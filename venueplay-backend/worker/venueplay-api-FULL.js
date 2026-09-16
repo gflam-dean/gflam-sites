@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '16 Sep 2026, 09:58 · df159e7c';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '16 Sep 2026, 10:13 · 01754bfc';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -610,7 +610,25 @@ async function handleWebhook(request, env, cors) {
     // up, and only 'nonpayment' is ever undone by a payment. Stamping a deliberate ending as
     // non-payment meant one late invoice landing on that customer switched the whole account
     // back on with no subscription behind it, playing free, with their credit already wiped.
-    await vpaSuspendForNonpayment(env, cust, 'ended');
+    /* THEY KEEP THE LAST NIGHT. Stripe ends the subscription on the ANNIVERSARY OF THE
+       SIGNUP, so a venue that joined at 10:19 on a Wednesday morning goes dark at 10:19
+       on a Friday morning, halfway through the last day they have paid for. Wellshot
+       would have lost its Friday night at twenty past ten in the morning.
+
+       Dean, 16 Sep 2026, asked for the last night to run properly, and then asked the
+       better question: midnight, or the 3am sweep? 3am. This product already decided
+       when a night ends. venueplay-game closes every unended session at 3am IN THE
+       VENUE'S OWN TIMEZONE, set on 11 Sep after Dean asked for the close to go state by
+       state. Ending the subscription at calendar midnight would kill a running game on
+       the one night people most remember, and ending it at 3am Brisbane would shut a
+       Sydney room at 2am through daylight saving. So the marker goes on here and
+       venueplay-game flips it at 3am local, using the same clock as everything else.
+
+       ONLY FOR A DELIBERATE CANCELLATION. A chargeback also arrives as
+       subscription.deleted, and a venue disputing its bill does not get a free night.
+       cancel_at_period_end is the test: we set it when the owner cancels, and nothing
+       sets it on a dispute. */
+    await vpaEndAfterLastNight(env, cust);
     await vpaClearCreditOnEnd(env, cust, event.id);   // the subscription is over, so the credit is too
   }
   /* A CHARGEBACK. Stripe's dispute setting is what stops the games (cancel immediately, which
@@ -3856,8 +3874,13 @@ async function vpaVenuesForCustomer(env, customerId) {
     'stripe_customer_id=eq.' + encodeURIComponent(customerId) + '&select=id,contact_email,plan&limit=1');
   const acct = accts && accts[0];
   if (!acct) return [];
+  /* cancel_at_period_end is selected because vpaEndAfterLastNight decides on it: a venue
+     the owner cancelled keeps its last night, a venue whose subscription ended any other
+     way does not. Without the column every venue reads as undefined, every one is treated
+     as a chargeback, and the last night is taken off all of them. */
   const venues = await vpaSelect(env, 'vp_venues',
-    'founding_id=eq.' + encodeURIComponent(acct.id) + '&select=id,name,status,suspended_reason');
+    'founding_id=eq.' + encodeURIComponent(acct.id)
+    + '&select=id,name,status,suspended_reason,cancel_at_period_end,timezone');
   return [(venues || []), acct];
 }
 
@@ -3908,6 +3931,45 @@ async function vpaRecordDispute(env, dispute, eventType) {
           ? vpaFmtDate(dispute.evidence_details.due_by) : null,
       },
     }, false).catch(() => {});
+  } catch (_) { /* never throw out of a webhook */ }
+}
+
+/* A subscription has ended. Venues the owner deliberately cancelled are MARKED rather
+   than switched off, and keep playing until 3am their own time; anything else is switched
+   off now, exactly as before.
+
+   The mark is status 'active' with suspended_reason 'ending'. Nothing else in either
+   Worker reads suspended_reason without first checking status, and the only thing that
+   stops a game is status === 'suspended', so a marked venue plays normally.
+
+   IF venueplay-game IS NEVER PASTED, THESE VENUES PLAY ON. That is the risk this design
+   carries and it is why the sweep at the other end closes anything marked whose local
+   clock reads 3, 4 or 5, rather than 3 exactly: two missed cron runs still end the night
+   on the right morning. */
+async function vpaEndAfterLastNight(env, customerId) {
+  try {
+    const [venues, acct] = await vpaVenuesForCustomer(env, customerId);
+    if (!venues || !venues.length) return;
+    let marked = 0, off = 0;
+    for (const v of venues) {
+      if (v.status === 'suspended') continue;
+      if (v.cancel_at_period_end) {
+        await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(v.id),
+          { suspended_reason: 'ending' });
+        marked++;
+      } else {
+        await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(v.id),
+          { status: 'suspended', suspended_reason: 'ended' });
+        off++;
+      }
+    }
+    if (marked || off) {
+      await vpaInsert(env, 'vp_admin_audit', {
+        action: 'venue_subscription_ended',
+        target: 'account:' + (acct && acct.id),
+        detail: { keeping_last_night: marked, switched_off_now: off, customer: customerId },
+      }, false).catch(() => {});
+    }
   } catch (_) { /* never throw out of a webhook */ }
 }
 
@@ -5292,27 +5354,67 @@ async function vpaFireCancelConfirm(env, opts) {
   } catch (_) { /* never let an email stop a cancellation */ }
 }
 
-/* THE DAY BEFORE. Runs from the scheduled handler.
+/* WHAT TIME AND WHAT DAY IS IT WHERE THE VENUE IS?
 
-   REQUIRES A CRON TRIGGER ON THIS WORKER, and on 16 Sep 2026 there was not one. Checked
-   through the Cloudflare API: venueplay-api had no schedules at all, venueplay-game had
-   "0 * * * *". So the 30-day archive sweep this handler already contains had never run a
-   single time since it was written, and this would have been the second thing to sit there
-   doing nothing. A daily trigger such as "0 20 * * *" runs both.
+   Intl is in the Workers runtime, so daylight saving comes from the tz database for free.
+   An unknown timezone falls back to Brisbane, which is where this product started and the
+   safest guess for an Australian venue. Same fallback as venueplay-game's session sweep,
+   deliberately, so the two cannot disagree about what day it is somewhere. */
+function vpaLocalHour(tz) {
+  try {
+    return parseInt(new Intl.DateTimeFormat('en-AU',
+      { timeZone: tz || 'Australia/Brisbane', hour: 'numeric', hour12: false })
+      .format(new Date()), 10);
+  } catch (e) { return -1; }
+}
+function vpaLocalDate(ts, tz) {          // YYYY-MM-DD where the venue is
+  try {
+    return new Intl.DateTimeFormat('en-CA',
+      { timeZone: tz || 'Australia/Brisbane', year: 'numeric', month: '2-digit', day: '2-digit' })
+      .format(new Date(ts * 1000));
+  } catch (e) { return ''; }
+}
+function vpaLocalWeekday(ts, tz) {       // "Friday"
+  try {
+    return new Intl.DateTimeFormat('en-AU',
+      { timeZone: tz || 'Australia/Brisbane', weekday: 'long' }).format(new Date(ts * 1000));
+  } catch (e) { return ''; }
+}
+function vpaDaysBetween(aYmd, bYmd) {    // whole days from a to b, both YYYY-MM-DD
+  if (!aYmd || !bYmd) return null;
+  const a = Date.UTC(+aYmd.slice(0, 4), +aYmd.slice(5, 7) - 1, +aYmd.slice(8, 10));
+  const b = Date.UTC(+bYmd.slice(0, 4), +bYmd.slice(5, 7) - 1, +bYmd.slice(8, 10));
+  return Math.round((b - a) / 86400000);
+}
 
-   Reads the end date from STRIPE, not from our own tables, because nothing here stores it:
-   vp_venues records cancel_at_period_end as a flag and the date lives only on the
-   subscription. Asking the source is also the only way to notice if someone has changed
-   the date in the Stripe dashboard.
+/* TWO DAYS OUT, AT 8AM WHERE THEY ARE.
 
-   Sends once. An audit row per venue per date is the lock, so a cron that fires hourly,
-   or a retry, cannot send the same venue the same warning twice. */
+   Dean, 16 Sep 2026: "lets tell them that <<DAY>> is their last day on VenuePlay and lets
+   do that 48 hours prior i think at like 8am that day so they have 2 full days to think of
+   it." So a venue whose last day is Friday hears on Wednesday morning and has Wednesday
+   and Thursday to change its mind, rather than being told the night before when there is
+   nothing left to decide.
+
+   THE DAY IS NAMED, not just dated. "Friday is your last day" is what a publican actually
+   plans around; "18 September 2026" is what a reader has to go and look up.
+
+   REQUIRES AN HOURLY CRON TRIGGER ON THIS WORKER: "0 * * * *". On 16 Sep 2026 there was
+   none at all, checked through the Cloudflare API: venueplay-api had no schedules and
+   venueplay-game had "0 * * * *". Hourly rather than daily because 8am local is three
+   different UTC hours across this country once Western Australia and daylight saving are
+   both in play, so a once-a-day trigger can only ever be 8am for one of them. The 30-day
+   archive sweep in this same handler has never run once for want of that trigger.
+
+   Reads the end date from STRIPE, because nothing here stores it: vp_venues carries
+   cancel_at_period_end as a flag and the date lives only on the subscription. Asking the
+   source is also the only way to notice a date changed by hand in the Stripe dashboard.
+
+   Sends once. An audit row per venue is the lock, so an hourly trigger cannot send the
+   same venue the same warning twice. */
 async function vpaLastDaySweep(env) {
   if (!env.RESEND_API_KEY || !env.STRIPE_SECRET_KEY) return { checked: 0, sent: 0 };
-  const now = Math.floor(Date.now() / 1000);
   const venues = await vpaSelect(env, 'vp_venues',
-    'status=eq.active&cancel_at_period_end=is.true'
-    + '&select=id,name,founding_id,timezone') || [];
+    'status=eq.active&cancel_at_period_end=is.true&select=id,name,founding_id,timezone') || [];
   let sent = 0;
   const byAccount = {};
   for (const v of venues) (byAccount[v.founding_id] = byAccount[v.founding_id] || []).push(v);
@@ -5335,27 +5437,34 @@ async function vpaLastDaySweep(env) {
     } catch (_) { continue; }
     if (!endTs) continue;
 
-    /* The window is "ends within the next 24 hours, and has not ended yet". A daily cron
-       hits it once. An hourly cron would hit it up to 24 times, which is what the audit
-       lock below is for. */
-    const away = endTs - now;
-    if (away <= 0 || away > 24 * 3600) continue;
-
-    const ends = vpaFmtDate(endTs);
     for (const v of byAccount[fid]) {
+      const tz = v.timezone;
+      /* Two whole days, counted in DATES rather than in hours. A venue is not "48 hours
+         out" at a fixed number of seconds: it is two sleeps away, and a date subtraction
+         says that correctly through a daylight saving change where an hour count does not. */
+      const today = vpaLocalDate(Math.floor(Date.now() / 1000), tz);
+      const lastDay = vpaLocalDate(endTs, tz);
+      if (vpaDaysBetween(today, lastDay) !== 2) continue;
+      if (vpaLocalHour(tz) !== 8) continue;
+
       const already = await vpaSelect(env, 'vp_admin_audit',
         'action=eq.venue_last_day_emailed&target=eq.' + encodeURIComponent('venue:' + v.id)
         + '&select=id&limit=1').catch(() => []);
       if (already && already.length) continue;
       const to = await vpaAccountContacts(env, acct, v.id);
       if (!to.length) continue;
+
+      const day = vpaLocalWeekday(endTs, tz);
+      const dated = vpaFmtDate(endTs);
       const html = vpaLeavingHtml(env, {
-        heading: 'Tomorrow is your last day on VenuePlay.',
-        lead: vpaEsc(v.name || 'Your venue') + ' is set to cancel on <b>' + vpaEsc(ends)
-            + '</b>. Everything still works today and tomorrow, and after that the screens '
-            + 'and the phones stop. We wanted you to know before it happened rather than after.',
+        heading: day + ' is your last day on VenuePlay.',
+        lead: vpaEsc(v.name || 'Your venue') + ' is set to cancel after <b>' + vpaEsc(day)
+            + ', ' + vpaEsc(dated) + '</b>. You keep that night in full, right through to close, '
+            + 'and the screens go quiet after it. We would rather tell you now, while there '
+            + 'are still two days in it, than the morning after.',
         rows: [['Venue', v.name || 'your venue'],
-               ['Last day', ends],
+               ['Last day', day + ', ' + dated],
+               ['Until then', 'Nothing changes. Every game runs as normal.'],
                ['After that', 'Games stop. Nothing is deleted for three months.']],
         extra: '<p style="font-size:13.5px;color:#3a3a44;margin:0 0 18px">'
              + 'If you would rather stay, one click on your billing page undoes it and '
@@ -5365,13 +5474,13 @@ async function vpaLastDaySweep(env) {
         cta: 'Keep the venue running',
       });
       for (const addr of to) {
-        await vpaSendEmail(env, addr, 'Tomorrow is your last day on VenuePlay', html)
+        await vpaSendEmail(env, addr, day + ' is your last day on VenuePlay', html)
           .catch(() => false);
       }
       await vpaInsert(env, 'vp_admin_audit', {
         action: 'venue_last_day_emailed',
         target: 'venue:' + v.id,
-        detail: { to: to, ends: ends, name: v.name || null, end_ts: endTs },
+        detail: { to: to, ends: dated, day: day, name: v.name || null, end_ts: endTs },
       }, false).catch(() => {});
       sent++;
     }

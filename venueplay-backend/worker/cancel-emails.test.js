@@ -20,7 +20,20 @@ eval(lift(BILL,"vpaFmtDate"));
 eval(lift(BILL,"vpaAccountContacts"));
 eval(lift(BILL,"vpaLeavingHtml"));
 eval(lift(BILL,"vpaFireCancelConfirm"));
+eval(lift(BILL,"vpaLocalHour"));
+eval(lift(BILL,"vpaLocalDate"));
+eval(lift(BILL,"vpaLocalWeekday"));
+eval(lift(BILL,"vpaDaysBetween"));
 eval(lift(BILL,"vpaLastDaySweep"));
+eval(lift(BILL,"vpaEndAfterLastNight"));
+
+/* THE REAL ONES, KEPT. Everything lifted above lives at TOP LEVEL, so a stub declared
+   inside main() is invisible to it: the function under test resolves vpaLocalHour from
+   the scope it was defined in, not from the scope calling it. Eleven checks failed that
+   way on the first run and not one of them was the Worker's fault. Stubs are therefore
+   assigned over the real bindings out here, and the originals are kept so the date
+   arithmetic can still be tested for real. */
+var REAL_hour=vpaLocalHour, REAL_date=vpaLocalDate, REAL_weekday=vpaLocalWeekday;
 pass("the four new functions are all in the Worker",
      typeof vpaAccountContacts==="function" && typeof vpaLeavingHtml==="function"
      && typeof vpaFireCancelConfirm==="function" && typeof vpaLastDaySweep==="function");
@@ -59,6 +72,27 @@ async function vpaSelect(env,table,q){
   });
 }
 var env={ RESEND_API_KEY:"re_x", STRIPE_SECRET_KEY:"sk_x", SITE_URL:"https://venueplay.com.au" };
+
+/* Clock stubs, assigned over the real bindings at top level so the lifted functions see
+   them. END_TS is a sentinel: the only timestamp the stub calls "the last day". */
+var END_TS=1789084740, FAKE_HOUR=8, TODAY="2026-09-16", LASTDAY="2026-09-18";
+/* THE STUBS MUST HONOUR tz OR THEY CANNOT CATCH A HARDCODED CLOCK. The first version
+   ignored the argument, so replacing the venue's timezone with a literal
+   "Australia/Brisbane" inside the sweep passed all 49 checks. Perth is given its own hour
+   and its own date here, which is what makes that mutation go red. */
+var PERTH_HOUR=6, TODAY_PERTH="2026-09-15";
+vpaLocalHour=function(tz){ return tz==="Australia/Perth" ? PERTH_HOUR : FAKE_HOUR; };
+vpaLocalDate=function(ts,tz){
+  if(ts===END_TS) return LASTDAY;
+  return tz==="Australia/Perth" ? TODAY_PERTH : TODAY;
+};
+vpaLocalWeekday=function(ts,tz){ return "Friday"; };
+var PATCHED=[];
+async function vpaPatch(env,table,filter,obj){ PATCHED.push({filter:filter,obj:obj}); return {}; }
+async function vpaVenuesForCustomer(env,cust){
+  return [[{id:"vA",name:"Cancelled",status:"active",cancel_at_period_end:true},
+           {id:"vB",name:"Chargeback",status:"active",cancel_at_period_end:false}],{id:"f1"}];
+}
 
 /* The functions under test are async. jsc has no top-level await, so the body runs inside
    an async main() and the microtask queue is drained at the end. Without the drain the
@@ -100,39 +134,124 @@ pass("it tells them how to undo it", c.html.indexOf("Undo this cancellation")!==
 pass("it carries NO unsubscribe link", c.html.indexOf("unsubscribe")===-1 && c.html.indexOf("Unsubscribe")===-1);
 pass("it is recorded in the audit", AUDIT.length===1 && AUDIT[0].action==="venue_cancel_confirm_emailed");
 
-/* --- the day before ----------------------------------------------------- */
-var NOW=Math.floor(Date.now()/1000);
-function sweepWith(endsIn, alreadySent){
-  SENT=[]; AUDIT=[];
+/* --- the real date maths, before anything is stubbed ---------------------- */
+pass("two whole days apart is two, across a month end",
+     vpaDaysBetween("2026-09-30","2026-10-02")===2, String(vpaDaysBetween("2026-09-30","2026-10-02")));
+pass("the same day is zero", vpaDaysBetween("2026-09-16","2026-09-16")===0);
+pass("a past date is negative, so it can never look like 2",
+     vpaDaysBetween("2026-09-18","2026-09-16")===-2);
+/* 1789084800 is Fri 18 Sep 2026 10:19 Brisbane, which is Wellshot's real cancel_at. */
+pass("the weekday is named from the venue's own clock",
+     REAL_weekday(1789084740,"Australia/Brisbane")==="Friday",
+     REAL_weekday(1789084740,"Australia/Brisbane"));
+pass("and Perth reads the same instant as its own day",
+     REAL_weekday(1789084740,"Australia/Perth")==="Friday");
+/* 15:00 UTC is already the next day in Brisbane and still the previous evening in Perth.
+   That two-hour gap is the whole reason the timezone column is used rather than one
+   national clock: a single Brisbane clock would end a Perth venue's night on the wrong
+   date entirely. The first version of this check used a timestamp where the two agreed,
+   so it could not have caught a Brisbane-only implementation. */
+pass("a venue's day is its own, not Brisbane's",
+     REAL_date(1789657200,"Australia/Brisbane")!==REAL_date(1789657200,"Australia/Perth"),
+     REAL_date(1789657200,"Australia/Brisbane")+" vs "+REAL_date(1789657200,"Australia/Perth"));
+
+/* --- the 48-hour warning ------------------------------------------------- */
+async function sweepWith(lastDay, hour, alreadySent){
+  SENT=[]; AUDIT=[]; LASTDAY=lastDay; FAKE_HOUR=hour;
   TABLES={
     vp_venues:[{id:"v1",name:"The Pub",founding_id:"f1",timezone:"Australia/Brisbane"}],
     venueplay_founding:[{id:"f1",contact_email:"accounts@thepub.com.au",stripe_subscription_id:"sub_1"}],
     vp_venue_staff:[{venue_id:"v1",auth_user_id:"u1"}],
     vp_admin_audit: alreadySent ? [{action:"venue_last_day_emailed",target:"venue:v1"}] : [],
   };
-  STRIPE={ sub_1:{ cancel_at: NOW+endsIn, items:{data:[{}]} } };
+  STRIPE={ sub_1:{ cancel_at: END_TS, items:{data:[{}]} } };
   return vpaLastDaySweep(env);
 }
-var r1=await sweepWith(20*3600,false);
-pass("a venue ending in 20 hours is warned", r1.sent===1 && SENT.length===2, "sent "+SENT.length+" email(s)");
+
+var r1=await sweepWith("2026-09-18",8,false);
+pass("two days out at 8am, they are told", r1.sent===1 && SENT.length===2, "sent "+SENT.length+" email(s)");
 var d=SENT[0]||{subject:"",html:""};
-pass("the subject is the one Dean asked for", d.subject==="Tomorrow is your last day on VenuePlay", d.subject);
-pass("it says games stop after that", d.html.indexOf("the screens")!==-1 && d.html.indexOf("stop")!==-1);
-pass("it promises three months here as well", d.html.indexOf("three months")!==-1);
+pass("the subject NAMES THE DAY, which is what a publican plans around",
+     d.subject==="Friday is your last day on VenuePlay", d.subject);
+pass("the body names the day too", d.html.indexOf("Friday is your last day")!==-1);
+pass("it says they keep that night in full, right through to close",
+     d.html.indexOf("keep that night in full")!==-1);
+pass("it says there are still two days in it", d.html.indexOf("two days in it")!==-1);
+pass("it promises three months", d.html.indexOf("three months")!==-1);
 pass("it offers the one click that keeps them", d.html.indexOf("Keep the venue running")!==-1);
-pass("the day-before email carries NO unsubscribe either", d.html.toLowerCase().indexOf("unsubscribe")===-1);
+pass("the warning carries NO unsubscribe", d.html.toLowerCase().indexOf("unsubscribe")===-1);
 
-var r2=await sweepWith(40*3600,false);
-pass("a venue ending in 40 hours is NOT warned yet", r2.sent===0 && SENT.length===0, "sent "+SENT.length);
-var r3=await sweepWith(-3600,false);
-pass("a venue that has already ended is not warned", r3.sent===0 && SENT.length===0);
-var r4=await sweepWith(20*3600,true);
+pass("three days out, nothing yet", (await sweepWith("2026-09-19",8,false)).sent===0);
+pass("one day out, the moment has passed and it is not sent late",
+     (await sweepWith("2026-09-17",8,false)).sent===0);
+pass("the last day itself, nothing", (await sweepWith("2026-09-16",8,false)).sent===0);
+pass("two days out but 7am, it waits for 8", (await sweepWith("2026-09-18",7,false)).sent===0);
+pass("two days out but 9am, the hour has gone by and it does not fire late",
+     (await sweepWith("2026-09-18",9,false)).sent===0);
+/* TWO VENUES, TWO CLOCKS, AND THE TWO CASES HAVE TO BE SEPARATED.
+
+   A single mixed case cannot tell you which clock is wrong. If Perth differs in BOTH the
+   hour and the date, then hardcoding either one still excludes it and the check stays
+   green while the code is broken. That happened: replacing the venue's timezone with a
+   literal "Australia/Brisbane" in the date lookup passed 51 checks, because the Perth
+   venue was being excluded by its hour anyway.
+
+   So: one case where only the DATE differs, one where only the HOUR does. */
+function twoVenues(){
+  SENT=[]; AUDIT=[];
+  TABLES={
+    vp_venues:[{id:"v1",name:"The Pub",founding_id:"f1",timezone:"Australia/Brisbane"},
+               {id:"v2",name:"The Sandgroper",founding_id:"f1",timezone:"Australia/Perth"}],
+    venueplay_founding:[{id:"f1",contact_email:"accounts@thepub.com.au",stripe_subscription_id:"sub_1"}],
+    vp_venue_staff:[{venue_id:"v1",auth_user_id:"u1"},{venue_id:"v2",auth_user_id:"u1"}],
+    vp_admin_audit: [],
+  };
+  STRIPE={ sub_1:{ cancel_at: END_TS, items:{data:[{}]} } };
+}
+/* Same hour in both, different DATE: Brisbane has two days to go, Perth three. */
+LASTDAY="2026-09-18"; FAKE_HOUR=8; PERTH_HOUR=8; TODAY="2026-09-16"; TODAY_PERTH="2026-09-15";
+twoVenues();
+var rDate=await vpaLastDaySweep(env);
+pass("the DAY is counted on each venue's own calendar, not one national one",
+     rDate.sent===1 && AUDIT.length===1 && AUDIT[0].target==="venue:v1",
+     "emailed "+rDate.sent+" venue(s): "+(AUDIT.map(function(a){return a.target;}).join(", ")||"none"));
+/* Same date in both, different HOUR: Perth is still at 6am. */
+TODAY_PERTH="2026-09-16"; PERTH_HOUR=6;
+twoVenues();
+var rHour=await vpaLastDaySweep(env);
+pass("8am is counted on each venue's own clock, not one national one",
+     rHour.sent===1 && AUDIT.length===1 && AUDIT[0].target==="venue:v1",
+     "emailed "+rHour.sent+" venue(s): "+(AUDIT.map(function(a){return a.target;}).join(", ")||"none"));
+TODAY_PERTH="2026-09-15";
+
+var r4=await sweepWith("2026-09-18",8,true);
 pass("a venue already warned is never warned twice", r4.sent===0 && SENT.length===0,
-     "this is what stops an hourly cron sending it 24 times");
+     "this is what stops the hourly cron sending it every hour of that morning");
 
-/* the sweep must ask STRIPE, because nothing in our tables stores the end date */
-pass("the end date is read from Stripe, not guessed from our own tables",
-     /subscriptions\//.test(JSON.stringify(Object.keys(STRIPE)))===false && typeof vpbStripeGet==="function");
+/* --- the last night is kept, and only for a real cancellation ------------- */
+SENT=[]; AUDIT=[];
+await vpaEndAfterLastNight(env,"cus_1");
+var marked=PATCHED.filter(function(p){ return p.obj.suspended_reason==="ending" && !p.obj.status; });
+var offNow=PATCHED.filter(function(p){ return p.obj.status==="suspended"; });
+pass("a venue the owner cancelled is MARKED, not switched off, so it keeps its last night",
+     marked.length===1 && marked[0].filter.indexOf("vA")!==-1, JSON.stringify(marked));
+pass("it is left ACTIVE, which is the only thing that lets a game run",
+     marked.length===1 && marked[0].obj.status===undefined);
+pass("a chargeback is switched off immediately and gets no free night",
+     offNow.length===1 && offNow[0].filter.indexOf("vB")!==-1, JSON.stringify(offNow));
+
+/* --- the game Worker ends it, on the same clock as the sessions ----------- */
+var GAME=find("venueplay-backend/worker/venueplay-game.js");
+pass("the game Worker has the sweep that ends the last night",
+     /async function sweepEndingVenues\(env\)/.test(GAME));
+pass("it only looks at venues marked 'ending' that are still active",
+     /status=eq\.active&suspended_reason=eq\.ending/.test(GAME));
+pass("it uses the venue's OWN clock, the same helper the session sweep uses",
+     /venueLocalHour\(v\.timezone\)/.test(GAME));
+pass("the window is 3 to 5am, so one missed cron cannot buy a free extra night",
+     /h >= 3 && h <= 5/.test(GAME));
+pass("it runs from the trigger that actually exists, in its own waitUntil",
+     /ctx\.waitUntil\(sweepEndingVenues\(env\)/.test(GAME));
 
 /* --- it is actually wired in -------------------------------------------- */
 pass("the cancel endpoint calls the confirmation", /vpaFireCancelConfirm\(env, \{/.test(BILL));

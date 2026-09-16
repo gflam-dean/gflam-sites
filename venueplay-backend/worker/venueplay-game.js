@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '12 Sep 2026, 18:57 · 900cbf48';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '16 Sep 2026, 10:13 · cf8cb225';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -314,8 +314,58 @@ export default {
       if (r.error) { console.log('[sweep] FAILED to list stale sessions: ' + r.error); return; }
       console.log('[sweep] closed ' + r.closed + ', failed ' + r.failed + ', of ' + r.found + ' stale sessions');
     }));
+    /* The last night of a cancelled venue ends on the SAME CLOCK as the sessions above,
+       and it rides this trigger because this is the Worker whose trigger actually runs.
+       venueplay-api has no Cron Trigger at all. Its own separate waitUntil so a failure
+       in the session sweep cannot leave a cancelled venue playing for free. */
+    ctx.waitUntil(sweepEndingVenues(env).then(function (r) {
+      if (r.error) { console.log('[ending] FAILED: ' + r.error); return; }
+      if (r.ended) console.log('[ending] switched off ' + r.ended + ' venue(s) after their last night');
+    }));
   },
 };
+
+/* THE LAST NIGHT IS OVER. Switch off the venues that were kept running past the end of
+   their subscription.
+
+   venueplay-api marks them rather than suspending them: Stripe ends a subscription on the
+   anniversary of the SIGNUP, so a venue that joined at 10:19 on a Wednesday morning would
+   otherwise go dark at 10:19 on a Friday morning, halfway through the last day it had paid
+   for. The mark is status 'active' with suspended_reason 'ending', and only a deliberate
+   cancellation gets it. A chargeback is switched off at once, over there.
+
+   3AM LOCAL, the same boundary the session sweep above uses, for the same reason: calendar
+   midnight would kill a game that is still running, and 3am Brisbane would shut a Sydney
+   room at 2am through daylight saving.
+
+   THE WINDOW IS 3, 4 AND 5, NOT 3 EXACTLY. If it were 3 exactly then one missed cron run
+   would leave a cancelled venue playing free for another 24 hours. Three hours of slack
+   costs nothing, because a venue that is still open at 5am local has bigger problems than
+   its subscription, and it means two consecutive failures still end the night on the right
+   morning. */
+async function sweepEndingVenues(env) {
+  let rows;
+  try {
+    rows = await sbGet(env, 'vp_venues',
+      'status=eq.active&suspended_reason=eq.ending&select=id,name,timezone') || [];
+  } catch (e) {
+    return { found: 0, ended: 0, error: String((e && e.message) || e) };
+  }
+  if (!rows.length) return { found: 0, ended: 0 };
+  const due = rows.filter(function (v) {
+    const h = venueLocalHour(v.timezone);
+    return h >= 3 && h <= 5;
+  });
+  let ended = 0;
+  for (const v of due) {
+    try {
+      await sbPatch(env, 'vp_venues', 'id=eq.' + enc(v.id),
+        { status: 'suspended', suspended_reason: 'ended' });
+      ended++;
+    } catch (e) { /* the next run picks it up; the window is three hours wide */ }
+  }
+  return { found: rows.length, ended: ended };
+}
 
 /* The sweep itself, so the nightly Cron Trigger and the button in HQ run the SAME code.
  * Closing a session is what bills an approved busy-night overage, so there must never be two
