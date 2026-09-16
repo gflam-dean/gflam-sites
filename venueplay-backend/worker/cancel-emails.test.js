@@ -186,8 +186,16 @@ pass("one day out, the moment has passed and it is not sent late",
      (await sweepWith("2026-09-17",8,false)).sent===0);
 pass("the last day itself, nothing", (await sweepWith("2026-09-16",8,false)).sent===0);
 pass("two days out but 7am, it waits for 8", (await sweepWith("2026-09-18",7,false)).sent===0);
-pass("two days out but 9am, the hour has gone by and it does not fire late",
-     (await sweepWith("2026-09-18",9,false)).sent===0);
+/* FROM 8am, not AT 8am. An exact hour means a single missed cron run loses the message,
+   because the next day the venue is one day out and no longer matches at all. Wellshot
+   was 47.9 hours from cancelling when this shipped at 10:13, so an exact test would have
+   skipped it for good. Late is fine; never is not. */
+pass("two days out at 9am, a missed 8am run still sends it",
+     (await sweepWith("2026-09-18",9,false)).sent===1);
+pass("two days out at 11pm, it still goes rather than being lost",
+     (await sweepWith("2026-09-18",23,false)).sent===1);
+pass("but it never fires before 8am, so nobody is woken at 4",
+     (await sweepWith("2026-09-18",4,false)).sent===0);
 /* TWO VENUES, TWO CLOCKS, AND THE TWO CASES HAVE TO BE SEPARATED.
 
    A single mixed case cannot tell you which clock is wrong. If Perth differs in BOTH the

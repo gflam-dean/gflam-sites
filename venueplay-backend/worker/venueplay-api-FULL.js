@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '16 Sep 2026, 10:13 · 01754bfc';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '16 Sep 2026, 10:25 · 6770d696';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -5445,7 +5445,13 @@ async function vpaLastDaySweep(env) {
       const today = vpaLocalDate(Math.floor(Date.now() / 1000), tz);
       const lastDay = vpaLocalDate(endTs, tz);
       if (vpaDaysBetween(today, lastDay) !== 2) continue;
-      if (vpaLocalHour(tz) !== 8) continue;
+      /* FROM 8am, not AT 8am. An exact hour means one missed run loses the message
+         entirely, because tomorrow the venue is one day out and no longer matches. That
+         is not hypothetical: this shipped at 10:13 on the morning Wellshot was 47.9 hours
+         from cancelling, so an exact-8 test would have skipped it at 11:00 and every hour
+         after, and the only venue ever to cancel would have gone dark with no warning.
+         The audit row below is what stops the hourly cron then sending it sixteen times. */
+      if (vpaLocalHour(tz) < 8) continue;
 
       const already = await vpaSelect(env, 'vp_admin_audit',
         'action=eq.venue_last_day_emailed&target=eq.' + encodeURIComponent('venue:' + v.id)
