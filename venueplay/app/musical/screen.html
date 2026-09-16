@@ -974,7 +974,9 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
         .then(function(d){ if(!d) return; paint(d.logo_url||"");
           /* THE LOGO WINS. A venue with a logo shows the logo and not the
              caption, the same rule tv.html applies, so the two never stack. */
-          var nt=document.getElementById("venueNameTag");
+          /* NOT IN A DEMO. ?demo=1 resolves no venue on purpose, so d.name is empty and
+             this would blank the name the demo block just set. */
+          var nt=VP_DEMO ? null : document.getElementById("venueNameTag");
           if(nt){ var nm=String(d.name||"").trim();
             nt.textContent=nm; nt.hidden = !nm || !!(d.logo_url||""); } })   // one object now, not an array
         .catch(function(){});
