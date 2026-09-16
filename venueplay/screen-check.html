@@ -213,7 +213,63 @@
          'the wall showed an error rather than a night: "' + (apology || '') + '"');
 
     pass(errors.length === 0, 'the screen threw no errors while we watched', errors.slice(0, 2).join(' / '));
+
+    await gameWalls();
     finish();
+  }
+
+  /* THE OTHER FOUR WALLS, THE ONES THIS FILE NEVER LOOKED AT.
+
+     Everything above tests /tv. On 16 Sep 2026 two faults shipped on the four GAME screens
+     and neither was visible to any of the 292 gate checks, because in both cases the source
+     read perfectly:
+
+       - .tv-status is markup-hidden AND styled display:flex. display wins, so every screen
+         painted a permanent amber CONNECTING over a game running fine. It was on
+         see-a-night, the page every cold email points at.
+       - the demo venue name was set inside venueLogo(), which opens
+         `if(!VENUE_SLUG) return;`. A demo has no slug ON PURPOSE, so the code was never
+         reached and the corner stayed blank beside a bingo wall that named the pub.
+
+     Both are one screenshot away and no distance at all from a file reader. So this asks
+     ?demo=1 what it actually PAINTS. Demo mode is the right target: it is hermetic, needs
+     no venue, and is exactly what a publican is shown. */
+  async function gameWalls() {
+    var GAMES = ['trivia', 'musical', 'raffle', 'members'];
+    note('the four game walls', 'checked in ?demo=1, which is what see-a-night embeds');
+    for (var i = 0; i < GAMES.length; i++) {
+      var g = GAMES[i];
+      stage.src = '/app/' + g + '/screen?demo=1&t=' + Date.now();
+      await new Promise(function (r) { stage.onload = r; setTimeout(r, 15000); });
+      await wait(5000);
+      var gd = null;
+      try { gd = doc(); } catch (e) {}
+      if (!gd) { pass(false, g + ': the wall loads at all', 'the frame has no document'); continue; }
+      var t = visibleText(gd).join(' | ');
+      pass(t.length > 2, g + ': something is on the wall', 'it rendered nothing a person could read');
+
+      /* PAINTED, not present. The badge sits in the DOM of a healthy screen too, waiting
+         for a disconnection, so matching it in the markup would fail every wall. */
+      var badge = null;
+      try {
+        var b = gd.querySelector('.tv-status');
+        if (b && b.getBoundingClientRect().width > 0 && b.getBoundingClientRect().height > 0
+            && /connect/i.test(b.textContent || '')) badge = (b.textContent || '').trim();
+      } catch (e) {}
+      pass(!badge, g + ': no connection badge over a running game',
+           'the wall is painting "' + (badge || '') + '" across the top of a game that is playing');
+
+      var nameOk = false, nameTxt = '';
+      try {
+        var nt = gd.getElementById('venueNameTag');
+        nameTxt = nt ? (nt.textContent || '').trim() : '';
+        nameOk = !!nt && !nt.hidden && nameTxt.length > 0
+                 && nt.getBoundingClientRect().width > 0;
+      } catch (e) {}
+      pass(nameOk, g + ': the wall says whose pub it is',
+           nameTxt ? ('the name is set to "' + nameTxt + '" but nothing is painted')
+                   : 'no venue name on the wall, so a punter cannot tell whose game this is');
+    }
   }
 
   function finish() {
