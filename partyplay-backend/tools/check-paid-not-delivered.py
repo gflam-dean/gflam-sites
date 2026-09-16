@@ -82,24 +82,82 @@ select coalesce(l.code,'?'),
 """ % (STAMP_EXISTS_FROM, GRACE_MINUTES)
 
 
+
+def _rows_over_rest():
+    """The same question as SQL, over PostgREST. Returns the same shape the psql branch
+    produces, so everything below it is untouched: code, email, paid_at, before-the-stamp,
+    inside-the-grace, party name."""
+    import json, datetime, urllib.request
+    env = {}
+    try:
+        for line in open(os.path.expanduser('~/.gflam-migrate.env')):
+            if '=' in line and not line.startswith('#'):
+                k, v = line.split('=', 1)
+                env[k] = v.strip()
+    except Exception:
+        return None
+    url, key = env.get('NEW_SUPABASE_URL'), env.get('NEW_SERVICE_KEY')
+    if not url or not key:
+        return None
+    q = (url.rstrip('/') + '/rest/v1/pp_licences'
+         '?status=eq.paid&welcome_sent_at=is.null'
+         '&select=code,buyer_email,paid_at,party_name&order=paid_at')
+    req = urllib.request.Request(q, headers={'apikey': key, 'Authorization': 'Bearer ' + key})
+    try:
+        data = json.loads(urllib.request.urlopen(req, timeout=30).read().decode())
+    except Exception:
+        return None
+    BNE = datetime.timezone(datetime.timedelta(hours=10))
+    now = datetime.datetime.now(datetime.timezone.utc)
+    stamp = datetime.datetime.fromisoformat(STAMP_EXISTS_FROM + 'T00:00:00+00:00')
+    out = []
+    for x in data:
+        raw = x.get('paid_at') or ''
+        try:
+            import re as _re
+            t = datetime.datetime.fromisoformat(
+                _re.sub(r'\.(\d{1,6})(?=[+-]|Z)',
+                        lambda m: '.' + m.group(1).ljust(6, '0'), raw.replace('Z', '+00:00')))
+        except Exception:
+            t = None
+        shown = t.astimezone(BNE).strftime('%d %b %H:%M') if t else '(no date)'
+        before = 'true' if (t and t < stamp) else 'false'
+        fresh = 'true' if (t and (now - t).total_seconds() < GRACE_MINUTES * 60) else 'false'
+        out.append([x.get('code') or '?', x.get('buyer_email') or '(no email)',
+                    shown, before, fresh, x.get('party_name') or ''])
+    return out
+
 def main():
     L = live()
     if not L.db_url:
         print('STOP: no live database configured'); sys.exit(1)
     print('\n' + L.banner())
-    if PSQL is None:
-        # A check that cannot run has to SAY it cannot run. This used to be one
-        # hardcoded Postgres.app path and a raw FileNotFoundError traceback.
-        print('STOP: psql is not installed on this machine, so this check cannot run.')
-        print('      Install Postgres.app from https://postgresapp.com, or run')
-        print('      "brew install libpq" and add it to PATH, then try again.')
-        print('      This is a missing tool, not a fault in the product.')
-        sys.exit(1)
-    r = subprocess.run([PSQL, L.db_url, '-At', '-F', '|', '-c', SQL],
-                       capture_output=True, text=True, timeout=120)
-    if r.returncode != 0:
-        print('could not ask the database: ' + (r.stderr or '').strip()[:200]); sys.exit(1)
-    rows = [l.split('|') for l in r.stdout.splitlines() if l.strip()]
+    """WITHOUT psql, ASK THE REST API INSTEAD OF GIVING UP.
+
+       This check sat red every single day because psql is not installed on this machine,
+       and a check that cannot run tells you nothing about whether somebody paid $50 and
+       got no code. "This is a missing tool, not a fault in the product" is true and it is
+       also exactly what a real fault would look like from the outside.
+
+       The question is one filter on one table, and the service key can ask it over REST
+       in a second. psql stays the first choice because it can express more; this is the
+       fallback so the answer exists either way."""
+    rows = None
+    if PSQL is not None:
+        r = subprocess.run([PSQL, L.db_url, '-At', '-F', '|', '-c', SQL],
+                           capture_output=True, text=True, timeout=120)
+        if r.returncode != 0:
+            print('could not ask the database: ' + (r.stderr or '').strip()[:200]); sys.exit(1)
+        rows = [l.split('|') for l in r.stdout.splitlines() if l.strip()]
+    else:
+        rows = _rows_over_rest()
+        if rows is None:
+            print('STOP: psql is not installed and the REST fallback could not read the')
+            print('      database either, so this check cannot run. Install Postgres.app')
+            print('      from https://postgresapp.com, or check NEW_SUPABASE_URL and')
+            print('      NEW_SERVICE_KEY in ~/.gflam-migrate.env.')
+            sys.exit(1)
+        print('(psql is not installed, so this asked the REST API instead)')
 
     old, fresh, stuck = [], [], []
     for code, email, paid, before_stamp, in_grace, party in rows:
