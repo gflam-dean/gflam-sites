@@ -11,7 +11,14 @@
 <style>
   :root{
     --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A; --pink:#FF1F8E; --pink-deep:#C70F69;
-    --gold:#FFC24B; --win:#35D07F; --roll:#F5A524; --white:#fff; --text:#E7E7EC; --muted:#9A9AA4; --faint:#6C6C76;
+    --gold:#FFC24B; --win:#35D07F; --roll:#F5A524; --white:#fff; --text:#E7E7EC; --muted:#A6A6B0;
+    /* CONTRAST, MEASURED, NOT EYEBALLED. --faint was #6C6C76 on #0A0A0B: 3.81:1, where WCAG
+       AA asks 4.5 for body text. It is the colour of every small explanatory line on these
+       screens, so the notes under the settings toggles and half of HQ were the hardest thing
+       on the page to read. Dean, 17 Sep 2026: "really hard to read with a bit of light on the
+       screen". #8A8A94 is 5.79:1, and --muted went 7.10 -> 8.20 for the same reason. Both are
+       still clearly below --text at 16.06, so the hierarchy is kept rather than flattened. */
+    --faint:#8A8A94;
     --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -2769,7 +2776,7 @@
         '<td>'+esc(d.email||"")+'</td>'+
         '<td style="white-space:nowrap">'+
           '<button data-appr="'+esc(fid)+'" style="border:none;background:#FF1F8E;color:#fff;border-radius:7px;padding:5px 11px;font-weight:700;cursor:pointer;font-size:12px">Approve opt-ins</button> '+
-          '<button data-lock="'+esc(fid)+'" style="border:1px solid #2a2a33;background:none;color:#9a9aa4;border-radius:7px;padding:5px 11px;font-weight:700;cursor:pointer;font-size:12px">No opt-ins</button>'+
+          '<button data-lock="'+esc(fid)+'" style="border:1px solid #2a2a33;background:none;color:var(--muted);border-radius:7px;padding:5px 11px;font-weight:700;cursor:pointer;font-size:12px">No opt-ins</button>'+
         '</td>';
       b.appendChild(tr);
     });
@@ -2802,12 +2809,12 @@
             : '<span class="badge" style="background:rgba(255,31,142,.12);color:#FF1F8E">Name only</span>')+'</td>'
         + '<td style="white-space:nowrap">'
         +   (on
-              ? '<button data-lock="'+esc(a.id)+'" style="border:1px solid #2a2a33;background:none;color:#9a9aa4;border-radius:7px;padding:5px 11px;font-weight:700;cursor:pointer;font-size:12px">Turn off</button>'
+              ? '<button data-lock="'+esc(a.id)+'" style="border:1px solid #2a2a33;background:none;color:var(--muted);border-radius:7px;padding:5px 11px;font-weight:700;cursor:pointer;font-size:12px">Turn off</button>'
               : '<button data-appr="'+esc(a.id)+'" style="border:none;background:#FF1F8E;color:#fff;border-radius:7px;padding:5px 11px;font-weight:700;cursor:pointer;font-size:12px">Approve opt-ins</button>'
               /* A deliberate NO, for an account whose domain would otherwise let them
                  through on the next save. Without it the only way to say no was to hope
                  nobody typed a venue word into their email address. */
-              + (off ? '' : ' <button data-lock="'+esc(a.id)+'" style="border:1px solid #2a2a33;background:none;color:#9a9aa4;border-radius:7px;padding:5px 11px;font-weight:700;cursor:pointer;font-size:12px">Never</button>'))
+              + (off ? '' : ' <button data-lock="'+esc(a.id)+'" style="border:1px solid #2a2a33;background:none;color:var(--muted);border-radius:7px;padding:5px 11px;font-weight:700;cursor:pointer;font-size:12px">Never</button>'))
         + '</td>';
       b.appendChild(tr);
     });

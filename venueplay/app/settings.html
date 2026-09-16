@@ -13,7 +13,14 @@
     --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
     --pink:#FF1F8E; --pink-deep:#C70F69;
     --gold:#FFC24B; --win:#35D07F; --roll:#F5A524;
-    --text:#E7E7EC; --muted:#9A9AA4; --faint:#6C6C76;
+    --text:#E7E7EC; --muted:#A6A6B0;
+    /* CONTRAST, MEASURED, NOT EYEBALLED. --faint was #6C6C76 on #0A0A0B: 3.81:1, where WCAG
+       AA asks 4.5 for body text. It is the colour of every small explanatory line on these
+       screens, so the notes under the settings toggles and half of HQ were the hardest thing
+       on the page to read. Dean, 17 Sep 2026: "really hard to read with a bit of light on the
+       screen". #8A8A94 is 5.79:1, and --muted went 7.10 -> 8.20 for the same reason. Both are
+       still clearly below --text at 16.06, so the hierarchy is kept rather than flattened. */
+    --faint:#8A8A94;
     --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -60,6 +67,10 @@
   .msg{min-height:20px;font-size:12.5px;margin-top:10px}
   .msg.ok{color:var(--win)}
   .msg.err{color:var(--roll)}
+  /* .warn was set by the save handler and never styled, so the one message that has to be
+     noticed, "could not be switched on", rendered in the same grey as everything else.
+     Gold, and a shade heavier, because it is the only line on the page carrying bad news. */
+  .msg.warn{color:var(--gold);font-weight:600}
   .warn{background:rgba(245,165,36,.08);border:1px solid rgba(245,165,36,.3);border-radius:12px;padding:12px 14px;font-size:12px;color:var(--roll);line-height:1.5;margin-bottom:16px}
   .hidden{display:none!important}
   /* Phones: a switch you have to hit with a thumb, and a button you cannot miss. */
@@ -259,6 +270,27 @@
     if(n) n.style.display="";   // always explain that approval is required to collect contact details
   }
 
+  /* THE FOUR THE DATABASE CAN REFUSE. Everything else on this screen always saves. */
+  var GATED=["collect_email","collect_mobile","collect_postcode","collect_marketing_optin"];
+  /* null = we do not know yet, true = this account may collect, false = it may not.
+     We cannot ASK: the rule lives in one place, the trigger in migration 82, and copying the
+     domain regex into this page is how two answers to one question start.
+     But there is a sound one-way inference. The trigger forces all four to false on EVERY
+     write when an account is not permitted, so a row that comes back with any of them TRUE
+     proves the account is permitted. False proves nothing either way, so that stays unknown
+     and the switches stay live until a save is actually refused. */
+  var mayCollect=null;
+  function lockGated(why){
+    document.querySelectorAll(".sw[data-k]").forEach(function(sw){
+      if(GATED.indexOf(sw.getAttribute("data-k"))===-1) return;
+      var off = (mayCollect===false);
+      sw.style.opacity = off ? ".4" : "";
+      sw.style.cursor  = off ? "not-allowed" : "";
+      sw.setAttribute("aria-disabled", off ? "true" : "false");
+      sw.title = off ? (why||"Your account is not approved to collect player contact details.") : "";
+    });
+  }
+
   function fill(s){
     state.name_display = s.name_display || "abbrev_last";
     // detect whether the new columns exist on the loaded row
@@ -271,6 +303,9 @@
     Array.prototype.forEach.call($("nameSeg").children, function(o){ o.classList.toggle("on", o.getAttribute("data-nd")===state.name_display); });
     // paint switches
     document.querySelectorAll(".sw[data-k]").forEach(function(sw){ sw.classList.toggle("on", !!state[sw.getAttribute("data-k")]); });
+    /* Any gated field already on is proof the account is allowed. */
+    if(hasNewCols && GATED.some(function(k){ return !!s[k]; })) mayCollect=true;
+    lockGated();
   }
 
   $("nameSeg").addEventListener("click", function(e){
@@ -281,6 +316,14 @@
   document.querySelectorAll(".sw[data-k]").forEach(function(sw){
     sw.addEventListener("click", function(){
       var k=this.getAttribute("data-k");
+      /* Dean, 17 Sep 2026: "shall we block that button out when their account cant use it?"
+         Once we KNOW the answer is no, the switch stops pretending. Before we know, it stays
+         live, because refusing somebody who is actually allowed would be the worse mistake. */
+      if(mayCollect===false && GATED.indexOf(k)!==-1){
+        var m=$("msg"); m.className="msg err";
+        m.textContent="Your account is not approved to collect player contact details yet, so this one cannot be switched on. Email us and we will sort it.";
+        return;
+      }
       state[k]=!state[k];
       this.classList.toggle("on", state[k]);
     });
@@ -326,9 +369,12 @@
           });
         }
         if(refused.length){
+          /* Now we know. Lock them, so nobody flicks the same switch twice. */
+          mayCollect=false; lockGated();
           msg.className="msg warn";
           msg.textContent="Saved, but "+refused.join(", ")+" could not be switched on. Collecting player contact details needs your account approved first. Email us and we will sort it.";
         } else {
+          if(GATED.some(function(k){ return patch[k]===true; })) { mayCollect=true; lockGated(); }
           msg.className="msg ok"; msg.textContent="Saved.";
         }
       }).catch(function(){ msg.className="msg ok"; msg.textContent="Saved."; });
