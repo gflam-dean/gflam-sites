@@ -1351,9 +1351,12 @@ def local_checks(which):
        An attribute and a stylesheet disagreeing is invisible to every other check in this
        file, because each half is correct on its own."""
     import glob as _glob
+    """EVERY PAGE, not the five screens it was first written for. signage.html carries the
+       same shape on .vlogo and was guarded but unwatched, which is the state tv.html was in
+       right up until it shipped a CONNECTING badge to the sales page."""
     clash = []
-    for f in [os.path.join(ROOT, 'venueplay', 'tv.html')] + sorted(
-            _glob.glob(os.path.join(ROOT, 'venueplay', 'app', '*', 'screen.html'))):
+    _pages = sorted(_glob.glob(os.path.join(ROOT, 'venueplay', '**', '*.html'), recursive=True))
+    for f in _pages:
         try:
             src = open(f, encoding='utf-8').read()
         except Exception:
@@ -1369,7 +1372,7 @@ def local_checks(which):
                     clash.append('%s: .%s sets display, so hidden does nothing' % (short(f), one))
     ok('a markup-hidden element is not made visible by its own stylesheet',
        not clash, why='; '.join(clash[:4]),
-       detail='%d screen(s) checked' % (1 + len(_glob.glob(os.path.join(ROOT, 'venueplay', 'app', '*', 'screen.html')))))
+       detail='%d page(s) checked' % len(_pages))
 
 
 
