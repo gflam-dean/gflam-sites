@@ -79,9 +79,33 @@
     var errors = [];
     var loadedAt = 0;
     stage.src = '/tv?venue=' + encodeURIComponent(VENUE);
+
+    /* LISTEN BEFORE load FIRES, NOT AFTER.
+
+       This attached the error listener once the frame had finished loading, which is after
+       every line of the screen's own startup has already run. A screen that throws while
+       setting itself up - the worst kind, because nothing downstream then works - was
+       reported as "threw no errors while we watched". So it now tries to attach from the
+       first moment there is a window to attach to, and unhandled promise rejections count
+       as errors too: most of this page's work is fetches. */
+    var attached = false;
+    function attach() {
+      if (attached) return;
+      try {
+        var w = stage.contentWindow;
+        if (!w) return;
+        w.addEventListener('error', function (e) { errors.push(String(e.message || e)); });
+        w.addEventListener('unhandledrejection', function (e) {
+          errors.push('unhandled rejection: ' + String((e.reason && e.reason.message) || e.reason));
+        });
+        attached = true;
+      } catch (e) {}
+    }
+    var attaching = setInterval(attach, 50);
     await new Promise(function (r) { stage.onload = r; setTimeout(r, 15000); });
+    clearInterval(attaching);
+    attach();
     loadedAt = Date.now();
-    try { stage.contentWindow.addEventListener('error', function (e) { errors.push(String(e.message || e)); }); } catch (e) {}
 
     var d = null;
     try { d = doc(); } catch (e) {}
@@ -146,13 +170,20 @@
       } catch (e) {}
     }, 500);
 
-    var status = d.getElementById('statusText');
-    pass(!!status && /connected/i.test(status.textContent), 'it says it is connected',
-         'the status line reads "' + (status ? status.textContent : 'nothing') + '" after six seconds');
+    /* SIX SECONDS IS NOT A VERDICT ON A CONNECTION.
 
-    var transport = d.documentElement.getAttribute('data-vp-transport');
-    pass(!!transport, 'it records which road it took', 'no data-vp-transport, so a deaf screen looks identical to a working one');
-    note('the road it took', transport || '(none)');
+       These two used to assert here, six seconds in, and they were red against a perfectly
+       healthy screen: measured on the live venue on 16 Sep 2026, Supabase reported
+       SUBSCRIBED at about twenty seconds. Judging a connection before the product has had
+       time to make one is how a check earns the right to be ignored, which is worse than
+       not having it.
+
+       So it only records what it saw at six seconds, and asserts at the end of the watch
+       below. The six second reading is still worth printing: a screen that is connected
+       immediately and a screen that takes twenty seconds are different screens, and the
+       slow one is the one that shows a room an empty wall after the host presses start. */
+    var status = d.getElementById('statusText');
+    note('what the status line said at six seconds', status ? status.textContent : 'nothing');
 
     /* ONE CODE ON THE WALL. A screen showing its pairing code AND a game join code is
        item 8 of the live-only list: two codes on the wall and the room types the wrong one. */
@@ -211,6 +242,24 @@
 
     pass(!apology, 'the screen is linked to a venue, and stayed that way while we watched',
          'the wall showed an error rather than a night: "' + (apology || '') + '"');
+
+    /* NOW judge the connection, with the whole window behind it rather than six seconds.
+
+       Both of these were red against Tugun Bowls Club on 16 Sep 2026 and both were RIGHT:
+       tvStatus had been declared inside an if that never ran, so the SUBSCRIBED handler
+       threw before it could set either one. Nothing else in this repo could see it. The
+       transport line is the half that matters most, because a screen with no road recorded
+       and a screen on a working road look identical from the room. */
+    var status2 = d.getElementById('statusText');
+    pass(!!status2 && /connected/i.test(status2.textContent), 'it says it is connected',
+         'after ' + Math.round(WATCH_MS / 1000) + ' seconds the status line still reads "' +
+         (status2 ? status2.textContent : 'nothing') + '"');
+
+    var transport = d.documentElement.getAttribute('data-vp-transport');
+    pass(!!transport, 'it records which road it took',
+         'no data-vp-transport after ' + Math.round(WATCH_MS / 1000) +
+         ' seconds, so a deaf screen looks identical to a working one');
+    note('the road it took', transport || '(none)');
 
     pass(errors.length === 0, 'the screen threw no errors while we watched', errors.slice(0, 2).join(' / '));
 
