@@ -2369,11 +2369,19 @@ def local_checks(which):
         if os.path.isfile(srcf):
             want = re.search(r"^const BUILD = '([^']*)';", io.open(srcf, encoding='utf-8').read(), re.M)
             got = re.search(r"^const BUILD = '([^']*)';", src, re.M)
-            ok('the build is this source, not an older one',
-               bool(want and got) and want.group(1) == got.group(1),
-               got.group(1) if got else 'no stamp in the build',
-               why='the source says %s and the build says %s. Run '
-                   'partyplay-backend/tools/build-worker.py.'
+            # The two stamps no longer have to be EQUAL, see WORKER_SOURCE above: the build
+            # carries its own fingerprint so it can be deployed by tool at all. What still has
+            # to be true is that the build is not OLDER than the source it was made from.
+            def _when(m):
+                import datetime as _dt
+                try: return _dt.datetime.strptime((m.group(1).split(' \u00b7 ')[0]).strip(), '%d %b %Y, %H:%M')
+                except Exception: return None
+            sw, bw = (_when(want) if want else None), (_when(got) if got else None)
+            ok('the build is at least as new as this source',
+               bool(sw and bw) and bw >= sw,
+               (got.group(1) if got else 'no stamp in the build'),
+               why='the source says %s and the build says %s, so the build is older. Run '
+                   'partyplay-backend/tools/build-worker.py then tools/stamp-workers.py.'
                    % (want.group(1) if want else '?', got.group(1) if got else '?'))
         # The file's own header lists the names of the secrets to set, with
         # "sk_live_..." as an example. Only a plausible VALUE counts.
@@ -2638,7 +2646,14 @@ def every_page_is_reachable(name, base, folder, skip=()):
 WORKER_SOURCE = {
     'VenuePlay game':    'venueplay-backend/worker/venueplay-game.js',
     'VenuePlay billing': 'venueplay-backend/worker/venueplay-api-FULL.js',
-    'PartyPlay':         'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+    # THE BUILT FILE, because that is the one that goes to Cloudflare. It used to be the
+    # SOURCE, which worked only while build-worker.py copied the source's BUILD line into the
+    # build verbatim. It cannot any more: deploy-worker.py refuses a file whose stamp does not
+    # match its OWN contents, and the build is source + inlined lib + header, so it never did.
+    # PartyPlay was therefore the one Worker that could only be deployed by paste, which is
+    # why its live build sat at 12 Sep. Now built, stamped, deployed and checked, all on the
+    # same file. Found 17 Sep 2026. See the sibling check on the two stamps agreeing.
+    'PartyPlay':         'partyplay-backend/worker/DEPLOY-partyplay-api.js',
 }
 
 
