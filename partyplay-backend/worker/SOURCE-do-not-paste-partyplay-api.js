@@ -13,7 +13,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '12 Sep 2026, 21:59 · 2924ba03';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Sep 2026, 09:19 · f940bd51';   // tools/stamp-workers.py, do not edit by hand
 // The licence window rules live in one place and are shared with the browser.
 // Paste lib/pp-licence.js above this line when deploying, or inline it. It is
 // referenced here as PPLicence.
@@ -615,6 +615,14 @@ async function sendFollowupEmail(env, l) {
 
   await sendEmail(env, {
     from: 'PartyPlay <hello@send.partyplay.com.au>',
+    /* REPLIES HAVE TO GO SOMEWHERE A PERSON LOOKS. Without this a reply goes back to
+       hello@send.partyplay.com.au, the Resend sending subdomain, which has no MX record
+       at all: the customer's reply is undeliverable and bounces to THEM. The licence
+       email tells every buyer "Just reply to this email, it comes straight to us", so
+       the one instruction we give a stuck customer was the one that could not work.
+       VenuePlay's sender has carried reply_to since it was written; this one never did.
+       Found 17 Sep 2026 by reading the DNS rather than the code. */
+    reply_to: 'hello@partyplay.com.au',
     to: [l.buyer_email],
     subject: 'How was ' + (l.party_name || 'the party') + '?',
     html: emailShell({
@@ -882,6 +890,14 @@ async function sendAlbumEmail(env, req, lic) {
 
   await sendEmail(env, {
     from: 'PartyPlay <hello@send.partyplay.com.au>',
+    /* REPLIES HAVE TO GO SOMEWHERE A PERSON LOOKS. Without this a reply goes back to
+       hello@send.partyplay.com.au, the Resend sending subdomain, which has no MX record
+       at all: the customer's reply is undeliverable and bounces to THEM. The licence
+       email tells every buyer "Just reply to this email, it comes straight to us", so
+       the one instruction we give a stuck customer was the one that could not work.
+       VenuePlay's sender has carried reply_to since it was written; this one never did.
+       Found 17 Sep 2026 by reading the DNS rather than the code. */
+    reply_to: 'hello@partyplay.com.au',
     to: [req.email],
     subject: 'Photos from ' + (lic.party_name || 'the party'),
     html: emailShell({
@@ -1498,6 +1514,14 @@ async function sendNudgeEmail(env, l, daysLeft) {
 
   await sendEmail(env, {
     from: 'PartyPlay <hello@send.partyplay.com.au>',
+    /* REPLIES HAVE TO GO SOMEWHERE A PERSON LOOKS. Without this a reply goes back to
+       hello@send.partyplay.com.au, the Resend sending subdomain, which has no MX record
+       at all: the customer's reply is undeliverable and bounces to THEM. The licence
+       email tells every buyer "Just reply to this email, it comes straight to us", so
+       the one instruction we give a stuck customer was the one that could not work.
+       VenuePlay's sender has carried reply_to since it was written; this one never did.
+       Found 17 Sep 2026 by reading the DNS rather than the code. */
+    reply_to: 'hello@partyplay.com.au',
     to: [l.buyer_email],
     subject: 'Your party code runs out in ' + daysLeft + ' days',
     html: emailShell({
@@ -2102,6 +2126,14 @@ async function sendLicenceEmail(env, l) {
 
   await sendEmail(env, {
     from: 'PartyPlay <hello@send.partyplay.com.au>',
+    /* REPLIES HAVE TO GO SOMEWHERE A PERSON LOOKS. Without this a reply goes back to
+       hello@send.partyplay.com.au, the Resend sending subdomain, which has no MX record
+       at all: the customer's reply is undeliverable and bounces to THEM. The licence
+       email tells every buyer "Just reply to this email, it comes straight to us", so
+       the one instruction we give a stuck customer was the one that could not work.
+       VenuePlay's sender has carried reply_to since it was written; this one never did.
+       Found 17 Sep 2026 by reading the DNS rather than the code. */
+    reply_to: 'hello@partyplay.com.au',
     to: [l.buyer_email],
     subject: l.is_comp ? 'A party on us: your code is ' + l.code : 'Your party code is ' + l.code,
     html: emailShell({

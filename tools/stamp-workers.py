@@ -28,6 +28,14 @@ WORKERS = [
     'venueplay-backend/worker/venueplay-game.js',
     'venueplay-backend/worker/venueplay-api-FULL.js',
     'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+    # THE BUILT ONE TOO, or PartyPlay cannot be deployed by tool at all.
+    # build-worker.py inlines the shared lib and adds a header, so the DEPLOY file's
+    # contents differ from the SOURCE it inherited its BUILD line from. deploy-worker.py
+    # refuses any file whose stamp does not match its own hash, so it refused this one
+    # every single time: "stamped f940bd51 but hashes to 7d02b952". The last PartyPlay
+    # deploy, 12 Sep 2026, was a paste for that reason. Build, then stamp, then deploy.
+    # Found 17 Sep 2026 trying to ship the reply_to fix.
+    'partyplay-backend/worker/DEPLOY-partyplay-api.js',
     # The Send SMS hook. It delivers every host's sign-in code, so "which build is running"
     # is a question worth being able to answer about it. Added 12 Sep 2026, after it turned
     # out to be the last unproved leg of the Sydney move.
