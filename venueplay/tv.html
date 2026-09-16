@@ -46,6 +46,14 @@
    that put a venue's name across the join panel on 5 Sep: two elements in one corner,
    one in cqw and one in px, only ever correct at a single screen width. */
   .tv-status{position:absolute;top:2cqw;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.45);border-radius:1cqw;padding:.4cqw 1cqw;display:flex;align-items:center;gap:.7cqw;z-index:6;font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:clamp(8px,1.1cqw,13px);color:var(--muted)}
+  /* display:flex BEATS THE hidden ATTRIBUTE. The badge is markup-hidden and this rule
+     made it visible from the first frame on every screen, reading "Connecting", until
+     tvStatus(true) ran. On ?demo=1 connectRealtime() is deliberately never called, so
+     tvStatus never ran at all and the sales page showed a permanent CONNECTING badge
+     over a game that was playing perfectly. Seen on see-a-night, 16 Sep 2026.
+     The comment above tvStatus records the same class of fault the other way round:
+     an element that could never be SEEN because of a conflicting style. */
+  .tv-status[hidden]{display:none}
   .sdot{width:.8cqw;height:.8cqw;min-width:8px;min-height:8px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
   .sdot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
 

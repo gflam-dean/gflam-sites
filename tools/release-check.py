@@ -1338,6 +1338,40 @@ def local_checks(which):
                     late.append('%s uses %s before %s' % (short(f), g, lib))
     ok('every shared script loads before it is used', not late, why='; '.join(late[:3]))
 
+    head('A hidden element is actually hidden')
+    """display:flex BEATS THE hidden ATTRIBUTE, and nothing here could see it.
+
+       The connection badge on all five venue screens is markup-hidden and styled
+       display:flex, so it was painted from the first frame reading "Connecting" until
+       tvStatus(true) ran. On ?demo=1 the screens never connect on purpose, so it never
+       ran, and see-a-night -- the page every cold email points at -- showed a permanent
+       CONNECTING badge over a game playing perfectly. Found 16 Sep 2026 by opening the
+       page, not by reading it.
+
+       An attribute and a stylesheet disagreeing is invisible to every other check in this
+       file, because each half is correct on its own."""
+    import glob as _glob
+    clash = []
+    for f in [os.path.join(ROOT, 'venueplay', 'tv.html')] + sorted(
+            _glob.glob(os.path.join(ROOT, 'venueplay', 'app', '*', 'screen.html'))):
+        try:
+            src = open(f, encoding='utf-8').read()
+        except Exception:
+            continue
+        for cls in set(re.findall(r'class="([a-z0-9 _-]*)"[^>]*\shidden(?=[\s>])', src)):
+            for one in cls.split():
+                rule = re.search(r'\.' + re.escape(one) + r'\s*\{([^}]*)\}', src)
+                if not rule or 'display:' not in rule.group(1).replace(' ', ''):
+                    continue
+                guard = re.search(r'\.' + re.escape(one) + r'\[hidden\]\s*\{[^}]*display\s*:\s*none',
+                                  src)
+                if not guard:
+                    clash.append('%s: .%s sets display, so hidden does nothing' % (short(f), one))
+    ok('a markup-hidden element is not made visible by its own stylesheet',
+       not clash, why='; '.join(clash[:4]),
+       detail='%d screen(s) checked' % (1 + len(_glob.glob(os.path.join(ROOT, 'venueplay', 'app', '*', 'screen.html')))))
+
+
 
 
 
