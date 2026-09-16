@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '16 Sep 2026, 11:38 · b3c172a1';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '16 Sep 2026, 12:36 · 99e400bd';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -5387,14 +5387,22 @@ async function vpaFireCancelConfirm(env, opts) {
            + 'the last day, and nothing will have been interrupted.</p>',
       cta: 'Undo this cancellation',
     });
+    /* "EMAILED" HAS TO MEAN EMAILED. vpaSendEmail returns whether Resend accepted the
+       message and both call sites used to throw that away, so the audit row said the venue
+       had been told even if every address was refused. Delivered and refused are recorded
+       separately now, because an audit trail that cannot be wrong is not a record of
+       anything. */
+    const delivered = [], refused = [];
     for (const addr of to) {
-      await vpaSendEmail(env, addr, 'Your VenuePlay cancellation is confirmed'
+      const ok = await vpaSendEmail(env, addr, 'Your VenuePlay cancellation is confirmed'
         + (ends ? ' - last day ' + ends : ''), html).catch(() => false);
+      (ok ? delivered : refused).push(addr);
     }
     await vpaInsert(env, 'vp_admin_audit', {
-      action: 'venue_cancel_confirm_emailed',
+      action: refused.length && !delivered.length
+        ? 'venue_cancel_confirm_NOT_emailed' : 'venue_cancel_confirm_emailed',
       target: 'venue:' + opts.venueId,
-      detail: { to: to, ends: ends, name: opts.name || null },
+      detail: { delivered: delivered, refused: refused, ends: ends, name: opts.name || null },
     }, false).catch(() => {});
   } catch (_) { /* never let an email stop a cancellation */ }
 }
@@ -5523,9 +5531,12 @@ async function vpaLastDaySweep(env) {
       const hr = vpaLocalHour(tz);
       if (hr < 8) { why.push(v.name + ': local time is ' + hr + ':00, waiting for 8am'); continue; }
 
+      /* Either action counts as "already tried". A venue Resend refused is not re-sent
+         every hour for the rest of the day; it is left in the log under its own action so
+         somebody can see it and act. */
       const already = await vpaSelect(env, 'vp_admin_audit',
-        'action=eq.venue_last_day_emailed&target=eq.' + encodeURIComponent('venue:' + v.id)
-        + '&select=id&limit=1').catch(() => []);
+        'action=in.(venue_last_day_emailed,venue_last_day_NOT_emailed)&target=eq.'
+        + encodeURIComponent('venue:' + v.id) + '&select=id&limit=1').catch(() => []);
       if (already && already.length) { why.push(v.name + ': already told'); continue; }
       const to = await vpaAccountContacts(env, acct, v.id);
       if (!to.length) { why.push(v.name + ': no email address on the account'); continue; }
@@ -5551,16 +5562,25 @@ async function vpaLastDaySweep(env) {
              + 'know what did not work, if you have a minute to reply.</p>',
         cta: 'Keep the venue running',
       });
+      const delivered = [], refused = [];
       for (const addr of to) {
-        await vpaSendEmail(env, addr, day + ' is your last day on VenuePlay', html)
+        const ok = await vpaSendEmail(env, addr, day + ' is your last day on VenuePlay', html)
           .catch(() => false);
+        (ok ? delivered : refused).push(addr);
       }
+      /* The audit row is also the lock that stops this being sent twice, so it is written
+         either way. But if NOT ONE address was accepted, it is written under a different
+         action: a venue that was never told must not be filed alongside the ones that were,
+         and it must be findable. */
       await vpaInsert(env, 'vp_admin_audit', {
-        action: 'venue_last_day_emailed',
+        action: (refused.length && !delivered.length)
+          ? 'venue_last_day_NOT_emailed' : 'venue_last_day_emailed',
         target: 'venue:' + v.id,
-        detail: { to: to, ends: dated, day: day, name: v.name || null, end_ts: endTs },
+        detail: { delivered: delivered, refused: refused, ends: dated, day: day,
+                  name: v.name || null, end_ts: endTs },
       }, false).catch(() => {});
-      sent++;
+      if (refused.length) why.push(v.name + ': Resend refused ' + refused.length + ' address(es)');
+      if (delivered.length) sent++;
     }
   }
   return { checked: venues.length, sent: sent, why: why };

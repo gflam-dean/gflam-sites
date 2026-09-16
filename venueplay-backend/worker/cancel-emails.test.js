@@ -56,9 +56,17 @@ async function vpaSelect(env,table,q){
   SELECTS.push(table+"?"+q);
   var rows=TABLES[table]||[];
   return rows.filter(function(r){
-    if(/action=eq\.venue_last_day_emailed/.test(q)){
+    /* THE FAKE HONOURS THE ACTUAL FILTER, action by action. The first version matched any
+       row whose action merely started venue_last_day_, so narrowing the Worker's lock back
+       to eq.venue_last_day_emailed changed nothing and the check stayed green while a
+       refused venue would have been retried every hour for the rest of the day. */
+    var am=/action=eq\.([^&]+)/.exec(q), ain=/action=in\.\(([^)]*)\)/.exec(q);
+    if(am||ain){
+      var want = ain ? ain[1].split(",").map(function(x){return decodeURIComponent(x.trim());})
+                     : [decodeURIComponent(am[1])];
       var t=/target=eq\.([^&]+)/.exec(q);
-      return r.action==="venue_last_day_emailed" && r.target===decodeURIComponent(t[1]);
+      if(want.indexOf(r.action)===-1) return false;
+      return !t || r.target===decodeURIComponent(t[1]);
     }
     /* venue_id is tested BEFORE id. "venue_id=eq.v1" contains the substring "id=eq.v1",
        so an unanchored id test matched the staff query, compared against a column the
@@ -140,6 +148,9 @@ pass("and it does NOT carry the price warning, which belongs on the 48-hour emai
    stopping invites someone to switch off the one email they cannot afford to miss. */
 pass("it carries NO unsubscribe link", c.html.indexOf("unsubscribe")===-1 && c.html.indexOf("Unsubscribe")===-1);
 pass("it is recorded in the audit", AUDIT.length===1 && AUDIT[0].action==="venue_cancel_confirm_emailed");
+pass("and the audit names who it actually reached",
+     (AUDIT[0].detail.delivered||[]).length===3 && (AUDIT[0].detail.refused||[]).length===0,
+     JSON.stringify(AUDIT[0].detail.delivered));
 
 /* --- the real date maths, before anything is stubbed ---------------------- */
 pass("two whole days apart is two, across a month end",
@@ -293,6 +304,26 @@ TODAY_PERTH="2026-09-15";
 var r4=await sweepWith("2026-09-18",8,true);
 pass("a venue already warned is never warned twice", r4.sent===0 && SENT.length===0,
      "this is what stops the hourly cron sending it every hour of that morning");
+
+/* WHEN RESEND REFUSES. The audit row used to say "emailed" regardless, because the return
+   value of vpaSendEmail was thrown away at both call sites. A record that cannot be wrong
+   is not a record. */
+var REALSEND = vpaSendEmail;
+vpaSendEmail = async function(env,to,subject,html){ SENT.push({to:to,subject:subject,html:html}); return false; };
+var refused = await sweepWith("2026-09-18",8,false);
+pass("a venue Resend refused is NOT counted as sent", refused.sent===0, "sent="+refused.sent);
+pass("it is filed under its own action so it can be found",
+     AUDIT.length===1 && AUDIT[0].action==="venue_last_day_NOT_emailed", AUDIT.length?AUDIT[0].action:"nothing");
+pass("the refused addresses are named", (AUDIT[0].detail.refused||[]).length===2,
+     JSON.stringify(AUDIT[0].detail.refused));
+pass("and the sweep says so in its reasons",
+     (refused.why||[]).join().indexOf("Resend refused")!==-1, JSON.stringify(refused.why));
+/* and it must not then retry that venue every hour for the rest of the day */
+TABLES.vp_admin_audit=[{action:"venue_last_day_NOT_emailed",target:"venue:v1"}];
+SENT=[]; AUDIT=[];
+var again = await vpaLastDaySweep(env);
+pass("a refused venue is not retried every hour", again.sent===0 && SENT.length===0);
+vpaSendEmail = REALSEND;
 
 /* --- the last night is kept, and only for a real cancellation ------------- */
 SENT=[]; AUDIT=[];
