@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '16 Sep 2026, 10:25 · 6770d696';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '16 Sep 2026, 10:52 · 18536645';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -5309,10 +5309,43 @@ function vpaLeavingHtml(env, opts) {
     + 'raffle and members draw history all stay on the account for <b>three months</b>, so if '
     + 'you come back in that time everything is where you left it. After that the player list '
     + 'is deleted, as our privacy page says.</p>'
+    /* THE RATE IS HELD BY STAYING, NOT BY HAVING BEEN. Dean asked for a warning about the
+       price, 16 Sep 2026, and it is the truest reason to think twice: the founding rate is
+       locked for as long as a venue is with us and the standard rate is the one that moves.
+       Said plainly and once. It is a fact they need before Friday, not a threat, and a
+       leaving email that nags is one nobody finishes reading. */
+    + (opts.priceHold
+        ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff8e6;border:1px solid #e8d9a8;border-radius:12px;margin:0 0 22px"><tr><td style="padding:16px 18px">'
+          + '<p style="margin:0;font-size:14px;font-weight:700;color:#12101a">'
+          + (opts.founding ? 'Worth knowing before then: the rate does not come back.'
+                           : 'Worth knowing before then: the price will not wait for you.') + '</p>'
+          + '<p style="margin:6px 0 0;font-size:13.5px;color:#3a3a44">'
+          /* ONLY THE FOUNDING RATE IS HELD. Dean, 16 Sep: "Wellshot didnt get founding
+             though", and he was right: Stripe has them on STRIPE_PRICE_STANDARD_MONTHLY at
+             $3. Telling a standard venue its rate is locked for as long as it stays is a
+             promise nobody made, and it would have gone to the only customer this product
+             has ever had. Which of the two they get is decided by the price id on their own
+             subscription, not by guesswork. */
+          + (opts.founding
+              ? 'You are on <b>' + vpaEsc(opts.priceHold) + ' a player a month</b>, and that '
+                + 'is held for as long as you stay with us. It is not held once you have gone. '
+                + 'Coming back later means coming back at whatever the price is then, and that '
+                + 'is the one that goes up.'
+              : 'You are on <b>' + vpaEsc(opts.priceHold) + ' a player a month</b>. That is the '
+                + 'rate that moves over time, and nothing about today\'s price is kept for you '
+                + 'once the account closes. If you came back later it would be at whatever it '
+                + 'is then.')
+          + '</p></td></tr></table>'
+        : '')
     + (opts.extra || '')
     + '<a href="' + billing + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">' + vpaEsc(opts.cta || 'Open your billing page') + '</a>'
     + '<p style="font-size:13px;color:#6a6a75;margin:22px 0 0">If this was not meant to happen, or you want to talk it through, just reply to this email. It reaches a person.</p>'
-    + '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay.com.au &middot; Gflam Group, ABN ' + VP_ABN + '</p>'
+    /* No Gflam Group and no ABN here. Dean's call, and it is a correct one: neither is a
+       requirement on a service notice, and a holding company's name at the bottom of
+       "your last night is Friday" reads like a letter from a solicitor. The ABN stays
+       where it is actually required, on the receipt, which also carries "Prices include
+       GST" and is a tax invoice. */
+    + '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay.com.au</p>'
     + '</div>';
 }
 
@@ -5428,12 +5461,22 @@ async function vpaLastDaySweep(env) {
       acct = rows && rows[0];
     } catch (_) { continue; }
     if (!acct || !acct.stripe_subscription_id) continue;
-    let endTs = 0;
+    let endTs = 0, rate = '', founding = false;
     try {
       const sub = await vpbStripeGet(env, 'subscriptions/'
         + encodeURIComponent(acct.stripe_subscription_id));
       const item = (sub && sub.items && sub.items.data && sub.items.data[0]) || {};
       endTs = parseInt(sub.cancel_at || sub.current_period_end || item.current_period_end || 0, 10);
+      /* THEIR rate, not a number typed into the copy. A founding venue is on $2.50 and a
+         standard one on $3, and telling a venue it is about to lose a price it never had
+         is worse than saying nothing. If Stripe does not give it, the paragraph says the
+         same thing without a figure. */
+      const cents = item && item.price && parseInt(item.price.unit_amount, 10);
+      rate = (cents > 0) ? '$' + (cents / 100).toFixed(2) : '';
+      /* Founding or standard, decided by the price the subscription actually carries and
+         the Worker's own STRIPE_PRICE_* variables. No second list to drift. */
+      const pid = (item && item.price && item.price.id) || '';
+      founding = !!pid && (pid === env.STRIPE_PRICE_MONTHLY || pid === env.STRIPE_PRICE_ANNUAL);
     } catch (_) { continue; }
     if (!endTs) continue;
 
@@ -5466,8 +5509,10 @@ async function vpaLastDaySweep(env) {
         heading: day + ' is your last day on VenuePlay.',
         lead: vpaEsc(v.name || 'Your venue') + ' is set to cancel after <b>' + vpaEsc(day)
             + ', ' + vpaEsc(dated) + '</b>. You keep that night in full, right through to close, '
-            + 'and the screens go quiet after it. We would rather tell you now, while there '
-            + 'are still two days in it, than the morning after.',
+            + 'and the screens go quiet after it. Two days seemed fairer than finding out '
+            + 'when the telly did not come on.',
+        priceHold: rate,
+        founding: founding,
         rows: [['Venue', v.name || 'your venue'],
                ['Last day', day + ', ' + dated],
                ['Until then', 'Nothing changes. Every game runs as normal.'],

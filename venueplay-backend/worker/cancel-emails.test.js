@@ -71,7 +71,8 @@ async function vpaSelect(env,table,q){
     return true;
   });
 }
-var env={ RESEND_API_KEY:"re_x", STRIPE_SECRET_KEY:"sk_x", SITE_URL:"https://venueplay.com.au" };
+var env={ RESEND_API_KEY:"re_x", STRIPE_SECRET_KEY:"sk_x", SITE_URL:"https://venueplay.com.au",
+          STRIPE_PRICE_MONTHLY:"price_founding_m", STRIPE_PRICE_ANNUAL:"price_founding_a" };
 
 /* Clock stubs, assigned over the real bindings at top level so the lifted functions see
    them. END_TS is a sentinel: the only timestamp the stub calls "the last day". */
@@ -129,6 +130,12 @@ pass("it says the service runs until the last day", c.html.indexOf("stays fully 
 pass("it says there is no further charge", c.html.indexOf("no further charge")!==-1);
 pass("it promises three months, matching the privacy page", c.html.indexOf("three months")!==-1);
 pass("it tells them how to undo it", c.html.indexOf("Undo this cancellation")!==-1);
+pass("the confirmation has no Gflam Group or ABN either",
+     c.html.indexOf("Gflam Group")===-1 && c.html.indexOf("ABN")===-1);
+/* The confirmation is sent the second they click, when they have not decided anything
+   they can regret yet. The price warning belongs on the one that lands two days out. */
+pass("and it does NOT carry the price warning, which belongs on the 48-hour email",
+     c.html.indexOf("the rate does not come back")===-1);
 /* A SERVICE MESSAGE MUST NOT CARRY ONE. An unsubscribe on a notice that your service is
    stopping invites someone to switch off the one email they cannot afford to miss. */
 pass("it carries NO unsubscribe link", c.html.indexOf("unsubscribe")===-1 && c.html.indexOf("Unsubscribe")===-1);
@@ -164,7 +171,7 @@ async function sweepWith(lastDay, hour, alreadySent){
     vp_venue_staff:[{venue_id:"v1",auth_user_id:"u1"}],
     vp_admin_audit: alreadySent ? [{action:"venue_last_day_emailed",target:"venue:v1"}] : [],
   };
-  STRIPE={ sub_1:{ cancel_at: END_TS, items:{data:[{}]} } };
+  STRIPE={ sub_1:{ cancel_at: END_TS, items:{data:[{price:{id:"price_standard_m",unit_amount:300}}]} } };
   return vpaLastDaySweep(env);
 }
 
@@ -176,10 +183,45 @@ pass("the subject NAMES THE DAY, which is what a publican plans around",
 pass("the body names the day too", d.html.indexOf("Friday is your last day")!==-1);
 pass("it says they keep that night in full, right through to close",
      d.html.indexOf("keep that night in full")!==-1);
-pass("it says there are still two days in it", d.html.indexOf("two days in it")!==-1);
+pass("the reason for telling them early is in plain words",
+     d.html.indexOf("Two days seemed fairer than finding out when the telly did not come on")!==-1);
+/* Dean, 16 Sep: "can we put a warning about not getting the same price point?" It is the
+   truest reason to think twice, so it must actually be in the email and it must carry
+   THEIR rate, read off their own Stripe subscription. */
+/* The default fixture is a STANDARD venue at $3, because that is what Wellshot is:
+   Stripe has them on STRIPE_PRICE_STANDARD_MONTHLY. Dean caught this. */
+pass("a standard venue is quoted ITS OWN rate", d.html.indexOf("$3.00 a player a month")!==-1,
+     "a venue on $3 must never be told it is losing $2.50");
+pass("a standard venue is NOT promised its rate is held",
+     d.html.indexOf("held for as long as you stay")===-1,
+     "only the founding rate is locked; saying otherwise invents a promise");
+pass("a standard venue is warned the price will not wait",
+     d.html.indexOf("the price will not wait for you")!==-1);
+/* Dean: "remove gflam group from the bottom of it." */
+pass("the holding company and the ABN are NOT on a leaving email",
+     d.html.indexOf("Gflam Group")===-1 && d.html.indexOf("ABN")===-1);
 pass("it promises three months", d.html.indexOf("three months")!==-1);
 pass("it offers the one click that keeps them", d.html.indexOf("Keep the venue running")!==-1);
 pass("the warning carries NO unsubscribe", d.html.toLowerCase().indexOf("unsubscribe")===-1);
+
+/* And now the founding case, which is the only one allowed to promise the rate is held. */
+SENT=[]; AUDIT=[];
+TABLES={
+  vp_venues:[{id:"v1",name:"The Pub",founding_id:"f1",timezone:"Australia/Brisbane"}],
+  venueplay_founding:[{id:"f1",contact_email:"accounts@thepub.com.au",stripe_subscription_id:"sub_1"}],
+  vp_venue_staff:[{venue_id:"v1",auth_user_id:"u1"}], vp_admin_audit: [],
+};
+LASTDAY="2026-09-18"; FAKE_HOUR=8;
+STRIPE={ sub_1:{ cancel_at: END_TS, items:{data:[{price:{id:"price_founding_m",unit_amount:250}}]} } };
+var rF=await vpaLastDaySweep(env);
+var f=SENT[0]||{html:""};
+pass("a founding venue IS told its rate is held while it stays",
+     rF.sent===1 && f.html.indexOf("held for as long as you stay with us")!==-1);
+pass("and it is quoted $2.50, not the standard $3", f.html.indexOf("$2.50 a player a month")!==-1);
+pass("a founding venue gets the stronger heading",
+     f.html.indexOf("the rate does not come back")!==-1);
+pass("and never the standard wording",
+     f.html.indexOf("the price will not wait for you")===-1);
 
 pass("three days out, nothing yet", (await sweepWith("2026-09-19",8,false)).sent===0);
 pass("one day out, the moment has passed and it is not sent late",
@@ -214,7 +256,7 @@ function twoVenues(){
     vp_venue_staff:[{venue_id:"v1",auth_user_id:"u1"},{venue_id:"v2",auth_user_id:"u1"}],
     vp_admin_audit: [],
   };
-  STRIPE={ sub_1:{ cancel_at: END_TS, items:{data:[{}]} } };
+  STRIPE={ sub_1:{ cancel_at: END_TS, items:{data:[{price:{id:"price_standard_m",unit_amount:300}}]} } };
 }
 /* Same hour in both, different DATE: Brisbane has two days to go, Perth three. */
 LASTDAY="2026-09-18"; FAKE_HOUR=8; PERTH_HOUR=8; TODAY="2026-09-16"; TODAY_PERTH="2026-09-15";
