@@ -3410,8 +3410,15 @@ def summary(which, ran_live):
     print('\n%sWHAT THIS DOES NOT CHECK%s' % (YEL, OFF))
     print("""  Four of the five faults found in live testing on 27 Aug only appear when a
   game is actually running, and nothing here would have caught any of them.
-  This tool cannot open a browser. After a release that touches a game, a
-  screen or a phone, somebody has to:
+  This tool cannot open a browser. HALF of that gap is now closed by
+  tools/verify-live.py, which drives a real headless Chrome through
+  venueplay/screen-check.html and asserts what the venue screens actually
+  PAINT. Run it after the deploy lands. It is the only thing in this repo that
+  caught the three faults of 16 Sep, all of which read correctly in the file
+  and left all 292 checks here green.
+
+  The other half is still a person in a room. After a release that touches a
+  game, a screen or a phone, somebody has to:
 
     1. Open /tv on a real screen and watch the ads rotate.
     2. Start each game from the host console and confirm the big screen follows.
@@ -3468,6 +3475,67 @@ def summary(which, ran_live):
   Nothing is deployed until step 5 says so. "I pasted it" is not evidence;
   /health answering with the right build is.""")
     return 1 if failed else 0
+
+
+def someone_actually_looked_at_a_screen():
+    """HAS ANYBODY OPENED THE SCREEN SINCE THIS COMMIT TOUCHED IT?
+
+    Every other check in this file reads a file or asks a server a question. Not one of
+    them can see what a television in a pub is PAINTING, and on 16 September 2026 three
+    separate faults shipped through a completely green run of this tool, one of which
+    left a live venue's screen with no working connection status for a day.
+
+    tools/verify-live.py closes that gap: it drives a real headless Chrome through
+    venueplay/screen-check.html and writes .verify-live.json when every screen passes.
+    This check is the part that makes it happen rather than hoping somebody remembers.
+
+    It only fires AFTER a deploy, never before a push. Before the push the screens are
+    still running the OLD build, so looking at them proves nothing about the change in
+    hand, and a check that is red at a moment nobody can fix it is a check people learn
+    to click past.
+    """
+    watched = ('venueplay/tv.html', 'venueplay/app/trivia/screen.html',
+               'venueplay/app/musical/screen.html', 'venueplay/app/raffle/screen.html',
+               'venueplay/app/members/screen.html', 'venueplay/app/vp-',
+               'venueplay/screen-check.html',
+               'partyplay/tv.html', 'partyplay/play.html', 'partyplay/host.html',
+               'partyplay/practice.html', 'partyplay/index.html',
+               'partyplay/screen-check.html')
+    try:
+        here = subprocess.run(['git', '-C', ROOT, 'rev-parse', 'HEAD'],
+                              capture_output=True, text=True).stdout.strip()
+    except Exception:
+        return
+    if not here:
+        return
+    stamp = {}
+    try:
+        with io.open(os.path.join(ROOT, '.verify-live.json'), encoding='utf-8') as f:
+            stamp = json.load(f)
+    except Exception:
+        pass
+    if stamp.get('commit') == here:
+        head('Somebody has actually looked at the screens')
+        ok('a real browser has checked the venue screens on this build', True,
+           detail='%s, %s' % (stamp.get('when', ''), ', '.join(stamp.get('venues', []))))
+        return
+
+    since = stamp.get('commit') or 'HEAD~1'
+    try:
+        diff = subprocess.run(['git', '-C', ROOT, 'diff', '--name-only', since, here],
+                              capture_output=True, text=True).stdout.splitlines()
+    except Exception:
+        diff = []
+    touched = sorted({f.strip() for f in diff
+                      if any(f.strip().startswith(w) for w in watched)})
+    if not touched:
+        return                       # nothing that paints on a wall has moved
+
+    head('Somebody has actually looked at the screens')
+    ok('a real browser has checked the venue screens on this build', False,
+       why=('%s changed and no browser has seen the result. Run:  '
+            'python3 tools/verify-live.py --stamp'
+            % ', '.join(os.path.basename(t) for t in touched[:4])))
 
 
 def main():
@@ -3567,6 +3635,7 @@ def main():
             no_session_left_open()
             every_active_venue_knows_its_state()
             stripe_fields_still_exist()
+            someone_actually_looked_at_a_screen()
         if which in ('both', 'partyplay'):
             pages_live('PartyPlay', PP, PP_PAGES)
             every_page_is_reachable('PartyPlay', PP, 'partyplay')

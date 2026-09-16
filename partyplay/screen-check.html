@@ -1,0 +1,320 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>PartyPlay screen check</title>
+<style>
+  :root{ color-scheme:dark; }
+  body{ margin:0; background:#12101A; color:#FFF1E6; font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  header{ padding:18px 20px 10px; }
+  h1{ margin:0 0 4px; font-size:19px; }
+  .sub{ color:#B6ADC2; font-size:13px; max-width:72ch; }
+  #out{ padding:6px 20px 30px; }
+  .row{ padding:7px 0; border-bottom:1px solid #241f31; display:flex; gap:12px; align-items:flex-start; }
+  .tag{ flex:0 0 62px; font-weight:700; font-size:12px; letter-spacing:.06em; padding-top:2px; }
+  .ok .tag{ color:#17C4B4; } .bad .tag{ color:#FF5470; } .info .tag{ color:#B6ADC2; }
+  .why{ color:#9b90ab; font-size:13px; }
+  #verdict{ margin:18px 20px; padding:14px 16px; border-radius:10px; font-weight:600; }
+  #verdict.pass{ background:#0e3a33; color:#5eead4; } #verdict.fail{ background:#3d1520; color:#fda4af; }
+  #stage{ width:960px; height:540px; border:0; transform:scale(.36); transform-origin:top left; }
+  .frame{ width:346px; height:195px; overflow:hidden; border:1px solid #2a2438; border-radius:8px; margin:0 20px; }
+  button{ font:inherit; background:#221c30; color:#FFF1E6; border:1px solid #352c47; border-radius:8px; padding:8px 14px; cursor:pointer; }
+</style>
+
+<header>
+  <h1>Screen check</h1>
+  <div class="sub">
+    Opens PartyPlay's own pages in a frame and asserts what is actually PAINTED, the same way
+    VenuePlay's does. Everything else in this repo reads source text or runs a function lifted
+    out of a file. Nothing else renders a page, and every fault found in the 15 September
+    play-through was a painted one.
+    <br><br>
+    It needs no licence and touches no party. The ten games cannot be reached without a paid
+    party, so what it CAN drive is the practice run, which is the same bingo engine, plus the
+    pages a guest and a host meet before anybody has paid.
+  </div>
+</header>
+<div class="frame"><iframe id="stage" title="the PartyPlay page under test"></iframe></div>
+<div id="verdict">running…</div>
+<div id="out"></div>
+<p style="padding:0 20px 40px"><button onclick="location.reload()">Run it again</button></p>
+
+<script>
+(function () {
+  "use strict";
+  var out = document.getElementById('out'), stage = document.getElementById('stage');
+  var bad = 0, ran = 0;
+
+  function line(kind, text, why) {
+    var d = document.createElement('div');
+    d.className = 'row ' + kind;
+    d.innerHTML = '<div class="tag">' + (kind === 'ok' ? 'ok' : kind === 'bad' ? 'FAIL' : '--') +
+      '</div><div><div>' + text + '</div>' + (why ? '<div class="why">' + why + '</div>' : '') + '</div>';
+    out.appendChild(d);
+  }
+  function pass(cond, text, why) { ran++; if (!cond) bad++; line(cond ? 'ok' : 'bad', text, cond ? '' : why); }
+  function note(text, why) { line('info', text, why); }
+  var wait = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
+
+  function doc() { return stage.contentDocument; }
+
+  /* Only what a person could actually see. A node that is in the DOM and invisible is not
+     on the screen, and PartyPlay hides half of every page behind a class at any moment. */
+  function visibleText(d) {
+    return Array.prototype.slice.call(d.querySelectorAll('*')).filter(function (e) {
+      if (e.children.length) return false;
+      var s = d.defaultView.getComputedStyle(e);
+      if (s.display === 'none' || s.visibility === 'hidden' || +s.opacity === 0) return false;
+      return e.offsetParent !== null && (e.innerText || '').trim().length > 1;
+    }).map(function (e) { return e.innerText.trim(); });
+  }
+
+  var errors = [];
+  function load(path) {
+    /* LISTEN BEFORE load FIRES. VenuePlay's version of this attached its error listener after
+       the frame had finished loading, so every throw during a page's own start-up was invisible
+       and it cheerfully reported that nothing had gone wrong. Same mistake not repeated here. */
+    var attached = false;
+    function attach() {
+      if (attached) return;
+      try {
+        var w = stage.contentWindow;
+        if (!w) return;
+        w.addEventListener('error', function (e) { errors.push(path + ': ' + String(e.message || e)); });
+        w.addEventListener('unhandledrejection', function (e) {
+          errors.push(path + ': unhandled rejection: ' + String((e.reason && e.reason.message) || e.reason));
+        });
+        attached = true;
+      } catch (e) {}
+    }
+    stage.src = path;
+    var t = setInterval(attach, 50);
+    return new Promise(function (r) { stage.onload = r; setTimeout(r, 15000); })
+      .then(function () { clearInterval(t); attach(); return wait(1200); });
+  }
+
+  async function run() {
+    /* ---------------------------------------------------------------- the practice run.
+
+       THE ONLY REAL GAME THIS CAN PLAY. Everything else on PartyPlay needs a paid party, and
+       a check must never be the thing that buys one. /practice is the same 90 ball engine
+       with three made-up guests, and it is also the page a host rehearses on, so a fault here
+       is a fault in the last thing they see before doing it in front of people.
+
+       Every assertion below was run by hand against the live page on 16 Sep 2026 before it
+       was written down, so these are observations, not guesses about how it probably works. */
+    note('the practice run', 'the same bingo engine, with no licence and no party involved');
+    await load('/practice');
+    var d = null;
+    try { d = doc(); } catch (e) {}
+    pass(!!d, 'the practice run loads at all', 'the frame has no document: the page did not load');
+    if (!d) return finish();
+
+    var callBtn = d.getElementById('call'), resetBtn = d.getElementById('reset');
+    pass(!!callBtn && !!resetBtn, 'it has the two buttons a host presses',
+         'Call a number or Start again is missing, so a host cannot rehearse anything');
+    if (!callBtn) return finish();
+
+    function called() {
+      var c = d.getElementById('called');
+      return c ? Array.prototype.map.call(c.children, function (x) { return x.textContent.trim(); })
+                      .filter(Boolean) : [];
+    }
+    function ball() { var b = d.getElementById('ball'); return b ? b.textContent.trim() : ''; }
+    function said() { var s = d.getElementById('said'); return s ? s.textContent.trim() : ''; }
+    function marked() {
+      return Array.prototype.map.call(d.querySelectorAll('.tik > div.on'),
+                                      function (x) { return x.textContent.trim(); });
+    }
+    function offALine() {
+      var m = ((d.getElementById('who') || {}).innerText || '').match(/(\d+) off a line/);
+      return m ? +m[1] : null;
+    }
+
+    resetBtn.click();
+    await wait(600);
+    pass(ball() === '--' && called().length === 0, 'it starts with nothing called',
+         'the board opened showing "' + ball() + '" and ' + called().length + ' called');
+
+    var startOff = offALine();
+
+    /* THIRTY CALLS, not three. A duplicate ball is the fault that ends a night in an argument,
+       and with three presses out of ninety you would almost never see one. Thirty gives it a
+       real chance to repeat itself and still finishes well inside the time a check may take. */
+    var offWentUp = 0, lastOff = startOff, silent = 0;
+    for (var i = 0; i < 30; i++) {
+      callBtn.click();
+      await wait(90);
+      if (!said() || said() === 'Press Call a number to start') silent++;
+      var now = offALine();
+      if (now != null && lastOff != null && now > lastOff) offWentUp++;
+      lastOff = now;
+    }
+    var list = called();
+    var uniq = {}, dupes = [];
+    list.forEach(function (n) { if (uniq[n]) { dupes.push(n); } uniq[n] = 1; });
+
+    pass(list.length === 30, 'thirty presses call thirty numbers',
+         'pressed 30 times and ' + list.length + ' numbers came out, so a press did nothing');
+    pass(dupes.length === 0, 'the same number never comes out twice',
+         'these came out more than once: ' + dupes.slice(0, 5).join(', ') +
+         '. In a room that is an argument about a false line.');
+    pass(silent === 0, 'every ball gets a call read out',
+         silent + ' of 30 balls left the caption on its placeholder, so the telly said nothing');
+
+    /* THE TICKET HAS TO AGREE WITH THE BOARD. Not decoration: the whole game is a guest
+       believing the marks on their phone. A ticket that marks a number nobody called, or
+       misses one that was, is a wrong claim either way round. */
+    var cells = Array.prototype.slice.call(d.querySelectorAll('.tik > div'));
+    var nums = cells.filter(function (c) { return c.textContent.trim(); });
+    pass(nums.length === 15, 'the ticket is a real 90 ball ticket',
+         'it has ' + nums.length + ' numbers on it and a 90 ball ticket has 15');
+    var wrong = nums.filter(function (c) {
+      var on = c.className.indexOf('on') > -1;
+      return on !== (list.indexOf(c.textContent.trim()) > -1);
+    });
+    pass(wrong.length === 0, 'every mark on the ticket matches a number that was called',
+         wrong.length + ' cell(s) disagree with the board, first is "' +
+         (wrong[0] ? wrong[0].textContent.trim() : '') + '"');
+
+    pass(offWentUp === 0, 'nobody ever gets further from a line',
+         'the "off a line" count went UP ' + offWentUp + ' time(s), which cannot happen');
+    var endOff = offALine();
+    pass(endOff == null || startOff == null || endOff <= startOff,
+         'thirty numbers move somebody closer to a line',
+         'after 30 calls the guests are no closer than they started (' + startOff +
+         ' then ' + endOff + '), so the phones are not following the board');
+
+    resetBtn.click();
+    await wait(800);
+    pass(called().length === 0 && ball() === '--' && marked().length === 0,
+         'Start again really does start again',
+         'after Start again the board still holds ' + called().length + ' number(s), the ball reads "' +
+         ball() + '" and ' + marked().length + ' cell(s) are still marked. A host who rehearses ' +
+         'twice would carry the first run into the second.');
+
+    /* ---------------------------------------------------------------- the telly. */
+    note('the telly', 'what goes on the big screen before anybody has joined');
+    await load('/tv');
+    try { d = doc(); } catch (e) { d = null; }
+    pass(!!d, 'the telly loads at all', 'the frame has no document');
+    if (d) {
+      var tvTxt = visibleText(d).join(' | ');
+      pass(tvTxt.length > 2, 'something is on the telly',
+           'it rendered nothing a person could read, which is a black screen in a living room');
+
+      /* ONE CODE ON THE WALL. VenuePlay shipped a screen showing its pairing code beside the
+         game join code and the room typed the wrong one. Same shape, same check. */
+      var codes = visibleText(d).filter(function (t) { return /^[A-Z0-9]{6}$/.test(t.trim()); });
+      pass(codes.length <= 1, 'at most one six character code is on the telly',
+           'it is showing ' + codes.length + ' codes: ' + codes.join(', ') +
+           ', so the room has to guess which one to type');
+
+      pass(/partyplay\.com\.au/i.test(tvTxt), 'the telly says where to go',
+           'the address a guest has to type is not painted anywhere, only the code');
+    }
+
+    /* ---------------------------------------------------------------- the guest's phone. */
+    note("the guest's phone", 'the page every single guest opens, and the only one they see');
+    await load('/play');
+    try { d = doc(); } catch (e) { d = null; }
+    pass(!!d, 'the join page loads at all', 'the frame has no document');
+    if (d) {
+      var inputs = Array.prototype.slice.call(d.querySelectorAll('input')).filter(function (e) {
+        return e.offsetParent !== null;
+      });
+      pass(inputs.length >= 1, 'a guest has somewhere to type the code',
+           'no visible input on the join page, so nobody can get in');
+      var btns = Array.prototype.slice.call(d.querySelectorAll('button')).filter(function (e) {
+        return e.offsetParent !== null && (e.innerText || '').trim();
+      });
+      pass(btns.length >= 1, 'and a button to press',
+           'no visible button on the join page');
+    }
+
+    /* ------------------------------------------- the guest who has been to a party before.
+
+       THE FAULT THIS IS HERE FOR WAS FOUND BY OPENING THE PAGE ON A BROWSER THAT HAD
+       PLAYED. play.html restored ANY saved player for ever. The telly tells the room to go
+       to partyplay.com.au/play and type the code, so a guest who came to an earlier party
+       followed that instruction, was put straight back into the old one, and read "You are
+       in. Watch the big screen." with no input, no button and no link anywhere on the page.
+       Subscribing to a dead party's channel succeeds, because a channel is only a name, so
+       it even showed the green dot.
+
+       The QR on the telly was never affected, because it carries ?code=. Only the typed
+       route printed beside it was broken, which is the route anyone without a working
+       camera takes.
+
+       This writes a synthetic saved player, loads the page as that guest, and puts it back
+       afterwards in a finally, so running the check never costs you your own place at a
+       party you are actually at. */
+    note('a guest who has been to a party before', 'the trap found on 16 Sep 2026');
+    var KEY = 'ppPlayer', held = null, wrote = false;
+    try {
+      try { held = localStorage.getItem(KEY); } catch (e) {}
+      try {
+        localStorage.setItem(KEY, JSON.stringify({
+          code: 'OLDPTY', nickname: 'A guest who played before',
+          token: 'screen-check-not-a-real-token', email: '', mkt: false
+          /* no `at`, which is exactly the shape every record saved before the fix has */
+        }));
+        wrote = true;
+      } catch (e) { note('could not write a test player', String(e)); }
+
+      if (wrote) {
+        await load('/play');
+        try { d = doc(); } catch (e) { d = null; }
+        if (d) {
+          var visible = function (sel) {
+            return Array.prototype.slice.call(d.querySelectorAll(sel))
+              .filter(function (e) { return e.offsetParent !== null; });
+          };
+          var canType = visible('input').length > 0;
+          var wayOut = visible('a').filter(function (a) {
+            return /different code|not this party|wrong party/i.test(a.textContent || '');
+          }).length > 0;
+          pass(canType || wayOut,
+               'a returning guest can always reach the join form',
+               'the page restored a party from months ago and offered no input, no button ' +
+               'and no way out. The telly tells them to come to this exact address, so this ' +
+               'is a guest standing in a room unable to join while the host watches.');
+          var says = visibleText(d).join(' ');
+          pass(!(/you are in/i.test(says) && !canType && !wayOut),
+               'it does not claim "You are in" with nothing to press',
+               'it is telling a guest they are in a party that ended, and giving them ' +
+               'nothing to do about it. That is the most reassuring possible lie.');
+        }
+      }
+    } finally {
+      try {
+        if (held === null) localStorage.removeItem(KEY); else localStorage.setItem(KEY, held);
+      } catch (e) {}
+    }
+
+    /* ---------------------------------------------------------------- what we are selling. */
+    note('the page that takes the money', 'a broken price is worse than a broken game');
+    await load('/');
+    try { d = doc(); } catch (e) { d = null; }
+    if (d) {
+      var home = visibleText(d).join(' | ');
+      pass(/\$50/.test(home) && /\$120/.test(home), 'both prices are painted',
+           'the home page is not showing $50 and $120, and those are the product');
+      pass(/\bTen\b|\b10\b/.test(home), 'it still says ten games',
+           'the count of games on the home page does not read as ten');
+    }
+
+    pass(errors.length === 0, 'no page threw an error while we watched',
+         errors.slice(0, 2).join(' / '));
+
+    finish();
+  }
+
+  function finish() {
+    var v = document.getElementById('verdict');
+    v.className = bad ? 'fail' : 'pass';
+    v.textContent = bad ? (bad + ' of ' + ran + ' checks FAILED') : ('all ' + ran + ' checks passed');
+  }
+
+  run().catch(function (e) { note('the check itself broke', String(e)); finish(); });
+})();
+</script>
