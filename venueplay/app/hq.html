@@ -498,6 +498,18 @@
       <tbody id="flaggedRows"></tbody>
     </table></div></div>
     <div class="note">Signups whose <b>email</b> does not look like a venue land here (a trivia host, a personal Gmail). They can run games on team names only and collect <b>no</b> player data until you Approve. "No opt-ins" records your decision and leaves them running games on team names, just without collecting player data.</div>
+
+    <!-- EVERY ACCOUNT, not only the flagged ones. The list above is built from signup_flagged
+         audit rows, so an account that was never flagged has no row and therefore no button,
+         and an old flag scrolls out of the audit window and becomes unapprovable the same way.
+         The Mini Bar hit exactly that on 17 Sep 2026: its own domain, never flagged, and the
+         settings page told it to email us with nothing here to click. -->
+    <div class="lblk" style="margin-top:26px">Player data collection, every account</div>
+    <div class="panel"><div class="tscroll"><table>
+      <thead><tr><th>Account</th><th>Email</th><th>Venues</th><th>Collecting</th><th>Decision</th></tr></thead>
+      <tbody id="optinRows"></tbody>
+    </table></div></div>
+    <div class="note">An account on its own venue-looking domain approves itself. Everyone else waits here. <b>Automatic</b> means nobody has decided: the database works it out from their email domain on each save, and lets them through on their own venue-looking domain. <b>Approve opt-ins</b> overrides that as a yes, <b>Never</b> as a no. Note that <b>"bar" is not one of the words that auto-approves</b>, so The Mini Bar and a Sports Bar sit on Automatic and stay blocked even on their own domain.</div>
   </div>
 </div>
 
@@ -672,7 +684,10 @@
       // Which venues are ours to break. Its own query so the 250-row audit window cannot hide one.
       c.from("vp_admin_audit").select("action,target,created_at")
        .in("action",["venue_marked_test","venue_unmarked_test"])
-       .order("created_at",{ascending:false}).limit(500)
+       .order("created_at",{ascending:false}).limit(500),
+      // Who may collect player contact details. Its own query so a failure here cannot take
+      // the venue list down with it; the panel says so rather than rendering empty.
+      c.from("venueplay_founding").select("id,venue_name,contact_email,optin_release_approved")
     ]).then(function(settled){
       var r = settled.map(function(x){ return x.status==="fulfilled" ? x.value : null; });
       var venuesFailed = settled[0].status !== "fulfilled";
@@ -689,6 +704,8 @@
         S.screenSeen[v.id]=v.screen_seen_at||null;                 // heartbeat (migration 64)
         S.screenVer[v.id]=v.screen_version||null;                  // which page it runs (migration 66)
       });
+      S.accounts=(r[13] && r[13].data) || [];
+      S.accountsFailed = settled[13] && settled[13].status !== "fulfilled";
       S.groups=(r[1] && r[1].data) || [];
       S.groupById={}; S.groups.forEach(function(g){ S.groupById[g.id]=g; });
       S.discounts=(r[2] && r[2].data) || [];
@@ -733,7 +750,7 @@
       S.usageMonth = null;
       (function(){ var p=$("gstPanel"); if(p) p.style.display = canBilling() ? "" : "none"; })();
     if(canBilling()) renderGst(0);
-    renderStats(); renderVenues(); renderLive(); renderBilling(); renderGroups(); renderUsage(); renderTeam(); renderFlagged(); renderAudit(); populateGroupSelect();
+    renderStats(); renderVenues(); renderLive(); renderBilling(); renderGroups(); renderUsage(); renderTeam(); renderFlagged(); renderOptin(); renderAudit(); populateGroupSelect();
     }).catch(function(e){
       $("venueRows").innerHTML='<tr><td colspan="5" class="empty" style="border:none;background:none">Could not load venues: '+esc(e&&e.message||e)+'</td></tr>';
     });
@@ -2757,6 +2774,70 @@
       b.appendChild(tr);
     });
   }
+  /* ---- Every account, and whether it may collect player contact details ---- */
+  function renderOptin(){
+    var b=$("optinRows"); if(!b) return; b.innerHTML="";
+    if(S.accountsFailed){
+      b.innerHTML='<tr><td colspan="5"><div class="empty" style="border:none;background:none">'
+        + 'Could not read the accounts table. Nothing here is a decision you have made, so do not '
+        + 'read an empty list as "everyone is approved".</div></td></tr>';
+      return;
+    }
+    var rows=(S.accounts||[]).slice().sort(function(a,b2){
+      var aa=a.optin_release_approved===true, bb=b2.optin_release_approved===true;
+      if(aa!==bb) return aa?1:-1;                       // the ones waiting, first
+      return String(a.venue_name||"").localeCompare(String(b2.venue_name||""));
+    });
+    if(!rows.length){ b.innerHTML='<tr><td colspan="5"><div class="empty" style="border:none;background:none">No self-serve accounts yet.</div></td></tr>'; return; }
+    rows.forEach(function(a){
+      var on=a.optin_release_approved===true;
+      var mine=S.venues.filter(function(v){ return v.founding_id===a.id; });
+      var names=mine.map(function(v){ return v.name; }).join(", ");
+      var tr=document.createElement("tr");
+      tr.innerHTML='<td><div class="vn">'+esc(a.venue_name||"(account)")+'</div></td>'
+        + '<td style="color:var(--muted)">'+esc(a.contact_email||"")+'</td>'
+        + '<td style="color:var(--muted)">'+esc(names||"none")+'</td>'
+        + '<td>'+(on
+            ? '<span class="badge" style="background:rgba(34,197,94,.14);color:#4ade80">Approved</span>'
+            : '<span class="badge" style="background:rgba(255,31,142,.12);color:#FF1F8E">Name only</span>')+'</td>'
+        + '<td style="white-space:nowrap">'
+        +   (on
+              ? '<button data-lock="'+esc(a.id)+'" style="border:1px solid #2a2a33;background:none;color:#9a9aa4;border-radius:7px;padding:5px 11px;font-weight:700;cursor:pointer;font-size:12px">Turn off</button>'
+              : '<button data-appr="'+esc(a.id)+'" style="border:none;background:#FF1F8E;color:#fff;border-radius:7px;padding:5px 11px;font-weight:700;cursor:pointer;font-size:12px">Approve opt-ins</button>'
+              /* A deliberate NO, for an account whose domain would otherwise let them
+                 through on the next save. Without it the only way to say no was to hope
+                 nobody typed a venue word into their email address. */
+              + (off ? '' : ' <button data-lock="'+esc(a.id)+'" style="border:1px solid #2a2a33;background:none;color:#9a9aa4;border-radius:7px;padding:5px 11px;font-weight:700;cursor:pointer;font-size:12px">Never</button>'))
+        + '</td>';
+      b.appendChild(tr);
+    });
+  }
+
+  /* One handler for both tables: same endpoint, same two buttons, and re-reading the accounts
+     afterwards so the row shows what actually landed rather than what was clicked. */
+  function wireOptinButtons(el){
+    if(!el) return;
+    el.addEventListener("click", function(e){
+      var ap=e.target.closest("button[data-appr]"), lk=e.target.closest("button[data-lock]");
+      if(!ap && !lk) return;
+      var btn=ap||lk, fid=btn.getAttribute(ap?"data-appr":"data-lock"), approved=!!ap;
+      btn.disabled=true; btn.textContent=approved?"Approving...":"Turning off...";
+      workerPost("/admin/optin-approve",{ founding_id:fid, approved:approved }).then(function(r){
+        if(r && r.error){ alert(r.error); btn.disabled=false; renderOptin(); renderFlagged(); return; }
+        var c=VP.getClient();
+        Promise.all([
+          c.from("venueplay_founding").select("id,venue_name,contact_email,optin_release_approved"),
+          c.from("vp_admin_audit").select("*").order("created_at",{ascending:false}).limit(250)
+        ]).then(function(rr){
+          S.accounts=(rr[0] && rr[0].data) || S.accounts;
+          S.audit=(rr[1] && rr[1].data) || S.audit;
+          renderOptin(); renderFlagged(); renderAudit();
+        });
+      }).catch(function(){ btn.disabled=false; renderOptin(); });
+    });
+  }
+  wireOptinButtons($("optinRows"));
+
   (function(){
     var fr=$("flaggedRows"); if(!fr) return;
     fr.addEventListener("click", function(e){

@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '16 Sep 2026, 12:36 · 99e400bd';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Sep 2026, 06:47 · c888bb49';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -125,6 +125,7 @@ export default {
       if (request.method === 'POST' && path === '/account/add-venue' && typeof vpbAddVenue === 'function')       return await vpbAddVenue(request, env, json);
       if (request.method === 'POST' && path === '/account/reminders' && typeof vpbSetReminders === 'function')   return await vpbSetReminders(request, env, json);
       if (request.method === 'POST' && path === '/account/portal'    && typeof vpbBillingPortal === 'function')  return await vpbBillingPortal(request, env, json);
+      if (request.method === 'POST' && path === '/webhooks/resend' && typeof vpaHandleResendWebhook === 'function') return await vpaHandleResendWebhook(request, env, json);
       if (request.method === 'POST' && path === '/account/cancel-venue' && typeof vpbCancelVenue === 'function')  return await vpbCancelVenue(request, env, json);
       if (request.method === 'POST' && path === '/account/screen-get'  && typeof vpbScreenGet === 'function')    return await vpbScreenGet(request, env, json);
       if (request.method === 'POST' && path === '/account/screen-save' && typeof vpbScreenSave === 'function')   return await vpbScreenSave(request, env, json);
@@ -746,6 +747,138 @@ async function sbSpotsTaken(env) {
   } catch (e) {
     return 0;
   }
+}
+
+
+/* ------------------------------ Resend webhook (bounces) ---------------------------------
+ *
+ * THE OTHER HALF OF THE BOUNCE FLAG. vpaFireDeliveryFailure catches a message Resend
+ * REFUSES at the door. This catches the one it accepts and the far end rejects a minute
+ * later, which is the common case: a mailbox that is full, a staff address that was deleted
+ * when somebody left, a domain that has stopped existing. Until this endpoint, an accepted
+ * message was recorded as delivered and nobody ever found out.
+ *
+ * Resend signs with Svix. Three headers, and the signed content is
+ *   `${svix-id}.${svix-timestamp}.${raw body}`
+ * HMAC-SHA256 with the secret, which arrives base64 after a `whsec_` prefix. The signature
+ * header can hold SEVERAL space-separated versioned signatures during a secret rotation, so
+ * every v1 entry is checked and any one matching is enough.
+ *
+ * Verified, not trusted: this endpoint is public, and without the signature check anybody
+ * could post a bounce for a venue and have us ring a customer who is perfectly fine.
+ */
+async function vpaVerifyResendSig(rawBody, headers, secret) {
+  if (!secret) return false;
+  const id = headers.get('svix-id'), ts = headers.get('svix-timestamp'), sigHeader = headers.get('svix-signature');
+  if (!id || !ts || !sigHeader) return false;
+  /* Same five minute tolerance as the Stripe check above, and for the same reason: without
+     it a captured (body, signature) pair is valid for ever and can be replayed. */
+  const t = parseInt(ts, 10);
+  if (!isFinite(t) || Math.abs(Math.floor(Date.now() / 1000) - t) > 300) return false;
+
+  const b64 = String(secret).replace(/^whsec_/, '');
+  let keyBytes;
+  try {
+    const bin = atob(b64);
+    keyBytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) keyBytes[i] = bin.charCodeAt(i);
+  } catch (e) { return false; }
+
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', keyBytes, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const mac = await crypto.subtle.sign('HMAC', key, enc.encode(id + '.' + ts + '.' + rawBody));
+  let mine = '';
+  const bytes = new Uint8Array(mac);
+  for (let i = 0; i < bytes.length; i++) mine += String.fromCharCode(bytes[i]);
+  mine = btoa(mine);
+
+  for (const part of String(sigHeader).split(' ')) {
+    const bits = part.split(',');
+    if (bits.length !== 2 || bits[0] !== 'v1') continue;
+    const theirs = bits[1];
+    if (theirs.length !== mine.length) continue;
+    let diff = 0;
+    for (let i = 0; i < mine.length; i++) diff |= mine.charCodeAt(i) ^ theirs.charCodeAt(i);
+    if (diff === 0) return true;
+  }
+  return false;
+}
+
+/* Which venue does this address belong to? Best effort, and it says so: an address we
+   cannot place still raises the alarm, just without a name attached. Never guessing is the
+   point, because the alert tells somebody to pick up the phone. */
+async function vpaVenuesForEmail(env, addr) {
+  const out = [];
+  const e = String(addr || '').trim().toLowerCase();
+  if (!e) return out;
+  try {
+    const accts = await vpaSelect(env, 'venueplay_founding',
+      'contact_email=eq.' + encodeURIComponent(e) + '&select=id,contact_email') || [];
+    for (const a of accts) {
+      const vs = await vpaSelect(env, 'vp_venues',
+        'founding_id=eq.' + encodeURIComponent(a.id) + '&select=id,name,slug,status') || [];
+      for (const v of vs) out.push(v);
+    }
+  } catch (_) {}
+  return out;
+}
+
+async function vpaHandleResendWebhook(request, env, json) {
+  const raw = await request.text();
+  const ok = await vpaVerifyResendSig(raw, request.headers, env.RESEND_WEBHOOK_SECRET);
+  /* 401, not 400: an unsigned post is somebody else's, and Resend retries on 5xx only. */
+  if (!ok) return json({ error: 'bad signature' }, 401);
+
+  let ev = null;
+  try { ev = JSON.parse(raw); } catch (e) { return json({ error: 'bad json' }, 400); }
+  const type = String((ev && ev.type) || '');
+  /* Only the two that mean a person did not read it. delivered/opened/clicked are noise we
+     have no use for and would fill the audit table at the rate we send. */
+  if (type !== 'email.bounced' && type !== 'email.complained') return json({ ok: true, ignored: type });
+
+  const d = (ev && ev.data) || {};
+  const to = Array.isArray(d.to) ? d.to : (d.to ? [d.to] : []);
+  const subject = String(d.subject || '');
+  const bounce = d.bounce || {};
+  const reason = String(bounce.message || bounce.subType || bounce.type || d.reason || '').slice(0, 300);
+  const complained = type === 'email.complained';
+
+  for (const addr of to) {
+    const venues = await vpaVenuesForEmail(env, addr);
+    const named = venues.map((v) => v.name).filter(Boolean).join(', ');
+    /* A LEAVING EMAIL BOUNCING IS THE EMERGENCY. Any bounce is worth recording, but the two
+       that decide whether a venue knows its games are about to stop get the loud subject and
+       a line telling somebody to ring them. */
+    const leaving = /last day on VenuePlay|cancellation is confirmed/i.test(subject);
+    const head = complained ? 'marked us as spam' : 'bounced';
+    const html = '<div style="font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif">'
+      + '<p style="font-size:18px;font-weight:800;color:' + (leaving ? '#b3261e' : '#8a6d00') + ';margin:0 0 10px">'
+      +   (leaving ? 'A leaving email ' + head + '. Ring them.' : 'An email ' + head + '.') + '</p>'
+      + '<p style="margin:0 0 6px;font-size:14px"><b>Address:</b> ' + vpaEsc(addr) + '</p>'
+      + '<p style="margin:0 0 6px;font-size:14px"><b>Venue:</b> ' + vpaEsc(named || 'could not match this address to an account') + '</p>'
+      + '<p style="margin:0 0 6px;font-size:14px"><b>Subject:</b> ' + vpaEsc(subject || '(none)') + '</p>'
+      + (reason ? '<p style="margin:0 0 6px;font-size:14px"><b>Reason:</b> ' + vpaEsc(reason) + '</p>' : '')
+      + (leaving
+          ? '<p style="margin:14px 0 0;font-size:14px">They do not know their games are stopping. '
+            + 'Get a working address onto the account and resend from HQ, and if the last day is '
+            + 'close, ring them today.</p>'
+          : '<p style="margin:14px 0 0;font-size:14px">Worth getting a working address on the account '
+            + 'before the next one matters.</p>')
+      + '</div>';
+    for (const who of VPA_CANCEL_ALERTS) {
+      await vpaSendEmail(env, who,
+        (leaving ? 'ACTION NEEDED: leaving email ' + head + ' - ' : 'Email ' + head + ' - ')
+        + (named || addr), html).catch(() => false);
+    }
+    await vpaInsert(env, 'vp_admin_audit', {
+      actor_admin: null, actor_label: 'system',
+      action: complained ? 'email_marked_spam' : 'email_bounced',
+      target: venues.length ? ('venue:' + venues[0].id) : ('email:' + addr),
+      detail: { address: addr, subject: subject, reason: reason, leaving: leaving,
+                venues: venues.map((v) => v.name) },
+    }, false).catch(() => {});
+  }
+  return json({ ok: true });
 }
 
 /* ------------------------------ Stripe signature verify ------------------------------ */
@@ -4417,7 +4550,7 @@ async function vpbRequireOwner(request, env) {
   const venues = await vpaSelect(env, 'vp_venues',
     'id=in.(' + ids.map(encodeURIComponent).join(',') + ')' +
     '&order=founding_id.asc,created_at.asc' +
-    '&select=id,name,founding_id,group_id,max_players,pending_players,status,slug,cancel_at_period_end');
+    '&select=id,name,founding_id,group_id,max_players,pending_players,status,slug,cancel_at_period_end,suspended_reason,timezone,created_at,postcode');
   if (!venues || !venues.length) return { error: 'No venues found.', status: 403 };
 
   const foundingId = venues[0].founding_id;
@@ -4435,7 +4568,7 @@ async function vpbRequireOwner(request, env) {
     const all = await vpaSelect(env, 'vp_venues',
       'founding_id=eq.' + encodeURIComponent(foundingId) +
       '&order=created_at.asc' +
-      '&select=id,name,founding_id,group_id,max_players,pending_players,status,slug,cancel_at_period_end');
+      '&select=id,name,founding_id,group_id,max_players,pending_players,status,slug,cancel_at_period_end,suspended_reason,timezone,created_at,postcode');
     if (all && all.length) accountVenues = all;
   }
   // Audit attribution: if the person making this owner-level change is actually a VenuePlay
@@ -5299,6 +5432,276 @@ async function vpaAccountContacts(env, acct, venueId) {
 
 /* The shared shell, so the two emails cannot drift apart in tone or in what they promise.
    `lead` is the one-line summary, `rows` the facts table, `extra` anything after it. */
+/* WHAT THIS VENUE ACTUALLY DID WITH US.
+ *
+ * One function, three readers: the goodbye email's "that's a wrap", the cancellation
+ * confirmation, and HQ's details panel on the quiet and cancelled screens. Dean asked for
+ * the same numbers in both places on 17 Sep 2026, and two functions computing "how many
+ * trivia nights" separately is precisely how this codebase ends up with two answers to one
+ * question. Everything here is counted from what happened, never estimated.
+ *
+ * WHAT IS AND IS NOT COUNTED, because a goodbye email that flatters is worse than none:
+ *   - test players (vp_players.is_test) are excluded. A venue's biggest night must not be
+ *     a night we were testing on their account.
+ *   - a session with no games is not a night. Opening the console and closing it again is
+ *     not something to thank somebody for.
+ *   - formats are read from vp_games, which does record bingo: it is broadcast-only and
+ *     opens no game Worker session, but the host's end-of-game report writes the row.
+ *     Checked against live data, 17 Sep 2026: bingo90 24, trivia 21, musical_bingo 13,
+ *     raffle 11. If that ever comes back empty for a venue that plainly played, suspect
+ *     this join before you suspect the venue.
+ *
+ * Money is NOT here. There is no invoices table in this database; spend lives in Stripe
+ * and needs a live call, so it is fetched separately and is allowed to fail without
+ * taking the rest of the numbers with it.
+ */
+async function vpaVenueStats(env, venueId) {
+  const out = { nights: 0, totalGames: 0, games: {}, avgPlayers: {}, totalPlayers: 0,
+                biggest: null, overagePlayers: 0, overageSpendCents: 0,
+                playerGames: 0, ok: false };
+  try {
+    const sessions = await vpaSelect(env, 'vp_sessions',
+      'venue_id=eq.' + encodeURIComponent(venueId)
+      + '&select=id,started_at,opened_at,overage_approved_count&limit=2000') || [];
+    if (!sessions.length) { out.ok = true; return out; }
+    const ids = sessions.map((s) => s.id);
+    const byId = {};
+    for (const s of sessions) {
+      byId[s.id] = s;
+      out.overagePlayers += parseInt(s.overage_approved_count, 10) || 0;
+    }
+    /* Chunked, because `id=in.(...)` goes in the URL and a venue with a few hundred nights
+       would build a request long enough for Cloudflare to refuse it. */
+    const chunk = (arr, n) => { const o = []; for (let i = 0; i < arr.length; i += n) o.push(arr.slice(i, i + n)); return o; };
+    const perSession = {};
+    for (const part of chunk(ids, 40)) {
+      const inList = '(' + part.map((x) => encodeURIComponent(x)).join(',') + ')';
+      const games = await vpaSelect(env, 'vp_games',
+        'session_id=in.' + inList + '&select=session_id,format&limit=4000') || [];
+      for (const g of games) {
+        if (!g.format) continue;
+        out.games[g.format] = (out.games[g.format] || 0) + 1;
+        out.totalGames++;
+        (perSession[g.session_id] = perSession[g.session_id] || { formats: [], players: 0 }).formats.push(g.format);
+      }
+      const players = await vpaSelect(env, 'vp_players',
+        'session_id=in.' + inList + '&is_test=not.is.true&select=session_id&limit=20000') || [];
+      for (const p of players) {
+        if (!perSession[p.session_id]) continue;      // a session with no games is not a night
+        perSession[p.session_id].players++;
+      }
+    }
+    const perFormat = {};
+    for (const sid of Object.keys(perSession)) {
+      const row = perSession[sid];
+      out.nights++;
+      out.totalPlayers += row.players;
+      const when = byId[sid] && (byId[sid].started_at || byId[sid].opened_at);
+      if (!out.biggest || row.players > out.biggest.players) {
+        out.biggest = { players: row.players, at: when || null };
+      }
+      for (const f of row.formats) {
+        const a = perFormat[f] = perFormat[f] || { games: 0, players: 0, best: 0, bestAt: null };
+        a.games++; a.players += row.players;
+        /* The best night EACH game ever had, so the wrap can say which game pulled their
+           biggest room. "Your biggest night was 41" is a number; "your biggest trivia night
+           was 41" is the one that tells a publican which night to protect. */
+        if (row.players > a.best) { a.best = row.players; a.bestAt = when || null; }
+        /* PLAYER-GAMES, the denominator for what a player cost. Dean, 17 Sep 2026: price it
+           "per player per game, not including raffles and members draws". Those two are drawn
+           FOR the room rather than played BY it: nobody joins a members draw on their phone,
+           so counting them would divide the bill by rounds that had no players in them and
+           flatter the figure. One player in one game is one unit. */
+        if (!VPA_NOT_PLAYED.has(f)) out.playerGames += row.players;
+      }
+    }
+    out.bestByFormat = {};
+    for (const f of Object.keys(perFormat)) {
+      out.avgPlayers[f] = perFormat[f].games ? Math.round(perFormat[f].players / perFormat[f].games) : 0;
+      out.bestByFormat[f] = { players: perFormat[f].best, at: perFormat[f].bestAt };
+      /* Which single game pulled the biggest room of the lot. Ties go to the first seen,
+         which is the most played format, because the list is walked in that order. */
+      if (!out.bestGame || perFormat[f].best > out.bestGame.players) {
+        out.bestGame = { format: f, players: perFormat[f].best, at: perFormat[f].bestAt };
+      }
+    }
+    if (out.bestGame && !out.bestGame.players) out.bestGame = null;
+    if (out.biggest && !out.biggest.players) out.biggest = null;   // nobody ever joined
+    out.overageSpendCents = out.overagePlayers * VPA_OVERAGE_CENTS;
+    out.ok = true;
+  } catch (e) {
+    /* A goodbye email must still go out if the numbers cannot be gathered. ok stays false
+       and every caller leaves the wrap section out rather than printing zeroes, because
+       "you played 0 games" to a venue that played forty is the worst version of this. */
+    out.ok = false;
+  }
+  return out;
+}
+
+/* $2 a head, the locked overage price. Named here so the email, HQ and the biller cannot
+   drift apart on what an extra player costs. */
+const VPA_OVERAGE_CENTS = 200;
+
+/* Drawn FOR the room, not played BY it: nobody joins a raffle or a members draw on their
+   phone, so neither counts toward "per player, per game". Including them would divide the
+   bill by rounds that had no players in them. */
+const VPA_NOT_PLAYED = new Set(['raffle', 'members_draw']);
+
+/* Above this, the per-player figure has stopped being a reason to stay, so it is left out
+   rather than made into an argument for leaving. A dollar a head a game is already well
+   past the point where it is worth saying. */
+const VPA_WRAP_MAX_PER_PLAYER = 1.00;
+
+/* How long they have been with us, in the words a person would use. Years once it earns
+   them, because "it has been a pleasure for the last 14 months" reads worse than
+   "the last year and a bit". */
+/* Written to follow "for the last ___", so no leading article: "for the last a month" is
+   what the first version produced and it is the sort of thing that makes a goodbye email
+   read as though nobody looked at it. Found by rendering it, 17 Sep 2026. */
+function vpaTenureWords(createdAt, asAtMs) {
+  const t = Date.parse(createdAt || '');
+  if (!t) return null;
+  /* MEASURED TO THEIR LAST DAY, not to today. Dean, 17 Sep 2026: "we should bump them up to
+     the next month because the venue actually will complete 7 months so we are not lying."
+     He is right, and the honest way to get there is to count the relationship to the day it
+     actually ends rather than to the morning we happen to be writing. A venue that signed up
+     on the 3rd of February and plays its last night in September HAS given us seven months
+     by the time they read this. Floor still applies, so it can never overstate. */
+  const end = asAtMs || Date.now();
+  const months = Math.max(0, Math.floor((end - t) / (30.44 * 86400000)));
+  if (months < 1) return 'few weeks';
+  if (months === 1) return 'month';
+  if (months < 12) return months + ' months';
+  const years = Math.floor(months / 12), rem = months % 12;
+  const y = years === 1 ? 'year' : years + ' years';
+  if (rem === 0) return y;
+  if (rem === 1) return y + ' and a month';
+  return y + ' and ' + rem + ' months';
+}
+/* Months with us, for the per-night figure below. Same clock as vpaTenureWords so the two
+   cannot disagree about how long somebody has been here. */
+function vpaTenureMonths(createdAt, asAtMs) {
+  const t = Date.parse(createdAt || '');
+  if (!t) return 0;
+  return Math.max(1, Math.floor(((asAtMs || Date.now()) - t) / (30.44 * 86400000)));
+}
+
+/* THAT'S A WRAP. The block at the bottom of the goodbye email.
+ *
+ * Dean, 17 Sep 2026: "You played x amount of each game and your average cost was x per
+ * trivia etc, your biggest night was x amount of players which was x date."
+ *
+ * Every line here is a count of something that happened, except the per-night cost, which
+ * is derived from the rate their subscription actually carries and is labelled "about"
+ * because it is. There is no invoices table, so a precise lifetime spend would be a live
+ * Stripe call per venue and a figure we could get wrong; a venue that reads a wrong number
+ * about its own money stops believing the rest of the email.
+ *
+ * Returns '' when there is nothing worth showing. A venue that never ran a night gets no
+ * wrap rather than a column of zeroes on the way out the door.
+ */
+function vpaWrapHtml(stats, opts) {
+  if (!stats || !stats.ok || !stats.nights || !stats.totalGames) return '';
+  const o = opts || {};
+  const PINK = '#FF1F8E', INK = '#12101a', MUTE = '#6a6a75';
+  /* Thousands separators, because these have to hold a real club. A 900 seat venue on a
+     grand final night is four figures of phones, and "10000 phones in the room" reads like
+     a serial number. Dean, 17 Sep 2026: room for 10,000 phones and 1,000 games. */
+  const n = (x) => String(Math.round(x || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+  /* THE TILES. Three numbers, big, side by side. A table and not a grid: Outlook has no
+     flexbox and this is the one part of the email that has to survive it. Widths are
+     percentages so four figures fit without pushing anything off the edge. */
+  const tile = (big, small) =>
+    '<td width="33.33%" align="center" style="padding:14px 6px;background:#fbf7fa;border-radius:12px">'
+    + '<div style="font-size:30px;line-height:1.05;font-weight:800;color:' + INK + '">' + big + '</div>'
+    + '<div style="font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:' + MUTE + ';padding-top:5px">' + small + '</div>'
+    + '</td>';
+  const tiles = '<table role="presentation" width="100%" cellpadding="0" cellspacing="6" style="margin:0 0 16px"><tr>'
+    + tile(n(stats.nights), stats.nights === 1 ? 'night' : 'nights')
+    + tile(n(stats.totalGames), stats.totalGames === 1 ? 'game' : 'games')
+    + tile(n(stats.totalPlayers), 'phones in the room')
+    + '</tr></table>';
+
+  /* A BAR PER GAME, drawn as a table cell with a background colour. No images: half the
+     email clients in a pub office block them by default, and a wrap that arrives as three
+     grey boxes is worse than no wrap. Widths are whole percents of the most played game. */
+  const fmts = Object.keys(stats.games).sort((a, b) => stats.games[b] - stats.games[a]);
+  const top = fmts.length ? stats.games[fmts[0]] : 0;
+  const rows = fmts.map((f) => {
+    const c = stats.games[f];
+    const pct = top ? Math.max(6, Math.round((c / top) * 100)) : 0;
+    const avg = stats.avgPlayers[f];
+    return '<tr>'
+      + '<td style="padding:5px 10px 5px 0;font-size:14px;color:' + INK + ';white-space:nowrap">'
+      +   vpaEsc(vpaFormatWord(f)) + '</td>'
+      + '<td width="52%" style="padding:5px 0">'
+      +   '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>'
+      +   '<td width="' + pct + '%" style="background:' + PINK + ';border-radius:5px;font-size:0;line-height:9px;height:9px">&nbsp;</td>'
+      +   '<td style="font-size:0;line-height:9px">&nbsp;</td></tr></table></td>'
+      + '<td align="right" style="padding:5px 0 5px 10px;font-size:14px;font-weight:700;color:' + INK + ';white-space:nowrap">'
+      +   n(c) + '</td>'
+      + '<td align="right" style="padding:5px 0 5px 12px;font-size:12.5px;color:' + MUTE + ';white-space:nowrap">'
+      +   (avg ? n(avg) + (avg === 1 ? ' player' : ' players') : '') + '</td>'
+      + '</tr>';
+  }).join('');
+
+  const when = (at) => at ? vpaFmtDate(Math.floor(Date.parse(at) / 1000)) : null;
+
+  let best = '';
+  if (stats.bestGame && stats.bestGame.players > 0) {
+    const d = when(stats.bestGame.at);
+    best = '<p style="margin:0 0 6px;font-size:14.5px;color:' + INK + '">'
+      + 'Your biggest room was <b>' + n(stats.bestGame.players) + ' players</b>, on a '
+      + vpaEsc(vpaFormatWord(stats.bestGame.format)) + ' night'
+      + (d ? ' on ' + vpaEsc(d) : '') + '.</p>';
+  } else if (stats.biggest && stats.biggest.players > 0) {
+    const d = when(stats.biggest.at);
+    best = '<p style="margin:0 0 6px;font-size:14.5px;color:' + INK + '">'
+      + 'Your biggest room was <b>' + n(stats.biggest.players) + ' players</b>'
+      + (d ? ', on ' + vpaEsc(d) : '') + '.</p>';
+  }
+
+  /* Reworded, 17 Sep 2026. "Counting every game a player actually played, that worked out
+     at about $0.32 per player, per game" made the reader do the arithmetic to see the
+     point. Say the number first and let it land. */
+  let cost = '';
+  if (o.rateCents > 0 && o.players > 0 && o.months > 0 && stats.playerGames > 0) {
+    const per = ((o.rateCents * o.players * o.months) / 100) / stats.playerGames;
+    if (per >= 0.005 && isFinite(per) && per <= VPA_WRAP_MAX_PER_PLAYER) {
+      const cents = Math.round(per * 100);
+      cost = '<p style="margin:0 0 6px;font-size:14.5px;color:' + INK + '">'
+        + 'All of it came to about <b>' + (per < 1 ? cents + 'c' : '$' + per.toFixed(2))
+        + ' a player, a game</b>.</p>';
+    }
+  }
+
+  /* Reworded. "You waved 18 extra players in over the cap on busy nights, rather than turn
+     them away" was three clauses to say one thing. */
+  let over = '';
+  if (stats.overagePlayers > 0) {
+    over = '<p style="margin:0 0 6px;font-size:14.5px;color:' + INK + '">'
+      + '<b>' + n(stats.overagePlayers) + ' extra players</b> got in on nights you went over '
+      + 'the cap. You never turned anyone away.</p>';
+  }
+
+  return ''
+    + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
+    +   'style="border:1px solid #f0e6ec;border-radius:14px;margin:0 0 22px"><tr><td style="padding:20px 20px 18px">'
+    + '<p style="margin:0 0 3px;font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:' + PINK + ';font-weight:700">And that is a wrap</p>'
+    + '<p style="margin:0 0 16px;font-size:15px;color:' + MUTE + '">Everything you ran with us.</p>'
+    + tiles
+    + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 14px">' + rows + '</table>'
+    + best + cost + over
+    + '</td></tr></table>';
+}
+
+const VPA_FORMAT_WORDS = {
+  bingo90: 'bingo', musical_bingo: 'musical bingo', trivia: 'trivia',
+  raffle: 'raffle', members_draw: 'members draw',
+};
+function vpaFormatWord(f) { return VPA_FORMAT_WORDS[f] || String(f || '').replace(/_/g, ' '); }
+
 function vpaLeavingHtml(env, opts) {
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
   const logo = site + '/logos/venueplay_primary_dark.png';
@@ -5318,9 +5721,10 @@ function vpaLeavingHtml(env, opts) {
        published rather than inventing a second number. Change one and you must change both. */
     + '<p style="font-size:13.5px;color:#3a3a44;margin:0 0 18px">'
     + 'Nothing is thrown away on the day. Your members list, your advertising slides, your '
-    + 'raffle and members draw history all stay on the account for <b>three months</b>, so if '
-    + 'you come back in that time everything is where you left it. After that the player list '
-    + 'is deleted, as our privacy page says.</p>'
+    + 'raffle and members draw history all stay on the account for <b>90 days</b>, so if '
+    + 'you come back in that time everything is where you left it. After that, in line with '
+    + 'our <a href="' + site + '/privacy" style="color:#3a3a44">privacy policy</a>, the player '
+    + 'data is deleted.</p>'
     /* THE RATE IS HELD BY STAYING, NOT BY HAVING BEEN. Dean asked for a warning about the
        price, 16 Sep 2026, and it is the truest reason to think twice: the founding rate is
        locked for as long as a venue is with us and the standard rate is the one that moves.
@@ -5341,16 +5745,23 @@ function vpaLeavingHtml(env, opts) {
           + (opts.founding
               ? 'You are on <b>' + vpaEsc(opts.priceHold) + ' a player a month</b>, and that '
                 + 'is held for as long as you stay with us. It is not held once you have gone. '
-                + 'Coming back later means coming back at whatever the price is then, and that '
-                + 'is the one that goes up.'
+                + 'Come back later and it is at the price of the day, and that price has only '
+                + 'ever moved one way.'
               : 'You are on <b>' + vpaEsc(opts.priceHold) + ' a player a month</b>. That is the '
                 + 'rate that moves over time, and nothing about today\'s price is kept for you '
-                + 'once the account closes. If you came back later it would be at whatever it '
-                + 'is then.')
+                + 'once the account closes. Come back later and it is at the price of the day, '
+                + 'and that price has only ever moved one way.')
           + '</p></td></tr></table>'
         : '')
     + (opts.extra || '')
-    + '<a href="' + billing + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">' + vpaEsc(opts.cta || 'Open your billing page') + '</a>'
+    /* FULL WIDTH. Dean, 17 Sep 2026. On a phone a 22px-padded link floats in a wall of
+       text and reads as a footnote, and on the goodbye this is the last chance to keep
+       them. A table with align rather than display:block, because Outlook ignores that. */
+    + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 4px"><tr>'
+    + '<td align="center" style="background:#FF1F8E;border-radius:10px">'
+    + '<a href="' + billing + '" style="display:block;padding:15px 18px;color:#ffffff;'
+    + 'text-decoration:none;font-size:15.5px;font-weight:700">'
+    + vpaEsc(opts.cta || 'Open your billing page') + '</a></td></tr></table>'
     + '<p style="font-size:13px;color:#6a6a75;margin:22px 0 0">If this was not meant to happen, or you want to talk it through, just reply to this email. It reaches a person.</p>'
     /* No Gflam Group and no ABN here. Dean's call, and it is a correct one: neither is a
        requirement on a service notice, and a holding company's name at the bottom of
@@ -5364,27 +5775,92 @@ function vpaLeavingHtml(env, opts) {
 /* Sent the moment they click cancel. Confirms what they just did, in plain words, with the
    date. An owner who cancels and hears nothing has no way to tell whether it worked, and
    the support email that follows is always "did that go through?". */
+
+/* A LEAVING EMAIL THAT DID NOT LAND IS AN EMERGENCY, NOT A LOG LINE.
+ *
+ * Dean, 17 Sep 2026: "if this goes to a bounced email we need a massive flag to alert us so
+ * we can remind the venue."
+ *
+ * Both leaving emails are the only warning a venue gets. If every address on the account
+ * refuses, the venue finds out its games have stopped when the telly does not come on, and
+ * the first we hear is an angry phone call. Until now that produced one audit row under a
+ * slightly different action name, which is a thing nobody is watching at 8am.
+ *
+ * WHAT THIS CAN AND CANNOT SEE, honestly. It fires when Resend REFUSES the message: a bad
+ * address, an unverified domain, a rate limit. It cannot see a message Resend accepted and
+ * the far end bounced an hour later; that arrives on a Resend webhook we do not yet handle,
+ * and it is written up in the release notes as the other half of this job.
+ */
+async function vpaFireDeliveryFailure(env, opts) {
+  try {
+    if (!env.RESEND_API_KEY) return;
+    const what = opts.kind === 'last_day'
+      ? 'their LAST DAY warning' : 'their cancellation confirmation';
+    const html = '<div style="font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif">'
+      + '<p style="font-size:18px;font-weight:800;color:#b3261e;margin:0 0 10px">'
+      +   'A venue was NOT told. Ring them.</p>'
+      + '<p style="margin:0 0 14px;font-size:15px">We could not deliver ' + what + ' to '
+      +   '<b>' + vpaEsc(opts.name || 'a venue') + '</b>. Every address on the account refused it, '
+      +   'so as far as they know nothing is happening.</p>'
+      + '<p style="margin:0 0 6px;font-size:14px"><b>Venue:</b> ' + vpaEsc(opts.name || '') + '</p>'
+      + (opts.ends ? '<p style="margin:0 0 6px;font-size:14px"><b>Last day:</b> ' + vpaEsc(opts.ends) + '</p>' : '')
+      + '<p style="margin:0 0 6px;font-size:14px"><b>Addresses that refused:</b> '
+      +   vpaEsc((opts.refused || []).join(', ') || 'none on file') + '</p>'
+      + '<p style="margin:14px 0 0;font-size:14px">Get a working address on the account, then '
+      +   'resend from HQ. If the last day is close, ring them today.</p></div>';
+    for (const addr of VPA_CANCEL_ALERTS) {
+      await vpaSendEmail(env, addr,
+        'ACTION NEEDED: ' + (opts.name || 'a venue') + ' was NOT told about '
+        + (opts.kind === 'last_day' ? 'its last day' : 'its cancellation'),
+        html).catch(() => false);
+    }
+    await vpaInsert(env, 'vp_admin_audit', {
+      actor_admin: null, actor_label: 'system',
+      action: 'venue_leaving_email_UNDELIVERED',
+      target: 'venue:' + opts.venueId,
+      detail: { kind: opts.kind, name: opts.name || null, refused: opts.refused || [],
+                ends: opts.ends || null },
+    }, false).catch(() => {});
+  } catch (_) { /* an alert must never stop the sweep */ }
+}
+
 async function vpaFireCancelConfirm(env, opts) {
   try {
     if (!env.RESEND_API_KEY) return;
     const to = await vpaAccountContacts(env, opts.account, opts.venueId);
     if (!to.length) return;
     const ends = opts.ends || null;
+    /* NAME THE DAY, not just the date. Dean, 17 Sep 2026: a publican works in days of the
+       week, and "Friday" is the word that tells them whether it lands on their big night.
+       The weekday is computed in the VENUE's timezone, same as the last-day email, so the
+       two can never name different days for the same date. */
+    const day = (opts.endTs && opts.timezone) ? vpaLocalWeekday(opts.endTs, opts.timezone) : null;
+    const whenPhrase = ends ? (day ? day + ', ' + ends : ends) : null;
     const rows = [['Venue', opts.name || 'your venue']];
-    if (ends) rows.push(['Last day', ends]);
-    rows.push(['What happens until then', 'Nothing changes. Every game runs as normal.']);
+    if (whenPhrase) rows.push(['Last day', whenPhrase]);
+    rows.push(['Until close that day', 'Every game runs as normal, and the TVs keep showing your advertising.']);
     const html = vpaLeavingHtml(env, {
       heading: 'Your cancellation is confirmed.',
-      lead: ends
-        ? 'You have cancelled ' + vpaEsc(opts.name || 'your venue') + '. It stays fully live until <b>'
-          + vpaEsc(ends) + '</b>, which is the end of the period you have already paid for. '
-          + 'There is no further charge after that.'
+      lead: whenPhrase
+        ? 'You have cancelled ' + vpaEsc(opts.name || 'your venue') + '. You keep playing right '
+          + 'through <b>' + vpaEsc(whenPhrase) + '</b>, to close, which is the end of the period '
+          + 'you have already paid for. There is no further charge after that.'
         : 'You have cancelled ' + vpaEsc(opts.name || 'your venue') + '. It stays live until the end of '
           + 'the period you have already paid for, and there is no further charge after that.',
       rows: rows,
+      /* WHAT THEY KEEP UNTIL THE LAST BELL. "It stays live" did not say that the screens go
+         on earning: a venue reading this wants to know whether the advertising they sold to
+         the bottle shop still runs on Friday night. It does. And the undo window closes at
+         the same moment the games do, which was never stated: "any time before the last day"
+         reads as though it shuts the night before. */
+      /* The "Until close that day" row above already says the games run and the screens keep
+         playing their advertising. A paragraph repeating it an inch below, in nearly the same
+         words, read as though nobody had looked at the email whole. Seen by rendering it,
+         17 Sep 2026. The undo is the only thing left to say here. */
       extra: '<p style="font-size:13.5px;color:#3a3a44;margin:0 0 18px">'
-           + 'Changed your mind? You can undo this yourself on your billing page any time before '
-           + 'the last day, and nothing will have been interrupted.</p>',
+           + 'Changed your mind? You can undo this yourself on your billing page any time up to '
+           + 'close on ' + (whenPhrase ? vpaEsc(whenPhrase) : 'your last day')
+           + ', and nothing will have been interrupted.</p>',
       cta: 'Undo this cancellation',
     });
     /* "EMAILED" HAS TO MEAN EMAILED. vpaSendEmail returns whether Resend accepted the
@@ -5397,6 +5873,10 @@ async function vpaFireCancelConfirm(env, opts) {
       const ok = await vpaSendEmail(env, addr, 'Your VenuePlay cancellation is confirmed'
         + (ends ? ' - last day ' + ends : ''), html).catch(() => false);
       (ok ? delivered : refused).push(addr);
+    }
+    if (refused.length && !delivered.length) {
+      await vpaFireDeliveryFailure(env, { kind: 'confirm', venueId: opts.venueId,
+        name: opts.name, ends: ends, refused: refused });
     }
     await vpaInsert(env, 'vp_admin_audit', {
       action: refused.length && !delivered.length
@@ -5475,7 +5955,11 @@ async function vpaLastDaySweep(env) {
     return { checked: 0, sent: 0, why: ['no RESEND_API_KEY or STRIPE_SECRET_KEY on this Worker'] };
   }
   const venues = await vpaSelect(env, 'vp_venues',
-    'status=eq.active&cancel_at_period_end=is.true&select=id,name,founding_id,timezone') || [];
+    /* created_at and max_players are read for the wrap at the bottom of the email: how long
+       they have been with us, and what a night worked out at. Selected here rather than
+       fetched per venue, because this runs hourly over every cancelling venue. */
+    'status=eq.active&cancel_at_period_end=is.true'
+    + '&select=id,name,founding_id,timezone,created_at,max_players') || [];
   let sent = 0;
   const byAccount = {};
   for (const v of venues) (byAccount[v.founding_id] = byAccount[v.founding_id] || []).push(v);
@@ -5491,7 +5975,7 @@ async function vpaLastDaySweep(env) {
     if (!acct || !acct.stripe_subscription_id) {
       why.push('account ' + fid + ': no Stripe subscription on file'); continue;
     }
-    let endTs = 0, rate = '', founding = false;
+    let endTs = 0, rate = '', founding = false, rateCents = 0;
     try {
       const sub = await vpbStripeGet(env, 'subscriptions/'
         + encodeURIComponent(acct.stripe_subscription_id));
@@ -5503,6 +5987,7 @@ async function vpaLastDaySweep(env) {
          same thing without a figure. */
       const cents = item && item.price && parseInt(item.price.unit_amount, 10);
       rate = (cents > 0) ? '$' + (cents / 100).toFixed(2) : '';
+      rateCents = (cents > 0) ? cents : 0;      // the wrap works out a per-night figure from this
       /* Founding or standard, decided by the price the subscription actually carries and
          the Worker's own STRIPE_PRICE_* variables. No second list to drift. */
       const pid = (item && item.price && item.price.id) || '';
@@ -5543,23 +6028,38 @@ async function vpaLastDaySweep(env) {
 
       const day = vpaLocalWeekday(endTs, tz);
       const dated = vpaFmtDate(endTs);
+      /* What they actually did with us, for the wrap at the bottom. Never allowed to stop
+         the email: a venue must be told its last day even if not one number can be counted. */
+      const stats = await vpaVenueStats(env, v.id).catch(() => null);
+      const tenure = vpaTenureWords(v.created_at, endTs * 1000);
+      const wrap = vpaWrapHtml(stats, { rateCents: rateCents, players: v.max_players,
+                                        months: vpaTenureMonths(v.created_at, endTs * 1000) });
       const html = vpaLeavingHtml(env, {
         heading: day + ' is your last day on VenuePlay.',
-        lead: vpaEsc(v.name || 'Your venue') + ' is set to cancel after <b>' + vpaEsc(day)
-            + ', ' + vpaEsc(dated) + '</b>. You keep that night in full, right through to close, '
-            + 'and the screens go quiet after it. Two days seemed fairer than finding out '
-            + 'when the telly did not come on.',
+        /* SORRY TO SEE THEM GO, AND SAY HOW LONG IT HAS BEEN. Dean, 17 Sep 2026. A venue
+           that has been with us a year should not get the same opening line as one that
+           lasted a fortnight, and "the last 14 months" is the sentence that makes somebody
+           pause. Only said when we actually know: no tenure, no claim. */
+        lead: 'We are sorry to see you go.'
+            + (tenure ? ' It has been a pleasure having ' + vpaEsc(v.name || 'you')
+                        + ' with us for the last <b>' + vpaEsc(tenure) + '</b>.' : '')
+            + ' You are set to cancel after <b>' + vpaEsc(day) + ', ' + vpaEsc(dated)
+            + '</b>. You keep that night in full, right through to close, and your screens '
+            + 'keep playing your advertising until you shut.',
         priceHold: rate,
         founding: founding,
         rows: [['Venue', v.name || 'your venue'],
                ['Last day', day + ', ' + dated],
-               ['Until then', 'Nothing changes. Every game runs as normal.'],
-               ['After that', 'Games stop. Nothing is deleted for three months.']],
-        extra: '<p style="font-size:13.5px;color:#3a3a44;margin:0 0 18px">'
-             + 'If you would rather stay, one click on your billing page undoes it and '
-             + 'nothing will have been interrupted. If you are going, thank you for giving '
-             + 'it a run, and there is no hard feeling in it. We would genuinely like to '
-             + 'know what did not work, if you have a minute to reply.</p>',
+               ['Until close that day', 'Every game runs as normal, and the TVs keep showing your advertising.'],
+               ['Undo it any time up to', 'close on ' + day],
+               ['After that', 'Games stop. Nothing is deleted for 90 days.']],
+        extra: wrap
+             + '<p style="font-size:13.5px;color:#3a3a44;margin:0 0 18px">'
+             + 'All of that stays yours if you change your mind. One click, any time up to close on '
+             + vpaEsc(day) + ', and nothing will have been interrupted.</p>'
+             + '<p style="font-size:13.5px;color:#6a6a75;margin:0 0 18px">'
+             + 'And if you are going, thank you for the run. If something did not work, we would '
+             + 'genuinely like to hear it. Just reply.</p>',
         cta: 'Keep the venue running',
       });
       const delivered = [], refused = [];
@@ -5572,6 +6072,10 @@ async function vpaLastDaySweep(env) {
          either way. But if NOT ONE address was accepted, it is written under a different
          action: a venue that was never told must not be filed alongside the ones that were,
          and it must be findable. */
+      if (refused.length && !delivered.length) {
+        await vpaFireDeliveryFailure(env, { kind: 'last_day', venueId: v.id,
+          name: v.name, ends: day + ', ' + dated, refused: refused });
+      }
       await vpaInsert(env, 'vp_admin_audit', {
         action: (refused.length && !delivered.length)
           ? 'venue_last_day_NOT_emailed' : 'venue_last_day_emailed',
@@ -5604,7 +6108,23 @@ async function vpbCancelVenue(request, env, json) {
   if (!venue) return json({ error: 'That venue is not on your account.' }, 403);
 
   const foundingId = o.account.id;
-  await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), { cancel_at_period_end: !undo });
+  /* AN UNDO HAS TO PUT THEM BACK ON.
+     This only ever cleared the flag. If the paid period had already renewed, the invoice
+     webhook had switched the venue off, so clearing the flag left an owner who had changed
+     their mind with a suspended venue and nothing in the product to undo it. Found 16 Sep
+     2026 on GFLAM GROUP PTY LTD: last action in the audit was an uncancel, and the venue
+     was still suspended.
+
+     Only reverses OUR OWN suspension. A venue switched off for not paying, or suspended by
+     hand from HQ, is left exactly as it is: changing your mind about leaving does not settle
+     an unpaid bill, and an undo must never be a way to turn your games back on. */
+  const patch = { cancel_at_period_end: !undo };
+  if (undo && venue.status === 'suspended'
+      && (venue.suspended_reason === 'cancelled' || venue.suspended_reason === 'ended')) {
+    patch.status = 'active';
+    patch.suspended_reason = null;
+  }
+  await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), patch);
 
   // Remaining billed total now EXCLUDES venues flagged to cancel (vpbAccountTotal skips them).
   // The credit for the removed players applies at renewal.
@@ -5642,6 +6162,11 @@ async function vpbCancelVenue(request, env, json) {
   if (!undo) {
     await vpaFireCancelConfirm(env, {
       venueId: venueId, name: venue.name, ends: endsDate, account: o.account,
+      /* The raw timestamp and the venue's own timezone, so the email can say "Friday" and
+         mean Friday where the pub is. Derived from the postcode when the row has no
+         timezone, the same fallback the session sweep uses. */
+      endTs: (info && info.periodEnd) || null,
+      timezone: venue.timezone || vpaTimezoneFromPostcode(venue.postcode),
     }).catch(() => {});
   }
 
@@ -5810,7 +6335,26 @@ async function vpbApplyPendingOnInvoice(env, invoice) {
       // A venue flagged to cancel has now reached the end of its paid period: suspend it
       // (the kill-switch stops games) but keep the row so it can be reactivated later.
       if (v.cancel_at_period_end && v.status !== 'suspended') {
-        await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(v.id), { status: 'suspended' });
+        /* SAY WHY, AND WRITE IT DOWN. This turned a venue's games off and left
+           suspended_reason null, so nothing afterwards could tell a venue stopped by its own
+           cancellation from one stopped for not paying. That matters because the undo below
+           has to know whether it is safe to switch them back on, and with no reason recorded
+           it could not, so an owner who cancelled and changed their mind was suspended for
+           ever with no way back through the product.
+
+           It also wrote no audit row at all. Turning a venue's games off is the most
+           consequential thing this Worker does and it was the one state change with no
+           trace: GFLAM GROUP PTY LTD was found suspended on 16 Sep 2026 with nothing
+           anywhere to say what had done it. */
+        await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(v.id),
+          { status: 'suspended', suspended_reason: 'cancelled' });
+        await vpaInsert(env, 'vp_admin_audit', {
+          actor_admin: null, actor_label: 'system',
+          action: 'venue_suspended_at_period_end',
+          target: 'venue:' + v.id,
+          detail: { why: 'cancel_at_period_end was set and the paid period has renewed',
+                    invoice: (invoice && invoice.id) || null },
+        }, false).catch(() => {});
         changed = true;
         continue;
       }

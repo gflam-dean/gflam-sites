@@ -305,6 +305,26 @@
          ["collect_marketing_optin","Marketing opt-in"]].forEach(function(p){
           if(patch[p[0]] === true && saved && saved[p[0]] !== true) refused.push(p[1]);
         });
+        /* PUT THE SWITCHES BACK TO WHAT ACTUALLY LANDED.
+           The message below was honest and the screen was not: the read-back was used to write
+           a warning and then thrown away, so a refused toggle stayed sitting there ON. An owner
+           read "could not be switched on" directly underneath a switch showing ON, came back
+           later to a screen that still said ON, and reasonably concluded the save was a lie.
+           Dean hit exactly this on The Mini Bar, 17 Sep 2026: "it says it saved everything else
+           but it hasnt". The database was right the whole time; this screen was showing him
+           something that was never true. */
+        if(saved){
+          TOGGLES.forEach(function(k){ if(typeof saved[k] === "boolean") state[k]=saved[k]; });
+          if(typeof saved.name_display === "string") state.name_display=saved.name_display;
+          document.querySelectorAll(".sw[data-k]").forEach(function(sw){
+            sw.classList.toggle("on", !!state[sw.getAttribute("data-k")]);
+          });
+          /* The name style is drawn as a segmented control, not a switch, so it needs
+             repainting the same way or it drifts from the row it is meant to be showing. */
+          if($("nameSeg")) Array.prototype.forEach.call($("nameSeg").children, function(o){
+            o.classList.toggle("on", o.getAttribute("data-nd") === state.name_display);
+          });
+        }
         if(refused.length){
           msg.className="msg warn";
           msg.textContent="Saved, but "+refused.join(", ")+" could not be switched on. Collecting player contact details needs your account approved first. Email us and we will sort it.";

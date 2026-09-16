@@ -1,8 +1,9 @@
 {
-  "commit": "0a11ba97ff5006a03720019eff00f6a6ef69a097",
-  "when": "2026-09-16 22:12:49",
+  "commit": "da32927802c6a852de4ee948c436a819107ca3df",
+  "when": "2026-09-17 06:01:52",
   "venues": [
     "tugun-bowls",
-    "wellshot-hotel"
+    "wellshot-hotel",
+    "partyplay"
   ]
 }

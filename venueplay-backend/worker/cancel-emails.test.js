@@ -19,6 +19,27 @@ eval(lift(BILL,"vpaEsc"));
 eval(lift(BILL,"vpaFmtDate"));
 eval(lift(BILL,"vpaAccountContacts"));
 eval(lift(BILL,"vpaLeavingHtml"));
+eval(lift(BILL,"vpaVenueStats"));
+eval(lift(BILL,"vpaWrapHtml"));
+eval(lift(BILL,"vpaTenureWords"));
+eval(lift(BILL,"vpaTenureMonths"));
+eval(lift(BILL,"vpaFormatWord"));
+eval(lift(BILL,"vpaFireDeliveryFailure"));
+/* THE CONSTANTS TOO, and this is not housekeeping. vpaVenueStats reads VPA_NOT_PLAYED and
+   is wrapped in its own try/catch so a goodbye email still goes out when the numbers cannot
+   be gathered. Lift the functions without the constants and it throws ReferenceError on
+   every call, the catch swallows it, ok comes back false, and the wrap silently renders as
+   an empty string. The email still sends and every other check stays green: exactly the
+   shape of the tvStatus fault that reached a venue TV on 16 Sep. Read from the Worker, not
+   retyped, so they cannot drift. */
+eval("var VPA_FORMAT_WORDS=" + (/const VPA_FORMAT_WORDS = (\{[\s\S]*?\});/.exec(BILL)||[,"{}"])[1] + ";");
+eval("var VPA_NOT_PLAYED=" + (/const VPA_NOT_PLAYED = (new Set\([^;]*\));/.exec(BILL)||[,"new Set()"])[1] + ";");
+eval("var VPA_OVERAGE_CENTS=" + (/const VPA_OVERAGE_CENTS = (\d+);/.exec(BILL)||[,"200"])[1] + ";");
+eval("var VPA_WRAP_MAX_PER_PLAYER=" + (/const VPA_WRAP_MAX_PER_PLAYER = ([\d.]+);/.exec(BILL)||[,"1"])[1] + ";");
+pass("the wrap's constants were lifted, not defaulted",
+     typeof VPA_NOT_PLAYED==="object" && VPA_NOT_PLAYED.has("raffle")
+     && VPA_FORMAT_WORDS.bingo90==="bingo",
+     "a default here would make every wrap check below it meaningless");
 eval(lift(BILL,"vpaFireCancelConfirm"));
 eval(lift(BILL,"vpaLocalHour"));
 eval(lift(BILL,"vpaLocalDate"));
@@ -134,9 +155,15 @@ var c=SENT[0]||{subject:"",html:""};
 pass("the subject says what it is", c.subject.indexOf("cancellation is confirmed")!==-1, c.subject);
 pass("the last day is in the subject, not just buried in the body", c.subject.indexOf("18 September 2026")!==-1);
 pass("the body names the venue", c.html.indexOf("The Pub")!==-1);
-pass("it says the service runs until the last day", c.html.indexOf("stays fully live until")!==-1);
+pass("it says the service runs until the last day", c.html.indexOf("keep playing right through")!==-1);
+pass("and that the screens keep earning until close",
+     c.html.indexOf("TVs keep showing your advertising")!==-1);
 pass("it says there is no further charge", c.html.indexOf("no further charge")!==-1);
-pass("it promises three months, matching the privacy page", c.html.indexOf("three months")!==-1);
+/* 90 DAYS, not "three months". Same promise, in the words the privacy page uses, so a venue
+   checking one against the other does not have to convert. Change this and you must change
+   venueplay/privacy.html too: that is what this check is for. */
+pass("it promises 90 days, matching the privacy page", c.html.indexOf("90 days")!==-1);
+pass("and links to the privacy page it is quoting", c.html.indexOf("/privacy")!==-1);
 pass("it tells them how to undo it", c.html.indexOf("Undo this cancellation")!==-1);
 pass("the confirmation has no Gflam Group or ABN either",
      c.html.indexOf("Gflam Group")===-1 && c.html.indexOf("ABN")===-1);
@@ -177,9 +204,22 @@ pass("a venue's day is its own, not Brisbane's",
 async function sweepWith(lastDay, hour, alreadySent){
   SENT=[]; AUDIT=[]; LASTDAY=lastDay; FAKE_HOUR=hour;
   TABLES={
-    vp_venues:[{id:"v1",name:"The Pub",founding_id:"f1",timezone:"Australia/Brisbane"}],
+    /* A VENUE WITH A HISTORY, because the wrap is now the point of this email.
+       created_at and max_players drive "for the last N months" and the per-player figure;
+       the sessions, games and players drive everything inside the box. Without them the
+       wrap returns an empty string and the checks below cannot tell a broken wrap from a
+       venue that never played. Ten months back, so the tenure reads in months not weeks. */
+    vp_venues:[{id:"v1",name:"The Pub",founding_id:"f1",timezone:"Australia/Brisbane",
+                created_at:new Date(END_TS*1000 - 305*86400000).toISOString(), max_players:20}],
     venueplay_founding:[{id:"f1",contact_email:"accounts@thepub.com.au",stripe_subscription_id:"sub_1"}],
     vp_venue_staff:[{venue_id:"v1",auth_user_id:"u1"}],
+    vp_sessions:[{id:"s1",venue_id:"v1",started_at:"2026-08-06T10:00:00.000Z",overage_approved_count:4},
+                 {id:"s2",venue_id:"v1",started_at:"2026-08-13T10:00:00.000Z",overage_approved_count:0}],
+    vp_games:[{session_id:"s1",format:"bingo90"},{session_id:"s1",format:"trivia"},
+              {session_id:"s2",format:"bingo90"},{session_id:"s2",format:"raffle"}],
+    vp_players:[{session_id:"s1"},{session_id:"s1"},{session_id:"s1"},
+                {session_id:"s2"},{session_id:"s2"},
+                {session_id:"s1",is_test:true}],
     vp_admin_audit: alreadySent ? [{action:"venue_last_day_emailed",target:"venue:v1"}] : [],
   };
   STRIPE={ sub_1:{ cancel_at: END_TS, items:{data:[{price:{id:"price_standard_m",unit_amount:300}}]} } };
@@ -194,8 +234,16 @@ pass("the subject NAMES THE DAY, which is what a publican plans around",
 pass("the body names the day too", d.html.indexOf("Friday is your last day")!==-1);
 pass("it says they keep that night in full, right through to close",
      d.html.indexOf("keep that night in full")!==-1);
-pass("the reason for telling them early is in plain words",
-     d.html.indexOf("Two days seemed fairer than finding out when the telly did not come on")!==-1);
+/* The "two days seemed fairer" line was cut on Dean's instruction, 17 Sep 2026. What
+   replaced it as the opening is the thing worth protecting: this email exists to be warm
+   before it is administrative, so it must still open by being sorry they are going and
+   naming how long they stayed. */
+pass("it opens by being sorry to see them go",
+     d.html.indexOf("We are sorry to see you go")!==-1);
+pass("and says how long they have been with us",
+     /pleasure having [^<]*with us for the last <b>/.test(d.html));
+pass("it says the screens keep earning to close, not just the games",
+     d.html.indexOf("keep playing your advertising until you shut")!==-1);
 /* Dean, 16 Sep: "can we put a warning about not getting the same price point?" It is the
    truest reason to think twice, so it must actually be in the email and it must carry
    THEIR rate, read off their own Stripe subscription. */
@@ -211,7 +259,10 @@ pass("a standard venue is warned the price will not wait",
 /* Dean: "remove gflam group from the bottom of it." */
 pass("the holding company and the ABN are NOT on a leaving email",
      d.html.indexOf("Gflam Group")===-1 && d.html.indexOf("ABN")===-1);
-pass("it promises three months", d.html.indexOf("three months")!==-1);
+pass("it promises 90 days", d.html.indexOf("90 days")!==-1);
+/* The wrap is the last appeal, so it has to actually be in there. Counted rather than
+   matched on wording, because the copy inside it will keep changing. */
+pass("it carries the wrap", d.html.indexOf("And that is a wrap")!==-1);
 pass("it offers the one click that keeps them", d.html.indexOf("Keep the venue running")!==-1);
 pass("the warning carries NO unsubscribe", d.html.toLowerCase().indexOf("unsubscribe")===-1);
 
