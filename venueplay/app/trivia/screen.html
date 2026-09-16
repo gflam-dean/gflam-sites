@@ -910,6 +910,13 @@
      re-fetches on screen_refresh) and NOT on the game screen, which had already loaded without
      one. That reads as "the logo doesn't work in games". */
   var reloadVenueLogo=function(){};
+  /* BEFORE the logo loader, not inside it. venueLogo() returns immediately when there is
+     no slug, and a demo has no slug on purpose, so anything inside it is dead code on the
+     one page the sales site actually shows. */
+  if(VP_DEMO){
+    var dnt0=document.getElementById("venueNameTag");
+    if(dnt0){ dnt0.textContent="The Rose and Crown"; dnt0.hidden=false; }
+  }
   (function venueLogo(){
     if(!VENUE_SLUG) return;
     function paint(url){
@@ -921,13 +928,6 @@
       el.src=url; el.style.display="block";
     }
     function load(){
-    /* A DEMO NAMES THE SAME PUB AS THE BINGO WALL. ?demo=1 resolves no venue on
-       purpose, so the fetch below returns nothing and the corner would stay blank while
-       the bingo wall beside it on see-a-night says The Rose and Crown. */
-    if(VP_DEMO){
-      var dnt=document.getElementById("venueNameTag");
-      if(dnt){ dnt.textContent="The Rose and Crown"; dnt.hidden=false; }
-    }
     try{
       /* Through the Worker, not straight at Supabase. The public grant on vp_venue_screen
          answered an unfiltered request with EVERY venue, which is the customer list. */
