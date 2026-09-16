@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '16 Sep 2026, 10:52 · 18536645';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '16 Sep 2026, 11:20 · 92da884c';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -192,10 +192,8 @@ export default {
          tomorrow on a night when the archive sweep has thrown. */
       try {
         const last = await vpaLastDaySweep(env);
-        if (last && last.sent) {
-          await vpaAudit(env, actor, 'last_day_emails_sent', null,
-            { sent: last.sent, checked: last.checked });
-        }
+        await vpaAudit(env, actor, 'last_day_sweep_ran', null,
+          { sent: last.sent, checked: last.checked, why: (last.why || []).slice(0, 12) });
       } catch (e2) {
         await vpaAudit(env, actor, 'last_day_sweep_failed', null,
           { error: String((e2 && e2.message) || e2).slice(0, 300) }).catch(() => {});
@@ -5445,7 +5443,15 @@ function vpaDaysBetween(aYmd, bYmd) {    // whole days from a to b, both YYYY-MM
    Sends once. An audit row per venue is the lock, so an hourly trigger cannot send the
    same venue the same warning twice. */
 async function vpaLastDaySweep(env) {
-  if (!env.RESEND_API_KEY || !env.STRIPE_SECRET_KEY) return { checked: 0, sent: 0 };
+  /* A SWEEP THAT RUNS AND SENDS NOTHING MUST NOT LOOK LIKE A CRON THAT NEVER FIRED.
+     On 16 Sep the first hour of this was spent unable to tell those two apart, which is
+     the same fault the session sweep already carried: "a sweep whose query failed used to
+     print exactly what a quiet night prints. Say which." So every venue considered leaves
+     a reason, and the caller records them whether or not anything was sent. */
+  const why = [];
+  if (!env.RESEND_API_KEY || !env.STRIPE_SECRET_KEY) {
+    return { checked: 0, sent: 0, why: ['no RESEND_API_KEY or STRIPE_SECRET_KEY on this Worker'] };
+  }
   const venues = await vpaSelect(env, 'vp_venues',
     'status=eq.active&cancel_at_period_end=is.true&select=id,name,founding_id,timezone') || [];
   let sent = 0;
@@ -5459,8 +5465,10 @@ async function vpaLastDaySweep(env) {
         'id=eq.' + encodeURIComponent(fid)
         + '&select=id,contact_email,stripe_subscription_id&limit=1');
       acct = rows && rows[0];
-    } catch (_) { continue; }
-    if (!acct || !acct.stripe_subscription_id) continue;
+    } catch (e) { why.push('account ' + fid + ': could not be read'); continue; }
+    if (!acct || !acct.stripe_subscription_id) {
+      why.push('account ' + fid + ': no Stripe subscription on file'); continue;
+    }
     let endTs = 0, rate = '', founding = false;
     try {
       const sub = await vpbStripeGet(env, 'subscriptions/'
@@ -5477,8 +5485,8 @@ async function vpaLastDaySweep(env) {
          the Worker's own STRIPE_PRICE_* variables. No second list to drift. */
       const pid = (item && item.price && item.price.id) || '';
       founding = !!pid && (pid === env.STRIPE_PRICE_MONTHLY || pid === env.STRIPE_PRICE_ANNUAL);
-    } catch (_) { continue; }
-    if (!endTs) continue;
+    } catch (e) { why.push('account ' + fid + ': Stripe would not answer'); continue; }
+    if (!endTs) { why.push('account ' + fid + ': no end date on the subscription'); continue; }
 
     for (const v of byAccount[fid]) {
       const tz = v.timezone;
@@ -5487,21 +5495,26 @@ async function vpaLastDaySweep(env) {
          says that correctly through a daylight saving change where an hour count does not. */
       const today = vpaLocalDate(Math.floor(Date.now() / 1000), tz);
       const lastDay = vpaLocalDate(endTs, tz);
-      if (vpaDaysBetween(today, lastDay) !== 2) continue;
+      const away = vpaDaysBetween(today, lastDay);
+      if (away !== 2) {
+        why.push(v.name + ': ' + away + ' day(s) out, not 2 (today ' + today + ', last day ' + lastDay + ')');
+        continue;
+      }
       /* FROM 8am, not AT 8am. An exact hour means one missed run loses the message
          entirely, because tomorrow the venue is one day out and no longer matches. That
          is not hypothetical: this shipped at 10:13 on the morning Wellshot was 47.9 hours
          from cancelling, so an exact-8 test would have skipped it at 11:00 and every hour
          after, and the only venue ever to cancel would have gone dark with no warning.
          The audit row below is what stops the hourly cron then sending it sixteen times. */
-      if (vpaLocalHour(tz) < 8) continue;
+      const hr = vpaLocalHour(tz);
+      if (hr < 8) { why.push(v.name + ': local time is ' + hr + ':00, waiting for 8am'); continue; }
 
       const already = await vpaSelect(env, 'vp_admin_audit',
         'action=eq.venue_last_day_emailed&target=eq.' + encodeURIComponent('venue:' + v.id)
         + '&select=id&limit=1').catch(() => []);
-      if (already && already.length) continue;
+      if (already && already.length) { why.push(v.name + ': already told'); continue; }
       const to = await vpaAccountContacts(env, acct, v.id);
-      if (!to.length) continue;
+      if (!to.length) { why.push(v.name + ': no email address on the account'); continue; }
 
       const day = vpaLocalWeekday(endTs, tz);
       const dated = vpaFmtDate(endTs);
@@ -5536,7 +5549,7 @@ async function vpaLastDaySweep(env) {
       sent++;
     }
   }
-  return { checked: venues.length, sent: sent };
+  return { checked: venues.length, sent: sent, why: why };
 }
 
 async function vpbCancelVenue(request, env, json) {

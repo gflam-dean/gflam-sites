@@ -8,21 +8,37 @@ on VenuePlay, so a bad push is a bad night in a room full of people.
 
     1. python3 tools/release-check.py      BEFORE the push
     2. push to main                        the site deploys itself; Workers do not
-    3. run any new SQL migration FIRST, then paste the Worker that needs it
-    4. paste each Worker into the Worker whose NAME matches the file
+    3. run any new SQL migration FIRST, then deploy the Worker that needs it
+    4. python3 tools/stamp-workers.py      then
+       python3 tools/deploy-worker.py --live <worker> <file>
     5. python3 tools/release-check.py      AGAIN, after. This is the step that
                                            gets skipped and the one that catches
-                                           a bad paste
+                                           a bad deploy
     6. if it touched a game, do the live list the gate prints. No tool here can
        open a browser or hear a pub
     7. python3 tools/prove-checks.py       before a release that matters, and
                                            after adding a check
 
-**"I pasted it" is not evidence.** /health answering with the right build is.
+**"I deployed it" is not evidence.** /health answering with the right build is.
 
-Workers are deployed by PASTING a file into the Cloudflare dashboard. There is no
-CLI deploy. Paste `venueplay-api-FULL.js`, never a stub. Paste
+Workers go up with `tools/deploy-worker.py`, over the Cloudflare API. It refuses a
+file whose BUILD stamp does not match its contents, refuses a LIVE Worker without
+`--live`, refuses the wrong file for a slot by name, keeps every existing variable
+and binding, and then waits for that Worker's own /health to answer with the new
+stamp before it says DEPLOYED.
+
+This paragraph used to say Workers were deployed by pasting into the dashboard and
+that there was no CLI deploy. That stopped being true on 10 September and the line
+was still here on 16 September, by which point it had cost a round trip of offering
+Dean a paste he did not need. Deploy `venueplay-api-FULL.js`, never a stub. Deploy
 `DEPLOY-partyplay-api.js`, never the SOURCE.
+
+**Do not `open -t` a Worker for someone to copy out of.** On 16 September a stray
+`Y` was typed into the first line of venueplay-game.js while it sat open in
+TextEdit, and Cloudflare rejected the upload with "ReferenceError: Y is not defined
+at worker.js:1:1". Nothing reached a venue, because the stamp check and then
+Cloudflare both refused it, but a file opened for a human to read can come back
+changed.
 
 `git push origin HEAD:main`. This worktree is detached on purpose, because `main`
 is checked out in another one, so plain `git push origin main` pushes a stale ref
@@ -86,7 +102,7 @@ claims from **the host**, never the bar. All four are enforced by the gate, in
     tools/prove-checks.py             breaks each check on purpose, 52 of 52
     tools/stamp-workers.py            BUILD stamps; run before build-worker.py
     venueplay/                        the site, auto-deploys from main
-    venueplay-backend/worker/         game + billing Workers, paste-deployed
+    venueplay-backend/worker/         game + billing Workers, deployed by tools/deploy-worker.py
     venueplay-backend/supabase/       migrations, run by hand, numbered once each
     partyplay-backend/                same shape; build-worker.py writes DEPLOY-
     Dropbox/GFLAM/VenuePlay/Pubs list/enrichment/README.md

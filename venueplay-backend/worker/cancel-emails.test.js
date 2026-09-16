@@ -223,7 +223,23 @@ pass("a founding venue gets the stronger heading",
 pass("and never the standard wording",
      f.html.indexOf("the price will not wait for you")===-1);
 
-pass("three days out, nothing yet", (await sweepWith("2026-09-19",8,false)).sent===0);
+/* A QUIET RUN MUST SAY WHY IT WAS QUIET. The first hour this was live was spent unable
+   to tell "the cron has not fired" from "it fired and decided not to send". */
+var quiet = await sweepWith("2026-09-19",8,false);
+pass("three days out, nothing yet", quiet.sent===0);
+pass("and it says WHY it sent nothing, rather than looking like a cron that never ran",
+     (quiet.why||[]).length===1 && quiet.why[0].indexOf("3 day(s) out, not 2")!==-1,
+     JSON.stringify(quiet.why));
+pass("the reason names the dates it compared, so a timezone fault is visible",
+     (quiet.why[0]||"").indexOf("today 2026-09-16")!==-1 && (quiet.why[0]||"").indexOf("last day 2026-09-19")!==-1);
+var early = await sweepWith("2026-09-18",6,false);
+pass("waiting for 8am says so, with the local hour it saw",
+     (early.why||[]).length===1 && early.why[0].indexOf("local time is 6:00, waiting for 8am")!==-1,
+     JSON.stringify(early.why));
+var told = await sweepWith("2026-09-18",8,true);
+pass("already told says so too", (told.why||[]).join().indexOf("already told")!==-1, JSON.stringify(told.why));
+pass("the scheduled handler records EVERY run, not only the ones that send",
+     /await vpaAudit\(env, actor, 'last_day_sweep_ran'/.test(BILL));
 pass("one day out, the moment has passed and it is not sent late",
      (await sweepWith("2026-09-17",8,false)).sent===0);
 pass("the last day itself, nothing", (await sweepWith("2026-09-16",8,false)).sent===0);
