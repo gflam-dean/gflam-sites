@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '16 Sep 2026, 11:20 · 92da884c';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '16 Sep 2026, 11:38 · b3c172a1';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -1191,7 +1191,9 @@ async function vpaHandleVenue(request, env, json) {
   const b = await request.json();
   const name = (b.name || '').trim();
   const slugIn = vpaSlugify(b.slug || b.name);
-  const timezone = (b.timezone || 'Australia/Brisbane').trim();
+  /* Only what HQ actually sent. The fallback is decided below, once the postcode has
+     been read, because "no timezone was supplied" is not a reason to assume Queensland. */
+  const timezoneIn = String(b.timezone || '').trim();
   const billing = b.billing || {};
 
   if (!name) return json({ error: 'Venue name is required.' }, 400);
@@ -1214,6 +1216,11 @@ async function vpaHandleVenue(request, env, json) {
      had a null state and the whole compliance feature was inert for exactly those venues. The
      self-serve path (vpaProvisionOneVenue) has always done this correctly; this is it catching up. */
   const venuePostcode = String((b.postcode || '')).replace(/\D/g, '').slice(0, 4);
+  /* HQ's Add venue form does not ask for a timezone, so this used to write Brisbane for
+     every hand-onboarded venue in the country. The postcode it DOES require is enough to
+     work it out, and it is the same helper the self-serve path uses, so the two cannot
+     disagree about what time it is at the same venue. */
+  const timezone = timezoneIn || vpaTimezoneFromPostcode(venuePostcode);
   const venueRow = { name: name, slug: slug, timezone: timezone };
   // HQ's Add venue form does not ask the question, so this stays null and HQ prompts for it.
   // A guess must never occupy this column: see vpaProvisionOneVenue.
@@ -2838,7 +2845,14 @@ async function vpaProvisionOneVenue(env, opts) {
       entity_type: declaredEntity,
       paid_entry_enabled: vpaPaidEntryDefault(declaredEntity, vpaStateFromPostcode(opts.postcode)),
       status: 'active',
-      timezone: 'Australia/Brisbane',
+      /* THE SAME ROW DERIVED au_state FROM THE POSTCODE AND THEN HARDCODED THE CLOCK.
+         Every self-serve venue outside Queensland was written Australia/Brisbane. Today
+         that is invisible for NSW, VIC, TAS and ACT because the clocks agree; from
+         5 October it is an hour wrong, and it is an hour wrong in three places at once:
+         sessions close at 4am instead of 3am, a members draw shows "Tonight" on the wrong
+         day for an hour, and the last-day email lands at 9am instead of 8. vpaTimezoneFromPostcode
+         has existed all along and one of the three creation paths was already using it. */
+      timezone: vpaTimezoneFromPostcode(opts.postcode),
     });
     created = true;
   }
