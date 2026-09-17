@@ -50,16 +50,38 @@ check('postcode on: postcode kept', gatedCapture({ collect_postcode: true }, EVE
 check('surname on: surname kept', gatedCapture({ collect_last_name: true }, EVERYTHING).last_name === 'Smith');
 
 /* 3. Consent. Two things must BOTH be true, and the timestamp only exists with the consent. */
-var optOn = gatedCapture({ collect_marketing_optin: true }, EVERYTHING);
-check('opt-in on and ticked: recorded, with a timestamp',
+/* A contact method has to be collected alongside, or the consent is a record of nothing. This
+   case used to pass with the tick alone, which was the fault. */
+var optOn = gatedCapture({ collect_marketing_optin: true, collect_email: true }, EVERYTHING);
+check('opt-in on, ticked, and an email to send to: recorded, with a timestamp',
   optOn.marketing_optin === true && typeof optOn.marketing_optin_at === 'string', optOn);
 check('opt-in on but NOT ticked: nothing recorded',
-  gatedCapture({ collect_marketing_optin: true }, { marketing_optin: false }).marketing_optin === undefined);
+  gatedCapture({ collect_marketing_optin: true, collect_email: true }, { email: 'a@b.com', marketing_optin: false }).marketing_optin === undefined);
 check('opt-in on, a truthy value that is not true, still nothing',
-  gatedCapture({ collect_marketing_optin: true }, { marketing_optin: 'yes' }).marketing_optin === undefined);
+  gatedCapture({ collect_marketing_optin: true, collect_email: true }, { email: 'a@b.com', marketing_optin: 'yes' }).marketing_optin === undefined);
 check('opt-in off but ticked anyway: nothing recorded, and no timestamp',
   (function(){ var r = gatedCapture({ collect_email: true }, EVERYTHING);
     return r.marketing_optin === undefined && r.marketing_optin_at === undefined; })());
+
+/* 3b. CONSENT WITH NOTHING TO CONTACT. A venue can leave the tick on and switch email and
+       mobile off, or collect both and have this player leave them blank. Either way the row says
+       somebody agreed to hear from the venue and there is nothing to send anything to. */
+check('opt-in on but NO contact collected: consent is not recorded',
+  gatedCapture({ collect_marketing_optin: true }, { first_name: 'Jane', marketing_optin: true }).marketing_optin === undefined);
+check('opt-in on, postcode only: still not recorded',
+  gatedCapture({ collect_marketing_optin: true, collect_postcode: true },
+               { postcode: '4220', marketing_optin: true }).marketing_optin === undefined);
+check('opt-in on with an EMAIL: recorded',
+  gatedCapture({ collect_marketing_optin: true, collect_email: true },
+               { email: 'jane@example.com', marketing_optin: true }).marketing_optin === true);
+check('opt-in on with a MOBILE: recorded',
+  gatedCapture({ collect_marketing_optin: true, collect_mobile: true },
+               { mobile: '0400000000', marketing_optin: true }).marketing_optin === true);
+check('opt-in on, email collected but this player left it blank: not recorded',
+  gatedCapture({ collect_marketing_optin: true, collect_email: true },
+               { email: '   ', marketing_optin: true }).marketing_optin === undefined);
+check('and no orphan consent timestamp is left behind either',
+  gatedCapture({ collect_marketing_optin: true }, { marketing_optin: true }).marketing_optin_at === undefined);
 
 /* 4. First name is on unless explicitly OFF, which is not the same as absent. */
 check('first name explicitly off: not kept', gatedCapture({ collect_first_name: false }, EVERYTHING).first_name === undefined);

@@ -130,6 +130,10 @@
       <div class="lbl">Marketing opt-in</div>
       <div class="sublbl">Whether the join screen asks the player to opt in to your venue's marketing.</div>
       <div class="row"><div class="t"><div class="n">Ask players to opt in</div><div class="d">Default OFF. When on, the tick is always shown UNTICKED, and the player must tick it themselves (this is a locked rule, never pre-ticked).</div></div><div class="sw" data-k="collect_marketing_optin"></div></div>
+      <!-- Consent to be contacted, with no way to contact them, is not consent to anything. The
+           Worker refuses to record it, so without this warning a venue would leave the tick on
+           all night, collect nothing, and reasonably conclude the feature is broken. -->
+      <p class="msg warn hidden" id="optinNoContact">The opt-in tick is on, but you are not collecting an email or a mobile, so there is nothing to add anyone to. Turn on Email or Mobile above, or these opt-ins will not be recorded.</p>
     </div>
 
     <div class="card">
@@ -291,6 +295,14 @@
     });
   }
 
+  /* Shown whenever the tick is on and there is nothing to send to. Repainted on every save as
+     well as on load, because the way into this state is switching Email back OFF later, long
+     after the opt-in was turned on and forgotten about. */
+  function paintOptinWarning(){
+    var el = $("optinNoContact"); if (!el) return;
+    var bad = !!state.collect_marketing_optin && !state.collect_email && !state.collect_mobile;
+    el.classList.toggle("hidden", !bad);
+  }
   function fill(s){
     state.name_display = s.name_display || "abbrev_last";
     // detect whether the new columns exist on the loaded row
@@ -306,6 +318,7 @@
     /* Any gated field already on is proof the account is allowed. */
     if(hasNewCols && GATED.some(function(k){ return !!s[k]; })) mayCollect=true;
     lockGated();
+    paintOptinWarning();
   }
 
   $("nameSeg").addEventListener("click", function(e){
@@ -367,6 +380,10 @@
           if($("nameSeg")) Array.prototype.forEach.call($("nameSeg").children, function(o){
             o.classList.toggle("on", o.getAttribute("data-nd") === state.name_display);
           });
+          /* And re-check the opt-in warning against what ACTUALLY saved, not what was asked for.
+             Switching Email back off is the ordinary way into this state, and it happens long
+             after the opt-in tick was turned on and forgotten. */
+          paintOptinWarning();
         }
         if(refused.length){
           /* Now we know. Lock them, so nobody flicks the same switch twice. */

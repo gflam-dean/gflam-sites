@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '17 Sep 2026, 15:36 · 30f38ee5';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Sep 2026, 16:11 · dafdc770';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -1197,7 +1197,22 @@ function gatedCapture(cfg, b) {
   if (cfg.collect_email && b.email != null)                     out.email      = s(b.email, 200);
   if (cfg.collect_mobile && b.mobile != null)                   out.mobile     = s(b.mobile, 40);
   if (cfg.collect_postcode && b.postcode != null)               out.postcode   = s(b.postcode, 10);
-  if (cfg.collect_marketing_optin && b.marketing_optin === true) {
+  /* CONSENT TO BE CONTACTED, WITH NO WAY TO CONTACT THEM, IS NOT CONSENT TO ANYTHING.
+
+     A venue can switch the marketing tick on and leave email and mobile off, or switch email off
+     later and leave the tick on. Every player then produces a row saying they agreed to hear
+     from the venue, with a consent timestamp, and nothing to send anything to. That is the worst
+     kind of record to hold: it looks like a marketing list, it is useless as one, and it is
+     personal information kept for a purpose it cannot serve, which is the part the Privacy Act
+     cares about. It also quietly teaches a venue the feature is broken, because the box was on
+     all night and the download is empty.
+
+     So the tick is only recorded when a contact method survives the gate with it. Tested on the
+     RESULT rather than on the settings, deliberately: a venue can be collecting email and this
+     particular player can have left it blank, and a consent with a blank address is the same
+     useless record. As at 17 Sep 2026 one venue of 23 collects the tick and it does collect a
+     contact method, so nothing live changes today. */
+  if (cfg.collect_marketing_optin && b.marketing_optin === true && (out.email || out.mobile)) {
     out.marketing_optin = true;
     out.marketing_optin_at = new Date().toISOString();
   }
