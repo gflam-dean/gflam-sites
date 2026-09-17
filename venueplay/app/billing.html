@@ -2014,12 +2014,22 @@
     api("/account/optin-export", {}).then(function(r){
       btn.disabled = false; btn.textContent = "Download opt-in list (CSV)";
       if (r.error){ showMsg(r.error); return; }
-      if (!r.count){ showMsg("No opt-ins to download yet.", true); return; }
+      /* "None yet" and "some are being held" are different facts and used to look identical.
+         A capture that reaches us without proof the phone was in the room is kept but left out
+         of this file, because an unverifiable opt-in is a Spam Act problem for the VENUE, not
+         for us. That is the right call. Saying nothing about it was not: the venue collected
+         details, somebody really consented, and the list simply did not contain them. */
+      if (r.held_unverified){
+        showMsg((r.count ? (r.count + " opt-in" + (r.count===1?"":"s") + " downloaded. ") : "No opt-ins to download yet. ")
+          + r.held_unverified + (r.held_unverified===1 ? " more is" : " more are")
+          + " being held because we could not confirm the phone was in the room at the time."
+          + " Email hello@venueplay.com.au and we will check them for you.", true);
+      } else if (!r.count){ showMsg("No opt-ins to download yet.", true); return; }
       var blob = new Blob([r.csv || ""], { type:"text/csv" });
       var url = URL.createObjectURL(blob);
       var a = document.createElement("a"); a.href = url; a.download = "venueplay-optins.csv";
       document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-      showMsg(r.count + " opt-in" + (r.count===1?"":"s") + " downloaded.", true);
+      if (!r.held_unverified) showMsg(r.count + " opt-in" + (r.count===1?"":"s") + " downloaded.", true);
     });
   }
   function initManagers(){

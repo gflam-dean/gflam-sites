@@ -2535,6 +2535,30 @@ def local_checks(which):
                    'change them in the other: venueplay-backend/supabase/venueplay-82-*.sql and '
                    'VPA_VENUE_WORDS_LOOSE/ANCHORED in the Worker')
 
+    # AN OPT-IN A VENUE CANNOT SEE MUST BE ONE A VENUE IS TOLD ABOUT.
+    #
+    # Broadcast bingo has no session, so a capture arriving without a player token cannot be
+    # vouched for and is stored, marked during_game false, and left out of v_vp_player_optins.
+    # That exclusion is correct and stays: an unverifiable opt-in is a Spam Act problem for the
+    # VENUE. What was wrong is that nobody was told. The venue collected details, somebody really
+    # consented, and the list simply did not contain them. As at 17 Sep 2026, 9 of 30 captures
+    # arrive with no token, so it is about a third of them the day a venue switches collection on.
+    if which in ('both', 'venueplay'):
+        head('D. A venue is told what its opt-in list is not showing')
+        t = os.path.join(ROOT, 'tools', 'test-optin-held-back.js')
+        if not os.path.isfile(t):
+            ok('the held-back opt-in test exists', False, why='tools/test-optin-held-back.js is missing')
+        else:
+            r = subprocess.run([JSC, t], capture_output=True, text=True, timeout=120)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+            n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
+            ok('held-back opt-ins are counted and reported, never silent (%d checks)' % n,
+               r.returncode == 0 and 'PASS' in out and not bad,
+               detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
+               why='run jsc tools/test-optin-held-back.js. A venue that collected details and '
+                   'sees an empty file concludes the product does not work')
+
     head('E. The Worker you are about to paste')
     dep = os.path.join(PARTYPLAY_BACK, 'worker', 'DEPLOY-partyplay-api.js')
     if which in ('both', 'partyplay') and os.path.isfile(dep):

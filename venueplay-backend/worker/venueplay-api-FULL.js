@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '17 Sep 2026, 15:59 · 349bc118';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Sep 2026, 16:08 · 4c374830';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -7134,8 +7134,33 @@ async function vpaOptinCsv(env, venues) {
       out.push([vname[r.venue_id] || '', r.first_name, r.last_name, r.email, r.mobile, r.postcode, r.opted_in_at]);
     }
   }
+  /* AND SAY WHAT IS BEING HELD BACK, rather than letting it vanish.
+
+     A capture that arrives without a player token cannot be vouched for: broadcast bingo has no
+     session, so anyone who knows a venue exists could post a forged opt-in with a consent
+     timestamp, which is a Spam Act problem for the VENUE. Those rows are stored, marked
+     during_game false, and excluded from this file by v_vp_player_optins. That exclusion is the
+     right call and it stays.
+
+     What was wrong is that nobody was ever told. The venue collected details, a real person
+     consented, and the list simply did not contain them, with nothing anywhere saying so. Silence
+     is the worst of the three possible behaviours: worse than handing over an unverifiable row,
+     and worse than refusing loudly. As at 17 Sep 2026, 9 of 30 captures arrive with no token, so
+     this is roughly a third of them the day a venue switches collection on.
+
+     Best effort on purpose. A venue's real list must never fail to download because the count of
+     what is missing could not be worked out. */
+  let held = 0;
+  if (ids.length) {
+    try {
+      const h = await vpaSelect(env, 'vp_captures',
+        'venue_id=in.(' + ids.map(encodeURIComponent).join(',') + ')'
+        + '&marketing_optin=is.true&during_game=is.false&select=id');
+      held = (h || []).length;
+    } catch (_) { held = 0; }
+  }
   return { csv: [header].concat(out).map((cols) => cols.map(vpbCsvCell).join(',')).join('\n') + '\n',
-           count: out.length };
+           count: out.length, held_unverified: held };
 }
 
 /* GET /admin/optin-export?venue_id=...   or ?founding_id=...
@@ -7166,8 +7191,9 @@ async function vpaHandleAdminOptinExport(request, env, json) {
   const res = await vpaOptinCsv(env, venues);
   await vpaAudit(env, actor, 'optin_exported_by_admin',
     venueId ? ('venue:' + venueId) : ('account:' + foundingId),
-    { rows: res.count, venues: venues.map((v) => v.name) }).catch(() => {});
+    { rows: res.count, held_unverified: res.held_unverified, venues: venues.map((v) => v.name) }).catch(() => {});
   return json({ ok: true, csv: res.csv, count: res.count,
+                held_unverified: res.held_unverified,
                 venues: venues.map((v) => v.name) });
 }
 
@@ -7343,8 +7369,9 @@ async function vpbOptinExport(request, env, json) {
   /* o.venues is resolved from THEIR OWN staff rows, never from client input, so this stays
      scoped to their venues exactly as before. Same builder as the HQ route now. */
   const res = await vpaOptinCsv(env, o.venues);
-  await vpaInsert(env, 'vp_admin_audit', { ...vpbActorFields(o), action: 'optin_exported', target: 'account:' + o.account.id, detail: { rows: res.count } }, false).catch(() => {});
-  return json({ ok: true, csv: res.csv, count: res.count });
+  await vpaInsert(env, 'vp_admin_audit', { ...vpbActorFields(o), action: 'optin_exported', target: 'account:' + o.account.id,
+    detail: { rows: res.count, held_unverified: res.held_unverified } }, false).catch(() => {});
+  return json({ ok: true, csv: res.csv, count: res.count, held_unverified: res.held_unverified });
 }
 
 /* --- POST /account/managers : list the account's managers (role manager) with their toggles. --- */

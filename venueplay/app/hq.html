@@ -1478,7 +1478,17 @@
     workerGet("/admin/optin-export?venue_id="+encodeURIComponent(id)).then(function(r){
       btn.disabled=false; btn.textContent="Download player opt-ins";
       if(r && r.error){ if(msg){ msg.style.color="var(--roll)"; msg.textContent=r.error; } return; }
-      if(!r.count){ if(msg){ msg.style.color="var(--faint)"; msg.textContent="Nothing to download: no opt-ins on file for this venue."; } return; }
+      /* Held rows are the reason HQ exists on this screen: a venue rings up asking where their
+         opt-ins went, and this is the answer. Shown whether or not there is a file to download. */
+      var heldNote = r.held_unverified
+        ? (" " + r.held_unverified + (r.held_unverified===1?" opt-in is":" opt-ins are")
+           + " held back: no proof the phone was in the room, so they are stored and excluded.")
+        : "";
+      if(!r.count){
+        if(msg){ msg.style.color = r.held_unverified ? "var(--roll)" : "var(--faint)";
+          msg.textContent = "Nothing to download: no opt-ins on file for this venue." + heldNote; }
+        return;
+      }
       var name=((r.venues&&r.venues[0])||"venue").replace(/[^A-Za-z0-9]+/g,"-").toLowerCase();
       var blob=new Blob([r.csv],{type:"text/csv;charset=utf-8"});
       var a=document.createElement("a");
@@ -1486,7 +1496,7 @@
       a.download="optins-"+name+"-"+new Date().toISOString().slice(0,10)+".csv";
       document.body.appendChild(a); a.click();
       setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 0);
-      if(msg){ msg.style.color="var(--win)"; msg.textContent=r.count+(r.count===1?" person":" people")+" downloaded."; }
+      if(msg){ msg.style.color="var(--win)"; msg.textContent=r.count+(r.count===1?" person":" people")+" downloaded."+heldNote; }
     }).catch(function(e){
       btn.disabled=false; btn.textContent="Download player opt-ins";
       if(msg){ msg.style.color="var(--roll)"; msg.textContent=String((e&&e.message)||e); }
