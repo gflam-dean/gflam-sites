@@ -54,11 +54,17 @@ var gateSaysFounding = vpaFoundingStateOk;
 
 /* And the HQ path, which is the one that was wrong. It loops the live codes and
    must reach the same answer as checkout for the same postcode. */
-var hq = /function vpaFoundingForPostcode\(env, postcode\)[\s\S]*?\n\}/.exec(SRC);
+/* THE HQ PATH NO LONGER ASKS THE POSTCODE AT ALL, and that is the fix, not a gap.
+   vpaFoundingForPostcode was deleted on 17 Sep 2026: checkout had already stopped pricing off
+   the postcode at Dean's instruction, and leaving the card link and the welcome email asking it
+   meant a Queensland venue we onboarded by hand paid $3.00 while the identical venue that
+   signed itself up through the NSW page paid $2.50. Deleting the other two answers is the only
+   reliable way to keep one. */
+var hq = /function vpaFoundingOpenNow\(env\)[\s\S]*?\n\}/.exec(SRC);
 pass("the HQ path exists", !!hq);
 if (hq) { eval(hq[0]); }
 function hqSaysFounding(postcode, codeState) {
-  return vpaFoundingForPostcode({ FOUNDING_CODES: codeState + '-SEP-2026' }, postcode);
+  return vpaFoundingOpenNow({ FOUNDING_CODES: codeState + '-SEP-2026' });
 }
 
 print("\nTHE ORDINARY CASE: a venue in the state the code is for");
@@ -101,20 +107,30 @@ print("\nAND A VENUE IN THE WRONG STATE MUST NOT");
 pass("a postcode that is not a postcode pays standard", gateSaysFounding('', 'QLD') === false);
 pass("nonsense pays standard", gateSaysFounding('abcd', 'QLD') === false);
 
-print("\nHQ ONBOARDING AND SELF-SERVE MUST AGREE, FOR EVERY POSTCODE");
-/* Two links to the same product. A venue that qualifies through /qld must qualify
-   through the welcome email too, or its price depends on which door it came in. */
-var disagree = [], checked = 0;
+print("\nHQ ONBOARDING MUST NEVER BE THE DEARER DOOR");
+/* Two links to the same product. This used to compare the two answers postcode by postcode,
+   because both paths asked the postcode and disagreed about it. The HQ path no longer asks,
+   so the test that matters now is the one that was really being protected all along: a venue
+   we set up BY HAND must never be charged more than the same venue signing itself up. If
+   somebody reintroduces a postcode test on that side, this goes red for thousands of pairs. */
+var dearer = [], checked = 0;
 ['QLD','NSW','VIC','SA','WA','TAS','NT','ACT'].forEach(function (st) {
   for (var pc = 200; pc <= 9999; pc += 1) {
     var p = String(pc);
     while (p.length < 4) p = '0' + p;
     checked++;
-    if (gateSaysFounding(p, st) !== hqSaysFounding(p, st)) disagree.push(st + ' ' + p);
+    if (gateSaysFounding(p, st) === true && hqSaysFounding(p, st) !== true) dearer.push(st + ' ' + p);
   }
 });
-pass("both paths agree on all " + checked + " postcode and state pairs", disagree.length === 0,
-     disagree.length ? (disagree.length + " disagree, e.g. " + disagree.slice(0, 4).join(', ')) : "");
+pass("HQ is never dearer than self-serve, across all " + checked + " postcode and state pairs",
+     dearer.length === 0,
+     dearer.length ? (dearer.length + " dearer, e.g. " + dearer.slice(0, 4).join(', ')) : "");
+/* And it takes no postcode, so there is no argument left to get wrong. Same answer for a
+   Brisbane postcode, a Sydney one and a blank one, while the deal is open. */
+pass("the HQ price does not move with the postcode",
+     hqSaysFounding('4000','NSW') === hqSaysFounding('2000','NSW') &&
+     hqSaysFounding('','NSW') === hqSaysFounding('2000','NSW'));
+pass("and it is standard once the last code comes out", vpaFoundingOpenNow({ FOUNDING_CODES: '' }) === false);
 
 print("\nEVERY STATE MAPS SOMEWHERE, AND NOTHING MAPS TWICE");
 var seen = {}, clash = [];

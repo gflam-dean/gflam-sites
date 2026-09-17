@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '17 Sep 2026, 13:43 · 3416c2e0';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Sep 2026, 13:59 · d8bfe204';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -319,6 +319,35 @@ async function handleCheckout(request, env, json) {
     else if (totalSeats >= 4000) { tierCoupon = env.STRIPE_COUPON_5;  tierPct = 5;  tierLabel = 'Large group'; }
   }
 
+  /* WHO IS THIS, BEFORE ANYTHING IS WRITTEN DOWN. This lookup and the guard under it used to
+     sit below the insert, so every refused duplicate still left a pending row behind. Harmless
+     on its own, since pending rows are excluded from this very query and from the account
+     lists, but it is litter that accumulates fastest on exactly the venue who is confused
+     enough to be signing up twice, and HQ would be reading it. Ask first, write second. */
+  const prior = await sbPriorAccounts(env, email, (b.mobile || '').trim(), null);
+
+  /* ONE ACCOUNT PER PERSON. Nothing used to stop a second ACCOUNT being created, only a second
+     free month, and there is no unique index on contact_email. So a venue that signed up twice,
+     because the first attempt looked like it failed or because they were sent a second link, got
+     a second founding row and a SECOND STRIPE SUBSCRIPTION billed in full alongside the first.
+
+     Worse, they could not see it to stop it: vpbRequireOwner resolves one account from
+     venues[0].founding_id, so the duplicate never appeared on their billing page and there was no
+     button anywhere that would cancel it. The add-card path has guarded exactly this since it was
+     written. Checkout never did. Found by audit, 17 Sep 2026.
+
+     A LIVE SUBSCRIPTION IS THE TEST, not merely having a row. An abandoned pending signup is
+     already excluded by the query, and a venue that genuinely cancelled and is coming back must
+     not be turned away at the door. */
+  const live = prior.filter(function (a) { return !!a.stripe_subscription_id; })[0];
+  if (live) {
+    return json({ error: 'That email already has a VenuePlay account with billing set up'
+      + (live.venue_name ? ' (' + live.venue_name + ')' : '') + '. '
+      + 'Sign in and use Add a venue instead, so it all stays on one bill. '
+      + 'If that does not look right, email hello@venueplay.com.au and we will sort it out.',
+      existing_account: true }, 409);
+  }
+
   // 1) Save the lead (status 'pending' until the card is added). For a group we
   //    store the full venue list so provisioning can create each one.
   const row = await sbInsert(env, {
@@ -386,34 +415,25 @@ async function handleCheckout(request, env, json) {
   const ONE_MONTH = 30 * 24 * 60 * 60;
   const MIN_TRIAL = nowTs + 3 * 24 * 60 * 60; // Stripe rejects any trial_end under ~2 days out
   const launchTs = Math.max(nowTs + ONE_MONTH, MIN_TRIAL);
-  // Returning-venue guard: an email/mobile that already had a (non-pending) account does
-  // NOT get another free month (the free month is for NEW venues) - they are billed from
-  // signup on whatever price is current, and flagged for HQ via subscription metadata.
-  // Stripe still needs trial_end >= ~2 days, so returning venues use the minimum floor.
-  const returning = await sbReturningAccount(env, email, (b.mobile || '').trim(), rowId);
-  /* ONE ACCOUNT PER PERSON. sbReturningAccount was only ever used to withhold the second free
-     month; nothing stopped a second ACCOUNT being created, and there is no unique index on
-     contact_email. So a venue that signed up twice, because the first attempt looked like it
-     failed or because they were sent a second link, got a second founding row and a SECOND
-     STRIPE SUBSCRIPTION billed in full alongside the first.
-     Worse, they could not see it: vpbRequireOwner resolves a single account from
-     venues[0].founding_id, so the duplicate never appears on their billing page and they
-     cannot cancel it themselves. The add-card path has guarded exactly this since it was
-     written; checkout never did. Found by audit, 17 Sep 2026.
-     A live subscription is the test, not merely having a row: an abandoned pending signup is
-     excluded by sbReturningAccount already, and someone who genuinely cancelled and is coming
-     back should not be stopped at the door. */
-  if (returning) {
-    const live = await vpaSelect(env, 'venueplay_founding',
-      'or=(contact_email.eq.' + encodeURIComponent(email) + ')&status=neq.pending'
-      + '&stripe_subscription_id=not.is.null&select=id,venue_name&limit=1').catch(() => []);
-    if (live && live.length) {
-      return json({ error: 'That email already has a VenuePlay account with billing set up. '
-        + 'Sign in and use Add a venue instead, so it all stays on one bill. '
-        + 'If that does not look right, email hello@venueplay.com.au and we will sort it.',
-        existing_account: true }, 409);
-    }
-  }
+  /* THE FREE MONTH FOR A VENUE COMING BACK. Every page on the site promises a free month with no
+     conditions on it, and this quietly gave three days to anyone who had ever held an account.
+     A pub that was with us for two years, left, and came back eighteen months later was treated
+     as a chancer, and the first thing that happened was a charge they had been told would not
+     come. That is a bad way to win somebody back.
+
+     So the month is given unless they held an account within the last twelve months, which is the
+     only case the short trial was ever really for: leaving and re-signing to stay free. created_at
+     is the START of the previous account rather than when it ended, which is the generous way
+     round and deliberately so. A venue on its second year is not the venue this guards against.
+
+     Dean, 17 Sep 2026, set the same intent on venues added to a paying account. This is the same
+     answer at the other door. */
+  const TWELVE_MONTHS = 365 * 24 * 60 * 60 * 1000;
+  const recent = prior.filter(function (a) {
+    const t = Date.parse(a.created_at || '');
+    return isFinite(t) && (Date.now() - t) < TWELVE_MONTHS;
+  })[0];
+  const returning = !!recent;
   const trialTs = returning ? MIN_TRIAL : launchTs;
   const site = (env.SITE_URL || '').replace(/\/+$/, '');
   const label = isGroup ? (venueCount + ' venues') : venues[0].name;
@@ -740,20 +760,37 @@ function sbHeaders(env) {
     'Content-Type': 'application/json',
   };
 }
-// Has this email or mobile already had a real (non-pending) account? Used to deny a
-// second free month to a venue that left and came back. Best-effort: any lookup failure
-// returns false so a signup is never blocked by it.
-async function sbReturningAccount(env, email, mobile, excludeId) {
+/* EVERY REAL ACCOUNT THIS EMAIL OR MOBILE ALREADY HAS, newest first.
+
+   This used to return a bare true/false and was used for one thing: withholding the second free
+   month. Two separate faults came out of that on 17 Sep 2026, and both needed the ROWS rather
+   than the boolean, so it returns them:
+
+     - nothing stopped a second ACCOUNT being created, only a second free month, and a duplicate
+       account is a duplicate Stripe subscription the venue cannot even see to cancel
+     - "returning" was treated as "has ever had an account", so a venue that left two years ago
+       and came back was given three days while every page promised them a month
+
+   Best effort on purpose. Any lookup failure returns [] so a signup is never blocked by our own
+   database being slow, which is the right way round: a missed duplicate is a phone call, a
+   refused signup is a lost venue. */
+async function sbPriorAccounts(env, email, mobile, excludeId) {
   try {
     const ors = ['contact_email.eq.' + encodeURIComponent(email)];
     if (mobile) ors.push('mobile.eq.' + encodeURIComponent(mobile));
-    const q = 'venueplay_founding?or=(' + ors.join(',') + ')&status=neq.pending&id=neq.' +
-              encodeURIComponent(excludeId) + '&select=id&limit=1';
+    /* excludeId is optional. This runs BEFORE the lead row is written now, so there is usually
+       nothing to exclude, and sending id=neq.undefined asks Postgrest to compare a uuid column
+       against the string "undefined", which errors, returns [], and silently reports that a
+       venue with three accounts has none. */
+    const q = 'venueplay_founding?or=(' + ors.join(',') + ')&status=neq.pending' +
+              (excludeId ? ('&id=neq.' + encodeURIComponent(excludeId)) : '') +
+              '&select=id,venue_name,created_at,status,stripe_subscription_id' +
+              '&order=created_at.desc&limit=5';
     const res = await fetch(env.SUPABASE_URL + '/rest/v1/' + q, { headers: sbHeaders(env) });
-    if (!res.ok) return false;
+    if (!res.ok) return [];
     const rows = await res.json();
-    return Array.isArray(rows) && rows.length > 0;
-  } catch (e) { return false; }
+    return Array.isArray(rows) ? rows : [];
+  } catch (e) { return []; }
 }
 async function sbInsert(env, obj) {
   const res = await fetch(env.SUPABASE_URL + '/rest/v1/venueplay_founding', {
@@ -3035,7 +3072,13 @@ function vpaStateFromPostcode(pc) {
    and returned false when it came back null.
 
    So the same venue in the same live window got a different price purely by which
-   link they signed up through. A 200-player venue in SA 5800 onboarded by HQ pays
+   link they signed up through. THIS HAPPENED AGAIN, and the same way: on 17 Sep 2026
+   checkout stopped pricing off the postcode entirely and those same two paths were
+   left behind, so a Queensland venue we onboarded by hand paid $3.00 while the one
+   that signed itself up paid $2.50. Both now ask vpaFoundingOpenNow, which takes no
+   postcode at all, because the only reliable fix for one answer in three places is
+   to delete the other two. What is below stays because checkout still records
+   whether the state matched, as metadata and not as money. A 200-player venue in SA 5800 onboarded by HQ pays
    $3.00 instead of $2.50 a head, for life, silently: the welcome email is built
    from the same broken gate, so the quoted rate matches the wrong charge and
    nothing looks inconsistent. About $1,200 a year, or $1,320 on annual.
@@ -3420,13 +3463,29 @@ async function vpaCardLink(env, foundingId) {
  * env FOUNDING_CODES is the list of codes that are live right now, so retiring a state's window
  * is deleting its code from that variable. There is deliberately no count anywhere.
  */
-function vpaFoundingForPostcode(env, postcode) {
-  const codes = (env.FOUNDING_CODES || '').split(',').map(function (c) { return c.trim(); }).filter(Boolean);
-  if (!codes.length) return false;
-  for (const code of codes) {
-    if (vpaFoundingStateOk(postcode, String(code.split('-')[0] || ''))) return true;
-  }
-  return false;
+/* IS THE DEAL OPEN AT ALL RIGHT NOW. Not "is this venue's state open", which is what the
+   function this replaces asked.
+
+   Checkout stopped pricing off the postcode on 17 Sep 2026, at Dean's instruction: "if it's more
+   than one venue and they have one in NSW and one in QLD I am happy for the same price between
+   the 2." It became `const founding = codeActive` and the postcode now only rides along in the
+   Stripe metadata so a cross-state signup is visible.
+
+   Two other paths never got that change and were still asking vpaFoundingForPostcode, which is
+   true only when the postcode's state matches a live code:
+
+     - /add-card, the card link HQ sends when we set a venue up for someone
+     - the HQ welcome email, which quotes the rate IN WRITING
+
+   So a Queensland venue we set up by hand was charged $3.00 and told $3.00, while the identical
+   venue signing itself up through the NSW page paid $2.50. Same product, same week, two prices,
+   and the expensive one went to the venues Dean was personally selling to.
+
+   A venue HQ sets up by hand carries no founding code, so there is nothing to match. The honest
+   equivalent of `codeActive` here is simply whether the deal is running. When it ends, every code
+   comes out of FOUNDING_CODES and all three paths go to standard together. */
+function vpaFoundingOpenNow(env) {
+  return (env.FOUNDING_CODES || '').split(',').map(function (c) { return c.trim(); }).filter(Boolean).length > 0;
 }
 
 /* GET /add-card?f=<founding id>&t=<token>
@@ -3465,10 +3524,12 @@ async function vpaAddCardRedirect(request, env) {
 
     const rows = await vpaSelect(env, 'venueplay_founding',
       'id=eq.' + encodeURIComponent(foundingId)
-      // postcode IS in this list on purpose: vpaFoundingForPostcode below reads it, and
-      // without it f.postcode was undefined, founding came back false, and every venue
-      // onboarded from HQ was quietly put on the STANDARD price instead of the founding
-      // one they were promised. Self-serve signup was never affected; only this path.
+      /* postcode is still selected, but it NO LONGER DECIDES THE PRICE. It used to: a missing
+         postcode here made founding come back false and every venue onboarded from HQ was
+         quietly put on the STANDARD price. That was fixed by selecting the column; on 17 Sep
+         2026 the price stopped asking the postcode at all, on any path. Left in the select
+         because the Checkout session still carries it and because deleting a column from a
+         select to "tidy up" is how that fault happened the first time. */
       + '&select=id,venue_name,contact_email,mobile,max_seats,plan,status,stripe_subscription_id,postcode');
     const f = rows && rows[0];
     if (!f) return page('We could not find that account', 'Reply to your welcome email and we will sort it out.');
@@ -3480,8 +3541,9 @@ async function vpaAddCardRedirect(request, env) {
     const plan = f.plan === 'annual' ? 'annual' : 'monthly';
     const seats = Math.max(parseInt(f.max_seats, 10) || 0, 1);
     // Founding vs standard is decided at the moment they add the card, on the SAME rule as a
-    // self-serve signup: is this venue's state inside a live founding window. Nothing counts spots.
-    const founding = vpaFoundingForPostcode(env, f.postcode);
+    // self-serve signup: is the deal open. Not the postcode, which stopped deciding the price at
+    // checkout on 17 Sep and left this path quietly charging $3.00 for the same thing.
+    const founding = vpaFoundingOpenNow(env);
     const price = founding
       ? (plan === 'annual' ? env.STRIPE_PRICE_ANNUAL : env.STRIPE_PRICE_MONTHLY)
       : (plan === 'annual' ? env.STRIPE_PRICE_STANDARD_ANNUAL : env.STRIPE_PRICE_STANDARD_MONTHLY);
@@ -3605,8 +3667,10 @@ async function vpaFireHqWelcome(env, o) {
     html = vpaTplSections(html, { card: !comp, comp: comp });
 
     const plan = o.plan === 'annual' ? 'annual' : 'monthly';
-    // Same rule as checkout and as the card link: the venue's state, not a count.
-    const founding = !comp && vpaFoundingForPostcode(env, o.postcode);
+    // Same rule as checkout and as the card link: is the deal open, not where they are. This
+    // email quotes the rate in writing, so pricing it differently to checkout puts a number in
+    // front of a venue that we then do not charge them.
+    const founding = !comp && vpaFoundingOpenNow(env);
     const rate = founding ? (plan === 'annual' ? 2.30 : 2.50)
                           : (plan === 'annual' ? 2.85 : 3.00);
     const seats = parseInt(o.seats, 10) || 0;

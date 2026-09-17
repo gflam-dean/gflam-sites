@@ -2374,6 +2374,42 @@ def local_checks(which):
                    'happening, which means groups are being charged to expand, or it started '
                    'happening where it should not, which is money given away')
 
+    # SIGNING UP: THE FREE MONTH, AND ONE BILL PER PERSON.
+    #
+    # Three faults found on 17 Sep 2026, all of which reached Stripe:
+    #   - one email could open a SECOND subscription, and because vpbRequireOwner resolves an
+    #     account from venues[0].founding_id the duplicate never appeared on their billing page,
+    #     so they could not cancel the thing they were being charged for
+    #   - anyone who had ever held an account got a 3-day trial while every page on the site
+    #     promised a free month, so a venue coming back after two years was charged in three days
+    #   - checkout stopped pricing off the postcode, and the card link and the HQ welcome email
+    #     did not, so a Queensland venue we onboarded by hand paid $3.00 while the identical one
+    #     that signed itself up paid $2.50. That is the SECOND time those two paths have been
+    #     left behind by a pricing change; see the comment above vpaFoundingStateOk.
+    #
+    # The test RUNS handleCheckout and vpaFireHqWelcome with only global fetch replaced, so the
+    # real query, the real trial arithmetic and the real form sent to Stripe are all exercised,
+    # and it reads the assertions back out of that form. Proved against four mutations.
+    if which in ('both', 'venueplay'):
+        head('D. Signing up: the free month, and one bill per person')
+        t = os.path.join(ROOT, 'tools', 'test-checkout-trial-and-duplicates.js')
+        if not os.path.isfile(t):
+            ok('the signup billing test exists', False,
+               why='tools/test-checkout-trial-and-duplicates.js is missing, so nothing is '
+                   'checking that one email cannot open two subscriptions')
+        else:
+            r = subprocess.run([JSC, t], capture_output=True, text=True, timeout=120)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+            n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
+            ok('one email, one bill, and the promised free month (%d checks)' % n,
+               r.returncode == 0 and 'PASS' in out and not bad,
+               detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
+               why='run jsc tools/test-checkout-trial-and-duplicates.js. This guards money at '
+                   'the front door: a duplicate subscription the venue cannot see to cancel, a '
+                   'charge landing three days after we promised a free month, or two prices for '
+                   'the same venue depending which link they came through')
+
     head('E. The Worker you are about to paste')
     dep = os.path.join(PARTYPLAY_BACK, 'worker', 'DEPLOY-partyplay-api.js')
     if which in ('both', 'partyplay') and os.path.isfile(dep):
