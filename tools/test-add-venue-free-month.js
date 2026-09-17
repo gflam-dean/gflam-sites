@@ -24,11 +24,18 @@ console = { log: function (m) { LOGS.push(String(m)); } };
 var MONTHLY = 'price_founding_monthly', ANNUAL = 'price_founding_annual';
 var ENV = { STRIPE_PRICE_MONTHLY: MONTHLY, STRIPE_PRICE_ANNUAL: ANNUAL, STRIPE_SECRET_KEY: 'x', SUPABASE_URL: 'https://example.invalid' };
 
-var calls, patched;
+var calls, patched, provisioned;
 
 /* Everything below here is a stand-in for the network. vpbAddVenue is NOT stubbed. */
 function arm(opts) {
-  calls = []; patched = [];
+  calls = []; patched = []; provisioned = [];
+  /* Venues already on the account with the SAME NAME. vpbAddVenue reads these to work out
+     whether this is a different pub that happens to share a name, a live one being added twice,
+     or one coming back from a cancellation. */
+  vpaSelect = function (env, table, q) {
+    if (table === 'vp_venues' && /name=eq/.test(q)) return Promise.resolve(opts.sameName || []);
+    return Promise.resolve([]);
+  };
   var status = opts.status || 'active';
   var priceId = ('priceId' in opts) ? opts.priceId : MONTHLY;
 
@@ -38,7 +45,7 @@ function arm(opts) {
       venues: [{ id: 'v_existing' }], perms: null, adminActor: null, authUserId: 'user_1',
     });
   };
-  vpaProvisionOneVenue = function () { return Promise.resolve({ created: true, venue: { id: 'v_new', slug: 'new-venue' } }); };
+  vpaProvisionOneVenue = function (env, o) { provisioned.push(o); return Promise.resolve({ created: true, venue: { id: 'v_new', slug: 'new-venue' } }); };
   vpbAccountTotal = function () { return Promise.resolve(90); };
   vpbSubItem = function () {
     return Promise.resolve({
@@ -60,7 +67,7 @@ function arm(opts) {
 
 function run(opts) {
   arm(opts);
-  var req = { json: function () { return Promise.resolve({ name: 'The New Pub', players: opts.players, postcode: '4220' }); } };
+  var req = { json: function () { return Promise.resolve({ name: 'The New Pub', players: opts.players, postcode: ('postcode' in opts) ? opts.postcode : '4220' }); } };
   var out = null;
   vpbAddVenue(req, ENV, function (body) { return { body: body }; }).then(function (r) { out = r; });
   drainMicrotasks();
@@ -121,6 +128,74 @@ check('credit refused: said so loudly, because charged-and-not-credited is the o
   LOGS.some(function (l) { return /FREE MONTH CREDIT FAILED/.test(l); }), LOGS);
 check('credit refused: the page is not told they got one', r6.free_month_cents === 0, r6.free_month_cents);
 check('credit refused: the venue row is not marked as credited', patched.length === 0, patched);
+
+/* ---------------------------------------------------------------------------
+   SAME NAME, AND COMING BACK AFTER A CANCELLATION.
+   Dean, 17 Sep 2026: "then they arent cancelling a venue and readding it right."
+   --------------------------------------------------------------------------- */
+print('same name, and coming back');
+
+function venue(over) {
+  var v = { id: 'v_old', name: 'The New Pub', slug: 'the-new-pub', status: 'active',
+            suspended_reason: null, cancel_at_period_end: false, postcode: '4220', max_players: 30 };
+  for (var k in over) v[k] = over[k];
+  return v;
+}
+
+/* A genuinely different pub that happens to share a name. A hundred Royal Hotels exist and
+   seven percent of venue names are shared, so this is the ordinary case, not the exotic one. */
+var rA = run({ players: 50, plan: 'monthly', postcode: '4225', sameName: [venue({ postcode: '4220' })] });
+check('same name, different postcode: added, not refused', rA && rA.ok === true, rA);
+check('same name, different postcode: provisioned as a NEW venue', provisioned.length === 1 && provisioned[0].forceNew === true, provisioned);
+check('same name, different postcode: gets its own free month', rA.free_month_cents === 12500, rA.free_month_cents);
+
+/* The same live venue added twice. Still refused, because a second copy would split its
+   players and its bill, but the message now says what to do about it. */
+var rB = run({ players: 50, plan: 'monthly', postcode: '4220', sameName: [venue({})] });
+check('same name, same postcode, live: refused', !!rB.error, rB);
+check('same name, same postcode, live: nothing charged', charges().length === 0 && credits().length === 0, calls);
+check('same name, same postcode, live: the message says what to do', /different pub|own postcode/i.test(rB.error || ''), rB.error);
+
+/* THE ONE THAT WAS BROKEN. A cancelled venue used to be told "use a different name", for ever. */
+var rC = run({ players: 50, plan: 'monthly', postcode: '4220',
+               sameName: [venue({ status: 'suspended', suspended_reason: 'cancelled' })] });
+check('cancelled venue: comes back on', rC && rC.ok === true && rC.readded === true, rC);
+check('cancelled venue: the same row, not a second one', provisioned.length === 0, provisioned);
+check('cancelled venue: switched back on and un-cancelled',
+  patched.length >= 1 && patched[0].body.status === 'active' && patched[0].body.cancel_at_period_end === false
+  && patched[0].body.suspended_reason === null, patched[0] && patched[0].body);
+check('cancelled venue: billed again from now', charges().length === 1, charges());
+check('cancelled venue: NO second free month, or the month is farmable',
+  credits().length === 0 && rC.free_month_cents === 0, [credits(), rC.free_month_cents]);
+
+/* Cancelled but still inside the paid period: the row is active with the flag set. Same answer. */
+var rD = run({ players: 50, plan: 'monthly', postcode: '4220',
+               sameName: [venue({ cancel_at_period_end: true })] });
+check('cancelling this period: comes back on', rD && rD.readded === true, rD);
+check('cancelling this period: no second free month', rD.free_month_cents === 0, rD.free_month_cents);
+
+/* NOT reversible from here. Only money turns a non-payment suspension back on, and only a
+   person turns a manual one back on. Otherwise this route is the "nudge the player count"
+   loophole the subscription.updated handler exists to stop. */
+var rE = run({ players: 50, plan: 'monthly', postcode: '4220',
+               sameName: [venue({ status: 'suspended', suspended_reason: 'nonpayment' })] });
+check('suspended for non-payment: refused, and not switched back on', !!rE.error && patched.length === 0, [rE, patched]);
+check('suspended for non-payment: told it is the payment, not the name', /payment/i.test(rE.error || ''), rE.error);
+check('suspended for non-payment: nothing charged', charges().length === 0, charges());
+
+var rF = run({ players: 50, plan: 'monthly', postcode: '4220',
+               sameName: [venue({ status: 'suspended', suspended_reason: 'manual' })] });
+check('switched off by us: refused, and points at a human', !!rF.error && /hello@venueplay/.test(rF.error || ''), rF.error);
+
+/* A venue on the account with no postcode recorded cannot be told apart from this one, so it
+   counts as the same venue. Conservative on purpose: a second copy of a LIVE venue is worse
+   than an add they can retry with a postcode. */
+var rG = run({ players: 50, plan: 'monthly', postcode: '4225', sameName: [venue({ postcode: null })] });
+check('existing venue has no postcode: treated as the same venue, not duplicated', !!rG.error, rG);
+
+/* Nothing with that name at all: the ordinary add, untouched. */
+var rH = run({ players: 50, plan: 'monthly', postcode: '4220', sameName: [] });
+check('no clash: added as a new venue with no forceNew', rH.ok === true && provisioned[0].forceNew === false, provisioned);
 
 print(fails ? ('FAILED ' + fails) : 'PASS');
 if (fails) { throw new Error('add-venue free month: ' + fails + ' failed'); }

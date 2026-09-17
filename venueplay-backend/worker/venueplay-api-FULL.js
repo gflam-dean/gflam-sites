@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '17 Sep 2026, 13:33 · 1c7ae930';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Sep 2026, 13:43 · 3416c2e0';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -3121,7 +3121,11 @@ async function vpaProvisionOneVenue(env, opts) {
     ? opts.entityType : null;
   let created = false;
 
-  let venue = (await vpaSelect(env, 'vp_venues',
+  /* opts.forceNew: the caller has ALREADY looked and decided this is a genuinely different
+     venue that happens to share a name, so do not collapse it onto the old one. Only
+     vpbAddVenue passes it, and only after comparing postcodes. The signup path is untouched:
+     it still matches on name alone, which is what makes provisioning safe to retry. */
+  let venue = opts.forceNew ? null : (await vpaSelect(env, 'vp_venues',
     'founding_id=eq.' + encodeURIComponent(foundingId) +
     '&name=eq.' + encodeURIComponent(name) + '&select=id,name,slug'))[0];
   if (!venue) {
@@ -5438,13 +5442,82 @@ async function vpbAddVenue(request, env, json) {
     await vpaPatch(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(foundingId), { is_group: true }).catch(() => {});
   }
 
-  // Provision the new venue under the same account + owner login (idempotent by name).
-  const r = await vpaProvisionOneVenue(env, {
-    foundingId: foundingId, groupId: null, name: name, seats: players, postcode: (b.postcode || '').replace(/\D/g, '').slice(0, 4), authUserId: o.authUserId,
-  });
-  if (!r || !r.created) {
-    // Idempotent-by-name matched an existing venue: nothing was added. Do not report success.
-    return json({ error: 'You already have a venue with that name. Use a different name.' }, 409);
+  const postcode = (b.postcode || '').replace(/\D/g, '').slice(0, 4);
+
+  /* SAME NAME IS NOT THE SAME VENUE, AND A CANCELLED VENUE HAS TO BE ABLE TO COME BACK.
+     Dean, 17 Sep 2026, on the free month: "then they arent cancelling a venue and readding it
+     right."
+
+     Both halves of that were broken, and the second one badly. vpaProvisionOneVenue matches on
+     founding_id + name with NO status filter, and this route turned any non-creation into a flat
+     409, so:
+
+       - a group with The Royal Hotel in two towns could not add the second one and was told to
+         invent a name for their own pub. Seven percent of Australian venue names are shared and
+         there are about a hundred Royal Hotels, so this is not exotic, and the slug allocator has
+         separated same-named venues by postcode since August.
+       - a group that CANCELLED one venue could never add it back. The row is not deleted, it is
+         left status 'suspended', so the name still matched and they got the same "use a different
+         name". The only way back was to make one up, which is how "Royal Hotel 2" ends up on a
+         telly in a pub. A customer trying to give us money again is the last person to refuse.
+
+     So the POSTCODE decides whether it is the same venue, exactly as the slug already does, and a
+     venue that is merely switched off gets switched back on rather than refused.
+
+     WHAT IS STILL REFUSED, and why. 'nonpayment' is the one suspension that money reverses and
+     nothing else may: the subscription.updated handler says plainly that no quantity write is
+     allowed to turn games back on, because a venue could otherwise be switched back on by nudging
+     its player count without a cent being paid, and this route would be exactly that nudge.
+     'manual' is HQ switching a venue off on purpose, so it is not the venue's to undo either. */
+  const sameName = await vpaSelect(env, 'vp_venues',
+    'founding_id=eq.' + encodeURIComponent(foundingId) + '&name=eq.' + encodeURIComponent(name)
+    + '&select=id,name,slug,status,suspended_reason,cancel_at_period_end,postcode,max_players');
+  /* A blank postcode on either side cannot tell two venues apart, so it counts as the same venue.
+     That is the conservative way round: refusing an add they can retry with a postcode is a
+     nuisance, while creating a second copy of a LIVE venue splits its players and its bill. */
+  const twin = (sameName || []).filter(function (v) {
+    return !v.postcode || !postcode || String(v.postcode) === postcode;
+  })[0] || null;
+
+  const LOCKED_OFF = {
+    nonpayment: 'That venue is switched off because a payment did not go through. Sort the payment out on this page and it comes back on by itself.',
+    manual: 'That venue was switched off by us. Email hello@venueplay.com.au and we will get it back on for you.',
+  };
+  if (twin && twin.status === 'suspended' && LOCKED_OFF[twin.suspended_reason || '']) {
+    return json({ error: LOCKED_OFF[twin.suspended_reason] }, 409);
+  }
+  // Switched off, or on its way off at the end of the paid period. Either way it can come back.
+  const reviving = !!twin && (twin.status === 'suspended' || !!twin.cancel_at_period_end);
+  if (twin && !reviving) {
+    return json({ error: 'You already have a venue called ' + name + ' at that postcode. If this is a different pub, put its own postcode in. If it is the same one, change its max players on the list above instead.' }, 409);
+  }
+
+  let r;
+  if (reviving) {
+    await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(twin.id), {
+      status: 'active',
+      suspended_reason: null,
+      // They are asking for it back, so the cancellation is off. vpbAccountTotal excludes a venue
+      // flagged cancel_at_period_end, so leaving it set would bill for a venue nobody counted.
+      cancel_at_period_end: false,
+      max_players: players,
+      // A pending reduction belongs to a subscription they have now un-cancelled, and applying it
+      // later would silently drop the number they just typed in.
+      pending_players: null,
+      postcode: postcode || twin.postcode || null,
+    });
+    r = { created: false, revived: true, venue: { id: twin.id, name: name, slug: twin.slug } };
+  } else {
+    // Provision the new venue under the same account + owner login. forceNew only when a
+    // same-named venue exists at a DIFFERENT postcode, which the block above has just established.
+    r = await vpaProvisionOneVenue(env, {
+      foundingId: foundingId, groupId: null, name: name, seats: players, postcode: postcode,
+      authUserId: o.authUserId, forceNew: !!(sameName && sameName.length),
+    });
+    if (!r || !r.created) {
+      // Nothing was added, and there is no name clash left to explain it, so do not invent one.
+      return json({ error: 'Could not add that venue just now. Nothing was charged. Please try again, and if it keeps happening email hello@venueplay.com.au.' }, 500);
+    }
   }
 
   // Bump the subscription to the new total, pro rata.
@@ -5487,7 +5560,11 @@ async function vpbAddVenue(request, env, json) {
      'failed' is a Stripe refusal, and crediting that would turn a failed charge into free money.
      So the test is kind === 'charge', not merely "aAdj exists". */
   let freeMonth = null;
-  if (aAdj && aAdj.kind === 'charge' && aAdj.cents > 0 && info && info.sub && info.sub.customer) {
+  /* NOT FOR A VENUE COMING BACK. It had its free month the first time, and without this the
+     free month is farmable: cancel a venue, add it again, get another month. That is the exact
+     loop Dean named when he asked for the same-name rule. `reviving` is the whole test, because
+     a returning venue is now the SAME ROW rather than a new one. */
+  if (!reviving && aAdj && aAdj.kind === 'charge' && aAdj.cents > 0 && info && info.sub && info.sub.customer) {
     const fRate = vpbRateStrict(env, info.priceId, o.account.plan);   // per player, per month
     const freeCents = (fRate == null) ? 0 : Math.round(fRate * 100) * players;
     if (freeCents > 0) {
@@ -5517,7 +5594,7 @@ async function vpbAddVenue(request, env, json) {
 
   await vpaInsert(env, 'vp_admin_audit', {
     ...vpbActorFields(o),
-    action: billingOk ? 'venue_added' : 'venue_added_billing_pending',
+    action: (reviving ? 'venue_readded' : 'venue_added') + (billingOk ? '' : '_billing_pending'),
     target: 'venue:' + (r.venue && r.venue.id),
     detail: { name: name, players: players, new_total: newTotal, billing: aAdj, free_month: freeMonth, actor_user: o.authUserId },
   }, false).catch(() => {});
@@ -5532,6 +5609,7 @@ async function vpbAddVenue(request, env, json) {
   });
 
   return json({ ok: true, billing_synced: billingOk, onboarding_sent: onboardingSent,
+    readded: !!reviving,
     free_month_cents: (freeMonth && freeMonth.cents) || 0,
     venue: { id: r.venue && r.venue.id, name: name, slug: r.venue && r.venue.slug, players: players } });
 }

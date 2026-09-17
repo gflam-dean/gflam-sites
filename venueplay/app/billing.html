@@ -317,7 +317,7 @@
       <input type="number" class="seats" id="add-seats" min="1" placeholder="Max players">
       <button class="go" id="add-go">Add venue</button>
     </div>
-    <p class="note">Adding a venue puts it on this same account and bill, on your current rate. Its first month is free, the same as your first venue, and the credit comes off your next invoice.</p>
+    <p class="note">Adding a venue puts it on this same account and bill, on your current rate. Its first month is free, the same as your first venue, and the credit comes off your next invoice. Two venues can share a name as long as their postcodes differ, and putting a cancelled venue back on is the same form: type its name and it comes back with everything it had.</p>
 
     <div class="label">Payment reminders</div>
     <div class="card toggle">
@@ -1071,9 +1071,14 @@
       var freeBit = (r.free_month_cents > 0)
         ? (" Its first month is free: $" + (r.free_month_cents/100).toFixed(2) + " credited, and it comes off your next invoice.")
         : "";
-      showMsg((r.onboarding_sent
-        ? (name + " added. We have emailed you a setup guide to forward on to the venue.")
-        : (name + " added to your account.")) + freeBit, true);
+      /* A venue COMING BACK is not a venue being added, and telling them it was added is how
+         somebody ends up with two of the same pub in their head. It is the same venue, the same
+         join code and the same telly link as before, which is the useful thing to say. */
+      showMsg(r.readded
+        ? (name + " is back on, with everything it had before. Billing for it starts again today.")
+        : ((r.onboarding_sent
+            ? (name + " added. We have emailed you a setup guide to forward on to the venue.")
+            : (name + " added to your account.")) + freeBit), true);
       // Refresh the account summary AND the host/manager panels: their "which venues" checkbox
       // pickers are built from their own /account/hosts + /account/managers calls, so without this
       // a freshly added venue would not appear as a tickable option until a full page reload.
