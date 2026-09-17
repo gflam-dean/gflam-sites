@@ -29,8 +29,12 @@ is green now, so nothing is blocked from being pushed.
 
 **Nothing else in PartyPlay was broken.** Everything I went looking for was either
 already correct or a gap in the CHECKING rather than in the product. That is the
-honest headline. What changed is that eleven things that were true by luck are
-now true by construction.
+honest headline. What changed is that the eight things listed below were true by
+luck, and are true by construction now.
+
+**Written at about 1am. For current numbers read `DEAN-MORNING-18-SEP.md`**, which
+supersedes this one: more was found after it was written, including four real
+bugs in VenuePlay.
 
 ---
 

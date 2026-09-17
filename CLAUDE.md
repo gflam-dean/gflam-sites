@@ -16,8 +16,17 @@ on VenuePlay, so a bad push is a bad night in a room full of people.
                                            a bad deploy
     6. if it touched a game, do the live list the gate prints. No tool here can
        open a browser or hear a pub
+    6b. if it touched a SCREEN file (tv.html, any app/*/screen.html, the shared
+        vp-* scripts), run python3 tools/verify-live.py --stamp and commit
+        .verify-live.json. Until you do, the LIVE gate is red and it is right to
+        be: nothing but a publican would otherwise find out what the screen
+        paints
     7. python3 tools/prove-checks.py       before a release that matters, and
-                                           after adding a check
+                                           after adding a check. The full run is
+                                           about two hours now. --list is two
+                                           seconds and tells you whether any
+                                           mutation has rotted, which is the
+                                           check most worth doing often
 
 **"I deployed it" is not evidence.** /health answering with the right build is.
 
@@ -88,12 +97,45 @@ script tag.
   beside it says does NOT keep the promise. All three were green before the sweep
   existed. Scope it to the function, and assert the two things are in the same
   statement.
+- **Never read a growing table without paging it.** PostgREST stops at 1000 rows
+  on this project, silently: `vp_questions` holds 37,665 and a plain select
+  returns 1,000. That had trivia drawing from the first 1,000 questions of a
+  4,076-question set, a club over 1,000 members drawing from the first 1,000 so
+  members 1001 and up could never win, the opt-in export handing a venue a short
+  copy of its own customer list, and the members import failing outright. Use
+  `sbGetAll` (game) or `vpaSelectAll` (billing), and give the query an `order` or
+  the pages are not stable.
+- **Never stop paging on a SHORT page.** Only on an EMPTY one. Supabase's own
+  max-rows can sit below the page size you asked for, so every page is short, the
+  loop stops after one, and the truncation is silent all over again. This is
+  written on `sbGetAll` and I nearly shipped a second copy that got it wrong.
+- **Never build a paging loop on a read that fails OPEN.** `sbGet` throws on a
+  non-2xx, so `sbGetAll` is safe. `vpaSelect` returns `[]`, so a loop over it
+  reads a FAILED page as "no more pages" and returns a short list with no error.
+  A paging helper must do its own fetch and throw.
+- **Never let a fake database ignore `limit` and `offset`.** Two suites did. One
+  returned the same rows for every call, so a paged export reported 120 people
+  where there were three. A stub that cannot model paging cannot model the bug
+  the paging exists to fix. Offset first, then limit, the way PostgREST does it.
+- **Never derive a test fixture from the current clock.** `sweep-sessions` picked
+  its control timezone as (Brisbane's hour + 1), which IS 3am while Brisbane
+  reads 2am, so the suite went red for one hour every night on the rule that
+  stops a session billing every player who ever joined it. Pick a fixed value and
+  assert the two fixtures actually differ.
 
 ## When a check looks blind, suspect your test first
 
-Measured over ~19 rounds of `prove-checks.py`: **14 times the mutation was wrong,
-twice the check was.** Wrong file, wrong string, a replacement that changed
-nothing, a first-occurrence replace that landed nowhere near the call site.
+Measured over ~22 rounds of `prove-checks.py`: **17 times the mutation was wrong,
+three times the check was.** Wrong file, wrong string, a replacement that changed
+nothing, a first-occurrence replace that landed nowhere near the call site, an
+anchor inside a comment the check strips before looking, a change too small to
+cross the threshold, and a suite that injects its own copy of the thing you
+broke.
+
+The three where the check was wrong are worth knowing by shape: a whole-file word
+search that could not fail, a check that read a COMMENT as proof a script was
+loaded, and a report derived from a list it could never appear in, so it would
+have printed nothing for ever while looking busy.
 
 ## House rules for anything a person reads
 
@@ -104,10 +146,17 @@ claims from **the host**, never the bar. All four are enforced by the gate, in
 
 ## Where things are
 
-    tools/release-check.py            the gate, 199 local checks (305 with --live)
-    tools/prove-checks.py             breaks each one on purpose, 199 of 199,
-                                      249 mutations. --list says in two seconds
-                                      whether any of them has stopped applying
+    tools/release-check.py            the gate, 213 local checks. --live is a
+                                      SEPARATE set of 126, not a superset: no
+                                      label appears in both
+    tools/prove-checks.py             breaks each one on purpose, 213 of 213
+                                      local, 270 mutations. --live proves the
+                                      handful of live checks whose subject is a
+                                      file in this repo; the rest are questions
+                                      about production and cannot be proven
+                                      without breaking it. --list says in two
+                                      seconds whether any mutation has stopped
+                                      applying OR matches twice, which is as bad
     tools/stamp-workers.py            BUILD stamps; run before build-worker.py
     venueplay/                        the site, auto-deploys from main
     venueplay-backend/worker/         game + billing Workers, deployed by tools/deploy-worker.py

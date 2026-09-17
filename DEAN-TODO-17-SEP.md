@@ -1,6 +1,12 @@
 # What is yours to do, 17 September (evening)
 
-Rewritten tonight. Everything here needs a login I do not have. Ordered by value.
+Rewritten on the evening of the 17th. Everything here needs a login I do not have.
+Ordered by value. **Still current on the 18th**: these are the standing mail and
+admin jobs and none of them changed overnight.
+
+**Two lists on purpose, and they do not overlap.** This one is your standing jobs.
+`DEAN-MORNING-18-SEP.md` is what came out of the night of the 17th, including one
+two-minute Cloudflare job that is holding the live gate red. Do that one first.
 
 **Done since this morning, nothing for you here:** the four signup views that were
 handing out email and mobile to the public key (both revokes run and verified), the
