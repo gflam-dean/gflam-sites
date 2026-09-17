@@ -412,7 +412,18 @@
   try{ _useRoom = !!(window.VPRoom && window.VPRoom.wanted()); }catch(e){ _useRoom=false; }
   function wireOut(obj){
     if(_room){ try{ _room.send(obj); return true; }catch(e){ return false; } }
-    if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); return true; }
+    /* GUARDED, exactly like the room path one line up. This send was bare. `subscribed` is set
+       from the subscribe callback, which lags a socket that has actually died, so there is a
+       window where the flag says yes and the send throws. The throw escaped wireOut, escaped
+       send(), and the message was never pushed onto sendQueue: it was simply gone.
+       The message that matters most here is a BINGO claim. A punter taps it, the page shows the
+       claim as sent, the host never sees it, and somebody with a winning card stands in a pub
+       being ignored. Returning false instead queues it, and flushQueue delivers it the moment
+       the channel is back. */
+    if(subscribed && ch){
+      try{ ch.send({ type:"broadcast", event:"msg", payload:obj }); return true; }
+      catch(e){ return false; }
+    }
     return false;
   }
   function send(obj){ if(!wireOut(obj)) sendQueue.push(obj); }

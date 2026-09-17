@@ -93,10 +93,25 @@ ok('and tells the page so', /onUnavailable/.test(CLIENT));
 });
 
 print('== nothing is sent into a socket the page does not have ==');
+/* ORDER, NOT DISTANCE. These two asserted the room branch and the channel send were within a
+   couple of hundred characters of each other, which is a limit on COMMENT LENGTH pretending to
+   be a correctness check. Adding a comment explaining why the channel send is wrapped in a
+   try/catch broke it, 17 Sep 2026, while the code it checks was more correct than before.
+   What actually matters is that the room is tried BEFORE the channel, so that is what this
+   asks now: find both inside the function and compare where they sit. It still goes red if
+   somebody swaps them round, which is the only thing it was ever protecting. */
+function roomBeforeChannel(src, fnStart) {
+  var at = src.indexOf(fnStart);
+  if (at === -1) return false;
+  var body = src.slice(at, at + 4000);         // generously past the end of either function
+  var room = body.indexOf('if(_room)');
+  var chan = body.indexOf('ch.send');
+  return room !== -1 && chan !== -1 && room < chan;
+}
 ok('the console send tries the room first, then the channel',
-   /function rawSend\(p\)\{[\s\S]{0,220}if\(_room\)[\s\S]{0,200}ch\.send/.test(CONSOLE));
+   roomBeforeChannel(CONSOLE, 'function rawSend(p){'));
 ok('the phone send tries the room first, then the channel',
-   /function wireOut\(obj\)\{[\s\S]{0,200}if\(_room\)[\s\S]{0,200}ch\.send/.test(PLAY));
+   roomBeforeChannel(PLAY, 'function wireOut(obj){'));
 ok('the phone queues a message it could not send', /if\(!wireOut\(obj\)\) sendQueue\.push\(obj\)/.test(PLAY));
 ok('the console queues a message it could not send', /sendQueue\.push\(p\)/.test(CONSOLE));
 ok('the phone flush stops instead of dropping what it cannot send',

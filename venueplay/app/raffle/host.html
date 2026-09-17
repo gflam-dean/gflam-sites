@@ -886,7 +886,13 @@
       if(status==="SUBSCRIBED"){
         subscribed=true; send({ t:"host_here" }); send({ t:"mode", mode:"raffle" }); flushQueue();   // put the raffle screen on the unified /tv
         $("statusDot").classList.remove("on"); $("statusText").textContent="Waiting for screen";
-      } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){
+      /* CLOSED BELONGS HERE, and leaving it out is the fault that blinded a live venue's telly
+         all day on 16 Sep. The branch above already resets `subscribed` on CLOSED, so sends
+         start queueing correctly. What was missing is TELLING THE HOST: the dot stayed green
+         and the text stayed on its last happy message while the channel was shut. A host
+         looking at a console that says it is connected does not reload it. Trivia has had
+         CLOSED in this list all along; musical, raffle and members did not. */
+      } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){
         $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting";
       }
     });

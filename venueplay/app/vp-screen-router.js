@@ -103,7 +103,35 @@
         };
         if (gate) gate(e.payload, handle); else handle(e.payload);
       });
-      c.subscribe();
+      /* SUBSCRIBE AND LISTEN TO THE ANSWER. This was a bare c.subscribe() with no status
+         callback at all, which is the one shape this codebase keeps getting bitten by: a
+         subscription that never connects looks exactly like a subscription with nothing to
+         report. These are the channels the unified telly watches so it can switch to whichever
+         game a host starts. If one silently fails, the screen simply never switches, the host
+         starts a raffle and the wall stays on the last thing, and there is nothing anywhere
+         saying why. Same family as the CLOSED handlers on the consoles and the tvStatus fault
+         that blinded a venue for a day.
+
+         It retries rather than just reporting, because there is no person looking at this
+         screen to press anything: a telly on a wall has to heal itself. Backing off to a
+         minute so a genuinely dead channel does not hammer anything all night. */
+      var tries = 0, retry = null;
+      function watch() {
+        c.subscribe(function (status) {
+          if (status === "SUBSCRIBED") { tries = 0; return; }
+          if (status !== "CHANNEL_ERROR" && status !== "TIMED_OUT" && status !== "CLOSED") return;
+          if (retry) return;                    // one timer per channel, however many errors land
+          tries++;
+          var wait = Math.min(60000, 2000 * tries);
+          try { console.log("[router] " + game + " channel " + status + ", retrying in " + (wait / 1000) + "s"); } catch (e) {}
+          retry = setTimeout(function () {
+            retry = null;
+            try { c.unsubscribe(); } catch (e) {}
+            watch();
+          }, wait);
+        });
+      }
+      watch();
     });
 
     /* The page calls this from its own message handler, so we can tell a game
