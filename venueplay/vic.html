@@ -1710,6 +1710,23 @@
      So: grey until they choose, white once they have, and a height it cannot drift from. */
   .field select{height:52px}
   .field select:has(option[value=""]:checked){color:var(--muted-2)}
+
+  /* A script measures the headline and pins an inline max-width on it to balance the line
+     breaks. It never re-centres the box afterwards, so once the text inside was centred the
+     balanced heading still sat about 175px left of true centre while everything around it was
+     dead centre, which is the kind of near-miss that looks worse than no centring at all.
+     Any capped-width block inside a centred head gets its box centred too. */
+  .hero h1{margin-left:auto;margin-right:auto}
+  .sec-head .sec-title,.sec-head .sec-sub,.sec-head .vps-balance{margin-left:auto;margin-right:auto}
+  .offer-grid > div:first-child .sec-title{margin-left:auto;margin-right:auto}
+
+  /* .label is display:flex on every section, so text-align never reached it and all twelve
+     little "OPEN NOW" / "DEAD SIMPLE" labels stayed hard left under a centred heading. Worth
+     recording how it got missed: the first check measured each element's BOX against its
+     parent, and a flex label's box IS full width and IS centred. The box was right and the
+     content was wrong, so a clean scan reported nothing. Same shape as every other detector in
+     this repo that could not fail. */
+  .sec-head .label,.offer-grid > div:first-child .label{justify-content:center}
 </style>
 <a href="#claim" class="vp-float-cta" id="vpFloatCta" aria-label="Lock in founding">
   <svg width="15" height="17" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#fff" stroke-width="2.8" stroke-linejoin="round"/></svg>
