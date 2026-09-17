@@ -70,6 +70,39 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 # wholeness check is reached. Zero bytes parses perfectly, which is the case
 # that check was actually written for.
 MUTATIONS = [
+    # ---- 17 Sep 2026: the nine checks added the day the billing, player-data and isolation
+    # ---- audit was worked through. Every one of these was broken by hand and watched go red
+    # ---- as it was written, and the commit for each says so. They are written down here so
+    # ---- that stays true tomorrow, when nobody remembers doing it.
+    ('adding a venue charges a month and credits it straight back',
+     'venueplay-backend/worker/venueplay-api-FULL.js', 'if (!reviving && aAdj && aAdj.kind', 'if (aAdj && aAdj.kind',
+     'a venue that comes back gets a SECOND free month, so the month is farmable by cancelling and re-adding'),
+    ('one email, one bill, and the promised free month',
+     'venueplay-backend/worker/venueplay-api-FULL.js', 'const live = sameEmail.filter(function (a) { return !!a.stripe_subscription_id; })[0];',
+     'const live = null;',
+     'one email opens a second Stripe subscription, billed in full, that the venue cannot see to cancel'),
+    ('an unsubscribe keeps them off the marketing list',
+     'venueplay-backend/worker/venueplay-api-FULL.js', 'if (unsub[key]) { heldBack++; continue; }', '',
+     'somebody who asked us to stop is handed straight back on the next marketing list'),
+    ('no join can write player data the venue never switched on',
+     'venueplay-backend/worker/venueplay-game.js', 'if (cfg.collect_email && b.email != null)', 'if (b.email != null)',
+     'a join writes a player email for a venue that collects none of it'),
+    ('player-data permission needs an explicit tick, in every copy',
+     'venueplay-backend/worker/venueplay-api-FULL.js', '<<ALL:players_optin: p.players_optin === true,>>', 'players_optin: p.players_optin !== false,',
+     'every manager is handed the venue customer list by default again'),
+    ('anything a venue may collect, it may also download',
+     'venueplay-backend/worker/venueplay-api-FULL.js', "VENUE_RE.test(v.name || '')) || domainLooksLikeVenue;", "VENUE_RE.test(v.name || ''));",
+     'a venue allowed to collect its customers is refused its own list back'),
+    ('held-back opt-ins are counted and reported, never silent',
+     'venueplay-backend/worker/venueplay-api-FULL.js', 'count: out.length, held_unverified: held };', 'count: out.length };',
+     'a venue sees an empty file and never learns rows are being held back'),
+    ('closed venues lose their player details, and nobody else does',
+     'venueplay-backend/worker/venueplay-game.js', 'const RETENTION_DAYS = 90;', 'const RETENTION_DAYS = 9;',
+     'player details are deleted 81 days before the privacy page says they will be'),
+    ('permissions are read per account, most restrictive wins',
+     'venueplay-backend/worker/venueplay-api-FULL.js', "'&venue_id=in.(' + scopeIds.map(encodeURIComponent).join(',') + ')' +", "'' +",
+     'one account restrictions bleed onto another account the same person works at'),
+
     # ---- 15 Sep 2026: four faults found by playing PartyPlay on all three surfaces,
     # ---- and one check that was green while the fault it named sat underneath it.
     # ---- Each of these was broken by hand and watched go red as it was written.
@@ -615,7 +648,14 @@ MUTATIONS = [
     # code does not: the stamp only changes when stamp-workers.py runs, which the
     # pre-push hook does before this ever runs. That is the real guard against an
     # edited-but-unbuilt source, and it is why editing code here proves nothing.
-    ('the build is this source, not an older one',
+    # NAMED AS THE GATE NAMES IT TODAY. This entry said 'the build is this source, not an older
+    # one', which is what the check was called before it was relaxed to let the build carry its
+    # own fingerprint. prove-checks matches on the NAME, found nothing, and reported the check as
+    # BLIND. It is not: applying this exact mutation by hand turns it red with a full
+    # explanation. So the meta-check was crying wolf about a healthy check, which is the same
+    # disease it exists to cure, and a meta-check people learn to ignore is worse than none.
+    # Caught 17 Sep 2026. If you rename a check, rename it here in the same commit.
+    ('the build is at least as new as this source',
      'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
      "const BUILD = '", "const BUILD = 'not the same stamp",
      'the source is rebuilt and the deployed copy is left behind'),
