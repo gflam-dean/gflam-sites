@@ -2715,6 +2715,29 @@ def local_checks(which):
         ok('deploy build parses', good, msg if not good else (stamp.group(1) if stamp else ''))
         ok('the licence library is inlined, not a marker', 'const PPLicence = (function' in src)
 
+        """AND THE INLINED COPY MUST BE THE LIBRARY AS IT STANDS NOW.
+
+        build-worker.py pastes lib/pp-licence.js into the build VERBATIM. So editing the
+        library and not rebuilding leaves the Worker running the old copy, and every check
+        around here stays green: 'inlined, not a marker' only asks whether the wrapper is
+        there, and 'the build is at least as new as this source' compares the build against
+        the SOURCE, which the edit never touched.
+
+        pp-licence.test.js reads the library, so it would test the new code and pass, while
+        the thing actually deployed ran the old code. That is the same shape as ten
+        PartyPlay suites reading a copy nobody ships and reporting 699 passing checks.
+
+        Because it is pasted verbatim, the honest question is a substring one. Found by
+        asking, 18 Sep 2026; they matched, and nothing was checking."""
+        lib_p3 = os.path.join(PARTYPLAY_BACK, 'lib', 'pp-licence.js')
+        if os.path.isfile(lib_p3):
+            lib3 = io.open(lib_p3, encoding='utf-8').read()
+            ok('and it is the library as it stands now, character for character',
+               lib3 in src, '%d characters' % len(lib3),
+               why='lib/pp-licence.js has been edited and the Worker never rebuilt, so the '
+                   'deployed build runs the old copy while its suite tests the new one. Run '
+                   'partyplay-backend/tools/build-worker.py then tools/stamp-workers.py.')
+
         """AND IT MUST BE BUILT FROM THE SOURCE AS IT STANDS NOW.
 
         Every check around this one reads the DEPLOY file, so a deploy file that

@@ -70,6 +70,12 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 # wholeness check is reached. Zero bytes parses perfectly, which is the case
 # that check was actually written for.
 MUTATIONS = [
+    ('and it is the library as it stands now, character for character',
+     'partyplay-backend/lib/pp-licence.js',
+     'PLAYER_CAP', 'PLAYER_CAP_V2',
+     'the licence library is edited and the Worker never rebuilt, so the deployed build '
+     'runs the old copy while pp-licence.test.js tests the new one and passes'),
+
     # ---- 18 Sep 2026. A suite nobody runs proves nothing, and this repo had two.
     # COPYTO puts a .test.js where nothing sweeps it. tools/ is swept for .test.py only,
     # so a .test.js there is exactly the orphan this check exists to find.
