@@ -41,10 +41,19 @@ declare
   -- Tables and views that must be invisible to the key in the page.
   shut text[] := array[
     'vp_bingo_draws','vp_bingo_draw_balls','vp_players','vp_venue_screen',
-    'v_vp_player_optins','v_vp_prizes_given','v_vp_question_review_queue','v_vp_screen_draws',
+    'v_vp_player_optins','v_vp_question_review_queue','v_vp_screen_draws',
     'v_vp_feedback_by_session','v_vp_song_flag_counts','v_signups_all',
     'ops_approvals','ops_questions','ops_priorities'
   ];
+  /* v_vp_prizes_given WAS IN THE LIST ABOVE AND MUST NOT GO BACK IN IT.
+     The list revokes from anon AND authenticated. This view is read from the
+     account page by the signed-in user's own token, not by the key in the page,
+     and migration 61 reasoned its way to keeping that grant: security_invoker is
+     on, so RLS decides which venue's rows come back. Revoking authenticated broke
+     the prizes tally on every venue's Raffles panel from the cut-over until
+     17 Sep 2026, silently, because the page treats an error as an empty tally.
+     Anon-only, and migration 85 restores the grant. */
+  anon_only text[] := array['v_vp_prizes_given'];
   -- The other Gflam sites read these, so SELECT stays and only the write half goes.
   readonly text[] := array['reviews','shows','venues','signups','contacts',
                            'experience','tour_categories','ticket_milestones'];
@@ -64,6 +73,15 @@ begin
     begin
       execute format('revoke all on public.%I from anon, authenticated', n);
       raise notice 'shut %', n;
+    exception when undefined_table then
+      raise notice 'skipped %, not on this database', n;
+    end;
+  end loop;
+
+  foreach n in array anon_only loop
+    begin
+      execute format('revoke all on public.%I from anon', n);
+      raise notice 'shut to anon only %', n;
     exception when undefined_table then
       raise notice 'skipped %, not on this database', n;
     end;
@@ -101,6 +119,7 @@ select 'table still readable by anon', table_name
  where grantee = 'anon' and table_schema = 'public'
    and table_name = any (array['vp_bingo_draws','vp_bingo_draw_balls','vp_players',
         'vp_venue_screen','v_vp_player_optins','v_vp_prizes_given','v_vp_question_review_queue',
+        -- v_vp_prizes_given stays in THIS check: anon must still not read it.
         'v_vp_screen_draws','v_vp_feedback_by_session','v_vp_song_flag_counts','v_signups_all',
         'ops_approvals','ops_questions','ops_priorities'])
 union all

@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '17 Sep 2026, 16:17 · 37e49cda';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Sep 2026, 16:32 · 4924f23e';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -6841,14 +6841,31 @@ function vpaB64ToBytes(b64) {
   return arr;
 }
 // Create the public ad-image bucket if it does not exist yet (idempotent; ignores "already exists").
+/* ASK BEFORE CREATING, so a normal upload stops writing an error to the database log.
+
+   This blind-POSTed the bucket on every single image upload. The bucket has existed since the
+   first one, so every upload after that raised
+     duplicate key value violates unique constraint "buckets_pkey"
+   as a Postgres ERROR, plus a 400 in the edge log. Nothing broke, the upload carried on, and the
+   comment below even said so. But it means the one place we look when something IS wrong is
+   filled with entries from the thing working perfectly, and on 17 Sep it took a while to tell
+   the real faults out of 2,234 lines. A log you have learned to ignore is not a log.
+
+   HEAD is cheap and says the same thing. The create is still attempted when it is genuinely
+   missing, and still swallowed if that races with another upload doing the same. */
 async function vpbEnsureBucket(env, id) {
+  const auth = { 'Authorization': 'Bearer ' + env.SUPABASE_SERVICE_KEY, 'apikey': env.SUPABASE_SERVICE_KEY };
+  try {
+    const look = await fetch(env.SUPABASE_URL + '/storage/v1/bucket/' + encodeURIComponent(id), { headers: auth });
+    if (look.ok) return;                      // already there, which is the normal case
+  } catch (_) { /* could not ask: fall through and try to create it */ }
   try {
     await fetch(env.SUPABASE_URL + '/storage/v1/bucket', {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + env.SUPABASE_SERVICE_KEY, 'apikey': env.SUPABASE_SERVICE_KEY, 'Content-Type': 'application/json' },
+      headers: Object.assign({ 'Content-Type': 'application/json' }, auth),
       body: JSON.stringify({ id: id, name: id, public: true, file_size_limit: 5242880, allowed_mime_types: ['image/png', 'image/jpeg', 'image/webp', 'image/gif'] }),
     });
-  } catch (_) { /* if it already exists the POST 400s; the upload below still works */ }
+  } catch (_) { /* two uploads racing to create it: the second 400s and the upload still works */ }
 }
 
 /* --- POST /account/screen-upload : upload one advertising image to storage, return its URL. --- */
