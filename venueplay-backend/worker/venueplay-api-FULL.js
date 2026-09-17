@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '17 Sep 2026, 14:07 · 47aba29f';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Sep 2026, 15:22 · 1c13d149';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -3415,10 +3415,13 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
          was the literal text. Found 15 Sep 2026 by listing every merge tag in the four
          templates the Worker loads and asking which ones anything fills in.
 
-         It points at /unsubscribe, which writes to vp_unsubscribes. That list is read ONLY
-         by the outreach send tools, so opting out stops marketing and CANNOT stop a
-         billing notice. Getting that the wrong way round would be far worse than the dead
-         link it replaces. */
+         It points at /unsubscribe, which writes to vp_unsubscribes.
+
+         THIS COMMENT USED TO SAY that list was "read ONLY by the outreach send tools". It was
+         not read by them either. On 17 Sep 2026 nothing anywhere read it: unsubscribing wrote a
+         row and changed nothing. The venue marketing export now consults it and fails closed if
+         it cannot. Opting out stops MARKETING and deliberately cannot stop a billing notice or
+         a cancellation email; getting that the wrong way round would be far worse. */
       .replace(/\{\{unsubscribe_url\}\}/g, site + '/unsubscribe?e=' + encodeURIComponent(email || ''))
       .replace(/{{support_email}}/g, support);
 
@@ -7169,9 +7172,50 @@ async function vpaHandleAdminOptinExport(request, env, json) {
  * Only the ones who said YES. Under the Spam Act the tick is the consent, so a list that
  * quietly included the eleven who did not tick would be the whole problem, not a convenience.
  */
+/* EVERYONE WHO HAS ASKED US TO STOP, read straight from the table.
+
+   THROWS rather than returning [] on failure, and that is the whole point. vpaSelect answers []
+   for ANY non-2xx, and an empty unsubscribe list is indistinguishable from "nobody has ever
+   unsubscribed". One transient database error while HQ downloaded this list would have exported
+   every person who had opted out, with no sign anything had gone wrong, and the next campaign
+   would have gone to all of them. A list of people we must not contact is only safe if we know
+   the query succeeded, so this fails closed. */
+async function vpaUnsubscribedSet(env) {
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_unsubscribes?select=email', { headers: vpaHeaders(env) });
+  if (!res.ok) throw new Error('could not read the unsubscribe list: HTTP ' + res.status);
+  const rows = await res.json();
+  if (!Array.isArray(rows)) throw new Error('the unsubscribe list did not come back as a list');
+  const set = Object.create(null);
+  for (const r of rows) {
+    const e = String((r && r.email) || '').trim().toLowerCase();
+    if (e) set[e] = true;
+  }
+  return set;
+}
+
 async function vpaHandleVenueMarketingExport(request, env, json) {
   const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
   if (actor.error) return json({ error: actor.error }, actor.status);
+
+  /* NOBODY WHO HAS ASKED US TO STOP. Found 17 Sep 2026: unsubscribing WORKED, the page wrote to
+     vp_unsubscribes and a live test landed a row, and then NOTHING anywhere read it. Not this
+     export, not the outreach tools, despite a comment in this file saying the outreach tools
+     did. So a venue could click unsubscribe in one of our emails, be recorded as having opted
+     out, and appear on the very next list we used to market to them. That is the Spam Act, and
+     it is the one fault on this platform that carries a fine rather than an apology.
+
+     Held-back rows are COUNTED and reported, never silently dropped. A filter that matches
+     nothing looks exactly like a filter that works, and this one will legitimately match nothing
+     for a while yet, so the number is the only way to tell the difference. */
+  let unsub;
+  try {
+    unsub = await vpaUnsubscribedSet(env);
+  } catch (e) {
+    return json({ error: 'Could not check the unsubscribe list just now, so nothing was '
+      + 'exported. Exporting without that check could send marketing to people who have asked '
+      + 'us to stop. Please try again in a moment.' }, 503);
+  }
+
   const rows = await vpaSelect(env, 'venueplay_founding',
     'marketing_opt_in=is.true&select=venue_name,contact_name,contact_email,mobile,postcode,created_at,status'
     + '&order=created_at.desc') || [];
@@ -7180,16 +7224,21 @@ async function vpaHandleVenueMarketingExport(request, env, json) {
      judgement for whoever reads this, not something to make for them by hiding the row. */
   const header = ['Venue', 'Contact', 'Email', 'Mobile', 'Postcode', 'Signed up', 'Account status'];
   const seen = {}, out = [];
+  let heldBack = 0;
   for (const r of rows) {
     const key = String(r.contact_email || '').trim().toLowerCase();
     if (!key) continue;                       // no address, nothing to send to
     if (seen[key]) continue; seen[key] = true; // one person once, however many venues they run
+    // Opted in once, asked us to stop since. The later answer is the one that counts.
+    if (unsub[key]) { heldBack++; continue; }
     out.push([r.venue_name, r.contact_name, r.contact_email, r.mobile, r.postcode,
               String(r.created_at || '').slice(0, 10), r.status]);
   }
   const csv = [header].concat(out).map((c) => c.map(vpbCsvCell).join(',')).join('\n') + '\n';
-  await vpaAudit(env, actor, 'venue_marketing_exported', 'accounts', { rows: out.length }).catch(() => {});
-  return json({ ok: true, csv: csv, count: out.length, considered: rows.length });
+  await vpaAudit(env, actor, 'venue_marketing_exported', 'accounts',
+    { rows: out.length, held_back_unsubscribed: heldBack }).catch(() => {});
+  return json({ ok: true, csv: csv, count: out.length, considered: rows.length,
+                held_back_unsubscribed: heldBack });
 }
 
 function vpbCsvCell(v) { const s = String(v == null ? '' : v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }

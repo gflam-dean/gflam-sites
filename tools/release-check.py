@@ -2410,6 +2410,39 @@ def local_checks(which):
                    'charge landing three days after we promised a free month, or two prices for '
                    'the same venue depending which link they came through')
 
+    # ASKING US TO STOP HAS TO ACTUALLY STOP US.
+    #
+    # Found 17 Sep 2026. Unsubscribing WORKED: /unsubscribe wrote a row to vp_unsubscribes and a
+    # live test landed one. Then nothing anywhere read it. Not the venue marketing export, and not
+    # the outreach tools either, despite a comment in the Worker saying the outreach tools did. So
+    # a venue could click unsubscribe in one of our emails and appear on the very next list we used
+    # to market to them. That is the Spam Act, and it is the only fault on this platform that
+    # carries a fine rather than an apology.
+    #
+    # The test RUNS vpaHandleVenueMarketingExport with only global fetch replaced, so the real
+    # query, the real matching and the real CSV are exercised. It also checks the export FAILS
+    # CLOSED: vpaSelect answers [] for any non-2xx, so a database wobble would otherwise read as
+    # "nobody has ever unsubscribed" and hand over every one of them. Proved against four
+    # mutations, including failing open and matching case-sensitively.
+    if which in ('both', 'venueplay'):
+        head('D. Asking us to stop actually stops us')
+        t = os.path.join(ROOT, 'tools', 'test-unsubscribe-is-honoured.js')
+        if not os.path.isfile(t):
+            ok('the unsubscribe test exists', False,
+               why='tools/test-unsubscribe-is-honoured.js is missing, so nothing is checking that '
+                   'an opt-out keeps people off the marketing list')
+        else:
+            r = subprocess.run([JSC, t], capture_output=True, text=True, timeout=120)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+            n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
+            ok('an unsubscribe keeps them off the marketing list (%d checks)' % n,
+               r.returncode == 0 and 'PASS' in out and not bad,
+               detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
+               why='run jsc tools/test-unsubscribe-is-honoured.js. This is the Spam Act one: '
+                   'marketing to somebody who has withdrawn consent is the single fault here that '
+                   'costs money in a fine rather than an apology')
+
     head('E. The Worker you are about to paste')
     dep = os.path.join(PARTYPLAY_BACK, 'worker', 'DEPLOY-partyplay-api.js')
     if which in ('both', 'partyplay') and os.path.isfile(dep):

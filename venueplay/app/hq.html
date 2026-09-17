@@ -3076,15 +3076,33 @@
       workerGet("/admin/venue-marketing-export").then(function(r){
         b.disabled=false; b.textContent="Download the list";
         if(r && r.error){ msg.style.color="var(--roll)"; msg.textContent=r.error; return; }
-        if(!r.count){ msg.style.color="var(--faint)"; msg.textContent="Nobody has ticked it yet, so there is nothing to download."; return; }
+        /* Zero used to mean one thing and now means two. If everyone who ticked the box has
+           since unsubscribed, the file is empty for a completely different reason and saying
+           "nobody has ticked it" would be a lie that hides the thing you most need to know. */
+        if(!r.count){
+          msg.style.color="var(--faint)";
+          msg.textContent = r.held_back_unsubscribed
+            ? ("Nothing to download. " + r.held_back_unsubscribed + (r.held_back_unsubscribed===1?" venue has":" venues have")
+               + " asked us to stop emailing them, so they are not on the list.")
+            : "Nobody has ticked it yet, so there is nothing to download.";
+          return;
+        }
         var blob=new Blob([r.csv],{type:"text/csv;charset=utf-8"});
         var a=document.createElement("a"); a.href=URL.createObjectURL(blob);
         a.download="venues-who-opted-in-"+new Date().toISOString().slice(0,10)+".csv";
         document.body.appendChild(a); a.click();
         setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },0);
         msg.style.color="var(--win)";
+        /* The held-back number is SHOWN, never silently absorbed into "skipped". A filter that
+           matches nothing looks exactly like a filter that works, and this one will match
+           nothing for a while yet, so the count is the only way to tell them apart. It also
+           tells you the real size of your list before you go and write to it. */
+        var skippedNoEmail = (r.considered || 0) - r.count - (r.held_back_unsubscribed || 0);
+        var extra = [];
+        if (skippedNoEmail > 0) extra.push(skippedNoEmail + " with no email on the account");
+        if (r.held_back_unsubscribed) extra.push(r.held_back_unsubscribed + " who asked us to stop");
         msg.textContent=r.count+(r.count===1?" venue":" venues")+" downloaded"
-          + (r.considered && r.considered!==r.count ? " (" + (r.considered-r.count) + " skipped: no email on the account)" : "") + ".";
+          + (extra.length ? " (held back: " + extra.join(", ") + ")" : "") + ".";
       }).catch(function(e){
         b.disabled=false; b.textContent="Download the list";
         msg.style.color="var(--roll)"; msg.textContent=String((e&&e.message)||e);
