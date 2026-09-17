@@ -79,10 +79,14 @@ globalThis.crypto = { getRandomValues: function (b) { for (var i = 0; i < b.leng
 
 function rows(table, query) {
   var out = (DB[table] || []).slice();
+  /* limit and offset are HONOURED, not ignored, because PostgREST honours them and because
+     reads that can run past a thousand rows page now. A fake database that ignores paging
+     hands back the same page every time, which is how a paging loop looks infinite in a
+     test and perfect in production, or the other way round. */
   query.split('&').forEach(function (part) {
     var i = part.indexOf('=');
     var k = part.slice(0, i), v = part.slice(i + 1);
-    if (k === 'select' || k === 'limit' || k === 'order') return;
+    if (k === 'select' || k === 'limit' || k === 'order' || k === 'offset') return;
     if (v.indexOf('eq.') === 0) {
       var val = decodeURIComponent(v.slice(3));
       out = out.filter(function (r) { return String(r[k]) === val; });
@@ -99,6 +103,11 @@ function rows(table, query) {
     if (x === y) return 0;
     return (x > y ? 1 : -1) * (ord[2] === 'desc' ? -1 : 1);
   });
+  /* OFFSET THEN LIMIT, in that order, the way PostgREST does it. Ignoring offset made the
+     fake database hand back the same page for ever, so a paging loop that is correct in
+     production looked like it returned forty copies here. */
+  var off = /(?:^|&)offset=(\d+)/.exec(query);
+  if (off) out = out.slice(+off[1]);
   var lim = /(?:^|&)limit=(\d+)/.exec(query);
   if (lim) out = out.slice(0, +lim[1]);
   return out;
@@ -289,6 +298,11 @@ function fetch(url, opts) {
    The real Worker code
    ===================================================================== */
 function httpError(status, message) { var e = new Error(message); e.status = status; return e; }
+/* THE REAL PAGING HELPER, not a stand-in. validMembers pages now, because a club with more
+   than a thousand members was drawing from the first thousand only and members 1001 and up
+   could never win. Lifting the real sbGetAll runs that loop against the fake database above,
+   which honours limit and offset, so the paging is exercised rather than assumed. */
+eval(lift('sbGetAll'));
 eval(lift('randInt'));
 eval(lift('drawHoldMs'));
 eval(lift('formatMemberName'));
@@ -456,7 +470,13 @@ async function both(name, opts, body, note) {
   ok('a member is named, with the venue\'s name format', r.fast.status === 200 && r.fast.body.winner_name === 'Ada L',
      JSON.stringify(r.fast.body));
   ok('the lapsed member was never in the pool', r.fast.body.valid_count === 7);
-  ok('it costs ONE call now, and cost nine before', r.fastTrips.length === 1 && r.slowTrips.length === 9,
+  /* TEN, not nine, since 18 Sep 2026. validMembers pages now, and sbGetAll stops only on an
+     EMPTY page, never on a short one, because Supabase's own max-rows can be below the page
+     size asked for. So a small club costs one extra read to learn there is no second page.
+     That is the right trade: the alternative is a club over a thousand members drawing from
+     the first thousand for ever. The point of this check is unchanged, and sharper: one
+     call against ten. */
+  ok('it costs ONE call now, and cost ten before', r.fastTrips.length === 1 && r.slowTrips.length === 10,
      'one trip: ' + r.fastTrips.join(', ') + ' | many: ' + r.slowTrips.join(', '));
   ok('the unresolved record is written either way (migration 74)',
      DB.vp_member_draw_results.length === 1 && DB.vp_member_draw_results[0].outcome === 'drawn' &&

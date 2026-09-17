@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '17 Sep 2026, 16:17 · 88c0f5ea';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '18 Sep 2026, 01:28 · 487787dc';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -3835,7 +3835,19 @@ async function handleMembersImport(request, env, json) {
   }
 
   // Skip numbers already present; insert the rest as valid (pickable) members.
-  const existing = await sbGet(env, 'vp_members', 'roster_id=eq.' + enc(rosterId) + '&select=member_number');
+  /* PAGED, BECAUSE POSTGREST STOPS AT 1000 ROWS.
+     This read was unpaged, so a club with more than a thousand members only ever saw the
+     first thousand of its own list. Everyone past that looked new, the insert hit the
+     unique constraint on (roster_id, member_number), and sbInsert turned the 409 into
+     "That was already starting. Please try again." So the WHOLE import failed, including
+     the one genuinely new member they were trying to add, and there was no way for that
+     club to ever change its list again by pasting it.
+
+     Nobody has hit it yet: the largest list today is 136. A big RSL is exactly the
+     customer this is for. Found 18 Sep 2026 by asking the database what it caps at
+     (vp_questions has 37,665 rows and returns 1,000). */
+  const existing = await sbGetAll(env, 'vp_members',
+    'roster_id=eq.' + enc(rosterId) + '&select=member_number&order=member_number.asc');
   const have = {}; existing.forEach((m) => { have[String(m.member_number)] = true; });
   const rows = [];
   members.forEach((m) => {
@@ -4110,8 +4122,12 @@ async function validMembers(env, draw) {
   }
   if (!rosterIds.length) return [];
   const inList = '(' + rosterIds.map((id) => enc(id)).join(',') + ')';
-  return await sbGet(env, 'vp_members',
-    'roster_id=in.' + inList + '&status=eq.valid&select=id,roster_id,member_number,first_name,last_name');
+  /* PAGED. Unpaged, a club with more than a thousand members drew from the first thousand
+     only, and members 1001 and up could never win. Nobody could have seen it from outside:
+     the draw works, somebody wins, and it is simply never them. */
+  return await sbGetAll(env, 'vp_members',
+    'roster_id=in.' + inList + '&status=eq.valid' +
+    '&select=id,roster_id,member_number,first_name,last_name&order=member_number.asc');
 }
 
 // Confirm a member belongs to this draw's roster (or, when the draw names no roster, to any

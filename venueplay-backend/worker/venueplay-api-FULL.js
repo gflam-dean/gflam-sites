@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '18 Sep 2026, 01:07 · add2300a';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '18 Sep 2026, 01:28 · d2de7238';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -1260,6 +1260,28 @@ async function vpaPatch(env, table, filter, obj) {
     const t = await res.text();
     throw new Error(table + ' update failed: ' + t);
   }
+}
+
+/* EVERY ROW, NOT THE FIRST THOUSAND.
+
+   PostgREST stops at 1000 rows on this project, with no error and nothing in the response
+   to say so: vp_questions holds 37,665 and a plain select returns 1,000. Measured 18 Sep
+   2026. Any read that can legitimately run past a thousand has to page.
+
+   ADVANCE BY WHAT CAME BACK, and stop only on an EMPTY page, the same as sbGetAll in the
+   game Worker. Stopping on a short page is wrong for exactly the reason this exists:
+   Supabase's own max-rows may be lower than the page size asked for, so every page is
+   short, the loop stops after one, and the truncation is silent all over again. */
+async function vpaSelectAll(env, table, query, pageSize) {
+  const size = pageSize || 1000;
+  let out = [], offset = 0;
+  for (let page = 0; page < 40; page++) {
+    const rows = await vpaSelect(env, table, query + '&limit=' + size + '&offset=' + offset);
+    if (!Array.isArray(rows) || rows.length === 0) break;
+    out = out.concat(rows);
+    offset += rows.length;
+  }
+  return out;
 }
 
 async function vpaSelect(env, table, query) {
@@ -7187,7 +7209,9 @@ async function vpaOptinCsv(env, venues) {
   const header = ['Venue', 'First name', 'Last name', 'Email', 'Mobile', 'Postcode', 'Opted in'];
   const out = [];
   if (ids.length) {
-    const rows = await vpaSelect(env, 'v_vp_player_optins',
+    /* PAGED. Unpaged, a venue with more than a thousand opt-ins downloaded the first
+       thousand and was told nothing. Their own customer list, silently short. */
+    const rows = await vpaSelectAll(env, 'v_vp_player_optins',
       'venue_id=in.(' + ids.map(encodeURIComponent).join(',') +
       ')&select=venue_id,first_name,last_name,email,mobile,postcode,opted_in_at&order=opted_in_at.desc');
     /* One person once. The same punter joins a dozen nights, and a venue pasting this into a
@@ -7219,9 +7243,9 @@ async function vpaOptinCsv(env, venues) {
   let held = 0;
   if (ids.length) {
     try {
-      const h = await vpaSelect(env, 'vp_captures',
+      const h = await vpaSelectAll(env, 'vp_captures',
         'venue_id=in.(' + ids.map(encodeURIComponent).join(',') + ')'
-        + '&marketing_optin=is.true&during_game=is.false&select=id');
+        + '&marketing_optin=is.true&during_game=is.false&select=id&order=id.asc');
       held = (h || []).length;
     } catch (_) { held = 0; }
   }

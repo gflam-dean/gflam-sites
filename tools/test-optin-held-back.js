@@ -25,12 +25,24 @@ var queries;
 
 function arm(opts) {
   queries = [];
+  /* THE STUB HONOURS limit AND offset, because PostgREST does.
+     It used to return the same rows for every call. The moment the export started paging,
+     that stub handed back the same page forty times and the test reported 120 people where
+     there were three. A stub that cannot model paging cannot model the bug the paging is
+     there to fix: a real venue with more than a thousand opt-ins getting a short file. */
+  function page(rows, q) {
+    var lim = /[?&]limit=(\d+)/.exec(q), off = /[?&]offset=(\d+)/.exec(q);
+    if (!lim && !off) return rows;
+    var start = off ? parseInt(off[1], 10) : 0;
+    var size = lim ? parseInt(lim[1], 10) : rows.length;
+    return rows.slice(start, start + size);
+  }
   vpaSelect = function (env, table, q) {
     queries.push(table + '?' + q);
-    if (table === 'v_vp_player_optins') return Promise.resolve(opts.visible || []);
+    if (table === 'v_vp_player_optins') return Promise.resolve(page(opts.visible || [], q));
     if (table === 'vp_captures') {
       if (opts.heldQueryFails) return Promise.reject(new Error('boom'));
-      return Promise.resolve(opts.held || []);
+      return Promise.resolve(page(opts.held || [], q));
     }
     return Promise.resolve([]);
   };
