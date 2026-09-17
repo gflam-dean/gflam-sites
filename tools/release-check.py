@@ -2588,6 +2588,29 @@ def local_checks(which):
                    'breaks a written promise; in the other it empties a paying venue\'s customer '
                    'list with no way back')
 
+    # A MANAGER'S RESTRICTIONS BELONG TO THE ACCOUNT THEY WERE SET ON.
+    #
+    # vpbRequireOwner resolved permissions with a query that had NO venue filter: it read every
+    # staff row the person holds anywhere and took the first one carrying a permissions object. A
+    # travelling host or duty manager working at venues on two DIFFERENT accounts got one
+    # account's restrictions applied to the other, in whichever order Postgres returned the rows.
+    # It could fall either way: losing buttons where they were trusted, or keeping access somebody
+    # had deliberately taken away. That is venue isolation broken from the inside.
+    if which in ('both', 'venueplay'):
+        head('D. Manager permissions do not bleed between accounts')
+        t = os.path.join(ROOT, 'tools', 'test-manager-perms-scope.js')
+        if not os.path.isfile(t):
+            ok('the permission scope test exists', False, why='tools/test-manager-perms-scope.js is missing')
+        else:
+            r = subprocess.run([JSC, t], capture_output=True, text=True, timeout=120)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+            n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
+            ok('permissions are read per account, most restrictive wins (%d checks)' % n,
+               r.returncode == 0 and 'PASS' in out and not bad,
+               detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
+               why='run jsc tools/test-manager-perms-scope.js')
+
     head('E. The Worker you are about to paste')
     dep = os.path.join(PARTYPLAY_BACK, 'worker', 'DEPLOY-partyplay-api.js')
     if which in ('both', 'partyplay') and os.path.isfile(dep):

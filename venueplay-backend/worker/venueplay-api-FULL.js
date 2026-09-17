@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '17 Sep 2026, 16:32 · 4924f23e';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Sep 2026, 16:42 · 74679017';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -4866,9 +4866,34 @@ async function vpbRequireOwner(request, env) {
   // somewhere would silently lose buttons on every OTHER venue they opened.
   if (!actingAsAdmin) {
     try {
-      const pr = await vpaSelect(env, 'vp_venue_staff',
-        'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&role=in.(manager,owner)&select=permissions');
-      for (const s of (pr || [])) { if (s && s.permissions) { perms = s.permissions; break; } }
+      /* SCOPED TO THIS ACCOUNT'S VENUES, which it never was. This query had NO venue filter at
+         all: it read every staff row the person holds anywhere and took the first one that
+         happened to carry a permissions object. A travelling host or a duty manager who works
+         at venues on two DIFFERENT accounts got one account's restrictions applied to the
+         other, in whichever order Postgres returned the rows. That is the venue-isolation rule
+         broken from the inside, and it could fall either way: silently losing buttons on an
+         account where they were trusted, or keeping access on one where somebody had
+         deliberately taken it away.
+
+         THE MOST RESTRICTIVE ROW WINS, not the first one found. Within one account a person can
+         be a manager at two venues with different ticks, and a single perms object has to stand
+         for the whole call. Refusing wherever any row refuses is the only safe way to collapse
+         that: the worst case is a manager who has to ask, rather than one who quietly has a
+         venue's customer list because of how a query sorted. */
+      const scopeIds = accountVenues.map((v) => v.id);
+      const pr = scopeIds.length ? await vpaSelect(env, 'vp_venue_staff',
+        'auth_user_id=eq.' + encodeURIComponent(authUserId) +
+        '&venue_id=in.(' + scopeIds.map(encodeURIComponent).join(',') + ')' +
+        '&role=in.(manager,owner)&select=permissions') : [];
+      for (const row of (pr || [])) {
+        if (!row || !row.permissions) continue;
+        if (!perms) { perms = Object.assign({}, row.permissions); continue; }
+        // false wins, on every key either row mentions.
+        for (const k in row.permissions) {
+          if (row.permissions[k] === false) perms[k] = false;
+          else if (!(k in perms)) perms[k] = row.permissions[k];
+        }
+      }
     } catch (_) { /* permissions column not present yet */ }
   }
 
