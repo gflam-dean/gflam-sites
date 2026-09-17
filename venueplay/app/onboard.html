@@ -247,7 +247,9 @@
         method:"POST",
         headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+tok, "X-VP-Venue":venueId },
         body:JSON.stringify({ label:label, mobile:mobile, venue_ids:[venueId],
-          permissions:{ advertising:true, draws_raffles:true, players_optin:true, add_hosts:true } })
+          permissions:{ advertising:true, draws_raffles:true, players_optin:false, add_hosts:true } })  /* players_optin starts OFF. A venue's customer list is not something a new manager
+             should be handed by a default; the owner ticks it on the account page when they
+             mean to. Everything else here stays generous on purpose. */
       }).then(function(res){ return res.json(); });
     }).then(function(j){
       if(j && j.error) return { ok:false, error:{ message:j.error } };
@@ -300,7 +302,7 @@
              The UID path is kept for operator-group venues, which have no billing account for the
              Worker route to act on, and it now writes the permissions object itself. */
           var mgrDone=Promise.resolve({ skipped:true });
-          var DEFAULT_PERMS={ advertising:true, draws_raffles:true, players_optin:true, add_hosts:true };
+          var DEFAULT_PERMS={ advertising:true, draws_raffles:true, players_optin:false, add_hosts:true };  /* see above: player data is ticked on deliberately, never inherited */
           if(mgrMobile){
             mgrDone=addManagerByMobile(v.id, mgrName, mgrMobile);
           } else if(mgrUid){

@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '17 Sep 2026, 15:22 · 1c13d149';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Sep 2026, 15:41 · 9f922a3a';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -7048,10 +7048,23 @@ async function vpbAddManager(request, env, json) {
   if (!wanted.length) return json({ error: 'Pick at least one venue for this manager.' }, 400);
 
   const p = b.permissions || {};
+  /* PLAYER DATA IS THE ONE THAT MUST BE ASKED FOR, NOT ASSUMED.
+
+     Every permission here read "true unless explicitly false", so a permissions object that
+     simply did not mention players_optin granted it. That is the right way round for
+     advertising, raffles and adding hosts: generous, reversible, and the worst case is a
+     manager changes a promo slide. It is the wrong way round for a venue's customer list,
+     where the worst case is a duty manager or a travelling host walks off with a room full of
+     people's contact details and nobody ever notices, because nothing breaks.
+
+     Dean, 17 Sep 2026: player contact data ranks with money, billing and the games working.
+     So this one is === true. A manager gets it when the owner ticks the box, and not before.
+     The export route has required === true since this morning; this stops the stored record
+     disagreeing with it, which is how a box could look ticked while the download refused. */
   const permissions = {
     advertising: p.advertising !== false,
     draws_raffles: p.draws_raffles !== false,
-    players_optin: p.players_optin !== false,
+    players_optin: p.players_optin === true,
     add_hosts: p.add_hosts !== false,
   };
 
@@ -7321,10 +7334,23 @@ async function vpbSetManagerPerms(request, env, json) {
   if (!target) return json({ error: 'Missing manager.' }, 400);
   if (target === o.authUserId) return json({ error: 'You cannot change your own permissions.' }, 400);
   const p = b.permissions || {};
+  /* PLAYER DATA IS THE ONE THAT MUST BE ASKED FOR, NOT ASSUMED.
+
+     Every permission here read "true unless explicitly false", so a permissions object that
+     simply did not mention players_optin granted it. That is the right way round for
+     advertising, raffles and adding hosts: generous, reversible, and the worst case is a
+     manager changes a promo slide. It is the wrong way round for a venue's customer list,
+     where the worst case is a duty manager or a travelling host walks off with a room full of
+     people's contact details and nobody ever notices, because nothing breaks.
+
+     Dean, 17 Sep 2026: player contact data ranks with money, billing and the games working.
+     So this one is === true. A manager gets it when the owner ticks the box, and not before.
+     The export route has required === true since this morning; this stops the stored record
+     disagreeing with it, which is how a box could look ticked while the download refused. */
   const permissions = {
     advertising: p.advertising !== false,
     draws_raffles: p.draws_raffles !== false,
-    players_optin: p.players_optin !== false,
+    players_optin: p.players_optin === true,
     add_hosts: p.add_hosts !== false,
   };
   const venueIds = o.venues.map((v) => v.id);

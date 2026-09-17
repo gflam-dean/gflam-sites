@@ -2475,6 +2475,35 @@ def local_checks(which):
                    'and the games working, and a fault here does not look like a fault: nothing '
                    'breaks and a room full of people are simply on a list nobody agreed to')
 
+    # WHAT A MANAGER GETS WHEN NOBODY SAID.
+    #
+    # vpbCan is `!o.perms || o.perms[key] !== false`, so an ABSENT permission reads as GRANTED,
+    # and both places that normalise a permissions object wrote players_optin the same generous
+    # way. Right for advertising, raffles and adding hosts: reversible, worst case a changed promo
+    # slide. Wrong for a venue's customer list, where the worst case is a duty manager or a
+    # travelling host walking off with a room full of contact details and nobody noticing, because
+    # nothing breaks. Dean, 17 Sep 2026: player data ranks with money and the games working.
+    #
+    # The test pulls EVERY permissions normaliser out of the Worker by shape and runs them all, so
+    # fixing one copy and leaving the other goes red. That half-fix is this repo's oldest failure
+    # mode and the mutation run proves this check catches it.
+    if which in ('both', 'venueplay'):
+        head('D. A manager is not handed the customer list by default')
+        t = os.path.join(ROOT, 'tools', 'test-manager-permissions.js')
+        if not os.path.isfile(t):
+            ok('the manager permission test exists', False,
+               why='tools/test-manager-permissions.js is missing')
+        else:
+            r = subprocess.run([JSC, t], capture_output=True, text=True, timeout=120)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+            n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
+            ok('player-data permission needs an explicit tick, in every copy (%d checks)' % n,
+               r.returncode == 0 and 'PASS' in out and not bad,
+               detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
+               why='run jsc tools/test-manager-permissions.js. An absent permission must not '
+                   'grant a manager a venue customer list')
+
     head('E. The Worker you are about to paste')
     dep = os.path.join(PARTYPLAY_BACK, 'worker', 'DEPLOY-partyplay-api.js')
     if which in ('both', 'partyplay') and os.path.isfile(dep):

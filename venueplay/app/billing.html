@@ -1012,7 +1012,11 @@
     function setSec(labelText, show){ section(labelText).forEach(function(el){ el.style.display = show?"":"none"; }); }
     // Toggle-gated sections.
     setSec("Hosts", p.add_hosts!==false);
-    setSec("Marketing opt-ins", p.players_optin!==false);
+    /* === true, matching the Worker. Everything else here is true-unless-refused, but the
+       export route refuses anything short of an explicit tick, so showing this section as
+       available to a manager whose permission was never set told them they had something
+       they would be refused the moment they pressed Download. */
+    setSec("Marketing opt-ins", p.players_optin===true);
     setSec("Raffles", p.draws_raffles!==false);
     setSec("Members draws", p.draws_raffles!==false);
     setSec("Advertising", p.advertising!==false);
@@ -1033,7 +1037,7 @@
     var openTab = p.advertising!==false ? "screen"
                 : p.draws_raffles!==false ? "draws"
                 : p.add_hosts!==false ? "billing"
-                : p.players_optin!==false ? "settings" : "billing";
+                : p.players_optin===true ? "settings" : "billing";
     // First render only: a refresh after a save must not yank them off the tab they are working on.
     if(!gateSections._tabbed){
       gateSections._tabbed = true;
@@ -1046,7 +1050,7 @@
       if(p.advertising!==false) canDo.push("your screen");
       if(p.draws_raffles!==false) canDo.push("draws and raffles");
       if(p.add_hosts!==false) canDo.push("hosts");
-      if(p.players_optin!==false) canDo.push("player opt-ins");
+      if(p.players_optin===true) canDo.push("player opt-ins");
       lede.textContent = canDo.length
         ? ("Set up " + canDo.join(", ").replace(/, ([^,]*)$/, " and $1") + " for your venues. Billing and player data stay with the account owner.")
         : "Your account owner has not switched anything on for you yet. Ask them if you need access to the screen, draws or hosts.";
