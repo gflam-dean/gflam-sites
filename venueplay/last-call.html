@@ -1157,8 +1157,24 @@ function vpFoundingCode(pc){
 
         <div class="success" id="vp-success">
           <div class="ring"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M6 14.5 11.5 20 22 8" stroke="#FF1F8E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-          <h3>Your spot is held</h3>
-          <p>Your price is locked in and your card's on file. Check your inbox, we've sent your login and a few quick setup steps. New venues get a free first month, then your first payment is one month later, and you can cancel any time before then.</p>
+          <!-- WHAT THIS SAID, AND WHY IT WAS WRONG. Dean, 17 Sep 2026, after a real signup:
+               "confirmation says spot is held... maybe we should go to the sign in page or
+               something with a banner saying log in?"
+
+               "Your spot is held" is the language from BEFORE checkout, when there really was
+               only a spot. By the time anyone reads this their venues are provisioned, their
+               screen codes exist and they could run a game tonight. Telling them we are holding
+               something makes them wait for a next step that has already happened.
+
+               And there was nothing to press. The old copy sent them to their inbox, which made
+               the email the only way in. It is not: sign-in is a code texted to the mobile they
+               just typed in, so they can be on their console before the email lands. The button
+               goes there. We do NOT redirect automatically, because this panel carries the one
+               line people want in writing, that nothing is charged for a month. -->
+          <h3>You're in</h3>
+          <p>Your price is locked in and your card is on file. Nothing is charged today: your first month is free, your first payment is one month from now, and you can cancel any time before then. Your setup steps are on their way by email.</p>
+          <a class="btn btn-primary success-go" href="/app">Sign in and set up your screen</a>
+          <p class="success-fine">Sign in with the mobile you just gave us. No password, we text you a code.</p>
         </div>
 
       </div>
@@ -1781,6 +1797,11 @@ function vpFoundingCode(pc){
      content was wrong, so a clean scan reported nothing. Same shape as every other detector in
      this repo that could not fail. */
   .sec-head .label,.offer-grid > div:first-child .label{justify-content:center}
+
+  /* The confirmation now has somewhere to go. See the comment on the panel itself. */
+  .success .success-go{margin-top:24px;min-width:280px;justify-content:center}
+  .success .success-fine{font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.04em;
+    color:var(--muted-2);margin-top:14px;text-transform:none}
 </style>
 <a href="#claim" class="vp-float-cta" id="vpFloatCta" aria-label="Lock in founding">
   <svg width="15" height="17" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#fff" stroke-width="2.8" stroke-linejoin="round"/></svg>
