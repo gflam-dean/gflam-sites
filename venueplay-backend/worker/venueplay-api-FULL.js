@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '17 Sep 2026, 12:21 · f7b53fcc';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Sep 2026, 12:29 · 8fc373b0';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -6866,12 +6866,13 @@ async function vpaHandleAdminOptinExport(request, env, json) {
   const url = new URL(request.url);
   const venueId = (url.searchParams.get('venue_id') || '').trim();
   const foundingId = (url.searchParams.get('founding_id') || '').trim();
-  if (!venueId && !foundingId) return json({ error: 'venue_id or founding_id is required.' }, 400);
+  /* Said the way a person reads it: this is surfaced on a button in HQ, not in a console. */
+  if (!venueId && !foundingId) return json({ error: 'No venue was named, so there was nothing to export. Reload HQ and try again.' }, 400);
   const filter = venueId
     ? 'id=eq.' + encodeURIComponent(venueId)
     : 'founding_id=eq.' + encodeURIComponent(foundingId);
   const venues = await vpaSelect(env, 'vp_venues', filter + '&select=id,name');
-  if (!venues || !venues.length) return json({ error: 'No such venue.' }, 404);
+  if (!venues || !venues.length) return json({ error: 'That venue is not on the account any more, so there is nothing to export.' }, 404);
   const res = await vpaOptinCsv(env, venues);
   await vpaAudit(env, actor, 'optin_exported_by_admin',
     venueId ? ('venue:' + venueId) : ('account:' + foundingId),

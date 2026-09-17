@@ -577,7 +577,7 @@
       return fetch(VP_GAME_WORKER+path, { method:"POST", headers:headers, body:JSON.stringify(body||{}) })
         .then(function(res){
           if(res.status===404) return { degraded:true, error:"The game Worker does not have "+path+" yet. Paste venueplay-game.js and try again." };
-          return res.json().then(function(j){ return res.ok ? j : { error:(j && j.error) || ("Request failed ("+res.status+")") }; })
+          return res.json().then(function(j){ return res.ok ? j : { error:(j && j.error) || humanHttp(res.status) }; })
                            .catch(function(){ return { error:"Unexpected response from the server." }; });
         });
     }).catch(function(){ return { error:"Could not reach the game service. Please try again." }; });
@@ -593,10 +593,24 @@
       return fetch(VP_GAME_WORKER+path, { headers:headers })
         .then(function(res){
           if(res.status===404) return { error:"The game Worker does not have "+path+" yet. Paste venueplay-game.js and try again." };
-          return res.json().then(function(j){ return res.ok ? j : { error:(j && j.error) || ("Request failed ("+res.status+")") }; })
+          return res.json().then(function(j){ return res.ok ? j : { error:(j && j.error) || humanHttp(res.status) }; })
                            .catch(function(){ return { error:"Unexpected response from the server." }; });
         });
     }).catch(function(){ return { error:"Could not reach the game service. Please try again." }; });
+  }
+
+  /* NOBODY KNOWS WHAT A 401 IS. Dean, 17 Sep 2026: "as long as there's decent errors on that
+     as well cause no one's gonna know what a 401 is."
+     The Worker almost always sends its own sentence, and that one is used when it does. This is
+     only the fallback for when it sends nothing, which used to read "Request failed (401)". */
+  function humanHttp(status){
+    if(status===401) return "Your HQ session has expired. Reload the page and sign in again.";
+    if(status===403) return "This login is not allowed to do that.";
+    if(status===404) return "That is not there any more. Reload the page.";
+    if(status===409) return "Something else changed this first. Reload and try again.";
+    if(status===429) return "Too many goes at once. Wait a moment and try again.";
+    if(status>=500)  return "The server had a problem, so nothing was changed. Try again in a minute.";
+    return "That did not go through, so nothing was changed. Try again.";
   }
 
   /* The GET twin of workerPost, same auth and the same honest 404 message. Written when the
@@ -611,7 +625,7 @@
           return res.json().then(function(j){
             if(res.ok) return j;
             var out=(j && typeof j==="object") ? j : {};
-            if(!out.error) out.error="Request failed ("+res.status+")";
+            if(!out.error) out.error=humanHttp(res.status);
             return out;
           }).catch(function(){ return { error:"Unexpected response from the server." }; });
         });
@@ -631,7 +645,7 @@
           return res.json().then(function(j){
             if(res.ok) return j;
             var out=(j && typeof j==="object") ? j : {};
-            if(!out.error) out.error="Request failed ("+res.status+")";
+            if(!out.error) out.error=humanHttp(res.status);
             return out;
           }).catch(function(){ return { error:"Unexpected response from the server." }; });
         })
