@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '17 Sep 2026, 12:46 · 3eb1c3b3';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Sep 2026, 13:02 · 2731baf8';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -5293,6 +5293,26 @@ async function vpbSetPlayers(request, env, json) {
   }
 
   if (players > current) {
+    /* A PREVIEW MUST NOT CHANGE ANYTHING, AND THIS ONE CHANGED TWO THINGS.
+       The preview branch used to sit AFTER the capacity patch and after the Stripe quantity
+       was raised, and billing.html calls this with preview:true purely to fill in the numbers
+       on a confirm() dialog. So merely opening that dialog permanently raised the venue's
+       capacity and their recurring Stripe quantity, and wiped any scheduled reduction.
+         - press Cancel, and they are billed for players they just declined
+         - press OK, and the real call now sees players === current, returns unchanged, and the
+           one-off top-up invoice item is never raised: free capacity, and on annual a skipped
+           pro-rata for the rest of the year
+       Quote first, write second. vpbSubItem only reads. Found by audit, 17 Sep 2026. */
+    const pinfo = await vpbSubItem(env, o.account.stripe_subscription_id);
+    if (!pinfo || !pinfo.itemId) {
+      return json({ error: 'Could not reach billing just now. Please try again.' }, 502);
+    }
+    if (previewOnly) {
+      const q = await vpbAdjustPlayerBilling(env, pinfo, players - basis, o.account.plan, venue.name,
+        null, true);
+      return json({ ok: true, preview: true, players: players, from: current,
+                    charge_cents: (q && q.cents) || 0, plan: o.account.plan });
+    }
     // INCREASE: grant capacity, then raise the Stripe quantity now (pro rata). If billing
     // cannot be updated, roll the capacity back so we never silently under-charge.
     await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId),
@@ -5311,12 +5331,6 @@ async function vpbSetPlayers(request, env, json) {
     }
     // Charge for the players they are actually gaining over what they are billed today. Using
     // players-current understated it whenever a reduction was already scheduled.
-    if (previewOnly) {
-      const q = await vpbAdjustPlayerBilling(env, info, players - basis, o.account.plan, venue.name,
-        null, true);
-      return json({ ok: true, preview: true, players: players, from: current,
-                    charge_cents: (q && q.cents) || 0, plan: o.account.plan });
-    }
 
     /* THE KEY DESCRIBES THE MOVE, NOT THE DESTINATION. It used to be
        venueId:players:periodEnd, which omits direction and size, so 100 -> 50 ->

@@ -526,8 +526,21 @@
      screen would sit on a venue channel where a real game could surface, and would answer
      tv_here, which is what HQ reads to decide a screen is alive. A demo must never make a dead
      TV look healthy. */
+  /* DECLARED, because yesterday it was not and this file is "use strict".
+     I added `tvSubscribed=false` to the CLOSED branch below on 17 Sep without checking the
+     variable existed here: trivia, musical and raffle all declare it, members never did. In
+     strict mode that assignment throws a ReferenceError, and it is the FIRST statement on the
+     line, so tvStatus(false) beside it never ran. The result was the precise fault the comment
+     above tvStatus says it fixes: a members draw wall that loses its channel keeps the green
+     dot and the word Connected, hears nothing more from the host, and looks identical to a
+     working screen. Found by audit the same day, not by me re-reading my own change. */
+  var tvSubscribed=false;
+  /* The try/catch is not decoration: ch.send throws once the socket is gone, and this is
+     called from repaint paths. Unguarded it takes the render with it and the wall goes black. */
+  function tvSend(obj){ if(tvSubscribed && ch){ try{ ch.send({ type:"broadcast", event:"msg", payload:obj }); }catch(e){} } }
   if(!VP_DEMO) ch.subscribe(function(status){
     if(status==="SUBSCRIBED"){
+      tvSubscribed=true;
       tvStatus(true);
       // announce ourselves so the host replays the current jackpot + draws list
       ch.send({ type:"broadcast", event:"msg", payload:{ t:"tv_here", hello:true } });
@@ -544,6 +557,11 @@
     state.hostSeen=true;
     // The host tapped "Back to ads". Go now rather than wait for a timeout.
     if(m.t==="to_ads"){ if(VENUE_SLUG) window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); return; }
+    /* ANSWER THE HOST, every time. The other three screens do this and members did not, so a
+       host who reloads their tablet mid-draw, or opens the console while the wall is already
+       live, reads "Waiting for screen" for the rest of the night with a working screen in
+       front of them, and a live round's winner is never replayed to it. */
+    tvSend({ t:"tv_here" });
     if(m.t==="host_here"){ /* host present; wait for state */ return; }
     if(m.t==="state"){
       /* A routine state refresh must NOT wipe a winner or a result off the wall. The host resends
