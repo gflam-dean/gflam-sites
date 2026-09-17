@@ -70,6 +70,65 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 # wholeness check is reached. Zero bytes parses perfectly, which is the case
 # that check was actually written for.
 MUTATIONS = [
+    # ---- 17 Sep 2026, eighth pass: the screens.
+    ('tvStatus() is the same in all', 'venueplay/app/musical/screen.html',
+     'if(box) box.hidden = !!connected;', 'if(box) box.hidden = false;',
+     'the musical screen keeps the Reconnecting pill up for the whole night while the other '
+     'four hide it, which is five screens deciding this for themselves again'),
+
+    ('a markup-hidden element is not made visible by its own stylesheet', 'venueplay/tv.html',
+     '.tv-status[hidden]{display:none}', '.tv-status-old[hidden]{display:none}',
+     'the guard goes and .tv-status sets display:flex, so the Reconnecting pill sits on the '
+     'venue television all night with nothing able to hide it'),
+
+    ('no page uses a CSS variable it never defines', 'venueplay/tv.html',
+     'font-size:clamp(8px,1.1cqw,13px);color:var(--muted)}',
+     'font-size:clamp(8px,1.1cqw,13px);color:var(--muted-2)}',
+     'one renamed token leaves a var() with nothing behind it, and a CSS variable that is '
+     'not defined kills the whole declaration silently'),
+
+    # ---- 17 Sep 2026, seventh pass: the stamps, and a constant the Worker has to reach.
+    # ---- A stamp check fails on ANY edit that is not followed by tools/stamp-workers.py,
+    # ---- which is the whole point of it: an unstamped edit ships a Worker whose /health
+    # ---- reports a build that is not the one running.
+    ('venueplay-sms-hook.js carries its own fingerprint',
+     'venueplay-backend/worker/venueplay-sms-hook.js',
+     'const FIVE_MINUTES_SECONDS = 60 * 5;', 'const FIVE_MINUTES_SECONDS = 60 * 10;',
+     'the Worker was edited and never re-stamped, so /health reports a build nobody is '
+     'running and there is no way to tell what is deployed'),
+
+    ('DEPLOY-partyplay-api.js carries its own fingerprint',
+     'partyplay-backend/worker/DEPLOY-partyplay-api.js',
+     "reply_to: 'hello@partyplay.com.au',", "reply_to: 'hello@getpartyplay.com.au',",
+     'the built file was edited by hand instead of being rebuilt and re-stamped, which is '
+     'exactly what made deploy-worker.py refuse PartyPlay every time until 17 Sep'),
+
+    # Two call sites, so this has to break both: leaving one keeps the whole-file search
+    # green and the mutation proves nothing.
+    ('and the Worker can actually reach the constant',
+     'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     '<<ALL:PPLicence.UNUSED_EXPIRY_DAYS>>', 'UNUSED_EXPIRY_DAYS',
+     'the Worker no longer asks the licence library for the expiry and refers to a name that '
+     'does not exist, so unused codes are never chased at all'),
+
+    # ---- 17 Sep 2026, sixth pass: the last three suites nobody had broken.
+    ('redirect-verdict.test.py', 'tools/release-check.py',
+     "    if loc.startswith('https://venueplay.com.au.'):",
+     "    if loc.startswith('https://venueplay.com.au.evil.invalid/'):",
+     'the lookalike-host rule stops firing, so a redirect to venueplay.com.au.somebody-else '
+     'reads as our own site and every television follows it'),
+
+    ('cancel-emails.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     'status=eq.active&suspended_reason=eq.ending', 'status=eq.active&suspended_reason=eq.ended',
+     'the nightly sweep finds nobody, so a venue that cancelled is never ended and never gets '
+     'its last email, and keeps being billed'),
+
+    ('founding-postcode-agree.test.js', 'venueplay/last-call.html',
+     "if((n>=3000&&n<=3999)||(n>=8000&&n<=8999)) return 'VIC';",
+     "if((n>=3000&&n<=4099)||(n>=8000&&n<=8999)) return 'VIC';",
+     'the page and the Worker disagree about Brisbane, so a 4000 venue is shown the Victorian '
+     'founding price and the card takes the standard one'),
+
     # ---- 17 Sep 2026, fifth pass: the PartyPlay game names, which a host reads off their
     # ---- own console mid-party and which run.html sends up on the television.
     ('the game names live in lib/pp-games.js', 'partyplay/lib/pp-games.js',
