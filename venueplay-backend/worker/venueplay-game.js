@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '16 Sep 2026, 10:18 · cf8cb225';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Sep 2026, 15:36 · 30f38ee5';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -1157,6 +1157,53 @@ async function handleFeedbackTally(request, env, json) {
   });
 }
 
+/* WHAT THIS VENUE HAS ACTUALLY AGREED TO COLLECT. One answer, asked by both doors.
+
+   There were two doors and only one of them asked. /capture (broadcast bingo) read
+   vp_venue_settings and wrote only the fields the venue had switched on. /join did not read the
+   settings at all: it took first_name, last_name, email, mobile, postcode and marketing_optin
+   straight off the request and assigned them onto the player row. The join SCREEN only shows the
+   fields a venue has enabled, so nothing looked wrong, but the screen is not the gate. A crafted
+   POST could write a player's email, mobile and postcode, and a marketing_optin with a consent
+   timestamp, for a venue that had never switched any of it on.
+
+   That matters beyond tidiness. Migration 43, widened by 82, exists to stop an account switching
+   collection on unless its contact domain reads like a real venue, precisely so a stranger cannot
+   start harvesting a room. /join went round that gate completely. As at 17 Sep 2026, 5 of 23
+   venues have some collection switched on, so this is a live path, not a theoretical one.
+
+   FAILS CLOSED. sbGet answers [] on any non-2xx, so a database wobble gives {} here and {} means
+   "collect nothing but a first name", which is the safe direction. The opposite default would
+   have a transient error open the whole room up. */
+async function venueCollectCfg(env, venueId) {
+  const rows = await sbGet(env, 'vp_venue_settings',
+    'venue_id=eq.' + enc(venueId) + '&select=collect_first_name,collect_last_name,collect_postcode,collect_email,collect_mobile,collect_marketing_optin&limit=1');
+  return (rows && rows[0]) || {};
+}
+
+/* The fields a venue is allowed to keep, and nothing else. Lengths are per field rather than one
+   blanket slice: an email is longer than a postcode, and truncating a real address at 120
+   characters silently stores a dud one.
+
+   A first name is on unless explicitly switched off, which is how it has always worked: a game
+   needs something to put on the screen when somebody wins. Everything else is off until the venue
+   turns it on. marketing_optin is only ever recorded when the venue collects it AND the player
+   ticked it themselves. Never pre-ticked, never defaulted on, never inferred. */
+function gatedCapture(cfg, b) {
+  const s = (v, n) => { const t = String(v == null ? '' : v).trim().slice(0, n); return t || null; };
+  const out = {};
+  if (cfg.collect_first_name !== false && b.first_name != null) out.first_name = s(b.first_name, 80);
+  if (cfg.collect_last_name && b.last_name != null)             out.last_name  = s(b.last_name, 80);
+  if (cfg.collect_email && b.email != null)                     out.email      = s(b.email, 200);
+  if (cfg.collect_mobile && b.mobile != null)                   out.mobile     = s(b.mobile, 40);
+  if (cfg.collect_postcode && b.postcode != null)               out.postcode   = s(b.postcode, 10);
+  if (cfg.collect_marketing_optin && b.marketing_optin === true) {
+    out.marketing_optin = true;
+    out.marketing_optin_at = new Date().toISOString();
+  }
+  return out;
+}
+
 async function handleCapture(request, env, json) {
   const b = await readJson(request);
   const ipHash = await abuseIpHash(request, env);
@@ -1175,17 +1222,8 @@ async function handleCapture(request, env, json) {
 
   const venueId = await venueByCode(env, b.code);
   if (!venueId) return json({ ok: false, stored: false });
-  const rows = await sbGet(env, 'vp_venue_settings',
-    'venue_id=eq.' + enc(venueId) + '&select=collect_first_name,collect_last_name,collect_postcode,collect_email,collect_mobile,collect_marketing_optin&limit=1');
-  const cfg = (rows && rows[0]) || {};
-  const s = v => (v == null ? null : String(v).slice(0, 120));
-  const row = { venue_id: venueId, source: 'bingo' };
-  if (cfg.collect_first_name !== false) row.first_name = s(b.first_name);
-  if (cfg.collect_last_name)  row.last_name = s(b.last_name);
-  if (cfg.collect_postcode)   row.postcode  = s(b.postcode);
-  if (cfg.collect_email)      row.email     = s(b.email);
-  if (cfg.collect_mobile)     row.mobile    = s(b.mobile);
-  if (cfg.collect_marketing_optin && b.marketing_optin === true) { row.marketing_optin = true; row.marketing_optin_at = new Date().toISOString(); }
+  const cfg = await venueCollectCfg(env, venueId);
+  const row = Object.assign({ venue_id: venueId, source: 'bingo' }, gatedCapture(cfg, b));
   /* PROVENANCE, because this cannot be authenticated yet and pretending otherwise would be worse.
      Broadcast bingo has no session and no player token, so there is genuinely nothing to check
      beyond a venue code derived from a public slug: anyone can post a forged capture, including a
@@ -2281,17 +2319,12 @@ async function handleJoin(request, env, json) {
 
   const name = cleanName(b.name);
 
-  // Optional player data, per the venue's collect_* settings on the join screen. Stored on the
-  // player row. The marketing opt-in is ONLY ever recorded true if the player ticked it
-  // themselves (a locked rule: never pre-ticked, never defaulted on).
-  const capStr = (v, n) => { const s = String(v == null ? '' : v).trim().slice(0, n); return s || null; };
-  const cap = {};
-  if (b.first_name != null) cap.first_name = capStr(b.first_name, 80);
-  if (b.last_name != null) cap.last_name = capStr(b.last_name, 80);
-  if (b.email != null) cap.email = capStr(b.email, 200);
-  if (b.mobile != null) cap.mobile = capStr(b.mobile, 40);
-  if (b.postcode != null) cap.postcode = capStr(b.postcode, 10);
-  if (b.marketing_optin === true) { cap.marketing_optin = true; cap.marketing_optin_at = new Date().toISOString(); }
+  /* Optional player data, gated on what the VENUE has agreed to collect, not on what the join
+     screen happened to render. This used to trust the request: the screen only shows the fields a
+     venue has enabled, so it looked right, but a crafted POST wrote an email, a mobile, a
+     postcode and a marketing_optin with a consent timestamp for a venue that collects none of it.
+     Same rules as /capture now, out of one function, so the two cannot drift apart again. */
+  const cap = gatedCapture(await venueCollectCfg(env, session.venue_id), b);
 
   // Soft dedup (LIVE only with env.RL): a rapid re-join from the same network +
   // device hint reuses that device's existing player row instead of minting a new

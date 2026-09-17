@@ -2443,6 +2443,38 @@ def local_checks(which):
                    'marketing to somebody who has withdrawn consent is the single fault here that '
                    'costs money in a fine rather than an apology')
 
+    # A VENUE ONLY KEEPS WHAT IT AGREED TO KEEP, WHICHEVER DOOR THE PLAYER CAME THROUGH.
+    #
+    # Found 17 Sep 2026. There were two doors and only one asked. /capture read vp_venue_settings
+    # and wrote only the fields a venue had switched on. /join read the settings NOT AT ALL and
+    # assigned the request straight onto the player row. The join screen only renders enabled
+    # fields, so nothing looked wrong, but the screen is not the gate: a crafted POST wrote an
+    # email, a mobile, a postcode and a marketing_optin WITH a consent timestamp for a venue that
+    # collects none of it. That walks straight round migration 43/82, which exists to stop an
+    # account harvesting a room unless its contact domain reads like a real venue.
+    #
+    # Both doors now call one gatedCapture(). The test RUNS it out of the shipped Worker and
+    # checks it fails CLOSED: sbGet answers [] on any non-2xx, so a database wobble must mean
+    # "collect nothing", never "collect everything". Proved against four mutations.
+    if which in ('both', 'venueplay'):
+        head('D. A venue only keeps the player data it agreed to keep')
+        t = os.path.join(ROOT, 'tools', 'test-collection-gate.js')
+        if not os.path.isfile(t):
+            ok('the collection gate test exists', False,
+               why='tools/test-collection-gate.js is missing, so nothing is checking that a join '
+                   'cannot write player data a venue never switched on')
+        else:
+            r = subprocess.run([JSC, t], capture_output=True, text=True, timeout=120)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+            n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
+            ok('no join can write player data the venue never switched on (%d checks)' % n,
+               r.returncode == 0 and 'PASS' in out and not bad,
+               detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
+               why='run jsc tools/test-collection-gate.js. Player contact data ranks with billing '
+                   'and the games working, and a fault here does not look like a fault: nothing '
+                   'breaks and a room full of people are simply on a list nobody agreed to')
+
     head('E. The Worker you are about to paste')
     dep = os.path.join(PARTYPLAY_BACK, 'worker', 'DEPLOY-partyplay-api.js')
     if which in ('both', 'partyplay') and os.path.isfile(dep):
