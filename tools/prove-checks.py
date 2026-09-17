@@ -70,6 +70,89 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 # wholeness check is reached. Zero bytes parses perfectly, which is the case
 # that check was actually written for.
 MUTATIONS = [
+    # ---- 17 Sep 2026, twelfth pass: the two retention nags. Both run a real tool against the
+    # ---- live database, so the thing worth proving is that the gate reads what the tool says
+    # ---- rather than merely managing to start it. Shortening the promised window is also the
+    # ---- realistic fault: the privacy page gets edited and the sweep does not follow.
+    ("a closed venue's player data is deleted within 90 days",
+     'venueplay-backend/tools/purge-closed-player-data.py',
+     # 30 was not enough: the closest closed venue is five days old, so a thirty day
+     # window still left it waiting and the gate stayed green. The mutation has to be
+     # shorter than the youngest closed venue or it proves nothing.
+     "ap.add_argument('--days', type=int, default=90)",
+     "ap.add_argument('--days', type=int, default=1)",
+     'a venue closed inside the promised window is already overdue, and the gate has to say '
+     'so rather than quietly reporting that the tool ran'),
+
+    ('no closed venue is still holding its players',
+     'venueplay-backend/tools/check-player-retention.py',
+     'PROMISE_DAYS = 90', 'PROMISE_DAYS = 3',
+     'the page promises a shorter window than anything deletes, so we are holding player '
+     'data past what we told the venue, and the gate must go red on the tool exit code'),
+
+    # ---- 17 Sep 2026, eleventh pass: the copy checks, and the clock.
+    ('nothing claims the bingo cards mark themselves', 'venueplay/index.html',
+     'Digital cards on every phone, everyone dabs their own the way they always have,',
+     'Digital cards on every phone, auto-marked as the caller goes,',
+     'the site sells a feature the product refuses to have on purpose, so a venue buys '
+     'auto-marking and gets a room full of people dabbing'),
+
+    # welcome.html documents its own tokens in a comment at the top, so {{monthly_total}}
+    # appears there first and the check strips comments before looking. The mutation landed
+    # in the note and the email was untouched. That is the very trap this check's own comment
+    # warns about, walked into from the other side.
+    ('every merge tag in a live email gets filled in', 'venueplay/emails/welcome.html',
+     '{{player_count}} players at {{player_rate}} each, {{monthly_total}} a month.',
+     '{{player_count}} players at {{player_rate}} each, {{monthly_total_inc_gst}} a month.',
+     'a live email goes out with {{monthly_total_inc_gst}} printed in it where the price '
+     'should be, because nothing in the Worker fills that name'),
+
+    ('no founding page has outlived its own deadline', 'venueplay/qld.html',
+     '<<ANY:QLD-OCT-2026>>', 'QLD-JAN-2026',
+     'the page promises a founding code that expired months ago, so either the discount '
+     'runs past the date we published or a venue reads $2.50 and is charged $3'),
+
+    ('no printed handout carries a date that can go stale', 'venueplay/leave-behind-club.html',
+     'Go live the day you sign up, first payment a month later.',
+     'Go live 24 October 2026, first payment 24 November 2026.',
+     'a handout on a bar carries a date nobody can edit once it is printed, which is how '
+     'all four of them came to promise a go-live three weeks in the past'),
+
+    # ---- 17 Sep 2026, tenth pass: a pane that never stops loading, and a black-on-black panel.
+    ('every loading line has something that will finish it', 'venueplay/app/hq.html',
+     'if(pane==="billing" || pane==="usage") needMeter();',
+     'if(pane==="billing") needMeter();',
+     'the Usage tab sits on "Reading the meter..." for ever if it is opened first, which is '
+     'the exact 12 Sep fault and is indistinguishable on screen from a slow request'),
+
+    # "    color: var(--white);" appears four times in this file and the first is 150 lines
+    # above .vp-modal, so a first-occurrence replace broke an unrelated rule and the check
+    # stayed green. Anchored on the line above it instead. Eleventh time out of sixteen that
+    # the mutation was wrong rather than the check.
+    ('the demo panel sets its own text colour', 'venueplay/see-a-night.html',
+     '    color: var(--white);\n    position: relative;\n    width: 100%;\n    max-width: 380px;',
+     '    position: relative;\n    width: 100%;\n    max-width: 380px;',
+     'the panel on the page every cold email points at goes back to inheriting black text on '
+     'a black console, so the wordmark and four game headings are invisible while every tool '
+     'that reads the DOM says they are there'),
+
+    # ---- 17 Sep 2026, ninth pass: the buzz, which is one call site and one guard.
+    ('nothing buzzes a phone except', 'venueplay/play.html',
+     'function buzz(pattern){ try{ if(window.VPCelebrate) VPCelebrate.buzz(pattern); }catch(e){} }',
+     'function buzz(pattern){ try{ navigator.vibrate(pattern); }catch(e){} }',
+     'the phone goes back to buzzing on its own, so the demo guard in vp-celebrate.js is '
+     'bypassed and a sales page vibrates in somebody\'s hand'),
+
+    ('and it asks whether the page is a demo BEFORE it does', 'venueplay/app/vp-celebrate.js',
+     '      if (isDemoPage()) return;                 // a demonstration is watched, not felt\n'
+     '      var nav = root.navigator;\n'
+     '      if (nav && nav.vibrate) nav.vibrate(pattern);',
+     '      var nav = root.navigator;\n'
+     '      if (nav && nav.vibrate) nav.vibrate(pattern);\n'
+     '      if (isDemoPage()) return;                 // a demonstration is watched, not felt',
+     'the guard runs after the buzz instead of before it, so the one allowed call site '
+     'buzzes unconditionally and every demo page vibrates'),
+
     # ---- 17 Sep 2026, eighth pass: the screens.
     ('tvStatus() is the same in all', 'venueplay/app/musical/screen.html',
      'if(box) box.hidden = !!connected;', 'if(box) box.hidden = false;',
@@ -99,7 +182,7 @@ MUTATIONS = [
 
     ('DEPLOY-partyplay-api.js carries its own fingerprint',
      'partyplay-backend/worker/DEPLOY-partyplay-api.js',
-     "reply_to: 'hello@partyplay.com.au',", "reply_to: 'hello@getpartyplay.com.au',",
+     "<<ANY:reply_to: 'hello@partyplay.com.au',>>", "reply_to: 'hello@getpartyplay.com.au',",
      'the built file was edited by hand instead of being rebuilt and re-stamped, which is '
      'exactly what made deploy-worker.py refuse PartyPlay every time until 17 Sep'),
 
