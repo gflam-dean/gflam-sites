@@ -317,7 +317,7 @@
       <input type="number" class="seats" id="add-seats" min="1" placeholder="Max players">
       <button class="go" id="add-go">Add venue</button>
     </div>
-    <p class="note">Adding a venue puts it on this same account and bill, on your current rate.</p>
+    <p class="note">Adding a venue puts it on this same account and bill, on your current rate. Its first month is free, the same as your first venue, and the credit comes off your next invoice.</p>
 
     <div class="label">Payment reminders</div>
     <div class="card toggle">
@@ -1063,9 +1063,17 @@
       // The Worker emails a ready-to-forward setup guide for the new venue to this account's
       // contact address. Saying so is the only way the owner knows to pass it on, and saying so
       // ONLY when it actually sent is the only way they know when to write it themselves.
-      showMsg(r.onboarding_sent
+      /* SAY THE FREE MONTH OUT LOUD. The credit is real money and it lands on an invoice they
+         will not see for weeks, so an owner who was charged a month today and told nothing would
+         reasonably believe expanding cost them. free_month_cents is 0 when the account is still
+         inside its own free month, where there was nothing to charge and nothing to hand back,
+         and saying it then would be claiming a discount that did not happen. */
+      var freeBit = (r.free_month_cents > 0)
+        ? (" Its first month is free: $" + (r.free_month_cents/100).toFixed(2) + " credited, and it comes off your next invoice.")
+        : "";
+      showMsg((r.onboarding_sent
         ? (name + " added. We have emailed you a setup guide to forward on to the venue.")
-        : (name + " added to your account."), true);
+        : (name + " added to your account.")) + freeBit, true);
       // Refresh the account summary AND the host/manager panels: their "which venues" checkbox
       // pickers are built from their own /account/hosts + /account/managers calls, so without this
       // a freshly added venue would not appear as a tickable option until a full page reload.

@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '17 Sep 2026, 13:02 · 2731baf8';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Sep 2026, 13:33 · 1c7ae930';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -391,6 +391,29 @@ async function handleCheckout(request, env, json) {
   // signup on whatever price is current, and flagged for HQ via subscription metadata.
   // Stripe still needs trial_end >= ~2 days, so returning venues use the minimum floor.
   const returning = await sbReturningAccount(env, email, (b.mobile || '').trim(), rowId);
+  /* ONE ACCOUNT PER PERSON. sbReturningAccount was only ever used to withhold the second free
+     month; nothing stopped a second ACCOUNT being created, and there is no unique index on
+     contact_email. So a venue that signed up twice, because the first attempt looked like it
+     failed or because they were sent a second link, got a second founding row and a SECOND
+     STRIPE SUBSCRIPTION billed in full alongside the first.
+     Worse, they could not see it: vpbRequireOwner resolves a single account from
+     venues[0].founding_id, so the duplicate never appears on their billing page and they
+     cannot cancel it themselves. The add-card path has guarded exactly this since it was
+     written; checkout never did. Found by audit, 17 Sep 2026.
+     A live subscription is the test, not merely having a row: an abandoned pending signup is
+     excluded by sbReturningAccount already, and someone who genuinely cancelled and is coming
+     back should not be stopped at the door. */
+  if (returning) {
+    const live = await vpaSelect(env, 'venueplay_founding',
+      'or=(contact_email.eq.' + encodeURIComponent(email) + ')&status=neq.pending'
+      + '&stripe_subscription_id=not.is.null&select=id,venue_name&limit=1').catch(() => []);
+    if (live && live.length) {
+      return json({ error: 'That email already has a VenuePlay account with billing set up. '
+        + 'Sign in and use Add a venue instead, so it all stays on one bill. '
+        + 'If that does not look right, email hello@venueplay.com.au and we will sort it.',
+        existing_account: true }, 409);
+    }
+  }
   const trialTs = returning ? MIN_TRIAL : launchTs;
   const site = (env.SITE_URL || '').replace(/\/+$/, '');
   const label = isGroup ? (venueCount + ' venues') : venues[0].name;
@@ -5436,11 +5459,67 @@ async function vpbAddVenue(request, env, json) {
   // renewal date on annual (it used to be charged a single month even on an annual account).
   const aAdj = billingOk ? await vpbAdjustPlayerBilling(env, info, players, o.account.plan, name,
     'newvenue:' + String(name || '').slice(0,40) + ':' + players + ':' + (info.periodEnd || '0')) : null;
+
+  /* THE NEW VENUE GETS ITS FIRST MONTH FREE, the same month a venue that signs up on its own
+     gets. Dean, 17 Sep 2026: "if I sign up as a group and then I add another venue but I'm now
+     paying because my trial was over that venue should still get a month free right?"
+
+     Until now it did not. A venue added while the account was inside its OWN free month rode
+     that month for nothing, because vpbAdjustPlayerBilling returns null while the subscription
+     is 'trialing'. A venue added by a PAYING account was charged a full month the instant the
+     owner clicked Add. So the one thing we most want a group to do, put us in the rest of their
+     pubs, cost them money on the day they decided to do it, and the new room's staff never got
+     the trial the first room got. The owner has proven the product. That pub has not: different
+     staff, different telly, different Wi-Fi, different crowd.
+
+     WHY A CREDIT AND NOT A TRIAL. trial_end is a property of the SUBSCRIPTION, and one
+     subscription covers every venue on the account. Trialling the new venue would stop billing
+     the venues already being paid for. A customer balance credit is per-account money the next
+     invoice consumes, and it prints on their invoice with the reason on it.
+
+     ONE MONTH AT THEIR RATE, and it works out the same on both plans. Monthly: the charge above
+     billed exactly one month, this hands it back, and their next renewal bills the venue
+     normally. Annual: the charge above was pro rata to renewal, and this takes one month off it.
+     Either way the value given is players x rate, which is the month a new signup gets.
+
+     ONLY WHERE THEY WERE ACTUALLY CHARGED. Inside the free month aAdj is null and there is
+     nothing to hand back; crediting then would give away a month they never paid for. kind
+     'failed' is a Stripe refusal, and crediting that would turn a failed charge into free money.
+     So the test is kind === 'charge', not merely "aAdj exists". */
+  let freeMonth = null;
+  if (aAdj && aAdj.kind === 'charge' && aAdj.cents > 0 && info && info.sub && info.sub.customer) {
+    const fRate = vpbRateStrict(env, info.priceId, o.account.plan);   // per player, per month
+    const freeCents = (fRate == null) ? 0 : Math.round(fRate * 100) * players;
+    if (freeCents > 0) {
+      /* KEYED ON THE VENUE ID, which is unique and permanent, so a double click or a client
+         retry banks the credit once. vpaProvisionOneVenue is idempotent by name and answers 409
+         above on a second add, so nothing can reach here twice for one venue after Stripe's 24h
+         key window has passed either. */
+      const fRes = await vpbStripePost(env, 'customers/' + encodeURIComponent(info.sub.customer) + '/balance_transactions', {
+        amount: -freeCents, currency: 'aud',
+        description: name + ' - first month free, comes off your next invoice',
+      }, 'vfree:' + String(r.venue && r.venue.id));
+      if (fRes && !fRes.error && fRes.id) {
+        freeMonth = { cents: freeCents, txn: fRes.id };
+        /* Best effort, and deliberately AFTER the money. The credit is the thing that matters,
+           and these columns arrive with migration 83: on a database that has not run it yet the
+           venue is still credited and the patch simply does nothing. */
+        await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(r.venue && r.venue.id),
+          { free_month_at: new Date().toISOString(), free_month_cents: freeCents }).catch(() => {});
+      } else {
+        // Charged and not credited is the one bad outcome here, so it is logged loudly and
+        // reported in the audit row rather than swallowed. The venue is live either way.
+        console.log('[billing] FREE MONTH CREDIT FAILED for ' + name + ': ' + ((fRes && fRes.error && fRes.error.message) || 'unknown'));
+        freeMonth = { cents: 0, failed: true, owed_cents: freeCents };
+      }
+    }
+  }
+
   await vpaInsert(env, 'vp_admin_audit', {
     ...vpbActorFields(o),
     action: billingOk ? 'venue_added' : 'venue_added_billing_pending',
     target: 'venue:' + (r.venue && r.venue.id),
-    detail: { name: name, players: players, new_total: newTotal, billing: aAdj, actor_user: o.authUserId },
+    detail: { name: name, players: players, new_total: newTotal, billing: aAdj, free_month: freeMonth, actor_user: o.authUserId },
   }, false).catch(() => {});
 
   // A venue added from the account is a venue nobody has told yet. Send the owner one tidy
@@ -5452,7 +5531,9 @@ async function vpbAddVenue(request, env, json) {
     slug: r.venue && r.venue.slug,
   });
 
-  return json({ ok: true, billing_synced: billingOk, onboarding_sent: onboardingSent, venue: { id: r.venue && r.venue.id, name: name, slug: r.venue && r.venue.slug, players: players } });
+  return json({ ok: true, billing_synced: billingOk, onboarding_sent: onboardingSent,
+    free_month_cents: (freeMonth && freeMonth.cents) || 0,
+    venue: { id: r.venue && r.venue.id, name: name, slug: r.venue && r.venue.slug, players: players } });
 }
 
 /* --- POST /account/cancel-venue : schedule (or undo) a venue's cancellation. ---

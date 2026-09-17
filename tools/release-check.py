@@ -2341,6 +2341,39 @@ def local_checks(which):
                why='%s does not put an unsubscribe link in the email it sends. That '
                    'is a Spam Act problem, not a nicety' % name)
 
+    # A VENUE ADDED TO A PAYING ACCOUNT GETS ITS FIRST MONTH FREE, AND THIS RUNS IT.
+    #
+    # Dean, 17 Sep 2026. Until that day a venue added while the account was inside its own
+    # free month rode that month for nothing, while a venue added by a PAYING account was
+    # charged a full month the instant the owner clicked Add. So expanding cost a group
+    # money on the day they decided to do it.
+    #
+    # This is not a source read. tools/test-add-venue-free-month.js CALLS vpbAddVenue with
+    # the network helpers replaced and vpbAdjustPlayerBilling, vpbRateStrict and
+    # vpbYearFractionLeft left real, and asserts the money: one month charged and one month
+    # credited on monthly, pro rata charged and one month credited on annual, and NOTHING
+    # credited in the three cases where crediting would be giving money away (still in the
+    # free month, the charge was refused, the rate is unknown). Proved against three
+    # mutations on the day it was written; all three went red.
+    if which in ('both', 'venueplay'):
+        head('D. A venue added to a paying account gets its first month free')
+        t = os.path.join(ROOT, 'tools', 'test-add-venue-free-month.js')
+        if not os.path.isfile(t):
+            ok('the add-venue free month test exists', False,
+               why='tools/test-add-venue-free-month.js is missing, so nothing is checking '
+                   'that adding a venue still credits the month back')
+        else:
+            r = subprocess.run([JSC, t], capture_output=True, text=True, timeout=120)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+            n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
+            ok('adding a venue charges a month and credits it straight back (%d checks)' % n,
+               r.returncode == 0 and 'PASS' in out and not bad,
+               detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
+               why='run jsc tools/test-add-venue-free-month.js. Either the credit stopped '
+                   'happening, which means groups are being charged to expand, or it started '
+                   'happening where it should not, which is money given away')
+
     head('E. The Worker you are about to paste')
     dep = os.path.join(PARTYPLAY_BACK, 'worker', 'DEPLOY-partyplay-api.js')
     if which in ('both', 'partyplay') and os.path.isfile(dep):
