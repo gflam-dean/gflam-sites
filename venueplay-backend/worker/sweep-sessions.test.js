@@ -217,7 +217,23 @@ function zoneWhereHourIs(target) {
   return null;
 }
 var atThree = zoneWhereHourIs(3);
-var notThree = zoneWhereHourIs((venueLocalHour("Australia/Brisbane") + 1) % 24);
+/* A FIXED HOUR, NOT ONE DERIVED FROM THE CLOCK.
+
+   This used to ask for the zone at (Brisbane's hour + 1). For one hour every night, while
+   Brisbane reads 2am, that IS 3am, so notThree and atThree were the SAME zone, both venues
+   were closed, and two checks failed. Every night, 2am to 3am, on the rule that stops a
+   session nobody closed from billing every player who ever joined it. Found 18 Sep 2026 at
+   about ten past two, by the gate going red between two runs with nothing changed in
+   between.
+
+   15:00 is never 3am, the zone list covers all twenty four offsets, so this always exists
+   and is always a different zone. The assertion below makes sure of it rather than trusting
+   the arithmetic. */
+var notThree = zoneWhereHourIs(15);
+if (atThree && notThree && atThree === notThree) {
+  bad++;
+  print("  FAIL the two test zones are the same, so 'left alone' cannot be told from 'closed'");
+}
 
 if (!atThree) {
   /* The list now covers every UTC offset, so this is unreachable. If it ever fires,

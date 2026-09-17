@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '18 Sep 2026, 01:28 · 487787dc';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '18 Sep 2026, 02:11 · 58e0e721';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -2731,7 +2731,13 @@ async function hostStartTrivia(env, json, b, session, staff, seq) {
   /* parked_at is set on questions pulled from play (flagged by venues, or withdrawn by us as
      unfit for a pub screen). Migration 32 added the column and listed this filter as still to do,
      so until now parking a question did nothing at all and it kept coming up in rounds. */
-  const qs = await sbGet(env, 'vp_questions', 'set_id=eq.' + enc(setId) + '&parked_at=is.null&select=id,seq');
+  /* PAGED. PostgREST stops at 1000 rows, and four library sets are already past it: the
+     Australiana set holds 4,076 questions. Unpaged, qtotal on the phones and the telly said
+     1000, three quarters of the set could never be asked, and the no-repeat memory was
+     working over a quarter of the pool, so questions came round again far sooner than they
+     should. Measured 18 Sep 2026. */
+  const qs = await sbGetAll(env, 'vp_questions',
+    'set_id=eq.' + enc(setId) + '&parked_at=is.null&select=id,seq&order=seq.asc');
   const allSeqs = qs.map((r) => r.seq).filter((s) => s != null);
   if (!allSeqs.length) return json({ error: 'That question set has no questions' }, 409);
   const seqToId = {};
@@ -2756,8 +2762,11 @@ async function hostStartTrivia(env, json, b, session, staff, seq) {
   if (session.venue_id) {
     const cutoff = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
     try {
-      const askedRows = await sbGet(env, 'vp_asked_questions',
-        'venue_id=eq.' + enc(session.venue_id) + '&asked_at=gt.' + enc(cutoff) + '&select=question_id');
+      /* PAGED: a busy venue asks far more than a thousand questions in twelve months, and a
+         truncated memory is a repeat the room notices. */
+      const askedRows = await sbGetAll(env, 'vp_asked_questions',
+        'venue_id=eq.' + enc(session.venue_id) + '&asked_at=gt.' + enc(cutoff) +
+        '&select=question_id&order=asked_at.asc');
       askedRows.forEach((r) => { if (r.question_id) askedIds[r.question_id] = true; });
     } catch (e) { /* table not migrated yet -> session-only variety */ }
   }
@@ -4232,7 +4241,10 @@ async function nextTriviaSeq(env, setId) {
   return rows.length ? (rows[0].seq || 0) + 1 : 1;
 }
 async function retagSetCount(env, setId) {
-  const rows = await sbGet(env, 'vp_questions', 'set_id=eq.' + enc(setId) + '&select=seq');
+  /* PAGED, or this WRITES the truncation into the database: question_count would be set to
+     1000 for any set bigger than that, the first time anybody edited it. The seeded library
+     counts are right today only because this has never run on them. */
+  const rows = await sbGetAll(env, 'vp_questions', 'set_id=eq.' + enc(setId) + '&select=seq&order=seq.asc');
   await sbPatch(env, 'vp_question_sets', 'id=eq.' + enc(setId), { question_count: rows.length });
 }
 async function handleTriviaSet(request, env, json) {              // create a new set, or rename an existing one
@@ -4267,7 +4279,7 @@ async function handleTriviaSetQuestions(request, env, json) {     // list a venu
   const authUserId = await verifyHostJwt(request, env);
   const setId = new URL(request.url).searchParams.get('set') || '';
   await triviaSetForVenue(env, setId, authUserId);
-  const rows = await sbGet(env, 'vp_questions',
+  const rows = await sbGetAll(env, 'vp_questions',
     'set_id=eq.' + enc(String(setId).trim()) + '&select=id,seq,question,options,correct_index,category,difficulty,image_url&order=seq.asc');
   return json({ questions: rows });
 }
