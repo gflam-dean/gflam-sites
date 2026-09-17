@@ -98,9 +98,23 @@
   .venue.cancelling{opacity:.9}
   .cxbanner{flex-basis:100%;background:rgba(255,60,120,.08);border:1px solid var(--line-2);border-radius:10px;padding:10px 13px;color:var(--pink);font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
   .cxbanner .keep{background:none;border:0;color:#fff;text-decoration:underline;cursor:pointer;font-size:12.5px;font-family:inherit;white-space:nowrap}
-  .screenpick{margin:0 0 12px}
-  .screenpick .flabel{display:block;margin:0 0 5px}
-  .screenpick select{width:100%;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:12px;padding:11px 12px;font-size:15px;font-family:'Manrope',sans-serif}
+  /* WHICH VENUE'S TV AM I EDITING.
+     Dean, 17 Sep 2026, after uploading a promo and seeing nothing on the telly: the panel had
+     quietly defaulted to the FIRST venue on the account, so the slide went to GEN HOTEL while he
+     was standing in front of DADDYS HOTEL's screen. Nothing was broken, which is the problem:
+     the upload, the save and the TV all did exactly what they were told. On a three-venue group
+     the only clue was a small grey "Screen for" label and a slug in a link.
+     "maybe that venue picker could be bigger or more noticable" -- so it is now a bar you
+     cannot scroll past, and the venue's name is repeated on the save button, which is the last
+     thing you look at before you commit. */
+  .screenpick{margin:0 0 16px;background:rgba(255,31,142,0.07);border:1px solid rgba(255,31,142,0.32);
+    border-radius:14px;padding:13px 15px}
+  .screenpick .flabel{display:block;margin:0 0 7px;font-family:'JetBrains Mono',ui-monospace,monospace;
+    font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--pink)}
+  .screenpick select{width:100%;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:12px;
+    padding:13px 12px;font-size:17px;font-weight:600;font-family:'Manrope',sans-serif}
+  .screenpick .pickfine{margin:8px 0 0;font-size:12.5px;color:var(--muted)}
+  .screenpick .pickfine b{color:#fff}
   .scard{background:var(--ink-2);border:1px solid var(--line-2);border-radius:16px;padding:15px 16px;margin:10px 0}
   .scardhead{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15px;color:#fff;letter-spacing:.01em}
   .snote{color:var(--muted);font-size:12.5px;margin:3px 0 10px}
@@ -417,9 +431,11 @@
     <div class="tabpanel" id="tp-draws">
     <div class="label">Raffles</div>
     <p class="note" style="margin:0 0 10px">Set your raffle routine and your usual prizes once. The running total of prizes given away shows here too.</p>
+    <!-- Same bar, same reason: the raffle routine also defaults to the first venue. -->
     <div id="rfPickWrap" class="screenpick" style="display:none">
-      <label class="flabel" for="rfVenue">Raffle for</label>
+      <label class="flabel" for="rfVenue">You are editing the raffle at</label>
       <select id="rfVenue"></select>
+      <p class="pickfine">The routine and prizes below belong to <b id="rfPickName">this venue</b> only.</p>
     </div>
     <div class="scard">
       <div class="scardhead">Routine</div>
@@ -534,8 +550,9 @@
     <div class="label">Advertising</div>
     <p class="note" style="margin:0 0 10px">Upload your own promo images to play on the venue TV between games, then open <b id="tvLink" style="color:var(--text)">venueplay.com.au/tv</b> on your screen. Changes appear within a few seconds.</p>
     <div id="screenPickWrap" class="screenpick" style="display:none">
-      <label class="flabel" for="screenVenue">Screen for</label>
+      <label class="flabel" for="screenVenue">You are editing the TV at</label>
       <select id="screenVenue"></select>
+      <p class="pickfine">Everything below, the logo and the slides, goes to <b id="screenPickName">this venue</b> only.</p>
     </div>
 
     <div class="scard">
@@ -1464,6 +1481,14 @@
   // The bare /tv?<slug> form (tv.html reads a query with no "=" as the slug). Cleaner to read out and
   // to type on a TV remote than /tv?venue=<slug>, and it resolves to exactly the same screen.
   function tvHref(slug){ return (screenOrigin||"") + "/tv" + (slug ? ("?" + encodeURIComponent(slug)) : ""); }
+  /* The venue's NAME, everywhere it can be seen before you commit: in the picker bar, in the
+     sentence under it, and on the save button itself. A slug in a link was not enough. */
+  function screenNameNow(){ return (screenCurrent && screenCurrent.name) || ""; }
+  function paintScreenVenue(){
+    var n = screenNameNow(), el = $("screenPickName"), btn = $("screenSave");
+    if (el) el.textContent = n || "this venue";
+    if (btn) btn.textContent = (screenVenues.length > 1 && n) ? ("Save screen for " + n) : "Save screen";
+  }
   function setTvLinks(slug){
     $("tvLink").textContent = "venueplay.com.au/tv" + (slug ? ("?" + slug) : "");
     $("screenPreview").href = tvHref(slug);
@@ -1475,6 +1500,7 @@
       if (d.error){ showMsg("Screen: " + d.error); return; }
       screenCurrent = d.venue;
       setTvLinks(d.venue && d.venue.slug);
+      paintScreenVenue();
       fillScreen(d);
     });
   }
@@ -1496,7 +1522,7 @@
     var data = gatherScreen(), btn = $("screenSave");
     btn.disabled = true; btn.textContent = "Saving…";
     api("/account/screen-save", { venue_id:screenCurrent.id, slides:data.slides }).then(function(r){
-      btn.disabled = false; btn.textContent = "Save screen";
+      btn.disabled = false; paintScreenVenue();
       if (r.error){ showMsg(r.error); return; }
       pushToScreen();
       showMsg("Screen saved. It updates on your TV within a few seconds.", true);
@@ -1572,6 +1598,7 @@
         sel.onchange = function(){ loadScreenFor(sel.value); };
       } else { pick.style.display = "none"; }
       setTvLinks(d.venue && d.venue.slug);
+      paintScreenVenue();
       fillScreen(d);
     });
     $("addSlide").addEventListener("click", function(){
@@ -1963,6 +1990,10 @@
   }
   function loadRafflesFor(venueId){
     rfCurrent = venueId;
+    (function(){
+      var sel = $("rfVenue"), el = $("rfPickName");
+      if (el && sel) { var o = sel.options[sel.selectedIndex]; el.textContent = (o && o.textContent) || "this venue"; }
+    })();
     api("/account/screen-get", { venue_id: venueId }).then(function(d){
       if (d.error) return;
       var r = d.raffle || {};
