@@ -1762,6 +1762,15 @@ UNPROVABLE = {
 }
 
 MUTATIONS_LIVE = [
+    # Shrink the keep window and parties that finished days ago are suddenly overdue, with
+    # their guests' nicknames and email addresses still sitting there. The tool reads the
+    # number out of the Worker on purpose, so this proves that too.
+    ('a finished party is not still holding its guests',
+     'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     'const ALBUM_KEEP_DAYS = 30;', 'const ALBUM_KEEP_DAYS = 1;',
+     'a finished party is still holding its guests past what privacy.html promises, which '
+     'is what a sweep that has quietly stopped working looks like'),
+
     # A Worker that exports scheduled with no Cron Trigger behind it. venueplay-sms has no
     # trigger, correctly, because it has no scheduled job; give it one and the checker has
     # to notice. This is the fault that left the PartyPlay album sweep unrun for its whole

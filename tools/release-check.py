@@ -4066,6 +4066,26 @@ def main():
                why=('; '.join(_crbad[:3]) if _crbad else
                     'the checker could not run: ' + (_cro.strip().splitlines() or [''])[-1][:90]))
 
+            # AND IS THE PARTYPLAY SWEEP ACTUALLY KEEPING UP? The gate checks the code is
+            # there and that a cron calls it. Neither says whether it WORKS. runPhotoSweep
+            # returns {ok:false} into a scheduled handler nobody reads, so a sweep that is
+            # throwing looks exactly like one with nothing to do, and the only symptom is
+            # guest email addresses still sitting in a table a month after the page said
+            # they went. This asks the database instead.
+            _pr = os.path.join(ROOT, 'partyplay-backend', 'tools', 'check-partyplay-retention.py')
+            if os.path.isfile(_pr):
+                _prr = subprocess.run([sys.executable, _pr], capture_output=True, text=True,
+                                      cwd=ROOT, timeout=180)
+                _pro = re.sub(r'\033\[[0-9;]*m', '', _prr.stdout + _prr.stderr)
+                _prbad = [l.strip() for l in _pro.splitlines()
+                          if 'STILL HERE' in l or l.strip().startswith('STOP')]
+                _prnear = [l.strip() for l in _pro.splitlines() if 'closest is' in l]
+                ok('a finished party is not still holding its guests',
+                   _prr.returncode == 0,
+                   (_prnear[0][:60] if _prnear else ''),
+                   why=('; '.join(_prbad[:3]) if _prbad else
+                        'the checker could not run: ' + (_pro.strip().splitlines() or [''])[-1][:90]))
+
             pages_live('VenuePlay', VP, VP_PAGES)
             shared_scripts_live(VP, os.path.join(ROOT, 'venueplay', 'app'))
             every_page_is_reachable('VenuePlay', VP, 'venueplay',
