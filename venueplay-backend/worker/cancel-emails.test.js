@@ -25,6 +25,10 @@ eval(lift(BILL,"vpaTenureWords"));
 eval(lift(BILL,"vpaTenureMonths"));
 eval(lift(BILL,"vpaFormatWord"));
 eval(lift(BILL,"vpaFireDeliveryFailure"));
+eval(lift(BILL,"vpaGreeting"));
+eval(lift(BILL,"vpaFirstName"));
+eval(lift(BILL,"vpaHello"));
+eval(lift(BILL,"vpaGoodbyeHtml"));
 /* THE CONSTANTS TOO, and this is not housekeeping. vpaVenueStats reads VPA_NOT_PLAYED and
    is wrapped in its own try/catch so a goodbye email still goes out when the numbers cannot
    be gathered. Lift the functions without the constants and it throws ReferenceError on
@@ -180,6 +184,50 @@ pass("and the audit names who it actually reached",
      JSON.stringify(AUDIT[0].detail.delivered));
 
 /* --- the real date maths, before anything is stubbed ---------------------- */
+/* CANCELLING INSIDE THE LAST TWO DAYS GETS THE GOODBYE, NOT THE CONFIRMATION.
+   The sweep only ever fires at exactly two days out, so these venues used to get the plain
+   confirmation and never saw the wrap, the price warning or "we are sorry to see you go". */
+SENT=[]; AUDIT=[];
+/* The same three-address account the confirmation test uses, so "one each, no duplicates"
+   is actually testing something: a single recipient could not tell one email per address
+   from one email in total. */
+USERS={ u1:{email:"manager@thepub.com.au"}, u2:{email:"Owner@ThePub.com.au"}, u3:{email:null} };
+TABLES={ venueplay_founding:[{id:"f1",contact_email:"accounts@thepub.com.au",contact_name:"Dean Tindale"}],
+         vp_venue_staff:[{venue_id:"v1",auth_user_id:"u1"},{venue_id:"v1",auth_user_id:"u2"},
+                         {venue_id:"v1",auth_user_id:"u3"}],
+         vp_admin_audit:[] };
+await vpaFireCancelConfirm(env, {venueId:"v1", name:"The Pub", ends:"18 September 2026",
+  /* The WHOLE account object, the way vpbCancelVenue passes o.account. A bare {id} left the
+     billing contact out of the recipients, and that is the person most likely to act on a
+     cancellation. The fixture, not the Worker, but a test that quietly drops a recipient is
+     a test that would not notice the Worker doing it. */
+  account:{id:"f1",contact_email:"accounts@thepub.com.au",contact_name:"Dean Tindale"},
+  endTs:END_TS, timezone:"Australia/Brisbane",
+  createdAt:new Date(END_TS*1000 - 305*86400000).toISOString(),
+  players:20, rateCents:250, rate:"$2.50", founding:true, contactName:"Dean Tindale"});
+var near=SENT[0]||{subject:"",html:""};
+pass("cancelling one day out sends the GOODBYE, not the confirmation",
+     near.subject.indexOf("last day on VenuePlay")!==-1, near.subject);
+/* Dean, 17 Sep 2026: "just send the second one if they are inside the window." ONE email,
+   not both. Two arriving a second apart, one of them saying less than the other, reads as a
+   system with a stutter and buries the one that matters. */
+pass("and ONLY that one: no confirmation goes with it",
+     SENT.every(function(m){ return m.subject.indexOf("cancellation is confirmed")===-1; }),
+     SENT.map(function(m){ return m.subject; }).join(" | "));
+/* Not a fixed count: what matters is that each address got it ONCE. Asserting "3" would
+   break the day somebody changes the fixture and would say nothing about duplicates. */
+pass("each address gets it exactly once",
+     SENT.length >= 2 && new Set(SENT.map(function(m){ return String(m.to||"").toLowerCase(); })).size === SENT.length,
+     SENT.map(function(m){ return m.to; }).join(" | "));
+pass("and it carries the appeal the confirmation does not",
+     near.html.indexOf("We are sorry to see you go")!==-1
+     && near.html.indexOf("a player a month")!==-1, "sorry + price warning");
+pass("it is logged under the SWEEP's action so the sweep cannot send a second one",
+     AUDIT.some(function(a){ return a.action==="venue_last_day_emailed"; }),
+     JSON.stringify(AUDIT.map(function(a){return a.action;})));
+pass("and it wishes them well",
+     near.html.indexOf("all the very best")!==-1);
+
 pass("two whole days apart is two, across a month end",
      vpaDaysBetween("2026-09-30","2026-10-02")===2, String(vpaDaysBetween("2026-09-30","2026-10-02")));
 pass("the same day is zero", vpaDaysBetween("2026-09-16","2026-09-16")===0);
@@ -238,6 +286,21 @@ pass("it says they keep that night in full, right through to close",
    replaced it as the opening is the thing worth protecting: this email exists to be warm
    before it is administrative, so it must still open by being sorry they are going and
    naming how long they stayed. */
+/* THE GREETING IS THE VENUE'S OWN CLOCK, and only a real first name. */
+pass("it opens with a greeting", /Good (morning|afternoon|evening)/.test(d.html), (d.html.match(/Good (morning|afternoon|evening)[^<]*/)||[""])[0]);
+pass("morning, afternoon and evening are told apart by the venue's hour",
+     REAL_hour && (function(){
+       var save=vpaLocalHour, got=[];
+       [8,14,20].forEach(function(h){ vpaLocalHour=function(){ return h; }; got.push(vpaGreeting("Australia/Brisbane")); });
+       vpaLocalHour=save;
+       return got.join("|")==="Good morning|Good afternoon|Good evening";
+     })());
+pass("a first name is used, a trading name is not",
+     vpaFirstName("Dean Tindale","The Pub")==="Dean"
+     && vpaFirstName("The Mini Bar","The Mini Bar")===""
+     && vpaFirstName("manager","The Pub")===""
+     && vpaFirstName("","The Pub")==="",
+     "contact_name holds whatever was typed at signup");
 pass("it opens by being sorry to see them go",
      d.html.indexOf("We are sorry to see you go")!==-1);
 pass("and says how long they have been with us",

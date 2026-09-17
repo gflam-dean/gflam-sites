@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '17 Sep 2026, 06:47 · c888bb49';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Sep 2026, 10:29 · c338dc07';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -5455,10 +5455,12 @@ async function vpaAccountContacts(env, acct, venueId) {
  * and needs a live call, so it is fetched separately and is allowed to fail without
  * taking the rest of the numbers with it.
  */
-async function vpaVenueStats(env, venueId) {
+async function vpaVenueStats(env, venueId, tz) {
   const out = { nights: 0, totalGames: 0, games: {}, avgPlayers: {}, totalPlayers: 0,
                 biggest: null, overagePlayers: 0, overageSpendCents: 0,
-                playerGames: 0, ok: false };
+                playerGames: 0, regulars: 0, bestNight: null, ok: false };
+  const _devices = {};      // device -> how many different nights it turned up on
+  const _weekday = {};      // which night of the week they actually run
   try {
     const sessions = await vpaSelect(env, 'vp_sessions',
       'venue_id=eq.' + encodeURIComponent(venueId)
@@ -5485,16 +5487,42 @@ async function vpaVenueStats(env, venueId) {
         (perSession[g.session_id] = perSession[g.session_id] || { formats: [], players: 0 }).formats.push(g.format);
       }
       const players = await vpaSelect(env, 'vp_players',
-        'session_id=in.' + inList + '&is_test=not.is.true&select=session_id&limit=20000') || [];
+        'session_id=in.' + inList + '&is_test=not.is.true&select=session_id,device_id&limit=20000') || [];
       for (const p of players) {
         if (!perSession[p.session_id]) continue;      // a session with no games is not a night
         perSession[p.session_id].players++;
+        /* REGULARS. The same phone turning up on a different night is the strongest thing a
+           venue has built with us and the hardest to replace, so it is worth telling them.
+           Counted on device_id, not on name: two different Sams are two people, and one Sam
+           who types "sam" then "Sam" is one. device_id is null on some rows (an older join,
+           a browser that would not give one), and those simply do not count rather than
+           being guessed at. Sets are used because a phone that joins twice in ONE night is
+           still one person on one night. */
+        if (p.device_id) {
+          (_devices[p.device_id] = _devices[p.device_id] || {})[p.session_id] = 1;
+        }
       }
     }
     const perFormat = {};
     for (const sid of Object.keys(perSession)) {
       const row = perSession[sid];
       out.nights++;
+      /* Which night of the week they run, in THEIR timezone. A venue in Perth whose Thursday
+         night starts at 7pm is Thursday at 11am UTC, so counting on the raw timestamp would
+         tell a publican their big night was a Wednesday. */
+      const wts = byId[sid] && (byId[sid].started_at || byId[sid].opened_at);
+      if (wts && tz) {
+        const d = vpaLocalWeekday(Math.floor(Date.parse(wts) / 1000), tz);
+        if (d) {
+          const w = _weekday[d] = _weekday[d] || { nights: 0, formats: {} };
+          w.nights++;
+          /* WHICH GAME OWNS THAT NIGHT. Dean, 17 Sep 2026: "say Thursday night trivia". A
+             publican does not think "we run 17 Thursdays", they think "Thursday is trivia",
+             and that is the thing they would be giving up. Counted per night, not per game,
+             so three bingo games on one Thursday is one Thursday of bingo. */
+          for (const f of row.formats) w.formats[f] = (w.formats[f] || 0) + 1;
+        }
+      }
       out.totalPlayers += row.players;
       const when = byId[sid] && (byId[sid].started_at || byId[sid].opened_at);
       if (!out.biggest || row.players > out.biggest.players) {
@@ -5527,6 +5555,26 @@ async function vpaVenueStats(env, venueId) {
     }
     if (out.bestGame && !out.bestGame.players) out.bestGame = null;
     if (out.biggest && !out.biggest.players) out.biggest = null;   // nobody ever joined
+    for (const dev of Object.keys(_devices)) {
+      if (Object.keys(_devices[dev]).length > 1) out.regulars++;
+    }
+    /* Only worth saying when it is actually a pattern. Three nights on a Thursday out of four
+       is a venue's trivia night; two out of eleven spread across the week is not, and calling
+       it their big night would be us telling them something untrue about their own pub. */
+    let topDay = null, topN = 0, total = 0;
+    for (const d of Object.keys(_weekday)) {
+      total += _weekday[d].nights;
+      if (_weekday[d].nights > topN) { topN = _weekday[d].nights; topDay = d; }
+    }
+    if (topDay && total >= 4 && topN / total >= 0.4) {
+      out.bestNight = { day: topDay, nights: topN, format: null };
+      /* Only name the game when it really is THAT night's game. Half of the nights on that
+         day, or it is just the game they happened to play most, and telling a venue Thursday
+         was its trivia night when Thursday was mostly bingo is worse than saying neither. */
+      const fs = _weekday[topDay].formats; let bf = null, bn = 0;
+      for (const f of Object.keys(fs)) if (fs[f] > bn) { bn = fs[f]; bf = f; }
+      if (bf && bn / topN >= 0.5) out.bestNight.format = bf;
+    }
     out.overageSpendCents = out.overagePlayers * VPA_OVERAGE_CENTS;
     out.ok = true;
   } catch (e) {
@@ -5558,6 +5606,43 @@ const VPA_WRAP_MAX_PER_PLAYER = 1.00;
 /* Written to follow "for the last ___", so no leading article: "for the last a month" is
    what the first version produced and it is the sort of thing that makes a goodbye email
    read as though nobody looked at it. Found by rendering it, 17 Sep 2026. */
+/* "Good morning, Dean." Dean, 17 Sep 2026.
+ *
+ * The hour is the VENUE's, not ours and not the server's: the last-day email goes out from
+ * 8am wherever the pub is, so a Perth venue must not be wished good afternoon at breakfast.
+ * Same helper the rest of this file uses for the weekday, so the two cannot disagree.
+ *
+ * FIRST NAME ONLY, and only when it plainly is one. contact_name holds whatever was typed at
+ * signup, which is sometimes "Dean Tindale", sometimes "The Mini Bar", sometimes "manager".
+ * Greeting a pub by its trading name reads worse than not greeting it at all, so anything
+ * with no letters, anything longer than a name, and anything that matches the venue's own
+ * name is dropped and the greeting goes out bare: "Good morning." still works.
+ */
+function vpaGreeting(tz) {
+  let h = 9;
+  try { h = vpaLocalHour(tz); } catch (e) {}
+  if (!(h >= 0 && h < 24)) h = 9;
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+function vpaFirstName(contactName, venueName) {
+  const raw = String(contactName == null ? '' : contactName).trim();
+  if (!raw) return '';
+  const first = raw.split(/\s+/)[0].replace(/[^A-Za-z'\-]/g, '');
+  if (first.length < 2 || first.length > 20) return '';
+  const low = first.toLowerCase();
+  // not a name: a role, or the venue talking about itself
+  if (['the','manager','admin','info','office','reception','owner','host','staff','accounts',
+       'bar','club','hotel','venue','team'].indexOf(low) !== -1) return '';
+  if (venueName && String(venueName).toLowerCase().indexOf(low) === 0) return '';
+  return first.charAt(0).toUpperCase() + first.slice(1);
+}
+function vpaHello(tz, contactName, venueName) {
+  const n = vpaFirstName(contactName, venueName);
+  return vpaGreeting(tz) + (n ? ', ' + vpaEsc(n) : '') + '.';
+}
+
 function vpaTenureWords(createdAt, asAtMs) {
   const t = Date.parse(createdAt || '');
   if (!t) return null;
@@ -5603,7 +5688,13 @@ function vpaTenureMonths(createdAt, asAtMs) {
 function vpaWrapHtml(stats, opts) {
   if (!stats || !stats.ok || !stats.nights || !stats.totalGames) return '';
   const o = opts || {};
-  const PINK = '#FF1F8E', INK = '#12101a', MUTE = '#6a6a75';
+  /* BLACK, AND CENTRED. Dean, 17 Sep 2026: "lets make it prettier, its our last chance to
+     convince them to uncancel." The rest of the email is dark text on white, so a black panel
+     is the one thing on the page that cannot be skimmed past. Colours are inverted for it:
+     paper on ink, with the pink kept for the bars so it still reads as VenuePlay.
+     Every email client renders a background colour on a table cell; half of them block
+     images, so none of this is a picture. */
+  const PINK = '#FF1F8E', INK = '#12101a', PAPER = '#FFF1E6', DIM = '#9b90ab', TILE = '#1e1a2b';
   /* Thousands separators, because these have to hold a real club. A 900 seat venue on a
      grand final night is four figures of phones, and "10000 phones in the room" reads like
      a serial number. Dean, 17 Sep 2026: room for 10,000 phones and 1,000 games. */
@@ -5613,14 +5704,14 @@ function vpaWrapHtml(stats, opts) {
      flexbox and this is the one part of the email that has to survive it. Widths are
      percentages so four figures fit without pushing anything off the edge. */
   const tile = (big, small) =>
-    '<td width="33.33%" align="center" style="padding:14px 6px;background:#fbf7fa;border-radius:12px">'
-    + '<div style="font-size:30px;line-height:1.05;font-weight:800;color:' + INK + '">' + big + '</div>'
-    + '<div style="font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:' + MUTE + ';padding-top:5px">' + small + '</div>'
+    '<td width="33.33%" align="center" style="padding:16px 6px;background:' + TILE + ';border-radius:12px">'
+    + '<div style="font-size:30px;line-height:1.05;font-weight:800;color:' + PAPER + '">' + big + '</div>'
+    + '<div style="font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:' + DIM + ';padding-top:5px">' + small + '</div>'
     + '</td>';
   const tiles = '<table role="presentation" width="100%" cellpadding="0" cellspacing="6" style="margin:0 0 16px"><tr>'
     + tile(n(stats.nights), stats.nights === 1 ? 'night' : 'nights')
     + tile(n(stats.totalGames), stats.totalGames === 1 ? 'game' : 'games')
-    + tile(n(stats.totalPlayers), 'phones in the room')
+    + tile(n(stats.totalPlayers), 'phones')
     + '</tr></table>';
 
   /* A BAR PER GAME, drawn as a table cell with a background colour. No images: half the
@@ -5633,15 +5724,15 @@ function vpaWrapHtml(stats, opts) {
     const pct = top ? Math.max(6, Math.round((c / top) * 100)) : 0;
     const avg = stats.avgPlayers[f];
     return '<tr>'
-      + '<td style="padding:5px 10px 5px 0;font-size:14px;color:' + INK + ';white-space:nowrap">'
+      + '<td style="padding:5px 10px 5px 0;font-size:14px;color:' + PAPER + ';white-space:nowrap">'
       +   vpaEsc(vpaFormatWord(f)) + '</td>'
       + '<td width="52%" style="padding:5px 0">'
       +   '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>'
       +   '<td width="' + pct + '%" style="background:' + PINK + ';border-radius:5px;font-size:0;line-height:9px;height:9px">&nbsp;</td>'
       +   '<td style="font-size:0;line-height:9px">&nbsp;</td></tr></table></td>'
-      + '<td align="right" style="padding:5px 0 5px 10px;font-size:14px;font-weight:700;color:' + INK + ';white-space:nowrap">'
+      + '<td align="right" style="padding:5px 0 5px 10px;font-size:14px;font-weight:700;color:' + PAPER + ';white-space:nowrap">'
       +   n(c) + '</td>'
-      + '<td align="right" style="padding:5px 0 5px 12px;font-size:12.5px;color:' + MUTE + ';white-space:nowrap">'
+      + '<td align="right" style="padding:5px 0 5px 12px;font-size:12.5px;color:' + DIM + ';white-space:nowrap">'
       +   (avg ? n(avg) + (avg === 1 ? ' player' : ' players') : '') + '</td>'
       + '</tr>';
   }).join('');
@@ -5651,15 +5742,35 @@ function vpaWrapHtml(stats, opts) {
   let best = '';
   if (stats.bestGame && stats.bestGame.players > 0) {
     const d = when(stats.bestGame.at);
-    best = '<p style="margin:0 0 6px;font-size:14.5px;color:' + INK + '">'
+    best = '<p style="margin:0 0 6px;font-size:14.5px;color:' + PAPER + '">'
       + 'Your biggest room was <b>' + n(stats.bestGame.players) + ' players</b>, on a '
       + vpaEsc(vpaFormatWord(stats.bestGame.format)) + ' night'
       + (d ? ' on ' + vpaEsc(d) : '') + '.</p>';
   } else if (stats.biggest && stats.biggest.players > 0) {
     const d = when(stats.biggest.at);
-    best = '<p style="margin:0 0 6px;font-size:14.5px;color:' + INK + '">'
+    best = '<p style="margin:0 0 6px;font-size:14.5px;color:' + PAPER + '">'
       + 'Your biggest room was <b>' + n(stats.biggest.players) + ' players</b>'
       + (d ? ', on ' + vpaEsc(d) : '') + '.</p>';
+  }
+
+  /* THE ONE THAT IS HARDEST TO REPLACE. A venue can buy games anywhere; people coming back
+     is the thing they built. Only said when there are enough of them to be a pattern rather
+     than a coincidence. */
+  let regulars = '';
+  if (stats.regulars >= 3) {
+    regulars = '<p style="margin:0 0 6px;font-size:14.5px;color:' + PAPER + '">'
+      + '<b>' + n(stats.regulars) + ' people</b> came back for another night.</p>';
+  }
+  let bestNight = '';
+  if (stats.bestNight && stats.bestNight.day) {
+    bestNight = '<p style="margin:0 0 6px;font-size:14.5px;color:' + PAPER + '">'
+      + (stats.bestNight.format
+          ? '<b>' + vpaEsc(stats.bestNight.day) + ' night '
+            + vpaEsc(vpaFormatWord(stats.bestNight.format)) + '</b>, '
+            + n(stats.bestNight.nights) + ' of them.'
+          : '<b>' + vpaEsc(stats.bestNight.day) + '</b> was your night, '
+            + n(stats.bestNight.nights) + ' of them.')
+      + '</p>';
   }
 
   /* Reworded, 17 Sep 2026. "Counting every game a player actually played, that worked out
@@ -5670,7 +5781,7 @@ function vpaWrapHtml(stats, opts) {
     const per = ((o.rateCents * o.players * o.months) / 100) / stats.playerGames;
     if (per >= 0.005 && isFinite(per) && per <= VPA_WRAP_MAX_PER_PLAYER) {
       const cents = Math.round(per * 100);
-      cost = '<p style="margin:0 0 6px;font-size:14.5px;color:' + INK + '">'
+      cost = '<p style="margin:0 0 6px;font-size:14.5px;color:' + PAPER + '">'
         + 'All of it came to about <b>' + (per < 1 ? cents + 'c' : '$' + per.toFixed(2))
         + ' a player, a game</b>.</p>';
     }
@@ -5680,19 +5791,20 @@ function vpaWrapHtml(stats, opts) {
      them away" was three clauses to say one thing. */
   let over = '';
   if (stats.overagePlayers > 0) {
-    over = '<p style="margin:0 0 6px;font-size:14.5px;color:' + INK + '">'
+    over = '<p style="margin:0 0 6px;font-size:14.5px;color:' + PAPER + '">'
       + '<b>' + n(stats.overagePlayers) + ' extra players</b> got in on nights you went over '
       + 'the cap. You never turned anyone away.</p>';
   }
 
   return ''
     + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
-    +   'style="border:1px solid #f0e6ec;border-radius:14px;margin:0 0 22px"><tr><td style="padding:20px 20px 18px">'
-    + '<p style="margin:0 0 3px;font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:' + PINK + ';font-weight:700">And that is a wrap</p>'
-    + '<p style="margin:0 0 16px;font-size:15px;color:' + MUTE + '">Everything you ran with us.</p>'
+    +   'style="background:' + INK + ';border-radius:14px;margin:0 0 22px"><tr>'
+    +   '<td align="center" style="padding:24px 20px 22px;text-align:center">'
+    + '<p style="margin:0 0 4px;font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:' + PINK + ';font-weight:700">And that is a wrap</p>'
+    + '<p style="margin:0 0 18px;font-size:15px;color:' + DIM + '">Everything you ran with us.</p>'
     + tiles
     + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 14px">' + rows + '</table>'
-    + best + cost + over
+    + best + regulars + bestNight + cost + over
     + '</td></tr></table>';
 }
 
@@ -5824,6 +5936,58 @@ async function vpaFireDeliveryFailure(env, opts) {
   } catch (_) { /* an alert must never stop the sweep */ }
 }
 
+
+/* THE GOODBYE, BUILT IN ONE PLACE.
+ *
+ * Two things send it now, so it cannot live inside either of them. The 48 hour sweep sends it
+ * to a venue that cancelled a while back, and the cancel endpoint sends it instead of the
+ * ordinary confirmation when there are two days or fewer left.
+ *
+ * WHY THAT SECOND PATH EXISTS. The sweep only fires at exactly two days out. A venue that
+ * cancels ONE day before its period ends, or on the last day itself, matched nothing and got
+ * the plain confirmation: no wrap, no price warning, not even "we are sorry to see you go".
+ * Those are the most impulsive cancellations there are and the likeliest to be reversed, and
+ * they were the only ones we never made the case to. Dean spotted it, 17 Sep 2026, by asking
+ * what happens if somebody clicks cancel the morning after.
+ */
+function vpaGoodbyeHtml(env, o) {
+  const day = o.day, dated = o.dated;
+  const when = day ? (day + ', ' + dated) : dated;
+  return vpaLeavingHtml(env, {
+    heading: day ? (day + ' is your last day on VenuePlay.') : 'Your last day on VenuePlay.',
+    /* SORRY TO SEE THEM GO, AND SAY HOW LONG IT HAS BEEN. A venue that has been with us a
+       year should not get the same opening line as one that lasted a fortnight, and "the last
+       14 months" is the sentence that makes somebody pause. Only said when we know it. */
+    lead: '<b>' + o.hello + '</b> We are sorry to see you go.'
+        + (o.tenure ? ' It has been a pleasure having ' + vpaEsc(o.name || 'you')
+                    + ' with us for the last <b>' + vpaEsc(o.tenure) + '</b>.' : '')
+        + ' You are set to cancel after <b>' + vpaEsc(when)
+        + '</b>. You keep that night in full, right through to close, and your screens '
+        + 'keep playing your advertising until you shut.',
+    priceHold: o.rate,
+    founding: o.founding,
+    rows: [['Venue', o.name || 'your venue'],
+           ['Last day', when],
+           ['Until close that day', 'Every game runs as normal, and the TVs keep showing your advertising.'],
+           ['Undo it any time up to', 'close on ' + (day || 'your last day')],
+           ['After that', 'Games stop. Nothing is deleted for 90 days.']],
+    extra: (o.wrap || '')
+         + '<p style="font-size:13.5px;color:#3a3a44;margin:0 0 18px">'
+         + 'All of that stays yours if you change your mind. One click, any time up to close on '
+         + vpaEsc(day || 'your last day') + ', and nothing will have been interrupted.</p>'
+         /* THE SIGN OFF. Dean, 17 Sep 2026: "we should also wish them the very best and in the
+            most friendly sign off." A venue leaving is a publican we may well see again, and
+            the last paragraph they read should sound like it came from a person who meant it.
+            No pitch in it, and nothing asked for except the one thing worth asking. */
+         + '<p style="font-size:13.5px;color:#6a6a75;margin:0 0 18px">'
+         + 'And if you are going, thank you for the run. We wish you and '
+         + vpaEsc(o.name || 'your venue') + ' all the very best, and if you ever want us back, '
+         + 'you know where we are. If something did not work, we would genuinely like to hear '
+         + 'it. Just reply, it reaches a person.</p>',
+    cta: 'Keep the venue running',
+  });
+}
+
 async function vpaFireCancelConfirm(env, opts) {
   try {
     if (!env.RESEND_API_KEY) return;
@@ -5836,6 +6000,50 @@ async function vpaFireCancelConfirm(env, opts) {
        two can never name different days for the same date. */
     const day = (opts.endTs && opts.timezone) ? vpaLocalWeekday(opts.endTs, opts.timezone) : null;
     const whenPhrase = ends ? (day ? day + ', ' + ends : ends) : null;
+
+    /* TWO DAYS OR FEWER AND THIS IS THE ONLY EMAIL THEY GET, so it has to be the good one.
+       The 48 hour sweep fires at EXACTLY two days out, so a venue cancelling one day before
+       its period ends, or on the last day, never matched it and got the plain confirmation.
+       Dean, 17 Sep 2026: "within 2 days trigger the final email not the confirmation." */
+    let away = null;
+    if (opts.endTs && opts.timezone) {
+      try {
+        away = vpaDaysBetween(vpaLocalDate(Math.floor(Date.now() / 1000), opts.timezone),
+                              vpaLocalDate(opts.endTs, opts.timezone));
+      } catch (e) { away = null; }
+    }
+    if (away !== null && away <= 2) {
+      const stats = await vpaVenueStats(env, opts.venueId, opts.timezone).catch(() => null);
+      const months = vpaTenureMonths(opts.createdAt, opts.endTs * 1000);
+      const html2 = vpaGoodbyeHtml(env, {
+        day: day, dated: ends, name: opts.name, wrap: vpaWrapHtml(stats, {
+          rateCents: opts.rateCents, players: opts.players, months: months }),
+        tenure: vpaTenureWords(opts.createdAt, opts.endTs * 1000),
+        rate: opts.rate, founding: opts.founding,
+        hello: vpaHello(opts.timezone, opts.contactName, opts.name),
+      });
+      const del = [], ref = [];
+      for (const addr of to) {
+        const sent = await vpaSendEmail(env, addr,
+          (day ? day + ' is your last day on VenuePlay' : 'Your last day on VenuePlay'),
+          html2).catch(() => false);
+        (sent ? del : ref).push(addr);
+      }
+      if (ref.length && !del.length) {
+        await vpaFireDeliveryFailure(env, { kind: 'last_day', venueId: opts.venueId,
+          name: opts.name, ends: whenPhrase, refused: ref });
+      }
+      /* Written under the SWEEP's action on purpose: that row is what stops the hourly sweep
+         sending a second one a few minutes later to a venue cancelling at exactly two days. */
+      await vpaInsert(env, 'vp_admin_audit', {
+        actor_admin: null, actor_label: 'system',
+        action: (ref.length && !del.length) ? 'venue_last_day_NOT_emailed' : 'venue_last_day_emailed',
+        target: 'venue:' + opts.venueId,
+        detail: { delivered: del, refused: ref, ends: ends, day: day, name: opts.name || null,
+                  why: 'cancelled with ' + away + ' day(s) left, so the goodbye went instead of the confirmation' },
+      }, false).catch(() => {});
+      return;
+    }
     const rows = [['Venue', opts.name || 'your venue']];
     if (whenPhrase) rows.push(['Last day', whenPhrase]);
     rows.push(['Until close that day', 'Every game runs as normal, and the TVs keep showing your advertising.']);
@@ -5969,7 +6177,7 @@ async function vpaLastDaySweep(env) {
     try {
       const rows = await vpaSelect(env, 'venueplay_founding',
         'id=eq.' + encodeURIComponent(fid)
-        + '&select=id,contact_email,stripe_subscription_id&limit=1');
+        + '&select=id,contact_email,stripe_subscription_id,contact_name&limit=1');
       acct = rows && rows[0];
     } catch (e) { why.push('account ' + fid + ': could not be read'); continue; }
     if (!acct || !acct.stripe_subscription_id) {
@@ -6030,37 +6238,14 @@ async function vpaLastDaySweep(env) {
       const dated = vpaFmtDate(endTs);
       /* What they actually did with us, for the wrap at the bottom. Never allowed to stop
          the email: a venue must be told its last day even if not one number can be counted. */
-      const stats = await vpaVenueStats(env, v.id).catch(() => null);
+      const stats = await vpaVenueStats(env, v.id, tz).catch(() => null);
       const tenure = vpaTenureWords(v.created_at, endTs * 1000);
       const wrap = vpaWrapHtml(stats, { rateCents: rateCents, players: v.max_players,
                                         months: vpaTenureMonths(v.created_at, endTs * 1000) });
-      const html = vpaLeavingHtml(env, {
-        heading: day + ' is your last day on VenuePlay.',
-        /* SORRY TO SEE THEM GO, AND SAY HOW LONG IT HAS BEEN. Dean, 17 Sep 2026. A venue
-           that has been with us a year should not get the same opening line as one that
-           lasted a fortnight, and "the last 14 months" is the sentence that makes somebody
-           pause. Only said when we actually know: no tenure, no claim. */
-        lead: 'We are sorry to see you go.'
-            + (tenure ? ' It has been a pleasure having ' + vpaEsc(v.name || 'you')
-                        + ' with us for the last <b>' + vpaEsc(tenure) + '</b>.' : '')
-            + ' You are set to cancel after <b>' + vpaEsc(day) + ', ' + vpaEsc(dated)
-            + '</b>. You keep that night in full, right through to close, and your screens '
-            + 'keep playing your advertising until you shut.',
-        priceHold: rate,
-        founding: founding,
-        rows: [['Venue', v.name || 'your venue'],
-               ['Last day', day + ', ' + dated],
-               ['Until close that day', 'Every game runs as normal, and the TVs keep showing your advertising.'],
-               ['Undo it any time up to', 'close on ' + day],
-               ['After that', 'Games stop. Nothing is deleted for 90 days.']],
-        extra: wrap
-             + '<p style="font-size:13.5px;color:#3a3a44;margin:0 0 18px">'
-             + 'All of that stays yours if you change your mind. One click, any time up to close on '
-             + vpaEsc(day) + ', and nothing will have been interrupted.</p>'
-             + '<p style="font-size:13.5px;color:#6a6a75;margin:0 0 18px">'
-             + 'And if you are going, thank you for the run. If something did not work, we would '
-             + 'genuinely like to hear it. Just reply.</p>',
-        cta: 'Keep the venue running',
+      const html = vpaGoodbyeHtml(env, {
+        day: day, dated: dated, name: v.name, tenure: tenure, wrap: wrap,
+        rate: rate, founding: founding,
+        hello: vpaHello(tz, acct && acct.contact_name, v.name),
       });
       const delivered = [], refused = [];
       for (const addr of to) {
@@ -6159,6 +6344,15 @@ async function vpbCancelVenue(request, env, json) {
      dean@ and hello@: the owner clicked cancel and heard nothing back. Awaited so the
      write cannot be dropped when the response returns, caught so a mail failure can never
      stop somebody leaving. Not sent on an undo, which has its own confirmation on screen. */
+  /* Their rate, read off the subscription itself, in case this cancellation turns out to be
+     inside the last two days and the goodbye goes instead of the confirmation. vpbSubItem
+     returns priceId and quantity and has never returned a rate, so reading info.rateCents
+     gave undefined and the price warning would have been silently missing. */
+  const _item = info && info.sub && info.sub.items && info.sub.items.data && info.sub.items.data[0];
+  const _rateCents = (_item && _item.price && parseInt(_item.price.unit_amount, 10)) || 0;
+  const _pid = (info && info.priceId) || '';
+  const _founding = !!_pid && (_pid === env.STRIPE_PRICE_MONTHLY || _pid === env.STRIPE_PRICE_ANNUAL);
+
   if (!undo) {
     await vpaFireCancelConfirm(env, {
       venueId: venueId, name: venue.name, ends: endsDate, account: o.account,
@@ -6167,6 +6361,16 @@ async function vpbCancelVenue(request, env, json) {
          timezone, the same fallback the session sweep uses. */
       endTs: (info && info.periodEnd) || null,
       timezone: venue.timezone || vpaTimezoneFromPostcode(venue.postcode),
+      /* Everything the goodbye needs, in case this turns out to be one. */
+      createdAt: venue.created_at || null,
+      players: venue.max_players || 0,
+      /* READ OFF THE SUBSCRIPTION, because vpbSubItem returns priceId and quantity and has
+         never returned a rate. info.rateCents was undefined, so the price warning would have
+         been silently missing from this email and nothing would have said so. */
+      rateCents: _rateCents,
+      rate: _rateCents ? '$' + (_rateCents / 100).toFixed(2) : '',
+      founding: _founding,
+      contactName: o.account && o.account.contact_name,
     }).catch(() => {});
   }
 
