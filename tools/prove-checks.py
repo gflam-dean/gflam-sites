@@ -1710,10 +1710,71 @@ MUTATIONS = [
 ]
 
 
-def gate(only_label, root):
-    # --local: no network. The checks proven here are all about the files, and a
-    # dozen full runs with live fetches would take longer than anyone will wait.
-    r = subprocess.run([sys.executable, os.path.join(root, 'tools', 'release-check.py'), '--local'],
+# ---------------------------------------------------------------------------
+# THE LIVE CHECKS HAD NEVER BEEN BROKEN EITHER, and nobody had noticed because
+# prove-checks only ever ran the gate with --local. The two sets are disjoint:
+# 199 local checks and 108 live ones, no label in both. So the headline "every
+# check is proven" was true of a bit under two thirds of the gate.
+#
+# MOST OF THE LIVE ONES CANNOT BE PROVEN AND SHOULD NOT BE. "/play serves" is a
+# question about production, and the only way to make it fail is to break
+# production. Those stay unproven on purpose.
+#
+# What IS provable is the subset whose subject is a file in this repo compared
+# against live state: a Worker's build stamp against its own /health, a founding
+# code against env.FOUNDING_CODES, a page hash against the browser stamp. Break
+# the repo copy and the two must disagree. Production is never touched: the
+# mutation happens in the scratch copy and only the reading end moves.
+#
+# Run with:  python3 tools/prove-checks.py --live
+# It is slow, because each one is a full live sweep. Do not run it in parallel
+# with itself.
+MUTATIONS_LIVE = [
+    # A Worker's /health answers with the stamp that is actually deployed. Move the repo's
+    # copy and the two must disagree. This is the check that says "I pasted it" is not
+    # evidence, and until 17 Sep 2026 nobody had ever seen it say no.
+    ('VenuePlay game is running the current code',
+     'venueplay-backend/worker/venueplay-game.js',
+     "const BUILD = '17 Sep 2026, 16:17 \u00b7 88c0f5ea';",
+     "const BUILD = '17 Sep 2026, 16:17 \u00b7 00000000';",
+     'the deployed game Worker is not the code in this repo, and the only thing that was '
+     'ever going to say so is this line'),
+
+    ('VenuePlay billing is running the current code',
+     'venueplay-backend/worker/venueplay-api-FULL.js',
+     "const BUILD = '17 Sep 2026, 16:42 \u00b7 74679017';",
+     "const BUILD = '17 Sep 2026, 16:42 \u00b7 00000000';",
+     'the deployed billing Worker is not the code in this repo, so a billing fix that was '
+     'written and never landed reads exactly like one that did'),
+
+    # The browser stamp: .verify-live.json records which build a real browser has seen.
+    # Any edit to a screen file makes it stale, which is what went red on 17 Sep after the
+    # abandoned-lobby change and is the only thing standing between a screen edit and a
+    # venue finding out in the room.
+    ('a real browser has checked the venue screens on this build',
+     'venueplay/tv.html',
+     '<title>VenuePlay: Venue Screen</title>',
+     '<title>VenuePlay: Venue Screen </title>',
+     'a venue screen changed and no browser has opened it since, so nothing but a publican '
+     'is going to find out what it paints'),
+
+    # The page carries the code, the Worker carries the list. A code on a page that the
+    # Worker will not honour is a venue reading $2.50 and being charged $3.
+    ('all 9 founding page(s) have a live code',
+     'venueplay/qld.html',
+     '<<ALL:QLD-OCT-2026>>', 'QLD-OCT-2027',
+     'a founding page offers a code env.FOUNDING_CODES has never heard of, so the venue is '
+     'quoted one price and charged another with no error and no explanation'),
+]
+
+
+def gate(only_label, root, live=False):
+    # --local by default: no network. The checks proven that way are all about the
+    # files, and a dozen full runs with live fetches would take longer than anyone
+    # will wait. --live is for the handful whose subject is a repo file measured
+    # against production; see MUTATIONS_LIVE.
+    r = subprocess.run([sys.executable, os.path.join(root, 'tools', 'release-check.py'),
+                        '--live' if live else '--local'],
                        capture_output=True, text=True, cwd=root)
     out = re.sub(r'\033\[[0-9;]*m', '', r.stdout + r.stderr)
     for line in out.splitlines():
@@ -1734,13 +1795,20 @@ def scratch():
 
 
 def main():
-    want = sys.argv[1] if len(sys.argv) > 1 else ''
+    LIVE = '--live' in sys.argv
+    args = [a for a in sys.argv[1:] if not a.startswith('--')]
+    want = args[0] if args else ''
+    TABLE = MUTATIONS_LIVE if LIVE else MUTATIONS
     proven = broken = skipped = 0
     tmp, repo = scratch()
-    print('\n%sPROVING THE CHECKS CAN FAIL%s' % (YEL, OFF))
-    print('%s  each one is broken on purpose, in a copy at %s%s\n' % (DIM, repo, OFF))
+    print('\n%sPROVING THE %s CHECKS CAN FAIL%s' % (YEL, 'LIVE' if LIVE else 'LOCAL', OFF))
+    print('%s  each one is broken on purpose, in a copy at %s%s' % (DIM, repo, OFF))
+    if LIVE:
+        print('%s  the break is in the copy, never in production: only the reading end moves%s'
+              % (DIM, OFF))
+    print('')
 
-    for label, rel, find, repl, why in MUTATIONS:
+    for label, rel, find, repl, why in TABLE:
         if want and want.lower() not in label.lower():
             continue
         path = os.path.join(repo, rel)
@@ -1753,7 +1821,7 @@ def main():
             # Duplicating a migration NUMBER needs a second file, not an edit.
             dest = os.path.join(repo, find[len('<<COPYTO:'):].rstrip('>'))
             io.open(dest, 'w', encoding='utf-8').write(before)
-            caught = gate(label, repo)
+            caught = gate(label, repo, LIVE)
             os.remove(dest)
             (proven, broken) = (proven + 1, broken) if caught else (proven, broken + 1)
             print(('  %sok%s   %s %s%s%s' % (GRN, OFF, label.ljust(52), DIM, why, OFF)) if caught
@@ -1793,7 +1861,7 @@ def main():
             skipped += 1
             continue
         io.open(path, 'w', encoding='utf-8').write(after)
-        caught = gate(label, repo)
+        caught = gate(label, repo, LIVE)
         io.open(path, 'w', encoding='utf-8').write(before)
         if caught:
             proven += 1
@@ -1805,7 +1873,8 @@ def main():
     # WHAT THE GATE RUNS THAT NOBODY HAS BROKEN YET. Asked of the gate rather
     # than counted from the list above, because a list of the checks is a second
     # copy of the checks and goes stale the moment somebody adds one.
-    r = subprocess.run([sys.executable, os.path.join(repo, 'tools', 'release-check.py'), '--local'],
+    r = subprocess.run([sys.executable, os.path.join(repo, 'tools', 'release-check.py'),
+                        '--live' if LIVE else '--local'],
                        capture_output=True, text=True, cwd=repo)
     clean = re.sub(r'\033\[[0-9;]*m', '', r.stdout + r.stderr)
     labels = []
@@ -1813,7 +1882,7 @@ def main():
         m = re.match(r'\s+(?:ok|FAIL)\s+(.+?)(?:\s{2,}.*)?$', line)
         if m:
             labels.append(m.group(1).strip())
-    covered = [m[0] for m in MUTATIONS]
+    covered = [m[0] for m in TABLE]
     naked = [l for l in labels if not any(c in l for c in covered)]
 
     shutil.rmtree(tmp, ignore_errors=True)
@@ -1856,7 +1925,7 @@ def check_mutations_still_apply():
     """
     print('\n  Does every mutation still find what it breaks?\n')
     bad = 0
-    for label, rel, find, repl, why in MUTATIONS:
+    for label, rel, find, repl, why in MUTATIONS + MUTATIONS_LIVE:
         f = os.path.join(ROOT, rel)
         if not os.path.exists(f):
             print('  GONE    %-56s %s' % (label[:56], rel)); bad += 1; continue
@@ -1883,7 +1952,8 @@ def check_mutations_still_apply():
         print('\n  %d mutation(s) would be SKIPPED, so the checks they prove are not tested.' % bad)
         print('  The full run calls these "no longer apply", which reads like tidiness.')
         return 1
-    print('  All %d apply. The full run will actually test something.' % len(MUTATIONS))
+    print('  All %d apply (%d local, %d live). The full run will actually test something.'
+          % (len(MUTATIONS) + len(MUTATIONS_LIVE), len(MUTATIONS), len(MUTATIONS_LIVE)))
     return 0
 
 
