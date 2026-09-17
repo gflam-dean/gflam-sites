@@ -70,6 +70,111 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 # wholeness check is reached. Zero bytes parses perfectly, which is the case
 # that check was actually written for.
 MUTATIONS = [
+    # ---- 17 Sep 2026, fifth pass: the PartyPlay game names, which a host reads off their
+    # ---- own console mid-party and which run.html sends up on the television.
+    ('the game names live in lib/pp-games.js', 'partyplay/lib/pp-games.js',
+     "    charades:   { name: 'Charades',               icon: '\U0001f3ad' },\n"
+     "    guesswho:   { name: 'Who am I?',              icon: '\U0001f914' }",
+     "    charades:   { icon: '\U0001f3ad' },\n"
+     "    guesswho:   { icon: '\U0001f914' }",
+     'two games have an icon and no name, so both fall back to their slug and the room '
+     'reads "charades" and "guesswho" off the telly'),
+
+    ('host.html loads the shared names', 'partyplay/host.html',
+     '/lib/pp-games.js', '/lib/pp-games-old.js',
+     'PPGames is undefined on the build page, so every tile falls back to its slug'),
+
+    ('run.html loads the shared names', 'partyplay/run.html',
+     '/lib/pp-games.js', '/lib/pp-games-old.js',
+     'PPGames is undefined on the screen the host actually runs the night from, which is '
+     'the exact 12 Sep fault'),
+
+    # The first half of this check ("name:PPGames.name(" is present) matches eleven times,
+    # so breaking one leaves ten and the check stays green. The half that can fail is the
+    # one that forbids a second hardcoded list, which is the drift it was written for.
+    ('host.html takes its names from the same place, so they cannot drift', 'partyplay/host.html',
+     'charades:   { icon:PPGames.icon("charades"), name:PPGames.name("charades")',
+     'charades:   { icon:"\U0001f3ad", name:"Charades"',
+     'a second list of the same names starts up in host.html, which is how the first one '
+     'drifted away from run.html and put a slug on the television'),
+
+    # ---- 17 Sep 2026, fourth pass: PartyPlay's three privacy promises.
+    # ---- All three checks were whole-file word searches, so they could not fail. The gate
+    # ---- was tightened first (scoped to runPhotoSweep, and a DELETE aimed at that table in
+    # ---- the same statement), and only then could these be written.
+    ('the album keep window is written once, in the Worker', 'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     'const ALBUM_KEEP_DAYS = 30;', 'const ALBUM_KEEP_DAYS_WAS = 30;',
+     'the one place the keep window is written has gone, so the code and the privacy page '
+     'can drift apart with nothing tying them together'),
+
+    ('and the privacy page promises the same number of days', 'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     'const ALBUM_KEEP_DAYS = 30;', 'const ALBUM_KEEP_DAYS = 45;',
+     'the page promises 30 days and the sweep keeps 45, so we hold guest photos and email '
+     'addresses for a fortnight longer than we told them'),
+
+    ('the retention sweep is still in the Worker', 'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     'async function runPhotoSweep(env) {', 'async function runPhotoSweepOld(env) {',
+     'the job that keeps all three privacy promises is no longer the one the cron calls'),
+
+    ('the album are actually deleted, not just promised', 'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     "await sb(env, 'pp_photos?id=eq.' + r.id, { method: 'DELETE' });",
+     "await sb(env, 'pp_photos?id=eq.' + r.id, { method: 'PATCH' });",
+     'the photo rows are read and left where they are, so an album the page said was gone '
+     'thirty days ago is still there'),
+
+    ("the guests' nicknames are actually deleted, not just promised", 'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     "'pp_players?licence_id=eq.' + encodeURIComponent(l.id),\n"
+     "        { method: 'DELETE', headers: { prefer: 'return=representation' } });",
+     "'pp_players?licence_id=eq.' + encodeURIComponent(l.id),\n"
+     "        { headers: { prefer: 'return=representation' } });",
+     'guest nicknames are never deleted, which is the exact fault found on 12 Sep and the '
+     'one the old whole-file check could not have caught'),
+
+    ("the guests' email addresses are actually deleted, not just promised", 'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     "'pp_album_requests?licence_id=eq.' + encodeURIComponent(l.id),\n"
+     "        { method: 'DELETE', headers: { prefer: 'return=representation' } });",
+     "'pp_album_requests?licence_id=eq.' + encodeURIComponent(l.id),\n"
+     "        { headers: { prefer: 'return=representation' } });",
+     "a finished party's guest email addresses stay in the database for ever while "
+     'privacy.html says they went thirty days after the night'),
+
+    ('the sweep removes guest rows, not only picture rows', 'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     "'pp_players?licence_id=eq.' + encodeURIComponent(l.id),",
+     "'pp_players?id=eq.' + encodeURIComponent(l.id),",
+     'the sweep clears one row keyed by the wrong column instead of the whole party, so '
+     'almost every guest is left behind and the run still reports success'),
+
+    # ---- 17 Sep 2026, third pass: the test suites nobody had ever broken.
+    # ---- Each mutates the file the suite actually reads, so a green suite over a broken
+    # ---- subject is impossible. That exact shape has bitten this repo twice.
+    # This suite injects its OWN httpError, so breaking the Worker's copy proves nothing.
+    # What it really drives is verifyJwtHS256 up to the crypto check. Break the catch that
+    # turns a rubbish token into a sign-in problem and it is the 12 Sep fault again, exactly.
+    ('token-refusal.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     "  } catch (e) {\n    throw httpError(401, 'Malformed token');\n  }",
+     "  } catch (e) {\n    throw httpError(500, 'Something went wrong');\n  }",
+     'a corrupted session is answered with "something went wrong" instead of "sign in again", '
+     'so a host is told the product is broken when they just need to sign in'),
+
+    ('venue-timezone.test.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "case 'NSW': case 'ACT': return 'Australia/Sydney';", "case 'NSW': case 'ACT': return 'Australia/Darwin';",
+     'a NSW venue is put on the wrong clock, so its last night ends at the wrong hour'),
+
+    ('pp-tv-layout.test.js', 'partyplay/tv.html',
+     'max-width:24ch;margin-inline:auto', 'max-width:24ch',
+     'a capped block on the telly stops centring itself, which is the off-centre subtitle this '
+     'suite was written for'),
+
+    # The suite drives the REAL replayState out of the host page, so break that, not a string.
+    # My first attempt mutated a sentence on the phone page that the suite quotes in a comment
+    # and does not assert on, and the text was not even there any more. A mutation aimed at the
+    # wrong thing is a check nobody is proving.
+    ('trivia-catchup.test.js', 'venueplay/app/trivia/host.html',
+     'var to = pid ? function(o){ o.to = pid; gsend(o); } : send;',
+     'var to = send;',
+     'a phone that joins mid-question is caught up by broadcasting to the whole room instead of '
+     'answering the one phone, so every other player sees somebody else\'s catch-up'),
+
     # ---- 17 Sep 2026, second pass: checks that had never been broken on purpose.
     # ---- Each one guards a fault that has actually happened in this repo, which is exactly
     # ---- why leaving them unproven was the wrong gap to have.

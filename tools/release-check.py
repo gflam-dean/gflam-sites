@@ -852,18 +852,35 @@ def local_checks(which):
                'code keeps %s days' % m_days.group(1),
                why='a retention period on the page that is not the one enforced is a promise we do not keep')
         # The page names three things. The sweep has to touch all three.
-        for label, table, phrase in (
-                ('the album', 'pp_photos', 'album is deleted'),
-                ("the guests' nicknames", 'pp_players', 'nickname is deleted'),
-                ("the guests' email addresses", 'pp_album_requests', 'emails are deleted')):
-            promised = phrase.split()[0].lower() in priv.lower()
+        #
+        # THIS USED TO ASK WHETHER THE WORDS pp_players AND DELETE BOTH APPEARED SOMEWHERE
+        # IN THE FILE. They do, in unrelated places: line 1414 is the admin "clear players"
+        # button a host presses by hand, which is exactly the delete the comment beside the
+        # sweep says is NOT the one that keeps the promise. So all three checks were green
+        # before the sweep existed and would stay green if it were deleted tomorrow. A check
+        # that cannot fail for the fault it names is not a check. Found 17 Sep 2026 while
+        # trying to break it on purpose and finding there was nothing to break.
+        #
+        # Now it looks inside runPhotoSweep only, and wants a DELETE actually aimed at that
+        # table in the same statement.
+        m_fn = re.search(r'async function runPhotoSweep\(env\)\s*\{(.*?)\n\}', w4c, re.S)
+        sweep = m_fn.group(1) if m_fn else ''
+        ok('the retention sweep is still in the Worker', bool(m_fn),
+           why='runPhotoSweep is where all three privacy promises are kept')
+        for label, table in (('the album', 'pp_photos'),
+                             ("the guests' nicknames", 'pp_players'),
+                             ("the guests' email addresses", 'pp_album_requests')):
+            hit = re.search(r"'" + table + r"\?[^']*'[^;]{0,200}method:\s*'DELETE'", sweep, re.S)
             ok('%s are actually deleted, not just promised' % label,
-               ("'" + table) in w4c and 'DELETE' in w4c,
-               table,
-               why='privacy.html says this goes 30 days after the party')
+               hit is not None, table,
+               why='privacy.html says this goes 30 days after the party, and only a DELETE '
+                   'inside runPhotoSweep keeps that promise')
+        # Same fault as above: this searched the whole file, and pp_players?licence_id=eq.
+        # appears in four unrelated places. Scoped to the sweep, it now asks the question it
+        # is named for: does the sweep clear a WHOLE PARTY, or one row somebody named.
         ok("the sweep removes guest rows, not only picture rows",
-           re.search(r"pp_players\?licence_id=eq\.", w4c) is not None and
-           re.search(r"pp_album_requests\?licence_id=eq\.", w4c) is not None,
+           re.search(r"pp_players\?licence_id=eq\.", sweep) is not None and
+           re.search(r"pp_album_requests\?licence_id=eq\.", sweep) is not None,
            why='both of those tables hold guest email addresses')
 
     head('Every PartyPlay game has a name a person would say out loud')
