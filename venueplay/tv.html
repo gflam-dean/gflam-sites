@@ -1618,6 +1618,32 @@
   // A live game always produces host traffic, so silence for this long means nobody is running
   // anything. Ads are always safe to show, and going there re-arms every other protection.
   var HOST_SILENCE_MS=90*60*1000, lastHostAt=Date.now();
+  /* AN EMPTY LOBBY DOES NOT DESERVE NINETY MINUTES.
+
+     The ordinary end of a night is a host closing the tab, not pressing End. Every console
+     sends t:"to_ads" on pagehide, but it has to go unsigned (an async signature never completes
+     before the page dies) and vp-sign.js drops unsigned to_ads on purpose, because a forged one
+     would let any patron in the room kill a live game. So at an enforcing venue, which is all of
+     them, that message never arrives and the wall sits on a bingo join code for a game nobody is
+     running until the ninety minute timeout above. tv.html's own comment at the NOT_ON_AIR list
+     describes exactly this.
+
+     Ninety minutes is the right number for a GAME. A quiz can sit between rounds, a members
+     draw waits for the room to settle, and pulling a live game off the wall would be far worse
+     than leaving a dead code up. It is the wrong number for a LOBBY, where nothing is being
+     played and the only thing on screen is a code.
+
+     WHY A SHORT WINDOW IS SAFE NOW AND WAS NOT THIS MORNING. Every console beats t:"host_here"
+     at the TV every thirty seconds while a game or a lobby is open, and HOST_TYPES counts that
+     as proof of life. The bingo console was the one that never did, which is why a quiet lobby
+     used to mean nothing at all; it beats now, same interval as the other four. So twelve
+     missed beats really does mean the host has gone, rather than that the host is busy.
+
+     Deliberately NOT applied to embed. While another format is embedded, the TV's proof of life
+     comes through the game-channel subscriptions, and those are exactly what I gave a retry loop
+     today. If they ever fail, a short window here would yank the wall off a running quiz. The
+     backstop for that case stays at ninety minutes, where being wrong is merely untidy. */
+  var LOBBY_SILENCE_MS=6*60*1000;
   /* When the five game channels went deaf, or 0 while they are healthy. A screen with
      no channel hears nothing at all: no host, no HQ reload. The ads keep rotating
      locally, so nothing on the wall says anything is wrong. */
@@ -1628,8 +1654,11 @@
   function noteHostAlive(){ lastHostAt=Date.now(); }
   setInterval(function(){
     if(tvMode==="ads") { lastHostAt=Date.now(); return; }
-    if(Date.now()-lastHostAt < HOST_SILENCE_MS) return;
-    try{ sessionStorage.setItem("vpTvReloadWhy","host-silent"); }catch(e){}
+    // A bingo screen sitting in the lobby is not a game. Everything else keeps the long window.
+    var idleLobby = (tvMode==="bingo" && state && state.phase==="lobby");
+    var window_ms = idleLobby ? LOBBY_SILENCE_MS : HOST_SILENCE_MS;
+    if(Date.now()-lastHostAt < window_ms) return;
+    try{ sessionStorage.setItem("vpTvReloadWhy", idleLobby ? "lobby-silent" : "host-silent"); }catch(e){}
     enterAds();
   }, 60000);
 

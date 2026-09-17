@@ -933,6 +933,25 @@
      produces activity; a forgotten one does not, so an untouched game stops being
      pushed to the screen and the venue's advertising keeps the wall. The console
      itself is untouched: the host can still finish or end the game from it. */
+  /* THE BINGO CONSOLE NEVER SAID IT WAS STILL THERE, and every other format does.
+
+     Trivia, musical, raffle and members all beat t:"host_here" at the TV every thirty seconds
+     while a game or a lobby is open. This console had no periodic send of any kind. So the TV
+     could not tell a bingo lobby with a host standing at it from a bingo lobby whose host had
+     closed the tab, and the only thing that eventually rescued the wall was the ninety minute
+     host-silence timeout in tv.html. Ninety minutes of a venue's screen showing a join code for
+     a game nobody is running, between the ordinary end of one game and the start of the next.
+
+     tv.html counts host_here as proof of life (HOST_TYPES), so this is all it takes. Same
+     interval as the other four on purpose: five formats, one answer.
+
+     Lobby as well as running, deliberately. The lobby is exactly the state that was getting
+     stranded, and a host filling a room can genuinely send nothing else for ten minutes. */
+  var BINGO_HEARTBEAT_MS = 30000;
+  setInterval(function(){
+    if(G.status==="running" || G.status==="lobby") send({ t:"host_here" });
+  }, BINGO_HEARTBEAT_MS);
+
   var STALE_GAME_MS = 3 * 60 * 60 * 1000;
   var lastGameTouch = Date.now();
   function touchGame(){ lastGameTouch = Date.now(); }

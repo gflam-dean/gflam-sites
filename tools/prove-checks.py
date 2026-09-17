@@ -70,6 +70,12 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 # wholeness check is reached. Zero bytes parses perfectly, which is the case
 # that check was actually written for.
 MUTATIONS = [
+    ('every console says it is there, and only a lobby times out fast',
+     'venueplay/tv.html',
+     'var idleLobby = (tvMode==="bingo" && state && state.phase==="lobby");',
+     'var idleLobby = (tvMode!=="ads");',
+     'a bingo game being played is pulled off the wall after six minutes of quiet'),
+
     # ---- 17 Sep 2026: the nine checks added the day the billing, player-data and isolation
     # ---- audit was worked through. Every one of these was broken by hand and watched go red
     # ---- as it was written, and the commit for each says so. They are written down here so

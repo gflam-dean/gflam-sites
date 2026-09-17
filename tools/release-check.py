@@ -2611,6 +2611,36 @@ def local_checks(which):
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/test-manager-perms-scope.js')
 
+    # AN ABANDONED LOBBY GOES BACK TO THE VENUE'S ADS; A LIVE GAME DOES NOT.
+    #
+    # The ordinary end of a night is a host closing the tab, not pressing End. The t:"to_ads"
+    # sent on pagehide has to go unsigned, and vp-sign.js drops unsigned to_ads on purpose
+    # because a forged one would let any patron in the room kill a live game. So at an enforcing
+    # venue, which is all of them, that message never arrives and the wall sat on a join code for
+    # a game nobody was running until the 90 minute host-silence timeout.
+    #
+    # Four of the five consoles beat host_here every thirty seconds while a game or lobby is
+    # open. Bingo never did, which is why a quiet lobby meant nothing at all. It does now, so
+    # twelve missed beats really means the host has gone, and only THEN is a short window safe.
+    # The long window stays for a game being played: pulling a live quiz off the wall is far
+    # worse than leaving a dead code up.
+    if which in ('both', 'venueplay'):
+        head('D. An abandoned lobby goes back to ads, a live game does not')
+        t = os.path.join(ROOT, 'tools', 'test-abandoned-lobby.js')
+        if not os.path.isfile(t):
+            ok('the abandoned lobby test exists', False, why='tools/test-abandoned-lobby.js is missing')
+        else:
+            r = subprocess.run([JSC, t], capture_output=True, text=True, timeout=120)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+            n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
+            ok('every console says it is there, and only a lobby times out fast (%d checks)' % n,
+               r.returncode == 0 and 'PASS' in out and not bad,
+               detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
+               why='run jsc tools/test-abandoned-lobby.js. Getting this wrong one way leaves a '
+                   'venue looking at a dead join code all night; the other way pulls the wall '
+                   'off a game that is being played')
+
     head('E. The Worker you are about to paste')
     dep = os.path.join(PARTYPLAY_BACK, 'worker', 'DEPLOY-partyplay-api.js')
     if which in ('both', 'partyplay') and os.path.isfile(dep):
