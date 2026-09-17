@@ -70,6 +70,14 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 # wholeness check is reached. Zero bytes parses perfectly, which is the case
 # that check was actually written for.
 MUTATIONS = [
+    # The win fanfare was silent on all eight screens for half a day because it moved into
+    # vp-celebrate.js and not one page got the script tag. Nothing threw until the first
+    # call, and the first call was in front of a room.
+    ('every page loads the shared script it calls', 'venueplay/play.html',
+     '<script src="/app/vp-celebrate.js"></script>', '',
+     'a page calls VPCelebrate and never loads it, so nothing throws until the first win '
+     'and the first win is in front of a room'),
+
     ('and it is the library as it stands now, character for character',
      'partyplay-backend/lib/pp-licence.js',
      'PLAYER_CAP', 'PLAYER_CAP_V2',

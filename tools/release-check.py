@@ -593,6 +593,7 @@ def local_checks(which):
         ok(os.path.basename(t), suite_passed(line), line)
 
     every_suite_is_run()
+    every_page_loads_what_it_calls()
 
     head('C. Nothing internal sits in a directory the world can download')
     """A DEPLOY DIRECTORY IS A PUBLIC DIRECTORY. Everything under venueplay/ and
@@ -2918,7 +2919,60 @@ def wait_for_deploy(minutes=30):
     return False
 
 
-def shared_scripts_live(base, folder):
+def every_page_loads_what_it_calls():
+    """A PAGE THAT CALLS A SHARED SCRIPT MUST LOAD IT.
+
+    The win fanfare was silent on all eight screens for half a day because it moved into
+    /app/vp-celebrate.js and not one page got the script tag. Nothing threw until the first
+    call, and the first call was in front of a room.
+
+    shared_scripts_live asks whether the file SERVES. This asks the other half, and it needs
+    no network: does the page that calls VPCelebrate or PPGames actually pull the file that
+    defines it? Both halves have to be true and neither implies the other.
+
+    Comments are stripped first, and so are the src attributes of script tags, or a page
+    would satisfy this by mentioning the name it fails to load."""
+    head('Every page loads the shared script it calls')
+    defines = {}
+    for folder in (os.path.join(ROOT, 'partyplay', 'lib'),
+                   os.path.join(ROOT, 'venueplay', 'app')):
+        if not os.path.isdir(folder):
+            continue
+        for f in sorted(os.listdir(folder)):
+            if not f.endswith('.js') or f.endswith('.test.js'):
+                continue
+            t = io.open(os.path.join(folder, f), encoding='utf-8', errors='ignore').read()
+            for g in re.findall(r'root\.((?:VP|PP)[A-Za-z0-9_]+)\s*=', t):
+                defines.setdefault(g, f)
+    pages = []
+    for base in (os.path.join(ROOT, 'partyplay'), os.path.join(ROOT, 'venueplay')):
+        for d, dirs, fs in os.walk(base):
+            dirs[:] = [x for x in dirs if x not in ('node_modules', '.git')]
+            pages += [os.path.join(d, f) for f in sorted(fs) if f.endswith('.html')]
+    missing = []
+    for page in sorted(set(pages)):
+        raw = io.open(page, encoding='utf-8', errors='ignore').read()
+        body = re.sub(r'<!--.*?-->', ' ', raw, flags=re.S)
+        body = re.sub(r'/\*.*?\*/', ' ', body, flags=re.S)
+        body = re.sub(r'(^|[^:])//[^\n]*', r'\1', body)
+        # the src attribute must not count as "using" the global
+        body_nosrc = re.sub(r'<script[^>]*?src=["\'][^"\']*["\'][^>]*?>\s*</script>', ' ', body)
+        # THE FILE MUST BE IN A REAL SCRIPT TAG, not merely named somewhere in the page.
+        # The first version asked "is the filename anywhere in this file", and play.html
+        # explains vp-celebrate.js in TWO comments, so deleting the actual script tag left
+        # the check green and prove-checks called it BLIND. Comments are claims.
+        loaded = set()
+        for tag_src in re.findall(r'<script[^>]*?src=["\']([^"\']+)["\']', raw):
+            loaded.add(os.path.basename(tag_src.split('?')[0]))
+        for g, src in sorted(defines.items()):
+            if re.search(r'\b' + g + r'\s*\.', body_nosrc) and src not in loaded:
+                missing.append('%s calls %s and never loads %s' % (short(page), g, src))
+    ok('every page loads the shared script it calls', not missing,
+       '%d page(s), %d shared global(s)' % (len(set(pages)), len(defines)),
+       why='; '.join(missing[:4]))
+
+
+def shared_scripts_live(base, folder, url_prefix='/app/'):
     """EVERY shared script a page loads must come back as JavaScript.
 
     Cloudflare Pages answers a path it does not have with the HOMEPAGE and a 200,
@@ -2937,8 +2991,10 @@ def shared_scripts_live(base, folder):
                    if f.endswith('.js') and not f.endswith('.test.js'))
     for f in names:
         local = io.open(os.path.join(folder, f), encoding='utf-8').read()
-        m = re.search(r'root\.(VP[A-Za-z]+)\s*=', local)
-        status, body, _ = get(base + '/app/' + f)
+        # VP or PP: PartyPlay's shared scripts were never checked at all, and they fail
+        # exactly the same way. Hardcoding VP here is why: it was written for one product.
+        m = re.search(r'root\.((?:VP|PP)[A-Za-z]+)\s*=', local)
+        status, body, _ = get(base + url_prefix + f)
         looks_html = '<html' in body[:2000].lower() or '<!doctype' in body[:200].lower()
         why = ''
         good = status == 200 and not looks_html
@@ -4233,6 +4289,13 @@ def main():
             someone_actually_looked_at_a_screen()
         if which in ('both', 'partyplay'):
             pages_live('PartyPlay', PP, PP_PAGES)
+            # PARTYPLAY'S SHARED SCRIPTS WERE NEVER CHECKED. Cloudflare Pages answers a path
+            # it does not have with the HOMEPAGE and a 200, so one that failed to deploy does
+            # not 404: the browser fetches HTML, cannot parse it, and the global is simply
+            # missing. That is how vp-qr.js behaved on 2 Sep. pp-games.js failing that way
+            # would put every game's database slug on the television, which is the exact
+            # fault lib/pp-games.js was created to stop.
+            shared_scripts_live(PP, os.path.join(ROOT, 'partyplay', 'lib'), '/lib/')
             every_page_is_reachable('PartyPlay', PP, 'partyplay')
             worker_health('PartyPlay', PP_API)
             nobody_paid_and_got_nothing()
