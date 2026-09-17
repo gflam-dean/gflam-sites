@@ -988,9 +988,11 @@
             <div class="pl"><b>Annual</b>billed yearly · best value</div>
             <div class="pv"><s>$2.85</s> $2.30</div>
           </div>
-          <p class="price-foot">Priced per player, on your venue's max players per session. Go over on a big night and it's just $2 per extra player that night. Your rate is locked for life while your subscription stays active. Cancel and that rate ends for good, so rejoining later is at the standard rate.</p>
+          <p class="price-foot">Priced per player, on your venue's max players per session. Go over on a big night and it's just $2 per extra player that night. Three big nights in a row and we move your plan up to match, which costs less than paying per head every week. Your rate is locked for life while your subscription stays active. Cancel and that rate ends for good, so rejoining later is at the standard rate.</p>
         </div>
       </div>
+      <div class="offer-cta"><a class="btn btn-primary" href="#claim">Lock in your price</a></div>
+    
     </div>
   </div>
 </section>
@@ -1089,7 +1091,7 @@
             </div>
           </div>
           <p class="estimate" id="vp-estimate">Put in your busiest night and we will price it.</p>
-          <p class="overage-note">Use your busiest night, not your average one. If a night ever runs bigger than that, your host okays it on screen before the game starts and those extra players are $2 each, that night only. Your monthly bill does not change.</p>
+          <p class="overage-note">Use your busiest night, not your average one. If a night runs bigger than that, your host okays it on screen before the game starts and those extra players are $2 each, that night only. Do it three nights running and we move your plan up to the crowd you keep getting, which costs less than paying per head every week. That is the only time your monthly changes, and we tell you when it does.</p>
           <div class="consent">
             <label class="ck"><input type="checkbox" id="vp-consent"> <span>I agree to the <a href="/terms" target="_blank" rel="noopener">Terms</a> and <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</span></label>
             <label class="ck"><input type="checkbox" id="vp-marketing"> <span>Send me VenuePlay news, tips and launch updates. You can unsubscribe anytime.</span></label>
@@ -1663,6 +1665,51 @@
 .vp-float-cta:hover{background:#ff3d9e}
 @media(max-width:560px){.vp-float-cta{right:14px;left:14px;bottom:14px;justify-content:center;padding:15px 20px}}
 @media(prefers-reduced-motion:reduce){.vp-float-cta{transition:opacity .25s ease}}
+
+  /* ===== CENTRED THE WHOLE WAY DOWN =====
+     Dean, 17 Sep 2026: "those landing pages, can we centre them all the way down?"
+
+     Every section box was already dead centre, so nothing looked wrong in a measurement. What
+     was wrong was the TEXT: the column is 1120px and the headings and paragraphs wrapped at
+     around 790, all hard against the left edge, so on a wide screen the right third of every
+     section sat empty and the page read as if it had slipped sideways. The card grid made it
+     worse: five cards in a three-wide flex row left the last two hugging the left with a card
+     and a half of nothing beside them.
+
+     Headings, intros, the hero and the buttons are centred. The body copy INSIDE a card is
+     deliberately left alone: centring three or four lines of running text inside a box is the
+     one place this stops looking designed and starts looking like a school project. */
+  .hero > .wrap{text-align:center}
+  .hero .lede{margin-left:auto;margin-right:auto;max-width:62ch}
+  .hero-cta{justify-content:center}
+  .sec-head{text-align:center}
+  .sec-sub{margin-left:auto;margin-right:auto}
+  .offer-grid > div:first-child{text-align:center}
+  /* Five cards in a three-wide row: centre the orphans instead of stranding them on the left. */
+  .modes{justify-content:center}
+
+  /* ===== THE SIGN-UP BUTTON UNDER THE PRICE =====
+     The pricing block stated the price and then stopped. The only way on from it was to scroll
+     past two more sections or go back up to the hero. Somebody who has just read the price and
+     decided is the most likely person on the page to sign up, and there was nothing to press. */
+  .offer-cta{margin-top:34px;text-align:center}
+  .offer-cta .btn{min-width:260px;justify-content:center}
+
+  /* ===== THE DROPDOWN, MATCHING THE FIELDS AROUND IT =====
+     Dean, 17 Sep 2026: "Choose 1 - pub or club is in a different font."
+
+     It was not a different font, it is Manrope like everything else, and forcing another face
+     on it proved the select honours the CSS. Two real differences made it read as one:
+
+       - every OTHER empty field shows grey placeholder text, and this one showed "Choose one"
+         in full white, so it looked answered when it was not, and the white-against-grey
+         contrast reads as a heavier, different typeface
+       - it measured 48.5px against the inputs' 52px, because a select is laid out from the
+         font's own metrics and does not get re-laid-out when the web font finishes loading
+
+     So: grey until they choose, white once they have, and a height it cannot drift from. */
+  .field select{height:52px}
+  .field select:has(option[value=""]:checked){color:var(--muted-2)}
 </style>
 <a href="#claim" class="vp-float-cta" id="vpFloatCta" aria-label="Lock in founding">
   <svg width="15" height="17" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#fff" stroke-width="2.8" stroke-linejoin="round"/></svg>
