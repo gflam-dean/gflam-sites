@@ -414,9 +414,13 @@
     <div class="tabpanel" id="tp-nights">
     <div class="label">Your nights</div>
     <p class="note" style="margin:0 0 10px">How your recent nights went. "Came back" counts the phones we had seen on an earlier night at this venue, so it is a fair guess at regulars, not an exact headcount.</p>
+    <!-- Read-only, so nothing can be written to the wrong venue here. It still gets the bar,
+         because quietly reading the WRONG venue's numbers and deciding something about your
+         Tuesday off the back of them is its own kind of wrong. -->
     <div id="ntPickWrap" class="screenpick" style="display:none">
-      <label class="flabel" for="ntVenue">Nights for</label>
+      <label class="flabel" for="ntVenue">You are looking at nights at</label>
       <select id="ntVenue"></select>
+      <p class="pickfine">Every number below is <b id="ntPickName">this venue</b> only.</p>
     </div>
     <div id="nights"><p class="note">Loading your nights…</p></div>
     </div><!-- /tp-nights -->
@@ -490,9 +494,16 @@
 
     <div class="label">Members draws</div>
     <p class="note" style="margin:0 0 10px">Set your members draw once and it runs every week. The live jackpot and the next draw show on your TV automatically.</p>
+    <!-- THE SAME TRAP, AND THE WORST PLACE FOR IT. The advertising panel sending a promo to the
+         wrong telly is embarrassing. This panel imports a MEMBERS LIST, which is personal
+         information one venue holds about its own members, and it defaulted to the first venue
+         exactly the same way. Putting one venue's members into another venue's list is the
+         thing venueplay-venue-data-isolation exists to stop, and it would leave no trace that
+         looked like a fault. -->
     <div id="mdPickWrap" class="screenpick" style="display:none">
-      <label class="flabel" for="mdVenue">Draw for</label>
+      <label class="flabel" for="mdVenue">You are editing the members draw at</label>
       <select id="mdVenue"></select>
+      <p class="pickfine">The draw, the jackpot and the members list below belong to <b id="mdPickName">this venue</b> only.</p>
     </div>
     <div class="scard">
       <div class="scardhead" id="mdHead">Your members draws</div>
@@ -519,7 +530,7 @@
       <p class="snote" style="margin-top:8px">Taking it off the TV clears the draw day and time, so it stops appearing between games. The draw, its jackpot and your members list are all kept, so putting a night back on brings it straight back.</p>
     </div>
     <div class="scard">
-      <div class="scardhead">Your members list</div>
+      <div class="scardhead">Your members list<span class="forvenue" id="mdListForVenue"></span></div>
       <p class="snote" id="mdCount">No members yet.</p>
       <p class="snote">This is personal information your venue holds about your members. Keep it to a member number and a name, and take someone off when they ask.</p>
       <p class="snote">Paste your members below, one per line as <b style="color:var(--text)">number, name</b> (e.g. <span class="mono">142, Jane Smith</span>). We add any new numbers to your members list.</p>
@@ -1639,6 +1650,23 @@
     }).catch(function(){ return { error:"Could not reach the game service. Please try again." }; });
   }
   var mdCurrent = null, mdDraw = null;
+  /* The venue's name on every control that writes to a members list. Same reasoning as the
+     advertising panel: the moment you press "Add to members list" is the moment you believe you
+     are working on a particular venue, and that belief is what goes wrong. */
+  function mdVenueName(){
+    var sel = $("mdVenue"); if (!sel) return "";
+    var o = sel.options[sel.selectedIndex];
+    return (o && o.textContent) || "";
+  }
+  function paintMdVenue(){
+    var n = mdVenueName(), many = ($("mdVenue") && $("mdVenue").options.length > 1) && !!n;
+    var el = $("mdPickName"); if (el) el.textContent = n || "this venue";
+    var lh = $("mdListForVenue"); if (lh) lh.textContent = many ? n : "";
+    var b;
+    if ((b = $("mdImport"))) b.textContent = many ? ("Add to " + n + "'s members list") : "Add to members list";
+    if ((b = $("md-csvbtn"))) b.textContent = many ? ("Or upload a CSV file for " + n) : "Or upload a CSV file";
+    if ((b = $("mdSave"))) b.textContent = many ? ("Save draw for " + n) : "Save draw";
+  }
   function toCents(v){ if(v===""||v==null) return undefined; var n=Math.round(parseFloat(v)*100); return isNaN(n)?undefined:n; }
   function toDollars(c){ return (c==null)?"":String(Math.round(c/100)); }
   function fillMembersDraw(d){
@@ -1685,6 +1713,7 @@
   }
   function loadMembersDrawFor(venueId){
     mdCurrent = venueId; mdDraw = null; mdDraws = [];
+    paintMdVenue();
     var client = VP.getClient();
     return client.from("vp_member_draws").select("*").eq("venue_id", venueId).order("created_at",{ascending:true})
       .then(function(r){
@@ -2250,6 +2279,10 @@
   }
   function loadNightsFor(venueId){
     ntCurrent = venueId;
+    (function(){
+      var sel = $("ntVenue"), el = $("ntPickName");
+      if (el && sel) { var o = sel.options[sel.selectedIndex]; el.textContent = (o && o.textContent) || "this venue"; }
+    })();
     $("nights").innerHTML = '<p class="note">Loading your nights…</p>';
     return api("/account/nights", { venue_id: venueId, limit: 12 }).then(function(r){
       if (r.error){ $("nights").innerHTML = '<p class="note">' + esc(r.error) + '</p>'; return; }
