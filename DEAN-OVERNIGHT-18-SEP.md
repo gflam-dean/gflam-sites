@@ -1,7 +1,7 @@
 # PartyPlay, overnight 18 September
 
-Nothing here needs you to do anything. It is a record of what was found and what
-is now guarded. Your job list is still `DEAN-TODO-17-SEP.md`.
+One job for you, below, and it is two minutes. The rest is a record of what was
+found and what is now guarded. Your main job list is still `DEAN-TODO-17-SEP.md`.
 
 ## ONE THING FOR YOU, AND THE LIVE GATE IS RED UNTIL IT IS DONE. Two minutes.
 
@@ -107,8 +107,8 @@ number shown is honest. Noted, not fixed.
 
 ## Where the numbers landed
 
-    local gate    210 checks
-    live gate     125 checks
+    local gate    210 checks, green
+    live gate     126 checks, ONE RED: the www.partyplay.com.au redirect above
     mutations     every local check has one, each new one proved as it was added
 
 A full sweep of every mutation is still running. Each check added tonight was
