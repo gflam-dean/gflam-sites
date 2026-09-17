@@ -3907,6 +3907,28 @@ def nobody_paid_and_got_nothing():
            why='a 401 here means every realtime channel and every browser read is dead, '
                'while the Worker and /health stay perfectly healthy')
 
+    """AND THE KEY A BROWSER IS ACTUALLY HANDED IS THE ONE IN THIS REPO.
+
+    Everything above reads the repo copy. If the deployed copy is stale, the repo is right,
+    the key it names works, the check is green, and every browser is still being handed the
+    old one. That is the Sydney fault moved one step along: nothing in the gate compared the
+    file a browser downloads with the file we think we shipped.
+
+    shared_scripts_live already proves these serve as JavaScript and define their global. It
+    does not look at what is IN them. Added 18 Sep 2026; both matched."""
+    for label, rel, url, key in pairs:
+        live_url = (PP if label == 'PartyPlay' else VP) + \
+                   ('/lib/pp-config.js' if label == 'PartyPlay' else '/app/vp-session.js')
+        status, body, _ = get(live_url)
+        if status != 200 or not body:
+            note('%s browser config: NOT CHECKED' % label, 'HTTP %s' % status)
+            continue
+        ok('%s: the config a browser downloads is the one in this repo' % label,
+           url in body and key in body,
+           'project %s' % url.split('//')[-1].split('.')[0],
+           why='the deployed copy names a different project or key from the repo, so the '
+               'gate is checking one file and every phone is running another')
+
     head('Nobody paid for a party and got nothing')
     tool = os.path.join(ROOT, 'partyplay-backend', 'tools', 'check-paid-not-delivered.py')
     env_file = os.path.join(os.path.expanduser('~'), '.gflam-migrate.env')
