@@ -70,6 +70,26 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 # wholeness check is reached. Zero bytes parses perfectly, which is the case
 # that check was actually written for.
 MUTATIONS = [
+    # ---- 17 Sep 2026, the advertising image cap. One number, two files, which is the shape
+    # ---- behind most of the faults in this repo.
+    ('the advertising image cap is a named number in the Worker',
+     'venueplay-backend/worker/venueplay-api-FULL.js',
+     'const VPB_MAX_SLIDES = 20;', 'const VPB_MAX_SLIDES_WAS = 20;',
+     'the cap goes back to being a bare number in a slice() that nobody can find when it '
+     'needs changing, and nothing can compare it to the page'),
+
+    ('and the billing page offers exactly that many', 'venueplay/app/billing.html',
+     'var VP_MAX_SLIDES = 20;', 'var VP_MAX_SLIDES = 25;',
+     'the page lets a venue add five slides the Worker throws away, and the page says Saved, '
+     'and they are gone on the next reload with nothing to say which'),
+
+    ('a venue over the cap is told, not quietly trimmed',
+     'venueplay-backend/worker/venueplay-api-FULL.js',
+     'if (Array.isArray(b.slides) && b.slides.length > VPB_MAX_SLIDES) {',
+     'if (Array.isArray(b.slides) && b.slides.length > 9999) {',
+     'over the cap is sliced off in silence again, so a venue loses images and is told the '
+     'save worked'),
+
     # ---- 17 Sep 2026, twelfth pass: the two retention nags. Both run a real tool against the
     # ---- live database, so the thing worth proving is that the gate reads what the tool says
     # ---- rather than merely managing to start it. Shortening the promised window is also the
