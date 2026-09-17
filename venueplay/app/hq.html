@@ -511,6 +511,16 @@
          and an old flag scrolls out of the audit window and becomes unapprovable the same way.
          The Mini Bar hit exactly that on 17 Sep 2026: its own domain, never flagged, and the
          settings page told it to email us with nothing here to click. -->
+    <!-- OUR list, not a venue's. Kept above the player-data table and labelled so the two are
+         never confused: these venues said yes to hearing from US, the players said yes to their
+         venue. Mixing them would be the exact thing the rest of this screen exists to prevent. -->
+    <div class="lblk" style="margin-top:26px">Venues who want to hear from us</div>
+    <div class="panel pad" style="margin-bottom:14px">
+      <div class="note" style="margin:0 0 10px">Venues who ticked "send me the occasional update" when they signed up. This is <b>our</b> mailing list, nothing to do with a venue's own players. Only the ones who actually ticked it are in the file, because under the Spam Act that tick is the consent.</div>
+      <button class="btn ghost sp" id="vmExport">Download the list</button>
+      <span class="note" id="vmMsg" style="margin-left:10px"></span>
+    </div>
+
     <div class="lblk" style="margin-top:26px">Player data collection, every account</div>
     <div class="panel"><div class="tscroll"><table>
       <thead><tr><th>Account</th><th>Email</th><th>Venues</th><th>Collecting</th><th>Decision</th></tr></thead>
@@ -3055,6 +3065,32 @@
     });
   }
   wireOptinButtons($("optinRows"));
+
+  /* Our own marketing list. marketing_opt_in has been written since August and read by
+     nothing, so the venues who ticked it have been sitting there unreachable. */
+  (function(){
+    var b=$("vmExport"); if(!b) return;
+    b.addEventListener("click", function(){
+      var msg=$("vmMsg");
+      b.disabled=true; b.textContent="Getting it\u2026";
+      workerGet("/admin/venue-marketing-export").then(function(r){
+        b.disabled=false; b.textContent="Download the list";
+        if(r && r.error){ msg.style.color="var(--roll)"; msg.textContent=r.error; return; }
+        if(!r.count){ msg.style.color="var(--faint)"; msg.textContent="Nobody has ticked it yet, so there is nothing to download."; return; }
+        var blob=new Blob([r.csv],{type:"text/csv;charset=utf-8"});
+        var a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+        a.download="venues-who-opted-in-"+new Date().toISOString().slice(0,10)+".csv";
+        document.body.appendChild(a); a.click();
+        setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },0);
+        msg.style.color="var(--win)";
+        msg.textContent=r.count+(r.count===1?" venue":" venues")+" downloaded"
+          + (r.considered && r.considered!==r.count ? " (" + (r.considered-r.count) + " skipped: no email on the account)" : "") + ".";
+      }).catch(function(e){
+        b.disabled=false; b.textContent="Download the list";
+        msg.style.color="var(--roll)"; msg.textContent=String((e&&e.message)||e);
+      });
+    });
+  })();
 
   (function(){
     var fr=$("flaggedRows"); if(!fr) return;

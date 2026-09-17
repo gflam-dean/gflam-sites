@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '17 Sep 2026, 12:29 · 8fc373b0';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Sep 2026, 12:46 · 3eb1c3b3';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -154,6 +154,7 @@ export default {
       if (request.method === 'POST' && path === '/admin/gst'             && typeof vpaHandleGst === 'function')            return await vpaHandleGst(request, env, json);
       if (request.method === 'GET'  && path === '/admin/venue-detail'    && typeof vpaHandleVenueDetail === 'function')    return await vpaHandleVenueDetail(request, env, json);
       if (request.method === 'GET'  && path === '/admin/optin-export'    && typeof vpaHandleAdminOptinExport === 'function') return await vpaHandleAdminOptinExport(request, env, json);
+      if (request.method === 'GET'  && path === '/admin/venue-marketing-export' && typeof vpaHandleVenueMarketingExport === 'function') return await vpaHandleVenueMarketingExport(request, env, json);
       if (request.method === 'POST' && path === '/admin/optin-approve'   && typeof vpaHandleOptinApprove === 'function')   return await vpaHandleOptinApprove(request, env, json);
       if (request.method === 'POST' && path === '/admin/staff'           && typeof vpaHandleStaff === 'function')          return await vpaHandleStaff(request, env, json);
       if (request.method === 'POST' && path === '/admin/audit'           && typeof vpaHandleAudit === 'function')          return await vpaHandleAudit(request, env, json);
@@ -6879,6 +6880,43 @@ async function vpaHandleAdminOptinExport(request, env, json) {
     { rows: res.count, venues: venues.map((v) => v.name) }).catch(() => {});
   return json({ ok: true, csv: res.csv, count: res.count,
                 venues: venues.map((v) => v.name) });
+}
+
+
+/* GET /admin/venue-marketing-export
+ *
+ * OUR OWN marketing list, which is a different thing from the player opt-ins above and must
+ * never be confused with them. These are VENUES who ticked "send me the occasional update"
+ * when they signed up. The players belong to the venue; these people said yes to us.
+ *
+ * venueplay_founding.marketing_opt_in has been written since August and read by NOTHING:
+ * two writes, zero reads, the same shape as the bingo opt-ins that never reached a venue.
+ * Eleven venues have ticked it and there has never been a way to find out who.
+ *
+ * Only the ones who said YES. Under the Spam Act the tick is the consent, so a list that
+ * quietly included the eleven who did not tick would be the whole problem, not a convenience.
+ */
+async function vpaHandleVenueMarketingExport(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const rows = await vpaSelect(env, 'venueplay_founding',
+    'marketing_opt_in=is.true&select=venue_name,contact_name,contact_email,mobile,postcode,created_at,status'
+    + '&order=created_at.desc') || [];
+  /* A venue that has since been archived is still a person who consented, so they stay on the
+     list with their status alongside. Deciding whether to write to a venue that left is a
+     judgement for whoever reads this, not something to make for them by hiding the row. */
+  const header = ['Venue', 'Contact', 'Email', 'Mobile', 'Postcode', 'Signed up', 'Account status'];
+  const seen = {}, out = [];
+  for (const r of rows) {
+    const key = String(r.contact_email || '').trim().toLowerCase();
+    if (!key) continue;                       // no address, nothing to send to
+    if (seen[key]) continue; seen[key] = true; // one person once, however many venues they run
+    out.push([r.venue_name, r.contact_name, r.contact_email, r.mobile, r.postcode,
+              String(r.created_at || '').slice(0, 10), r.status]);
+  }
+  const csv = [header].concat(out).map((c) => c.map(vpbCsvCell).join(',')).join('\n') + '\n';
+  await vpaAudit(env, actor, 'venue_marketing_exported', 'accounts', { rows: out.length }).catch(() => {});
+  return json({ ok: true, csv: csv, count: out.length, considered: rows.length });
 }
 
 function vpbCsvCell(v) { const s = String(v == null ? '' : v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
