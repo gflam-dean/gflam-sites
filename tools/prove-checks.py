@@ -1749,6 +1749,18 @@ MUTATIONS = [
 # Run with:  python3 tools/prove-checks.py --live
 # It is slow, because each one is a full live sweep. Do not run it in parallel
 # with itself.
+# CHECKS THAT CANNOT BE PROVEN IN A SCRATCH COPY, AND THE REASON. Named out loud so
+# they read as "cannot be done, here is why" rather than "nobody got round to it",
+# which is what an unexplained gap in the list looks like.
+UNPROVABLE = {
+    'a real browser has checked the venue screens on this build':
+        'it works off git history (rev-parse HEAD, then diff since the commit in '
+        '.verify-live.json) and scratch() copies the repo WITHOUT .git, so the check '
+        'returns early and never runs here at all. It was seen to fail for real on '
+        '17 Sep 2026, red after the abandoned-lobby change to tv.html, green again '
+        'after verify-live.py --stamp. That is the proof it can fail.',
+}
+
 MUTATIONS_LIVE = [
     # A Worker's /health answers with the stamp that is actually deployed. Move the repo's
     # copy and the two must disagree. This is the check that says "I pasted it" is not
@@ -1772,17 +1784,6 @@ MUTATIONS_LIVE = [
      "-not-the-deployed-one';   // tools/stamp-workers.py, do not edit by hand",
      'the deployed billing Worker is not the code in this repo, so a billing fix that was '
      'written and never landed reads exactly like one that did'),
-
-    # The browser stamp: .verify-live.json records which build a real browser has seen.
-    # Any edit to a screen file makes it stale, which is what went red on 17 Sep after the
-    # abandoned-lobby change and is the only thing standing between a screen edit and a
-    # venue finding out in the room.
-    ('a real browser has checked the venue screens on this build',
-     'venueplay/tv.html',
-     '<title>VenuePlay: Venue Screen</title>',
-     '<title>VenuePlay: Venue Screen </title>',
-     'a venue screen changed and no browser has opened it since, so nothing but a publican '
-     'is going to find out what it paints'),
 
     # The page carries the code, the Worker carries the list. A code on a page that the
     # Worker will not honour is a venue reading $2.50 and being charged $3.
@@ -1916,6 +1917,14 @@ def main():
     print('  %d of the %d checks the gate runs have a mutation (%d%%)'
           % (len(labels) - len(naked), len(labels),
              100 * (len(labels) - len(naked)) // max(1, len(labels))))
+    cannot = [l for l in naked if any(k in l for k in UNPROVABLE)]
+    naked = [l for l in naked if l not in cannot]
+    if cannot:
+        print('\n  %sCANNOT BE PROVEN HERE, and why:%s' % (DIM, OFF))
+        for l in cannot:
+            why_not = [v for k, v in UNPROVABLE.items() if k in l][0]
+            print('     %s' % l[:70])
+            print('       %s' % why_not)
     if naked:
         print('\n  %sNOT YET PROVEN. Nobody has broken these on purpose:%s' % (YEL, OFF))
         for l in naked:
