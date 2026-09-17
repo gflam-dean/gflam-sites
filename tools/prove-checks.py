@@ -1917,13 +1917,16 @@ def main():
     print('  %d of the %d checks the gate runs have a mutation (%d%%)'
           % (len(labels) - len(naked), len(labels),
              100 * (len(labels) - len(naked)) // max(1, len(labels))))
-    cannot = [l for l in naked if any(k in l for k in UNPROVABLE)]
-    naked = [l for l in naked if l not in cannot]
-    if cannot:
+    # PRINTED UNCONDITIONALLY, not filtered out of `naked`. The first version of this
+    # derived the list from naked, which could never fire: the one check in it does not
+    # run in a scratch copy at all, so its label is not in the gate's output, so it was
+    # never in naked to be taken out of. A report that can only ever print nothing is the
+    # same fault as a check that can only ever pass.
+    naked = [l for l in naked if not any(k in l for k in UNPROVABLE)]
+    if UNPROVABLE:
         print('\n  %sCANNOT BE PROVEN HERE, and why:%s' % (DIM, OFF))
-        for l in cannot:
-            why_not = [v for k, v in UNPROVABLE.items() if k in l][0]
-            print('     %s' % l[:70])
+        for k, why_not in sorted(UNPROVABLE.items()):
+            print('     %s' % k[:70])
             print('       %s' % why_not)
     if naked:
         print('\n  %sNOT YET PROVEN. Nobody has broken these on purpose:%s' % (YEL, OFF))
