@@ -70,6 +70,39 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 # wholeness check is reached. Zero bytes parses perfectly, which is the case
 # that check was actually written for.
 MUTATIONS = [
+    # ---- 17 Sep 2026, second pass: checks that had never been broken on purpose.
+    # ---- Each one guards a fault that has actually happened in this repo, which is exactly
+    # ---- why leaving them unproven was the wrong gap to have.
+    # BALANCED ON PURPOSE, and it must stay that way. The first version of this mutation put
+    # everything on one line and left an unbalanced brace: the check went red, but so would the
+    # parse check, so it proved nothing about THIS check. The replacement below keeps the file
+    # parsing, so the only thing that can turn red is the detector itself. It also plants the
+    # declaration as the SECOND statement in the block rather than the first, which is the shape
+    # the detector was blind to until it was widened on 17 Sep 2026.
+    ('every function is declared where it will actually be bound',
+     'venueplay/app/vp-screen-router.js',
+     '      var tries = 0, retry = null;',
+     '      var tries = 0, retry = null;\n      if (tries === 0) {\n        var noise = 1;\n'
+     '        function _mutStray() { return 1; }\n      }\n      _mutStray();',
+     'a function is declared inside a block and called outside it, which is the Annex B fault '
+     'that blinded a live venue TV for a whole day while every other check stayed green'),
+
+    ('no consent box is pre-ticked',
+     'venueplay/nsw.html',
+     '<input type="checkbox" id="vp-marketing">',
+     '<input type="checkbox" id="vp-marketing" checked>',
+     'a marketing consent box is ticked for the venue before they have agreed to anything'),
+
+    ('the player cap is enforced by a database trigger',
+     'partyplay-backend/supabase/partyplay-01-core.sql',
+     'capped at ', 'capped to ',
+     'nothing in the database stops a 200 person party on a 50 player licence'),
+
+    ('and the licence library states the same number',
+     'partyplay-backend/lib/pp-licence.js',
+     'PLAYER_CAP:', 'PLAYER_CAP_WAS:',
+     'the library and the database disagree about how many players a licence allows'),
+
     ('every console says it is there, and only a lobby times out fast',
      'venueplay/tv.html',
      'var idleLobby = (tvMode==="bingo" && state && state.phase==="lobby");',

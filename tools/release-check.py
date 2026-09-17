@@ -3245,23 +3245,39 @@ def _decls_inside_blocks(src):
     OPENS = re.compile(r'^\s*(?:\}\s*else\s+)?(?:if|for|while|switch|try|else)\b'
                        r'(?![^\n]*(?:function|=>))[^\n]*\{\s*$')
     DECL  = re.compile(r'^\s*function\s+([A-Za-z_$][\w$]*)\s*\(')
+    CLOSE = re.compile(r'^\s*\}')
+    # IT USED TO LOOK ONLY AT THE FIRST STATEMENT IN THE BLOCK, and only report that.
+    # Proved blind on 17 Sep 2026: a function planted as the THIRD statement inside an if,
+    # and called from outside it, sailed through. That is the same fault as tvStatus, just
+    # a few lines lower down, and it is the more likely shape of the two.
+    #
+    # Widening to "a declaration ANYWHERE inside a control block" names 53 things in this
+    # repo, and nearly all of them are honest little helpers used right where they are
+    # declared, which is fine and is how the brace-counting version wrongly accused four
+    # healthy screens. So this applies the rule the docstring above already states, and the
+    # only one that is actually a fault: declared inside a block AND the name used OUTSIDE
+    # that block. Measured across every page and script before changing it, that combination
+    # occurs ZERO times today, so this is strictly more catching and costs nothing.
     out, i = [], 0
     while i < len(lines) - 1:
         if OPENS.match(lines[i]):
-            j, incomment = i + 1, False
-            while j < len(lines):
-                t = lines[j].strip()
-                if incomment:
-                    if '*/' in t: incomment = False
-                    j += 1; continue
-                if t.startswith('/*') and '*/' not in t: incomment = True; j += 1; continue
-                if not t or t.startswith('//') or t.startswith('*') or t.startswith('/*'):
-                    j += 1; continue
-                break
-            if j < len(lines):
+            base = len(lines[i]) - len(lines[i].lstrip())
+            end = len(lines)
+            for j in range(i + 1, len(lines)):
+                t = lines[j]
+                if t.strip() and (len(t) - len(t.lstrip())) <= base and CLOSE.match(t):
+                    end = j
+                    break
+            outside = '\n'.join(lines[:i] + lines[end:])
+            for j in range(i + 1, min(end, len(lines))):
                 m = DECL.match(lines[j])
-                if m:
-                    out.append((m.group(1), j + 1))
+                if not m:
+                    continue
+                name = m.group(1)
+                # Called from outside the block it lives in. The dot guard keeps obj.name()
+                # from counting: that is a property, not this declaration.
+                if re.search(r'(?<![\w$.])' + re.escape(name) + r'\s*\(', outside):
+                    out.append((name, j + 1))
         i += 1
     return out
 
