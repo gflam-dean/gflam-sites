@@ -115,6 +115,9 @@
     padding:13px 12px;font-size:17px;font-weight:600;font-family:'Manrope',sans-serif}
   .screenpick .pickfine{margin:8px 0 0;font-size:12.5px;color:var(--muted)}
   .screenpick .pickfine b{color:#fff}
+  /* The venue's name beside a card heading: present, not shouting. */
+  .scardhead .forvenue{color:var(--pink);font-weight:600}
+  .scardhead .forvenue:not(:empty)::before{content:" · ";color:var(--muted)}
   .scard{background:var(--ink-2);border:1px solid var(--line-2);border-radius:16px;padding:15px 16px;margin:10px 0}
   .scardhead{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15px;color:#fff;letter-spacing:.01em}
   .snote{color:var(--muted);font-size:12.5px;margin:3px 0 10px}
@@ -556,19 +559,19 @@
     </div>
 
     <div class="scard">
-      <div class="scardhead">Venue logo</div>
+      <div class="scardhead">Venue logo<span class="forvenue" id="logoForVenue"></span></div>
       <p class="snote">Shows in the top-left corner of your TV, over games and between them. Use a PNG with a <b>transparent background</b>, and make sure the logo itself is <b>white or a bright colour</b>. The TV screen is dark, so a black or dark logo will disappear.</p>
       <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
         <div id="logoThumb" style="width:130px;height:64px;border:1px solid var(--line);border-radius:10px;background:#0d0d12 center/contain no-repeat;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px">No logo</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <label class="addbtn" style="cursor:pointer">Upload logo<input type="file" id="logoFile" accept="image/png,image/jpeg,image/webp" style="display:none"></label>
+          <label class="addbtn" style="cursor:pointer" id="logoUploadBtn">Upload logo<input type="file" id="logoFile" accept="image/png,image/jpeg,image/webp" style="display:none"></label>
           <button class="addbtn" id="logoRemove" type="button" style="display:none">Remove</button>
         </div>
       </div>
     </div>
 
     <div class="scard">
-      <div class="scardhead">Slides</div>
+      <div class="scardhead">Slides<span class="forvenue" id="slidesForVenue"></span></div>
       <p class="snote">Each slide is one image. Set how long it stays on screen, and optional dates so a promo ends itself (leave the dates blank to show it all the time). Up to 12.</p>
       <div id="slides"></div>
       <div style="display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap">
@@ -1468,6 +1471,7 @@
           row.setAttribute("data-url", r.url);
           thumb.textContent = ""; thumb.style.backgroundImage = "url(" + r.url + ")";
           row.querySelector(".ad-change").textContent = "Change image";
+          paintScreenVenue();   // the line above just dropped the venue name off this button
         });
       });
     };
@@ -1477,6 +1481,8 @@
     var sl = $("slides"); sl.innerHTML = "";
     (cfg.slides||[]).forEach(function(s){ sl.appendChild(slideRow(s)); });
     screenLogoUrl = cfg.logo_url || ""; renderLogo();
+    // Rows are rebuilt here, so their buttons need the venue name putting back on them.
+    paintScreenVenue();
   }
   // The bare /tv?<slug> form (tv.html reads a query with no "=" as the slug). Cleaner to read out and
   // to type on a TV remote than /tv?venue=<slug>, and it resolves to exactly the same screen.
@@ -1485,9 +1491,23 @@
      sentence under it, and on the save button itself. A slug in a link was not enough. */
   function screenNameNow(){ return (screenCurrent && screenCurrent.name) || ""; }
   function paintScreenVenue(){
-    var n = screenNameNow(), el = $("screenPickName"), btn = $("screenSave");
-    if (el) el.textContent = n || "this venue";
-    if (btn) btn.textContent = (screenVenues.length > 1 && n) ? ("Save screen for " + n) : "Save screen";
+    var n = screenNameNow(), many = screenVenues.length > 1 && !!n;
+    var el = $("screenPickName"); if (el) el.textContent = n || "this venue";
+    var btn = $("screenSave"); if (btn) btn.textContent = many ? ("Save screen for " + n) : "Save screen";
+    /* THE BUTTON THAT PUTS THE IMAGE SOMEWHERE has to name the venue too. Dean, 17 Sep 2026:
+       "the save and image button need to link to the venue." Saving is the moment you commit,
+       but UPLOADING is the moment you believe you are working on a particular telly, and that
+       belief is what went wrong: he chose an image for a venue the panel was not on. Naming the
+       venue on the control you press first is the cheapest place to catch it. */
+    var lb = $("logoUploadBtn");
+    if (lb && lb.firstChild && lb.firstChild.nodeType === 3) lb.firstChild.nodeValue = many ? ("Upload logo for " + n) : "Upload logo";
+    var lh = $("logoForVenue"); if (lh) lh.textContent = many ? n : "";
+    var sh = $("slidesForVenue"); if (sh) sh.textContent = many ? n : "";
+    var slides = $("slides");
+    if (slides) slides.querySelectorAll(".ad-change").forEach(function(b){
+      var has = b.closest(".adslide") && b.closest(".adslide").getAttribute("data-url");
+      b.textContent = (has ? "Change image" : "Choose image") + (many ? (" for " + n) : "");
+    });
   }
   function setTvLinks(slug){
     $("tvLink").textContent = "venueplay.com.au/tv" + (slug ? ("?" + slug) : "");
@@ -1604,6 +1624,7 @@
     $("addSlide").addEventListener("click", function(){
       if ($("slides").querySelectorAll(".adslide").length >= 12){ showMsg("Up to 12 slides."); return; }
       $("slides").appendChild(slideRow());
+      paintScreenVenue();   // a new row starts with the bare "Choose image"
     });
     $("screenSave").addEventListener("click", saveScreen);
   }
