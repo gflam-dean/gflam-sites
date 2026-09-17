@@ -3302,7 +3302,7 @@ def every_suite_is_run():
        why='RUN_BY_HAND names a file that is not here any more: ' + ', '.join(stale[:4]))
 
 
-def redirect_verdict(path, mustkeep, code, loc):
+def redirect_verdict(path, mustkeep, code, loc, apex='https://venueplay.com.au'):
     """Is this answer a correct www-to-apex redirect? Returns None if it is, else what is wrong.
 
     SPLIT OUT SO IT CAN BE PROVEN. As part of one_address_check it could only ever be tested
@@ -3312,9 +3312,9 @@ def redirect_verdict(path, mustkeep, code, loc):
     redirect-verdict.test.py can hand it the answers a broken edge rule would give."""
     if code not in (301, 302, 307, 308):
         return '%s answered %s, not a redirect' % (path, code)
-    if not loc.startswith('https://venueplay.com.au'):
+    if not loc.startswith(apex):
         return '%s went to %s' % (path, loc)
-    if loc.startswith('https://venueplay.com.au.'):
+    if loc.startswith(apex + '.'):
         return '%s went to a lookalike host: %s' % (path, loc)   # venueplay.com.au.evil.example
     if mustkeep and mustkeep not in loc:
         return '%s LOST the query string, went to %s' % (path, loc)
@@ -3349,25 +3349,48 @@ def one_address_check():
         def redirect_request(self, *a, **k):
             return None
 
-    bad = []
-    for path, mustkeep in [('/', None), ('/app/', None), ('/tv?the-mini-bar', 'the-mini-bar')]:
-        url = 'https://www.venueplay.com.au' + path
+    # BOTH PRODUCTS. This checked VenuePlay only, and on 18 Sep 2026
+    # www.partyplay.com.au answered 200 and redirected nowhere, so PartyPlay was two
+    # origins. www.getpartyplay.com.au and www.venueplay.com.au both redirect correctly,
+    # so the rule was simply never made for this one domain.
+    #
+    # It matters for PartyPlay the same way it mattered for VenuePlay, for a different
+    # reason: play.html keeps the guest's identity in localStorage["ppPlayer"], which is
+    # per ORIGIN. A guest who lands on www and later on the apex is a new person to the
+    # browser, gets asked for a nickname again, writes a SECOND pp_players row, and that
+    # row counts against the fifty player cap. Their bingo card state goes too.
+    for site, apex, paths in (
+            ('https://www.venueplay.com.au', 'https://venueplay.com.au',
+             [('/', None), ('/app/', None), ('/tv?the-mini-bar', 'the-mini-bar')]),
+            ('https://www.partyplay.com.au', 'https://partyplay.com.au',
+             [('/', None), ('/play?code=ABC123', 'code=ABC123')])):
+      bad = []
+      for path, mustkeep in paths:
+        url = site + path
         try:
             opener = _u.build_opener(_NoRedir)
             code, loc = None, ''
             try:
-                opener.open(_u.Request(url), timeout=15)
+                # WITH A USER AGENT. Cloudflare answers a bare Python-urllib 403 on some
+                # zones and not others, so this probe reported "403, not a redirect" for
+                # www.partyplay.com.au while curl got a 200. That is a check failing for
+                # the wrong reason, and it would have stayed red after the rule was added.
+                opener.open(_u.Request(url, headers={'User-Agent': 'curl/8.7.1'}), timeout=15)
                 bad.append(path + ' did not redirect at all'); continue
             except Exception as e:
                 code = getattr(e, 'code', None)
                 hdrs = getattr(e, 'headers', None)
                 loc = hdrs.get('Location', '') if hdrs else ''
-            v = redirect_verdict(path, mustkeep, code, loc)
+            v = redirect_verdict(path, mustkeep, code, loc, apex)
             if v:
                 bad.append(v)
         except Exception as ex:
             bad.append('%s could not be checked: %s' % (path, str(ex)[:50]))
-    ok('www lands on the one address, query string and all', not bad, why='; '.join(bad[:3]))
+      ok('%s lands on the one address, query string and all' % site.split('//')[1],
+         not bad, why='; '.join(bad[:3]) +
+         '. Cloudflare -> the zone -> Rules -> Redirect Rules: hostname equals '
+         + site.split('//')[1] + ' -> dynamic 301 to concat("' + apex +
+         '", http.request.uri.path) preserving the query string')
 
 
 def cors_checks(name, api, path, good_origins, bad_origin='https://evil.example'):
