@@ -70,6 +70,25 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 # wholeness check is reached. Zero bytes parses perfectly, which is the case
 # that check was actually written for.
 MUTATIONS = [
+    ('the image size limit is a named number in the Worker',
+     'venueplay-backend/worker/venueplay-api-FULL.js',
+     'const VPB_MAX_IMAGE_BYTES = 5 * 1024 * 1024;',
+     'const VPB_MAX_IMAGE_BYTES_WAS = 5 * 1024 * 1024;',
+     'the cap goes back to being a bare number written three times, and nothing can '
+     'compare it to the page'),
+
+    ('and the billing page knows the same limit', 'venueplay/app/billing.html',
+     'var VP_MAX_IMAGE_BYTES = 5 * 1024 * 1024;', 'var VP_MAX_IMAGE_BYTES = 8 * 1024 * 1024;',
+     'the page lets through an image the Worker will refuse, so a venue waits out the '
+     'whole upload on pub wifi and is then quoted a smaller number'),
+
+    ('and the page checks what it is about to SEND, not what was picked',
+     'venueplay/app/billing.html',
+     'if (dataUrlBytes(data) > VP_MAX_IMAGE_BYTES){',
+     'if (file.size > VP_MAX_IMAGE_BYTES){',
+     'the page goes back to judging the file that was picked, so an animated GIF, which is '
+     'never shrunk, sails past and is refused at the far end'),
+
     ('the photo size limit is the same in the browser and the Worker',
      'partyplay-backend/lib/pp-photo.js',
      'var HARD_LIMIT = 5 * 1024 * 1024;', 'var HARD_LIMIT = 8 * 1024 * 1024;',

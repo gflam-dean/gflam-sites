@@ -1383,6 +1383,13 @@
   // venueplay-api-FULL.js: the Worker trims anything past it, so a page that let you add
   // more would show you slides the television will never play. The gate compares them.
   var VP_MAX_SLIDES = 20;
+  // THE BIGGEST IMAGE THE WORKER WILL TAKE. Must equal VPB_MAX_IMAGE_BYTES in
+  // venueplay-api-FULL.js; the gate compares them. The 8MB gate below is deliberately
+  // more generous because most images are shrunk on the way, but an animated GIF is NOT
+  // shrunk and neither is one whose shrink fails, so the SENT size is checked as well.
+  var VP_MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+  // How many bytes a data: URL actually carries, without decoding it.
+  function dataUrlBytes(d){ var i = String(d).indexOf(","); return i < 0 ? 0 : Math.floor((d.length - i - 1) * 3 / 4); }
   var screenVenues = [], screenCurrent = null, screenOrigin = "";
 
   function slideRow(s){
@@ -1485,6 +1492,17 @@
     var reader = new FileReader();
     reader.onload = function(){
       resizeAdImage(String(reader.result), function(data){
+        /* CHECK WHAT IS ACTUALLY BEING SENT, not what was picked. An animated GIF goes
+           through resizeAdImage untouched, and so does any image whose shrink fails or
+           comes out bigger. Without this the venue waits through the whole upload on pub
+           wifi and is then told a smaller number than the one this page just quoted. */
+        if (dataUrlBytes(data) > VP_MAX_IMAGE_BYTES){
+          showMsg("That image is still over " + Math.round(VP_MAX_IMAGE_BYTES/(1024*1024))
+                  + "MB after shrinking, so it cannot go on the TV. Animated GIFs are sent as they are, "
+                  + "so try a smaller one.");
+          thumb.textContent = "No image yet";
+          return;
+        }
         api("/account/screen-upload", { venue_id: screenCurrent.id, data: data }).then(function(r){
           if (r.error){ showMsg(r.error); thumb.textContent = "No image yet"; return; }
           row.setAttribute("data-url", r.url);

@@ -868,6 +868,27 @@ def local_checks(which):
            'Worker %s, page %s' % (m_w and m_w.group(1), m_b and m_b.group(1)),
            why='the page would let a venue add slides the Worker throws away, and the '
                'television would never play them')
+        # THE BIGGEST IMAGE THE WORKER TAKES, AND WHAT THE PAGE SENDS.
+        #
+        # The page gated on 8MB and the Worker refused over 5MB. Most images are shrunk on
+        # the way, which is why the page was generous, but resizeAdImage passes an animated
+        # GIF through UNTOUCHED, and also returns the original when the shrink fails or comes
+        # out bigger. So a 7MB GIF was uploaded in full over pub wifi and refused at the far
+        # end, quoting a smaller number than the page had just quoted. Found 18 Sep 2026.
+        m_wi = re.search(r'VPB_MAX_IMAGE_BYTES\s*=\s*(\d+)\s*\*\s*1024\s*\*\s*1024', wbc)
+        m_bi = re.search(r'VP_MAX_IMAGE_BYTES\s*=\s*(\d+)\s*\*\s*1024\s*\*\s*1024', bpc)
+        ok('the image size limit is a named number in the Worker', bool(m_wi),
+           (m_wi.group(1) + 'MB') if m_wi else 'VPB_MAX_IMAGE_BYTES is gone',
+           why='it was written three times: this check, the bucket file_size_limit, and the '
+               'page, and the page had a different number')
+        ok('and the billing page knows the same limit',
+           bool(m_wi and m_bi and m_wi.group(1) == m_bi.group(1)),
+           'Worker %sMB, page %sMB' % (m_wi and m_wi.group(1), m_bi and m_bi.group(1)))
+        ok('and the page checks what it is about to SEND, not what was picked',
+           re.search(r'dataUrlBytes\(\s*data\s*\)\s*>\s*VP_MAX_IMAGE_BYTES', bpc) is not None,
+           why='an animated GIF is never shrunk, so gating on the picked file lets a bigger '
+               'one through and the venue finds out after the upload')
+
         # AND THE WORKER MUST SAY NO, not trim in silence.
         ok('a venue over the cap is told, not quietly trimmed',
            re.search(r'b\.slides\.length\s*>\s*VPB_MAX_SLIDES', wbc) is not None,

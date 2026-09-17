@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '17 Sep 2026, 22:29 · 3fa085ce';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '18 Sep 2026, 01:07 · add2300a';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -6852,6 +6852,13 @@ function vpbScreenStr(s, n) { return String(s == null ? '' : s).replace(/[\x00-\
    separate 12 in the page, which is two copies of one answer waiting to disagree. */
 const VPB_MAX_SLIDES = 20;
 
+/* THE BIGGEST IMAGE A VENUE MAY SEND. Written three times before: this check, the bucket's
+   own file_size_limit, and an 8MB gate on billing.html that let a bigger one through. An
+   animated GIF is never shrunk by the page, so a 7MB one arrived here and was refused after
+   the whole upload, quoting a different number from the one the page had just quoted. The
+   gate makes billing.html agree with this. Named 18 Sep 2026. */
+const VPB_MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+
 function vpbCleanSlides(arr) {
   if (!Array.isArray(arr)) return [];
   return arr.slice(0, VPB_MAX_SLIDES).map(function (s) {
@@ -6894,7 +6901,7 @@ async function vpbEnsureBucket(env, id) {
     await fetch(env.SUPABASE_URL + '/storage/v1/bucket', {
       method: 'POST',
       headers: Object.assign({ 'Content-Type': 'application/json' }, auth),
-      body: JSON.stringify({ id: id, name: id, public: true, file_size_limit: 5242880, allowed_mime_types: ['image/png', 'image/jpeg', 'image/webp', 'image/gif'] }),
+      body: JSON.stringify({ id: id, name: id, public: true, file_size_limit: VPB_MAX_IMAGE_BYTES, allowed_mime_types: ['image/png', 'image/jpeg', 'image/webp', 'image/gif'] }),
     });
   } catch (_) { /* two uploads racing to create it: the second 400s and the upload still works */ }
 }
@@ -6914,7 +6921,8 @@ async function vpbScreenUpload(request, env, json) {
   const contentType = m[1].toLowerCase();
   if (!/^image\/(png|jpe?g|webp|gif)$/.test(contentType)) return json({ error: 'Use a PNG, JPG, WEBP or GIF.' }, 400);
   const bytes = vpaB64ToBytes(m[2]);
-  if (bytes.length > 5 * 1024 * 1024) return json({ error: 'That image is too big. Keep it under 5MB.' }, 400);
+  if (bytes.length > VPB_MAX_IMAGE_BYTES) return json({ error: 'That image is too big. Keep it under '
+    + Math.round(VPB_MAX_IMAGE_BYTES / (1024 * 1024)) + 'MB.' }, 400);
 
   await vpbEnsureBucket(env, 'venue-ads');
   const ext = contentType.split('/')[1].replace('jpeg', 'jpg');
