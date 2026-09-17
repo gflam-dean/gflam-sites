@@ -1059,16 +1059,23 @@
               <label for="vp-email">Contact email</label>
               <input id="vp-email" type="email" placeholder="you@venue.com.au" autocomplete="email">
             </div>
-            <div class="field full">
+            <!-- Mobile and club-or-pub share a row. Dean, 17 Sep 2026: "maybe move pub or club
+                 next to mobile number?" Both are short answers and both were eating a full
+                 width each, which pushed the venue rows and the button further down the page
+                 than they needed to be. The grid drops to one column on a phone, so they stack
+                 there as before. -->
+            <div class="field">
               <label for="vp-mobile">Mobile</label>
               <input id="vp-mobile" type="tel" placeholder="0400 000 000" autocomplete="tel" required>
             </div>
-            <div class="field full">
+            <div class="field">
               <!-- Club or pub. Asked once for the account, because a group is pubs or it is clubs,
                    never a mix. It decides which gaming rules the venue is shown and whether it can
                    ever charge for entry, and nothing else on this form can tell us. These six
-                   founding pages are the launch cohort and were not asking it at all. -->
-              <label for="vp-entity">Is your venue a club or a pub?</label>
+                   founding pages are the launch cohort and were not asking it at all.
+                   The label is four words now that it sits in a half-width column: the long form
+                   wrapped onto two lines and knocked it out of line with Mobile beside it. -->
+              <label for="vp-entity">Club or pub?</label>
               <select id="vp-entity">
                 <option value="">Choose one</option>
                 <option value="non_profit">Club (RSL, bowls, leagues, community, non-profit)</option>
@@ -1091,7 +1098,7 @@
             </div>
           </div>
           <p class="estimate" id="vp-estimate">Put in your busiest night and we will price it.</p>
-          <p class="overage-note">Use your busiest night, not your average one. If a night runs bigger than that, your host okays it on screen before the game starts and those extra players are $2 each, that night only. Do it three nights running and we move your plan up to the crowd you keep getting, which costs less than paying per head every week. That is the only time your monthly changes, and we tell you when it does.</p>
+          <p class="overage-note">Use your busiest night, not your average. Go over and your host okays it on screen first: $2 per extra player, that night only. Three big nights running and we move you up to a plan that fits, which is cheaper. That is the only time your monthly changes.</p>
           <div class="consent">
             <label class="ck"><input type="checkbox" id="vp-consent"> <span>I agree to the <a href="/terms" target="_blank" rel="noopener">Terms</a> and <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</span></label>
             <label class="ck"><input type="checkbox" id="vp-marketing"> <span>Send me VenuePlay news, tips and launch updates. You can unsubscribe anytime.</span></label>
