@@ -927,6 +927,26 @@ def local_checks(which):
         # Same fault as above: this searched the whole file, and pp_players?licence_id=eq.
         # appears in four unrelated places. Scoped to the sweep, it now asks the question it
         # is named for: does the sweep clear a WHOLE PARTY, or one row somebody named.
+        """AND NOTHING GOES INTO THE ALBUM WITHOUT A DATE IT LEAVES.
+
+        runPhotoSweep finds photo rows by delete_after. A row written without one is never
+        found, so it lives for ever, and privacy.html says it went thirty days after the
+        party. There is no error and nothing to see: the album just quietly keeps things.
+
+        Three inserts today and all three set it. The point is the fourth one, written by
+        somebody adding an upload path six months from now. Privacy by construction rather
+        than by remembering. Added 18 Sep 2026."""
+        inserts = []
+        for m in re.finditer(r"sb\(env, 'pp_photos'\s*,\s*\{", w4c):
+            chunk = w4c[m.start():m.start() + 700]
+            cut = chunk.find('});')
+            inserts.append('delete_after' in (chunk[:cut + 3] if cut > 0 else chunk))
+        ok('nothing is written to the album without a date it goes',
+           bool(inserts) and all(inserts),
+           '%d insert(s), %d set delete_after' % (len(inserts), sum(1 for x in inserts if x)),
+           why='a photo row with no delete_after is never found by the sweep, so it lives '
+               'for ever while privacy.html says it went thirty days after the party')
+
         ok("the sweep removes guest rows, not only picture rows",
            re.search(r"pp_players\?licence_id=eq\.", sweep) is not None and
            re.search(r"pp_album_requests\?licence_id=eq\.", sweep) is not None,

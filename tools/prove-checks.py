@@ -70,6 +70,13 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 # wholeness check is reached. Zero bytes parses perfectly, which is the case
 # that check was actually written for.
 MUTATIONS = [
+    ('nothing is written to the album without a date it goes',
+     'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     '        bytes: buf.byteLength, content_type: k.type, delete_after: deleteAfter',
+     '        bytes: buf.byteLength, content_type: k.type',
+     'a guest photo is written with no date it goes, so the sweep never finds it and it '
+     'lives for ever while privacy.html says it went thirty days after the party'),
+
     # The win fanfare was silent on all eight screens for half a day because it moved into
     # vp-celebrate.js and not one page got the script tag. Nothing threw until the first
     # call, and the first call was in front of a room.
