@@ -103,7 +103,10 @@ MUTATIONS = [
 
     ('nothing is written to the album without a date it goes',
      'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     # Two inserts share this line, so name the one with player.nickname on it.
+     '        licence_id: player.licence_id, object_key: key, taken_by: player.nickname,\n'
      '        bytes: buf.byteLength, content_type: k.type, delete_after: deleteAfter',
+     '        licence_id: player.licence_id, object_key: key, taken_by: player.nickname,\n'
      '        bytes: buf.byteLength, content_type: k.type',
      'a guest photo is written with no date it goes, so the sweep never finds it and it '
      'lives for ever while privacy.html says it went thirty days after the party'),
@@ -290,8 +293,10 @@ MUTATIONS = [
 
     # ---- 17 Sep 2026, sixth pass: the last three suites nobody had broken.
     ('redirect-verdict.test.py', 'tools/release-check.py',
-     "    if loc.startswith('https://venueplay.com.au.'):",
-     "    if loc.startswith('https://venueplay.com.au.evil.invalid/'):",
+     # Re-aimed 18 Sep: redirect_verdict takes the apex as a parameter now, so both
+     # products can use it, and the literal this anchored on is gone.
+     "    if loc.startswith(apex + '.'):",
+     "    if loc.startswith(apex + '.evil.invalid/'):",
      'the lookalike-host rule stops firing, so a redirect to venueplay.com.au.somebody-else '
      'reads as our own site and every television follows it'),
 
