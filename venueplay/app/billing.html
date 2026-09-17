@@ -380,9 +380,9 @@
           <div class="qhead">What are they allowed to do?</div>
           <p class="qhint">On the venues you ticked above. Billing and the player-data rules always stay with you.</p>
           <div class="hostvenues" id="mgr-perms">
-            <label class="hostchk"><input type="checkbox" class="mgr-p" value="advertising" checked><span>Advertising</span></label>
-            <label class="hostchk"><input type="checkbox" class="mgr-p" value="draws_raffles" checked><span>Draws &amp; raffles</span></label>
-            <label class="hostchk"><input type="checkbox" class="mgr-p" value="players_optin" checked><span>Players &amp; opt-in export</span></label>
+            <label class="hostchk"><input type="checkbox" class="mgr-p" value="advertising" checked><span>Edit advertising</span></label>
+            <label class="hostchk"><input type="checkbox" class="mgr-p" value="draws_raffles" checked><span>Edit draws and raffles</span></label>
+            <label class="hostchk"><input type="checkbox" class="mgr-p" value="players_optin"><span>Players and opt-in export</span></label>
             <label class="hostchk"><input type="checkbox" class="mgr-p" value="add_hosts" checked><span>Add hosts</span></label>
           </div>
           <p class="qsum" id="mgr-perms-sum"></p>
@@ -1848,8 +1848,8 @@
       permLbl.className = "qhead"; permLbl.textContent = "What " + (m.label || "this manager") + " is allowed to do";
       var permSum = document.createElement("p"); permSum.className = "qsum";
       var checks = document.createElement("div"); checks.className = "hostvenues";
-      [["advertising","Advertising"],["draws_raffles","Draws & raffles"],
-       ["players_optin","Players & opt-in export"],["add_hosts","Add hosts"]].forEach(function(pair){
+      [["advertising","Edit advertising"],["draws_raffles","Edit draws and raffles"],
+       ["players_optin","Players and opt-in export"],["add_hosts","Add hosts"]].forEach(function(pair){
         var l = document.createElement("label"); l.className = "hostchk";
         l.innerHTML = '<input type="checkbox" class="mgr-edit-p" value="' + esc(pair[0]) + '"' +
           (p[pair[0]] !== false ? " checked" : "") + '><span>' + esc(pair[1]) + '</span>';

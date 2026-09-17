@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '17 Sep 2026, 11:51 · 143a8c2a';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Sep 2026, 12:21 · f7b53fcc';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -153,6 +153,7 @@ export default {
       if (request.method === 'POST' && path === '/admin/venue-gaming'    && typeof vpaHandleVenueGaming === 'function')    return await vpaHandleVenueGaming(request, env, json);
       if (request.method === 'POST' && path === '/admin/gst'             && typeof vpaHandleGst === 'function')            return await vpaHandleGst(request, env, json);
       if (request.method === 'GET'  && path === '/admin/venue-detail'    && typeof vpaHandleVenueDetail === 'function')    return await vpaHandleVenueDetail(request, env, json);
+      if (request.method === 'GET'  && path === '/admin/optin-export'    && typeof vpaHandleAdminOptinExport === 'function') return await vpaHandleAdminOptinExport(request, env, json);
       if (request.method === 'POST' && path === '/admin/optin-approve'   && typeof vpaHandleOptinApprove === 'function')   return await vpaHandleOptinApprove(request, env, json);
       if (request.method === 'POST' && path === '/admin/staff'           && typeof vpaHandleStaff === 'function')          return await vpaHandleStaff(request, env, json);
       if (request.method === 'POST' && path === '/admin/audit'           && typeof vpaHandleAudit === 'function')          return await vpaHandleAudit(request, env, json);
@@ -4740,7 +4741,17 @@ async function vpbRequireOwner(request, env) {
     } catch (_) { /* permissions column not present yet */ }
   }
 
-  return { authUserId: authUserId, account: account, venues: accountVenues, adminActor: adminActor, perms: perms };
+  /* WHICH ROLE THEY ACTUALLY HOLD, not merely that they hold one. vpbRequireOwner accepts a
+     staff row of manager OR owner, and vpbCan treats a null permissions object as full access.
+     21 of the 22 staff rows have no permissions object, so every one of the 17 managers was
+     passing every owner-level check, including the player contact export. Callers that mean
+     "the person who set this venue up" need to be able to say so.
+     Found 17 Sep 2026 when Dean asked for the export to be owner-only and I checked who that
+     currently meant. */
+  const myRole = (staff || []).some((x) => x.role === 'owner') ? 'owner'
+               : ((staff || []).length ? 'manager' : null);
+  return { authUserId: authUserId, account: account, venues: accountVenues, adminActor: adminActor,
+           perms: perms, role: myRole, actingAsAdmin: actingAsAdmin };
 }
 
 // Full-access (account owner or legacy staff) vs a restricted manager, and per-toggle checks.
@@ -6810,11 +6821,91 @@ async function vpaStaffWelcome(env, o, venueIds, mobile, isManager) {
    Returns { csv }. The page turns it into a download. Scoping is server-side: venue_id is
    filtered to o.venues only (resolved from the login), never from anything the browser sends,
    so an owner can never pull another venue's or account's contacts. --- */
+
+/* The opt-in CSV for a set of venues. One builder, two callers: the owner's own download and
+   HQ's download of anybody's. A second copy would have drifted the moment the header changed,
+   and the header is the bit a venue pastes into a mail tool. */
+async function vpaOptinCsv(env, venues) {
+  const ids = venues.map((v) => v.id);
+  const vname = {}; venues.forEach((v) => { vname[v.id] = v.name; });
+  const header = ['Venue', 'First name', 'Last name', 'Email', 'Mobile', 'Postcode', 'Opted in'];
+  const out = [];
+  if (ids.length) {
+    const rows = await vpaSelect(env, 'v_vp_player_optins',
+      'venue_id=in.(' + ids.map(encodeURIComponent).join(',') +
+      ')&select=venue_id,first_name,last_name,email,mobile,postcode,opted_in_at&order=opted_in_at.desc');
+    /* One person once. The same punter joins a dozen nights, and a venue pasting this into a
+       mail tool must not email them a dozen times. Keyed on email, then mobile, then the name,
+       which is the same order of trust the rest of this file uses. */
+    const seen = {};
+    for (const r of (rows || [])) {
+      const key = String(r.email || r.mobile || ((r.first_name || '') + '|' + (r.last_name || ''))).toLowerCase();
+      if (seen[key]) continue; seen[key] = true;
+      out.push([vname[r.venue_id] || '', r.first_name, r.last_name, r.email, r.mobile, r.postcode, r.opted_in_at]);
+    }
+  }
+  return { csv: [header].concat(out).map((cols) => cols.map(vpbCsvCell).join(',')).join('\n') + '\n',
+           count: out.length };
+}
+
+/* GET /admin/optin-export?venue_id=...   or ?founding_id=...
+ *
+ * Dean, 17 Sep 2026: "I should be able to export any venues as well as ours."
+ *
+ * There was no way to. The only export was /account/optin-export, which is scoped to the
+ * signed-in owner's own venues, so HQ could see that opt-ins existed and never get them out.
+ * A venue ringing up asking for their list could not be helped without asking them to log in.
+ *
+ * No looksLikeVenue test and no optin_release_approved test here, deliberately: both of those
+ * exist to stop a THIRD PARTY walking off with a venue's customers, and this route is us.
+ * It is admin-only and writes an audit row naming who exported what.
+ */
+async function vpaHandleAdminOptinExport(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const url = new URL(request.url);
+  const venueId = (url.searchParams.get('venue_id') || '').trim();
+  const foundingId = (url.searchParams.get('founding_id') || '').trim();
+  if (!venueId && !foundingId) return json({ error: 'venue_id or founding_id is required.' }, 400);
+  const filter = venueId
+    ? 'id=eq.' + encodeURIComponent(venueId)
+    : 'founding_id=eq.' + encodeURIComponent(foundingId);
+  const venues = await vpaSelect(env, 'vp_venues', filter + '&select=id,name');
+  if (!venues || !venues.length) return json({ error: 'No such venue.' }, 404);
+  const res = await vpaOptinCsv(env, venues);
+  await vpaAudit(env, actor, 'optin_exported_by_admin',
+    venueId ? ('venue:' + venueId) : ('account:' + foundingId),
+    { rows: res.count, venues: venues.map((v) => v.name) }).catch(() => {});
+  return json({ ok: true, csv: res.csv, count: res.count,
+                venues: venues.map((v) => v.name) });
+}
+
 function vpbCsvCell(v) { const s = String(v == null ? '' : v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
 async function vpbOptinExport(request, env, json) {
   const o = await vpbRequireOwner(request, env);
   if (o.error) return json({ error: o.error }, o.status);
   if (!vpbCan(o, 'players_optin')) return json({ error: 'You do not have permission to export opt-in data.' }, 403);
+  /* A MANAGER MAY, BUT ONLY IF THEY HAVE BEEN TICKED. Dean, 17 Sep 2026: "a manager can do
+     the opt in data however they need to be ticked to be able to do that."
+
+     vpbCan is not enough on its own here, because it reads an ABSENT permission as granted:
+     `!o.perms || o.perms[key] !== false`. 21 of the 22 staff rows carry no permissions object
+     at all, so every one of the 17 managers could download a venue's whole player contact
+     list without anybody having decided they should. For advertising or a raffle that default
+     is generous and harmless. For a customer list it is the wrong way round.
+
+     So: the account owner always may. A manager needs players_optin ticked, explicitly true,
+     not merely un-refused. An HQ admin using View as may, because that is us on the phone to
+     the venue and it is audited.
+
+     This TIGHTENS things for existing managers, on purpose: none of them has a permissions
+     object, so none of them was ever granted this. They are told who to ask, not just no. */
+  const mayExport = o.actingAsAdmin || o.role === 'owner'
+                 || !!(o.perms && o.perms.players_optin === true);
+  if (!mayExport) {
+    return json({ error: 'Your manager access does not include player details. The venue owner '
+      + 'can tick "Players and opt-in export" for you on the Account page, or export it themselves.' }, 403);
+  }
   // Customer data belongs to the venue. An account whose venue names read like a real venue can
   // export freely; anything else is held until an admin approves (optin_release_approved), so a
   // third party can't quietly take a venue's customer list.
@@ -6828,25 +6919,11 @@ async function vpbOptinExport(request, env, json) {
   if (!looksLikeVenue && !approved) {
     return json({ error: 'Opt-in downloads for this account are pending a quick review, this protects venue customer data. We approve within a business day, or email hello@venueplay.com.au.', pending: true }, 403);
   }
-  const venueIds = o.venues.map((v) => v.id);
-  const vname = {}; o.venues.forEach((v) => { vname[v.id] = v.name; });
-  const header = ['Venue', 'First name', 'Last name', 'Email', 'Mobile', 'Postcode', 'Opted in'];
-  let out = [];
-  if (venueIds.length) {
-    // v_vp_player_optins is worker-only (service key); filter to OWN venues, never client input.
-    const rows = await vpaSelect(env, 'v_vp_player_optins',
-      'venue_id=in.(' + venueIds.map(encodeURIComponent).join(',') +
-      ')&select=venue_id,first_name,last_name,email,mobile,postcode,opted_in_at&order=opted_in_at.desc');
-    const seen = {};
-    for (const r of (rows || [])) {
-      const key = String(r.email || r.mobile || ((r.first_name || '') + '|' + (r.last_name || ''))).toLowerCase();
-      if (seen[key]) continue; seen[key] = true;
-      out.push([vname[r.venue_id] || '', r.first_name, r.last_name, r.email, r.mobile, r.postcode, r.opted_in_at]);
-    }
-  }
-  const csv = [header].concat(out).map((cols) => cols.map(vpbCsvCell).join(',')).join('\n') + '\n';
-  await vpaInsert(env, 'vp_admin_audit', { ...vpbActorFields(o), action: 'optin_exported', target: 'account:' + o.account.id, detail: { rows: out.length } }, false).catch(() => {});
-  return json({ ok: true, csv: csv, count: out.length });
+  /* o.venues is resolved from THEIR OWN staff rows, never from client input, so this stays
+     scoped to their venues exactly as before. Same builder as the HQ route now. */
+  const res = await vpaOptinCsv(env, o.venues);
+  await vpaInsert(env, 'vp_admin_audit', { ...vpbActorFields(o), action: 'optin_exported', target: 'account:' + o.account.id, detail: { rows: res.count } }, false).catch(() => {});
+  return json({ ok: true, csv: res.csv, count: res.count });
 }
 
 /* --- POST /account/managers : list the account's managers (role manager) with their toggles. --- */

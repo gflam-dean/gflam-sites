@@ -1116,6 +1116,8 @@
       if(va){ viewAs(va.getAttribute("data-viewas"), va); return; }
       var h=e.target.closest("button[data-history]");
       if(h){ toggleHistory(h.getAttribute("data-history")); return; }
+      var ocq=e.target.closest("button[data-optincsv]");
+      if(ocq){ downloadOptins(ocq.getAttribute("data-optincsv"), ocq); return; }
       var dgq=e.target.closest("button[data-dcgo]");
       if(dgq){ applyDiscount(dgq.getAttribute("data-dcgo"), dgq); return; }
       var qd=e.target.closest("button[data-qdetail]");
@@ -1407,6 +1409,10 @@
       + '</div>'
       + (st.nights ? '' : '<div class="note" style="margin:8px 0 0">No nights on record for this venue.</div>')
       + discountHtml(d.venue && d.venue.id ? d.venue.id : '')
+      + '<div class="cxacts" style="margin-top:8px">'
+      +   '<button class="btn ghost sp" data-optincsv="'+esc(d.venue&&d.venue.id?d.venue.id:'')+'">Download player opt-ins</button>'
+      +   '<span class="note" data-optinmsg="'+esc(d.venue&&d.venue.id?d.venue.id:'')+'" style="margin-left:10px"></span>'
+      + '</div>'
       + '<div class="note" style="margin:8px 0 0">Spend is an estimate: their current rate times the players they pay for times the months they have been here. There is no invoice table to read, so cross-check Stripe before quoting it at anybody.</div>';
   }
   /* A DISCOUNT, FROM THE SCREEN WHERE YOU DECIDE TO OFFER ONE. Dean, 17 Sep 2026: "we
@@ -1435,6 +1441,34 @@
       + '<div class="note" data-dcmsg="'+esc(id)+'" style="margin:6px 0 0"></div>'
       + '</div>';
   }
+  /* THE OPT-IN LIST, FOR ANY VENUE. Dean, 17 Sep 2026: "I should be able to export any venues
+     as well as ours." Until now the only export was the owner's own, so HQ could see that
+     opt-ins existed and never get them out: a venue ringing up for their list could not be
+     helped without asking them to log in.
+
+     Downloaded in the browser from the CSV the Worker returns, rather than a link to a file,
+     so nothing lands in storage and there is no URL anybody could share by accident. */
+  function downloadOptins(id, btn){
+    var msg=document.querySelector('[data-optinmsg="'+id+'"]');
+    btn.disabled=true; btn.textContent="Getting it\u2026";
+    workerGet("/admin/optin-export?venue_id="+encodeURIComponent(id)).then(function(r){
+      btn.disabled=false; btn.textContent="Download player opt-ins";
+      if(r && r.error){ if(msg){ msg.style.color="var(--roll)"; msg.textContent=r.error; } return; }
+      if(!r.count){ if(msg){ msg.style.color="var(--faint)"; msg.textContent="Nothing to download: no opt-ins on file for this venue."; } return; }
+      var name=((r.venues&&r.venues[0])||"venue").replace(/[^A-Za-z0-9]+/g,"-").toLowerCase();
+      var blob=new Blob([r.csv],{type:"text/csv;charset=utf-8"});
+      var a=document.createElement("a");
+      a.href=URL.createObjectURL(blob);
+      a.download="optins-"+name+"-"+new Date().toISOString().slice(0,10)+".csv";
+      document.body.appendChild(a); a.click();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 0);
+      if(msg){ msg.style.color="var(--win)"; msg.textContent=r.count+(r.count===1?" person":" people")+" downloaded."; }
+    }).catch(function(e){
+      btn.disabled=false; btn.textContent="Download player opt-ins";
+      if(msg){ msg.style.color="var(--roll)"; msg.textContent=String((e&&e.message)||e); }
+    });
+  }
+
   function applyDiscount(id, btn){
     var pct = document.querySelector('[data-dcpct="'+id+'"]');
     var mon = document.querySelector('[data-dcmon="'+id+'"]');
@@ -1540,6 +1574,8 @@
      hoping. If the write did not land, the row does not appear, which is the honest answer. */
   $("cxList").addEventListener("click", function(e){
     var b=e.target.closest("button"); if(!b) return;
+    var oc=b.getAttribute("data-optincsv");
+    if(oc){ downloadOptins(oc, b); return; }
     var dg=b.getAttribute("data-dcgo");
     if(dg){ applyDiscount(dg, b); return; }
     var det=b.getAttribute("data-cxdetail");
