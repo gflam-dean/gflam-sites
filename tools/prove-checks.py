@@ -70,6 +70,28 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 # wholeness check is reached. Zero bytes parses perfectly, which is the case
 # that check was actually written for.
 MUTATIONS = [
+    # ---- 18 Sep 2026. A suite nobody runs proves nothing, and this repo had two.
+    # COPYTO puts a .test.js where nothing sweeps it. tools/ is swept for .test.py only,
+    # so a .test.js there is exactly the orphan this check exists to find.
+    ('no suite in this repo is left unrun', 'venueplay/tv.html',
+     '<<COPYTO:tools/orphan.test.js>>', '',
+     'a suite is added where nothing sweeps it, so it sits in the repo proving nothing, '
+     'which is how ten PartyPlay suites reported 699 passing checks for weeks'),
+
+    # The excuse list is half the check. A name left behind after a rename excuses a suite
+    # that no longer exists and hides the one that replaced it.
+    ('every run-by-hand excuse still names a real suite', 'tools/release-check.py',
+     "    'purge-closed-player-data.test.py':",
+     "    'purge-closed-player-data-renamed.test.py':",
+     'the run-by-hand list names a file that is not there any more, so a real suite could '
+     'go unrun behind a stale excuse'),
+
+    ('touring-api.test.js', 'touring-backend/worker/DEPLOY-touring-api.js',
+     "    if (!m) return json({ error: 'not found', path: path }, 404);",
+     "    if (!m) return json({ error: 'not found', path: path }, 200);",
+     'an unknown path answers 200 with an error body, so anything reading the status '
+     'thinks it worked'),
+
     # ---- 17 Sep 2026, the advertising image cap. One number, two files, which is the shape
     # ---- behind most of the faults in this repo.
     ('the advertising image cap is a named number in the Worker',

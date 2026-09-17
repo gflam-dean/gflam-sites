@@ -508,7 +508,8 @@ def local_checks(which):
                     continue
                 r = subprocess.run([JSC, os.path.join(d, f)], capture_output=True, text=True)
                 last = (r.stdout.strip().splitlines() or [''])[-1]
-                ok(f, last.startswith('ALL '), last)
+                _SUITES_RUN.add(os.path.abspath(os.path.join(d, f)))
+                ok(f, suite_passed(last), last)
     """A .test.py under tools/ runs the same way a .test.js does. redirect-verdict.test.py is
     the first: it drives redirect_verdict with the answers a broken edge rule would give, which
     a live probe can never produce while the rule is working."""
@@ -518,7 +519,8 @@ def local_checks(which):
         r = subprocess.run([sys.executable, os.path.join(ROOT, 'tools', f)],
                            capture_output=True, text=True, cwd=ROOT)
         last = (r.stdout.strip().splitlines() or [''])[-1]
-        ok(f, r.returncode == 0 and last.startswith('ALL '), last)
+        _SUITES_RUN.add(os.path.abspath(os.path.join(ROOT, 'tools', f)))
+        ok(f, r.returncode == 0 and suite_passed(last), last)
 
     for f in ['check-tv-watchdog.py', 'check-venue-scoping.py']:
         p = os.path.join(ROOT, 'venueplay-backend', 'tools', f)
@@ -552,6 +554,9 @@ def local_checks(which):
     # loop reads the repo now, so it picks the suite up like every other one and
     # running it again by name only printed it twice.
 
+    # WHICH SUITES THIS GATE ACTUALLY RAN. Recorded as they run, never re-derived,
+    # because a second list of the suites is a second thing to keep in step.
+    # every_suite_is_run() below reads this.
     """VenuePlay's own suites, wherever they sit.
 
     one-game.test.js used to be named here on its own, so the musical draw suite
@@ -566,8 +571,13 @@ def local_checks(which):
     # beside the page it tests ran nowhere: on 10 Sep 2026 a new suite for
     # venueplay/signage.html sat at venueplay/ level and was silently never run. A
     # test that does not run is the same as no test, except that nobody knows.
+    # touring-backend joined this on 18 Sep 2026. Its suite passed 36 of 36 and had never
+    # been run by anything, because the sweep named two folders and it is in a third. It
+    # also prints "36 of 36 checks passed" rather than "ALL n CHECKS PASSED", so even once
+    # swept it would have read as a failure until suite_passed learned both shapes.
     for base in (os.path.join(ROOT, 'venueplay'),
-                 os.path.join(ROOT, 'venueplay-backend')):
+                 os.path.join(ROOT, 'venueplay-backend'),
+                 os.path.join(ROOT, 'touring-backend')):
         for d, _, fs in os.walk(base):
             if os.sep + 'node_modules' in d or os.sep + '.git' in d:
                 continue
@@ -579,7 +589,10 @@ def local_checks(which):
         r = subprocess.run([JSC, t], capture_output=True, text=True, cwd=ROOT)
         out = (r.stdout + r.stderr).strip().splitlines()
         line = out[-1] if out else ''
-        ok(os.path.basename(t), 'ALL' in line and 'PASSED' in line, line)
+        _SUITES_RUN.add(os.path.abspath(t))
+        ok(os.path.basename(t), suite_passed(line), line)
+
+    every_suite_is_run()
 
     head('C. Nothing internal sits in a directory the world can download')
     """A DEPLOY DIRECTORY IS A PUBLIC DIRECTORY. Everything under venueplay/ and
@@ -3085,6 +3098,74 @@ def worker_health(name, api, needs_config=True):
            'HTTP %s' % status if status != 404 else 'no /health on this Worker')
 
 
+_SUITES_RUN = set()
+
+
+def suite_passed(line):
+    """Did a suite's last line say every check passed?
+
+    TWO SHAPES, because there are two. Most print "ALL 26 CHECKS PASSED"; touring-api
+    prints "36 of 36 checks passed". The second was never recognised, so that suite
+    would have read as a failure the moment anybody swept it in, which is one of the
+    two reasons nobody had.
+
+    The numbers must MATCH. "35 of 36 checks passed" is a failure and has to stay one."""
+    line = (line or '').strip()
+    if 'ALL' in line and 'PASSED' in line:
+        return True
+    m = re.match(r'^(\d+) of (\d+) checks? passed', line)
+    return bool(m) and m.group(1) == m.group(2) and int(m.group(1)) > 0
+
+
+# A SUITE THAT NOBODY RUNS, WITH THE REASON. Anything here is deliberately outside the
+# gate. Anything NOT here and not run is a test that exists and proves nothing, which this
+# repo has shipped twice.
+RUN_BY_HAND = {
+    'purge-closed-player-data.test.py':
+        'it CREATES real venues and accounts, purges them and cleans up, so it is a live '
+        'integration test and not something to run on every pre-push gate. Run it by hand '
+        'before any change to purge-closed-player-data.py. It passed on 18 Sep 2026.',
+}
+
+
+def every_suite_is_run():
+    """IS THERE A SUITE IN THIS REPO THAT NOTHING RUNS?
+
+    The sweeps above say "a suite that is added is a suite that runs", and twice that was
+    not true: a suite written beside venueplay/signage.html sat a directory above the sweep
+    on 10 Sep, and ten PartyPlay suites read a copy of the project nobody ships and reported
+    699 passing checks for weeks.
+
+    Found again 18 Sep 2026, two of them. purge-closed-player-data.test.py, which covers the
+    deletion of a closed venue's player list, so tier one, and touring-api.test.js. Neither
+    was swept: .test.py is only collected under tools/, and .test.js only under venueplay,
+    venueplay-backend and the PartyPlay folders. Both pass. Nobody knew, because a suite
+    nobody runs is indistinguishable from one that does not exist.
+
+    So this asks the level above: every test file in the repo is either run by this gate or
+    named in RUN_BY_HAND with a reason."""
+    head('Every suite in this repo is actually run')
+    found = []
+    for d, dirs, fs in os.walk(ROOT):
+        dirs[:] = [x for x in dirs if x not in ('.git', 'node_modules', 'worktrees', '__pycache__')]
+        for f in fs:
+            if f.endswith('.test.js') or f.endswith('.test.py'):
+                found.append(os.path.abspath(os.path.join(d, f)))
+    orphans = sorted(p for p in set(found)
+                     if p not in _SUITES_RUN and os.path.basename(p) not in RUN_BY_HAND)
+    ok('no suite in this repo is left unrun',
+       not orphans,
+       '%d suite(s) run, %d run by hand on purpose' % (len(_SUITES_RUN), len(RUN_BY_HAND)),
+       why=('nothing runs these, so they prove nothing: '
+            + ', '.join(short(p) for p in orphans[:4])))
+    # AND THE EXCUSES MUST STILL POINT AT SOMETHING. A name left here after the file is
+    # renamed excuses a suite that no longer exists and hides the one that replaced it.
+    names = {os.path.basename(p) for p in found}
+    stale = sorted(n for n in RUN_BY_HAND if n not in names)
+    ok('every run-by-hand excuse still names a real suite', not stale,
+       why='RUN_BY_HAND names a file that is not here any more: ' + ', '.join(stale[:4]))
+
+
 def redirect_verdict(path, mustkeep, code, loc):
     """Is this answer a correct www-to-apex redirect? Returns None if it is, else what is wrong.
 
@@ -3769,14 +3850,38 @@ def nobody_paid_and_got_nothing():
 
 def admin_routes_refuse():
     head('Admin and money routes must refuse a stranger')
+    # THE LIST WAS SHORT BY FOUR. Found 18 Sep 2026 by asking which routes in the Worker
+    # no suite and no check here mentions at all: /admin/party, /admin/party/do,
+    # /admin/followups and /admin/send-albums were four admin routes nothing was watching.
+    # Reading them showed all four do call adminActor, so nothing was open. That is not the
+    # same as being checked: the reason the other four are on this list is that somebody
+    # would notice if they changed, and these four had nobody.
+    #
+    # /admin/send-albums EMAILS GUESTS, so it is the one that matters most and the one I
+    # read hardest before probing it. adminActor runs before anything is sent.
     for path, method in [('/admin/stats', 'GET'), ('/admin/whoami', 'GET'),
-                         ('/admin/staff', 'GET')]:
+                         ('/admin/staff', 'GET'), ('/admin/party', 'GET')]:
         status, body, _ = get(PP_API + path)
         ok('PartyPlay %s refuses' % path, status == 403, why='HTTP %s' % status)
-    for path in ['/admin/staff/add', '/admin/staff/off', '/admin/comp', '/admin/nudge-expiring']:
+    for path in ['/admin/staff/add', '/admin/staff/off', '/admin/comp', '/admin/nudge-expiring',
+                 '/admin/party/do', '/admin/send-albums', '/admin/followups']:
         status, body = post(PP_API + path, {})
         ok('PartyPlay %s refuses' % path, status == 403,
            why='HTTP %s %s' % (status, body[:60]))
+
+    # AND THE HOST-KEY ROUTES. requireHost throws 403 on a short or missing key and compares
+    # the real one with timingSafeEqual, which is right. Nothing was checking it stayed that
+    # way. A 500 here would mean it threw before it checked, which is how a broken route
+    # hides: refused, but for the wrong reason, and one refactor from not refusing.
+    for path in ['/photos/pick', '/games']:
+        status, body, _ = get(PP_API + path + '?code=ZZZZZZ&key=x')
+        ok('PartyPlay %s refuses without a host key' % path, status in (403, 404),
+           why='HTTP %s %s: a 500 means it threw before it checked' % (status, body[:50]))
+
+    # The album is reached by a share link, not a login, so the link itself is the key.
+    status, body, _ = get(PP_API + '/album/photo?share=short&id=1')
+    ok('PartyPlay /album/photo refuses a short share key', status in (400, 404, 503),
+       why='HTTP %s %s' % (status, body[:50]))
 
     # A 500 here means it threw before it checked, which is how a broken route hides.
     status, body = post(PP_API + '/licence/resend', {'code': 'ZZZZZZ'})
