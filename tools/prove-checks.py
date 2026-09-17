@@ -971,8 +971,13 @@ MUTATIONS = [
     ('no playlist is empty', 'venueplay/data/musical-library.json',
      '<<ANY:"songIds": [\n>>', '"songIds": [], "wasSongIds": [\n',
      'a pack empties and a host picks a night with nothing in it'),
+    # THE DATE MOVED AND THIS DID NOT. It looked for "30 September", which every founding page
+    # carried when the deal ran to the end of September. They all say 31 October now, so the
+    # find string matched nothing and prove-checks reported "the mutation no longer applies".
+    # That is a check nobody is proving, dressed up as a tidy line of output. Caught 17 Sep 2026.
+    # If a date in the copy moves, move it here too.
     ('every founding page agrees with its own code', 'venueplay/qld.html',
-     '<<ALL:30 September>>', '31 September',
+     '<<ALL:31 October 2026>>', '31 November 2026',
      'a founding page carries a date that does not exist'),
     ('no screen leaves a second code up once the host is connected',
      'venueplay/app/musical/screen.html',
