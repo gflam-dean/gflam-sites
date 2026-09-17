@@ -82,11 +82,17 @@ script tag.
 - **Never assume a test tests anything.** Break the file it names and watch it
   fail. Ten PartyPlay suites read a copy of the project nobody ships and reported
   699 passing checks for weeks.
+- **Never check a whole file for a word.** "Does pp_players appear, and does
+  DELETE appear" was three of the privacy checks, and both words appear in
+  unrelated places: the admin clear-players button is the very delete the code
+  beside it says does NOT keep the promise. All three were green before the sweep
+  existed. Scope it to the function, and assert the two things are in the same
+  statement.
 
 ## When a check looks blind, suspect your test first
 
-Measured over ~14 rounds of `prove-checks.py`: **10 times the mutation was wrong,
-once the check was.** Wrong file, wrong string, a replacement that changed
+Measured over ~19 rounds of `prove-checks.py`: **14 times the mutation was wrong,
+twice the check was.** Wrong file, wrong string, a replacement that changed
 nothing, a first-occurrence replace that landed nowhere near the call site.
 
 ## House rules for anything a person reads
@@ -98,8 +104,10 @@ claims from **the host**, never the bar. All four are enforced by the gate, in
 
 ## Where things are
 
-    tools/release-check.py            the gate, 52 local checks
-    tools/prove-checks.py             breaks each check on purpose, 52 of 52
+    tools/release-check.py            the gate, 199 local checks (305 with --live)
+    tools/prove-checks.py             breaks each one on purpose, 199 of 199,
+                                      249 mutations. --list says in two seconds
+                                      whether any of them has stopped applying
     tools/stamp-workers.py            BUILD stamps; run before build-worker.py
     venueplay/                        the site, auto-deploys from main
     venueplay-backend/worker/         game + billing Workers, deployed by tools/deploy-worker.py
