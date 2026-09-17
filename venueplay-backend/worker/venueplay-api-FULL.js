@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '17 Sep 2026, 10:40 · 498ec101';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Sep 2026, 11:07 · 99631e7b';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -152,6 +152,7 @@ export default {
       if (request.method === 'POST' && path === '/admin/venue-status'    && typeof vpaHandleVenueStatus === 'function')    return await vpaHandleVenueStatus(request, env, json);
       if (request.method === 'POST' && path === '/admin/venue-gaming'    && typeof vpaHandleVenueGaming === 'function')    return await vpaHandleVenueGaming(request, env, json);
       if (request.method === 'POST' && path === '/admin/gst'             && typeof vpaHandleGst === 'function')            return await vpaHandleGst(request, env, json);
+      if (request.method === 'GET'  && path === '/admin/venue-detail'    && typeof vpaHandleVenueDetail === 'function')    return await vpaHandleVenueDetail(request, env, json);
       if (request.method === 'POST' && path === '/admin/optin-approve'   && typeof vpaHandleOptinApprove === 'function')   return await vpaHandleOptinApprove(request, env, json);
       if (request.method === 'POST' && path === '/admin/staff'           && typeof vpaHandleStaff === 'function')          return await vpaHandleStaff(request, env, json);
       if (request.method === 'POST' && path === '/admin/audit'           && typeof vpaHandleAudit === 'function')          return await vpaHandleAudit(request, env, json);
@@ -2547,6 +2548,91 @@ async function vpaHandleVenueStatus(request, env, json) {
  *   body: { founding_id, approved? }  -> { ok:true, approved }
  *   Approves (or revokes) a founding account to collect/export player marketing data. Non-venue
  *   sign-ups stay name-only until this is set; approving flips venueplay_founding.optin_release_approved. */
+
+/* GET /admin/venue-detail?venue_id=...
+ *
+ * Everything you want in front of you before you ring a venue that has gone quiet or asked
+ * to leave. Dean, 17 Sep 2026: how long they have been with us, when they hit cancel, what
+ * day their last day is, how many of each game they played, the average room, what they have
+ * spent and what the overages came to.
+ *
+ * READS vpaVenueStats, the same function that builds the wrap at the bottom of the goodbye
+ * email. One answer to "how many trivia nights", not two that drift.
+ *
+ * Money is an ESTIMATE and says so in the field name. There is no invoices table in this
+ * database: spend is their current rate times the players they pay for times the months they
+ * have been here. A venue that changed plan mid-way will not match Stripe exactly, and a
+ * number on a screen that disagrees with a bank statement is worse than no number, so the UI
+ * labels it as about.
+ */
+async function vpaHandleVenueDetail(request, env, json) {
+  /* owner and accounts, the same pair every other admin route here uses. 'support' was in
+     the first draft of this line and is not a role anybody holds, so it would have read as
+     a wider permission than it granted. */
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const url = new URL(request.url);
+  const venueId = (url.searchParams.get('venue_id') || '').trim();
+  if (!venueId) return json({ error: 'venue_id is required.' }, 400);
+
+  const vs = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId)
+    + '&select=id,name,slug,status,suspended_reason,cancel_at_period_end,created_at,'
+    + 'max_players,founding_id,timezone,postcode');
+  const v = vs && vs[0];
+  if (!v) return json({ error: 'No such venue.' }, 404);
+  const tz = v.timezone || vpaTimezoneFromPostcode(v.postcode);
+
+  /* When they hit cancel, what they said, and anything we have written down since. Read from
+     the audit because that is where it is: there is no cancel_reason column on the venue. */
+  const trail = await vpaSelect(env, 'vp_admin_audit',
+    'target=eq.' + encodeURIComponent('venue:' + venueId)
+    + '&action=in.(venue_cancel_scheduled,venue_cancel_undone,venue_cancel_note,venue_quiet_contacted)'
+    + '&select=created_at,action,detail&order=created_at.desc&limit=40').catch(() => []) || [];
+  const lastCancel = trail.filter((r) => r.action === 'venue_cancel_scheduled')[0] || null;
+  const lastUndo   = trail.filter((r) => r.action === 'venue_cancel_undone')[0] || null;
+  const notes = trail.filter((r) => r.action === 'venue_cancel_note' || r.action === 'venue_quiet_contacted')
+    .map((r) => ({ at: r.created_at, what: r.action, note: (r.detail && (r.detail.note || r.detail.by)) || null }));
+
+  /* Their last day, and the weekday a publican actually thinks in. */
+  let endTs = 0, rateCents = 0, founding = false;
+  try {
+    const accts = await vpaSelect(env, 'venueplay_founding', 'id=eq.'
+      + encodeURIComponent(v.founding_id || '') + '&select=id,stripe_subscription_id,contact_email,contact_name');
+    const acct = accts && accts[0];
+    if (acct && acct.stripe_subscription_id) {
+      const sub = await vpbStripeGet(env, 'subscriptions/' + encodeURIComponent(acct.stripe_subscription_id));
+      const item = (sub && sub.items && sub.items.data && sub.items.data[0]) || {};
+      endTs = parseInt(sub.cancel_at || sub.current_period_end || item.current_period_end || 0, 10) || 0;
+      rateCents = (item.price && parseInt(item.price.unit_amount, 10)) || 0;
+      const pid = (item.price && item.price.id) || '';
+      founding = !!pid && (pid === env.STRIPE_PRICE_MONTHLY || pid === env.STRIPE_PRICE_ANNUAL);
+    }
+  } catch (e) { /* Stripe down: everything else is still worth showing */ }
+
+  const stats = await vpaVenueStats(env, venueId, tz).catch(() => null);
+  const months = vpaTenureMonths(v.created_at, endTs ? endTs * 1000 : null);
+
+  return json({
+    ok: true,
+    venue: { id: v.id, name: v.name, slug: v.slug, status: v.status,
+             cancelling: !!v.cancel_at_period_end, players: v.max_players },
+    with_us: { since: v.created_at, months: months, words: vpaTenureWords(v.created_at, endTs ? endTs * 1000 : null) },
+    cancel: {
+      requested_at: lastCancel ? lastCancel.created_at : null,
+      undone_at: lastUndo ? lastUndo.created_at : null,
+      reason: lastCancel && lastCancel.detail ? lastCancel.detail.reason_label || lastCancel.detail.reason : null,
+      reason_detail: lastCancel && lastCancel.detail ? lastCancel.detail.reason_detail : null,
+      notes: notes,
+    },
+    last_day: endTs ? { at: endTs, date: vpaFmtDate(endTs), day: vpaLocalWeekday(endTs, tz) } : null,
+    rate: { cents: rateCents, founding: founding },
+    /* about_spend_cents, not spend_cents. See the note above the function. */
+    about_spend_cents: rateCents * (v.max_players || 0) * months,
+    overage_cents: stats ? stats.overageSpendCents : 0,
+    stats: stats,
+  });
+}
+
 async function vpaHandleOptinApprove(request, env, json) {
   const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
   if (actor.error) return json({ error: actor.error }, actor.status);
