@@ -1762,6 +1762,17 @@ UNPROVABLE = {
 }
 
 MUTATIONS_LIVE = [
+    # A Worker that exports scheduled with no Cron Trigger behind it. venueplay-sms has no
+    # trigger, correctly, because it has no scheduled job; give it one and the checker has
+    # to notice. This is the fault that left the PartyPlay album sweep unrun for its whole
+    # life while every test passed.
+    ('every scheduled job has a cron that calls it',
+     'venueplay-backend/worker/venueplay-sms-hook.js',
+     'const FIVE_MINUTES_SECONDS = 60 * 5;',
+     'const FIVE_MINUTES_SECONDS = 60 * 5;\nexport default { async scheduled(e, env, ctx) { } };',
+     'a Worker ships a scheduled job and nobody wires a cron to it, so it never runs once '
+     'and nothing anywhere says so'),
+
     # check-columns.py asks the LIVE database whether every column the code names is really
     # there. Name one that is not and it has to say so: this is the check that catches code
     # written against a migration nobody has run yet.

@@ -4048,6 +4048,24 @@ def main():
                why=('; '.join(_miss[:3]) if _miss else
                     ('the checker itself could not run: ' + _out.strip().splitlines()[-1][:90]
                      if _out.strip() else 'no output')))
+            # A SCHEDULED HANDLER THAT NO CRON CALLS IS DEAD CODE THAT LOOKS ALIVE.
+            # The 30 day album sweep sat in the PartyPlay Worker, written and correct and
+            # exported, and never ran once, because nobody had added a Cron Trigger in a
+            # dashboard. Nothing in this repo could see it. Three sweeps hang off the game
+            # Worker's scheduled handler now and one of them is the 90 day deletion of a
+            # closed venue's player list that the privacy page promises.
+            _cr = subprocess.run([sys.executable, os.path.join(ROOT, 'tools', 'check-cron-triggers.py')],
+                                 capture_output=True, text=True, cwd=ROOT, timeout=180)
+            _cro = re.sub(r'\033\[[0-9;]*m', '', _cr.stdout + _cr.stderr)
+            _crbad = [l.strip() for l in _cro.splitlines()
+                      if 'NO TRIGGER' in l or 'COULD NOT ASK' in l or l.strip().startswith('STOP')]
+            _crok = [l.strip() for l in _cro.splitlines() if l.strip().startswith('ok')]
+            ok('every scheduled job has a cron that calls it',
+               _cr.returncode == 0,
+               '%d Worker(s) with a trigger' % len(_crok),
+               why=('; '.join(_crbad[:3]) if _crbad else
+                    'the checker could not run: ' + (_cro.strip().splitlines() or [''])[-1][:90]))
+
             pages_live('VenuePlay', VP, VP_PAGES)
             shared_scripts_live(VP, os.path.join(ROOT, 'venueplay', 'app'))
             every_page_is_reachable('VenuePlay', VP, 'venueplay',
