@@ -111,7 +111,10 @@ check('brand new: not flagged as returning', sent['subscription_data[metadata][r
 /* 2. THE ONE THAT WOULD HAVE BITTEN DEAN'S OWN TEST. An email that already has billing set up
       opened a SECOND subscription, and vpbRequireOwner reads venues[0].founding_id, so the
       duplicate never appeared on the billing page and could not be cancelled from the app. */
-var r2 = signup({ prior: [{ id: 'old', venue_name: 'GFLAM GROUP PTY LTD', created_at: iso(200), status: 'card_on_file', stripe_subscription_id: 'sub_live' }] });
+var r2 = signup({ prior: [{ id: 'old', venue_name: 'GFLAM GROUP PTY LTD', contact_email: 'new@thepub.com.au', mobile: '0400000000', created_at: iso(200), status: 'card_on_file', stripe_subscription_id: 'sub_live' }] });
+/* The fixtures carry contact_email on purpose. The real query always selects it, and the guard
+   now compares it, because the EMAIL is the billing identity and the mobile is not. A fixture
+   missing that field quietly stops the guard firing and every check here passes. */
 check('already has billing: refused', !!(r2 && r2.body && r2.body.error), r2 && r2.body);
 check('already has billing: NO second subscription opened', sent === null, sent);
 check('already has billing: told which account, and what to do instead',
@@ -124,12 +127,12 @@ check('already has billing: no pending row left behind', inserted === 0, inserte
 
 /* 3. Left two years ago and coming back. Every page promises a free month with no conditions,
       and this used to hand them three days and a charge they were told would not come. */
-var r3 = signup({ prior: [{ id: 'old', venue_name: 'The Pub', created_at: iso(730), status: 'cancelled', stripe_subscription_id: null }] });
+var r3 = signup({ prior: [{ id: 'old', venue_name: 'The Pub', contact_email: 'new@thepub.com.au', mobile: '0400000000', created_at: iso(730), status: 'cancelled', stripe_subscription_id: null }] });
 check('gone two years, coming back: gets the full month', trialDays() === 30, trialDays());
 check('gone two years, coming back: session created', !!(r3 && r3.body && r3.body.url), r3 && r3.body);
 
 /* 4. Left two months ago and straight back. This is the loop the short trial is actually for. */
-var r4 = signup({ prior: [{ id: 'old', venue_name: 'The Pub', created_at: iso(60), status: 'cancelled', stripe_subscription_id: null }] });
+var r4 = signup({ prior: [{ id: 'old', venue_name: 'The Pub', contact_email: 'new@thepub.com.au', mobile: '0400000000', created_at: iso(60), status: 'cancelled', stripe_subscription_id: null }] });
 check('left and re-signed inside a year: three days, not a month', trialDays() === 3, trialDays());
 check('left and re-signed inside a year: flagged for HQ', sent['subscription_data[metadata][returning]'] === '1', sent['subscription_data[metadata][returning]']);
 
@@ -202,6 +205,50 @@ check('the deal is open while any code is live', vpaFoundingOpenNow({ FOUNDING_C
 check('the deal is shut when the last code comes out', vpaFoundingOpenNow({ FOUNDING_CODES: '' }) === false);
 check('an unset variable is shut, not open', vpaFoundingOpenNow({}) === false);
 check('whitespace is not a live code', vpaFoundingOpenNow({ FOUNDING_CODES: ' , ' }) === false);
+
+/* ---------------------------------------------------------------------------
+   MOVING PUBS. Dean, 17 Sep 2026: "if I move pubs and my phone number is still linked to an
+   old pub you need to work that one out."
+   --------------------------------------------------------------------------- */
+print('moving pubs');
+
+var OLD_PUB = { id: 'old', venue_name: 'The Old Pub', contact_email: 'pat@theoldpub.com.au',
+                mobile: '0400000000', created_at: iso(120), status: 'card_on_file',
+                stripe_subscription_id: 'sub_live' };
+
+/* Their mobile is still on the pub they left. Different email, different venue, different
+   owner paying. Refusing this is refusing a brand new customer over somebody else's account. */
+var m1 = signup({ email: 'pat@thenewpub.com.au', mobile: '0400000000', prior: [OLD_PUB] });
+check('moved pubs: signed up, not refused', !!(m1 && m1.body && m1.body.url), m1 && m1.body);
+check('moved pubs: gets the full free month', trialDays() === 30, trialDays());
+check('moved pubs: the old account is noted for us, not held against them',
+  sent['subscription_data[metadata][mobile_on_other_accounts]'] === '1',
+  sent['subscription_data[metadata][mobile_on_other_accounts]']);
+check('moved pubs: not flagged as returning', sent['subscription_data[metadata][returning]'] === '0',
+  sent['subscription_data[metadata][returning]']);
+
+/* Same person, same login, second bill. Still refused: this is the fault the guard is for. */
+var m2 = signup({ email: 'pat@theoldpub.com.au', mobile: '0400000000', prior: [OLD_PUB] });
+check('same email with billing: still refused', !!(m2.body && m2.body.error), m2.body);
+check('same email: the message covers a move, not just "add a venue"',
+  /moved to a new venue/i.test(m2.body.error || ''), m2.body.error);
+check('same email: it also covers a group adding another venue',
+  /Add a venue/.test(m2.body.error || ''), m2.body.error);
+
+/* A shared mobile must not cost the new venue its month either. Their own email has never
+   been here, so nothing about them is "returning". */
+var m3 = signup({ email: 'new@another.com.au', mobile: '0400000000',
+                  prior: [{ id: 'o2', venue_name: 'The Old Pub', contact_email: 'pat@theoldpub.com.au',
+                            mobile: '0400000000', created_at: iso(30), status: 'cancelled',
+                            stripe_subscription_id: null }] });
+check('a shared mobile on a RECENT account does not cost the new venue its month', trialDays() === 30, trialDays());
+
+/* And the email rule still bites where it should: their own address, inside a year. */
+var m4 = signup({ email: 'pat@theoldpub.com.au', mobile: '0400000000',
+                  prior: [{ id: 'o3', venue_name: 'The Old Pub', contact_email: 'pat@theoldpub.com.au',
+                            mobile: '0400000000', created_at: iso(30), status: 'cancelled',
+                            stripe_subscription_id: null }] });
+check('their own email, left and back inside a year: three days', trialDays() === 3, trialDays());
 
 print(fails ? ('FAILED ' + fails) : 'PASS');
 if (fails) { throw new Error('checkout: ' + fails + ' failed'); }

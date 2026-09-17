@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '17 Sep 2026, 13:59 · d8bfe204';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Sep 2026, 14:07 · 47aba29f';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -339,12 +339,41 @@ async function handleCheckout(request, env, json) {
      A LIVE SUBSCRIPTION IS THE TEST, not merely having a row. An abandoned pending signup is
      already excluded by the query, and a venue that genuinely cancelled and is coming back must
      not be turned away at the door. */
-  const live = prior.filter(function (a) { return !!a.stripe_subscription_id; })[0];
+  /* A PHONE NUMBER MUST NEVER BLOCK A SIGNUP. Dean, 17 Sep 2026: "if I move pubs and my phone
+     number is still linked to an old pub you need to work that one out."
+
+     The lookup asks about the email OR the mobile, and the guard treated both the same, so a
+     publican who moved from one pub to the next was refused at the door because their own mobile
+     was still on the account of the pub they had left. A brand new venue, a different owner, a
+     different bill, and the answer was no. The message even said "that email", which was not the
+     field that matched, and it named a venue they may have nothing to do with any more.
+
+     So identity for BILLING is the EMAIL, and only the email. It is the login, it is what
+     vpbRequireOwner resolves an account from, and a second account on one login is the whole
+     fault this guard exists for. A mobile is a contact detail: people move pubs, numbers get
+     recycled, and a venue manager's mobile can sit on three venues quite legitimately.
+
+     A mobile seen elsewhere is still worth knowing, so it rides along in the Stripe metadata and
+     an HQ audit row rather than stopping anybody. Nobody is refused a product over it. */
+  const sameEmail = prior.filter(function (a) {
+    return String(a.contact_email || '').trim().toLowerCase() === email.toLowerCase();
+  });
+  const mobileOnly = prior.filter(function (a) {
+    return String(a.contact_email || '').trim().toLowerCase() !== email.toLowerCase();
+  });
+
+  const live = sameEmail.filter(function (a) { return !!a.stripe_subscription_id; })[0];
   if (live) {
+    /* THREE THINGS THEY MIGHT ACTUALLY BE DOING, and the message has to cover all three or it
+       reads as a wall. They are adding a second venue to a group; they are signing up twice by
+       mistake; or they have moved pubs and are using the same address for the new one, which is
+       the one case where "add a venue" is the WRONG advice, because they do not want their old
+       pub on their new bill. */
     return json({ error: 'That email already has a VenuePlay account with billing set up'
       + (live.venue_name ? ' (' + live.venue_name + ')' : '') + '. '
-      + 'Sign in and use Add a venue instead, so it all stays on one bill. '
-      + 'If that does not look right, email hello@venueplay.com.au and we will sort it out.',
+      + 'If this is another venue for the same group, sign in and use Add a venue, so it all '
+      + 'stays on one bill. If you have moved to a new venue and that account belongs to the old '
+      + 'one, email hello@venueplay.com.au and we will move things across for you.',
       existing_account: true }, 409);
   }
 
@@ -429,7 +458,11 @@ async function handleCheckout(request, env, json) {
      Dean, 17 Sep 2026, set the same intent on venues added to a paying account. This is the same
      answer at the other door. */
   const TWELVE_MONTHS = 365 * 24 * 60 * 60 * 1000;
-  const recent = prior.filter(function (a) {
+  /* sameEmail, NOT prior. Same reason as the guard above: a publican who moves pubs would
+     otherwise have their NEW venue's free month taken off them because their mobile is still on
+     the account of the pub they left. Different venue, different owner paying, and the month is
+     the thing that gets them to try it. */
+  const recent = sameEmail.filter(function (a) {
     const t = Date.parse(a.created_at || '');
     return isFinite(t) && (Date.now() - t) < TWELVE_MONTHS;
   })[0];
@@ -450,6 +483,9 @@ async function handleCheckout(request, env, json) {
   form.set('subscription_data[metadata][is_group]', isGroup ? '1' : '0');
   form.set('subscription_data[metadata][venue_count]', String(venueCount));
   form.set('subscription_data[metadata][returning]', returning ? '1' : '0');
+  // Not a block and not a price change. Just a thing worth being able to see later: the same
+  // mobile on more than one account is usually somebody moving pubs, and occasionally it is not.
+  form.set('subscription_data[metadata][mobile_on_other_accounts]', mobileOnly.length ? String(mobileOnly.length) : '0');
   /* Visible, not enforced: which state's link they used, and whether the first venue's
      postcode agrees with it. Priced the same either way. */
   form.set('subscription_data[metadata][signup_state_link]', codeState || '');
@@ -784,7 +820,7 @@ async function sbPriorAccounts(env, email, mobile, excludeId) {
        venue with three accounts has none. */
     const q = 'venueplay_founding?or=(' + ors.join(',') + ')&status=neq.pending' +
               (excludeId ? ('&id=neq.' + encodeURIComponent(excludeId)) : '') +
-              '&select=id,venue_name,created_at,status,stripe_subscription_id' +
+              '&select=id,venue_name,contact_email,mobile,created_at,status,stripe_subscription_id' +
               '&order=created_at.desc&limit=5';
     const res = await fetch(env.SUPABASE_URL + '/rest/v1/' + q, { headers: sbHeaders(env) });
     if (!res.ok) return [];
