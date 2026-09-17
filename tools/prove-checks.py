@@ -70,6 +70,18 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 # wholeness check is reached. Zero bytes parses perfectly, which is the case
 # that check was actually written for.
 MUTATIONS = [
+    ('the photo size limit is the same in the browser and the Worker',
+     'partyplay-backend/lib/pp-photo.js',
+     'var HARD_LIMIT = 5 * 1024 * 1024;', 'var HARD_LIMIT = 8 * 1024 * 1024;',
+     'the browser sends more than the Worker will take, so a guest waits through the whole '
+     'upload and gets a 413 at the end of it'),
+
+    ('the video size limit is the same in the browser and the Worker',
+     'partyplay-backend/lib/pp-video.js',
+     'var HARD_LIMIT = 25 * 1024 * 1024;', 'var HARD_LIMIT = 40 * 1024 * 1024;',
+     'a guest records a clip at a party, waits through the upload on party wifi, and the '
+     'Worker refuses it at the end'),
+
     ('nothing is written to the album without a date it goes',
      'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
      '        bytes: buf.byteLength, content_type: k.type, delete_after: deleteAfter',

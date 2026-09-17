@@ -927,6 +927,30 @@ def local_checks(which):
         # Same fault as above: this searched the whole file, and pp_players?licence_id=eq.
         # appears in four unrelated places. Scoped to the sweep, it now asks the question it
         # is named for: does the sweep clear a WHOLE PARTY, or one row somebody named.
+        """THE SIZE A BROWSER WILL SEND AND THE SIZE THE WORKER WILL TAKE.
+
+        Written twice each, and nothing tied them together. Whichever way they drift it is
+        bad, but one way is much worse: if the browser allows more than the Worker takes, a
+        guest records a clip at a party, waits through the whole upload on party wifi, and
+        gets a 413 at the end. The other way round they simply cannot send something the
+        Worker would have accepted, and nobody ever finds out why.
+
+        Same shape as the venue slides cap and the fifty player cap. Added 18 Sep 2026; both
+        pairs agreed."""
+        for label, libname, wconst in (('photo', 'pp-photo.js', 'PHOTO_MAX_BYTES'),
+                                       ('video', 'pp-video.js', 'VIDEO_MAX_BYTES')):
+            lp = os.path.join(PARTYPLAY_BACK, 'lib', libname)
+            if not os.path.isfile(lp):
+                continue
+            lt = re.sub(r'/\*.*?\*/', ' ', io.open(lp, encoding='utf-8').read(), flags=re.S)
+            m_lib = re.search(r'HARD_LIMIT\s*=\s*(\d+)\s*\*\s*1024\s*\*\s*1024', lt)
+            m_w = re.search(wconst + r'\s*=\s*(\d+)\s*\*\s*1024\s*\*\s*1024', w4c)
+            ok('the %s size limit is the same in the browser and the Worker' % label,
+               bool(m_lib and m_w and m_lib.group(1) == m_w.group(1)),
+               'browser %sMB, Worker %sMB' % (m_lib and m_lib.group(1), m_w and m_w.group(1)),
+               why='if the browser sends more than the Worker takes, a guest waits through '
+                   'the whole upload on party wifi and gets a 413 at the end of it')
+
         """AND NOTHING GOES INTO THE ALBUM WITHOUT A DATE IT LEAVES.
 
         runPhotoSweep finds photo rows by delete_after. A row written without one is never
