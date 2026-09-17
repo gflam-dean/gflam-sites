@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '17 Sep 2026, 10:29 · c338dc07';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Sep 2026, 10:40 · 498ec101';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -823,6 +823,12 @@ async function vpaVenuesForEmail(env, addr) {
   return out;
 }
 
+/* The two subjects that mean a venue is being told its games are stopping. One pattern, used
+   by the bounce alert and the delivery record, so they cannot end up disagreeing about which
+   emails are the important ones. Kept beside the webhook rather than next to the senders,
+   because it matches what Resend reports back, not what we typed. */
+const VPA_LEAVING_SUBJECT = /last day on VenuePlay|cancellation is confirmed/i;
+
 async function vpaHandleResendWebhook(request, env, json) {
   const raw = await request.text();
   const ok = await vpaVerifyResendSig(raw, request.headers, env.RESEND_WEBHOOK_SECRET);
@@ -832,8 +838,33 @@ async function vpaHandleResendWebhook(request, env, json) {
   let ev = null;
   try { ev = JSON.parse(raw); } catch (e) { return json({ error: 'bad json' }, 400); }
   const type = String((ev && ev.type) || '');
-  /* Only the two that mean a person did not read it. delivered/opened/clicked are noise we
-     have no use for and would fill the audit table at the rate we send. */
+  /* bounced and complained always matter. delivered matters for ONE thing: the two emails
+     that decide whether a venue knows its games are stopping.
+
+     Dean, 17 Sep 2026, after a last-day email was recorded as delivered, reported to him as
+     delivered, and found in his Outlook junk folder: we could not tell "arrived" from "never
+     arrived" at all. This closes half that gap. It cannot see a junk folder, and nothing can,
+     but it can say whether Microsoft took it.
+
+     Everything else is still dropped. opened and clicked would fill this table at the rate we
+     send, and delivered on every welcome and receipt would do the same. */
+  if (type === 'email.delivered') {
+    const dd = (ev && ev.data) || {};
+    const subj = String(dd.subject || '');
+    if (!VPA_LEAVING_SUBJECT.test(subj)) return json({ ok: true, ignored: 'delivered, not a leaving email' });
+    for (const addr of (Array.isArray(dd.to) ? dd.to : (dd.to ? [dd.to] : []))) {
+      const vs = await vpaVenuesForEmail(env, addr);
+      await vpaInsert(env, 'vp_admin_audit', {
+        actor_admin: null, actor_label: 'system',
+        action: 'venue_leaving_email_delivered',
+        target: vs.length ? ('venue:' + vs[0].id) : ('email:' + addr),
+        /* No alert email. A leaving email arriving is the expected case and mailing ourselves
+           about it would train us to ignore the ones that matter. */
+        detail: { address: addr, subject: subj, venues: vs.map(function (v) { return v.name; }) },
+      }, false).catch(() => {});
+    }
+    return json({ ok: true });
+  }
   if (type !== 'email.bounced' && type !== 'email.complained') return json({ ok: true, ignored: type });
 
   const d = (ev && ev.data) || {};
@@ -849,7 +880,7 @@ async function vpaHandleResendWebhook(request, env, json) {
     /* A LEAVING EMAIL BOUNCING IS THE EMERGENCY. Any bounce is worth recording, but the two
        that decide whether a venue knows its games are about to stop get the loud subject and
        a line telling somebody to ring them. */
-    const leaving = /last day on VenuePlay|cancellation is confirmed/i.test(subject);
+    const leaving = VPA_LEAVING_SUBJECT.test(subject);
     const head = complained ? 'marked us as spam' : 'bounced';
     const html = '<div style="font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif">'
       + '<p style="font-size:18px;font-weight:800;color:' + (leaving ? '#b3261e' : '#8a6d00') + ';margin:0 0 10px">'
@@ -3409,6 +3440,13 @@ async function vpaSendEmail(env, to, subject, html) {
       html: html,
     }),
   });
+  /* ACCEPTED, NOT DELIVERED, and the difference has already cost us. res.ok is Resend saying
+     it has taken the message: the far end has not been near it yet. The audit rows written
+     from this used to call that "delivered", and on 17 Sep 2026 a last-day email to
+     dean.tindale@outlook.com was recorded as delivered, reported to Dean as delivered, and
+     never arrived. Nothing was lying except the word.
+     The audit key is `accepted` now. Real delivery only ever arrives on the Resend webhook,
+     which is what /webhooks/resend is for. */
   return res.ok;
 }
 
@@ -6039,7 +6077,7 @@ async function vpaFireCancelConfirm(env, opts) {
         actor_admin: null, actor_label: 'system',
         action: (ref.length && !del.length) ? 'venue_last_day_NOT_emailed' : 'venue_last_day_emailed',
         target: 'venue:' + opts.venueId,
-        detail: { delivered: del, refused: ref, ends: ends, day: day, name: opts.name || null,
+        detail: { accepted: del, refused: ref, ends: ends, day: day, name: opts.name || null,
                   why: 'cancelled with ' + away + ' day(s) left, so the goodbye went instead of the confirmation' },
       }, false).catch(() => {});
       return;
@@ -6090,7 +6128,7 @@ async function vpaFireCancelConfirm(env, opts) {
       action: refused.length && !delivered.length
         ? 'venue_cancel_confirm_NOT_emailed' : 'venue_cancel_confirm_emailed',
       target: 'venue:' + opts.venueId,
-      detail: { delivered: delivered, refused: refused, ends: ends, name: opts.name || null },
+      detail: { accepted: delivered, refused: refused, ends: ends, name: opts.name || null },
     }, false).catch(() => {});
   } catch (_) { /* never let an email stop a cancellation */ }
 }
@@ -6265,7 +6303,7 @@ async function vpaLastDaySweep(env) {
         action: (refused.length && !delivered.length)
           ? 'venue_last_day_NOT_emailed' : 'venue_last_day_emailed',
         target: 'venue:' + v.id,
-        detail: { delivered: delivered, refused: refused, ends: dated, day: day,
+        detail: { accepted: delivered, refused: refused, ends: dated, day: day,
                   name: v.name || null, end_ts: endTs },
       }, false).catch(() => {});
       if (refused.length) why.push(v.name + ': Resend refused ' + refused.length + ' address(es)');

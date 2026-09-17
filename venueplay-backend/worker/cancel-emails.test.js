@@ -179,9 +179,9 @@ pass("and it does NOT carry the price warning, which belongs on the 48-hour emai
    stopping invites someone to switch off the one email they cannot afford to miss. */
 pass("it carries NO unsubscribe link", c.html.indexOf("unsubscribe")===-1 && c.html.indexOf("Unsubscribe")===-1);
 pass("it is recorded in the audit", AUDIT.length===1 && AUDIT[0].action==="venue_cancel_confirm_emailed");
-pass("and the audit names who it actually reached",
-     (AUDIT[0].detail.delivered||[]).length===3 && (AUDIT[0].detail.refused||[]).length===0,
-     JSON.stringify(AUDIT[0].detail.delivered));
+pass("and the audit names who Resend ACCEPTED it for",
+     (AUDIT[0].detail.accepted||[]).length===3 && (AUDIT[0].detail.refused||[]).length===0,
+     JSON.stringify(AUDIT[0].detail.accepted));
 
 /* --- the real date maths, before anything is stubbed ---------------------- */
 /* CANCELLING INSIDE THE LAST TWO DAYS GETS THE GOODBYE, NOT THE CONFIRMATION.
@@ -227,6 +227,21 @@ pass("it is logged under the SWEEP's action so the sweep cannot send a second on
      JSON.stringify(AUDIT.map(function(a){return a.action;})));
 pass("and it wishes them well",
      near.html.indexOf("all the very best")!==-1);
+
+/* THE WEBHOOK ONLY CARES ABOUT THE TWO EMAILS THAT MATTER. A pattern that matched
+   everything would fill the audit table at the rate we send; one that matched nothing would
+   quietly record no deliveries at all and look identical to a webhook nobody configured. */
+eval("var VPA_LEAVING_SUBJECT=" + (/const VPA_LEAVING_SUBJECT = (\/.*\/i);/.exec(BILL)||[,"/$^/"])[1] + ";");
+pass("the leaving-subject pattern matches BOTH real subjects",
+     VPA_LEAVING_SUBJECT.test("Friday is your last day on VenuePlay")
+     && VPA_LEAVING_SUBJECT.test("Your VenuePlay cancellation is confirmed - last day 19 September 2026"));
+pass("and does not match the everyday mail",
+     !VPA_LEAVING_SUBJECT.test("Your VenuePlay receipt")
+     && !VPA_LEAVING_SUBJECT.test("Welcome to VenuePlay")
+     && !VPA_LEAVING_SUBJECT.test("Your upcoming payment"));
+pass("the webhook records delivery for a leaving email, and ignores the rest",
+     /email\.delivered/.test(BILL) && /venue_leaving_email_delivered/.test(BILL)
+     && /ignored: 'delivered, not a leaving email'/.test(BILL));
 
 pass("two whole days apart is two, across a month end",
      vpaDaysBetween("2026-09-30","2026-10-02")===2, String(vpaDaysBetween("2026-09-30","2026-10-02")));
