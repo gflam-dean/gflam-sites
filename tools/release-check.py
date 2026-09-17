@@ -3471,6 +3471,51 @@ def no_session_left_open():
        why='run venueplay-backend/tools/check-stale-sessions.py for which venue and which session')
 
 
+def nobody_can_reach_another_venue():
+    """A REAL SIGNED-IN HOST TRIES TO READ AND WRITE SOMEBODY ELSE'S VENUE.
+
+    tools/tenant-isolation-attack.py signs in as a real test host and then goes after another
+    venue's members, players, staff rows, opt-in captures, draw results and night reports, both
+    straight at the database with the key out of play.html and through the Worker with a valid
+    token. Everything it tries must be refused.
+
+    IT WAS ADDED TO THE GATE ON 17 SEP 2026 BECAUSE IT COULD NOT RUN. It looked only for a
+    JWT-shaped anon key (eyJ...) and Supabase had moved to sb_publishable_, so it died on an
+    AttributeError before making a single request. An isolation attack that never attacks is the
+    worst kind of check to own: its silence reads as safety. It was not in the gate, so nothing
+    noticed. Now it is, and a tool that cannot run is a FAILURE here, not a quiet skip.
+    """
+    # Called from inside the live-only branch, so there is no flag to test here.
+    head('The isolation attack: a host tries to reach another venue')
+    tool = os.path.join(ROOT, 'tools', 'tenant-isolation-attack.py')
+    # READ THE PATH OUT OF THE TOOL, never guess it. My first version looked for
+    # ~/.vp-test-host-password, which does not exist, so this printed NOT CHECKED while the tool
+    # itself ran perfectly well minutes earlier. A check that reports "cannot run" when it can is
+    # the same fault as one that reports "fine" when it is not: either way nobody learns anything.
+    pw = os.path.join(os.path.expanduser('~'), '.gflam-migrate', 'test-host.pass')
+    if not os.path.isfile(tool):
+        ok('the isolation attack tool exists', False, why='tools/tenant-isolation-attack.py is missing')
+        return
+    if not os.path.isfile(pw):
+        note('isolation attack: NOT CHECKED',
+             'no test host password on this machine, so nobody signed in. Deliberately not a '
+             'pass: run venueplay-backend/tools/make-test-host.py, then this tool, where the '
+             'credentials are.')
+        return
+    r = subprocess.run([sys.executable, tool], capture_output=True, text=True, timeout=600)
+    out = ((r.stdout or '') + (r.stderr or '')).strip()
+    lines = [l.strip() for l in out.splitlines() if l.strip()]
+    bad = [l for l in lines if l.startswith('FAIL') or 'LEAK' in l]
+    n = len([l for l in lines if l.startswith('ok ')])
+    # A crash is not a pass. Traceback means the tool could not attack at all.
+    crashed = 'Traceback' in out or r.returncode not in (0,)
+    ok('no signed-in host can reach another venue (%d checks)' % n,
+       not crashed and not bad and 'No leak found' in out,
+       detail=('; '.join(bad[:2]) if bad else (lines[-1] if lines else 'no output')),
+       why='run python3 tools/tenant-isolation-attack.py. If it crashed rather than failed, the '
+           'attack never happened, which is not the same as nothing being wrong')
+
+
 def every_active_venue_knows_its_state():
     """THE COMPLIANCE CARD THAT CANNOT NAME THE REGULATOR.
 
@@ -3918,6 +3963,7 @@ def main():
             venue_codes_are_unique()
             founding_windows_are_open()
             no_session_left_open()
+            nobody_can_reach_another_venue()
             every_active_venue_knows_its_state()
             stripe_fields_still_exist()
             someone_actually_looked_at_a_screen()

@@ -50,10 +50,26 @@ def env():
     return e
 
 def anon_key():
+    """The key a real phone uses, read out of the page a real phone loads.
+
+    THIS TOOL COULD NOT RUN AT ALL, and had not been able to for some time. It looked only for
+    a JWT-shaped key (eyJ...), and Supabase moved to the sb_publishable_ format. So it died on
+    an AttributeError before making a single request: an isolation ATTACK that never attacked,
+    which is the worst kind of check to own, because its silence reads as safety. Found
+    17 Sep 2026 while testing everything. It takes both shapes now, and says which it found.
+
+    It still reads the key out of play.html rather than the env file on purpose: the point is
+    to attack with exactly what a punter's browser is handed, not with something we chose."""
     import re, io
     src = io.open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                                'venueplay', 'play.html'), encoding='utf-8').read()
-    return re.search(r'eyJ[A-Za-z0-9_.-]{80,}', src).group(0)
+    m = (re.search(r'sb_publishable_[A-Za-z0-9_-]{20,}', src)
+         or re.search(r'eyJ[A-Za-z0-9_.-]{80,}', src))
+    if not m:
+        print('STOP: no anon key found in venueplay/play.html. If the key format has changed '
+              'again, add it here: this tool is useless the moment it cannot find one.')
+        sys.exit(1)
+    return m.group(0)
 
 def sign_in(anon):
     if not PASS_FILE.exists():
