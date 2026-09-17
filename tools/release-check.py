@@ -1541,9 +1541,22 @@ def local_checks(which):
        It only counts as a fault when the name is called from outside the block too,
        which is the combination that actually breaks."""
     stray = []
+    # IT SCANNED VENUEPLAY'S JAVASCRIPT AND NOT PARTYPLAY'S. VenuePlay got .html and .js,
+    # PartyPlay got .html only, so all seven of its shared browser libraries and both
+    # Workers were outside the net. Nothing was hiding there, checked 18 Sep 2026 by
+    # pointing the same detector at all twenty files: zero. But this is the fault that
+    # blinded a live venue television for a day while every other check stayed green, and
+    # half a net is how it got there in the first place.
     for f in sorted(_glob.glob(os.path.join(ROOT, 'venueplay', '**', '*.html'), recursive=True)
                     + _glob.glob(os.path.join(ROOT, 'venueplay', '**', '*.js'), recursive=True)
-                    + _glob.glob(os.path.join(ROOT, 'partyplay', '**', '*.html'), recursive=True)):
+                    + _glob.glob(os.path.join(ROOT, 'partyplay', '**', '*.html'), recursive=True)
+                    + _glob.glob(os.path.join(ROOT, 'partyplay', '**', '*.js'), recursive=True)
+                    + _glob.glob(os.path.join(ROOT, 'partyplay-backend', 'lib', '*.js'))
+                    + _glob.glob(os.path.join(ROOT, 'partyplay-backend', 'worker', '*.js'))
+                    + _glob.glob(os.path.join(ROOT, 'venueplay-backend', 'worker', '*.js'))
+                    + _glob.glob(os.path.join(ROOT, 'touring-backend', '**', '*.js'), recursive=True)):
+        if f.endswith('.test.js'):
+            continue
         try:
             body = io.open(f, encoding='utf-8').read()
         except Exception:
