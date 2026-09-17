@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '17 Sep 2026, 11:07 · 99631e7b';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Sep 2026, 11:51 · 143a8c2a';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -279,7 +279,26 @@ async function handleCheckout(request, env, json) {
   // NSW 1xxx-2xxx and ACT 02xx, so ask it. Kept as a UNION with the old digit test so this can only
   // ever accept MORE venues than before, never newly reject one.
   const stateOk = vpaFoundingStateOk(foundingPostcode, codeState);
-  const founding = codeActive && stateOk;
+  /* THE POSTCODE NO LONGER DECIDES THE PRICE, and it never should have decided it this way.
+     Dean, 17 Sep 2026: "I dont want them knowing that the postcode is how we are measuring
+     it, but if its more than one venue and they have one in NSW and one in QLD I am happy
+     for the same price between the 2."
+
+     IT WAS ORDER-DEPENDENT. foundingPostcode reads venues[0] and nothing else, and that one
+     answer set the price for the WHOLE account. So a group with a Sydney pub and a Brisbane
+     pub paid $2.50 a player if they happened to type the Sydney one first and $3 if they
+     typed Brisbane first, across every venue either way. Same group, same night, same form,
+     two different bills depending on typing order.
+
+     An active code is an invite, and an invite is the whole test. One price across a group,
+     which is what Dean asked for and is the only answer that does not depend on the order
+     somebody filled in a form.
+
+     THE STATE IS STILL RECORDED. au_state decides which gaming rules apply and has nothing
+     to do with billing, and the mismatch now rides along in the Stripe metadata so a
+     cross-state signup is visible rather than silent. That matters while Queensland and WA
+     are waiting on OLGR: the price is not the thing we needed the postcode for. */
+  const founding = codeActive;
   const price = founding
     ? (plan === 'annual' ? env.STRIPE_PRICE_ANNUAL : env.STRIPE_PRICE_MONTHLY)
     : (plan === 'annual' ? env.STRIPE_PRICE_STANDARD_ANNUAL : env.STRIPE_PRICE_STANDARD_MONTHLY);
@@ -386,6 +405,10 @@ async function handleCheckout(request, env, json) {
   form.set('subscription_data[metadata][is_group]', isGroup ? '1' : '0');
   form.set('subscription_data[metadata][venue_count]', String(venueCount));
   form.set('subscription_data[metadata][returning]', returning ? '1' : '0');
+  /* Visible, not enforced: which state's link they used, and whether the first venue's
+     postcode agrees with it. Priced the same either way. */
+  form.set('subscription_data[metadata][signup_state_link]', codeState || '');
+  form.set('subscription_data[metadata][state_matches_postcode]', stateOk ? '1' : '0');
   form.set('payment_method_collection', 'always'); // require a card even during the trial
   form.set('customer_email', email);
   form.set('client_reference_id', rowId || '');
