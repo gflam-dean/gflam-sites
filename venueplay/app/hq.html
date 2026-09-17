@@ -204,7 +204,7 @@
     <div class="scard"><div class="k">Live now</div><div class="v g" id="stLive">0</div><div class="d">running a game</div></div>
     <div class="scard"><div class="k">Groups</div><div class="v" id="stGroups">0</div><div class="d">pub / operator groups</div></div>
     <div class="scard"><div class="k">Suspended</div><div class="v" id="stSusp">0</div><div class="d">kill-switch off</div></div>
-    <div class="scard"><div class="k">Founding venues</div><div class="v g" id="stSpots">&mdash;</div><div class="d">signed up</div></div>
+    <div class="scard"><div class="k">Open now</div><div class="v g" id="stSpots">&mdash;</div><div class="d">signed up</div></div>
   </div>
 
   <div class="navpills" id="hqNav">
@@ -267,7 +267,7 @@
         <div class="field"><label>Venue postcode</label><input type="text" id="nvPostcode" placeholder="e.g. 4224" class="mono" maxlength="4" inputmode="numeric"><div class="note" style="margin-top:4px">The VENUE's postcode, not the account's. It sets the state, which decides which gaming rules apply and whether players can use phones for bingo.</div></div>
         <div class="field"><label>First manager's mobile</label><input type="text" id="nvMobile" placeholder="e.g. 0412 345 678" class="mono"><div class="note" style="margin-top:4px">They are texted a login invite. Without this nobody at the venue can sign in.</div></div>
         <div class="field nvFoundF"><label>Max players (plan cap)</label><input type="number" id="nvMax" placeholder="e.g. 80" class="mono"></div>
-        <div class="field nvFoundF"><label>Plan</label><select id="nvPlan"><option value="monthly">Founding monthly</option><option value="annual">Founding annual</option></select></div>
+        <div class="field nvFoundF"><label>Plan</label><select id="nvPlan"><option value="monthly"> monthly</option><option value="annual"> annual</option></select></div>
         <div class="field nvFoundF"><label style="display:flex;align-items:center;gap:8px;font-weight:400;text-transform:none;letter-spacing:0"><input type="checkbox" id="nvComp" style="width:auto;margin:0"> Comp / demo venue &mdash; no card, no charge, and not counted as a signed-up venue</label></div>
         <div class="field"><label style="display:flex;align-items:center;gap:8px;font-weight:400;text-transform:none;letter-spacing:0"><input type="checkbox" id="nvWelcome" style="width:auto;margin:0" checked> Email the venue their welcome and setup guide</label><div class="note" style="margin-top:4px">Goes to the contact email. A paying venue gets a secure link to add their card (nothing is charged until they do, and their free month starts then). A comp venue gets the same email with the billing left out. Untick if you are onboarding them in person.</div></div>
       </div>
@@ -405,7 +405,7 @@
       <thead><tr><th>Venue</th><th>Billing</th><th>Peak players</th><th>Included</th><th>Overage</th><th style="text-align:right">Est charge</th><th></th></tr></thead>
       <tbody id="billingRows"></tbody>
     </table></div></div>
-    <div class="note">Peak rule: the single biggest metered night sets the month. Raffles and members draws never count. Open <b>Details</b> to apply a discount. Dollar estimates use the group's negotiated rate; independent venue rates live in the founding record (Worker only).</div>
+    <div class="note">Peak rule: the single biggest metered night sets the month. Raffles and members draws never count. Open <b>Details</b> to apply a discount. Dollar estimates use the group's negotiated rate; independent venue rates live in the record (Worker only).</div>
 
     <div class="lblk">GST set-aside</div>
     <div class="panel" id="gstPanel">
@@ -3067,7 +3067,8 @@
       var email=$("nvEmail").value.trim(); if(!email){ errFlash("addVenueErr","Enter the contact email."); return; }
       var max=parseInt($("nvMax").value,10);
       body.billing.founding={ contact_email:email, mobile:mob, postcode:pc, max_seats:(max||null), plan:$("nvPlan").value };
-      body.billing.comp = $("nvComp").checked;   // comp/demo: founding row 'comp', not counted in the 100 spots
+      body.billing.comp = $("nvComp").checked;   // comp/demo: founding row 'comp', so it is not counted as a paying venue.
+      // (It never was 'one of 100': that stopped being the offer well before this comment did.)
     }
     /* The welcome email is the ONLY thing that asks an HQ-onboarded venue for a card, so it is on
        by default and the flash below says whether it actually went. A grouped venue never gets one:

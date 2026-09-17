@@ -121,7 +121,7 @@
         <div class="opt on" data-bill="group">Grouped operator</div>
         <div class="opt" data-bill="founding">Independent (card)</div>
       </div>
-      <div class="note" style="margin-bottom:14px">A venue must attach to exactly one billing parent. Grouped venues are invoiced through an operator group. Independent venues are card-billed through their founding subscription record.</div>
+      <div class="note" style="margin-bottom:14px">A venue must attach to exactly one billing parent. Grouped venues are invoiced through an operator group. Independent venues are card-billed through their subscription record.</div>
 
       <div id="groupFields">
         <div class="field">
@@ -137,9 +137,9 @@
 
       <div id="foundingFields" class="hidden">
         <div class="field">
-          <label>venueplay_founding record id</label>
+          <label>venueplay_ record id</label>
           <input type="text" id="vfounding" class="mono" placeholder="paste the founding row id (uuid)">
-          <div class="note">The independent venue's paid subscription record. It is created when they sign up on the founding page (Worker, service role), so the browser cannot create it here. Copy its id from the Supabase Table Editor (venueplay_founding). The player cap is read from that record's max_seats.</div>
+          <div class="note">The independent venue's paid subscription record. It is created when they sign up on the page (Worker, service role), so the browser cannot create it here. Copy its id from the Supabase Table Editor (venueplay_). The player cap is read from that record's max_seats.</div>
         </div>
       </div>
     </div>
