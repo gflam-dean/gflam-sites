@@ -1762,6 +1762,25 @@ UNPROVABLE = {
 }
 
 MUTATIONS_LIVE = [
+    # check-columns.py asks the LIVE database whether every column the code names is really
+    # there. Name one that is not and it has to say so: this is the check that catches code
+    # written against a migration nobody has run yet.
+    ('every column the code names exists in the live database',
+     'venueplay-backend/worker/venueplay-api-FULL.js',
+     "&select=slides,draws,raffle,logo_url')",
+     "&select=slides,draws,raffle,logo_url,banner_url')",
+     'the Worker reads a column that does not exist on the live database, which is what '
+     'happens when code lands ahead of its migration, and PostgREST answers [] rather than '
+     'an error so the venue just sees an empty screen'),
+
+    # File-based, but it lives in the live branch, so prove-checks never reached it either.
+    ('every page sending X-VP-Venue shows whose venue it is',
+     'venueplay/app/billing.html',
+     "bar.innerHTML = '<span>Billing for <b>' + esc(imp.name || \"this venue\") +",
+     "bar.innerHTML = '<span>Billing for <b>' + esc(imp.venue || \"this venue\") +",
+     'the View-as banner stops naming the venue, so an HQ admin can change a price or close '
+     'an account with nothing on screen saying whose it is'),
+
     # A Worker's /health answers with the stamp that is actually deployed. Move the repo's
     # copy and the two must disagree. This is the check that says "I pasted it" is not
     # evidence, and until 17 Sep 2026 nobody had ever seen it say no.
