@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '17 Sep 2026, 16:11 · dafdc770';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Sep 2026, 16:17 · 88c0f5ea';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -322,8 +322,86 @@ export default {
       if (r.error) { console.log('[ending] FAILED: ' + r.error); return; }
       if (r.ended) console.log('[ending] switched off ' + r.ended + ' venue(s) after their last night');
     }));
+    /* THE 90-DAY DELETION PROMISE, KEPT. Its own waitUntil, like the two above, so a failure
+       anywhere else cannot be the reason a venue's old customers are still on file. */
+    ctx.waitUntil(sweepRetention(env).then(function (r) {
+      if (r.error) { console.log('[retention] FAILED: ' + r.error); return; }
+      if (r.venues) console.log('[retention] cleared player details for ' + r.venues + ' closed venue(s), '
+        + r.players + ' player row(s), ' + r.captures + ' capture(s)');
+    }));
   },
 };
+
+/* WHAT privacy.html PROMISES, IN WRITING, TO EVERY VENUE AND EVERY PLAYER:
+ *
+ *   "When a venue's account is closed, its player list is deleted within 90 days, other than
+ *    anything we have to keep for tax or legal record-keeping."
+ *
+ * Nothing did it. Not a cron, not a sweep, not a hand procedure. Found by audit 17 Sep 2026.
+ *
+ * It could not have been written either, because nothing recorded WHEN a venue closed: vp_venues
+ * had status and suspended_reason and not one timestamp for the moment either changed. Ninety
+ * days from what? Migration 84 adds closed_at, every closing path stamps it, and every comeback
+ * clears it.
+ *
+ * NULLED, NOT DELETED, and the promise's own words are why. A vp_players row is a METERED row:
+ * it is what the venue was billed on, and deleting it would quietly rewrite their invoice
+ * history, which is exactly the "tax or legal record-keeping" the promise carves out. So the row,
+ * its session and its join time all stay, and the person goes: name, email, mobile, postcode and
+ * any marketing opt-in.
+ *
+ * IT REFUSES TO GUESS. Every step is checked and the whole thing stops rather than continue on a
+ * partial answer, because the failure mode here is deleting the wrong venue's customers and there
+ * is no undo. A venue that never closed, or closed and came back, has closed_at null and is not
+ * selectable by this query at all.
+ */
+const RETENTION_DAYS = 90;
+async function sweepRetention(env) {
+  try {
+    const cutoff = new Date(Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000).toISOString();
+    /* closed_at is the ONLY thing that puts a venue in this list. Not status, not
+       suspended_reason: those describe a venue today and say nothing about when, and a venue
+       suspended for non-payment this morning is not a closed account. */
+    const venues = await sbGet(env, 'vp_venues',
+      'closed_at=lt.' + enc(cutoff) + '&status=eq.suspended&player_data_purged_at=is.null'
+      + '&select=id,name,closed_at&limit=200');
+    if (!venues || !venues.length) return { venues: 0, players: 0, captures: 0 };
+
+    let players = 0, captures = 0, done = 0;
+    for (const v of venues) {
+      /* Their sessions, so their players. A venue with no sessions is normal and is not a
+         reason to skip the captures below. */
+      const sessions = await sbGet(env, 'vp_sessions', 'venue_id=eq.' + enc(v.id) + '&select=id&limit=1000');
+      const ids = (sessions || []).map(function (x) { return x.id; });
+      const BLANK = { first_name: null, last_name: null, email: null, mobile: null, postcode: null,
+                      marketing_optin: null, marketing_optin_at: null };
+      if (ids.length) {
+        /* In batches. One PostgREST call with a thousand ids in the URL is a request nobody
+           should build, and half a purge is worse than none. */
+        for (let i = 0; i < ids.length; i += 50) {
+          const batch = ids.slice(i, i + 50).map(enc).join(',');
+          await sbPatch(env, 'vp_players', 'session_id=in.(' + batch + ')', BLANK);
+          players += Math.min(50, ids.length - i);
+        }
+      }
+      // Broadcast bingo keeps its captures against the venue directly, with no session.
+      await sbPatch(env, 'vp_captures', 'venue_id=eq.' + enc(v.id), BLANK);
+      captures++;
+      /* Stamped in its OWN column so it is not done again every night for ever.
+         The first version of this cleared closed_at instead, which was wrong twice over: it
+         destroyed the only record of when the venue actually closed, directly contradicting the
+         comment above it, and a suspended venue with closed_at null is exactly the state
+         migration 84's backfill treats as "needs a clock", so re-running the migration would
+         have started the whole ninety days again. */
+      await sbPatch(env, 'vp_venues', 'id=eq.' + enc(v.id),
+        { player_data_purged_at: new Date().toISOString() });
+      done++;
+    }
+    return { venues: done, players: players, captures: captures };
+  } catch (e) {
+    return { error: String((e && e.message) || e) };
+  }
+}
 
 /* THE LAST NIGHT IS OVER. Switch off the venues that were kept running past the end of
    their subscription.
@@ -360,7 +438,7 @@ async function sweepEndingVenues(env) {
   for (const v of due) {
     try {
       await sbPatch(env, 'vp_venues', 'id=eq.' + enc(v.id),
-        { status: 'suspended', suspended_reason: 'ended' });
+        { status: 'suspended', suspended_reason: 'ended', closed_at: new Date().toISOString() });
       ended++;
     } catch (e) { /* the next run picks it up; the window is three hours wide */ }
   }

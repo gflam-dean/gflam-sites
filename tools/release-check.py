@@ -2559,6 +2559,35 @@ def local_checks(which):
                why='run jsc tools/test-optin-held-back.js. A venue that collected details and '
                    'sees an empty file concludes the product does not work')
 
+    # THE 90-DAY DELETION PROMISE, ACTUALLY KEPT.
+    #
+    # privacy.html says in writing, to every venue and every player: "When a venue's account is
+    # closed, its player list is deleted within 90 days." Nothing did it. Not a cron, not a
+    # sweep, not a hand procedure. It could not have been written either, because nothing
+    # recorded WHEN a venue closed: vp_venues had status and suspended_reason and not one
+    # timestamp. Migration 84 adds closed_at, every closing path stamps it, every comeback clears
+    # it, and the nightly cron on venueplay-game does the work.
+    #
+    # The failure mode here is emptying the wrong venue's customer list with no undo, so most of
+    # the test is about what the sweep must REFUSE to touch: not live venues, not venues closed
+    # yesterday, not by venue when it should be by session, and never twice.
+    if which in ('both', 'venueplay'):
+        head('D. The 90-day deletion promise is actually kept')
+        t = os.path.join(ROOT, 'tools', 'test-retention-sweep.js')
+        if not os.path.isfile(t):
+            ok('the retention sweep test exists', False, why='tools/test-retention-sweep.js is missing')
+        else:
+            r = subprocess.run([JSC, t], capture_output=True, text=True, timeout=120)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+            n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
+            ok('closed venues lose their player details, and nobody else does (%d checks)' % n,
+               r.returncode == 0 and 'PASS' in out and not bad,
+               detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
+               why='run jsc tools/test-retention-sweep.js. Getting this wrong in one direction '
+                   'breaks a written promise; in the other it empties a paying venue\'s customer '
+                   'list with no way back')
+
     head('E. The Worker you are about to paste')
     dep = os.path.join(PARTYPLAY_BACK, 'worker', 'DEPLOY-partyplay-api.js')
     if which in ('both', 'partyplay') and os.path.isfile(dep):

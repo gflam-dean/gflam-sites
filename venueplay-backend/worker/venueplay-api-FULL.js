@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '17 Sep 2026, 16:08 · 4c374830';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Sep 2026, 16:17 · 37e49cda';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -4383,7 +4383,7 @@ async function vpaEndAfterLastNight(env, customerId) {
         marked++;
       } else {
         await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(v.id),
-          { status: 'suspended', suspended_reason: 'ended' });
+          { status: 'suspended', suspended_reason: 'ended', closed_at: new Date().toISOString() });
         off++;
       }
     }
@@ -4436,7 +4436,7 @@ async function vpaReactivateOnPayment(env, customerId) {
       // (suspended_reason null or 'manual') stays off until a person turns it back on.
       if (v.status !== 'suspended' || v.suspended_reason !== 'nonpayment') continue;
       await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(v.id),
-        { status: 'active', suspended_reason: null });
+        { status: 'active', suspended_reason: null, closed_at: null });
       n++;
     }
     if (n) {
@@ -5600,6 +5600,9 @@ async function vpbAddVenue(request, env, json) {
     await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(twin.id), {
       status: 'active',
       suspended_reason: null,
+      // Back on, so the 90-day retention clock stops. A venue that returns must not have its
+      // player list deleted out from under it because of a closure it has since undone.
+      closed_at: null,
       // They are asking for it back, so the cancellation is off. vpbAccountTotal excludes a venue
       // flagged cancel_at_period_end, so leaving it set would bill for a venue nobody counted.
       cancel_at_period_end: false,
@@ -6986,7 +6989,7 @@ async function vpbApplyPendingOnInvoice(env, invoice) {
            trace: GFLAM GROUP PTY LTD was found suspended on 16 Sep 2026 with nothing
            anywhere to say what had done it. */
         await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(v.id),
-          { status: 'suspended', suspended_reason: 'cancelled' });
+          { status: 'suspended', suspended_reason: 'cancelled', closed_at: new Date().toISOString() });
         await vpaInsert(env, 'vp_admin_audit', {
           actor_admin: null, actor_label: 'system',
           action: 'venue_suspended_at_period_end',
