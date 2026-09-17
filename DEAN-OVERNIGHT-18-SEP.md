@@ -3,7 +3,31 @@
 Nothing here needs you to do anything. It is a record of what was found and what
 is now guarded. Your job list is still `DEAN-TODO-17-SEP.md`.
 
-**Nothing was broken in PartyPlay.** Everything I went looking for was either
+## ONE THING FOR YOU, AND THE LIVE GATE IS RED UNTIL IT IS DONE. Two minutes.
+
+**www.partyplay.com.au answers 200 and redirects nowhere, so PartyPlay is two
+addresses.** www.venueplay.com.au redirects. www.getpartyplay.com.au redirects.
+This one domain was simply never given the rule.
+
+It matters more here than it did for VenuePlay. play.html keeps the guest's
+identity in `localStorage["ppPlayer"]`, and localStorage is per ADDRESS. A guest
+who lands on www and later on the plain name is a new person to the browser:
+asked for a nickname again, written into the database a second time, and that
+second row counts against the **fifty player cap**, which is enforced by the
+database and cannot be argued with. Their bingo card marks go too. A thirty
+person party could be refused at fifty.
+
+**Cloudflare, the partyplay.com.au zone, Rules, Redirect Rules.** Hostname
+equals `www.partyplay.com.au`, dynamic 301 to
+`concat("https://partyplay.com.au", http.request.uri.path)`, preserve query
+string. Exactly what you already did for the other two.
+
+The live gate will go green again by itself once the rule is in. The local gate
+is green now, so nothing is blocked from being pushed.
+
+---
+
+**Nothing else in PartyPlay was broken.** Everything I went looking for was either
 already correct or a gap in the CHECKING rather than in the product. That is the
 honest headline. What changed is that eleven things that were true by luck are
 now true by construction.
