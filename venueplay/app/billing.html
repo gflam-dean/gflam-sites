@@ -623,9 +623,9 @@
             ? "It stays live until the end of your current paid period, then your subscription ends. You can undo this any time before then."
             : "It stays live until the end of your current paid period, then it is removed and you stop paying for it. Your other venues are unaffected. You can undo this any time before then.") +
         '</p>' +
-        '<label class="flabel" for="whyPick">If you do not mind us asking, why?</label>' +
+        '<label class="flabel" for="whyPick">Before you go, why?</label>' +
         '<select id="whyPick">' +
-          '<option value="">Rather not say</option>' +
+          '<option value="" selected disabled>Pick one&hellip;</option>' +
           '<option value="expensive">VenuePlay is too expensive</option>' +
           '<option value="trial">We just wanted to trial it</option>' +
           '<option value="dislike">We do not like it</option>' +
@@ -637,7 +637,7 @@
         '</div>' +
         '<div class="dlgacts">' +
           '<button type="button" id="whyBack" class="dlgbtn keep">Keep it</button>' +
-          '<button type="button" id="whyGo" class="dlgbtn go">Cancel this venue</button>' +
+          '<button type="button" id="whyGo" class="dlgbtn go" disabled>Cancel this venue</button>' +
         '</div>' +
       '</div>';
     document.body.appendChild(w);
@@ -652,7 +652,21 @@
     };
     var pick = w.querySelector("#whyPick"), moreWrap = w.querySelector("#whyMoreWrap"),
         moreLbl = w.querySelector("#whyMoreLbl"), more = w.querySelector("#whyMore");
+    /* REQUIRED IN THE FORM, NEVER REFUSED BY THE SERVER. Dean, 17 Sep 2026: "The Average Joe
+       didnt give a reason, lets force the customer to give us a answer."
+
+       This reverses the 12 September decision written below, and deliberately only reverses
+       half of it. The button stays dead until they pick something, so nobody leaves without
+       telling us why. The Worker still accepts a cancellation with no reason at all, and must
+       keep doing so: a venue whose JavaScript failed, or who is on something this select does
+       not render in, must still be able to leave. A form standing between somebody and the
+       door is how a cancellation becomes a complaint, and that part was right.
+
+       "Rather not say" is gone as an option, but "Something else" takes anything, so nobody
+       is actually trapped into a reason they do not hold. */
+    var goBtn = w.querySelector("#whyGo");
     pick.addEventListener("change", function(){
+      goBtn.disabled = !pick.value;
       var q = ASK[pick.value];
       moreWrap.style.display = q ? "" : "none";
       moreLbl.textContent = q || "";
