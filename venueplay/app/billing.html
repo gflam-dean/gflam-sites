@@ -1379,6 +1379,10 @@
   $("signout").addEventListener("click", function(){ VP.signOut(); });
 
   // ---- Advertising: image slides (upload) + per-slide seconds and optional dates ----
+  // HOW MANY IMAGES A VENUE MAY HAVE. This has to be the same number as VPB_MAX_SLIDES in
+  // venueplay-api-FULL.js: the Worker trims anything past it, so a page that let you add
+  // more would show you slides the television will never play. The gate compares them.
+  var VP_MAX_SLIDES = 20;
   var screenVenues = [], screenCurrent = null, screenOrigin = "";
 
   function slideRow(s){
@@ -1637,7 +1641,9 @@
       fillScreen(d);
     });
     $("addSlide").addEventListener("click", function(){
-      if ($("slides").querySelectorAll(".adslide").length >= 12){ showMsg("Up to 12 slides."); return; }
+      // The cap is VPB_MAX_SLIDES in venueplay-api-FULL.js. The gate makes the two agree.
+      if ($("slides").querySelectorAll(".adslide").length >= VP_MAX_SLIDES){
+        showMsg("Up to " + VP_MAX_SLIDES + " slides."); return; }
       $("slides").appendChild(slideRow());
       paintScreenVenue();   // a new row starts with the bare "Choose image"
     });

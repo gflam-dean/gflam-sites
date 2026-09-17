@@ -825,6 +825,41 @@ def local_checks(which):
            '/50 players/i' not in wcode3 and re.search(r"/capped at/i", wcode3) is not None,
            why='matching the figure means raising the cap hands a guest a raw constraint error')
 
+    """HOW MANY ADVERTISING IMAGES A VENUE MAY HAVE, WRITTEN TWICE.
+
+    The Worker trims the list to its cap and saves without complaint, and billing.html decides
+    for itself when to stop offering "Add slide". Until 17 Sep 2026 both said 12, separately,
+    so raising one would have let a venue add slides the Worker quietly threw away and the
+    television would never play. Nothing would have looked broken: the page says Saved, the
+    slide is on screen until you reload, and then it is gone.
+
+    Same shape as the fifty player cap above and the album keep window below. One number, two
+    files, nothing tying them together. Raised to 20 on Dean's word the same day."""
+    wbill_p = os.path.join(ROOT, 'venueplay-backend', 'worker', 'venueplay-api-FULL.js')
+    bill_p = os.path.join(ROOT, 'venueplay', 'app', 'billing.html')
+    if os.path.isfile(wbill_p) and os.path.isfile(bill_p):
+        wb = io.open(wbill_p, encoding='utf-8').read()
+        bp = io.open(bill_p, encoding='utf-8').read()
+        # Strip comments first: the note beside each one names the other one's number.
+        wbc = re.sub(r'/\*.*?\*/', ' ', wb, flags=re.S)
+        bpc = re.sub(r'/\*.*?\*/', ' ', bp, flags=re.S)
+        bpc = re.sub(r'(^|[^:])//[^\n]*', r'\1', bpc)
+        m_w = re.search(r'VPB_MAX_SLIDES\s*=\s*(\d+)', wbc)
+        m_b = re.search(r'VP_MAX_SLIDES\s*=\s*(\d+)', bpc)
+        ok('the advertising image cap is a named number in the Worker', bool(m_w),
+           (m_w.group(1) + ' images') if m_w else 'VPB_MAX_SLIDES is gone',
+           why='a bare 12 in a slice() is a number nobody can find when it needs changing')
+        ok('and the billing page offers exactly that many',
+           bool(m_w and m_b and m_w.group(1) == m_b.group(1)),
+           'Worker %s, page %s' % (m_w and m_w.group(1), m_b and m_b.group(1)),
+           why='the page would let a venue add slides the Worker throws away, and the '
+               'television would never play them')
+        # AND THE WORKER MUST SAY NO, not trim in silence.
+        ok('a venue over the cap is told, not quietly trimmed',
+           re.search(r'b\.slides\.length\s*>\s*VPB_MAX_SLIDES', wbc) is not None,
+           why='slicing to the cap and answering Saved loses images with nothing on screen '
+               'to say which ones went')
+
     """WHAT THE PRIVACY PAGE PROMISES ABOUT A FINISHED PARTY, SOMETHING HAS TO DO.
 
     privacy.html makes three promises, not one: the album goes 30 days after the party, the

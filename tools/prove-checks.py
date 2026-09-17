@@ -1735,15 +1735,21 @@ MUTATIONS_LIVE = [
     # evidence, and until 17 Sep 2026 nobody had ever seen it say no.
     ('VenuePlay game is running the current code',
      'venueplay-backend/worker/venueplay-game.js',
-     "const BUILD = '17 Sep 2026, 16:17 \u00b7 88c0f5ea';",
-     "const BUILD = '17 Sep 2026, 16:17 \u00b7 00000000';",
+     # ANCHORED ON THE COMMENT, NOT THE STAMP. The stamp changes every time the Worker is
+     # deployed, so a mutation naming it stops applying the same afternoon it is written.
+     # This corrupts the stamp without needing to know what it says.
+     "';   // tools/stamp-workers.py, do not edit by hand",
+     "-not-the-deployed-one';   // tools/stamp-workers.py, do not edit by hand",
      'the deployed game Worker is not the code in this repo, and the only thing that was '
      'ever going to say so is this line'),
 
     ('VenuePlay billing is running the current code',
      'venueplay-backend/worker/venueplay-api-FULL.js',
-     "const BUILD = '17 Sep 2026, 16:42 \u00b7 74679017';",
-     "const BUILD = '17 Sep 2026, 16:42 \u00b7 00000000';",
+     # ANCHORED ON THE COMMENT, NOT THE STAMP. The stamp changes every time the Worker is
+     # deployed, so a mutation naming it stops applying the same afternoon it is written.
+     # This corrupts the stamp without needing to know what it says.
+     "';   // tools/stamp-workers.py, do not edit by hand",
+     "-not-the-deployed-one';   // tools/stamp-workers.py, do not edit by hand",
      'the deployed billing Worker is not the code in this repo, so a billing fix that was '
      'written and never landed reads exactly like one that did'),
 

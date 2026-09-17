@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '17 Sep 2026, 16:42 · 74679017';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Sep 2026, 22:29 · 3fa085ce';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -6846,9 +6846,15 @@ function vpbScreenStr(s, n) { return String(s == null ? '' : s).replace(/[\x00-\
 // Advertising slides are now uploaded IMAGES: {image_url, seconds, starts?, ends?}. The url
 // must be one of our own storage URLs (set by /account/screen-upload) so nothing arbitrary can
 // be pointed at the venue TV. seconds is clamped to 3..60; starts/ends are optional YYYY-MM-DD.
+/* HOW MANY ADVERTISING IMAGES A VENUE MAY HAVE. Raised from 12 to 20 on Dean's word,
+   17 Sep 2026. The number is written HERE and nowhere else in this Worker, and the gate
+   makes billing.html agree with it, because it used to be a 12 in this line and a
+   separate 12 in the page, which is two copies of one answer waiting to disagree. */
+const VPB_MAX_SLIDES = 20;
+
 function vpbCleanSlides(arr) {
   if (!Array.isArray(arr)) return [];
-  return arr.slice(0, 12).map(function (s) {
+  return arr.slice(0, VPB_MAX_SLIDES).map(function (s) {
     s = s || {};
     let secs = parseInt(s.seconds, 10); if (isNaN(secs) || secs < 3) secs = 7; if (secs > 60) secs = 60;
     const out = { image_url: vpbScreenStr(s.image_url, 500), seconds: secs };
@@ -6961,6 +6967,13 @@ async function vpbScreenSave(request, env, json) {
   if (!venue) return json({ error: 'That venue is not on your account.' }, 403);
 
   if (b.slides !== undefined && !vpbCan(o, 'advertising')) return json({ error: 'You do not have permission to change advertising.' }, 403);
+  /* SAY NO OUT LOUD. vpbCleanSlides slices to the cap, so a venue that sent 25 used to get
+     "Saved" and quietly lose five of them, with nothing on screen to say which. */
+  if (Array.isArray(b.slides) && b.slides.length > VPB_MAX_SLIDES) {
+    return json({ error: 'That is ' + b.slides.length + ' images. A venue can have up to '
+                         + VPB_MAX_SLIDES + '. Remove ' + (b.slides.length - VPB_MAX_SLIDES)
+                         + ' and save again.' }, 400);
+  }
   if (b.raffle !== undefined && !vpbCan(o, 'draws_raffles')) return json({ error: 'You do not have permission to change raffles.' }, 403);
 
   // Partial update: only the parts sent are changed. The advertising section sends slides;

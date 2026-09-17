@@ -36,6 +36,14 @@
   .setup .brand .div{width:1px;height:18px;background:rgba(255,255,255,.2)}
   .setup .brand .tag{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10px;
     letter-spacing:.16em;text-transform:uppercase;color:var(--pink)}
+  /* THE WAY BACK. The console opens this in a NEW TAB, so there is no history behind it and
+     the browser's own back button is greyed out. A venue that got here had no way back to
+     their account except retyping the address. Reported by Dean, 17 Sep 2026. */
+  .setup .brand .back{margin-left:auto;font-family:'Hanken Grotesk',sans-serif;font-weight:700;
+    font-size:12.5px;color:#B9B9C2;text-decoration:none;border:1px solid rgba(255,255,255,.2);
+    border-radius:999px;padding:6px 14px;white-space:nowrap;transition:.15s}
+  .setup .brand .back:hover{color:#fff;border-color:var(--pink)}
+  @media (max-width:520px){ .setup .brand .back{margin-left:0} }
   .setup h1{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;
     font-size:26px;line-height:1.02;margin-bottom:6px}
   .setup .lede{font-size:13.5px;color:#B9B9C2;max-width:64ch;line-height:1.5}
@@ -209,6 +217,7 @@
     <span class="word">VenuePlay</span>
     <span class="div"></span>
     <span class="tag">Scan to play signs</span>
+    <a class="back" href="/app/billing">&#8592; Back to your account</a>
   </div>
   <h1>Print your <em style="font-style:normal;color:var(--pink)">scan to play</em> signs</h1>
   <div class="lede">
