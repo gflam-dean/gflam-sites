@@ -2504,6 +2504,37 @@ def local_checks(which):
                why='run jsc tools/test-manager-permissions.js. An absent permission must not '
                    'grant a manager a venue customer list')
 
+    # NEVER COLLECT WHAT YOU WILL NOT HAND BACK.
+    #
+    # Two gates asked the same question with two different word lists: collecting is gated on the
+    # contact EMAIL DOMAIN (migration 43, widened by 82), exporting was gated on the VENUE NAME
+    # with a shorter list. Eleven words were on one and not the other, so The Mini Bar could
+    # collect its customers' details on its own domain and was then refused its own list back. We
+    # hold their data and will not give it to them, which reads as keeping it deliberately.
+    #
+    # The test lifts the real regexes AND the real decision line out of the Worker, and reads
+    # migration 82's word list straight out of the SQL, so the two cannot drift again. It also
+    # pins the anchoring SPLIT: migration 82 leaves the original words loose on purpose and
+    # anchors only the new ones, and an export gate stricter than the collection gate is the same
+    # fault in the other direction.
+    if which in ('both', 'venueplay'):
+        head('D. Never collect what you will not hand back')
+        t = os.path.join(ROOT, 'tools', 'test-optin-export-gate.js')
+        if not os.path.isfile(t):
+            ok('the opt-in export gate test exists', False,
+               why='tools/test-optin-export-gate.js is missing')
+        else:
+            r = subprocess.run([JSC, t], capture_output=True, text=True, timeout=120)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+            n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
+            ok('anything a venue may collect, it may also download (%d checks)' % n,
+               r.returncode == 0 and 'PASS' in out and not bad,
+               detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
+               why='run jsc tools/test-optin-export-gate.js. If you change the words in one gate, '
+                   'change them in the other: venueplay-backend/supabase/venueplay-82-*.sql and '
+                   'VPA_VENUE_WORDS_LOOSE/ANCHORED in the Worker')
+
     head('E. The Worker you are about to paste')
     dep = os.path.join(PARTYPLAY_BACK, 'worker', 'DEPLOY-partyplay-api.js')
     if which in ('both', 'partyplay') and os.path.isfile(dep):

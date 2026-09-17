@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '17 Sep 2026, 15:41 · 9f922a3a';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Sep 2026, 15:59 · 349bc118';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -7280,16 +7280,63 @@ async function vpbOptinExport(request, env, json) {
     return json({ error: 'Your manager access does not include player details. The venue owner '
       + 'can tick "Players and opt-in export" for you on the Account page, or export it themselves.' }, 403);
   }
-  // Customer data belongs to the venue. An account whose venue names read like a real venue can
-  // export freely; anything else is held until an admin approves (optin_release_approved), so a
-  // third party can't quietly take a venue's customer list.
-  const VENUE_RE = /\b(hotel|tavern|rsl|club|pub|bowls|bowlo|bowling|leagues|sports|surf|golf|services|inn|arms)\b/i;
-  const looksLikeVenue = o.venues.some((v) => VENUE_RE.test(v.name || ''));
-  let approved = false;
+  /* NEVER COLLECT WHAT YOU WILL NOT HAND BACK. Customer data belongs to the venue, and this gate
+     exists so a third party cannot quietly take one. But it was asking a DIFFERENT question to
+     the gate that decides whether an account may collect at all, with a different word list:
+
+       collecting  is gated on the contact EMAIL DOMAIN  (migration 43, widened by 82)
+       exporting   was gated on the VENUE NAME           (a shorter list, right here)
+
+     Eleven words were on one list and not the other: bar, lounge, bistro, cellars, winery,
+     taphouse, alehouse, brewery, brewhouse, hospitality, sportsclub. So The Mini Bar, on its own
+     domain, was allowed to collect its customers' details and then refused its own list back. We
+     hold their data and will not give it to them, which is the worst outcome available here and
+     reads as us keeping it deliberately.
+
+     So the two questions are now the SAME question, asked of both things we know: the venue's
+     name OR the contact email domain. Anything allowed to collect can always export. The export
+     side stays deliberately the more generous of the two, because being wrong here means a real
+     venue waits a day for a human, while being wrong on the collection side means a stranger
+     starts harvesting a room.
+
+     The word list below MUST match migration 82's. release-check.py compares them and fails if
+     they drift, because a list in two places is how this happened. */
+  /* TWO GROUPS, EXACTLY AS MIGRATION 82 HAS THEM, and they are not interchangeable.
+
+     The original words are matched anywhere in a domain. That is loose (it matches publicsydney
+     on "pub" and innisfailrealestate on "inn") and migration 82 deliberately did NOT tighten it,
+     because tightening would revoke accounts that are auto-approved today and collecting legally.
+
+     The words added later are ANCHORED: the word has to end a label or be followed by a
+     non-letter. That is what keeps barossavalleywines and barbershopquartet out on "bar", the
+     trap CLAUDE.md records under "Never do these".
+
+     MIRRORING THAT SPLIT IS THE WHOLE POINT. My first version anchored all of them, which was
+     tidier and wrong: publicsydney.com.au could COLLECT under the loose SQL rule and then could
+     not EXPORT under the strict one here, which is the very fault this change exists to remove,
+     reintroduced one line lower down. Export must never be stricter than collection. */
+  const VPA_VENUE_WORDS_LOOSE = 'hotel|tavern|rsl|club|pub|bowls|bowlo|bowling|leagues'
+    + '|surf|golf|hospitality|inn|arms|brewery|brewhouse|sportsclub|sports|services';
+  const VPA_VENUE_WORDS_ANCHORED = 'bar|lounge|bistro|cellars?|winery|taphouse|alehouse';
+  const VPA_VENUE_WORDS = VPA_VENUE_WORDS_LOOSE + '|' + VPA_VENUE_WORDS_ANCHORED;
+  /* A venue NAME is spaced words, so whole-word matching is right throughout: "The Mini Bar"
+     matches and "Barossa Valley Wines" does not, without needing the split. */
+  const VENUE_RE = new RegExp('\\b(' + VPA_VENUE_WORDS + ')\\b', 'i');
+  const DOMAIN_RE = new RegExp('(' + VPA_VENUE_WORDS_LOOSE + ')|(' + VPA_VENUE_WORDS_ANCHORED + ')([^a-z]|$)', 'i');
+  const FREE_MAILBOX_RE = /^(gmail|googlemail|outlook|hotmail|live|msn|yahoo|ymail|icloud|me|mac|aol|proton|protonmail|gmx|bigpond|optusnet|tpg|iinet|internode|westnet|dodo|exemail)\./i;
+
+  let approved = false, acctEmail = '';
   try {
-    const ar = await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(o.account.id) + '&select=optin_release_approved');
+    const ar = await vpaSelect(env, 'venueplay_founding',
+      'id=eq.' + encodeURIComponent(o.account.id) + '&select=optin_release_approved,contact_email');
     approved = !!(ar && ar[0] && ar[0].optin_release_approved);
+    acctEmail = String((ar && ar[0] && ar[0].contact_email) || '');
   } catch (_) { /* column may not exist yet (migration 20) */ }
+
+  const domain = acctEmail.split('@').slice(1).join('@').toLowerCase();
+  // A free mailbox says nothing about who owns the customers, so it never qualifies on its own.
+  const domainLooksLikeVenue = !!domain && !FREE_MAILBOX_RE.test(domain) && DOMAIN_RE.test(domain);
+  const looksLikeVenue = o.venues.some((v) => VENUE_RE.test(v.name || '')) || domainLooksLikeVenue;
   if (!looksLikeVenue && !approved) {
     return json({ error: 'Opt-in downloads for this account are pending a quick review, this protects venue customer data. We approve within a business day, or email hello@venueplay.com.au.', pending: true }, 403);
   }
