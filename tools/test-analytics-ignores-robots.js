@@ -22,11 +22,20 @@ function check(name, cond, saw) {
 
 /* Run the file against a described browser and report what it loaded, plus a way to
    fire a click at it afterwards. */
-function run(nav) {
+function run(nav, opts) {
+  opts = opts || {};
   var appended = [];
   var handlers = [];
+  var store = opts.store || {};
   var win = { navigator: nav, dataLayer: undefined,
-              location: { pathname: '/', host: 'venueplay.com.au' } };
+              location: { pathname: '/', host: 'venueplay.com.au',
+                          search: opts.search || '' },
+              localStorage: {
+                getItem: function (k) { return Object.prototype.hasOwnProperty.call(store, k) ? store[k] : null; },
+                setItem: function (k, v) { store[k] = String(v); },
+                removeItem: function (k) { delete store[k]; }
+              } };
+  win._store = store;
   var doc = {
     head: { appendChild: function (el) { appended.push(el.src || ''); } },
     createElement: function () { return { async: false, src: '' }; },
@@ -34,8 +43,8 @@ function run(nav) {
   };
   win.window = win;
   win.document = doc;
-  var fn = new Function('window', 'document', 'navigator', 'location', SRC);
-  fn(win, doc, nav, win.location);
+  var fn = new Function('window', 'document', 'navigator', 'location', 'localStorage', SRC);
+  fn(win, doc, nav, win.location, win.localStorage);
 
   // A stand-in for the element a real click lands on: usually a span INSIDE the anchor.
   function clickOn(tag, href, text, path) {
@@ -47,7 +56,7 @@ function run(nav) {
     return win.dataLayer ? win.dataLayer[win.dataLayer.length - 1] : null;
   }
   return { loaded: appended, dataLayer: win.dataLayer, clickOn: clickOn,
-           handlers: handlers.length };
+           handlers: handlers.length, store: store };
 }
 
 var PERSON  = { webdriver: false, userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Safari/605.1' };
@@ -125,6 +134,32 @@ check('a non-state page keeps its own name', !!s4 && s4[2].cta_state === 'see-a-
    fake button presses on top of fake visits. */
 var rc = run(ROBOT);
 check('a robot registers no click handler at all', rc.handlers === 0, rc.handlers);
+
+/* THE TEAM OPT-OUT, because the IP route is closed: Dean is behind Carrier Grade NAT,
+   so his public address is shared with other subscribers and an IP filter would bin
+   their traffic too, silently. This one travels with the browser instead. */
+var o1 = run(PERSON, { search: '?noga=1' });
+check('?noga=1 stops counting this browser', o1.loaded.length === 0, o1.loaded);
+check('and it is remembered for next time', o1.store.vpNoAnalytics === '1', o1.store);
+
+var o2 = run(PERSON, { store: { vpNoAnalytics: '1' } });
+check('a browser already opted out stays out with no parameter',
+      o2.loaded.length === 0, o2.loaded);
+check('and registers no click handler either', o2.handlers === 0, o2.handlers);
+
+var o3 = run(PERSON, { search: '?noga=0', store: { vpNoAnalytics: '1' } });
+check('?noga=0 turns counting back on', o3.loaded.length === 1, o3.loaded);
+check('and forgets the opt-out', o3.store.vpNoAnalytics === undefined, o3.store);
+
+var o4 = run(PERSON, { search: '?utm_source=email&noga=1' });
+check('it still works alongside other query parameters', o4.loaded.length === 0, o4.loaded);
+
+/* ?noga=10 is the case that actually tests the word boundary. ?nogay=1 does NOT contain
+   "noga=1" at all, so the first version of this check could not fail: removing the \b from
+   the pattern left it green. Caught by mutating the file and watching nothing happen. */
+var o5 = run(PERSON, { search: '?noga=10' });
+check('a value that merely STARTS with 1 does not opt out',
+      o5.loaded.length === 1, o5.loaded);
 
 /* The id must exist in exactly one place. Fourteen pages used to carry their own copy. */
 var pages = 0, inline = 0;

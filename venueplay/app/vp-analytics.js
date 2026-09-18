@@ -38,6 +38,39 @@
 
   var MEASUREMENT_ID = 'G-E2CZM4BZCH';   // VenuePlay. PartyPlay is a separate property.
 
+  /* OUR OWN PEOPLE, ON A SHARED IP.
+
+     Dean, 19 Sep 2026, on why the obvious fix is not available: "i have Carrier Grade NAT
+     shares a public IP across multiple subscribers."
+
+     So GA4's internal-traffic filter is not merely unreliable here, it is dangerous.
+     Activating a rule on a CGNAT address would exclude every other subscriber on that
+     carrier too, silently, and excluded data is not recorded anywhere to notice.
+     Google's own dialog calls the change "destructive and irreversible". It was left
+     in Testing and must stay there.
+
+     This travels with the BROWSER instead of the network, so it works from the office,
+     from home, and from a phone on mobile data.
+
+         venueplay.com.au/?noga=1     stop counting this browser, for good
+         venueplay.com.au/?noga=0     start counting it again
+
+     Set it once on each device the team uses. It survives until site data is cleared.
+     If it is ever wrong it fails towards COUNTING you, which costs a few sessions of
+     noise rather than hiding real venues. */
+  var OPT_OUT = 'vpNoAnalytics';
+
+  function teamOptOut() {
+    try {
+      var q = (location.search || '');
+      if (/[?&]noga=1\b/.test(q)) { localStorage.setItem(OPT_OUT, '1'); return true; }
+      if (/[?&]noga=0\b/.test(q)) { localStorage.removeItem(OPT_OUT); return false; }
+      return localStorage.getItem(OPT_OUT) === '1';
+    } catch (e) {
+      return false;   // private window, blocked storage: count them
+    }
+  }
+
   function isRobot() {
     try {
       if (navigator.webdriver === true) return true;
@@ -48,7 +81,7 @@
     return false;
   }
 
-  if (isRobot()) return;
+  if (isRobot() || teamOptOut()) return;
 
   var s = document.createElement('script');
   s.async = true;
