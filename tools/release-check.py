@@ -2728,6 +2728,36 @@ def local_checks(which):
                why='run jsc tools/test-optin-fails-closed.js. A short customer list with no '
                    'error is worse than no list at all: nobody questions it')
 
+        # AN ARCHIVED VENUE MUST LET GO OF THE HOST.
+        #
+        # Dean, 18 Sep: "the GFLAM group has the Mini Bar loaded but says the games are on
+        # hold at the moment again." A fix shipped that morning and did not fix it, because
+        # pickVenue() only ever had venue IDS and vp_venue_staff comes back UNORDERED: when
+        # the archived venue happened to sit first, the host landed right back on it. Same
+        # user, same data, different outcome depending on Postgres row order. The same fix
+        # also broke HQ "View as", because hq.html stores an id then NAVIGATES, so a
+        # deliberate choice arrived looking exactly like a restore.
+        #
+        # This suite runs the SHIPPED vp-session.js and controls the staff-row order, which
+        # is the whole bug. Every check here was watched go red against the broken build.
+        head('D2. An archived venue lets go of the host')
+        t = os.path.join(ROOT, 'tools', 'test-archived-venue-restore.js')
+        if not os.path.isfile(t):
+            ok('the archived-venue test exists', False,
+               why='tools/test-archived-venue-restore.js is missing')
+        else:
+            r = subprocess.run([JSC, t], capture_output=True, text=True, timeout=120)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+            n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
+            ok('an archived venue is not restored, and an explicit choice still works '
+               '(%d checks)' % n,
+               r.returncode == 0 and n > 0 and not bad,
+               detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
+               why='run jsc tools/test-archived-venue-restore.js. A host locked into an '
+                   'archived venue reads as an outage, and an admin bounced out of View as '
+                   'has no way to support them')
+
     # THE 90-DAY DELETION PROMISE, ACTUALLY KEPT.
     #
     # privacy.html says in writing, to every venue and every player: "When a venue's account is

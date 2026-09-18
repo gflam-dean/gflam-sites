@@ -106,6 +106,12 @@
   var SUPA_ANON = "sb_publishable_9v83FWCSt7Di-jkgTvsMJQ_f6lJPovb";
 
   var VENUE_KEY = "vpCurrentVenue";   // localStorage: last chosen venue id
+  /* An EXPLICIT choice, kept for the tab only. hq.html "View as" stores a venue id and
+     then NAVIGATES to index.html, so by the time build() runs, a deliberate choice looks
+     exactly like a remembered one. Without this marker the archived guard below threw the
+     admin's own choice away and bounced them back to HQ with no message. sessionStorage,
+     not local: the choice should last as long as the tab and no longer. */
+  var EXPLICIT_KEY = "vpVenueExplicit";
   var SIGNIN    = "index.html";       // the sign-in shell (this folder)
 
   var _client  = null;   // the Supabase client singleton
@@ -139,6 +145,12 @@
   function rememberVenue(id) {
     try { if (id) localStorage.setItem(VENUE_KEY, id); else localStorage.removeItem(VENUE_KEY); } catch (e) {}
   }
+  function explicitVenue() {
+    try { return sessionStorage.getItem(EXPLICIT_KEY) || null; } catch (e) { return null; }
+  }
+  function markExplicit(id) {
+    try { if (id) sessionStorage.setItem(EXPLICIT_KEY, id); else sessionStorage.removeItem(EXPLICIT_KEY); } catch (e) {}
+  }
 
   // ---- role resolution ------------------------------------------------
   // Reads are RLS-safe: a non-admin reading vp_platform_admins simply gets
@@ -146,10 +158,30 @@
   // only their own venue's rows, which includes their own membership.
   function resolveRole(client, user) {
     var uid = user.id;
+    /* The THIRD read is why this function changed on 18 Sep. pickVenue() used to have
+       nothing but venue ids, so it could not tell a live venue from one somebody had
+       switched off, and it returned staff[0] with no status test at all. vp_venue_staff
+       comes back UNORDERED, so a host whose archived venue happened to sit first landed
+       straight back on it: same user, same data, different outcome depending on Postgres
+       row order, which is why it read as intermittent. One extra read buys the status of
+       every venue they belong to, and removes the second round trip the old guard needed. */
     return Promise.all([
       client.from("vp_platform_admins").select("role,label").eq("auth_user_id", uid).maybeSingle(),
       client.from("vp_venue_staff").select("venue_id,role,display_name").eq("auth_user_id", uid)
     ]).then(function (res) {
+      var rows = (res[1] && res[1].data) || [];
+      var ids = rows.map(function (r) { return r.venue_id; }).filter(Boolean);
+      if (!ids.length) return [res[0], res[1], {}];
+      return client.from("vp_venues").select("id,status,suspended_reason").in("id", ids)
+        .then(function (vr) {
+          var map = {};
+          ((vr && vr.data) || []).forEach(function (v) { map[v.id] = v; });
+          return [res[0], res[1], map];
+        })
+        // A venue-status read that fails must not cost the host their session. Fall back
+        // to knowing nothing, which behaves exactly as this did before the third read.
+        .catch(function () { return [res[0], res[1], {}]; });
+    }).then(function (res) {
       var adminRow = (res[0] && res[0].data) || null;
       var staff    = (res[1] && res[1].data) || [];
       var isAdmin  = !!adminRow;
@@ -157,6 +189,7 @@
         isAdmin: isAdmin,
         adminRole: adminRow ? adminRow.role : null,
         staff: staff,
+        venueState: res[2] || {},
         scope: isAdmin ? "admin" : (staff.length ? "staff" : "none")
       };
     });
@@ -218,12 +251,33 @@
               v.suspended_reason.indexOf('archived') === 0);
   }
 
-  // Choose the working venue: stored choice if the caller may use it,
-  // else their first staff venue, else null (admin with no membership).
-  function pickVenue(role) {
+  // Is THIS id one we know to be archived? Unknown is never treated as archived: an
+  // admin viewing a venue they are not staff at has no row in the map, and guessing
+  // would throw away their choice.
+  function archivedId(role, id) {
+    var v = id && role && role.venueState ? role.venueState[id] : null;
+    return !!(v && isArchived(v));
+  }
+
+  /* Choose the working venue.
+     Order of preference: the stored choice if the caller may use it AND it is not a
+     venue somebody switched off, then the first of their venues that is not archived,
+     then the stored one anyway, then their first venue, then null.
+
+     Keeping a LONE archived venue is deliberate. Swapping a host's only venue for
+     nothing is worse than showing them the banner, which now says "archived" and tells
+     them how to bring it back. */
+  function pickVenue(role, allowArchived) {
     var stored = storedVenue();
     var mine = role.staff.map(function (s) { return s.venue_id; });
-    if (stored && (role.isAdmin || mine.indexOf(stored) >= 0)) return stored;
+    var mayUseStored = !!(stored && (role.isAdmin || mine.indexOf(stored) >= 0));
+
+    if (mayUseStored && (allowArchived || !archivedId(role, stored))) return stored;
+
+    for (var i = 0; i < mine.length; i++) {
+      if (!archivedId(role, mine[i])) return mine[i];
+    }
+    if (mayUseStored) return stored;
     if (mine.length) return mine[0];
     return null;   // admin picks a venue explicitly via setCurrentVenue()
   }
@@ -275,9 +329,14 @@
       if (!user) { _ctx = emptyCtx(client); return _ctx; }
 
       return resolveRole(client, user).then(function (role) {
-        var venueId = pickVenue(role);
-        // Read BEFORE assemble(), because assemble() re-stores the id it used.
-        var fromStore = !!(venueId && venueId === storedVenue());
+        /* An explicit choice wins, even when it is archived. Anything else prefers a
+           venue that is not switched off. This replaced a guard that assembled the
+           archived venue, cleared storage and re-picked: that cost two extra round
+           trips, could only ever re-pick staff[0] (unordered, often the same archived
+           venue), and turned HQ "View as" into a bounce back to HQ because a stored-then-
+           navigated choice is indistinguishable from a restore. */
+        var chosen = explicitVenue();
+        var venueId = pickVenue(role, !!(chosen && chosen === storedVenue()));
 
         function assemble(id) {
           return Promise.all([loadVenue(client, id), loadSettings(id)])
@@ -293,20 +352,7 @@
             });
         }
 
-        /* NEVER auto-restore an ARCHIVED venue. pickVenue() only has ids, so it cannot know,
-           and for an admin it returns the stored id unconditionally. The result: once an
-           archived venue had been selected, every page load restored the same dead venue and
-           re-showed "your games are on hold", for ever, with no way out but the venue picker.
-           Dean hit this on 18 Sep and read it as an outage. Explicitly choosing an archived
-           venue still works, because setCurrentVenue() stores it and this only fires on a
-           RESTORE. If there is nothing better to fall back to, keep it and let the banner
-           speak: silently swapping a lone venue for nothing would be worse. */
-        return assemble(venueId).then(function (ctx) {
-          if (!fromStore || !isArchived(ctx.venue)) return ctx;
-          rememberVenue(null);
-          var next = pickVenue(role);   // stored is cleared, so this is the fallback
-          return next === venueId ? ctx : assemble(next);
-        });
+        return assemble(venueId);
       });
     }).catch(function (err) {
       // Never leave the page wedged: fall back to a signed-out context.
@@ -358,6 +404,7 @@
       var allowed = ctx.isAdmin || ctx.staff.some(function (s) { return s.venue_id === id; });
       if (!allowed) return ctx;
       rememberVenue(id);
+      markExplicit(id);   // survives the navigation hq.html does straight after this
       return Promise.all([loadVenue(getClient(), id), loadSettings(id)]).then(function (vs) {
         _ctx = Object.assign({}, ctx, {
           currentVenueId: id,
