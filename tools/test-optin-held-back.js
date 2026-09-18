@@ -37,14 +37,27 @@ function arm(opts) {
     var size = lim ? parseInt(lim[1], 10) : rows.length;
     return rows.slice(start, start + size);
   }
-  vpaSelect = function (env, table, q) {
+  /* STUBS fetch, NOT vpaSelect. vpaSelectAll stopped going through vpaSelect on 18 Sep: it
+     does its own fetch now so that a non-2xx page THROWS instead of returning [], which a
+     paging loop reads as "no more pages". Stubbing the old seam left fetch undefined and every
+     check here went red, which is the gate doing its job. See tools/test-optin-fails-closed.js. */
+  function reply(rows, q) {
+    return Promise.resolve({ ok: true, status: 200,
+      text: function () { return Promise.resolve(''); },
+      json: function () { return Promise.resolve(page(rows, q)); } });
+  }
+  fetch = function (url) {
+    var u = String(url);
+    var q = u.indexOf('?') >= 0 ? u.slice(u.indexOf('?') + 1) : '';
+    var table = /\/rest\/v1\/([^?]+)/.exec(u);
+    table = table ? table[1] : '';
     queries.push(table + '?' + q);
-    if (table === 'v_vp_player_optins') return Promise.resolve(page(opts.visible || [], q));
+    if (table === 'v_vp_player_optins') return reply(opts.visible || [], q);
     if (table === 'vp_captures') {
       if (opts.heldQueryFails) return Promise.reject(new Error('boom'));
-      return Promise.resolve(page(opts.held || [], q));
+      return reply(opts.held || [], q);
     }
-    return Promise.resolve([]);
+    return reply([], q);
   };
 }
 function run(opts) {

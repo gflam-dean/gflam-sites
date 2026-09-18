@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '18 Sep 2026, 01:28 · d2de7238';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '18 Sep 2026, 13:04 · 80a87cef';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -1272,14 +1272,42 @@ async function vpaPatch(env, table, filter, obj) {
    game Worker. Stopping on a short page is wrong for exactly the reason this exists:
    Supabase's own max-rows may be lower than the page size asked for, so every page is
    short, the loop stops after one, and the truncation is silent all over again. */
+/* PAGES, AND FAILS CLOSED.
+
+   This was built on vpaSelect, which returns [] on ANY non-2xx. A paging loop reads that as
+   "no more pages", so one transient Supabase error halfway through an opt-in export handed the
+   venue a SHORT copy of its own customer list, with nothing anywhere saying so. That is the
+   exact fault the paging was added to remove, reintroduced by building it on something that
+   fails open. So it does its own fetch and it THROWS. The game Worker's sbGetAll was always
+   safe this way, because sbGet throws; only billing had the hole. Player data is tier one.
+
+   Stops only on an EMPTY page, never a short one. Supabase's own max-rows can sit below the
+   page size asked for, so every page can come back short, and breaking on a short page would
+   truncate after the first one. */
 async function vpaSelectAll(env, table, query, pageSize) {
   const size = pageSize || 1000;
-  let out = [], offset = 0;
-  for (let page = 0; page < 40; page++) {
-    const rows = await vpaSelect(env, table, query + '&limit=' + size + '&offset=' + offset);
-    if (!Array.isArray(rows) || rows.length === 0) break;
+  const CAP = 40;
+  let out = [], offset = 0, lastPageWasFull = false;
+  for (let page = 0; page < CAP; page++) {
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/' + table + '?' + query +
+      '&limit=' + size + '&offset=' + offset, { headers: vpaHeaders(env) });
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      throw new Error('read ' + table + ' page ' + page + ' at offset ' + offset +
+                      ': ' + res.status + ' ' + body.slice(0, 200));
+    }
+    const rows = await res.json();
+    if (!Array.isArray(rows) || rows.length === 0) { lastPageWasFull = false; break; }
     out = out.concat(rows);
     offset += rows.length;
+    lastPageWasFull = rows.length >= size;
+  }
+  /* And do not truncate quietly at the page cap either. If the last page came back FULL we are
+     still mid-list, and handing back what we have would be the same silent short file by
+     another route. Loud beats short. */
+  if (lastPageWasFull) {
+    throw new Error('read ' + table + ': more than ' + out.length +
+                    ' rows, page cap of ' + CAP + ' reached before the end of the list');
   }
   return out;
 }
@@ -7213,7 +7241,10 @@ async function vpaOptinCsv(env, venues) {
        thousand and was told nothing. Their own customer list, silently short. */
     const rows = await vpaSelectAll(env, 'v_vp_player_optins',
       'venue_id=in.(' + ids.map(encodeURIComponent).join(',') +
-      ')&select=venue_id,first_name,last_name,email,mobile,postcode,opted_in_at&order=opted_in_at.desc');
+      ')&select=venue_id,first_name,last_name,email,mobile,postcode,opted_in_at'
+      /* opted_in_at is NOT unique, and offset paging over a non-unique order can skip a
+         row at a page boundary when two timestamps tie. The tiebreakers make it total. */
+      + '&order=opted_in_at.desc,email.asc,mobile.asc');
     /* One person once. The same punter joins a dozen nights, and a venue pasting this into a
        mail tool must not email them a dozen times. Keyed on email, then mobile, then the name,
        which is the same order of trust the rest of this file uses. */

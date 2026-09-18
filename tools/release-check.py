@@ -2703,6 +2703,31 @@ def local_checks(which):
                why='run jsc tools/test-optin-held-back.js. A venue that collected details and '
                    'sees an empty file concludes the product does not work')
 
+    # A FAILED PAGE MUST NOT READ AS THE END OF THE LIST.
+    #
+    # vpaSelectAll was built on vpaSelect, which returns [] on any non-2xx. A paging loop reads
+    # [] as "no more pages", so one transient Supabase error halfway through an opt-in export
+    # handed the venue a SHORT copy of its own customer list and reported success. Proved on
+    # 18 Sep against the old code: a failure on page two returned 1000 rows out of 2500 and the
+    # export said count=1000. The empty file this replaced was at least noticeable. A wrong one
+    # is not. Player data is tier one.
+    if which in ('both', 'venueplay'):
+        head('D. A failed page is not the end of the list')
+        t = os.path.join(ROOT, 'tools', 'test-optin-fails-closed.js')
+        if not os.path.isfile(t):
+            ok('the fail-closed paging test exists', False,
+               why='tools/test-optin-fails-closed.js is missing')
+        else:
+            r = subprocess.run([JSC, t], capture_output=True, text=True, timeout=120)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+            n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
+            ok('a failed page throws instead of truncating the export (%d checks)' % n,
+               r.returncode == 0 and 'PASS' in out and not bad,
+               detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
+               why='run jsc tools/test-optin-fails-closed.js. A short customer list with no '
+                   'error is worse than no list at all: nobody questions it')
+
     # THE 90-DAY DELETION PROMISE, ACTUALLY KEPT.
     #
     # privacy.html says in writing, to every venue and every player: "When a venue's account is
