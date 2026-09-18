@@ -2740,6 +2740,30 @@ def local_checks(which):
         #
         # This suite runs the SHIPPED vp-session.js and controls the staff-row order, which
         # is the whole bug. Every check here was watched go red against the broken build.
+        # A FAILED READ MUST NOT PUT A VENUE IN THE DARK.
+        #
+        # The nightly sweep decides "have they played since they cancelled?" from two
+        # reads, and they used vpaSelect, which returns [] on ANY non-2xx. One 503 at
+        # 3:30am and every cancelling venue read as "never played again" and was switched
+        # off. The reads were also unpaged over 90 days across every venue. Reverting to
+        # the old code archives the test venue in both cases, which is what these checks
+        # were watched doing before the fix.
+        head('D3. A failed read does not archive a venue')
+        t = os.path.join(ROOT, 'tools', 'test-archive-sweep-fails-closed.js')
+        if not os.path.isfile(t):
+            ok('the archive-sweep fail-closed test exists', False,
+               why='tools/test-archive-sweep-fails-closed.js is missing')
+        else:
+            r = subprocess.run([JSC, t], capture_output=True, text=True, timeout=120)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+            n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
+            ok('the nightly archive sweep fails closed (%d checks)' % n,
+               r.returncode == 0 and n > 0 and not bad,
+               detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
+               why='run jsc tools/test-archive-sweep-fails-closed.js. A venue archived '
+                   'by mistake is a dark room on a Friday night')
+
         head('D2. An archived venue lets go of the host')
         t = os.path.join(ROOT, 'tools', 'test-archived-venue-restore.js')
         if not os.path.isfile(t):

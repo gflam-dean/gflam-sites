@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '18 Sep 2026, 17:40 · d80b7234';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '18 Sep 2026, 20:01 · 97380df3';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -2554,13 +2554,26 @@ async function vpaAutoArchiveSweep(env, actor, days, dryRun) {
     const t = Date.parse(ts);
     if (isFinite(t) && (!lastPlayed[id] || t > lastPlayed[id])) lastPlayed[id] = t;
   };
-  const sess = await vpaSelect(env, 'vp_sessions',
+  /* THESE TWO READS DECIDE WHETHER A VENUE GOES DARK, SO THEY MUST FAIL CLOSED.
+     They used vpaSelect, which returns [] on ANY non-2xx. One 503 here and lastPlayed
+     is empty, every cancelling venue reads as "never played again", and the sweep
+     switches them all off at 3:30am with nobody watching. They were also UNPAGED
+     against a 90-day window across every venue, so past 1000 rows the same thing
+     happened without any error at all: the venues whose sessions fell outside the
+     first page looked quiet.
+
+     vpaSelectAll throws instead, and scheduled() already wraps this whole sweep in a
+     try, so a failed read now means NOTHING is archived tonight. A venue archived by
+     mistake is a dark room on a Friday; a sweep that skips a night costs nothing. */
+  const sess = await vpaSelectAll(env, 'vp_sessions',
     'select=venue_id,opened_at,started_at,ended_at' +
-    '&or=(started_at.gte.' + lookback + ',opened_at.gte.' + lookback + ',ended_at.gte.' + lookback + ')') || [];
+    '&or=(started_at.gte.' + lookback + ',opened_at.gte.' + lookback + ',ended_at.gte.' + lookback + ')' +
+    '&order=venue_id.asc,opened_at.asc,id.asc');
   for (const r of sess) note(r.venue_id, r.started_at || r.opened_at || r.ended_at);
-  const reps = await vpaSelect(env, 'vp_game_reports',
+  const reps = await vpaSelectAll(env, 'vp_game_reports',
     'select=venue_id,ended_at,created_at' +
-    '&or=(ended_at.gte.' + lookback + ',created_at.gte.' + lookback + ')') || [];
+    '&or=(ended_at.gte.' + lookback + ',created_at.gte.' + lookback + ')' +
+    '&order=venue_id.asc,created_at.asc,id.asc');
   for (const r of reps) note(r.venue_id, r.ended_at || r.created_at);
 
   const archived = [];
