@@ -2748,6 +2748,28 @@ def local_checks(which):
         # off. The reads were also unpaged over 90 days across every venue. Reverting to
         # the old code archives the test venue in both cases, which is what these checks
         # were watched doing before the fix.
+        # OUR OWN CHECKS MUST NOT BE COUNTED AS VISITORS.
+        #
+        # verify-live.py drives a REAL browser through three live pages every run and waits
+        # forty seconds on each. GA4 filters known spiders; it cannot filter us, and to it
+        # that is the most engaged visitor of the day. vp-analytics.js drops the tag when
+        # navigator.webdriver is set, which travels with the robot rather than with an IP.
+        head('D4. Analytics ignores our own robots')
+        t = os.path.join(ROOT, 'tools', 'test-analytics-ignores-robots.js')
+        if not os.path.isfile(t):
+            ok('the analytics robot-guard test exists', False,
+               why='tools/test-analytics-ignores-robots.js is missing')
+        else:
+            r = subprocess.run([JSC, t], capture_output=True, text=True, timeout=120)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+            n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
+            ok('a real visitor is counted, an automated browser is not (%d checks)' % n,
+               r.returncode == 0 and n > 0 and not bad,
+               detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
+               why='run jsc tools/test-analytics-ignores-robots.js. Our own live checks '
+                   'inflating the numbers makes every marketing decision off them wrong')
+
         head('D3. A failed read does not archive a venue')
         t = os.path.join(ROOT, 'tools', 'test-archive-sweep-fails-closed.js')
         if not os.path.isfile(t):
