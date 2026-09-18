@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '18 Sep 2026, 13:04 · 80a87cef';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '18 Sep 2026, 17:40 · d80b7234';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -1286,8 +1286,12 @@ async function vpaPatch(env, table, filter, obj) {
    truncate after the first one. */
 async function vpaSelectAll(env, table, query, pageSize) {
   const size = pageSize || 1000;
-  const CAP = 40;
-  let out = [], offset = 0, lastPageWasFull = false;
+  /* 200 pages, not 40. At 40 an export of EXACTLY 40,000 rows threw on a complete list,
+     because the loop used its last iteration on real data and never got to see the empty
+     page that proves the end. The cap is a runaway guard, not a size limit, so it should
+     sit far above any real list. */
+  const CAP = 200;
+  let out = [], offset = 0, sawTheEnd = false;
   for (let page = 0; page < CAP; page++) {
     const res = await fetch(env.SUPABASE_URL + '/rest/v1/' + table + '?' + query +
       '&limit=' + size + '&offset=' + offset, { headers: vpaHeaders(env) });
@@ -1297,15 +1301,17 @@ async function vpaSelectAll(env, table, query, pageSize) {
                       ': ' + res.status + ' ' + body.slice(0, 200));
     }
     const rows = await res.json();
-    if (!Array.isArray(rows) || rows.length === 0) { lastPageWasFull = false; break; }
+    if (!Array.isArray(rows) || rows.length === 0) { sawTheEnd = true; break; }
     out = out.concat(rows);
     offset += rows.length;
-    lastPageWasFull = rows.length >= size;
   }
-  /* And do not truncate quietly at the page cap either. If the last page came back FULL we are
-     still mid-list, and handing back what we have would be the same silent short file by
-     another route. Loud beats short. */
-  if (lastPageWasFull) {
+  /* Do not truncate quietly at the page cap either. The ONLY proof that a list is complete
+     is an EMPTY page. This used to ask "was the last page full?", which is a different
+     question and a wrong one: when Supabase's own max-rows sits BELOW the page size we
+     asked for, every page is short by construction, the flag is never set, and the cap
+     truncates in silence. That is the exact fault this function exists to prevent, arriving
+     by another route. Ask whether we actually saw the end. */
+  if (!sawTheEnd) {
     throw new Error('read ' + table + ': more than ' + out.length +
                     ' rows, page cap of ' + CAP + ' reached before the end of the list');
   }
