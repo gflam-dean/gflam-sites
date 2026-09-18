@@ -209,6 +209,15 @@
     return null;
   }
 
+  /* An ARCHIVED venue is not a fault, it is a venue somebody switched off on purpose.
+     It still reads status === 'suspended', so every check that only looks at status treats
+     it as a problem and says so to the host. Reason is what separates the two. */
+  function isArchived(v) {
+    return !!(v && v.status === 'suspended' &&
+              typeof v.suspended_reason === 'string' &&
+              v.suspended_reason.indexOf('archived') === 0);
+  }
+
   // Choose the working venue: stored choice if the caller may use it,
   // else their first staff venue, else null (admin with no membership).
   function pickVenue(role) {
@@ -267,17 +276,37 @@
 
       return resolveRole(client, user).then(function (role) {
         var venueId = pickVenue(role);
-        return Promise.all([loadVenue(client, venueId), loadSettings(venueId)])
-          .then(function (vs) {
-            _ctx = {
-              client: client, user: user, authed: true, scope: role.scope,
-              isAdmin: role.isAdmin, adminRole: role.adminRole, staff: role.staff,
-              currentVenueId: venueId, role: venueId ? roleAtVenue(role, venueId) : null,
-              venue: vs[0], settings: vs[1]
-            };
-            if (venueId) rememberVenue(venueId);
-            return _ctx;
-          });
+        // Read BEFORE assemble(), because assemble() re-stores the id it used.
+        var fromStore = !!(venueId && venueId === storedVenue());
+
+        function assemble(id) {
+          return Promise.all([loadVenue(client, id), loadSettings(id)])
+            .then(function (vs) {
+              _ctx = {
+                client: client, user: user, authed: true, scope: role.scope,
+                isAdmin: role.isAdmin, adminRole: role.adminRole, staff: role.staff,
+                currentVenueId: id, role: id ? roleAtVenue(role, id) : null,
+                venue: vs[0], settings: vs[1]
+              };
+              if (id) rememberVenue(id);
+              return _ctx;
+            });
+        }
+
+        /* NEVER auto-restore an ARCHIVED venue. pickVenue() only has ids, so it cannot know,
+           and for an admin it returns the stored id unconditionally. The result: once an
+           archived venue had been selected, every page load restored the same dead venue and
+           re-showed "your games are on hold", for ever, with no way out but the venue picker.
+           Dean hit this on 18 Sep and read it as an outage. Explicitly choosing an archived
+           venue still works, because setCurrentVenue() stores it and this only fires on a
+           RESTORE. If there is nothing better to fall back to, keep it and let the banner
+           speak: silently swapping a lone venue for nothing would be worse. */
+        return assemble(venueId).then(function (ctx) {
+          if (!fromStore || !isArchived(ctx.venue)) return ctx;
+          rememberVenue(null);
+          var next = pickVenue(role);   // stored is cleared, so this is the fallback
+          return next === venueId ? ctx : assemble(next);
+        });
       });
     }).catch(function (err) {
       // Never leave the page wedged: fall back to a signed-out context.
@@ -622,6 +651,11 @@
     bar.innerHTML = nonpay
       ? 'Your tab has run a bit long. Settle up and we will pour you another round of bingo. ' +
         '<a href="billing.html#pastDue" style="color:#180d00;text-decoration:underline">Update your card</a> and everything comes straight back on, exactly as you left it.'
+      // An archived venue was switched off on purpose. Telling its owner to "give us a shout
+      // and we will sort it out" reads as a fault and sends them chasing a problem that is not
+      // one. Say what it is, and point at the way out.
+      : isArchived(v)
+      ? 'This venue is archived, so its games are switched off. Nothing has been lost. Choose another venue to keep playing, or email hello@venueplay.com.au to bring this one back.'
       : 'Your games are on hold for the moment. Nothing has been lost. Give us a shout at hello@venueplay.com.au and we will sort it out.';
     if (document.body.firstChild) document.body.insertBefore(bar, document.body.firstChild);
     else document.body.appendChild(bar);
