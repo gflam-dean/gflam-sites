@@ -1,9 +1,23 @@
 # Where the Google tag goes, and where it must not
 
-Tag: `G-7S6R8QJSMQ`
+Tag: `G-73XKQG9TBN`   (GA4 property PartyPlay, 554860060, under the GFLAM account)
+
+**THE OLD TAG WAS POINTING AT NOTHING.** Until 18 September 2026 this said
+`G-7S6R8QJSMQ`, and there was no GA4 property anywhere on any of Dean's five Analytics
+accounts with that id. Every visit PartyPlay has ever had went into a void: the tag was
+present, looked correct, cost a request on every page load, and measured nobody. Found
+while building the traffic dashboard, by listing every property on every account rather
+than trusting the id in the source.
+
+A PartyPlay property was created on 18 Sep with the id above. **There is no history before
+that date and there never will be.**
 
 ## Tagged
-`index`, `start`, `booked`, `setup`, `terms`, `privacy`
+`index`, `start`, `booked`, `terms`, `privacy`
+
+**`setup` is NOT tagged, though this file used to claim it was.** Checked page by page on
+18 Sep. If you want the setup step measured, and it is arguably the most interesting step
+in the funnel, it has to be added deliberately, mindful of the query-string rule below.
 
 The buyer's journey. This is the only part where the numbers are worth anything:
 how many people land, how many start a booking, how many finish it.
