@@ -64,4 +64,62 @@
   window.gtag = gtag;
   gtag('js', new Date());
   gtag('config', MEASUREMENT_ID);
+
+  /* ---------------------------------------------------------------------------------
+     WHAT DID THEY ACTUALLY PRESS?
+
+     Dean, 19 Sep 2026: "So people are landing on the page and not clicking anything?"
+     Nobody could answer that, including me, and THAT was the real problem.
+
+     The two main buttons on the homepage go to #claim and #modes. They are anchors that
+     scroll the same page. GA4's own automatic click tracking only fires for links leaving
+     the site, so an in-page anchor produces no event and no page view. Every press of
+     "Get started" was invisible. 292 people saw that page in 30 days and we could not say
+     whether one of them touched the button.
+
+     One delegated listener on the document, so it works for anything added later and costs
+     one handler rather than one per link.
+     --------------------------------------------------------------------------------- */
+  document.addEventListener('click', function (ev) {
+    var a;
+    try {
+      // .closest, because the click usually lands on a span INSIDE the anchor
+      a = ev.target && ev.target.closest && ev.target.closest('a,button');
+    } catch (e) { return; }
+    if (!a) return;
+
+    var href = a.getAttribute('href') || '';
+    var label = (a.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+    if (!label) label = a.getAttribute('aria-label') || '(no label)';
+
+    var kind = 'other';
+    if (href.charAt(0) === '#') kind = 'anchor';              // the invisible ones
+    else if (/^mailto:/i.test(href)) kind = 'email';
+    else if (/^tel:/i.test(href)) kind = 'phone';
+    else if (/^https?:/i.test(href) && href.indexOf(location.host) === -1) kind = 'outbound';
+    else if (href) kind = 'internal';
+    else if (a.tagName === 'BUTTON') kind = 'button';
+
+    /* WHICH PAGE THEY PRESSED IT ON, as its own field.
+       Dean, 19 Sep: "We should do a different one for each state though so a nsw/get
+       started etc". page_path carries it, but reading a report by combining two dimensions
+       is the sort of thing nobody does twice. cta_state makes "NSW / Get started" one line.
+       The homepage and the state pages sell the SAME product at DIFFERENT prices, so this
+       is the comparison that matters: /nsw holds people 279 seconds and engages 76%, the
+       homepage 69 seconds and 10%. */
+    var seg = (location.pathname || '/').split('/')[1] || '';
+    seg = seg.replace(/\.html$/, '').toLowerCase();
+    var state = !seg ? 'home'
+      : (/^(nsw|qld|vic|sa|wa|nt|tas|act)$/.test(seg) ? seg.toUpperCase() : seg);
+
+    try {
+      gtag('event', 'cta_click', {
+        cta_label: label,
+        cta_target: href || '(button)',
+        cta_kind: kind,
+        cta_state: state,
+        page_path: location.pathname
+      });
+    } catch (e) { /* never let analytics break a click */ }
+  }, true);   // capture, so it still counts when the handler below calls stopPropagation
 })();

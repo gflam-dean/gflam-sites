@@ -20,19 +20,34 @@ function check(name, cond, saw) {
   else { FAIL++; print('  FAIL ' + name + (saw !== undefined ? '   saw: ' + JSON.stringify(saw) : '')); }
 }
 
-/* Run the file against a described browser and report what it loaded. */
+/* Run the file against a described browser and report what it loaded, plus a way to
+   fire a click at it afterwards. */
 function run(nav) {
   var appended = [];
-  var win = { navigator: nav, dataLayer: undefined };
+  var handlers = [];
+  var win = { navigator: nav, dataLayer: undefined,
+              location: { pathname: '/', host: 'venueplay.com.au' } };
   var doc = {
     head: { appendChild: function (el) { appended.push(el.src || ''); } },
-    createElement: function () { return { async: false, src: '' }; }
+    createElement: function () { return { async: false, src: '' }; },
+    addEventListener: function (type, fn) { if (type === 'click') handlers.push(fn); }
   };
   win.window = win;
   win.document = doc;
-  var fn = new Function('window', 'document', 'navigator', SRC);
-  fn(win, doc, nav);
-  return { loaded: appended, dataLayer: win.dataLayer };
+  var fn = new Function('window', 'document', 'navigator', 'location', SRC);
+  fn(win, doc, nav, win.location);
+
+  // A stand-in for the element a real click lands on: usually a span INSIDE the anchor.
+  function clickOn(tag, href, text, path) {
+    if (path) win.location.pathname = path;
+    var el = { tagName: tag, getAttribute: function (k) {
+                 return k === 'href' ? href : null; }, textContent: text };
+    var inner = { closest: function () { return el; } };
+    handlers.forEach(function (h) { h({ target: inner }); });
+    return win.dataLayer ? win.dataLayer[win.dataLayer.length - 1] : null;
+  }
+  return { loaded: appended, dataLayer: win.dataLayer, clickOn: clickOn,
+           handlers: handlers.length };
 }
 
 var PERSON  = { webdriver: false, userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Safari/605.1' };
@@ -62,6 +77,54 @@ check('a HeadlessChrome user agent loads nothing', h.loaded.length === 0, h.load
 var b = run(BROKEN);
 check('when the browser refuses to say, we COUNT the visit rather than drop it',
       b.loaded.length === 1, b.loaded);
+
+/* A CLICK MUST BE VISIBLE, especially an in-page anchor.
+   "Get started" and "See the game modes" both point at #claim and #modes. GA4's own click
+   tracking only covers links LEAVING the site, so every press of the main button on the
+   homepage was invisible. 292 people saw that page in 30 days and nobody could say whether
+   one of them touched it. */
+var c = run(PERSON);
+check('a click handler is registered at all', c.handlers === 1, c.handlers);
+
+var ev = c.clickOn('A', '#claim', 'Get started');
+check('an in-page anchor click is reported', !!ev && ev[0] === 'event' && ev[1] === 'cta_click',
+      ev && [ev[0], ev[1]]);
+check('and it is labelled with what the button says',
+      !!ev && ev[2] && ev[2].cta_label === 'Get started', ev && ev[2]);
+check('and marked as an anchor, which is the invisible kind',
+      !!ev && ev[2] && ev[2].cta_kind === 'anchor', ev && ev[2] && ev[2].cta_kind);
+
+var ev2 = c.clickOn('A', 'https://example.com/x', 'Somewhere else');
+check('a link off the site is marked outbound',
+      !!ev2 && ev2[2].cta_kind === 'outbound', ev2 && ev2[2] && ev2[2].cta_kind);
+
+var ev3 = c.clickOn('A', '/nsw', 'See the NSW price');
+check('a link to another page of ours is marked internal',
+      !!ev3 && ev3[2].cta_kind === 'internal', ev3 && ev3[2] && ev3[2].cta_kind);
+
+var ev4 = c.clickOn('A', 'mailto:hello@venueplay.com.au', 'Email us');
+check('an email link is marked as email',
+      !!ev4 && ev4[2].cta_kind === 'email', ev4 && ev4[2] && ev4[2].cta_kind);
+
+/* WHICH PAGE was it pressed on. The homepage and the state pages quote different
+   prices, so a "Get started" on /nsw is a different event to one on /. */
+var s1 = c.clickOn('A', '#claim', 'Get started', '/nsw');
+check('a press on /nsw is tagged NSW', !!s1 && s1[2].cta_state === 'NSW',
+      s1 && s1[2] && s1[2].cta_state);
+var s2 = c.clickOn('A', '#claim', 'Get started', '/');
+check('a press on the homepage is tagged home', !!s2 && s2[2].cta_state === 'home',
+      s2 && s2[2] && s2[2].cta_state);
+var s3 = c.clickOn('A', '#claim', 'Get started', '/qld.html');
+check('the .html form of a state page is tagged the same', !!s3 && s3[2].cta_state === 'QLD',
+      s3 && s3[2] && s3[2].cta_state);
+var s4 = c.clickOn('A', '#x', 'Watch', '/see-a-night');
+check('a non-state page keeps its own name', !!s4 && s4[2].cta_state === 'see-a-night',
+      s4 && s4[2] && s4[2].cta_state);
+
+/* A robot must not register a click handler either, or our own checks would post
+   fake button presses on top of fake visits. */
+var rc = run(ROBOT);
+check('a robot registers no click handler at all', rc.handlers === 0, rc.handlers);
 
 /* The id must exist in exactly one place. Fourteen pages used to carry their own copy. */
 var pages = 0, inline = 0;
