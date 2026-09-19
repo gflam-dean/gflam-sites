@@ -38,6 +38,7 @@ so this drives Chrome over the debug protocol and waits in real seconds.
 
 import argparse
 import base64
+import io
 import json
 import os
 import re
@@ -321,6 +322,96 @@ def read_stamp():
         return {}
 
 
+def deploy_has_landed():
+    """Is the LIVE site actually serving the code in this working copy?
+
+    --stamp used to write the local git HEAD with no check at all. So the honest
+    sequence (push, then verify) produced a DISHONEST stamp: Cloudflare Pages takes
+    three to twenty-five minutes, the browser drove the PREVIOUS build, it passed,
+    and the new commit was recorded as browser-checked. The gate then printed "a real
+    browser has checked the venue screens on this build" and it was not true.
+
+    That is the exact shape this repo exists to stamp out: a check that cannot fail,
+    dressed as a green line. Caught 19 Sep 2026 while changing vp-session.js, which
+    every console loads, and the stamp written at 12:31 that day was already false.
+    (Harmlessly: that commit touched no screen file. The next one would not have been.)
+
+    So compare what is LIVE against what is on disk, for the files the stamp is a
+    claim about: the shared vp-*.js scripts and the screen pages. Any difference and
+    the deploy has not landed, so there is nothing honest to stamp yet.
+
+    Returns (ok, [list of files that differ]).
+    """
+    import hashlib
+    watched = []
+    appdir = os.path.join(ROOT, 'venueplay', 'app')
+    for fn in sorted(os.listdir(appdir)):
+        if fn.startswith('vp-') and fn.endswith('.js'):
+            watched.append(('venueplay/app/' + fn, '/app/' + fn))
+    # Cloudflare Pages serves .html at an EXTENSIONLESS path and 308s the .html form,
+    # and index.html at the directory. Asking for the file name gets a redirect, which
+    # read as "could not fetch" and would have failed the guard for the wrong reason.
+    for rel in ('venueplay/tv.html', 'venueplay/app/index.html',
+                'venueplay/app/members/host.html'):
+        if not os.path.isfile(os.path.join(ROOT, rel)):
+            continue
+        path = '/' + rel.split('venueplay/', 1)[1]
+        if path.endswith('/index.html'):
+            path = path[:-len('index.html')]
+        elif path.endswith('.html'):
+            path = path[:-len('.html')]
+        watched.append((rel, path))
+
+    def normalise(b):
+        """Cloudflare REWRITES HTML on the way out, so live is never byte-identical.
+
+        It obfuscates email addresses: hello@venueplay.com.au becomes an
+        <a class="__cf_email__" data-cfemail="..."> link, and a decode script is
+        injected near the end of the document. Comparing raw bytes therefore reported
+        EVERY html file as stale, for ever, which would have blocked stamping
+        altogether. A check that always fails is no better than one that cannot.
+
+        Flatten both sides to the same shape before comparing. .js is served verbatim
+        and is unaffected.
+        """
+        t = b.decode('utf-8', 'replace')
+        # Match each injected tag through its CLOSING tag, not with [^>]*. The beacon
+        # carries data-cf-beacon='{...json...}', so an attribute-by-attribute pattern
+        # is one stray > away from not matching, and a normaliser that silently stops
+        # matching makes this guard refuse every html file with no explanation.
+        t = re.sub(r'<script[^>]*email-decode[\s\S]*?</script>', '', t)
+        t = re.sub(r'<a href="/cdn-cgi/l/email-protection"[^>]*>.*?</a>', 'EMAIL', t,
+                   flags=re.S)
+        t = re.sub(r'/cdn-cgi/l/email-protection[^"\']*', 'EMAIL', t)
+        t = re.sub(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}', 'EMAIL', t)
+        # Cloudflare injects a Web Analytics beacon too, with a build hash in the URL
+        # that changes on their schedule and not ours. Two separate injections, and
+        # missing either one makes this guard refuse every html file for ever.
+        t = re.sub(r'<script[^>]*cloudflareinsights[\s\S]*?</script>', '', t)
+        # Deleting an injected tag leaves the blank line it sat on, and all three html
+        # files then differed by exactly one empty line. Compare CONTENT, not layout.
+        t = re.sub(r'\s+', ' ', t).strip()
+        return hashlib.sha256(t.encode('utf-8')).hexdigest()
+
+    stale = []
+    for rel, path in watched:
+        try:
+            with io.open(os.path.join(ROOT, rel), 'rb') as f:
+                mine = normalise(f.read())
+        except (IOError, OSError):
+            continue
+        try:
+            req = urllib.request.Request(SITE + path, headers={
+                'User-Agent': 'verify-live', 'Cache-Control': 'no-cache'})
+            live = normalise(urllib.request.urlopen(req, timeout=20).read())
+        except Exception as e:
+            stale.append('%s (could not fetch: %s)' % (rel, str(e)[:40]))
+            continue
+        if live != mine:
+            stale.append(rel)
+    return (not stale), stale
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -402,6 +493,18 @@ def main():
 
     print('%sEvery screen checked is painting what it should.%s' % (GREEN, OFF))
     if args.stamp:
+        # REFUSE TO STAMP A BUILD THE BROWSER DID NOT SEE. See deploy_has_landed().
+        landed, stale = deploy_has_landed()
+        if not landed:
+            print('')
+            print('%sNOT STAMPED. The live site is not serving this working copy yet:%s'
+                  % (YEL, OFF))
+            for f in stale[:8]:
+                print('   %s' % f)
+            print('%s  Cloudflare Pages takes 3 to 25 minutes. The screens above were')
+            print('  checked against the PREVIOUS build, so stamping this commit would')
+            print('  be a lie. Wait for the deploy and run this again.%s' % OFF)
+            return 1
         with open(STAMP, 'w') as f:
             json.dump({'commit': head(), 'when': time.strftime('%Y-%m-%d %H:%M:%S'),
                        'venues': [r['slug'] for r in results]}, f, indent=2)
