@@ -566,7 +566,7 @@
     /* Only ever called after validateVenue has said exists:false TWICE, thirty
        seconds apart. A single bad read during a Worker deploy must not wipe a
        working screen's memory. */
-    try{ localStorage.removeItem("vpTvVenue"); }catch(e){}
+    try{ localStorage.removeItem("vpTvVenue"); localStorage.removeItem("vpTvConfirmed"); }catch(e){}
   }
   // ---- stable code, persists across refreshes so the link works forever ----
   var CODE=(function(){
@@ -844,6 +844,7 @@
              "Setting up" wording has done its job. Rebuild is forced: the holding entry's
              signature does not change when only its words do, so buildAds() would compare
              equal and leave the old text on the wall. */
+          try{ localStorage.setItem("vpTvConfirmed", VENUE_SLUG); }catch(e){}
           if(!VENUE_CONFIRMED){ VENUE_CONFIRMED=true; if(tvMode==="ads"){ buildAds(true); startAds(); } }
           var el=$("badVenue"); if(el) el.classList.add("hidden");   // it resolved: take the card down
           /* A SCREEN THAT WAS NOT LISTENING STILL CATCHES UP.
@@ -984,7 +985,17 @@
      the answer never arrives and the strike count never advances, so without a deadline a
      venue with no slides yet would sit on "checking" for ever. After this many seconds the
      screen goes back to the ordinary holding slide, which is the behaviour it has today. */
-  var VENUE_CONFIRMED = false;
+  /* REMEMBERED ACROSS RELOADS. This was a plain `false`, so every page load started
+     unconfirmed, and an idle screen reloads itself every four hours by design. A venue with
+     no advertising therefore flashed "Setting up / Checking this screen's address" about
+     six times a day, on a screen that had been set up for weeks. Dean, 19 Sep 2026: "the
+     screen keeps reverting when the venue hasnt set up advertising".
+     Keyed to the SLUG, so typing a different venue's address still gets the honest
+     "Setting up" wording, and forgetVenue() clears it along with the venue. */
+  var VENUE_CONFIRMED = (function(){
+    try{ return !!VENUE_SLUG && localStorage.getItem("vpTvConfirmed") === VENUE_SLUG; }
+    catch(e){ return false; }
+  })();
   var VENUE_PENDING_MS = 45000;
   var VENUE_PENDING_UNTIL = Date.now() + VENUE_PENDING_MS;
   function venuePending(){

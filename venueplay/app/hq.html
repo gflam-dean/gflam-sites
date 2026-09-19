@@ -909,7 +909,9 @@
                      : (s.status==="paused" ? '<span class="badge suspend">Paused</span>'
                      : '<span class="badge idle">Lobby</span>');
       var since = agoLabel(s.started_at||s.opened_at);
-      var tvUrl = slug ? ("https://www.venueplay.com.au/tv?venue="+encodeURIComponent(slug)) : "";
+      // The SAME short form every other surface quotes. This was the one place using www.
+      // and ?venue=, a third spelling of one answer. Both resolve, but one answer, one spelling.
+      var tvUrl = slug ? ("https://venueplay.com.au/tv?"+encodeURIComponent(slug)) : "";
       var watch = tvUrl ? '<a class="mini win" href="'+esc(tvUrl)+'" target="_blank" rel="noopener">&#9654; Watch TV</a>' : '<span class="vt">no screen slug</span>';
       var tr=document.createElement("tr");
       tr.innerHTML='<td><div class="vn">'+esc(name)+'</div><div class="vt mono">'+esc(slug||"(no slug)")+'</div></td>'+
