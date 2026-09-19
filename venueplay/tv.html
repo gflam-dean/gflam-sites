@@ -114,12 +114,34 @@
   /* The mark sits ABOVE the card, not tucked against the heading. Dean: "venueplay logo could
      go up a bit on the error screen". It is a wordmark introducing the screen, not a bullet
      point on it, so it gets room to breathe. */
-  .bvmark{margin:0 0 1.4em}
-  .bvmark,.admark{display:flex;align-items:center;justify-content:center;gap:.5em;margin-bottom:.7em}
-  .bvmark svg,.admark svg{width:clamp(16px,2.2cqw,30px);height:auto;display:block;
-    filter:drop-shadow(0 0 .5cqw rgba(255,31,142,.75))}
+  /* THE MARK STACKS: triangle ABOVE the word, not beside it. Dean, 19 Sep 2026.
+     Beside the word the triangle had to stay tiny to match the cap height, so it read as
+     a bullet point rather than a logo. Stacked, it can be five times the size and the
+     wordmark sits under it as a caption: a lockup rather than a line of text. This is a
+     television across a room, and the first thing a venue sees of the product they just
+     bought, so it is worth the space. */
+  .bvmark,.admark{display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:.5em;margin:0 0 1.15em}
+  .bvmark svg,.admark svg{width:clamp(34px,5.4cqw,80px);height:auto;display:block;
+    /* Two shadows: a tight one to make the stroke glow, a wide soft one so it lifts off
+       the black the way the neon logo does on the site. */
+    filter:drop-shadow(0 0 .28cqw rgba(255,31,142,.95))
+           drop-shadow(0 0 1.5cqw rgba(255,31,142,.45))}
   .bvmark span,.admark span{font-family:'Hanken Grotesk',sans-serif;font-weight:800;
-    font-size:clamp(13px,2cqw,26px);letter-spacing:.02em;color:#fff}
+    font-size:clamp(11px,1.5cqw,20px);letter-spacing:.22em;text-transform:uppercase;
+    color:rgba(255,255,255,.92)}
+  /* A SLOW BREATH WHILE IT IS CHECKING, on the setting-up screen only. This is the one
+     state where the screen genuinely is waiting on something, and a still image on a
+     television is indistinguishable from a frozen one. The error and picker cards do NOT
+     get this: they are finished, not working.
+     It never hides anything. The triangle stays fully visible throughout; only the glow
+     moves, so a screen that stops animating still reads correctly. */
+  @keyframes vpMarkBreath{
+    0%,100%{filter:drop-shadow(0 0 .28cqw rgba(255,31,142,.95)) drop-shadow(0 0 1.5cqw rgba(255,31,142,.40))}
+    50%    {filter:drop-shadow(0 0 .38cqw rgba(255,31,142,1))   drop-shadow(0 0 2.4cqw rgba(255,31,142,.72))}
+  }
+  .admark svg{animation:vpMarkBreath 2.6s ease-in-out infinite}
+  @media (prefers-reduced-motion:reduce){ .admark svg{animation:none} }
   /* The address, on its own line between the problem and what to do about it, boxed so the eye
      lands on it. Mono so a hyphen or a missing postcode is unmistakable against a printed
      setup sheet, and break-all so a long slug cannot push the card off a narrow screen. */
@@ -382,6 +404,11 @@
        on the books. This is not an error state and must not look like one. -->
   <div class="badvenue hidden" id="venuePick">
     <div class="bvcard">
+      <!-- THE MARK BELONGS HERE TOO. This screen had none. It is not an error state, it is
+           a SETUP state: a new venue whose name is shared with others picking itself off a
+           list, on a television, in front of whoever is setting it up. The one card in this
+           flow that did not say VenuePlay was the one somebody stares at longest. -->
+      <div class="bvmark"><svg viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg><span>VenuePlay</span></div>
       <div class="bvtitle" id="vpTitle">Which one is this?</div>
       <div class="bvtext" id="vpText"></div>
       <div class="bvpick" id="vpList"></div>
