@@ -2770,6 +2770,26 @@ def local_checks(which):
                why='run jsc tools/test-analytics-ignores-robots.js. Our own live checks '
                    'inflating the numbers makes every marketing decision off them wrong')
 
+        # A club over 1,000 members saw the first 1,000 on the host console and nothing
+        # said so. PostgREST stops there silently. The DRAW was always right, because it
+        # runs server side, which is what hid this: the console lied while the draw was
+        # correct, so there was no reason to doubt either.
+        head('D5. The members console shows every member')
+        t = os.path.join(ROOT, 'tools', 'test-members-paged.js')
+        if not os.path.isfile(t):
+            ok('the member paging test exists', False,
+               why='tools/test-members-paged.js is missing')
+        else:
+            r = subprocess.run([JSC, t], capture_output=True, text=True, timeout=120)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+            n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
+            ok('a club past 1,000 members sees all of them (%d checks)' % n,
+               r.returncode == 0 and n > 0 and not bad,
+               detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
+               why='run jsc tools/test-members-paged.js. A member the host cannot see '
+                   'is a member who cannot be drawn, and the screen gives no hint')
+
         head('D3. A failed read does not archive a venue')
         t = os.path.join(ROOT, 'tools', 'test-archive-sweep-fails-closed.js')
         if not os.path.isfile(t):

@@ -697,11 +697,46 @@
       /* Removed draws are filtered here, not in the query: see billing.html. */
       .then(function(r){ G.draws=((r&&r.data)||[]).filter(function(d){ return !d.archived_at; }); });
   }
+  /* EVERY member, not the first thousand.
+
+     PostgREST stops at 1000 rows on this project, silently. This read had no paging,
+     so a club with more than a thousand members showed the host the first thousand and
+     said nothing: the count on screen was wrong, and a member numbered above 1000 could
+     not be found in the list at all. The DRAW itself is safe, because it runs server
+     side in vp_members_draw, which is almost worse: the console lied while the draw was
+     correct, so nobody had a reason to doubt either.
+
+     Stops on an EMPTY page, never a short one. Supabase enforces its own max-rows, and
+     if that ceiling sits below the page size we ask for then every page comes back
+     short, the loop stops after the first, and the truncation is silent all over again.
+
+     Ordered by member_number AND id. An order is what makes pages stable, but
+     member_number is not guaranteed unique across a venue's rosters, and ties can
+     repeat or skip a row across a page boundary. The id breaks them. */
+  function loadAllMembers(ids){
+    var PAGE = 1000, out = [], from = 0;
+    function nextPage(){
+      return client.from("vp_members").select("*").in("roster_id", ids)
+        .order("member_number",{ascending:true}).order("id",{ascending:true})
+        .range(from, from + PAGE - 1)
+        .then(function(r){
+          var rows = (r && r.data) || [];
+          if(!rows.length) return out;            // empty page: that is the end
+          out = out.concat(rows);
+          from += rows.length;
+          /* A read that never ends must not spin the browser for ever. No club is near
+             this; if it ever fires, something is wrong with the query, not the venue. */
+          if(out.length > 100000) throw new Error("member list did not end after " + out.length + " rows");
+          return nextPage();
+        });
+    }
+    return nextPage();
+  }
+
   function loadRoster(){
     return client.from("vp_member_rosters").select("id").eq("venue_id", G.venueId)
       .then(function(r){ var ids=((r&&r.data)||[]).map(function(x){ return x.id; }); if(!ids.length){ G.members=[]; return; }
-        return client.from("vp_members").select("*").in("roster_id", ids).order("member_number",{ascending:true})
-          .then(function(r2){ G.members=(r2&&r2.data)||[]; }); });
+        return loadAllMembers(ids).then(function(rows){ G.members=rows; }); });
   }
 
   // ---- pair with the venue screen ----
