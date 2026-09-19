@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '18 Sep 2026, 02:11 · 58e0e721';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '19 Sep 2026, 11:51 · 3e04b918';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -7614,18 +7614,40 @@ async function sbCount(env, table, query) {
  * thousand cancelled is six thousand rows, so live venues would have broken
  * while cancelled ones held the slots, in whatever order Postgres felt like.
  *
- * Pages until a short page comes back, so there is no ceiling to raise later.
- * Capped at 40 pages (40,000 rows) purely so a runaway query cannot spin a
- * Worker for ever; if that is ever reached the venue count is a happier problem
- * than this bug.
+ * Pages until an EMPTY page comes back, so there is no ceiling to raise later.
+ *
+ * THE PAGE CAP THROWS. It used to `break`, and the comment here used to say that
+ * reaching it would be "a happier problem than this bug". That was wrong, and it
+ * was the bug: falling out of the loop at the cap returns a SHORT LIST WITH NO
+ * ERROR, which is precisely the silent truncation the whole function exists to
+ * prevent. It would have re-created the venue-code fault above at 40,000 rows
+ * instead of 5,000, and nothing would have said a word. The billing Worker's
+ * vpaSelectAll had the identical fault and now throws the same way.
+ *
+ * A caller that dies loudly at forty thousand rows is a caller someone fixes.
+ * One that quietly returns the first forty thousand is a venue whose screen says
+ * "not linked to an account" on a Friday night.
  */
 async function sbGetAll(env, table, query, pageSize) {
+  /* The cap lives INSIDE the function on purpose. It was a module-scope const for
+     about ten minutes and one-trip-draws.test.js went red on eight checks, because
+     that suite lifts single functions out of this file by name, `eval(lift('sbGetAll'))`,
+     and never sees anything declared outside them. `page < undefined` is false, so the
+     loop body never ran, and every call threw. A helper meant to be lifted and tested
+     has to carry everything it needs. */
+  /* 40 pages is 40,000 rows, and vp_questions already holds 37,665, so this looks
+     two pages from disaster. It is not: every vp_questions read here is filtered to
+     one set_id, members to one venue, cards and players to one session. The largest
+     real read is a club's member list. Checked 19 Sep 2026 against all nine callers.
+     If a caller ever reads a whole growing table unfiltered, raise this rather than
+     removing the throw. */
+  const PAGE_CAP = 40;
   const size = pageSize || 1000;
-  let out = [], offset = 0;
-  for (let page = 0; page < 40; page++) {
+  let out = [], offset = 0, sawTheEnd = false;
+  for (let page = 0; page < PAGE_CAP; page++) {
     const q = query + '&limit=' + size + '&offset=' + offset;
     const rows = await sbGet(env, table, q);
-    if (!Array.isArray(rows) || rows.length === 0) break;
+    if (!Array.isArray(rows) || rows.length === 0) { sawTheEnd = true; break; }
     out = out.concat(rows);
     /* Advance by what CAME BACK, and stop only on an empty page.
        Stopping on a SHORT page was the first version of this and it has the same
@@ -7635,6 +7657,10 @@ async function sbGetAll(env, table, query, pageSize) {
        again. Asking until nothing comes back is correct whatever the platform
        cap turns out to be. */
     offset += rows.length;
+  }
+  if (!sawTheEnd) {
+    throw new Error('read ' + table + ': more than ' + out.length + ' rows, page cap of '
+      + PAGE_CAP + ' reached before the end of the list');
   }
   return out;
 }

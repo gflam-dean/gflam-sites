@@ -118,9 +118,22 @@ var cp = lift(GAME, "countPlayers");
 pass("the Worker has the who-played counters", !!pw && !!cw && !!cp);
 if (pw && cw && cp) {
   var GAMES = [], CARDS = [], ANSWERS = [];
-  globalThis.sbGet = function (e, t) {
-    return Promise.resolve(t === "vp_games" ? GAMES : t === "vp_cards" ? CARDS
-                         : t === "vp_trivia_answers" ? ANSWERS : []);
+  /* OFFSET THEN LIMIT, the way PostgREST does it, because a fake that ignores them
+     cannot model the bug the paging exists to fix. This stub used to return the whole
+     array on EVERY page, for ever. sbGetAll then read the same rows forty times, fell
+     out of its page cap, and returned forty duplicate copies with no error. Nothing
+     went red, because the only consumer here is a Set of player ids and a Set absorbs
+     duplicates. The comment above claimed the pagination was "exercised here instead
+     of being assumed", and it was assumed. It is exercised now: sbGetAll throws when
+     it hits the cap, so a stub that never ends fails loudly instead of quietly. */
+  globalThis.sbGet = function (e, t, q) {
+    var all = t === "vp_games" ? GAMES : t === "vp_cards" ? CARDS
+            : t === "vp_trivia_answers" ? ANSWERS : [];
+    var off = /(?:^|&)offset=(\d+)/.exec(String(q || ""));
+    var lim = /(?:^|&)limit=(\d+)/.exec(String(q || ""));
+    var rows = all.slice(off ? +off[1] : 0);
+    if (lim) rows = rows.slice(0, +lim[1]);
+    return Promise.resolve(rows);
   };
   globalThis.enc = function (x) { return String(x); };
   /* playerIdsWhoPlayed pages now, because a fixed limit there under-bills a big
