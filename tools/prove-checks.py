@@ -1824,7 +1824,7 @@ MUTATIONS = [
     # NOT 'all 14 paged reads': that number is the count of sbGetAll call sites and it
     # moved from 14 to 13 within the hour, when retagSetCount stopped fetching rows.
     # A label carrying a count goes blind the moment the count changes, silently.
-    ('paged reads in the game Worker are ordered',
+    ('paged reads in venueplay-game.js are ordered',
      'venueplay-backend/worker/venueplay-game.js',
      "')&kicked=eq.false&select=id,session_id,device_id&order=id.asc');",
      "')&kicked=eq.false&select=id,session_id,device_id');",
@@ -1908,6 +1908,18 @@ MUTATIONS = [
      'the venue list reads a SHORT page as the end, so a server whose own max-rows sits '
      'below the page size truncates HQ to one page and says nothing: venues past it '
      'cannot be seen or fixed by anybody'),
+
+    # D6 covers BOTH Workers, so it needs a mutation in each. The billing one pages over
+    # sessions, game reports and the opt-in export: money and player data.
+    ('paged reads in venueplay-api-FULL.js are ordered',
+     'venueplay-backend/worker/venueplay-api-FULL.js',
+     # Anchored on the ORDER line, which is unique. The select line above it appears
+     # twice in this file, and a find-string that matches twice is aimed by file order:
+     # as bad as one that matches nothing, and quieter about it.
+     "    '&order=venue_id.asc,opened_at.asc,id.asc');",
+     "    '');",
+     'the nightly sweep pages sessions with a broken order clause, so rows repeat and '
+     'others are skipped, and the sweep decides which venues get archived'),
 ]
 
 

@@ -2873,19 +2873,27 @@ def local_checks(which):
            why='use vpaBody(request, json), which returns a 400 the caller returns as-is')
 
         head('D6. Every paged read has a stable order')
-        gpath = os.path.join(ROOT, 'venueplay-backend', 'worker', 'venueplay-game.js')
-        try:
-            with io.open(gpath, encoding='utf-8') as fh:
-                gsrc = fh.read()
-        except (IOError, OSError):
-            gsrc = ''
-        if not gsrc:
-            ok('venueplay-game.js is readable', False, why='could not read the game Worker')
-        else:
+        # BOTH Workers. This covered only the game Worker at first, which left the billing
+        # one free to lose an order silently, and its paged reads are over sessions, game
+        # reports and the OPT-IN EXPORT: money and player data.
+        WORKERS = [('venueplay-game.js', r"sbGetAll\(env, '([a-z_]+)'"),
+                   ('venueplay-api-FULL.js', r"vpaSelectAll\(env, '([a-z_]+)'")]
+        gsrc, glines, pattern = '', [], ''
+        for wname, wpat in WORKERS:
+            gpath = os.path.join(ROOT, 'venueplay-backend', 'worker', wname)
+            try:
+                with io.open(gpath, encoding='utf-8') as fh:
+                    gsrc = fh.read()
+            except (IOError, OSError):
+                gsrc = ''
+            if not gsrc:
+                ok('%s is readable' % wname, False, why='could not read %s' % wname)
+                continue
             glines = gsrc.splitlines()
+            pattern = wpat
             unordered, seen = [], 0
             for i, ln in enumerate(glines):
-                m = re.search(r"sbGetAll\(env, '([a-z_]+)'", ln)
+                m = re.search(pattern, ln)
                 if not m:
                     continue
                 seen += 1
@@ -2900,11 +2908,12 @@ def local_checks(which):
                     j += 1
                 if 'order=' not in stmt:
                     unordered.append('%s line %d' % (m.group(1), i + 1))
-            ok('all %d paged reads in the game Worker are ordered' % seen,
+            ok('paged reads in %s are ordered (%d)' % (wname, seen),
                seen > 0 and not unordered,
                detail=('; '.join(unordered[:4]) if unordered else '%d reads' % seen),
                why='add &order=id.asc. Without an order, paging can repeat and skip rows, '
-                   'and the who-played counter that does it is what bills the venue')
+                   'and the reads that do it are what bills a venue and what exports its '
+                   'opt-in list')
 
         head('D3. A failed read does not archive a venue')
         t = os.path.join(ROOT, 'tools', 'test-archive-sweep-fails-closed.js')

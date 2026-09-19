@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '19 Sep 2026, 12:58 · 9d9c103d';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '19 Sep 2026, 15:35 · 6fa07b1f';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -2163,8 +2163,14 @@ async function vpaHandleQuietVenues(request, env, json) {
   let days = parseInt(b.days, 10);
   if (!(days >= 1)) days = 7;
 
-  const venues = await vpaSelect(env, 'vp_venues',
-    'select=id,name,slug,status,suspended_reason,created_at&order=name.asc');
+  /* PAGED, and ordered by name AND id. vpaSelect reads ONE page and PostgREST stops at
+     1000 rows in silence, so past a thousand venues a quiet venue simply would not appear
+     on the call list: the exact venue somebody needs to ring, invisible, with no error.
+     name.asc alone is not a stable order either. Seven percent of venue names are shared
+     and there are a hundred Royal Hotels, so ties can repeat one row and skip another
+     across a page boundary. */
+  const venues = await vpaSelectAll(env, 'vp_venues',
+    'select=id,name,slug,status,suspended_reason,created_at&order=name.asc,id.asc');
   if (!venues || !venues.length) return json({ ok: true, days: days, venues: [] });
 
   const latest = {};
@@ -8102,7 +8108,10 @@ async function vpbMyVenues(request, env, json) {
     const admins = await vpaSelect(env, 'vp_platform_admins',
       'auth_user_id=eq.' + encodeURIComponent(payload.sub) + '&select=auth_user_id');
     if (admins && admins.length) {
-      const all = await vpaSelect(env, 'vp_venues', 'select=id,name,slug&order=name.asc');
+      /* Paged, and ordered by name AND id: this is the HQ admin's "view as" picker, so a
+         truncated read is an admin who cannot reach a venue at all. See the note in
+         vpaHandleQuietVenues about shared venue names making name.asc unstable. */
+      const all = await vpaSelectAll(env, 'vp_venues', 'select=id,name,slug&order=name.asc,id.asc');
       return json({ venues: all || [] });
     }
     return json({ venues: [] });
