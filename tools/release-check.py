@@ -2808,6 +2808,25 @@ def local_checks(which):
         # past it, silently: the same fault sbGetAll's header describes, where venues
         # past the ceiling resolved to nothing and their screens said "not linked to
         # an account".
+        # The 90-day purge has NO UNDO. Until 20 Sep 2026 the HQ status handler never
+        # stamped closed_at on archive (players kept for ever) and never cleared it on
+        # reactivation (a live customer one failed card away from the 3am purge).
+        head('D10. The retention clock follows the venue status')
+        t = os.path.join(ROOT, 'tools', 'test-status-moves-the-clock.js')
+        if not os.path.isfile(t):
+            ok('the status-clock test exists', False,
+               why='tools/test-status-moves-the-clock.js is missing')
+        else:
+            r = subprocess.run([JSC, t], capture_output=True, text=True, timeout=120)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+            n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
+            ok('archiving starts the purge clock and reactivating clears it',
+               r.returncode == 0 and n >= 6 and not bad,
+               detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
+               why='run jsc tools/test-status-moves-the-clock.js. A reactivated venue that '
+                   'keeps an old closed date can have its players wiped, and that has no undo')
+
         head('D9. HQ sees every venue, and a host still costs one call')
         t = os.path.join(ROOT, 'tools', 'test-venue-list-paged.js')
         if not os.path.isfile(t):

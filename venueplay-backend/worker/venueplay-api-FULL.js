@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '19 Sep 2026, 15:35 · 6fa07b1f';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '20 Sep 2026, 09:38 · ba8f0cf0';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -2700,6 +2700,8 @@ async function vpaAutoArchiveSweep(env, actor, days, dryRun) {
         // The OWNER cancelled first, so this is the reason the manual path would
         // also write. Un-archiving reads it and will not restart their billing.
         suspended_reason: 'archived_cancelling',
+        // And the 90-day clock starts here. It never used to: see vpaHandleVenueStatus.
+        closed_at: new Date().toISOString(),
       });
       await vpaAudit(env, actor, 'venue_archived', 'venue:' + v.id,
         { status: 'archived', name: v.name, automatic: true,
@@ -2735,7 +2737,7 @@ async function vpaHandleVenueStatus(request, env, json) {
   // What it was before, so reactivating an ARCHIVED venue can put its billing back and
   // reactivating a merely suspended one leaves billing alone.
   const priorRows = await vpaSelect(env, 'vp_venues',
-    'id=eq.' + encodeURIComponent(venueId) + '&select=id,name,founding_id,status,suspended_reason,cancel_at_period_end');
+    'id=eq.' + encodeURIComponent(venueId) + '&select=id,name,founding_id,status,suspended_reason,cancel_at_period_end,closed_at');
   const prior = priorRows && priorRows[0];
   if (!prior) return json({ error: 'That venue no longer exists.' }, 404);
 
@@ -2749,10 +2751,23 @@ async function vpaHandleVenueStatus(request, env, json) {
      flag on the way back out is useless: archiving sets it either way. So the reason carries it.
      Free text, no migration, and it reads plainly in HQ. */
   const archiveReason = prior.cancel_at_period_end ? 'archived_cancelling' : 'archived';
-  await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), {
+  /* THE 90-DAY CLOCK MOVES WITH THE STATUS, IN BOTH DIRECTIONS.
+     This patch used to write status and reason only. Two faults, found by audit 20 Sep 2026:
+       - an archive never stamped closed_at, so a venue archived from HQ was invisible to the
+         retention sweep and its players were kept for ever, which is the exact case the
+         privacy page's 90-day promise is about
+       - a REACTIVATION never cleared it. An un-archived venue kept its old closed date, so
+         months later one failed card (status suspended, closed_at ancient) put a LIVE
+         customer's players in front of the 3am purge. That one has no undo.
+     Archive starts the clock, only if one is not already running. Active always clears it.
+     A plain manual suspension is short and reversible and leaves it alone. */
+  const statusPatch = {
     status: archiving ? 'suspended' : status,
     suspended_reason: archiving ? archiveReason : (status === 'suspended' ? 'manual' : null),
-  });
+  };
+  if (archiving && !prior.closed_at) statusPatch.closed_at = new Date().toISOString();
+  if (status === 'active') statusPatch.closed_at = null;
+  await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), statusPatch);
 
   /* Archiving has to reach Stripe, which it never used to. A venue is archived once retention has
      given up on it: the games stop and it drops off the active list. Leaving the subscription

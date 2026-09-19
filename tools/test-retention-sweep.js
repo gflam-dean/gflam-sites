@@ -57,6 +57,13 @@ check('no venue is due: nothing patched at all', patches.length === 0 && r0.venu
 run({ venues: [] });
 var q = gets[0] || '';
 check('asks only for venues closed BEFORE the cutoff', /closed_at=lt\./.test(q), q);
+/* A DATE ALONE MUST NOT BE ENOUGH, because this delete has no undo. Until 20 Sep 2026 the
+   HQ reactivation path forgot to clear closed_at, which left a live customer one failed
+   card away from this list: status suspended (non-payment), closed date ancient. The reason
+   has to say the account is CLOSED as well. */
+check('and only for venues whose REASON says closed, never non-payment or manual',
+      /suspended_reason=in\.\(ended,cancelled,archived,archived_cancelling\)/.test(q), q);
+check('non-payment is not in that list', !/nonpayment|manual/.test(q), q);
 check('asks only for SUSPENDED venues', /status=eq\.suspended/.test(q), q);
 check('skips venues already purged', /player_data_purged_at=is\.null/.test(q), q);
 var days = /const RETENTION_DAYS = (\d+);/.exec(src);

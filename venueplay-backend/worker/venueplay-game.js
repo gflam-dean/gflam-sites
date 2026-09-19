@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '19 Sep 2026, 13:06 · c87724e5';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '20 Sep 2026, 09:38 · 0500fbfe';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -364,6 +364,12 @@ async function sweepRetention(env) {
        suspended for non-payment this morning is not a closed account. */
     const venues = await sbGet(env, 'vp_venues',
       'closed_at=lt.' + enc(cutoff) + '&status=eq.suspended&player_data_purged_at=is.null'
+      /* BELT AND BRACES, because this delete has no undo. closed_at alone selected the
+         venue, and a reactivation path that forgot to clear it (the HQ one did, until
+         20 Sep 2026) left a live customer one failed card away from this list. A venue
+         suspended for non-payment or by hand is NOT a closed account, whatever date it
+         carries, so the reason has to say closed as well. */
+      + '&suspended_reason=in.(ended,cancelled,archived,archived_cancelling)'
       + '&select=id,name,closed_at&limit=200');
     if (!venues || !venues.length) return { venues: 0, players: 0, captures: 0 };
 

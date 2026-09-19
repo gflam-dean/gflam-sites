@@ -1931,6 +1931,14 @@ MUTATIONS = [
      "  const _t = 'vp_venues';\n  const rows = await sbGetAll(env, _t,",
      'a paged read written with a variable table name is invisible to the order check, '
      'so it is skipped in silence and the gate still says every read is ordered'),
+
+    # ---- 20 Sep: the purge with no undo ----
+    ('archiving starts the purge clock and reactivating clears it',
+     'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  if (status === 'active') statusPatch.closed_at = null;",
+     "  // forgot to clear the clock",
+     'a venue un-archived from HQ keeps its old closed date, so months later one failed card '
+     'puts a LIVE customer in front of the 3am purge and their players are wiped, no undo'),
 ]
 
 
