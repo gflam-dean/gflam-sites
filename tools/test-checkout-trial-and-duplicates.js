@@ -80,7 +80,10 @@ function signup(opts) {
     plan: 'monthly',
     venues: opts.venues || [{ name: 'The Pub', seats: 50, postcode: opts.postcode || '2000' }],
   };
-  var req = { json: function () { return Promise.resolve(body); } };
+  /* text() as well as json(): vpaBody() reads the body as text so it can tell an
+     empty body from a malformed one, and a real Request has both. */
+  var req = { json: function () { return Promise.resolve(body); },
+              text: function () { return Promise.resolve(JSON.stringify(body)); } };
   var out = null;
   handleCheckout(req, env(opts.codes), function (b, status) { return { body: b, status: status || 200 }; })
     .then(function (r) { out = r; })

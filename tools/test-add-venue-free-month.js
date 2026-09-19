@@ -67,7 +67,14 @@ function arm(opts) {
 
 function run(opts) {
   arm(opts);
-  var req = { json: function () { return Promise.resolve({ name: 'The New Pub', players: opts.players, postcode: ('postcode' in opts) ? opts.postcode : '4220' }); } };
+  /* BOTH json() and text(), because a real Request has both and the Worker reads the
+     body through vpaBody(), which uses text() so it can tell an EMPTY body from a
+     malformed one. A stub that models half the interface breaks on a change that
+     production would not have noticed. Derived from one object so they cannot drift. */
+  var _body = { name: 'The New Pub', players: opts.players,
+                postcode: ('postcode' in opts) ? opts.postcode : '4220' };
+  var req = { json: function () { return Promise.resolve(_body); },
+              text: function () { return Promise.resolve(JSON.stringify(_body)); } };
   var out = null;
   vpbAddVenue(req, ENV, function (body) { return { body: body }; }).then(function (r) { out = r; });
   drainMicrotasks();

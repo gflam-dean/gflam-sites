@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '18 Sep 2026, 20:01 · 97380df3';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '19 Sep 2026, 12:58 · 9d9c103d';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -211,9 +211,61 @@ export default {
   },
 };
 
+
+/* ONE WAY TO READ A REQUEST BODY.
+
+   Sixteen handlers did a bare `await request.json()`. That REJECTS on a malformed
+   body, and there are three different spellings of the guard in this file already
+   (two flavours of `.catch(() => ({}))` plus one try/catch), which is the same
+   one-answer-in-many-places shape that this repo keeps paying for.
+
+   Nothing crashed, because the fetch handler has a top-level catch. What happened
+   instead is worse to debug: the caller got a 500 "Something went wrong", which reads
+   as our fault and says nothing about the actual problem. It is almost always OUR
+   front end sending something wrong, and a 500 is the least useful way to find out.
+
+   NO BODY AT ALL IS FINE and returns {}. That is deliberate and matches what the
+   twelve already-guarded call sites did: several endpoints are a bare POST with
+   nothing in them. Only a body that is present and unparseable is an error.
+
+   Returns { ok: true, body } or { ok: false, res }. NOT a bare Response, and the
+   caller must NOT test `instanceof Response`: that relies on Response being an ambient
+   global, which Cloudflare has and jsc does not, so every money test that drives these
+   handlers threw a ReferenceError instead of running. Control flow should not depend on
+   a global that may or may not be there.
+
+       const _b = await vpaBody(request, json);
+       if (!_b.ok) return _b.res;
+       const b = _b.body;
+*/
+async function vpaBody(request, json) {
+  let raw;
+  try {
+    raw = await request.text();
+  } catch (e) {
+    return { ok: false,
+             res: json({ error: 'We could not read that request. Please try again.' }, 400) };
+  }
+  if (!raw || !raw.trim()) return { ok: true, body: {} };
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (e) {
+    return { ok: false, res: json({ error: 'That request body was not valid JSON.' }, 400) };
+  }
+  // JSON.parse happily returns a string, a number or null. Every caller here expects to
+  // read properties off an object, and `null.foo` is a crash rather than a 400.
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    return { ok: false, res: json({ error: 'That request body was not a JSON object.' }, 400) };
+  }
+  return { ok: true, body: parsed };
+}
+
 /* ------------------------------ /checkout ------------------------------ */
 async function handleCheckout(request, env, json) {
-  const b = await request.json();
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
   const email = (b.email || '').trim();
   const contactName = (b.name || '').trim().slice(0, 200); // cap length (Stripe metadata max 500)
   const plan  = b.plan === 'annual' ? 'annual' : 'monthly';
@@ -756,7 +808,9 @@ async function handleWebhook(request, env, cors) {
 
 /* ------------------------------ /contact ------------------------------ */
 async function handleContact(request, env, json) {
-  const b = await request.json();
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
   const name = (b.name || '').trim();
   const email = (b.email || '').trim();
   // Optional. Capped and stripped of control characters like every other field that reaches an
@@ -1530,7 +1584,9 @@ async function vpaHandleVenue(request, env, json) {
   const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
   if (actor.error) return json({ error: actor.error }, actor.status);
 
-  const b = await request.json();
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
   const name = (b.name || '').trim();
   const slugIn = vpaSlugify(b.slug || b.name);
   /* Only what HQ actually sent. The fallback is decided below, once the postcode has
@@ -1722,7 +1778,9 @@ async function vpaResendWelcome(request, env, json) {
   const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
   if (actor.error) return json({ error: actor.error }, actor.status);
 
-  const b = await request.json();
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
   const venueId = (b.venue_id || '').trim();
   if (!venueId) return json({ error: 'Which venue?' }, 400);
 
@@ -1778,7 +1836,9 @@ async function vpaHandleDiscount(request, env, json) {
   const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
   if (actor.error) return json({ error: actor.error }, actor.status);
 
-  const b = await request.json();
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
   const targetType = b.target_type;
   const targetId = b.target_id;
   const kind = b.kind;
@@ -1986,7 +2046,9 @@ async function vpaHandleDiscountRemove(request, env, json) {
   const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
   if (actor.error) return json({ error: actor.error }, actor.status);
 
-  const b = await request.json();
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
   const id = b.discount_id || b.id;
   if (!id) return json({ error: 'discount_id is required.' }, 400);
 
@@ -2257,7 +2319,9 @@ async function vpaHandleVenueGaming(request, env, json) {
   const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
   if (actor.error) return json({ error: actor.error }, actor.status);
 
-  const b = await request.json();
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
   const venueId = b.venue_id;
   if (!venueId) return json({ error: 'venue_id is required.' }, 400);
 
@@ -2647,7 +2711,9 @@ async function vpaHandleVenueStatus(request, env, json) {
   const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
   if (actor.error) return json({ error: actor.error }, actor.status);
 
-  const b = await request.json();
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
   const venueId = b.venue_id;
   const status = b.status;
   const reason = (b.reason || '').trim() || null;
@@ -2826,7 +2892,9 @@ async function vpaHandleVenueDetail(request, env, json) {
 async function vpaHandleOptinApprove(request, env, json) {
   const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
   if (actor.error) return json({ error: actor.error }, actor.status);
-  const b = await request.json();
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
   const foundingId = b.founding_id;
   if (!foundingId) return json({ error: 'founding_id is required.' }, 400);
   const approved = b.approved !== false;   // default true; pass approved:false to revoke
@@ -2846,7 +2914,9 @@ async function vpaHandleStaff(request, env, json) {
   const actor = await vpaRequireAdmin(request, env, ['owner']);
   if (actor.error) return json({ error: actor.error }, actor.status);
 
-  const b = await request.json();
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
   const name = (b.name || '').trim();
   const email = (b.email || '').trim();
   const role = b.role;
@@ -2902,7 +2972,9 @@ async function vpaHandleAudit(request, env, json) {
   const actor = await vpaRequireAdmin(request, env, null);
   if (actor.error) return json({ error: actor.error }, actor.status);
 
-  const b = await request.json();
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
   const action = (b.action || '').trim();
   if (!action) return json({ error: 'action is required.' }, 400);
 
@@ -5464,7 +5536,9 @@ async function vpbSetPlayers(request, env, json) {
   if (o.error) return json({ error: o.error }, o.status);
   { const g = vpbOwnerOnly(o, json); if (g) return g; }   // billing is owner-only
 
-  const b = await request.json();
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
   const venueId = (b.venue_id || '').trim();
   const players = parseInt(b.players, 10);
   if (!players || players < 1) return json({ error: 'Enter a valid number of players.' }, 400);
@@ -5620,7 +5694,9 @@ async function vpbAddVenue(request, env, json) {
   if (o.error) return json({ error: o.error }, o.status);
   { const g = vpbOwnerOnly(o, json); if (g) return g; }   // adding venues is owner-only
 
-  const b = await request.json();
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
   const name = (b.name || '').trim();
   const players = parseInt(b.players, 10);
   if (!name) return json({ error: 'Enter a venue name.' }, 400);
@@ -6812,7 +6888,9 @@ async function vpbCancelVenue(request, env, json) {
   if (o.error) return json({ error: o.error }, o.status);
   { const g = vpbOwnerOnly(o, json); if (g) return g; }   // cancelling a venue is owner-only
 
-  const b = await request.json();
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
   const venueId = (b.venue_id || '').trim();
   const undo = b.undo === true;
   /* Never reject a cancellation over a form field. An unknown reason becomes 'other'
@@ -6980,7 +7058,9 @@ async function vpbScreenUpload(request, env, json) {
   const o = await vpbRequireOwner(request, env);
   if (o.error) return json({ error: o.error }, o.status);
   if (!vpbCan(o, 'advertising')) return json({ error: 'You do not have permission to change advertising.' }, 403);
-  const b = await request.json();
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
   const venueId = (b.venue_id || '').trim();
   const venue = o.venues.filter(function (v) { return v.id === venueId; })[0];
   if (!venue) return json({ error: 'That venue is not on your account.' }, 403);
@@ -7038,7 +7118,9 @@ async function vpbScreenGet(request, env, json) {
 async function vpbScreenSave(request, env, json) {
   const o = await vpbRequireOwner(request, env);
   if (o.error) return json({ error: o.error }, o.status);
-  const b = await request.json();
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
   const venueId = (b.venue_id || '').trim();
   const venue = o.venues.filter(function (v) { return v.id === venueId; })[0];
   if (!venue) return json({ error: 'That venue is not on your account.' }, 403);
@@ -7082,7 +7164,9 @@ async function vpbSetReminders(request, env, json) {
   if (o.error) return json({ error: o.error }, o.status);
   { const g = vpbOwnerOnly(o, json); if (g) return g; }   // payment reminders are owner-only
 
-  const b = await request.json();
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
   const enabled = !(b.enabled === false || b.enabled === 'false' || b.enabled === 0);
   await vpaPatch(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(o.account.id),
     { payment_reminders: enabled });

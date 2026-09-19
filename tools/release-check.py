@@ -2796,6 +2796,41 @@ def local_checks(which):
         # the vp_cards, vp_players and vp_games reads that feed the who-played counter,
         # which is what BILLS a venue. A skipped row there is a player who was never
         # counted, and nothing anywhere would have said so.
+        # Sixteen handlers did a bare `await request.json()`. That rejects on a
+        # malformed body, and the top-level catch turned it into a 500 "Something went
+        # wrong": reads as our fault, says nothing, and it is almost always our own
+        # front end sending the bad body.
+        head('D7. A bad request body gets a 400, not a 500')
+        t = os.path.join(ROOT, 'tools', 'test-body-reader.js')
+        if not os.path.isfile(t):
+            ok('the request-body test exists', False,
+               why='tools/test-body-reader.js is missing')
+        else:
+            r = subprocess.run([JSC, t], capture_output=True, text=True, timeout=120)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+            n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
+            ok('a malformed body is refused with a reason (%d checks)' % n,
+               r.returncode == 0 and n > 0 and not bad,
+               detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
+               why='run jsc tools/test-body-reader.js')
+
+        # And no handler may go back to reading the body raw.
+        apath = os.path.join(ROOT, 'venueplay-backend', 'worker', 'venueplay-api-FULL.js')
+        try:
+            with io.open(apath, encoding='utf-8') as fh:
+                asrc = fh.read()
+        except (IOError, OSError):
+            asrc = ''
+        naked = []
+        for i, ln in enumerate(asrc.splitlines()):
+            if re.search(r'=\s*await request\.json\(\)\s*;', ln):
+                naked.append('line %d' % (i + 1))
+        ok('no handler reads the body without a guard',
+           bool(asrc) and not naked,
+           detail=('; '.join(naked[:5]) if naked else 'all go through vpaBody'),
+           why='use vpaBody(request, json), which returns a 400 the caller returns as-is')
+
         head('D6. Every paged read has a stable order')
         gpath = os.path.join(ROOT, 'venueplay-backend', 'worker', 'venueplay-game.js')
         try:
