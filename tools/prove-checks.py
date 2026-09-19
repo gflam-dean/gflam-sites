@@ -1087,7 +1087,7 @@ MUTATIONS = [
     # The ceiling Dean spotted: every venue ever created, cancelled ones
     # included, counted toward 5,000 - so live venues stop resolving silently.
     ('venue-scale.test.js', 'venueplay-backend/worker/venueplay-game.js',
-     "const rows = await sbGetAll(env, 'vp_venues',\n    'slug=not.is.null&select=id,slug,join_code,status');",
+     "const rows = await sbGetAll(env, 'vp_venues',\n    'slug=not.is.null&select=id,slug,join_code,status&order=id.asc');",
      "const rows = await sbGet(env, 'vp_venues', 'slug=not.is.null&select=id,slug,join_code,status&limit=1000');",
      'the venue-code map reads one page again, so venues past it stop working'),
     # 8 Sep: the TV, the console and the table talkers all use a HASH of the slug
@@ -1806,6 +1806,100 @@ MUTATIONS = [
      '      if (false) {',
      'a Guess the Photo game is stored naming a photo the television cannot fetch, and '
      'the host finds out in front of the room'),
+
+    # ---- 19 Sep: four silent faults, and the checks that now watch them ----
+    # These four checks do NOT print a suite file name, they print their own prose, so
+    # the label here is a stable substring of that prose. The trailing "(N checks)" is
+    # deliberately left out: N changes when the suite fails, which is exactly when the
+    # label has to still match.
+    # Every one was broken by hand and watched go red before being written down.
+
+    ('a club past 1,000 members sees all of them',
+     'venueplay/app/members/host.html',
+     '          if(!rows.length) return out;            // empty page: that is the end',
+     '          if(rows.length < PAGE) return out.concat(rows);',
+     'the member list stops on a SHORT page, so a club over 1,000 members sees the first '
+     'page only and a member past it cannot be found or drawn'),
+
+    # NOT 'all 14 paged reads': that number is the count of sbGetAll call sites and it
+    # moved from 14 to 13 within the hour, when retagSetCount stopped fetching rows.
+    # A label carrying a count goes blind the moment the count changes, silently.
+    ('paged reads in the game Worker are ordered',
+     'venueplay-backend/worker/venueplay-game.js',
+     "')&kicked=eq.false&select=id,session_id,device_id&order=id.asc');",
+     "')&kicked=eq.false&select=id,session_id,device_id');",
+     'the player read pages with no stable order, so a row can repeat and another be '
+     'skipped, and that read is what counts who played and BILLS the venue'),
+
+    ('a malformed body is refused with a reason',
+     'venueplay-backend/worker/venueplay-api-FULL.js',
+     """  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    return { ok: false, res: json({ error: 'That request body was not a JSON object.' }, 400) };
+  }""",
+     '  // guard removed',
+     'a body of null or 42 or [1,2] is handed to a handler that reads properties off it, '
+     'so null.foo crashes into a 500 instead of a 400 that says what was wrong'),
+
+    ('parked questions are not advertised',
+     'venueplay-backend/worker/venueplay-game.js',
+     "'set_id=eq.' + enc(setId) + '&parked_at=is.null&select=id'",
+     "'set_id=eq.' + enc(setId) + '&select=id'",
+     'the set count includes questions the draw filters out, so a host is told there are '
+     'more questions than can ever come up and runs short on the night'),
+
+    # D7 is two checks: the suite, and a grep that stops a handler quietly going back to
+    # reading the body raw. The grep needs its own mutation or only half of D7 is proven.
+    ('no handler reads the body without a guard',
+     'venueplay-backend/worker/venueplay-api-FULL.js',
+     '''  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
+  const email = (b.email || '').trim();''',
+     '''  const b = await request.json();
+  const email = (b.email || '').trim();''',
+     'a handler goes back to reading the body raw, so a malformed body is a 500 that says '
+     'nothing instead of a 400 that says what was wrong'),
+
+    # ---- 18-19 Sep: four checks that were added and never broken on purpose ----
+    # Found by the run itself listing them as NOT YET PROVEN. A check nobody has seen
+    # fail is a green line, not evidence.
+
+    ('a real visitor is counted, an automated browser is not',
+     'venueplay/app/vp-analytics.js',
+     '      if (navigator.webdriver === true) return true;',
+     '      if (false) return true;',
+     'our own verify-live browser counts as a visitor again: it walks three live pages '
+     'and waits forty seconds on each, so to Google it is the most engaged visitor of '
+     'the day and every marketing decision taken off these numbers is wrong'),
+
+    ('an archived venue is not restored',
+     'venueplay/app/vp-session.js',
+     '''    for (var i = 0; i < mine.length; i++) {
+      if (!archivedId(role, mine[i])) return mine[i];
+    }''',
+     '''    for (var i = 0; i < mine.length; i++) {
+      return mine[i];
+    }''',
+     'the console picks the first venue in an unordered staff list even when it is '
+     'archived, so a host is put back into a venue that has been shut and cannot get out'),
+
+    ('the nightly archive sweep fails closed',
+     'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  const sess = await vpaSelectAll(env, 'vp_sessions',",
+     "  const sess = await vpaSelect(env, 'vp_sessions',",
+     'the 3:30am sweep reads sessions through a call that returns [] on failure, so one '
+     'transient error reads as "this venue has run nothing" and a trading venue is '
+     'archived overnight: a dark room on a Friday'),
+
+    ('a failed page throws instead of truncating the export',
+     'venueplay-backend/worker/venueplay-api-FULL.js',
+     '''  if (!sawTheEnd) {
+    throw new Error('read ' + table + ': more than ' + out.length +
+                    ' rows, page cap of ' + CAP + ' reached before the end of the list');
+  }''',
+     '  // cap reached: return what we have',
+     'the opt-in export hands a venue a SHORT copy of its own customer list and reports '
+     'success, which is the fault this function exists to prevent arriving by another route'),
 ]
 
 
