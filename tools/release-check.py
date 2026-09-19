@@ -2803,6 +2803,28 @@ def local_checks(which):
         # The draw filters parked_at=is.null, so a parked question can never come up,
         # but retagSetCount counted them anyway. "General Knowledge" advertised 1,169
         # questions to a host when 1,158 were playable.
+        # listVenues is the venue list behind HQ and behind the venue picker on every
+        # console, and it was unpaged. At a thousand venues HQ stops showing the ones
+        # past it, silently: the same fault sbGetAll's header describes, where venues
+        # past the ceiling resolved to nothing and their screens said "not linked to
+        # an account".
+        head('D9. HQ sees every venue, and a host still costs one call')
+        t = os.path.join(ROOT, 'tools', 'test-venue-list-paged.js')
+        if not os.path.isfile(t):
+            ok('the venue-list test exists', False,
+               why='tools/test-venue-list-paged.js is missing')
+        else:
+            r = subprocess.run([JSC, t], capture_output=True, text=True, timeout=120)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+            n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
+            ok('the venue list is complete and still one call for a host (%d checks)' % n,
+               r.returncode == 0 and n > 0 and not bad,
+               detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
+               why='run jsc tools/test-venue-list-paged.js. A venue HQ cannot see is a '
+                   'venue nobody can fix, and a second call on every console boot costs '
+                   'the gateway ceiling for a fault a thousand venues away')
+
         head('D8. The advertised question count is the playable count')
         t = os.path.join(ROOT, 'tools', 'test-set-count.js')
         if not os.path.isfile(t):

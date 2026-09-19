@@ -1900,6 +1900,14 @@ MUTATIONS = [
      '  // cap reached: return what we have',
      'the opt-in export hands a venue a SHORT copy of its own customer list and reports '
      'success, which is the fault this function exists to prevent arriving by another route'),
+
+    ('the venue list is complete and still one call for a host',
+     'venueplay/app/vp-session.js',
+     '      if (total == null || out.length >= total) return out;',
+     '      if (out.length < PAGE) return out;',
+     'the venue list reads a SHORT page as the end, so a server whose own max-rows sits '
+     'below the page size truncates HQ to one page and says nothing: venues past it '
+     'cannot be seen or fixed by anybody'),
 ]
 
 

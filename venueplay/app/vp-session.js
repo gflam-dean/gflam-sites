@@ -430,16 +430,65 @@
     // and both were pulled back off this line until the migration was actually run. It has been
     // (19 Aug 2026), and tools/check-schema.py now verifies every name here against the live
     // database, so run that before adding to this list.
-    return getClient().from("vp_venues")
-      .select("id,name,slug,timezone,status,suspended_reason,founding_id,group_id,included_players,max_players,logo_url,created_at,postcode,au_state,entity_type,paid_entry_enabled")
-      .order("created_at", { ascending: false })
-      .then(function (r) {
-        // And do not swallow the failure. Returning [] on an error is indistinguishable from
+    /* PostgREST stops at 1000 rows on this project, SILENTLY. This is the venue list
+       behind HQ and behind the venue picker on every console, so at a thousand venues
+       HQ would simply stop showing the ones past it, with no error. That is not a new
+       fault, it is the one sbGetAll's header already describes: the venue-code map read
+       the first page, every venue after it resolved to nothing, and their screens said
+       "not linked to an account" while the join codes silently failed.
+
+       It does NOT page unconditionally. This runs on every console boot, and a loop that
+       only stops on an empty page would cost a second round trip every time, for every
+       host, for ever, to guard something a thousand venues away. This project's wall is
+       about fifty REST calls a second and what counts is CALLS, not rows.
+
+       IT ALSO DOES NOT GUESS THE CEILING. The first version asked for one row MORE than
+       1000 and treated a short answer as the end. That cannot work, and the first run of
+       tools/test-venue-list-paged.js said so: PostgREST's own max-rows caps the response
+       at 1000, so the 1001st row can never arrive and "short" is indistinguishable from
+       "finished". It is the same short-page trap written on sbGetAll, arriving through
+       the door marked clever.
+
+       So ASK THE DATABASE. count:'exact' returns the true total in the SAME request, so
+       one call answers both "here are the rows" and "is that all of them". No guessing,
+       and no cost to the common case. */
+    var COLS = "id,name,slug,timezone,status,suspended_reason,founding_id,group_id," +
+               "included_players,max_players,logo_url,created_at,postcode,au_state," +
+               "entity_type,paid_entry_enabled";
+    var PAGE = 1000;
+
+    function page(from, to, withCount) {
+      var q = getClient().from("vp_venues")
+        .select(COLS, withCount ? { count: "exact" } : undefined)
+        /* created_at alone is not a stable order: two venues created in the same
+           millisecond can swap between pages, repeating one and skipping the other.
+           id breaks the tie. */
+        .order("created_at", { ascending: false }).order("id", { ascending: false })
+        .range(from, to);
+      return q.then(function (r) {
+        // Do not swallow the failure. Returning [] on an error is indistinguishable from
         // "this venue has no venues", so a broken query looked like an empty account for
         // however long it took someone to notice. Let the caller show the real reason.
         if (r && r.error) throw r.error;
-        return (r && r.data) || [];
+        return { rows: (r && r.data) || [], total: r ? r.count : null };
       });
+    }
+
+    return page(0, PAGE - 1, true).then(function (first) {
+      var out = first.rows, total = first.total;
+      // No count came back, or we already hold all of them: one call and done.
+      if (total == null || out.length >= total) return out;
+      function more() {
+        return page(out.length, out.length + PAGE - 1, false).then(function (r) {
+          if (!r.rows.length) return out;            // empty page, never a short one
+          out = out.concat(r.rows);
+          if (out.length >= total) return out;
+          if (out.length > 200000) throw new Error("venue list did not end at " + out.length);
+          return more();
+        });
+      }
+      return more();
+    });
   }
 
   function saveSettings(id, patch) {
