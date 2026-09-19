@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '19 Sep 2026, 12:47 · 7d47496c';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '19 Sep 2026, 13:06 · c87724e5';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -4242,11 +4242,25 @@ async function nextTriviaSeq(env, setId) {
   return rows.length ? (rows[0].seq || 0) + 1 : 1;
 }
 async function retagSetCount(env, setId) {
-  /* PAGED, or this WRITES the truncation into the database: question_count would be set to
-     1000 for any set bigger than that, the first time anybody edited it. The seeded library
-     counts are right today only because this has never run on them. */
-  const rows = await sbGetAll(env, 'vp_questions', 'set_id=eq.' + enc(setId) + '&select=seq&order=seq.asc');
-  await sbPatch(env, 'vp_question_sets', 'id=eq.' + enc(setId), { question_count: rows.length });
+  /* COUNTED, not fetched. This used to pull every row of the set back just to read
+     .length off the array: four pages of question text over the wire to produce one
+     number. sbCount asks PostgREST for the count with a HEAD and Prefer: count=exact,
+     reads it out of Content-Range, and throws if that header is missing or unreadable,
+     so it fails closed rather than writing a wrong number.
+     (It had been written and had NO callers at all until this.)
+
+     PARKED QUESTIONS ARE EXCLUDED, and that is a correctness fix rather than a tidy-up.
+     The draw itself filters parked_at=is.null, so a parked question can never come up,
+     but this counted them anyway. On 19 Sep 2026 "General Knowledge" advertised 1,169
+     questions to a host when only 1,158 could ever be drawn. One set of thirty was
+     wrong, by exactly the 11 parked rows in the table.
+
+     The old comment's warning still applies and is now structural: it used to page so
+     that it would not WRITE a truncation into the database, setting question_count to
+     1000 for any set bigger than that. A count cannot truncate. */
+  const n = await sbCount(env, 'vp_questions',
+    'set_id=eq.' + enc(setId) + '&parked_at=is.null&select=id');
+  await sbPatch(env, 'vp_question_sets', 'id=eq.' + enc(setId), { question_count: n });
 }
 async function handleTriviaSet(request, env, json) {              // create a new set, or rename an existing one
   const authUserId = await verifyHostJwt(request, env);

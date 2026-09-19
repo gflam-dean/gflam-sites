@@ -2800,6 +2800,25 @@ def local_checks(which):
         # malformed body, and the top-level catch turned it into a 500 "Something went
         # wrong": reads as our fault, says nothing, and it is almost always our own
         # front end sending the bad body.
+        # The draw filters parked_at=is.null, so a parked question can never come up,
+        # but retagSetCount counted them anyway. "General Knowledge" advertised 1,169
+        # questions to a host when 1,158 were playable.
+        head('D8. The advertised question count is the playable count')
+        t = os.path.join(ROOT, 'tools', 'test-set-count.js')
+        if not os.path.isfile(t):
+            ok('the question-count test exists', False,
+               why='tools/test-set-count.js is missing')
+        else:
+            r = subprocess.run([JSC, t], capture_output=True, text=True, timeout=120)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+            n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
+            ok('parked questions are not advertised, and a bad count writes nothing (%d checks)' % n,
+               r.returncode == 0 and n > 0 and not bad,
+               detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
+               why='run jsc tools/test-set-count.js. A host told there are more questions '
+                   'than can be drawn runs short on the night')
+
         head('D7. A bad request body gets a 400, not a 500')
         t = os.path.join(ROOT, 'tools', 'test-body-reader.js')
         if not os.path.isfile(t):
