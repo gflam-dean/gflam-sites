@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '19 Sep 2026, 11:51 · 3e04b918';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '19 Sep 2026, 12:47 · 7d47496c';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -1106,7 +1106,7 @@ async function refreshVenueCodes(env) {
      than filtered in the query, because the screen index below needs them: a
      suspended venue's television must still know which venue it is. */
   const rows = await sbGetAll(env, 'vp_venues',
-    'slug=not.is.null&select=id,slug,join_code,status');
+    'slug=not.is.null&select=id,slug,join_code,status&order=id.asc');
   const map = {}, seen = {}, dupes = [], hashMap = {}, hashSeen = {}, all = {}, susp = {};
   for (const v of rows) {
     if (!v || !v.slug) continue;
@@ -1937,7 +1937,8 @@ async function handleMetering(request, env, json) {
      a raffle or members draw mints no vp_players and lands as a zero, which is correct. */
   const sessions = await sbGetAll(env, 'vp_sessions',
     'opened_at=gte.' + enc(since) +
-    '&select=id,venue_id,opened_at,started_at,ended_at,status,plan_cap_at_start,overage_approved_count');
+    '&select=id,venue_id,opened_at,started_at,ended_at,status,plan_cap_at_start,overage_approved_count'
+    + '&order=id.asc');
   if (!sessions || !sessions.length) {
     return json({ ok: true, months: months, sessions: 0, rows: [],
                   note: 'no sessions have been opened in that window' });
@@ -1948,9 +1949,9 @@ async function handleMetering(request, env, json) {
 
   // Everyone who joined, and which game rows those sessions produced.
   const players = await sbGetAll(env, 'vp_players',
-    'session_id=in.(' + ids.join(',') + ')&kicked=eq.false&select=id,session_id,device_id');
+    'session_id=in.(' + ids.join(',') + ')&kicked=eq.false&select=id,session_id,device_id&order=id.asc');
   const games = await sbGetAll(env, 'vp_games',
-    'session_id=in.(' + ids.join(',') + ')&select=id,session_id');
+    'session_id=in.(' + ids.join(',') + ')&select=id,session_id&order=id.asc');
   const gameIds = games.map((g) => g.id);
   const sessionOfGame = {};
   for (const g of games) sessionOfGame[g.id] = g.session_id;
@@ -1960,8 +1961,8 @@ async function handleMetering(request, env, json) {
      joined, which is what the billing path does and errs in the venue's favour. */
   const playedBySession = {};
   if (gameIds.length) {
-    const cards = await sbGetAll(env, 'vp_cards', 'game_id=in.(' + gameIds.join(',') + ')&select=player_id,game_id');
-    const answers = await sbGetAll(env, 'vp_trivia_answers', 'game_id=in.(' + gameIds.join(',') + ')&select=player_id,game_id');
+    const cards = await sbGetAll(env, 'vp_cards', 'game_id=in.(' + gameIds.join(',') + ')&select=player_id,game_id&order=id.asc');
+    const answers = await sbGetAll(env, 'vp_trivia_answers', 'game_id=in.(' + gameIds.join(',') + ')&select=player_id,game_id&order=id.asc');
     for (const r of cards.concat(answers)) {
       const sid = r && sessionOfGame[r.game_id];
       if (!sid || !r.player_id) continue;
@@ -6340,10 +6341,10 @@ async function playerIdsWhoPlayed(env, sessionId) {
        exactly the night this matters on, and exactly the night that overruns
        the cap. */
     const cards = await sbGetAll(env, 'vp_cards',
-      'game_id=in.(' + ids + ')&select=player_id');
+      'game_id=in.(' + ids + ')&select=player_id&order=id.asc');
     for (const c of cards) if (c && c.player_id) played.add(c.player_id);
     const answers = await sbGetAll(env, 'vp_trivia_answers',
-      'game_id=in.(' + ids + ')&select=player_id');
+      'game_id=in.(' + ids + ')&select=player_id&order=id.asc');
     for (const a of answers) if (a && a.player_id) played.add(a.player_id);
 
     /* BROADCAST BINGO LEAVES NO PER-PLAYER TRACE, AND THIS FUNCTION MADE IT FREE.

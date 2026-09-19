@@ -2790,6 +2790,46 @@ def local_checks(which):
                why='run jsc tools/test-members-paged.js. A member the host cannot see '
                    'is a member who cannot be drawn, and the screen gives no hint')
 
+        # A PAGED READ WITH NO ORDER IS NOT STABLE. Postgres makes no promise about row
+        # order without one, so LIMIT/OFFSET across pages can repeat a row and skip
+        # another. Eight of the fourteen sbGetAll calls had no order on 19 Sep, including
+        # the vp_cards, vp_players and vp_games reads that feed the who-played counter,
+        # which is what BILLS a venue. A skipped row there is a player who was never
+        # counted, and nothing anywhere would have said so.
+        head('D6. Every paged read has a stable order')
+        gpath = os.path.join(ROOT, 'venueplay-backend', 'worker', 'venueplay-game.js')
+        try:
+            with io.open(gpath, encoding='utf-8') as fh:
+                gsrc = fh.read()
+        except (IOError, OSError):
+            gsrc = ''
+        if not gsrc:
+            ok('venueplay-game.js is readable', False, why='could not read the game Worker')
+        else:
+            glines = gsrc.splitlines()
+            unordered, seen = [], 0
+            for i, ln in enumerate(glines):
+                m = re.search(r"sbGetAll\(env, '([a-z_]+)'", ln)
+                if not m:
+                    continue
+                seen += 1
+                # Read to the END of the statement. A two-line window reported one of
+                # these as unordered when the order sat on the fourth line, which is a
+                # scan that lies in the safe direction only by luck.
+                stmt, j = '', i
+                while j < len(glines) and j < i + 12:
+                    stmt += glines[j]
+                    if glines[j].rstrip().endswith(');'):
+                        break
+                    j += 1
+                if 'order=' not in stmt:
+                    unordered.append('%s line %d' % (m.group(1), i + 1))
+            ok('all %d paged reads in the game Worker are ordered' % seen,
+               seen > 0 and not unordered,
+               detail=('; '.join(unordered[:4]) if unordered else '%d reads' % seen),
+               why='add &order=id.asc. Without an order, paging can repeat and skip rows, '
+                   'and the who-played counter that does it is what bills the venue')
+
         head('D3. A failed read does not archive a venue')
         t = os.path.join(ROOT, 'tools', 'test-archive-sweep-fails-closed.js')
         if not os.path.isfile(t):
