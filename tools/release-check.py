@@ -2915,6 +2915,21 @@ def local_checks(which):
                    'and the reads that do it are what bills a venue and what exports its '
                    'opt-in list')
 
+            # AND THE CHECK MUST BE ABLE TO SEE ALL OF THEM. The pattern above only
+            # matches a LITERAL table name. Write sbGetAll(env, table, ...) with a
+            # variable and this check skips it in silence and still reports green, which
+            # is the shape of every blind check in this repo's history. Count every call
+            # site however it is written and require the two numbers to agree.
+            helper = pattern.split('\\(')[0]
+            every = len(re.findall(r'\b' + helper + r'\s*\(', gsrc))
+            defs = len(re.findall(r'function\s+' + helper + r'\s*\(', gsrc))
+            calls = every - defs
+            ok('and the check can see every %s call in %s' % (helper, wname),
+               calls == seen,
+               detail='%d call sites, %d visible to this check' % (calls, seen),
+               why='a call written with a variable table name is invisible to the pattern '
+                   'above, so it would be skipped silently and still pass')
+
         head('D3. A failed read does not archive a venue')
         t = os.path.join(ROOT, 'tools', 'test-archive-sweep-fails-closed.js')
         if not os.path.isfile(t):

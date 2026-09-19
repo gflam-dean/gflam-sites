@@ -1920,6 +1920,17 @@ MUTATIONS = [
      "    '');",
      'the nightly sweep pages sessions with a broken order clause, so rows repeat and '
      'others are skipped, and the sweep decides which venues get archived'),
+
+    # D6 ALSO CHECKS ITS OWN COVERAGE, and this proves that half. Give one call a
+    # variable table name and the ordering line above happily reports "12 reads, ok"
+    # while a thirteenth goes unwatched. Seen doing exactly that before it was written
+    # down: the ordering check stayed green at 12 and only the coverage line went red.
+    ('the check can see every sbGetAll call',
+     'venueplay-backend/worker/venueplay-game.js',
+     "  const rows = await sbGetAll(env, 'vp_venues',",
+     "  const _t = 'vp_venues';\n  const rows = await sbGetAll(env, _t,",
+     'a paged read written with a variable table name is invisible to the order check, '
+     'so it is skipped in silence and the gate still says every read is ordered'),
 ]
 
 
