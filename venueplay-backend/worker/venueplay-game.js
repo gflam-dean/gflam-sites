@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '20 Sep 2026, 10:09 · 67d3115f';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '20 Sep 2026, 10:17 · 9a83590e';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -377,22 +377,65 @@ async function sweepRetention(env) {
     for (const v of venues) {
       /* Their sessions, so their players. A venue with no sessions is normal and is not a
          reason to skip the captures below. */
-      const sessions = await sbGet(env, 'vp_sessions', 'venue_id=eq.' + enc(v.id) + '&select=id&limit=1000');
+      /* EVERY session, not the first thousand. This was a bare sbGet with limit=1000 and no
+         order, so a busy venue's later sessions were never purged, and the venue was then
+         stamped as done FOR EVER. Found by audit, 20 Sep 2026. */
+      const sessions = await sbGetAll(env, 'vp_sessions', 'venue_id=eq.' + enc(v.id) + '&select=id&order=id.asc');
       const ids = (sessions || []).map(function (x) { return x.id; });
+      /* WHAT THE PRIVACY PAGE PROMISES IS "the player list", and this used to clear seven
+         columns of it. Left behind: display_name (the name the player TYPED on the join
+         screen, which is the one most likely to be their real one), ip_hash, device_id and
+         device_hint. display_name becomes a word rather than null so nothing that renders a
+         player ever prints "null". */
       const BLANK = { first_name: null, last_name: null, email: null, mobile: null, postcode: null,
-                      marketing_optin: null, marketing_optin_at: null };
+                      marketing_optin: null, marketing_optin_at: null,
+                      display_name: 'Player', ip_hash: null, device_id: null, device_hint: null };
+      /* vp_captures.marketing_optin is NOT NULL in the live database, and this sent it null
+         with the rest. Every purge would have been refused by Postgres, the sweep would have
+         thrown, nothing would have been stamped, and it would have failed the same way every
+         night for ever. It had simply never run on real data: no venue reaches ninety days
+         until mid December 2026. Checked against the live schema, not a migration file. */
+      const BLANK_CAPTURE = { first_name: null, last_name: null, email: null, mobile: null,
+                              postcode: null, marketing_optin: false, marketing_optin_at: null,
+                              source_ip_hash: null };
       if (ids.length) {
         /* In batches. One PostgREST call with a thousand ids in the URL is a request nobody
            should build, and half a purge is worse than none. */
         for (let i = 0; i < ids.length; i += 50) {
           const batch = ids.slice(i, i + 50).map(enc).join(',');
           await sbPatch(env, 'vp_players', 'session_id=in.(' + batch + ')', BLANK);
+          /* LOOK BEFORE SAYING IT IS DONE. The stamp below is permanent, so it is only
+             written after the database itself says nobody in this batch still has a
+             contact detail. A PATCH that quietly matched nothing reads exactly like one
+             that worked. */
+          const left = await sbCount(env, 'vp_players', 'session_id=in.(' + batch + ')'
+            + '&or=(email.not.is.null,mobile.not.is.null,first_name.not.is.null,last_name.not.is.null)&select=id');
+          if (left > 0) throw new Error('purge ' + v.id + ': ' + left + ' player(s) still hold a contact detail after the update');
           players += Math.min(50, ids.length - i);
         }
       }
       // Broadcast bingo keeps its captures against the venue directly, with no session.
-      await sbPatch(env, 'vp_captures', 'venue_id=eq.' + enc(v.id), BLANK);
+      await sbPatch(env, 'vp_captures', 'venue_id=eq.' + enc(v.id), BLANK_CAPTURE);
       captures++;
+      /* THE MEMBERS LIST IS PERSONAL DATA TOO, and it was never touched: every club member's
+         first and last name, kept for ever after the club had gone. BLANKED, NOT DELETED, on
+         purpose: draw results point at member rows, how those keys cascade is not recorded in
+         any file in this repo, and a delete with no undo is the wrong place to find out. The
+         member NUMBER stays: it is NOT NULL, unique within the list, and with the names gone
+         and the venue closed it identifies nobody. */
+      const rosters = await sbGetAll(env, 'vp_member_rosters', 'venue_id=eq.' + enc(v.id) + '&select=id&order=id.asc');
+      const rosterIds = (rosters || []).map(function (x) { return x.id; });
+      for (let i = 0; i < rosterIds.length; i += 50) {
+        const batch = rosterIds.slice(i, i + 50).map(enc).join(',');
+        await sbPatch(env, 'vp_members', 'roster_id=in.(' + batch + ')', { first_name: null, last_name: null, note: null });
+      }
+      // And the winners' names, which are copied onto each result at draw time.
+      const draws = await sbGetAll(env, 'vp_member_draws', 'venue_id=eq.' + enc(v.id) + '&select=id&order=id.asc');
+      const drawIds = (draws || []).map(function (x) { return x.id; });
+      for (let i = 0; i < drawIds.length; i += 50) {
+        const batch = drawIds.slice(i, i + 50).map(enc).join(',');
+        await sbPatch(env, 'vp_member_draw_results', 'draw_id=in.(' + batch + ')', { winner_name: null });
+      }
       /* Stamped in its OWN column so it is not done again every night for ever.
          The first version of this cleared closed_at instead, which was wrong twice over: it
          destroyed the only record of when the venue actually closed, directly contradicting the

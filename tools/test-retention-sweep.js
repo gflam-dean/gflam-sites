@@ -18,15 +18,29 @@ var src = readFile('venueplay-backend/worker/venueplay-game.js')
 console = { log: function () {} };
 (0, eval)(src);
 
-var gets, patches;
+var gets, patches, counts;
 function arm(opts) {
   gets = []; patches = [];
+  /* OFFSET THEN LIMIT, WITH MAX-ROWS 1000, the way PostgREST does it. The sweep pages its
+     reads now, and a fake that ignores offset hands back the same rows for ever, which is
+     how four suites in this repo stayed green over a read that stopped at a thousand. */
+  function page(all, q) {
+    var off = /(?:^|&)offset=(\d+)/.exec(q), lim = /(?:^|&)limit=(\d+)/.exec(q);
+    var from = off ? +off[1] : 0, want = Math.min(lim ? +lim[1] : 1000, 1000);
+    return all.slice(from, from + want);
+  }
   sbGet = function (env, table, q) {
     gets.push(table + '?' + q);
     if (table === 'vp_venues') return Promise.resolve(opts.venues || []);
-    if (table === 'vp_sessions') return Promise.resolve(opts.sessions || []);
+    if (table === 'vp_sessions') return Promise.resolve(page(opts.sessions || [], q));
+    if (table === 'vp_member_rosters') return Promise.resolve(page(opts.rosters || [], q));
+    if (table === 'vp_member_draws') return Promise.resolve(page(opts.draws || [], q));
     return Promise.resolve([]);
   };
+  /* The look-before-stamping count. opts.stillHeld says how many players the database
+     reports as still holding a contact detail AFTER the update. */
+  counts = [];
+  sbCount = function (env, table, q) { counts.push(table + '?' + q); return Promise.resolve(opts.stillHeld || 0); };
   sbPatch = function (env, table, q, body) {
     patches.push({ table: table, q: q, body: body });
     if (opts.patchFails) return Promise.reject(new Error('boom'));
@@ -80,6 +94,18 @@ check('cleared BY SESSION, so it cannot reach another venue', /session_id=in\.\(
 });
 check('the row itself is NOT deleted, because it is what they were billed on',
   Object.keys(pp[0].body).indexOf('id') === -1 && Object.keys(pp[0].body).indexOf('session_id') === -1, pp[0].body);
+/* What the first version LEFT BEHIND, found by audit 20 Sep 2026. */
+check('the name the player TYPED goes too', pp[0].body.display_name === 'Player', pp[0].body.display_name);
+['ip_hash','device_id','device_hint'].forEach(function (f) {
+  check('the device goes: ' + f + ' is nulled', pp[0].body[f] === null, pp[0].body);
+});
+var cap = patches.filter(function (p) { return p.table === 'vp_captures'; })[0];
+check('captures: marketing_optin is FALSE, not null (the column is NOT NULL, null was refused)',
+      cap && cap.body.marketing_optin === false, cap && cap.body);
+check('captures: the ip hash goes', cap && cap.body.source_ip_hash === null, cap && cap.body);
+check('it LOOKS before stamping: the database is asked who still holds a contact detail',
+      counts.length >= 1 && /email\.not\.is\.null/.test(counts[0]), counts);
+
 check('broadcast bingo captures are cleared too, by venue',
   patches.some(function (p) { return p.table === 'vp_captures' && /venue_id=eq\.v1/.test(p.q); }), patches);
 
@@ -89,6 +115,33 @@ check('it is stamped so it does not run again every night', stamp && !!stamp.bod
 check('and closed_at is NOT cleared, or we lose when they closed',
   stamp && !('closed_at' in stamp.body), stamp && stamp.body);
 check('the count comes back', r1.venues === 1 && r1.captures === 1, r1);
+
+/* 4b. THE MEMBERS LIST. Never touched before: every club member's name kept for ever. */
+var rm = run({ venues: [{ id: 'v1', name: 'The Old Club', closed_at: '2026-01-01T00:00:00Z' }],
+               sessions: [], rosters: [{ id: 'r1' }], draws: [{ id: 'd1' }] });
+var mem = patches.filter(function (p) { return p.table === 'vp_members'; })[0];
+check('members: names are blanked, by roster', !!mem && /roster_id=in\.\(r1\)/.test(mem.q)
+      && mem.body.first_name === null && mem.body.last_name === null, mem);
+check('members: BLANKED not deleted, the number stays', !!mem && !('member_number' in mem.body), mem && mem.body);
+var res = patches.filter(function (p) { return p.table === 'vp_member_draw_results'; })[0];
+check('draw results: the winner name goes', !!res && res.body.winner_name === null && /draw_id=in\.\(d1\)/.test(res.q), res);
+
+/* 4c. MORE THAN A THOUSAND SESSIONS. The read was limit=1000 with no order, and the venue
+       was stamped as done for ever with the rest untouched. */
+var lots = []; for (var i = 0; i < 1300; i++) lots.push({ id: 's' + i });
+var rbig = run({ venues: [{ id: 'v1', name: 'Busy', closed_at: '2026-01-01T00:00:00Z' }], sessions: lots });
+var touched = {};
+patches.filter(function (p) { return p.table === 'vp_players'; }).forEach(function (p) {
+  (/in\.\(([^)]*)\)/.exec(p.q) || ['', ''])[1].split(',').forEach(function (id) { touched[id] = 1; });
+});
+check('1,300 sessions: every one is purged, not the first 1,000', Object.keys(touched).length === 1300, Object.keys(touched).length);
+
+/* 4d. IF THE DATABASE SAYS SOMEBODY IS STILL THERE, DO NOT STAMP. The stamp is permanent. */
+var rheld = run({ venues: [{ id: 'v1', name: 'Stuck', closed_at: '2026-01-01T00:00:00Z' }],
+                  sessions: [{ id: 's1' }], stillHeld: 3 });
+check('players still held after the update: reported as an error', !!(rheld && rheld.error), rheld);
+check('and the venue is NOT stamped as purged',
+      !patches.some(function (p) { return p.table === 'vp_venues'; }), patches);
 
 /* 5. A venue with no sessions still gets its captures cleared. Broadcast bingo has no session
       at all, so skipping on "no sessions" would leave exactly the bingo data behind. */
