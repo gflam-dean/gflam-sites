@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '20 Sep 2026, 09:38 · 0500fbfe';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '20 Sep 2026, 10:09 · 67d3115f';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -7668,7 +7668,10 @@ async function sbGetAll(env, table, query, pageSize) {
   for (let page = 0; page < PAGE_CAP; page++) {
     const q = query + '&limit=' + size + '&offset=' + offset;
     const rows = await sbGet(env, table, q);
-    if (!Array.isArray(rows) || rows.length === 0) { sawTheEnd = true; break; }
+    // Not a list is not the end of the list: see vpaSelectAll in the billing Worker. Only an
+    // EMPTY ARRAY ends the read; anything else that is not an array is an error.
+    if (!Array.isArray(rows)) throw new Error('read ' + table + ': the database answered with something that is not a list');
+    if (rows.length === 0) { sawTheEnd = true; break; }
     out = out.concat(rows);
     /* Advance by what CAME BACK, and stop only on an empty page.
        Stopping on a SHORT page was the first version of this and it has the same

@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '20 Sep 2026, 10:02 · b7f2b899';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '20 Sep 2026, 10:09 · 4c31e677';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -818,6 +818,17 @@ async function handleContact(request, env, json) {
   const phone = String(b.phone == null ? '' : b.phone).replace(/[\x00-\x1f]+/g, ' ').trim().slice(0, 30);
   const message = (b.message || '').trim();
   if (!name || email.indexOf('@') === -1 || !message) return json({ error: 'Missing fields.' }, 400);
+  /* CAPS, AND A HONEYPOT. This sends an email per request on the SAME Resend key that sends
+     invoices and welcome emails, with the caller choosing the reply-to, and it had no limits
+     at all: a script could burn the sending reputation the billing emails depend on, or post
+     a megabyte into two inboxes. A real enquiry fits in these with room to spare. `website` is
+     a field no person ever sees or fills; anything that fills it is told it worked and
+     nothing is sent. */
+  if (String(b.website || '').trim()) return json({ ok: true });
+  if (name.length > 120 || email.length > 200 || message.length > 4000
+      || !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(email)) {
+    return json({ error: 'That message is too long or the email address does not look right.' }, 400);
+  }
 
   const esc = (s) => String(s).replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
   const html =
@@ -1355,7 +1366,14 @@ async function vpaSelectAll(env, table, query, pageSize) {
                       ': ' + res.status + ' ' + body.slice(0, 200));
     }
     const rows = await res.json();
-    if (!Array.isArray(rows) || rows.length === 0) { sawTheEnd = true; break; }
+    /* NOT A LIST IS NOT THE END OF THE LIST. These two were one test, so a 200 carrying
+       anything but an array (an error object, a proxy's HTML page parsed as nothing useful)
+       read as "no more rows" and the caller got a short or empty list with no error. For the
+       unsubscribe list that means "nobody has opted out". Only an EMPTY ARRAY ends the read. */
+    if (!Array.isArray(rows)) {
+      throw new Error('read ' + table + ' page ' + page + ': the database answered with something that is not a list');
+    }
+    if (rows.length === 0) { sawTheEnd = true; break; }
     out = out.concat(rows);
     offset += rows.length;
   }
@@ -5058,10 +5076,15 @@ async function vpbRequireOwner(request, env) {
          that: the worst case is a manager who has to ask, rather than one who quietly has a
          venue's customer list because of how a query sorted. */
       const scopeIds = accountVenues.map((v) => v.id);
-      const pr = scopeIds.length ? await vpaSelect(env, 'vp_venue_staff',
+      /* vpaSelectAll, because it THROWS. vpaSelect answers [] on any non-2xx, an empty result
+         left perms null, and null perms read as the account owner everywhere. So a single 429
+         on this one read turned a manager with billing:false into somebody who could change
+         billing and add hosts. CLAUDE.md already names the trap: never build on a read that
+         fails open. */
+      const pr = scopeIds.length ? await vpaSelectAll(env, 'vp_venue_staff',
         'auth_user_id=eq.' + encodeURIComponent(authUserId) +
         '&venue_id=in.(' + scopeIds.map(encodeURIComponent).join(',') + ')' +
-        '&role=in.(manager,owner)&select=permissions') : [];
+        '&role=in.(manager,owner)&select=permissions&order=venue_id.asc') : [];
       for (const row of (pr || [])) {
         if (!row || !row.permissions) continue;
         if (!perms) { perms = Object.assign({}, row.permissions); continue; }
@@ -5071,7 +5094,14 @@ async function vpbRequireOwner(request, env) {
           else if (!(k in perms)) perms[k] = row.permissions[k];
         }
       }
-    } catch (_) { /* permissions column not present yet */ }
+    } catch (_) {
+      /* FAIL CLOSED. This used to swallow the error with the note "permissions column not
+         present yet". The column has been live for weeks, and what the swallow actually did
+         was hand full owner access to anyone whose permissions could not be read. Not knowing
+         what somebody may do is a reason to ask them to try again, never a reason to let
+         them do everything. */
+      return { error: 'We could not check your access just now. Please try again in a moment.', status: 503 };
+    }
   }
 
   /* WHICH ROLE THEY ACTUALLY HOLD, not merely that they hold one. vpbRequireOwner accepts a
@@ -7480,9 +7510,15 @@ async function vpaHandleAdminOptinExport(request, env, json) {
    would have gone to all of them. A list of people we must not contact is only safe if we know
    the query succeeded, so this fails closed. */
 async function vpaUnsubscribedSet(env) {
-  const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_unsubscribes?select=email', { headers: vpaHeaders(env) });
-  if (!res.ok) throw new Error('could not read the unsubscribe list: HTTP ' + res.status);
-  const rows = await res.json();
+  /* PAGED. This was one bare fetch with no limit, offset or order, and PostgREST stops at
+     1000 rows in silence. So the 1,001st person to unsubscribe went straight back onto the
+     marketing export, and nothing anywhere said so. The table takes anonymous inserts from a
+     public page and is the opt-out list behind a 15,582-contact campaign, so a thousand rows
+     is a near-term number, and anyone can push it past a thousand on purpose. A Spam Act
+     promise that quietly stops being kept at row 1,001 is the worst kind: it looks kept.
+     vpaSelectAll throws on a failed page rather than returning short, which matters here
+     more than anywhere: a SHORT opt-out list means emailing people who said stop. */
+  const rows = await vpaSelectAll(env, 'vp_unsubscribes', 'select=email&order=email.asc');
   if (!Array.isArray(rows)) throw new Error('the unsubscribe list did not come back as a list');
   const set = Object.create(null);
   for (const r of rows) {
@@ -7540,7 +7576,17 @@ async function vpaHandleVenueMarketingExport(request, env, json) {
                 held_back_unsubscribed: heldBack });
 }
 
-function vpbCsvCell(v) { const s = String(v == null ? '' : v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+/* A CELL A SPREADSHEET WILL NOT RUN. first_name, last_name, email and mobile are typed by
+   anybody at all on an unauthenticated join screen, and this file is opened in Excel by a
+   publican. A value starting = + - @ (or a tab or carriage return) is a FORMULA to a
+   spreadsheet, so a "name" of =HYPERLINK(...) became a live link in the venue's own customer
+   list. A leading apostrophe makes it text. \r is quoted too: it was passed through bare and
+   splits a row in two. */
+function vpbCsvCell(v) {
+  let s = String(v == null ? '' : v);
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+  return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
 async function vpbOptinExport(request, env, json) {
   const o = await vpbRequireOwner(request, env);
   if (o.error) return json({ error: o.error }, o.status);

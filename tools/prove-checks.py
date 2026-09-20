@@ -1946,6 +1946,13 @@ MUTATIONS = [
      "    const tvFor = (v) => site + '/tv';",
      'every welcome email hands the venue a TV link that names no venue, so the screen sits in '
      'its setup state on day one and the customer thinks the product is broken'),
+
+    ('a manager whose permissions cannot be read is refused',
+     'venueplay-backend/worker/venueplay-api-FULL.js',
+     "      return { error: 'We could not check your access just now. Please try again in a moment.', status: 503 };",
+     "      /* swallowed */",
+     'one 429 on the permissions read turns a manager with billing:false into somebody who '
+     'can change billing and add hosts, because null permissions read as the owner'),
 ]
 
 

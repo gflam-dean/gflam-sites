@@ -1,0 +1,97 @@
+/* THREE THINGS THAT FAILED OPEN, from the audit of 20 Sep 2026.
+
+   1. A manager's permissions could not be read, so they were treated as the OWNER.
+   2. A player's typed "name" of =HYPERLINK(...) was a live formula in the venue's CSV.
+   3. The contact form sent an email per request with no limits, on the invoice key.
+
+   Each check RUNS the shipped function out of the billing Worker.
+
+   Run:  jsc tools/test-fail-closed-batch.js
+*/
+var src = readFile('venueplay-backend/worker/venueplay-api-FULL.js')
+  .replace(/^export default/m, 'var _d =')
+  .replace(/^export\s+(?=(async\s+)?(class|function|const|let|var)\b)/mg, '')
+  .replace(/^export\s*\{[^}]*\}\s*;?/mg, '');
+console = { log: function () {} };
+(0, eval)(src);
+
+var PASS = 0, FAIL = 0;
+function check(name, cond, saw) {
+  if (cond) { PASS++; print('  ok   ' + name); }
+  else { FAIL++; print('  FAIL ' + name + (saw !== undefined ? '   saw: ' + JSON.stringify(saw).slice(0, 260) : '')); }
+}
+function drain() { if (typeof drainMicrotasks === 'function') drainMicrotasks(); }
+function J(o, st) { return { body: o, status: st || 200 }; }
+
+print('A spreadsheet must not run what a stranger typed');
+['=HYPERLINK("http://x","hi")', '+61400', '-1', '@SUM(A1)', '\tx', '\rx'].forEach(function (v) {
+  var c = vpbCsvCell(v);
+  check(JSON.stringify(v).slice(0, 22) + ' is neutralised', /^"?'/.test(c), c);
+});
+check('an ordinary name is left exactly as typed', vpbCsvCell('Margaret') === 'Margaret', vpbCsvCell('Margaret'));
+check('an email is left alone', vpbCsvCell('pat@pub.com.au') === 'pat@pub.com.au');
+check('a comma still gets quoted', vpbCsvCell('Smith, Pat') === '"Smith, Pat"', vpbCsvCell('Smith, Pat'));
+check('a carriage return is quoted, it used to split the row', /^"/.test(vpbCsvCell('a\rb')), vpbCsvCell('a\rb'));
+
+print('');
+print('The contact form has limits');
+var sentMail;
+fetch = function (url, o) { if (/resend/.test(String(url))) sentMail++; return Promise.resolve({ ok: true,
+  json: function () { return Promise.resolve({}); }, text: function () { return Promise.resolve('{}'); } }); };
+function contact(body) {
+  sentMail = 0; var out = null;
+  var req = { json: function () { return Promise.resolve(body); }, text: function () { return Promise.resolve(JSON.stringify(body)); } };
+  handleContact(req, { RESEND_API_KEY: 'k' }, J).then(function (r) { out = r; }, function (e) { out = { threw: String(e) }; });
+  drain(); return { out: out, sent: sentMail };
+}
+var c = contact({ name: 'Sam', email: 'sam@pub.com.au', message: 'Tell me more' });
+check('a real enquiry is sent', c.sent === 1 && c.out.status === 200, c);
+c = contact({ name: 'Sam', email: 'sam@pub.com.au', message: new Array(5002).join('x') });
+check('a 5,000 character message is refused and nothing is sent', c.sent === 0 && c.out.status === 400, c);
+c = contact({ name: new Array(300).join('n'), email: 'sam@pub.com.au', message: 'hi' });
+check('a 300 character name is refused', c.sent === 0 && c.out.status === 400, c);
+c = contact({ name: 'Sam', email: 'sam@@pub', message: 'hi' });
+check('a malformed email is refused', c.sent === 0 && c.out.status === 400, c);
+c = contact({ name: 'Bot', email: 'b@x.com', message: 'buy pills', website: 'http://spam' });
+check('a filled honeypot is told ok and NOTHING is sent', c.sent === 0 && c.out.status === 200, c);
+
+print('');
+print('Unreadable permissions are not owner permissions');
+var PERMS_DOWN = false;
+vpaVerifyJWT = function () { return Promise.resolve({ sub: 'user-1' }); };
+vpaSelect = function (env, table, q) {
+  if (table === 'vp_platform_admins') return Promise.resolve([]);
+  if (table === 'vp_venue_staff') return Promise.resolve([{ venue_id: 'v1', role: 'manager', auth_user_id: 'user-1' }]);
+  if (table === 'vp_venues') return Promise.resolve([{ id: 'v1', name: 'The Pub', founding_id: 'f1', group_id: null, status: 'active' }]);
+  if (table === 'venueplay_founding') return Promise.resolve([{ id: 'f1', contact_email: 'o@pub.com.au', status: 'card_on_file' }]);
+  return Promise.resolve([]);
+};
+vpaSelectAll = function (env, table, q) {
+  if (table === 'vp_venue_staff') {
+    if (PERMS_DOWN) return Promise.reject(new Error('read vp_venue_staff page 0: 429'));
+    return Promise.resolve([{ permissions: { billing: false, add_hosts: false } }]);
+  }
+  return Promise.resolve([]);
+};
+function owner() {
+  var out = null;
+  var req = { headers: { get: function () { return 'Bearer t'; } }, url: 'https://x/y' };
+  vpbRequireOwner(req, { SUPABASE_URL: 'https://db', SUPABASE_JWT_SECRET: 's' })
+    .then(function (r) { out = r; }, function (e) { out = { threw: String(e) }; });
+  drain(); return out;
+}
+var o1 = owner();
+if (o1 && !o1.error) {
+  check('with the read working, a manager with billing:false is restricted', vpbCan(o1, 'billing') === false, o1.perms);
+  PERMS_DOWN = true;
+  var o2 = owner();
+  check('with the read FAILING, they are refused, not promoted', !!(o2 && o2.error) && o2.status === 503, o2);
+  check('and they are certainly not handed billing', !(o2 && !o2.error && vpbCan(o2, 'billing')), o2);
+} else {
+  check('vpbRequireOwner ran under this harness (the stubs match the shipped shape)', false, o1);
+}
+
+print('');
+print(PASS + ' passed, ' + FAIL + ' failed');
+if (FAIL) { print('FAILED ' + FAIL); throw new Error(FAIL + ' check(s) failed'); }
+print('PASS');

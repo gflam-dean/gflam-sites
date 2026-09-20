@@ -35,7 +35,14 @@ function arm(opts) {
       if (opts.unsubDown) return Promise.resolve({ ok: false, status: 500,
         json: function () { return Promise.resolve({}); }, text: function () { return Promise.resolve('boom'); } });
       if (opts.unsubGarbage) return ok({ not: 'a list' });
-      return ok((opts.unsubscribed || []).map(function (e) { return { email: e }; }));
+      /* OFFSET THEN LIMIT, WITH THE SERVER'S OWN MAX-ROWS, the way PostgREST does it. This
+         fake used to hand back the whole list whatever it was asked, which is why the suite
+         was green over a read that silently stopped at 1,000 opt-outs: it could not model
+         the one fault that mattered. Fourth suite in this repo found doing that. */
+      var all = (opts.unsubscribed || []).map(function (e) { return { email: e }; });
+      var off = /[?&]offset=(\d+)/.exec(url), lim = /[?&]limit=(\d+)/.exec(url);
+      var from = off ? +off[1] : 0, want = Math.min(lim ? +lim[1] : 1000, 1000);
+      return ok(all.slice(from, from + want));
     }
     if (/venueplay_founding/.test(url)) return ok(opts.venues || []);
     return ok([]);
@@ -103,6 +110,19 @@ check('stop list comes back malformed: refuses too', !r7.body.csv && !!r7.body.e
 run({ venues: [venue('a@x.com')] });
 check('it actually queries vp_unsubscribes',
   asked.some(function (a) { return typeof a === 'string' && /vp_unsubscribes\?select=email/.test(a); }), asked);
+
+/* THE 1,001ST PERSON TO SAY STOP. The list was read in one bare fetch and PostgREST stops at
+   1000 rows in silence, so everyone past it went back on the marketing export. 1,500
+   opt-outs here, and the venue we care about sorts LAST, well past the first page. */
+var many = [];
+for (var i = 0; i < 1499; i++) many.push('a' + ('0000' + i).slice(-4) + '@example.com.au');
+many.push('zz-last@thepub.com.au');
+var r9 = run({ venues: [venue('zz-last@thepub.com.au')], unsubscribed: many });
+check('1,500 opt-outs: the one past row 1,000 is STILL held back',
+      !/zz-last@thepub\.com\.au/.test(r9.body.csv || '') && r9.body.held_back_unsubscribed === 1, r9.body);
+check('and it took more than one page to know that',
+      asked.filter(function (u) { return /vp_unsubscribes/.test(String(u)); }).length >= 2,
+      asked.filter(function (u) { return /vp_unsubscribes/.test(String(u)); }).length);
 
 print(fails ? ('FAILED ' + fails) : 'PASS');
 if (fails) { throw new Error('unsubscribe: ' + fails + ' failed'); }

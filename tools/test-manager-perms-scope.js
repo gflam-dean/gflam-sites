@@ -25,11 +25,19 @@ var asked = [];
 function run(accountVenues, rowsByQuery, authUserId) {
   asked = [];
   var env = {}, actingAsAdmin = false, perms = null;
-  var vpaSelect = function (e, table, q) { asked.push(q); return Promise.resolve(rowsByQuery); };
+  /* The lookup goes through vpaSelectAll now, the reader that THROWS, because vpaSelect
+     answers [] on a failed read and an empty answer here reads as "the owner". The stub is
+     handed in under the name the shipped block actually calls. rowsByQuery === 'DOWN' makes
+     the read fail, the way a 429 does. */
+  var vpaSelectAll = function (e, table, q) {
+    asked.push(q);
+    if (rowsByQuery === 'DOWN') return Promise.reject(new Error('read vp_venue_staff: 429'));
+    return Promise.resolve(rowsByQuery);
+  };
   var body = 'return (async function(){ var perms = null; ' + block[0] + ' return perms; })();';
-  var f = new Function('env', 'actingAsAdmin', 'accountVenues', 'authUserId', 'vpaSelect', 'encodeURIComponent', body);
+  var f = new Function('env', 'actingAsAdmin', 'accountVenues', 'authUserId', 'vpaSelectAll', 'encodeURIComponent', body);
   var out = null;
-  f(env, actingAsAdmin, accountVenues, authUserId || 'u1', vpaSelect, encodeURIComponent)
+  f(env, actingAsAdmin, accountVenues, authUserId || 'u1', vpaSelectAll, encodeURIComponent)
     .then(function (p) { out = { perms: p }; });
   drainMicrotasks();
   return out && out.perms;
@@ -67,6 +75,12 @@ check('keys from every row are merged', m && m.advertising === false && m.add_ho
 /* 6. No venues on the account: ask nothing rather than ask for everything. An empty
       venue_id=in.() would be a syntax error, and worse, dropping the filter would be the
       original fault back again. */
+/* A FAILED READ IS A REFUSAL. It used to be swallowed, perms stayed null, and null is the
+   owner. The block now returns the 503 straight out of vpbRequireOwner. */
+var down = run(VENUES, 'DOWN');
+check('a failed permissions read is a 503 refusal, never null (null means owner)',
+      !!down && down.status === 503 && !!down.error, down);
+
 check('no venues: the lookup is not run at all', run([], [{ permissions: { advertising: false } }]) === null && asked.length === 0, asked);
 
 print(fails ? ('FAILED ' + fails) : 'PASS');

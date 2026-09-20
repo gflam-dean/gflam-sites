@@ -2813,6 +2813,23 @@ def local_checks(which):
         # reactivation (a live customer one failed card away from the 3am purge).
         # The group welcome went out with a raw {{VENUE_BLOCKS}} tag and no venues, and every
         # welcome handed over a bare /tv link naming no venue. Both on a customer's first day.
+        # Three things that FAILED OPEN: unreadable manager permissions read as owner, a
+        # player-typed formula ran in the venue's spreadsheet, the contact form had no limits.
+        head('D12. Permissions, the CSV and the contact form fail closed')
+        t = os.path.join(ROOT, 'tools', 'test-fail-closed-batch.js')
+        if not os.path.isfile(t):
+            ok('the fail-closed test exists', False, why='tools/test-fail-closed-batch.js is missing')
+        else:
+            r = subprocess.run([JSC, t], capture_output=True, text=True, timeout=120)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+            n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
+            ok('a manager whose permissions cannot be read is refused, never promoted',
+               r.returncode == 0 and n >= 18 and not bad,
+               detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
+               why='run jsc tools/test-fail-closed-batch.js. Not knowing what somebody may do '
+                   'is a reason to ask them to try again, never to let them do everything')
+
         head('D11. The welcome email a customer is actually sent')
         t = os.path.join(ROOT, 'tools', 'test-welcome-email-renders.js')
         if not os.path.isfile(t):
