@@ -21,11 +21,10 @@ personal data is not a thing a check should do on its own.
   red    a venue has been closed longer than the page promises and its people are
          still on the database
 
-A NOTE ON "CLOSED". The database has no closed state. It has active and suspended, so
-suspended is what this reads, and a suspended venue may simply be behind on a bill and
-coming back. If a real closed state ever exists, point this at that instead: counting
-a venue that is coming back would be crying wolf, and a check nobody believes is worse
-than no check.
+WHAT "CLOSED" MEANS is the same thing it means to the purge: suspended, for a reason that
+means gone (ended, cancelled, archived), dated from vp_venues.closed_at. A venue that is
+merely behind on a bill is NOT closed and is not counted. One definition, in two places
+that must agree: here, and sweepRetention in venueplay-game.js.
 """
 import datetime
 import json
@@ -54,6 +53,20 @@ def env():
     return out
 
 
+def when(text):
+    """A Postgres timestamp, whatever it looks like. Postgres drops trailing zeros from the
+    fraction ('17:00:56.13+00:00') and this Python's fromisoformat wants exactly three or six
+    digits, so the first run of this tool reported a venue closed YESTERDAY as having no closing
+    date at all. The fraction is of no interest here, so it goes."""
+    import re
+    t = re.sub(r'\.\d+', '', str(text).strip().replace('Z', '+00:00').replace(' ', 'T'))
+    try:
+        d = datetime.datetime.fromisoformat(t)
+    except Exception:
+        return None
+    return d if d.tzinfo else d.replace(tzinfo=datetime.timezone.utc)
+
+
 def main():
     e = env()
     url, key = e.get('NEW_SUPABASE_URL'), e.get('NEW_SERVICE_KEY')
@@ -69,45 +82,75 @@ def main():
         except Exception:
             die('the database did not answer with JSON: ' + r.stdout[:160])
 
-    venues = q('vp_venues?select=id,name,status,created_at')
-    if not isinstance(venues, list):
-        die('could not read the venue list')
+    # ONE DEFINITION OF CLOSED, the one the purge itself uses (sweepRetention in the game Worker):
+    # suspended, for a reason that means gone, with closed_at saying since when. This used to
+    # date "closed" from the venue's CREATION date and count every non-active venue, so it
+    # disagreed with the other 90-day check on the same day (36 days against 83) and was set
+    # to turn the gate red in late October over a venue that had closed the week before.
+    # Found by audit, 20 Sep 2026.
+    CLOSED = ('ended', 'cancelled', 'archived', 'archived_cancelling')
 
+    def q_all(path, order='id'):
+        """Every row. One read stops at 1,000 without a word, and these tables only grow. Pages
+        in a stable order and stops on an EMPTY page: a short page is not the end."""
+        out, off = [], 0
+        while True:
+            page = q('%s&order=%s.asc&limit=1000&offset=%d' % (path, order, off))
+            if not isinstance(page, list):
+                die('could not read %s' % path.split('?')[0])
+            if not page:
+                return out
+            out.extend(page); off += len(page)
+            if off > 2000000:
+                die('%s did not end after two million rows' % path.split('?')[0])
+
+    venues = q_all('vp_venues?select=id,name,status,suspended_reason,closed_at,player_data_purged_at')
     now = datetime.datetime.now(datetime.timezone.utc)
-    shut = {}
+    shut, undated = {}, []
     for v in venues:
-        if v.get('status') == 'active':
+        if v.get('status') != 'suspended' or v.get('suspended_reason') not in CLOSED:
             continue
-        try:
-            born = datetime.datetime.fromisoformat(str(v['created_at']).replace('Z', '+00:00'))
-        except Exception:
-            continue
-        shut[v['id']] = (v['name'], (now - born).days)
+        if not v.get('closed_at'):
+            undated.append(v['name']); continue
+        since = when(v['closed_at'])
+        if since is None:
+            undated.append(v['name'] + ' (closed_at is %r, which is not a date)' % v['closed_at']); continue
+        shut[v['id']] = (v['name'], (now - since).days, bool(v.get('player_data_purged_at')))
 
+    if undated:
+        # A closed venue with no clock can never come due, which is the promise failing quietly.
+        print('%d closed venue(s) have NO closed_at, so their 90 days never start:' % len(undated))
+        for n in undated[:8]:
+            print('  ' + n)
+        return 1
     if not shut:
-        print('No venue is closed, so there is nothing to have deleted.')
+        print('No venue is closed, so there is nothing to have deleted. (%d venues read)' % len(venues))
         return 0
 
-    # players hang off a session, members hang off a list, so both need a hop
-    sessions = {s['id']: s['venue_id'] for s in q('vp_sessions?select=id,venue_id')}
-    rosters = {r['id']: r['venue_id'] for r in q('vp_member_rosters?select=id,venue_id')}
-
+    # WHAT "STILL HOLDING" MEANS. The purge BLANKS a row, it does not delete it: the head counts
+    # are billing records. So a row existing proves nothing either way. What is counted is a row
+    # that still says who somebody is.
+    sessions = {x['id']: x['venue_id'] for x in q_all('vp_sessions?select=id,venue_id')}
+    rosters = {x['id']: x['venue_id'] for x in q_all('vp_member_rosters?select=id,venue_id')}
     held = {}
-    for p in q('vp_players?select=id,session_id'):
-        vid = sessions.get(p.get('session_id'))
+    for pl in q_all('vp_players?or=(email.not.is.null,mobile.not.is.null,first_name.not.is.null,last_name.not.is.null)&select=id,session_id'):
+        vid = sessions.get(pl.get('session_id'))
         if vid in shut:
             held.setdefault(vid, {'players': 0, 'members': 0})['players'] += 1
-    for m in q('vp_members?select=id,roster_id'):
+    for m in q_all('vp_members?or=(first_name.not.is.null,last_name.not.is.null)&select=id,roster_id'):
         vid = rosters.get(m.get('roster_id'))
         if vid in shut:
             held.setdefault(vid, {'players': 0, 'members': 0})['members'] += 1
 
     overdue, waiting = [], []
-    for vid, counts in held.items():
-        name, age = shut[vid]
-        line = '%s: %d player(s), %d member(s), closed %d days ago' % (
-            name, counts['players'], counts['members'], age)
-        (overdue if age > PROMISE_DAYS else waiting).append((age, line))
+    for vid, (name, age, purged) in shut.items():
+        c = held.get(vid, {'players': 0, 'members': 0})
+        line = '%s: %d player(s) and %d member(s) still named, closed %d days ago%s' % (
+            name, c['players'], c['members'], age, ', marked purged' if purged else '')
+        if c['players'] or c['members']:
+            (overdue if age > PROMISE_DAYS else waiting).append((age, line))
+        elif age > PROMISE_DAYS and not purged:
+            overdue.append((age, '%s: nothing left to name anybody, but never marked purged, closed %d days ago' % (name, age)))
 
     if overdue:
         overdue.sort(reverse=True)
@@ -115,22 +158,19 @@ def main():
         for _, line in overdue:
             print('  ' + line)
         print('')
-        print('The page says this data is deleted within %d days of an account closing.' % PROMISE_DAYS)
-        print('Nothing deletes it. Either build the sweep or change what the page says,')
-        print('and do not leave it saying something that is not happening.')
+        print('The nightly sweep in the game Worker (sweepRetention) should have blanked these.')
+        print('Look at vp_admin_audit for retention_sweep rows and at the Worker\'s cron.')
         return 1
 
     if waiting:
         waiting.sort(reverse=True)
-        soonest = PROMISE_DAYS - waiting[0][0]
-        print('Nothing is overdue. The closest is %d days away.' % soonest)
+        print('Nothing is overdue. %d closed venue(s) still hold names; the closest is %d days away.' % (
+            len(waiting), PROMISE_DAYS - waiting[0][0]))
         for _, line in waiting[:4]:
             print('  ' + line)
-        print('')
-        print('Still nothing that will delete it when the day comes.')
         return 0
 
-    print('Closed venues hold no player or member data.')
+    print('%d closed venue(s), and none of them still names a player or a member.' % len(shut))
     return 0
 
 

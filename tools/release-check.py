@@ -1493,8 +1493,25 @@ def local_checks(which):
             out = 'could not run it: %s' % e
         due = [l.strip() for l in out.splitlines() if l.strip().startswith('DUE')]
         soon = [l.strip() for l in out.splitlines() if 'to go' in l]
+        # GREEN WHEN THE TOOL CRASHED. This never read the exit code, and its verdict was "no
+        # line starts with DUE", which a tool that died saying "STOP: cannot reach the database"
+        # satisfies perfectly. The audit of 20 Sep 2026 swapped the tool for one that does
+        # exactly that and the gate stayed green. A pass now needs the tool to have exited
+        # cleanly AND to have said how many venues it looked at, and a venue it could not date
+        # is a failure that names the venue, not a line nobody reads.
+        skipped = [l.strip() for l in out.splitlines() if l.strip().startswith('SKIPPED')]
+        counted = re.search(r'(\d+) suspended venue\(s\), (\d+) of them closed for good', out)
+        rc = getattr(r, 'returncode', 1) if 'could not run it' not in out else 1
         if 'could not run it' in out:
             ok('a closed venue\'s player data is deleted within 90 days', False, why=out[:120])
+        elif rc != 0 or not counted:
+            ok('a closed venue\'s player data is deleted within 90 days', False,
+               detail='the tool did not finish (exit %s)' % rc,
+               why='purge-closed-player-data.py said: ' + (out.strip().splitlines() or ['nothing'])[-1][:140])
+        elif skipped:
+            ok('a closed venue\'s player data is deleted within 90 days', False,
+               detail='%d closed venue(s) cannot be dated' % len(skipped),
+               why='; '.join(x[:80] for x in skipped[:3]) + '. A venue with no closing date never comes due')
         else:
             nearest = ''
             if soon:

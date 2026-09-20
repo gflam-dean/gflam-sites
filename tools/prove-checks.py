@@ -2093,6 +2093,11 @@ MUTATIONS = [
      "        return Promise.resolve({ ok: false, legacy: false, why: \"unsigned message for a keyed pid\" });",
      "        return Promise.resolve({ ok: true, legacy: true, why: \"\" });",
      'an unsigned message about a keyed pid is waved through as legacy: the original hole'),
+
+    ("a closed venue's player data is deleted within 90 days", 'venueplay-backend/tools/purge-closed-player-data.py',
+     "    ap = argparse.ArgumentParser()\n",
+     "    print('STOP: cannot reach the database'); sys.exit(1)\n    ap = argparse.ArgumentParser()\n",
+     'the purge tool dies before it looks at anything, and the gate calls that a pass'),
 ]
 
 

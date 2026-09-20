@@ -121,19 +121,28 @@ def main():
     a = ap.parse_args()
     now = datetime.datetime.now(datetime.timezone.utc)
 
-    venues = sb('GET', 'vp_venues?status=eq.suspended&select=id,name,suspended_reason')
+    venues = sb('GET', 'vp_venues?status=eq.suspended&select=id,name,suspended_reason,closed_at&order=id.asc&limit=1000')
     closed = [v for v in venues if v.get('suspended_reason') in CLOSED_REASONS]
-    audit = sb('GET', 'vp_admin_audit?select=action,target,created_at&order=created_at.desc&limit=2000')
 
     print('%d suspended venue(s), %d of them closed for good\n' % (len(venues), len(closed)))
     due, waiting, undated = [], [], []
     for v in closed:
-        rows = [x for x in audit if (x.get('target') or '') == 'venue:' + v['id']
-                and any(k in x['action'] for k in ('archiv', 'suspend', 'cancel'))]
-        if not rows:
-            undated.append(v)
-            continue
-        age = (now - iso(rows[0]['created_at'])).days
+        # closed_at FIRST: it is what the Worker's nightly sweep and check-player-retention.py
+        # date a closure from, and three tools that answer one question must give one answer.
+        # The audit trail is only the fallback for a venue closed before closed_at existed, and
+        # it is asked about THIS venue. It used to be one read of the newest 2,000 audit rows for
+        # everybody: PostgREST hands back 1,000, so once the table grew a venue closed 120 days
+        # ago fell off the end, printed SKIPPED, and the gate said ok. Audit, 20 Sep 2026.
+        if v.get('closed_at'):
+            age = (now - iso(v['closed_at'])).days
+        else:
+            rows = [x for x in sb('GET', 'vp_admin_audit?target=eq.venue:%s&select=action,created_at'
+                                         '&order=created_at.desc&limit=200' % v['id'])
+                    if any(k in x['action'] for k in ('archiv', 'suspend', 'cancel'))]
+            if not rows:
+                undated.append(v)
+                continue
+            age = (now - iso(rows[0]['created_at'])).days
         (due if age >= a.days else waiting).append((v, age))
 
     for v, age in sorted(waiting, key=lambda x: -x[1]):
