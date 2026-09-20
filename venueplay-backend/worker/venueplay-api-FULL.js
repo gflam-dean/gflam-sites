@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '20 Sep 2026, 10:09 · 4c31e677';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '20 Sep 2026, 14:37 · 9bcba6b9';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -266,7 +266,9 @@ async function handleCheckout(request, env, json) {
   const _b = await vpaBody(request, json);
   if (!_b.ok) return _b.res;
   const b = _b.body;
-  const email = (b.email || '').trim();
+  /* Lower case from the door, so the account is stored one way however the phone typed it.
+     It is the login, and Supabase lowercases logins already. */
+  const email = (b.email || '').trim().toLowerCase();
   const contactName = (b.name || '').trim().slice(0, 200); // cap length (Stripe metadata max 500)
   const plan  = b.plan === 'annual' ? 'annual' : 'monthly';
 
@@ -552,6 +554,13 @@ async function handleCheckout(request, env, json) {
   form.set('metadata[tier]', founding ? 'founding' : 'standard');
   form.set('metadata[is_group]', isGroup ? '1' : '0');
   form.set('metadata[venue_count]', String(venueCount));
+  /* THE DATE STRIPE WAS ACTUALLY GIVEN, carried to the welcome email. The email used to work out
+     its own "free until" as today plus 30 days, knowing nothing about this. A venue coming back
+     inside twelve months gets a three day trial (above), so their email promised a first payment
+     27 days later than the one Stripe then took. A surprise charge on exactly the customer we
+     are trying to win back gently. Found by audit, 20 Sep 2026. */
+  form.set('metadata[trial_end]', String(trialTs));
+  form.set('metadata[returning]', returning ? '1' : '0');
   // Apply the volume coupon (its Stripe name shows the reason on checkout + the invoice),
   // or disallow promo codes when there is no tier discount (Stripe forbids setting both).
   if (tierCoupon) {
@@ -629,7 +638,14 @@ async function vpaClaimStripeEvent(env, event) {
     if (!row) return 'go';
     if (row.completed_at) return 'skip';             // a real duplicate
     const age = Date.now() - Date.parse(row.claimed_at || '');
-    if (!(age > VPA_EVENT_STALE_MS)) return 'skip';  // another delivery is mid-flight right now
+    /* CLAIMED, NOT FINISHED, AND RECENT. This used to answer 'skip', which the handler turns
+       into a 200, and a 200 tells Stripe never to send the event again. But "unfinished" is also
+       what a delivery that THREW looks like. A signup paid, Supabase hiccupped, the handler threw
+       and answered 500 (correct), Stripe retried one minute later (or Dean pressed Resend, which
+       is what anybody does on seeing a failed webhook) and was told "already handled". Paid, no
+       venue, no login, and nothing anywhere said so. Found by audit, 20 Sep 2026.
+       Only completed_at is proof that it was handled, so only that earns a 200. */
+    if (!(age > VPA_EVENT_STALE_MS)) return 'busy';
     /* Past the window with no completion: the attempt that claimed it died. Take
        it over rather than strand it, because an event nobody will ever finish is
        the one failure a ledger must not introduce. */
@@ -640,6 +656,22 @@ async function vpaClaimStripeEvent(env, event) {
     }).catch(() => {});
     return 'go';
   } catch (_) { return 'go'; }
+}
+
+/* The handler threw. Hand the claim back, so the very next delivery runs it instead of waiting
+   out the stale window. claimed_at goes to the epoch rather than the row being deleted, because
+   the attempts count on it is the only record that this event has already failed once. Only an
+   UNFINISHED row is touched: a finished event must stay finished whatever happens afterwards. */
+async function vpaReleaseStripeEvent(env, event) {
+  const id = event && event.id;
+  if (!id || !env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) return;
+  try {
+    await fetch(env.SUPABASE_URL + '/rest/v1/vp_stripe_events?event_id=eq.' + encodeURIComponent(String(id)) + '&completed_at=is.null', {
+      method: 'PATCH',
+      headers: { ...vpaHeaders(env), 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ claimed_at: '1970-01-01T00:00:00Z' }),
+    });
+  } catch (_) { /* then it ages out in five minutes, which is what happened before this existed */ }
 }
 
 async function vpaFinishStripeEvent(env, event) {
@@ -667,11 +699,34 @@ async function handleWebhook(request, env, cors) {
   /* AFTER the signature, BEFORE any handling. Signature first because an unsigned
      event must never be allowed to write a row at all, let alone claim an id that
      would then make us ignore the real one. */
-  if ((await vpaClaimStripeEvent(env, event)) === 'skip') {
+  const claim = await vpaClaimStripeEvent(env, event);
+  if (claim === 'skip') {
     // 200 is the whole point: it is what tells Stripe to stop retrying.
     return new Response('already handled', { status: 200, headers: cors });
   }
+  if (claim === 'busy') {
+    /* NOT a 200. Another delivery holds this event and has not finished it. If it finishes,
+       Stripe's retry of this one finds completed_at and gets its 200 then. If it died, the retry
+       takes it over. Either way Stripe keeps asking until somebody has actually done the work. */
+    return new Response('still being handled, send it again shortly', { status: 409, headers: cors });
+  }
 
+  try {
+    await vpaHandleStripeEvent(env, event);
+  } catch (e) {
+    await vpaReleaseStripeEvent(env, event);
+    throw e;   // the router answers 5xx, which is what makes Stripe retry
+  }
+  /* Marked finished only HERE, after everything. Anything that throws leaves completed_at
+     null and hands the claim back, so Stripe's retry runs it properly. */
+  await vpaFinishStripeEvent(env, event);
+  return new Response('ok', { status: 200, headers: cors });
+}
+
+/* Everything a Stripe event makes us do. Its own function so that handleWebhook can wrap ALL of
+   it in one try: a branch added here later is covered without anybody remembering to. There is
+   deliberately no return out of any branch, because several branches act on the same event. */
+async function vpaHandleStripeEvent(env, event) {
   if (event.type === 'checkout.session.completed') {
     const s = event.data.object;
     const rowId = s.client_reference_id || (s.metadata && s.metadata.row_id);
@@ -799,11 +854,6 @@ async function handleWebhook(request, env, cors) {
   if (event.type === 'invoice.paid') {
     await vpaReactivateOnPayment(env, event.data.object && event.data.object.customer);
   }
-  /* Marked finished only HERE, at the bottom. Anything above that throws leaves
-     completed_at null, so Stripe's retry finds an unfinished claim and, once the
-     stale window has passed, takes it over and runs it properly. */
-  await vpaFinishStripeEvent(env, event);
-  return new Response('ok', { status: 200, headers: cors });
 }
 
 /* ------------------------------ /contact ------------------------------ */
@@ -875,9 +925,25 @@ function sbHeaders(env) {
    Best effort on purpose. Any lookup failure returns [] so a signup is never blocked by our own
    database being slow, which is the right way round: a missed duplicate is a phone call, a
    refused signup is a lost venue. */
+/* AN EMAIL ADDRESS IS ONE ADDRESS HOWEVER IT IS TYPED. Postgrest's eq. is letter for letter,
+   and a phone keyboard capitalises the first letter of an email about half the time. So the
+   one-account-per-person guard asked for 'bob@royalhotel.com.au', never saw the row stored as
+   'Bob@RoyalHotel.com.au', and let a second full-price subscription through that the owner's
+   billing page could not show or cancel. The guard compared in lower case, but only over rows
+   the database had already narrowed letter for letter, so that comparison could never fire.
+   Found by audit, 20 Sep 2026.
+
+   ilike matches without case. Its wildcards are * % and _, none of which may act as one here,
+   so the first two become _ (which matches any ONE character, the real one included) and every
+   caller still compares the rows it gets back exactly, in lower case. Over-asking by a
+   character is harmless. Under-asking is a second bill. */
+function vpaEmailIs(email) {
+  return 'ilike.' + encodeURIComponent(String(email || '').trim().replace(/[*%\\]/g, '_'));
+}
+
 async function sbPriorAccounts(env, email, mobile, excludeId) {
   try {
-    const ors = ['contact_email.eq.' + encodeURIComponent(email)];
+    const ors = ['contact_email.' + vpaEmailIs(email)];
     if (mobile) ors.push('mobile.eq.' + encodeURIComponent(mobile));
     /* excludeId is optional. This runs BEFORE the lead row is written now, so there is usually
        nothing to exclude, and sending id=neq.undefined asks Postgrest to compare a uuid column
@@ -1000,8 +1066,9 @@ async function vpaVenuesForEmail(env, addr) {
   if (!e) return out;
   try {
     const accts = await vpaSelect(env, 'venueplay_founding',
-      'contact_email=eq.' + encodeURIComponent(e) + '&select=id,contact_email') || [];
+      'contact_email=' + vpaEmailIs(e) + '&select=id,contact_email') || [];
     for (const a of accts) {
+      if (String(a.contact_email || '').trim().toLowerCase() !== e) continue;
       const vs = await vpaSelect(env, 'vp_venues',
         'founding_id=eq.' + encodeURIComponent(a.id) + '&select=id,name,slug,status') || [];
       for (const v of vs) out.push(v);
@@ -3551,9 +3618,18 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
                                      : (plan === 'annual' ? 2.30 : 2.50);
     const money = (n) => '$' + Number(n).toFixed(2);
     const nowSecs = Math.floor(Date.now() / 1000);
-    const firstChargeTs = nowSecs + 30 * 24 * 60 * 60;
+    /* The first payment is WHEN STRIPE WILL TAKE IT, read off the checkout that set it. Thirty
+       days from now is only the fallback for a checkout made before the date was carried, and a
+       date already in the past is ignored rather than printed. */
+    const metaTrial = parseInt(session && session.metadata && session.metadata.trial_end, 10) || 0;
+    const firstChargeTs = metaTrial > nowSecs ? metaTrial : nowSecs + 30 * 24 * 60 * 60;
     const firstCharge = vpaFmtDate(firstChargeTs);
     const launchPhrase = '';
+    /* A returning venue did not get a free month, so the email must not say it did. */
+    const returning = !!(session && session.metadata && session.metadata.returning === '1');
+    const freeIntro = returning
+      ? 'Your free month was used on your earlier account, and this time you have a few days to get set up'
+      : 'Your first month is free';
     const consoleUrl = site + '/app';
     /* THE TV LINK CARRIES THE VENUE, ALWAYS. This was `site + '/tv'` for every venue, so the
        email said "open this link on your screen" and handed over an address that names no
@@ -3596,6 +3672,7 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
         .replace(/{{monthly_total}}/g, money(seats * rate));
     }
     html = html.replace(/{{first_charge_date}}/g, firstCharge)
+      .replace(/{{free_intro}}/g, freeIntro)
       .replace(/{{launch_phrase}}/g, launchPhrase)
       .replace(/{{player_rate}}/g, money(rate))
       .replace(/{{host_console_url}}/g, consoleUrl)
@@ -3809,6 +3886,7 @@ async function vpaAddCardRedirect(request, env) {
     form.set('metadata[is_group]', '0');
     form.set('metadata[venue_count]', '1');
     form.set('metadata[hq_onboarded]', '1');
+    form.set('metadata[trial_end]', String(trialTs));
     form.set('success_url', site + '/?vp=success&session_id={CHECKOUT_SESSION_ID}');
     form.set('cancel_url', site + '/app');
 
@@ -5754,6 +5832,12 @@ async function vpbSetPlayers(request, env, json) {
                 credit_cents: (dAdj && dAdj.kind === 'credit') ? dAdj.cents : 0 });
 }
 
+/* The Stripe idempotency tag for a new venue's setup charge. Its own function so the gate can
+   run it: two different venues must never share a tag, and one venue retried must keep its own. */
+function vpbNewVenueTag(venueId, players, periodEnd) {
+  return 'newvenue:' + String(venueId || '') + ':' + players + ':' + (periodEnd || '0');
+}
+
 /* --- POST /account/add-venue : add a whole new venue to the account. --- */
 async function vpbAddVenue(request, env, json) {
   const o = await vpbRequireOwner(request, env);
@@ -5872,8 +5956,14 @@ async function vpbAddVenue(request, env, json) {
   const billingOk = !!(info && info.itemId) && !(upd && upd.error);
   // A whole new venue is an increase like any other: one month on monthly, pro rata to the
   // renewal date on annual (it used to be charged a single month even on an annual account).
+  /* THE KEY NAMES THE VENUE, NOT WHAT IT IS CALLED. It used to be built from the name, the
+     player count and the renewal date, and there are a hundred Royal Hotels. A group adding two
+     of them on one day, same size, made the same key twice, so Stripe replayed the first
+     venue's charge from its cache and the second venue's charge never existed, while its free
+     month credit (keyed on the venue id all along) was banked anyway. $250 out the door with no
+     error anywhere. Found by audit, 20 Sep 2026. The id is what makes a venue itself. */
   const aAdj = billingOk ? await vpbAdjustPlayerBilling(env, info, players, o.account.plan, name,
-    'newvenue:' + String(name || '').slice(0,40) + ':' + players + ':' + (info.periodEnd || '0')) : null;
+    vpbNewVenueTag(r.venue && r.venue.id, players, info.periodEnd)) : null;
 
   /* THE NEW VENUE GETS ITS FIRST MONTH FREE, the same month a venue that signs up on its own
      gets. Dean, 17 Sep 2026: "if I sign up as a group and then I add another venue but I'm now
@@ -6980,10 +7070,25 @@ async function vpbCancelVenue(request, env, json) {
      hand from HQ, is left exactly as it is: changing your mind about leaving does not settle
      an unpaid bill, and an undo must never be a way to turn your games back on. */
   const patch = { cancel_at_period_end: !undo };
+  /* WHAT IT WAS, so a refusal from Stripe can put back EVERYTHING this writes and not just the
+     flag. The write has to come before Stripe, because the new billed total is counted off
+     these rows. But the rollback below used to restore cancel_at_period_end alone, so a venue
+     whose subscription had genuinely ended pressed "Keep this venue", Stripe said no, the page
+     said "nothing has changed", and the row was left active with nothing behind it collecting
+     money. A second press then saw an active venue and skipped this branch for good.
+     Found by audit, 20 Sep 2026. closed_at is read fresh because the owner lookup does not
+     carry it, and a cleared retention clock that is not put back is a purge that never runs. */
+  const before = { cancel_at_period_end: !!venue.cancel_at_period_end };
   if (undo && venue.status === 'suspended'
       && (venue.suspended_reason === 'cancelled' || venue.suspended_reason === 'ended')) {
+    const rows = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=closed_at&limit=1');
+    before.status = venue.status;
+    before.suspended_reason = venue.suspended_reason;
+    before.closed_at = (rows && rows[0] && rows[0].closed_at) || null;
     patch.status = 'active';
     patch.suspended_reason = null;
+    // Back on, so the 90-day retention clock stops, the same as every other way back on.
+    patch.closed_at = null;
   }
   await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), patch);
 
@@ -6993,7 +7098,7 @@ async function vpbCancelVenue(request, env, json) {
   // Telling an owner "it stays live until 14 September and then stops billing" when Stripe refused
   // the change is a promise about their money that we have not kept.
   if (info && info.syncFailed) {
-    await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), { cancel_at_period_end: undo });
+    await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), before);
     return json({ error: 'We could not update your billing just now, so nothing has changed. Please try again in a minute, or email hello@venueplay.com.au.' }, 502);
   }
   const endsDate = info && info.periodEnd ? vpaFmtDate(info.periodEnd) : null;

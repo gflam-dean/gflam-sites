@@ -81,6 +81,34 @@ check('the venue cards are VISIBLE, not injected into a comment',
       (String(sent && sent.html).match(/<!--[\s\S]*?-->/g) || []).join('').indexOf('The Anchor') === -1);
 
 print('');
+/* THE DATE IN THE EMAIL IS THE DATE STRIPE WILL CHARGE. A venue coming back inside twelve months
+   gets a three day trial, and the email used to promise them thirty regardless. */
+print('');
+print('The first payment date is the real one');
+function fmt(ts) { return vpaFmtDate(ts); }
+var NOWS = Math.floor(Date.now() / 1000), D3 = NOWS + 3 * 86400, D30 = NOWS + 30 * 86400;
+function welcome(meta, group) {
+  sent = null;
+  vpaFireWelcome(ENV, { metadata: meta }, { contact_email: 'owner@pub.com', contact_name: 'Sam', plan: 'monthly', max_seats: 40 },
+    group ? [{ name: 'The Anchor', seats: 40, slug: 'the-anchor' }, { name: 'The Crown', seats: 60, slug: 'the-crown' }]
+          : [{ name: 'The Royal Hotel', seats: 40, slug: 'the-royal-hotel-4220' }], !!group);
+  drain();
+  return visible(sent && sent.html).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
+}
+var back = welcome({ tier: 'founding', trial_end: String(D3), returning: '1' });
+check('a returning venue is told the THREE DAY date', back.indexOf('free until ' + fmt(D3)) !== -1, back.match(/free until [^,.]*/));
+check('and is never shown the thirty day one', fmt(D30) === fmt(D3) || back.indexOf(fmt(D30)) === -1, fmt(D30));
+check('and is not told it has a free month it did not get', !/first month is free/i.test(back), (back.match(/[^.]*free[^.]*\./i) || [])[0]);
+check('it is told why, in words', /free month was used on your earlier account/.test(back));
+var backGrp = welcome({ tier: 'founding', trial_end: String(D3), returning: '1' }, true);
+check('the same for a returning GROUP', backGrp.indexOf('free until ' + fmt(D3)) !== -1 && !/first month is free/i.test(backGrp), backGrp.match(/free until [^,.]*/));
+var fresh = welcome({ tier: 'founding', trial_end: String(D30), returning: '0' });
+check('a new venue is still told a free month, to the right day', /first month is free/i.test(fresh) && fresh.indexOf('free until ' + fmt(D30)) !== -1, fresh.match(/free until [^,.]*/));
+var olds = welcome({ tier: 'founding' });
+check('a checkout made before the date was carried still gets a date, not a blank', olds.indexOf('free until ' + fmt(D30)) !== -1, olds.match(/free until [^,.]*/));
+var stale = welcome({ tier: 'founding', trial_end: String(NOWS - 86400) });
+check('a date already gone is never printed as the first payment', stale.indexOf(fmt(NOWS - 86400)) === -1, stale.match(/free until [^,.]*/));
+
 print(PASS + ' passed, ' + FAIL + ' failed');
 if (FAIL) { print('FAILED ' + FAIL); throw new Error(FAIL + ' check(s) failed'); }
 print('PASS');

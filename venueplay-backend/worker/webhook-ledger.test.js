@@ -110,7 +110,12 @@ pass("an event already finished is waved through", claim() === "skip",
 pass("a finished event is not re-claimed either", patches() === 0);
 
 setup({ event_id: "evt_1", claimed_at: iso(1000), completed_at: null, attempts: 1 });
-pass("an event another delivery is handling RIGHT NOW is left alone", claim() === "skip");
+/* "busy", NOT "skip". skip is answered 200 and a 200 tells Stripe to stop for good, but
+   unfinished is also what a delivery that THREW looks like. Audit, 20 Sep 2026. What matters
+   here is that the work is not run a second time and that it is not called finished. */
+var mid = claim();
+pass("an event another delivery is handling RIGHT NOW is not run a second time", mid !== "go", mid);
+pass("and is NOT called handled, because only completed_at proves that", mid === "busy", mid);
 pass("and it is not stolen by rewriting the claim", patches() === 0);
 
 setup({ event_id: "evt_1", claimed_at: iso(STALE_MS + 60000), completed_at: null, attempts: 1 });
@@ -143,8 +148,9 @@ var sigAt   = BILL.indexOf("if (!ok) return new Response('bad signature'");
 /* The CALL, not the definition. Searching for the bare name found the function
    declaration, which sits above the handler, so this check passed nothing and
    failed for the wrong reason. */
-var claimAt = BILL.indexOf("(await vpaClaimStripeEvent(env, event))");
-var firstBranch = BILL.indexOf("if (event.type === 'checkout.session.completed')");
+var claimAt = BILL.indexOf("await vpaClaimStripeEvent(env, event)");
+/* The branches live in vpaHandleStripeEvent now, so "the first branch" is the call to it. */
+var firstBranch = BILL.indexOf("await vpaHandleStripeEvent(env, event)");
 pass("the signature is checked BEFORE anything can claim an event id",
      sigAt > 0 && claimAt > sigAt,
      "an unsigned event claiming an id would make us ignore the real one");

@@ -2822,6 +2822,33 @@ def local_checks(which):
         # One wifi blip deafened four of the five game screens for the rest of the night: the
         # retry re-subscribed the SAME channel object, which supabase-js forbids, so it threw
         # inside its own timer and never tried again.
+        # Two money faults from the audit of 20 Sep 2026 that nothing ran. "Keep this venue"
+        # wrote the venue ACTIVE before Stripe agreed and rolled back only one of the fields,
+        # and a Stripe event that threw was answered "already handled" on its retry, so a paid
+        # signup got no venue and Stripe stopped asking.
+        for label, fn, title, floor, why in (
+            ('D16. A Stripe event that failed is run again, not waved away',
+             'test-webhook-retry-is-not-dropped.js',
+             'only a FINISHED Stripe event is answered 200; a failed one is retried', 10,
+             'A 200 tells Stripe never to send it again. Paid, no venue, and nothing says so'),
+            ('D15. A refused "Keep this venue" leaves the venue exactly as it was',
+             'test-undo-cancel-rolls-back.js',
+             'a refused undo puts back every field it wrote, the 90-day clock included', 12,
+             'A venue left active with no subscription behind it plays for nothing, for ever'),
+        ):
+            head(label)
+            t = os.path.join(ROOT, 'tools', fn)
+            if not os.path.isfile(t):
+                ok(title, False, why='tools/%s is missing' % fn)
+                continue
+            r = subprocess.run([JSC, t], capture_output=True, text=True, timeout=120, cwd=ROOT)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+            n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
+            ok(title, r.returncode == 0 and n >= floor and not bad,
+               detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
+               why='run jsc tools/%s. %s' % (fn, why))
+
         head('D14. The wall heals itself after a network blip')
         t = os.path.join(ROOT, 'tools', 'test-router-heals-after-a-blip.js')
         if not os.path.isfile(t):

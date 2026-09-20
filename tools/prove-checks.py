@@ -716,8 +716,8 @@ MUTATIONS = [
 
     ('webhook-ledger.test.js',
      'venueplay-backend/worker/venueplay-api-FULL.js',
-     "    if (!(age > VPA_EVENT_STALE_MS)) return 'skip';  // another delivery is mid-flight right now",
-     "    return 'skip';  // another delivery is mid-flight right now",
+     "    if (!(age > VPA_EVENT_STALE_MS)) return 'busy';",
+     "    return 'busy';",
      'a webhook whose first attempt was killed is never handled, so a venue pays and stays switched off'),
 
     ('sweep-sessions.test.js',
@@ -1854,9 +1854,9 @@ MUTATIONS = [
      '''  const _b = await vpaBody(request, json);
   if (!_b.ok) return _b.res;
   const b = _b.body;
-  const email = (b.email || '').trim();''',
+  /* Lower case from the door,''',
      '''  const b = await request.json();
-  const email = (b.email || '').trim();''',
+  /* Lower case from the door,''',
      'a handler goes back to reading the body raw, so a malformed body is a 500 that says '
      'nothing instead of a 400 that says what was wrong'),
 
@@ -1968,6 +1968,40 @@ MUTATIONS = [
      '            try { mine.subscribe(function () {}); } catch (e) {',
      'the retry subscribes the same channel object again, supabase-js refuses, and after one '
      'wifi blip the wall stays on the finished quiz while the host runs a raffle'),
+
+    # THE MONEY BATCH, audit of 20 Sep 2026. Each one puts the original fault back.
+    ('adding a venue charges a month and credits it straight back',
+     'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  return 'newvenue:' + String(venueId || '') + ':' + players",
+     "  return 'newvenue:' + 'The Royal Hotel' + ':' + players",
+     'two venues share one Stripe idempotency key, so the second setup charge is replayed from '
+     'the first and never exists, while its free month is credited anyway'),
+
+    ('one email, one bill, and the promised free month',
+     'venueplay-backend/worker/venueplay-api-FULL.js',
+     "    const ors = ['contact_email.' + vpaEmailIs(email)];",
+     "    const ors = ['contact_email.eq.' + encodeURIComponent(email)];",
+     'Bob@ and bob@ are two people again, and the second one is billed in full on a '
+     'subscription the owner cannot see or cancel'),
+
+    ('a refused undo puts back every field it wrote',
+     'venueplay-backend/worker/venueplay-api-FULL.js',
+     "encodeURIComponent(venueId), before);",
+     "encodeURIComponent(venueId), { cancel_at_period_end: undo });",
+     'Stripe says no, the page says nothing changed, and the venue is left active with no '
+     'subscription behind it'),
+
+    ('only a FINISHED Stripe event is answered 200',
+     'venueplay-backend/worker/venueplay-api-FULL.js',
+     "    if (!(age > VPA_EVENT_STALE_MS)) return 'busy';",
+     "    if (!(age > VPA_EVENT_STALE_MS)) return 'skip';",
+     'a retry of a delivery that threw is told already handled; paid, no venue, no login'),
+
+    ('the real templates render with every venue, its own TV link and no raw tags',
+     'venueplay-backend/worker/venueplay-api-FULL.js',
+     "    const firstChargeTs = metaTrial > nowSecs ? metaTrial : nowSecs + 30 * 24 * 60 * 60;",
+     "    const firstChargeTs = nowSecs + 30 * 24 * 60 * 60;",
+     'a returning venue is promised thirty free days and charged after three'),
 ]
 
 

@@ -65,7 +65,24 @@ function arm(prior) {
       });
       return reply({ url: 'https://checkout.stripe.com/x', client_secret: 'cs_1' });
     }
-    if (/venueplay_founding\?or=/.test(url)) { priorQuery = url; return reply(prior || []); }
+    /* THE FAKE FILTERS LIKE POSTGREST DOES. It used to hand back every fixture whatever was
+       asked for, so the query could be as wrong as it liked and the guard still got its rows.
+       That is how a letter-for-letter email match lived here unnoticed: eq. is exact, ilike.
+       ignores case and treats _ as any one character. */
+    if (/venueplay_founding\?or=/.test(url)) {
+      priorQuery = url;
+      var m = /or=\(([^)]*)\)/.exec(url), conds = m ? m[1].split(',') : [];
+      function hit(row) {
+        return conds.some(function (c) {
+          var p = /^(\w+)\.(eq|ilike)\.(.*)$/.exec(c); if (!p) return false;
+          var have = String(row[p[1]] == null ? '' : row[p[1]]), want = decodeURIComponent(p[3]);
+          if (p[2] === 'eq') return have === want;
+          var rx = new RegExp('^' + want.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/_/g, '.') + '$', 'i');
+          return rx.test(have);
+        });
+      }
+      return reply((prior || []).filter(hit));
+    }
     if (/venueplay_founding/.test(url) && opts && opts.method === 'POST') { inserted++; return reply([{ id: 'row_new' }]); }
     return reply([]);
   };
@@ -254,4 +271,30 @@ var m4 = signup({ email: 'pat@theoldpub.com.au', mobile: '0400000000',
 check('their own email, left and back inside a year: three days', trialDays() === 3, trialDays());
 
 print(fails ? ('FAILED ' + fails) : 'PASS');
+/* THE SAME PERSON, TYPED WITH A CAPITAL. A phone keyboard capitalises the first letter of an
+   email. The account is stored as it was first typed, and the second signup must still be seen. */
+print('one address however it is typed');
+var LIVE_CAPS = [{ id: 'old', venue_name: 'The Royal Hotel', contact_email: 'Bob@RoyalHotel.com.au', mobile: '0411111111',
+                   created_at: iso(40), status: 'card_on_file', stripe_subscription_id: 'sub_live' }];
+var rc1 = signup({ email: 'bob@royalhotel.com.au', mobile: '0422222222', prior: LIVE_CAPS });
+check('lower case against a stored capital: refused, not billed twice', rc1 && rc1.status === 409 && !sent, [rc1 && rc1.status, sent]);
+check('lower case against a stored capital: no second row written', inserted === 0, inserted);
+var rc2 = signup({ email: 'BOB@ROYALHOTEL.COM.AU', mobile: '0422222222', prior: LIVE_CAPS });
+check('capitals against a stored mixed case: refused', rc2 && rc2.status === 409 && !sent, [rc2 && rc2.status, sent]);
+var rc3 = signup({ email: 'rob@royalhotel.com.au', mobile: '0422222222', prior: LIVE_CAPS });
+check('a DIFFERENT address one letter away is still let in', rc3 && rc3.status === 200 && !!sent, rc3 && rc3.status);
+var rc4 = signup({ email: 'bob_smith@royalhotel.com.au', mobile: '0422222222',
+                   prior: [{ id: 'o9', venue_name: 'X', contact_email: 'bobXsmith@royalhotel.com.au', mobile: '0433333333',
+                             created_at: iso(40), status: 'card_on_file', stripe_subscription_id: 'sub_live' }] });
+check('an underscore is a character, not a wildcard: a lookalike does not block anybody', rc4 && rc4.status === 200, rc4 && rc4.status);
+
+/* What the welcome email will be told. It prints this date as the first payment, so it has to
+   be the one Stripe was given and not one worked out somewhere else. */
+print('the email and Stripe are given the same date');
+signup({});
+check('new venue: the date carried for the email IS the trial Stripe got', !!sent['metadata[trial_end]'] && sent['metadata[trial_end]'] === sent['subscription_data[trial_end]'], [sent['metadata[trial_end]'], sent['subscription_data[trial_end]']]);
+signup({ prior: [{ id: 'old', venue_name: 'The Pub', contact_email: 'new@thepub.com.au', mobile: '0400000000', created_at: iso(60), status: 'cancelled', stripe_subscription_id: null }] });
+check('returning venue: three days, and the email is told three days', trialDays() === 3 && sent['metadata[trial_end]'] === sent['subscription_data[trial_end]'] && sent['metadata[returning]'] === '1',
+  [trialDays(), sent['metadata[trial_end]'], sent['metadata[returning]']]);
+
 if (fails) { throw new Error('checkout: ' + fails + ' failed'); }

@@ -45,12 +45,12 @@ function arm(opts) {
       venues: [{ id: 'v_existing' }], perms: null, adminActor: null, authUserId: 'user_1',
     });
   };
-  vpaProvisionOneVenue = function (env, o) { provisioned.push(o); return Promise.resolve({ created: true, venue: { id: 'v_new', slug: 'new-venue' } }); };
+  vpaProvisionOneVenue = function (env, o) { provisioned.push(o); return Promise.resolve({ created: true, venue: { id: opts.newId || 'v_new', slug: 'new-venue' } }); };
   vpbAccountTotal = function () { return Promise.resolve(90); };
   vpbSubItem = function () {
     return Promise.resolve({
       itemId: 'si_1', priceId: priceId, quantity: 40,
-      periodEnd: Math.floor(Date.now() / 1000) + (opts.plan === 'annual' ? 300 * 86400 : 20 * 86400),
+      periodEnd: opts.periodEnd || (Math.floor(Date.now() / 1000) + (opts.plan === 'annual' ? 300 * 86400 : 20 * 86400)),
       sub: { id: 'sub_1', customer: 'cus_1', status: status },
     });
   };
@@ -205,4 +205,23 @@ var rH = run({ players: 50, plan: 'monthly', postcode: '4220', sameName: [] });
 check('no clash: added as a new venue with no forceNew', rH.ok === true && provisioned[0].forceNew === false, provisioned);
 
 print(fails ? ('FAILED ' + fails) : 'PASS');
+/* ---------------------------------------------------------------------------
+   TWO ROYAL HOTELS ON ONE DAY. The setup charge's Stripe idempotency key used to be the name,
+   the player count and the renewal date, so the second one's charge was replayed from the
+   first one's and never existed, while its free month was credited anyway. The renewal date is
+   pinned here on purpose: Date.now() ticking between the two runs would make the old key
+   differ by accident and this would pass against the broken code.
+   --------------------------------------------------------------------------- */
+print('two venues with one name, added the same day');
+var PE = 1790000000;
+run({ players: 100, plan: 'monthly', postcode: '4220', newId: 'v_royal_a', periodEnd: PE });
+var keyA = charges()[0] && charges()[0].idem;
+run({ players: 100, plan: 'monthly', postcode: '2000', newId: 'v_royal_b', periodEnd: PE,
+      sameName: [venue({ id: 'v_royal_a', postcode: '4220' })] });
+var keyB = charges()[0] && charges()[0].idem;
+check('each venue\'s setup charge has a key', !!keyA && !!keyB, [keyA, keyB]);
+check('and they are DIFFERENT keys, or Stripe replays the first charge for the second venue', keyA !== keyB, [keyA, keyB]);
+run({ players: 100, plan: 'monthly', postcode: '4220', newId: 'v_royal_a', periodEnd: PE });
+check('the same venue retried keeps its own key, so a double click charges once', charges()[0].idem === keyA, [charges()[0].idem, keyA]);
+
 if (fails) { throw new Error('add-venue free month: ' + fails + ' failed'); }
