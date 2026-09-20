@@ -333,6 +333,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/app/vp-sign.js"></script>
+<script src="/app/vp-phonekey.js"></script>
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-feedback.js"></script>
 <script src="/app/vp-celebrate.js"></script>
@@ -426,7 +427,24 @@
     }
     return false;
   }
-  function send(obj){ if(!wireOut(obj)) sendQueue.push(obj); }
+  /* JOIN, CLAIM AND LEAVE ARE SIGNED BY THIS PHONE. The host used to believe anybody who said a
+     pid, and the host itself reads every pid out to the room when it deals. See vp-phonekey.js.
+     Signing is asynchronous, so these go through one chain: a join and the claim behind it must
+     reach the host in the order they were sent. The pid on the way out is ALWAYS the key's own,
+     whatever the caller put in, because a signature for any other pid is worthless.
+     If the script did not load, or this browser cannot sign, it sends exactly as it always did. */
+  var _keyReady=null, _signChain=Promise.resolve();
+  function send(obj){
+    if(window.VPPhoneKey && VPPhoneKey.isPhoneMsg(obj) && _keyReady){
+      _signChain=_signChain.then(function(){ return _keyReady; })
+        .then(function(id){ return id ? id.sign(obj) : obj; })
+        .catch(function(){ return obj; })
+        .then(function(o){ if(!wireOut(o)) sendQueue.push(o); });
+      return _signChain;
+    }
+    if(!wireOut(obj)) sendQueue.push(obj);
+    return null;
+  }
   function flushQueue(){ while(sendQueue.length && (ch || _room)){ if(!wireOut(sendQueue[0])) break; sendQueue.shift(); } }
 
   /* WHAT THE PHONE DOES WHEN ITS CHANNEL CHANGES STATE.
@@ -1394,7 +1412,16 @@
     P.room=room;
     $("roomLabel").textContent=room;
     $("joinCode").textContent=room;
-    P.pid=loadPid(room); if(!P.pid){ P.pid=randId(); savePid(room, P.pid); }
+    /* WHO THIS PHONE IS, IN THIS ROOM. Its pid is the fingerprint of a key only it holds, so
+       knowing the pid (the host broadcasts it) lets nobody speak for it. A phone that joined
+       before this existed has an old random pid saved: it is replaced, the host sees a new
+       player and deals fresh tickets, once. A browser that cannot make a key keeps the old
+       kind of pid and sends unsigned. */
+    P.pid=loadPid(room);
+    _keyReady=((window.VPPhoneKey && VPPhoneKey.ensure) ? VPPhoneKey.ensure(room) : Promise.reject(new Error("no phone key")))
+      .then(function(id){ if(P.pid!==id.pid){ P.pid=id.pid; savePid(room, P.pid); } return id; })
+      .catch(function(){ if(!P.pid || /^k1_/.test(P.pid)){   // a keyed pid this browser cannot sign for is no use to it
+        P.pid=randId(); savePid(room, P.pid); } return null; });
     // a saved name means this player already joined this room: auto-rejoin on reload so
     // they land back on their card. The host re-deals it when we re-announce below.
     var savedName=loadName(room);
@@ -1649,7 +1676,17 @@
   var leaveBtn=$("leaveBtn"); if(leaveBtn){ leaveBtn.addEventListener("click", leaveGame); }
   function leaveGame(){
     if(menuPanel) menuPanel.classList.add("hidden");
-    try{ send({ t:"leave", pid:P.pid }); }catch(e){}   // tell the host to drop us from the roster
+    /* Tell the host to drop us from the roster, and WAIT for that to be signed and sent before
+       hanging up. The signature takes a few milliseconds and everything below tears the
+       connection down and leaves the page, so without the wait the host never hears it and
+       the seat is billed for the rest of the night. Never more than a second, so a phone with
+       no signal can still leave. */
+    var _sent=null; try{ _sent=send({ t:"leave", pid:P.pid }); }catch(e){}
+    var _done=false;
+    function _finish(){ if(_done) return; _done=true; finishLeaving(); }
+    if(_sent && _sent.then){ _sent.then(_finish, _finish); setTimeout(_finish, 1000); } else { _finish(); }
+  }
+  function finishLeaving(){
     try{ if(ch) ch.unsubscribe(); }catch(e){}
     subscribed=false;
     /* Both stores. saveName writes to localStorage and loadName reads either, so clearing only

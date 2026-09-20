@@ -49,6 +49,9 @@ function lift(src, name) {
 }
 var PLAY = find("venueplay/play.html");
 
+/* send() signs a join, claim or leave when vp-phonekey.js is there. It is not here, so send()
+   takes its plain path: the same one a browser with no WebCrypto takes. */
+var window = this, _keyReady = null, _signChain = Promise.resolve();
 var srcs = ["onChannelStatus", "send", "flushQueue", "wireOut", "setConn"].map(function (n) {
   return [n, lift(PLAY, n)];
 });

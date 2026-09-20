@@ -2068,6 +2068,31 @@ MUTATIONS = [
      "      var _wait = gotIt ? Math.random()*2000 : 1000+Math.random()*5000;",
      "      var _wait = 0;",
      'every phone in the room asks in the same millisecond again'),
+
+    ('a forged join, claim or leave for another player is dropped', 'venueplay/app/index.html',
+     "        if(!v || !v.ok) return;\n",
+     "",
+     'the console checks the signature and then believes the message anyway'),
+
+    ('a forged join, claim or leave for another player is dropped', 'venueplay/app/index.html',
+     "        else if(!VPPhoneKey.fresh((G.seenN||(G.seenN={})), m, Date.now())) return;",
+     "        else if(false) return;",
+     'a real signed leave can be played back all night to throw her out of the game'),
+
+    ('a forged join, claim or leave for another player is dropped', 'venueplay/app/vp-phonekey.js',
+     "        if (pid !== m.pid) return { ok: false, legacy: false, why: \"that key is not this pid\" };",
+     "",
+     'anybody can sign with their OWN key and put her pid on it'),
+
+    ('a forged join, claim or leave for another player is dropped', 'venueplay/app/vp-phonekey.js',
+     "      m.name == null ? \"\" : String(m.name), m.cards == null",
+     "      \"\", m.cards == null",
+     'the name is not part of what is signed, so a captured join can be re-sent under another name'),
+
+    ('a forged join, claim or leave for another player is dropped', 'venueplay/app/vp-phonekey.js',
+     "        return Promise.resolve({ ok: false, legacy: false, why: \"unsigned message for a keyed pid\" });",
+     "        return Promise.resolve({ ok: true, legacy: true, why: \"\" });",
+     'an unsigned message about a keyed pid is waved through as legacy: the original hole'),
 ]
 
 

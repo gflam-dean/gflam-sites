@@ -490,6 +490,7 @@
 <script src="vp-session.js"></script>
 <script src="vp-gaming.js"></script>
 <script src="/app/vp-sign.js"></script>
+<script src="/app/vp-phonekey.js"></script>
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-hold.js"></script>
 <!-- The shared celebration helpers. This console only needs buzz(), which is the one place in
@@ -1164,6 +1165,7 @@
           defaultCards:G.defaultCards, prizesWon:G.prizesWon, startedAt:G.startedAt,
           draw:G.draw, idx:G.idx, called:G.called,
           players:G.players, order:G.order,
+          seenN:G.seenN||{},   // so a console reload does not reopen the door to a played-back message
           claims:G.claims, claimIdx:G.claimIdx, lastWins:G.lastWins, won:G.won,
           reportId:G.reportId,
           drawId:G.drawId||null, drawMode:G.drawMode||"local",
@@ -1210,6 +1212,7 @@
       G.defaultCards=clampCards(s.defaultCards||1);
       G.prizesWon=Array.isArray(s.prizesWon)?s.prizesWon:[];
       G.startedAt=s.startedAt||null;
+      G.seenN=(s.seenN && typeof s.seenN==="object")?s.seenN:{};
       G.draw=Array.isArray(s.draw)?s.draw:[];
       G.idx=(typeof s.idx==="number")?s.idx:-1;
       /* A save written before this change holds all 90 numbers pre-shuffled, with idx marking how
@@ -2345,7 +2348,36 @@
       }
     }
   }
+  /* WHO SAID THAT. A join, a claim and a leave used to be believed from anybody: the only
+     identity was pid, and this console reads every pid out to the room when it deals. So a
+     stranger on the channel could rename a player, shout BINGO on her ticket under his own name,
+     or send "leave" for every pid and wipe the room's tickets mid game. Found by audit, 20 Sep 2026.
+
+     A phone now signs those three with a key only it holds, and its pid is that key's
+     fingerprint (vp-phonekey.js). Checking a signature is asynchronous, so phone messages go
+     through one chain and are handled in the order they arrived: a join must not overtake the
+     claim behind it. What passes is handed to onPhoneMsg, which is the old handler unchanged.
+
+     LEGACY_PHONES_OK: a phone page loaded before this shipped has an old random pid and cannot
+     sign. It is still heard, so nobody mid game on deploy day is thrown out. It protects nobody
+     with a keyed pid: an UNSIGNED message about a k1_ pid is exactly the forgery and is always
+     dropped. Turn this off once no old page can still be open (a week is generous). */
+  var LEGACY_PHONES_OK=true;
+  var _phoneChain=Promise.resolve();
   function onMsg(m){
+    if(!m||!m.t) return;
+    if(window.VPPhoneKey && VPPhoneKey.isPhoneMsg(m)){
+      _phoneChain=_phoneChain.then(function(){ return VPPhoneKey.verify(m); }).then(function(v){
+        if(!v || !v.ok) return;
+        if(v.legacy){ if(!LEGACY_PHONES_OK) return; }
+        else if(!VPPhoneKey.fresh((G.seenN||(G.seenN={})), m, Date.now())) return;   // a real message, played back
+        onPhoneMsg(m);
+      }).catch(function(){});
+      return;
+    }
+    onPhoneMsg(m);
+  }
+  function onPhoneMsg(m){
     if(!m||!m.t) return;
     if(m.t==="tv_here"){ tvHere(m); return; }
     if(m.t==="join"){

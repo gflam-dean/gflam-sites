@@ -2873,6 +2873,11 @@ def local_checks(which):
                    'venue\'s raffle, or a draw on Math.random, ships with a green gate otherwise')
 
         for label, fn, title, floor, why in (
+            ('D22. Nobody on the bingo channel can speak for somebody else\'s phone',
+             'test-phones-cannot-be-impersonated.js',
+             'a forged join, claim or leave for another player is dropped by the bingo console', 34,
+             'Any stranger could rename a player, shout BINGO on her ticket, or wipe the room\'s '
+             'tickets mid game, from anywhere, with a browser console'),
             ('D19. A captured Stripe event stops working after five minutes',
              'test-stripe-signature-expires.js',
              'an old or altered Stripe signature is refused', 10,
