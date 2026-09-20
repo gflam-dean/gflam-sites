@@ -2815,6 +2815,26 @@ def local_checks(which):
         # welcome handed over a bare /tv link naming no venue. Both on a customer's first day.
         # Three things that FAILED OPEN: unreadable manager permissions read as owner, a
         # player-typed formula ran in the venue's spreadsheet, the contact form had no limits.
+        # Rated CRITICAL by the audit of 20 Sep 2026. A winner's "You won, show the host"
+        # screen was wiped inside thirty seconds by ordinary heartbeat traffic, and the BINGO
+        # button came back to life on a finished game. The fault lives BETWEEN the console and
+        # the phone page, so this runs the two REAL pages against each other.
+        head('D13. A winner still has her win screen when she reaches the host')
+        t = os.path.join(ROOT, 'tools', 'test-winner-screen-survives.js')
+        if not os.path.isfile(t) or not os.path.isfile(os.path.join(ROOT, 'tools', 'rig-bingo-room.js')):
+            ok('the winner-screen test and its rig exist', False,
+               why='tools/test-winner-screen-survives.js or tools/rig-bingo-room.js is missing')
+        else:
+            r = subprocess.run([JSC, t], capture_output=True, text=True, timeout=180, cwd=ROOT)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+            n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
+            ok('a win survives heartbeats and reconnects, and a new round still clears it',
+               r.returncode == 0 and n >= 10 and not bad,
+               detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
+               why='run jsc tools/test-winner-screen-survives.js from the repo root. The win '
+                   'screen is what a player shows the host to be paid')
+
         head('D12. Permissions, the CSV and the contact form fail closed')
         t = os.path.join(ROOT, 'tools', 'test-fail-closed-batch.js')
         if not os.path.isfile(t):

@@ -1953,6 +1953,14 @@ MUTATIONS = [
      "      /* swallowed */",
      'one 429 on the permissions read turns a manager with billing:false into somebody who '
      'can change billing and add hosts, because null permissions read as the owner'),
+
+    ('a win survives heartbeats and reconnects',
+     'venueplay/play.html',
+     '      if(_same) return;\n',
+     '',
+     'the phone reads a RESEND of tickets it already holds as a new round, so a winner is put '
+     'back on her ordinary ticket inside thirty seconds with the BINGO button live again, on '
+     'her way to the host to be paid'),
 ]
 
 

@@ -1263,6 +1263,24 @@
     markHost();   // any message below proves a live host is on this channel
     if(m.t==="cards"){
       if(m.pid && m.pid!==P.pid) return;   // those tickets are for another player
+      /* THE SAME TICKETS AGAIN ARE NOT A NEW ROUND, and treating them as one wiped the
+         winner's screen. Found by audit, 20 Sep 2026, reproduced by running this page.
+
+         The host answers EVERY join with a cards message, and a phone re-joins on every
+         30 second host heartbeat and on every reconnect, which is what a screen locking
+         and unlocking is. The block below read any cards message as "fresh deal", so a
+         player on "You won! Show this to the host" was put back on her ordinary ticket
+         inside half a minute, with the BINGO button live again, on her way to the host.
+         A line win in a progressive game went the same way.
+
+         A new round ALWAYS deals new card numbers (nextCardNo only counts up), so an
+         identical set can only ever be a resend. Compare, and leave everything alone. */
+      var _inc = m.cards || [], _same = _inc.length > 0 && _inc.length === P.cards.length;
+      for(var _s=0; _same && _s<_inc.length; _s++){
+        if(_inc[_s].cardNo !== P.cards[_s].cardNo ||
+           JSON.stringify(_inc[_s].cells) !== JSON.stringify(P.cards[_s].cells)) _same = false;
+      }
+      if(_same) return;
       // Being dealt tickets IS the start of a round for this phone, so it clears last round's
       // result. Without this a phone that slept through t:"started" stayed on "Nice game!" or a
       // stale "You won!" for the whole next game, ignoring its own new tickets, and the only way
