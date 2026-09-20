@@ -2032,6 +2032,27 @@ MUTATIONS = [
      "so this is a promotional game, not a paid one.';",
      "so this is a promotional game and needs no licence anywhere.';",
      'every venue in every state is told a free game needs no licence anywhere'),
+
+    # The five careless edits from the audit of 20 Sep 2026, which all passed the gate that day.
+    ('an old or altered Stripe signature is refused', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  if (!isFinite(ts) || Math.abs(Math.floor(Date.now() / 1000) - ts) > 300) return false;",
+     "  if (!isFinite(ts)) return false;",
+     'a captured invoice.paid can be replayed for ever'),
+
+    ('every host route checks the login and the venue, draws use crypto', 'venueplay-backend/worker/venueplay-game.js',
+     "min + randInt(span)",
+     "min + Math.floor(Math.random() * span)",
+     'the raffle draws on Math.random: still uniform, so the fairness test stays green, and a licence matter'),
+
+    ('every host route checks the login and the venue, draws use crypto', 'venueplay-backend/worker/venueplay-game.js',
+     "const OVERAGE_ABSOLUTE_MAX = 500",
+     "const OVERAGE_ABSOLUTE_MAX = 5000",
+     'one night can bill ten times the extras anybody agreed to'),
+
+    ('every host route checks the login and the venue, draws use crypto', 'venueplay-backend/worker/venueplay-game.js',
+     "  const staff = await requireStaff(env, authUserId, session.venue_id);   // ENFORCED: staff at the claim's venue",
+     "  const staff = { role: 'owner' };   // staff at the claim's venue",
+     'any signed-in host can rule on any venue\'s bingo claim'),
 ]
 
 

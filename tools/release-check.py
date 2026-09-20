@@ -2828,7 +2828,28 @@ def local_checks(which):
         # wrote the venue ACTIVE before Stripe agreed and rolled back only one of the fields,
         # and a Stripe event that threw was answered "already handled" on its retry, so a paid
         # signup got no venue and Stripe stopped asking.
+        # D19 and D20: the audit made five careless edits to a Worker, one at a time, and the
+        # whole local gate stayed green for every one of them.
+        head('D20. A host route cannot lose its staff check, nor a draw its generator')
+        t = os.path.join(ROOT, 'tools', 'check-worker-guards.py')
+        if not os.path.isfile(t):
+            ok('the worker guards check exists', False, why='tools/check-worker-guards.py is missing')
+        else:
+            r = subprocess.run([sys.executable, t], capture_output=True, text=True, timeout=120, cwd=ROOT)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+            n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
+            ok('every host route checks the login and the venue, draws use crypto, big tables are paged',
+               r.returncode == 0 and n >= 40 and not bad,
+               detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
+               why='run python3 tools/check-worker-guards.py. Any signed-in host drawing any '
+                   'venue\'s raffle, or a draw on Math.random, ships with a green gate otherwise')
+
         for label, fn, title, floor, why in (
+            ('D19. A captured Stripe event stops working after five minutes',
+             'test-stripe-signature-expires.js',
+             'an old or altered Stripe signature is refused', 10,
+             'One captured invoice.paid replayed for ever keeps a suspended venue switched on'),
             ('D18. A free game is told its own state\'s rules, not "no licence anywhere"',
              'test-free-entry-rules-are-the-states-own.js',
              'the free-entry popup shows each state its own prize thresholds', 13,
@@ -4266,6 +4287,18 @@ def nobody_can_reach_another_venue():
        detail=('; '.join(bad[:2]) if bad else (lines[-1] if lines else 'no output')),
        why='run python3 tools/tenant-isolation-attack.py. If it crashed rather than failed, the '
            'attack never happened, which is not the same as nothing being wrong')
+
+    # AND CAN IT STILL FAIL? Three of its six data lines could not, for ten days, because they
+    # looked for a venue_id those tables do not have (audit, 20 Sep 2026). --prove tells it the
+    # test venue's own members list is somebody else's. The host can read those members, so a
+    # detector that works has to shout LEAK. One that stays green here is decoration.
+    rp = subprocess.run([sys.executable, tool, '--prove'], capture_output=True, text=True, timeout=600)
+    outp = (rp.stdout or '') + (rp.stderr or '')
+    ok('and the members isolation check goes red when it is shown a foreign row',
+       'Traceback' not in outp and any('LEAK' in l and 'members' in l for l in outp.splitlines()),
+       detail='blinded on purpose, it said: ' + (([l.strip() for l in outp.splitlines() if 'members' in l] or ['nothing'])[0][:90]),
+       why='tools/tenant-isolation-attack.py --prove must report a LEAK for members. If it does '
+           'not, the members line is measuring an empty table again and proves nothing')
 
 
 def every_active_venue_knows_its_state():

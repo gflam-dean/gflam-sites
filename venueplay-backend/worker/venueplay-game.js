@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '20 Sep 2026, 14:54 · 721149b1';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '20 Sep 2026, 15:08 · 09a7413b';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -4693,7 +4693,10 @@ async function handleTriviaRemove(request, env, json) {           // remove one 
   if (!qrows.length) return json({ error: 'Question not found' }, 404);
   const set = await triviaSetForVenue(env, qrows[0].set_id, authUserId);
   await sbDelete(env, 'vp_questions', 'id=eq.' + enc(qid));
-  const rest = await sbGet(env, 'vp_questions', 'set_id=eq.' + enc(set.id) + '&select=id,seq&order=seq.asc');
+  /* PAGED. A single read stops at 1,000 rows without a word, and this one then writes
+     question_count from what came back: a big set would have been renumbered short and its
+     count written as 1,000 for good. Caught by tools/check-worker-guards.py the day it was written. */
+  const rest = await sbGetAll(env, 'vp_questions', 'set_id=eq.' + enc(set.id) + '&select=id,seq&order=seq.asc,id.asc');
   for (let i = 0; i < rest.length; i++) {
     if (rest[i].seq !== i + 1) await sbPatch(env, 'vp_questions', 'id=eq.' + enc(rest[i].id), { seq: i + 1 });
   }

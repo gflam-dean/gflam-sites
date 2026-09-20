@@ -131,17 +131,69 @@ def main():
     # actually hands over a foreign row. If PostgREST refuses the table outright, this
     # section is measuring the refusal, not the filter. The Worker section below is the
     # one with a control in it, and a control is what makes a green line mean something.
-    for table, what in [('vp_members', 'members'), ('vp_players', 'players'),
-                        ('vp_venue_staff', 'staff rows'), ('vp_captures', 'opt-in captures'),
-                        ('vp_member_draw_results', 'draw results'), ('vp_game_reports', 'night reports')]:
-        st, rows = rest(anon, jwt, '%s?select=*&limit=200' % table)
+    # THREE OF THESE SIX COULD NOT FAIL. Found by audit, 20 Sep 2026. The test for "somebody
+    # else's row" was r.get('venue_id') not in mine, and vp_members, vp_players and
+    # vp_member_draw_results HAVE NO venue_id: a member belongs to a venue through its members
+    # list, a player through a session, a draw result through its draw. A row with no venue_id was
+    # never foreign, so this printed "all its own" over whatever the database handed back, up to
+    # and including every club's whole members list.
+    #
+    # So ownership is now resolved the way the data is: through the parent. WHAT IS MINE is read
+    # with the service key, because asking the attacker which lists are its own lets one leak hide
+    # another. Then the attack is the precise one: as the host, ask for rows whose parent is NOT
+    # mine. And a control per table: if the truth says I own rows, I must be able to see one,
+    # so that a refusal, an empty table and a working filter are three different answers.
+    # GIVE THE MEMBERS CHECK SOMETHING TO OWN. The test venues had no members list, so the
+    # members line could only ever measure an empty table. One test member at test-alpha, written
+    # through the same Worker route a real host uses, to a venue that is ours. Importing the same
+    # number again is an update, so this does not grow.
+    alpha = [v['id'] for v in mine if v.get('slug') == 'test-alpha'] if isinstance(mine, list) else []
+    if alpha:
+        worker(jwt, '/host/members/import', {'venue_id': alpha[0], 'members': [{'number': 9001, 'name': 'Isolation Control'}]})
+
+    def truth(path):
+        req = urllib.request.Request(LIVE + '/rest/v1/' + path, headers={
+            'apikey': e['NEW_SERVICE_KEY'], 'Authorization': 'Bearer ' + e['NEW_SERVICE_KEY'], 'User-Agent': UA})
+        return json.load(urllib.request.urlopen(req, timeout=30))
+    def inlist(ids): return '(' + ','.join(sorted(ids)) + ')'
+    venues_in = 'venue_id=in.' + inlist(mine_ids)
+
+    for table, what, parent_col, parent_table in [
+            ('vp_members', 'members', 'roster_id', 'vp_member_rosters'),
+            ('vp_players', 'players', 'session_id', 'vp_sessions'),
+            ('vp_member_draw_results', 'draw results', 'draw_id', 'vp_member_draws'),
+            ('vp_venue_staff', 'staff rows', 'venue_id', None),
+            ('vp_captures', 'opt-in captures', 'venue_id', None),
+            ('vp_game_reports', 'night reports', 'venue_id', None)]:
+        if parent_table:
+            own = {r['id'] for r in truth('%s?%s&select=id&order=id&limit=1000' % (parent_table, venues_in))}
+        else:
+            own = set(mine_ids)
+        # --prove: CAN THIS LINE FAIL AT ALL? Pretend the test venue's own members list belongs to
+        # somebody else. The host can see those members, so a working detector MUST shout LEAK.
+        # The old version of this section stayed green with its filter blinded, 17 times.
+        if '--prove' in sys.argv and table == 'vp_members':
+            own = set()
+        if not own:
+            print('  --   %s: the test venues have no %s to own, so only the refusal can be measured' % (what, parent_table))
+            own = {'00000000-0000-0000-0000-000000000000'}
+        # THE ATTACK: anything whose parent is not mine. One row is a breach.
+        st, rows = rest(anon, jwt, '%s?%s=not.in.%s&select=%s&limit=5' % (table, parent_col, inlist(own), parent_col))
         if not isinstance(rows, list):
             print('  ok   the database refuses %s outright (%s)' % (what, st)); continue
-        foreign = [r for r in rows if r.get('venue_id') and r['venue_id'] not in mine_ids]
-        ok('every %s row it can see belongs to ITS venues' % what, not foreign,
-           '%d of %d rows belong to somebody else' % (len(foreign), len(rows)))
-        if rows and not foreign:
-            print('       (%d row(s), all its own)' % len(rows))
+        ok('it cannot read a single one of another venue\'s %s' % what, not rows,
+           '%d foreign row(s) came back, e.g. %s=%s' % (len(rows), parent_col, rows[0].get(parent_col) if rows else ''))
+        # THE CONTROL: does the truth say I own any? Then I must see one, or "no foreign rows"
+        # only means "no rows", which is what a broken filter and a locked table both look like.
+        mine_truth = truth('%s?%s=in.%s&select=%s&limit=1' % (table, parent_col, inlist(own), parent_col))
+        if mine_truth:
+            st2, seen = rest(anon, jwt, '%s?%s=in.%s&select=%s&limit=1' % (table, parent_col, inlist(own), parent_col))
+            if isinstance(seen, list) and seen:
+                print('       CONTROL: it CAN see its own %s, so the empty answer above is the filter working' % what)
+            else:
+                print('       control: it cannot see its own %s either (%s), so that line measures a locked table, not a filter' % (what, st2))
+        else:
+            print('       control: the test venues hold no %s, so that line cannot tell a filter from an empty table' % what)
 
     print('\n== 3. billing ==')
     for table, what in [('venueplay_founding', 'billing accounts'), ('vp_venue_groups', 'venue groups')]:
