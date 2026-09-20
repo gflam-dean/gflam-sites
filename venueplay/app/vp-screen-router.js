@@ -92,8 +92,17 @@
     GAMES.forEach(function (game) {
       if (game === self) return;
       var name = game === "bingo" ? code(slug) : code(game + "-" + slug);
-      var c = client.channel("vp-" + name, { config: { broadcast: { self: false } } });
-      c.on("broadcast", { event: "msg" }, function (e) {
+      /* A BRAND NEW CHANNEL ON EVERY RETRY. This used to hold ONE channel object and call
+         c.subscribe() on it again after an error. supabase-js allows subscribe() exactly once
+         per channel instance, so the retry threw "tried to join multiple times" inside its
+         own timer, nothing caught it, no further retry was ever scheduled, and that channel
+         was dead for the rest of the night. One ordinary wifi blip, and the wall stayed on
+         the trivia podium while the host ran a raffle. Found by audit 20 Sep 2026 by running
+         this file against the real supabase-js bundle. tv.html's own copy of this logic
+         already rebuilt the channel; this one did not, which is what two copies of one
+         answer costs. */
+      var tries = 0, retry = null, c = null;
+      function onMsg(e) {
         var handle = function (m) {
           if (!m) return;
           /* mode is still honoured, because it is the one message a host sends
@@ -102,22 +111,19 @@
           if (m.t === "mode" || onAir(m)) goTo(game);
         };
         if (gate) gate(e.payload, handle); else handle(e.payload);
-      });
-      /* SUBSCRIBE AND LISTEN TO THE ANSWER. This was a bare c.subscribe() with no status
-         callback at all, which is the one shape this codebase keeps getting bitten by: a
-         subscription that never connects looks exactly like a subscription with nothing to
-         report. These are the channels the unified telly watches so it can switch to whichever
-         game a host starts. If one silently fails, the screen simply never switches, the host
-         starts a raffle and the wall stays on the last thing, and there is nothing anywhere
-         saying why. Same family as the CLOSED handlers on the consoles and the tvStatus fault
-         that blinded a venue for a day.
-
-         It retries rather than just reporting, because there is no person looking at this
-         screen to press anything: a telly on a wall has to heal itself. Backing off to a
-         minute so a genuinely dead channel does not hammer anything all night. */
-      var tries = 0, retry = null;
+      }
+      /* SUBSCRIBE AND LISTEN TO THE ANSWER. A subscription that never connects looks exactly
+         like a subscription with nothing to report. These are the channels the unified telly
+         watches so it can switch to whichever game a host starts. It retries rather than just
+         reporting, because there is no person looking at this screen to press anything: a
+         telly on a wall has to heal itself. Backing off to a minute so a genuinely dead
+         channel does not hammer anything all night. */
       function watch() {
-        c.subscribe(function (status) {
+        var mine = client.channel("vp-" + name, { config: { broadcast: { self: false } } });
+        c = mine;
+        mine.on("broadcast", { event: "msg" }, onMsg);
+        mine.subscribe(function (status) {
+          if (mine !== c) return;                // a status from a channel we already replaced
           if (status === "SUBSCRIBED") { tries = 0; return; }
           if (status !== "CHANNEL_ERROR" && status !== "TIMED_OUT" && status !== "CLOSED") return;
           if (retry) return;                    // one timer per channel, however many errors land
@@ -126,8 +132,12 @@
           try { console.log("[router] " + game + " channel " + status + ", retrying in " + (wait / 1000) + "s"); } catch (e) {}
           retry = setTimeout(function () {
             retry = null;
-            try { c.unsubscribe(); } catch (e) {}
-            watch();
+            try { client.removeChannel(mine); } catch (e) {}
+            try { watch(); } catch (e) {
+              // Whatever goes wrong building the next one, keep trying: a throw here used to
+              // be the end of this channel for the night.
+              retry = setTimeout(function () { retry = null; try { watch(); } catch (e2) {} }, 60000);
+            }
           }, wait);
         });
       }

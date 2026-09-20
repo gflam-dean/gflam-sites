@@ -2819,6 +2819,25 @@ def local_checks(which):
         # screen was wiped inside thirty seconds by ordinary heartbeat traffic, and the BINGO
         # button came back to life on a finished game. The fault lives BETWEEN the console and
         # the phone page, so this runs the two REAL pages against each other.
+        # One wifi blip deafened four of the five game screens for the rest of the night: the
+        # retry re-subscribed the SAME channel object, which supabase-js forbids, so it threw
+        # inside its own timer and never tried again.
+        head('D14. The wall heals itself after a network blip')
+        t = os.path.join(ROOT, 'tools', 'test-router-heals-after-a-blip.js')
+        if not os.path.isfile(t):
+            ok('the router healing test exists', False,
+               why='tools/test-router-heals-after-a-blip.js is missing')
+        else:
+            r = subprocess.run([JSC, t], capture_output=True, text=True, timeout=120, cwd=ROOT)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+            n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
+            ok('a dropped game channel is rebuilt, and the screen still follows the host',
+               r.returncode == 0 and n >= 10 and not bad,
+               detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
+               why='run jsc tools/test-router-heals-after-a-blip.js. A telly on a wall has '
+                   'nobody to press reload; if it cannot heal itself it stays wrong all night')
+
         head('D13. A winner still has her win screen when she reaches the host')
         t = os.path.join(ROOT, 'tools', 'test-winner-screen-survives.js')
         if not os.path.isfile(t) or not os.path.isfile(os.path.join(ROOT, 'tools', 'rig-bingo-room.js')):

@@ -427,8 +427,8 @@ MUTATIONS = [
     # the detector was blind to until it was widened on 17 Sep 2026.
     ('every function is declared where it will actually be bound',
      'venueplay/app/vp-screen-router.js',
-     '      var tries = 0, retry = null;',
-     '      var tries = 0, retry = null;\n      if (tries === 0) {\n        var noise = 1;\n'
+     '      var tries = 0, retry = null, c = null;',
+     '      var tries = 0, retry = null, c = null;\n      if (tries === 0) {\n        var noise = 1;\n'
      '        function _mutStray() { return 1; }\n      }\n      _mutStray();',
      'a function is declared inside a block and called outside it, which is the Annex B fault '
      'that blinded a live venue TV for a whole day while every other check stayed green'),
@@ -1961,6 +1961,13 @@ MUTATIONS = [
      'the phone reads a RESEND of tickets it already holds as a new round, so a winner is put '
      'back on her ordinary ticket inside thirty seconds with the BINGO button live again, on '
      'her way to the host to be paid'),
+
+    ('a dropped game channel is rebuilt',
+     'venueplay/app/vp-screen-router.js',
+     '            try { client.removeChannel(mine); } catch (e) {}\n            try { watch(); } catch (e) {',
+     '            try { mine.subscribe(function () {}); } catch (e) {',
+     'the retry subscribes the same channel object again, supabase-js refuses, and after one '
+     'wifi blip the wall stays on the finished quiz while the host runs a raffle'),
 ]
 
 
