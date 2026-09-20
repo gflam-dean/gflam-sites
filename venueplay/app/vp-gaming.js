@@ -63,11 +63,13 @@
 
     NSW: {
       confirmed: true, name: 'New South Wales', regulator: 'NSW Fair Trading',
+      free: { all: ['Over $10,000 in total prize value you need an authority from NSW Fair Trading first.',
+                    'If the game is tied to the gaming machines, the prize cap is $1,000.'] },
       phones: { bingo: true },
       for_profit: {
         bingo:  { paid: 'no', notes: [
           'Paid bingo in NSW is for registered clubs only, and only on club premises. A hotel cannot run it, and unlike a raffle there is no route through a charity.',
-          'Free entry is always open to you, with no permit and no limit on the prize.'] },
+          'Free entry is always open to you. Over $10,000 in prize value needs an authority.'] },
         raffle: { paid: 'cause', notes: [
           'A paid raffle has to be run by or on behalf of a charity or a non-profit. A pub can run one FOR a nominated cause: get their authorisation in writing first.',
           'At least 40% of the gross takings must go to the benefiting organisation. The pub cannot be its own beneficiary.',
@@ -91,6 +93,7 @@
 
     QLD: {
       confirmed: true, name: 'Queensland', regulator: 'OLGR',
+      free: { all: ['In Queensland this is a Category 4 promotional game, which needs no licence and has no prize limit.'] },
       phones: { bingo: 'pending' },
       /* Our number generator is not yet approved here, which blocks the DRAW itself
          regardless of what the venue is allowed to do. This is about us, not them. */
@@ -114,6 +117,7 @@
 
     VIC: {
       confirmed: true, name: 'Victoria', regulator: 'VGCCC',
+      free: { all: ['In Victoria this is a trade promotion lottery: no permit, and any cost of entering is capped at $1.'] },
       phones: { bingo: 'unclear' },
       warn: 'Victoria publishes a rule that bingo "must not be conducted online" and nobody has defined what that covers. Until we have that in writing, do not rely on phone tickets for bingo here. Raffles and trivia are not affected.',
       for_profit: {
@@ -138,6 +142,7 @@
 
     WA: {
       confirmed: true, name: 'Western Australia', regulator: 'the Gaming and Wagering Commission',
+      free: { all: ['In Western Australia this is a trade promotion, and any electronic cost of entering is capped at 55c.'] },
       phones: { bingo: true },
       warn: 'A raffle using our draw needs independent certification BEFORE the permit is granted, and the venue pays for it. The Commission accepts a certificate from another state, so our Queensland one should cover it once granted. Verifying a win on screen needs separate approval.',
       for_profit: {
@@ -157,6 +162,7 @@
 
     SA: {
       confirmed: true, name: 'South Australia', regulator: 'Consumer and Business Services',
+      free: { all: ['In South Australia a trade promotion with prizes up to $5,000 needs no licence. Above $5,000, check with Consumer and Business Services first.'] },
       phones: { bingo: false },
       paperBingo: 'South Australia recognises only physical bingo sheets, bought from a licensed supplier. Players cannot use their phones as tickets here. Run the paper sheets and use our calling and our screen. Trivia on phones is unaffected.',
       for_profit: {
@@ -178,6 +184,7 @@
 
     ACT: {
       confirmed: true, name: 'ACT', regulator: 'the Gambling and Racing Commission',
+      free: { all: ['In ACT a trade promotion is for prizes up to $3,000. Above $3,000, check with the Gambling and Racing Commission first.'] },
       phones: { bingo: false },
       paperBingo: 'ACT housie rules do not allow players to hold electronic devices in the playing area, so phones cannot be used as bingo tickets here. Run paper and use our calling and our screen. Trivia is unaffected.',
       for_profit: {
@@ -225,6 +232,8 @@
 
     NT: {
       confirmed: true, name: 'the Northern Territory', regulator: 'Licensing NT',
+      free: { all: ['In the Northern Territory this is a trade lottery: prizes up to $5,000 need no permit.'],
+              members: ['A members draw prize is capped at $2,000.'] },
       phones: { bingo: true },
       blocked: 'We are not selling paid games in the Northern Territory yet. A published permit condition says no payment, fee or commission whatsoever may be provided in relation to conducting a game, which may prevent an association paying us at all. We are checking it. Free entry games and trivia are fine.',
       for_profit: {
@@ -301,11 +310,28 @@
     var entity = (opts.entityType === 'non_profit') ? 'non_profit' : 'for_profit';
     var rule = (st[entity] || {})[kind] || { paid: 'no', notes: [] };
 
-    // Free entry is the safe path everywhere, so handle it first and briefly.
+    /* Free entry is the safe path everywhere, so handle it first and briefly.
+
+       BUT NOT WITH TWO SENTENCES THAT ARE TRUE NOWHERE IN PARTICULAR. This said a free game
+       "needs no licence anywhere" and "there is no limit on what you put up as a prize", to
+       every venue in every state, while this same file knew that NSW wants an authority over
+       $10,000, South Australia stops at $5,000 and ACT at $3,000. Those facts sat in notes that
+       are only read on the PAID branch, below this early return, so the path every venue is
+       actually on never showed them. A members draw carries a jackpot that grows every week,
+       and the host's "I understand" is recorded against that headline. It broke the rule at the
+       top of this file: where something is not confirmed we say so. Found by audit, 20 Sep 2026.
+
+       So: what is true everywhere, then what THIS state says about a free game, and where we
+       hold nothing for the state, exactly that. */
     if (!opts.paidEntry) {
-      out.headline = 'Free entry. Nobody pays to play, so this is a promotional game and needs no licence anywhere.';
+      out.headline = 'Free entry. Nobody pays to play, so this is a promotional game, not a paid one.';
       out.points.push('Nobody may pay to enter, buy a ticket or buy a book, and entry cannot depend on a purchase.');
-      out.points.push('There is no limit on what you put up as a prize.');
+      var free = ((st.free && st.free.all) || []).concat((st.free && st.free[kind]) || []);
+      if (free.length) {
+        for (var fi = 0; fi < free.length; fi++) out.points.push(free[fi]);
+      } else {
+        out.points.push('We have not confirmed a prize threshold for free-entry games in ' + st.name + '. Before a large prize, check with ' + st.regulator + '.');
+      }
       if (rule.paid === 'yes') {
         out.points.push('In ' + st.name + ' you could charge for entry if you wanted to. Ask us to turn paid entry on for this venue.');
       }
@@ -317,7 +343,7 @@
       out.ok = false;
       out.headline = 'Paid entry is switched off for this venue.';
       out.warnings.push('We turn paid entry on once we have recorded whether you are a club or a pub, because that is what the rules turn on. Email hello@venueplay.com.au and we will sort it.');
-      out.points.push('A free-entry game needs no licence anywhere and you can run one right now.');
+      out.points.push('A free-entry game is open to you right now. Switch this game to free entry and the rules for it are shown here.');
       return out;
     }
 

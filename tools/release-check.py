@@ -2829,6 +2829,11 @@ def local_checks(which):
         # and a Stripe event that threw was answered "already handled" on its retry, so a paid
         # signup got no venue and Stripe stopped asking.
         for label, fn, title, floor, why in (
+            ('D18. A free game is told its own state\'s rules, not "no licence anywhere"',
+             'test-free-entry-rules-are-the-states-own.js',
+             'the free-entry popup shows each state its own prize thresholds', 13,
+             'A club runs a $12,000 members jackpot in NSW on our written say-so that a free '
+             'game needs no licence anywhere and has no prize limit'),
             ('D17. The record of a draw says what the draw did, not what the console says',
              'test-draws-keep-an-honest-record.js',
              'a draw record cannot be rewritten by a stale tablet, a repeat tap or a reload', 18,

@@ -2022,6 +2022,16 @@ MUTATIONS = [
      "          seq: r.seq,\n          ticket: r.ticket_number,",
      "          ticket: r.ticket_number,",
      'every console reload re-arms Claim and redraw on a prize already handed over'),
+
+    ('the free-entry popup shows each state its own prize thresholds', 'venueplay/app/vp-gaming.js',
+     "      if (free.length) {",
+     "      if (false) {",
+     'the thresholds go back to being unreachable on the only path venues are on'),
+
+    ('the free-entry popup shows each state its own prize thresholds', 'venueplay/app/vp-gaming.js',
+     "so this is a promotional game, not a paid one.';",
+     "so this is a promotional game and needs no licence anywhere.';",
+     'every venue in every state is told a free game needs no licence anywhere'),
 ]
 
 
