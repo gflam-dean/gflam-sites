@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '20 Sep 2026, 10:17 · 9a83590e';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '20 Sep 2026, 14:54 · 721149b1';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -3202,6 +3202,22 @@ async function handleHostDraw(request, env, json) {
   const isRedraw = !isNaN(redrawSeq);
   if (isRedraw) {
     if (!raffle.allow_redraw) return json({ error: 'This raffle does not allow a redraw' }, 409);
+    /* A ROUND THAT IS FINISHED STAYS FINISHED. This patched the row to no_show whatever it
+       already said, so a redraw aimed at a round recorded as CLAIMED rewrote it to "never
+       showed" and drew a second ticket for a prize already in somebody's hands. The console was
+       meant to stop that and its check had never once worked (see getPublicSnapshot), and a
+       console is not what should stand between a tap and the record anyway.
+       Found by audit, 20 Sep 2026. Only a round still waiting on its winner can be redrawn. */
+    const target = await sbGet(env, 'vp_raffle_results',
+      'game_id=eq.' + enc(gameId) + '&seq=eq.' + redrawSeq + '&select=seq,outcome&limit=1');
+    if (!target.length) return json({ error: 'That round is not part of this raffle. Reload this page to see the current draw.' }, 404);
+    const was = String(target[0].outcome || 'drawn');
+    if (was === 'claimed') {
+      return json({ error: 'That prize has already been claimed, so it cannot be redrawn. Reload this page to see the current draw.', already: 'claimed' }, 409);
+    }
+    if (was === 'no_show') {
+      return json({ error: 'That round has already been redrawn. Reload this page to see the current winner.', already: 'no_show' }, 409);
+    }
     await sbPatch(env, 'vp_raffle_results', 'game_id=eq.' + enc(gameId) + '&seq=eq.' + redrawSeq,
       { status: 'no_show', outcome: 'no_show' });
   }
@@ -3570,10 +3586,19 @@ async function handleMembersResolve(request, env, json) {
   if (!outcome) return json({ error: 'outcome must be "claim" or "rollover"' }, 400);
 
   const draws = await sbGet(env, 'vp_member_draws',
-    'id=eq.' + enc(drawId) + '&select=id,venue_id,roster_id,current_jackpot_cents,starting_amount_cents,increment_cents,last_resolved_at');
+    'id=eq.' + enc(drawId) + '&select=id,venue_id,roster_id,current_jackpot_cents,starting_amount_cents,increment_cents,last_resolved_at,last_drawn_at');
   if (!draws.length) return json({ error: 'Draw not found' }, 404);
   const draw = draws[0];
   await requireStaff(env, authUserId, draw.venue_id);            // ENFORCED: staff at the draw's venue (also kill-switch)
+
+  /* THE ROW THE DRAW OPENED, read before anything is decided, because it answers both questions
+     this handler has: who was drawn, and whether there is anything left to resolve. */
+  let openRow = null;
+  try {
+    const openRows = await sbGet(env, 'vp_member_draw_results',
+      'draw_id=eq.' + enc(drawId) + '&outcome=eq.drawn&select=id,member_id,member_number,winner_name&order=drawn_at.desc&limit=1');
+    openRow = openRows.length ? openRows[0] : null;
+  } catch (e) { openRow = null; }
 
   /* Idempotency: a double-tap or a retry must not write a second audit row or
      advance the jackpot twice.
@@ -3592,8 +3617,21 @@ async function handleMembersResolve(request, env, json) {
      inside the gap between two genuine draws on the same draw row: resolving,
      drawing again and resolving again inside five minutes is not something a
      members draw does. */
+  /* A CLOCK WAS THE WRONG TEST, IN BOTH DIRECTIONS. Found by audit, 20 Sep 2026, by running it.
+     A club that draws three numbers a night rolled the first over, drew again, and the second
+     winner walked up 135 seconds later: inside the window, so her genuine claim was answered
+     "duplicate", never recorded, and the jackpot did not reset. And a host whose rollover reply
+     was lost tapped again six minutes later: outside the window, so it rolled over twice.
+
+     What makes a resolve a duplicate is that NOTHING HAS BEEN DRAWN SINCE THE LAST ONE. The
+     draw opens a row and stamps last_drawn_at (both the SQL draw and the fallback here do), so:
+     an open row means there is something to resolve, whatever the clock says; no open row and
+     no draw since the last resolve means this is a repeat, however long ago. The five minute
+     window survives only for a database with no last_drawn_at to compare. */
   const lastResolved = draw.last_resolved_at ? new Date(draw.last_resolved_at).getTime() : 0;
-  if (lastResolved && (Date.now() - lastResolved) < 300000) {
+  const lastDrawn = draw.last_drawn_at ? new Date(draw.last_drawn_at).getTime() : 0;
+  const nothingSince = lastDrawn ? (lastResolved >= lastDrawn) : ((Date.now() - lastResolved) < 300000);
+  if (lastResolved && !openRow && nothingSince) {
     /* AND REPORT WHAT ACTUALLY HAPPENED, not what the jackpot is now.
 
        This returned draw.current_jackpot_cents, which after a claim is the
@@ -3618,6 +3656,27 @@ async function handleMembersResolve(request, env, json) {
     return json({ draw_id: drawId, outcome: saidOutcome, amount_cents: saidAmount,
       new_jackpot_cents: draw.current_jackpot_cents,
       increment_cents: draw.increment_cents != null ? draw.increment_cents : 0, duplicate: true });
+  }
+
+  /* THE RECORD SAYS WHO THE DRAW PICKED, NOT WHO THE REQUEST NAMES. The draw opens a row with
+     the member the random number generator chose. This handler then found that row by draw_id
+     alone and wrote whatever member the request supplied over the top, checking only that they
+     were on the members list. Drawn #108, resolve sent #101, reply 200, and the permanent record
+     said #101 was paid $2,400. The honest route to it is two tablets: one still showing an old
+     round presses Claim after the other has drawn again. Found by audit, 20 Sep 2026.
+
+     The record exists to check the host, so it cannot take the host's word for the winner. A
+     request that names somebody other than the open row is REFUSED rather than quietly
+     corrected: the person pressing Claim is looking at the wrong member, and recording the
+     right one as paid on their say-so would be just as false. */
+  if (openRow) {
+    const saysId = (b.member_id != null && String(b.member_id).trim()) ? String(b.member_id).trim() : null;
+    const saysNo = (b.member_number != null && !isNaN(parseInt(b.member_number, 10))) ? parseInt(b.member_number, 10) : null;
+    const wrongId = saysId && openRow.member_id && saysId !== String(openRow.member_id);
+    const wrongNo = !saysId && saysNo != null && openRow.member_number != null && saysNo !== Number(openRow.member_number);
+    if (wrongId || wrongNo) {
+      return json({ error: 'That is not the member this draw picked. Another device has drawn since. Reload this page to see the current draw.', stale_round: true }, 409);
+    }
   }
 
   // Re-derive the winner server-side. A supplied member_id MUST belong to this draw's roster
@@ -3645,16 +3704,20 @@ async function handleMembersResolve(request, env, json) {
   if (memberId) resultRow.member_id = memberId;
   if (memberNumber != null) resultRow.member_number = memberNumber;
   if (winnerName) resultRow.winner_name = winnerName;
+  /* Closing the row the draw opened: who won is already on it, written by the draw. Nothing the
+     request said about identity is written over that, so a request that named nobody still
+     closes the right member and one that named the right member changes nothing. */
+  const closing = { draw_id: drawId, outcome, amount_cents: jackpotAtDraw };
   /* Finish the row the DRAW opened, so one draw is one row. Falls back to an insert when there
      is no open row (an older Worker drew it, or the migration widening the outcome check has not
      been run yet), which is exactly the old behaviour. drawn_at, not created_at: this table has
      no created_at column. */
   let closed = 0;
   try {
-    const open = await sbGet(env, 'vp_member_draw_results',
-      'draw_id=eq.' + enc(drawId) + '&outcome=eq.drawn&select=id&order=drawn_at.desc&limit=1');
-    if (open.length) {
-      await sbPatch(env, 'vp_member_draw_results', 'id=eq.' + enc(open[0].id), resultRow);
+    if (openRow) {
+      // outcome=eq.drawn again on the write: two Claims racing must not both close it.
+      await sbPatch(env, 'vp_member_draw_results', 'id=eq.' + enc(openRow.id) + '&outcome=eq.drawn',
+        (openRow.member_id || openRow.member_number != null) ? closing : resultRow);
       closed = 1;
     }
   } catch (e) { closed = 0; }
@@ -7252,9 +7315,16 @@ async function getPublicSnapshot(env, sessionId) {
         pad: padWidth, last_seq: lastSeq, last_tickets: lastTickets, all_tickets: allTickets,
         /* Oldest first: the console reverses this into newest-first, matching the order it uses
            when it appends a live draw, so a restored log and a live one read the same way. */
+        /* seq AND prize_text GO OUT TOO. The console decides whether to put the last round back
+           as a live winner by matching results[i].seq against last_seq and reading
+           results[i].prize_text. Neither was sent (the select above reads both, this map dropped
+           them), so the match never fired: every reload re-armed Claim and "Not here, redraw"
+           on a prize already handed over, and re-announced the winner on the wall. */
         results: last.slice().reverse().map((r) => ({
+          seq: r.seq,
           ticket: r.ticket_number,
           prize: r.prize_text || '',
+          prize_text: r.prize_text || '',
           outcome: r.outcome || 'drawn',
           drawn_at: r.drawn_at || null,
         })),

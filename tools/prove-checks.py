@@ -2002,6 +2002,26 @@ MUTATIONS = [
      "    const firstChargeTs = metaTrial > nowSecs ? metaTrial : nowSecs + 30 * 24 * 60 * 60;",
      "    const firstChargeTs = nowSecs + 30 * 24 * 60 * 60;",
      'a returning venue is promised thirty free days and charged after three'),
+
+    ('a draw record cannot be rewritten', 'venueplay-backend/worker/venueplay-game.js',
+     "    if (wrongId || wrongNo) {",
+     "    if (false) {",
+     'a stale tablet presses Claim and the jackpot is recorded against a member the draw never picked'),
+
+    ('a draw record cannot be rewritten', 'venueplay-backend/worker/venueplay-game.js',
+     "  if (lastResolved && !openRow && nothingSince) {",
+     "  if (lastResolved && (Date.now() - lastResolved) < 300000) {",
+     'the stopwatch is back: a genuine second claim is ignored and a late repeat rolls the jackpot twice'),
+
+    ('a draw record cannot be rewritten', 'venueplay-backend/worker/venueplay-game.js',
+     "    if (was === 'claimed') {",
+     "    if (was === 'never') {",
+     'a claimed raffle prize is rewritten to no-show and a second ticket is drawn for it'),
+
+    ('a draw record cannot be rewritten', 'venueplay-backend/worker/venueplay-game.js',
+     "          seq: r.seq,\n          ticket: r.ticket_number,",
+     "          ticket: r.ticket_number,",
+     'every console reload re-arms Claim and redraw on a prize already handed over'),
 ]
 
 

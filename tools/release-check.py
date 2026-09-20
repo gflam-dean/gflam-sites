@@ -2822,11 +2822,18 @@ def local_checks(which):
         # One wifi blip deafened four of the five game screens for the rest of the night: the
         # retry re-subscribed the SAME channel object, which supabase-js forbids, so it threw
         # inside its own timer and never tried again.
+        # D17: members-draw resolve took the winner from the request, its duplicate test was a
+        # stopwatch that was wrong both ways, and a raffle reload re-armed a claimed prize.
         # Two money faults from the audit of 20 Sep 2026 that nothing ran. "Keep this venue"
         # wrote the venue ACTIVE before Stripe agreed and rolled back only one of the fields,
         # and a Stripe event that threw was answered "already handled" on its retry, so a paid
         # signup got no venue and Stripe stopped asking.
         for label, fn, title, floor, why in (
+            ('D17. The record of a draw says what the draw did, not what the console says',
+             'test-draws-keep-an-honest-record.js',
+             'a draw record cannot be rewritten by a stale tablet, a repeat tap or a reload', 18,
+             'A members jackpot recorded against the wrong member, or a claimed raffle prize '
+             'rewritten to no-show with a second ticket drawn, in a regulated game of chance'),
             ('D16. A Stripe event that failed is run again, not waved away',
              'test-webhook-retry-is-not-dropped.js',
              'only a FINISHED Stripe event is answered 200; a failed one is retried', 10,
