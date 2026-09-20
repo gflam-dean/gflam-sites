@@ -1939,6 +1939,13 @@ MUTATIONS = [
      "  // forgot to clear the clock",
      'a venue un-archived from HQ keeps its old closed date, so months later one failed card '
      'puts a LIVE customer in front of the 3am purge and their players are wiped, no undo'),
+
+    ('the real templates render with every venue',
+     'venueplay-backend/worker/venueplay-api-FULL.js',
+     "    const tvFor = (v) => site + '/tv' + (v && v.slug ? ('?' + encodeURIComponent(v.slug)) : '');",
+     "    const tvFor = (v) => site + '/tv';",
+     'every welcome email hands the venue a TV link that names no venue, so the screen sits in '
+     'its setup state on day one and the customer thinks the product is broken'),
 ]
 
 

@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '20 Sep 2026, 09:38 · ba8f0cf0';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '20 Sep 2026, 10:02 · b7f2b899';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -3214,7 +3214,7 @@ async function vpaProvisionFromCheckout(env, session) {
 
     // Welcome email on a fresh provision (best-effort; skips if Resend unset).
     if (stepsDone.indexOf('venue') !== -1) {
-      await vpaFireWelcome(env, session, f, [{ name: venueName, seats: f.max_seats }], false);
+      await vpaFireWelcome(env, session, f, [{ name: venueName, seats: f.max_seats, slug: venue && venue.slug }], false);
       await vpaNotifyNewSignup(env, session, f, [{ name: venueName, seats: f.max_seats }], false);
     }
   } catch (e) {
@@ -3473,6 +3473,9 @@ async function vpaProvisionGroup(env, session, f) {
       const postcode = String(v.postcode || '').replace(/\D/g, '').slice(0, 4);
       const r = await vpaProvisionOneVenue(env, { foundingId: foundingId, groupId: null, name: name, seats: seats, postcode: postcode, entityType: v.entity_type || null, authUserId: authUserId });
       if (r.created) anyCreated = true;
+      // The welcome email needs each venue's OWN screen link, and the slug only exists
+      // once the venue does. Without this every card in the email pointed at a bare /tv.
+      if (r.venue && r.venue.slug && venues[i]) venues[i].slug = r.venue.slug;
     }
 
     step = 'audit';
@@ -3534,7 +3537,15 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
     const firstCharge = vpaFmtDate(firstChargeTs);
     const launchPhrase = '';
     const consoleUrl = site + '/app';
-    const tvUrl = site + '/tv';
+    /* THE TV LINK CARRIES THE VENUE, ALWAYS. This was `site + '/tv'` for every venue, so the
+       email said "open this link on your screen" and handed over an address that names no
+       venue at all: the screen sits in its setup state and the venue thinks the product is
+       broken. It only ever worked on a browser that still remembered a slug from before.
+       Found by audit 20 Sep 2026, the day after the copy beside it was changed to say
+       "always use this full link". A venue with no slug yet falls back to the bare link,
+       which is no worse than before. */
+    const tvFor = (v) => site + '/tv' + (v && v.slug ? ('?' + encodeURIComponent(v.slug)) : '');
+    const tvUrl = tvFor(venues && venues[0]);
     const support = 'hello@venueplay.com.au';
 
     const res = await fetch(site + '/emails/' + (isGroup ? 'welcome-group.html' : 'welcome.html'));
@@ -3550,10 +3561,14 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
           + '<p style="margin:0;font-size:17px;font-weight:700;color:#12101a">' + vpaEsc(v.name) + '</p>'
           + '<p style="margin:4px 0 12px;font-size:14px;color:#6a6a75">' + seats + ' players &middot; ' + money(seats * rate) + ' a month</p>'
           + '<a href="' + consoleUrl + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:10px 20px;border-radius:8px;margin-right:8px">Host console</a>'
-          + '<a href="' + tvUrl + '" style="display:inline-block;color:#12101a;text-decoration:none;font-size:14px;font-weight:700;border:1.5px solid #12101a;padding:8.5px 20px;border-radius:8px">TV screen</a>'
+          + '<a href="' + tvFor(v) + '" style="display:inline-block;color:#12101a;text-decoration:none;font-size:14px;font-weight:700;border:1.5px solid #12101a;padding:8.5px 20px;border-radius:8px">TV screen</a>'
           + '</td></tr></table>';
       }
-      html = html.replace('{{VENUE_BLOCKS}}', blocks)
+      /* EVERY occurrence, not the first. A string replace swaps only the FIRST match, and the
+         first {{VENUE_BLOCKS}} in the template was inside its documentation comment. So the
+         blocks were injected into a comment nobody sees and the real placeholder went out to
+         a paying group as a raw tag with no venues under it. */
+      html = html.split('{{VENUE_BLOCKS}}').join(blocks)
         .replace(/{{venue_count}}/g, String(venues.length))
         .replace(/{{total_players}}/g, String(total))
         .replace(/{{monthly_total}}/g, money(total * rate));

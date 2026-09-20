@@ -2811,6 +2811,24 @@ def local_checks(which):
         # The 90-day purge has NO UNDO. Until 20 Sep 2026 the HQ status handler never
         # stamped closed_at on archive (players kept for ever) and never cleared it on
         # reactivation (a live customer one failed card away from the 3am purge).
+        # The group welcome went out with a raw {{VENUE_BLOCKS}} tag and no venues, and every
+        # welcome handed over a bare /tv link naming no venue. Both on a customer's first day.
+        head('D11. The welcome email a customer is actually sent')
+        t = os.path.join(ROOT, 'tools', 'test-welcome-email-renders.js')
+        if not os.path.isfile(t):
+            ok('the welcome-render test exists', False,
+               why='tools/test-welcome-email-renders.js is missing')
+        else:
+            r = subprocess.run([JSC, t], capture_output=True, text=True, timeout=120)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+            n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
+            ok('the real templates render with every venue, its own TV link and no raw tags',
+               r.returncode == 0 and n >= 9 and not bad,
+               detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
+               why='run jsc tools/test-welcome-email-renders.js. This is the first thing a '
+                   'paying venue reads, and the TV link in it is how their screen finds them')
+
         head('D10. The retention clock follows the venue status')
         t = os.path.join(ROOT, 'tools', 'test-status-moves-the-clock.js')
         if not os.path.isfile(t):
