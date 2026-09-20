@@ -2053,6 +2053,21 @@ MUTATIONS = [
      "  const staff = await requireStaff(env, authUserId, session.venue_id);   // ENFORCED: staff at the claim's venue",
      "  const staff = { role: 'owner' };   // staff at the claim's venue",
      'any signed-in host can rule on any venue\'s bingo claim'),
+
+    ('a room shares one leaderboard read', 'venueplay-backend/worker/venueplay-game.js',
+     "  let board = qKey ? cached('b:' + gameId + ':' + qKey) : null;",
+     "  let board = null;",
+     'every phone reads the whole leaderboard for itself again: 160 calls a reveal'),
+
+    ('a room shares one leaderboard read', 'venueplay-backend/worker/venueplay-game.js',
+     "    if (qKey) cache.set('b:' + gameId + ':' + qKey, { data: board, until: nowMs + 8000 });",
+     "    cache.set('b:' + gameId, { data: board, until: nowMs + 8000 });",
+     'the kept leaderboard forgets which question it was for, and question 8 is answered with question 7'),
+
+    ('the phones do not all ask in the same instant', 'venueplay/app/trivia/play.html',
+     "      var _wait = gotIt ? Math.random()*2000 : 1000+Math.random()*5000;",
+     "      var _wait = 0;",
+     'every phone in the room asks in the same millisecond again'),
 ]
 
 

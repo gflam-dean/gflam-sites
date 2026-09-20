@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '20 Sep 2026, 15:08 · 09a7413b';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '20 Sep 2026, 15:20 · f0078a20';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -5734,15 +5734,42 @@ async function handlePlayerScore(request, env, json) {
   if (!gameId) return json({ error: 'Missing game' }, 400);
   assertUuid(gameId, 'game');
 
-  const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,format');
-  if (!games.length) return json({ error: 'Game not found' }, 404);
-  const game = games[0];
+  /* THE WHOLE ROOM ASKS THIS AT ONCE, AND TWO OF THE FOUR ANSWERS ARE THE SAME FOR EVERYBODY.
+     Every phone gets the reveal in the same instant and pulled its score in the same instant:
+     four database trips each, so one 40 player room was 160 calls inside a second against a
+     gateway that sustains about 50 for the WHOLE platform. It was the one hot path the one-trip
+     work missed. Found by audit, 20 Sep 2026.
+
+     The game row never changes and the leaderboard is identical for every phone in the room,
+     so those two are kept for a moment in this isolate as PLAIN DATA (never a promise: a Worker
+     may not await another request's I/O). The key carries the question the phone is asking
+     about, so a board read for question 6 can never answer question 7. The phones also stagger
+     themselves now (trivia/play.html), which is what lets the later ones land on a warm copy. */
+  const qKey = (url.searchParams.get('q') || '').slice(0, 12);
+  const cache = (globalThis.__vpScoreCache = globalThis.__vpScoreCache || new Map());
+  const nowMs = Date.now();
+  if (cache.size > 400) { for (const [k, v] of cache) { if (v.until < nowMs) cache.delete(k); } }
+  const cached = (k) => { const v = cache.get(k); return (v && v.until >= nowMs) ? v.data : null; };
+
+  let game = cached('g:' + gameId);
+  if (!game) {
+    const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,format');
+    if (!games.length) return json({ error: 'Game not found' }, 404);
+    game = games[0];
+    cache.set('g:' + gameId, { data: game, until: nowMs + 60000 });
+  }
   if (game.format !== 'trivia') return json({ error: 'Not a trivia game' }, 400);
   if (game.session_id !== player.session_id) return json({ error: 'Player is not in this game' }, 403);
 
   // Whole leaderboard for this game, so we can derive both this player's total and rank.
-  const board = await sbGet(env, 'v_vp_trivia_leaderboard',
-    'game_id=eq.' + enc(gameId) + '&select=player_id,points&order=points.desc&limit=1000');
+  // Only kept when the phone says WHICH question it is asking about; an old phone page that
+  // sends no q gets a fresh read every time, exactly as before.
+  let board = qKey ? cached('b:' + gameId + ':' + qKey) : null;
+  if (!board) {
+    board = await sbGet(env, 'v_vp_trivia_leaderboard',
+      'game_id=eq.' + enc(gameId) + '&select=player_id,points&order=points.desc&limit=1000');
+    if (qKey) cache.set('b:' + gameId + ':' + qKey, { data: board, until: nowMs + 8000 });
+  }
   // Equal points share a place, so the phone agrees with the wall. Ranking by list position
   // told two teams on 850 they were 3rd and 4th, decided by database order.
   let total = 0, rank = board.length ? board.length : 1, found = false;
@@ -5760,7 +5787,10 @@ async function handlePlayerScore(request, env, json) {
   // question just revealed. vp_trivia_answers is keyed by question_id, not qseq, and resolving a
   // qseq here would cost two extra queries per player per question. The phone knows whether IT
   // answered the current question, so it decides whether to trust this. See trivia/play.html.
-  const last = await sbGet(env, 'vp_trivia_answers',
+  // A phone that did not answer this question throws this away (see the note above), so it says
+  // so with last=0 and the read is not made at all.
+  const wantLast = url.searchParams.get('last') !== '0';
+  const last = !wantLast ? [] : await sbGet(env, 'vp_trivia_answers',
     'game_id=eq.' + enc(gameId) + '&player_id=eq.' + enc(player.id) +
     '&select=answer_index,is_correct,points_awarded,answered_at&order=answered_at.desc&limit=1');
   const lastRow = last.length

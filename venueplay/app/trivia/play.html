@@ -510,15 +510,37 @@
       if(ca){ if(ci>=0 && opts && opts[ci]!=null){ ca.innerHTML='<span class="cl">'+LETTERS[ci]+'</span>'+(correct?'':'<b>Correct answer:</b> ')+esc(opts[ci]); ca.classList.remove("hidden"); } else ca.classList.add("hidden"); }
     }
     // Optimistic paint from the broadcast, then correct it with the Worker's numbers.
-    paint(answered && P.choice===ci, 0);
+    var gotIt=(answered && P.choice===ci);
+    paint(gotIt, 0);
+    /* The points for a right answer include a speed bonus only the server knows, so until it
+       answers show that they are coming rather than a flat 0 that then jumps. A wrong answer or
+       none is 0 and stays 0. */
+    if(gotIt && m.demoPts==null && P.gameId) $("pResPts").textContent="+ \u2026";
     /* A scripted night has no Worker to ask, so it carries its own number. Only the demo
        ever sets demoPts; a real reveal has no such field and falls through unchanged. */
     if(m.demoPts!=null){ paint(answered && P.choice===ci, m.demoPts); return; }
     if(P.gameId){
-      playerGet("/player/score?game="+encodeURIComponent(P.gameId)).then(function(r){
+      /* NOT ALL AT ONCE. The reveal reaches every phone in the room in the same instant, and
+         every phone used to ask for its score in that instant: four database trips each, so one
+         40 player room was 160 calls inside a second, several times what the whole platform
+         sustains. Found by audit, 20 Sep 2026.
+         Somebody who got it right is waiting on a number, so they ask within two seconds.
+         Everybody else already knows theirs is 0 and only needs the running total and place, so
+         they ask over the next six, and tell the server not to look up an answer they would
+         throw away. The q is what lets the server reuse one leaderboard for the whole room. */
+      var _wait = gotIt ? Math.random()*2000 : 1000+Math.random()*5000;
+      var _rq = (m.qseq!=null ? m.qseq : (P.q?P.q.qseq:""));
+      var _url = "/player/score?game="+encodeURIComponent(P.gameId)+"&q="+encodeURIComponent(_rq)+(answered?"":"&last=0");
+      setTimeout(function(){
+      playerGet(_url).then(function(r){
         if(typeof r.total==="number") P.total=r.total;
         if(typeof r.rank==="number") P.rank=r.rank;
         if(typeof r.players_count==="number") P.playersCount=r.players_count;
+        /* THE ROOM MAY HAVE MOVED ON. This answer is up to six seconds late on purpose now, and
+           paint() SHOWS the result screen, so a late one would drag a player off the next
+           question and back to the last result. The totals above are always worth keeping; the
+           screen is only repainted if the result is still what they are looking at. */
+        if($("vRes").classList.contains("hidden")) return;
         /* ONLY trust the server's "last answer" if we actually answered THIS question.
            /player/score returns the player's most recent answer in the whole game, not the one
            being revealed, so a player who sat a question out was congratulated with the result of
@@ -528,7 +550,8 @@
         var last=r.last||{};
         var correct=(last.is_correct===true);
         paint(correct, last.points_awarded||0);
-      }).catch(function(){});
+      }).catch(function(){ if(gotIt && !$("vRes").classList.contains("hidden")) paint(true, 0); });
+      }, _wait);
     }
   }
 

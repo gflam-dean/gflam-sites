@@ -2828,6 +2828,33 @@ def local_checks(which):
         # wrote the venue ACTIVE before Stripe agreed and rolled back only one of the fields,
         # and a Stripe event that threw was answered "already handled" on its retry, so a paid
         # signup got no venue and Stripe stopped asking.
+        # D21: one reveal made every phone in the room pull its score in the same instant, four
+        # database trips each: 160 calls in a second from one 40 player room.
+        head('D21. One reveal is not 160 database calls')
+        t = os.path.join(ROOT, 'tools', 'test-score-pull-is-shared.js')
+        if not os.path.isfile(t):
+            ok('the score pull test exists', False, why='tools/test-score-pull-is-shared.js is missing')
+        else:
+            r = subprocess.run([JSC, t], capture_output=True, text=True, timeout=120, cwd=ROOT)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+            n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
+            ok('a room shares one leaderboard read, and nobody sees another question\'s numbers',
+               r.returncode == 0 and n >= 11 and not bad,
+               detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
+               why='run jsc tools/test-score-pull-is-shared.js. The gateway sustains about 50 calls a '
+                   'second for the whole platform; two rooms revealing together stalled every venue')
+        phone = io.open(os.path.join(ROOT, 'venueplay', 'app', 'trivia', 'play.html'), encoding='utf-8').read()
+        a = phone.find('function showResult(')
+        b = phone.find('\n  // ---- win celebration', a)
+        body = phone[a:b] if a >= 0 and b > a else ''
+        ok('the phones do not all ask in the same instant, and say which question they mean',
+           bool(body) and 'Math.random()' in body and 'setTimeout(function(){' in body
+           and '"&q="' in body and '&last=0' in body
+           and body.find('setTimeout(function(){') < body.find('playerGet(_url)'),
+           why='venueplay/app/trivia/play.html showResult() must stagger its /player/score pull and '
+               'send &q=. Without the stagger every phone misses the warm copy together')
+
         # D19 and D20: the audit made five careless edits to a Worker, one at a time, and the
         # whole local gate stayed green for every one of them.
         head('D20. A host route cannot lose its staff check, nor a draw its generator')
