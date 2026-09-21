@@ -680,8 +680,8 @@ MUTATIONS = [
       announce(false);
       G.won = true;
     }
-    clearCallGuards();''',
-     '    clearCallGuards();',
+    /* AND SOMEBODY''',
+     '    /* AND SOMEBODY',
      'the host taps End game over a confirmed winner, the wall goes back to the ads and the '
      "winner message is never sent, so the punter's phone never says YOU WON and they have "
      'nothing to show the host to claim the prize'),
@@ -2132,6 +2132,11 @@ MUTATIONS = [
      "    ? fmt(monthlyTotal * 12) + ' a year, billed yearly (' + fmt(monthlyTotal) + ' a month)'",
      "    ? fmt(monthlyTotal) + ' a month'",
      'an annual venue is told a monthly figure and charged twelve times it'),
+
+    ('bingo-after-the-win.test.js', 'venueplay/app/index.html',
+     "    if(G.claims.length && !G.won){\n      var _now=Date.now();",
+     "    if(false){\n      var _now=Date.now();",
+     'a player who shouted BINGO is dropped without a word when the host taps End game'),
 ]
 
 

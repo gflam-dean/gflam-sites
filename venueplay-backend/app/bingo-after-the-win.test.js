@@ -546,7 +546,7 @@ print("== ending the night with nothing confirmed announces nothing ==");
 room({ p1: { name:"Kate", card:CARD_A, no:332 } });
 onMsg({ t:"claim", pid:"p1", cardNo:332 });   // shouted, never confirmed
 MSGS = [];
-endGame();
+endGame(); endGame();   // twice: since 21 Sep 2026 the first tap stops to say somebody is waiting on a check
 ok("an unconfirmed shout is not turned into a winner by ending the night", !lastOf("winner"),
    MSGS.map(function(m){ return m.t; }).join(","));
 ok("the TV still goes back to the ads", !!lastOf("idle"));
@@ -562,6 +562,26 @@ endGame();
 ok("End game afterwards does not send a second winner message", sent("winner").length === 0,
    MSGS.map(function(m){ return m.t; }).join(","));
 ok("and it still ends the night", !!lastOf("idle"));
+
+/* ================= SHE SHOUTED, AND THE HOST PRESSED END ================= */
+print("");
+print("== a BINGO has been called, nobody has checked it, and the host taps End game ==");
+room({ p1: { name:"Kate", card:CARD_A, no:332 } });
+onMsg({ t:"claim", pid:"p1", cardNo:332 });
+MSGS = []; toasts = [];
+endGame();
+ok("the first tap does NOT end the night", !lastOf("idle") && G.claims.length === 1, MSGS.map(function(m){return m.t;}).join(","));
+ok("and the host is told WHO is waiting on a check", toasts.length === 1 && /Kate/.test(toasts[0]) && /not been checked/.test(toasts[0]), toasts.join(" / "));
+endGame();
+ok("a second tap means it: the night ends", !!lastOf("idle"), MSGS.map(function(m){return m.t;}).join(","));
+var dropped = sent("claim_dropped");
+ok("and her phone is TOLD the claim was never checked, by name", dropped.length === 1 && dropped[0].pid === "p1", dropped);
+ok("before the wall goes back to the ads, not after", MSGS.map(function(m){return m.t;}).indexOf("claim_dropped") < MSGS.map(function(m){return m.t;}).indexOf("idle"), MSGS.map(function(m){return m.t;}).join(","));
+
+room({ p1: { name:"Kate", card:CARD_A, no:332 } });
+MSGS = []; toasts = [];
+endGame();
+ok("with nobody waiting, End game ends on the first tap as it always has", !!lastOf("idle") && toasts.length === 0, toasts.join(" / "));
 
 print("");
 if (bad) { print(bad + " OF " + (pass + bad) + " CHECKS FAILED"); throw new Error(bad + " failed"); }

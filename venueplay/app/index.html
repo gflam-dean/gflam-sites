@@ -2104,6 +2104,31 @@
       announce(false);
       G.won = true;
     }
+    /* AND SOMEBODY WHO HAS SHOUTED BINGO AND NOT BEEN CHECKED YET.
+       The block above saves a CONFIRMED winner. A claim still sitting in the queue was simply
+       dropped: no question asked here, and her phone went from "the host is checking your
+       ticket" straight back to "waiting for the host to start the game" without a word. Watched
+       happen on a live test game, 21 Sep 2026 (audit finding 68). In a room that is the
+       disputed win at the bar, with nothing on either screen to settle it.
+
+       First tap: stop, and say who is waiting. No browser dialog: the claim queue is right
+       there, and a dialog over it is one more thing between the host and the ticket. A second
+       tap inside fifteen seconds means they mean it, so the night ends as asked, and each of
+       those phones is TOLD its claim was not checked rather than being left to guess. */
+    if(G.claims.length && !G.won){
+      var _now=Date.now();
+      if(!G._endAsked || (_now-G._endAsked)>15000){
+        G._endAsked=_now;
+        var _who=G.claims.map(function(c){ return c.name||"A player"; }).join(" and ");
+        showToast(_who+(G.claims.length>1?" have":" has")+" called BINGO and the ticket has not been checked. Check it first, or tap End game again to end without it.");
+        try{ renderClaimQueue(); }catch(e){}
+        return;
+      }
+      for(var _c=0;_c<G.claims.length;_c++){
+        try{ send({ t:"claim_dropped", pid:G.claims[_c].pid, name:G.claims[_c].name }); }catch(e){}
+      }
+    }
+    G._endAsked=0;
     clearCallGuards();
     postReport();   // send this game's figures to the backend before returning to ads
     /* Closing the session is what meters and bills the night: chargeNightOverage counts the

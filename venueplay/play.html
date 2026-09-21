@@ -690,7 +690,12 @@
        game wondering. Tell them where the tickets come from. */
     var wn=$("waitNote");
     if(wn){
-      wn.innerHTML = (P.paidMode && P.active && !P.cards.length)
+      /* THEY SHOUTED BINGO AND THE GAME ENDED BEFORE ANYBODY LOOKED. This screen used to say
+         "waiting for the host to start the game", as if nothing had happened. Say what did, and
+         keep the card number on screen, because it is all they have to show the host. */
+      wn.innerHTML = P.droppedClaim
+        ? "The game ended before the host checked your BINGO"+(P.droppedClaim>0?" on card #"+esc(String(P.droppedClaim)):"")+". <b>See the host now</b> and show them this screen."
+        : (P.paidMode && P.active && !P.cards.length)
         ? "Tickets are on sale at the bar tonight. Grab one and the staff will put it straight on your phone."
         : (P.stageWins.length
           ? "You won <b>"+esc(PATTERN_NAMES[P.stageWins[P.stageWins.length-1].pattern]||"a line")+"</b> last game (card #"+esc(String(P.stageWins[P.stageWins.length-1].cardNo||""))+"). See the host to collect. Your next ticket will appear here."
@@ -1334,7 +1339,7 @@
       if(typeof m.prize==="string") P.prize=m.prize;
       // fresh round: the host deals new tickets (t:"cards") just before this. Reset the
       // round but keep whatever tickets we're holding.
-      P.called=[]; P.active=true; P.won=false; P.ended=false; P.claimPending=false; P.wonCardNo=0; _celebrated=false; clearWin(P.room);   // new round starting
+      P.called=[]; P.active=true; P.won=false; P.ended=false; P.claimPending=false; P.wonCardNo=0; P.droppedClaim=0; _celebrated=false; clearWin(P.room);   // new round starting
       P.shared=false; P.sharedWith=[]; clearStage(P.room); P.lostBy="";
       for(var i=0;i<P.cards.length;i++) P.cards[i].daubs={};
       clearDaubs();   // a new game starts on a clean ticket
@@ -1348,6 +1353,11 @@
     }
     else if(m.t==="claim_pending"){
       // another player (or me) claimed; nothing to change locally
+    }
+    else if(m.t==="claim_dropped"){
+      // The host ended the game with our claim still unchecked. Remember it, so the waiting
+      // screen can say so. Cleared when the next game starts.
+      if(m.pid && m.pid===P.pid){ P.droppedClaim = P.wonCardNo || -1; P.claimPending=false; }
     }
     else if(m.t==="resume"){
       // No pid means the whole room plays on. A pid means only that player was waved off,
