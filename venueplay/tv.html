@@ -2162,7 +2162,18 @@
          watchdog can reload as a last resort. */
       var tries = 0, retryT = null;
       function join(){
+        /* WHICH CHANNEL IS TALKING. Replacing a channel makes supabase-js tell the OLD one it
+           is CLOSED, and that arrives here, in a callback that could not tell old from new. So
+           the healthy replacement's own teardown notice read as a fresh failure: another retry
+           two seconds later tore down the good channel, whose CLOSED scheduled the next, for
+           ever. One wifi blip and the screen re-joined four channels about twice a second for
+           the rest of the night (3,588 joins in half an hour on the audit's clock), a short gap
+           of deafness each time. SUBSCRIBED reset the backoff every lap, so it never slowed.
+           Found by audit, 20 Sep 2026. The router got this same guard the same day. A status
+           from a channel this screen has already replaced is history, not news. */
+        var mine = c;
         c.subscribe(function(st){
+          if(mine !== c) return;
           if(st === "SUBSCRIBED"){
             tries = 0;
             gameChannelsDeafSince = 0;
@@ -2176,7 +2187,13 @@
             tries++;
             retryT = setTimeout(function(){
               retryT = null;
-              try{ client.removeChannel(c); }catch(e){}
+              /* LET GO OF IT BEFORE REMOVING IT. removeChannel makes the old channel report
+                 CLOSED straight away, inside this call. If c still pointed at it, the guard in
+                 join() saw its own current channel failing and booked another retry, which is
+                 the flap. The first attempt at this fix had the guard and not this line, and
+                 the test reproduced all 3,600 re-joins regardless. */
+              var old = c; c = null;
+              try{ client.removeChannel(old); }catch(e){}
               c = client.channel("vp-" + venueCode(game + "-" + VENUE_SLUG),
                                  { config:{ broadcast:{ self:false } } });
               c.on("broadcast", { event:"msg" }, onGameMsg);

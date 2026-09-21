@@ -50,7 +50,10 @@ function makeClient() {
         unsubscribe: function () { return Promise.resolve('ok'); } };
       channels.push(ch); return ch;
     },
-    removeChannel: function (ch) { ch.removed = true; }
+    /* THE REAL LIBRARY TELLS A REMOVED CHANNEL IT IS CLOSED, there and then. This fake did not,
+       and that is how a second fault hid behind the first fix: the router took its own old
+       channel's CLOSED for news and built a duplicate live channel on every blip. */
+    removeChannel: function (ch) { if (ch.removed) return; ch.removed = true; if (ch.statusCb) ch.statusCb('CLOSED'); }
   };
 }
 function live(nameEndsWith) {

@@ -700,6 +700,32 @@
     loadAll();
   });
 
+  /* "SCREEN OK" WAS A READING FROM WHENEVER THIS PAGE WAS OPENED. Nothing on this page ever
+     refreshed, so a tab left open said "Screen ok, polled us within the last two minutes" about
+     a screen that had been silent for 29 hours. Dean, 21 Sep 2026, looking at exactly that:
+     "it says the screen is ok but is that right?" It was not. A health badge that does not
+     update is worse than no badge, because it is believed.
+
+     Every minute, and the moment the tab is looked at again: read the heartbeats, repaint the
+     badges. If the read FAILS (signed out, offline) the badges say so instead of keeping the
+     last good news on screen. */
+  function refreshScreens(){
+    if(document.hidden || !S.venues || !S._screenBadge) return;
+    var spans=document.querySelectorAll("[data-screenbadge]");
+    if(!spans.length) return;
+    function paint(fn){ for(var i=0;i<spans.length;i++){ spans[i].innerHTML=fn(spans[i].getAttribute("data-screenbadge")); } }
+    function unknown(){ paint(function(){ return '<span class="badge idle" title="This page could not check the screens just now. Reload it.">Screen ? reload this page</span>'; }); }
+    var c; try{ c=VP.getClient(); }catch(e){ unknown(); return; }
+    c.from("vp_venues").select("id,screen_seen_at,screen_version").order("id").limit(1000).then(function(r){
+      if(!r || r.error || !Array.isArray(r.data)){ unknown(); return; }
+      r.data.forEach(function(v){ S.screenSeen[v.id]=v.screen_seen_at||null; S.screenVer[v.id]=v.screen_version||null; });
+      var byId={}; S.venues.forEach(function(v){ byId[v.id]=v; });
+      paint(function(id){ return byId[id] ? S._screenBadge(byId[id]) : ""; });
+    }, unknown);
+  }
+  setInterval(refreshScreens, 60000);
+  document.addEventListener("visibilitychange", function(){ if(!document.hidden) refreshScreens(); });
+
   function loadAll(){
     var c=VP.getClient();
     /* allSettled, not all. listVenues now throws on error instead of quietly returning [], which
@@ -1754,6 +1780,7 @@
        way to find out was to press Reload TV and watch nothing happen. The screen
        polls every thirty seconds, so anything past two minutes has missed at least
        three in a row. */
+    S._screenBadge = screenBadge;   // the refresher repaints with the SAME judgement, not a copy of it
     function screenBadge(v){
       if(!v.slug) return "";                                  // no screen address yet: nothing to say
       var seen = S.screenSeen ? S.screenSeen[v.id] : undefined;
@@ -1784,7 +1811,9 @@
         : '<span class="badge indep">Independent</span>');
       var testBadge = isTest(v) ? ' <span class="badge gold">Test</span>' : '';
       var statusCell = stateBadgeFor(v);
-      statusCell += testBadge + " " + screenBadge(v);
+      /* Its own span, so the minute-by-minute refresh below can repaint JUST this badge without
+         re-rendering a table somebody may be half way through using. */
+      statusCell += testBadge + ' <span data-screenbadge="'+esc(v.id)+'">' + screenBadge(v) + '</span>';
       /* TWO BUTTONS PER ROW, NOT NINE.
          At 400 venues a row of nine controls is 3,600 buttons on one page: unusable,
          and worse than unusable for the dangerous ones, which sat one careless click

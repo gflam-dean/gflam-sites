@@ -2098,6 +2098,26 @@ MUTATIONS = [
      "    ap = argparse.ArgumentParser()\n",
      "    print('STOP: cannot reach the database'); sys.exit(1)\n    ap = argparse.ArgumentParser()\n",
      'the purge tool dies before it looks at anything, and the gate calls that a pass'),
+
+    ('after a blip the TV settles on four channels and stops', 'venueplay/tv.html',
+     "              var old = c; c = null;\n              try{ client.removeChannel(old); }catch(e){}",
+     "              try{ client.removeChannel(c); }catch(e){}",
+     'the old channel reports CLOSED while it is still the current one, and the flap is back'),
+
+    ('after a blip the TV settles on four channels and stops', 'venueplay/tv.html',
+     "          if(mine !== c) return;\n",
+     "",
+     'a replaced channel is believed again'),
+
+    ('a dropped game channel is rebuilt', 'venueplay/app/vp-screen-router.js',
+     "            if (c === mine) c = null;\n",
+     "",
+     'every blip leaves a second live channel beside the healthy one, and every message is handled twice'),
+
+    ('the screen badges are re-read every minute', 'venueplay/app/hq.html',
+     "  setInterval(refreshScreens, 60000);\n",
+     "",
+     'HQ goes back to showing a health reading from whenever the page was opened'),
 ]
 
 

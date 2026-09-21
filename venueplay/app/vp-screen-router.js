@@ -132,6 +132,13 @@
           try { console.log("[router] " + game + " channel " + status + ", retrying in " + (wait / 1000) + "s"); } catch (e) {}
           retry = setTimeout(function () {
             retry = null;
+            /* LET GO OF IT BEFORE REMOVING IT. removeChannel makes the old channel report CLOSED
+               inside this very call. While c still pointed at it, the guard above took that for
+               news about the current channel and booked a second retry, and that one built a
+               SECOND live channel beside the healthy one without removing it: every message
+               handled twice, and one more channel for every blip. Found 20 Sep 2026 by giving
+               the test's fake the real library's behaviour, which the first version lacked. */
+            if (c === mine) c = null;
             try { client.removeChannel(mine); } catch (e) {}
             try { watch(); } catch (e) {
               // Whatever goes wrong building the next one, keep trying: a throw here used to

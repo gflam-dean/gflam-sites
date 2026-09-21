@@ -2872,6 +2872,19 @@ def local_checks(which):
            why='venueplay/app/trivia/play.html showResult() must stagger its /player/score pull and '
                'send &q=. Without the stagger every phone misses the warm copy together')
 
+        # D24: HQ said "Screen ok" about a screen that had been silent for 29 hours, because the
+        # page never refreshed. Dean found it by asking "is that right?", 21 Sep 2026.
+        head('D24. HQ does not keep saying "Screen ok" about a screen that has gone quiet')
+        hq = io.open(os.path.join(ROOT, 'venueplay', 'app', 'hq.html'), encoding='utf-8').read()
+        a = hq.find('function refreshScreens(')
+        body = hq[a:hq.find('function loadAll(', a)] if a >= 0 else ''
+        ok('the screen badges are re-read every minute, and say so when they cannot be',
+           bool(body) and 'setInterval(refreshScreens, 60000)' in body and 'visibilitychange' in body
+           and 'S._screenBadge(' in body and 'unknown()' in body and 'data-screenbadge' in hq
+           and "screen_seen_at" in body,
+           why='venueplay/app/hq.html must refresh [data-screenbadge] from vp_venues.screen_seen_at on '
+               'a timer, with the SAME screenBadge() judgement, and paint "unknown" on a failed read')
+
         # D19 and D20: the audit made five careless edits to a Worker, one at a time, and the
         # whole local gate stayed green for every one of them.
         head('D20. A host route cannot lose its staff check, nor a draw its generator')
@@ -2890,6 +2903,11 @@ def local_checks(which):
                    'venue\'s raffle, or a draw on Math.random, ships with a green gate otherwise')
 
         for label, fn, title, floor, why in (
+            ('D23. One network blip does not leave the venue TV re-joining for ever',
+             'test-tv-does-not-flap.js',
+             'after a blip the TV settles on four channels and stops', 11,
+             'Two re-joins a second per screen, all night, each one a short gap of deafness, '
+             'and nothing on the wall to say so'),
             ('D22. Nobody on the bingo channel can speak for somebody else\'s phone',
              'test-phones-cannot-be-impersonated.js',
              'a forged join, claim or leave for another player is dropped by the bingo console', 34,
