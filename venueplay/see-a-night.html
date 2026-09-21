@@ -1566,6 +1566,11 @@ block (all classes prefixed .vpa-)
      Australian English, no em dashes.
      ============================================================ */
   html,body{overflow-x:hidden}
+  /* THE PAGE ITSELF IS DARK. Only .vp-wrap carried the stage black and the typeface, and the
+     "Like the look of it?" block sits outside it. So that block was white text on a bare white
+     body in the browser's default serif: the one place this page asks for anything, and nobody
+     could read it. Dean, 22 Sep 2026: "the box under doesnt look right". */
+  html,body{background:#0A0A0B;margin:0;font-family:'Manrope',system-ui,-apple-system,sans-serif;color:#fff;-webkit-font-smoothing:antialiased}
 
   @media (max-width:600px){
     /* Use more of the screen for the popups so the device mockups breathe */
@@ -1786,16 +1791,36 @@ block (all classes prefixed .vpa-)
      somebody hunt for that loses them. -->
 <div class="vp-next">
   <h2>Like the look of it?</h2>
-  <p class="vp-next-price"><b>$3 per player, per month.</b> You choose how many players. No lock-in,
+  <p class="vp-next-price" id="vpNextPrice"><b>Your first month is free.</b> Then $3 per player, per month. You choose how many players. No lock-in,
     no setup fee, and nothing extra per night.</p>
   <p class="vp-next-sub">Every format on this page is included: bingo, trivia, musical bingo,
     raffles, your members draw and your own screen ads.</p>
   <div class="vp-next-btns">
-    <a class="vp-next-go" href="/#claim">Get started</a>
-    <a class="vp-next-alt" href="/#faq">Questions first</a>
+    <a class="vp-next-go" id="vpNextGo" href="/#claim">Get started</a>
+    <a class="vp-next-alt" id="vpNextTalk" href="/#contact">Talk to us first</a>
   </div>
-  <p class="vp-next-fine">Runs on the telly you already have. Players join on their phones, no app.</p>
+  <p class="vp-next-fine">Not sure it suits your room, or stuck getting started? Send us a message and a real person will get back to you. Runs on the telly you already have.</p>
 </div>
+<script>
+(function(){
+  /* SEND THEM BACK TO WHERE THEY CAME FROM, AT THE PRICE THEY WERE SHOWN. Every state page opens
+     this demo, and this block used to quote $3 and send everybody to the homepage, so a venue
+     that arrived on the New South Wales offer at $2.50 watched the demo and was then walked to a
+     dearer price on a different page. The state comes from ?from= when a link carries it, else
+     from the page that sent them here. No state, no change: the homepage and its $3 stand. */
+  var STATES={ nsw:"New South Wales", vic:"Victoria", qld:"Queensland", sa:"South Australia", wa:"Western Australia", tas:"Tasmania", nt:"the Northern Territory", act:"ACT" };
+  var st="";
+  try{
+    var q=/[?&]from=([a-z]{2,3})\b/.exec(location.search||""); if(q && STATES[q[1]]) st=q[1];
+    if(!st && document.referrer){ var a=document.createElement("a"); a.href=document.referrer;
+      if(a.hostname===location.hostname){ var m=/^\/(nsw|vic|qld|sa|wa|tas|nt|act)(?:\.html)?\/?$/.exec(a.pathname); if(m) st=m[1]; } }
+  }catch(e){}
+  if(!st) return;
+  document.getElementById("vpNextGo").href="/"+st+"#claim";
+  document.getElementById("vpNextTalk").href="/"+st+"#contact";
+  document.getElementById("vpNextPrice").innerHTML="<b>Your first month is free.</b> Then $2.50 per player, per month on the "+STATES[st]+" offer (normally $3). You choose how many players. No lock-in, no setup fee, and nothing extra per night.";
+})();
+</script>
 
 <!-- Modal -->
 <div class="vp-backdrop" id="vpBackdrop">
