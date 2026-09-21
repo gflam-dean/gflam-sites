@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>VenuePlay · Marketing</title>
+<link rel="icon" type="image/png" href="/logos/venueplay_appicon_rebuilt.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A; --pink:#FF1F8E; --pink-deep:#C70F69; --gold:#FFC24B; --win:#35D07F;
+         --text:#E7E7EC; --muted:#A6A6B0; --faint:#8A8A94; --line:rgba(255,255,255,0.10); }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(1200px 600px at 80% -10%, rgba(255,31,142,.10), transparent 60%), var(--ink);color:var(--text);
+       font-family:'Manrope',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+  header{border-bottom:1px solid var(--line);background:rgba(10,10,11,.7);backdrop-filter:blur(8px);position:sticky;top:0;z-index:20}
+  .bar{max-width:860px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9)) drop-shadow(0 0 8px rgba(255,31,142,.4))}
+  .brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff}
+  .brand .div{width:1px;height:20px;background:var(--line)}
+  .tag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:11px;color:var(--pink)}
+  .hactions{margin-left:auto;display:flex;gap:8px}
+  .hact{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12px;padding:7px 14px;border-radius:999px;background:var(--ink-3);color:var(--text);border:1px solid var(--line);text-decoration:none;cursor:pointer}
+  .hact:hover{border-color:var(--pink);color:#fff}
+  .wrap{max-width:860px;margin:0 auto;padding:22px 18px 90px}
+  h1{font-family:'Anton',sans-serif;text-transform:uppercase;font-weight:400;font-size:32px;color:#fff;line-height:1.04;margin:18px 0 4px}
+  .lede{color:var(--muted);margin-bottom:18px}
+  .label{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--faint);margin:30px 0 10px}
+  select{background:var(--ink-3);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font:inherit;max-width:100%}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  .stat{background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:14px 14px 12px}
+  .stat .n{font-family:'Anton',sans-serif;font-size:34px;color:#fff;line-height:1}
+  .stat .k{color:var(--muted);font-size:13px;margin-top:6px}
+  .stat .d{font-size:12px;margin-top:4px;color:var(--faint)} .stat .d.up{color:var(--win)} .stat .d.down{color:var(--gold)}
+  .card{background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:10px}
+  .card h3{font-family:'Hanken Grotesk',sans-serif;font-size:16px;color:#fff;margin-bottom:4px}
+  .card p{color:var(--muted);font-size:14px}
+  .facts{list-style:none;display:grid;gap:8px} .facts li{background:var(--ink-2);border:1px solid var(--line);border-radius:12px;padding:11px 14px;font-size:15px}
+  .facts b{color:#fff}
+  .btn{display:inline-block;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:13px;padding:10px 18px;border-radius:999px;background:var(--pink);color:#fff;border:none;cursor:pointer;text-decoration:none;margin-top:10px}
+  .btn.ghost{background:var(--ink-3);border:1px solid var(--line);color:var(--text)} .btn:disabled{opacity:.5;cursor:default}
+  .row{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+  canvas{width:100%;max-width:320px;height:auto;border-radius:14px;border:1px solid var(--line);display:block}
+  .sw{display:flex;gap:10px;flex-wrap:wrap} .sw button{flex:1 1 120px;border:1px solid var(--line);border-radius:12px;padding:0;overflow:hidden;background:var(--ink-3);color:var(--text);cursor:pointer;font:inherit;text-align:left}
+  .sw .chip{height:54px} .sw span{display:block;padding:8px 10px;font-size:12px} .sw b{display:block;color:#fff;font-size:13px}
+  .logos{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+  .logos a{background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:12px;text-decoration:none;color:var(--muted);font-size:12px;text-align:center}
+  .logos a.light{background:#fff;color:#333} .logos img{max-width:100%;height:56px;object-fit:contain;display:block;margin:0 auto 8px}
+  .rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+  .rules ul{margin:6px 0 0 18px;color:var(--muted);font-size:14px}
+  .msg{min-height:20px;font-size:14px;color:var(--gold);margin-top:8px}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+<header><div class="bar">
+  <div class="brand">
+    <svg width="20" height="23" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
+    <span class="div"></span><span class="word">VenuePlay</span>
+  </div>
+  <span class="tag">Marketing</span>
+  <span class="hactions">
+    <a class="hact hidden" id="toConsole" href="index.html">Games</a>
+    <button type="button" class="hact" id="signout">Sign out</button>
+  </span>
+</div></header>
+
+<div class="wrap">
+  <h1 id="title">Your numbers</h1>
+  <p class="lede" id="lede">Adding them up&hellip;</p>
+  <p class="lede hidden" id="demoNote" style="color:var(--gold)">Sample numbers, to show what this page looks like. Yours appear once you are signed in.</p>
+  <div id="pickWrap" class="hidden"><select id="venuePick" aria-label="Which venue"></select></div>
+
+  <div id="body" class="hidden">
+    <div class="grid" id="stats"></div>
+
+    <div class="label">Worth a post</div>
+    <ul class="facts" id="facts"></ul>
+
+    <div class="label">A tile for your socials</div>
+    <div class="card"><div class="row">
+      <canvas id="tile" width="1080" height="1080" aria-label="Share tile preview"></canvas>
+      <div style="flex:1 1 220px">
+        <h3>Ready to post</h3>
+        <p>Made from your real numbers. Pick what it says, then download it and post it wherever you like.</p>
+        <p style="margin-top:10px"><select id="tilePick" aria-label="What the tile says"></select></p>
+        <button class="btn" id="tileSave">Download the tile</button>
+      </div>
+    </div></div>
+
+    <div class="label">Your tools</div>
+    <div class="card"><h3>Signs and table talkers</h3><p>Print-ready Scan to play signs for the tables, the bar and the door, with your venue's own code on them.</p><a class="btn ghost" id="signsLink" href="/signage">Open your signs</a></div>
+    <div class="card hidden" id="optinCard"><h3>Players who opted in</h3><p>The people who ticked the box to hear from this venue, as a spreadsheet. Every download is logged. If somebody asks to come off your list, take them off your copy too: the Spam Act gives you five working days.</p><button class="btn ghost" id="optinBtn">Download the list</button><div class="msg" id="optinMsg"></div></div>
+
+    <div class="label">Brand kit</div>
+    <div class="card"><h3>Logos</h3><p>Tap one to download it. Use the white version on dark backgrounds and photos, the dark one on white or light paper.</p>
+      <div class="logos" style="margin-top:12px">
+        <a href="/logos/venueplay_primary_rebuilt.png" download><img src="/logos/venueplay_primary_rebuilt.png" alt="">Primary, for dark backgrounds</a>
+        <a class="light" href="/logos/venueplay_primary_dark.png" download><img src="/logos/venueplay_primary_dark.png" alt="">Primary, for light backgrounds</a>
+        <a href="/logos/venueplay_stacked_rebuilt.png" download><img src="/logos/venueplay_stacked_rebuilt.png" alt="">Stacked</a>
+        <a href="/logos/venueplay_poweredby_rebuilt.png" download><img src="/logos/venueplay_poweredby_rebuilt.png" alt="">Powered by VenuePlay</a>
+        <a href="/logos/venueplay-mark.svg" download><img src="/logos/venueplay-mark.svg" alt="">The play mark (SVG)</a>
+        <a href="/logos/venueplay_appicon_rebuilt.png" download><img src="/logos/venueplay_appicon_rebuilt.png" alt="">App icon</a>
+      </div>
+    </div>
+    <div class="card"><h3>Colours</h3><p>Tap a colour to copy its code.</p>
+      <div class="sw" id="swatches" style="margin-top:12px"></div><div class="msg" id="swMsg"></div></div>
+    <div class="card"><h3>Type</h3><p><span style="font-family:'Anton',sans-serif;font-size:26px;color:#fff;text-transform:uppercase">Anton for headlines</span><br>
+      <span style="font-family:'Hanken Grotesk',sans-serif;font-weight:800;color:#fff">Hanken Grotesk for labels and buttons</span><br>Manrope for everything you read. All three are free from Google Fonts.</p></div>
+    <div class="rules">
+      <div class="card"><h3>Do</h3><ul><li>Say what is on and when: "Trivia, Tuesdays 7pm".</li><li>Use "powered by VenuePlay" under your own venue name.</li><li>Keep clear space around the logo, about the height of the play mark.</li><li>Tell people it is free to play and they only need their phone.</li></ul></div>
+      <div class="card"><h3>Do not</h3><ul><li>Recolour, stretch, outline or tilt the logo.</li><li>Put the pink logo on a busy photo. Use the white one.</li><li>Promise a prize you have not confirmed with the venue.</li><li>Contact anybody who has not ticked the opt-in box.</li></ul></div>
+    </div>
+  </div>
+  <div class="msg" id="msg"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="vp-session.js"></script>
+<script>
+(function(){
+  "use strict";
+  var VP_WORKER = "https://venueplay-api.dean-tindale.workers.dev";
+  var $ = function(id){ return document.getElementById(id); };
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function tokenThen(){ return VP.getClient().auth.getSession().then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||null; }); }
+  function api(path, body){
+    return tokenThen().then(function(tok){
+      var h={ "Content-Type":"application/json" }; if(tok) h["Authorization"]="Bearer "+tok;
+      try{ var imp=JSON.parse(localStorage.getItem("vpImpersonate")||"null"); if(imp&&imp.id) h["X-VP-Venue"]=imp.id; }catch(e){}
+      return fetch(VP_WORKER+path,{ method:"POST", headers:h, body:JSON.stringify(body||{}) }).then(function(r){ return r.json(); });
+    }).catch(function(){ return { error:"Something went wrong. Check your connection and try again." }; });
+  }
+  function n(x){ return Number(x||0).toLocaleString("en-AU"); }
+  function money(c){ return "$"+Math.round((c||0)/100).toLocaleString("en-AU"); }
+  function niceDay(d){ var p=String(d||"").split("-"); if(p.length!==3) return ""; var mo=["January","February","March","April","May","June","July","August","September","October","November","December"]; return Number(p[2])+" "+mo[Number(p[1])-1]+" "+p[0]; }
+
+  var DATA=null, CUR=null;
+  function pickStats(){ if(!DATA) return null; var id=$("venuePick").value; if(!id||id==="all") return DATA.stats.total;
+    return DATA.stats.venues.filter(function(v){ return v.venue_id===id; })[0] || DATA.stats.total; }
+  function venueName(){ var id=$("venuePick").value; if(!id||id==="all") return DATA.venues.length===1 ? DATA.venues[0].name : "our venues";
+    var v=DATA.venues.filter(function(x){ return x.id===id; })[0]; return v?v.name:""; }
+  function delta(now, was){ if(!was && !now) return ""; if(!was) return '<div class="d up">new this month</div>';
+    var pct=Math.round((now-was)/was*100); return '<div class="d '+(pct>=0?"up":"down")+'">'+(pct>=0?"&#9650; ":"&#9660; ")+Math.abs(pct)+'% on last month</div>'; }
+
+  function render(){
+    var s=pickStats(); if(!s) return; CUR=s;
+    var types=Object.keys(s.games_by_type||{}).sort(function(a,b){ return s.games_by_type[b]-s.games_by_type[a]; })
+      .map(function(k){ return n(s.games_by_type[k])+" "+k; }).join(", ");
+    var cells=[
+      [n(s.players), "players through the door", delta(s.players_this_month, s.players_last_month)],
+      [n(s.games), "games played"+(types?'<div class="d">'+esc(types)+'</div>':""), delta(s.games_this_month, s.games_last_month)],
+      [n(s.nights), "nights with a game on", ""],
+      [n(s.phones), "different phones", ""],
+      [n(s.regulars), "regulars (3 nights or more)", ""],
+      [n(s.questions_asked), "trivia questions asked", ""],
+      [n(s.answers_given), "answers tapped", ""],
+      [n(s.raffle_draws), "raffle tickets drawn", ""],
+      [n(s.member_draws), "members draws", ""],
+      [n(s.prizes_given), "prizes given away"+(s.prizes_value_cents?'<div class="d">worth '+money(s.prizes_value_cents)+'</div>':""), ""],
+      [n(s.opt_ins), "players opted in", (s.players? '<div class="d">'+Math.round(s.opt_ins/s.players*100)+'% of players</div>' : "")]
+    ];
+    $("stats").innerHTML=cells.map(function(c){ return '<div class="stat"><div class="n">'+c[0]+'</div><div class="k">'+c[1]+'</div>'+c[2]+'</div>'; }).join("");
+    var f=[];
+    if(s.biggest_night) f.push("Your biggest night so far: <b>"+n(s.biggest_night.players)+" players</b> on "+esc(niceDay(s.biggest_night.day))+(s.biggest_night.venue_name?" at "+esc(s.biggest_night.venue_name):"")+".");
+    if(s.busiest_day) f.push("<b>"+esc(s.busiest_day)+"</b> is your busiest day.");
+    if(s.regulars) f.push("<b>"+n(s.regulars)+" regulars</b> have played on three or more nights. They are who to tell first about a new night.");
+    if(s.players_this_month) f.push("<b>"+n(s.players_this_month)+" players</b> so far this month.");
+    if(s.prizes_given) f.push("You have given away <b>"+n(s.prizes_given)+" prizes</b>"+(s.prizes_value_cents?" worth "+money(s.prizes_value_cents):"")+".");
+    if(!f.length) f.push("Nothing to shout about yet. Run a night and the numbers land here by the next morning.");
+    $("facts").innerHTML=f.map(function(x){ return "<li>"+x+"</li>"; }).join("");
+    var slug=""; var id=$("venuePick").value; var v=DATA.venues.filter(function(x){ return x.id===id; })[0] || DATA.venues[0];
+    if(v&&v.slug) slug=v.slug; $("signsLink").href="/signage"+(slug?"?venue="+encodeURIComponent(slug):"");
+    fillTilePick(); drawTile();
+  }
+
+  // ---- the share tile: drawn here, from their own numbers, and downloaded as a PNG ----
+  function tileLines(){
+    var s=CUR||{}, out=[];
+    if(s.players_this_month) out.push({ big:n(s.players_this_month), small:"players this month" });
+    if(s.players) out.push({ big:n(s.players), small:"players so far" });
+    if(s.biggest_night) out.push({ big:n(s.biggest_night.players), small:"on our biggest night" });
+    if(s.questions_asked) out.push({ big:n(s.questions_asked), small:"trivia questions asked" });
+    if(s.prizes_given) out.push({ big:n(s.prizes_given), small:"prizes given away" });
+    if(!out.length) out.push({ big:"Game on", small:"free to play, bring your phone" });
+    return out;
+  }
+  function fillTilePick(){ var sel=$("tilePick"), keep=sel.selectedIndex; sel.innerHTML=tileLines().map(function(l,i){ return '<option value="'+i+'">'+esc(l.big+" "+l.small)+'</option>'; }).join(""); sel.selectedIndex=Math.max(0, Math.min(keep, sel.options.length-1)); }
+  function drawTile(){
+    var c=$("tile"), x=c.getContext("2d"), l=tileLines()[$("tilePick").selectedIndex||0]||tileLines()[0];
+    x.fillStyle="#0A0A0B"; x.fillRect(0,0,1080,1080);
+    var g=x.createRadialGradient(860,80,0,860,80,900); g.addColorStop(0,"rgba(255,31,142,.35)"); g.addColorStop(1,"rgba(255,31,142,0)"); x.fillStyle=g; x.fillRect(0,0,1080,1080);
+    x.strokeStyle="#FF1F8E"; x.lineWidth=14; x.lineJoin="round"; x.shadowColor="rgba(255,31,142,.8)"; x.shadowBlur=30;
+    x.beginPath(); x.moveTo(90,96); x.lineTo(186,150); x.lineTo(90,204); x.closePath(); x.stroke(); x.shadowBlur=0;
+    x.fillStyle="#fff"; x.textAlign="left"; x.textBaseline="alphabetic";
+    var size=l.big.length>7?190:300; x.font="400 "+size+"px Anton, Impact, sans-serif"; x.fillText(l.big.toUpperCase(), 84, 600);
+    x.fillStyle="#FF1F8E"; x.font="800 64px 'Hanken Grotesk', Arial, sans-serif"; x.fillText(l.small.toUpperCase(), 90, 700);
+    x.fillStyle="#E7E7EC"; x.font="600 50px Manrope, Arial, sans-serif"; var nm=venueName(); x.fillText(nm.length>34?nm.slice(0,33)+"…":nm, 90, 800);
+    x.fillStyle="#A6A6B0"; x.font="600 36px Manrope, Arial, sans-serif"; x.fillText("Free to play. Bring your phone.  ·  powered by VenuePlay", 90, 990);
+  }
+  $("tilePick").addEventListener("change", drawTile);
+  $("tileSave").addEventListener("click", function(){
+    try{ $("tile").toBlob(function(b){ var a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download="venueplay-tile.png"; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 800); }, "image/png"); }catch(e){}
+  });
+
+  // ---- brand colours ----
+  var COLOURS=[["Play pink","#FF1F8E"],["Deep pink","#C70F69"],["Gold","#FFC24B"],["Win green","#35D07F"],["Ink","#0A0A0B"],["Paper","#E7E7EC"]];
+  $("swatches").innerHTML=COLOURS.map(function(c){ return '<button type="button" data-hex="'+c[1]+'"><div class="chip" style="background:'+c[1]+'"></div><span><b>'+esc(c[0])+'</b>'+c[1]+'</span></button>'; }).join("");
+  $("swatches").addEventListener("click", function(e){ var b=e.target.closest?e.target.closest("[data-hex]"):null; if(!b) return; var hex=b.getAttribute("data-hex");
+    function said(){ $("swMsg").textContent="Copied "+hex; setTimeout(function(){ $("swMsg").textContent=""; }, 2500); }
+    try{ navigator.clipboard.writeText(hex).then(said, function(){ $("swMsg").textContent=hex; }); }catch(err){ $("swMsg").textContent=hex; } });
+
+  // ---- opt-ins: only drawn when the Worker says this login may have them ----
+  $("optinBtn").addEventListener("click", function(){
+    var b=$("optinBtn"); b.disabled=true; $("optinMsg").textContent="Getting it…";
+    api("/account/optin-export", {}).then(function(r){ b.disabled=false;
+      if(r.error){ $("optinMsg").textContent=r.error; return; }
+      var blob=new Blob([r.csv||""],{ type:"text/csv" }), a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="venueplay-opt-ins.csv"; document.body.appendChild(a); a.click();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 800);
+      $("optinMsg").textContent=(r.count||0)+" people. Treat this file like your till: it is your customers' details."; });
+  });
+
+  $("signout").addEventListener("click", function(){ VP.signOut(); });
+
+  /* ?demo=1: sample numbers and no sign-in, for showing a venue what their marketing person will
+     get. It asks the Worker nothing and can download nobody's list. */
+  var DEMO=/[?&]demo=1\b/.test(location.search||"");
+  var SAMPLE={ ok:true, role:"marketing", may_see_optins:false, venues:[{ id:"demo", name:"The Royal Hotel", slug:"" }],
+    stats:{ venues:[], total:{ games:64, games_by_type:{ trivia:26, bingo:22, "musical bingo":9, raffle:7 }, nights:41, players:2318, phones:1204, regulars:186,
+      questions_asked:1040, answers_given:38214, raffle_draws:96, member_draws:12, prizes_given:143, prizes_value_cents:612000, opt_ins:412,
+      biggest_night:{ day:"2026-08-28", players:118 }, busiest_day:"Thursday", players_this_month:412, players_last_month:351, games_this_month:11, games_last_month:9 } } };
+  (DEMO ? Promise.resolve(SAMPLE) : VP.requireAuth({}).then(function(ctx){
+    // Somebody who also runs games gets a way back to them. A marketing-only login does not need one.
+    if(VP.homeHref(ctx)!=="marketing.html") $("toConsole").classList.remove("hidden");
+    return api("/marketing/summary", {});
+  })).then(function(d){
+    if(!d || d.error){ $("lede").textContent=(d&&d.error)||"Could not load your numbers."; return; }
+    DATA=d; if(DEMO) $("demoNote").classList.remove("hidden");
+    var sel=$("venuePick"); sel.innerHTML=(d.venues.length>1?'<option value="all">All '+d.venues.length+' venues</option>':"")+d.venues.map(function(v){ return '<option value="'+esc(v.id)+'">'+esc(v.name)+'</option>'; }).join("");
+    if(d.venues.length>1) $("pickWrap").classList.remove("hidden");
+    sel.addEventListener("change", render);
+    $("title").textContent=d.venues.length===1 ? d.venues[0].name : "Your numbers";
+    $("lede").textContent="Everything VenuePlay has counted for you, plus the kit to shout about it.";
+    if(d.may_see_optins) $("optinCard").classList.remove("hidden");
+    $("body").classList.remove("hidden");
+    if(document.fonts && document.fonts.ready){ document.fonts.ready.then(render); }
+    render();
+  });
+})();
+</script>
+</body>
+</html>

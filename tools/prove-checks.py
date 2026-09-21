@@ -2197,6 +2197,42 @@ MUTATIONS = [
      ' "venueplay-backend/worker/money.test.js": {\n  "checks": 44,',
      ' "venueplay-backend/worker/money.test.js": {\n  "checks": 45,',
      'a check is deleted from the only suite on the rates and nothing notices'),
+
+    # THE MARKETING LOGIN, 22 Sep 2026.
+    ('a marketing login is refused by every owner route', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "           perms: Object.assign({}, VPM_NO_RIGHTS, { players_optin: optin }),",
+     "           perms: null,",
+     'a marketing access object with no permissions reads as the OWNER, and the opt-in list opens'),
+
+    ('a marketing login is refused by every owner route', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  const optin = scoped.length > 0 && scoped.every((r) =>",
+     "  const optin = scoped.length > 0 && scoped.some((r) =>",
+     'ticked at one venue unlocks the player details of every venue'),
+
+    ('a marketing login is refused by every owner route', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  const perms = { players_optin: b.optin === true };       // the owner's tick. Off unless ticked.",
+     "  const perms = { players_optin: b.optin !== false };",
+     'a marketing login is given player details by default, without the owner ticking anything'),
+
+    ('a marketing login is refused by every owner route', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "')&role=eq.marketing');\n  await vpaInsert(env, 'vp_admin_audit', { ...vpbActorFields(o), action: 'marketing_login_removed'",
+     "')&role=neq.owner');\n  await vpaInsert(env, 'vp_admin_audit', { ...vpbActorFields(o), action: 'marketing_login_removed'",
+     'the remove-a-marketing-login route deletes hosts and managers too'),
+
+    ('a marketing login is refused by every owner route', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "&role=in.(owner,manager,host)&select=auth_user_id,role');\n    for (const s of (staff || [])) {",
+     "&select=auth_user_id,role');\n    for (const s of (staff || [])) {",
+     'billing and cancellation emails start going to the outside marketing person'),
+
+    ('the staff check names its roles, in the Worker and in the database alike', 'venueplay-backend/worker/venueplay-game.js',
+     "'&venue_id=eq.' + enc(venueId) + '&role=in.(owner,manager,host)&select=id,role,venue_id,permissions');",
+     "'&venue_id=eq.' + enc(venueId) + '&select=id,role,venue_id,permissions');",
+     'any staff row is staff again, and a marketing login can run games'),
+
+    ('the staff check names its roles, in the Worker and in the database alike', 'venueplay-backend/supabase/venueplay-86-marketing-role.sql',
+     "     and s.role in ('owner', 'manager', 'host')\n   limit 1;",
+     "   limit 1;",
+     'the database twin of the staff check accepts a marketing login'),
 ]
 
 

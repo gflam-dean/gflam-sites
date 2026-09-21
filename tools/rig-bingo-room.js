@@ -117,7 +117,8 @@ function bootHost(opts){
     venueCode:function(){ return CODE; }, venueJoinCode:function(){ return Promise.resolve(null); }, getClient:function(){ return { auth:{ getSession:function(){ return Promise.resolve({data:{session:null}}); } } }; },
     gameApiPost:function(path,body){ (sb.__posts=sb.__posts||[]).push({path:path,body:body}); return Promise.resolve(opts.post?opts.post(path,body):{error:"offline"}); },
     gameApiCall:function(path,body){ (sb.__calls=sb.__calls||[]).push({path:path,body:body}); return Promise.resolve(opts.call?opts.call(path,body):{status:503,json:{}}); },
-    setGameActive:function(){}, enforceShift:function(){}, noteOpenSession:function(){}, closeOpenSessions:function(){}, listVenues:function(){ return Promise.resolve([]); }, signOut:function(){} };
+    setGameActive:function(){}, enforceShift:function(){}, noteOpenSession:function(){}, closeOpenSessions:function(){}, listVenues:function(){ return Promise.resolve([]); }, signOut:function(){},
+    homeHref:function(c){ var st=(c&&c.staff)||[]; return (st.length && st.every(function(x){ return x.role==="marketing"; })) ? "marketing.html" : "index.html"; } };
   sb.VP=VP; dom.window.VP=VP;
   var HOLD={ busy:function(){ return false; }, hold:function(){}, release:function(){} };
   sb.VP_HOLD=HOLD; dom.window.VP_HOLD=HOLD;

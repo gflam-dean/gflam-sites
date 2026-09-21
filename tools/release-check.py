@@ -2962,6 +2962,16 @@ def local_checks(which):
                    'venue\'s raffle, or a draw on Math.random, ships with a green gate otherwise')
 
         for label, fn, title, floor, why in (
+            ('D32. A marketing login cannot run a game',
+             'test-marketing-cannot-run-games.js',
+             'the staff check names its roles, in the Worker and in the database alike', 10,
+             'A marketing login has a staff row at the venue. If any row counts as staff, somebody '
+             'from an outside agency can call a bingo ball or draw a raffle'),
+            ('D31. A marketing login sees numbers, and player details only if the owner ticked the box',
+             'test-marketing-login.js',
+             'a marketing login is refused by every owner route and sees no player it was not given', 38,
+             'In this Worker an access object with no permissions reads as the OWNER. One careless '
+             'guard and a marketing login has billing, hosts and every player\'s details'),
             ('D29. A player who asks to be removed is removed, and a venue holding a copy is told',
              'test-remove-a-player.js',
              'removal blanks exactly that person, and emails only a venue that downloaded them', 26,

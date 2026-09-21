@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '21 Sep 2026, 22:27 · e630b59c';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '22 Sep 2026, 07:42 · 6dcca81e';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -130,6 +130,10 @@ export default {
       if (request.method === 'POST' && path === '/account/screen-get'  && typeof vpbScreenGet === 'function')    return await vpbScreenGet(request, env, json);
       if (request.method === 'POST' && path === '/account/screen-save' && typeof vpbScreenSave === 'function')   return await vpbScreenSave(request, env, json);
       if (request.method === 'POST' && path === '/account/screen-upload' && typeof vpbScreenUpload === 'function') return await vpbScreenUpload(request, env, json);
+      if (request.method === 'POST' && path === '/account/marketing-add'    && typeof vpbMarketingAdd === 'function')    return await vpbMarketingAdd(request, env, json);
+      if (request.method === 'POST' && path === '/account/marketing-list'   && typeof vpbMarketingList === 'function')   return await vpbMarketingList(request, env, json);
+      if (request.method === 'POST' && path === '/account/marketing-remove' && typeof vpbMarketingRemove === 'function') return await vpbMarketingRemove(request, env, json);
+      if (request.method === 'POST' && path === '/marketing/summary'        && typeof vpmSummary === 'function')         return await vpmSummary(request, env, json);
       if (request.method === 'POST' && path === '/account/hosts'       && typeof vpbListHosts === 'function')    return await vpbListHosts(request, env, json);
       if (request.method === 'POST' && path === '/account/staff-set-venues' && typeof vpbSetStaffVenues === 'function') return await vpbSetStaffVenues(request, env, json);
       if (request.method === 'POST' && path === '/account/host-add'    && typeof vpbAddHost === 'function')      return await vpbAddHost(request, env, json);
@@ -3116,11 +3120,20 @@ async function vpaHandlePlayerRemove(request, env, json) {
     let emailed = null;
     if (v.downloaded_at && v.founding_id) {
       const acct = await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(v.founding_id) + '&select=contact_email,contact_name&limit=1');
-      const to = acct && acct[0] && acct[0].contact_email;
+      /* Dean: "it emails a marketing inbox or something of theirs". If the venue has a marketing
+         login, that is who handles its lists, so that is who is told. With none, the account
+         address. Both are tried in that order and one email goes to each marketing address. */
+      let mk = [];
+      try {
+        mk = (await vpaSelect(env, 'vp_venue_staff', 'venue_id=eq.' + encodeURIComponent(v.venue_id) + '&role=eq.marketing&select=notify_email') || [])
+          .map((r) => String(r.notify_email || '').trim().toLowerCase()).filter((e, i, a) => e && e.indexOf('@') > 0 && a.indexOf(e) === i);
+      } catch (e) { mk = []; }
+      const recipients = mk.length ? mk : [acct && acct[0] && acct[0].contact_email].filter(Boolean);
+      const to = recipients[0];
       if (to) {
         const who = pq.kind === 'email' ? pq.value : ('the mobile number ending ' + pq.value.slice(-3));
         const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;color:#12101a;max-width:560px">'
-          + '<p>Hi' + (acct[0].contact_name ? ' ' + vpaEsc(String(acct[0].contact_name).split(' ')[0]) : '') + ',</p>'
+          + '<p>Hi' + ((!mk.length && acct[0] && acct[0].contact_name) ? ' ' + vpaEsc(String(acct[0].contact_name).split(' ')[0]) : '') + ',</p>'
           + '<p>Somebody who played at <strong>' + vpaEsc(v.venue_name) + '</strong> has asked to be removed from your players list: <strong>' + vpaEsc(who) + '</strong>.</p>'
           + '<p>We have removed them from VenuePlay, so they will not be in any list you download from now on.</p>'
           + '<p>You downloaded your list on ' + vpaFmtDate(Math.floor(Date.parse(v.downloaded_at) / 1000)) + ', after they joined, so they are probably in that copy. '
@@ -3128,8 +3141,11 @@ async function vpaHandlePlayerRemove(request, env, json) {
           + 'The Spam Act gives a business five working days to act on a request like this.</p>'
           + '<p>Nothing else is needed, and you do not need to reply. If you have a question, just answer this email.</p>'
           + '<p>VenuePlay<br>hello@venueplay.com.au</p></div>';
-        try { emailed = (await vpaSendEmail(env, to, 'Please remove one person from your ' + v.venue_name + ' players list', html)) ? 'sent' : 'failed'; }
-        catch (e) { emailed = 'failed'; }
+        emailed = 'sent';
+        for (const addr of recipients) {
+          try { if (!(await vpaSendEmail(env, addr, 'Please remove one person from your ' + v.venue_name + ' players list', html))) emailed = 'failed'; }
+          catch (e) { emailed = 'failed'; }
+        }
       } else { emailed = 'no address'; }
     }
     await vpaAudit(env, actor, 'player_removed', 'venue:' + v.venue_id, {
@@ -5393,7 +5409,7 @@ function vpbOwnerOnly(o, json) { return o.perms ? json({ error: 'Only the accoun
 function vpbActorFields(o) {
   return o.adminActor
     ? { actor_admin: o.adminActor.id, actor_label: o.adminActor.label }
-    : { actor_admin: null, actor_label: 'owner' };
+    : { actor_admin: null, actor_label: (o.role === 'marketing' ? 'marketing' : 'owner') };
 }
 
 /* --- Stripe REST helpers. --- */
@@ -6374,7 +6390,7 @@ async function vpaAccountContacts(env, acct, venueId) {
   add(acct && acct.contact_email);
   try {
     const staff = await vpaSelect(env, 'vp_venue_staff',
-      'venue_id=eq.' + encodeURIComponent(venueId) + '&select=auth_user_id,role');
+      'venue_id=eq.' + encodeURIComponent(venueId) + '&role=in.(owner,manager,host)&select=auth_user_id,role');
     for (const s of (staff || [])) {
       const u = await vpaAuthGetUser(env, s.auth_user_id);
       if (u && u.email) add(u.email);
@@ -7686,6 +7702,292 @@ async function vpaStaffWelcome(env, o, venueIds, mobile, isManager) {
   });
 }
 
+/* ==========================================================================================
+   THE MARKETING LOGIN.   Dean, 22 Sep 2026.
+
+   An optional extra login on an account, for whoever does the venue's marketing: often somebody
+   outside the venue's staff. They see the numbers, the brand kit, the signs and the advertising
+   screens. They see the opt-in list ONLY if the owner ticked the box when adding them. They are
+   where a "please remove this person" request is sent. They can never run a game, see billing,
+   or change what player data is collected.
+
+   It is its own ROLE in vp_venue_staff ('marketing', migration 86), not a manager with things
+   switched off, because this database's row level security grants by role and cannot see a flag
+   inside a permissions object. Every guard that existed before this was written asks for
+   role in (owner, manager) or (owner, manager, host), so a marketing login is refused by all of
+   them without anybody remembering to add it.
+
+   THE TRAP IN THIS FILE: vpbIsOwner(o) is `!o.perms`. An `o` with no perms object IS the owner,
+   everywhere. So a marketing `o` ALWAYS carries a perms object, with every owner-side right
+   spelt out as false, and it is only ever handed to the routes written for it.
+   ========================================================================================== */
+const VPM_NO_RIGHTS = { marketing: true, billing: false, add_hosts: false, draws_raffles: false,
+                        advertising: true, players_optin: false };
+
+async function vpmRequire(request, env) {
+  const token = (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '').trim();
+  if (!token) return { error: 'Not signed in.', status: 401 };
+  const payload = await vpaVerifyJWT(token, env.SUPABASE_JWT_SECRET, env);
+  if (!payload || !payload.sub) return { error: 'Invalid or expired session. Please sign in again.', status: 401 };
+  const authUserId = payload.sub;
+  let rows;
+  try {
+    rows = await vpaSelectAll(env, 'vp_venue_staff',
+      'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&role=eq.marketing&select=venue_id,permissions,notify_email&order=venue_id.asc');
+  } catch (e) { return { error: 'We could not check your access just now. Please try again in a moment.', status: 503 }; }
+  if (!rows.length) return { error: 'This login is not a marketing login.', status: 403 };
+  const venues = await vpaSelect(env, 'vp_venues',
+    'id=in.(' + rows.map((r) => encodeURIComponent(r.venue_id)).join(',') + ')&order=founding_id.asc,created_at.asc' +
+    '&select=id,name,founding_id,slug,status,timezone,postcode,created_at');
+  if (!venues || !venues.length) return { error: 'No venues found.', status: 403 };
+  const foundingId = venues[0].founding_id;
+  const mine = venues.filter((v) => v.founding_id === foundingId);
+  const accounts = await vpaSelect(env, 'venueplay_founding',
+    'id=eq.' + encodeURIComponent(foundingId) + '&select=id,contact_email,status');
+  if (!accounts || !accounts[0]) return { error: 'No account found for this login.', status: 404 };
+  /* The opt-in tick, MOST RESTRICTIVE WINS, the same rule vpbRequireOwner uses: they may see
+     player details only if EVERY one of their rows on this account says so. */
+  const mineIds = {}; mine.forEach((v) => { mineIds[v.id] = true; });
+  const scoped = rows.filter((r) => mineIds[r.venue_id]);
+  const optin = scoped.length > 0 && scoped.every((r) => r.permissions && r.permissions.players_optin === true);
+  return { authUserId: authUserId, account: accounts[0], venues: mine, adminActor: null,
+           perms: Object.assign({}, VPM_NO_RIGHTS, { players_optin: optin }),
+           role: 'marketing', actingAsAdmin: false };
+}
+
+/* The Marketing page is for the marketing login, and for the owner and managers too: it is
+   their venue's numbers. Owner first, because a login can be both and the owner's view is wider. */
+async function vpmRequireAny(request, env) {
+  const o = await vpbRequireOwner(request, env);
+  if (!o.error) return o;
+  if (o.status !== 403) return o;
+  return vpmRequire(request, env);
+}
+
+async function vpbMarketingAdd(request, env, json) {
+  const o = await vpbRequireOwner(request, env);
+  if (o.error) return json({ error: o.error }, o.status);
+  { const g = vpbOwnerOnly(o, json); if (g) return g; }
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
+  const label = String(b.label || '').trim().slice(0, 80);
+  if (!label) return json({ error: 'Put in their name, so you can tell who this login is later.' }, 400);
+  const mobile = vpaNormaliseMobileAU(b.mobile);
+  if (!vpaIsAuMobileE164(mobile)) return json({ error: 'Enter a valid Australian mobile (04...). They sign in by text code.' }, 400);
+  const email = String(b.email || '').trim().toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || email.length > 200) {
+    return json({ error: 'Put in their email address. It is where we send a request when a player asks to be taken off your list.' }, 400);
+  }
+  const accountVenueIds = new Set(o.venues.map((v) => v.id));
+  const wanted = b.all_venues ? o.venues.map((v) => v.id)
+               : (Array.isArray(b.venue_ids) ? b.venue_ids.filter((id) => accountVenueIds.has(id)) : []);
+  if (!wanted.length) return json({ error: 'Pick at least one venue for this login.' }, 400);
+
+  let authUserId = null;
+  try {
+    const u = await vpaAuthCreateUser(env, { phone: mobile, phone_confirm: true, user_metadata: { label: label } });
+    authUserId = u && u.id;
+  } catch (e) {
+    if (e && e.alreadyExists) { const found = await vpaFindAuthUser(env, { phone: mobile }); authUserId = found && found.id; }
+    else return json({ error: 'Could not set up that login. Check the mobile and try again.' }, 502);
+  }
+  if (!authUserId) return json({ error: 'Could not set up that login.' }, 502);
+
+  /* ONE KIND OF LOGIN PER PERSON PER VENUE. A mobile that already signs in here as a host or a
+     manager keeps doing exactly that. Making the same person marketing as well would leave two
+     rows for one login at one venue, and every guard in both Workers would have to decide
+     which one it meant. */
+  const existing = await vpaSelect(env, 'vp_venue_staff',
+    'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&venue_id=in.(' + wanted.map(encodeURIComponent).join(',') + ')&select=venue_id,role');
+  const clash = (existing || []).filter((r) => r.role !== 'marketing');
+  if (clash.length) {
+    return json({ error: 'That mobile already signs in at your venue as a ' + clash[0].role + '. Use a different mobile for the marketing login, or remove the other login first.' }, 409);
+  }
+  const have = new Set((existing || []).map((r) => r.venue_id));
+  const perms = { players_optin: b.optin === true };       // the owner's tick. Off unless ticked.
+  try {
+    for (const vid of wanted) {
+      if (have.has(vid)) {
+        await vpaPatch(env, 'vp_venue_staff', 'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&venue_id=eq.' + encodeURIComponent(vid) + '&role=eq.marketing',
+          { display_name: label, notify_email: email, permissions: perms });
+      } else {
+        await vpaInsert(env, 'vp_venue_staff', { venue_id: vid, auth_user_id: authUserId, role: 'marketing',
+          display_name: label, notify_email: email, permissions: perms }, false);
+      }
+    }
+  } catch (e) {
+    return json({ error: 'Marketing logins are not switched on for this database yet (migration 86). Email hello@venueplay.com.au and we will sort it.' }, 409);
+  }
+  await vpaInsert(env, 'vp_admin_audit', { ...vpbActorFields(o), action: 'marketing_login_added', target: 'account:' + o.account.id,
+    detail: { label: label, venues: wanted.length, may_see_optins: perms.players_optin } }, false).catch(() => {});
+  return json({ ok: true, auth_user_id: authUserId, venue_ids: wanted, may_see_optins: perms.players_optin });
+}
+
+async function vpbMarketingList(request, env, json) {
+  const o = await vpbRequireOwner(request, env);
+  if (o.error) return json({ error: o.error }, o.status);
+  { const g = vpbOwnerOnly(o, json); if (g) return g; }
+  const rows = await vpaSelectAll(env, 'vp_venue_staff',
+    'venue_id=in.(' + o.venues.map((v) => encodeURIComponent(v.id)).join(',') + ')&role=eq.marketing' +
+    '&select=auth_user_id,venue_id,display_name,notify_email,permissions&order=venue_id.asc');
+  const by = {};
+  rows.forEach((r) => {
+    const u = by[r.auth_user_id] || (by[r.auth_user_id] = { auth_user_id: r.auth_user_id, label: r.display_name || '', email: r.notify_email || '', venue_ids: [], may_see_optins: true });
+    u.venue_ids.push(r.venue_id);
+    if (!(r.permissions && r.permissions.players_optin === true)) u.may_see_optins = false;
+  });
+  return json({ ok: true, users: Object.keys(by).map((k) => by[k]) });
+}
+
+async function vpbMarketingRemove(request, env, json) {
+  const o = await vpbRequireOwner(request, env);
+  if (o.error) return json({ error: o.error }, o.status);
+  { const g = vpbOwnerOnly(o, json); if (g) return g; }
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const target = String(_b.body.auth_user_id || '').trim();
+  if (!/^[0-9a-fA-F-]{36}$/.test(target)) return json({ error: 'Missing login.' }, 400);
+  // role=eq.marketing on the delete itself: this route can never remove a host, a manager or an owner.
+  await vpaDelete(env, 'vp_venue_staff', 'auth_user_id=eq.' + encodeURIComponent(target) +
+    '&venue_id=in.(' + o.venues.map((v) => encodeURIComponent(v.id)).join(',') + ')&role=eq.marketing');
+  await vpaInsert(env, 'vp_admin_audit', { ...vpbActorFields(o), action: 'marketing_login_removed', target: 'account:' + o.account.id, detail: {} }, false).catch(() => {});
+  return json({ ok: true });
+}
+
+/* THE NUMBERS. Counts only: nothing here can name a player, so it is safe for a marketing login
+   whether or not the owner ticked the opt-in box. Every read is paged, in a stable order, and
+   scoped to the caller's own venues by id. */
+function vpmLocalDay(iso, tz) {
+  try { return new Intl.DateTimeFormat('en-CA', { timeZone: tz || 'Australia/Brisbane', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(iso)); }
+  catch (e) { return String(iso || '').slice(0, 10); }
+}
+function vpmWeekday(day) { return ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][new Date(day + 'T12:00:00Z').getUTCDay()]; }
+/* Sixty ids to a request, so a long list never makes a URL the gateway refuses. The READ is
+   passed in rather than built here, on purpose: the gate checks that every paged read names its
+   table and carries an order, and it can only do that where the call is written out. A helper
+   that took the table as a variable hid nine reads from it on the day this was written. */
+async function vpmInChunks(ids, read) {
+  const out = [];
+  for (let i = 0; i < ids.length; i += 60) {
+    const part = await read(ids.slice(i, i + 60).map(encodeURIComponent).join(','));
+    for (const r of part) out.push(r);
+  }
+  return out;
+}
+
+async function vpmStats(env, venues) {
+  const blank = () => ({ games: 0, games_by_type: {}, nights: 0, players: 0, phones: 0, regulars: 0, questions_asked: 0,
+                         answers_given: 0, raffle_draws: 0, member_draws: 0, prizes_given: 0, prizes_value_cents: 0,
+                         opt_ins: 0, biggest_night: null, busiest_day: null, players_this_month: 0, players_last_month: 0,
+                         games_this_month: 0, games_last_month: 0 });
+  const per = {}; venues.forEach((v) => { per[v.id] = Object.assign({ venue_id: v.id, venue_name: v.name }, blank()); });
+  const tzOf = {}; venues.forEach((v) => { tzOf[v.id] = v.timezone || 'Australia/Brisbane'; });
+  const vids = venues.map((v) => v.id);
+  if (!vids.length) return { venues: [], total: blank() };
+  const nowDay = vpmLocalDay(new Date().toISOString(), 'Australia/Brisbane');
+  const thisMonth = nowDay.slice(0, 7);
+  const lm = new Date(Date.UTC(+nowDay.slice(0, 4), +nowDay.slice(5, 7) - 2, 1));
+  const lastMonth = lm.getUTCFullYear() + '-' + ('0' + (lm.getUTCMonth() + 1)).slice(-2);
+
+  const sessions = await vpmInChunks(vids, (inl) => vpaSelectAll(env, 'vp_sessions',
+    'venue_id=in.(' + inl + ')&select=id,venue_id,opened_at,created_at&order=id.asc'));
+  const venueOf = {}, dayOf = {};
+  sessions.forEach((x) => { venueOf[x.id] = x.venue_id; dayOf[x.id] = vpmLocalDay(x.opened_at || x.created_at, tzOf[x.venue_id]); });
+  const sids = sessions.map((x) => x.id);
+
+  const games = sids.length ? await vpmInChunks(sids, (inl) => vpaSelectAll(env, 'vp_games',
+    'session_id=in.(' + inl + ')&select=id,session_id,format&order=id.asc')) : [];
+  const venueOfGame = {};
+  games.forEach((g) => {
+    const vid = venueOf[g.session_id]; if (!vid) return; venueOfGame[g.id] = vid;
+    const p = per[vid], f = String(g.format || 'game').replace(/^bingo90$/, 'bingo').replace(/^musical_bingo$/, 'musical bingo');
+    p.games++; p.games_by_type[f] = (p.games_by_type[f] || 0) + 1;
+    const m = (dayOf[g.session_id] || '').slice(0, 7);
+    if (m === thisMonth) p.games_this_month++; else if (m === lastMonth) p.games_last_month++;
+  });
+
+  const players = sids.length ? await vpmInChunks(sids, (inl) => vpaSelectAll(env, 'vp_players',
+    'session_id=in.(' + inl + ')&select=id,session_id,device_id,is_test&order=id.asc')) : [];
+  const nightCount = {}, phoneNights = {};
+  players.forEach((pl) => {
+    if (pl.is_test) return;
+    const vid = venueOf[pl.session_id]; if (!vid) return;
+    const day = dayOf[pl.session_id], p = per[vid];
+    p.players++;
+    const m = (day || '').slice(0, 7);
+    if (m === thisMonth) p.players_this_month++; else if (m === lastMonth) p.players_last_month++;
+    (nightCount[vid] || (nightCount[vid] = {}))[day] = ((nightCount[vid] || {})[day] || 0) + 1;
+    if (pl.device_id) { const k = vid + '|' + pl.device_id; (phoneNights[k] || (phoneNights[k] = {}))[day] = true; }
+  });
+  Object.keys(phoneNights).forEach((k) => { const vid = k.split('|')[0]; per[vid].phones++; if (Object.keys(phoneNights[k]).length >= 3) per[vid].regulars++; });
+  Object.keys(nightCount).forEach((vid) => {
+    const days = nightCount[vid], wk = {};
+    per[vid].nights = Object.keys(days).length;
+    Object.keys(days).forEach((d) => {
+      if (!per[vid].biggest_night || days[d] > per[vid].biggest_night.players) per[vid].biggest_night = { day: d, players: days[d] };
+      const w = vpmWeekday(d); wk[w] = (wk[w] || 0) + days[d];
+    });
+    per[vid].busiest_day = Object.keys(wk).sort((a, b) => wk[b] - wk[a])[0] || null;
+  });
+
+  const triviaIds = games.filter((g) => g.format === 'trivia').map((g) => g.id);
+  if (triviaIds.length) {
+    const ans = await vpmInChunks(triviaIds, (inl) => vpaSelectAll(env, 'vp_trivia_answers',
+    'game_id=in.(' + inl + ')&select=id,game_id,question_id&order=id.asc'));
+    const asked = {};
+    ans.forEach((a) => { const vid = venueOfGame[a.game_id]; if (!vid) return; per[vid].answers_given++; asked[a.game_id + '|' + a.question_id] = vid; });
+    Object.keys(asked).forEach((k) => { per[asked[k]].questions_asked++; });
+  }
+  const raffleIds = games.filter((g) => g.format === 'raffle').map((g) => g.id);
+  if (raffleIds.length) {
+    const rr = await vpmInChunks(raffleIds, (inl) => vpaSelectAll(env, 'vp_raffle_results',
+    'game_id=in.(' + inl + ')&select=id,game_id&order=id.asc'));
+    rr.forEach((r) => { const vid = venueOfGame[r.game_id]; if (vid) per[vid].raffle_draws++; });
+  }
+  const draws = await vpmInChunks(vids, (inl) => vpaSelectAll(env, 'vp_member_draws',
+    'venue_id=in.(' + inl + ')&select=id,venue_id&order=id.asc'));
+  if (draws.length) {
+    const vOfDraw = {}; draws.forEach((d) => { vOfDraw[d.id] = d.venue_id; });
+    const dr = await vpmInChunks(draws.map((d) => d.id), (inl) => vpaSelectAll(env, 'vp_member_draw_results',
+    'draw_id=in.(' + inl + ')&select=id,draw_id&order=id.asc'));
+    dr.forEach((r) => { const vid = vOfDraw[r.draw_id]; if (vid) per[vid].member_draws++; });
+  }
+  const prizes = await vpmInChunks(vids, (inl) => vpaSelectAll(env, 'v_vp_prizes_given',
+    'venue_id=in.(' + inl + ')&select=venue_id,prizes_given_count,prizes_given_value_cents,cash_given_count,cash_given_value_cents&order=venue_id.asc'));
+  prizes.forEach((r) => { const p = per[r.venue_id]; if (!p) return;
+    p.prizes_given += (r.prizes_given_count || 0) + (r.cash_given_count || 0);
+    p.prizes_value_cents += (r.prizes_given_value_cents || 0) + (r.cash_given_value_cents || 0); });
+  // opted_in_at only: a COUNT of people who said yes. Never a name, an address or a number.
+  const optins = await vpmInChunks(vids, (inl) => vpaSelectAll(env, 'v_vp_player_optins',
+    'venue_id=in.(' + inl + ')&select=venue_id,opted_in_at&order=opted_in_at.asc'));
+  optins.forEach((r) => { if (per[r.venue_id]) per[r.venue_id].opt_ins++; });
+
+  const total = blank();
+  const list = venues.map((v) => per[v.id]);
+  list.forEach((p) => {
+    ['games', 'nights', 'players', 'phones', 'regulars', 'questions_asked', 'answers_given', 'raffle_draws', 'member_draws',
+     'prizes_given', 'prizes_value_cents', 'opt_ins', 'players_this_month', 'players_last_month', 'games_this_month', 'games_last_month']
+      .forEach((k) => { total[k] += p[k]; });
+    Object.keys(p.games_by_type).forEach((f) => { total.games_by_type[f] = (total.games_by_type[f] || 0) + p.games_by_type[f]; });
+    if (p.biggest_night && (!total.biggest_night || p.biggest_night.players > total.biggest_night.players)) {
+      total.biggest_night = Object.assign({ venue_name: p.venue_name }, p.biggest_night);
+    }
+  });
+  return { venues: list, total: total };
+}
+
+async function vpmSummary(request, env, json) {
+  const o = await vpmRequireAny(request, env);
+  if (o.error) return json({ error: o.error }, o.status);
+  let stats;
+  try { stats = await vpmStats(env, o.venues); }
+  catch (e) { return json({ error: 'We could not add up your numbers just now. Please try again in a moment.' }, 503); }
+  return json({ ok: true, role: o.role || 'owner',
+    may_see_optins: o.role === 'marketing' ? !!(o.perms && o.perms.players_optin === true) : vpbCan(o, 'players_optin'),
+    venues: o.venues.map((v) => ({ id: v.id, name: v.name, slug: v.slug })), stats: stats });
+}
+
 /* --- POST /account/optin-export : CSV of marketing opt-ins, STRICTLY the caller's own venues.
    Returns { csv }. The page turns it into a download. Scoping is server-side: venue_id is
    filtered to o.venues only (resolved from the login), never from anything the browser sends,
@@ -7882,7 +8184,11 @@ function vpbCsvCell(v) {
   return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
 }
 async function vpbOptinExport(request, env, json) {
-  const o = await vpbRequireOwner(request, env);
+  /* An owner, a manager, or a marketing login. The marketing login arrives with perms spelt
+     out (vpmRequire), so the two rules below apply to it exactly as they do to a manager:
+     players_optin must be TRUE, not merely absent, and the account must be approved. */
+  let o = await vpbRequireOwner(request, env);
+  if (o.error && o.status === 403) { const m = await vpmRequire(request, env); if (!m.error) o = m; }
   if (o.error) return json({ error: o.error }, o.status);
   if (!vpbCan(o, 'players_optin')) return json({ error: 'You do not have permission to export opt-in data.' }, 403);
   /* A MANAGER MAY, BUT ONLY IF THEY HAVE BEEN TICKED. Dean, 17 Sep 2026: "a manager can do
@@ -8221,7 +8527,7 @@ async function vpbListHosts(request, env, json) {
   const venueIds = o.venues.map((v) => v.id);
   if (!venueIds.length) return json({ hosts: [], venues: [] });
   const staff = await vpaSelect(env, 'vp_venue_staff',
-    'venue_id=in.(' + venueIds.map(encodeURIComponent).join(',') + ')&select=auth_user_id,venue_id,role,display_name,permissions');
+    'venue_id=in.(' + venueIds.map(encodeURIComponent).join(',') + ')&role=in.(owner,manager,host)&select=auth_user_id,venue_id,role,display_name,permissions');
   const byUser = {};
   for (const s of (staff || [])) {
     if (!byUser[s.auth_user_id]) byUser[s.auth_user_id] = { auth_user_id: s.auth_user_id, label: s.display_name || '', venue_ids: [], role: 'host', is_owner: false, full_access: false, mobile_last3: null };
@@ -8326,7 +8632,13 @@ async function vpbAddHost(request, env, json) {
 
   const existing = await vpaSelect(env, 'vp_venue_staff',
     'auth_user_id=eq.' + encodeURIComponent(authUserId) +
-    '&venue_id=in.(' + wanted.map(encodeURIComponent).join(',') + ')&select=venue_id');
+    '&venue_id=in.(' + wanted.map(encodeURIComponent).join(',') + ')&select=venue_id,role');
+  /* One kind of login per person per venue (see vpbMarketingAdd). This used to read "already
+     has a row here" as "already a host" and skip the venue without a word, which for a
+     marketing login would have reported success and added nobody. */
+  if ((existing || []).some((r) => r.role === 'marketing')) {
+    return json({ error: 'That mobile is already the marketing login at your venue. Use a different mobile for a host, or remove the marketing login first.' }, 409);
+  }
   const have = new Set((existing || []).map((r) => r.venue_id));
   for (const vid of wanted) {
     if (have.has(vid)) continue;
@@ -8431,6 +8743,9 @@ async function vpbSetStaffVenues(request, env, json) {
   if (!currentRows || !currentRows.length) {
     return json({ error: 'That person is not set up on this account yet. Add them first.' }, 404);
   }
+  if (currentRows.some((r) => r.role === 'marketing')) {
+    return json({ error: 'To change which venues a marketing login covers, remove it and add it again.' }, 400);
+  }
   // A manager with "Add hosts" may re-scope host-role logins at their venues; everything else is owner-only.
   { const g = vpbStaffGuard(o, currentRows, json); if (g) return g; }
   // Never reassign the owner's own login (stored as role 'owner' on at least one venue).
@@ -8472,7 +8787,7 @@ async function vpbMyVenues(request, env, json) {
   const payload = token ? await vpaVerifyJWT(token, env.SUPABASE_JWT_SECRET, env) : null;
   if (!payload || !payload.sub) return json({ error: 'Not signed in.' }, 401);
   const staff = await vpaSelect(env, 'vp_venue_staff',
-    'auth_user_id=eq.' + encodeURIComponent(payload.sub) + '&select=venue_id');
+    'auth_user_id=eq.' + encodeURIComponent(payload.sub) + '&select=venue_id,role');
   if (!staff || !staff.length) {
     // A Gflam HQ admin is staff nowhere, but must be able to pick any venue to view as.
     const admins = await vpaSelect(env, 'vp_platform_admins',
@@ -8489,5 +8804,7 @@ async function vpbMyVenues(request, env, json) {
   const ids = staff.map((s) => s.venue_id);
   const venues = await vpaSelect(env, 'vp_venues',
     'id=in.(' + ids.map(encodeURIComponent).join(',') + ')&select=id,name,slug&order=name.asc');
-  return json({ venues: venues || [] });
+  /* marketing_only: every row this login holds is a marketing one. The console sends such a
+     login to its own page instead of showing it game buttons it could only be refused by. */
+  return json({ venues: venues || [], marketing_only: staff.every((x) => x.role === 'marketing') });
 }

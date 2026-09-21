@@ -115,6 +115,14 @@
   "checks": 12,
   "counted_by": "lines"
  },
+ "tools/test-marketing-cannot-run-games.js": {
+  "checks": 10,
+  "counted_by": "lines"
+ },
+ "tools/test-marketing-login.js": {
+  "checks": 38,
+  "counted_by": "lines"
+ },
  "tools/test-members-paged.js": {
   "checks": 14,
   "counted_by": "lines"

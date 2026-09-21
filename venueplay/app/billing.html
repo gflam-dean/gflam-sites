@@ -407,6 +407,32 @@
         <button class="go" id="mgr-go" style="align-self:flex-start;margin-top:8px">Add manager</button>
       </div>
     </div>
+    <!-- THE MARKETING LOGIN. Optional, owner only. Dean, 22 Sep 2026. -->
+    <div id="marketingSection" style="display:none">
+      <div class="label">Marketing</div>
+      <p class="note" style="margin:0 0 10px">Optional. A login for whoever does your marketing, in house or at an agency. They see your numbers, the brand kit, your signs and your advertising screens at <b style="color:var(--text)">venueplay.com.au/app/marketing</b>. They cannot run games, see billing or change what you collect from players. If a player asks to be taken off your list, this is who we tell.</p>
+      <div id="marketers"></div>
+      <button class="addbtn" id="mktToggle">+ Add a marketing login</button>
+      <div class="addform" id="mktForm" style="flex-direction:column;align-items:stretch">
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <div class="ffield" style="flex:1 1 140px"><label class="flabel" for="mkt-name">Name</label>
+            <input type="text" id="mkt-name" placeholder="Full name" autocomplete="name"></div>
+          <div class="ffield" style="flex:1 1 140px"><label class="flabel" for="mkt-mobile">Mobile</label>
+            <input type="tel" id="mkt-mobile" placeholder="0400 000 000" autocomplete="tel"></div>
+          <div class="ffield" style="flex:1 1 200px"><label class="flabel" for="mkt-email">Email</label>
+            <input type="email" id="mkt-email" placeholder="name@example.com.au" autocomplete="email"></div>
+        </div>
+        <div class="qgroup">
+          <div class="qhead">Which venues?</div>
+          <div class="hostvenues" id="mkt-venues"></div>
+        </div>
+        <div class="qgroup">
+          <div class="qhead">Player details</div>
+          <label class="hostchk" style="align-items:flex-start"><input type="checkbox" id="mkt-optin"><span>Let them download the list of players who opted in to hear from you. <b>Leave this off</b> unless they send your marketing for you. Every download is logged.</span></label>
+        </div>
+        <button class="go" id="mkt-go" style="align-self:flex-start">Add marketing login</button>
+      </div>
+    </div>
     </div><!-- /tp-billing -->
 
     <!-- Nights. The morning after a night the app showed the game menu and nothing else: nobody
@@ -1175,6 +1201,7 @@
       hostsCanManage = d.can_manage_hosts !== false;
       renderHosts(d.hosts || [], acctVenues);
       buildHostVenuePicker(acctVenues);
+      loadMarketers();
     });
   }
   /* Inline "which venues" editor shared by hosts and managers, so a person's venues can be changed
@@ -1357,6 +1384,44 @@
     box.onchange = refresh;   // assigned, not added: the picker is rebuilt on every load
     refresh();
   }
+  /* THE MARKETING LOGIN. Owner only: the section stays hidden for a manager, and the Worker
+     refuses them anyway. It is drawn from its own list, never from the hosts list, because a
+     marketing login is not staff and must not pick up a host's Edit and Remove buttons. */
+  function loadMarketers(){
+    var sec=$("marketingSection"); if(!sec) return;
+    if(!hostsIsOwner){ sec.style.display="none"; return; }
+    api("/account/marketing-list", {}).then(function(d){
+      if(d.error){ sec.style.display="none"; return; }          // an older Worker: say nothing rather than show a dead form
+      sec.style.display="";
+      var box=$("marketers"); box.innerHTML="";
+      (d.users||[]).forEach(function(u){
+        var names=(u.venue_ids||[]).map(function(id){ var v=acctVenues.filter(function(x){ return x.id===id; })[0]; return v?v.name:""; }).filter(Boolean);
+        var row=document.createElement("div"); row.className="card toggle";
+        row.innerHTML='<div class="t">'+esc(u.label||"Marketing")+'<small>'+esc(u.email||"")+' &middot; '+esc(names.join(", "))+' &middot; '+(u.may_see_optins?"can download opt-ins":"numbers and brand kit only")+'</small></div>';
+        var rm=document.createElement("button"); rm.className="canxlink"; rm.type="button"; rm.textContent="Remove";
+        rm.addEventListener("click", function(){
+          if(rm.getAttribute("data-armed")!=="1"){ rm.setAttribute("data-armed","1"); rm.textContent="Tap again to remove"; setTimeout(function(){ rm.removeAttribute("data-armed"); rm.textContent="Remove"; }, 6000); return; }
+          rm.disabled=true;
+          api("/account/marketing-remove", { auth_user_id:u.auth_user_id }).then(function(r){ if(r.error){ showMsg(r.error); rm.disabled=false; return; } loadMarketers(); });
+        });
+        row.appendChild(rm); box.appendChild(row);
+      });
+      var pick=$("mkt-venues"); pick.innerHTML="";
+      acctVenues.forEach(function(v){ var l=document.createElement("label"); l.className="hostchk";
+        l.innerHTML='<input type="checkbox" class="mkt-v" value="'+esc(v.id)+'"'+(acctVenues.length===1?" checked":"")+'><span>'+esc(v.name)+'</span>'; pick.appendChild(l); });
+    });
+  }
+  if($("mktToggle")) $("mktToggle").addEventListener("click", function(){ $("mktForm").classList.toggle("show"); });
+  if($("mkt-go")) $("mkt-go").addEventListener("click", function(){
+    var ids=[]; var cs=document.querySelectorAll(".mkt-v"); for(var i=0;i<cs.length;i++){ if(cs[i].checked) ids.push(cs[i].value); }
+    var b=$("mkt-go"); b.disabled=true;
+    api("/account/marketing-add", { label:$("mkt-name").value, mobile:$("mkt-mobile").value, email:$("mkt-email").value, venue_ids:ids, optin:$("mkt-optin").checked })
+      .then(function(r){ b.disabled=false;
+        if(r.error){ showMsg(r.error); return; }
+        $("mkt-name").value=""; $("mkt-mobile").value=""; $("mkt-email").value=""; $("mkt-optin").checked=false; $("mktForm").classList.remove("show");
+        showMsg("Marketing login added. They sign in at venueplay.com.au/app with a text code.", true); loadMarketers(); });
+  });
+
   $("hostToggle").addEventListener("click", function(){ $("hostForm").classList.toggle("show"); });
   $("host-go").addEventListener("click", function(){
     var ids = [];

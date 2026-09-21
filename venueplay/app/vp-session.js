@@ -504,6 +504,10 @@
   function homeHref(ctx) {
     ctx = ctx || _ctx || {};
     if (ctx.isAdmin) return "hq.html";
+    /* Marketing ONLY. Somebody who is a host at one venue and the marketing login at another
+       still has games to run, so they keep the console and reach their numbers from a link. */
+    var st = ctx.staff || [];
+    if (ctx.scope === "staff" && st.length && st.every(function (x) { return x.role === "marketing"; })) return "marketing.html";
     if (ctx.scope === "staff") return "index.html";
     return "index.html";
   }

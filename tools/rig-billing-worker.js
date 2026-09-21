@@ -5,6 +5,11 @@
    FAIL['table:METHOD'] = n makes the next n such requests answer 503, which is how a resumed
    provision is exercised. */
 var console = { log: function () {}, warn: function () {}, error: function () {} };
+/* jsc has neither of these and the Worker uses both to put a deadline on a slow lookup. Without
+   them every such lookup throws and is swallowed, which reads as "found nothing". */
+if (typeof AbortController === 'undefined') { AbortController = function () { this.signal = {}; }; AbortController.prototype.abort = function () {}; }
+if (typeof setTimeout === 'undefined') { setTimeout = function () { return 0; }; }
+if (typeof clearTimeout === 'undefined') { clearTimeout = function () {}; }   // jsc has setTimeout and NOT clearTimeout
 var TPL = {};
 ['welcome.html', 'welcome-group.html', 'welcome-hq.html', 'venue-onboarding.html'].forEach(function (n) {
   try { TPL[n] = readFile('venueplay/emails/' + n); } catch (e) {}
@@ -40,6 +45,7 @@ globalThis.fetch=function(url,opts){
     if(method==='POST'){var b=JSON.parse(opts.body);var ex=tbl('auth').filter(function(u){return u.phone===b.phone.replace('+','')})[0];
       if(ex) return Promise.resolve(resp(422,{msg:'Phone number already registered by another user',error_code:'phone_exists'}));
       var u={id:newId(),phone:b.phone.replace('+','')};tbl('auth').push(u);return Promise.resolve(resp(200,u));}
+    var one=/\/auth\/v1\/admin\/users\/([0-9a-fA-F-]{36})/.exec(url); if(one){ var hit=tbl('auth').filter(function(u){return u.id===one[1]})[0]; return Promise.resolve(hit?resp(200,hit):resp(404,{msg:'not found'})); }
     return Promise.resolve(resp(200,{users:tbl('auth')}));}
   var m=/\/rest\/v1\/([a-zA-Z_\/]+)\??(.*)$/.exec(url); if(!m) return Promise.resolve(resp(404,{}));
   var t=m[1], q=parseQ(m[2]); var key=t+':'+method;
@@ -48,6 +54,7 @@ globalThis.fetch=function(url,opts){
   if(method==='GET'){var rows=tbl(t).filter(function(r){return match(r,q)});var off=parseInt(q.offset||'0',10);var lim=Math.min(parseInt(q.limit||'1000',10),1000);return Promise.resolve(resp(200,rows.slice(off,off+lim)));}
   if(method==='POST'){var o=JSON.parse(opts.body);o.id=o.id||newId();o.created_at=o.created_at||new Date().toISOString();tbl(t).push(o);return Promise.resolve(resp(201,[o]));}
   if(method==='PATCH'){var o2=JSON.parse(opts.body);tbl(t).filter(function(r){return match(r,q)}).forEach(function(r){for(var k in o2)r[k]=o2[k];});return Promise.resolve(resp(204,''));}
+  if(method==='DELETE'){var gone=tbl(t).filter(function(r){return match(r,q)});DB[t]=tbl(t).filter(function(r){return gone.indexOf(r)===-1});return Promise.resolve(resp(200,gone));}
   return Promise.resolve(resp(200,[]));
 };
 var URLSearchParams=function(){this.p=[];}; URLSearchParams.prototype.set=function(k,v){this.p.push([k,v]);}; URLSearchParams.prototype.get=function(k){var r=this.p.filter(function(x){return x[0]===k})[0];return r?r[1]:null;}; URLSearchParams.prototype.toString=function(){return this.p.map(function(x){return encodeURIComponent(x[0])+'='+encodeURIComponent(x[1])}).join('&');};

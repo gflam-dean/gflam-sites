@@ -120,3 +120,10 @@ picked, never merged.
 That asks the live database whether every column the code reads is really there.
 It is the only thing that catches this class of problem, because the code is
 correct and the database is the thing that disagrees with it.
+
+## 86, marketing role (22 Sep 2026)
+
+`venueplay-86-marketing-role.sql`: lets `vp_venue_staff.role` hold `marketing`, adds `notify_email`, and replaces
+`vp_host_staff()` (the staff check behind every one-trip game function) with the same function plus one line,
+`and s.role in (owner, manager, host)`. Run BEFORE deploying the Workers that read `notify_email`. The previous
+function is at the bottom of the file, commented, to paste back.

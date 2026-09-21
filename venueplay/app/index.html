@@ -646,6 +646,10 @@
       window.location.href="hq.html"; return;
     }
     if(ctx.scope==="staff"){
+      /* A MARKETING LOGIN HAS NOTHING TO DO HERE. Every button on this page runs a game, and both
+         Workers and the database refuse it all of them. So it goes to its own page instead of
+         being shown a console that can only say no. Decided by VP.homeHref, in one place. */
+      try{ if(VP.homeHref && VP.homeHref(ctx)==="marketing.html"){ window.location.href="marketing.html"; return; } }catch(e){}   // never let a routing nicety stop a host reaching their games
       $("headerTag").textContent="";
       $("hactions").style.display="flex"; // owner can reach their account/hosts from anywhere
       greetOnce(ctx);

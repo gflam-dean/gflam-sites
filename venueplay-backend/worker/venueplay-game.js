@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '21 Sep 2026, 22:07 · 7cedf122';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '22 Sep 2026, 07:35 · ac2ab21a';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -7034,8 +7034,14 @@ async function requireStaff(env, authUserId, venueId, audience) {
      that has to match byte for byte, which is what one-trip-draws.test.js guards. */
   assertUuid(authUserId, 'user');     // sub claim from the verified JWT
   assertUuid(venueId, 'venue_id');    // re-derived per request; never trusted raw
+  /* NAMED ROLES ONLY. This took any row in vp_venue_staff as proof of being staff. Since
+     22 Sep 2026 there is a 'marketing' role: somebody, often from outside the venue, who sees
+     the numbers and the brand kit and must never be able to call a ball or draw a raffle. A
+     role this Worker has not been told about is not staff, which is the safe way round for
+     every role anybody adds after this one too. The database's own staff check
+     (vp_host_staff, migration 86) says the same thing in the same words. */
   const rows = await sbGet(env, 'vp_venue_staff',
-    'auth_user_id=eq.' + enc(authUserId) + '&venue_id=eq.' + enc(venueId) + '&select=id,role,venue_id,permissions');
+    'auth_user_id=eq.' + enc(authUserId) + '&venue_id=eq.' + enc(venueId) + '&role=in.(owner,manager,host)&select=id,role,venue_id,permissions');
   if (!rows.length) {
     /* A VenuePlay HQ admin using "View as" is staff nowhere, and this Worker had no concept of an
        admin at all, so every host route refused them. The consoles do not refuse them: they read
