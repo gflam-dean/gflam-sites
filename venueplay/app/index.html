@@ -1165,6 +1165,7 @@
           defaultCards:G.defaultCards, prizesWon:G.prizesWon, startedAt:G.startedAt,
           draw:G.draw, idx:G.idx, called:G.called,
           players:G.players, order:G.order,
+          paidLeft:G.paidLeft||{},   // tickets bought by somebody who has stepped out
           seenN:G.seenN||{},   // so a console reload does not reopen the door to a played-back message
           claims:G.claims, claimIdx:G.claimIdx, lastWins:G.lastWins, won:G.won,
           reportId:G.reportId,
@@ -1213,6 +1214,7 @@
       G.prizesWon=Array.isArray(s.prizesWon)?s.prizesWon:[];
       G.startedAt=s.startedAt||null;
       G.seenN=(s.seenN && typeof s.seenN==="object")?s.seenN:{};
+      G.paidLeft=(s.paidLeft && typeof s.paidLeft==="object")?s.paidLeft:{};
       G.draw=Array.isArray(s.draw)?s.draw:[];
       G.idx=(typeof s.idx==="number")?s.idx:-1;
       /* A save written before this change holds all 90 numbers pre-shuffled, with idx marking how
@@ -2410,7 +2412,14 @@
       // has no business becoming a DOM attribute or a localStorage key.
       if(!m.pid || typeof m.pid!=="string" || !/^[A-Za-z0-9_-]{1,40}$/.test(m.pid)) return;
       var isNew=!G.players[m.pid];
-      if(isNew){ G.players[m.pid]={ name:(m.name||"Player"), cards:null, paid:0 }; G.order.push(m.pid); }
+      if(isNew){
+        G.players[m.pid]={ name:(m.name||"Player"), cards:null, paid:0 }; G.order.push(m.pid);
+        /* THEY PAID, LEFT, AND CAME BACK. See the leave handler: what they bought is kept by
+           pid, and since 20 Sep 2026 a pid is a key only that phone holds, so handing the
+           tickets back to it is handing them back to the person who bought them. */
+        var _back=G.paidLeft && G.paidLeft[m.pid];
+        if(_back){ G.players[m.pid].paid=_back.paid; G.players[m.pid].cards=_back.cards||null; delete G.paidLeft[m.pid]; }
+      }
       /* HIGH-WATER MARK. The report used to send G.order.length at the moment the game ended, and
          a player leaving removes them from that list, so a room of 80 that thinned to 50 by the
          last house was metered at 50. Every other format bills the PEAK, and the peak is what the
@@ -2493,6 +2502,15 @@
         // prize on a ticket that player no longer holds (rejoining deals them a fresh one).
         for(var lv=G.claims.length-1;lv>=0;lv--){ if(G.claims[lv].pid===m.pid) G.claims.splice(lv,1); }
         if(!G.claims.length && !G.lastWins.length) G.claimIdx=-1;
+        /* WHAT THEY PAID FOR IS NOT THROWN AWAY WITH THE SEAT. On a paid night this deleted the
+           player, their paid count and their tickets in one line, so somebody who bought six
+           tickets, tapped Leave by mistake and rejoined on the same phone was told "tickets are
+           on sale at the bar". Found by audit, 20 Sep 2026. They still leave the room and stop
+           counting as a head; the purchase is kept for the night in case they come back. */
+        var _lp=G.players[m.pid];
+        if(G.paidMode && _lp && (parseInt(_lp.paid,10)||0)>0){
+          (G.paidLeft||(G.paidLeft={}))[m.pid]={ paid:_lp.paid, cards:_lp.cards||null, name:_lp.name };
+        }
         delete G.players[m.pid];
         var li=G.order.indexOf(m.pid); if(li>=0) G.order.splice(li,1);
         sendPlayers(); sendState(); saveGame(); renderConsole();

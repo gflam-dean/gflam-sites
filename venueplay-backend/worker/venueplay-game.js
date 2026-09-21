@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '20 Sep 2026, 15:20 · f0078a20';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '21 Sep 2026, 22:07 · 7cedf122';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -1000,7 +1000,11 @@ async function handleJoinInfo(request, env, json) {
        blanked and could not join anything. Trivia is a game of skill, is not gaming at all, and
        has no ticket to print: the whole product says so. An unknown format means bingo here,
        because broadcast bingo has no session and so never resolves one. */
-    const paperFormat = !format || format.indexOf('bingo') === 0 || format.indexOf('musical') === 0;
+    /* AND NOT FOR MUSICAL BINGO. Dean, 21 Sep 2026: "musical bingo don't count that as bingo in
+       other states it's fine." This flag was set for musical and the musical phone page never
+       read it, so the two halves disagreed (audit finding 14). His ruling settles which half
+       was right: musical keeps its phone tickets, and this stops claiming otherwise. */
+    const paperFormat = !format || format.indexOf('bingo') === 0;
     if (paperFormat && vrows && vrows[0] && PAPER_BINGO_STATES.has(String(vrows[0].au_state || '').toUpperCase())) {
       paperBingo = true;
     }

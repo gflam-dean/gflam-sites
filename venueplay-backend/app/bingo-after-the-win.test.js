@@ -583,6 +583,31 @@ MSGS = []; toasts = [];
 endGame();
 ok("with nobody waiting, End game ends on the first tap as it always has", !!lastOf("idle") && toasts.length === 0, toasts.join(" / "));
 
+/* ================= SHE PAID FOR SIX TICKETS, LEFT BY MISTAKE, AND CAME BACK ================= */
+print("");
+print("== a paid night: leaving does not throw away what was bought ==");
+if (typeof renderJoinCounts === "undefined") { renderJoinCounts = function(){}; }   // the join branch repaints a counter this suite never needed before
+if (typeof sendPlayers === "undefined") { sendPlayers = function(){}; }
+room({ p1: { name:"Ann", card:CARD_A, no:332 } });
+G.paidMode = "card"; G.paidLeft = {};
+G.players.p1.paid = 6;
+var annsCards = G.players.p1.cards;
+onMsg({ t:"leave", pid:"p1" });
+G.status = "lobby";   // between games, so the join below is about who she IS, not about dealing (dealing has its own suite)
+ok("she leaves the room and stops counting as a head", !G.players.p1 && G.order.indexOf("p1") === -1);
+onMsg({ t:"join", pid:"p1", name:"Ann" });
+ok("she comes back on the same phone and still has the 6 she paid for", G.players.p1 && G.players.p1.paid === 6, G.players.p1 && G.players.p1.paid);
+ok("and the very tickets she was marking, not fresh ones", G.players.p1 && G.players.p1.cards === annsCards);
+ok("the purchase is handed back once, not kept lying around", !G.paidLeft.p1);
+onMsg({ t:"leave", pid:"p1" }); onMsg({ t:"join", pid:"p2", name:"Somebody else" });
+ok("a DIFFERENT phone joining does not inherit her tickets", G.players.p2 && G.players.p2.paid === 0, G.players.p2 && G.players.p2.paid);
+
+room({ p1: { name:"Ann", card:CARD_A, no:332 } });
+G.paidMode = ""; G.paidLeft = {};
+onMsg({ t:"leave", pid:"p1" });
+ok("on a FREE night nothing is kept: she just rejoins and is dealt in like anybody", !G.paidLeft.p1);
+G.paidMode = "";
+
 print("");
 if (bad) { print(bad + " OF " + (pass + bad) + " CHECKS FAILED"); throw new Error(bad + " failed"); }
 print("ALL " + pass + " CHECKS PASSED");

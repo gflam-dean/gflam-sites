@@ -287,7 +287,11 @@
     out.confirmed = true;
 
     // Paper-ticket states: true whatever else is going on, so say it every time.
-    if (kind === 'bingo' && st.phones && st.phones.bingo === false) {
+    /* NOT FOR MUSICAL BINGO. Dean, 21 Sep 2026: "musical bingo don't count that as bingo in
+       other states it's fine." The paper rules in SA, ACT and Tasmania are written around housie:
+       numbered sheets and printed cards. Musical bingo is a music quiz on a grid, and its
+       tickets stay on the phone. His call as the owner; Queensland is a separate matter. */
+    if (kind === 'bingo' && opts.format !== 'musical' && st.phones && st.phones.bingo === false) {
       out.paper = true;
       out.warnings.push(st.paperBingo);
     }
@@ -459,7 +463,14 @@
 
   /* Keep the record server-side too, because a localStorage flag proves nothing to anybody.
      Best-effort in the strongest sense: a failed write must never stop a night. */
-  function record(venue, format, a, paidEntry) {
+  /* shown: did a person actually see the rules and press the button? The table's own note calls
+     declared_by "whoever ticked it", and the Terms said we "record that you have seen it", but a
+     free bingo game writes this row with nobody having seen or pressed anything. The row was
+     true about the state, the format and free entry, and false about the one thing it exists to
+     evidence. Found by audit, 20 Sep 2026. There is no column for it, so the record says so in
+     words, at the front of the text a regulator would read. */
+  var NOT_SHOWN = 'RECORDED AUTOMATICALLY, NOT SHOWN TO THE HOST (free entry game). ';
+  function record(venue, format, a, paidEntry, shown) {
     try {
       if (!root.VP || !VP.gameApiPost) return;
       VP.gameApiPost('/host/gaming/declare', {
@@ -467,7 +478,7 @@
         entity_type: venue.entity_type || null,
         state: venue.au_state || null,
         paid_entry: !!paidEntry,
-        category_claimed: a.headline || null
+        category_claimed: ((shown === false ? NOT_SHOWN : '') + (a.headline || '')).slice(0, 300) || null
       });
     } catch (e) {}
   }
@@ -585,7 +596,7 @@
             state: venue.au_state, entityType: venue.entity_type, format: format,
             paidEntry: false, paidEntryEnabled: venue.paid_entry_enabled !== false,
             venueName: venue.name
-          }) || {}, false);
+          }) || {}, false, false);
         } catch (e) {}
         proceed(); return;
       }
@@ -604,6 +615,7 @@
   }
 
   root.VPGaming = {
+    NOT_SHOWN: NOT_SHOWN,
     assess: assess, isGaming: isGaming, kindOf: kindOf, formatName: formatName,
     money: money, declaration: declaration, states: STATES,
     gate: gate, gateFor: gateFor, alreadyAcked: alreadyAcked

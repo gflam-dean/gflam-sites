@@ -2892,6 +2892,27 @@ def local_checks(which):
            why='a sentence that starts in lower case in a contract has had its subject deleted. '
                'Clause 2 read "2. offer" and " pricing is offered by invitation" for four days')
 
+        # D26: the privacy policy described a product that collects "a name only". It also holds
+        # every club member's name, a device identifier and a hashed IP on every player, pointed
+        # at the Cookies section for its contact address, and promised a removal button that
+        # does not exist. Audit, 20 Sep 2026.
+        head('D26. The privacy policy describes what is actually collected')
+        pol = io.open(os.path.join(ROOT, 'venueplay', 'privacy.html'), encoding='utf-8').read()
+        heads = re.findall(r'<h2[^>]*>\s*(\d+)\.\s*([^<]+)', pol)
+        contact = [n for n, t in heads if 'contact' in t.lower()]
+        cited = set(re.findall(r'address in section (\d+)', pol))
+        ok('every "address in section N" points at the section that is really Contact us',
+           bool(contact) and bool(cited) and cited == set(contact),
+           detail='cites %s, Contact us is %s' % (sorted(cited), contact),
+           why='privacy.html sent people to the Cookies section for our address')
+        ok('it discloses members lists, the browser identifier and the hashed address, and never says "a name only"',
+           'Members lists' in pol and 'random identifier' in pol and 'hashed' in pol and 'name only' not in pol,
+           why='the join handler stores device_id and ip_hash on every player, and a members import '
+               'stores a name for people who never open VenuePlay. The policy has to say so')
+        ok('it does not promise that a venue can remove a player itself, which no screen can do',
+           'the venue can remove them from its list' not in pol,
+           why='there is no remove-a-player control. Until there is, the policy says we do it')
+
         # D24: HQ said "Screen ok" about a screen that had been silent for 29 hours, because the
         # page never refreshed. Dean found it by asking "is that right?", 21 Sep 2026.
         head('D24. HQ does not keep saying "Screen ok" about a screen that has gone quiet')
@@ -2923,6 +2944,15 @@ def local_checks(which):
                    'venue\'s raffle, or a draw on Math.random, ships with a green gate otherwise')
 
         for label, fn, title, floor, why in (
+            ('D28. Only housie is told to play on paper',
+             'test-paper-is-for-bingo-only.js',
+             'the paper flag is set for bingo in SA, ACT and TAS and for nothing else', 8,
+             'A trivia or musical bingo player in Adelaide has their phone blanked, or the Worker '
+             'and the phone page disagree about it again'),
+            ('D27. A signup that had to be resumed is still welcomed, once',
+             'test-welcome-is-sent-once.js',
+             'the welcome email goes out on whichever run finishes provisioning, and never twice', 8,
+             'A paying customer gets a working account and silence, and we never hear about the signup'),
             ('D23. One network blip does not leave the venue TV re-joining for ever',
              'test-tv-does-not-flap.js',
              'after a blip the TV settles on four channels and stops', 11,
@@ -2939,7 +2969,7 @@ def local_checks(which):
              'One captured invoice.paid replayed for ever keeps a suspended venue switched on'),
             ('D18. A free game is told its own state\'s rules, not "no licence anywhere"',
              'test-free-entry-rules-are-the-states-own.js',
-             'the free-entry popup shows each state its own prize thresholds', 13,
+             'the free-entry popup shows each state its own prize thresholds', 24,
              'A club runs a $12,000 members jackpot in NSW on our written say-so that a free '
              'game needs no licence anywhere and has no prize limit'),
             ('D17. The record of a draw says what the draw did, not what the console says',

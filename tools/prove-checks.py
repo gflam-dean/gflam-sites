@@ -2137,6 +2137,35 @@ MUTATIONS = [
      "    if(G.claims.length && !G.won){\n      var _now=Date.now();",
      "    if(false){\n      var _now=Date.now();",
      'a player who shouted BINGO is dropped without a word when the host taps End game'),
+
+    ('every "address in section N" points at the section that is really Contact us', 'venueplay/privacy.html',
+     "contact us at the address in section 14. We will remove", "contact us at the address in section 10. We will remove",
+     'the privacy policy sends people to the Cookies section to find our address'),
+
+    ('bingo-after-the-win.test.js', 'venueplay/app/index.html',
+     "        if(_back){ G.players[m.pid].paid=_back.paid;",
+     "        if(false){ G.players[m.pid].paid=_back.paid;",
+     'a player who paid for six tickets, left by mistake and rejoined is told to buy tickets at the bar'),
+
+    ('the free-entry popup shows each state its own prize thresholds', 'venueplay/app/vp-gaming.js',
+     "}) || {}, false, false);",
+     "}) || {}, false);",
+     'a declaration nobody saw is recorded as if the host had pressed OK'),
+
+    ('the free-entry popup shows each state its own prize thresholds', 'venueplay/app/vp-gaming.js',
+     "    if (kind === 'bingo' && opts.format !== 'musical' && st.phones",
+     "    if (kind === 'bingo' && st.phones",
+     'musical bingo hosts in SA, ACT and TAS are told paper only, against the owner\'s ruling'),
+
+    ('the welcome email goes out on whichever run finishes provisioning', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "    if (prior && prior.length) return false;\n    await send();",
+     "    await send();",
+     'every Stripe redelivery welcomes the customer again'),
+
+    ('the paper flag is set for bingo in SA, ACT and TAS and for nothing else', 'venueplay-backend/worker/venueplay-game.js',
+     "    const paperFormat = !format || format.indexOf('bingo') === 0;",
+     "    const paperFormat = true;",
+     'a trivia player in Adelaide has their phone blanked and told to play on paper'),
 ]
 
 

@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '21 Sep 2026, 21:32 · b6c00ba7';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '21 Sep 2026, 22:07 · f9524483';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -3297,11 +3297,11 @@ async function vpaProvisionFromCheckout(env, session) {
     }
     // else: fully provisioned already -> nothing to do, no audit noise.
 
-    // Welcome email on a fresh provision (best-effort; skips if Resend unset).
-    if (stepsDone.indexOf('venue') !== -1) {
+    // Welcome email once the account is whole, on whichever run got it there (see vpaWelcomeOnce).
+    await vpaWelcomeOnce(env, session, foundingId, async function () {
       await vpaFireWelcome(env, session, f, [{ name: venueName, seats: f.max_seats, slug: venue && venue.slug }], false);
       await vpaNotifyNewSignup(env, session, f, [{ name: venueName, seats: f.max_seats }], false);
-    }
+    });
   } catch (e) {
     // Log which step failed so a stuck venue is visible in HQ, then rethrow so
     // Stripe retries and the self-healing path above finishes it next time.
@@ -3575,9 +3575,12 @@ async function vpaProvisionGroup(env, session, f) {
           stripe_subscription_id: session.subscription || null,
         },
       }, false);
+    }
+    // Outside the anyCreated test on purpose: a retry that only FINISHES a group created nothing.
+    await vpaWelcomeOnce(env, session, foundingId, async function () {
       await vpaFireWelcome(env, session, f, venues, true);
       await vpaNotifyNewSignup(env, session, f, venues, true);
-    }
+    });
     // Flag a loginless group on ANY run (even a no-op retry), written once, so HQ always catches it.
     if (!authUserId) {
       const existingFlag = await vpaSelect(env, 'vp_admin_audit',
@@ -3605,6 +3608,32 @@ async function vpaProvisionGroup(env, session, f) {
 // Best-effort WELCOME email via Resend. Skips silently if Resend is not set up
 // yet (provisioning already succeeded, so this must NEVER throw). Reuses the
 // real templates hosted on the site (/emails/welcome*.html).
+/* THE WELCOME EMAIL, ONCE, WHICHEVER RUN FINISHES THE JOB. It used to be sent only on the run
+   that INSERTED the venue row. Provisioning is built to be resumed: the first run creates the
+   venue, something after it throws, Stripe retries, the retry finds the venue and finishes the
+   rest. That second run did not create the venue, so nobody was ever welcomed and we were never
+   told about the signup: a paying customer with a working account and silence. Since 20 Sep
+   2026 a failed webhook really is retried straight away, so this path is the ordinary one now.
+   Found by audit the same day.
+
+   The audit trail is the ledger: one welcome_email_sent row per account. Only for a checkout
+   made in the last three days, so Stripe re-delivering an OLD event for an account that was
+   welcomed before this ledger existed cannot welcome it twice. */
+async function vpaWelcomeOnce(env, session, foundingId, send) {
+  try {
+    const made = parseInt(session && session.created, 10) || 0;
+    if (made && (Date.now() / 1000 - made) > 3 * 24 * 60 * 60) return false;
+    const target = 'account:' + foundingId;
+    const prior = await vpaSelect(env, 'vp_admin_audit',
+      'target=eq.' + encodeURIComponent(target) + '&action=eq.welcome_email_sent&select=id&limit=1');
+    if (prior && prior.length) return false;
+    await send();
+    await vpaInsert(env, 'vp_admin_audit', { actor_admin: null, actor_label: 'stripe',
+      action: 'welcome_email_sent', target: target, detail: {} }, false);
+    return true;
+  } catch (e) { return false; }
+}
+
 /* WHAT THEY WILL ACTUALLY BE CHARGED, IN WORDS. Every welcome email said "{{monthly_total}} a
    month" whatever the plan, so an annual venue with 80 players was told "$184.00 a month" and
    then charged $2,208.00 in one go, which is what the Terms and the pricing page both say annual

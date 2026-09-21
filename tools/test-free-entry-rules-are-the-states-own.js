@@ -42,5 +42,26 @@ check('a free game in Queensland is still not shown the paid-gaming block', !fre
 var off = text(G.assess({ state: 'NSW', entityType: 'for_profit', format: 'raffle', paidEntry: true, paidEntryEnabled: false }));
 check('the paid-entry-is-off message makes no "anywhere" promise either', !/anywhere/i.test(off), off);
 
+print('the record of a free game says nobody was shown anything');
+var posted = [];
+this.VP = { getContext: function () { return { venue: { id: 'v1', name: 'The Club', au_state: 'NSW', entity_type: 'non_profit', paid_entry_enabled: false } }; },
+            gameApiPost: function (path, body) { posted.push({ path: path, body: body }); } };
+var started = 0;
+G.gateFor('bingo90', function () { started++; }, { gameIsPaid: false });
+check('a free bingo game starts without a popup', started === 1, started);
+check('a declaration IS still recorded for it', posted.length === 1 && posted[0].path === '/host/gaming/declare', posted);
+var said = (posted[0] && posted[0].body.category_claimed) || '';
+check('and the record says, up front, that it was NOT shown to the host', /^RECORDED AUTOMATICALLY, NOT SHOWN TO THE HOST/.test(said), said);
+check('it still says what kind of game it was', /Free entry/.test(said) && posted[0].body.paid_entry === false, said);
+check('and fits the 300 characters the Worker keeps', said.length <= 300, said.length);
+
+print('musical bingo is not housie (Dean, 21 Sep 2026)');
+['SA', 'ACT', 'TAS'].forEach(function (st) {
+  var mus = G.assess({ state: st, entityType: 'for_profit', format: 'musical', paidEntry: false });
+  var bin = G.assess({ state: st, entityType: 'for_profit', format: 'bingo90', paidEntry: false });
+  check(st + ': musical bingo is NOT told to play on paper', !mus.paper && !/paper|phones cannot/i.test(mus.warnings.join(' ')), mus.warnings);
+  check(st + ': ordinary bingo still is', bin.paper === true, bin.warnings);
+});
+
 if (fails) throw new Error('free entry rules: ' + fails + ' of ' + ran + ' failed');
 print('PASS ' + ran + ' checks');
