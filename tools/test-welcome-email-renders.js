@@ -109,6 +109,26 @@ check('a checkout made before the date was carried still gets a date, not a blan
 var stale = welcome({ tier: 'founding', trial_end: String(NOWS - 86400) });
 check('a date already gone is never printed as the first payment', stale.indexOf(fmt(NOWS - 86400)) === -1, stale.match(/free until [^,.]*/));
 
+/* AN ANNUAL VENUE IS CHARGED FOR THE YEAR, so the email must say the year's figure. */
+print('');
+print('An annual venue is told what it will really be charged');
+function welcomePlan(plan, group) {
+  sent = null;
+  vpaFireWelcome(ENV, { metadata: { tier: 'founding' } }, { contact_email: 'owner@pub.com', contact_name: 'Sam', plan: plan, max_seats: 80 },
+    group ? [{ name: 'The Anchor', seats: 80, slug: 'the-anchor' }, { name: 'The Crown', seats: 20, slug: 'the-crown' }]
+          : [{ name: 'The Royal Hotel', seats: 80, slug: 'the-royal-hotel-4220' }], !!group);
+  drain();
+  return visible(sent && sent.html).replace(/<[^>]*>/g, ' ').replace(/&middot;/g, '.').replace(/\s+/g, ' ');
+}
+var yr = welcomePlan('annual');
+check('annual, 80 players at $2.30: the yearly charge, $2,208.00, is in the email', yr.indexOf('$2,208.00 a year') !== -1, (yr.match(/first payment[^.]*\./) || [])[0]);
+check('and it is never presented as "$184.00 a month" on its own', !/\$184\.00 a month\. /.test(yr) && yr.indexOf('billed yearly') !== -1, (yr.match(/first payment[^.]*\./) || [])[0]);
+var mo = welcomePlan('monthly');
+check('monthly, 80 players at $2.50: $200.00 a month, and no mention of a year', mo.indexOf('$200.00 a month') !== -1 && mo.indexOf('a year') === -1, (mo.match(/first payment[^.]*\./) || [])[0]);
+var yg = welcomePlan('annual', true);
+check('an annual GROUP: the group total for the year ($2,760.00) and each venue\'s own', yg.indexOf('$2,760.00 a year') !== -1 && yg.indexOf('$2,208.00 a year') !== -1 && yg.indexOf('$552.00 a year') !== -1, (yg.match(/\$[0-9,.]+ a year/g) || []));
+check('no raw token left behind on any of them', !/\{\{/.test(yr + mo + yg));
+
 print(PASS + ' passed, ' + FAIL + ' failed');
 if (FAIL) { print('FAILED ' + FAIL); throw new Error(FAIL + ' check(s) failed'); }
 print('PASS');

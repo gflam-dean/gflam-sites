@@ -199,7 +199,7 @@ MUTATIONS = [
     # in the note and the email was untouched. That is the very trap this check's own comment
     # warns about, walked into from the other side.
     ('every merge tag in a live email gets filled in', 'venueplay/emails/welcome.html',
-     '{{player_count}} players at {{player_rate}} each, {{monthly_total}} a month.',
+     '{{player_count}} players at {{player_rate}} each, {{payment_total}}.',
      '{{player_count}} players at {{player_rate}} each, {{monthly_total_inc_gst}} a month.',
      'a live email goes out with {{monthly_total_inc_gst}} printed in it where the price '
      'should be, because nothing in the Worker fills that name'),
@@ -2118,6 +2118,20 @@ MUTATIONS = [
      "  setInterval(refreshScreens, 60000);\n",
      "",
      'HQ goes back to showing a health reading from whenever the page was opened'),
+
+    ('no page says extra players join', 'venueplay/nsw.html',
+     "Extra players are $2 each for that night, and your host OKs it on screen first.",
+     "The extra players just join at the same per-player rate.",
+     'a sales page promises extras at the monthly rate and we charge $2 a head'),
+
+    ('no heading or paragraph of the Terms starts with a lower-case word', 'venueplay/terms.html',
+     "<h2>2. State offer</h2>", "<h2>2. offer</h2>",
+     'the contract loses the subject of a clause again'),
+
+    ('the real templates render with every venue, its own TV link and no raw tags', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "    ? fmt(monthlyTotal * 12) + ' a year, billed yearly (' + fmt(monthlyTotal) + ' a month)'",
+     "    ? fmt(monthlyTotal) + ' a month'",
+     'an annual venue is told a monthly figure and charged twelve times it'),
 ]
 
 

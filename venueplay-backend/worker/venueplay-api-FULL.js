@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '20 Sep 2026, 14:37 · 9bcba6b9';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '21 Sep 2026, 21:32 · b6c00ba7';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -3605,6 +3605,17 @@ async function vpaProvisionGroup(env, session, f) {
 // Best-effort WELCOME email via Resend. Skips silently if Resend is not set up
 // yet (provisioning already succeeded, so this must NEVER throw). Reuses the
 // real templates hosted on the site (/emails/welcome*.html).
+/* WHAT THEY WILL ACTUALLY BE CHARGED, IN WORDS. Every welcome email said "{{monthly_total}} a
+   month" whatever the plan, so an annual venue with 80 players was told "$184.00 a month" and
+   then charged $2,208.00 in one go, which is what the Terms and the pricing page both say annual
+   means. Found by audit, 20 Sep 2026. One function, so the three welcome emails cannot disagree. */
+function vpaPaymentPhrase(monthlyTotal, plan) {
+  const fmt = (n) => '$' + Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return plan === 'annual'
+    ? fmt(monthlyTotal * 12) + ' a year, billed yearly (' + fmt(monthlyTotal) + ' a month)'
+    : fmt(monthlyTotal) + ' a month';
+}
+
 async function vpaFireWelcome(env, session, f, venues, isGroup) {
   try {
     if (!env.RESEND_API_KEY) return; // Resend not configured yet -> skip
@@ -3653,7 +3664,7 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
         const v = venues[i]; const seats = parseInt(v.seats, 10) || 0;
         blocks += '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eee;border-radius:12px;margin-bottom:12px"><tr><td style="padding:16px 20px">'
           + '<p style="margin:0;font-size:17px;font-weight:700;color:#12101a">' + vpaEsc(v.name) + '</p>'
-          + '<p style="margin:4px 0 12px;font-size:14px;color:#6a6a75">' + seats + ' players &middot; ' + money(seats * rate) + ' a month</p>'
+          + '<p style="margin:4px 0 12px;font-size:14px;color:#6a6a75">' + seats + ' players &middot; ' + vpaPaymentPhrase(seats * rate, plan) + '</p>'
           + '<a href="' + consoleUrl + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:10px 20px;border-radius:8px;margin-right:8px">Host console</a>'
           + '<a href="' + tvFor(v) + '" style="display:inline-block;color:#12101a;text-decoration:none;font-size:14px;font-weight:700;border:1.5px solid #12101a;padding:8.5px 20px;border-radius:8px">TV screen</a>'
           + '</td></tr></table>';
@@ -3665,10 +3676,12 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
       html = html.split('{{VENUE_BLOCKS}}').join(blocks)
         .replace(/{{venue_count}}/g, String(venues.length))
         .replace(/{{total_players}}/g, String(total))
+        .replace(/{{payment_total}}/g, vpaPaymentPhrase(total * rate, plan))
         .replace(/{{monthly_total}}/g, money(total * rate));
     } else {
       const seats = parseInt((venues[0] && venues[0].seats) || f.max_seats, 10) || 0;
       html = html.replace(/{{player_count}}/g, String(seats))
+        .replace(/{{payment_total}}/g, vpaPaymentPhrase(seats * rate, plan))
         .replace(/{{monthly_total}}/g, money(seats * rate));
     }
     html = html.replace(/{{first_charge_date}}/g, firstCharge)
@@ -3996,6 +4009,7 @@ async function vpaFireHqWelcome(env, o) {
       .replace(/{{venue_name}}/g, vpaEsc(o.venueName || 'Your venue'))
       .replace(/{{player_count}}/g, String(seats))
       .replace(/{{player_rate}}/g, money(rate))
+      .replace(/{{payment_total}}/g, vpaPaymentPhrase(seats * rate, plan))
       .replace(/{{monthly_total}}/g, money(seats * rate))
       .replace(/{{card_url}}/g, cardUrl)
       .replace(/{{host_console_url}}/g, site + '/app')

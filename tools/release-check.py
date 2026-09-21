@@ -2872,6 +2872,26 @@ def local_checks(which):
            why='venueplay/app/trivia/play.html showResult() must stagger its /player/score pull and '
                'send &q=. Without the stagger every phone misses the warm copy together')
 
+        # D25: two pieces of customer copy that were simply wrong, both found by the audit of
+        # 20 Sep 2026. Ten sales pages said extra players "just join at the same per-player rate"
+        # when they are $2 a head for the night, and the live contract's clause 2 had lost its
+        # subject when the word "founding" was deleted from it: "2. offer" and " pricing is
+        # offered by invitation".
+        head('D25. What we promise on the sales pages and in the Terms is what we charge')
+        import glob as _glob
+        pages = sorted(_glob.glob(os.path.join(ROOT, 'venueplay', '*.html')))
+        wrong = [os.path.basename(f) for f in pages
+                 if 'same per-player rate' in io.open(f, encoding='utf-8').read()]
+        ok('no page says extra players join "at the same per-player rate" (%d pages read)' % len(pages),
+           len(pages) >= 10 and not wrong, detail=', '.join(wrong[:5]),
+           why='extras are $2 each for that night, host approved. The plan rate is per MONTH')
+        terms = io.open(os.path.join(ROOT, 'venueplay', 'terms.html'), encoding='utf-8').read()
+        starts = re.findall(r'<(?:h2|p)[^>]*>\s*(?:\d+\.\s*)?([a-z][a-z]+)', terms)
+        ok('no heading or paragraph of the Terms starts with a lower-case word',
+           len(re.findall(r'<h2', terms)) >= 8 and not starts, detail=', '.join(starts[:4]),
+           why='a sentence that starts in lower case in a contract has had its subject deleted. '
+               'Clause 2 read "2. offer" and " pricing is offered by invitation" for four days')
+
         # D24: HQ said "Screen ok" about a screen that had been silent for 29 hours, because the
         # page never refreshed. Dean found it by asking "is that right?", 21 Sep 2026.
         head('D24. HQ does not keep saying "Screen ok" about a screen that has gone quiet')
