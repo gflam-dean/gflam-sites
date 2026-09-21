@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" href="/logos/venueplay_appicon_rebuilt.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
   :root{ --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A; --pink:#FF1F8E; --pink-deep:#C70F69; --gold:#FFC24B; --win:#35D07F;
          --text:#E7E7EC; --muted:#A6A6B0; --faint:#8A8A94; --line:rgba(255,255,255,0.10); }
@@ -108,11 +108,15 @@
     </div>
     <div class="card"><h3>Colours</h3><p>Tap a colour to copy its code.</p>
       <div class="sw" id="swatches" style="margin-top:12px"></div><div class="msg" id="swMsg"></div></div>
-    <div class="card"><h3>Type</h3><p><span style="font-family:'Anton',sans-serif;font-size:26px;color:#fff;text-transform:uppercase">Anton for headlines</span><br>
-      <span style="font-family:'Hanken Grotesk',sans-serif;font-weight:800;color:#fff">Hanken Grotesk for labels and buttons</span><br>Manrope for everything you read. All three are free from Google Fonts.</p></div>
+    <div class="card"><h3>Type</h3><p><span style="font-family:'Anton',sans-serif;font-size:26px;color:#fff;text-transform:uppercase">Anton for the loud moments</span><br>
+      <span style="font-weight:700;color:#fff">Manrope for everything else: body, buttons, captions.</span><br>
+      <span style="font-family:'JetBrains Mono',ui-monospace,monospace;color:#fff">JetBrains Mono for codes, like BOWLO&middot;47</span><br>All three are free from Google Fonts.</p></div>
+    <div class="card"><h3>The look</h3><p>Dark space, bright neon, nothing extra. Stage black with one or two neon highlights. Pink is the signal colour, so use it sparingly. Yellow is for winning moments only. If you want another colour, the answer is more space, not more colour.</p></div>
     <div class="rules">
-      <div class="card"><h3>Do</h3><ul><li>Say what is on and when: "Trivia, Tuesdays 7pm".</li><li>Use "powered by VenuePlay" under your own venue name.</li><li>Keep clear space around the logo, about the height of the play mark.</li><li>Tell people it is free to play and they only need their phone.</li></ul></div>
-      <div class="card"><h3>Do not</h3><ul><li>Recolour, stretch, outline or tilt the logo.</li><li>Put the pink logo on a busy photo. Use the white one.</li><li>Promise a prize you have not confirmed with the venue.</li><li>Contact anybody who has not ticked the opt-in box.</li></ul></div>
+      <div class="card"><h3>How we sound</h3><ul><li>Short sentences. One thought each.</li><li>Specific beats generic: "Three rounds in 45 minutes", not "engaging gameplay".</li><li>Read it out loud. If you would not say it to a publican at the bar, rewrite it.</li><li>Confident, not boastful. Aussie without the parody.</li></ul></div>
+      <div class="card"><h3>Photos and posts</h3><ul><li>Real people in real rooms: the cheer when a winner is called, phones in hands, your screen lit up.</li><li>Warm and a little dark is good. Pub light is the look.</li><li>Five hashtags at most. No stickers.</li><li>Never stock photos, and never AI-made pictures.</li></ul></div>
+      <div class="card"><h3>The logo</h3><ul><li>Pick one of the versions above. Never build your own.</li><li>Do not recolour, stretch, outline or tilt it.</li><li>On a photo, use the white version.</li><li>Leave clear space around it, about the height of the play mark.</li></ul></div>
+      <div class="card"><h3>Before you hit send</h3><ul><li>Only contact people who ticked the opt-in box.</li><li>Do not promise a prize the venue has not confirmed.</li><li>Say what is on and when: "Trivia, Tuesdays 7pm". Free to play, bring your phone.</li></ul></div>
     </div>
   </div>
   <div class="msg" id="msg"></div>
@@ -207,7 +211,8 @@
   });
 
   // ---- brand colours ----
-  var COLOURS=[["Play pink","#FF1F8E"],["Deep pink","#C70F69"],["Gold","#FFC24B"],["Win green","#35D07F"],["Ink","#0A0A0B"],["Paper","#E7E7EC"]];
+  /* From VenuePlay Brand Guidelines v2.0 (May 2026): three core, three support, and no others. */
+  var COLOURS=[["Gflam Pink","#FF1F8E"],["Neon Yellow","#FFD93D"],["Stage Black","#0A0A0B"],["Warm cream","#F5F2ED"],["Surface dark","#1A1A1F"],["Muted text","#8A8A95"]];
   $("swatches").innerHTML=COLOURS.map(function(c){ return '<button type="button" data-hex="'+c[1]+'"><div class="chip" style="background:'+c[1]+'"></div><span><b>'+esc(c[0])+'</b>'+c[1]+'</span></button>'; }).join("");
   $("swatches").addEventListener("click", function(e){ var b=e.target.closest?e.target.closest("[data-hex]"):null; if(!b) return; var hex=b.getAttribute("data-hex");
     function said(){ $("swMsg").textContent="Copied "+hex; setTimeout(function(){ $("swMsg").textContent=""; }, 2500); }
