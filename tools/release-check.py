@@ -2913,6 +2913,24 @@ def local_checks(which):
            'the venue can remove them from its list' not in pol,
            why='there is no remove-a-player control. Until there is, the policy says we do it')
 
+        # D30: the audit replaced the money suite with one line that printed ALL 0 CHECKS PASSED
+        # and the gate stayed green; it added a failing suite nobody wired in and the gate stayed
+        # green. This does not trust what a suite says: it runs every one and counts.
+        head('D30. No suite has been gutted, shrunk, deleted or added unseen')
+        t = os.path.join(ROOT, 'tools', 'check-suite-ledger.py')
+        if not os.path.isfile(t) or not os.path.isfile(os.path.join(ROOT, 'tools', 'suite-counts.json')):
+            ok('the suite ledger and its checker exist', False, why='tools/check-suite-ledger.py or tools/suite-counts.json is missing')
+        else:
+            r = subprocess.run([sys.executable, t], capture_output=True, text=True, timeout=900, cwd=ROOT)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+            m = re.search(r'(\d+) suites ran (\d+) checks', out)
+            ok('every suite still runs at least the checks the ledger recorded',
+               r.returncode == 0 and not bad and bool(m) and int(m.group(1)) >= 100,
+               detail=('; '.join(b[:120] for b in bad[:3]) if bad else (m.group(0) if m else out[-120:])),
+               why='run python3 tools/check-suite-ledger.py. If a suite was shrunk ON PURPOSE, run it '
+                   'with --update and commit the ledger: the diff is the record that it was a decision')
+
         # D24: HQ said "Screen ok" about a screen that had been silent for 29 hours, because the
         # page never refreshed. Dean found it by asking "is that right?", 21 Sep 2026.
         head('D24. HQ does not keep saying "Screen ok" about a screen that has gone quiet')

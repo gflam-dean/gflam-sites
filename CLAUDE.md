@@ -30,6 +30,28 @@ on VenuePlay, so a bad push is a bad night in a room full of people.
 
 **"I deployed it" is not evidence.** /health answering with the right build is.
 
+**Three things added on 21 and 22 Sep 2026, after an audit showed a careless edit
+could ship with a green gate. They are there for whoever works here next, whatever
+model that is, so read them before "fixing" a red line:**
+
+- `deploy-worker.py --live` now RUNS the local gate itself and will not upload over
+  a red one. The only failure it forgives is "is running the current code", which
+  cannot go green until the upload has happened. `--emergency="why, in words"`
+  skips it, for rolling back a bad deploy. If you are reaching for it to get past a
+  red check, the check is the thing to read.
+- `tools/check-suite-ledger.py` runs every suite and counts the checks that
+  actually passed, against `tools/suite-counts.json`. A suite that was gutted,
+  shrunk, deleted, or added without being wired in turns the gate red. If you
+  removed checks ON PURPOSE, run it with `--update` and commit the ledger: that
+  diff is the record that it was a decision. Never edit the ledger to make a red
+  line go away.
+- `tools/check-worker-guards.py`: every `/host/` route must reach `verifyHostJwt`
+  and a venue staff check, `Math.random` is banned in both Workers, and a read of a
+  table that outgrows 1,000 rows must be one row, limited, or `sbGetAll`.
+- When a Worker and an email template or page change TOGETHER, deploy the Worker
+  first. The site publishes minutes later, and a page asking an old Worker for
+  something new (or an email token the old Worker does not fill) reaches a customer.
+
 Workers go up with `tools/deploy-worker.py`, over the Cloudflare API. It refuses a
 file whose BUILD stamp does not match its contents, refuses a LIVE Worker without
 `--live`, refuses the wrong file for a slot by name, keeps every existing variable

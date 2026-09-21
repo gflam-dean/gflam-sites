@@ -2191,6 +2191,12 @@ MUTATIONS = [
      "  const mine = players.filter(pq.same);",
      "  const mine = players;",
      'a PLAYER row one digit away from the person asking is wiped with them'),
+
+    # Same as a suite losing one check: the ledger is one ahead of what the suite runs.
+    ('every suite still runs at least the checks the ledger recorded', 'tools/suite-counts.json',
+     ' "venueplay-backend/worker/money.test.js": {\n  "checks": 44,',
+     ' "venueplay-backend/worker/money.test.js": {\n  "checks": 45,',
+     'a check is deleted from the only suite on the rates and nothing notices'),
 ]
 
 

@@ -158,6 +158,42 @@ def wait_for_build(name, stamp, seconds=90):
         time.sleep(3)
     print(f'  /health on {name} after {seconds}s: {h}'); return False
 
+def gate_or_die(flags):
+    """A LIVE WORKER DOES NOT GO UP OVER A RED GATE.
+
+    This tool used to say "add --live if you mean it, after the gate is green" and then upload
+    whatever it was handed. It never ran the gate, so "after the gate is green" was a sentence,
+    not a rule, and a careless hand (or a model in a hurry) could put an untested Worker in
+    front of a paying venue with one command. Found by audit, 20 Sep 2026.
+
+    It now runs the local half of the gate itself and refuses on any failure EXCEPT the one that
+    is supposed to be red at this moment: "is running the current code", which can only go green
+    once this very upload has happened.
+
+    --emergency="why" skips it, for the one case that needs it: rolling back a bad deploy while
+    the gate is red for some unrelated reason. It is loud, and the reason is printed, so it is a
+    decision somebody made and not a habit."""
+    why = [f.split('=', 1)[1] for f in flags if f.startswith('--emergency=')]
+    if why:
+        if len(why[0].strip()) < 12: die('--emergency needs a real reason in words, for whoever reads this later')
+        print('  GATE SKIPPED, EMERGENCY: ' + why[0].strip())
+        return
+    import subprocess
+    here = Path(__file__).resolve().parent
+    print('  running the local gate first (about a minute) ...')
+    r = subprocess.run([sys.executable, str(here / 'release-check.py'), '--local'], capture_output=True, text=True)
+    out = re.sub(r'\x1b\[[0-9;]*m', '', (r.stdout or '') + (r.stderr or ''))
+    fails = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+    real = [l for l in fails if 'is running the current code' not in l]
+    ran = re.search(r'(\d+) checks in total|All (\d+) checks passed', out)
+    if not ran: die('the gate did not finish, so nothing was uploaded. Run python3 tools/release-check.py --local and read it.')
+    if real:
+        print('  THE GATE IS RED, so nothing was uploaded:')
+        for l in real[:6]: print('    ' + l[:150])
+        sys.exit(1)
+    print('  gate green (%s checks)' % (ran.group(1) or ran.group(2)))
+
+
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith('--')]
     flags = {a for a in sys.argv[1:] if a.startswith('--')}
@@ -177,9 +213,11 @@ def main():
         if f.startswith('--do-class='):
             do_class = f.split('=', 1)[1]
             if not re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*', do_class): die(f'--do-class needs a class name, got {do_class!r}')
-    unknown = flags - {'--live', '--list'} - {f for f in flags if f.startswith('--do-class=')}
+    unknown = flags - {'--live', '--list'} - {f for f in flags if f.startswith('--do-class=') or f.startswith('--emergency=')}
     if unknown: die('unknown flag(s): ' + ', '.join(sorted(unknown)))
     print(f"DEPLOY {path.name} -> {name}{'  (LIVE)' if name in LIVE else '  (staging)'}")
+    if name in LIVE:
+        gate_or_die(flags)
     print(f'  before: {fetch_health(name)}')
     stamp = upload(tok, acct, name, path, do_class)
     ok = wait_for_build(name, stamp)
