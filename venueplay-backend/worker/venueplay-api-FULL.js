@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '21 Sep 2026, 22:07 · f9524483';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '21 Sep 2026, 22:27 · e630b59c';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -153,6 +153,8 @@ export default {
       if (request.method === 'POST' && path === '/admin/venue-gaming'    && typeof vpaHandleVenueGaming === 'function')    return await vpaHandleVenueGaming(request, env, json);
       if (request.method === 'POST' && path === '/admin/gst'             && typeof vpaHandleGst === 'function')            return await vpaHandleGst(request, env, json);
       if (request.method === 'GET'  && path === '/admin/venue-detail'    && typeof vpaHandleVenueDetail === 'function')    return await vpaHandleVenueDetail(request, env, json);
+      if (request.method === 'POST' && path === '/admin/player-find'     && typeof vpaHandlePlayerFind === 'function')   return await vpaHandlePlayerFind(request, env, json);
+      if (request.method === 'POST' && path === '/admin/player-remove'   && typeof vpaHandlePlayerRemove === 'function') return await vpaHandlePlayerRemove(request, env, json);
       if (request.method === 'GET'  && path === '/admin/optin-export'    && typeof vpaHandleAdminOptinExport === 'function') return await vpaHandleAdminOptinExport(request, env, json);
       if (request.method === 'GET'  && path === '/admin/venue-marketing-export' && typeof vpaHandleVenueMarketingExport === 'function') return await vpaHandleVenueMarketingExport(request, env, json);
       if (request.method === 'POST' && path === '/admin/optin-approve'   && typeof vpaHandleOptinApprove === 'function')   return await vpaHandleOptinApprove(request, env, json);
@@ -2993,6 +2995,150 @@ async function vpaHandleVenueDetail(request, env, json) {
     overage_cents: stats ? stats.overageSpendCents : 0,
     stats: stats,
   });
+}
+
+/* ------------------------------------------------------------------------------------------
+   A PLAYER ASKS TO BE REMOVED.   POST /admin/player-find   POST /admin/player-remove
+
+   The privacy policy says: ask the venue or ask us, and "we will remove their details from that
+   venue's list and tell the venue we have done so". Until 21 Sep 2026 nothing could do it.
+
+   Dean's design, that night: "if the venue has downloaded it ... it emails a marketing inbox or
+   something of theirs. if it hasnt been downloaded we just remove it." Removing somebody from
+   OUR database does nothing about the spreadsheet a venue exported last month, and the person
+   asking does not know or care which copy is which. Every download is already in the audit
+   trail with a date, and every opt-in has its own date, so "has this venue downloaded a list
+   with this person in it" is a comparison, not a guess.
+
+   FIND shows, per venue, what is held and whether it has left the building. REMOVE blanks the
+   same fields the 90 day purge blanks (the row stays: the head count is a billing record), and
+   when the venue has downloaded since the opt-in, emails the account address asking them to
+   delete the person from their own copy. HQ admins only. The person's address is never written
+   to the audit trail in full: an audit row that stores what was just deleted has deleted nothing.
+   ------------------------------------------------------------------------------------------ */
+function vpaPersonQuery(raw) {
+  const q = String(raw || '').trim();
+  if (q.indexOf('@') !== -1) {
+    const e = q.toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e) || e.length > 200) return null;
+    return { kind: 'email', value: e, filter: 'email=' + vpaEmailIs(e), masked: e.replace(/^(.).*(@.*)$/, '$1***$2'),
+             same: (row) => String(row.email || '').trim().toLowerCase() === e };
+  }
+  const digits = q.replace(/\D/g, '');
+  if (digits.length < 9 || digits.length > 13) return null;
+  const tail = digits.slice(-9);                       // 0412 345 678, +61 412 345 678 and 61412345678 all end the same
+  // Mobiles are stored as typed, spaces and all, so ask loosely and then compare digits exactly.
+  return { kind: 'mobile', value: tail, filter: 'mobile=ilike.' + encodeURIComponent('*' + tail.split('').join('*')),
+           masked: '*** *** ' + tail.slice(-3),
+           same: (row) => String(row.mobile || '').replace(/\D/g, '').slice(-9) === tail };
+}
+
+async function vpaFindPerson(env, pq) {
+  /* The database is asked loosely (no case, and for a mobile, anything between the digits) and
+     every row that comes back is then compared EXACTLY. A near miss must never be deleted. */
+  const caps = (await vpaSelectAll(env, 'vp_captures',
+    pq.filter + '&select=id,venue_id,email,mobile,marketing_optin,marketing_optin_at&order=id.asc')).filter(pq.same);
+  const players = await vpaSelectAll(env, 'vp_players',
+    pq.filter + '&select=id,session_id,email,mobile,marketing_optin,marketing_optin_at,joined_at&order=id.asc');
+  const mine = players.filter(pq.same);
+  const sessionIds = Array.from(new Set(mine.map((r) => r.session_id).filter(Boolean)));
+  const venueOfSession = {};
+  for (let i = 0; i < sessionIds.length; i += 80) {
+    const part = await vpaSelectAll(env, 'vp_sessions',
+      'id=in.(' + sessionIds.slice(i, i + 80).map(encodeURIComponent).join(',') + ')&select=id,venue_id&order=id.asc');
+    part.forEach((x) => { venueOfSession[x.id] = x.venue_id; });
+  }
+  const by = {};
+  const slot = (vid) => by[vid] || (by[vid] = { venue_id: vid, player_ids: [], capture_ids: [], opted_in_at: null });
+  const note = (v, row) => { if (row.marketing_optin && row.marketing_optin_at && (!v.opted_in_at || row.marketing_optin_at < v.opted_in_at)) v.opted_in_at = row.marketing_optin_at; };
+  caps.forEach((r) => { if (r.venue_id) { const v = slot(r.venue_id); v.capture_ids.push(r.id); note(v, r); } });
+  mine.forEach((r) => { const vid = venueOfSession[r.session_id]; if (vid) { const v = slot(vid); v.player_ids.push(r.id); note(v, r); } });
+  const out = Object.keys(by).map((k) => by[k]);
+  for (const v of out) {
+    const vr = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(v.venue_id) + '&select=id,name,founding_id&limit=1');
+    v.venue_name = (vr && vr[0] && vr[0].name) || 'Unknown venue';
+    v.founding_id = (vr && vr[0] && vr[0].founding_id) || null;
+    v.downloaded_at = null;
+    if (v.opted_in_at) {
+      /* Either kind of download counts: the owner's own, or one we ran for them from HQ. Only
+         one AFTER the opt-in can have this person in it. */
+      const targets = ['venue:' + v.venue_id].concat(v.founding_id ? ['account:' + v.founding_id] : []);
+      const dl = await vpaSelect(env, 'vp_admin_audit',
+        'action=in.(optin_exported,optin_exported_by_admin)&target=in.(' + targets.map((t) => '"' + t + '"').map(encodeURIComponent).join(',') + ')' +
+        '&created_at=gt.' + encodeURIComponent(v.opted_in_at) + '&select=created_at&order=created_at.desc&limit=1');
+      v.downloaded_at = (dl && dl[0] && dl[0].created_at) || null;
+    }
+  }
+  return out.sort((a, b) => String(a.venue_name).localeCompare(String(b.venue_name)));
+}
+
+async function vpaHandlePlayerFind(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const pq = vpaPersonQuery(_b.body.q);
+  if (!pq) return json({ error: 'Type the whole email address or the whole mobile number they gave the venue.' }, 400);
+  let found;
+  try { found = await vpaFindPerson(env, pq); }
+  catch (e) { return json({ error: 'Could not search just now, so nothing has been changed. Try again in a moment.' }, 503); }
+  return json({ ok: true, kind: pq.kind, venues: found.map((v) => ({
+    venue_id: v.venue_id, venue_name: v.venue_name, records: v.player_ids.length + v.capture_ids.length,
+    opted_in_at: v.opted_in_at, downloaded_at: v.downloaded_at })) });
+}
+
+async function vpaHandlePlayerRemove(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
+  const pq = vpaPersonQuery(b.q);
+  if (!pq) return json({ error: 'Type the whole email address or the whole mobile number they gave the venue.' }, 400);
+  const only = b.venue_id ? String(b.venue_id) : null;       // one venue, or everywhere when absent
+  let found;
+  try { found = await vpaFindPerson(env, pq); }
+  catch (e) { return json({ error: 'Could not search just now, so nothing has been changed. Try again in a moment.' }, 503); }
+  const todo = found.filter((v) => !only || v.venue_id === only);
+  if (!todo.length) return json({ ok: true, removed: 0, venues: [] });
+
+  // The same fields the 90 day purge blanks, and marketing_optin false rather than null: NOT NULL.
+  const BLANK = { first_name: null, last_name: null, email: null, mobile: null, postcode: null,
+                  marketing_optin: false, marketing_optin_at: null };
+  const done = [];
+  for (const v of todo) {
+    for (let i = 0; i < v.player_ids.length; i += 80) {
+      await vpaPatch(env, 'vp_players', 'id=in.(' + v.player_ids.slice(i, i + 80).map(encodeURIComponent).join(',') + ')', BLANK);
+    }
+    for (let i = 0; i < v.capture_ids.length; i += 80) {
+      await vpaPatch(env, 'vp_captures', 'id=in.(' + v.capture_ids.slice(i, i + 80).map(encodeURIComponent).join(',') + ')', BLANK);
+    }
+    let emailed = null;
+    if (v.downloaded_at && v.founding_id) {
+      const acct = await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(v.founding_id) + '&select=contact_email,contact_name&limit=1');
+      const to = acct && acct[0] && acct[0].contact_email;
+      if (to) {
+        const who = pq.kind === 'email' ? pq.value : ('the mobile number ending ' + pq.value.slice(-3));
+        const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;color:#12101a;max-width:560px">'
+          + '<p>Hi' + (acct[0].contact_name ? ' ' + vpaEsc(String(acct[0].contact_name).split(' ')[0]) : '') + ',</p>'
+          + '<p>Somebody who played at <strong>' + vpaEsc(v.venue_name) + '</strong> has asked to be removed from your players list: <strong>' + vpaEsc(who) + '</strong>.</p>'
+          + '<p>We have removed them from VenuePlay, so they will not be in any list you download from now on.</p>'
+          + '<p>You downloaded your list on ' + vpaFmtDate(Math.floor(Date.parse(v.downloaded_at) / 1000)) + ', after they joined, so they are probably in that copy. '
+          + '<strong>Please delete them from that file and from anything you loaded it into</strong> (your email or SMS tool, a spreadsheet, a CRM), and do not contact them again. '
+          + 'The Spam Act gives a business five working days to act on a request like this.</p>'
+          + '<p>Nothing else is needed, and you do not need to reply. If you have a question, just answer this email.</p>'
+          + '<p>VenuePlay<br>hello@venueplay.com.au</p></div>';
+        try { emailed = (await vpaSendEmail(env, to, 'Please remove one person from your ' + v.venue_name + ' players list', html)) ? 'sent' : 'failed'; }
+        catch (e) { emailed = 'failed'; }
+      } else { emailed = 'no address'; }
+    }
+    await vpaAudit(env, actor, 'player_removed', 'venue:' + v.venue_id, {
+      who: pq.masked, records: v.player_ids.length + v.capture_ids.length,
+      venue_had_downloaded: !!v.downloaded_at, venue_emailed: emailed }).catch(() => {});
+    done.push({ venue_id: v.venue_id, venue_name: v.venue_name, records: v.player_ids.length + v.capture_ids.length,
+                venue_had_downloaded: !!v.downloaded_at, venue_emailed: emailed });
+  }
+  return json({ ok: true, removed: done.reduce((n, d) => n + d.records, 0), venues: done });
 }
 
 async function vpaHandleOptinApprove(request, env, json) {

@@ -521,6 +521,18 @@
       <span class="note" id="vmMsg" style="margin-left:10px"></span>
     </div>
 
+    <!-- A PLAYER ASKS TO COME OFF A LIST. The privacy policy says we do it and tell the venue.
+         Dean, 21 Sep 2026: if the venue has already downloaded its list, email them to delete
+         the person from their copy; if it has not, just remove them. -->
+    <div class="lblk" style="margin-top:26px">Remove a player who has asked</div>
+    <div class="panel pad" style="margin-bottom:14px">
+      <div class="note" style="margin:0 0 10px">Type the <b>whole</b> email address or mobile number they gave the venue. You will see every venue that holds it before anything is removed. Where a venue has downloaded its list since they joined, we email that venue asking them to delete the person from their own copy as well.</div>
+      <input id="rpQuery" type="text" autocomplete="off" placeholder="name@example.com or 0412 345 678" style="max-width:340px">
+      <button class="btn ghost sp" id="rpFind" style="margin-left:8px">Find them</button>
+      <span class="note" id="rpMsg" style="margin-left:10px"></span>
+      <div id="rpResults" style="margin-top:12px"></div>
+    </div>
+
     <div class="lblk" style="margin-top:26px">Player data collection, every account</div>
     <div class="panel"><div class="tscroll"><table>
       <thead><tr><th>Account</th><th>Email</th><th>Venues</th><th>Collecting</th><th>Decision</th></tr></thead>
@@ -3106,6 +3118,55 @@
     });
   }
   wireOptinButtons($("optinRows"));
+
+  /* Remove a player who has asked. Look first, then remove: the search changes nothing. Removal
+     cannot be undone, so the button asks for a second tap rather than a browser dialog. */
+  (function(){
+    var find=$("rpFind"), box=$("rpResults"), msg=$("rpMsg"), input=$("rpQuery"); if(!find||!box) return;
+    var lastQ="";
+    function say(t){ if(msg) msg.textContent=t||""; }
+    function render(list){
+      if(!list.length){ box.innerHTML='<div class="note">Nobody with that address is on any venue\'s list.</div>'; return; }
+      var h='<div class="tscroll"><table><thead><tr><th>Venue</th><th>Records</th><th>Opted in</th><th>Venue has a copy?</th><th></th></tr></thead><tbody>';
+      list.forEach(function(v){
+        h+='<tr><td>'+esc(v.venue_name)+'</td><td>'+esc(String(v.records))+'</td><td>'+(v.opted_in_at?fmtWhen(v.opted_in_at):'No')+'</td><td>'
+          +(v.downloaded_at?'<span class="badge suspend">Yes, downloaded '+fmtWhen(v.downloaded_at)+'</span> We will email them.':'<span class="badge live">No</span> Nothing to tell them.')
+          +'</td><td><button class="btn ghost sp" data-rpvenue="'+esc(v.venue_id)+'">Remove here</button></td></tr>';
+      });
+      h+='</tbody></table></div>';
+      if(list.length>1) h+='<div style="margin-top:10px"><button class="btn ghost sp" data-rpvenue="">Remove at all '+list.length+' venues</button></div>';
+      box.innerHTML=h;
+    }
+    function search(){
+      var q=(input.value||"").trim(); if(!q){ say("Type an email address or a mobile number first."); return; }
+      lastQ=q; say("Looking\u2026"); find.disabled=true;
+      workerPost("/admin/player-find", { q:q }).then(function(r){
+        find.disabled=false;
+        if(r.error){ say(r.error); box.innerHTML=""; return; }
+        say(""); render(r.venues||[]);
+      });
+    }
+    find.addEventListener("click", search);
+    input.addEventListener("keydown", function(e){ if(e.key==="Enter") search(); });
+    box.addEventListener("click", function(e){
+      var b=e.target.closest ? e.target.closest("[data-rpvenue]") : null; if(!b) return;
+      if(b.getAttribute("data-armed")!=="1"){
+        b.setAttribute("data-armed","1"); b.textContent="Tap again to remove. This cannot be undone.";
+        setTimeout(function(){ if(b.getAttribute("data-armed")==="1"){ b.removeAttribute("data-armed"); b.textContent=b.getAttribute("data-rpvenue")?"Remove here":"Remove everywhere"; } }, 8000);
+        return;
+      }
+      b.disabled=true; b.textContent="Removing\u2026";
+      var body={ q:lastQ }; var vid=b.getAttribute("data-rpvenue"); if(vid) body.venue_id=vid;
+      workerPost("/admin/player-remove", body).then(function(r){
+        if(r.error){ say(r.error); b.disabled=false; b.removeAttribute("data-armed"); b.textContent="Remove here"; return; }
+        var lines=(r.venues||[]).map(function(v){
+          return esc(v.venue_name)+": removed"+(v.venue_had_downloaded ? (v.venue_emailed==="sent" ? ", and the venue has been emailed to delete them from its own copy." : ". <b>The venue has a copy and the email to them did not send ("+esc(String(v.venue_emailed))+"). Email them yourself.</b>") : ". The venue never downloaded them, so there is nobody to tell.");
+        });
+        box.innerHTML='<div class="note">'+(lines.length?lines.join("<br>"):"Nothing was found to remove.")+'</div>';
+        say("Done."); loadAuditOnly();
+      });
+    });
+  })();
 
   /* Our own marketing list. marketing_opt_in has been written since August and read by
      nothing, so the venues who ticked it have been sitting there unreachable. */

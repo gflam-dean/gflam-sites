@@ -2944,6 +2944,11 @@ def local_checks(which):
                    'venue\'s raffle, or a draw on Math.random, ships with a green gate otherwise')
 
         for label, fn, title, floor, why in (
+            ('D29. A player who asks to be removed is removed, and a venue holding a copy is told',
+             'test-remove-a-player.js',
+             'removal blanks exactly that person, and emails only a venue that downloaded them', 26,
+             'The privacy policy promises this. A near miss deleted, a venue not told about the copy '
+             'in its mailing tool, or the address kept in the audit trail, all break that promise'),
             ('D28. Only housie is told to play on paper',
              'test-paper-is-for-bingo-only.js',
              'the paper flag is set for bingo in SA, ACT and TAS and for nothing else', 8,

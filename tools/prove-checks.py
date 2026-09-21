@@ -2166,6 +2166,31 @@ MUTATIONS = [
      "    const paperFormat = !format || format.indexOf('bingo') === 0;",
      "    const paperFormat = true;",
      'a trivia player in Adelaide has their phone blanked and told to play on paper'),
+
+    ('removal blanks exactly that person', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "&select=id,venue_id,email,mobile,marketing_optin,marketing_optin_at&order=id.asc')).filter(pq.same);",
+     "&select=id,venue_id,email,mobile,marketing_optin,marketing_optin_at&order=id.asc'));",
+     'the loose database match is trusted, so somebody one character away can be deleted'),
+
+    ('removal blanks exactly that person', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "    if (v.downloaded_at && v.founding_id) {",
+     "    if (false) {",
+     'a venue with the person in a file it downloaded is never told to delete them from it'),
+
+    ('removal blanks exactly that person', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "      who: pq.masked, records:",
+     "      who: pq.value, records:",
+     'the audit trail keeps in full the address we were asked to delete'),
+
+    ('removal blanks exactly that person', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "        '&created_at=gt.' + encodeURIComponent(v.opted_in_at) +",
+     "        '&created_at=gt.' + encodeURIComponent('1970-01-01') +",
+     'a download from BEFORE they joined counts, and venues are told to delete somebody who is not in their file'),
+
+    ('removal blanks exactly that person', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  const mine = players.filter(pq.same);",
+     "  const mine = players;",
+     'a PLAYER row one digit away from the person asking is wiped with them'),
 ]
 
 

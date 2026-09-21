@@ -20,7 +20,13 @@ function match(row,q){
     if(k==='or'){ var parts=v.replace(/^\(|\)$/g,'').split(','); var any=false;
       parts.forEach(function(p){var m=/^([a-z_]+)\.(eq|ilike)\.(.*)$/.exec(p); if(!m) return; var have=String(row[m[1]]==null?'':row[m[1]]);
         if(m[2]==='eq' ? have===m[3] : new RegExp('^'+m[3].replace(/[.+?^${}()|[\]\\]/g,'\\$&').replace(/_/g,'.')+'$','i').test(have)) any=true;}); if(!any) return false; continue;}
-    var m=/^(eq|neq|is|in)\.(.*)$/.exec(v); if(!m) continue;
+    var m=/^(eq|neq|is|in|gt|lt|ilike)\.(.*)$/.exec(v); if(!m) throw new Error('the fake database cannot answer '+k+'='+v);
+    var have=row[k];
+    if(m[1]==='in'){ var list=m[2].replace(/^\(|\)$/g,'').split(',').map(function(x){return x.replace(/^"|"$/g,'');}); if(list.indexOf(String(have))===-1) return false; continue; }
+    if(m[1]==='gt'){ if(!(have!=null && String(have)>m[2])) return false; continue; }
+    if(m[1]==='lt'){ if(!(have!=null && String(have)<m[2])) return false; continue; }
+    if(m[1]==='is'){ if(m[2]==='null' ? have!=null : String(have)!==m[2]) return false; continue; }
+    if(m[1]==='ilike'){ var rx=new RegExp('^'+m[2].replace(/[.+?^${}()|[\]\\]/g,'\\$&').replace(/\*/g,'.*').replace(/_/g,'.')+'$','i'); if(!rx.test(String(have==null?'':have))) return false; continue; }
     if(m[1]==='eq' && String(row[k])!==m[2]) return false;   // case-sensitive, like Postgres text =
     if(m[1]==='neq' && String(row[k])===m[2]) return false;
   } return true;}
