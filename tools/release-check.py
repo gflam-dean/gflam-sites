@@ -2978,6 +2978,11 @@ def local_checks(which):
                    'venue\'s raffle, or a draw on Math.random, ships with a green gate otherwise')
 
         for label, fn, title, floor, why in (
+            ('D35. Removing a trivia question between rounds does not bring round one back',
+             'test-trivia-no-repeat-survives-a-removal.js',
+             'the within-night memory is by question id, and a removal mid-round is refused', 10,
+             'The memory was a list of positions; removing renumbers the set, and five of round '
+             'one\'s questions came round again in round two of the same night'),
             ('D34. A login with venues on two accounts can reach both, and nobody else\'s',
              'test-two-accounts-one-login.js',
              'naming a venue you hold picks its account; naming one you do not changes nothing', 14,

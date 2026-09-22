@@ -2,7 +2,7 @@
    day it was written. load() it from a test.
 
    Shared harness: loads the REAL shipped venueplay-game.js into jsc and swaps only the
-   network (fetch) for a fake PostgREST that honours eq/in/is/gt/or-ilike/order/limit/offset and
+   network (fetch) for a fake PostgREST that honours eq/neq/in/is/gt/or-ilike/order/limit/offset and
    enforces max-rows 1000. RPC calls answer 404 so the Worker's own JS fallback paths run. */
 var SRC = readFile('venueplay-backend/worker/venueplay-game.js');   // run from the repo root, like every other gate test
 SRC = SRC.replace(/export default \{/, 'var __worker = {').replace(/export class /g, 'class ');
@@ -31,6 +31,7 @@ function query(table, qs){
     if(k==='order'){ order=v; return; } if(k==='limit'){ limit=+v; return; } if(k==='offset'){ offset=+v; return; }
     if(v.indexOf('eq.')===0){ var val=decodeURIComponent(v.slice(3)); out=out.filter(function(r){ return String(r[k])===val; }); }
     else if(v.indexOf('in.(')===0){ var l=v.slice(4,-1).split(',').map(decodeURIComponent); out=out.filter(function(r){ return l.indexOf(String(r[k]))>=0; }); }
+    else if(v.indexOf('neq.')===0){ var nv=decodeURIComponent(v.slice(4)); out=out.filter(function(r){ return String(r[k])!==nv; }); }
     else if(v==='is.null'){ out=out.filter(function(r){ return r[k]==null; }); }
     else if(v==='is.true'){ out=out.filter(function(r){ return r[k]===true; }); }
     else if(k==='or'){ var alts=decodeURIComponent(v).replace(/^\(|\)$/g,'').split(','); out=out.filter(function(r){ return alts.some(function(a){ var m=/^([^.]+)\.ilike\.(.*)$/.exec(a); if(!m) throw new Error('fake PostgREST cannot answer or-clause "'+a+'"'); var re=new RegExp('^'+m[2].replace(/[.+?^${}()|[\]\\]/g,'\\$&').replace(/\*/g,'.*')+'$','i'); return re.test(String(r[m[1]]==null?'':r[m[1]])); }); }); }

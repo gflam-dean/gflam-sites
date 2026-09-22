@@ -179,6 +179,10 @@
   "checks": 10,
   "counted_by": "lines"
  },
+ "tools/test-trivia-no-repeat-survives-a-removal.js": {
+  "checks": 10,
+  "counted_by": "lines"
+ },
  "tools/test-tv-does-not-flap.js": {
   "checks": 11,
   "counted_by": "lines"

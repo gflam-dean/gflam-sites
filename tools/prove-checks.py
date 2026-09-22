@@ -2104,6 +2104,18 @@ MUTATIONS = [
      "    cache.set('b:' + gameId, { data: board, until: nowMs + 8000 });",
      'the kept leaderboard forgets which question it was for, and question 8 is answered with question 7'),
 
+    ('the within-night memory is by question id', 'venueplay-backend/worker/venueplay-game.js',
+     "    if (Array.isArray(c.question_ids)) c.question_ids.forEach((id) => { usedIds[id] = true; });\n    else if (Array.isArray(c.question_seqs))",
+     "    if (Array.isArray(c.question_seqs))",
+     'the memory is positions again: a removal between rounds renumbers the set and round two '
+     'repeats five of round one\'s questions'),
+
+    ('the within-night memory is by question id', 'venueplay-backend/worker/venueplay-game.js',
+     "    if (running.length) return json({ error: 'A trivia round is running on this set. Finish the round, then remove the question.' }, 409);",
+     "    if (running.length) { /* allowed */ }",
+     'a question removed mid-round shifts every later question under the room, and the reveal '
+     'scores answers against the wrong one'),
+
     ('a draw record cannot be rewritten by a stale tablet', 'venueplay-backend/worker/venueplay-game.js',
      "  if (!isRedraw && raffle.allow_redraw && prior.length && maxSeq > 0) {",
      "  if (false) {",

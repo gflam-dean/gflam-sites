@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '22 Sep 2026, 17:03 · 5d2c3ab5';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '22 Sep 2026, 17:13 · 2d1218bb';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -2808,8 +2808,17 @@ async function hostStartTrivia(env, json, b, session, staff, seq) {
   // seqs are stored on the game (config.question_seqs) and served from there.
   const priorTrivia = await sbGet(env, 'vp_games',
     'session_id=eq.' + enc(session.id) + '&format=eq.trivia&select=config');
-  const used = {};
-  priorTrivia.forEach((g) => { const sq = g && g.config && g.config.question_seqs; if (Array.isArray(sq)) sq.forEach((s) => { used[s] = true; }); });
+  /* BY IDENTITY, NOT POSITION. Removing a question between two rounds renumbers the set, so a
+     memory of seq numbers pointed at different questions in round two and five of round one's
+     questions came round again (audit, 20 Sep 2026). Games now record the ids they asked and
+     the memory reads those; a game from before this change carries only seqs, and those are
+     still honoured as the best it has. */
+  const used = {}, usedIds = {};
+  priorTrivia.forEach((g) => {
+    const c = (g && g.config) || {};
+    if (Array.isArray(c.question_ids)) c.question_ids.forEach((id) => { usedIds[id] = true; });
+    else if (Array.isArray(c.question_seqs)) c.question_seqs.forEach((s) => { used[s] = true; });
+  });
   // Cross-night memory: ids this venue asked within the last 365 days. Wrapped so that if the
   // vp_asked_questions table is not migrated yet, we simply fall back to session-only variety.
   const askedIds = {};
@@ -2824,8 +2833,9 @@ async function hostStartTrivia(env, json, b, session, staff, seq) {
       askedRows.forEach((r) => { if (r.question_id) askedIds[r.question_id] = true; });
     } catch (e) { /* table not migrated yet -> session-only variety */ }
   }
-  let pool = allSeqs.filter((s) => !used[s] && !askedIds[seqToId[s]]);
-  if (pool.length < questionCount) pool = allSeqs.filter((s) => !used[s]);   // relax the 12-month rule (recycle early)
+  const usedHere = (s) => used[s] || usedIds[seqToId[s]];
+  let pool = allSeqs.filter((s) => !usedHere(s) && !askedIds[seqToId[s]]);
+  if (pool.length < questionCount) pool = allSeqs.filter((s) => !usedHere(s));   // relax the 12-month rule (recycle early)
   if (pool.length < questionCount) pool = allSeqs.slice();                   // whole set used this session -> reset
   const chosenSeqs = shuffleArray(pool.slice()).slice(0, questionCount);
   questionCount = chosenSeqs.length;
@@ -2843,7 +2853,8 @@ async function hostStartTrivia(env, json, b, session, staff, seq) {
      chosenSeqs, so we recorded questions as "asked at this venue" that the room had never been
      asked, and then refused to ask them for twelve months. The bank was being burned through
      without a single one of those questions reaching a player. */
-  const config = { question_set_id: setId, question_count: questionCount, question_seqs: chosenSeqs };
+  const config = { question_set_id: setId, question_count: questionCount, question_seqs: chosenSeqs,
+                   question_ids: chosenSeqs.map((sq) => seqToId[sq]).filter(Boolean) };
   if (b.title) config.title = String(b.title).slice(0, 120);
   if (b.prize) config.prize = String(b.prize).slice(0, 120);
   const base = parseInt(b.base_points, 10);
@@ -4740,6 +4751,15 @@ async function handleTriviaRemove(request, env, json) {           // remove one 
   const qrows = await sbGet(env, 'vp_questions', 'id=eq.' + enc(qid) + '&select=id,set_id');
   if (!qrows.length) return json({ error: 'Question not found' }, 404);
   const set = await triviaSetForVenue(env, qrows[0].set_id, authUserId);
+  /* NOT WHILE A ROUND ON THIS SET IS RUNNING. Removing renumbers the set, and a running round
+     is dealt and served by seq number: every question after the removed one would shift under
+     the room mid-game, and the reveal would score answers against the wrong question. */
+  const liveTg = await sbGet(env, 'vp_trivia_games', 'question_set_id=eq.' + enc(set.id) + '&select=game_id&limit=200');
+  if (liveTg.length) {
+    const ids = '(' + liveTg.map((t) => enc(t.game_id)).join(',') + ')';
+    const running = await sbGet(env, 'vp_games', 'id=in.' + ids + '&status=eq.running&select=id&limit=1');
+    if (running.length) return json({ error: 'A trivia round is running on this set. Finish the round, then remove the question.' }, 409);
+  }
   await sbDelete(env, 'vp_questions', 'id=eq.' + enc(qid));
   /* PAGED. A single read stops at 1,000 rows without a word, and this one then writes
      question_count from what came back: a big set would have been renumbered short and its
