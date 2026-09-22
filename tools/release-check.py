@@ -2962,6 +2962,11 @@ def local_checks(which):
                    'venue\'s raffle, or a draw on Math.random, ships with a green gate otherwise')
 
         for label, fn, title, floor, why in (
+            ('D33. Add from library deals from the whole bank, never a parked question',
+             'test-library-pull-reaches-the-whole-bank.js',
+             'ten weeks of "add 20" reach past the first hundred rows, and no parked question is dealt', 6,
+             'A venue pulling General Knowledge every week was drawing from the same 100 questions '
+             'out of thousands, and a question pulled for a fact-check was still being dealt'),
             ('D32. A marketing login cannot run a game',
              'test-marketing-cannot-run-games.js',
              'the staff check names its roles, in the Worker and in the database alike', 10,

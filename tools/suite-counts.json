@@ -107,6 +107,10 @@
   "checks": 24,
   "counted_by": "lines"
  },
+ "tools/test-library-pull-reaches-the-whole-bank.js": {
+  "checks": 6,
+  "counted_by": "lines"
+ },
  "tools/test-manager-permissions.js": {
   "checks": 14,
   "counted_by": "lines"

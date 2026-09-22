@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '22 Sep 2026, 07:35 · ac2ab21a';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '22 Sep 2026, 16:22 · 08622488';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -4586,6 +4586,22 @@ async function handleAdminResolve(request, env, json) {
     { status, review_note: (String(b.review_note || '').slice(0, 500)) || null, reviewed_at: new Date().toISOString() });
   return json({ ok: true, id, status });
 }
+/* A RANDOM WINDOW OF A POOL, not its first rows.
+
+   "Add 20 General Knowledge" used to read the first 100 matching rows in whatever order the
+   database felt like and shuffle those, so a venue pulling from the same category every
+   week drew from the same 100 questions out of thousands, and the other thousands were
+   never dealt to anyone. Found in the 20 Sep 2026 audit. PostgREST has no cheap random
+   order, so: count the pool (a HEAD, no rows), pick a random start inside it, and read one
+   window from there in a fixed order. The caller still shuffles the window. Two round trips,
+   and the whole pool is reachable. */
+async function randomWindow(env, table, query, size) {
+  const total = await sbCount(env, table, query);
+  if (!total) return [];
+  const start = total > size ? randInt(total - size + 1) : 0;
+  return await sbGet(env, table, query + '&order=id.asc&offset=' + start + '&limit=' + size);
+}
+
 async function handleTriviaFromLibrary(request, env, json) {     // copy N library questions into the set
   const authUserId = await verifyHostJwt(request, env);
   const b = await readJson(request);
@@ -4597,10 +4613,11 @@ async function handleTriviaFromLibrary(request, env, json) {     // copy N libra
   const libSets = await sbGet(env, 'vp_question_sets', setQ);
   if (!libSets.length) return json({ error: 'No matching library category' }, 404);
   const inList = '(' + libSets.map((s) => enc(s.id)).join(',') + ')';
-  let q = 'set_id=in.' + inList + '&select=question,options,correct_index,category,difficulty,image_url';
+  let q = 'set_id=in.' + inList
+        + '&parked_at=is.null'   // pulled for a fact-check: not on offer, the same rule as the search below
+        + '&select=question,options,correct_index,category,difficulty,image_url';
   if (['easy', 'medium', 'hard'].includes(b.difficulty)) q += '&difficulty=eq.' + enc(b.difficulty);
-  q += '&limit=' + (count * 5);   // over-fetch, then shuffle + take count (PostgREST has no cheap random order)
-  const pool = await sbGet(env, 'vp_questions', q);
+  const pool = await randomWindow(env, 'vp_questions', q, count * 5);
   if (!pool.length) return json({ error: 'No library questions match that filter' }, 404);
   for (let i = pool.length - 1; i > 0; i--) { const j = randInt(i + 1); const t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
   let seq = await nextTriviaSeq(env, set.id);
@@ -4631,8 +4648,7 @@ async function handleTriviaSearch(request, env, json) {
         + '&or=(question.ilike.' + like + ',category.ilike.' + like + ')'
         + '&select=question,options,correct_index,category,difficulty,image_url';
   if (['easy', 'medium', 'hard'].includes(b.difficulty)) q += '&difficulty=eq.' + enc(b.difficulty);
-  q += '&limit=' + (count * 6);
-  const pool = await sbGet(env, 'vp_questions', q);
+  const pool = await randomWindow(env, 'vp_questions', q, count * 6);
   if (!pool.length) return json({ ok: true, added: 0, matched: 0 });
   for (let i = pool.length - 1; i > 0; i--) { const j = randInt(i + 1); const t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
   let seq = await nextTriviaSeq(env, set.id);

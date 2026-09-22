@@ -2064,6 +2064,16 @@ MUTATIONS = [
      "    cache.set('b:' + gameId, { data: board, until: nowMs + 8000 });",
      'the kept leaderboard forgets which question it was for, and question 8 is answered with question 7'),
 
+    ('ten weeks of "add 20" reach past the first hundred rows', 'venueplay-backend/worker/venueplay-game.js',
+     "  const start = total > size ? randInt(total - size + 1) : 0;",
+     "  const start = 0;",
+     'every pull is the first hundred rows again; a venue never sees the rest of the bank'),
+
+    ('ten weeks of "add 20" reach past the first hundred rows', 'venueplay-backend/worker/venueplay-game.js',
+     "        + '&parked_at=is.null'   // pulled for a fact-check: not on offer, the same rule as the search below\n",
+     "",
+     'a question parked for a fact-check is dealt to a pub on Tuesday'),
+
     ('the phones do not all ask in the same instant', 'venueplay/app/trivia/play.html',
      "      var _wait = gotIt ? Math.random()*2000 : 1000+Math.random()*5000;",
      "      var _wait = 0;",
