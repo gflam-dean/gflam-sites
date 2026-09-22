@@ -37,7 +37,7 @@ WHAT THIS CAN AND CANNOT DO, said plainly.
 IT STAYS QUIET. A check that speaks every run is a check people learn to scroll past,
 so this says nothing at all unless the screen has changed or a month has gone by.
 """
-import argparse, hashlib, io, json, os, re, sys, datetime
+import argparse, subprocess, hashlib, io, json, os, re, sys, datetime
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STATE = os.path.join(ROOT, 'tools', 'mockups-last-checked.json')
@@ -74,7 +74,14 @@ def embeds_real_screen(path):
     # NOT a literal "/tv?demo=1". see-a-night builds its src by concatenation so the same page
     # works on Pages (/tv) and off a plain file server (/tv.html), and the first version of this
     # looked for the joined-up string and found nothing. An embed is an iframe pointed at a demo.
-    return bool(re.search(r'<iframe', src)) and bool(re.search(r'demo=1', src))
+    # THE IFRAME'S OWN SOURCE, not the word anywhere in the file. One unrelated iframe plus a
+    # link to /tv?demo=1 elsewhere on the page used to retire a page still drawn by hand
+    # (audit, 20 Sep 2026). see-a-night builds the src by concatenation just above the tag,
+    # so the window is the tag and the 800 characters before it.
+    for m in re.finditer(r'<iframe[^>]*>', src):
+        if 'demo=1' in src[max(0, m.start() - 800):m.end()]:
+            return True
+    return False
 DAYS = 31
 
 
@@ -103,6 +110,16 @@ def fingerprint():
     return (h.hexdigest()[:12] if seen else None), seen
 
 
+def per_screen():
+    """One hash per screen, so a change can be NAMED and --accept has to name it back."""
+    out = {}
+    for rel in REAL:
+        css = styles_of(rel)
+        if css is not None:
+            out[rel] = hashlib.sha256(css.encode()).hexdigest()[:12]
+    return out
+
+
 def rules(path):
     """{class: the declarations inside its LAST rule}. Last, because a later rule is
     what actually applies, which is the one a person would see."""
@@ -124,8 +141,9 @@ def load():
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--accept', action='store_true',
-                    help='record that you have looked and they match')
+    ap.add_argument('--accept', metavar='SCREENS',
+                    help='record that you LOOKED. Name the screen(s) that changed, comma separated '
+                         '(e.g. tv.html,trivia/screen.html), or "all" the first time. Typing the name is the evidence.')
     ap.add_argument('--force', action='store_true', help='say something even if nothing changed')
     a = ap.parse_args()
 
@@ -139,9 +157,33 @@ def main():
     today = datetime.date.today().isoformat()
 
     if a.accept:
+        # --accept used to take no argument and rewrote the record with today's date and
+        # nothing else, so editing the JSON by hand was equivalent (audit, 20 Sep 2026). Now
+        # the person has to type back the name of every screen that changed, and the record
+        # says who accepted and what had moved.
+        now, before = per_screen(), st.get('per_screen') or {}
+        moved = sorted(r for r in now if before.get(r) != now[r]) if before else sorted(now)
+        typed = [t.strip() for t in a.accept.split(',') if t.strip()]
+        if typed != ['all']:
+            missing = [r for r in moved if not any(r.endswith('/' + t) or r.endswith(t) for t in typed)]
+            extra = [t for t in typed if not any(r.endswith('/' + t) or r.endswith(t) for r in moved)]
+            if missing or extra:
+                print('%sNOT RECORDED.%s The screens that changed since the last look are:' % (RED, OFF))
+                for r in moved:
+                    print('    ' + r.split('venueplay/', 1)[1])
+                if extra:
+                    print('  (%s did not change)' % ', '.join(extra))
+                print('Look at each beside the mockups, then name them all: --accept ' + ','.join(r.split('venueplay/', 1)[1] for r in moved))
+                return 2
+        who = ''
+        try:
+            who = subprocess.run(['git', 'config', 'user.name'], capture_output=True, text=True, cwd=ROOT).stdout.strip()
+        except Exception:
+            pass
         io.open(STATE, 'w', encoding='utf-8').write(json.dumps(
-            {'screens_fingerprint': fp, 'checked_on': today, 'screens': seen}, indent=2) + '\n')
-        print('Recorded. %d screen file(s), fingerprint %s, on %s.' % (len(seen), fp, today))
+            {'screens_fingerprint': fp, 'checked_on': today, 'screens': seen, 'per_screen': now,
+             'accepted': {'by': who, 'on': today, 'changed': moved}}, indent=2) + '\n')
+        print('Recorded by %s. %d screen file(s), fingerprint %s, on %s; changed: %s.' % (who or 'unknown', len(seen), fp, today, ', '.join(moved) or 'none'))
         print('Nothing will be said about the mockups again until a screen changes or %d days pass.' % DAYS)
         return 0
 

@@ -7,5 +7,23 @@
     "venueplay/app/musical/screen.html",
     "venueplay/app/raffle/screen.html",
     "venueplay/app/members/screen.html"
-  ]
+  ],
+  "per_screen": {
+    "venueplay/tv.html": "313e14e10541",
+    "venueplay/app/trivia/screen.html": "a90aeab928d5",
+    "venueplay/app/musical/screen.html": "09b480f9d71c",
+    "venueplay/app/raffle/screen.html": "c5dc6c5af3aa",
+    "venueplay/app/members/screen.html": "e7d90a23278d"
+  },
+  "accepted": {
+    "by": "Gflam AI Team",
+    "on": "2026-09-22",
+    "changed": [
+      "venueplay/app/members/screen.html",
+      "venueplay/app/musical/screen.html",
+      "venueplay/app/raffle/screen.html",
+      "venueplay/app/trivia/screen.html",
+      "venueplay/tv.html"
+    ]
+  }
 }
