@@ -85,9 +85,12 @@ pass("and there is only one place that decides it",
       block it is a ReferenceError swallowed by a try/catch: a line that looks like it works. */
 var lvs = TV.slice(TV.indexOf("(function loadVenueScreen(){"));
 lvs = lvs.slice(0, 1200);
-pass("a demo puts an invented pub on the wall", /setVenueName\("The Rose and Crown"\)/.test(lvs));
+/* Tugun Bowls Club is a real customer and, since 22 Sep 2026, the demo venue by Dean's decision:
+   "Shall we do Tugun bowls as the demo so they have a logo?" Its NAME and LOGO FILE are in the page.
+   Nothing about its account is: the return-before-fetch check below is what guarantees that. */
+pass("the demo names its venue on the wall", /setVenueName\("Tugun Bowls Club"\)/.test(lvs));
 pass("and it is set inside loadVenueScreen, where that function is in scope",
-     TV.indexOf('setVenueName("The Rose and Crown")') > TV.indexOf("(function loadVenueScreen(){"));
+     TV.indexOf('setVenueName("Tugun Bowls Club")') > TV.indexOf("(function loadVenueScreen(){"));
 /* It must RETURN before the venue fetch. Everything below that point in loadVenueScreen reads
    a real venue: its slides, its logo, its poll. The check is that the return is inside the demo
    block and before any of it, not the exact shape of the line, which has already changed once. */
@@ -96,8 +99,8 @@ var venueFetchAt = TV.indexOf("var hdr={ apikey:SUPA_ANON", demoAt);
 pass("the demo returns before any venue fetch, so no logo or ads are pulled",
      demoEnd > 0 && venueFetchAt > 0 && demoEnd < venueFetchAt,
      "everything past that return in loadVenueScreen reads a real venue");
-pass("the invented name is not a real venue of ours",
-     TV.indexOf("Rose and Crown") > 0 && !/setVenueName\("(Wellshot|Tugun|The Jolly Jess|Test Alpha)/.test(TV));
+pass("the demo logo is a file on this site, never a venue's own upload",
+     /var demoLogo="\/logos\/venue-tugun-bowls\.png"/.test(TV) && !/setVenueLogo\(d\.logo_url[^)]*\)[^\n]*DEMO/.test(TV));
 
 /* 4b. THE PUB HAS SOMETHING TO ADVERTISE. The screen earns its keep between games, and a demo
        that only ever shows a game leaves that out. Worse, with no slides at all loopEntries()
@@ -108,7 +111,7 @@ pass("the invented name is not a real venue of ours",
 /* ANCHORED ON THE RIGHT BLOCK. There are two `if(DEMO){` in this page: the scripted night, and
    the one inside loadVenueScreen that dresses the invented pub. Taking the first match tested
    the wrong one and reported "0 slides" about a block that was never going to have any. */
-var demoAt = TV.indexOf('setVenueName("The Rose and Crown")');
+var demoAt = TV.indexOf('setVenueName("Tugun Bowls Club")');
 /* To the block's own `return;`, not a fixed 2,600 characters: on 22 Sep 2026 the demo gained the
    Tugun slides and a logo option, buildAds() moved past the window, and this said "not started"
    about a block that starts them on its last line. */

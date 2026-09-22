@@ -2233,7 +2233,7 @@
        function. Called from out there it is a ReferenceError, swallowed by a try/catch,
        which is a line of code that looks like it works and does nothing. */
     if(DEMO){
-      setVenueName("The Rose and Crown");
+      setVenueName("Tugun Bowls Club");
       /* AND THE PUB'S ADVERTISING, which is half of what the screen is FOR.
 
          Dean, 12 Sep 2026: "that invented pub has all the advertising etc needed for all
@@ -2277,7 +2277,12 @@
       ].concat(ADS.slides);
       /* ?demo=1&logo=<url>: a venue logo in the corner, so a prospect sees their own name up
          there. Same-site paths only: this is a sales page, not a place to load strangers' images. */
-      try{ var lg=/[?&]logo=([^&]+)/.exec(window.location.search||""); if(lg){ var u=decodeURIComponent(lg[1]); if(/^\/[^\/]/.test(u)) setVenueLogo(u); } }catch(e){}
+      /* The demo venue is Tugun Bowls Club, a real customer, with its real logo (Dean, 22 Sep
+         2026, "Shall we do Tugun bowls as the demo so they have a logo?"). ?logo=/path swaps in
+         another same-site file for a prospect's own. */
+      var demoLogo="/logos/venue-tugun-bowls.png";
+      try{ var lg=/[?&]logo=([^&]+)/.exec(window.location.search||""); if(lg){ var u=decodeURIComponent(lg[1]); if(/^\/[^\/]/.test(u)) demoLogo=u; } }catch(e){}
+      setVenueLogo(demoLogo);
       buildAds(true); startAds();
       return;   // and nothing else on this path runs: no fetch, no poll
     }
