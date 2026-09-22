@@ -468,11 +468,13 @@ def main():
         landed, stale = deploy_has_landed()
         if not landed:
             print('')
+            # This printed a NameError traceback (YEL for YELL) for its whole life, so the
+            # one time it mattered the refusal read as a crash (audit, 20 Sep 2026).
             print('%sNOT STAMPED. The live site is not serving this working copy yet:%s'
-                  % (YEL, OFF))
+                  % (YELL, OFF))
             for f in stale[:8]:
                 print('   %s' % f)
-            print('%s  Cloudflare Pages takes 3 to 25 minutes. The screens above were')
+            print('%s  Cloudflare Pages takes 3 to 25 minutes. The screens above were' % DIM)
             print('  checked against the PREVIOUS build, so stamping this commit would')
             print('  be a lie. Wait for the deploy and run this again.%s' % OFF)
             return 1
