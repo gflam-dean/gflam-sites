@@ -13,7 +13,13 @@ on VenuePlay, so a bad push is a bad night in a room full of people.
        python3 tools/deploy-worker.py --live <worker> <file>
     5. python3 tools/release-check.py      AGAIN, after. This is the step that
                                            gets skipped and the one that catches
-                                           a bad deploy
+                                           a bad deploy. Since 22 Sep 2026 its
+                                           "this release is live" line compares
+                                           every served file the last commit
+                                           changed against what Cloudflare is
+                                           serving; red means Pages has not
+                                           landed it yet (3 to 25 minutes), so
+                                           run it again, or --wait
     6. if it touched a game, do the live list the gate prints. No tool here can
        open a browser or hear a pub
     6b. if it touched a SCREEN file (tv.html, any app/*/screen.html, the shared
