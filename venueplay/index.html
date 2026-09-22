@@ -819,19 +819,136 @@
   </div>
 </header>
 
+<style>
+/* ---- trial hero (Queensland only, 22 Sep 2026): the product in the first screen ---- */
+  .hero2{padding:44px 0 40px}
+  .hero2 > .wrap.h2-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:center;text-align:left}
+  .hero2 h1{font-size:clamp(36px,4.6vw,64px);margin-left:0;margin-right:0}
+  .hero2 .eyebrow{margin-bottom:14px} .hero2 .lede{font-size:17px;margin-top:14px}
+  .hero2 .lede{margin-left:0;margin-right:0;max-width:46ch}
+  .hero2 .hero-cta{justify-content:flex-start;margin-top:26px}
+  .h2-price{margin-top:20px;color:var(--muted);font-size:16px} .h2-price b{color:#fff}
+  .h2-stage{position:relative;padding-bottom:6%}
+  /* The phone stands beside the telly, over the bezel only, so no score or ball is hidden. */
+  /* The SCREEN is the 16:9 element and the bezel wraps it. With the ratio on the bezel, its 9px
+     padding made the screen wider than 16:9 and the wall's bottom row was clipped (Dean, 22 Sep
+     2026: "our screen is not really fitting it properly"). */
+  .h2-tv{margin-right:19%;transition:margin-right .35s cubic-bezier(.22,1,.36,1);background:#050506;border:1px solid var(--line-2,rgba(255,255,255,.14));border-radius:16px;padding:9px;box-shadow:0 0 0 1px rgba(255,31,142,.18),0 30px 80px -30px rgba(255,31,142,.45)}
+  /* The wall renders at a real telly's size and is scaled down, like the phone. Drawn at the
+     frame's own 320px the walls hit every clamp() minimum, so the corner badge stood three
+     times taller than it does on a pub TV and sat on the question. */
+  .h2-tvscreen{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:9px;background:#0A0A0B}
+  .h2-tv iframe{position:absolute;top:0;left:0;width:1280px;height:720px;border:0;background:#0A0A0B;display:block;pointer-events:none;transform-origin:top left}
+  .h2-tvstand{width:22%;height:7px;margin:0 auto;background:linear-gradient(#2a2a30,#121214);border-radius:0 0 8px 8px}
+  .h2-phone{position:absolute;right:0;bottom:0;width:21%;min-width:96px;transition:opacity .35s cubic-bezier(.22,1,.36,1),transform .35s cubic-bezier(.22,1,.36,1)}
+  .h2-stage.nophone .h2-tv{margin-right:0}   /* advertising is the wall alone: let it have the room */
+  .h2-phone.off{opacity:0;transform:translateY(10px);pointer-events:none}
+  .h2-phonebox{position:relative;aspect-ratio:390/844;overflow:hidden;border-radius:18px;border:3px solid #26262c;background:#0A0A0B radial-gradient(60% 40% at 50% 8%, rgba(255,31,142,.22), transparent 70%);box-shadow:0 18px 40px -12px rgba(0,0,0,.9)}
+  /* While the phone page fetches its fonts the frame shows the mark, not a black hole. */
+  .h2-phonebox::before{content:"";position:absolute;inset:0;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 30'><path d='M2 3 L24 15 L2 27 Z' fill='none' stroke='%23FF1F8E' stroke-width='2.6' stroke-linejoin='round'/></svg>") center 42%/26% no-repeat;opacity:.9}
+  .h2-phonebox iframe{position:absolute;top:0;left:0;width:390px;height:844px;border:0;transform-origin:top left;pointer-events:none;z-index:1;background:transparent}
+  .h2-modes{display:flex;flex-wrap:nowrap;gap:6px;margin-top:14px}
+  .h2-modes button{flex:1 1 0;min-width:0;font:700 12.5px 'Manrope',system-ui,sans-serif;color:var(--muted);background:var(--ink-3,#17171A);border:1px solid var(--line,rgba(255,255,255,.1));border-radius:999px;padding:8px 6px;cursor:pointer;transition:all .25s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .h2-modes button:hover{color:#fff;border-color:var(--pink)}
+  .h2-modes button.on{background:var(--pink);border-color:var(--pink);color:#fff}
+  .h2-under{display:flex;gap:14px;align-items:center;justify-content:space-between;margin-top:12px;flex-wrap:wrap}
+  .h2-cap{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted);margin:0;flex:1 1 200px}
+  .h2-watch{flex:0 0 auto}
+  @media (max-width:900px){
+    .hero2{padding:32px 0 32px}
+    .h2-modes{flex-wrap:wrap} .h2-modes button{flex:1 1 30%}
+    .hero2 > .wrap.h2-grid{grid-template-columns:1fr;gap:18px}
+    /* No taller than the telly, or it climbs into the headline. */
+    .h2-phone{width:20%;min-width:0} .h2-tv{margin-right:18%}
+    /* On a phone the show goes straight under the headline. The copy's children become grid
+       items so the demo can sit between the headline and the words, not after the buttons. */
+    .h2-copy{display:contents}
+    .h2-copy .eyebrow{order:1;justify-self:center} .h2-copy h1{order:2} .h2-show{order:3}
+    .h2-copy .lede{order:4} .h2-copy .hero-cta{order:5;margin-top:4px} .h2-copy .h2-price{order:6;margin-top:0} .h2-copy .hero-note{order:7;margin-top:0}
+    /* On a phone the hero is one column, so it reads centred like the rest of the page
+       (Dean, 23 Sep 2026: "the qld now open and run a packed tuesday ... aren't centred"). */
+    .hero2 > .wrap.h2-grid{text-align:center}
+    .hero2 h1,.hero2 .lede,.hero2 .h2-price,.hero2 .hero-note{margin-left:auto;margin-right:auto}
+    .hero2 .hero-cta{justify-content:center}
+    .h2-under{justify-content:center;text-align:center} .h2-cap{flex:1 1 100%}
+  }
+
+  
+</style>
 <!-- ===================== HERO ===================== -->
-<section class="hero" id="top">
-  <div class="wrap">
-    
-    <h1>Run a packed <span class="accent">Tuesday</span>.<br>Every&nbsp;Tuesday.</h1>
-    <p class="lede">Bingo, trivia, musical bingo and raffles, run from one screen. Your crowd plays from their own phones, <b>no app and no login</b>. You just press go. Built for pubs, clubs and bowls clubs that want a full room on a quiet night.</p>
-    <div class="hero-cta">
-      <a class="btn btn-primary" href="#claim">Get started</a>
-      <a class="btn btn-ghost" href="#modes">See the game modes</a>
+<!-- Rolled out from qld.html, 23 Sep 2026, once Dean was happy with it there. No state badge
+     and no deadline offer here: the homepage sells the evergreen $3/player plan, not a
+     state deal, so the eyebrow is dropped and the CTAs point at the standard pricing and
+     contact sections. Everything else -- the live demo widget, the copy -- is state-neutral
+     already and carries over unchanged. -->
+<section class="hero hero2" id="top">
+  <div class="wrap h2-grid">
+    <div class="h2-copy">
+      <h1>Run a packed <span class="accent">Tuesday</span>.<br>Every&nbsp;Tuesday.</h1>
+      <p class="lede">Bingo, trivia, musical bingo, raffles and members draws on the screen you already own. Your crowd plays on their own phones. <b>No app, no login, no host to hire.</b></p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="#offer" data-cta="hero-pricing">See pricing</a>
+        <a class="btn btn-ghost" href="#contact" data-cta="hero-contact">Talk to us</a>
+      </div>
+      <p class="h2-price"><b>First month free.</b> Then a 60 seat pub pays about $150 a month. No lock-in, cancel anytime.</p>
+      <p class="hero-note">Built by Gflam Touring, who run live entertainment nights in venues across Australia.</p>
     </div>
-    <p class="hero-note">$3 per player, per month · cancel anytime</p>
+    <div class="h2-show" aria-label="VenuePlay running a sample night">
+      <div class="h2-stage" id="h2Stage">
+        <div class="h2-tv"><div class="h2-tvscreen"><iframe id="h2Tv" title="The venue screen, running a sample night" scrolling="no" tabindex="-1"></iframe></div></div>
+        <div class="h2-tvstand"></div>
+        <div class="h2-phone" id="h2PhoneWrap"><div class="h2-phonebox"><iframe id="h2Phone" title="A player's phone, mid game" scrolling="no" tabindex="-1"></iframe></div></div>
+      </div>
+      <div class="h2-modes" id="h2Modes" role="tablist" aria-label="Pick a game to watch">
+        <button type="button" role="tab" class="on" data-mode="trivia">Trivia</button>
+        <button type="button" role="tab" data-mode="musical">Musical</button>
+        <button type="button" role="tab" data-mode="bingo">Bingo</button>
+        <button type="button" role="tab" data-mode="raffle">Raffle</button>
+        <button type="button" role="tab" data-mode="members">Draw</button>
+        <button type="button" role="tab" data-mode="ads">Ads</button>
+      </div>
+      <div class="h2-under">
+        <p class="h2-cap">The real screens, playing a sample night. Pick a game, or see the screen between games.</p>
+        <a class="btn btn-primary h2-watch" href="/see-a-night?from=home" data-cta="hero-see-a-night">Play with a full night</a>
+      </div>
+    </div>
   </div>
 </section>
+<script>
+(function(){
+  /* THE WALL AND THE PHONE ARE THE PRODUCT'S OWN PAGES in their ?demo=1 mode: no venue, no
+     network, no analytics. Each one plays a scripted night on its own clock, and the two
+     scripts are written to the same clock (see the notes in play.html and screen.html), so
+     they only stay in step if they START together. Both are (re)loaded in the same tick on
+     every chip, never one after the other. Advertising is the wall alone: it is what the
+     screen does between games. Ported verbatim from qld.html, 23 Sep 2026. */
+  var WALL={ bingo:"/tv?demo=1", trivia:"/app/trivia/screen?demo=1", musical:"/app/musical/screen?demo=1", raffle:"/app/raffle/screen?demo=1", members:"/app/members/screen?demo=1", ads:"/tv?demo=1&ads=1" };
+  var PHONE={ bingo:"/play?demo=1", trivia:"/app/trivia/play?demo=1", musical:"/app/musical/play?demo=1" };
+  var tv=document.getElementById("h2Tv"), ph=document.getElementById("h2Phone"), wrap=document.getElementById("h2PhoneWrap"), modes=document.getElementById("h2Modes");
+  if(!tv||!ph||!modes) return;
+  /* The phone box's CSS sits lower in the file than this script, so a measurement taken now
+     sees the box at full width. Measure again whenever the box's size settles. */
+  function fit(){
+    var pw=ph.parentNode.clientWidth; if(pw) ph.style.transform="scale("+(pw/390)+")";
+    var tw=tv.parentNode.clientWidth; if(tw) tv.style.transform="scale("+(tw/1280)+")";
+  }
+  try{ var ro=new ResizeObserver(fit); ro.observe(ph.parentNode); ro.observe(tv.parentNode); }catch(err){}
+  window.addEventListener("load", fit); ph.addEventListener("load", fit); tv.addEventListener("load", fit);
+  function show(mode){
+    var bust="&t="+Date.now();     // a fresh load each time, so both scripts start from zero together
+    tv.setAttribute("src", WALL[mode]+bust);
+    var stage=document.getElementById("h2Stage");
+    if(PHONE[mode]){ wrap.classList.remove("off"); if(stage) stage.classList.remove("nophone"); ph.setAttribute("src", PHONE[mode]+bust); fit(); }
+    else { wrap.classList.add("off"); if(stage) stage.classList.add("nophone"); ph.removeAttribute("src"); }
+    var bs=modes.querySelectorAll("button"); for(var i=0;i<bs.length;i++){ var on=bs[i].getAttribute("data-mode")===mode; bs[i].classList.toggle("on", on); bs[i].setAttribute("aria-selected", on?"true":"false"); }
+  }
+  modes.addEventListener("click", function(e){ var b=e.target.closest?e.target.closest("[data-mode]"):null; if(!b) return;
+    show(b.getAttribute("data-mode"));
+    try{ if(typeof gtag==="function") gtag("event","cta_click",{ cta_label:"Hero game: "+b.textContent, cta_state:"home", cta_kind:"hero-demo" }); }catch(err){} });
+  window.addEventListener("resize", fit);
+  show("trivia");
+})();
+</script>
 
 <!-- ===================== GAME MODES ===================== -->
 <section class="sec" id="modes">
