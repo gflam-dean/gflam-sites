@@ -308,16 +308,22 @@
       pass(!badge, g + ': no connection badge over a running game',
            'the wall is painting "' + (badge || '') + '" across the top of a game that is playing');
 
-      var nameOk = false, nameTxt = '';
+      /* The name OR the logo. The logo wins when a venue has one (the name tag is hidden
+         on purpose then), and since 22 Sep 2026 the demo venue has one. A logo counts
+         only if the image actually arrived and was painted, not merely requested. */
+      var nameOk = false, nameTxt = '', logoOk = false;
       try {
         var nt = gd.getElementById('venueNameTag');
         nameTxt = nt ? (nt.textContent || '').trim() : '';
         nameOk = !!nt && !nt.hidden && nameTxt.length > 0
                  && nt.getBoundingClientRect().width > 0;
+        var lg = gd.getElementById('venueLogo');
+        logoOk = !!lg && lg.complete && lg.naturalWidth > 0
+                 && lg.getBoundingClientRect().width > 0 && getComputedStyle(lg).display !== 'none';
       } catch (e) {}
-      pass(nameOk, g + ': the wall says whose pub it is',
-           nameTxt ? ('the name is set to "' + nameTxt + '" but nothing is painted')
-                   : 'no venue name on the wall, so a punter cannot tell whose game this is');
+      pass(nameOk || logoOk, g + ': the wall says whose pub it is',
+           nameTxt ? ('the name is set to "' + nameTxt + '" but neither it nor a logo is painted')
+                   : 'no venue name or logo on the wall, so a punter cannot tell whose game this is');
     }
   }
 
