@@ -88,7 +88,7 @@
   "counted_by": "lines"
  },
  "tools/test-checkout-trial-and-duplicates.js": {
-  "checks": 44,
+  "checks": 46,
   "counted_by": "lines"
  },
  "tools/test-collection-gate.js": {

@@ -171,6 +171,13 @@ check('QLD postcode on the NSW link: the mismatch is still recorded for us',
 var r7 = signup({ code: '' });
 check('no founding code: standard price', sent['line_items[0][price]'] === STD_M, sent['line_items[0][price]']);
 
+/* 7b. The code the page was told was OPEN (GET /founding upper-cases) must price the same
+       here, whatever case it arrives in. The audit of 20 Sep 2026 found the preview saying
+       open and the checkout charging standard for the same lower case code. */
+var r7b = signup({ code: 'nsw-sep-2026' });
+check('a lower case founding code prices the deal, the same as the preview said', sent['line_items[0][price]'] === MONTHLY, sent['line_items[0][price]']);
+check('and the code is recorded upper case', sent['subscription_data[metadata][founding_code]'] === 'NSW-SEP-2026', sent['subscription_data[metadata][founding_code]']);
+
 /* 8. The lookup asks about the mobile as well as the email, or a second account is one new
       address away. */
 signup({});

@@ -2009,6 +2009,13 @@ MUTATIONS = [
      'Bob@ and bob@ are two people again, and the second one is billed in full on a '
      'subscription the owner cannot see or cancel'),
 
+    ('one email, one bill, and the promised free month',
+     'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  const foundingCode = (b.founding_code || '').trim().toUpperCase();",
+     "  const foundingCode = (b.founding_code || '').trim();",
+     'the page says the deal is open (GET /founding upper-cases) and the checkout charges '
+     'standard for the same code in lower case, with nothing on screen to say so'),
+
     ('a refused undo puts back every field it wrote',
      'venueplay-backend/worker/venueplay-api-FULL.js',
      "encodeURIComponent(venueId), before);",

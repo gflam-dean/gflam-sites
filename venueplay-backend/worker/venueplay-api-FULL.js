@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '22 Sep 2026, 07:42 · 6dcca81e';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '22 Sep 2026, 16:44 · 5db7b087';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -330,8 +330,11 @@ async function handleCheckout(request, env, json) {
   // full price. Codes look like "QLD-AUG-2026"; the state prefix maps to the leading postcode
   // digit (QLD=4, NSW/ACT=2, VIC=3, SA=5, WA=6, TAS=7, NT=0). env FOUNDING_CODES = the active
   // codes (comma-separated). Cold visitors send no code and pay standard.
-  const activeCodes = (env.FOUNDING_CODES || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
-  const foundingCode = (b.founding_code || '').trim();
+  /* Upper case on both sides, the same as GET /founding above. That preview told a page
+     'qld-oct-2026' was open while this match, case sensitive, priced the same code at
+     standard. Nothing sends a lower case code today; nothing should ever be able to. */
+  const activeCodes = (env.FOUNDING_CODES || '').split(',').map(function (s) { return s.trim().toUpperCase(); }).filter(Boolean);
+  const foundingCode = (b.founding_code || '').trim().toUpperCase();
   const codeActive = foundingCode !== '' && activeCodes.indexOf(foundingCode) !== -1;
   const codeState = foundingCode.split('-')[0].toUpperCase();
   const foundingPostcode = ((b.postcode || (venues[0] && venues[0].postcode) || '') + '').trim();
