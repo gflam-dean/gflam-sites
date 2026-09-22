@@ -15,8 +15,9 @@ the steps and stops at the first one that is not true:
        (Workers first: the site lands minutes later, and a page asking an old Worker for
        something new reaches a customer)
     3. wait until Cloudflare Pages is serving every served file the push changed
-    4. run the full gate (release-check.py, live half included)
-    5. if a screen file changed, run verify-live --stamp and commit the stamp
+    4. if a screen file changed, run verify-live --stamp and commit the stamp (the full
+       gate's "a browser has looked" line is red until this has happened)
+    5. run the full gate (release-check.py, live half included)
     6. one plain line
 
 It calls the existing tools; it adds no judgement of its own. Secrets stay in
@@ -123,12 +124,7 @@ def main():
     else:
         print('  nothing served changed')
 
-    step(4, 'the full gate, after')
-    r = subprocess.run([PY, 'tools/release-check.py'], cwd=ROOT)
-    if r.returncode != 0:
-        stop('the full gate is red on the live release. Read it; a "this release is live" line means Pages has not finished, run python3 tools/release-check.py again.')
-
-    step(5, 'a real browser looks at the screens')
+    step(4, 'a real browser looks at the screens (before the gate: its stamp check is red until this runs)')
     if screens:
         r = subprocess.run([PY, 'tools/verify-live.py', '--stamp'], cwd=ROOT)
         if r.returncode != 0:
@@ -143,6 +139,11 @@ def main():
                 stop('the stamp commit did not push; push it by hand: git push origin HEAD:main')
     else:
         print('  no screen file in this push; nothing to look at')
+
+    step(5, 'the full gate, after')
+    r = subprocess.run([PY, 'tools/release-check.py'], cwd=ROOT)
+    if r.returncode != 0:
+        stop('the full gate is red on the live release. Read it; a "this release is live" line means Pages has not finished, run python3 tools/release-check.py again.')
 
     print('\n%sLIVE and checked: %s%s' % (GRN, head[:8], OFF))
     return 0
