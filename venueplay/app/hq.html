@@ -572,7 +572,9 @@
   }
 
   /* ---- CSV ---- */
-  function csvCell(v){ v=(v==null?"":String(v)); if(/[",\n\r]/.test(v)){ v='"'+v.replace(/"/g,'""')+'"'; } return v; }
+  /* Same rule as vpbCsvCell in the billing Worker: a cell that starts like a formula gets a
+     leading quote, so a name typed as =HYPERLINK(...) on a signup form opens as text. */
+  function csvCell(v){ v=(v==null?"":String(v)); if(/^[=+\-@\t\r]/.test(v)) v="'"+v; if(/[",\n\r]/.test(v)){ v='"'+v.replace(/"/g,'""')+'"'; } return v; }
   function downloadCSV(filename, rows){
     var csv=rows.map(function(r){ return r.map(csvCell).join(","); }).join("\r\n");
     var blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});

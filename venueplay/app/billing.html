@@ -2265,7 +2265,8 @@
   }
   function downloadDrawLog(){
     if (!dlRows.length){ showMsg("There is nothing to download yet."); return; }
-    function cell(s){ return '"' + String(s == null ? "" : s).replace(/"/g, '""') + '"'; }
+    // A winner's name is typed by the winner. Same formula guard as vpbCsvCell in the Worker.
+    function cell(s){ s = String(s == null ? "" : s); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return '"' + s.replace(/"/g, '""') + '"'; }
     var lines = ["When,What,Number,Winner,Prize,Outcome"];
     dlRows.forEach(function(r){
       lines.push([dlWhen(r.at), r.name, r.number, r.winner, r.prize, r.outcome].map(cell).join(","));

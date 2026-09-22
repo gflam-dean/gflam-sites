@@ -80,6 +80,23 @@ function owner() {
     .then(function (r) { out = r; }, function (e) { out = { threw: String(e) }; });
   drain(); return out;
 }
+/* The two exports the PAGES build themselves, lifted out of the shipped files and run.
+   HQ's venue list is typed by strangers on the signup form; the draws download carries
+   the winner's own typed name. Both used to hand a formula straight to Excel. */
+(function () {
+  var hq = readFile('venueplay/app/hq.html'), m = /function csvCell\(v\)\{[^\n]*\}\n/.exec(hq);
+  var bl = readFile('venueplay/app/billing.html'), n = /    function cell\(s\)\{[^\n]*\}\n/.exec(bl);
+  check('hq.html still has its own csvCell to test', !!m);
+  check('billing.html still has its own draws cell() to test', !!n);
+  if (m) { var hqCell = (0, eval)('(' + m[0].replace(/^function csvCell/, 'function') + ')');
+    check('HQ export: =HYPERLINK is neutralised', /^"?'/.test(hqCell('=HYPERLINK("http://x","hi")')), hqCell('=HYPERLINK("http://x","hi")'));
+    check('HQ export: a plain venue name is untouched', hqCell('Royal Hotel') === 'Royal Hotel'); }
+  if (n) { var dlCell = (0, eval)('(' + n[0].trim().replace(/^function cell/, 'function') + ')');
+    check('draws download: -1 is neutralised', /^"'/.test(dlCell('-1')), dlCell('-1'));
+    check('draws download: @SUM is neutralised', /^"'/.test(dlCell('@SUM(A1)')), dlCell('@SUM(A1)'));
+    check('draws download: a plain winner is untouched', dlCell('Pat Smith') === '"Pat Smith"'); }
+})();
+
 var o1 = owner();
 if (o1 && !o1.error) {
   check('with the read working, a manager with billing:false is restricted', vpbCan(o1, 'billing') === false, o1.perms);

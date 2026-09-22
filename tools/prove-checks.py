@@ -1954,6 +1954,19 @@ MUTATIONS = [
      'one 429 on the permissions read turns a manager with billing:false into somebody who '
      'can change billing and add hosts, because null permissions read as the owner'),
 
+    ('a manager whose permissions cannot be read is refused',
+     'venueplay/app/hq.html',
+     '''  function csvCell(v){ v=(v==null?"":String(v)); if(/^[=+\\-@\\t\\r]/.test(v)) v="'"+v; if(/[",\\n\\r]/.test(v)){''',
+     '''  function csvCell(v){ v=(v==null?"":String(v)); if(/[",\\n\\r]/.test(v)){''',
+     'a venue name typed as =HYPERLINK on the signup form runs as a formula the moment HQ opens '
+     'its venue export in Excel'),
+
+    ('a manager whose permissions cannot be read is refused',
+     'venueplay/app/billing.html',
+     '''    function cell(s){ s = String(s == null ? "" : s); if (/^[=+\\-@\\t\\r]/.test(s)) s = "'" + s; return''',
+     '''    function cell(s){ s = String(s == null ? "" : s); return''',
+     'a raffle winner who typed -1 or @SUM as a name runs it in the venue\'s draws spreadsheet'),
+
     ('a win survives heartbeats and reconnects',
      'venueplay/play.html',
      '      if(_same) return;\n',

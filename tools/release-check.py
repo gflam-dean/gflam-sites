@@ -3079,7 +3079,7 @@ def local_checks(which):
             bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
             n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
             ok('a manager whose permissions cannot be read is refused, never promoted',
-               r.returncode == 0 and n >= 18 and not bad,
+               r.returncode == 0 and n >= 25 and not bad,
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/test-fail-closed-batch.js. Not knowing what somebody may do '
                    'is a reason to ask them to try again, never to let them do everything')

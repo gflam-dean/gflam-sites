@@ -100,7 +100,7 @@
   "counted_by": "lines"
  },
  "tools/test-fail-closed-batch.js": {
-  "checks": 18,
+  "checks": 25,
   "counted_by": "lines"
  },
  "tools/test-free-entry-rules-are-the-states-own.js": {
