@@ -4,7 +4,9 @@ check-data.py -- ask the LIVE database the questions code review cannot answer.
 
     SUPABASE_SERVICE_KEY='...' python3 venueplay-backend/tools/check-data.py
 
-check-schema.py asks whether the columns exist. This asks whether the ROWS make sense:
+tools/check-columns.py asks whether the columns exist (check-schema.py was deleted on 22 Sep 2026: it
+paired the Sydney URL with the Singapore key, every probe was refused, and it printed PASS for
+ever). This asks whether the ROWS make sense:
 a venue nobody can sign in to, a venue that will never be billed, a comp venue that is
 quietly counted as a paying venue, a signing-key table that is empty because the feature was
 never finished. Every one of these reads as fine in the code and only shows up in the data.
