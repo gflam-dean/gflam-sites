@@ -155,37 +155,6 @@ MUTATIONS = [
      'the cap goes back to being a bare number in a slice() that nobody can find when it '
      'needs changing, and nothing can compare it to the page'),
 
-    ('and the billing page offers exactly that many', 'venueplay/app/billing.html',
-     'var VP_MAX_SLIDES = 20;', 'var VP_MAX_SLIDES = 25;',
-     'the page lets a venue add five slides the Worker throws away, and the page says Saved, '
-     'and they are gone on the next reload with nothing to say which'),
-
-    ('a venue over the cap is told, not quietly trimmed',
-     'venueplay-backend/worker/venueplay-api-FULL.js',
-     'if (Array.isArray(b.slides) && b.slides.length > VPB_MAX_SLIDES) {',
-     'if (Array.isArray(b.slides) && b.slides.length > 9999) {',
-     'over the cap is sliced off in silence again, so a venue loses images and is told the '
-     'save worked'),
-
-    # ---- 17 Sep 2026, twelfth pass: the two retention nags. Both run a real tool against the
-    # ---- live database, so the thing worth proving is that the gate reads what the tool says
-    # ---- rather than merely managing to start it. Shortening the promised window is also the
-    # ---- realistic fault: the privacy page gets edited and the sweep does not follow.
-    ("a closed venue's player data is deleted within 90 days",
-     'venueplay-backend/tools/purge-closed-player-data.py',
-     # 30 was not enough: the closest closed venue is five days old, so a thirty day
-     # window still left it waiting and the gate stayed green. The mutation has to be
-     # shorter than the youngest closed venue or it proves nothing.
-     "ap.add_argument('--days', type=int, default=90)",
-     "ap.add_argument('--days', type=int, default=1)",
-     'a venue closed inside the promised window is already overdue, and the gate has to say '
-     'so rather than quietly reporting that the tool ran'),
-
-    ('no closed venue is still holding its players',
-     'venueplay-backend/tools/check-player-retention.py',
-     'PROMISE_DAYS = 90', 'PROMISE_DAYS = 3',
-     'the page promises a shorter window than anything deletes, so we are holding player '
-     'data past what we told the venue, and the gate must go red on the tool exit code'),
 
     # ---- 17 Sep 2026, eleventh pass: the copy checks, and the clock.
     ('nothing claims the bingo cards mark themselves', 'venueplay/index.html',
@@ -2179,8 +2148,8 @@ MUTATIONS = [
      'every gate stayed green)'),
 
     ('a black wall is rebuilt once then reloaded', 'venueplay/tv.html',
-     '      try{ if(navigator.onLine === false) return; }catch(e){}',
-     '',
+     '      try{ if(navigator.onLine === false) return; }catch(e){}\n      try{\n        var last = parseInt(sessionStorage.getItem("vpTvReloadAt")',
+     '      try{\n        var last = parseInt(sessionStorage.getItem("vpTvReloadAt")',
      'an offline screen reloads into a browser error page in front of the room'),
 
     ('a black wall is rebuilt once then reloaded', 'venueplay/tv.html',
@@ -2303,15 +2272,6 @@ MUTATIONS = [
      "      \"\", m.cards == null",
      'the name is not part of what is signed, so a captured join can be re-sent under another name'),
 
-    ('a forged join, claim or leave for another player is dropped', 'venueplay/app/vp-phonekey.js',
-     "        return Promise.resolve({ ok: false, legacy: false, why: \"unsigned message for a keyed pid\" });",
-     "        return Promise.resolve({ ok: true, legacy: true, why: \"\" });",
-     'an unsigned message about a keyed pid is waved through as legacy: the original hole'),
-
-    ("a closed venue's player data is deleted within 90 days", 'venueplay-backend/tools/purge-closed-player-data.py',
-     "    ap = argparse.ArgumentParser()\n",
-     "    print('STOP: cannot reach the database'); sys.exit(1)\n    ap = argparse.ArgumentParser()\n",
-     'the purge tool dies before it looks at anything, and the gate calls that a pass'),
 
     ('after a blip the TV settles on four channels and stops', 'venueplay/tv.html',
      "              var old = c; c = null;\n              try{ client.removeChannel(old); }catch(e){}",
@@ -2495,6 +2455,49 @@ UNPROVABLE = {
 }
 
 MUTATIONS_LIVE = [
+    # MOVED FROM THE LOCAL TABLE 22 Sep 2026: these two checks read production and now run
+    # only in the full gate (audit, 20 Sep 2026).
+    ('a venue over the cap is told, not quietly trimmed',
+     'venueplay-backend/worker/venueplay-api-FULL.js',
+     'if (Array.isArray(b.slides) && b.slides.length > VPB_MAX_SLIDES) {',
+     'if (Array.isArray(b.slides) && b.slides.length > 9999) {',
+     'over the cap is sliced off in silence again, so a venue loses images and is told the '
+     'save worked'),
+
+    # ---- 17 Sep 2026, twelfth pass: the two retention nags. Both run a real tool against the
+    # ---- live database, so the thing worth proving is that the gate reads what the tool says
+    # ---- rather than merely managing to start it. Shortening the promised window is also the
+    # ---- realistic fault: the privacy page gets edited and the sweep does not follow.
+    ("a closed venue's player data is deleted within 90 days",
+     'venueplay-backend/tools/purge-closed-player-data.py',
+     # 30 was not enough: the closest closed venue is five days old, so a thirty day
+     # window still left it waiting and the gate stayed green. The mutation has to be
+     # shorter than the youngest closed venue or it proves nothing.
+     "ap.add_argument('--days', type=int, default=90)",
+     "ap.add_argument('--days', type=int, default=1)",
+     'a venue closed inside the promised window is already overdue, and the gate has to say '
+     'so rather than quietly reporting that the tool ran'),
+    ('and the billing page offers exactly that many', 'venueplay/app/billing.html',
+     'var VP_MAX_SLIDES = 20;', 'var VP_MAX_SLIDES = 25;',
+     'the page lets a venue add five slides the Worker throws away, and the page says Saved, '
+     'and they are gone on the next reload with nothing to say which'),
+
+
+    ('no closed venue is still holding its players',
+     'venueplay-backend/tools/check-player-retention.py',
+     'PROMISE_DAYS = 90', 'PROMISE_DAYS = 3',
+     'the page promises a shorter window than anything deletes, so we are holding player '
+     'data past what we told the venue, and the gate must go red on the tool exit code'),
+    ('a forged join, claim or leave for another player is dropped', 'venueplay/app/vp-phonekey.js',
+     "        return Promise.resolve({ ok: false, legacy: false, why: \"unsigned message for a keyed pid\" });",
+     "        return Promise.resolve({ ok: true, legacy: true, why: \"\" });",
+     'an unsigned message about a keyed pid is waved through as legacy: the original hole'),
+
+    ("a closed venue's player data is deleted within 90 days", 'venueplay-backend/tools/purge-closed-player-data.py',
+     "    ap = argparse.ArgumentParser()\n",
+     "    print('STOP: cannot reach the database'); sys.exit(1)\n    ap = argparse.ArgumentParser()\n",
+     'the purge tool dies before it looks at anything, and the gate calls that a pass'),
+
     # The public-key probe used to cover seven tables picked by hand; the audit of 20 Sep 2026
     # found the members list, the staff table and the signing keys unprobed. It now reads every
     # relation the code names. Narrow the name scan back to one table and the coverage line
@@ -2607,7 +2610,8 @@ def scratch():
     d = tempfile.mkdtemp(prefix='prove-checks-')
     dst = os.path.join(d, 'repo')
     shutil.copytree(ROOT, dst, ignore=shutil.ignore_patterns(
-        '.git', 'node_modules', '*.backup-*', '__pycache__', '*.pyc'))
+        '.git', 'node_modules', '*.backup-*', '__pycache__', '*.pyc',
+        '.claude'))   # 796 MB of session files that nothing here reads (audit, 20 Sep 2026)
     return d, dst
 
 

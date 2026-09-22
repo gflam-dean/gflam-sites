@@ -113,6 +113,7 @@ RED, GRN, YEL, DIM, OFF = '\033[31m', '\033[32m', '\033[33m', '\033[2m', '\033[0
 BROWSER_UA = ('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 '
               '(KHTML, like Gecko) Chrome/124.0 Safari/537.36')
 
+LOCAL_ONLY = '--local' in sys.argv      # set once: the production-reading checks look at it
 passed = failed = 0
 checked_things = 0
 failures = []
@@ -1510,7 +1511,15 @@ def local_checks(which):
        It does NOT reimplement the rule: a second copy of "what counts as closed" is
        exactly how the two would drift apart."""
     tool = os.path.join(ROOT, 'venueplay-backend', 'tools', 'purge-closed-player-data.py')
-    if not os.path.isfile(tool):
+    # PRODUCTION QUESTIONS BELONG IN THE LIVE HALF. This and the retention check below open
+    # ~/.gflam-migrate.env and read the live database with the service key; under --local
+    # (prove-checks runs the local gate once per mutation) that was some 280 production reads
+    # a run, and their answers move with the clock, not the code (audit, 20 Sep 2026). The
+    # jsc retention suite stays local as the proof of the tools' logic.
+    if LOCAL_ONLY:
+        note('a closed venue\'s player data is deleted within 90 days',
+             'SKIPPED under --local: reads production; the full gate asks')
+    elif not os.path.isfile(tool):
         ok('a closed venue\'s player data is deleted within 90 days', False,
            why='purge-closed-player-data.py is missing entirely')
     else:
@@ -2225,7 +2234,10 @@ def local_checks(which):
     # Nothing is overdue yet. The oldest closed venue is 50 days old, so this is green
     # today and red in 40 days unless somebody builds the sweep or changes the page.
     tool = os.path.join(ROOT, 'venueplay-backend', 'tools', 'check-player-retention.py')
-    if os.path.isfile(tool):
+    if LOCAL_ONLY:
+        note('no closed venue is still holding its players',
+             'SKIPPED under --local: reads production; the full gate asks')
+    elif os.path.isfile(tool):
         r = subprocess.run([sys.executable, tool], capture_output=True, text=True, timeout=120)
         out = ((r.stdout or '') + (r.stderr or '')).strip().splitlines()
         ok('no closed venue is still holding its players', r.returncode == 0,
