@@ -195,6 +195,10 @@
   "checks": 11,
   "counted_by": "lines"
  },
+ "tools/test-tv-watchdog-runs.js": {
+  "checks": 12,
+  "counted_by": "lines"
+ },
  "tools/test-two-accounts-one-login.js": {
   "checks": 17,
   "counted_by": "lines"

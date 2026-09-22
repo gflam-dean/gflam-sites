@@ -3000,6 +3000,12 @@ def local_checks(which):
                    'venue\'s raffle, or a draw on Math.random, ships with a green gate otherwise')
 
         for label, fn, title, floor, why in (
+            ('D39. The TV watchdog is run, not word-searched',
+             'test-tv-watchdog-runs.js',
+             'a black wall is rebuilt once then reloaded; offline, a live game and a fresh reload are left alone', 12,
+             'The audit of 20 Sep 2026 replaced the black-screen reload with strikes = 0 and every '
+             'gate stayed green; a venue TV that cannot repair itself is a black screen nobody in '
+             'the room will fix'),
             ('D38. The trivia answers room relays nothing',
              'test-answers-room-relays-nothing.js',
              'a stranger in the answers room reaches no other phone; a game room still relays', 5,

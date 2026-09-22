@@ -2122,6 +2122,28 @@ MUTATIONS = [
      "    cache.set('b:' + gameId, { data: board, until: nowMs + 8000 });",
      'the kept leaderboard forgets which question it was for, and question 8 is answered with question 7'),
 
+    ('a black wall is rebuilt once then reloaded', 'venueplay/tv.html',
+     '        reload("black-screen");                 // the repair did not take, so start clean',
+     '        strikes = 0;',
+     'a black screen is never reloaded (the audit of 20 Sep 2026 made exactly this change and '
+     'every gate stayed green)'),
+
+    ('a black wall is rebuilt once then reloaded', 'venueplay/tv.html',
+     '      try{ if(navigator.onLine === false) return; }catch(e){}',
+     '',
+     'an offline screen reloads into a browser error page in front of the room'),
+
+    ('a black wall is rebuilt once then reloaded', 'venueplay/tv.html',
+     '        if(Date.now() - last < MIN_GAP) return;',
+     '',
+     'a broken page thrashes reloads every twenty seconds'),
+
+    ('a black wall is rebuilt once then reloaded', 'venueplay/tv.html',
+     '      if(!idle()) return !gameLooksFrozen();',
+     '      if(!idle()) return true;',
+     'a game on the wall is proof of life again, so a board frozen since last night sits '
+     'there for ever (the 5 Sep 2026 Mini Bar fault)'),
+
     ('naming a venue you hold picks its account', 'venueplay-backend/worker/venueplay-api-FULL.js',
      "  const totalPlayers = (stripeQty != null && stripeQty > 0 && !pendingReduction) ? stripeQty : localPlayers;",
      "  const totalPlayers = (stripeQty != null && stripeQty > 0) ? stripeQty : localPlayers;",
