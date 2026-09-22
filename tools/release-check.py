@@ -5040,16 +5040,32 @@ def someone_actually_looked_at_a_screen():
             stamp = json.load(f)
     except Exception:
         pass
+    REAL = ('tugun-bowls', 'wellshot-hotel')     # verify-live's REAL_SCREENS; a stamp must name both
     if stamp.get('commit') == here:
         head('Somebody has actually looked at the screens')
-        ok('a real browser has checked the venue screens on this build', True,
-           detail='%s, %s' % (stamp.get('when', ''), ', '.join(stamp.get('venues', []))))
+        # BOTH REAL VENUES, not any stamp for this commit. A run with --only partyplay or a
+        # test slug used to satisfy this after a tv.html change (audit, 20 Sep 2026).
+        seen = set(stamp.get('venues') or [])
+        ok('a real browser has checked the venue screens on this build', all(v in seen for v in REAL),
+           detail='%s, %s' % (stamp.get('when', ''), ', '.join(sorted(seen))),
+           why='the stamp for this commit names %s, not both real venues %s. Run '
+               'python3 tools/verify-live.py --stamp with no --only/--venue' % (sorted(seen) or 'nothing', list(REAL)))
         return
 
     since = stamp.get('commit') or 'HEAD~1'
     try:
-        diff = subprocess.run(['git', '-C', ROOT, 'diff', '--name-only', since, here],
-                              capture_output=True, text=True).stdout.splitlines()
+        r = subprocess.run(['git', '-C', ROOT, 'diff', '--name-only', since, here],
+                           capture_output=True, text=True)
+        diff = r.stdout.splitlines()
+        if r.returncode != 0:
+            # AN UNKNOWN STAMPED COMMIT IS NOT "NOTHING CHANGED". git exits 128 with empty output
+            # and this used to return with no line at all, so a hand-typed or amended-away
+            # stamp switched the check off silently (audit, 20 Sep 2026).
+            head('Somebody has actually looked at the screens')
+            ok('a real browser has checked the venue screens on this build', False,
+               why='the stamped commit %s is not in this clone, so nothing can be compared. '
+                   'Run python3 tools/verify-live.py --stamp' % str(since)[:8])
+            return
     except Exception:
         diff = []
     touched = sorted({f.strip() for f in diff

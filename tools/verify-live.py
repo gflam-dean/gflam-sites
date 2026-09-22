@@ -352,7 +352,11 @@ def deploy_has_landed():
     # and index.html at the directory. Asking for the file name gets a redirect, which
     # read as "could not fetch" and would have failed the guard for the wrong reason.
     for rel in ('venueplay/tv.html', 'venueplay/app/index.html',
-                'venueplay/app/members/host.html'):
+                'venueplay/app/members/host.html',
+                # the four game walls the demo embeds and a venue puts on air
+                'venueplay/app/trivia/screen.html', 'venueplay/app/musical/screen.html',
+                'venueplay/app/raffle/screen.html', 'venueplay/app/members/screen.html',
+                'venueplay/screen-check.html'):
         if not os.path.isfile(os.path.join(ROOT, rel)):
             continue
         path = '/' + rel.split('venueplay/', 1)[1]
@@ -396,6 +400,13 @@ def main():
     ap.add_argument('--stamp', action='store_true',
                     help='on a clean pass, record this commit in .verify-live.json')
     args = ap.parse_args()
+
+    # A STAMP MEANS THE DEFAULT JOB LIST WAS SEEN. --stamp with --only, --venue or --all could
+    # write the stamp after a PartyPlay-only run, or a test slug, after a tv.html change, and
+    # the gate read it as "the venue screens were checked" (audit, 20 Sep 2026).
+    if args.stamp and (args.only or args.venue or args.all):
+        raise SystemExit('--stamp only records a DEFAULT run (both real venues and PartyPlay). '
+                         'Drop --only/--venue/--all, or run without --stamp.')
 
     venues = list(args.venue) or list(REAL_SCREENS)
     if args.all:

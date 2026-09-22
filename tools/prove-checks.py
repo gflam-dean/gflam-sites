@@ -2478,7 +2478,9 @@ UNPROVABLE = {
         '.verify-live.json) and scratch() copies the repo WITHOUT .git, so the check '
         'returns early and never runs here at all. It was seen to fail for real on '
         '17 Sep 2026, red after the abandoned-lobby change to tv.html, green again '
-        'after verify-live.py --stamp. That is the proof it can fail.',
+        'after verify-live.py --stamp. That is the proof it can fail. Two more failure modes '
+        'were proven by hand on 22 Sep 2026: a stamp for HEAD naming only partyplay went red, '
+        'and a stamp naming a commit this clone does not have went red instead of silent.',
     'every file checked is one git tracks':
         'it asks git which files are untracked, and scratch() copies the repo WITHOUT .git, '
         'so here it is a note (SKIPPED), never a pass. In a real checkout it was seen to '
