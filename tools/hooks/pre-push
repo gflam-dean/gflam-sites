@@ -6,11 +6,23 @@
 # this is not a reminder, it is a gate.
 #
 # Install:  bash tools/hooks/install.sh
-# Skip it once, knowing what you are doing:  git push --no-verify
 
 ROOT="$(git rev-parse --show-toplevel)"
 echo
 echo "── pre-push: checking before this goes to a live venue ──"
+
+# THE GATE READS FILES ON DISK, SO THE DISK MUST BE WHAT IS BEING PUSHED. With an edit
+# sitting uncommitted under a served or tested folder, every check below judges a tree
+# that is not in the push (audit, 20 Sep 2026). Commit it or stash it first.
+DIRTY=$(git status --porcelain -- venueplay partyplay venueplay-backend partyplay-backend tools 2>/dev/null | grep -v '^?? .*\.backup-' | head -8)
+if [ -n "$DIRTY" ]; then
+  echo
+  echo "PUSH REFUSED. These files differ from the commit being pushed, so the gate"
+  echo "would be judging a tree that is not going out:"
+  echo "$DIRTY" | sed 's/^/    /'
+  echo "Commit them, or git stash them, then push again."
+  exit 1
+fi
 
 # A Worker whose stamp does not match its own contents would report a build that
 # is not the one running, which is worse than no stamp at all.
@@ -23,8 +35,8 @@ fi
 
 if ! python3 "$ROOT/tools/release-check.py" --local; then
   echo
-  echo "PUSH REFUSED. Fix the above, or push with --no-verify if you are certain."
-  echo "Whatever you do, do not fix it by deleting the check."
+  echo "PUSH REFUSED. Fix the above. Do not fix it by deleting the check, and do not"
+  echo "reach for --no-verify: a red gate is cheaper than a red venue."
   exit 1
 fi
 
