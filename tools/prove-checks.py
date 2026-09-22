@@ -2435,6 +2435,12 @@ UNPROVABLE = {
         'returns early and never runs here at all. It was seen to fail for real on '
         '17 Sep 2026, red after the abandoned-lobby change to tv.html, green again '
         'after verify-live.py --stamp. That is the proof it can fail.',
+    'this release is live':
+        'it compares the files the LAST COMMIT changed (git diff HEAD~1) against what is '
+        'served, and scratch() has no .git, so here it always finds nothing to compare. The '
+        'comparison itself was checked by hand on 22 Sep 2026: nine live pages compared equal '
+        'to the repo through livenorm, and a page with a local edit compared unequal. Not yet '
+        'seen red on a real push; when it is, record the date here.',
 }
 
 MUTATIONS_LIVE = [

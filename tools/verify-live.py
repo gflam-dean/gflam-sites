@@ -342,7 +342,7 @@ def deploy_has_landed():
 
     Returns (ok, [list of files that differ]).
     """
-    import hashlib
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     watched = []
     appdir = os.path.join(ROOT, 'venueplay', 'app')
     for fn in sorted(os.listdir(appdir)):
@@ -362,36 +362,7 @@ def deploy_has_landed():
             path = path[:-len('.html')]
         watched.append((rel, path))
 
-    def normalise(b):
-        """Cloudflare REWRITES HTML on the way out, so live is never byte-identical.
-
-        It obfuscates email addresses: hello@venueplay.com.au becomes an
-        <a class="__cf_email__" data-cfemail="..."> link, and a decode script is
-        injected near the end of the document. Comparing raw bytes therefore reported
-        EVERY html file as stale, for ever, which would have blocked stamping
-        altogether. A check that always fails is no better than one that cannot.
-
-        Flatten both sides to the same shape before comparing. .js is served verbatim
-        and is unaffected.
-        """
-        t = b.decode('utf-8', 'replace')
-        # Match each injected tag through its CLOSING tag, not with [^>]*. The beacon
-        # carries data-cf-beacon='{...json...}', so an attribute-by-attribute pattern
-        # is one stray > away from not matching, and a normaliser that silently stops
-        # matching makes this guard refuse every html file with no explanation.
-        t = re.sub(r'<script[^>]*email-decode[\s\S]*?</script>', '', t)
-        t = re.sub(r'<a href="/cdn-cgi/l/email-protection"[^>]*>.*?</a>', 'EMAIL', t,
-                   flags=re.S)
-        t = re.sub(r'/cdn-cgi/l/email-protection[^"\']*', 'EMAIL', t)
-        t = re.sub(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}', 'EMAIL', t)
-        # Cloudflare injects a Web Analytics beacon too, with a build hash in the URL
-        # that changes on their schedule and not ours. Two separate injections, and
-        # missing either one makes this guard refuse every html file for ever.
-        t = re.sub(r'<script[^>]*cloudflareinsights[\s\S]*?</script>', '', t)
-        # Deleting an injected tag leaves the blank line it sat on, and all three html
-        # files then differed by exactly one empty line. Compare CONTENT, not layout.
-        t = re.sub(r'\s+', ' ', t).strip()
-        return hashlib.sha256(t.encode('utf-8')).hexdigest()
+    from livenorm import normalise   # ONE copy, shared with release-check.py (see tools/livenorm.py)
 
     stale = []
     for rel, path in watched:

@@ -3604,12 +3604,40 @@ def live_matches_local(path_in_repo):
         base, rel = PP, path_in_repo[len('partyplay/'):]
     else:
         return None                       # tools, docs: nothing is served
-    url = base + '/' + rel
+    # THE SAME NORMALISER verify-live uses, or this can never be true: Cloudflare rewrites
+    # every html page on the way out (see tools/livenorm.py), and the .html form of a URL
+    # answers 308, so the file is asked for at the path it is actually served at.
+    sys.path.insert(0, os.path.join(ROOT, 'tools'))
+    from livenorm import normalise, served_path
+    url = base + served_path(path_in_repo)
     status, body, _ = get(url)
     if status != 200:
         return False
-    want = io.open(local, encoding='utf-8').read()
-    return body.strip() == want.strip()
+    want = io.open(local, 'rb').read()
+    return normalise(body.encode('utf-8') if isinstance(body, str) else body) == normalise(want)
+
+
+def release_is_live():
+    """THE FILES THIS COMMIT CHANGED ARE WHAT IS SERVED, on every non-local run.
+
+    pages_live below looks for markers that have been in every build for weeks, so it can
+    only tell "a page" from "not a page"; it cannot tell the new build from the old one. The
+    real comparison, file by file, lived only behind --wait, which the runbook never uses.
+    So after a push the gate said green while the old build was still up (audit, 20 Sep
+    2026). This compares every served file the last commit changed against what is live.
+    """
+    head('This release is live')
+    changed = [f for f in changed_files_since()
+               if f.startswith(('venueplay/', 'partyplay/')) and f.endswith(('.html', '.js'))
+               and '/emails/' not in f and not f.endswith('.test.js')]
+    if not changed:
+        ok('this release is live', True, 'the last commit changed nothing that is served')
+        return
+    stale = [f for f in changed if live_matches_local(f) is False]
+    ok('this release is live', not stale,
+       '%d changed file(s) checked' % len(changed),
+       why='still serving the old build for: ' + ', '.join(stale[:4]) +
+           '. Cloudflare Pages takes three to twenty-five minutes; run again, or --wait')
 
 
 def wait_for_deploy(minutes=30):
@@ -3750,7 +3778,7 @@ def shared_scripts_live(base, folder, url_prefix='/app/'):
 
 
 def pages_live(name, base, table):
-    head('%s pages: is the CURRENT build actually being served%s'
+    head('%s pages: every listed page exists and is a page%s'
          % (name, '' if base in (VP, PP) else '   [%s]' % base))
     for path, marker in sorted(table.items()):
         status, body, final = get(base + path)
@@ -5098,6 +5126,7 @@ def main():
                    why=('; '.join(_prbad[:3]) if _prbad else
                         'the checker could not run: ' + (_pro.strip().splitlines() or [''])[-1][:90]))
 
+            release_is_live()
             pages_live('VenuePlay', VP, VP_PAGES)
             shared_scripts_live(VP, os.path.join(ROOT, 'venueplay', 'app'))
             every_page_is_reachable('VenuePlay', VP, 'venueplay',
