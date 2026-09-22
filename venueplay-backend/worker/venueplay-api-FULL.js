@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '22 Sep 2026, 17:52 · 3fd96d83';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '22 Sep 2026, 18:20 · e00fe77b';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -8481,12 +8481,16 @@ async function vpbNights(request, env, json) {
   if (sessions.length) {
     const ids = sessions.map((x) => encodeURIComponent(x.id)).join(',');
     games = await vpaSelect(env, 'vp_games', 'session_id=in.(' + ids + ')&select=id,session_id,format,status,started_at&order=seq.asc') || [];
-    players = await vpaSelect(env, 'vp_players', 'session_id=in.(' + ids + ')&select=id,session_id') || [];
+    /* PAGED. Up to 22 nights of players in one read stops at a thousand rows without a word, and
+       the headcounts on the Account page are what an owner checks the bill against. */
+    players = await vpaSelectAll(env, 'vp_players', 'session_id=in.(' + ids + ')&select=id,session_id&order=id.asc') || [];
     /* device_id is asked for SEPARATELY, and on purpose. vpaSelect turns any PostgREST refusal
        into an empty list, so naming a column the live database has not been given yet (migration
        39) would have returned no players at all and every night would have read "0 players".
        Split in two, a missing column costs the "came back" figure and nothing else. */
-    seenDevices = await vpaSelect(env, 'vp_players', 'session_id=in.(' + ids + ')&select=session_id,device_id') || [];
+    try {
+      seenDevices = await vpaSelectAll(env, 'vp_players', 'session_id=in.(' + ids + ')&select=session_id,device_id&order=id.asc') || [];
+    } catch (e) { seenDevices = []; }   // a missing column costs the "came back" figure and nothing else, as before
   }
   const headcount = {}, devices = {};
   for (const p of players) headcount[p.session_id] = (headcount[p.session_id] || 0) + 1;
