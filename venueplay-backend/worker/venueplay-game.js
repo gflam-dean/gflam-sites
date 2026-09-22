@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '22 Sep 2026, 17:20 · ca7533e3';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '22 Sep 2026, 17:25 · 2715be02';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -4583,7 +4583,7 @@ async function handleHostAddTime(request, env, json) {
   assertUuid(gameId, 'game_id');
   const seconds = Math.max(1, Math.min(60, parseInt(b.seconds, 10) || 10));
   const [games, tg] = await Promise.all([
-    sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,status,format'),
+    sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,status,format,config'),
     sbGet(env, 'vp_trivia_games', 'game_id=eq.' + enc(gameId) + '&select=current_seq,phase,question_ends_at'),
   ]);
   if (!games.length) return json({ error: 'Game not found' }, 404);
@@ -4594,11 +4594,24 @@ async function handleHostAddTime(request, env, json) {
   const session = await getSession(env, game.session_id);
   await requireStaff(env, authUserId, session.venue_id);            // ENFORCED: staff at the game's venue
   const was = Date.parse(tg[0].question_ends_at) || Date.now();
-  const endsAt = new Date(Math.max(was, Date.now()) + seconds * 1000).toISOString();
+  const nowMs = Date.now();
+  const endsAt = new Date(Math.max(was, nowMs) + seconds * 1000).toISOString();
   const moved = await sbPatchReturning(env, 'vp_trivia_games',
     'game_id=eq.' + enc(gameId) + '&current_seq=eq.' + tg[0].current_seq + '&phase=eq.asking',
     { question_ends_at: endsAt });
   if (!moved || !moved.length) return json({ error: 'That question has already moved on.' }, 409);
+  /* REMEMBER HOW MUCH WAS ADDED. The speed bonus is measured back from the deadline, so a
+     longer deadline used to hand everyone who had ALREADY answered the full bonus (audit,
+     20 Sep 2026: a 125 point answer became 150). The reveal subtracts this and scores against
+     the window the question was actually asked with. Kept on the game's config, per question,
+     so no new column is needed; a game with nothing here scores as it always did. */
+  try {
+    const cfg = game.config || {};
+    const prev = (cfg.time_added && cfg.time_added.seq === tg[0].current_seq) ? (cfg.time_added.ms || 0) : 0;
+    const addedMs = (Date.parse(endsAt) - was);
+    await sbPatch(env, 'vp_games', 'id=eq.' + enc(gameId),
+      { config: Object.assign({}, cfg, { time_added: { seq: tg[0].current_seq, ms: prev + Math.max(0, addedMs) } }) });
+  } catch (e) { /* the extra time is granted either way; only the bonus fairness rides on this */ }
   return json({ ok: true, ends_at: endsAt, seconds });
 }
 
@@ -5285,7 +5298,11 @@ async function handleHostRevealManyTrips(request, env, json, pre) {
   const secs = (cfg.time_limit_s != null) ? cfg.time_limit_s : (q.time_limit_s || 20);
   const speedBonus = cfg.speed_bonus !== false;
   const options = Array.isArray(q.options) ? q.options : [];
-  const endsAtMs = t.question_ends_at ? Date.parse(t.question_ends_at) : 0;
+  /* The bonus is measured against the window the question was ASKED with. Time the host
+     added afterwards (see handleHostAddTime) still lets late answers count, but it must not
+     make an answer given at second ten look like one given at second zero. */
+  let endsAtMs = t.question_ends_at ? Date.parse(t.question_ends_at) : 0;
+  if (endsAtMs && cfg.time_added && cfg.time_added.seq === t.current_seq && cfg.time_added.ms > 0) endsAtMs -= cfg.time_added.ms;
 
   const answers = await sbGet(env, 'vp_trivia_answers',
     'game_id=eq.' + enc(gameId) + '&question_id=eq.' + enc(q.id) +

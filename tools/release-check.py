@@ -2978,6 +2978,11 @@ def local_checks(which):
                    'venue\'s raffle, or a draw on Math.random, ships with a green gate otherwise')
 
         for label, fn, title, floor, why in (
+            ('D37. Time added to a question does not inflate the speed bonus of answers already in',
+             'test-added-time-keeps-the-bonus-honest.js',
+             'an answer at second ten scores 125 whether or not the host adds time afterwards', 8,
+             'The bonus is measured back from the deadline; a moved deadline handed everyone who '
+             'had already answered the full bonus, 125 became 150'),
             ('D36. The venue-name search cannot be used to walk the customer list',
              'test-venue-search-is-limited.js',
              'a screen finding itself is answered, the thirty-first ask a minute is refused', 4,

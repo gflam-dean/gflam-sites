@@ -2104,6 +2104,12 @@ MUTATIONS = [
      "    cache.set('b:' + gameId, { data: board, until: nowMs + 8000 });",
      'the kept leaderboard forgets which question it was for, and question 8 is answered with question 7'),
 
+    ('an answer at second ten scores 125 whether or not the host adds time afterwards', 'venueplay-backend/worker/venueplay-game.js',
+     "  if (endsAtMs && cfg.time_added && cfg.time_added.seq === t.current_seq && cfg.time_added.ms > 0) endsAtMs -= cfg.time_added.ms;",
+     "",
+     'the reveal scores against the moved deadline again: add ten seconds and every answer '
+     'already in gets the full bonus'),
+
     ('a screen finding itself is answered, the thirty-first ask a minute is refused', 'venueplay-backend/worker/venueplay-game.js',
      "    const rl = await rateLimit(env, 'like:ip:' + ipHash, LIKE_MAX_PER_IP, 60);\n    if (!rl.ok)",
      "    const rl = { ok: true };\n    if (!rl.ok)",

@@ -71,6 +71,10 @@
   "checks": 41,
   "counted_by": "lines"
  },
+ "tools/test-added-time-keeps-the-bonus-honest.js": {
+  "checks": 8,
+  "counted_by": "lines"
+ },
  "tools/test-analytics-ignores-robots.js": {
   "checks": 29,
   "counted_by": "lines"
