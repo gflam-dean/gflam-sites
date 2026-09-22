@@ -2978,6 +2978,11 @@ def local_checks(which):
                    'venue\'s raffle, or a draw on Math.random, ships with a green gate otherwise')
 
         for label, fn, title, floor, why in (
+            ('D38. The trivia answers room relays nothing',
+             'test-answers-room-relays-nothing.js',
+             'a stranger in the answers room reaches no other phone; a game room still relays', 5,
+             'A forged ans_ok relayed to every phone was read by the phone with that id pending '
+             'as its own acknowledgement, and the ids were a1, a2, a3'),
             ('D37. Time added to a question does not inflate the speed bonus of answers already in',
              'test-added-time-keeps-the-bonus-honest.js',
              'an answer at second ten scores 125 whether or not the host adds time afterwards', 8,

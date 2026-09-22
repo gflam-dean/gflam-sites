@@ -308,7 +308,8 @@
         if(AR.room || P.gameId!==game) return;
         AR.gameId=game;
         AR.room = VPRoom.connect(VP_GAME_API, "vpa-"+game, "phone", function(m){
-          if(!m || typeof m.t!=="string" || !m.id) return;
+          // Only an acknowledgement, and only one for an answer this phone is waiting on.
+          if(!m || typeof m.t!=="string" || m.t.indexOf("ans_")!==0 || !m.id) return;
           var w=AR.waiting[m.id];
           if(w){ delete AR.waiting[m.id]; w(m.t); }
         }, { onUnavailable: function(){ AR.off=true; AR.room=null; } });
@@ -320,7 +321,7 @@
   function sendAnswer(gameId, i, qseq, endsAt){
     function post(){ return playerPost("/player/answer",{ game_id:gameId, answer_index:i, qseq:qseq }); }
     if(AR.off || !AR.room || AR.gameId!==gameId || !AR.hash || AR.room.state()!=="open") return post();
-    var id="a"+(++AR.n);
+    var id="a"+(++AR.n)+"-"+Math.random().toString(36).slice(2,10);   // not guessable from the counter
     return new Promise(function(resolve){
       var done=false;
       var timer=setTimeout(function(){ if(done) return; done=true; delete AR.waiting[id]; resolve(""); }, ANS_ACK_MS);

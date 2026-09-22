@@ -570,7 +570,9 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     var ids, out=[], seen={};
     if(plId==="all"){ for(var i=0;i<LIB.songs.length;i++){ out.push(LIB.songs[i]); } return out; }
     if(plId==="surprise"){   // a fresh random draw from the whole library each game
-      var pool=LIB.songs.slice(), n=Math.min(50,pool.length);
+      // GAME_SONGS of them, the number the win-rate design is built on. This said 50, so every
+      // Surprise Mix night was shorter and quicker to a full house than every other playlist.
+      var pool=LIB.songs.slice(), n=Math.min(GAME_SONGS,pool.length);
       for(var q=0;q<n;q++){ var idx=cryptoInt(pool.length); out.push(pool[idx]); pool.splice(idx,1); }
       return out;
     }

@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '22 Sep 2026, 17:25 · 2715be02';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '22 Sep 2026, 17:45 · 269b3a03';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -8466,7 +8466,11 @@ export class VenueRoom {
     const pair = new WebSocketPair();
     const client = pair[0], server = pair[1];
     this.state.acceptWebSocket(server, [role]);
-    server.serializeAttachment({ role: role, since: Date.now(), win: 0, n: 0 });
+    /* An ANSWERS room ("vpa-<game>") holds answers and acknowledges each phone alone; it has
+       nothing to relay, so nothing in it is ever relayed. Marked on the socket at connect,
+       because a Durable Object is not told its own name; the Worker passes it (roomConnect). */
+    const answersOnly = /^vpa-/.test(String(url.searchParams.get('room') || ''));
+    server.serializeAttachment({ role: role, since: Date.now(), win: 0, n: 0, ao: answersOnly });
     return new Response(null, { status: 101, webSocket: client });
   }
 
@@ -8501,6 +8505,10 @@ export class VenueRoom {
        picked, and the TV's "answered" ticker is a separate cosmetic message the phone sends
        once the answer is in. */
     if (obj.t === 'ans') return await this.answer(ws, obj, a);
+    /* In an answers room a stranger could otherwise send {t:"ans_ok", id:"a3"} and be relayed
+       to every phone, and the phone with a3 pending would read it as its acknowledgement
+       (audit, 20 Sep 2026). Nothing but an answer has any business here. */
+    if (a.ao) return;
     this.relay(JSON.stringify(obj), ws);
   }
 
@@ -8688,7 +8696,7 @@ async function handleRoomSocket(request, env, json) {
   const role = String(url.searchParams.get('role') || 'phone');
   if (ROOM_ROLES.indexOf(role) < 0) return json({ error: 'bad role' }, 400);
   if (request.headers.get('Upgrade') !== 'websocket') return json({ error: 'expected a websocket' }, 426);
-  return roomStub(env, name).fetch(new Request('https://room/ws?role=' + encodeURIComponent(role), request));
+  return roomStub(env, name).fetch(new Request('https://room/ws?role=' + encodeURIComponent(role) + '&room=' + encodeURIComponent(name), request));
 }
 
 // GET /room/presence?room=vp-XXXXXX  -> {total, tv, host, phone, hq}

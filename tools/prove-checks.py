@@ -2104,6 +2104,22 @@ MUTATIONS = [
      "    cache.set('b:' + gameId, { data: board, until: nowMs + 8000 });",
      'the kept leaderboard forgets which question it was for, and question 8 is answered with question 7'),
 
+    ('a stranger in the answers room reaches no other phone', 'venueplay-backend/worker/venueplay-game.js',
+     "    if (a.ao) return;\n    this.relay(JSON.stringify(obj), ws);",
+     "    this.relay(JSON.stringify(obj), ws);",
+     'the answers room relays again: one stranger can acknowledge, or refuse, every answer in '
+     'the room'),
+
+    ('a stranger in the answers room reaches no other phone', 'venueplay-backend/worker/venueplay-game.js',
+     "    const answersOnly = /^vpa-/.test(String(url.searchParams.get('room') || ''));",
+     "    const answersOnly = false;",
+     'no socket is ever marked as an answers-room socket, so the guard never fires'),
+
+    ('musical-draw.test.js', 'venueplay/app/musical/host.html',
+     "      var pool=LIB.songs.slice(), n=Math.min(GAME_SONGS,pool.length);",
+     "      var pool=LIB.songs.slice(), n=Math.min(50,pool.length);",
+     'Surprise Mix is a 50 song night again while every other playlist is 60, and nothing says so'),
+
     ('bingo-after-the-win.test.js', 'venueplay/app/index.html',
      "    if(p._books[bi]===undefined) p._books[bi]=makeStrip();",
      "    p._books[bi]=makeStrip();",

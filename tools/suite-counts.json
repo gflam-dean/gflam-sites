@@ -79,6 +79,10 @@
   "checks": 29,
   "counted_by": "lines"
  },
+ "tools/test-answers-room-relays-nothing.js": {
+  "checks": 5,
+  "counted_by": "lines"
+ },
  "tools/test-archive-sweep-fails-closed.js": {
   "checks": 7,
   "counted_by": "lines"
@@ -264,7 +268,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/musical/musical-draw.test.js": {
-  "checks": 34,
+  "checks": 37,
   "counted_by": "lines"
  },
  "venueplay-backend/app/musical/musical-win.test.js": {

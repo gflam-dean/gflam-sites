@@ -149,5 +149,22 @@ for (var p = 0; p < packs.length; p++){
        medFlat > med, "median goes " + med + " -> " + medFlat);
 }
 
+/* Surprise Mix draws GAME_SONGS songs like every other night, not a number of its own. It said
+   50 while GAME_SONGS said 60, so a Surprise night ran shorter and reached a full house sooner
+   than the design the page documents (audit, 20 Sep 2026). Run the real function on the real
+   library with cryptoInt stood in. */
+(function () {
+  var fnSongs = grab("songsForPlaylist", html);
+  pass("songsForPlaylist is still in the page", !!fnSongs);
+  if (!fnSongs) return;
+  var LIB = { songs: lib.songs, plById: {}, byId: byId };
+  var cryptoInt = function (n) { return Math.floor(Math.random() * n); };
+  var songsForPlaylist = new Function("LIB", "cryptoInt", fnSongs + "; return songsForPlaylist;")(LIB, cryptoInt);
+  var mix = songsForPlaylist("surprise");
+  pass("Surprise Mix draws GAME_SONGS songs, the same night length as every playlist", mix.length === Math.min(GAME_SONGS, lib.songs.length), mix.length + " drawn, GAME_SONGS is " + GAME_SONGS);
+  var ids = {}; mix.forEach(function (s) { ids[s.id] = 1; });
+  pass("and no song twice", Object.keys(ids).length === mix.length);
+})();
+
 print(bad ? ("  " + bad + " FAILED") : "ALL " + "CHECKS PASSED");
 if (bad) throw new Error(bad + " failed");
