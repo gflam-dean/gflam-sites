@@ -4989,7 +4989,7 @@ def summary(which, ran_live):
     steps = ''
     try:
         md = io.open(os.path.join(ROOT, 'CLAUDE.md'), encoding='utf-8').read()
-        m = re.search(r'## How anything gets deployed\n\n(.*?)\n\n(?=\S)', md, re.S)
+        m = re.search(r'## How anything gets deployed\n\n(.*?)\n\n(?=##)', md, re.S)
         steps = m.group(1) if m else ''
     except Exception:
         steps = ''

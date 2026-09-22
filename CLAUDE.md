@@ -6,6 +6,12 @@ on VenuePlay, so a bad push is a bad night in a room full of people.
 
 ## How anything gets deployed
 
+Commit, then `python3 tools/release.py`. It walks the six steps below in order and
+stops at the first that is not true: clean tree and stamped Workers, push (the hook
+gates it), deploy any Worker in the push and prove it by /health, wait until Pages
+serves every changed file, the full gate, then verify-live --stamp if a screen file
+changed. `--plan` says what it would do. The steps, for when one has to be done by hand:
+
     1. python3 tools/release-check.py      BEFORE the push
     2. push to main                        the site deploys itself; Workers do not
     3. run any new SQL migration FIRST, then deploy the Worker that needs it
