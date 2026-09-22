@@ -2122,6 +2122,17 @@ MUTATIONS = [
      "    cache.set('b:' + gameId, { data: board, until: nowMs + 8000 });",
      'the kept leaderboard forgets which question it was for, and question 8 is answered with question 7'),
 
+    ('staff of the Royal are offered the Royal and nothing else', 'venueplay/app/index.html',
+     "        mine = (vs||[]).filter(function(v){ return ids[v.id]; });",
+     "        mine = (vs||[]).filter(function(v){ return ids[v.id] || true; });",
+     'a host at one pub is offered every venue on the platform (the audit of 20 Sep 2026 made '
+     'exactly this change and the gate stayed green)'),
+
+    ('staff of the Royal are offered the Royal and nothing else', 'venueplay/app/index.html',
+     "                        if(cur.founding_id && v.founding_id===cur.founding_id) return true;",
+     "                        return true;",
+     'an admin viewing as one venue is offered the whole customer list on the host console'),
+
     ('no gate check has disappeared', 'tools/release-check.py',
      "    ok('no ternary picks between two identical strings', not tern_hits,",
      "    (lambda *a, **k: None)('no ternary picks between two identical strings', not tern_hits,",

@@ -73,18 +73,11 @@ CHECKS.append((
 ))
 
 # --- only HQ may enumerate everything --------------------------------------------------
-for page in ["app/index.html", "app/billing.html", "app/settings.html"]:
-    try:
-        src = read(page)
-    except OSError:
-        continue
-    # a bare select of all venues with no filtering anywhere near it
-    bad = re.search(r'from\("vp_venues"\)\s*\.select\([^)]*\)\s*(?!.*(eq|in|filter|match))', src)
-    CHECKS.append((
-        "%s does not enumerate every venue" % page,
-        not bad,
-        "Only app/hq.html should ever list the whole database.",
-    ))
+# RETIRED 22 Sep 2026. Three checks here scanned app/index.html, app/billing.html and
+# app/settings.html for from("vp_venues").select(...), and none of those pages contains
+# that call (every venue read lives in vp-session.js and hq.html), so all three read nothing
+# and passed for ever. The picker's scoping is now RUN, not word-searched:
+# tools/test-venue-picker-scopes.js (gate D40) lifts showVenuePick and drives it.
 
 print("Checking venues cannot see each other's data\n")
 bad = 0

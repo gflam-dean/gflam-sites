@@ -194,6 +194,7 @@
   "sms-hook-secrets.test.js",
   "song-excluded-acts.test.js",
   "songs know what year they are",
+  "staff of the Royal are offered the Royal and nothing else; an admin sees one account, never the database",
   "stripe-idempotency.test.js",
   "suspend-not-before-auth.test.js",
   "sweep-sessions.test.js",

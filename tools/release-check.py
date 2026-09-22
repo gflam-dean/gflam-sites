@@ -3028,6 +3028,11 @@ def local_checks(which):
                    'venue\'s raffle, or a draw on Math.random, ships with a green gate otherwise')
 
         for label, fn, title, floor, why in (
+            ('D40. The venue picker is run: staff see their venues, an admin sees one account',
+             'test-venue-picker-scopes.js',
+             'staff of the Royal are offered the Royal and nothing else; an admin sees one account, never the database', 9,
+             'The scoping check proved itself by the string ids[v.id] existing, and the audit of '
+             '20 Sep 2026 changed the filter to ids[v.id] || true with the gate green'),
             ('D39. The TV watchdog is run, not word-searched',
              'test-tv-watchdog-runs.js',
              'a black wall is rebuilt once then reloaded; offline, a live game and a fresh reload are left alone', 12,
