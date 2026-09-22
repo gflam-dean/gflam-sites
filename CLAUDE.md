@@ -51,6 +51,13 @@ model that is, so read them before "fixing" a red line:**
   removed checks ON PURPOSE, run it with `--update` and commit the ledger: that
   diff is the record that it was a decision. Never edit the ledger to make a red
   line go away.
+- The gate's OWN labels are pinned in `tools/gate-labels.json` (section Z of a
+  `--local` run). A check that disappears is red. A new check is red until it has
+  a row in `tools/prove-checks.py` (a mutation, or a reason in UNPROVABLE) AND
+  the ledger is rewritten with `python3 tools/release-check.py --local
+  --update-labels` and committed. So: write the check, write its mutation, prove
+  it (`python3 tools/prove-checks.py "<label>"`), then update the ledger. A
+  green line nobody has ever seen red is not a check.
 - `tools/check-worker-guards.py`: every `/host/` route must reach `verifyHostJwt`
   and a venue staff check, `Math.random` is banned in both Workers, and a read of a
   table that outgrows 1,000 rows must be one row, limited, or `sbGetAll`.

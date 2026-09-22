@@ -116,6 +116,7 @@ BROWSER_UA = ('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.3
 passed = failed = 0
 checked_things = 0
 failures = []
+labels_seen = []        # every label ok() judged, for the label ledger (see labels_ledger)
 
 
 def ok(label, good, detail='', why=''):
@@ -124,6 +125,7 @@ def ok(label, good, detail='', why=''):
     something did go wrong."""
     global passed, failed, checked_things
     checked_things += 1
+    labels_seen.append(label)
     if good:
         passed += 1
         print('  %sok%s   %s %s%s%s' % (GRN, OFF, label.ljust(52), DIM, detail, OFF))
@@ -4863,6 +4865,57 @@ def cannot_change_a_party_without_the_key():
            why='HTTP %s %s' % (status, body[:50]))
 
 
+def labels_ledger(update):
+    """EVERY LOCAL CHECK IS ON A LIST, AND EVERY NEW ONE HAS A MUTATION.
+
+    prove-checks' "98% proven" counted labels it knew about; nothing noticed a label that
+    quietly disappeared from this file, and a new check could be added with no mutation
+    and read as covered (audit, 20 Sep 2026). The same shape as the suite ledger: the
+    labels a --local run judges are pinned in tools/gate-labels.json. A label that
+    vanishes is red. A label that appears is red until it has an entry in prove-checks
+    (a MUTATIONS row, or a reason in UNPROVABLE) AND the ledger is rewritten with
+    --update-labels, so the diff is the record that a check was added on purpose.
+    """
+    head('Z. The gate itself: no check disappears, none is added unproven')
+    ledger_path = os.path.join(ROOT, 'tools', 'gate-labels.json')
+    seen = sorted(set(labels_seen))
+    # Every string constant in prove-checks, read with ast so quotes inside a label and
+    # implicit concatenation are handled the way Python handles them, not by a regex.
+    lits = set()
+    try:
+        tree = ast.parse(io.open(os.path.join(ROOT, 'tools', 'prove-checks.py'), encoding='utf-8').read())
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Constant) and isinstance(node.value, str) and len(node.value) >= 12:
+                lits.add(node.value)
+    except Exception:
+        pass
+    def covered(label):
+        # prove-checks names a label by its prefix (counts in a label move).
+        return any(label.startswith(x) for x in lits)
+    if update or not os.path.isfile(ledger_path):
+        with io.open(ledger_path, 'w', encoding='utf-8') as fh:
+            json.dump({'labels': seen}, fh, indent=1)
+            fh.write('\n')
+        print('  %swrote %s: %d labels%s' % (DIM, short(ledger_path), len(seen), OFF))
+    try:
+        pinned = set(json.load(io.open(ledger_path, encoding='utf-8')).get('labels', []))
+    except Exception:
+        pinned = set()
+    gone = sorted(pinned - set(seen))
+    new = sorted(set(seen) - pinned)
+    unproven = [l for l in seen if not covered(l)]
+    ok('no gate check has disappeared', not gone,
+       '%d labels pinned' % len(pinned),
+       why='missing this run: ' + '; '.join(gone[:4]) + '. If it was removed on purpose, '
+           'run with --update-labels and commit tools/gate-labels.json')
+    ok('no gate check was added unseen', not new,
+       why='new this run: ' + '; '.join(new[:4]) + '. Add a mutation to tools/prove-checks.py, '
+           'then run with --update-labels and commit tools/gate-labels.json')
+    ok('every local check has a mutation or a written reason it cannot', not unproven,
+       '%d checked against prove-checks' % len(seen),
+       why='no prove-checks entry starts these: ' + '; '.join(unproven[:4]))
+
+
 def summary(which, ran_live):
     print('\n' + '=' * 66)
     if failed:
@@ -5166,6 +5219,8 @@ def main():
         # anyway: it is worth knowing they are still sound.
         public_key_cannot_reach_data()
 
+    if local_only:
+        labels_ledger('--update-labels' in args)
     sys.exit(summary(which, not local_only))
 
 

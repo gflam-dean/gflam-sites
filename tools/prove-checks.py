@@ -2122,6 +2122,39 @@ MUTATIONS = [
      "    cache.set('b:' + gameId, { data: board, until: nowMs + 8000 });",
      'the kept leaderboard forgets which question it was for, and question 8 is answered with question 7'),
 
+    ('no gate check has disappeared', 'tools/release-check.py',
+     "    ok('no ternary picks between two identical strings', not tern_hits,",
+     "    (lambda *a, **k: None)('no ternary picks between two identical strings', not tern_hits,",
+     'a check is deleted from the gate and nothing says so (the audit of 20 Sep 2026: '
+     'nothing stops the gate itself being edited green)'),
+
+    ('no gate check was added unseen', 'tools/release-check.py',
+     "    ok('no ternary picks between two identical strings', not tern_hits,",
+     "    ok('no ternary picks between two identical strings, and never will', not tern_hits,",
+     'a check appears under a new name with no mutation behind it and reads as covered'),
+
+    ('and the check can see every sbGetAll call in venueplay-game.js', 'venueplay-backend/worker/venueplay-game.js',
+     "  const qs = await sbGetAll(env, 'vp_questions',",
+     "  const qs = await sbGetAll(env, ('vp_questions'),",
+     'a paged read written with a computed table name is invisible to the order check and '
+     'still passes; this is the line that has to notice the count no longer agrees'),
+
+    ('and the check can see every vpaSelectAll call in venueplay-api-FULL.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  const players = await vpaSelectAll(env, 'vp_players',",
+     "  const players = await vpaSelectAll(env, ('vp_players'),",
+     'same as above, on the billing Worker'),
+
+    ('it discloses members lists, the browser identifier and the hashed address', 'venueplay/privacy.html',
+     '<p><strong>Members lists.</strong>',
+     '<p><strong>Club lists.</strong>',
+     'the privacy policy stops naming the members list, which holds the names of people '
+     'who never opened VenuePlay'),
+
+    ('it does not promise that a venue can remove a player itself', 'venueplay/privacy.html',
+     'or contact us at the address in section 14.</p>',
+     'or contact us at the address in section 14. For players, the venue can remove them from its list.</p>',
+     'the policy promises a button no screen has'),
+
     ('a console can put the game back on the wall', 'venueplay/app/musical/host.html',
      '    _lastReassert = now;\n    reassertToTv();\n  }',
      '    _lastReassert = now;\n  }',
@@ -2435,6 +2468,11 @@ UNPROVABLE = {
         'returns early and never runs here at all. It was seen to fail for real on '
         '17 Sep 2026, red after the abandoned-lobby change to tv.html, green again '
         'after verify-live.py --stamp. That is the proof it can fail.',
+    'every file checked is one git tracks':
+        'it asks git which files are untracked, and scratch() copies the repo WITHOUT .git, '
+        'so here it is a note (SKIPPED), never a pass. In a real checkout it was seen to '
+        'work on 22 Sep 2026: a scratch _phone-preview.html left in venueplay/ was named '
+        'as untracked and excluded from the scan.',
     'this release is live':
         'it compares the files the LAST COMMIT changed (git diff HEAD~1) against what is '
         'served, and scratch() has no .git, so here it always finds nothing to compare. The '
@@ -2539,7 +2577,15 @@ def gate(only_label, root, live=False):
         s = line.strip()
         if s.startswith('FAIL ') and only_label in s:
             return True
+    # A GATE THAT CRASHED DID NOT STAY GREEN. A mutation that breaks the gate's own syntax
+    # (found 22 Sep 2026) used to print "stayed green while ...", which is the one thing
+    # it did not do. Say what happened, so the mutation gets fixed rather than the check.
+    if 'checks in total' not in out and 'checks passed' not in out:
+        gate.crashed = (out.strip().splitlines() or ['no output'])[-1][:120]
     return False
+
+
+gate.crashed = ''
 
 
 def scratch():
@@ -2583,7 +2629,9 @@ def main():
             os.remove(dest)
             (proven, broken) = (proven + 1, broken) if caught else (proven, broken + 1)
             print(('  %sok%s   %s %s%s%s' % (GRN, OFF, label.ljust(52), DIM, why, OFF)) if caught
-                  else ('  %sBLIND%s %s stayed green while %s' % (RED, OFF, label.ljust(52), why)))
+                  else ('  %sBLIND%s %s %s' % (RED, OFF, label.ljust(52),
+                        ('the GATE CRASHED under this mutation, fix the mutation: ' + gate.crashed) if gate.crashed else ('stayed green while ' + why))))
+            gate.crashed = ''
             continue
         if find == '<<EMPTY>>':
             after = ''
@@ -2626,7 +2674,9 @@ def main():
             print('  %sok%s   %s %s%s%s' % (GRN, OFF, label.ljust(52), DIM, why, OFF))
         else:
             broken += 1
-            print('  %sBLIND%s %s stayed green while %s' % (RED, OFF, label.ljust(52), why))
+            print('  %sBLIND%s %s %s' % (RED, OFF, label.ljust(52),
+                  ('the GATE CRASHED under this mutation, fix the mutation: ' + gate.crashed) if gate.crashed else ('stayed green while ' + why)))
+        gate.crashed = ''
 
     # WHAT THE GATE RUNS THAT NOBODY HAS BROKEN YET. Asked of the gate rather
     # than counted from the list above, because a list of the checks is a second
