@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '22 Sep 2026, 16:51 · e8fd0a3e';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '22 Sep 2026, 17:52 · 3fd96d83';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -5689,7 +5689,14 @@ async function vpbAccountSummary(request, env, json) {
      cancelling venues do not count. */
   const localPlayers = venues.reduce((n, v) => v.cancelling ? n : n + v.players, 0);
   const stripeQty = info && Number.isFinite(Number(info.quantity)) ? Number(info.quantity) : null;
-  const totalPlayers = (stripeQty != null && stripeQty > 0) ? stripeQty : localPlayers;
+  /* EXCEPT AFTER A MONTHLY REDUCTION. The decrease path lowers the Stripe quantity at once
+     (so the NEXT invoice is right) while capacity holds until renewal, so for the rest of
+     this cycle Stripe's quantity is next month's number, not this month's. The page said
+     "this month: 60 players, $150" to a venue that had paid for 80 and still had 80 (audit,
+     20 Sep 2026). While a monthly reduction is pending, this month is what they hold. */
+  const pendingReduction = o.account.plan !== 'annual'
+    && venues.some((v) => !v.cancelling && v.pending != null && v.pending < v.players);
+  const totalPlayers = (stripeQty != null && stripeQty > 0 && !pendingReduction) ? stripeQty : localPlayers;
   // What Stripe will actually bill next: the scheduled reduction where one is pending, else
   // capacity. On annual plans the renewal charge is the yearly figure, not the monthly one.
   const billedPlayers = venues.reduce((n, v) => v.cancelling ? n : n + ((v.pending != null) ? v.pending : v.players), 0);

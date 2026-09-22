@@ -2104,6 +2104,12 @@ MUTATIONS = [
      "    cache.set('b:' + gameId, { data: board, until: nowMs + 8000 });",
      'the kept leaderboard forgets which question it was for, and question 8 is answered with question 7'),
 
+    ('naming a venue you hold picks its account', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  const totalPlayers = (stripeQty != null && stripeQty > 0 && !pendingReduction) ? stripeQty : localPlayers;",
+     "  const totalPlayers = (stripeQty != null && stripeQty > 0) ? stripeQty : localPlayers;",
+     'after a monthly reduction the page says "this month: 60 players" to a venue that paid '
+     'for 80 and still has 80'),
+
     ('a stranger in the answers room reaches no other phone', 'venueplay-backend/worker/venueplay-game.js',
      "    if (a.ao) return;\n    this.relay(JSON.stringify(obj), ws);",
      "    this.relay(JSON.stringify(obj), ws);",

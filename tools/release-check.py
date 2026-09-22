@@ -3000,7 +3000,7 @@ def local_checks(which):
              'one\'s questions came round again in round two of the same night'),
             ('D34. A login with venues on two accounts can reach both, and nobody else\'s',
              'test-two-accounts-one-login.js',
-             'naming a venue you hold picks its account; naming one you do not changes nothing', 14,
+             'naming a venue you hold picks its account; naming one you do not changes nothing', 17,
              'A publican who signed up two pubs separately was shown the older account on every '
              'call with no way to the other; the fix must not let a stranger\'s venue id in'),
             ('D33. Add from library deals from the whole bank, never a parked question',

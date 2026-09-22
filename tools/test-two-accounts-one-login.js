@@ -65,6 +65,20 @@ function names(o) { return (o.venues || []).map(function (v) { return v.name; })
   var r3 = await vpbAccountSummary(as(PAT), ENV, J);
   check('a one-account login is told of no other accounts', r3.status === 200 && r3.body.other_accounts.length === 0, r3.body.other_accounts);
 
+  print('the headline after a monthly reduction');
+  /* Sam drops the Royal from 80 to 60 on a monthly plan. Capacity holds until renewal and the
+     Stripe quantity is lowered at once for the NEXT invoice. This month he has, and paid for, 80. */
+  world();
+  DB.vp_venues[0].pending_players = 60;                       // the Royal: 80 now, 60 from renewal
+  vpbSubItem = async function () { return { itemId: 'si_1', quantity: 110, periodEnd: 0 }; };   // Royal 60 + Anchor 50: Stripe already says next month
+  var r4 = await vpbAccountSummary(as(SAM), ENV, J);
+  check('this month still counts the 80 he holds and paid for, not next month\'s 60', r4.status === 200 && r4.body.total_players === 130, r4.body.total_players);
+  check('and the reduction is shown as pending on the venue', r4.body.venues[0].pending === 60 && r4.body.venues[0].players === 80, JSON.stringify(r4.body.venues[0]));
+  DB.vp_venues[0].pending_players = null;
+  var r5 = await vpbAccountSummary(as(SAM), ENV, J);
+  check('with nothing pending, Stripe\'s quantity is the headline as before', r5.status === 200 && r5.body.total_players === 110, r5.body.total_players);
+  vpbSubItem = async function () { return null; };
+
   print('HQ View as is unchanged');
   var o5 = await vpbRequireOwner(as(ADMIN, { 'X-VP-Venue': NEWER }), ENV);
   check('an admin naming a venue acts on it as an admin', !o5.error && o5.account.id === 'f41' && o5.actingAsAdmin === true, o5);

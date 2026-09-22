@@ -196,7 +196,7 @@
   "counted_by": "lines"
  },
  "tools/test-two-accounts-one-login.js": {
-  "checks": 14,
+  "checks": 17,
   "counted_by": "lines"
  },
  "tools/test-undo-cancel-rolls-back.js": {
