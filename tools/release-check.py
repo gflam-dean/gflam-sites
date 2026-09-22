@@ -4983,32 +4983,25 @@ def summary(which, ran_live):
   above can be skipped. If it touched a game, it cannot.""")
 
     print('%sTHE RELEASE, IN ORDER%s' % (YEL, OFF))
-    print("""  Every one of these exists because skipping it cost something real.
-
-    1. Run this tool BEFORE the push. A red gate is cheaper than a red venue.
-    2. Push. The site deploys itself from main; Workers and SQL do not.
-    3. Run any new migration FIRST, then paste the Worker that needs it.
-       A Worker writing to a table that is not there fails silently.
-    4. Paste each Worker into the Worker whose NAME matches the file. On
-       31 Aug the game Worker went into the billing slot: checkout answered
-       404 and nobody could sign up until it was noticed.
-    5. RUN THIS TOOL AGAIN, AFTER. This is the step that gets skipped and it
-       is the one that catches a bad paste. It asks each Worker its own name
-       and compares its build stamp to the repo, so a file that went to the
-       wrong URL, or a paste that did not land, is named in one line.
-    6. If the release touched a game, do the live list above. No tool here
-       can open a browser or hear a pub.
-
-    7. NOT EVERY TIME, but before a release that matters and after adding a
-       check: python3 tools/prove-checks.py
-
-       It breaks the thing each check watches, in a scratch copy, and requires
-       that check to go red. A check that cannot fail is worse than no check,
-       because the green line says the job was done. It takes about fifteen
-       minutes and it has already caught a live one: the win fanfare was silent
-       on all eight screens for half a day because a shared script was called
-       and never loaded, and the check that should have said so skipped any
-       script a page did not load at all.
+    # THE SAME SIX STEPS CLAUDE.md GIVES, read from CLAUDE.md so the two cannot drift. This
+    # block used to say "paste the Worker" for eleven days after pasting ended, and "about
+    # fifteen minutes" for a prove run that takes two hours (audit, 20 Sep 2026).
+    steps = ''
+    try:
+        md = io.open(os.path.join(ROOT, 'CLAUDE.md'), encoding='utf-8').read()
+        m = re.search(r'## How anything gets deployed\n\n(.*?)\n\n(?=\S)', md, re.S)
+        steps = m.group(1) if m else ''
+    except Exception:
+        steps = ''
+    if steps:
+        print(steps)
+    else:
+        print('  (could not read the steps out of CLAUDE.md; open it, section "How anything gets deployed")')
+    print("""
+    And, before a release that matters and after adding a check:
+    python3 tools/prove-checks.py "<label>" for the check you touched (a minute),
+    the whole table for a release (about two hours). A check that cannot fail is
+    worse than no check, because the green line says the job was done.
 
   Nothing is deployed until step 5 says so. "I pasted it" is not evidence;
   /health answering with the right build is.""")

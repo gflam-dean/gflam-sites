@@ -84,9 +84,9 @@ at worker.js:1:1". Nothing reached a venue, because the stamp check and then
 Cloudflare both refused it, but a file opened for a human to read can come back
 changed.
 
-`git push origin HEAD:main`. This worktree is detached on purpose, because `main`
-is checked out in another one, so plain `git push origin main` pushes a stale ref
-and is rejected.
+`git push origin HEAD:main`. Say HEAD:main every time: this checkout has been both
+a detached worktree and a plain `main` checkout at different times, and HEAD:main
+pushes what is here whichever it is.
 
 ## The rule behind most of the faults in this codebase
 
@@ -181,11 +181,13 @@ claims from **the host**, never the bar. All four are enforced by the gate, in
 
 ## Where things are
 
-    tools/release-check.py            the gate, 213 local checks. --live is a
-                                      SEPARATE set of 126, not a superset: no
-                                      label appears in both
-    tools/prove-checks.py             breaks each one on purpose, 213 of 213
-                                      local, 270 mutations. --live proves the
+    tools/release-check.py            the gate. Run it for the count; a number
+                                      written here was wrong within a week. --live
+                                      is a SEPARATE set, not a superset: no label
+                                      appears in both; tools/gate-labels.json pins
+                                      the local ones
+    tools/prove-checks.py             breaks each one on purpose (--list for the
+                                      count, and it must say all apply). --live proves the
                                       handful of live checks whose subject is a
                                       file in this repo; the rest are questions
                                       about production and cannot be proven
