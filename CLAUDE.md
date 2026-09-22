@@ -64,6 +64,11 @@ model that is, so read them before "fixing" a red line:**
   --update-labels` and committed. So: write the check, write its mutation, prove
   it (`python3 tools/prove-checks.py "<label>"`), then update the ledger. A
   green line nobody has ever seen red is not a check.
+- `venueplay-backend/supabase/RLS-BASELINE.json` is the live database's locks written
+  down (RLS per table, every policy, every grant to anon/authenticated, views, definer
+  functions). The full gate compares live against it. Changed a policy on purpose? Run
+  `python3 venueplay-backend/tools/dump-rls-baseline.py` and commit the file: the diff is
+  the record. It needs `python3 -m pip install --user pg8000` (there is no psql here).
 - `tools/check-worker-guards.py`: every `/host/` route must reach `verifyHostJwt`
   and a venue staff check, `Math.random` is banned in both Workers, and a read of a
   table that outgrows 1,000 rows must be one row, limited, or `sbGetAll`.

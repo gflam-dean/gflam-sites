@@ -5254,6 +5254,24 @@ def main():
         # and the production database, so these are the same either way. Run them
         # anyway: it is worth knowing they are still sound.
         public_key_cannot_reach_data()
+        # THE LOCKS THEMSELVES, not only what the public key can reach. RLS on every table, every
+        # policy, every grant to anon/authenticated, every view and SECURITY DEFINER function
+        # those roles can call: written down in venueplay-backend/supabase/RLS-BASELINE.json
+        # and compared against live here, so a policy dropped by hand in the dashboard is red
+        # (audit, 20 Sep 2026: none of it existed in any file).
+        head('The database locks match the baseline in the repo')
+        t = os.path.join(ROOT, 'venueplay-backend', 'tools', 'dump-rls-baseline.py')
+        if not os.path.isfile(t):
+            ok('the RLS baseline tool exists', False, why='venueplay-backend/tools/dump-rls-baseline.py is missing')
+        else:
+            r = subprocess.run([sys.executable, t, '--check'], capture_output=True, text=True, timeout=180, cwd=ROOT)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l for l in out.splitlines() if l.startswith('FAIL') or l.startswith('STOP')]
+            ok('row security, policies, grants and definer functions match RLS-BASELINE.json',
+               r.returncode == 0 and out.startswith('PASS') and not bad,
+               detail=(out.splitlines()[0][6:120] if out.startswith('PASS') else ''),
+               why=('; '.join(b[:110] for b in bad[:3]) if bad else out[-160:]) +
+                   '. If the live change was deliberate, rerun the tool without --check and commit the baseline')
 
     if local_only:
         labels_ledger('--update-labels' in args)

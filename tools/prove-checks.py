@@ -2477,6 +2477,14 @@ UNPROVABLE = {
 }
 
 MUTATIONS_LIVE = [
+    # A policy vanishes from the BASELINE (the reading end), so live no longer matches it.
+    ('row security, policies, grants and definer functions match RLS-BASELINE.json',
+     'venueplay-backend/supabase/RLS-BASELINE.json',
+     '<<ANY:"vp_members.>>',
+     '"vp_members_gone.',
+     'a policy on the members list can be dropped in the dashboard and no file in the repo, '
+     'and no check, would know'),
+
     # MOVED FROM THE LOCAL TABLE 22 Sep 2026: these two checks read production and now run
     # only in the full gate (audit, 20 Sep 2026).
     ('a venue over the cap is told, not quietly trimmed',
