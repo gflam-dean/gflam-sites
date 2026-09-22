@@ -2104,6 +2104,12 @@ MUTATIONS = [
      "    cache.set('b:' + gameId, { data: board, until: nowMs + 8000 });",
      'the kept leaderboard forgets which question it was for, and question 8 is answered with question 7'),
 
+    ('a draw record cannot be rewritten by a stale tablet', 'venueplay-backend/worker/venueplay-game.js',
+     "  if (!isRedraw && raffle.allow_redraw && prior.length && maxSeq > 0) {",
+     "  if (false) {",
+     'a raffle draw whose reply was lost is retried and mints a SECOND round: two winners for '
+     'one prize, the first ticket stuck at drawn for ever'),
+
     ('naming a venue you hold picks its account', 'venueplay-backend/worker/venueplay-api-FULL.js',
      "    if (held) chosen = held;",
      "    if (held) chosen = venues[0];",

@@ -3033,7 +3033,7 @@ def local_checks(which):
              'game needs no licence anywhere and has no prize limit'),
             ('D17. The record of a draw says what the draw did, not what the console says',
              'test-draws-keep-an-honest-record.js',
-             'a draw record cannot be rewritten by a stale tablet, a repeat tap or a reload', 18,
+             'a draw record cannot be rewritten by a stale tablet, a repeat tap or a reload', 24,
              'A members jackpot recorded against the wrong member, or a claimed raffle prize '
              'rewritten to no-show with a second ticket drawn, in a regulated game of chance'),
             ('D16. A Stripe event that failed is run again, not waved away',

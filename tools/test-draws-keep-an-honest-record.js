@@ -116,6 +116,34 @@ var DECIDE = new Function('g', HOSTPAGE.slice(a, bEnd) + '\nreturn { stillLive: 
   NOWMS += 60000;
   var n2 = await handleHostDraw({}, ENV, json);     // the same redraw again: a retry of a lost reply
   show('but not twice: a repeat does not draw a third ticket', n2.status === 409 && DB.vp_raffle_results.length === 3, 'status ' + n2.status + ', ' + DB.vp_raffle_results.length + ' rows');
+
+  print('raffle: a plain draw whose reply was lost comes back with the SAME round');
+  /* The console aborts a slow /host/draw and tries again. Round n1 (the redraw above) is still
+     waiting on its winner, so the retry must hand that round back, not mint a fourth ticket
+     and leave n1's ticket stuck at drawn for ever. */
+  NOWMS += 16000;
+  BODY = { game_id: GAME, prize: 'Bar voucher', prize_type: 'other' };
+  var again = await handleHostDraw({}, ENV, json);
+  show('the retry is answered with the round still waiting', again.status === 200 && again.body.seq === n1.body.seq && again.body.tickets[0] === n1.body.tickets[0] && again.body.resumed === true, JSON.stringify(again.body));
+  show('and no new ticket was drawn', DB.vp_raffle_results.length === 3, DB.vp_raffle_results.length + ' rows');
+  var ev = (DB.__events || []).filter(function (e) { return e.type === 'raffle.winner'; }).pop();
+  show('the wall is shown that same winner again', !!ev && ev.payload.seq === n1.body.seq && ev.payload.resumed === true, JSON.stringify(ev && ev.payload));
+  BODY = { game_id: GAME, seq: n1.body.seq, outcome: 'claimed' };
+  await handleDrawResolve({}, ENV, json);
+  NOWMS += 16000;
+  BODY = { game_id: GAME, prize: 'Bar voucher', prize_type: 'other' };
+  var next = await handleHostDraw({}, ENV, json);
+  show('once it is claimed, the next draw is a real new round', next.status === 200 && next.body.seq === n1.body.seq + 1 && !next.body.resumed && DB.vp_raffle_results.length === 4, 'seq ' + (next.body && next.body.seq) + ', ' + DB.vp_raffle_results.length + ' rows');
+
+  print('raffle with no redraw: every draw is a new round, as it always was');
+  var GAME2 = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2';
+  DB.vp_games.push({ id: GAME2, session_id: SESSION, seq: 2, format: 'raffle', status: 'running', config: { leading_zeros: true, spin_seconds: 4 } });
+  DB.vp_raffle_games.push({ game_id: GAME2, range_min: 1, range_max: 500, draws_count: 1, allow_redraw: false, time_to_claim_seconds: 0 });
+  BODY = { game_id: GAME2, prize: 'Meat tray', prize_type: 'other' };
+  var p1 = await handleHostDraw({}, ENV, json);
+  NOWMS += 16000;
+  var p2 = await handleHostDraw({}, ENV, json);
+  show('two draws, two rounds, nothing waited on', p1.status === 200 && p2.status === 200 && p2.body.seq === p1.body.seq + 1 && !p2.body.resumed, 'seqs ' + (p1.body && p1.body.seq) + ' then ' + (p2.body && p2.body.seq));
   finished = true;
 })().catch(function (e) { print('  FAIL the test itself threw: ' + e + '\n' + e.stack); bad++; });
 drainMicrotasks();

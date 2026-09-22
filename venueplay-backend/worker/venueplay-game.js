@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '22 Sep 2026, 16:22 · 08622488';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '22 Sep 2026, 17:03 · 5d2c3ab5';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -3227,12 +3227,40 @@ async function handleHostDraw(request, env, json) {
   }
 
   // Numbers already drawn in this raffle (ANY outcome) are never drawn again.
-  const prior = await sbGet(env, 'vp_raffle_results', 'game_id=eq.' + enc(gameId) + '&select=ticket_number,seq,drawn_at&order=seq.desc');
+  const prior = await sbGet(env, 'vp_raffle_results', 'game_id=eq.' + enc(gameId) + '&select=ticket_number,seq,drawn_at,outcome,prize_text,prize_type&order=seq.desc');
   const drawn = {};
   let maxSeq = 0;
   for (let i = 0; i < prior.length; i++) {
     if (prior[i].ticket_number != null) drawn[prior[i].ticket_number] = true;
     if (prior[i].seq != null && prior[i].seq > maxSeq) maxSeq = prior[i].seq;
+  }
+
+  /* A ROUND STILL WAITING ON ITS WINNER IS THE ROUND. In a raffle that allows a redraw the
+     console cannot draw again until the last round is claimed or redrawn, so a plain draw
+     arriving while one is still 'drawn' can only be a retry whose first reply was lost (the
+     console aborts a slow call and tries again). This used to mint a NEW round: two rows,
+     the first ticket stuck at 'drawn' for ever, the second announced on the wall. Found by
+     the audit of 20 Sep 2026. Now the same round is handed back and shown again. A raffle
+     with no redraw never resolves its rounds, so 'drawn' is final there and the next draw
+     is a real one. */
+  if (!isRedraw && raffle.allow_redraw && prior.length && maxSeq > 0) {
+    const open = prior.filter((r) => r.seq === maxSeq);
+    if (open.length && open.every((r) => String(r.outcome || 'drawn') === 'drawn')) {
+      const tickets = open.map((r) => r.ticket_number).filter((n) => n != null);
+      const cfg0 = game.config || {};
+      const pad0 = (cfg0.leading_zeros !== false) ? String(Math.max(max, 1)).length : 1;
+      await emitEvent(env, session, 'raffle.winner', {
+        game_id: gameId, seq: maxSeq, tickets: tickets,
+        prize: open[0].prize_text || null, prize_type: open[0].prize_type || null,
+        allow_redraw: raffle.allow_redraw, time_to_present: raffle.time_to_claim_seconds,
+        range_min: min, range_max: max, pad: pad0, redraw: false, resumed: true,
+      }, actorRef(staff));
+      return json({
+        game_id: gameId, seq: maxSeq, tickets: tickets, pad: pad0, resumed: true,
+        allow_redraw: raffle.allow_redraw, time_to_present: raffle.time_to_claim_seconds,
+        prize: open[0].prize_text || null, prize_type: open[0].prize_type || null,
+      });
+    }
   }
 
   // Double-tap guard, sized to the SPIN. The TV animates a draw for the spin length the host

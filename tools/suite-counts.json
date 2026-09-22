@@ -96,7 +96,7 @@
   "counted_by": "lines"
  },
  "tools/test-draws-keep-an-honest-record.js": {
-  "checks": 19,
+  "checks": 24,
   "counted_by": "lines"
  },
  "tools/test-fail-closed-batch.js": {
