@@ -857,6 +857,24 @@ MUTATIONS = [
      'Thanks — that helps the venue',
      'an em dash reaches player-facing copy through a shared script'),
 
+    ('no em dashes in copy',
+     'venueplay/emails/welcome.html',
+     'Welcome to VenuePlay.</h1>',
+     'Welcome to VenuePlay — your first night is close.</h1>',
+     'an em dash in the first email a paying customer reads, which no rule used to read at all'),
+
+    ('never "roster" in copy',
+     'venueplay/emails/welcome.html',
+     'Welcome to VenuePlay.</h1>',
+     'Welcome to VenuePlay. Upload your roster to get started.</h1>',
+     'the word Dean banned from every screen ships in the welcome email'),
+
+    ('a winner is sent to the host, never the bar',
+     'venueplay/app/vp-feedback.js',
+     "Thanks, that helps the venue",
+     "Thanks, collect your prize from the bar",
+     'a shared script sends a winner to the bar and the .html-only rule cannot see it'),
+
     ('never "the ACT"',
      'venueplay/app/vp-gaming.js',
      "name: 'ACT'", "name: 'the ACT'",
@@ -2392,6 +2410,16 @@ UNPROVABLE = {
 }
 
 MUTATIONS_LIVE = [
+    # The public-key probe used to cover seven tables picked by hand; the audit of 20 Sep 2026
+    # found the members list, the staff table and the signing keys unprobed. It now reads every
+    # relation the code names. Narrow the name scan back to one table and the coverage line
+    # has to go red, or the probe can quietly shrink again.
+    ('the probe covered every relation the code names',
+     'tools/release-check.py',
+     "    name_re = re.compile(r'\\b(vp_[a-z0-9_]+|pp_[a-z0-9_]+|v_vp_[a-z0-9_]+|venueplay_[a-z0-9_]+)\\b')",
+     "    name_re = re.compile(r'\\b(vp_venues)\\b')",
+     'the probe is back to a handful of tables and a new table with an open grant is never asked'),
+
     # Shrink the keep window and parties that finished days ago are suddenly overdue, with
     # their guests' nicknames and email addresses still sitting there. The tool reads the
     # number out of the Worker on purpose, so this proves that too.

@@ -2268,9 +2268,20 @@ def local_checks(which):
              # In markup a bare word is copy. In code "roster" is a table name, a
              # route and a variable, and those stay: only prose counts.
              ('never "roster" in copy', r'>[^<>]{0,60}\broster\b', r'\broster\b')]
+    # THE EMAILS ARE COPY TOO. The file list above drops every emails directory (their
+    # templates carry {{tags}} the script parser chokes on), and so the four house rules
+    # never read a single email a customer is sent. The audit of 20 Sep 2026 appended
+    # "Upload your roster" and an em dash to the welcome email and the gate stayed green.
+    copy_files = list(files)
+    for top in ('venueplay', 'partyplay'):
+        ed = os.path.join(ROOT, top, 'emails')
+        if os.path.isdir(ed):
+            for fn in sorted(os.listdir(ed)):
+                if fn.endswith('.html'):
+                    copy_files.append(os.path.join(ed, fn))
     for label, pat, jspat in rules:
         hits = []
-        for f in files:
+        for f in copy_files:
             if f.endswith('.html'):
                 text, p2 = copy_text(f), pat
             elif f.endswith('.js'):
@@ -2319,13 +2330,24 @@ def local_checks(which):
     claimed at the bar, the member has to be present, and that is the venue's
     own practice rather than ours to overrule. If that ever changes it is a
     decision to make here, not an oversight to tidy."""
+    # IN .js AND THE EMAILS AS WELL, and "bar staff" or "the bar" in any phrasing, not only
+    # "at the bar" / "to the bar": the audit of 20 Sep 2026 wrote "collect your prize from
+    # the bar" into a shared .js widget and the rule, .html and two prepositions only, stayed
+    # green. Members pages stay exempt, as above.
     bar_hits = []
-    for f in files:
-        if not f.endswith('.html') or '/members/' in f.replace('\\', '/'):
+    for f in copy_files:
+        if '/members/' in f.replace('\\', '/'):
             continue
-        for m in re.finditer(r'[^<>]{0,70}\b(?:at|to) the bar\b[^<>]{0,40}', copy_text(f), re.I):
+        if f.endswith('.html'):
+            text = copy_text(f)
+        elif f.endswith('.js'):
+            text = js_prose(f)
+        else:
+            continue
+        for m in re.finditer(r'[^<>\n]{0,70}\bbar(?: staff)?\b[^<>\n]{0,40}', text, re.I):
             line = m.group(0)
-            if re.search(r'\b(claim|collect|show|present|winner|prize|jackpot)\b', line, re.I):
+            if re.search(r'\b(claim|collect|show|present|winner|prize|jackpot)\b', line, re.I) \
+               and not re.search(r'\b(bar tab|bar voucher|bar\s*-?\s*tab)\b', line, re.I):
                 bar_hits.append('%s: "%s"' % (short(f), line.strip()[:60]))
     ok('a winner is sent to the host, never the bar', not bar_hits,
        why='; '.join(bar_hits[:3]))
@@ -4063,9 +4085,35 @@ def public_key_cannot_reach_data():
        'HTTP %s' % reachable,
        why='the probe never asked, so every result below would be meaningless')
 
-    for t in ('vp_venues', 'vp_players', 'vp_sessions', 'vp_captures',
-              'pp_licences', 'pp_admins', 'vp_games'):
+    # EVERY TABLE AND VIEW THE CODE NAMES, not seven picked by hand. The audit of 20 Sep 2026
+    # found the members list, the staff table, the signing keys and every view unprobed. The
+    # names come from the shipped code, so a table added tomorrow is probed tomorrow. A name
+    # that is not a relation (a function, a constraint, an image file) answers "not found" and
+    # is skipped; that is neither a leak nor a refusal.
+    names = set(['vp_venues', 'vp_players', 'vp_sessions', 'vp_captures', 'pp_licences', 'pp_admins', 'vp_games'])
+    name_re = re.compile(r'\b(vp_[a-z0-9_]+|pp_[a-z0-9_]+|v_vp_[a-z0-9_]+|venueplay_[a-z0-9_]+)\b')
+    for top in ('venueplay', 'venueplay-backend', 'partyplay', 'partyplay-backend'):
+        for d, _, fs in os.walk(os.path.join(ROOT, top)):
+            if 'node_modules' in d or '.git' in d:
+                continue
+            for f in fs:
+                if not (f.endswith('.js') or f.endswith('.html')) or f.endswith('.test.js'):
+                    continue
+                try:
+                    names.update(name_re.findall(io.open(os.path.join(d, f), encoding='utf-8', errors='ignore').read()))
+                except Exception:
+                    pass
+    skipped, probed = [], 0
+    for t in sorted(names):
         status, body, _ = get(url + '/rest/v1/' + t + '?select=*&limit=1', headers=h)
+        try:
+            d0 = json.loads(body)
+        except Exception:
+            d0 = None
+        if isinstance(d0, dict) and (d0.get('code') in ('42P01', 'PGRST205', 'PGRST200') or status == 404):
+            skipped.append(t)
+            continue
+        probed += 1
         # FOUR ANSWERS, and only two of them are good:
         #   a list with rows   -> the table is READABLE. This is the leak.
         #   an empty list      -> reachable, RLS returned nothing. Good.
@@ -4086,6 +4134,9 @@ def public_key_cannot_reach_data():
         except Exception:
             note = 'the probe could not ask: unreadable answer, HTTP %s' % status
         ok('cannot READ %s' % t, good, note if good else '', why=note)
+    ok('the probe covered every relation the code names', probed >= 30,
+       '%d probed, %d names were not relations' % (probed, len(skipped)),
+       why='fewer than thirty relations answered, so the name scan or the probe is broken')
 
     for t in ('vp_venues', 'pp_licences', 'pp_admins'):
         status, body = post(url + '/rest/v1/' + t, {}, h)

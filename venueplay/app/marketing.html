@@ -142,6 +142,29 @@
   function money(c){ return "$"+Math.round((c||0)/100).toLocaleString("en-AU"); }
   function niceDay(d){ var p=String(d||"").split("-"); if(p.length!==3) return ""; var mo=["January","February","March","April","May","June","July","August","September","October","November","December"]; return Number(p[2])+" "+mo[Number(p[1])-1]+" "+p[0]; }
 
+  /* VIEWED FROM HQ: say so, and say whose. This page sends X-VP-Venue when an admin arrives
+     from View as, and the gate's rule is that any page doing that names the venue on screen,
+     or an admin acts on the wrong account with nothing to tell them. Same banner as billing. */
+  (function viewingAsBanner(){
+    var imp = null;
+    try { imp = JSON.parse(localStorage.getItem("vpImpersonate") || "null"); } catch (e) {}
+    if (!imp || !imp.id || document.getElementById("vpImpBar")) return;
+    var bar = document.createElement("div");
+    bar.id = "vpImpBar";
+    bar.style.cssText = "position:sticky;top:0;z-index:60;background:rgba(255,194,75,.12);" +
+      "border-bottom:1px solid rgba(255,194,75,.35);color:#FFC24B;font-size:12.5px;font-weight:600;" +
+      "padding:9px 16px;display:flex;align-items:center;gap:10px;font-family:'Manrope',system-ui,sans-serif";
+    bar.innerHTML = '<span>Marketing numbers for <b>' + esc(imp.name || "this venue") +
+      '</b>, viewed from VenuePlay Admin</span>' +
+      '<a id="vpImpBack" style="margin-left:auto;color:#FFC24B;text-decoration:underline;' +
+      'cursor:pointer;font-weight:700">Back to VenuePlay Admin</a>';
+    document.body.insertBefore(bar, document.body.firstChild);
+    document.getElementById("vpImpBack").addEventListener("click", function(){
+      try { localStorage.removeItem("vpImpersonate"); } catch (e) {}
+      window.location.href = "hq.html";
+    });
+  })();
+
   var DATA=null, CUR=null;
   function pickStats(){ if(!DATA) return null; var id=$("venuePick").value; if(!id||id==="all") return DATA.stats.total;
     return DATA.stats.venues.filter(function(v){ return v.venue_id===id; })[0] || DATA.stats.total; }
