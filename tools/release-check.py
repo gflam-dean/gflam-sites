@@ -3040,6 +3040,11 @@ def local_checks(which):
                    'venue\'s raffle, or a draw on Math.random, ships with a green gate otherwise')
 
         for label, fn, title, floor, why in (
+            ('D43. A player bills once they have shown life, not when a phone opened the join page',
+             'test-a-player-bills-once-alive.js',
+             'the phones that stamped played_at are the players; with no stamp anywhere the old count stands', 10,
+             'Broadcast bingo billed every joined row, so a stranger with the join code could '
+             'inflate a venue\'s head count from anywhere (Dean\'s rule, 22 Sep 2026)'),
             ('D42. A removed host loses the screen key, and the screens pick up the new one on their own',
              'test-screen-key-rotates.js',
              'a screen refetches the key on an unknown kid and every five minutes; a console mints after a rotation', 11,

@@ -245,6 +245,8 @@
   // vp_questions at all (RLS). Must match the deployed venueplay-game Worker URL.
   var VP_GAME_API='https://venueplay-game.dean-tindale.workers.dev';
   function readApi(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((d&&d.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }
+  var _alive=false;
+  function sayAlive(){ if(_alive || !P.token || /[?&]demo=1/.test(location.search)) return; _alive=true; try{ playerPost("/player/alive",{}).catch(function(){}); }catch(e){} }   // holding a question: billable (migration 87)
   function playerPost(path, body){ var h={ "Content-Type":"application/json" }; if(P.token) h["X-Player-Token"]=P.token; return fetch(VP_GAME_API+path,{ method:"POST", headers:h, body:JSON.stringify(body||{}) }).then(readApi); }
   function playerGet(path){ var h={}; if(P.token) h["X-Player-Token"]=P.token; return fetch(VP_GAME_API+path,{ headers:h }).then(readApi); }
 
@@ -665,7 +667,7 @@
       P.q=null; P.ended=false; P.total=0; P.rank=0; P.playersCount=0;
       if(P.joined) showWait("The quiz is starting. Your questions will pop up here.");
     }
-    else if(m.t==="question"){
+    else if(m.t==="question"){ sayAlive();
       if(!P.joined) return;
       /* A CATCH-UP AIMED AT SOMEBODY ELSE. The host replays whatever is on to any phone
          that announces itself, because a backgrounded tab comes back to nothing. That

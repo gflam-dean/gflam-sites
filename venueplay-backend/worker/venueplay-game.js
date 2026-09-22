@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '22 Sep 2026, 17:45 · 269b3a03';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '23 Sep 2026, 00:09 · 02232f9b';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -270,6 +270,7 @@ export default {
       if (method === 'POST' && path === '/player/claim')       return await handlePlayerClaim(request, env, json);
       if (method === 'POST' && path === '/player/answer')      return await handlePlayerAnswer(request, env, json);
       if (method === 'GET'  && path === '/player/score')       return await handlePlayerScore(request, env, json);
+      if (method === 'POST' && path === '/player/alive')       return await handlePlayerAlive(request, env, json);
       if (method === 'POST' && path === '/host/claim/resolve') return await handleClaimResolve(request, env, json);
       if (method === 'GET'  && path === '/snapshot')           return await handleSnapshot(request, env, json);
       return json({ error: 'not found' }, 404);
@@ -5823,6 +5824,21 @@ async function handlePlayerAnswerEightTrips(request, env, json, pre) {
  * key), so this is how it learns its score after a reveal. Correctness is computed
  * server-side and only exists here once the host has revealed (is_correct is null before).
  */
+/* THE PHONE IS IN THE GAME. Called once, the moment a phone holds a card or a question, and
+   stamps vp_players.played_at. That stamp is what makes a row a billable player (migration
+   87): a phone that only loaded the join page never sends it. Never fails the phone: if the
+   column is not there yet the answer is still ok, and billing falls back to the old count. */
+async function handlePlayerAlive(request, env, json) {
+  const player = await verifyPlayerToken(request, env);           // ENFORCED: valid player token
+  try {
+    await sbPatch(env, 'vp_players', 'id=eq.' + enc(player.id) + '&played_at=is.null',
+      { played_at: new Date().toISOString() });
+    return json({ ok: true });
+  } catch (e) {
+    return json({ ok: true, recorded: false });
+  }
+}
+
 async function handlePlayerScore(request, env, json) {
   const player = await verifyPlayerToken(request, env);           // ENFORCED: valid player token
   const url = new URL(request.url);
@@ -6601,6 +6617,16 @@ async function playerIdsWhoPlayed(env, sessionId) {
     const answers = await sbGetAll(env, 'vp_trivia_answers',
       'game_id=in.(' + ids + ')&select=player_id&order=id.asc');
     for (const a of answers) if (a && a.player_id) played.add(a.player_id);
+    /* AND THE PHONES THAT SAID SO. Since migration 87 a phone stamps played_at the moment it
+       holds a card or a question (/player/alive), which is the only trace broadcast bingo
+       leaves on the server. Dean, 22 Sep 2026: a player bills once they have shown life.
+       Tolerant of the column not being there yet: then this adds nothing and the old rules
+       stand. */
+    try {
+      const alive = await sbGetAll(env, 'vp_players',
+        'session_id=eq.' + enc(sessionId) + '&played_at=not.is.null&kicked=eq.false&select=id&order=id.asc');
+      for (const p of alive) if (p && p.id) played.add(p.id);
+    } catch (e) { /* column absent, or a read failure: the cards and answers above still count */ }
 
     /* BROADCAST BINGO LEAVES NO PER-PLAYER TRACE, AND THIS FUNCTION MADE IT FREE.
        vp_cards is written only inside /host/game and the musical starter. The bingo

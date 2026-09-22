@@ -2091,6 +2091,22 @@ MUTATIONS = [
      "    cache.set('b:' + gameId, { data: board, until: nowMs + 8000 });",
      'the kept leaderboard forgets which question it was for, and question 8 is answered with question 7'),
 
+    ('the phones that stamped played_at are the players', 'venueplay-backend/worker/venueplay-game.js',
+     "      for (const p of alive) if (p && p.id) played.add(p.id);",
+     "",
+     'the stamp is read and thrown away: broadcast bingo bills every phone that opened the join page again'),
+
+    ('the phones that stamped played_at are the players', 'venueplay-backend/worker/venueplay-game.js',
+     "    await sbPatch(env, 'vp_players', 'id=eq.' + enc(player.id) + '&played_at=is.null',",
+     "    await sbPatch(env, 'vp_players', 'session_id=eq.' + enc(player.session_id) + '&played_at=is.null',",
+     'one phone saying it is in the game stamps every phone in the session, phantoms included'),
+
+    ('the phones that stamped played_at are the players', 'venueplay/play.html',
+     "  function renderCards(){\n    sayAlive();",
+     "  function renderCards(){",
+     'the bingo phone never says it is in the game, so a bingo night falls back to billing '
+     'every phone that opened the page, which is the fault this closes'),
+
     ('a screen refetches the key on an unknown kid', 'venueplay/app/vp-sign.js',
      "        if (!S._keyRefresh) S._keyRefresh = setInterval(function () { attempt(); }, KEY_REFRESH_MS);",
      "",

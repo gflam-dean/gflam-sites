@@ -95,20 +95,20 @@ var P = { joined: true, pid: 'pid-me', ended: true, q: null };
 function renderQuestion(m) { rendered.push(m); }
 var body = phone.match(/else if\(m\.t==="question"\)\{([\s\S]*?)\n    \}/);
 if (!body) throw new Error('cannot find the question handler on the phone');
-var handle = new Function('m', 'P', 'renderQuestion',
-  'if(false){}' + 'else if(m.t==="question"){' + body[1] + '\n}');
+var handle = new Function('m', 'P', 'renderQuestion', 'sayAlive',
+  'if(false){}' + 'else if(m.t==="question"){' + body[1] + '\n}');   // sayAlive: the phone's in-the-game stamp (migration 87), a no-op here
 
-rendered = []; handle({ t: 'question', text: 'q' }, P, renderQuestion);
+rendered = []; handle({ t: 'question', text: 'q' }, P, renderQuestion, function () {});
 ok(rendered.length === 1, 'a normal broadcast still renders for everybody');
 
-rendered = []; handle({ t: 'question', text: 'q', to: 'pid-me' }, P, renderQuestion);
+rendered = []; handle({ t: 'question', text: 'q', to: 'pid-me' }, P, renderQuestion, function () {});
 ok(rendered.length === 1, 'a catch-up addressed to me renders');
 
-rendered = []; handle({ t: 'question', text: 'q', to: 'pid-someone-else' }, P, renderQuestion);
+rendered = []; handle({ t: 'question', text: 'q', to: 'pid-someone-else' }, P, renderQuestion, function () {});
 ok(rendered.length === 0,
    'A CATCH-UP FOR SOMEBODY ELSE MUST NOT RENDER, or one reconnect wipes the room');
 
-rendered = []; P.joined = false; handle({ t: 'question', text: 'q' }, P, renderQuestion);
+rendered = []; P.joined = false; handle({ t: 'question', text: 'q' }, P, renderQuestion, function () {});
 ok(rendered.length === 0, 'and somebody who has not joined still gets nothing');
 
 print('');

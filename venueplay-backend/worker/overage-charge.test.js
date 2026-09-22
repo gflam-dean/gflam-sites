@@ -68,6 +68,10 @@ function sbGet(env, table, query) {
   if (m) rows = rows.filter(function (r) { return String(r[m[1]]) === decodeURIComponent(m[2]); });
   var inn = /(?:^|&)game_id=in\.\(([^)]*)\)/.exec(query);
   if (inn) { var ids = inn[1].split(","); rows = rows.filter(function (r) { return ids.indexOf(String(r.game_id)) !== -1; }); }
+  // played_at=not.is.null and kicked=eq.false, since migration 87: a fake that ignored them
+  // made every phone that opened the page look alive (22 Sep 2026).
+  if (/(?:^|&)played_at=not\.is\.null/.test(query)) rows = rows.filter(function (r) { return r.played_at != null; });
+  if (/(?:^|&)kicked=eq\.false/.test(query)) rows = rows.filter(function (r) { return !r.kicked; });
   return Promise.resolve(rows.map(function (r) { return Object.assign({}, r); }));
 }
 function sbGetAll(env, table, query) { return sbGet(env, table, query); }
@@ -374,6 +378,17 @@ scenario("an account that pays by invoice, 30 day terms, PO reference", function
 });
 
 /* 9. WHO GETS COUNTED. */
+scenario("broadcast bingo: five phones opened the page, three said they were in the game", function () {
+  /* No vp_cards at all (the bingo console deals over the air), so before migration 87 every
+     one of the five was billed. Three stamped played_at from the card screen. */
+  var w = night({ players: 5 }); w.tables.vp_cards = []; reset(w);
+  w.tables.vp_players[0].played_at = "2026-09-11T10:00:00Z"; w.tables.vp_players[1].played_at = "2026-09-11T10:00:00Z"; w.tables.vp_players[2].played_at = "2026-09-11T10:01:00Z";
+  return run(mkSession({ approvedCount: 5 }), "alive").then(function () {
+    var b = item()[0] && item()[0].body;
+    pass("billed 2 over (3 alive, cap 1), not 4", !!b && b.quantity === "2", JSON.stringify(b));
+  });
+});
+
 scenario("five phones opened the page, two played", function () {
   var w = night({ players: 5 }); w.tables.vp_cards = [{ game_id: GAMEID, player_id: "p0" }, { game_id: GAMEID, player_id: "p1" }]; reset(w);
   return run(mkSession({ approvedCount: 5 }), "played").then(function () {

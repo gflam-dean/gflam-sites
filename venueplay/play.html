@@ -756,7 +756,12 @@
     for(var i=0;i<P.cards.length;i++) k+="|"+P.cards[i].cardNo;
     return k;
   }
+  // Once, the first time this phone holds a card: tell the server it is in the game. That
+  // stamp is what makes it a billable player (migration 87). Fire and forget; never blocks.
+  var _alive=false;
+  function sayAlive(){ if(_alive || !P.token || /[?&]demo=1/.test(location.search)) return; _alive=true; try{ playerPost("/player/alive",{}).catch(function(){}); }catch(e){} }
   function renderCards(){
+    sayAlive();
     autoLayoutForHand();   // six tickets stacked on a phone is a scroll, not a game
     if(structureKey()===P.builtKey){ paintCards(); return; }
     buildCards();

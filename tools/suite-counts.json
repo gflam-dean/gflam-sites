@@ -63,6 +63,10 @@
   "checks": 12,
   "counted_by": "lines"
  },
+ "tools/test-a-player-bills-once-alive.js": {
+  "checks": 10,
+  "counted_by": "lines"
+ },
  "tools/test-abandoned-lobby.js": {
   "checks": 18,
   "counted_by": "lines"
@@ -428,7 +432,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/overage-charge.test.js": {
-  "checks": 102,
+  "checks": 104,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/owner-only-routes.test.js": {

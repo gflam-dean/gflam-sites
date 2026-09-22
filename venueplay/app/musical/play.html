@@ -510,7 +510,10 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     setMsg("Caught up. Every song that has played is marked on your card.","");
   }
 
+  var _alive=false;
+  function sayAlive(){ if(_alive || !P.token || /[?&]demo=1/.test(location.search)) return; _alive=true; try{ playerPost("/player/alive",{}).catch(function(){}); }catch(e){} }   // in the game with a card: billable (migration 87)
   function renderCard(){
+    sayAlive();
     $("cardName").textContent=P.name;
     $("cardPat").textContent=PATTERN_NAMES[P.pattern]||P.pattern;
     renderPrizeStrip();

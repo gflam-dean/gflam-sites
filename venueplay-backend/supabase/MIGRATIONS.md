@@ -127,3 +127,8 @@ correct and the database is the thing that disagrees with it.
 `vp_host_staff()` (the staff check behind every one-trip game function) with the same function plus one line,
 `and s.role in (owner, manager, host)`. Run BEFORE deploying the Workers that read `notify_email`. The previous
 function is at the bottom of the file, commented, to paste back.
+
+`venueplay-87-played-at.sql`: adds `vp_players.played_at`, stamped once by `/player/alive` the moment a phone
+holds a card or a question. Billing and the overage count treat a row with it as a player who showed life
+(Dean's rule, 22 Sep 2026); a session where no row carries it is counted the old way. The Worker tolerates the
+column being absent, so the order does not matter here; run it when convenient. Rollback at the bottom.
