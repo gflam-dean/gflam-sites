@@ -38,9 +38,10 @@ print('The contact form has limits');
 var sentMail;
 fetch = function (url, o) { if (/resend/.test(String(url))) sentMail++; return Promise.resolve({ ok: true,
   json: function () { return Promise.resolve({}); }, text: function () { return Promise.resolve('{}'); } }); };
-function contact(body) {
+function contact(body, ip) {
   sentMail = 0; var out = null;
-  var req = { json: function () { return Promise.resolve(body); }, text: function () { return Promise.resolve(JSON.stringify(body)); } };
+  var req = { json: function () { return Promise.resolve(body); }, text: function () { return Promise.resolve(JSON.stringify(body)); },
+              headers: { get: function (k) { return k.toLowerCase() === 'cf-connecting-ip' ? (ip || '203.0.113.9') : ''; } } };
   handleContact(req, { RESEND_API_KEY: 'k' }, J).then(function (r) { out = r; }, function (e) { out = { threw: String(e) }; });
   drain(); return { out: out, sent: sentMail };
 }
@@ -54,6 +55,20 @@ c = contact({ name: 'Sam', email: 'sam@@pub', message: 'hi' });
 check('a malformed email is refused', c.sent === 0 && c.out.status === 400, c);
 c = contact({ name: 'Bot', email: 'b@x.com', message: 'buy pills', website: 'http://spam' });
 check('a filled honeypot is told ok and NOTHING is sent', c.sent === 0 && c.out.status === 200, c);
+
+/* THE THROTTLE ITSELF, not only the size caps. A script hitting /contact repeatedly from one
+   IP used to send one email per request, unlimited, on the same Resend key as every invoice
+   and welcome email (audit, 20 Sep 2026). */
+var flood = 0, blocked429 = 0, i;
+for (i = 0; i < 8; i++) {
+  var f = contact({ name: 'Sam', email: 'sam' + i + '@pub.com.au', message: 'msg ' + i }, '198.51.100.7');
+  if (f.sent === 1) flood++;
+  if (f.out && f.out.status === 429) blocked429++;
+}
+check('the sixth message from one network in the hour still sends', flood === 6, flood);
+check('the seventh and eighth are refused with 429, nothing sent for either', blocked429 === 2 && flood === 6, { flood: flood, blocked429: blocked429 });
+var other = contact({ name: 'Pat', email: 'pat@otherpub.com.au', message: 'hi from a different network' }, '192.0.2.44');
+check('a DIFFERENT network is not caught by somebody else\'s flood', other.sent === 1 && other.out.status === 200, other);
 
 print('');
 print('Unreadable permissions are not owner permissions');

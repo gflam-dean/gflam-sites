@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '23 Sep 2026, 00:09 · 02232f9b';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '23 Sep 2026, 09:57 · e3c95e19';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -2247,12 +2247,16 @@ async function handleScreen(request, env, json) {
   /* THE DRAWS BOARD DOES NOT DEPEND ON THE SCREEN CONFIG, SO IT SHOULD NOT WAIT
      BEHIND IT.
 
-     Every TV asks this endpoint every thirty seconds, always, whether a game is
-     on or not, so it is the single most-called thing in the product and its cost
-     is multiplied by every venue that exists. Measured on 8 Sep 2026 it took
-     about 700ms, of which roughly 435ms was database: three round trips, one
-     after another, because they were written in reading order rather than
-     dependency order.
+     Every TV asks this endpoint ONLY WHILE SHOWING ADS (tv.html's SCREEN_REFRESH_MS,
+     currently every ten minutes; a game on screen does not poll it at all), and HQ's
+     own dashboard asks it once a minute per open tab for the live-screen badges. The
+     "every thirty seconds, always" this comment used to claim was already stale by
+     20 Sep 2026 (audit finding: the comment names a frequency the client no longer
+     produces) and both callers have moved since. Read the client, not this comment,
+     before quoting a number: whoever finds this next should update it again rather
+     than trust it. Measured on 8 Sep 2026 it took about 700ms, of which roughly
+     435ms was database: three round trips, one after another, because they were
+     written in reading order rather than dependency order.
 
      Only two of them actually depend on each other - the venue row is found via
      the screen config's venue_id. The draws board is keyed on the slug we already

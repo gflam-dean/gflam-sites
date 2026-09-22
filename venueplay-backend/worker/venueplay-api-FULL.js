@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '22 Sep 2026, 22:26 · 02164dc5';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '23 Sep 2026, 09:55 · 0b8a5464';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -867,7 +867,33 @@ async function vpaHandleStripeEvent(env, event) {
 }
 
 /* ------------------------------ /contact ------------------------------ */
+/* IN-MEMORY RATE LIMIT, one Worker isolate's worth. /contact sends an email per request on
+   the SAME Resend key as invoices and welcome emails, with no limit of any kind, so a
+   scripted flood could burn that sending reputation (audit, 20 Sep 2026). The key is the
+   raw connecting IP: never written to a database, a log, or returned to the caller, so it
+   does not need hashing the way a stored ip_hash does. Cleared on isolate restart, which is
+   fine -- the thing being protected is sustained sending rate, not a permanent ban list. */
+const rlMem = new Map();   // ip -> { n, until }
+let rlSweptAt = 0;
+function rateLimit(key, limit, windowSecs) {
+  const now = Date.now();
+  if (now - rlSweptAt > 30000) {
+    rlSweptAt = now;
+    for (const [k, v] of rlMem) if (v.until <= now) rlMem.delete(k);
+  }
+  let m = rlMem.get(key);
+  if (!m || m.until <= now) { m = { n: 0, until: now + windowSecs * 1000 }; rlMem.set(key, m); }
+  if (m.n >= limit) return false;
+  m.n += 1;
+  return true;
+}
+const CONTACT_MAX_PER_IP = 6;   // a real enquiry is a one-off; six in an hour is generous for a shared office IP
+
 async function handleContact(request, env, json) {
+  const ip = request.headers.get('cf-connecting-ip') || '';   // Cloudflare-set; x-real-ip is client-suppliable
+  if (ip && !rateLimit('contact:' + ip, CONTACT_MAX_PER_IP, 3600)) {
+    return json({ error: 'Too many messages from this network. Please try again in a while, or call us.' }, 429);
+  }
   const _b = await vpaBody(request, json);
   if (!_b.ok) return _b.res;
   const b = _b.body;

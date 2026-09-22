@@ -2096,6 +2096,12 @@ MUTATIONS = [
      "",
      'the stamp is read and thrown away: broadcast bingo bills every phone that opened the join page again'),
 
+    ('a manager whose permissions cannot be read is refused', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  if (ip && !rateLimit('contact:' + ip, CONTACT_MAX_PER_IP, 3600)) {",
+     "  if (false) {",
+     '/contact sends an email per request again with no limit at all, on the same Resend key '
+     'as every invoice and welcome email'),
+
     ('the phones that stamped played_at are the players', 'venueplay-backend/worker/venueplay-game.js',
      "    await sbPatch(env, 'vp_players', 'id=eq.' + enc(player.id) + '&played_at=is.null',",
      "    await sbPatch(env, 'vp_players', 'session_id=eq.' + enc(player.session_id) + '&played_at=is.null',",
