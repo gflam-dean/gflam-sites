@@ -939,19 +939,28 @@
      no slug, and a demo has no slug on purpose, so anything inside it is dead code on the
      one page the sales site actually shows. */
   if(VP_DEMO){
+    /* The demo venue is Tugun Bowls Club (Dean, 22 Sep 2026) and it has a logo, so the wall
+       shows the logo the way tv.html does, in the same corner a real venue's lands in. The
+       name tag stays hidden: the logo wins, the same rule as a real venue. ?logo=/path swaps
+       in another file from this site; never a URL, so no page can point it at someone else's
+       server. */
+    var demoLogo="/logos/venue-tugun-bowls.png";
+    try{ var lg=/[?&]logo=([^&]+)/.exec(window.location.search||""); if(lg){ var u=decodeURIComponent(lg[1]); if(/^\/[^\/]/.test(u)) demoLogo=u; } }catch(e){}
     var dnt0=document.getElementById("venueNameTag");
-    if(dnt0){ dnt0.textContent="Tugun Bowls Club"; dnt0.hidden=false; }
+    if(dnt0){ dnt0.textContent="Tugun Bowls Club"; dnt0.hidden=true; }
+    paintVenueLogo(demoLogo);
+  }
+  function paintVenueLogo(url){
+    var el=document.getElementById("venueLogo");
+    if(!url){ if(el) el.style.display="none"; return; }   // logo removed: take it off the wall
+    if(!el){ el=document.createElement("img"); el.id="venueLogo";
+      el.style.cssText="position:fixed;top:20px;left:22px;max-height:64px;max-width:220px;z-index:60;pointer-events:none;filter:drop-shadow(0 2px 8px rgba(0,0,0,.55))";
+      document.body.appendChild(el); }
+    el.src=url; el.style.display="block";
   }
   (function venueLogo(){
     if(!VENUE_SLUG) return;
-    function paint(url){
-      var el=document.getElementById("venueLogo");
-      if(!url){ if(el) el.style.display="none"; return; }   // logo removed: take it off the wall
-      if(!el){ el=document.createElement("img"); el.id="venueLogo";
-        el.style.cssText="position:fixed;top:20px;left:22px;max-height:64px;max-width:220px;z-index:60;pointer-events:none;filter:drop-shadow(0 2px 8px rgba(0,0,0,.55))";
-        document.body.appendChild(el); }
-      el.src=url; el.style.display="block";
-    }
+    var paint=paintVenueLogo;
     function load(){
     try{
       /* Through the Worker, not straight at Supabase. The public grant on vp_venue_screen
