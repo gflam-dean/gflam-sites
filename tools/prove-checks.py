@@ -404,8 +404,8 @@ MUTATIONS = [
 
     ('no consent box is ticked from a script',
      'venueplay/play.html',
-     '''        l.innerHTML='<input type="checkbox" id="xOptin"> <span>Keep me posted on what is on at the venue</span>';''',
-     '''        l.innerHTML='<input type="checkbox" id="xOptin"> <span>Keep me posted on what is on at the venue</span>'; l.querySelector("input").checked = true;''',
+     '''        l.innerHTML='<input type="checkbox" id="xOptin"> <span>I am 18 or over. Keep me posted on what is on at the venue</span>';''',
+     '''        l.innerHTML='<input type="checkbox" id="xOptin"> <span>I am 18 or over. Keep me posted on what is on at the venue</span>'; l.querySelector("input").checked = true;''',
      'the join screen opt-in arrives ticked by a line of script, the markup reads unticked, '
      'and the Worker faithfully records consent nobody gave (the audit of 20 Sep 2026 did '
      'exactly this and the gate stayed green)'),
