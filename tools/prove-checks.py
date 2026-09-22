@@ -2122,6 +2122,12 @@ MUTATIONS = [
      "    cache.set('b:' + gameId, { data: board, until: nowMs + 8000 });",
      'the kept leaderboard forgets which question it was for, and question 8 is answered with question 7'),
 
+    ('a console can put the game back on the wall', 'venueplay/app/musical/host.html',
+     '    _lastReassert = now;\n    reassertToTv();\n  }',
+     '    _lastReassert = now;\n  }',
+     'the console listens for its return and replays nothing: the wall stays on ads after '
+     'the tablet sleeps (the audit of 20 Sep 2026 made exactly this change with the gate green)'),
+
     ('a black wall is rebuilt once then reloaded', 'venueplay/tv.html',
      '        reload("black-screen");                 // the repair did not take, so start clean',
      '        strikes = 0;',

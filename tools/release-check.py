@@ -1237,8 +1237,34 @@ def local_checks(which):
                       re.search(r'''addEventListener\(\s*["']visibilitychange["']''', body))
         if sends_to_ads and not comes_back:
             oneway.append('%s sends to_ads and never says it is back' % short(f))
-        if comes_back and 'reassertToTv' not in body:
-            oneway.append('%s listens for the return but replays nothing' % short(f))
+        # THE CALL, INSIDE THE HANDLER, not the word anywhere in the file. Every console
+        # DEFINES function reassertToTv, so "the word is in the file" was satisfied by the
+        # definition, and the audit of 20 Sep 2026 removed the call from reassertOnReturn
+        # with the gate green. Follow the listener to the function it names (or its inline
+        # body), strip comments, and require the call there.
+        if comes_back:
+            code = re.sub(r'/\*.*?\*/', '', body, flags=re.S)
+            code = re.sub(r'(^|[^:])//[^\n]*', r'\1', code)
+            bodies = []
+            for m in re.finditer(r'''addEventListener\(\s*["'](?:pageshow|visibilitychange)["']\s*,\s*(\w+|function\s*\([^)]*\)\s*\{)''', code):
+                target = m.group(1)
+                if target.startswith('function'):
+                    j = m.end() - 1
+                else:
+                    d = re.search(r'function\s+' + re.escape(target) + r'\s*\([^)]*\)\s*\{', code)
+                    if not d:
+                        continue
+                    j = d.end() - 1
+                depth, k2 = 0, j
+                while k2 < len(code):
+                    if code[k2] == '{': depth += 1
+                    elif code[k2] == '}':
+                        depth -= 1
+                        if depth == 0: break
+                    k2 += 1
+                bodies.append(code[j:k2 + 1])
+            if not any(re.search(r'\breassertToTv\s*\(', b) for b in bodies):
+                oneway.append('%s listens for the return but replays nothing' % short(f))
     ok('a console can put the game back on the wall', not oneway,
        '%d consoles' % len(consoles),
        why='; '.join(oneway[:3]) + '. The TV drops to ads on pagehide and nothing '
