@@ -193,7 +193,17 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- A DEMO DOES NOT WAIT FOR THE REALTIME LIBRARY. It is 219KB from a CDN and this page cannot
+     start until it has arrived, which on the sales page hero meant a black phone for seconds
+     (Dean, 22 Sep 2026: "The Mobile took ages to load"). ?demo=1 never connects to anything,
+     so it gets a stand-in with the one call the page makes at startup, and the real library is
+     not loaded at all. A real phone is untouched: the tag below still runs for it. -->
+<script>
+  if(/[?&]demo=1\b/.test(location.search)){
+    window.supabase={ createClient:function(){ return { channel:function(){ return { on:function(){ return this; }, subscribe:function(){ return this; }, send:function(){}, unsubscribe:function(){} }; }, removeChannel:function(){}, auth:{ getSession:function(){ return Promise.resolve({ data:{ session:null } }); } } }; } };
+  }
+</script>
+<script>if(!/[?&]demo=1\b/.test(location.search)){ document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>'); }</script>
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-follow.js"></script>
