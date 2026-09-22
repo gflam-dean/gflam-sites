@@ -1820,8 +1820,14 @@
     /* On a phone the show goes straight under the headline. The copy's children become grid
        items so the demo can sit between the headline and the words, not after the buttons. */
     .h2-copy{display:contents}
-    .h2-copy .eyebrow{order:1;justify-self:start} .h2-copy h1{order:2} .h2-show{order:3}
+    .h2-copy .eyebrow{order:1;justify-self:center} .h2-copy h1{order:2} .h2-show{order:3}
     .h2-copy .lede{order:4} .h2-copy .hero-cta{order:5;margin-top:4px} .h2-copy .h2-price{order:6;margin-top:0} .h2-copy .hero-note{order:7;margin-top:0}
+    /* On a phone the hero is one column, so it reads centred like the rest of the page
+       (Dean, 23 Sep 2026: "the qld now open and run a packed tuesday ... aren't centred"). */
+    .hero2 > .wrap.h2-grid{text-align:center}
+    .hero2 h1,.hero2 .lede,.hero2 .h2-price,.hero2 .hero-note{margin-left:auto;margin-right:auto}
+    .hero2 .hero-cta{justify-content:center}
+    .h2-under{justify-content:center;text-align:center} .h2-cap{flex:1 1 100%}
   }
 
   /* ---- rhythm (Queensland trial, 22 Sep 2026). Twelve identical centred blocks at the same
