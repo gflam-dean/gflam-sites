@@ -892,15 +892,16 @@
       <h2 class="sec-title">Every format. And your own screen ads.</h2>
       <p class="sec-sub">Swap formats on the night or run a different one each week. It all plays on the screen you've already got: a smart TV, a projector, a laptop via HDMI, or a streaming stick.</p>
     </div>
-    <!-- A LIST, NOT FIVE TILES. Five identical icon cards in a three-and-two grid is the shape of
+    <!-- A LIST, NOT FIVE TILES. No "Watch it" links: the hero already plays every format, so a
+         link that leaves the page to show it again is a duplicate (Dean, 22 Sep 2026). Five identical icon cards in a three-and-two grid is the shape of
          every template landing page, and the hero above already shows each of these games
          running. Dean, 22 Sep 2026: "make it look less ai a little profesh but on brand". -->
     <ul class="fmtlist">
-      <li><b>Trivia</b><span>Rounds, teams and a live leaderboard. Questions, scoring and tie-breaks all handled. You just host.</span><a href="/see-a-night?mode=trivia&from=qld" target="_blank" rel="noopener">Watch it</a></li>
-      <li><b>Musical bingo</b><span>Songs instead of numbers. Players mark the track when it drops. Built-in playlists, or bring your own theme.</span><a href="/see-a-night?mode=musical&from=qld" target="_blank" rel="noopener">Watch it</a></li>
-      <li><b>Bingo</b><span>Classic numbers night with a big-screen caller. Digital cards on every phone, and a claim is checked the moment it is called.</span><a href="/see-a-night?mode=bingo&from=qld" target="_blank" rel="noopener">Watch it</a></li>
-      <li><b>Raffles and members draws</b><span>The meat tray or the members jackpot on the same system. Tickets, draws and number checks live on screen.</span><a href="/see-a-night?mode=raffle&from=qld" target="_blank" rel="noopener">Watch it</a></li>
-      <li><b>Screen ads</b><span>With no game on, your screen still earns its keep: your own slides, drink specials, gigs and members offers on a loop.</span><a href="/see-a-night?mode=ads&from=qld" target="_blank" rel="noopener">Watch it</a></li>
+      <li><b>Trivia</b><span>Rounds, teams and a live leaderboard. Questions, scoring and tie-breaks all handled. You just host.</span></li>
+      <li><b>Musical bingo</b><span>Songs instead of numbers. Players mark the track when it drops. Built-in playlists, or bring your own theme.</span></li>
+      <li><b>Bingo</b><span>Classic numbers night with a big-screen caller. Digital cards on every phone, and a claim is checked the moment it is called.</span></li>
+      <li><b>Raffles and members draws</b><span>The meat tray or the members jackpot on the same system. Tickets, draws and number checks live on screen.</span></li>
+      <li><b>Screen ads</b><span>With no game on, your screen still earns its keep: your own slides, drink specials, gigs and members offers on a loop.</span></li>
     </ul>
   </div>
 </section>
@@ -1786,11 +1787,14 @@
   .h2-price{margin-top:20px;color:var(--muted);font-size:16px} .h2-price b{color:#fff}
   .h2-stage{position:relative;padding-bottom:6%}
   /* The phone stands beside the telly, over the bezel only, so no score or ball is hidden. */
-  .h2-tv{margin-right:19%;transition:margin-right .35s cubic-bezier(.22,1,.36,1);aspect-ratio:16/9;background:#050506;border:1px solid var(--line-2,rgba(255,255,255,.14));border-radius:16px;padding:9px;box-shadow:0 0 0 1px rgba(255,31,142,.18),0 30px 80px -30px rgba(255,31,142,.45)}
+  /* The SCREEN is the 16:9 element and the bezel wraps it. With the ratio on the bezel, its 9px
+     padding made the screen wider than 16:9 and the wall's bottom row was clipped (Dean, 22 Sep
+     2026: "our screen is not really fitting it properly"). */
+  .h2-tv{margin-right:19%;transition:margin-right .35s cubic-bezier(.22,1,.36,1);background:#050506;border:1px solid var(--line-2,rgba(255,255,255,.14));border-radius:16px;padding:9px;box-shadow:0 0 0 1px rgba(255,31,142,.18),0 30px 80px -30px rgba(255,31,142,.45)}
   /* The wall renders at a real telly's size and is scaled down, like the phone. Drawn at the
      frame's own 320px the walls hit every clamp() minimum, so the corner badge stood three
      times taller than it does on a pub TV and sat on the question. */
-  .h2-tvscreen{position:relative;width:100%;height:100%;overflow:hidden;border-radius:9px;background:#0A0A0B}
+  .h2-tvscreen{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:9px;background:#0A0A0B}
   .h2-tv iframe{position:absolute;top:0;left:0;width:1280px;height:720px;border:0;background:#0A0A0B;display:block;pointer-events:none;transform-origin:top left}
   .h2-tvstand{width:22%;height:7px;margin:0 auto;background:linear-gradient(#2a2a30,#121214);border-radius:0 0 8px 8px}
   .h2-phone{position:absolute;right:0;bottom:0;width:21%;min-width:96px;transition:opacity .35s cubic-bezier(.22,1,.36,1),transform .35s cubic-bezier(.22,1,.36,1)}
@@ -1825,17 +1829,19 @@
      hairline separates them instead of eighty pixels of nothing. ---- */
   .sec{padding:64px 0;border-top:1px solid var(--line-2,rgba(255,255,255,.06))}
   .sec.sec-tight{padding:44px 0}
-  .sec-head{margin-bottom:30px;text-align:left}
-  .sec-head .sec-title,.sec-head .sec-sub,.sec-head .vps-balance{margin-left:0;margin-right:0}
-  .sec-head .label{justify-content:flex-start}
+  /* Dean, 22 Sep 2026: the section headings should be centred. Heads centred, the lists and
+     cards under them stay as they are. */
+  .sec-head{margin-bottom:30px;text-align:center}
+  .sec-head .sec-title,.sec-head .sec-sub,.sec-head .vps-balance{margin-left:auto;margin-right:auto}
+  .sec-head .label{justify-content:center}
   .sec-sub{margin-left:0;margin-right:0}
   .banks{display:grid;grid-template-columns:1fr 1fr;gap:28px}
   .bank{padding:26px 28px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,0))}
-  .bank .label{justify-content:flex-start} .bank .counter{margin-top:10px} .bank .sec-sub{margin-top:12px;font-size:15.5px}
+  .bank .label{justify-content:center} .bank{text-align:center} .bank .sec-sub{margin-left:auto;margin-right:auto} .bank .counter{margin-top:10px} .bank .sec-sub{margin-top:12px;font-size:15.5px}
   @media (max-width:760px){ .banks{grid-template-columns:1fr} .sec{padding:48px 0} }
 
   .fmtlist{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
-  .fmtlist li{display:grid;grid-template-columns:200px 1fr auto;gap:22px;align-items:baseline;padding:18px 0;border-bottom:1px solid var(--line)}
+  .fmtlist li{display:grid;grid-template-columns:200px 1fr;gap:22px;align-items:baseline;padding:18px 0;border-bottom:1px solid var(--line)}
   .fmtlist b{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:18px;color:#fff}
   .fmtlist span{color:var(--muted);font-size:15.5px;line-height:1.55}
   .fmtlist a{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;color:var(--pink);text-decoration:none;white-space:nowrap;border:1px solid rgba(255,31,142,.35);border-radius:999px;padding:6px 12px}
@@ -1846,8 +1852,8 @@
      identical glowing cards in a rounded panel. Dean, 22 Sep 2026: "less ai". */
   #replaces .vps-strip{background:none;border:0;border-radius:0;padding:0;overflow:visible}
   #replaces .vps-strip::before{display:none}
-  #replaces .label{justify-content:flex-start}
-  #replaces .vps-strip-title{text-align:left;margin:0;max-width:24ch}
+  #replaces .label{justify-content:center}
+  #replaces .vps-strip-title{text-align:center;margin:0 auto;max-width:24ch}
   #replaces .vps-swaps{grid-template-columns:repeat(2,1fr);gap:0 56px;margin-top:30px;border-top:1px solid var(--line)}
   #replaces .vps-swap{background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:22px 0;display:grid;grid-template-columns:112px 1fr;column-gap:22px;align-content:start}
   #replaces .vps-swap:hover{border-color:var(--line)}
