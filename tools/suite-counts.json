@@ -424,7 +424,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/shift-timer.test.js": {
-  "checks": 20,
+  "checks": 25,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/slug-ladder.test.js": {

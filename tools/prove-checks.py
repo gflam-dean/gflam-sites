@@ -1296,6 +1296,18 @@ MUTATIONS = [
      'a console goes back to its own frozen shift timer, which signs out the next '
      'host mid-game and closes a live night'),
 
+    ('shift-timer.test.js', 'venueplay/app/vp-session.js',
+     '  var SHIFT_MAX  = 4 * 3600 * 1000;',
+     '  var SHIFT_MAX  = 400 * 3600 * 1000;',
+     'the forced sign-out that keeps opt-in player details behind a login on a shared bar '
+     'tablet is quietly stretched to 400 hours (the audit of 20 Sep 2026 did exactly this '
+     'and every gate stayed green)'),
+
+    ('shift-timer.test.js', 'venueplay/app/vp-session.js',
+     '    if ((Date.now() - start) <= SHIFT_MAX) return;',
+     '    if ((Date.now() - start) <= SHIFT_MAX * 100) return;',
+     'the limit reads four hours but the check itself lets a shift run for weeks'),
+
     ('money.test.js', 'venueplay-backend/worker/venueplay-game.js',
      "  if (annual) return tier === 'founding' ? 2.30 : 2.85;",
      "  if (annual) return tier === 'founding' ? 2.40 : 2.85;",
