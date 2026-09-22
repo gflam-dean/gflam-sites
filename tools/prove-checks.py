@@ -2091,6 +2091,28 @@ MUTATIONS = [
      "    cache.set('b:' + gameId, { data: board, until: nowMs + 8000 });",
      'the kept leaderboard forgets which question it was for, and question 8 is answered with question 7'),
 
+    ('a screen refetches the key on an unknown kid', 'venueplay/app/vp-sign.js',
+     "        if (!S._keyRefresh) S._keyRefresh = setInterval(function () { attempt(); }, KEY_REFRESH_MS);",
+     "",
+     'a screen fetches the key once and never again: after a rotation the wall is deaf to the '
+     'new console until somebody reloads it'),
+
+    ('a screen refetches the key on an unknown kid', 'venueplay/app/vp-sign.js',
+     "          pre = Promise.resolve(S._refetch()).catch(function () {});",
+     "          pre = Promise.resolve();",
+     'the first messages from a freshly minted console are thrown away on the old key'),
+
+    ('a screen refetches the key on an unknown kid', 'venueplay/app/vp-sign.js',
+     "      if (!S._hostRefresh) S._hostRefresh = setInterval(function () { VPSign._initHost(apiBase, slug, getToken); }, KEY_REFRESH_MS);",
+     "",
+     'a console never asks for the key again, so after a rotation nobody mints the new one and '
+     'the venue has no key until the next sign-in'),
+
+    ('the venue key is deleted with the login', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  await vpbRotateScreenKeys(env, venueIds);\n  return json({ ok: true, screens_resecured: venueIds.length });",
+     "  return json({ ok: true, screens_resecured: venueIds.length });",
+     'a removed host keeps a key that signs balls and winners for ever'),
+
     ('staff of the Royal are offered the Royal and nothing else', 'venueplay/app/index.html',
      "        mine = (vs||[]).filter(function(v){ return ids[v.id]; });",
      "        mine = (vs||[]).filter(function(v){ return ids[v.id] || true; });",

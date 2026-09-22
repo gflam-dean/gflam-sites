@@ -35,10 +35,12 @@
   var MAX_AGE_MS = 6 * 60 * 60 * 1000;
   var NONCE_KEEP = 600;           // remember this many recent nonces to reject instant replays
 
+  var KEY_REFRESH_MS = 5 * 60 * 1000;   // how often each side asks for the venue key again; rotation converges within this
   var S = {
     apiBase: "", slug: "",
     pubKey: null, privKey: null,  // imported CryptoKey objects (null until ready)
     kid: null, enforce: false,
+    _refetch: null, _keyRefresh: null, _hostRefresh: null, _kidFetchAt: 0,
     ready: false,
     seenNonces: [], seenSet: {},
     chain: Promise.resolve(),     // serialises host signing so message order is preserved
@@ -157,7 +159,15 @@
       // Fetch the key, and if it is not there yet (a screen that booted before the venue's first host
       // login) or the fetch failed, KEEP RETRYING every 90s. Without this a long-lived Fire Stick that
       // came up before the key existed would stay fail-open forever, so enforce would never protect it.
+      /* AND KEEP THE KEY FRESH ONCE WE HAVE ONE. A venue's key is rotated when a host is
+         removed (the row is deleted and the next console mints a new pair). A receiver that
+         fetched once and stopped would hold the old key until its next reload and drop every
+         signed message from the new console, so the wall goes deaf for the rest of the night.
+         Two ways back: a refetch every five minutes, and an immediate one when a message
+         arrives under a key id this screen does not know (see gate). Audit, 20 Sep 2026. */
+      S._refetch = attempt;
       return attempt().then(function (got) {
+        if (!S._keyRefresh) S._keyRefresh = setInterval(function () { attempt(); }, KEY_REFRESH_MS);
         if (got || S._keyPoll) return;
         S._keyPoll = setInterval(function () {
           attempt().then(function (ok) { if (ok && S._keyPoll) { clearInterval(S._keyPoll); S._keyPoll = null; } });
@@ -174,6 +184,10 @@
       /* Remember this attempt so signSend can WAIT for it. See the note on keyTried. */
       var p = VPSign._initHost(apiBase, slug, getToken);
       S.keyTried = p.catch(function () {});
+      /* The console's half of rotation: ask again every five minutes. A rotated venue answers
+         "no key" and this console mints the new pair; a login that has been removed is refused
+         at the Worker and keeps signing with a key the screens are about to stop trusting. */
+      if (!S._hostRefresh) S._hostRefresh = setInterval(function () { VPSign._initHost(apiBase, slug, getToken); }, KEY_REFRESH_MS);
       return p;
     },
     _initHost: function (apiBase, slug, getToken) {
@@ -190,7 +204,10 @@
         }).then(function (r) { return r.ok ? r.json() : null; });
       }).then(function (d) {
         if (!d) return;
-        if (d.has_key && d.private_jwk) return useHostKey(d);
+        if (d.has_key && d.private_jwk) {
+          if (d.kid && d.kid === S.kid && S.privKey) { S.enforce = !!d.enforce; return; }   // same key: nothing to re-import
+          return useHostKey(d);
+        }
         // No key yet for this venue: mint one here, store it, then use whatever the Worker settles on
         // (another host may have minted first; the Worker returns the effective key so we converge).
         S.enforce = !!(d && d.enforce);
@@ -277,7 +294,15 @@
       // leaderboard) cannot be reordered by crypto.subtle.verify's variable timing under enforce. The
       // sender already preserves wire order; this preserves it on the receive side too.
       S.recvChain = S.recvChain.then(function () {
-        return VPSign.verify(payload).then(function (verdict) {
+        // A key id this screen does not hold: fetch before judging, at most once every 15s, so
+        // the first message from a freshly minted console is not thrown away on the old key.
+        var pre = Promise.resolve();
+        var kid = payload && payload._kid;
+        if (kid && S.kid && kid !== S.kid && S._refetch && (Date.now() - (S._kidFetchAt || 0)) > 15000) {
+          S._kidFetchAt = Date.now();
+          pre = Promise.resolve(S._refetch()).catch(function () {});
+        }
+        return pre.then(function () { return VPSign.verify(payload); }).then(function (verdict) {
           if (verdict === "ok") { try { cb(payload); } catch (e) { } return; }
           var t = payload && payload.t;
           if (t && EXEMPT[t]) {

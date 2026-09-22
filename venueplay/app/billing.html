@@ -355,6 +355,13 @@
     <p class="note" style="margin:0 0 10px">People who can run games on the night. Add a mobile and tick which venues they can host. They sign in at <b style="color:var(--text)">venueplay.com.au/app</b> with a text code, no app to install.</p>
     <div id="hosts"></div>
     <button class="addbtn" id="hostToggle">+ Add a host</button>
+    <!-- SOMEONE HAS LEFT. Removing a host above already does this. This is for the case where a
+         phone or a laptop that was signed in has gone missing, or you are not sure who has what:
+         one press and every screen at every venue on the account stops trusting the old key. -->
+    <div class="card toggle" id="resecureCard" style="margin-top:10px">
+      <div class="t">Re-secure my screens<small>Someone has left, or a signed-in device has gone missing. Your screens stop trusting the old key and pick up a new one on their own within a few minutes. Nobody is signed out.</small></div>
+      <button class="addbtn" id="resecureBtn" style="margin:0;flex:0 0 auto">Re-secure</button>
+    </div>
     <div class="addform" id="hostForm" style="flex-direction:column;align-items:stretch">
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <div class="ffield" style="flex:1 1 140px"><label class="flabel" for="host-name">Name</label>
@@ -1222,6 +1229,7 @@
          owner as well: the Worker is still the lock either way. */
       hostsIsOwner = (d.is_owner === undefined) ? true : (d.is_owner === true);
       hostsCanManage = d.can_manage_hosts !== false;
+      var rs = $("resecureCard"); if (rs) rs.style.display = hostsCanManage ? "" : "none";   // same right as managing hosts
       renderHosts(d.hosts || [], acctVenues);
       buildHostVenuePicker(acctVenues);
       loadMarketers();
@@ -1300,13 +1308,25 @@
           rm.disabled = true; rm.textContent = "Removing…";
           api("/account/host-remove", { auth_user_id: h.auth_user_id, all_venues: true }).then(function(r){
             if (r.error){ showMsg(r.error); rm.disabled = false; rm.textContent = "Remove"; return; }
-            showMsg((h.label || "That person") + " has been removed.", true); loadHosts();
+            showMsg((h.label || "That person") + " has been removed. Their login no longer works and your screens have been re-secured; they reconnect on their own within a few minutes.", true); loadHosts();
           });
         });
       }
       wrap.appendChild(row);
     });
   }
+  (function(){
+    var b = $("resecureBtn"); if (!b) return;
+    b.addEventListener("click", function(){
+      if (!confirm("Re-secure every screen on this account?\n\nThe screens stop trusting the current key and pick up a new one within a few minutes. A game that is running keeps running. Nobody is signed out.")) return;
+      b.disabled = true; b.textContent = "Working…";
+      api("/account/screens-resecure", {}).then(function(r){
+        b.disabled = false; b.textContent = "Re-secure";
+        if (r.error){ showMsg(r.error); return; }
+        showMsg("Done. " + r.venues + " venue" + (r.venues === 1 ? "" : "s") + " re-secured. The screens pick up the new key on their own.", true);
+      });
+    });
+  })();
   /* What the ticks add up to, in words, and the exact body the page posts. Kept pure and free of the
      DOM so venueplay-backend/app/billing-hosts.test.js can read this very block out of this very file and run
      it: a test that copies the logic instead is a test that goes green after the page has drifted. */

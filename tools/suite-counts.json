@@ -163,6 +163,10 @@
   "checks": 26,
   "counted_by": "lines"
  },
+ "tools/test-removed-host-loses-the-key.js": {
+  "checks": 9,
+  "counted_by": "lines"
+ },
  "tools/test-retention-sweep.js": {
   "checks": 40,
   "counted_by": "lines"
@@ -172,6 +176,10 @@
   "counted_by": "lines"
  },
  "tools/test-score-pull-is-shared.js": {
+  "checks": 11,
+  "counted_by": "lines"
+ },
+ "tools/test-screen-key-rotates.js": {
   "checks": 11,
   "counted_by": "lines"
  },

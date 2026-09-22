@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '22 Sep 2026, 18:20 · e00fe77b';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '22 Sep 2026, 22:26 · 02164dc5';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -141,6 +141,7 @@ export default {
       if (request.method === 'POST' && path === '/account/managers'     && typeof vpbListManagers === 'function') return await vpbListManagers(request, env, json);
       if (request.method === 'POST' && path === '/account/optin-export'  && typeof vpbOptinExport === 'function')  return await vpbOptinExport(request, env, json);
       if (request.method === 'POST' && path === '/account/host-remove' && typeof vpbRemoveHost === 'function')   return await vpbRemoveHost(request, env, json);
+      if (request.method === 'POST' && path === '/account/screens-resecure' && typeof vpbResecureScreens === 'function') return await vpbResecureScreens(request, env, json);
       if (request.method === 'POST' && path === '/account/my-venues'   && typeof vpbMyVenues === 'function')     return await vpbMyVenues(request, env, json);
       if (request.method === 'POST' && path === '/account/manager-perms' && typeof vpbSetManagerPerms === 'function') return await vpbSetManagerPerms(request, env, json);
       if (request.method === 'POST' && path === '/account/draw-log'    && typeof vpbDrawLog === 'function')      return await vpbDrawLog(request, env, json);
@@ -8743,7 +8744,37 @@ async function vpbRemoveHost(request, env, json) {
     await vpaDelete(env, 'vp_venue_staff',
       'auth_user_id=eq.' + encodeURIComponent(target) + '&venue_id=eq.' + encodeURIComponent(vid) + '&role=neq.owner');
   }
-  return json({ ok: true });
+  /* THE KEY THEY HELD GOES WITH THEM. Every host at a venue signs with the venue's one private
+     key, handed to their browser. Revoking the login left that key working for ever (audit,
+     20 Sep 2026). Deleting the row rotates it: the next console at the venue mints a fresh
+     pair on its five-minute refresh, and every screen picks the new key up on its own. */
+  await vpbRotateScreenKeys(env, venueIds);
+  return json({ ok: true, screens_resecured: venueIds.length });
+}
+
+/* Rotate the signing key of each venue named: delete the row, and the next legitimate console
+   mints a new pair (a Worker cannot generate an ECDSA key; the browser does). Best effort per
+   venue, so one refusal does not leave the others holding a key a removed host still has. */
+async function vpbRotateScreenKeys(env, venueIds) {
+  let n = 0;
+  for (const vid of venueIds || []) {
+    try { await vpaDelete(env, 'vp_venue_signing_keys', 'venue_id=eq.' + encodeURIComponent(vid)); n++; } catch (e) {}
+  }
+  return n;
+}
+
+/* "Someone has left": the owner's one plain button. Rotates every venue on the account. */
+async function vpbResecureScreens(request, env, json) {
+  const o = await vpbRequireOwner(request, env);
+  if (o.error) return json({ error: o.error }, o.status);
+  if (!vpbCan(o, 'add_hosts')) return json({ error: 'Only the account owner, or a manager allowed to manage hosts, can do this.' }, 403);
+  const ids = o.venues.map((v) => v.id);
+  const n = await vpbRotateScreenKeys(env, ids);
+  try {
+    await vpaAudit(env, { actorId: o.adminActor ? o.adminActor.id : null, label: (o.adminActor && o.adminActor.label) || 'owner' },
+      'screens_resecured', o.account.id, { venues: n });
+  } catch (e) {}
+  return json({ ok: true, venues: n });
 }
 
 /* PORTED VERBATIM FROM fix/audit-40, not rewritten.
@@ -8807,12 +8838,16 @@ async function vpbSetStaffVenues(request, env, json) {
     if (role === 'manager') row.permissions = perms;
     await vpaInsert(env, 'vp_venue_staff', row, false);
   }
-  // Remove rows for venues they were de-selected from (never an owner row).
+  // Remove rows for venues they were de-selected from (never an owner row), and rotate those
+  // venues' screen keys: the login still holds them (see vpbRemoveHost).
+  const lost = [];
   for (const r of currentRows) {
     if (wantSet.has(r.venue_id)) continue;
     await vpaDelete(env, 'vp_venue_staff',
       'auth_user_id=eq.' + encodeURIComponent(target) + '&venue_id=eq.' + encodeURIComponent(r.venue_id) + '&role=neq.owner');
+    if (lost.indexOf(r.venue_id) < 0) lost.push(r.venue_id);
   }
+  await vpbRotateScreenKeys(env, lost);
   return json({ ok: true, auth_user_id: target, venue_ids: wanted });
 }
 

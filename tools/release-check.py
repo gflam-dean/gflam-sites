@@ -3040,6 +3040,16 @@ def local_checks(which):
                    'venue\'s raffle, or a draw on Math.random, ships with a green gate otherwise')
 
         for label, fn, title, floor, why in (
+            ('D42. A removed host loses the screen key, and the screens pick up the new one on their own',
+             'test-screen-key-rotates.js',
+             'a screen refetches the key on an unknown kid and every five minutes; a console mints after a rotation', 11,
+             'A receiver that fetched once held the old key until its next reload, so a rotation '
+             'left every TV deaf to the new console for the rest of the night'),
+            ('D41. Removing a host rotates the venue key; Re-secure rotates the account',
+             'test-removed-host-loses-the-key.js',
+             'the venue key is deleted with the login, and only those with the hosts right can re-secure', 9,
+             'Every host signs with the venue\'s one private key handed to their browser; revoking '
+             'the login left that key working for ever'),
             ('D40. The venue picker is run: staff see their venues, an admin sees one account',
              'test-venue-picker-scopes.js',
              'staff of the Royal are offered the Royal and nothing else; an admin sees one account, never the database', 9,
