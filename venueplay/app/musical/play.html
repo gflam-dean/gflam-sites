@@ -912,6 +912,51 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     window.location.href = window.location.pathname;   // reload without ?room
   }
 
+  /* ?demo=1 : THE REAL MUSICAL BINGO PHONE, PLAYING A SCRIPTED NIGHT, JOINED TO NOTHING.
+
+     The trial hero on the state pages and /see-a-night show the real wall for musical bingo
+     beside a phone, and until 22 Sep 2026 there was no musical phone to show, so the phone
+     stepped aside. Dean: "musical bingo doesnt have a phone screen". Same shape as the trivia
+     and bingo phones: every pixel here is driven by onMsg(), so the demo is a SCRIPT OF
+     MESSAGES, in step with the wall's own demo (app/musical/screen.html: first song at 1.2s,
+     one every 5.2s, revealed 2.6s in), and the card is the shape /player/card returns. The
+     player marks each song by ear a moment after it is revealed, gets one wrong and fixes it,
+     and calls bingo on the fifth. Never connects, never follows a host, never touches a venue. */
+  var VP_DEMO = /[?&]demo=1/.test(window.location.search||"");
+  if(VP_DEMO){
+    document.documentElement.setAttribute("data-vp-demo","1");
+    P.joined=true; P.name="Sam"; P.pid="demo"; P.room="DEMO24"; P.cardNo=17; P.pattern="one";
+    $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
+    var CELLS=[{"title": "Wonderwall", "song_id": "wonderwall-oasis"}, {"title": "Sweet Caroline", "song_id": "sweet-caroline-neil-diamond"}, {"title": "Never Gonna Give You Up", "song_id": "never-gonna-give-you-up-rick-astley"}, {"title": "Don't Stop Believin'", "song_id": "don-t-stop-believin-journey"}, {"title": "Beds Are Burning", "song_id": "beds-are-burning-midnight-oil"}, {"title": "You're the Voice", "song_id": "you-re-the-voice-john-farnham"}, {"title": "Never Tear Us Apart", "song_id": "never-tear-us-apart-inxs"}, {"title": "Livin' on a Prayer", "song_id": "livin-on-a-prayer-bon-jovi"}, {"title": "Dancing Queen", "song_id": "dancing-queen-abba"}, {"title": "Bohemian Rhapsody", "song_id": "bohemian-rhapsody-queen"}, {"title": "Khe Sanh", "song_id": "khe-sanh-cold-chisel"}, {"title": "Hey Ya!", "song_id": "hey-ya-outkast"}, "FREE", {"title": "Take On Me", "song_id": "take-on-me-a-ha"}, {"title": "Hotel California", "song_id": "hotel-california-remastered-eagles"}, {"title": "Africa", "song_id": "africa-toto"}, {"title": "Mr. Brightside", "song_id": "mr-brightside-the-killers"}, {"title": "Mr. Blue Sky", "song_id": "mr-blue-sky-electric-light-orchestra"}, {"title": "Come On Eileen", "song_id": "come-on-eileen-dexys-midnight-runners"}, {"title": "Don't Dream It's Over", "song_id": "don-t-dream-it-s-over-crowded-house"}, {"title": "Blinding Lights", "song_id": "blinding-lights-the-weeknd"}, {"title": "Uptown Funk", "song_id": "uptown-funk-mark-ronson"}, {"title": "The Horses", "song_id": "the-horses-daryl-braithwaite"}, {"title": "September", "song_id": "september-earth-wind-fire"}, {"title": "Eagle Rock", "song_id": "eagle-rock-daddy-cool"}];
+    var IDS={"Never Gonna Give You Up": "never-gonna-give-you-up-rick-astley", "Dancing Queen": "dancing-queen-abba", "Khe Sanh": "khe-sanh-cold-chisel", "Mr. Brightside": "mr-brightside-the-killers", "The Horses": "the-horses-daryl-braithwaite"};
+    var ORDER=["Never Gonna Give You Up","Dancing Queen","Khe Sanh","Mr. Brightside","The Horses"];
+    var _dt=[];
+    function d(ms, fn){ _dt.push(setTimeout(function(){ try{ fn(); }catch(e){} }, ms)); }
+    function fire(o){ try{ onMsg(o); }catch(e){} }
+    function tapSong(title){ for(var i=0;i<25;i++){ if(cellTitle(i)===title){ P.daubs[i]=true; renderCard(); return; } } }
+    function round(){
+      for(var i=0;i<_dt.length;i++) clearTimeout(_dt[i]);
+      _dt=[]; P.won=false; P.ended=false; P.claimPending=false;
+      fire({ t:"started", pattern:"one", prize:"$50 bar tab", played:[] });
+      P.cells=CELLS.slice(); P.active=true; P.daubs={}; P.daubs[12]=true; route();
+      var t=1200, played=[], ids=[];
+      ORDER.forEach(function(title, i){
+        d(t, function(){ played.push(title); ids.push(IDS[title]); fire({ t:"played", title:title, played:played.slice(), played_ids:ids.slice(), reveal:false }); });
+        d(t+3600, function(){ tapSong(title); });
+        if(i===2){ d(t+4300, function(){ tapSong("Wonderwall"); }); d(t+4900, function(){ for(var j=0;j<25;j++){ if(cellTitle(j)==="Wonderwall") delete P.daubs[j]; } renderCard(); }); }
+        t+=5200;
+      });
+      /* The real button asks the Worker to verify the card. A demo has no Worker, so it shows the
+         same two screens the real thing does: sent and checking, then the win. */
+      d(t, function(){ P.claimPending=true; $("bingoBtn").disabled=true; setMsg("BINGO sent. The host is checking your card&hellip;","wait"); });
+      d(t+2600, function(){ fire({ t:"winner", name:"Sam", names:["Sam"], pids:["demo"], cardNos:[17] }); });
+      d(t+14000, round);   // = the wall's lap in screen.html: run() reschedules at t + 14000. Change both.
+    }
+    P.assist=false;
+    d(900, round);
+    return;
+  }
+
   // ---- init: read ?room ----
   (function(){
     P.assist=loadAssist(); var ac=$("assistChk"); if(ac) ac.checked=P.assist;

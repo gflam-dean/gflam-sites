@@ -896,7 +896,7 @@
     var _dt=[];
     function d(ms, fn){ _dt.push(setTimeout(function(){ try{ fn(); }catch(e){} }, ms)); }
     function q(qi, text, options, secs){
-      return { t:"question", qseq:qi, qi:qi, qtotal:12, text:text, options:options,
+      return { t:"question", qseq:qi, qi:qi, qtotal:3, text:text, options:options,
                secs:secs||15, endsAt:Date.now()+(secs||15)*1000 };
     }
     function fire(o){ try{ onMsg(o); }catch(e){} }
@@ -904,26 +904,23 @@
       for(var i=0;i<_dt.length;i++) clearTimeout(_dt[i]);
       _dt=[]; P.total=0; P.rank=0; P.ended=false;
       fire({ t:"started" });
-      d(1800, function(){ fire(q(4,"Which Australian city is known as the City of Churches?",
-                                 ["Hobart","Adelaide","Perth","Ballarat"],15)); });
-      d(5200, function(){ answer(1); });
-      d(9000, function(){ P.total=130; P.rank=3;
-                          fire({ t:"reveal", qseq:4, correctIndex:1,
-                                 options:["Hobart","Adelaide","Perth","Ballarat"], demoPts:130 }); });
-      d(15000,function(){ fire(q(5,"In what year did the Sydney Harbour Bridge open?",
-                                 ["1923","1932","1938","1945"],15)); });
-      d(18600,function(){ answer(2); });
-      d(22400,function(){ P.rank=4;
-                          fire({ t:"reveal", qseq:5, correctIndex:1,
-                                 options:["1923","1932","1938","1945"], demoPts:0 }); });
-      d(28000,function(){ fire(q(6,"Which of these is NOT a native Australian animal?",
-                                 ["Capybara","Quokka","Bilby","Numbat"],15)); });
-      d(31400,function(){ answer(0); });
-      d(35200,function(){ P.total=275; P.rank=2;
-                          fire({ t:"reveal", qseq:6, correctIndex:0,
-                                 options:["Capybara","Quokka","Bilby","Numbat"], demoPts:145 }); });
-      d(41000,function(){ P.total=275; P.rank=2; fire({ t:"podium" }); });
-      d(50000,round);
+      /* IN STEP WITH THE WALL. app/trivia/screen.html asks its three questions at 900ms and
+         then every 13200ms, reveals at +6200, and runs a 56600ms lap. This used to run its own
+         clock and a 50000ms lap, so the phone answered questions the wall had not asked yet.
+         Dean, 22 Sep 2026: "the tv and phone seem to be unsynced". The numbers below are the
+         wall's; change both. */
+      var T0=900, GAP=13200, REV=6200;
+      d(T0,           function(){ fire(q(1,"Which Australian city hosted the 2000 Summer Olympics?", ["Melbourne","Sydney","Brisbane","Perth"],15)); });
+      d(T0+3400,      function(){ answer(1); });
+      d(T0+REV,       function(){ P.total=130; P.rank=3; fire({ t:"reveal", qseq:1, correctIndex:1, options:["Melbourne","Sydney","Brisbane","Perth"], demoPts:130 }); });
+      d(T0+GAP,       function(){ fire(q(2,"What is the only food that never spoils?", ["Rice","Honey","Salt","Tinned fish"],15)); });
+      d(T0+GAP+3600,  function(){ answer(2); });
+      d(T0+GAP+REV,   function(){ P.rank=4; fire({ t:"reveal", qseq:2, correctIndex:1, options:["Rice","Honey","Salt","Tinned fish"], demoPts:0 }); });
+      d(T0+2*GAP,     function(){ fire(q(3,"Which band released the album Back in Black?", ["AC/DC","Cold Chisel","INXS","Midnight Oil"],15)); });
+      d(T0+2*GAP+3400,function(){ answer(0); });
+      d(T0+2*GAP+REV, function(){ P.total=275; P.rank=2; fire({ t:"reveal", qseq:3, correctIndex:0, options:["AC/DC","Cold Chisel","INXS","Midnight Oil"], demoPts:145 }); });
+      d(T0+3*GAP,     function(){ P.total=275; P.rank=2; fire({ t:"podium" }); });
+      d(T0+3*GAP+17000, round);
     }
     showWait("The quiz is starting. Your questions will pop up here.");
     d(900, round);

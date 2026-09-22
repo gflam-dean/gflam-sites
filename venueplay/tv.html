@@ -2014,7 +2014,20 @@
        - no join code a stranger could use, which is the whole reason this is not simply
          pointed at a live demo venue */
   var DEMO = VP_DEMO;      // decided up at VENUE_SLUG, because that read has to know too
+  /* ?demo=1&ads=1: the advertising loop and nothing else. The trial hero's "Advertising" chip
+     shows the wall earning its keep between games; the bingo script would take it over. */
+  var DEMO_ADS_ONLY = DEMO && /[?&]ads=1\b/.test(window.location.search||"");
   if(DEMO){
+    document.documentElement.setAttribute("data-vp-demo","1");   // both demo flavours: no sound, no venue, no analytics
+    /* NO SETUP FURNITURE ON A SALES PAGE. "Link this screen" and "Go fullscreen" are for the
+       person standing at a venue's TV; on a page a prospect is reading they are noise, and the
+       pairing panel carries a code nobody can pair with. Kept hidden however the modes flip. */
+    (function hideSetup(){
+      function off(){ ["pairPanel","tvFsBtn"].forEach(function(id){ var n=document.getElementById(id); if(n && n.style.display!=="none") n.style.display="none"; }); }
+      off(); new MutationObserver(off).observe(document.body, { childList:true, subtree:true });
+    })();
+  }
+  if(DEMO && !DEMO_ADS_ONLY){
     document.documentElement.setAttribute("data-vp-demo","1");
     (function demoNight(){
       var BALLS=[7,42,13,88,31,64,5,77,26,90,19,53];
@@ -2250,8 +2263,23 @@
         { day:"Sunday",   jackpot:"$900",   time:"5:00pm" }
       ];
       ADS.raffle = { label:"Meat raffle", day:"Friday", time:"6:30pm" };
+      /* AND WHAT A REAL VENUE'S SLIDES LOOK LIKE. (Absolute addresses: the image whitelist in
+         slideHtml takes only a full http(s) URL, and drops a relative path without a word.) The four Tugun Bowls Club slides already on
+         the site (logos/ad-slides) are what an uploaded promo looks like on the wall, and a
+         venue's own artwork sells the advertising better than our text slides can. Dean,
+         22 Sep 2026: "also advertising", "so they have a logo". First in the loop, so the
+         ads-only demo opens on them. */
+      ADS.slides = [
+        { tag:"Tuesday",  accent:"pink", head:"Roast night, $14.90", sub:"", image_url:location.origin+"/logos/ad-slides/tugun-tuesday.jpg" },
+        { tag:"Thursday", accent:"gold", head:"Half price menu",     sub:"", image_url:location.origin+"/logos/ad-slides/tugun-thursday.jpg" },
+        { tag:"Friday",   accent:"blue", head:"Surf and turf, $24.90", sub:"", image_url:location.origin+"/logos/ad-slides/tugun-friday.jpg" },
+        { tag:"Saturday", accent:"green", head:"Parmi and pints, $19.90", sub:"", image_url:location.origin+"/logos/ad-slides/tugun-saturday.jpg" }
+      ].concat(ADS.slides);
+      /* ?demo=1&logo=<url>: a venue logo in the corner, so a prospect sees their own name up
+         there. Same-site paths only: this is a sales page, not a place to load strangers' images. */
+      try{ var lg=/[?&]logo=([^&]+)/.exec(window.location.search||""); if(lg){ var u=decodeURIComponent(lg[1]); if(/^\/[^\/]/.test(u)) setVenueLogo(u); } }catch(e){}
       buildAds(true); startAds();
-      return;   // and nothing else on this path runs: no fetch, no logo, no poll
+      return;   // and nothing else on this path runs: no fetch, no poll
     }
     if(!slug) return;
     var hdr={ apikey:SUPA_ANON, Authorization:"Bearer "+SUPA_ANON };

@@ -109,7 +109,11 @@ pass("the invented name is not a real venue of ours",
    the one inside loadVenueScreen that dresses the invented pub. Taking the first match tested
    the wrong one and reported "0 slides" about a block that was never going to have any. */
 var demoAt = TV.indexOf('setVenueName("The Rose and Crown")');
-var demoBlock = TV.slice(TV.lastIndexOf("if(DEMO){", demoAt), demoAt + 2600);
+/* To the block's own `return;`, not a fixed 2,600 characters: on 22 Sep 2026 the demo gained the
+   Tugun slides and a logo option, buildAds() moved past the window, and this said "not started"
+   about a block that starts them on its last line. */
+var demoEnd = TV.indexOf("return;", demoAt);
+var demoBlock = TV.slice(TV.lastIndexOf("if(DEMO){", demoAt), demoEnd > 0 ? demoEnd : demoAt + 2600);
 var slideCount = (demoBlock.match(/head:"/g) || []).length;
 pass("the demo pub runs a rotation, not a single slide", slideCount >= 3, slideCount + " slides");
 pass("it has the weekly draws board", /ADS\.draws\s*=\s*\[/.test(demoBlock) && /jackpot:/.test(demoBlock));

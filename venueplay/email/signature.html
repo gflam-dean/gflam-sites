@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>VenuePlay email signature</title>
+<style>
+  body{margin:0;background:#0A0A0B;color:#E7E7EC;font-family:Manrope,system-ui,-apple-system,sans-serif;padding:32px 18px 80px}
+  .wrap{max-width:760px;margin:0 auto}
+  h1{font-size:22px;margin:0 0 6px;color:#fff} p{color:#A6A6B0;line-height:1.5}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:18px 0}
+  input{background:#17171A;color:#E7E7EC;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:9px 12px;font:inherit;min-width:180px}
+  label{font-size:12px;color:#8A8A94;display:block;margin-bottom:4px}
+  .fld{flex:1 1 180px}
+  button{font:800 13px 'Hanken Grotesk',Manrope,sans-serif;padding:11px 18px;border-radius:999px;border:0;cursor:pointer}
+  .go{background:#FF1F8E;color:#fff} .ghost{background:#17171A;color:#E7E7EC;border:1px solid rgba(255,255,255,.14)}
+  .preview{border-radius:16px;padding:28px;margin-top:10px;border:1px solid rgba(255,255,255,.1)}
+  .preview.light{background:#fff} .preview.dark{background:#1f1f22}
+  .warn{background:rgba(255,194,75,.14);border:1px solid rgba(255,194,75,.5);color:#FFC24B;border-radius:12px;padding:12px 14px;margin:14px 0;display:none}
+  .ok{color:#35D07F;font-size:14px;min-height:20px;margin-top:8px}
+  .note{font-size:13px;color:#8A8A94}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>VenuePlay email signature</h1>
+  <p>Fill in your details, check the preview, then <b>Copy signature</b> and paste it into Outlook: Settings, Mail, Compose and reply, Email signature. The logo is hosted on venueplay.com.au, so it shows for everyone you email.</p>
+  <div class="row">
+    <div class="fld"><label for="nm">Name</label><input id="nm" value="Dean Tindale"></div>
+    <div class="fld"><label for="rl">Role</label><input id="rl" value="Founder, VenuePlay"></div>
+    <div class="fld"><label for="mb">Mobile</label><input id="mb" placeholder="0400 000 000"></div>
+    <div class="fld"><label for="em">Email</label><input id="em" value="hello@venueplay.com.au"></div>
+  </div>
+  <div class="warn" id="warn">The logo is not live at venueplay.com.au/email/venueplay-signature.gif yet. Wait for the site to publish, then reload this page.</div>
+  <div class="row">
+    <button class="go" id="copy">Copy signature</button>
+    <button class="ghost" id="mode">Preview: light</button>
+    <span class="ok" id="ok"></span>
+  </div>
+  <div class="preview light" id="pv"></div>
+  <p class="note">Old versions of Windows Outlook show only the first frame of the GIF; that frame is the full glow, so it still looks right. A still version is at <a href="/email/venueplay-signature-static.png" style="color:#FF1F8E">venueplay-signature-static.png</a>.</p>
+</div>
+<script>
+(function(){
+  var $=function(id){ return document.getElementById(id); };
+  var LOGO="https://venueplay.com.au/email/venueplay-signature.gif";
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function tel(s){ return String(s||"").replace(/[^\d+]/g,""); }
+  /* Table layout and inline styles only: Outlook ignores stylesheets and most modern CSS. The colours
+     are fixed so the block reads the same in light and dark mail clients. */
+  function html(dark){
+    var name=$("nm").value.trim(), role=$("rl").value.trim(), mob=$("mb").value.trim(), em=$("em").value.trim();
+    var ink=dark?"#FFFFFF":"#0A0A0B", mute=dark?"#B8B8C2":"#5E5E68";
+    var rows="";
+    if(mob) rows+='<tr><td style="padding:2px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:'+mute+'"><span style="color:#FF1F8E;font-weight:700;display:inline-block;width:18px">M</span> <a href="'+("tel:"+esc(tel(mob)))+'" style="color:'+mute+';text-decoration:none">'+esc(mob)+'</a></td></tr>';
+    if(em)  rows+='<tr><td style="padding:2px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:'+mute+'"><span style="color:#FF1F8E;font-weight:700;display:inline-block;width:18px">E</span> <a href="'+("mailto:"+esc(em))+'" style="color:'+mute+';text-decoration:none">'+esc(em)+'</a></td></tr>';
+    rows+='<tr><td style="padding:2px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:'+mute+'"><span style="color:#FF1F8E;font-weight:700;display:inline-block;width:18px">W</span> <a href="https://venueplay.com.au" style="color:'+mute+';text-decoration:none">venueplay.com.au</a></td></tr>';
+    return '<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr>'
+      +'<td style="padding:0 18px 0 0;vertical-align:middle"><a href="https://venueplay.com.au" style="text-decoration:none"><img src="'+LOGO+'" width="96" height="96" alt="VenuePlay" style="display:block;border:0;border-radius:14px"></a></td>'
+      +'<td style="padding:0 18px 0 0;vertical-align:middle;border-left:2px solid #FF1F8E"></td>'
+      +'<td style="vertical-align:middle"><table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse">'
+      +'<tr><td style="padding:0 0 2px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;color:'+ink+'">'+esc(name)+'</td></tr>'
+      +(role?'<tr><td style="padding:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:'+mute+'">'+esc(role)+'</td></tr>':'')
+      +rows+'</table></td></tr></table>';
+  }
+  var dark=false;
+  function paint(){ $("pv").className="preview "+(dark?"dark":"light"); $("pv").innerHTML=html(dark); }
+  ["nm","rl","mb","em"].forEach(function(id){ $(id).addEventListener("input", paint); });
+  $("mode").addEventListener("click", function(){ dark=!dark; $("mode").textContent="Preview: "+(dark?"dark":"light"); paint(); });
+  $("copy").addEventListener("click", function(){
+    var h=html(false);
+    function done(){ $("ok").textContent="Copied. Paste it into Outlook's signature box."; setTimeout(function(){ $("ok").textContent=""; }, 5000); }
+    try{
+      if(navigator.clipboard && window.ClipboardItem){
+        navigator.clipboard.write([new ClipboardItem({ "text/html": new Blob([h],{type:"text/html"}), "text/plain": new Blob([$("nm").value+" | VenuePlay | venueplay.com.au"],{type:"text/plain"}) })]).then(done, fallback);
+      } else fallback();
+    }catch(e){ fallback(); }
+    function fallback(){ var r=document.createRange(); r.selectNodeContents($("pv")); var s=window.getSelection(); s.removeAllRanges(); s.addRange(r); try{ document.execCommand("copy"); done(); }catch(e){ $("ok").textContent="Select the preview and copy it by hand."; } s.removeAllRanges(); }
+  });
+  var probe=new Image(); probe.onload=function(){ $("warn").style.display="none"; }; probe.onerror=function(){ $("warn").style.display="block"; }; probe.src=LOGO+"?p="+Date.now();
+  paint();
+})();
+</script>
+</body>
+</html>

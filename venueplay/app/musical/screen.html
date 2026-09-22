@@ -72,9 +72,17 @@
      host now chooses when the answer appears; until then this holds the space, so the screen
      is never blank and never gives it away. */
   .mystery{display:flex;flex-direction:column;align-items:center;justify-content:center}
-  .qmark{font-family:'Anton',sans-serif;font-size:clamp(70px,20cqw,240px);line-height:.85;color:var(--pink);
-    text-shadow:0 0 60px rgba(255,31,142,.45);animation:qbeat 2.2s ease-in-out infinite}
-  @keyframes qbeat{0%,100%{transform:scale(1);opacity:.92}50%{transform:scale(1.06);opacity:1}}
+  /* THE MYSTERY MOMENT. This was a two-hundred-pixel question mark in Anton. Dean, 22 Sep 2026:
+     "that question mark looks awful". A song you cannot name yet is a sound, so the wall shows
+     one: seven bars breathing in pink, stage-lit, nothing else. The brand guide's neon pulse,
+     nothing bouncy. Respects reduced motion by holding still. */
+  .qmark{display:flex;align-items:flex-end;justify-content:center;gap:1.1cqw;height:clamp(60px,16cqw,200px)}
+  .qmark i{display:block;width:clamp(6px,1.6cqw,20px);border-radius:999px;background:var(--pink);
+    box-shadow:0 0 24px rgba(255,31,142,.55);height:30%;animation:wave 1.6s ease-in-out infinite}
+  .qmark i:nth-child(1){animation-delay:0s}.qmark i:nth-child(2){animation-delay:.18s}.qmark i:nth-child(3){animation-delay:.36s}
+  .qmark i:nth-child(4){animation-delay:.54s}.qmark i:nth-child(5){animation-delay:.36s}.qmark i:nth-child(6){animation-delay:.18s}.qmark i:nth-child(7){animation-delay:0s}
+  @keyframes wave{0%,100%{height:28%;opacity:.7}50%{height:100%;opacity:1}}
+  @media (prefers-reduced-motion:reduce){.qmark i{animation:none;height:60%}}
   .mysub{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(13px,2.8cqw,28px);color:var(--text);margin-top:1.2cqw}
   .nowart{width:clamp(84px,15cqw,210px);height:clamp(84px,15cqw,210px);border-radius:2cqw;object-fit:cover;display:block;margin:0 auto 1.2cqw;border:1px solid var(--line-2);box-shadow:0 0 42px rgba(0,0,0,.55);animation:pop .45s ease-out}
   .nowtitle{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(22px,6cqw,72px);color:#fff;line-height:1.02;margin:1.2cqw 0 .6cqw;animation:pop .45s ease-out;max-width:92cqw}
@@ -164,7 +172,7 @@
   <div class="layer hidden" id="tvRun">
     <div class="eyebrow" id="tvNowEye">Now playing</div>
     <div class="mystery hidden" id="tvListen">
-      <div class="qmark">?</div>
+      <div class="qmark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
       <div class="listen pulse">Listen&hellip;</div>
       <div class="mysub" id="tvListenSub">Know it? Mark it on your card</div>
     </div>
@@ -885,7 +893,8 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
     (function demoNight(){
       function m(o){ try{ onMsg(o); }catch(e){ console.warn("[demo]", e && e.message); } }
       var steps=[]; function at(ms, fn){ steps.push([ms, fn]); }
-      var SONGS = [{"title": "Never Gonna Give You Up", "artist": "Rick Astley"}, {"title": "Dancing Queen", "artist": "ABBA"}, {"title": "Khe Sanh", "artist": "Cold Chisel"}, {"title": "Mr. Brightside", "artist": "The Killers"}, {"title": "Horses", "artist": "Daryl Braithwaite"}];
+      /* Real artwork, from the same library the host uses, so the demo wall looks like a real wall. */
+      var SONGS = [{"title": "Never Gonna Give You Up", "artist": "Rick Astley", "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/de/eb/63/deeb63c1-7bc0-9153-cfa3-fd9e4929aacf/4050538826562.jpg/600x600bb.jpg"}, {"title": "Dancing Queen", "artist": "ABBA", "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/dc/f7/90/dcf790c3-7c63-f7b3-e57b-5a8747a8ebbe/14UMGIM11148.rgb.jpg/600x600bb.jpg"}, {"title": "Khe Sanh", "artist": "Cold Chisel", "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/96/1e/d6/961ed68b-b595-a6ae-e187-9df064db8475/13UAEIM00192.rgb.jpg/600x600bb.jpg"}, {"title": "Mr. Brightside", "artist": "The Killers", "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/07/1a/5a/071a5aee-6e42-060c-35b9-6a6e45b9ea59/06UMGIM10441.rgb.jpg/600x600bb.jpg"}, {"title": "The Horses", "artist": "Daryl Braithwaite", "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/40/fe/1e/40fe1e44-ee25-e025-3f36-931c97783036/886971200423.jpg/600x600bb.jpg"}];
       at(0, function(){
         m({ t:"session", join_code:"DEMO24" });
         m({ t:"mode" });
@@ -901,9 +910,9 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
              into textContent, so an object arrives on the wall as "[object Object]". It did. */
           played.push(sg.title);
           // reveal:false first, so the wall shows the card filling in without naming the song
-          m({ t:"played", title:sg.title, artist:sg.artist, played:played.slice(), reveal:false });
+          m({ t:"played", title:sg.title, artist:sg.artist, artworkUrl:sg.artworkUrl, played:played.slice(), reveal:false });
         });
-        at(t+2600, function(){ m({ t:"reveal", title:sg.title, artist:sg.artist, level:"full" }); });
+        at(t+2600, function(){ m({ t:"reveal", title:sg.title, artist:sg.artist, artworkUrl:sg.artworkUrl, level:"full" }); });
         at(t+3400, function(){ m({ t:"players", count: 22 + i*4 }); });
         t += 5200;
       });

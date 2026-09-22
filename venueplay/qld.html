@@ -827,46 +827,51 @@
     </div>
     <div class="h2-show" aria-label="VenuePlay running a sample night">
       <div class="h2-stage">
-        <div class="h2-tv"><iframe id="h2Tv" src="/tv?demo=1" title="The venue screen, running a sample bingo night" scrolling="no" tabindex="-1"></iframe></div>
+        <div class="h2-tv"><iframe id="h2Tv" title="The venue screen, running a sample night" scrolling="no" tabindex="-1"></iframe></div>
         <div class="h2-tvstand"></div>
         <div class="h2-phone" id="h2PhoneWrap"><div class="h2-phonebox"><iframe id="h2Phone" title="A player's phone, mid game" scrolling="no" tabindex="-1"></iframe></div></div>
       </div>
       <div class="h2-modes" id="h2Modes" role="tablist" aria-label="Pick a game to watch">
-        <button type="button" role="tab" class="on" data-mode="bingo">Bingo</button>
-        <button type="button" role="tab" data-mode="trivia">Trivia</button>
+        <button type="button" role="tab" class="on" data-mode="trivia">Trivia</button>
         <button type="button" role="tab" data-mode="musical">Musical bingo</button>
+        <button type="button" role="tab" data-mode="bingo">Bingo</button>
         <button type="button" role="tab" data-mode="raffle">Raffle</button>
         <button type="button" role="tab" data-mode="members">Members draw</button>
+        <button type="button" role="tab" data-mode="ads">Advertising</button>
       </div>
-      <p class="h2-cap">These are the real screens, playing a sample night. Pick a game.</p>
+      <p class="h2-cap">The real screens, playing a sample night. Pick a game, or see the screen between games.</p>
     </div>
   </div>
 </section>
 <script>
 (function(){
-  /* The walls are the product's own pages in their ?demo=1 mode: no venue, no network, no
-     analytics. Only one wall is ever loaded at a time, and the phone waits a moment so the
-     headline paints first. Bingo and trivia have a player page with a demo mode; the others
-     are drawn on the wall alone, so the phone steps aside rather than show the wrong game. */
-  var WALL={ bingo:"/tv?demo=1", trivia:"/app/trivia/screen?demo=1", musical:"/app/musical/screen?demo=1", raffle:"/app/raffle/screen?demo=1", members:"/app/members/screen?demo=1" };
-  var PHONE={ bingo:"/play?demo=1", trivia:"/app/trivia/play?demo=1" };
+  /* THE WALL AND THE PHONE ARE THE PRODUCT'S OWN PAGES in their ?demo=1 mode: no venue, no
+     network, no analytics. Each one plays a scripted night on its own clock, and the two
+     scripts are written to the same clock (see the notes in play.html and screen.html), so
+     they only stay in step if they START together. Both are (re)loaded in the same tick on
+     every chip, never one after the other. Dean, 22 Sep 2026: "the tv and phone seem to be
+     unsynced". Advertising is the wall alone: it is what the screen does between games. */
+  var WALL={ bingo:"/tv?demo=1", trivia:"/app/trivia/screen?demo=1", musical:"/app/musical/screen?demo=1", raffle:"/app/raffle/screen?demo=1", members:"/app/members/screen?demo=1", ads:"/tv?demo=1&ads=1" };
+  var PHONE={ bingo:"/play?demo=1", trivia:"/app/trivia/play?demo=1", musical:"/app/musical/play?demo=1" };
   var tv=document.getElementById("h2Tv"), ph=document.getElementById("h2Phone"), wrap=document.getElementById("h2PhoneWrap"), modes=document.getElementById("h2Modes");
   if(!tv||!ph||!modes) return;
   function fit(){ var box=ph.parentNode; var sc=box.clientWidth/390; ph.style.transform="scale("+sc+")"; }
   function show(mode){
-    if(tv.getAttribute("src")!==WALL[mode]) tv.setAttribute("src", WALL[mode]);
-    if(PHONE[mode]){ wrap.classList.remove("off"); if(ph.getAttribute("src")!==PHONE[mode]) ph.setAttribute("src", PHONE[mode]); fit(); }
-    else { wrap.classList.add("off"); }
-    var bs=modes.querySelectorAll("button"); for(var i=0;i<bs.length;i++){ bs[i].classList.toggle("on", bs[i].getAttribute("data-mode")===mode); bs[i].setAttribute("aria-selected", bs[i].getAttribute("data-mode")===mode?"true":"false"); }
+    var bust="&t="+Date.now();     // a fresh load each time, so both scripts start from zero together
+    tv.setAttribute("src", WALL[mode]+bust);
+    if(PHONE[mode]){ wrap.classList.remove("off"); ph.setAttribute("src", PHONE[mode]+bust); fit(); }
+    else { wrap.classList.add("off"); ph.removeAttribute("src"); }
+    var bs=modes.querySelectorAll("button"); for(var i=0;i<bs.length;i++){ var on=bs[i].getAttribute("data-mode")===mode; bs[i].classList.toggle("on", on); bs[i].setAttribute("aria-selected", on?"true":"false"); }
   }
   modes.addEventListener("click", function(e){ var b=e.target.closest?e.target.closest("[data-mode]"):null; if(!b) return;
     show(b.getAttribute("data-mode"));
     try{ if(typeof gtag==="function") gtag("event","cta_click",{ cta_label:"Hero game: "+b.textContent, cta_state:"qld", cta_kind:"hero-demo" }); }catch(err){} });
   window.addEventListener("resize", fit);
-  setTimeout(function(){ ph.setAttribute("src", PHONE.bingo); fit(); }, 1200);
-  fit();
+  show("trivia");   // Dean: "trivia to start then musical bingo and then bingo"
 })();
 </script>
+
+
 
 <!-- ===================== GAME MODES ===================== -->
 <section class="sec" id="modes">
@@ -876,33 +881,16 @@
       <h2 class="sec-title">Every format. And your own screen ads.</h2>
       <p class="sec-sub">Swap formats on the night or run a different one each week. It all plays on the screen you've already got: a smart TV, a projector, a laptop via HDMI, or a streaming stick.</p>
     </div>
-    <div class="modes">
-      <a class="mode" href="/see-a-night?mode=bingo" target="_blank" rel="noopener">
-        <div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="16" height="16" rx="3" stroke="#FF1F8E" stroke-width="1.6"/><circle cx="6.5" cy="6.5" r="1.4" fill="#FF1F8E"/><circle cx="13.5" cy="6.5" r="1.4" fill="#FF1F8E"/><circle cx="10" cy="10" r="1.4" fill="#FF1F8E"/><circle cx="6.5" cy="13.5" r="1.4" fill="#FF1F8E"/><circle cx="13.5" cy="13.5" r="1.4" fill="#FF1F8E"/></svg></div>
-        <h3>Bingo</h3>
-        <p>Classic numbers night with a big-screen caller. Digital cards on every phone, everyone dabs their own the way they always have, and a claim is checked the moment it is called.</p>
-      </a>
-      <a class="mode" href="/see-a-night?mode=trivia" target="_blank" rel="noopener">
-        <div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2.5a4 4 0 0 0-2.5 7.1c.5.4.7.9.7 1.4v.5h3.6v-.5c0-.5.2-1 .7-1.4A4 4 0 0 0 10 2.5Z" stroke="#FF1F8E" stroke-width="1.6"/><path d="M8 15.5h4M8.5 17.5h3" stroke="#FF1F8E" stroke-width="1.6" stroke-linecap="round"/></svg></div>
-        <h3>Trivia</h3>
-        <p>Rounds, teams and a live leaderboard. Questions, scoring and tie-breaks all handled. You just host.</p>
-      </a>
-      <a class="mode" href="/see-a-night?mode=musical" target="_blank" rel="noopener">
-        <div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7 14.5V5l8-1.5v9" stroke="#FF1F8E" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="5" cy="14.5" r="2" stroke="#FF1F8E" stroke-width="1.6"/><circle cx="13" cy="12.5" r="2" stroke="#FF1F8E" stroke-width="1.6"/></svg></div>
-        <h3>Musical Bingo</h3>
-        <p>Songs instead of numbers, players mark the track when it drops. Built-in playlists or bring your own theme.</p>
-      </a>
-      <a class="mode" href="/see-a-night?mode=raffle" target="_blank" rel="noopener">
-        <div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 8.5 10 3l6 5.5" stroke="#FF1F8E" stroke-width="1.6" stroke-linejoin="round"/><rect x="4.5" y="8.5" width="11" height="8" rx="1.5" stroke="#FF1F8E" stroke-width="1.6"/><path d="M10 11v3" stroke="#FF1F8E" stroke-width="1.6" stroke-linecap="round"/></svg></div>
-        <h3>Raffles &amp; Members Draws</h3>
-        <p>Run the meat tray or the members jackpot on the same system. Tickets, draws and number checks done live on screen.</p>
-      </a>
-      <a class="mode" href="/see-a-night?mode=ads" target="_blank" rel="noopener">
-        <div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="3.5" width="15" height="10" rx="1.5" stroke="#FF1F8E" stroke-width="1.6"/><path d="M7.5 16.5h5" stroke="#FF1F8E" stroke-width="1.6" stroke-linecap="round"/><path d="M10 13.5v3" stroke="#FF1F8E" stroke-width="1.6"/><path d="M8.5 6 L12.5 8.5 L8.5 11 Z" fill="#FF1F8E"/></svg></div>
-        <h3>Screen Ads</h3>
-        <p>Even with no game on, your screen earns its keep. Upload your own slides, drink specials, gigs, members offers, and VenuePlay loops them on the big screen. Set it and walk away.</p>
-      </a>
-    </div>
+    <!-- A LIST, NOT FIVE TILES. Five identical icon cards in a three-and-two grid is the shape of
+         every template landing page, and the hero above already shows each of these games
+         running. Dean, 22 Sep 2026: "make it look less ai a little profesh but on brand". -->
+    <ul class="fmtlist">
+      <li><b>Trivia</b><span>Rounds, teams and a live leaderboard. Questions, scoring and tie-breaks all handled. You just host.</span><a href="/see-a-night?mode=trivia&from=qld" target="_blank" rel="noopener">Watch it</a></li>
+      <li><b>Musical bingo</b><span>Songs instead of numbers. Players mark the track when it drops. Built-in playlists, or bring your own theme.</span><a href="/see-a-night?mode=musical&from=qld" target="_blank" rel="noopener">Watch it</a></li>
+      <li><b>Bingo</b><span>Classic numbers night with a big-screen caller. Digital cards on every phone, and a claim is checked the moment it is called.</span><a href="/see-a-night?mode=bingo&from=qld" target="_blank" rel="noopener">Watch it</a></li>
+      <li><b>Raffles and members draws</b><span>The meat tray or the members jackpot on the same system. Tickets, draws and number checks live on screen.</span><a href="/see-a-night?mode=raffle&from=qld" target="_blank" rel="noopener">Watch it</a></li>
+      <li><b>Screen ads</b><span>With no game on, your screen still earns its keep: your own slides, drink specials, gigs and members offers on a loop.</span><a href="/see-a-night?mode=ads&from=qld" target="_blank" rel="noopener">Watch it</a></li>
+    </ul>
   </div>
 </section>
 
@@ -930,24 +918,6 @@
         <p>You run the whole night from behind the bar, one tap at a time. When someone calls bingo, the <b>win is already checked for you</b>. You just confirm it and hand over the prize.</p>
       </div>
     </div>
-  </div>
-</section>
-
-<section class="sec" id="preview">
-  <div class="wrap">
-    <div class="sec-head">
-      <div class="label">The whole night, one tap</div>
-      <h2 class="sec-title vps-balance">See a night on VenuePlay</h2>
-      <p class="sec-sub">Open the interactive demo, tap the big screen, the host and a player, and flick between all six formats.</p>
-    </div>
-
-    <a class="vps-explore" href="/see-a-night" target="_blank" rel="noopener" aria-label="Open the interactive VenuePlay demo">
-      <span class="vps-explore-eyebrow"><span class="vps-dot"></span>Interactive demo</span>
-      <span class="vps-explore-title">Tap through a real night</span>
-      <span class="vps-explore-sub">Open the big screen, the host's tablet and a player's phone, and switch between bingo, trivia, musical bingo, raffles, members draws and screen ads. Click anything.</span>
-      <span class="vps-explore-btn">See a night on VenuePlay <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="#12030b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-    </a>
-
   </div>
 </section>
 
@@ -985,27 +955,19 @@
 </section>
 
 <!-- ===================== FOUNDING OFFER ===================== -->
-<!-- ===================== TRIVIA BANK COUNTER ===================== -->
-<section class="sec" id="trivia-bank">
-  <div class="wrap" style="text-align:center">
-    <div class="label" style="justify-content:center">The trivia bank</div>
-    <div class="counter" style="margin-top:14px">
-      <div class="big"><span id="vp-trivia-count">33,599</span></div>
-      <div class="sub">trivia questions and counting</div>
+<!-- ===================== THE BANKS ===================== -->
+<section class="sec sec-tight" id="banks">
+  <div class="wrap banks">
+    <div class="bank">
+      <div class="label">The trivia bank</div>
+      <div class="counter"><div class="big"><span id="vp-trivia-count">33,599</span></div><div class="sub">questions and counting</div></div>
+      <p class="sec-sub">Fact-checked, Aussie-friendly questions across every category, and the bank grows every week. A fresh trivia night every week, all included.</p>
     </div>
-    <p class="sec-sub" style="margin:18px auto 0;max-width:640px">Fact-checked, Aussie-friendly questions across every category, and the bank grows every week. Run a fresh trivia night once a week, all included, no extra packs to buy.</p>
-  </div>
-</section>
-
-<!-- ===================== MUSIC LIBRARY COUNTER ===================== -->
-<section class="sec" id="music-bank">
-  <div class="wrap" style="text-align:center">
-    <div class="label" style="justify-content:center">The music library</div>
-    <div class="counter" style="margin-top:14px">
-      <div class="big"><span id="vp-music-count">125</span></div>
-      <div class="sub">musical bingo songs and counting</div>
+    <div class="bank">
+      <div class="label">The music library</div>
+      <div class="counter"><div class="big"><span id="vp-music-count">125</span></div><div class="sub">songs and counting</div></div>
+      <p class="sec-sub">From Aussie anthems to disco, motown, country and modern hits, every track ready to play. A fresh musical bingo night every week, all included.</p>
     </div>
-    <p class="sec-sub" style="margin:18px auto 0;max-width:640px">From Aussie anthems to disco, motown, country and modern hits, every track ready to play. Run a fresh musical bingo night once a week, all included, no extra packs to buy.</p>
   </div>
 </section>
 
@@ -1342,7 +1304,7 @@
   /* ---------- Live trivia question counter (reads /data/trivia-count.json) ---------- */
   (function(){
     var el = document.getElementById('vp-trivia-count');
-    var sec = document.getElementById('trivia-bank');
+    var sec = document.getElementById('banks');
     if (!el) return;
     var fallback = parseInt((el.textContent || '').replace(/[^\d]/g, ''), 10) || 0; // keep the HTML number as a safety net
     el.textContent = '0'; // start at 0 straight away, then roll up
@@ -1378,7 +1340,7 @@
   /* ---------- Live music library counter (counts /data/musical-library.json songs) ---------- */
   (function(){
     var el = document.getElementById('vp-music-count');
-    var sec = document.getElementById('music-bank');
+    var sec = document.getElementById('banks');
     if (!el) return;
     var fallback = parseInt((el.textContent || '').replace(/[^\d]/g, ''), 10) || 0; // keep the HTML number as a safety net
     el.textContent = '0'; // start at 0 straight away, then roll up
@@ -1830,6 +1792,28 @@
     .h2-copy .eyebrow{order:1;justify-self:start} .h2-copy h1{order:2} .h2-show{order:3}
     .h2-copy .lede{order:4} .h2-copy .hero-cta{order:5;margin-top:4px} .h2-copy .h2-price{order:6;margin-top:0} .h2-copy .hero-note{order:7;margin-top:0}
   }
+
+  /* ---- rhythm (Queensland trial, 22 Sep 2026). Twelve identical centred blocks at the same
+     height read as a template. Heads sit left with the copy, blocks alternate in weight, and a
+     hairline separates them instead of eighty pixels of nothing. ---- */
+  .sec{padding:64px 0;border-top:1px solid var(--line-2,rgba(255,255,255,.06))}
+  .sec.sec-tight{padding:44px 0}
+  .sec-head{margin-bottom:30px;text-align:left}
+  .sec-head .sec-title,.sec-head .sec-sub,.sec-head .vps-balance{margin-left:0;margin-right:0}
+  .sec-head .label{justify-content:flex-start}
+  .sec-sub{margin-left:0;margin-right:0}
+  .banks{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+  .bank{padding:26px 28px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,0))}
+  .bank .label{justify-content:flex-start} .bank .counter{margin-top:10px} .bank .sec-sub{margin-top:12px;font-size:15.5px}
+  @media (max-width:760px){ .banks{grid-template-columns:1fr} .sec{padding:48px 0} }
+
+  .fmtlist{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+  .fmtlist li{display:grid;grid-template-columns:200px 1fr auto;gap:22px;align-items:baseline;padding:18px 0;border-bottom:1px solid var(--line)}
+  .fmtlist b{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:18px;color:#fff}
+  .fmtlist span{color:var(--muted);font-size:15.5px;line-height:1.55}
+  .fmtlist a{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;color:var(--pink);text-decoration:none;white-space:nowrap;border:1px solid rgba(255,31,142,.35);border-radius:999px;padding:6px 12px}
+  .fmtlist a:hover{background:var(--pink);color:#fff}
+  @media (max-width:760px){ .fmtlist li{grid-template-columns:1fr;gap:6px} .fmtlist a{justify-self:start} }
 </style>
 <a href="#claim" class="vp-float-cta" id="vpFloatCta" aria-label="Lock in founding">
   <svg width="15" height="17" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#fff" stroke-width="2.8" stroke-linejoin="round"/></svg>

@@ -1839,7 +1839,11 @@
             d({ t:"ball", number:n, called:called.slice(), active:true });
           }, 2600 + i*2100));
         });
-        timers.push(setTimeout(run, 2600 + BALLS.length*2100 + 9000));
+        /* THE SAME LAP AS THE WALL. tv.html's demo runs 2600 + 12*2100 + 14000 ms a lap and
+           this ran 9000 at the end, so the two drifted five seconds further apart every lap
+           and the phone was daubing balls the wall had not called. Dean, 22 Sep 2026: "the tv
+           and phone seem to be unsynced". One number, copied from tv.html; change both. */
+        timers.push(setTimeout(run, 2600 + BALLS.length*2100 + 14000));
       }
       run();
       return;                       // never reaches goToCode/watchVenue, so nothing connects
