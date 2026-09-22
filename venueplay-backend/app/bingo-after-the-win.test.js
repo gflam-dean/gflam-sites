@@ -608,6 +608,40 @@ onMsg({ t:"leave", pid:"p1" });
 ok("on a FREE night nothing is kept: she just rejoins and is dealt in like anybody", !G.paidLeft.p1);
 G.paidMode = "";
 
+/* ================= SIX TICKETS, ONE SALE AT A TIME, ARE STILL ONE BOOK ================= */
+print("");
+print("== paid tickets bought one at a time cover the numbers like a book ==");
+/* The host taps + once per sale. A top-up used to start a brand new strip and take its second
+   ticket, so six such sales were six tickets from six books: 24 numbers on two of them, 35 on
+   none (audit, 20 Sep 2026). Lifted here: the real makeStrip, makeCard, nextCardNo, dealFor and
+   topUpFor out of the shipped console. */
+var DEAL = ["cryptoInt", "clampCards", "colRange", "pickColCounts", "pickNumbers", "assignRows", "validTicket", "makeCard", "stripCounts", "stripRows", "makeStrip", "nextCardNo", "ticketsFor", "ticketFrom", "dealFor", "topUpFor"];
+var COL_TOTAL = [9,10,10,10,10,10,10,10,11];   // the 90-ball column sizes the console declares beside stripCounts
+if (typeof crypto === "undefined") { crypto = { getRandomValues: function(a){ for (var i = 0; i < a.length; i++) a[i] = Math.floor(Math.random() * 4294967296); return a; } }; }
+var dealMissing = [];
+DEAL.forEach(function(n){ if (!grab(n)) dealMissing.push(n); });
+eval(DEAL.map(function(n){ return grab(n) || ""; }).join("\n"));   // at top level, so the declarations land in scope
+ok("the dealing functions are still in the console under their names", dealMissing.length === 0, dealMissing.join(", "));
+if (!dealMissing.length) {
+  var PAID_MAX_TICKETS = 24;
+  function coverage(cards){ var seen = {}, twice = 0; cards.forEach(function(c){ var on = {}; c.card.forEach(function(row){ row.forEach(function(n){ if (n) on[n] = 1; }); }); Object.keys(on).forEach(function(n){ if (seen[n]) twice++; seen[n] = 1; }); }); return { none: 90 - Object.keys(seen).length, twice: twice }; }
+  G.paidMode = "card"; G.cardNo = 1;
+  var ann = { paid: 6, cards: [] }; dealFor(ann);
+  var a = coverage(ann.cards);
+  ok("bought in one go: a proper strip, every number once", ann.cards.length === 6 && a.none === 0 && a.twice === 0, JSON.stringify(a));
+  var bob = { paid: 1, cards: [] }; dealFor(bob);
+  for (var tk = 2; tk <= 6; tk++) { bob.paid = tk; topUpFor(bob); }
+  var b = coverage(bob.cards);
+  ok("bought one at a time: the SAME book continued, every number once", bob.cards.length === 6 && b.none === 0 && b.twice === 0, JSON.stringify(b));
+  bob.paid = 9; topUpFor(bob);
+  var b2 = coverage(bob.cards.slice(6));
+  ok("a seventh ticket starts a second book, which is what holding two books is", bob.cards.length === 9 && b2.twice === 0, JSON.stringify(b2));
+  bob.paid = 4; topUpFor(bob); bob.paid = 6; topUpFor(bob);
+  var b3 = coverage(bob.cards);
+  ok("dropping back and buying again stays inside the first book", bob.cards.length === 6 && b3.none === 0 && b3.twice === 0, JSON.stringify(b3));
+  G.paidMode = "";
+}
+
 print("");
 if (bad) { print(bad + " OF " + (pass + bad) + " CHECKS FAILED"); throw new Error(bad + " failed"); }
 print("ALL " + pass + " CHECKS PASSED");

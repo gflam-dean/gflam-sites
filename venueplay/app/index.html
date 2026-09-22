@@ -1574,32 +1574,33 @@
   // whole hand away and minted a fresh one, so a host tapping + for a second sheet at ball 40 wiped
   // six half-marked tickets and any near-line with them, and the phone cleared every daub. Buying
   // more must never cost you what you were holding.
+  /* THE SAME BOOK, CONTINUED. A top-up used to build a brand new strip and take its second
+     ticket, so six tickets bought one at a time (the natural workflow: tap + once per sale)
+     were six tickets from six different books: 24 numbers on two of them, 35 on none. Bought
+     in one go they were a proper strip, every number once (audit, 20 Sep 2026). The player
+     now keeps the book they were dealt from and the next ticket is the next one in it. */
+  // Ticket k of a player's hand is page k%6 of their book number k/6. The books are kept on the
+  // player, so buying one at a time, dropping back and buying again all land on the same pages.
+  function ticketFrom(p, k){
+    if(!p._books) p._books=[];
+    var bi=Math.floor(k/6);
+    if(p._books[bi]===undefined) p._books[bi]=makeStrip();
+    return p._books[bi] ? p._books[bi][k%6] : makeCard();      // makeCard is the fallback if a strip cannot be built
+  }
   function topUpFor(p){
     var want=ticketsFor(p), have=(p.cards||[]).length;
     if(!p.cards) p.cards=[];
     if(want===have) return;
-    if(want<have){ p.cards=p.cards.slice(0, want); return; }   // reduced: drop the newest, keep the rest
-    var strip=makeStrip(), si=have%6;
-    for(var k=have;k<want;k++){
-      if(si>=6 || !strip){ strip=makeStrip(); si=0; }
-      var card = strip ? strip[si] : makeCard();
-      si++;
-      p.cards.push({ card:card, cardNo:nextCardNo(p) });
-    }
+    if(want<have){ p.cards=p.cards.slice(0, want); return; }   // reduced: drop the newest, keep the rest (and the books)
+    for(var k=have;k<want;k++) p.cards.push({ card:ticketFrom(p, k), cardNo:nextCardNo(p) });
   }
   function dealFor(p){
     var want=ticketsFor(p);
-    p.cards=[];
     // Deal from a strip so a called number can never appear on two of the same player's tickets.
     // Fewer than six is simply the front of the strip; more than six starts a fresh one, which is
-    // exactly what holding two books is.
-    var strip=makeStrip(), si=0;
-    for(var k=0;k<want;k++){
-      if(si>=6){ strip=makeStrip(); si=0; }
-      var card = strip ? strip[si] : makeCard();   // makeCard is the fallback if a strip cannot be built
-      si++;
-      p.cards.push({ card:card, cardNo:nextCardNo(p) });
-    }
+    // exactly what holding two books is. A new deal is new books.
+    p.cards=[]; p._books=[];
+    for(var k=0;k<want;k++) p.cards.push({ card:ticketFrom(p, k), cardNo:nextCardNo(p) });
   }
   // The TV's "Bingo claimed" card. names[] carries everyone who called on this ball; name stays
   // as the first so a screen still running the old shape shows something sensible.

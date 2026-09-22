@@ -236,7 +236,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/bingo-after-the-win.test.js": {
-  "checks": 136,
+  "checks": 141,
   "counted_by": "lines"
  },
  "venueplay-backend/app/bingo-console.test.js": {

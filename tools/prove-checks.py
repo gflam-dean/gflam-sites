@@ -2104,6 +2104,12 @@ MUTATIONS = [
      "    cache.set('b:' + gameId, { data: board, until: nowMs + 8000 });",
      'the kept leaderboard forgets which question it was for, and question 8 is answered with question 7'),
 
+    ('bingo-after-the-win.test.js', 'venueplay/app/index.html',
+     "    if(p._books[bi]===undefined) p._books[bi]=makeStrip();",
+     "    p._books[bi]=makeStrip();",
+     'every top-up is a fresh book again: six tickets sold one at a time carry 24 numbers twice '
+     'and 35 not at all'),
+
     ('an answer at second ten scores 125 whether or not the host adds time afterwards', 'venueplay-backend/worker/venueplay-game.js',
      "  if (endsAtMs && cfg.time_added && cfg.time_added.seq === t.current_seq && cfg.time_added.ms > 0) endsAtMs -= cfg.time_added.ms;",
      "",
