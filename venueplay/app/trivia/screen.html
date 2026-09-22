@@ -137,17 +137,29 @@
   .brow .s{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:3cqw;color:var(--gold)}
   .revboard .brow .r,.revboard .brow .n,.revboard .brow .s{font-size:2.3cqw}
 
-  /* podium */
-  .podium{display:flex;align-items:flex-end;justify-content:center;gap:3cqw;margin-top:2cqw}
-  .pcol{display:flex;flex-direction:column;align-items:center;gap:1.2cqw;width:22cqw}
-  .pcol .medal{font-size:5cqw;line-height:1}
-  .pcol .pn{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:2.8cqw;color:#fff;text-align:center;line-height:1.05;word-break:break-word}
-  .pcol .ps{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:2.6cqw;color:var(--gold)}
-  .pcol .bar{width:100%;border-radius:1.4cqw 1.4cqw 0 0;border:0.2cqw solid var(--line);border-bottom:none;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.01))}
-  .pcol.first .bar{height:24cqw;border-color:var(--gold);background:linear-gradient(180deg,rgba(255,194,75,.22),rgba(255,194,75,.03))}
-  .pcol.first .pn{color:var(--gold)}
-  .pcol.second .bar{height:16cqw}
-  .pcol.third .bar{height:11cqw}
+  /* THE WINNERS SCREEN. This was three thin columns with medal emoji and near-black bars, and it
+     is the screen a room photographs. Dean, 22 Sep 2026, with a competitor's board that a table
+     had posted to Facebook: bright bands, big place numbers, the winner unmistakable. So: a stack
+     of bands, the place in Anton on the left, the team name as the loudest text on the wall, the
+     score in mono on the right. First is a pink band with the neon glow; second and third are
+     stage-black with a hairline. No emoji. Bands enter one after another, third first, so the
+     winner is the last thing revealed. */
+  .podium{display:flex;flex-direction:column;align-items:stretch;gap:1.6cqw;margin-top:1cqw;width:100%;max-width:78cqw}
+  .podium.four{max-width:82cqw}
+  .pcol{display:grid;grid-template-columns:9cqw 1fr auto;align-items:center;gap:2.4cqw;padding:1.6cqw 3cqw 1.6cqw 2cqw;border-radius:1.6cqw;
+    border:0.2cqw solid var(--line);background:linear-gradient(90deg,rgba(255,255,255,.05),rgba(255,255,255,.015));
+    opacity:0;transform:translateX(-3cqw);animation:bandin .55s cubic-bezier(.22,1,.36,1) forwards}
+  .pcol.first{border-color:var(--pink);background:linear-gradient(90deg,rgba(255,31,142,.55),rgba(255,31,142,.18));box-shadow:0 0 3cqw rgba(255,31,142,.45),inset 0 0 0 0.1cqw rgba(255,255,255,.12);animation-delay:.9s;padding:2.2cqw 3cqw 2.2cqw 2cqw}
+  .pcol.second{animation-delay:.45s} .pcol.third{animation-delay:0s}
+  .pcol .medal{font-family:'Anton',sans-serif;font-size:6cqw;line-height:1;color:var(--muted);text-align:center}
+  .pcol.first .medal{color:#fff;font-size:7.5cqw;text-shadow:0 0 2cqw rgba(255,255,255,.5)}
+  .pcol .pn{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:3.6cqw;color:#fff;text-align:left;line-height:1.05;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pcol.first .pn{font-size:4.6cqw}
+  .pcol .ps{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:3.4cqw;color:var(--gold);text-align:right}
+  .pcol.first .ps{color:#fff;font-size:4.2cqw}
+  .pcol .bar{display:none}
+  @keyframes bandin{to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.pcol{animation:none;opacity:1;transform:none}}
 
   /* join corner */
   .tv-join{position:absolute;left:2cqw;bottom:2cqw;display:flex;align-items:center;gap:1cqw;z-index:6;background:rgba(0,0,0,.42);border:1px solid var(--line-2);border-radius:1.2cqw;padding:.8cqw 1.4cqw .8cqw .8cqw;backdrop-filter:blur(4px)}
@@ -532,9 +544,9 @@
     show("tvPodium");
     var cols=$("tvPodiumCols"); cols.innerHTML="";
     var ents=podiumEntries(top, rows);
-    var CLS={1:"first",2:"second",3:"third"}, MEDAL={1:"🥇",2:"🥈",3:"🥉"};
-    var seconds=ents.filter(function(e){ return e.rank===2; }), firsts=ents.filter(function(e){ return e.rank===1; }), thirds=ents.filter(function(e){ return e.rank===3; });
-    var order=seconds.concat(firsts, thirds);
+    var CLS={1:"first",2:"second",3:"third"}, MEDAL={1:"1",2:"2",3:"3"};
+    // Top to bottom, first at the top: it is a leaderboard now, not three columns.
+    var order=ents.slice().sort(function(a,b){ return a.rank-b.rank; });
     cols.classList.toggle("four", order.length>3);
     var tiedRank={}; ents.forEach(function(e){ tiedRank[e.rank]=(tiedRank[e.rank]||0)+1; });
     order.forEach(function(o){ if(!o.p) return;
