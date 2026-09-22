@@ -936,8 +936,8 @@
   <div class="wrap">
     <div class="vps-strip">
       <div class="vps-strip-inner">
-        <div class="label" style="justify-content:center">Less to set up, less to pack down</div>
-        <h2 class="vps-strip-title" style="text-align:center;margin-left:auto;margin-right:auto">One screen replaces the paper bingo books and the <span class="vps-accent">hired trivia host</span>.</h2>
+        <div class="label">Less to set up, less to pack down</div>
+        <h2 class="vps-strip-title">One screen replaces the paper bingo books and the <span class="vps-accent">hired trivia host</span>.</h2>
         <div class="vps-swaps">
           <div class="vps-swap">
             <div class="vps-swap-k">The screen</div>
@@ -988,11 +988,16 @@
       <div class="offer-grid">
         <div>
           <div class="label">Open now</div>
-          <h2 class="sec-title">$2.50 per player.<br>Locked for life.</h2>
-          <p class="sec-sub">Queensland venues that join before 31 October 2026 lock in $2.50 per player a month (normally $3), set and locked for life. The deal closes at the end of October, and it will not come back.</p>
+          <h2 class="sec-title">First month free.<br>Then $2.50 a player, locked for life.</h2>
+          <p class="sec-sub">Queensland venues that join before 31 October 2026 pay nothing for the first month, then $2.50 per player a month (normally $3), locked for as long as you stay. The deal closes at the end of October, and it will not come back.</p>
+          <div class="offer-cta"><a class="btn btn-primary" href="#claim">Lock in your price</a></div>
         </div>
         <div class="price-card">
           <div class="price-eyebrow">Per player · per month</div>
+          <div class="price-row found">
+            <div class="pl"><b>First month</b>on us</div>
+            <div class="pv">$0</div>
+          </div>
           <div class="price-row list">
             <div class="pl"><b>Standard</b>full rate</div>
             <div class="pv">$3.00</div>
@@ -1008,8 +1013,6 @@
           <p class="price-foot">Priced per player, on your venue's max players per session. Go over on a big night and it's just $2 per extra player that night. Three big nights in a row and we move your plan up to match, which costs less than paying per head every week. Your rate is locked for life while your subscription stays active. Cancel and that rate ends for good, so rejoining later is at the standard rate.</p>
         </div>
       </div>
-      <div class="offer-cta"><a class="btn btn-primary" href="#claim">Lock in your price</a></div>
-    
     </div>
   </div>
 </section>
@@ -1838,6 +1841,31 @@
   .fmtlist a{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;color:var(--pink);text-decoration:none;white-space:nowrap;border:1px solid rgba(255,31,142,.35);border-radius:999px;padding:6px 12px}
   .fmtlist a:hover{background:var(--pink);color:#fff}
   @media (max-width:760px){ .fmtlist li{grid-template-columns:1fr;gap:6px} .fmtlist a{justify-self:start} }
+
+  /* "One screen replaces": the same left-set list rhythm as the formats above it, not four
+     identical glowing cards in a rounded panel. Dean, 22 Sep 2026: "less ai". */
+  #replaces .vps-strip{background:none;border:0;border-radius:0;padding:0;overflow:visible}
+  #replaces .vps-strip::before{display:none}
+  #replaces .label{justify-content:flex-start}
+  #replaces .vps-strip-title{text-align:left;margin:0;max-width:24ch}
+  #replaces .vps-swaps{grid-template-columns:repeat(2,1fr);gap:0 56px;margin-top:30px;border-top:1px solid var(--line)}
+  #replaces .vps-swap{background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:22px 0;display:grid;grid-template-columns:112px 1fr;column-gap:22px;align-content:start}
+  #replaces .vps-swap:hover{border-color:var(--line)}
+  #replaces .vps-swap-k{grid-row:1/3;align-self:start;margin:5px 0 0;font-size:11px}
+  #replaces .vps-swap-k::before{display:none}
+  #replaces .vps-swap h3{font-size:18px;margin-bottom:6px}
+  #replaces .vps-swap p{font-size:15.5px}
+  @media (max-width:760px){ #replaces .vps-swaps{grid-template-columns:1fr;gap:0} #replaces .vps-swap{grid-template-columns:1fr} #replaces .vps-swap-k{grid-row:auto;margin-bottom:8px} }
+
+  /* The offer reads left like everything else, with the button under the words that sold it. */
+  #offer .offer-grid > div:first-child{text-align:left}
+  #offer .offer-grid > div:first-child .label{justify-content:flex-start}
+  #offer .offer-grid > div:first-child .sec-title{margin-left:0;margin-right:0;max-width:22ch}
+  #offer .offer-grid > div:first-child .sec-sub{margin-left:0;max-width:48ch}
+  #offer .offer-cta{text-align:left;margin-top:26px}
+  #offer .offer-cta .btn{min-width:0}
+  /* A price never breaks onto two lines ("$2.85" over "$2.30" read as two prices). */
+  .price-row .pv{white-space:nowrap;flex:none;margin-left:14px}
 </style>
 <a href="#claim" class="vp-float-cta" id="vpFloatCta" aria-label="Lock in founding">
   <svg width="15" height="17" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#fff" stroke-width="2.8" stroke-linejoin="round"/></svg>
