@@ -433,6 +433,14 @@ MUTATIONS = [
      'a function is declared inside a block and called outside it, which is the Annex B fault '
      'that blinded a live venue TV for a whole day while every other check stayed green'),
 
+    ('no consent box is ticked from a script',
+     'venueplay/play.html',
+     '''        l.innerHTML='<input type="checkbox" id="xOptin"> <span>Keep me posted on what is on at the venue</span>';''',
+     '''        l.innerHTML='<input type="checkbox" id="xOptin"> <span>Keep me posted on what is on at the venue</span>'; l.querySelector("input").checked = true;''',
+     'the join screen opt-in arrives ticked by a line of script, the markup reads unticked, '
+     'and the Worker faithfully records consent nobody gave (the audit of 20 Sep 2026 did '
+     'exactly this and the gate stayed green)'),
+
     ('no consent box is pre-ticked',
      'venueplay/nsw.html',
      '<input type="checkbox" id="vp-marketing">',

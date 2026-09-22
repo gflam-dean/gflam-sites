@@ -2080,6 +2080,22 @@ def local_checks(which):
                          r'agree to receive|keep me (posted|updated)', said, re.I):
                 tick_hits.append('%s:%d' % (short(f), text[:m.start()].count('\n') + 1))
     ok('no consent box is pre-ticked', not tick_hits, why=', '.join(tick_hits[:4]))
+    # AND NOT TICKED FROM A SCRIPT EITHER. The audit of 20 Sep 2026 added
+    #   l.querySelector("input").checked = true;
+    # under the join screen's opt-in box and the check above stayed green: it reads the
+    # markup, and the markup was unticked. So read the script too: any write that ticks a
+    # box within reach of a consent box's id or its label is the same breach.
+    js_hits = []
+    ids = r'(xOptin|vp-marketing|"optin"|\bmkt\b|marketing_optin)'
+    for f in files:
+        if not f.endswith('.html'):
+            continue
+        text = io.open(f, encoding='utf-8', errors='ignore').read()
+        for m in re.finditer(r'(\.checked\s*=\s*true|\.defaultChecked\s*=\s*true|setAttribute\(\s*["\']checked["\'])', text):
+            near = text[max(0, m.start() - 400):m.end() + 120]
+            if re.search(ids, near) or re.search(r'send me|marketing|newsletter|keep me (posted|updated)', near, re.I):
+                js_hits.append('%s:%d' % (short(f), text[:m.start()].count('\n') + 1))
+    ok('no consent box is ticked from a script', not js_hits, why=', '.join(js_hits[:4]))
 
     # EVERY MERGE TAG IN AN EMAIL THE WORKER SENDS HAS TO BE FILLED IN BY THE WORKER.
     # {{unsubscribe_url}} sat in four templates and nothing anywhere replaced it, so the
