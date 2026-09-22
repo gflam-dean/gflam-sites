@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '22 Sep 2026, 16:44 · 5db7b087';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '22 Sep 2026, 16:51 · e8fd0a3e';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -5313,7 +5313,26 @@ async function vpbRequireOwner(request, env) {
     '&select=id,name,founding_id,group_id,max_players,pending_players,status,slug,cancel_at_period_end,suspended_reason,timezone,created_at,postcode');
   if (!venues || !venues.length) return { error: 'No venues found.', status: 403 };
 
-  const foundingId = venues[0].founding_id;
+  /* WHICH ACCOUNT. A login with venues on two accounts (a publican who signed up two pubs
+     separately, or our own test logins) used to be handed the account with the lowest
+     founding id on every call, silently, with the other account unreachable from the page.
+     Found by the audit of 20 Sep 2026. A staff member may now name a venue THEY HOLD in
+     X-VP-Venue and get that venue's account; a venue they do not hold changes nothing, so
+     this is no wider than their own staff rows. With no header the old order stands, and
+     the other accounts are listed so the page can offer the switch. */
+  let chosen = venues[0];
+  if (!viewingAs && isUuid.test(target)) {
+    const held = venues.find((v) => v.id === target);
+    if (held) chosen = held;
+  }
+  const foundingId = chosen.founding_id;
+  const otherAccounts = [];
+  venues.forEach((v) => {
+    if (v.founding_id === foundingId) return;
+    let a = otherAccounts.find((x) => x.founding_id === v.founding_id);
+    if (!a) { a = { founding_id: v.founding_id, venue_id: v.id, venues: [] }; otherAccounts.push(a); }
+    a.venues.push(v.name);
+  });
   const accounts = await vpaSelect(env, 'venueplay_founding',
     'id=eq.' + encodeURIComponent(foundingId) +
     '&select=id,plan,is_group,payment_reminders,stripe_subscription_id,stripe_customer_id,contact_email,status');
@@ -5400,7 +5419,7 @@ async function vpbRequireOwner(request, env) {
   const myRole = (staff || []).some((x) => x.role === 'owner') ? 'owner'
                : ((staff || []).length ? 'manager' : null);
   return { authUserId: authUserId, account: account, venues: accountVenues, adminActor: adminActor,
-           perms: perms, role: myRole, actingAsAdmin: actingAsAdmin };
+           perms: perms, role: myRole, actingAsAdmin: actingAsAdmin, otherAccounts: otherAccounts };
 }
 
 // Full-access (account owner or legacy staff) vs a restricted manager, and per-toggle checks.
@@ -5726,6 +5745,9 @@ async function vpbAccountSummary(request, env, json) {
     is_group: o.account.is_group,
     rate: rate,
     venues: venues,
+    /* The login's venues on OTHER accounts, if any: one venue id per account is enough for
+       the page to switch by naming it in X-VP-Venue. Empty for nearly everyone. */
+    other_accounts: (o.otherAccounts || []).map((a) => ({ venue_id: a.venue_id, venues: a.venues })),
     total_players: totalPlayers,
     /* BOTH figures are what the venue will actually pay. The full price is sent alongside so
        the page can show the saving rather than silently quoting a smaller number. */

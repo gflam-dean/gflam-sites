@@ -278,6 +278,8 @@
 <div class="wrap">
   <h1>Your account</h1>
   <p class="lede" id="lede">Your plan, venues, hosts and next payment. Add players or venues anytime.</p>
+  <!-- Only for a login with venues on more than one account. Everyone else never sees it. -->
+  <p class="lede" id="otherAccounts" hidden></p>
 
   <div id="loading" class="card">Loading your account…</div>
   <div id="content" style="display:none">
@@ -651,6 +653,11 @@
       // admin is staff nowhere, so without this it cannot tell what account to act on.
       try { var _imp = JSON.parse(localStorage.getItem("vpImpersonate") || "null");
             if (_imp && _imp.id) h["X-VP-Venue"] = _imp.id; } catch (e) {}
+      // Not viewing as anyone: name the venue this login picked (at sign-in, or with the
+      // account switch below), so a login with venues on two accounts sees the one it meant.
+      // The Worker only honours a venue the login actually holds.
+      if (!h["X-VP-Venue"]) { try { var _pick = JSON.parse(localStorage.getItem("vpVenuePick") || "null");
+            if (_pick && _pick.id) h["X-VP-Venue"] = _pick.id; } catch (e) {} }
       return fetch(VP_WORKER + path, { method:"POST", headers:h, body:JSON.stringify(body||{}) }).then(function(r){ return r.json(); }).then(function(j){ if (j && j.error && j._detail){ j.error = j.error + ". " + j._detail; } return j; });
     }).catch(function(){ return { error: "Something went wrong. Please check your connection and try again." }; });
   }
@@ -1008,6 +1015,21 @@
   }
 
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  /* A login with venues on another account gets one line naming those venues and a switch.
+     The switch just records that venue as the one picked; every call names it from then on. */
+  function renderOtherAccounts(list){
+    var el = $("otherAccounts"); if (!el) return;
+    if (!list.length) { el.hidden = true; el.innerHTML = ""; return; }
+    el.innerHTML = "You also have " + (list.length === 1 ? "another account" : list.length + " other accounts") + ": " +
+      list.map(function(a){ return esc((a.venues || []).join(", ")) + ' <a href="#" data-switch="' + esc(a.venue_id) + '">Open it</a>'; }).join(" · ");
+    el.hidden = false;
+    el.querySelectorAll("[data-switch]").forEach(function(a){
+      a.addEventListener("click", function(e){ e.preventDefault();
+        try { localStorage.setItem("vpVenuePick", JSON.stringify({ id: a.getAttribute("data-switch"), at: Date.now() })); } catch (err) {}
+        location.reload();
+      });
+    });
+  }
 
   // Restricted managers only see the sections their toggles allow; owner-only sections are
   // hidden. (The Worker independently blocks the actions, so this is UX, not the security line.)
@@ -1101,6 +1123,7 @@
           ? "Your year is already paid, so releasing players frees them straight away and credits the rest of the year to your next invoice."
           : "Reductions apply from your next renewal, so you are never left short.");
       render(d);
+      renderOtherAccounts(d.other_accounts || []);
     }).catch(function(){
       if ($("content").style.display === "none") $("loading").textContent = "Could not load your billing. Please try again.";
       else showMsg("Could not refresh just now. Please reload the page.");

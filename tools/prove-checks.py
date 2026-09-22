@@ -2096,6 +2096,17 @@ MUTATIONS = [
      "    cache.set('b:' + gameId, { data: board, until: nowMs + 8000 });",
      'the kept leaderboard forgets which question it was for, and question 8 is answered with question 7'),
 
+    ('naming a venue you hold picks its account', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "    if (held) chosen = held;",
+     "    if (held) chosen = venues[0];",
+     'the header is read and ignored: Sam is back on the older account for ever'),
+
+    ('naming a venue you hold picks its account', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "    const held = venues.find((v) => v.id === target);",
+     "    const held = (await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(target) + '&select=id,founding_id'))[0];",
+     'any venue id in the header picks its account, held or not: every account on the platform '
+     'is one guessed uuid away'),
+
     ('ten weeks of "add 20" reach past the first hundred rows', 'venueplay-backend/worker/venueplay-game.js',
      "  const start = total > size ? randInt(total - size + 1) : 0;",
      "  const start = 0;",

@@ -2962,6 +2962,11 @@ def local_checks(which):
                    'venue\'s raffle, or a draw on Math.random, ships with a green gate otherwise')
 
         for label, fn, title, floor, why in (
+            ('D34. A login with venues on two accounts can reach both, and nobody else\'s',
+             'test-two-accounts-one-login.js',
+             'naming a venue you hold picks its account; naming one you do not changes nothing', 14,
+             'A publican who signed up two pubs separately was shown the older account on every '
+             'call with no way to the other; the fix must not let a stranger\'s venue id in'),
             ('D33. Add from library deals from the whole bank, never a parked question',
              'test-library-pull-reaches-the-whole-bank.js',
              'ten weeks of "add 20" reach past the first hundred rows, and no parked question is dealt', 6,
