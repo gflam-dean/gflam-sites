@@ -138,13 +138,14 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '22 Sep 2026, 17:13 · 2d1218bb';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '22 Sep 2026, 17:20 · ca7533e3';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
  * are 60s because Workers KV requires expirationTtl >= 60.
  * ------------------------------------------------------------------------- */
 const JOIN_MAX_PER_IP = 300;      // joins per 60s per network. Generous: a whole venue shares one NAT IP. Raise for big venues.
+const LIKE_MAX_PER_IP = 30;      // venue-name searches per 60s per network: a screen setting itself up asks a handful of times.
 const REPORT_MAX_PER_IP = 30;    // game reports per 60s per network. A venue finishes a round every few minutes.
 const CAPTURE_MAX_PER_IP = 120;  // opt-in captures per 60s per network. A whole venue shares one NAT IP, so keep it generous.
 const JOIN_MAX_PER_DEVICE = 8;    // joins per 60s per device hint. One phone should not join many times a minute.
@@ -1671,6 +1672,13 @@ async function handleVenueLike(request, env, json) {
   const typed = String(url.searchParams.get('slug') || '').trim().toLowerCase().slice(0, 80);
   if (!typed || !/^[a-z0-9-]+$/.test(typed)) return json({ matches: [] });
   if (typed.length < 6) return json({ matches: [], why: 'too short to search' });
+  /* A screen finding itself asks this a handful of times. Anyone else asking sixty times a
+     minute is walking the customer list one common word at a time (audit, 20 Sep 2026). */
+  const ipHash = await abuseIpHash(request, env);
+  if (ipHash) {
+    const rl = await rateLimit(env, 'like:ip:' + ipHash, LIKE_MAX_PER_IP, 60);
+    if (!rl.ok) return json({ matches: [], why: 'too many searches from this network, wait a minute' }, 429);
+  }
 
   /* PostgREST 'or' with a like: the slug itself, or the slug plus a dash and
      anything. The dash matters - without it the-grand would match the-grande
@@ -4462,7 +4470,10 @@ function sanitizeQuestion(q) {                                    // -> a valid 
     question: question.slice(0, 500), options, correct_index: ci,
     category: q.category ? String(q.category).slice(0, 60) : null,
     difficulty: ['easy', 'medium', 'hard'].includes(q.difficulty) ? q.difficulty : 'medium',
-    image_url: q.image_url ? String(q.image_url).slice(0, 600) : null,
+    /* https only, for add and update alike. Only the edit route checked this; a question
+       ADDED with a plain http or javascript: link went straight into the set and, through the
+       submissions queue, up for the shared library, and the phone sets img.src to it. */
+    image_url: (q.image_url && /^https:\/\//i.test(String(q.image_url))) ? String(q.image_url).slice(0, 600) : null,
   };
 }
 async function handleTriviaAdd(request, env, json) {              // write your own questions (bulk)

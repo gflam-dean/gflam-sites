@@ -108,7 +108,7 @@
   "counted_by": "lines"
  },
  "tools/test-library-pull-reaches-the-whole-bank.js": {
-  "checks": 6,
+  "checks": 10,
   "counted_by": "lines"
  },
  "tools/test-manager-permissions.js": {
@@ -201,6 +201,10 @@
  },
  "tools/test-venue-list-paged.js": {
   "checks": 15,
+  "counted_by": "lines"
+ },
+ "tools/test-venue-search-is-limited.js": {
+  "checks": 4,
   "counted_by": "lines"
  },
  "tools/test-webhook-retry-is-not-dropped.js": {

@@ -2978,6 +2978,11 @@ def local_checks(which):
                    'venue\'s raffle, or a draw on Math.random, ships with a green gate otherwise')
 
         for label, fn, title, floor, why in (
+            ('D36. The venue-name search cannot be used to walk the customer list',
+             'test-venue-search-is-limited.js',
+             'a screen finding itself is answered, the thirty-first ask a minute is refused', 4,
+             '/venues/like answers slug, name and postcode for a whole family of pubs from one '
+             'common word; unlimited, that is the customer list'),
             ('D35. Removing a trivia question between rounds does not bring round one back',
              'test-trivia-no-repeat-survives-a-removal.js',
              'the within-night memory is by question id, and a removal mid-round is refused', 10,
@@ -2990,7 +2995,7 @@ def local_checks(which):
              'call with no way to the other; the fix must not let a stranger\'s venue id in'),
             ('D33. Add from library deals from the whole bank, never a parked question',
              'test-library-pull-reaches-the-whole-bank.js',
-             'ten weeks of "add 20" reach past the first hundred rows, and no parked question is dealt', 6,
+             'ten weeks of "add 20" reach past the first hundred rows, and no parked question is dealt', 9,
              'A venue pulling General Knowledge every week was drawing from the same 100 questions '
              'out of thousands, and a question pulled for a fact-check was still being dealt'),
             ('D32. A marketing login cannot run a game',

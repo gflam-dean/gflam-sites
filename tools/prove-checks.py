@@ -2104,6 +2104,17 @@ MUTATIONS = [
      "    cache.set('b:' + gameId, { data: board, until: nowMs + 8000 });",
      'the kept leaderboard forgets which question it was for, and question 8 is answered with question 7'),
 
+    ('a screen finding itself is answered, the thirty-first ask a minute is refused', 'venueplay-backend/worker/venueplay-game.js',
+     "    const rl = await rateLimit(env, 'like:ip:' + ipHash, LIKE_MAX_PER_IP, 60);\n    if (!rl.ok)",
+     "    const rl = { ok: true };\n    if (!rl.ok)",
+     'the venue-name search answers without limit again, and the customer list is one '
+     'dictionary of common pub words away'),
+
+    ('ten weeks of "add 20" reach past the first hundred rows', 'venueplay-backend/worker/venueplay-game.js',
+     "    image_url: (q.image_url && /^https:\\/\\//i.test(String(q.image_url))) ? String(q.image_url).slice(0, 600) : null,",
+     "    image_url: q.image_url ? String(q.image_url).slice(0, 600) : null,",
+     'a question ADDED with a javascript: picture link goes into the set and onto every phone'),
+
     ('the within-night memory is by question id', 'venueplay-backend/worker/venueplay-game.js',
      "    if (Array.isArray(c.question_ids)) c.question_ids.forEach((id) => { usedIds[id] = true; });\n    else if (Array.isArray(c.question_seqs))",
      "    if (Array.isArray(c.question_seqs))",
