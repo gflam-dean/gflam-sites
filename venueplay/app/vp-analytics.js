@@ -117,16 +117,22 @@
     var a;
     try {
       // .closest, because the click usually lands on a span INSIDE the anchor
-      a = ev.target && ev.target.closest && ev.target.closest('a,button');
+      a = ev.target && ev.target.closest && ev.target.closest('a,button,summary');
     } catch (e) { return; }
     if (!a) return;
+    /* WHICH QUESTIONS DO THEY OPEN? Dean, 25 Sep 2026: "is it showing what FAQ's they
+       open? That would be super handy". A FAQ is a <details>, pressed on its <summary>,
+       which is neither a link nor a button, so it was invisible. Counted on OPENING only:
+       the click fires before the browser toggles, so a closed <details> is being opened. */
+    if (a.tagName === 'SUMMARY' && a.parentNode && a.parentNode.tagName === 'DETAILS' && a.parentNode.open) return;
 
     var href = a.getAttribute('href') || '';
     var label = (a.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 80);
     if (!label) label = a.getAttribute('aria-label') || '(no label)';
 
     var kind = 'other';
-    if (href.charAt(0) === '#') kind = 'anchor';              // the invisible ones
+    if (a.tagName === 'SUMMARY') kind = 'faq';
+    else if (href.charAt(0) === '#') kind = 'anchor';              // the invisible ones
     else if (/^mailto:/i.test(href)) kind = 'email';
     else if (/^tel:/i.test(href)) kind = 'phone';
     else if (/^https?:/i.test(href) && href.indexOf(location.host) === -1) kind = 'outbound';
