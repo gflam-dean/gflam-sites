@@ -5,8 +5,9 @@
 
 WHAT IT PROVES, and why each one matters:
 
-  1. EVERY ACTIVE VENUE HOLDS A KEY. A venue enforcing with no key would drop every
-     message on its own wall.
+  1. EVERY ACTIVE VENUE ENFORCES. (Until 25 Sep this said a venue enforcing with no key would
+     drop every message; vp-sign.js fails open with no key, so that was never true, and new
+     venues now start enforcing before their first login mints a key. Migration 92.)
   2. EVERY KEY IS A SHAPE A BROWSER WILL IMPORT. crypto.subtle.importKey refuses a
      P-256 JWK whose x, y or d is not 32 bytes, or which uses the padded alphabet.
      A key that fails here looks perfect in the database and cannot sign anything.
@@ -89,8 +90,23 @@ def main():
         print('  FAIL could not read the venues or the keys'); sys.exit(1)
     byv = {k['venue_id']: k for k in keys}
     missing = [v['slug'] for v in venues if v['id'] not in byv]
-    say(not missing, '%d of %d active venues hold a signing key%s'
-        % (len(venues) - len(missing), len(venues), '' if not missing else '; MISSING: ' + ', '.join(missing)))
+    # A key is minted by a venue's FIRST host login, so a venue nobody has run a game at yet has
+    # none, correctly (and since migration 92 it is already enforcing, which fails open without
+    # one). Only a venue that HAS run a game and still has no key means minting failed.
+    used = set()
+    if missing:
+        ids = [v['id'] for v in venues if v['slug'] in missing]
+        st2, ses = req(SUPA + '/rest/v1/vp_sessions?select=venue_id&venue_id=in.(' + ','.join(ids) + ')&limit=1000', hdrs=h)
+        if not isinstance(ses, list):
+            print('  FAIL could not read sessions to judge the venues with no key'); sys.exit(1)
+        used = set(r['venue_id'] for r in ses)
+    broken = [v['slug'] for v in venues if v['slug'] in missing and v['id'] in used]
+    fresh = [x for x in missing if x not in broken]
+    if fresh:
+        print('  --   no key yet, no game run yet (the first host login mints it): ' + ', '.join(fresh))
+    say(not broken, '%d of %d active venues hold a signing key%s'
+        % (len(venues) - len(missing), len(venues),
+           '' if not broken else '; RAN GAMES WITH NO KEY, minting failed: ' + ', '.join(broken)))
 
     bad = []
     for v in venues:
@@ -115,8 +131,15 @@ def main():
 
     on = [v['slug'] for v in venues if v.get('broadcast_enforce')]
     print('  --   %d of %d venues are enforcing: %s' % (len(on), len(venues), ', '.join(on) if len(on) < 6 else '%d venues' % len(on)))
+    # ENFORCING WITH NO KEY IS SAFE, and since migration 92 (25 Sep 2026) it is how every new
+    # venue starts: vp-sign.js gate() delivers when enforce is on and no public key is loaded, and
+    # the first host login mints the key. So it is reported, never failed. What fails is a venue
+    # NOT enforcing (tools/check-signing-enforced.py, in the live gate).
     naked = [v['slug'] for v in venues if v.get('broadcast_enforce') and v['id'] not in byv]
-    say(not naked, 'no venue is enforcing without a key' if not naked else 'ENFORCING WITH NO KEY, its wall drops everything: ' + ', '.join(naked))
+    print('  --   %s' % ('every enforcing venue holds a key' if not naked else
+          'waiting for a first host login to mint a key (walls deliver until then): ' + ', '.join(naked)))
+    off = [v['slug'] for v in venues if not v.get('broadcast_enforce')]
+    say(not off, 'every active venue is enforcing' if not off else 'NOT ENFORCING, anyone can send its wall a fake ball or winner: ' + ', '.join(off))
 
     print('\nTHE ROUTE A HOST ACTUALLY USES')
     # Find the site by walking UP from this file rather than counting directories. A copy

@@ -2404,8 +2404,11 @@
      LEGACY_PHONES_OK: a phone page loaded before this shipped has an old random pid and cannot
      sign. It is still heard, so nobody mid game on deploy day is thrown out. It protects nobody
      with a keyed pid: an UNSIGNED message about a k1_ pid is exactly the forgery and is always
-     dropped. Turn this off once no old page can still be open (a week is generous). */
-  var LEGACY_PHONES_OK=true;
+     dropped. Turn this off once no old page can still be open (a week is generous).
+     TURNED OFF 25 Sep 2026, Dean: "turn off the old phone allowance for bingo, go for it". A
+     phone whose browser cannot make a key (no crypto.subtle: some old iOS and in-app browsers)
+     is now refused too; Dean judged that at one or two players, and they can see the host. */
+  var LEGACY_PHONES_OK=false;
   var _phoneChain=Promise.resolve();
   function onMsg(m){
     if(!m||!m.t) return;

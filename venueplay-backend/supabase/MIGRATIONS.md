@@ -155,3 +155,10 @@ Mini Bar) and every venue created since 17 Sep had none, because migration 68 on
 and nothing assigned one after. Uses 68's `vp_legacy_venue_code`; a clashing hash leaves the code null rather than
 failing the sign-up. RUN ON SYDNEY 25 Sep 2026: 26 of 26 match; trigger proven on rolled-back inserts (new venue
 gets its code; a clash inserts codeless). Old codes 62GTYQ, TMJ2TP, NCEM9A, 2Y3F9Q no longer resolve.
+
+`venueplay-92-signing-on-by-default.sql`: `vp_venues.broadcast_enforce` defaults to TRUE and every active venue is
+switched on (Dean, 25 Sep 2026: "make sure it doesn't happen again"). The four venues made after 10 Sep had run
+without signing because the default was false. Safe with no key: vp-sign.js fails open until the first host login
+mints one. RUN ON SYDNEY 25 Sep 2026: 0 active venues not enforcing; a rolled-back insert came back enforcing.
+Live gate line "every active venue enforces broadcast signing" (tools/check-signing-enforced.py), proven red by
+switching test-charlie off and back. Rollback: enforce-signing.py --off ALL.

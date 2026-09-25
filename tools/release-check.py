@@ -5175,6 +5175,18 @@ def main():
                why=('; '.join(_miss[:3]) if _miss else
                     ('the checker itself could not run: ' + _out.strip().splitlines()[-1][:90]
                      if _out.strip() else 'no output')))
+            # EVERY VENUE'S TV REFUSES A FORGED MESSAGE. 25 Sep 2026: signing had been switched on
+            # for the 17 venues of 10 Sep and every venue made after that ran without it, because
+            # nothing looked. Migration 92 made it the default; this notices if one ever slips.
+            _sg = subprocess.run([sys.executable, os.path.join(ROOT, 'tools', 'check-signing-enforced.py')],
+                                 capture_output=True, text=True, cwd=ROOT, timeout=60)
+            _sgo = (_sg.stdout + _sg.stderr).strip()
+            ok('every active venue enforces broadcast signing',
+               _sg.returncode == 0,
+               (_sgo.splitlines() or [''])[0][:90],
+               why=((_sgo.splitlines() or ['no output'])[0][:160] +
+                    ('. Fix: venueplay-backend/tools/enforce-signing.py --on <slug>' if _sg.returncode == 1 else '')))
+
             # A SCHEDULED HANDLER THAT NO CRON CALLS IS DEAD CODE THAT LOOKS ALIVE.
             # The 30 day album sweep sat in the PartyPlay Worker, written and correct and
             # exported, and never ran once, because nobody had added a Cron Trigger in a
