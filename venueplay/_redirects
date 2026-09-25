@@ -34,5 +34,8 @@
 # in nsw.html OFFERS. Plain /offer is NOT an offer: it goes to the homepage and the $3 rate.
 /offer-oct  /nsw  200
 /offer-nov  /nsw  200
-# TEMPORARY, 25 Sep 2026: live emails still link to /offer until they are switched to /offer-oct.
-/offer      /nsw  200
+/offer-dec  /nsw  200
+/offer-jan  /nsw  200
+/offer-feb  /nsw  200
+/offer-mar  /nsw  200
+/offer      /     302

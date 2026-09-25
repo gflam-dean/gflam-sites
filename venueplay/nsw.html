@@ -1916,7 +1916,11 @@
 (function () {
   var OFFERS = {
     oct: { code: 'NSW-OCT-2026',    date: '31 October 2026',  day: '31 October',  month: 'October'  },
-    nov: { code: 'OFFER-NOV-2026',  date: '30 November 2026', day: '30 November', month: 'November' }
+    nov: { code: 'OFFER-NOV-2026',  date: '30 November 2026', day: '30 November', month: 'November' },
+    dec: { code: 'OFFER-DEC-2026',  date: '31 December 2026', day: '31 December', month: 'December' },
+    jan: { code: 'OFFER-JAN-2027',  date: '31 January 2027',  day: '31 January',  month: 'January'  },
+    feb: { code: 'OFFER-FEB-2027',  date: '28 February 2027', day: '28 February', month: 'February' },
+    mar: { code: 'OFFER-MAR-2027',  date: '31 March 2027',    day: '31 March',    month: 'March'    }
   };
   var m = /^\/offer-([a-z]{3})\b/i.exec(location.pathname || '');
   var o = OFFERS[(m && m[1].toLowerCase()) || 'oct'] || OFFERS.oct;
