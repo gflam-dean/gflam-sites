@@ -124,7 +124,7 @@
   "counted_by": "lines"
  },
  "tools/test-lobby-format.js": {
-  "checks": 6,
+  "checks": 9,
   "counted_by": "lines"
  },
  "tools/test-manager-permissions.js": {
@@ -272,7 +272,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/bingo-console.test.js": {
-  "checks": 39,
+  "checks": 42,
   "counted_by": "lines"
  },
  "venueplay-backend/app/bingo-win.test.js": {

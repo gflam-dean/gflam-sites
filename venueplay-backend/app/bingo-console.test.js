@@ -179,6 +179,15 @@ ok("zero is a real answer, not a missing one", run({ player_count: 0 }, "abc") =
 ok("it asks the snapshot route for that session",
    fetched.length > 0 && fetched[fetched.length-1].indexOf("/snapshot?session=abc") >= 0,
    fetched[fetched.length-1]);
+var night = { other: 0 };
+fetchPlan = { player_count: 12, other_games: 2 }; serverPlayerCount("abc", night).then(function(n){ got = n; }); drainMicrotasks();
+ok("the night's other games (trivia, musical) come back beside the count, which stays a number",
+   got === 12 && night.other === 2, String(got) + " / " + night.other);
+night = { other: 0 };
+fetchPlan = { player_count: 12, other_games: "lots" }; serverPlayerCount("abc", night).then(function(n){ got = n; }); drainMicrotasks();
+ok("a game count that is not a number adds nothing", got === 12 && night.other === 0, String(night.other));
+ok("the night card adds them onto the tablet's own bingo games",
+   !!grab("showNightCard") && grab("showNightCard").indexOf("games+night.other") >= 0);
 ok("no session means no server number", run({ player_count: 9 }, null) === null, String(got));
 ok("a refused answer falls back to the tablet", run("notok", "abc") === null, String(got));
 ok("a dead connection falls back to the tablet", run("throw", "abc") === null, String(got));
@@ -189,7 +198,7 @@ var card = grab("showNightCard");
 ok("the night card takes the session it is reporting on",
    !!card && /function showNightCard\(sessionId\)/.test(card));
 ok("the night card asks the server for the headcount",
-   !!card && card.indexOf("serverPlayerCount(sessionId)") >= 0);
+   !!card && card.indexOf("serverPlayerCount(sessionId, night)") >= 0);
 ok("the tablet caveat is removable, so it goes when the server number lands",
    !!card && card.indexOf('id="nightCounted"') >= 0 && card.indexOf("removeChild") >= 0,
    "a number shown as the billed one has to be the billed one");

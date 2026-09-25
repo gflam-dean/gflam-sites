@@ -29,6 +29,20 @@ async function info(code){ BODY = { code: code }; var r = await handleJoinInfo({
   BODY = { venue_id: VENUE, format: 'bingo' };
   var r = await handleCreateSession({}, ENV, json);
   show('opening a bingo lobby on the live night records it', r.body.reused === true && DB.vp_sessions[0].lobby_format === 'bingo90', JSON.stringify(r.body).slice(0,80) + ' ' + DB.vp_sessions[0].lobby_format);
+  /* "Tonight at a glance" (audit 25 Sep 2026): the bingo tablet counts its own games; the Worker
+     adds the rest of the night's games, and only when the card asks with night=1. */
+  reset('bingo90');
+  DB.vp_games.push({ id:'g1', session_id:S, seq:1, format:'trivia', status:'finished' },
+                   { id:'g2', session_id:S, seq:2, format:'musical_bingo', status:'finished' },
+                   { id:'g3', session_id:S, seq:3, format:'bingo90', status:'finished' },
+                   { id:'g4', session_id:'other-session', seq:1, format:'trivia', status:'finished' });
+  var sn = await handleSnapshot({ url: 'https://x/snapshot?session=' + S + '&night=1' }, ENV, json);
+  show('the night card hears of the trivia and musical games, not bingo and not another night', sn.body.other_games === 2, JSON.stringify(sn.body.other_games));
+  var plain = await handleSnapshot({ url: 'https://x/snapshot?session=' + S }, ENV, json);
+  show('control: a phone or TV snapshot (no night=1) carries no game count', !('other_games' in plain.body));
+  reset('bingo90');
+  var none = await handleSnapshot({ url: 'https://x/snapshot?session=' + S + '&night=1' }, ENV, json);
+  show('a bingo-only night adds nothing', none.body.other_games === 0);
   print('\n' + (ran - bad) + ' of ' + ran + ' checks passed');
   if (bad) throw new Error(bad + ' lobby format checks failed');
 })().catch(function(e){ print('CRASH ' + (e && e.stack || e)); throw e; });

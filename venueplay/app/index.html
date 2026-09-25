@@ -1810,14 +1810,18 @@
      Resolves to null on anything at all going wrong, and the card then keeps the tablet's own
      number AND the line that says so. A figure is never shown as the billed one unless it came
      from the server. */
-  function serverPlayerCount(sessionId){
+  function serverPlayerCount(sessionId, night){
     if(!sessionId) return Promise.resolve(null);
     var ctrl=(typeof AbortController==="function") ? new AbortController() : null;
     var timer=setTimeout(function(){ if(ctrl) ctrl.abort(); }, 6000);
-    return fetch(VP_GAME_API+"/snapshot?session="+encodeURIComponent(sessionId), { signal: ctrl?ctrl.signal:undefined })
+    /* night=1 also brings back other_games: the trivia, musical and raffle games this night
+       played, which this tablet never saw (it only counts its own bingo games). */
+    return fetch(VP_GAME_API+"/snapshot?session="+encodeURIComponent(sessionId)+"&night=1", { signal: ctrl?ctrl.signal:undefined })
       .then(function(r){ return r.ok ? r.json() : null; })
       .then(function(j){ clearTimeout(timer); var n=j && j.player_count;
-        return (typeof n==="number" && isFinite(n) && n>=0) ? n : null; })
+        if(!(typeof n==="number" && isFinite(n) && n>=0)) return null;
+        var o=j.other_games; if(night) night.other=(typeof o==="number" && isFinite(o) && o>0) ? o : 0;
+        return n; })
       .catch(function(){ clearTimeout(timer); return null; });
   }
   function cancelLobby(){
@@ -2189,7 +2193,7 @@
     if(!games && !players){ return; }   // a lobby that never started: nothing to report
     $("nightStats").innerHTML=
       '<div class="box"><div class="k">Players joined</div><div class="v g" id="nightPlayers">'+players+'</div></div>'+
-      '<div class="box"><div class="k">Games run</div><div class="v">'+games+'</div></div>'+
+      '<div class="box"><div class="k">Games run</div><div class="v" id="nightGames">'+games+'</div></div>'+
       '<div class="box"><div class="k">Prizes given</div><div class="v">'+prizes.length+'</div></div>';
     var h="";
     if(prizes.length){
@@ -2209,9 +2213,11 @@
     /* Up straight away on the tablet's figure, then the server's the moment it lands, which is
        usually well inside a second. Nothing is held up waiting for it. If it never lands the
        tablet number stays and so does the line explaining it. */
-    serverPlayerCount(sessionId).then(function(n){
+    var night={ other:0 };
+    serverPlayerCount(sessionId, night).then(function(n){
       if(n==null) return;
       var pv=$("nightPlayers"); if(pv) pv.textContent=n;
+      var gv=$("nightGames"); if(gv && night.other) gv.textContent=games+night.other;
       var nc=$("nightCounted"); if(nc && nc.parentNode) nc.parentNode.removeChild(nc);
     });
     nightReset();

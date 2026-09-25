@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '25 Sep 2026, 12:30 · 3d5ecabe';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '25 Sep 2026, 14:53 · 4b22b8f6';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -6113,6 +6113,15 @@ async function handleSnapshot(request, env, json) {
   const sessionId = url.searchParams.get('session');
   if (!sessionId) return json({ error: 'Missing session' }, 400);
   const snapshot = await getPublicSnapshot(env, sessionId);
+  /* ?night=1: the bingo console's "Tonight at a glance" card. Bingo counts its own games on the
+     tablet (broadcast bingo keeps no vp_games row), so the card said "Games run: 1" on a night that
+     had a trivia round before it (audit 25 Sep 2026). This is every OTHER game the night played.
+     Asked for only by that card, once, so phones and TVs polling the snapshot pay no extra read. */
+  if (url.searchParams.get('night') === '1') {
+    const other = await sbGet(env, 'vp_games', 'session_id=eq.' + enc(sessionId) +
+      '&format=neq.bingo90&status=in.(running,finished)&select=id&limit=500');
+    snapshot.other_games = other.length;
+  }
   return json(snapshot);
 }
 
