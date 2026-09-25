@@ -171,6 +171,25 @@ test("second delivery is idempotent", function(){
     .then(function(j){ ok(j.already === true, "retry does not re-send or re-mark, got "+JSON.stringify(j)); });
 });
 
+print("== checkout cannot be made twice ==");
+/* Audit 25 Sep 2026: the comment promised Stripe deduped checkout and nothing sent the header.
+   The real stripe() helper, lifted from the shipped source, with a fake network. */
+(function(){
+  var src = readFile(repo("worker/SOURCE-do-not-paste-partyplay-api.js"));
+  var fn = /async function stripe\(env, path, form, idem\) \{[\s\S]*?\n\}/.exec(src);
+  ok(!!fn, "the stripe() helper takes an idempotency key");
+  var seen = [];
+  var fake = function(u, init){ seen.push(init.headers); return Promise.resolve({ ok:true, json:function(){ return Promise.resolve({ id:"cs_1" }); } }); };
+  var helper = fn ? (new Function("fetch", fn[0] + "; return stripe;"))(fake) : null;
+  if (helper) {
+    helper({ STRIPE_SECRET_KEY:"sk" }, "checkout/sessions", { a:"1" }, "pp-checkout-L1").then(function(){
+      ok(seen[0] && seen[0]["idempotency-key"] === "pp-checkout-L1", "a keyed call sends Stripe's idempotency header");
+      return helper({ STRIPE_SECRET_KEY:"sk" }, "refunds", { a:"1" });
+    }).then(function(){ ok(seen[1] && !("idempotency-key" in seen[1]), "an unkeyed call sends none"); });
+  }
+  ok(/\}, 'pp-checkout-' \+ licence\.id\);/.test(src), "checkout passes a key made from the licence");
+})();
+
 print("== checkout validation ==");
 function checkout(body, plan){ FETCH.plan = plan || []; return W.fetch(req("POST","/checkout",body), ENV); }
 test("rejects a bad email", function(){

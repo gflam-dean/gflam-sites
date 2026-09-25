@@ -229,6 +229,22 @@
         '</div>');
       return;
     }
+    /* THE LEADERBOARD. The host's "Put it up" and the end of two truths send this, and
+       the host is told "On the screen", but the TV had no branch for it, so nothing ever
+       changed on the wall (audit, 25 Sep 2026). Names are guests' own words: escaped.
+       Scores are numbers from the host's console; Number() keeps anything else out. */
+    if(m.t === "board"){
+      var rows = (m.rows || []).slice(0, 12);
+      show('<div style="width:100%;max-width:70vw"><h2 style="font-size:clamp(24px,4.6vh,58px);margin-bottom:2.4vh">' +
+        esc(m.title || "Scores") + '</h2>' +
+        (rows.length ? rows.map(function(r, i){
+          return '<div style="display:flex;justify-content:space-between;gap:3vw;padding:1vh 0;' +
+            'font-size:clamp(16px,3vh,38px);border-bottom:1px solid var(--line)' + (i === 0 ? ';font-weight:800' : '') + '">' +
+            '<span>' + (i + 1) + '. ' + esc(r.name) + '</span><span>' + (Number(r.score) || 0) + '</span></div>'; }).join("")
+          : '<div class="msg">No scores yet.</div>') +
+        '</div>');
+      return;
+    }
     if(m.t === "queue"){
       if(!m.songs || !m.songs.length){ show('<div class="msg">Nothing in the queue yet. Add one on your phone.</div>'); return; }
       show('<div style="width:100%;max-width:78vw"><h2 style="font-size:clamp(24px,4.4vh,54px);margin-bottom:2vh">Coming up</h2>'+

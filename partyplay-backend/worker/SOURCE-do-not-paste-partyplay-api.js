@@ -13,7 +13,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '25 Sep 2026, 14:11 · 33a471fd';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '25 Sep 2026, 14:25 · f2a4ea87';   // tools/stamp-workers.py, do not edit by hand
 // The licence window rules live in one place and are shared with the browser.
 // Paste lib/pp-licence.js above this line when deploying, or inline it. It is
 // referenced here as PPLicence.
@@ -89,7 +89,7 @@ function emailGuide(site) {
     ['Heads or tails','ready','Ninety seconds, no skill, everyone in. The best opener.'],
     ['Who here has ever','optional','Gets people who have never met talking.'],
     ['Prize draw','ready','Draws from whoever is actually in the room.'],
-    ['The playlist','ready','Guests add songs, the queue goes on the screen.'],
+    // 'The playlist' removed 25 Sep 2026: it is retired in host.html, so a buyer could not build it.
     ['Charades','your words','The word goes to one phone only, never the telly. Screens away from whoever is acting.'],
     ['Who am I?','your list','On the screen and every phone but theirs. Sit them with their back to it.']
   ];
@@ -309,16 +309,15 @@ function timingSafeEqual(a, b) {
 }
 
 /* ------------------------------------------------------------- Stripe ------ */
-async function stripe(env, path, form) {
+async function stripe(env, path, form, idem) {
   const body = new URLSearchParams(form).toString();
-  const r = await fetch('https://api.stripe.com/v1/' + path, {
-    method: 'POST',
-    headers: {
-      authorization: 'Bearer ' + env.STRIPE_SECRET_KEY,
-      'content-type': 'application/x-www-form-urlencoded'
-    },
-    body
-  });
+  const headers = {
+    authorization: 'Bearer ' + env.STRIPE_SECRET_KEY,
+    'content-type': 'application/x-www-form-urlencoded'
+  };
+  // Stripe's own duplicate guard: the same key within 24 hours returns the first result.
+  if (idem) headers['idempotency-key'] = String(idem).slice(0, 255);
+  const r = await fetch('https://api.stripe.com/v1/' + path, { method: 'POST', headers, body });
   const j = await r.json();
   if (!r.ok) {
     const e = new Error((j && j.error && j.error.message) || 'stripe error');
@@ -1868,9 +1867,10 @@ async function handleCheckout(request, env) {
     allow_promotion_codes: 'true',
     success_url: site + '/booked?code=' + code,
     cancel_url: site + '/start',
-    // Stripe dedupes on this, so a double-tapped button cannot create two sessions.
-    // The header form is set below via a second call parameter.
-  });
+  }, 'pp-checkout-' + licence.id);   // one party, one Checkout: a retry or double tap gets the same session back
+  /* The comment here said Stripe deduped this and that "the header form is set below via a
+     second call parameter". There was no such parameter and no header (audit, 25 Sep 2026).
+     Now there is, keyed on the licence, which is what one purchase is. */
 
   await sb(env, 'pp_licences?id=eq.' + licence.id, {
     method: 'PATCH',
