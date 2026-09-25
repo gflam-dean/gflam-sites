@@ -876,7 +876,7 @@
   }
   modes.addEventListener("click", function(e){ var b=e.target.closest?e.target.closest("[data-mode]"):null; if(!b) return;
     show(b.getAttribute("data-mode"));
-    try{ if(typeof gtag==="function") gtag("event","cta_click",{ cta_label:"Hero game: "+b.textContent, cta_state:"nsw", cta_kind:"hero-demo" }); }catch(err){} });
+    try{ if(typeof gtag==="function") gtag("event","cta_click",{ cta_label:"Hero game: "+b.textContent, cta_state:((location.pathname||"/").split("/")[1]||"home").toLowerCase(), cta_kind:"hero-demo" }); }catch(err){} });
   window.addEventListener("resize", fit);
   show("trivia");   // Dean: "trivia to start then musical bingo and then bingo"
 })();

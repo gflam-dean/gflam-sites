@@ -28,7 +28,7 @@ function run(nav, opts) {
   var handlers = [];
   var store = opts.store || {};
   var win = { navigator: nav, dataLayer: undefined,
-              location: { pathname: '/', host: 'venueplay.com.au',
+              location: { pathname: '/', host: 'venueplay.com.au', hostname: opts.hostname === undefined ? 'venueplay.com.au' : opts.hostname,
                           search: opts.search || '' },
               localStorage: {
                 getItem: function (k) { return Object.prototype.hasOwnProperty.call(store, k) ? store[k] : null; },
@@ -177,6 +177,14 @@ check('no page carries its own copy of the measurement id (' + pages + ' pages c
 check('and every one of them loads the shared script',
       pages >= SITE_PAGES.length && SITE_PAGES
         .every(function (n) { return /vp-analytics\.js/.test(readFile('venueplay/' + n + '.html') || ''); }));
+
+/* A preview on this Mac is not a visitor (GA audit, 25 Sep 2026: 11 localhost page views). */
+check('a person on localhost is not counted', run(PERSON, { hostname: 'localhost' }).loaded.length === 0);
+check('a person on a Cloudflare preview address is not counted', run(PERSON, { hostname: 'abc123.venueplay.pages.dev' }).loaded.length === 0);
+check('a person on venueplay.com.au is counted', run(PERSON, { hostname: 'venueplay.com.au' }).loaded.length === 1);
+check('a person on www.venueplay.com.au is counted', run(PERSON, { hostname: 'www.venueplay.com.au' }).loaded.length === 1);
+check('a look-alike domain is not counted', run(PERSON, { hostname: 'venueplay.com.au.evil.example' }).loaded.length === 0);
+check('an unknown hostname fails towards counting', run(PERSON, { hostname: '' }).loaded.length === 1);
 
 print('');
 print(PASS + ' passed, ' + FAIL + ' failed');

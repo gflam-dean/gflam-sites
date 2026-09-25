@@ -81,7 +81,18 @@
     return false;
   }
 
-  if (isRobot() || teamOptOut()) return;
+  /* NOT THE LIVE SITE, NOT COUNTED. A preview on localhost (the pages are opened that way
+     to test them) went into the live property: 11 page views on 22 Sep, 28 Aug and 12 Sep,
+     inflating Brisbane and /qld (GA audit, 25 Sep 2026). Only venueplay.com.au and its
+     subdomains count. An empty hostname counts, so this fails towards counting. */
+  function notLiveSite() {
+    try {
+      var h = String(location.hostname || '').toLowerCase();
+      return !!h && !/(^|\.)venueplay\.com\.au$/.test(h);
+    } catch (e) { return false; }
+  }
+
+  if (isRobot() || teamOptOut() || notLiveSite()) return;
 
   var s = document.createElement('script');
   s.async = true;
