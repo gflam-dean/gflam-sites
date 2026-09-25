@@ -440,6 +440,8 @@
     }
     $("pStatus").className="pstatus"; $("pStatus").textContent="Tap your answer";
     P.cdTimer=setInterval(tickCd, 300); tickCd();
+    var had=loadAns(P.q.qseq);   // answered before a reload: show it, keep it, do not offer the buttons again
+    if(had!=null){ P.choice=had; P.locked=true; paintPicked(had); $("pStatus").className="pstatus locked"; $("pStatus").textContent="Answer in! Good luck."; $("pqCd").textContent="Answer locked in"; }
   }
 
   function paintPicked(i){
@@ -453,6 +455,22 @@
   function unpick(){
     var btns=document.querySelectorAll("#pAnswers .pans");
     for(var k=0;k<btns.length;k++){ btns[k].classList.remove("picked"); btns[k].classList.remove("dim"); btns[k].disabled=false; }
+  }
+  /* THIS PHONE'S OWN ANSWER, REMEMBERED. A phone that reloaded mid-question (a locked screen, a
+     swiped-away tab) forgot what it had tapped: the buttons came back live, and at the reveal a team
+     that had answered right and scored was told "NO ANSWER" and "Total 0 points" while the
+     leaderboard said otherwise (audit, 25 Sep 2026, found by playing). Kept per game and question. */
+  function ansKey(){ return "vp-tans-"+(P.room||"")+"-"+(P.gameId||""); }
+  function saveAns(qseq, i){ try{ var o=JSON.parse(localStorage.getItem(ansKey())||"{}"); o[qseq]=i; localStorage.setItem(ansKey(), JSON.stringify(o)); }catch(e){} }
+  function loadAns(qseq){ try{ var o=JSON.parse(localStorage.getItem(ansKey())||"{}"); return (o[qseq]==null) ? null : o[qseq]; }catch(e){ return null; } }
+  // Running total and place, quietly, so a reloaded phone does not show "Total 0" at the next reveal.
+  function refreshTotals(){
+    if(!P.gameId) return;
+    playerGet("/player/score?game="+encodeURIComponent(P.gameId)).then(function(r){
+      if(typeof r.total==="number") P.total=r.total;
+      if(typeof r.rank==="number") P.rank=r.rank;
+      if(typeof r.players_count==="number") P.playersCount=r.players_count;
+    }).catch(function(){});
   }
   function answer(i){
     if(!P.q || P.locked) return;
@@ -479,7 +497,12 @@
       if(!P.q || P.q.qseq!==qseq) return;
       // Cosmetic broadcast for the TV "answered" ticker, sent only once the real answer landed.
       send({ t:"answer", pid:P.pid, qseq:qseq, choice:i });
-      if(r && r.recorded===false){ $("pStatus").className="pstatus locked"; $("pStatus").textContent="Your first answer stands."; return; }
+      if(r && r.recorded===false){
+        var first=loadAns(qseq);   // the one the server kept, if this phone remembers it
+        if(first!=null){ P.choice=first; paintPicked(first); }
+        $("pStatus").className="pstatus locked"; $("pStatus").textContent="Your first answer stands."; return;
+      }
+      saveAns(qseq, i);
       sayIn();
     }).catch(function(e){
       var st=(e && e.status)||0, msg=(e && e.message)||"";
@@ -546,7 +569,10 @@
          Everybody else already knows theirs is 0 and only needs the running total and place, so
          they ask over the next six, and tell the server not to look up an answer they would
          throw away. The q is what lets the server reuse one leaderboard for the whole room. */
-      var _wait = gotIt ? Math.random()*2000 : 1000+Math.random()*5000;
+      /* Tightened 25 Sep 2026 (Dean: "There was a massive lag to load the score on the phone"). The
+         Worker now shares one leaderboard read across the room (#86, 21 Sep), so the spread only has
+         to take the edge off the burst: under a second for a right answer, 2.5 for the rest. */
+      var _wait = gotIt ? Math.random()*800 : 500+Math.random()*2000;
       var _rq = (m.qseq!=null ? m.qseq : (P.q?P.q.qseq:""));
       var _url = "/player/score?game="+encodeURIComponent(P.gameId)+"&q="+encodeURIComponent(_rq)+(answered?"":"&last=0");
       setTimeout(function(){
@@ -767,7 +793,7 @@
   }
   function applyPending(){
     if(!P.joined) return;
-    if(P.pendingQ){ var q=P.pendingQ, lk=P.pendingLocked; P.pendingQ=null; P.pendingLocked=false; renderQuestion(q); if(lk){ stopCd(); lockOut(); } return; }
+    if(P.pendingQ){ var q=P.pendingQ, lk=P.pendingLocked; P.pendingQ=null; P.pendingLocked=false; renderQuestion(q); if(lk){ stopCd(); lockOut(); } refreshTotals(); return; }
     if(P.pendingScore){ P.pendingScore=false; pullScore("You're back in. Next question coming up on the big screen."); }
   }
   // Rebuild any in-progress game from the Worker's public snapshot (late join / reload).
