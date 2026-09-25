@@ -283,6 +283,10 @@
   "checks": 77,
   "counted_by": "lines"
  },
+ "venueplay-backend/app/hop-name.test.js": {
+  "checks": 16,
+  "counted_by": "lines"
+ },
  "venueplay-backend/app/hq-contact-rule.test.js": {
   "checks": 34,
   "counted_by": "lines"

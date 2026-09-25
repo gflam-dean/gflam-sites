@@ -105,6 +105,7 @@
   "group-billing.test.js",
   "health.test.js",
   "held-back opt-ins are counted and reported, never silent (11 checks)",
+  "hop-name.test.js",
   "host.html loads the shared names",
   "host.html takes its names from the same place, so they cannot drift",
   "hq-contact-rule.test.js",

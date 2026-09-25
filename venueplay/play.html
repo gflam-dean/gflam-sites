@@ -1592,6 +1592,15 @@
       .catch(function(){});
   }
 
+  /* THE NAME GOES WITH THE PLAYER. This page shows the bingo name box straight away and asks the
+     Worker in the background what the code is for, so a punter could type their name, and then be
+     moved to trivia or musical and asked for it all over again (the "double join" on the live-test
+     list; seen on Test Alpha 25 Sep 2026). The name rides in THIS TAB's sessionStorage, never the
+     address: analytics records addresses, and a player's name is not ours to send to Google. */
+  function hopToApp(url){
+    try{ var nm=(($("nameIn")||{}).value||"").trim(); if(nm) sessionStorage.setItem("vpHopName", nm.slice(0,20)); }catch(e){}
+    window.location.replace(url);
+  }
   function goToCode(code){
     // Connect to the code we were given, exactly as this has always worked: for bingo that is the
     // venue's permanent code and the channel is live right now. Identity is claimed alongside,
@@ -1627,7 +1636,7 @@
           /* room_code is set when the code typed was the VENUE code (the permanent one on the
              wall) and a trivia or musical session is live under it. Hop to THAT room, not the
              code they typed, or the phone lands in the right app on the wrong channel. */
-          if(to){ window.location.replace(to+"?room="+encodeURIComponent((r && r.room_code) || code)); return; }
+          if(to){ hopToApp(to+"?room="+encodeURIComponent((r && r.room_code) || code)); return; }
           /* THE CHANNEL IS NOT THE CODE. The TV, the console and every phone off a table talker
              meet on a channel hashed from the venue's slug, which never changes. The code on the
              wall is the one the owner was ISSUED, and since Change code shipped the owner can
@@ -1798,7 +1807,7 @@
             var f=String(d.format||"");
             var to = f.indexOf("trivia")===0  ? "/app/trivia/play"
                    : f.indexOf("musical")===0 ? "/app/musical/play" : "";
-            if(to){ hopped=true; window.location.replace(to+"?room="+encodeURIComponent(d.join_code)); }
+            if(to){ hopped=true; hopToApp(to+"?room="+encodeURIComponent(d.join_code)); }
           }).catch(function(){});               // worker unreachable/old: bingo still works
       }catch(e){}
     }

@@ -941,6 +941,13 @@
   }
   $("roomBtn").addEventListener("click", roomGo);
   $("nameIn").addEventListener("keydown", function(e){ if(e.key==="Enter") join(); });
+  /* A name typed on /play before it moved this phone here (see hopToApp there): fill it in, once,
+     so nobody types it twice. Filled, never submitted: they still tap Join. */
+  function takeHopName(){
+    try{ var hn=sessionStorage.getItem("vpHopName"); sessionStorage.removeItem("vpHopName");
+      var ni=$("nameIn"); if(hn && ni && !ni.value) ni.value=String(hn).slice(0,20); }catch(e){}
+  }
+  takeHopName();
   $("joinBtn").addEventListener("click", join);
   // ---- menu (Light mode / Leave) ----
   var menuBtn=$("menuBtn"), menuPanel=$("menuPanel");
