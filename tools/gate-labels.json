@@ -20,7 +20,7 @@
   "a marketing login is refused by every owner route and sees no player it was not given",
   "a markup-hidden element is not made visible by its own stylesheet",
   "a new lobby in a multi-game night sends phones to that game, not the last one played",
-  "a real visitor is counted, an automated browser is not (29 checks)",
+  "a real visitor is counted, an automated browser is not (35 checks)",
   "a refused undo puts back every field it wrote, the 90-day clock included",
   "a reloaded TV gets the lobby back",
   "a room shares one leaderboard read, and nobody sees another question's numbers",
