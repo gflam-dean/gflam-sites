@@ -815,7 +815,7 @@
 <section class="hero hero2" id="top">
   <div class="wrap h2-grid">
     <div class="h2-copy">
-      <span class="eyebrow"><span class="live-dot"></span> New South Wales, now open</span>
+      <span class="eyebrow"><span class="live-dot"></span> $2.50 a player, if you lock it in by <span class="vpc-day">31 October</span></span>
       <h1>Run a packed <span class="accent">Tuesday</span>.<br>Every&nbsp;Tuesday.</h1>
       <p class="lede">Bingo, trivia, musical bingo, raffles and members draws on the screen you already own. Your crowd plays on their own phones, and the regulars who won't can play trivia and musical bingo on paper. <b>No app, no login, no host to hire.</b></p>
       <div class="hero-cta">
@@ -990,7 +990,7 @@
         <div>
           <div class="label">Open now</div>
           <h2 class="sec-title">First month free.<br>Then $2.50 a player, locked for life.</h2>
-          <p class="sec-sub">New South Wales venues that join before 31 October 2026 pay nothing for the first month, then $2.50 per player a month (normally $3), locked for as long as you stay. The deal closes at the end of October, and it will not come back.</p>
+          <p class="sec-sub">Our standard rate is $3 a player a month. Venues that join before <span class="vpc-date">31 October 2026</span> can still lock in $2.50 per player a month for as long as they stay, with the first month free. After <span class="vpc-day">31 October</span> this offer ends for you, and it won&#39;t come back. After that it&#39;s $3.</p>
           <div class="offer-cta"><a class="btn btn-primary" href="#claim">Lock in your price</a></div>
         </div>
         <div class="price-card">
@@ -1065,7 +1065,7 @@
     <div class="sec-head" style="text-align:center;max-width:640px;margin-left:auto;margin-right:auto">
       <div class="label" style="justify-content:center">Claim your spot</div>
       <h2 class="sec-title">Lock in your pricing</h2>
-      <p class="sec-sub" style="margin-left:auto;margin-right:auto">Add your card to lock in your New South Wales price before 31 October. Nothing is charged today. New venues get a free first month, then your first payment is one month later, and you can cancel any time before then.</p>
+      <p class="sec-sub" style="margin-left:auto;margin-right:auto">Add your card to lock in $2.50 before <span class="vpc-day">31 October</span>. Nothing is charged today. New venues get a free first month, then your first payment is one month later, and you can cancel any time before then.</p>
     </div>
 
     <div class="form-shell">
@@ -1193,7 +1193,7 @@
     </div>
     <div class="faq">
       <details class="q"><summary>When can I start?<span class="pm"></span></summary><div class="a">Is tonight too soon? You can sign up and start straight away.</div></details>
-      <details class="q"><summary>What does locked for life actually mean?<span class="pm"></span></summary><div class="a">New South Wales venues that join before 31 October 2026 lock in $2.50 per player a month instead of $3, for life. It stays locked while you are subscribed. If you cancel, that rate ends for good, and rejoining later is at the standard rate.</div></details>
+      <details class="q"><summary>What does locked for life actually mean?<span class="pm"></span></summary><div class="a">Venues that join before <span class="vpc-date">31 October 2026</span> lock in $2.50 per player a month instead of $3, for life. It stays locked while you are subscribed. If you cancel, that rate ends for good, and rejoining later is at the standard rate.</div></details>
       <details class="q"><summary>What about regulars who won't use a phone?<span class="pm"></span></summary><div class="a">They can still play trivia and musical bingo on paper. Print up to ten trivia answer sheets or musical bingo cards a night from the host console, before the night starts. Trivia teams on paper hand their sheet to the host at the end of each round, before the answers go up on the screen, and the host adds their score to the leaderboard. A paper musical bingo card is checked by typing its number into the console. Paper players count towards your players and your bill the same as phones do. Moving a trivia crowd over from paper? In your free month you can print a trivia sheet for every player on your plan, so your regulars can switch across at their own pace. VenuePlay does not print bingo tickets. For bingo, keep using the paper books you already buy, and the host checks those wins against the board.</div></details>
       <details class="q"><summary>Do players need to download an app?<span class="pm"></span></summary><div class="a">No. They scan a code and play straight from their phone's browser. No app, no login, no fuss, which means more of the room actually joins in.</div></details>
       <details class="q"><summary>What kind of venues is it for?<span class="pm"></span></summary><div class="a">Pubs, clubs, bowls clubs and RSLs: anyone running a regular entertainment night, or wanting to start one. If you've got a screen and a crowd, you're set.</div></details>
@@ -1558,7 +1558,7 @@
     fetch(VP_WORKER + '/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name, email: email, mobile: mobile, postcode: (venues[0] && venues[0].postcode) || '', plan: plan, founding_code: 'NSW-OCT-2026', venues: venues, venue: venues[0].name, seats: venues[0].seats, marketing_opt_in: marketingOptIn, embedded: wantEmbedded })
+      body: JSON.stringify({ name: name, email: email, mobile: mobile, postcode: (venues[0] && venues[0].postcode) || '', plan: plan, founding_code: (window.VP_OFFER || {}).code || 'NSW-OCT-2026', venues: venues, venue: venues[0].name, seats: venues[0].seats, marketing_opt_in: marketingOptIn, embedded: wantEmbedded })
     })
     .then(function(r){ return r.json(); })
     .then(function(data){
@@ -1901,6 +1901,29 @@
 </script>
 
 <!-- ===================================================================
+     ONE PAGE, A MONTH AT A TIME. Dean, 25 Sep 2026: no state on the offer, and each month's
+     campaign gets its own deadline and its own code. When a month's code ends it is gone:
+     that link says the offer ended and quotes the standard rate. There is no quiet roll-over.
+       /nsw, /offer, /offer/oct   the October offer (the link already in venues' inboxes)
+       /offer/nov                 the November offer (code OFFER-NOV-2026), for the campaign starting 10 October
+     /offer/* is served from this file by _redirects. A new month is a new row here, and its
+     code added to FOUNDING_CODES in Cloudflare on the day its campaign starts.
+     =================================================================== -->
+<script>
+(function () {
+  var OFFERS = {
+    oct: { code: 'NSW-OCT-2026',    date: '31 October 2026',  day: '31 October',  month: 'October'  },
+    nov: { code: 'OFFER-NOV-2026',  date: '30 November 2026', day: '30 November', month: 'November' }
+  };
+  var m = /^\/offer\/([a-z]{3})\b/i.exec(location.pathname || '');
+  var o = OFFERS[(m && m[1].toLowerCase()) || 'oct'] || OFFERS.oct;
+  window.VP_OFFER = o;
+  function put(cls, txt){ var els = document.querySelectorAll('.' + cls); for (var i = 0; i < els.length; i++) els[i].textContent = txt; }
+  put('vpc-date', o.date); put('vpc-day', o.day); put('vpc-month', o.month);
+})();
+</script>
+
+<!-- ===================================================================
      IF THIS FOUNDING WINDOW HAS CLOSED, SAY SO.
 
      This page is static and has its code baked in; the Worker decides the
@@ -1919,7 +1942,8 @@
      =================================================================== -->
 <script>
 (function () {
-  var CODE = 'NSW-OCT-2026';
+  var OFFER = window.VP_OFFER || { code:'NSW-OCT-2026', day:'31 October' };
+  var CODE = OFFER.code;
   var API  = 'https://venueplay-api.dean-tindale.workers.dev';
   if (!CODE || !API || API.indexOf('PASTE_') !== -1) return;
 
@@ -1933,14 +1957,14 @@
         'background:#2A2239;color:#FFF1E6;padding:14px 18px;text-align:center;' +
         'font-family:Manrope,system-ui,sans-serif;font-size:15.5px;line-height:1.5;' +
         'border-bottom:2px solid #FF1F8E;position:relative;z-index:99');
-      bar.innerHTML = '<b>Founding is not open for this state right now.</b> ' +
+      bar.innerHTML = '<b>This offer ended on ' + OFFER.day + '.</b> ' +
         'You can still sign up today at the standard rate of $3.00 per player a month, ' +
         'and everything else works exactly the same.';
       document.body.insertBefore(bar, document.body.firstChild);
 
       // Stop the page promising a price it will not be charged.
       document.querySelectorAll('.hero-note').forEach(function (el) {
-        el.textContent = 'Founding is not open for this state right now. Standard rate, $3.00 per player a month.';
+        el.textContent = 'This offer ended on ' + OFFER.day + '. Standard rate, $3.00 per player a month.';
       });
       document.querySelectorAll('a.btn-primary').forEach(function (el) {
         if (/founding/i.test(el.textContent)) el.textContent = 'Get started';

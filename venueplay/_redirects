@@ -27,3 +27,9 @@
 #
 # If you add anything private in future: put it in venueplay-backend/, not here,
 # and do not rely on a rule in this file to hide it.
+
+# ONE OFFER PAGE, A MONTH AT A TIME (Dean, 25 Sep 2026). /offer and /offer/<month> are served
+# from the /nsw page, which reads the month from the address and shows that month's closing
+# date and code. 200 = a rewrite: the visitor keeps the /offer address. See nsw.html OFFERS.
+/offer      /nsw  200
+/offer/*    /nsw  200

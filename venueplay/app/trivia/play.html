@@ -151,9 +151,9 @@
 
   <!-- WAIT -->
   <div class="view center hidden" id="vWait">
-    <div style="font-size:44px">&#9989;</div>
-    <div class="pbig" style="color:var(--win)">You&#39;re in</div>
-    <div class="psub">Good luck, <b id="waitName" style="color:var(--text)">Player</b></div>
+    <div style="font-size:44px" id="waitIcon">&#9989;</div>
+    <div class="pbig" style="color:var(--win)" id="waitHead">You&#39;re in</div>
+    <div class="psub" id="waitSub">Good luck, <b id="waitName" style="color:var(--text)">Player</b></div>
     <div class="pnote" id="waitMsg">Watch the big screen. Your questions will pop up here.</div>
     <div class="scorebox hidden" id="waitScore"></div>
     <div class="rankline hidden" id="waitRank"></div>
@@ -392,9 +392,14 @@
 
   // "3rd of 11". Never "Rank 0": with no rank yet it returns "" and the caller hides the line.
   function rankText(){ if(!(P.rank>0)) return ""; return ordinal(P.rank)+(P.playersCount>0?(" of "+P.playersCount):""); }
-  function showWait(msg){
+  /* head: a heading for the moment instead of "You're in". Dean, 25 Sep 2026, on a paper round:
+     take out the "You're in" above "Answer locked in"; mid-game it reads like a join screen. */
+  function showWait(msg, head){
     show("vWait");
     $("waitName").textContent=P.name;
+    $("waitHead").textContent = head || "You\u2019re in";
+    $("waitIcon").classList.toggle("hidden", !!head);
+    $("waitSub").classList.toggle("hidden", !!head);
     if(msg) $("waitMsg").textContent=msg;
     if(P.total>0 || P.rank>0){
       $("waitScore").classList.remove("hidden"); $("waitScore").textContent=P.total+" points";
@@ -710,12 +715,12 @@
       if(!P.joined) return;
       stopCd(); P.q=null;
       var rn=m.round||1;
-      if(m.t==="closed") showWait("Answer locked in. The answers go up on the big screen at the end of round "+rn+".");
-      else if(m.t==="handin") showWait("Paper teams are handing in their round "+rn+" sheets. The answers are next, on the big screen.");
+      if(m.t==="closed") showWait("The answers go up on the big screen at the end of round "+rn+".", "Locked in");
+      else if(m.t==="handin") showWait("Paper teams are handing in their round "+rn+" sheets. The answers are next, on the big screen.", "Sheets in");
       else {
-        showWait("Round "+rn+" answers are on the big screen.");
+        showWait("They are up on the big screen now.", "Round "+rn+" answers");
         // Spread over a few seconds: every phone hears this in the same instant (see showResult).
-        setTimeout(function(){ pullScore("Round "+rn+" answers are on the big screen."); }, Math.random()*4000);
+        setTimeout(function(){ pullScore("They are up on the big screen now.", "Round "+rn+" answers"); }, Math.random()*4000);
       }
     }
     else if(m.t==="leaderboard"){
@@ -751,13 +756,13 @@
       else if(g.phase==="revealed" || g.phase==="idle" || !g.question){ P.pendingScore=true; }
     }
   }
-  function pullScore(msg){
+  function pullScore(msg, head){
     if(!P.gameId) return;
     playerGet("/player/score?game="+encodeURIComponent(P.gameId)).then(function(r){
       if(typeof r.total==="number") P.total=r.total;
       if(typeof r.rank==="number") P.rank=r.rank;
       if(typeof r.players_count==="number") P.playersCount=r.players_count;
-      if(P.joined && !P.q && !P.ended) showWait(msg||"Next question coming up. Watch the big screen.");
+      if(P.joined && !P.q && !P.ended) showWait(msg||"Next question coming up. Watch the big screen.", head);
     }).catch(function(){});
   }
   function applyPending(){

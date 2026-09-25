@@ -1756,7 +1756,7 @@ def local_checks(which):
                      'last-call.html'):
             continue
         src = io.open(f, encoding='utf-8').read()
-        codes = set(re.findall(r'[A-Z]{2,3}-([A-Z]{3})-(20\d\d)', src))
+        codes = set(re.findall(r'(?<![A-Z])[A-Z]{2,3}-([A-Z]{3})-(20\d\d)', src))   # not OFFER-NOV-2026, see below
         if len(codes) != 1:
             wrong.append('%s has %d different codes' % (b, len(codes)))
             continue
@@ -1768,7 +1768,9 @@ def local_checks(which):
         # are made by cloning each other, which is exactly how that happens.
         # ACT and NSW are deliberately one market: the Worker accepts an ACT
         # postcode on an NSW code and says so where it does it.
-        pre = set(re.findall(r'([A-Z]{2,3})-[A-Z]{3}-20\d\d', src))
+        # (?<![A-Z]): a month code such as OFFER-NOV-2026 (nsw.html, Dean 25 Sep 2026: one offer page,
+        # a month at a time) is not a state code, and without the boundary it read as 'FER'.
+        pre = set(re.findall(r'(?<![A-Z])([A-Z]{2,3})-[A-Z]{3}-20\d\d', src))
         want = b[:-5].upper()
         # /last-call is the one NATIONAL page: it carries a code for every state and
         # chooses between them from the venue's postcode, because the Worker compares
