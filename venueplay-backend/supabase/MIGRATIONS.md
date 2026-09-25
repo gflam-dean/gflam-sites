@@ -141,3 +141,9 @@ writes it: /host/paper/print patches this column. Rollback: `alter table public.
 `venueplay-89-session-lobby-format.sql`: adds `vp_sessions.lobby_format` (text), the game the host last opened a
 lobby for or started, so /join/info sends a code typed in a lobby to that game and not the last one played
 (audit 25 Sep 2026). RUN ON SYDNEY 25 Sep 2026, verified by information_schema. The Worker tolerates it missing.
+
+`venueplay-90-members-draw-one-at-a-time.sql`: `vp_members_draw` takes a row lock (FOR UPDATE) on the draw when it
+first reads it, so two consoles pressing Draw together can no longer each name a different member (audit 25 Sep
+2026). Otherwise identical to the live definition it was read from. RUN ON SYDNEY 25 Sep 2026; verified by
+pg_get_functiondef, grants unchanged (postgres + service_role only), and by holding the row lock on one connection
+while a second call waited until its 2s timeout. No Worker change. Rollback: re-run the function from migration 76.
