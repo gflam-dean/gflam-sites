@@ -1752,41 +1752,20 @@ def local_checks(which):
     wrong = []
     for f in files:
         b = os.path.basename(f)
-        if b not in ('nsw.html','qld.html','vic.html','sa.html','wa.html','nt.html','tas.html','act.html',
-                     'last-call.html'):
+        # 25 Sep 2026: one offer page, a month at a time, no state (Dean). The state pages and
+        # /last-call are gone; /nsw is the October page and serves /offer-<mon> for later
+        # months from its OFFERS table. The code the page shows WITHOUT a month in its address
+        # is the October row, and the month written on the page must be that code's month.
+        if b != 'nsw.html':
             continue
         src = io.open(f, encoding='utf-8').read()
-        codes = set(re.findall(r'(?<![A-Z])[A-Z]{2,3}-([A-Z]{3})-(20\d\d)', src))   # not OFFER-NOV-2026, see below
-        if len(codes) != 1:
-            wrong.append('%s has %d different codes' % (b, len(codes)))
+        row = re.search(r"oct:\s*\{\s*code:\s*'([A-Z]+)-([A-Z]{3})-(20\d\d)'", src)
+        if not row:
+            wrong.append('nsw.html has no October row in OFFERS')
             continue
-        mon3, yr = codes.pop()
-        # AND IT MUST BE THIS STATE'S CODE. The month check would not blink at
-        # tas.html carrying VIC-OCT-2026, and the Worker prices founding off the
-        # POSTCODE's state, so every Tasmanian venue would see $2.50 on the page
-        # and be charged $3.00 with nothing on screen to explain it. These pages
-        # are made by cloning each other, which is exactly how that happens.
-        # ACT and NSW are deliberately one market: the Worker accepts an ACT
-        # postcode on an NSW code and says so where it does it.
-        # (?<![A-Z]): a month code such as OFFER-NOV-2026 (nsw.html, Dean 25 Sep 2026: one offer page,
-        # a month at a time) is not a state code, and without the boundary it read as 'FER'.
-        pre = set(re.findall(r'(?<![A-Z])([A-Z]{2,3})-[A-Z]{3}-20\d\d', src))
-        want = b[:-5].upper()
-        # /last-call is the one NATIONAL page: it carries a code for every state and
-        # chooses between them from the venue's postcode, because the Worker compares
-        # a code's prefix to that postcode and no made-up national prefix matches.
-        # So it may carry all seven, and it must carry all seven: a state missing here
-        # is a state that reads $2.50 and is charged $3.00.
-        if b == 'last-call.html':
-            allowed = {'NSW','VIC','QLD','SA','WA','TAS','NT'}
-            if pre != allowed:
-                wrong.append('last-call.html carries %d state codes, needs all 7 (missing %s)'
-                             % (len(pre), ', '.join(sorted(allowed - pre)) or 'none'))
-                continue
-        else:
-            allowed = {want} | ({'NSW'} if want == 'ACT' else set())
-        if not pre or not pre <= allowed:
-            wrong.append('%s carries %s' % (b, ', '.join(sorted(pre)) or 'no code'))
+        mon3, yr = row.group(2), row.group(3)
+        if row.group(1) != 'OFFER':
+            wrong.append('nsw.html offers %s-%s-%s, a state code (no state on the offer)' % row.groups())
             continue
         num = ABBR.get(mon3)
         if not num:
@@ -2211,7 +2190,7 @@ def local_checks(which):
     for f in files:
         if not f.endswith('.html'):
             continue
-        for code in sorted(set(re.findall(r'\b([A-Z]{2,3})-([A-Z]{3})-(20\d\d)\b', io.open(f, encoding='utf-8', errors='ignore').read()))):
+        for code in sorted(set(re.findall(r'\b(OFFER|[A-Z]{2,3})-([A-Z]{3})-(20\d\d)\b', io.open(f, encoding='utf-8', errors='ignore').read()))):
             st, mon, yr = code
             if mon not in _MON:
                 continue

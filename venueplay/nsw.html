@@ -1558,7 +1558,7 @@
     fetch(VP_WORKER + '/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name, email: email, mobile: mobile, postcode: (venues[0] && venues[0].postcode) || '', plan: plan, founding_code: (window.VP_OFFER || {}).code || 'NSW-OCT-2026', venues: venues, venue: venues[0].name, seats: venues[0].seats, marketing_opt_in: marketingOptIn, embedded: wantEmbedded })
+      body: JSON.stringify({ name: name, email: email, mobile: mobile, postcode: (venues[0] && venues[0].postcode) || '', plan: plan, founding_code: (window.VP_OFFER || {}).code || 'OFFER-OCT-2026', venues: venues, venue: venues[0].name, seats: venues[0].seats, marketing_opt_in: marketingOptIn, embedded: wantEmbedded })
     })
     .then(function(r){ return r.json(); })
     .then(function(data){
@@ -1915,7 +1915,7 @@
 <script>
 (function () {
   var OFFERS = {
-    oct: { code: 'NSW-OCT-2026',    date: '31 October 2026',  day: '31 October',  month: 'October'  },
+    oct: { code: 'OFFER-OCT-2026',    date: '31 October 2026',  day: '31 October',  month: 'October'  },
     nov: { code: 'OFFER-NOV-2026',  date: '30 November 2026', day: '30 November', month: 'November' },
     dec: { code: 'OFFER-DEC-2026',  date: '31 December 2026', day: '31 December', month: 'December' },
     jan: { code: 'OFFER-JAN-2027',  date: '31 January 2027',  day: '31 January',  month: 'January'  },
@@ -1949,7 +1949,7 @@
      =================================================================== -->
 <script>
 (function () {
-  var OFFER = window.VP_OFFER || { code:'NSW-OCT-2026', day:'31 October' };
+  var OFFER = window.VP_OFFER || { code:'OFFER-OCT-2026', day:'31 October' };
   var CODE = OFFER.code;
   var API  = 'https://venueplay-api.dean-tindale.workers.dev';
   if (!CODE || !API || API.indexOf('PASTE_') !== -1) return;

@@ -411,10 +411,6 @@
   "checks": 13,
   "counted_by": "lines"
  },
- "venueplay-backend/worker/founding-postcode-agree.test.js": {
-  "checks": 12,
-  "counted_by": "lines"
- },
  "venueplay-backend/worker/group-billing.test.js": {
   "checks": 31,
   "counted_by": "lines"

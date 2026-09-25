@@ -173,8 +173,8 @@ MUTATIONS = [
      'a live email goes out with {{monthly_total_inc_gst}} printed in it where the price '
      'should be, because nothing in the Worker fills that name'),
 
-    ('no founding page has outlived its own deadline', 'venueplay/qld.html',
-     '<<ANY:QLD-OCT-2026>>', 'QLD-JAN-2026',
+    ('no founding page has outlived its own deadline', 'venueplay/nsw.html',
+     '<<ANY:OFFER-OCT-2026>>', 'OFFER-JAN-2026',
      'the page promises a founding code that expired months ago, so either the discount '
      'runs past the date we published or a venue reads $2.50 and is charged $3'),
 
@@ -273,12 +273,6 @@ MUTATIONS = [
      'status=eq.active&suspended_reason=eq.ending', 'status=eq.active&suspended_reason=eq.ended',
      'the nightly sweep finds nobody, so a venue that cancelled is never ended and never gets '
      'its last email, and keeps being billed'),
-
-    ('founding-postcode-agree.test.js', 'venueplay/last-call.html',
-     "if((n>=3000&&n<=3999)||(n>=8000&&n<=8999)) return 'VIC';",
-     "if((n>=3000&&n<=4099)||(n>=8000&&n<=8999)) return 'VIC';",
-     'the page and the Worker disagree about Brisbane, so a 4000 venue is shown the Victorian '
-     'founding price and the card takes the standard one'),
 
     # ---- 17 Sep 2026, fifth pass: the PartyPlay game names, which a host reads off their
     # ---- own console mid-party and which run.html sends up on the television.
@@ -1334,7 +1328,7 @@ MUTATIONS = [
     # find string matched nothing and prove-checks reported "the mutation no longer applies".
     # That is a check nobody is proving, dressed up as a tidy line of output. Caught 17 Sep 2026.
     # If a date in the copy moves, move it here too.
-    ('every founding page agrees with its own code', 'venueplay/qld.html',
+    ('every founding page agrees with its own code', 'venueplay/nsw.html',
      '<<ALL:31 October 2026>>', '31 November 2026',
      'a founding page carries a date that does not exist'),
     ('no screen leaves a second code up once the host is connected',
@@ -2297,7 +2291,7 @@ MUTATIONS = [
      'a question parked for a fact-check is dealt to a pub on Tuesday'),
 
     ('the phones do not all ask in the same instant', 'venueplay/app/trivia/play.html',
-     "      var _wait = gotIt ? Math.random()*2000 : 1000+Math.random()*5000;",
+     "      var _wait = gotIt ? Math.random()*800 : 500+Math.random()*2000;",
      "      var _wait = 0;",
      'every phone in the room asks in the same millisecond again'),
 
@@ -2639,9 +2633,9 @@ MUTATIONS_LIVE = [
 
     # The page carries the code, the Worker carries the list. A code on a page that the
     # Worker will not honour is a venue reading $2.50 and being charged $3.
-    ('all 9 founding page(s) have a live code',
-     'venueplay/qld.html',
-     '<<ALL:QLD-OCT-2026>>', 'QLD-OCT-2027',
+    ('all 1 founding page(s) have a live code',
+     'venueplay/nsw.html',
+     "oct: { code: 'OFFER-OCT-2026',", "oct: { code: 'OFFER-OCT-2027',",
      'a founding page offers a code env.FOUNDING_CODES has never heard of, so the venue is '
      'quoted one price and charged another with no error and no explanation'),
 ]

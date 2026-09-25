@@ -123,8 +123,8 @@ check('a press on /nsw is tagged NSW', !!s1 && s1[2].cta_state === 'NSW',
 var s2 = c.clickOn('A', '#claim', 'Get started', '/');
 check('a press on the homepage is tagged home', !!s2 && s2[2].cta_state === 'home',
       s2 && s2[2] && s2[2].cta_state);
-var s3 = c.clickOn('A', '#claim', 'Get started', '/qld.html');
-check('the .html form of a state page is tagged the same', !!s3 && s3[2].cta_state === 'QLD',
+var s3 = c.clickOn('A', '#claim', 'Get started', '/nsw.html');
+check('the .html form of a state page is tagged the same', !!s3 && s3[2].cta_state === 'NSW',
       s3 && s3[2] && s3[2].cta_state);
 var s4 = c.clickOn('A', '#x', 'Watch', '/see-a-night');
 check('a non-state page keeps its own name', !!s4 && s4[2].cta_state === 'see-a-night',
@@ -163,18 +163,19 @@ check('a value that merely STARTS with 1 does not opt out',
 
 /* The id must exist in exactly one place. Fourteen pages used to carry their own copy. */
 var pages = 0, inline = 0;
-['index', 'nsw', 'qld', 'vic', 'sa', 'wa', 'nt', 'tas', 'act', 'terms', 'privacy',
- 'training', 'see-a-night', 'last-call'].forEach(function (n) {
+/* 25 Sep 2026: the seven other state pages and /last-call were retired (one offer page, a month at a
+   time); their addresses redirect to /offer-oct, so there are six pages to check, not fourteen. */
+var SITE_PAGES = ['index', 'nsw', 'terms', 'privacy', 'training', 'see-a-night'];
+SITE_PAGES.forEach(function (n) {
   var h = readFile('venueplay/' + n + '.html');
   if (!h) return;
   pages++;
   if (/G-E2CZM4BZCH/.test(h)) inline++;
 });
 check('no page carries its own copy of the measurement id (' + pages + ' pages checked)',
-      pages >= 14 && inline === 0, inline + ' page(s) still inline it');
+      pages >= SITE_PAGES.length && inline === 0, inline + ' page(s) still inline it');
 check('and every one of them loads the shared script',
-      pages >= 14 && ['index', 'nsw', 'qld', 'vic', 'sa', 'wa', 'nt', 'tas', 'act', 'terms',
-        'privacy', 'training', 'see-a-night', 'last-call']
+      pages >= SITE_PAGES.length && SITE_PAGES
         .every(function (n) { return /vp-analytics\.js/.test(readFile('venueplay/' + n + '.html') || ''); }));
 
 print('');
