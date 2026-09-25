@@ -39,3 +39,20 @@
 /offer-feb  /nsw  200
 /offer-mar  /nsw  200
 /offer      /     302
+
+# STATE PAGES RETIRED (Dean, 25 Sep 2026: "all the state links are gone except for nsw"). Nobody
+# was sent these, and /nsw is the one already in inboxes, so it keeps serving the October page.
+/qld          /offer-oct  301
+/qld.html     /offer-oct  301
+/vic          /offer-oct  301
+/vic.html     /offer-oct  301
+/sa          /offer-oct  301
+/sa.html     /offer-oct  301
+/wa          /offer-oct  301
+/wa.html     /offer-oct  301
+/nt          /offer-oct  301
+/nt.html     /offer-oct  301
+/tas          /offer-oct  301
+/tas.html     /offer-oct  301
+/act          /offer-oct  301
+/act.html     /offer-oct  301
