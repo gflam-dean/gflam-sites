@@ -72,7 +72,7 @@
   "counted_by": "lines"
  },
  "tools/test-add-venue-free-month.js": {
-  "checks": 41,
+  "checks": 44,
   "counted_by": "lines"
  },
  "tools/test-added-time-keeps-the-bonus-honest.js": {

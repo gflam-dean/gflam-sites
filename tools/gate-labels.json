@@ -30,7 +30,7 @@
   "a venue over the cap is told, not quietly trimmed",
   "a win survives heartbeats and reconnects, and a new round still clears it",
   "a winner is sent to the host, never the bar",
-  "adding a venue charges a month and credits it straight back (41 checks)",
+  "adding a venue charges a month and credits it straight back (44 checks)",
   "after a blip the TV settles on four channels and stops",
   "an answer at second ten scores 125 whether or not the host adds time afterwards",
   "an archived venue is not restored, and an explicit choice still works (14 checks)",

@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '25 Sep 2026, 12:02 · cdaec556';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '25 Sep 2026, 14:18 · c3f98d49';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -6242,8 +6242,18 @@ async function vpbAddVenue(request, env, json) {
      venue's charge from its cache and the second venue's charge never existed, while its free
      month credit (keyed on the venue id all along) was banked anyway. $250 out the door with no
      error anywhere. Found by audit, 20 Sep 2026. The id is what makes a venue itself. */
-  const aAdj = billingOk ? await vpbAdjustPlayerBilling(env, info, players, o.account.plan, name,
-    vpbNewVenueTag(r.venue && r.venue.id, players, info.periodEnd)) : null;
+  /* A VENUE ONLY FLAGGED TO CANCEL IS STILL PAID FOR. It stays active to the end of the period its
+     players were billed for, so bringing it back through Add a venue charges only the players ABOVE
+     what it already paid for this period. It used to charge them all again, pro rata, while "Keep
+     this venue" charged nothing for the identical outcome (audit 20 Sep, confirmed again 25 Sep
+     2026). A venue that was switched OFF (suspended) was not paid for this period and is charged in
+     full, as before. The subscription quantity above still counts every player, so the renewal is
+     right either way. */
+  const alreadyPaid = (reviving && twin.status !== 'suspended' && twin.cancel_at_period_end)
+    ? Math.max(0, parseInt(twin.max_players, 10) || 0) : 0;
+  const chargePlayers = Math.max(0, players - alreadyPaid);
+  const aAdj = (billingOk && chargePlayers > 0) ? await vpbAdjustPlayerBilling(env, info, chargePlayers, o.account.plan, name,
+    vpbNewVenueTag(r.venue && r.venue.id, chargePlayers, info.periodEnd)) : null;
 
   /* THE NEW VENUE GETS ITS FIRST MONTH FREE, the same month a venue that signs up on its own
      gets. Dean, 17 Sep 2026: "if I sign up as a group and then I add another venue but I'm now

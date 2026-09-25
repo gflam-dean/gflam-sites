@@ -180,6 +180,20 @@ var rD = run({ players: 50, plan: 'monthly', postcode: '4220',
                sameName: [venue({ cancel_at_period_end: true })] });
 check('cancelling this period: comes back on', rD && rD.readded === true, rD);
 check('cancelling this period: no second free month', rD.free_month_cents === 0, rD.free_month_cents);
+/* ALREADY PAID FOR THIS PERIOD (audit 25 Sep 2026). A venue only flagged to cancel is still active and
+   its players were billed to the renewal date. Brought back at the same size: nothing to charge. */
+var rD2 = run({ players: 50, plan: 'monthly', postcode: '4220',
+                sameName: [venue({ cancel_at_period_end: true, max_players: 50 })] });
+check('cancelling this period, same size back: charged NOTHING, it is already paid for', rD2 && rD2.readded === true && charges().length === 0, charges());
+/* Brought back BIGGER: only the players above what was paid. 30 paid, 50 asked: 20 charged. */
+var rD3 = run({ players: 50, plan: 'monthly', postcode: '4220',
+                sameName: [venue({ cancel_at_period_end: true, max_players: 30 })] });
+var q3 = charges().map(function (c) { return JSON.stringify(c.params); }).join(' ');
+check('cancelling this period, back bigger: charged for the 20 extra only', charges().length === 1 && /20/.test(q3) && !/\b50\b/.test(q3), q3);
+/* Control: a venue switched OFF was not paid for this period, so it pays for all of them. */
+var rD4 = run({ players: 50, plan: 'monthly', postcode: '4220',
+                sameName: [venue({ status: 'suspended', suspended_reason: 'cancelled', max_players: 50 })] });
+check('switched off and back: still charged for all 50', charges().length === 1, charges());
 
 /* NOT reversible from here. Only money turns a non-payment suspension back on, and only a
    person turns a manual one back on. Otherwise this route is the "nudge the player count"

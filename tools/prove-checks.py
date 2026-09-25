@@ -1269,6 +1269,11 @@ MUTATIONS = [
      '.tv-corner{position:absolute;top:2cqw;right:18px;',
      'a corner is pinned in two different units and only lines up at one screen width'),
 
+    ('adding a venue charges a month and credits it straight back', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  const chargePlayers = Math.max(0, players - alreadyPaid);",
+     "  const chargePlayers = players;",
+     'a venue flagged to cancel and added back is charged again for players it already paid for this month'),
+
     ('founding-month-expiry.test.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
      "  return (nowMs == null ? Date.now() : nowMs) < endMs;",
      "  return true;",
