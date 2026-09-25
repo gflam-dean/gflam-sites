@@ -621,7 +621,7 @@ MUTATIONS = [
 
     ('bingo-after-the-win.test.js',
      'venueplay/app/index.html',
-     '    else if(G.status==="running" && G.lastWins.length){ b.disabled=true; b.classList.add("waiting"); b.textContent="Announce the win"; }',
+     '    else if(G.status==="running" && G.lastWins.length){ b.disabled=true; b.textContent="Winner confirmed: keep playing or finish, below"; }',
      '    else if(G.status==="running" && G.lastWins.length){ b.disabled=false; b.textContent="Next number"; }',
      'the biggest button on the console reads Next number over an unannounced win, so the host '
      'taps it instead of announcing and is refused by a toast they are not looking at'),

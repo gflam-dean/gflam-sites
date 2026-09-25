@@ -1265,7 +1265,10 @@
        fumbled tap was refused, but the button did not say why). */
     if(G.status==="running" && G.won){ b.disabled=true; b.textContent="Game done"; }
     else if(G.status==="running" && G.claims.length){ b.disabled=true; b.classList.add("waiting"); b.textContent="Claim waiting"; }
-    else if(G.status==="running" && G.lastWins.length){ b.disabled=true; b.classList.add("waiting"); b.textContent="Announce the win"; }
+    /* Not orange, and not "Announce the win". It read like the button that announces the win, so
+       hosts pressed it over and over while the TV sat on "checking" (audit, 25 Sep 2026, found by
+       playing). The real choice is the two buttons under the claim: Keep playing or Finish game. */
+    else if(G.status==="running" && G.lastWins.length){ b.disabled=true; b.textContent="Winner confirmed: keep playing or finish, below"; }
     else if(G.status==="running" && G.idx>=89){ b.disabled=true; b.textContent="All 90 called"; }
     // Before the first ball it is not "next", it is the start of the game. Hosts read the button.
     else { b.disabled=false; b.textContent = (G.idx<0) ? "Start calling" : "Next number"; }

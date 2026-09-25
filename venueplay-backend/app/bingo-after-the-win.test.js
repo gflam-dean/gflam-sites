@@ -258,7 +258,7 @@ ok("NOTHING is broadcast on confirm alone: the host has not decided play on or f
 
 print("== the Next number button becomes a label, not a way out ==");
 ok("the big button is disabled while a win is unannounced", $("nextBtn").disabled === true);
-ok("and it reads Announce the win", $("nextBtn").textContent === "Announce the win",
+ok("and it says what to do instead (25 Sep 2026: it used to read Announce the win, and was pressed)", $("nextBtn").textContent === "Winner confirmed: keep playing or finish, below",
    "got '" + $("nextBtn").textContent + "'");
 MSGS = []; toasts = [];
 nextBall();
@@ -266,8 +266,8 @@ ok("tapping it draws no ball", G.draw.length === DRAW.length && MSGS.length === 
 ok("and the console SAYS why, rather than doing nothing",
    toasts.length === 1 && toasts[0].indexOf("Announce the win first") === 0, toasts.join(" / "));
 ok("it never even asks the server for a ball", ballRequests === 0, String(ballRequests));
-ok("and the button still reads Announce the win afterwards",
-   $("nextBtn").textContent === "Announce the win", "'" + $("nextBtn").textContent + "'");
+ok("and the button still says so afterwards",
+   $("nextBtn").textContent === "Winner confirmed: keep playing or finish, below", "'" + $("nextBtn").textContent + "'");
 
 print("== the win state offers exactly two ways out ==");
 var win = $("claimQueue").innerHTML;
