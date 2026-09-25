@@ -94,11 +94,6 @@
 
   if (isRobot() || teamOptOut() || notLiveSite()) return;
 
-  var s = document.createElement('script');
-  s.async = true;
-  s.src = 'https://www.googletagmanager.com/gtag/js?id=' + MEASUREMENT_ID;
-  document.head.appendChild(s);
-
   // window.dataLayer explicitly, not a bare `dataLayer`. Google's own snippet relies on
   // the implicit global, which only works because it runs at top level in a page. Inside a
   // file, under 'use strict', that is a ReferenceError waiting for the first person who
@@ -106,8 +101,34 @@
   window.dataLayer = window.dataLayer || [];
   function gtag() { window.dataLayer.push(arguments); }
   window.gtag = gtag;
-  gtag('js', new Date());
-  gtag('config', MEASUREMENT_ID);
+
+  /* A VISIT COUNTS WHEN A PERSON DOES SOMETHING. Dean, 25 Sep 2026: "Can we remove them from
+     my report". Microsoft's mail scanners open every link in an email from Australian Azure
+     data centres, so 29 of 30 "Australian" visits on 24 Sep were machines: they load the page
+     and never touch it. So nothing is loaded or sent until the first mouse move, touch, key or
+     wheel. A person reading does one of those within seconds; a scanner never does. Anything
+     queued before then (nothing, normally) goes out with the tag when it loads. */
+  var counting = false;
+  var HUMAN = ['pointermove', 'pointerdown', 'mousemove', 'touchstart', 'keydown', 'wheel'];
+  function startCounting() {
+    if (counting) return;
+    counting = true;
+    for (var i = 0; i < HUMAN.length; i++) {
+      try { window.removeEventListener(HUMAN[i], startCounting, true); } catch (e) {}
+    }
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=' + MEASUREMENT_ID;
+    document.head.appendChild(s);
+    // unshift, so the config is ahead of any click queued in the same instant. Each entry is an
+    // `arguments` object, exactly what gtag() pushes: gtag.js reads those as commands.
+    function cmd() { return arguments; }
+    window.dataLayer.unshift(cmd('config', MEASUREMENT_ID));
+    window.dataLayer.unshift(cmd('js', new Date()));
+  }
+  for (var hi = 0; hi < HUMAN.length; hi++) {
+    try { window.addEventListener(HUMAN[hi], startCounting, { capture: true, passive: true }); } catch (e) {}
+  }
 
   /* ---------------------------------------------------------------------------------
      WHAT DID THEY ACTUALLY PRESS?

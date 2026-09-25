@@ -41,10 +41,16 @@ function run(nav, opts) {
     createElement: function () { return { async: false, src: '' }; },
     addEventListener: function (type, fn) { if (type === 'click') handlers.push(fn); }
   };
+  var human = [];
+  win.addEventListener = function (type, fn) { human.push(fn); };
+  win.removeEventListener = function () {};
   win.window = win;
   win.document = doc;
   var fn = new Function('window', 'document', 'navigator', 'location', 'localStorage', SRC);
   fn(win, doc, nav, win.location, win.localStorage);
+  var beforeInput = appended.length;
+  // A person moves the mouse or touches the screen (unless this run is a scanner that never does)
+  if (!opts.noInput) human.slice().forEach(function (h) { h({ type: 'pointermove' }); });
 
   // A stand-in for the element a real click lands on: usually a span INSIDE the anchor.
   function clickOn(tag, href, text, path) {
@@ -56,7 +62,7 @@ function run(nav, opts) {
     return win.dataLayer ? win.dataLayer[win.dataLayer.length - 1] : null;
   }
   return { loaded: appended, dataLayer: win.dataLayer, clickOn: clickOn,
-           handlers: handlers.length, store: store };
+           handlers: handlers.length, store: store, beforeInput: beforeInput, humanHooks: human.length };
 }
 
 var PERSON  = { webdriver: false, userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Safari/605.1' };
@@ -177,6 +183,21 @@ check('no page carries its own copy of the measurement id (' + pages + ' pages c
 check('and every one of them loads the shared script',
       pages >= SITE_PAGES.length && SITE_PAGES
         .every(function (n) { return /vp-analytics\.js/.test(readFile('venueplay/' + n + '.html') || ''); }));
+
+/* A MAIL SCANNER OPENS THE PAGE AND NEVER TOUCHES IT (Dean, 25 Sep 2026: remove them from my
+   report). Nothing may load until a person does something. */
+var sc = run(PERSON, { noInput: true });
+check('a page that is opened and never touched loads nothing (the mail scanners)', sc.loaded.length === 0, sc.loaded);
+check('and sends nothing: no config, no page view queued', !(sc.dataLayer || []).some(function (a) { return a && a[0] === 'config'; }), sc.dataLayer && sc.dataLayer.length);
+var hp = run(PERSON);
+check('nothing loads before the first input even for a person', hp.beforeInput === 0, hp.beforeInput);
+check('the first mouse move or touch loads the tag, once', hp.loaded.length === 1, hp.loaded);
+check('and the config is first in the queue, ahead of any click', hp.dataLayer && hp.dataLayer[1] && hp.dataLayer[1][0] === 'config' && hp.dataLayer[0][0] === 'js',
+      hp.dataLayer && hp.dataLayer.slice(0, 2).map(function (a) { return a && a[0]; }));
+check('the queued commands are arguments objects, the shape gtag.js reads',
+      hp.dataLayer && Object.prototype.toString.call(hp.dataLayer[0]) === '[object Arguments]',
+      hp.dataLayer && Object.prototype.toString.call(hp.dataLayer[0]));
+check('a robot that moves the mouse still loads nothing', run(ROBOT).loaded.length === 0);
 
 /* A preview on this Mac is not a visitor (GA audit, 25 Sep 2026: 11 localhost page views). */
 check('a person on localhost is not counted', run(PERSON, { hostname: 'localhost' }).loaded.length === 0);

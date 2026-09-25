@@ -80,7 +80,7 @@
   "counted_by": "lines"
  },
  "tools/test-analytics-ignores-robots.js": {
-  "checks": 35,
+  "checks": 42,
   "counted_by": "lines"
  },
  "tools/test-answers-room-relays-nothing.js": {
