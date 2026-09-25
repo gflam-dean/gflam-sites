@@ -194,6 +194,25 @@ ok("a dead connection falls back to the tablet", run("throw", "abc") === null, S
 ok("a reply with no count in it falls back to the tablet", run({ ok:true }, "abc") === null, String(got));
 ok("and so does a count that is not a number", run({ player_count: "lots" }, "abc") === null, String(got));
 
+/* THE TILE TAP THAT WAS TAKEN BACK (audit 25 Sep 2026, reproduced on Test Alpha): connect() runs
+   after the venue loads and again on a reconnect, and put the picker back over a game the host
+   had already tapped. Runs the real landAfterConnect. */
+var fnLand = grab("landAfterConnect");
+ok("landAfterConnect is in the console", !!fnLand);
+var landed = "", _hostPicked = false, G = { status: "setup" };
+function selectGame(g){ landed = "game:" + g; }
+function showGameSelect(){ landed = "picker"; }
+eval(fnLand);
+_hostPicked = true; landed = ""; landAfterConnect();
+ok("a game the host already tapped is not taken back by start-up or a reconnect", landed === "", landed);
+_hostPicked = false; landed = ""; landAfterConnect();
+ok("control: with nothing tapped, the host lands on the picker", landed === "picker", landed);
+G.status = "running"; _hostPicked = false; landed = ""; landAfterConnect();
+ok("a game in progress still goes straight back to bingo", landed === "game:bingo", landed);
+ok("connect() lands through it", !!grab("connect") && grab("connect").indexOf("landAfterConnect()") >= 0);
+ok("tapping a tile marks the pick before opening it",
+   /_hostPicked=true;\s*selectGame\(b\.getAttribute\("data-game"\)\)/.test(html));
+
 var card = grab("showNightCard");
 ok("the night card takes the session it is reporting on",
    !!card && /function showNightCard\(sessionId\)/.test(card));

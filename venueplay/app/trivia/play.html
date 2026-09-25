@@ -778,7 +778,10 @@
       /* A phone that slept through a question comes back into whatever is on: the open question
          (asking), the same question with the buttons locked (locked), or its own score while the
          room is between questions. Before, only "asking" was handled and the rest saw "You're in". */
-      if(g.question && (g.phase==="asking" || g.phase==="locked")){ P.pendingQ=g.question; P.pendingLocked=(g.phase==="locked"); }
+      if(g.question && (g.phase==="asking" || g.phase==="locked")){ P.pendingQ=g.question; P.pendingLocked=(g.phase==="locked");
+        /* the snapshot carries the round size on the game, not the question, so a phone reloaded
+           mid-question read "QUESTION" where the live one read "QUESTION 1 OF 3" (25 Sep 2026) */
+        if(!P.pendingQ.qtotal && g.question_count>0) P.pendingQ.qtotal=g.question_count; }
       else if(g.phase==="revealed" || g.phase==="idle" || !g.question){ P.pendingScore=true; }
     }
   }

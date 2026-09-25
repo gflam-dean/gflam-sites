@@ -272,7 +272,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/bingo-console.test.js": {
-  "checks": 42,
+  "checks": 48,
   "counted_by": "lines"
  },
  "venueplay-backend/app/bingo-win.test.js": {

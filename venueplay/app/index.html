@@ -814,6 +814,7 @@
     return false;
   }
   function showVenuePick(){
+    _hostPicked=false;   // a different venue starts at its game picker
     go("vVenuePick");
     var box=$("venuePickList"); box.innerHTML="<div class='note'>Loading your venues…</div>";
     VP.listVenues().then(function(vs){
@@ -1147,6 +1148,7 @@
     syncPaidUI();
   })();
   var currentGame="bingo";
+  var _hostPicked=false;   // the host tapped a game tile; start-up and reconnects must not undo it
 
   // ---- persist the running game so a host reload (battery, refresh) recovers ----
   // Keyed by the paired screen code. We only keep RUNNING games, tagged with a
@@ -2608,7 +2610,11 @@
     }
     buildBoard();
     // Land on the game selection. If the host reloaded mid-game, drop straight back into the live bingo board.
-    if(G.status==="running" || G.status==="lobby"){ selectGame("bingo"); } else { showGameSelect(); }
+    /* ...unless the host has already tapped a game. connect() runs AFTER the venue loads, and
+       again whenever the live link falls back, so a tap on Bingo in the first second or two was
+       undone and the picker came back: "the tiles open on the second click" (audit 25 Sep 2026,
+       reproduced on Test Alpha). A pick the host made is never taken back by the page. */
+    landAfterConnect();
     renderConsole();
     syncNextBtn();
   }
@@ -2635,6 +2641,9 @@
     $("headerTag").textContent="Bingo";
   }
 
+  function landAfterConnect(){
+    if(G.status==="running" || G.status==="lobby"){ selectGame("bingo"); } else if(!_hostPicked){ showGameSelect(); }
+  }
   // The selection landing: /app shows this first, and every game's "Games" button returns here.
   function showGameSelect(){
     currentGame="";
@@ -2647,8 +2656,8 @@
     var btns=document.querySelectorAll("#gamePicker .pk");
     for(var i=0;i<btns.length;i++){ btns[i].classList.remove("on"); }
   }
-  $("gamePicker").addEventListener("click", function(e){ var b=e.target.closest("button.pk[data-game]"); if(b) selectGame(b.getAttribute("data-game")); });
-  $("gamesBack").addEventListener("click", showGameSelect);
+  $("gamePicker").addEventListener("click", function(e){ var b=e.target.closest("button.pk[data-game]"); if(b){ _hostPicked=true; selectGame(b.getAttribute("data-game")); } });
+  $("gamesBack").addEventListener("click", function(){ _hostPicked=false; showGameSelect(); });
   $("venueSwitchInline").addEventListener("click", function(){ try{ localStorage.removeItem("vpVenuePick"); }catch(e){} showVenuePick(); });
 
   // ================= EVENTS =================
