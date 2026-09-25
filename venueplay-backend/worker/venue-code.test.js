@@ -115,18 +115,15 @@ ok("the hot path is ONE indexed row, not a scan of every venue",
 ok("and it will not hand out a suspended venue", /join_code=eq[^;]*status=neq\.suspended/.test(W));
 ok("every generator uses the no-lookalike alphabet", CODE('ACDEFG') === 'ACDEFG');
 
-print("== an owner can actually change it, from a page a host cannot reach ==");
+print("== the code is shown in settings, and cannot be changed there ==");
+/* Dean, 25 Sep 2026: one code per venue. Change code only replaced the wall's code, never the channel,
+   so each press split a venue in two (undone by migration 91). The button is gone on purpose. */
 var SET = find("venueplay/app/settings.html");
 ok("settings.html is where it lives", !!SET);
-ok("and that page turns a host away", !!SET && /canEdit\s*=\s*ctx\.isAdmin\s*\|\|\s*ctx\.role==="owner"\s*\|\|\s*ctx\.role==="manager"/.test(SET),
-   "the Worker checks the role too, but a host should never see the button");
-ok("there is a button", !!SET && /id="refreshCodeBtn"/.test(SET));
-ok("it calls the refresh endpoint", !!SET && /gameApiPost\("\/venue\/code\/refresh"/.test(SET));
-ok("it warns about reprinting table talkers BEFORE changing anything",
-   !!SET && /TABLE TALKERS[\s\S]{0,120}REPRINT/.test(SET),
-   "the code is printed in the room: changing it silently is the fault, not the change");
-ok("the warning is a confirm the owner has to accept", !!SET && /if\(!confirm\(/.test(SET));
-ok("the code is shown, not just changeable", !!SET && /id="venueCodeVal"/.test(SET));
+ok("and that page turns a host away", !!SET && /canEdit\s*=\s*ctx\.isAdmin\s*\|\|\s*ctx\.role==="owner"\s*\|\|\s*ctx\.role==="manager"/.test(SET));
+ok("the code is shown", !!SET && /id="venueCodeVal"/.test(SET));
+ok("there is no Change code button", !!SET && !/id="refreshCodeBtn"/.test(SET) && !/>\s*Change code\s*</.test(SET));
+ok("and nothing on the page calls the refresh endpoint", !!SET && !/\/venue\/code\/refresh/.test(SET.replace(/\/\*[\s\S]*?\*\//g, "")));
 
 print("== the console shows the venue code, never the channel ==");
 ok("vp-session exposes venueJoinCode", /venueJoinCode: venueJoinCode/.test(SESS));

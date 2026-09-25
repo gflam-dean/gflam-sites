@@ -142,9 +142,7 @@
       <div class="row">
         <div class="t"><div class="n"><span id="venueCodeVal" style="font-family:monospace;letter-spacing:.18em;font-size:19px;color:#fff">------</span></div>
         <div class="d" id="venueCodeWhen">Assigned when your venue was set up.</div></div>
-        <button class="btn ghost" id="refreshCodeBtn" type="button">Change code</button>
       </div>
-      <div class="sublbl" style="margin-top:6px">Changing it stops the old code working straight away, so anything already printed with it becomes wrong. A host cannot change this.</div>
     </div>
 
     <button class="btn pink" id="saveBtn">Save settings</button>
@@ -168,48 +166,16 @@
   $("signOut").addEventListener("click", function(){ VP.signOut(); });
 
 
-  /* THE VENUE'S CODE, AND CHANGING IT.
-     Only an owner or a manager reaches this page at all (canEdit above sends a
-     host home), and the Worker checks the role again rather than trusting that.
-     The confirm is not ceremony: the code is printed in the room, so changing it
-     invalidates whatever is on the tables, and that is worth one deliberate
-     press rather than a stray tap on an iPad behind a bar. */
+  /* THE VENUE'S CODE. Shown, not changeable. Dean, 25 Sep 2026: one code per venue. A Change code
+     button used to live here; it only replaced the code on the wall (the TV, console and phones
+     meet on the channel code, which it never touched), so every press split a venue into two
+     codes, which is the fault migration 91 undid. The Worker's /venue/code/refresh is still there
+     but nothing calls it. */
   function paintVenueCode(){
     if(!VP.venueJoinCode) return;
     VP.venueJoinCode(venueId).then(function(code){
       if(code) $("venueCodeVal").textContent = code;
     }).catch(function(){});
-  }
-  var _refreshBusy = false;
-  function wireRefreshCode(){
-    var b = $("refreshCodeBtn");
-    if(!b) return;
-    b.addEventListener("click", function(){
-      if(_refreshBusy) return;
-      if(!confirm(
-        "Change this venue's code?\n\n" +
-        "IF YOU HAVE TABLE TALKERS, POSTERS OR ANYTHING ELSE PRINTED WITH THE OLD CODE, " +
-        "YOU WILL NEED TO REPRINT THEM.\n\n" +
-        "The old code stops working the moment you press OK, and players typing it will " +
-        "not get into your game.\n\nChange it anyway?")) return;
-      _refreshBusy = true; b.disabled = true; var was = b.textContent; b.textContent = "Changing\u2026";
-      VP.gameApiPost("/venue/code/refresh", { venue_id: venueId }).then(function(r){
-        if(r && r.ok && r.join_code){
-          $("venueCodeVal").textContent = r.join_code;
-          $("venueCodeWhen").textContent = "Changed just now. Reprint anything showing the old code.";
-          var m=$("msg"); m.className="msg ok";
-          m.textContent="Venue code changed to " + r.join_code + ". Reprint anything showing the old one.";
-        } else {
-          var m=$("msg"); m.className="msg err";
-          m.textContent=(r && r.error) || "Could not change the code. Please try again.";
-        }
-      }).catch(function(){
-        var m=$("msg"); m.className="msg err";
-        m.textContent="Could not change the code. Please try again.";
-      }).then(function(){
-        _refreshBusy = false; b.disabled = false; b.textContent = was;
-      });
-    });
   }
 
   // Manager/owner (or admin). If a ?venue= is passed (from HQ), switch to it first.
@@ -231,7 +197,6 @@
     gateMarketing(ctx);
     gateOwnerOnly(ctx);
     paintVenueCode();
-    wireRefreshCode();
     $("body").classList.remove("hidden");
   });
 
@@ -241,7 +206,7 @@
      manager could change what every player at the venue is asked for.
      Owner-ness is "no permissions object on my staff row", exactly as the billing Worker decides
      it (a real owner's row can be stored with role 'manager', so the role word cannot be trusted
-     on its own). The venue code and Change code stay available to a manager. */
+     on its own). The venue code stays visible to a manager. */
   function gateOwnerOnly(ctx){
     if (ctx.isAdmin || ctx.role === "owner") return;
     ctx.client.from("vp_venue_staff").select("permissions")

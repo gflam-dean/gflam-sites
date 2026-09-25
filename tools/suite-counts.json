@@ -524,7 +524,7 @@
   "counted_by": "total"
  },
  "venueplay-backend/worker/venue-code.test.js": {
-  "checks": 36,
+  "checks": 34,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/venue-scale.test.js": {
