@@ -111,6 +111,10 @@
   "checks": 24,
   "counted_by": "lines"
  },
+ "tools/test-email-outcomes-recorded.js": {
+  "checks": 10,
+  "counted_by": "lines"
+ },
  "tools/test-fail-closed-batch.js": {
   "checks": 28,
   "counted_by": "lines"

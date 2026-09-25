@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '25 Sep 2026, 14:18 · c3f98d49';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '25 Sep 2026, 18:25 · e21b64b9';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -3489,8 +3489,9 @@ async function vpaProvisionFromCheckout(env, session) {
 
     // Welcome email once the account is whole, on whichever run got it there (see vpaWelcomeOnce).
     await vpaWelcomeOnce(env, session, foundingId, async function () {
-      await vpaFireWelcome(env, session, f, [{ name: venueName, seats: f.max_seats, slug: venue && venue.slug }], false);
+      const r = await vpaFireWelcome(env, session, f, [{ name: venueName, seats: f.max_seats, slug: venue && venue.slug }], false);
       await vpaNotifyNewSignup(env, session, f, [{ name: venueName, seats: f.max_seats }], false);
+      return r;   // the welcome's own outcome, so vpaWelcomeOnce records what really happened
     });
   } catch (e) {
     // Log which step failed so a stuck venue is visible in HQ, then rethrow so
@@ -3768,8 +3769,9 @@ async function vpaProvisionGroup(env, session, f) {
     }
     // Outside the anyCreated test on purpose: a retry that only FINISHES a group created nothing.
     await vpaWelcomeOnce(env, session, foundingId, async function () {
-      await vpaFireWelcome(env, session, f, venues, true);
+      const r = await vpaFireWelcome(env, session, f, venues, true);
       await vpaNotifyNewSignup(env, session, f, venues, true);
+      return r;
     });
     // Flag a loginless group on ANY run (even a no-op retry), written once, so HQ always catches it.
     if (!authUserId) {
@@ -3817,10 +3819,16 @@ async function vpaWelcomeOnce(env, session, foundingId, send) {
     const prior = await vpaSelect(env, 'vp_admin_audit',
       'target=eq.' + encodeURIComponent(target) + '&action=eq.welcome_email_sent&select=id&limit=1');
     if (prior && prior.length) return false;
-    await send();
+    /* ONLY A WELCOME THAT WENT IS RECORDED AS SENT (audit 25 Sep 2026). This wrote
+       welcome_email_sent whatever send() did, and vpaFireWelcome returned quietly on no key, no
+       address or a Resend refusal, so the row could claim a welcome nobody got AND block the
+       retry. A failure is now its own row, which does not block the next attempt. */
+    const r = (await send()) || { sent: false, why: 'no answer from the sender' };
     await vpaInsert(env, 'vp_admin_audit', { actor_admin: null, actor_label: 'stripe',
-      action: 'welcome_email_sent', target: target, detail: {} }, false);
-    return true;
+      action: r.sent ? 'welcome_email_sent' : 'welcome_email_not_sent', target: target,
+      detail: { outcome: r.why || (r.sent ? 'sent' : ''), to: r.to || null, resend_id: r.id || null,
+                status: r.status || null } }, false);
+    return !!r.sent;
   } catch (e) { return false; }
 }
 
@@ -3837,10 +3845,10 @@ function vpaPaymentPhrase(monthlyTotal, plan) {
 
 async function vpaFireWelcome(env, session, f, venues, isGroup) {
   try {
-    if (!env.RESEND_API_KEY) return; // Resend not configured yet -> skip
+    if (!env.RESEND_API_KEY) return { sent: false, why: 'not sent: no Resend key on this Worker' };
     const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
     const email = f.contact_email;
-    if (!email) return;
+    if (!email) return { sent: false, why: 'not sent: the account has no contact email' };
 
     const plan = f.plan === 'annual' ? 'annual' : 'monthly';
     const tier = (session.metadata && session.metadata.tier) || 'founding';
@@ -3873,7 +3881,7 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
     const support = 'hello@venueplay.com.au';
 
     const res = await fetch(site + '/emails/' + (isGroup ? 'welcome-group.html' : 'welcome.html'));
-    if (!res.ok) return;
+    if (!res.ok) return { sent: false, why: 'not sent: the email template did not load (' + res.status + ')', to: email };
     let html = await res.text();
 
     if (isGroup) {
@@ -3929,7 +3937,7 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
       .replace(/\{\{unsubscribe_url\}\}/g, site + '/unsubscribe?e=' + encodeURIComponent(email || ''))
       .replace(/{{support_email}}/g, support);
 
-    await fetch('https://api.resend.com/emails', {
+    const sentRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -3940,7 +3948,14 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
         html: html,
       }),
     });
-  } catch (_) { /* welcome email is best-effort; never fail provisioning */ }
+    let id = null;
+    try { const j = await sentRes.json(); id = (j && j.id) || null; } catch (_) {}
+    return { sent: !!(sentRes && sentRes.ok), why: sentRes && sentRes.ok ? 'sent' : 'not sent: Resend refused it',
+             to: email, id: id, status: (sentRes && sentRes.status) || null };
+  } catch (e) {
+    /* welcome email is best-effort; never fail provisioning, but say what happened */
+    return { sent: false, why: 'not sent: ' + String((e && e.message) || e).slice(0, 120) };
+  }
 }
 
 
@@ -4727,19 +4742,29 @@ async function vpaFireInvoiceEmail(env, invoice) {
 /* 5-day payment reminder, sent on Stripe's invoice.upcoming event (set the lead time to 5 days in
    Stripe billing settings). Respects the venue's payment_reminders opt-out. Best-effort. */
 async function vpaFireUpcomingEmail(env, invoice) {
+  /* WRITTEN DOWN, LIKE THE RECEIPT (audit 25 Sep 2026). This sent and swallowed everything, the
+     same fault fixed on the receipt on 11 Sep: six invoice.upcoming events were handled and
+     nothing shows whether one reminder went. Every exit is now a vp_admin_audit row, so "it
+     returned early" and "it sent" never look the same from the outside. */
+  const say = (why, extra) => vpaInsert(env, 'vp_admin_audit', {
+    actor_admin: null, actor_label: 'stripe',
+    action: 'invoice_upcoming_email',
+    target: 'customer:' + String((invoice && invoice.customer) || ''),
+    detail: Object.assign({ invoice: (invoice && invoice.id) || null, outcome: why }, extra || {}),
+  }, false).catch(() => {});
   try {
-    if (!env.RESEND_API_KEY) return;
+    if (!env.RESEND_API_KEY) { await say('not sent: no Resend key on this Worker'); return; }
     if (!invoice) return;
     const email = invoice.customer_email;
-    if (!email) return;
+    if (!email) { await say('not sent: the customer has no email address'); return; }
     const amountDue = Number(invoice.amount_due || 0);
-    if (amountDue <= 0) return;   // $0 upcoming (still in the free month) -> no reminder
+    if (amountDue <= 0) { await say('not sent: $0 due (free month or credit)'); return; }
     const customer = invoice.customer;
     if (customer) {
       try {
         const accts = await vpaSelect(env, 'venueplay_founding',
           'stripe_customer_id=eq.' + encodeURIComponent(customer) + '&select=payment_reminders&limit=1');
-        if (accts && accts[0] && accts[0].payment_reminders === false) return;   // opted out
+        if (accts && accts[0] && accts[0].payment_reminders === false) { await say('not sent: the venue turned reminders off'); return; }
       } catch (_) { /* can't check -> still send; a reminder is safer than silence */ }
     }
     const amount = '$' + (amountDue / 100).toFixed(2);
@@ -4784,7 +4809,7 @@ async function vpaFireUpcomingEmail(env, invoice) {
       + '<p style="font-size:12.5px;color:#9a9aa4;margin:22px 0 0">Prefer not to get these? Turn payment reminders off on your billing page. Questions? Reply to this email or contact hello@venueplay.com.au</p>'
       + '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay.com.au &middot; Gflam Group, ABN ' + VP_ABN + '</p>'
       + '</div>';
-    await fetch('https://api.resend.com/emails', {
+    const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -4795,7 +4820,14 @@ async function vpaFireUpcomingEmail(env, invoice) {
         html: html,
       }),
     });
-  } catch (_) { /* reminder email is best-effort */ }
+    let resendId = null;
+    try { const j = await res.json(); resendId = (j && j.id) || null; } catch (_) {}
+    await say(res && res.ok ? 'sent' : 'not sent: Resend refused it',
+              { to: email, amount: amount, sent: !!(res && res.ok), resend_id: resendId,
+                status: (res && res.status) || null });
+  } catch (e) {
+    await say('not sent: ' + String((e && e.message) || e).slice(0, 120));
+  }
 }
 
 /* ---------------------------------------------------------------------------
