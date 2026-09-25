@@ -680,6 +680,21 @@ test("picking a guest's photo copies it into a game photo", function(){
     }); });
 });
 
+/* A GUEST'S FACE GOES WHEN THE ALBUM GOES. The copy used to be kept for purchase plus
+   400 days while the privacy page promises 30 days after the party (audit, 25 Sep 2026). */
+test("a copy of a guest's photo is deleted on the album's date, not a year later", function(){
+  var rec = { put:[], got:[], del:[] };
+  return promote({ id:ALBUM_ID },
+    [ licenceRow(), albumRow({ delete_after:"2026-11-15T00:00:00.000Z" }), { status:200, body:"[]" },
+      { status:200, body: JSON.stringify([{ id:GAME_ID }]) } ], photoEnv(rec))
+    .then(function(r){ return r.json().then(function(j){
+      var ins = FETCH.calls[FETCH.calls.length-1], rowIn = JSON.parse(ins.init.body||"[]")[0] || {};
+      ok(r.status===200, "the copy was made, got "+r.status);
+      ok(rowIn.delete_after === "2026-11-15T00:00:00.000Z",
+         "the copy takes the original's delete_after, wrote "+rowIn.delete_after);
+    }); });
+});
+
 test("picking the same face twice does not copy it twice", function(){
   var rec = { put:[], got:[], del:[] };
   return promote({ id:ALBUM_ID },

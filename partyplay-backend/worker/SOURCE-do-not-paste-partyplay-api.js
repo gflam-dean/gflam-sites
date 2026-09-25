@@ -987,7 +987,7 @@ async function handlePhotoPromote(request, env) {
   /* Scoped to this licence, so a host holding one party's key cannot reach into
      another party's album and pull a face out of it. */
   const rows = await sb(env, 'pp_photos?id=eq.' + encodeURIComponent(id) +
-    '&licence_id=eq.' + l.id + '&select=id,object_key,content_type,purpose,taken_by');
+    '&licence_id=eq.' + l.id + '&select=id,object_key,content_type,purpose,taken_by,delete_after');
   if (!rows.length) return json({ error: 'That photo is not on this party.' }, 404);
   const src = rows[0];
   if (src.purpose === 'game') return json({ ok: true, id: src.id, already: true });
@@ -1006,9 +1006,15 @@ async function handlePhotoPromote(request, env) {
   const buf = await obj.arrayBuffer();
   await env.PHOTOS.put(key, buf, { httpMetadata: { contentType: type } });
 
-  /* The album's clock is the party plus thirty days. A game photo has to still
-     be there on the night, so the copy is kept on the game clock instead. */
-  const deleteAfter = new Date(Date.parse(l.created_at) + 400 * 86400e3).toISOString();
+  /* A GUEST'S PHOTO GOES WHEN THE ALBUM GOES, copy and all. This copy used to be
+     kept on the host's game clock (purchase plus 400 days) while the privacy page
+     promises every guest photo is deleted 30 days after the party, so a face the host
+     picked for Guess the photo outlived that promise by up to a year (audit, 25 Sep
+     2026). The copy takes the ORIGINAL'S date. The game is played during the party,
+     which is always before that date, so nothing a host needs is lost. */
+  const gameClock = Date.parse(l.created_at) + 400 * 86400e3;
+  const albumClock = Date.parse(src.delete_after || '');
+  const deleteAfter = new Date(Number.isFinite(albumClock) ? Math.min(albumClock, gameClock) : gameClock).toISOString();
   let row;
   try {
     const made = await sb(env, 'pp_photos', {
