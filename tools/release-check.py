@@ -3042,7 +3042,7 @@ def local_checks(which):
         for label, fn, title, floor, why in (
             ('D44. A paper card or team is one player, printing is capped, and a paper night holds its answers',
              'test-paper-players.js',
-             'paper cards and sheets bill once, stop at ten, and keep a paper round\'s answers off every screen', 43,
+             'paper cards and sheets bill once, stop at ten, and keep a paper round\'s answers off every screen', 45,
              'A venue prints a hundred musical cards and never pays for the room, a paper card is billed '
              'every time it is checked, or a reloaded TV shows the answer before the sheets are in'),
             ('D43. A player bills once they have shown life, not when a phone opened the join page',

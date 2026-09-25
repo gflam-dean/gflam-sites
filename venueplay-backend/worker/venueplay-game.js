@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '25 Sep 2026, 10:10 · 33d10140';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '25 Sep 2026, 10:55 · cc50ea42';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -2945,7 +2945,10 @@ async function hostStartTrivia(env, json, b, session, staff, seq) {
      the console, so a reload cannot drop it. */
   const paperTrivia = session.paper && session.paper.trivia && Number(session.paper.trivia.teams) > 0 ? session.paper.trivia : null;
   if (paperTrivia) {
-    const rs = parseInt(b.round_size, 10);
+    // The size the sheets were PRINTED in wins over whatever the console sends now: a sheet on a
+    // table cannot change, and a host on a second tablet has not seen what the first one printed.
+    const printed = parseInt(paperTrivia.round_size, 10);
+    const rs = (printed >= 3 && printed <= 50) ? printed : parseInt(b.round_size, 10);
     config.paper_teams = Number(paperTrivia.teams);
     config.round_size = (rs >= 3 && rs <= 50) ? rs : 10;
     config.defer_reveal = true;
@@ -2994,7 +2997,10 @@ async function hostStartTrivia(env, json, b, session, staff, seq) {
     colour: config.colour !== false,
   }, actorRef(staff));
 
-  return json({ game_id: game.id, seq, format: 'trivia', question_count: questionCount });
+  // A paper round says so, with the round size it was PRINTED in, so the console asks for the
+  // sheets at the same moment the server allows scoring them, whichever tablet the host is on.
+  return json({ game_id: game.id, seq, format: 'trivia', question_count: questionCount,
+    paper: config.defer_reveal === true, round_size: config.defer_reveal === true ? config.round_size : null });
 }
 
 /* ------------------------------ MUSICAL BINGO: start a game ------------------------------
@@ -7804,12 +7810,18 @@ async function handlePaperPrint(request, env, json) {
   const paper = Object.assign({}, session.paper || {});
   const now = new Date().toISOString();
   if (kind === 'trivia') {
-    const teams = Math.max(want, Number((paper.trivia || {}).teams) || 0);   // a sheet already on a table stays valid
-    paper.trivia = { teams, printed_at: now };
+    const prev = paper.trivia || {};
+    const teams = Math.max(want, Number(prev.teams) || 0);   // a sheet already on a table stays valid
+    /* The shape the sheets were printed in. The FIRST print sets it: a reprint for more teams must
+       match the sheets already handed out, so it is not changed by a later request. */
+    const rsIn = parseInt(b.round_size, 10), qIn = parseInt(b.questions, 10);
+    const roundSize = Number(prev.round_size) || ((rsIn >= 3 && rsIn <= 50) ? rsIn : 10);
+    const questions = Number(prev.questions) || ((qIn >= 1 && qIn <= 100) ? qIn : null);
+    paper.trivia = { teams, round_size: roundSize, questions, printed_at: now };
     await sbPatch(env, 'vp_sessions', 'id=eq.' + enc(session.id), { paper });
     await sbInsert(env, 'vp_admin_audit', { action: 'paper_printed', target: 'venue:' + session.venue_id,
       detail: { session_id: session.id, kind, count: teams } }, false).catch(() => {});
-    return json({ kind, cap, teams });
+    return json({ kind, cap, teams, round_size: roundSize, questions });
   }
 
   let set = (paper.musical && paper.musical.playlist_id) ? paper.musical : null;

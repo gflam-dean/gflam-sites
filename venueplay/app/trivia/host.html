@@ -837,7 +837,7 @@
     }).then(function(r){
       G.gameId=r.game_id; G.questionCount=r.question_count; G.qtotal=r.question_count;
       // The Worker makes it a paper round from what was printed; the console mirrors that rule.
-      G.defer = paperTeams()>0; G.rs = G.roundSize; G.round = 1; G.roundItems = []; savePaperRound();
+      G.defer = (r.paper===true); G.rs = r.round_size || G.roundSize; G.round = 1; G.roundItems = []; savePaperRound();
       G.status="ready"; G.board=[]; G.current=null;
       saveTrivia();
       bcast({ t:"started", game_id:G.gameId, question_count:r.question_count, colour:G.colour, title:G.setTitle });
@@ -1144,11 +1144,13 @@
       if(n==null) return;
       var w=window.VPPrint ? VPPrint.open("Trivia answer sheets") : null;   // opened inside the tap, so no pop-up blocker
       openSession().then(function(){
-        return apiPost("/host/paper/print",{ session_id:G.sessionId, kind:"trivia", count:n });
+        return apiPost("/host/paper/print",{ session_id:G.sessionId, kind:"trivia", count:n, round_size:G.roundSize, questions:G.count });
       }).then(function(r){
-        try{ localStorage.setItem(paperKey(), JSON.stringify({ teams:r.teams, roundSize:G.roundSize, questions:G.count })); }catch(e){}
+        // The server keeps the FIRST print's shape; a reprint for more teams gets the same sheets.
+        var rs=r.round_size||G.roundSize, qn=r.questions||G.count;
+        try{ localStorage.setItem(paperKey(), JSON.stringify({ teams:r.teams, roundSize:rs, questions:qn })); }catch(e){}
         renderPaperSetup();
-        if(!window.VPPrint || !VPPrint.trivia(w, { teams:r.teams, questions:G.count, roundSize:G.roundSize, venue:(G.venue && G.venue.name)||"" })){
+        if(!window.VPPrint || !VPPrint.trivia(w, { teams:r.teams, questions:qn, roundSize:rs, venue:(G.venue && G.venue.name)||"" })){
           hostError("Your browser blocked the print window. Allow pop-ups for venueplay.com.au, then tap Print again.");
         }
       }).catch(function(e){ if(window.VPPrint) VPPrint.fail(w, e.message); hostError(e.message); });

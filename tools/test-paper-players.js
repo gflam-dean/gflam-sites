@@ -110,12 +110,15 @@ function paperRows(){ return DB.vp_players.filter(function(p){ return /^paper-/.
   var Q = []; for (var i=1;i<=6;i++){ Q.push({ id:'q-'+i, set_id:SET, seq:i, question:'Q'+i, options:['A','B','C','D'], correct_index: i % 4, points:100 }); }
   DB.vp_questions = Q;
   DB.vp_question_sets = [{ id:SET, title:'Set', owner_venue_id:null, visibility:'library', question_count:6 }];
-  await call(handlePaperPrint, { session_id:SESSION, kind:'trivia', count:2 });
-  r = await call(handleHostGame, { session_id:SESSION, format:'trivia', question_set_id:SET, question_count:6, round_size:3, base_points:100 });
+  await call(handlePaperPrint, { session_id:SESSION, kind:'trivia', count:2, round_size:3, questions:6 });
+  await call(handlePaperPrint, { session_id:SESSION, kind:'trivia', count:3, round_size:10, questions:6 });
+  show('a reprint for more teams keeps the FIRST print\'s rounds of 3', sess().paper.trivia.round_size === 3 && sess().paper.trivia.teams === 3);
+  r = await call(handleHostGame, { session_id:SESSION, format:'trivia', question_set_id:SET, question_count:6, round_size:10, base_points:100 });
   show('the trivia round starts', r.status === 200, JSON.stringify(r.body).slice(0,200));
   var TG = r.body.game_id;
   var tcfg = (DB.vp_games.filter(function(g){ return g.id === TG; })[0] || {}).config || {};
-  show('printed sheets make it a paper night: answers held back, rounds of 3', tcfg.defer_reveal === true && tcfg.round_size === 3 && tcfg.paper_teams === 2, JSON.stringify(tcfg).slice(0,160));
+  show('printed sheets make it a paper night in the PRINTED rounds of 3, though the console asked for 10', tcfg.defer_reveal === true && tcfg.round_size === 3 && tcfg.paper_teams === 3, JSON.stringify(tcfg).slice(0,160));
+  show('and the console is told so, whichever tablet it is', r.body.paper === true && r.body.round_size === 3);
   var tgRow = DB.vp_trivia_games.filter(function(t){ return t.game_id === TG; })[0];
   tgRow.current_seq = tcfg.question_seqs[1]; tgRow.phase = 'revealed';
   r = await call(handlePaperScore, { game_id:TG, round:1, teams:[{ no:1, name:'The Oldies', correct:2 }] });
@@ -144,8 +147,8 @@ function paperRows(){ return DB.vp_players.filter(function(p){ return /^paper-/.
   r = await call(handlePaperScore, { game_id:TG, round:1, teams:[{ no:1, name:'The Oldies', correct:3 }] });
   show('a corrected score REPLACES the round (300), it does not add to it', board()[oldies.id] === 300);
   show('scoring twice is still one player', paperRows().filter(function(p){ return p.device_id==='paper-t-1'; }).length === 1);
-  r = await call(handlePaperScore, { game_id:TG, round:1, teams:[{ no:3, name:'Ghost', correct:3 }] });
-  show('a team number that was never printed is ignored', !paperRows().some(function(p){ return p.device_id==='paper-t-3'; }));
+  r = await call(handlePaperScore, { game_id:TG, round:1, teams:[{ no:4, name:'Ghost', correct:3 }] });
+  show('a team number that was never printed is ignored', !paperRows().some(function(p){ return p.device_id==='paper-t-4'; }));
   r = await call(handlePaperScore, { game_id:TG, round:2, teams:[{ no:2, name:'Zero', correct:0 }] });
   show('round 2 cannot be scored before it is played', r.status === 409);
 

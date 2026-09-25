@@ -160,7 +160,7 @@
   "counted_by": "lines"
  },
  "tools/test-paper-players.js": {
-  "checks": 43,
+  "checks": 45,
   "counted_by": "lines"
  },
  "tools/test-phones-cannot-be-impersonated.js": {
