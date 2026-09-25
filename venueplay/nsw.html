@@ -1904,9 +1904,12 @@
      ONE PAGE, A MONTH AT A TIME. Dean, 25 Sep 2026: no state on the offer, and each month's
      campaign gets its own deadline and its own code. When a month's code ends it is gone:
      that link says the offer ended and quotes the standard rate. There is no quiet roll-over.
-       /nsw, /offer, /offer/oct   the October offer (the link already in venues' inboxes)
-       /offer/nov                 the November offer (code OFFER-NOV-2026), for the campaign starting 10 October
-     /offer/* is served from this file by _redirects. A new month is a new row here, and its
+       /nsw, /offer-oct           the October offer (/nsw is the link already in venues' inboxes)
+       /offer-nov                 the November offer (code OFFER-NOV-2026), for the campaign starting 10 October
+     /offer-<mon> is served from this file by _redirects; plain /offer goes to the homepage ($3),
+     because an address with no month in it must never be a standing offer. Each code also ENDS by
+     itself at the end of its month (billing Worker vpaCodeInDate), so nothing relies on a code
+     being taken out of Cloudflare. A new month is a new row here, and its
      code added to FOUNDING_CODES in Cloudflare on the day its campaign starts.
      =================================================================== -->
 <script>
@@ -1915,7 +1918,7 @@
     oct: { code: 'NSW-OCT-2026',    date: '31 October 2026',  day: '31 October',  month: 'October'  },
     nov: { code: 'OFFER-NOV-2026',  date: '30 November 2026', day: '30 November', month: 'November' }
   };
-  var m = /^\/offer\/([a-z]{3})\b/i.exec(location.pathname || '');
+  var m = /^\/offer-([a-z]{3})\b/i.exec(location.pathname || '');
   var o = OFFERS[(m && m[1].toLowerCase()) || 'oct'] || OFFERS.oct;
   window.VP_OFFER = o;
   function put(cls, txt){ var els = document.querySelectorAll('.' + cls); for (var i = 0; i < els.length; i++) els[i].textContent = txt; }

@@ -62,9 +62,15 @@ var gateSaysFounding = vpaFoundingStateOk;
    reliable way to keep one. */
 var hq = /function vpaFoundingOpenNow\(env\)[\s\S]*?\n\}/.exec(SRC);
 pass("the HQ path exists", !!hq);
+/* vpaFoundingOpenNow reads vpaLiveCodes, which drops a code past the end of its month (25 Sep
+   2026). Lift those too, and give the fixtures a month far away: a -SEP-2026 code here would have
+   turned this suite red on 1 October for a reason that has nothing to do with postcodes. */
+var _mo = /const VPA_CODE_MONTHS = \{[^}]*\};/.exec(SRC); if (_mo) eval(_mo[0].replace('const ', 'var '));
+var _cd = /function vpaCodeInDate\(code, nowMs\) \{[\s\S]*?\n\}/.exec(SRC); if (_cd) eval(_cd[0]);
+var _lc = /function vpaLiveCodes\(env, nowMs\) \{[\s\S]*?\n\}/.exec(SRC); if (_lc) eval(_lc[0]);
 if (hq) { eval(hq[0]); }
 function hqSaysFounding(postcode, codeState) {
-  return vpaFoundingOpenNow({ FOUNDING_CODES: codeState + '-SEP-2026' });
+  return vpaFoundingOpenNow({ FOUNDING_CODES: codeState + '-DEC-2099' });
 }
 
 print("\nTHE ORDINARY CASE: a venue in the state the code is for");

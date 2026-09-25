@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '23 Sep 2026, 09:55 · 0b8a5464';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '25 Sep 2026, 12:02 · cdaec556';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -106,9 +106,7 @@ export default {
          depends on it corrects itself. */
       if (request.method === 'GET' && path === '/founding') {
         const want = (url.searchParams.get('code') || '').trim().toUpperCase();
-        const live = (env.FOUNDING_CODES || '').split(',')
-                       .map(function (c) { return c.trim().toUpperCase(); })
-                       .filter(Boolean);
+        const live = vpaLiveCodes(env);   // listed AND inside its month
         return json({ code: want, open: want !== '' && live.indexOf(want) !== -1 },
                     200, { 'cache-control': 'public, max-age=300' });
       }
@@ -334,7 +332,7 @@ async function handleCheckout(request, env, json) {
   /* Upper case on both sides, the same as GET /founding above. That preview told a page
      'qld-oct-2026' was open while this match, case sensitive, priced the same code at
      standard. Nothing sends a lower case code today; nothing should ever be able to. */
-  const activeCodes = (env.FOUNDING_CODES || '').split(',').map(function (s) { return s.trim().toUpperCase(); }).filter(Boolean);
+  const activeCodes = vpaLiveCodes(env);   // listed AND inside its month: a code ends with its month by itself
   const foundingCode = (b.founding_code || '').trim().toUpperCase();
   const codeActive = foundingCode !== '' && activeCodes.indexOf(foundingCode) !== -1;
   const codeState = foundingCode.split('-')[0].toUpperCase();
@@ -4029,8 +4027,26 @@ async function vpaCardLink(env, foundingId) {
    A venue HQ sets up by hand carries no founding code, so there is nothing to match. The honest
    equivalent of `codeActive` here is simply whether the deal is running. When it ends, every code
    comes out of FOUNDING_CODES and all three paths go to standard together. */
+/* A MONTH'S CODE ENDS WITH ITS MONTH, BY ITSELF. Dean, 25 Sep 2026: each campaign's offer runs to
+   the end of a month and then "that code is done, dusted and gone". Until now a code only stopped
+   when somebody took it out of FOUNDING_CODES, so a forgotten one kept selling $2.50 for ever.
+   A code ending -OCT-2026 is honoured until midnight at the end of 31 October, Brisbane time
+   (UTC+10 all year, no daylight saving). A code with no month in it keeps the old rule: live while
+   it is listed. The list still switches a code OFF early; the date only ever ends one. */
+const VPA_CODE_MONTHS = { JAN: 0, FEB: 1, MAR: 2, APR: 3, MAY: 4, JUN: 5, JUL: 6, AUG: 7, SEP: 8, OCT: 9, NOV: 10, DEC: 11 };
+function vpaCodeInDate(code, nowMs) {
+  const m = /-([A-Z]{3})-(20\d\d)$/.exec(String(code || '').trim().toUpperCase());
+  if (!m || !(m[1] in VPA_CODE_MONTHS)) return true;
+  const endMs = Date.UTC(Number(m[2]), VPA_CODE_MONTHS[m[1]] + 1, 1) - 10 * 3600 * 1000;   // 00:00 on the 1st of the next month, Brisbane
+  return (nowMs == null ? Date.now() : nowMs) < endMs;
+}
+// The codes that are live RIGHT NOW: listed, and not past the end of their month.
+function vpaLiveCodes(env, nowMs) {
+  return (env.FOUNDING_CODES || '').split(',').map(function (c) { return c.trim().toUpperCase(); })
+    .filter(Boolean).filter(function (c) { return vpaCodeInDate(c, nowMs); });
+}
 function vpaFoundingOpenNow(env) {
-  return (env.FOUNDING_CODES || '').split(',').map(function (c) { return c.trim(); }).filter(Boolean).length > 0;
+  return vpaLiveCodes(env).length > 0;
 }
 
 /* GET /add-card?f=<founding id>&t=<token>

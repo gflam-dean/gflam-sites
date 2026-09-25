@@ -1275,6 +1275,11 @@ MUTATIONS = [
      '.tv-corner{position:absolute;top:2cqw;right:18px;',
      'a corner is pinned in two different units and only lines up at one screen width'),
 
+    ('founding-month-expiry.test.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  return (nowMs == null ? Date.now() : nowMs) < endMs;",
+     "  return true;",
+     'an October code keeps selling $2.50 in November because nobody took it out of Cloudflare'),
+
     ('founding-gate.test.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
      "  if ((n >= 4000 && n <= 4999) || (n >= 9000 && n <= 9999)) return 'QLD';",
      "  if (n >= 4000 && n <= 4999) return 'QLD';",

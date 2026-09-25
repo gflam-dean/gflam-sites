@@ -100,6 +100,7 @@
   "every suite still runs at least the checks the ledger recorded",
   "every test reads the code this repo ships",
   "founding-gate.test.js",
+  "founding-month-expiry.test.js",
   "founding-postcode-agree.test.js",
   "group-billing.test.js",
   "health.test.js",
