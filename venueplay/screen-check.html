@@ -78,7 +78,7 @@
 
     var errors = [];
     var loadedAt = 0;
-    stage.src = '/tv?venue=' + encodeURIComponent(VENUE);
+    stage.src = '/tv?venue=' + encodeURIComponent(VENUE) + '&probe=1';   // looks, never counts as the venue's screen (tv.html ask())
 
     /* LISTEN BEFORE load FIRES, NOT AFTER.
 

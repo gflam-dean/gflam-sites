@@ -828,10 +828,15 @@
        cost a venue their screen for the night. Now it has to say so twice, thirty seconds apart,
        and it re-checks afterwards so the card clears itself the moment the venue really is
        findable again. */
+    /* A TOOL IS NOT A SCREEN. /screen-check (and verify-live.py through it) loads this page with
+       ?probe=1 to prove a real venue's wall paints, and every poll it made wrote that venue's
+       heartbeat: on 25 Sep 2026 HQ showed Tugun's "TV" alive at 14:30 and 18:05 when the only
+       thing looking was our own release check. probe=1 reaches the Worker, which then answers
+       without writing (handleVenueLookup, isProbe). A real screen never has it in its address. */
     var strikes=0, lastContentAt=null;
     function ask(){
       try{
-        fetch(VP_GAME_API+"/venue?code="+encodeURIComponent(CODE)+"&venue="+encodeURIComponent(VENUE_SLUG)+"&v="+encodeURIComponent(TV_BUILD))
+        fetch(VP_GAME_API+"/venue?code="+encodeURIComponent(CODE)+"&venue="+encodeURIComponent(VENUE_SLUG)+"&v="+encodeURIComponent(TV_BUILD)+(/[?&]probe=1(&|$)/.test(location.search)?"&probe=1":""))
           .then(function(r){ return r.ok?r.json():null; }).then(function(d){
           if(!d){ return; }                       // unreachable or old Worker: never false-alarm
           if(d.exists===false){

@@ -191,6 +191,10 @@
   "checks": 11,
   "counted_by": "lines"
  },
+ "tools/test-screen-check-probe.js": {
+  "checks": 6,
+  "counted_by": "lines"
+ },
  "tools/test-screen-key-rotates.js": {
   "checks": 11,
   "counted_by": "lines"
