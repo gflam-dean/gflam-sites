@@ -1,5 +1,5 @@
 /* PASTE THIS ONE.
-   Built 25 Sep 2026, 14:10:06   fingerprint a704a6524014
+   Built 25 Sep 2026, 14:11:42   fingerprint 17be95aeefd0
    If that time is not within the last few minutes, close this window and reopen. */
 /* ============================================================================
    PartyPlay Worker: checkout, licences, joining.
@@ -16,7 +16,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '17 Sep 2026, 09:19 · f940bd51';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '25 Sep 2026, 14:11 · 5ba7431f';   // tools/stamp-workers.py, do not edit by hand
 /* ---- lib/pp-licence.js, inlined at build time. Edit the file, not this. ---- */
 const PPLicence = (function () {
   const module = { exports: {} };

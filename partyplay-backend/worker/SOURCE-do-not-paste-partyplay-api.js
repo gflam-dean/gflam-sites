@@ -13,7 +13,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '17 Sep 2026, 09:19 · f940bd51';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '25 Sep 2026, 14:11 · 33a471fd';   // tools/stamp-workers.py, do not edit by hand
 // The licence window rules live in one place and are shared with the browser.
 // Paste lib/pp-licence.js above this line when deploying, or inline it. It is
 // referenced here as PPLicence.
