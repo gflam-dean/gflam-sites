@@ -222,6 +222,15 @@
             <div class="seg" id="cfgColour"><button data-v="on" class="on">Four colours</button><button data-v="off">Plain</button></div>
             <div class="note" style="margin-top:4px">Four colours is faster to pick in a noisy room and matches the TV. Plain shows grey buttons.</div>
           </div>
+          <div class="field" id="paperField">
+            <label>Paper teams <small style="color:var(--faint);font-weight:400">for regulars without a phone</small></label>
+            <button type="button" class="btn ghost" id="paperPrintBtn" style="width:100%">Print answer sheets</button>
+            <div id="paperRoundWrap" style="display:none;margin-top:10px">
+              <label for="cfgRound">Questions per round</label>
+              <input type="number" id="cfgRound" class="mono" min="3" max="50" value="10">
+            </div>
+            <div class="note" id="paperNote" style="margin-top:4px">Up to 10 teams a night. With paper teams playing, the answers go up at the end of each round, after the host has their sheets. A paper team counts as a player once its score goes on the leaderboard.</div>
+          </div>
           <div id="weekBanner" style="display:none;margin:0 0 12px;padding:12px 14px;background:rgba(245,165,36,.12);border:1px solid rgba(245,165,36,.45);border-radius:11px;color:#F5A524;font-size:13.5px;line-height:1.5"></div>
           <button class="btn pink big" id="startBtn">Open lobby</button>
           <button class="btn ghost big" id="cancelLobbyBtn" style="display:none;margin-top:8px">Close lobby</button>
@@ -264,10 +273,24 @@
     </div>
   </div>
 </div>
+<!-- Paper teams: how many answer sheets to print (Dean, 25 Sep 2026) -->
+<div id="paperModal" class="hidden" style="position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);padding:20px">
+  <div style="max-width:440px;width:100%;background:var(--ink-2);border:1px solid var(--line);border-radius:16px;padding:24px">
+    <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;margin-bottom:10px">Print answer sheets</div>
+    <div id="paperBody" style="font-size:14.5px;color:var(--text);line-height:1.55;margin-bottom:12px"></div>
+    <input type="number" id="paperCount" min="1" inputmode="numeric" style="width:100%;min-height:48px;font-size:20px;text-align:center">
+    <div id="paperErr" style="color:var(--roll);font-size:13px;min-height:18px;margin-top:6px"></div>
+    <div style="display:flex;gap:10px;margin-top:10px">
+      <button type="button" id="paperGo" class="btn pink big" style="flex:1">Print</button>
+      <button type="button" id="paperCancel" class="btn ghost big" style="flex:0 0 auto">Cancel</button>
+    </div>
+  </div>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../vp-session.js"></script>
 <script src="/app/vp-weekly.js"></script>
 <script src="/app/vp-sign.js"></script>
+<script src="/app/vp-print.js"></script>
 <script>
 (function(){
   "use strict";
@@ -456,6 +479,7 @@
         G.sessionId=snap.session_id; G.joinCode=snap.join_code||""; G.gameId=g.game_id;
         if(g.question_count!=null){ G.questionCount=g.question_count; G.qtotal=g.question_count; }
         if(typeof g.colour==="boolean") G.colour=g.colour;
+        G.defer = g.paper===true; G.rs = g.round_size || 10; loadPaperRound();
         if(G.joinCode) openGameChannel(G.joinCode);   // re-subscribe the players' channel so answers still land
         // Re-sync the TV only (the pairing channel). Connected phones are left alone; a phone that
         // also reloaded recovers itself from /snapshot, so we must not replay "started" to the game channel.
@@ -507,6 +531,7 @@
     renderPlayers();
   }
   function renderConsole(){
+    try{ renderPaperSetup(); }catch(e){}
     var live=(G.status!=="setup" && G.status!=="lobby");   // lobby keeps the setup panel visible
     $("setupBlock").classList.toggle("hidden", live);
     $("liveBlock").classList.toggle("hidden", !live);
@@ -586,6 +611,7 @@
   }
   function renderRun(){
     var body=$("runBody"); body.innerHTML="";
+    if(G.defer && renderPaperRun(body)) return;
 
     if(G.status==="ready"){
       var rd=el("div","qwrap");
@@ -614,7 +640,7 @@
         w.appendChild(o);
       }
       body.appendChild(w);
-      var rv=el("button","btn win big","Reveal answer"); rv.addEventListener("click", reveal); body.appendChild(rv);
+      var rv=el("button","btn win big", G.defer ? "Close the question" : "Reveal answer"); rv.addEventListener("click", reveal); body.appendChild(rv);
       var at=el("button","btn ghost","+10 seconds"); at.id="addTimeBtn"; at.style.width="100%"; at.style.marginTop="8px";
       at.addEventListener("click", function(){ addTime(10); }); body.appendChild(at);
       var nu=nextUpPanel(); if(nu) body.appendChild(nu);
@@ -714,6 +740,7 @@
     G.timePerQ=Math.max(5, Math.min(60, parseInt($("cfgTime").value,10)||30));
     G.base=Math.max(0, parseInt($("cfgBase").value,10)||0);
     G.count=Math.max(1, Math.min(100, parseInt($("cfgCount").value,10)||10));
+    G.roundSize=Math.max(3, Math.min(50, parseInt($("cfgRound").value,10)||10));
     G.setId=$("setSel").value||"";
     var so=$("setSel").options[$("setSel").selectedIndex];
     G.setTitle=(so && so.getAttribute("data-title"))||"";
@@ -805,10 +832,12 @@
       return apiPost("/host/game",{
         session_id:G.sessionId, format:"trivia", question_set_id:G.setId,
         time_limit_s:G.timePerQ, base_points:G.base, speed_bonus:G.speedBonus, colour:G.colour,
-        question_count:G.count
+        question_count:G.count, round_size:G.roundSize
       });
     }).then(function(r){
       G.gameId=r.game_id; G.questionCount=r.question_count; G.qtotal=r.question_count;
+      // The Worker makes it a paper round from what was printed; the console mirrors that rule.
+      G.defer = paperTeams()>0; G.rs = G.roundSize; G.round = 1; G.roundItems = []; savePaperRound();
       G.status="ready"; G.board=[]; G.current=null;
       saveTrivia();
       bcast({ t:"started", game_id:G.gameId, question_count:r.question_count, colour:G.colour, title:G.setTitle });
@@ -854,6 +883,18 @@
       G.status="reveal"; G.board=r.leaderboard||[]; G.split=r.split||[];
       saveTrivia();
       if(G.current) G.current.correctIndex=r.correct_index;
+      if(G.defer){
+        /* PAPER ROUND: scored on the server, kept off the TV and the phones until the sheets are in. */
+        var qn=(G.current && (G.current.qi||G.current.qseq))||0;
+        G.round=roundOf(qn);
+        if(G.current && !G.roundItems.some(function(it){ return it.qi===qn; })){
+          G.roundItems.push({ qi:qn, text:G.current.text, letter:LETTERS[r.correct_index]||"", answer:(G.current.options||[])[r.correct_index]||"" });
+        }
+        savePaperRound();
+        bcast({ t:"closed", round:G.round, qi:qn });
+        renderConsole();
+        return;
+      }
       // Safe to send correct_index now, the reveal has happened.
       bcast({ t:"reveal", qseq:r.qseq, correctIndex:r.correct_index,
         options:(G.current?G.current.options:[]), split:r.split||[], leaderboard:G.board });
@@ -928,6 +969,13 @@
            secs:remainingSecs(), colour:G.colour,
            imageUrl:(G.current.imageUrl||"") });   // without this a replayed picture round loses its picture
       if(remainingSecs()<=0) to({ t:"lock" });
+    } else if(G.defer && G.status==="reveal" && G.current){
+      to({ t:"closed", round:G.round, qi:(G.current.qi||G.current.qseq) });
+    } else if(G.defer && G.status==="handin"){
+      to({ t:"handin", round:G.round });
+    } else if(G.defer && (G.status==="paperscore" || G.status==="roundboard")){
+      to({ t:"roundanswers", round:G.round, items:G.roundItems });
+      if(G.status==="roundboard" && G.board.length) to({ t:"leaderboard", title:"Leaderboard after round "+G.round, rows:G.board });
     } else if(G.status==="reveal" && G.current){
       to({ t:"reveal", qseq:G.current.qseq, correctIndex:G.current.correctIndex,
            options:G.current.options, split:(G.split||[]), leaderboard:G.board, imageUrl:(G.current.imageUrl||"") });
@@ -1049,6 +1097,155 @@
   $("connectBtn").addEventListener("click", tryConnect);
   $("startBtn").addEventListener("click", function(){ if(G.status==="lobby") startRound(); else openLobby(); });
   $("cancelLobbyBtn").addEventListener("click", cancelLobby);
+
+  /* ---- PAPER TEAMS (Dean, 25 Sep 2026) ----
+     Printed A/B/C/D sheets for the regulars without a phone. With any printed, the round is a PAPER
+     round: every answer is held back to the end of its block of questions, the TV asks the paper
+     teams for their sheets, the host taps "Sheets collected", THEN the answers go up and the host
+     types each paper team's score. A paper team is a player once it is scored: that is when it
+     bills, once. Ten a night; the Worker allows a sheet per player on the plan in the free month. */
+  function paperKey(){ return "vpPaperT-"+(G.sessionId||""); }
+  function paperTeams(){ try{ return (JSON.parse(localStorage.getItem(paperKey())||"{}").teams)|0; }catch(e){ return 0; } }
+  function roundOf(qi){ return Math.max(1, Math.ceil((qi||1)/(G.rs||10))); }
+  function roundEnds(qi){ return (qi%(G.rs||10))===0 || (G.qtotal && qi>=G.qtotal); }
+  function roundKey(){ return "vpPaperR-"+(G.gameId||""); }
+  function savePaperRound(){ try{ localStorage.setItem(roundKey(), JSON.stringify({ round:G.round, items:G.roundItems, names:G.paperNames||{}, status:G.status })); }catch(e){} }
+  function loadPaperRound(){ try{ var o=JSON.parse(localStorage.getItem(roundKey())||"{}"); G.round=o.round||1; G.roundItems=o.items||[]; G.paperNames=o.names||{}; }catch(e){ G.round=1; G.roundItems=[]; G.paperNames={}; } }
+  function renderPaperSetup(){
+    var n=G.sessionId ? paperTeams() : 0;
+    $("paperPrintBtn").textContent = n ? ("Print again ("+n+" team sheet"+(n===1?"":"s")+" tonight)") : "Print answer sheets";
+    $("paperRoundWrap").style.display = n ? "" : "none";
+    $("paperNote").textContent = n
+      ? (n+" paper team"+(n===1?"":"s")+" tonight, so the answers go up at the end of each round, after you have their sheets. A paper team counts as a player once its score goes on the leaderboard.")
+      : "Up to 10 teams a night. With paper teams playing, the answers go up at the end of each round, after the host has their sheets. A paper team counts as a player once its score goes on the leaderboard.";
+  }
+  var _paperDone=null;
+  $("paperGo").addEventListener("click", function(){
+    var v=parseInt($("paperCount").value,10);
+    if(!(v>=1)){ $("paperErr").textContent="How many teams are playing on paper?"; return; }
+    $("paperModal").classList.add("hidden"); var f=_paperDone; _paperDone=null; if(f) f(v);
+  });
+  $("paperCancel").addEventListener("click", function(){ $("paperModal").classList.add("hidden"); var f=_paperDone; _paperDone=null; if(f) f(null); });
+  $("paperPrintBtn").addEventListener("click", function(){
+    if(G.busy) return;
+    readSettings();
+    var had=G.sessionId ? paperTeams() : 0;
+    $("paperBody").innerHTML="How many teams are playing on paper? Up to 10 a night (more in your free month)."+
+      (had ? " You have printed "+had+" already; the same team numbers carry on." : "")+
+      "<br><small style=\"color:var(--muted)\">Each sheet has "+Math.ceil(G.count/G.roundSize)+" round"+(Math.ceil(G.count/G.roundSize)===1?"":"s")+" of "+G.roundSize+" to tear off and hand in. A paper team counts as a player once it is scored.</small>";
+    $("paperCount").value=String(had||2); $("paperErr").textContent="";
+    $("paperModal").classList.remove("hidden");
+    setTimeout(function(){ try{ $("paperCount").focus(); $("paperCount").select(); }catch(e){} }, 30);
+    new Promise(function(res){ _paperDone=res; }).then(function(n){
+      if(n==null) return;
+      var w=window.VPPrint ? VPPrint.open("Trivia answer sheets") : null;   // opened inside the tap, so no pop-up blocker
+      openSession().then(function(){
+        return apiPost("/host/paper/print",{ session_id:G.sessionId, kind:"trivia", count:n });
+      }).then(function(r){
+        try{ localStorage.setItem(paperKey(), JSON.stringify({ teams:r.teams })); }catch(e){}
+        renderPaperSetup();
+        if(!window.VPPrint || !VPPrint.trivia(w, { teams:r.teams, questions:G.count, roundSize:G.roundSize, venue:(G.venue && G.venue.name)||"" })){
+          hostError("Your browser blocked the print window. Allow pop-ups for venueplay.com.au, then tap Print again.");
+        }
+      }).catch(function(e){ if(window.VPPrint) VPPrint.fail(w, e.message); hostError(e.message); });
+    });
+  });
+  $("cfgRound").addEventListener("change", function(){ readSettings(); });
+
+  function paperHandIn(){
+    G.status="handin"; savePaperRound();
+    bcast({ t:"handin", round:G.round });
+    renderConsole();
+  }
+  function paperShowAnswers(){
+    G.status="paperscore"; savePaperRound();
+    bcast({ t:"roundanswers", round:G.round, items:G.roundItems });
+    renderConsole();
+  }
+  function paperRoundDone(){
+    G.status="roundboard"; savePaperRound();
+    bcast({ t:"leaderboard", title:"Leaderboard after round "+G.round, rows:G.board });
+    renderConsole();
+  }
+  function paperSaveScores(btn){
+    var teams=[], n=paperTeams();
+    G.paperNames=G.paperNames||{};
+    for(var i=1;i<=n;i++){
+      var nm=($("ppName"+i)||{}).value||"", c=($("ppCorrect"+i)||{}).value;
+      G.paperNames[i]=nm.trim();
+      teams.push({ no:i, name:nm.trim(), correct:(c===""||c==null)?"":parseInt(c,10) });
+    }
+    if(btn){ btn.disabled=true; btn.textContent="Saving..."; }
+    apiPost("/host/paper/score",{ game_id:G.gameId, round:G.round, teams:teams }).then(function(r){
+      if(r && r.leaderboard) G.board=r.leaderboard;
+      paperRoundDone();
+    }).catch(function(e){ hostError(e.message); if(btn){ btn.disabled=false; btn.textContent="Put scores on the leaderboard"; } });
+  }
+  function nextRoundQuestion(){ G.round=G.round+1; G.roundItems=[]; savePaperRound(); nextQuestion(); }
+  /* The run panel on a paper round. Returns true when it drew the panel. */
+  function renderPaperRun(body){
+    var q=G.current, qn=q ? (q.qi||q.qseq) : 0, total=G.qtotal||0, last=total && qn>=total;
+    if(G.status==="reveal" && q){
+      var w=el("div","qwrap");
+      w.innerHTML='<div class="qmeta"><span class="qn">Question '+qn+' of '+(total||"?")+' &middot; round '+G.round+' &middot; answer held back</span></div>'+
+        '<div class="qtext-h">'+esc(q.text)+'</div>'+
+        '<div class="since" style="margin:0 0 8px">Paper teams are playing, so this answer stays off the TV and the phones until the end of round '+G.round+'.</div>';
+      for(var i=0;i<q.options.length;i++){
+        var ok=(i===q.correctIndex), o=el("div","opt"+(ok?" correct":""));
+        o.innerHTML='<span class="ol">'+LETTERS[i]+'</span><span class="otx">'+esc(q.options[i])+'</span>'+(ok?'<span class="ck">&#10003; correct</span>':'');
+        w.appendChild(o);
+      }
+      body.appendChild(w);
+      if(roundEnds(qn)){
+        var hb=el("button","btn pink big","End of round "+G.round+": ask for the paper sheets"); hb.addEventListener("click", paperHandIn); body.appendChild(hb);
+      } else {
+        var nb=el("button","btn pink big","Next question"); nb.addEventListener("click", nextQuestion); body.appendChild(nb);
+        var nu=nextUpPanel(); if(nu) body.appendChild(nu);
+      }
+      body.appendChild(endBtn("End round"));
+      return true;
+    }
+    if(G.status==="handin"){
+      var h=el("div","qwrap");
+      h.innerHTML='<div class="qmeta"><span class="qn">Round '+G.round+' &middot; collecting sheets</span></div>'+
+        '<div class="qtext-h">Collect the round '+G.round+' sheets from the paper teams.</div>'+
+        '<div class="since" style="margin:0">The TV is asking them for their sheets now. Once you have every one, show the answers.</div>';
+      body.appendChild(h);
+      var sb=el("button","btn win big","Sheets collected, show the answers"); sb.addEventListener("click", paperShowAnswers); body.appendChild(sb);
+      body.appendChild(endBtn("End round"));
+      return true;
+    }
+    if(G.status==="paperscore"){
+      var n=paperTeams(), items=G.roundItems||[], k=el("div","qwrap");
+      var keyHtml='<div class="qmeta"><span class="qn">Round '+G.round+' answers, on the TV now</span></div>';
+      for(var a=0;a<items.length;a++) keyHtml+='<div class="opt correct"><span class="ol">'+esc(items[a].letter)+'</span><span class="otx"><b>Q'+esc(items[a].qi)+'</b> '+esc(items[a].answer)+'</span></div>';
+      keyHtml+='<div class="since" style="margin:10px 0 6px">Mark the sheets, then type how many each paper team got right out of '+items.length+'. Leave a box empty if that team did not hand in a sheet.</div>';
+      k.innerHTML=keyHtml;
+      for(var t=1;t<=n;t++){
+        var row=el("div","two");
+        row.style.marginBottom="8px";
+        row.innerHTML='<input type="text" id="ppName'+t+'" placeholder="Team '+t+' name" value="'+esc((G.paperNames||{})[t]||"")+'">'+
+          '<input type="number" id="ppCorrect'+t+'" class="mono" min="0" max="'+items.length+'" inputmode="numeric" placeholder="Right, out of '+items.length+'">';
+        k.appendChild(row);
+      }
+      body.appendChild(k);
+      var pb=el("button","btn pink big","Put scores on the leaderboard"); pb.addEventListener("click", function(){ paperSaveScores(pb); }); body.appendChild(pb);
+      var skip=el("button","btn ghost","No paper sheets this round"); skip.style.width="100%"; skip.style.marginTop="8px";
+      skip.addEventListener("click", paperRoundDone); body.appendChild(skip);
+      return true;
+    }
+    if(G.status==="roundboard"){
+      var d=el("div","qwrap");
+      d.innerHTML='<div class="qmeta"><span class="qn">Round '+G.round+' done</span></div>'+
+        '<div class="qtext-h">The leaderboard is on the TV.</div>';
+      body.appendChild(d);
+      if(last){ var fb=el("button","btn pink big","Reveal the winners"); fb.addEventListener("click", finish); body.appendChild(fb); }
+      else { var rb=el("button","btn pink big","Start round "+(G.round+1)); rb.addEventListener("click", nextRoundQuestion); body.appendChild(rb); }
+      body.appendChild(endBtn("End round"));
+      return true;
+    }
+    return false;
+  }
   $("setSel").addEventListener("change", syncSetCount);
   var cfgBaseEl=$("cfgBase"); if(cfgBaseEl){ cfgBaseEl.addEventListener("input", function(){ var b=Math.max(0,parseInt(cfgBaseEl.value,10)||0); if($("scBase")) $("scBase").textContent=b; if($("scMax")) $("scMax").textContent=Math.round(b*1.5); }); }
 

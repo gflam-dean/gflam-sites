@@ -700,6 +700,22 @@
       if(!P.joined) return;
       showResult(m);
     }
+    /* A PAPER NIGHT (Dean, 25 Sep 2026). The answers are held to the end of each round so a team
+       on paper cannot change a box after seeing them, and that goes for this screen too: a phone
+       showing "Correct!" is a phone the next table can read. The score comes with the round. */
+    else if(m.t==="closed" || m.t==="handin" || m.t==="roundanswers"){
+      if(m.to && m.to !== P.pid) return;   // a catch-up for one phone
+      if(!P.joined) return;
+      stopCd(); P.q=null;
+      var rn=m.round||1;
+      if(m.t==="closed") showWait("Answer locked in. The answers go up on the big screen at the end of round "+rn+".");
+      else if(m.t==="handin") showWait("Paper teams are handing in their round "+rn+" sheets. The answers are next, on the big screen.");
+      else {
+        showWait("Round "+rn+" answers are on the big screen.");
+        // Spread over a few seconds: every phone hears this in the same instant (see showResult).
+        setTimeout(function(){ pullScore("Round "+rn+" answers are on the big screen."); }, Math.random()*4000);
+      }
+    }
     else if(m.t==="leaderboard"){
       if(m.to && m.to !== P.pid) return;   // a catch-up for one phone
       /* Leave the result screen up. This used to swap to "Next question coming up" 5 seconds after

@@ -132,3 +132,8 @@ function is at the bottom of the file, commented, to paste back.
 holds a card or a question. Billing and the overage count treat a row with it as a player who showed life
 (Dean's rule, 22 Sep 2026); a session where no row carries it is counted the old way. The Worker tolerates the
 column being absent, so the order does not matter here; run it when convenient. Rollback at the bottom.
+
+`venueplay-88-paper-players.sql`: adds `vp_sessions.paper` (jsonb), where the game Worker keeps a night's printed
+musical bingo cards and how many trivia team sheets were printed (Dean, 25 Sep 2026). RUN ON SYDNEY 25 Sep 2026,
+verified by information_schema and by a PostgREST select of the column. Run BEFORE deploying the game Worker that
+writes it: /host/paper/print patches this column. Rollback: `alter table public.vp_sessions drop column paper;`

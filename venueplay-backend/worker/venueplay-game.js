@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '23 Sep 2026, 09:57 · e3c95e19';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '25 Sep 2026, 10:10 · 33d10140';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -153,6 +153,15 @@ const CLAIM_MAX_PER_PLAYER = 20;  // claims per 60s per player. Stops a joined a
 const ANSWER_MAX_PER_PLAYER = 30; // trivia answers per 60s per player. One answer per question is normal; this only blocks a flood.
 /* Bingo tickets must be on paper in these jurisdictions. See handleJoinInfo. */
 const PAPER_BINGO_STATES = new Set(['SA', 'ACT', 'TAS']);
+/* PAPER PLAYERS (migration 88). Dean, 25 Sep 2026: printed musical bingo cards and trivia answer
+   sheets for the regulars who will not use a phone. Ten a night; during the free month a venue may
+   print a TRIVIA sheet for every player on its plan ("Theres always going to be one pain in the ass").
+   A paper card or team becomes an ordinary vp_players row, device_id 'paper-m-<n>' / 'paper-t-<n>',
+   the first time it touches the console, so the existing billing counts it once, like a phone.
+   Paper musical cards are stored on the card numbers PAPER_CARD_BASE+n so a phone never takes one. */
+const PAPER_MAX = 10;
+const PAPER_CARD_BASE = 900;
+function isPaperDevice(d) { return /^paper-/i.test(String(d || '')); }
 const JOIN_DEDUP_TTL = 120;       // seconds a device's player_id is remembered, so a rapid re-join reuses its row.
 
 export default {
@@ -272,6 +281,9 @@ export default {
       if (method === 'GET'  && path === '/player/score')       return await handlePlayerScore(request, env, json);
       if (method === 'POST' && path === '/player/alive')       return await handlePlayerAlive(request, env, json);
       if (method === 'POST' && path === '/host/claim/resolve') return await handleClaimResolve(request, env, json);
+      if (method === 'POST' && path === '/host/paper/print')   return await handlePaperPrint(request, env, json);
+      if (method === 'POST' && path === '/host/paper/check')   return await handlePaperCheck(request, env, json);
+      if (method === 'POST' && path === '/host/paper/score')   return await handlePaperScore(request, env, json);
       if (method === 'GET'  && path === '/snapshot')           return await handleSnapshot(request, env, json);
       return json({ error: 'not found' }, 404);
     } catch (e) {
@@ -2506,7 +2518,9 @@ async function handleJoin(request, env, json) {
      never collide, whatever network they share. No pid (an older page) means no dedup, which is
      the safe direction: a spare row costs a metered player, a collision costs somebody's game. */
   const devId = String(b.pid || '').trim();
-  const devIdValid = /^[A-Za-z0-9_-]{6,64}$/.test(devId);
+  /* A pid starting 'paper-' is refused: that prefix belongs to printed cards (PAPER_MAX), and a
+     phone sending it would be handed the paper player's row, its card and its claims. */
+  const devIdValid = /^[A-Za-z0-9_-]{6,64}$/.test(devId) && !isPaperDevice(devId);
   const dedupKey = (env.RL && devIdValid)
     ? 'joindedup:' + session.id + ':' + devId
     : null;
@@ -2602,9 +2616,42 @@ async function handleJoin(request, env, json) {
 // /snapshot and the ball draw point at the newest round. Run AFTER the new game row exists,
 // so a start that fails validation never touches the game already in progress.
 async function finishOtherRunningGames(env, sessionId, keepGameId) {
+  const trivia = await sbGet(env, 'vp_games', 'session_id=eq.' + enc(sessionId) + '&status=eq.running&format=eq.trivia&id=neq.' +
+    enc(keepGameId) + '&select=id,config&limit=20');
   await sbPatch(env, 'vp_games',
     'session_id=eq.' + enc(sessionId) + '&status=eq.running&id=neq.' + enc(keepGameId),
     { status: 'finished', ended_at: new Date().toISOString() });
+  for (let i = 0; i < trivia.length; i++) await noteTriviaNight(env, sessionId, trivia[i]);
+}
+
+/* A TRIVIA GAME THAT ASKED A LOT AND HEARD FROM ALMOST NO PHONES is a night played on paper that
+   nobody is paying for: the questions on our screen, the answers on a notepad. Dean, 25 Sep 2026:
+   "Yes, we should have an alert for that." Written down for HQ when the game ends; it decides
+   nothing and blocks nothing. Paper teams scored on the leaderboard are players, so they do not
+   count as phones here but they are billed. Never throws: a note must not fail the end of a game. */
+const PAPER_SUSPECT_MIN_QUESTIONS = 15;
+const PAPER_SUSPECT_MAX_PHONES = 2;
+async function noteTriviaNight(env, sessionId, game) {
+  try {
+    const cfg = game.config || {};
+    const seqs = Array.isArray(cfg.question_seqs) ? cfg.question_seqs : [];
+    const tg = await sbGet(env, 'vp_trivia_games', 'game_id=eq.' + enc(game.id) + '&select=current_seq&limit=1');
+    const asked = tg.length ? Math.max(0, seqs.indexOf(tg[0].current_seq) + 1) : 0;
+    if (asked < PAPER_SUSPECT_MIN_QUESTIONS) return;
+    const ans = await sbGetAll(env, 'vp_trivia_answers', 'game_id=eq.' + enc(game.id) + '&select=player_id&order=id.asc');
+    const ids = [...new Set(ans.map((a) => a.player_id))];
+    let phones = 0;
+    if (ids.length) {
+      const pl = await sbGet(env, 'vp_players', 'id=in.(' + ids.map(enc).join(',') + ')&select=id,device_id&limit=' + ids.length);
+      phones = pl.filter((p) => !isPaperDevice(p.device_id)).length;
+    }
+    if (phones > PAPER_SUSPECT_MAX_PHONES) return;
+    const sess = await getSession(env, sessionId);
+    await sbInsert(env, 'vp_admin_audit', {
+      action: 'paper_suspect_trivia', target: 'venue:' + sess.venue_id,
+      detail: { session_id: sessionId, game_id: game.id, questions: asked, phones, paper_teams: Number(cfg.paper_teams) || 0 },
+    }, false);
+  } catch (e) { /* a note, never a failure */ }
 }
 async function handleHostGame(request, env, json) {
   const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
@@ -2659,6 +2706,19 @@ async function handleHostGame(request, env, json) {
     const limitMsg = await checkWeeklyFormatLimit(env, session, isTrivia);
     if (limitMsg) return json({ error: limitMsg }, 429);
   }
+
+  /* PAPER CARDS DECLARED AT START GAME (musical). The console asks "how many printed cards are
+     being played?" pre-filled with the number printed; that many paper players are written HERE,
+     before the overage count below, so the host is asked about them exactly like phones and the
+     night bills them once. Idempotent: an overage ack retries this whole request. */
+  let paperDeclared = null;
+  if (isMusical && session.paper && session.paper.musical && Array.isArray(session.paper.musical.cards)) {
+    const printed = session.paper.musical.cards.length;
+    const declared = Math.max(0, Math.min(printed, parseInt(b.paper_count, 10) || 0));
+    for (let no = 1; no <= declared; no++) await ensurePaperPlayer(env, session, 'm', no);
+    paperDeclared = { printed, declared };
+  }
+  b._paperDeclared = paperDeclared;
 
   // Overage approval gate: if the room is already over the venue's plan cap and the host has
   // not approved the overage yet, the game will NOT start. The host UI catches this response,
@@ -2754,8 +2814,10 @@ async function handleHostGame(request, env, json) {
     auto_daub: false,
   }, false);
 
-  // Deal one ticket to every current non-kicked player.
-  const players = await sbGet(env, 'vp_players', 'session_id=eq.' + enc(sessionId) + '&kicked=eq.false&select=id');
+  // Deal one ticket to every current non-kicked PHONE. A paper musical card or trivia team from
+  // earlier in the same night is not a bingo player: VenuePlay prints no bingo tickets.
+  const players = (await sbGet(env, 'vp_players', 'session_id=eq.' + enc(sessionId) + '&kicked=eq.false&select=id,device_id'))
+    .filter((p) => !isPaperDevice(p.device_id));
   const cards = players.map((p, i) => ({
     game_id: game.id,
     player_id: p.id,
@@ -2877,6 +2939,17 @@ async function hostStartTrivia(env, json, b, session, staff, seq) {
   if (typeof b.colour === 'boolean') config.colour = b.colour;
   const speedBonus = b.speed_bonus !== false;   // default on
   config.speed_bonus = speedBonus;
+  /* PAPER TEAMS. Sheets printed tonight make this a paper night: the answers are held back to the
+     end of each round of round_size questions, so a team on paper cannot change a box after
+     seeing it on the screen (Dean, 25 Sep). Decided by the Worker from what was printed, not by
+     the console, so a reload cannot drop it. */
+  const paperTrivia = session.paper && session.paper.trivia && Number(session.paper.trivia.teams) > 0 ? session.paper.trivia : null;
+  if (paperTrivia) {
+    const rs = parseInt(b.round_size, 10);
+    config.paper_teams = Number(paperTrivia.teams);
+    config.round_size = (rs >= 3 && rs <= 50) ? rs : 10;
+    config.defer_reveal = true;
+  }
 
   // Remember this venue's trivia settings (migration 50), so the next night pre-fills to what they
   // last used instead of resetting to the built-in defaults. Only writes the fields the host actually
@@ -2958,7 +3031,14 @@ async function hostStartMusical(env, json, b, session, staff, seq) {
   // from and the host plays against. Either an existing id or an inline materialise.
   let playlistId = null;
   let playlistName = b.playlist_name ? String(b.playlist_name).slice(0, 120) : null;
-  if (b.playlist_id) {
+  /* A night with printed cards plays the PRINTED card's songs. A card on a table cannot change, so
+     every musical game this session is dealt from, and played against, the set they were printed
+     from. Without this, "New game" draws a fresh 60 and half the printed squares can never come up. */
+  const paperSet = (session.paper && session.paper.musical && session.paper.musical.playlist_id) ? session.paper.musical : null;
+  if (paperSet) {
+    playlistId = paperSet.playlist_id;
+    playlistName = paperSet.playlist_name || playlistName || 'Playlist';
+  } else if (b.playlist_id) {
     playlistId = String(b.playlist_id).trim();
     assertUuid(playlistId, 'playlist_id');
     const pls = await sbGet(env, 'vp_playlists', 'id=eq.' + enc(playlistId) + '&select=id,owner_venue_id,title');
@@ -2973,12 +3053,7 @@ async function hostStartMusical(env, json, b, session, staff, seq) {
     // never sent here or stored (licensing: VenuePlay hosts no audio).
     const raw = Array.isArray(b.songs) ? b.songs : (b.playlist && Array.isArray(b.playlist.songs) ? b.playlist.songs : null);
     if (!raw) return json({ error: 'Provide a playlist_id or an inline songs list' }, 400);
-    const clean = [];
-    for (let i = 0; i < Math.min(raw.length, 500); i++) {   // cap materialised songs at 500
-      const t = raw[i] && raw[i].title != null ? String(raw[i].title).trim().slice(0, 200) : '';
-      const a = raw[i] && raw[i].artist != null ? String(raw[i].artist).trim().slice(0, 200) : '';
-      if (t && a) clean.push({ title: t, artist: a, hint: raw[i].hint ? String(raw[i].hint).slice(0, 200) : null });
-    }
+    const clean = cleanInlineSongs(raw);
     if (!playlistName) playlistName = (b.playlist && b.playlist.name) ? String(b.playlist.name).slice(0, 120) : 'Playlist';
     if (!clean.length) return json({ error: 'The playlist has no valid songs' }, 400);
     playlistId = await ensureMusicPlaylist(env, session.venue_id, playlistName, clean);
@@ -3012,12 +3087,30 @@ async function hostStartMusical(env, json, b, session, staff, seq) {
     await sbPatch(env, 'vp_sessions', 'id=eq.' + enc(session.id), { status: 'running', started_at: new Date().toISOString() });
   }
 
-  // Deal one 5x5 card of song titles to every current non-kicked player.
-  const players = await sbGet(env, 'vp_players', 'session_id=eq.' + enc(session.id) + '&kicked=eq.false&select=id');
-  const cards = players.map((p, i) => ({
+  // Deal one 5x5 card of song titles to every current non-kicked PHONE. A paper player's card is
+  // the one printed for it, on card number PAPER_CARD_BASE + its printed number.
+  const players = await sbGet(env, 'vp_players', 'session_id=eq.' + enc(session.id) + '&kicked=eq.false&select=id,device_id');
+  const phones = players.filter((p) => !isPaperDevice(p.device_id));
+  const cards = phones.map((p, i) => ({
     game_id: game.id, player_id: p.id, card_no: i + 1, cells: generateMusicCard(songs),
   }));
+  if (paperSet && Array.isArray(paperSet.cards)) {
+    for (let i = 0; i < players.length; i++) {
+      const m = /^paper-m-(\d+)$/.exec(String(players[i].device_id || ''));
+      const pc = m ? paperSet.cards.find((c) => c.no === Number(m[1])) : null;
+      if (pc) cards.push({ game_id: game.id, player_id: players[i].id, card_no: PAPER_CARD_BASE + pc.no, cells: pc.cells });
+    }
+  }
   if (cards.length) await sbInsert(env, 'vp_cards', cards, false);
+  /* What the host said at Start game, against what they printed. HQ reads these rows: a venue that
+     prints ten and always declares none is playing paper nobody is paying for (Dean, 25 Sep). */
+  if (b._paperDeclared && b._paperDeclared.printed > 0) {
+    await sbInsert(env, 'vp_admin_audit', {
+      action: 'paper_declared', target: 'venue:' + session.venue_id,
+      detail: { session_id: session.id, game_id: game.id, format: 'musical_bingo',
+                printed: b._paperDeclared.printed, declared: b._paperDeclared.declared },
+    }, false).catch(() => {});
+  }
 
   await emitEvent(env, session, 'game.started', {
     game_id: game.id, seq, format: 'musical_bingo', pattern,
@@ -6039,7 +6132,9 @@ async function handlePlayerCard(request, env, json) {
       'game_id=eq.' + enc(gameId) + '&player_id=eq.' + enc(player.id) + '&select=id,card_no,cells');
     if (mine.length) { card = mine[0]; break; }
 
-    const top = await sbGet(env, 'vp_cards', 'game_id=eq.' + enc(gameId) + '&select=card_no&order=card_no.desc&limit=1');
+    // Phones only: printed musical cards sit at PAPER_CARD_BASE and up, and "top + 1" would
+    // hand a late phone card 911.
+    const top = await sbGet(env, 'vp_cards', 'game_id=eq.' + enc(gameId) + '&card_no=lt.' + PAPER_CARD_BASE + '&select=card_no&order=card_no.desc&limit=1');
     const nextNo = top.length ? top[0].card_no + 1 : 1;
     const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_cards', {
       method: 'POST',
@@ -6085,7 +6180,9 @@ async function playerMusicCard(env, json, gameId, player) {
       'game_id=eq.' + enc(gameId) + '&player_id=eq.' + enc(player.id) + '&select=id,card_no,cells&order=card_no.asc&limit=1');
     if (mine.length) { card = mine[0]; break; }
 
-    const top = await sbGet(env, 'vp_cards', 'game_id=eq.' + enc(gameId) + '&select=card_no&order=card_no.desc&limit=1');
+    // Phones only: printed musical cards sit at PAPER_CARD_BASE and up, and "top + 1" would
+    // hand a late phone card 911.
+    const top = await sbGet(env, 'vp_cards', 'game_id=eq.' + enc(gameId) + '&card_no=lt.' + PAPER_CARD_BASE + '&select=card_no&order=card_no.desc&limit=1');
     const nextNo = top.length ? top[0].card_no + 1 : 1;
     const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_cards', {
       method: 'POST',
@@ -6123,13 +6220,14 @@ async function handleGameEnd(request, env, json) {
   if (!gameId) return json({ error: 'Missing game_id' }, 400);
   assertUuid(gameId, 'game_id');
 
-  const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,status');
+  const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,status,format,config');
   if (!games.length) return json({ error: 'Game not found' }, 404);
   const session = await getSession(env, games[0].session_id);
   const staff = await requireStaff(env, authUserId, session.venue_id);   // ENFORCED: staff at the game's venue (also kill-switch)
 
   if (games[0].status === 'running') {
     await sbPatch(env, 'vp_games', 'id=eq.' + enc(gameId), { status: 'finished', ended_at: new Date().toISOString() });
+    if (games[0].format === 'trivia') await noteTriviaNight(env, session.id, games[0]);
   }
   await emitEvent(env, session, 'game.ended', { game_id: gameId }, actorRef(staff));
   return json({ game_id: gameId, status: 'finished' });
@@ -7364,6 +7462,8 @@ async function getPublicSnapshot(env, sessionId) {
         title: cfg.title || null, prize: cfg.prize || null,
         question_count: cfg.question_count != null ? cfg.question_count : null,
         colour: cfg.colour !== false, phase: 'idle', question: null,
+        // A paper night (migration 88): so a reloaded console knows to hold the answers back. Not a secret.
+        paper: cfg.defer_reveal === true, round_size: cfg.defer_reveal === true ? (Number(cfg.round_size) || 10) : null,
       };
       const tg = await sbGet(env, 'vp_trivia_games',
         'game_id=eq.' + enc(g.id) + '&select=question_set_id,current_seq,phase,question_ends_at');
@@ -7389,7 +7489,9 @@ async function getPublicSnapshot(env, sessionId) {
               text: q.question, options: Array.isArray(q.options) ? q.options : [],
               ends_at: t.question_ends_at || null,
             };
-            if (t.phase === 'revealed') pub.correct_index = q.correct_index;   // only after reveal
+            // Only after reveal, and never on a paper night: there the answers go up at the end of
+            // the round, after the sheets are in, and a reload must not show one early.
+            if (t.phase === 'revealed' && !(g.config || {}).defer_reveal) pub.correct_index = q.correct_index;
             game.question = pub;
           }
         }
@@ -7637,6 +7739,234 @@ function checkPattern(pattern, cells, drawnSet) {
 /* ---- MUSICAL BINGO card + pattern (5x5, FREE centre) ---- */
 
 // Deal a 5x5 musical bingo card: 24 distinct songs plus a FREE centre (index 12 = 0).
+/* ------------------------------ PAPER PLAYERS ------------------------------
+ * Printed musical bingo cards and trivia answer sheets, for the regulars who will not use a phone.
+ * Dean, 25 Sep 2026. Storage is vp_sessions.paper (migration 88); limits are PAPER_MAX.
+ *
+ *   POST /host/paper/print  {session_id, kind:'musical'|'trivia', count, playlist?}
+ *        musical: deals `count` cards from the set (materialised once for the night) and keeps
+ *        them; printing again returns the same cards plus any extra. trivia: records how many
+ *        team sheets, which makes the next round a paper round (answers held to the round's end).
+ *   POST /host/paper/check  {game_id, card_no}       a printed musical card, checked by its number
+ *   POST /host/paper/score  {game_id, round, teams:[{no,name,correct}]}   a round's paper scores
+ *
+ * A paper card or team is NOT a player until one of these touches it (or it is declared at Start
+ * game). Then it is an ordinary vp_players row and every existing count bills it once.
+ */
+
+// The paper card or team as an ordinary player row, found again by device_id, so it is one
+// player however many times it is checked or scored.
+async function ensurePaperPlayer(env, session, kind, no, name) {
+  const dev = 'paper-' + kind + '-' + no;
+  const label = name ? String(name).trim().slice(0, 40) : '';
+  const rows = await sbGet(env, 'vp_players', 'session_id=eq.' + enc(session.id) + '&device_id=eq.' + enc(dev) +
+    '&select=id,display_name&order=joined_at.asc&limit=1');
+  if (rows.length) {
+    if (label && label !== rows[0].display_name) {
+      await sbPatch(env, 'vp_players', 'id=eq.' + enc(rows[0].id), { display_name: label });
+      rows[0].display_name = label;
+    }
+    return rows[0];
+  }
+  const now = new Date().toISOString();
+  const ins = await sbInsert(env, 'vp_players', {
+    session_id: session.id,
+    token_hash: await sha256Hex(randomTokenHex(32)),   // never issued: a paper player has no phone
+    display_name: label || (kind === 'm' ? 'Paper card ' + no : 'Paper team ' + no),
+    joined_at: now, last_seen_at: now, played_at: now, device_id: dev, kicked: false,
+  }, true);
+  return Array.isArray(ins) ? ins[0] : ins;
+}
+
+// How many a venue may print tonight: ten. During the free month, a TRIVIA sheet for every player
+// on the plan so a room can move across from paper. Musical stays at ten, always (Dean: "lets not
+// say unlimited cause everyones just going to print off 100 musicals and do it themselves").
+async function paperCap(env, session, kind) {
+  if (kind !== 'trivia') return PAPER_MAX;
+  const plan = Number(session.plan_cap_at_start || 0);
+  if (plan <= PAPER_MAX) return PAPER_MAX;
+  return (await venueInFreeMonth(env, session.venue_id)) ? plan : PAPER_MAX;
+}
+
+async function handlePaperPrint(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const session = await getSession(env, String(b.session_id || '').trim());
+  if (session.status === 'finished' || session.status === 'cancelled') return json({ error: 'This session is closed' }, 409);
+  await requireStaff(env, authUserId, session.venue_id, 'host');
+  const kind = b.kind === 'trivia' ? 'trivia' : (b.kind === 'musical' ? 'musical' : '');
+  if (!kind) return json({ error: 'Print musical bingo cards or trivia sheets' }, 400);
+  const cap = await paperCap(env, session, kind);
+  const want = parseInt(b.count, 10);
+  if (!(want >= 1)) return json({ error: 'How many do you want to print?', cap }, 400);
+  if (want > cap) return json({ error: 'You can print up to ' + cap + ' tonight.', cap }, 400);
+
+  const paper = Object.assign({}, session.paper || {});
+  const now = new Date().toISOString();
+  if (kind === 'trivia') {
+    const teams = Math.max(want, Number((paper.trivia || {}).teams) || 0);   // a sheet already on a table stays valid
+    paper.trivia = { teams, printed_at: now };
+    await sbPatch(env, 'vp_sessions', 'id=eq.' + enc(session.id), { paper });
+    await sbInsert(env, 'vp_admin_audit', { action: 'paper_printed', target: 'venue:' + session.venue_id,
+      detail: { session_id: session.id, kind, count: teams } }, false).catch(() => {});
+    return json({ kind, cap, teams });
+  }
+
+  let set = (paper.musical && paper.musical.playlist_id) ? paper.musical : null;
+  if (!set) {
+    const raw = (b.playlist && Array.isArray(b.playlist.songs)) ? b.playlist.songs : null;
+    if (!raw) return json({ error: 'Pick a playlist first' }, 400);
+    const clean = cleanInlineSongs(raw);
+    if (clean.length < 24) return json({ error: 'A musical bingo playlist needs at least 24 songs' }, 409);
+    const name = (b.playlist && b.playlist.name) ? String(b.playlist.name).slice(0, 120) : 'Playlist';
+    /* Stored under a title of its own. ensureMusicPlaylist reuses any playlist with the same title and
+       song count, and a reused one could be a DIFFERENT sixty songs from the set the host just drew. */
+    const pid = await ensureMusicPlaylist(env, session.venue_id, name + ' (paper ' + session.id.slice(0, 8) + ')', clean);
+    set = { playlist_id: pid, playlist_name: name, cards: [] };
+  }
+  const songs = await sbGet(env, 'vp_playlist_songs',
+    'playlist_id=eq.' + enc(set.playlist_id) + '&select=id,title,artist&order=seq.asc.nullslast,title.asc');
+  if (songs.length < 24) return json({ error: 'A musical bingo playlist needs at least 24 songs' }, 409);
+  const cards = Array.isArray(set.cards) ? set.cards.slice() : [];
+  for (let no = cards.length + 1; no <= want; no++) cards.push({ no, cells: generateMusicCard(songs) });
+  paper.musical = { playlist_id: set.playlist_id, playlist_name: set.playlist_name, cards, printed_at: now };
+  await sbPatch(env, 'vp_sessions', 'id=eq.' + enc(session.id), { paper });
+  await sbInsert(env, 'vp_admin_audit', { action: 'paper_printed', target: 'venue:' + session.venue_id,
+    detail: { session_id: session.id, kind, count: cards.length } }, false).catch(() => {});
+  return json({
+    kind, cap, playlist_name: set.playlist_name,
+    cards: cards.map((c) => ({ no: c.no, titles: c.cells.map((x) => (x && x.title) || '') })),
+  });
+}
+
+async function handlePaperCheck(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const gameId = String(b.game_id || '').trim();
+  assertUuid(gameId, 'game_id');
+  const no = parseInt(b.card_no, 10);
+  const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,format,status');
+  if (!games.length) return json({ error: 'Game not found' }, 404);
+  const game = games[0];
+  const session = await getSession(env, game.session_id);
+  const staff = await requireStaff(env, authUserId, session.venue_id, 'host');
+  if (game.format !== 'musical_bingo') return json({ error: 'Paper cards are for musical bingo' }, 400);
+  if (game.status !== 'running') return json({ error: 'That game has finished' }, 409);
+  const set = session.paper && session.paper.musical;
+  const pc = (set && Array.isArray(set.cards)) ? set.cards.find((c) => c.no === no) : null;
+  if (!pc) return json({ error: 'There is no paper card ' + (Number.isFinite(no) ? no + ' ' : '') + 'tonight' }, 404);
+
+  // Checked = played. This is the moment a paper card becomes a player (Dean: "If they check a
+  // musical bingo code thats when an extra player is charged"), once, whatever the verdict.
+  const player = await ensurePaperPlayer(env, session, 'm', no);
+  const cardNo = PAPER_CARD_BASE + no;
+  const have = await sbGet(env, 'vp_cards', 'game_id=eq.' + enc(gameId) + '&card_no=eq.' + cardNo + '&select=id,cells&limit=1');
+  let card = have[0];
+  if (!card) {
+    const ins = await sbInsert(env, 'vp_cards', { game_id: gameId, player_id: player.id, card_no: cardNo, cells: pc.cells }, true);
+    card = Array.isArray(ins) ? ins[0] : ins;
+  }
+  const mg = await sbGet(env, 'vp_music_games', 'game_id=eq.' + enc(gameId) + '&select=pattern');
+  if (!mg.length) return json({ error: 'Not a musical game' }, 404);
+  const plays = await sbGet(env, 'vp_music_plays', 'game_id=eq.' + enc(gameId) + '&played_at=not.is.null&select=song_id');
+  const result = checkMusicPattern(mg[0].pattern, pc.cells, new Set(plays.map((p) => p.song_id)));
+  const out = { card_no: no, cells: pc.cells, display_name: player.display_name, paper: true };
+  if (!result.valid) return json(Object.assign(out, { auto_verdict: 'invalid' }));   // nothing to confirm, no claim row
+
+  const pend = await sbGet(env, 'vp_claims', 'game_id=eq.' + enc(gameId) + '&card_id=eq.' + enc(card.id) +
+    '&status=eq.pending&select=id&limit=1');
+  let claimId = pend.length ? pend[0].id : null;
+  if (!claimId) {
+    const rows = await sbInsert(env, 'vp_claims', {
+      game_id: gameId, player_id: player.id, card_id: card.id, claimed_at: new Date().toISOString(),
+      auto_verdict: 'valid', winning_cells: result.cells, status: 'pending',
+    }, true);
+    claimId = (Array.isArray(rows) ? rows[0] : rows).id;
+    await emitEvent(env, session, 'music.claim_submitted', {
+      claim_id: claimId, display_name: player.display_name, card_no: cardNo, paper: true,
+      cells: pc.cells, winning_cells: result.cells,
+    }, actorRef(staff));
+  }
+  return json(Object.assign(out, { auto_verdict: 'valid', claim_id: claimId, winning_cells: result.cells }));
+}
+
+async function handlePaperScore(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const gameId = String(b.game_id || '').trim();
+  assertUuid(gameId, 'game_id');
+  const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,format,status,config');
+  if (!games.length) return json({ error: 'Game not found' }, 404);
+  const game = games[0];
+  const session = await getSession(env, game.session_id);
+  await requireStaff(env, authUserId, session.venue_id, 'host');
+  const cfg = game.config || {};
+  if (game.format !== 'trivia' || !cfg.defer_reveal) return json({ error: 'No paper sheets were printed for this round' }, 400);
+
+  const R = Number(cfg.round_size) || 10;
+  const ids = Array.isArray(cfg.question_ids) ? cfg.question_ids : [];
+  const seqs = Array.isArray(cfg.question_seqs) ? cfg.question_seqs : [];
+  const round = parseInt(b.round, 10);
+  const rounds = Math.ceil(ids.length / R);
+  if (!(round >= 1 && round <= rounds)) return json({ error: 'That round does not exist' }, 400);
+  const roundIds = ids.slice((round - 1) * R, round * R);
+  const roundEnd = Math.min(round * R, ids.length);
+  /* The sheets come in only when the round's last question is closed. Scoring earlier would let a
+     paper total reach the leaderboard (and every phone) while a question is still open. */
+  if (game.status === 'running') {
+    const tg = await sbGet(env, 'vp_trivia_games', 'game_id=eq.' + enc(gameId) + '&select=current_seq,phase&limit=1');
+    const pos = tg.length ? seqs.indexOf(tg[0].current_seq) + 1 : 0;
+    if (pos < roundEnd || (pos === roundEnd && tg[0].phase !== 'revealed')) {
+      return json({ error: 'Close the last question of round ' + round + ' first' }, 409);
+    }
+  }
+  const qs = await sbGet(env, 'vp_questions', 'id=in.(' + roundIds.map(enc).join(',') + ')&select=id,correct_index&limit=' + roundIds.length);
+  const ci = {};
+  for (let i = 0; i < qs.length; i++) ci[qs[i].id] = Number(qs[i].correct_index);
+  const base = (cfg.base_points != null) ? Number(cfg.base_points) : 100;   // no speed bonus: a pen cannot be timed
+  const maxTeam = Math.max(Number(cfg.paper_teams) || 0, Number(((session.paper || {}).trivia || {}).teams) || 0);
+  const teams = Array.isArray(b.teams) ? b.teams : [];
+  let scored = 0;
+  for (let k = 0; k < teams.length && k < 200; k++) {
+    const t = teams[k] || {};
+    const no = parseInt(t.no, 10);
+    if (!(no >= 1 && no <= maxTeam)) continue;
+    if (t.correct === '' || t.correct == null) continue;           // left blank = not handed in
+    const correct = Math.max(0, Math.min(roundIds.length, parseInt(t.correct, 10) || 0));
+    const player = await ensurePaperPlayer(env, session, 't', no, t.name);   // scored = played, billed once
+    // A corrected score replaces the round, it does not add to it.
+    await sbDelete(env, 'vp_trivia_answers', 'game_id=eq.' + enc(gameId) + '&player_id=eq.' + enc(player.id) +
+      '&question_id=in.(' + roundIds.map(enc).join(',') + ')');
+    const rows = [];
+    const now = new Date().toISOString();
+    for (let i = 0; i < roundIds.length; i++) {
+      const right = i < correct;
+      // Wrong answers are not stored, except one zero row so a team on 0 still shows on the board.
+      if (!right && !(correct === 0 && i === 0)) continue;
+      const idx = Number.isFinite(ci[roundIds[i]]) ? ci[roundIds[i]] : 0;
+      rows.push({ game_id: gameId, question_id: roundIds[i], player_id: player.id,
+        answer_index: right ? idx : (idx + 1) % 4, answered_at: now, is_correct: right, points_awarded: right ? base : 0 });
+    }
+    if (rows.length) await sbInsert(env, 'vp_trivia_answers', rows, false);
+    scored++;
+  }
+  const board = await sbGet(env, 'v_vp_trivia_leaderboard',
+    'game_id=eq.' + enc(gameId) + '&select=player_id,display_name,points&order=points.desc&limit=50');
+  return json({ round, scored, leaderboard: board.map((r) => ({ name: r.display_name || 'Player', points: r.points || 0 })) });
+}
+
+// An inline playlist from a console, cleaned the one way: title and artist required, 200 chars
+// each, 500 songs at most. Used by a game start and by printing paper cards, which must agree.
+function cleanInlineSongs(raw) {
+  const clean = [];
+  for (let i = 0; i < Math.min(raw.length, 500); i++) {   // cap materialised songs at 500
+    const t = raw[i] && raw[i].title != null ? String(raw[i].title).trim().slice(0, 200) : '';
+    const a = raw[i] && raw[i].artist != null ? String(raw[i].artist).trim().slice(0, 200) : '';
+    if (t && a) clean.push({ title: t, artist: a, hint: raw[i].hint ? String(raw[i].hint).slice(0, 200) : null });
+  }
+  return clean;
+}
+
 // Each non-free cell is { song_id, title }; song_id (a vp_playlist_songs uuid) is what the
 // claim check matches against played songs, title is what the phone renders. songs is the
 // playlist's rows [{id,title,artist}]. CSPRNG pick, order does not matter on the card.

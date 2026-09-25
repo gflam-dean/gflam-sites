@@ -124,6 +124,14 @@
   /* reveal / board */
   .revhead{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.16em;font-size:clamp(12px,2.6cqw,30px);color:var(--win);margin-bottom:2cqw;max-width:92cqw;line-height:1.1}
   .revboard{width:100%;max-width:70cqw;margin-top:2.6cqw;display:flex;flex-direction:column;gap:.8cqw}
+  /* PAPER NIGHT (Dean, 25 Sep 2026): answers held to the end of the round, then listed. */
+  .papersub{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(14px,3.2cqw,34px);color:var(--muted,#bbb);max-width:80cqw;line-height:1.25}
+  .paperlist{width:100%;max-width:84cqw;display:flex;flex-direction:column;gap:.6cqw;margin-top:1cqw;text-align:left}
+  .prow{display:grid;grid-template-columns:6cqw 4.4cqw 1fr;gap:1.4cqw;align-items:center;padding:.55cqw 1.6cqw;border:0.18cqw solid var(--line);border-radius:1cqw;background:rgba(255,255,255,.03)}
+  .prow .pq{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(11px,1.9cqw,22px);color:var(--muted,#bbb)}
+  .prow .pl{font-family:'Anton',sans-serif;font-size:clamp(14px,2.6cqw,30px);color:var(--win);text-align:center}
+  .prow .pa{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(12px,2.1cqw,24px);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .prow .pa small{display:block;font-weight:500;font-size:.72em;color:var(--muted,#bbb);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .boardtitle{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(22px,6cqw,58px);color:#fff;line-height:1;margin-bottom:2.4cqw}
   .boardpage{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:clamp(10px,1.5cqw,15px);color:var(--muted);margin-top:1.6cqw}
   .podium.four .pcol{width:19cqw}
@@ -219,6 +227,13 @@
     <div class="revhead" id="tvRevHead">Correct answer</div>
     <div class="answers rev4" id="tvRevAnswers"></div>
     <div class="revboard" id="tvRevBoard"></div>
+  </div>
+
+  <!-- paper night: locked in / hand in your sheets / the round's answers -->
+  <div class="layer hidden" id="tvPaper">
+    <div class="boardtitle" id="tvPaperTitle">Answer locked in</div>
+    <div class="papersub" id="tvPaperSub"></div>
+    <div class="paperlist" id="tvPaperList"></div>
   </div>
 
   <!-- leaderboard -->
@@ -335,11 +350,34 @@
   var curQ=null, answeredPids={}, ringTimer=null, boardRollTimer=null;
 
   // ---- layers ----
-  var LAYERS=["tvLobby","tvQ","tvReveal","tvBoard","tvPodium"];
+  var LAYERS=["tvLobby","tvQ","tvReveal","tvPaper","tvBoard","tvPodium"];
   function show(which){
     if(which!=="tvBoard") stopBoardPaging();
     for(var i=0;i<LAYERS.length;i++){ $(LAYERS[i]).classList.toggle("hidden", LAYERS[i]!==which); }
     $("tvJoinCorner").classList.toggle("hidden", which==="tvLobby");
+  }
+  function renderPaper(m){
+    var title=$("tvPaperTitle"), sub=$("tvPaperSub"), list=$("tvPaperList");
+    list.innerHTML="";
+    if(m.t==="closed"){
+      title.textContent="Answer locked in";
+      sub.textContent="The answers go up at the end of round "+(m.round||1)+", once the paper teams have handed in their sheets.";
+    } else if(m.t==="handin"){
+      title.textContent="Paper teams";
+      sub.textContent="Hand your round "+(m.round||1)+" sheet to the host now. The answers are next.";
+    } else {
+      title.textContent="Round "+(m.round||1)+" answers";
+      sub.textContent="";
+      var items=Array.isArray(m.items)?m.items:[];
+      for(var i=0;i<items.length;i++){
+        var it=items[i]||{}, r=document.createElement("div");
+        r.className="prow";
+        r.innerHTML='<span class="pq">Q'+esc(it.qi)+'</span><span class="pl">'+esc(it.letter||"")+'</span>'+
+          '<span class="pa">'+esc(it.answer||"")+'<small>'+esc(it.text||"")+'</small></span>';
+        list.appendChild(r);
+      }
+    }
+    show("tvPaper");
   }
   function applyColour(container){ container.classList.toggle("neutral", !state.colour); }
 
@@ -686,7 +724,7 @@
     else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ tvSubscribed=false; tvStatus(false); }
   });
 
-  var HOST_TYPES={host_here:1,session:1,mode:1,started:1,state:1,question:1,lock:1,reveal:1,leaderboard:1,podium:1,idle:1,players:1};
+  var HOST_TYPES={host_here:1,session:1,mode:1,started:1,state:1,question:1,lock:1,reveal:1,leaderboard:1,podium:1,idle:1,players:1,closed:1,handin:1,roundanswers:1};
   // Unified TV: after a game ends (idle) and stays ended, drop back to /tv (the venue ads). Any
   // real game activity cancels it, so a quick next round or restart never bounces.
   var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, players:1 };
@@ -783,6 +821,13 @@
     else if(m.t==="reveal"){
       state.phase="reveal";
       renderReveal(m);
+    }
+    /* A PAPER NIGHT holds every answer to the end of its round, so a team on paper cannot change a
+       box after seeing it here. The console sends these three instead of "reveal". */
+    else if(m.t==="closed" || m.t==="handin" || m.t==="roundanswers"){
+      state.phase="paper";
+      stopRing();
+      renderPaper(m);
     }
     else if(m.t==="leaderboard"){
       /* finish() broadcasts podium and then leaderboard back to back, synchronously, so the medals

@@ -302,6 +302,11 @@
               <span>Auto play<small style="display:block;color:var(--faint);font-size:11.5px">The next song starts 8 seconds after the clip ends. It waits while a claim is on screen, and a song with no clip waits for you.</small></span>
             </label>
           </div>
+          <div class="field" id="paperField">
+            <label>Paper cards <small style="color:var(--faint);font-weight:400">for regulars without a phone</small></label>
+            <button type="button" class="btn ghost" id="paperPrintBtn" style="width:100%">Print paper cards</button>
+            <small class="fieldnote" id="paperNote">Up to 10 a night, printed from the playlist above. A paper card counts as a player once it is played or checked, the same as a phone.</small>
+          </div>
           <div class="stat">
             <div class="box"><div class="k">Players</div><div class="v" id="setupPlayers">0</div></div>
             <div class="box" style="display:none"><div class="k">Join code</div><div class="v g" id="setupCode">------</div></div>
@@ -368,6 +373,14 @@
           </div>
           <div class="prizeline2" id="prizeLine2">Playing for <b>the prize</b></div>
 
+          <div id="paperCheck" class="hidden" style="margin:0 0 14px;padding:12px 14px;border:1px solid var(--line);border-radius:11px">
+            <label for="paperNo" style="display:block;font-size:13px;margin-bottom:8px">Someone calling BINGO on a paper card? Type its card number.</label>
+            <div style="display:flex;gap:8px">
+              <input type="text" id="paperNo" inputmode="numeric" placeholder="Card number" style="flex:1;min-height:44px">
+              <button type="button" class="btn ghost" id="paperCheckBtn" style="flex:0 0 auto">Check card</button>
+            </div>
+            <div id="paperResult" class="note" style="margin-top:8px"></div>
+          </div>
           <div class="lbl" id="claimHead">Claims</div>
           <div id="claimQueue"></div>
 
@@ -414,6 +427,20 @@
   </div>
 </div>
 
+<!-- Paper cards: how many to print, and at Start game how many are being played (Dean, 25 Sep 2026) -->
+<div id="paperModal" class="hidden" style="position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);padding:20px">
+  <div style="max-width:440px;width:100%;background:var(--ink-2);border:1px solid var(--line);border-radius:16px;padding:24px">
+    <div id="paperTitle" style="font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;margin-bottom:10px">Paper cards</div>
+    <div id="paperBody" style="font-size:14.5px;color:var(--text);line-height:1.55;margin-bottom:12px"></div>
+    <input type="number" id="paperCount" min="0" max="10" inputmode="numeric" style="width:100%;min-height:48px;font-size:20px;text-align:center">
+    <div id="paperErr" style="color:var(--roll);font-size:13px;min-height:18px;margin-top:6px"></div>
+    <div style="display:flex;gap:10px;margin-top:10px">
+      <button type="button" id="paperGo" class="btn pink big" style="flex:1">Print</button>
+      <button type="button" id="paperCancel" class="btn ghost big" style="flex:0 0 auto">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <div id="carryModal" class="hidden" style="position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);padding:20px">
   <div style="max-width:440px;width:100%;background:var(--ink-2);border:1px solid var(--line);border-radius:16px;padding:24px">
     <div id="carryTitle" style="font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;margin-bottom:6px">Winner!</div>
@@ -432,6 +459,7 @@
 <script src="/app/vp-weekly.js"></script>
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-hold.js"></script>
+<script src="/app/vp-print.js"></script>
 <script>
 (function(){
   "use strict";
@@ -1160,6 +1188,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     });
   }
   function renderConsole(){
+    try{ renderPaper(); }catch(e){}
     var live=G.status==="running", lobby=G.status==="lobby";
     $("setupBlock").classList.toggle("hidden", live);
     $("liveBlock").classList.toggle("hidden", !live);
@@ -1376,10 +1405,12 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   function beginRound(btn, label){
     G.busy=true; if(btn){ btn.disabled=true; btn.textContent="Starting..."; }
     openSession().then(function(){
+      return paperPrinted()>0 ? askPaperDeclared() : 0;
+    }).then(function(paperCount){
       bcast({ t:"mode", mode:"musical" });
       return apiPost("/host/game",{
         session_id:G.sessionId, format:"musical", pattern:PAT_TO_WORKER[G.pattern],
-        prize:G.prize, auto_daub:G.autoDaub, playlist:playlistPayload()
+        prize:G.prize, auto_daub:G.autoDaub, playlist:playlistPayload(), paper_count:paperCount
       });
     }).then(function(r){
       G.gameId=r.game_id;
@@ -1406,7 +1437,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       bcast({ t:"players", count:playerCount() });
       sendState();
       renderConsole();
-    }).catch(function(e){ hostError(e.message); }).then(function(){
+    }).catch(function(e){ if(!(e && e.cancelled)) hostError(e.message); }).then(function(){
       G.busy=false; if(btn){ btn.disabled=false; btn.textContent=label; } renderConsole();   // re-sync the button label to G.status (e.g. still 'lobby' after a cancelled/failed start)
     });
   }
@@ -1785,6 +1816,84 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     function go(){ if(G.status==="lobby") startGame(); else openLobby(); }
   });
   $("cancelLobbyBtn").addEventListener("click", cancelLobby);
+
+  /* ---- PAPER CARDS (Dean, 25 Sep 2026) ----
+     Ten a night, printed from the playlist the host picked; the Worker keeps them on the night and
+     every game tonight plays that set, because a card on a table cannot change. A paper card is a
+     player once it is DECLARED at Start game or CHECKED by number: that is when it bills, once. */
+  function paperKey(){ return "vpPaper-"+(G.sessionId||""); }
+  function paperPrinted(){ try{ var o=JSON.parse(localStorage.getItem(paperKey())||"{}"); return o.musical|0; }catch(e){ return 0; } }
+  function savePaperPrinted(n){ try{ localStorage.setItem(paperKey(), JSON.stringify({ musical:n })); }catch(e){} }
+  function renderPaper(){
+    var n=G.sessionId ? paperPrinted() : 0;
+    $("paperPrintBtn").textContent = n ? ("Print again ("+n+" printed tonight)") : "Print paper cards";
+    $("paperNote").textContent = n
+      ? (n+" paper card"+(n===1?"":"s")+" printed tonight. Every game tonight plays the songs on those cards. A paper card counts as a player once it is played or checked, the same as a phone.")
+      : "Up to 10 a night, printed from the playlist above. A paper card counts as a player once it is played or checked, the same as a phone.";
+    $("paperCheck").classList.toggle("hidden", !(n && G.status==="running"));
+  }
+  var _paperDone=null;
+  function paperModal(title, body, value, max, goLabel){
+    $("paperTitle").textContent=title; $("paperBody").innerHTML=body;
+    var inp=$("paperCount"); inp.max=String(max); inp.value=String(value); $("paperErr").textContent="";
+    $("paperGo").textContent=goLabel;
+    $("paperModal").classList.remove("hidden");
+    setTimeout(function(){ try{ inp.focus(); inp.select(); }catch(e){} }, 30);
+    return new Promise(function(res){ _paperDone=res; });
+  }
+  function paperClose(v){ $("paperModal").classList.add("hidden"); var f=_paperDone; _paperDone=null; if(f) f(v); }
+  $("paperGo").addEventListener("click", function(){
+    var inp=$("paperCount"), v=parseInt(inp.value,10), max=parseInt(inp.max,10);
+    if(!(v>=0) || v>max || (v===0 && $("paperGo").textContent==="Print")){ $("paperErr").textContent="Pick a number from "+($("paperGo").textContent==="Print"?1:0)+" to "+max+"."; return; }
+    paperClose(v);
+  });
+  $("paperCancel").addEventListener("click", function(){ paperClose(null); });
+  function askPaperDeclared(){
+    var n=paperPrinted();
+    return paperModal("Paper cards tonight",
+      "You printed <b>"+n+"</b> paper card"+(n===1?"":"s")+". How many are being played this game?<br><small style=\"color:var(--muted)\">These count as players, the same as phones. Nobody playing on paper? Put 0.</small>",
+      n, n, "Start game").then(function(v){ if(v==null){ var e=new Error("cancelled"); e.cancelled=true; throw e; } return v; });
+  }
+  $("paperPrintBtn").addEventListener("click", function(){
+    if(!libLoaded || G.busy) return;
+    var had=G.sessionId ? paperPrinted() : 0;
+    paperModal("Print paper cards",
+      "How many cards? Up to 10 a night."+(had ? " You have printed "+had+" already; printing again gives you the same cards, plus any extra." : "")+
+      "<br><small style=\"color:var(--muted)\">Each card counts as a player once it is played or checked, the same as a phone.</small>",
+      had || 4, 10, "Print").then(function(n){
+      if(n==null) return;
+      var w=window.VPPrint ? VPPrint.open("Musical bingo paper cards") : null;   // opened inside the tap, so no pop-up blocker
+      G.playlistId=$("playlistSel").value;
+      G.playlistName=(G.playlistId==="all")?"All songs":(G.playlistId==="surprise")?"Surprise Mix":((LIB.plById[G.playlistId]||{}).name||"Playlist");
+      openSession().then(function(){
+        return apiPost("/host/paper/print",{ session_id:G.sessionId, kind:"musical", count:n, playlist:playlistPayload() });
+      }).then(function(r){
+        savePaperPrinted(r.cards.length);
+        renderPaper();
+        if(!window.VPPrint || !VPPrint.musical(w, r.cards, { venue:(G.venue && G.venue.name)||"", playlist:r.playlist_name||"" })){
+          hostError("Your browser blocked the print window. Allow pop-ups for venueplay.com.au, then tap Print again.");
+        }
+      }).catch(function(e){ if(window.VPPrint) VPPrint.fail(w, e.message); hostError(e.message); });
+    });
+  });
+  $("paperCheckBtn").addEventListener("click", checkPaperCard);
+  $("paperNo").addEventListener("keydown", function(e){ if(e.key==="Enter") checkPaperCard(); });
+  function checkPaperCard(){
+    var no=parseInt(($("paperNo").value||"").replace(/\D/g,""),10);
+    if(!(no>0) || !G.gameId || G.status!=="running"){ $("paperResult").textContent="Type the number printed on the card."; return; }
+    $("paperResult").textContent="Checking card "+no+"...";
+    apiPost("/host/paper/check",{ game_id:G.gameId, card_no:no }).then(function(r){
+      if(r.auto_verdict!=="valid"){ $("paperResult").textContent="Card "+no+" is not a winner yet. Play on."; return; }
+      $("paperResult").textContent="Card "+no+" has "+PATTERN_NAMES[G.pattern]+". It is in your claims list.";
+      $("paperNo").value="";
+      for(var i=0;i<G.claims.length;i++){ if(G.claims[i].claimId===r.claim_id) return; }
+      G.claims.push({ claimId:r.claim_id, pid:"paper-m-"+no, name:(r.display_name||("Paper card "+no)), cardNo:("P"+no), cells:(r.cells||[]), at:Date.now(), seq:(++_claimSeq) });
+      sortClaims();
+      pauseForClaim();
+      bcast(claimPendingMsg());
+      renderClaimQueue(true);
+    }).catch(function(e){ $("paperResult").textContent=e.message; });
+  }
   $("newGameBtn").addEventListener("click", newGame);
   /* An abandoned lobby must not recapture the wall every time the host tabs back.
      See the same guard in app/index.html: a console being OPEN is not a night in

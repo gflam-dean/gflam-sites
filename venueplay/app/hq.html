@@ -506,6 +506,17 @@
     </table></div></div>
     <div class="note">Signups whose <b>email</b> does not look like a venue land here (a trivia host, a personal Gmail). They can run games on team names only and collect <b>no</b> player data until you Approve. "No opt-ins" records your decision and leaves them running games on team names, just without collecting player data.</div>
 
+    <!-- PAPER PLAY (Dean, 25 Sep 2026: "we should have an alert for that"). Written by the game Worker:
+         paper_suspect_trivia when a trivia game asked 15+ questions and 2 or fewer phones answered,
+         paper_declared when a musical host printed paper cards and said at Start game how many were
+         played. Shown here only when that was none. Nothing is blocked; it is a conversation to have. -->
+    <div class="lblk" style="margin-top:22px">Paper play, last 60 days</div>
+    <div class="panel"><div class="tscroll"><table>
+      <thead><tr><th>When</th><th>Venue</th><th>What happened</th></tr></thead>
+      <tbody id="paperRows"></tbody>
+    </table></div></div>
+    <div class="note">A trivia night that asked a lot of questions with almost no phones answering, or a musical bingo night where paper cards were printed and the host said none were played. Paper players only count towards a venue's bill once they are checked or scored, so these are the nights worth a friendly call.</div>
+
     <!-- EVERY ACCOUNT, not only the flagged ones. The list above is built from signup_flagged
          audit rows, so an account that was never flagged has no row and therefore no button,
          and an old flag scrolls out of the audit window and becomes unapprovable the same way.
@@ -3040,7 +3051,35 @@
     });
     return out;
   }
+  var _paperAt=0;
+  function renderPaperFlags(){
+    var b=$("paperRows"); if(!b || Date.now()-_paperAt<60000) return;
+    _paperAt=Date.now();
+    var since=new Date(Date.now()-60*86400000).toISOString();
+    VP.getClient().from("vp_admin_audit").select("action,target,detail,created_at")
+      .in("action",["paper_suspect_trivia","paper_declared"]).gte("created_at",since)
+      .order("created_at",{ascending:false}).limit(300)
+      .then(function(r){
+        b.innerHTML="";
+        if(r && r.error){ b.innerHTML='<tr><td colspan="3"><div class="empty" style="border:none;background:none">Could not read the paper play records. This is not the same as none.</div></td></tr>'; _paperAt=0; return; }
+        var rows=((r && r.data)||[]).filter(function(a){
+          var d=a.detail||{};
+          return a.action==="paper_suspect_trivia" || (a.action==="paper_declared" && (d.printed|0)>0 && (d.declared|0)===0);
+        });
+        if(!rows.length){ b.innerHTML='<tr><td colspan="3"><div class="empty" style="border:none;background:none">Nothing to look at. No venue has run a night mostly on paper.</div></td></tr>'; return; }
+        rows.forEach(function(a){
+          var d=a.detail||{}, vid=String(a.target||"").replace(/^venue:/,"");
+          var what = a.action==="paper_suspect_trivia"
+            ? ("Trivia: "+(d.questions|0)+" questions asked, "+(d.phones|0)+" phone"+((d.phones|0)===1?"":"s")+" answered"+((d.paper_teams|0)?(", "+(d.paper_teams|0)+" paper team sheets printed"):""))
+            : ("Musical bingo: printed "+(d.printed|0)+" paper card"+((d.printed|0)===1?"":"s")+", said none were being played");
+          var tr=document.createElement("tr");
+          tr.innerHTML='<td style="white-space:nowrap">'+esc(fmtWhen(a.created_at))+'</td><td><div class="vn">'+esc(venueName(vid))+'</div></td><td>'+esc(what)+'</td>';
+          b.appendChild(tr);
+        });
+      });
+  }
   function renderFlagged(){
+    try{ renderPaperFlags(); }catch(e){}
     var b=$("flaggedRows"); if(!b) return; b.innerHTML="";
     var rows=flaggedAccounts();
     if(!rows.length){ b.innerHTML='<tr><td colspan="4"><div class="empty" style="border:none;background:none">No signups waiting for review in the newest '+AUDIT_LIMIT+' audit entries. Non-venue emails show up here.</div></td></tr>'; return; }

@@ -2380,6 +2380,11 @@ MUTATIONS = [
      "    await send();",
      'every Stripe redelivery welcomes the customer again'),
 
+    ('paper cards and sheets bill once, stop at ten', 'venueplay-backend/worker/venueplay-game.js',
+     "            if (t.phase === 'revealed' && !(g.config || {}).defer_reveal) pub.correct_index = q.correct_index;",
+     "            if (t.phase === 'revealed') pub.correct_index = q.correct_index;",
+     'a TV reloaded on a paper night shows the answer before the paper teams hand in their sheets'),
+
     ('the paper flag is set for bingo in SA, ACT and TAS and for nothing else', 'venueplay-backend/worker/venueplay-game.js',
      "    const paperFormat = !format || format.indexOf('bingo') === 0;",
      "    const paperFormat = true;",

@@ -36,6 +36,7 @@ function query(table, qs){
     else if(v==='is.null'){ out=out.filter(function(r){ return r[k]==null; }); }
     else if(v==='is.true'){ out=out.filter(function(r){ return r[k]===true; }); }
     else if(k==='or'){ var alts=decodeURIComponent(v).replace(/^\(|\)$/g,'').split(','); out=out.filter(function(r){ return alts.some(function(a){ var m=/^([^.]+)\.(ilike|like|eq)\.(.*)$/.exec(a); if(!m) throw new Error('fake PostgREST cannot answer or-clause "'+a+'"'); var val=String(r[m[1]]==null?'':r[m[1]]); if(m[2]==='eq') return val===m[3]; var re=new RegExp('^'+m[3].replace(/[.+?^${}()|[\]\\]/g,'\\$&').replace(/\*/g,'.*')+'$', m[2]==='ilike'?'i':''); return re.test(val); }); }); }
+    else if(v.indexOf('lt.')===0){ var lv=decodeURIComponent(v.slice(3)); out=out.filter(function(r){ return r[k]!=null && (isNaN(+lv)? String(r[k])<lv : +r[k]<+lv); }); }
     else if(v.indexOf('gt.')===0){ var g=decodeURIComponent(v.slice(3)); out=out.filter(function(r){ return r[k]!=null && (isNaN(+g)? String(r[k])>g : +r[k]>+g); }); }
     else throw new Error('fake PostgREST cannot answer "'+part+'" on '+table);
   });
