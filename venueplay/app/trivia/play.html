@@ -662,6 +662,7 @@
       if(m.phase==="lobby"){ P.q=null; P.ended=false; if(P.joined){ showWait("Watch the big screen. Your questions will pop up here."); } }
     }
     else if(m.t==="started"){
+      if(P.joined && !P.token) rejoinNow();   // the night began after this phone arrived: join it now
       useGame(m.game_id);
       if(typeof m.colour==="boolean") P.colour=m.colour;
       P.q=null; P.ended=false; P.total=0; P.rank=0; P.playersCount=0;
@@ -669,6 +670,7 @@
     }
     else if(m.t==="question"){ sayAlive();
       if(!P.joined) return;
+      if(!P.token) rejoinNow();              // an answer with no token for tonight would go nowhere
       /* A CATCH-UP AIMED AT SOMEBODY ELSE. The host replays whatever is on to any phone
          that announces itself, because a backgrounded tab comes back to nothing. That
          replay goes down the same channel the whole room is on, so it is tagged with the
@@ -764,11 +766,29 @@
     if(P.pendingScore){ P.pendingScore=false; pullScore("You're back in. Next question coming up on the big screen."); }
   }
   // Rebuild any in-progress game from the Worker's public snapshot (late join / reload).
+  /* A NIGHT THAT HAS ENDED IS NOT THE NIGHT YOU ARE IN. The room code is the venue's permanent
+     code, so the token and session this phone saved for it last week are still sitting here this
+     week. The page used to call that "joined": it said YOU'RE IN, showed every question off the
+     channel, and every answer went to a finished session and scored nothing, silently. Found by
+     playing, 25 Sep 2026. The bingo phone already re-joins whenever the night changes
+     (joinServerSession); this is the same rule. Same pid, so the Worker keeps one player. */
+  function dropStaleJoin(){
+    P.token=""; P.sessionId="";
+    try{ localStorage.removeItem("vp-ttoken-"+P.room); localStorage.removeItem("vp-tsess-"+P.room); }catch(e){}
+  }
+  var _rejoining=false;
+  function rejoinNow(){
+    if(!P.joined || P.token || _rejoining) return Promise.resolve();
+    _rejoining=true;
+    return ensureJoined().catch(function(){}).then(function(){ _rejoining=false; });
+  }
   function rebuildFromSnapshot(){
-    if(!P.sessionId) return;
+    if(!P.sessionId){ rejoinNow().then(applyPending); return; }
     fetch(VP_GAME_API+"/snapshot?session="+encodeURIComponent(P.sessionId))
-      .then(function(res){ return res.json(); })
+      .then(function(res){ return res.ok ? res.json() : null; })
       .then(function(s){
+        var live = s && !s.error && (s.status==="lobby" || s.status==="running" || s.status==="paused");
+        if(!live){ dropStaleJoin(); return rejoinNow().then(applyPending); }
         applySnap(s);
         applyPending();
       }).catch(function(){});

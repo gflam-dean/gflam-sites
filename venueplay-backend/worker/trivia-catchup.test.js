@@ -93,6 +93,7 @@ print('== and every other phone lets it past ==');
 var rendered = [];
 var P = { joined: true, pid: 'pid-me', ended: true, q: null };
 function renderQuestion(m) { rendered.push(m); }
+function rejoinNow() { /* the phone joining tonight's night when its saved one has ended (25 Sep 2026); a no-op here */ }
 var body = phone.match(/else if\(m\.t==="question"\)\{([\s\S]*?)\n    \}/);
 if (!body) throw new Error('cannot find the question handler on the phone');
 var handle = new Function('m', 'P', 'renderQuestion', 'sayAlive',

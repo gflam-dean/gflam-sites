@@ -12,13 +12,14 @@
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
 
   var CSS =
-    '@page{size:A4 portrait;margin:12mm}' +
+    /* margin 0 so Chrome prints no date, title or address across the top of a card; the page pads itself */
+    '@page{size:A4 portrait;margin:0}' +
     '*{box-sizing:border-box}' +
     'body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#111;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
     '.bar{position:sticky;top:0;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 16px;background:#111;color:#fff;font-size:15px}' +
     '.bar button{font:inherit;font-weight:700;padding:10px 18px;border:0;border-radius:8px;background:#FF1F8E;color:#fff;cursor:pointer}' +
     '.wait{padding:40px;font-size:18px;text-align:center}' +
-    '.sheet{padding:0 2mm;page-break-after:always;break-after:page}' +
+    '.sheet{padding:12mm 14mm;page-break-after:always;break-after:page}' +
     '.sheet:last-child{page-break-after:auto;break-after:auto}' +
     '.card{border:2px solid #111;border-radius:6px;padding:5mm;margin-bottom:6mm;page-break-inside:avoid;break-inside:avoid}' +
     '.head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:3mm}' +

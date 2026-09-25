@@ -225,7 +225,7 @@
           <div class="field" id="paperField">
             <label>Paper teams <small style="color:var(--faint);font-weight:400">for regulars without a phone</small></label>
             <button type="button" class="btn ghost" id="paperPrintBtn" style="width:100%">Print answer sheets</button>
-            <div id="paperRoundWrap" style="display:none;margin-top:10px">
+            <div id="paperRoundWrap" style="margin-top:10px">
               <label for="cfgRound">Questions per round</label>
               <input type="number" id="cfgRound" class="mono" min="3" max="50" value="10">
             </div>
@@ -269,7 +269,7 @@
     <div id="ovgBody" style="font-size:14.5px;color:var(--text);line-height:1.55"></div>
     <div style="display:flex;gap:10px;margin-top:20px">
       <button type="button" id="ovgGo" class="btn pink big" style="flex:1">Start game</button>
-      <button type="button" id="ovgCancel" class="btn ghost big" style="flex:0 0 auto">Cancel</button>
+      <button type="button" id="ovgCancel" class="btn ghost big" style="flex:0 0 auto;width:auto">Cancel</button>
     </div>
   </div>
 </div>
@@ -282,7 +282,7 @@
     <div id="paperErr" style="color:var(--roll);font-size:13px;min-height:18px;margin-top:6px"></div>
     <div style="display:flex;gap:10px;margin-top:10px">
       <button type="button" id="paperGo" class="btn pink big" style="flex:1">Print</button>
-      <button type="button" id="paperCancel" class="btn ghost big" style="flex:0 0 auto">Cancel</button>
+      <button type="button" id="paperCancel" class="btn ghost big" style="flex:0 0 auto;width:auto">Cancel</button>
     </div>
   </div>
 </div>
@@ -1105,7 +1105,8 @@
      types each paper team's score. A paper team is a player once it is scored: that is when it
      bills, once. Ten a night; the Worker allows a sheet per player on the plan in the free month. */
   function paperKey(){ return "vpPaperT-"+(G.sessionId||""); }
-  function paperTeams(){ try{ return (JSON.parse(localStorage.getItem(paperKey())||"{}").teams)|0; }catch(e){ return 0; } }
+  function paperTeams(){ return paperPrintedInfo().teams|0; }
+  function paperPrintedInfo(){ try{ return JSON.parse(localStorage.getItem(paperKey())||"{}")||{}; }catch(e){ return {}; } }
   function roundOf(qi){ return Math.max(1, Math.ceil((qi||1)/(G.rs||10))); }
   function roundEnds(qi){ return (qi%(G.rs||10))===0 || (G.qtotal && qi>=G.qtotal); }
   function roundKey(){ return "vpPaperR-"+(G.gameId||""); }
@@ -1114,9 +1115,12 @@
   function renderPaperSetup(){
     var n=G.sessionId ? paperTeams() : 0;
     $("paperPrintBtn").textContent = n ? ("Print again ("+n+" team sheet"+(n===1?"":"s")+" tonight)") : "Print answer sheets";
-    $("paperRoundWrap").style.display = n ? "" : "none";
+    /* The sheets are printed in rounds of this size, so once they are on the tables it cannot
+       change: a different size would ask for sheets at the wrong moment. */
+    var info=paperPrintedInfo(), rin=$("cfgRound");
+    if(n && info.roundSize){ rin.value=String(info.roundSize); rin.disabled=true; } else { rin.disabled=false; }
     $("paperNote").textContent = n
-      ? (n+" paper team"+(n===1?"":"s")+" tonight, so the answers go up at the end of each round, after you have their sheets. A paper team counts as a player once its score goes on the leaderboard.")
+      ? (n+" paper team"+(n===1?"":"s")+" tonight, printed in rounds of "+(info.roundSize||G.roundSize)+" for "+(info.questions||G.count)+" questions. The answers go up at the end of each round, after you have their sheets. A paper team counts as a player once its score goes on the leaderboard.")
       : "Up to 10 teams a night. With paper teams playing, the answers go up at the end of each round, after the host has their sheets. A paper team counts as a player once its score goes on the leaderboard.";
   }
   var _paperDone=null;
@@ -1132,7 +1136,7 @@
     var had=G.sessionId ? paperTeams() : 0;
     $("paperBody").innerHTML="How many teams are playing on paper? Up to 10 a night (more in your free month)."+
       (had ? " You have printed "+had+" already; the same team numbers carry on." : "")+
-      "<br><small style=\"color:var(--muted)\">Each sheet has "+Math.ceil(G.count/G.roundSize)+" round"+(Math.ceil(G.count/G.roundSize)===1?"":"s")+" of "+G.roundSize+" to tear off and hand in. A paper team counts as a player once it is scored.</small>";
+      "<br><small style=\"color:var(--muted)\">"+sheetShape()+" A paper team counts as a player once it is scored.</small>";
     $("paperCount").value=String(had||2); $("paperErr").textContent="";
     $("paperModal").classList.remove("hidden");
     setTimeout(function(){ try{ $("paperCount").focus(); $("paperCount").select(); }catch(e){} }, 30);
@@ -1142,7 +1146,7 @@
       openSession().then(function(){
         return apiPost("/host/paper/print",{ session_id:G.sessionId, kind:"trivia", count:n });
       }).then(function(r){
-        try{ localStorage.setItem(paperKey(), JSON.stringify({ teams:r.teams })); }catch(e){}
+        try{ localStorage.setItem(paperKey(), JSON.stringify({ teams:r.teams, roundSize:G.roundSize, questions:G.count })); }catch(e){}
         renderPaperSetup();
         if(!window.VPPrint || !VPPrint.trivia(w, { teams:r.teams, questions:G.count, roundSize:G.roundSize, venue:(G.venue && G.venue.name)||"" })){
           hostError("Your browser blocked the print window. Allow pop-ups for venueplay.com.au, then tap Print again.");
@@ -1152,6 +1156,11 @@
   });
   $("cfgRound").addEventListener("change", function(){ readSettings(); });
 
+  function sheetShape(){
+    var rounds=Math.ceil(G.count/G.roundSize);
+    return rounds===1 ? ("Each team gets one strip with all "+G.count+" questions to hand in at the end.")
+      : ("Each team gets "+rounds+" strips to tear off, one per round of "+G.roundSize+" questions ("+G.count+" questions in all).");
+  }
   function paperHandIn(){
     G.status="handin"; savePaperRound();
     bcast({ t:"handin", round:G.round });
