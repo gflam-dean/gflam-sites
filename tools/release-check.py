@@ -3042,6 +3042,11 @@ def local_checks(which):
                    'venue\'s raffle, or a draw on Math.random, ships with a green gate otherwise')
 
         for label, fn, title, floor, why in (
+            ('D45. A code typed in a lobby goes to the game that lobby is for',
+             'test-lobby-format.js',
+             'a new lobby in a multi-game night sends phones to that game, not the last one played', 6,
+             'After trivia, the whole room typing the code into the bingo lobby lands on a dead trivia '
+             'page, and after bingo a musical lobby shows last game\'s YOU WON'),
             ('D44. A paper card or team is one player, printing is capped, and a paper night holds its answers',
              'test-paper-players.js',
              'paper cards and sheets bill once, stop at ten, and keep a paper round\'s answers off every screen', 45,

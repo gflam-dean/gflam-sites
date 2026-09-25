@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '25 Sep 2026, 10:55 · cc50ea42';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '25 Sep 2026, 12:30 · 3d5ecabe';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -162,6 +162,20 @@ const PAPER_BINGO_STATES = new Set(['SA', 'ACT', 'TAS']);
 const PAPER_MAX = 10;
 const PAPER_CARD_BASE = 900;
 function isPaperDevice(d) { return /^paper-/i.test(String(d || '')); }
+/* THE GAME A LOBBY IS FOR (migration 89). The consoles say 'bingo', 'musical', 'trivia'; games are
+   stored 'bingo90', 'musical_bingo', 'trivia'. One spelling here so /join/info can compare. */
+function lobbyFormat(f) {
+  const v = String(f || '').toLowerCase();
+  if (v.indexOf('trivia') === 0) return 'trivia';
+  if (v.indexOf('musical') === 0) return 'musical_bingo';
+  if (v.indexOf('bingo') === 0) return 'bingo90';
+  return v.slice(0, 30);
+}
+// Best effort: a missing column (migration 89 not run) must never stop a lobby or a game.
+async function noteLobbyFormat(env, sessionId, format) {
+  if (!format) return;
+  try { await sbPatch(env, 'vp_sessions', 'id=eq.' + enc(sessionId), { lobby_format: lobbyFormat(format) }); } catch (e) { /* tolerated */ }
+}
 const JOIN_DEDUP_TTL = 120;       // seconds a device's player_id is remembered, so a rapid re-join reuses its row.
 
 export default {
@@ -853,6 +867,7 @@ async function handleCreateSession(request, env, json) {
        believing they are on air. If the console told us which format it is
        starting, end any other one still running before we hand the session back. */
     if (b.format) await endOtherRunningGames(env, venueId, b.format);
+    if (b.format) await noteLobbyFormat(env, liveNow[0].id, b.format);
     return json({ session_id: liveNow[0].id, join_code: liveNow[0].join_code, tv_pairing_code: liveNow[0].tv_pairing_code, plan_cap: (liveNow[0].plan_cap_at_start != null ? liveNow[0].plan_cap_at_start : null), reused: true });
   }
 
@@ -910,6 +925,7 @@ async function handleCreateSession(request, env, json) {
     throw dbError('insert', 'vp_sessions', await res.text());   // M5: log detail, return generic + code
   }
   if (!session) return json({ error: 'Could not allocate a unique join code, or a session is already live for this venue' }, 409);
+  if (b.format) await noteLobbyFormat(env, session.id, b.format);
 
   return json({ session_id: session.id, join_code: session.join_code, tv_pairing_code: session.tv_pairing_code, plan_cap: (planCap != null ? planCap : null) });
 }
@@ -934,7 +950,7 @@ async function handleJoinInfo(request, env, json) {
      ever hopped to another game was the /play?venue= path off a table talker. */
   let format = '';
   let roomCode = '';   // set only when the code typed was the venue code and a session is live
-  const sessions = await sbGet(env, 'vp_sessions', 'join_code=eq.' + enc(code) + '&status=in.(lobby,running,paused)&select=id,venue_id&limit=1');
+  const sessions = await sbGet(env, 'vp_sessions', 'join_code=eq.' + enc(code) + '&status=in.(lobby,running,paused)&select=*&limit=1');
   if (sessions.length) {
     venueId = sessions[0].venue_id;
     /* The LATEST game of any status, not just a live one. No vp_games row is ever written with
@@ -944,8 +960,15 @@ async function handleJoinInfo(request, env, json) {
        It went blank again between rounds, because ending a round marks it finished. A session
        that has run a trivia round is a trivia session whether or not a round is live right now. */
     const games = await sbGet(env, 'vp_games',
-      'session_id=eq.' + enc(sessions[0].id) + '&select=format&order=seq.desc&limit=1');
-    if (games.length) format = String(games[0].format || '');
+      'session_id=eq.' + enc(sessions[0].id) + '&select=format,status&order=seq.desc&limit=1');
+    /* WHAT IS ON NOW, then WHAT THE HOST JUST OPENED, then what was played last. One night can run
+       trivia, then bingo, then musical bingo, and a lobby writes no game until it starts: asking
+       only for the latest game sent a bingo lobby's whole room to the finished trivia page (audit,
+       25 Sep 2026). The lobby's own format (migration 89) settles it; the old answer is the last
+       resort, which keeps "a trivia code typed between rounds is still trivia" working. */
+    if (games.length && games[0].status === 'running') format = String(games[0].format || '');
+    else if (sessions[0].lobby_format) format = String(sessions[0].lobby_format);
+    else if (games.length) format = String(games[0].format || '');
   } else {
     venueId = await venueByCode(env, code);   // broadcast bingo has no session: resolve by venue code
     /* ONE CODE PER VENUE, whatever is on tonight.
@@ -957,7 +980,7 @@ async function handleJoinInfo(request, env, json) {
        page can move the phone to the right room. Nothing to type twice, nothing to reprint. */
     if (venueId) {
       const live = await sbGet(env, 'vp_sessions',
-        'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id,join_code&order=created_at.desc&limit=1');
+        'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=*&order=created_at.desc&limit=1');
       if (live.length) {
         /* A RUNNING game only. This deliberately does NOT match the session branch above, which
            takes the latest game of any status so that a code typed between rounds still resolves.
@@ -972,6 +995,11 @@ async function handleJoinInfo(request, env, json) {
         if (g.length) {
           format = String(g[0].format || '');
           // Only worth handing back when it actually differs, so bingo is untouched.
+          if (live[0].join_code && live[0].join_code !== code) roomCode = live[0].join_code;
+        } else if (live[0].lobby_format === 'trivia' || live[0].lobby_format === 'musical_bingo') {
+          /* A trivia or musical LOBBY the host has just opened (migration 89) is proof enough: the
+             host chose it tonight, it is not a session left open from last week. Bingo stays put. */
+          format = String(live[0].lobby_format);
           if (live[0].join_code && live[0].join_code !== code) roomCode = live[0].join_code;
         }
       }
@@ -2719,6 +2747,7 @@ async function handleHostGame(request, env, json) {
     paperDeclared = { printed, declared };
   }
   b._paperDeclared = paperDeclared;
+  await noteLobbyFormat(env, session.id, format);   // the game now on is what the code is for
 
   // Overage approval gate: if the room is already over the venue's plan cap and the host has
   // not approved the overage yet, the game will NOT start. The host UI catches this response,

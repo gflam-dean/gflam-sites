@@ -137,3 +137,7 @@ column being absent, so the order does not matter here; run it when convenient. 
 musical bingo cards and how many trivia team sheets were printed (Dean, 25 Sep 2026). RUN ON SYDNEY 25 Sep 2026,
 verified by information_schema and by a PostgREST select of the column. Run BEFORE deploying the game Worker that
 writes it: /host/paper/print patches this column. Rollback: `alter table public.vp_sessions drop column paper;`
+
+`venueplay-89-session-lobby-format.sql`: adds `vp_sessions.lobby_format` (text), the game the host last opened a
+lobby for or started, so /join/info sends a code typed in a lobby to that game and not the last one played
+(audit 25 Sep 2026). RUN ON SYDNEY 25 Sep 2026, verified by information_schema. The Worker tolerates it missing.

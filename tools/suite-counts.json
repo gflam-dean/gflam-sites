@@ -123,6 +123,10 @@
   "checks": 10,
   "counted_by": "lines"
  },
+ "tools/test-lobby-format.js": {
+  "checks": 6,
+  "counted_by": "lines"
+ },
  "tools/test-manager-permissions.js": {
   "checks": 14,
   "counted_by": "lines"

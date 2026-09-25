@@ -1282,6 +1282,16 @@
        Nothing is trusted from the message itself: it only triggers the same lookup the poll
        does, which is the thing that decides where to send them. A forged broadcast can
        therefore make a phone ask a question early, and nothing more. Added 13 Sep 2026. */
+    /* A LOBBY FOR ANOTHER GAME ENDS LAST GAME'S WIN ON THIS PHONE. The win is saved against the
+       room so a reload on the way to the host still shows it, and the room code never changes, so a
+       bingo "YOU WON! Show this screen to the host" sat through the next musical lobby and into its
+       game: a real-looking claim for a game nobody had won (audit, 25 Sep 2026, found by playing).
+       Bingo re-announces mode:"bingo" on every reconnect, so only ANOTHER game's lobby clears it;
+       bingo's own next round clears it on cards/started as before. */
+    if(m.t==="mode" && m.mode && m.mode!=="bingo" && (P.won || P.ended)){
+      P.won=false; P.ended=false; P.claimPending=false; P.wonCardNo=0; P.shared=false; P.sharedWith=[];
+      clearWin(P.room); clearStage(P.room); P.lostBy=""; route();
+    }
     if(m.t==="mode" && typeof VP_LOOK_NOW === "function"){ VP_LOOK_NOW(); }
     if(m.t==="tv_here" || m.t==="tv_pair" || m.t==="session"){ return; }   // host<->TV only
     if(typeof m.defaultCards==="number"){ setHostDefault(m.defaultCards); }

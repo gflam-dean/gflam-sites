@@ -2385,6 +2385,11 @@ MUTATIONS = [
      "    await send();",
      'every Stripe redelivery welcomes the customer again'),
 
+    ('a new lobby in a multi-game night sends phones to that game', 'venueplay-backend/worker/venueplay-game.js',
+     "    else if (sessions[0].lobby_format) format = String(sessions[0].lobby_format);",
+     "    else if (false) format = String(sessions[0].lobby_format);",
+     'the bingo lobby after trivia sends the whole room to the finished trivia page'),
+
     ('paper cards and sheets bill once, stop at ten', 'venueplay-backend/worker/venueplay-game.js',
      "            if (t.phase === 'revealed' && !(g.config || {}).defer_reveal) pub.correct_index = q.correct_index;",
      "            if (t.phase === 'revealed') pub.correct_index = q.correct_index;",
