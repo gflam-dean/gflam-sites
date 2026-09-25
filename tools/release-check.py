@@ -4515,7 +4515,9 @@ def founding_windows_are_open():
     shut, unreachable = [], []
     for b in pages:
         src = io.open(os.path.join(root, b), encoding='utf-8').read()
-        codes = sorted(set(re.findall(r'[A-Z]{2,3}-[A-Z]{3}-20\d\d', src)))
+        # A state code (NSW-OCT-2026) or a month code (OFFER-NOV-2026, nsw.html, 25 Sep 2026). Read
+        # whole: unanchored, OFFER-NOV-2026 came back as FER-NOV-2026, a code nobody could add.
+        codes = sorted(set(re.findall(r'(?<![A-Z])(?:OFFER|[A-Z]{2,3})-[A-Z]{3}-20\d\d', src)))
         if not codes:
             continue
         # Ask about EVERY code on the page. /last-call carries seven, one per state,
