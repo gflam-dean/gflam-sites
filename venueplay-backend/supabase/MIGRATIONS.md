@@ -147,3 +147,11 @@ first reads it, so two consoles pressing Draw together can no longer each name a
 2026). Otherwise identical to the live definition it was read from. RUN ON SYDNEY 25 Sep 2026; verified by
 pg_get_functiondef, grants unchanged (postgres + service_role only), and by holding the row lock on one connection
 while a second call waited until its 2s timeout. No Worker change. Rollback: re-run the function from migration 76.
+
+`venueplay-91-one-code-per-venue.sql`: every venue's shown code (`join_code`) is now its channel code (the slug
+hash), and a new venue is given it on insert by trigger `vp_venues_fill_code` (Dean, 25 Sep 2026: "make all the
+venues the same code"). Before: 4 venues showed a code that was not their channel (Test Alpha/Bravo/Charlie, The
+Mini Bar) and every venue created since 17 Sep had none, because migration 68 only backfilled existing venues
+and nothing assigned one after. Uses 68's `vp_legacy_venue_code`; a clashing hash leaves the code null rather than
+failing the sign-up. RUN ON SYDNEY 25 Sep 2026: 26 of 26 match; trigger proven on rolled-back inserts (new venue
+gets its code; a clash inserts codeless). Old codes 62GTYQ, TMJ2TP, NCEM9A, 2Y3F9Q no longer resolve.
