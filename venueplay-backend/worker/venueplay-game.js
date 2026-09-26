@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '25 Sep 2026, 14:53 · 4b22b8f6';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '27 Sep 2026, 09:50 · 72b9f1a7';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -2977,9 +2977,11 @@ async function hostStartTrivia(env, json, b, session, staff, seq) {
     // The size the sheets were PRINTED in wins over whatever the console sends now: a sheet on a
     // table cannot change, and a host on a second tablet has not seen what the first one printed.
     const printed = parseInt(paperTrivia.round_size, 10);
-    const rs = (printed >= 3 && printed <= 50) ? printed : parseInt(b.round_size, 10);
+    // 1 to 100: since 27 Sep the sheet is one strip for the whole round (round_size = the round's
+    // question count), so a 40-question night is one round of 40, not refused as over 50.
+    const rs = (printed >= 1 && printed <= 100) ? printed : parseInt(b.round_size, 10);
     config.paper_teams = Number(paperTrivia.teams);
-    config.round_size = (rs >= 3 && rs <= 50) ? rs : 10;
+    config.round_size = (rs >= 1 && rs <= 100) ? rs : 10;
     config.defer_reveal = true;
   }
 
@@ -7850,11 +7852,18 @@ async function handlePaperPrint(request, env, json) {
   if (kind === 'trivia') {
     const prev = paper.trivia || {};
     const teams = Math.max(want, Number(prev.teams) || 0);   // a sheet already on a table stays valid
-    /* The shape the sheets were printed in. The FIRST print sets it: a reprint for more teams must
-       match the sheets already handed out, so it is not changed by a later request. */
+    /* The shape the sheets were printed in. BEFORE the game starts, the latest print wins: Dean,
+       27 Sep 2026, "Printable sheets don't change when the host changes how many questions". The
+       console had defaulted to 100 questions, he printed, lowered it, printed again, and got 100
+       again because the first print was kept for good. Once a trivia game is RUNNING, the shape
+       is fixed: a reprint then is for an extra team and must match the sheets on the tables. */
     const rsIn = parseInt(b.round_size, 10), qIn = parseInt(b.questions, 10);
-    const roundSize = Number(prev.round_size) || ((rsIn >= 3 && rsIn <= 50) ? rsIn : 10);
-    const questions = Number(prev.questions) || ((qIn >= 1 && qIn <= 100) ? qIn : null);
+    const okRs = (rsIn >= 1 && rsIn <= 100) ? rsIn : null, okQ = (qIn >= 1 && qIn <= 100) ? qIn : null;
+    const running = await sbGet(env, 'vp_games', 'session_id=eq.' + enc(session.id) +
+      '&format=eq.trivia&status=eq.running&select=id&limit=1').catch(() => []);
+    const locked = running.length > 0 && Number(prev.round_size) > 0;
+    const roundSize = locked ? Number(prev.round_size) : (okRs || Number(prev.round_size) || 10);
+    const questions = locked ? (Number(prev.questions) || okQ) : (okQ || Number(prev.questions) || null);
     paper.trivia = { teams, round_size: roundSize, questions, printed_at: now };
     await sbPatch(env, 'vp_sessions', 'id=eq.' + enc(session.id), { paper });
     await sbInsert(env, 'vp_admin_audit', { action: 'paper_printed', target: 'venue:' + session.venue_id,

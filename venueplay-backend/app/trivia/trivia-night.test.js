@@ -150,9 +150,10 @@ pass("phone: the picture sits above the answers", play.indexOf('id="pqImg"') > 0
 pass("phone: a broken picture hides itself and the question carries on", play.indexOf("onerror=\"this.classList.add('hidden')\"") > 0);
 
 print("");
-print("6. FOUR COLOURED ANSWER BUTTONS CAN ACTUALLY BE TURNED ON (finding 1)");
-pass("the host settings panel has the colour toggle", host.indexOf('id="cfgColour"') > 0);
-pass("and the click handler has an element to listen to", host.indexOf('#cfgColour button') > 0);
+print("6. FOUR COLOURED ANSWER BUTTONS, ALWAYS (Dean, 27 Sep 2026: get rid of the setting)");
+pass("there is no colour setting on the host panel any more", host.indexOf('id="cfgColour"') < 0 && host.indexOf('#cfgColour button') < 0);
+pass("and the console always sends the four colours, even to a venue that once saved Plain",
+     /colour:true/.test(host) && host.indexOf("G.colour=true;") > 0);
 (function(){
   // The whole fault was a handler listening for an element nobody had written.
   var ids = host.match(/document\.querySelectorAll\("#(\w+) button"\)/g) || [];
@@ -237,6 +238,20 @@ print("14. NOTHING IN THESE PAGES USES AN EM DASH (the gate rejects them)");
   for (var k in files){ if (files[k].indexOf(EM) >= 0) hits.push(k); }
   pass("no em dash in any trivia page", hits.length === 0, hits.join(", "));
 })();
+
+print("");
+print("7. DEAN'S 27 SEP FIXES: the round count, the print sheets, and a false 'lost connection'");
+pass("a question bank (over 50) starts at 10; a night you built plays in full",
+     host.indexOf('$("cfgCount").value = G.questionCount<=50 ? G.questionCount : 10;') > 0 && host.indexOf("Math.min(100, G.questionCount)") < 0);
+pass("there is no separate 'Questions per round' box; the sheet is the round", host.indexOf('id="cfgRound"') < 0 && host.indexOf("G.roundSize=G.count;") > 0);
+pass("changing the count after printing tells the host to print again", host.indexOf("Tap Print again for sheets that match.") > 0);
+(function(){
+  var i = host.indexOf("gch.subscribe(function(status){");
+  var body = i > 0 ? host.slice(i, i + 2500) : "";
+  var guard = body.indexOf("if(mine!==gch || _leaving) return;"), err = body.indexOf("Lost the connection to the players' phones");
+  pass("leaving the page or swapping channels is not reported as a lost connection (guard comes first)", guard > 0 && err > guard);
+})();
+pass("the page marks itself as leaving before it goes", /addEventListener\("beforeunload", function\(\)\{ _leaving=true; \}\)/.test(host) && /addEventListener\("pagehide", function\(\)\{ _leaving=true; \}\)/.test(host));
 
 print("");
 print(bad ? ("  " + bad + " FAILED") : "ALL " + "CHECKS PASSED");

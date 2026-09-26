@@ -172,7 +172,7 @@
   "counted_by": "lines"
  },
  "tools/test-paper-players.js": {
-  "checks": 45,
+  "checks": 46,
   "counted_by": "lines"
  },
  "tools/test-phones-cannot-be-impersonated.js": {
@@ -368,7 +368,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/trivia/trivia-night.test.js": {
-  "checks": 84,
+  "checks": 89,
   "counted_by": "lines"
  },
  "venueplay-backend/app/tv-ads-rebuild.test.js": {

@@ -201,7 +201,7 @@
           <div class="field">
             <label>Questions this round</label>
             <input type="number" id="cfgCount" class="mono" min="1" max="100" value="10">
-            <div class="note" style="margin-top:4px">Auto-fills to the whole set when you pick one. Lower it to play fewer.</div>
+            <div class="note" style="margin-top:4px">A night you built plays in full. A big question bank starts at 10. Change it to play more or fewer.</div>
           </div>
           <div class="stat">
             <div class="box"><div class="k">Questions</div><div class="v" id="setupQs">0</div></div>
@@ -217,18 +217,9 @@
             <label>Speed bonus (faster answers score more, up to +50%)</label>
             <div class="seg" id="cfgSpeed"><button data-v="on" class="on">On</button><button data-v="off">Off</button></div>
           </div>
-          <div class="field">
-            <label>Answer buttons on phones</label>
-            <div class="seg" id="cfgColour"><button data-v="on" class="on">Four colours</button><button data-v="off">Plain</button></div>
-            <div class="note" style="margin-top:4px">Four colours is faster to pick in a noisy room and matches the TV. Plain shows grey buttons.</div>
-          </div>
           <div class="field" id="paperField">
             <label>Paper teams <small style="color:var(--faint);font-weight:400">for regulars without a phone</small></label>
             <button type="button" class="btn ghost" id="paperPrintBtn" style="width:100%">Print answer sheets</button>
-            <div id="paperRoundWrap" style="margin-top:10px">
-              <label for="cfgRound">Questions per round</label>
-              <input type="number" id="cfgRound" class="mono" min="3" max="50" value="10">
-            </div>
             <div class="note" id="paperNote" style="margin-top:4px">Up to 10 teams a night. With paper teams playing, the answers go up at the end of each round, after the host has their sheets. A paper team counts as a player once its score goes on the leaderboard.</div>
           </div>
           <div id="weekBanner" style="display:none;margin:0 0 12px;padding:12px 14px;background:rgba(245,165,36,.12);border:1px solid rgba(245,165,36,.45);border-radius:11px;color:#F5A524;font-size:13.5px;line-height:1.5"></div>
@@ -359,14 +350,20 @@
      host_here is on the screen's presence list and on the router's do-not-hop
      list, so this keeps the wall alive without ever looking like a game starting. */
   var HEARTBEAT_MS = 30000;
+  var _leaving=false;   // set as the page is left, so closing its channel is not reported as a drop
   setInterval(function(){
     if(G.status && G.status !== "setup") bcast({ t:"host_here" });
   }, HEARTBEAT_MS);
   function openGameChannel(joinCode){
     if(gch){ try{ client.removeChannel(gch); }catch(e){} gch=null; gsub=false; }
     gch=client.channel("vp-"+joinCode, { config:{ broadcast:{ self:false } } });
+    var mine=gch;
     gch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
     gch.subscribe(function(status){
+      /* NOT A DROP: this channel was replaced, or the page is being left. Leaving (Build a night,
+         Games, a reload) closes the channel, and that CLOSED used to put "Lost the connection to
+         the players' phones" on screen as the page went (Dean, 27 Sep 2026). */
+      if(mine!==gch || _leaving) return;
       if(status==="SUBSCRIBED"){ gsub=true; gflush(); gsend({ t:"rollcall" }); return; }   // ask connected players to re-announce so the roster rebuilds
       /* gsub was never reset, so after a dropped channel gsend() kept posting into a dead socket:
          questions stopped reaching phones and nothing on the console said so. The TV pairing
@@ -740,7 +737,11 @@
     G.timePerQ=Math.max(5, Math.min(60, parseInt($("cfgTime").value,10)||30));
     G.base=Math.max(0, parseInt($("cfgBase").value,10)||0);
     G.count=Math.max(1, Math.min(100, parseInt($("cfgCount").value,10)||10));
-    G.roundSize=Math.max(3, Math.min(50, parseInt($("cfgRound").value,10)||10));
+    /* ONE STRIP PER ROUND, THE WHOLE ROUND ON IT. There was a separate "Questions per round" box
+       under the print button; Dean, 27 Sep 2026: "dunno why that's there". A paper team now gets one
+       strip with every question in this round and hands it in at the end, so the sheets follow
+       "Questions this round" and there is one number to set, not two. */
+    G.roundSize=G.count;
     G.setId=$("setSel").value||"";
     var so=$("setSel").options[$("setSel").selectedIndex];
     G.setTitle=(so && so.getAttribute("data-title"))||"";
@@ -1070,8 +1071,12 @@
     G.setId=sel.value||""; G.questionCount=(c>=0?c:0);
     G.setTitle=(opt && opt.getAttribute("data-title"))||"";
     $("setupQs").textContent=G.questionCount;
-    // Default the round to the WHOLE set so a host's questions all play (was stuck at 10). They can lower it.
-    if($("cfgCount") && G.questionCount>0){ $("cfgCount").value=Math.min(100, G.questionCount); }
+    /* A NIGHT YOU BUILT PLAYS IN FULL; A QUESTION BANK STARTS AT 10. This filled the whole set
+       every time, so picking a bank like Geography (2,720 questions) set the round to 100 (Dean,
+       27 Sep 2026: "for some reason it defaulted to 100 questions"). Up to 50 is a night somebody
+       built, so all of it; more than that is a bank to draw from, so a normal round of 10. */
+    if($("cfgCount") && G.questionCount>0){ $("cfgCount").value = G.questionCount<=50 ? G.questionCount : 10; }
+    if(typeof renderPaperSetup==="function"){ try{ renderPaperSetup(); }catch(e){} }
     /* RE-RENDER. renderConsole() decides whether "Open lobby" is enabled, and it reads
        G.questionCount. On a cold load renderConsole() runs before the question sets have come
        back from the network, so the count is 0 and the button is disabled and captioned "No
@@ -1117,11 +1122,17 @@
     $("paperPrintBtn").textContent = n ? ("Print again ("+n+" team sheet"+(n===1?"":"s")+" tonight)") : "Print answer sheets";
     /* The sheets are printed in rounds of this size, so once they are on the tables it cannot
        change: a different size would ask for sheets at the wrong moment. */
-    var info=paperPrintedInfo(), rin=$("cfgRound");
-    if(n && info.roundSize){ rin.value=String(info.roundSize); rin.disabled=true; } else { rin.disabled=false; }
+    var info=paperPrintedInfo();
+    readSettings();
+    /* Printed for a different number of questions than the round is now set to: say so, plainly,
+       before the lobby opens. A reprint before the game starts replaces the sheets. */
+    var stale = n && info.questions && info.questions !== G.count && !G.gameId;
     $("paperNote").textContent = n
-      ? (n+" paper team"+(n===1?"":"s")+" tonight, printed in rounds of "+(info.roundSize||G.roundSize)+" for "+(info.questions||G.count)+" questions. The answers go up at the end of each round, after you have their sheets. A paper team counts as a player once its score goes on the leaderboard.")
-      : "Up to 10 teams a night. With paper teams playing, the answers go up at the end of each round, after the host has their sheets. A paper team counts as a player once its score goes on the leaderboard.";
+      ? (stale
+          ? ("Printed for "+info.questions+" questions, but this round is now "+G.count+". Tap Print again for sheets that match.")
+          : (n+" paper team"+(n===1?"":"s")+" tonight, each with one sheet of "+(info.questions||G.count)+" questions. The answers go up at the end of the round, after you have their sheets. A paper team counts as a player once its score goes on the leaderboard."))
+      : "Up to 10 teams a night. With paper teams playing, the answers go up at the end of the round, after the host has their sheets. A paper team counts as a player once its score goes on the leaderboard.";
+    $("paperNote").style.color = stale ? "var(--gold)" : "";
   }
   var _paperDone=null;
   $("paperGo").addEventListener("click", function(){
@@ -1146,7 +1157,7 @@
       openSession().then(function(){
         return apiPost("/host/paper/print",{ session_id:G.sessionId, kind:"trivia", count:n, round_size:G.roundSize, questions:G.count });
       }).then(function(r){
-        // The server keeps the FIRST print's shape; a reprint for more teams gets the same sheets.
+        // Before the game the latest print wins; once it is running a reprint keeps the sheets on the tables.
         var rs=r.round_size||G.roundSize, qn=r.questions||G.count;
         try{ localStorage.setItem(paperKey(), JSON.stringify({ teams:r.teams, roundSize:rs, questions:qn })); }catch(e){}
         renderPaperSetup();
@@ -1156,7 +1167,7 @@
       }).catch(function(e){ if(window.VPPrint) VPPrint.fail(w, e.message); hostError(e.message); });
     });
   });
-  $("cfgRound").addEventListener("change", function(){ readSettings(); });
+  $("cfgCount").addEventListener("input", function(){ renderPaperSetup(); });
 
   function sheetShape(){
     var rounds=Math.ceil(G.count/G.roundSize);
@@ -1264,10 +1275,8 @@
     G.speedBonus=b.getAttribute("data-v")==="on";
     document.querySelectorAll("#cfgSpeed button").forEach(function(x){x.classList.remove("on");}); b.classList.add("on");
   }); });
-  document.querySelectorAll("#cfgColour button").forEach(function(b){ b.addEventListener("click", function(){
-    G.colour=b.getAttribute("data-v")==="on";
-    document.querySelectorAll("#cfgColour button").forEach(function(x){x.classList.remove("on");}); b.classList.add("on");
-  }); });
+  /* No "Plain" answer buttons any more (Dean, 27 Sep 2026: "get rid of the setting to change the
+     coloured buttons"). Phones always get the four colours, which match the TV. */
 
   /* ONCE-A-WEEK, SAID UP FRONT. The Worker refuses a second trivia night inside 7 days, but it
      only said so at Start, after the QR was on the TV and the room had scanned in. The venue row
@@ -1337,8 +1346,7 @@
         if(s.trivia_base_points!=null){ G.base=s.trivia_base_points; var bp=$("cfgBase"); if(bp) bp.value=s.trivia_base_points; }
         if(s.trivia_speed_bonus!=null){ G.speedBonus=!!s.trivia_speed_bonus;
           var seg=$("cfgSpeed"); if(seg){ Array.prototype.forEach.call(seg.children, function(bt){ bt.classList.toggle("on", (bt.getAttribute("data-v")==="on")===G.speedBonus); }); } }
-        if(s.trivia_colour!=null){ G.colour=!!s.trivia_colour;
-          var cseg=$("cfgColour"); if(cseg){ Array.prototype.forEach.call(cseg.children, function(bt){ bt.classList.toggle("on", (bt.getAttribute("data-v")==="on")===G.colour); }); } }
+        G.colour=true;   // a venue that once saved "Plain" is not stuck with it: the setting is gone
       }).catch(function(){}); }
       weeklyPreCheck(ctx.venue);
       // Tell vp-session when a quiz is actually on, so the forced sign-out stops closing the
@@ -1409,6 +1417,8 @@
     if(document.visibilityState === "visible") reassertOnReturn();
   });
 
+  window.addEventListener("beforeunload", function(){ _leaving=true; });
+  window.addEventListener("pagehide", function(){ _leaving=true; });
   window.addEventListener("pagehide", function(){
     if(G.status==="question" || G.status==="reveal" || G.status==="ready") return;
     try{ rawSend({ t:"to_ads" }); }catch(e){}   // sync on unload; an async signed send never lands before the page dies. NOT exempt: under enforce this is dropped, see vp-sign.js EXEMPT
