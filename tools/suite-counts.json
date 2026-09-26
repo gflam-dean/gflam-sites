@@ -108,7 +108,7 @@
   "counted_by": "lines"
  },
  "tools/test-demo-returns-to-offer.js": {
-  "checks": 16,
+  "checks": 22,
   "counted_by": "lines"
  },
  "tools/test-draws-keep-an-honest-record.js": {

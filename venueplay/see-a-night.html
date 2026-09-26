@@ -1559,11 +1559,16 @@ block (all classes prefixed .vpa-)
   /* THE BAR THAT IS ALWAYS THERE. Dean, 26 Sep 2026. Both real visitors in a week played with this
      demo for minutes and never scrolled to the block above, so a next step only at the bottom was
      never seen. Pinned to the bottom of the screen, under the demo's own pop-up (z 50). */
-  .vp-startstrip{position:fixed;left:0;right:0;bottom:0;z-index:45;display:flex;align-items:center;justify-content:center;
+  .vp-startstrip{position:fixed;left:0;right:0;bottom:0;z-index:55;display:flex;align-items:center;justify-content:center;
     gap:14px;flex-wrap:wrap;padding:12px 52px 12px 16px;background:rgba(10,10,11,.94);border-top:1px solid rgba(255,31,142,.45);
     backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;font-size:15px;
     transform:translateY(110%);transition:transform .3s ease}
   .vp-startstrip.show{transform:none}
+  /* ABOVE THE DEMO, NOT UNDER IT. The demo opens full screen (.vp-backdrop, z 50) and that is where a
+     visitor spends their time, so a strip underneath it was never seen: Dean, "Nothing is there".
+     While the strip shows, the demo leaves room for it at the bottom. */
+  body.vp-strip-on .vp-backdrop{padding-bottom:86px}
+  @media(max-width:560px){body.vp-strip-on .vp-backdrop{padding-bottom:70px}}
   .vp-startstrip .t b{color:#fff}
   .vp-startstrip .t span{color:#B9B2C7}
   .vp-startstrip a.go{display:inline-block;text-decoration:none;font-weight:800;background:#FF1F8E;color:#fff;
@@ -1638,13 +1643,13 @@ block (all classes prefixed .vpa-)
 
     <div class="vp-modebar">
       <button class="vp-modebtn" id="vpModeBtn" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="vpModeMenu">
-        <span>Game mode: <span class="vp-mode-accent" id="vpModeLabel">Bingo</span></span>
+        <span>Game mode: <span class="vp-mode-accent" id="vpModeLabel">Trivia</span></span>
         <svg class="vp-caret" width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true"><path d="M1 1.5 6 6.5 11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
       <div class="vp-modemenu" id="vpModeMenu" role="listbox" aria-label="Game mode" tabindex="-1">
-        <button class="vp-modeopt" type="button" role="option" data-mode="bingo" data-label="Bingo" aria-selected="true">Bingo<span class="vp-check" aria-hidden="true">&#10003;</span></button>
-        <button class="vp-modeopt" type="button" role="option" data-mode="trivia" data-label="Trivia" aria-selected="false">Trivia<span class="vp-check" aria-hidden="true">&#10003;</span></button>
+        <button class="vp-modeopt" type="button" role="option" data-mode="trivia" data-label="Trivia" aria-selected="true">Trivia<span class="vp-check" aria-hidden="true">&#10003;</span></button>
         <button class="vp-modeopt" type="button" role="option" data-mode="musical" data-label="Musical bingo" aria-selected="false">Musical bingo<span class="vp-check" aria-hidden="true">&#10003;</span></button>
+        <button class="vp-modeopt" type="button" role="option" data-mode="bingo" data-label="Bingo" aria-selected="false">Bingo<span class="vp-check" aria-hidden="true">&#10003;</span></button>
         <button class="vp-modeopt" type="button" role="option" data-mode="raffle" data-label="Raffle" aria-selected="false">Raffle<span class="vp-check" aria-hidden="true">&#10003;</span></button>
         <button class="vp-modeopt" type="button" role="option" data-mode="members" data-label="Members draw" aria-selected="false">Members draw<span class="vp-check" aria-hidden="true">&#10003;</span></button><button class="vp-modeopt" type="button" role="option" data-mode="ads" data-label="Screen ads" aria-selected="false">Screen ads<span class="vp-check" aria-hidden="true">&#10003;</span></button>
       </div>
@@ -1858,7 +1863,7 @@ block (all classes prefixed .vpa-)
   go.href=(main&&main.getAttribute("href"))||"/#claim";
   var hidden=false, started=false, nextOnScreen=false;
   try{ hidden=sessionStorage.getItem("vpStartStripHidden")==="1"; }catch(e){}
-  function paint(){ strip.classList.toggle("show", started && !hidden && !nextOnScreen); }
+  function paint(){ var on=started && !hidden && !nextOnScreen; strip.classList.toggle("show", on); document.body.classList.toggle("vp-strip-on", on); }
   function start(){ if(started) return; started=true; paint(); }
   /* after they start using the demo, or 12 seconds of reading, whichever is first */
   document.addEventListener("click", function(e){ if(!strip.contains(e.target)) start(); }, true);
@@ -1896,8 +1901,11 @@ block (all classes prefixed .vpa-)
 
   /* Selected game mode. "bingo" embeds the real screens; the other modes show a card saying
      the game is live and the preview is coming, until each gets a demo script of its own. */
-  var currentMode = "bingo";
-  var currentModeLabel = "Bingo";
+  /* TRIVIA FIRST. Dean, 26 Sep 2026: "any demos need to start on trivia", the same order the demo at
+     the top of the homepage and the offer page already uses (trivia, musical bingo, bingo). A link
+     with ?mode= still opens on the game it names. */
+  var currentMode = "trivia";
+  var currentModeLabel = "Trivia";
 
   var screenLabels = {
     tv: "Big screen",

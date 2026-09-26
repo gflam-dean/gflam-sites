@@ -51,7 +51,9 @@ if (BAR) {
   var els = { vpStartStrip: strip, vpStartGo: { href: "" }, vpStartX: { addEventListener: function(t, fn){ this.fn = fn; } },
               vpNextGo: { getAttribute: function(){ return "/offer-oct#claim"; } } };
   var store = {};
-  var document = { getElementById: function(id){ return els[id]; }, querySelector: function(){ return null; },
+  var bodyCls = {};
+  var document = { body: { classList: { toggle: function(c, on){ bodyCls[c] = !!on; } } },
+                   getElementById: function(id){ return els[id]; }, querySelector: function(){ return null; },
                    addEventListener: function(t, fn){ listeners.push(fn); } };
   var sessionStorage = { getItem: function(k){ return store[k] || null; }, setItem: function(k, v){ store[k] = v; } };
   (new Function("document", "window", "sessionStorage", "setTimeout", BAR))(document, {}, sessionStorage, function(fn){ timers.push(fn); });
@@ -59,9 +61,22 @@ if (BAR) {
   ok("the bar is not shown the instant the page opens", !cls.show);
   listeners.forEach(function(fn){ fn({ target: {} }); });
   ok("it shows once they start using the demo", cls.show === true);
+  ok("...and tells the page, so the full-screen demo leaves room for it", bodyCls["vp-strip-on"] === true);
   els.vpStartX.fn();
   ok("the close button hides it, and it stays hidden for the visit", cls.show === false && store.vpStartStripHidden === "1");
 }
+/* "Nothing is there" (Dean, 26 Sep): the strip sat UNDER the full-screen demo. It must sit above it. */
+var zStrip = +((/\.vp-startstrip\{[^}]*z-index:(\d+)/.exec(PAGE) || [])[1] || 0);
+var zDemo = +((/\.vp-backdrop \{[\s\S]*?z-index:\s*(\d+)/.exec(PAGE) || [])[1] || 0);
+ok("the strip sits above the full-screen demo (" + zStrip + " over " + zDemo + ")", zStrip > zDemo && zDemo > 0);
+ok("the demo leaves room at the bottom while the strip shows", /body\.vp-strip-on \.vp-backdrop\{padding-bottom:\d+px\}/.test(PAGE));
+/* "any demos need to start on trivia" (Dean, 26 Sep) */
+ok("the full demo starts on trivia", /var currentMode = "trivia";/.test(PAGE) && /id="vpModeLabel">Trivia</.test(PAGE));
+var opts = PAGE.match(/data-mode="([a-z]+)" data-label="[^"]*" aria-selected="(true|false)"/g) || [];
+ok("trivia is first in the game menu and the one selected", opts.length > 3 && /data-mode="trivia"[\s\S]*aria-selected="true"/.test(opts[0]) &&
+   opts.filter(function(o){ return /aria-selected="true"/.test(o); }).length === 1, opts[0]);
+ok("then musical bingo, then bingo, as on the homepage", /"musical"/.test(opts[1] || "") && /"bingo"/.test(opts[2] || ""));
+
 print("");
 if (bad) { print(bad + " OF " + ran + " CHECKS FAILED"); throw new Error(bad + " failed"); }
 print("ALL " + ran + " CHECKS PASSED");
