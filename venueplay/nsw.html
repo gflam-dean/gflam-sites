@@ -841,7 +841,7 @@
       </div>
       <div class="h2-under">
         <p class="h2-cap">The real screens, playing a sample night. Pick a game, or see the screen between games.</p>
-        <a class="btn btn-primary h2-watch" href="/see-a-night?from=nsw" data-cta="hero-see-a-night">Play with a full night</a>
+        <a class="btn btn-primary h2-watch" href="/see-a-night?from=offer-oct" data-cta="hero-see-a-night">Play with a full night</a>
       </div>
     </div>
   </div>
@@ -1927,6 +1927,10 @@
   window.VP_OFFER = o;
   function put(cls, txt){ var els = document.querySelectorAll('.' + cls); for (var i = 0; i < els.length; i++) els[i].textContent = txt; }
   put('vpc-date', o.date); put('vpc-day', o.day); put('vpc-month', o.month);
+  /* The demo sends them back to THIS month's offer (see-a-night reads ?from=offer-<mon>). */
+  var key = (m && OFFERS[m[1].toLowerCase()]) ? m[1].toLowerCase() : 'oct';
+  var w = document.querySelectorAll('a[href^="/see-a-night?from="]');
+  for (var wi = 0; wi < w.length; wi++) w[wi].setAttribute('href', '/see-a-night?from=offer-' + key);
 })();
 </script>
 

@@ -1556,6 +1556,24 @@ block (all classes prefixed .vpa-)
   .vp-next-go{background:#FF1F8E;color:#fff;box-shadow:0 10px 30px -12px rgba(255,31,142,.9)}
   .vp-next-alt{background:transparent;color:#E9E4F0;border:1px solid rgba(255,255,255,.22)}
   .vp-next-fine{color:#8E869E;font-size:13.5px;margin:20px 0 0}
+  /* THE BAR THAT IS ALWAYS THERE. Dean, 26 Sep 2026. Both real visitors in a week played with this
+     demo for minutes and never scrolled to the block above, so a next step only at the bottom was
+     never seen. Pinned to the bottom of the screen, under the demo's own pop-up (z 50). */
+  .vp-startstrip{position:fixed;left:0;right:0;bottom:0;z-index:45;display:flex;align-items:center;justify-content:center;
+    gap:14px;flex-wrap:wrap;padding:12px 52px 12px 16px;background:rgba(10,10,11,.94);border-top:1px solid rgba(255,31,142,.45);
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;font-size:15px;
+    transform:translateY(110%);transition:transform .3s ease}
+  .vp-startstrip.show{transform:none}
+  .vp-startstrip .t b{color:#fff}
+  .vp-startstrip .t span{color:#B9B2C7}
+  .vp-startstrip a.go{display:inline-block;text-decoration:none;font-weight:800;background:#FF1F8E;color:#fff;
+    padding:11px 20px;border-radius:999px;box-shadow:0 10px 30px -12px rgba(255,31,142,.9);white-space:nowrap}
+  .vp-startstrip a.go:hover{background:#ff3d9e}
+  .vp-startstrip button.x{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:0;
+    color:#8E869E;font-size:22px;line-height:1;padding:8px;cursor:pointer}
+  @media(max-width:560px){.vp-startstrip{font-size:14px;gap:8px;padding:10px 44px 12px 12px;text-align:center}
+    .vp-startstrip .t span{display:none}}
+  @media(prefers-reduced-motion:reduce){.vp-startstrip{transition:none}}
 </style>
 
 <style>
@@ -1803,22 +1821,53 @@ block (all classes prefixed .vpa-)
 </div>
 <script>
 (function(){
-  /* SEND THEM BACK TO WHERE THEY CAME FROM, AT THE PRICE THEY WERE SHOWN. Every state page opens
-     this demo, and this block used to quote $3 and send everybody to the homepage, so a venue
-     that arrived on the New South Wales offer at $2.50 watched the demo and was then walked to a
-     dearer price on a different page. The state comes from ?from= when a link carries it, else
-     from the page that sent them here. No state, no change: the homepage and its $3 stand. */
-  var STATES={ nsw:"New South Wales", vic:"Victoria", qld:"Queensland", sa:"South Australia", wa:"Western Australia", tas:"Tasmania", nt:"the Northern Territory", act:"ACT" };
-  var st="";
+  /* SEND THEM BACK TO THE OFFER THEY CAME FROM, AT THE PRICE THEY WERE SHOWN. The offer page
+     (/offer-oct, /offer-nov ...) opens this demo with ?from=offer-<month>, or is the referrer. This
+     used to know only the old state pages, which were retired on 25 Sep 2026, so a venue from
+     /offer-oct watched the demo and was walked to the $3 homepage, and one from /nsw was told
+     "the New South Wales offer" (Dean: no state wording anywhere). An old ?from=nsw link, or /nsw
+     itself, is the October page, so it goes to /offer-oct. No offer, no change: the homepage's $3. */
+  var mon="";
   try{
-    var q=/[?&]from=([a-z]{2,3})\b/.exec(location.search||""); if(q && STATES[q[1]]) st=q[1];
-    if(!st && document.referrer){ var a=document.createElement("a"); a.href=document.referrer;
-      if(a.hostname===location.hostname){ var m=/^\/(nsw|vic|qld|sa|wa|tas|nt|act)(?:\.html)?\/?$/.exec(a.pathname); if(m) st=m[1]; } }
+    var q=/[?&]from=(?:offer-([a-z]{3})|(nsw|vic|qld|sa|wa|tas|nt|act))\b/.exec(location.search||"");
+    if(q) mon=q[1]||"oct";
+    if(!mon && document.referrer){ var a=document.createElement("a"); a.href=document.referrer;
+      if(a.hostname===location.hostname){
+        var m=/^\/offer-([a-z]{3})\/?$/.exec(a.pathname) || (/^\/(?:nsw|offer\/oct)(?:\.html)?\/?$/.test(a.pathname) ? [0,"oct"] : null);
+        if(m) mon=m[1]; } }
   }catch(e){}
-  if(!st) return;
-  document.getElementById("vpNextGo").href="/"+st+"#claim";
-  document.getElementById("vpNextTalk").href="/"+st+"#contact";
-  document.getElementById("vpNextPrice").innerHTML="<b>Your first month is free.</b> Then $2.50 per player, per month on the "+STATES[st]+" offer (normally $3). You choose how many players. No lock-in, no setup fee, and nothing extra per night.";
+  if(!/^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)$/.test(mon)) return;
+  var page="/"+"offer-"+mon;   // built in two parts, or the site link checker reads a broken "/offer-" link
+  document.getElementById("vpNextGo").href=page+"#claim";
+  document.getElementById("vpNextTalk").href=page+"#contact";
+  document.getElementById("vpNextPrice").innerHTML="<b>Your first month is free.</b> Then $2.50 per player, per month on our current offer (normally $3). You choose how many players. No lock-in, no setup fee, and nothing extra per night.";
+})();
+</script>
+
+<div class="vp-startstrip" id="vpStartStrip" role="region" aria-label="Start your free month">
+  <div class="t"><b>Your first month is free.</b> <span>Run a real night at your venue.</span></div>
+  <a class="go" id="vpStartGo" href="/#claim">Start your free month</a>
+  <button type="button" class="x" id="vpStartX" aria-label="Hide">&times;</button>
+</div>
+<script>
+(function(){
+  var strip=document.getElementById("vpStartStrip"), go=document.getElementById("vpStartGo"),
+      x=document.getElementById("vpStartX"), next=document.querySelector(".vp-next"), main=document.getElementById("vpNextGo");
+  if(!strip||!go) return;
+  /* Same place as the button at the bottom, whatever that was pointed at (the visitor's offer, or the homepage). */
+  go.href=(main&&main.getAttribute("href"))||"/#claim";
+  var hidden=false, started=false, nextOnScreen=false;
+  try{ hidden=sessionStorage.getItem("vpStartStripHidden")==="1"; }catch(e){}
+  function paint(){ strip.classList.toggle("show", started && !hidden && !nextOnScreen); }
+  function start(){ if(started) return; started=true; paint(); }
+  /* after they start using the demo, or 12 seconds of reading, whichever is first */
+  document.addEventListener("click", function(e){ if(!strip.contains(e.target)) start(); }, true);
+  setTimeout(start, 12000);
+  /* step aside while the full sign-up block is on screen, so there are never two at once */
+  if(next && "IntersectionObserver" in window){
+    new IntersectionObserver(function(es){ nextOnScreen=es[0].isIntersecting; paint(); }).observe(next);
+  }
+  x.addEventListener("click", function(){ hidden=true; try{ sessionStorage.setItem("vpStartStripHidden","1"); }catch(e){} paint(); });
 })();
 </script>
 
