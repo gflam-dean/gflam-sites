@@ -61,6 +61,14 @@ function reads(table) { return LOG.filter(function (l) { return l.indexOf('GET '
   LOG.length = 0;
   var skipped = await ask('tok5', '&q=8&last=0');
   show('a phone that did not answer asks for no answer row, and none is read', reads('vp_trivia_answers') === 0 && skipped.body.last.answered === false && typeof skipped.body.total === 'number', JSON.stringify(skipped.body));
+  /* "You finished 5th of 4" (live play-test 27 Sep 2026): a phone with no score is not on the board. */
+  DB.vp_players.push({ id: pid(50), session_id: SESSION, token_hash: 'h-tok50', display_name: 'P50', kicked: false });
+  var none = await ask('tok50', '');
+  show('a phone that has scored nothing counts itself: 41st of 41, never 41st of 40', none.body.rank === 41 && none.body.players_count === 41, JSON.stringify(none.body));
+  DB.vp_players.push({ id: pid(51), session_id: SESSION, token_hash: 'h-tok51', display_name: 'P51', kicked: false });
+  DB.v_vp_trivia_leaderboard.push({ game_id: GAME, player_id: pid(51), points: 0 });
+  none = await ask('tok50', '');
+  show('and shares the place of a team already on 0', none.body.rank === 41 && none.body.players_count === 42, JSON.stringify(none.body));
   finished = true;
 })().catch(function (e) { print('  FAIL the test itself threw: ' + e + '\n' + e.stack); bad++; });
 drainMicrotasks();

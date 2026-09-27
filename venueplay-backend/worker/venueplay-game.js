@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '27 Sep 2026, 11:59 · 24278178';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '27 Sep 2026, 12:18 · 8f03bdfe';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -702,6 +702,26 @@ async function handleAdminSweep(request, env, json) {
    Now it is the latest game AND the running one, and both paths land on bingo.
    Idempotent: a report retry or a second start finds the row already there.
 */
+/* AND ITS END. The start report puts a running bingo90 row on the night (above); the end report only
+   patched vp_game_reports, so the row stayed running: /play/live and /join/info kept saying bingo,
+   and a musical phone's /player/card picked that row and got "Not a bingo game" (live play-test,
+   27 Sep 2026). Best effort, like the start: the report itself must not fail over this. */
+async function markBroadcastGameEnded(env, venueId, format) {
+  try {
+    const root = String(format || '').toLowerCase().split('_')[0].replace(/\d+$/, '');
+    if (root !== 'bingo') return { ok: false };
+    const live = await sbGet(env, 'vp_sessions',
+      'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id&order=created_at.desc&limit=1');
+    if (!live.length) return { ok: false };
+    await sbPatch(env, 'vp_games', 'session_id=eq.' + enc(live[0].id) + '&format=eq.bingo90&status=eq.running',
+      { status: 'finished', ended_at: new Date().toISOString() });
+    return { ok: true };
+  } catch (e) {
+    console.log('[one-game] could not mark bingo ended: ' + String((e && e.message) || e));
+    return { ok: false, error: true };
+  }
+}
+
 async function markBroadcastGameLive(env, venueId, format) {
   try {
     const root = String(format || '').toLowerCase().split('_')[0].replace(/\d+$/, '');
@@ -2463,6 +2483,7 @@ async function handleReport(request, env, json) {
     // another venue's figures.
     await sbPatch(env, 'vp_game_reports',
       'id=eq.' + enc(reportId) + '&venue_id=eq.' + enc(venueId), row);
+    if (row.ended_at) await markBroadcastGameEnded(env, venueId, row.format);
     return json({ ok: true, id: reportId });
   }
   /* Bingo reports the moment a game STARTS, which is the only server-side signal
@@ -5504,10 +5525,15 @@ async function handleHostRevealManyTrips(request, env, json, pre) {
     'game_id=eq.' + enc(gameId) + '&select=player_id,display_name,points&order=points.desc&limit=50');
   const leaderboard = board.map((r) => ({ name: r.display_name || 'Player', points: r.points || 0 }));
 
-  // PUBLIC broadcast: NOW it is safe to send correct_index, the reveal has happened.
-  await emitEvent(env, session, 'trivia.reveal', {
-    qseq: t.current_seq, correct_index: q.correct_index, options, split, leaderboard,
-  }, actorRef(staff));
+  // PUBLIC broadcast: NOW it is safe to send correct_index, the reveal has happened. EXCEPT on a
+  // paper night (defer_reveal): the paper teams have not handed in yet, and any phone in the room
+  // could read this event and tell them (live play-test, 27 Sep 2026; migration 94 does the same in
+  // vp_host_reveal). The console has the answer from its own reply and puts it up at round end.
+  const deferred = cfg.defer_reveal === true;
+  await emitEvent(env, session, 'trivia.reveal', deferred
+    ? { qseq: t.current_seq, options, leaderboard, deferred: true }
+    : { qseq: t.current_seq, correct_index: q.correct_index, options, split, leaderboard },
+  actorRef(staff));
 
   return json({ qseq: t.current_seq, correct_index: q.correct_index, split, leaderboard, already });
 }
@@ -6027,7 +6053,15 @@ async function handlePlayerScore(request, env, json) {
       found = true; break;
     }
   }
-  if (!found) { total = 0; rank = board.length + 1; }
+  /* A phone that has not scored is not on the leaderboard view yet. It was ranked one past the end
+     while players_count left it out, so the phone said "You finished 5th of 4" (live play-test,
+     27 Sep 2026). It counts itself, and shares the place of anyone else on 0. */
+  let count = board.length;
+  if (!found) {
+    total = 0; count = board.length + 1;
+    let firstZero = board.findIndex((r) => (r.points || 0) <= 0);
+    rank = firstZero >= 0 ? firstZero + 1 : board.length + 1;
+  }
 
   // The player's most recent stamped answer in this game. NOTE: this is not necessarily the
   // question just revealed. vp_trivia_answers is keyed by question_id, not qseq, and resolving a
@@ -6043,7 +6077,7 @@ async function handlePlayerScore(request, env, json) {
     ? { answered: true, answer_index: last[0].answer_index, is_correct: last[0].is_correct, points_awarded: last[0].points_awarded }
     : { answered: false, is_correct: null, points_awarded: null };
 
-  return json({ total, rank, players_count: board.length, last: lastRow });
+  return json({ total, rank, players_count: count, last: lastRow });
 }
 
 /* ------------------------------ POST /host/claim/resolve ------------------------------

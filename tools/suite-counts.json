@@ -95,6 +95,10 @@
   "checks": 14,
   "counted_by": "lines"
  },
+ "tools/test-bingo-end-report.js": {
+  "checks": 4,
+  "counted_by": "lines"
+ },
  "tools/test-body-reader.js": {
   "checks": 27,
   "counted_by": "lines"
@@ -224,7 +228,7 @@
   "counted_by": "lines"
  },
  "tools/test-score-pull-is-shared.js": {
-  "checks": 11,
+  "checks": 13,
   "counted_by": "lines"
  },
  "tools/test-screen-check-probe.js": {
@@ -320,7 +324,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/bingo-console.test.js": {
-  "checks": 53,
+  "checks": 58,
   "counted_by": "lines"
  },
  "venueplay-backend/app/bingo-win.test.js": {

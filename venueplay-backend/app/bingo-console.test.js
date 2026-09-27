@@ -229,6 +229,25 @@ ok("tapping a tile marks the pick before opening it",
   ok("both switch buttons go through the guard", (html.match(/addEventListener\("click", trySwitchVenue\)/g) || []).length === 2);
 })();
 
+/* EDITS IN THE LOBBY REACH THE TV (audit 27 Sep 2026). Runs the real lobbyEdited. */
+(function(){
+  var fn = grab("lobbyEdited");
+  ok("the lobby edit handler is in the console", !!fn);
+  if (!fn) return;
+  var sent = 0, saved = 0;
+  var els = { patternSel: { value: "two_lines" }, prizeInput: { value: " $100 meat tray " }, cardsSel: { value: "2" } };
+  var G = { status: "lobby", pattern: "one_line", prize: "$50 bar tab", defaultCards: 1 };
+  var f = new Function("G", "$", "clampCards", "sendState", "saveGame", fn + "; return lobbyEdited;")(
+    G, function(id){ return els[id]; }, function(v){ return parseInt(v,10)||1; }, function(){ sent++; }, function(){ saved++; });
+  f();
+  ok("a prize fixed in the lobby goes to the TV and phones", G.prize === "$100 meat tray" && G.pattern === "two_lines" && G.defaultCards === 2 && sent === 1, JSON.stringify(G));
+  els.prizeInput.value = "   "; f();
+  ok("clearing the prize box keeps the last prize up rather than a blank", G.prize === "$100 meat tray" && sent === 2);
+  G.status = "running"; els.patternSel.value = "full_house"; f();
+  ok("control: once the game is running an edit changes nothing on air", G.pattern === "two_lines" && sent === 2);
+  ok("all three fields are listened to", /addEventListener\("change", lobbyEdited\)/.test(html) && /\$\("prizeInput"\)\.addEventListener\("input", lobbyEdited\)/.test(html) && (html.match(/lobbyEdited\);/g)||[]).length >= 3);
+})();
+
 var card = grab("showNightCard");
 ok("the night card takes the session it is reporting on",
    !!card && /function showNightCard\(sessionId\)/.test(card));

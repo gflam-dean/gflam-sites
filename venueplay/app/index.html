@@ -1780,6 +1780,21 @@
     openServerSession();
   }
 
+  /* EDITS IN THE LOBBY GO OUT. The pattern, prize and cards were read once, when the lobby opened,
+     and nothing listened after that: a host who fixed the prize while the room scanned in had the
+     old prize on the TV and the phones (audit, 27 Sep 2026). An emptied prize box keeps the last
+     prize rather than putting a blank up. */
+  function lobbyEdited(){
+    if(G.status!=="lobby") return;
+    G.pattern=$("patternSel").value;
+    var pz=String($("prizeInput").value||"").trim(); if(pz) G.prize=pz;
+    G.defaultCards=clampCards($("cardsSel").value);
+    sendState(); saveGame();
+  }
+  $("patternSel").addEventListener("change", lobbyEdited);
+  $("cardsSel").addEventListener("change", lobbyEdited);
+  $("prizeInput").addEventListener("input", lobbyEdited);
+
   /* THE SERVER SESSION. Broadcast bingo ran without one for a long time and paid for it twice
      over: the room could never be counted by anything but this browser, and /capture had nothing
      to identify a phone by except a code derived from the venue's PUBLIC slug, which is printed

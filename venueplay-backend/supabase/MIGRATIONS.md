@@ -168,3 +168,9 @@ question was ASKED with, subtracting `config.time_added.ms` (from /host/question
 always did. Found live by the play-test of 27 Sep 2026 (a 125-point answer scored 150; the audit fault of 20 Sep).
 RUN ON SYDNEY 27 Sep 2026; verified by pg_get_functiondef and by replaying the live add-time test on test-bravo
 (now 125). Grants unchanged. Rollback: re-run vp_host_reveal from migration 73.
+
+`venueplay-94-paper-night-reveal-private.sql`: on a paper night (`config.defer_reveal`) `vp_host_reveal` emits
+`trivia.reveal` WITHOUT `correct_index` or `split` (it went to the public session channel every joined phone reads,
+before the paper teams handed in). The host's reply keeps the answer. Worker fallback changed to match.
+RUN ON SYDNEY 27 Sep 2026; proven live on test-bravo (event keys: deferred, leaderboard, options, qseq). Keeps 93's fix.
+Rollback: re-run 93.
