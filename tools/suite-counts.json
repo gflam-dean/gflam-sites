@@ -95,6 +95,10 @@
   "checks": 14,
   "counted_by": "lines"
  },
+ "tools/test-billing-panels.js": {
+  "checks": 54,
+  "counted_by": "lines"
+ },
  "tools/test-bingo-end-report.js": {
   "checks": 4,
   "counted_by": "lines"
