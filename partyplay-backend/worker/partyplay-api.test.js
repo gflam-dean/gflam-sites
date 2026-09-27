@@ -890,6 +890,63 @@ test("a Worker with no email key cannot pretend it sent one", function(){
       ok(stamps().length === 0, "and stamped nothing"); });
 });
 
+/* A comp and an admin Resend stamp welcome_sent_at like a paid party, only when the
+   email went, and the admin is told when it did not (audit, 27 Sep 2026). */
+var AK = {"x-admin-key":"test-admin-key"};
+function compRow(){ return { status:201, body: JSON.stringify([{ id:"LC", code:"ACDEFG", host_key:HK,
+  buyer_name:"Dean", buyer_email:"d@e.f", party_name:null, days:3, is_comp:true }]) }; }
+test("a comp that was emailed is stamped delivered", function(){
+  FETCH.calls = [];
+  FETCH.plan = [ { status:200, body:"[]" }, compRow(), { status:200, body: JSON.stringify({ id:"em_2" }) } ];
+  return W.fetch(req("POST","/admin/comp",{ key:"test-admin-key", name:"Dean", email:"d@e.f" }, AK), ENV)
+    .then(function(r){ return r.json().then(function(j){
+      ok(r.status===200 && j.emailed===true, "got "+r.status+" "+JSON.stringify(j));
+      ok(stamps().length === 1, "welcome_sent_at written, saw "+stamps().length);
+    }); });
+});
+test("a comp whose email was refused is not, and the admin is told", function(){
+  FETCH.calls = [];
+  FETCH.plan = [ { status:200, body:"[]" }, compRow(), { status:422, body: JSON.stringify({ message:"no" }) } ];
+  return W.fetch(req("POST","/admin/comp",{ key:"test-admin-key", name:"Dean", email:"d@e.f" }, AK), ENV)
+    .then(function(r){ return r.json().then(function(j){
+      ok(j.emailed===false, "emailed:false, got "+JSON.stringify(j));
+      ok(stamps().length === 0, "nothing stamped, saw "+stamps().length);
+    }); });
+});
+test("the admin Resend button stamps the party once the email goes", function(){
+  FETCH.calls = [];
+  FETCH.plan = [ licenceForResend(), { status:200, body: JSON.stringify({ id:"em_3" }) } ];
+  return W.fetch(req("POST","/admin/party/do",{ key:"test-admin-key", code:"ACDEFG", action:"resend" }, AK), ENV)
+    .then(function(r){ ok(r.status===200 && stamps().length === 1, "got "+r.status+", stamps "+stamps().length); });
+});
+test("+24 hours on a party that already ended runs from now, not from the old end", function(){
+  FETCH.calls = [];
+  FETCH.plan = [ { status:200, body: JSON.stringify([{ id:"L1", code:"ACDEFG",
+    activated_at: new Date(Date.now()-4*86400e3).toISOString(), expires_at: new Date(Date.now()-2*86400e3).toISOString() }]) } ];
+  return W.fetch(req("POST","/admin/party/do",{ key:"test-admin-key", code:"ACDEFG", action:"extend", hours:24 }, AK), ENV)
+    .then(function(){
+      var p = FETCH.calls.filter(function(c){ return (c.init||{}).method === "PATCH" && /expires_at/.test((c.init||{}).body||""); })[0];
+      var to = p ? Date.parse(JSON.parse(p.init.body).expires_at) : NaN;
+      var h = (to - Date.now()) / 3600e3;
+      ok(h > 23 && h < 25, "ends about 24 hours from now, got " + (isNaN(h) ? "no PATCH" : h.toFixed(1) + " hours"));
+    });
+});
+
+test("an album emptied by the 30 day deletion says expired, a fresh empty one does not", function(){
+  function lic(daysAgo){ return { status:200, body: JSON.stringify([{ id:"L1", party_name:"P",
+    activated_at: new Date(Date.now()-(daysAgo+1)*86400e3).toISOString(),
+    expires_at: new Date(Date.now()-daysAgo*86400e3).toISOString() }]) }; }
+  FETCH.plan = [ lic(40), { status:200, body:"[]" } ];
+  return W.fetch(req("GET","/album?share=abcdefabcdefabcdef"), ENV)
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      ok(j.count===0 && j.expired===true, "40 days after: expired, got "+JSON.stringify(j));
+      FETCH.plan = [ lic(5), { status:200, body:"[]" } ];
+      return W.fetch(req("GET","/album?share=abcdefabcdefabcdef"), ENV).then(function(r){ return r.json(); });
+    })
+    .then(function(j){ ok(j.expired===false, "5 days after: not expired, got "+JSON.stringify(j)); });
+});
+
 /* ============================================================================
    THE UNSUBSCRIBE THAT NOTHING COULD REACH.
 

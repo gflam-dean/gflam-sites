@@ -509,7 +509,9 @@
       if(!b.name||!b.email){ out("compout","Name and email, please.",true); return; }
       $("compgo").disabled=true;
       api("/admin/comp",{method:"POST",body:JSON.stringify(b)})
-        .then(function(j){ out("compout","Done. Code "+j.code+"\nThey have been emailed their link."); 
+        .then(function(j){ out("compout","Done. Code "+j.code+(j.emailed===false
+            ? "\nThe email did NOT go. Open their party below and press Resend their email."
+            : "\nThey have been emailed their link.")); 
           $("cn").value=$("ce").value=$("cp").value=$("cr").value=""; })
         .catch(function(e){ out("compout",e.message,true); })
         .then(function(){ $("compgo").disabled=false; });

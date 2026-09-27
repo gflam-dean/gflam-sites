@@ -13,7 +13,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '27 Sep 2026, 16:33 · 35cd7b6f';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '27 Sep 2026, 17:03 · 56c604c4';   // tools/stamp-workers.py, do not edit by hand
 // The licence window rules live in one place and are shared with the browser.
 // Paste lib/pp-licence.js above this line when deploying, or inline it. It is
 // referenced here as PPLicence.
@@ -562,8 +562,18 @@ async function handleComp(request, env) {
       is_comp: true, comp_reason: b.reason ? String(b.reason).slice(0, 200) : null
     }])
   });
-  try { await sendLicenceEmail(env, rows[0]); } catch (e) { console.log('comp email failed: ' + e.message); }
-  return json({ ok: true, code, hostKey: rows[0].host_key });
+  /* Stamped like a paid one. A comp never set welcome_sent_at, so every comp read as
+     "paid, code never delivered" and a real delivery failure hid among them (audit,
+     27 Sep 2026). The admin is told if the email did not go. */
+  let emailed = false;
+  try {
+    await sendLicenceEmail(env, rows[0]);
+    await sb(env, 'pp_licences?id=eq.' + encodeURIComponent(rows[0].id), {
+      method: 'PATCH', body: JSON.stringify({ welcome_sent_at: new Date().toISOString() })
+    });
+    emailed = true;
+  } catch (e) { console.log('comp email failed: ' + e.message); }
+  return json({ ok: true, code, hostKey: rows[0].host_key, emailed });
 }
 
 /* POST /admin/followups  { key }
@@ -790,7 +800,11 @@ async function handleAlbumShare(request, env) {
     photos: rows.map(r => ({ id: r.id, by: r.taken_by,
                              video: /^video\//.test(r.content_type || '') })),
     count: rows.length,
-    deleteAfter: rows.length ? rows[0].delete_after : null
+    deleteAfter: rows.length ? rows[0].delete_after : null,
+    /* Empty because the album was DELETED on schedule, not because nobody took any.
+       The page said "Nobody took any photos" to a guest whose photos we had removed. */
+    expired: !rows.length && !!l.expires_at &&
+             Date.now() > Date.parse(l.expires_at) + ALBUM_KEEP_DAYS * 86400e3
   });
 }
 
@@ -1406,6 +1420,10 @@ async function handleAdminAction(request, env) {
          reason. */
       return json({ error: 'That email would not send. ' + e.message }, 502);
     }
+    // It went, so the party now has its code: the same stamp the webhook and a comp write.
+    await sb(env, 'pp_licences?id=eq.' + encodeURIComponent(l.id), {
+      method: 'PATCH', body: JSON.stringify({ welcome_sent_at: new Date().toISOString() })
+    });
     did = 'resent the licence email to ' + l.buyer_email;
 
   } else if (act === 'unstart') {
@@ -1420,7 +1438,10 @@ async function handleAdminAction(request, env) {
   } else if (act === 'extend') {
     const hours = Math.min(72, Math.max(1, Number(b.hours) || 24));
     if (!l.expires_at) return json({ error: 'That party has not been started, so there is nothing to extend.' }, 409);
-    const to = new Date(Date.parse(l.expires_at) + hours * 3600e3).toISOString();
+    /* From NOW if it has already ended. Adding 24 hours to a party that finished two
+       days ago left it finished, and the admin was told it now ends at a time already
+       gone (audit, 27 Sep 2026). */
+    const to = new Date(Math.max(Date.parse(l.expires_at), Date.now()) + hours * 3600e3).toISOString();
     await sb(env, 'pp_licences?id=eq.' + l.id, {
       method: 'PATCH', body: JSON.stringify({ expires_at: to })
     });

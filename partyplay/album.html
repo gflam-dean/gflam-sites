@@ -82,7 +82,9 @@
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(d.error) throw new Error(d.error);
-      if(!d.count){ $("app").innerHTML='<h1>'+esc(d.party||"The album")+'</h1><p>Nobody took any photos.</p>'; return; }
+      if(!d.count){ $("app").innerHTML='<h1>'+esc(d.party||"The album")+'</h1><p>'+
+        (d.expired ? "These photos have been deleted. We keep a party\u2019s album for 30 days after the party, then remove it for good."
+                   : "Nobody took any photos.")+'</p>'; return; }
       var gone = d.deleteAfter ? new Intl.DateTimeFormat("en-AU",{weekday:"long",day:"numeric",month:"long"})
         .format(new Date(d.deleteAfter)) : null;
       var days = d.deleteAfter ? albumDays(d.deleteAfter) : null;

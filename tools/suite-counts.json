@@ -35,6 +35,10 @@
   "checks": 39,
   "counted_by": "total"
  },
+ "partyplay-backend/lib/pp-photo-downloads.test.js": {
+  "checks": 7,
+  "counted_by": "lines"
+ },
  "partyplay-backend/lib/pp-photo.test.js": {
   "checks": 28,
   "counted_by": "total"
@@ -64,7 +68,7 @@
   "counted_by": "total"
  },
  "partyplay-backend/worker/partyplay-api.test.js": {
-  "checks": 137,
+  "checks": 145,
   "counted_by": "total"
  },
  "tools/redirect-verdict.test.py": {

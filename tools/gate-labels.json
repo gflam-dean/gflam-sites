@@ -169,6 +169,7 @@
   "pp-host-channel.test.js",
   "pp-join-names.test.js",
   "pp-licence.test.js",
+  "pp-photo-downloads.test.js",
   "pp-photo.test.js",
   "pp-quiz.test.js",
   "pp-run-games.test.js",
