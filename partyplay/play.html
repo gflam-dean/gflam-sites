@@ -272,7 +272,8 @@
     if(email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))
       return joinScreen(code, "That email does not look right. Fix it, or clear it and join anyway.", typed);
     $("go").disabled = true; $("go").textContent = "Joining...";
-    api("/join", { method:"POST", body: JSON.stringify({ code:code, nickname:nickname }) })
+    var had = load() || {};
+    api("/join", { method:"POST", body: JSON.stringify({ code:code, nickname:nickname, prev: had.token || had.prev || "" }) })
       .then(function(j){
         /* `at` is what lets the boot below tell tonight's party from one in March. */
         save({ code:PPConfig.code(code), nickname:j.nickname, token:j.token, email:email, mkt:mkt,
@@ -349,7 +350,9 @@
       var was = load() || {};
       /* Drop the TOKEN, not the whole record: the token is what decides the auto-restore,
          and keeping the rest means their name and email are still filled in for them. */
-      try{ delete was.token; save(was); }catch(e){}
+      /* Kept as `prev`, so typing the same code again gets their own place back rather
+         than a second one out of the fifty. */
+      try{ if(was.token) was.prev = was.token; delete was.token; save(was); }catch(e){}
       hangUp();
       hideCamera();
       joinScreen("", null, { nickname: was.nickname, email: was.email, mkt: was.mkt });

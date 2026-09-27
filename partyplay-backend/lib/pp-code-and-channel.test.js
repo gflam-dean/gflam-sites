@@ -79,6 +79,9 @@ pass("the phone files the code it saves and connects with through PPConfig.code"
      /save\(\{ code:PPConfig\.code\(code\)/.test(PLAY) && /connect\(PPConfig\.code\(code\), j\.nickname\)/.test(PLAY));
 pass("the host console reads its code through PPConfig.code", /var CODE=PPConfig\.code\(q\.get\("code"\)\)/.test(RUN));
 pass("the telly reads its code through PPConfig.code", /var CODE = PPConfig\.code\(/.test(TV));
+pass("the phone sends the token it last had, so a returning guest keeps their place",
+     /api\("\/join", \{ method:"POST", body: JSON\.stringify\(\{ code:code, nickname:nickname, prev: had\.token \|\| had\.prev \|\| "" \}\)/.test(PLAY) &&
+     /if\(was\.token\) was\.prev = was\.token; delete was\.token;/.test(PLAY));
 var resend = lift(SRC, "handleResendWelcome") || "";
 pass("the resend email looks the code up the way /join does", /normaliseCode\(b\.code\)/.test(resend));
 

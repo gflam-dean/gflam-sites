@@ -16,7 +16,7 @@
   "counted_by": "total"
  },
  "partyplay-backend/lib/pp-code-and-channel.test.js": {
-  "checks": 31,
+  "checks": 32,
   "counted_by": "lines"
  },
  "partyplay-backend/lib/pp-guest-connection.test.js": {
@@ -64,7 +64,7 @@
   "counted_by": "total"
  },
  "partyplay-backend/worker/partyplay-api.test.js": {
-  "checks": 132,
+  "checks": 137,
   "counted_by": "total"
  },
  "tools/redirect-verdict.test.py": {

@@ -13,7 +13,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '27 Sep 2026, 16:18 · f30c118d';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '27 Sep 2026, 16:33 · 35cd7b6f';   // tools/stamp-workers.py, do not edit by hand
 // The licence window rules live in one place and are shared with the browser.
 // Paste lib/pp-licence.js above this line when deploying, or inline it. It is
 // referenced here as PPLicence.
@@ -2085,14 +2085,37 @@ async function handleJoin(request, env) {
 
      So the second Sam becomes "Sam 2". The reply carries the name we settled on
      and the phone stores THAT, so it knows itself by a name nobody else has. */
-  const taken = await sb(env, 'pp_players?licence_id=eq.' + encodeURIComponent(l.id) + '&select=nickname');
-  const used = new Set((taken || []).map(r => String(r.nickname || '').toLowerCase()));
+  /* THE SAME GUEST COMING BACK KEEPS THEIR PLACE. The fifty cap counts rows, and every
+     join made a new one: a guest who pressed "Not this party?" and typed the same code, or
+     whose phone had forgotten them, used up a second place, so a party of forty could be
+     turned away as full (audit, 27 Sep 2026). The phone now sends the token it last had;
+     if that token is a player at THIS party, they are the same person and get the same row. */
+  const prev = String(b.prev || '');
+  let me = null;
+  if (/^[A-Z0-9]{24}$/.test(prev)) {
+    const mine = await sb(env, 'pp_players?licence_id=eq.' + encodeURIComponent(l.id) +
+      '&token=eq.' + encodeURIComponent(prev) + '&select=id,nickname&limit=1');
+    me = (mine && mine[0]) || null;
+  }
+
+  const taken = await sb(env, 'pp_players?licence_id=eq.' + encodeURIComponent(l.id) + '&select=id,nickname');
+  const used = new Set((taken || []).filter(r => !me || r.id !== me.id)
+                                    .map(r => String(r.nickname || '').toLowerCase()));
   let name = nickname;
   if (used.has(name.toLowerCase())) {
     for (let n = 2; n <= 60; n++) {
       const tryName = nickname.slice(0, 21) + ' ' + n;
       if (!used.has(tryName.toLowerCase())) { name = tryName; break; }
     }
+  }
+
+  if (me) {
+    if (name !== me.nickname) {
+      await sb(env, 'pp_players?id=eq.' + encodeURIComponent(me.id), {
+        method: 'PATCH', body: JSON.stringify({ nickname: name })
+      });
+    }
+    return json({ ok: true, token: prev, nickname: name, back: true });
   }
 
   const token = makeCode(24);

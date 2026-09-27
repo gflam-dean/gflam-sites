@@ -283,6 +283,44 @@ test("a mistyped twin still gets in", function(){
   return W.fetch(req("POST","/join",{ code:"acde5 2", nickname:"Sam" }), ENV)
     .then(function(r){ ok(r.status===200, "5 for S and 2 for Z accepted, got "+r.status); });
 });
+/* A guest coming back with the token they last had is the same person: same row, no
+   second place out of the fifty (audit, 27 Sep 2026). */
+var PREV = "ACDEFGHJKMNPQRSTUVWXYZ34";
+test("a returning guest keeps their place instead of taking a second one", function(){
+  FETCH.calls = [];
+  FETCH.plan = [ liveLic(),
+    { status:200, body: JSON.stringify([{ id:"P7", nickname:"Sam" }]) },                 // their row
+    { status:200, body: JSON.stringify([{ id:"P7", nickname:"Sam" }, { id:"P8", nickname:"Jo" }]) } ];
+  return W.fetch(req("POST","/join",{ code:"ACDEFG", nickname:"Sam", prev:PREV }), ENV)
+    .then(function(r){ return r.json().then(function(j){
+      var posts = FETCH.calls.filter(function(c){ return c.init && c.init.method === "POST"; });
+      ok(r.status===200 && j.token===PREV && j.nickname==="Sam",
+         "same token and name back, got "+r.status+" "+JSON.stringify(j));
+      ok(posts.length===0, "and no new player row, saw "+posts.length+" inserts");
+      var q = FETCH.calls[1] && String(FETCH.calls[1].url);
+      ok(/licence_id=eq\.L1/.test(q||"") && /token=eq\./.test(q||""), "the token is looked up on THIS party only, got "+q);
+    }); });
+});
+test("a returning guest is not renamed Sam 2 by their own old row", function(){
+  FETCH.calls = [];
+  FETCH.plan = [ liveLic(),
+    { status:200, body: JSON.stringify([{ id:"P7", nickname:"sam" }]) },
+    { status:200, body: JSON.stringify([{ id:"P7", nickname:"sam" }]) },
+    { status:200, body: "[]" } ];                                                        // the rename PATCH
+  return W.fetch(req("POST","/join",{ code:"ACDEFG", nickname:"Sam", prev:PREV }), ENV)
+    .then(function(r){ return r.json().then(function(j){
+      ok(j.nickname==="Sam", "kept Sam, got "+JSON.stringify(j));
+    }); });
+});
+test("a token from another party is a new guest", function(){
+  FETCH.calls = [];
+  FETCH.plan = [ liveLic(), { status:200, body:"[]" }, { status:200, body:"[]" }, { status:201, body:"[]" } ];
+  return W.fetch(req("POST","/join",{ code:"ACDEFG", nickname:"Sam", prev:PREV }), ENV)
+    .then(function(r){ return r.json().then(function(j){
+      var posts = FETCH.calls.filter(function(c){ return c.init && c.init.method === "POST"; });
+      ok(r.status===200 && j.token!==PREV && posts.length===1, "new token, one insert, got "+JSON.stringify(j)+" inserts "+posts.length);
+    }); });
+});
 test("rejects a malformed code", function(){
   return W.fetch(req("POST","/join",{ code:"OOOO00", nickname:"Sam" }), ENV)
     .then(function(r){ ok(r.status===400, "malformed code rejected, got "+r.status); });
