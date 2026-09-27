@@ -115,6 +115,13 @@
     padding:13px 12px;font-size:17px;font-weight:600;font-family:'Manrope',sans-serif}
   .screenpick .pickfine{margin:8px 0 0;font-size:12.5px;color:var(--muted)}
   .screenpick .pickfine b{color:#fff}
+  /* A read that FAILED says so, with a way to try again. It never shows as an empty state:
+     "No members yet." after a failed read is how a club ends up importing thousands twice. */
+  .loadfail{margin:0 0 14px;background:rgba(255,194,75,0.08);border:1px solid rgba(255,194,75,0.4);
+    border-radius:12px;padding:11px 13px;color:#FFC24B;font-size:13.5px}
+  .loadfail[hidden]{display:none}
+  .loadfail .addbtn{margin:8px 0 0}
+  .loadfail p{margin:0}
   /* The venue's name beside a card heading: present, not shouting. */
   .scardhead .forvenue{color:var(--pink);font-weight:600}
   .scardhead .forvenue:not(:empty)::before{content:" · ";color:var(--muted)}
@@ -479,6 +486,7 @@
       <select id="rfVenue"></select>
       <p class="pickfine">The routine and prizes below belong to <b id="rfPickName">this venue</b> only.</p>
     </div>
+    <div id="rfLoadErr" class="loadfail" hidden></div>
     <div class="scard">
       <div class="scardhead">Routine</div>
       <p class="snote">When your raffle runs. Shows on the TV as "drawn [day] [time]".</p>
@@ -504,7 +512,7 @@
     </div>
     <div class="scard">
       <div class="scardhead">Prizes given away</div>
-      <p class="snote" id="rfTally">No prizes recorded yet.</p>
+      <div class="snote" id="rfTally"></div>
     </div>
 
     <!-- Every draw and raffle result, read back. It was all recorded and none of it was shown, so
@@ -540,6 +548,7 @@
       <select id="mdVenue"></select>
       <p class="pickfine">The draw, the jackpot and the members list below belong to <b id="mdPickName">this venue</b> only.</p>
     </div>
+    <div id="mdLoadErr" class="loadfail" hidden></div>
     <div class="scard">
       <div class="scardhead" id="mdHead">Your members draws</div>
       <div class="mdf" id="mdDrawWrap" style="margin-bottom:14px">
@@ -556,7 +565,8 @@
         <div class="mdf"><label class="flabel" for="md-inc">Weekly increase ($)</label><input type="number" id="md-inc" min="0" step="1" inputmode="numeric"></div>
         <div class="mdf"><label class="flabel" for="md-curjp">Current jackpot ($)</label><input type="number" id="md-curjp" min="0" step="1" inputmode="numeric"></div>
       </div>
-      <p class="snote" style="margin:8px 0 0">The draw day comes from your start date, and the current jackpot is worked out from the start date, starting jackpot and weekly increase. You can still adjust the jackpot if you need to.</p>
+      <p class="snote" style="margin:8px 0 0">The draw day comes from your start date. The current jackpot is the live amount on your TV: it resets to the starting jackpot when someone claims it and grows by the weekly increase when it rolls over, so changing the starting jackpot or the weekly increase does not touch it. Type a new amount to change it.</p>
+      <button class="addbtn" id="mdCalcJp" type="button" style="margin-top:8px">Work out the jackpot from the start date</button>
       <div class="btnrow">
         <button class="go" id="mdSave">Save draw</button>
         <button class="offtv" id="mdOffTv" type="button">Take off the TV</button>
@@ -566,7 +576,7 @@
     </div>
     <div class="scard">
       <div class="scardhead">Your members list<span class="forvenue" id="mdListForVenue"></span></div>
-      <p class="snote" id="mdCount">No members yet.</p>
+      <div class="snote" id="mdCount">Loading your members list…</div>
       <p class="snote">This is personal information your venue holds about your members. Keep it to a member number and a name, and take someone off when they ask.</p>
       <p class="snote">Paste your members below, one per line as <b style="color:var(--text)">number, name</b> (e.g. <span class="mono">142, Jane Smith</span>). We add any new numbers to your members list.</p>
       <textarea id="md-import" rows="6" placeholder="142, Jane Smith
@@ -603,6 +613,7 @@
       <select id="screenVenue"></select>
       <p class="pickfine">Everything below, the logo and the slides, goes to <b id="screenPickName">this venue</b> only.</p>
     </div>
+    <div id="screenLoadErr" class="loadfail" hidden></div>
 
     <div class="scard">
       <div class="scardhead">Venue logo<span class="forvenue" id="logoForVenue"></span></div>
@@ -1660,9 +1671,23 @@
     var sg=$("signageLink");
     if(sg) sg.href = (screenOrigin||"") + "/signage.html" + (slug ? ("?venue=" + encodeURIComponent(slug)) : "");
   }
+  /* Switching venue in the Screen picker. A read that fails must NOT leave the picker on the
+     new venue while the slides, the logo and screenCurrent are still the old one's: the page
+     would then say "editing B" and save to A. Put the picker back and say so, with a retry. */
+  var screenSeq = 0;
   function loadScreenFor(venueId){
+    var seq = ++screenSeq, was = screenCurrent, sel = $("screenVenue");
+    showLoadFailed("screenLoadErr", null);
     return api("/account/screen-get", venueId ? { venue_id:venueId } : {}).then(function(d){
-      if (d.error){ showMsg("Screen: " + d.error); return; }
+      if (seq !== screenSeq) return;          // a later pick has already taken over
+      if (!d || d.error || !d.venue){
+        if (sel && was) sel.value = was.id;
+        showLoadFailed("screenLoadErr",
+          "Could not load the TV for " + (venueNameIn(screenVenues, venueId) || "that venue") + ". " +
+          (was ? ("You are still editing " + (was.name || "the venue you were on") + ". ") : "") + "Try again.",
+          function(){ if (sel) sel.value = venueId; loadScreenFor(venueId); });
+        return;
+      }
       screenCurrent = d.venue;
       setTvLinks(d.venue && d.venue.slug);
       paintScreenVenue();
@@ -1745,27 +1770,100 @@
       });
     }catch(e){}
   }
+  /* THE VENUE THIS PAGE IS ABOUT. Three panels here (Screen, Raffles, Members draw) each have
+     their own venue picker. Raffles and Members opened on the account's FIRST venue, and so
+     did Screen in practice (screen-get with no venue answers for venues[0]). A group owner who
+     came here from venue B edited venue A's raffle or members draw with nothing on the page
+     looking wrong. Every panel now opens on the same venue: the one being viewed as from HQ,
+     else the venue this login is working at (VP context currentVenueId), else the one picked
+     at sign-in, and only then the first. */
+  var pageVenueId = null;
+  function preferredVenueIds(){
+    var ids = [];
+    try { var imp = JSON.parse(localStorage.getItem("vpImpersonate") || "null"); if (imp && imp.id) ids.push(imp.id); } catch (e) {}
+    if (pageVenueId) ids.push(pageVenueId);
+    try { var pk = JSON.parse(localStorage.getItem("vpVenuePick") || "null"); if (pk && pk.id) ids.push(pk.id); } catch (e) {}
+    return ids;
+  }
+  function defaultVenue(venues){
+    venues = venues || [];
+    var ids = preferredVenueIds();
+    for (var i = 0; i < ids.length; i++){
+      for (var j = 0; j < venues.length; j++){ if (venues[j] && venues[j].id === ids[i]) return venues[j]; }
+    }
+    return venues[0] || null;
+  }
+  function venueNameIn(venues, id){
+    for (var i = 0; i < (venues || []).length; i++){ if (venues[i].id === id) return venues[i].name || ""; }
+    return "";
+  }
+  function fillVenuePicker(sel, venues, chosenId){
+    sel.innerHTML = "";
+    venues.forEach(function(v){
+      var o = document.createElement("option"); o.value = v.id; o.textContent = v.name;
+      if (v.id === chosenId) o.selected = true;
+      sel.appendChild(o);
+    });
+    sel.value = chosenId;
+  }
+  /* A read that FAILED. supabase-js does not throw on a failed query, it resolves with
+     { data:null, error }, so `(r && r.data) || []` turned every failure into "nothing here":
+     "No members yet." to a club with 3,000 members, which is an invitation to import them all
+     again. Every read in these panels checks for this and says so, with a retry. text null
+     clears the box. */
+  function showLoadFailed(id, text, retry){
+    var el = $(id); if (!el) return;
+    el.innerHTML = "";
+    if (!text){ el.hidden = true; return; }
+    var p = document.createElement("p"); p.textContent = text; el.appendChild(p);
+    if (retry){
+      var b = document.createElement("button"); b.type = "button"; b.className = "addbtn"; b.textContent = "Try again";
+      b.addEventListener("click", function(){ retry(); });
+      el.appendChild(b);
+    }
+    el.hidden = false;
+  }
+  function readFailed(r){ return !r || !!r.error; }
+
+  /* Opening the Screen tab: the list first, then the venue this login is working at. */
+  function loadScreenPanel(){
+    var seq = ++screenSeq;
+    showLoadFailed("screenLoadErr", null);
+    function failed(){
+      if (seq !== screenSeq) return;
+      showLoadFailed("screenLoadErr", "Could not load your TV settings. Try again.", loadScreenPanel);
+    }
+    return api("/account/screen-get", {}).then(function(d){
+      if (seq !== screenSeq) return;
+      if (!d || d.error){ failed(); return; }
+      screenVenues = d.venues || [];
+      var want = defaultVenue(screenVenues);
+      if (want && d.venue && want.id !== d.venue.id){
+        return api("/account/screen-get", { venue_id: want.id }).then(function(d2){
+          if (seq !== screenSeq) return;
+          if (!d2 || d2.error || !d2.venue){ failed(); return; }
+          showScreenVenue(d2);
+        });
+      }
+      if (!d.venue){ failed(); return; }
+      showScreenVenue(d);
+    });
+  }
+  function showScreenVenue(d){
+    screenCurrent = d.venue;
+    var pick = $("screenPickWrap"), sel = $("screenVenue");
+    if (screenVenues.length > 1){
+      fillVenuePicker(sel, screenVenues, d.venue.id);
+      pick.style.display = "";
+      sel.onchange = function(){ loadScreenFor(sel.value); };
+    } else { pick.style.display = "none"; }
+    setTvLinks(d.venue && d.venue.slug);
+    paintScreenVenue();
+    fillScreen(d);
+  }
   function initScreen(){
     try{ screenOrigin = window.location.origin; }catch(e){}
-    api("/account/screen-get", {}).then(function(d){
-      if (d.error){ showMsg("Screen: " + d.error); return; }
-      screenVenues = d.venues || [];
-      screenCurrent = d.venue;
-      var pick = $("screenPickWrap"), sel = $("screenVenue");
-      if (screenVenues.length > 1){
-        sel.innerHTML = "";
-        screenVenues.forEach(function(v){
-          var o = document.createElement("option"); o.value = v.id; o.textContent = v.name;
-          if (d.venue && v.id === d.venue.id) o.selected = true;
-          sel.appendChild(o);
-        });
-        pick.style.display = "";
-        sel.onchange = function(){ loadScreenFor(sel.value); };
-      } else { pick.style.display = "none"; }
-      setTvLinks(d.venue && d.venue.slug);
-      paintScreenVenue();
-      fillScreen(d);
-    });
+    loadScreenPanel();
     $("addSlide").addEventListener("click", function(){
       // The cap is VPB_MAX_SLIDES in venueplay-api-FULL.js. The gate makes the two agree.
       if ($("slides").querySelectorAll(".adslide").length >= VP_MAX_SLIDES){
@@ -1804,8 +1902,21 @@
     if ((b = $("mdSave"))) b.textContent = many ? ("Save draw for " + n) : "Save draw";
   }
   function toCents(v){ if(v===""||v==null) return undefined; var n=Math.round(parseFloat(v)*100); return isNaN(n)?undefined:n; }
-  function toDollars(c){ return (c==null)?"":String(Math.round(c/100)); }
+  /* Cents shown as they are. Math.round(c/100) turned a $1,234.50 jackpot into "1235", and Save
+     then wrote $1,235.00 back: the owner changed nothing and the jackpot moved 50c. */
+  function toDollars(c){
+    if (c==null || c==="") return "";
+    var n = Number(c); if (isNaN(n)) return "";
+    return (n % 100 === 0) ? String(n/100) : (n/100).toFixed(2);
+  }
+  /* The current jackpot is LIVE. The game Worker resets it to the starting jackpot on a claim
+     and grows it by the weekly increase on a rollover, so it is not a function of the other
+     boxes and must never be worked out from them behind the owner's back. It is sent on Save
+     only when the owner typed in that box (or pressed "Work out the jackpot"), so an unrelated
+     edit cannot put back a figure the host console has moved on from since the page opened. */
+  var mdCurTouched = false;
   function fillMembersDraw(d){
+    mdCurTouched = false;
     d = d || {};
     $("md-name").value = d.name || "";
     $("md-start").value = d.date_started || "";
@@ -1847,39 +1958,71 @@
       for(var i=0;i<mdDraws.length;i++){ if(mdDraws[i].id===sel.value){ mdDraw=mdDraws[i]; fillMembersDraw(mdDraw); return; } }
     };
   }
+  /* mdReady is true only once THIS venue's draws have been read. Until then (or if that read
+     failed) nothing in the panel may write: with no draw loaded, Save would CREATE a second
+     draw instead of editing the real one, and an import would go in against no draw. */
+  var mdReady = false, mdSeq = 0;
+  function mdNotReady(){
+    if (!mdCurrent){ showMsg("Pick a venue first."); return true; }
+    if (!mdReady){ showMsg("The members draw for " + (mdVenueName() || "this venue") + " has not loaded. Press Try again first."); return true; }
+    return false;
+  }
+  function mdCountFailed(venueId){
+    $("mdCount").className = "snote loadfail";
+    showLoadFailed("mdCount", "Could not load your members list. Your members are not lost: this page could not read them just now. Try again before adding anyone.",
+      function(){ loadMembersDrawFor(venueId); });
+  }
   function loadMembersDrawFor(venueId){
-    mdCurrent = venueId; mdDraw = null; mdDraws = [];
+    var seq = ++mdSeq;
+    mdCurrent = venueId; mdDraw = null; mdDraws = []; mdReady = false;
     paintMdVenue();
+    showLoadFailed("mdLoadErr", null);
+    $("mdCount").hidden = false;
+    $("mdCount").className = "snote";
+    $("mdCount").textContent = "Loading your members list…";
     var client = VP.getClient();
+    var stale = function(){ return seq !== mdSeq; };
     return client.from("vp_member_draws").select("*").eq("venue_id", venueId).order("created_at",{ascending:true})
       .then(function(r){
-        /* Hide removed draws HERE rather than with .is("archived_at", null) in the query.
-           select("*") returns the column once migration 45 has run and simply omits it before,
-           so this works either way. A filter naming the column would 400 the whole query on a
-           database that has not been migrated yet, which is exactly how the HQ venue list ended
-           up empty this morning. */
-        mdDraws = ((r && r.data) || []).filter(function(d){ return !d.archived_at; });
-        mdDraw = mdDraws[0] || null;
-        renderDrawPicker();
-        fillMembersDraw(mdDraw);
-        return client.from("vp_member_rosters").select("id").eq("venue_id", venueId);
-      }).then(function(r){
-        var ids = ((r && r.data) || []).map(function(x){ return x.id; });
-        if (!ids.length){ $("mdCount").textContent = "No members yet."; return; }
-        return client.from("vp_members").select("id",{ count:"exact", head:true }).in("roster_id", ids).then(function(rc){
-          var n = rc && rc.count;
-          $("mdCount").textContent = n ? (n + " member" + (n===1?"":"s") + " in your list.") : "No members yet.";
+        if (stale()) return;
+        if (readFailed(r)){
+          fillMembersDraw(null); renderDrawPicker();
+          showLoadFailed("mdLoadErr", "Could not load the members draw for " + (mdVenueName() || "this venue") + ". Nothing has been changed. Try again.",
+            function(){ loadMembersDrawFor(venueId); });
+        } else {
+          /* Hide removed draws HERE rather than with .is("archived_at", null) in the query.
+             select("*") returns the column once migration 45 has run and simply omits it before,
+             so this works either way. A filter naming the column would 400 the whole query on a
+             database that has not been migrated yet, which is exactly how the HQ venue list ended
+             up empty this morning. */
+          mdDraws = (r.data || []).filter(function(d){ return !d.archived_at; });
+          mdDraw = mdDraws[0] || null;
+          mdReady = true;
+          renderDrawPicker();
+          fillMembersDraw(mdDraw);
+        }
+        return client.from("vp_member_rosters").select("id").eq("venue_id", venueId).then(function(rr){
+          if (stale()) return;
+          if (readFailed(rr)){ mdCountFailed(venueId); return; }
+          var ids = (rr.data || []).map(function(x){ return x.id; });
+          if (!ids.length){ $("mdCount").textContent = "No members yet."; return; }
+          return client.from("vp_members").select("id",{ count:"exact", head:true }).in("roster_id", ids).then(function(rc){
+            if (stale()) return;
+            if (readFailed(rc) || typeof rc.count !== "number"){ mdCountFailed(venueId); return; }
+            var n = rc.count;
+            $("mdCount").textContent = n ? (n + " member" + (n===1?"":"s") + " in your list.") : "No members yet.";
+          });
         });
-      }).catch(function(){ $("mdCount").textContent = "No members yet."; });
+      }).catch(function(){ if (!stale()) mdCountFailed(venueId); });
   }
   function saveMembersDraw(){
-    if (!mdCurrent){ showMsg("Pick a venue first."); return; }
+    if (mdNotReady()) return;
     var name = $("md-name").value.trim();
     if (!name){ showMsg("Give your draw a name."); return; }
     var body = mdDraw ? { draw_id: mdDraw.id, name:name } : { venue_id: mdCurrent, name:name };
     var sj=toCents($("md-startjp").value); if(sj!==undefined) body.starting_amount_cents=sj;
     var ic=toCents($("md-inc").value);     if(ic!==undefined) body.increment_cents=ic;
-    var cj=toCents($("md-curjp").value);   if(cj!==undefined) body.current_jackpot_cents=cj;
+    if (mdCurTouched){ var cj=toCents($("md-curjp").value); if(cj!==undefined) body.current_jackpot_cents=cj; }
     // Always send the day and time, even when they are empty. Sending them only when filled
     // meant a venue could set a draw night but never unset one, so the TV kept advertising a
     // draw that was not running. An empty string is a real instruction: take it off the board.
@@ -1888,10 +2031,15 @@
     var tc=parseInt($("md-claim").value,10); if(!isNaN(tc)) body.time_to_claim_seconds=tc;
     body.date_started = $("md-start").value.trim();   // sent even when blank, so it can be cleared
     var btn=$("mdSave"); btn.disabled=true; btn.textContent="Saving…";
+    var savedFor = mdCurrent;
     gameApi("/host/members/settings", body).then(function(r){
-      btn.disabled=false; btn.textContent="Save draw";
+      btn.disabled=false; paintMdVenue();
       if (r.error){ showMsg(r.error); return; }
+      if (mdCurrent !== savedFor){ showMsg("Members draw saved.", true); pushToScreen(savedFor); return; }
       mdDraw = r.draw || mdDraw;
+      // Show the jackpot the Worker now holds, and forget the edit: it has been sent.
+      if (r.draw && r.draw.current_jackpot_cents != null) $("md-curjp").value = toDollars(r.draw.current_jackpot_cents);
+      mdCurTouched = false;
       pushToScreen(mdCurrent);
       showMsg("Members draw saved. Your TV updates in a few seconds.", true);
     });
@@ -1901,7 +2049,7 @@
      the wins she already has. This edits the row in place. The member NUMBER is not editable:
      it is what the club prints on cards and what the win is announced by. */
   function fixMemberName(){
-    if (!mdCurrent){ showMsg("Pick a venue first."); return; }
+    if (mdNotReady()) return;
     var num = $("md-fixnum").value.trim();
     var first = $("md-fixfirst").value.trim();
     var last = $("md-fixlast").value.trim();
@@ -1922,7 +2070,7 @@
   /* Someone asking to come off a list a venue holds about them is a privacy request, not a
      preference, so this is a real delete rather than a hidden flag. */
   function removeMember(){
-    if (!mdCurrent){ showMsg("Pick a venue first."); return; }
+    if (mdNotReady()) return;
     var num = $("md-remove").value.trim();
     if (!num){ showMsg("Enter the member number to remove."); return; }
     if (!confirm("Remove member " + num + " from your members list?\n\nThey stop being drawn. Any draws they have already won stay on your records.")) return;
@@ -1972,7 +2120,7 @@
     return cols;
   }
   function importMembers(){
-    if (!mdCurrent){ showMsg("Pick a venue first."); return; }
+    if (mdNotReady()) return;
     var raw = $("md-import").value.trim();
     if (!raw){ showMsg("Paste your members first."); return; }
     var members = [], skipped = [];
@@ -2171,11 +2319,34 @@
   }
 
   // ---- Raffles: routine (vp_venue_screen) + reusable prize list (vp_raffle_prizes) + tally ----
-  var rfCurrent = null;
+  var rfCurrent = null, rfReady = false, rfSeq = 0;
+  function rfVenueName(){
+    var sel = $("rfVenue"); if (!sel) return "";
+    var o = sel.options[sel.selectedIndex];
+    return (o && o.textContent) || "";
+  }
+  /* The venue's name on the buttons that write, same as the members draw and the screen. */
+  function paintRfVenue(){
+    var n = rfVenueName(), many = ($("rfVenue") && $("rfVenue").options.length > 1) && !!n;
+    var el = $("rfPickName"); if (el) el.textContent = n || "this venue";
+    var b;
+    if ((b = $("rfSave"))) b.textContent = many ? ("Save routine for " + n) : "Save routine";
+    if ((b = $("rfAddPrize"))) b.textContent = many ? ("Add prize for " + n) : "Add prize";
+  }
+  function rfNotReady(){
+    if (!rfCurrent){ showMsg("Pick a venue first."); return true; }
+    if (!rfReady){ showMsg("The raffle for " + (rfVenueName() || "this venue") + " has not loaded. Press Try again first."); return true; }
+    return false;
+  }
   function loadRafflePrizes(venueId){
     VP.getClient().from("vp_raffle_prizes").select("id,label").eq("venue_id", venueId).order("created_at",{ascending:false}).then(function(r){
+      if (venueId !== rfCurrent) return;      // the picker has moved on
       var box = $("rfPrizes"); box.innerHTML = "";
-      var rows = (r && r.data) || [];
+      if (readFailed(r)){
+        showLoadFailed("rfPrizes", "Could not load your prize list. Try again.", function(){ loadRafflePrizes(venueId); });
+        return;
+      }
+      var rows = r.data || [];
       if (!rows.length){ box.innerHTML = '<p class="snote" style="margin:0">No prizes yet.</p>'; return; }
       rows.forEach(function(p){
         var chip = document.createElement("span"); chip.className = "rfchip";
@@ -2184,32 +2355,54 @@
       });
     });
   }
-  function loadRafflesFor(venueId){
-    rfCurrent = venueId;
-    (function(){
-      var sel = $("rfVenue"), el = $("rfPickName");
-      if (el && sel) { var o = sel.options[sel.selectedIndex]; el.textContent = (o && o.textContent) || "this venue"; }
-    })();
-    api("/account/screen-get", { venue_id: venueId }).then(function(d){
-      if (d.error) return;
+  /* The routine read used to `if (d.error) return;`, which left the PREVIOUS venue's routine in
+     the boxes under the new venue's name, one Save away from being written to it. */
+  function loadRaffleRoutine(venueId){
+    var seq = ++rfSeq;
+    rfReady = false;
+    showLoadFailed("rfLoadErr", null);
+    $("rf-label").value = ""; $("rf-day").value = ""; $("rf-time").value = "";
+    return api("/account/screen-get", { venue_id: venueId }).then(function(d){
+      if (seq !== rfSeq) return;
+      if (!d || d.error){
+        showLoadFailed("rfLoadErr", "Could not load the raffle for " + (rfVenueName() || "this venue") + ". Nothing has been changed. Try again.",
+          function(){ loadRaffleRoutine(venueId); });
+        return;
+      }
       var r = d.raffle || {};
       $("rf-label").value = r.label || ""; $("rf-day").value = r.day || ""; $("rf-time").value = r.time || "";
+      rfReady = true;
     });
-    loadRafflePrizes(venueId);
-    loadDrawLog(venueId);
+  }
+  function loadPrizeTally(venueId){
     // Prizes-given tally: sum any *_cents field on the venue's rows (defensive about the view's shape).
-    VP.getClient().from("v_vp_prizes_given").select("*").eq("venue_id", venueId).then(function(r){
-      var rows = (r && r.data) || [], cents = 0;
+    $("rfTally").className = "snote"; $("rfTally").textContent = "";
+    return VP.getClient().from("v_vp_prizes_given").select("*").eq("venue_id", venueId).then(function(r){
+      if (venueId !== rfCurrent) return;
+      if (readFailed(r)){
+        $("rfTally").className = "snote loadfail";
+        showLoadFailed("rfTally", "Could not load the prizes given away. Try again.", function(){ loadPrizeTally(venueId); });
+        return;
+      }
+      var rows = r.data || [], cents = 0;
       rows.forEach(function(row){ for (var k in row){ if (/cents/.test(k) && typeof row[k] === "number") cents += row[k]; } });
       $("rfTally").textContent = cents > 0 ? ("$" + (cents/100).toFixed(2) + " given away in prizes so far.") : "No prizes recorded yet.";
     });
   }
+  function loadRafflesFor(venueId){
+    rfCurrent = venueId;
+    paintRfVenue();
+    loadRaffleRoutine(venueId);
+    loadRafflePrizes(venueId);
+    loadDrawLog(venueId);
+    loadPrizeTally(venueId);
+  }
   function saveRaffleRoutine(){
-    if (!rfCurrent){ showMsg("Pick a venue first."); return; }
+    if (rfNotReady()) return;
     var raffle = { label:$("rf-label").value.trim(), day:$("rf-day").value.trim(), time:$("rf-time").value.trim() };
     var btn=$("rfSave"); btn.disabled=true; btn.textContent="Saving…";
     api("/account/screen-save", { venue_id:rfCurrent, raffle:raffle }).then(function(r){
-      btn.disabled=false; btn.textContent="Save routine";
+      btn.disabled=false; paintRfVenue();
       if (r.error){ showMsg(r.error); return; }
       pushToScreen(rfCurrent);
       showMsg("Raffle routine saved. Your TV updates in a few seconds.", true);
@@ -2232,7 +2425,7 @@
   /* Same idea for a members draw, except the draw itself is valuable: the jackpot and the
      members list stay exactly as they are, and only the advertised night and time are cleared. */
   function membersDrawOffTv(){
-    if (!mdCurrent){ showMsg("Pick a venue first."); return; }
+    if (mdNotReady()) return;
     if (!mdDraw){ showMsg("Save the draw first."); return; }
     if (!confirm("Take this members draw off the TV?\n\nIt stops showing between games. The draw, its jackpot and your members list are all kept.")) return;
     var btn=$("mdOffTv"); btn.disabled=true; btn.textContent="Removing…";
@@ -2251,7 +2444,7 @@
     if (!label){ showMsg("Enter a prize."); return; }
     var btn=$("rfAddPrize"); btn.disabled=true; btn.textContent="Adding…";
     gameApi("/host/raffle/prize-add", { venue_id:rfCurrent, label:label }).then(function(r){
-      btn.disabled=false; btn.textContent="Add prize";
+      btn.disabled=false; paintRfVenue();
       if (r.error){ showMsg(r.error); return; }
       $("rf-newprize").value = "";
       loadRafflePrizes(rfCurrent);
@@ -2301,8 +2494,16 @@
     if (!venueId) return;
     var months = parseInt(($("dlMonths") && $("dlMonths").value) || "3", 10) || 3;
     $("drawLog").innerHTML = '<p class="snote">Loading…</p>';
+    // Nothing from the last venue may be downloaded while this one loads or if it fails.
+    dlRows = []; dlVenueName = "";
     return api("/account/draw-log", { venue_id: venueId, months: months }).then(function(r){
-      if (r.error){ $("drawLog").innerHTML = '<p class="snote">' + esc(r.error) + '</p>'; $("dlTotal").textContent = ""; return; }
+      if (venueId !== rfCurrent) return;
+      if (!r || r.error){
+        $("dlTotal").textContent = "";
+        showLoadFailed("drawLog", "Could not load who won what. Try again.",
+          function(){ loadDrawLog(venueId); });
+        return;
+      }
       renderDrawLog(r);
     });
   }
@@ -2329,25 +2530,47 @@
     $("rfClear").addEventListener("click", clearRaffleRoutine);
     $("rfAddPrize").addEventListener("click", addRafflePrize);
     $("rfPrizes").addEventListener("click", function(e){ var b=e.target.closest(".rfx"); if (b) removeRafflePrize(b.getAttribute("data-id")); });
-    api("/account/summary", {}).then(function(d){
-      var venues = (d && d.venues) || [];
+    loadRafflePanel();
+  }
+  /* Opens on the venue this login is working at (defaultVenue), not venues[0]. */
+  function loadRafflePanel(){
+    showLoadFailed("rfLoadErr", null);
+    return api("/account/summary", {}).then(function(d){
+      if (!d || d.error){
+        showLoadFailed("rfLoadErr", "Could not load your venues. Try again.", loadRafflePanel);
+        return;
+      }
+      var venues = d.venues || [];
       if (!venues.length) return;
+      var want = defaultVenue(venues);
       var pick = $("rfPickWrap"), sel = $("rfVenue");
       if (venues.length > 1){
-        sel.innerHTML = "";
-        venues.forEach(function(v){ var o=document.createElement("option"); o.value=v.id; o.textContent=v.name; sel.appendChild(o); });
+        fillVenuePicker(sel, venues, want.id);
         pick.style.display = "";
         sel.onchange = function(){ loadRafflesFor(sel.value); };
       } else { pick.style.display = "none"; }
-      loadRafflesFor(venues[0].id);
+      loadRafflesFor(want.id);
     });
   }
   function mdWeekday(dateStr){ if(!dateStr) return ""; var p=dateStr.split("-"); if(p.length<3) return ""; var d=new Date(+p[0],+p[1]-1,+p[2]); return ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][d.getDay()]||""; }
   function mdWeeksSince(dateStr){ if(!dateStr) return 0; var p=dateStr.split("-"); if(p.length<3) return 0; var d=new Date(+p[0],+p[1]-1,+p[2]); var w=Math.floor((Date.now()-d.getTime())/(7*86400000)); return w>0?w:0; }
+  /* The start date sets the draw DAY, and that is all a field change does. It used to rewrite
+     the current jackpot too, as start + weekly increase x weeks since the start date, which is
+     only true of a draw nobody has ever won. A draw claimed in August (reset to the start)
+     whose owner then nudged the weekly increase jumped to 38 weeks' worth, and Save sent it to
+     the TV. The current jackpot now changes only when the owner types in it, or asks. */
   function mdRecalc(){
     $("md-day").value = mdWeekday($("md-start").value);
+  }
+  function mdWorkOutJackpot(){
+    var startDate = $("md-start").value;
+    if (!startDate){ showMsg("Set the start date first."); return; }
     var start=parseFloat($("md-startjp").value)||0, inc=parseFloat($("md-inc").value)||0;
-    $("md-curjp").value = Math.round(start + inc*mdWeeksSince($("md-start").value));
+    var weeks = mdWeeksSince(startDate), amount = Math.round(start + inc*weeks);
+    if (!confirm("Set the current jackpot to $" + amount + "?\n\nThat is the starting jackpot plus " + weeks + " week" + (weeks===1?"":"s") +
+                 " of increases since the start date, which is only right if nobody has won it since then. It goes on the TV when you save.")) return;
+    $("md-curjp").value = String(amount);
+    mdCurTouched = true;
   }
   function initMembersDraws(){
     $("mdSave").addEventListener("click", saveMembersDraw);
@@ -2357,6 +2580,8 @@
     $("mdRemoveDraw").addEventListener("click", removeDraw);
     $("mdImport").addEventListener("click", importMembers);
     ["md-start","md-startjp","md-inc"].forEach(function(id){ $(id).addEventListener("input", mdRecalc); $(id).addEventListener("change", mdRecalc); });
+    ["input","change"].forEach(function(ev){ $("md-curjp").addEventListener(ev, function(){ mdCurTouched = true; }); });
+    $("mdCalcJp").addEventListener("click", mdWorkOutJackpot);
     $("md-csvbtn").addEventListener("click", function(){ $("md-csv").click(); });
     $("md-csv").addEventListener("change", function(){
       var f = this.files && this.files[0]; if (!f) return;
@@ -2374,17 +2599,28 @@
       reader.readAsText(f);
       this.value = "";
     });
-    api("/account/summary", {}).then(function(d){
-      var venues = (d && d.venues) || [];
-      if (!venues.length) return;
+    loadMembersPanel();
+  }
+  /* Opens on the venue this login is working at (defaultVenue), not venues[0]. Of every panel
+     here this is the worst place for the trap: it imports one venue's MEMBERS LIST. */
+  function loadMembersPanel(){
+    showLoadFailed("mdLoadErr", null);
+    return api("/account/summary", {}).then(function(d){
+      if (!d || d.error){
+        $("mdCount").textContent = "";
+        showLoadFailed("mdLoadErr", "Could not load your venues. Try again.", loadMembersPanel);
+        return;
+      }
+      var venues = d.venues || [];
+      if (!venues.length){ $("mdCount").textContent = ""; return; }
+      var want = defaultVenue(venues);
       var pick = $("mdPickWrap"), sel = $("mdVenue");
       if (venues.length > 1){
-        sel.innerHTML = "";
-        venues.forEach(function(v){ var o=document.createElement("option"); o.value=v.id; o.textContent=v.name; sel.appendChild(o); });
+        fillVenuePicker(sel, venues, want.id);
         pick.style.display = "";
         sel.onchange = function(){ loadMembersDrawFor(sel.value); };
       } else { pick.style.display = "none"; }
-      loadMembersDrawFor(venues[0].id);
+      loadMembersDrawFor(want.id);
     });
   }
 
@@ -2432,22 +2668,29 @@
     })();
     $("nights").innerHTML = '<p class="note">Loading your nights…</p>';
     return api("/account/nights", { venue_id: venueId, limit: 12 }).then(function(r){
-      if (r.error){ $("nights").innerHTML = '<p class="note">' + esc(r.error) + '</p>'; return; }
+      if (venueId !== ntCurrent) return;
+      if (!r || r.error){
+        showLoadFailed("nights", "Could not load your nights. Try again.", function(){ loadNightsFor(venueId); });
+        return;
+      }
       renderNights(r.nights || []);
     });
   }
+  /* Opens on the venue this login is working at (defaultVenue), not venues[0], like every
+     other panel with a venue picker. A failed read is not "No venues on this account yet." */
   function initNights(){
     return api("/account/summary", {}).then(function(d){
-      ntVenues = (d && d.venues) || [];
+      if (!d || d.error){ showLoadFailed("nights", "Could not load your venues. Try again.", initNights); return; }
+      ntVenues = d.venues || [];
       if (!ntVenues.length){ $("nights").innerHTML = '<p class="note">No venues on this account yet.</p>'; return; }
+      var want = defaultVenue(ntVenues);
       var pick = $("ntPickWrap"), sel = $("ntVenue");
       if (ntVenues.length > 1){
-        sel.innerHTML = "";
-        ntVenues.forEach(function(v){ var o=document.createElement("option"); o.value=v.id; o.textContent=v.name; sel.appendChild(o); });
+        fillVenuePicker(sel, ntVenues, want.id);
         pick.style.display = "";
         sel.onchange = function(){ loadNightsFor(sel.value); };
       } else { pick.style.display = "none"; }
-      loadNightsFor(ntVenues[0].id);
+      loadNightsFor(want.id);
     });
   }
 
@@ -2501,6 +2744,7 @@
     if (ctx) VP.suspensionBanner(ctx);
     if (!ctx){ return; } // requireAuth handles redirect when signed out
     impBillingBanner();   // say whose account this is BEFORE anything is drawn or pressed
+    pageVenueId = ctx.currentVenueId || null;   // every venue picker below opens on this one
     load();
     loadHosts();   // populate the hosts list AND the "venues they can run" picker on page load
     initScreen();
