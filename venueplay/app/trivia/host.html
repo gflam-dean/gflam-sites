@@ -217,6 +217,14 @@
             <label>Speed bonus (faster answers score more, up to +50%)</label>
             <div class="seg" id="cfgSpeed"><button data-v="on" class="on">On</button><button data-v="off">Off</button></div>
           </div>
+          <div class="field">
+            <label>Double points final round <small style="color:var(--faint);font-weight:400">saved for your venue, so it is set for next week too</small></label>
+            <div class="two" style="align-items:center">
+              <div class="seg" id="cfgDouble"><button data-v="on">On</button><button data-v="off" class="on">Off</button></div>
+              <div class="field" style="margin:0"><input type="number" id="cfgDoubleLast" class="mono" min="1" max="100" value="10" aria-label="Questions in the double points round"></div>
+            </div>
+            <div class="note" id="doubleNote" style="margin-top:4px">The last 10 questions of the night score double, speed bonus included.</div>
+          </div>
           <div class="field" id="paperField">
             <label>Paper teams <small style="color:var(--faint);font-weight:400">for regulars without a phone</small></label>
             <button type="button" class="btn ghost" id="paperPrintBtn" style="width:100%">Print answer sheets</button>
@@ -413,7 +421,7 @@
     venueId:null, pairCode:"", sessionId:"", joinCode:"", gameId:"",
     status:"setup",                 // setup | ready | question | reveal | ended
     setId:"", questionCount:0, qtotal:0,
-    timePerQ:30, base:100, count:10, speedBonus:true, colour:true,
+    timePerQ:30, base:100, count:10, speedBonus:true, colour:true, doublePoints:false, doubleLast:10, doubleSeqs:[],
     setTitle:"",                    // the night's name, shown on the TV lobby instead of a fixed "Trivia Night"
     current:null,                   // {qseq, qi, qtotal, text, options, correctIndex, endsAt, secs}
     board:[],                       // latest leaderboard rows [{name,points}] from /host/reveal
@@ -506,6 +514,7 @@
         if(g.question_count!=null){ G.questionCount=g.question_count; G.qtotal=g.question_count; }
         if(typeof g.colour==="boolean") G.colour=g.colour;
         G.defer = g.paper===true; G.rs = g.round_size || 10; loadPaperRound();
+        G.doubleSeqs = Array.isArray(g.double_seqs) ? g.double_seqs : [];
         if(G.joinCode) openGameChannel(G.joinCode);   // re-subscribe the players' channel so answers still land
         // Re-sync the TV only (the pairing channel). Connected phones are left alone; a phone that
         // also reloaded recovers itself from /snapshot, so we must not replay "started" to the game channel.
@@ -521,7 +530,7 @@
           var endsAt=Date.parse(q.ends_at)||0;
           G.current={ qseq:q.qseq, qi:q.qi||q.qseq, qtotal:G.qtotal, text:q.text||"", options:Array.isArray(q.options)?q.options:[], correctIndex:-1, endsAt:endsAt, secs:0, imageUrl:q.image_url||"" };
           G.status="question"; G.answeredQseq=q.qseq; G.answeredPids={};
-          send({ t:"question", game_id:G.gameId, qseq:G.current.qseq, qi:G.current.qi, qtotal:G.qtotal, text:G.current.text, options:G.current.options, endsAt:endsAt, secs:remainingSecs(), colour:G.colour, imageUrl:G.current.imageUrl });
+          send({ t:"question", game_id:G.gameId, qseq:G.current.qseq, qi:G.current.qi, qtotal:G.qtotal, text:G.current.text, options:G.current.options, endsAt:endsAt, secs:remainingSecs(), colour:G.colour, imageUrl:G.current.imageUrl, double:isDouble(G.current.qseq) });
           if(remainingSecs()>0){ G.tick=setInterval(function(){ updateLive(); if(remainingSecs()<=0){ clearTick(); send({ t:"lock" }); } }, 500); }
           else { send({ t:"lock" }); }
         } else if(q && phase==="revealed"){
@@ -653,7 +662,7 @@
     if(G.status==="question"){
       var q=G.current;
       var w=el("div","qwrap");
-      w.innerHTML='<div class="qmeta"><span class="qn">Question '+(q.qi||q.qseq)+' of '+(G.qtotal||"?")+'</span>'+
+      w.innerHTML='<div class="qmeta"><span class="qn">Question '+(q.qi||q.qseq)+' of '+(G.qtotal||"?")+(isDouble(q.qseq)?' &middot; <b style="color:var(--gold)">DOUBLE POINTS</b>':'')+'</span>'+
         '<span class="live"><span id="hAnsWrap" style="font-weight:700"><b id="hAns">'+answeredCount()+'</b>/<span id="hTot">'+playerCount()+'</span> in</span><span class="cd" id="hCd">'+remainingSecs()+'s</span></span></div>'+
         /* Picture round: the same image the TV shows, so the host can describe it. A broken
            link hides itself and the question carries on as a plain text one. */
@@ -677,7 +686,7 @@
     if(G.status==="reveal"){
       var q2=G.current;
       var rw=el("div","qwrap");
-      rw.innerHTML='<div class="qmeta"><span class="qn">Question '+(q2.qi||q2.qseq)+' of '+(G.qtotal||"?")+' &middot; revealed</span></div>'+
+      rw.innerHTML='<div class="qmeta"><span class="qn">Question '+(q2.qi||q2.qseq)+' of '+(G.qtotal||"?")+(isDouble(q2.qseq)?' &middot; <b style="color:var(--gold)">DOUBLE POINTS</b>':'')+' &middot; revealed</span></div>'+
         (q2.imageUrl?'<img class="qimg-h" alt="" src="'+esc(q2.imageUrl)+'" onerror="this.style.display=\'none\'">':'')+
         '<div class="qtext-h">'+esc(q2.text)+'</div>';
       /* How the room split. The TV draws these bars; until now the host had to look over their
@@ -766,6 +775,7 @@
     G.timePerQ=Math.max(5, Math.min(60, parseInt($("cfgTime").value,10)||30));
     G.base=Math.max(0, parseInt($("cfgBase").value,10)||0);
     G.count=effectiveCount();
+    G.doubleLast=Math.max(1, Math.min(100, parseInt(($("cfgDoubleLast")||{}).value,10)||10));
     /* ONE STRIP PER ROUND, THE WHOLE ROUND ON IT. There was a separate "Questions per round" box
        under the print button; Dean, 27 Sep 2026: "dunno why that's there". A paper team now gets one
        strip with every question in this round and hands it in at the end, so the sheets follow
@@ -862,10 +872,11 @@
       return apiPost("/host/game",{
         session_id:G.sessionId, format:"trivia", question_set_id:G.setId,
         time_limit_s:G.timePerQ, base_points:G.base, speed_bonus:G.speedBonus, colour:G.colour,
-        question_count:G.count, round_size:G.roundSize
+        question_count:G.count, round_size:G.roundSize, double_points:G.doublePoints, double_last:G.doubleLast
       });
     }).then(function(r){
       G.gameId=r.game_id; G.questionCount=r.question_count; G.qtotal=r.question_count;
+      G.doubleSeqs=Array.isArray(r.double_seqs)?r.double_seqs:[];
       // The Worker makes it a paper round from what was printed; the console mirrors that rule.
       G.defer = (r.paper===true); G.rs = r.round_size || G.roundSize; G.round = 1; G.roundItems = []; savePaperRound();
       G.status="ready"; G.board=[]; G.current=null;
@@ -889,7 +900,7 @@
       saveTrivia();
       // PUBLIC broadcast: text + options + optional picture, NEVER correct_index.
       bcast({ t:"question", game_id:G.gameId, qseq:r.qseq, qi:r.qi, qtotal:r.qtotal,
-        text:r.text, options:r.options||[], endsAt:G.current.endsAt, secs:r.secs, colour:G.colour, imageUrl:r.image_url||"" });
+        text:r.text, options:r.options||[], endsAt:G.current.endsAt, secs:r.secs, colour:G.colour, imageUrl:r.image_url||"", double:isDouble(r.qseq) });
       renderRun();
       G.tick=setInterval(function(){ updateLive(); if(remainingSecs()<=0){ clearTick(); bcast({ t:"lock" }); } }, 500);
     }).catch(function(e){ hostError(e.message); }).then(function(){ G.busy=false; });
@@ -918,7 +929,7 @@
         var qn=(G.current && (G.current.qi||G.current.qseq))||0;
         G.round=roundOf(qn);
         if(G.current && !G.roundItems.some(function(it){ return it.qi===qn; })){
-          G.roundItems.push({ qi:qn, text:G.current.text, letter:LETTERS[r.correct_index]||"", answer:(G.current.options||[])[r.correct_index]||"" });
+          G.roundItems.push({ qi:qn, text:G.current.text, letter:LETTERS[r.correct_index]||"", answer:(G.current.options||[])[r.correct_index]||"", dbl:isDouble(G.current.qseq) });
         }
         savePaperRound();
         bcast({ t:"closed", round:G.round, qi:qn });
@@ -997,7 +1008,7 @@
       to({ t:"question", game_id:G.gameId, qseq:G.current.qseq, qi:G.current.qi, qtotal:G.qtotal,
            text:G.current.text, options:G.current.options, endsAt:G.current.endsAt,
            secs:remainingSecs(), colour:G.colour,
-           imageUrl:(G.current.imageUrl||"") });   // without this a replayed picture round loses its picture
+           imageUrl:(G.current.imageUrl||""), double:isDouble(G.current.qseq) });   // without this a replayed picture round loses its picture
       if(remainingSecs()<=0) to({ t:"lock" });
     } else if(G.defer && G.status==="reveal" && G.current){
       to({ t:"closed", round:G.round, qi:(G.current.qi||G.current.qseq) });
@@ -1249,9 +1260,9 @@
     var teams=[], n=paperTeams();
     G.paperNames=G.paperNames||{};
     for(var i=1;i<=n;i++){
-      var nm=($("ppName"+i)||{}).value||"", c=($("ppCorrect"+i)||{}).value;
+      var nm=($("ppName"+i)||{}).value||"", c=($("ppCorrect"+i)||{}).value, d=($("ppDouble"+i)||{}).value;
       G.paperNames[i]=nm.trim();
-      teams.push({ no:i, name:nm.trim(), correct:(c===""||c==null)?"":parseInt(c,10) });
+      teams.push({ no:i, name:nm.trim(), correct:(c===""||c==null)?"":parseInt(c,10), double:(d===""||d==null)?0:parseInt(d,10) });
     }
     if(btn){ btn.disabled=true; btn.textContent="Saving..."; }
     apiPost("/host/paper/score",{ game_id:G.gameId, round:G.round, teams:teams }).then(function(r){
@@ -1265,7 +1276,7 @@
     var q=G.current, qn=q ? (q.qi||q.qseq) : 0, total=G.qtotal||0, last=total && qn>=total;
     if(G.status==="reveal" && q){
       var w=el("div","qwrap");
-      w.innerHTML='<div class="qmeta"><span class="qn">Question '+qn+' of '+(total||"?")+' &middot; round '+G.round+' &middot; answer held back</span></div>'+
+      w.innerHTML='<div class="qmeta"><span class="qn">Question '+qn+' of '+(total||"?")+(q && isDouble(q.qseq)?' &middot; <b style="color:var(--gold)">DOUBLE POINTS</b>':'')+' &middot; round '+G.round+' &middot; answer held back</span></div>'+
         '<div class="qtext-h">'+esc(q.text)+'</div>'+
         '<div class="since" style="margin:0 0 8px">Paper teams are playing, so this answer stays off the TV and the phones until the end of round '+G.round+'.</div>';
       for(var i=0;i<q.options.length;i++){
@@ -1295,6 +1306,7 @@
     }
     if(G.status==="paperscore"){
       var n=paperTeams(), items=G.roundItems||[], k=el("div","qwrap");
+      var dblInRound=items.filter(function(it){ return it.dbl; }).length;
       var keyHtml='<div class="qmeta"><span class="qn">Round '+G.round+' answers, on the TV now</span></div>';
       for(var a=0;a<items.length;a++) keyHtml+='<div class="opt correct"><span class="ol">'+esc(items[a].letter)+'</span><span class="otx"><b>Q'+esc(items[a].qi)+'</b> '+esc(items[a].answer)+'</span></div>';
       keyHtml+='<div class="since" style="margin:10px 0 6px">Mark the sheets, then type how many each paper team got right out of '+items.length+'. Leave a box empty if that team did not hand in a sheet.</div>';
@@ -1305,6 +1317,12 @@
         row.innerHTML='<input type="text" id="ppName'+t+'" placeholder="Team '+t+' name" value="'+esc((G.paperNames||{})[t]||"")+'">'+
           '<input type="number" id="ppCorrect'+t+'" class="mono" min="0" max="'+items.length+'" inputmode="numeric" placeholder="Right, out of '+items.length+'">';
         k.appendChild(row);
+        if(dblInRound){
+          var drow=el("div","");
+          drow.style.margin="-2px 0 10px";
+          drow.innerHTML='<input type="number" id="ppDouble'+t+'" class="mono" min="0" max="'+dblInRound+'" inputmode="numeric" placeholder="Of those, right in the double points questions (out of '+dblInRound+')">';
+          k.appendChild(drow);
+        }
       }
       body.appendChild(k);
       var pb=el("button","btn pink big","Put scores on the leaderboard"); pb.addEventListener("click", function(){ paperSaveScores(pb); }); body.appendChild(pb);
@@ -1327,6 +1345,23 @@
   $("setSel").addEventListener("change", syncSetCount);
   var cfgBaseEl=$("cfgBase"); if(cfgBaseEl){ cfgBaseEl.addEventListener("input", function(){ var b=Math.max(0,parseInt(cfgBaseEl.value,10)||0); if($("scBase")) $("scBase").textContent=b; if($("scMax")) $("scMax").textContent=Math.round(b*1.5); }); }
 
+  /* DOUBLE POINTS FINAL ROUND. Which questions it covers is decided by the Worker when the night
+     starts (config.double_seqs) and handed back; the console only ever asks isDouble(). */
+  function isDouble(qseq){ return !!(G.doubleSeqs && G.doubleSeqs.indexOf(qseq) >= 0); }
+  function paintDouble(){
+    var seg=$("cfgDouble"); if(seg){ Array.prototype.forEach.call(seg.children, function(bt){ bt.classList.toggle("on", (bt.getAttribute("data-v")==="on")===G.doublePoints); }); }
+    var inp=$("cfgDoubleLast"); if(inp){ inp.value=G.doubleLast; inp.disabled=!G.doublePoints; }
+    var nt=$("doubleNote"); if(nt) nt.textContent = G.doublePoints
+      ? ("The last "+G.doubleLast+" question"+(G.doubleLast===1?"":"s")+" of the night score double, speed bonus included.")
+      : "Off. Turn it on to make the last questions of the night count double.";
+  }
+  document.querySelectorAll("#cfgDouble button").forEach(function(b){ b.addEventListener("click", function(){
+    G.doublePoints=b.getAttribute("data-v")==="on"; paintDouble();
+  }); });
+  (function(){ var inp=$("cfgDoubleLast"); if(inp) inp.addEventListener("input", function(){
+    G.doubleLast=Math.max(1, Math.min(100, parseInt(inp.value,10)||10)); var nt=$("doubleNote");
+    if(nt && G.doublePoints) nt.textContent="The last "+G.doubleLast+" question"+(G.doubleLast===1?"":"s")+" of the night score double, speed bonus included."; }); })();
+  paintDouble();
   document.querySelectorAll("#cfgSpeed button").forEach(function(b){ b.addEventListener("click", function(){
     G.speedBonus=b.getAttribute("data-v")==="on";
     document.querySelectorAll("#cfgSpeed button").forEach(function(x){x.classList.remove("on");}); b.classList.add("on");
@@ -1402,6 +1437,9 @@
         if(s.trivia_base_points!=null){ G.base=s.trivia_base_points; var bp=$("cfgBase"); if(bp) bp.value=s.trivia_base_points; }
         if(s.trivia_speed_bonus!=null){ G.speedBonus=!!s.trivia_speed_bonus;
           var seg=$("cfgSpeed"); if(seg){ Array.prototype.forEach.call(seg.children, function(bt){ bt.classList.toggle("on", (bt.getAttribute("data-v")==="on")===G.speedBonus); }); } }
+        if(s.trivia_double_points!=null) G.doublePoints=!!s.trivia_double_points;
+        if(s.trivia_double_last!=null) G.doubleLast=Math.max(1, Math.min(100, s.trivia_double_last));
+        paintDouble();
         G.colour=true;   // a venue that once saved "Plain" is not stuck with it: the setting is gone
       }).catch(function(){}); }
       weeklyPreCheck(ctx.venue);
@@ -1444,7 +1482,7 @@
     if(G.status==="question" && G.current){
       send({ t:"question", game_id:G.gameId, qseq:G.current.qseq, qi:G.current.qi, qtotal:G.qtotal,
              text:G.current.text, options:G.current.options, endsAt:G.current.endsAt,
-             secs:remainingSecs(), colour:G.colour, imageUrl:(G.current.imageUrl||"") });
+             secs:remainingSecs(), colour:G.colour, imageUrl:(G.current.imageUrl||""), double:isDouble(G.current.qseq) });
       if(remainingSecs()<=0) send({ t:"lock" });
     } else if(G.status==="reveal" && G.current){
       send({ t:"reveal", qseq:G.current.qseq, correctIndex:G.current.correctIndex,
