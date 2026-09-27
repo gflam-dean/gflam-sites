@@ -155,8 +155,24 @@
   "checks": 38,
   "counted_by": "lines"
  },
+ "tools/test-members-console.js": {
+  "checks": 32,
+  "counted_by": "lines"
+ },
  "tools/test-members-paged.js": {
   "checks": 14,
+  "counted_by": "lines"
+ },
+ "tools/test-musical-host.js": {
+  "checks": 41,
+  "counted_by": "lines"
+ },
+ "tools/test-musical-phone.js": {
+  "checks": 25,
+  "counted_by": "lines"
+ },
+ "tools/test-musical-print.js": {
+  "checks": 13,
   "counted_by": "lines"
  },
  "tools/test-optin-export-gate.js": {
@@ -181,6 +197,10 @@
  },
  "tools/test-phones-cannot-be-impersonated.js": {
   "checks": 34,
+  "counted_by": "lines"
+ },
+ "tools/test-raffle-console.js": {
+  "checks": 44,
   "counted_by": "lines"
  },
  "tools/test-remove-a-player.js": {
@@ -261,6 +281,10 @@
  },
  "tools/test-venue-search-is-limited.js": {
   "checks": 4,
+  "counted_by": "lines"
+ },
+ "tools/test-venue-url.js": {
+  "checks": 101,
   "counted_by": "lines"
  },
  "tools/test-webhook-retry-is-not-dropped.js": {
