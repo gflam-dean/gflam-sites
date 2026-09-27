@@ -145,6 +145,7 @@
   <div class="errbar" id="hostErrBar" role="alert" aria-live="assertive">
     <div class="einner">
       <span class="etxt" id="hostErrText"></span>
+      <button type="button" class="ex hidden" id="hostErrRetry">Try again</button>
       <button type="button" class="ex" id="hostErrX">Dismiss</button>
     </div>
   </div>
@@ -272,14 +273,22 @@
   "use strict";
   function $(id){ return document.getElementById(id); }
   // Faults the host has to act on go here, not to the 11.5px status pill and not to console.error.
-  function hostError(msg){
+  /* A message that stops being true comes down by itself. The bar only ever cleared on Dismiss,
+     so "Time is up on #1204" sat over the console after the member had claimed. An error raised
+     with a key is taken down by clearHostErrorIf(key) when its condition ends; an error without
+     one, or with a different one, is left alone. */
+  var _errKey="";
+  function hostError(msg, key){
+    _errKey=key||"";
     var t=$("hostErrText"), b=$("hostErrBar");
     if(!t||!b){ var st=$("statusText"); if(st) st.textContent=msg||"Something went wrong"; return; }
     t.textContent=msg||"Something went wrong";
     b.classList.add("show");
+    var r=$("hostErrRetry"); if(r) r.classList.toggle("hidden", _errKey!=="load");   // only a failed load can be retried from the bar
     try{ window.scrollTo({ top:0, behavior:"smooth" }); }catch(e){ window.scrollTo(0,0); }
   }
-  function clearHostError(){ var b=$("hostErrBar"); if(b) b.classList.remove("show"); }
+  function clearHostError(){ _errKey=""; var b=$("hostErrBar"); if(b) b.classList.remove("show"); var r=$("hostErrRetry"); if(r) r.classList.add("hidden"); }
+  function clearHostErrorIf(key){ if(key && _errKey===key) clearHostError(); }
   (function(){ var x=$("hostErrX"); if(x) x.addEventListener("click", clearHostError); })();
   function show(el,on){ $(el).classList.toggle("hidden", !on); }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
@@ -402,6 +411,11 @@
   // ---- render console ----
   function renderStats(){
     var d=curDraw();
+    if(G.loadFailed){   // a count we could not load is not 0
+      $("runJackpot").textContent = d ? money(d.current_jackpot_cents) : "?";
+      $("runValid").textContent="?"; $("memberCount").textContent="?"; $("runSince").textContent="Could not load";
+      return;
+    }
     $("runJackpot").textContent=money(d?d.current_jackpot_cents:0);
     var act=activeMembers(d).length;
     $("runValid").textContent=act; $("memberCount").textContent=act;
@@ -411,6 +425,7 @@
   }
   function renderDrawSelect(){
     var sel=$("drawSel"); sel.innerHTML="";
+    if(G.loadFailed && !G.draws.length){ var lf=document.createElement("option"); lf.value=""; lf.textContent="Could not load your draws"; lf.selected=true; sel.appendChild(lf); return; }
     G.draws.forEach(function(d){ var o=document.createElement("option"); o.value=d.id; o.textContent=d.name; if(d.id===G.currentDrawId) o.selected=true; sel.appendChild(o); });
     var nw=document.createElement("option"); nw.value="__new"; nw.textContent=(G.draws.length?"+ New draw":"+ Set up your first draw");
     if(G.currentDrawId==="__new" || !G.draws.length) nw.selected=true;
@@ -419,6 +434,7 @@
   function renderMembers(){
     var el=$("memberList"); el.innerHTML=""; var d=curDraw();
     var ms=drawMembers(d).slice().sort(function(a,b){ return (a.member_number||0)-(b.member_number||0); });
+    if(G.loadFailed){ el.innerHTML='<span class="note">Could not load your members list. Tap Try again at the top.</span>'; return; }
     if(!ms.length){ el.innerHTML='<span class="note">No members saved for this draw yet.</span>'; return; }
     ms.forEach(function(m){
       var chip=document.createElement("span");
@@ -431,7 +447,7 @@
   function renderSettings(){
     if(!G.round && !G.busy) drawBtnIdle();   // reflect "Drawn tonight" for the selected draw (not while a round is live)
     var d=curDraw();
-    var sb=$("saveSettingsBtn"); if(sb) sb.textContent = d ? "Save settings" : "Create draw";
+    var sb=$("saveSettingsBtn"); if(sb) sb.textContent = d ? "Save settings" : (G.loadFailed ? "Could not load your draws" : "Create draw");
     if(!d){ ["setName","setSince","setStart","setInc","setCur","setClaim","setDay","setTime"].forEach(function(id){ $(id).value=""; }); return; }   // creating a new draw: blank form
     $("setName").value  = d.name||"";
     $("setSince").value = d.date_started||"";
@@ -455,7 +471,7 @@
     // setSince was in the clear list but not this one, so a host could type into "Running since"
     // and it silently never saved.
     ["setName","setSince","setStart","setInc","setCur","setClaim","setDay","setTime"].forEach(function(id){ $(id).disabled=lock; });
-    $("saveSettingsBtn").disabled=lock;
+    $("saveSettingsBtn").disabled=lock || (!!G.loadFailed && !G.draws.length);
     show("settingsLock", lock);
   }
 
@@ -515,7 +531,14 @@
   }
 
   function startDraw(){
-    if(!subscribed){ hostError("No TV connected yet. Open venueplay.com.au/tv on your screen, then tap Draw."); return; }   // was a silent no-op
+    /* A CHANNEL BLIP DOES NOT STOP THE DRAW. This refused with "No TV connected yet" whenever
+       the channel was between subscriptions, even with the TV on the wall, and the message then
+       stayed up after the TV was back. The raffle queues in the same situation and so does this
+       now: send() queues while the link is down, flushQueue() replays it in order when the
+       channel is back, and a TV that says hello is sent the live winner (onPair). The draw is
+       server side and logged either way. What the members draw does need is a draw that EXISTS
+       and members that loaded, and those are checked below. */
+    if(G.loadFailed){ hostError(LOAD_FAIL_MSG, "load"); return; }   // never draw off a list that did not load
     if(alreadyDrawnTonight() && !confirm("This draw has already been drawn tonight.\n\nOnly draw again if the first draw never showed a winner (for example the wifi dropped, or the tablet reloaded). Drawing again picks a new random member.\n\nDraw again?")) return;
     if(G.busy || G.round) return;
     var d=curDraw();
@@ -533,7 +556,7 @@
     clearTimers(); hideWinnerCard();
     G.busy=true;
     $("drawBtn").disabled=true; $("drawBtn").textContent="Drawing…";
-    $("drawNote").textContent="Drawing now on the TV…";
+    $("drawNote").textContent = subscribed ? "Drawing now on the TV…" : "Drawing now. The TV link is reconnecting and the TV catches up as soon as it is back.";
     var len=Math.max(2000, ((d.draw_length_seconds||4))*1000);
     var nums=activeMembers(d).map(function(m){ return m.member_number|0; }).filter(function(n){ return n>0; });
     var lo=nums.length?Math.min.apply(null,nums):0, hi=nums.length?Math.max.apply(null,nums):0;
@@ -579,7 +602,7 @@
            as the raffle now does. */
         if(G.round.remaining<=0){
           stopClaimTimer();
-          hostError("Time is up on #"+G.round.number+" "+(G.round.name||"")+". Tap Claim if they are here, or Jackpot to next week if not.");
+          hostError("Time is up on #"+G.round.number+" "+(G.round.name||"")+". Tap Claim if they are here, or Jackpot to next week if not.", "timeup");
         }
       }, 1000);
     }
@@ -594,6 +617,7 @@
         if(d && r.new_jackpot_cents!=null) d.current_jackpot_cents=r.new_jackpot_cents;
         send({ t:"claimed", name:round.name, amountCents:r.amount_cents, nextResetCents:r.new_jackpot_cents });
         G.round=null; clearRound(); hideWinnerCard(); renderStats(); renderSettings();
+        clearHostErrorIf("timeup");   // claimed: "Time is up on #N" is no longer true
         $("drawNote").textContent="Claimed. Jackpot reset to "+money(d?d.current_jackpot_cents:0)+" for next week.";
         scheduleIdle(CLAIM_HOLD_MS);
       })
@@ -609,6 +633,7 @@
         if(d && r.new_jackpot_cents!=null) d.current_jackpot_cents=r.new_jackpot_cents;
         send({ t:"rollover", nextJackpotCents:r.new_jackpot_cents, incrementCents:r.increment_cents, missedNumber:round.number, missedName:round.name });
         G.round=null; clearRound(); hideWinnerCard(); renderStats(); renderSettings();
+        clearHostErrorIf("timeup");   // rolled over: the host has made the call
         $("drawNote").textContent="Not claimed. Jackpot grew by "+money(r.increment_cents)+" to "+money(d?d.current_jackpot_cents:0)+".";
         scheduleIdle(ROLLOVER_HOLD_MS);
       })
@@ -647,6 +672,7 @@
   function saveSettings(){
     if(!G.canManage) return;
     var d=curDraw();
+    if(!d && G.loadFailed){ hostError(LOAD_FAIL_MSG, "load"); return; }   // never create a draw we could not check for
     var name=$("setName").value.trim();
     function dollarsToCents(id){ var v=$(id).value; if(v===""||v==null) return undefined; var n=Math.round(parseFloat(v)*100); return isNaN(n)?undefined:n; }
     function intOf(id){ var v=$(id).value; if(v===""||v==null) return undefined; var n=parseInt(v,10); return isNaN(n)?undefined:n; }
@@ -679,8 +705,17 @@
   }
 
   // ---- data loads (READ directly via RLS; every WRITE goes through the Worker) ----
+  /* A FAILED LOAD IS NOT AN EMPTY VENUE. supabase-js does not throw on a failed read: it
+     resolves {data:null, error}. Every read here took (r.data||[]), so a network blip or an
+     expired session read as "this venue has no draws and no members": the console landed on
+     the Create draw form (a manager could create a duplicate of the draw that already exists),
+     the members count said 0, and the "Could not load" message below could never fire because
+     nothing ever rejected. Each read now throws on r.error, loadAll rejects, and G.loadFailed
+     keeps the empty state off the screen until a retry succeeds. */
+  function loadFail(what, r){ var e=new Error("Could not load "+what+((r&&r.error&&r.error.message)?" ("+r.error.message+")":"")); e.loadFailed=true; return e; }
   function loadAll(){
     return Promise.all([ loadDraws(), loadRoster() ]).then(function(){
+      G.loadFailed=false;
       if(!G.currentDrawId && G.draws.length){
         // default to tonight's draw if any, else the first
         var wd=todayWeekday(), pick=G.draws[0].id;
@@ -692,10 +727,30 @@
       renderDrawSelect(); renderStats(); renderMembers(); renderSettings();
     });
   }
+  /* The load failed: say so, offer a retry, and show "could not load" where the draws and the
+     count would be, never the create form or a 0. */
+  var LOAD_FAIL_MSG="Could not load your draws and members list. Check the venue wifi, then tap Try again.";
+  function loadFailed(){
+    G.loadFailed=true;
+    try{ renderDrawSelect(); renderStats(); renderMembers(); renderSettings(); }catch(_){}
+    hostError(LOAD_FAIL_MSG, "load");
+  }
+  function retryLoad(){
+    var r=$("hostErrRetry"); if(r){ r.disabled=true; r.textContent="Loading\u2026"; }
+    return loadAll().then(function(){
+      clearHostErrorIf("load");
+      renderNameSeg(); applyRoleGates();
+      if(!G.round && ch) restoreRound();
+      sendState();
+    }, function(e){ try{ console.error("members: load failed", e); }catch(_){} loadFailed(); })
+      .then(function(){ if(r){ r.disabled=false; r.textContent="Try again"; } });
+  }
+  (function(){ var r=$("hostErrRetry"); if(r) r.addEventListener("click", retryLoad); })();
   function loadDraws(){
     return client.from("vp_member_draws").select("*").eq("venue_id", G.venueId).order("created_at",{ascending:true})
       /* Removed draws are filtered here, not in the query: see billing.html. */
-      .then(function(r){ G.draws=((r&&r.data)||[]).filter(function(d){ return !d.archived_at; }); });
+      .then(function(r){ if(!r || r.error || !Array.isArray(r.data)) throw loadFail("your draws", r);
+        G.draws=r.data.filter(function(d){ return !d.archived_at; }); });
   }
   /* EVERY member, not the first thousand.
 
@@ -720,7 +775,10 @@
         .order("member_number",{ascending:true}).order("id",{ascending:true})
         .range(from, from + PAGE - 1)
         .then(function(r){
-          var rows = (r && r.data) || [];
+          /* A FAILED page is not an empty one. Read as empty, it ends the loop and hands back a
+             short list with no error, which is the exact truncation this loop exists to stop. */
+          if(!r || r.error || !Array.isArray(r.data)) throw loadFail("your members list", r);
+          var rows = r.data;
           if(!rows.length) return out;            // empty page: that is the end
           out = out.concat(rows);
           from += rows.length;
@@ -735,19 +793,35 @@
 
   function loadRoster(){
     return client.from("vp_member_rosters").select("id").eq("venue_id", G.venueId)
-      .then(function(r){ var ids=((r&&r.data)||[]).map(function(x){ return x.id; }); if(!ids.length){ G.members=[]; return; }
+      .then(function(r){ if(!r || r.error || !Array.isArray(r.data)) throw loadFail("your members list", r);
+        var ids=r.data.map(function(x){ return x.id; }); if(!ids.length){ G.members=[]; return; }
         return loadAllMembers(ids).then(function(rows){ G.members=rows; }); });
   }
 
   // ---- pair with the venue screen ----
-  function connect(code){
-    G.code=code;
+  /* ONLY THIS PAGE'S CURRENT CHANNEL MAY SAY THE LINK IS DOWN, and not while the page is being
+     left. Trivia found this the hard way (27 Sep 2026, see LOST_MSG there): removeChannel makes the
+     old channel report CLOSED inside the call, and a callback that does not check whose channel it
+     is reads that as its own link failing. The page being left (a reload, Games, the tablet
+     sleeping into the back/forward cache) closes the socket the same way, and this console then
+     sat on "Reconnecting" after it came back, with nothing that would ever resubscribe, because a
+     CLOSED channel does not rejoin by itself. So: let go of the old channel BEFORE removing it,
+     ignore anything a replaced channel says, keep quiet while leaving, and open a fresh channel
+     on return if this one was closed underneath us. */
+  var _leaving=false, _closed=false;
+  function openChannel(code){
+    if(ch){ var old=ch; ch=null; subscribed=false; try{ client.removeChannel(old); }catch(e){} }
+    _closed=false;
     ch=client.channel("vp-"+code, { config:{ broadcast:{ self:false } } });   // same convention as trivia/musical so the unified TV finds it
+    var mine=ch;
     ch.on("broadcast", { event:"msg" }, function(e){ onPair(e.payload); });
     ch.subscribe(function(status){
+        if(mine!==ch) return;   // a replaced channel closing is not this console's link going down
         /* Reset on failure. Without this one CHANNEL_ERROR left the console posting into a
            dead socket for the rest of the night instead of queueing. See app/index.html. */
         if(status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") subscribed = false;
+        if(status === "CLOSED") _closed = true;
+        if(status !== "SUBSCRIBED" && _leaving) return;   // the page is going: nothing to tell the host
       if(status==="SUBSCRIBED"){
         subscribed=true; send({ t:"host_here" }); send({ t:"mode", mode:"members" }); flushQueue();   // put the members-draw screen on the unified /tv
         $("statusDot").classList.remove("on"); $("statusText").textContent="Waiting for screen";
@@ -762,6 +836,10 @@
         $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting";
       }
     });
+  }
+  function connect(code){
+    G.code=code;
+    openChannel(code);
     $("signinView").classList.add("hidden");
     $("connectView").classList.add("hidden");
     $("consoleView").classList.remove("hidden");
@@ -844,9 +922,7 @@
         // null reference inside renderSettings rejected loadAll and the host got a blank page
         // with no error at all: nothing to report, nothing to act on.
         try{ console.error("members: load failed", e); }catch(_){}
-        // console.error alone is invisible behind a bar. Tell the host their list may be incomplete,
-        // otherwise a network blip looks exactly like an empty members list.
-        hostError("Could not load your members list. What you see may be out of date. Check your connection and reload before drawing.");
+        loadFailed();
       }).then(function(){
         renderNameSeg(); applyRoleGates();
         var tv=tvFromUrl();
@@ -894,6 +970,8 @@
      back without a navigation. Guarded so a burst of both only speaks once. */
   var _lastReassert = 0;
   function reassertOnReturn(){
+    _leaving = false;
+    if(_closed && !subscribed && G.code) openChannel(G.code);   // closed while we were away: it will not rejoin by itself
     var now = Date.now();
     if(now - _lastReassert < 1200) return;
     _lastReassert = now;
@@ -905,6 +983,7 @@
   });
 
   window.addEventListener("pagehide", function(){
+    _leaving = true;                          // the socket closing as the page goes is not a dropped link
     if(G.round) return;                       // a draw is live: leave the room as it is
     try{ rawSend({ t:"to_ads" }); }catch(e){}   // sync on unload; an async signed send never lands before the page dies. NOT exempt: under enforce this is dropped, see vp-sign.js EXEMPT
   });
