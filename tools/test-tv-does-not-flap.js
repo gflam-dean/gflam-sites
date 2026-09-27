@@ -36,6 +36,17 @@ var block = html.slice(a, b + '\n      join();\n'.length);
 check('the block lifted out of tv.html is the reconnect loop', /removeChannel\(old\)/.test(block) && /function join\(\)/.test(block), block.length);
 
 var gameChannelsDeafSince = 0, VENUE_SLUG = 'the-pub';
+/* Each channel keeps its own deaf clock since 27 Sep 2026, through tv.html's noteDeaf(). Lifted
+   from the page, not copied, so gameChannelsDeafSince below is what the watchdog really reads:
+   "every channel is deaf, since the last one went". */
+var anyChannelDeafSince = 0, channelDeafSince = {};
+(function () {
+  var i = html.indexOf('function noteDeaf(name, deaf){');
+  if (i < 0) throw new Error('cannot find noteDeaf in tv.html');
+  var d = 0, j = html.indexOf('{', i), k;
+  for (k = j; k < html.length; k++) { if (html[k] === '{') d++; else if (html[k] === '}') { d--; if (!d) break; } }
+  (0, eval)(html.slice(i, k + 1));
+})();
 function venueCode(s) { return 'C-' + s; }
 function onGameMsg() {}
 var GAMES = ['trivia', 'musical', 'raffle', 'members'];

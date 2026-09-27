@@ -343,6 +343,7 @@
 </script>
 <script>if(!/[?&]demo=1\b/.test(location.search)){ document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>'); }</script>
 <script src="/app/vp-sign.js"></script>
+<script src="/app/vp-channel.js"></script>
 <script src="/app/vp-phonekey.js"></script>
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-feedback.js"></script>
@@ -1445,6 +1446,15 @@
 
   // ---- connect ----
   function connect(room){
+    /* ONE CHANNEL, AND IT COMES BACK. connect() can run again for this phone (a code hop, the
+       room server saying no), so hang up the last channel first. And a channel that ended in
+       CLOSED used to say Reconnecting and never rejoin: every answer after that sat in
+       sendQueue for the rest of the night (audit, 27 Sep 2026). The channel below comes from
+       /app/vp-channel.js, which rebuilds it with a backoff, and hanging it up (Leave, a code
+       hop) now really ends it: the old channel's CLOSED used to arrive afterwards and paint
+       Reconnecting on the screen the phone had moved to. Without the script it is the plain
+       channel, as before. */
+    if(ch){ try{ ch.unsubscribe(); }catch(e){} ch=null; subscribed=false; }
     P.room=room;
     $("roomLabel").textContent=room;
     $("joinCode").textContent=room;
@@ -1500,7 +1510,8 @@
       }catch(err){ _useRoom=false; _room=null; }
     }
     if(!_room){
-        ch=client.channel("vp-"+room, { config:{ broadcast:{ self:false } } });
+    ch=window.VPChannel ? VPChannel.keep(client, "vp-"+room, { config:{ broadcast:{ self:false } } })
+                        : client.channel("vp-"+room, { config:{ broadcast:{ self:false } } });
     ch.on("broadcast", { event:"msg" }, function(e){ if(window.VPSign){ VPSign.gate(e.payload, onMsg); } else { onMsg(e.payload); } });
     /* NAMED, so it can be RUN by a test. It was an anonymous callback and the fault below
        lived in it for weeks: no test in this repo could reach it. */
@@ -1882,7 +1893,11 @@
       return;                       // never reaches goToCode/watchVenue, so nothing connects
     }
     var m=/[?&]room=([^&]+)/.exec(window.location.search);
-    var room = m ? decodeURIComponent(m[1]).toUpperCase().trim() : "";
+    /* A STRAY "%" THREW HERE, and a throw here is the end of this phone's whole startup: no
+       code screen, no venue, nothing. /play?room=ABC234% did it (audit, 27 Sep 2026). A bad
+       escape is read as the raw text, which then simply fails the code check below. */
+    var room = "";
+    if(m){ try{ room=decodeURIComponent(m[1]); }catch(e){ room=m[1]; } room=room.toUpperCase().trim(); }
     var slug = room ? "" : venueSlugFromURL();
     if(room && CODE_RE.test(room)){ goToCode(room); }
     else if(slug){ watchVenue(slug); }

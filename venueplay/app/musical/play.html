@@ -1003,7 +1003,8 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     P.assist=loadAssist(); var ac=$("assistChk"); if(ac) ac.checked=P.assist;
     if(loadLight()) setLight(true); var lc=$("lightChk"); if(lc) lc.checked=loadLight();
     var m=/[?&]room=([^&]+)/.exec(window.location.search);
-    var room = m ? decodeURIComponent(m[1]).toUpperCase().trim() : "";
+    var room = ""; // a stray "%" threw here and stopped the phone starting (audit, 27 Sep 2026)
+    if(m){ try{ room=decodeURIComponent(m[1]); }catch(e){ room=m[1]; } room=room.toUpperCase().trim(); }
     if(room && CODE_RE.test(room)){
       connect(room);
       // Follow the host to whatever they start next. See vp-follow.js.

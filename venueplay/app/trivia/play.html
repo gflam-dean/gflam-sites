@@ -205,6 +205,7 @@
 </script>
 <script>if(!/[?&]demo=1\b/.test(location.search)){ document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>'); }</script>
 <script src="/app/vp-sign.js"></script>
+<script src="/app/vp-channel.js"></script>
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-follow.js"></script>
 <script src="/app/vp-feedback.js"></script>
@@ -903,6 +904,19 @@
   }
 
   // ---- connect ----
+  /* NAMED, so a test can RUN it (the bingo phone's is too). The drop branch clears subscribed:
+     with it left true, send() writes into a dead channel and the answer is simply gone, where
+     cleared it waits in sendQueue and flushQueue() posts it the moment the channel is back. */
+  function onChannelStatus(status){
+    if(status==="SUBSCRIBED"){
+      subscribed=true; flushQueue();
+      if(P.joined){ send({ t:"join", pid:P.pid, name:P.name }); rebuildFromSnapshot(); }
+      $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
+    } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){
+      subscribed=false;
+      $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting";
+    }
+  }
   function connect(room){
     P.room=room;
     $("roomLabel").textContent=room;
@@ -915,17 +929,17 @@
     // Verify host broadcasts (migrations 38/49): fetch the venue PUBLIC key via the join code, drop
     // forged questions/reveals in enforce mode. No key / enforce off / script absent -> as before.
     if(window.VPSign){ VPSign.initReceiver(VP_GAME_API, { code: room }); }
-    ch=client.channel("vp-"+room, { config:{ broadcast:{ self:false } } });
+    /* ONE CHANNEL, AND IT COMES BACK. Audit, 27 Sep 2026: this ignored CLOSED and never set
+       subscribed=false, so a phone whose channel closed said Connected and send() kept writing
+       answers into a dead channel instead of queueing them. And nothing ever rejoined a CLOSED
+       channel. /app/vp-channel.js rebuilds it with a backoff, tells this callback only about
+       the channel it is on now, and hanging it up (Leave, typing another code) really ends it.
+       Without the script it is the plain channel, as before. */
+    if(ch){ try{ ch.unsubscribe(); }catch(e){} ch=null; subscribed=false; }
+    ch=window.VPChannel ? VPChannel.keep(client, "vp-"+room, { config:{ broadcast:{ self:false } } })
+                        : client.channel("vp-"+room, { config:{ broadcast:{ self:false } } });
     ch.on("broadcast", { event:"msg" }, function(e){ if(window.VPSign){ VPSign.gate(e.payload, onMsg); } else { onMsg(e.payload); } });
-    ch.subscribe(function(status){
-      if(status==="SUBSCRIBED"){
-        subscribed=true; flushQueue();
-        if(P.joined){ send({ t:"join", pid:P.pid, name:P.name }); rebuildFromSnapshot(); }
-        $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
-      } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){
-        $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting";
-      }
-    });
+    ch.subscribe(onChannelStatus);
     if(P.joined) showWait("Watch the big screen. Your questions will pop up here.");
     else { loadJoinInfo(); show("vJoin"); }
   }
@@ -1020,7 +1034,10 @@
   // ---- init: read ?room ----
   (function(){
     var m=/[?&]room=([^&]+)/.exec(window.location.search);
-    var room = m ? decodeURIComponent(m[1]).toUpperCase().trim() : "";
+    /* A stray "%" threw here and stopped this phone's startup (audit, 27 Sep 2026): read a bad
+       escape as the raw text, which then fails the code check below like any other typo. */
+    var room = "";
+    if(m){ try{ room=decodeURIComponent(m[1]); }catch(e){ room=m[1]; } room=room.toUpperCase().trim(); }
     if(room && CODE_RE.test(room)){
       connect(room);
       /* Follow the host. If they realise they started the wrong game and start
