@@ -33,6 +33,7 @@ var btoa = function (s) { return s; }, atob = function (s) { return s; };
 var document = { getElementById: function () { return null; } };
 var fetch = function (url, opts) {
   W.fetches.push(url);
+  if (url.indexOf('/host/signing/private') >= 0) { try { W.privFor = (JSON.parse((opts && opts.body) || '{}').slug) || W.privFor; } catch (e) {} }
   if (url.indexOf('/venue/signing/public') >= 0) {
     return Promise.resolve({ ok: true, json: function () { return Promise.resolve(W.row ? { exists: true, enforce: true, kid: W.row.kid, public_jwk: { kid: W.row.kid } } : { exists: false, enforce: true }); } });
   }
@@ -93,6 +94,16 @@ function arrive(kid, t) { V.gate({ t: t || 'ball', k: kid, _sig: 'sig', _kid: ki
   var f0 = W.fetches.length;
   tick(300000); await drainAll();
   ok('a login that has been removed is refused the new key and mints nothing', W.mints === 3 && W.row.kid === 'k9', JSON.stringify([W.mints, W.row]));
+
+  print('a multi-venue host switches venue (audit, 27 Sep 2026)');
+  W.staff = true; W.row = { kid: 'kA' };
+  var timersBefore = W.timers.length;
+  await V.initHost('https://w', 'venue-b', function () { return 'tok'; });
+  ok('the first fetch after switching asks for venue B\'s key', W.privFor === 'venue-b', W.privFor);
+  W.privFor = null;
+  tick(300000); await drainAll();
+  ok('and the five-minute refresh keeps asking for venue B, not the first venue', W.privFor === 'venue-b', W.privFor);
+  ok('no second refresh timer was armed by the switch', W.timers.length === timersBefore, (W.timers.length - timersBefore) + ' extra');
 })().then(function () { finished = true; }, function (e) { print('  FAIL threw: ' + e + '\n' + e.stack); bad++; });
 var finished = false;
 async function drainAll() { for (var i = 0; i < 40; i++) { await Promise.resolve(); } }

@@ -313,6 +313,50 @@
     } catch (e) {}
   }
 
+  /* THE ADDRESS NAMES THE VENUE; THE CONSOLE MUST NOT QUIETLY RUN SOMEWHERE ELSE.
+     Every console link carries ?venue= (the bingo console builds /app/<game>/host.html?venue=<slug>,
+     HQ and billing link settings.html?venue=<id>), and nothing read it: the venue came only from the
+     choice this browser last saved, which every tab shares. On 27 Sep 2026 a trivia console at
+     ?venue=test-alpha opened a live lobby at Karina Bay Surf Club, a real venue, because another tab
+     had switched to it. Console pages only: a TV or phone page on the same laptop must not move the
+     host's console. A uuid or a slug is accepted; a venue this login may not use is REPORTED, never
+     silently swapped for another one. */
+  var CONSOLE_PATH = /\/app\/(?:(?:index|settings|billing|account)|(?:trivia|musical|raffle|members)\/host|trivia\/builder)?(?:\.html)?$/;
+  var UUID_RX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  function urlVenueParam() {
+    try {
+      if (!CONSOLE_PATH.test(root.location.pathname || "")) return "";
+      var m = /[?&]venue=([^&#]+)/i.exec(root.location.search || "");
+      if (!m) return "";
+      var raw = m[1]; try { raw = decodeURIComponent(raw); } catch (e) {}
+      raw = String(raw).trim();
+      return UUID_RX.test(raw) ? raw.toLowerCase() : raw.toLowerCase().replace(/[\s_]+/g, "-").replace(/[^a-z0-9-]/g, "");
+    } catch (e) { return ""; }
+  }
+  function resolveUrlVenue(client, want) {
+    if (!want) return Promise.resolve(null);
+    var q = client.from("vp_venues").select("id,name,slug");
+    q = UUID_RX.test(want) ? q.eq("id", want) : q.eq("slug", want);
+    return q.maybeSingle().then(function (r) { return (r && r.data) || null; }, function () { return null; });
+  }
+  function urlVenueBanner(asked, workingName) {
+    try {
+      if (document.getElementById("vpUrlVenue")) return;
+      var d = document.createElement("div");
+      d.id = "vpUrlVenue";
+      d.style.cssText = "position:fixed;left:0;right:0;top:0;z-index:99998;background:#2A0B14;color:#fff;" +
+        "border-bottom:2px solid #FF4D5E;padding:12px 16px;font:600 14px/1.4 -apple-system,Segoe UI,sans-serif;text-align:center";
+      d.textContent = "This link is for " + asked + ", which this login cannot run. You are working at " +
+        (workingName || "your own venue") + ". Anything you start here happens at " + (workingName || "your venue") + ".";
+      var x = document.createElement("button");
+      x.textContent = "OK";
+      x.style.cssText = "margin-left:12px;font:inherit;background:#FF1F8E;color:#fff;border:0;border-radius:8px;padding:6px 14px;cursor:pointer";
+      x.addEventListener("click", function () { d.parentNode && d.parentNode.removeChild(d); });
+      d.appendChild(x);
+      (document.body || document.documentElement).appendChild(d);
+    } catch (e) {}
+  }
+
   function build() {
     var client;
     try {
@@ -337,6 +381,7 @@
            navigated choice is indistinguishable from a restore. */
         var chosen = explicitVenue();
         var venueId = pickVenue(role, !!(chosen && chosen === storedVenue()));
+        var asked = urlVenueParam();
 
         function assemble(id) {
           return Promise.all([loadVenue(client, id), loadSettings(id)])
@@ -352,7 +397,20 @@
             });
         }
 
-        return assemble(venueId);
+        if (!asked) return assemble(venueId);
+        return resolveUrlVenue(client, asked).then(function (v) {
+          var mine = role.staff.map(function (st) { return st.venue_id; });
+          var may = !!(v && (role.isAdmin || mine.indexOf(v.id) >= 0));
+          if (may) {
+            if (v.id !== venueId) { markExplicit(v.id); }   // the link's venue, exactly as if picked
+            return assemble(v.id);
+          }
+          return assemble(venueId).then(function (ctx) {
+            ctx.urlVenueRefused = asked;
+            urlVenueBanner(asked, ctx.venue && ctx.venue.name);
+            return ctx;
+          });
+        });
       });
     }).catch(function (err) {
       // Never leave the page wedged: fall back to a signed-out context.

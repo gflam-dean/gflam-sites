@@ -179,7 +179,12 @@
     // token (or a Promise of it). If the venue has no key yet, mint an ECDSA P-256 pair in the browser
     // (the Workers runtime cannot) and store it. Never rejects; on any failure the host sends UNSIGNED.
     initHost: function (apiBase, slug, getToken) {
-      S.apiBase = apiBase; S.slug = slug;
+      /* A NEW VENUE MEANS A NEW KEY, AND THE OLD ONE IS DROPPED NOW. A multi-venue host who switched
+         venue kept venue A's private key until the refresh, and the refresh below was bound to A's
+         slug for good, so every five minutes it fetched A's key again: venue B's messages carried A's
+         signature and B's enforcing TV dropped them (audit, 27 Sep 2026). */
+      if (S.slug && slug !== S.slug) { S.privKey = null; S.kid = null; }
+      S.apiBase = apiBase; S.slug = slug; S.hostGetToken = getToken;
       if (!subtleOk() || !slug) return Promise.resolve();
       /* Remember this attempt so signSend can WAIT for it. See the note on keyTried. */
       var p = VPSign._initHost(apiBase, slug, getToken);
@@ -187,7 +192,8 @@
       /* The console's half of rotation: ask again every five minutes. A rotated venue answers
          "no key" and this console mints the new pair; a login that has been removed is refused
          at the Worker and keeps signing with a key the screens are about to stop trusting. */
-      if (!S._hostRefresh) S._hostRefresh = setInterval(function () { VPSign._initHost(apiBase, slug, getToken); }, KEY_REFRESH_MS);
+      // Reads the CURRENT venue each time, not the one the timer started with.
+      if (!S._hostRefresh) S._hostRefresh = setInterval(function () { VPSign._initHost(S.apiBase, S.slug, S.hostGetToken); }, KEY_REFRESH_MS);
       return p;
     },
     _initHost: function (apiBase, slug, getToken) {

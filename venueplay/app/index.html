@@ -795,7 +795,16 @@
     try{ sessionStorage.removeItem("vpGreeted"); }catch(e){}
     setTimeout(function(){ if(window.VP){ VP.signOut(); } else { go("vSignIn"); } }, 1600);
   });
-  $("switchVenue").addEventListener("click", function(){ try{ localStorage.removeItem("vpVenuePick"); }catch(e){} showVenuePick(); });
+  /* NO SWITCHING VENUE WITH A GAME OPEN. The console kept the open game, its session, its draw and
+     the old venue's channel across a switch, so venue A's game went up on venue B's TV and B's End
+     game closed A's night (audit, 27 Sep 2026). End it first, then switch. */
+  function gameOpenHere(){ return G.status==="lobby" || G.status==="running"; }
+  function trySwitchVenue(){
+    if(gameOpenHere()){ showToast("Finish or end this game before you switch venue."); return; }
+    try{ localStorage.removeItem("vpVenuePick"); }catch(e){}
+    showVenuePick();
+  }
+  $("switchVenue").addEventListener("click", trySwitchVenue);
 
   // ---- always land on the pair step, code pre-filled and visible ----
   // Auto-pair by venue: the host derives the SAME code the venue's TV derives (VP.venueCode),
@@ -2661,7 +2670,7 @@
   }
   $("gamePicker").addEventListener("click", function(e){ var b=e.target.closest("button.pk[data-game]"); if(b){ _hostPicked=true; selectGame(b.getAttribute("data-game")); } });
   $("gamesBack").addEventListener("click", function(){ _hostPicked=false; showGameSelect(); });
-  $("venueSwitchInline").addEventListener("click", function(){ try{ localStorage.removeItem("vpVenuePick"); }catch(e){} showVenuePick(); });
+  $("venueSwitchInline").addEventListener("click", trySwitchVenue);
 
   // ================= EVENTS =================
   /* State gaming rules, once a night: shown before the night opens, never mid-game. */

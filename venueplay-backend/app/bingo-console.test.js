@@ -213,6 +213,22 @@ ok("connect() lands through it", !!grab("connect") && grab("connect").indexOf("l
 ok("tapping a tile marks the pick before opening it",
    /_hostPicked=true;\s*selectGame\(b\.getAttribute\("data-game"\)\)/.test(html));
 
+/* NO VENUE SWITCH WITH A GAME OPEN (audit 27 Sep 2026): the game, its session and channel carried
+   across to the other venue. Runs the real trySwitchVenue. */
+(function(){
+  var gg = grab("gameOpenHere"), ts = grab("trySwitchVenue");
+  ok("the switch guard is in the console", !!gg && !!ts);
+  if (!gg || !ts) return;
+  var toasts = [], picked = 0, removed = 0;
+  var env = { G: { status: "lobby" }, showToast: function(m){ toasts.push(m); }, showVenuePick: function(){ picked++; },
+              localStorage: { removeItem: function(){ removed++; } } };
+  var f = new Function("G", "showToast", "showVenuePick", "localStorage", gg + ts + "; return trySwitchVenue;")(env.G, env.showToast, env.showVenuePick, env.localStorage);
+  f(); ok("switching venue in a bingo LOBBY is refused, with a reason", picked === 0 && toasts.length === 1);
+  env.G.status = "running"; f(); ok("and during a running game", picked === 0 && toasts.length === 2);
+  env.G.status = "setup"; f(); ok("control: between games the venue picker opens", picked === 1 && removed === 1);
+  ok("both switch buttons go through the guard", (html.match(/addEventListener\("click", trySwitchVenue\)/g) || []).length === 2);
+})();
+
 var card = grab("showNightCard");
 ok("the night card takes the session it is reporting on",
    !!card && /function showNightCard\(sessionId\)/.test(card));
