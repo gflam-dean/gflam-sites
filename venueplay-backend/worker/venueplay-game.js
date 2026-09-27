@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '27 Sep 2026, 14:30 · 2a501ede';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '27 Sep 2026, 18:08 · e9f62872';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -289,6 +289,13 @@ export default {
       if (method === 'POST' && path === '/host/members/draw-remove')   return await handleDrawRemove(request, env, json);
       if (method === 'POST' && path === '/host/raffle/prize-add')      return await handleRafflePrizeAdd(request, env, json);
       if (method === 'POST' && path === '/host/raffle/prize-remove')   return await handleRafflePrizeRemove(request, env, json);
+      /* Jag the Joker (migration 95). OFF unless JAG_ON=1: see jagOn(). */
+      if (method === 'GET'  && path === '/jag/board')           return await handleJagBoard(request, env, json);
+      if (method === 'GET'  && path === '/host/jag')            return await handleJagHost(request, env, json);
+      if (method === 'POST' && path === '/host/jag/start')      return await handleJagStart(request, env, json);
+      if (method === 'POST' && path === '/host/jag/turn')       return await handleJagTurn(request, env, json);
+      if (method === 'POST' && path === '/host/jag/jackpot')    return await handleJagJackpot(request, env, json);
+      if (method === 'POST' && path === '/host/jag/close')      return await handleJagClose(request, env, json);
       if (method === 'GET'  && path === '/player/card')        return await handlePlayerCard(request, env, json);
       if (method === 'POST' && path === '/player/claim')       return await handlePlayerClaim(request, env, json);
       if (method === 'POST' && path === '/player/answer')      return await handlePlayerAnswer(request, env, json);
@@ -4411,6 +4418,159 @@ async function handleDrawRemove(request, env, json) {
   await sbPatch(env, 'vp_member_draws', 'id=eq.' + enc(drawId),
     { archived_at: new Date().toISOString(), draw_day: '', draw_time: '' });
   return json({ ok: true, name: dr[0].name || 'Members draw' });
+}
+
+/* =====================================================================
+ * JAG THE JOKER  (migration 95, built 27 Sep 2026, OFF until JAG_ON=1)
+ *
+ * A weekly jackpot: a drawn ticket-holder turns one face-down card; the Joker wins, anything
+ * else stays turned and the jackpot carries. Dean's condition: "prove the joker is in a random
+ * spot where it stays". So the spot is picked HERE with randInt (this Worker's CSPRNG and
+ * rejection rule, the same one every VenuePlay draw uses), a 128-bit salt is minted with it,
+ * and the game is published with commitment = sha256('jag:<id>:<spot>:<salt>'). The spot and
+ * salt go into vp_jag_secrets, readable by the service role only and frozen by a trigger.
+ * When the Joker is found, or the game is closed, both are revealed and /jag-check recomputes
+ * the hash in the browser. The spot is never sent to a console, screen or phone before then.
+ *
+ * LICENSING: a jackpotting game of chance. Refused in Queensland (OLGR approval, parked), and
+ * every route is off until the Worker has JAG_ON=1, which Dean switches on once the per-state
+ * position is confirmed. Nothing here counts players, so it never touches billing.
+ * ===================================================================== */
+const JAG_STATUS = {
+  no_game:         [404, 'That Jag the Joker game is not here'],
+  not_staff:       [403, 'Not authorised: you are not staff at this venue'],
+  venue_missing:   [403, 'Venue not available'],
+  venue_paused:    [403, 'Games are paused here tonight. Have a word with the staff.'],
+  not_manager:     [403, 'Only an owner or manager can close a Jag the Joker game'],
+  finished:        [409, 'This game has finished. Start a new one.'],
+  already_running: [409, 'There is already a Jag the Joker game running here'],
+  already_turned:  [409, 'That card has already been turned. Pick another.'],
+  bad_card:        [400, 'That card is not on the board'],
+  bad_spot:        [500, 'The Joker could not be placed. Try again.'],
+};
+function jagOn(env) { return String(env.JAG_ON || '') === '1'; }
+function jagOff(json) { return json({ error: 'Jag the Joker is not switched on yet' }, 404); }
+function jagCents(v) {
+  const n = Math.round(Number(v));
+  return Number.isFinite(n) && n >= 0 && n <= 100000000 ? n : null;
+}
+async function jagRpc(env, json, fn, args) {
+  const d = await sbRpc(env, fn, args);
+  if (d && d.status === 'ok') return { d };
+  const r = JAG_STATUS[d && d.status];
+  if (!r) throw dbError('rpc', fn, 'unexpected status ' + (d && d.status));
+  return { reply: json({ error: r[1] }, r[0]) };
+}
+// The commitment. Also recomputed by the page at /jag-check, which must use the same string.
+async function jagCommitment(id, spot, salt) {
+  return await sha256Hex('jag:' + id + ':' + spot + ':' + salt);
+}
+
+/* GET /jag/board?venue=<slug>   PUBLIC: the TV and the check page. Never the spot of a live game. */
+async function handleJagBoard(request, env, json) {
+  if (!jagOn(env)) return jagOff(json);
+  const url = new URL(request.url);
+  const slug = String(url.searchParams.get('venue') || '').trim().toLowerCase().slice(0, 80);
+  if (!/^[a-z0-9-]+$/.test(slug)) return json({ error: 'Which venue?' }, 400);
+  const v = await sbGet(env, 'vp_venues', 'slug=eq.' + enc(slug) + '&select=id,name,status&limit=1');
+  if (!v.length || v[0].status !== 'active') return json({ error: 'Venue not found' }, 404);
+  const board = await sbRpc(env, 'vp_jag_current', { p_venue_id: v[0].id });
+  if (!board) return json({ venue: v[0].name, board: null });
+  // Public: the room sees which cards are gone and the jackpot, not who turned them.
+  const pub = Object.assign({}, board, {
+    turns: (board.turns || []).map(t => ({ card: t.card, is_joker: t.is_joker, jackpot_cents: t.jackpot_cents, turned_at: t.turned_at })),
+  });
+  delete pub.venue_id;
+  return json({ venue: v[0].name, board: pub });
+}
+
+/* GET /host/jag?venue_id=   staff: the console's view, names included. */
+async function handleJagHost(request, env, json) {
+  if (!jagOn(env)) return jagOff(json);
+  const authUserId = await verifyHostJwt(request, env);
+  const venueId = String(new URL(request.url).searchParams.get('venue_id') || '').trim();
+  assertUuid(venueId, 'venue_id');
+  const who = await sbRpc(env, 'vp_host_staff', { p_auth_user_id: authUserId, p_venue_id: venueId });
+  if (!who || who.status !== 'ok') {
+    const r = JAG_STATUS[who && who.status] || JAG_STATUS.not_staff;
+    return json({ error: r[1] }, r[0]);
+  }
+  const board = await sbRpc(env, 'vp_jag_current', { p_venue_id: venueId });
+  return json({ board: board || null, role: who.role });
+}
+
+/* POST /host/jag/start { venue_id, name, deck_size, jackpot_cents } */
+async function handleJagStart(request, env, json) {
+  if (!jagOn(env)) return jagOff(json);
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const venueId = String(b.venue_id || '').trim();
+  assertUuid(venueId, 'venue_id');
+  const deck = Math.round(Number(b.deck_size));
+  if (!(deck >= 10 && deck <= 100)) return json({ error: 'The board needs between 10 and 100 cards' }, 400);
+  const jackpot = jagCents(b.jackpot_cents);
+  if (jackpot === null) return json({ error: 'Enter the starting jackpot in dollars' }, 400);
+  const v = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=au_state&limit=1');
+  if (v.length && String(v[0].au_state || '').toUpperCase() === 'QLD') {
+    return json({ error: 'Jag the Joker is not available in Queensland yet' }, 403);
+  }
+  const id = crypto.randomUUID();
+  const spot = randInt(deck) + 1;
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  const salt = Array.from(bytes, x => x.toString(16).padStart(2, '0')).join('');
+  const commitment = await jagCommitment(id, spot, salt);
+  const r = await jagRpc(env, json, 'vp_jag_start', {
+    p_auth_user_id: authUserId, p_venue_id: venueId, p_jag_id: id,
+    p_name: String(b.name || '').trim().slice(0, 60), p_deck_size: deck, p_jackpot_cents: jackpot,
+    p_commitment: commitment, p_spot: spot, p_salt: salt,
+  });
+  if (r.reply) return r.reply;
+  return json({ board: r.d.board });
+}
+
+/* POST /host/jag/turn { jag_id, card, winner_name, jackpot_cents } */
+async function handleJagTurn(request, env, json) {
+  if (!jagOn(env)) return jagOff(json);
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const jagId = String(b.jag_id || '').trim();
+  assertUuid(jagId, 'jag_id');
+  const card = Math.round(Number(b.card));
+  if (!(card >= 1 && card <= 100)) return json({ error: 'Pick a card on the board' }, 400);
+  const jackpot = b.jackpot_cents == null || b.jackpot_cents === '' ? null : jagCents(b.jackpot_cents);
+  const r = await jagRpc(env, json, 'vp_jag_turn', {
+    p_auth_user_id: authUserId, p_jag_id: jagId, p_card: card,
+    p_winner_name: String(b.winner_name || '').trim().slice(0, 60), p_jackpot_cents: jackpot,
+  });
+  if (r.reply) return r.reply;
+  return json({ is_joker: !!r.d.is_joker, board: r.d.board });
+}
+
+/* POST /host/jag/jackpot { jag_id, jackpot_cents } */
+async function handleJagJackpot(request, env, json) {
+  if (!jagOn(env)) return jagOff(json);
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const jagId = String(b.jag_id || '').trim();
+  assertUuid(jagId, 'jag_id');
+  const jackpot = jagCents(b.jackpot_cents);
+  if (jackpot === null) return json({ error: 'Enter the jackpot in dollars' }, 400);
+  const r = await jagRpc(env, json, 'vp_jag_jackpot', { p_auth_user_id: authUserId, p_jag_id: jagId, p_jackpot_cents: jackpot });
+  if (r.reply) return r.reply;
+  return json({ board: r.d.board });
+}
+
+/* POST /host/jag/close { jag_id }   owner or manager: stop without a winner, reveal the spot. */
+async function handleJagClose(request, env, json) {
+  if (!jagOn(env)) return jagOff(json);
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const jagId = String(b.jag_id || '').trim();
+  assertUuid(jagId, 'jag_id');
+  const r = await jagRpc(env, json, 'vp_jag_close', { p_auth_user_id: authUserId, p_jag_id: jagId });
+  if (r.reply) return r.reply;
+  return json({ board: r.d.board });
 }
 
 /* POST /host/raffle/prize-add  (MANAGER/OWNER) : add a reusable prize to the venue's list.

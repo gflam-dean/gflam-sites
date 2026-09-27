@@ -167,6 +167,14 @@
   "checks": 24,
   "counted_by": "lines"
  },
+ "tools/test-jag-joker.js": {
+  "checks": 34,
+  "counted_by": "lines"
+ },
+ "tools/test-jag-pages.js": {
+  "checks": 22,
+  "counted_by": "lines"
+ },
  "tools/test-library-pull-reaches-the-whole-bank.js": {
   "checks": 10,
   "counted_by": "lines"

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VenuePlay Jag the Joker: Big Screen</title>
+<link rel="icon" type="image/png" href="/logos/venueplay_appicon_rebuilt.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --pink:#FF1F8E; --gold:#FFC24B; --text:#E7E7EC; --muted:#9A9AA4; --faint:#6C6C76; --line:rgba(255,255,255,0.10); }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden}
+  body{background:#050506;color:var(--text);font-family:'Manrope',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  /* Sized in cqw (a WIDTH unit) and the grid scales with the card count, so a 100-card board
+     and a 20-card board both fit a 16:9 wall. See vp-fit notes: never trust one screen width. */
+  .tv{position:fixed;inset:0;container-type:inline-size;display:flex;flex-direction:column;padding:2.2cqw 3cqw;
+      background:radial-gradient(1200px 700px at 80% -10%, rgba(255,31,142,.10), transparent 60%), #050506}
+  .head{display:flex;align-items:flex-end;gap:3cqw}
+  .title{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:4.2cqw;line-height:1;color:#fff}
+  .title b{color:var(--pink);font-weight:400}
+  .venue{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:1.3cqw;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-top:.6cqw}
+  .pot{margin-left:auto;text-align:right}
+  .pot .l{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:1.2cqw;letter-spacing:.2em;color:var(--muted);text-transform:uppercase}
+  .pot .v{font-family:'Anton',sans-serif;font-size:7cqw;line-height:.95;color:var(--gold);filter:drop-shadow(0 0 18px rgba(255,194,75,.3))}
+  .grid{flex:1;display:grid;gap:.7cqw;margin:1.6cqw 0;align-content:center}
+  .card{border-radius:.6cqw;display:flex;align-items:center;justify-content:center;font-family:'Hanken Grotesk',sans-serif;font-weight:800;
+        background:linear-gradient(160deg,#3A1128,#17171A);border:1px solid rgba(255,31,142,.35);color:#fff}
+  .card.gone{background:#0E0E10;border-color:var(--line);color:#2E2E34}
+  .card.joker{background:var(--gold);color:#1a1200;border-color:var(--gold)}
+  .foot{display:flex;justify-content:space-between;gap:2cqw;font-size:1.15cqw;color:var(--faint)}
+  .foot .mono{font-family:'JetBrains Mono',monospace;color:var(--muted)}
+  .flip{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(5,5,6,.93);container-type:inline-size;text-align:center}
+  .flip .n{font-family:'Hanken Grotesk',sans-serif;font-weight:800;letter-spacing:.2em;text-transform:uppercase;font-size:2.4cqw;color:var(--muted)}
+  .flip .big{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:13cqw;line-height:1;margin:1cqw 0}
+  .flip .big.win{color:var(--gold)}
+  .flip .sub{font-size:2.4cqw;color:var(--text)}
+  .msg{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;font-size:2.6cqw;color:var(--muted)}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="tv">
+  <div class="head">
+    <div><div class="title" id="title">Jag the <b>Joker</b></div><div class="venue" id="venue"></div></div>
+    <div class="pot hidden" id="pot"><div class="l" id="potL">Jackpot</div><div class="v" id="potV">$0</div></div>
+  </div>
+  <div class="grid hidden" id="grid"></div>
+  <div class="msg" id="msg">Loading the board</div>
+  <div class="foot hidden" id="foot"><span id="left"></span>
+    <span>The Joker was sealed when this jackpot started. Fingerprint <span class="mono" id="fp"></span>, check it at venueplay.com.au/jag-check</span></div>
+</div>
+<div class="flip hidden" id="flip"><div class="n" id="flipN"></div><div class="big" id="flipBig"></div><div class="sub" id="flipSub"></div></div>
+
+<script src="/app/vp-venueurl.js"></script>
+<script>
+(function(){
+  "use strict";
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function money(c){ return "$"+Math.round((c||0)/100).toLocaleString("en-AU"); }
+  var API='https://venueplay-game.dean-tindale.workers.dev';
+  var SLUG=(window.VPVenueURL && VPVenueURL.slug()) || (new URLSearchParams(location.search).get("venue")||"").toLowerCase();
+  var seen=null, flipT=null;
+
+  // Columns chosen so the cards stay as square as the wall allows at any count.
+  function cols(n){ var best=1, bestScore=1e9, W=16, H=7.4;
+    for(var c=1;c<=n;c++){ var r=Math.ceil(n/c), cw=W/c, ch=H/r, s=Math.abs(Math.log((cw/ch)/0.75)); if(s<bestScore){ bestScore=s; best=c; } }
+    return best; }
+
+  function paint(d){
+    var b=d.board; $("venue").textContent=d.venue||"";
+    if(!b){ $("msg").textContent="No Jag the Joker jackpot running here yet."; $("msg").classList.remove("hidden");
+      ["grid","pot","foot"].forEach(function(id){ $(id).classList.add("hidden"); }); return; }
+    $("msg").classList.add("hidden"); ["grid","pot","foot"].forEach(function(id){ $(id).classList.remove("hidden"); });
+    $("title").innerHTML=esc(b.name).replace(/Joker/i,'<b>Joker</b>');
+    $("potV").textContent=money(b.jackpot_cents);
+    $("potL").textContent=b.status==="won"?"Won":"Jackpot";
+    var turned={}; (b.turns||[]).forEach(function(t){ turned[t.card]=t; });
+    var c=cols(b.deck_size), g=$("grid"), h="";
+    g.style.gridTemplateColumns="repeat("+c+",1fr)";
+    var fs=Math.max(0.9, Math.min(3.2, 60/c));
+    for(var i=1;i<=b.deck_size;i++){
+      var t=turned[i], j=(t&&t.is_joker)||(b.status!=="active"&&b.revealed_spot===i);
+      h+='<div class="card'+(j?" joker":(t?" gone":""))+'" style="font-size:'+fs+'cqw">'+(j?"JOKER":i)+'</div>';
+    }
+    g.innerHTML=h;
+    var left=b.deck_size-(b.turns||[]).length;
+    $("left").textContent = b.status==="active" ? left+" cards left. One of them is the Joker."
+      : (b.status==="won" ? "Found on card "+b.revealed_spot+"." : "This jackpot has ended. The Joker was on card "+b.revealed_spot+".");
+    $("fp").textContent=String(b.commitment||"").slice(0,12);
+
+    // A card turned since we last looked goes up full screen for the room.
+    var n=(b.turns||[]).length;
+    if(seen!==null && n>seen){ var last=b.turns[n-1]; flip(last, b); }
+    seen=n;
+  }
+  function flip(t, b){
+    $("flipN").textContent="Card "+t.card;
+    var big=$("flipBig"); big.textContent=t.is_joker?"JOKER!":"No Joker"; big.className="big"+(t.is_joker?" win":"");
+    $("flipSub").textContent=t.is_joker ? "Winner of "+money(t.jackpot_cents)+". See the host to claim."
+                                        : "The jackpot carries: "+money(b.jackpot_cents);
+    $("flip").classList.remove("hidden");
+    clearTimeout(flipT); flipT=setTimeout(function(){ $("flip").classList.add("hidden"); }, t.is_joker?30000:9000);
+  }
+  function poll(){
+    if(!SLUG){ $("msg").textContent="This screen needs its venue in the address: /app/jag/screen?venue=your-venue"; return; }
+    fetch(API+"/jag/board?venue="+encodeURIComponent(SLUG), { cache:"no-store" })
+      .then(function(r){ return r.json().then(function(d){ if(!r.ok) throw new Error(d.error||r.status); return d; }); })
+      .then(paint)
+      .catch(function(e){ if(seen===null){ $("msg").textContent="Could not load the board: "+e.message; } })
+      .then(function(){ setTimeout(poll, 4000); });
+  }
+  poll();
+})();
+</script>
+</body>
+</html>

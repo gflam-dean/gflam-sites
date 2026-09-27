@@ -57,7 +57,8 @@ ok('the route table can be read at all (%d host routes)' % len(routes), len(rout
    'found %d: the route table has changed shape and this check is blind' % len(routes))
 # A staff check is requireStaff, or one of the one-trip SQL functions that make the same check
 # inside the database (migration 76 and friends).
-STAFF = r"requireStaff\(|'vp_host_staff'|'vp_host_question'|'vp_host_reveal'|'vp_bingo_ball'|'vp_members_draw'"
+# The four vp_jag_ functions (migration 95) each call vp_host_staff before anything else.
+STAFF = r"requireStaff\(|'vp_host_staff'|'vp_host_question'|'vp_host_reveal'|'vp_bingo_ball'|'vp_members_draw'|'vp_jag_start'|'vp_jag_turn'|'vp_jag_jackpot'|'vp_jag_close'"
 for path, handler in routes:
     jwt = reaches(gb, handler, r"verifyHostJwt\(")
     staff = reaches(gb, handler, STAFF)

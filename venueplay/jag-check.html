@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Check the Joker | VenuePlay</title>
+<meta name="description" content="Check that a VenuePlay Jag the Joker card was sealed at the start and never moved.">
+<link rel="icon" type="image/png" href="/logos/venueplay_appicon_rebuilt.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --ink:#0A0A0B; --ink-2:#121214; --pink:#FF1F8E; --gold:#FFC24B; --win:#35D07F; --bad:#FF5A6A;
+         --text:#E7E7EC; --muted:#9A9AA4; --line:rgba(255,255,255,0.10); }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--ink);color:var(--text);font-family:'Manrope',system-ui,sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:720px;margin:0 auto;padding:28px 16px 60px}
+  h1{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:34px;line-height:1.05;margin-bottom:6px}
+  h1 b{color:var(--pink);font-weight:400}
+  p{margin:10px 0;color:var(--text)}
+  .muted{color:var(--muted);font-size:14px}
+  .box{background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:16px;margin:16px 0;overflow-wrap:anywhere}
+  .lbl{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--muted)}
+  .mono{font-family:'JetBrains Mono',monospace;font-size:14px}
+  .verdict{font-family:'Anton',sans-serif;font-size:26px;text-transform:uppercase;margin-top:6px}
+  .ok{color:var(--win)} .no{color:var(--bad)} .wait{color:var(--gold)}
+  label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+  input{width:100%;background:#17171A;border:1px solid var(--line);color:var(--text);border-radius:9px;padding:10px 12px;font:inherit;font-size:16px}
+  button{margin-top:12px;border:0;border-radius:10px;padding:12px 16px;font:inherit;font-weight:700;cursor:pointer;background:var(--pink);color:#fff}
+  a{color:var(--pink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Check the <b>Joker</b></h1>
+  <p class="muted">For Jag the Joker jackpots run on VenuePlay.</p>
+
+  <div class="box">
+    <p><b>How the proof works.</b> When a jackpot starts, our server picks the Joker's card at random and locks it away
+      with a long secret key that nobody at the venue can see. At the same moment it publishes a fingerprint made from three things:
+      the game, the card and the key. That fingerprint is on the TV from the first week.</p>
+    <p>When the Joker is found, the card and the key are revealed. This page puts them back through the same recipe in your own
+      browser. If the Joker had moved, even by one card, the fingerprint would come out completely different.</p>
+  </div>
+
+  <div class="box" id="live">
+    <div class="lbl" id="liveL">Loading</div>
+    <div id="liveBody" class="muted">Looking up the venue's jackpot.</div>
+  </div>
+
+  <div class="box">
+    <div class="lbl">Check any fingerprint yourself</div>
+    <label for="cId">Game</label><input id="cId" class="mono" autocomplete="off">
+    <label for="cSpot">Joker's card</label><input id="cSpot" class="mono" inputmode="numeric" autocomplete="off">
+    <label for="cSalt">Secret key</label><input id="cSalt" class="mono" autocomplete="off">
+    <label for="cFp">Fingerprint shown at the start</label><input id="cFp" class="mono" autocomplete="off">
+    <button id="cGo">Check it</button>
+    <div class="verdict" id="cOut"></div>
+    <p class="muted">The recipe, for anyone who wants to check it another way: SHA-256 of <span class="mono">jag:GAME:CARD:KEY</span>.</p>
+  </div>
+</div>
+
+<script src="/app/vp-venueurl.js"></script>
+<script>
+(function(){
+  "use strict";
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  var API='https://venueplay-game.dean-tindale.workers.dev';
+
+  // The SAME string the Worker hashes (jagCommitment in venueplay-game.js).
+  function fingerprint(id, spot, salt){
+    var data=new TextEncoder().encode("jag:"+String(id).trim()+":"+String(spot).trim()+":"+String(salt).trim().toLowerCase());
+    return crypto.subtle.digest("SHA-256", data).then(function(buf){
+      return Array.from(new Uint8Array(buf), function(x){ return x.toString(16).padStart(2,"0"); }).join("");
+    });
+  }
+  function check(id, spot, salt, fp){
+    return fingerprint(id, spot, salt).then(function(h){ return h === String(fp).trim().toLowerCase(); });
+  }
+  window.__jagCheck = { fingerprint: fingerprint, check: check };
+
+  $("cGo").addEventListener("click", function(){
+    var out=$("cOut");
+    check($("cId").value, $("cSpot").value, $("cSalt").value, $("cFp").value).then(function(ok){
+      out.className="verdict "+(ok?"ok":"no");
+      out.textContent= ok ? "Matches. That card was sealed at the start." : "Does not match.";
+    }).catch(function(){ out.className="verdict no"; out.textContent="Could not check in this browser."; });
+  });
+
+  var slug=(window.VPVenueURL && VPVenueURL.slug()) || "";
+  if(!slug){ $("liveL").textContent="No venue in the link"; $("liveBody").textContent="Use the link on the venue's screen, or check a fingerprint by hand below."; return; }
+  fetch(API+"/jag/board?venue="+encodeURIComponent(slug), { cache:"no-store" })
+    .then(function(r){ return r.json().then(function(d){ if(!r.ok) throw new Error(d.error||r.status); return d; }); })
+    .then(function(d){
+      var b=d.board;
+      $("liveL").textContent=(d.venue||"This venue");
+      if(!b){ $("liveBody").textContent="No Jag the Joker jackpot has been run here yet."; return; }
+      $("cId").value=b.id; $("cFp").value=b.commitment;
+      var head='<p><b>'+esc(b.name)+'</b>, '+b.deck_size+' cards, started '+esc(new Date(b.created_at).toLocaleDateString("en-AU",{day:"numeric",month:"long",year:"numeric"}))+'.</p>'+
+               '<p class="muted">Fingerprint published at the start:</p><p class="mono">'+esc(b.commitment)+'</p>';
+      if(b.status==="active"){
+        $("liveBody").innerHTML=head+'<div class="verdict wait">Still sealed</div><p class="muted">'+
+          (b.deck_size-(b.turns||[]).length)+' cards are still face down. When the Joker is found, the card and key appear here and are checked automatically.</p>';
+        return;
+      }
+      $("cSpot").value=b.revealed_spot; $("cSalt").value=b.revealed_salt;
+      return check(b.id, b.revealed_spot, b.revealed_salt, b.commitment).then(function(ok){
+        $("liveBody").innerHTML=head+
+          '<p>'+(b.status==="won"?"Found on card ":"Ended with no winner. The Joker was on card ")+'<b>'+b.revealed_spot+'</b>.</p>'+
+          '<p class="muted">Secret key revealed:</p><p class="mono">'+esc(b.revealed_salt)+'</p>'+
+          '<div class="verdict '+(ok?"ok":"no")+'">'+(ok?"Matches: the Joker never moved":"Does not match")+'</div>';
+      });
+    })
+    .catch(function(e){ $("liveL").textContent="Could not load"; $("liveBody").textContent=e.message; });
+})();
+</script>
+</body>
+</html>
