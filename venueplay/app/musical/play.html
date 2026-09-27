@@ -347,7 +347,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   // cells (each { song_id, title }) + gameId come from the Worker.
   var P={
     room:"", pid:"", name:"", joined:false,
-    token:"", sessionId:"", gameId:"", claimId:"",
+    token:"", sessionId:"", gameId:"", claimId:"", claimMsg:null,
     cells:null, cardNo:0,
     pattern:"one", prize:"the prize", played:[], playedIds:[], active:false, autoDaub:true, assist:false,
     daubs:{}, claimPending:false, won:false, ended:false
@@ -361,7 +361,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   function loadPid(room){ try{ return localStorage.getItem("vp-mpid-"+room) || sessionStorage.getItem("vp-mpid-"+room) || ""; }catch(e){ return ""; } }
   function savePid(room,pid){ try{ localStorage.setItem("vp-mpid-"+room, pid); }catch(e){} }
   function loadName(room){ try{ return localStorage.getItem("vp-mname-"+room) || sessionStorage.getItem("vp-mname-"+room) || ""; }catch(e){ return ""; } }
-  function saveName(room,nm){ try{ sessionStorage.setItem("vp-mname-"+room, nm); }catch(e){} }
+  function saveName(room,nm){ try{ localStorage.setItem("vp-mname-"+room, nm); }catch(e){} }   // localStorage, like pid and token: in sessionStorage the name died with the discarded tab, and connect() only restores a player holding BOTH, so they were asked for their name mid-song
   // the player token IS the metered identity: persist it so a reload reuses the same
   // vp_players row instead of minting a new metered one.
   function loadToken(room){ try{ return localStorage.getItem("vp-mtoken-"+room)||""; }catch(e){ return ""; } }
@@ -753,7 +753,8 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       if(r && r.auto_verdict==="valid"){
         P.claimId=r.claim_id;
         // Only a Worker-verified claim is broadcast, so the host can hand over the prize.
-        send({ t:"claim", claim_id:r.claim_id, pid:P.pid, name:P.name, cardNo:(r.card_no||P.cardNo), cells:P.cells });
+        P.claimMsg={ t:"claim", claim_id:r.claim_id, pid:P.pid, name:P.name, cardNo:(r.card_no||P.cardNo), cells:P.cells };   // kept, so a reconnect can say it again
+        send(P.claimMsg);
       } else {
         P.claimPending=false; $("bingoBtn").disabled=false;
         sayNotYet();
@@ -848,21 +849,41 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     // Verify host broadcasts (migrations 38/49): fetch the venue PUBLIC key via the join code, drop
     // forged songs/winners in enforce mode. No key / enforce off / script absent -> as before.
     if(window.VPSign){ VPSign.initReceiver(VP_GAME_API, { code: room }); }
+    openChannel(room);
+    if(!P.joined) loadJoinInfo();   // show any extra fields this venue collects
+    route();
+  }
+  /* THE PHONE'S CHANNEL, AND GETTING IT BACK. CLOSED was ignored and subscribed was never set back
+     to false, so after a drop the dot stayed green and join and BINGO went into a dead socket: the
+     Worker had the claim and the host never heard about it. Now any drop queues sends, shows
+     Reconnecting, and rebuilds the channel with a backoff; when it is back, a BINGO still waiting
+     on the host is said again (the host ignores a claim it already has). */
+  var chRetryT=null, chTries=0;
+  function openChannel(room){
+    if(ch){ var old=ch; ch=null; subscribed=false; try{ client.removeChannel(old); }catch(e){} }   // let go first: removing reports CLOSED to the old one
     ch=client.channel("vp-"+room, { config:{ broadcast:{ self:false } } });
+    var mine=ch;
     ch.on("broadcast", { event:"msg" }, function(e){ if(window.VPSign){ VPSign.gate(e.payload, onMsg); } else { onMsg(e.payload); } });
     ch.subscribe(function(status){
+      if(mine!==ch) return;   // a channel we replaced, not a drop
       if(status==="SUBSCRIBED"){
-        subscribed=true; flushQueue();
+        subscribed=true; chTries=0;
+        if(chRetryT){ clearTimeout(chRetryT); chRetryT=null; }   // healed by itself: keep the working channel
+        flushQueue();
         // re-announce on every (re)connect so the host rebuilds our seat, and pull our
         // card from the Worker in case a game is already running.
         if(P.joined){ send({ t:"join", pid:P.pid, name:P.name }); fetchCard(); }
+        if(P.claimPending && P.claimMsg && P.claimMsg.claim_id===P.claimId && !P.won && !P.ended) send(P.claimMsg);
         $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
-      } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){
+      } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){
+        subscribed=false;
         $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting";
+        if(!chRetryT){
+          var wait=Math.min(30000, 2000*Math.pow(2, Math.min(chTries,4))); chTries++;
+          chRetryT=setTimeout(function(){ chRetryT=null; if(P.room===room) openChannel(room); }, wait);
+        }
       }
     });
-    if(!P.joined) loadJoinInfo();   // show any extra fields this venue collects
-    route();
   }
 
   // ---- events ----
