@@ -262,11 +262,31 @@
 
   /* big-ball reveal */
   .ballreveal{position:absolute;inset:0;z-index:15;display:flex;align-items:center;justify-content:center;pointer-events:none}
-  .brball{width:min(46cqw,66vh);height:min(46cqw,66vh);border-radius:50%;display:flex;align-items:center;justify-content:center;
+  /* THE BIGGER REVEAL (Dean, 28 Sep 2026: "do the bigger reveal ball"). The room dims, light
+     rings pulse out, the ball rolls in with a spin at nearly two thirds of the wall, and the
+     traditional call sits under it. Same 1.3s hold and the same glide onto the resting ball,
+     so a host calling fast is not slowed down and the in-flight rules below are untouched. */
+  .brdim{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%, rgba(40,6,24,.55), rgba(5,5,6,.86) 70%);
+    opacity:0;transition:opacity .25s ease}
+  .ballreveal.live .brdim{opacity:1}
+  .brrings{position:absolute;left:50%;top:0;width:min(56cqw,68vh);height:min(56cqw,68vh);transform:translateX(-50%);pointer-events:none}
+  .brrings i{position:absolute;inset:0;border-radius:50%;border:.5cqw solid rgba(255,31,142,.55);opacity:0}
+  .ballreveal.live .brrings i{animation:brring 1.1s ease-out forwards}
+  .ballreveal.live .brrings i:nth-child(2){animation-delay:.18s}
+  .ballreveal.live .brrings i:nth-child(3){animation-delay:.36s}
+  @keyframes brring{ 0%{transform:scale(.7);opacity:.9} 100%{transform:scale(1.55);opacity:0} }
+  .brwrap{position:relative;display:flex;flex-direction:column;align-items:center}
+  .brball{width:min(56cqw,68vh);height:min(56cqw,68vh);border-radius:50%;display:flex;align-items:center;justify-content:center;
     background:radial-gradient(circle at 38% 30%, #ffffff, #ffe0ef 42%, #FF1F8E 100%);
-    color:#0A0A0B;font-family:'Anton',sans-serif;font-size:min(26cqw,44vh);line-height:1;
-    box-shadow:0 0 100px rgba(255,31,142,.55), inset 0 -1.2cqw 3cqw rgba(0,0,0,.16)}
-  @keyframes brpop{ 0%{transform:scale(.2);opacity:0} 45%{transform:scale(1.06);opacity:1} 70%{transform:scale(.98)} 100%{transform:scale(1);opacity:1} }
+    color:#0A0A0B;font-family:'Anton',sans-serif;font-size:min(31cqw,44vh);line-height:1;
+    box-shadow:0 0 140px rgba(255,31,142,.7), inset 0 -1.6cqw 4cqw rgba(0,0,0,.18)}
+  .brcall{margin-top:2.2vh;min-height:1em;white-space:nowrap;font-family:'Anton',sans-serif;text-transform:uppercase;
+    letter-spacing:.04em;font-size:min(4.4cqw,7.5vh);line-height:1;color:#fff;text-shadow:0 0 30px rgba(255,31,142,.8);opacity:0;transition:opacity .25s ease}
+  .ballreveal.live .brcall{opacity:1;transition-delay:.7s}
+  @keyframes brpop{ 0%{transform:translateX(55cqw) rotate(220deg) scale(.45);opacity:0}
+                    55%{transform:translateX(-2cqw) rotate(-10deg) scale(1.08);opacity:1}
+                    78%{transform:translateX(.6cqw) rotate(3deg) scale(.98)}
+                    100%{transform:none;opacity:1} }
   /* the reveal ball glides left into the resting ball (roughly its spot) and fades as it arrives */
   @keyframes brgo{ 0%{transform:scale(1);opacity:1} 82%{opacity:1} 100%{transform:translate(-30cqw,1cqw) scale(.58);opacity:0} }
   .cbletter{font-family:'Anton',sans-serif;font-size:clamp(16px,5cqw,60px);color:var(--pink);letter-spacing:.05em;text-shadow:0 0 26px rgba(255,31,142,.5)}
@@ -416,7 +436,8 @@
   </div>
 
   <!-- ball reveal: a big ball pops in the centre, then flies down to the board -->
-  <div class="ballreveal hidden" id="ballReveal"><div class="brball" id="brBall">--</div></div>
+  <div class="ballreveal hidden" id="ballReveal"><div class="brdim"></div>
+    <div class="brwrap"><div class="brrings"><i></i><i></i><i></i></div><div class="brball" id="brBall">--</div><div class="brcall" id="brCall"></div></div></div>
 
   <!-- BINGO: lobby -->
   <div class="layer hidden" id="tvLobby">
@@ -1336,8 +1357,14 @@
     revealT1=revealT2=null;
     ballInFlight=false; inFlightNum=0;
     var el=document.getElementById("ballReveal"), b=document.getElementById("brBall");
-    if(el) el.classList.add("hidden");
+    if(el){ el.classList.add("hidden"); el.classList.remove("live"); }
     if(b){ b.style.transition="none"; b.style.transform=""; b.style.opacity=""; b.style.animation="none"; }
+  }
+  /* The calls a room knows. Only these: a made-up call for every number is noise. */
+  function bingoCall(n){
+    return ({1:"Kelly's eye",2:"One little duck",7:"Lucky seven",8:"Garden gate",10:"Uncle Ben",11:"Legs eleven",
+      13:"Unlucky for some",22:"Two little ducks",25:"Duck and dive",44:"Droopy drawers",55:"All the fives",
+      66:"Clickety click",77:"Sunset strip",88:"Two fat ladies",90:"Top of the shop"})[n] || "";
   }
   function revealBall(n){
     n=parseInt(n,10); if(!n || tvMode!=="bingo") return;
@@ -1368,14 +1395,17 @@
     }
     ballInFlight=true; inFlightNum=n;
     b.textContent=n; el.classList.remove("hidden");
+    var callEl=$("brCall"); if(callEl) callEl.textContent=bingoCall(n);
+    el.classList.remove("live"); void el.offsetWidth; el.classList.add("live");   // restart the dim, rings and call
     b.style.transition="none"; b.style.transform=""; b.style.opacity="";
     b.style.animation="none"; void b.offsetWidth;   // restart the animation
-    b.style.animation="brpop .55s cubic-bezier(.2,.9,.3,1.2) forwards";
+    b.style.animation="brpop .8s cubic-bezier(.2,.9,.3,1.1) forwards";
     if(revealT1) clearTimeout(revealT1); if(revealT2) clearTimeout(revealT2);
     revealT1=setTimeout(function(){
       // Settle the big ball EXACTLY onto the resting called-number ball. We measure both live so
       // it lands right at any TV size/aspect, instead of a fixed guess that drifts off into space.
       var rest=document.querySelector("#tvRun .curball");
+      el.classList.remove("live");                     // the room comes back up as the ball glides home
       b.style.animation="none"; void b.offsetWidth;   // freeze at full size, then transition onto the resting ball
       if(rest){
         var rb=rest.getBoundingClientRect(), bb=b.getBoundingClientRect();

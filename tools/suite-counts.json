@@ -464,7 +464,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/tv-screen.test.js": {
-  "checks": 36,
+  "checks": 39,
   "counted_by": "lines"
  },
  "venueplay-backend/app/tv-stale-screen.test.js": {
