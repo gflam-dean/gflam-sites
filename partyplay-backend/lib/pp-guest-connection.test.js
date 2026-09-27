@@ -154,7 +154,7 @@ var BIG = (function () {
 })();
 ok("the phone still has a big handler at all", !!BIG);
 ok("a bingo BALL still gets through, because that really is for the phone",
-   /B && !isNaN\(n\)[\s\S]{0,200}paintBingo\(\); return;/.test(BIG),
+   /B && !isNaN\(n\)[\s\S]{0,260}paintBingo\(\); return;/.test(BIG),
    "the ball arrives as a big whose text is just a number, and it must keep working");
 ok("but a caption is DROPPED while this phone is holding a game",
    /if\(B \|\| Q \|\| H \|\| T \|\| W \|\| V \|\| PH \|\| CH \|\| GW\) return;/.test(BIG),

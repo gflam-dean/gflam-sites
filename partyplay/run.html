@@ -242,7 +242,7 @@
         /* An answer from a phone. First one per person per question counts: a
            guest who taps twice has changed their mind after seeing a face, and
            letting that through makes the whole board meaningless. */
-        if(m.t==="claim" && m.name){ onClaim(m.name, m.kind); }
+        if(m.t==="claim" && m.name){ onClaim(m.name, m.kind, m.nums); }
         if(m.t==="photoguess" && G && G.mode==="photos" && m.name){
           if(!G.answers.some(function(a){ return a.name===m.name && a.i===m.i; })){
             G.answers.push({name:m.name,i:m.i,answer:m.answer}); paintPhotos();
@@ -497,19 +497,35 @@
      The phone builds its own ticket when it hears {t:"bingo"}, so this is just saying it
      again. They start from the next ball rather than the first, which is a worse ticket
      than everyone else's and still enormously better than watching. */
-  function resendBingo(){ send({t:"bingo"}); }
+  function resendBingo(){ send({t:"bingo", gid:G.gid, called:G.called.slice()}); }
   function runBingo(g){
-    G={ pool:[], called:[], repaint:paintBingo, resend:resendBingo };
+    /* gid tells a phone THIS game from the last bingo game tonight, so it does not
+       carry the old card's marks into a new one. `called` goes to a late phone so it
+       knows what has already gone. */
+    G={ pool:[], called:[], gid:String(Date.now()), repaint:paintBingo, resend:resendBingo };
     for(var i=1;i<=90;i++) G.pool.push(i);
     // Tell the phones to build their tickets BEFORE the first ball, so nobody is
     // still staring at a lobby when a number goes up.
-    send({t:"bingo"});
+    send({t:"bingo", gid:G.gid});
     send({t:"big",text:"Bingo",sub:"Grab your ticket"});
     paintBingo();
   }
   /* A claim from a phone. Without this the shout goes nowhere and the host never
      knows anybody has won. */
-  function onClaim(name, kind){
+  function onClaim(name, kind, nums){
+    /* CHECKED AGAINST WHAT WAS CALLED. A phone's win used to be its own taps, so a
+       guest who tapped five numbers nobody had called put their name on the telly as
+       the winner (audit, 27 Sep 2026). A phone now sends the numbers it won with; any
+       that were not called keeps it off the screen and tells the host which. */
+    if(G && G.called && Array.isArray(nums)){
+      var notCalled = nums.map(Number).filter(function(n){ return G.called.indexOf(n) < 0; });
+      if(!nums.length || notCalled.length){
+        toast((name||"Someone") + " shouted " + (kind === "full" ? "full house" : "line") +
+              (notCalled.length ? ", but " + notCalled.slice(0,4).join(", ") + (notCalled.length===1 ? " has" : " have") +
+               " not been called" : ", but sent no numbers") + ". Check their phone.");
+        return;
+      }
+    }
     toast((name||"Someone") + (kind === "full" ? " has a full house!" : " has a line!"));
     send({t:"big", text:(name||"Winner"), sub: kind === "full" ? "Full house" : "Line"});
   }
@@ -539,7 +555,8 @@
     if(!G.pool.length) return;
     var n=G.pool.splice(pick(G.pool.length),1)[0];
     G.called.push(n);
-    send({t:"big",text:String(n),sub:callName(n)});
+    // The whole list rides with every ball, so a phone that missed one catches up.
+    send({t:"big",text:String(n),sub:callName(n),called:G.called.slice()});
     paintBingo();
   }
 

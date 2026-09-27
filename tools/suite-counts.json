@@ -7,6 +7,10 @@
   "checks": 13,
   "counted_by": "total"
  },
+ "partyplay-backend/lib/pp-bingo-called.test.js": {
+  "checks": 16,
+  "counted_by": "lines"
+ },
  "partyplay-backend/lib/pp-checkout.test.js": {
   "checks": 17,
   "counted_by": "total"

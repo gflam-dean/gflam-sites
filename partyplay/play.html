@@ -423,26 +423,47 @@
   var CH = null;  // charades: the word is on THIS phone
   var GW = null;  // guess who: this phone is the guesser, or watching
 
-  function bingoStart(){
+  function bingoStart(m){
     var s = load() || {};
     if(!s.token) return;
-    B = { grid: PPTicket.build(s.token), called: [], marked: {}, last: null, lastSaid: "" };
-    // Marks survive a reload, because a phone at a party gets reloaded.
+    var gid = (m && m.gid) || null;
+    B = { grid: PPTicket.build(s.token), called: [], marked: {}, last: null, lastSaid: "", gid: gid };
+    /* Marks survive a reload, because a phone at a party gets reloaded. Only for the SAME
+       game: a second bingo game tonight used to open with the first game's card marked. */
     try{
       var keep = JSON.parse(localStorage.getItem("ppBingo:"+s.code) || "null");
-      if(keep && keep.token === s.token){ B.marked = keep.marked || {}; B.called = keep.called || []; }
+      if(keep && keep.token === s.token && (keep.gid || null) === gid){ B.marked = keep.marked || {}; B.called = keep.called || []; }
     }catch(e){}
+    bingoCalled(m && m.called);
     paintBingo();
+  }
+  function bingoCalled(list){
+    if(!B || !Array.isArray(list)) return;
+    list.forEach(function(x){ x = +x; if(x>=1 && x<=90 && B.called.indexOf(x)<0) B.called.push(x); });
+  }
+  /* A win is the marked numbers that have ALSO been called. Tapping a number nobody
+     called is allowed (it is a phone, people fat-finger), it just cannot win. */
+  function bingoCounted(){
+    return Object.keys(B.marked).map(Number).filter(function(n){ return B.called.indexOf(n) >= 0; });
+  }
+  function bingoWinNums(kind){
+    var got = bingoCounted(), row;
+    if(kind === "full") return got;
+    for(var r = 0; r < B.grid.length; r++){
+      row = B.grid[r].filter(Boolean);
+      if(row.every(function(n){ return got.indexOf(n) >= 0; })) return row;
+    }
+    return [];
   }
   function bingoSave(){
     var s = load() || {};
     try{ localStorage.setItem("ppBingo:"+s.code,
-      JSON.stringify({ token:s.token, marked:B.marked, called:B.called })); }catch(e){}
+      JSON.stringify({ token:s.token, gid:B.gid, marked:B.marked, called:B.called })); }catch(e){}
   }
 
   function paintBingo(){
     if(!B) return;
-    var p = PPTicket.progress(B.grid, Object.keys(B.marked).map(Number));
+    var p = PPTicket.progress(B.grid, bingoCounted());
     var h = '<div class="called"><div class="n">' + (B.last==null ? "--" : B.last) + '</div>' +
             '<div class="s">' + esc(B.lastSaid||"") + '</div></div>';
 
@@ -659,7 +680,7 @@
     if(m.t === "lobby"){ B = null; Q = null; H = null; T = null; W = null; V = null; PH = null;
       CH = null; GW = null;
       var s = load()||{}; waiting(s.nickname||"", _ppLive ? "live" : undefined); return; }
-    if(m.t === "bingo"){ Q=null; H=null; bingoStart(); return; }
+    if(m.t === "bingo"){ Q=null; H=null; bingoStart(m); return; }
     if(m.t === "photo"){
       B=null;Q=null;H=null;T=null;V=null;W=null;CH=null;GW=null;
       PH={ i:m.i, q:m.q, url:m.url, options:m.options||[], n:m.n, of:m.of, mine:null, correct:null };
@@ -778,6 +799,7 @@
       // message for the screen and the phone just shows it.
       if(B && !isNaN(n) && n>=1 && n<=90 && String(n)===String(m.text).trim()){
         if(B.called.indexOf(n)<0) B.called.push(n);
+        bingoCalled(m.called);
         B.last = n; B.lastSaid = m.sub||"";
         bingoSave(); paintBingo(); return;
       }
@@ -879,7 +901,8 @@
     }
     if(el.hasAttribute("data-claim")){
       var s = load() || {};
-      if(window._ppSend) window._ppSend({ t:"claim", name:s.nickname, kind:el.getAttribute("data-claim") });
+      if(window._ppSend) window._ppSend({ t:"claim", name:s.nickname, kind:el.getAttribute("data-claim"),
+                                          nums:bingoWinNums(el.getAttribute("data-claim")) });
       el.textContent = "Told them. Give us a yell too.";
       el.disabled = true;
     }

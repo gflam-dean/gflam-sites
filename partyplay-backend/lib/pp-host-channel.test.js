@@ -184,7 +184,7 @@ pass("the console resends the running game on hello",
      /m\.t===\"hello\"[\s\S]{0,600}G\.resend\(\)/.test(RUN),
      "without this the resend hooks below are never called");
 pass("bingo gives a latecomer a ticket",
-     /resend\s*:\s*resendBingo/.test(RUN) && /function resendBingo\(\)\s*\{\s*send\(\{t:"bingo"\}\)/.test(RUN),
+     /resend\s*:\s*resendBingo/.test(RUN) && /function resendBingo\(\)\s*\{\s*send\(\{t:"bingo"[,}]/.test(RUN),
      "they watched the whole game with no ticket");
 pass("two truths lets a latecomer still write theirs",
      /mode:"truths"[\s\S]{0,400}resend\s*:/.test(RUN) && /ask-truths/.test(RUN));

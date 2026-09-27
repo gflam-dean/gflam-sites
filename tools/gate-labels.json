@@ -162,6 +162,7 @@
   "player-data permission needs an explicit tick, in every copy (14 checks)",
   "pp-admin-auth.test.js",
   "pp-album-page.test.js",
+  "pp-bingo-called.test.js",
   "pp-checkout.test.js",
   "pp-code-and-channel.test.js",
   "pp-guest-connection.test.js",
