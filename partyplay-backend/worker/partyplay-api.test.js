@@ -603,7 +603,8 @@ test("the sweep deletes the nicknames and the guest emails, not just the picture
   FETCH.calls = [];
   FETCH.plan = [
     { status:200, body:"[]" },                                        // no photo rows due
-    { status:200, body:JSON.stringify([{ id:"lic-old" }]) },           // one finished licence
+    { status:200, body:JSON.stringify([{ licence_id:"lic-old" },{ licence_id:"lic-old" }]) }, // players left at one finished party
+    { status:200, body:JSON.stringify([{ licence_id:"lic-old" }]) },   // and an album request
     { status:200, body:JSON.stringify([{ id:"p1" },{ id:"p2" }]) },    // two players removed
     { status:200, body:JSON.stringify([{ id:"a1" }]) }                 // one album request removed
   ];
@@ -631,12 +632,12 @@ test("it only sweeps parties whose album window has passed", function(){
   FETCH.calls = []; FETCH.plan = [{ status:200, body:"[]" }];
   return W.fetch(req("POST","/admin/sweep-photos",{key:"test-admin-key"},
                      {"x-admin-key":"test-admin-key"}), ENV3).then(function(){
-    var lic = FETCH.calls.filter(function(c){ return String(c.url).indexOf("pp_licences") >= 0; })[0];
-    ok(!!lic, "it asks which parties are finished");
+    var lic = FETCH.calls.filter(function(c){ return String(c.url).indexOf("pp_players?select=licence_id") >= 0; })[0];
+    ok(!!lic, "it asks which finished parties still hold guests");
     var u = String(lic && lic.url);
-    ok(u.indexOf("expires_at=lt.") >= 0, "filtered on when the party ENDED, got " + u.slice(-90));
-    ok(u.indexOf("expires_at=not.is.null") >= 0,
-       "and skips a licence that was never started, which has no end to count from");
+    ok(u.indexOf("pp_licences.expires_at=lt.") >= 0, "filtered on when the party ENDED, got " + u.slice(-90));
+    ok(u.indexOf("pp_licences!inner(") >= 0,
+       "an inner join, so a licence never started (no end to count from) is not matched");
     /* The cutoff has to be 30 days back, not now: sweeping on expires_at < now would
        delete a guest's details the morning after the party, while the album they were
        told they have 30 days to download is still up. */
@@ -645,6 +646,31 @@ test("it only sweeps parties whose album window has passed", function(){
     var daysBack = (Date.now() - when) / 86400000;
     ok(daysBack > 29 && daysBack < 31,
        "the cutoff is 30 days back, it was " + (isNaN(daysBack) ? "unreadable" : daysBack.toFixed(1) + " days"));
+  });
+});
+
+/* THE 201st PARTY. The sweep read every finished licence, limit 200 with no order, so
+   once 200 empty old parties existed it could fetch those same 200 every night and never
+   reach a party that still held guests' emails (audit, 27 Sep 2026). */
+test("the sweep reaches every party still holding guests, and says when there are more", function(){
+  var ENV3 = Object.assign({}, ENV, { PHOTOS: {
+    put:function(){ return Promise.resolve(); }, get:function(){ return Promise.resolve(null); },
+    "delete":function(){ return Promise.resolve(); },
+    list:function(){ return Promise.resolve({ truncated:false, objects:[] }); }
+  }});
+  var full = []; for (var i = 0; i < 1000; i++) full.push({ licence_id: "lic-" + (1000 + (i % 160)) });
+  FETCH.calls = [];
+  FETCH.plan = [{ status:200, body:"[]" }, { status:200, body:JSON.stringify(full) }, { status:200, body:"[]" }];
+  for (var k = 0; k < 400; k++) FETCH.plan.push({ status:200, body:"[]" });
+  return W.fetch(req("POST","/admin/sweep-photos",{key:"test-admin-key"},
+                     {"x-admin-key":"test-admin-key"}), ENV3).then(function(r){
+    return r.json().then(function(j){
+      var sel = FETCH.calls.filter(function(c){ return String(c.url).indexOf("pp_licences?") >= 0 && !(c.init && c.init.method); });
+      ok(sel.length === 0, "it no longer reads the licence list itself, saw " + sel.length);
+      var dels = FETCH.calls.filter(function(c){ return c.init && c.init.method === "DELETE" && String(c.url).indexOf("pp_players") >= 0; });
+      ok(dels.length === 150, "150 parties cleared this run, saw " + dels.length);
+      ok(j.remaining === "more", "and it says there is more, said " + j.remaining);
+    });
   });
 });
 

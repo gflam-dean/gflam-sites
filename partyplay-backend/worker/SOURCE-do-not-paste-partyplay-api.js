@@ -13,7 +13,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '27 Sep 2026, 15:37 · 83f6bc6f';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '27 Sep 2026, 16:18 · f30c118d';   // tools/stamp-workers.py, do not edit by hand
 // The licence window rules live in one place and are shared with the browser.
 // Paste lib/pp-licence.js above this line when deploying, or inline it. It is
 // referenced here as PPLicence.
@@ -1153,16 +1153,29 @@ async function runPhotoSweep(env) {
      agreed to and can leave from /unsubscribe. This only clears the party.
 
      Found 12 Sep 2026 by reading the privacy page against the code. */
-  let people = 0, asks = 0;
+  /* ONLY PARTIES THAT STILL HOLD SOMEBODY. This read every finished licence, limit 200
+     with no order, so from the 201st finished party on it could fetch the same 200
+     already-empty ones every night and never reach the rest (audit, 27 Sep 2026). Now it
+     asks the two tables for licences that still have rows, so every run makes progress,
+     and it says 'more' when it stopped with some left. */
+  let people = 0, asks = 0, peopleLeft = false;
   try {
-    const cutoff = new Date(Date.now() - ALBUM_KEEP_DAYS * 86400e3).toISOString();
-    const finished = await sb(env, 'pp_licences?expires_at=lt.' + encodeURIComponent(cutoff) +
-      '&expires_at=not.is.null&select=id&limit=200');
-    for (const l of (finished || [])) {
-      const p1 = await sb(env, 'pp_players?licence_id=eq.' + encodeURIComponent(l.id),
+    const cutoff = encodeURIComponent(new Date(Date.now() - ALBUM_KEEP_DAYS * 86400e3).toISOString());
+    const MAX_PARTIES = 150;
+    const ids = new Set();
+    for (const t of ['pp_players', 'pp_album_requests']) {
+      const rows = await sb(env, t + '?select=licence_id,pp_licences!inner(id)&pp_licences.expires_at=lt.' + cutoff +
+        '&order=licence_id.asc&limit=1000');
+      (rows || []).forEach(r => ids.add(r.licence_id));
+      if ((rows || []).length === 1000) peopleLeft = true;
+    }
+    const todo = Array.from(ids).sort();
+    if (todo.length > MAX_PARTIES) peopleLeft = true;
+    for (const id of todo.slice(0, MAX_PARTIES)) {
+      const p1 = await sb(env, 'pp_players?licence_id=eq.' + encodeURIComponent(id),
         { method: 'DELETE', headers: { prefer: 'return=representation' } });
       people += (p1 || []).length;
-      const p2 = await sb(env, 'pp_album_requests?licence_id=eq.' + encodeURIComponent(l.id),
+      const p2 = await sb(env, 'pp_album_requests?licence_id=eq.' + encodeURIComponent(id),
         { method: 'DELETE', headers: { prefer: 'return=representation' } });
       asks += (p2 || []).length;
     }
@@ -1174,7 +1187,7 @@ async function runPhotoSweep(env) {
   }
 
   return { ok: true, deleted: gone, orphans: orphans, players: people, albumAsks: asks,
-           remaining: due.length === 500 ? 'more' : 0 };
+           remaining: (due.length === 500 || peopleLeft) ? 'more' : 0 };
 }
 
 /* GET /unsubscribe?e=<email>   shows a button

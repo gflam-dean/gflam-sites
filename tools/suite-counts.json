@@ -64,7 +64,7 @@
   "counted_by": "total"
  },
  "partyplay-backend/worker/partyplay-api.test.js": {
-  "checks": 129,
+  "checks": 132,
   "counted_by": "total"
  },
  "tools/redirect-verdict.test.py": {

@@ -327,24 +327,24 @@ MUTATIONS = [
      'thirty days ago is still there'),
 
     ("the guests' nicknames are actually deleted, not just promised", 'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
-     "'pp_players?licence_id=eq.' + encodeURIComponent(l.id),\n"
+     "'pp_players?licence_id=eq.' + encodeURIComponent(id),\n"
      "        { method: 'DELETE', headers: { prefer: 'return=representation' } });",
-     "'pp_players?licence_id=eq.' + encodeURIComponent(l.id),\n"
+     "'pp_players?licence_id=eq.' + encodeURIComponent(id),\n"
      "        { headers: { prefer: 'return=representation' } });",
      'guest nicknames are never deleted, which is the exact fault found on 12 Sep and the '
      'one the old whole-file check could not have caught'),
 
     ("the guests' email addresses are actually deleted, not just promised", 'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
-     "'pp_album_requests?licence_id=eq.' + encodeURIComponent(l.id),\n"
+     "'pp_album_requests?licence_id=eq.' + encodeURIComponent(id),\n"
      "        { method: 'DELETE', headers: { prefer: 'return=representation' } });",
-     "'pp_album_requests?licence_id=eq.' + encodeURIComponent(l.id),\n"
+     "'pp_album_requests?licence_id=eq.' + encodeURIComponent(id),\n"
      "        { headers: { prefer: 'return=representation' } });",
      "a finished party's guest email addresses stay in the database for ever while "
      'privacy.html says they went thirty days after the night'),
 
     ('the sweep removes guest rows, not only picture rows', 'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
-     "'pp_players?licence_id=eq.' + encodeURIComponent(l.id),",
-     "'pp_players?id=eq.' + encodeURIComponent(l.id),",
+     "'pp_players?licence_id=eq.' + encodeURIComponent(id),",
+     "'pp_players?id=eq.' + encodeURIComponent(id),",
      'the sweep clears one row keyed by the wrong column instead of the whole party, so '
      'almost every guest is left behind and the run still reports success'),
 
@@ -1345,6 +1345,12 @@ MUTATIONS = [
     ('test-paper-players.js', 'venueplay-backend/worker/venueplay-game.js',
      '    if (!locked && running.length === 0) teams = want;', '    ;',
      'a host who mistyped 8 paper teams is stuck with 8 sheets all night'),
+    ('partyplay-api.test.js', 'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     "remaining: (due.length === 500 || peopleLeft) ? 'more' : 0 };", "remaining: due.length === 500 ? 'more' : 0 };",
+     'the guest-data sweep stops with parties still holding emails and reports nothing left'),
+    ('partyplay-api.test.js', 'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     "'?select=licence_id,pp_licences!inner(id)&pp_licences.expires_at=lt.'", "'?select=licence_id,pp_licences(id)&pp_licences.expires_at=lt.'",
+     'the guest-data sweep matches parties that never started or have not ended'),
     ('pp-bingo-called.test.js', 'partyplay/play.html',
      '    var p = PPTicket.progress(B.grid, bingoCounted());', '    var p = PPTicket.progress(B.grid, Object.keys(B.marked).map(Number));',
      'a PartyPlay guest wins bingo on numbers nobody called'),
@@ -1796,15 +1802,15 @@ MUTATIONS = [
     # ---- 12 Sep 2026: the privacy page promised three deletions and one happened.
     ('partyplay-api.test.js',
      'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
-     "      const p2 = await sb(env, 'pp_album_requests?licence_id=eq.' + encodeURIComponent(l.id),",
-     "      const p2 = await sb(env, 'pp_photos?id=eq.nothing-at-all&licence_id=eq.' + encodeURIComponent(l.id),",
+     "      const p2 = await sb(env, 'pp_album_requests?licence_id=eq.' + encodeURIComponent(id),",
+     "      const p2 = await sb(env, 'pp_photos?id=eq.nothing-at-all&licence_id=eq.' + encodeURIComponent(id),",
      "guest EMAIL ADDRESSES are left in the database after a party, while privacy.html says "
      'they are deleted with everything else 30 days after it'),
 
     ('partyplay-api.test.js',
      'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
-     "    const cutoff = new Date(Date.now() - ALBUM_KEEP_DAYS * 86400e3).toISOString();",
-     "    const cutoff = new Date(Date.now()).toISOString();",
+     "    const cutoff = encodeURIComponent(new Date(Date.now() - ALBUM_KEEP_DAYS * 86400e3).toISOString());",
+     "    const cutoff = encodeURIComponent(new Date(Date.now()).toISOString());",
      "a guest's details are deleted the morning after the party, while the album they were "
      'told they have thirty days to download is still up'),
 
