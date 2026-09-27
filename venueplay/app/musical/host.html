@@ -594,6 +594,17 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     return G.joinCode || "------";
   }
 
+  // The name a playlist id is known by, on the cards, the TV and the Worker's paper set. One place.
+  function playlistNameOf(id){
+    return (id==="all")?"All songs":(id==="surprise")?"Surprise Mix":((LIB.plById[id]||{}).name||"Playlist");
+  }
+  /* WHAT A PLAYLIST CARD SAYS. It said "312 songs" while a game plays GAME_SONGS of them, so a host
+     reading the card expected a night working through 312 and got 60. Say what will play. */
+  function playlistCountLabel(count){
+    if(count==null) return GAME_SONGS+" songs, random each game";
+    if(count>GAME_SONGS) return GAME_SONGS+" of "+count.toLocaleString("en-AU")+" songs";
+    return count+" song"+(count===1?"":"s");
+  }
   function songsForPlaylist(plId){
     var ids, out=[], seen={};
     if(plId==="all"){ for(var i=0;i<LIB.songs.length;i++){ out.push(LIB.songs[i]); } return out; }
@@ -660,20 +671,49 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   function gsend(obj){ if(window.VPSign){ VPSign.signSend(obj, rawGsend); } else { rawGsend(obj); } }
   function gflush(){ while(gQueue.length && gch){ gch.send({ type:"broadcast", event:"msg", payload:gQueue.shift() }); } }
   function bcast(obj){ send(obj); gsend(obj); }
+  var _leaving=false;   // set as the page is left, so closing its channel is not reported as a drop
+  var LOST_MSG="Lost the connection to the players' phones. Reconnecting: hold off on the next song for a moment.";
+  var gRetryT=null, gTries=0, gLostT=null, gLostShown=false;
   function openGameChannel(joinCode){
-    if(gch){ try{ client.removeChannel(gch); }catch(e){} gch=null; gsub=false; }
+    /* LET GO OF THE OLD CHANNEL BEFORE REMOVING IT. removeChannel makes the old channel report
+       CLOSED inside the call, and gch still pointed at it, so the handler below read its own
+       channel closing as a drop: a red "Lost the connection" the moment a lobby opened, with no
+       song playing. The same fault trivia/host.html had until 27 Sep 2026; this is its fix. */
+    if(gch){ var old=gch; gch=null; gsub=false; try{ client.removeChannel(old); }catch(e){} }
     gch=client.channel("vp-"+joinCode, { config:{ broadcast:{ self:false } } });
+    var mine=gch;
     gch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
     gch.subscribe(function(status){
-      if(status==="SUBSCRIBED"){ gsub=true; gflush(); gsend({ t:"rollcall" }); return; }   // ask connected players to re-announce so the roster rebuilds
+      /* NOT A DROP: this channel was replaced, or the page is being left (Games, a reload). */
+      if(mine!==gch || _leaving) return;
+      if(status==="SUBSCRIBED"){
+        gsub=true; gTries=0; gflush(); gsend({ t:"rollcall" });   // ask connected players to re-announce so the roster rebuilds
+        if(gLostT){ clearTimeout(gLostT); gLostT=null; }
+        if(gRetryT){ clearTimeout(gRetryT); gRetryT=null; }      // healed by itself: do not tear down a working channel
+        if(gLostShown){ gLostShown=false; clearHostError(); }     // it came back: take the warning down
+        return;
+      }
       /* gsub was never reset here, so after a dropped channel gsend() kept posting
          into a dead socket: the song, the daub and the WINNER announcement stopped
-         reaching phones and nothing on the console said so. trivia/host.html has
-         had this branch for a while and musical did not. Queue instead, so whatever
+         reaching phones and nothing on the console said so. Queue instead, so whatever
          the room missed is flushed the moment it reconnects. */
       if(status==="CHANNEL_ERROR" || status==="TIMED_OUT" || status==="CLOSED"){
         gsub=false;
-        hostError("Lost the connection to the players' phones. Reconnecting: hold off on the next song for a moment.");
+        /* ACTUALLY RECONNECT. This said "Reconnecting" and did nothing: no retry, and the warning
+           stayed up after the socket healed by itself. Retry with a backoff, the way the TV does. */
+        if(!gRetryT){
+          var wait=Math.min(30000, 2000*Math.pow(2, Math.min(gTries,4))); gTries++;
+          gRetryT=setTimeout(function(){ gRetryT=null; if(!_leaving && G.joinCode===joinCode) openGameChannel(joinCode); }, wait);
+        }
+        /* SAY SO ONLY IF IT MATTERS. A blip that heals inside 8 seconds is not news, and before the
+           first song there is nothing to "hold off" on: the retry carries on quietly. */
+        if(!gLostT){
+          gLostT=setTimeout(function(){
+            gLostT=null;
+            var live = G.status==="running";
+            if(!gsub && live && !_leaving){ gLostShown=true; hostError(LOST_MSG); }
+          }, 8000);
+        }
       }
     });
   }
@@ -1376,7 +1416,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   function startGame(){
     if(!libLoaded || G.busy) return;
     G.playlistId=$("playlistSel").value;
-    G.playlistName=(G.playlistId==="all")?"All songs":(G.playlistId==="surprise")?"Surprise Mix":((LIB.plById[G.playlistId]||{}).name||"Playlist");
+    G.playlistName=playlistNameOf(G.playlistId);
     G.pattern=$("patternSel").value;
     // Required, not defaulted. "the prize" was going up on the venue's TV whenever a host
     // skipped the field, which reads like the screen is broken.
@@ -1746,7 +1786,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     var s=$("playlistSel"); s.innerHTML="";
     PL_OPTS=[];
     for(var i=0;i<LIB.playlists.length;i++){ var p=LIB.playlists[i]; PL_OPTS.push({id:p.id,name:p.name,count:(p.songIds||[]).length}); }
-    PL_OPTS.push({id:"surprise",name:"Surprise Mix",count:null,sub:"random each game"});
+    PL_OPTS.push({id:"surprise",name:"Surprise Mix",count:null});   // count null: a fresh draw each game, see playlistCountLabel
     PL_OPTS.push({id:"all",name:"All songs",count:LIB.songs.length});
     for(var j=0;j<PL_OPTS.length;j++){ var o=document.createElement("option"); o.value=PL_OPTS[j].id; o.textContent=PL_OPTS[j].name; s.appendChild(o); }
     selectPlaylist(LIB.playlists.length ? LIB.playlists[0].id : "all");
@@ -1765,7 +1805,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       shown++;
       var c=document.createElement("div"); c.className="plcard"+(o.id===G.playlistId?" on":""); c.setAttribute("data-id",o.id);
       var nm=document.createElement("div"); nm.className="nm"; nm.textContent=o.name; c.appendChild(nm);
-      var ct=document.createElement("div"); ct.className="ct"; ct.textContent=(o.count!=null?(o.count+" songs"):(o.sub||"")); c.appendChild(ct);
+      var ct=document.createElement("div"); ct.className="ct"; ct.textContent=playlistCountLabel(o.count); c.appendChild(ct);
       c.addEventListener("click", function(){ selectPlaylist(this.getAttribute("data-id")); });
       g.appendChild(c);
     }
@@ -1818,18 +1858,47 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   $("cancelLobbyBtn").addEventListener("click", cancelLobby);
 
   /* ---- PAPER CARDS (Dean, 25 Sep 2026) ----
-     Ten a night, printed from the playlist the host picked; the Worker keeps them on the night and
-     every game tonight plays that set, because a card on a table cannot change. A paper card is a
-     player once it is DECLARED at Start game or CHECKED by number: that is when it bills, once. */
+     Ten a night, printed from the playlist the host picked. Until a game has been played off them,
+     printing from a DIFFERENT playlist replaces them (the Worker decides, 27 Sep 2026); after that
+     the Worker keeps them on the night and every game tonight plays that set, because a card on a
+     table cannot change. A paper card is a player once it is DECLARED at Start game or CHECKED by
+     number: that is when it bills, once. */
   function paperKey(){ return "vpPaper-"+(G.sessionId||""); }
-  function paperPrinted(){ try{ var o=JSON.parse(localStorage.getItem(paperKey())||"{}"); return o.musical|0; }catch(e){ return 0; } }
-  function savePaperPrinted(n){ try{ localStorage.setItem(paperKey(), JSON.stringify({ musical:n })); }catch(e){} }
+  function paperRead(){ try{ return JSON.parse(localStorage.getItem(paperKey())||"{}")||{}; }catch(e){ return {}; } }
+  function paperPrinted(){ return paperRead().musical|0; }
+  function paperPrintedFrom(){ return String(paperRead().from||""); }   // the playlist the cards were printed from
+  function savePaperPrinted(n, from){ try{ localStorage.setItem(paperKey(), JSON.stringify({ musical:n, from:(from||"") })); }catch(e){} }
+  /* What the Print modal says. It used to promise "printing again gives you the same cards", which
+     was only true from the same playlist, and once the Worker replaces a set from another playlist
+     it would have been a lie on the one screen the host reads before tapping Print. */
+  function paperPrintIntro(had, from, picked){
+    var s="How many cards? Up to 10 a night.";
+    if(!had) return s;
+    s+=" You have printed "+had+" already"+(from ? " from <b>"+esc(from)+"</b>" : "")+".";
+    if(from && picked && picked!==from){
+      s+=" You have picked <b>"+esc(picked)+"</b> now. Before the first game, printing replaces the "+esc(from)+" cards: throw those away, they will not play."+
+         " Once a game has been played off them they stay, and every game tonight plays "+esc(from)+".";
+    } else {
+      s+=" Printing again from the same playlist gives you the same cards, plus any extra.";
+    }
+    return s;
+  }
+  // The line under the Print button after a print: which playlist the cards on the tables are from.
+  function paperPrintedNote(n, from){
+    if(!n) return "Up to 10 a night, printed from the playlist above. A paper card counts as a player once it is played or checked, the same as a phone.";
+    return n+" paper card"+(n===1?"":"s")+" printed tonight"+(from ? " from "+from : "")+". Every game tonight plays the songs on those cards. A paper card counts as a player once it is played or checked, the same as a phone.";
+  }
+  // Said once, after a print that did not come from the playlist the host picked.
+  function paperPrintOutcome(r, picked){
+    var from=(r && r.playlist_name)||"";
+    if(r && r.kept && picked && picked!==from) return "These cards are from "+from+", not "+picked+": a game tonight has been played off the "+from+" cards, so every game tonight plays "+from+".";
+    if(r && r.replaced) return "New cards printed from "+from+". Throw away any cards printed earlier tonight: they will not play.";
+    return "";
+  }
   function renderPaper(){
     var n=G.sessionId ? paperPrinted() : 0;
     $("paperPrintBtn").textContent = n ? ("Print again ("+n+" printed tonight)") : "Print paper cards";
-    $("paperNote").textContent = n
-      ? (n+" paper card"+(n===1?"":"s")+" printed tonight. Every game tonight plays the songs on those cards. A paper card counts as a player once it is played or checked, the same as a phone.")
-      : "Up to 10 a night, printed from the playlist above. A paper card counts as a player once it is played or checked, the same as a phone.";
+    $("paperNote").textContent = paperPrintedNote(n, n ? paperPrintedFrom() : "");
     $("paperCheck").classList.toggle("hidden", !(n && G.status==="running"));
   }
   var _paperDone=null;
@@ -1857,19 +1926,23 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   $("paperPrintBtn").addEventListener("click", function(){
     if(!libLoaded || G.busy) return;
     var had=G.sessionId ? paperPrinted() : 0;
+    var picked=playlistNameOf($("playlistSel").value);
     paperModal("Print paper cards",
-      "How many cards? Up to 10 a night."+(had ? " You have printed "+had+" already; printing again gives you the same cards, plus any extra." : "")+
+      paperPrintIntro(had, had ? paperPrintedFrom() : "", picked)+
       "<br><small style=\"color:var(--muted)\">Each card counts as a player once it is played or checked, the same as a phone.</small>",
       had || 4, 10, "Print").then(function(n){
       if(n==null) return;
       var w=window.VPPrint ? VPPrint.open("Musical bingo paper cards") : null;   // opened inside the tap, so no pop-up blocker
       G.playlistId=$("playlistSel").value;
-      G.playlistName=(G.playlistId==="all")?"All songs":(G.playlistId==="surprise")?"Surprise Mix":((LIB.plById[G.playlistId]||{}).name||"Playlist");
+      G.playlistName=playlistNameOf(G.playlistId);
       openSession().then(function(){
         return apiPost("/host/paper/print",{ session_id:G.sessionId, kind:"musical", count:n, playlist:playlistPayload() });
       }).then(function(r){
-        savePaperPrinted(r.cards.length);
+        savePaperPrinted(r.cards.length, r.playlist_name||"");
         renderPaper();
+        var said=paperPrintOutcome(r, G.playlistName);
+        if(said && r.kept) hostError(said);   // the host asked for other songs and did not get them: that must be seen
+        else if(said) $("paperNote").textContent=said+" "+$("paperNote").textContent;
         if(!window.VPPrint || !VPPrint.musical(w, r.cards, { venue:(G.venue && G.venue.name)||"", playlist:r.playlist_name||"" })){
           hostError("Your browser blocked the print window. Allow pop-ups for venueplay.com.au, then tap Print again.");
         }
@@ -1933,6 +2006,16 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
      being signed out by the 4 hour timer left the wall sitting on the musical screen. Raffle and
      members have done this for a while. A live game is left alone: closing the tab mid-song must
      not wipe the round off the screen. */
+  window.addEventListener("beforeunload", function(){ _leaving=true; });
+  window.addEventListener("pagehide", function(){ _leaving=true; });
+  /* BACK FROM THE BACK/FORWARD CACHE. pagehide set _leaving and the page did not die, so without
+     this every later drop was ignored for the rest of the night. The channel may have been shut
+     while the page was frozen, and its CLOSED was ignored as leaving (so gsub may still say
+     true), so open it again whatever gsub says. */
+  window.addEventListener("pageshow", function(ev){
+    _leaving=false;
+    if(ev && ev.persisted && G.joinCode && (G.status==="lobby" || G.status==="running")) openGameChannel(G.joinCode);
+  });
   window.addEventListener("pagehide", function(){
     if(G.status==="running") return;
     try{ rawSend({ t:"to_ads" }); }catch(e){}   // sync on unload; an async signed send never lands before the page dies. NOT exempt: under enforce this is dropped, see vp-sign.js EXEMPT
