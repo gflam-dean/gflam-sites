@@ -222,6 +222,7 @@
 <script src="/app/vp-screen-router.js"></script>
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-fit.js"></script>
+<script src="/app/vp-venueurl.js"></script>
 <script>
 (function(){
   "use strict";
@@ -258,14 +259,15 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
      tv.html: VENUE_SLUG is what the divert guard, VPSign and VPScreenRouter all hang off, so a
      demo that resolves no venue is hermetic almost by construction. */
   var VP_DEMO = /[?&]demo=1/.test(window.location.search || "");
+  var VENUE_UNREAD=false;                        // set when the address held something we could not read
   var VENUE_SLUG=(function(){
     if(VP_DEMO) return "";                       // hermetic: never inherit a real venue
-    var q=window.location.search||"";
-    var m=/[?&]venue=([^&]+)/.exec(q); var raw=m?m[1]:"";
-    if(!raw){ var bare=q.replace(/^\?/,"").split("&")[0]; if(bare && bare.indexOf("=")===-1) raw=bare; }
-    var v=raw?decodeURIComponent(raw).toLowerCase().replace(/[^a-z0-9-]/g,""):"";
+    /* The venue in the address comes from ONE reader, /app/vp-venueurl.js, the same one tv.html
+       and the bingo phone use (venue=, slug=, any capitals, ?=slug, spaces as hyphens, a stray %
+       no longer throws). No script, no venue from the address: memory takes over, and says so. */
+    var v=window.VPVenueURL ? VPVenueURL.slug(window.location.search||"") : "";
     if(v){ try{ localStorage.setItem("vpTvVenue", v); }catch(e){} return v; }
-    try{ var s=localStorage.getItem("vpTvVenue"); if(s) return s; }catch(e){}
+    try{ var s=localStorage.getItem("vpTvVenue"); if(s){ try{ VENUE_UNREAD=!!VPVenueURL.fellBack(window.location.search||"", s); }catch(e){} return s; } }catch(e){}
     return "";
   })();
   var VP_GAME_API='https://venueplay-game.dean-tindale.workers.dev';
@@ -278,7 +280,10 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   //      open is bounced straight to /tv so a screen is only ever the live link. ----
   if(VENUE_SLUG){
     var _hop=""; try{ _hop=sessionStorage.getItem("vpTvHop")||""; }catch(e){}
-    if(!_hop){ window.location.replace("/tv?venue="+encodeURIComponent(VENUE_SLUG)); return; }   // bounce only a genuine cold/bookmarked open; any live /tv hop leaves a marker so it never flickers
+    /* An address we could not read must not come back from the bounce as ?venue=<whatever this
+       browser remembered>, written in as if somebody had typed it. Hand /tv the address as typed;
+       it reads the same memory and warns the same way. */
+    if(!_hop){ window.location.replace(VENUE_UNREAD ? "/tv"+window.location.search : "/tv?venue="+encodeURIComponent(VENUE_SLUG)); return; }   // bounce only a genuine cold/bookmarked open; any live /tv hop leaves a marker so it never flickers
   }
   var CODE=(function(){
     if(VENUE_SLUG) return venueCode("musical-"+VENUE_SLUG);   // auto-pair by venue (game-namespaced)
