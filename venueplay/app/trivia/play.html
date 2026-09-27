@@ -111,6 +111,8 @@
   body.light{ --ink:#F3EFF5; --ink-2:#FFFFFF; --ink-3:#EFEAF2; --text:#191420; --muted:#5c5666; --faint:#8b8594; --line:rgba(0,0,0,.12); --line-2:rgba(0,0,0,.06); background:#F3EFF5 }
   body.light .ptop{ background:rgba(255,255,255,.92) }
   body.light .brand .word, body.light .pbig{ color:#191420 }
+  .dblpts{display:inline-block;margin-left:8px;padding:2px 9px;border-radius:99px;background:#FFC24B;color:#1a1200;
+    font-weight:800;font-size:11px;letter-spacing:.1em;text-transform:uppercase}
 </style>
 </head>
 <body>
@@ -428,6 +430,7 @@
     if(typeof m.colour==="boolean") P.colour=m.colour;
     show("vQ");
     $("pqCount").textContent = (m.qi && m.qtotal) ? ("Question "+m.qi+" of "+m.qtotal) : "Question";
+    if(m.double===true){ var dp=document.createElement("span"); dp.className="dblpts"; dp.textContent="Double points"; $("pqCount").appendChild(dp); }
     var pqi=$("pqImg"); if(m.imageUrl){ pqi.src=m.imageUrl; pqi.classList.remove("hidden"); } else { pqi.classList.add("hidden"); pqi.removeAttribute("src"); }
     $("pqText").textContent = m.text||"";
     var wrap=$("pAnswers"); wrap.innerHTML="";
