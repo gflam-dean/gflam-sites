@@ -4884,10 +4884,19 @@ def admin_routes_refuse():
 
 def cannot_change_a_party_without_the_key():
     head('A party cannot be changed by someone who only knows the code')
-    for path in ['/party/games', '/party/start']:
-        status, body = post(PP_API + path, {'code': 'ZZZZZZ'})
-        ok('%s refuses without the host key' % path, status in (400, 401, 403, 404),
-           why='HTTP %s %s' % (status, body[:50]))
+    # This used to post to /party/games and /party/start, which do not exist, with a code
+    # that is not a party, and accepted 404. So "route missing" and "no such party" both
+    # passed, and it could not have gone red if the key check were deleted (audit, 27 Sep
+    # 2026). Now: real routes, a REAL party's code, the wrong key, and only the Worker's
+    # own "Not your party" 403 counts. FKGSAJ is a finished comp party; a wrong key
+    # changes nothing on it.
+    for path in ['/licence/start', '/games', '/games/delete', '/photos/promote']:
+        status, body = post(PP_API + path, {'code': 'FKGSAJ', 'key': 'not-the-key-' * 3,
+                                            'id': 'x', 'format': 'trivia'})
+        ok('%s refuses a real party with the wrong key' % path,
+           status == 403 and 'Not your party' in body,
+           why='HTTP %s %s (404 "No party" means FKGSAJ is gone: pick another real code)'
+               % (status, body[:60]))
 
 
 def labels_ledger(update):

@@ -13,7 +13,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '25 Sep 2026, 14:25 · f2a4ea87';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '27 Sep 2026, 15:37 · 83f6bc6f';   // tools/stamp-workers.py, do not edit by hand
 // The licence window rules live in one place and are shared with the browser.
 // Paste lib/pp-licence.js above this line when deploying, or inline it. It is
 // referenced here as PPLicence.
@@ -1563,7 +1563,7 @@ const RESEND_GAP_MS = 3 * 60 * 1000;
 
 async function handleResendWelcome(request, env) {
   const b = await request.json().catch(() => ({}));
-  const code = String(b.code || '').trim().toUpperCase();
+  const code = normaliseCode(b.code);
   if (!/^[A-Z0-9]{4,10}$/.test(code)) return json({ error: 'Which party?' }, 400);
   if (!env.RESEND_API_KEY) return json({ error: 'Email is not set up on this Worker.' }, 503);
 

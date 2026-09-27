@@ -1,5 +1,5 @@
 /* PASTE THIS ONE.
-   Built 25 Sep 2026, 14:25:38   fingerprint 0bfa92b13707
+   Built 27 Sep 2026, 15:37:03   fingerprint 83f3e897852f
    If that time is not within the last few minutes, close this window and reopen. */
 /* ============================================================================
    PartyPlay Worker: checkout, licences, joining.
@@ -16,7 +16,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '25 Sep 2026, 14:25 · 47913b4a';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '27 Sep 2026, 15:37 · 96a7ed03';   // tools/stamp-workers.py, do not edit by hand
 /* ---- lib/pp-licence.js, inlined at build time. Edit the file, not this. ---- */
 const PPLicence = (function () {
   const module = { exports: {} };
@@ -1669,7 +1669,7 @@ const RESEND_GAP_MS = 3 * 60 * 1000;
 
 async function handleResendWelcome(request, env) {
   const b = await request.json().catch(() => ({}));
-  const code = String(b.code || '').trim().toUpperCase();
+  const code = normaliseCode(b.code);
   if (!/^[A-Z0-9]{4,10}$/.test(code)) return json({ error: 'Which party?' }, 400);
   if (!env.RESEND_API_KEY) return json({ error: 'Email is not set up on this Worker.' }, 503);
 

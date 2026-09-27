@@ -96,7 +96,8 @@ ok("the join path calls waiting() with no state, so it reads 'Getting you in'",
    /waiting\(j\.nickname\)\s*;/.test(code),
    "passing 'live' there would be claiming a connection that has not been made");
 ok("and connect() is still called after the guest is on the list",
-   code.indexOf("waiting(j.nickname)") < code.indexOf("connect(code.toUpperCase()"),
+   code.indexOf("connect(PPConfig.code(code)") > 0 &&
+   code.indexOf("waiting(j.nickname)") < code.indexOf("connect(PPConfig.code(code)"),
    "the order matters: the REST join is what puts them on the host's screen");
 ok("a returning guest gets the same honest screen",
    /waiting\(saved\.nickname\);\s*showCamera\(\);\s*connect\(saved\.code/.test(code),
@@ -203,7 +204,7 @@ ok("a dropped channel raises it",
    leaving the function definition kept it green. Check the call site: the watch has to be
    armed where the subscribe happens, or it guards nothing. */
 ok("a subscribe that NEVER lands raises it too",
-   /ch\.subscribe\(onChannelStatus\);\s*armWireWatch\(\)/.test(runCode) &&
+   /ch\.subscribe\((?:onChannelStatus|function\(st\)\{ if\(ch===mine\) onChannelStatus\(st\); \})\);\s*armWireWatch\(\)/.test(runCode) &&
    /setTimeout\([\s\S]{0,80}subscribed[\s\S]{0,40}wireBar\(true\)/.test(runCode),
    "the failure seen in the wild produced no error event at all: it simply never reached SUBSCRIBED, so waiting for an error waits forever");
 ok("and it clears the moment the channel comes good",

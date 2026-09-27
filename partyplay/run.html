@@ -90,7 +90,7 @@
   var SUPA_URL=PPConfig.SUPA_URL, SUPA_ANON=PPConfig.SUPA_ANON;
   var $=function(i){return document.getElementById(i);};
   var q=new URLSearchParams(location.search);
-  var CODE=(q.get("code")||"").toUpperCase(), KEY=q.get("key")||"";
+  var CODE=PPConfig.code(q.get("code")), KEY=q.get("key")||"";
   var PARTY=null, GAMES=[], players=[], ch=null, G=null;
   /* The night's running total, kept outside G so it survives one game ending and
      the next starting. Stored too, because the host's tablet WILL get locked,
@@ -174,7 +174,10 @@
     document.body.insertBefore(bar, document.body.firstChild);
     document.getElementById("ppWireGo").addEventListener("click", function(){
       wireBar(false);
-      try{ if(ch && ch.unsubscribe) ch.unsubscribe(); }catch(e){}
+      /* Forget it BEFORE unsubscribing: the CLOSED that unsubscribing reports at once
+         used to put this bar straight back up. Audit, 27 Sep 2026. */
+      var old=ch; ch=null; subscribed=false;
+      try{ if(old && old.unsubscribe) old.unsubscribe(); }catch(e){}
       connect();
       armWireWatch();
     });
@@ -221,8 +224,10 @@
     if(!SUPA_ANON) return;
     try{
       var c=supabase.createClient(SUPA_URL,SUPA_ANON);
-      ch=c.channel(PPConfig.channel(CODE),{config:{broadcast:{self:false}}});
+      var mine=c.channel(PPConfig.channel(CODE),{config:{broadcast:{self:false}}});
+      ch=mine;
       ch.on("broadcast",{event:"msg"},function(e){
+        if(ch!==mine) return;      // a channel we have hung up on
         var m=e.payload||{};
         if(m.t==="hello" && m.name){
           if(players.indexOf(m.name)<0){ players.push(m.name); paintStrip(); send({t:"players",names:players}); }
@@ -282,7 +287,7 @@
           if(!dup){ G.answers.push({name:m.name,i:m.i,answer:m.answer}); paintTrivia(); }
         }
       });
-      ch.subscribe(onChannelStatus);
+      ch.subscribe(function(st){ if(ch===mine) onChannelStatus(st); });
       armWireWatch();   // a subscribe that never lands fires no error; catch it on the clock
     }catch(e){}
   }
@@ -329,7 +334,7 @@
       '</div>';
 
     function go(){
-      var c = ($("siCode").value || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+      var c = PPConfig.code($("siCode").value);
       var k = ($("siKey").value || "").trim();
       if(c.length < 4 || !k) return signIn("Put in both the code and the host key.");
       // Straight into the address the rest of the page already reads, so there
@@ -340,7 +345,7 @@
     $("siKey").addEventListener("keydown", function(e){ if(e.key === "Enter") go(); });
     $("siResend").addEventListener("click", function(e){
       e.preventDefault();
-      var c = ($("siCode").value || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+      var c = PPConfig.code($("siCode").value);
       if(c.length < 4) return signIn("Put your party code in first, then press send it again.");
       api("/licence/resend", { method:"POST", body: JSON.stringify({ code:c }) })
         .then(function(){ toast("If that code is one of ours, the email is on its way."); })

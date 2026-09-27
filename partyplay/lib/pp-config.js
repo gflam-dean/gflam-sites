@@ -65,6 +65,15 @@
     /* Realtime channel name. One place, because the host console, the television
        and every phone have to agree on it exactly or the night silently does
        nothing at all. */
-    channel: function (code) { return 'pp-' + String(code || '').toUpperCase(); }
+    channel: function (code) { return 'pp-' + this.code(code); },
+
+    /* The party code the way the Worker files it (normaliseCode in the Worker, which
+       must stay identical). The Worker let "abs 3km" and "AB53KM" join ABS3KM, and every
+       page then built its channel from what the guest typed, so they were in the party
+       and heard nothing of it. Audit, 27 Sep 2026. */
+    code: function (input) {
+      return String(input || '').toUpperCase().replace(/[^A-Z0-9]/g, '')
+        .replace(/5/g, 'S').replace(/2/g, 'Z');
+    }
   };
 }(typeof globalThis !== 'undefined' ? globalThis : this));

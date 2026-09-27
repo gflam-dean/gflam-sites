@@ -97,7 +97,7 @@
   var SUPA_URL  = PPConfig.SUPA_URL;
   var SUPA_ANON = PPConfig.SUPA_ANON;
   var $ = function(id){ return document.getElementById(id); };
-  var CODE = (new URLSearchParams(location.search).get("code") || "").toUpperCase();
+  var CODE = PPConfig.code(new URLSearchParams(location.search).get("code"));
   /* A television gets set up once and used all night, then again next year. If a
      code was typed in before, the bare address works from then on.
 
@@ -111,7 +111,7 @@
   if(CODE){
     try{ localStorage.setItem("ppTvCode", CODE); }catch(e){}
   } else {
-    try{ CODE = (localStorage.getItem("ppTvCode") || "").toUpperCase(); }catch(e){}
+    try{ CODE = PPConfig.code(localStorage.getItem("ppTvCode")); }catch(e){}
   }
   var players = [];
 
@@ -139,7 +139,7 @@
       'comes straight back to your party.</p></div>');
 
     var i = document.getElementById("cin"), b = document.getElementById("cgo");
-    function clean(){ return (i.value||"").toUpperCase().replace(/[^A-Z0-9]/g,""); }
+    function clean(){ return PPConfig.code(i.value); }
     function go(){
       var v = clean();
       if(v.length < 6){ i.focus(); return; }

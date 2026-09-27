@@ -275,11 +275,11 @@
     api("/join", { method:"POST", body: JSON.stringify({ code:code, nickname:nickname }) })
       .then(function(j){
         /* `at` is what lets the boot below tell tonight's party from one in March. */
-        save({ code:code.toUpperCase(), nickname:j.nickname, token:j.token, email:email, mkt:mkt,
+        save({ code:PPConfig.code(code), nickname:j.nickname, token:j.token, email:email, mkt:mkt,
                at: Date.now() });
         waiting(j.nickname);            // "Getting you in...", not "You are in"
         showCamera();
-        connect(code.toUpperCase(), j.nickname);
+        connect(PPConfig.code(code), j.nickname);
         /* Sent after they are already in, and never allowed to fail the join.
            Nobody should be kept out of a party because a mailing list is down. */
         if(email){
@@ -350,7 +350,7 @@
       /* Drop the TOKEN, not the whole record: the token is what decides the auto-restore,
          and keeping the rest means their name and email are still filled in for them. */
       try{ delete was.token; save(was); }catch(e){}
-      try{ if(_ppChannel && _ppChannel.unsubscribe) _ppChannel.unsubscribe(); }catch(e){}
+      hangUp();
       hideCamera();
       joinScreen("", null, { nickname: was.nickname, email: was.email, mkt: was.mkt });
     });
@@ -363,20 +363,28 @@
     });
   }
 
+  /* Forget the channel BEFORE unsubscribing it. Unsubscribing reports CLOSED straight
+     away, and while it was still the current channel that CLOSED painted "Lost the
+     connection" over the join form the guest had just asked for. Audit, 27 Sep 2026. */
+  function hangUp(){
+    var old = _ppChannel; _ppChannel = null; _ppLive = false;
+    try{ if(old && old.unsubscribe) old.unsubscribe(); }catch(e){}
+  }
+
   function connect(code, nickname){
     /* EVERY WAY OUT OF HERE TELLS THE GUEST SOMETHING. Each of these three used to be
        silent, and all three end with the same screen: "You are in", forever, wrong. */
     _ppLive = false;
     if(!SUPA_ANON){ waiting(nickname, "lost"); return; }
     /* Let go of the previous party before joining another one. */
-    try{ if(_ppChannel && _ppChannel.unsubscribe) _ppChannel.unsubscribe(); }catch(e){}
-    _ppChannel = null;
+    hangUp();
     try{
       var client = supabase.createClient(SUPA_URL, SUPA_ANON);
       var ch = client.channel(PPConfig.channel(code), { config:{ broadcast:{ self:false } } });
       _ppChannel = ch;
-      ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
+      ch.on("broadcast", { event:"msg" }, function(e){ if(_ppChannel === ch) onMsg(e.payload); });
       ch.subscribe(function(s){
+        if(_ppChannel !== ch) return;      // a channel we hung up on: its news is not news
         if(s === "SUBSCRIBED"){
           _ppLive = true;
           /* Only say they are in once the room can actually hear them. The hello is what
@@ -1058,9 +1066,9 @@
      itself proof it is old, so it counts as stale and the fault clears itself the first
      time everybody opens the page. Their name and email are still filled in for them. */
   var STALE_MS = 4 * 24 * 60 * 60 * 1000;
-  var saved = load(), fromUrl = (qs.get("code")||"").toUpperCase();
+  var saved = load(), fromUrl = PPConfig.code(qs.get("code"));
   var fresh = !!(saved && saved.token && saved.at && (Date.now() - saved.at) < STALE_MS);
-  if(fresh && (!fromUrl || fromUrl === saved.code)){
+  if(fresh && (!fromUrl || fromUrl === PPConfig.code(saved.code))){
     waiting(saved.nickname); showCamera(); connect(saved.code, saved.nickname);
   } else {
     joinScreen(fromUrl, null, saved ? { nickname:saved.nickname, email:saved.email, mkt:saved.mkt } : null);

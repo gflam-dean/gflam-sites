@@ -11,6 +11,10 @@
   "checks": 17,
   "counted_by": "total"
  },
+ "partyplay-backend/lib/pp-code-and-channel.test.js": {
+  "checks": 31,
+  "counted_by": "lines"
+ },
  "partyplay-backend/lib/pp-guest-connection.test.js": {
   "checks": 66,
   "counted_by": "lines"

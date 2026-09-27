@@ -55,7 +55,7 @@ g.crypto = { getRandomValues: function(a){
 } };
 g.addEventListener = function(){};
 g.URLSearchParams = function(){ this.get=function(k){ return k==="code"?"ABCDEF":"k"; }; };
-g.PPConfig = { API:"https://x", SUPA_URL:"https://y", SUPA_ANON:"z", channel:function(c){return "pp-"+c;} };
+g.PPConfig = { API:"https://x", SUPA_URL:"https://y", SUPA_ANON:"z", channel:function(c){return "pp-"+c;}, code:function(c){ return String(c||"").toUpperCase(); } };
 // The real one is loaded by a <script src>, which this harness does not follow.
 g.PPQuiz = { CORRECT_POINTS: 100, SPEED_POINTS: 0, options: function(){ return []; } };
 // Same again for the licence library, which decides whether the party is still on.

@@ -163,6 +163,7 @@
   "pp-admin-auth.test.js",
   "pp-album-page.test.js",
   "pp-checkout.test.js",
+  "pp-code-and-channel.test.js",
   "pp-guest-connection.test.js",
   "pp-host-channel.test.js",
   "pp-join-names.test.js",
