@@ -1401,8 +1401,10 @@ MUTATIONS = [
      'the receipt throws a ReferenceError on every payment and the catch swallows it'),
     ('billing-emails.test.js',
      'venueplay-backend/worker/venueplay-api-FULL.js',
-     "await say(res && res.ok ? 'sent' : 'not sent: Resend refused it',",
-     "await Promise.resolve(res && res.ok ? 'sent' : 'not sent',",
+     # Anchored on the RECEIPT's subject: since 25 Sep the upcoming-payment email records its outcome with
+     # the identical say(...) line, and a bare match broke whichever came first in the file.
+     "subject: 'Your VenuePlay invoice' + (number ? ' ' + number : '') + ' - ' + amount,\n        html: html,\n      }),\n    });\n    let resendId = null;\n    try { const j = await res.json(); resendId = (j && j.id) || null; } catch (_) {}\n    await say(res && res.ok ? 'sent' : 'not sent: Resend refused it',",
+     "subject: 'Your VenuePlay invoice' + (number ? ' ' + number : '') + ' - ' + amount,\n        html: html,\n      }),\n    });\n    let resendId = null;\n    try { const j = await res.json(); resendId = (j && j.id) || null; } catch (_) {}\n    await Promise.resolve(res && res.ok ? 'sent' : 'not sent',",
      'a receipt sends or fails and leaves no record either way'),
 
     # ---- 11 Sep: the plan upgrade, which nothing had ever run ----
@@ -2395,8 +2397,9 @@ MUTATIONS = [
      'musical bingo hosts in SA, ACT and TAS are told paper only, against the owner\'s ruling'),
 
     ('the welcome email goes out on whichever run finishes provisioning', 'venueplay-backend/worker/venueplay-api-FULL.js',
-     "    if (prior && prior.length) return false;\n    await send();",
-     "    await send();",
+     # 25 Sep: send() is now awaited for its outcome, so the anchor is the early return itself.
+     "    if (prior && prior.length) return false;\n    /* ONLY A WELCOME THAT WENT",
+     "    /* ONLY A WELCOME THAT WENT",
      'every Stripe redelivery welcomes the customer again'),
 
     ('a new lobby in a multi-game night sends phones to that game', 'venueplay-backend/worker/venueplay-game.js',
