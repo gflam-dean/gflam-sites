@@ -208,6 +208,36 @@ test("rejects days outside 1 to 3", function(){
   return checkout({ name:"A", email:"a@b.co", days:5 })
     .then(function(r){ ok(r.status===400, "days=5 rejected, got "+r.status); });
 });
+test("checkout offers card only, so nobody pays by a bank transfer that takes days", function(){
+  FETCH.calls = [];
+  var answer = function(url){
+    if (/stripe\.com/.test(url)) return { status:200, body: JSON.stringify({ id:"cs_1", url:"https://pay" }) };
+    if (/pp_licences\?code=eq/.test(url)) return { status:200, body:"[]" };
+    return { status:201, body: JSON.stringify([{ id:"L9", code:"ACDEFG" }]) };
+  };
+  FETCH.plan = [answer, answer, answer, answer, answer, answer, answer, answer];
+  return W.fetch(req("POST","/checkout",{ name:"A", email:"a@b.co", days:1 }), ENV).then(function(r){
+    var st = FETCH.calls.filter(function(c){ return /checkout\/sessions/.test(c.url); })[0];
+    var body = st ? decodeURIComponent(String(st.init.body)) : "";
+    ok(!!st, "a Stripe session was asked for, status "+r.status);
+    ok(/payment_method_types\[0\]=card/.test(body) && !/payment_method_types\[1\]/.test(body), "card and nothing else, body "+body.slice(0,200));
+  });
+});
+test("the welcome email counts its own games and uses a logo every mail app shows", function(){
+  var src = readFile(repo("worker/SOURCE-do-not-paste-partyplay-api.js"));
+  var i = src.indexOf("const GAMES = ["), j = src.indexOf("];", i);
+  var rows = src.slice(i, j).split("\n").filter(function(l){ return /^\s*\['/.test(l); }).length;
+  var words = ["zero","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen","fourteen"];
+  var m = />The (\w+) games<\/h2>/.exec(src);
+  ok(i > 0 && m && words.indexOf(m[1]) === rows, "heading says " + (m && m[1]) + ", the list has " + rows);
+  FETCH.calls = [];
+  FETCH.plan = [ licenceForResend(), { status:200, body: JSON.stringify({ id:"em_9" }) } ];
+  return W.fetch(req("POST","/licence/resend",{ code:"ACDEFG" }), ENV).then(function(){
+    var mail = FETCH.calls.filter(function(c){ return /resend\.com/.test(c.url); })[0];
+    var html = mail ? JSON.parse(mail.init.body).html || "" : "";
+    ok(/partyplay-email-logo\.png/.test(html) && !/<img[^>]+\.svg/.test(html), "a PNG logo, not an SVG Gmail and Outlook refuse");
+  });
+});
 test("no date is needed at all", function(){
   // the stopwatch model: nothing about WHEN is asked for or stored at purchase
   var src = readFile(repo("worker/SOURCE-do-not-paste-partyplay-api.js"));

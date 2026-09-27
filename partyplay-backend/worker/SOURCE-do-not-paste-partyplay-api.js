@@ -13,7 +13,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '27 Sep 2026, 17:03 · 56c604c4';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '27 Sep 2026, 17:46 · b82a6cbd';   // tools/stamp-workers.py, do not edit by hand
 // The licence window rules live in one place and are shared with the browser.
 // Paste lib/pp-licence.js above this line when deploying, or inline it. It is
 // referenced here as PPLicence.
@@ -39,7 +39,7 @@ function emailShell(opts) {
 '<tr><td align="center">' +
 '<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden">' +
 '<tr><td style="background:' + INK + ';padding:22px 30px">' +
-'<img src="' + site + '/logos/partyplay-primary.svg" width="176" alt="PartyPlay" style="display:block;border:0;height:auto;max-width:176px">' +
+'<img src="' + site + '/logos/partyplay-email-logo.png" width="176" alt="PartyPlay" style="display:block;border:0;height:auto;max-width:176px">' +
 '</td></tr>' +
 '<tr><td style="height:3px;background:' + PINK + ';font-size:0;line-height:0">&nbsp;</td></tr>' +
 '<tr><td style="padding:32px 30px 8px">' +
@@ -99,7 +99,7 @@ function emailGuide(site) {
     step(2,'Get a screen up before people arrive','A cable from a laptop is the easy one, and no TV at all is fine. <a href="' + site + '/setup" style="color:' + PINK + '">Five ways, here</a>.') +
     step(3,'Press start on the night','That is when your time begins, not when you paid. Then read out the code and guests join in their phone browser.') +
     '</table>' +
-    '<h2 style="margin:26px 0 10px;font-family:Helvetica,Arial,sans-serif;font-size:19px;color:' + INK + '">The eleven games</h2>' +
+    '<h2 style="margin:26px 0 10px;font-family:Helvetica,Arial,sans-serif;font-size:19px;color:' + INK + '">The ten games</h2>' +
     '<p style="margin:0 0 12px;font-family:Helvetica,Arial,sans-serif;font-size:15px;color:' + MUTE + '">The ones marked <b>ready</b> need nothing from you at all.</p>' +
     '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="font-family:Helvetica,Arial,sans-serif;font-size:15px;color:#3A3444">' +
     GAMES.map(g => '<tr><td style="padding:7px 10px 7px 0;vertical-align:top;white-space:nowrap"><b>' + g[0] + '</b></td>' +
@@ -618,7 +618,7 @@ async function sendFollowupEmail(env, l) {
   const site = (env.SITE_ORIGIN || '').replace(/\/$/, '');
   const now = new Date();
   const endOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0));
-  const expires = new Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 'long' }).format(endOfMonth);
+  const expires = new Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 'long', timeZone: 'UTC' }).format(endOfMonth);
   const what = l.party_name ? escapeHtml(l.party_name) : 'the party';
   const promo = escapeHtml(env.FOLLOWUP_PROMO_CODE || 'AGAIN10');
 
@@ -898,7 +898,8 @@ async function runSendAlbums(env) {
 async function sendAlbumEmail(env, req, lic) {
   const site = (env.SITE_ORIGIN || '').replace(/\/$/, '');
   const gone = new Date(Date.parse(lic.expires_at) + ALBUM_KEEP_DAYS * 86400e3);
-  const goneStr = new Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 'long' }).format(gone);
+  // In Australian time: a Worker runs in UTC, so a party ending late on the 3rd read as the 2nd.
+  const goneStr = new Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 'long', timeZone: 'Australia/Sydney' }).format(gone);
   const what = lic.party_name ? escapeHtml(lic.party_name) : 'the party';
 
   await sendEmail(env, {
@@ -1890,6 +1891,11 @@ async function handleCheckout(request, env) {
   const site = (env.SITE_ORIGIN || '').replace(/\/$/, '');
   const session = await stripe(env, 'checkout/sessions', {
     mode: 'payment',                                  // NOT subscription. One party, one charge.
+    /* CARD ONLY (Dean, 27 Sep 2026). Without this Stripe offers whatever the dashboard has
+       switched on, including bank payments that take days to clear, and the buyer landed on
+       a page saying their code had been emailed while nothing had been paid yet. Apple Pay
+       and Google Pay ride on card, so they still show. */
+    'payment_method_types[0]': 'card',
     'line_items[0][price]': priceId,
     'line_items[0][quantity]': '1',
     customer_email: email,

@@ -68,8 +68,12 @@
   "counted_by": "total"
  },
  "partyplay-backend/worker/partyplay-api.test.js": {
-  "checks": 145,
+  "checks": 149,
   "counted_by": "total"
+ },
+ "tools/livenorm.test.py": {
+  "checks": 5,
+  "counted_by": "lines"
  },
  "tools/redirect-verdict.test.py": {
   "checks": 12,

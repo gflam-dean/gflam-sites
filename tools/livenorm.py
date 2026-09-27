@@ -30,7 +30,10 @@ def normalise(b):
     t = re.sub(r'<a href="/cdn-cgi/l/email-protection[^"]*"([^>]*)><span class="__cf_email__"[^>]*>.*?</span></a>',
                r'<a href="mailto:EMAIL"\1>EMAIL</a>', t, flags=re.S)
     t = re.sub(r'<a href="/cdn-cgi/l/email-protection[^"]*" class="__cf_email__"[^>]*>.*?</a>', 'EMAIL', t, flags=re.S)
-    t = re.sub(r'<a href="/cdn-cgi/l/email-protection[^"]*"([^>]*)>.*?</a>', r'<a href="mailto:EMAIL"\1>EMAIL</a>', t, flags=re.S)
+    # A mailto link whose TEXT is not an address ("Tell us") keeps its text: Cloudflare only
+    # rewrote the href. This replaced the text with EMAIL on the live side only, so a page
+    # with <a href="mailto:...">Tell us</a> compared stale for ever (album.html, 27 Sep 2026).
+    t = re.sub(r'<a href="/cdn-cgi/l/email-protection[^"]*"([^>]*)>(.*?)</a>', r'<a href="mailto:EMAIL"\1>\2</a>', t, flags=re.S)
     t = re.sub(r'/cdn-cgi/l/email-protection[^"\']*', 'mailto:EMAIL', t)
     t = re.sub(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}', 'EMAIL', t)
     t = re.sub(r'<script[^>]*cloudflareinsights[\s\S]*?</script>', '', t)
