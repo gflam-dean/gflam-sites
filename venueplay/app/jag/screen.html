@@ -24,8 +24,8 @@
   .pot{margin-left:auto;text-align:right}
   .pot .l{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:1.2cqw;letter-spacing:.2em;color:var(--muted);text-transform:uppercase}
   .pot .v{font-family:'Anton',sans-serif;font-size:7cqw;line-height:.95;color:var(--gold);filter:drop-shadow(0 0 18px rgba(255,194,75,.3))}
-  .grid{flex:1;display:grid;gap:.7cqw;margin:1.6cqw 0;align-content:center}
-  .card{border-radius:.6cqw;display:flex;align-items:center;justify-content:center;font-family:'Hanken Grotesk',sans-serif;font-weight:800;
+  .grid{flex:1;min-height:0;display:grid;gap:.7cqw;margin:1.6cqw 0;align-content:stretch}
+  .card{min-height:0;border-radius:.6cqw;display:flex;align-items:center;justify-content:center;font-family:'Hanken Grotesk',sans-serif;font-weight:800;
         background:linear-gradient(160deg,#3A1128,#17171A);border:1px solid rgba(255,31,142,.35);color:#fff}
   .card.gone{background:#0E0E10;border-color:var(--line);color:#2E2E34}
   .card.joker{background:var(--gold);color:#1a1200;border-color:var(--gold)}
@@ -80,6 +80,7 @@
     var turned={}; (b.turns||[]).forEach(function(t){ turned[t.card]=t; });
     var c=cols(b.deck_size), g=$("grid"), h="";
     g.style.gridTemplateColumns="repeat("+c+",1fr)";
+    g.style.gridTemplateRows="repeat("+Math.ceil(b.deck_size/c)+",1fr)";   // fill the wall, cards not strips
     var fs=Math.max(0.9, Math.min(3.2, 60/c));
     for(var i=1;i<=b.deck_size;i++){
       var t=turned[i], j=(t&&t.is_joker)||(b.status!=="active"&&b.revealed_spot===i);
