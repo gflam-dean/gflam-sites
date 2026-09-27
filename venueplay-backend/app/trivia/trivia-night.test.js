@@ -253,6 +253,23 @@ pass("changing the count after printing tells the host to print again", host.ind
 })();
 pass("the page marks itself as leaving before it goes", /addEventListener\("beforeunload", function\(\)\{ _leaving=true; \}\)/.test(host) && /addEventListener\("pagehide", function\(\)\{ _leaving=true; \}\)/.test(host));
 
+(function(){
+  var a = host.indexOf("function paintRoundQs(){"), d = 0, j = a, st = false;
+  for (; j < host.length; j++){ if (host[j] === "{"){ d++; st = true; } else if (host[j] === "}"){ d--; if (st && d === 0) break; } }
+  var fn = a > 0 ? host.slice(a, j + 1) : "";
+  pass("the Questions box has its own painter", !!fn);
+  function run(total, typed){
+    var els = { setupQs: { innerHTML: "" }, cfgCount: { value: String(typed) } };
+    (new Function("$", "G", fn + "; paintRoundQs();"))(function(id){ return els[id]; }, { questionCount: total });
+    return els.setupQs.innerHTML.replace(/<[^>]+>/g, "");
+  }
+  pass("a bank of 2,720 set to 10 shows 10 of 2,720 (Dean, 27 Sep: it showed 2720)", run(2720, 10) === "10 of 2,720", run(2720, 10));
+  pass("a built night of 20 played in full shows just 20", run(20, 20) === "20", run(20, 20));
+  pass("asking for more than the set holds shows what will actually play", run(20, 50) === "20", run(20, 50));
+  pass("no set yet shows 0", run(0, 10) === "0");
+  pass("typing in the round box repaints it", host.indexOf('$("cfgCount").addEventListener("input", function(){ renderPaperSetup(); paintRoundQs(); });') > 0);
+})();
+
 print("");
 print(bad ? ("  " + bad + " FAILED") : "ALL " + "CHECKS PASSED");
 if (bad) throw new Error(bad + " failed");

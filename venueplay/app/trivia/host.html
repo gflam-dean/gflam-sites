@@ -532,7 +532,7 @@
     var live=(G.status!=="setup" && G.status!=="lobby");   // lobby keeps the setup panel visible
     $("setupBlock").classList.toggle("hidden", live);
     $("liveBlock").classList.toggle("hidden", !live);
-    $("setupQs").textContent=G.questionCount;
+    paintRoundQs();
     $("setupPlayers").textContent=playerCount();
     var _ob=$("overBanner"), _oc=playerCap(), _op=playerCount();
     if(_ob){
@@ -1070,13 +1070,13 @@
     var c=opt?parseInt(opt.getAttribute("data-count"),10):0;
     G.setId=sel.value||""; G.questionCount=(c>=0?c:0);
     G.setTitle=(opt && opt.getAttribute("data-title"))||"";
-    $("setupQs").textContent=G.questionCount;
     /* A NIGHT YOU BUILT PLAYS IN FULL; A QUESTION BANK STARTS AT 10. This filled the whole set
        every time, so picking a bank like Geography (2,720 questions) set the round to 100 (Dean,
        27 Sep 2026: "for some reason it defaulted to 100 questions"). Up to 50 is a night somebody
        built, so all of it; more than that is a bank to draw from, so a normal round of 10. */
     if($("cfgCount") && G.questionCount>0){ $("cfgCount").value = G.questionCount<=50 ? G.questionCount : 10; }
     if(typeof renderPaperSetup==="function"){ try{ renderPaperSetup(); }catch(e){} }
+    paintRoundQs();
     /* RE-RENDER. renderConsole() decides whether "Open lobby" is enabled, and it reads
        G.questionCount. On a cold load renderConsole() runs before the question sets have come
        back from the network, so the count is 0 and the button is disabled and captioned "No
@@ -1167,7 +1167,16 @@
       }).catch(function(e){ if(window.VPPrint) VPPrint.fail(w, e.message); hostError(e.message); });
     });
   });
-  $("cfgCount").addEventListener("input", function(){ renderPaperSetup(); });
+  $("cfgCount").addEventListener("input", function(){ renderPaperSetup(); paintRoundQs(); });
+  /* THE QUESTIONS BOX SHOWS THIS ROUND, not the whole set. Dean, 27 Sep 2026: "the questions down
+     the bottom don't reflect what the number is in the top". It showed the set size (2,720 for a
+     bank) while the round was 10. Now it shows the round, with the set beside it when they differ. */
+  function paintRoundQs(){
+    var el=$("setupQs"); if(!el) return;
+    var total=G.questionCount||0, want=parseInt(($("cfgCount")||{}).value,10)||0;
+    var n = total ? Math.min(want>0?want:total, total) : 0;
+    el.innerHTML = String(n) + (total>n ? ' <small style="font-size:12px;color:var(--muted);font-weight:600">of '+total.toLocaleString("en-AU")+'</small>' : '');
+  }
 
   function sheetShape(){
     var rounds=Math.ceil(G.count/G.roundSize);
