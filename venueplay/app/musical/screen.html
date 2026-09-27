@@ -219,6 +219,7 @@
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
 <script src="/app/vp-qr.js"></script>
 <script src="/app/vp-sign.js"></script>
+<script src="/app/vp-channel.js"></script>
 <script src="/app/vp-screen-router.js"></script>
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-fit.js"></script>
@@ -520,7 +521,12 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       busy: function(){ return state.phase && state.phase !== "lobby"; }
     });
   }
-  var ch=client.channel("vp-"+CODE, { config:{ broadcast:{ self:false } } });
+  /* A CHANNEL THAT COMES BACK BY ITSELF. client.channel() on its own said Reconnecting after a
+     CLOSED and never tried again, so one blip left this wall deaf for the night (audit, 27 Sep
+     2026). /app/vp-channel.js rebuilds it with a backoff and is shaped like a channel, so
+     nothing below changed. Without the script it is the plain channel, as before. */
+  var ch=window.VPChannel ? VPChannel.keep(client, "vp-"+CODE, { config:{ broadcast:{ self:false } } })
+                          : client.channel("vp-"+CODE, { config:{ broadcast:{ self:false } } });
   var tvSubscribed=false;
   /* The try/catch is not decoration: ch.send throws once the socket is gone, and
      this is called from repaint paths. Unguarded it takes the whole render with it

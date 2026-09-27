@@ -484,6 +484,7 @@
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
 <script src="/app/vp-qr.js"></script>
 <script src="/app/vp-sign.js"></script>
+<script src="/app/vp-channel.js"></script>
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-fit.js"></script>
@@ -1696,7 +1697,33 @@
   /* When the five game channels went deaf, or 0 while they are healthy. A screen with
      no channel hears nothing at all: no host, no HQ reload. The ads keep rotating
      locally, so nothing on the wall says anything is wrong. */
-  var gameChannelsDeafSince=0;
+  /* EVERY CHANNEL KEEPS ITS OWN CLOCK. Audit, 27 Sep 2026: the four game channels shared this
+     one timer, and any one of them coming back set it to 0. So a channel that stayed dead
+     all night, beside another that blipped now and then, never reached four minutes and the
+     watchdog never reloaded. The bingo channel (the one this page draws the game from) was
+     not counted at all. Now each channel, bingo's included as "main", has its own time, and
+     noteDeaf() derives the two numbers the watchdog reads:
+       gameChannelsDeafSince  every channel is deaf, since the last one went. The screen hears
+                              nothing at all, so the watchdog may reload even mid game, as it
+                              always has: a screen that hears nothing has nothing to protect.
+       anyChannelDeafSince    the oldest single deaf channel. That screen can still hear part
+                              of the night, so this reloads ONLY while the ads are up, never
+                              over a game. */
+  var gameChannelsDeafSince=0, anyChannelDeafSince=0, channelDeafSince={};
+  function noteDeaf(name, deaf){
+    if(deaf){ if(!channelDeafSince[name]) channelDeafSince[name]=Date.now(); }
+    else channelDeafSince[name]=0;
+    var n=0, allDeaf=true, latest=0, oldest=0, k, t;
+    for(k in channelDeafSince){
+      if(!Object.prototype.hasOwnProperty.call(channelDeafSince, k)) continue;
+      n++; t=channelDeafSince[k];
+      if(!t){ allDeaf=false; continue; }
+      if(t>latest) latest=t;
+      if(!oldest || t<oldest) oldest=t;
+    }
+    gameChannelsDeafSince = (n && allDeaf) ? latest : 0;
+    anyChannelDeafSince = oldest;
+  }
   /* Set only by traffic on the BINGO channel, so "is bingo actually on air" can be answered
      without another format's chatter answering it for us. */
   var BINGO_LIVE_MS=2*60*1000, lastBingoAt=0;
@@ -1832,6 +1859,7 @@
         _room=VPRoom.connect(VP_GAME_API, "vp-"+CODE, "tv", function(payload){ vpGate(payload, onMsg); }, {
           onUnavailable: function(){ _useRoom=false; _room=null; setTimeout(connectRealtime, 0); },
           onState: function(st){
+            noteDeaf("main", st!=="open");   // the room is this screen's bingo road: it counts
             if(st==="open"){ tvSubscribed=true; tvStatus(true);
               try{document.documentElement.setAttribute("data-vp-transport","room");console.log("[VenuePlay] transport: "+"room");}catch(e){};
               try{ _room.send({ t:"tv_here", hello:true }); }catch(e){}   // tvSend() only speaks down the Supabase channel, and it is one of the three kept byte-identical
@@ -1843,18 +1871,27 @@
       }catch(err){ _useRoom=false; _room=null; }
     }
     try{
+      /* ONE BINGO CHANNEL AT A TIME. This function runs again after a throw below; hang up the
+         last one first, so its retries stop and its CLOSED is not news. */
+      if(ch && ch.unsubscribe){ try{ ch.unsubscribe(); }catch(e){} ch=null; }
       client=supabase.createClient(SUPA_URL, SUPA_ANON);
-      ch=client.channel("vp-"+CODE, { config:{ broadcast:{ self:false } } });
+      /* AND IT COMES BACK. This said Reconnecting after a CLOSED and never tried again: a bingo
+         wall deaf for the night, and not counted by the watchdog either (audit, 27 Sep 2026).
+         /app/vp-channel.js rebuilds it with a backoff; without the script it is the plain
+         channel, as before. */
+      ch=window.VPChannel ? VPChannel.keep(client, "vp-"+CODE, { config:{ broadcast:{ self:false } } })
+                          : client.channel("vp-"+CODE, { config:{ broadcast:{ self:false } } });
+      noteDeaf("main", false);        // counted from here; healthy until it says otherwise
       ch.on("broadcast", { event:"msg" }, function(e){ vpGate(e.payload, onMsg); });
       ch.subscribe(function(status){
-        if(status==="SUBSCRIBED"){ tvSubscribed=true; tvSend({ t:"tv_here", hello:true }); tvStatus(true); try{document.documentElement.setAttribute("data-vp-transport","supabase");console.log("[VenuePlay] transport: "+"supabase");}catch(e){} }
+        if(status==="SUBSCRIBED"){ noteDeaf("main", false); tvSubscribed=true; tvSend({ t:"tv_here", hello:true }); tvStatus(true); try{document.documentElement.setAttribute("data-vp-transport","supabase");console.log("[VenuePlay] transport: "+"supabase");}catch(e){} }
         /* CLOSED TOO. Supabase reports three failure states and this listed two, so a
            channel that simply CLOSED left tvSubscribed true: the screen kept announcing
            itself into a dead channel and kept the green dot up while hearing nothing. A
            deaf screen that says Connected is the hardest fault on this page to see, and
            it is the one the watchdog exists to catch minutes later. Found by widening the
            gate check that had only ever looked at host consoles, never at this page. */
-        else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ tvSubscribed=false; tvStatus(false); }
+        else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ tvSubscribed=false; tvStatus(false); noteDeaf("main", true); }
       });
     }catch(err){ tvStatus(false); setTimeout(connectRealtime, 3000); }
   }
@@ -2185,6 +2222,7 @@
          Re-subscribe with a backoff, and count how long we have been deaf so the
          watchdog can reload as a last resort. */
       var tries = 0, retryT = null;
+      noteDeaf(game, false);                     // counted from the start, healthy until it says otherwise
       function join(){
         /* WHICH CHANNEL IS TALKING. Replacing a channel makes supabase-js tell the OLD one it
            is CLOSED, and that arrives here, in a callback that could not tell old from new. So
@@ -2200,12 +2238,12 @@
           if(mine !== c) return;
           if(st === "SUBSCRIBED"){
             tries = 0;
-            gameChannelsDeafSince = 0;
+            noteDeaf(game, false);                 // THIS channel hears; the others keep their own clocks
             try{ c.send({ type:"broadcast", event:"msg", payload:{ t:"tv_here", hello:true } }); }catch(e){}
             return;
           }
           if(st === "CHANNEL_ERROR" || st === "TIMED_OUT" || st === "CLOSED"){
-            if(!gameChannelsDeafSince) gameChannelsDeafSince = Date.now();
+            noteDeaf(game, true);
             if(retryT) return;                     // one retry in flight is enough
             var wait = Math.min(30000, 2000 * Math.pow(2, Math.min(tries, 4)));
             tries++;
@@ -2484,6 +2522,21 @@
       try { return gameChannelsDeafSince && (Date.now() - gameChannelsDeafSince) > DEAF_MS; }
       catch(e){ return false; }
     }
+    /* ONE CHANNEL DEAF FOR TOO LONG, WHILE THE ADS ARE UP. A screen that still hears some of
+       its channels is not deaf, so this never reloads over a game: idle() is asked first. But
+       with the ads up, the dead channel is the road some host's game will arrive by, and the
+       watchdog is the only thing that can open it again. Not more than once in half an hour
+       for this reason, so a channel that is dead however often we reload cannot restart the
+       venue's ad loop every four minutes all night. Audit, 27 Sep 2026. */
+    var ONE_DEAF_GAP = 30 * 60 * 1000;
+    function oneChannelDeafTooLong(){
+      try {
+        if(!idle() || !anyChannelDeafSince || (Date.now() - anyChannelDeafSince) <= DEAF_MS) return false;
+        var why = sessionStorage.getItem("vpTvReloadWhy") || "";
+        var at = parseInt(sessionStorage.getItem("vpTvReloadAt") || "0", 10) || 0;
+        return !(why === "channel-deaf" && (Date.now() - at) < ONE_DEAF_GAP);
+      } catch(e){ return false; }
+    }
 
     // Anyone who opens devtools on a real venue screen should be able to see this is armed,
     // and see why it last reloaded. Costs nothing and answers the first question every time.
@@ -2541,6 +2594,7 @@
         if(idle() && (Date.now() - loadedAt) > MAX_AGE){ reload("max-age"); return; }
         // Not idle-only: a deaf screen cannot be reached any other way. See deafTooLong.
         if(deafTooLong()){ reload("channels-deaf"); return; }
+        if(oneChannelDeafTooLong()){ reload("channel-deaf"); return; }   // idle only; see above
 
         if(screenIsAlive()){ strikes = 0; return; }
 
