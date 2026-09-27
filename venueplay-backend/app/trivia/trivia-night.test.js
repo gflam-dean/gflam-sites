@@ -246,10 +246,44 @@ pass("a question bank (over 50) starts at 10; a night you built plays in full",
 pass("there is no separate 'Questions per round' box; the sheet is the round", host.indexOf('id="cfgRound"') < 0 && host.indexOf("G.roundSize=G.count;") > 0);
 pass("changing the count after printing tells the host to print again", host.indexOf("Tap Print again for sheets that match.") > 0);
 (function(){
-  var i = host.indexOf("gch.subscribe(function(status){");
-  var body = i > 0 ? host.slice(i, i + 2500) : "";
-  var guard = body.indexOf("if(mine!==gch || _leaving) return;"), err = body.indexOf("Lost the connection to the players' phones");
-  pass("leaving the page or swapping channels is not reported as a lost connection (guard comes first)", guard > 0 && err > guard);
+  /* RUNS the real openGameChannel against a fake realtime client that behaves like supabase-js:
+     removeChannel() reports CLOSED to the old channel INSIDE the call. */
+  var a = host.indexOf('  var LOST_MSG='), b = host.indexOf('  // ---- host game state ----');
+  var SRC = (a > 0 && b > a) ? host.slice(a, b) : "";
+  pass("the players' channel code is where the test expects it", !!SRC);
+  var timers = [], shown = [], cleared = 0, chans = [], tid = 0;
+  var client = { channel: function(name){ var c = { name: name, on: function(){ return c; }, subscribe: function(cb){ c.cb = cb; return c; } }; chans.push(c); return c; },
+                 removeChannel: function(c){ if (c && c.cb) c.cb("CLOSED"); } };
+  var env = { client: client, G: { status: "setup", joinCode: "ABC123" }, _leaving: false,
+              hostError: function(m){ shown.push(m); }, clearHostError: function(){ cleared++; },
+              gflush: function(){}, gsend: function(){}, onMsg: function(){},
+              setTimeout: function(fn, ms){ var t = { fn: fn, ms: ms, id: ++tid }; timers.push(t); return t.id; },
+              clearTimeout: function(id){ timers = timers.filter(function(t){ return t.id !== id; }); } };
+  var names = Object.keys(env);
+  var api = (new Function(names.join(","), "var gch=null, gsub=false;" + SRC +
+    "; return { open: openGameChannel, cur: function(){ return gch; }, sub: function(){ return gsub; } };")).apply(null, names.map(function(k){ return env[k]; }));
+  function fire(){ var t = timers.slice(); timers = []; t.forEach(function(x){ x.fn(); }); }
+  api.open("ABC123"); api.cur().cb("SUBSCRIBED");
+  api.open("ABC123");                       // printing, then opening the lobby, reopens it
+  pass("replacing the channel is not mistaken for a drop: no reconnect, no warning booked", timers.length === 0, JSON.stringify(timers.map(function(t){ return t.ms; })));
+  env.G.status = "question"; api.open("ABC123"); env.G.status = "setup";
+  pass("...even mid-game (a reload restores a live quiz and reopens it)", timers.length === 0);
+  fire();
+  pass("replacing the channel before any lobby shows no 'lost connection' (Dean, 27 Sep, twice)", shown.length === 0, JSON.stringify(shown));
+  env.G.status = "question"; shown.length = 0; timers = [];
+  api.cur().cb("TIMED_OUT"); api.cur().cb("SUBSCRIBED"); fire();
+  pass("a blip that heals inside 8 seconds says nothing", shown.length === 0, JSON.stringify(shown));
+  timers = []; api.cur().cb("CHANNEL_ERROR");
+  var waits = timers.map(function(t){ return t.ms; });
+  pass("a real drop books a retry and an 8 second warning", waits.indexOf(8000) >= 0 && waits.some(function(ms){ return ms >= 2000 && ms !== 8000; }), JSON.stringify(waits));
+  var before = chans.length; fire();
+  pass("still down after 8 seconds in a live game: the host is told", shown.length === 1);
+  pass("and the retry really opens a fresh channel", chans.length === before + 1);
+  api.cur().cb("SUBSCRIBED");
+  pass("when it comes back the warning is taken down", cleared === 1);
+  env.G.status = "setup"; shown.length = 0; timers = [];
+  api.cur().cb("TIMED_OUT"); fire();
+  pass("before the game starts, a drop retries quietly and warns nobody", shown.length === 0);
 })();
 pass("the page marks itself as leaving before it goes", /addEventListener\("beforeunload", function\(\)\{ _leaving=true; \}\)/.test(host) && /addEventListener\("pagehide", function\(\)\{ _leaving=true; \}\)/.test(host));
 

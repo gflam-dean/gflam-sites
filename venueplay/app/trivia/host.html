@@ -354,24 +354,44 @@
   setInterval(function(){
     if(G.status && G.status !== "setup") bcast({ t:"host_here" });
   }, HEARTBEAT_MS);
+  var LOST_MSG="Lost the connection to the players' phones. Reconnecting: hold off on the next question for a moment.";
+  var gRetryT=null, gTries=0, gLostT=null, gLostShown=false;
   function openGameChannel(joinCode){
-    if(gch){ try{ client.removeChannel(gch); }catch(e){} gch=null; gsub=false; }
+    /* LET GO OF THE OLD CHANNEL BEFORE REMOVING IT. removeChannel makes the old channel report
+       CLOSED inside the call, and gch still pointed at it, so the guard below read its own channel
+       failing: "Lost the connection" with no lobby even open (Dean, 27 Sep 2026, twice). */
+    if(gch){ var old=gch; gch=null; gsub=false; try{ client.removeChannel(old); }catch(e){} }
     gch=client.channel("vp-"+joinCode, { config:{ broadcast:{ self:false } } });
     var mine=gch;
     gch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
     gch.subscribe(function(status){
-      /* NOT A DROP: this channel was replaced, or the page is being left. Leaving (Build a night,
-         Games, a reload) closes the channel, and that CLOSED used to put "Lost the connection to
-         the players' phones" on screen as the page went (Dean, 27 Sep 2026). */
+      /* NOT A DROP: this channel was replaced, or the page is being left (Build a night, Games,
+         a reload closes it). */
       if(mine!==gch || _leaving) return;
-      if(status==="SUBSCRIBED"){ gsub=true; gflush(); gsend({ t:"rollcall" }); return; }   // ask connected players to re-announce so the roster rebuilds
-      /* gsub was never reset, so after a dropped channel gsend() kept posting into a dead socket:
-         questions stopped reaching phones and nothing on the console said so. The TV pairing
-         channel already handled this; the players' channel did not. Queue instead, so whatever the
-         room missed is flushed the moment it reconnects. */
+      if(status==="SUBSCRIBED"){
+        gsub=true; gTries=0; gflush(); gsend({ t:"rollcall" });   // ask connected players to re-announce so the roster rebuilds
+        if(gLostT){ clearTimeout(gLostT); gLostT=null; }
+        if(gRetryT){ clearTimeout(gRetryT); gRetryT=null; }      // healed by itself: do not tear down a working channel
+        if(gLostShown){ gLostShown=false; clearHostError(); }     // it came back: take the warning down
+        return;
+      }
       if(status==="CHANNEL_ERROR" || status==="TIMED_OUT" || status==="CLOSED"){
-        gsub=false;
-        hostError("Lost the connection to the players' phones. Reconnecting: hold off on the next question for a moment.");
+        gsub=false;   // queue sends until it is back, so nothing the room should see is lost
+        /* ACTUALLY RECONNECT. This said "Reconnecting" and did nothing: no retry, and the warning
+           stayed up after the socket healed by itself. Retry with a backoff, the way the TV does. */
+        if(!gRetryT){
+          var wait=Math.min(30000, 2000*Math.pow(2, Math.min(gTries,4))); gTries++;
+          gRetryT=setTimeout(function(){ gRetryT=null; if(!_leaving && G.joinCode===joinCode) openGameChannel(joinCode); }, wait);
+        }
+        /* SAY SO ONLY IF IT MATTERS. A blip that heals inside 8 seconds is not news, and before the
+           first question there is nothing to "hold off" on: the retry carries on quietly. */
+        if(!gLostT){
+          gLostT=setTimeout(function(){
+            gLostT=null;
+            var live = G.status && G.status!=="setup" && G.status!=="lobby";
+            if(!gsub && live && !_leaving){ gLostShown=true; hostError(LOST_MSG); }
+          }, 8000);
+        }
       }
     });
   }
