@@ -347,6 +347,7 @@
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-feedback.js"></script>
 <script src="/app/vp-celebrate.js"></script>
+<script src="/app/vp-venueurl.js"></script>
 <script>
 (function(){
   "use strict";
@@ -1754,12 +1755,10 @@
   // Bingo needs nothing more: host, TV and phones all meet on that code. Trivia and musical
   // open a session with a RANDOM join code, so we ask the Worker what is on tonight and hop
   // the phone over to the right player screen.
+  // The venue in the address comes from ONE reader, /app/vp-venueurl.js, shared with every TV
+  // screen (venue=, slug=, any capitals, ?=slug, spaces as hyphens, a stray % no longer throws).
   function venueSlugFromURL(){
-    var q=window.location.search||"";
-    var m=/[?&]venue=([^&]+)/.exec(q);
-    var raw = m ? m[1] : "";
-    if(!raw){ var bare=q.replace(/^\?/,"").split("&")[0]; if(bare && bare.indexOf("=")===-1) raw=bare; }
-    return raw ? decodeURIComponent(raw).toLowerCase().replace(/[^a-z0-9-]/g,"") : "";
+    return window.VPVenueURL ? VPVenueURL.slug(window.location.search||"") : "";
   }
   function venueCode(slug){
     var s=String(slug||"").toLowerCase().replace(/[^a-z0-9]/g,""), h=2166136261>>>0;

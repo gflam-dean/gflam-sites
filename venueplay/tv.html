@@ -487,6 +487,7 @@
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-fit.js"></script>
+<script src="/app/vp-venueurl.js"></script>
 <script>
 (function(){
   "use strict";
@@ -504,20 +505,19 @@
   var SUPA_URL='https://ijkzgmdtwtgfkedqspxm.supabase.co';
   var SUPA_ANON='sb_publishable_9v83FWCSt7Di-jkgTvsMJQ_f6lJPovb';
 
+  /* The venue in the address: ONE reader for every screen and the bingo phone, in
+     /app/vp-venueurl.js (venue=, slug=, any capitals, ?=slug, a bare ?slug after a setting like
+     ?unified=1, spaces and underscores as hyphens, a stray % no longer kills this script).
+     27 Sep 2026: Dean typed ?=hello-hotel and this screen quietly showed the last venue the
+     browser remembered. If the script failed to load, read no venue: memory takes over and
+     the console says why. */
+  function tvVenueSlug(){
+    if(!window.VPVenueURL){ try{ console.warn("VenuePlay: /app/vp-venueurl.js did not load; reading no venue from the address"); }catch(e){} return ""; }
+    return VPVenueURL.slug(window.location.search||"");
+  }
   // Venue-derived code: identical to VP.venueCode() in vp-session.js (keep in lockstep). When
   // the TV is opened as /tv?venue=<slug>, the host derives the SAME code from the same venue, so
   // they share a channel with no pairing step; it also shows as the players' join code.
-  function tvVenueSlug(){
-    var q=window.location.search||"";
-    var m=/[?&](?:venue|slug)=([^&]+)/.exec(q);              // /tv?venue=your-venue, or ?slug=your-venue
-    var raw = m ? m[1] : "";
-    /* /tv?your-venue (shorter), and /tv?=your-venue. Dean typed ?=hello-hotel on 27 Sep 2026: the
-       stray "=" made this read no venue at all, so the screen quietly showed the LAST venue this
-       browser remembered (Test Alpha) while he opened Hello Hotel's lobby, and nothing said so. A
-       leading "=" is forgiven; ?slug= is read as well (it had only ever worked by memory). */
-    if(!raw){ var bare=q.replace(/^\?/,"").split("&")[0].replace(/^=/,""); if(bare && bare.indexOf("=")===-1) raw=bare; }
-    return raw ? decodeURIComponent(raw).toLowerCase().replace(/[^a-z0-9-]/g,"") : "";
-  }
   function venueCode(slug){
     var s=String(slug||"").toLowerCase().replace(/[^a-z0-9]/g,""), h=2166136261>>>0;
     for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619)>>>0; }
@@ -560,7 +560,9 @@
     if(VP_DEMO) return "";                       // hermetic: never inherit a real venue
     var fromUrl=tvVenueSlug();
     if(fromUrl){ rememberVenue(fromUrl); return fromUrl; }
-    try{ var s=localStorage.getItem("vpTvVenue"); if(s) return s; }catch(e){}
+    // memory: fellBack says so in the console if the address held something it could not read.
+    // Its own try, so a warning that cannot run never costs the screen its remembered venue.
+    try{ var s=localStorage.getItem("vpTvVenue"); if(s){ try{ VPVenueURL.fellBack(window.location.search||"", s); }catch(e){} return s; } }catch(e){}
     return "";
   })();
   function rememberVenue(slug){

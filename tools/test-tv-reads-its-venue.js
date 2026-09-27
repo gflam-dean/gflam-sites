@@ -2,7 +2,9 @@
    27 Sep 2026: Dean opened /tv?=hello-hotel. The stray "=" made tv.html read no venue, so the screen
    quietly showed the last venue that browser remembered (Test Alpha) while he opened Hello Hotel's
    lobby. ?slug= had the same fault and only ever worked from memory. This RUNS the real
-   tvVenueSlug() lifted from tv.html against every shape of address.
+   tvVenueSlug() lifted from tv.html against every shape of address, with the real shared reader
+   /app/vp-venueurl.js behind it (tv.html calls it since 27 Sep 2026; tools/test-venue-url.js covers
+   the reader itself, the other five pages, and the shapes this file never had).
    Run: jsc tools/test-tv-reads-its-venue.js */
 var bad = 0, ran = 0;
 function ok(n, c, saw){ ran++; if (c) print("  ok   " + n); else { bad++; print("  FAIL " + n + (saw !== undefined ? "   saw: " + saw : "")); } }
@@ -11,7 +13,12 @@ var i = TV.indexOf("function tvVenueSlug(){"), d = 0, j = i, started = false;
 for (; j < TV.length; j++) { if (TV[j] === "{") { d++; started = true; } else if (TV[j] === "}") { d--; if (started && d === 0) break; } }
 var FN = i > 0 ? TV.slice(i, j + 1) : "";
 ok("tv.html has tvVenueSlug", !!FN);
-function slugFor(search){ var window = { location: { search: search } }; return (new Function("window", FN + "; return tvVenueSlug();"))(window); }
+var SHARED = readFile("venueplay/app/vp-venueurl.js");
+function slugFor(search){
+  var window = { location: { search: search }, console: { warn: function(){} } };
+  (new Function("window", SHARED))(window);
+  return (new Function("window", "VPVenueURL", FN + "; return tvVenueSlug();"))(window, window.VPVenueURL);
+}
 [["?venue=hello-hotel", "hello-hotel", "the long form"],
  ["?hello-hotel", "hello-hotel", "the short form in the welcome email"],
  ["?=hello-hotel", "hello-hotel", "a stray '=' (what Dean typed)"],
