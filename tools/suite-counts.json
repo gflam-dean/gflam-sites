@@ -227,6 +227,10 @@
   "checks": 11,
   "counted_by": "lines"
  },
+ "tools/test-tv-reads-its-venue.js": {
+  "checks": 10,
+  "counted_by": "lines"
+ },
  "tools/test-tv-watchdog-runs.js": {
   "checks": 12,
   "counted_by": "lines"

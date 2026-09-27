@@ -509,9 +509,13 @@
   // they share a channel with no pairing step; it also shows as the players' join code.
   function tvVenueSlug(){
     var q=window.location.search||"";
-    var m=/[?&]venue=([^&]+)/.exec(q);                       // /tv?venue=your-venue
+    var m=/[?&](?:venue|slug)=([^&]+)/.exec(q);              // /tv?venue=your-venue, or ?slug=your-venue
     var raw = m ? m[1] : "";
-    if(!raw){ var bare=q.replace(/^\?/,"").split("&")[0]; if(bare && bare.indexOf("=")===-1) raw=bare; }  // /tv?your-venue (shorter)
+    /* /tv?your-venue (shorter), and /tv?=your-venue. Dean typed ?=hello-hotel on 27 Sep 2026: the
+       stray "=" made this read no venue at all, so the screen quietly showed the LAST venue this
+       browser remembered (Test Alpha) while he opened Hello Hotel's lobby, and nothing said so. A
+       leading "=" is forgiven; ?slug= is read as well (it had only ever worked by memory). */
+    if(!raw){ var bare=q.replace(/^\?/,"").split("&")[0].replace(/^=/,""); if(bare && bare.indexOf("=")===-1) raw=bare; }
     return raw ? decodeURIComponent(raw).toLowerCase().replace(/[^a-z0-9-]/g,"") : "";
   }
   function venueCode(slug){
