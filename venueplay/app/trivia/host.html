@@ -356,6 +356,13 @@
   }, HEARTBEAT_MS);
   var LOST_MSG="Lost the connection to the players' phones. Reconnecting: hold off on the next question for a moment.";
   var gRetryT=null, gTries=0, gLostT=null, gLostShown=false;
+  /* WHICH PRINT PROBLEM. "Your browser blocked the print window" was said for any failure, including a
+     host who simply closed the "Getting ready" tab before the sheets arrived (audit, 27 Sep 2026). */
+  function printProblem(w){
+    return (w && w.closed)
+      ? "The print window was closed before the sheets were ready. Tap Print again."
+      : "Your browser blocked the print window. Allow pop-ups for venueplay.com.au, then tap Print again.";
+  }
   function openGameChannel(joinCode){
     /* LET GO OF THE OLD CHANNEL BEFORE REMOVING IT. removeChannel makes the old channel report
        CLOSED inside the call, and gch still pointed at it, so the guard below read its own channel
@@ -1193,7 +1200,7 @@
         try{ localStorage.setItem(paperKey(), JSON.stringify({ teams:r.teams, roundSize:rs, questions:qn })); }catch(e){}
         renderPaperSetup();
         if(!window.VPPrint || !VPPrint.trivia(w, { teams:r.teams, questions:qn, roundSize:rs, venue:(G.venue && G.venue.name)||"" })){
-          hostError("Your browser blocked the print window. Allow pop-ups for venueplay.com.au, then tap Print again.");
+          hostError(printProblem(w));
         }
       }).catch(function(e){ if(window.VPPrint) VPPrint.fail(w, e.message); hostError(e.message); });
     });

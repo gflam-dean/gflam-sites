@@ -330,12 +330,12 @@
      host fixes it: guessing at an exclusion is as bad as ignoring one.
 
      Blocks are sorted, clipped to the ticket range and merged where they touch or overlap, which
-     loses nothing. The game Worker keeps at most 20 blocks (excluded_ranges.slice(0,20)), so more
-     than 20 after merging is not truncated here either: .tooMany carries the count and the draw
+     loses nothing. The game Worker keeps at most 200 blocks (excluded_ranges.slice(0,200), 20 before 27 Sep), so more
+     than 200 after merging is not truncated here either: .tooMany carries the count and the draw
      is refused with a message saying so. Returns a plain array (what the Worker is sent and what
      raffleSig fingerprints) with .unread and .tooMany hung on it. */
   function parseSkips(){
-    var MAX_BLOCKS=20;   // the game Worker's own limit; see the note above
+    var MAX_BLOCKS=200;  // the game Worker's own limit (raised from 20 on 27 Sep 2026, with merging); see the note above
     var raw=($("rfSkip") && $("rfSkip").value || "").trim();
     var out=[]; out.unread=[]; out.tooMany=0;
     if(!raw) return out;
@@ -361,7 +361,7 @@
   /* Why the unsold box cannot be used as typed, in words a host can act on, or "" if it can. */
   function skipsProblem(sk){
     if(sk.unread && sk.unread.length) return "Could not read: "+sk.unread.join(", ")+" in the unsold tickets box. Nothing has been drawn. Fix it so an unsold ticket can never be drawn: use a dash for a block and commas between them, like 240-320, 512.";
-    if(sk.tooMany) return "That is "+sk.tooMany+" separate blocks of unsold tickets, and a raffle can leave out at most 20. Nothing has been drawn. If whole books did not sell at the start or end, change the first or last ticket number instead of listing them.";
+    if(sk.tooMany) return "That is "+sk.tooMany+" separate blocks of unsold tickets, and a raffle can leave out at most 200. Nothing has been drawn. If whole books did not sell at the start or end, change the first or last ticket number instead of listing them.";
     return "";
   }
   function prizeLabel(){ return G.jackOn ? money(G.jackAmt) : (drawingPrize() || G.prize || ""); }

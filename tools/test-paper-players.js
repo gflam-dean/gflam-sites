@@ -119,6 +119,9 @@ function paperRows(){ return DB.vp_players.filter(function(p){ return /^paper-/.
   await call(handlePaperPrint, { session_id:SESSION, kind:'trivia', count:2, round_size:10, questions:10 });
   await call(handlePaperPrint, { session_id:SESSION, kind:'trivia', count:3, round_size:3, questions:6 });
   show('before the game, a reprint replaces the sheets: rounds of 3, 6 questions, 3 teams', sess().paper.trivia.round_size === 3 && sess().paper.trivia.questions === 6 && sess().paper.trivia.teams === 3, JSON.stringify(sess().paper.trivia));
+  await call(handlePaperPrint, { session_id:SESSION, kind:'trivia', count:8, round_size:3, questions:6 });
+  await call(handlePaperPrint, { session_id:SESSION, kind:'trivia', count:3, round_size:3, questions:6 });
+  show('a mistyped 8 teams can be corrected to 3 before the game starts', sess().paper.trivia.teams === 3, JSON.stringify(sess().paper.trivia));
   r = await call(handleHostGame, { session_id:SESSION, format:'trivia', question_set_id:SET, question_count:6, round_size:10, base_points:100 });
   show('the trivia round starts', r.status === 200, JSON.stringify(r.body).slice(0,200));
   var TG = r.body.game_id;

@@ -674,6 +674,13 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   var _leaving=false;   // set as the page is left, so closing its channel is not reported as a drop
   var LOST_MSG="Lost the connection to the players' phones. Reconnecting: hold off on the next song for a moment.";
   var gRetryT=null, gTries=0, gLostT=null, gLostShown=false;
+  /* WHICH PRINT PROBLEM. "Your browser blocked the print window" was said for any failure, including a
+     host who simply closed the "Getting ready" tab before the sheets arrived (audit, 27 Sep 2026). */
+  function printProblem(w){
+    return (w && w.closed)
+      ? "The print window was closed before the sheets were ready. Tap Print again."
+      : "Your browser blocked the print window. Allow pop-ups for venueplay.com.au, then tap Print again.";
+  }
   function openGameChannel(joinCode){
     /* LET GO OF THE OLD CHANNEL BEFORE REMOVING IT. removeChannel makes the old channel report
        CLOSED inside the call, and gch still pointed at it, so the handler below read its own
@@ -1944,7 +1951,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
         if(said && r.kept) hostError(said);   // the host asked for other songs and did not get them: that must be seen
         else if(said) $("paperNote").textContent=said+" "+$("paperNote").textContent;
         if(!window.VPPrint || !VPPrint.musical(w, r.cards, { venue:(G.venue && G.venue.name)||"", playlist:r.playlist_name||"" })){
-          hostError("Your browser blocked the print window. Allow pop-ups for venueplay.com.au, then tap Print again.");
+          hostError(printProblem(w));
         }
       }).catch(function(e){ if(window.VPPrint) VPPrint.fail(w, e.message); hostError(e.message); });
     });

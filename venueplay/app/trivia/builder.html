@@ -353,6 +353,8 @@
     try{ window.scrollTo({ top:0, behavior:"smooth" }); }catch(e){ window.scrollTo(0,0); }
   }
 
+  function clearBuilderError(){ var b=document.getElementById("builderErr"); if(b && b.parentNode) b.parentNode.removeChild(b); }
+
   // ---- step 1: themes + saved nights ----
   function loadCategories(){
     client.from("vp_question_sets").select("title,question_count").eq("visibility","library").order("title")
@@ -409,6 +411,7 @@
       .then(function(r){
         var rows=(r&&r.data)||[]; var w=$("nightList"); w.innerHTML="";
         if(r && r.error){ builderError("Could not load your trivia nights. Check your connection and reload before building: what you see may be out of date."); return; }
+        clearBuilderError();   // a load that worked takes the old warning down (audit, 27 Sep 2026)
         if(!rows.length){ w.innerHTML='<div class="empty">No saved nights yet. Tap a theme above and you will have one in a few seconds.</div>'; return; }
         rows.forEach(function(row){
           var b=document.createElement("button"); b.type="button"; b.className="night";

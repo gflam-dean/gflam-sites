@@ -216,15 +216,23 @@
   "counted_by": "lines"
  },
  "tools/test-paper-players.js": {
-  "checks": 46,
+  "checks": 47,
   "counted_by": "lines"
  },
  "tools/test-phones-cannot-be-impersonated.js": {
   "checks": 34,
   "counted_by": "lines"
  },
+ "tools/test-print-problem.js": {
+  "checks": 8,
+  "counted_by": "lines"
+ },
  "tools/test-raffle-console.js": {
-  "checks": 44,
+  "checks": 45,
+  "counted_by": "lines"
+ },
+ "tools/test-raffle-unsold-server.js": {
+  "checks": 5,
   "counted_by": "lines"
  },
  "tools/test-remove-a-player.js": {

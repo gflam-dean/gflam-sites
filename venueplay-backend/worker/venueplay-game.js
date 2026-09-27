@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '27 Sep 2026, 12:18 · 8f03bdfe';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '27 Sep 2026, 14:16 · 543a9e91';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -706,6 +706,19 @@ async function handleAdminSweep(request, env, json) {
    patched vp_game_reports, so the row stayed running: /play/live and /join/info kept saying bingo,
    and a musical phone's /player/card picked that row and got "Not a bingo game" (live play-test,
    27 Sep 2026). Best effort, like the start: the report itself must not fail over this. */
+/* [[from,to],...] sorted and joined where blocks overlap or touch, so each ticket counts once. */
+function mergeTicketRanges(list) {
+  const r = (list || []).filter((x) => Array.isArray(x) && x.length === 2 && x[1] >= x[0])
+    .map((x) => [x[0], x[1]]).sort((p, q) => p[0] - q[0]);
+  const out = [];
+  for (const x of r) {
+    const last = out[out.length - 1];
+    if (last && x[0] <= last[1] + 1) last[1] = Math.max(last[1], x[1]);
+    else out.push(x);
+  }
+  return out;
+}
+
 async function markBroadcastGameEnded(env, venueId, format) {
   try {
     const root = String(format || '').toLowerCase().split('_')[0].replace(/\d+$/, '');
@@ -3246,17 +3259,22 @@ async function hostStartRaffle(env, json, b, session, staff, seq) {
   // Tickets that were never sold. Two sellers working from one book leaves a hole in the middle,
   // and drawing a number nobody holds means standing there re-drawing in front of the room.
   // Kept on the game config as [[from,to],...] so it needs no schema change.
-  const excluded = [];
+  /* UP TO 200 BLOCKS, MERGED. This kept the first 20 blocks and dropped the rest silently, so a
+     club with 25 separate unsold stretches could draw a ticket nobody held; and overlapping blocks
+     were counted twice in the "tickets left" sums (audit, 27 Sep 2026). Blocks are sorted and joined
+     where they overlap or touch, then counted once. The draw itself (randInt below) is unchanged. */
+  const raw = [];
   if (Array.isArray(b.excluded_ranges)) {
-    for (const r of b.excluded_ranges.slice(0, 20)) {
+    for (const r of b.excluded_ranges.slice(0, 200)) {
       const a = parseInt(Array.isArray(r) ? r[0] : r && r.from, 10);
       const z = parseInt(Array.isArray(r) ? r[1] : r && r.to, 10);
       if (isNaN(a) || isNaN(z)) continue;
       const lo = Math.max(rangeMin, Math.min(a, z));
       const hi = Math.min(rangeMax, Math.max(a, z));
-      if (hi >= lo) excluded.push([lo, hi]);
+      if (hi >= lo) raw.push([lo, hi]);
     }
   }
+  const excluded = mergeTicketRanges(raw);
   if (excluded.length) {
     let out = 0;
     for (const [lo, hi] of excluded) out += (hi - lo + 1);
@@ -3466,7 +3484,7 @@ async function handleHostDraw(request, env, json) {
   const excl = (game.config && Array.isArray(game.config.excluded_ranges)) ? game.config.excluded_ranges : [];
   const inExcluded = (n) => { for (const r of excl) { if (n >= r[0] && n <= r[1]) return true; } return false; };
   let excludedInRange = 0;
-  for (const r of excl) {
+  for (const r of mergeTicketRanges(excl)) {   // merged: an overlap is not two tickets gone
     const lo = Math.max(min, r[0]), hi = Math.min(max, r[1]);
     if (hi >= lo) excludedInRange += (hi - lo + 1);
   }
@@ -7892,7 +7910,7 @@ async function handlePaperPrint(request, env, json) {
   const now = new Date().toISOString();
   if (kind === 'trivia') {
     const prev = paper.trivia || {};
-    const teams = Math.max(want, Number(prev.teams) || 0);   // a sheet already on a table stays valid
+    let teams = Math.max(want, Number(prev.teams) || 0);   // a sheet already on a table stays valid
     /* The shape the sheets were printed in. BEFORE the game starts, the latest print wins: Dean,
        27 Sep 2026, "Printable sheets don't change when the host changes how many questions". The
        console had defaulted to 100 questions, he printed, lowered it, printed again, and got 100
@@ -7903,6 +7921,9 @@ async function handlePaperPrint(request, env, json) {
     const running = await sbGet(env, 'vp_games', 'session_id=eq.' + enc(session.id) +
       '&format=eq.trivia&status=eq.running&select=id&limit=1').catch(() => []);
     const locked = running.length > 0 && Number(prev.round_size) > 0;
+    /* ...but before the game starts nothing is on a table yet, so a mistyped 8 can be corrected to 3
+       by printing again. Only once a game is running can the number only go up (audit, 27 Sep 2026). */
+    if (!locked && running.length === 0) teams = want;
     const roundSize = locked ? Number(prev.round_size) : (okRs || Number(prev.round_size) || 10);
     const questions = locked ? (Number(prev.questions) || okQ) : (okQ || Number(prev.questions) || null);
     paper.trivia = { teams, round_size: roundSize, questions, printed_at: now };

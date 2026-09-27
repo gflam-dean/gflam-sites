@@ -191,10 +191,15 @@ form({ rfSkip: '240-320', rfEnd: '500' });
 renderRange();
 check('fixing the box takes that message down', errorShown() === '', errorShown());
 
+/* The game server keeps 200 blocks since 27 Sep 2026 (it was 20, and 25 blocks used to be refused). */
 reset(); form({ rfSkip: many.join(', '), rfEnd: '500' });
 startDraw();
-check('more separate blocks than the game server keeps (20) stops the draw', apiCalls.length === 0 && !G.busy, apiCalls);
-check('and says how many there are and what the limit is', /25 separate blocks/.test(errorShown()) && /at most 20/.test(errorShown()), errorShown());
+check('25 separate unsold blocks now draw (under the server\'s 200)', apiCalls.length > 0, apiCalls);
+var lots = []; for (i = 0; i < 205; i++) lots.push(10 + i * 10);
+reset(); form({ rfSkip: lots.join(', '), rfEnd: '3000' });
+startDraw();
+check('more separate blocks than the game server keeps (200) stops the draw', apiCalls.length === 0 && !G.busy, apiCalls);
+check('and says how many there are and what the limit is', /205 separate blocks/.test(errorShown()) && /at most 200/.test(errorShown()), errorShown());
 
 reset(); form({ rfSkip: '240 - 320 and #400', rfEnd: '500' });
 startDraw();
