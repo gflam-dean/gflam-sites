@@ -145,6 +145,9 @@
     letter-spacing:.16em;text-transform:uppercase;color:var(--pink);
     border:1px solid var(--line-2);border-radius:999px;padding:7px 15px;margin-bottom:26px;
   }
+  /* The words and the date are ONE flex item. As loose text beside a span they were two, and on a
+     phone the badge wrapped into two columns: "IF YOU / LOCK IT IN BY" beside "31 / OCTOBER" (27 Sep 2026). */
+  .eyebrow .eb-text{display:inline;text-align:center}
   .live-dot{width:7px;height:7px;border-radius:50%;background:var(--pink);box-shadow:0 0 8px var(--pink);animation:pulse 1.8s ease-in-out infinite}
   @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
 
@@ -815,7 +818,7 @@
 <section class="hero hero2" id="top">
   <div class="wrap h2-grid">
     <div class="h2-copy">
-      <span class="eyebrow"><span class="live-dot"></span> $2.50 a player, if you lock it in by <span class="vpc-day">31 October</span></span>
+      <span class="eyebrow"><span class="live-dot"></span> <span class="eb-text">$2.50 a player, if you lock it in by <span class="vpc-day" style="white-space:nowrap">31 October</span></span></span>
       <h1>Run a packed <span class="accent">Tuesday</span>.<br>Every&nbsp;Tuesday.</h1>
       <p class="lede">Bingo, trivia, musical bingo, raffles and members draws on the screen you already own. Your crowd plays on their own phones, and the regulars who won't can play trivia and musical bingo on paper. <b>No app, no login, no host to hire.</b></p>
       <div class="hero-cta">
