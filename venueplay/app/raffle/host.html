@@ -211,15 +211,15 @@
         <div class="field"><label>First ticket number</label><input type="number" id="rfStart" class="mono" value="1" min="0"></div>
         <div class="field"><label>Last ticket number</label><input type="number" id="rfEnd" class="mono" value="150" min="0" max="999999"></div>
       </div>
-      <div class="field"><label>Time to claim (seconds)</label><input type="number" id="rfTime" class="mono" value="180" min="0" step="1"><div class="note" style="margin-top:5px">30 seconds or more. Put 0 for no time limit.</div></div>
+      <div class="field"><label>Time to claim (seconds)</label><input type="number" id="rfTime" class="mono" value="180" placeholder="180" min="0" step="1"><div class="note" style="margin-top:5px">30 seconds or more. Put 0 for no time limit. Left empty, it is 180.</div></div>
       <p class="note" style="margin-top:10px">Draws <b>one winner at a time</b>. For another prize, change the prize above and tap <b>Draw the next prize</b>.</p>
       <label class="check"><input type="checkbox" id="rfJackOn"> This raffle has a cash jackpot</label>
-      <div class="field hidden" id="rfJackWrap"><label>Jackpot amount ($)</label><input type="number" id="rfJackAmt" class="mono" value="500" min="0"></div>
+      <div class="field hidden" id="rfJackWrap"><label>Jackpot amount ($)</label><input type="number" id="rfJackAmt" class="mono" value="500" min="0" step="0.01"></div>
       <label class="check"><input type="checkbox" id="rfAllowRedraw" checked> Allow a redraw if the winner isn't here</label>
       <div class="field">
         <label>Tickets that did not sell (optional)</label>
         <input type="text" id="rfSkip" placeholder="e.g. 240-320, 512">
-        <div class="note" style="margin-top:5px">Two sellers working one book leaves a gap. Anything you put here is never drawn, so you are not re-drawing in front of the room. Use a dash for a block and commas between them.</div>
+        <div class="note" style="margin-top:5px">Two sellers working one book leaves a gap. Anything you put here is never drawn, so you are not re-drawing in front of the room. Use a dash for a block and commas between them, like 240-320, 512. Anything it cannot read is shown before you draw.</div>
       </div>
       <div class="rangeline" id="rangeLine"></div>
       <button class="btn pink big" id="drawBtn">Draw the winner</button>
@@ -266,7 +266,9 @@
   function $(id){ return document.getElementById(id); }
   function show(el,on){ $(el).classList.toggle("hidden", !on); }
   function secsToClock(s){ var m=Math.floor(s/60),r=s%60; return m+":"+(r<10?"0":"")+r; }
-  function money(d){ return "$"+Number(d||0).toLocaleString("en-AU"); }
+  /* Cents are shown when there are any: a $500.50 jackpot reads $500.50, not $500.5 or $500. */
+  function money(d){ var n=Number(d||0); return "$"+(n%1 ? n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,",") : n.toLocaleString("en-AU")); }
+  function dollarsText(cents){ var c=Number(cents)||0; return (c%100) ? (c/100).toFixed(2) : String(Math.round(c/100)); }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
 
   var SUPA_URL='https://ijkzgmdtwtgfkedqspxm.supabase.co';
@@ -317,19 +319,50 @@
           serverPad:null, drawn:{}, round:null, results:[],
           busy:false, spinTimer:null, countdownTimer:null, celebrateWait:null };
 
-  /* "240-320, 512" becomes [[240,320],[512,512]]. Anything unparseable is IGNORED rather than
-     guessed at: a wrong exclusion silently takes real tickets out of the draw. */
+  /* "240-320, 512" becomes [[240,320],[512,512]].
+
+     NOTHING IS DROPPED IN SILENCE. This used to split on commas only, skip anything it could not
+     read, and keep the first 20 blocks. So "240 - 320 and 400", "#512" and a list separated by
+     semicolons or new lines all quietly lost tickets from the box, and the 21st block was cut, and
+     every one of those unsold tickets could then be drawn in front of the room. It now reads
+     commas, semicolons, new lines, "and", "&" and "#", with or without spaces around the dash.
+     Anything it still cannot read comes back on .unread, and startDraw refuses to draw until the
+     host fixes it: guessing at an exclusion is as bad as ignoring one.
+
+     Blocks are sorted, clipped to the ticket range and merged where they touch or overlap, which
+     loses nothing. The game Worker keeps at most 20 blocks (excluded_ranges.slice(0,20)), so more
+     than 20 after merging is not truncated here either: .tooMany carries the count and the draw
+     is refused with a message saying so. Returns a plain array (what the Worker is sent and what
+     raffleSig fingerprints) with .unread and .tooMany hung on it. */
   function parseSkips(){
+    var MAX_BLOCKS=20;   // the game Worker's own limit; see the note above
     var raw=($("rfSkip") && $("rfSkip").value || "").trim();
-    if(!raw) return [];
-    var out=[];
-    raw.split(",").forEach(function(part){
+    var out=[]; out.unread=[]; out.tooMany=0;
+    if(!raw) return out;
+    var got=[];
+    raw.replace(/#/g," ").replace(/\band\b|&|;|\r|\n/gi,",").split(",").forEach(function(part){
       part=part.trim(); if(!part) return;
-      var m=part.match(/^(\d+)\s*(?:-|to|\u2013)\s*(\d+)$/i);
-      if(m){ out.push([parseInt(m[1],10), parseInt(m[2],10)]); return; }
-      if(/^\d+$/.test(part)){ var n=parseInt(part,10); out.push([n,n]); }
+      var m=part.match(/^(\d+)\s*(?:-|to|\u2013|\u2014)\s*(\d+)$/i);
+      if(m){ var a=parseInt(m[1],10), b=parseInt(m[2],10); got.push([Math.min(a,b), Math.max(a,b)]); return; }
+      if(/^\d+$/.test(part)){ var n=parseInt(part,10); got.push([n,n]); return; }
+      out.unread.push(part);
     });
-    return out.slice(0,20);
+    var lo=G.min, hi=G.max, clip=!(isNaN(lo)||isNaN(hi)||hi<lo);
+    if(clip){ got=got.map(function(r){ return [Math.max(lo,r[0]), Math.min(hi,r[1])]; }).filter(function(r){ return r[1]>=r[0]; }); }
+    got.sort(function(x,y){ return x[0]-y[0] || x[1]-y[1]; });
+    for(var i=0;i<got.length;i++){
+      var last=out.length ? out[out.length-1] : null;
+      if(last && got[i][0]<=last[1]+1){ if(got[i][1]>last[1]) last[1]=got[i][1]; }
+      else out.push([got[i][0], got[i][1]]);
+    }
+    if(out.length>MAX_BLOCKS) out.tooMany=out.length;
+    return out;
+  }
+  /* Why the unsold box cannot be used as typed, in words a host can act on, or "" if it can. */
+  function skipsProblem(sk){
+    if(sk.unread && sk.unread.length) return "Could not read: "+sk.unread.join(", ")+" in the unsold tickets box. Nothing has been drawn. Fix it so an unsold ticket can never be drawn: use a dash for a block and commas between them, like 240-320, 512.";
+    if(sk.tooMany) return "That is "+sk.tooMany+" separate blocks of unsold tickets, and a raffle can leave out at most 20. Nothing has been drawn. If whole books did not sell at the start or end, change the first or last ticket number instead of listing them.";
+    return "";
   }
   function prizeLabel(){ return G.jackOn ? money(G.jackAmt) : (drawingPrize() || G.prize || ""); }
   function padWidth(){ return G.serverPad || String(Math.max(G.max||0,1)).length; }
@@ -337,14 +370,22 @@
   function hostStatus(msg){ if(msg) $("statusText").textContent=msg; }
   // Errors go to the banner under the header, NOT to the 11.5px status pill. A host mid-service
   // never sees that pill, so a failed draw used to look like a button that simply did nothing.
-  function hostError(msg){
+  /* A message that stops being true comes down by itself. The bar only ever cleared on Dismiss,
+     so "Time is up on ticket 087" sat over the next draw after the ticket was claimed, and "Enter
+     a valid ticket range" stayed up after the range was fixed. An error raised with a key is taken
+     down by clearHostErrorIf(key) when its condition ends; an error without one, or with a
+     different one, is left alone. */
+  var _errKey="";
+  function hostError(msg, key){
+    _errKey=key||"";
     var t=$("hostErrText"), b=$("hostErrBar");
     if(!t||!b){ $("statusText").textContent=msg||"Something went wrong"; return; }
     t.textContent=msg||"Something went wrong";
     b.classList.add("show");
     try{ window.scrollTo({ top:0, behavior:"smooth" }); }catch(e){ window.scrollTo(0,0); }
   }
-  function clearHostError(){ var b=$("hostErrBar"); if(b) b.classList.remove("show"); }
+  function clearHostError(){ _errKey=""; var b=$("hostErrBar"); if(b) b.classList.remove("show"); }
+  function clearHostErrorIf(key){ if(key && _errKey===key) clearHostError(); }
   (function(){ var x=$("hostErrX"); if(x) x.addEventListener("click", clearHostError); })();
 
   // ---- reload-recovery: a host refresh keeps drawing the SAME raffle (same pattern as trivia/musical) ----
@@ -392,7 +433,7 @@
         $("rfAllowRedraw").checked=(g.allow_redraw!==false);
         if([3,4,5,6,8].indexOf(g.spin_seconds)>=0){ G.drawLength=g.spin_seconds; $("drawLenLbl").textContent=g.spin_seconds; }
         $("rfJackOn").checked=jackOn; show("rfJackWrap", jackOn); show("prizeField", !jackOn);
-        if(jackOn && g.jackpot_amount_cents!=null) $("rfJackAmt").value=Math.round(g.jackpot_amount_cents/100);
+        if(jackOn && g.jackpot_amount_cents!=null) $("rfJackAmt").value=dollarsText(g.jackpot_amount_cents);   // cents kept: rounding here turned a $500.50 raffle into a fresh $501 one on the next draw
         if(!jackOn && g.prize) $("rfPrize").value=g.prize;
         // F2: the unsold-ticket gaps are baked onto the game; if the snapshot carries them, put them
         // back in the box so the count and the signature match the live game (see Worker handoff).
@@ -464,9 +505,12 @@
                             members console actually does. Passing the full time restarted a
                             fresh three minute countdown on a round that was drawn before the
                             tablet locked, on the console and on the wall. */
-                         time_to_present:0,
+                         time_to_present:0, recovered:true,
                          prize:(_lastPrize||g.prize||prizeLabel()) });
-          hostError("Picked up where you left off. Confirm the ticket on screen: Claim if they are here, or Not here to redraw.");
+          /* NOT AN ERROR. This used to go in the red error bar, where it stayed after the host had
+             claimed or redrawn. It is information, so it goes on the status line and on the winner
+             card, which revealServer writes for a recovered round and which goes away with it. */
+          hostStatus("Picked up where you left off");
           return true;
         }
         hostStatus("Recovered your raffle");
@@ -477,12 +521,26 @@
   }
 
   // ---- inputs ----
+  var CLAIM_DEFAULT_S=180;   // must match the value and placeholder on #rfTime
   function readInputs(){
     G.prize=($("rfPrize").value||"").trim();   // empty until the host types one, so the TV never shows a placeholder prize
     G.min=parseInt($("rfStart").value,10); G.max=parseInt($("rfEnd").value,10);
-    G.jackOn=$("rfJackOn").checked; G.jackAmt=Math.max(0,parseInt($("rfJackAmt").value,10)||0);
+    /* DOLLARS AND CENTS, EXACTLY. parseInt made a $500.50 jackpot $500 on the wall and in the
+       record, with nothing said. Whole dollars or up to two decimal places are kept to the cent;
+       anything else (500.555, 5o0, -5) is NaN, and startDraw refuses it by name. Empty is 0,
+       which startDraw also refuses. */
+    G.jackOn=$("rfJackOn").checked;
+    var ja=String($("rfJackAmt").value==null?"":$("rfJackAmt").value).trim();
+    G.jackAmt = ja==="" ? 0 : (/^\d+(\.\d{1,2})?$/.test(ja) ? Math.round(parseFloat(ja)*100)/100 : NaN);
     G.winnersCount = 1;   // one winner per draw; the host draws again (with a new prize) for each additional prize
-    G.time=parseInt($("rfTime").value,10); if(isNaN(G.time)||G.time<0) G.time=180;
+    /* WHAT THE NOTE UNDER THE BOX SAYS, AND NOTHING ELSE. Empty is the default the box shows
+       (CLAIM_DEFAULT_S, also its placeholder). 0 is no time limit: no countdown on the console or
+       the wall, and never a "Time is up". 1 to 29 is 30, which is what the Worker stores anyway.
+       Anything else (a negative) is NaN, and startDraw refuses it by name instead of quietly
+       turning it into three minutes. */
+    var tv=String($("rfTime").value==null?"":$("rfTime").value).trim();
+    if(tv===""){ G.time=CLAIM_DEFAULT_S; }
+    else { G.time=/^\d+$/.test(tv) ? parseInt(tv,10) : NaN; if(G.time>0 && G.time<30) G.time=30; }
     /* G.drawLength used to be reset to 4 here, and startDraw() calls this first, so the "tap to
        change" spin control set a label and nothing else: every draw spun for 4 seconds whatever it
        said. The spin now lives with the tap and the venue's saved template, not with the inputs. */
@@ -510,11 +568,18 @@
     readInputs();
     var line=$("rangeLine");
     if(!validRange()){ line.innerHTML='<span class="warn">Enter a valid ticket range.</span>'; return; }
+    clearHostErrorIf("range");   // the range is valid now, so "Enter a valid ticket range" is no longer true
+    if(G.jackOn ? (G.jackAmt>0) : true) clearHostErrorIf("jackpot");
+    if(G.time>=0) clearHostErrorIf("time");
     var drew=drawnCount(), skipped=skippedCount(), left=remainingCount();
     line.textContent=(G.max-G.min+1)+" tickets ("+G.min+" to "+G.max+")"
       +(skipped?" \u00b7 "+skipped+" unsold":"")
       +(drew?" \u00b7 "+drew+" already drawn":"")
       +((skipped||drew)?" \u00b7 "+left+" left to draw":"");
+    /* Say it where the host is looking while they type, not only when they tap Draw. */
+    var skProblem=skipsProblem(parseSkips());
+    if(skProblem){ var w=document.createElement("span"); w.className="warn"; w.textContent=" "+skProblem.replace(/ Nothing has been drawn\./,""); line.appendChild(w); }
+    else clearHostErrorIf("skips");
     scheduleIdleBroadcast();
   }
 
@@ -712,8 +777,13 @@
   function startDraw(){
     if(G.busy) return;
     readInputs();
-    if(!validRange()){ hostError("Enter a valid ticket range first."); return; }
-    if(G.jackOn && G.jackAmt<=0){ hostError("Enter a jackpot amount."); return; }
+    if(!validRange()){ hostError("Enter a valid ticket range first.", "range"); return; }
+    if(isNaN(G.time)){ hostError("Time to claim has to be 0 for no time limit, or 30 seconds or more.", "time"); return; }
+    if(G.jackOn && isNaN(G.jackAmt)){ hostError("Enter the jackpot in dollars and cents, like 500 or 500.50.", "jackpot"); return; }
+    if(G.jackOn && G.jackAmt<=0){ hostError("Enter a jackpot amount.", "jackpot"); return; }
+    var skProblem=skipsProblem(parseSkips());
+    if(skProblem){ hostError(skProblem, "skips"); return; }   // an unsold ticket must never be drawn
+    clearHostErrorIf("timeup");
     if(!G.jackOn && G.prizeIdx>=G.prizes.length){ var typed=($("rfPrize").value||"").trim(); if(typed) addPrize(typed); }   // single-prize quick draw: add what's typed
     if(!G.jackOn && !drawingPrize()){ hostError("Add at least one prize to draw for."); return; }
     if(remainingCount()<1){ hostError("No undrawn tickets left. Tap New raffle to start again."); return; }
@@ -756,6 +826,16 @@
       show("wcResolve",true);
       drawBtnWaiting(nums);
       $("claimBtn").classList.add("pulse");   // the safe action is the one that moves
+      /* NO LIMIT MEANS NO LIMIT. Time to claim 0 ("Put 0 for no time limit") used to start this
+         countdown at zero, so one second after the draw the console said "Time is up" while the
+         wall, which treats 0 as no countdown, said nothing. A recovered round is also sent here
+         with 0: the clock is not restarted and the host decides now. */
+      if(!(t>0)){
+        $("wcCd").textContent = r.recovered
+          ? "Picked up where you left off. Claim if they are here, or Not here to redraw."
+          : "No time limit. Claim if they are here, or Not here to redraw.";
+        return;
+      }
       updateCd();
       /* At zero this fires a REAL redraw: the holder is marked no_show, their number is taken out
          of the pool for good, and someone else is drawn, with no confirmation. If the holder of
@@ -771,7 +851,7 @@
              that timer from now and keeps the number up while they decide. */
           try{ send({ t:"winner", numbers:G.round.numbers, prizeLabel:G.round.prize, allowRedraw:true,
                       pad:padWidth(), min:G.min, max:G.max, time:0 }); }catch(e){}
-          hostError("Time is up on ticket "+(G.round&&G.round.numbers?G.round.numbers.join(", "):"")+". Tap \u201cNot here, redraw\u201d if nobody has come forward, or \u201cClaim\u201d if they have.");
+          hostError("Time is up on ticket "+(G.round&&G.round.numbers?G.round.numbers.join(", "):"")+". Tap \u201cNot here, redraw\u201d if nobody has come forward, or \u201cClaim\u201d if they have.", "timeup");
         }
       },1000);
     } else {
@@ -797,6 +877,7 @@
   function onClaim(){
     if(!G.round||G.round.resolved) return;
     G.round.resolved=true; clearTimers(); disarmRedraw();
+    clearHostErrorIf("timeup");   // claimed: "Time is up on ticket N" is no longer true
     var nums=G.round.numbers.slice(), pz=G.round.prize, seq=G.round.seq;
     logResults("claimed");
     for(var i=0;i<nums.length;i++){ G.drawn[nums[i]]=true; }
@@ -819,6 +900,7 @@
   function onRedraw(auto){
     if(!G.round||G.round.resolved||G.busy) return;
     G.round.resolved=true; clearTimers(); disarmRedraw();
+    clearHostErrorIf("timeup");   // redrawn: that ticket's time is no longer the question
     var _cb=$("claimBtn"); if(_cb) _cb.classList.remove("pulse");   // the spin is starting; nothing on the card is tappable now
     logResults("no_show");
     for(var i=0;i<G.round.numbers.length;i++){ G.drawn[G.round.numbers[i]]=true; }
@@ -845,7 +927,7 @@
     var started = !!G.gameId || Object.keys(G.drawn||{}).length>0;
     if(started && !confirm("Start a brand new raffle?\n\nThe drawn tickets and the prize list are cleared. This cannot be undone.")) return;
     clearRaffle();
-    clearTimers(); G.round=null; G.drawn={};
+    clearTimers(); G.round=null; G.drawn={}; clearHostErrorIf("timeup");
     G.prizes=[]; G.prizeIdx=0; renderPrizeList();   // a brand new raffle starts with a fresh prize list
     var gid=G.gameId; G.gameId=""; G.gameSig=""; G.serverPad=null;
     $("winnerCard").classList.remove("show"); $("claimBtn").classList.remove("pulse"); drawBtnIdle(); renderRange(); sendIdle();
@@ -875,14 +957,29 @@
   }
 
   // ---- pair with the venue screen ----
-  function connect(code){
-    G.code=code;
+  /* ONLY THIS PAGE'S CURRENT CHANNEL MAY SAY THE LINK IS DOWN, and not while the page is being
+     left. Trivia found this the hard way (27 Sep 2026, see LOST_MSG there): removeChannel makes the
+     old channel report CLOSED inside the call, and a callback that does not check whose channel it
+     is reads that as its own link failing. The page being left (a reload, Games, the tablet
+     sleeping into the back/forward cache) closes the socket the same way, and this console then
+     sat on "Reconnecting" after it came back, with nothing that would ever resubscribe, because a
+     CLOSED channel does not rejoin by itself. So: let go of the old channel BEFORE removing it,
+     ignore anything a replaced channel says, keep quiet while leaving, and open a fresh channel
+     on return if this one was closed underneath us. */
+  var _leaving=false, _closed=false;
+  function openChannel(code){
+    if(ch){ var old=ch; ch=null; subscribed=false; try{ client.removeChannel(old); }catch(e){} }
+    _closed=false;
     ch=client.channel("vp-"+code, { config:{ broadcast:{ self:false } } });   // same convention as trivia/musical so the unified TV finds it
+    var mine=ch;
     ch.on("broadcast", { event:"msg" }, function(e){ onPair(e.payload); });
     ch.subscribe(function(status){
+        if(mine!==ch) return;   // a replaced channel closing is not this console's link going down
         /* Reset on failure. Without this one CHANNEL_ERROR left the console posting into a
            dead socket for the rest of the night instead of queueing. See app/index.html. */
         if(status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") subscribed = false;
+        if(status === "CLOSED") _closed = true;
+        if(status !== "SUBSCRIBED" && _leaving) return;   // the page is going: nothing to tell the host
       if(status==="SUBSCRIBED"){
         subscribed=true; send({ t:"host_here" }); send({ t:"mode", mode:"raffle" }); flushQueue();   // put the raffle screen on the unified /tv
         $("statusDot").classList.remove("on"); $("statusText").textContent="Waiting for screen";
@@ -896,6 +993,10 @@
         $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting";
       }
     });
+  }
+  function connect(code){
+    G.code=code;
+    openChannel(code);
     $("signinView").classList.add("hidden");
     $("connectView").classList.add("hidden");
     $("consoleView").classList.remove("hidden");
@@ -1022,7 +1123,7 @@
           setv("rfStart", t.range_min); setv("rfEnd", t.range_max);
           if(t.time_to_present!=null) setv("rfTime", t.time_to_present);
           if([3,4,5,6,8].indexOf(t.spin_seconds)>=0){ G.drawLength=t.spin_seconds; var dl=$("drawLenLbl"); if(dl) dl.textContent=t.spin_seconds; }
-          if(t.jackpot_on){ var jo=$("rfJackOn"); if(jo){ jo.checked=true; var jw=$("rfJackWrap"); if(jw) jw.classList.remove("hidden"); if(t.jackpot_amount_cents) setv("rfJackAmt", Math.round(t.jackpot_amount_cents/100)); } }
+          if(t.jackpot_on){ var jo=$("rfJackOn"); if(jo){ jo.checked=true; var jw=$("rfJackWrap"); if(jw) jw.classList.remove("hidden"); if(t.jackpot_amount_cents) setv("rfJackAmt", dollarsText(t.jackpot_amount_cents)); } }
           var ar=$("rfAllowRedraw"); if(ar && typeof t.allow_redraw==="boolean") ar.checked=t.allow_redraw;
           if(Array.isArray(t.excluded_ranges) && t.excluded_ranges.length){ var sk=$("rfSkip"); if(sk) sk.value=t.excluded_ranges.map(function(r){ return r[0]===r[1]?(""+r[0]):(r[0]+"-"+r[1]); }).join(", "); }
           if(typeof renderRange==="function") renderRange();
@@ -1063,6 +1164,8 @@
      back without a navigation. Guarded so a burst of both only speaks once. */
   var _lastReassert = 0;
   function reassertOnReturn(){
+    _leaving = false;
+    if(_closed && !subscribed && G.code) openChannel(G.code);   // closed while we were away: it will not rejoin by itself
     var now = Date.now();
     if(now - _lastReassert < 1200) return;
     _lastReassert = now;
@@ -1074,6 +1177,7 @@
   });
 
   window.addEventListener("pagehide", function(){
+    _leaving = true;                          // the socket closing as the page goes is not a dropped link
     if(G.round) return;
     try{ rawSend({ t:"to_ads" }); }catch(e){}   // sync on unload; an async signed send never lands before the page dies. NOT exempt: under enforce this is dropped, see vp-sign.js EXEMPT
   });
