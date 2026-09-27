@@ -107,6 +107,18 @@
   "checks": 27,
   "counted_by": "lines"
  },
+ "tools/test-channel-recovery-phones.js": {
+  "checks": 25,
+  "counted_by": "lines"
+ },
+ "tools/test-channel-recovery-screens.js": {
+  "checks": 57,
+  "counted_by": "lines"
+ },
+ "tools/test-channel-recovery-tv.js": {
+  "checks": 16,
+  "counted_by": "lines"
+ },
  "tools/test-checkout-trial-and-duplicates.js": {
   "checks": 46,
   "counted_by": "lines"
