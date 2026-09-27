@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '27 Sep 2026, 14:16 · 543a9e91';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '27 Sep 2026, 14:30 · 2a501ede';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -6043,13 +6043,33 @@ async function handlePlayerScore(request, env, json) {
 
   let game = cached('g:' + gameId);
   if (!game) {
-    const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,format');
+    const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,format,status,config');
     if (!games.length) return json({ error: 'Game not found' }, 404);
     game = games[0];
     cache.set('g:' + gameId, { data: game, until: nowMs + 60000 });
   }
   if (game.format !== 'trivia') return json({ error: 'Not a trivia game' }, 400);
   if (game.session_id !== player.session_id) return json({ error: 'Player is not in this game' }, 403);
+
+  /* A PAPER NIGHT HOLDS SCORES TO THE END OF THE ROUND. On defer_reveal the answers go up only after the
+     host has the sheets, but this route told any phone whether it was right, and its running total,
+     after every question: a phone could tell a paper table (replay play-test, 27 Sep 2026; migration
+     94 closed the same leak in the reveal event). Until the round's last question is revealed, or the
+     game is over, a paper-night phone gets nothing it could pass on. Normal nights are unchanged. */
+  const pcfg = game.config || {};
+  if (pcfg.defer_reveal === true && game.status === 'running') {
+    const tg = await sbGet(env, 'vp_trivia_games', 'game_id=eq.' + enc(gameId) + '&select=current_seq,phase&limit=1');
+    const cur = tg.length ? tg[0] : null;
+    const seqs = Array.isArray(pcfg.question_seqs) ? pcfg.question_seqs : null;
+    const R = Number(pcfg.round_size) || 10;
+    const pos = cur ? (seqs ? seqs.indexOf(cur.current_seq) + 1 : Number(cur.current_seq) || 0) : 0;
+    const total = seqs ? seqs.length : Number(pcfg.question_count) || 0;
+    const roundOver = !!cur && cur.phase === 'revealed' && pos > 0 && (pos % R === 0 || (total && pos >= total));
+    if (!roundOver) {
+      return json({ deferred: true, total: null, rank: null, players_count: null,
+                    last: { answered: false, is_correct: null, points_awarded: null } });
+    }
+  }
 
   // Whole leaderboard for this game, so we can derive both this player's total and rank.
   // Only kept when the phone says WHICH question it is asking about; an old phone page that
