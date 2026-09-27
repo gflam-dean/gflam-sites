@@ -187,6 +187,10 @@
   "checks": 11,
   "counted_by": "lines"
  },
+ "tools/test-overage-ack-covers-room.js": {
+  "checks": 5,
+  "counted_by": "lines"
+ },
  "tools/test-paper-is-for-bingo-only.js": {
   "checks": 8,
   "counted_by": "lines"

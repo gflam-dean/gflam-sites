@@ -162,3 +162,9 @@ without signing because the default was false. Safe with no key: vp-sign.js fail
 mints one. RUN ON SYDNEY 25 Sep 2026: 0 active venues not enforcing; a rolled-back insert came back enforcing.
 Live gate line "every active venue enforces broadcast signing" (tools/check-signing-enforced.py), proven red by
 switching test-charlie off and back. Rollback: enforce-signing.py --off ALL.
+
+`venueplay-93-reveal-honours-added-time.sql`: `vp_host_reveal` measures the trivia speed bonus against the window the
+question was ASKED with, subtracting `config.time_added.ms` (from /host/question/add-time) as the Worker's fallback
+always did. Found live by the play-test of 27 Sep 2026 (a 125-point answer scored 150; the audit fault of 20 Sep).
+RUN ON SYDNEY 27 Sep 2026; verified by pg_get_functiondef and by replaying the live add-time test on test-bravo
+(now 125). Grants unchanged. Rollback: re-run vp_host_reveal from migration 73.

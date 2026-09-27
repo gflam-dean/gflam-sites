@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '27 Sep 2026, 11:35 · 32817880';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '27 Sep 2026, 11:59 · 24278178';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -6301,9 +6301,16 @@ async function handleOverageAck(request, env, json) {
      the amount was whatever the count happened to be at close, hours later, with no ceiling. */
   const roster = await sbGet(env, 'vp_players',
     'session_id=eq.' + enc(sessionId) + '&kicked=eq.false&select=id,device_id');
-  // Counted the same way the charge counts, or the approved figure and the
-  // billed figure are unrelated numbers again.
-  const approvedCount = countPlayersWhoPlayed(roster, await playerIdsWhoPlayed(env, sessionId));
+  /* THE NUMBER THE HOST WAS SHOWN. The start check (handleHostGame) asks about every joined phone,
+     countPlayers(roster), so that is what an OK agrees to. This recorded only phones that had
+     already PLAYED, which on round two is fewer: plan 40, 30 played, 15 more joined, the host saw
+     45 and OK recorded 30, the ceiling came out at 40, and the same question came back for ever
+     (and looped with no dialog in a free month). Found by the live play-test, 27 Sep 2026.
+     The CHARGE still counts only players who played (chargeNightOverage), so this can never bill
+     a phone that joined and did not play; it only stops the consent screen asking twice. */
+  const joined = countPlayers(roster);
+  const played = countPlayersWhoPlayed(roster, await playerIdsWhoPlayed(env, sessionId));
+  const approvedCount = Math.max(joined, played);
   await sbPatch(env, 'vp_sessions', 'id=eq.' + enc(sessionId),
     { overage_approved: true, overage_approved_at: new Date().toISOString(),
       overage_approved_count: approvedCount });
