@@ -174,3 +174,12 @@ RUN ON SYDNEY 27 Sep 2026; verified by pg_get_functiondef and by replaying the l
 before the paper teams handed in). The host's reply keeps the answer. Worker fallback changed to match.
 RUN ON SYDNEY 27 Sep 2026; proven live on test-bravo (event keys: deferred, leaderboard, options, qseq). Keeps 93's fix.
 Rollback: re-run 93.
+
+`venueplay-95-jag-the-joker.sql`: on branch `feature/jag-joker` only. NOT RUN. Number claimed so nothing else takes it.
+
+`venueplay-96-double-points-final-round.sql`: `vp_venue_settings.trivia_double_points` + `trivia_double_last`, and
+`vp_host_reveal` (identical to 94 otherwise) scores a correct answer twice, speed bonus included, when the question's
+seq is in `config.double_seqs`; the reply says `double`. Safe before the Worker: no `double_seqs`, no change.
+NOT RUN (28 Sep 2026: auto mode refused to run it on live). Branch `feature/double-points` must not be merged
+until it has run: the console would tell the room "Double points" while the one-trip reveal scored single.
+Rollback: re-run 94.

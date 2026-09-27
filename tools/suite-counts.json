@@ -151,6 +151,10 @@
   "checks": 23,
   "counted_by": "lines"
  },
+ "tools/test-double-points.js": {
+  "checks": 23,
+  "counted_by": "lines"
+ },
  "tools/test-draws-keep-an-honest-record.js": {
   "checks": 24,
   "counted_by": "lines"

@@ -53,7 +53,7 @@ var env = {
   remainingSecs: function () { return 12; },
 };
 var fn = new Function('G', 'send', 'gsend', 'remainingSecs',
-  lift(host, 'replayState') + '; return replayState;')(env.G, env.send, env.gsend, env.remainingSecs);
+  lift(host, 'isDouble') + ';' + lift(host, 'replayState') + '; return replayState;')(env.G, env.send, env.gsend, env.remainingSecs);
 
 fn(null);                       // the television
 ok(toTv.length >= 1, 'the screen still gets its replay');
