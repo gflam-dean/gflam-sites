@@ -1253,8 +1253,10 @@ MUTATIONS = [
      '    ;',
      '"Enter a valid ticket range" stays on the raffle console after the range is fixed'),
     ('test-members-console.js', 'venueplay/app/members/host.html',
-     '      .then(function(r){ if(!r || r.error || !Array.isArray(r.data)) throw loadFail("your draws", r);',
-     '      .then(function(r){ if(false) throw loadFail("your draws", r);',
+     '      .then(function(r){ if(!r || r.error || !Array.isArray(r.data)) throw loadFail("your draws", r);\n'
+     '        G.draws=r.data.filter(',
+     '      .then(function(r){\n'
+     '        G.draws=((r && r.data) || []).filter(',
      'a failed load looks like a brand-new venue and a duplicate members draw can be created'),
     ('test-overage-ack-covers-room.js', 'venueplay-backend/worker/venueplay-game.js',
      '  const approvedCount = Math.max(joined, played);', '  const approvedCount = played;',
