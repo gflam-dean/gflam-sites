@@ -40,9 +40,11 @@ function paperRows(){ return DB.vp_players.filter(function(p){ return /^paper-/.
   show('each printed card is 25 squares with a FREE centre', r.body.cards[0].titles.length === 25 && r.body.cards[0].titles[12] === '');
   show('the cards are kept on the night', sess().paper && sess().paper.musical.cards.length === 3);
   var firstCells = JSON.stringify(sess().paper.musical.cards[0].cells);
-  r = await call(handlePaperPrint, { session_id:SESSION, kind:'musical', count:4, playlist:{ name:'Other', songs:songs(60) } });
+  /* The same playlist again. A DIFFERENT one before any game replaces the set (27 Sep 2026); that,
+     and the set being kept once a game is on, is tools/test-musical-print.js and the Start game
+     section below. */
+  r = await call(handlePaperPrint, { session_id:SESSION, kind:'musical', count:4, playlist:{ name:'Pub Classics', songs:songs(60) } });
   show('printing again keeps the first three exactly and adds one', r.body.cards.length === 4 && JSON.stringify(sess().paper.musical.cards[0].cells) === firstCells);
-  show('printing again keeps the ORIGINAL set, not the newly chosen playlist', sess().paper.musical.playlist_name === 'Pub Classics');
   show('a printed card is not a player yet', paperRows().length === 0);
   show('printing is written down for HQ', DB.vp_admin_audit.some(function(a){ return a.action==='paper_printed' && a.detail.kind==='musical'; }));
 
@@ -70,6 +72,8 @@ function paperRows(){ return DB.vp_players.filter(function(p){ return /^paper-/.
   show('card 901 carries exactly what was printed as card 1', JSON.stringify(cards.filter(function(c){ return c.card_no===901; })[0].cells) === JSON.stringify(sess().paper.musical.cards[0].cells));
   var mg = DB.vp_games.filter(function(g){ return g.id === GAME; })[0];
   show('the game plays the PRINTED set, not the one the console drew', mg.config.playlist_id === sess().paper.musical.playlist_id);
+  await call(handlePaperPrint, { session_id:SESSION, kind:'musical', count:5, playlist:{ name:'Other', songs:songs(60) } });
+  show('printing again keeps the ORIGINAL set, not the newly chosen playlist', sess().paper.musical.playlist_name === 'Pub Classics');
   var dec = DB.vp_admin_audit.filter(function(a){ return a.action === 'paper_declared'; })[0];
   show('what was declared is written down against what was printed', dec && dec.detail.printed === 5 && dec.detail.declared === 2);
   show('billing sees four players: two phones, two paper', countPlayers(DB.vp_players.filter(function(p){ return !p.kicked; })) === 4);

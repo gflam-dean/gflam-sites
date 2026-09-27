@@ -7872,6 +7872,22 @@ async function handlePaperPrint(request, env, json) {
   }
 
   let set = (paper.musical && paper.musical.playlist_id) ? paper.musical : null;
+  /* WHICH PLAYLIST THE CARDS COME FROM. BEFORE a musical game has been played off the printed set,
+     a print from a DIFFERENT playlist replaces it: the host changed their mind, and the first
+     print used to be kept for the whole night, so the cards said Pub Classics while the host had
+     picked the 80s (the fault trivia's sheets had, fixed 27 Sep 2026). Compared by NAME, since
+     every print sends a fresh random draw of the same playlist. Once a musical game is running, or
+     any game tonight has been dealt from these cards, they are on the tables and the set is kept:
+     a reprint then is only for an extra card. */
+  const askedName = (b.playlist && b.playlist.name) ? String(b.playlist.name).slice(0, 120) : '';
+  let replaced = false, kept = false;
+  if (set && askedName && askedName !== set.playlist_name) {
+    const games = await sbGet(env, 'vp_games', 'session_id=eq.' + enc(session.id) +
+      '&format=eq.musical_bingo&select=id,status,config&order=seq.desc&limit=100').catch(() => null);
+    // A failed read keeps the set: replacing cards that may be on the tables is the worse mistake.
+    const played = !games || games.some((g) => g.status === 'running' || (g.config && g.config.playlist_id === set.playlist_id));
+    if (played) kept = true; else { set = null; replaced = true; }
+  }
   if (!set) {
     const raw = (b.playlist && Array.isArray(b.playlist.songs)) ? b.playlist.songs : null;
     if (!raw) return json({ error: 'Pick a playlist first' }, 400);
@@ -7893,7 +7909,7 @@ async function handlePaperPrint(request, env, json) {
   await sbInsert(env, 'vp_admin_audit', { action: 'paper_printed', target: 'venue:' + session.venue_id,
     detail: { session_id: session.id, kind, count: cards.length } }, false).catch(() => {});
   return json({
-    kind, cap, playlist_name: set.playlist_name,
+    kind, cap, playlist_name: set.playlist_name, replaced, kept,
     cards: cards.map((c) => ({ no: c.no, titles: c.cells.map((x) => (x && x.title) || '') })),
   });
 }
