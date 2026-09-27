@@ -180,6 +180,6 @@ Rollback: re-run 93.
 `venueplay-96-double-points-final-round.sql`: `vp_venue_settings.trivia_double_points` + `trivia_double_last`, and
 `vp_host_reveal` (identical to 94 otherwise) scores a correct answer twice, speed bonus included, when the question's
 seq is in `config.double_seqs`; the reply says `double`. Safe before the Worker: no `double_seqs`, no change.
-NOT RUN (28 Sep 2026: auto mode refused to run it on live). Branch `feature/double-points` must not be merged
-until it has run: the console would tell the room "Double points" while the one-trip reveal scored single.
+RUN ON SYDNEY by Dean 28 Sep 2026; read back: vp_host_reveal doubles on double_seqs and still hides the answer on
+paper nights, both columns present, anon still cannot execute it.
 Rollback: re-run 94.
