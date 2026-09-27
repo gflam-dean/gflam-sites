@@ -241,8 +241,8 @@ print("14. NOTHING IN THESE PAGES USES AN EM DASH (the gate rejects them)");
 
 print("");
 print("7. DEAN'S 27 SEP FIXES: the round count, the print sheets, and a false 'lost connection'");
-pass("a question bank (over 50) starts at 10; a night you built plays in full",
-     host.indexOf('$("cfgCount").value = G.questionCount<=50 ? G.questionCount : 10;') > 0 && host.indexOf("Math.min(100, G.questionCount)") < 0);
+pass("a library bank (over 50) starts at 10; your own night, or a library night up to 50, plays in full",
+     host.indexOf('$("cfgCount").value = (own || G.questionCount<=50) ? Math.min(100, G.questionCount) : 10;') > 0);
 pass("there is no separate 'Questions per round' box; the sheet is the round", host.indexOf('id="cfgRound"') < 0 && host.indexOf("G.roundSize=G.count;") > 0);
 pass("changing the count after printing tells the host to print again", host.indexOf("Tap Print again for sheets that match.") > 0);
 (function(){
@@ -254,8 +254,10 @@ pass("changing the count after printing tells the host to print again", host.ind
   var timers = [], shown = [], cleared = 0, chans = [], tid = 0;
   var client = { channel: function(name){ var c = { name: name, on: function(){ return c; }, subscribe: function(cb){ c.cb = cb; return c; } }; chans.push(c); return c; },
                  removeChannel: function(c){ if (c && c.cb) c.cb("CLOSED"); } };
+  var bar = { textContent: "" };
   var env = { client: client, G: { status: "setup", joinCode: "ABC123" }, _leaving: false,
-              hostError: function(m){ shown.push(m); }, clearHostError: function(){ cleared++; },
+              $: function(id){ return id === "hostErrText" ? bar : null; },
+              hostError: function(m){ shown.push(m); bar.textContent = m; }, clearHostError: function(){ cleared++; bar.textContent = ""; },
               gflush: function(){}, gsend: function(){}, onMsg: function(){},
               setTimeout: function(fn, ms){ var t = { fn: fn, ms: ms, id: ++tid }; timers.push(t); return t.id; },
               clearTimeout: function(id){ timers = timers.filter(function(t){ return t.id !== id; }); } };
@@ -288,10 +290,13 @@ pass("changing the count after printing tells the host to print again", host.ind
 pass("the page marks itself as leaving before it goes", /addEventListener\("beforeunload", function\(\)\{ _leaving=true; \}\)/.test(host) && /addEventListener\("pagehide", function\(\)\{ _leaving=true; \}\)/.test(host));
 
 (function(){
-  var a = host.indexOf("function paintRoundQs(){"), d = 0, j = a, st = false;
+  var a = host.indexOf("function effectiveCount(){"), d = 0, j = a, st = false;
   for (; j < host.length; j++){ if (host[j] === "{"){ d++; st = true; } else if (host[j] === "}"){ d--; if (st && d === 0) break; } }
-  var fn = a > 0 ? host.slice(a, j + 1) : "";
-  pass("the Questions box has its own painter", !!fn);
+  var fnE = a > 0 ? host.slice(a, j + 1) : "";
+  a = host.indexOf("function paintRoundQs(){"); d = 0; j = a; st = false;
+  for (; j < host.length; j++){ if (host[j] === "{"){ d++; st = true; } else if (host[j] === "}"){ d--; if (st && d === 0) break; } }
+  var fn = a > 0 ? fnE + host.slice(a, j + 1) : "";
+  pass("the Questions box has its own painter", !!fn && !!fnE);
   function run(total, typed){
     var els = { setupQs: { innerHTML: "" }, cfgCount: { value: String(typed) } };
     (new Function("$", "G", fn + "; paintRoundQs();"))(function(id){ return els[id]; }, { questionCount: total });
@@ -301,6 +306,20 @@ pass("the page marks itself as leaving before it goes", /addEventListener\("befo
   pass("a built night of 20 played in full shows just 20", run(20, 20) === "20", run(20, 20));
   pass("asking for more than the set holds shows what will actually play", run(20, 50) === "20", run(20, 50));
   pass("no set yet shows 0", run(0, 10) === "0");
+  function eff(total, typed){
+    var els = { cfgCount: { value: String(typed) } };
+    return (new Function("$", "G", fnE + "; return effectiveCount();"))(function(id){ return els[id]; }, { questionCount: total });
+  }
+  pass("typing 250 on a bank plays and prints 100, not 250 (audit 27 Sep)", eff(2720, 250) === 100 && run(2720, 250) === "100 of 2,720", run(2720, 250));
+  pass("typing 30 on a 12-question night plays and prints 12, not 30", eff(12, 30) === 12);
+  pass("another venue's private night is never listed (only your own and the ownerless library)",
+       host.indexOf("if(s.owner_venue_id===G.venueId) mine.push(s); else if(!s.owner_venue_id) lib.push(s);") > 0);
+  pass("a Run-it-now link to a night this venue cannot use says so", host.indexOf("That night is not one of this venue's") > 0);
+  pass("waking the iPad (pageshow) clears the leaving flag and reopens the channel",
+       /addEventListener\("pageshow", function\(e\)\{\s*_leaving=false;/.test(host));
+  pass("a successful Worker call no longer hides 'Lost the connection' while the phones are still down",
+       host.indexOf("if(!gLostShown) clearHostError(); return data;") > 0);
+  pass("the game and the sheets read the same number (readSettings uses it)", host.indexOf("G.count=effectiveCount();") > 0);
   pass("typing in the round box repaints it", host.indexOf('$("cfgCount").addEventListener("input", function(){ renderPaperSetup(); paintRoundQs(); });') > 0);
 })();
 

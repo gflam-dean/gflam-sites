@@ -404,7 +404,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/trivia/trivia-night.test.js": {
-  "checks": 104,
+  "checks": 111,
   "counted_by": "lines"
  },
  "venueplay-backend/app/tv-ads-rebuild.test.js": {
