@@ -98,8 +98,8 @@ print("4. A DISCARDED TAB COMES BACK AS THE SAME PLAYER, WITHOUT BEING ASKED FOR
   function boot(){
     var P = { room: "", pid: "", name: "", joined: false, token: "", sessionId: "" };
     var routed = 0, info = 0;
-    (new Function("localStorage", "sessionStorage", "P", "$", "window", "randId", "openChannel", "loadJoinInfo", "route", "VP_GAME_API",
-      fns.join("\n") + "; return connect;"))(local, session, P, els(), {}, function(){ return "newpid"; }, function(){}, function(){ info++; }, function(){ routed++; }, "")("ABC123");
+    (new Function("localStorage", "sessionStorage", "P", "$", "window", "randId", "openChannel", "loadJoinInfo", "route", "VP_GAME_API", "checkStaleJoin",
+      fns.join("\n") + "; return connect;"))(local, session, P, els(), {}, function(){ return "newpid"; }, function(){}, function(){ info++; }, function(){ routed++; }, "", function(){ return Promise.resolve(); })("ABC123");
     return { P: P, askedForName: info > 0 };
   }
   var s = (new Function("localStorage", "sessionStorage", fns.join("\n") + "; return { saveName: saveName, savePid: savePid, saveToken: saveToken };"))(local, session);
@@ -119,5 +119,38 @@ print("4. A DISCARDED TAB COMES BACK AS THE SAME PLAYER, WITHOUT BEING ASKED FOR
 })();
 
 print("");
+print("5. LAST WEEK'S TOKEN IS NOT THIS WEEK'S NIGHT");
+(function(){
+  var fns = ["loadToken", "saveToken", "loadSess", "saveSess", "ensureJoined", "dropStaleJoin", "rejoinNow", "checkStaleJoin", "connect"].map(function(n){ return grab(n, play); });
+  pass("dropStaleJoin, rejoinNow and checkStaleJoin are lifted from the page", fns.every(Boolean));
+  pass("connect() checks the saved night the moment it decides the phone is joined", /P\.joined=true; checkStaleJoin\(\);/.test(play));
+  pass("the started event checks it before fetching a card", /checkStaleJoin\(\)\.then\(fetchCard\)/.test(play));
+  function run(snapStatus){
+    var local = fakeStore(); local.setItem("vp-mtoken-ABC123", "tok-old"); local.setItem("vp-msess-ABC123", "sess-old"); local.setItem("vp-mname-ABC123", "Sam"); local.setItem("vp-mpid-ABC123", "pid-sam");
+    var P = { room: "ABC123", pid: "pid-sam", name: "Sam", joined: true, token: "tok-old", sessionId: "sess-old", capture: null };
+    var joins = [], snaps = [];
+    var fetchF = function(u){ snaps.push(u); return Promise.resolve({ ok: true, json: function(){ return Promise.resolve({ status: snapStatus, session_id: "sess-old" }); } }); };
+    var post = function(path, body){ joins.push({ path: path, body: body }); return Promise.resolve({ token: "tok-new", snapshot: { session_id: "sess-new", status: "lobby" } }); };
+    var applied = [];
+    var api = (new Function("localStorage", "P", "fetch", "playerPost", "applySnap", "deviceId", "VP_GAME_API",
+      "var _rejoining=false;\n" + fns.slice(0, 8).join("\n") + "; return { check: checkStaleJoin };"))(local, P, fetchF, post, function(s){ applied.push(s); P.sessionId = s.session_id; }, function(){ return P.pid; }, "https://w");
+    return api.check().then(function(){ return { P: P, joins: joins, snaps: snaps, local: local, applied: applied }; });
+  }
+  return run("finished").then(function(r){
+    pass("the saved night is asked about", r.snaps.length === 1 && /snapshot\?session=sess-old/.test(r.snaps[0]));
+    pass("a finished night: the old token and session are dropped from storage", r.local.getItem("vp-mtoken-ABC123") !== "tok-old" && r.local.getItem("vp-msess-ABC123") !== "sess-old");
+    pass("...and the phone re-joins as the SAME player (same pid, same name)", r.joins.length === 1 && r.joins[0].path === "/join" && r.joins[0].body.pid === "pid-sam" && r.joins[0].body.name === "Sam", JSON.stringify(r.joins));
+    pass("...and now holds tonight's token and session", r.P.token === "tok-new" && r.P.sessionId === "sess-new");
+    return run("running");
+  }).then(function(r){
+    pass("control: a night still on keeps the token and does not re-join", r.joins.length === 0 && r.P.token === "tok-old" && r.local.getItem("vp-mtoken-ABC123") === "tok-old");
+  });
+})().then(function(){
+  print("");
+  print(bad ? ("  " + bad + " FAILED") : ("ALL " + ran + " CHECKS PASSED"));
+  if (bad) throw new Error(bad + " failed");
+});
+if (false) {
 print(bad ? ("  " + bad + " FAILED") : ("ALL " + ran + " CHECKS PASSED"));
 if (bad) throw new Error(bad + " failed");
+}

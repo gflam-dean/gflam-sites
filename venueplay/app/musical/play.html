@@ -637,6 +637,33 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       applySnap(r.snapshot);
     });
   }
+  /* A NIGHT THAT HAS ENDED IS NOT THE NIGHT YOU ARE IN. The room code is the venue's permanent code
+     (migration 91) and the name moved to localStorage on 27 Sep, so the token and session this phone
+     saved at last week's musical bingo are still here this week. connect() called that "joined", the
+     started event fetched a card with the OLD token, the Worker looked in the finished session, found
+     no game, and the phone sat on "waiting" for the whole night. The trivia phone got this rule on
+     25 Sep (dropStaleJoin/rejoinNow); this one never did. Review, 28 Sep 2026. Same pid, so the Worker
+     keeps one player and nobody is billed twice. */
+  function dropStaleJoin(){
+    P.token=""; P.sessionId="";
+    try{ localStorage.removeItem("vp-mtoken-"+P.room); localStorage.removeItem("vp-msess-"+P.room); }catch(e){}
+  }
+  var _rejoining=false;
+  function rejoinNow(){
+    if(!P.joined || P.token || _rejoining) return Promise.resolve();
+    _rejoining=true;
+    return ensureJoined().catch(function(){}).then(function(){ _rejoining=false; });
+  }
+  function checkStaleJoin(){
+    if(!P.joined || !P.token) return Promise.resolve();
+    if(!P.sessionId){ dropStaleJoin(); return rejoinNow(); }
+    return fetch(VP_GAME_API+"/snapshot?session="+encodeURIComponent(P.sessionId))
+      .then(function(res){ return res.ok ? res.json() : null; })
+      .then(function(s){
+        var live = s && !s.error && (s.status==="lobby" || s.status==="running" || s.status==="paused");
+        if(!live){ dropStaleJoin(); return rejoinNow(); }
+      }).catch(function(){});
+  }
   function loadJoinInfo(){
     if(!P.room) return;
     playerPost("/join/info",{ code:P.room }).then(function(r){
@@ -790,7 +817,8 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       if(m.game_id) P.gameId=m.game_id;
       // a fresh round: clear the old card and pull the new one from the Worker
       P.played=[]; P.playedIds=[]; P.active=true; P.won=false; P.ended=false; P.claimPending=false; P.daubs={}; P.daubs[12]=true; P.cells=null; _celebrated=false;
-      if(P.joined){ fetchCard(); } else { route(); }
+      // A stale token (last week's night) would fetch no card at all: check the night first.
+      if(P.joined){ checkStaleJoin().then(fetchCard); } else { route(); }
     }
     else if(m.t==="played"){
       if(typeof m.autoDaub==="boolean") P.autoDaub=m.autoDaub;
@@ -845,7 +873,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     P.token=loadToken(room);
     P.sessionId=loadSess(room);
     var savedName=loadName(room);
-    if(savedName && P.token){ P.name=savedName; P.joined=true; }
+    if(savedName && P.token){ P.name=savedName; P.joined=true; checkStaleJoin(); }
     // Verify host broadcasts (migrations 38/49): fetch the venue PUBLIC key via the join code, drop
     // forged songs/winners in enforce mode. No key / enforce off / script absent -> as before.
     if(window.VPSign){ VPSign.initReceiver(VP_GAME_API, { code: room }); }

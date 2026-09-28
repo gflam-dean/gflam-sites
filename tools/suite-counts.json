@@ -208,7 +208,7 @@
   "counted_by": "lines"
  },
  "tools/test-musical-phone.js": {
-  "checks": 25,
+  "checks": 33,
   "counted_by": "lines"
  },
  "tools/test-musical-print.js": {
