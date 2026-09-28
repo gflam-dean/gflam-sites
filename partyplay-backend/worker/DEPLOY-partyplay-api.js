@@ -1,5 +1,5 @@
 /* PASTE THIS ONE.
-   Built 28 Sep 2026, 19:16:38   fingerprint ce789d40ac23
+   Built 28 Sep 2026, 20:27:16   fingerprint b234595c9085
    If that time is not within the last few minutes, close this window and reopen. */
 /* ============================================================================
    PartyPlay Worker: checkout, licences, joining.
@@ -16,7 +16,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '28 Sep 2026, 19:16 · 2b8776ec';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '28 Sep 2026, 20:27 · 2fd06f81';   // tools/stamp-workers.py, do not edit by hand
 /* ---- lib/pp-licence.js, inlined at build time. Edit the file, not this. ---- */
 const PPLicence = (function () {
   const module = { exports: {} };
@@ -630,8 +630,28 @@ async function handleGameDelete(request, env) {
   const b = await request.json().catch(() => ({}));
   const l = await requireHost(env, b.code, b.key);
   if (!b.id) return json({ error: 'Which game?' }, 400);
+  /* A DELETED GAME TAKES ITS PHOTOS WITH IT. The host's own photos for a game (baby photos for Guess
+     the photo) were kept for 400 days from purchase whether or not the game still existed, so a host
+     who deleted the game to get rid of them could not (privacy wording check, 28 Sep 2026). Only
+     purpose='game' photos on THIS licence, and only ones no other game of this party still uses. */
+  const gone = await sb(env, 'pp_games?id=eq.' + encodeURIComponent(String(b.id)) + '&licence_id=eq.' + l.id + '&select=config');
   await sb(env, 'pp_games?id=eq.' + encodeURIComponent(String(b.id)) + '&licence_id=eq.' + l.id, { method: 'DELETE' });
-  return json({ ok: true });
+  const idsOf = (cfg) => (cfg && Array.isArray(cfg.items) ? cfg.items : []).map(it => String((it && it.id) || '')).filter(x => PHOTO_ID_RE.test(x));
+  const was = gone.length ? idsOf(gone[0].config) : [];
+  let removed = 0;
+  if (was.length && env.PHOTOS) {
+    const rest = await sb(env, 'pp_games?licence_id=eq.' + l.id + '&select=config');
+    const stillUsed = {};
+    (rest || []).forEach(g => idsOf(g.config).forEach(x => { stillUsed[x] = 1; }));
+    const mine = await sb(env, 'pp_photos?licence_id=eq.' + l.id + '&purpose=eq.game&select=id,object_key&limit=500');
+    for (const r of (mine || [])) {
+      if (was.indexOf(r.id) < 0 || stillUsed[r.id]) continue;
+      try { await env.PHOTOS.delete(r.object_key); } catch (e) { continue; }   // file not gone: keep the row that finds it
+      await sb(env, 'pp_photos?id=eq.' + encodeURIComponent(r.id) + '&licence_id=eq.' + l.id + '&purpose=eq.game', { method: 'DELETE' });
+      removed++;
+    }
+  }
+  return json({ ok: true, photos_removed: removed });
 }
 
 /* POST /admin/comp   { key, name, email, state, date, days, reason }

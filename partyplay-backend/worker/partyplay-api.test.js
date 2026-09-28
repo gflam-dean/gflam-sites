@@ -268,6 +268,29 @@ test("a different plan, or an expired checkout, gets a fresh one", function(){
     ok(j.url === "https://pay/new" && !j.reused, "an expired checkout is not reused, got " + JSON.stringify(j));
   });
 });
+/* Deleting a Guess the photo game deletes the host's photos for it, unless another game uses them. */
+test("deleting a game deletes its photos, but not ones another game still uses", function(){
+  var P1 = "11111111-1111-4111-8111-111111111111", P2 = "22222222-2222-4222-8222-222222222222";
+  var deletedFiles = [];
+  var ENVP = Object.assign({}, ENV, { PHOTOS: { "delete": function(k){ deletedFiles.push(k); return Promise.resolve(); },
+    put: function(){ return Promise.resolve(); }, get: function(){ return Promise.resolve(null); }, list: function(){ return Promise.resolve({ objects:[] }); } } });
+  FETCH.calls = [];
+  var answer = function(url, init){
+    if (/pp_licences\?code=eq/.test(url)) return { status:200, body: JSON.stringify([{ id:"L1", code:"ACDEFG", host_key:HK, created_at:new Date().toISOString() }]) };
+    if (/pp_games\?id=eq\.G1.*select=config/.test(url)) return { status:200, body: JSON.stringify([{ config:{ items:[{ id:P1 },{ id:P2 }] } }]) };
+    if (/pp_games\?licence_id=eq\.L1&select=config/.test(url)) return { status:200, body: JSON.stringify([{ config:{ items:[{ id:P2 }] } }]) };
+    if (/pp_photos\?licence_id=eq\.L1&purpose=eq\.game&select/.test(url)) return { status:200, body: JSON.stringify([{ id:P1, object_key:"k1" },{ id:P2, object_key:"k2" }]) };
+    return { status:200, body:"[]" };
+  };
+  FETCH.plan = []; for (var i = 0; i < 12; i++) FETCH.plan.push(answer);
+  return W.fetch(req("POST","/games/delete",{ code:"ACDEFG", key:HK, id:"G1" }), ENVP).then(function(r){ return r.json(); }).then(function(j){
+    FETCH.plan = [];
+    var rowDeletes = FETCH.calls.filter(function(c){ return c.init && c.init.method === "DELETE" && /pp_photos/.test(c.url); });
+    ok(j.ok === true && j.photos_removed === 1, "one photo removed, got " + JSON.stringify(j));
+    ok(deletedFiles.join() === "k1", "the file only this game used is deleted, the shared one is kept: " + deletedFiles.join());
+    ok(rowDeletes.length === 1 && rowDeletes[0].url.indexOf(P1) >= 0 && /purpose=eq\.game/.test(rowDeletes[0].url), "and only its row, and only a game photo on this licence");
+  });
+});
 test("no date is needed at all", function(){
   // the stopwatch model: nothing about WHEN is asked for or stored at purchase
   var src = readFile(repo("worker/SOURCE-do-not-paste-partyplay-api.js"));

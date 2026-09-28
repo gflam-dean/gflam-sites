@@ -195,6 +195,13 @@
   Array.prototype.forEach.call(f.querySelectorAll('input[name=days]'), function(r){
     r.addEventListener("change", refresh);
   });
+  /* BACK FROM STRIPE. Safari and Chrome keep this page frozen in memory (the back/forward cache) and
+     show it again exactly as it was left: the button disabled and reading "Taking you to Stripe...",
+     so a buyer who pressed Back to change the plan had nothing to press but a reload (audit, 27 Sep
+     2026). pageshow with persisted=true is that restore: put the button back. */
+  window.addEventListener("pageshow", function(ev){
+    if(ev && ev.persisted){ go.disabled = false; refresh(); clearErr(); }
+  });
 
   f.addEventListener("submit", function(ev){
     ev.preventDefault();

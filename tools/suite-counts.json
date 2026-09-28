@@ -51,6 +51,10 @@
   "checks": 59,
   "counted_by": "total"
  },
+ "partyplay-backend/lib/pp-start-back.test.js": {
+  "checks": 4,
+  "counted_by": "lines"
+ },
  "partyplay-backend/lib/pp-ticket.test.js": {
   "checks": 415,
   "counted_by": "total"
@@ -72,7 +76,7 @@
   "counted_by": "total"
  },
  "partyplay-backend/worker/partyplay-api.test.js": {
-  "checks": 152,
+  "checks": 155,
   "counted_by": "total"
  },
  "tools/livenorm.test.py": {
