@@ -187,4 +187,4 @@ Rollback: re-run 94.
 `venueplay-97-paper-night-board-private.sql`: on a paper night the public `trivia.reveal` event also drops the
 `leaderboard` (94 dropped the answer; a team's total moving is the answer by another name). Identical to 96
 otherwise, so double points is kept. Worker fallback changed to match (shipped first; safe either order).
-NOT RUN (28 Sep 2026): auto mode refuses live migrations; opened for Dean. Rollback: re-run 96.
+RUN ON SYDNEY by Dean 28 Sep 2026; read back: the deferred event has no leaderboard, double points kept. Rollback: re-run 96.
