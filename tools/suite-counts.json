@@ -123,6 +123,10 @@
   "checks": 27,
   "counted_by": "lines"
  },
+ "tools/test-channel-recovery-consoles.js": {
+  "checks": 21,
+  "counted_by": "lines"
+ },
  "tools/test-channel-recovery-phones.js": {
   "checks": 25,
   "counted_by": "lines"

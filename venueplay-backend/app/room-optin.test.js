@@ -139,7 +139,7 @@ ok('the phone still paints itself after joining a room',
 ok('neither page returns out of connect from the room branch',
    !/return;\s*\}catch\(err\)\{ _useRoom=false/.test(CONSOLE) && !/return;\s*\}catch\(err\)\{ _useRoom=false/.test(PLAY));
 ok('the console only opens a Supabase channel when it is not in a room',
-   /if\(!_room\)\{\s*ch=client\.channel/.test(CONSOLE));
+   /if\(!_room\)\{\s*(?:\/\/[^\n]*\n\s*)?ch=(?:window\.VPChannel \? VPChannel\.keep\(client, "vp-"\+code, \{ config:\{ broadcast:\{ self:false \} \} \}\)\s*:\s*)?client\.channel/.test(CONSOLE))
 /* Since 27 Sep 2026 the phone's channel comes from /app/vp-channel.js when that loaded (a channel
    that rebuilds itself), and is the plain client.channel otherwise. Either way it is the FIRST
    thing inside if(!_room){, which is what this asks. */

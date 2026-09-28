@@ -490,6 +490,7 @@
 <script src="vp-session.js"></script>
 <script src="vp-gaming.js"></script>
 <script src="/app/vp-sign.js"></script>
+<script src="/app/vp-channel.js"></script>
 <script src="/app/vp-phonekey.js"></script>
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-hold.js"></script>
@@ -2591,7 +2592,8 @@
       }catch(err){ _useRoom=false; _room=null; }
     }
     if(!_room){
-        ch=client.channel("vp-"+code, { config:{ broadcast:{ self:false } } });
+        // Supabase fallback (no room server): rebuilt after a drop by /app/vp-channel.js (review, 28 Sep 2026).
+        ch=window.VPChannel ? VPChannel.keep(client, "vp-"+code, { config:{ broadcast:{ self:false } } }) : client.channel("vp-"+code, { config:{ broadcast:{ self:false } } });
     ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
     ch.subscribe(function(status){
       if(status==="SUBSCRIBED"){
