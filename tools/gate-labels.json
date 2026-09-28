@@ -176,6 +176,7 @@
   "pp-run-games.test.js",
   "pp-ticket.test.js",
   "pp-trivia-pack.test.js",
+  "pp-tv-code-check.test.js",
   "pp-tv-layout.test.js",
   "pp-video.test.js",
   "redirect-verdict.test.py",

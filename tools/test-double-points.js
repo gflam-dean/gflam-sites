@@ -97,6 +97,7 @@ function scoreOf(pid, qid){ var a = DB.vp_trivia_answers.filter(function(x){ ret
   show('it pre-fills from the venue\'s saved setting', /s\.trivia_double_points!=null\) G\.doublePoints=/.test(H) && /s\.trivia_double_last!=null\)/.test(H));
   show('every question it sends the TV and phones says whether it is doubled', (H.match(/double:isDouble\(/g) || []).length === 4);
   show('the TV and the phone both show it', /m\.double===true/.test(readFile('venueplay/app/trivia/screen.html')) && /m\.double===true/.test(readFile('venueplay/app/trivia/play.html')));
+  show('a phone reloaded mid-question keeps the badge (applySnap reads double_seqs)', /g\.double_seqs\.indexOf\(P\.pendingQ\.qseq\)>=0\) P\.pendingQ\.double=true/.test(readFile('venueplay/app/trivia/play.html')));
 
   print('\n' + (ran - bad) + ' of ' + ran + ' checks passed');
   if (bad) throw new Error(bad + ' double points checks failed');
