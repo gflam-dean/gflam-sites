@@ -39,6 +39,10 @@ def normalise(b):
     t = re.sub(r'<script[^>]*cloudflareinsights[\s\S]*?</script>', '', t)
     # Deleting an injected tag leaves the blank line it sat on. Compare CONTENT, not layout.
     t = re.sub(r'\s+', ' ', t).strip()
+    # And between tags. Stripping an injected script that Cloudflare put on its OWN line leaves the line
+    # break behind as a space, so "</div></body>" in the repo met "</div> </body>" live and the page
+    # compared stale for ever (partyplay/privacy.html, 29 Sep 2026: the beacon arrived on a new line).
+    t = re.sub(r'>\s+<', '><', t)
     return hashlib.sha256(t.encode('utf-8')).hexdigest()
 
 

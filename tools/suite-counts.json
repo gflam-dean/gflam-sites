@@ -80,7 +80,7 @@
   "counted_by": "total"
  },
  "tools/livenorm.test.py": {
-  "checks": 5,
+  "checks": 6,
   "counted_by": "lines"
  },
  "tools/redirect-verdict.test.py": {
