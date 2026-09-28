@@ -72,7 +72,7 @@
   "counted_by": "total"
  },
  "partyplay-backend/worker/partyplay-api.test.js": {
-  "checks": 149,
+  "checks": 152,
   "counted_by": "total"
  },
  "tools/livenorm.test.py": {
@@ -301,6 +301,10 @@
  },
  "tools/test-set-count.js": {
   "checks": 9,
+  "counted_by": "lines"
+ },
+ "tools/test-sign-venue-switch.js": {
+  "checks": 2,
   "counted_by": "lines"
  },
  "tools/test-status-moves-the-clock.js": {

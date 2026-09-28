@@ -238,6 +238,36 @@ test("the welcome email counts its own games and uses a logo every mail app show
     ok(/partyplay-email-logo\.png/.test(html) && !/<img[^>]+\.svg/.test(html), "a PNG logo, not an SVG Gmail and Outlook refuse");
   });
 });
+/* Pressing Pay twice is ONE order (review, 28 Sep 2026: the idempotency key could never match). */
+test("the same buyer pressing pay again is sent back to the same open checkout", function(){
+  FETCH.calls = [];
+  var answer = function(url){
+    if (/checkout\/sessions\/cs_old/.test(url)) return { status:200, body: JSON.stringify({ id:"cs_old", status:"open", url:"https://pay/old" }) };
+    if (/status=eq\.pending/.test(url)) return { status:200, body: JSON.stringify([{ id:"L1", code:"ACDEFG", buyer_name:"A", stripe_session_id:"cs_old" }]) };
+    return { status:200, body:"[]" };
+  };
+  FETCH.plan = [answer, answer, answer, answer];
+  return W.fetch(req("POST","/checkout",{ name:"A", email:"a@b.co", days:1 }), ENV).then(function(r){ return r.json(); }).then(function(j){
+    var inserts = FETCH.calls.filter(function(c){ return c.init && c.init.method === "POST" && /pp_licences/.test(c.url); });
+    var fresh = FETCH.calls.filter(function(c){ return /checkout\/sessions$/.test(c.url) || (/checkout\/sessions/.test(c.url) && c.init && c.init.method === "POST"); });
+    ok(j.url === "https://pay/old" && j.code === "ACDEFG" && j.reused === true, "same checkout back, got " + JSON.stringify(j));
+    ok(inserts.length === 0 && fresh.length === 0, "and no second order or Stripe session, saw " + inserts.length + " inserts, " + fresh.length + " sessions");
+  });
+});
+test("a different plan, or an expired checkout, gets a fresh one", function(){
+  FETCH.calls = [];
+  var answer = function(url){
+    if (/checkout\/sessions\/cs_old/.test(url)) return { status:200, body: JSON.stringify({ id:"cs_old", status:"expired", url:null }) };
+    if (/status=eq\.pending/.test(url)) return { status:200, body: JSON.stringify([{ id:"L1", code:"ACDEFG", buyer_name:"A", stripe_session_id:"cs_old" }]) };
+    if (/stripe\.com/.test(url)) return { status:200, body: JSON.stringify({ id:"cs_new", url:"https://pay/new" }) };
+    if (/pp_licences\?code=eq/.test(url)) return { status:200, body:"[]" };
+    return { status:201, body: JSON.stringify([{ id:"L9", code:"ZZZZZZ" }]) };
+  };
+  FETCH.plan = [answer, answer, answer, answer, answer, answer, answer, answer];
+  return W.fetch(req("POST","/checkout",{ name:"A", email:"a@b.co", days:1 }), ENV).then(function(r){ return r.json(); }).then(function(j){
+    ok(j.url === "https://pay/new" && !j.reused, "an expired checkout is not reused, got " + JSON.stringify(j));
+  });
+});
 test("no date is needed at all", function(){
   // the stopwatch model: nothing about WHEN is asked for or stored at purchase
   var src = readFile(repo("worker/SOURCE-do-not-paste-partyplay-api.js"));

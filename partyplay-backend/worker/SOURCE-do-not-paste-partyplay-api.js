@@ -13,7 +13,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '27 Sep 2026, 17:46 · b82a6cbd';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '28 Sep 2026, 19:16 · 6ab39a96';   // tools/stamp-workers.py, do not edit by hand
 // The licence window rules live in one place and are shared with the browser.
 // Paste lib/pp-licence.js above this line when deploying, or inline it. It is
 // referenced here as PPLicence.
@@ -1854,6 +1854,24 @@ async function handleCheckout(request, env) {
 
   const priceId = plan.days === 3 ? env.STRIPE_PRICE_3DAY : env.STRIPE_PRICE_1DAY;
   const priceCents = plan.cents;
+
+  /* THE SAME BUYER PRESSING PAY AGAIN GETS THE SAME CHECKOUT. The Stripe idempotency key below is
+     built from the licence id, and every call used to insert a NEW pending licence first, so the key
+     was different every time and never matched a retry (review, 28 Sep 2026). A buyer who tapped
+     twice, or whose network retried, got two orders and two Stripe sessions. Now: the same email,
+     name and plan within 30 minutes, whose Stripe session is still open, is sent back to it. */
+  const since = new Date(Date.now() - 30 * 60e3).toISOString();
+  const recent = await sb(env, 'pp_licences?buyer_email=eq.' + encodeURIComponent(email) +
+    '&status=eq.pending&days=eq.' + plan.days + '&created_at=gt.' + encodeURIComponent(since) +
+    '&stripe_session_id=not.is.null&order=created_at.desc&limit=1&select=id,code,buyer_name,stripe_session_id');
+  if (recent.length && recent[0].buyer_name === name) {
+    try {
+      const r = await fetch('https://api.stripe.com/v1/checkout/sessions/' + encodeURIComponent(recent[0].stripe_session_id),
+        { headers: { authorization: 'Bearer ' + env.STRIPE_SECRET_KEY } });
+      const sess = r.ok ? await r.json() : null;
+      if (sess && sess.status === 'open' && sess.url) return json({ url: sess.url, code: recent[0].code, reused: true });
+    } catch (e) { /* could not ask Stripe: fall through and make a fresh checkout */ }
+  }
 
   // A code nobody else holds. Six characters is 29^6, so a collision is rare, but
   // rare is not never and a duplicate code would put two parties in one room.

@@ -209,7 +209,10 @@
           body: JSON.stringify({ slug: slug })
         }).then(function (r) { return r.ok ? r.json() : null; });
       }).then(function (d) {
-        if (!d) return;
+        /* AN ANSWER FOR A VENUE WE HAVE LEFT. A host who switches venue seconds after loading can get
+           venue A's key back after the switch to B, and would then sign B's broadcasts with A's key for
+           up to five minutes (review, 28 Sep 2026). S.slug is always the CURRENT venue. */
+        if (!d || S.slug !== slug) return;
         if (d.has_key && d.private_jwk) {
           if (d.kid && d.kid === S.kid && S.privKey) { S.enforce = !!d.enforce; return; }   // same key: nothing to re-import
           return useHostKey(d);
@@ -224,7 +227,7 @@
               method: "POST",
               headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
               body: JSON.stringify({ slug: slug, public_jwk: jw[0], private_jwk: jw[1] })
-            }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d2) { if (d2 && d2.private_jwk) return useHostKey(d2); });
+            }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d2) { if (d2 && d2.private_jwk && S.slug === slug) return useHostKey(d2); });
           });
       }).catch(function () { /* leave privKey null -> send unsigned */ });
     },
