@@ -168,7 +168,7 @@
   "counted_by": "lines"
  },
  "tools/test-jag-joker.js": {
-  "checks": 34,
+  "checks": 35,
   "counted_by": "lines"
  },
  "tools/test-jag-pages.js": {

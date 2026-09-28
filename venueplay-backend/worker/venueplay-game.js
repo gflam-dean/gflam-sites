@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '27 Sep 2026, 18:08 · e9f62872';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '28 Sep 2026, 12:05 · 3c29352f';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -4510,10 +4510,14 @@ async function handleJagStart(request, env, json) {
   if (!(deck >= 10 && deck <= 100)) return json({ error: 'The board needs between 10 and 100 cards' }, 400);
   const jackpot = jagCents(b.jackpot_cents);
   if (jackpot === null) return json({ error: 'Enter the starting jackpot in dollars' }, 400);
+  /* THE STATE DECIDES, AND NO STATE IS NOT A STATE. Migration 44: a null au_state means the rules
+     have not been confirmed for that venue, and an owner can blank the postcode and get exactly
+     that (venueplay-api-FULL.js), so refusing only 'QLD' let a Queensland venue clear its own
+     refusal. Review, 28 Sep 2026. */
   const v = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=au_state&limit=1');
-  if (v.length && String(v[0].au_state || '').toUpperCase() === 'QLD') {
-    return json({ error: 'Jag the Joker is not available in Queensland yet' }, 403);
-  }
+  const st = String((v[0] && v[0].au_state) || '').toUpperCase();
+  if (!st) return json({ error: 'Jag the Joker needs the venue\'s state on file first. Check the postcode on the Account page.' }, 403);
+  if (st === 'QLD') return json({ error: 'Jag the Joker is not available in Queensland yet' }, 403);
   const id = crypto.randomUUID();
   const spot = randInt(deck) + 1;
   const bytes = new Uint8Array(16);

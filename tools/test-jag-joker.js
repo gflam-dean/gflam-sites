@@ -104,6 +104,10 @@ async function turn(body){ BODY = body; return await handleJagTurn({}, ON, json)
   show('a Queensland venue is refused, even its owner', r.status===403 && /Queensland/.test(r.body.error) && DB.vp_jag_games.length===0, JSON.stringify(r.body));
   r = await start({ venue_id:V2, deck_size:20, jackpot_cents:50000 });
   show('somebody who is not staff at the venue cannot start one', r.status===403 && DB.vp_jag_games.length===0);
+  DB.vp_venues[0].au_state = null;
+  r = await start({ venue_id:VENUE, deck_size:20, jackpot_cents:50000 });
+  show('a venue with NO state on file is refused too (a blanked postcode cannot clear the QLD refusal)', r.status===403 && /state on file/.test(r.body.error) && DB.vp_jag_games.length===0, JSON.stringify(r.body));
+  DB.vp_venues[0].au_state = 'NSW';
   r = await start({ venue_id:VENUE, deck_size:5, jackpot_cents:50000 });
   show('a board under 10 cards is refused', r.status===400);
 
