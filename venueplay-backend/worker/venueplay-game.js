@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '28 Sep 2026, 08:28 · eb66f3ae';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '28 Sep 2026, 13:26 · 87c24fd4';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -5570,7 +5570,7 @@ async function handleHostRevealManyTrips(request, env, json, pre) {
   // vp_host_reveal). The console has the answer from its own reply and puts it up at round end.
   const deferred = cfg.defer_reveal === true;
   await emitEvent(env, session, 'trivia.reveal', deferred
-    ? { qseq: t.current_seq, options, leaderboard, deferred: true }
+    ? { qseq: t.current_seq, options, deferred: true }   // 97: no leaderboard either, a total moving is the answer by another name
     : { qseq: t.current_seq, correct_index: q.correct_index, options, split, leaderboard },
   actorRef(staff));
 

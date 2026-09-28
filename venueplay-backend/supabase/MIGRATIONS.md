@@ -183,3 +183,8 @@ seq is in `config.double_seqs`; the reply says `double`. Safe before the Worker:
 RUN ON SYDNEY by Dean 28 Sep 2026; read back: vp_host_reveal doubles on double_seqs and still hides the answer on
 paper nights, both columns present, anon still cannot execute it.
 Rollback: re-run 94.
+
+`venueplay-97-paper-night-board-private.sql`: on a paper night the public `trivia.reveal` event also drops the
+`leaderboard` (94 dropped the answer; a team's total moving is the answer by another name). Identical to 96
+otherwise, so double points is kept. Worker fallback changed to match (shipped first; safe either order).
+NOT RUN (28 Sep 2026): auto mode refuses live migrations; opened for Dean. Rollback: re-run 96.
