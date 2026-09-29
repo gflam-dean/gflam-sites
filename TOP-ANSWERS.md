@@ -19,8 +19,9 @@ owns). Built on the branch `feature/top-answers`. Nothing here is live and no ve
   and the unfound ones only at the end (ta_showall). Every phone hears the TV's channel.
 
 ## Decisions for Dean
-- The name ("Top Answers" is a placeholder).
-- Pricing: does a Top Answers night count as the venue's weekly trivia night under its plan?
+- The name: Dean wants "a better ring to it". Offered 29 Sep: Punters Reckon (my pick), Mob Rules, Crowd Says, Great Minds.
+- Pricing: DECIDED 29 Sep 2026 (Dean: "No it doesnt count"): a night of this game does NOT count as the
+  venue's weekly trivia night. Players still count for billing like any game (join + played).
 - Where it lives: my recommendation is a round type INSIDE the trivia console, so it inherits trivia's
   reconnect, signing, session and billing behaviour instead of becoming a fourth copy of all that.
 
