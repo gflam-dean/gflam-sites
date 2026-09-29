@@ -1,23 +1,16 @@
-/* TOP ANSWERS: the starter boards.
+/* GREAT MINDS (PartyPlay): the boards.
 
-   Written by us, 29 Sep 2026, and SAID SO: the screen calls these "top answers", never a survey,
-   because nobody was surveyed. Dean's plan is to replace them with real votes from venues as they
-   come in (option c). Points on a board add up to 100 and rank the answers most people would give.
+   PartyPlay plays at kids' birthdays, school fundraisers and community nights as well as adult
+   parties, so these are family boards: VenuePlay's Punters Reckon boards without the pub, beer,
+   wine and workplace ones, plus party boards of our own. Written by us, 30 Sep 2026, and called
+   "top answers", never a survey, because nobody was surveyed. Points on a board add up to 100.
+   tools/test-pp-great-minds.js refuses any board that does not add up, any answer form two answers
+   share, and any word from its list of things that do not belong at a kids' party.
 
-   Each answer's "also" list is what a phone might type for it. Keep them to things that clearly
-   mean the SAME answer: a word here that could belong to another answer on the board is a wrong
-   score in front of a room (tools/test-ta-boards.js refuses any form that two answers share). */
+   Same global name as VenuePlay's boards (TABoards) so the one engine, pr-game.js, reads either. */
 (function (root) {
   "use strict";
   root.TABoards = [
-    { id: "pub-find", q: "Name something you would find in a pub", answers: [
-      { a: "Beer", pts: 34, also: ["beers", "tap beer", "schooner", "pint", "middy", "keg"] },
-      { a: "Pokies", pts: 20, also: ["pokie", "poker machine", "poker machines", "gaming room", "slots"] },
-      { a: "TV", pts: 14, also: ["tele", "telly", "television", "big screen", "tab screen"] },
-      { a: "Bar", pts: 12, also: ["bartender", "barman", "barmaid", "bar staff"] },
-      { a: "Pool table", pts: 10, also: ["pool", "billiards", "snooker"] },
-      { a: "Toilets", pts: 6, also: ["toilet", "loo", "dunny", "bathroom", "restroom"] },
-      { a: "Dartboard", pts: 4, also: ["darts", "dart board"] } ] },
     { id: "bbq", q: "Name something you put on a barbie", answers: [
       { a: "Sausages", pts: 36, also: ["sausage", "snags", "snag", "sausies"] },
       { a: "Steak", pts: 24, also: ["steaks", "rump", "scotch fillet"] },
@@ -34,13 +27,6 @@
       { a: "Hat", pts: 8, also: ["cap", "bucket hat"] },
       { a: "Sunglasses", pts: 5, also: ["sunnies", "shades"] },
       { a: "Surfboard", pts: 3, also: ["board", "boogie board", "surf board"] } ] },
-    { id: "late", q: "Name an excuse for being late to work", answers: [
-      { a: "Traffic", pts: 40, also: ["bad traffic", "stuck in traffic", "roadworks"] },
-      { a: "Slept in", pts: 22, also: ["overslept", "alarm", "alarm didnt go off", "sleep in"] },
-      { a: "Car trouble", pts: 14, also: ["car broke down", "flat tyre", "flat tire", "car wouldnt start", "broke down"] },
-      { a: "Train late", pts: 10, also: ["train", "bus", "bus late", "public transport"] },
-      { a: "Kids", pts: 8, also: ["kid", "children", "school drop off", "dropping kids"] },
-      { a: "Sick", pts: 6, also: ["unwell", "doctor", "hangover", "hungover"] } ] },
     { id: "pizza", q: "Name a pizza topping", answers: [
       { a: "Pepperoni", pts: 30, also: ["salami"] },
       { a: "Cheese", pts: 20, also: ["mozzarella", "extra cheese"] },
@@ -71,14 +57,6 @@
       { a: "Horse racing", pts: 10, also: ["the races", "races", "melbourne cup", "racing"] },
       { a: "Tennis", pts: 7, also: ["australian open"] },
       { a: "Soccer", pts: 5, also: ["football", "aleague", "matildas", "socceroos"] } ] },
-    { id: "fridge", q: "Name something you would find in a fridge", answers: [
-      { a: "Milk", pts: 36, also: [] },
-      { a: "Beer", pts: 20, also: ["beers", "cans", "stubbies"] },
-      { a: "Butter", pts: 12, also: ["margarine", "marg"] },
-      { a: "Cheese", pts: 12, also: [] },
-      { a: "Eggs", pts: 10, also: ["egg"] },
-      { a: "Leftovers", pts: 6, also: ["leftover"] },
-      { a: "Sauce", pts: 4, also: ["tomato sauce", "tommy sauce", "sauces"] } ] },
     { id: "morning", q: "Name something you do first thing in the morning", answers: [
       { a: "Coffee", pts: 34, also: ["make coffee", "have a coffee", "cuppa"] },
       { a: "Check phone", pts: 22, also: ["phone", "look at phone", "scroll"] },
@@ -121,20 +99,6 @@
       { a: "Spare tyre", pts: 14, also: ["spare", "spare tire", "jack"] },
       { a: "Rubbish", pts: 12, also: ["trash", "garbage", "junk"] },
       { a: "Umbrella", pts: 10, also: ["brolly"] } ] },
-    { id: "pubfood", q: "Name a classic pub meal", answers: [
-      { a: "Parmi", pts: 38, also: ["parma", "parmy", "chicken parmi", "chicken parma", "parmigiana", "chicken parmigiana"] },
-      { a: "Schnitzel", pts: 20, also: ["schnitty", "schnitzy", "chicken schnitzel"] },
-      { a: "Fish and chips", pts: 16, also: ["fish n chips", "fish"] },
-      { a: "Steak", pts: 12, also: ["rump", "steak and chips"] },
-      { a: "Burger", pts: 8, also: ["burgers", "beef burger"] },
-      { a: "Bangers and mash", pts: 6, also: ["bangers", "sausages and mash"] } ] },
-    { id: "rain", q: "Name something you do on a rainy day", answers: [
-      { a: "Watch TV", pts: 30, also: ["tv", "netflix", "watch a movie", "movies", "movie"] },
-      { a: "Sleep", pts: 22, also: ["nap", "stay in bed", "sleep in"] },
-      { a: "Read", pts: 14, also: ["read a book", "book"] },
-      { a: "Go to the pub", pts: 12, also: ["pub", "drink", "have a beer"] },
-      { a: "Play games", pts: 12, also: ["board games", "video games", "cards"] },
-      { a: "Bake", pts: 10, also: ["cook", "baking"] } ] },
     { id: "kitchen", q: "Name something you find in a kitchen", answers: [
       { a: "Fridge", pts: 28, also: ["refrigerator"] },
       { a: "Oven", pts: 22, also: ["stove", "cooktop"] },
@@ -149,13 +113,6 @@
       { a: "Long black", pts: 14, also: ["americano"] },
       { a: "Espresso", pts: 8, also: ["short black", "expresso"] },
       { a: "Iced coffee", pts: 6, also: ["iced latte", "cold brew"] } ] },
-    { id: "tradie", q: "Name something a tradie always has", answers: [
-      { a: "Ute", pts: 32, also: ["utes", "work ute"] },
-      { a: "Hi vis", pts: 22, also: ["hi-vis", "high vis", "high visibility", "vest"] },
-      { a: "Tools", pts: 18, also: ["toolbox", "tool box", "drill"] },
-      { a: "Esky", pts: 10, also: ["cooler", "lunch box", "lunchbox"] },
-      { a: "Work boots", pts: 10, also: ["boots", "steel caps", "steel cap boots"] },
-      { a: "Pie", pts: 8, also: ["meat pie", "sausage roll", "bakery"] } ] },
     { id: "backyard", q: "Name something you find in an Aussie backyard", answers: [
       { a: "Hills Hoist", pts: 30, also: ["clothesline", "clothes line", "washing line"] },
       { a: "BBQ", pts: 24, also: ["barbie", "barbecue"] },
@@ -177,13 +134,6 @@
       { a: "Dog", pts: 12, also: ["dog barking", "barking", "cat", "pets"] },
       { a: "Noise", pts: 12, also: ["neighbours", "storm", "thunder"] },
       { a: "Phone", pts: 8, also: ["phone ringing", "text"] } ] },
-    { id: "gift", q: "Name a gift that is always a safe bet", answers: [
-      { a: "Gift card", pts: 30, also: ["voucher", "gift voucher", "gift cards"] },
-      { a: "Wine", pts: 22, also: ["bottle of wine", "grog"] },
-      { a: "Chocolates", pts: 18, also: ["chocolate", "choccies"] },
-      { a: "Flowers", pts: 12, also: ["flower"] },
-      { a: "Socks", pts: 10, also: ["sock"] },
-      { a: "Candle", pts: 8, also: ["candles"] } ] },
     { id: "fastfood", q: "Name a fast food chain", answers: [
       { a: "McDonald's", pts: 36, also: ["maccas", "mcdonalds", "macca", "mcdonald"] },
       { a: "KFC", pts: 22, also: ["kentucky fried chicken"] },
@@ -198,13 +148,6 @@
       { a: "Books", pts: 14, also: ["book", "exercise book", "homework"] },
       { a: "Hat", pts: 10, also: ["school hat"] },
       { a: "Jumper", pts: 8, also: ["jacket", "sweater", "hoodie"] } ] },
-    { id: "complain", q: "Name something people complain about at the pub", answers: [
-      { a: "Price of beer", pts: 32, also: ["prices", "beer prices", "expensive", "price"] },
-      { a: "Waiting", pts: 20, also: ["wait", "slow service", "service", "waiting for food"] },
-      { a: "Warm beer", pts: 14, also: ["flat beer", "bad beer"] },
-      { a: "Music too loud", pts: 12, also: ["music", "too loud", "noise"] },
-      { a: "The footy result", pts: 12, also: ["footy", "the footy", "the umpire", "the ref"] },
-      { a: "No seats", pts: 10, also: ["seating", "too busy", "crowded"] } ] },
     { id: "hardware", q: "Name something you buy at Bunnings", answers: [
       { a: "Sausage sizzle", pts: 34, also: ["sausage", "snag", "sausage in bread", "snag in bread"] },
       { a: "Paint", pts: 18, also: [] },
@@ -225,6 +168,77 @@
       { a: "Donuts", pts: 16, also: ["doughnuts", "donut"] },
       { a: "Fruit", pts: 12, also: ["fruit platter"] },
       { a: "Scones", pts: 10, also: ["scone"] },
-      { a: "Sausage rolls", pts: 10, also: ["sausage roll", "party pies", "pies"] } ] }
+      { a: "Sausage rolls", pts: 10, also: ["sausage roll", "party pies", "pies"] } ] },
+    { id: "party", q: "Name something you see at a birthday party", answers: [
+      { a: "Cake", pts: 34, also: ["birthday cake", "cakes"] },
+      { a: "Balloons", pts: 22, also: ["balloon"] },
+      { a: "Presents", pts: 16, also: ["present", "gifts", "gift"] },
+      { a: "Candles", pts: 10, also: ["candle"] },
+      { a: "Party hats", pts: 8, also: ["party hat", "hats", "hat"] },
+      { a: "Lollies", pts: 6, also: ["lolly", "sweets", "candy", "lolly bags"] },
+      { a: "Games", pts: 4, also: ["party games", "pass the parcel"] } ] },
+    { id: "sleepover", q: "Name something you do at a sleepover", answers: [
+      { a: "Watch movies", pts: 30, also: ["movies", "movie", "watch a movie", "films"] },
+      { a: "Stay up late", pts: 22, also: ["stay up", "stay awake", "no sleep"] },
+      { a: "Pillow fight", pts: 16, also: ["pillow fights"] },
+      { a: "Eat snacks", pts: 12, also: ["snacks", "snack", "junk food", "popcorn"] },
+      { a: "Play games", pts: 10, also: ["games", "board games", "video games"] },
+      { a: "Tell stories", pts: 6, also: ["ghost stories", "scary stories", "stories"] },
+      { a: "Talk", pts: 4, also: ["chat", "chatting", "gossip", "talking"] } ] },
+    { id: "zoo", q: "Name an animal you see at the zoo", answers: [
+      { a: "Lion", pts: 28, also: ["lions"] },
+      { a: "Elephant", pts: 22, also: ["elephants"] },
+      { a: "Giraffe", pts: 18, also: ["giraffes"] },
+      { a: "Monkey", pts: 14, also: ["monkeys", "ape", "apes"] },
+      { a: "Tiger", pts: 8, also: ["tigers"] },
+      { a: "Penguin", pts: 6, also: ["penguins"] },
+      { a: "Zebra", pts: 4, also: ["zebras"] } ] },
+    { id: "camping", q: "Name something you take camping", answers: [
+      { a: "Tent", pts: 34, also: ["tents", "swag"] },
+      { a: "Sleeping bag", pts: 20, also: ["sleeping bags"] },
+      { a: "Torch", pts: 14, also: ["torches", "flashlight", "head torch"] },
+      { a: "Food", pts: 10, also: ["snacks", "marshmallows"] },
+      { a: "Chairs", pts: 8, also: ["camp chair", "camp chairs", "chair"] },
+      { a: "Esky", pts: 8, also: ["cooler", "ice box", "eskies"] },
+      { a: "Matches", pts: 6, also: ["lighter", "fire starters"] } ] },
+    { id: "hero", q: "Name a superhero", answers: [
+      { a: "Superman", pts: 28, also: ["super man"] },
+      { a: "Spider-Man", pts: 24, also: ["spiderman", "spider man"] },
+      { a: "Batman", pts: 20, also: ["bat man"] },
+      { a: "Wonder Woman", pts: 10, also: ["wonderwoman"] },
+      { a: "Iron Man", pts: 8, also: ["ironman"] },
+      { a: "Hulk", pts: 6, also: ["the incredible hulk", "incredible hulk"] },
+      { a: "Captain America", pts: 4, also: ["captain america"] } ] },
+    { id: "rainbow", q: "Name a colour of the rainbow", answers: [
+      { a: "Red", pts: 26, also: [] },
+      { a: "Blue", pts: 22, also: [] },
+      { a: "Yellow", pts: 16, also: [] },
+      { a: "Green", pts: 14, also: [] },
+      { a: "Orange", pts: 10, also: [] },
+      { a: "Purple", pts: 8, also: ["violet"] },
+      { a: "Indigo", pts: 4, also: [] } ] },
+    { id: "playground", q: "Name something you find at a playground", answers: [
+      { a: "Swings", pts: 32, also: ["swing"] },
+      { a: "Slide", pts: 28, also: ["slides", "slippery dip", "slippery slide"] },
+      { a: "Monkey bars", pts: 14, also: ["monkey bar"] },
+      { a: "Sandpit", pts: 12, also: ["sand pit", "sandbox", "sand"] },
+      { a: "Seesaw", pts: 8, also: ["see saw", "see-saw"] },
+      { a: "Roundabout", pts: 6, also: ["merry go round", "merry-go-round"] } ] },
+    { id: "lunchfruit", q: "Name a fruit you put in a lunchbox", answers: [
+      { a: "Apple", pts: 34, also: ["apples"] },
+      { a: "Banana", pts: 26, also: ["bananas"] },
+      { a: "Grapes", pts: 14, also: ["grape"] },
+      { a: "Orange", pts: 10, also: ["oranges"] },
+      { a: "Strawberries", pts: 8, also: ["strawberry"] },
+      { a: "Mandarin", pts: 5, also: ["mandarins", "mandarine"] },
+      { a: "Pear", pts: 3, also: ["pears"] } ] },
+    { id: "icecream", q: "Name an ice cream flavour", answers: [
+      { a: "Chocolate", pts: 32, also: ["choc", "choccy"] },
+      { a: "Vanilla", pts: 26, also: [] },
+      { a: "Strawberry", pts: 16, also: [] },
+      { a: "Cookies and cream", pts: 10, also: ["cookies n cream", "cookies & cream"] },
+      { a: "Mint choc chip", pts: 8, also: ["mint", "mint chocolate chip", "choc mint"] },
+      { a: "Rainbow", pts: 5, also: ["rainbow ice cream"] },
+      { a: "Caramel", pts: 3, also: ["salted caramel"] } ] }
   ];
 }(typeof window !== "undefined" ? window : this));

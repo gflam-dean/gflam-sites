@@ -13,7 +13,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '28 Sep 2026, 20:27 · 81bf812d';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '30 Sep 2026, 09:00 · a1cb7138';   // tools/stamp-workers.py, do not edit by hand
 // The licence window rules live in one place and are shared with the browser.
 // Paste lib/pp-licence.js above this line when deploying, or inline it. It is
 // referenced here as PPLicence.
@@ -416,7 +416,7 @@ async function requireHost(env, code, hostKey) {
 }
 
 const FORMATS = ['bingo90','trivia','musical','draw','howwell','headstails','whohere','photos','truths','playlist',
-                 'charades','guesswho'];
+                 'charades','guesswho','topanswers'];
 
 /* GET /games?code=&key=   POST /games   POST /games/delete
    Building games is NOT limited by the licence window: a host may write questions

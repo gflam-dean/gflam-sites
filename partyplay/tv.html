@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>PartyPlay</title>
 <link rel="icon" href="/logos/partyplay-appicon.svg">
-<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@700;800&family=Manrope:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@700;800&family=Manrope:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root{--ink:#12101A;--paper:#FFF1E6;--mute:#B6ADC2;--pink:#FF1F8E;--teal:#17C4B4;--line:rgba(255,241,230,.14)}
   *{box-sizing:border-box}
@@ -85,6 +85,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
 <script src="/lib/pp-config.js"></script>
+<script src="/lib/pr-board.js"></script>
 <script>
 (function(){
   "use strict";
@@ -116,7 +117,10 @@
   var players = [];
 
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
-  function show(html){ $("screen").innerHTML = html; }
+  /* Anything else going up ends a Great Minds board: the board is only ever mounted by the branch
+     below, and show() is how every other screen is drawn. */
+  var gmBoard = null;
+  function show(html){ gmBoard = null; $("who").style.display = ""; $("screen").innerHTML = html; }
 
   /* The lobby. This is what is on the television for most of the night, so it is
      the screen that matters most: a code big enough to read from the back of the
@@ -206,6 +210,18 @@
   function onMsg(m){
     if(!m || !m.t) return;
     if(m.t === "players"){ players = m.names || []; drawWho(); return; }
+    /* GREAT MINDS: lib/pr-board.js, the same board VenuePlay's trivia TV mounts. It paints from
+       these three messages alone and never holds an answer before somebody finds it. Sized in cqw,
+       so it sits in its own size container, and the names strip steps aside while it is up. */
+    if(m.t === "ta_board" || m.t === "ta_reveal" || m.t === "ta_showall"){
+      if(!gmBoard){
+        if(m.t !== "ta_board") return;          // a reveal for a board this telly never saw
+        show('<div id="gmwrap" style="position:fixed;inset:0;container-type:inline-size;background:var(--ink)"></div>');
+        $("who").style.display = "none";
+        gmBoard = PRBoard.mount($("gmwrap"));
+      }
+      gmBoard.onMsg(m); return;
+    }
     if(m.t === "lobby"){ drawJoin(); return; }
     if(m.t === "big"){
       /* A bingo ball is two characters and should be enormous; a trivia question can be

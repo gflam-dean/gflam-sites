@@ -19,8 +19,12 @@
   "checks": 32,
   "counted_by": "lines"
  },
+ "partyplay-backend/lib/pp-great-minds.test.js": {
+  "checks": 28,
+  "counted_by": "lines"
+ },
  "partyplay-backend/lib/pp-guest-connection.test.js": {
-  "checks": 66,
+  "checks": 68,
   "counted_by": "lines"
  },
  "partyplay-backend/lib/pp-host-channel.test.js": {
@@ -336,7 +340,7 @@
   "counted_by": "lines"
  },
  "tools/test-ta-match.js": {
-  "checks": 15,
+  "checks": 16,
   "counted_by": "lines"
  },
  "tools/test-ta-screen.js": {
