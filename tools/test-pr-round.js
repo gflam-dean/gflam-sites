@@ -66,5 +66,21 @@ ok('a guess result goes back addressed (gsend of pr.result)', /gsend\(pr\.result
 ok('only a FOUND answer is broadcast', /if\(pr\.reveal\)\{ bcast\(pr\.reveal\); \}/.test(H));
 ok('the board with its answers is never sent anywhere', !/(bcast|gsend|send|to)\(G\.pr\.board\)/.test(H));
 ok('Punters Reckon only appears with ?pr=1 (switched off for venues)', /if\(\/\[\?&\]pr=1\/\.test\(location\.search\)\)\{ var _pf=\$\("prField"\)/.test(H) && /id="prField" class="field hidden"|class="field hidden" id="prField"/.test(H));
+ok('a console reload recovers a Punters Reckon night (it has no game row for restoreTrivia to find)', /restoreTrivia\(\)\.then\(function\(ok\)\{ return ok \|\| restorePR\(\); \}\)/.test(H));
+ok('the final scores stay up before the TV goes back to the lobby', /G\.prIdleT=setTimeout\(function\(\)\{ if\(G\.status==="setup"\) bcast\(\{ t:"idle" \}\); \}, \(_mid \? 7000 : 0\) \+ 15000\);/.test(H));
+
+print('== a phone that is sent the same board again keeps what it typed ==');
+var pe = new Host(), me3 = { pid: 'p9', name: 'Bec' };
+var pc = window.PRPhone.mount(pe, { send: function(){}, alive: function(){}, me: function(){ return me3; }, show: function(){} }, doc);
+var b1 = { t: 'ta_board', round: 4, q: 'Name a pub snack', n: 5, secs: 45, endsAt: 0, name: 'Punters Reckon' };
+pc.onMsg(b1);
+pe.querySelector('#prIn').value = 'chips'; pe.querySelector('#prForm')._l.submit({ preventDefault: function(){} });
+pc.onMsg({ t: 'pr_result', to: 'p9', round: 4, text: 'chips', hit: true, a: 'Chips', pts: 30, left: 2 });
+pc.onMsg(JSON.parse(JSON.stringify(b1)));
+ok('the same board again: the guess is still listed, 2 left', /chips/.test(pe.innerHTML) && /<b>2<\/b> guesses left/.test(pe.innerHTML), pe.innerHTML.slice(0, 200));
+var b1l = JSON.parse(JSON.stringify(b1)); b1l.left = 1; pc.onMsg(b1l);
+ok('and the console\'s count of guesses left wins', /<b>1<\/b> guess left/.test(pe.innerHTML));
+pc.onMsg({ t: 'ta_board', round: 5, q: 'Name a beer', n: 6, secs: 45, endsAt: 0 });
+ok('a new board starts clean', !/chips/.test(pe.innerHTML) && /<b>3<\/b> guesses left/.test(pe.innerHTML));
 print('\n' + (ran - bad) + ' of ' + ran + ' checks passed');
 if (bad) throw new Error(bad + ' punters reckon round checks failed');

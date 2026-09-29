@@ -62,7 +62,11 @@
     function onMsg(m) {
       if (!m || !m.t) return false;
       if (m.t === "ta_board") {
-        S = { round: m.round|0, q: m.q, name: m.name, left: 3, tries: [], open: true, endsAt: +m.endsAt || 0, done: false };
+        /* The same board again (the console reloaded, or this phone asked to catch up) keeps what this
+           phone already typed. A new round starts clean. `left`, when the console sends it, is the truth. */
+        var same = (m.round|0) === S.round && S.q === m.q && !S.done;
+        S = { round: m.round|0, q: m.q, name: m.name, left: same ? S.left : 3, tries: same ? S.tries : [], open: true, endsAt: +m.endsAt || 0, done: false };
+        if (typeof m.left === "number") S.left = m.left;
         if (opts.alive) opts.alive();            // holding a board: a billable player, like a trivia question
         if (opts.show) opts.show();
         paint(); return true;

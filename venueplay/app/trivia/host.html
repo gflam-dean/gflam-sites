@@ -611,18 +611,19 @@
   }
   function renderBoard(){
     var box=$("hostBoard");
-    if(!G.board.length){ box.innerHTML='<div class="pempty">Scores appear once the round is under way.</div>'; return; }
+    var B=(G.roundType==="pr" && G.pr) ? G.pr.rows() : G.board;   // a Punters Reckon night scores in its own referee
+    if(!B.length){ box.innerHTML='<div class="pempty">Scores appear once the round is under way.</div>'; return; }
     box.innerHTML="";
     /* Every team, not the top 8: with 15 tables the ones in 9th to 15th only ever saw their own
        phone. The panel scrolls (see .board-h). Equal points share a rank ("=3") so two teams on
        850 are not split by database order. */
-    var ranks=sharedRanks(G.board);
-    for(var i=0;i<G.board.length;i++){
+    var ranks=sharedRanks(B);
+    for(var i=0;i<B.length;i++){
       var row=el("div","brow-h"+(i===0?" top1":""));
-      row.innerHTML='<span class="rk">'+ranks[i]+'</span><span class="nm">'+esc(G.board[i].name)+'</span><span class="sc">'+G.board[i].points+'</span>';
+      row.innerHTML='<span class="rk">'+ranks[i]+'</span><span class="nm">'+esc(B[i].name)+'</span><span class="sc">'+B[i].points+'</span>';
       box.appendChild(row);
     }
-    if(G.board.length>8) box.appendChild(el("div","allof","All "+G.board.length+" teams. Scroll for the rest."));
+    if(B.length>8) box.appendChild(el("div","allof","All "+B.length+" teams. Scroll for the rest."));
   }
   // [10,10,8] -> ["=1","=1","3"]. Rows arrive sorted by points from the Worker.
   function sharedRanks(rows){
@@ -993,6 +994,45 @@
      like any game, and a night of this does NOT count as the weekly trivia night (Dean, 29 Sep 2026). */
   function prKey(){ return "vpPR:"+(G.sessionId||""); }
   function savePR(){ try{ if(G.pr) localStorage.setItem(prKey(), G.pr.save()); }catch(e){} }
+  /* A PUNTERS RECKON NIGHT HAS NO GAME ROW, so restoreTrivia (which asks the Worker for the running
+     trivia game) never found it, and a console reload dropped the host back on setup with the room
+     mid-board and the session still open. Seen live at Test Alpha, 30 Sep 2026. This pointer is the
+     night; vpPR:<session> holds the scores and the board in play. */
+  function prNightKey(){ return "vpPRNight-"+(G.venueId||""); }
+  function savePRNight(){ try{ localStorage.setItem(prNightKey(), JSON.stringify({ v:1, ts:Date.now(), sessionId:G.sessionId })); }catch(e){} }
+  function clearPRNight(){ try{ localStorage.removeItem(prNightKey()); }catch(e){} }
+  function restorePR(){
+    if(!window.PRGame) return Promise.resolve(false);
+    var raw; try{ raw=localStorage.getItem(prNightKey()); }catch(e){ return Promise.resolve(false); }
+    if(!raw) return Promise.resolve(false);
+    var p; try{ p=JSON.parse(raw); }catch(e){ clearPRNight(); return Promise.resolve(false); }
+    if(!p || !p.sessionId || !p.ts || (Date.now()-p.ts)>TRIVIA_SAVE_MAX_AGE){ clearPRNight(); return Promise.resolve(false); }
+    return fetch(VP_GAME_API+"/snapshot?session="+encodeURIComponent(p.sessionId))
+      .then(function(res){ return res.ok ? res.json() : null; })
+      .then(function(snap){
+        if(!snap || !snap.join_code || ["lobby","running","paused"].indexOf(snap.status)<0){ clearPRNight(); return false; }
+        G.sessionId=snap.session_id; G.joinCode=snap.join_code;
+        G.roundType="pr";
+        document.querySelectorAll("#cfgRoundType button").forEach(function(x){ x.classList.toggle("on", x.getAttribute("data-v")==="pr"); });
+        var pf=$("prField"); if(pf) pf.classList.remove("hidden");
+        G.pr=new window.PRGame.Game(); G.prFeed=[]; G.prPub=null;
+        try{ G.pr.load(localStorage.getItem(prKey())); }catch(e){}
+        openGameChannel(G.joinCode);
+        send({ t:"session", session_id:G.sessionId, join_code:G.joinCode });
+        send({ t:"mode", mode:"trivia", title:window.PRGame.NAME });
+        var back=G.pr.replay();
+        if(back){
+          G.prPub=back[0]; G.status="question";
+          back.forEach(function(m){ bcast(m); });
+          var ms=G.pr.endsAt-Date.now();
+          clearTimeout(G.prEndT); G.prEndT=setTimeout(prEnd, Math.max(0, ms)+1500);
+        } else { G.status="ready"; }
+        $("statusText").textContent="Recovered your "+window.PRGame.NAME+" night";
+        renderConsole();
+        return true;
+      })
+      .catch(function(){ return false; });
+  }
   function startPR(){
     if(!window.PRGame){ hostError("Punters Reckon did not load. Reload the console."); return; }
     G.busy=true;
@@ -1000,6 +1040,7 @@
     openSession().then(function(){
       G.pr=new window.PRGame.Game(); G.prFeed=[]; G.prPub=null;
       try{ G.pr.load(localStorage.getItem(prKey())); }catch(e){}
+      clearTimeout(G.prIdleT); clearTimeout(G.prBoardT); savePRNight();
       G.status="ready";
       bcast({ t:"mode", mode:"trivia", title:window.PRGame.NAME });
       renderConsole();
@@ -1051,8 +1092,20 @@
     clearTrivia();
     var gid=G.gameId;
     G.status="setup"; G.current=null; G.answeredPids={};
-    if(G.pr){ clearTimeout(G.prEndT); clearTimeout(G.prBoardT); if(G.pr.board){ var _e=G.pr.endBoard(); bcast(_e.showall); } bcast({ t:"leaderboard", title:"Final scores", rows:G.pr.rows() }); G.pr=null; G.prPub=null; }
-    bcast({ t:"idle" });   // screen returns to the join/lobby state
+    /* FINAL SCORES MUST STAY UP LONG ENOUGH TO READ. This used to send the leaderboard and then
+       "idle" in the same breath, so the TV went straight back to the lobby and nobody saw who won
+       (and a board ended mid-play flipped its answers for no time at all). */
+    if(G.pr){
+      clearTimeout(G.prEndT); clearTimeout(G.prBoardT); clearTimeout(G.prIdleT);
+      var _mid=!!G.pr.board, _rows;
+      if(_mid){ var _e=G.pr.endBoard(); bcast(_e.showall); }
+      _rows=G.pr.rows(); clearPRNight();
+      G.prBoardT=setTimeout(function(){ bcast({ t:"leaderboard", title:"Final scores", rows:_rows }); }, _mid ? 7000 : 0);
+      G.prIdleT=setTimeout(function(){ if(G.status==="setup") bcast({ t:"idle" }); }, (_mid ? 7000 : 0) + 15000);
+      G.pr=null; G.prPub=null;
+    } else {
+      bcast({ t:"idle" });   // screen returns to the join/lobby state
+    }
     renderConsole();
     if(gid){ apiPost("/host/game/end",{ game_id:gid }).catch(function(e){ hostError(e.message); }); }
   }
@@ -1080,6 +1133,7 @@
       /* A phone or screen that arrives mid-board gets the board and what has been FOUND, never the rest.
          Phones filter on `to`, so a replay aimed at one phone is sent to that phone's pid. */
       var one=JSON.parse(JSON.stringify(G.prPub));
+      if(pid && G.pr.guesses[pid]) one.left=G.pr.guesses[pid].left;   // a phone that reloaded keeps its real guesses left
       to(one);   // aimed at the one phone that asked (`to`), or the TV: never re-sets everyone else's board
       Object.keys(G.pr.found).forEach(function(i){ var a=G.pr.board && G.pr.board.answers[i]; if(a){ to({ t:"ta_reveal", i:+i, a:a.a, pts:a.pts, by:G.pr.found[i] }); } });
       return;
@@ -1546,7 +1600,7 @@
       if(VP.suspensionBanner) VP.suspensionBanner(ctx);
       $("statusText").textContent="Signed in";
       loadQuestionSets();
-      restoreTrivia().then(function(){   // recover a live quiz first (if this was an accidental reload), then pair the TV as normal
+      restoreTrivia().then(function(ok){ return ok || restorePR(); }).then(function(){   // recover a live quiz first (if this was an accidental reload), then pair the TV as normal
         var tv=tvFromUrl();
         var slug=(ctx.venue && ctx.venue.slug) || "";
         if(slug && window.VPSign){ VPSign.initHost(VP_GAME_API, slug, vpHostToken); }   // this venue's signing key

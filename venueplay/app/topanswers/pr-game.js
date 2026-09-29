@@ -96,10 +96,32 @@
       .sort(function (a, b) { return b.points - a.points || a.name.localeCompare(b.name); });
   };
 
-  /* Survives a console reload: the scores and what has been played, never mid-board state. */
-  Game.prototype.save = function () { return JSON.stringify({ used: this.used, scores: this.scores, round: this.round }); };
+  /* Survives a console reload, INCLUDING a board in play: a host who reloads mid-board must get the
+     same board back with what was already found and how many guesses each phone has left, or the
+     room loses the round (seen live at Test Alpha, 30 Sep 2026). This is saved on the host's own
+     tablet only, never sent anywhere, so holding the board id here gives nothing away. */
+  Game.prototype.save = function () {
+    return JSON.stringify({ used: this.used, scores: this.scores, round: this.round,
+      board: this.board ? this.board.id : null, found: this.found, guesses: this.guesses, endsAt: this.endsAt });
+  };
   Game.prototype.load = function (json) {
-    try { var o = JSON.parse(json || "{}"); this.used = o.used || {}; this.scores = o.scores || {}; this.round = o.round || 0; } catch (e) {}
+    try {
+      var o = JSON.parse(json || "{}"); this.used = o.used || {}; this.scores = o.scores || {}; this.round = o.round || 0;
+      var b = null;
+      if (o.board) { for (var k = 0; k < this.boards.length; k++) { if (this.boards[k].id === o.board) { b = this.boards[k]; break; } } }
+      this.board = b; this.found = b ? (o.found || {}) : {}; this.guesses = b ? (o.guesses || {}) : {}; this.endsAt = b ? (+o.endsAt || 0) : 0;
+    } catch (e) {}
+  };
+  /* The public messages that put a restored board back on the TV and phones: the board (no answers)
+     and one reveal per answer already found. Null when no board is in play. */
+  Game.prototype.replay = function () {
+    if (!this.board) return null;
+    var b = this.board, out = [{ t: "ta_board", round: this.round, q: b.q, n: b.answers.length,
+      secs: Math.max(0, Math.ceil((this.endsAt - this.now()) / 1000)), endsAt: this.endsAt, name: NAME }];
+    for (var i = 0; i < b.answers.length; i++) {
+      if (this.found[i] !== undefined) out.push({ t: "ta_reveal", i: i, a: b.answers[i].a, pts: b.answers[i].pts, by: this.found[i] });
+    }
+    return out;
   };
 
   root.PRGame = { Game: Game, NAME: NAME, GUESSES_PER_BOARD: GUESSES_PER_BOARD };

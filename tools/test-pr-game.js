@@ -35,6 +35,17 @@ r = g.guess('p2', 'Jo', 'beer');
 ok('scores carry across boards', g.scores.p2.pts === 38 + 34, JSON.stringify(g.scores.p2));
 var saved = g.save(), g2 = new window.PRGame.Game({ now: function(){ return clock; }, boards: [board] }); g2.load(saved);
 ok('a console reload keeps the scores and the round', g2.scores.p2.pts === 72 && g2.round === 2);
+/* Reloaded MID-BOARD: the same board comes back, with what was found and each phone's guesses left. */
+var g3 = new window.PRGame.Game({ now: function(){ return clock; } }); g3.load(g.save());
+ok('a reload mid-board brings back the board in play', !!g3.board && g3.board.q === pub2.q && g3.endsAt === g.endsAt);
+ok('and each phone\'s guesses left', g3.guesses.p2 && g3.guesses.p2.left === 2);
+var back = g3.replay();
+ok('the replay is the board (no answers) and only what was FOUND', back[0].t === 'ta_board' && !('answers' in back[0]) &&
+   back.length === 1 + Object.keys(g.found).length && back.slice(1).every(function(m){ return m.t === 'ta_reveal' && g.found[m.i] !== undefined; }));
+r = g3.guess('p2', 'Jo', 'beer');
+ok('an answer found before the reload stays found', r.result.why === 'already');
+g3.endBoard(); var g4 = new window.PRGame.Game(); g4.load(g3.save());
+ok('between boards there is nothing to replay', g4.board === null && g4.replay() === null);
 ok('the name lives in one place', window.PRGame.NAME === 'Punters Reckon');
 print('\n' + (ran - bad) + ' of ' + ran + ' checks passed');
 if (bad) throw new Error(bad + ' punters reckon checks failed');

@@ -197,7 +197,7 @@ print("10. EVERY TEAM CAN SEE ITSELF (finding 13)");
 pass("the TV pages through the whole board", screen.indexOf("function renderBoardPaged(") > 0);
 pass("paging stops the moment another layer shows, so it cannot paint over a question",
      screen.indexOf('if(which!=="tvBoard") stopBoardPaging();') > 0);
-pass("the host board scrolls the full list rather than stopping at eight", host.indexOf("All \"+G.board.length+\" teams") > 0);
+pass("the host board scrolls the full list rather than stopping at eight", host.indexOf("All \"+B.length+\" teams") > 0 && host.indexOf("for(var i=0;i<B.length;i++)") > 0);   // B is the board being shown (trivia, or a Punters Reckon night)
 
 print("");
 print("11. THE NIGHT IS NAMED ON THE WALL (finding 15)");

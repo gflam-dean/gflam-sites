@@ -264,11 +264,11 @@
   "counted_by": "lines"
  },
  "tools/test-pr-game.js": {
-  "checks": 16,
+  "checks": 21,
   "counted_by": "lines"
  },
  "tools/test-pr-round.js": {
-  "checks": 15,
+  "checks": 20,
   "counted_by": "lines"
  },
  "tools/test-print-problem.js": {
