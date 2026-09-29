@@ -1754,7 +1754,7 @@
          wall. The venue saw it work on the advertising loop and not "in the games", because the
          four game screens are each on their own game-namespaced channel. */
       var codes = [ VP.venueCode(slug) ];
-      ["trivia","musical","raffle","members"].forEach(function(g){ codes.push(VP.venueCode(g + "-" + slug)); });
+      ["trivia","musical","raffle","members","jag"].forEach(function(g){ codes.push(VP.venueCode(g + "-" + slug)); });
       codes.forEach(function(code){
         var ch = c.channel("vp-" + code, { config:{ broadcast:{ self:false } } });
         // Always let go, joined or not. Unsubscribing only on the happy path left a channel

@@ -176,6 +176,9 @@ RUN ON SYDNEY 27 Sep 2026; proven live on test-bravo (event keys: deferred, lead
 Rollback: re-run 93.
 
 `venueplay-95-jag-the-joker.sql`: on branch `feature/jag-joker` only. NOT RUN. Number claimed so nothing else takes it.
+Reworked in place 30 Sep 2026 (still NOT RUN): adds `vp_jag_log`, frozen turns/log/secrets (UPDATE and DELETE, cascade
+from a deleted venue let through), a guard on the game row's fingerprint fields, the state check inside every play
+(`vp_jag_gate`), one card a trading night, owner-only close with a reason, jackpot carry, and `vp_jag_public`.
 
 `venueplay-96-double-points-final-round.sql`: `vp_venue_settings.trivia_double_points` + `trivia_double_last`, and
 `vp_host_reveal` (identical to 94 otherwise) scores a correct answer twice, speed bonus included, when the question's

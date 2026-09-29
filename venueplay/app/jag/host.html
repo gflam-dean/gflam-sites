@@ -9,36 +9,45 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
-  :root{ --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A; --pink:#FF1F8E; --gold:#FFC24B; --win:#35D07F;
+  :root{ --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A; --pink:#FF1F8E; --gold:#FFC24B; --win:#35D07F; --roll:#FFB020;
          --text:#E7E7EC; --muted:#9A9AA4; --faint:#6C6C76; --line:rgba(255,255,255,0.10); --bad:#FF5A6A; }
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--ink);color:var(--text);font-family:'Manrope',system-ui,sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh}
   .wrap{max-width:980px;margin:0 auto;padding:18px 16px 60px}
-  .top{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+  .top{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
   .top h1{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:28px;letter-spacing:.02em}
   .top h1 b{color:var(--pink);font-weight:400}
-  .pill{margin-left:auto;font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:5px 11px}
+  .navbtn{background:none;border:1px solid var(--line);border-radius:8px;padding:5px 11px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;white-space:nowrap;text-decoration:none;min-height:44px;display:inline-flex;align-items:center}
+  .who{margin-left:auto;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
+  .dot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
   .panel{background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
   .lbl{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--muted);margin-bottom:8px}
   .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
   .row > div{flex:1 1 160px}
   label{display:block;font-size:13px;color:var(--muted);margin-bottom:5px}
+  label.tick{display:flex;gap:8px;align-items:center;margin-top:10px;color:var(--text)}
+  label.tick input{width:auto}
   input{width:100%;background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:11px 12px;font:inherit;font-size:16px}
-  button{border:0;border-radius:10px;padding:12px 16px;font:inherit;font-weight:700;cursor:pointer;background:var(--pink);color:#fff}
+  button{border:0;border-radius:10px;padding:12px 16px;font:inherit;font-weight:700;cursor:pointer;background:var(--pink);color:#fff;min-height:44px}
   button.sec{background:var(--ink-3);color:var(--text);border:1px solid var(--line)}
   button.warn{background:#5A1020;color:#FFE4E9}
   button:disabled{opacity:.5;cursor:default}
   .note{font-size:13px;color:var(--muted);line-height:1.55}
-  .mono{font-family:'JetBrains Mono',monospace}
+  .mono{font-family:'JetBrains Mono',monospace;overflow-wrap:anywhere}
   .jack{font-family:'Anton',sans-serif;font-size:44px;color:var(--gold);line-height:1}
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:7px}
   .card{aspect-ratio:3/4;border-radius:8px;border:1px solid var(--line);background:linear-gradient(160deg,#2A0F1E,#17171A);
-        color:var(--text);font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:17px;padding:0}
+        color:var(--text);font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:17px;padding:0;min-height:0}
   .card.sel{outline:3px solid var(--pink);outline-offset:1px}
   .card.gone{background:#101012;color:var(--faint);text-decoration:line-through;cursor:default}
   .card.joker{background:var(--gold);color:#1a1200;text-decoration:none}
   .result{font-family:'Anton',sans-serif;font-size:26px;margin-top:6px}
   .result.win{color:var(--gold)}
+  .confirm{position:fixed;inset:0;background:rgba(5,5,6,.82);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+  .confirm .box{background:var(--ink-2);border:1px solid var(--pink);border-radius:16px;padding:22px;max-width:460px;width:100%}
+  .confirm .q{font-family:'Anton',sans-serif;font-size:30px;line-height:1.1;margin-bottom:8px}
+  .confirm .row{margin-top:16px}
   .hist{list-style:none;font-size:14px}
   .hist li{padding:7px 0;border-bottom:1px solid var(--line);display:flex;gap:10px}
   .hist .c{font-family:'JetBrains Mono',monospace;color:var(--muted);min-width:64px}
@@ -49,7 +58,12 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="top"><h1>Jag the <b>Joker</b></h1><span class="pill" id="statusText">Loading</span></div>
+  <div class="top">
+    <button type="button" class="navbtn" id="toAdsBtn" title="Finish and put the venue ads back on the TV">End game</button>
+    <a class="navbtn" href="/app" title="Back to games">&#8592; Games</a>
+    <h1>Jag the <b>Joker</b></h1>
+    <span class="who"><span class="dot" id="statusDot"></span> <span id="statusText">Loading</span></span>
+  </div>
   <div class="err hidden" id="errBar"></div>
 
   <div class="panel hidden" id="signinView"><p class="note" id="signinSub">Sign in with your venue host login.</p>
@@ -66,6 +80,10 @@
         <div><label for="jDeck">Cards on the board (10 to 100)</label><input id="jDeck" type="number" min="10" max="100" value="52"></div>
         <div><label for="jPot">Starting jackpot ($)</label><input id="jPot" type="number" min="0" step="1" value="500"></div>
       </div>
+      <div class="hidden" id="carryWrap">
+        <p class="note" style="margin-top:12px" id="carryNote"></p>
+        <label class="tick hidden" id="noCarryWrap"><input type="checkbox" id="noCarry"> Start fresh instead, without the carried jackpot (owner only)</label>
+      </div>
       <p class="note" style="margin:12px 0">The Joker's card is picked at random by the VenuePlay server the moment you press start,
         and sealed. Nobody can see or move it, including us. A fingerprint of it goes on the screen straight away,
         so when the Joker is found everyone can check it was there from the start.</p>
@@ -81,16 +99,19 @@
         <div><div class="lbl" id="gName">Jag the Joker</div><div class="jack" id="gPot">$0</div>
           <div class="note" id="gLeft"></div></div>
         <div style="flex:0 1 auto" id="potEdit"><label for="potIn">Jackpot now ($)</label>
-          <div class="row"><input id="potIn" type="number" min="0" step="1" style="max-width:140px"><button class="sec" id="potSave">Save</button></div></div>
+          <div class="row"><input id="potIn" type="number" min="0" step="1" style="max-width:140px"><button class="sec" id="potSave">Save</button></div>
+          <p class="note" id="potNote" style="margin-top:6px">Any host can raise it. Only an owner or manager can lower it. Every change is logged.</p></div>
       </div>
     </div>
 
     <div class="panel" id="turnPanel">
       <div class="lbl">Tonight's pick</div>
       <div class="row">
-        <div><label for="whoIn">Ticket holder's name (on this console only, never on the screen)</label><input id="whoIn" maxlength="60" placeholder="e.g. Sam B."></div>
+        <div><label for="whoIn">Winner's name or ticket number (on this console only, never on the screen)</label><input id="whoIn" maxlength="60" placeholder="e.g. Sam B. or ticket 142"></div>
         <div style="flex:0 1 auto"><button id="turnBtn" disabled>Tap a card first</button></div>
       </div>
+      <p class="note hidden" id="tonightNote" style="margin-top:10px">A card has already been turned tonight. One card a night: the next is after 2am.</p>
+      <label class="tick hidden" id="overWrap"><input type="checkbox" id="overIn"> Turn another card tonight anyway (owner or manager, logged)</label>
       <div class="result" id="result"></div>
     </div>
 
@@ -100,22 +121,36 @@
       <div class="lbl">Proof the Joker never moves</div>
       <p class="note">Fingerprint: <span class="mono" id="gCommit"></span></p>
       <p class="note" style="margin-top:6px">Anyone can check it at <a id="checkLink" target="_blank" rel="noopener" href="/jag-check">venueplay.com.au/jag-check</a>.
-        TV link: <a id="tvLink" target="_blank" rel="noopener" href="/app/jag/screen">open the board on the TV</a>.</p>
+        The board is on the venue TV at <a id="tvLink" target="_blank" rel="noopener" href="/tv">your usual TV link</a> while this console is open.</p>
     </div>
 
     <div class="panel"><div class="lbl">Cards turned</div><ul class="hist" id="hist"></ul></div>
 
     <div class="panel hidden" id="closePanel">
-      <div class="lbl">Stop running it</div>
-      <p class="note" style="margin-bottom:10px">Ends this jackpot with no winner and shows where the Joker was, so the room can check it. Owners and managers only.</p>
-      <button class="warn" id="closeBtn">End this jackpot</button>
+      <div class="lbl">End this jackpot early</div>
+      <p class="note" style="margin-bottom:10px">Ends it with no winner and shows where the Joker was, so the room can check it.
+        The jackpot is not kept: it carries into the next game. Owners only. Your reason is shown on the public check page.</p>
+      <label for="closeWhy">Reason</label><input id="closeWhy" maxlength="200" placeholder="e.g. Closing for renovations until March">
+      <button class="warn" id="closeBtn" style="margin-top:10px">End this jackpot</button>
     </div>
     <div class="panel hidden" id="againPanel"><button id="againBtn">Start a new jackpot</button></div>
   </div>
 </div>
 
+<!-- One confirm for everything the room will see and nobody can take back. Not a browser
+     confirm(): those block a kiosk tablet. -->
+<div class="confirm hidden" id="confirm" role="dialog" aria-modal="true" aria-labelledby="confirmText">
+  <div class="box">
+    <div class="q" id="confirmText"></div>
+    <p class="note" id="confirmSub"></p>
+    <div class="row"><button class="sec" id="confirmNo">Cancel</button><button id="confirmYes">Yes</button></div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../vp-session.js"></script>
+<script src="/app/vp-sign.js"></script>
+<script src="/app/vp-channel.js"></script>
 <script>
 (function(){
   "use strict";
@@ -132,7 +167,9 @@
   var client=supabase.createClient(SUPA_URL, SUPA_ANON);
   if(window.VP){ VP.useClient(client); }
 
-  var G={ venueId:"", slug:"", canManage:false, board:null, pick:0, armed:0, busy:false };
+  var G={ venueId:"", slug:"", code:"", role:"", isAdmin:false, board:null, carry:null, pick:0, busy:false, sentKey:"" };
+  function canManage(){ return G.isAdmin || G.role==="owner" || G.role==="manager"; }
+  function isOwner(){ return G.isAdmin || G.role==="owner"; }   // vp_host_staff hands an HQ admin the owner role
 
   function token(){ var c=(window.VP&&VP.getClient)?VP.getClient():client;
     return c.auth.getSession().then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; }); }
@@ -148,25 +185,88 @@
         function(){ clearTimeout(to); throw new Error("The game server did not answer. Check the venue wifi and try again."); });
     }).then(readApi); }
 
+  /* ---- the venue TV ----
+     The console is what puts Jag on the wall: it joins the venue's signed Jag channel the way the
+     raffle console does, says mode:"jag" so /tv embeds /app/jag/screen, and pushes the board on
+     every change. The screen polls the Worker only slowly, as a fallback. What goes over the
+     channel is the PUBLIC board, the same shape /jag/board serves: never a name typed here. */
+  function vpHostToken(){ return (window.VP && VP.getClient ? VP.getClient().auth.getSession() : Promise.resolve(null)).then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; }).catch(function(){ return ""; }); }
+  var ch=null, subscribed=false, sendQueue=[];
+  function rawSend(p){ if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:p }); } else { sendQueue.push(p); } }
+  function send(obj){ if(window.VPSign){ VPSign.signSend(obj, rawSend); } else { rawSend(obj); } }
+  function flushQueue(){ while(sendQueue.length && ch){ ch.send({ type:"broadcast", event:"msg", payload:sendQueue.shift() }); } }
+  function publicBoard(b){
+    if(!b) return null;
+    var p={}; for(var k in b){ if(k!=="venue_id" && k!=="turns") p[k]=b[k]; }
+    p.turns=(b.turns||[]).map(function(t){ return { card:t.card, is_joker:t.is_joker, jackpot_cents:t.jackpot_cents, turned_at:t.turned_at }; });
+    return p;
+  }
+  function sendState(){ G.sentKey=JSON.stringify(publicBoard(G.board)); send({ t:"state", board:publicBoard(G.board) }); }
+
+  var _leaving=false, _closed=false;
+  function openChannel(code){
+    if(ch){ var old=ch; ch=null; subscribed=false; try{ if(old.unsubscribe) old.unsubscribe(); else client.removeChannel(old); }catch(e){} }
+    _closed=false;
+    ch=window.VPChannel ? VPChannel.keep(client, "vp-"+code, { config:{ broadcast:{ self:false } } }) : client.channel("vp-"+code, { config:{ broadcast:{ self:false } } });   // same convention as raffle so the unified TV finds it
+    var mine=ch;
+    ch.on("broadcast", { event:"msg" }, function(e){ onPair(e.payload); });
+    ch.subscribe(function(status){
+        if(mine!==ch) return;   // a replaced channel closing is not this console's link going down
+        if(status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") subscribed = false;
+        if(status === "CLOSED") _closed = true;
+        if(status !== "SUBSCRIBED" && _leaving) return;   // the page is going: nothing to tell the host
+      if(status==="SUBSCRIBED"){
+        subscribed=true; send({ t:"host_here" }); send({ t:"mode", mode:"jag" }); flushQueue();   // put the Jag board on the unified /tv
+        $("statusDot").classList.remove("on"); $("statusText").textContent="Waiting for screen";
+      } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){
+        $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting";
+      }
+    });
+  }
+  // the screen announces itself; on a fresh (re)load we re-announce and replay the board
+  function onPair(m){
+    if(!m||!m.t) return;
+    if(m.t==="tv_here"){
+      $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
+      if(m.hello){ send({ t:"host_here" }); send({ t:"mode", mode:"jag" }); sendState(); }
+    }
+  }
+
+  /* ---- the trading night, 2am to 2am Brisbane: the same clock as the Worker's brisbaneNightKey
+     and migration 95's vp_jag_night, so the console says "one a night" when the server will. */
+  function nightKey(ms){ return new Date(ms + 8*60*60*1000).toISOString().slice(0,10); }
+  function turnedTonight(b){ var k=nightKey(Date.now()); return (b.turns||[]).some(function(t){ return nightKey(Date.parse(t.turned_at))===k; }); }
+  function savedPot(){ return (G.board && G.board.jackpot_cents) || 0; }
+  function typedPot(){ var v=$("potIn").value; return v==="" ? null : Math.round(Number(v)*100); }
+
   function turnedMap(b){ var m={}; (b.turns||[]).forEach(function(t){ m[t.card]=t; }); return m; }
+  function lastTurnLine(){
+    var b=G.board, r=$("result"); if(!b || r.textContent) return;
+    var t=(b.turns||[])[(b.turns||[]).length-1]; if(!t) return;
+    var when=new Date(t.turned_at).toLocaleDateString("en-AU",{weekday:"short",day:"numeric",month:"short"});
+    if(t.is_joker){ r.className="result win"; r.textContent="JOKER on card "+t.card+" ("+when+"). They win "+money(t.jackpot_cents)+"."; }
+    else { r.className="result"; r.textContent="Last card: "+t.card+" ("+when+"), not the Joker."; }
+  }
 
   function render(){
     var b=G.board;
-    show("startView", !b || b.status!=="active");
-    show("gameView", !!b);
-    if(!b){ show("startView", true); return; }
-    var active=b.status==="active", turned=turnedMap(b), left=b.deck_size-(b.turns||[]).length;
-    show("startView", false);
+    var showStart = !b || (b.status!=="active" && G.fresh);
+    show("startView", showStart); show("gameView", !!b && !showStart);
+    show("carryWrap", !!G.carry); show("noCarryWrap", !!G.carry && isOwner());
+    if(G.carry) $("carryNote").textContent="The last jackpot ended early at "+money(G.carry.jackpot_cents)+". It carries into this one: the new jackpot starts at "+money(G.carry.jackpot_cents)+" or whatever you enter, whichever is more.";
+    if(!b || showStart) return;
+    var active=b.status==="active", turned=turnedMap(b), left=b.deck_size-(b.turns||[]).length, tonight=active && turnedTonight(b);
     $("gName").textContent=b.name;
     $("gPot").textContent=money(b.jackpot_cents);
     $("gLeft").textContent = active ? (left+" cards still face down. The Joker is one of them.")
-      : (b.status==="won" ? "The Joker was found on card "+b.revealed_spot+"." : "Ended with no winner. The Joker was on card "+b.revealed_spot+".");
+      : (b.status==="won" ? "The Joker was found on card "+b.revealed_spot+"." : "Ended early. The Joker was on card "+b.revealed_spot+". Reason: "+(b.closed_reason||""));
     show("potEdit", active); show("turnPanel", active);
-    show("closePanel", active && G.canManage); show("againPanel", !active);
+    show("tonightNote", tonight); show("overWrap", tonight && canManage());
+    show("closePanel", active && isOwner()); show("againPanel", !active);
     if(document.activeElement!==$("potIn")) $("potIn").value=Math.round((b.jackpot_cents||0)/100);
     $("gCommit").textContent=b.commitment;
     $("checkLink").href="/jag-check?venue="+encodeURIComponent(G.slug);
-    $("tvLink").href="/app/jag/screen?venue="+encodeURIComponent(G.slug);
+    $("tvLink").href="/tv?venue="+encodeURIComponent(G.slug);
     var h="";
     for(var i=1;i<=b.deck_size;i++){
       var t=turned[i], cls="card"+(t?(t.is_joker?" joker":" gone"):"")+(!active && b.revealed_spot===i?" joker":"")+(G.pick===i?" sel":"");
@@ -175,83 +275,153 @@
     $("grid").innerHTML=h;
     var hist=(b.turns||[]).slice().reverse().map(function(t){
       return '<li><span class="c">Card '+t.card+'</span><span>'+(t.is_joker?"<b>JOKER</b> ":"No joker ")+
-        (t.winner_name?esc(t.winner_name)+" ":"")+'<span class="note">'+money(t.jackpot_cents)+", "+
+        (t.winner_name?esc(t.winner_name)+" ":"")+(t.overridden?'<span class="note">(second card that night) </span>':"")+'<span class="note">'+money(t.jackpot_cents)+", "+
         esc(new Date(t.turned_at).toLocaleDateString("en-AU",{day:"numeric",month:"short"}))+'</span></span></li>'; }).join("");
     $("hist").innerHTML = hist || '<li class="note">None yet.</li>';
+    lastTurnLine();
     paintTurnBtn();
   }
   function paintTurnBtn(){
-    var btn=$("turnBtn");
+    var btn=$("turnBtn"), b=G.board;
+    if(b && b.status==="active" && turnedTonight(b) && !$("overIn").checked){ btn.disabled=true; btn.textContent="One card a night"; return; }
     if(!G.pick){ btn.disabled=true; btn.textContent="Tap a card first"; return; }
     btn.disabled=G.busy;
-    btn.textContent = G.armed===G.pick ? "Tap again to turn card "+G.pick : "Turn card "+G.pick;
+    btn.textContent="Turn card "+G.pick;
   }
+
+  /* THE CONFIRM. The old two-tap button was beaten by a double tap: both taps landed before the
+     label changed. So the question is asked in words, naming exactly what the room will see,
+     and Yes does not work for the first second and a half. */
+  var CONFIRM_LOCK_MS=1500, _confirmYes=null, _confirmT=null;
+  function askConfirm(text, sub, yesLabel, onYes){
+    $("confirmText").textContent=text; $("confirmSub").textContent=sub||"";
+    var y=$("confirmYes"); y.textContent=yesLabel||"Yes"; y.disabled=true;
+    _confirmYes=onYes; show("confirm", true);
+    clearTimeout(_confirmT); _confirmT=setTimeout(function(){ y.disabled=false; }, CONFIRM_LOCK_MS);
+  }
+  function closeConfirm(){ clearTimeout(_confirmT); _confirmYes=null; show("confirm", false); }
+  $("confirmNo").addEventListener("click", closeConfirm);
+  $("confirmYes").addEventListener("click", function(){
+    if($("confirmYes").disabled || !_confirmYes) return;
+    var f=_confirmYes; closeConfirm(); f();
+  });
+  function confirmOpen(){ return !$("confirm").classList.contains("hidden"); }
 
   function load(){
     return call("GET", "/host/jag?venue_id="+encodeURIComponent(G.venueId)).then(function(d){
-      G.board=d.board||null; G.canManage = G.canManage || d.role==="owner" || d.role==="manager";
+      G.board=d.board||null; G.carry=d.carry||null; G.role=d.role||G.role; G.isAdmin=G.isAdmin||!!d.is_admin;
+      if(!G.board || G.board.status!=="active"){ if(G.carry){ $("jPot").value=Math.round(G.carry.jackpot_cents/100); } }
       clearError(); render();
+      if(JSON.stringify(publicBoard(G.board))!==G.sentKey) sendState();   // a second device changed it: tell the TV
     }).catch(function(e){ hostError("Could not load Jag the Joker: "+e.message); });
   }
+  /* A SECOND DEVICE IS NOT STALE FOR LONG. Two tablets on one jackpot both painted what they had
+     when they opened. Refresh every 30 seconds, but never under a host who is mid-confirm or
+     mid-request, or the board would redraw under their finger. */
+  setInterval(function(){ if(G.venueId && !G.busy && !confirmOpen() && document.visibilityState!=="hidden") load(); }, 30000);
 
   $("grid").addEventListener("click", function(ev){
     var el=ev.target.closest && ev.target.closest("[data-card]"); if(!el || el.disabled) return;
-    G.pick=+el.getAttribute("data-card"); G.armed=0; $("result").textContent=""; render();
+    G.pick=+el.getAttribute("data-card"); $("result").textContent=""; render();
   });
-  // Two taps, because a turned card cannot be turned back and the room is watching.
+  $("overIn").addEventListener("change", paintTurnBtn);
   $("turnBtn").addEventListener("click", function(){
     if(!G.pick || G.busy || !G.board) return;
-    if(G.armed!==G.pick){ G.armed=G.pick; paintTurnBtn(); return; }
+    var who=$("whoIn").value.trim();
+    if(!who) return hostError("Enter the winner's name or ticket number first.");
+    var card=G.pick, pot=savedPot(), typed=typedPot();
+    var sub = typed!==null && typed!==pot ? "The "+money(typed)+" in the jackpot box is not saved. This card is for the saved "+money(pot)+"." : "For "+who+". The room sees it straight away and it cannot be undone.";
+    askConfirm("Turn card "+card+" for "+money(pot)+"?", sub, "Turn card "+card, function(){ doTurn(card, who); });
+  });
+  function doTurn(card, who){
     G.busy=true; paintTurnBtn();
-    var pot=$("potIn").value===""?null:Math.round(Number($("potIn").value)*100);
-    call("POST", "/host/jag/turn", { jag_id:G.board.id, card:G.pick, winner_name:$("whoIn").value.trim(), jackpot_cents:pot })
+    call("POST", "/host/jag/turn", { jag_id:G.board.id, card:card, winner_name:who, override:$("overIn").checked })
       .then(function(d){
-        var r=$("result"), card=G.pick;
-        G.board=d.board; G.pick=0; G.armed=0; $("whoIn").value="";
-        if(d.is_joker){ r.className="result win"; r.textContent="JOKER on card "+card+"! They win "+money(G.board.jackpot_cents)+"."; }
+        var r=$("result");
+        G.board=d.board; G.pick=0; $("whoIn").value=""; $("overIn").checked=false;
+        var last=(G.board.turns||[])[(G.board.turns||[]).length-1]||{};
+        if(d.is_joker){ r.className="result win"; r.textContent="JOKER on card "+card+"! They win "+money(last.jackpot_cents)+"."; }
         else { r.className="result"; r.textContent="Card "+card+": not the Joker. The jackpot carries."; }
+        G.sentKey=JSON.stringify(publicBoard(G.board));
+        send({ t:"turn", card:card, is_joker:!!d.is_joker, jackpot_cents:last.jackpot_cents, board:publicBoard(G.board) });
         clearError();
       })
-      .catch(function(e){ G.armed=0; hostError(e.message); return load(); })
+      .catch(function(e){ hostError(e.message); return load(); })
       .then(function(){ G.busy=false; render(); });
-  });
+  }
   $("potSave").addEventListener("click", function(){
-    var v=Math.round(Number($("potIn").value)*100);
+    var v=typedPot();
     if(!(v>=0)) return hostError("Enter the jackpot in dollars.");
+    if(v<savedPot() && !canManage()) return hostError("Only an owner or manager can lower the jackpot.");
     call("POST", "/host/jag/jackpot", { jag_id:G.board.id, jackpot_cents:v })
-      .then(function(d){ G.board=d.board; clearError(); render(); }).catch(function(e){ hostError(e.message); });
+      .then(function(d){ G.board=d.board; clearError(); render(); sendState(); }).catch(function(e){ hostError(e.message); });
   });
   $("startBtn").addEventListener("click", function(){
     var deck=Math.round(Number($("jDeck").value)), pot=Math.round(Number($("jPot").value)*100);
     if(!(deck>=10 && deck<=100)) return hostError("The board needs between 10 and 100 cards.");
     if(!(pot>=0)) return hostError("Enter the starting jackpot in dollars.");
-    $("startBtn").disabled=true;
-    call("POST", "/host/jag/start", { venue_id:G.venueId, name:$("jName").value.trim(), deck_size:deck, jackpot_cents:pot })
-      .then(function(d){ G.board=d.board; clearError(); render(); })
-      .catch(function(e){ hostError(e.message); })
-      .then(function(){ $("startBtn").disabled=false; });
+    var carry = !!G.carry && !$("noCarry").checked;
+    if(carry) pot=Math.max(pot, G.carry.jackpot_cents);
+    askConfirm(deck+" cards, "+money(pot)+" jackpot, start?", "The Joker is sealed the moment you say yes. The board, the number of cards and the fingerprint cannot be changed after that.",
+      "Start it", function(){
+        $("startBtn").disabled=true;
+        call("POST", "/host/jag/start", { venue_id:G.venueId, name:$("jName").value.trim(), deck_size:deck, jackpot_cents:pot, carry:carry })
+          .then(function(d){ G.board=d.board; G.carry=null; G.fresh=false; $("result").textContent=""; clearError(); render(); send({ t:"mode", mode:"jag" }); sendState(); })
+          .catch(function(e){ hostError(e.message); })
+          .then(function(){ $("startBtn").disabled=false; });
+      });
   });
-  var closeArmed=false;
   $("closeBtn").addEventListener("click", function(){
-    if(!closeArmed){ closeArmed=true; $("closeBtn").textContent="Tap again to end it with no winner"; return; }
-    closeArmed=false; $("closeBtn").textContent="End this jackpot";
-    call("POST", "/host/jag/close", { jag_id:G.board.id })
-      .then(function(d){ G.board=d.board; clearError(); render(); }).catch(function(e){ hostError(e.message); });
+    var why=$("closeWhy").value.trim();
+    if(why.length<5) return hostError("Say why the jackpot is ending. It is shown on the public check page.");
+    askConfirm("End this jackpot with no winner?", "The "+money(savedPot())+" carries into the next game. The Joker's card is shown to the room, with your reason: "+why,
+      "End it", function(){
+        call("POST", "/host/jag/close", { jag_id:G.board.id, reason:why })
+          .then(function(d){ G.board=d.board; $("closeWhy").value=""; clearError(); load(); }).catch(function(e){ hostError(e.message); });
+      });
   });
-  $("againBtn").addEventListener("click", function(){ show("gameView", false); show("startView", true); });
+  $("againBtn").addEventListener("click", function(){ G.fresh=true; render(); });
 
   if(window.VP){
     VP.ready().then(function(ctx){
       if(!ctx.authed){ $("statusText").textContent="Not signed in"; show("signinView", true); return; }
       if(!ctx.currentVenueId){ $("statusText").textContent="No venue"; $("signinSub").textContent="This login is not linked to a venue yet."; show("signinView", true); return; }
       G.venueId=ctx.currentVenueId; G.slug=(ctx.venue && ctx.venue.slug)||"";
-      G.canManage = !!(ctx.isAdmin || ctx.role==="owner" || ctx.role==="manager");
+      G.role=ctx.role||""; G.isAdmin=!!ctx.isAdmin;
       VP.enforceShift();   // the 4h forced sign-out is a compliance control; it applies here too
       if(VP.suspensionBanner) VP.suspensionBanner(ctx);
       $("statusText").textContent="Signed in";
+      if(G.slug && window.VPSign){ VPSign.initHost(VP_GAME_API, G.slug, vpHostToken); }   // this venue's signing key
+      if(G.slug && VP.venueCode){ G.code=VP.venueCode("jag-"+G.slug); openChannel(G.code); }
       load();
     }).catch(function(){ $("signinSub").textContent="Could not check your sign in. Try reloading."; show("signinView", true); });
   } else { $("signinSub").textContent="Sign in helper failed to load. Try reloading."; show("signinView", true); }
+
+  /* GIVE THE TV BACK ON THE WAY OUT, and put the board back when we return: the raffle console's
+     rules, for the raffle console's reasons (see raffle/host.html). */
+  var _lastReassert=0;
+  function reassertOnReturn(){
+    _leaving=false;
+    if(_closed && !subscribed && G.code) openChannel(G.code);   // closed while we were away: it will not rejoin by itself
+    var now=Date.now();
+    if(now-_lastReassert<1200) return;
+    _lastReassert=now;
+    if(G.code){ send({ t:"mode", mode:"jag" }); sendState(); }
+  }
+  window.addEventListener("pageshow", reassertOnReturn);
+  document.addEventListener("visibilitychange", function(){ if(document.visibilityState==="visible") reassertOnReturn(); });
+  window.addEventListener("pagehide", function(){
+    _leaving=true;                            // the socket closing as the page goes is not a dropped link
+    if(G.busy) return;
+    try{ rawSend({ t:"to_ads" }); }catch(e){}   // sync on unload; an async signed send never lands before the page dies
+  });
+  $("toAdsBtn").addEventListener("click", function(){
+    var b=$("toAdsBtn");
+    try{ send({ t:"idle" }); }catch(e){}
+    try{ send({ t:"to_ads" }); }catch(e){}
+    b.textContent="Ads are back on";
+    setTimeout(function(){ b.textContent="End game"; }, 2500);
+  });
 })();
 </script>
 </body>

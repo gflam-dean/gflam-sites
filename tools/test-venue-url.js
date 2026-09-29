@@ -77,7 +77,7 @@ ok("fellBack stays quiet for ?probe=1", fb("?probe=1", "test-alpha") === false &
 // ---- every page: loads the script before it uses it, and has no parser of its own ----
 var PAGES = ["venueplay/tv.html", "venueplay/play.html", "venueplay/app/trivia/screen.html",
              "venueplay/app/musical/screen.html", "venueplay/app/raffle/screen.html",
-             "venueplay/app/members/screen.html"];
+             "venueplay/app/members/screen.html", "venueplay/app/jag/screen.html"];
 function strip(s){ return s.replace(/<!--[\s\S]*?-->/g, " ").replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:"'])\/\/[^\n]*/g, "$1"); }
 var TEXT = {};
 PAGES.forEach(function(p){
@@ -102,7 +102,7 @@ var RUNS = [
   ["?venue=", MEM, true, "/tv?venue="],
   ["", MEM, false, "/tv?venue=" + MEM]
 ];
-["trivia", "musical", "raffle", "members"].forEach(function(g){
+["trivia", "musical", "raffle", "members", "jag"].forEach(function(g){
   var p = "venueplay/app/" + g + "/screen.html";
   var body = lift(TEXT[p], "  var VP_DEMO =", "  var CODE=(function(){");
   ok(p + ": venue code lifted", !!body);

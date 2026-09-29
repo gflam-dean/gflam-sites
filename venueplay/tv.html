@@ -1565,7 +1565,7 @@
       if(venueLogoUrl){ var nt=document.getElementById("venueNameTag"); if(nt) nt.style.display="none"; }
     }catch(e){}
   }
-  var GAME_LABELS={bingo:"Bingo","members-draw":"Members Draw",members_draw:"Members Draw",raffle:"Raffle",trivia:"Trivia","musical-bingo":"Musical Bingo",musical_bingo:"Musical Bingo"};
+  var GAME_LABELS={bingo:"Bingo","members-draw":"Members Draw",members_draw:"Members Draw",raffle:"Raffle",jag:"Jag the Joker",trivia:"Trivia","musical-bingo":"Musical Bingo",musical_bingo:"Musical Bingo"};
   function gameLabel(k){
     if(GAME_LABELS[k]) return GAME_LABELS[k];
     k=String(k||"the game").replace(/[-_]+/g," ");
@@ -2176,7 +2176,7 @@
     // back when realtime did, but the screen silently never followed trivia/musical/raffle/members
     // again for the life of the page. Wait for the client instead of giving up on it.
     if(!client){ setTimeout(unifiedRouter, 3000); return; }
-    var GAMES=["trivia","musical","raffle","members"];
+    var GAMES=["trivia","musical","raffle","members","jag"];   // jag: Jag the Joker (off until the game Worker has JAG_ON=1; a silent channel costs nothing)
     function onGameMode(game){
       if(tvMode==="embed") return;   // a game is already on screen; the embedded screen handles hops between games itself
       /* BINGO IS A GAME TOO. This only ever refused while another game was EMBEDDED, so a live

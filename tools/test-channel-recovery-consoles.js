@@ -16,7 +16,7 @@ show("vp-channel.js loaded", !!window.VPChannel);
 function fakeClient(){ var chans=[]; return { chans:chans, channel:function(name,opts){ var c={ name:name, subs:0, cb:null, sent:[], on:function(a,b,h){ this.h=h; return this; },
     subscribe:function(cb){ this.subs++; this.cb=cb; return this; }, send:function(m){ this.sent.push(m); }, unsubscribe:function(){ if(this.cb) this.cb("CLOSED"); } }; chans.push(c); return c; },
   removeChannel:function(c){ if(c.cb) c.cb("CLOSED"); } }; }
-["raffle","members"].forEach(function(game){
+["raffle","members","jag"].forEach(function(game){
   print("\n== "+game+" console ==");
   var src=readFile("venueplay/app/"+game+"/host.html");
   var body=lift(src,"openChannel"); show("openChannel() lifted", !!body);

@@ -132,7 +132,7 @@
   "counted_by": "lines"
  },
  "tools/test-channel-recovery-consoles.js": {
-  "checks": 21,
+  "checks": 30,
   "counted_by": "lines"
  },
  "tools/test-channel-recovery-phones.js": {
@@ -184,11 +184,11 @@
   "counted_by": "lines"
  },
  "tools/test-jag-joker.js": {
-  "checks": 35,
+  "checks": 74,
   "counted_by": "lines"
  },
  "tools/test-jag-pages.js": {
-  "checks": 22,
+  "checks": 67,
   "counted_by": "lines"
  },
  "tools/test-library-pull-reaches-the-whole-bank.js": {
@@ -384,7 +384,7 @@
   "counted_by": "lines"
  },
  "tools/test-venue-url.js": {
-  "checks": 101,
+  "checks": 111,
   "counted_by": "lines"
  },
  "tools/test-webhook-retry-is-not-dropped.js": {

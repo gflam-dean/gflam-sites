@@ -28,6 +28,11 @@
   input{width:100%;background:#17171A;border:1px solid var(--line);color:var(--text);border-radius:9px;padding:10px 12px;font:inherit;font-size:16px}
   button{margin-top:12px;border:0;border-radius:10px;padding:12px 16px;font:inherit;font-weight:700;cursor:pointer;background:var(--pink);color:#fff}
   a{color:var(--pink)}
+  .turns{list-style:none;margin:8px 0 0;font-size:14px}
+  .turns li{padding:6px 0;border-bottom:1px solid var(--line);display:flex;gap:10px;flex-wrap:wrap}
+  .turns .mono{min-width:70px}
+  .hist{list-style:none;margin:6px 0 0}
+  .hist li{padding:8px 0;border-bottom:1px solid var(--line)}
 </style>
 </head>
 <body>
@@ -46,6 +51,12 @@
   <div class="box" id="live">
     <div class="lbl" id="liveL">Loading</div>
     <div id="liveBody" class="muted">Looking up the venue's jackpot.</div>
+  </div>
+
+  <div class="box" id="histBox" hidden>
+    <div class="lbl">Past jackpots at this venue</div>
+    <p class="muted">Every jackpot stays checkable after the next one starts.</p>
+    <ul class="hist" id="hist"></ul>
   </div>
 
   <div class="box">
@@ -78,7 +89,17 @@
   function check(id, spot, salt, fp){
     return fingerprint(id, spot, salt).then(function(h){ return h === String(fp).trim().toLowerCase(); });
   }
-  window.__jagCheck = { fingerprint: fingerprint, check: check };
+  /* THE TURNS MUST AGREE WITH THE CARD. The fingerprint proves the Joker's card never moved. It
+     does not prove the room was told the truth each week: a "No Joker" that was really the Joker's
+     card would still leave the fingerprint matching. So every turn is checked against the revealed
+     card too. */
+  function verifyTurns(b){
+    var spot=Number(b.revealed_spot), turns=b.turns||[], bad=[];
+    turns.forEach(function(t){ if(t.is_joker ? Number(t.card)!==spot : Number(t.card)===spot) bad.push(t.card); });
+    if(b.status==="won" && !turns.some(function(t){ return t.is_joker; })) bad.push("no winning card");
+    return { ok: bad.length===0, bad: bad };
+  }
+  window.__jagCheck = { fingerprint: fingerprint, check: check, verifyTurns: verifyTurns };
 
   $("cGo").addEventListener("click", function(){
     var out=$("cOut");
@@ -88,17 +109,33 @@
     }).catch(function(){ out.className="verdict no"; out.textContent="Could not check in this browser."; });
   });
 
+  function money(c){ return "$"+Math.round((c||0)/100).toLocaleString("en-AU"); }
+  function day(iso){ return new Date(iso).toLocaleDateString("en-AU",{day:"numeric",month:"long",year:"numeric"}); }
   var slug=(window.VPVenueURL && VPVenueURL.slug()) || "";
+  var gid=(/[?&]id=([0-9a-fA-F-]{36})(?:&|$)/.exec(location.search)||[])[1]||"";
   if(!slug){ $("liveL").textContent="No venue in the link"; $("liveBody").textContent="Use the link on the venue's screen, or check a fingerprint by hand below."; return; }
-  fetch(API+"/jag/board?venue="+encodeURIComponent(slug), { cache:"no-store" })
+  function link(id){ return "/jag-check?venue="+encodeURIComponent(slug)+(id?"&id="+encodeURIComponent(id):""); }
+  fetch(API+"/jag/board?venue="+encodeURIComponent(slug)+(gid?"&id="+encodeURIComponent(gid):""), { cache:"no-store" })
     .then(function(r){ return r.json().then(function(d){ if(!r.ok) throw new Error(d.error||r.status); return d; }); })
     .then(function(d){
       var b=d.board;
-      $("liveL").textContent=(d.venue||"This venue");
+      $("liveL").textContent=(d.venue||"This venue")+(gid?": a past jackpot":"");
+      var past=(d.history||[]).filter(function(h){ return !b || h.id!==b.id; });
+      if(past.length){
+        $("histBox").hidden=false;
+        $("hist").innerHTML=past.map(function(h){
+          return '<li><a href="'+esc(link(h.id))+'">'+esc(h.name)+'</a>, started '+esc(day(h.created_at))+'. '+
+            (h.status==="won"?"Won, "+money(h.jackpot_cents)+".":h.status==="closed"?"Ended early: "+esc(h.closed_reason||""):"Still running.")+'</li>';
+        }).join("");
+      }
       if(!b){ $("liveBody").textContent="No Jag the Joker jackpot has been run here yet."; return; }
       $("cId").value=b.id; $("cFp").value=b.commitment;
-      var head='<p><b>'+esc(b.name)+'</b>, '+b.deck_size+' cards, started '+esc(new Date(b.created_at).toLocaleDateString("en-AU",{day:"numeric",month:"long",year:"numeric"}))+'.</p>'+
-               '<p class="muted">Fingerprint published at the start:</p><p class="mono">'+esc(b.commitment)+'</p>';
+      var turns=(b.turns||[]).map(function(t){
+        return '<li><span class="mono">Card '+esc(t.card)+'</span><span>'+(t.is_joker?"<b>JOKER</b>":"No Joker")+', '+money(t.jackpot_cents)+', '+esc(day(t.turned_at))+'</span></li>'; }).join("");
+      var head='<p><b>'+esc(b.name)+'</b>, '+b.deck_size+' cards, started '+esc(day(b.created_at))+'.</p>'+
+               (b.carried_from?'<p class="muted">Its jackpot carried over from <a href="'+esc(link(b.carried_from))+'">the jackpot before it</a>, which ended early.</p>':'')+
+               '<p class="muted">Fingerprint published at the start:</p><p class="mono">'+esc(b.commitment)+'</p>'+
+               '<p class="muted" style="margin-top:12px">Cards turned</p><ul class="turns">'+(turns||'<li class="muted">None yet.</li>')+'</ul>';
       if(b.status==="active"){
         $("liveBody").innerHTML=head+'<div class="verdict wait">Still sealed</div><p class="muted">'+
           (b.deck_size-(b.turns||[]).length)+' cards are still face down. When the Joker is found, the card and key appear here and are checked automatically.</p>';
@@ -106,10 +143,13 @@
       }
       $("cSpot").value=b.revealed_spot; $("cSalt").value=b.revealed_salt;
       return check(b.id, b.revealed_spot, b.revealed_salt, b.commitment).then(function(ok){
+        var v=verifyTurns(b);
         $("liveBody").innerHTML=head+
-          '<p>'+(b.status==="won"?"Found on card ":"Ended with no winner. The Joker was on card ")+'<b>'+b.revealed_spot+'</b>.</p>'+
+          (b.status==="closed"?'<p><b>Ended early by the venue owner.</b> Reason given: '+esc(b.closed_reason||"none")+'. Its '+money(b.jackpot_cents)+' jackpot carries into the next game.</p>':'')+
+          '<p>'+(b.status==="won"?"Found on card ":"The Joker was on card ")+'<b>'+esc(b.revealed_spot)+'</b>.</p>'+
           '<p class="muted">Secret key revealed:</p><p class="mono">'+esc(b.revealed_salt)+'</p>'+
-          '<div class="verdict '+(ok?"ok":"no")+'">'+(ok?"Matches: the Joker never moved":"Does not match")+'</div>';
+          '<div class="verdict '+(ok?"ok":"no")+'">'+(ok?"Matches: the Joker never moved":"Does not match")+'</div>'+
+          '<div class="verdict '+(v.ok?"ok":"no")+'">'+(v.ok?"Every card turned agrees with it":"Turns that do not agree: "+esc(v.bad.join(", ")))+'</div>';
       });
     })
     .catch(function(e){ $("liveL").textContent="Could not load"; $("liveBody").textContent=e.message; });

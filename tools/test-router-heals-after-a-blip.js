@@ -79,7 +79,7 @@ Router.start({ client: makeClient(), self: 'trivia', slug: 'the-pub',
 
 print('');
 print('The wall heals itself after a blip');
-check('it watches the four OTHER games from the start', channels.length === 4, channels.map(function (c) { return c.name; }));
+check('it watches the five OTHER games from the start (Jag the Joker is the fifth)', channels.length === 5, channels.map(function (c) { return c.name; }));
 var raffle = live('raffle-the-pub')[0];
 check('including the raffle channel', !!raffle, channels.map(function (c) { return c.name; }));
 

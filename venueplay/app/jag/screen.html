@@ -9,51 +9,71 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
-  :root{ --pink:#FF1F8E; --gold:#FFC24B; --text:#E7E7EC; --muted:#9A9AA4; --faint:#6C6C76; --line:rgba(255,255,255,0.10); }
+  :root{ --pink:#FF1F8E; --gold:#FFC24B; --win:#35D07F; --roll:#FFB020; --text:#E7E7EC; --muted:#9A9AA4; --faint:#6C6C76; --line:rgba(255,255,255,0.10); }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%;overflow:hidden}
   body{background:#050506;color:var(--text);font-family:'Manrope',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
   /* Sized in cqw (a WIDTH unit) and the grid scales with the card count, so a 100-card board
-     and a 20-card board both fit a 16:9 wall. See vp-fit notes: never trust one screen width. */
+     and a 20-card board both fit a 16:9 wall. vp-fit.js scales the layer down if a telly with
+     an odd shape still clips it. */
   .tv{position:fixed;inset:0;container-type:inline-size;display:flex;flex-direction:column;padding:2.2cqw 3cqw;
       background:radial-gradient(1200px 700px at 80% -10%, rgba(255,31,142,.10), transparent 60%), #050506}
   .head{display:flex;align-items:flex-end;gap:3cqw}
   .title{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:4.2cqw;line-height:1;color:#fff}
   .title b{color:var(--pink);font-weight:400}
-  .venue{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:1.3cqw;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-top:.6cqw}
+  .venue{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:1.6cqw;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-top:.6cqw}
   .pot{margin-left:auto;text-align:right}
-  .pot .l{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:1.2cqw;letter-spacing:.2em;color:var(--muted);text-transform:uppercase}
+  .pot .l{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:1.6cqw;letter-spacing:.2em;color:var(--muted);text-transform:uppercase}
   .pot .v{font-family:'Anton',sans-serif;font-size:7cqw;line-height:.95;color:var(--gold);filter:drop-shadow(0 0 18px rgba(255,194,75,.3))}
   .grid{flex:1;min-height:0;display:grid;gap:.7cqw;margin:1.6cqw 0;align-content:stretch}
   .card{min-height:0;border-radius:.6cqw;display:flex;align-items:center;justify-content:center;font-family:'Hanken Grotesk',sans-serif;font-weight:800;
         background:linear-gradient(160deg,#3A1128,#17171A);border:1px solid rgba(255,31,142,.35);color:#fff}
   .card.gone{background:#0E0E10;border-color:var(--line);color:#2E2E34}
   .card.joker{background:var(--gold);color:#1a1200;border-color:var(--gold)}
-  .foot{display:flex;justify-content:space-between;gap:2cqw;font-size:1.15cqw;color:var(--faint)}
-  .foot .mono{font-family:'JetBrains Mono',monospace;color:var(--muted)}
+  /* Read from the back of the room: 1.6cqw is about 30px on a 1920 wall. */
+  .foot{display:flex;align-items:center;justify-content:space-between;gap:2cqw;font-size:1.6cqw;line-height:1.3;color:var(--muted)}
+  .foot .mono{font-family:'JetBrains Mono',monospace;color:var(--text);letter-spacing:.02em}
+  .foot .fp{flex:1;min-width:0}
+  .foot .qr{display:flex;align-items:center;gap:1cqw;text-align:right}
+  .foot canvas{width:7cqw;height:7cqw;border-radius:.4cqw;background:#fff}
   .flip{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(5,5,6,.93);container-type:inline-size;text-align:center}
   .flip .n{font-family:'Hanken Grotesk',sans-serif;font-weight:800;letter-spacing:.2em;text-transform:uppercase;font-size:2.4cqw;color:var(--muted)}
   .flip .big{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:13cqw;line-height:1;margin:1cqw 0}
   .flip .big.win{color:var(--gold)}
   .flip .sub{font-size:2.4cqw;color:var(--text)}
   .msg{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;font-size:2.6cqw;color:var(--muted)}
+  .tv-status{position:absolute;top:2cqw;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.45);border-radius:1cqw;padding:.4cqw 1cqw;display:flex;align-items:center;gap:.7cqw;z-index:6;font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:clamp(8px,1.1cqw,13px);color:var(--muted)}
+  .tv-status[hidden]{display:none}
+  .sdot{width:.8cqw;height:.8cqw;min-width:8px;min-height:8px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
+  .sdot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
   .hidden{display:none!important}
 </style>
 </head>
 <body>
-<div class="tv">
+<div class="tv layer" id="tvBoard">
+  <div class="tv-status" hidden><span class="sdot" id="statusDot"></span><span id="statusText">Connecting</span></div>
   <div class="head">
     <div><div class="title" id="title">Jag the <b>Joker</b></div><div class="venue" id="venue"></div></div>
     <div class="pot hidden" id="pot"><div class="l" id="potL">Jackpot</div><div class="v" id="potV">$0</div></div>
   </div>
   <div class="grid hidden" id="grid"></div>
   <div class="msg" id="msg">Loading the board</div>
-  <div class="foot hidden" id="foot"><span id="left"></span>
-    <span>The Joker was sealed when this jackpot started. Fingerprint <span class="mono" id="fp"></span>, check it at venueplay.com.au/jag-check</span></div>
+  <div class="foot hidden" id="foot">
+    <span id="left"></span>
+    <span class="fp">Sealed at the start. Fingerprint <span class="mono" id="fp"></span></span>
+    <span class="qr"><span>Check it<br>yourself</span><canvas id="qr" width="140" height="140"></canvas></span>
+  </div>
 </div>
-<div class="flip hidden" id="flip"><div class="n" id="flipN"></div><div class="big" id="flipBig"></div><div class="sub" id="flipSub"></div></div>
+<div class="flip layer hidden" id="flip"><div class="n" id="flipN"></div><div class="big" id="flipBig"></div><div class="sub" id="flipSub"></div></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/app/vp-sign.js"></script>
+<script src="/app/vp-channel.js"></script>
+<script src="/app/vp-screen-router.js"></script>
+<script src="/app/vp-fit.js"></script>
 <script src="/app/vp-venueurl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
+<script src="/app/vp-qr.js"></script>
 <script>
 (function(){
   "use strict";
@@ -61,58 +81,181 @@
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   function money(c){ return "$"+Math.round((c||0)/100).toLocaleString("en-AU"); }
   var API='https://venueplay-game.dean-tindale.workers.dev';
-  var SLUG=(window.VPVenueURL && VPVenueURL.slug()) || (new URLSearchParams(location.search).get("venue")||"").toLowerCase();
-  var seen=null, flipT=null;
+  var SUPA_URL='https://ijkzgmdtwtgfkedqspxm.supabase.co';
+  var SUPA_ANON='sb_publishable_9v83FWCSt7Di-jkgTvsMJQ_f6lJPovb';
+  function venueCode(slug){
+    var s=String(slug||"").toLowerCase().replace(/[^a-z0-9]/g,""), h=2166136261>>>0;
+    for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619)>>>0; }
+    var A="ACDEFGHJKMNPQRSTUVWXYZ2345679", out="", x=h||1;
+    for(var j=0;j<6;j++){ x=(Math.imul(x,1103515245)+12345)>>>0; out+=A[x%A.length]; }
+    return out;
+  }
+  /* The venue, the signing gate and the divert guard: the raffle screen's, line for line, so
+     tools/test-venue-url.js runs this copy with the others. */
+  var VP_DEMO = /[?&]demo=1/.test(window.location.search || "");
+  var VENUE_UNREAD=false;                        // set when the address held something we could not read
+  var VENUE_SLUG=(function(){
+    if(VP_DEMO) return "";                       // hermetic: never inherit a real venue
+    var v=window.VPVenueURL ? VPVenueURL.slug(window.location.search||"") : "";
+    if(v){ try{ localStorage.setItem("vpTvVenue", v); }catch(e){} return v; }
+    try{ var s=localStorage.getItem("vpTvVenue"); if(s){ try{ VENUE_UNREAD=!!VPVenueURL.fellBack(window.location.search||"", s); }catch(e){} return s; } }catch(e){}
+    return "";
+  })();
+  var VP_GAME_API='https://venueplay-game.dean-tindale.workers.dev';
+  // Verify host broadcasts (migrations 38/49): vpGate drops forged messages in enforce mode.
+  if(window.VPSign && VENUE_SLUG){ VPSign.initReceiver(VP_GAME_API, VENUE_SLUG); }
+  function vpGate(payload, cb){ if(window.VPSign){ VPSign.gate(payload, cb); } else { cb(payload); } }
+  // ---- divert guard: a venue screen is NEVER a landing page. The only entry is the unified /tv link,
+  //      which hops here (sessionStorage vpTvHop) the moment a game goes on air. A direct or bookmarked
+  //      open is bounced straight to /tv so a screen is only ever the live link. ----
+  if(VENUE_SLUG){
+    var _hop=""; try{ _hop=sessionStorage.getItem("vpTvHop")||""; }catch(e){}
+    if(!_hop){ window.location.replace(VENUE_UNREAD ? "/tv"+window.location.search : "/tv?venue="+encodeURIComponent(VENUE_SLUG)); return; }   // bounce only a genuine cold/bookmarked open
+  }
+  var CODE=(function(){
+    return VENUE_SLUG ? venueCode("jag-"+VENUE_SLUG) : "";   // auto-pair by venue (game-namespaced), the console's channel
+  })();
+
+  var S={ board:null, seen:null, flipT:null, adsT:null, lastHost:0 };
+  var HOST_QUIET_MS=10*60*1000;    // no word from a console for this long: the wall goes back to the venue's ads
+  var AFTER_TURN_MS=3*60*1000;     // and this long after a card has been turned and shown
+  var RECENT_MS=60*1000;           // a card turned this recently is shown full screen even to a screen that just arrived
+  var POLL_MS=30000;               // the fallback read; the board normally arrives over the channel
+
+  function scheduleAdsReturn(ms){ clearTimeout(S.adsT); S.adsT=setTimeout(function(){
+    if(VENUE_SLUG){ window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); }
+  }, ms||HOST_QUIET_MS); }
 
   // Columns chosen so the cards stay as square as the wall allows at any count.
   function cols(n){ var best=1, bestScore=1e9, W=16, H=7.4;
     for(var c=1;c<=n;c++){ var r=Math.ceil(n/c), cw=W/c, ch=H/r, s=Math.abs(Math.log((cw/ch)/0.75)); if(s<bestScore){ bestScore=s; best=c; } }
     return best; }
 
-  function paint(d){
-    var b=d.board; $("venue").textContent=d.venue||"";
-    if(!b){ $("msg").textContent="No Jag the Joker jackpot running here yet."; $("msg").classList.remove("hidden");
+  function sane(b){ return !!b && typeof b==="object" && b.deck_size>=10 && b.deck_size<=100 && Array.isArray(b.turns); }
+  function paint(venue, b){
+    if(venue) $("venue").textContent=venue;
+    if(!sane(b)){ $("msg").textContent="No Jag the Joker jackpot running here yet."; $("msg").classList.remove("hidden");
       ["grid","pot","foot"].forEach(function(id){ $(id).classList.add("hidden"); }); return; }
+    S.board=b;
     $("msg").classList.add("hidden"); ["grid","pot","foot"].forEach(function(id){ $(id).classList.remove("hidden"); });
     $("title").innerHTML=esc(b.name).replace(/Joker/i,'<b>Joker</b>');
     $("potV").textContent=money(b.jackpot_cents);
     $("potL").textContent=b.status==="won"?"Won":"Jackpot";
-    var turned={}; (b.turns||[]).forEach(function(t){ turned[t.card]=t; });
+    var turned={}; b.turns.forEach(function(t){ turned[+t.card]=t; });
     var c=cols(b.deck_size), g=$("grid"), h="";
     g.style.gridTemplateColumns="repeat("+c+",1fr)";
     g.style.gridTemplateRows="repeat("+Math.ceil(b.deck_size/c)+",1fr)";   // fill the wall, cards not strips
     var fs=Math.max(0.9, Math.min(3.2, 60/c));
     for(var i=1;i<=b.deck_size;i++){
-      var t=turned[i], j=(t&&t.is_joker)||(b.status!=="active"&&b.revealed_spot===i);
+      var t=turned[i], j=(t&&t.is_joker)||(b.status!=="active"&&+b.revealed_spot===i);
       h+='<div class="card'+(j?" joker":(t?" gone":""))+'" style="font-size:'+fs+'cqw">'+(j?"JOKER":i)+'</div>';
     }
     g.innerHTML=h;
-    var left=b.deck_size-(b.turns||[]).length;
+    var left=b.deck_size-b.turns.length;
     $("left").textContent = b.status==="active" ? left+" cards left. One of them is the Joker."
-      : (b.status==="won" ? "Found on card "+b.revealed_spot+"." : "This jackpot has ended. The Joker was on card "+b.revealed_spot+".");
-    $("fp").textContent=String(b.commitment||"").slice(0,12);
+      : (b.status==="won" ? "Found on card "+(+b.revealed_spot)+"." : "This jackpot has ended. The Joker was on card "+(+b.revealed_spot)+".");
+    /* 32 characters, not 12. A 12-character prefix is 48 bits, and a room cannot hold the server
+       to a fingerprint it cannot read in full; the whole 64 is on /jag-check, one scan away. */
+    $("fp").textContent=String(b.commitment||"").slice(0,32);
 
-    // A card turned since we last looked goes up full screen for the room.
-    var n=(b.turns||[]).length;
-    if(seen!==null && n>seen){ var last=b.turns[n-1]; flip(last, b); }
-    seen=n;
+    /* A card turned since we last looked goes up full screen for the room. On the FIRST look only
+       a card turned in the last minute does: that is a screen /tv has just put on the wall because
+       a turn was announced, and it would otherwise miss the very thing it was brought up to show.
+       S.seen is also what stops the channel and the fallback poll showing one card twice. */
+    var n=b.turns.length, last=b.turns[n-1];
+    if(last && (S.seen!==null ? n>S.seen : (Date.now()-Date.parse(last.turned_at)) < RECENT_MS)) flip(last, b);
+    S.seen=n;
   }
   function flip(t, b){
-    $("flipN").textContent="Card "+t.card;
+    $("flipN").textContent="Card "+(+t.card);
     var big=$("flipBig"); big.textContent=t.is_joker?"JOKER!":"No Joker"; big.className="big"+(t.is_joker?" win":"");
     $("flipSub").textContent=t.is_joker ? "Winner of "+money(t.jackpot_cents)+". See the host to claim."
                                         : "The jackpot carries: "+money(b.jackpot_cents);
     $("flip").classList.remove("hidden");
-    clearTimeout(flipT); flipT=setTimeout(function(){ $("flip").classList.add("hidden"); }, t.is_joker?30000:9000);
+    var hold=t.is_joker?30000:9000;
+    clearTimeout(S.flipT); S.flipT=setTimeout(function(){ $("flip").classList.add("hidden"); }, hold);
+    scheduleAdsReturn(hold+AFTER_TURN_MS);
   }
+  function drawQr(){
+    if(!VENUE_SLUG || !window.VPQR) return;
+    var url=(window.location.origin||"https://venueplay.com.au")+"/jag-check?venue="+encodeURIComponent(VENUE_SLUG);
+    window.VPQR.draw($("qr"), url, 140);
+  }
+
   function poll(){
-    if(!SLUG){ $("msg").textContent="This screen needs its venue in the address: /app/jag/screen?venue=your-venue"; return; }
-    fetch(API+"/jag/board?venue="+encodeURIComponent(SLUG), { cache:"no-store" })
+    if(!VENUE_SLUG){ $("msg").textContent="This screen needs its venue in the address: /tv?venue=your-venue"; return; }
+    fetch(API+"/jag/board?venue="+encodeURIComponent(VENUE_SLUG), { cache:"no-store" })
       .then(function(r){ return r.json().then(function(d){ if(!r.ok) throw new Error(d.error||r.status); return d; }); })
-      .then(paint)
-      .catch(function(e){ if(seen===null){ $("msg").textContent="Could not load the board: "+e.message; } })
-      .then(function(){ setTimeout(poll, 4000); });
+      .then(function(d){ paint(d.venue, d.board); })
+      .catch(function(e){ if(S.seen===null){ $("msg").textContent="Could not load the board: "+e.message; } })
+      .then(function(){ setTimeout(poll, POLL_MS); });
   }
+
+  // ---- realtime ----
+  /* The Realtime library comes from a CDN. On slow venue wifi it is not here yet when this runs.
+     Say so and get the kiosk back on its own: three tries, then /tv, which has the ad loop and
+     the real watchdog. The raffle screen's recovery, for the raffle screen's reasons. */
+  if(typeof supabase==="undefined" || !supabase.createClient){
+    var _rc=document.createElement("div");
+    _rc.setAttribute("style","position:fixed;inset:0;z-index:99999;display:flex;align-items:center;"+
+      "justify-content:center;background:#0A0A0B;color:#9A9AA4;text-align:center;padding:24px;"+
+      "font:600 24px/1.4 system-ui,-apple-system,sans-serif");
+    _rc.textContent="Reconnecting to VenuePlay…";
+    (document.body||document.documentElement).appendChild(_rc);
+    var _tries=0; try{ _tries=parseInt(sessionStorage.getItem("vpCdnTries")||"0",10)||0; }catch(e){}
+    if(_tries>=3){
+      try{ sessionStorage.removeItem("vpCdnTries"); }catch(e){}
+      if(VENUE_SLUG){ location.replace("/tv?venue="+encodeURIComponent(VENUE_SLUG)); }
+    } else {
+      try{ sessionStorage.setItem("vpCdnTries", String(_tries+1)); }catch(e){}
+      setTimeout(function(){ location.reload(); }, 4000);
+    }
+    throw new Error("VenuePlay: Realtime library not loaded yet");
+  }
+  try{ sessionStorage.removeItem("vpCdnTries"); }catch(e){}   // loaded: reset the retry count
+  var client=supabase.createClient(SUPA_URL, SUPA_ANON);
+  // Follow the night: hop to whatever OTHER game a host puts on air (the shared router).
+  var _router={ seen:function(){} };
+  if(window.VPScreenRouter && VENUE_SLUG){
+    _router=VPScreenRouter.start({
+      client: client, self: "jag", slug: VENUE_SLUG, venueCode: venueCode, gate: vpGate,
+      busy: function(){ return !$("flip").classList.contains("hidden"); }
+    });
+  }
+  var ch=null, tvSubscribed=false;
+  function tvSend(obj){ if(tvSubscribed && ch){ try{ ch.send({ type:"broadcast", event:"msg", payload:obj }); }catch(e){} } }
+  /* SILENT WHILE CONNECTED, LOUD WHILE NOT. Identical in every screen on purpose; the gate
+     checks they stay identical. */
+  function tvStatus(connected){
+    var box=document.querySelector(".tv-status"), dot=$("statusDot"), txt=$("statusText");
+    if(dot) dot.classList.toggle("on", !!connected);
+    if(txt) txt.textContent = connected ? "Connected" : "Reconnecting";
+    if(box) box.hidden = !!connected;
+  }
+  var HOST_TYPES={ host_here:1, state:1, turn:1, idle:1 };
+  function onMsg(m){
+    _router.seen(m);   // only traffic that means a game is ON AIR counts as ours
+    if(!m||!m.t) return;
+    if(m.t==="tv_here") return;                       // our own presence pings
+    if(HOST_TYPES[m.t]){ S.lastHost=Date.now(); tvSend({ t:"tv_here" }); scheduleAdsReturn(HOST_QUIET_MS); }
+    // The host tapped End game or closed the console: back to the venue's ads now.
+    if(m.t==="to_ads"){ if(VENUE_SLUG) window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); return; }
+    if(m.t==="idle"){ scheduleAdsReturn(60000); return; }
+    if(m.t==="state" && m.board){ paint("", m.board); return; }
+    if(m.t==="turn" && m.board){ paint("", m.board); return; }
+  }
+  if(CODE){
+    ch=window.VPChannel ? VPChannel.keep(client, "vp-"+CODE, { config:{ broadcast:{ self:false } } })
+                        : client.channel("vp-"+CODE, { config:{ broadcast:{ self:false } } });   // the console's channel
+    ch.on("broadcast", { event:"msg" }, function(e){ vpGate(e.payload, onMsg); });
+    if(!VP_DEMO) ch.subscribe(function(status){
+      if(status==="SUBSCRIBED"){ tvSubscribed=true; tvSend({ t:"tv_here", hello:true }); tvStatus(true); }
+      else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ tvSubscribed=false; tvStatus(false); }
+    });
+  }
+
+  drawQr();
+  scheduleAdsReturn(HOST_QUIET_MS);
   poll();
 })();
 </script>

@@ -328,6 +328,9 @@
         <button type="button" class="pk" data-game="musical-bingo">Musical Bingo<span class="soon">Name that tune</span></button>
         <button type="button" class="pk" data-game="raffle">Raffle<span class="soon">Prize draw</span></button>
         <button type="button" class="pk" data-game="members-draw">Members Draw<span class="soon">Members jackpot</span></button>
+        <!-- Jag the Joker: built and switched off (feature/jag-joker). Shown only on /app?jag=1 until the
+             state rules are confirmed and the game Worker has JAG_ON=1. -->
+        <button type="button" class="pk hidden" data-game="jag" id="jagTile">Jag the Joker<span class="soon">Weekly jackpot</span></button>
       </div>
     </div>
 
@@ -2652,7 +2655,8 @@
   // Each game runs in its own console. /app is the single front door: Bingo lives here,
   // the others launch their own page (carrying the current venue so a multi-venue host lands
   // on the right one). This is why there is no separate link to remember.
-  var GAME_PATHS={ "trivia":"/app/trivia/host.html", "musical-bingo":"/app/musical/host.html", "raffle":"/app/raffle/host.html", "members-draw":"/app/members/host.html" };
+  var GAME_PATHS={ "trivia":"/app/trivia/host.html", "musical-bingo":"/app/musical/host.html", "raffle":"/app/raffle/host.html", "members-draw":"/app/members/host.html", "jag":"/app/jag/host.html" };
+  if(/[?&]jag=1(?:&|$)/.test(location.search)){ var _jt=document.getElementById("jagTile"); if(_jt) _jt.classList.remove("hidden"); }   // switched off unless asked for, like Punters Reckon's ?pr=1
   function selectGame(game){
     if(game!=="bingo" && GAME_PATHS[game]){
       var q=""; try{ var v=(typeof __ctx!=="undefined"&&__ctx&&__ctx.venue&&__ctx.venue.slug)||""; if(v) q="?venue="+encodeURIComponent(v); }catch(e){}
