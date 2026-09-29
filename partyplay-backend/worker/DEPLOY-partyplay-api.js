@@ -1,5 +1,5 @@
 /* PASTE THIS ONE.
-   Built 28 Sep 2026, 20:27:16   fingerprint b234595c9085
+   Built 30 Sep 2026, 08:59:09   fingerprint c13d54670123
    If that time is not within the last few minutes, close this window and reopen. */
 /* ============================================================================
    PartyPlay Worker: checkout, licences, joining.
@@ -16,7 +16,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '28 Sep 2026, 20:27 · 2fd06f81';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '30 Sep 2026, 09:00 · 19e6e04a';   // tools/stamp-workers.py, do not edit by hand
 /* ---- lib/pp-licence.js, inlined at build time. Edit the file, not this. ---- */
 const PPLicence = (function () {
   const module = { exports: {} };
@@ -522,7 +522,7 @@ async function requireHost(env, code, hostKey) {
 }
 
 const FORMATS = ['bingo90','trivia','musical','draw','howwell','headstails','whohere','photos','truths','playlist',
-                 'charades','guesswho'];
+                 'charades','guesswho','topanswers'];
 
 /* GET /games?code=&key=   POST /games   POST /games/delete
    Building games is NOT limited by the licence window: a host may write questions

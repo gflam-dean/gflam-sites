@@ -177,6 +177,7 @@
 <script src="/lib/pp-quiz.js"></script>
 <script src="/lib/pp-photo.js"></script>
 <script src="/lib/pp-video.js"></script>
+<script src="/lib/pr-phone.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function(){
@@ -425,6 +426,7 @@
      state to guard. Seen 15 Sep 2026 by taking a turn as the actor. */
   var CH = null;  // charades: the word is on THIS phone
   var GW = null;  // guess who: this phone is the guesser, or watching
+  var GM = null;  // great minds: the mounted phone part (lib/pr-phone.js), which keeps its own state
 
   function bingoStart(m){
     var s = load() || {};
@@ -681,11 +683,11 @@
        silently swallowed the television's caption from then on: the guard below sees CH
        still set and returns. Found 15 Sep 2026 by ending a round and looking at the phone. */
     if(m.t === "lobby"){ B = null; Q = null; H = null; T = null; W = null; V = null; PH = null;
-      CH = null; GW = null;
+      CH = null; GW = null; GM = null;
       var s = load()||{}; waiting(s.nickname||"", _ppLive ? "live" : undefined); return; }
     if(m.t === "bingo"){ Q=null; H=null; bingoStart(m); return; }
     if(m.t === "photo"){
-      B=null;Q=null;H=null;T=null;V=null;W=null;CH=null;GW=null;
+      B=null;Q=null;H=null;T=null;V=null;W=null;CH=null;GW=null;GM=null;
       PH={ i:m.i, q:m.q, url:m.url, options:m.options||[], n:m.n, of:m.of, mine:null, correct:null };
       paintPhoto(); return;
     }
@@ -693,7 +695,7 @@
        watch, which also stops them staring at a blank screen wondering whether
        the game has started. */
     if(m.t === "charades"){
-      B=null;Q=null;H=null;T=null;V=null;W=null;PH=null;CH=null;GW=null;
+      B=null;Q=null;H=null;T=null;V=null;W=null;PH=null;CH=null;GW=null;GM=null;
       CH = { i:m.i, of:m.of, actor:m.actor };
       var me = (load()||{}).nickname || "";
       var mine = m.actor && me && String(m.actor) === String(me);
@@ -712,7 +714,7 @@
 
     /* WHO AM I. The mirror image: everyone sees it except the one guessing. */
     if(m.t === "guesswho"){
-      B=null;Q=null;H=null;T=null;V=null;W=null;PH=null;CH=null;GW=null;
+      B=null;Q=null;H=null;T=null;V=null;W=null;PH=null;CH=null;GW=null;GM=null;
       GW = { i:m.i, of:m.of, guesser:m.guesser };
       var me2 = (load()||{}).nickname || "";
       var blind = m.guesser && me2 && String(m.guesser) === String(me2);
@@ -735,12 +737,12 @@
       return;
     }
     if(m.t === "ask-text"){
-      B=null;Q=null;H=null;V=null;W=null;CH=null;GW=null;
+      B=null;Q=null;H=null;V=null;W=null;CH=null;GW=null;GM=null;
       T={ kind:m.kind, title:m.title, hint:m.hint, sent:0 };
       paintText(); return;
     }
     if(m.t === "ask-truths"){
-      B=null;Q=null;H=null;V=null;W=null;CH=null;GW=null;
+      B=null;Q=null;H=null;V=null;W=null;CH=null;GW=null;GM=null;
       T={ kind:"truths", title:"Two truths and a lie", hint:"Write three things about you. Two true, one not.", sent:0 };
       paintTruthsForm(); return;
     }
@@ -748,17 +750,32 @@
       /* Same rule as "ask" above: a repeat of the prompt already on this phone must not
          put a raised hand back down. */
       if(W && W.i === m.i && W.q === m.q){ paintHands(); return; }
-      B=null;Q=null;H=null;T=null;V=null;CH=null;GW=null;
+      B=null;Q=null;H=null;T=null;V=null;CH=null;GW=null;GM=null;
       W={ i:m.i, q:m.q, raised:false }; paintHands(); return;
     }
     if(m.t === "truthvote"){
-      B=null;Q=null;H=null;T=null;W=null;CH=null;GW=null;
+      B=null;Q=null;H=null;T=null;W=null;CH=null;GW=null;GM=null;
       V={ turn:m.turn, who:m.name, lines:m.lines||[], picked:null, lie:null }; paintVote(); return;
     }
     if(m.t === "truthresult"){
       if(V && V.turn===m.turn){ V.lie=m.lie; paintVote(); }
       return;
     }
+    /* GREAT MINDS. The phone part is lib/pr-phone.js, the same one VenuePlay's trivia phone uses.
+       It is told only the question and a count, and only its OWN results (pr_result carries `to`,
+       and this phone's id is its name). A found answer (ta_reveal) is a television thing. */
+    if(m.t === "ta_board" || m.t === "pr_result" || m.t === "ta_showall"){
+      if(m.t !== "ta_board" && !GM) return;
+      if(!GM){
+        B=null;Q=null;H=null;T=null;V=null;W=null;PH=null;CH=null;GW=null;
+        GM = PRPhone.mount($("app"), {
+          send: function(o){ if(window._ppSend) window._ppSend(o); },
+          me: function(){ var n = (load()||{}).nickname || ""; return { pid:n, name:n }; }
+        });
+      }
+      GM.onMsg(m); return;
+    }
+    if(m.t === "ta_reveal"){ return; }
     if(m.t === "queue"){ return; }          // the queue is a television thing
     if(m.t === "heads"){
       B=null; Q=null;
@@ -831,7 +848,7 @@
          clears these, so an ending survives until the host moves on, which is right.
 
          The same shape guards connect(): see the note there. */
-      if(B || Q || H || T || W || V || PH || CH || GW) return;
+      if(B || Q || H || T || W || V || PH || CH || GW || GM) return;
       $("app").innerHTML = '<img class="mark" src="/logos/partyplay-mark.svg" alt="">' +
         '<div class="waiting"><div class="who">' + esc(m.text||"") + '</div>' +
         '<p>' + esc(m.sub||"") + '</p></div>';
@@ -841,7 +858,7 @@
        every phone renders when it has no game of its own. So every guest in the room read
        "Come and get it". Now the winner is named and only their phone is told to move. */
     if(m.t === "draw"){
-      B=null;Q=null;H=null;T=null;V=null;W=null;PH=null;CH=null;GW=null;
+      B=null;Q=null;H=null;T=null;V=null;W=null;PH=null;CH=null;GW=null;GM=null;
       var meD = (load()||{}).nickname || "";
       var wonD = m.winner && meD && String(m.winner) === String(meD);
       $("app").innerHTML =

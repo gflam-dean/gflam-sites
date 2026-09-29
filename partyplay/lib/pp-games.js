@@ -36,7 +36,8 @@
     playlist:   { name: 'The playlist',           icon: '🎶' },
     draw:       { name: 'Prize draw',             icon: '🎫' },
     charades:   { name: 'Charades',               icon: '🎭' },
-    guesswho:   { name: 'Who am I?',              icon: '🤔' }
+    guesswho:   { name: 'Who am I?',              icon: '🤔' },
+    topanswers: { name: 'Great Minds',            icon: '💡' }   // the Punters Reckon engine; the name lives here
   };
 
   /* THE HOST'S OWN TITLE WINS. A host who called it "Nan's Round" gets "Nan's Round", which

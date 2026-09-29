@@ -1512,6 +1512,30 @@ MUTATIONS = [
     ('test-pr-round.js', 'venueplay/app/topanswers/pr-phone.js',
      'left: same ? S.left : 3, tries: same ? S.tries : []', 'left: 3, tries: []',
      'a phone sent the same Punters Reckon board again forgets what it typed and shows 3 guesses'),
+    ('pp-great-minds.test.js', 'partyplay/lib/pr-game.js',
+     '    this.name = opts.name || NAME;', '    this.name = NAME;',
+     "PartyPlay's copy of the Punters Reckon engine drifts from VenuePlay's (and calls itself Punters Reckon at a party)"),
+    ('pp-great-minds.test.js', 'partyplay/lib/pp-great-minds-boards.js',
+     '"Name a fast food chain"', '"Name a pub you would have a beer at"',
+     'a pub or beer board ends up in the PartyPlay game played at kids parties'),
+    ('pp-great-minds.test.js', 'partyplay/run.html',
+     '    if(r.reveal) send(r.reveal);       // an answer', '    send({t:"ta_showall", rest:G.game.board.answers.map(function(a,i){ return {i:i,a:a.a,pts:a.pts}; })}); if(r.reveal) send(r.reveal);       // an answer',
+     'Great Minds sends every answer down the party channel while the board is still being played'),
+    ('pp-great-minds.test.js', 'partyplay/run.html',
+     "    send(r.result);                    // addressed (pr_result.to)", "    r.result.to=''; send(r.result);                    // addressed (pr_result.to)",
+     "a Great Minds result reaches every guest's phone instead of the one who guessed"),
+    ('pp-great-minds.test.js', 'partyplay/run.html',
+     '    if(!G.added){ nightAdd(rows); G.added=true; }', '    nightAdd(rows);',
+     'pressing Finish twice counts a Great Minds game into the night twice'),
+    ('pp-great-minds.test.js', 'partyplay/run.html',
+     '(G.game.replay() || []).forEach(function(m){ send(m); });', 'send(G.pub); b=G.game.board; if(b) send({t:"ta_showall", rest:b.answers.map(function(a,i){ return {i:i,a:a.a,pts:a.pts}; })});',
+     'a guest who walks in mid-board is sent every answer'),
+    ('pp-great-minds.test.js', 'partyplay/play.html',
+     'if(B || Q || H || T || W || V || PH || CH || GW || GM) return;', 'if(B || Q || H || T || W || V || PH || CH || GW) return;',
+     "the telly's caption wipes a guest's phone in the middle of a Great Minds board"),
+    ('pp-great-minds.test.js', 'partyplay/host.html',
+     'return TYPES[k].ready && !TYPES[k].retired && !TYPES[k].hidden; })', 'return TYPES[k].ready && !TYPES[k].retired; })',
+     'the Great Minds tile shows to every host before the database will accept the game'),
     ('test-paper-score-held.js', 'venueplay-backend/worker/venueplay-game.js',
      "  if (pcfg.defer_reveal === true && game.status === 'running') {", '  if (false) {',
      'a phone on a paper night learns if it was right after every question and tells the paper table'),
@@ -1994,7 +2018,7 @@ MUTATIONS = [
     # ---- 12 Sep 2026: the television's caption wiped every phone. Nine games.
     ('pp-guest-connection.test.js',
      'partyplay/play.html',
-     '      if(B || Q || H || T || W || V || PH || CH || GW) return;\n',
+     '      if(B || Q || H || T || W || V || PH || CH || GW || GM) return;\n',
      '',
      "the wall's caption replaces the whole phone again a millisecond after the game "
      'arrives: nothing to tap in trivia, no Heads or Tails buttons, the charades actor '
@@ -2002,7 +2026,7 @@ MUTATIONS = [
 
     ('pp-guest-connection.test.js',
      'partyplay/play.html',
-     '      if(B || Q || H || T || W || V || PH || CH || GW) return;',
+     '      if(B || Q || H || T || W || V || PH || CH || GW || GM) return;',
      '      if(B || Q || H || T || W) return;',
      'two of the seven game states drop out of the guard, so Guess the photo and the video '
      'prompt go back to being wiped while the other five are fine, which is the hardest '

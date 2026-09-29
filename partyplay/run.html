@@ -82,6 +82,9 @@
 <script src="/lib/pp-games.js"></script>
 <script src="/lib/pp-licence.js"></script>
 <script src="/lib/pp-quiz.js"></script>
+<script src="/lib/ta-match.js"></script>
+<script src="/lib/pp-great-minds-boards.js"></script>
+<script src="/lib/pr-game.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function(){
@@ -282,6 +285,7 @@
           G.everPicked[m.name]=true;
           paintHeads();
         }
+        if(m.t==="pr_guess"){ onGreatMindsGuess(m); }
         if(m.t==="answer" && G && G.items && m.name){
           var dup = G.answers.some(function(a){ return a.name===m.name && a.i===m.i; });
           if(!dup){ G.answers.push({name:m.name,i:m.i,answer:m.answer}); paintTrivia(); }
@@ -867,6 +871,88 @@
           sub:  tb.length ? tb[0].score + " points" : "Nobody caught a lie" });
   }
 
+  /* ------------------------------------------------------ great minds ------
+     VenuePlay's Punters Reckon, one engine (lib/pr-game.js, a byte-for-byte copy), played with
+     family boards. A board goes up with only its question and how many answers are hidden; each
+     phone gets three typed guesses; an answer's text goes out only when somebody finds it, and
+     the rest turn over at the end. Guests are known by name here, so the name is the player id.
+     Every phone hears every message on a party channel, which is why the board with its answers
+     never leaves this tablet. */
+  function runGreatMinds(g){
+    if(!window.PRGame){ toast("That game did not load. Reload this page."); return; }
+    G={ mode:"gm", game:new PRGame.Game({ name:PPGames.name(g.format, g.title) }), pub:null, feed:[], added:false,
+        endT:null, boardT:null, repaint:paintGreatMinds, resend:resendGreatMinds };
+    send({t:"big", text:G.game.name, sub:"Get your phones out"});
+    paintGreatMinds();
+  }
+  /* Somebody walked in mid-board: the board and what has been FOUND, never the rest. A phone
+     already on this board keeps what it typed (lib/pr-phone.js matches the round and question). */
+  function resendGreatMinds(){
+    if(!G || G.mode!=="gm" || !G.pub) return;
+    (G.game.replay() || []).forEach(function(m){ send(m); });
+  }
+  function gmPutUp(){
+    clearTimeout(G.endT); clearTimeout(G.boardT);
+    G.pub=G.game.nextBoard(45); G.feed=[];
+    if(!G.pub){ toast("There are no boards to play."); return; }
+    send(G.pub);
+    var mine=G;
+    G.endT=setTimeout(function(){ if(G===mine) gmEnd(); }, 45*1000+1500);   // the room gets the whole clock
+    paintGreatMinds();
+  }
+  function gmEnd(){
+    if(!G || G.mode!=="gm" || !G.game.board) return;
+    clearTimeout(G.endT);
+    var e=G.game.endBoard(); G.pub=null;
+    send(e.showall);
+    var mine=G, rows=gmRows();
+    G.boardT=setTimeout(function(){ if(G===mine) send({t:"board", title:e.leaderboard.title, rows:rows}); }, 7000);   // read the board first
+    paintGreatMinds();
+  }
+  function gmRows(){ return G.game.rows().map(function(r){ return { name:r.name, score:r.points }; }); }
+  function gmFinish(){
+    if(G.game.board) gmEnd();
+    clearTimeout(G.boardT);
+    var rows=gmRows();
+    if(!G.added){ nightAdd(rows); G.added=true; }   // once, however many times Finish is pressed
+    send({t:"board", title:G.game.name+": final scores", rows:rows.slice(0,10)});
+    paintGreatMinds();
+  }
+  function onGreatMindsGuess(m){
+    if(!G || G.mode!=="gm" || !m.name || (m.round|0)!==G.game.round) return;
+    var r=G.game.guess(m.name, m.name, m.text);
+    send(r.result);                    // addressed (pr_result.to): every other phone drops it
+    if(r.reveal) send(r.reveal);       // an answer's text travels only now, when it has been found
+    G.feed.unshift({ name:m.name, text:r.result.text, hit:!!r.result.hit, a:r.result.a });
+    G.feed=G.feed.slice(0,30);
+    if(!G.paintT) G.paintT=setTimeout(function(){ if(G && G.mode==="gm"){ G.paintT=null; paintGreatMinds(); } }, 400);   // a room typing at once repaints once
+  }
+  function paintGreatMinds(){
+    var b=G.game.board, h='';
+    if(b){
+      var left=Math.max(0, Math.ceil((G.game.endsAt-Date.now())/1000));
+      h='<div class="q"><div class="qn">Board '+G.game.round+' &middot; about '+left+'s left</div>'+
+        '<div class="qt">'+esc(b.q)+'</div>'+
+        b.answers.map(function(a,i){ var f=G.game.found[i];
+          return '<div class="qa"'+(f!==undefined?' style="color:var(--teal,#17C4B4)"':'')+'>'+(i+1)+'. '+esc(a.a)+' <b>'+a.pts+'</b>'+
+                 (f!==undefined?' &middot; '+esc(f):'')+'</div>'; }).join("")+
+        '<p style="color:var(--mute,#B6ADC2);font-size:13px">Only you can see these. The telly shows each one when somebody finds it.</p>'+
+        (G.feed.length? '<div class="qa">'+G.feed.slice(0,8).map(function(x){ return esc(x.name)+': '+esc(x.text)+(x.hit?' ('+esc(x.a)+')':''); }).join('<br>')+'</div>' : '')+
+        '</div>'+
+        '<div class="bar2"><button class="sec" id="gmend" style="flex:1">End this board now</button></div>';
+    } else {
+      var rows=gmRows();
+      h='<div class="gate"><div class="big">'+(G.game.round? 'Board '+G.game.round+' done' : esc(G.game.name))+'</div>'+
+        '<p>'+(G.game.round? rows.slice(0,5).map(function(r,i){ return (i+1)+'. '+esc(r.name)+' '+r.score; }).join('<br>')
+                            : 'A question goes up and everyone has three guesses at the top answers.')+'</p></div>'+
+        '<div class="bar2"><button class="play" id="gmnext" style="flex:1">'+(G.game.round?"Next board":"First board")+'</button></div>'+
+        (G.game.round? '<div class="bar2"><button class="sec" id="gmfinish" style="flex:1">Finish and show final scores</button></div>' : '');
+    }
+    h+='<div class="bar2"><button class="sec" id="back">Back to games</button></div>';
+    $("app").innerHTML=h;
+    if(b){ clearTimeout(G.tickT); var mine=G; G.tickT=setTimeout(function(){ if(G===mine && G.game.board) paintGreatMinds(); }, 1000); }
+  }
+
   /* ------------------------------------------- two truths and a lie --------- */
   /* Two phases. Everyone writes their three first, because doing it person by
      person leaves twenty people watching one person type. */
@@ -1078,6 +1164,7 @@
       else if(g.format==="photos") runPhotos(g);
       else if(g.format==="charades") runCharades(g);
       else if(g.format==="guesswho") runGuessWho(g);
+      else if(g.format==="topanswers") runGreatMinds(g);
       /* AND THE SAME ON THE TELEVISION. This is the worse half: the slug went up on the big
          screen in front of the whole room when the game started. */
       else { var _n=PPGames.name(g.format,g.title);
@@ -1087,6 +1174,9 @@
     if(el.id==="charstart" || el.id==="charnext"){ charadesGo(); return; }
     if(el.id==="charskip"){ G.got.pop(); charadesGo(); return; }   // a skip should not use up their turn
     if(el.id==="gwstart" || el.id==="gwnext"){ guessWhoGo(); return; }
+    if(el.id==="gmnext"){ gmPutUp(); return; }
+    if(el.id==="gmend"){ gmEnd(); return; }
+    if(el.id==="gmfinish"){ gmFinish(); return; }
     if(el.id==="gwpass"){ G.done.pop(); guessWhoGo(); return; }
     if(el.id==="startnow"){ startClock(); return; }
     if(el.id==="photoreveal"){

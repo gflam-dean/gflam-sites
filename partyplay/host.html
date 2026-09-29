@@ -171,7 +171,12 @@
                   q:"Word or phrase to act out", a:null, addLabel:"Add a word" },
     guesswho:   { icon:PPGames.icon("guesswho"), name:PPGames.name("guesswho"),        ready:true, screenOff:"guesser",
                   blurb:"They ask, everyone else can see the answer",
-                  q:"Person or thing", a:null, addLabel:"Add one" }
+                  q:"Person or thing", a:null, addLabel:"Add one" },
+    /* HIDDEN until migration partyplay-15 is run and a party has been played with it: the database
+       refuses the format before then, so the tile would only add an error. ?gm=1 shows it. */
+    topanswers: { icon:PPGames.icon("topanswers"), name:PPGames.name("topanswers"), ready:true,
+                  hidden: !/[?&]gm=1/.test(location.search),
+                  blurb:"Guess the top answers. Nothing to set up." }
   };
 
   var PARTY = null, GAMES = [], editing = null;
@@ -313,7 +318,7 @@
     });
 
     h += '<div class="bar"><div><h2>Add a game</h2></div></div><div class="add">';
-    Object.keys(TYPES).filter(function(k){ return TYPES[k].ready && !TYPES[k].retired; }).forEach(function(k){
+    Object.keys(TYPES).filter(function(k){ return TYPES[k].ready && !TYPES[k].retired && !TYPES[k].hidden; }).forEach(function(k){
       var t = TYPES[k];
       h += '<button data-add="' + k + '"><b>' + t.icon + " " + esc(t.name) + '</b><span>' + esc(t.blurb) + '</span></button>';
     });

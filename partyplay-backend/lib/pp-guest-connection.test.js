@@ -157,7 +157,7 @@ ok("a bingo BALL still gets through, because that really is for the phone",
    /B && !isNaN\(n\)[\s\S]{0,260}paintBingo\(\); return;/.test(BIG),
    "the ball arrives as a big whose text is just a number, and it must keep working");
 ok("but a caption is DROPPED while this phone is holding a game",
-   /if\(B \|\| Q \|\| H \|\| T \|\| W \|\| V \|\| PH \|\| CH \|\| GW\) return;/.test(BIG),
+   /if\(B \|\| Q \|\| H \|\| T \|\| W \|\| V \|\| PH \|\| CH \|\| GW \|\| GM\) return;/.test(BIG),
    "this single line is what makes nine of the ten games playable");
 ok("and every one of the seven game states is named in that guard",
    ["B","Q","H","T","W","V","PH","CH","GW"].every(function (v) {
@@ -254,7 +254,7 @@ ok("guess-who keeps a state of its own",
    /GW\s*=\s*\{[^}]*guesser/.test(code),
    "same fault, same round");
 ok("and the caption guard actually names them",
-   /if\(B \|\| Q \|\| H \|\| T \|\| W \|\| V \|\| PH \|\| CH \|\| GW\) return;/.test(code),
+   /if\(B \|\| Q \|\| H \|\| T \|\| W \|\| V \|\| PH \|\| CH \|\| GW \|\| GM\) return;/.test(code),
    "a state nothing checks is the same as no state");
 ok("starting either one clears the other",
    /m\.t === "charades"[\s\S]{0,200}GW=null/.test(code) &&
