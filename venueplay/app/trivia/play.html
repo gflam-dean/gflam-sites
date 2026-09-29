@@ -171,6 +171,9 @@
     <div class="pstatus" id="pStatus">Tap your answer</div>
   </div>
 
+  <!-- PUNTERS RECKON (feature/top-answers, switched off): drawn by /app/topanswers/pr-phone.js -->
+  <div class="view hidden" id="vPR"></div>
+
   <!-- RESULT -->
   <div class="view center hidden" id="vRes">
     <div class="presult">
@@ -212,6 +215,7 @@
 <script src="/app/vp-follow.js"></script>
 <script src="/app/vp-feedback.js"></script>
 <script src="/app/vp-celebrate.js"></script>
+<script src="/app/topanswers/pr-phone.js"></script>
 <script>
 (function(){
   "use strict";
@@ -390,7 +394,7 @@
   function saveSess(room,sid){ try{ if(sid) localStorage.setItem("vp-tsess-"+room, sid); }catch(e){} }
 
   // ---- views ----
-  var VIEWS=["vNoRoom","vJoin","vWait","vQ","vRes","vFinal"];
+  var VIEWS=["vNoRoom","vJoin","vWait","vQ","vRes","vFinal","vPR"];
   function show(which){ for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==which); } }
 
   // "3rd of 11". Never "Rank 0": with no rank yet it returns "" and the caller hides the line.
@@ -683,8 +687,19 @@
   }
 
   // ---- incoming ----
+  var _prPhone=null;   // Punters Reckon, mounted on first use
   function onMsg(m){
     if(!m||!m.t) return;
+    if(m.t==="ta_board" || m.t==="pr_result" || m.t==="ta_showall" || m.t==="ta_reveal"){
+      if(!P.joined) return;
+      if(m.to && m.to !== P.pid) return;   // a catch-up aimed at another phone must not reset this one's board
+      if(!_prPhone && window.PRPhone){
+        _prPhone = window.PRPhone.mount($("vPR"), { send: send, alive: sayAlive,
+          me: function(){ return { pid: P.pid, name: P.name }; }, show: function(){ show("vPR"); } });
+      }
+      if(_prPhone) _prPhone.onMsg(m);
+      return;
+    }
     if(m.t==="rollcall" || m.t==="host_here"){
       if(P.joined){ send({ t:"join", pid:P.pid, name:P.name }); }
       return;

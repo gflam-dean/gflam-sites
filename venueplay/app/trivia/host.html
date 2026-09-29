@@ -213,6 +213,11 @@
             <div class="field"><label>Time per question (seconds)</label><input type="number" id="cfgTime" class="mono" min="5" max="60" value="30"></div>
             <div class="field"><label>Correct answer points</label><input type="number" id="cfgBase" class="mono" min="0" value="100"></div>
           </div>
+          <div class="field hidden" id="prField">
+            <label>Round type</label>
+            <div class="seg" id="cfgRoundType"><button data-v="trivia" class="on">Trivia</button><button data-v="pr">Punters Reckon</button></div>
+            <div class="note" style="margin-top:4px">Punters Reckon: a question goes up, everyone types what they reckon the room would say, and the board flips as answers are found. It does not use the question set or the settings below.</div>
+          </div>
           <div class="field">
             <label>Speed bonus (faster answers score more, up to +50%)</label>
             <div class="seg" id="cfgSpeed"><button data-v="on" class="on">On</button><button data-v="off">Off</button></div>
@@ -290,6 +295,9 @@
 <script src="/app/vp-weekly.js"></script>
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-print.js"></script>
+<script src="/app/topanswers/ta-match.js"></script>
+<script src="/app/topanswers/ta-boards.js"></script>
+<script src="/app/topanswers/pr-game.js"></script>
 <script>
 (function(){
   "use strict";
@@ -417,7 +425,7 @@
   // The Worker is authoritative; this is the console's view of it. correct_index arrives
   // ONLY in the /host/question response (host-only) and is used solely to highlight the
   // answer on THIS console. It is never placed on any channel before the host reveals.
-  var G={
+  var G={ roundType:"trivia", pr:null, prFeed:[], prPub:null,   // Punters Reckon (?pr=1 only)
     venueId:null, pairCode:"", sessionId:"", joinCode:"", gameId:"",
     status:"setup",                 // setup | ready | question | reveal | ended
     setId:"", questionCount:0, qtotal:0,
@@ -586,7 +594,8 @@
          showing the join QR and the room had scanned in before the Worker's 409 came back. Stop it
          at the button instead, and say why. */
       $("startBtn").textContent = noQs ? "No questions in this night" : (G.weekHold ? "Trivia ran this week" : (lobby ? "Start round" : "Open lobby"));
-      $("startBtn").disabled = noQs || !!G.weekHold;
+      if(G.roundType==="pr"){ $("startBtn").textContent = lobby ? "Start Punters Reckon" : "Open lobby"; $("startBtn").disabled=false; }
+      else $("startBtn").disabled = noQs || !!G.weekHold;
       var cl=$("cancelLobbyBtn"); if(cl) cl.style.display = lobby ? "" : "none";
     }
     renderPlayers();
@@ -646,6 +655,7 @@
   }
   function renderRun(){
     var body=$("runBody"); body.innerHTML="";
+    if(G.roundType==="pr" && G.pr) return renderPRRun(body);
     if(G.defer && renderPaperRun(body)) return;
 
     if(G.status==="ready"){
@@ -863,6 +873,7 @@
   function startRound(){
     if(G.busy) return;
     stopLobbyWatch();
+    if(G.roundType==="pr") return startPR();
     readSettings();
     if(!G.setId){ hostError("Pick a question set first"); return; }
     G.busy=true;
@@ -975,11 +986,72 @@
     bcast({ t:"leaderboard", title:"Final scores", rows:G.board });
     renderConsole();
   }
+  /* ---- PUNTERS RECKON (feature/top-answers; hidden unless the console is opened with ?pr=1) ----
+     The referee is /app/topanswers/pr-game.js. Its board object, with the answers, never leaves this
+     console: the TV and phones get the question and a count (ta_board), each found answer as it is found
+     (ta_reveal), and the rest at the end (ta_showall). Phones mark themselves played with /player/alive
+     like any game, and a night of this does NOT count as the weekly trivia night (Dean, 29 Sep 2026). */
+  function prKey(){ return "vpPR:"+(G.sessionId||""); }
+  function savePR(){ try{ if(G.pr) localStorage.setItem(prKey(), G.pr.save()); }catch(e){} }
+  function startPR(){
+    if(!window.PRGame){ hostError("Punters Reckon did not load. Reload the console."); return; }
+    G.busy=true;
+    var btn=$("startBtn"); if(btn){ btn.disabled=true; btn.textContent="Starting..."; }
+    openSession().then(function(){
+      G.pr=new window.PRGame.Game(); G.prFeed=[]; G.prPub=null;
+      try{ G.pr.load(localStorage.getItem(prKey())); }catch(e){}
+      G.status="ready";
+      bcast({ t:"mode", mode:"trivia", title:window.PRGame.NAME });
+      renderConsole();
+    }).catch(function(e){ hostError(e.message); }).then(function(){ G.busy=false; if(btn){ btn.disabled=false; } });
+  }
+  function prPutUp(){
+    if(!G.pr) return;
+    var secs=Math.max(15, Math.min(180, parseInt(($("prSecs")||{}).value,10)||45));
+    G.prPub=G.pr.nextBoard(secs); G.prFeed=[];
+    if(!G.prPub){ hostError("There are no boards to play."); return; }
+    G.status="question";
+    bcast(G.prPub);
+    clearTimeout(G.prEndT);
+    G.prEndT=setTimeout(prEnd, secs*1000+1500);     // the room gets the whole clock, then the board ends itself
+    savePR(); renderConsole();
+  }
+  function prEnd(){
+    if(!G.pr || !G.pr.board) return;
+    clearTimeout(G.prEndT);
+    var e=G.pr.endBoard(); G.prPub=null; G.status="ready";
+    bcast(e.showall);
+    clearTimeout(G.prBoardT);
+    G.prBoardT=setTimeout(function(){ bcast(e.leaderboard); }, 7000);   // let the room read the board first
+    savePR(); renderConsole();
+  }
+  function renderPRRun(body){
+    var w=el("div","qwrap");
+    if(G.pr.board){
+      var b=G.pr.board, left=Math.max(0, Math.ceil((G.pr.endsAt-Date.now())/1000));
+      var rows=b.answers.map(function(a,i){ var f=G.pr.found[i];
+        return '<div class="opt'+(f!==undefined?' correct':'')+'"><span class="ol">'+(i+1)+'</span><span class="otx">'+esc(a.a)+' <b>'+a.pts+'</b>'+(f!==undefined?' <small>found by '+esc(f)+'</small>':'')+'</span></div>'; }).join("");
+      w.innerHTML='<div class="qmeta"><span class="qn">'+esc(window.PRGame.NAME)+' &middot; round '+G.pr.round+' &middot; about '+left+'s left</span></div>'+
+        '<div class="qtext-h">'+esc(b.q)+'</div>'+rows+
+        '<div class="since" style="margin:10px 0 6px">Only you can see the answers. The TV shows each one when somebody finds it.</div>'+
+        G.prFeed.slice(0,8).map(function(f){ return '<div class="since" style="margin:2px 0">'+esc(f.name)+': '+esc(f.text)+(f.hit?' <b style="color:var(--win)">'+esc(f.a)+'</b>':'')+'</div>'; }).join("");
+      body.appendChild(w);
+      var eb=el("button","btn pink big","End this board now"); eb.addEventListener("click", prEnd); body.appendChild(eb);
+    } else {
+      w.innerHTML='<div class="qmeta"><span class="qn">'+esc(window.PRGame.NAME)+(G.pr.round?' &middot; '+G.pr.round+' played':'')+'</span></div>'+
+        '<div class="field" style="margin:8px 0 0"><label>Seconds for the room to answer</label><input type="number" id="prSecs" class="mono" min="15" max="180" value="45"></div>';
+      body.appendChild(w);
+      var nb=el("button","btn pink big", G.pr.round?"Next board":"First board"); nb.addEventListener("click", prPutUp); body.appendChild(nb);
+    }
+    body.appendChild(endBtn("Finish Punters Reckon"));
+  }
+
   function endRound(){
     clearTick();
     clearTrivia();
     var gid=G.gameId;
     G.status="setup"; G.current=null; G.answeredPids={};
+    if(G.pr){ clearTimeout(G.prEndT); clearTimeout(G.prBoardT); if(G.pr.board){ var _e=G.pr.endBoard(); bcast(_e.showall); } bcast({ t:"leaderboard", title:"Final scores", rows:G.pr.rows() }); G.pr=null; G.prPub=null; }
     bcast({ t:"idle" });   // screen returns to the join/lobby state
     renderConsole();
     if(gid){ apiPost("/host/game/end",{ game_id:gid }).catch(function(e){ hostError(e.message); }); }
@@ -1004,6 +1076,14 @@
      question to the room would wipe the answer somebody had already given. */
   function replayState(pid){
     var to = pid ? function(o){ o.to = pid; gsend(o); } : send;
+    if(G.roundType==="pr" && G.pr && G.prPub){
+      /* A phone or screen that arrives mid-board gets the board and what has been FOUND, never the rest.
+         Phones filter on `to`, so a replay aimed at one phone is sent to that phone's pid. */
+      var one=JSON.parse(JSON.stringify(G.prPub));
+      to(one);   // aimed at the one phone that asked (`to`), or the TV: never re-sets everyone else's board
+      Object.keys(G.pr.found).forEach(function(i){ var a=G.pr.board && G.pr.board.answers[i]; if(a){ to({ t:"ta_reveal", i:+i, a:a.a, pts:a.pts, by:G.pr.found[i] }); } });
+      return;
+    }
     if(G.status==="question" && G.current){
       to({ t:"question", game_id:G.gameId, qseq:G.current.qseq, qi:G.current.qi, qtotal:G.qtotal,
            text:G.current.text, options:G.current.options, endsAt:G.current.endsAt,
@@ -1048,6 +1128,15 @@
       bcast({ t:"players", count:playerCount() });
       renderJoinCounts();     // NOT renderConsole: see above
       replayState(m.pid);     // they may have missed a live question; catch them up
+    }
+    else if(m.t==="pr_guess"){
+      if(G.roundType!=="pr" || !G.pr || !m.pid || (m.round|0)!==G.pr.round) return;
+      var pr=G.pr.guess(m.pid, (G.players[m.pid] && G.players[m.pid].name) || m.name, m.text);
+      gsend(pr.result);                    // addressed to that phone (pr_result.to); nobody else learns anything
+      if(pr.reveal){ bcast(pr.reveal); }   // an answer's text travels only now, when it has been found
+      G.prFeed.unshift({ name:(G.players[m.pid] && G.players[m.pid].name) || m.name || "Player", text:pr.result.text, hit:!!pr.result.hit, a:pr.result.a });
+      G.prFeed=G.prFeed.slice(0,30); savePR();
+      if(!G.prPaint){ G.prPaint=setTimeout(function(){ G.prPaint=null; renderConsole(); }, 400); }   // a room typing at once repaints once
     }
     else if(m.t==="answer"){
       if(G.status!=="question" || m.qseq!==G.answeredQseq || !m.pid) return;   // cosmetic "answered" ticker
@@ -1362,6 +1451,12 @@
     G.doubleLast=Math.max(1, Math.min(100, parseInt(inp.value,10)||10)); var nt=$("doubleNote");
     if(nt && G.doublePoints) nt.textContent="The last "+G.doubleLast+" question"+(G.doubleLast===1?"":"s")+" of the night score double, speed bonus included."; }); })();
   paintDouble();
+  if(/[?&]pr=1/.test(location.search)){ var _pf=$("prField"); if(_pf) _pf.classList.remove("hidden"); }   // switched off unless asked for
+  document.querySelectorAll("#cfgRoundType button").forEach(function(b){ b.addEventListener("click", function(){
+    G.roundType=b.getAttribute("data-v")==="pr" ? "pr" : "trivia";
+    document.querySelectorAll("#cfgRoundType button").forEach(function(x){ x.classList.toggle("on", x===b); });
+    renderConsole();
+  }); });
   document.querySelectorAll("#cfgSpeed button").forEach(function(b){ b.addEventListener("click", function(){
     G.speedBonus=b.getAttribute("data-v")==="on";
     document.querySelectorAll("#cfgSpeed button").forEach(function(x){x.classList.remove("on");}); b.classList.add("on");

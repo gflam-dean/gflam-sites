@@ -263,6 +263,14 @@
   "checks": 34,
   "counted_by": "lines"
  },
+ "tools/test-pr-game.js": {
+  "checks": 16,
+  "counted_by": "lines"
+ },
+ "tools/test-pr-round.js": {
+  "checks": 15,
+  "counted_by": "lines"
+ },
  "tools/test-print-problem.js": {
   "checks": 8,
   "counted_by": "lines"
@@ -324,7 +332,7 @@
   "counted_by": "lines"
  },
  "tools/test-ta-screen.js": {
-  "checks": 10,
+  "checks": 9,
   "counted_by": "lines"
  },
  "tools/test-trivia-no-repeat-survives-a-removal.js": {

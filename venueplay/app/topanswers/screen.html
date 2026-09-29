@@ -3,145 +3,41 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>VenuePlay Top Answers: Big Screen</title>
+<title>VenuePlay Punters Reckon: Big Screen</title>
 <link rel="icon" type="image/png" href="/logos/venueplay_appicon_rebuilt.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
-  :root{ --ink:#0A0A0B; --pink:#FF1F8E; --gold:#FFC24B; --win:#35D07F; --bad:#FF4D6D;
-         --text:#E7E7EC; --muted:#9A9AA4; --faint:#6C6C76; --line:rgba(255,255,255,0.10); }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%;overflow:hidden}
-  body{background:#050506;color:var(--text);font-family:'Manrope',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
-  /* Sized in cqw (a WIDTH unit), and the whole layer is laid out for 16:9 so a board of eight
-     still fits a wall (see vp-fit notes: never trust one screen width). */
-  .tv{position:fixed;inset:0;container-type:inline-size;display:flex;flex-direction:column;padding:2.4cqw 3.4cqw;
-      background:radial-gradient(1200px 700px at 80% -10%, rgba(255,31,142,.12), transparent 60%), #050506}
-  .eyebrow{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.22em;font-size:1.4cqw;color:var(--pink)}
-  .q{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:3.6cqw;line-height:1.05;color:#fff;margin:.8cqw 0 1.8cqw;max-width:88cqw}
-  .board{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:1cqw 1.4cqw;grid-auto-flow:column}
-  .slot{perspective:80cqw;min-height:0}
-  .card{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .7s cubic-bezier(.3,1.4,.5,1)}
-  .slot.open .card{transform:rotateX(180deg)}
-  .face{position:absolute;inset:0;border-radius:.9cqw;display:flex;align-items:center;backface-visibility:hidden;-webkit-backface-visibility:hidden;padding:0 1.8cqw}
-  .front{background:linear-gradient(160deg,#2A0F1E,#141417);border:1px solid rgba(255,31,142,.35);justify-content:center}
-  .front .n{font-family:'Anton',sans-serif;font-size:3.4cqw;color:rgba(255,255,255,.28)}
-  .back{transform:rotateX(180deg);background:linear-gradient(160deg,#FF1F8E,#C70F69);justify-content:space-between;box-shadow:0 0 3cqw rgba(255,31,142,.35)}
-  .back .a{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:2.4cqw;color:#fff;text-transform:uppercase;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .back .p{font-family:'Anton',sans-serif;font-size:3cqw;color:#fff;background:rgba(0,0,0,.22);border-radius:.6cqw;padding:.2cqw 1cqw;margin-left:1cqw}
-  .slot.missed .back{background:linear-gradient(160deg,#3a3a42,#26262c);box-shadow:none}
-  .foot{display:flex;align-items:center;justify-content:space-between;gap:2cqw;margin-top:1.8cqw}
-  .team{display:flex;align-items:baseline;gap:1cqw;padding:.7cqw 1.6cqw;border-radius:1cqw;border:1px solid var(--line);background:rgba(255,255,255,.03)}
-  .team.turn{border-color:var(--gold);box-shadow:0 0 2cqw rgba(255,194,75,.25)}
-  .team .tn{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:1.6cqw;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
-  .team.turn .tn{color:var(--gold)}
-  .team .ts{font-family:'Anton',sans-serif;font-size:3.2cqw;color:#fff}
-  .mid{text-align:center}
-  .strikes{display:flex;gap:.8cqw;justify-content:center}
-  .x{font-family:'Anton',sans-serif;font-size:3.4cqw;line-height:1;color:rgba(255,77,109,.18)}
-  .x.on{color:var(--bad);text-shadow:0 0 1.6cqw rgba(255,77,109,.7)}
-  .pot{font-family:'JetBrains Mono',monospace;font-size:1.3cqw;color:var(--muted);margin-top:.4cqw}
-  .pot b{color:var(--gold)}
-  .bigx{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;pointer-events:none;container-type:inline-size;
-        font-family:'Anton',sans-serif;font-size:34cqw;color:var(--bad);text-shadow:0 0 6cqw rgba(255,77,109,.8);opacity:0;transform:scale(.6)}
-  .bigx.show{animation:bigx .9s ease-out forwards}
-  @keyframes bigx{ 0%{opacity:0;transform:scale(.6)} 20%{opacity:1;transform:scale(1.05)} 70%{opacity:1;transform:scale(1)} 100%{opacity:0;transform:scale(1)} }
-  .hidden{display:none!important}
+  body{background:#050506;color:#E7E7EC;font-family:'Manrope',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  .tv{position:fixed;inset:0;container-type:inline-size;background:radial-gradient(1200px 700px at 80% -10%, rgba(255,31,142,.12), transparent 60%), #050506}
 </style>
 </head>
 <body>
-<div class="tv">
-  <div class="eyebrow" id="eyebrow">Top Answers</div>
-  <div class="q" id="q">Getting the board ready</div>
-  <div class="board" id="board"></div>
-  <div class="foot">
-    <div class="team" id="teamA"><span class="tn" id="tnA">Team A</span><span class="ts" id="tsA">0</span></div>
-    <div class="mid"><div class="strikes" id="strikes"><span class="x">X</span><span class="x">X</span><span class="x">X</span></div>
-      <div class="pot">On the board: <b id="pot">0</b></div></div>
-    <div class="team" id="teamB"><span class="tn" id="tnB">Team B</span><span class="ts" id="tsB">0</span></div>
-  </div>
-</div>
-<div class="bigx" id="bigx">X</div>
-
+<div class="tv" id="tv"></div>
+<!-- The demo page for Punters Reckon. The real game runs on the trivia TV (app/trivia/screen.html), which
+     mounts the same board from /app/topanswers/pr-board.js. -->
+<script src="/app/topanswers/ta-match.js"></script>
 <script src="/app/topanswers/ta-boards.js"></script>
+<script src="/app/topanswers/pr-game.js"></script>
+<script src="/app/topanswers/pr-board.js"></script>
 <script>
 (function(){
   "use strict";
-  function $(id){ return document.getElementById(id); }
-  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
-  /* What the wall shows is driven ONLY by these messages, the same way every other VenuePlay
-     screen works, so the demo below and a real host console paint the identical screen.
-       {t:"ta_board", round, q, n, teams:[{name,score}], turn}   n answers, NOT the answers
-       {t:"ta_reveal", i, a, pts}    flip answer i, found by a team: its text arrives only now
-       {t:"ta_strike", n}            n strikes on this board (1 to 3), with the big X
-       {t:"ta_scores", teams, turn}  scores after the board is banked
-       {t:"ta_showall", rest:[{i,a,pts}]}  end of board: the ones nobody found, greyed
-     THE ANSWERS NEVER TRAVEL BEFORE THEY ARE FOUND. Every phone at the venue listens on the same
-     channel as this screen, so a board sent whole at the start would put every answer in reach of
-     anyone at a table who knows where to look (the paper-night leak, 27 Sep 2026, by another road). */
-  var S = { answers: [], open: {}, strikes: 0, pot: 0 };
-  function paintTeams(teams, turn){
-    ["A","B"].forEach(function(k, i){
-      var t = (teams||[])[i]; if(!t) return;
-      $("tn"+k).textContent = t.name; $("ts"+k).textContent = t.score;
-      $("team"+k).classList.toggle("turn", turn === i);
-    });
-  }
-  function paintStrikes(){
-    var xs = $("strikes").children;
-    for(var i=0;i<xs.length;i++) xs[i].classList.toggle("on", i < S.strikes);
-  }
-  function onMsg(m){
-    if(!m || !m.t) return;
-    if(m.t==="ta_board"){
-      S.answers = []; S.open = {}; S.strikes = 0; S.pot = 0;
-      var count = Math.max(0, Math.min(8, m.n|0));
-      $("eyebrow").textContent = "Top Answers" + (m.round ? " · round " + m.round : "");
-      $("q").textContent = m.q || "";
-      var rows = Math.ceil(count/2);
-      $("board").style.gridTemplateRows = "repeat(" + rows + ",1fr)";
-      var h = ""; for(var k=0;k<count;k++){
-        h += '<div class="slot" id="slot'+k+'"><div class="card">' +
-          '<div class="face front"><span class="n">'+(k+1)+'</span></div>' +
-          '<div class="face back" id="back'+k+'"></div></div></div>';
-      }
-      $("board").innerHTML = h;
-      $("pot").textContent = "0"; paintStrikes(); paintTeams(m.teams, m.turn);
-    }
-    else if(m.t==="ta_reveal"){
-      var i = m.i|0, el = $("slot"+i); if(!el || S.open[i]) return;
-      fillBack(i, m.a, m.pts);
-      S.open[i] = true; el.classList.add("open");
-      S.pot += (m.pts|0); $("pot").textContent = S.pot;
-    }
-    else if(m.t==="ta_strike"){
-      S.strikes = Math.max(0, Math.min(3, m.n|0)); paintStrikes();
-      var bx = $("bigx"); bx.classList.remove("show"); void bx.offsetWidth; bx.classList.add("show");
-    }
-    else if(m.t==="ta_scores"){ paintTeams(m.teams, m.turn); }
-    else if(m.t==="ta_showall"){
-      (m.rest || []).forEach(function(x){ var i = x.i|0, el = $("slot"+i); if(el && !S.open[i]){ fillBack(i, x.a, x.pts); el.classList.add("missed","open"); } });
-    }
-  }
-  function fillBack(i, a, pts){ var b = $("back"+i); if(b) b.innerHTML = '<span class="a">'+esc(a)+'</span><span class="p">'+esc(pts|0)+'</span>'; }
-  window.TAScreen = { onMsg: onMsg };
-
-  /* ?demo=1 : a scripted board, connected to nothing. For looking at, and for the sales page later. */
-  if(/[?&]demo=1/.test(location.search) && window.TABoards){
-    var b = window.TABoards.filter(function(x){ return x.id === "pubfood"; })[0] || window.TABoards[0];
-    var steps = [], t = 400;
-    function at(ms, f){ steps.push([ms, f]); }
-    var teams = [{ name:"The Quizzly Bears", score:0 }, { name:"Les Quizerables", score:0 }];
-    at(0, function(){ onMsg({ t:"ta_board", round:1, q:b.q, n:b.answers.length, teams:teams, turn:0 }); });
-    var found = {};
-    [[0,1800],[2,3600],[-1,5600],[1,7400],[-2,9400],[4,11200],[-3,13400]].forEach(function(s){
-      at(s[1], function(){ if(s[0] >= 0){ found[s[0]] = 1; onMsg({ t:"ta_reveal", i:s[0], a:b.answers[s[0]].a, pts:b.answers[s[0]].pts }); } else onMsg({ t:"ta_strike", n:-s[0] }); });
-    });
-    at(15600, function(){ teams[1].score = 38+20+16+8; onMsg({ t:"ta_scores", teams:teams, turn:1 }); });
-    at(17400, function(){ onMsg({ t:"ta_showall", rest:b.answers.map(function(x, i){ return { i:i, a:x.a, pts:x.pts }; }).filter(function(x){ return !found[x.i]; }) }); });
-    steps.forEach(function(s){ setTimeout(s[1], s[0] + t); });
-  }
+  var board = window.PRBoard.mount(document.getElementById("tv"));
+  window.TAScreen = board;
+  /* ?demo=1 : one round played through the REAL referee (pr-game.js) by pretend phones. */
+  if(!/[?&]demo=1/.test(location.search)) return;
+  var b = window.TABoards.filter(function(x){ return x.id === "pubfood"; })[0];
+  var g = new window.PRGame.Game({ boards:[b], pick:function(){ return 0; } });
+  setTimeout(function(){ board.onMsg(g.nextBoard(30)); }, 300);
+  [["p1","Sam","chicken parma",1800],["p2","Jo","lasagne",3200],["p3","Mick","fish n chips",4600],
+   ["p2","Jo","schnitty",6400],["p4","Bec","a burger",8200],["p1","Sam","steak",9800]].forEach(function(s){
+    setTimeout(function(){ var r = g.guess(s[0], s[1], s[2]); if(r.reveal) board.onMsg(r.reveal); }, s[3]);
+  });
+  setTimeout(function(){ board.onMsg(g.endBoard().showall); }, 13000);
 })();
 </script>
 </body>

@@ -1,4 +1,4 @@
-# Top Answers: in progress, switched off
+# Punters Reckon (working name; was "Top Answers"): in progress, switched off
 
 A new team game (Family Feud style, under our own name, since "Survey Says" is a format someone
 owns). Built on the branch `feature/top-answers`. Nothing here is live and no venue can reach it.
@@ -25,7 +25,26 @@ owns). Built on the branch `feature/top-answers`. Nothing here is live and no ve
 - Where it lives: my recommendation is a round type INSIDE the trivia console, so it inherits trivia's
   reconnect, signing, session and billing behaviour instead of becoming a fourth copy of all that.
 
-## Still to build, in order
+## Built 29 Sep 2026 (afternoon), as a round type INSIDE trivia
+Dean said keep going without questions, so I used my own recommendations: the name Punters Reckon
+(lives only in PRGame.NAME), and room play: every phone gets 3 typed guesses a board, a match scores
+that answer's points, the TV flips an answer the first time anyone finds it, scores go to the leaderboard.
+- `pr-game.js`: the referee (console only). `pr-board.js`: the TV board, one copy, mounted by the trivia
+  TV and the demo page. `pr-phone.js`: the phone's part, mounted by the trivia phone.
+- Trivia console: a "Round type" choice that appears ONLY with ?pr=1 (switched off for venues). Start,
+  put up a board (15 to 180 s), live guesses for the host (who alone sees the answers), end board (the
+  rest turn over, the leaderboard follows 7 s later), Finish. Scores survive a console reload.
+- Phones mark themselves played with /player/alive (billing like any game). Not the weekly trivia night.
+- Seen in a real browser: TV board (1600x960) and the phone (typed guesses, Enter and Go both work).
+- Tests: test-pr-game.js (16), test-pr-round.js (15: two phones + TV on one channel, nothing leaks),
+  test-ta-screen.js (9), test-ta-match.js (15). Mutations proven for each.
+
+## Still to do before a venue sees it
+1. Play a whole night on the live console with ?pr=1 at a test venue (two phones + TV).
+2. The unified /tv routing and the see-a-night demo, if Dean wants it on the sales page.
+3. Real venue votes to replace our boards (option c).
+
+## Original build list (kept for the record)
 1. Host console (`app/topanswers/host.html`): pick a board, open it, show typed answers, reveal
    the board, award points to teams, next board.
 2. TV (`app/topanswers/screen.html`): the board of hidden answers flipping as they are found, team
