@@ -213,9 +213,22 @@
             <div class="field"><label>Time per question (seconds)</label><input type="number" id="cfgTime" class="mono" min="5" max="60" value="30"></div>
             <div class="field"><label>Correct answer points</label><input type="number" id="cfgBase" class="mono" min="0" value="100"></div>
           </div>
+          <div class="field hidden" id="prField">
+            <label>Round type</label>
+            <div class="seg" id="cfgRoundType"><button data-v="trivia" class="on">Trivia</button><button data-v="pr">Punters Reckon</button></div>
+            <div class="note" style="margin-top:4px">Punters Reckon: a question goes up, everyone types what they reckon the room would say, and the board flips as answers are found. It does not use the question set or the settings below.</div>
+          </div>
           <div class="field">
             <label>Speed bonus (faster answers score more, up to +50%)</label>
             <div class="seg" id="cfgSpeed"><button data-v="on" class="on">On</button><button data-v="off">Off</button></div>
+          </div>
+          <div class="field">
+            <label>Double points final round <small style="color:var(--faint);font-weight:400">saved for your venue, so it is set for next week too</small></label>
+            <div class="two" style="align-items:center">
+              <div class="seg" id="cfgDouble"><button data-v="on">On</button><button data-v="off" class="on">Off</button></div>
+              <div class="field" style="margin:0"><input type="number" id="cfgDoubleLast" class="mono" min="1" max="100" value="10" aria-label="Questions in the double points round"></div>
+            </div>
+            <div class="note" id="doubleNote" style="margin-top:4px">The last 10 questions of the night score double, speed bonus included.</div>
           </div>
           <div class="field" id="paperField">
             <label>Paper teams <small style="color:var(--faint);font-weight:400">for regulars without a phone</small></label>
@@ -282,6 +295,9 @@
 <script src="/app/vp-weekly.js"></script>
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-print.js"></script>
+<script src="/app/topanswers/ta-match.js"></script>
+<script src="/app/topanswers/ta-boards.js"></script>
+<script src="/app/topanswers/pr-game.js"></script>
 <script>
 (function(){
   "use strict";
@@ -409,11 +425,11 @@
   // The Worker is authoritative; this is the console's view of it. correct_index arrives
   // ONLY in the /host/question response (host-only) and is used solely to highlight the
   // answer on THIS console. It is never placed on any channel before the host reveals.
-  var G={
+  var G={ roundType:"trivia", pr:null, prFeed:[], prPub:null,   // Punters Reckon (?pr=1 only)
     venueId:null, pairCode:"", sessionId:"", joinCode:"", gameId:"",
     status:"setup",                 // setup | ready | question | reveal | ended
     setId:"", questionCount:0, qtotal:0,
-    timePerQ:30, base:100, count:10, speedBonus:true, colour:true,
+    timePerQ:30, base:100, count:10, speedBonus:true, colour:true, doublePoints:false, doubleLast:10, doubleSeqs:[],
     setTitle:"",                    // the night's name, shown on the TV lobby instead of a fixed "Trivia Night"
     current:null,                   // {qseq, qi, qtotal, text, options, correctIndex, endsAt, secs}
     board:[],                       // latest leaderboard rows [{name,points}] from /host/reveal
@@ -506,6 +522,7 @@
         if(g.question_count!=null){ G.questionCount=g.question_count; G.qtotal=g.question_count; }
         if(typeof g.colour==="boolean") G.colour=g.colour;
         G.defer = g.paper===true; G.rs = g.round_size || 10; loadPaperRound();
+        G.doubleSeqs = Array.isArray(g.double_seqs) ? g.double_seqs : [];
         if(G.joinCode) openGameChannel(G.joinCode);   // re-subscribe the players' channel so answers still land
         // Re-sync the TV only (the pairing channel). Connected phones are left alone; a phone that
         // also reloaded recovers itself from /snapshot, so we must not replay "started" to the game channel.
@@ -521,7 +538,7 @@
           var endsAt=Date.parse(q.ends_at)||0;
           G.current={ qseq:q.qseq, qi:q.qi||q.qseq, qtotal:G.qtotal, text:q.text||"", options:Array.isArray(q.options)?q.options:[], correctIndex:-1, endsAt:endsAt, secs:0, imageUrl:q.image_url||"" };
           G.status="question"; G.answeredQseq=q.qseq; G.answeredPids={};
-          send({ t:"question", game_id:G.gameId, qseq:G.current.qseq, qi:G.current.qi, qtotal:G.qtotal, text:G.current.text, options:G.current.options, endsAt:endsAt, secs:remainingSecs(), colour:G.colour, imageUrl:G.current.imageUrl });
+          send({ t:"question", game_id:G.gameId, qseq:G.current.qseq, qi:G.current.qi, qtotal:G.qtotal, text:G.current.text, options:G.current.options, endsAt:endsAt, secs:remainingSecs(), colour:G.colour, imageUrl:G.current.imageUrl, double:isDouble(G.current.qseq) });
           if(remainingSecs()>0){ G.tick=setInterval(function(){ updateLive(); if(remainingSecs()<=0){ clearTick(); send({ t:"lock" }); } }, 500); }
           else { send({ t:"lock" }); }
         } else if(q && phase==="revealed"){
@@ -577,7 +594,8 @@
          showing the join QR and the room had scanned in before the Worker's 409 came back. Stop it
          at the button instead, and say why. */
       $("startBtn").textContent = noQs ? "No questions in this night" : (G.weekHold ? "Trivia ran this week" : (lobby ? "Start round" : "Open lobby"));
-      $("startBtn").disabled = noQs || !!G.weekHold;
+      if(G.roundType==="pr"){ $("startBtn").textContent = lobby ? "Start Punters Reckon" : "Open lobby"; $("startBtn").disabled=false; }
+      else $("startBtn").disabled = noQs || !!G.weekHold;
       var cl=$("cancelLobbyBtn"); if(cl) cl.style.display = lobby ? "" : "none";
     }
     renderPlayers();
@@ -593,18 +611,19 @@
   }
   function renderBoard(){
     var box=$("hostBoard");
-    if(!G.board.length){ box.innerHTML='<div class="pempty">Scores appear once the round is under way.</div>'; return; }
+    var B=(G.roundType==="pr" && G.pr) ? G.pr.rows() : G.board;   // a Punters Reckon night scores in its own referee
+    if(!B.length){ box.innerHTML='<div class="pempty">Scores appear once the round is under way.</div>'; return; }
     box.innerHTML="";
     /* Every team, not the top 8: with 15 tables the ones in 9th to 15th only ever saw their own
        phone. The panel scrolls (see .board-h). Equal points share a rank ("=3") so two teams on
        850 are not split by database order. */
-    var ranks=sharedRanks(G.board);
-    for(var i=0;i<G.board.length;i++){
+    var ranks=sharedRanks(B);
+    for(var i=0;i<B.length;i++){
       var row=el("div","brow-h"+(i===0?" top1":""));
-      row.innerHTML='<span class="rk">'+ranks[i]+'</span><span class="nm">'+esc(G.board[i].name)+'</span><span class="sc">'+G.board[i].points+'</span>';
+      row.innerHTML='<span class="rk">'+ranks[i]+'</span><span class="nm">'+esc(B[i].name)+'</span><span class="sc">'+B[i].points+'</span>';
       box.appendChild(row);
     }
-    if(G.board.length>8) box.appendChild(el("div","allof","All "+G.board.length+" teams. Scroll for the rest."));
+    if(B.length>8) box.appendChild(el("div","allof","All "+B.length+" teams. Scroll for the rest."));
   }
   // [10,10,8] -> ["=1","=1","3"]. Rows arrive sorted by points from the Worker.
   function sharedRanks(rows){
@@ -637,6 +656,7 @@
   }
   function renderRun(){
     var body=$("runBody"); body.innerHTML="";
+    if(G.roundType==="pr" && G.pr) return renderPRRun(body);
     if(G.defer && renderPaperRun(body)) return;
 
     if(G.status==="ready"){
@@ -653,7 +673,7 @@
     if(G.status==="question"){
       var q=G.current;
       var w=el("div","qwrap");
-      w.innerHTML='<div class="qmeta"><span class="qn">Question '+(q.qi||q.qseq)+' of '+(G.qtotal||"?")+'</span>'+
+      w.innerHTML='<div class="qmeta"><span class="qn">Question '+(q.qi||q.qseq)+' of '+(G.qtotal||"?")+(isDouble(q.qseq)?' &middot; <b style="color:var(--gold)">DOUBLE POINTS</b>':'')+'</span>'+
         '<span class="live"><span id="hAnsWrap" style="font-weight:700"><b id="hAns">'+answeredCount()+'</b>/<span id="hTot">'+playerCount()+'</span> in</span><span class="cd" id="hCd">'+remainingSecs()+'s</span></span></div>'+
         /* Picture round: the same image the TV shows, so the host can describe it. A broken
            link hides itself and the question carries on as a plain text one. */
@@ -677,7 +697,7 @@
     if(G.status==="reveal"){
       var q2=G.current;
       var rw=el("div","qwrap");
-      rw.innerHTML='<div class="qmeta"><span class="qn">Question '+(q2.qi||q2.qseq)+' of '+(G.qtotal||"?")+' &middot; revealed</span></div>'+
+      rw.innerHTML='<div class="qmeta"><span class="qn">Question '+(q2.qi||q2.qseq)+' of '+(G.qtotal||"?")+(isDouble(q2.qseq)?' &middot; <b style="color:var(--gold)">DOUBLE POINTS</b>':'')+' &middot; revealed</span></div>'+
         (q2.imageUrl?'<img class="qimg-h" alt="" src="'+esc(q2.imageUrl)+'" onerror="this.style.display=\'none\'">':'')+
         '<div class="qtext-h">'+esc(q2.text)+'</div>';
       /* How the room split. The TV draws these bars; until now the host had to look over their
@@ -766,6 +786,7 @@
     G.timePerQ=Math.max(5, Math.min(60, parseInt($("cfgTime").value,10)||30));
     G.base=Math.max(0, parseInt($("cfgBase").value,10)||0);
     G.count=effectiveCount();
+    G.doubleLast=Math.max(1, Math.min(100, parseInt(($("cfgDoubleLast")||{}).value,10)||10));
     /* ONE STRIP PER ROUND, THE WHOLE ROUND ON IT. There was a separate "Questions per round" box
        under the print button; Dean, 27 Sep 2026: "dunno why that's there". A paper team now gets one
        strip with every question in this round and hands it in at the end, so the sheets follow
@@ -853,6 +874,7 @@
   function startRound(){
     if(G.busy) return;
     stopLobbyWatch();
+    if(G.roundType==="pr") return startPR();
     readSettings();
     if(!G.setId){ hostError("Pick a question set first"); return; }
     G.busy=true;
@@ -862,10 +884,11 @@
       return apiPost("/host/game",{
         session_id:G.sessionId, format:"trivia", question_set_id:G.setId,
         time_limit_s:G.timePerQ, base_points:G.base, speed_bonus:G.speedBonus, colour:G.colour,
-        question_count:G.count, round_size:G.roundSize
+        question_count:G.count, round_size:G.roundSize, double_points:G.doublePoints, double_last:G.doubleLast
       });
     }).then(function(r){
       G.gameId=r.game_id; G.questionCount=r.question_count; G.qtotal=r.question_count;
+      G.doubleSeqs=Array.isArray(r.double_seqs)?r.double_seqs:[];
       // The Worker makes it a paper round from what was printed; the console mirrors that rule.
       G.defer = (r.paper===true); G.rs = r.round_size || G.roundSize; G.round = 1; G.roundItems = []; savePaperRound();
       G.status="ready"; G.board=[]; G.current=null;
@@ -889,7 +912,7 @@
       saveTrivia();
       // PUBLIC broadcast: text + options + optional picture, NEVER correct_index.
       bcast({ t:"question", game_id:G.gameId, qseq:r.qseq, qi:r.qi, qtotal:r.qtotal,
-        text:r.text, options:r.options||[], endsAt:G.current.endsAt, secs:r.secs, colour:G.colour, imageUrl:r.image_url||"" });
+        text:r.text, options:r.options||[], endsAt:G.current.endsAt, secs:r.secs, colour:G.colour, imageUrl:r.image_url||"", double:isDouble(r.qseq) });
       renderRun();
       G.tick=setInterval(function(){ updateLive(); if(remainingSecs()<=0){ clearTick(); bcast({ t:"lock" }); } }, 500);
     }).catch(function(e){ hostError(e.message); }).then(function(){ G.busy=false; });
@@ -918,7 +941,7 @@
         var qn=(G.current && (G.current.qi||G.current.qseq))||0;
         G.round=roundOf(qn);
         if(G.current && !G.roundItems.some(function(it){ return it.qi===qn; })){
-          G.roundItems.push({ qi:qn, text:G.current.text, letter:LETTERS[r.correct_index]||"", answer:(G.current.options||[])[r.correct_index]||"" });
+          G.roundItems.push({ qi:qn, text:G.current.text, letter:LETTERS[r.correct_index]||"", answer:(G.current.options||[])[r.correct_index]||"", dbl:isDouble(G.current.qseq) });
         }
         savePaperRound();
         bcast({ t:"closed", round:G.round, qi:qn });
@@ -964,12 +987,125 @@
     bcast({ t:"leaderboard", title:"Final scores", rows:G.board });
     renderConsole();
   }
+  /* ---- PUNTERS RECKON (feature/top-answers; hidden unless the console is opened with ?pr=1) ----
+     The referee is /app/topanswers/pr-game.js. Its board object, with the answers, never leaves this
+     console: the TV and phones get the question and a count (ta_board), each found answer as it is found
+     (ta_reveal), and the rest at the end (ta_showall). Phones mark themselves played with /player/alive
+     like any game, and a night of this does NOT count as the weekly trivia night (Dean, 29 Sep 2026). */
+  function prKey(){ return "vpPR:"+(G.sessionId||""); }
+  function savePR(){ try{ if(G.pr) localStorage.setItem(prKey(), G.pr.save()); }catch(e){} }
+  /* A PUNTERS RECKON NIGHT HAS NO GAME ROW, so restoreTrivia (which asks the Worker for the running
+     trivia game) never found it, and a console reload dropped the host back on setup with the room
+     mid-board and the session still open. Seen live at Test Alpha, 30 Sep 2026. This pointer is the
+     night; vpPR:<session> holds the scores and the board in play. */
+  function prNightKey(){ return "vpPRNight-"+(G.venueId||""); }
+  function savePRNight(){ try{ localStorage.setItem(prNightKey(), JSON.stringify({ v:1, ts:Date.now(), sessionId:G.sessionId })); }catch(e){} }
+  function clearPRNight(){ try{ localStorage.removeItem(prNightKey()); }catch(e){} }
+  function restorePR(){
+    if(!window.PRGame) return Promise.resolve(false);
+    var raw; try{ raw=localStorage.getItem(prNightKey()); }catch(e){ return Promise.resolve(false); }
+    if(!raw) return Promise.resolve(false);
+    var p; try{ p=JSON.parse(raw); }catch(e){ clearPRNight(); return Promise.resolve(false); }
+    if(!p || !p.sessionId || !p.ts || (Date.now()-p.ts)>TRIVIA_SAVE_MAX_AGE){ clearPRNight(); return Promise.resolve(false); }
+    return fetch(VP_GAME_API+"/snapshot?session="+encodeURIComponent(p.sessionId))
+      .then(function(res){ return res.ok ? res.json() : null; })
+      .then(function(snap){
+        if(!snap || !snap.join_code || ["lobby","running","paused"].indexOf(snap.status)<0){ clearPRNight(); return false; }
+        G.sessionId=snap.session_id; G.joinCode=snap.join_code;
+        G.roundType="pr";
+        document.querySelectorAll("#cfgRoundType button").forEach(function(x){ x.classList.toggle("on", x.getAttribute("data-v")==="pr"); });
+        var pf=$("prField"); if(pf) pf.classList.remove("hidden");
+        G.pr=new window.PRGame.Game(); G.prFeed=[]; G.prPub=null;
+        try{ G.pr.load(localStorage.getItem(prKey())); }catch(e){}
+        openGameChannel(G.joinCode);
+        send({ t:"session", session_id:G.sessionId, join_code:G.joinCode });
+        send({ t:"mode", mode:"trivia", title:window.PRGame.NAME });
+        var back=G.pr.replay();
+        if(back){
+          G.prPub=back[0]; G.status="question";
+          back.forEach(function(m){ bcast(m); });
+          var ms=G.pr.endsAt-Date.now();
+          clearTimeout(G.prEndT); G.prEndT=setTimeout(prEnd, Math.max(0, ms)+1500);
+        } else { G.status="ready"; }
+        $("statusText").textContent="Recovered your "+window.PRGame.NAME+" night";
+        renderConsole();
+        return true;
+      })
+      .catch(function(){ return false; });
+  }
+  function startPR(){
+    if(!window.PRGame){ hostError("Punters Reckon did not load. Reload the console."); return; }
+    G.busy=true;
+    var btn=$("startBtn"); if(btn){ btn.disabled=true; btn.textContent="Starting..."; }
+    openSession().then(function(){
+      G.pr=new window.PRGame.Game(); G.prFeed=[]; G.prPub=null;
+      try{ G.pr.load(localStorage.getItem(prKey())); }catch(e){}
+      clearTimeout(G.prIdleT); clearTimeout(G.prBoardT); savePRNight();
+      G.status="ready";
+      bcast({ t:"mode", mode:"trivia", title:window.PRGame.NAME });
+      renderConsole();
+    }).catch(function(e){ hostError(e.message); }).then(function(){ G.busy=false; if(btn){ btn.disabled=false; } });
+  }
+  function prPutUp(){
+    if(!G.pr) return;
+    var secs=Math.max(15, Math.min(180, parseInt(($("prSecs")||{}).value,10)||45));
+    G.prPub=G.pr.nextBoard(secs); G.prFeed=[];
+    if(!G.prPub){ hostError("There are no boards to play."); return; }
+    G.status="question";
+    bcast(G.prPub);
+    clearTimeout(G.prEndT);
+    G.prEndT=setTimeout(prEnd, secs*1000+1500);     // the room gets the whole clock, then the board ends itself
+    savePR(); renderConsole();
+  }
+  function prEnd(){
+    if(!G.pr || !G.pr.board) return;
+    clearTimeout(G.prEndT);
+    var e=G.pr.endBoard(); G.prPub=null; G.status="ready";
+    bcast(e.showall);
+    clearTimeout(G.prBoardT);
+    G.prBoardT=setTimeout(function(){ bcast(e.leaderboard); }, 7000);   // let the room read the board first
+    savePR(); renderConsole();
+  }
+  function renderPRRun(body){
+    var w=el("div","qwrap");
+    if(G.pr.board){
+      var b=G.pr.board, left=Math.max(0, Math.ceil((G.pr.endsAt-Date.now())/1000));
+      var rows=b.answers.map(function(a,i){ var f=G.pr.found[i];
+        return '<div class="opt'+(f!==undefined?' correct':'')+'"><span class="ol">'+(i+1)+'</span><span class="otx">'+esc(a.a)+' <b>'+a.pts+'</b>'+(f!==undefined?' <small>found by '+esc(f)+'</small>':'')+'</span></div>'; }).join("");
+      w.innerHTML='<div class="qmeta"><span class="qn">'+esc(window.PRGame.NAME)+' &middot; round '+G.pr.round+' &middot; about '+left+'s left</span></div>'+
+        '<div class="qtext-h">'+esc(b.q)+'</div>'+rows+
+        '<div class="since" style="margin:10px 0 6px">Only you can see the answers. The TV shows each one when somebody finds it.</div>'+
+        G.prFeed.slice(0,8).map(function(f){ return '<div class="since" style="margin:2px 0">'+esc(f.name)+': '+esc(f.text)+(f.hit?' <b style="color:var(--win)">'+esc(f.a)+'</b>':'')+'</div>'; }).join("");
+      body.appendChild(w);
+      var eb=el("button","btn pink big","End this board now"); eb.addEventListener("click", prEnd); body.appendChild(eb);
+    } else {
+      w.innerHTML='<div class="qmeta"><span class="qn">'+esc(window.PRGame.NAME)+(G.pr.round?' &middot; '+G.pr.round+' played':'')+'</span></div>'+
+        '<div class="field" style="margin:8px 0 0"><label>Seconds for the room to answer</label><input type="number" id="prSecs" class="mono" min="15" max="180" value="45"></div>';
+      body.appendChild(w);
+      var nb=el("button","btn pink big", G.pr.round?"Next board":"First board"); nb.addEventListener("click", prPutUp); body.appendChild(nb);
+    }
+    body.appendChild(endBtn("Finish Punters Reckon"));
+  }
+
   function endRound(){
     clearTick();
     clearTrivia();
     var gid=G.gameId;
     G.status="setup"; G.current=null; G.answeredPids={};
-    bcast({ t:"idle" });   // screen returns to the join/lobby state
+    /* FINAL SCORES MUST STAY UP LONG ENOUGH TO READ. This used to send the leaderboard and then
+       "idle" in the same breath, so the TV went straight back to the lobby and nobody saw who won
+       (and a board ended mid-play flipped its answers for no time at all). */
+    if(G.pr){
+      clearTimeout(G.prEndT); clearTimeout(G.prBoardT); clearTimeout(G.prIdleT);
+      var _mid=!!G.pr.board, _rows;
+      if(_mid){ var _e=G.pr.endBoard(); bcast(_e.showall); }
+      _rows=G.pr.rows(); clearPRNight();
+      G.prBoardT=setTimeout(function(){ bcast({ t:"leaderboard", title:"Final scores", rows:_rows }); }, _mid ? 7000 : 0);
+      G.prIdleT=setTimeout(function(){ if(G.status==="setup") bcast({ t:"idle" }); }, (_mid ? 7000 : 0) + 15000);
+      G.pr=null; G.prPub=null;
+    } else {
+      bcast({ t:"idle" });   // screen returns to the join/lobby state
+    }
     renderConsole();
     if(gid){ apiPost("/host/game/end",{ game_id:gid }).catch(function(e){ hostError(e.message); }); }
   }
@@ -993,11 +1129,20 @@
      question to the room would wipe the answer somebody had already given. */
   function replayState(pid){
     var to = pid ? function(o){ o.to = pid; gsend(o); } : send;
+    if(G.roundType==="pr" && G.pr && G.prPub){
+      /* A phone or screen that arrives mid-board gets the board and what has been FOUND, never the rest.
+         Phones filter on `to`, so a replay aimed at one phone is sent to that phone's pid. */
+      var one=JSON.parse(JSON.stringify(G.prPub));
+      if(pid && G.pr.guesses[pid]) one.left=G.pr.guesses[pid].left;   // a phone that reloaded keeps its real guesses left
+      to(one);   // aimed at the one phone that asked (`to`), or the TV: never re-sets everyone else's board
+      Object.keys(G.pr.found).forEach(function(i){ var a=G.pr.board && G.pr.board.answers[i]; if(a){ to({ t:"ta_reveal", i:+i, a:a.a, pts:a.pts, by:G.pr.found[i] }); } });
+      return;
+    }
     if(G.status==="question" && G.current){
       to({ t:"question", game_id:G.gameId, qseq:G.current.qseq, qi:G.current.qi, qtotal:G.qtotal,
            text:G.current.text, options:G.current.options, endsAt:G.current.endsAt,
            secs:remainingSecs(), colour:G.colour,
-           imageUrl:(G.current.imageUrl||"") });   // without this a replayed picture round loses its picture
+           imageUrl:(G.current.imageUrl||""), double:isDouble(G.current.qseq) });   // without this a replayed picture round loses its picture
       if(remainingSecs()<=0) to({ t:"lock" });
     } else if(G.defer && G.status==="reveal" && G.current){
       to({ t:"closed", round:G.round, qi:(G.current.qi||G.current.qseq) });
@@ -1037,6 +1182,15 @@
       bcast({ t:"players", count:playerCount() });
       renderJoinCounts();     // NOT renderConsole: see above
       replayState(m.pid);     // they may have missed a live question; catch them up
+    }
+    else if(m.t==="pr_guess"){
+      if(G.roundType!=="pr" || !G.pr || !m.pid || (m.round|0)!==G.pr.round) return;
+      var pr=G.pr.guess(m.pid, (G.players[m.pid] && G.players[m.pid].name) || m.name, m.text);
+      gsend(pr.result);                    // addressed to that phone (pr_result.to); nobody else learns anything
+      if(pr.reveal){ bcast(pr.reveal); }   // an answer's text travels only now, when it has been found
+      G.prFeed.unshift({ name:(G.players[m.pid] && G.players[m.pid].name) || m.name || "Player", text:pr.result.text, hit:!!pr.result.hit, a:pr.result.a });
+      G.prFeed=G.prFeed.slice(0,30); savePR();
+      if(!G.prPaint){ G.prPaint=setTimeout(function(){ G.prPaint=null; renderConsole(); }, 400); }   // a room typing at once repaints once
     }
     else if(m.t==="answer"){
       if(G.status!=="question" || m.qseq!==G.answeredQseq || !m.pid) return;   // cosmetic "answered" ticker
@@ -1249,9 +1403,9 @@
     var teams=[], n=paperTeams();
     G.paperNames=G.paperNames||{};
     for(var i=1;i<=n;i++){
-      var nm=($("ppName"+i)||{}).value||"", c=($("ppCorrect"+i)||{}).value;
+      var nm=($("ppName"+i)||{}).value||"", c=($("ppCorrect"+i)||{}).value, d=($("ppDouble"+i)||{}).value;
       G.paperNames[i]=nm.trim();
-      teams.push({ no:i, name:nm.trim(), correct:(c===""||c==null)?"":parseInt(c,10) });
+      teams.push({ no:i, name:nm.trim(), correct:(c===""||c==null)?"":parseInt(c,10), double:(d===""||d==null)?0:parseInt(d,10) });
     }
     if(btn){ btn.disabled=true; btn.textContent="Saving..."; }
     apiPost("/host/paper/score",{ game_id:G.gameId, round:G.round, teams:teams }).then(function(r){
@@ -1265,7 +1419,7 @@
     var q=G.current, qn=q ? (q.qi||q.qseq) : 0, total=G.qtotal||0, last=total && qn>=total;
     if(G.status==="reveal" && q){
       var w=el("div","qwrap");
-      w.innerHTML='<div class="qmeta"><span class="qn">Question '+qn+' of '+(total||"?")+' &middot; round '+G.round+' &middot; answer held back</span></div>'+
+      w.innerHTML='<div class="qmeta"><span class="qn">Question '+qn+' of '+(total||"?")+(q && isDouble(q.qseq)?' &middot; <b style="color:var(--gold)">DOUBLE POINTS</b>':'')+' &middot; round '+G.round+' &middot; answer held back</span></div>'+
         '<div class="qtext-h">'+esc(q.text)+'</div>'+
         '<div class="since" style="margin:0 0 8px">Paper teams are playing, so this answer stays off the TV and the phones until the end of round '+G.round+'.</div>';
       for(var i=0;i<q.options.length;i++){
@@ -1295,6 +1449,7 @@
     }
     if(G.status==="paperscore"){
       var n=paperTeams(), items=G.roundItems||[], k=el("div","qwrap");
+      var dblInRound=items.filter(function(it){ return it.dbl; }).length;
       var keyHtml='<div class="qmeta"><span class="qn">Round '+G.round+' answers, on the TV now</span></div>';
       for(var a=0;a<items.length;a++) keyHtml+='<div class="opt correct"><span class="ol">'+esc(items[a].letter)+'</span><span class="otx"><b>Q'+esc(items[a].qi)+'</b> '+esc(items[a].answer)+'</span></div>';
       keyHtml+='<div class="since" style="margin:10px 0 6px">Mark the sheets, then type how many each paper team got right out of '+items.length+'. Leave a box empty if that team did not hand in a sheet.</div>';
@@ -1305,6 +1460,12 @@
         row.innerHTML='<input type="text" id="ppName'+t+'" placeholder="Team '+t+' name" value="'+esc((G.paperNames||{})[t]||"")+'">'+
           '<input type="number" id="ppCorrect'+t+'" class="mono" min="0" max="'+items.length+'" inputmode="numeric" placeholder="Right, out of '+items.length+'">';
         k.appendChild(row);
+        if(dblInRound){
+          var drow=el("div","");
+          drow.style.margin="-2px 0 10px";
+          drow.innerHTML='<input type="number" id="ppDouble'+t+'" class="mono" min="0" max="'+dblInRound+'" inputmode="numeric" placeholder="Of those, right in the double points questions (out of '+dblInRound+')">';
+          k.appendChild(drow);
+        }
       }
       body.appendChild(k);
       var pb=el("button","btn pink big","Put scores on the leaderboard"); pb.addEventListener("click", function(){ paperSaveScores(pb); }); body.appendChild(pb);
@@ -1327,6 +1488,29 @@
   $("setSel").addEventListener("change", syncSetCount);
   var cfgBaseEl=$("cfgBase"); if(cfgBaseEl){ cfgBaseEl.addEventListener("input", function(){ var b=Math.max(0,parseInt(cfgBaseEl.value,10)||0); if($("scBase")) $("scBase").textContent=b; if($("scMax")) $("scMax").textContent=Math.round(b*1.5); }); }
 
+  /* DOUBLE POINTS FINAL ROUND. Which questions it covers is decided by the Worker when the night
+     starts (config.double_seqs) and handed back; the console only ever asks isDouble(). */
+  function isDouble(qseq){ return !!(G.doubleSeqs && G.doubleSeqs.indexOf(qseq) >= 0); }
+  function paintDouble(){
+    var seg=$("cfgDouble"); if(seg){ Array.prototype.forEach.call(seg.children, function(bt){ bt.classList.toggle("on", (bt.getAttribute("data-v")==="on")===G.doublePoints); }); }
+    var inp=$("cfgDoubleLast"); if(inp){ inp.value=G.doubleLast; inp.disabled=!G.doublePoints; }
+    var nt=$("doubleNote"); if(nt) nt.textContent = G.doublePoints
+      ? ("The last "+G.doubleLast+" question"+(G.doubleLast===1?"":"s")+" of the night score double, speed bonus included.")
+      : "Off. Turn it on to make the last questions of the night count double.";
+  }
+  document.querySelectorAll("#cfgDouble button").forEach(function(b){ b.addEventListener("click", function(){
+    G.doublePoints=b.getAttribute("data-v")==="on"; paintDouble();
+  }); });
+  (function(){ var inp=$("cfgDoubleLast"); if(inp) inp.addEventListener("input", function(){
+    G.doubleLast=Math.max(1, Math.min(100, parseInt(inp.value,10)||10)); var nt=$("doubleNote");
+    if(nt && G.doublePoints) nt.textContent="The last "+G.doubleLast+" question"+(G.doubleLast===1?"":"s")+" of the night score double, speed bonus included."; }); })();
+  paintDouble();
+  if(/[?&]pr=1/.test(location.search)){ var _pf=$("prField"); if(_pf) _pf.classList.remove("hidden"); }   // switched off unless asked for
+  document.querySelectorAll("#cfgRoundType button").forEach(function(b){ b.addEventListener("click", function(){
+    G.roundType=b.getAttribute("data-v")==="pr" ? "pr" : "trivia";
+    document.querySelectorAll("#cfgRoundType button").forEach(function(x){ x.classList.toggle("on", x===b); });
+    renderConsole();
+  }); });
   document.querySelectorAll("#cfgSpeed button").forEach(function(b){ b.addEventListener("click", function(){
     G.speedBonus=b.getAttribute("data-v")==="on";
     document.querySelectorAll("#cfgSpeed button").forEach(function(x){x.classList.remove("on");}); b.classList.add("on");
@@ -1402,6 +1586,9 @@
         if(s.trivia_base_points!=null){ G.base=s.trivia_base_points; var bp=$("cfgBase"); if(bp) bp.value=s.trivia_base_points; }
         if(s.trivia_speed_bonus!=null){ G.speedBonus=!!s.trivia_speed_bonus;
           var seg=$("cfgSpeed"); if(seg){ Array.prototype.forEach.call(seg.children, function(bt){ bt.classList.toggle("on", (bt.getAttribute("data-v")==="on")===G.speedBonus); }); } }
+        if(s.trivia_double_points!=null) G.doublePoints=!!s.trivia_double_points;
+        if(s.trivia_double_last!=null) G.doubleLast=Math.max(1, Math.min(100, s.trivia_double_last));
+        paintDouble();
         G.colour=true;   // a venue that once saved "Plain" is not stuck with it: the setting is gone
       }).catch(function(){}); }
       weeklyPreCheck(ctx.venue);
@@ -1413,7 +1600,7 @@
       if(VP.suspensionBanner) VP.suspensionBanner(ctx);
       $("statusText").textContent="Signed in";
       loadQuestionSets();
-      restoreTrivia().then(function(){   // recover a live quiz first (if this was an accidental reload), then pair the TV as normal
+      restoreTrivia().then(function(ok){ return ok || restorePR(); }).then(function(){   // recover a live quiz first (if this was an accidental reload), then pair the TV as normal
         var tv=tvFromUrl();
         var slug=(ctx.venue && ctx.venue.slug) || "";
         if(slug && window.VPSign){ VPSign.initHost(VP_GAME_API, slug, vpHostToken); }   // this venue's signing key
@@ -1444,7 +1631,7 @@
     if(G.status==="question" && G.current){
       send({ t:"question", game_id:G.gameId, qseq:G.current.qseq, qi:G.current.qi, qtotal:G.qtotal,
              text:G.current.text, options:G.current.options, endsAt:G.current.endsAt,
-             secs:remainingSecs(), colour:G.colour, imageUrl:(G.current.imageUrl||"") });
+             secs:remainingSecs(), colour:G.colour, imageUrl:(G.current.imageUrl||""), double:isDouble(G.current.qseq) });
       if(remainingSecs()<=0) send({ t:"lock" });
     } else if(G.status==="reveal" && G.current){
       send({ t:"reveal", qseq:G.current.qseq, correctIndex:G.current.correctIndex,

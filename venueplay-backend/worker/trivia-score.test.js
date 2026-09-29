@@ -34,7 +34,9 @@ var m = /let pts = 0;[\s\S]*?\n    \}/.exec(src);
 ok("the scoring block is still in the Worker", !!m);
 if (!m) throw new Error("scoring block not found");
 var BLOCK = m[0];
-ok("it still pays base plus a speed bonus", /pts = base \+ bonus/.test(BLOCK), BLOCK.slice(0, 60));
+// Since 28 Sep 2026 the sum is multiplied for a double points question (mult is 1 otherwise;
+// tools/test-double-points.js runs the doubled case).
+ok("it still pays base plus a speed bonus", /pts = mult \* \(base \+ bonus\)/.test(BLOCK), BLOCK.slice(0, 60));
 ok("the bonus is still half of base at most", /base \* 0\.5/.test(BLOCK));
 ok("time left is clamped to the question length",
    /Math\.max\(0, Math\.min\(secs,/.test(BLOCK),
@@ -42,7 +44,7 @@ ok("time left is clamped to the question length",
 
 /* Run it. answered_at and question_ends_at are ISO strings in the Worker. */
 function score(opts) {
-  var base = opts.base, secs = opts.secs, speedBonus = opts.speedBonus !== false;
+  var base = opts.base, secs = opts.secs, speedBonus = opts.speedBonus !== false, mult = 1;
   var correct = opts.correct;
   var endsAtMs = opts.endsAt;
   var a = { answered_at: opts.answeredAt };

@@ -1,5 +1,5 @@
 /* PASTE THIS ONE.
-   Built 27 Sep 2026, 17:46:08   fingerprint aafb59c2fedc
+   Built 28 Sep 2026, 20:27:16   fingerprint b234595c9085
    If that time is not within the last few minutes, close this window and reopen. */
 /* ============================================================================
    PartyPlay Worker: checkout, licences, joining.
@@ -16,7 +16,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '27 Sep 2026, 17:46 · d4ff2ea9';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '28 Sep 2026, 20:27 · 2fd06f81';   // tools/stamp-workers.py, do not edit by hand
 /* ---- lib/pp-licence.js, inlined at build time. Edit the file, not this. ---- */
 const PPLicence = (function () {
   const module = { exports: {} };
@@ -630,8 +630,28 @@ async function handleGameDelete(request, env) {
   const b = await request.json().catch(() => ({}));
   const l = await requireHost(env, b.code, b.key);
   if (!b.id) return json({ error: 'Which game?' }, 400);
+  /* A DELETED GAME TAKES ITS PHOTOS WITH IT. The host's own photos for a game (baby photos for Guess
+     the photo) were kept for 400 days from purchase whether or not the game still existed, so a host
+     who deleted the game to get rid of them could not (privacy wording check, 28 Sep 2026). Only
+     purpose='game' photos on THIS licence, and only ones no other game of this party still uses. */
+  const gone = await sb(env, 'pp_games?id=eq.' + encodeURIComponent(String(b.id)) + '&licence_id=eq.' + l.id + '&select=config');
   await sb(env, 'pp_games?id=eq.' + encodeURIComponent(String(b.id)) + '&licence_id=eq.' + l.id, { method: 'DELETE' });
-  return json({ ok: true });
+  const idsOf = (cfg) => (cfg && Array.isArray(cfg.items) ? cfg.items : []).map(it => String((it && it.id) || '')).filter(x => PHOTO_ID_RE.test(x));
+  const was = gone.length ? idsOf(gone[0].config) : [];
+  let removed = 0;
+  if (was.length && env.PHOTOS) {
+    const rest = await sb(env, 'pp_games?licence_id=eq.' + l.id + '&select=config');
+    const stillUsed = {};
+    (rest || []).forEach(g => idsOf(g.config).forEach(x => { stillUsed[x] = 1; }));
+    const mine = await sb(env, 'pp_photos?licence_id=eq.' + l.id + '&purpose=eq.game&select=id,object_key&limit=500');
+    for (const r of (mine || [])) {
+      if (was.indexOf(r.id) < 0 || stillUsed[r.id]) continue;
+      try { await env.PHOTOS.delete(r.object_key); } catch (e) { continue; }   // file not gone: keep the row that finds it
+      await sb(env, 'pp_photos?id=eq.' + encodeURIComponent(r.id) + '&licence_id=eq.' + l.id + '&purpose=eq.game', { method: 'DELETE' });
+      removed++;
+    }
+  }
+  return json({ ok: true, photos_removed: removed });
 }
 
 /* POST /admin/comp   { key, name, email, state, date, days, reason }
@@ -1960,6 +1980,24 @@ async function handleCheckout(request, env) {
 
   const priceId = plan.days === 3 ? env.STRIPE_PRICE_3DAY : env.STRIPE_PRICE_1DAY;
   const priceCents = plan.cents;
+
+  /* THE SAME BUYER PRESSING PAY AGAIN GETS THE SAME CHECKOUT. The Stripe idempotency key below is
+     built from the licence id, and every call used to insert a NEW pending licence first, so the key
+     was different every time and never matched a retry (review, 28 Sep 2026). A buyer who tapped
+     twice, or whose network retried, got two orders and two Stripe sessions. Now: the same email,
+     name and plan within 30 minutes, whose Stripe session is still open, is sent back to it. */
+  const since = new Date(Date.now() - 30 * 60e3).toISOString();
+  const recent = await sb(env, 'pp_licences?buyer_email=eq.' + encodeURIComponent(email) +
+    '&status=eq.pending&days=eq.' + plan.days + '&created_at=gt.' + encodeURIComponent(since) +
+    '&stripe_session_id=not.is.null&order=created_at.desc&limit=1&select=id,code,buyer_name,stripe_session_id');
+  if (recent.length && recent[0].buyer_name === name) {
+    try {
+      const r = await fetch('https://api.stripe.com/v1/checkout/sessions/' + encodeURIComponent(recent[0].stripe_session_id),
+        { headers: { authorization: 'Bearer ' + env.STRIPE_SECRET_KEY } });
+      const sess = r.ok ? await r.json() : null;
+      if (sess && sess.status === 'open' && sess.url) return json({ url: sess.url, code: recent[0].code, reused: true });
+    } catch (e) { /* could not ask Stripe: fall through and make a fresh checkout */ }
+  }
 
   // A code nobody else holds. Six characters is 29^6, so a collision is rare, but
   // rare is not never and a duplicate code would put two parties in one room.

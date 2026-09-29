@@ -11,8 +11,8 @@
 -- this makes the existing rule true, it does not change the rule.
 --
 -- Audit, 27 Sep 2026. Run once on Sydney; safe to run again.
--- STATUS: written and NOT RUN (27 Sep 2026). The race it closes was reproduced on live
--- the same day: 49 players, two joins at once, 51 in the party.
+-- STATUS: RUN ON SYDNEY by Dean 28 Sep 2026; read back: the trigger takes the lock and the cap
+-- is still 50. The race it closes was reproduced on live on 27 Sep: 49 players, two joins at once, 51.
 
 create or replace function pp_enforce_player_cap() returns trigger
 language plpgsql as $$

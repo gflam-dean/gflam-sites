@@ -73,7 +73,7 @@ function grabBranch(marker){
 
 var NEED = ["adsSignature","buildAds","stopAds","startAds","loopEntries","entryClass","entryInner",
             "slideVisible","todayStr","hasRaffle","accentClass","accentHex","esc","escBr",
-            "landBall","revealBall","renderRun","calledSet","updateBoard","hideBingoLayers",
+            "landBall","revealBall","bingoCall","renderRun","calledSet","updateBoard","hideBingoLayers",
             "showBingoLayer","applyBingo","hideGameFrame","applyVenueLogo","stopCelebrate",
             "cancelHolding","cancelEmbedWatch","gameLabel","enterAds","enterBingo","enterEmbed",
             "enterHolding"];
@@ -463,7 +463,13 @@ var bStart = mark();
 
 /* one ball on its own */
 hostCallsBall(7, [7]);
-run(2600);
+/* THE BIGGER REVEAL (28 Sep 2026): the room dims ("live") while the ball is up, the call a room
+   knows sits under it, and both are gone before the ball glides home. */
+ok("the ball goes up with the room dimmed behind it", $("ballReveal").classList.contains("live") && !$("ballReveal").classList.contains("hidden"));
+ok("and 7 is called as Lucky seven", String($("brCall").textContent) === "Lucky seven", "it says '" + $("brCall").textContent + "'");
+run(1350);
+ok("the room comes back up as the ball glides home", !$("ballReveal").classList.contains("live"));
+run(1250);
 var b1 = since(bStart);
 ok("after the reveal lands, the resting ball shows the number that was called",
    String($("cbNum").textContent) === "7", "it shows " + $("cbNum").textContent);

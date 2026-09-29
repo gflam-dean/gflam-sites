@@ -260,6 +260,7 @@
 <script src="../vp-session.js"></script>
 <script src="../vp-gaming.js"></script>
 <script src="/app/vp-sign.js"></script>
+<script src="/app/vp-channel.js"></script>
 <script>
 (function(){
   "use strict";
@@ -968,9 +969,12 @@
      on return if this one was closed underneath us. */
   var _leaving=false, _closed=false;
   function openChannel(code){
-    if(ch){ var old=ch; ch=null; subscribed=false; try{ client.removeChannel(old); }catch(e){} }
+    if(ch){ var old=ch; ch=null; subscribed=false; try{ if(old.unsubscribe) old.unsubscribe(); else client.removeChannel(old); }catch(e){} }
     _closed=false;
-    ch=client.channel("vp-"+code, { config:{ broadcast:{ self:false } } });   // same convention as trivia/musical so the unified TV finds it
+    /* Rebuilt by /app/vp-channel.js after a drop (review, 28 Sep 2026): a CLOSED channel never rejoins by
+       itself, and this console only reopened one on a tab switch, so a draw stopped reaching the TV until
+       the host went away and came back. Same helper as the TV and every phone. */
+    ch=window.VPChannel ? VPChannel.keep(client, "vp-"+code, { config:{ broadcast:{ self:false } } }) : client.channel("vp-"+code, { config:{ broadcast:{ self:false } } });   // same convention as trivia/musical so the unified TV finds it
     var mine=ch;
     ch.on("broadcast", { event:"msg" }, function(e){ onPair(e.payload); });
     ch.subscribe(function(status){

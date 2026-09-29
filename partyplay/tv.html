@@ -127,11 +127,11 @@
      and otherwise showed a dead end with nothing to tap, which on a TV remote is
      the end of the road. This is what makes the smart-TV and TV-browser routes
      work at all. Big boxes, because this gets typed with a remote. */
-  function askForCode(){
+  function askForCode(msg){
     show('<div class="entry">' +
       '<img class="mark" src="/logos/partyplay-mark.svg" alt="">' +
       '<h1>Enter your party code</h1>' +
-      '<p class="sub">Six characters, in your welcome email and in the host console on your phone.</p>' +
+      '<p class="sub">' + (msg ? esc(msg) : 'Six characters, in your welcome email and in the host console on your phone.') + '</p>' +
       '<input id="cin" maxlength="9" placeholder="ABC123" autocomplete="off" ' +
       'autocapitalize="characters" spellcheck="false" inputmode="text">' +
       '<button id="cgo" disabled>Show the party</button>' +
@@ -257,10 +257,34 @@
     }
   }
 
+  /* IS THIS A PARTY? The telly used to trust any six characters: a typo, or a code from a party
+     that was never bought, put a QR code and "Join the party" on the wall for a room that could
+     never join (review, 28 Sep 2026). The lobby still goes up first, because the Worker being slow
+     must not delay the one screen everyone is looking at; a party that does not exist takes it down
+     again and asks for the code, and a finished one says so under the code. */
+  function checkCode(code){
+    return fetch(PPConfig.API + "/licence?code=" + encodeURIComponent(code))
+      .then(function(r){ return r.json().then(function(j){ return { status: r.status, body: j }; }); })
+      .then(function(x){
+        if(x.status === 404){
+          try{ localStorage.removeItem("ppTvCode"); }catch(e){}
+          CODE = "";
+          askForCode("There is no party with the code " + code + ". Check it against your welcome email and try again.");
+          return false;
+        }
+        if(x.status === 200 && x.body && x.body.status === "finished"){
+          var f = document.querySelector(".join .foot");
+          if(f) f.insertAdjacentHTML("beforebegin", '<p class="foot">This party has finished.</p>');
+        }
+        return true;
+      })
+      .catch(function(){ return true; });   // the Worker not answering is not a reason to take the lobby down
+  }
   function connect(){
     if(!CODE){ askForCode(); return; }
     if(!SUPA_ANON){ show('<div class="msg">This screen is not configured yet.</div>'); return; }
     drawJoin();
+    checkCode(CODE);
     try{
       var client = supabase.createClient(SUPA_URL, SUPA_ANON);
       var ch = client.channel(PPConfig.channel(CODE), { config:{ broadcast:{ self:false } } });

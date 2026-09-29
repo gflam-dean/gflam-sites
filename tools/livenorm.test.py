@@ -38,6 +38,11 @@ live3 = ('<p>Write to <a href="/cdn-cgi/l/email-protection" class="__cf_email__"
          'data-cfemail="a1c9">[email&#160;protected]</a> today</p>' + DECODE + BEACON)
 check('an address in running text matches, beacon and all', normalise(repo3) == normalise(live3))
 
+repo4 = '<footer>Hi</footer>\n</div></body></html>'
+live4 = ('<footer>Hi</footer>\n</div>' + DECODE + "<script type=\"module\" src='https://static.cloudflareinsights.com/beacon.min.js/v1' "
+         "data-cf-beacon='{\"token\": \"abc\"}'></script>\n</body></html>")
+check('a beacon Cloudflare puts on its own line leaves no difference behind', normalise(repo4) == normalise(live4))
+
 check('control: a real edit to the words is still a difference',
       normalise(repo) != normalise(live.replace('Tell us', 'Email us')))
 check('control: a real edit to the code is still a difference',

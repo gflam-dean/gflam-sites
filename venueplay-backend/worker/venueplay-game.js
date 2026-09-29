@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '28 Sep 2026, 12:05 · 3c29352f';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '28 Sep 2026, 13:26 · 87c24fd4';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -3009,6 +3009,17 @@ async function hostStartTrivia(env, json, b, session, staff, seq) {
   if (typeof b.colour === 'boolean') config.colour = b.colour;
   const speedBonus = b.speed_bonus !== false;   // default on
   config.speed_bonus = speedBonus;
+  /* DOUBLE POINTS FINAL ROUND (migration 96; Dean, 28 Sep 2026). The last N questions of the
+     night score twice, speed bonus included. Decided HERE from the questions actually chosen, and
+     written onto the game, so the reveal, the paper scoring and every tablet agree on exactly
+     which questions they are, whatever happens to the console. */
+  const doubleOn = b.double_points === true;
+  const doubleLast = Math.max(1, Math.min(100, parseInt(b.double_last, 10) || 10));
+  if (doubleOn && chosenSeqs.length) {
+    const from = Math.max(0, chosenSeqs.length - doubleLast);
+    config.double_seqs = chosenSeqs.slice(from);
+    config.double_ids = config.double_seqs.map((sq) => seqToId[sq]).filter(Boolean);
+  }
   /* PAPER TEAMS. Sheets printed tonight make this a paper night: the answers are held back to the
      end of each round of round_size questions, so a team on paper cannot change a box after
      seeing it on the screen (Dean, 25 Sep). Decided by the Worker from what was printed, not by
@@ -3035,6 +3046,14 @@ async function hostStartTrivia(env, json, b, session, staff, seq) {
     if (config.time_limit_s != null) prefs.trivia_time_limit_s = config.time_limit_s;
     if (config.base_points != null) prefs.trivia_base_points = config.base_points;
     try { await sbUpsert(env, 'vp_venue_settings', prefs, 'venue_id'); } catch (e) { /* non-fatal */ }
+    /* Its own write: if migration 96's columns are missing, the speed bonus and timings above
+       must still save. Only when the console sent the setting, so an old console changes nothing. */
+    if (typeof b.double_points === 'boolean') {
+      try {
+        await sbUpsert(env, 'vp_venue_settings',
+          { venue_id: session.venue_id, trivia_double_points: doubleOn, trivia_double_last: doubleLast }, 'venue_id');
+      } catch (e) { /* non-fatal */ }
+    }
   }
 
   const gameRows = await sbInsert(env, 'vp_games', {
@@ -3072,7 +3091,8 @@ async function hostStartTrivia(env, json, b, session, staff, seq) {
   // A paper round says so, with the round size it was PRINTED in, so the console asks for the
   // sheets at the same moment the server allows scoring them, whichever tablet the host is on.
   return json({ game_id: game.id, seq, format: 'trivia', question_count: questionCount,
-    paper: config.defer_reveal === true, round_size: config.defer_reveal === true ? config.round_size : null });
+    paper: config.defer_reveal === true, round_size: config.defer_reveal === true ? config.round_size : null,
+    double_seqs: config.double_seqs || [] });
 }
 
 /* ------------------------------ MUSICAL BINGO: start a game ------------------------------
@@ -5569,7 +5589,7 @@ async function handleHostReveal(request, env, json) {
   if (r.reply) return r.reply;
   if (r.pre) return handleHostRevealManyTrips(request, env, json, r.pre);
   const d = r.rpc;   // the phase was flipped, the answers scored and trivia.reveal emitted inside the function
-  return json({ qseq: d.qseq, correct_index: d.correct_index, split: d.split, leaderboard: d.leaderboard, already: d.already === true });
+  return json({ qseq: d.qseq, correct_index: d.correct_index, split: d.split, leaderboard: d.leaderboard, already: d.already === true, double: d.double === true });
 }
 
 // The pre-73 path, kept only as the fallback above (see handleHostQuestionManyTrips).
@@ -5635,6 +5655,7 @@ async function handleHostRevealManyTrips(request, env, json, pre) {
   const base = (cfg.base_points != null) ? cfg.base_points : (q.points || 100);
   const secs = (cfg.time_limit_s != null) ? cfg.time_limit_s : (q.time_limit_s || 20);
   const speedBonus = cfg.speed_bonus !== false;
+  const mult = Array.isArray(cfg.double_seqs) && cfg.double_seqs.indexOf(t.current_seq) >= 0 ? 2 : 1;   // migration 96
   const options = Array.isArray(q.options) ? q.options : [];
   /* The bonus is measured against the window the question was ASKED with. Time the host
      added afterwards (see handleHostAddTime) still lets late answers count, but it must not
@@ -5670,7 +5691,7 @@ async function handleHostRevealManyTrips(request, env, json, pre) {
         const remaining = Math.max(0, Math.min(secs, (endsAtMs - Date.parse(a.answered_at)) / 1000));
         bonus = Math.round(base * 0.5 * (remaining / secs));
       }
-      pts = base + bonus;
+      pts = mult * (base + bonus);
     }
     // Collected, not written one at a time. See the batch below.
     scored.push({ id: a.id, is_correct: correct, points_awarded: pts });
@@ -5713,11 +5734,11 @@ async function handleHostRevealManyTrips(request, env, json, pre) {
   // vp_host_reveal). The console has the answer from its own reply and puts it up at round end.
   const deferred = cfg.defer_reveal === true;
   await emitEvent(env, session, 'trivia.reveal', deferred
-    ? { qseq: t.current_seq, options, leaderboard, deferred: true }
+    ? { qseq: t.current_seq, options, deferred: true }   // 97: no leaderboard either, a total moving is the answer by another name
     : { qseq: t.current_seq, correct_index: q.correct_index, options, split, leaderboard },
   actorRef(staff));
 
-  return json({ qseq: t.current_seq, correct_index: q.correct_index, split, leaderboard, already });
+  return json({ qseq: t.current_seq, correct_index: q.correct_index, split, leaderboard, already, double: mult === 2 });
 }
 
 /* ------------------------------ POST /host/ball ------------------------------
@@ -7753,6 +7774,7 @@ async function getPublicSnapshot(env, sessionId) {
         colour: cfg.colour !== false, phase: 'idle', question: null,
         // A paper night (migration 88): so a reloaded console knows to hold the answers back. Not a secret.
         paper: cfg.defer_reveal === true, round_size: cfg.defer_reveal === true ? (Number(cfg.round_size) || 10) : null,
+        double_seqs: Array.isArray(cfg.double_seqs) ? cfg.double_seqs : [],   // migration 96: survives a console reload
       };
       const tg = await sbGet(env, 'vp_trivia_games',
         'game_id=eq.' + enc(g.id) + '&select=question_set_id,current_seq,phase,question_ends_at');
@@ -8231,6 +8253,7 @@ async function handlePaperScore(request, env, json) {
   const rounds = Math.ceil(ids.length / R);
   if (!(round >= 1 && round <= rounds)) return json({ error: 'That round does not exist' }, 400);
   const roundIds = ids.slice((round - 1) * R, round * R);
+  const roundDouble = Array.isArray(cfg.double_ids) ? roundIds.filter((id) => cfg.double_ids.indexOf(id) >= 0) : [];
   const roundEnd = Math.min(round * R, ids.length);
   /* The sheets come in only when the round's last question is closed. Scoring earlier would let a
      paper total reach the leaderboard (and every phone) while a question is still open. */
@@ -8254,19 +8277,32 @@ async function handlePaperScore(request, env, json) {
     if (!(no >= 1 && no <= maxTeam)) continue;
     if (t.correct === '' || t.correct == null) continue;           // left blank = not handed in
     const correct = Math.max(0, Math.min(roundIds.length, parseInt(t.correct, 10) || 0));
+    /* DOUBLE POINTS (migration 96). A sheet says how many a team got right, not which, so the host
+       also enters how many of those were in the double points questions. Never more than they got
+       right, never more than the round has doubled. */
+    // And never fewer than the count forces: 9 right on a round with only 7 ordinary questions
+    // means at least 2 of them were doubled, whatever was typed.
+    const dbl = Math.max(correct - (roundIds.length - roundDouble.length),
+      Math.max(0, Math.min(correct, roundDouble.length, parseInt(t.double, 10) || 0)));
     const player = await ensurePaperPlayer(env, session, 't', no, t.name);   // scored = played, billed once
     // A corrected score replaces the round, it does not add to it.
     await sbDelete(env, 'vp_trivia_answers', 'game_id=eq.' + enc(gameId) + '&player_id=eq.' + enc(player.id) +
       '&question_id=in.(' + roundIds.map(enc).join(',') + ')');
     const rows = [];
     const now = new Date().toISOString();
+    // The right answers go to `dbl` doubled questions and correct - dbl ordinary ones.
+    let singleLeft = correct - dbl, doubleLeft = dbl;
     for (let i = 0; i < roundIds.length; i++) {
-      const right = i < correct;
+      const isDbl = roundDouble.indexOf(roundIds[i]) >= 0;
+      let right = false;
+      if (isDbl && doubleLeft > 0) { right = true; doubleLeft--; }
+      else if (!isDbl && singleLeft > 0) { right = true; singleLeft--; }
       // Wrong answers are not stored, except one zero row so a team on 0 still shows on the board.
       if (!right && !(correct === 0 && i === 0)) continue;
       const idx = Number.isFinite(ci[roundIds[i]]) ? ci[roundIds[i]] : 0;
       rows.push({ game_id: gameId, question_id: roundIds[i], player_id: player.id,
-        answer_index: right ? idx : (idx + 1) % 4, answered_at: now, is_correct: right, points_awarded: right ? base : 0 });
+        answer_index: right ? idx : (idx + 1) % 4, answered_at: now, is_correct: right,
+        points_awarded: right ? (isDbl ? 2 * base : base) : 0 });
     }
     if (rows.length) await sbInsert(env, 'vp_trivia_answers', rows, false);
     scored++;

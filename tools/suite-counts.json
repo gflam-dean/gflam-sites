@@ -51,6 +51,10 @@
   "checks": 59,
   "counted_by": "total"
  },
+ "partyplay-backend/lib/pp-start-back.test.js": {
+  "checks": 4,
+  "counted_by": "lines"
+ },
  "partyplay-backend/lib/pp-ticket.test.js": {
   "checks": 415,
   "counted_by": "total"
@@ -58,6 +62,10 @@
  "partyplay-backend/lib/pp-trivia-pack.test.js": {
   "checks": 46,
   "counted_by": "total"
+ },
+ "partyplay-backend/lib/pp-tv-code-check.test.js": {
+  "checks": 8,
+  "counted_by": "lines"
  },
  "partyplay-backend/lib/pp-tv-layout.test.js": {
   "checks": 9,
@@ -68,11 +76,11 @@
   "counted_by": "total"
  },
  "partyplay-backend/worker/partyplay-api.test.js": {
-  "checks": 149,
+  "checks": 155,
   "counted_by": "total"
  },
  "tools/livenorm.test.py": {
-  "checks": 5,
+  "checks": 6,
   "counted_by": "lines"
  },
  "tools/redirect-verdict.test.py": {
@@ -123,6 +131,10 @@
   "checks": 27,
   "counted_by": "lines"
  },
+ "tools/test-channel-recovery-consoles.js": {
+  "checks": 21,
+  "counted_by": "lines"
+ },
  "tools/test-channel-recovery-phones.js": {
   "checks": 25,
   "counted_by": "lines"
@@ -149,6 +161,10 @@
  },
  "tools/test-demo-returns-to-offer.js": {
   "checks": 23,
+  "counted_by": "lines"
+ },
+ "tools/test-double-points.js": {
+  "checks": 24,
   "counted_by": "lines"
  },
  "tools/test-draws-keep-an-honest-record.js": {
@@ -212,7 +228,7 @@
   "counted_by": "lines"
  },
  "tools/test-musical-phone.js": {
-  "checks": 25,
+  "checks": 33,
   "counted_by": "lines"
  },
  "tools/test-musical-print.js": {
@@ -239,6 +255,10 @@
   "checks": 8,
   "counted_by": "lines"
  },
+ "tools/test-paper-night-event-private.js": {
+  "checks": 7,
+  "counted_by": "lines"
+ },
  "tools/test-paper-players.js": {
   "checks": 47,
   "counted_by": "lines"
@@ -249,6 +269,14 @@
  },
  "tools/test-phones-cannot-be-impersonated.js": {
   "checks": 34,
+  "counted_by": "lines"
+ },
+ "tools/test-pr-game.js": {
+  "checks": 21,
+  "counted_by": "lines"
+ },
+ "tools/test-pr-round.js": {
+  "checks": 20,
   "counted_by": "lines"
  },
  "tools/test-print-problem.js": {
@@ -295,12 +323,24 @@
   "checks": 9,
   "counted_by": "lines"
  },
+ "tools/test-sign-venue-switch.js": {
+  "checks": 2,
+  "counted_by": "lines"
+ },
  "tools/test-status-moves-the-clock.js": {
   "checks": 6,
   "counted_by": "lines"
  },
  "tools/test-stripe-signature-expires.js": {
   "checks": 10,
+  "counted_by": "lines"
+ },
+ "tools/test-ta-match.js": {
+  "checks": 15,
+  "counted_by": "lines"
+ },
+ "tools/test-ta-screen.js": {
+  "checks": 9,
   "counted_by": "lines"
  },
  "tools/test-trivia-no-repeat-survives-a-removal.js": {
@@ -472,7 +512,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/tv-screen.test.js": {
-  "checks": 36,
+  "checks": 39,
   "counted_by": "lines"
  },
  "venueplay-backend/app/tv-stale-screen.test.js": {

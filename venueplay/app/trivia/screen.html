@@ -180,6 +180,9 @@
   @keyframes confettiFall{0%{transform:translateY(-3vh) rotate(0);opacity:1}100%{transform:translateY(105vh) rotate(680deg);opacity:.85}}
   .pulse{animation:pulse 1.4s ease-in-out infinite}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+  .dblpts{display:inline-block;vertical-align:middle;margin-left:1.4cqw;padding:.45cqw 1.6cqw;border-radius:99px;background:#FFC24B;color:#1a1200;font-size:clamp(12px,1.9cqw,34px);line-height:1;
+    font-weight:800;letter-spacing:.12em;text-transform:uppercase;animation:dblpulse 1.6s ease-in-out infinite}
+  @keyframes dblpulse{ 0%,100%{box-shadow:0 0 0 0 rgba(255,194,75,.6)} 50%{box-shadow:0 0 2cqw .4cqw rgba(255,194,75,.35)} }
 </style>
 </head>
 <body>
@@ -237,6 +240,8 @@
   </div>
 
   <!-- leaderboard -->
+  <!-- Punters Reckon (feature/top-answers, switched off): the board is drawn by /app/topanswers/pr-board.js -->
+  <div class="layer hidden" id="tvPR" style="padding:0;container-type:inline-size"></div>
   <div class="layer hidden" id="tvBoard">
     <div class="boardtitle" id="tvBoardTitle">Leaderboard</div>
     <div class="board" id="tvBoardRows"></div>
@@ -261,6 +266,7 @@
 <script src="/app/vp-qr.js"></script>
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-channel.js"></script>
+<script src="/app/topanswers/pr-board.js"></script>
 <script src="/app/vp-screen-router.js"></script>
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-fit.js"></script>
@@ -353,10 +359,11 @@
   /* The TV never shows the player count (locked design rule): a room of six should not read
      "6 playing" on the wall. The host console has the number. */
   var state={ phase:"lobby", hostSeen:false, colour:true, title:"" };
+  var _prBoard=null;   // Punters Reckon board, mounted on first use
   var curQ=null, answeredPids={}, ringTimer=null, boardRollTimer=null;
 
   // ---- layers ----
-  var LAYERS=["tvLobby","tvQ","tvReveal","tvPaper","tvBoard","tvPodium"];
+  var LAYERS=["tvLobby","tvQ","tvReveal","tvPaper","tvBoard","tvPodium","tvPR"];
   function show(which){
     if(which!=="tvBoard") stopBoardPaging();
     for(var i=0;i<LAYERS.length;i++){ $(LAYERS[i]).classList.toggle("hidden", LAYERS[i]!==which); }
@@ -474,6 +481,8 @@
     answeredPids={};
     show("tvQ");
     $("tvQCount").textContent = (m.qi && m.qtotal) ? ("Question "+m.qi+" of "+m.qtotal) : "Question";
+    /* DOUBLE POINTS FINAL ROUND (28 Sep 2026): the console flags the question; the Worker scores it. */
+    if(m.double===true){ var dp=document.createElement("span"); dp.className="dblpts"; dp.textContent="Double points"; $("tvQCount").appendChild(dp); }
     var qi=$("tvQImg"), lay=$("tvQ"), hasPic=!!(m.imageUrl && /^https?:\/\//i.test(String(m.imageUrl)));
     if(hasPic){ qi.src=m.imageUrl; qi.classList.remove("hidden"); } else { qi.classList.add("hidden"); qi.removeAttribute("src"); }
     lay.classList.toggle("pic", hasPic);   // picture round layout; a picture that fails to load drops back to this text layout (see onerror)
@@ -735,7 +744,7 @@
     else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ tvSubscribed=false; tvStatus(false); }
   });
 
-  var HOST_TYPES={host_here:1,session:1,mode:1,started:1,state:1,question:1,lock:1,reveal:1,leaderboard:1,podium:1,idle:1,players:1,closed:1,handin:1,roundanswers:1};
+  var HOST_TYPES={host_here:1,session:1,mode:1,started:1,state:1,question:1,lock:1,reveal:1,leaderboard:1,podium:1,idle:1,players:1,closed:1,handin:1,roundanswers:1,ta_board:1,ta_reveal:1,ta_showall:1};
   // Unified TV: after a game ends (idle) and stays ended, drop back to /tv (the venue ads). Any
   // real game activity cancels it, so a quick next round or restart never bounces.
   var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, players:1 };
@@ -792,6 +801,13 @@
     if(m.t==="tv_here") return;                       // ignore our own presence pings
     if(HOST_TYPES[m.t]){ state.hostSeen=true; noteHost(); tvSend({ t:"tv_here" }); }
     if(m.t==="host_here"){ if(state.phase==="lobby") renderLobby(); return; }
+    /* PUNTERS RECKON rounds. The board is its own layer, painted by the shared pr-board.js; the
+       leaderboard after a board is the ordinary "leaderboard" message, handled below as for trivia. */
+    if(m.t==="ta_board" || m.t==="ta_reveal" || m.t==="ta_showall"){
+      if(!_prBoard && window.PRBoard){ _prBoard = window.PRBoard.mount($("tvPR")); }
+      if(_prBoard){ if(m.t==="ta_board"){ state.phase="pr"; show("tvPR"); } _prBoard.onMsg(m); }
+      return;
+    }
     if(m.t==="session"){ if(m.join_code && CODE_RE.test(m.join_code)){ joinCode=m.join_code; } if(state.phase==="lobby") renderLobby(); else drawLobbyQR(); return; }
     if(m.t==="mode"){ if(typeof m.title==="string") state.title=m.title; if(state.phase==="lobby") paintLobbyName(); return; }
     if(m.t==="started"){ if(typeof m.title==="string") state.title=m.title; state.phase="lobby"; stopRing(); show("tvLobby"); renderLobby(); return; }

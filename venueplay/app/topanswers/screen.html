@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VenuePlay Punters Reckon: Big Screen</title>
+<link rel="icon" type="image/png" href="/logos/venueplay_appicon_rebuilt.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden}
+  body{background:#050506;color:#E7E7EC;font-family:'Manrope',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  .tv{position:fixed;inset:0;container-type:inline-size;background:radial-gradient(1200px 700px at 80% -10%, rgba(255,31,142,.12), transparent 60%), #050506}
+</style>
+</head>
+<body>
+<div class="tv" id="tv"></div>
+<!-- The demo page for Punters Reckon. The real game runs on the trivia TV (app/trivia/screen.html), which
+     mounts the same board from /app/topanswers/pr-board.js. -->
+<script src="/app/topanswers/ta-match.js"></script>
+<script src="/app/topanswers/ta-boards.js"></script>
+<script src="/app/topanswers/pr-game.js"></script>
+<script src="/app/topanswers/pr-board.js"></script>
+<script>
+(function(){
+  "use strict";
+  var board = window.PRBoard.mount(document.getElementById("tv"));
+  window.TAScreen = board;
+  /* ?demo=1 : one round played through the REAL referee (pr-game.js) by pretend phones. */
+  if(!/[?&]demo=1/.test(location.search)) return;
+  var b = window.TABoards.filter(function(x){ return x.id === "pubfood"; })[0];
+  var g = new window.PRGame.Game({ boards:[b], pick:function(){ return 0; } });
+  setTimeout(function(){ board.onMsg(g.nextBoard(30)); }, 300);
+  [["p1","Sam","chicken parma",1800],["p2","Jo","lasagne",3200],["p3","Mick","fish n chips",4600],
+   ["p2","Jo","schnitty",6400],["p4","Bec","a burger",8200],["p1","Sam","steak",9800]].forEach(function(s){
+    setTimeout(function(){ var r = g.guess(s[0], s[1], s[2]); if(r.reveal) board.onMsg(r.reveal); }, s[3]);
+  });
+  setTimeout(function(){ board.onMsg(g.endBoard().showall); }, 13000);
+})();
+</script>
+</body>
+</html>
