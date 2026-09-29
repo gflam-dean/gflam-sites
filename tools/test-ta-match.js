@@ -49,5 +49,9 @@ B.forEach(function(b){
 });
 ok(B.length + ' boards, all sound', problems.length === 0, problems.slice(0, 8).join(' | '));
 ok('at least 30 boards to start', B.length >= 30, String(B.length));
+/* "Footy" is AFL in Melbourne and league in Brisbane. Scoring it as either one tells half the country
+   they are wrong in front of the room, so it scores as neither (seen live, 30 Sep 2026). */
+var sportB = B.filter(function(b){ return b.id === 'sport'; })[0];
+ok('"footy" on the sport board is not credited to one code', sportB && M.match(sportB, 'footy') === -1);
 print('\n' + (ran - bad) + ' of ' + ran + ' checks passed');
 if (bad) throw new Error(bad + ' top answers checks failed');

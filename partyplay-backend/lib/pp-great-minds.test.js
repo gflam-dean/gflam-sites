@@ -53,6 +53,8 @@ ok("nothing that does not belong at a kids' party", !badWords.length, badWords.j
 ok("every board adds up to 100", !badSums.length, badSums.join(", "));
 ok("no typed form belongs to two answers on one board", !shared.length, shared.join(", "));
 ok("every answer scores when typed exactly", !selfMiss.length, selfMiss.join(", "));
+var sportB = boards.filter(function(b){ return b.id === "sport"; })[0];
+ok('"footy" on the sport board is not credited to one code (AFL in one state, league in another)', sportB && g.TAMatch.match(sportB, "footy") === -1);
 ok("the game is called Great Minds, in one place", g.PPGames.name("topanswers") === "Great Minds");
 
 print("== a board played through the real run.html runner ==");

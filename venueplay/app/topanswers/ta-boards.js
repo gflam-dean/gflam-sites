@@ -65,7 +65,7 @@
       { a: "Groom", pts: 10, also: [] },
       { a: "Dancing", pts: 8, also: ["dance floor", "first dance", "dj", "band"] } ] },
     { id: "sport", q: "Name a sport Australians love to watch", answers: [
-      { a: "Rugby league", pts: 30, also: ["nrl", "league", "footy", "rugby", "state of origin", "origin"] },
+      { a: "Rugby league", pts: 30, also: ["nrl", "league", "rugby", "state of origin", "origin"] },
       { a: "AFL", pts: 26, also: ["aussie rules", "australian rules", "afl footy"] },
       { a: "Cricket", pts: 22, also: ["test cricket", "the cricket"] },
       { a: "Horse racing", pts: 10, also: ["the races", "races", "melbourne cup", "racing"] },
