@@ -12,6 +12,18 @@ owns). Built on the branch `feature/top-answers`. Nothing here is live and no ve
 - `tools/test-ta-match.js`: 15 checks, incl. every alias on every board scoring its own answer and
   no two answers sharing a form. 2 break-tests proven.
 
+- `venueplay/app/topanswers/screen.html`: the TV board. Flips answers as found, big red X for a strike,
+  team scores, the team on turn in gold, greyed answers nobody got at the end. `?demo=1` plays a scripted
+  round. Seen in a real browser at 1600x960. `tools/test-ta-screen.js` (10 checks, 2 mutations).
+- RULE THE CONSOLE MUST KEEP: an answer's text is only broadcast when it is FOUND (ta_reveal carries it),
+  and the unfound ones only at the end (ta_showall). Every phone hears the TV's channel.
+
+## Decisions for Dean
+- The name ("Top Answers" is a placeholder).
+- Pricing: does a Top Answers night count as the venue's weekly trivia night under its plan?
+- Where it lives: my recommendation is a round type INSIDE the trivia console, so it inherits trivia's
+  reconnect, signing, session and billing behaviour instead of becoming a fourth copy of all that.
+
 ## Still to build, in order
 1. Host console (`app/topanswers/host.html`): pick a board, open it, show typed answers, reveal
    the board, award points to teams, next board.

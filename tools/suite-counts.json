@@ -323,6 +323,10 @@
   "checks": 15,
   "counted_by": "lines"
  },
+ "tools/test-ta-screen.js": {
+  "checks": 10,
+  "counted_by": "lines"
+ },
  "tools/test-trivia-no-repeat-survives-a-removal.js": {
   "checks": 10,
   "counted_by": "lines"
