@@ -59,7 +59,7 @@ Names typed on the console stay on the console. The TV and the public page never
 - `tools/test-jag-pages.js`: 67 checks. Runs the real console, the TV screen, `/tv`'s game
   router, the shared screen router and the `/app` tile the way a host would.
 - The Jag screen and console were also added to the shared venue-link and channel-recovery suites.
-- 46 break-tests in `tools/prove-checks.py`, each proven to turn the gate red.
+- 45 break-tests in `tools/prove-checks.py`, each proven to turn the gate red.
 
 The database part (migration 95) still cannot be run here: there is no copy of the database.
 Its read-back at the bottom asks the six questions that matter.
