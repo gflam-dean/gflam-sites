@@ -97,6 +97,13 @@ function tapCard(K, n){ var fake = { disabled:false, getAttribute:function(){ re
   K.ch().cb('SUBSCRIBED'); await flush();
   show('subscribed: it says host_here and mode:"jag", which is what puts Jag on the venue TV', payloads(K.ch(),'host_here').length===1 && payloads(K.ch(),'mode').length===1 && payloads(K.ch(),'mode')[0].mode==='jag');
 
+  print('\n== switched off, it leaves the TV alone ==');
+  var _realFetch = fakeFetch, OFF = true;
+  fakeFetch = function(url, o){ if(OFF && /\/host\/jag\?/.test(url)) return Promise.resolve({ ok:false, status:404, json:function(){ return Promise.resolve({ error:'Jag the Joker is not switched on yet' }); } }); return _realFetch(url, o); };
+  var K0 = bootConsole('host'); await flush(); await flush();
+  show('with /host/jag answering 404 (JAG_ON unset) it never joins the venue channel, so no mode moves the TV', !K0.ch());
+  OFF = false; fakeFetch = _realFetch;
+
   print('\n== start, with a real confirm ==');
   $('jName').value='Friday Jag'; $('jDeck').value='20'; $('jPot').value='500';
   $('startBtn').fire('click'); await flush();

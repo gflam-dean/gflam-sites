@@ -313,7 +313,8 @@
       if(!G.board || G.board.status!=="active"){ if(G.carry){ $("jPot").value=Math.round(G.carry.jackpot_cents/100); } }
       clearError(); render();
       if(JSON.stringify(publicBoard(G.board))!==G.sentKey) sendState();   // a second device changed it: tell the TV
-    }).catch(function(e){ hostError("Could not load Jag the Joker: "+e.message); });
+      return true;
+    }).catch(function(e){ hostError("Could not load Jag the Joker: "+e.message); return false; });
   }
   /* A SECOND DEVICE IS NOT STALE FOR LONG. Two tablets on one jackpot both painted what they had
      when they opened. Refresh every 30 seconds, but never under a host who is mid-confirm or
@@ -392,8 +393,13 @@
       if(VP.suspensionBanner) VP.suspensionBanner(ctx);
       $("statusText").textContent="Signed in";
       if(G.slug && window.VPSign){ VPSign.initHost(VP_GAME_API, G.slug, vpHostToken); }   // this venue's signing key
-      if(G.slug && VP.venueCode){ G.code=VP.venueCode("jag-"+G.slug); openChannel(G.code); }
-      load();
+      /* THE TV IS ONLY TAKEN ONCE THE SERVER SAYS JAG IS ON HERE. Joining the channel sends t:"mode", which
+         moves the venue's wall onto the Jag board, so a console opened while Jag is switched off (or at a
+         venue it is refused for) used to put "not switched on yet" on the TV for ten minutes (review,
+         30 Sep 2026). load() answering is the proof: /host/jag is 404 while JAG_ON is unset. */
+      load().then(function(ok){
+        if(ok && !G.code && G.slug && VP.venueCode){ G.code=VP.venueCode("jag-"+G.slug); openChannel(G.code); }
+      });
     }).catch(function(){ $("signinSub").textContent="Could not check your sign in. Try reloading."; show("signinView", true); });
   } else { $("signinSub").textContent="Sign in helper failed to load. Try reloading."; show("signinView", true); }
 
