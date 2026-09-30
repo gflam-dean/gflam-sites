@@ -67,6 +67,27 @@
   footer{border-top:1px solid var(--hair);padding:26px 0 60px;color:var(--faint);font-size:15px}
   footer a{color:var(--mute)}
 </style>
+<!-- Google Analytics. Deliberately NOT on every page: see partyplay-backend/ANALYTICS.md -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-73XKQG9TBN"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-73XKQG9TBN', {
+    // Never send a query string to Google. Three pages on this site carry the
+    // host key in the URL, and page_location would post it straight to a third
+    // party. Those pages are excluded entirely as well, but this is the belt to
+    // that braces: if anyone ever pastes the snippet somewhere new, the key
+    // still does not leave.
+    page_location: location.origin + location.pathname,
+    anonymize_ip: true
+  });
+</script>
+<meta property="og:image" content="https://partyplay.com.au/logos/partyplay-share.png">
+<meta name="twitter:card" content="summary">
+<meta property="og:title" content="Getting it on your TV | PartyPlay">
+<meta property="og:description" content="Five ways to get PartyPlay on a screen, including not having a TV at all.">
+<meta property="og:type" content="website">
 </head>
 <body>
 <div class="w">

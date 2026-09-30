@@ -99,7 +99,9 @@ ok("and starts the game from its tile", /else if\(g\.format==="topanswers"\) run
 
 X.runGreatMinds({ format:"topanswers" });
 X.gmPutUp();
+X.gmPutUp();   // a double-tap
 var G = X.getG(), b = G.game.board, pub = sent.filter(function(m){ return m.t === "ta_board"; })[0];
+ok("a double-tap on Next board does not skip the board the room is on", G.game.round === 1 && sent.filter(function(m){ return m.t === "ta_board"; }).length === 1);
 ok("the board goes up with its question and a count, named Great Minds", pub && pub.q === b.q && pub.n === b.answers.length && pub.name === "Great Minds");
 ok("the host's own screen lists the answers (only the tablet sees this)", dom.app.innerHTML.indexOf(b.answers[0].a) > 0);
 var first = b.answers[0], second = b.answers[1];
@@ -124,8 +126,24 @@ var boardTimer = timers.filter(function(t){ return t.ms === 7000; }).pop();
 boardTimer.f();
 var lb = sent.filter(function(m){ return m.t === "board"; }).pop();
 ok("the scores go up after the board has been read, in the telly's shape", lb && lb.rows[0].name === "Sam" && lb.rows[0].score === first.pts && typeof lb.rows[1].score === "number");
+print("== the host's tablet reloads mid-board ==");
+var savedKey = Object.keys(store).filter(function(k){ return /^ppGM:/.test(k); })[0];
+ok("the game is saved on the tablet as it is played", !!savedKey && JSON.parse(store[savedKey]).game.indexOf('"board"') > 0);
+X.gmPutUp();   // board 2 goes up
+var b2 = X.getG().game.board;
+X.onGreatMindsGuess({ t:"pr_guess", name:"Sam", round:2, text:b2.answers[0].a });
+var mark = sent.length;
+X.runGreatMinds({ format:"topanswers", id:undefined });   // what a reload does: the runner starts again
+var G2 = X.getG();
+ok("a reload brings back the same board, the scores and what was found", G2.game.board && G2.game.board.q === b2.q && G2.game.scores.Sam && Object.keys(G2.game.found).length === 1);
+ok("and puts the board back on the telly and phones (question, count, found answers only)",
+   sent.slice(mark).length === 2 && sent[mark].t === "ta_board" && sent[mark + 1].t === "ta_reveal");
+X.gmEnd();
 X.gmFinish(); X.gmFinish();
-ok("Finish adds the scores to the night once, however many times it is pressed", X.night().Sam === first.pts && X.night().Jo === second.pts);
+var fin = X.getG().game.scores;
+ok("Finish adds the scores to the night once, however many times it is pressed", X.night().Sam === fin.Sam.pts && X.night().Jo === fin.Jo.pts && fin.Sam.pts > first.pts, JSON.stringify(X.night()));
+X.runGreatMinds({ format:"topanswers", id:undefined });
+ok("running a finished game again starts it fresh", X.getG().game.round === 0 && !Object.keys(X.getG().game.scores).length);
 
 print("== the phone and the telly mount the shared parts ==");
 var play = readFile(ppFile("partyplay/play.html")), tv = readFile(ppFile("partyplay/tv.html")), host = readFile(ppFile("partyplay/host.html"));

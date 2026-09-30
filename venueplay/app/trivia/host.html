@@ -1048,6 +1048,7 @@
   }
   function prPutUp(){
     if(!G.pr) return;
+    if(G.pr.board) return;   // a double-tap on "Next board" must not skip the board the room is on (audit, 30 Sep 2026)
     var secs=Math.max(15, Math.min(180, parseInt(($("prSecs")||{}).value,10)||45));
     G.prPub=G.pr.nextBoard(secs); G.prFeed=[];
     if(!G.prPub){ hostError("There are no boards to play."); return; }

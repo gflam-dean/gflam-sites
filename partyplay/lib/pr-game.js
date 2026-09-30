@@ -13,7 +13,7 @@
    Needs TAMatch (ta-match.js). Boards come from TABoards (ta-boards.js). ES5.
 
    ONE ENGINE, TWO PRODUCTS. PartyPlay runs this same file as its own game (a byte-for-byte copy in
-   partyplay/lib, checked by tools/test-pp-great-minds.js) with family boards and its own name. */
+   partyplay/lib, checked by partyplay-backend/lib/pp-great-minds.test.js) with family boards and its own name. */
 (function (root) {
   "use strict";
   var NAME = "Punters Reckon";          // the one place the name lives; Dean may still change it

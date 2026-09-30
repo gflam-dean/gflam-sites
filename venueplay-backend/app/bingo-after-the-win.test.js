@@ -79,6 +79,9 @@ var NEED = ["isCalled", "rowComplete", "completeRows", "cornerNums", "checkPatte
    everything straight through, exactly as the page does when that script fails to load.
    Who is believed is tools/test-phones-cannot-be-impersonated.js. */
 var window = this, LEGACY_PHONES_OK = true, _phoneChain = Promise.resolve();
+var TIMERS = [];
+var setTimeout = function(f, ms){ TIMERS.push({ f:f, ms:ms }); return TIMERS.length; };   // held, run by hand below
+var clearTimeout = function(){};
 var SRC = {}, missing = [];
 NEED.forEach(function(n){ SRC[n] = grab(n); if (!SRC[n]) missing.push(n); });
 ok("every function the end of a game runs through is still there", missing.length === 0, missing.join(", "));
@@ -582,6 +585,28 @@ room({ p1: { name:"Kate", card:CARD_A, no:332 } });
 MSGS = []; toasts = [];
 endGame();
 ok("with nobody waiting, End game ends on the first tap as it always has", !!lastOf("idle") && toasts.length === 0, toasts.join(" / "));
+
+/* ONE TAP, ONE CLAIM: in a tie the next claimant's buttons are drawn where the finger already is,
+   so for a moment after a resolve they are drawn disabled (audit, 30 Sep 2026). */
+room({ p1: { name:"Kate", card:CARD_A, no:332 }, p2: { name:"Bo", card:CARD_A, no:333 } });
+onMsg({ t:"claim", pid:"p1", cardNo:332 }); onMsg({ t:"claim", pid:"p2", cardNo:333 });
+G._resolveAt = 0; renderClaimQueue();
+ok("two claims in a tie: both are live before anything is tapped", !/data-act="confirm" data-i="0" disabled/.test($("claimQueue").innerHTML));
+click("reject", 0);
+var heldHtml = $("claimQueue").innerHTML;
+ok("straight after a resolve, the next claimant's Confirm and Not this one are drawn disabled",
+   G.claims.length === 1 && /data-act="confirm" data-i="0" disabled/.test(heldHtml) && /data-act="reject" data-i="0" disabled/.test(heldHtml), heldHtml.slice(0, 200));
+var wake = TIMERS.filter(function(t){ return t.ms > 600 && t.ms < 800; }).pop();
+if (wake) wake.f();
+ok("and a moment later they are live again", !!wake && !/data-act="confirm" data-i="0" disabled/.test($("claimQueue").innerHTML));
+G.claims = []; G._resolveAt = 0;
+
+/* The next lobby must not open on the last game's balls (played at Test Alpha, 30 Sep 2026). */
+room({ p1: { name:"Kate", card:CARD_A, no:332 } });
+G.draw = [11, 30, 81]; G.idx = 2; G.called = { 11:true, 30:true, 81:true };
+endGame();
+ok("End game clears the called board, so the next lobby does not show old balls as called",
+   G.idx === -1 && G.draw.length === 0 && Object.keys(G.called).length === 0, "idx=" + G.idx + " called=" + Object.keys(G.called).join(","));
 
 /* ================= SHE PAID FOR SIX TICKETS, LEFT BY MISTAKE, AND CAME BACK ================= */
 print("");

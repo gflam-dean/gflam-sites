@@ -4,7 +4,7 @@
    parties, so these are family boards: VenuePlay's Punters Reckon boards without the pub, beer,
    wine and workplace ones, plus party boards of our own. Written by us, 30 Sep 2026, and called
    "top answers", never a survey, because nobody was surveyed. Points on a board add up to 100.
-   tools/test-pp-great-minds.js refuses any board that does not add up, any answer form two answers
+   partyplay-backend/lib/pp-great-minds.test.js refuses any board that does not add up, any answer form two answers
    share, and any word from its list of things that do not belong at a kids' party.
 
    Same global name as VenuePlay's boards (TABoards) so the one engine, pr-game.js, reads either. */

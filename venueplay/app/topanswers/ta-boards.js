@@ -6,7 +6,7 @@
 
    Each answer's "also" list is what a phone might type for it. Keep them to things that clearly
    mean the SAME answer: a word here that could belong to another answer on the board is a wrong
-   score in front of a room (tools/test-ta-boards.js refuses any form that two answers share). */
+   score in front of a room (tools/test-ta-match.js refuses any form that two answers share, and any board that does not add up). */
 (function (root) {
   "use strict";
   root.TABoards = [

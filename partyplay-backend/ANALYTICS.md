@@ -13,11 +13,11 @@ A PartyPlay property was created on 18 Sep with the id above. **There is no hist
 that date and there never will be.**
 
 ## Tagged
-`index`, `start`, `booked`, `terms`, `privacy`
+`index`, `start`, `booked`, `terms`, `privacy`, `setup`
 
-**`setup` is NOT tagged, though this file used to claim it was.** Checked page by page on
-18 Sep. If you want the setup step measured, and it is arguably the most interesting step
-in the funnel, it has to be added deliberately, mindful of the query-string rule below.
+**`setup` was tagged deliberately on 30 Sep 2026** (audit): it is the step every buyer lands on
+after paying, and it carries no host key (no query string at all). Same snippet, same
+query-string stripping.
 
 The buyer's journey. This is the only part where the numbers are worth anything:
 how many people land, how many start a booking, how many finish it.

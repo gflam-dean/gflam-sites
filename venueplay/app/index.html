@@ -1928,6 +1928,12 @@
     return n.slice(0,-1).join(", ")+" and "+n[n.length-1];
   }
   function renderClaimQueue(){
+    /* ONE TAP, ONE CLAIM. Confirm and "Not this one" redraw this queue at once, so in a tie the next
+       claimant's buttons land exactly under the finger, and the second half of a double-tap confirmed
+       (or waved off) the OTHER player (audit, 30 Sep 2026). For 700ms after a resolve the new buttons
+       are drawn disabled, then drawn again live. A browser does not deliver a click to a disabled button. */
+    var _wait=G._resolveAt ? 700-(Date.now()-G._resolveAt) : 0, _hold="";
+    if(_wait>0){ _hold=" disabled"; clearTimeout(G._resolveT); G._resolveT=setTimeout(function(){ G._resolveAt=0; renderClaimQueue(); }, _wait+20); }
     syncNextBtn();
     var q=$("claimQueue"), i, p;
     // Resolved: one or more confirmed winners, nothing left waiting on the host.
@@ -1982,10 +1988,10 @@
       html+='<div class="claimcard"><div class="top"><span class="cn">'+esc(c.name)+'</span>'+badge+'</div>'+
         '<div class="card9" id="claimCard-'+ci+'"></div>'+
         '<div class="claimsub">'+sub+'</div>'+
-        '<div class="resolve" style="margin-top:12px"><button class="btn win" data-act="confirm" data-i="'+ci+'">Confirm winner</button>'+
+        '<div class="resolve" style="margin-top:12px"><button class="btn win" data-act="confirm" data-i="'+ci+'"'+_hold+'>Confirm winner</button>'+
         // "Play on" only when waving this one off actually resumes the ROOM. If anyone else is
         // still queued or already confirmed, it only releases this player.
-        '<button class="btn roll" data-act="reject" data-i="'+ci+'">'+((G.claims.length>1||G.lastWins.length)?"Not this one":"Play on")+'</button></div></div>';
+        '<button class="btn roll" data-act="reject" data-i="'+ci+'"'+_hold+'>'+((G.claims.length>1||G.lastWins.length)?"Not this one":"Play on")+'</button></div></div>';
     });
     q.innerHTML=html;
     G.claims.forEach(function(c,ci){ renderClaimCard($("claimCard-"+ci), c.card); });
@@ -2201,6 +2207,10 @@
          Only reloading the page cleared it. */
       overageAcked=false; overageApproved=0;
     G.status="setup"; G.claims=[]; G.claimIdx=-1; G.won=false; G.lastWins=[];
+    /* THE CALLED BOARD GOES WITH THE GAME. It kept the last game's balls lit, and "3 of 90", into
+       the next lobby, so a host opening a fresh game read numbers as already called (played at
+       Test Alpha, 30 Sep 2026). postReport above has already taken this game's figures. */
+    G.draw=[]; G.idx=-1; G.called={};
     send({ t:"idle" });   // TV returns to the advertising loop
     sendState();
     saveGame();   // status is now "setup", so this clears the saved game for this code
@@ -2726,6 +2736,7 @@
   $("claimQueue").addEventListener("click", function(e){
     var b=e.target.closest("button[data-act]"); if(!b) return;
     var act=b.getAttribute("data-act"), i=parseInt(b.getAttribute("data-i"),10);
+    if(act==="confirm"||act==="reject") G._resolveAt=Date.now();   // see renderClaimQueue: the next claim's buttons wait a moment
     if(act==="confirm") hostConfirm(i);
     else if(act==="confirmall") hostConfirmAll();
     else if(act==="keepplaying") keepPlaying();

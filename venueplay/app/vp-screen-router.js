@@ -42,7 +42,12 @@
      type nobody has invented yet still counts as gameplay. */
   var NOT_ON_AIR = {
     tv_here: 1, host_here: 1, session: 1, players: 1, idle: 1, rollcall: 1,
-    tv_audio_blocked: 1, screen_refresh: 1, tv_reload: 1, to_ads: 1, mode: 1
+    tv_audio_blocked: 1, screen_refresh: 1, tv_reload: 1, to_ads: 1, mode: 1,
+    /* WHAT A PHONE SENDS IS NEVER PROOF A GAME IS ON. tv.html learnt this on 5 Sep, when one
+       punter's phone waking up and re-announcing join kept a venue's wall on a bingo game that
+       had ended hours earlier. This shared copy never got the fix, so a game screen could still
+       be yanked by a phone (audit, 30 Sep 2026). A live game always makes HOST traffic. */
+    join: 1, claim: 1, leave: 1, answer: 1, pr_guess: 1
   };
 
   /* t:"state" means "here is where things stand", which is as often "nothing is

@@ -881,10 +881,23 @@
   function runGreatMinds(g){
     if(!window.PRGame){ toast("That game did not load. Reload this page."); return; }
     G={ mode:"gm", game:new PRGame.Game({ name:PPGames.name(g.format, g.title) }), pub:null, feed:[], added:false,
-        endT:null, boardT:null, repaint:paintGreatMinds, resend:resendGreatMinds };
-    send({t:"big", text:G.game.name, sub:"Get your phones out"});
+        endT:null, boardT:null, repaint:paintGreatMinds, resend:resendGreatMinds, key:"ppGM:"+CODE+":"+(g.id||"") };
+    /* A RELOAD PICKS UP WHERE IT WAS, board in play included: the scores, what was found and each
+       guest's guesses left are saved on this tablet after every change (never sent anywhere). */
+    var was=null; try{ was=JSON.parse(localStorage.getItem(G.key)||"null"); }catch(e){}
+    if(was && was.game && !was.added){           // a finished game starts fresh if it is run again
+      G.game.load(was.game);
+      var back=G.game.replay();
+      if(back){
+        G.pub=back[0]; back.forEach(function(m){ send(m); });
+        var mine=G; G.endT=setTimeout(function(){ if(G===mine) gmEnd(); }, Math.max(0, G.game.endsAt-Date.now())+1500);
+      }
+    } else {
+      send({t:"big", text:G.game.name, sub:"Get your phones out"});
+    }
     paintGreatMinds();
   }
+  function gmSave(){ try{ localStorage.setItem(G.key, JSON.stringify({ game:G.game.save(), added:G.added })); }catch(e){} }
   /* Somebody walked in mid-board: the board and what has been FOUND, never the rest. A phone
      already on this board keeps what it typed (lib/pr-phone.js matches the round and question). */
   function resendGreatMinds(){
@@ -892,10 +905,11 @@
     (G.game.replay() || []).forEach(function(m){ send(m); });
   }
   function gmPutUp(){
+    if(G.game.board) return;   // a double-tap on "Next board" must not skip the board the room is on
     clearTimeout(G.endT); clearTimeout(G.boardT);
     G.pub=G.game.nextBoard(45); G.feed=[];
     if(!G.pub){ toast("There are no boards to play."); return; }
-    send(G.pub);
+    send(G.pub); gmSave();
     var mine=G;
     G.endT=setTimeout(function(){ if(G===mine) gmEnd(); }, 45*1000+1500);   // the room gets the whole clock
     paintGreatMinds();
@@ -903,7 +917,7 @@
   function gmEnd(){
     if(!G || G.mode!=="gm" || !G.game.board) return;
     clearTimeout(G.endT);
-    var e=G.game.endBoard(); G.pub=null;
+    var e=G.game.endBoard(); G.pub=null; gmSave();
     send(e.showall);
     var mine=G, rows=gmRows();
     G.boardT=setTimeout(function(){ if(G===mine) send({t:"board", title:e.leaderboard.title, rows:rows}); }, 7000);   // read the board first
@@ -914,7 +928,7 @@
     if(G.game.board) gmEnd();
     clearTimeout(G.boardT);
     var rows=gmRows();
-    if(!G.added){ nightAdd(rows); G.added=true; }   // once, however many times Finish is pressed
+    if(!G.added){ nightAdd(rows); G.added=true; gmSave(); }   // once, however many times Finish is pressed, reloads included
     send({t:"board", title:G.game.name+": final scores", rows:rows.slice(0,10)});
     paintGreatMinds();
   }
@@ -923,6 +937,7 @@
     var r=G.game.guess(m.name, m.name, m.text);
     send(r.result);                    // addressed (pr_result.to): every other phone drops it
     if(r.reveal) send(r.reveal);       // an answer's text travels only now, when it has been found
+    gmSave();
     G.feed.unshift({ name:m.name, text:r.result.text, hit:!!r.result.hit, a:r.result.a });
     G.feed=G.feed.slice(0,30);
     if(!G.paintT) G.paintT=setTimeout(function(){ if(G && G.mode==="gm"){ G.paintT=null; paintGreatMinds(); } }, 400);   // a room typing at once repaints once
@@ -1083,6 +1098,15 @@
     G={ items:(g.config&&g.config.items)||[], i:-1, shown:false, answers:[],
         seed: Math.floor(Math.random()*1e6), title:(g.title||"Trivia"), repaint:paintTrivia,
         resend:resendTrivia };
+    /* NO QUESTIONS, SAY SO. A game added and never filled used to open on "That is the lot, all 0
+       done", which reads as broken. Same gate Guess the photo has (audit, 30 Sep 2026). */
+    if(!G.items.length){
+      $("app").innerHTML='<div class="gate"><div class="big">No questions yet</div>'+
+        '<p>Add some questions to this one first, or pick a ready-made pack.</p>'+
+        '<p style="margin-top:14px"><a href="/host?code='+encodeURIComponent(CODE)+'&key='+encodeURIComponent(KEY)+'">Add questions</a></p>'+
+        '</div><div class="bar2"><button class="sec" id="back">Back to games</button></div>';
+      return;
+    }
     paintTrivia();
   }
   /* A LATECOMER GETS THE QUESTION THAT IS ON THE WALL RIGHT NOW.

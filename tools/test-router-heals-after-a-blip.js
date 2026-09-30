@@ -111,6 +111,22 @@ check('a channel that blips TWICE is rebuilt twice', cur3.length === 1 && cur3[0
 check('still with nothing thrown', uncaught.length === 0, uncaught.slice(0, 2));
 
 print('');
+print('A punter\'s phone does not move the wall');
+channels.length = 0;   // a fresh screen: the one above has already switched once, and a router only ever leaves once
+Router.start({ client: makeClient(), self: 'trivia', slug: 'the-pub',
+               venueCode: function (s) { return 'C-' + s; }, busy: function () { return false; } });
+var bingoCh = channels.filter(function (c) { return !c.removed && !/trivia|musical|raffle|members|jag/.test(c.name); })[0];
+check('the bingo channel is watched', !!bingoCh, channels.map(function (c) { return c.name; }));
+['join', 'claim', 'leave'].forEach(function (t) {
+  navigatedTo = null;
+  bingoCh.handlers.forEach(function (h) { h({ payload: { t: t, pid: 'p1', name: 'Kate' } }); });
+  check('a phone\'s ' + t + ' on the bingo channel leaves this screen where it is', navigatedTo === null, navigatedTo);
+});
+navigatedTo = null;
+bingoCh.handlers.forEach(function (h) { h({ payload: { t: 'ball', n: 42 } }); });
+check('but the host calling a ball does take the wall to bingo (so the checks above can fail)', !!navigatedTo && /\/tv/.test(navigatedTo), navigatedTo);
+
+print('');
 print(PASS + ' passed, ' + FAIL + ' failed');
 if (FAIL) { print('FAILED ' + FAIL); throw new Error(FAIL + ' check(s) failed'); }
 print('PASS');

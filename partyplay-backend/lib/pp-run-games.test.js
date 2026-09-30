@@ -65,7 +65,7 @@ g.PPLicence = { isLive: function(l){ return Date.now() < l.endsAt; },
 // expose the internals we want to drive
 /* The runners live inside the page's own IIFE, so the export has to go INSIDE
    it, immediately before it closes, or none of these names are in scope. */
-var EXPORT = "\n; globalThis.__X = { runCharades:runCharades, runGuessWho:runGuessWho," +
+var EXPORT = "\n; globalThis.__X = { runTrivia:runTrivia, runCharades:runCharades, runGuessWho:runGuessWho," +
   " charadesGo:charadesGo, guessWhoGo:guessWhoGo, setSend:function(f){ send=f; }," +
   " setPlayers:function(p){ players=p; }, getG:function(){ return G; }, setToast:function(f){ toast=f; }," +
   " truthsTally:truthsTally, resend:function(){ if(G && G.resend) G.resend(); }, runHeads:runHeads, flip:flip, truthsEnd:truthsEnd, setG:function(o){ G=o; }, licenceTick:licenceTick, setParty:function(p){ PARTY=p; }, getParty:function(){ return PARTY; } };\n";
@@ -326,6 +326,13 @@ ok(sent.filter(function(m){ return m.t==="charades"; }).length === 0,
   ok(sent.indexOf(lob[0]) < sent.indexOf(big[0]),
      "lobby BEFORE the caption, or a phone holding a game swallows it");
   ok(X.getParty().status === "finished", "and only then does the console change");
+})();
+
+/* A trivia game nobody filled says so, instead of "That is the lot, all 0 done" (audit, 30 Sep 2026). */
+(function(){
+  X.runTrivia({ format:"trivia", config:{ items:[] } });
+  var h = g.document.getElementById("app").innerHTML;
+  ok(/No questions yet/.test(h) && /Add questions/.test(h) && !/That is the lot/.test(h), "an empty trivia game says there are no questions yet, got " + h.slice(0, 120));
 })();
 
 print(fail ? "FAILED " + fail + " of " + (pass+fail) : "ALL " + pass + " CHECKS PASSED");
