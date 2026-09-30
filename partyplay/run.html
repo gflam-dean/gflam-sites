@@ -286,10 +286,11 @@
           paintHeads();
         }
         if(m.t==="pr_guess"){ onGreatMindsGuess(m); }
-        if(m.t==="answer" && G && G.items && m.name){
+        if(m.t==="answer" && G && G.items && G.answers && m.name){   // G.answers: who here and charades have items and no answers
           var dup = G.answers.some(function(a){ return a.name===m.name && a.i===m.i; });
           if(!dup){ G.answers.push({name:m.name,i:m.i,answer:m.answer}); if(G.tkey) triviaSave(); paintTrivia(); }
         }
+        runSave();   // a raised hand is part of where the game is up to
       });
       ch.subscribe(function(st){ if(ch===mine) onChannelStatus(st); });
       armWireWatch();   // a subscribe that never lands fires no error; catch it on the clock
@@ -701,9 +702,33 @@
   }
 
   /* -------------------------------------------------- who here has ever ----- */
+  /* A RELOAD PICKS THESE UP WHERE THEY WERE (audit, 30 Sep 2026). Who here has ever, charades and
+     who am I lived only in this page, so a tablet that slept put the host back at the start with
+     the room half way through. What each needs to carry on is saved on this tablet after every tap
+     and every guest message, and reopening the same game within twelve hours puts it back. A game
+     that has run off its end starts fresh. Guess the photo is left out on purpose: its options are
+     built from who was in the room when each photo went up. */
+  var RUN_KEEP = { whohere:["i","hands"], charades:["i","actor","got"], guesswho:["i","guesser","done"] };
+  function runSave(){
+    if(!G || !G.gameId || !RUN_KEEP[G.mode]) return;
+    var o = { at:Date.now(), n:G.items.length };
+    RUN_KEEP[G.mode].forEach(function(k){ o[k] = G[k]; });
+    try{ localStorage.setItem("ppRun:"+CODE+":"+G.gameId, JSON.stringify(o)); }catch(e){}
+  }
+  function runRestore(g){
+    G.gameId = g && g.id ? String(g.id) : null;
+    if(!G.gameId) return;
+    var was=null; try{ was=JSON.parse(localStorage.getItem("ppRun:"+CODE+":"+G.gameId)||"null"); }catch(e){}
+    if(!was || was.n!==G.items.length || (Date.now()-(was.at||0)) > 12*3600*1000) return;
+    if(typeof was.i!=="number" || was.i < 0 || was.i >= G.items.length) return;
+    RUN_KEEP[G.mode].forEach(function(k){ if(was[k]!==undefined) G[k]=was[k]; });
+    if(G.resend) try{ G.resend(); }catch(e){}
+  }
+
   function runWhoHere(g){
     G={ mode:"whohere", items:(g.config&&g.config.items)||[], i:-1, hands:[], repaint:paintWhoHere,
         resend:resendWhoHere };
+    runRestore(g);
     paintWhoHere();
   }
   /* There is no reveal in this one, so a latecomer can always be given the prompt that is
@@ -744,6 +769,7 @@
   function runCharades(g){
     G={ mode:"charades", items:(g.config&&g.config.items)||[], i:-1, actor:null, got:[],
         repaint:paintCharades, resend:resendCharades };
+    runRestore(g);
     warnScreens("charades");
     paintCharades();
   }
@@ -804,6 +830,7 @@
   function runGuessWho(g){
     G={ mode:"guesswho", items:(g.config&&g.config.items)||[], i:-1, guesser:null, done:[],
         repaint:paintGuessWho, resend:resendGuessWho };
+    runRestore(g);
     warnScreens("guesswho");
     paintGuessWho();
   }
@@ -1355,6 +1382,8 @@
     }
   });
 
+  /* AFTER the game handler above, so it saves where the game got to, not where it was. */
+  document.addEventListener("click", function(){ runSave(); });
   if(navigator.wakeLock) navigator.wakeLock.request("screen").catch(function(){});
   load();
 })();

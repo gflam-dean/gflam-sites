@@ -65,7 +65,7 @@ g.PPLicence = { isLive: function(l){ return Date.now() < l.endsAt; },
 // expose the internals we want to drive
 /* The runners live inside the page's own IIFE, so the export has to go INSIDE
    it, immediately before it closes, or none of these names are in scope. */
-var EXPORT = "\n; globalThis.__X = { runTrivia:runTrivia, triviaSave:triviaSave, runBingo:runBingo, nextBall:nextBall, runCharades:runCharades, runGuessWho:runGuessWho," +
+var EXPORT = "\n; globalThis.__X = { runWhoHere:runWhoHere, runSave:runSave, runTrivia:runTrivia, triviaSave:triviaSave, runBingo:runBingo, nextBall:nextBall, runCharades:runCharades, runGuessWho:runGuessWho," +
   " charadesGo:charadesGo, guessWhoGo:guessWhoGo, setSend:function(f){ send=f; }," +
   " setPlayers:function(p){ players=p; }, getG:function(){ return G; }, setToast:function(f){ toast=f; }," +
   " truthsTally:truthsTally, resend:function(){ if(G && G.resend) G.resend(); }, runHeads:runHeads, flip:flip, truthsEnd:truthsEnd, setG:function(o){ G=o; }, licenceTick:licenceTick, setParty:function(p){ PARTY=p; }, getParty:function(){ return PARTY; } };\n";
@@ -376,6 +376,27 @@ ok(sent.filter(function(m){ return m.t==="charades"; }).length === 0,
   X.runBingo(game, true);   // Start over
   ok(X.getG().gid !== gid && X.getG().called.length === 0, "Start over is a new game with new tickets");
   ok(/if\(el\.id==="again"\)\{ runBingo\(G && G\.gref, true\); return; \}/.test(src), "and the Start over button asks for exactly that (a fresh game), not the saved one");
+  g.localStorage.getItem = function(){ return null; }; g.localStorage.setItem = function(){};
+})();
+
+/* WHO HERE HAS EVER AND CHARADES PICK UP WHERE THEY WERE AFTER A RELOAD (audit, 30 Sep 2026). */
+(function(){
+  var store = {};
+  g.localStorage.getItem = function(k){ return store.hasOwnProperty(k) ? store[k] : null; };
+  g.localStorage.setItem = function(k, v){ store[k] = String(v); };
+  var who = { id:"w1", format:"whohere", config:{ items:[{ q:"been to Bali" }, { q:"met a koala" }, { q:"sung karaoke" }] } };
+  X.setSend(function(o){ sent.push(o); }); sent = [];
+  X.runWhoHere(who); var W = X.getG(); W.i = 1; W.hands = [{ i:1, name:"Sam" }]; X.runSave();
+  sent = []; X.runWhoHere(who);
+  ok(X.getG().i === 1 && X.getG().hands.length === 1, "who here has ever comes back on prompt two with Sam's hand up, got i=" + X.getG().i);
+  ok(sent.some(function(m){ return m.t === "hands" && m.i === 1; }), "and the phones are handed prompt two again");
+  X.getG().i = 3; X.runSave(); sent = []; X.runWhoHere(who);
+  ok(X.getG().i === -1, "a game that ran off its end starts fresh when opened again");
+  var ch = { id:"c1", format:"charades", config:{ items:[{ q:"Kangaroo" }, { q:"Surfing" }] } };
+  X.setPlayers(["Sam", "Jo"]);
+  X.runCharades(ch); var C = X.getG(); C.i = 0; C.actor = "Jo"; C.got = ["Sam"]; X.runSave();
+  X.runCharades(ch);
+  ok(X.getG().i === 0 && X.getG().actor === "Jo" && X.getG().got.length === 1, "charades comes back with Jo still acting and Sam's turn counted");
   g.localStorage.getItem = function(){ return null; }; g.localStorage.setItem = function(){};
 })();
 
