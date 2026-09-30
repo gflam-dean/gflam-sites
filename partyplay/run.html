@@ -502,6 +502,7 @@
      again. They start from the next ball rather than the first, which is a worse ticket
      than everyone else's and still enormously better than watching. */
   function resendBingo(){ send({t:"bingo", gid:G.gid, called:G.called.slice()}); }
+  var bingoSeq=0;   // two games in one millisecond still get different ids
   function bingoSave(){
     if(!G || !G.bkey) return;
     try{ localStorage.setItem(G.bkey, JSON.stringify({ gid:G.gid, called:G.called, at:Date.now() })); }catch(e){}
@@ -510,7 +511,7 @@
     /* gid tells a phone THIS game from the last bingo game tonight, so it does not
        carry the old card's marks into a new one. `called` goes to a late phone so it
        knows what has already gone. */
-    G={ pool:[], called:[], gid:String(Date.now())+"-"+pick(1000000), repaint:paintBingo, resend:resendBingo,
+    G={ pool:[], called:[], gid:String(Date.now())+"-"+(++bingoSeq), repaint:paintBingo, resend:resendBingo,
         gref:g||null, bkey: g && g.id ? "ppBingo:"+CODE+":"+g.id : null };
     /* A RELOAD IS NOT A NEW GAME. A fresh gid tells every phone to throw its ticket away, so a
        tablet that slept mid-game dealt the whole room new tickets and lost every number called
