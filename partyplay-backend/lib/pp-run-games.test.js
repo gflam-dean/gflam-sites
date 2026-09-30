@@ -65,7 +65,7 @@ g.PPLicence = { isLive: function(l){ return Date.now() < l.endsAt; },
 // expose the internals we want to drive
 /* The runners live inside the page's own IIFE, so the export has to go INSIDE
    it, immediately before it closes, or none of these names are in scope. */
-var EXPORT = "\n; globalThis.__X = { runTrivia:runTrivia, runCharades:runCharades, runGuessWho:runGuessWho," +
+var EXPORT = "\n; globalThis.__X = { runTrivia:runTrivia, triviaSave:triviaSave, runCharades:runCharades, runGuessWho:runGuessWho," +
   " charadesGo:charadesGo, guessWhoGo:guessWhoGo, setSend:function(f){ send=f; }," +
   " setPlayers:function(p){ players=p; }, getG:function(){ return G; }, setToast:function(f){ toast=f; }," +
   " truthsTally:truthsTally, resend:function(){ if(G && G.resend) G.resend(); }, runHeads:runHeads, flip:flip, truthsEnd:truthsEnd, setG:function(o){ G=o; }, licenceTick:licenceTick, setParty:function(p){ PARTY=p; }, getParty:function(){ return PARTY; } };\n";
@@ -333,6 +333,28 @@ ok(sent.filter(function(m){ return m.t==="charades"; }).length === 0,
   X.runTrivia({ format:"trivia", config:{ items:[] } });
   var h = g.document.getElementById("app").innerHTML;
   ok(/No questions yet/.test(h) && /Add questions/.test(h) && !/That is the lot/.test(h), "an empty trivia game says there are no questions yet, got " + h.slice(0, 120));
+})();
+
+/* THE HOST'S TABLET RELOADS ON QUESTION TWO (audit, 30 Sep 2026): the round comes back. */
+(function(){
+  var store = {};
+  g.localStorage.getItem = function(k){ return store.hasOwnProperty(k) ? store[k] : null; };
+  g.localStorage.setItem = function(k, v){ store[k] = String(v); };
+  var game = { id:"t1", format:"trivia", config:{ items:[
+    { q:"Q one", a:"A", options:["A","B","C","D"] }, { q:"Q two", a:"B", options:["A","B","C","D"] }, { q:"Q three", a:"C", options:["A","B","C","D"] } ] } };
+  X.runTrivia(game);
+  var G1 = X.getG(); G1.i = 1; G1.shown = false; G1.answers = [{ name:"Sam", i:0, answer:"A" }, { name:"Sam", i:1, answer:"B" }];
+  X.triviaSave();
+  sent = []; X.setSend(function(o){ sent.push(o); });
+  X.runTrivia(game);   // what a reload does
+  var G2 = X.getG();
+  ok(G2.i === 1 && G2.answers.length === 2 && G2.seed === G1.seed, "a reload comes back on question two with both answers, got i=" + G2.i + " answers=" + G2.answers.length);
+  var ask = sent.filter(function(m){ return m.t === "ask"; });
+  ok(ask.length === 1 && ask[0].i === 1, "and the phones are handed question two again, got " + JSON.stringify(ask));
+  G2.banked = true; X.triviaSave(); sent = [];
+  X.runTrivia(game);
+  ok(X.getG().i === -1 && !sent.some(function(m){ return m.t === "ask"; }), "a round already banked into the night starts fresh");
+  g.localStorage.getItem = function(){ return null; }; g.localStorage.setItem = function(){};
 })();
 
 print(fail ? "FAILED " + fail + " of " + (pass+fail) : "ALL " + pass + " CHECKS PASSED");

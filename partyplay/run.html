@@ -288,7 +288,7 @@
         if(m.t==="pr_guess"){ onGreatMindsGuess(m); }
         if(m.t==="answer" && G && G.items && m.name){
           var dup = G.answers.some(function(a){ return a.name===m.name && a.i===m.i; });
-          if(!dup){ G.answers.push({name:m.name,i:m.i,answer:m.answer}); paintTrivia(); }
+          if(!dup){ G.answers.push({name:m.name,i:m.i,answer:m.answer}); if(G.tkey) triviaSave(); paintTrivia(); }
         }
       });
       ch.subscribe(function(st){ if(ch===mine) onChannelStatus(st); });
@@ -1097,7 +1097,16 @@
     // the same four options in the same order without sending them three times.
     G={ items:(g.config&&g.config.items)||[], i:-1, shown:false, answers:[],
         seed: Math.floor(Math.random()*1e6), title:(g.title||"Trivia"), repaint:paintTrivia,
-        resend:resendTrivia };
+        resend:resendTrivia, tkey:"ppTrivia:"+CODE+":"+(g.id||"") };
+    /* A RELOAD PICKS THE ROUND BACK UP. The round lived only in this page, so a tablet that slept,
+       a dropped wifi or a stray swipe put the host back on "Ready when you are" with the room on
+       question six and every answer so far gone (audit, 30 Sep 2026). Saved on this tablet after
+       every change, never sent anywhere; a round already banked into the night starts fresh. */
+    var was=null; try{ was=JSON.parse(localStorage.getItem(G.tkey)||"null"); }catch(e){}
+    if(was && !was.banked && was.n===G.items.length && typeof was.i==="number"){
+      G.i=was.i; G.shown=!!was.shown; G.answers=was.answers||[]; G.seed=was.seed;
+      if(G.i>=0 && !G.shown) resendTrivia();   // the phones get the question on the wall back
+    }
     /* NO QUESTIONS, SAY SO. A game added and never filled used to open on "That is the lot, all 0
        done", which reads as broken. Same gate Guess the photo has (audit, 30 Sep 2026). */
     if(!G.items.length){
@@ -1123,6 +1132,10 @@
     if(!it) return;
     var o = PPQuiz.options(G.items, G.i, G.seed);
     send({t:"ask", i:G.i, q:it.q, options:o.options, n:G.i+1, of:G.items.length});
+  }
+  function triviaSave(){
+    if(!G || !G.tkey) return;
+    try{ localStorage.setItem(G.tkey, JSON.stringify({ i:G.i, shown:G.shown, answers:G.answers, seed:G.seed, banked:!!G.banked, n:G.items.length })); }catch(e){}
   }
   function answeredCount(){
     return G.answers.filter(function(a){ return a.i===G.i; }).length;
@@ -1301,7 +1314,7 @@
       // rather than having to find themselves on a list on the television.
       send({t:"result", i:G.i, correct:o.correct, board:board().slice(0,10)});
       send({t:"big", text:(it.a||""), sub:it.q});
-      paintTrivia(); return; }
+      triviaSave(); paintTrivia(); return; }
     if(el.id==="next"){
       G.i++; G.shown=false;
       var it2=G.items[G.i];
@@ -1318,7 +1331,7 @@
         send({t:"big", text: fin.length?fin[0].name:"That is the lot",
               sub: fin.length? fin[0].score+" points" : ""});
       }
-      paintTrivia(); return;
+      triviaSave(); paintTrivia(); return;
     }
   });
 
