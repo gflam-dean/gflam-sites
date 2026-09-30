@@ -339,6 +339,10 @@
   "checks": 9,
   "counted_by": "lines"
  },
+ "tools/test-shared-links-absolute.js": {
+  "checks": 6,
+  "counted_by": "lines"
+ },
  "tools/test-sign-venue-switch.js": {
   "checks": 2,
   "counted_by": "lines"

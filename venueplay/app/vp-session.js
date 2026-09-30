@@ -112,7 +112,11 @@
      admin's own choice away and bounced them back to HQ with no message. sessionStorage,
      not local: the choice should last as long as the tab and no longer. */
   var EXPLICIT_KEY = "vpVenueExplicit";
-  var SIGNIN    = "index.html";       // the sign-in shell (this folder)
+  /* ABSOLUTE, NOT "index.html". This file is loaded by the game consoles too, and they live one
+     folder down (/app/musical/, /app/trivia/, ...). From there "index.html" is /app/musical/index.html,
+     which does not exist, and a missing page on this site answers with the MARKETING HOMEPAGE. So a
+     host whose login ran out mid-night was dropped on the sales site (found 30 Sep 2026). */
+  var SIGNIN    = "/app/";            // the sign-in shell
 
   var _client  = null;   // the Supabase client singleton
   var _ctx     = null;   // last resolved Context
@@ -561,13 +565,13 @@
 
   function homeHref(ctx) {
     ctx = ctx || _ctx || {};
-    if (ctx.isAdmin) return "hq.html";
+    if (ctx.isAdmin) return "/app/hq.html";
     /* Marketing ONLY. Somebody who is a host at one venue and the marketing login at another
        still has games to run, so they keep the console and reach their numbers from a link. */
     var st = ctx.staff || [];
-    if (ctx.scope === "staff" && st.length && st.every(function (x) { return x.role === "marketing"; })) return "marketing.html";
-    if (ctx.scope === "staff") return "index.html";
-    return "index.html";
+    if (ctx.scope === "staff" && st.length && st.every(function (x) { return x.role === "marketing"; })) return "/app/marketing.html";
+    if (ctx.scope === "staff") return "/app/";
+    return "/app/";
   }
 
   function signOut() {
