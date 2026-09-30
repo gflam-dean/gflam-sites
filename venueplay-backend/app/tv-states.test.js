@@ -127,6 +127,23 @@ ok("a game that just spoke is not frozen", gameLooksFrozen() === false);
 idleFlag = false; lastHostAt = Date.now() - 10*60*1000; lastBingoAt = 0;
 ok("a game silent for ten minutes IS frozen", gameLooksFrozen() === true);
 
+/* THE SAME mode, TWICE (Test Charlie, 30 Sep 2026). Runs tv.html's own main-channel mode branch. */
+(function(){
+  var i = html.indexOf('if(m.t==="mode"){'), j = html.indexOf('return;\n    }', html.indexOf('enterHolding(m.mode)', i));
+  var branch = i > 0 && j > i ? html.slice(i, j + 'return;\n    }'.length) : "";
+  ok("the main channel's mode branch can be read", branch.length > 100);
+  var calls = [];
+  var run = new Function("m", "tvMode", "adsHoldUntil", "enterBingo", "enterHolding", "console", branch);
+  run({ t:"mode", mode:"musical" }, "embed", 0, function(){ calls.push("bingo"); }, function(g){ calls.push("hold:" + g); }, { info:function(){} });
+  ok("a musical game already embedded is NOT replaced by the Starting card when its mode arrives again", calls.length === 0, calls.join(","));
+  calls = [];
+  run({ t:"mode", mode:"musical" }, "ads", 0, function(){ calls.push("bingo"); }, function(g){ calls.push("hold:" + g); }, { info:function(){} });
+  ok("from the ads it still holds the room while the game loads", calls.join(",") === "hold:musical", calls.join(","));
+  calls = [];
+  run({ t:"mode", mode:"bingo" }, "embed", 0, function(){ calls.push("bingo"); }, function(g){ calls.push("hold:" + g); }, { info:function(){} });
+  ok("and bingo still takes the wall from an embedded game", calls.join(",") === "bingo", calls.join(","));
+})();
+
 print("");
 if (bad) { print(bad + " OF " + (pass + bad) + " CHECKS FAILED"); throw new Error(bad + " failed"); }
 print("ALL " + pass + " CHECKS PASSED");

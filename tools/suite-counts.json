@@ -528,7 +528,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/tv-states.test.js": {
-  "checks": 17,
+  "checks": 21,
   "counted_by": "lines"
  },
  "venueplay-backend/app/vp-follow.test.js": {

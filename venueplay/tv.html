@@ -1983,8 +1983,14 @@
                      Math.ceil((adsHoldUntil - Date.now())/1000) + "s");
         return;
       }
+      /* THE SAME mode ARRIVES TWICE. A musical or trivia console sends it on its own game channel
+         (the router below embeds the game) AND on its session channel, which for any venue that never
+         changed its code IS this main channel. When this copy landed second it put the "Starting
+         Musical..." card over the game that had just embedded, and nothing re-embedded it: the wall
+         sat on the card for five minutes, then went to the ads (played at Test Charlie, 30 Sep 2026).
+         The router owns every non-bingo embed, so an embed already on screen is left alone. */
       if(m.mode==="bingo") enterBingo();
-      else enterHolding(m.mode);
+      else if(tvMode!=="embed") enterHolding(m.mode);
       return;
     }
     /* to_ads had no branch here at all, so even a console that sent it was
