@@ -189,11 +189,12 @@
       /* Remember this attempt so signSend can WAIT for it. See the note on keyTried. */
       var p = VPSign._initHost(apiBase, slug, getToken);
       S.keyTried = p.catch(function () {});
+      p.then(function () { VPSign._cantSignCheck(slug); }, function () { VPSign._cantSignCheck(slug); });
       /* The console's half of rotation: ask again every five minutes. A rotated venue answers
          "no key" and this console mints the new pair; a login that has been removed is refused
          at the Worker and keeps signing with a key the screens are about to stop trusting. */
       // Reads the CURRENT venue each time, not the one the timer started with.
-      if (!S._hostRefresh) S._hostRefresh = setInterval(function () { VPSign._initHost(S.apiBase, S.slug, S.hostGetToken); }, KEY_REFRESH_MS);
+      if (!S._hostRefresh) S._hostRefresh = setInterval(function () { VPSign._initHost(S.apiBase, S.slug, S.hostGetToken).then(function () { VPSign._cantSignCheck(S.slug); }); }, KEY_REFRESH_MS);
       return p;
     },
     _initHost: function (apiBase, slug, getToken) {
@@ -230,6 +231,33 @@
             }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d2) { if (d2 && d2.private_jwk && S.slug === slug) return useHostKey(d2); });
           });
       }).catch(function () { /* leave privKey null -> send unsigned */ });
+    },
+
+    /* A CONSOLE THAT CANNOT SIGN MUST SAY SO. With no private key this console sends unsigned, which
+       is right at a venue that is not enforcing and useless at one that is: every TV and phone drops
+       it, and nothing on the console changes, so the host plays to a wall that is ignoring them. Seen
+       at Test Charlie, 30 Sep 2026 (an HQ View as login, which the Worker will not hand a venue key).
+       Only when the venue really enforces, asked of the public route, and only while there is still
+       no key: the bar goes as soon as the five-minute refresh gets one. */
+    _cantSignCheck: function (slug) {
+      if (S.privKey || !subtleOk() || typeof document === "undefined" || !slug || S.slug !== slug) { VPSign._cantSignBar(false); return; }
+      fetch(S.apiBase + "/venue/signing/public?venue=" + encodeURIComponent(slug))
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) { if (S.slug === slug && !S.privKey) VPSign._cantSignBar(!!(d && d.enforce)); })
+        .catch(function () {});
+    },
+    _cantSignBar: function (on) {
+      var bar = document.getElementById("vpCantSign");
+      if (!on) { if (bar && bar.parentNode) bar.parentNode.removeChild(bar); return; }
+      if (bar || !document.body) return;
+      bar = document.createElement("div");
+      bar.id = "vpCantSign";
+      bar.setAttribute("role", "alert");
+      bar.setAttribute("style", "position:sticky;top:0;z-index:9999;background:#5A1020;color:#FFE4E9;padding:12px 16px;" +
+        "font:600 14px/1.45 Manrope,system-ui,sans-serif;border-bottom:2px solid #FF1F8E");
+      bar.textContent = "The TV and phones will ignore this console: it could not get this venue's security key. " +
+        "Sign out and sign back in with a host login for this venue. (HQ View as cannot run a game at a venue that checks.)";
+      document.body.insertBefore(bar, document.body.firstChild);
     },
 
     enforcing: function () { return !!S.enforce; },

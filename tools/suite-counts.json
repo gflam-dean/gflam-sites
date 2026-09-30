@@ -135,6 +135,10 @@
   "checks": 27,
   "counted_by": "lines"
  },
+ "tools/test-cant-sign-warns.js": {
+  "checks": 3,
+  "counted_by": "lines"
+ },
  "tools/test-channel-recovery-consoles.js": {
   "checks": 30,
   "counted_by": "lines"
