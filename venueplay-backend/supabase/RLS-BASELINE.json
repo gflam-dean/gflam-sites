@@ -1832,6 +1832,22 @@
    "enabled": true,
    "forced": false
   },
+  "vp_jag_games": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_jag_log": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_jag_secrets": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_jag_turns": {
+   "enabled": true,
+   "forced": false
+  },
   "vp_marketing_optins": {
    "enabled": true,
    "forced": false
@@ -2029,6 +2045,38 @@
   "vp_is_platform_admin()": {
    "anon": true,
    "authenticated": true
+  },
+  "vp_jag_board(p_jag_id uuid)": {
+   "anon": false,
+   "authenticated": false
+  },
+  "vp_jag_close(p_auth_user_id uuid, p_jag_id uuid, p_reason text)": {
+   "anon": false,
+   "authenticated": false
+  },
+  "vp_jag_current(p_venue_id uuid)": {
+   "anon": false,
+   "authenticated": false
+  },
+  "vp_jag_gate(p_auth_user_id uuid, p_venue_id uuid)": {
+   "anon": false,
+   "authenticated": false
+  },
+  "vp_jag_jackpot(p_auth_user_id uuid, p_jag_id uuid, p_jackpot_cents integer)": {
+   "anon": false,
+   "authenticated": false
+  },
+  "vp_jag_public(p_slug text, p_jag_id uuid)": {
+   "anon": false,
+   "authenticated": false
+  },
+  "vp_jag_start(p_auth_user_id uuid, p_venue_id uuid, p_jag_id uuid, p_name text, p_deck_size integer, p_jackpot_cents integer, p_commitment text, p_spot integer, p_salt text, p_carry boolean)": {
+   "anon": false,
+   "authenticated": false
+  },
+  "vp_jag_turn(p_auth_user_id uuid, p_jag_id uuid, p_card integer, p_winner_name text, p_override boolean)": {
+   "anon": false,
+   "authenticated": false
   },
   "vp_members_draw(p_draw_id uuid, p_auth_user_id uuid, p_rand bigint[], p_hold_default integer, p_hold_lo integer, p_hold_hi integer)": {
    "anon": false,
