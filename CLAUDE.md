@@ -1,5 +1,37 @@
 # Working in this repo
 
+## START HERE (if you only read one section)
+
+Every change goes through this loop. Do not skip a step, and do not "fix" a red line by editing
+a ledger or deleting a check: the red line is the job.
+
+    git fetch && git status                        is this checkout current? (it was once 255 commits behind)
+    ...make the change...
+    jsc <the suite for what you changed>           a test must RUN the code, not grep it
+    add a row to tools/prove-checks.py             for every new check: break the code, check goes red
+    python3 tools/prove-checks.py "<suite name>"   must say "proven, 0 BLIND"
+    python3 tools/check-suite-ledger.py --update   only AFTER the new checks exist and pass
+    python3 tools/release-check.py --local --update-labels
+    python3 tools/release-check.py --local         must end "exit 0"; it now also fails when any
+                                                   prove-checks mutation no longer finds its line
+    git commit, then python3 tools/release.py      pushes, deploys Workers, waits, re-gates
+
+Traps that cost real time on 30 Sep 2026, each of which LOOKS like a product bug:
+- The browser tool only keeps the FRONT tab fully alive. A console in a background tab can miss
+  messages. Take a screenshot of a tab to bring it forward before judging what it did.
+- HQ "View as" is not a host. It can lack the venue's signing key, and at an enforcing venue the
+  TV then drops everything it sends. Consoles now show a red bar when that happens.
+- Test Alpha/Bravo/Charlie are Queensland venues. The raffle and members draw ask the venue to
+  accept its rules first: that is Dean's to accept, never yours.
+- Trivia and musical bingo run once a week per venue. A "ran this week" banner is the rule
+  working, not a fault; use another test venue.
+- tools/play-a-game.py refuses the live Worker on purpose, and the staging Worker has no room
+  server. It cannot run today; play by hand at a test venue instead.
+- A live migration is refused in auto mode. Write it, open a COPY for Dean, and read it back
+  (read-only) after he runs it. Never route around the refusal.
+- When the same code lives in two products (the Punters Reckon engine is copied into
+  partyplay/lib), change BOTH; a suite fails if they differ.
+
 Two products. **VenuePlay** (live pub games: bingo, musical bingo, trivia, raffle,
 members draw) and **PartyPlay** (a $50 consumer party product). A real venue runs
 on VenuePlay, so a bad push is a bad night in a room full of people.

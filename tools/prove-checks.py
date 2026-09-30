@@ -2634,7 +2634,7 @@ MUTATIONS = [
      'the first messages from a freshly minted console are thrown away on the old key'),
 
     ('a screen refetches the key on an unknown kid', 'venueplay/app/vp-sign.js',
-     "      if (!S._hostRefresh) S._hostRefresh = setInterval(function () { VPSign._initHost(S.apiBase, S.slug, S.hostGetToken); }, KEY_REFRESH_MS);",
+     "      if (!S._hostRefresh) S._hostRefresh = setInterval(function () { VPSign._initHost(S.apiBase, S.slug, S.hostGetToken).then(function () { VPSign._cantSignCheck(S.slug); }); }, KEY_REFRESH_MS);",
      "",
      'a console never asks for the key again, so after a rotation nobody mints the new one and '
      'the venue has no key until the next sign-in'),
@@ -2997,6 +2997,12 @@ MUTATIONS = [
 # they read as "cannot be done, here is why" rather than "nobody got round to it",
 # which is what an unexplained gap in the list looks like.
 UNPROVABLE = {
+    'every prove-checks mutation still finds the line it breaks':
+        'it runs this very file with --list, and scratch() copies the repo WITHOUT .git and breaks '
+        'one line in the copy, so here it is a note (SKIPPED), never a pass: run inside a copy it '
+        'would go red on every mutation and make blind checks look proven. In a real checkout it was '
+        'seen to go red on 30 Sep 2026: a find-string edited to text that is nowhere in the file was '
+        'reported as NEVER and the gate failed, then went green when it was put back.',
     'a real browser has checked the venue screens on this build':
         'it works off git history (rev-parse HEAD, then diff since the commit in '
         '.verify-live.json) and scratch() copies the repo WITHOUT .git, so the check '

@@ -4899,6 +4899,32 @@ def cannot_change_a_party_without_the_key():
                % (status, body[:60]))
 
 
+def mutations_still_apply():
+    """EVERY MUTATION STILL FINDS WHAT IT BREAKS, CHECKED ON EVERY PUSH.
+
+    `prove-checks.py --list` answers this in two seconds, and it was only ever run when somebody
+    remembered to. On 30 Sep 2026 two mutations had rotted in one afternoon (a product edit moved
+    the line each one breaks), so the checks they were meant to prove had quietly stopped being
+    proven, and nothing went red. Now the gate asks.
+
+    NOT under prove-checks. It copies the repo WITHOUT .git and breaks one line in the copy, so
+    that mutation's own search string is gone and this would go red on every single run, which
+    would make every blind check look proven. So outside a real checkout it is a note, never a pass.
+    """
+    if not os.path.exists(os.path.join(ROOT, '.git')):
+        note('every prove-checks mutation still finds the line it breaks',
+             'SKIPPED, not a git checkout (prove-checks runs the gate on a copy)')
+        return
+    r = subprocess.run([sys.executable, os.path.join(ROOT, 'tools', 'prove-checks.py'), '--list'],
+                       capture_output=True, text=True, cwd=ROOT)
+    out = (r.stdout + r.stderr)
+    rotten = [l.strip() for l in out.splitlines() if l.strip().startswith(('NEVER', 'AMBIG', 'NO-OP', 'GONE'))]
+    ok('every prove-checks mutation still finds the line it breaks', r.returncode == 0 and not rotten,
+       detail=next((l.strip() for l in out.splitlines() if l.strip().startswith('All ')), ''),
+       why=('; '.join(x[:110] for x in rotten[:3]) or out[-200:]) +
+           '. Fix the find-string in tools/prove-checks.py to match the new code (python3 tools/prove-checks.py --list)')
+
+
 def labels_ledger(update):
     """EVERY LOCAL CHECK IS ON A LIST, AND EVERY NEW ONE HAS A MUTATION.
 
@@ -5293,6 +5319,7 @@ def main():
                    '. If the live change was deliberate, rerun the tool without --check and commit the baseline')
 
     if local_only:
+        mutations_still_apply()
         labels_ledger('--update-labels' in args)
     sys.exit(summary(which, not local_only))
 
