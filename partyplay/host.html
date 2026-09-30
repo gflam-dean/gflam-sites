@@ -305,7 +305,13 @@
          '<p class="hint">Build these whenever you like. There is no rush and no extra cost.</p></div></div>';
 
     if(!GAMES.length){
-      h += '<p class="hint" style="margin-bottom:10px">Nothing yet. Add your first below.</p>';
+      /* A FIRST-TIME HOST HAS TEN UNFAMILIAR GAMES AND NOBODY TO ASK. The likeliest thing to stall
+         them is the very first decision, so offer a whole night in one tap: a warm-up, two that get
+         people talking, a quiz, bingo, and the prize draw to finish (audit, 30 Sep 2026). */
+      h += '<div class="game" style="border-color:var(--pink,#FF1F8E)"><div class="ico">\u2728</div><div class="meta">' +
+           '<b>Not sure where to start?</b><span>Add a suggested night: six games in a good order, about ninety minutes. ' +
+           'Change or remove any of them after.</span></div><button id="suggestNight">Add it</button></div>';
+      h += '<p class="hint" style="margin-bottom:10px">Or add your own below.</p>';
     }
     GAMES.forEach(function(g){
       var t = TYPES[g.format] || { icon:"\u{1F3AE}", name:g.format };
@@ -663,6 +669,39 @@
       .catch(function(e){ $("pickHint").textContent = e.message; });
   }
 
+  /* The suggested night, added one game at a time in running order, so the list reads top to bottom
+     the way the night goes. Content comes from the same packs the builder offers, family-safe ones. */
+  function pickSome(list, n){
+    var a = list.slice();
+    for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a.slice(0, n);
+  }
+  function addSuggestedNight(btn){
+    var post = function(format, title, config){
+      return api("/games", { method:"POST", body: JSON.stringify({ code:CODE, key:KEY, format:format, title:title || null, config:config || {} }) });
+    };
+    var words = fetch("/data/words/whohere-easy-openers.json").then(function(r){ return r.ok ? r.json() : null; });
+    var quiz  = fetch("/data/trivia/kids-and-family.json").then(function(r){ return r.ok ? r.json() : null; });
+    Promise.all([words, quiz]).then(function(got){
+      var w = got[0], q = got[1];
+      if(!w || !w.words || !q || !q.questions) throw new Error("Could not load the ready-made games. Try again.");
+      return post("headstails")
+        .then(function(){ return post("whohere", null, { items: pickSome(w.words, 10).map(function(x){ return { q:x, a:"" }; }) }); })
+        .then(function(){ return post("truths"); })
+        .then(function(){ return post("trivia", "Family quiz", { items: pickSome(q.questions, 10).map(function(x){
+                  return { q:x.q, a:x.answer, options:x.options.slice(), src:q.category }; }) }); })
+        .then(function(){ return post("bingo90"); })
+        .then(function(){ return post("draw"); });
+    }).then(function(){
+      toast("Your night is ready");
+    }).catch(function(e){
+      toast(e.message || "Something went wrong");
+    }).then(function(){
+      return api("/games?code=" + encodeURIComponent(CODE) + "&key=" + encodeURIComponent(KEY));
+    }).then(function(d){ if(d){ GAMES = d.games || []; render(); } })
+      .catch(function(){ if(btn){ btn.disabled = false; btn.textContent = "Add it"; } });
+  }
+
   function harvest(){
     editing.title = ($("gTitle") && $("gTitle").value.trim()) || "";
     Array.prototype.forEach.call($("dBody").querySelectorAll("[data-q]"), function(el){
@@ -731,6 +770,7 @@
       } else openBuilder(fmt, null);
       return;
     }
+    if(el.id === "suggestNight"){ if(!el.disabled){ el.disabled = true; el.textContent = "Adding..."; addSuggestedNight(el); } return; }
     if(el.hasAttribute("data-edit")){
       var g = GAMES.filter(function(x){ return String(x.id) === el.getAttribute("data-edit"); })[0];
       if(g) openBuilder(g.format, g);

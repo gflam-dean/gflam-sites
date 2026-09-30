@@ -8,3 +8,5 @@ Disallow: /run
 Disallow: /play
 Disallow: /tv
 Allow: /
+
+Sitemap: https://partyplay.com.au/sitemap.xml

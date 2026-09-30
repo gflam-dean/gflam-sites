@@ -296,6 +296,17 @@
       })
       .catch(function(){ return true; });   // the Worker not answering is not a reason to take the lobby down
   }
+  var LOST_MS = 20000, lostT = null;
+  function lostNote(on){
+    var n = $("lostNote");
+    if(!on){ if(n) n.remove(); return; }
+    if(n) return;
+    n = document.createElement("div"); n.id = "lostNote";
+    n.setAttribute("style", "position:fixed;top:2vh;right:2vw;z-index:50;background:rgba(18,16,26,.92);color:var(--mute);" +
+      "border:1px solid var(--line);border-radius:2vh;padding:.8vh 1.8vh;font-size:clamp(12px,1.8vh,22px)");
+    n.textContent = "Reconnecting to the party\u2026";
+    document.body.appendChild(n);
+  }
   function connect(){
     if(!CODE){ askForCode(); return; }
     if(!SUPA_ANON){ show('<div class="msg">This screen is not configured yet.</div>'); return; }
@@ -307,8 +318,17 @@
       ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
       ch.subscribe(function(status){
         /* Say nothing on a wobble. A television that flashes "reconnecting" every
-           time the house wifi hiccups is a television everyone is looking at. */
-        if(status === "SUBSCRIBED") ch.send({ type:"broadcast", event:"msg", payload:{ t:"tv-here" } });
+           time the house wifi hiccups is a television everyone is looking at.
+           BUT SAY SOMETHING WHEN IT IS REALLY GONE. A telly that lost the party showed
+           whatever it last drew, for ever, and looked exactly like one waiting for the
+           host (audit, 30 Sep 2026). Twenty seconds without the party earns a small
+           corner note; it goes the moment the party is back. */
+        if(status === "SUBSCRIBED"){
+          clearTimeout(lostT); lostT = null; lostNote(false);
+          ch.send({ type:"broadcast", event:"msg", payload:{ t:"tv-here" } });
+        } else if(status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED"){
+          if(!lostT) lostT = setTimeout(function(){ lostNote(true); }, LOST_MS);
+        }
       });
     }catch(e){ /* the lobby is already up, and it is the useful screen anyway */ }
   }

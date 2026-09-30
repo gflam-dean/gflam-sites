@@ -59,6 +59,10 @@
   "checks": 4,
   "counted_by": "lines"
  },
+ "partyplay-backend/lib/pp-suggested-night.test.js": {
+  "checks": 9,
+  "counted_by": "lines"
+ },
  "partyplay-backend/lib/pp-ticket.test.js": {
   "checks": 415,
   "counted_by": "total"
@@ -73,6 +77,10 @@
  },
  "partyplay-backend/lib/pp-tv-layout.test.js": {
   "checks": 9,
+  "counted_by": "lines"
+ },
+ "partyplay-backend/lib/pp-tv-reconnect.test.js": {
+  "checks": 6,
   "counted_by": "lines"
  },
  "partyplay-backend/lib/pp-video.test.js": {
