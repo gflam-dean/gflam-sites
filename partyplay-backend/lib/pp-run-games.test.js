@@ -65,7 +65,7 @@ g.PPLicence = { isLive: function(l){ return Date.now() < l.endsAt; },
 // expose the internals we want to drive
 /* The runners live inside the page's own IIFE, so the export has to go INSIDE
    it, immediately before it closes, or none of these names are in scope. */
-var EXPORT = "\n; globalThis.__X = { runTrivia:runTrivia, triviaSave:triviaSave, runCharades:runCharades, runGuessWho:runGuessWho," +
+var EXPORT = "\n; globalThis.__X = { runTrivia:runTrivia, triviaSave:triviaSave, runBingo:runBingo, nextBall:nextBall, runCharades:runCharades, runGuessWho:runGuessWho," +
   " charadesGo:charadesGo, guessWhoGo:guessWhoGo, setSend:function(f){ send=f; }," +
   " setPlayers:function(p){ players=p; }, getG:function(){ return G; }, setToast:function(f){ toast=f; }," +
   " truthsTally:truthsTally, resend:function(){ if(G && G.resend) G.resend(); }, runHeads:runHeads, flip:flip, truthsEnd:truthsEnd, setG:function(o){ G=o; }, licenceTick:licenceTick, setParty:function(p){ PARTY=p; }, getParty:function(){ return PARTY; } };\n";
@@ -354,6 +354,28 @@ ok(sent.filter(function(m){ return m.t==="charades"; }).length === 0,
   G2.banked = true; X.triviaSave(); sent = [];
   X.runTrivia(game);
   ok(X.getG().i === -1 && !sent.some(function(m){ return m.t === "ask"; }), "a round already banked into the night starts fresh");
+  g.localStorage.getItem = function(){ return null; }; g.localStorage.setItem = function(){};
+})();
+
+/* THE HOST'S TABLET RELOADS MID-BINGO (audit, 30 Sep 2026): same game, same tickets, same calls. */
+(function(){
+  var store = {};
+  g.localStorage.getItem = function(k){ return store.hasOwnProperty(k) ? store[k] : null; };
+  g.localStorage.setItem = function(k, v){ store[k] = String(v); };
+  var game = { id:"b1", format:"bingo90", config:{} };
+  X.setSend(function(o){ sent.push(o); }); sent = [];
+  X.runBingo(game); X.nextBall(); X.nextBall(); X.nextBall();
+  var G1 = X.getG(), gid = G1.gid, called = G1.called.slice();
+  sent = [];
+  X.runBingo(game);   // what a reload does
+  var G2 = X.getG();
+  ok(G2.gid === gid && JSON.stringify(G2.called) === JSON.stringify(called) && G2.pool.length === 87,
+     "a reload keeps the game id and the three numbers called, got gid " + (G2.gid === gid) + " called " + G2.called.length + " pool " + G2.pool.length);
+  var b = sent.filter(function(m){ return m.t === "bingo"; });
+  ok(b.length === 1 && b[0].gid === gid && b[0].called.length === 3, "and tells the phones it is the SAME game, so they keep their tickets, got " + JSON.stringify(b));
+  X.runBingo(game, true);   // Start over
+  ok(X.getG().gid !== gid && X.getG().called.length === 0, "Start over is a new game with new tickets");
+  ok(/if\(el\.id==="again"\)\{ runBingo\(G && G\.gref, true\); return; \}/.test(src), "and the Start over button asks for exactly that (a fresh game), not the saved one");
   g.localStorage.getItem = function(){ return null; }; g.localStorage.setItem = function(){};
 })();
 

@@ -502,16 +502,34 @@
      again. They start from the next ball rather than the first, which is a worse ticket
      than everyone else's and still enormously better than watching. */
   function resendBingo(){ send({t:"bingo", gid:G.gid, called:G.called.slice()}); }
-  function runBingo(g){
+  function bingoSave(){
+    if(!G || !G.bkey) return;
+    try{ localStorage.setItem(G.bkey, JSON.stringify({ gid:G.gid, called:G.called, at:Date.now() })); }catch(e){}
+  }
+  function runBingo(g, fresh){
     /* gid tells a phone THIS game from the last bingo game tonight, so it does not
        carry the old card's marks into a new one. `called` goes to a late phone so it
        knows what has already gone. */
-    G={ pool:[], called:[], gid:String(Date.now()), repaint:paintBingo, resend:resendBingo };
-    for(var i=1;i<=90;i++) G.pool.push(i);
+    G={ pool:[], called:[], gid:String(Date.now())+"-"+pick(1000000), repaint:paintBingo, resend:resendBingo,
+        gref:g||null, bkey: g && g.id ? "ppBingo:"+CODE+":"+g.id : null };
+    /* A RELOAD IS NOT A NEW GAME. A fresh gid tells every phone to throw its ticket away, so a
+       tablet that slept mid-game dealt the whole room new tickets and lost every number called
+       (audit, 30 Sep 2026). The same game, reopened within twelve hours and not finished, keeps
+       its gid and its calls; "Start over" is still a new game. */
+    var was=null; if(G.bkey && !fresh){ try{ was=JSON.parse(localStorage.getItem(G.bkey)||"null"); }catch(e){} }
+    if(was && was.gid && Array.isArray(was.called) && was.called.length < 90 && (Date.now()-(was.at||0)) < 12*3600*1000){
+      G.gid=String(was.gid); G.called=was.called.map(Number);
+    }
+    for(var i=1;i<=90;i++) if(G.called.indexOf(i)<0) G.pool.push(i);
     // Tell the phones to build their tickets BEFORE the first ball, so nobody is
     // still staring at a lobby when a number goes up.
-    send({t:"bingo", gid:G.gid});
-    send({t:"big",text:"Bingo",sub:"Grab your ticket"});
+    if(G.called.length){
+      send({t:"bingo", gid:G.gid, called:G.called.slice()});   // the same game: phones keep their tickets
+    } else {
+      send({t:"bingo", gid:G.gid});
+      send({t:"big",text:"Bingo",sub:"Grab your ticket"});
+    }
+    bingoSave();
     paintBingo();
   }
   /* A claim from a phone. Without this the shout goes nowhere and the host never
@@ -561,6 +579,7 @@
     G.called.push(n);
     // The whole list rides with every ball, so a phone that missed one catches up.
     send({t:"big",text:String(n),sub:callName(n),called:G.called.slice()});
+    bingoSave();
     paintBingo();
   }
 
@@ -1302,7 +1321,7 @@
       NIGHT={}; nightSave(); render(); toast("Scores cleared"); return;
     }
     if(el.id==="call"){ nextBall(); return; }
-    if(el.id==="again"){ runBingo(); return; }
+    if(el.id==="again"){ runBingo(G && G.gref, true); return; }   // Start over IS a new game
     if(el.id==="flip"){ flip(); return; }
     if(el.id==="hstart"){ runHeads(); return; }
     if(el.id==="back"){ G=null; render(); return; }

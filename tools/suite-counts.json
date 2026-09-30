@@ -52,7 +52,7 @@
   "counted_by": "total"
  },
  "partyplay-backend/lib/pp-run-games.test.js": {
-  "checks": 63,
+  "checks": 66,
   "counted_by": "total"
  },
  "partyplay-backend/lib/pp-start-back.test.js": {
