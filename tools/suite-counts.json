@@ -320,7 +320,7 @@
   "counted_by": "lines"
  },
  "tools/test-router-heals-after-a-blip.js": {
-  "checks": 15,
+  "checks": 23,
   "counted_by": "lines"
  },
  "tools/test-score-pull-is-shared.js": {

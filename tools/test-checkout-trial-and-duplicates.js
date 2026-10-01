@@ -39,7 +39,7 @@ URLSearchParams.prototype.toString = function () {
 var MONTHLY = 'price_f_m', ANNUAL = 'price_f_a', STD_M = 'price_s_m', STD_A = 'price_s_a';
 function env(codes) {
   return {
-    FOUNDING_CODES: (codes === undefined) ? 'NSW-SEP-2026,VIC-SEP-2026' : codes,
+    FOUNDING_CODES: (codes === undefined) ? 'NSW-DEC-2099,VIC-DEC-2099' : codes,
     STRIPE_PRICE_MONTHLY: MONTHLY, STRIPE_PRICE_ANNUAL: ANNUAL,
     STRIPE_PRICE_STANDARD_MONTHLY: STD_M, STRIPE_PRICE_STANDARD_ANNUAL: STD_A,
     STRIPE_SECRET_KEY: 'x', SUPABASE_URL: 'https://db.invalid', SUPABASE_SERVICE_KEY: 'k',
@@ -93,7 +93,7 @@ function signup(opts) {
   var body = {
     email: opts.email || 'new@thepub.com.au',
     contact_name: 'Pat', mobile: opts.mobile || '0400000000',
-    founding_code: ('code' in opts) ? opts.code : 'NSW-SEP-2026',
+    founding_code: ('code' in opts) ? opts.code : 'NSW-DEC-2099',
     plan: 'monthly',
     venues: opts.venues || [{ name: 'The Pub', seats: 50, postcode: opts.postcode || '2000' }],
   };
@@ -109,6 +109,10 @@ function signup(opts) {
   return out;
 }
 
+/* THE CODES ARE FAR IN THE FUTURE ON PURPOSE. They were NSW-SEP-2026, and a month code now ends with
+   its month (vpaCodeInDate), so on 1 Oct 2026 every deal-price check here went red overnight while the
+   product was right: it was the fixture that had expired. This suite is about the price a live code
+   buys, not about expiry (the expiry rule has its own checks), so the codes must never run out. */
 var NOW = Math.floor(Date.now() / 1000), DAY = 86400;
 function trialDays() { return sent ? Math.round((Number(sent['subscription_data[trial_end]']) - NOW) / DAY) : null; }
 function iso(daysAgo) { return new Date(Date.now() - daysAgo * 86400000).toISOString(); }
@@ -162,7 +166,7 @@ check('abandoned pending signup: still gets the full month', trialDays() === 30,
 
 /* 6. Dean, 17 Sep: the postcode does not decide the price. A Queensland venue on the NSW link
       pays the same as a Sydney one. */
-var r6 = signup({ postcode: '4220', code: 'NSW-SEP-2026' });
+var r6 = signup({ postcode: '4220', code: 'NSW-DEC-2099' });
 check('QLD postcode on the NSW link: same deal price', sent['line_items[0][price]'] === MONTHLY, sent['line_items[0][price]']);
 check('QLD postcode on the NSW link: the mismatch is still recorded for us',
   sent['subscription_data[metadata][state_matches_postcode]'] === '0', sent['subscription_data[metadata][state_matches_postcode]']);
@@ -174,9 +178,9 @@ check('no founding code: standard price', sent['line_items[0][price]'] === STD_M
 /* 7b. The code the page was told was OPEN (GET /founding upper-cases) must price the same
        here, whatever case it arrives in. The audit of 20 Sep 2026 found the preview saying
        open and the checkout charging standard for the same lower case code. */
-var r7b = signup({ code: 'nsw-sep-2026' });
+var r7b = signup({ code: 'nsw-dec-2099' });
 check('a lower case founding code prices the deal, the same as the preview said', sent['line_items[0][price]'] === MONTHLY, sent['line_items[0][price]']);
-check('and the code is recorded upper case', sent['subscription_data[metadata][founding_code]'] === 'NSW-SEP-2026', sent['subscription_data[metadata][founding_code]']);
+check('and the code is recorded upper case', sent['subscription_data[metadata][founding_code]'] === 'NSW-DEC-2099', sent['subscription_data[metadata][founding_code]']);
 
 /* 8. The lookup asks about the mobile as well as the email, or a second account is one new
       address away. */
@@ -228,7 +232,7 @@ check('deal closed: the welcome email quotes standard', /\$3\.00/.test(wShut.htm
 
 /* The helper both the card link and that email now share. No postcode goes into it, which is
    the point: there is no argument left to get wrong. */
-check('the deal is open while any code is live', vpaFoundingOpenNow({ FOUNDING_CODES: 'NSW-SEP-2026' }) === true);
+check('the deal is open while any code is live', vpaFoundingOpenNow({ FOUNDING_CODES: 'NSW-DEC-2099' }) === true);
 check('the deal is shut when the last code comes out', vpaFoundingOpenNow({ FOUNDING_CODES: '' }) === false);
 check('an unset variable is shut, not open', vpaFoundingOpenNow({}) === false);
 check('whitespace is not a live code', vpaFoundingOpenNow({ FOUNDING_CODES: ' , ' }) === false);

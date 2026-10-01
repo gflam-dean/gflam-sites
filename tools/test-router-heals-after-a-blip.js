@@ -122,9 +122,34 @@ check('the bingo channel is watched', !!bingoCh, channels.map(function (c) { ret
   bingoCh.handlers.forEach(function (h) { h({ payload: { t: t, pid: 'p1', name: 'Kate' } }); });
   check('a phone\'s ' + t + ' on the bingo channel leaves this screen where it is', navigatedTo === null, navigatedTo);
 });
+/* And on a GAME channel, where the bingo-only rule does not apply and the phone list is what holds. */
+var musicalCh = channels.filter(function (c) { return !c.removed && /musical/.test(c.name); })[0];
+['join', 'claim', 'leave', 'answer', 'pr_guess'].forEach(function (t) {
+  navigatedTo = null;
+  musicalCh.handlers.forEach(function (h) { h({ payload: { t: t, pid: 'p1', name: 'Kate' } }); });
+  check('a phone\'s ' + t + ' on the musical channel leaves this screen where it is', navigatedTo === null, navigatedTo);
+});
 navigatedTo = null;
 bingoCh.handlers.forEach(function (h) { h({ payload: { t: 'ball', n: 42 } }); });
 check('but the host calling a ball does take the wall to bingo (so the checks above can fail)', !!navigatedTo && /\/tv/.test(navigatedTo), navigatedTo);
+
+print('');
+print('A musical console talking on the venue channel is not bingo (Test Charlie, 1 Oct 2026)');
+function freshScreen(self){
+  channels.length = 0; navigatedTo = null;
+  Router.start({ client: makeClient(), self: self, slug: 'the-pub', venueCode: function (s) { return 'C-' + s; }, busy: function () { return false; } });
+  return channels.filter(function (c) { return !c.removed && !/trivia|musical|raffle|members|jag/.test(c.name); })[0];
+}
+var main = freshScreen('musical');
+['state', 'volume', 'session', 'players'].forEach(function (t) {
+  main.handlers.forEach(function (h) { h({ payload: { t: t, active: true } }); });
+});
+check('the musical screen is not pulled to bingo by the musical console\'s own state and volume on the venue channel', navigatedTo === null, navigatedTo);
+main.handlers.forEach(function (h) { h({ payload: { t: 'mode', mode: 'musical' } }); });
+check('nor by its own mode:musical arriving on the venue channel', navigatedTo === null, navigatedTo);
+main = freshScreen('trivia');
+main.handlers.forEach(function (h) { h({ payload: { t: 'mode', mode: 'musical' } }); });
+check('a trivia screen that hears mode:musical on the venue channel goes to MUSICAL, not bingo', !!navigatedTo && /musical/.test(navigatedTo), navigatedTo);
 
 print('');
 print(PASS + ' passed, ' + FAIL + ' failed');

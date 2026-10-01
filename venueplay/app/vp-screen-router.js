@@ -50,6 +50,8 @@
     join: 1, claim: 1, leave: 1, answer: 1, pr_guess: 1
   };
 
+  var BINGO_ON_AIR = { ball: 1, started: 1, claim_pending: 1, winner: 1 };
+
   /* t:"state" means "here is where things stand", which is as often "nothing is
      on" as "a game is running". The formats that can be live say so. */
   function onAir(m) {
@@ -114,7 +116,15 @@
           /* mode is still honoured, because it is the one message a host sends
              deliberately to claim the screen. Everything else has to look like
              play. */
-          if (m.t === "mode" || onAir(m)) goTo(game);
+          /* A mode NAMES its game, so go to that one. The venue's main (bingo) channel is also the
+             session channel musical and trivia consoles talk on, at every venue that never changed
+             its code, so their own "mode: musical" arrived here and read as BINGO: the embedded
+             musical screen asked /tv to leave for bingo, /tv dropped to the ads, and the wall sat
+             on "Starting Musical..." (played at Test Charlie, 1 Oct 2026). For the same reason only
+             traffic that only bingo makes (a ball, a new round, a claim, a winner) counts as bingo
+             being on air there; state and volume are said by every format. */
+          if (m.t === "mode") { goTo(m.mode && URLS[m.mode] ? m.mode : game); return; }
+          if (game === "bingo" ? BINGO_ON_AIR[m.t] : onAir(m)) goTo(game);
         };
         if (gate) gate(e.payload, handle); else handle(e.payload);
       }
