@@ -13,7 +13,7 @@
     --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
     --pink:#FF1F8E; --pink-deep:#C70F69;
     --gold:#FFC24B; --win:#35D07F; --roll:#F5A524;
-    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#6C6C76;
+    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#8A8A94;
     --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -55,7 +55,7 @@
   #nameIn{text-align:center}
 
   .btn{border:none;border-radius:12px;padding:16px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:16px;cursor:pointer;transition:.15s;letter-spacing:.02em;width:100%}
-  .btn.pink{background:var(--pink);color:#fff;box-shadow:0 8px 20px rgba(255,31,142,.3)}
+  .btn.pink{background:var(--pink);color:#0A0A0B;box-shadow:0 8px 20px rgba(255,31,142,.3)}
   .btn.pink:active{background:var(--pink-deep)}
   .btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
   .cerr{color:var(--roll);font-size:13px;min-height:18px;margin-top:10px}
@@ -102,7 +102,7 @@
   .cprow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
   .cpbtn{width:50px;height:50px;border-radius:12px;border:1px solid var(--line);background:var(--ink-3);color:var(--text);
     font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;cursor:pointer;transition:.12s}
-  .cpbtn.sel{background:var(--pink);color:#fff;border-color:transparent;box-shadow:0 6px 16px rgba(255,31,142,.3)}
+  .cpbtn.sel{background:var(--pink);color:#0A0A0B;border-color:transparent;box-shadow:0 6px 16px rgba(255,31,142,.3)}
   /* stacked tickets (a book) */
   .ticket{margin-bottom:16px}
   /* Turning the page hides tickets; it does NOT rebuild them. See buildCards. */
@@ -365,7 +365,7 @@
       'Tonight you play on paper</div>'+
       '<p style="color:#9A9AA4">Grab your bingo book from the bar and mark it off as the numbers are called. '+
       'The big screen shows every number, so you can always check back.</p>'+
-      '<p style="color:#6C6C76;font-size:14px;margin-top:18px">Your state\u2019s rules ask for a printed ticket '+
+      '<p style="color:#8A8A94;font-size:14px;margin-top:18px">Your state\u2019s rules ask for a printed ticket '+
       'for bingo, so phones sit this one out. Everything else runs exactly the same.</p>';
     try{ document.body.innerHTML=""; }catch(e){}
     (document.body||host).appendChild(d);
@@ -1100,7 +1100,7 @@
         var vn=(P.venueName||"").trim();
         var n=document.createElement("p");
         n.className="collectnote";
-        n.setAttribute("style","font-size:12px;line-height:1.5;color:#6C6C76;margin-top:10px");
+        n.setAttribute("style","font-size:12px;line-height:1.5;color:#8A8A94;margin-top:10px");
         n.textContent="These details are optional and go to "+(vn||"the venue you are playing at")+
           ", not to anyone else. You can play with just your name. ";
         var a=document.createElement("a");

@@ -231,8 +231,8 @@ MUTATIONS = [
      'venue television all night with nothing able to hide it'),
 
     ('no page uses a CSS variable it never defines', 'venueplay/tv.html',
-     'font-size:clamp(8px,1.1cqw,13px);color:var(--muted)}',
-     'font-size:clamp(8px,1.1cqw,13px);color:var(--muted-2)}',
+     'font-size:clamp(8px,1.1cqw,22px);color:var(--muted)}',
+     'font-size:clamp(8px,1.1cqw,22px);color:var(--muted-2)}',
      'one renamed token leaves a var() with nothing behind it, and a CSS variable that is '
      'not defined kills the whole declaration silently'),
 

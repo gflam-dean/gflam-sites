@@ -13,7 +13,7 @@
     --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
     --pink:#FF1F8E; --pink-deep:#C70F69;
     --gold:#FFC24B; --win:#35D07F; --roll:#F5A524;
-    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#6C6C76;
+    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#8A8A94;
     --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -45,7 +45,7 @@
    Reconnecting indicator hidden behind it, at the one moment it matters. Same fault
    that put a venue's name across the join panel on 5 Sep: two elements in one corner,
    one in cqw and one in px, only ever correct at a single screen width. */
-  .tv-status{position:absolute;top:2cqw;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.45);border-radius:1cqw;padding:.4cqw 1cqw;display:flex;align-items:center;gap:.7cqw;z-index:6;font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:clamp(8px,1.1cqw,13px);color:var(--muted)}
+  .tv-status{position:absolute;top:2cqw;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.45);border-radius:1cqw;padding:.4cqw 1cqw;display:flex;align-items:center;gap:.7cqw;z-index:6;font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:clamp(8px,1.1cqw,22px);color:var(--muted)}
   /* display:flex BEATS THE hidden ATTRIBUTE. The badge is markup-hidden and this rule
      made it visible from the first frame on every screen, reading "Connecting", until
      tvStatus(true) ran. On ?demo=1 connectRealtime() is deliberately never called, so
@@ -311,15 +311,18 @@
   .bcol{display:flex;flex-direction:column;gap:.4cqw;flex:1;min-width:0}
   /* The board fills the height it has. Digits were capped at 17px whatever the screen. */
   .bhead{font-family:'Anton',sans-serif;font-size:clamp(14px,3cqw,48px);color:var(--pink);text-align:center;line-height:1;margin-bottom:.3cqw}
-  .bnum{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(10px,2.2cqw,60px);line-height:1.15;color:var(--faint);text-align:center;padding:.45cqw 0;border-radius:.4cqw;background:rgba(255,255,255,.02);border:1px solid transparent}
-  .bnum.lit{background:rgba(255,31,142,.18);color:#fff;border-color:rgba(255,31,142,.4)}
+  .bnum{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(10px,2.2cqw,60px);line-height:1.15;color:#5A5A64;text-align:center;padding:.45cqw 0;border-radius:.4cqw;background:rgba(255,255,255,.02);border:1px solid transparent}
+  /* CALLED HAS TO READ FROM THE BACK OF THE ROOM. Pink at 18% behind white text was barely different from
+     an uncalled number on a real TV (design review, 1 Oct 2026). Solid pink, dark text; uncalled sits back. */
+  .bnum.lit{background:var(--pink);color:#0A0A0B;border-color:transparent}
   .bnum.cur{background:var(--gold);color:#1a1000;border-color:transparent;box-shadow:0 0 14px rgba(255,194,75,.6)}
 
   .tv-join{position:absolute;left:2cqw;bottom:2cqw;display:flex;align-items:center;gap:1cqw;z-index:6;background:rgba(0,0,0,.42);border:1px solid var(--line-2);border-radius:1.2cqw;padding:.8cqw 1.4cqw .8cqw .8cqw;backdrop-filter:blur(4px)}
   .qrmini{width:clamp(44px,8cqw,110px);height:clamp(44px,8cqw,110px);background:#fff;border-radius:.6cqw;padding:.4cqw;flex:none}
   .qrmini canvas{display:block;width:100%!important;height:100%!important;image-rendering:pixelated}
-  .tv-join .tjl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:clamp(8px,1.3cqw,13px);color:var(--muted)}
-  .tv-join .tjc{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(13px,2.4cqw,26px);color:var(--gold);letter-spacing:.08em}
+  .tv-join .tjl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:clamp(8px,1.3cqw,22px);color:var(--muted)}
+  /* The join code a latecomer reads from across the bar. The 26px ceiling won on every 1080p TV. */
+  .tv-join .tjc{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(13px,2.4cqw,52px);color:var(--gold);letter-spacing:.08em}
 
   /* ---- claim / win ---- */
   .claimbig{font-family:'Anton',sans-serif;font-size:clamp(40px,12cqw,150px);color:var(--pink);line-height:.9;text-shadow:0 0 40px rgba(255,31,142,.5);margin:1cqw 0}

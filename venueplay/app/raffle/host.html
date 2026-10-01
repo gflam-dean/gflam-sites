@@ -13,7 +13,7 @@
     --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
     --pink:#FF1F8E; --pink-deep:#C70F69;
     --gold:#FFC24B; --win:#35D07F; --roll:#F5A524;
-    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#6C6C76;
+    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#8A8A94;
     --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -52,7 +52,7 @@
   input:disabled{opacity:.5;cursor:not-allowed}
 
   .btn{border:none;border-radius:10px;padding:11px 15px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13.5px;cursor:pointer;transition:.15s;letter-spacing:.01em}
-  .btn.pink{background:var(--pink);color:#fff;box-shadow:0 8px 20px rgba(255,31,142,.3)}
+  .btn.pink{background:var(--pink);color:#0A0A0B;box-shadow:0 8px 20px rgba(255,31,142,.3)}
   .btn.pink:hover{background:var(--pink-deep)}
   .btn.ghost{background:var(--ink-3);color:var(--text);border:1px solid var(--line)}
   .btn.ghost:hover{border-color:var(--pink);color:#fff}
@@ -99,7 +99,7 @@
   .presetlbl{font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:5px}
   .addrow{display:flex;gap:8px;align-items:stretch}
   .addrow input{flex:1}
-  .addbtn{flex:none;border:none;border-radius:10px;padding:0 16px;background:var(--pink);color:#fff;font-weight:700;font-size:14px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif}
+  .addbtn{flex:none;border:none;border-radius:10px;padding:0 16px;background:var(--pink);color:#0A0A0B;font-weight:700;font-size:14px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif}
   .addbtn:active{background:var(--pink-deep)}
   .prizelist{margin-top:10px;display:flex;flex-direction:column;gap:6px}
   .prizelist:empty{display:none}
@@ -151,7 +151,7 @@
 <body>
 <header>
   <div class="bar">
-    <button type="button" id="toAdsBtn" title="Finish and put the venue ads back on the TV" style="background:none;border:1px solid var(--line);border-radius:8px;padding:5px 11px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;margin-right:10px;white-space:nowrap">End game</button>
+    <button type="button" id="toAdsBtn" title="Finish and put the venue ads back on the TV" style="background:none;border:1px solid var(--line-2,var(--line));border-radius:10px;padding:10px 14px;min-height:42px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;margin-right:18px;white-space:nowrap">End game</button>
     <a href="/app" title="Back to games" style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12.5px;color:var(--muted);text-decoration:none;margin-right:10px;white-space:nowrap">&#8592; Games</a>
     <div class="brand">
       <svg width="20" height="23" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>

@@ -309,7 +309,7 @@
         '<h1 style="margin:0 0 12px;font-size:22px;line-height:1.25">VenuePlay could not finish loading</h1>' +
         '<p style="margin:0 0 16px;font-size:14.5px;line-height:1.5;color:#9A9AA4">Part of the app is served from the internet and it did not arrive. This is almost always the venue wifi, or a network that blocks it. Your game and your players are fine.</p>' +
         '<button id="vpCdnRetry" style="font:inherit;font-size:15px;font-weight:700;background:#FF1F8E;color:#fff;border:0;border-radius:10px;padding:12px 24px;cursor:pointer">Try again</button>' +
-        '<p style="margin:14px 0 0;font-size:12.5px;color:#6C6C76">Still stuck? Use your phone hotspot, or call us on the number in your welcome email.</p>' +
+        '<p style="margin:14px 0 0;font-size:12.5px;color:#8A8A94">Still stuck? Use your phone hotspot, or call us on the number in your welcome email.</p>' +
         '</div>';
       document.body.appendChild(d);
       var b = document.getElementById('vpCdnRetry');

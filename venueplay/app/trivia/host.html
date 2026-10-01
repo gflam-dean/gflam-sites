@@ -13,7 +13,7 @@
     --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
     --pink:#FF1F8E; --pink-deep:#C70F69;
     --gold:#FFC24B; --win:#35D07F; --roll:#F5A524;
-    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#6C6C76;
+    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#8A8A94;
     --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -50,7 +50,7 @@
   select{cursor:pointer;-webkit-appearance:none;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 18px) 17px,calc(100% - 13px) 17px;background-size:5px 5px;background-repeat:no-repeat}
 
   .btn{border:none;border-radius:10px;min-height:44px;padding:11px 15px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13.5px;cursor:pointer;transition:.15s;letter-spacing:.01em}
-  .btn.pink{background:var(--pink);color:#fff;box-shadow:0 8px 20px rgba(255,31,142,.3)}
+  .btn.pink{background:var(--pink);color:#0A0A0B;box-shadow:0 8px 20px rgba(255,31,142,.3)}
   .btn.pink:hover{background:var(--pink-deep)}
   .btn.ghost{background:var(--ink-3);color:var(--text);border:1px solid var(--line)}
   .btn.ghost:hover{border-color:var(--pink);color:#fff}
@@ -69,23 +69,23 @@
   .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .seg{display:flex;gap:5px;background:var(--ink-3);padding:4px;border-radius:11px;border:1px solid var(--line-2)}
   .seg button{flex:1;min-height:44px;padding:8px 4px;border:none;background:transparent;color:var(--muted);border-radius:8px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:.15s}
-  .seg button.on{background:var(--pink);color:#fff}
+  .seg button.on{background:var(--pink);color:#0A0A0B}
 
   .stat{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
   .stat .box{flex:1;background:var(--ink-3);border:1px solid var(--line-2);border-radius:11px;padding:11px 12px;min-width:80px}
-  .stat .box .k{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.1em;font-weight:700;font-family:'Hanken Grotesk',sans-serif}
+  .stat .box .k{font-size:12px;color:var(--faint);text-transform:uppercase;letter-spacing:.1em;font-weight:700;font-family:'Hanken Grotesk',sans-serif}
   .stat .box .v{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:19px;color:#fff;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .stat .box .v.g{color:var(--gold)}
 
   .nextup{margin-top:12px;padding:11px 13px;border:1px dashed rgba(255,194,75,.45);border-radius:11px;background:rgba(255,194,75,.06)}
-  .nuh{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:10px;color:var(--gold)}
+  .nuh{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:12px;color:var(--gold)}
   .nut{font-size:14.5px;color:var(--text);margin-top:5px;line-height:1.4}
   .nuopts{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
   .nuo{font-size:11.5px;color:var(--muted);background:var(--ink-3);border:1px solid var(--line-2);border-radius:14px;padding:3px 9px}
   .nuo.ok{color:var(--win);border-color:rgba(53,208,127,.4)}
   .qwrap{background:var(--ink-3);border:1px solid var(--line-2);border-radius:13px;padding:14px;margin-bottom:14px}
   .qmeta{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-  .qmeta .qn{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.1em;font-size:10px;color:var(--faint)}
+  .qmeta .qn{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.1em;font-size:12px;color:var(--faint)}
   .qmeta .live{margin-left:auto;display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)}
   .qmeta .live b{color:#fff}
   .qmeta .live .cd{color:var(--gold)}
@@ -142,7 +142,7 @@
 <body>
 <header>
   <div class="bar">
-    <button type="button" id="toAdsBtn" title="Finish and put the venue ads back on the TV" style="background:none;border:1px solid var(--line);border-radius:8px;padding:5px 11px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;margin-right:10px;white-space:nowrap">End game</button>
+    <button type="button" id="toAdsBtn" title="Finish and put the venue ads back on the TV" style="background:none;border:1px solid var(--line-2,var(--line));border-radius:10px;padding:10px 14px;min-height:42px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;margin-right:18px;white-space:nowrap">End game</button>
     <a href="/app" title="Back to games" style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12.5px;color:var(--muted);text-decoration:none;margin-right:10px;white-space:nowrap">&#8592; Games</a>
     <div class="brand">
       <svg width="20" height="23" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>

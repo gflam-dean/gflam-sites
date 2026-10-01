@@ -13,7 +13,7 @@
     --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
     --pink:#FF1F8E; --pink-deep:#C70F69;
     --gold:#FFC24B; --win:#35D07F; --roll:#F5A524;
-    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#6C6C76;
+    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#8A8A94;
     --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -53,7 +53,7 @@
   input:disabled,select:disabled{opacity:.5;cursor:not-allowed}
 
   .btn{border:none;border-radius:10px;padding:11px 15px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13.5px;cursor:pointer;transition:.15s;letter-spacing:.01em}
-  .btn.pink{background:var(--pink);color:#fff;box-shadow:0 8px 20px rgba(255,31,142,.3)}
+  .btn.pink{background:var(--pink);color:#0A0A0B;box-shadow:0 8px 20px rgba(255,31,142,.3)}
   .btn.pink:hover{background:var(--pink-deep)}
   .btn.ghost{background:var(--ink-3);color:var(--text);border:1px solid var(--line)}
   .btn.ghost:hover{border-color:var(--pink);color:#fff}
@@ -101,7 +101,7 @@
 
   .seg{display:flex;gap:5px;background:var(--ink-3);padding:4px;border-radius:11px;border:1px solid var(--line-2)}
   .seg button{flex:1;padding:8px 4px;border:none;background:transparent;color:var(--muted);border-radius:8px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12px;cursor:pointer;transition:.15s}
-  .seg button.on{background:var(--pink);color:#fff}
+  .seg button.on{background:var(--pink);color:#0A0A0B}
   .seg button:disabled{cursor:not-allowed}
 
   .members{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px}
@@ -133,7 +133,7 @@
 <body>
 <header>
   <div class="bar">
-    <button type="button" id="toAdsBtn" title="Finish and put the venue ads back on the TV" style="background:none;border:1px solid var(--line);border-radius:8px;padding:5px 11px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;margin-right:10px;white-space:nowrap">End game</button>
+    <button type="button" id="toAdsBtn" title="Finish and put the venue ads back on the TV" style="background:none;border:1px solid var(--line-2,var(--line));border-radius:10px;padding:10px 14px;min-height:42px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;margin-right:18px;white-space:nowrap">End game</button>
     <a href="/app" title="Back to games" style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12.5px;color:var(--muted);text-decoration:none;margin-right:10px;white-space:nowrap">&#8592; Games</a>
     <div class="brand">
       <svg width="20" height="23" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
@@ -217,7 +217,7 @@
               <button data-nd="full">John Smith</button>
             </div>
             <div class="lockline hidden" id="nameLock">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="11" rx="2" stroke="#6C6C76" stroke-width="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#6C6C76" stroke-width="2"/></svg>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="11" rx="2" stroke="#8A8A94" stroke-width="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#8A8A94" stroke-width="2"/></svg>
               Only a manager or owner can change how names show.
             </div>
           </div>
@@ -246,7 +246,7 @@
           </div>
           <button class="btn pink big" id="saveSettingsBtn">Save settings</button>
           <div class="lockline hidden" id="settingsLock">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="11" rx="2" stroke="#6C6C76" stroke-width="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#6C6C76" stroke-width="2"/></svg>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="11" rx="2" stroke="#8A8A94" stroke-width="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#8A8A94" stroke-width="2"/></svg>
             Only a manager or owner can change the jackpot and draw settings.
           </div>
           <div class="note" id="settingsMsg" style="margin-top:8px"></div>

@@ -13,7 +13,7 @@
     --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
     --pink:#FF1F8E; --pink-deep:#C70F69;
     --gold:#FFC24B; --win:#35D07F; --roll:#F5A524;
-    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#6C6C76;
+    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#8A8A94;
     --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -50,7 +50,7 @@
   input.code{font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:.2em;text-transform:uppercase;font-size:24px}
 
   .btn{border:none;border-radius:12px;padding:16px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:16px;cursor:pointer;transition:.15s;letter-spacing:.02em;width:100%}
-  .btn.pink{background:var(--pink);color:#fff;box-shadow:0 8px 20px rgba(255,31,142,.3)}
+  .btn.pink{background:var(--pink);color:#0A0A0B;box-shadow:0 8px 20px rgba(255,31,142,.3)}
   .btn.pink:active{background:var(--pink-deep)}
   .btn.ghost{background:var(--ink-3);color:var(--text);border:1px solid var(--line)}
   .btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
@@ -886,7 +886,7 @@
       if(h){
         var vn=(P.venueName||"").trim();
         var n=document.createElement("p");
-        n.setAttribute("style","font-size:12px;line-height:1.5;color:#6C6C76;margin-top:10px");
+        n.setAttribute("style","font-size:12px;line-height:1.5;color:#8A8A94;margin-top:10px");
         n.textContent="These details are optional and go to "+(vn||"the venue you are playing at")+
           ", not to anyone else. You can play with just your name. ";
         var a=document.createElement("a");
