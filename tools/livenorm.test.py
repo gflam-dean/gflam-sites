@@ -32,6 +32,10 @@ repo2 = '<p>Email <a href="mailto:hello@venueplay.com.au">hello@venueplay.com.au
 live2 = ('<p>Email <a href="/cdn-cgi/l/email-protection#a1c9c4cdcdce"><span class="__cf_email__" '
          'data-cfemail="a1c9c4cdcdce">[email&#160;protected]</span></a></p>' + DECODE)
 check('a mailto link showing the address matches its rewrite', normalise(repo2) == normalise(live2))
+repo3 = '<div class="contact"><a class="mail" href="mailto:hello@venueplay.com.au?subject=VenuePlay%20tester%20feedback">Email your feedback</a></div>'
+live3 = '<div class="contact"><a class="mail" href="/cdn-cgi/l/email-protection#0a6d">Email your feedback</a></div>'
+check('a mailto with a subject matches its rewrite (Cloudflare drops the query)', normalise(repo3) == normalise(live3))
+check('control: a different link text still differs', normalise(repo3) != normalise(live3.replace('Email your feedback', 'Other')))
 
 repo3 = '<p>Write to hello@venueplay.com.au today</p>'
 live3 = ('<p>Write to <a href="/cdn-cgi/l/email-protection" class="__cf_email__" '

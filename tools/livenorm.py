@@ -36,6 +36,10 @@ def normalise(b):
     t = re.sub(r'<a href="/cdn-cgi/l/email-protection[^"]*"([^>]*)>(.*?)</a>', r'<a href="mailto:EMAIL"\1>\2</a>', t, flags=re.S)
     t = re.sub(r'/cdn-cgi/l/email-protection[^"\']*', 'mailto:EMAIL', t)
     t = re.sub(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}', 'EMAIL', t)
+    # Cloudflare's rewrite DROPS a mailto's query (?subject=...), so the repo side keeps it and the
+    # live side never has it: test.html compared stale for 30 minutes and stopped a release
+    # (1 Oct 2026). The query is part of the address Cloudflare hides, so compare without it.
+    t = re.sub(r'mailto:EMAIL\?[^"\']*', 'mailto:EMAIL', t)
     t = re.sub(r'<script[^>]*cloudflareinsights[\s\S]*?</script>', '', t)
     # Deleting an injected tag leaves the blank line it sat on. Compare CONTENT, not layout.
     t = re.sub(r'\s+', ' ', t).strip()

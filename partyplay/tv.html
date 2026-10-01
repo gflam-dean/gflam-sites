@@ -34,13 +34,13 @@
 
   /* Typing a code with a TV remote is slow and unpleasant, so this screen gets
      out of the way: one box, one button, nothing else to land focus on. */
-  .entry{width:min(90vw,30ch);text-align:center}
+  .entry{width:min(90vw,760px);text-align:center}   /* 30ch of body text was narrower than "ABC123" at TV size, so it cut off */
   .entry .mark{width:11vh;height:9.5vh;margin-bottom:1.6vh}
   .entry h1{font-size:clamp(26px,5.2vh,66px);line-height:1.02}
   .entry .sub{color:var(--mute);font-size:clamp(14px,2.2vh,26px);margin:1.2vh 0 3vh;line-height:1.5}
   .entry input{width:100%;padding:2.2vh 1vh;border-radius:1.6vh;border:2px solid var(--line);
     background:rgba(255,241,230,.05);color:var(--paper);font-family:'Hanken Grotesk',system-ui,sans-serif;
-    font-weight:800;font-size:clamp(28px,6.6vh,68px);text-align:center;letter-spacing:.16em;
+    font-weight:800;font-size:clamp(28px,6.6vh,68px);text-align:center;letter-spacing:.12em;text-indent:.12em;
     text-transform:uppercase;outline:none;transition:border-color .15s}
   .entry input:focus{border-color:var(--pink)}
   .entry input::placeholder{color:rgba(182,173,194,.4);letter-spacing:.12em}

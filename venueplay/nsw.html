@@ -92,7 +92,7 @@
     padding:13px 24px;transition:transform .15s ease,box-shadow .15s ease,background .15s ease;
   }
   .btn-primary{background:var(--pink);color:#0A0A0B;box-shadow:0 0 0 0 var(--glow)}
-  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 30px -8px var(--glow)}
+  .btn-primary:hover{filter:brightness(1.06)}
   .btn-ghost{background:transparent;color:#fff;border:1px solid var(--line-2)}
   .btn-ghost:hover{border-color:var(--pink);color:var(--pink)}
   .nav .btn{padding:10px 20px;font-size:14px}
@@ -122,13 +122,7 @@
 
   /* ---------- HERO ---------- */
   .hero{position:relative;padding:96px 0 88px;overflow:hidden}
-  .hero::before{
-    content:"";position:absolute;inset:0;z-index:0;
-    background:
-      radial-gradient(900px 520px at 50% -10%, rgba(255,31,142,0.18), transparent 60%),
-      radial-gradient(600px 400px at 85% 30%, rgba(255,31,142,0.07), transparent 60%);
-    pointer-events:none;
-  }
+  .hero::before{display:none}   /* glow diet, design review 1 Oct 2026 */
   .hero::after{
     content:"";position:absolute;inset:0;z-index:0;opacity:.4;
     background-image:linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px);
@@ -167,7 +161,7 @@
   .lede b{color:#fff;font-weight:700}
 
   .hero-cta{margin-top:36px;display:flex;flex-wrap:wrap;gap:14px;align-items:center}
-  .hero-note{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--muted);margin-top:18px}
+  .hero-note{font-family:'Manrope',sans-serif;font-size:14px;color:var(--muted);margin-top:18px}
 
   /* ---------- SECTION SCAFFOLD ---------- */
   section{position:relative}
@@ -191,7 +185,7 @@
     padding:26px 22px 24px;transition:border-color .2s ease,transform .2s ease,background .2s ease;
     position:relative;overflow:hidden;
   }
-  .mode:hover{border-color:var(--line-2);transform:translateY(-3px);background:var(--ink-3)}
+  .mode:hover{border-color:var(--line-2)}
   .mode .ico{
     width:40px;height:40px;border-radius:10px;display:grid;place-items:center;
     background:rgba(255,31,142,0.12);border:1px solid rgba(255,31,142,0.3);margin-bottom:20px;
@@ -206,10 +200,7 @@
     border:1px solid var(--line);border-radius:22px;
     padding:clamp(28px,4vw,52px);position:relative;overflow:hidden;
   }
-  .offer::before{
-    content:"";position:absolute;top:-40%;right:-10%;width:480px;height:480px;
-    background:radial-gradient(circle,rgba(255,31,142,0.16),transparent 65%);pointer-events:none;
-  }
+  .offer::before{display:none}
   .offer-grid{position:relative;display:grid;grid-template-columns:1.1fr 0.9fr;gap:48px;align-items:center}
 
   .counter{font-family:'JetBrains Mono',monospace;margin-top:8px}
@@ -229,7 +220,7 @@
   .price-row .pv{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:21px}
   .price-row.list .pv{color:var(--muted-2);text-decoration:line-through;text-decoration-color:var(--pink)}
   .price-row.found .pv{color:var(--pink)}
-  .price-foot{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted-2);margin-top:20px;line-height:1.6}
+  .price-foot{font-family:'Manrope',sans-serif;font-size:13px;color:var(--muted-2);margin-top:20px;line-height:1.6}
 
   /* ---------- INCLUDED ---------- */
   .incl{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 40px;max-width:860px;margin-left:auto;margin-right:auto}
@@ -244,8 +235,7 @@
   #claim{padding-top:8px}
   .form-shell{background:var(--ink-2);border:1px solid var(--line);border-radius:22px;
     padding:clamp(28px,4vw,48px);max-width:680px;margin:0 auto;position:relative;overflow:hidden}
-  .form-shell::before{content:"";position:absolute;top:-30%;left:-10%;width:360px;height:360px;
-    background:radial-gradient(circle,rgba(255,31,142,0.13),transparent 65%);pointer-events:none}
+  .form-shell::before{display:none}
   .form-shell .inner{position:relative}
   .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:26px}
   .field{display:flex;flex-direction:column;gap:7px}
@@ -392,7 +382,7 @@
     overflow:hidden;
     transition:border-color .2s ease,transform .2s ease,background .2s ease;
   }
-  .vps-step:hover{border-color:var(--line-2);background:var(--ink-3);transform:translateY(-3px)}
+  .vps-step:hover{border-color:var(--line-2)}
   .vps-step-num{
     font-family:'JetBrains Mono',monospace;
     font-size:12.5px;font-weight:700;letter-spacing:.16em;
@@ -980,7 +970,7 @@
     </div>
     <div class="bank">
       <div class="label">The music library</div>
-      <div class="counter"><div class="big"><span id="vp-music-count">125</span></div><div class="sub">songs and counting</div></div>
+      <div class="counter"><div class="big"><span id="vp-music-count">5,146</span></div><div class="sub">songs and counting</div></div>
       <p class="sec-sub">From Aussie anthems to disco, motown, country and modern hits, every track ready to play. A fresh musical bingo night every week, all included.</p>
     </div>
   </div>
@@ -1308,7 +1298,7 @@
   // Roll a number up from 0 to target (used so the counters animate rather than snap).
   function rollCount(el, target, dur){
     if (!el) return;
-    el.textContent = '0';
+    el.textContent = String(target); return;   // the real number, at once (design review, 1 Oct 2026)
     var t0 = null;
     function step(ts){
       if (!t0) t0 = ts;
@@ -1326,11 +1316,10 @@
     var sec = document.getElementById('banks');
     if (!el) return;
     var fallback = parseInt((el.textContent || '').replace(/[^\d]/g, ''), 10) || 0; // keep the HTML number as a safety net
-    el.textContent = '0'; // start at 0 straight away, then roll up
     var done = false;
     function animateTo(target){
       if (done) return; done = true;
-      var start = 0, t0 = null, dur = COUNT_DUR;
+      var start = target, t0 = null, dur = COUNT_DUR;   // no roll-up from 0 (design review, 1 Oct 2026)
       function step(ts){
         if (!t0) t0 = ts;
         var p = Math.min(1, (ts - t0) / dur);
@@ -1345,7 +1334,6 @@
       if (!n) { if (fallback) el.textContent = fallback.toLocaleString('en-AU'); return; }
       el.textContent = n.toLocaleString('en-AU');
       if (sec && 'IntersectionObserver' in window){
-        el.textContent = '0';
         var io = new IntersectionObserver(function(entries){
           for (var i = 0; i < entries.length; i++){ if (entries[i].isIntersecting){ animateTo(n); io.disconnect(); } }
         }, { threshold: 0.4 });
@@ -1362,11 +1350,10 @@
     var sec = document.getElementById('banks');
     if (!el) return;
     var fallback = parseInt((el.textContent || '').replace(/[^\d]/g, ''), 10) || 0; // keep the HTML number as a safety net
-    el.textContent = '0'; // start at 0 straight away, then roll up
     var done = false;
     function animateTo(target){
       if (done) return; done = true;
-      var start = 0, t0 = null, dur = COUNT_DUR;
+      var start = target, t0 = null, dur = COUNT_DUR;   // no roll-up from 0 (design review, 1 Oct 2026)
       function step(ts){
         if (!t0) t0 = ts;
         var p = Math.min(1, (ts - t0) / dur);
@@ -1383,7 +1370,6 @@
       if (!n) { if (fallback) el.textContent = fallback.toLocaleString('en-AU'); return; }
       el.textContent = n.toLocaleString('en-AU');
       if (sec && 'IntersectionObserver' in window){
-        el.textContent = '0';
         var io = new IntersectionObserver(function(entries){
           for (var i = 0; i < entries.length; i++){ if (entries[i].isIntersecting){ animateTo(n); io.disconnect(); } }
         }, { threshold: 0.4 });
@@ -1813,7 +1799,7 @@
   .h2-modes button:hover{color:#fff;border-color:var(--pink)}
   .h2-modes button.on{background:var(--pink);border-color:var(--pink);color:#fff}
   .h2-under{display:flex;gap:14px;align-items:center;justify-content:space-between;margin-top:12px;flex-wrap:wrap}
-  .h2-cap{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted);margin:0;flex:1 1 200px}
+  .h2-cap{font-family:'Manrope',sans-serif;font-size:14px;color:var(--muted);margin:0;flex:1 1 200px}
   .h2-watch{flex:0 0 auto}
   @media (max-width:900px){
     .hero2{padding:32px 0 32px}

@@ -113,8 +113,11 @@
   .price ul{list-style:none;padding:0;margin:0;font-size:15.5px}
   .price li{padding:4px 0 4px 17px;position:relative}
   .price li::before{content:"";position:absolute;left:0;top:13px;width:7px;height:2px;background:var(--pink)}
-  .price .take{display:inline-block;margin-top:18px;font-family:'Hanken Grotesk',sans-serif;
-    font-weight:800;font-size:15.5px;border-bottom:2px solid var(--pink);padding-bottom:2px}
+  /* A BUTTON, NOT A LINK. The whole card was clickable but the only thing that said so was an
+     underlined line of text, which reads as small print (design review, 1 Oct 2026). */
+  .price .take{display:inline-block;margin-top:20px;font-family:'Hanken Grotesk',sans-serif;
+    font-weight:800;font-size:16px;background:var(--pink);color:var(--ink);padding:12px 22px;border-radius:10px}
+  .price a:hover .take{background:var(--paper);color:var(--ink)}
 
   /* HOW: three steps, but as a run of headlines rather than three rounded boxes. */
   .steps{display:grid;gap:34px}
