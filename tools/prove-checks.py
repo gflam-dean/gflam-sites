@@ -158,8 +158,8 @@ MUTATIONS = [
 
     # ---- 17 Sep 2026, eleventh pass: the copy checks, and the clock.
     ('nothing claims the bingo cards mark themselves', 'venueplay/index.html',
-     'Digital cards on every phone, everyone dabs their own the way they always have,',
-     'Digital cards on every phone, auto-marked as the caller goes,',
+     'Digital cards on every phone, and a claim is checked the moment it is called.',
+     'Digital cards on every phone, auto-marked as the caller goes, and a claim is checked the moment it is called.',
      'the site sells a feature the product refuses to have on purpose, so a venue buys '
      'auto-marking and gets a room full of people dabbing'),
 

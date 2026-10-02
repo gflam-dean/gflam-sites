@@ -883,7 +883,7 @@
     <div class="sec-head">
       <div class="label">One pub, one platform</div>
       <h2 class="sec-title">Every format. And your own screen ads.</h2>
-      <p class="sec-sub">Swap formats on the night or run a different one each week. It all plays on the screen you've already got: a smart TV, a projector, a laptop via HDMI, or a streaming stick.</p>
+      <p class="sec-sub">Swap formats on the night or run a different one each week.</p>
     </div>
     <!-- A LIST, NOT FIVE TILES. No "Watch it" links: the hero already plays every format, so a
          link that leaves the page to show it again is a duplicate (Dean, 22 Sep 2026). Five identical icon cards in a three-and-two grid is the shape of
@@ -934,11 +934,6 @@
         <h2 class="vps-strip-title">One screen replaces the paper bingo books and the <span class="vps-accent">hired trivia host</span>.</h2>
         <div class="vps-swaps">
           <div class="vps-swap">
-            <div class="vps-swap-k">The screen</div>
-            <h3>Already on your wall</h3>
-            <p>It plays on the screen you've already got: a smart TV, or the projector behind the bar. The easy way is a laptop with an HDMI lead or a streaming stick.</p>
-          </div>
-          <div class="vps-swap">
             <div class="vps-swap-k">The host</div>
             <h3>Any bar staff member</h3>
             <p>Whoever's on shift presses go. Calls, cards and winner checks are handled, so nobody needs a mic voice or a run sheet.</p>
@@ -965,7 +960,7 @@
   <div class="wrap banks">
     <div class="bank">
       <div class="label">The trivia bank</div>
-      <div class="counter"><div class="big"><span id="vp-trivia-count">33,599</span></div><div class="sub">questions and counting</div></div>
+      <div class="counter"><div class="big"><span id="vp-trivia-count">37,678</span></div><div class="sub">questions and counting</div></div>
       <p class="sec-sub">Fact-checked, Aussie-friendly questions across every category, and the bank grows every week. A fresh trivia night every week, all included.</p>
     </div>
     <div class="bank">
@@ -1868,6 +1863,14 @@
   #offer .offer-cta .btn{min-width:0}
   /* A price never breaks onto two lines ("$2.85" over "$2.30" read as two prices). */
   .price-row .pv{white-space:nowrap;flex:none;margin-left:14px}
+  /* "How a night runs": three steps read across, not three tall boxes (design review, 1 Oct 2026). */
+  #how .vps-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:0 40px;border-top:1px solid var(--line)}
+  #how .vps-step{background:none;border:0;border-radius:0;padding:24px 0 0;box-shadow:none}
+  #how .vps-step:hover{background:none}
+  #how .vps-step-num::after{display:none}
+  #how .vps-step h3{font-size:19px;margin:10px 0 8px}
+  #how .vps-step p{font-size:15.5px}
+  @media (max-width:760px){ #how .vps-steps{grid-template-columns:1fr} #how .vps-step{padding:20px 0;border-bottom:1px solid var(--line)} }
 </style>
 <a href="#claim" class="vp-float-cta" id="vpFloatCta" aria-label="Lock in founding">
   <svg width="15" height="17" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#fff" stroke-width="2.8" stroke-linejoin="round"/></svg>
