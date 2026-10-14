@@ -237,13 +237,48 @@ def extract(path):
     return out
 
 
+def top_level(sel):
+    """Split a PostgREST select on the commas that are not inside brackets."""
+    parts, depth, cur = [], 0, ''
+    for ch in sel:
+        if ch == '(':
+            depth += 1
+        elif ch == ')':
+            depth -= 1
+        if ch == ',' and depth == 0:
+            parts.append(cur); cur = ''
+        else:
+            cur += ch
+    parts.append(cur)
+    return parts
+
+
+def select_cols(table, sel):
+    """Columns a select names, table by table. `vp_questions(seq)` is an EMBEDDED table, not a
+    column: it was read as vp_trivia_answers.vp_questions and reported missing (15 Oct 2026),
+    while the columns inside it went unchecked. Now the inner columns are checked against the
+    embedded table. An alias (q:vp_questions) and a foreign-key hint (vp_questions!fk) are stripped."""
+    got = []
+    for part in top_level(sel):
+        part = part.strip()
+        if not part or part == '*':
+            continue
+        if '(' in part and part.endswith(')'):
+            head, inner = part[:part.index('(')], part[part.index('(') + 1:-1]
+            embedded = head.split(':')[-1].split('!')[0].strip()
+            if embedded:
+                got.extend(select_cols(embedded, inner))
+            continue
+        col = part.split('!')[0].split(':')[-1].split('::')[0].strip()
+        if col and col != '*':
+            got.append((table, col, 'select'))
+    return got
+
+
 def from_query(table, q):
     got = []
     for m in re.finditer(r'select=([^&\'"]*)', q):
-        for part in m.group(1).split(','):
-            part = part.split('(')[0].split('!')[0].split(':')[-1].strip()
-            if part and part != '*':
-                got.append((table, part, 'select'))
+        got.extend(select_cols(table, m.group(1)))
     for m in re.finditer(r'order=([A-Za-z_]\w*)', q):
         got.append((table, m.group(1), 'order'))
     for m in re.finditer(r'(?:^|&)([A-Za-z_]\w*)=(?:eq|neq|gt|gte|lt|lte|is|in|like|ilike|not)\.', q):

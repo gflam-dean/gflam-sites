@@ -320,7 +320,7 @@
   "counted_by": "lines"
  },
  "tools/test-platform-15-oct.js": {
-  "checks": 64,
+  "checks": 63,
   "counted_by": "lines"
  },
  "tools/test-platform-worker-15-oct.js": {
