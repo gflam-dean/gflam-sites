@@ -1264,7 +1264,7 @@ MUTATIONS = [
     ('test-bingo-seat-15-oct.js', 'venueplay/app/index.html', '    if(_seatT){ if(_seatAt<=at) return; clearTimeout(_seatT); }', '    if(_seatT){ return; }', 'a stranger backoff holds up seating the next lobby'),
     ('test-bingo-seat-15-oct.js', 'venueplay/app/index.html', '    return k>1 ? base+" ("+k+")" : base;', '    return base;', 'two Margarets look identical on the console'),
     ('test-bingo-seat-15-oct.js', 'venueplay/app/index.html', '        if(_ra[m.pid] && _rn-_ra[m.pid]<2000) return;', '        if(false) return;', 'every refused claim signs and broadcasts another refusal'),
-    ('test-bingo-seat-15-oct.js', 'venueplay/app/index.html', '    setCoach();\n    $("liveCount")', '    $("liveCount")', 'coach says Tickets are out all game'),
+    ('test-bingo-seat-15-oct.js', 'venueplay/app/index.html', '    else if(G.status==="running") txt="<b>"+called+" of 90</b> called.', '    else if(false) txt="<b>"+called+" of 90</b> called.', 'coach says Tickets are out all game'),
     ('test-bingo-seat-15-oct.js', 'venueplay/app/index.html', '      ovgNames();', '      "";', 'consent screen stops naming who is counted'),
     ('test-bingo-seat-15-oct.js', 'venueplay/app/index.html', '      if(!isSeated(p)){ waiting++; continue; }', '      if(false){ waiting++; continue; }', 'a stranger appears on the console by name'),
     ('test-bingo-seat-15-oct.js', 'venueplay/play.html', '    $("roomErr").textContent="There is no game with the code "+c+" right now. Check the code on the TV and try again.";', '    $("roomErr").textContent="";', 'a mistyped code is not told'),
