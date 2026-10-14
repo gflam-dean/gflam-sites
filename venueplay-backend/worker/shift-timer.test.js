@@ -102,4 +102,48 @@ pass("and it warns first when a game is live", /liveNightElsewhere\(\)/.test(bin
   pass("a start in the future is treated as tampered and reset to now, not honoured", store.vpShiftStart === String(now) && ref.n === 1);
 })();
 
+/* EVERY PAGE THAT HOLDS PLAYER DATA RUNS THE CLOCK (14 Oct 2026). Billing downloads the opt-in
+   list, and it, marketing, settings, HQ, onboarding and the trivia builder never called the timer,
+   so a login there never expired. And on those pages a timeout must ONLY sign out: they cannot see
+   a console in another tab of the same tablet, and closing from there ends the night under the
+   room. Both halves are RUN, not read. */
+print("\nTHE PAGES WITH PLAYER DATA SIGN OUT TOO, AND NEVER CLOSE A NIGHT");
+[["billing", "venueplay/app/billing.html"], ["settings", "venueplay/app/settings.html"],
+ ["marketing", "venueplay/app/marketing.html"], ["hq", "venueplay/app/hq.html"],
+ ["onboard", "venueplay/app/onboard.html"], ["trivia builder", "venueplay/app/trivia/builder.html"]]
+.forEach(function (c) {
+  var src = find(c[1]);
+  var at = src.indexOf("<script>if(window.VP && VP.guardShift) VP.guardShift();"), lib = src.indexOf("vp-session.js");
+  pass(c[0] + " runs the 4h clock (VP.guardShift after vp-session.js)", at > 0 && lib > 0 && at > lib);
+});
+(function () {
+  function lift(name) {
+    var i = SHARED.indexOf("function " + name + "(");
+    var depth = 0, j = SHARED.indexOf("{", i), k;
+    for (k = j; k < SHARED.length; k++) { if (SHARED[k] === "{") depth++; else if (SHARED[k] === "}") { depth--; if (!depth) break; } }
+    return SHARED.slice(i, k + 1);
+  }
+  function run(pageOnly) {
+    var r = { out: 0, closed: 0, enforced: 0 };
+    var f = new Function("r", "pageOnly",
+      "var SHIFT_KEY='vpShiftStart', SHIFT_MAX=" + 4 * 3600 * 1000 + ", _shiftIv=null, _shiftSignOutOnly=false, now=1700000000000;"
+      + "var store={vpShiftStart:String(now - 5*3600*1000)};"
+      + "var localStorage={getItem:function(k){return store[k]==null?null:store[k];},setItem:function(k,v){store[k]=v;},removeItem:function(k){delete store[k];}};"
+      + "var Date={now:function(){return now;}};"
+      + "function clearInterval(){} function setTimeout(f){} function setInterval(){return 1;}"
+      + "function signOut(){r.out++;} function gameIsLive(){return false;} function retryPendingCloses(){}"
+      + "function closeOpenSessions(){r.closed++; return {then:function(a){a();}};}"
+      + "var _client={auth:{getSession:function(){return {then:function(cb){cb({data:{session:{}}}); return {catch:function(){}};}};}}}; function getClient(){return _client;}"
+      + lift("enforceShift") + lift("checkShift") + lift("guardShift")
+      + "if(pageOnly) guardShift(); else enforceShift();");
+    f(r, pageOnly);
+    return r;
+  }
+  var page = run(true);
+  pass("a data page past 4h signs out", page.out === 1, JSON.stringify(page));
+  pass("and does NOT close the night a console in another tab may be running", page.closed === 0, JSON.stringify(page));
+  var con = run(false);
+  pass("a console past 4h with no game on still closes its night (unchanged)", con.closed === 1 && con.out === 1, JSON.stringify(con));
+})();
+
 print("\n" + (bad ? bad + " FAILED, " + ran + " run" : "ALL " + ran + " CHECKS PASSED"));

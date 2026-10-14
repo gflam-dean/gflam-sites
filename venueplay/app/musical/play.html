@@ -319,8 +319,14 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   // Worker judges every claim against its own copy of the card and the songs actually played.
   var VP_GAME_API='https://venueplay-game.dean-tindale.workers.dev';
   function readApi(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((d&&d.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }
-  function playerPost(path, body){ var h={ "Content-Type":"application/json" }; if(P.token) h["X-Player-Token"]=P.token; return fetch(VP_GAME_API+path,{ method:"POST", headers:h, body:JSON.stringify(body||{}) }).then(readApi); }
-  function playerGet(path){ var h={}; if(P.token) h["X-Player-Token"]=P.token; return fetch(VP_GAME_API+path,{ headers:h }).then(readApi); }
+  /* A token the Worker no longer knows (another page re-minted it, or the night moved on) is
+     dropped and the phone re-joins quietly, instead of answering into nothing all night. */
+  function deadToken(e, path){
+    if(e && e.status===401 && P.token && path!=="/join"){ try{ dropStaleJoin(); setTimeout(function(){ rejoinNow(); }, 0); }catch(x){} }
+    throw e;
+  }
+  function playerPost(path, body){ var h={ "Content-Type":"application/json" }; if(P.token) h["X-Player-Token"]=P.token; return fetch(VP_GAME_API+path,{ method:"POST", headers:h, body:JSON.stringify(body||{}) }).then(readApi).catch(function(e){ return deadToken(e, path); }); }
+  function playerGet(path){ var h={}; if(P.token) h["X-Player-Token"]=P.token; return fetch(VP_GAME_API+path,{ headers:h }).then(readApi).catch(function(e){ return deadToken(e, path); }); }
 
   /* On patchy pub wifi the Realtime library from the CDN is sometimes not there yet when this
      runs. Everything below depends on it, so the script threw here and the punter was left with a
@@ -365,7 +371,18 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   // the player token IS the metered identity: persist it so a reload reuses the same
   // vp_players row instead of minting a new metered one.
   function loadToken(room){ try{ return localStorage.getItem("vp-mtoken-"+room)||""; }catch(e){ return ""; } }
-  function saveToken(room,tok){ try{ if(tok) localStorage.setItem("vp-mtoken-"+room, tok); }catch(e){} }
+  var OWN_TOKEN_KEY="vp-mtoken-";
+  /* ONE IDENTITY PER PHONE PER ROOM, WHICHEVER PAGE MINTED IT. A /join re-mints the token on the
+     same player row, so the bingo, trivia and musical pages each holding their own copy meant a
+     phone bounced through another page came back with a dead token: trivia answers were acked
+     by the room and thrown away at Reveal, "CORRECT! 0" all night while still billed (break test,
+     14 Oct 2026). Whoever mints writes every copy this phone already holds. Identical on all
+     three phone pages. */
+  function shareToken(room, tok){
+    if(!room || !tok) return;
+    try{ ["vp-token-","vp-ttoken-","vp-mtoken-"].forEach(function(k){ if(k===OWN_TOKEN_KEY || localStorage.getItem(k+room)!==null) localStorage.setItem(k+room, tok); }); }catch(e){}
+  }
+  function saveToken(room,tok){ shareToken(room, tok); }
   function loadSess(room){ try{ return localStorage.getItem("vp-msess-"+room)||""; }catch(e){ return ""; } }
   function saveSess(room,sid){ try{ if(sid) localStorage.setItem("vp-msess-"+room, sid); }catch(e){} }
 

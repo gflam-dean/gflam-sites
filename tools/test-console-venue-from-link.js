@@ -52,6 +52,13 @@ r = run("/app/", "?venue=test-alpha", B, admin);
 ok("the bingo console (/app/) honours it too", r && r.id === A, JSON.stringify(r));
 r = run("/app/trivia/host", "?venue=Test_Alpha", B, admin);
 ok("a hand-typed slug with capitals or underscores still finds the venue", r && r.id === A, JSON.stringify(r));
+/* The short link the TV and phones accept ran the musical console at ANOTHER venue (14 Oct 2026). */
+r = run("/app/musical/host", "?test-alpha", B, admin);
+ok("the short link /app/musical/host?test-alpha runs at that venue", r && r.id === A, JSON.stringify(r));
+r = run("/app/trivia/host", "?pr=1&test-alpha", B, admin);
+ok("...with a setting in front of it too", r && r.id === A, JSON.stringify(r));
+r = run("/app/trivia/host", "?pr=1", B, admin);
+ok("a setting on its own is not a venue", r && r.id === B, JSON.stringify(r));
 print("");
 if (bad) { print(bad + " OF " + ran + " CHECKS FAILED"); throw new Error(bad + " failed"); }
 print("ALL " + ran + " CHECKS PASSED");

@@ -146,7 +146,8 @@ ok("a ball request left in flight no longer gags the next game", G.calling === f
 ok("the last game's five second hold is released off the button", released.length === 1,
    "otherwise the new game's button reads 'Next number in 3s' and a tap does nothing");
 
-["openLobby", "cancelLobby", "startGame", "newGame", "endGame"].forEach(function(name){
+// openLobby asks first whether another tablet owns the room (14 Oct 2026); openLobbyNow is what opens it.
+["openLobbyNow", "cancelLobby", "startGame", "newGame", "endGame"].forEach(function(name){
   var body = grab(name);
   ok(name + " clears the call guards", !!body && body.indexOf("clearCallGuards()") >= 0,
      "a hold or a request from the last game must not carry into this one");

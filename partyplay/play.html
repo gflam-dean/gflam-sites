@@ -413,6 +413,7 @@
   var B = null;   // bingo
   var Q = null;   // the question on screen right now
   var H = null;   // heads or tails
+  var DRW = false; // a prize-draw result on screen: the telly's caption that follows must not replace it
   var T = null;   // text prompt: a song, or three statements
   var W = null;   // who here has ever
   var V = null;   // voting on somebody's two truths
@@ -661,6 +662,7 @@
   }
 
   function onMsg(m){
+    if(m && m.t!=="big" && m.t!=="draw") DRW = false;   // anything else the host sends moves the room on
     if(!m || !m.t) return;
     /* THE HOST HAS ASKED WHO IS HERE. Answer with the same hello sent on joining, so a
        console that opened late, or was reloaded part way through the night, learns about
@@ -682,7 +684,7 @@
        later and were not added here, so a phone that had played charades or who am I
        silently swallowed the television's caption from then on: the guard below sees CH
        still set and returns. Found 15 Sep 2026 by ending a round and looking at the phone. */
-    if(m.t === "lobby"){ B = null; Q = null; H = null; T = null; W = null; V = null; PH = null;
+    if(m.t === "lobby"){ B = null; Q = null; H = null; T = null; W = null; V = null; PH = null; DRW = false;
       CH = null; GW = null; GM = null;
       var s = load()||{}; waiting(s.nickname||"", _ppLive ? "live" : undefined); return; }
     if(m.t === "bingo"){ Q=null; H=null; bingoStart(m); return; }
@@ -753,7 +755,10 @@
       B=null;Q=null;H=null;T=null;V=null;CH=null;GW=null;GM=null;
       W={ i:m.i, q:m.q, raised:false }; paintHands(); return;
     }
-    if(m.t === "truthvote"){
+    /* "truthvote" is the HOST's prompt and always carries the lines. A guest's vote used to share
+       the name, so the first guest to vote wiped every other phone's vote screen (break test,
+       14 Oct 2026). Guests now send "truthpick"; a truthvote with no lines is never a prompt. */
+    if(m.t === "truthvote" && Array.isArray(m.lines) && m.lines.length){
       B=null;Q=null;H=null;T=null;W=null;CH=null;GW=null;GM=null;
       V={ turn:m.turn, who:m.name, lines:m.lines||[], picked:null, lie:null }; paintVote(); return;
     }
@@ -780,6 +785,15 @@
     if(m.t === "heads"){
       B=null; Q=null;
       var me=(load()||{}).nickname;
+      if(m.over){
+        H=null; DRW=true;   // the telly's "winner" caption follows at once and must not replace this
+        var wonH = m.winner && me && String(m.winner)===String(me);
+        $("app").innerHTML = '<img class="mark" src="/logos/partyplay-mark.svg" alt="">' +
+          (wonH ? '<div class="waiting"><div class="who">You won</div><p>Last one standing. Heads or tails is yours.</p></div>'
+                : '<div class="waiting"><div class="who">' + esc(m.winner || "All out") + '</div><p>' +
+                  (m.winner ? 'won heads or tails.' : 'Nobody was left standing.') + '</p></div>');
+        return;
+      }
       if(m.inPlay && m.inPlay.indexOf(me)<0 && m.round>0){ H={out:true}; paintHeads(); return; }
       H={ out:false, picked:null, round:m.round||0, result:m.result||null };
       paintHeads(); return;
@@ -848,7 +862,7 @@
          clears these, so an ending survives until the host moves on, which is right.
 
          The same shape guards connect(): see the note there. */
-      if(B || Q || H || T || W || V || PH || CH || GW || GM) return;
+      if(B || Q || H || T || W || V || PH || CH || GW || GM || DRW) return;
       $("app").innerHTML = '<img class="mark" src="/logos/partyplay-mark.svg" alt="">' +
         '<div class="waiting"><div class="who">' + esc(m.text||"") + '</div>' +
         '<p>' + esc(m.sub||"") + '</p></div>';
@@ -859,6 +873,7 @@
        "Come and get it". Now the winner is named and only their phone is told to move. */
     if(m.t === "draw"){
       B=null;Q=null;H=null;T=null;V=null;W=null;PH=null;CH=null;GW=null;GM=null;
+      DRW = true;   // the "big" for the telly arrives next and must not replace this (14 Oct)
       var meD = (load()||{}).nickname || "";
       var wonD = m.winner && meD && String(m.winner) === String(meD);
       $("app").innerHTML =
@@ -893,7 +908,7 @@
       var sv=load()||{};
       V.picked=+el.getAttribute("data-lie");
       paintVote();
-      if(window._ppSend) window._ppSend({ t:"truthvote", name:sv.nickname, turn:V.turn, pick:V.picked });
+      if(window._ppSend) window._ppSend({ t:"truthpick", name:sv.nickname, turn:V.turn, pick:V.picked });
       return;
     }
     if(el.hasAttribute("data-side")){

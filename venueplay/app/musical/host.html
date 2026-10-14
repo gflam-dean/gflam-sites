@@ -668,7 +668,11 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   function flushQueue(){ while(sendQueue.length && ch){ ch.send({ type:"broadcast", event:"msg", payload:sendQueue.shift() }); } }
   var gch=null, gsub=false, gQueue=[];
   function rawGsend(p){ if(gsub && gch){ gch.send({ type:"broadcast", event:"msg", payload:p }); } else { gQueue.push(p); } }
-  function gsend(obj){ if(window.VPSign){ VPSign.signSend(obj, rawGsend); } else { rawGsend(obj); } }
+  /* Tagged with the game it belongs to. The players' channel is the venue's own code at most venues,
+     the same channel bingo and the TV's router listen on, and an untagged "started" or "winner"
+     from here read as BINGO there: the TV dropped to the ads as a musical game started and phones
+     on the bingo page took trivia for bingo (break test, 14 Oct 2026). */
+  function gsend(obj){ if(obj && typeof obj==="object" && !obj.fmt){ var o={}; for(var k in obj) o[k]=obj[k]; o.fmt="musical"; obj=o; } if(window.VPSign){ VPSign.signSend(obj, rawGsend); } else { rawGsend(obj); } }
   function gflush(){ while(gQueue.length && gch){ gch.send({ type:"broadcast", event:"msg", payload:gQueue.shift() }); } }
   function bcast(obj){ send(obj); gsend(obj); }
   var _leaving=false;   // set as the page is left, so closing its channel is not reported as a drop
@@ -1380,7 +1384,12 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   function openSession(){
     if(!G.venueId){ return Promise.reject(new Error("no venue linked to this login")); }
     if(G.sessionId && G.joinCode){ return Promise.resolve({ session_id:G.sessionId, join_code:G.joinCode }); }
-    return apiPost("/session",{ venue_id:G.venueId, format:"musical" }).then(function(r){
+    var _slug=(G.venue && G.venue.slug) || "";
+    var _ask=(window.VP && VP.confirmTakeover) ? VP.confirmTakeover(_slug) : Promise.resolve(true);
+    return _ask.then(function(ok){
+      if(!ok){ var e=new Error("Left as it is. The game on the other device is still running."); e.takeoverDeclined=true; throw e; }
+      return apiPost("/session",{ venue_id:G.venueId, format:"musical" });
+    }).then(function(r){
       G.sessionId=r.session_id;
       // Remember the night so it can be CLOSED on sign-out. Closing is what marks the
       // session finished and bills any approved busy-night overage; nothing else does it.
@@ -1959,7 +1968,11 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   $("paperCheckBtn").addEventListener("click", checkPaperCard);
   $("paperNo").addEventListener("keydown", function(e){ if(e.key==="Enter") checkPaperCard(); });
   function checkPaperCard(){
-    var no=parseInt(($("paperNo").value||"").replace(/\D/g,""),10);
+    /* Only a card number. Stripping every non-digit turned a typo like "-1x" into card 1, checked the
+       wrong card, and the check added "Paper card 1" as a player (break test, 14 Oct 2026). "P12",
+       "#12" and "12" are what is printed or said; anything else is refused. */
+    var _raw=String($("paperNo").value||"").trim().replace(/^[pP#]\s*/,"");
+    var no=/^\d{1,5}$/.test(_raw) ? parseInt(_raw,10) : NaN;
     if(!(no>0) || !G.gameId || G.status!=="running"){ $("paperResult").textContent="Type the number printed on the card."; return; }
     $("paperResult").textContent="Checking card "+no+"...";
     apiPost("/host/paper/check",{ game_id:G.gameId, card_no:no }).then(function(r){

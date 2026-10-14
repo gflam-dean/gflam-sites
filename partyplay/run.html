@@ -271,7 +271,8 @@
             paintTruths();
           }
         }
-        if(m.t==="truthvote" && G && G.mode==="truths" && m.name && G.phase==="play"){
+        // A guest's pick. "truthvote" with no lines is a phone still on the page from before 14 Oct.
+        if((m.t==="truthpick" || (m.t==="truthvote" && !m.lines)) && G && G.mode==="truths" && m.name && G.phase==="play"){
           var t=G.subs[G.turn];
           if(t && m.name!==t.name && !G.votes.some(function(x){ return x.turn===G.turn && x.name===m.name; })){
             G.votes.push({ turn:G.turn, name:m.name, right: (parseInt(m.pick,10)===t.lie) });
@@ -1119,7 +1120,7 @@
     var out = G.inPlay.filter(function(n){ return G.picks[n] && G.picks[n] !== side; });
     G.inPlay = G.inPlay.filter(function(n){ return out.indexOf(n) < 0; });
     G.picks = {}; G.round++;
-    send({t:"heads", round:G.round, result:side, out:out, inPlay:G.inPlay.slice()});
+    var headsMsg = {t:"heads", round:G.round, result:side, out:out, inPlay:G.inPlay.slice()};
     if(G.inPlay.length<=1){
       var w = G.inPlay[0];
       /* YOU CANNOT WIN A GAME YOU NEVER PLAYED. Not picking keeps you in, on purpose,
@@ -1131,8 +1132,14 @@
       G.over = true; G.winner = w || null;
       G.overWhy = w ? null : (G.inPlay.length ? "never picked" : "all out");
       if(w){ nightAdd([{name:w, score:PPQuiz.CORRECT_POINTS}]); }
+      /* The phones are told the game is over and who won, in the same message. The "big"
+         below is the telly's, and a phone holding the coin ignores it, so the winner's own
+         phone still said "Pick one" after the telly had named them (break test, 14 Oct). */
+      headsMsg.over = true; headsMsg.winner = w || null;
+      send(headsMsg);
       send({t:"big", text: w?w:"All out", sub: w?"Heads or tails winner":"Nobody was still playing"});
     } else {
+      send(headsMsg);
       send({t:"big", text:side.toUpperCase(), sub:G.inPlay.length+" still in"});
     }
     paintHeads();

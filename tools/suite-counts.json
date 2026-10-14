@@ -140,7 +140,7 @@
   "counted_by": "lines"
  },
  "tools/test-body-reader.js": {
-  "checks": 27,
+  "checks": 33,
   "counted_by": "lines"
  },
  "tools/test-cant-sign-warns.js": {
@@ -172,7 +172,7 @@
   "counted_by": "lines"
  },
  "tools/test-console-venue-from-link.js": {
-  "checks": 9,
+  "checks": 12,
   "counted_by": "lines"
  },
  "tools/test-demo-returns-to-offer.js": {
@@ -251,6 +251,10 @@
   "checks": 13,
   "counted_by": "lines"
  },
+ "tools/test-one-room-one-identity.js": {
+  "checks": 33,
+  "counted_by": "lines"
+ },
  "tools/test-optin-export-gate.js": {
   "checks": 33,
   "counted_by": "lines"
@@ -319,6 +323,10 @@
   "checks": 40,
   "counted_by": "lines"
  },
+ "tools/test-room-chatter-14-oct.js": {
+  "checks": 17,
+  "counted_by": "lines"
+ },
  "tools/test-router-heals-after-a-blip.js": {
   "checks": 23,
   "counted_by": "lines"
@@ -333,6 +341,10 @@
  },
  "tools/test-screen-key-rotates.js": {
   "checks": 14,
+  "counted_by": "lines"
+ },
+ "tools/test-screens-14-oct.js": {
+  "checks": 23,
   "counted_by": "lines"
  },
  "tools/test-set-count.js": {
@@ -599,6 +611,10 @@
   "checks": 44,
   "counted_by": "lines"
  },
+ "venueplay-backend/worker/nights-dedup.test.js": {
+  "checks": 5,
+  "counted_by": "lines"
+ },
  "venueplay-backend/worker/one-game.test.js": {
   "checks": 32,
   "counted_by": "total"
@@ -640,7 +656,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/shift-timer.test.js": {
-  "checks": 25,
+  "checks": 34,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/slug-ladder.test.js": {

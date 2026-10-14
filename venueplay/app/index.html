@@ -1769,7 +1769,22 @@
     G.calling=false;
     try{ if(window.VP_HOLD) VP_HOLD.release($("nextBtn")); }catch(e){}
   }
+  /* ONE ROOM, ONE CONSOLE. A second tablet signed in at the same venue showed the normal setup
+     screen, and its Open lobby sent the TV and every phone to a new lobby while the first tablet
+     kept calling balls nobody could see; Close lobby then put the ads up over the live game (break
+     test, 14 Oct 2026). The game itself lives in each tablet's own storage, so ask the server
+     whether anything is open here first. A tablet that already owns this night skips the check,
+     and an unreachable server never stops a lobby opening. */
+  var _lobbyAsking=false;
   function openLobby(){
+    if(blockedByHold()) return;
+    var slug=(__ctx&&__ctx.venue&&__ctx.venue.slug)||"";
+    if(G.sessionId || !slug || !(window.VP && VP.confirmTakeover)){ openLobbyNow(); return; }
+    if(_lobbyAsking) return;   // a second tap while the server is being asked must not open two
+    _lobbyAsking=true;
+    VP.confirmTakeover(slug).then(function(ok){ _lobbyAsking=false; if(ok) openLobbyNow(); });
+  }
+  function openLobbyNow(){
     if(blockedByHold()) return;
     clearCallGuards();
     G.pattern=$("patternSel").value;
@@ -2415,12 +2430,16 @@
   }
 
   // ---- incoming ----
+  var _lastHelloReplay=0;
   function tvHere(m){
     $("statusDot").classList.add("on"); $("statusText").textContent="Connected"; $("pairedChip").innerHTML="&middot; connected";
     // a freshly (re)loaded TV announces itself with hello:true. Re-announce the host
     // (hides the pair QR even if the TV missed our first host_here) and, if a game is
     // live, replay the current state so the screen catches up instead of showing ads.
-    if(m && m.hello){
+    /* A TV hello is unsigned, so anyone can send one. Answer at most once every three seconds,
+       or a stranger can make this tablet sign and broadcast the whole state on demand. */
+    if(m && m.hello && Date.now()-_lastHelloReplay>3000){
+      _lastHelloReplay=Date.now();
       send({ t:"host_here" });
       if(G.status==="running" || G.status==="lobby"){
         send({ t:"mode", mode:"bingo" });   // running OR an open lobby: replay so the TV shows the game/QR
@@ -2499,7 +2518,10 @@
         sendCards(m.pid);
       }
       sendPlayers();
-      sendState();
+      /* A console still in setup has no game to describe. Its blank state went out to every phone
+         and the TV in the middle of ANOTHER tablet's live game ("Playing for the prize") each
+         time a phone joined (break test, 14 Oct 2026). Opening the lobby sends the state. */
+      if(gameOpenHere()) sendState();
       saveGame();
       renderJoinCounts();     // NOT renderConsole: see above
     }
@@ -2595,7 +2617,7 @@
               $("statusDot").classList.add("on"); $("statusText").textContent="Ready"; try{document.documentElement.setAttribute("data-vp-transport","room");console.log("[VenuePlay] transport: "+"room");}catch(e){};
               $("pairedChip").innerHTML="&middot; ready";
               reassertToTv();
-              send({ t:"rollcall" });
+              if(gameOpenHere()) send({ t:"rollcall" });   // a console in setup has nobody to call back (14 Oct)
             } else {
               subscribed=false;
               $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting";
@@ -2620,7 +2642,9 @@
         // roll call: ask every joined phone to re-announce so we rebuild seats and
         // re-deal the current card. players answer with a join; we answer that join with
         // card/state (never another roll call), so the exchange terminates and cannot loop.
-        send({ t:"rollcall" });
+        // Only with a game open here: a second tablet merely OPENING the bingo screen called every
+        // phone in another tablet's live game back to itself (break test, 14 Oct 2026).
+        if(gameOpenHere()) send({ t:"rollcall" });
       } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){
         /* subscribed WAS NEVER RESET HERE. It said "Reconnecting" on screen and then
            kept calling ch.send() into a dead socket, so every ball, every claim

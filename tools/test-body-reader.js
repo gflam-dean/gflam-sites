@@ -77,6 +77,29 @@ run('a normal object', '{"a":1}', { a: 1 })
   /* An array has no named properties either: b.email would be undefined for ever. */
   .then(function () { return run('an array', '[1,2,3]', 400); })
   .then(function () { return run('a body that cannot be read at all', '', 400, true); })
+  /* THE GAME WORKER TOO (14 Oct 2026). Its readJson only caught unparseable text, so a body
+     of `null` reached /join, /session and nine more as null and every one answered 500. Run
+     its real readJson and httpError against the same shapes. */
+  .then(function () {
+    print('');
+    print('The game Worker refuses the same shapes');
+    var G = readFile('venueplay-backend/worker/venueplay-game.js');
+    var rj = /async function readJson\(request\) \{[\s\S]*?\n\}/.exec(G);
+    var he = /function httpError\(status, message\) \{[\s\S]*?\n\}/.exec(G);
+    if (!rj || !he) { check('the game Worker still has readJson and httpError', false); return; }
+    var readJson = (new Function(he[0] + rj[0] + '; return readJson;'))();
+    function g(label, text, ok) {
+      return readJson({ json: function () { return Promise.resolve().then(function () { return JSON.parse(text); }); } })
+        .then(function (b) { check('game: ' + label + (ok ? ' -> accepted' : ' -> refused'), ok && b && typeof b === 'object', b); },
+              function (e) { check('game: ' + label + (ok ? ' -> accepted' : ' -> a 400, not a 500'), !ok && e && e.status === 400, e && e.status); });
+    }
+    return g('a normal object', '{"code":"ABC"}', true)
+      .then(function () { return g('literal null', 'null', false); })
+      .then(function () { return g('a bare number', '42', false); })
+      .then(function () { return g('a bare string', '"x"', false); })
+      .then(function () { return g('an array', '[1]', false); })
+      .then(function () { return g('truncated json', '{"a":', false); });
+  })
   .then(function () {
     print('');
     print(PASS + ' passed, ' + FAIL + ' failed');

@@ -254,8 +254,14 @@
   function readApi(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((d&&d.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }
   var _alive=false;
   function sayAlive(){ if(_alive || !P.token || /[?&]demo=1/.test(location.search)) return; _alive=true; try{ playerPost("/player/alive",{}).catch(function(){}); }catch(e){} }   // holding a question: billable (migration 87)
-  function playerPost(path, body){ var h={ "Content-Type":"application/json" }; if(P.token) h["X-Player-Token"]=P.token; return fetch(VP_GAME_API+path,{ method:"POST", headers:h, body:JSON.stringify(body||{}) }).then(readApi); }
-  function playerGet(path){ var h={}; if(P.token) h["X-Player-Token"]=P.token; return fetch(VP_GAME_API+path,{ headers:h }).then(readApi); }
+  /* A token the Worker no longer knows (another page re-minted it, or the night moved on) is
+     dropped and the phone re-joins quietly, instead of answering into nothing all night. */
+  function deadToken(e, path){
+    if(e && e.status===401 && P.token && path!=="/join"){ try{ dropStaleJoin(); setTimeout(function(){ rejoinNow(); }, 0); }catch(x){} }
+    throw e;
+  }
+  function playerPost(path, body){ var h={ "Content-Type":"application/json" }; if(P.token) h["X-Player-Token"]=P.token; return fetch(VP_GAME_API+path,{ method:"POST", headers:h, body:JSON.stringify(body||{}) }).then(readApi).catch(function(e){ return deadToken(e, path); }); }
+  function playerGet(path){ var h={}; if(P.token) h["X-Player-Token"]=P.token; return fetch(VP_GAME_API+path,{ headers:h }).then(readApi).catch(function(e){ return deadToken(e, path); }); }
 
   /* THE ANSWER GOES TO THE ROOM, NOT STRAIGHT TO THE DATABASE.
      Every tap used to be its own write, and thirty phones answering every twenty five seconds
@@ -389,7 +395,18 @@
   // the player token IS the metered server identity: persist it so a reload reuses the
   // same vp_players row instead of minting a new metered one.
   function loadToken(room){ try{ return localStorage.getItem("vp-ttoken-"+room)||""; }catch(e){ return ""; } }
-  function saveToken(room,tok){ try{ if(tok) localStorage.setItem("vp-ttoken-"+room, tok); }catch(e){} }
+  var OWN_TOKEN_KEY="vp-ttoken-";
+  /* ONE IDENTITY PER PHONE PER ROOM, WHICHEVER PAGE MINTED IT. A /join re-mints the token on the
+     same player row, so the bingo, trivia and musical pages each holding their own copy meant a
+     phone bounced through another page came back with a dead token: trivia answers were acked
+     by the room and thrown away at Reveal, "CORRECT! 0" all night while still billed (break test,
+     14 Oct 2026). Whoever mints writes every copy this phone already holds. Identical on all
+     three phone pages. */
+  function shareToken(room, tok){
+    if(!room || !tok) return;
+    try{ ["vp-token-","vp-ttoken-","vp-mtoken-"].forEach(function(k){ if(k===OWN_TOKEN_KEY || localStorage.getItem(k+room)!==null) localStorage.setItem(k+room, tok); }); }catch(e){}
+  }
+  function saveToken(room,tok){ shareToken(room, tok); }
   function loadSess(room){ try{ return localStorage.getItem("vp-tsess-"+room)||""; }catch(e){ return ""; } }
   function saveSess(room,sid){ try{ if(sid) localStorage.setItem("vp-tsess-"+room, sid); }catch(e){} }
 
@@ -500,11 +517,13 @@
       $("pStatus").className="pstatus warn"; $("pStatus").textContent="Didn't get through. Tap your answer again.";
       tickCd();
     }
-    if(!P.gameId){ send({ t:"answer", pid:P.pid, qseq:qseq, choice:i }); sayIn(); return; }
+    // No choice in it: the channel is public, so the pick told anyone listening each team's answer
+    // before the clock ran out, paper rounds included (break test, 14 Oct 2026). Only "answered" is used.
+    if(!P.gameId){ send({ t:"answer", pid:P.pid, qseq:qseq }); sayIn(); return; }
     sendAnswer(P.gameId, i, qseq, P.q.endsAt).then(function(r){
       if(!P.q || P.q.qseq!==qseq) return;
       // Cosmetic broadcast for the TV "answered" ticker, sent only once the real answer landed.
-      send({ t:"answer", pid:P.pid, qseq:qseq, choice:i });
+      send({ t:"answer", pid:P.pid, qseq:qseq });
       if(r && r.recorded===false){
         var first=loadAns(qseq);   // the one the server kept, if this phone remembers it
         if(first!=null){ P.choice=first; paintPicked(first); }
@@ -828,7 +847,7 @@
      playing, 25 Sep 2026. The bingo phone already re-joins whenever the night changes
      (joinServerSession); this is the same rule. Same pid, so the Worker keeps one player. */
   function dropStaleJoin(){
-    P.token=""; P.sessionId="";
+    P.token=""; P.sessionId=""; AR.hash="";   // the answers room knows a phone by its token's hash
     try{ localStorage.removeItem("vp-ttoken-"+P.room); localStorage.removeItem("vp-tsess-"+P.room); }catch(e){}
   }
   var _rejoining=false;
@@ -852,10 +871,14 @@
   // team name is stored as the player's display_name, which the leaderboard groups on.
   function ensureJoined(){
     if(P.token){ return Promise.resolve(); }
+    // The sales-page demo (?demo=1) is a recording: it must never join anything. It did, twice on
+    // every view of every sales page, each a 400 "Invalid join code" (break test, 14 Oct 2026).
+    if(/[?&]demo=1/.test(window.location.search||"")){ return Promise.resolve(); }
     var body={ code:P.room, name:P.name, pid:deviceId() };   // pid = billing/rejoin device key, see deviceId()
     if(P.capture){ for(var k in P.capture){ body[k]=P.capture[k]; } }
     return playerPost("/join", body).then(function(r){
       P.token=r.token; saveToken(P.room, P.token);
+      AR.hash=""; ansHash();   // a new token is a new fingerprint in the answers room
       applySnap(r.snapshot);
     });
   }

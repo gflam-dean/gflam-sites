@@ -331,6 +331,19 @@
     try {
       if (!CONSOLE_PATH.test(root.location.pathname || "")) return "";
       var m = /[?&]venue=([^&#]+)/i.exec(root.location.search || "");
+      /* The short form, /app/musical/host?test-charlie, is what the TV and the phones accept
+         (vp-venueurl.js), and the consoles read only venue=: the musical console quietly ran at
+         ANOTHER venue on the short link, no banner (break test, 14 Oct 2026). The first bare part
+         that is not a setting, same rule as vp-venueurl.js. */
+      if (!m) {
+        var SETTINGS = { demo: 1, unified: 1, roomserver: 1, probe: 1, v: 1, t: 1, ads: 1, logo: 1,
+                         tv: 1, room: 1, code: 1, from: 1, mode: 1, pr: 1, gm: 1 };
+        var parts = String(root.location.search || "").replace(/^\?/, "").split("&");
+        for (var i = 0; i < parts.length && !m; i++) {
+          var p = parts[i]; if (p.charAt(0) === "=") p = p.slice(1);
+          if (p && p.indexOf("=") < 0 && !SETTINGS[p.toLowerCase()]) m = [p, p];
+        }
+      }
       if (!m) return "";
       var raw = m[1]; try { raw = decodeURIComponent(raw); } catch (e) {}
       raw = String(raw).trim();
@@ -791,8 +804,56 @@
     // is available in 7 days" with the room still seated and no way to clear it. Left open, the
     // session is still live, so signing back in restores the same night and the same slot.
     if (gameIsLive()) { finish(); return; }
+    // A page with no game on it (billing, settings, HQ...) only signs out. It cannot know whether
+    // a console in another tab of this same tablet is mid-night, and closing from here would end
+    // that night under the room. The console's own clock closes it, or the 3am sweep does.
+    if (_shiftSignOutOnly) { finish(); return; }
     setTimeout(finish, 2500);
     closeOpenSessions().then(finish, finish);
+  }
+
+  /* THE SHIFT CLOCK ON EVERY PAGE THAT HOLDS PLAYER DATA, not only the consoles. Found 14 Oct
+     2026: billing (which downloads the opt-in list), marketing, settings, HQ, onboarding and the
+     trivia builder never called enforceShift(), so a host left signed in there stayed signed in
+     for ever, and a marketing login (which goes straight to marketing.html) never had a clock at
+     all. The 4h sign-out is a compliance control. One line per page: VP.guardShift(). It does
+     nothing for a visitor who is not signed in (the TV and signage load this file too, and never
+     call it). */
+  var _shiftSignOutOnly = false;
+  function guardShift() {
+    _shiftSignOutOnly = true;
+    try {
+      getClient().auth.getSession().then(function (r) {
+        if (r && r.data && r.data.session) enforceShift();
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
+  /* ONE ROOM, ONE CONSOLE. Each console keeps its night in its own tablet's storage, so a second
+     tablet at the same venue showed a plain setup screen and its Open lobby took the TV and every
+     phone off the live game, and Start round ended it outright (break test, 14 Oct 2026). Every
+     console asks this before opening a lobby it does not already own. Resolves true to go ahead.
+     An unreachable server, or no answer in three seconds, never stops a lobby opening. */
+  function confirmTakeover(slug) {
+    return new Promise(function (resolve) {
+      if (!slug) { resolve(true); return; }
+      var done = false;
+      function finish(v) { if (!done) { done = true; resolve(v); } }
+      setTimeout(function () { finish(true); }, 3000);
+      fetch(GAME_API + "/play/live?code=" + encodeURIComponent(venueCode(slug)))
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+          if (done) return;
+          if (!d || !d.live) { finish(true); return; }
+          var f = String(d.format || "");
+          var what = f.indexOf("trivia") === 0 ? "trivia night" : f.indexOf("musical") === 0 ? "musical bingo game"
+                   : f.indexOf("bingo") === 0 ? "bingo game" : "game";
+          done = true;
+          resolve(root.confirm("A " + what + " is already open at this venue on another device.\n\n" +
+            "Opening a lobby here takes the TV and every phone away from it, and starting a round here ends it.\n\n" +
+            "Open the lobby here anyway?"));
+        }, function () { finish(true); });
+    });
   }
 
   /* A suspended venue used to look completely healthy until the host tapped Start in front of a
@@ -890,6 +951,8 @@
     closeOpenSessions: closeOpenSessions,
     retryPendingCloses: retryPendingCloses,
     enforceShift: enforceShift,
+    guardShift: guardShift,
+    confirmTakeover: confirmTakeover,
     endShift: endShift,
     setGameActive: setGameActive
   };

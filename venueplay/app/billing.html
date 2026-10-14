@@ -654,6 +654,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="vp-session.js"></script>
+<script>if(window.VP && VP.guardShift) VP.guardShift();   /* the 4h forced sign-out reaches every page with player data */</script>
 <script>
 (function(){
   var VP_WORKER = "https://venueplay-api.dean-tindale.workers.dev";
@@ -2626,7 +2627,7 @@
 
   // ---- Nights: how the last few nights went, per venue ----
   var ntVenues = [], ntCurrent = null;
-  var FORMAT_WORDS = { bingo:"Bingo", trivia:"Trivia", musical:"Musical bingo", raffle:"Raffle", members_draw:"Members draw", members:"Members draw" };
+  var FORMAT_WORDS = { bingo:"Bingo", bingo90:"Bingo", trivia:"Trivia", musical:"Musical bingo", musical_bingo:"Musical bingo", raffle:"Raffle", members_draw:"Members draw", members:"Members draw" };   // the server names: bingo90, musical_bingo (14 Oct)
   function formatWords(list){
     var out = (list||[]).map(function(f){ return FORMAT_WORDS[f] || (String(f||"").charAt(0).toUpperCase() + String(f||"").slice(1)); });
     return out.length ? out.join(" + ") : "";

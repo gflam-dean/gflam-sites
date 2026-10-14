@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '14 Oct 2026, 10:37 · f1b55af8';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '14 Oct 2026, 13:12 · 50f3db7f';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -8871,7 +8871,12 @@ async function getSession(env, sessionId) {
  * ===================================================================== */
 
 async function readJson(request) {
-  try { return await request.json(); } catch (e) { throw httpError(400, 'Invalid or missing JSON body'); }
+  let b;
+  try { b = await request.json(); } catch (e) { throw httpError(400, 'Invalid or missing JSON body'); }
+  // `null`, a number, a string or an array is valid JSON and every handler then read b.code off
+  // it and answered 500 (break test, 14 Oct 2026). Only an object is a request body here.
+  if (!b || typeof b !== 'object' || Array.isArray(b)) throw httpError(400, 'Invalid or missing JSON body');
+  return b;
 }
 
 function httpError(status, message) {

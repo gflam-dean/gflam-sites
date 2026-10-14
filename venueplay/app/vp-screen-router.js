@@ -124,6 +124,7 @@
              traffic that only bingo makes (a ball, a new round, a claim, a winner) counts as bingo
              being on air there; state and volume are said by every format. */
           if (m.t === "mode") { goTo(m.mode && URLS[m.mode] ? m.mode : game); return; }
+          if (m.fmt && m.fmt !== game) return;   // another game's traffic on a shared channel (14 Oct 2026)
           if (game === "bingo" ? BINGO_ON_AIR[m.t] : onAir(m)) goTo(game);
         };
         if (gate) gate(e.payload, handle); else handle(e.payload);

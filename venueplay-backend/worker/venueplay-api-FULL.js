@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '25 Sep 2026, 18:25 · e21b64b9';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '14 Oct 2026, 13:12 · ff44126a';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -2615,7 +2615,7 @@ async function vpaHandleVenueHistory(request, env, json) {
   const reports = await vpaSelect(env, 'vp_game_reports',
     'venue_id=eq.' + vid + '&select=id,format,players,tickets,started_at,ended_at,created_at' +
     '&order=created_at.desc&limit=60') || [];
-  for (const r of reports) {
+  for (const r of reportsOutsideSessions(sessions, reports)) {
     nights.push({
       kind: 'report',
       at: r.started_at || r.created_at,
@@ -8542,6 +8542,22 @@ async function vpbDrawLog(request, env, json) {
   return json({ ok: true, venue: { id: venue.id, name: venue.name }, months: months, rows: rows.slice(0, 500), cash_cents: cashCents, cash: '$' + (cashCents / 100).toFixed(2) });
 }
 
+/* A game report inside a session's window is that session's game, already on the session's card.
+   Bingo and musical bingo both open a session now, so merging every report listed one night four
+   or five times (break test, 14 Oct 2026). Only a report with no session around it, a
+   broadcast-only game, still needs a card of its own. One copy, used by HQ and the Account page. */
+function reportsOutsideSessions(sessions, reports) {
+  const windows = (sessions || []).map((s) => {
+    const from = Date.parse(s.opened_at || s.created_at || 0);
+    const to = s.ended_at ? Date.parse(s.ended_at) : Infinity;   // still open: everything after it is inside
+    return [from - 60000, to + 60000];
+  });
+  return (reports || []).filter((r) => {
+    const t = Date.parse(r.started_at || r.created_at || 0);
+    return !windows.some((w) => t >= w[0] && t <= w[1]);
+  });
+}
+
 /* --- POST /account/nights : how did the last few nights go, for one venue. ---
    body { venue_id, limit?: 1..30 }
    The morning after, an owner or manager opened the app and found the game menu and nothing
@@ -8626,7 +8642,7 @@ async function vpbNights(request, env, json) {
   }
   const reports = await vpaSelect(env, 'vp_game_reports',
     'venue_id=eq.' + vid + '&select=id,format,players,tickets,started_at,ended_at,created_at&order=created_at.desc&limit=' + limit) || [];
-  for (const r of reports) {
+  for (const r of reportsOutsideSessions(sessions, reports)) {
     nights.push({
       kind: 'report', at: r.started_at || r.created_at, ended_at: r.ended_at || null,
       status: r.ended_at ? 'finished' : 'unfinished',

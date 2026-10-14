@@ -353,7 +353,11 @@
   function flushQueue(){ while(sendQueue.length && ch){ ch.send({ type:"broadcast", event:"msg", payload:sendQueue.shift() }); } }
   var gch=null, gsub=false, gQueue=[];
   function rawGsend(p){ if(gsub && gch){ gch.send({ type:"broadcast", event:"msg", payload:p }); } else { gQueue.push(p); } }
-  function gsend(obj){ if(window.VPSign){ VPSign.signSend(obj, rawGsend); } else { rawGsend(obj); } }
+  /* Tagged with the game it belongs to. The players' channel is the venue's own code at most venues,
+     the same channel bingo and the TV's router listen on, and an untagged "started" or "winner"
+     from here read as BINGO there: the TV dropped to the ads as a musical game started and phones
+     on the bingo page took trivia for bingo (break test, 14 Oct 2026). */
+  function gsend(obj){ if(obj && typeof obj==="object" && !obj.fmt){ var o={}; for(var k in obj) o[k]=obj[k]; o.fmt="trivia"; obj=o; } if(window.VPSign){ VPSign.signSend(obj, rawGsend); } else { rawGsend(obj); } }
   function gflush(){ while(gQueue.length && gch){ gch.send({ type:"broadcast", event:"msg", payload:gQueue.shift() }); } }
   function bcast(obj){ send(obj); gsend(obj); }
 
@@ -503,7 +507,11 @@
   function saveTrivia(){
     try{
       if(G.gameId && G.sessionId && G.status!=="setup" && G.status!=="lobby"){
-        localStorage.setItem(triviaKey(), JSON.stringify({ v:1, ts:Date.now(), sessionId:G.sessionId }));
+        /* The current question's answer and who is in, so a reload mid-question still shows the
+           host the right answer and "4/7 in", not "0/7" and no tick (break test, 14 Oct 2026). This
+           tablet only; it never goes on a channel. */
+        var cur = (G.current && G.status==="question") ? { qseq:G.current.qseq, ci:G.current.correctIndex, pids:G.answeredPids||{} } : null;
+        localStorage.setItem(triviaKey(), JSON.stringify({ v:1, ts:Date.now(), sessionId:G.sessionId, cur:cur }));
       }
     }catch(e){}
   }
@@ -538,6 +546,10 @@
           var endsAt=Date.parse(q.ends_at)||0;
           G.current={ qseq:q.qseq, qi:q.qi||q.qseq, qtotal:G.qtotal, text:q.text||"", options:Array.isArray(q.options)?q.options:[], correctIndex:-1, endsAt:endsAt, secs:0, imageUrl:q.image_url||"" };
           G.status="question"; G.answeredQseq=q.qseq; G.answeredPids={};
+          if(p.cur && p.cur.qseq===q.qseq){   // what this tablet knew before the reload
+            if(typeof p.cur.ci==="number") G.current.correctIndex=p.cur.ci;
+            if(p.cur.pids && typeof p.cur.pids==="object") G.answeredPids=p.cur.pids;
+          }
           send({ t:"question", game_id:G.gameId, qseq:G.current.qseq, qi:G.current.qi, qtotal:G.qtotal, text:G.current.text, options:G.current.options, endsAt:endsAt, secs:remainingSecs(), colour:G.colour, imageUrl:G.current.imageUrl, double:isDouble(G.current.qseq) });
           if(remainingSecs()>0){ G.tick=setInterval(function(){ updateLive(); if(remainingSecs()<=0){ clearTick(); send({ t:"lock" }); } }, 500); }
           else { send({ t:"lock" }); }
@@ -799,7 +811,12 @@
   function openSession(){
     if(!G.venueId){ return Promise.reject(new Error("no venue linked to this login")); }
     if(G.sessionId && G.joinCode){ return Promise.resolve({ session_id:G.sessionId, join_code:G.joinCode }); }
-    return apiPost("/session",{ venue_id:G.venueId, format:"trivia" }).then(function(r){
+    var _slug=(G.venue && G.venue.slug) || "";
+    var _ask=(window.VP && VP.confirmTakeover) ? VP.confirmTakeover(_slug) : Promise.resolve(true);
+    return _ask.then(function(ok){
+      if(!ok){ var e=new Error("Left as it is. The game on the other device is still running."); e.takeoverDeclined=true; throw e; }
+      return apiPost("/session",{ venue_id:G.venueId, format:"trivia" });
+    }).then(function(r){
       G.sessionId=r.session_id;
       // Remember the night so it can be CLOSED on sign-out. Closing is what marks the
       // session finished and bills any approved busy-night overage; nothing else does it.
@@ -1195,7 +1212,7 @@
     }
     else if(m.t==="answer"){
       if(G.status!=="question" || m.qseq!==G.answeredQseq || !m.pid) return;   // cosmetic "answered" ticker
-      G.answeredPids[m.pid]=true; updateLive();
+      G.answeredPids[m.pid]=true; updateLive(); saveTrivia();
       send({ t:"answered", count:answeredCount() });   // the TV is on the pair channel, so push the tally to it
     }
   }

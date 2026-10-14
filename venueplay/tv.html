@@ -1068,7 +1068,7 @@
     // slide, not the whole rotation: throwing here took every good slide down with it.
     var slides=Array.isArray(ADS.slides)?ADS.slides:[];
     slides.forEach(function(s){
-      try{ if(s && typeof s==="object" && slideVisible(s)) arr.push({type:"slide",slide:s}); }catch(e){}
+      try{ if(s && typeof s==="object" && slideVisible(s) && !(s.image_url && BAD_IMG[String(s.image_url)])) arr.push({type:"slide",slide:s}); }catch(e){}
     });
     if(Array.isArray(ADS.draws) && ADS.draws.length) arr.push({type:"auto-draws"});
     if(ADS.raffle) arr.push({type:"auto-raffle"});
@@ -1140,6 +1140,7 @@
     if(s.image_url){
       var u=String(s.image_url);
       if(/^https?:\/\/[A-Za-z0-9._~:\/?#@!$&*+,;=%-]+$/.test(u) && u.indexOf("&#")===-1){
+        probeImg(u);
         return '<div class="adimg" style="background-image:url('+encodeURI(u).replace(/[()';]/g,"")+')"></div>';
       }
       return '';   // unusable URL: show nothing rather than trust it
@@ -1150,6 +1151,23 @@
     return (s.tag?'<div class="adtag" style="color:'+accentHex(s.accent)+'">'+esc(s.tag)+'</div>':"")+
            '<div class="adbig">'+escBr(s.head)+'</div>'+
            (s.sub?'<div class="adsub">'+escBr(s.sub)+'</div>':"");
+  }
+  /* A SLIDE WHOSE PICTURE WILL NOT LOAD IS DROPPED FROM THE ROTATION. A CSS background has no error
+     event, so a deleted or mistyped image painted a near-black wall for its whole turn, every
+     other slide, and the watchdog called it healthy (break test, 14 Oct 2026). Each picture is
+     loaded once on the side; one that fails is left out and the slides are rebuilt without it. */
+  var BAD_IMG={}, _probed={};
+  function probeImg(u){
+    if(_probed[u]) return; _probed[u]=1;
+    try{
+      var im=new Image();
+      im.onerror=function(){
+        BAD_IMG[u]=1;
+        try{ buildAds(true); }catch(e){}
+        setTimeout(function(){ delete BAD_IMG[u]; delete _probed[u]; }, 600000);   // a wifi blip is retried in 10 minutes
+      };
+      im.src=u;
+    }catch(e){}
   }
   var adIdx=0, adTimer=null, adBuilt=false, adFadeTimer=null, adsSig=null;
   /* WHAT THE ROTATION WOULD LOOK LIKE, AS ONE STRING.
@@ -1929,6 +1947,7 @@
     }catch(err){ tvStatus(false); setTimeout(connectRealtime, 3000); }
   }
 
+  var lastTvHereAt=0;
   var HOST_TYPES={host_here:1,session:1,mode:1,idle:1,to_ads:1,state:1,started:1,ball:1,players:1,claim_pending:1,resume:1,winner:1};
   function onMsg(m){
     if(!m||!m.t) return;
@@ -1973,7 +1992,10 @@
     }
     // any host broadcast means a host is connected this session: hide the pair QR
     // and reply so the host can flip to "connected"
-    if(HOST_TYPES[m.t]){ markHostConnected(); tvSend({ t:"tv_here" }); noteHostAlive(); }
+    /* One "I am here" per ten seconds, not one per host message: it went to every phone in the
+       room as well, 22 a minute on an idle game (break test, 14 Oct 2026). The console only uses
+       it to light its "connected" dot. */
+    if(HOST_TYPES[m.t]){ markHostConnected(); if(m.t==="host_here" || Date.now()-lastTvHereAt>10000){   /* a console arriving hears back at once (host_here is signed, and at most one per 3s answers a hello) */ lastTvHereAt=Date.now(); tvSend({ t:"tv_here" }); } noteHostAlive(); }
     if(m.t==="host_here"){ return; }
     if(m.t==="session"){ sessionId=m.session_id||sessionId; if(m.join_code) setJoinCode(m.join_code); return; }
     if(m.t==="mode"){
@@ -2222,7 +2244,8 @@
        seconds), so requiring that loses nothing and settles who decides. */
     var NOT_ON_AIR = { tv_here:1, host_here:1, session:1, players:1, idle:1, rollcall:1,
                        tv_audio_blocked:1, screen_refresh:1, tv_reload:1, to_ads:1,
-                       join:1, claim:1, leave:1 };
+                       join:1, claim:1, leave:1,
+                       volume:1 };   // a setting, not a game: musical sends it to every TV hello, and after End game it pulled a dead lobby back up (14 Oct 2026)
     /* t:"state" is the awkward one: every format sends it, and it means "here is where things
        stand", which is just as often "nothing is on" as "a game is running". Musical ends a game
        with idle THEN state, and members does the same, so treating state as proof of life put the

@@ -1164,7 +1164,7 @@
             if(j && j.token){
               P.token=j.token;                                  // the patch mints a fresh token
               _joinedFor=d.join_code;
-              try{ localStorage.setItem("vp-token-"+code, j.token); }catch(e){}
+              shareToken(code, j.token);
             }
           });
       })
@@ -1195,7 +1195,7 @@
       .then(function(j){
         if(j && j.token){
           P.token=j.token; _joinedFor=joinCode; _namePushed=P.name;
-          try{ localStorage.setItem("vp-token-"+room, j.token); }catch(e){}
+          shareToken(room, j.token);
           if(P.capture) saveCapture();   // details that went out unvouched can be vouched for now
         }
       })
@@ -1264,6 +1264,12 @@
   var VP_LOOK_NOW = null;   // set by watchVenue: the lookup that decides where a phone belongs
   function playingHere(){ return P.active && lastPlay && (Date.now() - lastPlay < 60000); }
   function onMsg(m){
+    /* A TRIVIA ROUND IS NOT BINGO. The session code is the venue code now, so the trivia console's
+       {t:"started", question_count} arrives on this channel too. This page took it for a bingo
+       round, called itself busy, and its lookup stopped for good: phones sent here sat on bingo
+       through every later round (break test, 14 Oct 2026). Ask where to go instead. */
+    if(m && m.fmt && m.fmt!=="bingo" && m.t!=="mode"){ if(m.t==="started" && typeof VP_LOOK_NOW==="function") VP_LOOK_NOW(); return; }   // mode still runs below, as it always has   // tagged by its console
+    if(m && m.t==="started" && m.question_count!=null){ if(typeof VP_LOOK_NOW==="function") VP_LOOK_NOW(); return; }   // a console from before the tag
     if(m && m.t && PLAY_TYPES[m.t]) lastPlay = Date.now();
     if(!m||!m.t) return;
     /* A GAME HAS GONE ON AIR AND THIS PHONE IS ALREADY LISTENING.
@@ -1298,9 +1304,13 @@
     if(m.t==="tv_here" || m.t==="tv_pair" || m.t==="session"){ return; }   // host<->TV only
     if(typeof m.defaultCards==="number"){ setHostDefault(m.defaultCards); }
     if(typeof m.allowEarly==="boolean"){ P.allowEarly=m.allowEarly; }
-    if(m.t==="rollcall" || m.t==="host_here"){
+    if(m.t==="rollcall"){
       // host (re)connected and is rebuilding the night. re-announce so it re-adds us and
-      // re-deals our tickets. We only reply to explicit host presence.
+      // re-deals our tickets. ONLY the roll call: host_here is also the 30s heartbeat (and the
+      // answer to every TV hello, which anyone can forge), and answering it made every phone
+      // re-join and the console re-deal to all of them twice a minute, about seven broadcasts
+      // per phone each time, growing with the square of the room (break test, 14 Oct 2026).
+      // Every console sends rollcall itself when it (re)connects, so nothing is lost.
       if(P.joined){
         send({ t:"join", pid:P.pid, name:P.name, cards:P.numCards });
         // Re-announce a still-pending BINGO claim, so a host that reloaded mid-claim gets it back in
@@ -1578,6 +1588,17 @@
     }
     return v;
   }
+  var OWN_TOKEN_KEY="vp-token-";
+  /* ONE IDENTITY PER PHONE PER ROOM, WHICHEVER PAGE MINTED IT. A /join re-mints the token on the
+     same player row, so the bingo, trivia and musical pages each holding their own copy meant a
+     phone bounced through another page came back with a dead token: trivia answers were acked
+     by the room and thrown away at Reveal, "CORRECT! 0" all night while still billed (break test,
+     14 Oct 2026). Whoever mints writes every copy this phone already holds. Identical on all
+     three phone pages. */
+  function shareToken(room, tok){
+    if(!room || !tok) return;
+    try{ ["vp-token-","vp-ttoken-","vp-mtoken-"].forEach(function(k){ if(k===OWN_TOKEN_KEY || localStorage.getItem(k+room)!==null) localStorage.setItem(k+room, tok); }); }catch(e){}
+  }
   function savedToken(code){ try{ return localStorage.getItem("vp-token-"+code)||""; }catch(e){ return ""; } }
 
   function claimIdentity(code){
@@ -1594,7 +1615,7 @@
           .then(function(j){
             if(j && j.token){
               P.token = j.token; _joinedFor = d.join_code;
-              try{ localStorage.setItem("vp-token-"+code, j.token); }catch(e){}
+              shareToken(code, j.token);
               // A capture may already have gone unverified while we were asking. Send it again now
               // that it can be vouched for; the Worker keeps the newer row.
               if(P.capture) saveCapture();
@@ -1634,16 +1655,19 @@
        give up. Cheap, and it stops the moment it has an answer. */
     var tries=0;
     (function look(){
+      VP_LOOK_NOW = look;   // a console announcing its mode moves this phone now, as on a ?venue link
       /* "Already in a game here" must mean a game, not a remembered name. connect() sets
          P.joined=true whenever localStorage has a name for this room, and the room key is now the
          venue's PERMANENT code, so it matches for every regular who has ever played bingo here.
          They typed the trivia code off the TV and were silently pinned to the bingo channel with
          this lookup never running once. Only a live game here should stop the hop. */
-      if(playingHere()) return;   // see watchVenue
+      // Busy with bingo: ask again later rather than stop asking. Returning here ended the lookup
+      // for the night, so a phone could never follow the room to trivia (14 Oct 2026).
+      if(playingHere()){ if(++tries<225) setTimeout(look, 8000); return; }   // see watchVenue
       playerPost("/join/info",{ code:code })
         .then(function(r){
           if(r && r.paper_bingo){ showPaperBingo(); return; }
-          if(playingHere()) return;
+          if(playingHere()){ if(++tries<225) setTimeout(look, 8000); return; }
           var to=playerAppFor(r && r.format);
           /* room_code is set when the code typed was the VENUE code (the permanent one on the
              wall) and a trivia or musical session is live under it. Hop to THAT room, not the

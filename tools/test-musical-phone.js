@@ -92,8 +92,9 @@ print("3. A DROPPED CHANNEL IS NOTICED, REBUILT, AND A BINGO IS SAID AGAIN");
 print("");
 print("4. A DISCARDED TAB COMES BACK AS THE SAME PLAYER, WITHOUT BEING ASKED FOR A NAME");
 (function(){
-  var fns = ["loadPid", "savePid", "loadName", "saveName", "loadToken", "saveToken", "loadSess", "saveSess", "connect"].map(function(n){ return grab(n, play); });
+  var fns = ["loadPid", "savePid", "loadName", "saveName", "loadToken", "saveToken", "shareToken", "loadSess", "saveSess", "connect"].map(function(n){ return grab(n, play); });
   pass("the identity functions and connect() are lifted from the page", fns.every(Boolean));
+  fns.unshift('var OWN_TOKEN_KEY="vp-mtoken-";');   // shareToken writes this page's own key (14 Oct 2026)
   var local = fakeStore(), session = fakeStore();
   function boot(){
     var P = { room: "", pid: "", name: "", joined: false, token: "", sessionId: "" };
@@ -121,8 +122,9 @@ print("4. A DISCARDED TAB COMES BACK AS THE SAME PLAYER, WITHOUT BEING ASKED FOR
 print("");
 print("5. LAST WEEK'S TOKEN IS NOT THIS WEEK'S NIGHT");
 (function(){
-  var fns = ["loadToken", "saveToken", "loadSess", "saveSess", "ensureJoined", "dropStaleJoin", "rejoinNow", "checkStaleJoin", "connect"].map(function(n){ return grab(n, play); });
+  var fns = ["loadToken", "saveToken", "shareToken", "loadSess", "saveSess", "ensureJoined", "dropStaleJoin", "rejoinNow", "checkStaleJoin", "connect"].map(function(n){ return grab(n, play); });
   pass("dropStaleJoin, rejoinNow and checkStaleJoin are lifted from the page", fns.every(Boolean));
+  fns.unshift('var OWN_TOKEN_KEY="vp-mtoken-";');   // shareToken writes this page's own key (14 Oct 2026)
   pass("connect() checks the saved night the moment it decides the phone is joined", /P\.joined=true; checkStaleJoin\(\);/.test(play));
   pass("the started event checks it before fetching a card", /checkStaleJoin\(\)\.then\(fetchCard\)/.test(play));
   function run(snapStatus){
@@ -133,7 +135,7 @@ print("5. LAST WEEK'S TOKEN IS NOT THIS WEEK'S NIGHT");
     var post = function(path, body){ joins.push({ path: path, body: body }); return Promise.resolve({ token: "tok-new", snapshot: { session_id: "sess-new", status: "lobby" } }); };
     var applied = [];
     var api = (new Function("localStorage", "P", "fetch", "playerPost", "applySnap", "deviceId", "VP_GAME_API",
-      "var _rejoining=false;\n" + fns.slice(0, 8).join("\n") + "; return { check: checkStaleJoin };"))(local, P, fetchF, post, function(s){ applied.push(s); P.sessionId = s.session_id; }, function(){ return P.pid; }, "https://w");
+      "var _rejoining=false;\n" + fns.slice(0, -1).join("\n") + "; return { check: checkStaleJoin };"))(local, P, fetchF, post, function(s){ applied.push(s); P.sessionId = s.session_id; }, function(){ return P.pid; }, "https://w");
     return api.check().then(function(){ return { P: P, joins: joins, snaps: snaps, local: local, applied: applied }; });
   }
   return run("finished").then(function(r){

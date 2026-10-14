@@ -149,7 +149,7 @@ print("== the phone and the telly mount the shared parts ==");
 var play = readFile(ppFile("partyplay/play.html")), tv = readFile(ppFile("partyplay/tv.html")), host = readFile(ppFile("partyplay/host.html"));
 ok("the phone loads the shared phone part and mounts it", /<script src="\/lib\/pr-phone\.js"><\/script>/.test(play) && /GM = PRPhone\.mount\(\$\("app"\)/.test(play));
 ok("the phone's id is its name, so pr_result.to finds it", /me: function\(\)\{ var n = \(load\(\)\|\|\{\}\)\.nickname \|\| ""; return \{ pid:n, name:n \}; \}/.test(play));
-ok("a caption for the telly cannot wipe a phone that is mid-board", /if\(B \|\| Q \|\| H \|\| T \|\| W \|\| V \|\| PH \|\| CH \|\| GW \|\| GM\) return;/.test(play));
+ok("a caption for the telly cannot wipe a phone that is mid-board", /if\(B \|\| Q \|\| H \|\| T \|\| W \|\| V \|\| PH \|\| CH \|\| GW \|\| GM \|\| DRW\) return;/.test(play));
 ok("the telly loads the shared board and mounts it in a size container", /<script src="\/lib\/pr-board\.js"><\/script>/.test(tv) && /container-type:inline-size/.test(tv) && /gmBoard = PRBoard\.mount\(\$\("gmwrap"\)\);/.test(tv));
 ok("the tile stays hidden until ?gm=1 (the database refuses the format until migration 15 runs)",
    /hidden: !\/\[\?&\]gm=1\/\.test\(location\.search\)/.test(host) && /!TYPES\[k\]\.hidden/.test(host));

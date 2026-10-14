@@ -365,7 +365,12 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   var TV_BOARD_MAX=8;   // the last eight, at a size the back of the room can read
   function renderBoard(){
     var b=$("tvBoard"); b.innerHTML="";
-    var all=state.played, start=Math.max(0, all.length-TV_BOARD_MAX), last=all.length-1;
+    var all=state.played||[];
+    /* The song still hidden behind "LISTEN... Know it?" is not on the strip yet: it gave the title
+       away right under the question mark, on every song (break test, 14 Oct 2026). doReveal
+       redraws this once the song is shown. */
+    if(_pendingSong && all.length && all[all.length-1]===_pendingSong.title) all=all.slice(0, -1);
+    var start=Math.max(0, all.length-TV_BOARD_MAX), last=all.length-1;
     for(var i=start;i<all.length;i++){
       var d=document.createElement("div"); d.className="ptok"+(i===last?" new":""); d.textContent=all[i]; b.appendChild(d);
     }

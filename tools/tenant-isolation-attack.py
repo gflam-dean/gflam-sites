@@ -214,8 +214,14 @@ def main():
 
     # The control. If this does NOT work, every refusal below is meaningless, because a
     # test where everything fails proves nothing at all.
-    st, d = worker(jwt, '/session', {'venue_id': mine_one, 'format': 'bingo90'})
+    # No format: with one, a session already open at Test Alpha (a tester's trivia lobby) was
+    # REUSED and relabelled bingo90, and every phone off the QR then stayed on bingo (14 Oct
+    # 2026). And close what this opened, or every gate run leaves a session behind. A reused
+    # session is someone else's and is left alone.
+    st, d = worker(jwt, '/session', {'venue_id': mine_one})
     ok('CONTROL: it CAN start a game at its own venue', st == 200, '%s %s' % (st, d))
+    if st == 200 and isinstance(d, dict) and d.get('session_id') and not d.get('reused'):
+        worker(jwt, '/session/close', {'session_id': d['session_id']})
 
     st, d = worker(jwt, '/session', {'venue_id': '00000000-0000-0000-0000-000000000000', 'format': 'bingo90'})
     ok('refused a session at a venue it does not work at', st == 403, '%s %s' % (st, d))
