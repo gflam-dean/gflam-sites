@@ -1171,9 +1171,9 @@ MUTATIONS = [
      '',
      'a TV reloaded beside an open bingo lobby shows the bingo join screen through a whole trivia round'),
     # 14 Oct fix round: platform.
-    ('test-platform-15-oct.js', 'venueplay/tv.html', 'setVenueName("The Local");', 'setVenueName("Tugun Bowls Club");', 'the demo TV names a real customer to every prospect again'),
-    ('test-platform-15-oct.js', 'venueplay/app/musical/screen.html', 'dnt0.textContent="The Local";', 'dnt0.textContent="Tugun Bowls Club";', 'the musical bingo demo wall names a real customer again'),
-    ('test-platform-15-oct.js', 'venueplay/see-a-night.html', '<img src="/logos/ad-slides/demo-tuesday.jpg" alt="The Local ', '<img src="/logos/ad-slides/tugun-tuesday.jpg" alt="Tugun Bowls Club ', "the sales page shows a real club's own promo artwork and name again"),
+    ('test-platform-15-oct.js', 'venueplay/tv.html', 'setVenueName("Tugun Bowls Club");', 'setVenueName("The Local");', 'the demo TV names a different venue from the other demo screens'),
+    ('test-platform-15-oct.js', 'venueplay/app/musical/screen.html', 'var demoLogo="/logos/venue-tugun-bowls.png";', 'var demoLogo="/logos/venue-the-local.png";', 'the musical bingo demo wall shows a logo file that is not on the site'),
+    ('test-platform-15-oct.js', 'venueplay/see-a-night.html', '/logos/ad-slides/tugun-tuesday.jpg', '/logos/ad-slides/demo-tuesday.jpg', 'the sales page shows a broken picture where a demo slide should be'),
     ('test-platform-15-oct.js', 'venueplay/app/vp-pixel.js', "  if (typeof window.vpWhenHuman !== 'function') return;\n  window.vpWhenHuman(function () {", "  (function (f) { f(); })(function () {", 'the Meta pixel fires on page load again, so every mail scanner and crawler is a Meta visitor'),
     ('test-platform-15-oct.js', 'venueplay/app/vp-analytics.js', '    waiting.push(fn);\n  }', '    try { fn(); } catch (e) {}\n  }', 'the shared gate stops waiting for a person, so both tags count every scanner that opens a link'),
     ('test-platform-15-oct.js', 'venueplay/404.html', '<meta name="robots" content="noindex,nofollow">', '', 'the not-found page can be indexed by search engines'),

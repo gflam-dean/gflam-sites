@@ -1,7 +1,8 @@
 /* THE PUBLIC SITE, AFTER THE AUDIT OF 14 OCT 2026.
 
-   1. The demos named a real customer (its name, its logo, its promo artwork) on the sales
-      pages. Dean's rule: never name a real venue to a prospect. The demo pub is The Local.
+   1. The demo venue is Tugun Bowls Club, with its own logo and promo slides. Dean, 15 Oct 2026:
+      "Tugun is fine as the demo" (it was swapped for an invented pub for one day). What is
+      checked is that every demo screen names it the same way and every file it shows exists.
    2. The Meta pixel fired on load, so every crawler and mail scanner was a Meta visitor.
       It now waits on the same gate as Google Analytics (vpWhenHuman in vp-analytics.js).
    3. Unknown addresses answered 200 with the homepage. 404.html switches that off, so every
@@ -37,7 +38,7 @@ function stripComments(t) {
   return t.replace(/<!--[\s\S]*?-->/g, ' ').replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:\\'"])\/\/[^\n]*/g, '$1');
 }
 
-print('== 1. the demo pub is invented, on every screen a prospect sees ==');
+print('== 1. every demo screen shows the same demo venue, and its files exist ==');
 ['musical', 'trivia', 'members', 'raffle'].forEach(function (g) {
   var src = read('venueplay/app/' + g + '/screen.html');
   var b = block(src, 'if(VP_DEMO){\n    /* The demo venue');
@@ -45,8 +46,8 @@ print('== 1. the demo pub is invented, on every screen a prospect sees ==');
   var tag = { textContent: '', hidden: false }, painted = null;
   var doc = { getElementById: function (id) { return id === 'venueNameTag' ? tag : null; } };
   new Function('window', 'document', 'paintVenueLogo', b)({ location: { search: '' } }, doc, function (u) { painted = u; });
-  ok(g + ': the wall is named The Local', tag.textContent === 'The Local', tag.textContent);
-  ok(g + ': and wears The Local\'s logo, a file on this site', painted === '/logos/venue-the-local.png' && exists('venueplay' + painted), painted);
+  ok(g + ': the wall is named Tugun Bowls Club', tag.textContent === 'Tugun Bowls Club', tag.textContent);
+  ok(g + ': and wears its logo, a file on this site', painted === '/logos/venue-tugun-bowls.png' && exists('venueplay' + painted), painted);
 });
 var TV = read('venueplay/tv.html');
 var tvb = block(TV, 'if(DEMO){\n      setVenueName(');
@@ -57,13 +58,12 @@ if (tvb) {
     'return (function(){' + tvb + '})();');
   runTv(function (n) { named = n; }, function (u) { logo = u; }, function () {}, function () {}, ADS,
         { origin: 'https://venueplay.com.au' }, { location: { search: '' } });
-  ok('tv.html: the corner says The Local', named === 'The Local', named);
-  ok('tv.html: the demo logo is The Local\'s, and the file is there', logo === '/logos/venue-the-local.png' && exists('venueplay' + logo), logo);
+  ok('tv.html: the corner says Tugun Bowls Club', named === 'Tugun Bowls Club', named);
+  ok('tv.html: the demo logo is Tugun\'s, and the file is there', logo === '/logos/venue-tugun-bowls.png' && exists('venueplay' + logo), logo);
   var imgs = (ADS.slides || []).filter(function (s) { return s.image_url; });
   ok('tv.html: the photo slides are still in the loop (four)', imgs.length === 4, imgs.length);
   var missing = imgs.filter(function (s) { return !exists('venueplay' + s.image_url.replace('https://venueplay.com.au', '')); });
   ok('tv.html: every photo slide is a file on this site', !missing.length, missing.map(function (s) { return s.image_url; }).join(', '));
-  ok('tv.html: no slide, name or logo names a real venue', !/tugun/i.test(JSON.stringify(ADS) + named + logo), JSON.stringify(ADS).slice(0, 200));
   var logo2 = null;
   runTv(function () {}, function (u) { logo2 = u; }, function () {}, function () {}, {}, { origin: 'x' }, { location: { search: '?logo=%2Flogos%2Fprospect.png' } });
   ok('control: ?logo=/path still puts a prospect\'s own logo up', logo2 === '/logos/prospect.png', logo2);
@@ -71,16 +71,11 @@ if (tvb) {
 var SAN = read('venueplay/see-a-night.html');
 var sanImgs = SAN.match(/\/logos\/ad-slides\/[a-z-]+\.jpg/g) || [];
 ok('see-a-night: its four ad pictures are files on this site', sanImgs.length === 4 && sanImgs.every(function (p) { return exists('venueplay' + p); }), sanImgs.join(', '));
-/* Every page and script the site serves, comments aside (they are the history of why), names no
-   real venue. The list of names is the one Dean has had to rule on; add to it, never remove. */
-var REAL = /tugun/i;
-var served = ['index.html', 'nsw.html', 'see-a-night.html', 'tv.html', 'play.html', 'signage.html', 'training.html',
-  'screen-check.html', 'jag-check.html', '404.html', 'leave-behind.html', 'leave-behind-club.html', 'leave-behind-pub.html',
-  'leave-behind-rsl.html', 'privacy.html', 'terms.html', 'unsubscribe.html', 'add-card.html',
-  'app/musical/screen.html', 'app/trivia/screen.html', 'app/members/screen.html', 'app/raffle/screen.html',
-  'app/jag/screen.html', 'app/topanswers/screen.html', 'emails/welcome-hq.html'];
-var named2 = served.filter(function (f) { return REAL.test(stripComments(read('venueplay/' + f))); });
-ok('no public page names a real venue outside a comment', !named2.length, named2.join(', '));
+/* One demo venue everywhere: no page left on the invented pub of 14 Oct. */
+var served = ['index.html', 'see-a-night.html', 'tv.html', 'signage.html',
+  'app/musical/screen.html', 'app/trivia/screen.html', 'app/members/screen.html', 'app/raffle/screen.html'];
+var stale = served.filter(function (f) { return /The Local|venue-the-local|ad-slides\/demo-/.test(stripComments(read('venueplay/' + f))); });
+ok('no demo page is left on the invented pub', !stale.length, stale.join(', '));
 
 print('\n== 2. the Meta pixel waits for a person, through the same gate as Analytics ==');
 var GA = read('venueplay/app/vp-analytics.js'), PX = read('venueplay/app/vp-pixel.js');
