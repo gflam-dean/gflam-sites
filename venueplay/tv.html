@@ -2356,7 +2356,7 @@
        function. Called from out there it is a ReferenceError, swallowed by a try/catch,
        which is a line of code that looks like it works and does nothing. */
     if(DEMO){
-      setVenueName("Tugun Bowls Club");
+      setVenueName("The Local");
       /* AND THE PUB'S ADVERTISING, which is half of what the screen is FOR.
 
          Dean, 12 Sep 2026: "that invented pub has all the advertising etc needed for all
@@ -2387,23 +2387,25 @@
       ];
       ADS.raffle = { label:"Meat raffle", day:"Friday", time:"6:30pm" };
       /* AND WHAT A REAL VENUE'S SLIDES LOOK LIKE. (Absolute addresses: the image whitelist in
-         slideHtml takes only a full http(s) URL, and drops a relative path without a word.) The four Tugun Bowls Club slides already on
-         the site (logos/ad-slides) are what an uploaded promo looks like on the wall, and a
+         slideHtml takes only a full http(s) URL, and drops a relative path without a word.) The four demo slides
+         (logos/ad-slides/demo-*) are what an uploaded promo looks like on the wall, and a
          venue's own artwork sells the advertising better than our text slides can. Dean,
          22 Sep 2026: "also advertising", "so they have a logo". First in the loop, so the
          ads-only demo opens on them. */
       ADS.slides = [
-        { tag:"Tuesday",  accent:"pink", head:"Roast night, $14.90", sub:"", image_url:location.origin+"/logos/ad-slides/tugun-tuesday.jpg" },
-        { tag:"Thursday", accent:"gold", head:"Half price menu",     sub:"", image_url:location.origin+"/logos/ad-slides/tugun-thursday.jpg" },
-        { tag:"Friday",   accent:"blue", head:"Surf and turf, $24.90", sub:"", image_url:location.origin+"/logos/ad-slides/tugun-friday.jpg" },
-        { tag:"Saturday", accent:"green", head:"Parmi and pints, $19.90", sub:"", image_url:location.origin+"/logos/ad-slides/tugun-saturday.jpg" }
+        { tag:"Tuesday",  accent:"pink", head:"Roast night, $14.90", sub:"", image_url:location.origin+"/logos/ad-slides/demo-tuesday.jpg" },
+        { tag:"Thursday", accent:"gold", head:"Half price menu",     sub:"", image_url:location.origin+"/logos/ad-slides/demo-thursday.jpg" },
+        { tag:"Friday",   accent:"blue", head:"Surf and turf, $24.90", sub:"", image_url:location.origin+"/logos/ad-slides/demo-friday.jpg" },
+        { tag:"Saturday", accent:"green", head:"Parmi and pints, $19.90", sub:"", image_url:location.origin+"/logos/ad-slides/demo-saturday.jpg" }
       ].concat(ADS.slides);
       /* ?demo=1&logo=<url>: a venue logo in the corner, so a prospect sees their own name up
          there. Same-site paths only: this is a sales page, not a place to load strangers' images. */
-      /* The demo venue is Tugun Bowls Club, a real customer, with its real logo (Dean, 22 Sep
-         2026, "Shall we do Tugun bowls as the demo so they have a logo?"). ?logo=/path swaps in
-         another same-site file for a prospect's own. */
-      var demoLogo="/logos/venue-tugun-bowls.png";
+      /* The demo venue is THE LOCAL, invented (14 Oct 2026). From 22 Sep it was a real customer
+         with its real logo and its real promo artwork, which broke Dean's rule that no real venue
+         is ever named to a prospect. The roundel and the four slides (logos/ad-slides/demo-*) are
+         that artwork with the club's badge replaced by The Local's. ?logo=/path swaps in another
+         same-site file for a prospect's own. */
+      var demoLogo="/logos/venue-the-local.png";
       try{ var lg=/[?&]logo=([^&]+)/.exec(window.location.search||""); if(lg){ var u=decodeURIComponent(lg[1]); if(/^\/[^\/]/.test(u)) demoLogo=u; } }catch(e){}
       setVenueLogo(demoLogo);
       buildAds(true); startAds();

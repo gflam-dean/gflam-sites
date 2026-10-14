@@ -107,7 +107,7 @@ if (!bp.missing.length) {
 print('\nthe trivia phone (app/trivia/play.html)');
 var TPLAY = readFile('venueplay/app/trivia/play.html');
 check('trivia/play.html loads /app/vp-channel.js in a real script tag', RIG.loadsScript(TPLAY, 'vp-channel.js'));
-var tp = take(TPLAY, ['connect', 'send', 'flushQueue'], 'trivia/play.html');
+var tp = take(TPLAY, ['connect', 'send', 'flushQueue', 'announce'], 'trivia/play.html');   // announce: the join is tagged fmt since 14 Oct 2026
 var tpStatus = RIG.lift(TPLAY, 'onChannelStatus');     // named since 27 Sep 2026; before that it lived inside connect
 check('the real trivia phone functions came out of trivia/play.html', tp.missing.length === 0, tp.missing);
 

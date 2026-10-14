@@ -223,7 +223,9 @@ def prove():
     home2 = get(base + '/')[1]
     svg = get(base + '/logos/venueplay-primary.svg')[1]
     png = get(base + '/logos/venueplay_appicon_rebuilt.png')[1]
-    miss = get(base + '/logos/this-file-does-not-exist.png')[1]
+    # A real 404 since 14 Oct 2026 (venueplay/404.html switches Pages' homepage fallback off);
+    # before that a missing file came back 200 as the homepage. Either way it must read as MISSING.
+    miss_status, miss = get(base + '/logos/this-file-does-not-exist.png')[:2]
 
     cases = [
         ('the homepage reads as HTML',                 is_html(home)),
@@ -232,7 +234,7 @@ def prove():
         ('a real PNG counts as an image',              looks_like_image(png)),
         ('the homepage does not count as an image',    not looks_like_image(home)),
         ('two fetches of one page compare equal',      same_page(home, home2)),
-        ('a MISSING asset is recognised as the page',  same_page(miss, home)),
+        ('a MISSING asset is recognised as missing',   miss_status != 200 or same_page(miss, home)),
         ('a real SVG is not mistaken for the page',    not same_page(svg, home)),
     ]
     bad = 0

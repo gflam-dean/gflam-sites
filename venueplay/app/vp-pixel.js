@@ -13,13 +13,26 @@
    Created 18 Sep 2026. The dataset is "VenuePlay website" in the VenuePlay business portfolio.
    Added after finding VenuePlay already had fbq('track','StartTrial') on the signup-complete
    path, guarded with typeof, firing into nothing because no pixel was ever installed. */
-!function(f,b,e,v,n,t,s)
-{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-n.queue=[];t=b.createElement(e);t.async=!0;
-t.src=v;s=b.getElementsByTagName(e)[0];
-s.parentNode.insertBefore(t,s)}(window, document,'script',
-'https://connect.facebook.net/en_US/fbevents.js');
-fbq('init', '1587841132831183');
-fbq('track', 'PageView');
+/* NOT ON LOAD: WHEN A PERSON IS HERE (14 Oct 2026). This used to fire PageView the instant the
+   page loaded, so every crawler and every mail scanner that opens an emailed link was a Meta
+   visitor, while vp-analytics.js had refused those same visits since 25 Sep. It now waits on
+   vp-analytics.js's own gate, window.vpWhenHuman(), so the two tags cannot disagree about who
+   is a person: the same robot check, team opt-out (?noga=1) and live-site check, and the same
+   wait for a touch, mouse move, key or wheel. ONE copy of those rules, in vp-analytics.js.
+   Every page loads vp-analytics.js first. If it did not load, the pixel stays off: missing a
+   visit beats counting every scanner. window.fbq, not a bare fbq: this runs in a function. */
+(function () {
+  if (typeof window.vpWhenHuman !== 'function') return;
+  window.vpWhenHuman(function () {
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    window.fbq('init', '1587841132831183');
+    window.fbq('track', 'PageView');
+  });
+})();

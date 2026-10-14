@@ -13,7 +13,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '30 Sep 2026, 09:00 · a1cb7138';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '14 Oct 2026, 19:14 · a295cbc8';   // tools/stamp-workers.py, do not edit by hand
 // The licence window rules live in one place and are shared with the browser.
 // Paste lib/pp-licence.js above this line when deploying, or inline it. It is
 // referenced here as PPLicence.
@@ -2398,7 +2398,11 @@ export default {
         missing,
         photos,
         email,
-        admins,
+        /* YES OR NO, NOT HOW MANY (14 Oct 2026 audit). This printed the admin count to anybody,
+           which is a fact about the business nobody outside it needs. The question it exists to
+           answer is whether anybody can get in at all, and a yes/no answers it: false is the
+           locked-out product, and ok above is already false with it. null = could not be read. */
+        admins_ok: admins === null ? null : admins > 0,
         warning: warnings.length ? warnings.join(' ') : undefined
       }, missing.length ? 503 : 200, ch);
     }
