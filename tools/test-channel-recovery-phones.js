@@ -117,7 +117,8 @@ function triviaPhone() {
     loadPid: function () { return 'pid1'; }, randId: function () { return 'pid1'; }, savePid: function () {},
     loadToken: function () { return 'tok'; }, loadSess: function () { return 's1'; }, loadName: function () { return 'Quizzers'; },
     rebuildFromSnapshot: function () {}, showWait: function () {}, loadJoinInfo: function () {}, show: function (v) { views.push(v); },
-    onMsg: function () {}
+    onMsg: function () {},
+    prKeyFor: function () {}   // connect() makes the phone's Punters Reckon key since 14 Oct 2026; not this suite's subject
   };
   var names = Object.keys(sandbox);
   var body = 'var P = {}, ch = null, subscribed = false, sendQueue = [];\n' + tp.src + '\n' + (tpStatus || '') + '\n' +
