@@ -191,6 +191,28 @@ async function billed(sid) { return countPlayersWhoPlayed(DB.vp_players.filter(f
   pg2.G.gateFor('bingo90', function () { drew2++; });
   pg2.open()._q['.vpg-go'].onclick();
   show('CONTROL: bingo, which asks for no wait, starts at the tap exactly as before', drew2 === 1, drew2);
+
+  print('the running bingo wall fits a 16:9 telly and keeps out of the JOIN NOW card');
+  /* Measured in Chrome on 14 Oct 2026 at 1280x720, 1366x768, 1600x900, 1920x1080 and 3840x2160:
+     no layer painted under the card, the corner mark or the logo, and NUMBER CALLED sat 48px down
+     at 720p (it was 8). The column is sized by the rules below; this works them out at each size. */
+  var TV = readFile('venueplay/tv.html');
+  function cssRule(sel) { var m = new RegExp('\\n\\s*\\' + sel + '\\{([^}]*)\\}').exec(TV); return m ? m[1] : ''; }
+  function evalLen(expr, W, H) {   // min()/clamp() of px, cqw (container = the wall's width) and vh
+    var e = expr.replace(/(\d*\.?\d+)cqw/g, function (_, n) { return '(' + n + '*' + W / 100 + ')'; })
+                .replace(/(\d*\.?\d+)vh/g, function (_, n) { return '(' + n + '*' + H / 100 + ')'; })
+                .replace(/(\d*\.?\d+)px/g, '$1').replace(/clamp\(/g, 'Math.max(').replace(/min\(/g, 'Math.min(');
+    e = e.replace(/Math\.max\(([^,]+),(.+),([^,()]+)\)$/, 'Math.max($1,Math.min($2,$3))');
+    return eval(e);
+  }
+  var ball = /width:([^;]+);/.exec(cssRule('.curball'))[1], prev = /width:([^;]+);/.exec(cssRule('.prevball'))[1];
+  var fits = [[1280, 720], [1366, 768], [1600, 900], [1920, 1080], [3840, 2160]].every(function (s) {
+    var col = evalLen(ball, s[0], s[1]) + evalLen(prev, s[0], s[1]);
+    return col <= 0.36 * s[1];
+  });
+  show('at every size the ball and the recent balls take at most 36% of the height (the label then clears overscan)', fits, ball + ' + ' + prev);
+  var qr = /width:(clamp\([^;]+\));/.exec(cssRule('.qrmini'))[1];
+  show('the column still reserves the JOIN NOW card\'s own QR size under it', cssRule('.runleft').indexOf('padding-bottom:calc(5.1cqw + ' + qr + ')') >= 0, cssRule('.runleft'));
   finished = true;
 })().catch(function (e) { print('  FAIL the test itself threw: ' + e + '\n' + e.stack); bad++; });
 drainMicrotasks();

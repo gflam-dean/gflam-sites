@@ -129,6 +129,11 @@ function callRow(host, cells) {
     var k = host.G.pool.indexOf(n); if (k >= 0) { host.G.pool.splice(k, 1); host.commitBall(n, false); }
   });
 }
+/* The console's check-in is a second road to the same place (it asks an unseated phone to join).
+   Switched off for game two, so the phone's OWN rule is what is tested: a new session id on the
+   state message means join again, whatever the join code says. */
+var DROP_CHECKIN = false, _pump = pump;
+pump = function () { if (DROP_CHECKIN) QUEUE = QUEUE.filter(function (q) { return !(q.payload && q.payload.t === 'checkin'); }); _pump(); };
 function hostSays(t, pid) { return LOG.filter(function (l) { return l && l.from === 'host' && l.p && l.p.t === t && (!pid || l.p.pid === pid); }).length; }
 
 (async function () {
@@ -186,11 +191,13 @@ function hostSays(t, pid) { return LOG.filter(function (l) { return l && l.from 
   check('and last game\'s "of 90" badge is gone from its header', phones.every(function (ph) { return ph.$('hdrBall').classList.contains('hidden'); }));
 
   print('GAME TWO: the same four phones never leave the page');
+  DROP_CHECKIN = true;
   host.openLobby(); await advance(9000);
+  DROP_CHECKIN = false;
   var S2 = SESS[1];
   check('CONTROL: a new lobby really is a new session', !!S2 && S2 !== S1);
   check('a new lobby puts the phones back on "you\'re in"', phones.every(function (ph) { return viewOf(ph) === 'vWait'; }), phones.map(viewOf));
-  check('every phone joined the new session, once', phones.every(function (ph) { return rowsIn(S2).filter(function (r) { return r.device_id === didOf(ph); }).length === 1 && joinsFor(ph, S2) === 1; }),
+  check('every phone joined the new session, once, on its own (no check-in reached it)', phones.every(function (ph) { return rowsIn(S2).filter(function (r) { return r.device_id === didOf(ph); }).length === 1 && joinsFor(ph, S2) === 1; }),
         phones.map(function (ph) { return joinsFor(ph, S2); }));
   host.startGame(); await advance(500); if (!host.$('ovgModal').classList.contains('hidden')) host.$('ovgGo').onclick();
   await advance(5000);
