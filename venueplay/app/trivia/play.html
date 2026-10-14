@@ -425,7 +425,9 @@
     $("waitIcon").classList.toggle("hidden", !!head);
     $("waitSub").classList.toggle("hidden", !!head);
     if(msg) $("waitMsg").textContent=msg;
-    if(P.total>0 || P.rank>0){
+    /* Points first, then a place. With nothing scored yet the place is just where a 0 sorts: a new
+       joiner was told "1st of 1" before the first question (audit, 14 Oct 2026). */
+    if(P.total>0){
       $("waitScore").classList.remove("hidden"); $("waitScore").textContent=P.total+" points";
       var rt=rankText(); $("waitRank").classList.toggle("hidden", !rt); $("waitRank").textContent=rt;
     } else { $("waitScore").classList.add("hidden"); $("waitRank").classList.add("hidden"); }
@@ -445,7 +447,9 @@
   function renderQuestion(m){
     stopCd();
     var endsAt = (typeof m.endsAt==="number") ? m.endsAt : (m.ends_at ? Date.parse(m.ends_at) : (Date.now()+ (m.secs||20)*1000));
-    P.q={ qseq:m.qseq, options:m.options||[], endsAt:endsAt };
+    // restored: this phone came back INTO the question (a snapshot, or a replay aimed at it), so at
+    // the reveal it may not know whether it answered and asks the server (see showResult).
+    P.q={ qseq:m.qseq, options:m.options||[], endsAt:endsAt, restored:(typeof m.endsAt!=="number" || !!m.to) };
     P.choice=null; P.locked=false;
     useGame(m.game_id);
     if(typeof m.colour==="boolean") P.colour=m.colour;
@@ -568,7 +572,7 @@
       $("pResEmoji").innerHTML = correct ? "&#127881;" : (answered ? "&#10060;" : "&#9203;");
       $("pResTag").className="rtag "+(correct?"good":"bad");
       $("pResTag").textContent = correct ? "Correct!" : (answered ? "Not this time" : "No answer");
-      $("pResPts").textContent = ((pts>0)?"+":"")+(pts||0);
+      $("pResPts").textContent = pts===null ? "" : ((pts>0)?"+":"")+(pts||0);   // null: the server could not be asked, so no number rather than a wrong one
       $("pResPts").style.color = correct ? "var(--gold)" : "var(--faint)";
       $("pResTot").textContent = P.total;
       var rt=rankText(); $("pResRank").classList.toggle("hidden", !rt); $("pResRank").textContent=rt;
@@ -601,8 +605,14 @@
          to take the edge off the burst: under a second for a right answer, 2.5 for the rest. */
       var _wait = gotIt ? Math.random()*800 : 500+Math.random()*2000;
       var _rq = (m.qseq!=null ? m.qseq : (P.q?P.q.qseq:""));
-      var _url = "/player/score?game="+encodeURIComponent(P.gameId)+"&q="+encodeURIComponent(_rq)+(answered?"":"&last=0");
+      /* A phone that saw this question live and did not tap still skips the answer lookup (last=0).
+         One that came back into it (a replay aimed at it, a reload, a re-join) may be wrong about
+         whether it answered, so it asks (see below). That is a handful of phones, not the room. */
+      var _unsure = !answered && (!P.q || P.q.restored===true || !!m.to);
+      var _url = "/player/score?game="+encodeURIComponent(P.gameId)+"&q="+encodeURIComponent(_rq)+((answered||_unsure)?"":"&last=0");
+      var fail = function(){ if(gotIt && !$("vRes").classList.contains("hidden")) paint(true, null); };
       setTimeout(function(){
+      (function ask(healed){
       playerGet(_url).then(function(r){
         if(typeof r.total==="number") P.total=r.total;
         if(typeof r.rank==="number") P.rank=r.rank;
@@ -612,16 +622,31 @@
            question and back to the last result. The totals above are always worth keeping; the
            screen is only repainted if the result is still what they are looking at. */
         if($("vRes").classList.contains("hidden")) return;
+        var last=r.last||{};
+        /* THE SERVER KNOWS WHICH QUESTION ITS LAST ANSWER WAS (last.qseq). A phone that re-joined,
+           or reloaded and lost its note of what it tapped, thought it had not answered and said
+           "NO ANSWER" over a question it had answered and been scored on (audit, 14 Oct 2026). When
+           the server says this phone's latest answer IS the one on the wall, that is the answer. */
+        if(!answered && last.answered===true && last.qseq!=null && String(last.qseq)===String(_rq)){
+          answered=true; P.choice=(typeof last.answer_index==="number") ? last.answer_index : P.choice;
+        }
         /* ONLY trust the server's "last answer" if we actually answered THIS question.
            /player/score returns the player's most recent answer in the whole game, not the one
            being revealed, so a player who sat a question out was congratulated with the result of
            an earlier one they got right: "Correct! +130" while their total did not move. One
            person showing that to their table is how a room stops believing the scoreboard. */
         if(!answered){ paint(false, 0); return; }
-        var last=r.last||{};
         var correct=(last.is_correct===true);
         paint(correct, last.points_awarded||0);
-      }).catch(function(){ if(gotIt && !$("vRes").classList.contains("hidden")) paint(true, 0); });
+      }).catch(function(e){
+        /* A DEAD TOKEN IS HEALED, THEN ASKED AGAIN. playerGet's 401 drops the token and re-joins the
+           phone on the same player row; the score was then never asked for again, so the card said
+           "CORRECT! 0", the old total and the old place while the server had +290, 580, 2nd (audit,
+           14 Oct 2026). Wait for the heal and ask once more with the new token. */
+        if(e && e.status===401 && !healed){ rejoinNow().then(function(){ if(P.token) ask(true); else fail(); }); return; }
+        fail();
+      });
+      })(false);
       }, _wait);
     }
   }
@@ -720,9 +745,10 @@
       return;
     }
     if(m.t==="rollcall" || m.t==="host_here"){
-      if(P.joined){ send({ t:"join", pid:P.pid, name:P.name }); }
+      if(P.joined){ announce(); }
       return;
     }
+    if(m.t==="rename"){ if(P.joined && m.to===P.pid) takeName(m.name); return; }   // only ever aimed at one phone
     if(m.t==="session"){ return; }   // host<->TV handoff; players ignore it
     if(m.t==="mode"){ return; }
     if(m.t==="state"){
@@ -834,10 +860,13 @@
       if(P.joined && !P.q && !P.ended) showWait(msg||"Next question coming up. Watch the big screen.", head);
     }).catch(function(){});
   }
-  function applyPending(){
+  /* fresh: this phone has just typed its name in. It was told "You're back in" and "1st of 1" by the
+     same path a returning phone takes (audit, 14 Oct 2026); somebody who has never been here is not
+     back, and a place before their first question is noise (see showWait). */
+  function applyPending(fresh){
     if(!P.joined) return;
     if(P.pendingQ){ var q=P.pendingQ, lk=P.pendingLocked; P.pendingQ=null; P.pendingLocked=false; renderQuestion(q); if(lk){ stopCd(); lockOut(); } refreshTotals(); return; }
-    if(P.pendingScore){ P.pendingScore=false; pullScore("You're back in. Next question coming up on the big screen."); }
+    if(P.pendingScore){ P.pendingScore=false; pullScore(fresh===true ? "You’re in. Next question coming up on the big screen." : "You're back in. Next question coming up on the big screen."); }
   }
   // Rebuild any in-progress game from the Worker's public snapshot (late join / reload).
   /* A NIGHT THAT HAS ENDED IS NOT THE NIGHT YOU ARE IN. The room code is the venue's permanent
@@ -850,11 +879,36 @@
     P.token=""; P.sessionId=""; AR.hash="";   // the answers room knows a phone by its token's hash
     try{ localStorage.removeItem("vp-ttoken-"+P.room); localStorage.removeItem("vp-tsess-"+P.room); }catch(e){}
   }
-  var _rejoining=false;
+  /* The one in flight, handed to everyone who asks while it runs, so a caller can WAIT for the
+     heal (showResult does, to read its score with the new token) instead of being told "done"
+     while the token is still empty. */
+  var _rejoinP=null;
   function rejoinNow(){
-    if(!P.joined || P.token || _rejoining) return Promise.resolve();
-    _rejoining=true;
-    return ensureJoined().catch(function(){}).then(function(){ _rejoining=false; });
+    if(!P.joined || P.token) return Promise.resolve();
+    if(_rejoinP) return _rejoinP;
+    _rejoinP=ensureJoined().catch(function(){}).then(function(){ _rejoinP=null; });
+    return _rejoinP;
+  }
+  /* "I am here", to the host's Players box. Tagged fmt:"trivia": the channel is the venue's own code,
+     shared with the bingo and musical phones, and the console now counts only trivia phones, so a
+     bingo page left open stops showing up as a trivia team (break test, 14 Oct 2026). */
+  function announce(){ send({ t:"join", pid:P.pid, name:P.name, fmt:"trivia" }); }
+  /* TWO TEAMS, ONE NAME: the console renames the later phone ("Quiz Kids 2") so the two can tell
+     their chips and leaderboard rows apart. The name the leaderboard shows is the one the Worker
+     holds, so the phone re-registers under it: /join with the same device id puts the new name on
+     the SAME player row (one person stays one player) and hands back a fresh token. */
+  function takeName(nm){
+    nm=String(nm||"").trim().slice(0,20);
+    if(!nm || nm===P.name) return;
+    var was=P.name;
+    P.name=nm; saveName(P.room, nm);
+    if($("waitName")) $("waitName").textContent=nm;
+    if(!$("vWait").classList.contains("hidden")) $("waitMsg").textContent="Another team is already called "+was+", so you are "+nm+" tonight. Watch the big screen.";
+    if(!P.room || /[?&]demo=1/.test(window.location.search||"")) return;
+    playerPost("/join",{ code:P.room, name:nm, pid:deviceId() }).then(function(r){
+      if(r && r.token){ P.token=r.token; saveToken(P.room, P.token); AR.hash=""; ansHash(); }
+      announce();
+    }).catch(function(){ announce(); });
   }
   function rebuildFromSnapshot(){
     if(!P.sessionId){ rejoinNow().then(applyPending); return; }
@@ -938,8 +992,8 @@
     var btn=$("joinBtn"); btn.disabled=true; btn.textContent="Joining...";
     ensureJoined().then(function(){
       P.joined=true; saveName(P.room, P.name);
-      send({ t:"join", pid:P.pid, name:P.name });   // cosmetic roster on the host + TV
-      if(P.pendingQ || P.pendingScore){ applyPending(); }
+      announce();   // cosmetic roster on the host + TV
+      if(P.pendingQ || P.pendingScore){ applyPending(true); }   // true: a name just typed in, not a phone coming back
       else showWait("Watch the big screen. Your questions will pop up here.");
     }).catch(function(e){
       $("joinErr").textContent=(e && e.message) ? e.message : "Could not join, check the code and try again.";
@@ -953,7 +1007,7 @@
   function onChannelStatus(status){
     if(status==="SUBSCRIBED"){
       subscribed=true; flushQueue();
-      if(P.joined){ send({ t:"join", pid:P.pid, name:P.name }); rebuildFromSnapshot(); }
+      if(P.joined){ announce(); rebuildFromSnapshot(); }
       $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
     } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){
       subscribed=false;

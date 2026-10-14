@@ -79,6 +79,92 @@
     return found ? { h: bottom - top, w: right - left } : null;
   }
 
+  /* KEEP-OUT CORNERS (14 Oct 2026). Fitting the wall to the whole screen was not enough: the
+     trivia screen keeps a "JOIN NOW" QR card in the bottom-left corner, the VenuePlay mark and
+     the venue's name in the top-right, and the venue's logo in the top-left, all ON TOP of the
+     wall. At 1920x1080 the card sat over the 4th and 5th leaderboard rows on the reveal and the
+     last answers on a paper round; at 1600x900 a two-line question ran under the corner mark.
+     A page marks those elements data-fit-avoid ("kids" = measure what its children paint, for a
+     corner whose box is wider than its text), and the wall is then scaled AND moved up or down
+     the least it takes for nothing it painted to sit under one. A page that marks nothing is
+     fitted exactly as before: this path only runs when there is something to avoid. */
+  function avoidRects() {
+    var out = [], els = d.querySelectorAll("[data-fit-avoid]");
+    for (var i = 0; i < els.length; i++) {
+      var e = els[i];
+      if (e.classList.contains("hidden")) continue;
+      var cs = getComputedStyle(e);
+      if (cs.display === "none" || cs.visibility === "hidden") continue;
+      var parts = e.getAttribute("data-fit-avoid") === "kids" ? e.children : [e];
+      var l = Infinity, t = Infinity, r = -Infinity, b = -Infinity;
+      for (var k = 0; k < parts.length; k++) {
+        var p = parts[k];
+        if (p !== e) { var pcs = getComputedStyle(p); if (p.hidden || pcs.display === "none" || pcs.visibility === "hidden") continue; }
+        var q = p.getBoundingClientRect();
+        if (!q.width || !q.height) continue;
+        if (q.left < l) l = q.left; if (q.top < t) t = q.top; if (q.right > r) r = q.right; if (q.bottom > b) b = q.bottom;
+      }
+      if (r > l && b > t) out.push({ l: l, t: t, r: r, b: b });
+    }
+    return out;
+  }
+
+  /* The largest scale (from `start` down) and the smallest vertical shift that keep every child
+     of the layer clear of every keep-out, and on the screen. Scaling is about the layer's centre
+     (cx, cy), the transform-origin; the shift is applied after, so it is in screen pixels.
+     Pure arithmetic on rectangles measured once: exported for the suite as VP_FIT_SOLVE. */
+  function solveFit(rects, avoids, W, H, cx, cy, start, gap, margin) {
+    for (var s = start; s >= 0.4; s = Math.round((s - 0.01) * 1000) / 1000) {
+      var R = [], top = Infinity, bot = -Infinity;
+      for (var i = 0; i < rects.length; i++) {
+        var c = rects[i];
+        var o = { l: cx + s * (c.l - cx), r: cx + s * (c.r - cx), t: cy + s * (c.t - cy), b: cy + s * (c.b - cy) };
+        if (o.t < top) top = o.t; if (o.b > bot) bot = o.b;
+        R.push(o);
+      }
+      var lo = margin - top, hi = (H - margin) - bot;           /* the shifts that keep it on screen */
+      if (lo > hi) continue;
+      var pairs = [], cand = [Math.max(lo, Math.min(hi, 0))];
+      for (var a = 0; a < avoids.length; a++) {
+        var A = avoids[a];
+        for (var j = 0; j < R.length; j++) {
+          if (R[j].l < A.r + gap && R[j].r > A.l - gap) {       /* shares columns: must clear it above or below */
+            pairs.push([R[j], A]);
+            cand.push(A.t - gap - R[j].b, A.b + gap - R[j].t);
+          }
+        }
+      }
+      var best = null;
+      for (var n = 0; n < cand.length; n++) {
+        var ty = cand[n];
+        if (ty < lo - 0.01 || ty > hi + 0.01) continue;
+        var ok = true;
+        for (var p = 0; p < pairs.length && ok; p++) {
+          var C = pairs[p][0], Z = pairs[p][1];
+          if (!(C.b + ty <= Z.t - gap + 0.01 || C.t + ty >= Z.b + gap - 0.01)) ok = false;
+        }
+        if (ok && (best === null || Math.abs(ty) < Math.abs(best))) best = ty;
+      }
+      if (best !== null) return { s: s, ty: Math.round(best) };
+    }
+    return { s: 0.4, ty: 0 };                                    /* something is wrong; do not vanish */
+  }
+  w.VP_FIT_SOLVE = solveFit;
+
+  function childRects(layer) {
+    var out = [], kids = layer.children;
+    for (var i = 0; i < kids.length; i++) {
+      var k = kids[i];
+      if (k.classList && k.classList.contains("hidden")) continue;
+      var cs = getComputedStyle(k);
+      if (cs.display === "none" || cs.visibility === "hidden") continue;
+      var b = k.getBoundingClientRect();
+      if (!b.height && !b.width) continue;
+      out.push({ l: b.left, t: b.top, r: b.right, b: b.bottom });
+    }
+    return out;
+  }
+
   function fitOne(layer) {
     var prev = applied[layer.id] || 1;
 
@@ -100,17 +186,31 @@
     if (scale > 0.999) scale = 1;
     if (scale < 0.4) scale = 0.4;                  /* something is wrong; do not vanish */
 
-    if (scale === prev) {                          /* already right: write nothing */
-      if (scale !== 1) layer.style.transform = "scale(" + scale + ")";
+    var tf = scale === 1 ? "" : "scale(" + scale + ")";
+    /* data-fit-self: a layer that already stops short of the keep-outs on its own (a full-wall
+       board) is only fitted to the screen, as before. */
+    var avoids = layer.hasAttribute("data-fit-self") ? [] : avoidRects();
+    if (avoids.length) {
+      var lb = layer.getBoundingClientRect();
+      var W = w.innerWidth, H = w.innerHeight;
+      var fit = solveFit(childRects(layer), avoids, W, H, lb.left + lb.width / 2, lb.top + lb.height / 2,
+                         scale, Math.round(W * 0.006), Math.round(H * inset) + Math.round(W * 0.008));
+      tf = (fit.ty ? "translateY(" + fit.ty + "px) " : "") + (fit.s < 1 ? "scale(" + fit.s + ")" : "");
+      tf = tf.replace(/\s+$/, "");
+    }
+    var key = tf || 1;
+
+    if (key === prev) {                            /* already right: write nothing */
+      if (tf) layer.style.transform = tf;
       return;
     }
 
-    if (scale === 1) layer.style.transform = "";
+    if (!tf) layer.style.transform = "";
     else {
       layer.style.transformOrigin = "center center";
-      layer.style.transform = "scale(" + scale + ")";
+      layer.style.transform = tf;
     }
-    applied[layer.id] = scale;
+    applied[layer.id] = key;
   }
 
   /* SCHEDULING, AND WHY IT IS NOT JUST requestAnimationFrame.

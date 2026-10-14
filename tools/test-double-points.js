@@ -89,7 +89,8 @@ function scoreOf(pid, qid){ var a = DB.vp_trivia_answers.filter(function(x){ ret
   r = await call(handlePaperScore, { game_id:G, round:1, teams:[{ no:1, name:'Oldies', correct:6, double:0 }] });
   show('6 right out of 6 must include both doubled ones, whatever was typed: 800', paperTotal(1) === 800, String(paperTotal(1)));
   r = await call(handlePaperScore, { game_id:G, round:1, teams:[{ no:2, name:'Quiet', correct:1, double:5 }] });
-  show('more doubled than they got right is capped: 1 right, doubled, 200', paperTotal(2) === 200, String(paperTotal(2)));
+  // Was "is capped" until 14 Oct 2026: a quiet cap put a typo on the wall, so it is refused and the host is told.
+  show('more doubled than they got right is refused, not capped: 400, and the 300 already on the board stands', r.status === 400 && paperTotal(2) === 300, r.status + ' ' + String(paperTotal(2)));
 
   print('\nthe console');
   var H = readFile('venueplay/app/trivia/host.html');

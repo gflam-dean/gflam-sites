@@ -92,6 +92,8 @@
  *                                         is returned ONLY in this host-only (authenticated) response.
  *   POST  /host/reveal          host     {game_id}                         -> {qseq, correct_index, split, leaderboard}
  *                                         Stamps is_correct + points_awarded server-side, then emits 'trivia.reveal'.
+ *   POST  /host/trivia/board    host     {game_id}                         -> {leaderboard}
+ *                                         The running totals only, read-only: a console reloaded mid-question refills its panel.
  *   GET   /player/card          player   ?game=<id> (optional)             -> BINGO:   {game_id, card_no, cells, pattern, called_numbers}
  *                                         Serves BINGO tickets AND musical cards           MUSICAL: {game_id, format:'musical_bingo', card_no,
  *                                         (branches on the running game format).                     cells, pattern, played_songs} | {game:null}
@@ -138,7 +140,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '14 Oct 2026, 13:12 · 50f3db7f';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '14 Oct 2026, 19:11 · caf0989b';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -275,6 +277,7 @@ export default {
       if (method === 'POST' && path === '/host/song/flag')      return await handleSongFlag(request, env, json);
       if (method === 'POST' && path === '/host/question')      return await handleHostQuestion(request, env, json);
       if (method === 'POST' && path === '/host/reveal')        return await handleHostReveal(request, env, json);
+      if (method === 'POST' && path === '/host/trivia/board')  return await handleHostTriviaBoard(request, env, json);
       if (method === 'POST' && path === '/host/draw')          return await handleHostDraw(request, env, json);
       if (method === 'POST' && path === '/host/draw/resolve')  return await handleDrawResolve(request, env, json);
       if (method === 'POST' && path === '/host/members/draw')         return await handleMembersDraw(request, env, json);
@@ -3031,7 +3034,12 @@ async function hostStartTrivia(env, json, b, session, staff, seq) {
      end of each round of round_size questions, so a team on paper cannot change a box after
      seeing it on the screen (Dean, 25 Sep). Decided by the Worker from what was printed, not by
      the console, so a reload cannot drop it. */
-  const paperTrivia = session.paper && session.paper.trivia && Number(session.paper.trivia.teams) > 0 ? session.paper.trivia : null;
+  /* ...and only for the round the host SAYS is on paper. Printing once made every later round that
+     night a paper round, answers held to the end of the round, even one with a different number of
+     questions than any sheet on a table (audit, 14 Oct 2026). The console now sends paper:true or
+     paper:false for each round; an older console that sends neither keeps the old rule. */
+  const paperAsked = b.paper === false ? false : true;
+  const paperTrivia = paperAsked && session.paper && session.paper.trivia && Number(session.paper.trivia.teams) > 0 ? session.paper.trivia : null;
   if (paperTrivia) {
     // The size the sheets were PRINTED in wins over whatever the console sends now: a sheet on a
     // table cannot change, and a host on a second tablet has not seen what the first one printed.
@@ -4909,7 +4917,27 @@ async function handleTriviaSetQuestions(request, env, json) {     // list a venu
   await triviaSetForVenue(env, setId, authUserId);
   const rows = await sbGetAll(env, 'vp_questions',
     'set_id=eq.' + enc(String(setId).trim()) + '&select=id,seq,question,options,correct_index,category,difficulty,image_url&order=seq.asc');
-  return json({ questions: rows });
+  /* WHICH ONES THE HOST WROTE. The builder's "Your own" count guessed from the category, and a
+     library question's category is often not a library set's title ("Movies & TV" lives in the
+     "Film & TV" set), so it said YOUR OWN 3 when the host had written one (audit, 14 Oct 2026). A
+     copied library question keeps its text word for word, so: any question whose exact text is in a
+     library set came from the library, and the rest are the venue's own. Twenty texts a read. If the
+     check cannot be made, `own` is left off and the builder falls back to its old guess. */
+  let libTexts = null;
+  try {
+    const lib = rows.length ? await sbGet(env, 'vp_question_sets', 'visibility=eq.library&select=id&limit=200') : [];
+    if (lib.length) {
+      libTexts = new Set();
+      const inList = '(' + lib.map((s) => enc(s.id)).join(',') + ')';
+      const uniq = [...new Set(rows.map((r) => String(r.question || '')))].filter(Boolean);
+      for (let i = 0; i < uniq.length; i += 20) {
+        const quoted = uniq.slice(i, i + 20).map((q) => enc('"' + q.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'));
+        const hits = await sbGet(env, 'vp_questions', 'set_id=in.' + inList + '&question=in.(' + quoted.join(',') + ')&select=question&limit=1000');
+        for (let k = 0; k < hits.length; k++) libTexts.add(hits[k].question);
+      }
+    }
+  } catch (e) { libTexts = null; }
+  return json({ questions: libTexts ? rows.map((r) => Object.assign({}, r, { own: !libTexts.has(r.question) })) : rows });
 }
 function sanitizeQuestion(q) {                                    // -> a valid row shape or null
   const options = Array.isArray(q.options) ? q.options.map((o) => String(o || '').slice(0, 200)) : [];
@@ -5684,6 +5712,29 @@ async function handleHostReveal(request, env, json) {
   return json({ qseq: d.qseq, correct_index: d.correct_index, split: d.split, leaderboard: d.leaderboard, already: d.already === true, double: d.double === true });
 }
 
+/* ------------------------------ POST /host/trivia/board ------------------------------
+ * The running totals, and nothing else. A console reloaded mid-question had no way to refill its
+ * Leaderboard panel: /host/reveal is the only route that returns the board, and asking it while a
+ * question is open REVEALS that question. So the panel sat empty until the next reveal (audit,
+ * 14 Oct 2026). This reads the same view the reveal reads and writes nothing. Host-only: on a paper
+ * night the totals are not public until the round's sheets are in.
+ */
+async function handleHostTriviaBoard(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
+  const b = await readJson(request);
+  const gameId = String(b.game_id || '').trim();
+  if (!gameId) return json({ error: 'Missing game_id' }, 400);
+  assertUuid(gameId, 'game_id');
+  const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,format');
+  if (!games.length) return json({ error: 'Game not found' }, 404);
+  const session = await getSession(env, games[0].session_id);
+  await requireStaff(env, authUserId, session.venue_id);          // ENFORCED: staff at the game's venue
+  if (games[0].format !== 'trivia') return json({ error: 'Not a trivia game' }, 400);
+  const board = await sbGet(env, 'v_vp_trivia_leaderboard',
+    'game_id=eq.' + enc(gameId) + '&select=player_id,display_name,points&order=points.desc&limit=50');
+  return json({ leaderboard: board.map((r) => ({ name: r.display_name || 'Player', points: r.points || 0 })) });
+}
+
 // The pre-73 path, kept only as the fallback above (see handleHostQuestionManyTrips).
 async function handleHostRevealManyTrips(request, env, json, pre) {
   const authUserId = pre ? pre.authUserId : await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
@@ -6211,6 +6262,15 @@ async function handlePlayerAnswer(request, env, json) {
   const status = rows && rows[0] && rows[0].status;
   if (status === 'recorded') return json({ ok: true, recorded: true });   // NO correctness: that is only known after reveal
   if (status === 'already')  return json({ ok: true, recorded: false, reason: 'already_answered' });
+  /* "Not a trivia game" TO A PHONE THAT IS NOT IN THE GAME tells another venue's phone what this game
+     is. The function (migration 71) checks the format before the membership; migration 99 swaps them.
+     Until it is run, and harmlessly after, a not_trivia is only said to a phone in the game's own
+     session. It is a rare answer (a phone posting a bingo game id), so the extra read costs nothing. */
+  if (status === 'not_trivia') {
+    const own = rows[0] && rows[0].session_id;
+    const g = await sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=session_id&limit=1');
+    if (!g.length || !own || g[0].session_id !== own) return json({ error: ANSWER_STATUS.wrong_game[1] }, ANSWER_STATUS.wrong_game[0]);
+  }
   const reply = ANSWER_STATUS[status];
   if (!reply) throw dbError('rpc', 'vp_player_answer', 'unexpected status ' + status);
   return json({ error: reply[1] }, reply[0]);
@@ -6234,8 +6294,9 @@ async function handlePlayerAnswerEightTrips(request, env, json, pre) {
   const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,status,format');
   if (!games.length) return json({ error: 'Game not found' }, 404);
   const game = games[0];
-  if (game.format !== 'trivia') return json({ error: 'Not a trivia game' }, 400);
+  // Membership FIRST, as in the one-trip path (migration 99): the format is not another venue's business.
   if (game.session_id !== player.session_id) return json({ error: 'Player is not in this game' }, 403);
+  if (game.format !== 'trivia') return json({ error: 'Not a trivia game' }, 400);
   if (game.status !== 'running') return json({ error: 'This game is not running' }, 409);
   const session = await getSession(env, game.session_id);
   if (session.status === 'finished' || session.status === 'cancelled') return json({ error: 'This session is closed' }, 409);
@@ -6325,8 +6386,9 @@ async function handlePlayerScore(request, env, json) {
     game = games[0];
     cache.set('g:' + gameId, { data: game, until: nowMs + 60000 });
   }
-  if (game.format !== 'trivia') return json({ error: 'Not a trivia game' }, 400);
+  // Membership FIRST: "Not a trivia game" told a phone from another venue what this game was (14 Oct 2026).
   if (game.session_id !== player.session_id) return json({ error: 'Player is not in this game' }, 403);
+  if (game.format !== 'trivia') return json({ error: 'Not a trivia game' }, 400);
 
   /* A PAPER NIGHT HOLDS SCORES TO THE END OF THE ROUND. On defer_reveal the answers go up only after the
      host has the sheets, but this route told any phone whether it was right, and its running total,
@@ -6385,11 +6447,16 @@ async function handlePlayerScore(request, env, json) {
   // A phone that did not answer this question throws this away (see the note above), so it says
   // so with last=0 and the read is not made at all.
   const wantLast = url.searchParams.get('last') !== '0';
+  /* WHICH QUESTION it was, too (qseq, the same number the reveal broadcast carries). A phone that
+     re-joined, or reloaded and lost its own note of what it tapped, could not tell whether this was
+     its answer to the question on the wall, so it said "NO ANSWER" for a question it had answered and
+     been scored on (audit, 14 Oct 2026). Embedded through the question_id foreign key: same one trip. */
   const last = !wantLast ? [] : await sbGet(env, 'vp_trivia_answers',
     'game_id=eq.' + enc(gameId) + '&player_id=eq.' + enc(player.id) +
-    '&select=answer_index,is_correct,points_awarded,answered_at&order=answered_at.desc&limit=1');
+    '&select=answer_index,is_correct,points_awarded,answered_at,vp_questions(seq)&order=answered_at.desc&limit=1');
+  const lastSeq = last.length && last[0].vp_questions && Number.isFinite(Number(last[0].vp_questions.seq)) ? Number(last[0].vp_questions.seq) : null;
   const lastRow = last.length
-    ? { answered: true, answer_index: last[0].answer_index, is_correct: last[0].is_correct, points_awarded: last[0].points_awarded }
+    ? { answered: true, answer_index: last[0].answer_index, is_correct: last[0].is_correct, points_awarded: last[0].points_awarded, qseq: lastSeq }
     : { answered: false, is_correct: null, points_awarded: null };
 
   return json({ total, rank, players_count: count, last: lastRow });
@@ -8362,6 +8429,18 @@ async function handlePaperScore(request, env, json) {
   const base = (cfg.base_points != null) ? Number(cfg.base_points) : 100;   // no speed bonus: a pen cannot be timed
   const maxTeam = Math.max(Number(cfg.paper_teams) || 0, Number(((session.paper || {}).trivia || {}).teams) || 0);
   const teams = Array.isArray(b.teams) ? b.teams : [];
+  /* A SCORE THE ROUND CANNOT HOLD IS REFUSED, NOT CUT DOWN. "9 right out of 5" was clamped to 5 and
+     went on the wall as if the sheet said so, and the host never knew a box was mistyped (audit, 14 Oct
+     2026). Checked for every team BEFORE anything is written, so one bad box saves nothing. */
+  for (let k = 0; k < teams.length && k < 200; k++) {
+    const t = teams[k] || {};
+    if (t.correct === '' || t.correct == null) continue;
+    const who = (String(t.name || '').trim() || ('Team ' + (parseInt(t.no, 10) || k + 1))).slice(0, 40);
+    const c = parseInt(t.correct, 10), dv = parseInt(t.double, 10) || 0;
+    if (!(c >= 0)) return json({ error: who + ': type how many they got right, as a number.' }, 400);
+    if (c > roundIds.length) return json({ error: who + ': ' + c + ' right, but round ' + round + ' had ' + roundIds.length + ' questions. Check the sheet and fix the number.' }, 400);
+    if (dv > roundDouble.length || dv > c) return json({ error: who + ': ' + dv + ' right in the double points questions does not fit ' + c + ' right with ' + roundDouble.length + ' doubled. Fix that box.' }, 400);
+  }
   let scored = 0;
   for (let k = 0; k < teams.length && k < 200; k++) {
     const t = teams[k] || {};

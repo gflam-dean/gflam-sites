@@ -234,6 +234,7 @@
             <label>Paper teams <small style="color:var(--faint);font-weight:400">for regulars without a phone</small></label>
             <button type="button" class="btn ghost" id="paperPrintBtn" style="width:100%">Print answer sheets</button>
             <div class="note" id="paperNote" style="margin-top:4px">Up to 10 teams a night. With paper teams playing, the answers go up at the end of each round, after the host has their sheets. A paper team counts as a player once its score goes on the leaderboard.</div>
+            <label id="paperRoundRow" style="display:none;margin-top:8px;color:var(--text);align-items:center;gap:8px;font-size:13.5px;font-weight:600;cursor:pointer"><input type="checkbox" id="paperRound" style="width:auto;margin:0"> Play this round on paper</label>
           </div>
           <div id="weekBanner" style="display:none;margin:0 0 12px;padding:12px 14px;background:rgba(245,165,36,.12);border:1px solid rgba(245,165,36,.45);border-radius:11px;color:#F5A524;font-size:13.5px;line-height:1.5"></div>
           <button class="btn pink big" id="startBtn">Open lobby</button>
@@ -551,6 +552,7 @@
             if(p.cur.pids && typeof p.cur.pids==="object") G.answeredPids=p.cur.pids;
           }
           send({ t:"question", game_id:G.gameId, qseq:G.current.qseq, qi:G.current.qi, qtotal:G.qtotal, text:G.current.text, options:G.current.options, endsAt:endsAt, secs:remainingSecs(), colour:G.colour, imageUrl:G.current.imageUrl, double:isDouble(G.current.qseq) });
+          readBoard();   // the scores so far, WITHOUT revealing the open question (see readBoard)
           if(remainingSecs()>0){ G.tick=setInterval(function(){ updateLive(); if(remainingSecs()<=0){ clearTick(); send({ t:"lock" }); } }, 500); }
           else { send({ t:"lock" }); }
         } else if(q && phase==="revealed"){
@@ -613,6 +615,24 @@
     renderPlayers();
     renderBoard();
     if(live) renderRun();
+  }
+  /* The name a phone plays under tonight: its own, unless a phone already in has it (in any
+     capitals), and then "<name> 2", "<name> 3". The first one in keeps the plain name, and a phone
+     re-announcing its own name is never renamed against itself. Kept to the 20 characters a phone
+     can type. */
+  function uniqueTeamName(pid, name){
+    var base=String(name||"").trim()||"Player";
+    function taken(n){
+      var k=n.toLowerCase();
+      for(var i=0;i<G.order.length;i++){
+        var id=G.order[i]; if(id===pid) continue;
+        var p=G.players[id]; if(p && String(p.name||"").trim().toLowerCase()===k) return true;
+      }
+      return false;
+    }
+    if(!taken(base)) return base;
+    for(var n=2;n<100;n++){ var c=base.slice(0,17).trim()+" "+n; if(!taken(c)) return c; }
+    return base;
   }
   function renderPlayers(){
     var elx=$("playerList");
@@ -856,8 +876,12 @@
     var el=$("lobbyWait"); if(!el) return;
     if(G.status!=="lobby" || typeof n!=="number" || n<1){ el.style.display="none"; el.textContent=""; return; }
     el.style.display="";
-    el.textContent = n===1 ? "1 phone has scanned in and is waiting. They pick a team name when you start the round."
-                           : n+" phones have scanned in and are waiting. They pick a team name when you start the round.";
+    /* Phones now reach this console in the lobby, team names and all, so "they pick a team name
+       when you start the round" was wrong while the names sat in the Players box right under it
+       (audit, 14 Oct 2026). Say what is true: how many, and whether every one has come through. */
+    var named=playerCount(), ph=(n===1 ? "1 phone has" : n+" phones have");
+    el.textContent = named>=n ? (ph+" scanned in. "+(n===1 ? "Its team name is" : "Their team names are")+" under Players.")
+                              : (ph+" scanned in. Team names show under Players as each one comes through.");
   }
   function pollLobbyWait(){
     if(G.status!=="lobby") return;
@@ -880,6 +904,7 @@
     readSettings();
     openSession().then(function(){
       bcast({ t:"mode", mode:"trivia", title:G.setTitle });   // TV shows the trivia join screen, named after the night
+      releasePodium();                                         // the last round's winners give way to this lobby
       G.status="lobby";
       startLobbyWatch();
       gsend({ t:"rollcall" });               // new round: pull the still-connected players back onto the roster
@@ -908,13 +933,16 @@
       return apiPost("/host/game",{
         session_id:G.sessionId, format:"trivia", question_set_id:G.setId,
         time_limit_s:G.timePerQ, base_points:G.base, speed_bonus:G.speedBonus, colour:G.colour,
-        question_count:G.count, round_size:G.roundSize, double_points:G.doublePoints, double_last:G.doubleLast
+        question_count:G.count, round_size:G.roundSize, double_points:G.doublePoints, double_last:G.doubleLast,
+        paper:paperThisRound()   // said for THIS round: printing once no longer makes every later round paper
       });
     }).then(function(r){
       G.gameId=r.game_id; G.questionCount=r.question_count; G.qtotal=r.question_count;
       G.doubleSeqs=Array.isArray(r.double_seqs)?r.double_seqs:[];
       // The Worker makes it a paper round from what was printed; the console mirrors that rule.
       G.defer = (r.paper===true); G.rs = r.round_size || G.roundSize; G.round = 1; G.roundItems = []; savePaperRound();
+      G.paperRound = null;   // the next round decides again
+      if(G.defer){ try{ var _pi=paperPrintedInfo(); _pi.usedBy=G.gameId; localStorage.setItem(paperKey(), JSON.stringify(_pi)); }catch(e){} }   // these sheets have now been played
       G.status="ready"; G.board=[]; G.current=null;
       saveTrivia();
       bcast({ t:"started", game_id:G.gameId, question_count:r.question_count, colour:G.colour, title:G.setTitle });
@@ -948,6 +976,18 @@
      The comment here used to say the TV recovers the leaderboard from its own snapshot. It cannot:
      trivia/screen.html never calls the game Worker at all. /host/reveal is idempotent (it will not
      re-stamp an already revealed question), so asking again is safe. */
+  /* THE SCORES SO FAR, MID-QUESTION. rebuildBoard cannot be used while a question is open: asking
+     /host/reveal then would REVEAL it. So a host who reloaded mid-question had an empty Leaderboard
+     panel until the next reveal (audit, 14 Oct 2026). /host/trivia/board reads the same board the
+     reveal returns and changes nothing. An older Worker without the route answers 404, and the
+     panel stays as it was. */
+  function readBoard(){
+    if(!G.gameId) return;
+    var gid=G.gameId;
+    apiPost("/host/trivia/board",{ game_id:gid })
+      .then(function(r){ if(r && Array.isArray(r.leaderboard) && G.gameId===gid && !G.board.length){ G.board=r.leaderboard; renderBoard(); } })
+      .catch(function(){});
+  }
   function rebuildBoard(){
     if(!G.gameId) return;
     apiPost("/host/reveal",{ game_id:G.gameId })
@@ -1112,10 +1152,23 @@
     body.appendChild(endBtn("Finish Punters Reckon"));
   }
 
+  var PODIUM_HOLD_MS=10*60*1000;
+  function holdPodium(){
+    clearTimeout(G.podiumHoldT); G.podiumHeld=true;
+    G.podiumHoldT=setTimeout(function(){ if(G.podiumHeld && G.status==="setup"){ G.podiumHeld=false; bcast({ t:"idle" }); } }, PODIUM_HOLD_MS);
+  }
+  /* The new lobby takes the wall from the held winners: the trivia screen only, on its own pairing
+     channel (send, not bcast), because the venue channel hears "state" as bingo's. Sent with every
+     lobby, held or not: a console reloaded while the winners were up has forgotten it was holding
+     them, and a lobby is what the wall should show either way. */
+  function releasePodium(){
+    clearTimeout(G.podiumHoldT); G.podiumHeld=false;
+    send({ t:"state", phase:"lobby", colour:G.colour });
+  }
   function endRound(){
     clearTick();
     clearTrivia();
-    var gid=G.gameId;
+    var gid=G.gameId, afterPodium=(G.status==="ended" && !G.pr);
     G.status="setup"; G.current=null; G.answeredPids={};
     /* FINAL SCORES MUST STAY UP LONG ENOUGH TO READ. This used to send the leaderboard and then
        "idle" in the same breath, so the TV went straight back to the lobby and nobody saw who won
@@ -1128,6 +1181,12 @@
       G.prBoardT=setTimeout(function(){ bcast({ t:"leaderboard", title:"Final scores", rows:_rows }); }, _mid ? 7000 : 0);
       G.prIdleT=setTimeout(function(){ if(G.status==="setup") bcast({ t:"idle" }); }, (_mid ? 7000 : 0) + 15000);
       G.pr=null; G.prPub=null;
+    } else if(afterPodium){
+      /* THE WINNERS STAY UP UNTIL THE NEXT LOBBY. "Start a new round" after the podium sent idle, and
+         idle on the venue's channel is /tv's "back to the ads", so the winners vanished the moment the
+         host went to set up the next round (audit, 14 Oct 2026). Nothing is sent now; openLobby puts
+         the wall on the new lobby. If no lobby follows, the ads come back after PODIUM_HOLD_MS. */
+      holdPodium();
     } else {
       bcast({ t:"idle" });   // screen returns to the join/lobby state
     }
@@ -1202,8 +1261,21 @@
     }
     if(m.t==="join"){
       if(!m.pid) return;                       // cosmetic roster only; the Worker meters vp_players
-      if(!G.players[m.pid]){ G.players[m.pid]={ name:(m.name||"Player") }; G.order.push(m.pid); }
-      else { G.players[m.pid].name=(m.name||G.players[m.pid].name); }
+      /* ONLY A TRIVIA PHONE IS A TRIVIA PLAYER. This channel is the venue's own code, the one the
+         bingo and musical phones are on too, and a bingo page left open in somebody's pocket answers
+         this console's rollcall with its own saved name: "Bingo Betty" sat in the Players box as a
+         sixth team, the count was one more than the room, and "All in" could never go green (break
+         test, 14 Oct 2026). Trivia phones tag their join with fmt, the same tag this console puts on
+         everything it sends; anything else is somebody else's game. */
+      if(m.fmt!=="trivia") return;
+      var nm=uniqueTeamName(m.pid, String(m.name||"Player"));
+      if(!G.players[m.pid]){ G.players[m.pid]={ name:nm }; G.order.push(m.pid); }
+      else { G.players[m.pid].name=nm; }
+      /* TWO TEAMS, ONE NAME. Two phones that both typed "Quiz Kids" were two identical chips and two
+         identical rows on the wall, so neither table knew which score was theirs. The later one is
+         told its name on the board ("Quiz Kids 2") and its phone re-registers under it, so the
+         leaderboard (which reads the name the Worker holds) tells them apart too. */
+      if(nm!==String(m.name||"Player")) gsend({ t:"rename", to:m.pid, name:nm });
       bcast({ t:"players", count:playerCount() });
       renderJoinCounts();     // NOT renderConsole: see above
       replayState(m.pid);     // they may have missed a live question; catch them up
@@ -1350,7 +1422,25 @@
           : (n+" paper team"+(n===1?"":"s")+" tonight, each with one sheet of "+(info.questions||G.count)+" questions. The answers go up at the end of the round, after you have their sheets. A paper team counts as a player once its score goes on the leaderboard."))
       : "Up to 10 teams a night. With paper teams playing, the answers go up at the end of the round, after the host has their sheets. A paper team counts as a player once its score goes on the leaderboard.";
     $("paperNote").style.color = stale ? "var(--gold)" : "";
+    var row=$("paperRoundRow"), box=$("paperRound");
+    if(row && box){
+      row.style.display = (n && (G.status==="setup" || G.status==="lobby")) ? "flex" : "none";   // before a round, including the second one of the night
+      box.checked = paperThisRound();
+    }
   }
+  /* PAPER IS DECIDED PER ROUND, BY THE HOST (14 Oct 2026). Printing sheets used to make EVERY later
+     round that night a paper round, answers held back to the end of the round, even a round with a
+     different number of questions that no sheet on a table matched (audit, 14 Oct 2026). Now the
+     console says paper:true or paper:false for each round it starts. Ticked by default only for the
+     first round after a print whose sheets match the round; a sheet already played is not reused
+     unless the host ticks the box. */
+  function paperThisRound(){
+    var info=paperPrintedInfo(), n=info.teams|0;
+    if(!n) return false;
+    if(typeof G.paperRound==="boolean") return G.paperRound;
+    return !info.usedBy && !(info.questions && info.questions!==effectiveCount());
+  }
+  (function(){ var b=$("paperRound"); if(b) b.addEventListener("change", function(){ G.paperRound=!!b.checked; }); })();
   var _paperDone=null;
   $("paperGo").addEventListener("click", function(){
     var v=parseInt($("paperCount").value,10);
@@ -1377,6 +1467,7 @@
         // Before the game the latest print wins; once it is running a reprint keeps the sheets on the tables.
         var rs=r.round_size||G.roundSize, qn=r.questions||G.count;
         try{ localStorage.setItem(paperKey(), JSON.stringify({ teams:r.teams, roundSize:rs, questions:qn })); }catch(e){}
+        G.paperRound = null;   // fresh sheets: the next round is on paper unless the host unticks it
         renderPaperSetup();
         if(!window.VPPrint || !VPPrint.trivia(w, { teams:r.teams, questions:qn, roundSize:rs, venue:(G.venue && G.venue.name)||"" })){
           hostError(printProblem(w));
@@ -1424,6 +1515,18 @@
     bcast({ t:"leaderboard", title:"Leaderboard after round "+G.round, rows:G.board });
     renderConsole();
   }
+  /* What is wrong with the typed paper scores, in words for the host, or "" when nothing is. */
+  function paperScoreProblem(teams, outOf, dblOutOf){
+    for(var i=0;i<teams.length;i++){
+      var t=teams[i], who=t.name || ("Team "+t.no);
+      if(t.correct==="") continue;                              // no sheet handed in: fine
+      if(!(t.correct>=0)) return who+": type how many they got right, as a number.";
+      if(t.correct>outOf) return who+": "+t.correct+" right, but this round had "+outOf+" question"+(outOf===1?"":"s")+". Check the sheet and fix the number.";
+      if(t.double>0 && t.double>dblOutOf) return who+": "+t.double+" right in the double points questions, but there "+(dblOutOf===1?"was 1":"were "+dblOutOf)+". Fix that box.";
+      if(t.double>t.correct) return who+": more right in the double points questions ("+t.double+") than right in total ("+t.correct+"). Fix one of the boxes.";
+    }
+    return "";
+  }
   function paperSaveScores(btn){
     var teams=[], n=paperTeams();
     G.paperNames=G.paperNames||{};
@@ -1432,6 +1535,14 @@
       G.paperNames[i]=nm.trim();
       teams.push({ no:i, name:nm.trim(), correct:(c===""||c==null)?"":parseInt(c,10), double:(d===""||d==null)?0:parseInt(d,10) });
     }
+    /* A SCORE THE ROUND CANNOT HOLD IS A TYPO, AND THE HOST HEARS ABOUT IT. "9 right out of 5" was
+       quietly cut to 5 by the server and went on the wall as if that is what the sheet said (audit,
+       14 Oct 2026). Nothing is sent until every box is a number the round allows. */
+    var _rs=G.rs||10, _len=G.qtotal ? Math.min(_rs, Math.max(0, G.qtotal-(G.round-1)*_rs)) : 0;
+    var _its=G.roundItems||[], _out=Math.max(_its.length, _len);
+    // The doubled count is only known when this tablet saw the whole round; otherwise the server checks it.
+    var bad=paperScoreProblem(teams, _out, _its.length===_out ? _its.filter(function(it){ return it.dbl; }).length : Infinity);
+    if(bad){ hostError(bad); return; }
     if(btn){ btn.disabled=true; btn.textContent="Saving..."; }
     apiPost("/host/paper/score",{ game_id:G.gameId, round:G.round, teams:teams }).then(function(r){
       if(r && r.leaderboard) G.board=r.leaderboard;
