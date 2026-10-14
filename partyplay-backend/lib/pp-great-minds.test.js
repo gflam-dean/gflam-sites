@@ -1,7 +1,8 @@
 /* GREAT MINDS (PartyPlay's copy of Punters Reckon): one engine, family boards, played for real.
 
-   Loads the REAL run.html runner, the real engine (partyplay/lib/pr-game.js) and the real boards,
-   drives a board with two guests, and reads what went down the party channel. Every phone and the
+   Loads the REAL run.html runner, the real engine (partyplay/lib/pr-game.js) and the real boards
+   (in the PartyPlay Worker since 15 Oct 2026, PP_GM_BOARDS, served to the host key by
+   GET /party/gm/boards; run.html asks for them), drives a board with two guests, and reads what went down the party channel. Every phone and the
    telly hear that channel, so the rule that matters is the one VenuePlay's round test holds too:
    no answer travels before somebody finds it.
 
@@ -26,13 +27,17 @@ print("== one engine: PartyPlay's copies are VenuePlay's files, byte for byte ==
 var g = {};
 g.window = g; g.globalThis = g;
 g.crypto = { getRandomValues: function(a){ a[0] = 0; return a; } };
-["partyplay/lib/ta-match.js", "partyplay/lib/pp-great-minds-boards.js", "partyplay/lib/pr-game.js", "partyplay/lib/pp-games.js"].forEach(function(f){
+/* The boards, lifted out of the Worker source and RUN, so this plays exactly what the Worker hands out. */
+var _ws = readFile(ppFile("partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js")), _bs = _ws.indexOf("\nconst PP_GM_BOARDS = [");
+if (_bs < 0) throw new Error("PP_GM_BOARDS is not in the PartyPlay Worker: a suite that cannot find its boards cannot fail");
+var GMB = (new Function(_ws.slice(_bs, _ws.indexOf("\n];\n", _bs) + 3) + "\nreturn PP_GM_BOARDS;"))();
+["partyplay/lib/ta-match.js", "partyplay/lib/pr-game.js", "partyplay/lib/pp-games.js"].forEach(function(f){
   (new Function("window", "globalThis", "module", readFile(ppFile(f))))(g, g, undefined);
 });
 
 print("== the boards are family boards, and each one plays fair ==");
 var BANNED = /\b(beer|beers|wine|pokies?|pub|pubs|grog|booze|drunk|schooner|pint|vodka|rum|champagne|cocktails?|cigarettes?|smok\w*|hangover|alcohol|bet|betting|tab)\b/i;
-var boards = g.TABoards, badWords = [], badSums = [], shared = [], selfMiss = [];
+var boards = GMB, badWords = [], badSums = [], shared = [], selfMiss = [];
 boards.forEach(function(b){
   var total = 0, seen = {};
   if (BANNED.test(b.q)) badWords.push(b.id + ": " + b.q);
@@ -70,7 +75,11 @@ g.location = { search:"?code=ABCDEF&key=k", href:"", replace:function(){} };
 var store = {};
 g.localStorage = { getItem:function(k){ return store[k] || null; }, setItem:function(k, v){ store[k] = String(v); } };
 g.sessionStorage = g.localStorage;
-g.fetch = function(){ return Promise.resolve({ ok:true, json:function(){ return Promise.resolve({}); } }); };
+var asked = [];
+g.fetch = function(url){ asked.push(String(url));
+  var j = /\/party\/gm\/boards\?/.test(url) ? { boards: GMB } : {};
+  return Promise.resolve({ ok:true, status:200, json:function(){ return Promise.resolve(j); } }); };
+function drain(){ for (var i = 0; i < 30; i++) drainMicrotasks(); }
 g.setTimeout = function(f, ms){ timers.push({ f:f, ms:ms }); return timers.length; };
 g.setInterval = function(){ return 0; }; g.clearTimeout = function(){}; g.clearInterval = function(){};
 g.navigator = { userAgent:"jsc", clipboard:{ writeText:function(){ return Promise.resolve(); } }, mediaDevices:{} };
@@ -97,7 +106,9 @@ X.setToast(function(){});
 ok("run.html sends a guess to the runner (the channel handler knows pr_guess)", /if\(m\.t==="pr_guess"\)\{ onGreatMindsGuess\(m\); \}/.test(src));
 ok("and starts the game from its tile", /else if\(g\.format==="topanswers"\) runGreatMinds\(g\);/.test(src));
 
-X.runGreatMinds({ format:"topanswers" });
+X.runGreatMinds({ format:"topanswers" }); drain();
+ok("the runner asks the Worker for the boards with the party code and host key", asked.filter(function(u){ return u === "https://x/party/gm/boards?code=ABCDEF&key=k"; }).length === 1, asked.join(" | "));
+ok("and plays exactly the boards the Worker sent", X.getG() && X.getG().game.boards === GMB && GMB.length >= 30 && !g.TABoards);
 X.gmPutUp();
 X.gmPutUp();   // a double-tap
 var G = X.getG(), b = G.game.board, pub = sent.filter(function(m){ return m.t === "ta_board"; })[0];
@@ -133,7 +144,7 @@ X.gmPutUp();   // board 2 goes up
 var b2 = X.getG().game.board;
 X.onGreatMindsGuess({ t:"pr_guess", name:"Sam", round:2, text:b2.answers[0].a });
 var mark = sent.length;
-X.runGreatMinds({ format:"topanswers", id:undefined });   // what a reload does: the runner starts again
+X.runGreatMinds({ format:"topanswers", id:undefined }); drain();   // what a reload does: the runner starts again
 var G2 = X.getG();
 ok("a reload brings back the same board, the scores and what was found", G2.game.board && G2.game.board.q === b2.q && G2.game.scores.Sam && Object.keys(G2.game.found).length === 1);
 ok("and puts the board back on the telly and phones (question, count, found answers only)",
@@ -142,7 +153,8 @@ X.gmEnd();
 X.gmFinish(); X.gmFinish();
 var fin = X.getG().game.scores;
 ok("Finish adds the scores to the night once, however many times it is pressed", X.night().Sam === fin.Sam.pts && X.night().Jo === fin.Jo.pts && fin.Sam.pts > first.pts, JSON.stringify(X.night()));
-X.runGreatMinds({ format:"topanswers", id:undefined });
+X.runGreatMinds({ format:"topanswers", id:undefined }); drain();
+ok("the boards are asked for once a party, not every time the game is run", asked.filter(function(u){ return /\/party\/gm\/boards/.test(u); }).length === 1, asked.join(" | "));
 ok("running a finished game again starts it fresh", X.getG().game.round === 0 && !Object.keys(X.getG().game.scores).length);
 
 print("== the phone and the telly mount the shared parts ==");

@@ -96,7 +96,7 @@
 <script src="/lib/pp-licence.js"></script>
 <script src="/lib/pp-quiz.js"></script>
 <script src="/lib/ta-match.js"></script>
-<script src="/lib/pp-great-minds-boards.js"></script>
+<!-- Great Minds' boards are NOT a script: this page asks the Worker for them with the host key (gmBoards). -->
 <script src="/lib/pr-game.js"></script>
 <script src="/lib/pp-ticket.js"></script>
 <script src="/lib/pp-sign.js"></script>
@@ -1172,9 +1172,30 @@
      the rest turn over at the end. Guests are known by name here, so the name is the player id.
      Every phone hears every message on a party channel, which is why the board with its answers
      never leaves this tablet. */
+  /* THE BOARDS COME FROM THE WORKER, WITH THE HOST KEY (15 Oct 2026). They were a public script,
+     /lib/pp-great-minds-boards.js, that anybody could open and read every answer from before the
+     party. Asked for once, the first time Great Minds is tapped, and held on this tablet only. */
+  var _gmBoards=null;
+  function gmBoards(){
+    if(!_gmBoards){
+      _gmBoards=api("/party/gm/boards?code="+encodeURIComponent(CODE)+"&key="+encodeURIComponent(KEY)).then(function(j){
+        if(!j || !j.boards || !j.boards.length) throw new Error("There are no boards to play.");
+        return j.boards;
+      });
+      _gmBoards.catch(function(){ _gmBoards=null; });   // a failed ask is asked again on the next tap
+    }
+    return _gmBoards;
+  }
   function runGreatMinds(g){
     if(!window.PRGame){ toast("That game did not load. Reload this page."); return; }
-    G={ mode:"gm", game:new PRGame.Game({ name:PPGames.name(g.format, g.title) }), pub:null, feed:[], added:false,
+    var was=G;
+    gmBoards().then(function(boards){
+      if(G!==was) return;   // the host tapped another game while the boards were on their way
+      startGreatMinds(g, boards);
+    }, function(){ toast("The Great Minds boards did not load. Check the wifi and tap it again."); });
+  }
+  function startGreatMinds(g, boards){
+    G={ mode:"gm", game:new PRGame.Game({ name:PPGames.name(g.format, g.title), boards:boards }), pub:null, feed:[], added:false,
         endT:null, boardT:null, repaint:paintGreatMinds, resend:resendGreatMinds, key:"ppGM:"+CODE+":"+(g.id||"") };
     /* A RELOAD PICKS UP WHERE IT WAS, board in play included: the scores, what was found and each
        guest's guesses left are saved on this tablet after every change (never sent anywhere). */

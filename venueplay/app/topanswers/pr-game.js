@@ -10,7 +10,10 @@
    way every game does (the phone calls /player/alive), and a night of this is NOT the weekly trivia
    night (Dean, 29 Sep 2026).
 
-   Needs TAMatch (ta-match.js). Boards come from TABoards (ta-boards.js). ES5.
+   Needs TAMatch (ta-match.js). Boards are passed in as opts.boards: each product's host screen asks
+   its own Worker for them (VenuePlay: GET /host/pr/boards, staff only; PartyPlay: GET /party/gm/boards,
+   host key only; 15 Oct 2026), because a public script of boards is every answer readable before a
+   night. window.TABoards is only a fallback, for a test or a demo page. ES5.
 
    ONE ENGINE, TWO PRODUCTS. PartyPlay runs this same file as its own game (a byte-for-byte copy in
    partyplay/lib, checked by partyplay-backend/lib/pp-great-minds.test.js) with family boards and its own name. */

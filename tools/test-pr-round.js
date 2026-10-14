@@ -17,7 +17,9 @@ Object.defineProperty(Host.prototype, 'innerHTML', { get: function(){ return thi
 Host.prototype.querySelector = function(sel){ var m = /\[data-([rib])="([^"]+)"\]/.exec(sel); if (m) return this.reg[m[1] + ':' + m[2]] || null; return this.reg[sel] || null; };
 var doc = { getElementById: function(){ return null; }, createElement: function(){ return {}; }, head: { appendChild: function(){} } };
 var window = { document: doc, crypto: { getRandomValues: function(a){ a[0] = 3; return a; } } };
-['ta-match.js', 'ta-boards.js', 'pr-game.js', 'pr-board.js', 'pr-phone.js'].forEach(function(f){
+load('tools/pr-boards-from-worker.js');
+window.TABoards = prBoardsFromWorker();   // the real boards, out of the game Worker (15 Oct 2026)
+['ta-match.js', 'pr-game.js', 'pr-board.js', 'pr-phone.js'].forEach(function(f){
   (new Function('window', 'setInterval', 'clearInterval', readFile('venueplay/app/topanswers/' + f)))(window, function(){ return 1; }, function(){});
 });
 

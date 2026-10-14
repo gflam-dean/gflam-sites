@@ -94,6 +94,8 @@
  *                                         Stamps is_correct + points_awarded server-side, then emits 'trivia.reveal'.
  *   POST  /host/trivia/board    host     {game_id}                         -> {leaderboard}
  *                                         The running totals only, read-only: a console reloaded mid-question refills its panel.
+ *   GET   /host/pr/boards       host     ?venue_id=<uuid>                  -> {boards:[{id, q, answers:[{a, pts, also}]}]}
+ *                                         Punters Reckon's boards WITH their answers, for the console only (15 Oct 2026).
  *   GET   /player/card          player   ?game=<id> (optional)             -> BINGO:   {game_id, card_no, cells, pattern, called_numbers}
  *                                         Serves BINGO tickets AND musical cards           MUSICAL: {game_id, format:'musical_bingo', card_no,
  *                                         (branches on the running game format).                     cells, pattern, played_songs} | {game:null}
@@ -140,7 +142,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '14 Oct 2026, 19:14 · f02f8bfe';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '15 Oct 2026, 09:23 · 74ae22a1';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -258,6 +260,7 @@ export default {
       if (method === 'POST' && path === '/host/trivia/set')                return await handleTriviaSet(request, env, json);
       if (method === 'POST' && path === '/host/trivia/set/delete')         return await handleTriviaSetDelete(request, env, json);
       if (method === 'GET'  && path === '/host/trivia/set/questions')      return await handleTriviaSetQuestions(request, env, json);
+      if (method === 'GET'  && path === '/host/pr/boards')                 return await handlePRBoards(request, env, json);   // Punters Reckon, staff only
       if (method === 'POST' && path === '/host/trivia/questions/add')      return await handleTriviaAdd(request, env, json);
       if (method === 'POST' && path === '/host/trivia/questions/update')   return await handleTriviaUpdate(request, env, json);
       if (method === 'POST' && path === '/host/trivia/image-upload')       return await handleTriviaImageUpload(request, env, json);
@@ -5014,6 +5017,246 @@ async function handleTriviaSetQuestions(request, env, json) {     // list a venu
     }
   } catch (e) { libTexts = null; }
   return json({ questions: libTexts ? rows.map((r) => Object.assign({}, r, { own: !libTexts.has(r.question) })) : rows });
+}
+/* ------------------------- GET /host/pr/boards?venue_id= -------------------------
+   PUNTERS RECKON'S BOARDS, WITH THEIR ANSWERS, FOR THE HOST CONSOLE ONLY (15 Oct 2026).
+   They used to ship in a public script, /app/topanswers/ta-boards.js. No phone and no TV loaded
+   it, but anybody could fetch it and read every answer before a night, and a team that did would
+   top the leaderboard. They live here now, behind the same two locks as every /host/ route: a
+   verified host login, and staff (or an HQ admin) at the venue asked about.
+
+   A module constant, not a table: we write them, they change a few times a year, and they are
+   reviewed in the repo beside the code that scores them. A table would add a migration, a database
+   read every night and a second copy to drift, and buy nothing. The console asks once a night (and
+   once after a reload). Changing a board is a Worker deploy.
+
+   Points on a board add up to 100 and rank the answers most people would give. Each answer's
+   "also" list is what a phone might type for it: only things that clearly mean the SAME answer
+   (tools/test-ta-match.js refuses any form two answers share, and any board that does not add up).
+   Written by us, 29 Sep 2026, and SAID SO: the screen calls them "top answers", never a survey. */
+const PR_BOARDS = [
+  { id: "pub-find", q: "Name something you would find in a pub", answers: [
+    { a: "Beer", pts: 34, also: ["beers", "tap beer", "schooner", "pint", "middy", "keg"] },
+    { a: "Pokies", pts: 20, also: ["pokie", "poker machine", "poker machines", "gaming room", "slots"] },
+    { a: "TV", pts: 14, also: ["tele", "telly", "television", "big screen", "tab screen"] },
+    { a: "Bar", pts: 12, also: ["bartender", "barman", "barmaid", "bar staff"] },
+    { a: "Pool table", pts: 10, also: ["pool", "billiards", "snooker"] },
+    { a: "Toilets", pts: 6, also: ["toilet", "loo", "dunny", "bathroom", "restroom"] },
+    { a: "Dartboard", pts: 4, also: ["darts", "dart board"] } ] },
+  { id: "bbq", q: "Name something you put on a barbie", answers: [
+    { a: "Sausages", pts: 36, also: ["sausage", "snags", "snag", "sausies"] },
+    { a: "Steak", pts: 24, also: ["steaks", "rump", "scotch fillet"] },
+    { a: "Onions", pts: 14, also: ["onion"] },
+    { a: "Prawns", pts: 10, also: ["prawn", "shrimp", "shrimps"] },
+    { a: "Burgers", pts: 8, also: ["burger", "rissoles", "patties"] },
+    { a: "Chicken", pts: 5, also: ["chicken wings", "wings", "drumsticks"] },
+    { a: "Corn", pts: 3, also: ["corn cob", "corn on the cob"] } ] },
+  { id: "beach", q: "Name something you take to the beach", answers: [
+    { a: "Towel", pts: 34, also: ["towels", "beach towel"] },
+    { a: "Sunscreen", pts: 24, also: ["sunblock", "suncream", "sun cream"] },
+    { a: "Umbrella", pts: 14, also: ["beach umbrella", "brolly", "tent"] },
+    { a: "Esky", pts: 12, also: ["cooler", "eski", "icebox"] },
+    { a: "Hat", pts: 8, also: ["cap", "bucket hat"] },
+    { a: "Sunglasses", pts: 5, also: ["sunnies", "shades"] },
+    { a: "Surfboard", pts: 3, also: ["board", "boogie board", "surf board"] } ] },
+  { id: "late", q: "Name an excuse for being late to work", answers: [
+    { a: "Traffic", pts: 40, also: ["bad traffic", "stuck in traffic", "roadworks"] },
+    { a: "Slept in", pts: 22, also: ["overslept", "alarm", "alarm didnt go off", "sleep in"] },
+    { a: "Car trouble", pts: 14, also: ["car broke down", "flat tyre", "flat tire", "car wouldnt start", "broke down"] },
+    { a: "Train late", pts: 10, also: ["train", "bus", "bus late", "public transport"] },
+    { a: "Kids", pts: 8, also: ["kid", "children", "school drop off", "dropping kids"] },
+    { a: "Sick", pts: 6, also: ["unwell", "doctor", "hangover", "hungover"] } ] },
+  { id: "pizza", q: "Name a pizza topping", answers: [
+    { a: "Pepperoni", pts: 30, also: ["salami"] },
+    { a: "Cheese", pts: 20, also: ["mozzarella", "extra cheese"] },
+    { a: "Ham", pts: 16, also: [] },
+    { a: "Pineapple", pts: 14, also: ["pineapples"] },
+    { a: "Mushrooms", pts: 10, also: ["mushroom", "mushies"] },
+    { a: "Olives", pts: 6, also: ["olive"] },
+    { a: "Anchovies", pts: 4, also: ["anchovy"] } ] },
+  { id: "animal", q: "Name an Australian animal", answers: [
+    { a: "Kangaroo", pts: 40, also: ["roo", "kangaroos", "joey"] },
+    { a: "Koala", pts: 24, also: ["koala bear"] },
+    { a: "Wombat", pts: 12, also: [] },
+    { a: "Emu", pts: 10, also: [] },
+    { a: "Platypus", pts: 7, also: ["platypi"] },
+    { a: "Crocodile", pts: 4, also: ["croc", "saltie", "crocs"] },
+    { a: "Kookaburra", pts: 3, also: ["kooka"] } ] },
+  { id: "wedding", q: "Name something you see at a wedding", answers: [
+    { a: "Cake", pts: 32, also: ["wedding cake"] },
+    { a: "Bride", pts: 22, also: ["the bride", "wedding dress", "dress"] },
+    { a: "Rings", pts: 16, also: ["ring", "wedding ring"] },
+    { a: "Flowers", pts: 12, also: ["flower", "bouquet"] },
+    { a: "Groom", pts: 10, also: [] },
+    { a: "Dancing", pts: 8, also: ["dance floor", "first dance", "dj", "band"] } ] },
+  { id: "sport", q: "Name a sport Australians love to watch", answers: [
+    { a: "Rugby league", pts: 30, also: ["nrl", "league", "rugby", "state of origin", "origin"] },
+    { a: "AFL", pts: 26, also: ["aussie rules", "australian rules", "afl footy"] },
+    { a: "Cricket", pts: 22, also: ["test cricket", "the cricket"] },
+    { a: "Horse racing", pts: 10, also: ["the races", "races", "melbourne cup", "racing"] },
+    { a: "Tennis", pts: 7, also: ["australian open"] },
+    { a: "Soccer", pts: 5, also: ["football", "aleague", "matildas", "socceroos"] } ] },
+  { id: "fridge", q: "Name something you would find in a fridge", answers: [
+    { a: "Milk", pts: 36, also: [] },
+    { a: "Beer", pts: 20, also: ["beers", "cans", "stubbies"] },
+    { a: "Butter", pts: 12, also: ["margarine", "marg"] },
+    { a: "Cheese", pts: 12, also: [] },
+    { a: "Eggs", pts: 10, also: ["egg"] },
+    { a: "Leftovers", pts: 6, also: ["leftover"] },
+    { a: "Sauce", pts: 4, also: ["tomato sauce", "tommy sauce", "sauces"] } ] },
+  { id: "morning", q: "Name something you do first thing in the morning", answers: [
+    { a: "Coffee", pts: 34, also: ["make coffee", "have a coffee", "cuppa"] },
+    { a: "Check phone", pts: 22, also: ["phone", "look at phone", "scroll"] },
+    { a: "Shower", pts: 16, also: ["have a shower", "take a shower"] },
+    { a: "Toilet", pts: 12, also: ["wee", "go to the toilet", "loo", "bathroom"] },
+    { a: "Brush teeth", pts: 10, also: ["teeth", "brush my teeth"] },
+    { a: "Hit snooze", pts: 6, also: ["snooze", "alarm", "turn off alarm"] } ] },
+  { id: "holiday", q: "Name a popular Aussie holiday spot", answers: [
+    { a: "Gold Coast", pts: 30, also: ["goldie", "surfers paradise", "surfers"] },
+    { a: "Bali", pts: 26, also: [] },
+    { a: "Byron Bay", pts: 14, also: ["byron"] },
+    { a: "Cairns", pts: 12, also: ["great barrier reef", "barrier reef", "port douglas"] },
+    { a: "Sunshine Coast", pts: 10, also: ["noosa", "sunny coast"] },
+    { a: "Uluru", pts: 8, also: ["ayers rock"] } ] },
+  { id: "handbag", q: "Name something you would find in a handbag", answers: [
+    { a: "Wallet", pts: 30, also: ["purse"] },
+    { a: "Phone", pts: 22, also: ["mobile", "mobile phone"] },
+    { a: "Keys", pts: 18, also: ["key", "car keys"] },
+    { a: "Lipstick", pts: 12, also: ["makeup", "make up", "lip balm", "lippy"] },
+    { a: "Tissues", pts: 10, also: ["tissue", "hanky"] },
+    { a: "Sunglasses", pts: 8, also: ["sunnies"] } ] },
+  { id: "christmas", q: "Name something you have at an Aussie Christmas", answers: [
+    { a: "Prawns", pts: 30, also: ["prawn", "seafood"] },
+    { a: "Ham", pts: 22, also: ["christmas ham"] },
+    { a: "Pavlova", pts: 16, also: ["pav"] },
+    { a: "Presents", pts: 14, also: ["present", "gifts", "gift"] },
+    { a: "Christmas tree", pts: 10, also: ["tree"] },
+    { a: "Pudding", pts: 8, also: ["christmas pudding", "plum pudding"] } ] },
+  { id: "kidsgame", q: "Name a game you played as a kid", answers: [
+    { a: "Hide and seek", pts: 32, also: ["hide and go seek", "hide n seek"] },
+    { a: "Tag", pts: 22, also: ["tiggy", "chasey", "tip"] },
+    { a: "Cricket", pts: 14, also: ["backyard cricket"] },
+    { a: "Hopscotch", pts: 12, also: [] },
+    { a: "Marbles", pts: 10, also: ["marble"] },
+    { a: "Handball", pts: 10, also: ["four square", "downball"] } ] },
+  { id: "car", q: "Name something you keep in your car", answers: [
+    { a: "Sunglasses", pts: 28, also: ["sunnies"] },
+    { a: "Phone charger", pts: 20, also: ["charger", "cable"] },
+    { a: "Water", pts: 16, also: ["water bottle", "bottle of water"] },
+    { a: "Spare tyre", pts: 14, also: ["spare", "spare tire", "jack"] },
+    { a: "Rubbish", pts: 12, also: ["trash", "garbage", "junk"] },
+    { a: "Umbrella", pts: 10, also: ["brolly"] } ] },
+  { id: "pubfood", q: "Name a classic pub meal", answers: [
+    { a: "Parmi", pts: 38, also: ["parma", "parmy", "chicken parmi", "chicken parma", "parmigiana", "chicken parmigiana"] },
+    { a: "Schnitzel", pts: 20, also: ["schnitty", "schnitzy", "chicken schnitzel"] },
+    { a: "Fish and chips", pts: 16, also: ["fish n chips", "fish"] },
+    { a: "Steak", pts: 12, also: ["rump", "steak and chips"] },
+    { a: "Burger", pts: 8, also: ["burgers", "beef burger"] },
+    { a: "Bangers and mash", pts: 6, also: ["bangers", "sausages and mash"] } ] },
+  { id: "rain", q: "Name something you do on a rainy day", answers: [
+    { a: "Watch TV", pts: 30, also: ["tv", "netflix", "watch a movie", "movies", "movie"] },
+    { a: "Sleep", pts: 22, also: ["nap", "stay in bed", "sleep in"] },
+    { a: "Read", pts: 14, also: ["read a book", "book"] },
+    { a: "Go to the pub", pts: 12, also: ["pub", "drink", "have a beer"] },
+    { a: "Play games", pts: 12, also: ["board games", "video games", "cards"] },
+    { a: "Bake", pts: 10, also: ["cook", "baking"] } ] },
+  { id: "kitchen", q: "Name something you find in a kitchen", answers: [
+    { a: "Fridge", pts: 28, also: ["refrigerator"] },
+    { a: "Oven", pts: 22, also: ["stove", "cooktop"] },
+    { a: "Sink", pts: 16, also: [] },
+    { a: "Kettle", pts: 12, also: [] },
+    { a: "Microwave", pts: 12, also: [] },
+    { a: "Knives", pts: 10, also: ["knife", "cutlery"] } ] },
+  { id: "coffee", q: "Name a way to order your coffee", answers: [
+    { a: "Flat white", pts: 30, also: [] },
+    { a: "Cappuccino", pts: 22, also: ["cappa", "cap", "capp"] },
+    { a: "Latte", pts: 20, also: [] },
+    { a: "Long black", pts: 14, also: ["americano"] },
+    { a: "Espresso", pts: 8, also: ["short black", "expresso"] },
+    { a: "Iced coffee", pts: 6, also: ["iced latte", "cold brew"] } ] },
+  { id: "tradie", q: "Name something a tradie always has", answers: [
+    { a: "Ute", pts: 32, also: ["utes", "work ute"] },
+    { a: "Hi vis", pts: 22, also: ["hi-vis", "high vis", "high visibility", "vest"] },
+    { a: "Tools", pts: 18, also: ["toolbox", "tool box", "drill"] },
+    { a: "Esky", pts: 10, also: ["cooler", "lunch box", "lunchbox"] },
+    { a: "Work boots", pts: 10, also: ["boots", "steel caps", "steel cap boots"] },
+    { a: "Pie", pts: 8, also: ["meat pie", "sausage roll", "bakery"] } ] },
+  { id: "backyard", q: "Name something you find in an Aussie backyard", answers: [
+    { a: "Hills Hoist", pts: 30, also: ["clothesline", "clothes line", "washing line"] },
+    { a: "BBQ", pts: 24, also: ["barbie", "barbecue"] },
+    { a: "Pool", pts: 16, also: ["swimming pool"] },
+    { a: "Dog", pts: 12, also: ["dogs", "pet"] },
+    { a: "Shed", pts: 10, also: [] },
+    { a: "Trampoline", pts: 8, also: ["tramp"] } ] },
+  { id: "pack", q: "Name something people forget to pack for a holiday", answers: [
+    { a: "Phone charger", pts: 30, also: ["charger"] },
+    { a: "Toothbrush", pts: 24, also: ["tooth brush"] },
+    { a: "Underwear", pts: 14, also: ["undies", "jocks", "knickers"] },
+    { a: "Passport", pts: 12, also: [] },
+    { a: "Sunscreen", pts: 10, also: ["sunblock"] },
+    { a: "Swimmers", pts: 10, also: ["togs", "cozzie", "bathers", "swimsuit"] } ] },
+  { id: "wakeup", q: "Name something that wakes you up at night", answers: [
+    { a: "Kids", pts: 28, also: ["baby", "children", "kid"] },
+    { a: "Snoring", pts: 24, also: ["partner snoring", "snore"] },
+    { a: "Needing the toilet", pts: 16, also: ["toilet", "wee", "bathroom"] },
+    { a: "Dog", pts: 12, also: ["dog barking", "barking", "cat", "pets"] },
+    { a: "Noise", pts: 12, also: ["neighbours", "storm", "thunder"] },
+    { a: "Phone", pts: 8, also: ["phone ringing", "text"] } ] },
+  { id: "gift", q: "Name a gift that is always a safe bet", answers: [
+    { a: "Gift card", pts: 30, also: ["voucher", "gift voucher", "gift cards"] },
+    { a: "Wine", pts: 22, also: ["bottle of wine", "grog"] },
+    { a: "Chocolates", pts: 18, also: ["chocolate", "choccies"] },
+    { a: "Flowers", pts: 12, also: ["flower"] },
+    { a: "Socks", pts: 10, also: ["sock"] },
+    { a: "Candle", pts: 8, also: ["candles"] } ] },
+  { id: "fastfood", q: "Name a fast food chain", answers: [
+    { a: "McDonald's", pts: 36, also: ["maccas", "mcdonalds", "macca", "mcdonald"] },
+    { a: "KFC", pts: 22, also: ["kentucky fried chicken"] },
+    { a: "Hungry Jack's", pts: 18, also: ["hungry jacks", "hjs", "burger king"] },
+    { a: "Subway", pts: 10, also: [] },
+    { a: "Domino's", pts: 8, also: ["dominos"] },
+    { a: "Red Rooster", pts: 6, also: ["rooster"] } ] },
+  { id: "schoolbag", q: "Name something in a kid's school bag", answers: [
+    { a: "Lunch box", pts: 30, also: ["lunchbox", "lunch"] },
+    { a: "Water bottle", pts: 20, also: ["drink bottle", "bottle"] },
+    { a: "Pencil case", pts: 18, also: ["pencils", "pens", "pencil"] },
+    { a: "Books", pts: 14, also: ["book", "exercise book", "homework"] },
+    { a: "Hat", pts: 10, also: ["school hat"] },
+    { a: "Jumper", pts: 8, also: ["jacket", "sweater", "hoodie"] } ] },
+  { id: "complain", q: "Name something people complain about at the pub", answers: [
+    { a: "Price of beer", pts: 32, also: ["prices", "beer prices", "expensive", "price"] },
+    { a: "Waiting", pts: 20, also: ["wait", "slow service", "service", "waiting for food"] },
+    { a: "Warm beer", pts: 14, also: ["flat beer", "bad beer"] },
+    { a: "Music too loud", pts: 12, also: ["music", "too loud", "noise"] },
+    { a: "The footy result", pts: 12, also: ["footy", "the footy", "the umpire", "the ref"] },
+    { a: "No seats", pts: 10, also: ["seating", "too busy", "crowded"] } ] },
+  { id: "hardware", q: "Name something you buy at Bunnings", answers: [
+    { a: "Sausage sizzle", pts: 34, also: ["sausage", "snag", "sausage in bread", "snag in bread"] },
+    { a: "Paint", pts: 18, also: [] },
+    { a: "Plants", pts: 16, also: ["plant", "pot plant", "garden"] },
+    { a: "Tools", pts: 14, also: ["tool", "drill", "hammer"] },
+    { a: "Screws", pts: 10, also: ["screw", "nails", "nail"] },
+    { a: "Timber", pts: 8, also: ["wood"] } ] },
+  { id: "exercise", q: "Name a way people try to get fit", answers: [
+    { a: "Gym", pts: 30, also: ["going to the gym", "weights"] },
+    { a: "Running", pts: 24, also: ["run", "jogging", "jog"] },
+    { a: "Walking", pts: 16, also: ["walk", "walk the dog"] },
+    { a: "Swimming", pts: 10, also: ["swim", "laps"] },
+    { a: "Cycling", pts: 10, also: ["bike", "riding", "bike riding"] },
+    { a: "Diet", pts: 10, also: ["dieting", "eat healthy", "healthy eating"] } ] },
+  { id: "morningtea", q: "Name something you bring to a work morning tea", answers: [
+    { a: "Cake", pts: 30, also: [] },
+    { a: "Biscuits", pts: 22, also: ["biscuit", "bickies", "cookies", "tim tams"] },
+    { a: "Donuts", pts: 16, also: ["doughnuts", "donut"] },
+    { a: "Fruit", pts: 12, also: ["fruit platter"] },
+    { a: "Scones", pts: 10, also: ["scone"] },
+    { a: "Sausage rolls", pts: 10, also: ["sausage roll", "party pies", "pies"] } ] }
+];
+async function handlePRBoards(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const venueId = String(new URL(request.url).searchParams.get('venue_id') || '').trim();
+  await requireStaff(env, authUserId, venueId, 'host');
+  return json({ boards: PR_BOARDS });
 }
 function sanitizeQuestion(q) {                                    // -> a valid row shape or null
   const options = Array.isArray(q.options) ? q.options.map((o) => String(o || '').slice(0, 200)) : [];

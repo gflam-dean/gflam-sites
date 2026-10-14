@@ -7,8 +7,11 @@ owns). Built on the branch `feature/top-answers`. Nothing here is live and no ve
 - `venueplay/app/topanswers/ta-match.js`: decides whether what a phone typed is an answer on the
   board. Forgives capitals, "a/the", plurals, and one slipped key on words of 5+ letters. Refuses short
   words ("car" is not "bar") and refuses to guess when two answers are equally close.
-- `venueplay/app/topanswers/ta-boards.js`: 30 starter boards, Australian and pub-flavoured, each
-  scored to 100. Written by us and shown as "top answers", never as a survey.
+- `PR_BOARDS` in `venueplay-backend/worker/venueplay-game.js`: 30 starter boards, Australian and
+  pub-flavoured, each scored to 100. Written by us and shown as "top answers", never as a survey.
+  Served to a signed-in host's console only, by `GET /host/pr/boards` (15 Oct 2026: they were a public
+  script, `app/topanswers/ta-boards.js`, that anybody could read the answers from). PartyPlay's family
+  boards live the same way in its Worker (`PP_GM_BOARDS`, `GET /party/gm/boards`, host key).
 - `tools/test-ta-match.js`: 15 checks, incl. every alias on every board scoring its own answer and
   no two answers sharing a form. 2 break-tests proven.
 
