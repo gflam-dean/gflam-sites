@@ -191,3 +191,8 @@ Rollback: re-run 94.
 `leaderboard` (94 dropped the answer; a team's total moving is the answer by another name). Identical to 96
 otherwise, so double points is kept. Worker fallback changed to match (shipped first; safe either order).
 RUN ON SYDNEY by Dean 28 Sep 2026; read back: the deferred event has no leaderboard, double points kept. Rollback: re-run 96.
+
+`venueplay-99-answer-membership-first.sql`: `vp_player_answer` checks the phone is in the game BEFORE the format, so a
+phone from another venue posting a bingo game id hears "not in this game", not "Not a trivia game" (break test, 14 Oct
+2026). Two lines swap; the rest is 71 exactly (live body compared 14 Oct). The Worker already maps a not_trivia for a
+stranger to wrong_game, so either order is safe. NOT RUN. Rollback: re-run 71.

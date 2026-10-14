@@ -357,9 +357,24 @@
   function clearBuilderError(){ var b=document.getElementById("builderErr"); if(b && b.parentNode) b.parentNode.removeChild(b); }
 
   // ---- step 1: themes + saved nights ----
+  /* ONE THEME, ONE CHIP. Two library sets are both called "General Knowledge" (477 and 1,158
+     questions), so the builder showed two identical "General Knowledge Night" chips and two identical
+     entries in the category list (audit, 14 Oct 2026). Both do the same thing: the Worker picks
+     library questions by the set's TITLE, so either chip draws from both sets. One chip per title,
+     with the question counts added together, is the honest picture. */
+  function libraryThemes(rows){
+    var out=[], at={};
+    (rows||[]).forEach(function(row){
+      if(!row || !row.title) return;
+      var k="t:"+row.title;   // exact, as the Worker's title=eq matches it
+      if(at[k]!=null){ out[at[k]].question_count=(out[at[k]].question_count||0)+(row.question_count||0); return; }
+      at[k]=out.length; out.push({ title:row.title, question_count:row.question_count||0 });
+    });
+    return out;
+  }
   function loadCategories(){
     client.from("vp_question_sets").select("title,question_count").eq("visibility","library").order("title")
-      .then(function(r){ var rows=(r&&r.data)||[]; var s=$("libCat"); s.innerHTML="";
+      .then(function(r){ var rows=libraryThemes((r&&r.data)||[]); var s=$("libCat"); s.innerHTML="";
         var any=document.createElement("option"); any.value=""; any.textContent="All categories"; s.appendChild(any);
         rows.forEach(function(row){ var o=document.createElement("option"); o.value=row.title; o.textContent=row.title+" ("+(row.question_count||0)+")"; s.appendChild(o); G.libraryTitles[row.title]=true; });
         renderQuickChips(rows);
@@ -665,7 +680,11 @@
   // ---- step 3 ----
   function renderReady(){
     var qs=G.questions||[], pics=0, own=0;
-    qs.forEach(function(q){ if(q.image_url) pics++; if(!q.category || !G.libraryTitles[q.category]) own++; });
+    /* The server says which ones the host wrote (q.own, matched against the library word for word).
+       Guessing from the category counted library questions as the host's whenever their category was
+       not a set's title, "YOUR OWN 3" for one written (audit, 14 Oct 2026). The guess stays only for
+       an older Worker that does not send own. */
+    qs.forEach(function(q){ if(q.image_url) pics++; if(typeof q.own==="boolean" ? q.own : (!q.category || !G.libraryTitles[q.category])) own++; });
     $("sumQs").textContent=qs.length; $("sumPics").textContent=pics; $("sumOwn").textContent=own;
     $("readyTitle").textContent=G.title; $("readyName").value=G.title;
     var run=$("runBtn"); run.href="/app/trivia/host.html?set="+encodeURIComponent(G.setId);
