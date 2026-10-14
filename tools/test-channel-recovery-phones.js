@@ -33,7 +33,8 @@ function joinsSent(c) { return c.sent.filter(function (m) { return m.payload && 
 print('\nthe bingo phone (play.html)');
 var PLAY = readFile('venueplay/play.html');
 check('play.html loads /app/vp-channel.js in a real script tag', RIG.loadsScript(PLAY, 'vp-channel.js'));
-var bp = take(PLAY, ['connect', 'onChannelStatus', 'send', 'wireOut', 'flushQueue', 'setConn', 'rehome', 'finishLeaving'], 'play.html');
+// deviceId since 14 Oct 2026: the join a phone announces carries its server device id.
+var bp = take(PLAY, ['connect', 'onChannelStatus', 'send', 'wireOut', 'flushQueue', 'setConn', 'rehome', 'finishLeaving', 'deviceId'], 'play.html');
 check('the real bingo phone functions came out of play.html', bp.missing.length === 0, bp.missing);
 
 function bingoPhone() {
@@ -50,7 +51,7 @@ function bingoPhone() {
     __conns: conns
   };
   var names = Object.keys(sandbox);
-  var body = 'var P = { numCards: 2 }, ch = null, subscribed = false, sendQueue = [], _room = null, _useRoom = false, _roomTried = false, _keyReady = null, _signChain = Promise.resolve();\n' +
+  var body = 'var P = { numCards: 2 }, ch = null, subscribed = false, sendQueue = [], _room = null, _useRoom = false, _roomTried = false, _keyReady = null, _signChain = Promise.resolve(), _paper = false;\n' +
     bp.src + '\n' +
     'var _realSetConn = setConn; setConn = function(s){ __conns.push(s); try{ _realSetConn(s); }catch(e){} };\n' +
     'return { P: function(){ return P; }, ch: function(){ return ch; }, sub: function(){ return subscribed; }, q: function(){ return sendQueue.length; },\n' +

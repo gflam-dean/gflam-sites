@@ -45,10 +45,16 @@
   /* EXACTLY what is signed. Every field the console acts on is in here, so none of them can be
      changed after signing: who (pid), what (t), when (n), and the name, ticket count and ticket
      number that join and claim carry. An array, so no field can run into the next. */
+  /* did (14 Oct 2026) is the phone's server device id, which decides whether the console deals to
+     it, so it is signed too. A message carrying one is version 2, and the version is inside what
+     is signed: adding a did to a version 1 signature, or stripping it from a version 2 one, breaks
+     the signature. A phone page from before this sends no did and still verifies as version 1. */
   function canon(m) {
-    return JSON.stringify(["vp-phone-1", String(m.t), String(m.pid), Number(m.n),
+    var a = [m.did == null ? "vp-phone-1" : "vp-phone-2", String(m.t), String(m.pid), Number(m.n),
       m.name == null ? "" : String(m.name), m.cards == null ? "" : String(m.cards),
-      m.cardNo == null ? "" : String(m.cardNo)]);
+      m.cardNo == null ? "" : String(m.cardNo)];
+    if (m.did != null) a.push(String(m.did));
+    return JSON.stringify(a);
   }
   function isKeyed(pid) { return typeof pid === "string" && pid.indexOf("k1_") === 0; }
   function isPhoneMsg(m) { return !!(m && PHONE_TYPES[m.t] === 1); }

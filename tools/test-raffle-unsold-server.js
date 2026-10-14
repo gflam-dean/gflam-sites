@@ -8,7 +8,9 @@ var S = '77777777-7777-4777-8777-777777777777';
 function reset(){
   DB = { vp_sessions: [{ id: S, venue_id: VENUE, status: 'running', join_code: 'ACDEFG', plan_cap_at_start: 0 }],
          vp_venues: [{ id: VENUE, name: 'Test Venue', slug: 'test-venue', status: 'active' }],
-         vp_venue_settings: [], vp_games: [], vp_players: [], vp_raffle_games: [], vp_raffle_results: [] };
+         vp_venue_settings: [], vp_games: [], vp_players: [], vp_raffle_games: [], vp_raffle_results: [],
+         // tonight's raffle rules were accepted (the draw asks the server for this since 14 Oct 2026)
+         vp_gaming_declarations: [{ id: 'decl-r', venue_id: VENUE, format: 'raffle', category_claimed: 'Free entry.', declared_at: new Date(NOWMS - 3600000).toISOString() }, { id: 'decl-m', venue_id: VENUE, format: 'members', category_claimed: 'Free entry.', declared_at: new Date(NOWMS - 3600000).toISOString() }] };
 }
 (async function(){
   show('merging: overlapping and touching blocks become one, sorted', JSON.stringify(mergeTicketRanges([[20,25],[1,10],[5,19],[40,40],[41,45]])) === '[[1,25],[40,45]]',

@@ -162,7 +162,10 @@
   .card9 .cc.missed{outline:2px dashed var(--gold);outline-offset:-2px;animation:missedPulse 1.1s ease-in-out infinite}
   @keyframes missedPulse{0%,100%{opacity:1}50%{opacity:.55}}
   @media (prefers-reduced-motion:reduce){ .card9 .cc.missed{animation:none} }
-  .tmiss{display:block;font-size:12.5px;font-weight:600;opacity:.92;margin-top:3px}
+  /* The hint under "2 numbers away" is a sentence, not a headline: in the headline's capitals and
+     condensed face it ran to three lines and the pulse pushed it into the win box below (audit,
+     14 Oct 2026). Plain type, one or two lines, and room underneath. */
+  .tmiss{display:block;font:600 12.5px/1.35 system-ui,-apple-system,sans-serif;text-transform:none;letter-spacing:0;text-shadow:none;opacity:.92;margin-top:5px}
   .card9 .cc.incol.blank{border-color:transparent}
   /* the number just called, ringed on the ticket that popped forward */
   .card9 .cc.justcalled{box-shadow:inset 0 0 0 2px var(--gold);color:var(--gold)}
@@ -231,7 +234,7 @@
   @media (prefers-reduced-motion: reduce){ .wonwrap .pbig,.wonwrap .wonemoji{animation:none} }
   .biglose .pbig{color:var(--gold)}
   /* near-win tension */
-  .tension{margin:10px 0 2px;text-align:center;font-family:'Anton',sans-serif;text-transform:uppercase;letter-spacing:.04em;color:var(--gold);line-height:1}
+  .tension{margin:10px 0 10px;text-align:center;font-family:'Anton',sans-serif;text-transform:uppercase;letter-spacing:.04em;color:var(--gold);line-height:1}
   .tension.two{font-size:16px;color:var(--muted);animation:none}
   .tension.hot{font-size:30px;color:var(--pink);text-shadow:0 0 18px rgba(255,31,142,.5);animation:tensionPulse 1s ease-in-out infinite}
   @keyframes tensionPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.09);opacity:.85}}
@@ -319,6 +322,7 @@
     <div class="psub">Show this screen to the host to claim</div>
     <div class="prizebox" id="wonPrize">the prize</div>
     <div class="sharenote hidden" id="wonShare"></div>
+    <div class="sharenote hidden" id="wonAlso"></div>
     <div class="pnote">Card <b id="wonCard" style="color:var(--muted)">#000</b></div>
   </div>
 
@@ -356,7 +360,15 @@
   function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
   /* Shown instead of a ticket in the three states whose rules still require a printed card.
      Written so a punter understands it is normal, not a fault. */
+  var _paper=false;   // set once this phone has been told it plays on paper: it then sends nothing
   function showPaperBingo(){
+    if(_paper) return;
+    _paper=true;
+    /* AND IT LEAVES THE ROOM. The page was blanked but the channel stayed open, so a phone that had
+       joined before kept announcing itself and the console dealt it tickets it could not see. */
+    try{ if(ch) ch.unsubscribe(); }catch(e){}
+    try{ if(_room && _room.close) _room.close(); }catch(e){}
+    ch=null; _room=null; subscribed=false; sendQueue=[];
     var host=document.querySelector(".wrap")||document.body;
     var d=document.createElement("div");
     d.setAttribute("style","max-width:30em;margin:12vh auto 0;padding:0 22px;text-align:center;"+
@@ -447,6 +459,7 @@
      If the script did not load, or this browser cannot sign, it sends exactly as it always did. */
   var _keyReady=null, _signChain=Promise.resolve();
   function send(obj){
+    if(_paper) return null;   // a paper-ticket phone has left the room
     if(window.VPPhoneKey && VPPhoneKey.isPhoneMsg(obj) && _keyReady){
       _signChain=_signChain.then(function(){ return _keyReady; })
         .then(function(id){ return id ? id.sign(obj) : obj; })
@@ -457,6 +470,9 @@
     if(!wireOut(obj)) sendQueue.push(obj);
     return null;
   }
+  /* EVERY JOIN THIS PHONE SAYS ON THE CHANNEL carries its SERVER device id too (did), the same
+     pid it sends /join. The console deals only to a phone the server knows in this session, and
+     this is how it asks (14 Oct 2026, see seatTick in app/index.html). Signed with the rest. */
   function flushQueue(){ while(sendQueue.length && (ch || _room)){ if(!wireOut(sendQueue[0])) break; sendQueue.shift(); } }
 
   /* WHAT THE PHONE DOES WHEN ITS CHANNEL CHANGES STATE.
@@ -479,7 +495,7 @@
     if(status==="SUBSCRIBED"){
       subscribed=true; flushQueue();
       // re-announce on every (re)connect so the host rebuilds our seat and re-deals our tickets
-      if(P.joined){ send({ t:"join", pid:P.pid, name:P.name, cards:P.numCards }); setConn("waiting"); }
+      if(P.joined){ send({ t:"join", pid:P.pid, name:P.name, cards:P.numCards, did:deviceId() }); setConn("waiting"); }
       else { setConn("ready"); }
       return;
     }
@@ -629,9 +645,9 @@
     // game left in it; two away is the point where confusion starts costing someone a win.
     _missed = (n<=2) ? missedOnBestCard(set) : [];
     var miss = _missed.length
-      ? '<span class="tmiss">You have not marked ' +
-        (_missed.length>3 ? (_missed.length + ' called numbers') : _missed.join(", ")) +
-        ' &middot; tap the glowing squares</span>'
+      ? '<span class="tmiss">' +
+        (_missed.length>3 ? ('Missed ' + _missed.length + ' called numbers.') : ('Missed ' + _missed.join(", ") + '.')) +
+        ' Tap the glowing squares.</span>'
       : '';
     if(n===1){ el.classList.remove("hidden"); el.className="tension hot"; el.innerHTML="&#128293; One to go!" + miss;
       if(_lastShort>1){ buzz([0,70,50,70]); } }   // buzz once, on the transition
@@ -675,6 +691,7 @@
   }
 
   function route(){
+    if(_paper) return;        // the page is the paper notice now; there is nothing else to show
     if(P.won){
       $("wonPrize").textContent=P.prize;
       $("wonCard").textContent="#"+(P.wonCardNo||"");
@@ -686,6 +703,19 @@
             esc(P.sharedWith.length<2 ? P.sharedWith[0] : P.sharedWith.slice(0,-1).join(", ")+" and "+P.sharedWith[P.sharedWith.length-1])+"</b>.";
           sw.classList.remove("hidden");
         } else { sw.classList.add("hidden"); }
+      }
+      /* EVERY PRIZE THIS PHONE WON, not just the last. A line, then two lines, then the house on
+         one phone showed only the house on YOU WON, so the punter walked up to the host with a
+         screen that did not mention two of their three prizes (audit, 14 Oct 2026). */
+      var wa=$("wonAlso");
+      if(wa){
+        var sw2=(P.stageWins||[]).filter(function(w){ return w && w.pattern; });
+        if(sw2.length){
+          wa.innerHTML="You also won "+sw2.map(function(w){
+            return "<b>"+esc(PATTERN_NAMES[w.pattern]||"a line")+"</b>"+(w.prize?" ("+esc(w.prize)+")":"")+(w.cardNo?" on card #"+esc(String(w.cardNo)):"");
+          }).join(" and ")+" this game. Show the host all of them.";
+          wa.classList.remove("hidden");
+        } else { wa.classList.add("hidden"); wa.innerHTML=""; }
       }
       show("vWon"); askHowItWent("vWon"); return;
     }
@@ -1077,6 +1107,11 @@
          from the venue's state and sends paper_bingo, rather than the console deciding, so a
          venue cannot route around it by handing out the phone link directly. */
       if(r && r.paper_bingo){ showPaperBingo(); return; }
+      if(r && r.exists===false){ unknownCode(); return; }
+      /* A phone that has joined before still asks (the paper check above is the point: a regular
+         back at an SA, ACT or Tasmanian venue was dealt phone tickets, 14 Oct 2026), but its name
+         box is not on screen, so there is nothing to add to it. */
+      if(P.joined) return;
       var c=r&&r.collect; var box=$("joinExtra"); if(!c||!box) return;
       P.venueName=(r&&r.venue_name)||"";   // named in the collection notice below
       function f(id,type,ph,ac,ml){ return '<div class="field"><input type="'+type+'" id="'+id+'" placeholder="'+ph+'" autocomplete="'+ac+'" maxlength="'+ml+'"></div>'; }
@@ -1112,6 +1147,22 @@
       }
     }).catch(function(){});
   }
+  /* A CODE NOBODY HOLDS. A typo used to connect to an empty channel and say "YOU'RE IN, good luck,
+     waiting for the host" for ever (audit, 14 Oct 2026). The Worker now says exists:false, and the
+     phone goes back to the code box and says why. Only when the Worker actually answered that,
+     never on a blip, and never while a host is plainly talking on this channel. A table-talker
+     link is told by watchVenue in its own words. */
+  function unknownCode(){
+    if(!P.room || P.venueSlug || P.hostSeen || P.active) return;
+    var c=P.room;
+    try{ if(ch) ch.unsubscribe(); }catch(e){}
+    ch=null; subscribed=false; sendQueue=[];
+    P.room=""; P.joined=false;
+    try{ roomIn.value=c; }catch(e){}
+    $("roomErr").textContent="There is no game with the code "+c+" right now. Check the code on the TV and try again.";
+    $("statusText").textContent="No room";
+    show("vNoRoom");
+  }
   function gatherCapture(nm){
     var cap={ first_name:nm.slice(0,80) }, v;
     if((v=$("xLast"))&&v.value.trim())  cap.last_name=v.value.trim();
@@ -1130,7 +1181,7 @@
     P.joined=true; saveName(P.room, P.name);
     // Bingo runs on the live link: tell the host we're here and how many tickets we want.
     // It adds us to the night and deals our tickets straight back (t:"cards").
-    send({ t:"join", pid:P.pid, name:P.name, cards:P.numCards });
+    send({ t:"join", pid:P.pid, name:P.name, cards:P.numCards, did:deviceId() });
     pushNameToServer();            // the TV reads the server row, not this broadcast
     saveCapture();                 // best-effort: store opt-in details for the venue
     setConn(P.hostSeen ? "live" : "waiting");
@@ -1162,8 +1213,7 @@
         return playerPost("/join", { code:d.join_code, name:P.name, pid:deviceId() })
           .then(function(j){
             if(j && j.token){
-              P.token=j.token;                                  // the patch mints a fresh token
-              _joinedFor=d.join_code;
+              noteJoined(j, d.join_code);                       // the patch mints a fresh token
               shareToken(code, j.token);
             }
           });
@@ -1177,16 +1227,30 @@
      names a code this phone has not joined, join it. Same pid every time: the Worker matches on
      it and patches one row, so this never seats a second player. Best effort, one call in
      flight at a time, and a Worker that does not answer changes nothing on screen. */
+  /* THE SESSION, NOT THE CODE (14 Oct 2026). Since one code per venue, every session a venue
+     opens has the SAME join code, so a phone that compared codes saw nothing new when the host
+     ended game two and opened game three, and never joined it: six people played game three and
+     the meter counted one (audit, 14 Oct 2026). The console now sends the session id with every
+     state message, and that is what this remembers. A /join answers with the session it joined
+     (its snapshot), so the identity claimed at page load is remembered the same way. */
   var _joinedFor="", _joinBusy=false;
-  function joinServerSession(joinCode){
-    if(!joinCode || _joinBusy || !P.room) return;
-    if(_joinedFor===joinCode && P.token) return;
+  function noteJoined(j, code){
+    P.token=j.token;
+    var sid=(j.snapshot && j.snapshot.session_id) || "";
+    var fresh=_joinedFor!==(sid||code);
+    _joinedFor=sid||code;
+    if(fresh){ _alive=false; if(P.joined && !_paper) send({ t:"join", pid:P.pid, name:P.name, cards:P.numCards, did:deviceId() }); }   // tell the console now: it seats us
+  }
+  function joinServerSession(joinCode, sessionId, now){
+    if(!joinCode || _joinBusy || !P.room || _paper) return;
+    if(!now && _joinedFor===(sessionId||joinCode) && P.token) return;
     _joinBusy=true;
     /* Every phone in the room gets this same message on the same tick. Sixty of them calling
        at once is sixty requests in one second, and the database sits behind a per-second
        ceiling, so they are spread over a few seconds instead. Nobody is waiting on it: the
-       game itself runs over the broadcast link. */
-    setTimeout(function(){ joinServerSessionNow(joinCode); }, Math.floor(Math.random()*4000));
+       game itself runs over the broadcast link. A console asking this one phone to check in
+       (it is not seated yet) is answered straight away. */
+    setTimeout(function(){ joinServerSessionNow(joinCode); }, now ? 0 : Math.floor(Math.random()*4000));
   }
   function joinServerSessionNow(joinCode){
     var room=P.room;
@@ -1194,7 +1258,7 @@
     playerPost("/join", { code:joinCode, name:(P.name||loadName(room)||""), pid:deviceId() })
       .then(function(j){
         if(j && j.token){
-          P.token=j.token; _joinedFor=joinCode; _namePushed=P.name;
+          noteJoined(j, joinCode); _namePushed=P.name;
           shareToken(room, j.token);
           if(P.capture) saveCapture();   // details that went out unvouched can be vouched for now
         }
@@ -1312,7 +1376,7 @@
       // per phone each time, growing with the square of the room (break test, 14 Oct 2026).
       // Every console sends rollcall itself when it (re)connects, so nothing is lost.
       if(P.joined){
-        send({ t:"join", pid:P.pid, name:P.name, cards:P.numCards });
+        send({ t:"join", pid:P.pid, name:P.name, cards:P.numCards, did:deviceId() });
         // Re-announce a still-pending BINGO claim, so a host that reloaded mid-claim gets it back in
         // the queue instead of an empty one, and the player is not left on "checking your ticket"
         // forever (audit #7).
@@ -1368,7 +1432,10 @@
       if(typeof m.prize==="string") P.prize=m.prize;
       if(typeof m.paidMode==="string") P.paidMode=m.paidMode;
       P.called=cleanCalled(m.called); P.active=!!m.active;
-      if(m.join_code && P.joined) joinServerSession(m.join_code);   // a new night, or a phone that arrived before the lobby opened
+      if(m.join_code && P.joined) joinServerSession(m.join_code, m.session_id);   // a new game, or a phone that arrived before the lobby opened
+      // A new lobby is a new game: last game's "that game is over" gives way to the waiting screen.
+      if(m.session_id && P.lastSid && m.session_id!==P.lastSid && P.ended && !P.won){ P.ended=false; P.lostBy=""; }
+      if(m.session_id) P.lastSid=m.session_id;
       autoDaub(); if(!P.won && !P.ended) route();
     }
     else if(m.t==="started"){
@@ -1387,6 +1454,11 @@
       P.called=m.called?cleanCalled(m.called):P.called; P.active=true;
       autoDaub();
       if(P.joined && !P.won && !P.ended && P.cards.length){ renderCards(); show("vCard"); }
+    }
+    else if(m.t==="checkin"){
+      // The console has not seated this phone in its session (14 Oct 2026): join it now. Only the
+      // console says this, signed; at worst a forged one makes a phone ask once more.
+      if(m.pid===P.pid && P.joined && m.join_code) joinServerSession(m.join_code, m.session_id, true);
     }
     else if(m.t==="claim_pending"){
       // another player (or me) claimed; nothing to change locally
@@ -1449,8 +1521,22 @@
       // host ended the round / went back to ads. Clear the game but keep the player "in"
       // for the next round (this fixes the screen being stuck mid-game). A winner keeps
       // their prize screen so they can still show it at the bar.
+      /* A GAME THAT ENDED WITH NO WINNER SAYS SO. This dropped the phone back on "YOU'RE IN, waiting
+         for the host" with the last game's "75 / 5 of 90" still in the header, which reads as the
+         game still being on (audit, 14 Oct 2026). A phone that was holding tickets goes to the
+         game-over screen instead and the header ball goes. Left as it was: a winner, a phone that
+         already knows who won, a dropped claim and a line won earlier, which each say their own
+         thing on the waiting screen, and a lobby closed before anyone was dealt. */
+      var hadGame=P.cards.length>0 || P.called.length>0;
       P.active=false; P.cards=[]; P.called=[]; P.claimPending=false;
-      if(!P.won){ P.ended=false; route(); }
+      setHeaderBall(0);
+      if(!P.won){
+        if(P.ended && P.lostBy){ route(); }
+        else if(hadGame && !P.droppedClaim && !(P.stageWins && P.stageWins.length)){
+          P.ended=true; P.lostBy="That game is over. Nobody called a winning ticket this time."; route();
+        }
+        else { P.ended=false; route(); }
+      }
     }
   }
 
@@ -1509,7 +1595,7 @@
           onState: function(st){
             if(st==="open"){
               subscribed=true; flushQueue();
-              if(P.joined){ send({ t:"join", pid:P.pid, name:P.name, cards:P.numCards }); setConn("waiting"); }
+              if(P.joined){ send({ t:"join", pid:P.pid, name:P.name, cards:P.numCards, did:deviceId() }); setConn("waiting"); }
               else { setConn("ready"); }
               // say it out loud: a phone in a room and a host that is not is the one
               // failure this feature keeps producing, and it looks identical to working.
@@ -1527,7 +1613,7 @@
        lived in it for weeks: no test in this repo could reach it. */
     ch.subscribe(onChannelStatus);
     }
-    if(!P.joined) loadJoinInfo();   // show any extra fields this venue collects
+    loadJoinInfo();                 // extra fields this venue collects, its logo, and whether bingo is on paper here
     renderPicker();                 // ticket-count buttons (default to the host's number)
     route();
   }
@@ -1614,7 +1700,7 @@
         return playerPost("/join", { code: d.join_code, name: loadName(code) || P.name || "", pid: deviceId() })
           .then(function(j){
             if(j && j.token){
-              P.token = j.token; _joinedFor = d.join_code;
+              noteJoined(j, d.join_code);
               shareToken(code, j.token);
               // A capture may already have gone unverified while we were asking. Send it again now
               // that it can be vouched for; the Worker keeps the newer row.
@@ -1667,6 +1753,7 @@
       playerPost("/join/info",{ code:code })
         .then(function(r){
           if(r && r.paper_bingo){ showPaperBingo(); return; }
+          if(r && r.exists===false){ unknownCode(); return; }   // no game behind it: stop asking
           if(playingHere()){ if(++tries<225) setTimeout(look, 8000); return; }
           var to=playerAppFor(r && r.format);
           /* room_code is set when the code typed was the VENUE code (the permanent one on the

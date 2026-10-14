@@ -256,7 +256,13 @@
   .balleye{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.2em;font-size:clamp(9px,1.7cqw,14px);color:var(--muted)}
   /* the resting "number called" is itself a bingo ball, so the big reveal settles into an
      identical ball with no visible handoff */
-  .curball{width:min(26cqw,38vh);aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:1.4cqw 0;
+  /* HEIGHT-AWARE, because this column is a stack of things sized by WIDTH. Once the row of recent
+     balls appeared the stack was taller than the column, so "Number called" sat 8px from the top
+     of a 1280x720 wall, off the screen on an overscanning telly (audit, 14 Oct 2026). Every 16:9
+     size had it, since cqw and vh scale together. The ball, its margins, the recent balls and the
+     pattern line now also answer to the height, which puts the label about 50px down on a
+     1280x720 wall, clear of a 5% overscan. */
+  .curball{width:min(26cqw,27vh);aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:min(1.4cqw,1.6vh) 0;
     background:radial-gradient(circle at 38% 30%, #ffffff, #ffe0ef 42%, #FF1F8E 100%);
     box-shadow:0 0 60px rgba(255,31,142,.45), inset 0 -1cqw 2.4cqw rgba(0,0,0,.16)}
 
@@ -288,13 +294,13 @@
                     78%{transform:translateX(.6cqw) rotate(3deg) scale(.98)}
                     100%{transform:none;opacity:1} }
   /* the reveal ball glides left into the resting ball (roughly its spot) and fades as it arrives */
-  @keyframes brgo{ 0%{transform:scale(1);opacity:1} 82%{opacity:1} 100%{transform:translate(-30cqw,1cqw) scale(.58);opacity:0} }
+  @keyframes brgo{ 0%{transform:scale(1);opacity:1} 82%{opacity:1} 100%{transform:translate(-30cqw,1cqw) scale(.40);opacity:0} }
   .cbletter{font-family:'Anton',sans-serif;font-size:clamp(16px,5cqw,60px);color:var(--pink);letter-spacing:.05em;text-shadow:0 0 26px rgba(255,31,142,.5)}
-  .cbnum{font-family:'Anton',sans-serif;font-size:min(15cqw,21vh);color:#0A0A0B;line-height:1}
+  .cbnum{font-family:'Anton',sans-serif;font-size:min(15cqw,15vh);color:#0A0A0B;line-height:1}
   /* The last five, newest first, as small grey balls under the big one. Sized to be read from
      the back of the room: the old 15px cap made them a caption. */
   .prevballs{display:flex;gap:1cqw;justify-content:center;flex-wrap:nowrap;margin-top:.8cqw}
-  .prevball{width:clamp(30px,4.8cqw,92px);aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;
+  .prevball{width:clamp(30px,min(4.8cqw,6.5vh),92px);aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;
     font-family:'Anton',sans-serif;font-size:clamp(14px,2.6cqw,48px);line-height:1;color:#fff;
     background:radial-gradient(circle at 38% 30%, rgba(255,255,255,.22), rgba(255,255,255,.06) 60%);border:1px solid var(--line-2)}
   .prevball:first-child{color:#fff;background:radial-gradient(circle at 38% 30%, rgba(255,31,142,.55), rgba(255,31,142,.18) 65%);border-color:rgba(255,31,142,.45)}
@@ -302,7 +308,7 @@
   .ballcount{font-family:'JetBrains Mono',monospace;font-size:clamp(12px,1.9cqw,24px);color:var(--muted);margin-top:.8cqw}
   .ballcount b{color:#fff}
   /* Pattern and prize are the two things people ask each other about. Twice their old size. */
-  .patline{margin-top:.8cqw;font-family:'Hanken Grotesk',sans-serif;font-size:clamp(16px,3.4cqw,46px);line-height:1.1;text-align:center}
+  .patline{margin-top:.8cqw;font-family:'Hanken Grotesk',sans-serif;font-size:clamp(16px,min(3.4cqw,5.2vh),46px);line-height:1.1;text-align:center}
   .patlbl{color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-weight:700;font-size:.5em;display:block;margin-bottom:.2cqw}
   .patval{color:var(--pink);font-weight:800}
   .prizeline{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(14px,2.4cqw,34px);color:var(--muted);margin-top:.6cqw;text-align:center;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

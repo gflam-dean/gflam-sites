@@ -70,7 +70,7 @@ function grabCall(prefix){
 
 print("== the end of a game is still written in the console ==");
 var NEED = ["isCalled", "rowComplete", "completeRows", "cornerNums", "checkPattern",
-            "calledArray", "playerCount", "sendState", "sendClaimPending",
+            "calledArray", "seatOpen", "isSeated", "playerCount", "shownName", "sendState", "sendClaimPending",
             "winnerNames", "renderClaimCard", "renderClaimQueue", "syncNextBtn",
             "nextPattern", "hostConfirm", "hostConfirmAll", "hostReject",
             "announce", "keepPlaying", "finishGame", "nextBall", "endGame", "onMsg", "onPhoneMsg",
@@ -80,6 +80,9 @@ var NEED = ["isCalled", "rowComplete", "completeRows", "cornerNums", "checkPatte
    everything straight through, exactly as the page does when that script fails to load.
    Who is believed is tools/test-phones-cannot-be-impersonated.js. */
 var window = this, LEGACY_PHONES_OK = true, _phoneChain = Promise.resolve();
+/* Seating (14 Oct 2026): this room has no server session, so every phone is seated, which is the
+   console with the Worker down. Asking the server is seatTick's business, not this suite's. */
+function seatSoon(){}
 var TIMERS = [];
 var setTimeout = function(f, ms){ TIMERS.push({ f:f, ms:ms }); return TIMERS.length; };   // held, run by hand below
 var clearTimeout = function(){};
@@ -232,7 +235,8 @@ function room(cards){
         lastWins:[], prizesWon:[], startedAt:"2026-09-12T10:00:00Z", joinCode:"4821", sessionId:"s1" };
   for (var i = 0; i < DRAW.length; i++) G.called[DRAW[i]] = true;
   Object.keys(cards).forEach(function(pid){
-    G.players[pid] = { name: cards[pid].name, cards: [{ card: cards[pid].card, cardNo: cards[pid].no }], paid: 0 };
+    // seatSid: the server knows this phone in session s1 (14 Oct 2026), so it is dealt and heard.
+    G.players[pid] = { name: cards[pid].name, cards: [{ card: cards[pid].card, cardNo: cards[pid].no }], paid: 0, seatSid: "s1" };
     G.order.push(pid);
   });
   MSGS = []; toasts = []; saves = 0; chimes = 0; dealt = 0; pushedCards = 0; consoleRenders = 0;

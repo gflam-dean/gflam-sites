@@ -93,6 +93,9 @@ function rows(table, query) {
     } else if (v.indexOf('in.(') === 0) {
       var list = v.slice(4, -1).split(',').map(function (s) { return decodeURIComponent(s); });
       out = out.filter(function (r) { return list.indexOf(String(r[k])) >= 0; });
+    } else if (v.indexOf('gt.') === 0) {   // the rules check reads declarations newer than a day (14 Oct 2026)
+      var gv = decodeURIComponent(v.slice(3));
+      out = out.filter(function (r) { return r[k] != null && String(r[k]) > gv; });
     } else {
       throw new Error('the fake database cannot answer "' + part + '" - a test that cannot ask cannot fail');
     }
@@ -312,6 +315,10 @@ eval(lift('assertVenueActive'));
 eval(lift('requireStaff'));
 eval('var HOST_DRAW_STATUS = ' + /const HOST_DRAW_STATUS = (\{[\s\S]*?\n\});/.exec(W)[1] + ';');
 eval('var hostDrawRpcMissing = false;');
+eval('var RULES_WINDOW_MS = 24 * 60 * 60 * 1000, RULES_NOT_SHOWN = "RECORDED AUTOMATICALLY";');
+eval(lift('rulesAccepted'));
+eval(lift('rulesRefusal'));
+eval(lift('membersRulesGate'));
 eval(lift('hostDrawRpc'));
 eval(lift('handleBingoBall'));
 eval(lift('handleBingoBallManyTrips'));
@@ -365,6 +372,10 @@ function base(opts) {
       { id: 'm-08', roster_id: ROSTER, member_number: '108', first_name: 'Hal',   last_name: 'Tan',      status: 'lapsed' },
     ],
     vp_venue_settings: [{ venue_id: VENUE, name_display: opts.nameDisplay || 'abbrev_last' }],
+    /* The venue accepted tonight's members draw rules (14 Oct 2026: the draw now asks for this
+       row on the server, see rulesAccepted). Every scene here is about the draw itself. */
+    vp_gaming_declarations: [{ id: 'decl-1', venue_id: VENUE, format: 'members', category_claimed: 'Free entry.',
+                               declared_at: new Date(NOW - 3600000).toISOString() }],
   };
   // balls already called, for the scenes that need a part-played game
   for (var i = 1; i <= (opts.drawIndex || 0); i++) {
@@ -476,7 +487,10 @@ async function both(name, opts, body, note) {
      That is the right trade: the alternative is a club over a thousand members drawing from
      the first thousand for ever. The point of this check is unchanged, and sharper: one
      call against ten. */
-  ok('it costs ONE call now, and cost ten before', r.fastTrips.length === 1 && r.slowTrips.length === 10,
+  /* Plus TWO since 14 Oct 2026, on both paths: whose draw it is and whether tonight's rules were
+     accepted (membersRulesGate). The draw itself is still one call against ten. */
+  ok('it costs ONE call now, and cost ten before', r.fastTrips.length === 3 && r.slowTrips.length === 12 &&
+     r.fastTrips.filter(function (t) { return t.indexOf('RPC ') === 0; }).length === 1,
      'one trip: ' + r.fastTrips.join(', ') + ' | many: ' + r.slowTrips.join(', '));
   ok('the unresolved record is written either way (migration 74)',
      DB.vp_member_draw_results.length === 1 && DB.vp_member_draw_results[0].outcome === 'drawn' &&

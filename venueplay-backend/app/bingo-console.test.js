@@ -79,6 +79,7 @@ var firstMonth = false;
 function inFirstMonth(){ return firstMonth; }
 var toasts = [];
 function showToast(m){ toasts.push(m); }
+function setCoach(){}   // renderLive rewrites the coach line since 14 Oct 2026; the line itself is not this suite's subject
 var released = [];
 var window = { VP_HOLD: { release: function(b){ released.push(b); } } };
 var VP_HOLD = window.VP_HOLD;

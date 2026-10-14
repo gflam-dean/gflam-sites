@@ -531,6 +531,13 @@
     b.textContent = alreadyDrawnTonight() ? "Drawn tonight \u00b7 draw again?" : "Draw";
   }
 
+  /* THE SERVER HAS NO ACCEPTANCE FOR TONIGHT (428, 14 Oct 2026): the record of "I understand" never
+     reached it, or this browser remembered a yes the server never heard. Show the rules again and,
+     once accepted, draw. Nothing was drawn by the refused request. */
+  function rulesAgain(e){
+    if(!e || e.status!==428 || !window.VPGaming) return;
+    VPGaming.gateFor("members", startDraw, { force:true, waitRecord:true });
+  }
   function startDraw(){
     /* A CHANNEL BLIP DOES NOT STOP THE DRAW. This refused with "No TV connected yet" whenever
        the channel was between subscriptions, even with the TV on the wall, and the message then
@@ -568,7 +575,7 @@
     apiPost("/host/members/draw", { draw_id:d.id })
       .then(function(r){ return wait.then(function(){ return r; }); })
       .then(function(r){ revealWinner(r); })
-      .catch(function(e){ G.busy=false; drawBtnIdle(); hostError(e.message||"Draw failed"); sendIdle(); });
+      .catch(function(e){ G.busy=false; drawBtnIdle(); hostError(e.message||"Draw failed"); sendIdle(); rulesAgain(e); });
   }
   function revealWinner(r){
     G.busy=false;
@@ -888,7 +895,8 @@
     G.currentDrawId=this.value; renderStats(); renderMembers(); renderSettings(); sendIdle();
   });
   /* State gaming rules, once a night, before the first draw. */
-  $("drawBtn").addEventListener("click", function(){ if(window.VPGaming) VPGaming.gateFor("members", startDraw); else startDraw(); });
+  /* waitRecord: the draw is refused by the Worker until tonight's acceptance is on the record (14 Oct 2026). */
+  $("drawBtn").addEventListener("click", function(){ if(window.VPGaming) VPGaming.gateFor("members", startDraw, { waitRecord:true }); else startDraw(); });
   $("claimBtn").addEventListener("click", onClaim);
   $("rollBtn").addEventListener("click", onRollover);
   $("saveSettingsBtn").addEventListener("click", saveSettings);

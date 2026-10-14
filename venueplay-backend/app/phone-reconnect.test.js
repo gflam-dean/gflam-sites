@@ -52,6 +52,8 @@ var PLAY = find("venueplay/play.html");
 /* send() signs a join, claim or leave when vp-phonekey.js is there. It is not here, so send()
    takes its plain path: the same one a browser with no WebCrypto takes. */
 var window = this, _keyReady = null, _signChain = Promise.resolve();
+// Since 14 Oct 2026 a join carries the phone's server device id, and a paper-ticket phone sends nothing.
+var _paper = false; function deviceId(){ return "dev-test-0001"; }
 var srcs = ["onChannelStatus", "send", "flushQueue", "wireOut", "setConn"].map(function (n) {
   return [n, lift(PLAY, n)];
 });
