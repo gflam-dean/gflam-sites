@@ -2208,7 +2208,7 @@
     // again for the life of the page. Wait for the client instead of giving up on it.
     if(!client){ setTimeout(unifiedRouter, 3000); return; }
     var GAMES=["trivia","musical","raffle","members","jag"];   // jag: Jag the Joker (off until the game Worker has JAG_ON=1; a silent channel costs nothing)
-    function onGameMode(game){
+    function onGameMode(game, overIdleLobby){
       if(tvMode==="embed") return;   // a game is already on screen; the embedded screen handles hops between games itself
       /* BINGO IS A GAME TOO. This only ever refused while another game was EMBEDDED, so a live
          bingo round (tvMode==="bingo", drawn by this page rather than in an iframe) was fair game:
@@ -2221,7 +2221,7 @@
          ran bingo then trivia had the bingo board frozen on the wall for the whole quiz.
          BINGO_LIVE_MS is short on purpose: a bingo round has constant traffic (a ball every few
          seconds), so two minutes of silence means it is over, not paused. */
-      if(tvMode==="bingo" && (Date.now() - lastBingoAt) < BINGO_LIVE_MS) return;
+      if(tvMode==="bingo" && !overIdleLobby && (Date.now() - lastBingoAt) < BINGO_LIVE_MS) return;
       enterEmbed(game);              // load it IN PLACE (iframe) instead of navigating, so browser fullscreen is kept
     }
     /* Messages that mean "somebody is present" or "housekeeping", never "a game is on air".
@@ -2263,7 +2263,13 @@
       function onGameMsg(e){ vpGate(e.payload, function(m){
         if(!m) return;
         noteHostAlive();
+        /* A bingo LOBBY with no ball called is not a game to protect. A TV that reloaded while a
+           second tablet held a bingo lobby open sat on "BINGO, JOIN THE GAME" through a live trivia
+           round: only a mode could move it, and the console's heartbeat kept bingo looking live
+           (break test, 14 Oct 2026). Real play on another game's channel now takes the wall. */
+        var idleBingo = tvMode==="bingo" && state && state.phase==="lobby" && !(state.called && state.called.length);
         if(m.t==="mode" || (tvMode==="ads" && onAir(m))) onGameMode(game);
+        else if(idleBingo && onAir(m) && m.t!=="state") onGameMode(game, true);
       }); }
       /* ANY traffic on a game channel is proof a host is running something. noteHostAlive() was
          only ever called from the bingo channel, so a trivia or musical night past 90 minutes,

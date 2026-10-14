@@ -116,6 +116,24 @@ print('\n== 5. a slide whose picture fails is dropped from the rotation ==');
   ok('an image slide asks for its picture to be checked', /probeImg\(u\);\s*return '<div class="adimg"/.test(TV));
 })();
 
+print('\n== 6. an idle bingo lobby gives the wall up to a game actually being played ==');
+(function () {
+  var i = TV.indexOf('var idleBingo = ');
+  ok('the TV decides it in one place', i > 0);
+  var body = TV.slice(i, TV.indexOf('onGameMode(game, true);', i) + 'onGameMode(game, true);'.length);
+  var calls = [];
+  function onGameMode(g, force) { calls.push(g + (force ? '!' : '')); }
+  function onAir(m) { return m.t !== 'state' && m.t !== 'host_here'; }
+  var f = new Function('m', 'game', 'tvMode', 'state', 'onAir', 'onGameMode', body);
+  f({ t: 'question' }, 'trivia', 'bingo', { phase: 'lobby', called: [] }, onAir, onGameMode);
+  ok('a trivia question takes the wall off an empty bingo lobby', calls.join() === 'trivia!', calls.join());
+  calls = [];
+  f({ t: 'question' }, 'trivia', 'bingo', { phase: 'running', called: [5, 12] }, onAir, onGameMode);
+  ok('but never off a bingo game with balls called', calls.length === 0, calls.join());
+  f({ t: 'state', active: false }, 'trivia', 'bingo', { phase: 'lobby', called: [] }, onAir, onGameMode);
+  ok('and another game merely saying where it stands does not', calls.length === 0, calls.join());
+})();
+
 print('');
 if (bad) { print(bad + ' OF ' + ran + ' CHECKS FAILED'); throw new Error(bad + ' failed'); }
 print('ALL ' + ran + ' CHECKS PASSED');

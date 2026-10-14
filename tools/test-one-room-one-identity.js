@@ -125,6 +125,18 @@ print('\n== a second console is asked before it takes the room ==');
   ].forEach(function (c) { ok(c[0] + ' console asks before it opens a session', c[2].test(c[1])); });
 })();
 
+print('\n== a console re-opening its own night says which game it is ==');
+[['trivia', find('venueplay/app/trivia/host.html')], ['musical', find('venueplay/app/musical/host.html')]].forEach(function (c) {
+  var posted = [];
+  var G = { sessionId: 's1', joinCode: 'ABC', venueId: 'v1' };
+  function apiPost(path, body) { posted.push(path + ':' + body.format); return { catch: function () {} }; }
+  var Promise = { resolve: function (v) { return v; } };
+  eval(lift(c[1], 'openSession', c[0] + ' host'));
+  var r = openSession();
+  ok(c[0] + ': an owned night tells the server its format again', posted.join() === '/session:' + c[0], posted.join());
+  ok(c[0] + ': and still hands back the same session', r && r.session_id === 's1');
+});
+
 print('\n== a phone\'s pick is not broadcast to the room ==');
 ok('the "answered" broadcast carries no choice', !/t:"answer", pid:P\.pid, qseq:qseq, choice/.test(TRIVIA) && /t:"answer", pid:P\.pid, qseq:qseq \}/.test(TRIVIA));
 

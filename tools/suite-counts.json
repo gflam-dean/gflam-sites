@@ -252,7 +252,7 @@
   "counted_by": "lines"
  },
  "tools/test-one-room-one-identity.js": {
-  "checks": 33,
+  "checks": 37,
   "counted_by": "lines"
  },
  "tools/test-optin-export-gate.js": {
@@ -344,7 +344,7 @@
   "counted_by": "lines"
  },
  "tools/test-screens-14-oct.js": {
-  "checks": 23,
+  "checks": 27,
   "counted_by": "lines"
  },
  "tools/test-set-count.js": {

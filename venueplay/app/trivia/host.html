@@ -810,7 +810,14 @@
   }
   function openSession(){
     if(!G.venueId){ return Promise.reject(new Error("no venue linked to this login")); }
-    if(G.sessionId && G.joinCode){ return Promise.resolve({ session_id:G.sessionId, join_code:G.joinCode }); }
+    if(G.sessionId && G.joinCode){
+      /* This night is already ours, but the server may have been told it is something else since
+         (a bingo lobby on another tablet). Say "trivia" again, or /join/info answers bingo and phones
+         off the QR sit on the bingo page through this whole lobby (break test, 14 Oct 2026). The
+         server reuses this same session; nothing waits on it. */
+      apiPost("/session",{ venue_id:G.venueId, format:"trivia" }).catch(function(){});
+      return Promise.resolve({ session_id:G.sessionId, join_code:G.joinCode });
+    }
     var _slug=(G.venue && G.venue.slug) || "";
     var _ask=(window.VP && VP.confirmTakeover) ? VP.confirmTakeover(_slug) : Promise.resolve(true);
     return _ask.then(function(ok){
