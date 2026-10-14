@@ -1329,6 +1329,8 @@ MUTATIONS = [
     ('test-room-chatter-14-oct.js', 'partyplay/play.html', '        H=null; DRW = m.winner ? String(m.winner) : "All out";', '        H=null;', 'the heads-or-tails winner is never told they won'),
     ('the reminder about an unused code can be stopped', 'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js', '            \'<p style="margin:10px 0 0"><a href="\' + site + \'/unsubscribe?e=\' + encodeURIComponent(l.buyer_email) +\n            \'&t=\' + (await unsubToken(env, l.buyer_email)) + \'" style="color:#8A8296">Unsubscribe</a></p>\'', "''", None),
     ('the "how was the party" follow-up can be stopped', 'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js', '      foot: \'<p style="margin:0"><a href="\' + site + \'/unsubscribe?e=\' + encodeURIComponent(l.buyer_email) +\n            \'&t=\' + (await unsubToken(env, l.buyer_email)) + \'" style="color:#8A8296">Unsubscribe</a></p>\'', "      foot: ''", None),
+    ('test-musical-15-oct.js', 'venueplay/app/vp-onetab.js', 'var wait = flagged ? FLAG_WAIT_MS : ASK_MS;', 'var wait = ASK_MS;', 'Use this tab instead hands the game straight back to the old tab, which reloads first'),
+    ('test-bingo-seat-15-oct.js', 'venueplay/app/index.html', '    setCoach();   // the setup line counts players too', '    void 0;   // the setup line counts players too', 'the setup line says 4 players are in beside a count of 3'),
     # The trivia night lost to a bounce through the bingo page.
     ('test-one-room-one-identity.js', 'venueplay/play.html',
      'if(k===OWN_TOKEN_KEY || localStorage.getItem(k+room)!==null) localStorage.setItem(k+room, tok);',

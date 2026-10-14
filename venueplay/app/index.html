@@ -1789,6 +1789,7 @@
     var _lp=$("livePlayers");  if(_lp) _lp.textContent=playerCount();
     renderOverBanner();
     renderPlayers();
+    setCoach();   // the setup line counts players too: it said "4 players are in" beside a count of 3 while one was checking in (14 Oct 2026)
   }
   function renderConsole(){
     setCoach();

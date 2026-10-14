@@ -45,6 +45,7 @@
 (function(root){
   "use strict";
   var ASK_MS = 500;                 // how long a new tab waits for "I am already live"
+  var FLAG_WAIT_MS = 4000;          // ...and a tab that was just stood down, so the taker can finish loading
   var DOWN_FLAG = "vpOneTabDown";   // sessionStorage: this tab was stood down (wording only)
   var bc = null;
   try { bc = (typeof root.BroadcastChannel === "function") ? new root.BroadcastChannel("vp-onetab") : null; } catch (e) { bc = null; }
@@ -134,7 +135,16 @@
     var flagged = readFlag() === k;
     if (readFlag() && !flagged) setFlag("");   // a flag for some other console in this tab means nothing here
     waiting = new Promise(function(resolve){
+      /* A TAB THAT WAS JUST STOOD DOWN WAITS FOR THE TAKER. It reloads the moment "Use this tab
+         instead" is pressed elsewhere, and the taker reloads 150ms after it, so with the usual
+         half second the stood-down tab finished loading first, heard nobody, and took the game
+         straight back: three tries out of three on the live site (14 Oct 2026). So it listens
+         long enough for the taker to load and announce itself (it says "live" the moment it is),
+         asking again half way. If nobody comes (that tab was closed) it carries on, so the flag
+         alone still never locks a console out. */
+      var wait = flagged ? FLAG_WAIT_MS : ASK_MS;
       post({ t: "hello" });
+      if (flagged) setTimeout(function(){ if (state === "asking") post({ t: "hello" }); }, wait / 2);
       setTimeout(function(){
         if (heard) { state = "blocked"; showNotice(flagged); return; }
         // Nobody else is live (closed, or never there): this tab is, whatever the flag said.
@@ -142,7 +152,7 @@
         state = "live"; since = Date.now();
         sayLive();   // and say so, so a tab that asked at the same moment finds out
         resolve(true);
-      }, ASK_MS);
+      }, wait);
     });
     return waiting;
   }

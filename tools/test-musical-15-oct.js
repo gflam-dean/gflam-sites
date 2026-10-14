@@ -139,7 +139,7 @@ var _realNow = Date.now; Date.now = function () { return NOW; };
   var a2 = makeTab(), ra2 = false;
   a2.sessionStorage.setItem('vpOneTabDown', 'musical:v1');
   a2.API.claim('musical:v1').then(function () { ra2 = true; });
-  advance(700);
+  advance(4100);   // a stood-down tab waits up to 4s for the taker (14 Oct 2026)
   ok('the old tab comes back to "moved to another tab", not to a second copy of the game',
      ra2 === false && /moved to another tab/.test(JSON.stringify(a2.document.getElementById('vpOneTab').kids)));
 
@@ -148,8 +148,23 @@ var _realNow = Date.now; Date.now = function () { return NOW; };
   var a3 = makeTab(), ra3 = false;
   a3.sessionStorage.setItem('vpOneTabDown', 'musical:v1');
   a3.API.claim('musical:v1').then(function () { ra3 = true; });
-  advance(700);
+  advance(4100);
   ok('with the other tab closed, the flag alone never locks a console out', ra3 === true && a3.API.live() === true);
+
+  /* THE RACE FOUND LIVE (14 Oct 2026): the stood-down tab reloads first, the taker 150ms later and
+     slower to load. The old tab must wait for it, not take the game straight back. */
+  a3.kill(); BUS.forEach(function (o) { o.dead = true; });
+  NOW += 1000;
+  var old4 = makeTab(), r4old = false;
+  old4.sessionStorage.setItem('vpOneTabDown', 'musical:v4');
+  old4.API.claim('musical:v4').then(function () { r4old = true; });
+  advance(1500);                                    // the taker is still loading
+  var new4 = makeTab(), r4new = false;
+  new4.API.claim('musical:v4').then(function () { r4new = true; });
+  advance(3000);
+  ok('the tab that was stood down does not win the reload race and take the game back', r4old === false && old4.API.live() === false);
+  ok('the tab whose button was pressed is the live console', r4new === true && new4.API.live() === true);
+  ok('and the stood-down tab says the game moved', /moved to another tab/.test(JSON.stringify((old4.document.getElementById('vpOneTab') || {}).kids || '')));
 
   // An iPad tab that slept through the question: two tabs both live, then the old one wakes.
   BUS.forEach(function (o) { o.dead = true; });

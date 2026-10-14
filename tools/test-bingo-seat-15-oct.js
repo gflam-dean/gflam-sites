@@ -1,3 +1,4 @@
+var SRC_CONSOLE_14 = readFile('venueplay/app/index.html');
 /* ONE PERSON IS ONE PLAYER, IN EVERY GAME OF THE NIGHT, AND ONLY PEOPLE WHO ARE REALLY THERE.
 
    The 14 Oct 2026 audit, by playing: from the second game of a night a phone that stayed on the
@@ -262,6 +263,13 @@ function hostSays(t, pid) { return LOG.filter(function (l) { return l && l.from 
   await advance(3000);
   check('CONTROL: the venue\'s real code is not', viewOf(good) === 'vJoin', viewOf(good));
 
+  // The setup line counts players too, and only a full redraw refreshed it: "4 players are in"
+  // beside a count of 3 while one phone was checking in (live check, 14 Oct 2026).
+  (function () {
+    var i = SRC_CONSOLE_14.indexOf('function renderJoinCounts(){');
+    var body = SRC_CONSOLE_14.slice(i, SRC_CONSOLE_14.indexOf('\n  }', i));
+    check('the setup line is refreshed with the counts', /setCoach\(\);/.test(body), body.slice(-120));
+  })();
   print('\n' + PASS + ' of ' + (PASS + FAILN) + ' checks passed');
   if (FAILN) throw new Error(FAILN + ' bingo seat checks failed');
 })().catch(function (e) { print('CRASH ' + (e && e.stack || e)); throw e; });

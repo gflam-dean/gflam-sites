@@ -156,7 +156,7 @@
   "counted_by": "lines"
  },
  "tools/test-bingo-seat-15-oct.js": {
-  "checks": 34,
+  "checks": 35,
   "counted_by": "lines"
  },
  "tools/test-bingo-worker-15-oct.js": {
@@ -264,7 +264,7 @@
   "counted_by": "lines"
  },
  "tools/test-musical-15-oct.js": {
-  "checks": 62,
+  "checks": 65,
   "counted_by": "lines"
  },
  "tools/test-musical-host.js": {
