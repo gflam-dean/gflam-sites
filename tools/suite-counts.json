@@ -19,12 +19,20 @@
   "checks": 32,
   "counted_by": "lines"
  },
+ "partyplay-backend/lib/pp-fixes-15-oct.test.js": {
+  "checks": 60,
+  "counted_by": "lines"
+ },
  "partyplay-backend/lib/pp-great-minds.test.js": {
   "checks": 33,
   "counted_by": "lines"
  },
  "partyplay-backend/lib/pp-guest-connection.test.js": {
   "checks": 68,
+  "counted_by": "lines"
+ },
+ "partyplay-backend/lib/pp-health-private.test.js": {
+  "checks": 5,
   "counted_by": "lines"
  },
  "partyplay-backend/lib/pp-host-channel.test.js": {
@@ -50,6 +58,10 @@
  "partyplay-backend/lib/pp-quiz.test.js": {
   "checks": 38,
   "counted_by": "total"
+ },
+ "partyplay-backend/lib/pp-realtime-auth.test.js": {
+  "checks": 49,
+  "counted_by": "lines"
  },
  "partyplay-backend/lib/pp-run-games.test.js": {
   "checks": 71,
@@ -86,6 +98,10 @@
  "partyplay-backend/lib/pp-video.test.js": {
   "checks": 21,
   "counted_by": "total"
+ },
+ "partyplay-backend/lib/pp-worker-15-oct.test.js": {
+  "checks": 35,
+  "counted_by": "lines"
  },
  "partyplay-backend/worker/partyplay-api.test.js": {
   "checks": 155,
@@ -137,6 +153,14 @@
  },
  "tools/test-bingo-end-report.js": {
   "checks": 4,
+  "counted_by": "lines"
+ },
+ "tools/test-bingo-seat-15-oct.js": {
+  "checks": 34,
+  "counted_by": "lines"
+ },
+ "tools/test-bingo-worker-15-oct.js": {
+  "checks": 37,
   "counted_by": "lines"
  },
  "tools/test-body-reader.js": {
@@ -239,6 +263,10 @@
   "checks": 14,
   "counted_by": "lines"
  },
+ "tools/test-musical-15-oct.js": {
+  "checks": 62,
+  "counted_by": "lines"
+ },
  "tools/test-musical-host.js": {
   "checks": 41,
   "counted_by": "lines"
@@ -291,8 +319,20 @@
   "checks": 34,
   "counted_by": "lines"
  },
+ "tools/test-platform-15-oct.js": {
+  "checks": 64,
+  "counted_by": "lines"
+ },
+ "tools/test-platform-worker-15-oct.js": {
+  "checks": 15,
+  "counted_by": "lines"
+ },
  "tools/test-pr-game.js": {
   "checks": 21,
+  "counted_by": "lines"
+ },
+ "tools/test-pr-guesses-15-oct.js": {
+  "checks": 20,
   "counted_by": "lines"
  },
  "tools/test-pr-round.js": {
@@ -359,6 +399,10 @@
   "checks": 2,
   "counted_by": "lines"
  },
+ "tools/test-signing-15-oct.js": {
+  "checks": 30,
+  "counted_by": "lines"
+ },
  "tools/test-status-moves-the-clock.js": {
   "checks": 6,
   "counted_by": "lines"
@@ -373,6 +417,10 @@
  },
  "tools/test-ta-screen.js": {
   "checks": 9,
+  "counted_by": "lines"
+ },
+ "tools/test-trivia-15-oct.js": {
+  "checks": 70,
   "counted_by": "lines"
  },
  "tools/test-trivia-no-repeat-survives-a-removal.js": {

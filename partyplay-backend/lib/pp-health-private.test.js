@@ -56,7 +56,9 @@ function ok(n, c, extra) { ran++; print((c ? '  ok   ' : '  FAIL ') + n + (c || 
 ANSWER = function () { return { status: 200, body: JSON.stringify([{ mobile: '+61400000001' }, { mobile: '+61400000002' }]) }; };
 health(ENV).then(function (d) {
   ok('with two admins it says somebody can sign in', d.admins_ok === true && d.ok === true, JSON.stringify(d));
-  ok('and it does not say how many', !('admins' in d) && JSON.stringify(d).indexOf(':2') < 0, JSON.stringify(d));
+  // Only the admin fields are looked at. A whole-response search for ":2" failed whenever the build
+// stamp's time read 19:2x, which is a fixture taken from the clock (CLAUDE.md, never do this).
+ok('and it does not say how many', !('admins' in d) && !Object.keys(d).some(function (k) { return /admin/.test(k) && typeof d[k] === 'number'; }), JSON.stringify(d));
   ok('control: it still names itself and its build', d.worker === 'partyplay-api' && 'build' in d, JSON.stringify(d));
   ANSWER = function () { return { status: 200, body: '[]' }; };
   return health(ENV);
