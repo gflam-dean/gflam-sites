@@ -99,9 +99,14 @@
   var $ = function (id) { return document.getElementById(id); };
   var show = function (id) { $(id).hidden = false; };
 
-  var email = "";
+  /* t is the proof the link came from one of our emails (the Worker's unsubToken). An old email
+     has none, and is still honoured once the button is pressed. NOTHING is sent until then: the
+     page only reads the address and draws the button. */
+  var email = "", tok = "";
   try {
-    email = (new URLSearchParams(location.search).get("e") || "").trim().toLowerCase();
+    var q = new URLSearchParams(location.search);
+    email = (q.get("e") || "").trim().toLowerCase();
+    tok = (q.get("t") || "").trim().toLowerCase().replace(/[^0-9a-f]/g, "").slice(0, 64);
   } catch (e) {}
 
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { show("bad"); return; }
@@ -110,6 +115,7 @@
      write, and this page has no business rendering anything they put in it. */
   $("who").textContent = email;
   $("email").value = email;
+  if (tok) { var ti = document.createElement("input"); ti.type = "hidden"; ti.name = "t"; ti.value = tok; $("form").appendChild(ti); }
   $("form").action = PPConfig.API + "/unsubscribe";
   show("ask");
 
@@ -126,8 +132,10 @@
     fetch(PPConfig.API + "/unsubscribe", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ email: email })
+      body: JSON.stringify({ email: email, t: tok })
     }).then(function (r) {
+      /* 403 is a link with a token that is not ours: say so, never "Done". */
+      if (r.status === 403) { $("ask").hidden = true; show("bad"); return; }
       if (!r.ok) throw new Error("http " + r.status);
       $("ask").hidden = true;
       show("done");

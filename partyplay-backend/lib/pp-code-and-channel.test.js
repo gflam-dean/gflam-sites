@@ -80,7 +80,7 @@ pass("the phone files the code it saves and connects with through PPConfig.code"
 pass("the host console reads its code through PPConfig.code", /var CODE=PPConfig\.code\(q\.get\("code"\)\)/.test(RUN));
 pass("the telly reads its code through PPConfig.code", /var CODE = PPConfig\.code\(/.test(TV));
 pass("the phone sends the token it last had, so a returning guest keeps their place",
-     /api\("\/join", \{ method:"POST", body: JSON\.stringify\(\{ code:code, nickname:nickname, prev: had\.token \|\| had\.prev \|\| "" \}\)/.test(PLAY) &&
+     /api\("\/join", \{ method:"POST", body: JSON\.stringify\(\{ code:code, nickname:nickname, prev: had\.token \|\| had\.prev \|\| "", pid: pid \|\| "" \}\)/.test(PLAY) &&   // 15 Oct: and its key's pid
      /if\(was\.token\) was\.prev = was\.token; delete was\.token;/.test(PLAY));
 var resend = lift(SRC, "handleResendWelcome") || "";
 pass("the resend email looks the code up the way /join does", /normaliseCode\(b\.code\)/.test(resend));
@@ -90,8 +90,9 @@ var paints = [], msgs = [], Q, B, H, T, W, _ppLive = false, _ppChannel = null, w
 var SUPA_URL = "https://x", SUPA_ANON = "k";
 function waiting(n, how) { paints.push(how || "getting"); }
 function onMsg(p) { msgs.push(p); }
-var got = ["hangUp", "connect"].map(function (n) { return lift(PLAY, n); });
-pass("hangUp() and connect() came out of play.html", !!(got[0] && got[1]));
+var got = ["hangUp", "connect", "phoneSend", "myId"].map(function (n) { return lift(PLAY, n); });   // 15 Oct: sends go through phoneSend
+var _sendChain = Promise.resolve();
+pass("hangUp() and connect() came out of play.html", !!(got[0] && got[1] && got[2] && got[3]));
 eval(got.join("\n"));
 connect(PPConfig.code("abs 3km"), "Sam");
 var first = made[made.length - 1];

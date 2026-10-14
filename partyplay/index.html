@@ -154,6 +154,9 @@
                 font-size:15px;padding:8px 4px;white-space:nowrap}
   .navr .signin:hover{color:var(--paper,#F6F3FF)}
   @media(max-width:430px){ .navr{gap:6px} .navr .signin{font-size:14px} }
+  /* "Book a party" broke onto three lines at 390px (14 Oct audit). It is a button, so it never wraps. */
+  nav .go,.navr .signin{white-space:nowrap}
+  @media(max-width:430px){ nav .go{padding:9px 12px;font-size:14.5px} nav b{font-size:19px} nav img{width:38px;height:33px} }
 </style>
 <script src="/lib/pp-pixel.js"></script>
 <meta property="og:image" content="https://partyplay.com.au/logos/partyplay-share.png">
@@ -315,7 +318,7 @@
   <div class="end">
     <span class="shout">Get it booked</span>
     <a class="cta" href="/start">Book your party</a>
-    <span class="under">Pick the date later. Pick the questions much later.</span>
+    <span class="under">Nothing ticks until you press start. Write the questions whenever.</span>
   </div>
   <footer>
     PartyPlay is made by Gflam Group Pty Ltd on the Gold Coast.

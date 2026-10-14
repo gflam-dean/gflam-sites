@@ -81,6 +81,7 @@ function send(o) { sent.push(o); }
 var oc = lift(RUN, "onClaim");
 pass("onClaim came out of run.html", !!oc);
 eval(oc);
+eval(lift(RUN, "bingoTicket"));   // 15 Oct: onClaim asks for the guest's ticket first; with no guest list it falls back to this check
 G = { called: [3, 14, 25, 36, 47] };
 onClaim("Sam", "line", [3, 14, 25, 36, 48]);
 pass("a claim with an uncalled number does not go on the telly", sent.length === 0, JSON.stringify(sent));
