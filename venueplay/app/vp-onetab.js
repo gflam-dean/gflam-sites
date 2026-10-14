@@ -36,6 +36,21 @@
    No BroadcastChannel (very old browsers): claim() resolves at once and live()
    is always true, which is exactly how the consoles behaved before.
 
+   BINGO IS ON THE MENU PAGE, so it takes three more calls (15 Oct 2026). /app is
+   both the games menu and the bingo console, and a menu locked to one tab is a
+   menu the second tablet cannot use. Bingo claims only when a night is actually
+   open, and lets go of it when the night ends:
+     - watch(k) asks the same question as claim() WITHOUT taking anything. If
+       another tab holds k this tab goes quiet (live() false, no notice) and
+       stays usable as a menu; if nobody does, nothing changes. A tab that has
+       watched k hears a later claim by another tab and goes quiet then too.
+     - notice(opts) shows the notice on demand (the host tapped Bingo), with an
+       optional second button, opts.back + opts.onBack, back to the menu.
+     - release(k) is End game: this tab stops being the live one and tells the
+       others, which wake up, so any tab can open the next night.
+   claim(k, { quiet: true }) is a claim that, when blocked, goes quiet rather
+   than covering the page (the menu again). Trivia and musical call none of this.
+
    Load before the page's own script:
        <script src="/app/vp-onetab.js"></script>
    Then:
@@ -51,6 +66,7 @@
   try { bc = (typeof root.BroadcastChannel === "function") ? new root.BroadcastChannel("vp-onetab") : null; } catch (e) { bc = null; }
   var ME = String(Date.now()) + "-" + Math.random().toString(36).slice(2);
   var key = null, state = "idle", since = 0, heard = false;   // idle | asking | live | blocked | down
+  var asking = null, askedOnce = false, lastFlagged = false, noticeOpts = null;
 
   function post(m){ if (!bc) return; try { m.key = key; m.from = ME; bc.postMessage(m); } catch (e) {} }
   function sayLive(){ if (state === "live") post({ t: "live", since: since }); }
@@ -81,6 +97,13 @@
     if (m.t === "live") {
       if (state === "asking") { heard = true; return; }
       if (state === "live") { if (otherIsNewer(m)) standDown(); else sayLive(); }
+      // A tab that watched k and found it free: another tab has just claimed it (bingo, 15 Oct 2026).
+      if (state === "idle") { state = "blocked"; }
+      return;
+    }
+    // The live tab ended its night: a tab waiting behind it is free again, notice and all.
+    if (m.t === "free") {
+      if (state === "blocked") { state = "idle"; hideNotice(); }
     }
   };
 
@@ -91,9 +114,14 @@
     setTimeout(function(){ try { root.location.reload(); } catch (e) {} }, 150);
   }
 
+  function hideNotice(){
+    try { var d = root.document, n = d && d.getElementById("vpOneTab"); if (n && n.parentNode) n.parentNode.removeChild(n); } catch (e) {}
+  }
+
   function showNotice(wasStoodDown){
     var d = root.document; if (!d || !d.body) return;
     if (d.getElementById("vpOneTab")) return;
+    var o = noticeOpts || {};
     var box = d.createElement("div");
     box.id = "vpOneTab";
     box.setAttribute("role", "alertdialog");
@@ -119,22 +147,29 @@
     b.textContent = "Use this tab instead";
     b.addEventListener("click", function(){ b.disabled = true; b.textContent = "Moving the game here..."; take(); });
     card.appendChild(h); card.appendChild(p); card.appendChild(b);
+    if (o.back) {
+      var bk = d.createElement("button");
+      bk.type = "button"; bk.id = "vpOneTabBack";
+      bk.style.cssText = "display:block;margin:12px auto 0;font:inherit;font-size:15px;font-weight:700;padding:10px 16px;" +
+        "border:0;background:none;color:#fff;opacity:.8;text-decoration:underline;cursor:pointer";
+      bk.textContent = String(o.back);
+      bk.addEventListener("click", function(){ hideNotice(); try { if (o.onBack) o.onBack(); } catch (e) {} });
+      card.appendChild(bk);
+    }
     box.appendChild(card);
     d.body.appendChild(box);
   }
 
   var waiting = null;
-  /* Resolves when this tab is the live console for k. Never resolves while
-     another tab holds it: the page stays on the notice, which is the point. */
-  function claim(k){
-    k = String(k || "");
-    if (!bc || !k) return Promise.resolve(true);
-    if (key === k && state === "live") return Promise.resolve(true);
-    if (key === k && waiting) return waiting;
+  /* Asks the other tabs whether one of them is live for k. Resolves true if one
+     answered. Shared by claim() and watch(), so two asks at once are one ask. */
+  function ask(k){
+    if (key === k && asking) return asking;
     key = k; state = "asking"; heard = false;
     var flagged = readFlag() === k;
+    lastFlagged = flagged;
     if (readFlag() && !flagged) setFlag("");   // a flag for some other console in this tab means nothing here
-    waiting = new Promise(function(resolve){
+    asking = new Promise(function(resolve){
       /* A TAB THAT WAS JUST STOOD DOWN WAITS FOR THE TAKER. It reloads the moment "Use this tab
          instead" is pressed elsewhere, and the taker reloads 150ms after it, so with the usual
          half second the stood-down tab finished loading first, heard nobody, and took the game
@@ -143,18 +178,69 @@
          asking again half way. If nobody comes (that tab was closed) it carries on, so the flag
          alone still never locks a console out. */
       var wait = flagged ? FLAG_WAIT_MS : ASK_MS;
+      /* Only the first ask after the reload is the race. Bingo asks again later in the same page
+         (tapping Bingo, Open lobby), and four seconds on every tap is a console that feels broken. */
+      if (askedOnce) wait = ASK_MS;
+      askedOnce = true;
       post({ t: "hello" });
-      if (flagged) setTimeout(function(){ if (state === "asking") post({ t: "hello" }); }, wait / 2);
-      setTimeout(function(){
-        if (heard) { state = "blocked"; showNotice(flagged); return; }
+      if (flagged && wait === FLAG_WAIT_MS) setTimeout(function(){ if (state === "asking") post({ t: "hello" }); }, wait / 2);
+      setTimeout(function(){ asking = null; resolve(heard); }, wait);
+    });
+    return asking;
+  }
+
+  /* Resolves when this tab is the live console for k. Never resolves while
+     another tab holds it: the page stays on the notice, which is the point. */
+  function claim(k, opts){
+    k = String(k || "");
+    if (!bc || !k) return Promise.resolve(true);
+    if (key === k && state === "live") return Promise.resolve(true);
+    if (key === k && waiting) return waiting;
+    var quiet = !!(opts && opts.quiet);
+    noticeOpts = opts || null;
+    var me = waiting = new Promise(function(resolve){
+      ask(k).then(function(h){
+        if (waiting === me) waiting = null;   // blocked or live, a later claim asks afresh
+        if (h) { state = "blocked"; if (!quiet) showNotice(lastFlagged); return; }
         // Nobody else is live (closed, or never there): this tab is, whatever the flag said.
         setFlag("");
         state = "live"; since = Date.now();
         sayLive();   // and say so, so a tab that asked at the same moment finds out
         resolve(true);
-      }, wait);
+      });
     });
-    return waiting;
+    return me;
+  }
+
+  /* Is another tab live for k? Takes nothing. Held: this tab goes quiet. Free:
+     this tab is idle but listening, so a claim elsewhere quietens it later. */
+  function watch(k){
+    k = String(k || "");
+    if (!bc || !k) return Promise.resolve(false);
+    if (key === k && state === "live") return Promise.resolve(false);   // it is this tab
+    return ask(k).then(function(h){
+      if (state === "live") return false;           // a claim() asked the same question and won
+      if (h) { state = "blocked"; return true; }
+      if (state === "asking") state = "idle";
+      return false;
+    });
+  }
+
+  /* The night is over (End game): stop being the live tab and say so, so another
+     tab can open the next one. Does nothing in a tab that does not hold k. */
+  function release(k){
+    k = String(k || "");
+    if (!bc || !k || key !== k || state !== "live") return;
+    state = "idle"; since = 0; waiting = null; setFlag("");
+    post({ t: "free" });
+  }
+
+  function notice(opts){
+    if (state !== "blocked" && state !== "down") return false;
+    noticeOpts = opts || noticeOpts;
+    hideNotice();
+    showNotice(lastFlagged);
+    return true;
   }
 
   /* An iPad suspends a background tab outright, so it cannot answer while it
@@ -167,6 +253,11 @@
 
   root.VP_ONETAB = {
     claim: claim,
+    watch: watch,
+    release: release,
+    notice: notice,
+    // False with no BroadcastChannel: the page then runs exactly as it did before any of this.
+    available: function(){ return !!bc; },
     // False only once this tab has been stood down or is waiting behind another.
     live: function(){ return state !== "down" && state !== "blocked"; },
     state: function(){ return state; }

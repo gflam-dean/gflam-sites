@@ -497,6 +497,7 @@
 <script src="/app/vp-phonekey.js"></script>
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-hold.js"></script>
+<script src="/app/vp-onetab.js"></script>
 <!-- The shared celebration helpers. This console only needs buzz(), which is the one place in
      the product that vibrates a phone and the one place that asks whether the page is a demo
      first. It was calling navigator.vibrate itself, which is how a sales page ended up buzzing
@@ -544,7 +545,22 @@
      changes road by one constant there. */
   var _useRoom=false, _roomTried=false, _room=null;
   try{ _useRoom = !!(window.VPRoom && window.VPRoom.wanted()); }catch(e){ _useRoom=false; }
+  /* ONE LIVE BINGO NIGHT PER TABLET (15 Oct 2026, /app/vp-onetab.js). Trivia and musical lock
+     their whole page to one tab. This page is also the games menu, so bingo locks only once a
+     night is open: restoring a saved lobby or game on connect, and Open lobby, claim
+     "bingo:<venue>" first, and End game or Close lobby let go of it. A tab behind another one
+     keeps a working menu and setup screen, sends the room nothing and calls nothing; tapping
+     Bingo there shows the notice with "Use this tab instead". While a tab is still ASKING it is
+     quiet too, so a second tab's connect cannot put a host_here or a roll call out before it
+     knows. No BroadcastChannel: oneTabOn() is false and every line below behaves as before. */
+  function oneTabOn(){ return !!(window.VP_ONETAB && VP_ONETAB.available && VP_ONETAB.available()); }
+  function oneTabKey(){ var v=(__ctx&&__ctx.venue&&__ctx.venue.id)||""; return "bingo:"+(v||G.code||""); }
+  function standingDown(){
+    if(!window.VP_ONETAB) return false;
+    return !VP_ONETAB.live() || (oneTabOn() && VP_ONETAB.state()==="asking");
+  }
   function rawSend(p){
+    if(standingDown()) return;
     if(_room){ try{ _room.send(p); return; }catch(e){} }
     if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:p }); } else { sendQueue.push(p); }
   }
@@ -779,6 +795,7 @@
   // pressing Sign out at handover had no idea they were about to end a quiz in progress.
   function liveNightElsewhere(){
     var v=(__ctx&&__ctx.venue&&__ctx.venue.id)||"", MAXAGE=6*60*60*1000;
+    if(oneTabOn() && VP_ONETAB.state()==="blocked") return "bingo game in another tab";   // 15 Oct 2026
     var probe=[["vpTriviaGame-","trivia night"],["vpMusicGame-","musical bingo game"],["vpRaffleGame-","raffle"]];
     for(var i=0;i<probe.length;i++){
       try{
@@ -1038,7 +1055,7 @@
   function enforceShift(){
     if(window.VP && VP.setGameActive){
       // A night is live while a game is running, or a claim is waiting on the host.
-      VP.setGameActive(function(){ return G.status==="running" || G.status==="lobby" || !!G.claimQueue && G.claimQueue.length>0; });
+      VP.setGameActive(function(){ return G.status==="running" || G.status==="lobby" || !!G.claimQueue && G.claimQueue.length>0 || (oneTabOn() && VP_ONETAB.state()==="blocked"); });   // a night in another tab on this tablet is live too (15 Oct 2026)
     }
     if(window.VP && VP.enforceShift){ VP.enforceShift(); return; }
     // No shared helper: release the room and send them to sign-in rather than
@@ -1171,6 +1188,8 @@
   function saveGame(){
     touchGame();
     if(!G.code) return;
+    // A tab behind another one holds no night, and its "setup" save would DELETE the live tab's.
+    if(standingDown()) return;
     try{
       // The tapping happens in the LOBBY and between rounds, which is exactly when this used to
       // delete the key. A reload mid-allocation lost the entire night's till record with nothing
@@ -1201,6 +1220,27 @@
       }
     }catch(e){}
   }
+  /* A saved lobby or running game: what a reload would bring back as a live night. */
+  function savedNightOpen(code){
+    try{
+      var s=JSON.parse(localStorage.getItem(gameKey(code))||"null");
+      return !!(s && (s.status==="running" || s.status==="lobby") && s.ts && (Date.now()-s.ts)<=SAVE_MAX_AGE);
+    }catch(e){ return false; }
+  }
+  /* connect() said hello to the room while this tab was still asking, and standingDown() dropped
+     it. Now that it is the live tab (or nobody else is), say it, and land where connect() would
+     have landed with the game restored. */
+  function resumeAfterClaim(){
+    if(subscribed){
+      send({ t:"host_here" });
+      reassertToTv();
+      if(gameOpenHere()) send({ t:"rollcall" });
+    }
+    landAfterConnect();
+    renderConsole();
+    syncNextBtn();
+  }
+  function oneTabNoticeOpts(){ return { back:"Back to the games menu", onBack:function(){ _hostPicked=false; showGameSelect(); } }; }
   function restoreGame(code){
     try{
       var raw=localStorage.getItem(gameKey(code));
@@ -1871,6 +1911,16 @@
   var _lobbyAsking=false;
   function openLobby(){
     if(blockedByHold()) return;
+    if(oneTabOn() && VP_ONETAB.state()!=="live"){
+      if(VP_ONETAB.state()==="asking") return;   // a second tap while the other tabs are asked
+      // Blocked: the notice goes up and this never resolves. Free: this tab holds the night now.
+      VP_ONETAB.claim(oneTabKey(), oneTabNoticeOpts()).then(openLobbyClaimed);
+      return;
+    }
+    openLobbyClaimed();
+  }
+  function openLobbyClaimed(){
+    if(blockedByHold()) return;
     var slug=(__ctx&&__ctx.venue&&__ctx.venue.slug)||"";
     if(G.sessionId || !slug || !(window.VP && VP.confirmTakeover)){ openLobbyNow(); return; }
     if(_lobbyAsking) return;   // a second tap while the server is being asked must not open two
@@ -1980,6 +2030,7 @@
     send({ t:"idle" });                  // TV back to the advertising loop
     sendState();
     saveGame(); renderConsole();
+    if(window.VP_ONETAB) VP_ONETAB.release(oneTabKey());   // the night is closed: any tab may open the next
   }
   function renderPlayers(){
     var el=$("playerList");
@@ -2359,6 +2410,7 @@
     sendState();
     saveGame();   // status is now "setup", so this clears the saved game for this code
     renderConsole();
+    if(window.VP_ONETAB) VP_ONETAB.release(oneTabKey());   // after the last send: any tab may open the next night
     showNightCard(_sid);
   }
   /* One card, after End game: players, games, prizes. Before this the tap posted the report and
@@ -2596,6 +2648,8 @@
      is now refused too; Dean judged that at one or two players, and they can see the host. */
   var LEGACY_PHONES_OK=false;
   var _phoneChain=Promise.resolve();
+  // The room belongs to the live tab: one behind it only waits, so it seats, deals and saves nothing (15 Oct 2026).
+  function onRoomMsg(m){ if(standingDown()) return; onMsg(m); }
   function onMsg(m){
     if(!m||!m.t) return;
     if(window.VPPhoneKey && VPPhoneKey.isPhoneMsg(m)){
@@ -2754,11 +2808,23 @@
     $("headerTag").textContent="Bingo";
     // if this screen has a saved RUNNING game (host reloaded mid game), bring it back
     // before we subscribe, so the draw, called set, roster and cards all survive.
-    restoreGame(code);
+    /* ...unless another tab on this tablet is running it (15 Oct 2026). A saved lobby or game is
+       restored only once this tab has claimed it; with nothing saved it only watches, so a menu
+       tab never holds a night. Either way the tab is silent until the other tabs have answered,
+       and resumeAfterClaim says the subscribe-time hellos again once it is the live one. */
+    if(oneTabOn()){
+      if(savedNightOpen(code)){
+        VP_ONETAB.claim(oneTabKey(), { quiet:true }).then(function(){ if(G.code===code){ restoreGame(code); resumeAfterClaim(); } });
+      } else {
+        VP_ONETAB.watch(oneTabKey()).then(function(held){ if(!held && G.code===code) resumeAfterClaim(); });
+      }
+    } else {
+      restoreGame(code);
+    }
     if(_useRoom && window.VPRoom && !_roomTried){
       _roomTried=true;
       try{
-        _room=VPRoom.connect(VP_GAME_API, "vp-"+code, "host", function(payload){ onMsg(payload); }, {
+        _room=VPRoom.connect(VP_GAME_API, "vp-"+code, "host", function(payload){ onRoomMsg(payload); }, {
           onUnavailable: function(){ _useRoom=false; _room=null; connect(code); },
           onState: function(st){
             if(st==="open"){
@@ -2780,7 +2846,7 @@
     if(!_room){
         // Supabase fallback (no room server): rebuilt after a drop by /app/vp-channel.js (review, 28 Sep 2026).
         ch=window.VPChannel ? VPChannel.keep(client, "vp-"+code, { config:{ broadcast:{ self:false } } }) : client.channel("vp-"+code, { config:{ broadcast:{ self:false } } });
-    ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
+    ch.on("broadcast", { event:"msg" }, function(e){ onRoomMsg(e.payload); });
     ch.subscribe(function(status){
       if(status==="SUBSCRIBED"){
         subscribed=true;
@@ -2849,6 +2915,11 @@
       return;
     }
     currentGame=game;
+    /* A tab behind the live one: ask again (the other tab may have been closed), and if it is
+       still there, say so now rather than at Open lobby. The setup screen stays underneath. */
+    if(oneTabOn() && VP_ONETAB.state()==="blocked"){
+      VP_ONETAB.watch(oneTabKey()).then(function(held){ if(held && currentGame==="bingo") VP_ONETAB.notice(oneTabNoticeOpts()); });
+    }
     var btns=document.querySelectorAll("#gamePicker .pk");
     for(var i=0;i<btns.length;i++){ btns[i].classList.toggle("on", btns[i].getAttribute("data-game")===game); }
     $("gameSelect").classList.add("hidden");      // hide the picker while in a game (Games button brings it back)
@@ -2892,7 +2963,14 @@
     setTimeout(function(){ _startBusy = false; }, 1200);
     /* G.paidMode is "" for a free night and "single"/"sheet" when they are selling tickets, and
        it is set from the same dropdown the host just used, so it is the truth about THIS game. */
-    if(window.VPGaming) VPGaming.gateFor("bingo90", go, { gameIsPaid: !!G.paidMode }); else go();
+    /* A tab behind the live one asks the other tabs BEFORE the state gaming rules: it was putting up
+       the rules and declaring the night for a lobby it was then not allowed to open (15 Oct 2026). */
+    if(G.status!=="lobby" && oneTabOn() && VP_ONETAB.state()!=="live"){
+      if(VP_ONETAB.state()!=="asking") VP_ONETAB.claim(oneTabKey(), oneTabNoticeOpts()).then(gate);
+      return;
+    }
+    gate();
+    function gate(){ if(window.VPGaming) VPGaming.gateFor("bingo90", go, { gameIsPaid: !!G.paidMode }); else go(); }
     function go(){ if(G.status==="lobby") startGame(); else openLobby(); }
   });
   var _startBusy = false;

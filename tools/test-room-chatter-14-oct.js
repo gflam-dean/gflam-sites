@@ -64,8 +64,10 @@ ok('phones re-join on rollcall only, never on host_here', /if\(m\.t==="rollcall"
   f({ t: 'host_here' }, Date, HOST_TYPES, markHostConnected, noteHostAlive, tvSend, box);
   ok('a console arriving (host_here) is answered at once', said === 2, 'said ' + said);
 })();
+/* Three since 15 Oct 2026: the room-server open, the Supabase subscribe, and resumeAfterClaim, which
+   says connect's hellos again once a tab has claimed its bingo night from the other tabs (vp-onetab). */
 ok('a console still in setup calls no roll call on connect',
-   (CONSOLE.match(/if\(gameOpenHere\(\)\) send\(\{ t:"rollcall" \}\)/g) || []).length === 2 && !/\n\s*send\(\{ t:"rollcall" \}\);/.test(CONSOLE));
+   (CONSOLE.match(/if\(gameOpenHere\(\)\) send\(\{ t:"rollcall" \}\)/g) || []).length === 3 && !/\n\s*send\(\{ t:"rollcall" \}\);/.test(CONSOLE));
 ok('and sends no state when a phone joins it', /if\(gameOpenHere\(\)\) sendState\(\);/.test(CONSOLE));
 
 print('\n== partyplay: a guest\'s vote is not the host\'s prompt ==');
