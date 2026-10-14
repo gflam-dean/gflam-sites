@@ -89,6 +89,10 @@ function renderJoinCounts() {} function renderConsole() {} function renderClaimQ
 var m1 = /var LEGACY_PHONES_OK\s*=\s*(true|false);/.exec(html);
 var LEGACY_PHONES_OK = m1 ? (m1[1] === 'true') : true, _phoneChain = Promise.resolve();
 if (onMsgSrc && onPhoneSrc) { eval(onMsgSrc); eval(onPhoneSrc); }
+// Who is seated, and the name the console shows (14 Oct 2026): the real ones. This room has no
+// server session, so everyone is seated, which is exactly the console with the Worker down.
+['seatOpen', 'isSeated', 'playerCount', 'shownName'].forEach(function (n) { var s = grab(n); if (s) eval.call(null, s); });
+function seatSoon() {}
 function room() { G = { status: 'running', won: false, idx: 10, claimIdx: -1, claims: [], lastWins: [], claimSeq: 0, allowEarly: false, peak: 1, players: {}, order: [], seenN: {} };
   G.players[marg.pid] = { name: 'Margaret', cards: [{ cardNo: 7, card: CARD }], paid: 0 }; G.order = [marg.pid]; }
 function deliver(m) { onMsg(m); drainMicrotasks(); }

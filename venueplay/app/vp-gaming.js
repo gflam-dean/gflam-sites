@@ -472,15 +472,15 @@
   var NOT_SHOWN = 'RECORDED AUTOMATICALLY, NOT SHOWN TO THE HOST (free entry game). ';
   function record(venue, format, a, paidEntry, shown) {
     try {
-      if (!root.VP || !VP.gameApiPost) return;
-      VP.gameApiPost('/host/gaming/declare', {
+      if (!root.VP || !VP.gameApiPost) return null;
+      return VP.gameApiPost('/host/gaming/declare', {
         venue_id: venue.id, format: format,
         entity_type: venue.entity_type || null,
         state: venue.au_state || null,
         paid_entry: !!paidEntry,
         category_claimed: ((shown === false ? NOT_SHOWN : '') + (a.headline || '')).slice(0, 300) || null
       });
-    } catch (e) {}
+    } catch (e) { return null; }
   }
 
   function gate(opts, onProceed) {
@@ -541,9 +541,16 @@
 
     wrap.querySelector('.vpg-go').addEventListener('click', function () {
       markAcked(venue.id, format);
-      record(venue, format, a, opts.paidEntry);
+      var rec = record(venue, format, a, opts.paidEntry);
       close();
-      proceed();
+      /* waitRecord: the raffle and members draw are refused by the Worker until this row exists
+         (14 Oct 2026), so the draw waits for it to land, four seconds at most. Everything else
+         goes straight on, as it always has: a record must never hold up a game. */
+      if (!opts.waitRecord || !rec || !rec.then) { proceed(); return; }
+      var gone = false;
+      function go() { if (gone) return; gone = true; proceed(); }
+      rec.then(go, go);
+      setTimeout(go, 4000);
     });
     wrap.querySelector('.vpg-no').addEventListener('click', close);
     wrap.addEventListener('click', function (e) { if (e.target === wrap) close(); });
@@ -601,7 +608,10 @@
         proceed(); return;
       }
 
-      if (alreadyAcked(venue.id, format)) { proceed(); return; }
+      /* force: the Worker refused a draw because it holds no acceptance for tonight (the record
+         was lost, or this browser's note says yes and the server's says no). Show the rules again,
+         whatever this browser remembers, and keep the new acceptance. */
+      if (!opts.force && alreadyAcked(venue.id, format)) { proceed(); return; }
       /* paidEntry MUST be whether THIS game charges, not whether the venue is unlocked to
          charge at all. It used to pass the venue-level flag, which ships false. So a venue
          selling tickets tonight was shown "Free entry, nobody pays to play", and
@@ -610,7 +620,7 @@
       var thisGameIsPaid = (opts.gameIsPaid != null)
         ? !!opts.gameIsPaid
         : (venue.paid_entry_enabled === true);
-      gate({ format: format, venue: venue, paidEntry: thisGameIsPaid }, proceed);
+      gate({ format: format, venue: venue, paidEntry: thisGameIsPaid, force: !!opts.force, waitRecord: !!opts.waitRecord }, proceed);
     } catch (e) { proceed(); }
   }
 

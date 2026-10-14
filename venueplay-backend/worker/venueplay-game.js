@@ -140,7 +140,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '14 Oct 2026, 19:11 · caf0989b';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '14 Oct 2026, 19:14 · f02f8bfe';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -271,6 +271,7 @@ export default {
       if (method === 'POST' && path === '/host/game/end')      return await handleGameEnd(request, env, json);
       if (method === 'POST' && path === '/host/ball')          return await handleHostBall(request, env, json);
       if (method === 'POST' && path === '/host/bingo/draw')      return await handleBingoDrawStart(request, env, json);
+      if (method === 'POST' && path === '/host/bingo/seat')      return await handleBingoSeat(request, env, json);
       if (method === 'POST' && path === '/host/bingo/ball')      return await handleBingoBall(request, env, json);
       if (method === 'POST' && path === '/host/bingo/fallback')  return await handleBingoFallback(request, env, json);
       if (method === 'POST' && path === '/host/play')          return await handleHostPlay(request, env, json);
@@ -1008,7 +1009,7 @@ async function handleCreateSession(request, env, json) {
 async function handleJoinInfo(request, env, json) {
   const b = await readJson(request);
   const code = String(b.code || '').trim().toUpperCase();
-  if (!code) return json({ collect: null });
+  if (!code) return json({ collect: null, exists: false });
   let venueId = null;
   /* WHICH GAME is this code for? Every printed sign says venueplay.com.au/play, so /play has to
      be able to resolve ANY code the room is shown: a bingo venue code, or the random join code a
@@ -1072,7 +1073,21 @@ async function handleJoinInfo(request, env, json) {
       }
     }
   }
-  if (!venueId) return json({ collect: null, format: '' }); // unknown code; join screen falls back to name only
+  /* A CODE NOBODY HOLDS SAYS SO. This answered { collect:null, format:'' } and nothing else, which
+     the phone could not tell apart from "a bingo venue that collects nothing", so a mistyped code
+     sat on "YOU'RE IN, waiting for the host" for ever (audit, 14 Oct 2026). exists:false is said
+     only when the lookups ANSWERED and found nothing; a database that fails throws above and the
+     phone keeps waiting, which is the safe way round. A suspended venue still exists. */
+  if (!venueId) {
+    let held = null;
+    try {
+      held = await venueByCode(env, code, { includeSuspended: true });
+      // venueByCode reads a failed lookup as "no venue", so prove the database is answering
+      // before a phone is told its code does not exist. One row, any row.
+      if (!held) await sbGet(env, 'vp_venues', 'select=id&limit=1');
+    } catch (e) { return json({ collect: null, format: '' }); }
+    return json({ collect: null, format: '', exists: !!held });
+  }
   const rows = await sbGet(env, 'vp_venue_settings',
     'venue_id=eq.' + enc(venueId) + '&select=collect_first_name,collect_last_name,collect_postcode,collect_email,collect_mobile,collect_marketing_optin&limit=1');
   const cfg = (rows && rows[0]) || {};
@@ -3454,6 +3469,7 @@ async function handleHostDraw(request, env, json) {
   const session = await getSession(env, game.session_id);
   if (session.status === 'finished' || session.status === 'cancelled') return json({ error: 'This session is closed' }, 409);
   const staff = await requireStaff(env, authUserId, session.venue_id);   // ENFORCED: staff at the venue (also kill-switch)
+  if (!(await rulesAccepted(env, session.venue_id, 'raffle'))) return rulesRefusal(json, 'raffle');   // ENFORCED: tonight's rules, seen and accepted
 
   const rg = await sbGet(env, 'vp_raffle_games',
     'game_id=eq.' + enc(gameId) + '&select=range_min,range_max,draws_count,allow_redraw,time_to_claim_seconds,jackpot_on,jackpot_amount_cents');
@@ -3715,7 +3731,7 @@ async function handleMembersDraw(request, env, json) {
   for (let i = 0; i < buf.length; i++) rand.push(buf[i]);
   const r = await hostDrawRpc(request, env, json, 'vp_members_draw', {
     p_rand: rand, p_hold_default: 4, p_hold_lo: 2, p_hold_hi: 30,
-  });
+  }, membersRulesGate);
   if (r.reply) return r.reply;
   if (r.pre) return handleMembersDrawManyTrips(request, env, json, r.pre);
   const d = r.rpc;
@@ -4083,6 +4099,39 @@ async function handleGamingDeclare(request, env, json) {
   }, false);
 
   return json({ ok: true });
+}
+
+/* THE RULES BEFORE A DRAW, ON THE SERVER TOO (14 Oct 2026).
+   The raffle and members draw consoles show the venue's state gaming rules before the first draw
+   of the night (vp-gaming.js gateFor), and "I understand" writes the row above. That was the whole
+   enforcement: a page that skipped the popup, or anybody calling /host/draw straight, drew with
+   nothing accepted at all (audit, 14 Oct 2026). Now the draw itself asks for the row.
+   The SAME rule as the browser, which shows the popup for every venue in every state for these
+   two formats, once per calendar day. 24 hours here is never stricter than that: a day's
+   acceptance in the browser is always younger than 24 hours. A row written automatically for a
+   free game nobody saw (vp-gaming.js NOT_SHOWN) is not an acceptance and does not count. */
+const RULES_WINDOW_MS = 24 * 60 * 60 * 1000;
+const RULES_NOT_SHOWN = 'RECORDED AUTOMATICALLY';
+async function rulesAccepted(env, venueId, format) {
+  const since = new Date(Date.now() - RULES_WINDOW_MS).toISOString();
+  const rows = await sbGet(env, 'vp_gaming_declarations', 'venue_id=eq.' + enc(venueId) + '&format=eq.' + enc(format) +
+    '&declared_at=gt.' + enc(since) + '&select=category_claimed&order=declared_at.desc&limit=20');
+  return rows.some(function (r) { return String(r.category_claimed || '').indexOf(RULES_NOT_SHOWN) !== 0; });
+}
+function rulesRefusal(json, format) {
+  return json({ error: 'Read and accept tonight\'s ' + (format === 'raffle' ? 'raffle' : 'members draw') +
+    ' rules first, then draw again.', needs_rules: true, format: format }, 428);
+}
+/* The members draw's gate. Two reads on top of the one-trip draw (whose draw, then the rules),
+   and no more: when the rules ARE accepted, the draw's own function makes the staff check as it
+   always has. Only a refusal checks staff here first, so a host at another venue is told 403,
+   never whether this venue has accepted anything. */
+async function membersRulesGate(env, json, authUserId, drawId) {
+  const d = await sbGet(env, 'vp_member_draws', 'id=eq.' + enc(drawId) + '&select=venue_id&limit=1');
+  if (!d.length) return null;                                      // the draw itself answers "not found"
+  if (await rulesAccepted(env, d[0].venue_id, 'members')) return null;
+  await requireStaff(env, authUserId, d[0].venue_id);              // throws for a stranger, so nothing leaks
+  return rulesRefusal(json, 'members');
 }
 
 async function handleMembersSettings(request, env, json) {
@@ -5949,6 +5998,74 @@ async function handleHostBall(request, env, json) {
   return json({ number, index: newIndex });
 }
 
+/* ------------------------------ POST /host/bingo/seat ------------------------------
+ * WHO IS REALLY IN THIS BINGO GAME, asked by the console that deals the tickets (14 Oct 2026).
+ *
+ * Broadcast bingo has two halves that never met. The CONSOLE heard phones on the realtime
+ * channel and dealt to anybody who signed a join there, from anywhere, without a server identity.
+ * The SERVER counted vp_players rows, which anybody holding the public venue code could mint by
+ * POSTing /join with a made-up pid, no phone and no ticket. So a stranger on the channel was
+ * PLAYING and not counted, a script on /join was counted and not playing, and the bill was
+ * whichever of those happened to be bigger (audit, 14 Oct 2026).
+ *
+ * This joins them. The phone puts its server device id (the pid it sends /join) in its signed
+ * channel join. The console asks here which of those ids hold a live row in THIS session, deals
+ * only to those, and with deal:true this stamps played_at on them: the stamp billing counts.
+ * A row the console never dealt to is never stamped, so a script that only POSTs /join is never
+ * billed, and a channel phone with no row is never dealt. A real phone, which does both, counts
+ * exactly as it always has: once per session, deduped by device.
+ *
+ * Bingo still runs with this Worker down: the console deals to everyone when it cannot ask,
+ * and asks again later (see seatTick in app/index.html).
+ *
+ *   body { session_id, dids:[device ids], deal:bool, count:bool }
+ *   ->   { ok, seated:[the ids that hold a row], counted?: the number billing would count now }
+ */
+const SEAT_MAX_IDS = 200;
+async function handleBingoSeat(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
+  const b = await readJson(request);
+  const sessionId = String(b.session_id || '').trim();
+  if (!sessionId) return json({ error: 'Missing session_id' }, 400);
+  assertUuid(sessionId, 'session_id');
+  const session = await getSession(env, sessionId);
+  await requireStaff(env, authUserId, session.venue_id);          // ENFORCED: staff at the session's venue (also kill-switch)
+  const want = [];
+  (Array.isArray(b.dids) ? b.dids : []).forEach(function (d) {
+    d = String(d || '');
+    if (want.length < SEAT_MAX_IDS && /^[A-Za-z0-9_-]{6,64}$/.test(d) && !isPaperDevice(d) && want.indexOf(d) === -1) want.push(d);
+  });
+  let rows = [];
+  if (want.length) {
+    rows = await sbGet(env, 'vp_players', 'session_id=eq.' + enc(sessionId) + '&kicked=eq.false&device_id=in.(' +
+      want.map(enc).join(',') + ')&select=id,device_id,played_at&limit=' + (want.length * 4));
+  }
+  const seated = [];
+  rows.forEach(function (r) { if (r.device_id && seated.indexOf(r.device_id) === -1) seated.push(r.device_id); });
+  const live = session.status !== 'finished' && session.status !== 'cancelled';
+  if (b.deal === true && live) {
+    const ids = rows.filter(function (r) { return !r.played_at; }).map(function (r) { return r.id; });
+    if (ids.length) {
+      try {
+        await sbPatch(env, 'vp_players', 'id=in.(' + ids.map(enc).join(',') + ')&session_id=eq.' + enc(sessionId) + '&played_at=is.null',
+          { played_at: new Date().toISOString() });
+      } catch (e) { return json({ ok: false, seated: seated, error: 'Could not record the deal' }, 503); }
+      /* The stamps only count inside a session that has a game row (playerIdsWhoPlayed), which
+         broadcast bingo gets from the console's start-of-game /report. If that report was lost,
+         make sure of it here, or the night falls back to counting every row, ghosts and all.
+         Idempotent: an existing running bingo row is left alone. */
+      await markBroadcastGameLive(env, session.venue_id, 'bingo');
+    }
+  }
+  const out = { ok: true, seated: seated };
+  if (b.count === true) {
+    // The very read and count chargeNightOverage makes, so the card cannot disagree with the bill.
+    const all = await sbGet(env, 'vp_players', 'session_id=eq.' + enc(sessionId) + '&kicked=eq.false&select=id,device_id');
+    out.counted = countPlayersWhoPlayed(all, await playerIdsWhoPlayed(env, sessionId));
+  }
+  return json(out);
+}
+
 /* ------------------------------ POST /host/bingo/draw ------------------------------
  * THE BINGO CONSOLE'S DRAW LIVES HERE NOW. The console on /app is broadcast-only: it deals
  * its own cards and talks to the TV and the phones over the realtime channel, and for two
@@ -6024,12 +6141,15 @@ let hostDrawRpcMissing = false;   // per isolate: once PostgREST says the functi
 // Common front half of both host draw routes: verify the host, read the body, ask the function.
 // Returns { rpc: <parsed jsonb> } on success, { pre } when the function is missing (fall back),
 // or { reply } when the status word maps to an error reply.
-async function hostDrawRpc(request, env, json, fn, extra) {
+async function hostDrawRpc(request, env, json, fn, extra, gate) {
   const authUserId = await verifyHostJwt(request, env);          // ENFORCED: valid host JWT
   const b = await readJson(request);
   const drawId = String(b.draw_id || '').trim();
   if (!drawId) return { reply: json({ error: 'Missing draw_id' }, 400) };
   assertUuid(drawId, 'draw_id');
+  // A check that has to run before EITHER path draws (the members draw's rules). Here, because
+  // the body can only be read once and both paths start from this one.
+  if (gate) { const refused = await gate(env, json, authUserId, drawId); if (refused) return { reply: refused }; }
   const pre = { authUserId, b, drawId };
   if (hostDrawRpcMissing) return { pre, drawId };
   const args = Object.assign({ p_draw_id: drawId, p_auth_user_id: authUserId }, extra || {});
@@ -6373,6 +6493,17 @@ async function handlePlayerAnswerEightTrips(request, env, json, pre) {
    column is not there yet the answer is still ok, and billing falls back to the old count. */
 async function handlePlayerAlive(request, env, json) {
   const player = await verifyPlayerToken(request, env);           // ENFORCED: valid player token
+  /* NOT FOR BROADCAST BINGO, WHERE THE HOST'S CONSOLE SAYS IT INSTEAD (14 Oct 2026).
+     Anyone holding the public venue code can POST /join with a made-up pid, get a token, and
+     call this, so a script could stamp as many "players" as it liked with no phone and no
+     ticket, and bingo billed every one (audit, 14 Oct 2026). A bingo ticket only exists once
+     the console deals it, so the console now stamps exactly the phones it dealt to
+     (/host/bingo/seat), and a stamp from the phone itself proves nothing extra. Trivia and
+     musical keep this, as before: their questions and cards come from this Worker. */
+  try {
+    const sess = await sbGet(env, 'vp_sessions', 'id=eq.' + enc(player.session_id) + '&select=lobby_format&limit=1');
+    if (sess.length && sess[0].lobby_format === 'bingo90') return json({ ok: true, recorded: false, by: 'host' });
+  } catch (e) { /* cannot tell: stamp as before */ }
   try {
     await sbPatch(env, 'vp_players', 'id=eq.' + enc(player.id) + '&played_at=is.null',
       { played_at: new Date().toISOString() });
@@ -6754,10 +6885,17 @@ async function handleOverageAck(request, env, json) {
   const joined = countPlayers(roster);
   const played = countPlayersWhoPlayed(roster, await playerIdsWhoPlayed(env, sessionId));
   const approvedCount = Math.max(joined, played);
+  /* NEVER MORE THAN THE HOST WAS SHOWN. The bingo console counts the room itself (only the phones
+     it dealt to, named on the consent screen) and sends that number. The server's own count also
+     holds every row a script minted on /join without a phone, so taking the server's number made
+     the host's OK cover heads nobody showed them (audit, 14 Oct 2026). The smaller of the two is
+     what was agreed to. Trivia and musical send no number and are unchanged. */
+  const shown = parseInt(b.approved_count, 10);
+  const recorded = (shown > 0 && shown < approvedCount) ? shown : approvedCount;
   await sbPatch(env, 'vp_sessions', 'id=eq.' + enc(sessionId),
     { overage_approved: true, overage_approved_at: new Date().toISOString(),
-      overage_approved_count: approvedCount });
-  return json({ ok: true, overage_approved: true, approved_count: approvedCount });
+      overage_approved_count: recorded });
+  return json({ ok: true, overage_approved: true, approved_count: recorded });
 }
 
 async function handleSessionClose(request, env, json) {

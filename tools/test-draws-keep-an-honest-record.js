@@ -20,6 +20,8 @@ function resetMembers() {
   DB.vp_members = []; for (var i = 1; i <= 50; i++) DB.vp_members.push({ id: uuid(i), roster_id: ROSTER, member_number: 100 + i, first_name: 'Member', last_name: 'N' + i, status: 'valid' });
   DB.vp_venue_settings = [{ venue_id: VENUE, name_display: 'abbrev_last' }];
   DB.vp_member_draw_results = [];
+  // Tonight's rules were accepted (the draws ask the server for this since 14 Oct 2026).
+  DB.vp_gaming_declarations = [{ id: 'decl-r', venue_id: VENUE, format: 'raffle', category_claimed: 'Free entry.', declared_at: new Date(NOWMS - 3600000).toISOString() }, { id: 'decl-m', venue_id: VENUE, format: 'members', category_claimed: 'Free entry.', declared_at: new Date(NOWMS - 3600000).toISOString() }];
 }
 function results() { return DB.vp_member_draw_results.map(function (r) { return { num: r.member_number, outcome: r.outcome, amt: r.amount_cents }; }); }
 function jackpot() { return DB.vp_member_draws[0].current_jackpot_cents; }

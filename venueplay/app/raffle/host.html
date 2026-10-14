@@ -775,6 +775,13 @@
   }
 
   // ---- draw (through the Worker; the winning number comes from the SERVER) ----
+  /* THE SERVER HAS NO ACCEPTANCE FOR TONIGHT (428, 14 Oct 2026): the record of "I understand" never
+     reached it, or this browser remembered a yes the server never heard. Show the rules again and,
+     once accepted, draw. Nothing was drawn by the refused request. */
+  function rulesAgain(e){
+    if(!e || e.status!==428 || !window.VPGaming) return;
+    VPGaming.gateFor("raffle", startDraw, { force:true, waitRecord:true });
+  }
   function startDraw(){
     if(G.busy) return;
     readInputs();
@@ -799,7 +806,7 @@
       .then(function(){ return apiPost("/host/draw", drawBody()); })
       .then(function(r){ return wait.then(function(){ return r; }); })
       .then(function(r){ revealServer(r); })
-      .catch(function(e){ stopSpin(); G.busy=false; drawBtnIdle(); hostError(e.message||"Draw failed"); sendIdle(); });
+      .catch(function(e){ stopSpin(); G.busy=false; drawBtnIdle(); hostError(e.message||"Draw failed"); sendIdle(); rulesAgain(e); });
   }
 
   // reveal the SERVER's drawn ticket(s)
@@ -1036,7 +1043,8 @@
   }
   $("connectBtn").addEventListener("click", tryConnect);
   /* State gaming rules, once a night, before the first draw. */
-  $("drawBtn").addEventListener("click", function(){ if(window.VPGaming) VPGaming.gateFor("raffle", startDraw); else startDraw(); });
+  /* waitRecord: the draw is refused by the Worker until tonight's acceptance is on the record (14 Oct 2026). */
+  $("drawBtn").addEventListener("click", function(){ if(window.VPGaming) VPGaming.gateFor("raffle", startDraw, { waitRecord:true }); else startDraw(); });
   $("claimBtn").addEventListener("click", onClaim);
   /* "Not here, redraw" was one tap and final: the ticket is marked no_show, taken out of the pool
      for good, and someone else is drawn, with no way back. A host who catches it while the holder

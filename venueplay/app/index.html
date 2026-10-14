@@ -1094,7 +1094,7 @@
     // Called when a game closes (New game or End game). A game counts once it has started.
     if(!G.startedAt) return;
     NIGHT.games+=1;
-    NIGHT.peak=Math.max(NIGHT.peak||0, G.peak||0, G.order.length);
+    NIGHT.peak=Math.max(NIGHT.peak||0, G.peak||0, playerCount());
     (G.prizesWon||[]).forEach(function(w){ NIGHT.prizes.push(w); });
   }
   // the natural next prize in a progressive housie game (line -> two lines -> full house)
@@ -1113,7 +1113,7 @@
     try{
       if(!G.code || !G.startedAt) return;
       if(!open) nightNote();
-      var players=Math.max(G.peak||0, G.order.length), tickets=0;
+      var players=Math.max(G.peak||0, playerCount()), tickets=0;
       for(var i=0;i<G.order.length;i++){ var p=G.players[G.order[i]]; if(p&&p.cards) tickets+=p.cards.length; }
       var body={ code:G.code, format:"bingo", players:players, tickets:tickets,
                  prizes:G.prizesWon||[], started_at:G.startedAt,
@@ -1471,11 +1471,103 @@
     return false;
   }
   function calledArray(){ var a=[]; for(var i=0;i<=G.idx;i++) a.push(G.draw[i]); return a; }
-  function playerCount(){ return G.order.length; }
+  /* ONE PERSON, ONE PLAYER, AND ONLY PEOPLE WHO ARE REALLY HERE (14 Oct 2026).
+     The room used to be whoever signed a join on the channel, which anybody anywhere can do, while
+     the bill was whoever POSTed /join, which a script can do without a phone. The audit found both:
+     a stranger PLAYING and not counted, ghosts counted and not playing, and a phone that stayed on
+     the page into game two never joined the new session at all (six played, the meter said one).
+     Now a phone is SEATED here only once the server says its device id holds a row in THIS
+     session (seatTick, /host/bingo/seat), and only seated phones are dealt, counted, named on the
+     consent screen and billed. Seating is per session, so game two seats everyone afresh.
+     BINGO STILL RUNS WITHOUT THE SERVER: with no session, or a seat check that gets no answer,
+     everybody is seated, exactly as before. */
+  function seatOpen(){ return !G.sessionId || !!G.seatDown; }
+  function isSeated(p){ return !!p && (seatOpen() || p.seatSid===G.sessionId); }
+  function playerCount(){ var n=0; for(var i=0;i<G.order.length;i++){ if(isSeated(G.players[G.order[i]])) n++; } return n; }
+  /* Two phones called Margaret are two people. The console showed them identically, so the host
+     could not tell whose ticket was whose. The second one is "Margaret (2)", everywhere the console
+     names her: the list, the claim queue, the winner announcement. */
+  function shownName(pid){
+    var p=G.players[pid]; if(!p) return "Player";
+    var base=String(p.name||"Player"), key=base.trim().toLowerCase(), k=0;
+    for(var i=0;i<G.order.length;i++){
+      var q=G.players[G.order[i]]; if(!q || !isSeated(q)) continue;
+      if(String(q.name||"Player").trim().toLowerCase()===key) k++;
+      if(G.order[i]===pid) break;
+    }
+    return k>1 ? base+" ("+k+")" : base;
+  }
 
   /* join_code rides on every state message. The TV shows it instead of the venue code, so what a
-     punter scans is a code that dies with the game rather than one printed on the furniture. */
-  function sendState(){ send({ t:"state", pattern:G.pattern, prize:G.prize, defaultCards:G.defaultCards, paidMode:G.paidMode, allowEarly:G.allowEarly, called:calledArray(), active:(G.status==="running"), playerCount:playerCount(), join_code:(G.joinCode||null) }); }
+     punter scans is a code that dies with the game rather than one printed on the furniture.
+     session_id rides too, because since one-code-per-venue the join code is the SAME for every
+     session: a phone that compared codes never noticed game two had begun (14 Oct 2026). */
+  function sendState(){ send({ t:"state", pattern:G.pattern, prize:G.prize, defaultCards:G.defaultCards, paidMode:G.paidMode, allowEarly:G.allowEarly, called:calledArray(), active:(G.status==="running"), playerCount:playerCount(), join_code:(G.joinCode||null), session_id:(G.sessionId||null) }); }
+
+  /* ASKING THE SERVER WHO IS SEATED. Batched, and each unseated phone is asked about on a backoff
+     (three seconds, five times, then doubling to a minute), so a stranger on the channel costs a
+     request a minute, not one every few seconds all night. A phone that announces itself again
+     is asked about straight away: that is what a phone does the moment its /join lands. */
+  var _seatT=0, _seatAt=0, _seatBusy=false;
+  // One timer, and an earlier ask always wins: a stranger's minute-long backoff must never hold
+  // up the room's next lobby behind it.
+  function seatSoon(ms){
+    var d=(ms==null?700:ms), at=Date.now()+d;
+    if(_seatT){ if(_seatAt<=at) return; clearTimeout(_seatT); }
+    _seatAt=at; _seatT=setTimeout(function(){ _seatT=0; _seatAt=0; seatTick(); }, d);
+  }
+  function seatTick(){
+    var sid=G.sessionId;
+    if(!sid || !(window.VP && VP.gameApiCall) || (G.status!=="lobby" && G.status!=="running")) return;
+    if(_seatBusy){ seatSoon(1500); return; }
+    var running=(G.status==="running"), now=Date.now(), want=[], wantP=[], later=0, i, p;
+    for(i=0;i<G.order.length;i++){
+      p=G.players[G.order[i]]; if(!p || !p.did) continue;
+      var need=(p.seatSid!==sid) || (running && p.cards && p.cards.length && p.stampSid!==sid);
+      if(!need) continue;
+      if(p.seatNext && p.seatNext>now){ later=later ? Math.min(later, p.seatNext) : p.seatNext; continue; }
+      if(want.length<200){ want.push(p.did); wantP.push(G.order[i]); }
+    }
+    if(!want.length){ if(later) seatSoon(Math.max(500, later-now)); return; }
+    _seatBusy=true;
+    VP.gameApiCall("/host/bingo/seat", { session_id:sid, dids:want, deal:running }, 6000).then(function(r){
+      _seatBusy=false;
+      if(sid!==G.sessionId) return;                      // a reply about the session before this one
+      var j=r && r.json;
+      if(!(r && r.status===200 && j && j.ok && Array.isArray(j.seated))){ seatFailed(); return; }
+      var wasDown=G.seatDown; G.seatDown=false;
+      var seated={}; j.seated.forEach(function(d){ seated[d]=true; });
+      wantP.forEach(function(pid){
+        var q=G.players[pid]; if(!q) return;
+        if(seated[q.did]){ q.seatSid=sid; q.seatTries=0; q.seatNext=0; if(running && q.cards && q.cards.length) q.stampSid=sid; }
+        else {
+          q.seatTries=(q.seatTries||0)+1;
+          q.seatNext=Date.now()+(q.seatTries<5 ? 3000 : Math.min(60000, 3000*Math.pow(2, q.seatTries-4)));
+          // Ask the phone to join this session now. A real phone whose /join failed retries; a
+          // stranger has nothing to join with. Signed like everything the console says.
+          send({ t:"checkin", pid:pid, session_id:sid, join_code:(G.joinCode||null) });
+        }
+      });
+      if(running) dealSeated();
+      if(wasDown || wantP.length){ sendPlayers(); renderJoinCounts(); saveGame(); }
+      seatSoon(1000);
+    }, function(){ _seatBusy=false; if(sid===G.sessionId) seatFailed(); });
+  }
+  function seatFailed(){
+    // No answer, or an answer this console cannot use (an older Worker, a signed-out tablet). The
+    // night must not stall on a server: everyone is seated until the server answers again.
+    if(!G.seatDown){ G.seatDown=true; if(G.status==="running") dealSeated(); sendPlayers(); renderJoinCounts(); }
+    seatSoon(15000);
+  }
+  // Deal to every seated phone that has no tickets yet: the late arrival, the phone whose /join was slow.
+  function dealSeated(){
+    for(var i=0;i<G.order.length;i++){
+      var pid=G.order[i], p=G.players[pid];
+      if(!isSeated(p)) continue;
+      if(!p.cards || !p.cards.length){ var need=ticketsFor(p); if(need>0){ dealFor(p); sendCards(pid); } }
+    }
+    seatSoon(800);                                       // and get the new ones stamped as dealt
+  }
   /* ---- strips ----
      Paper bingo is sold in STRIPS of six: between them the six tickets carry all 90
      numbers exactly once, so every number called marks exactly one of your tickets.
@@ -1828,16 +1920,19 @@
       var v = __ctx && __ctx.venue; if(!v || !v.id) return;
       // A reload in the lobby brings the session back with the saved game. Reuse it: opening a
       // second one would leave the first counting a room that had already moved on.
-      if(G.sessionId && G.joinCode){ sendState(); return; }
+      if(G.sessionId && G.joinCode){ sendState(); seatSoon(); return; }
       if(!(window.VP && VP.gameApiPost)) return;
       VP.gameApiPost("/session", { venue_id: v.id, format: "bingo" }).then(function(r){
         if(!r || r.error || !r.session_id) return;
         G.sessionId = r.session_id;
         G.joinCode  = r.join_code || null;
+        G.seatDown  = false;   // a new session is asked afresh
         if(r.plan_cap != null) G.planCapAtStart = r.plan_cap;
         try{ VP.noteOpenSession(r.session_id, v.id); }catch(e){}   // so sign-out closes it and bills the night
         sendState();     // the TV needs the join code: it is what the phones scan now
         saveGame();
+        renderJoinCounts();   // a new session seats everyone afresh (14 Oct 2026)
+        seatSoon();
       }).catch(function(){});
     }catch(e){}
   }
@@ -1861,13 +1956,22 @@
     var timer=setTimeout(function(){ if(ctrl) ctrl.abort(); }, 6000);
     /* night=1 also brings back other_games: the trivia, musical and raffle games this night
        played, which this tablet never saw (it only counts its own bingo games). */
+    /* THE NUMBER BILLING COUNTS, not every row. /snapshot's player_count is everyone who ever
+       POSTed /join, including rows no phone ever played, so the card and the panel disagreed
+       (audit, 14 Oct 2026). /host/bingo/seat with count:true answers with the very figure
+       chargeNightOverage bills. An older Worker that has no such route: the snapshot, as before. */
+    var billed=(window.VP && VP.gameApiCall)
+      ? VP.gameApiCall("/host/bingo/seat", { session_id:sessionId, dids:[], count:true }, 6000)
+          .then(function(r){ var c=r && r.status===200 && r.json && r.json.counted; return (typeof c==="number" && isFinite(c) && c>=0) ? c : null; }, function(){ return null; })
+      : Promise.resolve(null);
     return fetch(VP_GAME_API+"/snapshot?session="+encodeURIComponent(sessionId)+"&night=1", { signal: ctrl?ctrl.signal:undefined })
       .then(function(r){ return r.ok ? r.json() : null; })
       .then(function(j){ clearTimeout(timer); var n=j && j.player_count;
-        if(!(typeof n==="number" && isFinite(n) && n>=0)) return null;
-        var o=j.other_games; if(night) night.other=(typeof o==="number" && isFinite(o) && o>0) ? o : 0;
+        if(!(typeof n==="number" && isFinite(n) && n>=0)) n=null;
+        var o=j && j.other_games; if(night) night.other=(typeof o==="number" && isFinite(o) && o>0) ? o : 0;
         return n; })
-      .catch(function(){ clearTimeout(timer); return null; });
+      .catch(function(){ clearTimeout(timer); return null; })
+      .then(function(n){ return billed.then(function(c){ return c!=null ? c : n; }); });
   }
   function cancelLobby(){
     clearCallGuards();
@@ -1879,20 +1983,25 @@
   function renderPlayers(){
     var el=$("playerList");
     if(!G.order.length){ el.innerHTML='<div class="pempty">No players yet. They join by scanning the QR on the TV once you start.</div>'; return; }
-    var html="", unit=(G.paidMode==="sheet")?"sheet":"ticket";
+    var html="", unit=(G.paidMode==="sheet")?"sheet":"ticket", waiting=0;
     for(var i=0;i<G.order.length;i++){
       var pid=G.order[i], p=G.players[pid]; if(!p) continue;
-      if(!G.paidMode){ html+='<span class="pchip">'+esc(p.name)+'</span>'; continue; }
+      /* Not seated in this session yet: one line for all of them, not a chip each. They are not
+         counted, dealt or billed until the server knows them, and a stranger signing joins by
+         the hundred must not be able to fill the host's screen with names (14 Oct 2026). */
+      if(!isSeated(p)){ waiting++; continue; }
+      if(!G.paidMode){ html+='<span class="pchip">'+esc(shownName(pid))+'</span>'; continue; }
       // Paid night: the chip becomes the till receipt. Nothing here takes money; it records what
       // the bar already took, and it holds for the whole night.
       var n=parseInt(p.paid,10)||0;
       html+='<span class="pchip paid'+(n?" has":"")+'" data-pid="'+esc(pid)+'">'
           +   '<button type="button" class="pm" data-d="-1" aria-label="One less">&minus;</button>'
-          +   '<span class="pn">'+esc(p.name)+'</span>'
+          +   '<span class="pn">'+esc(shownName(pid))+'</span>'
           +   '<span class="pq">'+n+' '+unit+(n===1?"":"s")+'</span>'
           +   '<button type="button" class="pm" data-d="1" aria-label="One more">+</button>'
           + '</span>';
     }
+    if(waiting) html+='<span class="pchip" style="opacity:.6">+'+waiting+' checking in</span>';
     el.innerHTML=html;
   }
   // One handler for the whole list: chips are rebuilt constantly, so per-chip listeners would leak.
@@ -1914,6 +2023,9 @@
     });
   })();
   function renderLive(){
+    /* The coach line follows the ball. It was only rewritten by renderConsole, which a ball does not
+       run, so "Tickets are out. Tap Start calling" sat there for the whole game (audit, 14 Oct 2026). */
+    setCoach();
     $("liveCount").textContent=(G.idx+1)+" of 90";
     $("livePattern").textContent=PATTERN_NAMES[G.pattern];
     $("livePlayers").textContent=playerCount();
@@ -2015,7 +2127,10 @@
   // ---- actions ----
   function dealCards(){
     for(var i=0;i<G.order.length;i++){ var pid=G.order[i]; var p=G.players[pid];
+      // A phone not yet seated in this session gets its tickets the moment it is (dealSeated).
+      if(!isSeated(p)){ if(p) p.cards=null; continue; }
       dealFor(p); sendCards(pid); }
+    seatSoon(300);   // tell the server who was dealt: that is who this game bills
   }
   // Over-plan players: if more joined than the plan includes, get one clear OK at Start.
   /* The venue's plan. This read included_players, which is set only by HQ and by onboarding and
@@ -2038,6 +2153,18 @@
      three rooms. overageApproved is the number they were shown; the Worker bills the smaller of
      that and what the room really was, and bills nothing at all without it. */
   var overageAcked=false, overageApproved=0;
+  /* WHO IS BEING COUNTED, BY NAME, ON THE SCREEN THAT AGREES TO PAY FOR THEM (14 Oct 2026).
+     A number alone hid anybody who should not be in it. With the names in front of them a host
+     can see a stranger, or three Margarets when there is one, before tapping OK. */
+  function ovgNames(){
+    var names=[], i;
+    for(i=0;i<G.order.length;i++){ if(isSeated(G.players[G.order[i]])) names.push(shownName(G.order[i])); }
+    if(!names.length) return "";
+    var shown=names.slice(0, 60), more=names.length-shown.length;
+    return '<div style="margin-top:12px;font-size:13px;line-height:1.5;color:var(--muted)"><b>Counted tonight:</b> '+
+      esc(shown.join(", "))+(more>0 ? " and "+more+" more" : "")+
+      '. Someone you do not know? Tap Cancel and check the room first.</div>';
+  }
   function showOverage(cnt, cap, onGo){
     var extra=cnt-cap;
     // Name the actual number. This modal is the venue's consent to a charge and it used to give
@@ -2058,7 +2185,8 @@
       "Extra players are <b>$2 each</b> on your next bill, so right now that is <b>$"+(extra*2).toFixed(2)+"</b>. "+
       "Tap Start game and <b>anyone who joins from here is added too</b>, at the same $2. "+
       "The final number is whoever actually plays tonight. "+
-      "Go over three nights running and the third night is $1 a head and we lift your plan to suit, so it never costs more than moving up.";
+      "Go over three nights running and the third night is $1 a head and we lift your plan to suit, so it never costs more than moving up."+
+      ovgNames();
     var m=$("ovgModal"); m.classList.remove("hidden");
     $("ovgGo").onclick=function(){
       overageAcked=true; overageApproved=cnt;
@@ -2089,7 +2217,7 @@
     G.status="running"; G.won=false; G.claims=[]; G.claimIdx=-1; G.lastWins=[];
     G.prizesWon=[]; G.startedAt=new Date().toISOString();
     if(!NIGHT.startedAt) nightReset();   // a host who skipped the lobby still gets a night card
-    G.peak=G.order.length;   // the room as it stands at the first ball
+    G.peak=playerCount();   // the room as it stands at the first ball
     G.reportId=null; postReport(true);   // the night is on the record from ball one
     dealCards();
     $("nextBtn").disabled=false; $("nextBtn").textContent="Start calling";
@@ -2130,7 +2258,7 @@
     /* Consent does not carry into the next game, because the charge does not either. The room can
        grow between games and each one is billed on its own, so each one is asked on its own. */
     overageAcked=false; overageApproved=0;
-    G.peak=G.order.length;   // this game's peak starts at whoever is already in the room
+    G.peak=playerCount();   // this game's peak starts at whoever is already in the room
     G.draw=[]; G.pool=freshPool(); G.idx=-1; G.called={};
     openServerDraw();   // a fresh order for the fresh game
     G.won=false; G.claims=[]; G.claimIdx=-1; G.lastWins=[];
@@ -2244,7 +2372,7 @@
      stays, with its line, if the server cannot be reached. */
   function showNightCard(sessionId){
     var m=$("nightModal"); if(!m) return;
-    var players=Math.max(NIGHT.peak||0, G.peak||0, G.order.length), games=NIGHT.games||0, prizes=NIGHT.prizes||[];
+    var players=Math.max(NIGHT.peak||0, G.peak||0, playerCount()), games=NIGHT.games||0, prizes=NIGHT.prizes||[];
     if(!games && !players){ return; }   // a lobby that never started: nothing to report
     $("nightStats").innerHTML=
       '<div class="box"><div class="k">Players joined</div><div class="v g" id="nightPlayers">'+players+'</div></div>'+
@@ -2502,20 +2630,33 @@
          host was shown and tapped OK on, so bingo was the odd one out and the gap came out of our
          side. The Worker still clamps to whatever the host actually approved, so this can never
          bill more than they agreed to. */
-      if(G.order.length > (G.peak||0)) G.peak = G.order.length;
+      if(playerCount() > (G.peak||0)) G.peak = playerCount();   // seated phones only (14 Oct 2026)
       /* Refreshing the name used to sit in the ELSE of that peak check, which has
          nothing to do with it: a phone re-announcing itself at the same moment a
          new player pushed the peak up had its name silently dropped, and the
          winner card on the wall read "Player". Always take a name when one is
          offered. */
       if(m.name) G.players[m.pid].name = m.name;
-      if(G.status==="running"){
-        var p=G.players[m.pid];
+      /* The phone's SERVER identity, the pid it sent /join (14 Oct 2026). Signed with the rest of
+         the join (vp-phonekey.js), and one device id belongs to one phone here: a second pid
+         claiming a device id already held is not given it. See seatTick. */
+      var _p=G.players[m.pid];
+      if(typeof m.did==="string" && /^[A-Za-z0-9_-]{6,64}$/.test(m.did) && _p.did!==m.did){
+        var _held=false;
+        for(var _o=0;_o<G.order.length;_o++){ var _q=G.players[G.order[_o]]; if(G.order[_o]!==m.pid && _q && _q.did===m.did){ _held=true; break; } }
+        if(!_held){ _p.did=m.did; _p.seatSid=null; _p.stampSid=null; }
+      }
+      // It may have just joined the server: ask now. Once per ten seconds a phone, so a stranger
+      // re-signing joins cannot make this tablet ask the server several times a second.
+      if(_p.did && _p.seatSid!==G.sessionId && (!_p.seatAsked || Date.now()-_p.seatAsked>10000)){ _p.seatAsked=Date.now(); _p.seatNext=0; seatSoon(); }
+      if(G.status==="running" && isSeated(_p)){
+        var p=_p;
         var need=ticketsFor(p);
         // deal when they have none yet, or the host changed the ticket count. A plain
         // reconnect re-announces and re-sends the same tickets, so nothing is wiped.
         if(!p.cards || !p.cards.length || p.cards.length!==need){ dealFor(p); }
         sendCards(m.pid);
+        if(p.stampSid!==G.sessionId) seatSoon();         // record the deal on the server
       }
       sendPlayers();
       /* A console still in setup has no game to describe. Its blank state went out to every phone
@@ -2533,7 +2674,16 @@
          your ticket" forever, could not press it again, and the console said "No claims yet".
          That is the disputed-win-at-the-bar scenario. Release their button instead. */
       if(!m.pid) return;   // a pid-less resume reads as "the whole room plays on" on every phone
-      var _refuse=function(){ try{ send({ t:"resume", pid:m.pid }); }catch(e){} };
+      /* ONE REFUSAL EVERY TWO SECONDS A PHONE. Each refusal is a signed broadcast, so a stranger
+         re-signing claims could make this tablet sign and send as fast as it liked (audit, 14 Oct
+         2026). A real phone's BINGO button stays locked until it hears back, so it never claims
+         twice inside two seconds, and its next claim after that is answered as before. */
+      var _refuse=function(){
+        var _rn=Date.now(), _ra=(G._refusedAt||(G._refusedAt={}));
+        if(_ra[m.pid] && _rn-_ra[m.pid]<2000) return;
+        _ra[m.pid]=_rn;
+        try{ send({ t:"resume", pid:m.pid }); }catch(e){}
+      };
       if(G.status!=="running" || G.won){ _refuse(); return; }
       // The tie window is the BALL, and it stays open until the round is announced. Keying it on
       // "are there still unresolved claims" closed it the moment the host tapped Confirm on the
@@ -2546,7 +2696,7 @@
       for(q=0;q<G.claims.length;q++){ if(G.claims[q].pid===m.pid) return; }    // one claim per player per ball
       for(q=0;q<G.lastWins.length;q++){ if(G.lastWins[q].pid===m.pid) return; } // already confirmed, awaiting announce
       var pl=G.players[m.pid];
-      if(!pl || !pl.cards || !pl.cards.length){ _refuse(); return; }
+      if(!pl || !pl.cards || !pl.cards.length || !isSeated(pl)){ _refuse(); return; }
       // find the exact ticket they claimed on; fall back to any winning ticket they hold
       var tk=null, j, swapped=false;
       for(j=0;j<pl.cards.length;j++){ if(pl.cards[j].cardNo===m.cardNo){ tk=pl.cards[j]; break; } }
@@ -2566,7 +2716,7 @@
       if(valid || G.allowEarly){
         // seq preserves CALL order, so announcing is ordered by who shouted first even when the
         // host confirms the cards in a different order (they often serve whoever is at the bar).
-        G.claims.push({ pid:m.pid, name:pl.name, cardNo:tk.cardNo, card:tk.card, valid:valid, seq:G.claimSeq++,
+        G.claims.push({ pid:m.pid, name:shownName(m.pid), cardNo:tk.cardNo, card:tk.card, valid:valid, seq:G.claimSeq++,
                         swapped:swapped, calledOn:(swapped?m.cardNo:0) });
         G.claimIdx=G.idx;
         sendClaimPending();
