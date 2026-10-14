@@ -70,10 +70,25 @@ def fail(what, detail):
 def ok(what, note=''):
     print('  ok    %-52s %s' % (what, note))
 
-def get(url, timeout=15):
+def health_key():
+    """The game Worker's /health keeps its counts private since 14 Oct 2026 (it was showing
+    anybody our venue count and how many enforce signing). Our tools ask with
+    sha256('vp-health:' + service key), so the service key itself never leaves this machine.
+    '' when there are no credentials here, and the audit says so rather than reading zero."""
+    try:
+        import os, hashlib
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                                        'venueplay-backend', 'tools'))
+        from vp_live import live
+        k = live().service_key
+        return hashlib.sha256(('vp-health:' + k).encode('utf-8')).hexdigest() if k else ''
+    except Exception:
+        return ''
+
+def get(url, timeout=15, headers=None):
     t0 = time.time()
     try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'venueplay-daily-audit'})
+        req = urllib.request.Request(url, headers=dict({'User-Agent': 'venueplay-daily-audit'}, **(headers or {})))
         with urllib.request.urlopen(req, timeout=timeout) as r:
             return r.status, r.read().decode('utf-8', 'replace'), (time.time() - t0) * 1000
     except urllib.error.HTTPError as e:
@@ -81,8 +96,8 @@ def get(url, timeout=15):
     except Exception as e:
         return 0, str(e), (time.time() - t0) * 1000
 
-def jget(url):
-    s, body, ms = get(url)
+def jget(url, headers=None):
+    s, body, ms = get(url, headers=headers)
     try: return s, json.loads(body), ms
     except Exception: return s, None, ms
 
@@ -117,7 +132,8 @@ def fnv_venue_code(slug):
 
 def audit_platform():
     print('\nTHE PLATFORM ITSELF')
-    s, h, ms = jget(GAME + '/health')
+    hk = health_key()
+    s, h, ms = jget(GAME + '/health', {'X-VP-Health-Key': hk} if hk else None)
     if s != 200 or not h:
         return fail('the game Worker answers at all', 'HTTP %s - every venue is down' % s)
     ok('the game Worker is up', '%s, %.0fms' % (h.get('build', '?'), ms))
@@ -140,8 +156,9 @@ def audit_platform():
     else:
         # 8 Sep: these became HEAD count=exact requests instead of two full scans.
         # If the count header is not what the Worker expects this is where it shows.
-        fail('broadcast signing can be counted', 'health says %s - the signing figures are unreadable, '
-             'so nobody can tell how many rooms are actually protected' % (b or 'nothing'))
+        fail('broadcast signing can be counted', ('health says %s - the signing figures are unreadable, '
+             'so nobody can tell how many rooms are actually protected' % (b or 'nothing')) if hk else
+             'no service key on this machine, and /health only gives the signing figures to our own tools')
     return h
 
 

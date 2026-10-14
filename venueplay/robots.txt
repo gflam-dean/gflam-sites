@@ -3,8 +3,6 @@ User-agent: *
 Allow: /
 
 # Internal and unfinished pages. These also carry a noindex meta tag; this is belt and braces.
-Disallow: /test
-Disallow: /test.html
 Disallow: /training
 Disallow: /training.html
 Disallow: /app/
@@ -20,5 +18,5 @@ Disallow: /tools/
 Disallow: /data/
 
 # A plain-language summary of this site for AI assistants:
-# https://www.venueplay.com.au/llms.txt
-Sitemap: https://www.venueplay.com.au/sitemap.xml
+# https://venueplay.com.au/llms.txt
+Sitemap: https://venueplay.com.au/sitemap.xml
