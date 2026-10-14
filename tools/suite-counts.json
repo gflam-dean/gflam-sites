@@ -23,8 +23,12 @@
   "checks": 60,
   "counted_by": "lines"
  },
+ "partyplay-backend/lib/pp-gm-boards.test.js": {
+  "checks": 12,
+  "counted_by": "lines"
+ },
  "partyplay-backend/lib/pp-great-minds.test.js": {
-  "checks": 33,
+  "checks": 36,
   "counted_by": "lines"
  },
  "partyplay-backend/lib/pp-guest-connection.test.js": {
@@ -157,6 +161,10 @@
  },
  "tools/test-bingo-seat-15-oct.js": {
   "checks": 35,
+  "counted_by": "lines"
+ },
+ "tools/test-bingo-tab-15-oct.js": {
+  "checks": 71,
   "counted_by": "lines"
  },
  "tools/test-bingo-worker-15-oct.js": {
@@ -325,6 +333,10 @@
  },
  "tools/test-platform-worker-15-oct.js": {
   "checks": 15,
+  "counted_by": "lines"
+ },
+ "tools/test-pr-boards-15-oct.js": {
+  "checks": 25,
   "counted_by": "lines"
  },
  "tools/test-pr-game.js": {
