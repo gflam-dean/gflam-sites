@@ -221,7 +221,7 @@ export default {
          no host can sign in at all.
 
          Names and booleans only. Never a value: this endpoint is public. */
-      if (method === 'GET' && path === '/health')             return await handleHealth(env, json);
+      if (method === 'GET' && path === '/health')             return await handleHealth(env, json, request);
 
       if (method === 'POST' && path === '/session')            return await handleCreateSession(request, env, json);
       if (method === 'POST' && path === '/session/close')      return await handleSessionClose(request, env, json);
@@ -817,8 +817,29 @@ async function endOtherRunningGames(env, venueId, keepFormat) {
 /* GET /health. Public, unauthenticated, and polled by the release gate, the daily
    audit and anyone curious, so nothing in here may cost more than a few indexed
    round trips or grow with the number of venues. The clash sweep is the one
-   exception and it is cached per isolate for sixty seconds in refreshVenueCodes. */
-async function handleHealth(env, json) {
+   exception and it is cached per isolate for sixty seconds in refreshVenueCodes.
+
+   PUBLIC HALF AND PRIVATE HALF (14 Oct 2026 audit). It used to tell anybody how many venues
+   we have, how many hold a signing key, how many enforce it, and how the rate limiter and the
+   room server are set up. That is a map for whoever wants to find the soft spot, and it is our
+   customer count. Public now: worker, build, ok, missing, host_login and the join-code clash
+   count (the gate and the daily audit refuse to run without those). The rest comes back only
+   to a caller sending X-VP-Health-Key = sha256("vp-health:" + the service key): our own tools,
+   which already hold that key, so there is no new secret to lose, and the key itself never
+   leaves the machine. The counts are not even computed for a public call. */
+async function healthDetailAllowed(request, env) {
+  try {
+    const got = String((request && request.headers && request.headers.get('x-vp-health-key')) || '');
+    if (!got || !env.SUPABASE_SERVICE_KEY) return false;
+    const want = await sha256Hex('vp-health:' + env.SUPABASE_SERVICE_KEY);
+    if (got.length !== want.length) return false;
+    let diff = 0;
+    for (let i = 0; i < want.length; i++) diff |= got.charCodeAt(i) ^ want.charCodeAt(i);
+    return diff === 0;
+  } catch (e) { return false; }
+}
+
+async function handleHealth(env, json, request) {
   // SUPABASE_JWT_SECRET is only needed while the project signs host logins with the
   // legacy shared secret. A project on asymmetric signing keys (Sydney) verifies hosts
   // against its published public keys instead, so it is reported, not required.
@@ -852,9 +873,11 @@ async function handleHealth(env, json) {
    Three HEAD requests with count=exact answer the same three numbers in one
    round trip each, whatever the table size. venue_id is the signing table's
    primary key, so its row count IS the number of venues holding a key. */
+  const detail = await healthDetailAllowed(request, env);
 let oneTrip = null;
-  try { oneTrip = await oneTripPresent(env); } catch (e) { oneTrip = null; }
 let signing = null;
+if (detail) {
+  try { oneTrip = await oneTripPresent(env); } catch (e) { oneTrip = null; }
 try {
   const [venues, withKey, enforcing] = await Promise.all([
     sbCount(env, 'vp_venues', 'select=id'),
@@ -863,6 +886,7 @@ try {
   ]);
   signing = { venues, with_a_key: withKey, enforcing };
 } catch (e) { signing = { error: 'could not be read' }; }
+}
 
   return json({
     worker: 'venueplay-game',
@@ -870,12 +894,12 @@ try {
     build: BUILD,
     ok: !missing.length && rl && !clashes.length,
     missing,
-    rateLimiter: 'memory',   // per isolate since 8 Sep 2026; no store on the request path
-    joinDedupCache: rl,
-    room: !!env.ROOM && !roomOff(env),   // is the room server actually serving right now
-    room_off: roomOff(env) || undefined, // the global off switch, if somebody has thrown it
-    one_trip: oneTrip,       // which of migrations 71/72/73 this database really has
-    broadcast_signing: signing,
+    rateLimiter: detail ? 'memory' : undefined,   // per isolate since 8 Sep 2026; no store on the request path
+    joinDedupCache: detail ? rl : undefined,
+    room: detail ? (!!env.ROOM && !roomOff(env)) : undefined,   // is the room server actually serving right now
+    room_off: detail ? (roomOff(env) || undefined) : undefined, // the global off switch, if somebody has thrown it
+    one_trip: detail ? oneTrip : undefined,       // which of migrations 71/72/73 this database really has
+    broadcast_signing: detail ? signing : undefined,
     venue_code_clashes: clashes.length,
     venue_code_clash_detail: clashes.length ? clashes.slice(0, 5) : undefined,
     warning: clashes.length
@@ -2465,17 +2489,20 @@ async function handleReport(request, env, json) {
     const rl = await rateLimit(env, 'report:ip:' + ipHash, REPORT_MAX_PER_IP, 60);
     if (!rl.ok) return json({ error: 'Too many reports from this network right now' }, 429);
   }
-  const venueId = await venueByCode(env, b.code);
-  if (!venueId) return json({ ok: false });
-
   /* PROVE YOU ARE THE HOST. This authorised on the venue code alone, and that code is a plain
      hash of the venue's PUBLIC slug, so anyone could write invented player counts and prize
      figures against any venue. These rows drive the quiet-venue retention list, whose remedy is
      an Archive button, so poisoning them is a way to get a real customer chased or archived.
-     The only caller is the bingo console, which is signed in, so the token costs nothing. */
+     The only caller is the bingo console, which is signed in, so the token costs nothing.
+     SIGN-IN FIRST, THEN THE CODE (14 Oct 2026). The code was looked up first, so a stranger with
+     no token got 200 {ok:false} for a code that is no venue and 401 for one that is: a free way
+     to test which codes are real. Now nobody learns anything about a code until they are signed
+     in, and a signed-in host gets the same 403 for "no such venue" as for "not your venue". */
   let reporter = null;
   try { reporter = await verifyHostJwt(request, env); } catch (e) { reporter = null; }
   if (!reporter) return json({ error: 'Sign in to report a game.' }, 401);
+  const venueId = await venueByCode(env, b.code);
+  if (!venueId) return json({ error: 'That venue is not yours to report on.' }, 403);
   try { await requireStaff(env, reporter, venueId); }
   catch (e) { return json({ error: 'That venue is not yours to report on.' }, 403); }
   const row = {

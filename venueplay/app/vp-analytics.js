@@ -92,7 +92,22 @@
     } catch (e) { return false; }
   }
 
-  if (isRobot() || teamOptOut() || notLiveSite()) return;
+  /* ONE GATE FOR EVERY TAG (14 Oct 2026). The Meta pixel used to fire its PageView the moment
+     the page loaded, so every mail scanner and crawler this file refuses was still counted by
+     Meta. vpWhenHuman(fn) is the same three refusals plus the same wait for a person, and
+     vp-pixel.js calls it rather than keeping a second copy of the rules. Defined BEFORE the
+     early return, as a function that never runs fn, so a refused visitor stays refused by the
+     pixel too instead of the pixel deciding it has no gate and firing anyway. */
+  var refused = isRobot() || teamOptOut() || notLiveSite();
+  var isHuman = false, waiting = [];
+  function whenHuman(fn) {
+    if (refused || typeof fn !== 'function') return;
+    if (isHuman) { try { fn(); } catch (e) {} return; }
+    waiting.push(fn);
+  }
+  window.vpWhenHuman = whenHuman;
+
+  if (refused) return;
 
   // window.dataLayer explicitly, not a bare `dataLayer`. Google's own snippet relies on
   // the implicit global, which only works because it runs at top level in a page. Inside a
@@ -108,14 +123,17 @@
      and never touch it. So nothing is loaded or sent until the first mouse move, touch, key or
      wheel. A person reading does one of those within seconds; a scanner never does. Anything
      queued before then (nothing, normally) goes out with the tag when it loads. */
-  var counting = false;
   var HUMAN = ['pointermove', 'pointerdown', 'mousemove', 'touchstart', 'keydown', 'wheel'];
-  function startCounting() {
-    if (counting) return;
-    counting = true;
+  function aPersonIsHere() {
+    if (isHuman) return;
+    isHuman = true;
     for (var i = 0; i < HUMAN.length; i++) {
-      try { window.removeEventListener(HUMAN[i], startCounting, true); } catch (e) {}
+      try { window.removeEventListener(HUMAN[i], aPersonIsHere, true); } catch (e) {}
     }
+    var run = waiting; waiting = [];
+    for (var j = 0; j < run.length; j++) { try { run[j](); } catch (e) {} }
+  }
+  whenHuman(function startCounting() {
     var s = document.createElement('script');
     s.async = true;
     s.src = 'https://www.googletagmanager.com/gtag/js?id=' + MEASUREMENT_ID;
@@ -125,9 +143,9 @@
     function cmd() { return arguments; }
     window.dataLayer.unshift(cmd('config', MEASUREMENT_ID));
     window.dataLayer.unshift(cmd('js', new Date()));
-  }
+  });
   for (var hi = 0; hi < HUMAN.length; hi++) {
-    try { window.addEventListener(HUMAN[hi], startCounting, { capture: true, passive: true }); } catch (e) {}
+    try { window.addEventListener(HUMAN[hi], aPersonIsHere, { capture: true, passive: true }); } catch (e) {}
   }
 
   /* ---------------------------------------------------------------------------------

@@ -3636,7 +3636,8 @@ def live_matches_local(path_in_repo):
     from livenorm import normalise, served_path
     url = base + served_path(path_in_repo)
     status, body, _ = get(url)
-    if status != 200:
+    # 404.html is the one page that is RIGHT to answer 404 (14 Oct 2026): it is the not-found page.
+    if status != 200 and not (rel == '404.html' and status == 404):
         return False
     want = io.open(local, 'rb').read()
     return normalise(body.encode('utf-8') if isinstance(body, str) else body) == normalise(want)
@@ -4873,7 +4874,14 @@ def admin_routes_refuse():
         d = json.loads(body)
     except Exception:
         d = {}
-    if 'admins' not in d:
+    # admins_ok (yes/no) since 14 Oct 2026: the count itself is nobody else's business. A Worker
+    # deployed before that still says admins (a number), so either answer is read.
+    if 'admins_ok' in d:
+        n = d.get('admins_ok')
+        ok('somebody can actually sign in to the PartyPlay admin',
+           n is None or n is True,
+           why='pp_admins has no active rows, so nobody can comp, refund or resend')
+    elif 'admins' not in d:
         note('PartyPlay admin count', 'the deployed Worker predates this check')
     else:
         n = d.get('admins')
@@ -5264,7 +5272,7 @@ def main():
             pages_live('VenuePlay', VP, VP_PAGES)
             shared_scripts_live(VP, os.path.join(ROOT, 'venueplay', 'app'))
             every_page_is_reachable('VenuePlay', VP, 'venueplay',
-                                    skip=('test.html',))
+                                    skip=('test.html', '404.html'))   # 404.html answers 404 on purpose
             worker_health('VenuePlay game', VP_GAME)
             worker_health('VenuePlay billing', VP_API)
             one_address_check()

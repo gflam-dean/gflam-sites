@@ -40,7 +40,7 @@
 
   <div id="ask">
     <h1>Unsubscribe</h1>
-    <p>Put your address in and we will not contact you again. No reason needed and nothing else to do.</p>
+    <p id="lead">Put your address in and we will not contact you again. No reason needed and nothing else to do.</p>
     <form id="f" novalidate>
       <label for="em">Email address</label>
       <input id="em" type="email" inputmode="email" autocomplete="email" placeholder="you@yourvenue.com.au" required>
@@ -121,17 +121,16 @@
     show($("done"), true);
   }
 
-  /* A link from an email carries the address, so there is nothing to type: one
-     click and it is done. Anything else shows the form. */
+  /* A link from an email carries the address, so there is nothing to type, but there IS a
+     button to press. This used to write on page load (14 Oct 2026 audit), and the mail
+     scanners that open every link in an email (Microsoft's run the page's JavaScript)
+     unsubscribed people who never asked to be. Opening a link is not consent; pressing the
+     button is. So the link only fills the box in and says whose address it is. */
   var fromLink = param("e") || param("email");
-  if (looksLikeEmail(fromLink)) {
-    record(fromLink, "link").then(function () { finish(fromLink.trim().toLowerCase()); })
-      .catch(function () {
-        /* Could not write. Do NOT say Done. Let them use the form, which tries again. */
-        $("em").value = fromLink;
-        $("err").textContent = "That did not go through. Press the button and we will try again.";
-        show($("err"), true);
-      });
+  var linkAddr = looksLikeEmail(fromLink) ? fromLink.trim() : "";
+  if (linkAddr) {
+    $("em").value = linkAddr;
+    $("lead").textContent = "Press the button and we will not contact you again at this address. No reason needed.";
   }
 
   $("f").addEventListener("submit", function (e) {
@@ -143,7 +142,7 @@
       show($("err"), true); return;
     }
     $("go").disabled = true; $("go").textContent = "One moment...";
-    record(v, "form").then(function () { finish(v.toLowerCase()); })
+    record(v, (linkAddr && v.toLowerCase() === linkAddr.toLowerCase()) ? "link" : "form").then(function () { finish(v.toLowerCase()); })
       .catch(function () {
         $("go").disabled = false; $("go").textContent = "Unsubscribe me";
         $("err").textContent = "Something went wrong at our end. Reply to the email with STOP and we will take you off by hand.";
