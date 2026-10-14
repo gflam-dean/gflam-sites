@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '30 Sep 2026, 09:07 · 62e4fb88';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '14 Oct 2026, 10:37 · f1b55af8';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -2434,14 +2434,21 @@ async function handlePlayLive(request, env, json) {
   }
 
   const sessions = await sbGet(env, 'vp_sessions',
-    'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id,join_code&order=created_at.desc&limit=1');
+    'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id,join_code,lobby_format&order=created_at.desc&limit=1');
   if (!sessions.length) return json({ exists: true, name, live: false });
   const games = await sbGet(env, 'vp_games',
     'session_id=eq.' + enc(sessions[0].id) + '&status=eq.running&select=format&order=seq.desc&limit=1');
+  /* A TRIVIA OR MUSICAL LOBBY IS A FORMAT TOO. This answered '' until round one started, so a
+     phone off the TV's QR in the lobby (most of the room) stayed on the bingo page, joined
+     there, and was asked its name again and counted twice when the round began. /join/info has
+     used lobby_format for this since migration 89; this is its twin. Bingo stays put. */
+  const lf = sessions[0].lobby_format;
+  const format = (games && games[0] && games[0].format)
+    || ((lf === 'trivia' || lf === 'musical_bingo') ? lf : '');
   return json({
     exists: true, name, live: true,
     join_code: sessions[0].join_code,
-    format: (games && games[0] && games[0].format) || '',
+    format,
   });
 }
 

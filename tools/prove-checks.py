@@ -1086,6 +1086,17 @@ MUTATIONS = [
      'const derived = _vcHashMap[code];',
      'const derived = null;',
      'an owner presses Change code and the venue TV says "not linked to an account" and forgets its venue'),
+    # The Mini Bar, 10 Oct 2026: a session opens on the venue's own code, so the phone's
+    # "same code means bingo" stop kept every phone off the TV's QR on the bingo page.
+    ('venue-channel.test.js', 'venueplay/play.html',
+     'if(!d.live || !d.join_code) return;',
+     'if(!d.live || !d.join_code || d.join_code===code) return;',
+     'phones off the TV QR sit on the bingo page all through a trivia or musical night'),
+    # /play/live forgets the lobby's format, so phones in a lobby join bingo and are counted twice.
+    ('venue-channel.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     "|| ((lf === 'trivia' || lf === 'musical_bingo') ? lf : '');",
+     "|| '';",
+     'a phone that scans in the trivia lobby joins bingo, then is asked its name again and billed twice'),
     # The reveal's compare-and-set loses its condition: two reveals both win, and
     # a plain write is what let phones keep answering while the scoring ran.
     ('trivia-reveal.test.js', 'venueplay-backend/worker/venueplay-game.js',

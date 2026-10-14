@@ -680,7 +680,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/venue-channel.test.js": {
-  "checks": 29,
+  "checks": 34,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/venue-code-scan.test.js": {

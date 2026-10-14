@@ -50,7 +50,7 @@ function liftLine(re) {
   return m[0].replace(/^(let|const) /, 'var ') + '\n';
 }
 
-var EXPECT = 29;
+var EXPECT = 34;
 var bad = 0, ran = 0;
 function ok(n, c, extra) {
   ran++;
@@ -81,7 +81,7 @@ var VENUES = [
   { id: 'v-joe',   slug: 'the-average-joe',      join_code: null,     status: 'active', name: 'The Average Joe', au_state: 'QLD' },
   { id: 'v-shut',  slug: 'the-shut-inn',          join_code: 'SHUT22', status: 'suspended', name: 'The Shut Inn', au_state: 'QLD' },
 ];
-var scans = 0, order = [];
+var scans = 0, order = [], LOBBY = null;
 function param(q, k) { var m = new RegExp('(?:^|&)' + k + '=eq\\.([^&]*)').exec(q); return m ? decodeURIComponent(m[1]) : null; }
 function sbGet(env, table, q) {
   order.push(table + '?' + q);
@@ -97,6 +97,8 @@ function sbGet(env, table, q) {
     return Promise.resolve(rows.map(function (v) { return Object.assign({}, v); }));
   }
   if (table === 'vp_venue_settings') return Promise.resolve([{ collect_email: true }]);
+  /* LOBBY: a session open with no round running yet, set by the lobby check below. */
+  if (LOBBY && table === 'vp_sessions') return Promise.resolve([{ id: 's-1', join_code: LOBBY.code, lobby_format: LOBBY.format }]);
   return Promise.resolve([]);   // no sessions, no games: a broadcast bingo night
 }
 function sbGetAll(env, table, q) { scans++; order.push('SCAN ' + table); return Promise.resolve(VENUES.map(function (v) { return Object.assign({}, v); })); }
@@ -217,6 +219,46 @@ venueByCode({}, ROYAL.join_code).then(function (id) {
   ok('/play/live reaches its suspended branch (it was dead code before 8 Sep)',
      r._json.exists === true && r._json.suspended === true && r._json.live === false, JSON.stringify(r._json));
 
+  print('\n== a trivia or musical LOBBY sends a phone off the QR to that game (The Mini Bar, 10 Oct) ==');
+  /* Sessions open on the venue's own code now, so the room code a phone hears IS the code it
+     scanned. play.html stopped at "same code" and /play/live said '' until round one: every
+     phone off the TV's QR sat on the bingo page all night. Both halves are run here. */
+  var royalHash = fnvVenueCode(ROYAL.slug);
+  LOBBY = { code: royalHash, format: 'trivia' };
+  return handlePlayLive(get('/play/live?code=' + royalHash), {}, json).then(function (r) {
+    ok('/play/live names a trivia lobby before round one', r._json.live === true && r._json.format === 'trivia', JSON.stringify(r._json));
+    LOBBY = { code: royalHash, format: 'musical_bingo' };
+    return handlePlayLive(get('/play/live?code=' + royalHash), {}, json);
+  }).then(function (r) {
+    ok('/play/live names a musical lobby before round one', r._json.format === 'musical_bingo', JSON.stringify(r._json));
+    LOBBY = { code: royalHash, format: 'bingo90' };
+    return handlePlayLive(get('/play/live?code=' + royalHash), {}, json);
+  }).then(function (r) {
+    ok('/play/live leaves a bingo lobby as bingo (no format, the phone stays put)', r._json.live === true && r._json.format === '', JSON.stringify(r._json));
+    LOBBY = null;
+    /* The phone half: the REAL watchVenue from play.html, told trivia is live on its own code. */
+    function phoneHears(answer) {
+      var went = null, done = null, wait = new Promise(function (res) { done = res; });
+      var P = { active: false }, VP_GAME_API = 'https://w', VP_LOOK_NOW = null;
+      function connect() {} function claimIdentity() {} function playingHere() { return false; }
+      function $() { return null; }
+      function hopToApp(u) { went = u; }
+      function setInterval() {}
+      var fetch = function () { return Promise.resolve({ ok: true, json: function () { return Promise.resolve(answer); } }); };
+      eval(liftFrom(PLAY, 'venueCode', 'play.html'));
+      eval(liftFrom(PLAY, 'watchVenue', 'play.html'));
+      watchVenue(ROYAL.slug);
+      setTimeout(function () { done(went); }, 0);
+      return wait;
+    }
+    return phoneHears({ exists: true, live: true, join_code: royalHash, format: 'trivia' }).then(function (went) {
+      ok('a phone off the QR hops to trivia when the room code is its own venue code',
+         went === '/app/trivia/play?room=' + royalHash, 'went to ' + went);
+      return phoneHears({ exists: true, live: true, join_code: royalHash, format: '' });
+    }).then(function (went) {
+      ok('a phone off the QR stays on bingo when nothing else is live', went === null, 'went to ' + went);
+    });
+  }).then(function () {
   print('\n== two slugs that hash alike are refused, not guessed ==');
   /* Find a real collision by birthday: 29^6 codes, so ~30k slugs is usually enough. */
   var seen = {}, a = null, b = null;
@@ -231,6 +273,7 @@ venueByCode({}, ROYAL.join_code).then(function (id) {
   return venueByCode({}, fnvVenueCode(a)).then(function (id) {
     ok('the shared hash resolves to NEITHER venue', id === null, 'resolved to ' + id + ': one pub joins the other\'s night');
     VENUES = saved; _vcMap = null;
+  });
   });
 }).catch(function (e) {
   bad++; print('  FAIL a chain rejected: ' + (e && e.stack || e));
