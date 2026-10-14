@@ -299,6 +299,7 @@
 <script src="/app/topanswers/ta-match.js"></script>
 <script src="/app/topanswers/ta-boards.js"></script>
 <script src="/app/topanswers/pr-game.js"></script>
+<script src="/app/vp-phonekey.js"></script>
 <script>
 (function(){
   "use strict";
@@ -1056,6 +1057,47 @@
      console: the TV and phones get the question and a count (ta_board), each found answer as it is found
      (ta_reveal), and the rest at the end (ta_showall). Phones mark themselves played with /player/alive
      like any game, and a night of this does NOT count as the weekly trivia night (Dean, 29 Sep 2026). */
+  /* A GUESS MUST COME FROM THE PHONE WHOSE PID IT NAMES (audit, 14 Oct 2026). This scored any
+     {t:"pr_guess", pid, name, text} that arrived on the players' channel, whose name is a public hash
+     of the venue and which anybody with the anon key can shout into. So a stranger could score guesses
+     to a real team under its pid, burn that team's three guesses, put the results on its phone, and
+     add teams of their own making to the leaderboard. Now the trivia phone signs every guess with a
+     key it made for this room, and its pid IS that key's fingerprint (vp-phonekey.js, the same scheme
+     the bingo phones use). Here: the signature must be by the key the pid names, and the guess must be
+     newer than anything heard from that phone, so a recorded real guess cannot be played back to burn
+     the rest. What is signed is the pid, the name, the board and the text, so none of them can be
+     changed in flight; the name scored is the SIGNED one, never the unsigned join's. A guess with no
+     signature, or from an old random pid, is dropped. What this does not stop is somebody who has the
+     room code playing as a team of their own, which is true of every game played off a channel. */
+  var _prChain=Promise.resolve();
+  function onPRGuess(m){
+    if(G.roundType!=="pr" || !G.pr || !m || !m.pid || (m.round|0)!==G.pr.round) return;
+    if(!window.VPPhoneKey || !VPPhoneKey.isKeyed(m.pid)) return;   // unsigned, or an old random pid: nobody vouches for it
+    _prChain=_prChain.then(function(){ return VPPhoneKey.verify(m); }).then(function(v){
+      if(!v || !v.ok || v.legacy) return;
+      if(!VPPhoneKey.fresh(prSeen(), m, Date.now())) return;     // a real guess, played back
+      savePRSeen();
+      prGuess(m);
+    }).catch(function(){});
+  }
+  function prGuess(m){
+    if(G.roundType!=="pr" || !G.pr || (m.round|0)!==G.pr.round) return;   // the board moved on while it was checked
+    var name=String(m.name||"Player");
+    var pr=G.pr.guess(m.pid, name, m.text);
+    gsend(pr.result);                    // addressed to that phone (pr_result.to); nobody else learns anything
+    if(pr.reveal){ bcast(pr.reveal); }   // an answer's text travels only now, when it has been found
+    G.prFeed.unshift({ name:name, text:pr.result.text, hit:!!pr.result.hit, a:pr.result.a });
+    G.prFeed=G.prFeed.slice(0,30); savePR();
+    if(!G.prPaint){ G.prPaint=setTimeout(function(){ G.prPaint=null; renderConsole(); }, 400); }   // a room typing at once repaints once
+  }
+  /* The newest guess number heard from each phone, kept with the night, so a console reload does not
+     let a guess recorded earlier in the night be played back. */
+  function prSeenKey(){ return "vpPRSeen:"+(G.sessionId||""); }
+  function prSeen(){
+    if(!G.prSeenN){ try{ G.prSeenN=JSON.parse(localStorage.getItem(prSeenKey())||"{}")||{}; }catch(e){ G.prSeenN={}; } }
+    return G.prSeenN;
+  }
+  function savePRSeen(){ try{ localStorage.setItem(prSeenKey(), JSON.stringify(G.prSeenN||{})); }catch(e){} }
   function prKey(){ return "vpPR:"+(G.sessionId||""); }
   function savePR(){ try{ if(G.pr) localStorage.setItem(prKey(), G.pr.save()); }catch(e){} }
   /* A PUNTERS RECKON NIGHT HAS NO GAME ROW, so restoreTrivia (which asks the Worker for the running
@@ -1079,7 +1121,7 @@
         G.roundType="pr";
         document.querySelectorAll("#cfgRoundType button").forEach(function(x){ x.classList.toggle("on", x.getAttribute("data-v")==="pr"); });
         var pf=$("prField"); if(pf) pf.classList.remove("hidden");
-        G.pr=new window.PRGame.Game(); G.prFeed=[]; G.prPub=null;
+        G.pr=new window.PRGame.Game(); G.prFeed=[]; G.prPub=null; G.prSeenN=null;
         try{ G.pr.load(localStorage.getItem(prKey())); }catch(e){}
         openGameChannel(G.joinCode);
         send({ t:"session", session_id:G.sessionId, join_code:G.joinCode });
@@ -1102,7 +1144,7 @@
     G.busy=true;
     var btn=$("startBtn"); if(btn){ btn.disabled=true; btn.textContent="Starting..."; }
     openSession().then(function(){
-      G.pr=new window.PRGame.Game(); G.prFeed=[]; G.prPub=null;
+      G.pr=new window.PRGame.Game(); G.prFeed=[]; G.prPub=null; G.prSeenN=null;
       try{ G.pr.load(localStorage.getItem(prKey())); }catch(e){}
       clearTimeout(G.prIdleT); clearTimeout(G.prBoardT); savePRNight();
       G.status="ready";
@@ -1217,7 +1259,9 @@
       /* A phone or screen that arrives mid-board gets the board and what has been FOUND, never the rest.
          Phones filter on `to`, so a replay aimed at one phone is sent to that phone's pid. */
       var one=JSON.parse(JSON.stringify(G.prPub));
-      if(pid && G.pr.guesses[pid]) one.left=G.pr.guesses[pid].left;   // a phone that reloaded keeps its real guesses left
+      // A phone's guesses are kept under its SIGNING pid, which its join names as prk (14 Oct 2026).
+      var gk=(pid && G.prAlias && G.prAlias[pid]) || pid;
+      if(gk && G.pr.guesses[gk]) one.left=G.pr.guesses[gk].left;   // a phone that reloaded keeps its real guesses left
       to(one);   // aimed at the one phone that asked (`to`), or the TV: never re-sets everyone else's board
       Object.keys(G.pr.found).forEach(function(i){ var a=G.pr.board && G.pr.board.answers[i]; if(a){ to({ t:"ta_reveal", i:+i, a:a.a, pts:a.pts, by:G.pr.found[i] }); } });
       return;
@@ -1276,18 +1320,14 @@
          told its name on the board ("Quiz Kids 2") and its phone re-registers under it, so the
          leaderboard (which reads the name the Worker holds) tells them apart too. */
       if(nm!==String(m.name||"Player")) gsend({ t:"rename", to:m.pid, name:nm });
+      // Only ever used to look up how many Punters Reckon guesses this phone has left (replayState).
+      if(typeof m.prk==="string" && /^k1_[A-Za-z0-9_-]{8,64}$/.test(m.prk)){ (G.prAlias||(G.prAlias={}))[m.pid]=m.prk; }
       bcast({ t:"players", count:playerCount() });
       renderJoinCounts();     // NOT renderConsole: see above
       replayState(m.pid);     // they may have missed a live question; catch them up
     }
     else if(m.t==="pr_guess"){
-      if(G.roundType!=="pr" || !G.pr || !m.pid || (m.round|0)!==G.pr.round) return;
-      var pr=G.pr.guess(m.pid, (G.players[m.pid] && G.players[m.pid].name) || m.name, m.text);
-      gsend(pr.result);                    // addressed to that phone (pr_result.to); nobody else learns anything
-      if(pr.reveal){ bcast(pr.reveal); }   // an answer's text travels only now, when it has been found
-      G.prFeed.unshift({ name:(G.players[m.pid] && G.players[m.pid].name) || m.name || "Player", text:pr.result.text, hit:!!pr.result.hit, a:pr.result.a });
-      G.prFeed=G.prFeed.slice(0,30); savePR();
-      if(!G.prPaint){ G.prPaint=setTimeout(function(){ G.prPaint=null; renderConsole(); }, 400); }   // a room typing at once repaints once
+      onPRGuess(m);
     }
     else if(m.t==="answer"){
       if(G.status!=="question" || m.qseq!==G.answeredQseq || !m.pid) return;   // cosmetic "answered" ticker

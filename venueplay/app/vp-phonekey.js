@@ -1,4 +1,5 @@
-/* VenuePlay: a phone proves it is the SAME phone. Broadcast bingo only.
+/* VenuePlay: a phone proves it is the SAME phone. Broadcast bingo, and since 14 Oct 2026 the trivia
+ * phone's Punters Reckon guesses (see SIGNED_TYPES).
  *
  * WHY. vp-sign.js protects what the HOST says to the room. Nothing protected what a PHONE says to
  * the host. Broadcast bingo has no game server: a phone joins, claims and leaves by shouting
@@ -29,6 +30,13 @@
   var ALG = { name: "ECDSA", namedCurve: "P-256" }, SIG = { name: "ECDSA", hash: "SHA-256" };
   var DAY_MS = 24 * 60 * 60 * 1000;
   var PHONE_TYPES = { join: 1, claim: 1, leave: 1 };
+  /* What verify() will judge. pr_guess is a Punters Reckon guess from the trivia phone (audit, 14 Oct
+     2026: anybody with the anon key could score guesses to a real team under its pid, burn its three
+     guesses, put the result on that team's phone, and add teams of their own making to the
+     leaderboard). It is NOT in PHONE_TYPES on purpose: those three are what the BINGO pages sign and
+     gate, and a guess is no business of bingo's. The trivia phone signs a guess with a key of its own
+     for the room (app/trivia/play.html) and the trivia console verifies it (app/trivia/host.html). */
+  var SIGNED_TYPES = { join: 1, claim: 1, leave: 1, pr_guess: 1 };
 
   function enc(s) { return new TextEncoder().encode(s); }
   function b64u(buf) {
@@ -46,6 +54,10 @@
      changed after signing: who (pid), what (t), when (n), and the name, ticket count and ticket
      number that join and claim carry. An array, so no field can run into the next. */
   function canon(m) {
+    /* A guess signs what it guessed and for which board. Its own tag, so no signed message of one kind
+       can ever be read as the other. */
+    if (m && m.t === "pr_guess") return JSON.stringify(["vp-phone-pr-1", "pr_guess", String(m.pid), Number(m.n),
+      m.name == null ? "" : String(m.name), Number(m.round) || 0, m.text == null ? "" : String(m.text)]);
     return JSON.stringify(["vp-phone-1", String(m.t), String(m.pid), Number(m.n),
       m.name == null ? "" : String(m.name), m.cards == null ? "" : String(m.cards),
       m.cardNo == null ? "" : String(m.cardNo)]);
@@ -101,7 +113,7 @@
   /* Resolves { ok, legacy, why }. NEVER rejects: a verify that throws must read as "no". */
   function verify(m) {
     try {
-      if (!m || !isPhoneMsg(m)) return Promise.resolve({ ok: true, legacy: false, why: "not a phone message" });
+      if (!m || SIGNED_TYPES[m.t] !== 1) return Promise.resolve({ ok: true, legacy: false, why: "not a phone message" });
       if (!isKeyed(m.pid)) return Promise.resolve({ ok: true, legacy: true, why: "legacy pid" });
       if (!SUB) return Promise.resolve({ ok: false, legacy: false, why: "this console cannot verify" });
       if (typeof m.pk !== "string" || typeof m.sig !== "string" || typeof m.n !== "number" || !isFinite(m.n))

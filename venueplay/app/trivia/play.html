@@ -215,6 +215,7 @@
 <script src="/app/vp-follow.js"></script>
 <script src="/app/vp-feedback.js"></script>
 <script src="/app/vp-celebrate.js"></script>
+<script src="/app/vp-phonekey.js"></script>
 <script src="/app/topanswers/pr-phone.js"></script>
 <script>
 (function(){
@@ -370,14 +371,43 @@
   }
   var client=supabase.createClient(SUPA_URL, SUPA_ANON);
   var ch=null, subscribed=false, sendQueue=[];
-  function send(obj){ if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); } else { sendQueue.push(obj); } }
+  function send(obj){
+    if(obj && obj.t==="join" && P.prPid) obj.prk=P.prPid;   // tells the console which signing pid holds this phone's Punters Reckon guesses (see sendPR)
+    if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); } else { sendQueue.push(obj); }
+  }
   function flushQueue(){ while(sendQueue.length && ch){ ch.send({ type:"broadcast", event:"msg", payload:sendQueue.shift() }); } }
+  /* A PUNTERS RECKON GUESS IS SIGNED BY THIS PHONE (audit, 14 Oct 2026). The console used to score any
+     guess that named a pid, so anybody on the channel could score, or waste, a real team's guesses. Now
+     this phone makes a key of its own for the room and its guesses go out under that key's fingerprint
+     (P.prPid), signed; the console checks both (vp-phonekey.js). A key of its OWN, not the bingo page's
+     and not P.pid: a signed join from here would read as a bingo player to a bingo console on the same
+     channel. Signing is asynchronous, so guesses go through one chain and keep their order. A browser
+     that cannot make a key sends nothing: an unsigned guess would only be dropped. */
+  var _prKey=null, _prChain=Promise.resolve();
+  function prKeyFor(room){
+    P.prPid="";
+    _prKey=(window.VPPhoneKey && VPPhoneKey.ensure)
+      ? VPPhoneKey.ensure("pr-"+room).then(function(id){ if(P.room===room) P.prPid=id.pid; return id; }).catch(function(){ return null; })
+      : Promise.resolve(null);
+    return _prKey;
+  }
+  function sendPR(obj){
+    var room=P.room;
+    _prChain=_prChain.then(function(){ return _prKey; }).then(function(id){
+      if(!id || P.room!==room) return null;
+      var o={}; for(var k in obj) o[k]=obj[k];
+      o.pid=id.pid;                      // always the key's own pid: a signature for any other is worthless
+      return id.sign(o);
+    }).catch(function(){ return null; }).then(function(o){ if(o) send(o); });
+    return _prChain;
+  }
+  function prForMe(m){ return !m.to || m.to===P.pid || (!!P.prPid && m.to===P.prPid); }
 
   // ---- player state ----
   // pid/name are cosmetic (the TV "answered" ticker + host roster). token is the real
   // metered server identity; game_id + the score come from the Worker.
   var P={
-    room:"", pid:"", name:"", joined:false,
+    room:"", pid:"", prPid:"", name:"", joined:false,
     token:"", sessionId:"", gameId:"",
     colour:true, total:0, rank:0, playersCount:0,
     q:null, choice:null, locked:false,
@@ -736,10 +766,10 @@
     if(!m||!m.t) return;
     if(m.t==="ta_board" || m.t==="pr_result" || m.t==="ta_showall" || m.t==="ta_reveal"){
       if(!P.joined) return;
-      if(m.to && m.to !== P.pid) return;   // a catch-up aimed at another phone must not reset this one's board
+      if(!prForMe(m)) return;   // a catch-up aimed at another phone must not reset this one's board
       if(!_prPhone && window.PRPhone){
-        _prPhone = window.PRPhone.mount($("vPR"), { send: send, alive: sayAlive,
-          me: function(){ return { pid: P.pid, name: P.name }; }, show: function(){ show("vPR"); } });
+        _prPhone = window.PRPhone.mount($("vPR"), { send: sendPR, alive: sayAlive,
+          me: function(){ return { pid: P.prPid || P.pid, name: P.name }; }, show: function(){ show("vPR"); } });
       }
       if(_prPhone) _prPhone.onMsg(m);
       return;
@@ -1019,6 +1049,7 @@
     $("roomLabel").textContent=room;
     $("joinCode").textContent=room;
     P.pid=loadPid(room); if(!P.pid){ P.pid=randId(); savePid(room, P.pid); }
+    prKeyFor(room);
     P.token=loadToken(room);
     P.sessionId=loadSess(room);
     var savedName=loadName(room);

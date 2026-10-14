@@ -35,6 +35,47 @@
   var MAX_AGE_MS = 6 * 60 * 60 * 1000;
   var NONCE_KEEP = 600;           // remember this many recent nonces to reject instant replays
 
+  /* A REPLAY THAT THE NONCE SET COULD NOT SEE (audit, 14 Oct 2026).
+     "Replay within a session is already caught by the nonce set" above was only true for a page that
+     never reloads. The game screen inside /tv is an iframe that is thrown away and loaded fresh on
+     every hop, every reload and every return from the ads, and its nonce set started empty each time.
+     So a signed message recorded off the channel earlier in the night was accepted again: last game's
+     "winner" put "BINGO! WWWW WINS" up mid-game, and a recorded to_ads/idle pulled a live game to the
+     ads, as often as it was played back. Three ideas were weighed:
+       1. A per-key "never older than the newest" watermark. REJECTED: the key is the VENUE's, shared
+          by every console there, and two consoles with skewed clocks (a common thing on cheap tablets)
+          would drop each other's messages. That is a black wall, which is worse than the replay.
+       2. Binding destructive messages to their game id. Sound, but it has to be built into six
+          consoles and seven screens one message at a time, and every one missed is a hole.
+       3. What is here, in this one file that every page already loads:
+          a. SENDER ORDER. Each console page signs a random sender id (_sid) and a counter (_seq) into
+             every message. A receiver remembers, per sender, the highest counter it has seen and that
+             message's _ts, and refuses a message that is BOTH behind on the counter AND more than
+             SENDER_LAG_MS older than the newest one by the SAME SENDER'S OWN CLOCK. Comparing a sender
+             with itself means no clock skew can enter, between consoles or between console and TV.
+             The counter means a console whose clock is corrected backwards mid-night is not refused
+             (its counter still goes up), and the lag means a message that took a slow path is not
+             refused either. A console page that is still running, which is the normal night, cannot
+             have its earlier messages played back at all.
+          b. MEMORY THAT OUTLIVES THE PAGE. The per-sender table is kept in sessionStorage, which
+             every same-origin frame in the tab shares and which survives the iframe being replaced,
+             so the fresh game screen knows what /tv and its predecessor knew before the first
+             message arrives. Seen nonces are kept there too, but PER PAGE PATH: /tv and the game
+             screen inside it legitimately receive the SAME message (the router listens on the game
+             channels), so a shared nonce list would have one of them drop real traffic. The path
+             list catches the last message of a console that has since been closed, which no later
+             counter can retire. Bounded (SENDERS_KEEP, PATH_NONCES_KEEP) and written at most once a
+             second, because a cheap TV stick verifies every card a console deals to every phone.
+     What this does NOT catch: a message from a console the tab never heard, after the TV's browser
+     was restarted (sessionStorage is gone). MAX_AGE_MS still bounds that. Every rule here can only
+     ever drop a SIGNED message that is behind its own sender, so the fail-open rules below for
+     missing keys, unsigned traffic and enforce-off are untouched. */
+  var SENDER_LAG_MS = 60 * 1000;
+  var SENDERS_KEEP = 24;
+  var PATH_NONCES_KEEP = 300;
+  var HOST_WAIT_MS = 6000;        // how long after load a send waits for initHost to be called (see signSend)
+  var LOADED_AT = Date.now();
+
   var KEY_REFRESH_MS = 5 * 60 * 1000;   // how often each side asks for the venue key again; rotation converges within this
   var S = {
     apiBase: "", slug: "",
@@ -46,8 +87,13 @@
     chain: Promise.resolve(),     // serialises host signing so message order is preserved
     keyTried: null,               // the key fetch, so the first send does not race it
     recvChain: Promise.resolve(), // serialises receiver verify+deliver so enforce can't reorder messages
-    _keyPoll: null                // interval handle: retry the public-key fetch until it is minted
+    _keyPoll: null,               // interval handle: retry the public-key fetch until it is minted
+    sid: null, seq: 0,            // this page as a SENDER: random id + counter, signed into every message
+    senders: {},                  // as a RECEIVER: sid -> { q: highest _seq, t: its _ts, at: when we saw it }
+    seenLoaded: false, saveT: null
   };
+  var hostCalled = null;
+  var hostCalledP = new Promise(function (res) { hostCalled = res; });   // settles when initHost is first called
 
   // Message types that are harmless page-lifecycle nudges, not game content. They are honoured even
   // unsigned so admin tools (HQ "reload all TVs", the billing screen refresh) keep working: the worst
@@ -119,6 +165,88 @@
     S.seenSet[n] = 1; S.seenNonces.push(n);
     while (S.seenNonces.length > NONCE_KEEP) { delete S.seenSet[S.seenNonces.shift()]; }
   }
+
+  // ---- replay memory that outlives the page (see SENDER_LAG_MS at the top) ----
+  // Every storage touch is in a try: a private window, blocked site data or a test rig has none, and
+  // then this degrades to the in-memory sets exactly as before.
+  var SENDERS_KEY = "vpSign.senders";
+  function store() { try { return (typeof window !== "undefined" && window.sessionStorage) || null; } catch (e) { return null; } }
+  function pathKey() {
+    var p = "";
+    try { p = String((window.location && window.location.pathname) || ""); } catch (e) { }
+    return "vpSign.n:" + (p.replace(/\.html$/, "").replace(/\/+$/, "") || "/");   // /tv, /tv.html and /tv/ are one page
+  }
+  function mergeSenders() {
+    var st = store(); if (!st) return;
+    try {
+      var o = JSON.parse(st.getItem(SENDERS_KEY) || "{}") || {};
+      for (var sid in o) {
+        if (!Object.prototype.hasOwnProperty.call(o, sid)) continue;
+        var r = o[sid], h = S.senders[sid];
+        if (r && typeof r.q === "number" && typeof r.t === "number" && (!h || r.q > h.q)) S.senders[sid] = { q: r.q, t: r.t, at: +r.at || 0 };
+      }
+    } catch (e) { }
+  }
+  function loadSeen() {
+    if (S.seenLoaded) return;
+    S.seenLoaded = true;
+    var st = store(); if (!st) return;
+    try {
+      var list = JSON.parse(st.getItem(pathKey()) || "[]");
+      if (Array.isArray(list)) for (var i = 0; i < list.length; i++) if (typeof list[i] === "string") noteNonce(list[i]);
+    } catch (e) { }
+    mergeSenders();
+  }
+  function saveNow() {
+    S.saveT = null;
+    var st = store(); if (!st) return;
+    try {
+      mergeSenders();                                   // keep what /tv or the frame next door learnt meanwhile
+      var ids = Object.keys(S.senders).sort(function (a, b) { return (S.senders[b].at || 0) - (S.senders[a].at || 0); });
+      var keep = {};
+      for (var i = 0; i < ids.length && i < SENDERS_KEEP; i++) keep[ids[i]] = S.senders[ids[i]];
+      S.senders = keep;
+      st.setItem(SENDERS_KEY, JSON.stringify(keep));
+      st.setItem(pathKey(), JSON.stringify(S.seenNonces.slice(-PATH_NONCES_KEEP)));
+    } catch (e) { }
+  }
+  function saveSoon() {
+    if (S.saveT) return;
+    if (typeof setTimeout !== "function") { saveNow(); return; }
+    S.saveT = setTimeout(saveNow, 1000);
+  }
+  // The game frame is thrown away on a hop: write what it knows before it goes, not a second later.
+  try { if (typeof window !== "undefined" && window.addEventListener) window.addEventListener("pagehide", function () { if (S.saveT) { try { clearTimeout(S.saveT); } catch (e) { } saveNow(); } }); } catch (e) { }
+
+  function hostWait() {
+    if (S.keyTried) return null;
+    var left = HOST_WAIT_MS - (Date.now() - LOADED_AT);
+    if (left <= 0 || typeof setTimeout !== "function") return null;
+    return Promise.race([hostCalledP, new Promise(function (r) { setTimeout(r, left); })]);
+  }
+  function senderId() {
+    // Only from a real random source. A fixed fallback would give two consoles the same id, and the
+    // sender rule would then compare one console's counter and clock with another's.
+    if (S.sid) return S.sid;
+    try {
+      if (!(window.crypto && window.crypto.getRandomValues)) return null;
+      var a = new Uint8Array(9); window.crypto.getRandomValues(a); S.sid = b64uFromBytes(a);
+    } catch (e) { return null; }
+    return S.sid;
+  }
+  function senderBehind(p) {
+    var sid = p._sid, q = p._seq, h;
+    if (typeof sid !== "string" || !sid || typeof q !== "number" || typeof p._ts !== "number") return false;   // an older console: no claim to judge
+    h = S.senders[sid];
+    return !!h && q < h.q && (h.t - p._ts) > SENDER_LAG_MS;
+  }
+  function noteSender(p) {
+    var sid = p._sid, q = p._seq, h;
+    if (typeof sid !== "string" || !sid || typeof q !== "number" || !isFinite(q) || typeof p._ts !== "number") return;
+    h = S.senders[sid];
+    if (!h || q > h.q) S.senders[sid] = { q: q, t: p._ts, at: Date.now() };
+    else h.at = Date.now();
+  }
   function importKey(jwk, usage) {
     return window.crypto.subtle.importKey("jwk", jwk, { name: "ECDSA", namedCurve: "P-256" }, false, [usage]);
   }
@@ -185,10 +313,11 @@
          signature and B's enforcing TV dropped them (audit, 27 Sep 2026). */
       if (S.slug && slug !== S.slug) { S.privKey = null; S.kid = null; }
       S.apiBase = apiBase; S.slug = slug; S.hostGetToken = getToken;
-      if (!subtleOk() || !slug) return Promise.resolve();
+      if (!subtleOk() || !slug) { hostCalled(); return Promise.resolve(); }
       /* Remember this attempt so signSend can WAIT for it. See the note on keyTried. */
       var p = VPSign._initHost(apiBase, slug, getToken);
       S.keyTried = p.catch(function () {});
+      hostCalled();
       p.then(function () { VPSign._cantSignCheck(slug); }, function () { VPSign._cantSignCheck(slug); });
       /* The console's half of rotation: ask again every five minutes. A rotated venue answers
          "no key" and this console mints the new pair; a login that has been removed is refused
@@ -269,6 +398,8 @@
       if (!S.privKey || !subtleOk()) return Promise.resolve(payload);
       var msg = {}; for (var k in payload) if (Object.prototype.hasOwnProperty.call(payload, k)) msg[k] = payload[k];
       msg._ts = Date.now(); msg._n = nonce();
+      var sid = senderId();
+      if (sid) { msg._sid = sid; msg._seq = ++S.seq; }   // see SENDER_LAG_MS: lets a screen refuse this sender's old messages
       return window.crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, S.privKey, TE.encode(canon(msg)))
         .then(function (sig) { msg._sig = b64uFromBytes(new Uint8Array(sig)); if (S.kid) msg._kid = S.kid; return msg; })
         .catch(function () { return payload; });   // signing failed -> send unsigned rather than nothing
@@ -285,8 +416,16 @@
        with a game running. Reloading fixed it, which is the signature of a race.
        So the first send waits for the key attempt to settle. If there is no key, or the
        fetch fails, this resolves and everything behaves exactly as before. */
+    /* AND WAIT FOR initHost ITSELF, BRIEFLY (14 Oct 2026). keyTried only exists once initHost has been
+       called, and every console calls it after its sign-in check resolves. Anything sent before that
+       (the musical console states its saved room volume the moment the page loads) found no attempt to
+       wait on, went out unsigned, sat in the channel queue and was flushed at lobby-open, where an
+       enforcing TV binned it: "[VPSign] dropped unsigned message (volume)". So a send made in the first
+       HOST_WAIT_MS of the page's life also waits for initHost to be called. A page that never calls it
+       (signed out, a demo) waits at most that long once, and after it nothing waits at all. */
     signSend: function (obj, rawSend) {
       S.chain = S.chain
+        .then(function () { return hostWait(); })
         .then(function () { return S.keyTried || null; })
         .then(function () { return VPSign.sign(obj); })
         .then(function (signed) {
@@ -300,11 +439,19 @@
       if (!payload || typeof payload !== "object" || !payload._sig) return Promise.resolve("unsigned");
       if (!S.pubKey || !subtleOk()) return Promise.resolve("unsigned");   // can't verify -> treat as unsigned
       if (payload._ts && (Date.now() - payload._ts > MAX_AGE_MS)) return Promise.resolve("stale");
+      loadSeen();                                                           // what this tab already heard, once per page
       if (payload._n && S.seenSet[payload._n]) return Promise.resolve("replay");
+      if (senderBehind(payload)) return Promise.resolve("replay");         // behind its own sender: a recording
       var sig;
       try { sig = bytesFromB64u(payload._sig); } catch (e) { return Promise.resolve("bad"); }
       return window.crypto.subtle.verify({ name: "ECDSA", hash: "SHA-256" }, S.pubKey, sig, TE.encode(canon(payload)))
-        .then(function (ok) { if (!ok) return "bad"; if (payload._n) noteNonce(payload._n); return "ok"; })
+        .then(function (ok) {
+          if (!ok) return "bad";
+          // Remembered only once the signature is good, so a forger cannot poison the tables.
+          if (payload._n) noteNonce(payload._n);
+          noteSender(payload); saveSoon();
+          return "ok";
+        })
         .catch(function () { return "bad"; });
     },
 
