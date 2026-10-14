@@ -141,7 +141,16 @@
     .save,.addbtn,.go,.offtv,.hostrow .rm,.edv{min-height:44px}
     .canxlink{min-height:44px;display:inline-flex;align-items:center}
     .tabs{top:6px}
+    /* ALL FIVE TABS ON SCREEN (14 Oct 2026 audit). At phone width the strip scrolled sideways
+       with nothing to say so, and "Game settings" sat cut off past the edge: a tab you cannot
+       see is a tab nobody presses. They wrap to a second row instead. */
+    .tabs{flex-wrap:wrap;overflow-x:visible}
+    .tabs button{flex:1 1 auto;padding:10px 12px}
   }
+  /* The "Open it" switch to another account was the browser's default blue underline on a dark
+     page (14 Oct 2026 audit). It is the one action on that line, so it looks like one. */
+  #otherAccounts a{color:var(--pink);font-weight:700;text-decoration:none;white-space:nowrap}
+  #otherAccounts a:hover,#otherAccounts a:focus-visible{text-decoration:underline}
   .rfchip{display:inline-flex;align-items:center;gap:6px;background:var(--ink-3);border:1px solid var(--line);border-radius:999px;padding:6px 8px 6px 12px;margin:0 6px 6px 0;font-size:13px;color:#fff}
   .rfx{background:none;border:0;color:var(--muted);font-size:16px;line-height:1;cursor:pointer;padding:0 2px;font-family:inherit}
   .rfx:hover{color:var(--pink)}

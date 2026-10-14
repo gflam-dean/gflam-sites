@@ -939,8 +939,8 @@
   "contacts.Auth read contacts": {
    "cmd": "SELECT",
    "permissive": "PERMISSIVE",
-   "roles": "public",
-   "using": "(auth.role() = 'authenticated'::text)",
+   "roles": "authenticated",
+   "using": "vp_is_platform_admin()",
    "with_check": ""
   },
   "contacts.Public insert contacts": {
@@ -1030,8 +1030,8 @@
   "signups.Auth read signups": {
    "cmd": "SELECT",
    "permissive": "PERMISSIVE",
-   "roles": "public",
-   "using": "(auth.role() = 'authenticated'::text)",
+   "roles": "authenticated",
+   "using": "vp_is_platform_admin()",
    "with_check": ""
   },
   "signups.Public insert signups": {

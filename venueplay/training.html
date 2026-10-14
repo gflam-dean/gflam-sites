@@ -4,8 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>VenuePlay: Training Simulator</title>
-<!-- Four of the five format walkthroughs are still "Coming soon", and nothing links here yet.
-     Keep it out of search until it is finished. -->
+<!-- Bingo is walked through here; the other four formats open their live demo on See a night
+     (14 Oct 2026: they used to say "Coming soon" about games that are live). Nothing links here
+     yet, so it stays out of search. -->
 <meta name="robots" content="noindex,nofollow">
 <meta name="description" content="Train your venue team on VenuePlay. Watch the big screen, the host iPad and a player's phone react together as you run a pretend game of bingo.">
 <link rel="icon" type="image/png" href="/logos/venueplay_appicon_rebuilt.png">
@@ -332,10 +333,10 @@
     <span class="tag">Training simulator</span>
     <div class="scen" id="scenPicker">
       <button class="sp on" data-scen="bingo">Bingo</button>
-      <button class="sp" data-scen="trivia">Trivia<span class="soon">Coming soon</span></button>
-      <button class="sp" data-scen="musical-bingo">Musical Bingo<span class="soon">Coming soon</span></button>
-      <button class="sp" data-scen="raffle">Raffle<span class="soon">Coming soon</span></button>
-      <button class="sp" data-scen="members-draw">Members Draw<span class="soon">Coming soon</span></button>
+      <button class="sp" data-scen="trivia">Trivia<span class="soon">Live demo</span></button>
+      <button class="sp" data-scen="musical-bingo">Musical Bingo<span class="soon">Live demo</span></button>
+      <button class="sp" data-scen="raffle">Raffle<span class="soon">Live demo</span></button>
+      <button class="sp" data-scen="members-draw">Members Draw<span class="soon">Live demo</span></button>
     </div>
   </div>
 </header>
@@ -382,11 +383,12 @@
     </div>
   </div>
 
-  <!-- COMING SOON (hook for trivia / musical bingo / raffle / members draw) -->
+  <!-- THE OTHER FOUR FORMATS ARE LIVE. Their walkthrough is the real screens in demo mode on See a
+       night, the same big screen, host console and phone a venue gets, so this points there. -->
   <div class="comingsoon hidden" id="comingSoon">
     <div class="cs-name" id="csName">Trivia</div>
-    <div class="cs-sub">This training scenario is next in line. The bingo simulator above is complete and ready to run in front of a venue today. Every format uses the same three screens, so once you can run bingo you can run them all.</div>
-    <div class="cs-pill">Scenario coming soon</div>
+    <div class="cs-sub">This format is live. Its walkthrough runs on the real screens: the big screen, the host console and a player's phone, side by side, with no sign in. Every format uses the same three screens, so once you can run bingo here you can run them all.</div>
+    <a class="cs-pill" id="csLink" href="/see-a-night?mode=trivia" target="_blank" rel="noopener" style="text-decoration:none">Open the live demo</a>
   </div>
 
   <!-- TROUBLESHOOTING -->
@@ -538,14 +540,14 @@
   //     { cap:"coaching text", focus:"tv|host|player",
   //       hint:"pairConnect|hostStart|playerJoin|hostNext|playerBingo|hostConfirm"|null,
   //       tip:"join|claim|daub"|null, run:function(){ mutate S } }
-  //   Set ready:false to show the "coming soon" placeholder.
+  //   ready:false shows the panel that opens that format's live demo on See a night (demo:mode).
   // ============================================================
   var SCENARIOS={
     "bingo":        { label:"Bingo",         ready:true,  build:buildBingoScenario },
-    "trivia":       { label:"Trivia",        ready:false },
-    "musical-bingo":{ label:"Musical Bingo", ready:false },
-    "raffle":       { label:"Raffle",        ready:false },
-    "members-draw": { label:"Members Draw",  ready:false }
+    "trivia":       { label:"Trivia",        ready:false, demo:"trivia" },
+    "musical-bingo":{ label:"Musical Bingo", ready:false, demo:"musical" },
+    "raffle":       { label:"Raffle",        ready:false, demo:"raffle" },
+    "members-draw": { label:"Members Draw",  ready:false, demo:"members" }
   };
 
   function buildBingoScenario(){
@@ -580,19 +582,20 @@
     var cardNo=100+cryptoInt(900);
     var steps=[];
 
-    // 1. PAIR the iPad to the venue screen (2 devices)
+    // 1. SIGN IN: the TV is already on the venue's own link, the host signs in (2 devices).
+    //    14 Oct 2026: this taught pairing by a code on the TV, which is not how a venue is set up.
     steps.push({
       focus:"host", hint:"pairConnect", tip:null,
       run:function(){ S.stage="pairing"; S.paired=false; S.hostConnected=false; S.phase="ads"; S.hostLive=false;
         S.you.joined=false; S.you.card=null; S.called=[]; S.players=[]; },
-      cap:"First you pair your iPad to the venue screen. The big screen is playing your ads loop with a set-up code in the corner. On the iPad you scan or type that code, then tap Connect."
+      cap:"The venue TV is opened once at your venue's own link, venueplay.com.au/tv?your-venue, saved as its home page, and plays your ads loop. On the iPad the host signs in with a text code to their mobile and picks tonight's venue. The console finds your screen on its own: there is no code to type."
     });
 
     // 2. ADVERTISING + setup (2 devices)
     steps.push({
       focus:"host", hint:"hostStart", tip:null,
       run:function(){ S.stage="ads"; S.paired=true; S.hostConnected=true; S.phase="ads"; S.hostLive=false; S.players=[]; S.you.joined=false; S.you.card=null; S.called=[]; },
-      cap:"Paired. Between games the big screen just runs your advertising: bistro specials, live music, members draws. On the iPad you pick the pattern and the prize, then tap Start game."
+      cap:"Signed in. Between games the big screen just runs your advertising: bistro specials, live music, members draws. On the iPad you pick the pattern and the prize, then tap Start game."
     });
 
     // 3. LOBBY: the join code goes up, players start scanning (3 devices, phone slides in)
@@ -638,7 +641,7 @@
     steps.push({
       focus:"tv", hint:null, tip:null,
       run:function(){ S.phase="win"; S.you.claimPending=false; S.you.won=true; S.winner={ name:S.you.name, cardNo:S.you.cardNo }; S.claim=null; S.confetti=true; },
-      cap:"The big screen celebrates and your phone shows You won. Show it to the host to collect the prize. That is a full game: pair, advertise, lobby, call, claim, verify, winner. Tap Restart to run it again, or Next step to walk a venue through it slowly."
+      cap:"The big screen celebrates and your phone shows You won. Show it to the host to collect the prize. That is a full game: sign in, advertise, lobby, call, claim, verify, winner. Tap Restart to run it again, or Next step to walk a venue through it slowly."
     });
 
     return { steps:steps };
@@ -696,10 +699,10 @@
     return h+'</div>';
   }
   function pairPanelHTML(){
-    return '<div class="pairpanel"><div class="qrp">'+qrSVG("PAIR-"+S.code)+'</div>'+
-      '<div class="pairtxt"><div class="pt-head">Set up this screen</div>'+
-      '<div class="pt-lbl">Scan on your iPad to run a game</div>'+
-      '<div class="pt-code">Code '+S.code+'</div></div></div>';
+    return '<div class="pairpanel">'+
+      '<div class="pairtxt"><div class="pt-head">Your venue screen</div>'+
+      '<div class="pt-lbl">venueplay.com.au/tv?your-venue</div>'+
+      '<div class="pt-code">Waiting for your host</div></div></div>';
   }
   var adTimer=null;
   function stopAdRotation(){ if(adTimer){ clearInterval(adTimer); adTimer=null; } }
@@ -772,12 +775,12 @@
   function renderHost(){
     if(S.stage==="pairing"){
       var hp='<div class="htop"><span class="sp-brand">'+MARK+'<span class="w">VenuePlay</span></span><span class="htag">Host</span></div>'+
-        '<div class="hpair"><div class="hpair-big">Pair to your TV</div>'+
-        '<div class="hpair-sub">This is the code on your venue screen. Check it matches, then connect.</div>'+
-        '<label class="hpair-lbl">Screen code</label>'+
-        '<div class="hpair-code">'+S.code+'</div>'+
-        '<button class="btn pink" id="pairConnectBtn">Connect</button>'+
-        '<div class="hpair-note">The 6-character code is shown in the corner of the venue TV.</div></div>';
+        '<div class="hpair"><div class="hpair-big">Sign in</div>'+
+        '<div class="hpair-sub">Sign in with a text code to your mobile, then pick tonight\'s venue.</div>'+
+        '<label class="hpair-lbl">Mobile</label>'+
+        '<div class="hpair-code" style="letter-spacing:.06em">0412 345 678</div>'+
+        '<button class="btn pink" id="pairConnectBtn">Sign in</button>'+
+        '<div class="hpair-note">Your own login, not a shared one. The console finds your venue\'s screen on its own.</div></div>';
       $("hostScreen").innerHTML=hp;
       return;
     }
@@ -786,7 +789,7 @@
     var cur=S.called.length ? S.called[S.called.length-1] : 0;
     var h='<div class="htop"><span class="sp-brand">'+MARK+'<span class="w">VenuePlay</span></span>'+
           '<span class="htag">Host console</span>'+
-          '<span class="hpaired">Paired to screen <b>'+S.code+'</b></span></div>';
+          '<span class="hpaired">On <b>your venue screen</b></span></div>';
 
     h+='<div class="hgrid"><div class="hcol">';
     if(!S.hostLive){
@@ -1011,10 +1014,11 @@
       $("stage").classList.add("hidden");
       $("comingSoon").classList.remove("hidden");
       $("csName").textContent=sc.label;
+      $("csLink").setAttribute("href", "/see-a-night?mode="+encodeURIComponent(sc.demo||""));
       $("playBtn").disabled=true; $("stepBtn").disabled=true; $("restartBtn").disabled=true;
-      $("coachCap").textContent=sc.label+" training is coming soon. The bingo simulator is complete and ready to run in front of a venue today.";
-      $("coachHint").innerHTML='Pick <b>Bingo</b> to run the live training game.';
-      $("modeLbl").textContent="Coming soon";
+      $("coachCap").textContent=sc.label+" is live. Open its demo to walk a venue through it on the real screens.";
+      $("coachHint").innerHTML='Pick <b>Bingo</b> to run the step-by-step training game here.';
+      $("modeLbl").textContent="Live demo";
     }
   }
 

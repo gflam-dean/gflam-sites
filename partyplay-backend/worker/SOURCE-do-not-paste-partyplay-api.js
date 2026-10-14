@@ -2398,7 +2398,11 @@ export default {
         missing,
         photos,
         email,
-        admins,
+        /* YES OR NO, NOT HOW MANY (14 Oct 2026 audit). This printed the admin count to anybody,
+           which is a fact about the business nobody outside it needs. The question it exists to
+           answer is whether anybody can get in at all, and a yes/no answers it: false is the
+           locked-out product, and ok above is already false with it. null = could not be read. */
+        admins_ok: admins === null ? null : admins > 0,
         warning: warnings.length ? warnings.join(' ') : undefined
       }, missing.length ? 503 : 200, ch);
     }
