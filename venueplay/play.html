@@ -1813,7 +1813,12 @@
               return;
             }
             if(d.name){ var jv=$("joinVenue"); if(jv){ jv.textContent=d.name; jv.classList.remove("hidden"); } }
-            if(!d.live || !d.join_code || d.join_code===code) return;
+            /* THE FORMAT DECIDES, NOT THE CODE. This used to stop whenever the live room's code was
+               this venue's own code, on the idea that only bingo shares it. Trivia and musical
+               sessions are now opened on the venue's code too, so every phone off the TV's QR saw
+               "trivia is live" and stayed on the bingo screen all night. Found at The Mini Bar,
+               10 Oct 2026: two phones joined, zero answers. Bingo still stays put: no "to" below. */
+            if(!d.live || !d.join_code) return;
             var f=String(d.format||"");
             var to = f.indexOf("trivia")===0  ? "/app/trivia/play"
                    : f.indexOf("musical")===0 ? "/app/musical/play" : "";
