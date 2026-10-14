@@ -62,8 +62,12 @@
 <body>
 <div class="wrap">
   <img class="mark" src="/logos/partyplay-mark.svg" alt="">
-  <h1>You are booked</h1>
-  <p>We have emailed your code and a link to build your games. If it has not turned up in a minute, check the junk folder.</p>
+  <!-- WHAT THIS SAYS DEPENDS ON WHAT IS TRUE (14 Oct 2026 audit). It used to say "You are booked,
+       we have emailed your code" to anybody who opened /booked, with any code or none, before
+       Stripe had told us anything. Now it asks the Worker: a paid licence answers /licence, an
+       unpaid one does not yet, so this waits and says "confirming" until it does. -->
+  <h1 id="head">Checking your booking</h1>
+  <p id="lead">One moment while we confirm your payment.</p>
   <!-- The host key lives ONLY in that email, on purpose: in a URL it would go
        straight to analytics. Which means a spam filter or a typo leaves somebody
        who has paid with no way into their own party, and until now the only fix
@@ -75,7 +79,7 @@
   <div class="codecard"><span class="lbl">Your party code</span>
     <div class="code" id="code">------</div></div>
 
-  <div class="when"><p id="when">Loading...</p></div>
+  <div class="when"><p id="when">Checking...</p></div>
 
   <h2 style="font-size:20px;margin-top:30px">What now</h2>
   <ol>
@@ -89,8 +93,51 @@
 </div>
 <script>
 (function(){
-  var code = (new URLSearchParams(location.search).get("code")||"").toUpperCase();
-  if(code) document.getElementById("code").textContent = code;
+  var code = PPConfig.code(new URLSearchParams(location.search).get("code")||"");
+  var $ = function(id){ return document.getElementById(id); };
+  if(PPConfig.valid(code)) $("code").textContent = code;
+  function say(head, lead){ $("head").textContent = head; $("lead").textContent = lead; }
+  function booked(j){
+    say("You are booked",
+        "We have emailed your code and a link to build your games. If it has not turned up in a minute, check the junk folder.");
+    var label = j.days === 3 ? "3 days" : "24 hours";
+    $("when").textContent =
+      "You have " + label + " of play, and the clock does not start until you press start on the night. " +
+      "Build your games whenever suits.";
+  }
+  /* No code, or not one of ours in shape: nothing to confirm, and nothing to pretend about. */
+  if(!PPConfig.valid(code)){
+    say("We could not find your booking",
+        "This page needs the link Stripe sent you back with. If you have paid, your code and host link are in " +
+        "the email from PartyPlay. Nothing there? Email hello@partyplay.com.au and we will sort it.");
+    $("when").textContent = "Nothing has been charged by this page.";
+    var cc = document.querySelector(".codecard"); if(cc) cc.hidden = true;
+    var ag = document.querySelector(".again"); if(ag) ag.hidden = true;
+    return;
+  }
+  /* Paid shows in /licence the moment Stripe's webhook lands, usually within seconds. Ask a few
+     times, gently, and say plainly if it is still not there. */
+  var tries = 0;
+  function check(){
+    tries++;
+    fetch(PPConfig.API + "/licence?code=" + encodeURIComponent(code))
+      .then(function(r){ return r.json().then(function(j){ return { status:r.status, body:j }; }); })
+      .then(function(x){
+        if(x.status === 200 && x.body && !x.body.error){ booked(x.body); return; }
+        if(tries < 10){ setTimeout(check, 3000); return; }
+        say("Still confirming your payment",
+            "Stripe has not told us it has gone through yet. That can take a few minutes. When it does, your code " +
+            "and host link arrive by email. If nothing comes within ten minutes, email hello@partyplay.com.au.");
+        $("when").textContent = "Your code is reserved. Nothing else needs doing on this page.";
+      })
+      .catch(function(){
+        if(tries < 10){ setTimeout(check, 3000); return; }
+        say("We could not check just now",
+            "If you paid, your code and host link are on their way by email. Nothing within ten minutes? Email hello@partyplay.com.au.");
+        $("when").textContent = "";
+      });
+  }
+  check();
 
   var rs = document.getElementById("resend"), rmsg = document.getElementById("resendMsg");
   if(rs) rs.addEventListener("click", function(){
@@ -114,21 +161,6 @@
         rmsg.textContent = "Could not reach us just now. Try again in a moment, or email hello@partyplay.com.au.";
       });
   });
-  fetch(PPConfig.API + "/licence?code=" + encodeURIComponent(code))
-    .then(function(r){ return r.json(); })
-    .then(function(j){
-      if(j.error) throw new Error(j.error);
-      var label = j.days === 3 ? "3 days" : "24 hours";
-      document.getElementById("when").textContent =
-        "You have " + label + " of play, and the clock does not start until you press start on the night. " +
-        "Build your games whenever suits.";
-    })
-    .catch(function(){
-      /* The webhook may not have landed yet. Say something true rather than an
-         error: they have paid, and the email is coming. */
-      document.getElementById("when").textContent =
-        "The details are in the email we just sent you.";
-    });
 })();
 </script>
 </body>

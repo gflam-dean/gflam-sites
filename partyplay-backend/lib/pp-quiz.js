@@ -92,5 +92,27 @@
       .sort(function (x, y) { return y.score - x.score || x.name.localeCompare(y.name); });
   }
 
-  return { options: options, isRight: isRight, score: score, CORRECT_POINTS: CORRECT_POINTS };
+  /* WHO WON, said the way a room would say it (14 Oct 2026 audit). Every ending used to read the
+     top row and call it the winner, so a round where nobody scored ended "Sam wins" on a phone
+     that said "You finished on 0", and Alice and Eve on 300 each ended "Alice wins". Nobody on
+     points has not won anything, and a tie is a tie. rows: [{name, score}], in any order. */
+  function winners(rows) {
+    var top = 0;
+    (rows || []).forEach(function (r) { if ((+r.score || 0) > top) top = +r.score || 0; });
+    var names = top > 0 ? (rows || []).filter(function (r) { return (+r.score || 0) === top; })
+                                      .map(function (r) { return String(r.name); }) : [];
+    var list = names.length < 2 ? (names[0] || '')
+             : names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1];
+    return {
+      names: names, score: top, list: list,
+      // For the telly: the name big, the points small.
+      text: names.length ? list : 'Nobody scored',
+      sub: !names.length ? 'Not a single point. Next round!'
+         : names.length === 1 ? top + ' points' : 'Joint winners, ' + top + ' points each',
+      // For a phone: one line.
+      line: !names.length ? 'Nobody scored' : list + (names.length === 1 ? ' wins' : ' win, a tie')
+    };
+  }
+
+  return { options: options, isRight: isRight, score: score, winners: winners, CORRECT_POINTS: CORRECT_POINTS };
 }));

@@ -57,7 +57,9 @@ g.addEventListener = function(){};
 g.URLSearchParams = function(){ this.get=function(k){ return k==="code"?"ABCDEF":"k"; }; };
 g.PPConfig = { API:"https://x", SUPA_URL:"https://y", SUPA_ANON:"z", channel:function(c){return "pp-"+c;}, code:function(c){ return String(c||"").toUpperCase(); } };
 // The real one is loaded by a <script src>, which this harness does not follow.
-g.PPQuiz = { CORRECT_POINTS: 100, SPEED_POINTS: 0, options: function(){ return []; } };
+/* winners is the REAL one (15 Oct): the endings now say who won through it, ties and nobody included. */
+var _ppq = { exports:{} }; (new Function("module", readFile(ppFile("partyplay/lib/pp-quiz.js"))))(_ppq);
+g.PPQuiz = { CORRECT_POINTS: 100, SPEED_POINTS: 0, options: function(){ return []; }, winners: _ppq.exports.winners };
 // Same again for the licence library, which decides whether the party is still on.
 g.PPLicence = { isLive: function(l){ return Date.now() < l.endsAt; },
                 timeLeft: function(){ return "some time"; } };

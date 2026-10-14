@@ -34,7 +34,7 @@
       var me = opts.me(), q = S.q || "";
       var list = S.tries.map(function (t) {
         var cls = t.hit ? "hit" : (t.pending ? "" : "miss");
-        var right = t.pending ? "checking" : (t.hit ? ("+" + (t.pts|0) + " " + esc(t.a)) : (t.why === "already" ? "already got it" : (t.why === "time" ? "too late" : "not on the board")));
+        var right = t.pending ? "checking" : (t.hit ? ("+" + (t.pts|0) + " " + esc(t.a)) : (t.why === "already" ? "already got it" : (t.why === "time" ? "too late" : (t.why === "no_guesses" ? "no guesses left" : "not on the board"))));
         return '<li class="' + cls + '"><span>' + esc(t.text) + '</span><span class="pts">' + right + '</span></li>';
       }).join("");
       var canType = S.open && S.left > 0;
@@ -80,6 +80,7 @@
         t.pending = false; t.hit = !!m.hit; t.a = m.a; t.pts = m.pts; t.why = m.why;
         if (typeof m.left === "number") S.left = m.left;
         if (m.why === "time") S.open = false;
+        if (m.why === "no_guesses") S.left = 0;   // the console's count wins: a guess past the third was saying "not on the board" (14 Oct audit)
         paint(); return true;
       }
       if (m.t === "ta_showall") { S.open = false; S.done = true; paint(); return true; }

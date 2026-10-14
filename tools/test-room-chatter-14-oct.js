@@ -77,10 +77,13 @@ print('\n== partyplay: a result on a phone is held against the telly\'s caption 
 (function () {
   var i = PPLAY.indexOf('  function onMsg(m){');
   ok('onMsg is where it was', i > 0);
-  ok('a draw holds the screen', /if\(m\.t === "draw"\)\{[\s\S]{0,200}DRW = true;/.test(PPLAY));
-  ok('a heads-or-tails ending holds it too', /if\(m\.over\)\{\s*H=null; DRW=true;/.test(PPLAY));
-  ok('the caption guard honours the hold', /if\(B \|\| Q \|\| H \|\| T \|\| W \|\| V \|\| PH \|\| CH \|\| GW \|\| GM \|\| DRW\) return;/.test(PPLAY));
-  ok('anything else from the host lets go of it', /if\(m && m\.t!=="big" && m\.t!=="draw"\) DRW = false;/.test(PPLAY));
+  /* 15 Oct: the hold is now the caption's TEXT, so it holds that one caption and lets the next game's
+     opening caption through (partyplay-backend/lib/pp-realtime-auth.test.js runs it). */
+  ok('a draw holds the screen', /if\(m\.t === "draw"\)\{[\s\S]{0,200}DRW = String\(m\.winner \|\| ""\);/.test(PPLAY));
+  ok('a heads-or-tails ending holds it too', /if\(m\.over\)\{\s*H=null; DRW = m\.winner \? String\(m\.winner\) : "All out";/.test(PPLAY));
+  ok('the caption guard honours the hold', /if\(B \|\| Q \|\| H \|\| T \|\| W \|\| V \|\| PH \|\| CH \|\| GW \|\| GM \|\| DRW\) return;/.test(PPLAY) &&
+     /if\(DRW !== null && String\(m\.text == null \? "" : m\.text\) !== DRW\) DRW = null;/.test(PPLAY));
+  ok('anything else from the host lets go of it', /if\(!DRW_QUIET\[m\.t\]\) DRW = null;/.test(PPLAY));
   ok('the host tells the phones the coin game is over, and who won', /headsMsg\.over = true; headsMsg\.winner = w \|\| null;/.test(PRUN));
 })();
 

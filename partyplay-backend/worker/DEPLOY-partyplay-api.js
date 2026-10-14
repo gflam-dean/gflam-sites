@@ -1,5 +1,5 @@
 /* PASTE THIS ONE.
-   Built 30 Sep 2026, 08:59:09   fingerprint c13d54670123
+   Built 14 Oct 2026, 19:17:42   fingerprint 4606c4e3675b
    If that time is not within the last few minutes, close this window and reopen. */
 /* ============================================================================
    PartyPlay Worker: checkout, licences, joining.
@@ -16,7 +16,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '30 Sep 2026, 09:00 · 19e6e04a';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '14 Oct 2026, 19:17 · eccae2dd';   // tools/stamp-workers.py, do not edit by hand
 /* ---- lib/pp-licence.js, inlined at build time. Edit the file, not this. ---- */
 const PPLicence = (function () {
   const module = { exports: {} };
@@ -770,7 +770,7 @@ async function sendFollowupEmail(env, l) {
             'It runs out on ' + expires + '.</p>' +
             emailButton(site + '/start', 'Book the next one'),
       foot: '<p style="margin:0"><a href="' + site + '/unsubscribe?e=' + encodeURIComponent(l.buyer_email) +
-            '" style="color:#8A8296">Unsubscribe</a></p>'
+            '&t=' + (await unsubToken(env, l.buyer_email)) + '" style="color:#8A8296">Unsubscribe</a></p>'
     })
   });
 }
@@ -1349,9 +1349,28 @@ async function runPhotoSweep(env) {
 
    So the GET only asks. One button, still one click, and the POST does the work.
    RFC 8058 one-click unsubscribe is a POST for exactly this reason. */
+/* THE LINK CARRIES PROOF IT CAME FROM US (14 Oct 2026 audit). /unsubscribe took any address with
+   no token, so anybody could take anybody off the list, and that also stops the follow-up and the
+   expiry reminder for a licence they paid for. Every unsubscribe link now carries t, an HMAC of the
+   address under a Worker secret, and a POST with a t that does not match is refused.
+
+   A LINK WITH NO t IS STILL HONOURED, after the person presses the button. Every email sent before
+   this has one, and the Spam Act needs the unsubscribe in a message to keep working for at least 30
+   days after it was sent. Turning tokenless links off later is Dean's call; until then the click
+   is the protection they get, as before. The key is UNSUB_SECRET if it is set, and otherwise the
+   service key, which is already a secret only this Worker holds. */
+async function unsubToken(env, email) {
+  const secret = env.UNSUB_SECRET || env.SUPABASE_SERVICE_KEY || '';
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode('pp-unsub:' + secret),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const mac = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(String(email || '').trim().toLowerCase()));
+  return [...new Uint8Array(mac)].map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
+}
+
 async function handleUnsubscribe(request, env) {
   const u = new URL(request.url);
   let email = String(u.searchParams.get('e') || '').trim().toLowerCase();
+  let tok = String(u.searchParams.get('t') || '').trim().toLowerCase();
   if (request.method === 'POST' && !email) {
     /* The form posts it, so a mail client that rewrites the query string cannot
        lose it. Accepts either encoding; a party guest is not sending JSON. */
@@ -1360,14 +1379,16 @@ async function handleUnsubscribe(request, env) {
       if (ct.indexOf('application/json') >= 0) {
         const b = await request.json();
         email = String((b && b.email) || '').trim().toLowerCase();
+        tok = String((b && b.t) || tok).trim().toLowerCase();
       } else {
         const f = await request.formData();
         email = String(f.get('email') || '').trim().toLowerCase();
+        tok = String(f.get('t') || tok).trim().toLowerCase();
       }
     } catch (e) {}
   }
   const site = (env.SITE_ORIGIN || '').replace(/\/$/, '');
-  const page = (title, body) => new Response(
+  const page = (title, body, status) => new Response(
     '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
     '<title>' + title + ' | PartyPlay</title>' +
     '<body style="margin:0;background:#12101A;color:#FFF1E6;font-family:system-ui,sans-serif;' +
@@ -1375,7 +1396,7 @@ async function handleUnsubscribe(request, env) {
     '<div style="max-width:34ch"><h1 style="font-size:28px;margin:0 0 12px">' + title + '</h1>' +
     '<p style="color:#B6ADC2;line-height:1.6">' + body + '</p>' +
     '<p style="margin-top:22px"><a style="color:#FF1F8E" href="' + site + '">partyplay.com.au</a></p></div>',
-    { headers: { 'content-type': 'text/html; charset=utf-8' } });
+    { status: status || 200, headers: { 'content-type': 'text/html; charset=utf-8' } });
 
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     return page('That link looks wrong', 'Email hello@partyplay.com.au and we will take you off by hand.');
@@ -1393,6 +1414,7 @@ async function handleUnsubscribe(request, env) {
       'Nothing you have paid for is affected and your party code still works.</p>' +
       '<form method="POST" action="/unsubscribe" style="margin-top:22px">' +
       '<input type="hidden" name="email" value="' + escapeHtml(email) + '">' +
+      (tok ? '<input type="hidden" name="t" value="' + escapeHtml(tok) + '">' : '') +
       '<button type="submit" style="background:#FF1F8E;color:#fff;border:0;border-radius:12px;' +
       'padding:14px 22px;font:600 16px system-ui,sans-serif;cursor:pointer">Yes, unsubscribe</button>' +
       '</form></div>',
@@ -1417,6 +1439,11 @@ async function handleUnsubscribe(request, env) {
      is never mistaken for one that opted in. Found 12 Sep 2026 by pressing the
      button on the live site and then looking in the table, which is the only
      reason it was found: the screen said Done both times. */
+  /* A token that is there and WRONG is somebody writing links by hand. No token at all is an old
+     email, honoured after the click (see unsubToken). */
+  if (tok && !timingSafeEqual(tok, await unsubToken(env, email))) {
+    return page('That link looks wrong', 'Use the Unsubscribe link in the email itself, or email hello@partyplay.com.au and we will take you off by hand.', 403);
+  }
   const nowIso = new Date().toISOString();
   const patched = await sb(env, 'pp_subscribers?email=eq.' + encodeURIComponent(email), {
     method: 'PATCH',
@@ -1705,7 +1732,7 @@ async function sendNudgeEmail(env, l, daysLeft) {
             'Reply and tell us what got in the way, we do read them.</p>',
       foot: '<p style="margin:0">This is the only reminder we will send you about this code.</p>' +
             '<p style="margin:10px 0 0"><a href="' + site + '/unsubscribe?e=' + encodeURIComponent(l.buyer_email) +
-            '" style="color:#8A8296">Unsubscribe</a></p>'
+            '&t=' + (await unsubToken(env, l.buyer_email)) + '" style="color:#8A8296">Unsubscribe</a></p>'
     })
   });
 }
@@ -1962,6 +1989,44 @@ async function handleStats(request, env) {
    Creates the PENDING licence first, then the Stripe session pointing at it.
    That order matters: a session with no licence row behind it is a customer who
    paid for nothing, and we would have no record to fix it from. */
+/* Per address, not per person: the address is all an anonymous checkout has. Kept as a keyed hash
+   (never the address itself), so the licence table holds nothing that says where a buyer was.
+   Counted from the table when migration 16 has added the column, and from this Worker's memory
+   until then (weaker, since Cloudflare runs more than one copy, but not nothing). */
+const CHECKOUT_PER_HOUR = 6;
+const CHECKOUT_SEEN = new Map();
+async function checkoutIpTag(env, request) {
+  const ip = String((request.headers && request.headers.get && request.headers.get('CF-Connecting-IP')) || '').trim();
+  if (!ip) return null;
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode('pp-checkout:' + (env.SUPABASE_SERVICE_KEY || '')),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const mac = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(ip));
+  return [...new Uint8Array(mac)].map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 24);
+}
+function recentInMemory(tag) {
+  const cut = Date.now() - 3600e3;
+  const list = (CHECKOUT_SEEN.get(tag) || []).filter(t => t > cut);
+  CHECKOUT_SEEN.set(tag, list);
+  return list;
+}
+function noteCheckout(tag) {
+  if (!tag) return;
+  const list = recentInMemory(tag); list.push(Date.now());
+  if (CHECKOUT_SEEN.size > 5000) CHECKOUT_SEEN.clear();     // a memory guard, never a reason to refuse
+}
+async function checkoutsFrom(env, tag) {
+  const mem = recentInMemory(tag).length;
+  try {
+    const since = new Date(Date.now() - 3600e3).toISOString();
+    const rows = await sb(env, 'pp_licences?checkout_ip=eq.' + encodeURIComponent(tag) +
+      '&created_at=gt.' + encodeURIComponent(since) + '&select=id&limit=' + (CHECKOUT_PER_HOUR + 1));
+    return Math.max(mem, (rows || []).length);
+  } catch (e) {
+    if (!missingColumn(e)) throw e;
+    return mem;
+  }
+}
+
 async function handleCheckout(request, env) {
   const b = await request.json().catch(() => ({}));
 
@@ -1999,6 +2064,16 @@ async function handleCheckout(request, env) {
     } catch (e) { /* could not ask Stripe: fall through and make a fresh checkout */ }
   }
 
+  /* A LIMIT ON NEW CHECKOUTS FROM ONE PLACE (14 Oct 2026 audit). Every call with a new name or
+     email made a pending licence AND a live Stripe session, with nothing to stop a script making
+     thousands. A person retrying is sent back to their own session above and never reaches this;
+     CHECKOUT_PER_HOUR new ones from one address in an hour is more than any household books. */
+  const ipTag = await checkoutIpTag(env, request);
+  if (ipTag && (await checkoutsFrom(env, ipTag)) >= CHECKOUT_PER_HOUR) {
+    return json({ error: 'Too many bookings have been started from here in the last hour. ' +
+                         'Try again a bit later, or email hello@partyplay.com.au and we will sort it.' }, 429);
+  }
+
   // A code nobody else holds. Six characters is 29^6, so a collision is rare, but
   // rare is not never and a duplicate code would put two parties in one room.
   let code = null;
@@ -2019,17 +2094,28 @@ async function handleCheckout(request, env) {
      every single checkout answered 500 and nobody could buy anything. */
   const wantsMarketing = b.optin === true;
 
-  const rows = await sb(env, 'pp_licences', {
+  const newRow = {
+    code, host_key: makeHostKey(), buyer_name: name, buyer_email: email, buyer_mobile: mobile,
+    party_name: partyName,
+    days: plan.days,
+    marketing_optin: wantsMarketing,
+    price_cents: priceCents, status: 'pending'
+  };
+  if (ipTag) newRow.checkout_ip = ipTag;
+  const insertLicence = () => sb(env, 'pp_licences', {
     method: 'POST',
     headers: { prefer: 'return=representation' },
-    body: JSON.stringify([{
-      code, host_key: makeHostKey(), buyer_name: name, buyer_email: email, buyer_mobile: mobile,
-      party_name: partyName,
-      days: plan.days,
-      marketing_optin: wantsMarketing,
-      price_cents: priceCents, status: 'pending'
-    }])
+    body: JSON.stringify([newRow])
   });
+  let rows;
+  try { rows = await insertLicence(); }
+  catch (e) {
+    // migration 16 not run yet: the limit falls back to this Worker's memory, the sale goes ahead
+    if (!newRow.checkout_ip || !missingColumn(e)) throw e;
+    delete newRow.checkout_ip;
+    rows = await insertLicence();
+  }
+  noteCheckout(ipTag);
   const licence = rows[0];
 
   const site = (env.SITE_ORIGIN || '').replace(/\/$/, '');
@@ -2269,7 +2355,19 @@ async function handleJoin(request, env) {
     me = (mine && mine[0]) || null;
   }
 
-  const taken = await sb(env, 'pp_players?licence_id=eq.' + encodeURIComponent(l.id) + '&select=id,nickname');
+  /* THE PHONE'S KEY, so the console can tell this guest's messages from anybody else's (15 Oct
+     2026, lib/pp-phonekey.js). Only the fingerprint is kept; the console checks every message
+     against the public key the message itself carries. One pid, one guest: a pid already held by
+     somebody else at this party is not taken over, it is ignored. Read with the column if it is
+     there, and without it if migration 16 has not been run yet, because a join must never fail
+     for a column. */
+  /* rejoin is a phone that was already in, telling us its key: it must never become a second guest. */
+  if (b.rejoin === true && !me) return json({ error: 'That phone is not a guest at this party.' }, 404);
+  const pid = PID_RE.test(String(b.pid || '')) ? String(b.pid) : null;
+  const taken = await sb(env, 'pp_players?licence_id=eq.' + encodeURIComponent(l.id) + '&select=id,nickname,pid')
+    .catch(e => missingColumn(e) ? sb(env, 'pp_players?licence_id=eq.' + encodeURIComponent(l.id) + '&select=id,nickname') : Promise.reject(e));
+  const pidFree = pid && !(taken || []).some(r => r.pid === pid && (!me || r.id !== me.id));
+  const mePid = me ? ((taken || []).find(r => r.id === me.id) || {}).pid : null;
   const used = new Set((taken || []).filter(r => !me || r.id !== me.id)
                                     .map(r => String(r.nickname || '').toLowerCase()));
   let name = nickname;
@@ -2286,15 +2384,26 @@ async function handleJoin(request, env) {
         method: 'PATCH', body: JSON.stringify({ nickname: name })
       });
     }
+    /* A phone that joined before keys existed, or lost its key, tells us its key now. */
+    if (pidFree && mePid !== pid) {
+      try {
+        await sb(env, 'pp_players?id=eq.' + encodeURIComponent(me.id), { method: 'PATCH', body: JSON.stringify({ pid }) });
+      } catch (e) { if (!missingColumn(e)) throw e; }
+    }
     return json({ ok: true, token: prev, nickname: name, back: true });
   }
 
   const token = makeCode(24);
   try {
-    await sb(env, 'pp_players', {
-      method: 'POST',
-      body: JSON.stringify([{ licence_id: l.id, nickname: name, token }])
-    });
+    const row = { licence_id: l.id, nickname: name, token };
+    if (pidFree) row.pid = pid;
+    try {
+      await sb(env, 'pp_players', { method: 'POST', body: JSON.stringify([row]) });
+    } catch (e) {
+      if (!row.pid || !missingColumn(e)) throw e;
+      delete row.pid;
+      await sb(env, 'pp_players', { method: 'POST', body: JSON.stringify([row]) });
+    }
   } catch (e) {
     /* The cap is a database trigger (partyplay-01-core.sql), so this is where it surfaces.
        Say it in words a guest can act on rather than showing them a constraint error.
@@ -2313,6 +2422,112 @@ async function handleJoin(request, env) {
     throw e;
   }
   return json({ ok: true, token, nickname: name });
+}
+
+/* ------------------------------------------------- who is in the room ----
+ * The realtime channel is open to anybody holding the code on the telly, so what is SAID on it
+ * proves nothing (14 Oct 2026 audit). These routes are what the console checks it against.
+ * ------------------------------------------------------------------------ */
+const PID_RE = /^k1_[A-Za-z0-9_-]{32}$/;
+const KID_RE = /^p1_[A-Za-z0-9_-]{8,24}$/;
+
+/* PostgREST names the column when it refuses one it does not have (42703 on a read, PGRST204 on a
+   write). Migration 16 adds them; until it has been run, everything that uses them carries on
+   without them rather than failing a join or a checkout. */
+function missingColumn(e) {
+  return !!(e && /42703|PGRST204|column/i.test(String(e.message || '')));
+}
+
+/* lib/pp-ticket.js seedFrom, the same FNV-1a, held identical by pp-realtime-auth.test.js. The
+   console gets this for each guest and builds their ticket from it; the token itself never
+   leaves here, because it is what lets a phone upload to the album. */
+function ticketSeed(token) {
+  let h = 2166136261;
+  const s = String(token);
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+
+/* GET /party/players?code=&key=
+   The guests the SERVER let in, for the console to admit and nobody else. The console used to add
+   anyone who said hello on the channel, so the fifty cap on /join meant nothing to the room and a
+   made-up name went straight onto the telly. Host key only: it is the guest list. */
+async function handlePartyPlayers(request, env) {
+  const u = new URL(request.url);
+  const l = await requireHost(env, u.searchParams.get('code'), u.searchParams.get('key'));
+  let rows;
+  try {
+    rows = await sb(env, 'pp_players?licence_id=eq.' + encodeURIComponent(l.id) +
+      '&order=joined_at.asc,id.asc&limit=200&select=nickname,pid,token');
+  } catch (e) {
+    if (!missingColumn(e)) throw e;
+    rows = await sb(env, 'pp_players?licence_id=eq.' + encodeURIComponent(l.id) +
+      '&order=joined_at.asc,id.asc&limit=200&select=nickname,token');
+  }
+  return json({ players: (rows || []).map(r => ({ name: r.nickname, pid: r.pid || null, tseed: ticketSeed(r.token) })) });
+}
+
+/* GET /party/signing/public?code=
+   The party's public key, for the telly and the phones. Anybody may have it: it can only check a
+   signature, never make one. A party with no key yet (or a database without migration 16) says
+   so, and the screens then render everything, exactly as before signing existed. */
+async function handleSigningPublic(request, env) {
+  const code = normaliseCode(new URL(request.url).searchParams.get('code'));
+  if (!CODE_RE.test(code)) return json({ exists: false });
+  let rows = [];
+  try { rows = await sb(env, 'pp_licences?code=eq.' + code + '&status=eq.paid&select=sign_kid,sign_public_jwk&limit=1'); }
+  catch (e) { if (!missingColumn(e)) throw e; }
+  const r = rows[0];
+  if (!r || !r.sign_kid || !r.sign_public_jwk) return json({ exists: false });
+  return json({ exists: true, kid: r.sign_kid, public_jwk: r.sign_public_jwk });
+}
+
+function signingReply(row) {
+  if (!row || !row.sign_kid || !row.sign_private_jwk || !row.sign_public_jwk) return { exists: false };
+  return { exists: true, kid: row.sign_kid, public_jwk: row.sign_public_jwk, private_jwk: row.sign_private_jwk };
+}
+
+/* POST /party/signing/private  { code, key }
+   Both halves, for a console. Host key only, the same lock as editing the games. */
+async function handleSigningPrivate(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const l = await requireHost(env, b.code, b.key);
+  return json(signingReply(l));
+}
+
+/* POST /party/signing/mint  { code, key, kid, public_jwk, private_jwk }
+   The first console mints the pair in the browser (a Worker cannot generate an ECDSA key) and
+   leaves it here. Only a party with NO key takes one, so two consoles opening together cannot end
+   up with two keys: the second is handed the first's, and both sign the same way. */
+function okJwk(j, priv) {
+  return !!(j && typeof j === 'object' && j.kty === 'EC' && j.crv === 'P-256' &&
+            typeof j.x === 'string' && typeof j.y === 'string' && j.x.length < 100 && j.y.length < 100 &&
+            (priv ? (typeof j.d === 'string' && j.d.length < 100) : j.d === undefined));
+}
+async function handleSigningMint(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const l = await requireHost(env, b.code, b.key);
+  if (signingReply(l).exists) return json(signingReply(l));
+  if (!KID_RE.test(String(b.kid || '')) || !okJwk(b.public_jwk, false) || !okJwk(b.private_jwk, true) ||
+      b.public_jwk.x !== b.private_jwk.x || b.public_jwk.y !== b.private_jwk.y) {
+    return json({ error: 'That is not a key this party can use.' }, 400);
+  }
+  const keep = (j, priv) => {
+    const o = { kty: 'EC', crv: 'P-256', x: j.x, y: j.y };
+    if (priv) o.d = j.d;
+    return o;
+  };
+  try {
+    await sb(env, 'pp_licences?id=eq.' + encodeURIComponent(l.id) + '&sign_kid=is.null', {
+      method: 'PATCH',
+      body: JSON.stringify({ sign_kid: String(b.kid), sign_public_jwk: keep(b.public_jwk, false), sign_private_jwk: keep(b.private_jwk, true) })
+    });
+  } catch (e) {
+    if (missingColumn(e)) return json({ exists: false, why: 'not set up yet' });
+    throw e;
+  }
+  const rows = await sb(env, 'pp_licences?id=eq.' + encodeURIComponent(l.id) + '&select=sign_kid,sign_public_jwk,sign_private_jwk&limit=1');
+  return json(signingReply(rows[0]));
 }
 
 async function sendLicenceEmail(env, l) {
@@ -2526,6 +2741,10 @@ export default {
       else if (path === '/unsubscribe')                   res = await handleUnsubscribe(request, env);
       else if (method === 'POST' && path === '/licence/start') res = await handleStart(request, env);
       else if (method === 'POST' && path === '/join')     res = await handleJoin(request, env);
+      else if (method === 'GET'  && path === '/party/players')        res = await handlePartyPlayers(request, env);
+      else if (method === 'GET'  && path === '/party/signing/public') res = await handleSigningPublic(request, env);
+      else if (method === 'POST' && path === '/party/signing/private') res = await handleSigningPrivate(request, env);
+      else if (method === 'POST' && path === '/party/signing/mint')   res = await handleSigningMint(request, env);
       else if (method === 'GET'  && path === '/games')        res = await handleGamesList(request, env);
       else if (method === 'POST' && path === '/games')        res = await handleGameSave(request, env);
       else if (method === 'POST' && path === '/games/delete') res = await handleGameDelete(request, env);

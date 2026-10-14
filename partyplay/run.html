@@ -63,6 +63,19 @@
     border:1px solid var(--line);border-radius:22px;padding:10px 18px;font-size:14.5px;opacity:0;
     transition:opacity .18s;pointer-events:none}
   .toast.show{opacity:1}
+
+  /* "Before you start" for charades and who am I. warnScreens() built .ask and .askbox and this
+     page never styled either (they were play.html's), so the warning rendered as loose text at
+     the bottom of the page, under the Start button the host had already pressed (14 Oct audit).
+     A sheet over the whole console now, so it is read before anything can be started. */
+  .ask{position:fixed;inset:0;background:rgba(6,4,10,.8);display:grid;place-items:center;z-index:60;padding:16px}
+  .askbox{background:var(--ink2);border:1px solid var(--line);border-radius:18px;padding:24px 22px;
+    width:100%;max-width:460px}
+  .askbox h3{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:22px;margin:0 0 8px}
+  .askbox p{color:var(--mute);margin:0 0 16px;font-size:15.5px}
+  .askbox .row2{display:flex;gap:9px;margin-top:6px}
+  .askbox button{flex:1 1 0;padding:14px;border-radius:11px;border:0;background:var(--pink);color:#fff;
+    font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -85,6 +98,9 @@
 <script src="/lib/ta-match.js"></script>
 <script src="/lib/pp-great-minds-boards.js"></script>
 <script src="/lib/pr-game.js"></script>
+<script src="/lib/pp-ticket.js"></script>
+<script src="/lib/pp-sign.js"></script>
+<script src="/lib/pp-phonekey.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function(){
@@ -115,7 +131,7 @@
   function toast(m){ var t=$("toast"); t.textContent=m; t.classList.add("show");
     clearTimeout(toast._t); toast._t=setTimeout(function(){t.classList.remove("show");},1700); }
   function api(p,o){ return fetch(API+p,Object.assign({headers:{"content-type":"application/json"}},o||{}))
-    .then(function(r){ return r.json().then(function(j){ if(!r.ok) throw new Error(j.error||"Something went wrong"); return j; }); }); }
+    .then(function(r){ return r.json().then(function(j){ if(!r.ok){ var e=new Error(j.error||"Something went wrong"); e.status=r.status; throw e; } return j; }); }); }
   /* THE BROADCAST IS THE GAME, so a message that goes nowhere is a round that did not
      happen. This used to check only that `ch` EXISTED, never that it was connected, and
      it swallowed the error: if the host's channel dropped, every ball, every word and
@@ -132,10 +148,38 @@
     if(subscribed && ch){ try{ ch.send({type:"broadcast",event:"msg",payload:o}); return true; }catch(e){} }
     return false;
   }
-  function send(o){
+  /* EVERYTHING THE HOST SAYS IS SIGNED (15 Oct 2026, lib/pp-sign.js). Anybody who could read the
+     code off the telly could join this channel and speak as the host. The telly and the phones now
+     drop a host message without this party's signature, once the party has a key. In order, through
+     one chain; with no key (or no pp-sign.js) it goes out exactly as before.
+
+     AND THE TELLY'S LAST PICTURE IS KEPT. A telly that woke up or reloaded mid-game showed "Join the
+     party" until the host happened to press something, and resending the game did not help: that
+     is a PHONE message the telly ignores, and replaying it reset every phone (14 Oct audit). So
+     whatever last went up on the wall is remembered here and only that goes back, marked tvOnly so
+     no phone acts on it a second time. */
+  var PPS = window.PPSign || null;
+  var lastWall = null, WALL_T = { big:1, board:1, photoscreen:1, queue:1, lobby:1 };
+  /* Every send passes through here first; signed is true on the way back out of the signer.
+     `typeof`, so send() still runs on its own where a suite lifts it without this. */
+  function sendHook(o){
+    if(o && WALL_T[o.t] && !o.tvOnly) lastWall = o;
+    if(!PPS) return false;
+    PPS.signSend(o, function(m){ send(m, true); });
+    return true;
+  }
+  function send(o, signed){
+    if(!signed && typeof sendHook === "function" && sendHook(o)) return;
     if(wireOut(o)) return;
     if(sendQueue.length >= SEND_QUEUE_MAX) sendQueue.shift();
     sendQueue.push(o);
+  }
+  function wallAgain(){
+    if(G && G.mode==="gm" && G.pub){   // a Great Minds board in play: the board and what has been found
+      (G.game.replay() || []).forEach(function(m){ var c=JSON.parse(JSON.stringify(m)); c.tvOnly=true; send(c); });
+      return;
+    }
+    if(lastWall){ var w=JSON.parse(JSON.stringify(lastWall)); w.tvOnly=true; send(w); }
   }
   function flushQueue(){ while(sendQueue.length){ if(!wireOut(sendQueue[0])) break; sendQueue.shift(); } }
 
@@ -231,16 +275,125 @@
       ch=mine;
       ch.on("broadcast",{event:"msg"},function(e){
         if(ch!==mine) return;      // a channel we have hung up on
-        var m=e.payload||{};
+        fromRoom(e.payload||{});
+      });
+      ch.subscribe(function(st){ if(ch===mine) onChannelStatus(st); });
+      armWireWatch();   // a subscribe that never lands fires no error; catch it on the clock
+    }catch(e){}
+  }
+
+  /* ------------------------------------------------ who is actually speaking --
+     EVERY MESSAGE FROM A PHONE IS CHECKED BEFORE IT COUNTS (15 Oct 2026). The channel is open to
+     anybody holding the code on the telly, and a message's name field was the only identity there
+     was, so a stranger could answer in Alice's name, raise her hand or shout FULL HOUSE for her,
+     and a made-up name went onto the telly past the fifty cap (14 Oct audit).
+
+     Now a phone signs what it sends with its own key (lib/pp-phonekey.js) and gave that key's
+     fingerprint, its pid, to the Worker when it joined. ROOM is the Worker's own guest list,
+     fetched with the host key, and the NAME comes from there, never from the message. A phone on
+     the page from before this shipped sends unsigned, and is still heard, but only under a name
+     the Worker let in that no key has claimed. If the Worker cannot be asked at all (an old Worker,
+     no signal) the console falls back to holding each name to the first key that used it this
+     session, so it still never takes a second phone's word for a name a key already holds. */
+  var ROOM = null, roomAt = 0, roomP = null, BOUND = {}, SEEN_N = {}, recvChain = Promise.resolve();
+  var GUEST_T = { hello:1, claim:1, answer:1, hand:1, truths:1, truthpick:1, truthvote:1, pick:1,
+                  photoguess:1, song:1, text:1, pr_guess:1 };
+  function roomList(force){
+    if(roomP) return roomP;
+    if(ROOM && !force) return Promise.resolve(ROOM);
+    /* A Worker that cannot answer (not deployed yet, no signal) is asked again every thirty
+       seconds, not on every message. */
+    if(!ROOM && roomAt && Date.now()-roomAt < 30000) return Promise.resolve(null);
+    roomAt = Date.now();
+    roomP = api("/party/players?code="+encodeURIComponent(CODE)+"&key="+encodeURIComponent(KEY))
+      .then(function(d){
+        var L = { byPid:{}, byName:{} };
+        (d.players||[]).forEach(function(r){
+          var row = { name:String(r.name||""), pid:r.pid||null, tseed:(r.tseed>>>0) };
+          if(!row.name) return;
+          L.byName[row.name.toLowerCase()] = row;
+          if(row.pid) L.byPid[row.pid] = row;
+        });
+        ROOM = L; return L;
+      })
+      .catch(function(){ return ROOM; })          // keep what we had; null means "cannot ask"
+      .then(function(L){ roomP = null; return L; });
+    return roomP;
+  }
+  /* Pure, so a suite can drive it: m is the message, v what lib/pp-phonekey.js made of it, L the
+     Worker's list (null when it cannot be asked), bound this session's name to pid map. Returns
+     {name}, {refuse}, or {unknown} when a fresher list might know them (final is that second go). */
+  function admitName(m, v, L, bound, final){
+    if(!v || !v.ok) return { refuse: (v && v.why) || "not signed properly" };
+    var nm = String(m.name||"").trim(), k = nm.toLowerCase();
+    if(v.legacy){
+      if(bound[k]) return { refuse:"a phone with a key holds that name" };
+      if(!L) return nm ? { name:nm } : { refuse:"no name" };
+      var r = L.byName[k];
+      if(!r) return final ? { refuse:"not on the party's guest list" } : { unknown:true };
+      if(r.pid) return { refuse:"that guest's phone has a key" };
+      return { name:r.name };
+    }
+    var pid = m.pid;
+    function bind(name){ var kk=name.toLowerCase(); if(bound[kk] && bound[kk]!==pid) return { refuse:"another phone holds that name" }; bound[kk]=pid; return { name:name }; }
+    if(!L) return nm ? bind(nm) : { refuse:"no name" };
+    if(L.byPid[pid]){ bound[L.byPid[pid].name.toLowerCase()] = pid; return { name:L.byPid[pid].name }; }   // the Worker's word wins
+    if(!final) return { unknown:true };
+    var rn = L.byName[k];
+    if(!rn) return { refuse:"not on the party's guest list" };
+    if(rn.pid && rn.pid !== pid) return { refuse:"another phone holds that name" };
+    return bind(rn.name);    // joined before keys existed: the first key to speak for the name holds it
+  }
+  function who(m){
+    var PK = window.PPPhoneKey;
+    var vp = PK ? PK.verify(m) : Promise.resolve(m.pk||m.sig ? { ok:false, why:"cannot check" } : { ok:true, legacy:true });
+    return vp.then(function(v){
+      if(v && v.ok && !v.legacy && PK && !PK.fresh(SEEN_N, m)) return { refuse:"a replay" };   // something already heard, sent again
+      return (roomP || Promise.resolve(ROOM)).then(function(L){ var r = admitName(m, v, L, BOUND, false); r.v = v; return r; });
+    });
+  }
+  /* SOMEBODY THE LIST DOES NOT KNOW YET is usually a guest who joined a second ago. Their messages
+     wait to one side while the list is fetched again, at most once every two seconds, and are then
+     judged on it. They do not hold up anybody else's: a stranger sending a thousand made-up keys
+     costs one fetch every two seconds and delays nobody's answer. */
+  var parked = [], parkT = null;
+  function park(m, v){
+    parked.push({ m:m, v:v }); if(parked.length > 100) parked.shift();
+    if(parkT) return;
+    parkT = setTimeout(function(){
+      parkT = null;
+      roomList(true).then(function(L){
+        var list = parked; parked = [];
+        list.forEach(function(p){
+          recvChain = recvChain.then(function(){
+            var r = admitName(p.m, p.v, L, BOUND, true);
+            if(r.name){ p.m.name = r.name; onRoom(p.m); }
+          }).catch(function(){});
+        });
+      });
+    }, Math.max(0, roomAt + 2000 - Date.now()));
+  }
+  function fromRoom(m){
+    if(m.t==="tv-here"){ send({t:"players",names:players}); wallAgain(); if(G) G.repaint&&G.repaint(); return; }
+    if(!GUEST_T[m.t]) return;     // the console acts on guests' messages only; anything else here is not for it
+    recvChain = recvChain.then(function(){ return who(m); }).then(function(r){
+      if(r && r.unknown){ park(m, r.v); return; }
+      if(!r || !r.name) return;
+      m.name = r.name;
+      onRoom(m);
+    }).catch(function(){});
+  }
+
+  function onRoom(m){
         if(m.t==="hello" && m.name){
           if(players.indexOf(m.name)<0){ players.push(m.name); paintStrip(); send({t:"players",names:players}); }
           /* Somebody has just walked in and picked up their phone. Tell them what
              is happening, or they stare at a waiting screen until the next round
              wondering whether it is broken. Not every game can do this, so it is
-             opt in per game. */
-          if(G && G.resend){ try{ G.resend(); }catch(e){} }
+             opt in per game. Given the name, so a game that should only ask the
+             newcomer (two truths) does not ask the whole room again. */
+          if(G && G.resend){ try{ G.resend(m.name); }catch(e){} }
         }
-        if(m.t==="tv-here"){ send({t:"players",names:players}); if(G) G.repaint&&G.repaint(); }
         /* A phone answering the roll call below. Same shape as a hello, handled above. */
         /* An answer from a phone. First one per person per question counts: a
            guest who taps twice has changed their mind after seeing a face, and
@@ -292,10 +445,6 @@
           if(!dup){ G.answers.push({name:m.name,i:m.i,answer:m.answer}); if(G.tkey) triviaSave(); paintTrivia(); }
         }
         runSave();   // a raised hand is part of where the game is up to
-      });
-      ch.subscribe(function(st){ if(ch===mine) onChannelStatus(st); });
-      armWireWatch();   // a subscribe that never lands fires no error; catch it on the clock
-    }catch(e){}
   }
 
   /* SIGNING IN, which did not exist.
@@ -309,14 +458,14 @@
      The tips are here rather than only in the setup guide because this is the
      screen a host is looking at when they are getting ready, which is exactly
      when the advice is worth having. */
-  function signIn(err){
+  function signIn(err, prefill){
     $("app").innerHTML =
       '<div class="gate" style="text-align:left">' +
         '<div class="big" style="text-align:center">Open your party</div>' +
         '<p style="text-align:center">Both of these are in your welcome email.</p>' +
         '<label for="siCode" style="display:block;margin:18px 0 6px;color:var(--faint);font-size:14px">Party code</label>' +
         '<input id="siCode" maxlength="10" autocapitalize="characters" autocomplete="off" ' +
-          'spellcheck="false" placeholder="ABC123" style="width:100%;padding:14px;border-radius:11px;' +
+          'spellcheck="false" placeholder="ABC123" value="' + esc(prefill || CODE || '') + '" style="width:100%;padding:14px;border-radius:11px;' +
           'border:1px solid var(--line);background:rgba(255,255,255,.05);color:inherit;font:inherit;text-align:center">' +
         '<label for="siKey" style="display:block;margin:14px 0 6px;color:var(--faint);font-size:14px">Host key</label>' +
         '<input id="siKey" autocomplete="off" spellcheck="false" placeholder="the long one" ' +
@@ -342,7 +491,7 @@
     function go(){
       var c = PPConfig.code($("siCode").value);
       var k = ($("siKey").value || "").trim();
-      if(c.length < 4 || !k) return signIn("Put in both the code and the host key.");
+      if(c.length < 4 || !k) return signIn("Put in both the code and the host key.", c);
       // Straight into the address the rest of the page already reads, so there
       // is one way in and nothing new to keep in step.
       location.search = "?code=" + encodeURIComponent(c) + "&key=" + encodeURIComponent(k);
@@ -352,12 +501,12 @@
     $("siResend").addEventListener("click", function(e){
       e.preventDefault();
       var c = PPConfig.code($("siCode").value);
-      if(c.length < 4) return signIn("Put your party code in first, then press send it again.");
+      if(c.length < 4) return signIn("Put your party code in first, then press send it again.", c);
       api("/licence/resend", { method:"POST", body: JSON.stringify({ code:c }) })
         .then(function(){ toast("If that code is one of ours, the email is on its way."); })
         .catch(function(){ toast("If that code is one of ours, the email is on its way."); });
     });
-    $("siCode").focus();
+    ($("siCode").value ? $("siKey") : $("siCode")).focus();
   }
 
   function load(){
@@ -366,8 +515,44 @@
     $("buildlink").href="/host?code="+encodeURIComponent(CODE)+"&key="+encodeURIComponent(KEY);
     nightLoad();
     api("/games?code="+encodeURIComponent(CODE)+"&key="+encodeURIComponent(KEY))
-      .then(function(d){ PARTY=d.party; GAMES=d.games||[]; connect(); render(); })
-      .catch(function(e){ $("app").innerHTML='<div class="gate">'+esc(e.message)+'</div>'; });
+      .then(function(d){
+        PARTY=d.party; GAMES=d.games||[];
+        /* The key before the channel, so the opening burst can be signed; pp-sign.js holds the first
+           send a few seconds at most for it. The guest list too, so the roll call's answers are
+           matched against it rather than each one asking. */
+        if(PPS) PPS.initHost(API, CODE, KEY, signBar);
+        roomList(false);
+        connect(); render();
+      })
+      .catch(function(e){
+        /* A WRONG OR MISTYPED HOST KEY WAS A DEAD END: "Not your party to change." and nothing to
+           press (14 Oct audit). The sign-in screen has the code filled in and the "send it again"
+           link, so a host with a bad link can get the right one without writing to anybody. */
+        if(e && (e.status===403 || e.status===404)){
+          signIn(e.status===404
+            ? "We could not find a party with the code "+CODE+". Check it against your welcome email."
+            : "That host key does not match party "+CODE+". Copy it again from your welcome email, or have the email sent again below.", CODE);
+          return;
+        }
+        $("app").innerHTML='<div class="gate">'+esc(e.message)+
+          '<p style="margin-top:14px"><a href="'+esc(location.pathname+location.search)+'">Try again</a></p></div>';
+      });
+  }
+
+  /* THE CONSOLE SAYS WHEN THE ROOM IS IGNORING IT. Once a party has a key, the telly and the phones
+     drop anything unsigned, so a console that could not get the key (the Worker blipped as it
+     opened) would be playing to a wall that ignores it. pp-sign.js keeps trying every thirty
+     seconds; until it gets there, this says so, with the one thing that fixes it. */
+  function signBar(st){
+    var bar=$("ppSignBar");
+    if(!st || !st.ignored){ if(bar) bar.remove(); return; }
+    if(bar) return;
+    bar=document.createElement("div"); bar.id="ppSignBar"; bar.setAttribute("role","alert");
+    bar.setAttribute("style","position:sticky;top:0;z-index:98;background:#5A1020;color:#FFE4E9;padding:11px 16px;"+
+      "font:600 14px/1.45 Manrope,system-ui,sans-serif;border-bottom:2px solid #FF1F8E");
+    bar.innerHTML='The screen and the phones will ignore this console until it gets your party’s security key. '+
+      'It is trying again by itself. If this stays up, <a href="'+esc(location.pathname+location.search)+'" style="color:#fff">reload this page</a>.';
+    document.body.insertBefore(bar, document.body.firstChild);
   }
 
   function paintStrip(){
@@ -503,31 +688,49 @@
      The phone builds its own ticket when it hears {t:"bingo"}, so this is just saying it
      again. They start from the next ball rather than the first, which is a worse ticket
      than everyone else's and still enormously better than watching. */
-  function resendBingo(){ send({t:"bingo", gid:G.gid, called:G.called.slice()}); }
+  /* The game as it stands, for a phone that has just walked in or come back: what has been called,
+     the ball that is up now and who has already won. A reloaded console used to resend only the
+     calls, so every phone showed "--" until the next ball, and a guest who had already been
+     announced for a line was offered "Line! Shout out" again (14 Oct audit). */
+  function bingoState(){
+    var last = G.called.length ? G.called[G.called.length-1] : null;
+    return {t:"bingo", gid:G.gid, called:G.called.slice(), last:last, said: last==null ? "" : callName(last),
+            won:{ line:G.won.line.slice(), full:G.won.full.slice() }};
+  }
+  function resendBingo(){ send(bingoState()); }
   var bingoSeq=0;   // two games in one millisecond still get different ids
   function bingoSave(){
     if(!G || !G.bkey) return;
-    try{ localStorage.setItem(G.bkey, JSON.stringify({ gid:G.gid, called:G.called, at:Date.now() })); }catch(e){}
+    try{ localStorage.setItem(G.bkey, JSON.stringify({ gid:G.gid, called:G.called, won:G.won, at:Date.now() })); }catch(e){}
   }
   function runBingo(g, fresh){
     /* gid tells a phone THIS game from the last bingo game tonight, so it does not
        carry the old card's marks into a new one. `called` goes to a late phone so it
        knows what has already gone. */
+    /* won: who has been announced, and on which ball (lineAt is how many had been called). The
+       line goes to whoever had it on THAT ball, so two people on the same call share it and
+       anyone who gets there a ball later is told it has gone. */
     G={ pool:[], called:[], gid:String(Date.now())+"-"+(++bingoSeq), repaint:paintBingo, resend:resendBingo,
-        gref:g||null, bkey: g && g.id ? "ppBingo:"+CODE+":"+g.id : null };
+        gref:g||null, bkey: g && g.id ? "ppBingo:"+CODE+":"+g.id : null,
+        won:{ line:[], lineAt:null, full:[], fullAt:null } };
     /* A RELOAD IS NOT A NEW GAME. A fresh gid tells every phone to throw its ticket away, so a
        tablet that slept mid-game dealt the whole room new tickets and lost every number called
        (audit, 30 Sep 2026). The same game, reopened within twelve hours and not finished, keeps
        its gid and its calls; "Start over" is still a new game. */
     var was=null; if(G.bkey && !fresh){ try{ was=JSON.parse(localStorage.getItem(G.bkey)||"null"); }catch(e){} }
-    if(was && was.gid && Array.isArray(was.called) && was.called.length < 90 && (Date.now()-(was.at||0)) < 12*3600*1000){
+    var wasOver = was && was.won && Array.isArray(was.won.full) && was.won.full.length;   // a full house is the end of that game
+    if(was && was.gid && Array.isArray(was.called) && was.called.length < 90 && !wasOver && (Date.now()-(was.at||0)) < 12*3600*1000){
       G.gid=String(was.gid); G.called=was.called.map(Number);
+      if(was.won && Array.isArray(was.won.line)) G.won={ line:was.won.line.slice(), lineAt:was.won.lineAt==null?null:+was.won.lineAt, full:[], fullAt:null };
     }
     for(var i=1;i<=90;i++) if(G.called.indexOf(i)<0) G.pool.push(i);
     // Tell the phones to build their tickets BEFORE the first ball, so nobody is
     // still staring at a lobby when a number goes up.
     if(G.called.length){
-      send({t:"bingo", gid:G.gid, called:G.called.slice()});   // the same game: phones keep their tickets
+      send(bingoState());   // the same game: phones keep their tickets, and get the ball and the winners back
+      /* and the telly gets the ball that is up, which it last heard from the console before the reload */
+      var up = G.called[G.called.length-1];
+      send({t:"big", text:String(up), sub:callName(up), called:G.called.slice()});
     } else {
       send({t:"bingo", gid:G.gid});
       send({t:"big",text:"Bingo",sub:"Grab your ticket"});
@@ -537,22 +740,55 @@
   }
   /* A claim from a phone. Without this the shout goes nowhere and the host never
      knows anybody has won. */
+  /* CHECKED AGAINST THAT GUEST'S OWN TICKET (14 Oct audit). A claim used to be checked only
+     against what had been CALLED, so a guest could shout a line made of any five called numbers,
+     on nobody's ticket, and be announced. Their ticket is built here from the seed the Worker
+     keeps for them (lib/pp-ticket.js, the same build their phone does), and the claim stands
+     only if that ticket really has the line or the full house. With no seed (an old Worker, or
+     the guest list could not be fetched) it falls back to the check it had before. Returns why
+     it said no, for the suite. */
+  function bingoTicket(name){
+    var r = typeof ROOM !== "undefined" && ROOM && ROOM.byName[String(name||"").toLowerCase()];
+    if(!r || r.tseed==null || !window.PPTicket || !PPTicket.buildFromSeed) return null;
+    return PPTicket.buildFromSeed(r.tseed);
+  }
   function onClaim(name, kind, nums){
-    /* CHECKED AGAINST WHAT WAS CALLED. A phone's win used to be its own taps, so a
-       guest who tapped five numbers nobody had called put their name on the telly as
-       the winner (audit, 27 Sep 2026). A phone now sends the numbers it won with; any
-       that were not called keeps it off the screen and tells the host which. */
-    if(G && G.called && Array.isArray(nums)){
+    if(!G || !G.called) return "no game";
+    if(!G.won) G.won = { line:[], lineAt:null, full:[], fullAt:null };
+    var who = name || "Someone", full = kind === "full", what = full ? "full house" : "line";
+    if(G.won.full.length){ toast(who + " shouted " + what + ", but the full house has gone. That game is over."); return "over"; }
+    if((full ? G.won.full : G.won.line).indexOf(name) >= 0) return "already";      // announced once is enough
+    var t = bingoTicket(name);
+    if(t){
+      var p = PPTicket.progress(t, G.called);
+      if(full ? !p.fullHouse : !p.hasLine){
+        toast(who + " shouted " + what + ", but their ticket does not have one yet. Check their phone.");
+        return "not on their ticket";
+      }
+    } else if(Array.isArray(nums)){
+      /* The fallback, the 27 Sep check: the numbers they won with must all have been called. */
       var notCalled = nums.map(Number).filter(function(n){ return G.called.indexOf(n) < 0; });
       if(!nums.length || notCalled.length){
-        toast((name||"Someone") + " shouted " + (kind === "full" ? "full house" : "line") +
+        toast(who + " shouted " + what +
               (notCalled.length ? ", but " + notCalled.slice(0,4).join(", ") + (notCalled.length===1 ? " has" : " have") +
                " not been called" : ", but sent no numbers") + ". Check their phone.");
-        return;
+        return "not called";
       }
+    } else { toast(who + " shouted " + what + ". Check their phone."); return "unchecked"; }
+    if(!full && G.won.line.length && G.won.lineAt !== G.called.length){
+      toast(who + " has a line, but " + G.won.line.join(" and ") + " got there first. Playing for the full house.");
+      return "line gone";
     }
-    toast((name||"Someone") + (kind === "full" ? " has a full house!" : " has a line!"));
-    send({t:"big", text:(name||"Winner"), sub: kind === "full" ? "Full house" : "Line"});
+    if(full){ G.won.full.push(name); G.won.fullAt = G.called.length; }
+    else { G.won.line.push(name); G.won.lineAt = G.called.length; }
+    if(G.bkey) bingoSave();
+    toast(who + (full ? " has a full house!" : " has a line!"));
+    /* The winners ride on the caption, so every phone learns at once that the line has gone (or
+       the game is over) and stops offering a claim that can no longer win. */
+    send({t:"big", text:(name||"Winner"), sub: full ? "Full house" : "Line",
+          gid:G.gid, won:{ line:G.won.line.slice(), full:G.won.full.slice() }});
+    if(G.repaint) G.repaint();
+    return "ok";
   }
 
   function callName(n){
@@ -571,13 +807,21 @@
       '<button class="callbtn" id="call">'+(G.called.length?"Next number":"Start calling")+'</button>'+
       '<div class="board">';
     for(var i=1;i<=90;i++) h+='<i class="'+(G.called.indexOf(i)>=0?"hit":"")+'">'+i+'</i>';
-    h+='</div><div class="bar2"><button class="sec" id="back">Back to games</button>'+
+    h+='</div>';
+    var won = G.won || { line:[], full:[] };
+    if(won.line.length || won.full.length){
+      h+='<div class="q" style="margin-top:12px">'+
+         (won.line.length ? '<div class="qa">Line: '+esc(won.line.join(", "))+'</div>' : '')+
+         (won.full.length ? '<div class="qa">Full house: '+esc(won.full.join(", "))+'. That is the game.</div>' : '')+'</div>';
+    }
+    h+='<div class="bar2"><button class="sec" id="back">Back to games</button>'+
        '<button class="sec" id="again">Start over</button></div>';
     $("app").innerHTML=h;
-    if(!G.pool.length){ $("call").disabled=true; $("call").textContent="All 90 called"; }
+    if(won.full.length){ $("call").disabled=true; $("call").textContent="Full house, game over"; }
+    else if(!G.pool.length){ $("call").disabled=true; $("call").textContent="All 90 called"; }
   }
   function nextBall(){
-    if(!G.pool.length) return;
+    if(!G.pool.length || G.won.full.length) return;     // nothing is called after a full house
     var n=G.pool.splice(pick(G.pool.length),1)[0];
     G.called.push(n);
     // The whole list rides with every ball, so a phone that missed one catches up.
@@ -771,7 +1015,7 @@
     G={ mode:"charades", items:(g.config&&g.config.items)||[], i:-1, actor:null, got:[],
         repaint:paintCharades, resend:resendCharades };
     runRestore(g);
-    warnScreens("charades");
+    if(G.i < 0) warnScreens("charades");   // before the first actor; a console picking a round back up has had it
     paintCharades();
   }
   function nextActor(){
@@ -832,7 +1076,7 @@
     G={ mode:"guesswho", items:(g.config&&g.config.items)||[], i:-1, guesser:null, done:[],
         repaint:paintGuessWho, resend:resendGuessWho };
     runRestore(g);
-    warnScreens("guesswho");
+    if(G.i < 0) warnScreens("guesswho");
     paintGuessWho();
   }
   function paintGuessWho(){
@@ -883,8 +1127,9 @@
       ? "The word goes to their phone only. Nothing appears on the television."
       : "The answer goes on the television and on everyone else's phone.";
     send({t:"big", text:"Screens off", sub:"for "+who});
+    var old=document.getElementById("ppWarn"); if(old) try{ old.remove(); }catch(e){}
     var w=document.createElement("div");
-    w.className="ask";
+    w.className="ask"; w.id="ppWarn";
     w.innerHTML='<div class="askbox"><h3>Before you start</h3>'+
       '<p>'+why+' Make sure '+who+' cannot see any screen: turn their phone face '+
       'down, or sit them with their back to the telly.</p>'+
@@ -915,8 +1160,9 @@
     var tb = truthsTally(G.votes).sort(function(a,b){ return b.score - a.score; });
     nightAdd(tb);
     send({t:"board", title:"Who spotted the lies", rows:tb.slice(0,10)});
-    send({t:"big", text: tb.length ? tb[0].name : "That is the lot",
-          sub:  tb.length ? tb[0].score + " points" : "Nobody caught a lie" });
+    var w = PPQuiz.winners(tb);   // a tie is a tie (14 Oct audit)
+    send({t:"big", text: w.names.length ? w.text : "That is the lot",
+          sub:  w.names.length ? w.sub : "Nobody caught a lie" });
   }
 
   /* ------------------------------------------------------ great minds ------
@@ -1022,8 +1268,16 @@
   function runTruths(g){
     /* Only while still collecting. Once the room is voting, dropping a form on a new
        phone would be asking them to write for a round that has already closed. */
+    /* THE NEWCOMER ONLY. This sent {t:"ask-truths"} to the whole room every time anybody said
+       hello, and every phone redrew its empty form, wiping three statements a guest was half way
+       through typing (14 Oct audit). Now it is addressed to the guest who walked in, and only if
+       they have not already sent theirs; phones also ignore a repeat while they are on the form. */
     G={ mode:"truths", phase:"collect", subs:[], turn:-1, votes:[], repaint:paintTruths,
-        resend:function(){ if(G && G.phase==="collect") send({t:"ask-truths"}); } };
+        resend:function(name){
+          if(!G || G.phase!=="collect" || !name) return;
+          if(G.subs.some(function(x){ return x.name===name; })) return;
+          send({t:"ask-truths", to:name});
+        } };
     send({t:"ask-truths"});
     send({t:"big",text:"Two truths and a lie",sub:"Write yours on your phone"});
     paintTruths();
@@ -1160,6 +1414,9 @@
     if(was && !was.banked && was.n===G.items.length && typeof was.i==="number"){
       G.i=was.i; G.shown=!!was.shown; G.answers=was.answers||[]; G.seed=was.seed;
       if(G.i>=0 && !G.shown) resendTrivia();   // the phones get the question on the wall back
+      /* and the wall gets it back too: a console that reloaded had nothing to show a telly that woke */
+      var wit = G.items[G.i];
+      if(wit && G.i>=0) send(G.shown ? {t:"big", text:(wit.a||""), sub:wit.q} : {t:"big", text:wit.q, sub:"Question "+(G.i+1)+" of "+G.items.length});
     }
     /* NO QUESTIONS, SAY SO. A game added and never filled used to open on "That is the lot, all 0
        done", which reads as broken. Same gate Guess the photo has (audit, 30 Sep 2026). */
@@ -1299,8 +1556,9 @@
           .sort(function(a,b){return b.score-a.score;});
         if(!G.banked){ nightAdd(fin); G.banked=true; }
         send({t:"final", board:fin.slice(0,10), night:nightBoard().slice(0,10)});
-        send({t:"big", text: fin.length ? fin[0].name : "That is the lot",
-              sub:  fin.length ? fin[0].score+" points" : "Nobody got one"});
+        var pw = PPQuiz.winners(fin);
+        send({t:"big", text: pw.names.length ? pw.text : "That is the lot",
+              sub:  pw.names.length ? pw.sub : "Nobody got one"});
       }
       paintPhotos(); return;
     }
@@ -1382,8 +1640,11 @@
         // adding the same round to the night twice.
         if(!G.banked){ nightAdd(fin); G.banked=true; }
         send({t:"final", board:fin.slice(0,10), night:nightBoard().slice(0,10)});
-        send({t:"big", text: fin.length?fin[0].name:"That is the lot",
-              sub: fin.length? fin[0].score+" points" : ""});
+        /* THE TOP ROW IS NOT ALWAYS A WINNER. Nobody scoring put the first name up as if they had
+           won, and two on the same score crowned whichever sorted first (14 Oct audit). */
+        var tw = PPQuiz.winners(fin);
+        send({t:"big", text: tw.names.length ? tw.text : "That is the lot",
+              sub: tw.names.length ? tw.sub : (fin.length ? "Nobody scored" : "")});
       }
       triviaSave(); paintTrivia(); return;
     }

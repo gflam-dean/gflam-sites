@@ -181,15 +181,16 @@ pass("the room is told nobody was playing rather than shown a blank",
    ================================================================ */
 print("\nA LATE ARRIVAL IS NOT LEFT WATCHING");
 pass("the console resends the running game on hello",
-     /m\.t===\"hello\"[\s\S]{0,600}G\.resend\(\)/.test(RUN),
+     /m\.t===\"hello\"[\s\S]{0,800}G\.resend\(m\.name\)/.test(RUN),   // 15 Oct: given the name, so two truths asks only the newcomer
      "without this the resend hooks below are never called");
 pass("bingo gives a latecomer a ticket",
-     /resend\s*:\s*resendBingo/.test(RUN) && /function resendBingo\(\)\s*\{\s*send\(\{t:"bingo"[,}]/.test(RUN),
+     /resend\s*:\s*resendBingo/.test(RUN) && /function resendBingo\(\)\s*\{\s*send\(bingoState\(\)\)/.test(RUN) &&
+     /function bingoState\(\)[\s\S]{0,300}\{t:"bingo"[,}]/.test(RUN),   // 15 Oct: the state now carries the ball and the winners too
      "they watched the whole game with no ticket");
 pass("two truths lets a latecomer still write theirs",
      /mode:"truths"[\s\S]{0,400}resend\s*:/.test(RUN) && /ask-truths/.test(RUN));
 pass("but only while it is still collecting",
-     /phase===\"collect\"[\s\S]{0,60}ask-truths/.test(RUN),
+     /phase!==\"collect\"[\s\S]{0,200}ask-truths/.test(RUN),   // 15 Oct: an early return now, addressed to the newcomer
      "handing a form to someone once the room is voting asks them to write for a closed round");
 
 print(bad ? (bad + " OF " + ran + " CHECKS FAILED") : ("ALL " + ran + " CHECKS PASSED"));

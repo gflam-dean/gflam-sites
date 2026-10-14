@@ -74,6 +74,14 @@
     code: function (input) {
       return String(input || '').toUpperCase().replace(/[^A-Z0-9]/g, '')
         .replace(/5/g, 'S').replace(/2/g, 'Z');
+    },
+
+    /* Could this be a party code at all? Six characters from the Worker's alphabet (CODE_RE in the
+       Worker, which a suite holds to this). The telly used to take anything: /tv?code=<b>x put
+       "BX" up as the join code, because the Worker answered 400 and only a 404 took the lobby
+       down (14 Oct 2026 audit). */
+    valid: function (input) {
+      return /^[ACDEFGHJKMNPQRSTUVWXYZ34679]{6}$/.test(this.code(input));
     }
   };
 }(typeof globalThis !== 'undefined' ? globalThis : this));

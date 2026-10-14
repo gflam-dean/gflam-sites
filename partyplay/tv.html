@@ -86,6 +86,7 @@
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
 <script src="/lib/pp-config.js"></script>
 <script src="/lib/pr-board.js"></script>
+<script src="/lib/pp-sign.js"></script>
 <script>
 (function(){
   "use strict";
@@ -237,6 +238,10 @@
        injection point: anyone who knew the six character code could run script
        on partyplay.com.au, where admin keys and player tokens live. Deleted. */
     if(m.t === "photoscreen"){
+      /* Only a photo this party's Worker serves. Anything else, a stranger's picture from anywhere on
+         the internet, is not put on a wall in somebody's lounge room (14 Oct audit). Signing stops
+         a forged message once the party has a key; this holds even before it does. */
+      if(m.url && String(m.url).indexOf(PPConfig.API + "/game/photo?") !== 0) m.url = "";
       show('<div style="height:100%;display:grid;grid-template-rows:auto 1fr;gap:2vh;width:100%">'+
         '<div><div style="color:var(--mute);font-size:clamp(13px,2vh,24px)">Photo '+esc(m.n)+' of '+esc(m.of)+'</div>'+
         '<h2 style="font-size:clamp(22px,4.4vh,54px)">'+esc(m.q||"Who is this?")+'</h2></div>'+
@@ -282,6 +287,13 @@
     return fetch(PPConfig.API + "/licence?code=" + encodeURIComponent(code))
       .then(function(r){ return r.json().then(function(j){ return { status: r.status, body: j }; }); })
       .then(function(x){
+        /* 400 is "that is not even a code": it used to leave the lobby up with it (14 Oct audit). */
+        if(x.status === 400){
+          try{ localStorage.removeItem("ppTvCode"); }catch(e){}
+          CODE = "";
+          askForCode("That code does not look right. It is six letters and numbers, in your welcome email.");
+          return false;
+        }
         if(x.status === 404){
           try{ localStorage.removeItem("ppTvCode"); }catch(e){}
           CODE = "";
@@ -309,13 +321,27 @@
   }
   function connect(){
     if(!CODE){ askForCode(); return; }
+    /* NOT A CODE AT ALL, SAID BEFORE ANYTHING GOES UP. /tv?code=%3Cb%3Ex put "BX" on the wall as
+       the join code (14 Oct audit). A party code is six from one alphabet (PPConfig.valid). */
+    if(PPConfig.valid && !PPConfig.valid(CODE)){
+      try{ localStorage.removeItem("ppTvCode"); }catch(e){}
+      CODE = "";
+      askForCode("That code does not look right. It is six letters and numbers, in your welcome email.");
+      return;
+    }
     if(!SUPA_ANON){ show('<div class="msg">This screen is not configured yet.</div>'); return; }
     drawJoin();
     checkCode(CODE);
     try{
       var client = supabase.createClient(SUPA_URL, SUPA_ANON);
       var ch = client.channel(PPConfig.channel(CODE), { config:{ broadcast:{ self:false } } });
-      ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
+      /* ONLY THE HOST'S WORD GOES ON THE WALL (15 Oct 2026, lib/pp-sign.js). Anybody who could read
+         the code could put any caption, board or picture up here. Once the party has a key, a message
+         without the host's signature is dropped; with no key, or no pp-sign.js, it is as before, so a
+         missing key can never black the telly out. */
+      var PPS = window.PPSign || null;
+      if(PPS) PPS.initReceiver(API, CODE);
+      ch.on("broadcast", { event:"msg" }, function(e){ if(PPS) PPS.gate(e.payload, onMsg); else onMsg(e.payload); });
       ch.subscribe(function(status){
         /* Say nothing on a wobble. A television that flashes "reconnecting" every
            time the house wifi hiccups is a television everyone is looking at.

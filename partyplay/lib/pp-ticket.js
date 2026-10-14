@@ -88,8 +88,14 @@
     return { grid: grid, rowCount: rowCount };
   }
 
-  function build(token) {
-    var rand = rng(seedFrom(token));
+  /* THE HOST HAS TO KNOW A GUEST'S TICKET to check a claim against it (14 Oct audit: a claim was
+     only checked against what had been CALLED, so any guest could shout a line that was not on
+     their ticket). The token is that guest's secret and never leaves the Worker, so the Worker
+     hands the console this seed instead, worked out the same way (ticketSeed in the Worker, which
+     a suite holds to this one), and the console builds the same ticket from it. */
+  function build(token) { return buildFromSeed(seedFrom(token)); }
+  function buildFromSeed(seed) {
+    var rand = rng(seed >>> 0);
     var placed, tries = 0;
     do {
       placed = layout(columnCounts(rand), rand);
@@ -137,5 +143,5 @@
     };
   }
 
-  return { build: build, numbersOf: numbersOf, progress: progress, colRange: colRange };
+  return { build: build, buildFromSeed: buildFromSeed, seed: seedFrom, numbersOf: numbersOf, progress: progress, colRange: colRange };
 }));

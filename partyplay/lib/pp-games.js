@@ -29,7 +29,7 @@
     bingo90:    { name: 'Bingo',                  icon: '🎱' },
     trivia:     { name: 'Trivia',                 icon: '🧠' },
     howwell:    { name: 'How well do you know...', icon: '🎂' },
-    truths:     { name: 'Two truths and a lie',   icon: '🤔' },
+    truths:     { name: 'Two truths and a lie',   icon: '🤥' },   // was who am I's 🤔 as well (14 Oct audit)
     headstails: { name: 'Heads or tails',         icon: '🪙' },
     whohere:    { name: 'Who here has ever',      icon: '👥' },
     photos:     { name: 'Guess the photo',        icon: '🖼' },

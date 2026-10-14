@@ -178,6 +178,8 @@
 <script src="/lib/pp-photo.js"></script>
 <script src="/lib/pp-video.js"></script>
 <script src="/lib/pr-phone.js"></script>
+<script src="/lib/pp-sign.js"></script>
+<script src="/lib/pp-phonekey.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function(){
@@ -274,7 +276,9 @@
       return joinScreen(code, "That email does not look right. Fix it, or clear it and join anyway.", typed);
     $("go").disabled = true; $("go").textContent = "Joining...";
     var had = load() || {};
-    api("/join", { method:"POST", body: JSON.stringify({ code:code, nickname:nickname, prev: had.token || had.prev || "" }) })
+    myPid(PPConfig.code(code)).then(function(pid){
+      return api("/join", { method:"POST", body: JSON.stringify({ code:code, nickname:nickname, prev: had.token || had.prev || "", pid: pid || "" }) });
+    })
       .then(function(j){
         /* `at` is what lets the boot below tell tonight's party from one in March. */
         save({ code:PPConfig.code(code), nickname:j.nickname, token:j.token, email:email, mkt:mkt,
@@ -311,6 +315,29 @@
 
      So the screen now says what is true at the time, and gives them something to press
      when it is not. Found 12 Sep 2026. */
+  /* THIS PHONE'S KEY (15 Oct 2026, lib/pp-phonekey.js). Everything a guest sends is signed with a key
+     this phone made for this party, and the key's fingerprint (pid) goes to the Worker on /join, so
+     the console knows the message is from this guest and not from somebody who has read the code
+     off the telly and typed in their name (14 Oct audit). A phone that cannot make a key (no
+     WebCrypto) sends unsigned, as before. Never more than two seconds' wait for it. */
+  function myId(code){
+    if(!window.PPPhoneKey || !code) return Promise.resolve(null);
+    return PPPhoneKey.ensure(code).catch(function(){ return null; });
+  }
+  function myPid(code){
+    return new Promise(function(res){
+      var done = false, t = setTimeout(function(){ if(!done){ done = true; res(null); } }, 2000);
+      myId(code).then(function(id){ if(!done){ done = true; clearTimeout(t); res(id ? id.pid : null); } });
+    });
+  }
+  var _sendChain = Promise.resolve();
+  function phoneSend(ch, code, o){
+    _sendChain = _sendChain.then(function(){ return myId(code); }).then(function(id){
+      return id ? id.sign(o).catch(function(){ return o; }) : o;
+    }).then(function(m){ try{ ch.send({ type:"broadcast", event:"msg", payload:m }); }catch(e){} }).catch(function(){});
+    return _sendChain;
+  }
+
   var _ppLive = false;
   /* Held so it can be let go of. connect() used to keep the channel in a local var, which
      was fine while a phone could only ever join one party per page load. It can now back
@@ -386,7 +413,16 @@
       var client = supabase.createClient(SUPA_URL, SUPA_ANON);
       var ch = client.channel(PPConfig.channel(code), { config:{ broadcast:{ self:false } } });
       _ppChannel = ch;
-      ch.on("broadcast", { event:"msg" }, function(e){ if(_ppChannel === ch) onMsg(e.payload); });
+      /* ONLY THE HOST'S WORD (15 Oct 2026, lib/pp-sign.js). Once this party has a key, a message
+         without the host's signature is dropped here: a forged "You won", a fake question, a board
+         nobody sent. No key yet, or no pp-sign.js, and it renders exactly as before. */
+      var PPS = window.PPSign || null;
+      if(PPS) PPS.initReceiver(API, PPConfig.code(code));
+      ch.on("broadcast", { event:"msg" }, function(e){
+        if(_ppChannel !== ch) return;
+        if(PPS) PPS.gate(e.payload, function(m){ if(_ppChannel === ch) onMsg(m); });
+        else onMsg(e.payload);
+      });
       ch.subscribe(function(s){
         if(_ppChannel !== ch) return;      // a channel we hung up on: its news is not news
         if(s === "SUBSCRIBED"){
@@ -394,7 +430,7 @@
           /* Only say they are in once the room can actually hear them. The hello is what
              puts them on the host's screen, so this is the first moment it is true. */
           if(!Q && !B && !H && !T && !W) waiting(nickname, "live");
-          ch.send({ type:"broadcast", event:"msg", payload:{ t:"hello", name:nickname } });
+          phoneSend(ch, PPConfig.code(code), { t:"hello", name:nickname });
         } else if(s === "CHANNEL_ERROR" || s === "TIMED_OUT" || s === "CLOSED"){
           _ppLive = false;
           /* Only repaint the waiting screen. Mid-game there is a question or a ticket on
@@ -403,7 +439,7 @@
           if(!Q && !B && !H && !T && !W) waiting(nickname, "lost");
         }
       });
-      window._ppSend = function(o){ try{ ch.send({ type:"broadcast", event:"msg", payload:o }); }catch(e){} };
+      window._ppSend = function(o){ phoneSend(ch, PPConfig.code(code), o); };
     }catch(e){ waiting(nickname, "lost"); }
   }
 
@@ -413,7 +449,15 @@
   var B = null;   // bingo
   var Q = null;   // the question on screen right now
   var H = null;   // heads or tails
-  var DRW = false; // a prize-draw result on screen: the telly's caption that follows must not replace it
+  /* A prize-draw (or heads or tails) result on screen, held against the telly's caption that
+     follows it. It holds THAT caption, by its text, and nothing else: it used to hold every "big"
+     until some other kind of message came along, so when the next game opened with only a caption
+     (Great Minds' "Get your phones out") every phone stayed on "Jordan won that one" (14 Oct
+     audit). */
+  var DRW = null;
+  /* Messages that are not news for this screen: they must not let go of a draw result. */
+  var DRW_QUIET = { big:1, draw:1, players:1, rollcall:1, queue:1, ta_reveal:1, pr_result:1,
+                    hello:1, claim:1, answer:1, hand:1, truths:1, truthpick:1, pick:1, photoguess:1, song:1, text:1, pr_guess:1 };
   var T = null;   // text prompt: a song, or three statements
   var W = null;   // who here has ever
   var V = null;   // voting on somebody's two truths
@@ -433,15 +477,35 @@
     var s = load() || {};
     if(!s.token) return;
     var gid = (m && m.gid) || null;
-    B = { grid: PPTicket.build(s.token), called: [], marked: {}, last: null, lastSaid: "", gid: gid };
-    /* Marks survive a reload, because a phone at a party gets reloaded. Only for the SAME
-       game: a second bingo game tonight used to open with the first game's card marked. */
-    try{
-      var keep = JSON.parse(localStorage.getItem("ppBingo:"+s.code) || "null");
-      if(keep && keep.token === s.token && (keep.gid || null) === gid){ B.marked = keep.marked || {}; B.called = keep.called || []; }
-    }catch(e){}
+    /* THE SAME GAME AGAIN IS NOT A NEW CARD. The console says {t:"bingo"} again when somebody walks
+       in or it reloads; rebuilding the card each time put "--" where the ball was until the next
+       call (14 Oct audit). Same game: take what is new and keep the rest. */
+    if(!(B && B.gid === gid)){
+      B = { grid: PPTicket.build(s.token), called: [], marked: {}, last: null, lastSaid: "", gid: gid,
+            won: { line: [], full: [] }, claimed: {} };
+      /* Marks survive a reload, because a phone at a party gets reloaded. Only for the SAME
+         game: a second bingo game tonight used to open with the first game's card marked. */
+      try{
+        var keep = JSON.parse(localStorage.getItem("ppBingo:"+s.code) || "null");
+        if(keep && keep.token === s.token && (keep.gid || null) === gid){
+          B.marked = keep.marked || {}; B.called = keep.called || [];
+          B.claimed = keep.claimed || {}; if(keep.won) bingoWon(keep.won);
+          if(keep.last != null){ B.last = keep.last; B.lastSaid = keep.lastSaid || ""; }
+        }
+      }catch(e){}
+    }
     bingoCalled(m && m.called);
+    /* The ball that is up now, from the console, so a reload does not show "--". */
+    if(m && m.last != null && +m.last >= 1 && +m.last <= 90){ B.last = +m.last; B.lastSaid = m.said || ""; }
+    else if(B.last == null && m && Array.isArray(m.called) && m.called.length){ B.last = +m.called[m.called.length - 1]; }
+    if(m && m.won) bingoWon(m.won);
+    bingoSave();
     paintBingo();
+  }
+  function bingoWon(w){
+    if(!B || !w) return;
+    var clean = function(a){ return Array.isArray(a) ? a.map(String).slice(0, 20) : []; };
+    B.won = { line: clean(w.line), full: clean(w.full) };
   }
   function bingoCalled(list){
     if(!B || !Array.isArray(list)) return;
@@ -464,7 +528,8 @@
   function bingoSave(){
     var s = load() || {};
     try{ localStorage.setItem("ppBingo:"+s.code,
-      JSON.stringify({ token:s.token, gid:B.gid, marked:B.marked, called:B.called })); }catch(e){}
+      JSON.stringify({ token:s.token, gid:B.gid, marked:B.marked, called:B.called, claimed:B.claimed || {},
+                       won:B.won || null, last:B.last, lastSaid:B.lastSaid || "" })); }catch(e){}
   }
 
   function paintBingo(){
@@ -494,10 +559,25 @@
     });
     h += '</div>';
 
-    if(p.fullHouse) h += '<button class="claim" data-claim="full">Full house! Shout out</button>';
-    else if(p.hasLine) h += '<button class="claim" data-claim="line">Line! Shout out</button>';
-    else h += '<div class="status">' + p.bestLineNeeds + ' to go for a line, ' +
-              p.fullHouseNeeds + ' for the full house</div>';
+    /* WHAT IS STILL THERE TO WIN. A guest offered "Line! Shout out" for a line that has already gone,
+       or that they have already been announced for, shouted it twice (14 Oct audit). */
+    var won = B.won || { line: [], full: [] }, claimed = B.claimed || {}, me = (load()||{}).nickname || "";
+    var lineGone = won.line.length > 0, over = won.full.length > 0;
+    if(over){
+      h += '<div class="status">' + (won.full.indexOf(me) >= 0 ? 'Full house! That is you. See the host.'
+            : esc(won.full.join(" and ")) + ' got the full house. That is the game.') + '</div>';
+    } else if(p.fullHouse && !claimed.full){
+      h += '<button class="claim" data-claim="full">Full house! Shout out</button>';
+    } else if(p.hasLine && !lineGone && !claimed.line){
+      h += '<button class="claim" data-claim="line">Line! Shout out</button>';
+    } else if(claimed.full || claimed.line && !lineGone){
+      h += '<div class="status">Told the host. Give them a yell too.</div>';
+    } else {
+      h += '<div class="status">' + (lineGone
+             ? (won.line.indexOf(me) >= 0 ? 'Your line is in. ' : 'The line has gone to ' + esc(won.line.join(" and ")) + '. ') +
+               'Playing for the full house: ' + p.fullHouseNeeds + ' to go'
+             : p.bestLineNeeds + ' to go for a line, ' + p.fullHouseNeeds + ' for the full house') + '</div>';
+    }
     $("app").innerHTML = h;
   }
 
@@ -654,7 +734,9 @@
     var s = load()||{};
     var me = b.filter(function(r){ return r.name === s.nickname; })[0];
     $("app").innerHTML = '<img class="mark" src="/logos/partyplay-mark.svg" alt="">' +
-      '<div class="waiting"><div class="who">' + (b.length ? esc(b[0].name) + " wins" : "All done") + '</div>' +
+      /* Nobody on points has not won, and a tie is a tie (14 Oct audit: "Sam wins" over "You
+         finished on 0", and "Alice wins" when Eve had the same). */
+      '<div class="waiting"><div class="who">' + (b.length ? esc(PPQuiz.winners(b).line) : "All done") + '</div>' +
       (me ? '<p>You finished on ' + me.score + '.</p>' : '') + '</div>' +
       (b.length ? '<div class="lb">' + b.map(function(r,i){
         return '<div class="' + (r.name === s.nickname ? "me" : "") + '"><span>' +
@@ -662,8 +744,11 @@
   }
 
   function onMsg(m){
-    if(m && m.t!=="big" && m.t!=="draw") DRW = false;   // anything else the host sends moves the room on
     if(!m || !m.t) return;
+    /* The telly's picture sent again for a telly that has just woken up (run.html wallAgain). This
+       phone already acted on it the first time. */
+    if(m.tvOnly) return;
+    if(!DRW_QUIET[m.t]) DRW = null;   // anything that is news for this phone moves the room on
     /* THE HOST HAS ASKED WHO IS HERE. Answer with the same hello sent on joining, so a
        console that opened late, or was reloaded part way through the night, learns about
        a phone that joined before it was listening. Without this a reloaded console shows
@@ -684,7 +769,7 @@
        later and were not added here, so a phone that had played charades or who am I
        silently swallowed the television's caption from then on: the guard below sees CH
        still set and returns. Found 15 Sep 2026 by ending a round and looking at the phone. */
-    if(m.t === "lobby"){ B = null; Q = null; H = null; T = null; W = null; V = null; PH = null; DRW = false;
+    if(m.t === "lobby"){ B = null; Q = null; H = null; T = null; W = null; V = null; PH = null; DRW = null;
       CH = null; GW = null; GM = null;
       var s = load()||{}; waiting(s.nickname||"", _ppLive ? "live" : undefined); return; }
     if(m.t === "bingo"){ Q=null; H=null; bingoStart(m); return; }
@@ -744,6 +829,11 @@
       paintText(); return;
     }
     if(m.t === "ask-truths"){
+      /* For somebody else (the console asking a guest who has just walked in), or this phone is
+         already on the form or has sent it: change nothing. A repeat used to redraw the empty form
+         on every phone in the room and wipe what they were half way through typing (14 Oct audit). */
+      if(m.to && m.to !== ((load()||{}).nickname || "")) return;
+      if(T && T.kind === "truths") return;
       B=null;Q=null;H=null;V=null;W=null;CH=null;GW=null;GM=null;
       T={ kind:"truths", title:"Two truths and a lie", hint:"Write three things about you. Two true, one not.", sent:0 };
       paintTruthsForm(); return;
@@ -786,7 +876,7 @@
       B=null; Q=null;
       var me=(load()||{}).nickname;
       if(m.over){
-        H=null; DRW=true;   // the telly's "winner" caption follows at once and must not replace this
+        H=null; DRW = m.winner ? String(m.winner) : "All out";   // the telly's "winner" caption follows at once and must not replace this
         var wonH = m.winner && me && String(m.winner)===String(me);
         $("app").innerHTML = '<img class="mark" src="/logos/partyplay-mark.svg" alt="">' +
           (wonH ? '<div class="waiting"><div class="who">You won</div><p>Last one standing. Heads or tails is yours.</p></div>'
@@ -837,6 +927,12 @@
         B.last = n; B.lastSaid = m.sub||"";
         bingoSave(); paintBingo(); return;
       }
+      /* A winner announced: the winners ride on the caption (run.html onClaim), so a line that has
+         gone stops being offered here, and a full house ends the card. */
+      if(B && m.won && (m.gid || null) === B.gid){ bingoWon(m.won); bingoSave(); paintBingo(); return; }
+      /* The caption that goes with a draw or heads or tails result on this phone is held by the guard
+         below; any OTHER caption lets go of the result first. */
+      if(DRW !== null && String(m.text == null ? "" : m.text) !== DRW) DRW = null;
       /* A "big" IS A MESSAGE FOR THE TELEVISION, AND IT WAS WIPING EVERY PHONE.
 
          run.html sends the game payload and then, on the very next line, a big for the
@@ -873,7 +969,7 @@
        "Come and get it". Now the winner is named and only their phone is told to move. */
     if(m.t === "draw"){
       B=null;Q=null;H=null;T=null;V=null;W=null;PH=null;CH=null;GW=null;GM=null;
-      DRW = true;   // the "big" for the telly arrives next and must not replace this (14 Oct)
+      DRW = String(m.winner || "");   // the "big" for the telly arrives next, with this text, and must not replace this (14 Oct)
       var meD = (load()||{}).nickname || "";
       var wonD = m.winner && meD && String(m.winner) === String(meD);
       $("app").innerHTML =
@@ -935,9 +1031,10 @@
       bingoSave(); paintBingo(); return;
     }
     if(el.hasAttribute("data-claim")){
-      var s = load() || {};
-      if(window._ppSend) window._ppSend({ t:"claim", name:s.nickname, kind:el.getAttribute("data-claim"),
-                                          nums:bingoWinNums(el.getAttribute("data-claim")) });
+      var s = load() || {}, kind = el.getAttribute("data-claim");
+      if(window._ppSend) window._ppSend({ t:"claim", name:s.nickname, kind:kind, nums:bingoWinNums(kind) });
+      if(!B.claimed) B.claimed = {};
+      B.claimed[kind] = true; bingoSave();   // kept, so a reload does not offer the same shout again
       el.textContent = "Told them. Give us a yell too.";
       el.disabled = true;
     }
@@ -1128,6 +1225,15 @@
   var fresh = !!(saved && saved.token && saved.at && (Date.now() - saved.at) < STALE_MS);
   if(fresh && (!fromUrl || fromUrl === PPConfig.code(saved.code))){
     waiting(saved.nickname); showCamera(); connect(saved.code, saved.nickname);
+    /* A guest coming back tells the Worker its key, in the background. One who joined before keys
+       existed has none on file, and until it does the console can only hold their name to the first
+       key that speaks for it. Same token, same row, same name: nothing about their place changes. */
+    myPid(PPConfig.code(saved.code)).then(function(pid){
+      if(!pid) return;
+      api("/join", { method:"POST", body: JSON.stringify({ code:saved.code, nickname:saved.nickname, prev:saved.token, pid:pid, rejoin:true }) })
+        .then(function(j){ if(j && j.nickname && j.nickname !== saved.nickname){ var s2 = load() || {}; s2.nickname = j.nickname; save(s2); } })
+        .catch(function(){});
+    });
   } else {
     joinScreen(fromUrl, null, saved ? { nickname:saved.nickname, email:saved.email, mkt:saved.mkt } : null);
   }

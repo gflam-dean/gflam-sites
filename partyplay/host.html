@@ -203,7 +203,11 @@
     api("/games?code=" + encodeURIComponent(CODE) + "&key=" + encodeURIComponent(KEY))
       .then(function(d){ PARTY = d.party; GAMES = d.games || []; render(); })
       .catch(function(e){
-        $("app").innerHTML = '<div class="err">' + esc(e.message) + '</div>';
+        /* NOT A DEAD END. A mistyped host key said "Not your party to change." and nothing else
+           (14 Oct audit). The console's sign-in has the code filled in and "send it again". */
+        $("app").innerHTML = '<div class="err">' + esc(e.message) +
+          ' <a href="/run?code=' + encodeURIComponent(CODE) + '" style="color:inherit">Put your host key in again, ' +
+          'or have your welcome email sent again</a>.</div>';
       });
   }
 
@@ -496,7 +500,7 @@
        own name made it look like it had already been filled in. */
     var h = '<label for="gTitle">Name this round</label>' +
             '<p class="hint" style="margin:-2px 0 8px">Goes on the big screen when it starts. ' +
-            'Leave it blank and we will just call it ' + esc(t.name) + '.</p>' +
+            'Leave it blank and we will just call it ' + esc(t.name) + (/\.\.\.$/.test(t.name) ? '' : '.') + '</p>' +
             '<input type="text" id="gTitle" value="' + esc(editing.title || "") + '" placeholder="' + esc(t.name) + '">' +
             '<div style="height:16px"></div>' + categoryStrip();
     editing.items.forEach(function(it, i){
