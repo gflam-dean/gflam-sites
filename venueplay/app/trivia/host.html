@@ -296,6 +296,7 @@
 <script src="/app/vp-weekly.js"></script>
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-print.js"></script>
+<script src="/app/vp-onetab.js"></script>
 <script src="/app/topanswers/ta-match.js"></script>
 <script src="/app/topanswers/ta-boards.js"></script>
 <script src="/app/topanswers/pr-game.js"></script>
@@ -330,7 +331,7 @@
     return c.auth.getSession().then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; });
   }
   function readApi(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((d&&d.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }
-  function apiPost(path, body){ return getToken().then(function(t){
+  function apiPost(path, body){ if(window.VP_ONETAB && !VP_ONETAB.live()) return Promise.reject(new Error("This quiz is open in another tab on this device.")); return getToken().then(function(t){
       /* No timeout meant a request that never settled on pub wifi left G.busy true for good, and
          every later tap on Next, Reveal, Start and Open lobby returned silently at if(G.busy).
          The only way out was a reload, which used to land in the blank-podium bug. */
@@ -350,11 +351,14 @@
   // staff-gated private-key fetch; signSend is order-preserving and degrades to unsigned if no key.
   function vpHostToken(){ return (window.VP && VP.getClient ? VP.getClient().auth.getSession() : Promise.resolve(null)).then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; }).catch(function(){ return ""; }); }
   var ch=null, subscribed=false, sendQueue=[];
-  function rawSend(p){ if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:p }); } else { sendQueue.push(p); } }
+  /* A tab that has stood down for another tab on this tablet says nothing: its view of the quiz
+     is stale (14 Oct 2026, see /app/vp-onetab.js). */
+  function standingDown(){ return !!(window.VP_ONETAB && !VP_ONETAB.live()); }
+  function rawSend(p){ if(standingDown()) return; if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:p }); } else { sendQueue.push(p); } }
   function send(obj){ if(window.VPSign){ VPSign.signSend(obj, rawSend); } else { rawSend(obj); } }
   function flushQueue(){ while(sendQueue.length && ch){ ch.send({ type:"broadcast", event:"msg", payload:sendQueue.shift() }); } }
   var gch=null, gsub=false, gQueue=[];
-  function rawGsend(p){ if(gsub && gch){ gch.send({ type:"broadcast", event:"msg", payload:p }); } else { gQueue.push(p); } }
+  function rawGsend(p){ if(standingDown()) return; if(gsub && gch){ gch.send({ type:"broadcast", event:"msg", payload:p }); } else { gQueue.push(p); } }
   /* Tagged with the game it belongs to. The players' channel is the venue's own code at most venues,
      the same channel bingo and the TV's router listen on, and an untagged "started" or "winner"
      from here read as BINGO there: the TV dropped to the ads as a musical game started and phones
@@ -1776,7 +1780,9 @@
       if(VP.suspensionBanner) VP.suspensionBanner(ctx);
       $("statusText").textContent="Signed in";
       loadQuestionSets();
-      restoreTrivia().then(function(ok){ return ok || restorePR(); }).then(function(){   // recover a live quiz first (if this was an accidental reload), then pair the TV as normal
+      /* ONE CONSOLE PER TABLET: a second tab used to restore this same quiz as a second live
+         console. Ask the other tabs first (/app/vp-onetab.js, 14 Oct 2026). */
+      (window.VP_ONETAB ? VP_ONETAB.claim("trivia:"+G.venueId) : Promise.resolve(true)).then(function(){ return restoreTrivia().then(function(ok){ return ok || restorePR(); }); }).then(function(){   // recover a live quiz first (if this was an accidental reload), then pair the TV as normal
         var tv=tvFromUrl();
         var slug=(ctx.venue && ctx.venue.slug) || "";
         if(slug && window.VPSign){ VPSign.initHost(VP_GAME_API, slug, vpHostToken); }   // this venue's signing key

@@ -385,6 +385,26 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   function saveToken(room,tok){ shareToken(room, tok); }
   function loadSess(room){ try{ return localStorage.getItem("vp-msess-"+room)||""; }catch(e){ return ""; } }
   function saveSess(room,sid){ try{ if(sid) localStorage.setItem("vp-msess-"+room, sid); }catch(e){} }
+  /* THE MARKS SURVIVE A RELOAD. Marking by ear is the whole game (Easy mode is off by default),
+     and the marks lived only in memory, so a phone that reloaded, or that iOS threw out of the
+     background mid-game, came back with nothing on the card but FREE (live audit, 14 Oct 2026).
+     Bingo's play page has kept its daubs in localStorage for months. Saved per room, tagged with
+     the game and the card they belong to, so a new deal or next week's night never inherits them. */
+  function markKey(){ return "vp-mdaubs-"+(P.room||""); }
+  function saveMarks(){
+    if(!P.gameId || P.cardNo==null || /[?&]demo=1/.test(location.search)) return;
+    try{
+      var out=[]; for(var k in P.daubs){ if(P.daubs[k] && +k!==12) out.push(+k); }
+      localStorage.setItem(markKey(), JSON.stringify({ game:P.gameId, card:String(P.cardNo), marks:out }));
+    }catch(e){}
+  }
+  function loadMarks(){
+    try{
+      var s=JSON.parse(localStorage.getItem(markKey())||"null");
+      if(!s || s.game!==P.gameId || s.card!==String(P.cardNo) || !Array.isArray(s.marks)) return;
+      for(var i=0;i<s.marks.length;i++){ var n=s.marks[i]; if(n>=0 && n<25 && n!==12) P.daubs[n]=true; }
+    }catch(e){}
+  }
 
   // ---- cover check (cosmetic UI; the Worker is authoritative on the claim) ----
   function cellTitle(i){ var c=P.cells?P.cells[i]:null; return (c&&typeof c==="object")?(c.title||""):(c||""); }
@@ -583,6 +603,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       if(el.classList.contains("early")!==wantEarly) el.classList.toggle("early", wantEarly);
     }
     if(fresh) fitCells();
+    saveMarks();   // Easy mode and "mark what I missed" change marks too, and both end up here
     while(_justDone.length){
       var jd=wrap.children[_justDone.pop()];
       if(jd && !jd.classList.contains("free")){ jd.classList.remove("justdone"); void jd.offsetWidth; jd.classList.add("justdone"); }
@@ -737,6 +758,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       P.gameId=r.game_id;
       P.cells=r.cells||[];
       P.cardNo=r.card_no;
+      loadMarks();   // this card's marks from before a reload, if this is the same game and card
       P.pattern=PAT_FROM_WORKER[r.pattern]||P.pattern;
       if(r.played_songs){
         P.played=r.played_songs.map(function(x){ return x.title; });
@@ -973,6 +995,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     var i=cell.getAttribute("data-i"); if(i===null) return; i=parseInt(i,10);
     if(P.daubs[i]){ delete P.daubs[i]; cell.classList.remove("daub"); cell.classList.remove("early"); }
     else { P.daubs[i]=true; cell.classList.add("daub"); }
+    saveMarks();
   });
   // ---- the catch-up list (tap the "N played" line) ----
   var _lc=$("lastCalled"); if(_lc) _lc.addEventListener("click", openPlayedSheet);
