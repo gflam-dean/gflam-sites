@@ -20,7 +20,6 @@
 <!-- The demo page for Punters Reckon. The real game runs on the trivia TV (app/trivia/screen.html), which
      mounts the same board from /app/topanswers/pr-board.js. -->
 <script src="/app/topanswers/ta-match.js"></script>
-<script src="/app/topanswers/ta-boards.js"></script>
 <script src="/app/topanswers/pr-game.js"></script>
 <script src="/app/topanswers/pr-board.js"></script>
 <script>
@@ -30,11 +29,21 @@
   window.TAScreen = board;
   /* ?demo=1 : one round played through the REAL referee (pr-game.js) by pretend phones. */
   if(!/[?&]demo=1/.test(location.search)) return;
-  var b = window.TABoards.filter(function(x){ return x.id === "pubfood"; })[0];
+  /* A DEMO BOARD, AND ONLY THAT (15 Oct 2026). This page is public, so it must not carry a real one:
+     the real boards and their answers are held by the game Worker and handed to a signed-in host's
+     console only (GET /host/pr/boards). This board is in no night's set, so showing it gives nothing away. */
+  var b = { id: "demo-meattray", q: "Name something on a meat tray", answers: [
+    { a: "Sausages", pts: 30, also: ["sausage", "snags", "snag"] },
+    { a: "Steak", pts: 22, also: ["steaks", "rump"] },
+    { a: "Chops", pts: 16, also: ["chop", "lamb chops"] },
+    { a: "Chicken", pts: 12, also: ["drumsticks", "chicken breast"] },
+    { a: "Mince", pts: 8, also: ["beef mince"] },
+    { a: "Bacon", pts: 7, also: ["rashers"] },
+    { a: "Rissoles", pts: 5, also: ["rissole"] } ] };
   var g = new window.PRGame.Game({ boards:[b], pick:function(){ return 0; } });
   setTimeout(function(){ board.onMsg(g.nextBoard(30)); }, 300);
-  [["p1","Sam","chicken parma",1800],["p2","Jo","lasagne",3200],["p3","Mick","fish n chips",4600],
-   ["p2","Jo","schnitty",6400],["p4","Bec","a burger",8200],["p1","Sam","steak",9800]].forEach(function(s){
+  [["p1","Sam","snags",1800],["p2","Jo","lamb chops",3200],["p3","Mick","bacon",4600],
+   ["p2","Jo","steak",6400],["p4","Bec","a pork roast",8200],["p1","Sam","chicken",9800]].forEach(function(s){
     setTimeout(function(){ var r = g.guess(s[0], s[1], s[2]); if(r.reveal) board.onMsg(r.reveal); }, s[3]);
   });
   setTimeout(function(){ board.onMsg(g.endBoard().showall); }, 13000);

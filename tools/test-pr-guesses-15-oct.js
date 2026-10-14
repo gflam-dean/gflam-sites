@@ -6,7 +6,8 @@
 
    RUNS the shipped code: the phone's sendPR / prKeyFor / send / prForMe lifted out of
    app/trivia/play.html, the console's onPRGuess / prGuess / prSeen lifted out of app/trivia/host.html,
-   the real vp-phonekey.js on each side, and the real referee (pr-game.js, ta-match.js, ta-boards.js).
+   the real vp-phonekey.js on each side, and the real referee (pr-game.js, ta-match.js, and the boards
+   out of the game Worker, where they have lived since 15 Oct 2026).
    tools/rig-fake-webcrypto.js stands in for WebCrypto (only a private key's holder can sign for it).
 
    Run from the repo root:  jsc tools/test-pr-guesses-15-oct.js
@@ -32,7 +33,9 @@ function phoneKeyLib(ls) { var w = { crypto: crypto }; (new Function('window', '
 
 /* The referee, exactly as the console loads it. */
 var RW = { document: {}, crypto: { getRandomValues: function (a) { a[0] = 3; return a; } } };
-['ta-match.js', 'ta-boards.js', 'pr-game.js'].forEach(function (f) {
+load('tools/pr-boards-from-worker.js');
+RW.TABoards = prBoardsFromWorker();
+['ta-match.js', 'pr-game.js'].forEach(function (f) {
   (new Function('window', readFile('venueplay/app/topanswers/' + f)))(RW);
 });
 var BOARD = RW.TABoards.filter(function (b) { return b.id === 'bbq'; })[0];

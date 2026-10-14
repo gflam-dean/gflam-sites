@@ -18,7 +18,9 @@ HostEl.prototype.querySelector = function(sel){ var m = /\[data-([rib])="([^"]+)
 var host = new HostEl();
 var doc = { getElementById: function(){ return null; }, createElement: function(){ return { }; }, head: { appendChild: function(){} } };
 var window = { document: doc, crypto: { getRandomValues: function(a){ a[0] = 1; return a; } } };
-['ta-match.js', 'ta-boards.js', 'pr-game.js', 'pr-board.js'].forEach(function(f){
+load('tools/pr-boards-from-worker.js');
+window.TABoards = prBoardsFromWorker();   // the real boards, out of the game Worker (15 Oct 2026)
+['ta-match.js', 'pr-game.js', 'pr-board.js'].forEach(function(f){
   (new Function('window', 'setInterval', 'clearInterval', readFile('venueplay/app/topanswers/' + f)))(window, function(){ return 1; }, function(){});
 });
 var B = window.PRBoard.mount(host, doc), q = function(k){ return host.querySelector('[data-' + k + ']'); };

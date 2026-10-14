@@ -3,7 +3,9 @@
 var ran = 0, bad = 0;
 function ok(n, c, extra){ ran++; print((c ? '  ok   ' : '  FAIL ') + n + (extra ? '   -> ' + extra : '')); if (!c) bad++; }
 var window = { crypto: { getRandomValues: function(a){ a[0] = 7; return a; } } };
-['ta-match.js', 'ta-boards.js', 'pr-game.js'].forEach(function(f){ (new Function('window', readFile('venueplay/app/topanswers/' + f)))(window); });
+load('tools/pr-boards-from-worker.js');
+['ta-match.js', 'pr-game.js'].forEach(function(f){ (new Function('window', readFile('venueplay/app/topanswers/' + f)))(window); });
+window.TABoards = prBoardsFromWorker();   // the real boards, out of the game Worker (15 Oct 2026)
 var clock = 1000000;
 var board = window.TABoards.filter(function(b){ return b.id === 'pubfood'; })[0];
 var g = new window.PRGame.Game({ now: function(){ return clock; }, pick: function(){ return 0; }, boards: [board, window.TABoards[0]] });

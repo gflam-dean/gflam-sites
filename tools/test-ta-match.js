@@ -1,10 +1,12 @@
 /* TOP ANSWERS: THE MATCHER FORGIVES A PHONE, NEVER SCORES THE WRONG ANSWER, AND EVERY BOARD IS SOUND.
-   Runs the real ta-match.js against the real ta-boards.js. Run: jsc tools/test-ta-match.js */
+   Runs the real ta-match.js against the real boards, which live in the game Worker (PR_BOARDS) since
+   15 Oct 2026. Run: jsc tools/test-ta-match.js */
+load('tools/pr-boards-from-worker.js');
 var ran = 0, bad = 0;
 function ok(n, c, extra){ ran++; print((c ? '  ok   ' : '  FAIL ') + n + (extra ? '   -> ' + extra : '')); if (!c) bad++; }
 var window = {};
 (new Function('window', readFile('venueplay/app/topanswers/ta-match.js')))(window);
-(new Function('window', readFile('venueplay/app/topanswers/ta-boards.js')))(window);
+window.TABoards = prBoardsFromWorker();
 var M = window.TAMatch, B = window.TABoards;
 function board(id){ return B.filter(function(b){ return b.id === id; })[0]; }
 function says(id, typed){ var b = board(id), i = M.match(b, typed); return i < 0 ? null : b.answers[i].a; }

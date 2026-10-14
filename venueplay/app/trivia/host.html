@@ -298,7 +298,7 @@
 <script src="/app/vp-print.js"></script>
 <script src="/app/vp-onetab.js"></script>
 <script src="/app/topanswers/ta-match.js"></script>
-<script src="/app/topanswers/ta-boards.js"></script>
+<!-- Punters Reckon's boards are NOT a script: the console asks the game Worker for them (prLoadBoards). -->
 <script src="/app/topanswers/pr-game.js"></script>
 <script src="/app/vp-phonekey.js"></script>
 <script>
@@ -1111,21 +1111,46 @@
   function prNightKey(){ return "vpPRNight-"+(G.venueId||""); }
   function savePRNight(){ try{ localStorage.setItem(prNightKey(), JSON.stringify({ v:1, ts:Date.now(), sessionId:G.sessionId })); }catch(e){} }
   function clearPRNight(){ try{ localStorage.removeItem(prNightKey()); }catch(e){} }
+  /* THE BOARDS COME FROM THE GAME WORKER, STAFF ONLY (15 Oct 2026). They were a public script,
+     /app/topanswers/ta-boards.js, that anybody could open and read every answer from before a night.
+     Now the console asks GET /host/pr/boards with the host's login, once a night (and once after a
+     reload), and they are held in this tab only. A failure is said out loud: a night with no boards
+     cannot be played, so no session is opened for it. */
+  function prLoadBoards(){
+    if(G.prBoards) return Promise.resolve(G.prBoards);
+    return getToken().then(function(t){
+      var _ac=(typeof AbortController!=="undefined") ? new AbortController() : null;
+      var _to=setTimeout(function(){ try{ if(_ac) _ac.abort(); }catch(e){} }, 15000);
+      var o={ headers:{ "Authorization":"Bearer "+t } }; if(_ac) o.signal=_ac.signal;
+      return fetch(VP_GAME_API+"/host/pr/boards?venue_id="+encodeURIComponent(G.venueId||""), o)
+        .then(function(r){ clearTimeout(_to); return r; }, function(){ clearTimeout(_to); throw new Error("The game server did not answer. Check the venue wifi and try again."); });
+    }).then(readApi).then(function(d){
+      if(!d || !Array.isArray(d.boards) || !d.boards.length) throw new Error("There are no boards to play.");
+      G.prBoards=d.boards; return d.boards;
+    });
+  }
   function restorePR(){
     if(!window.PRGame) return Promise.resolve(false);
     var raw; try{ raw=localStorage.getItem(prNightKey()); }catch(e){ return Promise.resolve(false); }
     if(!raw) return Promise.resolve(false);
     var p; try{ p=JSON.parse(raw); }catch(e){ clearPRNight(); return Promise.resolve(false); }
     if(!p || !p.sessionId || !p.ts || (Date.now()-p.ts)>TRIVIA_SAVE_MAX_AGE){ clearPRNight(); return Promise.resolve(false); }
+    var boards=null;
     return fetch(VP_GAME_API+"/snapshot?session="+encodeURIComponent(p.sessionId))
       .then(function(res){ return res.ok ? res.json() : null; })
       .then(function(snap){
-        if(!snap || !snap.join_code || ["lobby","running","paused"].indexOf(snap.status)<0){ clearPRNight(); return false; }
+        if(!snap || !snap.join_code || ["lobby","running","paused"].indexOf(snap.status)<0){ clearPRNight(); return null; }
+        /* The night is still open, so its boards are needed to put the board in play back. If they
+           cannot be had, the night pointer is KEPT so the next reload tries again. */
+        return prLoadBoards().then(function(b){ boards=b; return snap; }, function(e){ hostError("Your "+window.PRGame.NAME+" night is still open but its boards did not load ("+e.message+"). Reload the console."); return null; });
+      })
+      .then(function(snap){
+        if(!snap) return false;
         G.sessionId=snap.session_id; G.joinCode=snap.join_code;
         G.roundType="pr";
         document.querySelectorAll("#cfgRoundType button").forEach(function(x){ x.classList.toggle("on", x.getAttribute("data-v")==="pr"); });
         var pf=$("prField"); if(pf) pf.classList.remove("hidden");
-        G.pr=new window.PRGame.Game(); G.prFeed=[]; G.prPub=null; G.prSeenN=null;
+        G.pr=new window.PRGame.Game({ boards:boards }); G.prFeed=[]; G.prPub=null; G.prSeenN=null;
         try{ G.pr.load(localStorage.getItem(prKey())); }catch(e){}
         openGameChannel(G.joinCode);
         send({ t:"session", session_id:G.sessionId, join_code:G.joinCode });
@@ -1147,8 +1172,8 @@
     if(!window.PRGame){ hostError("Punters Reckon did not load. Reload the console."); return; }
     G.busy=true;
     var btn=$("startBtn"); if(btn){ btn.disabled=true; btn.textContent="Starting..."; }
-    openSession().then(function(){
-      G.pr=new window.PRGame.Game(); G.prFeed=[]; G.prPub=null; G.prSeenN=null;
+    prLoadBoards().then(function(boards){ return openSession().then(function(){ return boards; }); }).then(function(boards){
+      G.pr=new window.PRGame.Game({ boards:boards }); G.prFeed=[]; G.prPub=null; G.prSeenN=null;
       try{ G.pr.load(localStorage.getItem(prKey())); }catch(e){}
       clearTimeout(G.prIdleT); clearTimeout(G.prBoardT); savePRNight();
       G.status="ready";
