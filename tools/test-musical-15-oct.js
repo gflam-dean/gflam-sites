@@ -337,6 +337,24 @@ print('\n== 4. Play next: a double tap is refused, a deliberate tap four seconds
   ok('a hold with no skip window (bingo) stays disabled the whole time', bb.disabled === true && VP_HOLD.soft(bb) === false);
 })();
 
+/* ---------- 5. nothing on the musical wall sits under the JOIN NOW card ---------- */
+print('\n== 5. the musical wall keeps clear of the JOIN NOW card, the corner mark and the logo ==');
+(function () {
+  ok('the JOIN NOW card is a vp-fit keep-out', /<div class="tv-join hidden" id="tvJoinCorner" data-fit-avoid>/.test(MSCREEN));
+  ok('so is the VenuePlay corner, by what its children paint', /<div class="tv-corner" data-fit-avoid="kids">/.test(MSCREEN));
+  // The logo is made at run time: run the real paintVenueLogo and look at what it made.
+  var made = null, document = { getElementById: function () { return null; },
+    createElement: function () { made = { style: {}, attrs: {}, setAttribute: function (k, v) { this.attrs[k] = v; } }; return made; },
+    body: { appendChild: function () {} } };
+  eval(lift(MSCREEN, 'paintVenueLogo', 'musical/screen.html'));
+  paintVenueLogo('/logos/x.png');
+  ok('the venue logo the screen paints is a keep-out', !!made && made.attrs['data-fit-avoid'] === '', made && JSON.stringify(made.attrs));
+  // The strip must not be the flex item that gives, or it hides its own rows and vp-fit measures a wall that "fits".
+  var css = MSCREEN.replace(/\/\*[\s\S]*?\*\//g, '');
+  ok('the played strip is never squashed (it hid its last rows at 1280x720)', /#tvRun \.pboard\{flex-shrink:0\}/.test(css));
+  ok('the screen loads the shared vp-fit', MSCREEN.indexOf('<script src="/app/vp-fit.js"></script>') > 0);
+})();
+
 print('');
 if (bad) { print(bad + ' OF ' + ran + ' CHECKS FAILED'); throw new Error(bad + ' failed'); }
 print('ALL ' + ran + ' CHECKS PASSED');
