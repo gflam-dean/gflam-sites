@@ -459,6 +459,7 @@
 <script src="/app/vp-weekly.js"></script>
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-hold.js"></script>
+<script src="/app/vp-onetab.js"></script>
 <script src="/app/vp-print.js"></script>
 <script>
 (function(){
@@ -642,7 +643,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     return c.auth.getSession().then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; });
   }
   function readApi(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((d&&d.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }
-  function apiPost(path, body){ return getToken().then(function(t){
+  function apiPost(path, body){ if(window.VP_ONETAB && !VP_ONETAB.live()) return Promise.reject(new Error("This game is open in another tab on this device.")); return getToken().then(function(t){
       /* No timeout meant a request that never settled on pub wifi left G.busy true for good, and
          every later tap on Next, Reveal, Start and Open lobby returned silently at if(G.busy).
          The only way out was a reload, which used to land in the blank-podium bug. */
@@ -663,11 +664,15 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   // staff-gated private-key fetch; signSend is order-preserving and degrades to unsigned if no key.
   function vpHostToken(){ return (window.VP && VP.getClient ? VP.getClient().auth.getSession() : Promise.resolve(null)).then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; }).catch(function(){ return ""; }); }
   var ch=null, subscribed=false, sendQueue=[];
-  function rawSend(p){ if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:p }); } else { sendQueue.push(p); } }
+  /* A tab that has stood down for another tab on this tablet must not say anything at all: its
+     view of the game is stale, and its heartbeat used to put that stale song back on the TV
+     (14 Oct 2026, see /app/vp-onetab.js). */
+  function standingDown(){ return !!(window.VP_ONETAB && !VP_ONETAB.live()); }
+  function rawSend(p){ if(standingDown()) return; if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:p }); } else { sendQueue.push(p); } }
   function send(obj){ if(window.VPSign){ VPSign.signSend(obj, rawSend); } else { rawSend(obj); } }
   function flushQueue(){ while(sendQueue.length && ch){ ch.send({ type:"broadcast", event:"msg", payload:sendQueue.shift() }); } }
   var gch=null, gsub=false, gQueue=[];
-  function rawGsend(p){ if(gsub && gch){ gch.send({ type:"broadcast", event:"msg", payload:p }); } else { gQueue.push(p); } }
+  function rawGsend(p){ if(standingDown()) return; if(gsub && gch){ gch.send({ type:"broadcast", event:"msg", payload:p }); } else { gQueue.push(p); } }
   /* Tagged with the game it belongs to. The players' channel is the venue's own code at most venues,
      the same channel bingo and the TV's router listen on, and an untagged "started" or "winner"
      from here read as BINGO there: the TV dropped to the ads as a musical game started and phones
@@ -1127,9 +1132,20 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   // when the song has no clip, because then nothing is playing and the host moves straight on.
   // Dean's call, 8 Sep 2026.
   var SONG_HOLD_SECONDS=20, NO_CLIP_HOLD_SECONDS=1.2;
+  /* BUT A TAP THE HOST MEANT MUST NOT VANISH. The twenty seconds disabled the button outright, so a
+     host skipping a song that was not landing, four seconds in, tapped a dead button and nothing
+     happened (live audit, 14 Oct 2026: two taps four seconds apart, one song). A fumbled double tap
+     is a fraction of a second, so after SKIP_ASK_SECONDS the button wakes up and a tap asks first,
+     the same question the song list already asks. Inside the window it is still refused. */
+  var SKIP_ASK_SECONDS=2;
+  function holdLabel(left){ return (SONG_HOLD_SECONDS-left>=SKIP_ASK_SECONDS) ? "Next song in "+left+"s (tap to skip)" : "Next song in "+left+"s"; }
   function playNext(){
     var b=$("playNextBtn");
-    if(VP_HOLD.busy(b)) return;
+    if(VP_HOLD.busy(b)){
+      if(!VP_HOLD.soft(b)) return;                       // a double tap: refused, as before
+      if(G.nowSong && !confirm("Skip \""+G.nowSong.title+"\" and play the next song?")) return;
+      VP_HOLD.release(b);
+    }
     cancelAuto();
     for(var i=G.qIdx+1;i<G.queue.length;i++){
       var s=G.songs[G.queue[i]];
@@ -1137,9 +1153,9 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
         if(b) b.disabled=true;
         G.qIdx=i;
         try{ playSong(s); } finally {
-          VP_HOLD.hold(b, s.previewUrl ? SONG_HOLD_SECONDS : NO_CLIP_HOLD_SECONDS,
-            function(left){ return "Next song in "+left+"s"; },
-            function(){ var bb=$("playNextBtn"); if(bb && bb.textContent!=="All songs played") syncPlayBtn(); });
+          VP_HOLD.hold(b, s.previewUrl ? SONG_HOLD_SECONDS : NO_CLIP_HOLD_SECONDS, holdLabel,
+            function(){ var bb=$("playNextBtn"); if(bb && bb.textContent!=="All songs played") syncPlayBtn(); },
+            SKIP_ASK_SECONDS);
         }
         return;
       }
@@ -2103,9 +2119,9 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     if(VP_HOLD.busy(_hb) && G.nowSong && !confirm("Stop \""+G.nowSong.title+"\" and play \""+_ps.title+"\" instead?")) return;
     cancelAuto();
     playSong(_ps);
-    VP_HOLD.hold(_hb, _ps.previewUrl ? SONG_HOLD_SECONDS : NO_CLIP_HOLD_SECONDS,
-      function(left){ return "Next song in "+left+"s"; },
-      function(){ var bb=$("playNextBtn"); if(bb && bb.textContent!=="All songs played") syncPlayBtn(); });
+    VP_HOLD.hold(_hb, _ps.previewUrl ? SONG_HOLD_SECONDS : NO_CLIP_HOLD_SECONDS, holdLabel,
+      function(){ var bb=$("playNextBtn"); if(bb && bb.textContent!=="All songs played") syncPlayBtn(); },
+      SKIP_ASK_SECONDS);
   });
   $("claimQueue").addEventListener("click", function(e){
     var b=e.target.closest("button[data-act]"); if(!b) return;
@@ -2155,7 +2171,10 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       $("statusText").textContent="Signed in";
       var slug=(ctx.venue && ctx.venue.slug) || "";
       if(slug && window.VPSign){ VPSign.initHost(VP_GAME_API, slug, vpHostToken); }   // this venue's signing key
-      libReady.then(function(){                 // library must be loaded before we rebuild a game's song list
+      /* ONE CONSOLE PER TABLET. Restoring is what made a second tab a second live console for
+         the same game, so ask the other tabs first (/app/vp-onetab.js, 14 Oct 2026). */
+      var _oneTab=(window.VP_ONETAB ? VP_ONETAB.claim("musical:"+G.venueId) : Promise.resolve(true));
+      Promise.all([libReady, _oneTab]).then(function(){   // library must be loaded before we rebuild a game's song list
         restoreMusic().then(function(){         // recover a live game first (accidental reload), then pair the TV as normal
           if(tv){ connect(tv); }                // paired from the screen QR
           else if(slug && window.VP && VP.venueCode){ connect(VP.venueCode("musical-"+slug)); }

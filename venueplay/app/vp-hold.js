@@ -41,6 +41,13 @@
     return true;
   }
 
+  /* Held, but past the double-tap window the page asked for (softAfter): a tap now is the
+     host meaning it, not a fumble. The page decides what to do with it (musical asks). */
+  function soft(btn){
+    var k = key(btn); if (!k || !holds[k] || holds[k].softAt == null) return false;
+    return busy(btn) && Date.now() >= holds[k].softAt;
+  }
+
   function release(btn){
     var k = key(btn); if (!k || !holds[k]) return;
     if (holds[k].timer) clearInterval(holds[k].timer);
@@ -50,12 +57,18 @@
   /* seconds: how long to hold. label(secondsLeft) -> text for the button while it
      holds; done() runs once when the hold ends and should put the button back the
      way the page wants it (the page knows its own labels, this does not). */
-  function hold(btn, seconds, label, done){
+  /* softAfter (optional, seconds): after this long the button is enabled again while the
+     hold still runs, so a deliberate tap reaches the page, which checks soft() and asks.
+     Without it a host who meant to skip a song four seconds in tapped a dead button and
+     the tap simply vanished (live audit, 14 Oct 2026). A real double tap lands well inside
+     the window and is still refused outright. Leave it out and nothing changes (bingo). */
+  function hold(btn, seconds, label, done, softAfter){
     var k = key(btn); if (!k) return;
     release(btn);
     var ms = Math.max(0, (+seconds || 0) * 1000);
     var until = Date.now() + ms;
-    var h = { until: until, timer: null };
+    var softAt = (softAfter != null && +softAfter >= 0) ? Date.now() + (+softAfter) * 1000 : null;
+    var h = { until: until, timer: null, softAt: softAt };
     holds[k] = h;
     function tick(){
       var left = Math.ceil((h.until - Date.now()) / 1000);
@@ -66,12 +79,12 @@
         if (typeof done === "function") { try { done(); } catch (e) {} }
         return;
       }
-      if (b) { b.disabled = true; if (typeof label === "function") b.textContent = label(left); }
+      if (b) { b.disabled = !(h.softAt != null && Date.now() >= h.softAt); if (typeof label === "function") b.textContent = label(left); }
     }
     tick();
     // Under a second and there is nothing to count; the flag alone does the work.
     h.timer = setInterval(tick, ms < 1500 ? Math.max(50, ms) : 250);
   }
 
-  window.VP_HOLD = { hold: hold, busy: busy, release: release };
+  window.VP_HOLD = { hold: hold, busy: busy, soft: soft, release: release };
 })();

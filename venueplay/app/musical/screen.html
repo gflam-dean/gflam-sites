@@ -130,6 +130,17 @@
   .wname{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(24px,6cqw,72px);color:var(--pink);line-height:1;margin-top:1cqw;text-shadow:0 0 36px rgba(255,31,142,.55)}
   .winslabel{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.24em;color:var(--muted);font-size:clamp(10px,2cqw,18px);margin-top:1.6cqw}
   .winprize{font-family:'Anton',sans-serif;font-size:clamp(28px,8cqw,96px);color:var(--gold);line-height:1;margin-top:.4cqw;filter:drop-shadow(0 0 24px rgba(255,194,75,.4))}
+  /* THE WIN CARD GROWS WITH A BIG TELLY. Every size above stops at a pixel cap, which is the
+     right look up to a 1920 wide screen and a postage stamp on a 3840 one: at 4K the winner's
+     name sat in a 1025px box in the middle of the wall (live audit, 14 Oct 2026). Each cap is
+     now the larger of the old pixels and the same size as a share of the width at 1920, so
+     nothing changes at 1080p or below and a 4K wall gets the same composition, twice the size. */
+  #tvWin .eyebrow{font-size:clamp(10px,1.9cqw,max(15px,.78cqw))}
+  #tvWin .winbingo{font-size:clamp(44px,14cqw,max(180px,9.375cqw))}
+  #tvWin .wname{font-size:clamp(24px,6cqw,max(72px,3.75cqw))}
+  #tvWin .winslabel{font-size:clamp(10px,2cqw,max(18px,.9375cqw))}
+  #tvWin .winprize{font-size:clamp(28px,8cqw,max(96px,5cqw))}
+  #tvWin .jsub{font-size:clamp(11px,2cqw,max(16px,.834cqw))}
   @keyframes shimmer{to{background-position:220% center}}
   @keyframes winpop{0%{transform:scale(.82);opacity:0}60%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
   .winburst{position:absolute;inset:0;background:radial-gradient(closest-side, rgba(255,194,75,.13), transparent 68%);opacity:0;z-index:1;transition:opacity .7s ease}
@@ -618,10 +629,53 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
      make on its own. */
   var LOBBY_MAX_MS=60*60*1000, _lobbySince=null;
   var LOBBY_SILENCE_MS=5*60*1000, _lastHostAt=Date.now(), _asking=false;
-  function noteHost(){ _lastHostAt=Date.now(); }
+  function noteHost(){ _lastHostAt=Date.now(); _nextRunAsk=0; }
+  /* A GAME NOBODY IS PLAYING IS NOT PROOF OF LIFE EITHER.
+
+     "A game being played is its own proof of life" was true only while somebody was playing
+     it. A console closed mid-game sends nothing on purpose (a reload must not wipe the round),
+     and a console that had been left open in a second tab kept heartbeating a game that the
+     other tab had already ended. Either way the wall sat on NOW PLAYING over a finished night
+     until the parent /tv gave up ninety minutes later (live audit, 14 Oct 2026).
+
+     So: a running game whose host has said nothing for RUN_SILENCE_MS (three missed thirty
+     second heartbeats) is checked against the server. The session's own snapshot answers
+     "is THIS game still running", which /play/live cannot: a night still open in its lobby
+     after End game reads as live there. A definite no goes back to the ads; no answer leaves
+     the room alone, exactly like the lobby check below. A game that is still on (a host whose
+     iPad is simply locked) is asked again only every RUN_RECHECK_MS, so a quiet tablet costs
+     one small read every few minutes and never touches the room. */
+  var RUN_SILENCE_MS=90*1000, RUN_RECHECK_MS=5*60*1000, _nextRunAsk=0;
+  var _sessionId="", _gameId="";
+  function gameStillOn(){
+    if(_sessionId){
+      return fetch(VP_GAME_API+"/snapshot?session="+encodeURIComponent(_sessionId))
+        .then(function(r){ if(r.status===404||r.status===400) return { gone:true }; return r.ok ? r.json() : null; })
+        .then(function(s){
+          if(!s) return null;                                   // no answer
+          if(s.gone) return false;
+          var open = s.status==="lobby" || s.status==="running" || s.status==="paused";
+          var g = s.game;
+          return !!(open && g && g.format==="musical_bingo" && (!_gameId || !g.game_id || g.game_id===_gameId));
+        });
+    }
+    return fetch(VP_GAME_API+"/play/live?code="+encodeURIComponent(venueCode(VENUE_SLUG)))
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){ if(!d) return null; return !!(d.live && d.format==="musical_bingo"); });
+  }
+  function checkRunningGame(){
+    if(_asking || Date.now()-_lastHostAt < RUN_SILENCE_MS || Date.now() < _nextRunAsk) return;
+    _asking=true;
+    gameStillOn().then(function(on){
+      _asking=false;
+      if(on===null) return;                                    // unreachable: ask again next tick
+      if(on){ _nextRunAsk=Date.now()+RUN_RECHECK_MS; return; } // still on, the console is just quiet
+      if(VENUE_SLUG) window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG);
+    }).catch(function(){ _asking=false; });
+  }
   setInterval(function(){
     if(!VENUE_SLUG) return;                       // a paired screen has no ads to go back to
-    if(state.phase!=="lobby"){ _lobbySince=null; return; }   // a game being played is its own proof of life
+    if(state.phase!=="lobby"){ _lobbySince=null; checkRunningGame(); return; }   // a game in play proves itself by its host, or by the server
     if(_lobbySince===null) _lobbySince=Date.now();
     if(Date.now()-_lobbySince >= LOBBY_MAX_MS){
       window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG);
@@ -759,7 +813,9 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
     if(m.t==="tv_here") return;                 // ignore our own presence pings
     if(HOST_TYPES[m.t]){ state.hostSeen=true; noteHost(); tvSend({ t:"tv_here" }); }
     if(m.t==="host_here"){ if(state.phase==="lobby") renderLobby(); return; }
-    if(m.t==="session"){ if(m.join_code && CODE_RE.test(m.join_code)){ joinCode=m.join_code; } if(state.phase==="lobby") renderLobby(); else drawLobbyQR(); return; }
+    // Which night and which game this wall is showing, so a silent console can be checked (checkRunningGame).
+    if(typeof m.game_id==="string" && m.game_id && (m.t==="started" || m.t==="state")) _gameId=m.game_id;
+    if(m.t==="session"){ if(typeof m.session_id==="string" && m.session_id) _sessionId=m.session_id; if(m.join_code && CODE_RE.test(m.join_code)){ joinCode=m.join_code; } if(state.phase==="lobby") renderLobby(); else drawLobbyQR(); return; }
     if(m.t==="mode"){ return; }                 // format handshake; the layers below drive the view
     // The host tapped "Back to ads". Go now rather than sit through the 18 second
     // wind-down: they have finished and the room should be looking at the venue again.
