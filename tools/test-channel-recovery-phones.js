@@ -34,7 +34,10 @@ print('\nthe bingo phone (play.html)');
 var PLAY = readFile('venueplay/play.html');
 check('play.html loads /app/vp-channel.js in a real script tag', RIG.loadsScript(PLAY, 'vp-channel.js'));
 // deviceId since 14 Oct 2026: the join a phone announces carries its server device id.
-var bp = take(PLAY, ['connect', 'onChannelStatus', 'send', 'wireOut', 'flushQueue', 'setConn', 'rehome', 'finishLeaving', 'deviceId'], 'play.html');
+// sendJoin since 15 Oct 2026: every join announcement goes through it (the "I am 18 or over" hold);
+// nothing is held here, so the real function sends exactly what it always did.
+var _ageHold = false, _agePendingJoin = false;
+var bp = take(PLAY, ['connect', 'onChannelStatus', 'send', 'sendJoin', 'wireOut', 'flushQueue', 'setConn', 'rehome', 'finishLeaving', 'deviceId'], 'play.html');
 check('the real bingo phone functions came out of play.html', bp.missing.length === 0, bp.missing);
 
 function bingoPhone() {

@@ -384,6 +384,64 @@
   }
   function randId(){ var s=""; for(var i=0;i<12;i++) s+="abcdefghijklmnopqrstuvwxyz0123456789".charAt(cryptoInt(36)); return s; }
 
+  /* ---- "I AM 18 OR OVER" (15 Oct 2026) ----
+     The Worker says age_gate:true on /join/info where the state bars minors from this game
+     (Anisimoff Legal, 8 Oct 2026: Victoria for all bingo, ACT housie under a permit; the lawyer
+     calls the lock the venue's to enforce, and this is the platform's help with it). The tick is
+     asked ONCE before this phone announces itself for a ticket, and remembered for the night in
+     sessionStorage, so a reload does not ask again and a new day does.
+     The ticket is HELD, not just covered: every "join" announcement goes through sendJoin(), which
+     queues it while the tick is outstanding. The hold only ever starts on a KNOWN "ask" (the
+     Worker said so, or this session remembers it said so): a phone never waits on an answer that
+     may not come, because bingo is built to survive the Worker being down and three suites model
+     exactly that. So a first-time player is asked before they can join (the answer lands long
+     before they have typed a name), and a regular whose phone re-announces itself on its own sees
+     the tick over the top of their tickets until they tick it. Nothing here can stop a night. */
+  var _ageHold=false, _agePendingJoin=false, _ageBox=null;
+  function ageKey(){ return "vpAge18:"+(P.room||""); }
+  function sendJoin(){
+    if(_ageHold){ _agePendingJoin=true; return; }
+    send({ t:"join", pid:P.pid, name:P.name, cards:P.numCards, did:deviceId() });   // the one real join announcement
+  }
+  function ageAsk(){
+    var saved=""; try{ saved=sessionStorage.getItem(ageKey())||""; }catch(e){}
+    if(saved==="need"){ _ageHold=true; requireAge18(); }     // asked earlier this session, not yet ticked
+  }
+  function ageAnswer(r){
+    if(!(r && r.age_gate===true)) return;                   // this venue's state does not ask: nothing held
+    var saved=""; try{ saved=sessionStorage.getItem(ageKey())||""; }catch(e){}
+    if(saved==="ok") return;                                // ticked earlier tonight
+    try{ sessionStorage.setItem(ageKey(),"need"); }catch(e){}
+    _ageHold=true; requireAge18();
+  }
+  function ageConfirmed(){
+    _ageHold=false;
+    try{ sessionStorage.setItem(ageKey(),"ok"); }catch(e){}
+    if(_ageBox){ try{ _ageBox.remove(); }catch(e){} _ageBox=null; }
+    if(_agePendingJoin){ _agePendingJoin=false; sendJoin(); }
+  }
+  function requireAge18(){
+    if(_ageBox || _paper) return;
+    try{
+      var d=document.createElement("div");
+      d.setAttribute("role","dialog"); d.setAttribute("aria-modal","true");
+      d.setAttribute("style","position:fixed;inset:0;z-index:99998;background:rgba(8,6,12,.92);display:flex;align-items:center;"+
+        "justify-content:center;padding:22px;font:400 16px/1.5 system-ui,-apple-system,sans-serif;color:#E7E7EC");
+      d.innerHTML='<div style="max-width:24em;width:100%;text-align:center">'+
+        '<div style="font:800 24px/1.2 system-ui,sans-serif;color:#fff;margin-bottom:12px">Are you 18 or over?</div>'+
+        '<p style="color:#9A9AA4;margin:0 0 18px">This venue’s state does not allow anyone under 18 to play this game, so we ask before you get a ticket.</p>'+
+        '<label style="display:flex;align-items:center;justify-content:center;gap:10px;font-size:17px;color:#fff;margin:0 0 16px;cursor:pointer">'+
+        '<input type="checkbox" id="age18Chk" style="width:24px;height:24px"> I am 18 or over</label>'+
+        '<button type="button" id="age18Btn" disabled style="width:100%;min-height:48px;border:0;border-radius:12px;background:#FF1F8E;color:#fff;font:700 16px system-ui,sans-serif;opacity:.5">Continue</button>'+
+        '<p style="color:#8A8A94;font-size:13px;margin:14px 0 0">Under 18? You are welcome to watch the big screen. Ask the host about anything else on tonight.</p></div>';
+      var chk=d.querySelector("#age18Chk"), btn=d.querySelector("#age18Btn");
+      chk.addEventListener("change", function(){ btn.disabled=!chk.checked; btn.style.opacity=chk.checked?"1":".5"; });
+      btn.addEventListener("click", function(){ if(chk.checked) ageConfirmed(); });
+      document.body.appendChild(d);
+      _ageBox=d;
+    }catch(e){ ageConfirmed(); }                 // a page that cannot ask does not hold anyone up
+  }
+
   var PATTERN_NAMES={one:"One line",two:"Two lines",full:"Full house",corners:"Four corners",top:"Top line",middle:"Middle line",bottom:"Bottom line"};
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
 
@@ -495,7 +553,7 @@
     if(status==="SUBSCRIBED"){
       subscribed=true; flushQueue();
       // re-announce on every (re)connect so the host rebuilds our seat and re-deals our tickets
-      if(P.joined){ send({ t:"join", pid:P.pid, name:P.name, cards:P.numCards, did:deviceId() }); setConn("waiting"); }
+      if(P.joined){ sendJoin(); setConn("waiting"); }
       else { setConn("ready"); }
       return;
     }
@@ -1099,14 +1157,17 @@
   // Ask the Worker which extra fields this venue collects, and render them on the join screen.
   function loadJoinInfo(){
     if(!P.room) return;
+    ageAsk();                      // hold any ticket request until the Worker says whether to ask
     playerPost("/join/info",{ code:P.room }).then(function(r){
       // Venue logo in the header (same one as the TV), so the phone shows whose game this is.
       var lg=$("venueLogo"); if(lg){ if(r&&r.logo_url){ lg.src=r.logo_url; lg.classList.remove("hidden"); } else { lg.classList.add("hidden"); } }
-      /* PAPER-TICKET STATES. South Australia, the ACT and Tasmania still expect a printed ticket
-         in the player's hand for bingo, so this phone must not show one. The Worker decides it
-         from the venue's state and sends paper_bingo, rather than the console deciding, so a
-         venue cannot route around it by handing out the phone link directly. */
+      /* PAPER-TICKET STATES. South Australia, Victoria and Tasmania expect a printed ticket in
+         the player's hand for bingo (Anisimoff Legal, 8 Oct 2026, for VIC and TAS), so this
+         phone must not show one. The Worker decides it from the venue's state and sends
+         paper_bingo, rather than the console deciding, so a venue cannot route around it by
+         handing out the phone link directly. */
       if(r && r.paper_bingo){ showPaperBingo(); return; }
+      ageAnswer(r);                // "I am 18 or over" where the state asks for it; releases the join otherwise
       if(r && r.exists===false){ unknownCode(); return; }
       /* A phone that has joined before still asks (the paper check above is the point: a regular
          back at an SA, ACT or Tasmanian venue was dealt phone tickets, 14 Oct 2026), but its name
@@ -1181,7 +1242,7 @@
     P.joined=true; saveName(P.room, P.name);
     // Bingo runs on the live link: tell the host we're here and how many tickets we want.
     // It adds us to the night and deals our tickets straight back (t:"cards").
-    send({ t:"join", pid:P.pid, name:P.name, cards:P.numCards, did:deviceId() });
+    sendJoin();
     pushNameToServer();            // the TV reads the server row, not this broadcast
     saveCapture();                 // best-effort: store opt-in details for the venue
     setConn(P.hostSeen ? "live" : "waiting");
@@ -1239,7 +1300,7 @@
     var sid=(j.snapshot && j.snapshot.session_id) || "";
     var fresh=_joinedFor!==(sid||code);
     _joinedFor=sid||code;
-    if(fresh){ _alive=false; if(P.joined && !_paper) send({ t:"join", pid:P.pid, name:P.name, cards:P.numCards, did:deviceId() }); }   // tell the console now: it seats us
+    if(fresh){ _alive=false; if(P.joined && !_paper) sendJoin(); }   // tell the console now: it seats us
   }
   function joinServerSession(joinCode, sessionId, now){
     if(!joinCode || _joinBusy || !P.room || _paper) return;
@@ -1376,7 +1437,7 @@
       // per phone each time, growing with the square of the room (break test, 14 Oct 2026).
       // Every console sends rollcall itself when it (re)connects, so nothing is lost.
       if(P.joined){
-        send({ t:"join", pid:P.pid, name:P.name, cards:P.numCards, did:deviceId() });
+        sendJoin();
         // Re-announce a still-pending BINGO claim, so a host that reloaded mid-claim gets it back in
         // the queue instead of an empty one, and the player is not left on "checking your ticket"
         // forever (audit #7).
@@ -1595,7 +1656,7 @@
           onState: function(st){
             if(st==="open"){
               subscribed=true; flushQueue();
-              if(P.joined){ send({ t:"join", pid:P.pid, name:P.name, cards:P.numCards, did:deviceId() }); setConn("waiting"); }
+              if(P.joined){ sendJoin(); setConn("waiting"); }
               else { setConn("ready"); }
               // say it out loud: a phone in a room and a host that is not is the one
               // failure this feature keeps producing, and it looks identical to working.

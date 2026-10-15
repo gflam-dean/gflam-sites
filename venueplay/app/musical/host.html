@@ -1890,9 +1890,13 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   /* Musical bingo is bingo to every regulator, but the line they draw is paid entry, not prize
      size. While this venue is free-entry only there is nothing to warn about, so no popup. It
      switches itself back on if the venue is ever unlocked to charge. */
+  /* G.freeEntry: the host pressed "Start as a free-entry game" on the rules popup (15 Oct 2026),
+     because the state will not let this venue charge for bingo (or no permit is on record where
+     one is needed). Musical has no paid switch of its own, so the choice is remembered for the
+     night and every gate from then on is for a free game. */
   $("startBtn").addEventListener("click", function(){
-    if(window.VPGaming) VPGaming.gateFor("musical", go, { onlyIfPaid:true }); else go();
-    function go(){ if(G.status==="lobby") startGame(); else openLobby(); }
+    if(window.VPGaming) VPGaming.gateFor("musical", go, { onlyIfPaid:true, freeEntry: !!G.freeEntry }); else go();
+    function go(r){ if(r && r.free) G.freeEntry=true; if(G.status==="lobby") startGame(); else openLobby(); }
   });
   $("cancelLobbyBtn").addEventListener("click", cancelLobby);
 

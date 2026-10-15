@@ -228,6 +228,7 @@
       </div>
       <div class="rangeline" id="rangeLine"></div>
       <button class="btn pink big" id="drawBtn">Draw the winner</button>
+      <p class="note hidden" id="freeEntryNote">Free-entry raffle tonight: nobody pays for a ticket. That is what you chose on the rules screen, because your state does not let this venue sell tickets for it (or no permit is on record). Give the tickets away and draw as normal.</p>
 
       <div class="winner-card" id="winnerCard">
         <div class="pz" id="wcPrize">Meat Tray</div>
@@ -816,7 +817,16 @@
      once accepted, draw. Nothing was drawn by the refused request. */
   function rulesAgain(e){
     if(!e || e.status!==428 || !window.VPGaming) return;
-    VPGaming.gateFor("raffle", startDraw, { force:true, waitRecord:true });
+    VPGaming.gateFor("raffle", startDrawGated, { force:true, waitRecord:true, freeEntry: !!G.freeEntry });
+  }
+  /* { free:true }: the state will not let this venue sell raffle tickets tonight (or no permit or
+     authority is on record where one is needed) and the host pressed "Start as a free-entry game"
+     (15 Oct 2026). A raffle has no paid switch: the venue sells its own paper tickets, or gives
+     them away. So the choice is remembered for the night, said on the console, and every gate
+     from then on is for a free draw. The draw itself is untouched. */
+  function startDrawGated(r){
+    if(r && r.free){ G.freeEntry=true; var fe=$("freeEntryNote"); if(fe) fe.classList.remove("hidden"); }
+    startDraw();
   }
   function startDraw(){
     if(G.busy) return;
@@ -1081,7 +1091,7 @@
   $("connectBtn").addEventListener("click", tryConnect);
   /* State gaming rules, once a night, before the first draw. */
   /* waitRecord: the draw is refused by the Worker until tonight's acceptance is on the record (14 Oct 2026). */
-  $("drawBtn").addEventListener("click", function(){ if(window.VPGaming) VPGaming.gateFor("raffle", startDraw, { waitRecord:true }); else startDraw(); });
+  $("drawBtn").addEventListener("click", function(){ if(window.VPGaming) VPGaming.gateFor("raffle", startDrawGated, { waitRecord:true, freeEntry: !!G.freeEntry }); else startDraw(); });
   $("claimBtn").addEventListener("click", onClaim);
   /* "Not here, redraw" was one tap and final: the ticket is marked no_show, taken out of the pool
      for good, and someone else is drawn, with no way back. A host who catches it while the holder

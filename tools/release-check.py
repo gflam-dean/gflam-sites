@@ -3033,6 +3033,18 @@ def local_checks(which):
              'an onboarding without the tick creates nothing; permits are written by an owner or draws manager, never a host', 55,
              'A venue onboarded with no record that it accepted the gaming laws as its own, or a '
              'host recording a permit for a venue they merely work at, both ship green otherwise'),
+            ('D49. The age tick and the paper flag come from the Worker, for the format that is on',
+             'test-play-live-age-gate-15-oct.js',
+             'age_gate and paper_bingo follow the letters on /play/live and /join/info, and the phone holds its ticket until the tick', 35,
+             'Anisimoff Legal, 8 Oct 2026: no minors in Victorian bingo or ACT permit housie, no phone '
+             'tickets in Victoria or Tasmania, ACT phones allowed. A phone page that asks nobody, asks '
+             'a trivia player, or blanks an ACT room is this check going red'),
+            ('D48. The paid-entry rules are the letters\' rules, and a venue that may not charge is offered a free game',
+             'test-gaming-rules-letters-15-oct.js',
+             'assess() on the paid path matches the Anisimoff tables; the gate offers free entry, never a paid game, where the state says no', 60,
+             'Dean, 15 Oct 2026: build the hard block the lawyer called prudent. A NSW pub selling bingo '
+             'tickets on our "I understand", or paid bingo in Victoria with no permit on record '
+             '(s8.4.4 makes supplying the generator an offence), is what this check stops'),
             ('D45. A code typed in a lobby goes to the game that lobby is for',
              'test-lobby-format.js',
              'a new lobby in a multi-game night sends phones to that game, not the last one played', 6,
@@ -3116,9 +3128,10 @@ def local_checks(which):
              'in its mailing tool, or the address kept in the audit trail, all break that promise'),
             ('D28. Only housie is told to play on paper',
              'test-paper-is-for-bingo-only.js',
-             'the paper flag is set for bingo in SA, ACT and TAS and for nothing else', 8,
-             'A trivia or musical bingo player in Adelaide has their phone blanked, or the Worker '
-             'and the phone page disagree about it again'),
+             'the paper flag is set for bingo in SA, VIC and TAS and for nothing else', 9,
+             'A trivia or musical bingo player in Adelaide has their phone blanked, an ACT room is '
+             'blanked (phones are allowed there, Anisimoff 8 Oct 2026), or the Worker and the phone '
+             'page disagree about it again'),
             ('D27. A signup that had to be resumed is still welcomed, once',
              'test-welcome-is-sent-once.js',
              'the welcome email goes out on whichever run finishes provisioning, and never twice', 8,
@@ -3139,7 +3152,7 @@ def local_checks(which):
              'One captured invoice.paid replayed for ever keeps a suspended venue switched on'),
             ('D18. A free game is told its own state\'s rules, not "no licence anywhere"',
              'test-free-entry-rules-are-the-states-own.js',
-             'the free-entry popup shows each state its own prize thresholds', 24,
+             'the free-entry popup shows each state its own prize thresholds', 30,
              'A club runs a $12,000 members jackpot in NSW on our written say-so that a free '
              'game needs no licence anywhere and has no prize limit'),
             ('D17. The record of a draw says what the draw did, not what the console says',

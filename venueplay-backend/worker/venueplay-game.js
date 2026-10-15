@@ -142,7 +142,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '15 Oct 2026, 14:59 · 3be5ec7a';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '15 Oct 2026, 20:13 · 96bcb12e';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -155,8 +155,31 @@ const CAPTURE_MAX_PER_IP = 120;  // opt-in captures per 60s per network. A whole
 const JOIN_MAX_PER_DEVICE = 8;    // joins per 60s per device hint. One phone should not join many times a minute.
 const CLAIM_MAX_PER_PLAYER = 20;  // claims per 60s per player. Stops a joined attacker spamming BINGO + the TV overlay.
 const ANSWER_MAX_PER_PLAYER = 30; // trivia answers per 60s per player. One answer per question is normal; this only blocks a flood.
-/* Bingo tickets must be on paper in these jurisdictions. See handleJoinInfo. */
-const PAPER_BINGO_STATES = new Set(['SA', 'ACT', 'TAS']);
+/* Bingo tickets must be on paper in these jurisdictions. See handleJoinInfo.
+   Anisimoff Legal, 8 Oct 2026, table p.8 to p.9: VIC not permitted (s8.4.7B of the Gambling
+   Regulation Act 2003; a device at the venue is fine, so the calling and the screen still run);
+   TAS not permitted for permit ("authorised") bingo; ACT "not specifically prohibited", so ACT
+   came OFF this list on 15 Oct 2026. SA stays on the rule we read ourselves (no letter yet). */
+const PAPER_BINGO_STATES = new Set(['SA', 'VIC', 'TAS']);
+/* AGE GATE. Which (state, format) pairs ask a phone to tick "I am 18 or over" before a ticket.
+   Anisimoff, 8 Oct 2026: minors cannot take part in gambling in Victoria (point 8 and the table,
+   "No minors" for all bingo, free or paid); in ACT minors cannot play housie where a permit is
+   required; in Tasmania no minors may take part in a raffle or draw (table p.9). The lawyer says
+   the lock is the venue's to enforce, and this is the platform's help with it. NEVER for trivia
+   (a game of skill), and NEVER for musical bingo: Dean, 15 Oct 2026, "musical bingo cards stay
+   in every state. Its not bingo." A format of '' is broadcast bingo (it has no session row). */
+function ageGateFor(state, format) {
+  const st = String(state || '').toUpperCase();
+  const f = String(format || '');
+  const kind = (!f || f.indexOf('bingo') === 0) ? 'bingo'
+             : (f === 'raffle' || f === 'members') ? f
+             : null;                                   // trivia, musical, musical_bingo: never
+  if (!kind) return false;
+  if (st === 'VIC') return true;
+  if (st === 'ACT') return kind === 'bingo';
+  if (st === 'TAS') return kind !== 'bingo';
+  return false;
+}
 /* PAPER PLAYERS (migration 88). Dean, 25 Sep 2026: printed musical bingo cards and trivia answer
    sheets for the regulars who will not use a phone. Ten a night; during the free month a venue may
    print a TRIVIA sheet for every player on its plan ("Theres always going to be one pain in the ass").
@@ -1100,6 +1123,7 @@ async function handleJoinInfo(request, env, json) {
      other venue data, so this stays what it has always been, a public lookup for one join code. */
   let venueName = '';
   let paperBingo = false;
+  let ageGate = false;
   /* THE CHANNEL THE ROOM IS ON.
      Bingo's broadcast channel is named from a hash of the slug: the television and
      the console derive it with no round trip, which is what lets a bingo night
@@ -1132,12 +1156,18 @@ async function handleJoinInfo(request, env, json) {
        other states it's fine." This flag was set for musical and the musical phone page never
        read it, so the two halves disagreed (audit finding 14). His ruling settles which half
        was right: musical keeps its phone tickets, and this stops claiming otherwise. */
+    /* Asked again when the Victorian letter arrived with "Housie / Bingo (incl. Musical)" as its
+       heading. Dean, 15 Oct 2026: "musical bingo cards stay in every state. Its not bingo." So
+       this line is musical-exempt in Victoria exactly as it is everywhere else. */
     const paperFormat = !format || format.indexOf('bingo') === 0;
     if (paperFormat && vrows && vrows[0] && PAPER_BINGO_STATES.has(String(vrows[0].au_state || '').toUpperCase())) {
       paperBingo = true;
     }
+    /* The age tick rides beside the paper flag, because this is the call the phone page acts on
+       before it shows a ticket. Decided here, not on the phone, for the same reason as paper. */
+    if (vrows && vrows[0]) ageGate = ageGateFor(vrows[0].au_state, format);
   } catch (e) { /* the notice falls back to "the venue you are playing at" */ }
-  return json({ format: format, room_code: roomCode, channel: channel, venue_name: venueName, paper_bingo: paperBingo, collect: {
+  return json({ format: format, room_code: roomCode, channel: channel, venue_name: venueName, paper_bingo: paperBingo, age_gate: ageGate, collect: {
     first_name: cfg.collect_first_name !== false, // first name defaults on
     last_name: !!cfg.collect_last_name,
     postcode: !!cfg.collect_postcode,
@@ -2462,8 +2492,16 @@ async function handlePlayLive(request, env, json) {
      lookup answers null for a suspended venue and this returned exists:false first. */
   const venueId = await venueByCode(env, url.searchParams.get('code') || '', { includeSuspended: true });
   if (!venueId) return json({ exists: false, live: false });
-  const vrows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name,status&limit=1');
+  const vrows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name,status,au_state&limit=1');
   const name = (vrows && vrows[0] && vrows[0].name) || '';
+  /* paper_bingo and age_gate here as well as on /join/info (15 Oct 2026): the state's rules for
+     the phone, decided by the Worker for whichever format is on tonight. Same two helpers as
+     /join/info, so the two answers cannot disagree. Computed on the format resolved below. */
+  const auState = (vrows && vrows[0] && vrows[0].au_state) || '';
+  const phoneRules = (format) => ({
+    paper_bingo: (!format || String(format).indexOf('bingo') === 0) && PAPER_BINGO_STATES.has(String(auState).toUpperCase()),
+    age_gate: ageGateFor(auState, format)
+  });
   /* BILLING CLOSING SOMETHING HAS TO REACH THE WALL.
 
      This asked the session and nothing else, so a venue suspended for non-payment
@@ -2481,7 +2519,7 @@ async function handlePlayLive(request, env, json) {
 
   const sessions = await sbGet(env, 'vp_sessions',
     'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id,join_code,lobby_format&order=created_at.desc&limit=1');
-  if (!sessions.length) return json({ exists: true, name, live: false });
+  if (!sessions.length) return json(Object.assign({ exists: true, name, live: false }, phoneRules('')));
   const games = await sbGet(env, 'vp_games',
     'session_id=eq.' + enc(sessions[0].id) + '&status=eq.running&select=format&order=seq.desc&limit=1');
   /* A TRIVIA OR MUSICAL LOBBY IS A FORMAT TOO. This answered '' until round one started, so a
@@ -2491,11 +2529,11 @@ async function handlePlayLive(request, env, json) {
   const lf = sessions[0].lobby_format;
   const format = (games && games[0] && games[0].format)
     || ((lf === 'trivia' || lf === 'musical_bingo') ? lf : '');
-  return json({
+  return json(Object.assign({
     exists: true, name, live: true,
     join_code: sessions[0].join_code,
     format,
-  });
+  }, phoneRules(format)));
 }
 
 async function abuseIpHash(request, env) {
