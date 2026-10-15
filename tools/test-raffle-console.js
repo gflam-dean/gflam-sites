@@ -99,6 +99,8 @@ try { eval(liftVar(/var CLAIM_DEFAULT_S=\d+;/, 'CLAIM_DEFAULT_S')); } catch (e) 
 try { eval(lift('skipsProblem')); } catch (e) {}
 eval(lift('parseSkips')); eval(lift('readInputs')); eval(lift('validRange'));
 eval(lift('drawnCount')); eval(lift('skippedCount')); eval(lift('remainingCount'));
+// the cash jackpot warning (15 Oct 2026): renderRange and startDraw call renderJackWarn
+eval(lift('jackpotWarning')); eval(lift('stateLimit')); eval(lift('renderJackWarn'));
 eval(lift('renderRange')); eval(lift('startDraw')); eval(lift('revealServer'));
 eval(lift('updateCd')); eval(lift('onClaim')); eval(lift('onRedraw')); eval(lift('money'));
 

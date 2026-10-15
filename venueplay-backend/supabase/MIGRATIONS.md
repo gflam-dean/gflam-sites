@@ -196,3 +196,11 @@ RUN ON SYDNEY by Dean 28 Sep 2026; read back: the deferred event has no leaderbo
 phone from another venue posting a bingo game id hears "not in this game", not "Not a trivia game" (break test, 14 Oct
 2026). Two lines swap; the rest is 71 exactly (live body compared 14 Oct). The Worker already maps a not_trivia for a
 stranger to wrong_game, so either order is safe. NOT RUN. Rollback: re-run 71.
+
+`venueplay-101-members-draw-jackpot-cap.sql`: `vp_member_draws.max_jackpot_cents` (int, null = no maximum, check >= 0)
+and `reserve_cents` (int, not null, default 0, check >= 0). Anisimoff Legal 1 Oct 2026 point 10 and 8 Oct 2026 point 6:
+a customer-set maximum jackpot, enforced before the draws, the draw continuing until won; the reserve banks the
+increments the jackpot cannot take and seeds the next one. The game Worker reads both in a forgiving second trip and
+only writes `reserve_cents` when the read succeeded, so either order is safe; run it BEFORE deploying that Worker so
+the cap is live on the first night. No RLS change (rides on vp_member_draws). NOT RUN. Rollback: drop the two columns
+(the file says how). 100 is agent B's (venue permits and compliance tick), written the same day.

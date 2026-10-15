@@ -273,8 +273,11 @@
       var d=state.draws[i];
       var clock=((d.drawDay||"")+(d.drawTime?(" "+d.drawTime):"")).trim();
       var badge=d.tonight?'<span class="tn">Tonight</span>':(d.drawnToday?'<span class="tn done">Drawn</span>':'');
+      /* atMax (migration 101): the venue set a maximum and the jackpot is at it. Said on the board
+         so the room is never told a figure that will grow when it will not. */
+      var sub=(clock?'<div class="dc">'+esc(clock)+'</div>':'')+(d.atMax?'<div class="dc">Jackpot at its maximum</div>':'');
       html+='<div class="drow'+(d.tonight?' hot':'')+'">'+
-              '<div class="dn"><span>'+esc(d.name)+badge+'</span>'+(clock?'<div class="dc">'+esc(clock)+'</div>':'')+'</div>'+
+              '<div class="dn"><span>'+esc(d.name)+badge+'</span>'+sub+'</div>'+
               '<div class="dj">'+money(d.jackpotCents)+'</div>'+
             '</div>';
     }
@@ -436,7 +439,11 @@
   }
 
   // ---- result: rollover ----
-  function showRollover(nextJackpotCents, incrementCents, missedNumber, missedName){
+  /* capped (migration 101): the venue set a maximum jackpot and it has been reached. The number on
+     the wall did not grow this week and the room can see that, so the wall says why instead of
+     "Up $0". The draw keeps running at the maximum until it is won (Anisimoff Legal, 1 Oct 2026,
+     point 10). */
+  function showRollover(nextJackpotCents, incrementCents, missedNumber, missedName, capped){
     stopAds(); stopSpin(); stopCelebrate(); $("winBurst").classList.remove("show"); $("hostLine").classList.add("hidden");
     if(typeof nextJackpotCents==="number") state.jackpotCents=nextJackpotCents;
     hideAll(); $("resTitle").textContent=state.drawName; $("tvResult").classList.remove("hidden");
@@ -446,7 +453,9 @@
     mm.innerHTML="<b>#"+(missedNumber==null?"--":esc(missedNumber))+" "+esc(missedName||"")+"</b> was drawn and was not here in time";
     $("resNext").classList.remove("hidden"); $("resNext").textContent="Next week's jackpot";
     $("resJack").classList.remove("hidden"); $("resJack").textContent=money(nextJackpotCents||0);
-    $("resSub").innerHTML="Up <b>"+money(incrementCents||0)+"</b> &middot; be here next week";
+    $("resSub").innerHTML = capped
+      ? "<b>Jackpot at its maximum</b> &middot; be here next week"
+      : "Up <b>"+money(incrementCents||0)+"</b> &middot; be here next week";
     holdResult(ROLLOVER_HOLD_MS);
   }
 
@@ -600,7 +609,7 @@
     }
     else if(m.t==="winner"){ state.phase="winner"; showWinner(m.number, m.name, m.claimSecs); }
     else if(m.t==="claimed"){ state.phase="result"; showClaimed(m.name, m.amountCents, m.nextResetCents); }
-    else if(m.t==="rollover"){ state.phase="result"; showRollover(m.nextJackpotCents, m.incrementCents, m.missedNumber, m.missedName); }
+    else if(m.t==="rollover"){ state.phase="result"; showRollover(m.nextJackpotCents, m.incrementCents, m.missedNumber, m.missedName, !!m.capped); }
   }
 
   // ---- init ----

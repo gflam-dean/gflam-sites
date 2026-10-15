@@ -214,7 +214,12 @@
       <div class="field"><label>Time to claim (seconds)</label><input type="number" id="rfTime" class="mono" value="180" placeholder="180" min="0" step="1"><div class="note" style="margin-top:5px">30 seconds or more. Put 0 for no time limit. Left empty, it is 180.</div></div>
       <p class="note" style="margin-top:10px">Draws <b>one winner at a time</b>. For another prize, change the prize above and tap <b>Draw the next prize</b>.</p>
       <label class="check"><input type="checkbox" id="rfJackOn"> This raffle has a cash jackpot</label>
-      <div class="field hidden" id="rfJackWrap"><label>Jackpot amount ($)</label><input type="number" id="rfJackAmt" class="mono" value="500" min="0" step="0.01"></div>
+      <div class="field hidden" id="rfJackWrap"><label>Jackpot amount ($)</label><input type="number" id="rfJackAmt" class="mono" value="500" min="0" step="0.01">
+        <!-- A warning, never a block (Anisimoff Legal, 1 Oct 2026, point 10: the limits are the venue's to
+             keep; the software should not display a figure the venue's own rules do not allow). The
+             figure comes from VPGaming.jackpotLimit, the letters' threshold tables. -->
+        <div class="note hidden" id="rfJackWarn" style="margin-top:5px;color:var(--roll,#F5A524)"></div>
+      </div>
       <label class="check"><input type="checkbox" id="rfAllowRedraw" checked> Allow a redraw if the winner isn't here</label>
       <div class="field">
         <label>Tickets that did not sell (optional)</label>
@@ -241,6 +246,10 @@
         </button>
         <button class="btn ghost" id="newRaffleBtn">New raffle &middot; clear drawn</button>
       </div>
+      <!-- The venue keeps its own winner and draw records (Anisimoff Legal, 1 Oct 2026, points 8 and 14).
+           This hands them the file: every raffle and members draw result at the venue, as CSV. -->
+      <button type="button" class="btn ghost" id="downloadRecordBtn" style="margin-top:12px;width:100%">Download draw record</button>
+      <div class="note" id="downloadRecordMsg" style="margin-top:4px"></div>
     </div>
 
     <div class="panel">
@@ -261,6 +270,7 @@
 <script src="../vp-gaming.js"></script>
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-channel.js"></script>
+<script src="/app/vp-drawrecord.js"></script>
 <script>
 (function(){
   "use strict";
@@ -565,8 +575,34 @@
   function remainingCount(){ return validRange() ? Math.max(0,(G.max-G.min+1) - drawnCount() - skippedCount()) : 0; }
   function drawnCount(){ var n=0; for(var k in G.drawn){ if(G.drawn.hasOwnProperty(k)) n++; } return n; }
 
+  /* A CASH JACKPOT ABOVE THE STATE'S FIGURE: warn, never block (Anisimoff Legal, 1 Oct 2026, point
+     10, and 8 Oct 2026, point 6). The limits are the venue's to keep as the conductor; ours is to
+     make sure the wall never shows a figure the venue did not mean. VPGaming.jackpotLimit answers
+     { cents, why } from the letters' threshold tables for this state and entity, or cents:null
+     where no figure is confirmed. paidEntry is whether THIS venue may charge, the same default
+     gateFor uses. Guarded: an older vp-gaming.js, or no venue on file, warns about nothing.
+     jackpotWarning is pure (limit object and dollars in, text out) so the suite can run it. */
+  function jackpotWarning(limit, jackOn, jackDollars){
+    if(!jackOn || !limit || typeof limit.cents!=="number" || isNaN(jackDollars) || !(jackDollars>0)) return "";
+    if(Math.round(jackDollars*100) <= limit.cents) return "";
+    return "This jackpot ("+money(jackDollars)+") is above "+(limit.why||"your state's figure")+" of "+money(limit.cents/100)+". You can still draw: the rules are yours to keep as the conductor of the raffle, so check them for your state first.";
+  }
+  function stateLimit(){
+    try{
+      if(!window.VPGaming || typeof VPGaming.jackpotLimit!=="function" || !G.venue) return null;
+      var lim=VPGaming.jackpotLimit({ state:G.venue.au_state, entityType:G.venue.entity_type, format:"raffle", paidEntry:G.venue.paid_entry_enabled===true });
+      return (lim && typeof lim==="object") ? lim : null;
+    }catch(e){ return null; }
+  }
+  function renderJackWarn(){
+    var w=$("rfJackWarn"); if(!w) return;
+    var t=jackpotWarning(stateLimit(), G.jackOn, G.jackAmt);
+    w.textContent=t; w.classList.toggle("hidden", !t);
+    return t;
+  }
   function renderRange(){
     readInputs();
+    renderJackWarn();
     var line=$("rangeLine");
     if(!validRange()){ line.innerHTML='<span class="warn">Enter a valid ticket range.</span>'; return; }
     clearHostErrorIf("range");   // the range is valid now, so "Enter a valid ticket range" is no longer true
@@ -789,6 +825,7 @@
     if(isNaN(G.time)){ hostError("Time to claim has to be 0 for no time limit, or 30 seconds or more.", "time"); return; }
     if(G.jackOn && isNaN(G.jackAmt)){ hostError("Enter the jackpot in dollars and cents, like 500 or 500.50.", "jackpot"); return; }
     if(G.jackOn && G.jackAmt<=0){ hostError("Enter a jackpot amount.", "jackpot"); return; }
+    renderJackWarn();   // a jackpot above the state's figure is said under the field, and the draw goes ahead: warn, never block
     var skProblem=skipsProblem(parseSkips());
     if(skProblem){ hostError(skProblem, "skips"); return; }   // an unsold ticket must never be drawn
     clearHostErrorIf("timeup");
@@ -1070,6 +1107,11 @@
   }
   $("redrawBtn").addEventListener("click", tapRedraw);
   $("newRaffleBtn").addEventListener("click", newRaffle);
+  /* THE DRAW RECORD, as a file: one copy in /app/vp-drawrecord.js, shared with the members console. */
+  $("downloadRecordBtn").addEventListener("click", function(){
+    if(!window.VPDrawRecord){ $("downloadRecordMsg").textContent="The download helper did not load. Reload the page and try again."; return; }
+    VPDrawRecord.download({ api:VP_GAME_API, venueId:G.venueId, getToken:getToken, button:$("downloadRecordBtn"), message:$("downloadRecordMsg") });
+  });
   $("drawLenWrap").addEventListener("click", function(){   // now a real control: tap to cycle the spin length
     var opts=[3,4,5,6,8]; var i=opts.indexOf(G.drawLength); G.drawLength=opts[(i+1)%opts.length];
     $("drawLenLbl").textContent=G.drawLength;
@@ -1109,6 +1151,7 @@
       if(!ctx.authed){ $("statusText").textContent="Not signed in"; showSignIn("You need your venue host login to draw a raffle."); return; }
       if(!ctx.currentVenueId){ $("statusText").textContent="No venue"; showSignIn("This login is not linked to a venue yet."); return; }
       G.venueId=ctx.currentVenueId;
+      G.venue=ctx.venue||null;   // state, entity and paid-entry flag, for the jackpot warning
       // Tell vp-session when a raffle is actually on, so the forced sign-out leaves the night
       // open instead of finishing it mid-draw. The host is still signed out on time.
       /* LIVE MEANS A WINNER NOBODY HAS RESOLVED YET, not "a raffle happened tonight".

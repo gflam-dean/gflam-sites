@@ -191,6 +191,8 @@
           <div class="box"><div class="k">In the draw</div><div class="v" id="runValid">0</div></div>
         </div>
         <div class="since" id="runSince"></div>
+        <!-- Shown only when the draw has a maximum: whether the jackpot sits at it, and the reserve. -->
+        <div class="since hidden" id="runCap"></div>
         <button class="btn pink big" id="drawBtn">Draw</button>
 
         <div class="winner-card" id="winnerCard">
@@ -244,6 +246,14 @@
             <div class="field"><label>Draw day</label><input type="text" id="setDay" placeholder="Friday"></div>
             <div class="field"><label>Draw time</label><input type="text" id="setTime" placeholder="7:30pm"></div>
           </div>
+          <!-- Maximum jackpot (migration 101). Anisimoff Legal, 1 Oct 2026 point 10 and 8 Oct 2026
+               point 6: a customer-set maximum, enforced before the draws, with the draw continuing
+               until won. The hint beside it is the figure the letters' tables give for this state
+               (VPGaming.jackpotLimit); the figure the venue types is the venue's own choice. -->
+          <div class="field"><label>Maximum jackpot ($)</label><input type="number" id="setMax" class="mono" min="0" step="1" placeholder="No maximum">
+            <div class="note" id="setMaxHint" style="margin-top:4px">Leave blank for no maximum. Once the jackpot reaches it, the draw keeps running at that figure until it is won, and each week's increase goes into a reserve.</div>
+            <div class="note hidden" id="capWarn" style="margin-top:4px;color:var(--roll)"></div>
+          </div>
           <button class="btn pink big" id="saveSettingsBtn">Save settings</button>
           <div class="lockline hidden" id="settingsLock">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="11" rx="2" stroke="#8A8A94" stroke-width="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#8A8A94" stroke-width="2"/></svg>
@@ -251,6 +261,10 @@
           </div>
           <div class="note" id="settingsMsg" style="margin-top:8px"></div>
           <div class="note" style="margin-top:10px">Adding or removing members, and removing a draw altogether, is done on your Account page.</div>
+          <!-- The venue keeps its own winner and draw records (Anisimoff Legal, 1 Oct 2026, points 8 and 14).
+               This hands them the file: every members draw and raffle result at the venue, as CSV. -->
+          <button type="button" class="btn ghost" id="downloadRecordBtn" style="margin-top:12px;width:100%">Download draw record</button>
+          <div class="note" id="downloadRecordMsg" style="margin-top:4px"></div>
         </div>
 
         <div class="panel">
@@ -269,6 +283,7 @@
 <script src="../vp-gaming.js"></script>
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-channel.js"></script>
+<script src="/app/vp-drawrecord.js"></script>
 <script>
 (function(){
   "use strict";
@@ -371,7 +386,8 @@
       var doneToday=(d.last_drawn_date===todayISO);   // already drawn tonight: drop the "tonight" badge so it does not read as still-to-come
       return { id:d.id, name:d.name, jackpotCents:d.current_jackpot_cents||0,
                drawDay:d.draw_day||"", drawTime:d.draw_time||"",
-               tonight: isDrawDay && !doneToday, drawnToday: doneToday };
+               tonight: isDrawDay && !doneToday, drawnToday: doneToday,
+               atMax: d.max_jackpot_cents!=null && (d.current_jackpot_cents||0)>=d.max_jackpot_cents };   // migration 101: the board says the jackpot has stopped growing
     });
   }
 
@@ -423,6 +439,24 @@
     var day=(d&&d.draw_day)?d.draw_day+"s ":""; var tm=(d&&d.draw_time)?d.draw_time:"";
     var since=(d&&d.date_started)?" &middot; running since "+fmtDate(d.date_started):"";
     $("runSince").innerHTML=(day||tm)?("Drawn "+day+tm+since):(since?since.replace(/^ &middot; /,""):"");
+    renderCapLine(d);
+  }
+  /* THE MAXIMUM AND THE RESERVE, in the host's words (migration 101). Only when the draw has a
+     maximum. The reserve is the venue's prize pool for this draw: it seeds the next jackpot after
+     a win. If the venue closes the draw, the venue decides what happens to it under its own terms
+     with its members. VenuePlay holds no money and never did, so that sentence is on the console,
+     not buried in a help page. */
+  function capLineText(d){
+    if(!d || d.max_jackpot_cents==null) return "";
+    var cur=d.current_jackpot_cents||0, max=d.max_jackpot_cents, res=d.reserve_cents||0, parts=[];
+    parts.push(cur>=max ? "Jackpot at its maximum of "+money(max)+": it stays there until it is won" : "Maximum jackpot "+money(max));
+    if(res>0) parts.push("Reserve "+money(res)+": weekly increases the jackpot could not take. It seeds the next jackpot after a win, never above the maximum. It is your prize pool for this draw; if you close the draw, you decide what happens to it under your own terms.");
+    return parts.join(" &middot; ");
+  }
+  function renderCapLine(d){
+    var el=$("runCap"); if(!el) return;
+    var t=capLineText(d);
+    el.innerHTML=t; el.classList.toggle("hidden", !t);
   }
   function renderDrawSelect(){
     var sel=$("drawSel"); sel.innerHTML="";
@@ -449,7 +483,7 @@
     if(!G.round && !G.busy) drawBtnIdle();   // reflect "Drawn tonight" for the selected draw (not while a round is live)
     var d=curDraw();
     var sb=$("saveSettingsBtn"); if(sb) sb.textContent = d ? "Save settings" : (G.loadFailed ? "Could not load your draws" : "Create draw");
-    if(!d){ ["setName","setSince","setStart","setInc","setCur","setClaim","setDay","setTime"].forEach(function(id){ $(id).value=""; }); return; }   // creating a new draw: blank form
+    if(!d){ ["setName","setSince","setStart","setInc","setCur","setClaim","setDay","setTime","setMax"].forEach(function(id){ $(id).value=""; }); renderCapAdvice(); return; }   // creating a new draw: blank form
     $("setName").value  = d.name||"";
     $("setSince").value = d.date_started||"";
     $("setStart").value = d.starting_amount_cents!=null ? Math.round(d.starting_amount_cents/100) : "";
@@ -458,6 +492,43 @@
     $("setClaim").value = d.time_to_claim_seconds!=null ? d.time_to_claim_seconds : "";
     $("setDay").value   = d.draw_day||"";
     $("setTime").value  = d.draw_time||"";
+    $("setMax").value   = d.max_jackpot_cents!=null ? Math.round(d.max_jackpot_cents/100) : "";
+    renderCapAdvice();
+  }
+  /* WHAT THE STATE'S TABLE SAYS, beside the field. VPGaming.jackpotLimit (vp-gaming.js, from the
+     two Anisimoff letters' threshold tables) answers { cents, why } for this venue's state and
+     entity, or cents:null where no figure is confirmed. A members draw is always free entry.
+     Guarded: an older vp-gaming.js without it, or no venue on file, just leaves the generic hint. */
+  function stateLimit(){
+    try{
+      if(!window.VPGaming || typeof VPGaming.jackpotLimit!=="function" || !G.venue) return null;
+      var lim=VPGaming.jackpotLimit({ state:G.venue.au_state, entityType:G.venue.entity_type, format:"members", paidEntry:false });
+      return (lim && typeof lim==="object") ? lim : null;
+    }catch(e){ return null; }
+  }
+  /* Pure, so the suite can run it: the hint under the field and the warning when the maximum the
+     manager typed, or the jackpot as it stands, is above the state's figure. Dollars in, text out. */
+  function capAdvice(limit, capDollars, currentDollars, startDollars){
+    var base="Leave blank for no maximum. Once the jackpot reaches it, the draw keeps running at that figure until it is won, and each week's increase goes into a reserve.";
+    var out={ hint:base, warn:"" };
+    if(limit && typeof limit.cents==="number"){
+      out.hint=(limit.why||"Your state's figure")+": "+money(limit.cents)+". "+base;
+      var lim=limit.cents/100, over=[];
+      if(capDollars!=null && !isNaN(capDollars) && capDollars>lim) over.push("the maximum you typed ("+money(Math.round(capDollars*100))+")");
+      if(currentDollars!=null && !isNaN(currentDollars) && currentDollars>lim) over.push("the current jackpot ("+money(Math.round(currentDollars*100))+")");
+      if(startDollars!=null && !isNaN(startDollars) && startDollars>lim) over.push("the starting jackpot ("+money(Math.round(startDollars*100))+")");
+      if(over.length) out.warn="Above your state's figure of "+money(limit.cents)+": "+over.join(" and ")+". Check the rules for your state before you save. Running above it is your call as the conductor of the draw, not ours.";
+    }
+    if(capDollars!=null && !isNaN(capDollars) && currentDollars!=null && !isNaN(currentDollars) && currentDollars>capDollars){
+      out.warn=(out.warn?out.warn+" ":"")+"The current jackpot is above the maximum, so this will not save: lower the jackpot or raise the maximum.";
+    }
+    return out;
+  }
+  function numOrNull(id){ var v=$(id).value; if(v===""||v==null) return null; var n=parseFloat(v); return isNaN(n)?null:n; }
+  function renderCapAdvice(){
+    var h=$("setMaxHint"), w=$("capWarn"); if(!h||!w) return;
+    var a=capAdvice(stateLimit(), numOrNull("setMax"), numOrNull("setCur"), numOrNull("setStart"));
+    h.textContent=a.hint; w.textContent=a.warn; w.classList.toggle("hidden", !a.warn);
   }
   function renderNameSeg(){
     document.querySelectorAll("#nameSeg button").forEach(function(b){ b.classList.toggle("on", b.getAttribute("data-nd")===G.nameDisplay); b.disabled=!G.canManage; });
@@ -471,7 +542,7 @@
     var lock=!G.canManage;
     // setSince was in the clear list but not this one, so a host could type into "Running since"
     // and it silently never saved.
-    ["setName","setSince","setStart","setInc","setCur","setClaim","setDay","setTime"].forEach(function(id){ $(id).disabled=lock; });
+    ["setName","setSince","setStart","setInc","setCur","setClaim","setDay","setTime","setMax"].forEach(function(id){ $(id).disabled=lock; });
     $("saveSettingsBtn").disabled=lock || (!!G.loadFailed && !G.draws.length);
     show("settingsLock", lock);
   }
@@ -623,10 +694,11 @@
     apiPost("/host/members/draw/resolve", { draw_id:round.drawId, member_id:round.memberId, member_number:round.number, outcome:"claim" })
       .then(function(r){
         if(d && r.new_jackpot_cents!=null) d.current_jackpot_cents=r.new_jackpot_cents;
-        send({ t:"claimed", name:round.name, amountCents:r.amount_cents, nextResetCents:r.new_jackpot_cents });
+        if(d && r.reserve_cents!=null) d.reserve_cents=r.reserve_cents;
+        send({ t:"claimed", name:round.name, amountCents:r.amount_cents, nextResetCents:r.new_jackpot_cents, capped:!!r.capped });
         G.round=null; clearRound(); hideWinnerCard(); renderStats(); renderSettings();
         clearHostErrorIf("timeup");   // claimed: "Time is up on #N" is no longer true
-        $("drawNote").textContent="Claimed. Jackpot reset to "+money(d?d.current_jackpot_cents:0)+" for next week.";
+        $("drawNote").textContent="Claimed. Jackpot reset to "+money(d?d.current_jackpot_cents:0)+" for next week."+(r.held_cents>0 ? " "+money(r.held_cents)+" of the reserve did not fit under the maximum and stays in reserve." : "");
         scheduleIdle(CLAIM_HOLD_MS);
       })
       .catch(function(e){ cb.disabled=false; rb.disabled=false; hostError(e.message||"Could not record the claim. The jackpot has NOT been reset: try again."); });
@@ -639,10 +711,15 @@
     apiPost("/host/members/draw/resolve", { draw_id:round.drawId, member_id:round.memberId, member_number:round.number, outcome:"rollover" })
       .then(function(r){
         if(d && r.new_jackpot_cents!=null) d.current_jackpot_cents=r.new_jackpot_cents;
-        send({ t:"rollover", nextJackpotCents:r.new_jackpot_cents, incrementCents:r.increment_cents, missedNumber:round.number, missedName:round.name });
+        if(d && r.reserve_cents!=null) d.reserve_cents=r.reserve_cents;
+        /* capped: the jackpot sits at the venue's maximum (migration 101). The TV says so instead
+           of "Up $X", because the number on the wall did not move and the room can see that. */
+        send({ t:"rollover", nextJackpotCents:r.new_jackpot_cents, incrementCents:r.increment_cents, missedNumber:round.number, missedName:round.name, capped:!!r.capped, reserveCents:r.reserve_cents });
         G.round=null; clearRound(); hideWinnerCard(); renderStats(); renderSettings();
         clearHostErrorIf("timeup");   // rolled over: the host has made the call
-        $("drawNote").textContent="Not claimed. Jackpot grew by "+money(r.increment_cents)+" to "+money(d?d.current_jackpot_cents:0)+".";
+        $("drawNote").textContent = r.capped
+          ? "Not claimed. The jackpot is at its maximum of "+money(d?d.current_jackpot_cents:0)+(r.held_cents>0 ? "; this week's "+money(r.held_cents)+" went to the reserve (now "+money(r.reserve_cents)+")." : ".")
+          : "Not claimed. Jackpot grew by "+money(r.increment_cents)+" to "+money(d?d.current_jackpot_cents:0)+".";
         scheduleIdle(ROLLOVER_HOLD_MS);
       })
       .catch(function(e){ cb.disabled=false; rb.disabled=false; hostError(e.message||"Could not roll the jackpot over. Try again."); });
@@ -695,6 +772,9 @@
     var ic=dollarsToCents("setInc");   if(ic!==undefined) body.increment_cents=ic;
     var cj=dollarsToCents("setCur");   if(cj!==undefined) body.current_jackpot_cents=cj;
     var tc=intOf("setClaim");          if(tc!==undefined) body.time_to_claim_seconds=tc;
+    /* The maximum is sent EVERY save, null when blank, so clearing the field clears the maximum
+       (the Worker treats "left out" as "leave alone"). */
+    var mx=dollarsToCents("setMax");   body.max_jackpot_cents = (mx===undefined) ? null : mx;
     body.date_started = $("setSince").value.trim();   // sent even when blank, so it can be cleared
     /* Sent even when blank, so clearing the night actually clears it. See billing.html. */
     body.draw_day  = $("setDay").value.trim();
@@ -900,6 +980,14 @@
   $("claimBtn").addEventListener("click", onClaim);
   $("rollBtn").addEventListener("click", onRollover);
   $("saveSettingsBtn").addEventListener("click", saveSettings);
+  ["setMax","setCur","setStart"].forEach(function(id){ $(id).addEventListener("input", renderCapAdvice); });
+  /* THE DRAW RECORD, as a file: one copy in /app/vp-drawrecord.js, shared with the raffle console.
+     Every members draw and raffle result at this venue, oldest first, 7 year retention note on the
+     first line. Any staff member may download it. */
+  $("downloadRecordBtn").addEventListener("click", function(){
+    if(!window.VPDrawRecord){ $("downloadRecordMsg").textContent="The download helper did not load. Reload the page and try again."; return; }
+    VPDrawRecord.download({ api:VP_GAME_API, venueId:G.venueId, getToken:getToken, button:$("downloadRecordBtn"), message:$("downloadRecordMsg") });
+  });
   $("memberList").addEventListener("click", function(e){ var chip=e.target.closest(".mchip"); if(!chip) return; toggleMember(chip.getAttribute("data-mid")); });
   document.querySelectorAll("#nameSeg button").forEach(function(b){
     b.addEventListener("click", function(){

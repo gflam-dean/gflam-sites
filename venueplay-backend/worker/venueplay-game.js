@@ -142,7 +142,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '15 Oct 2026, 09:23 · 74ae22a1';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '15 Oct 2026, 14:59 · 3be5ec7a';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -287,6 +287,7 @@ export default {
       if (method === 'POST' && path === '/host/members/draw')         return await handleMembersDraw(request, env, json);
       if (method === 'POST' && path === '/host/members/draw/resolve') return await handleMembersResolve(request, env, json);
       if (method === 'POST' && path === '/host/members/settings')     return await handleMembersSettings(request, env, json);
+      if (method === 'GET'  && path === '/host/draws/export')         return await handleDrawsExport(request, env, json, cors);   // the venue's draw record, CSV
       if (method === 'POST' && path === '/host/gaming/declare')       return await handleGamingDeclare(request, env, json);
       if (method === 'POST' && path === '/admin/sweep-sessions')      return await handleAdminSweep(request, env, json);
       if (method === 'POST' && path === '/host/members/roster')       return await handleMembersRoster(request, env, json);
@@ -3904,6 +3905,13 @@ async function handleMembersResolve(request, env, json) {
   const draw = draws[0];
   await requireStaff(env, authUserId, draw.venue_id);            // ENFORCED: staff at the draw's venue (also kill-switch)
 
+  /* THE MAXIMUM JACKPOT AND THE RESERVE (migration 101). Read in a trip of their own and
+     forgiven, exactly like last_drawn_at above handleMembersDrawManyTrips: PostgREST rejects a
+     whole select over one unknown column, and a Worker deployed a day before the migration must
+     still resolve the draw. Without the columns there is no cap and no reserve, which is what
+     every draw did before 15 Oct 2026. */
+  const cap = await membersCapAndReserve(env, drawId);
+
   /* THE ROW THE DRAW OPENED, read before anything is decided, because it answers both questions
      this handler has: who was drawn, and whether there is anything left to resolve. */
   let openRow = null;
@@ -3968,7 +3976,9 @@ async function handleMembersResolve(request, env, json) {
     } catch (e) { /* fall back to the draw row rather than fail a duplicate */ }
     return json({ draw_id: drawId, outcome: saidOutcome, amount_cents: saidAmount,
       new_jackpot_cents: draw.current_jackpot_cents,
-      increment_cents: draw.increment_cents != null ? draw.increment_cents : 0, duplicate: true });
+      increment_cents: draw.increment_cents != null ? draw.increment_cents : 0, duplicate: true,
+      max_jackpot_cents: cap.max, reserve_cents: cap.reserve,
+      capped: cap.max != null && (draw.current_jackpot_cents || 0) >= cap.max });
   }
 
   /* THE RECORD SAYS WHO THE DRAW PICKED, NOT WHO THE REQUEST NAMES. The draw opens a row with
@@ -4037,21 +4047,175 @@ async function handleMembersResolve(request, env, json) {
   if (!closed) await sbInsert(env, 'vp_member_draw_results', resultRow, false);
 
   // Jackpot maths, computed server-side from the stored numbers.
-  let newJackpot;
-  if (outcome === 'claimed') {
-    newJackpot = draw.starting_amount_cents != null ? draw.starting_amount_cents : jackpotAtDraw;
-  } else {
-    newJackpot = jackpotAtDraw + (draw.increment_cents != null ? draw.increment_cents : 0);
-  }
-  await sbPatch(env, 'vp_member_draws', 'id=eq.' + enc(drawId),
-    { current_jackpot_cents: newJackpot, last_resolved_at: new Date().toISOString() });
+  const next = membersNextJackpot(outcome, jackpotAtDraw, draw.starting_amount_cents, draw.increment_cents, cap.max, cap.reserve);
+  const patch = { current_jackpot_cents: next.jackpot, last_resolved_at: new Date().toISOString() };
+  // reserve_cents is only written when the column was read, so a database without migration 101
+  // takes the same patch it always did.
+  if (cap.present) patch.reserve_cents = next.reserve;
+  await sbPatch(env, 'vp_member_draws', 'id=eq.' + enc(drawId), patch);
 
   return json({
     draw_id: drawId, outcome,
     amount_cents: jackpotAtDraw,
-    new_jackpot_cents: newJackpot,
+    new_jackpot_cents: next.jackpot,
     increment_cents: draw.increment_cents != null ? draw.increment_cents : 0,
+    max_jackpot_cents: cap.max,
+    reserve_cents: next.reserve,
+    capped: next.capped,
+    held_cents: next.held,
   });
+}
+
+/* THE MAXIMUM JACKPOT, AND WHAT HAPPENS TO THE MONEY ABOVE IT (migration 101).
+
+   Anisimoff Legal, 1 Oct 2026 point 10 and 8 Oct 2026 point 6: a customer-set maximum jackpot,
+   enforced before the draws, "once a jackpot is reached, the draws could continue until a winner
+   is finally selected". The RESERVE is Dean's own proposal from the same question, which the
+   lawyer did not object to: an increment the jackpot cannot take is kept to one side, not lost,
+   and seeds the next jackpot after a win.
+
+     rollover:  jackpot + increment, stopped at the maximum; the part above it goes to reserve.
+     claim:     starting amount + reserve, stopped at the maximum; the part above it stays in
+                reserve. Reserve is then what did not fit (0 when there is no maximum).
+   A jackpot already AT its maximum keeps rolling over at the maximum, week after week, until it
+   is won: the draw never stops, the number on the wall just stops growing.
+
+   Whose money the reserve is: the venue's prize pool for this draw. VenuePlay holds none of it.
+   If the venue closes the draw, the venue decides under its own terms with its members (the
+   host console says exactly that beside the figure).
+
+   Pure, so the suite can run every branch against the shipped file. `max` null = no maximum,
+   which is every draw created before 15 Oct 2026. */
+function membersNextJackpot(outcome, jackpotAtDraw, startingCents, incrementCents, max, reserveCents) {
+  const inc = incrementCents != null ? incrementCents : 0;
+  const start = startingCents != null ? startingCents : jackpotAtDraw;
+  let reserve = Math.max(0, reserveCents || 0);
+  let raw = (outcome === 'claimed') ? start + reserve : jackpotAtDraw + inc;
+  if (outcome === 'claimed') reserve = 0;
+  let jackpot = raw, held = 0;
+  if (max != null && raw > max) {
+    jackpot = max;
+    held = raw - max;
+    reserve += held;
+  }
+  return { jackpot, reserve, held, capped: max != null && jackpot >= max };
+}
+
+/* ------------------------------ GET /host/draws/export?venue_id=&format=csv ------------------------------
+ * THE VENUE'S DRAW RECORD, as a file it can keep. Anisimoff Legal, 1 Oct 2026 points 8 and 14:
+ * keeping records of winners and draws is the venue's job, not ours, and the product recorded
+ * every draw but handed the venue none of it. ACT (8 Oct 2026 table): "winning ticket must be
+ * recorded and results must be available to entrants". So: every members-draw result and every
+ * raffle result at this venue, oldest first, one row each, with a retention note the venue can
+ * read in the first line. Seven years is the ordinary Australian business-records period and is
+ * what the letters' record-keeping points come down to for a publican; it is a note, not a
+ * promise by us, and the file says so.
+ *
+ * Guarded like every /host route: a valid host JWT, then staff at THIS venue (requireStaff, which
+ * also honours the kill-switch). Any staff role may download it: the host on the floor is who a
+ * member asks. PAGED with sbGetAll and an order on every read, because a club's record outgrows
+ * one PostgREST page in a year of Fridays, and every id list is chunked so no querystring outgrows
+ * a URL. Raffle rows reach the venue through vp_sessions, since vp_games carries no venue_id.
+ */
+const DRAWS_EXPORT_RETENTION_NOTE = '# VenuePlay draw record. Keep this file for at least 7 years: the venue is the conductor of every draw and keeps the winner and draw records (Anisimoff Legal, 1 Oct 2026, points 8 and 14). Times are UTC.';
+const DRAWS_EXPORT_HEADER = ['when_utc', 'game', 'draw_name', 'number', 'winner', 'prize', 'outcome'];
+function csvCell(v) {
+  const s = (v == null) ? '' : String(v);
+  // Leading = + - @ would make a spreadsheet run it as a formula; a winner's name is data.
+  const APOS = String.fromCharCode(39), DQ = String.fromCharCode(34);
+  const safe = /^[=+\-@]/.test(s) ? APOS + s : s;
+  // No quote characters inside a regex literal here: check-defs.py reads one as the start of a
+  // string and misreads the rest of the file (found 15 Oct 2026).
+  const needsQuote = safe.indexOf(DQ) >= 0 || safe.indexOf(',') >= 0 || safe.indexOf('\r') >= 0 || safe.indexOf('\n') >= 0;
+  return needsQuote ? DQ + safe.split(DQ).join(DQ + DQ) + DQ : safe;
+}
+function csvLine(cells) { return cells.map(csvCell).join(','); }
+function chunks(list, n) { const out = []; for (let i = 0; i < list.length; i += n) out.push(list.slice(i, i + n)); return out; }
+async function drawsRecordRows(env, venueId) {
+  const rows = [];
+  // Members draws: the draw rows, then every result row they own.
+  const draws = await sbGetAll(env, 'vp_member_draws', 'venue_id=eq.' + enc(venueId) + '&select=id,name&order=id.asc');
+  const drawName = {};
+  draws.forEach(function (d) { drawName[d.id] = d.name || 'Members draw'; });
+  for (const ids of chunks(draws.map(function (d) { return d.id; }), 60)) {
+    const res = await sbGetAll(env, 'vp_member_draw_results',
+      'draw_id=in.(' + ids.map(enc).join(',') + ')&select=id,draw_id,drawn_at,member_number,winner_name,amount_cents,outcome&order=drawn_at.asc,id.asc');
+    res.forEach(function (r) {
+      rows.push({ when: r.drawn_at || '', game: 'members draw', name: drawName[r.draw_id] || 'Members draw',
+        number: r.member_number != null ? r.member_number : '', winner: r.winner_name || '',
+        prize: r.amount_cents != null ? '$' + (r.amount_cents / 100).toFixed(2) : '',
+        outcome: membersOutcomeWord(r.outcome) });
+    });
+  }
+  // Raffles: this venue's sessions, their raffle games, then every drawn ticket.
+  const sessions = await sbGetAll(env, 'vp_sessions', 'venue_id=eq.' + enc(venueId) + '&select=id&order=id.asc');
+  const games = [];
+  for (const ids of chunks(sessions.map(function (s) { return s.id; }), 60)) {
+    const g = await sbGetAll(env, 'vp_games', 'session_id=in.(' + ids.map(enc).join(',') + ')&format=eq.raffle&select=id,config&order=id.asc');
+    g.forEach(function (x) { games.push(x); });
+  }
+  const gameName = {};
+  games.forEach(function (g) { gameName[g.id] = (g.config && g.config.name) ? String(g.config.name) : 'Raffle'; });
+  for (const ids of chunks(games.map(function (g) { return g.id; }), 60)) {
+    const res = await sbGetAll(env, 'vp_raffle_results',
+      'game_id=in.(' + ids.map(enc).join(',') + ')&select=game_id,seq,ticket_number,drawn_at,prize_text,prize_type,prize_value_cents,outcome&order=drawn_at.asc,seq.asc,ticket_number.asc');
+    res.forEach(function (r) {
+      let prize = r.prize_text || '';
+      if (r.prize_value_cents != null) prize += (prize ? ' ' : '') + '$' + (r.prize_value_cents / 100).toFixed(2);
+      rows.push({ when: r.drawn_at || '', game: 'raffle', name: gameName[r.game_id] || 'Raffle',
+        number: r.ticket_number != null ? r.ticket_number : '', winner: '',
+        prize: prize, outcome: raffleOutcomeWord(r.outcome) });
+    });
+  }
+  rows.sort(function (a, b) { return a.when < b.when ? -1 : (a.when > b.when ? 1 : 0); });
+  return rows;
+}
+function membersOutcomeWord(o) {
+  if (o === 'claimed') return 'claimed';
+  if (o === 'jackpot_rolled') return 'not claimed, jackpot rolled over';
+  if (o === 'drawn') return 'drawn, not yet resolved';
+  return o || '';
+}
+function raffleOutcomeWord(o) {
+  if (o === 'claimed') return 'claimed';
+  if (o === 'no_show') return 'not claimed, redrawn';
+  if (o === 'drawn' || !o) return 'drawn';
+  return o;
+}
+async function handleDrawsExport(request, env, json, cors) {
+  const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
+  const url = new URL(request.url);
+  const venueId = String(url.searchParams.get('venue_id') || '').trim();
+  if (!venueId) return json({ error: 'Missing venue_id' }, 400);
+  assertUuid(venueId, 'venue_id');
+  const format = String(url.searchParams.get('format') || 'csv').toLowerCase();
+  if (format !== 'csv') return json({ error: 'Only format=csv is available' }, 400);
+  await requireStaff(env, authUserId, venueId);                   // ENFORCED: staff at THIS venue (also kill-switch)
+  const rows = await drawsRecordRows(env, venueId);
+  const lines = [DRAWS_EXPORT_RETENTION_NOTE, csvLine(DRAWS_EXPORT_HEADER)];
+  rows.forEach(function (r) { lines.push(csvLine([r.when, r.game, r.name, r.number, r.winner, r.prize, r.outcome])); });
+  const body = lines.join('\r\n') + '\r\n';
+  const stamp = new Date().toISOString().slice(0, 10);
+  return new Response(body, { status: 200, headers: Object.assign({
+    'Content-Type': 'text/csv; charset=utf-8',
+    'Content-Disposition': 'attachment; filename="venueplay-draw-record-' + stamp + '.csv"',
+    'Cache-Control': 'no-store',
+  }, cors || {}) });
+}
+
+/* The two migration-101 columns, read on their own and forgiven. `present` says whether the
+   database has them: a write of reserve_cents is only attempted when it does. */
+async function membersCapAndReserve(env, drawId) {
+  try {
+    const t = await sbGet(env, 'vp_member_draws', 'id=eq.' + enc(drawId) + '&select=max_jackpot_cents,reserve_cents');
+    if (!t.length) return { present: false, max: null, reserve: 0 };
+    const row = t[0];
+    const max = (row.max_jackpot_cents != null && Number.isFinite(Number(row.max_jackpot_cents))) ? Math.max(0, parseInt(row.max_jackpot_cents, 10)) : null;
+    const reserve = (row.reserve_cents != null && Number.isFinite(Number(row.reserve_cents))) ? Math.max(0, parseInt(row.reserve_cents, 10)) : 0;
+    return { present: true, max, reserve };
+  } catch (e) {
+    return { present: false, max: null, reserve: 0 };
+  }
 }
 
 /* ------------------------------ POST /host/members/settings ------------------------------
@@ -4201,6 +4365,41 @@ async function handleMembersSettings(request, env, json) {
   if (b.roster_id != null && String(b.roster_id).trim()) {
     const rid = String(b.roster_id).trim(); assertUuid(rid, 'roster_id'); patch.roster_id = rid;
   }
+
+  /* THE MAXIMUM JACKPOT (migration 101; Anisimoff Legal 1 Oct 2026 point 10, 8 Oct 2026 point 6).
+     Sent as null or an empty string it CLEARS the maximum, so a venue can take it off again; left
+     out of the body it is left alone. A jackpot that is already above the new maximum, or a new
+     jackpot above the existing maximum, is REFUSED rather than quietly trimmed: the number the
+     wall shows and the number in the record have to agree, and a manager typing both at once
+     should be told which one to change. Whether the venue SHOULD have a maximum, and what figure
+     its state's table says, is the console's hint; the figure itself is the venue's choice. */
+  const capSent = Object.prototype.hasOwnProperty.call(b, 'max_jackpot_cents');
+  if (capSent) {
+    if (b.max_jackpot_cents == null || String(b.max_jackpot_cents).trim() === '') patch.max_jackpot_cents = null;
+    else {
+      const mx = parseInt(b.max_jackpot_cents, 10);
+      if (isNaN(mx) || mx < 0) return json({ error: 'The maximum jackpot has to be a whole number of cents, 0 or more' }, 400);
+      patch.max_jackpot_cents = mx;
+    }
+  }
+  // What the row holds today, read forgivingly: before the migration there is no maximum at all.
+  const held = existing ? await membersCapAndReserve(env, drawId) : { present: true, max: null, reserve: 0 };
+  let today = { current: null, starting: null };
+  if (existing) {
+    const t = await sbGet(env, 'vp_member_draws', 'id=eq.' + enc(drawId) + '&select=current_jackpot_cents,starting_amount_cents');
+    if (t.length) today = { current: t[0].current_jackpot_cents, starting: t[0].starting_amount_cents };
+  }
+  const effCap = capSent ? patch.max_jackpot_cents : held.max;
+  const effCur = (patch.current_jackpot_cents != null) ? patch.current_jackpot_cents : today.current;
+  const effStart = (patch.starting_amount_cents != null) ? patch.starting_amount_cents : today.starting;
+  if (effCap != null && effCur != null && effCur > effCap) {
+    return json({ error: 'The current jackpot ($' + (effCur / 100).toFixed(2) + ') is above the maximum jackpot ($' + (effCap / 100).toFixed(2) + '). Lower the jackpot or raise the maximum.', over_cap: 'current' }, 400);
+  }
+  if (effCap != null && effStart != null && effStart > effCap) {
+    return json({ error: 'The starting jackpot ($' + (effStart / 100).toFixed(2) + ') is above the maximum jackpot ($' + (effCap / 100).toFixed(2) + '). A jackpot can never start above its maximum.', over_cap: 'starting' }, 400);
+  }
+  // A database without migration 101 cannot take the column. The rest of the settings still save.
+  if (capSent && existing && !held.present) delete patch.max_jackpot_cents;
 
   if (existing) {
     if (Object.keys(patch).length) await sbPatch(env, 'vp_member_draws', 'id=eq.' + enc(drawId), patch);

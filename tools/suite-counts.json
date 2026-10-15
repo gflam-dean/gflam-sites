@@ -231,6 +231,10 @@
   "checks": 24,
   "counted_by": "lines"
  },
+ "tools/test-jackpot-cap-15-oct.js": {
+  "checks": 63,
+  "counted_by": "lines"
+ },
  "tools/test-jag-joker.js": {
   "checks": 74,
   "counted_by": "lines"

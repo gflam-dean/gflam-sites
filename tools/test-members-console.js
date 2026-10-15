@@ -118,6 +118,8 @@ eval(liftVar(/var LOAD_FAIL_MSG="[^"]*";/));
 var OPTIONAL = ['loadFail', 'loadFailed', 'retryLoad'];
 for (var oi = 0; oi < OPTIONAL.length; oi++) eval(tryLift(OPTIONAL[oi]));
 var LIFTED = ['money', 'todayWeekday', 'mmss', 'stopClaimTimer', 'updateClaimCd', 'curDraw', 'drawMembers', 'activeMembers',
+ // the maximum jackpot and the reserve (15 Oct 2026): renderStats and renderSettings call these
+ 'capLineText', 'renderCapLine', 'stateLimit', 'capAdvice', 'numOrNull', 'renderCapAdvice',
  'renderStats', 'renderDrawSelect', 'renderMembers', 'renderSettings', 'applyRoleGates', 'alreadyDrawnTonight',
  'drawBtnIdle', 'loadAll', 'loadDraws', 'loadAllMembers', 'loadRoster', 'saveSettings', 'startDraw',
  'revealWinner', 'onClaim', 'onRollover'];
