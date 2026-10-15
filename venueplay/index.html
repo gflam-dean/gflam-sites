@@ -50,6 +50,15 @@
     --line-2:rgba(255,255,255,0.14);
     --glow:rgba(255,31,142,0.55);
     --maxw:1120px;
+    /* Type scale: seven steps and nothing in between (design review, 1 Oct 2026). Every
+       font-size on the page is one of these. --fs-xs is the floor: nothing smaller is set. */
+    --fs-xs:12px;
+    --fs-sm:14px;
+    --fs-base:16px;
+    --fs-md:18px;
+    --fs-lg:22px;
+    --fs-xl:clamp(30px,4.4vw,52px);
+    --fs-hero:clamp(36px,4.6vw,64px);
   }
 
   *{box-sizing:border-box;margin:0;padding:0}
@@ -87,13 +96,13 @@
   .logo .div{width:1px;height:24px;background:var(--line-2)}
   .logo .word{
     font-family:'Hanken Grotesk',sans-serif;
-    font-weight:800;font-size:22px;letter-spacing:-0.03em;
+    font-weight:800;font-size:var(--fs-lg);letter-spacing:-0.03em;
     color:#fff;line-height:1;
   }
 
   .btn{
     display:inline-flex;align-items:center;justify-content:center;gap:8px;
-    font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;
+    font-family:'Manrope',sans-serif;font-weight:700;font-size:var(--fs-base);
     border:0;cursor:pointer;border-radius:999px;
     padding:13px 24px;transition:transform .15s ease,box-shadow .15s ease,background .15s ease;
   }
@@ -101,29 +110,29 @@
   .btn-primary:hover{filter:brightness(1.06)}
   .btn-ghost{background:transparent;color:#fff;border:1px solid var(--line-2)}
   .btn-ghost:hover{border-color:var(--pink);color:var(--pink)}
-  .nav .btn{padding:10px 20px;font-size:14px}
+  .nav .btn{padding:10px 20px;font-size:var(--fs-sm)}
 
   .nav-links{display:flex;align-items:center;gap:28px;margin-left:auto;margin-right:24px}
-  .nav-links a{font-size:14.5px;font-weight:600;color:var(--muted);transition:color .15s ease}
+  .nav-links a{font-size:var(--fs-sm);font-weight:600;color:var(--muted);transition:color .15s ease}
   .nav-links a:hover{color:#fff}
 
   /* plan toggle + seat estimate (founding form) */
   .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:var(--ink);border:1px solid var(--line-2);border-radius:12px;padding:5px}
   .seg button{border:0;cursor:pointer;border-radius:8px;padding:12px 10px;background:transparent;color:var(--muted);
-    font-family:'Manrope',sans-serif;font-weight:700;font-size:14.5px;transition:background .15s ease,color .15s ease;text-align:center;line-height:1.2}
-  .seg button small{display:block;font-family:'JetBrains Mono',monospace;font-weight:400;font-size:11px;margin-top:3px;opacity:.85}
+    font-family:'Manrope',sans-serif;font-weight:700;font-size:var(--fs-sm);transition:background .15s ease,color .15s ease;text-align:center;line-height:1.2}
+  .seg button small{display:block;font-family:'JetBrains Mono',monospace;font-weight:400;font-size:var(--fs-xs);margin-top:3px;opacity:.85}
   .seg button.on{background:var(--pink);color:#0A0A0B}
-  .estimate{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);margin-top:14px;text-align:center}
+  .estimate{font-family:'JetBrains Mono',monospace;font-size:var(--fs-sm);color:var(--muted);margin-top:14px;text-align:center}
   .estimate b{color:#fff;font-weight:700}
-  .overage-note{font-size:13px;color:var(--muted-2);text-align:center;margin-top:10px;max-width:46ch;margin-left:auto;margin-right:auto;line-height:1.5}
+  .overage-note{font-size:var(--fs-sm);color:var(--muted-2);text-align:center;margin-top:10px;max-width:46ch;margin-left:auto;margin-right:auto;line-height:1.5}
   .field textarea{
     background:var(--ink);border:1px solid var(--line-2);border-radius:11px;
-    color:#fff;font-family:'Manrope',sans-serif;font-size:16px;padding:14px 15px;width:100%;min-height:120px;resize:vertical;
+    color:#fff;font-family:'Manrope',sans-serif;font-size:var(--fs-base);padding:14px 15px;width:100%;min-height:120px;resize:vertical;
     transition:border-color .15s ease,box-shadow .15s ease;
   }
   .field textarea::placeholder{color:var(--muted-2)}
   .field textarea:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,0.18)}
-  .form-err{color:var(--pink);font-size:13px;text-align:center;margin-top:12px;min-height:0;display:none}
+  .form-err{color:var(--pink);font-size:var(--fs-sm);text-align:center;margin-top:12px;min-height:0;display:none}
   .form-err.show{display:block}
 
   /* ---------- HERO ---------- */
@@ -141,7 +150,7 @@
 
   .eyebrow{
     display:inline-flex;align-items:center;gap:9px;
-    font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:500;
+    font-family:'JetBrains Mono',monospace;font-size:var(--fs-xs);font-weight:500;
     letter-spacing:.16em;text-transform:uppercase;color:var(--pink);
     border:1px solid var(--line-2);border-radius:999px;padding:7px 15px;margin-bottom:26px;
   }
@@ -151,7 +160,7 @@
   h1{
     font-family:'Anton',sans-serif;font-weight:400;
     text-transform:uppercase;
-    font-size:clamp(46px,8.5vw,104px);
+    font-size:var(--fs-hero);
     line-height:0.92;letter-spacing:0.005em;
     max-width:14ch;
   }
@@ -159,12 +168,12 @@
 
   .lede{
     margin-top:26px;max-width:56ch;
-    font-size:clamp(17px,2.1vw,20px);color:#D8D8DD;font-weight:500;
+    font-size:var(--fs-md);color:#D8D8DD;font-weight:500;
   }
   .lede b{color:#fff;font-weight:700}
 
   .hero-cta{margin-top:36px;display:flex;flex-wrap:wrap;gap:14px;align-items:center}
-  .hero-note{font-family:'Manrope',sans-serif;font-size:14px;color:var(--muted);margin-top:18px}
+  .hero-note{font-family:'Manrope',sans-serif;font-size:var(--fs-sm);color:var(--muted);margin-top:18px}
 
   /* ---------- SECTION SCAFFOLD ---------- */
   section{position:relative}
@@ -179,14 +188,14 @@
   #faq,#included{padding:66px 0}
   .sec-head{margin-bottom:46px}
   .label{
-    font-family:'JetBrains Mono',monospace;font-size:12.5px;letter-spacing:.18em;
+    font-family:'JetBrains Mono',monospace;font-size:var(--fs-xs);letter-spacing:.18em;
     text-transform:uppercase;color:var(--pink);font-weight:500;
     display:flex;align-items:center;gap:12px;margin-bottom:18px;
   }
   .label::before{content:"";width:26px;height:1px;background:var(--pink)}
   .sec-title{font-family:'Anton',sans-serif;text-transform:uppercase;font-weight:400;
-    font-size:clamp(30px,4.4vw,52px);line-height:1;letter-spacing:.01em}
-  .sec-sub{margin-top:18px;max-width:54ch;color:var(--muted);font-size:17px}
+    font-size:var(--fs-xl);line-height:1;letter-spacing:.01em}
+  .sec-sub{margin-top:18px;max-width:54ch;color:var(--muted);font-size:var(--fs-md)}
 
   /* ---------- GAME MODES ---------- */
   .modes{display:flex;flex-wrap:wrap;justify-content:flex-start;gap:16px}
@@ -202,8 +211,8 @@
     background:rgba(255,31,142,0.12);border:1px solid rgba(255,31,142,0.3);margin-bottom:20px;
   }
   .mode .ico svg{display:block}
-  .mode h3{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;letter-spacing:-.01em;margin-bottom:8px}
-  .mode p{color:var(--muted);font-size:14.5px;line-height:1.5}
+  .mode h3{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:var(--fs-md);letter-spacing:-.01em;margin-bottom:8px}
+  .mode p{color:var(--muted);font-size:var(--fs-sm);line-height:1.5}
 
   /* ---------- FOUNDING OFFER ---------- */
   .offer{
@@ -215,23 +224,23 @@
   .offer-grid{position:relative;display:grid;grid-template-columns:1.1fr 0.9fr;gap:48px;align-items:center}
 
   .counter{font-family:'JetBrains Mono',monospace;margin-top:8px}
-  .counter .big{font-size:clamp(40px,6vw,68px);font-weight:700;color:#fff;line-height:1;letter-spacing:-.02em}
+  .counter .big{font-size:var(--fs-hero);font-weight:700;color:#fff;line-height:1;letter-spacing:-.02em}
   .counter .big .of{color:var(--pink)}
-  .counter .sub{color:var(--muted);font-size:13px;letter-spacing:.06em;margin-top:12px;text-transform:uppercase}
+  .counter .sub{color:var(--muted);font-size:var(--fs-xs);letter-spacing:.06em;margin-top:12px;text-transform:uppercase}
   .bar{height:8px;border-radius:999px;background:var(--ink-3);overflow:hidden;margin-top:22px;border:1px solid var(--line)}
   .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--pink-deep),var(--pink));box-shadow:0 0 14px var(--glow);transition:width 1s cubic-bezier(.4,0,.2,1)}
 
   .price-card{background:var(--ink);border:1px solid var(--line-2);border-radius:16px;padding:26px}
-  .price-eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding-bottom:16px;margin-bottom:2px;border-bottom:1px solid var(--line)}
+  .price-eyebrow{font-family:'JetBrains Mono',monospace;font-size:var(--fs-xs);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding-bottom:16px;margin-bottom:2px;border-bottom:1px solid var(--line)}
   .price-row{display:flex;align-items:baseline;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--line)}
   .price-row:last-child{border-bottom:0;padding-bottom:0}
   .price-row:first-child{padding-top:0}
-  .price-row .pl{font-size:14.5px;color:var(--muted)}
-  .price-row .pl b{display:block;color:#fff;font-weight:700;font-size:15px;letter-spacing:-.01em}
-  .price-row .pv{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:21px}
+  .price-row .pl{font-size:var(--fs-sm);color:var(--muted)}
+  .price-row .pl b{display:block;color:#fff;font-weight:700;font-size:var(--fs-base);letter-spacing:-.01em}
+  .price-row .pv{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:var(--fs-lg)}
   .price-row.list .pv{color:var(--muted-2);text-decoration:line-through;text-decoration-color:var(--pink)}
   .price-row.found .pv{color:var(--pink)}
-  .price-foot{font-family:'Manrope',sans-serif;font-size:13px;color:var(--muted-2);margin-top:20px;line-height:1.6}
+  .price-foot{font-family:'Manrope',sans-serif;font-size:var(--fs-sm);color:var(--muted-2);margin-top:20px;line-height:1.6}
 
   /* ---------- INCLUDED ---------- */
   .incl{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 40px;max-width:860px;margin-left:auto;margin-right:auto}
@@ -239,8 +248,8 @@
   .incl .tick{flex:0 0 auto;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;
     background:rgba(255,31,142,0.12);border:1px solid rgba(255,31,142,0.35);margin-top:2px}
   .incl b{font-weight:700;color:#fff}
-  .incl span{color:var(--muted);font-size:14.5px;display:block}
-  .incl strong{display:block;font-size:15.5px;color:#fff;font-weight:700;margin-bottom:1px}
+  .incl span{color:var(--muted);font-size:var(--fs-sm);display:block}
+  .incl strong{display:block;font-size:var(--fs-base);color:#fff;font-weight:700;margin-bottom:1px}
 
   /* ---------- SIGNUP ---------- */
   #claim{padding-top:8px}
@@ -251,7 +260,7 @@
   .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:26px}
   .field{display:flex;flex-direction:column;gap:7px}
   .field.full{grid-column:1 / -1}
-  .field label{font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.1em;
+  .field label{font-family:'JetBrains Mono',monospace;font-size:var(--fs-xs);letter-spacing:.1em;
     text-transform:uppercase;color:var(--muted)}
   /* SELECTS TOO. The club-or-pub dropdown had no styling at all, so it rendered as a native
      white 19px control with black Arial text and square corners, sitting in the middle of a
@@ -260,7 +269,7 @@
      by looking at the CSS, which said nothing about selects precisely because nothing did. */
   .field input, .field select{
     background:var(--ink);border:1px solid var(--line-2);border-radius:11px;
-    color:#fff;font-family:'Manrope',sans-serif;font-size:16px;padding:14px 15px;width:100%;
+    color:#fff;font-family:'Manrope',sans-serif;font-size:var(--fs-base);padding:14px 15px;width:100%;
     transition:border-color .15s ease,box-shadow .15s ease;
   }
   /* The native arrow is drawn in the OS colours and cannot be recoloured, so it is replaced
@@ -294,11 +303,11 @@
     border:1px solid var(--line-2);
     transition:background-color 9999s ease-in-out 0s;
   }
-  #vp-submit{width:100%;margin-top:20px;padding:16px;font-size:16px}
+  #vp-submit,#ct-submit{width:100%;margin-top:20px;padding:16px;font-size:var(--fs-base)}
   #vp-submit:disabled{opacity:.6;cursor:default;transform:none}
-  .form-fine{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted-2);text-align:center;margin-top:16px}
+  .form-fine{font-family:'JetBrains Mono',monospace;font-size:var(--fs-xs);color:var(--muted-2);text-align:center;margin-top:16px}
   .consent{margin-top:16px;display:flex;flex-direction:column;gap:9px}
-  .consent .ck{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;color:var(--muted);line-height:1.45;cursor:pointer}
+  .consent .ck{display:flex;gap:9px;align-items:flex-start;font-size:var(--fs-xs);color:var(--muted);line-height:1.45;cursor:pointer}
   .consent .ck input{margin-top:1px;accent-color:var(--pink);width:16px;height:16px;flex:0 0 auto;cursor:pointer}
   .consent .ck a{color:var(--pink)}
 
@@ -306,7 +315,7 @@
   .success.show{display:block}
   .success .ring{width:64px;height:64px;border-radius:50%;margin:0 auto 22px;display:grid;place-items:center;
     background:rgba(255,31,142,0.12);border:1px solid rgba(255,31,142,0.4);box-shadow:0 0 26px -4px var(--glow)}
-  .success h3{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:30px;font-weight:400;letter-spacing:.01em}
+  .success h3{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:var(--fs-xl);font-weight:400;letter-spacing:.01em}
   .success p{color:var(--muted);margin-top:12px;max-width:42ch;margin-left:auto;margin-right:auto}
 
   /* ---------- FAQ ---------- */
@@ -314,7 +323,7 @@
   .q{border-bottom:1px solid var(--line)}
   .q summary{
     cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:24px;
-    padding:22px 4px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:18px;letter-spacing:-.01em;
+    padding:22px 4px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:var(--fs-md);letter-spacing:-.01em;
   }
   .q summary::-webkit-details-marker{display:none}
   .q summary .pm{flex:0 0 auto;width:22px;height:22px;position:relative;transition:transform .2s ease}
@@ -322,7 +331,7 @@
   .q summary .pm::before{left:0;right:0;top:10px;height:2px}
   .q summary .pm::after{top:0;bottom:0;left:10px;width:2px;transition:opacity .2s ease}
   .q[open] summary .pm::after{opacity:0}
-  .q .a{padding:0 4px 24px;color:var(--muted);font-size:15.5px;max-width:64ch}
+  .q .a{padding:0 4px 24px;color:var(--muted);font-size:var(--fs-base);max-width:64ch}
 
   /* ---------- FOOTER ---------- */
   footer{border-top:1px solid var(--line);padding:54px 0 64px;margin-top:40px}
@@ -331,10 +340,10 @@
   .foot-brand .div{display:none}
   .foot-brand svg{display:block;filter:drop-shadow(0 0 7px var(--glow))}
   .foot-brand .div{width:1px;height:20px;background:var(--line-2)}
-  .foot-brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;letter-spacing:-.03em;color:#fff;line-height:1}
-  .foot-meta{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--muted);line-height:1.9;text-align:right}
+  .foot-brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:var(--fs-md);letter-spacing:-.03em;color:#fff;line-height:1}
+  .foot-meta{font-family:'JetBrains Mono',monospace;font-size:var(--fs-xs);color:var(--muted);line-height:1.9;text-align:right}
   .foot-meta a:hover{color:var(--pink)}
-  .powered{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted-2);letter-spacing:.08em;text-transform:uppercase}
+  .powered{font-family:'JetBrains Mono',monospace;font-size:var(--fs-xs);color:var(--muted-2);letter-spacing:.08em;text-transform:uppercase}
   .powered b{color:var(--muted);font-weight:500}
 
   /* ---------- RESPONSIVE ---------- */
@@ -359,18 +368,18 @@
   }
 
   /* Number-of-venues field hint + group-enquiry note */
-  .field-hint{display:block;margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted-2);letter-spacing:.01em}
+  .field-hint{display:block;margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:var(--fs-xs);color:var(--muted-2);letter-spacing:.01em}
   /* Group signup: repeatable venue rows */
   #vp-venue-list{display:flex;flex-direction:column;gap:9px}
   .venue-row{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap}
   .venue-row .v-name{flex:2 1 160px;min-width:120px}
   .venue-row .v-postcode{flex:1 1 90px;min-width:80px}
   .venue-row .v-seats{flex:1 1 120px;min-width:100px}
-  .venue-row .v-remove{flex:0 0 auto;width:46px;border:1px solid var(--line-2);background:transparent;color:var(--muted);border-radius:11px;font-size:22px;line-height:1;cursor:pointer;transition:border-color .15s ease,color .15s ease}
+  .venue-row .v-remove{flex:0 0 auto;width:46px;border:1px solid var(--line-2);background:transparent;color:var(--muted);border-radius:11px;font-size:var(--fs-lg);line-height:1;cursor:pointer;transition:border-color .15s ease,color .15s ease}
   .venue-row .v-remove:hover{border-color:var(--pink);color:var(--pink)}
-  .add-venue{margin:10px 0 2px;background:transparent;border:1px dashed var(--line-2);color:#fff;padding:11px 16px;border-radius:11px;font-family:'Manrope',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:border-color .15s ease}
+  .add-venue{margin:10px 0 2px;background:transparent;border:1px dashed var(--line-2);color:#fff;padding:11px 16px;border-radius:11px;font-family:'Manrope',sans-serif;font-size:var(--fs-sm);font-weight:700;cursor:pointer;transition:border-color .15s ease}
   .add-venue:hover{border-color:var(--pink)}
-  .group-note{margin:2px 0 16px;padding:13px 15px;border:1px solid rgba(255,31,142,.3);background:rgba(255,31,142,.07);border-radius:12px;font-size:13.5px;line-height:1.55;color:#e8e8ec}
+  .group-note{margin:2px 0 16px;padding:13px 15px;border:1px solid rgba(255,31,142,.3);background:rgba(255,31,142,.07);border-radius:12px;font-size:var(--fs-sm);line-height:1.55;color:#e8e8ec}
 </style>
 <style>
   /* ---------- shared ---------- */
@@ -396,7 +405,7 @@
   .vps-step:hover{border-color:var(--line-2)}
   .vps-step-num{
     font-family:'JetBrains Mono',monospace;
-    font-size:12.5px;font-weight:700;letter-spacing:.16em;
+    font-size:var(--fs-xs);font-weight:700;letter-spacing:.16em;
     color:var(--pink);
     display:flex;align-items:center;gap:12px;
     margin-bottom:18px;
@@ -404,249 +413,11 @@
   .vps-step-num::after{content:"";flex:1;height:1px;background:var(--line)}
   .vps-step h3{
     font-family:'Hanken Grotesk',sans-serif;
-    font-weight:800;font-size:21px;letter-spacing:-.01em;
+    font-weight:800;font-size:var(--fs-lg);letter-spacing:-.01em;
     margin-bottom:10px;text-wrap:balance;
   }
-  .vps-step p{color:var(--muted);font-size:15px;line-height:1.58}
+  .vps-step p{color:var(--muted);font-size:var(--fs-base);line-height:1.58}
   .vps-step p b{color:#fff;font-weight:700}
-
-  /* ============================================================
-     2. SEE A NIGHT ON VENUEPLAY  (#preview)
-     ============================================================ */
-  .vps-stage{display:flex;flex-direction:column;gap:34px}
-  .vps-stage-row{
-    display:grid;
-    grid-template-columns:300px minmax(0,1fr);
-    gap:28px;
-    align-items:start;
-  }
-  .vps-device-label{
-    font-family:'JetBrains Mono',monospace;
-    font-size:11px;letter-spacing:.14em;text-transform:uppercase;
-    color:var(--muted-2);margin-bottom:12px;text-align:center;
-  }
-  .vps-caption{
-    color:var(--muted);font-size:14px;line-height:1.55;
-    text-align:center;margin-top:14px;
-    max-width:52ch;margin-left:auto;margin-right:auto;
-  }
-  .vps-caption b{color:#fff;font-weight:700}
-  .vps-concept-note{
-    font-family:'JetBrains Mono',monospace;
-    font-size:11.5px;letter-spacing:.04em;color:var(--muted-2);
-    text-align:center;margin-top:38px;
-  }
-
-  /* ---- TV ---- */
-  .vps-tv{
-    aspect-ratio:16/9;border-radius:14px;
-    background:linear-gradient(160deg,#101013,#0b0b0d);
-    border:1px solid var(--line-2);
-    box-shadow:0 40px 90px -30px rgba(0,0,0,.9),0 0 0 7px #050506,0 0 60px -24px var(--glow);
-    padding:clamp(12px,2.4vw,22px);
-    display:flex;flex-direction:column;gap:clamp(8px,1.6vw,14px);
-    position:relative;overflow:hidden;
-  }
-  .vps-tv::after{
-    content:"";position:absolute;inset:0;
-    background:radial-gradient(120% 80% at 30% 0%,rgba(255,255,255,.05),transparent 55%);
-    pointer-events:none;
-  }
-  .vps-tv-top{display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:1;flex-wrap:wrap}
-  .vps-tv-venue{font-family:'JetBrains Mono',monospace;font-size:clamp(9px,1.4vw,12px);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-  .vps-pill{
-    font-family:'JetBrains Mono',monospace;font-size:clamp(8.5px,1.2vw,11px);
-    letter-spacing:.08em;text-transform:uppercase;
-    padding:4px 10px;border-radius:999px;border:1px solid var(--line-2);
-    color:var(--muted);display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
-  }
-  .vps-pill.vps-live{color:var(--pink);border-color:rgba(255,31,142,.45)}
-  .vps-pill.vps-prize{color:#fff;background:rgba(255,31,142,.12);border-color:rgba(255,31,142,.4)}
-  .vps-dot{width:7px;height:7px;border-radius:50%;background:var(--pink);box-shadow:0 0 9px var(--pink)}
-  @media(prefers-reduced-motion:no-preference){
-    .vps-dot{animation:vps-pulse 2.4s ease-in-out infinite}
-    .vps-tv.vps-inview .vps-ball{animation:vps-ballreveal 1.9s cubic-bezier(.16,1,.3,1) both,vps-ballglow 2.8s ease-in-out 1.9s infinite}
-  }
-  @keyframes vps-pulse{0%,100%{opacity:1}50%{opacity:.35}}
-  @keyframes vps-ballreveal{
-    0%{transform:scale(.35);opacity:0}
-    32%{transform:scale(2.25);opacity:1}
-    58%{transform:scale(2.25);opacity:1}
-    100%{transform:scale(1);opacity:1}
-  }
-  @keyframes vps-ballglow{
-    0%,100%{box-shadow:0 0 40px -6px var(--glow),inset 0 -8px 22px rgba(0,0,0,.32)}
-    50%{box-shadow:0 0 60px 0 var(--glow),inset 0 -8px 22px rgba(0,0,0,.32)}
-  }
-  .vps-tv-body{display:grid;grid-template-columns:auto 1fr;gap:clamp(12px,2.6vw,24px);flex:1;z-index:1;min-height:0;align-items:center}
-  .vps-ball-col{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
-  .vps-ball-idx{font-family:'JetBrains Mono',monospace;font-size:clamp(8.5px,1.2vw,11px);letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2)}
-  .vps-ball{
-    width:clamp(78px,13vw,148px);height:clamp(78px,13vw,148px);border-radius:50%;
-    background:radial-gradient(circle at 34% 30%,#ff5cae,var(--pink) 45%,var(--pink-deep));
-    box-shadow:0 0 46px -4px var(--glow),inset 0 -8px 22px rgba(0,0,0,.32);
-    display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;
-  }
-  .vps-ball .vps-nm{font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(32px,6vw,62px);line-height:.9;letter-spacing:.01em}
-  .vps-ball-chip{
-    font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(11px,1.5vw,15px);
-    letter-spacing:.04em;color:#fff;line-height:1;
-    padding:5px 11px;border-radius:999px;display:inline-flex;align-items:center;
-    background:radial-gradient(circle at 34% 30%,#ff5cae,var(--pink) 55%,var(--pink-deep));
-    box-shadow:0 0 16px -5px var(--glow),inset 0 -3px 8px rgba(0,0,0,.3);white-space:nowrap;
-  }
-  .vps-ball-prev{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:6px}
-  .vps-tv-recent{display:flex;align-items:center;gap:7px;z-index:1;flex-wrap:wrap}
-  .vps-tv-recent .vps-ball-chip{font-size:clamp(9px,1.2vw,12px);padding:3px 9px}
-  .vps-chip-lbl{font-family:'JetBrains Mono',monospace;font-size:clamp(8px,1.1vw,10px);letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2)}
-  .vps-cell{
-    font-family:'JetBrains Mono',monospace;font-size:clamp(6.5px,1vw,10.5px);
-    text-align:center;padding:2px 0;border-radius:4px;
-    color:var(--muted-2);background:rgba(255,255,255,.03);
-  }
-  .vps-cell.vps-on{
-    color:#fff;background:linear-gradient(180deg,var(--pink),var(--pink-deep));
-    box-shadow:0 0 10px -2px var(--glow);font-weight:600;
-  }
-  .vps-tv-foot{
-    display:flex;align-items:center;gap:clamp(10px,2vw,16px);
-    background:rgba(255,255,255,.03);border:1px solid var(--line);
-    border-radius:11px;padding:clamp(8px,1.6vw,12px) clamp(10px,2vw,16px);z-index:1;
-  }
-  .vps-qr{width:clamp(40px,6vw,56px);height:clamp(40px,6vw,56px);border-radius:8px;background:#fff;padding:4px;flex:none}
-  .vps-qr canvas{width:100%;height:100%;display:block;image-rendering:pixelated}
-  .vps-join{flex:1;min-width:0}
-  .vps-join .vps-l{font-family:'JetBrains Mono',monospace;font-size:clamp(8px,1.1vw,10.5px);letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2)}
-  .vps-join .vps-u{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(11px,1.6vw,15px);margin-top:2px}
-  .vps-code{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(16px,3vw,28px);letter-spacing:.14em;color:var(--pink);text-shadow:0 0 18px var(--glow)}
-
-  /* ---- Phone ---- */
-  .vps-phone{
-    width:270px;max-width:100%;margin:0 auto;aspect-ratio:9/19;border-radius:34px;background:#0d0d10;
-    border:1px solid var(--line-2);
-    box-shadow:0 40px 80px -30px rgba(0,0,0,.9),0 0 0 8px #050506,0 0 50px -24px var(--glow);
-    padding:14px 13px;display:flex;flex-direction:column;gap:10px;position:relative;
-  }
-  .vps-notch{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:92px;height:21px;background:#050506;border-radius:0 0 13px 13px;z-index:3}
-  .vps-ph-head{display:flex;align-items:center;justify-content:space-between;padding-top:15px}
-  .vps-ph-head .vps-v{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-  .vps-mini-mark{display:flex;align-items:center;gap:6px}
-  .vps-mini-mark svg{display:block;filter:drop-shadow(0 0 6px var(--glow))}
-  .vps-mini-mark .vps-w{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:13px;letter-spacing:-.02em}
-  .vps-ticker{
-    background:rgba(255,31,142,.1);border:1px solid rgba(255,31,142,.32);border-radius:9px;
-    padding:8px 11px;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#fff;
-    display:flex;align-items:center;gap:6px;
-  }
-  .vps-ticker b{color:var(--pink)}
-  .vps-pcell{
-    aspect-ratio:1;display:flex;align-items:center;justify-content:center;
-    font-family:'JetBrains Mono',monospace;font-size:12.5px;border-radius:7px;
-    background:rgba(255,255,255,.04);color:#e8e8ec;position:relative;
-  }
-  .vps-pcell.vps-marked{color:#fff;font-weight:700}
-  .vps-pcell.vps-marked::after{
-    content:"";position:absolute;inset:4px;border-radius:50%;
-    background:linear-gradient(180deg,var(--pink),var(--pink-deep));
-    box-shadow:0 0 10px -1px var(--glow);z-index:0;
-  }
-  .vps-pcell.vps-marked span{position:relative;z-index:1}
-  .vps-draw-chip{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:6px;padding:2px}
-  .vps-draw-chip b{color:#fff}
-  .vps-bingo-btn{
-    margin-top:auto;background:linear-gradient(180deg,var(--pink),var(--pink-deep));
-    color:var(--ink);font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;
-    letter-spacing:.06em;font-size:20px;border:0;border-radius:13px;padding:14px;
-    box-shadow:0 0 30px -6px var(--glow);cursor:default;
-  }
-
-  /* ---- Host console ---- */
-  .vps-console{
-    border-radius:14px;background:linear-gradient(160deg,#101013,#0b0b0d);
-    border:1px solid var(--line-2);
-    box-shadow:0 40px 90px -30px rgba(0,0,0,.9),0 0 0 7px #050506;
-    padding:18px;display:flex;flex-direction:column;gap:14px;
-  }
-  .vps-con-top{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding-bottom:13px}
-  .vps-con-top .vps-g{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;font-size:16px;letter-spacing:.02em}
-  .vps-con-top .vps-g small{display:block;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;color:var(--muted-2);text-transform:none;margin-top:4px}
-  .vps-con-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:14px}
-  .vps-next-ball{
-    display:block;width:100%;
-    background:linear-gradient(180deg,var(--pink),var(--pink-deep));
-    border:0;border-radius:12px;color:var(--ink);padding:22px 14px;cursor:default;
-    text-align:center;box-shadow:0 0 34px -8px var(--glow);
-  }
-  .vps-next-ball .vps-k{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;font-size:21px;letter-spacing:.04em}
-  .vps-next-ball .vps-s{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.06em;margin-top:5px;opacity:.85}
-  .vps-recent{margin-top:12px}
-  .vps-recent .vps-rl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);margin-bottom:7px}
-  .vps-recent .vps-balls{display:flex;gap:6px;flex-wrap:wrap}
-  .vps-rb{
-    font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;
-    padding:5px 8px;border-radius:7px;background:rgba(255,255,255,.05);
-    border:1px solid var(--line);color:#e8e8ec;
-  }
-  .vps-rb.vps-cur{background:rgba(255,31,142,.16);border-color:rgba(255,31,142,.45);color:#fff}
-  .vps-claim{background:var(--ink-3);border:1px solid rgba(47,210,122,.32);border-radius:12px;padding:14px}
-  .vps-claim .vps-cl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#2FD27A;margin-bottom:8px}
-  .vps-claim .vps-who{font-family:'Anton',sans-serif;font-weight:400;font-size:16px;text-transform:uppercase;letter-spacing:.02em}
-  .vps-claim .vps-verdict{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#2FD27A;margin-top:6px;display:flex;align-items:center;gap:6px}
-  .vps-claim .vps-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:13px}
-  .vps-cbtn{font-family:'Manrope',sans-serif;font-weight:700;font-size:12.5px;border:0;border-radius:9px;padding:10px 6px;cursor:default}
-  .vps-cbtn.vps-ok{background:#2FD27A;color:#04160c}
-  .vps-cbtn.vps-no{background:transparent;border:1px solid #FF5A6E;color:#FF5A6E}
-  .vps-con-foot{display:flex;gap:9px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:13px}
-  .vps-ghost{font-family:'Manrope',sans-serif;font-weight:600;font-size:12.5px;padding:8px 14px;border-radius:9px;border:1px solid var(--line-2);color:var(--muted);background:transparent;cursor:default}
-  .vps-con-foot .vps-count{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted)}
-  .vps-con-foot .vps-count b{color:#fff}
-
-
-  /* ---- Admin / finance ---- */
-  .vps-browser{
-    border-radius:13px;background:var(--ink-2);border:1px solid var(--line-2);
-    box-shadow:0 40px 90px -30px rgba(0,0,0,.9),0 0 0 7px #050506;overflow:hidden;
-  }
-  .vps-bbar{display:flex;align-items:center;gap:8px;padding:11px 14px;background:#0d0d10;border-bottom:1px solid var(--line)}
-  .vps-bbar i{width:10px;height:10px;border-radius:50%;background:var(--line-2);display:block}
-  .vps-bbar .vps-url{margin-left:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted-2);background:rgba(255,255,255,.04);border-radius:6px;padding:4px 12px}
-  .vps-admin{padding:18px}
-  .vps-admin-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:15px;flex-wrap:wrap}
-  .vps-admin-h .vps-t{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;font-size:15px;letter-spacing:.03em}
-  .vps-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:16px}
-  .vps-tile{background:var(--ink-3);border:1px solid var(--line);border-radius:11px;padding:13px}
-  .vps-tile .vps-l{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2)}
-  .vps-tile .vps-n{font-family:'Anton',sans-serif;font-weight:400;font-size:24px;margin-top:7px;font-variant-numeric:tabular-nums;letter-spacing:.01em}
-  .vps-tile .vps-n small{font-size:13px;color:var(--muted-2)}
-  .vps-tile .vps-n.vps-pink{color:var(--pink)}
-  .vps-inv{background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:15px}
-  .vps-inv-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap}
-  .vps-inv-h .vps-t{font-family:'Manrope',sans-serif;font-weight:700;font-size:14px}
-  .vps-inv-h .vps-t small{display:block;font-family:'JetBrains Mono',monospace;font-weight:400;font-size:10.5px;color:var(--muted-2);margin-top:3px}
-  .vps-pend{
-    font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;
-    color:#FFB13D;border:1px solid rgba(255,177,61,.4);background:rgba(255,177,61,.1);
-    border-radius:999px;padding:4px 10px;white-space:nowrap;
-  }
-  .vps-tbl-scroll{overflow-x:auto}
-  .vps-tbl{width:100%;min-width:480px;border-collapse:collapse;font-size:12.5px}
-  .vps-tbl th{
-    font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
-    color:var(--muted-2);text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);font-weight:400;
-  }
-  .vps-tbl th:first-child{text-align:left}
-  .vps-tbl td{
-    font-family:'JetBrains Mono',monospace;padding:8px;border-bottom:1px solid var(--line);
-    text-align:right;font-variant-numeric:tabular-nums;color:#dcdce2;white-space:nowrap;
-  }
-  .vps-tbl td:first-child{font-family:'Manrope',sans-serif;text-align:left;color:#fff}
-  .vps-tbl td.vps-disc{color:#2FD27A}
-  .vps-tbl td.vps-add{color:var(--pink)}
-  .vps-tbl tr.vps-tot td{border-bottom:0;font-weight:700;color:#fff;padding-top:11px}
-  .vps-tbl tr.vps-tot td:first-child{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-  .vps-inv-act{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap}
-  .vps-inv-act .vps-ok{background:#2FD27A;color:#04160c;font-family:'Manrope',sans-serif;font-weight:700;font-size:12.5px;border:0;border-radius:9px;padding:9px 16px;cursor:default}
-  .vps-inv-act .vps-ed{background:transparent;border:1px solid var(--line-2);color:var(--muted);font-family:'Manrope',sans-serif;font-weight:600;font-size:12.5px;border-radius:9px;padding:9px 16px;cursor:default}
 
   /* ============================================================
      3. WHY WE BUILT IT  (#why)
@@ -665,7 +436,7 @@
   }
   .vps-note-inner{position:relative}
   .vps-note p{
-    color:#D8D8DD;font-size:clamp(17px,2vw,19px);line-height:1.7;font-weight:500;
+    color:#D8D8DD;font-size:var(--fs-md);line-height:1.7;font-weight:500;
   }
   .vps-note p b{color:#fff;font-weight:700}
   .vps-note-sign{
@@ -678,8 +449,8 @@
     background:rgba(255,31,142,0.12);border:1px solid rgba(255,31,142,0.35);
     box-shadow:0 0 22px -6px var(--glow);
   }
-  .vps-note-sign .vps-sig-name{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;letter-spacing:-.01em}
-  .vps-note-sign .vps-sig-role{font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);margin-top:3px}
+  .vps-note-sign .vps-sig-name{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:var(--fs-base);letter-spacing:-.01em}
+  .vps-note-sign .vps-sig-role{font-family:'JetBrains Mono',monospace;font-size:var(--fs-xs);letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);margin-top:3px}
 
   /* ============================================================
      4. ONE SCREEN, LESS CLUTTER  (#replaces)
@@ -698,7 +469,7 @@
   .vps-strip-inner{position:relative}
   .vps-strip-title{
     font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;
-    font-size:clamp(26px,3.6vw,42px);line-height:1.05;letter-spacing:.01em;
+    font-size:var(--fs-xl);line-height:1.05;letter-spacing:.01em;
     max-width:22ch;text-wrap:balance;
   }
   .vps-strip-title .vps-accent{color:var(--pink)}
@@ -711,42 +482,29 @@
   }
   .vps-swap:hover{border-color:var(--line-2)}
   .vps-swap .vps-swap-k{
-    font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;
+    font-family:'JetBrains Mono',monospace;font-size:var(--fs-xs);letter-spacing:.14em;
     text-transform:uppercase;color:var(--pink);display:flex;align-items:center;gap:9px;margin-bottom:12px;
   }
   .vps-swap .vps-swap-k::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--pink);box-shadow:0 0 8px var(--glow);flex:none}
-  .vps-swap h3{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16.5px;letter-spacing:-.01em;margin-bottom:7px;text-wrap:balance}
-  .vps-swap p{color:var(--muted);font-size:13.5px;line-height:1.55}
+  .vps-swap h3{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:var(--fs-base);letter-spacing:-.01em;margin-bottom:7px;text-wrap:balance}
+  .vps-swap p{color:var(--muted);font-size:var(--fs-sm);line-height:1.55}
 
   /* ============================================================
      RESPONSIVE
      ============================================================ */
   @media(max-width:900px){
-    .vps-stage-row{grid-template-columns:1fr}
-    .vps-tiles{grid-template-columns:repeat(2,1fr)}
     .vps-swaps{grid-template-columns:repeat(2,1fr)}
-    .vps-con-grid{grid-template-columns:1fr}
   }
   @media(max-width:760px){
     .vps-steps{grid-template-columns:1fr}
   }
   @media(max-width:560px){
     .vps-swaps{grid-template-columns:1fr}
-    .vps-tv{aspect-ratio:auto}
-    .vps-tv-body{grid-template-columns:1fr;justify-items:center}
-    .vps-code{display:none}
   }
 
   /* VenuePlay neon hollow-triangle logo */
-  .logo svg,.foot-brand svg,.vps-mini-mark svg{overflow:visible;filter:drop-shadow(0 0 2px rgba(255,31,142,.9)) drop-shadow(0 0 6px rgba(255,31,142,.45))}
+  .logo svg,.foot-brand svg{overflow:visible;filter:drop-shadow(0 0 2px rgba(255,31,142,.9)) drop-shadow(0 0 6px rgba(255,31,142,.45))}
 
-  /* Interactive demo teaser (replaces the static preview panels) */
-  .vps-explore{display:flex;flex-direction:column;align-items:center;text-align:center;gap:15px;max-width:640px;margin:0 auto;padding:clamp(30px,5vw,54px) clamp(20px,4vw,40px);border:1px solid var(--line-2);border-radius:22px;background:radial-gradient(120% 100% at 50% 0%,rgba(255,31,142,.1),rgba(18,18,20,.55));box-shadow:0 40px 90px -40px rgba(255,31,142,.4);text-decoration:none;transition:transform .18s ease,border-color .18s ease}
-  .vps-explore:hover{transform:translateY(-4px);border-color:rgba(255,31,142,.5)}
-  .vps-explore-eyebrow{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--pink);display:inline-flex;align-items:center;gap:8px}
-  .vps-explore-title{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;color:#fff;font-size:clamp(28px,5vw,44px);line-height:1.02;letter-spacing:.01em}
-  .vps-explore-sub{color:var(--muted);font-size:clamp(14px,2vw,17px);line-height:1.55;max-width:46ch}
-  .vps-explore-btn{display:inline-flex;align-items:center;gap:9px;margin-top:6px;background:linear-gradient(180deg,var(--pink),var(--pink-deep));color:#12030b;font-family:'Manrope',sans-serif;font-weight:800;font-size:15px;padding:14px 24px;border-radius:12px;box-shadow:0 0 34px -8px var(--glow)}
   a.mode{text-decoration:none;color:inherit;cursor:pointer;transition:transform .16s ease,border-color .16s ease}
   a.mode:hover{transform:translateY(-3px);border-color:rgba(255,31,142,.45)}
 </style>
@@ -775,9 +533,8 @@
     .sec{padding:44px 0}
     .sec-head{margin-bottom:24px}
     .hero{padding:46px 0 40px}
-    h1{font-size:clamp(38px,11vw,52px)}
     .hero-cta .btn{flex:1 1 100%}
-    .nav .btn{padding:9px 15px;font-size:13px;white-space:nowrap}   /* "Venue log in" broke onto two lines at 390px */
+    .nav .btn{padding:9px 15px;font-size:var(--fs-xs);white-space:nowrap}   /* "Venue log in" broke onto two lines at 390px */
     .eyebrow{margin-bottom:20px}
   }
 </style>
@@ -813,11 +570,11 @@
 /* ---- trial hero (Queensland only, 22 Sep 2026): the product in the first screen ---- */
   .hero2{padding:44px 0 40px}
   .hero2 > .wrap.h2-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:center;text-align:left}
-  .hero2 h1{font-size:clamp(36px,4.6vw,64px);margin-left:0;margin-right:0}
-  .hero2 .eyebrow{margin-bottom:14px} .hero2 .lede{font-size:17px;margin-top:14px}
+  .hero2 h1{font-size:var(--fs-hero);margin-left:0;margin-right:0}
+  .hero2 .eyebrow{margin-bottom:14px} .hero2 .lede{font-size:var(--fs-md);margin-top:14px}
   .hero2 .lede{margin-left:0;margin-right:0;max-width:46ch}
   .hero2 .hero-cta{justify-content:flex-start;margin-top:26px}
-  .h2-price{margin-top:20px;color:var(--muted);font-size:16px} .h2-price b{color:#fff}
+  .h2-price{margin-top:20px;color:var(--muted);font-size:var(--fs-base)} .h2-price b{color:#fff}
   .h2-stage{position:relative;padding-bottom:6%}
   /* The phone stands beside the telly, over the bezel only, so no score or ball is hidden. */
   /* The SCREEN is the 16:9 element and the bezel wraps it. With the ratio on the bezel, its 9px
@@ -838,11 +595,11 @@
   .h2-phonebox::before{content:"";position:absolute;inset:0;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 30'><path d='M2 3 L24 15 L2 27 Z' fill='none' stroke='%23FF1F8E' stroke-width='2.6' stroke-linejoin='round'/></svg>") center 42%/26% no-repeat;opacity:.9}
   .h2-phonebox iframe{position:absolute;top:0;left:0;width:390px;height:844px;border:0;transform-origin:top left;pointer-events:none;z-index:1;background:transparent}
   .h2-modes{display:flex;flex-wrap:nowrap;gap:6px;margin-top:14px}
-  .h2-modes button{flex:1 1 0;min-width:0;font:700 12.5px 'Manrope',system-ui,sans-serif;color:var(--muted);background:var(--ink-3,#17171A);border:1px solid var(--line,rgba(255,255,255,.1));border-radius:999px;padding:8px 6px;cursor:pointer;transition:all .25s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .h2-modes button{flex:1 1 0;min-width:0;font:700 var(--fs-xs) 'Manrope',system-ui,sans-serif;color:var(--muted);background:var(--ink-3,#17171A);border:1px solid var(--line,rgba(255,255,255,.1));border-radius:999px;padding:8px 6px;cursor:pointer;transition:all .25s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .h2-modes button:hover{color:#fff;border-color:var(--pink)}
   .h2-modes button.on{background:var(--pink);border-color:var(--pink);color:#fff}
   .h2-under{display:flex;gap:14px;align-items:center;justify-content:space-between;margin-top:12px;flex-wrap:wrap}
-  .h2-cap{font-family:'Manrope',sans-serif;font-size:14px;color:var(--muted);margin:0;flex:1 1 200px}
+  .h2-cap{font-family:'Manrope',sans-serif;font-size:var(--fs-sm);color:var(--muted);margin:0;flex:1 1 200px}
   .h2-watch{flex:0 0 auto}
   @media (max-width:900px){
     .hero2{padding:32px 0 32px}
@@ -1230,11 +987,11 @@
     box-shadow:0 30px 80px -20px rgba(0,0,0,.6);margin:auto}
   .vp-embed-head{display:flex;align-items:center;justify-content:space-between;gap:12px;
     padding:14px 18px;border-bottom:1px solid #ececf2;background:#faf9fc}
-  .vp-embed-brand{display:flex;align-items:center;gap:8px;font-size:15px;color:#16141d}
+  .vp-embed-brand{display:flex;align-items:center;gap:8px;font-size:var(--fs-base);color:#16141d}
   .vp-embed-brand b{letter-spacing:-.01em}
   .vp-embed-tri{width:0;height:0;border-top:7px solid transparent;border-bottom:7px solid transparent;border-left:11px solid #FF1F8E}
-  .vp-embed-lock{font-size:12px;color:#6a6875;margin-left:2px}
-  #vp-embed-close{border:0;background:none;font-size:26px;line-height:1;color:#8a8896;cursor:pointer;padding:2px 6px;border-radius:8px}
+  .vp-embed-lock{font-size:var(--fs-xs);color:#6a6875;margin-left:2px}
+  #vp-embed-close{border:0;background:none;font-size:var(--fs-lg);line-height:1;color:#8a8896;cursor:pointer;padding:2px 6px;border-radius:8px}
   #vp-embed-close:hover{background:#efeef4;color:#16141d}
   #vp-embedded{padding:6px 10px 14px;min-height:280px}
   @media (max-width:520px){ .vp-embed-lock{display:none} }
@@ -1301,7 +1058,7 @@
               <textarea id="ct-message" placeholder="Tell us about your venue and what you'd like to know."></textarea>
             </div>
           </div>
-          <button class="btn btn-primary" id="ct-submit" type="button" style="width:100%;margin-top:20px;padding:16px;font-size:16px">Send message</button>
+          <button class="btn btn-primary" id="ct-submit" type="button">Send message</button>
           <p class="form-err" id="ct-err"></p>
           <p class="form-fine">Or email us directly at hello@venueplay.com.au</p>
         </div>
@@ -1796,7 +1553,7 @@
 </script>
 <style>
 .vp-float-cta{position:fixed;right:22px;bottom:22px;z-index:60;display:inline-flex;align-items:center;gap:9px;
-  padding:14px 24px;border-radius:999px;background:#FF1F8E;color:#fff;font-weight:800;font-size:15px;
+  padding:14px 24px;border-radius:999px;background:#FF1F8E;color:#fff;font-weight:800;font-size:var(--fs-base);
   font-family:'Hanken Grotesk',sans-serif;text-decoration:none;box-shadow:0 12px 34px rgba(255,31,142,.45);
   opacity:0;transform:translateY(16px);pointer-events:none;transition:opacity .25s ease,transform .25s ease}
 .vp-float-cta.show{opacity:1;transform:none;pointer-events:auto}
@@ -1868,7 +1625,7 @@
 
   /* The confirmation now has somewhere to go. See the comment on the panel itself. */
   .success .success-go{margin-top:24px;min-width:280px;justify-content:center}
-  .success .success-fine{font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.04em;
+  .success .success-fine{font-family:'JetBrains Mono',monospace;font-size:var(--fs-xs);letter-spacing:.04em;
     color:var(--muted-2);margin-top:14px;text-transform:none}
   /* ---- rhythm (from the offer page, 22 Sep 2026; brought to the homepage 1 Oct 2026). Twelve identical centred blocks at the same
      height read as a template. Heads sit left with the copy, blocks alternate in weight, and a
@@ -1883,14 +1640,14 @@
   .sec-sub{margin-left:0;margin-right:0}
   .banks{display:grid;grid-template-columns:1fr 1fr;gap:28px}
   .bank{padding:26px 28px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,0))}
-  .bank .label{justify-content:center} .bank{text-align:center} .bank .sec-sub{margin-left:auto;margin-right:auto} .bank .counter{margin-top:10px} .bank .sec-sub{margin-top:12px;font-size:15.5px}
+  .bank .label{justify-content:center} .bank{text-align:center} .bank .sec-sub{margin-left:auto;margin-right:auto} .bank .counter{margin-top:10px} .bank .sec-sub{margin-top:12px;font-size:var(--fs-base)}
   @media (max-width:760px){ .banks{grid-template-columns:1fr} .sec{padding:48px 0} }
 
   .fmtlist{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
   .fmtlist li{display:grid;grid-template-columns:200px 1fr;gap:22px;align-items:baseline;padding:18px 0;border-bottom:1px solid var(--line)}
-  .fmtlist b{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:18px;color:#fff}
-  .fmtlist span{color:var(--muted);font-size:15.5px;line-height:1.55}
-  .fmtlist a{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;color:var(--pink);text-decoration:none;white-space:nowrap;border:1px solid rgba(255,31,142,.35);border-radius:999px;padding:6px 12px}
+  .fmtlist b{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:var(--fs-md);color:#fff}
+  .fmtlist span{color:var(--muted);font-size:var(--fs-base);line-height:1.55}
+  .fmtlist a{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:var(--fs-sm);color:var(--pink);text-decoration:none;white-space:nowrap;border:1px solid rgba(255,31,142,.35);border-radius:999px;padding:6px 12px}
   .fmtlist a:hover{background:var(--pink);color:#fff}
   @media (max-width:760px){ .fmtlist li{grid-template-columns:1fr;gap:6px} .fmtlist a{justify-self:start} }
 
@@ -1903,10 +1660,10 @@
   #replaces .vps-swaps{grid-template-columns:repeat(2,1fr);gap:0 56px;margin-top:30px;border-top:1px solid var(--line)}
   #replaces .vps-swap{background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:22px 0;display:grid;grid-template-columns:112px 1fr;column-gap:22px;align-content:start}
   #replaces .vps-swap:hover{border-color:var(--line)}
-  #replaces .vps-swap-k{grid-row:1/3;align-self:start;margin:5px 0 0;font-size:11px}
+  #replaces .vps-swap-k{grid-row:1/3;align-self:start;margin:5px 0 0}
   #replaces .vps-swap-k::before{display:none}
-  #replaces .vps-swap h3{font-size:18px;margin-bottom:6px}
-  #replaces .vps-swap p{font-size:15.5px}
+  #replaces .vps-swap h3{font-size:var(--fs-md);margin-bottom:6px}
+  #replaces .vps-swap p{font-size:var(--fs-base)}
   @media (max-width:760px){ #replaces .vps-swaps{grid-template-columns:1fr;gap:0} #replaces .vps-swap{grid-template-columns:1fr} #replaces .vps-swap-k{grid-row:auto;margin-bottom:8px} }
 
   /* The offer reads left like everything else, with the button under the words that sold it. */
@@ -1923,8 +1680,8 @@
   #how .vps-step{background:none;border:0;border-radius:0;padding:24px 0 0;box-shadow:none}
   #how .vps-step:hover{background:none}
   #how .vps-step-num::after{display:none}
-  #how .vps-step h3{font-size:19px;margin:10px 0 8px}
-  #how .vps-step p{font-size:15.5px}
+  #how .vps-step h3{font-size:var(--fs-md);margin:10px 0 8px}
+  #how .vps-step p{font-size:var(--fs-base)}
   @media (max-width:760px){ #how .vps-steps{grid-template-columns:1fr} #how .vps-step{padding:20px 0;border-bottom:1px solid var(--line)} }
 </style>
 <a href="#claim" class="vp-float-cta" id="vpFloatCta" aria-label="Get started">

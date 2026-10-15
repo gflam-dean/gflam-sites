@@ -135,13 +135,40 @@
   .askbox p{margin:0 0 18px;color:var(--muted,#9A9AA4);font-size:14px;line-height:1.5}
   .askbtns{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
   .askbtns .btn{min-height:44px}
+
+  /* ---- Shared console classes (design review, 1 Oct 2026; moved 16 Oct 2026) ----
+     What used to be the same style="" attribute on every console, so a size is set once
+     and cannot drift between pages. This block is identical on all five consoles.
+     display:none stays inline on the elements that carry it, because the scripts toggle it.
+     Doubled selectors beat .btn.big and friends the way an inline style used to. */
+  .vp-modal{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);padding:20px}
+  .vp-modal-box{max-width:440px;width:100%;background:var(--ink-2);border:1px solid var(--line);border-radius:16px;padding:24px}
+  .vp-modal-box.wide{max-width:460px}
+  .vp-h{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;margin-bottom:10px}
+  .vp-copy{font-size:14.5px;color:var(--text);line-height:1.55}
+  .vp-row{display:flex;gap:10px}
+  .vp-grow.vp-grow{flex:1}
+  .vp-auto.vp-auto{flex:0 0 auto;width:auto}
+  .vp-c.vp-c{text-align:center}
+  .vp-gold{color:var(--gold)}
+  .vp-warn{margin:0 0 14px;padding:12px 16px;background:rgba(245,165,36,.14);border:1px solid rgba(245,165,36,.5);border-radius:12px;color:#F5A524;font-weight:600;font-size:14px}
+  .vp-week{margin:0 0 12px;padding:12px 14px;background:rgba(245,165,36,.12);border:1px solid rgba(245,165,36,.45);border-radius:11px;color:#F5A524;font-size:13.5px;line-height:1.5}
+  .vp-navlink.vp-navlink{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12.5px;color:var(--muted);text-decoration:none;margin-right:10px;white-space:nowrap}
+  .vp-hdrbtn.vp-hdrbtn{background:none;border:1px solid var(--line-2,var(--line));border-radius:10px;padding:10px 14px;min-height:42px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;margin-right:18px;white-space:nowrap}
+  .vp-inl.vp-inl{display:inline-block;text-decoration:none;margin-top:6px}
+  .vp-bigin.vp-bigin{width:100%;min-height:48px;font-size:20px;text-align:center}
+  .vp-err{color:var(--roll);font-size:13px;min-height:18px;margin-top:6px}
+  .vp-fine{color:var(--faint);font-size:12px}   /* was 11.5px inline: 12px is the label floor */
+  .vp-rate.vp-rate{flex:1;min-width:88px;font-size:13px}
+  .vp-wbtn.vp-wbtn{width:100%;margin-top:8px;font-size:13px}
+  .vp-check.vp-check{width:18px;height:18px;flex:none;accent-color:var(--pink)}
 </style>
 </head>
 <body>
 <header>
   <div class="bar">
-    <button type="button" id="toAdsBtn" title="Finish and put the venue ads back on the TV" style="background:none;border:1px solid var(--line-2,var(--line));border-radius:10px;padding:10px 14px;min-height:42px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;margin-right:18px;white-space:nowrap">End game</button>
-    <a href="/app" title="Back to games" style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12.5px;color:var(--muted);text-decoration:none;margin-right:10px;white-space:nowrap">&#8592; Games</a>
+    <button class="vp-hdrbtn" type="button" id="toAdsBtn" title="Finish and put the venue ads back on the TV">End game</button>
+    <a class="vp-navlink" href="/app" title="Back to games">&#8592; Games</a>
     <div class="brand">
       <svg width="20" height="23" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
       <span class="div"></span><span class="word">VenuePlay</span>
@@ -165,7 +192,7 @@
     <div class="connect">
       <div class="big">Sign in to run the draw</div>
       <div class="sub" id="signinSub">You need your venue host login to run a members draw.</div>
-      <a class="btn pink big" id="signinLink" href="../index.html" style="display:inline-block;text-decoration:none;margin-top:6px">Go to sign in</a>
+      <a class="btn pink big vp-inl" id="signinLink" href="../index.html">Go to sign in</a>
       <p class="note" style="margin-top:14px">The draw runs on the VenuePlay server so the winning member is picked fairly and logged. Your members list and draws load from your venue automatically.</p>
     </div>
   </div>
@@ -287,7 +314,7 @@
         </div>
 
         <div class="panel">
-          <div class="lbl" style="margin-bottom:0">In the draw <span class="mono" style="color:var(--gold)">(<span id="memberCount">0</span> active)</span></div>
+          <div class="lbl" style="margin-bottom:0">In the draw <span class="mono vp-gold">(<span id="memberCount">0</span> active)</span></div>
           <div class="members" id="memberList"></div>
           <p class="note" style="margin-top:10px">Tap a member to enable or disable them. Disabled members (barred or not financial) are skipped. The winner is picked at random on the server from the active members.</p>
         </div>
