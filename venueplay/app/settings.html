@@ -147,11 +147,26 @@
 
     <button class="btn pink" id="saveBtn">Save settings</button>
     <div class="msg" id="msg"></div>
+
+    <!-- PERMITS AND AUTHORITIES. Anisimoff Legal 9380, 1 Oct 2026, point 5: keeping a record of
+         the permits, licences and authorities a venue holds, so a manual check is possible, is
+         prudent. 8 Oct 2026, point 1(a): in Victoria we may not supply bingo tickets or a number
+         generator to anyone without a minor gaming permit, so a Victorian venue recording its
+         permit here is what lets us supply bingo at all. Point 7 of the NSW letter: a pub running
+         a paid raffle for a charity does so under the charity's authority, so the second form of
+         record is "a charity holds it, we run the game for them". Owner or a manager with the
+         draws right; the billing Worker enforces that (/account/permits). One card per kind. -->
+    <div class="card" id="permitsCard">
+      <div class="lbl">Permits and authorities</div>
+      <div class="sublbl" id="permitsIntro">Record any permit, licence or authority your venue holds for each kind of game, so it is on file. We do not check it, and recording it does not make a game lawful: that stays with you. Your console reads this before a paid game.</div>
+      <div id="permitsWrap"></div>
+    </div>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="vp-session.js"></script>
+<script src="vp-gaming.js"></script>
 <script>if(window.VP && VP.guardShift) VP.guardShift();   /* the 4h forced sign-out reaches every page with player data */</script>
 <script>
 (function(){
@@ -198,8 +213,142 @@
     gateMarketing(ctx);
     gateOwnerOnly(ctx);
     paintVenueCode();
+    paintPermits(ctx);
     $("body").classList.remove("hidden");
   });
+
+  /* ---------------------------------------------------------------------------
+     PERMITS AND AUTHORITIES. One card per kind of game (bingo, raffle, members
+     draw), each with the fields of vp_venues.permits (migration 100):
+       number, holder (venue | npo), npo_name, authorised_on, expires, note
+     A kind is RECORDED when it has a number, or a charity/non-profit is named
+     with the date it authorised the venue. The Worker applies that rule on
+     save and answers with it; vp-gaming.js applies the same rule on the console.
+
+     WHY A VENUE WOULD RECORD IT, BY STATE. One line each, from the lawyers'
+     threshold tables (Anisimoff Legal 9380: NSW table, 1 Oct 2026; QLD, VIC,
+     ACT and TAS tables, 8 Oct 2026). The regulator's name comes from
+     VPGaming.states when that script is loaded, so the two cannot disagree
+     about who to ring. WA, SA and NT have no letter yet, so they get the
+     generic line.
+     --------------------------------------------------------------------------- */
+  var VP_WORKER="https://venueplay-api.dean-tindale.workers.dev";
+  var PERMIT_KINDS=[["bingo","Bingo (including musical bingo)"],["raffle","Raffles"],["members","Members draws"]];
+  var WHY={
+    NSW:{ bingo:"In New South Wales, paid housie is for registered clubs (club bingo: no cash prizes, $70 a game) or is run to raise money for a charity (charity housie). Record the club's or the charity's authority here. Social housie needs nothing, and cannot be run at a pub.",
+          raffle:"In New South Wales, a pub may run a paid raffle for a charity under the charity's authority from {reg}, with the charity's written authorisation. Record the charity and the date it authorised you. A club's promotional raffle (up to $5,000, no cash prizes) needs no authority.",
+          members:"In New South Wales, a free-entry members draw is a free lottery or a trade promotion. A trade promotion with over $10,000 in prizes needs an authority from {reg}. Record it here." },
+    QLD:{ bingo:"In Queensland, only an association may conduct bingo, and only a bingo centre needs a licence. Record the association and its category (category 1 up to $2,000 in ticket sales, category 2 up to $20,000) so it is on file.",
+          raffle:"In Queensland, category 1 and 2 raffles (up to $50,000 in ticket sales) need no licence but must be run by an eligible association; category 3 (over $50,000) needs a licence from {reg}. Record the association or the licence.",
+          members:"In Queensland, a free-entry members draw is a category 4 promotional game, which any business may run with no licence. Nothing to record unless you hold one." },
+    VIC:{ bingo:"In Victoria, paid bingo (including musical bingo) is for non-profits declared by {reg} that have notified it. Record your minor gaming permit or VGCCC declaration here: Victorian law bans supplying bingo tickets or a number generator to anyone without one, so we need to know you hold it.",
+          raffle:"In Victoria, raffles are for non-profits; a prize pool over $23,060 needs a permit from {reg}. A for-profit venue needs the non-profit's written permission and a commercial organiser's licence. Record whichever applies.",
+          members:"In Victoria, a free-entry members draw is a trade promotion and needs no permit. A draw run for a non-profit runs under that non-profit's permit; record it here." },
+    ACT:{ bingo:"In ACT, housie with a prize pool over $1,000 a session needs a permit from {reg}, and no minors may play. Record the permit here.",
+          raffle:"In ACT, a raffle with a prize pool over $2,500 needs a permit from {reg}. Record it here.",
+          members:"In ACT, a free trade promotion with prizes up to $3,000 is exempt. Above that, or a raffle over $2,500, needs a permit from {reg}. Record it here." },
+    TAS:{ bingo:"In Tasmania, bingo is run for non-profits and needs a minor gaming permit from {reg} unless it is social bingo (one fee a session, entry $30 or less, no prize over $300). Record the permit, and the non-profit it is for.",
+          raffle:"In Tasmania, a raffle with a prize pool over $10,000 needs a minor gaming permit from {reg}; up to $10,000 needs none when the proceeds go to a non-profit. Record the permit or the non-profit.",
+          members:"In Tasmania, a members draw is treated like a raffle: over $10,000 in prizes needs a minor gaming permit from {reg}. Record it, or the non-profit the draw is for." }
+  };
+  var WHY_GENERIC="Record any permit, licence or authority {reg} has issued your venue for this game, so it is on file if anyone asks.";
+  function regulatorFor(state){
+    var st=(window.VPGaming && VPGaming.states && VPGaming.states[state]) || null;
+    return (st && st.regulator) ? st.regulator : "your state regulator";
+  }
+  function whyLine(state, kind){
+    var t=(WHY[state]||{})[kind] || WHY_GENERIC;
+    return t.replace("{reg}", regulatorFor(state));
+  }
+  var permitsNow={};
+  function isRecorded(kind){
+    if(window.VPGaming && typeof VPGaming.permitRecorded==="function") return VPGaming.permitRecorded({ permits:permitsNow }, kind);
+    return null;   // unknown until vp-gaming.js carries the rule; the Worker answers on save
+  }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function statusText(kind){
+    var r=isRecorded(kind);
+    if(r===true) return '<span style="color:var(--win)">Recorded</span>';
+    if(r===false) return '<span style="color:var(--faint)">Not recorded</span>';
+    return '';
+  }
+  function paintPermits(ctx){
+    var wrap=$("permitsWrap"); if(!wrap) return;
+    var v=ctx.venue||{};
+    permitsNow=(v.permits && typeof v.permits==="object" && !Array.isArray(v.permits)) ? v.permits : {};
+    var state=v.au_state||"";
+    wrap.innerHTML=PERMIT_KINDS.map(function(pk){
+      var kind=pk[0], p=permitsNow[kind]||{};
+      var npo=p.holder==="npo";
+      return '<div class="permit" data-kind="'+kind+'" style="padding:12px 0;border-top:1px solid var(--line-2)">'+
+        '<div class="n" style="font-weight:600;font-size:14px;color:var(--text)">'+esc(pk[1])+' <span class="pstatus" style="font-size:12px;margin-left:6px">'+statusText(kind)+'</span></div>'+
+        '<div class="note" style="margin:4px 0 10px">'+esc(whyLine(state, kind))+'</div>'+
+        '<div class="seg pholder" style="margin-bottom:8px">'+
+          '<div class="opt'+(npo?'':' on')+'" data-holder="venue">Our venue holds it</div>'+
+          '<div class="opt'+(npo?' on':'')+'" data-holder="npo">A charity or non-profit holds it, we run the game for them</div>'+
+        '</div>'+
+        '<div class="field" style="margin-bottom:8px"><label style="display:block;font-size:12px;color:var(--muted);margin-bottom:4px">Permit, licence or authority number</label>'+
+          '<input type="text" class="pnumber" maxlength="80" value="'+esc(p.number||"")+'" placeholder="As printed on the permit" style="width:100%;background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px 12px;font-family:inherit;font-size:14px"></div>'+
+        '<div class="field pnpo" style="margin-bottom:8px'+(npo?'':';display:none')+'"><label style="display:block;font-size:12px;color:var(--muted);margin-bottom:4px">Charity or non-profit name</label>'+
+          '<input type="text" class="pnpo_name" maxlength="120" value="'+esc(p.npo_name||"")+'" placeholder="The organisation whose authority you run under" style="width:100%;background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px 12px;font-family:inherit;font-size:14px"></div>'+
+        '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">'+
+          '<div class="field" style="flex:1;min-width:140px"><label style="display:block;font-size:12px;color:var(--muted);margin-bottom:4px">Authorised on</label><input type="date" class="pauthorised" value="'+esc(p.authorised_on||"")+'" style="width:100%;background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px 12px;font-family:inherit;font-size:14px"></div>'+
+          '<div class="field" style="flex:1;min-width:140px"><label style="display:block;font-size:12px;color:var(--muted);margin-bottom:4px">Expires (if it does)</label><input type="date" class="pexpires" value="'+esc(p.expires||"")+'" style="width:100%;background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px 12px;font-family:inherit;font-size:14px"></div>'+
+        '</div>'+
+        '<div class="field" style="margin-bottom:8px"><label style="display:block;font-size:12px;color:var(--muted);margin-bottom:4px">Note</label>'+
+          '<input type="text" class="pnote" maxlength="500" value="'+esc(p.note||"")+'" placeholder="Anything worth knowing, e.g. conditions on the permit" style="width:100%;background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px 12px;font-family:inherit;font-size:14px"></div>'+
+        '<button type="button" class="btn pink psave" style="width:auto;padding:10px 16px;font-size:13px">Save '+esc(kind==="members"?"members draw":kind)+' permit</button>'+
+        '<div class="msg pmsg"></div>'+
+      '</div>';
+    }).join("");
+    wrap.querySelectorAll(".pholder").forEach(function(seg){
+      seg.addEventListener("click", function(e){
+        var o=e.target.closest(".opt"); if(!o) return;
+        Array.prototype.forEach.call(seg.children, function(c){ c.classList.toggle("on", c===o); });
+        var card=seg.closest(".permit");
+        card.querySelector(".pnpo").style.display = (o.getAttribute("data-holder")==="npo") ? "" : "none";
+      });
+    });
+    wrap.querySelectorAll(".psave").forEach(function(btn){
+      btn.addEventListener("click", function(){ savePermit(btn.closest(".permit"), btn); });
+    });
+  }
+  function permitFrom(card){
+    var holderEl=card.querySelector(".pholder .opt.on");
+    return {
+      number: card.querySelector(".pnumber").value.trim(),
+      holder: holderEl ? holderEl.getAttribute("data-holder") : "venue",
+      npo_name: card.querySelector(".pnpo_name").value.trim(),
+      authorised_on: card.querySelector(".pauthorised").value || "",
+      expires: card.querySelector(".pexpires").value || null,
+      note: card.querySelector(".pnote").value.trim()
+    };
+  }
+  function savePermit(card, btn){
+    var kind=card.getAttribute("data-kind"), msg=card.querySelector(".pmsg");
+    msg.className="msg"; msg.textContent="";
+    btn.disabled=true;
+    VP.getClient().auth.getSession().then(function(r){
+      var tok=(r&&r.data&&r.data.session&&r.data.session.access_token)||null;
+      /* X-VP-Venue names the venue. For HQ "View as" it is the whole answer; for a manager or
+         owner the Worker only honours a venue they actually hold. */
+      return fetch(VP_WORKER+"/account/permits", { method:"POST",
+        headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+tok, "X-VP-Venue":venueId },
+        body:JSON.stringify({ venue_id:venueId, kind:kind, permit:permitFrom(card) }) })
+        .then(function(res){ if(res.status===404) return { error:"The billing service cannot record permits yet. Try again later." }; return res.json(); });
+    }).then(function(j){
+      btn.disabled=false;
+      if(!j || j.error){ msg.className="msg err"; msg.textContent=(j&&j.error)||"Could not save."; return; }
+      permitsNow=(j.permits && typeof j.permits==="object") ? j.permits : permitsNow;
+      var rec=j.recorded||{};
+      var st=card.querySelector(".pstatus");
+      if(st) st.innerHTML = rec[kind] ? '<span style="color:var(--win)">Recorded</span>' : '<span style="color:var(--faint)">Not recorded</span>';
+      msg.className="msg ok";
+      msg.textContent = rec[kind] ? "Saved. This counts as recorded." : (permitsNow[kind] ? "Saved, but it does not count as recorded yet: it needs a number, or a charity named with the date it authorised you." : "Cleared.");
+    }).catch(function(e){
+      btn.disabled=false; msg.className="msg err"; msg.textContent="Could not reach the billing service. Check your connection and try again.";
+    });
+  }
 
   /* What player data is collected, and how names show on the TV, are OWNER-ONLY decisions: they
      are the data-governance line in the role model, not a per-manager toggle. The Your account

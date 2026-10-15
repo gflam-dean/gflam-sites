@@ -3021,6 +3021,18 @@ def local_checks(which):
                    'venue\'s raffle, or a draw on Math.random, ships with a green gate otherwise')
 
         for label, fn, title, floor, why in (
+            # D47 and D46: the compliance build of 15 Oct 2026 (Anisimoff Legal 9380, letters of
+            # 1 and 8 Oct 2026). Dean: build everything the lawyer called prudent.
+            ('D47. The Terms put gaming compliance, permits, attendance, age, records and an indemnity on the venue',
+             'test-terms-put-compliance-on-the-venue.js',
+             'section 6 carries every clause the lawyer asked for, and the onboarding tick is one sentence everywhere', 40,
+             'A clause silently dropped from section 6 (the conductor line, the Victorian permit '
+             'warranty, the indemnity) is the exposure the two letters were paid to remove'),
+            ('D46. Onboarding needs the compliance tick, and a venue can record its permits',
+             'test-permits-and-compliance-tick.js',
+             'an onboarding without the tick creates nothing; permits are written by an owner or draws manager, never a host', 55,
+             'A venue onboarded with no record that it accepted the gaming laws as its own, or a '
+             'host recording a permit for a venue they merely work at, both ship green otherwise'),
             ('D45. A code typed in a lobby goes to the game that lobby is for',
              'test-lobby-format.js',
              'a new lobby in a multi-game night sends phones to that game, not the last one played', 6,
