@@ -530,11 +530,19 @@
     var COLS = "id,name,slug,timezone,status,suspended_reason,founding_id,group_id," +
                "included_players,max_players,logo_url,created_at,postcode,au_state," +
                "entity_type,paid_entry_enabled";
+    /* Migration 100 (15 Oct 2026): what the venue said it is, when it accepted the compliance
+       line, and the permits it has recorded. Anisimoff Legal 9380, 1 Oct 2026, points 3 and 5.
+       HQ reads them off this list; the console reads them off the full venue row (loadVenue
+       selects *). Named SEPARATELY so that if this select is ever served by a database the
+       migration has not reached, the page below retries without them rather than emptying
+       the venue list, which is exactly what entity_type did on 19 Aug 2026. */
+    var COLS_100 = "permits,venue_kind,compliance_accepted_at";
     var PAGE = 1000;
+    var cols100 = true;
 
     function page(from, to, withCount) {
       var q = getClient().from("vp_venues")
-        .select(COLS, withCount ? { count: "exact" } : undefined)
+        .select(cols100 ? (COLS + "," + COLS_100) : COLS, withCount ? { count: "exact" } : undefined)
         /* created_at alone is not a stable order: two venues created in the same
            millisecond can swap between pages, repeating one and skipping the other.
            id breaks the tie. */
@@ -544,7 +552,18 @@
         // Do not swallow the failure. Returning [] on an error is indistinguishable from
         // "this venue has no venues", so a broken query looked like an empty account for
         // however long it took someone to notice. Let the caller show the real reason.
-        if (r && r.error) throw r.error;
+        if (r && r.error) {
+          /* One retry, without the migration-100 columns, when PostgREST names one of them
+             as unknown. Anything else is still thrown: this is a narrow bridge for the
+             minutes between a site deploy and the migration, not a way to hide a fault. */
+          var msg = String((r.error && r.error.message) || "");
+          if (cols100 && /column/i.test(msg) && /permits|venue_kind|compliance_accepted_at/.test(msg)) {
+            cols100 = false;
+            try { console.warn("vp-session: migration 100 has not reached this database yet; venue list read without " + COLS_100); } catch (e) {}
+            return page(from, to, withCount);
+          }
+          throw r.error;
+        }
         return { rows: (r && r.data) || [], total: r ? r.count : null };
       });
     }

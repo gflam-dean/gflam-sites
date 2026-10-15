@@ -99,7 +99,7 @@
       <div class="field">
         <label>Postcode</label>
         <input type="text" id="vpostcode" class="mono" inputmode="numeric" maxlength="4" placeholder="4224">
-        <div class="note">Used to keep the slug unique. Four digits.</div>
+        <div class="note">Four digits, required. It sets the venue's state, which decides which gaming rules they are shown and whether phones may hold a bingo ticket, and it keeps the slug unique.</div>
       </div>
       <div class="field">
         <label>Timezone</label>
@@ -141,6 +141,39 @@
           <input type="text" id="vfounding" class="mono" placeholder="paste the founding row id (uuid)">
           <div class="note">The independent venue's paid subscription record. It is created when they sign up on the page (Worker, service role), so the browser cannot create it here. Copy its id from the Supabase Table Editor (venueplay_). The player cap is read from that record's max_seats.</div>
         </div>
+      </div>
+    </div>
+
+    <!-- What the venue says it is, and the compliance tick. Anisimoff Legal 9380, 1 Oct 2026,
+         point 3: compliance is the venue's, and an active tick box confirming it is prudent. The
+         Worker refuses the onboarding without both. The venue's own answer SUGGESTS club or pub
+         on the HQ card; HQ still sets entity_type and paid entry by hand (migration 44). -->
+    <div class="card">
+      <div class="lbl">Compliance (required)</div>
+      <div class="field">
+        <label>What the venue is, in their words</label>
+        <select id="vkind">
+          <option value="">Ask them...</option>
+          <option value="pub">Pub</option>
+          <option value="hotel">Hotel</option>
+          <option value="club">Registered club</option>
+          <option value="rsl">RSL</option>
+          <option value="charity">Charity</option>
+          <option value="association">Association (community, sporting, P and C)</option>
+          <option value="other">Other</option>
+        </select>
+        <div class="note">A club, RSL, charity or association suggests non-profit in HQ; a pub or hotel suggests for-profit. HQ confirms it before paid entry is switched on.</div>
+      </div>
+      <div class="field">
+        <label style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--text);line-height:1.5;text-transform:none;letter-spacing:0;font-weight:500">
+          <input type="checkbox" id="vcompliance" style="width:auto;margin:3px 0 0">
+          <span id="vcomplianceText">We are responsible for complying with the gaming laws that apply to our venue, including any permit, licence or authority, age limits and attendance rules. VenuePlay supplies the software only.</span>
+        </label>
+      </div>
+      <div class="field">
+        <label>Accepted by (name of the person at the venue)</label>
+        <input type="text" id="vcomplianceby" placeholder="Jane Smith, licensee">
+        <div class="note">Read the line to them, then tick it in their name. The record says who agreed and when.</div>
       </div>
     </div>
 
@@ -241,6 +274,17 @@
      writes the permissions object. X-VP-Venue is how an HQ admin tells the Worker which account
      they are acting on (View as). */
   var VP_WORKER="https://venueplay-api.dean-tindale.workers.dev";
+  /* The HQ admin's own token; /admin/venue checks it is an owner or accounts admin. */
+  function workerPost(path, body){
+    return client.auth.getSession().then(function(r){
+      var tok=(r&&r.data&&r.data.session&&r.data.session.access_token)||null;
+      return fetch(VP_WORKER+path, { method:"POST", headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+tok }, body:JSON.stringify(body||{}) })
+        .then(function(res){
+          if(res.status===404) return { error:"The billing service does not have "+path+" yet. Nothing was created." };
+          return res.json();
+        });
+    });
+  }
   function addManagerByMobile(venueId, label, mobile){
     return client.auth.getSession().then(function(r){
       var tok=(r&&r.data&&r.data.session&&r.data.session.access_token)||null;
@@ -268,18 +312,35 @@
     if(!name){ $("err").textContent="Enter the venue name."; return; }
     if(!slug){ $("err").textContent="Enter a slug (the TV web address key)."; return; }
 
-    var venueRow={ name:name, slug:slug, timezone:tz };
+    /* THROUGH THE WORKER, NOT THE BROWSER CLIENT. Until 15 Oct 2026 this page inserted
+       vp_venues, vp_venue_settings and vp_screens itself, which skipped everything
+       /admin/venue does for an HQ-onboarded venue: au_state from the postcode (so the state
+       rules and the paper-ticket rule were inert for these venues), the audit row, the
+       timezone fallback, and now the compliance record. One door for onboarding. */
+    var pc=(($("vpostcode").value||"").replace(/\D/g,"")).slice(0,4);
+    if(pc.length!==4){ $("err").textContent="Enter the venue's 4-digit postcode. It sets which state's gaming rules apply."; return; }
+    var body={ name:name, slug:slug, timezone:tz, postcode:pc, billing:{ type:bill }, send_welcome:false };
     if(bill==="group"){
       var gid=$("vgroup").value;
       if(!gid){ $("err").textContent="Choose the operator group (or switch to Independent)."; return; }
-      venueRow.group_id=gid;
+      body.billing.group_id=gid;
       var cap=($("vcap").value||"").replace(/\D/g,"");
-      if(cap) venueRow.included_players=parseInt(cap,10);
+      if(cap) body.billing.included_players=parseInt(cap,10);
     } else {
       var fid=($("vfounding").value||"").trim();
       if(!fid){ $("err").textContent="Paste the venueplay_founding record id (or switch to Grouped)."; return; }
-      venueRow.founding_id=fid;
+      body.billing.founding_id=fid;   // link the existing record; the Worker refuses an id it cannot find
     }
+
+    /* The compliance tick and what they are. The Worker refuses without both; checked here too
+       so the person on the call is told before anything is sent. */
+    var kind=$("vkind").value;
+    if(!kind){ $("err").textContent="Pick what the venue is, in their words (pub, hotel, club, RSL, charity, association or other)."; return; }
+    body.venue_kind=kind;
+    if(!$("vcompliance").checked){ $("err").textContent="Read them the compliance line and tick it. The venue must accept that the gaming laws are its responsibility before it is created."; return; }
+    var by=($("vcomplianceby").value||"").trim();
+    if(!by){ $("err").textContent="Enter the name of the person at the venue who agreed to the compliance line."; return; }
+    body.compliance={ accepted:true, by:by };
 
     var mgrUid=($("mgruid").value||"").trim();
     var mgrName=($("mgrname").value||"").trim();
@@ -288,41 +349,34 @@
 
     var btn=this; btn.disabled=true; btn.textContent="Creating...";
 
-    // 1. the venue
-    client.from("vp_venues").insert(venueRow).select("id,name,slug").maybeSingle().then(function(r){
-      if(r.error) throw r.error;
-      var v=r.data;
-      // 2. default settings, 3. a default screen (best-effort, sequential)
-      return client.from("vp_venue_settings").insert({ venue_id:v.id }).then(function(sr){
-        return client.from("vp_screens").insert({ venue_id:v.id, name:"Main TV" }).then(function(scr){
-          /* 4. optional first manager.
-             By mobile is the normal way: the billing Worker creates the login and, crucially,
-             writes a PERMISSIONS OBJECT. A manager row with no permissions object reads as FULL
-             ACCESS to the billing Worker, so every manager this form used to create could open
-             the owner's Stripe portal and cancel venues.
-             The UID path is kept for operator-group venues, which have no billing account for the
-             Worker route to act on, and it now writes the permissions object itself. */
-          var mgrDone=Promise.resolve({ skipped:true });
-          var DEFAULT_PERMS={ advertising:true, draws_raffles:true, players_optin:false, add_hosts:true };  /* see above: player data is ticked on deliberately, never inherited */
-          if(mgrMobile){
-            mgrDone=addManagerByMobile(v.id, mgrName, mgrMobile);
-          } else if(mgrUid){
-            mgrDone=client.from("vp_venue_staff").insert({
-              venue_id:v.id, auth_user_id:mgrUid, role:"manager", display_name:(mgrName||"Manager"),
-              permissions:DEFAULT_PERMS
-            }).then(function(mr){ return { ok:!mr.error, error:mr.error }; });
-          }
-          return mgrDone.then(function(mgr){
-            done(v, { settings:sr, screen:scr, manager:mgr });
-          });
-        });
+    // 1. the venue, its default settings and its screen, in the Worker
+    workerPost("/admin/venue", body).then(function(res){
+      if(!res || res.error) throw new Error((res&&res.error)||"Could not create the venue.");
+      var v=res.venue;
+      /* 2. optional first manager.
+         By mobile is the normal way: the billing Worker creates the login and, crucially,
+         writes a PERMISSIONS OBJECT. A manager row with no permissions object reads as FULL
+         ACCESS to the billing Worker, so every manager this form used to create could open
+         the owner's Stripe portal and cancel venues.
+         The UID path is kept for operator-group venues, which have no billing account for the
+         Worker route to act on, and it writes the permissions object itself. */
+      var mgrDone=Promise.resolve({ skipped:true });
+      var DEFAULT_PERMS={ advertising:true, draws_raffles:true, players_optin:false, add_hosts:true };  /* see above: player data is ticked on deliberately, never inherited */
+      if(mgrMobile){
+        mgrDone=addManagerByMobile(v.id, mgrName, mgrMobile);
+      } else if(mgrUid){
+        mgrDone=client.from("vp_venue_staff").insert({
+          venue_id:v.id, auth_user_id:mgrUid, role:"manager", display_name:(mgrName||"Manager"),
+          permissions:DEFAULT_PERMS
+        }).then(function(mr){ return { ok:!mr.error, error:mr.error }; });
+      }
+      return mgrDone.then(function(mgr){
+        done(v, { settings:{ ok:true }, screen:{ ok:true }, manager:mgr });
       });
     }).catch(function(e){
       btn.disabled=false; btn.textContent="Create venue";
       var msg=(e&&e.message)?e.message:"Could not create the venue.";
       if(/duplicate|unique/i.test(msg)) msg="That slug is already taken. Pick a different slug.";
-      else if(/foreign key|violates/i.test(msg) && bill==="founding") msg="That founding record id was not found. Check the uuid in venueplay_founding.";
-      else if(/foreign key|violates/i.test(msg)) msg="A referenced record was not found. Check the group / founding id.";
       $("err").textContent=msg;
     });
   });
@@ -333,8 +387,8 @@
     $("dName").textContent=v.name;
     $("dSlug").textContent=v.slug;
     $("dTv").textContent="venueplay.com.au/tv?"+v.slug;
-    $("dScreen").textContent=(extra.screen&&!extra.screen.error)?"Default screen created: Main TV":"Screen row not created (add one later).";
-    $("dSettings").textContent=(extra.settings&&!extra.settings.error)?"Default settings created.":"Settings row not created (open Settings to create it).";
+    $("dScreen").textContent=(extra.screen&&!extra.screen.error)?"Default screen created: Main screen":"Screen row not created (add one later).";
+    $("dSettings").textContent=(extra.settings&&!extra.settings.error)?"Default settings created. Compliance line accepted and recorded.":"Settings row not created (open Settings to create it).";
     if(extra.manager&&extra.manager.skipped){ $("dManager").textContent="No manager yet. Add one from Your account (View as this venue) whenever you are ready."; }
     else if(extra.manager&&extra.manager.ok){ $("dManager").textContent=extra.manager.texted?"First manager added. We have texted them their sign-in link and the TV address.":"First manager linked."; }
     else { $("dManager").innerHTML='<span style="color:var(--roll)">Manager NOT added: '+(extra.manager&&extra.manager.error&&extra.manager.error.message?extra.manager.error.message:"check the mobile")+'. The venue itself was created fine, so add the manager from Your account.</span>'; }

@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '14 Oct 2026, 13:12 · ff44126a';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '15 Oct 2026, 15:04 · e0151127';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -144,6 +144,8 @@ export default {
       if (request.method === 'POST' && path === '/account/manager-perms' && typeof vpbSetManagerPerms === 'function') return await vpbSetManagerPerms(request, env, json);
       if (request.method === 'POST' && path === '/account/draw-log'    && typeof vpbDrawLog === 'function')      return await vpbDrawLog(request, env, json);
       if (request.method === 'POST' && path === '/account/nights'      && typeof vpbNights === 'function')       return await vpbNights(request, env, json);
+      // The permits, licences and authorities a venue records about itself (Anisimoff, 1 Oct 2026, point 5).
+      if (request.method === 'POST' && path === '/account/permits'     && typeof vpbSetPermits === 'function')   return await vpbSetPermits(request, env, json);
       // Gflam HQ admin (vpa* functions below). JWT-verified + role-gated inside each handler.
       if (request.method === 'POST' && path === '/admin/venue'           && typeof vpaHandleVenue === 'function')          return await vpaHandleVenue(request, env, json);
       if (request.method === 'POST' && path === '/admin/resend-welcome'  && typeof vpaResendWelcome === 'function')        return await vpaResendWelcome(request, env, json);
@@ -156,6 +158,7 @@ export default {
       if (request.method === 'POST' && path === '/admin/venue-gaming'    && typeof vpaHandleVenueGaming === 'function')    return await vpaHandleVenueGaming(request, env, json);
       if (request.method === 'POST' && path === '/admin/gst'             && typeof vpaHandleGst === 'function')            return await vpaHandleGst(request, env, json);
       if (request.method === 'GET'  && path === '/admin/venue-detail'    && typeof vpaHandleVenueDetail === 'function')    return await vpaHandleVenueDetail(request, env, json);
+      if (request.method === 'GET'  && path === '/admin/venue-compliance' && typeof vpaHandleVenueCompliance === 'function') return await vpaHandleVenueCompliance(request, env, json);
       if (request.method === 'POST' && path === '/admin/player-find'     && typeof vpaHandlePlayerFind === 'function')   return await vpaHandlePlayerFind(request, env, json);
       if (request.method === 'POST' && path === '/admin/player-remove'   && typeof vpaHandlePlayerRemove === 'function') return await vpaHandlePlayerRemove(request, env, json);
       if (request.method === 'GET'  && path === '/admin/optin-export'    && typeof vpaHandleAdminOptinExport === 'function') return await vpaHandleAdminOptinExport(request, env, json);
@@ -1687,17 +1690,102 @@ async function vpaAudit(env, actor, action, target, detail) {
 }
 
 
+/* WHAT THE VENUE SAYS IT IS, THE COMPLIANCE TICK, AND THE PERMITS IT HOLDS.
+
+   Anisimoff Legal, ref 9380. 1 Oct 2026, point 3: compliance is the venue's, and "it would
+   also be prudent to ensure Customers actively tick a check box ... confirming that they will
+   be responsible for compliance". Point 5: keeping a record of the permits/licences/authorities
+   a venue holds, so a manual check is possible, is prudent. 8 Oct 2026, point 1(a): Victoria's
+   s8.4.4 bans supplying bingo tickets or a generator to anyone without a minor gaming permit,
+   and point 4 says recording VIC permit numbers is prudent. Dean, 15 Oct 2026: build all of it.
+
+   One shape, in one place. Onboarding (/admin/venue), HQ (/admin/venue-gaming and
+   /admin/venue-compliance) and the venue's settings page (/account/permits) all come through
+   here, and vp-gaming.js permitRecorded applies the SAME recorded rule on the console, so a
+   change to either is a change to both. Migration 100 holds the columns. */
+const VPA_VENUE_KINDS = ['pub', 'hotel', 'club', 'rsl', 'charity', 'association', 'other'];
+const VPA_PERMIT_KINDS = ['bingo', 'raffle', 'members'];
+/* The tick, word for word. The two onboarding pages show this sentence and a suite checks they
+   show THIS one, because a tick that reads differently from the record of it is not a record. */
+const VPA_COMPLIANCE_TICK = 'We are responsible for complying with the gaming laws that apply to our venue, including any permit, licence or authority, age limits and attendance rules. VenuePlay supplies the software only.';
+/* What a venue_kind suggests for entity_type. A SUGGESTION HQ sees beside its own dropdown,
+   never written to entity_type by anything: migration 44's rule that HQ sets what a venue is,
+   by hand, stands. A charity or association is a non-profit; a pub or hotel is a business;
+   "other" says nothing. */
+function vpaEntitySuggestion(kind) {
+  if (kind === 'club' || kind === 'rsl' || kind === 'charity' || kind === 'association') return 'non_profit';
+  if (kind === 'pub' || kind === 'hotel') return 'for_profit';
+  return null;
+}
+/* RECORDED means: a permit number, OR an NPO named with the date it authorised the venue. The
+   second form is the NSW letter's point 7 (a pub runs a paid raffle under the charity's
+   authority, with the charity's written authorisation), where the pub has no number of its
+   own to write down. Interface 1 of the 15 Oct 2026 build; vp-gaming.js says the same. */
+function vpaPermitRecorded(permits, kind) {
+  const p = permits && typeof permits === 'object' ? permits[kind] : null;
+  if (!p || typeof p !== 'object') return false;
+  if (String(p.number || '').trim()) return true;
+  return p.holder === 'npo' && !!String(p.npo_name || '').trim() && /^\d{4}-\d{2}-\d{2}$/.test(String(p.authorised_on || ''));
+}
+/* One permit, cleaned, or a reason it was refused. Strings are capped because this lands in a
+   jsonb column a browser form writes; a date must be a real YYYY-MM-DD so "12/03/2026" cannot
+   be stored as something the recorded rule then reads as no date at all. */
+function vpaCleanPermit(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { ok: false, error: 'A permit must be an object with number, holder, npo_name, authorised_on, expires and note.' };
+  const str = (v, max, what) => {
+    if (v == null) return '';
+    if (typeof v !== 'string') throw new Error(what + ' must be text.');
+    const s = v.trim();
+    if (s.length > max) throw new Error(what + ' is too long (' + max + ' characters at most).');
+    return s;
+  };
+  const date = (v, what) => {
+    if (v == null || v === '') return '';
+    if (typeof v !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(v)) throw new Error(what + ' must be a date written YYYY-MM-DD.');
+    const d = new Date(v + 'T00:00:00Z');
+    if (isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== v) throw new Error(what + ' is not a real date.');
+    return v;
+  };
+  try {
+    const holder = raw.holder == null || raw.holder === '' ? 'venue' : raw.holder;
+    if (holder !== 'venue' && holder !== 'npo') return { ok: false, error: "holder must be 'venue' (we hold it) or 'npo' (a charity or non-profit holds it and we run the game for them)." };
+    const permit = {
+      number: str(raw.number, 80, 'The permit number'),
+      holder: holder,
+      npo_name: str(raw.npo_name, 120, 'The charity or non-profit name'),
+      authorised_on: date(raw.authorised_on, 'The authorised-on date'),
+      expires: date(raw.expires, 'The expiry date') || null,
+      note: str(raw.note, 500, 'The note'),
+    };
+    if (holder === 'npo' && !permit.npo_name && !permit.number) return { ok: false, error: 'Name the charity or non-profit whose authority you run the game under.' };
+    const empty = !permit.number && !permit.npo_name && !permit.authorised_on && !permit.expires && !permit.note;
+    return { ok: true, permit: permit, empty: empty };
+  } catch (e) {
+    return { ok: false, error: String(e.message || e) };
+  }
+}
+/* A query-string value without new URL(), which the jsc test shell does not have. */
+function vpaQueryParam(request, name) {
+  const m = new RegExp('[?&]' + name + '=([^&#]*)').exec(String(request.url || ''));
+  return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : '';
+}
+
 /* ===========================================================================
  * 1) POST /admin/venue   (owner | accounts)
  *    Onboard a venue: founding record (independent) OR link to a group, plus
  *    vp_venues (+ slug), default vp_venue_settings, a vp_screens row, and an
  *    optional first-manager Auth user + vp_venue_staff row. Then an audit row.
- *    Body (from hq.html):
- *      { name, slug, timezone,
+ *    Body (from hq.html and onboard.html):
+ *      { name, slug, timezone, postcode,
+ *        venue_kind: 'pub'|'hotel'|'club'|'rsl'|'charity'|'association'|'other',
+ *        compliance: { accepted: true, by: 'name of who agreed' },
  *        billing:{ type:'founding'|'group', group_id?, included_players?,
- *                  founding?:{ contact_email, mobile, postcode, max_seats, plan } },
+ *                  founding?:{ contact_email, mobile, postcode, max_seats, plan },
+ *                  founding_id? (link an EXISTING venueplay_founding row instead) },
  *        manager?:{ mobile?, email?, display_name } }
  *    -> { ok:true, venue:{id,name,slug}, founding_id?, manager?:{auth_user_id} }
+ *    Refused without the compliance tick and a venue kind: a venue we cannot say accepted
+ *    the gaming laws as its own is not one we onboard (Anisimoff, 1 Oct 2026, point 3).
  * ======================================================================== */
 async function vpaHandleVenue(request, env, json) {
   const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
@@ -1717,6 +1805,21 @@ async function vpaHandleVenue(request, env, json) {
   if (!slugIn) return json({ error: 'A screen slug is required.' }, 400);
   if (billing.type !== 'founding' && billing.type !== 'group') {
     return json({ error: "billing.type must be 'founding' or 'group'." }, 400);
+  }
+  /* THE ACTIVE TICK, before anything is created. HQ reads the sentence to the venue on the
+     onboarding call and ticks it in their name; onboard.html does the same. An onboarding
+     that skipped it used to leave a venue with no record that it ever accepted the gaming
+     laws as its own, which is the one record the lawyer asked for. Nothing is written
+     before this line passes, so a refusal here leaves no half-made venue. */
+  const comp = (b.compliance && typeof b.compliance === 'object') ? b.compliance : {};
+  if (comp.accepted !== true) {
+    return json({ error: 'Tick the compliance line first. The venue must accept that it is responsible for the gaming laws that apply to it; VenuePlay supplies the software only. Nothing was created.' }, 400);
+  }
+  const acceptedBy = String(comp.by || '').trim().slice(0, 120);
+  if (!acceptedBy) return json({ error: 'Enter the name of the person at the venue who accepted the compliance line, so the record says who said it.' }, 400);
+  const venueKind = String(b.venue_kind || '').trim();
+  if (VPA_VENUE_KINDS.indexOf(venueKind) === -1) {
+    return json({ error: 'Pick what the venue is, in its own words: pub, hotel, club, rsl, charity, association or other.' }, 400);
   }
 
   const slug = await vpaUniqueSlug(env, slugIn, name, String((b.postcode || '')).replace(/\D/g, '').slice(0, 4));
@@ -1738,7 +1841,12 @@ async function vpaHandleVenue(request, env, json) {
      work it out, and it is the same helper the self-serve path uses, so the two cannot
      disagree about what time it is at the same venue. */
   const timezone = timezoneIn || vpaTimezoneFromPostcode(venuePostcode);
-  const venueRow = { name: name, slug: slug, timezone: timezone };
+  const venueRow = { name: name, slug: slug, timezone: timezone,
+    /* Migration 100. What they said they are, and the tick with a name and a time on it. */
+    venue_kind: venueKind,
+    compliance_accepted_at: new Date().toISOString(),
+    compliance_accepted_by: acceptedBy };
+  let linkedFounding = false;   // true when billing.founding_id named an existing record
   // HQ's Add venue form does not ask the question, so this stays null and HQ prompts for it.
   // A guess must never occupy this column: see vpaProvisionOneVenue.
   if (venuePostcode) {
@@ -1756,6 +1864,22 @@ async function vpaHandleVenue(request, env, json) {
       // Everything that DISPLAYS a plan reads vp_venues.max_players (see below).
       venueRow.max_players = venueRow.included_players;
     }
+  } else if (billing.founding_id) {
+    /* LINK, DO NOT CREATE. onboard.html's independent path names a venueplay_founding row that
+       already exists (a venue that signed up on the page and whose venue row never got made).
+       Until 15 Oct 2026 that page inserted vp_venues straight through the browser client, so
+       those venues got no au_state from their postcode, no audit row and no compliance record.
+       Now it comes through here like every other onboarding. The welcome email is NOT sent for
+       a linked record: that venue was welcomed when it signed up, and HQ has Resend welcome. */
+    const fid = String(billing.founding_id).trim();
+    const have = await vpaSelect(env, 'venueplay_founding',
+      'id=eq.' + encodeURIComponent(fid) + '&select=id,max_seats,contact_email,status');
+    const row = have && have[0];
+    if (!row) return json({ error: 'That founding record id was not found. Check the uuid in venueplay_founding.' }, 400);
+    foundingId = row.id;
+    venueRow.founding_id = foundingId;
+    venueRow.max_players = row.max_seats || null;
+    linkedFounding = true;
   } else {
     // Independent: create the founding/subscription record first.
     const f = billing.founding || {};
@@ -1846,7 +1970,7 @@ async function vpaHandleVenue(request, env, json) {
   // for independent venues: a grouped venue bills through its operator, who onboards it themselves.
   // Best-effort, and after the audit, so a Resend outage can never cost us the venue record.
   let welcomeSent = false;
-  if (foundingId && b.send_welcome !== false) {
+  if (foundingId && !linkedFounding && b.send_welcome !== false) {
     welcomeSent = await vpaFireHqWelcome(env, {
       foundingId: foundingId,
       email: foundingRow && foundingRow.contact_email,
@@ -1861,9 +1985,12 @@ async function vpaHandleVenue(request, env, json) {
 
   await vpaAudit(env, actor, 'venue_onboarded', 'venue:' + venue.id, {
     name: name, slug: slug, billing: billing.type,
-    founding_id: foundingId || undefined, manager_created: !!managerOut,
+    founding_id: foundingId || undefined, founding_linked: linkedFounding || undefined,
+    manager_created: !!managerOut,
     comp: isComp || undefined, comp_status_fallback: compFellBack || undefined,
     welcome_sent: welcomeSent,
+    /* The record of the tick lives on the venue row; the audit says it was taken, by whom. */
+    venue_kind: venueKind, compliance_accepted_by: acceptedBy,
   });
 
   const out = { ok: true, venue: { id: venue.id, name: venue.name, slug: venue.slug } };
@@ -1874,6 +2001,53 @@ async function vpaHandleVenue(request, env, json) {
     out.warning = 'The venue is set up, but the database would not accept a comp status, so it is marked active and IS counted as a signed-up venue. Fix the status by hand.';
   }
   return json(out);
+}
+
+/* ===========================================================================
+ * GET /admin/venue-compliance?venue_id=   (owner | accounts)
+ *   -> { ok, venue:{id,name,au_state,entity_type,paid_entry_enabled,venue_kind,
+ *                   compliance_accepted_at,compliance_accepted_by},
+ *        suggested_entity_type, permits, recorded:{bingo,raffle,members},
+ *        declarations:[ the last three vp_gaming_declarations ] }
+ *
+ * What HQ shows on a venue's card so a person can do the manual check the lawyer called
+ * prudent (Anisimoff, 1 Oct 2026, point 5): what the venue said it is, whether and when it
+ * accepted the compliance line, which permits it has recorded, and the last three nights it
+ * declared itself the conductor of a paid game. vp_gaming_declarations has no policies
+ * (migration 44: service key only), which is why this is a Worker route and not a select
+ * from the page. Read-only.
+ * ======================================================================== */
+async function vpaHandleVenueCompliance(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const venueId = vpaQueryParam(request, 'venue_id').trim();
+  if (!venueId) return json({ error: 'venue_id is required.' }, 400);
+
+  const vs = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId)
+    + '&select=id,name,au_state,entity_type,paid_entry_enabled,venue_kind,permits,compliance_accepted_at,compliance_accepted_by');
+  const v = vs && vs[0];
+  if (!v) return json({ error: 'No such venue.' }, 404);
+
+  /* Three, newest first. An order AND a limit: the table grows by one row per paid night per
+     venue for ever, and "the last three" without an order is three arbitrary rows. */
+  const declarations = await vpaSelect(env, 'vp_gaming_declarations',
+    'venue_id=eq.' + encodeURIComponent(venueId)
+    + '&select=id,format,entity_type,state,paid_entry,expected_sales_cents,total_prize_cents,category_claimed,declared_at'
+    + '&order=declared_at.desc&limit=3') || [];
+
+  const permits = (v.permits && typeof v.permits === 'object' && !Array.isArray(v.permits)) ? v.permits : {};
+  const recorded = {};
+  VPA_PERMIT_KINDS.forEach((k) => { recorded[k] = vpaPermitRecorded(permits, k); });
+  return json({
+    ok: true,
+    venue: { id: v.id, name: v.name, au_state: v.au_state || null, entity_type: v.entity_type || null,
+             paid_entry_enabled: v.paid_entry_enabled === true, venue_kind: v.venue_kind || null,
+             compliance_accepted_at: v.compliance_accepted_at || null, compliance_accepted_by: v.compliance_accepted_by || null },
+    suggested_entity_type: vpaEntitySuggestion(v.venue_kind),
+    permits: permits,
+    recorded: recorded,
+    declarations: declarations,
+  });
 }
 
 
@@ -2451,11 +2625,20 @@ async function vpaHandleVenueGaming(request, env, json) {
   if (!venueId) return json({ error: 'venue_id is required.' }, 400);
 
   const rows = await vpaSelect(env, 'vp_venues',
-    'id=eq.' + encodeURIComponent(venueId) + '&select=id,name,entity_type,paid_entry_enabled,au_state,postcode');
+    'id=eq.' + encodeURIComponent(venueId) + '&select=id,name,entity_type,paid_entry_enabled,au_state,postcode,venue_kind');
   const prior = rows && rows[0];
   if (!prior) return json({ error: 'That venue no longer exists.' }, 404);
 
   const patch = {};
+  /* What the venue said it is, correctable from HQ when the onboarding call got it wrong. It
+     only ever SUGGESTS entity_type on the HQ card; entity_type itself is still the dropdown
+     below, set by a person. */
+  if (b.venue_kind !== undefined) {
+    if (b.venue_kind !== null && VPA_VENUE_KINDS.indexOf(b.venue_kind) === -1) {
+      return json({ error: 'venue_kind must be one of ' + VPA_VENUE_KINDS.join(', ') + ', or null.' }, 400);
+    }
+    patch.venue_kind = b.venue_kind || null;
+  }
   /* The venue's postcode, and therefore its state. Set at creation and never editable until now,
      so a typo at signup permanently gave a venue the wrong state and the wrong gaming rules, and
      a venue that moved could not be corrected at all. Same class of fault as the ones the
@@ -8466,6 +8649,59 @@ async function vpbSetManagerPerms(request, env, json) {
   }
   await vpaInsert(env, 'vp_admin_audit', { ...vpbActorFields(o), action: 'manager_perms_set', target: 'user:' + target, detail: { permissions: permissions, venues: rows.length } }, false).catch(() => {});
   return json({ ok: true, permissions: permissions });
+}
+
+/* --- POST /account/permits : record a permit, licence or authority the venue holds. ---
+   body { venue_id, kind: 'bingo'|'raffle'|'members',
+          permit: { number, holder:'venue'|'npo', npo_name, authorised_on, expires, note } }
+   -> { ok, permits, recorded:{bingo,raffle,members} }
+
+   The venue's own record of what it holds, written to vp_venues.permits (migration 100) and
+   read back by the console before a paid game (vp-gaming.js permitRecorded). Recording it is
+   the venue's choice and nothing here verifies it: Anisimoff, 1 Oct 2026, point 5 ("you may
+   wish to keep records ... so you can conduct manual checks"), and 8 Oct 2026, point 4, where
+   the warranty and indemnity in the terms suffice when verifying is impractical.
+
+   Guarded like every other settings write: an owner, or a manager with the draws_raffles
+   right (the same toggle that lets them set up a raffle), scoped to the caller's own venues.
+   A host has no row vpbRequireOwner accepts, so a host is refused before the body is read.
+   An all-empty permit clears that kind. The whole object is rewritten from what is stored
+   plus this one kind, so two managers saving different kinds cannot blank each other's. */
+async function vpbSetPermits(request, env, json) {
+  const o = await vpbRequireOwner(request, env);
+  if (o.error) return json({ error: o.error }, o.status);
+  if (!vpbCan(o, 'draws_raffles')) return json({ error: 'You do not have permission to record permits. Ask your account owner.' }, 403);
+  const b = await request.json().catch(() => ({}));
+  const venueId = String(b.venue_id || '').trim();
+  const venue = o.venues.find((v) => v.id === venueId);
+  if (!venue) return json({ error: 'Pick one of your venues.' }, 400);
+  const kind = String(b.kind || '').trim();
+  if (VPA_PERMIT_KINDS.indexOf(kind) === -1) return json({ error: "kind must be 'bingo', 'raffle' or 'members'." }, 400);
+  const cleaned = vpaCleanPermit(b.permit);
+  if (!cleaned.ok) return json({ error: cleaned.error }, 400);
+
+  const rows = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=id,permits');
+  const prior = rows && rows[0];
+  if (!prior) return json({ error: 'That venue could not be read just now. Please try again.' }, 503);
+  const permits = (prior.permits && typeof prior.permits === 'object' && !Array.isArray(prior.permits))
+    ? Object.assign({}, prior.permits) : {};
+  if (cleaned.empty) delete permits[kind]; else permits[kind] = cleaned.permit;
+
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_venues?id=eq.' + encodeURIComponent(venueId), {
+    method: 'PATCH',
+    headers: { ...vpaHeaders(env), 'Prefer': 'return=representation' },
+    body: JSON.stringify({ permits: permits }),
+  });
+  if (!res.ok) return json({ error: 'Could not save. ' + (await res.text()).slice(0, 180) }, 500);
+  const saved = (await res.json())[0] || {};
+  const stored = (saved.permits && typeof saved.permits === 'object') ? saved.permits : permits;
+  const recorded = {};
+  VPA_PERMIT_KINDS.forEach((k) => { recorded[k] = vpaPermitRecorded(stored, k); });
+
+  await vpaInsert(env, 'vp_admin_audit', { ...vpbActorFields(o), action: 'permits_set', target: 'venue:' + venueId,
+    detail: { kind: kind, cleared: cleaned.empty || undefined, holder: cleaned.empty ? undefined : cleaned.permit.holder,
+              recorded: recorded[kind] } }, false).catch(() => {});
+  return json({ ok: true, permits: stored, recorded: recorded });
 }
 
 /* --- POST /account/draw-log : every raffle winner and members draw result for one venue. ---

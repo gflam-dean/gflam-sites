@@ -266,6 +266,24 @@
         <div class="field nvFoundF"><label>Contact email</label><input type="email" id="nvEmail" placeholder="owner@venue.com.au"></div>
         <div class="field"><label>Venue postcode</label><input type="text" id="nvPostcode" placeholder="e.g. 4224" class="mono" maxlength="4" inputmode="numeric"><div class="note" style="margin-top:4px">The VENUE's postcode, not the account's. It sets the state, which decides which gaming rules apply and whether players can use phones for bingo.</div></div>
         <div class="field"><label>First manager's mobile</label><input type="text" id="nvMobile" placeholder="e.g. 0412 345 678" class="mono"><div class="note" style="margin-top:4px">They are texted a login invite. Without this nobody at the venue can sign in.</div></div>
+        <!-- What the venue says it is, and the compliance tick. Anisimoff Legal 9380, 1 Oct 2026, point 3:
+             compliance is the venue's, and an active tick box confirming that is prudent. Read the line to
+             them on the onboarding call and tick it in their name; the Worker refuses the onboarding without
+             it. Their answer to "what are you" is a SUGGESTION for the club/pub dropdown on the card, never
+             set automatically (HQ still decides entity_type). -->
+        <div class="field"><label>What the venue is (their words)</label><select id="nvKind">
+          <option value="">Ask them...</option>
+          <option value="pub">Pub</option>
+          <option value="hotel">Hotel</option>
+          <option value="club">Registered club</option>
+          <option value="rsl">RSL</option>
+          <option value="charity">Charity</option>
+          <option value="association">Association (community, sporting, P and C)</option>
+          <option value="other">Other</option>
+        </select><div class="note" style="margin-top:4px">A club, RSL, charity or association suggests non-profit on the card; a pub or hotel suggests for-profit. You still set it there.</div></div>
+        <div class="field" style="grid-column:1 / -1"><label style="display:flex;align-items:flex-start;gap:8px;font-weight:400;text-transform:none;letter-spacing:0;line-height:1.45"><input type="checkbox" id="nvCompliance" style="width:auto;margin:3px 0 0"> <span id="nvComplianceText">We are responsible for complying with the gaming laws that apply to our venue, including any permit, licence or authority, age limits and attendance rules. VenuePlay supplies the software only.</span></label>
+          <input type="text" id="nvComplianceBy" placeholder="Name of the person at the venue who agreed (e.g. Jane Smith, licensee)" style="margin-top:8px">
+          <div class="note" style="margin-top:4px">Read it to them on the call, then tick it in their name. The venue cannot be created without it, and the record says who agreed and when.</div></div>
         <div class="field nvFoundF"><label>Max players (plan cap)</label><input type="number" id="nvMax" placeholder="e.g. 80" class="mono"></div>
         <div class="field nvFoundF"><label>Plan</label><select id="nvPlan"><option value="monthly"> monthly</option><option value="annual"> annual</option></select></div>
         <div class="field nvFoundF"><label style="display:flex;align-items:center;gap:8px;font-weight:400;text-transform:none;letter-spacing:0"><input type="checkbox" id="nvComp" style="width:auto;margin:0"> Comp / demo venue &mdash; no card, no charge, and not counted as a signed-up venue</label></div>
@@ -1912,7 +1930,8 @@
               ? "This venue can run paid-entry games. They see their own state's rules before each night."
               : "Free entry only, which is a promotional game and lawful everywhere. Set what they are, then switch paid entry on.")+
           '</div>'+
-        '</div>';
+        '</div>'+
+        complianceHtml(v, ent);
       dt.innerHTML='<td colspan="5">'+
         '<b>Screen address</b> screen.venueplay.com.au/'+esc(v.slug||"")+' &middot; '+
         '<b>Timezone</b> '+esc(v.timezone||"")+' &middot; '+
@@ -2021,6 +2040,8 @@
     }
     var dt=e.target.closest("button[data-details]");
     if(dt){ var id=dt.getAttribute("data-details"); S.openVenue=(S.openVenue===id?null:id); renderVenues(); return; }
+    var dc=e.target.closest("button[data-compliance]");
+    if(dc){ loadCompliance(dc.getAttribute("data-compliance"), dc); return; }
     var sp=e.target.closest("button[data-suspend]");
     if(sp){ suspendVenue(sp.getAttribute("data-suspend"), sp.getAttribute("data-to"), sp); return; }
     var ar=e.target.closest("button[data-archive]");
@@ -2087,6 +2108,72 @@
     var sel=e.target.closest("select.gament");
     if(sel) setVenueGaming(sel.getAttribute("data-vid"), { entity_type: sel.value || null }, sel);
   });
+
+  /* COMPLIANCE, ON THE CARD. What the venue said it is, whether and when it accepted the
+     compliance line, the permits it has recorded, and (on request) the last three nights it
+     declared itself the conductor of a paid game. Anisimoff Legal 9380, 1 Oct 2026, point 5:
+     keeping these so a manual check is possible is prudent. This paints what the venue list
+     already carries (migration 100 columns); the button asks the Worker for the rest, because
+     vp_gaming_declarations is service-key only. HQ remains the ONLY place that sets
+     entity_type and paid_entry_enabled: venue_kind here is the venue's word, shown as a
+     suggestion beside the dropdown above, never applied by itself. */
+  var KIND_LABEL={ pub:"a pub", hotel:"a hotel", club:"a registered club", rsl:"an RSL", charity:"a charity", association:"an association", other:"other" };
+  function kindSuggests(kind){
+    if(kind==="club"||kind==="rsl"||kind==="charity"||kind==="association") return "non_profit";
+    if(kind==="pub"||kind==="hotel") return "for_profit";
+    return null;
+  }
+  function permitLine(p, kind){
+    if(!p || typeof p!=="object") return null;
+    var bits=[];
+    if(p.number) bits.push("number "+esc(p.number));
+    if(p.holder==="npo") bits.push("under "+(p.npo_name?esc(p.npo_name)+"'s":"a charity's")+" authority"+(p.authorised_on?" from "+esc(p.authorised_on):""));
+    if(p.expires) bits.push("expires "+esc(p.expires));
+    if(!bits.length) return null;
+    return esc(kind==="members"?"members draw":kind)+": "+bits.join(", ");
+  }
+  function complianceHtml(v, ent){
+    var kind=v.venue_kind||"";
+    var suggest=kindSuggests(kind);
+    var kindTxt = kind ? esc(KIND_LABEL[kind]||kind) : '<span style="color:var(--roll)">not asked</span>';
+    var tick = v.compliance_accepted_at
+      ? ('accepted '+esc(fmtWhen(v.compliance_accepted_at))+(v.compliance_accepted_by?' by '+esc(v.compliance_accepted_by):''))
+      : '<span style="color:var(--roll)">NOT accepted. Onboarded before 15 Oct 2026, or by hand: have them accept it.</span>';
+    var permits=(v.permits&&typeof v.permits==="object")?v.permits:{};
+    var lines=["bingo","raffle","members"].map(function(k){ return permitLine(permits[k], k); }).filter(Boolean);
+    var permitsTxt = lines.length ? lines.join(" &middot; ") : "none recorded (they record them on their settings page)";
+    return '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line-2)">'+
+      '<b>Compliance</b> &middot; they say they are '+kindTxt+
+      (suggest && !ent ? ' <span class="note">(suggests '+(suggest==="non_profit"?"Club (non-profit)":"Pub (for-profit)")+' above; it is not set until you set it)</span>' : '')+
+      (suggest && ent && suggest!==ent ? ' <span class="note" style="color:var(--roll)">(which does not match '+(ent==="non_profit"?"Club":"Pub")+' above; worth a question)</span>' : '')+
+      ' &middot; compliance line '+tick+
+      '<div class="note" style="margin-top:6px"><b>Permits recorded</b> '+permitsTxt+' '+
+      '<button class="mini" data-compliance="'+esc(v.id)+'">Check</button></div>'+
+      '<div class="note" data-complianceout="'+esc(v.id)+'" style="margin-top:4px"></div>'+
+      '</div>';
+  }
+  function loadCompliance(id, btn){
+    var out=document.querySelector('[data-complianceout="'+id+'"]'); if(!out) return;
+    btn.disabled=true; out.textContent="Reading…";
+    workerGet("/admin/venue-compliance?venue_id="+encodeURIComponent(id)).then(function(r){
+      btn.disabled=false;
+      if(!r || r.error){ out.innerHTML='<span style="color:var(--roll)">Could not read it: '+esc((r&&r.error)||"no answer")+'</span>'; return; }
+      var rec=r.recorded||{};
+      var recTxt=["bingo","raffle","members"].map(function(k){ return esc(k==="members"?"members draw":k)+" "+(rec[k]?'<span style="color:var(--win)">recorded</span>':'<span style="color:var(--faint)">not recorded</span>'); }).join(" &middot; ");
+      var decl=(r.declarations||[]);
+      var declTxt = decl.length
+        ? decl.map(function(d){
+            var money=[];
+            if(d.total_prize_cents!=null) money.push("prize $"+(d.total_prize_cents/100).toFixed(0));
+            if(d.expected_sales_cents!=null) money.push("sales $"+(d.expected_sales_cents/100).toFixed(0));
+            return '<div>'+esc(fmtWhen(d.declared_at))+' &middot; '+esc(d.format||"")+' &middot; '+(d.paid_entry?"paid entry":"free entry")+
+              (d.state?' &middot; '+esc(d.state):'')+(d.entity_type?' &middot; '+esc(d.entity_type.replace("_"," ")):'')+
+              (d.category_claimed?' &middot; '+esc(d.category_claimed):'')+(money.length?' &middot; '+money.join(", "):'')+'</div>';
+          }).join("")
+        : '<div>No declarations yet: this venue has not started a paid game, raffle or members draw.</div>';
+      out.innerHTML='<b>Recorded</b> '+recTxt+'<div style="margin-top:4px"><b>Last declarations</b> (the venue saying it is the conductor, per game)</div>'+declTxt;
+    }).catch(function(e){ btn.disabled=false; out.textContent="Could not read it: "+String((e&&e.message)||e); });
+  }
 
   /* Club or pub, and whether paid entry is unlocked. HQ-only on purpose: a venue answering
      this about itself is the wrong person to ask, because the answer decides what it may do. */
@@ -3307,6 +3394,15 @@
       return;
     }
     body.manager={ mobile:mob, display_name:"Manager" };
+    /* The compliance tick and what they are. The Worker refuses without both; checked here as
+       well so the person on the call is told before the form clears. */
+    var kind=$("nvKind").value;
+    if(!kind){ errFlash("addVenueErr","Pick what the venue is, in their words (pub, hotel, club, RSL, charity, association or other)."); return; }
+    body.venue_kind=kind;
+    if(!$("nvCompliance").checked){ errFlash("addVenueErr","Read them the compliance line and tick it. The venue must accept that the gaming laws are its responsibility before it is created."); return; }
+    var by=$("nvComplianceBy").value.trim();
+    if(!by){ errFlash("addVenueErr","Enter the name of the person at the venue who agreed to the compliance line."); return; }
+    body.compliance={ accepted:true, by:by };
     if(bill==="group"){
       var gid=$("nvGroup").value; if(!gid){ errFlash("addVenueErr","Choose an operator group."); return; }
       body.billing.group_id=gid;
@@ -3336,6 +3432,7 @@
       if(res.warning){ errFlash("addVenueErr", res.warning); }
       flash("addVenueOk", msg);
       $("nvName").value=""; $("nvSlug").value=""; $("nvEmail").value=""; $("nvMobile").value=""; $("nvMax").value=""; $("nvCap").value=""; $("nvPostcode").value=""; $("nvComp").checked=false; $("nvWelcome").checked=true;
+      $("nvKind").value=""; $("nvCompliance").checked=false; $("nvComplianceBy").value="";
       loadAll();
     });
   });

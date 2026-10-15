@@ -323,6 +323,10 @@
   "checks": 5,
   "counted_by": "lines"
  },
+ "tools/test-permits-and-compliance-tick.js": {
+  "checks": 63,
+  "counted_by": "lines"
+ },
  "tools/test-phones-cannot-be-impersonated.js": {
   "checks": 34,
   "counted_by": "lines"
@@ -429,6 +433,10 @@
  },
  "tools/test-ta-screen.js": {
   "checks": 9,
+  "counted_by": "lines"
+ },
+ "tools/test-terms-put-compliance-on-the-venue.js": {
+  "checks": 44,
   "counted_by": "lines"
  },
  "tools/test-trivia-15-oct.js": {

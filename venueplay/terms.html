@@ -40,8 +40,10 @@
   .updated{color:var(--muted);font-size:14px;margin-bottom:8px}
   h2{font-family:'Hanken Grotesk',sans-serif;font-weight:800;color:var(--white);font-size:21px;margin:34px 0 10px;letter-spacing:-0.01em}
   p{margin:0 0 14px}
-  ul{margin:0 0 14px;padding-left:20px}
+  ul,ol{margin:0 0 14px;padding-left:20px}
+  ol.clauses{list-style:none;padding-left:0}
   li{margin:0 0 8px}
+  ol.clauses li{margin:0 0 12px}
   strong{color:var(--white)}
 
   footer{border-top:1px solid var(--line);margin-top:48px;padding:30px 0}
@@ -80,7 +82,7 @@
   <div class="wrap">
     <div class="eyebrow">Terms</div>
     <h1>Terms of Service</h1>
-    <p class="updated">Effective date: 22 September 2026</p>
+    <p class="updated">Effective date: 15 October 2026</p>
 
     <p>These Terms of Service ("Terms") apply to your use of <strong>VenuePlay</strong>, a product of <strong>Gflam Group Pty Ltd</strong> (ABN 35 679 383 049), trading as VenuePlay ("VenuePlay", "we", "us", "our"). By signing up for or using VenuePlay, you agree to these Terms. If you are agreeing on behalf of a venue or business, you confirm you are authorised to do so.</p>
 
@@ -109,14 +111,25 @@
     <p>You can cancel at any time. Cancellation stops future renewals; a monthly plan ends at the end of the current month, and an annual plan runs to the end of the period you have already paid for. Except where required by law, payments already made are not refunded for part-used periods. If you cancel before your first payment during the free month, you are never charged.</p>
 
     <h2>6. Your responsibilities</h2>
-    <ul>
-      <li>Give accurate signup and billing details and keep them up to date.</li>
-      <li><strong>You conduct the game.</strong> You are the conductor for the purposes of the gaming laws of your state or territory. You decide whether to charge for entry, you handle any ticket sales, you supply the prize and you keep the proceeds. VenuePlay supplies the software that draws the numbers, calls the game and displays it on your screen. Bingo, musical bingo, raffles and members draws are regulated gaming in every Australian state and territory; trivia is a game of skill and is not.</li>
-      <li>Meet the rules that apply to your category, including holding any permit, licence or authority your state or territory requires, and printing any licence number where the rules require it.</li>
-      <li>Tell us accurately whether your venue is a non-profit (such as a registered club, RSL or bowls club) or a for-profit business (such as a hotel, pub or tavern). That answer decides which rules we show you and whether paid-entry games are made available to your venue at all, so we rely on it. Tell us if it changes.</li>
-      <li>Free-entry games are available to every venue. Where we make paid-entry games available to you, that is not advice that a particular game is lawful for you to run, and it does not transfer any of the responsibilities above to us.</li>
-      <li>Do not misuse the platform, attempt to break its security, or use it to send unlawful or unsolicited messages.</li>
-    </ul>
+    <p>This section is the heart of the agreement, so it is numbered. In it, "gaming activity" means bingo, musical bingo, raffles, members draws and any other game of chance you run on VenuePlay. Bingo, musical bingo, raffles and members draws are regulated gaming in every Australian state and territory. Trivia is a game of skill and is not a gaming activity.</p>
+    <!-- Anisimoff Legal, ref 9380, letters of 1 Oct 2026 (points 3, 5, 7, 9, 12, 13, 14, 15) and
+         8 Oct 2026 (points 1(a), 3, 8, 10). Every clause below answers a line in those letters. -->
+    <ol class="clauses">
+      <li><strong>6.1 Accurate details.</strong> Give accurate signup and billing details and keep them up to date.</li>
+      <li><strong>6.2 You conduct the game.</strong> You are the conductor of every gaming activity run at your venue for the purposes of the gaming laws of your state or territory. You decide whether to charge for entry, you handle any ticket sales, you supply the prize and you keep the proceeds. VenuePlay supplies the software that draws the numbers, calls the game and displays it on your screen, and nothing more. <strong>VenuePlay is not responsible for or in any way involved with the conduct or organisation of the gaming activity.</strong></li>
+      <li><strong>6.3 Compliance is yours.</strong> You are responsible for complying with every law that applies to a gaming activity at your venue, including the community gaming, charitable gaming, lotteries and trade promotion laws of your state or territory and the Interactive Gambling Act 2001 (Cth). When you sign up, or when we set your venue up for you, you accept this section by ticking a box, and we record when and who. If we learn that you are running a gaming activity outside what the law or your permit allows, we may tell you, and we may suspend or end your subscription.</li>
+      <li><strong>6.4 Permits, licences and authorities.</strong> You are responsible for obtaining and holding every permit, licence, authority or approval your state or territory requires before you run a gaming activity, for keeping it current, and for printing a permit or authority number wherever the rules require it. You can record what you hold on your settings page so it is on file. We do not verify what you record, and recording it does not make a game lawful.</li>
+      <li><strong>6.5 Victoria.</strong> If your venue is in Victoria, you warrant that before you run bingo (including musical bingo) or a raffle that charges for entry you hold a current minor gaming permit from the VGCCC, or you are a VGCCC-declared community or charitable organisation that has notified the VGCCC, and that you will not use VenuePlay to issue bingo tickets to players' phones. Victorian law bans supplying bingo tickets or a random number generator to anyone without a permit, so we rely on this warranty to supply the software to you at all.</li>
+      <li><strong>6.6 Running a game for a charity.</strong> If you run a paid raffle or draw on behalf of a charity or non-profit, you are responsible for obtaining the charity's written authorisation, for making sure the charity holds any authority its state requires (in New South Wales the charity holds the authority and you run the raffle under it), and for paying the charity what the law requires. None of that is our responsibility.</li>
+      <li><strong>6.7 Attendance.</strong> Where the law requires players to be physically present at your venue to take part, you are responsible for making sure they are. VenuePlay cannot see who is in the room.</li>
+      <li><strong>6.8 Age.</strong> You are responsible for every age restriction that applies to a gaming activity at your venue, including keeping minors out where the law excludes them. Victoria excludes minors from all gambling; ACT excludes them from housie that needs a permit; Tasmania excludes them from raffles. Where we show an "I am 18 or over" tick on a player's phone, it is a prompt from you to the player and does not move this responsibility to us.</li>
+      <li><strong>6.9 Players' details, consent and records.</strong> You are responsible for complying with the Privacy Act 1988 (Cth) and the Spam Act 2003 (Cth) for any player details collected for your venue, for obtaining the consent the law requires before you send marketing, and for keeping the records the gaming laws require of a conductor, including winner and draw records and any record of proceeds and where they went. We give you a draw record download to help; keeping it is up to you.</li>
+      <li><strong>6.10 Tell us what you are.</strong> Tell us accurately whether your venue is a non-profit (a registered club, RSL, charity or association) or a for-profit business (a hotel, pub or tavern). That answer decides which rules we show you and whether paid-entry games are made available to your venue at all, so we rely on it. Tell us if it changes.</li>
+      <li><strong>6.11 Advertising.</strong> Any advertising of a gaming activity is yours, including any permit number, dates or conditions the advertisement must carry, and the rules in your state about what a gambling advertisement must not show or suggest.</li>
+      <li><strong>6.12 What we show you is not advice.</strong> Free-entry games are available to every venue. Where we make paid-entry games available to you, that is not advice that a particular game is lawful for you to run, and it does not transfer any of the responsibilities above to us. Where we warn you, or offer to start a game as free entry instead, that is a courtesy, not a check we have made on your behalf.</li>
+      <li><strong>6.13 Proper use.</strong> Do not misuse the platform, attempt to break its security, or use it to send unlawful or unsolicited messages.</li>
+      <li><strong>6.14 Indemnity.</strong> You indemnify VenuePlay and Gflam Group Pty Ltd, and hold us harmless, against any loss, cost, fine, penalty, claim or regulatory action arising from a gaming activity you run, from any failure by you to comply with a law, permit, licence or authority, or from a breach of this section 6. This indemnity survives the end of these Terms.</li>
+    </ol>
     <p>Before a game that charges for entry, and before a raffle or a members draw, we show you a summary of the gaming rules for your state and record that you have seen it. For a free bingo game we do not interrupt you: we record the game's details (your state, the format and that entry was free) automatically, and that record says it was not shown to you. That summary is a prompt to check, not legal advice, and the rules change. If you are unsure what applies to your venue, ask your state regulator before you sell a ticket.</p>
 
     <h2>7. Music licensing</h2>
