@@ -328,7 +328,7 @@
   "counted_by": "lines"
  },
  "tools/test-permits-and-compliance-tick.js": {
-  "checks": 63,
+  "checks": 68,
   "counted_by": "lines"
  },
  "tools/test-phones-cannot-be-impersonated.js": {

@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '15 Oct 2026, 15:04 · e0151127';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '15 Oct 2026, 15:15 · 73730936';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -3855,6 +3855,13 @@ async function vpaProvisionOneVenue(env, opts) {
          day for an hour, and the last-day email lands at 9am instead of 8. vpaTimezoneFromPostcode
          has existed all along and one of the three creation paths was already using it. */
       timezone: vpaTimezoneFromPostcode(opts.postcode),
+      /* The self-serve checkout tick carries the VPA_COMPLIANCE_TICK sentence under "I agree to
+         the Terms" (index.html and nsw.html, 15 Oct 2026), and /checkout refuses a signup without
+         the tick, so a venue provisioned from a paid signup HAS accepted it. Record who, from the
+         founding contact, the way /admin/venue records the name typed in HQ. Without this every
+         self-serve venue read "NOT accepted" on the HQ compliance card. */
+      compliance_accepted_at: opts.complianceBy ? new Date().toISOString() : null,
+      compliance_accepted_by: opts.complianceBy || null,
     });
     created = true;
   }
@@ -3925,12 +3932,14 @@ async function vpaProvisionGroup(env, session, f) {
     // venue). The separate admin-invoiced vp_venue_groups model is not used here.
     step = 'venues';
     let anyCreated = false;
+    // Who ticked the compliance sentence at checkout: the founding contact, or the card holder.
+    const complianceBy = String(f.contact_name || cd.name || '').trim().slice(0, 200) || 'the signup contact';
     for (let i = 0; i < venues.length; i++) {
       const v = venues[i] || {};
       const name = String(v.name || '').trim() || ('Venue ' + (i + 1));
       const seats = parseInt(v.seats, 10) || null;
       const postcode = String(v.postcode || '').replace(/\D/g, '').slice(0, 4);
-      const r = await vpaProvisionOneVenue(env, { foundingId: foundingId, groupId: null, name: name, seats: seats, postcode: postcode, entityType: v.entity_type || null, authUserId: authUserId });
+      const r = await vpaProvisionOneVenue(env, { foundingId: foundingId, groupId: null, name: name, seats: seats, postcode: postcode, entityType: v.entity_type || null, authUserId: authUserId, complianceBy: complianceBy });
       if (r.created) anyCreated = true;
       // The welcome email needs each venue's OWN screen link, and the slug only exists
       // once the venue does. Without this every card in the email pointed at a bare /tv.

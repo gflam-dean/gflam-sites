@@ -229,6 +229,25 @@ function permit(over) { var p = { number: '', holder: 'venue', npo_name: '', aut
   check('a kind outside the seven is refused', r.status === 400 && DB.vp_venues[0].venue_kind === 'club', r);
   r = await vpaHandleVenueGaming(as(ADMIN, { venue_id: ROYAL, venue_kind: null }), ENV, J);
   check('and it can be cleared', r.status === 200 && DB.vp_venues[0].venue_kind === null, r);
+
+  /* The self-serve path. A paid signup ticks the Terms box, which since 15 Oct 2026 carries the
+     compliance sentence on index.html and nsw.html, and the webhook provisions the venue through
+     vpaProvisionOneVenue with complianceBy = the founding contact. Run the real function on the rig
+     and read the row it wrote. Without this every self-serve venue read "NOT accepted" in HQ. */
+  print('a self-serve signup records the tick on the venue it provisions');
+  world();
+  r = await vpaProvisionOneVenue(ENV, { foundingId: 'f1', groupId: null, name: 'The Self Serve Arms', seats: 60, postcode: '2000', authUserId: 'u1', complianceBy: 'Sam Signup' });
+  var made = (DB.vp_venues || []).filter(function (v) { return v.name === 'The Self Serve Arms'; })[0];
+  check('provisioned with the contact as the acceptor', r && r.created && made && made.compliance_accepted_by === 'Sam Signup', made);
+  check('and a time of acceptance', !!(made && made.compliance_accepted_at && !isNaN(Date.parse(made.compliance_accepted_at))), made);
+  r = await vpaProvisionOneVenue(ENV, { foundingId: 'f1', groupId: null, name: 'The Untouched Arms', seats: 60, postcode: '2000', authUserId: 'u1' });
+  var made2 = (DB.vp_venues || []).filter(function (v) { return v.name === 'The Untouched Arms'; })[0];
+  check('no contact, nothing recorded: null is the truth, never a made-up name', !!made2 && made2.compliance_accepted_by === null && made2.compliance_accepted_at === null, made2);
+  ['venueplay/index.html', 'venueplay/nsw.html'].forEach(function (f) {
+    var page = readFile(f);
+    var label = (page.match(/<label class="ck"><input type="checkbox" id="vp-consent">[\s\S]*?<\/label>/) || [''])[0];
+    check(f + ': the consent tick carries the compliance sentence, verbatim', label.indexOf('We are responsible for complying with the gaming laws that apply to our venue, including any permit, licence or authority, age limits and attendance rules. VenuePlay supplies the software only.') !== -1, label.slice(0, 200));
+  });
   finished = true;
 })().catch(function (e) { print('  FAIL the test itself threw: ' + e + '\n' + e.stack); fails++; });
 drainMicrotasks();
