@@ -1,17 +1,21 @@
 /* Which phones are told "tonight you play on paper"?
 
-   In SA, ACT and Tasmania a bingo ticket has to be on paper, and the phone page blanks itself
+   In SA, Victoria and Tasmania a bingo ticket has to be on paper, and the phone page blanks itself
    when the Worker says so. That flag has been wrong twice: first it ignored the format (a TRIVIA
    player in Adelaide had their phone wiped), and then it included musical bingo, which the musical
    phone page never obeyed, so the two halves of the product disagreed. Dean settled it on
-   21 Sep 2026: musical bingo is not housie and keeps its phone tickets.
+   21 Sep 2026: musical bingo is not housie and keeps its phone tickets, and again on 15 Oct 2026
+   when the Victorian letter arrived: "musical bingo cards stay in every state. Its not bingo."
+
+   The list itself moved on 15 Oct 2026 to the Anisimoff Legal table (8 Oct 2026): Victoria ON
+   (s8.4.7B), Tasmania ON (authorised bingo), ACT OFF ("not specifically prohibited").
 
    Runs the REAL handleJoinInfo out of the shipped game Worker against the rig's fake database.
    Run from the repo root:  jsc tools/test-paper-is-for-bingo-only.js
 */
 load('tools/rig-game-worker.js');
 var finished = false;
-var V = { SA: '10000000-0000-4000-8000-000000000001', ACT: '10000000-0000-4000-8000-000000000002', TAS: '10000000-0000-4000-8000-000000000003', NSW: '10000000-0000-4000-8000-000000000004' };
+var V = { SA: '10000000-0000-4000-8000-000000000001', VIC: '10000000-0000-4000-8000-000000000002', TAS: '10000000-0000-4000-8000-000000000003', NSW: '10000000-0000-4000-8000-000000000004', ACT: '10000000-0000-4000-8000-000000000005' };
 DB.vp_venues = Object.keys(V).map(function (st) { return { id: V[st], name: 'The ' + st + ' Hotel', slug: 'the-' + st.toLowerCase(), au_state: st, status: 'active' }; });
 DB.vp_venue_settings = []; DB.vp_sessions = []; DB.vp_games = [];
 var n = 0;
@@ -26,11 +30,11 @@ venueByCode = async function (env, code) { var m = /^VENUE-(\w+)$/.exec(code); r
 (async function () {
   async function paper(code) { BODY = { code: code }; var r = await handleJoinInfo({}, ENV, json); return r.body; }
   print('the three paper states');
-  for (var st of ['SA', 'ACT', 'TAS']) {
+  for (var st of ['SA', 'VIC', 'TAS']) {
     var b = await paper('VENUE-' + st);
     show(st + ': ordinary bingo is on paper', b.paper_bingo === true, JSON.stringify(b).slice(0, 120));
   }
-  for (var st2 of ['SA', 'ACT', 'TAS']) {
+  for (var st2 of ['SA', 'VIC', 'TAS']) {
     var mu = await paper(night(st2, 'musical'));
     show(st2 + ': MUSICAL bingo keeps its phone tickets', mu.format === 'musical' && mu.paper_bingo === false, JSON.stringify(mu).slice(0, 120));
   }
@@ -39,6 +43,8 @@ venueByCode = async function (env, code) { var m = /^VENUE-(\w+)$/.exec(code); r
   print('everywhere else');
   var nsw = await paper('VENUE-NSW');
   show('NSW: bingo is on the phone', nsw.paper_bingo === false, JSON.stringify(nsw).slice(0, 120));
+  var act = await paper('VENUE-ACT');
+  show('ACT: bingo is back on the phone (Anisimoff, 8 Oct 2026)', act.paper_bingo === false, JSON.stringify(act).slice(0, 120));
   finished = true;
 })().catch(function (e) { print('  FAIL the test itself threw: ' + e + '\n' + e.stack); bad++; });
 drainMicrotasks();

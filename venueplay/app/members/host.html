@@ -534,9 +534,13 @@
   /* THE SERVER HAS NO ACCEPTANCE FOR TONIGHT (428, 14 Oct 2026): the record of "I understand" never
      reached it, or this browser remembered a yes the server never heard. Show the rules again and,
      once accepted, draw. Nothing was drawn by the refused request. */
+  /* freeEntry: a members draw is ALWAYS free entry (every state's rule for it says so), so the
+     rules shown are the free-entry rules and the paid-entry hard block can never fire here
+     (15 Oct 2026). The popup is still shown and accepted once a night: the Worker refuses a
+     draw whose only record tonight is the silent kind. */
   function rulesAgain(e){
     if(!e || e.status!==428 || !window.VPGaming) return;
-    VPGaming.gateFor("members", startDraw, { force:true, waitRecord:true });
+    VPGaming.gateFor("members", startDraw, { force:true, waitRecord:true, freeEntry:true });
   }
   function startDraw(){
     /* A CHANNEL BLIP DOES NOT STOP THE DRAW. This refused with "No TV connected yet" whenever
@@ -896,7 +900,7 @@
   });
   /* State gaming rules, once a night, before the first draw. */
   /* waitRecord: the draw is refused by the Worker until tonight's acceptance is on the record (14 Oct 2026). */
-  $("drawBtn").addEventListener("click", function(){ if(window.VPGaming) VPGaming.gateFor("members", startDraw, { waitRecord:true }); else startDraw(); });
+  $("drawBtn").addEventListener("click", function(){ if(window.VPGaming) VPGaming.gateFor("members", startDraw, { waitRecord:true, freeEntry:true }); else startDraw(); });
   $("claimBtn").addEventListener("click", onClaim);
   $("rollBtn").addEventListener("click", onRollover);
   $("saveSettingsBtn").addEventListener("click", saveSettings);

@@ -228,7 +228,11 @@
   "counted_by": "lines"
  },
  "tools/test-free-entry-rules-are-the-states-own.js": {
-  "checks": 24,
+  "checks": 36,
+  "counted_by": "lines"
+ },
+ "tools/test-gaming-rules-letters-15-oct.js": {
+  "checks": 66,
   "counted_by": "lines"
  },
  "tools/test-jag-joker.js": {
@@ -308,7 +312,7 @@
   "counted_by": "lines"
  },
  "tools/test-paper-is-for-bingo-only.js": {
-  "checks": 8,
+  "checks": 9,
   "counted_by": "lines"
  },
  "tools/test-paper-night-event-private.js": {
@@ -333,6 +337,10 @@
  },
  "tools/test-platform-worker-15-oct.js": {
   "checks": 15,
+  "counted_by": "lines"
+ },
+ "tools/test-play-live-age-gate-15-oct.js": {
+  "checks": 38,
   "counted_by": "lines"
  },
  "tools/test-pr-boards-15-oct.js": {

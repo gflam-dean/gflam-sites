@@ -72,6 +72,7 @@ function URL(u) {
 function json(o) { return { _json: o }; }
 function readJson(r) { return Promise.resolve(r.body || {}); }
 var PAPER_BINGO_STATES = { has: function () { return false; } };
+function ageGateFor() { return false; }   // the age tick (15 Oct 2026) is proven by tools/test-play-live-age-gate-15-oct.js, not here
 var console = { log: function () {}, warn: function () {} };
 
 /* The venues. ONE has an issued code that differs from its hash: that is the

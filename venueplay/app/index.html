@@ -2971,7 +2971,14 @@
     }
     gate();
     function gate(){ if(window.VPGaming) VPGaming.gateFor("bingo90", go, { gameIsPaid: !!G.paidMode }); else go(); }
-    function go(){ if(G.status==="lobby") startGame(); else openLobby(); }
+    /* { free:true }: the state says this venue may not charge tonight (or has no permit on record
+       where one is needed), and the host pressed "Start as a free-entry game" (15 Oct 2026). Put
+       the night back to free BEFORE it opens: the dropdown is the one truth about paid mode, so
+       set it there and let its own change handler carry it into G.paidMode and the room. */
+    function go(r){
+      if(r && r.free){ var ps=$("paidSel"); if(ps){ ps.value=""; try{ ps.dispatchEvent(new Event("change")); }catch(e){} } G.paidMode=""; }
+      if(G.status==="lobby") startGame(); else openLobby();
+    }
   });
   var _startBusy = false;
   $("cancelLobbyBtn").addEventListener("click", cancelLobby);

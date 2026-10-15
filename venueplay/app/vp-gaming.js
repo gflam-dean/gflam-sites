@@ -16,14 +16,19 @@
  * from another's would be worse than silence, because a venue would act on it.
  *
  * WHERE THE FACTS COME FROM
- * Each state's own legislation and regulator guidance, read in August 2026:
- *   NSW  Community Gaming Act 2018 + Community Gaming Regulation 2020 (NSW Fair Trading)
- *   QLD  Charitable and Non-Profit Gaming Act 1999 (OLGR), plus their letter of 18 Aug 2026
- *   VIC  Gambling Regulation Act 2003, Rules of Bingo Gazette S462 (VGCCC)
- *   WA   Gaming and Wagering Commission Act 1987 (Gaming and Wagering Commission)
+ * Two letters of advice from Mark Armstrong, Anisimoff Legal (their ref 9380), and the threshold
+ * tables at the end of each one are the source of truth for every figure a venue is shown:
+ *   1 Oct 2026  NSW, the general position, and the Interactive Gambling Act (Cth)
+ *   8 Oct 2026  QLD, VIC, ACT and TAS
+ * The letters establish that VenuePlay is not the conductor of any game and not a third-party
+ * operator: the venue conducts the game, holds any permit, licence or authority, and carries
+ * compliance. Monitoring and hard blocks are "prudent, not mandatory"; Dean asked for them anyway
+ * (15 Oct 2026), so a venue that may not charge in its state is offered a free-entry game and not
+ * a paid one. WA, SA and NT are not yet advised, so their text is what we read ourselves in
+ * August 2026 from each state's own legislation and regulator guidance:
+ *   WA   Gaming and Wagering Commission Act 1987 (Gaming and Wagering Commission), plus point 4
+ *        of the 1 Oct letter on raffle certification
  *   SA   Lottery and Gaming Act 1936 / Lottery and Gaming Regulations (Consumer and Business Services)
- *   ACT  Lotteries Act 1964, Unlawful Gambling Act 2009 (Gambling and Racing Commission)
- *   TAS  Gaming Control Act 1993 (Liquor and Gaming Tasmania)
  *   NT   Gaming Control Act 1993 (Licensing NT)
  * It moves. Victoria has changes landing through 2027. Treat this as a prompt to check, never
  * as advice: the footer of every popup says exactly that.
@@ -58,85 +63,117 @@
            'no'    it may not charge at all: free entry only
      Every state allows a FREE entry game for anyone, so 'no' never means
      "you cannot run this", only "you cannot sell tickets for it".
+
+     permit: 'required'       the state will not let this be charged for without a permit,
+                              licence or authority, so the gate will not open a PAID game
+                              until one is recorded on the account (vp_venues.permits)
+             'unless_exempt'  a permit is needed above an exemption the letters describe;
+                              the gate warns when none is recorded and lets the host decide
+     holder: 'npo'            the permit belongs to the charity or non-profit the game is
+                              run for, not the venue: recording their name and the date of
+                              their written authorisation counts (see permitRecorded)
+     ads:    one line on what an ad for the game must not do, where a letter gives one
      --------------------------------------------------------------------------- */
   var STATES = {
 
     NSW: {
       confirmed: true, name: 'New South Wales', regulator: 'NSW Fair Trading',
-      free: { all: ['Over $10,000 in total prize value you need an authority from NSW Fair Trading first.',
-                    'If the game is tied to the gaming machines, the prize cap is $1,000.'] },
+      /* Anisimoff, 1 Oct 2026, table p.9. The "$1,000 if tied to the gaming machines" line that
+         used to sit in three places here is gone: the lawyer says it is not relevant to anything
+         this platform runs. A members draw with a jackpot that rolls over week to week is a
+         progressive lottery in NSW, which is where the $7,000 cash figure comes from. */
+      free: { all: ['A free-entry game is a free lottery: anyone may run one, total prizes up to $30,000, and no cash prizes. Run as a trade promotion (free entry, promoting the venue) it needs an authority from NSW Fair Trading above $10,000 in prizes.'],
+              members: ['A jackpot that rolls over from week to week is a progressive lottery: no authority up to $30,000 in total prizes, and cash prizes are capped at $7,000.'] },
+      /* Permitted: Regulation s23(a), "appropriate computer-generated documents" (Anisimoff, 1 Oct 2026). */
       phones: { bingo: true },
+      ads: 'An ad for this game must not encourage anyone to break the law, show children taking part, or suggest that winning is certain or that entering will improve anyone’s finances (Anisimoff, 1 Oct 2026, point 15).',
       for_profit: {
         bingo:  { paid: 'no', notes: [
-          'Paid bingo in NSW is for registered clubs only, and only on club premises. A hotel cannot run it, and unlike a raffle there is no route through a charity.',
-          'Free entry is always open to you. Over $10,000 in prize value needs an authority.'] },
-        raffle: { paid: 'cause', notes: [
-          'A paid raffle has to be run by or on behalf of a charity or a non-profit. A pub can run one FOR a nominated cause: get their authorisation in writing first.',
-          'At least 40% of the gross takings must go to the benefiting organisation. The pub cannot be its own beneficiary.',
-          'Prizes up to $30,000, and cash prizes are allowed.'] },
+          'Paid bingo in NSW is club bingo (registered clubs only, on club premises, $70 a game and no cash prizes) or charity housie (run to raise funds for a charity or non-profit). A hotel cannot run either in its own right.',
+          'Social housie (a $40 prize pool a session, $200 jackpot) cannot be run on licensed premises, so it is not open to a pub or a club.',
+          'Free entry is always open to you: a free lottery, up to $30,000 in prizes and no cash prizes.'] },
+        raffle: { paid: 'cause', permit: 'required', holder: 'npo', notes: [
+          'A pub may run a paid raffle FOR a charity or non-profit under their written authorisation. The charity holds the authority from NSW Fair Trading and you operate under it. Record their authority on the account page before you sell a ticket.',
+          'How much of the gross goes to the charity (30 to 40%, depending on the kind of lottery) is between you and them.',
+          'A draw lottery is up to $30,000 in total prizes, cash allowed. A promotional raffle to attract patrons is for club licences only, up to $5,000 and no cash prizes.'] },
         members:{ paid: 'no', notes: [
-          'A members draw is a trade promotion, so entry must be free and cannot depend on a purchase.',
-          'Over $10,000 in prize value you need an authority. If the draw is tied to the gaming machines the cap is $1,000.'] }
+          'A members draw is free entry: a free lottery (up to $30,000 in prizes, no cash prizes) or a trade promotion (free entry, authority above $10,000).',
+          'A jackpot that rolls over week to week is a progressive lottery: no authority up to $30,000 in total, and cash prizes are capped at $7,000.'] }
       },
       non_profit: {
         bingo:  { paid: 'yes', notes: [
-          'Club bingo: a maximum of $70 a game, and NO money prizes. On club premises. There is no cap on tickets and no proceeds rule.',
-          'Charity housie is the alternative if you want cash prizes, up to $10,000 a session and 48 tickets a person, but 12.5% to charity plus 12.5% expenses plus 75% prizes leaves the club nothing.'] },
+          'Club bingo: by or on the authority of a registered club, to attract patrons. A maximum of $70 a game, one bonus prize up to $70, and no cash prizes.',
+          'Charity housie: to raise funds for a charity or non-profit. Total prizes up to $10,000 and no more than 75% of gross, 48 tickets a person. No authority needed for either.'] },
         raffle: { paid: 'yes', notes: [
-          'No permit needed. At least 40% of the gross takings goes to the benefiting organisation.',
-          'Prizes up to $30,000, and cash prizes are allowed.'] },
+          'A draw lottery: for non-profits, no authority needed, total prizes up to $30,000. A promotional raffle (club licence, to attract patrons) is up to $5,000 with no cash prizes.',
+          'An art union (a prize pool of $30,000 or more) needs an authority from NSW Fair Trading.'] },
         members:{ paid: 'no', notes: [
-          'Entry must be free: a members draw is a trade promotion.',
-          'Over $10,000 in prize value you need an authority. Tied to the gaming machines, the cap is $1,000.'] }
+          'Entry must be free: a free lottery (up to $30,000 in prizes, no cash prizes) or a trade promotion (free entry, authority above $10,000).',
+          'A jackpot that rolls over week to week is a progressive lottery: no authority up to $30,000 in total, and cash prizes are capped at $7,000.'] }
       }
     },
 
     QLD: {
       confirmed: true, name: 'Queensland', regulator: 'OLGR',
-      free: { all: ['In Queensland this is a Category 4 promotional game, which needs no licence and has no prize limit.'] },
-      phones: { bingo: 'pending' },
+      /* Anisimoff, 8 Oct 2026, table p.7 to p.8. Dean's settled decision is "leave QLD": the paid-entry
+         block below stays until our number generator is approved. Only the words changed. */
+      free: { all: ['In Queensland a free-entry game is a Category 4 promotional game: any business may run one, no licence, and no prize limit. Entry must be free apart from buying goods or services at their normal price.'] },
+      /* Permitted: Schedule 2, to "give" a ticket "includes allot electronically" (Anisimoff, 8 Oct 2026). */
+      phones: { bingo: true },
       /* Our number generator is not yet approved here, which blocks the DRAW itself
          regardless of what the venue is allowed to do. This is about us, not them. */
       blocked: 'Our number generator is still going through OLGR approval, so we cannot run bingo, musical bingo, raffles or members draws in Queensland yet. Trivia is unaffected: it is a game of skill and OLGR do not regulate it.',
       for_profit: {
-        bingo:  { paid: 'no', notes: ['A for-profit venue may only run a Category 4 promotional game, which means free entry. No licence, no limit on the prize, but nobody may pay to enter.'] },
-        raffle: { paid: 'no', notes: ['Category 4 promotional game only: free entry. To sell tickets the game must be conducted by an eligible association, which holds any licence itself.'] },
-        members:{ paid: 'no', notes: ['Free entry. Category 4 promotional game.'] }
+        bingo:  { paid: 'no', notes: [
+          'Businesses cannot conduct bingo in Queensland. Bingo is for an association (four or more people with a common purpose) or for an individual who takes no personal gain and returns every cent as prizes.',
+          'A for-profit venue may only run a Category 4 promotional game, which means free entry. No licence, no limit on the prize, but nobody may pay to enter.'] },
+        raffle: { paid: 'no', notes: ['Category 4 promotional game only: free entry, no licence, open to any business. To sell tickets the raffle must be conducted by an eligible association, which holds any licence itself.'] },
+        members:{ paid: 'no', notes: ['Free entry. Category 4 promotional game: no licence, no prize limit.'] }
       },
       non_profit: {
         bingo:  { paid: 'yes', notes: [
-          'Category 1 up to $2,000 of ticket sales, Category 2 up to $50,000, Category 3 above that with a licence whose number goes on every ticket.',
-          'A bingo SESSION is capped at $20,000.',
-          'Prizes must be worth at least 20% of expected ticket sales.'] },
+          'Category 1 is up to $2,000 of ticket sales a session (any association); Category 2 is $2,000 to $20,000 (an eligible association). No licence for either. Prizes cannot exceed 75% of gross unless every cent goes back as prizes and the game is off licensed premises.',
+          'A jackpot may only be paid from money set aside from earlier and current sessions. The first jackpot of a series may start at no more than $1,000 (Category 1) or $5,000 (Category 2).'] },
         raffle: { paid: 'yes', notes: [
-          'Category 1 up to $2,000 of ticket sales, Category 2 up to $50,000, Category 3 above that with a licence whose number goes on every ticket.',
-          'Prizes must be worth at least 20% of expected ticket sales.'] },
-        members:{ paid: 'no', notes: ['Free entry keeps it a Category 4 promotional game with no licence and no limits.'] }
+          'Category 1 is up to $2,000 of ticket sales (an association); Category 2 is $2,000 to $50,000 (an eligible association). No licence for either, no more than $25,000 in cash prizes, and prizes worth at least 20% of gross.',
+          'Category 3, above $50,000 of ticket sales, needs a licence and an incorporated eligible association.'] },
+        members:{ paid: 'no', notes: ['Free entry keeps it a Category 4 promotional game with no licence and no prize limit.'] }
       }
     },
 
     VIC: {
       confirmed: true, name: 'Victoria', regulator: 'VGCCC',
-      free: { all: ['In Victoria this is a trade promotion lottery: no permit, and any cost of entering is capped at $1.'] },
-      phones: { bingo: 'unclear' },
-      warn: 'Victoria publishes a rule that bingo "must not be conducted online" and nobody has defined what that covers. Until we have that in writing, do not rely on phone tickets for bingo here. Raffles and trivia are not affected.',
+      /* Anisimoff, 8 Oct 2026, table p.8 and point 1(a). Section 8.4.4 makes it an offence to supply
+         bingo tickets or a number generator to anyone without a minor gaming permit, which is why
+         paid bingo here is the one place the gate will not open without a permit on record. */
+      free: { all: ['In Victoria a free-entry draw is a trade promotion: no permit.'],
+              bingo: ['Free-entry bingo may be run by anyone with no permit (s8.2.4A), but it cannot be advertised or opened to the general public, any entry fee goes back in full as prizes, and it is for entertainment only, not for the venue’s commercial benefit.',
+                      'No minors may take part in bingo in Victoria, free or paid, and players must be physically present.'],
+              raffle: ['A free-entry raffle is a trade promotion: no permit, and entry is free apart from goods or services at their normal price.'],
+              members: ['A members draw is a trade promotion: no permit, entry free.'] },
+      phones: { bingo: false },
+      paperBingo: 'Victoria does not allow a phone as a bingo ticket. Section 8.4.7B of the Gambling Regulation Act 2003 bars conducting bingo, or selling bingo tickets, through a website or online platform. A device at the venue is allowed, so the calling and the big screen run as normal: hand out paper tickets and mark them off. Trivia and musical bingo are unaffected.',
+      ads: 'A gambling ad in Victoria must not encourage anyone to break the law, show children taking part, suggest winning is certain or that playing will improve anyone’s finances, or promote drinking while gambling (Anisimoff, 8 Oct 2026, point 10).',
       for_profit: {
         bingo:  { paid: 'no', notes: [
-          'A venue with gaming machines cannot hold a bingo operator licence in Victoria.',
-          'Free entry is open to you as a trade promotion lottery: no permit, and any entry cost capped at $1.'] },
-        raffle: { paid: 'cause', notes: [
-          'A paid raffle must be run by a declared community or charitable organisation. A pub can host one for a cause, but the organisation is the one conducting it and holding any permit.',
-          'Free entry as a trade promotion needs no permit, with entry costs capped at $1.'] },
-        members:{ paid: 'no', notes: ['Trade promotion lottery: entry free, no permit, entry costs capped at $1.'] }
+          'Paid bingo in Victoria is for non-profits only, with VGCCC approval and a minor gaming permit. A venue cannot charge for it in its own right.',
+          'Free entry is open to you (s8.2.4A): no permit, any entry fee back in full as prizes, not advertised or open to the general public, entertainment only. No minors, and players must be present.'] },
+        raffle: { paid: 'cause', permit: 'required', holder: 'npo', notes: [
+          'A paid raffle is for non-profits only. The non-profit holds the VGCCC permit; a for-profit running it for them needs their written permission and a commercial organiser’s licence. Record their permission on the account page first.',
+          'Ticket sales must be between two and six times the prize pool. No cash prizes (travel money up to 10% of the prize is the exception; store gift cards are fine, debit cards are not). No reverse draws.',
+          'Above $23,060 in prizes the raffle needs a VGCCC permit and printed tickets. A small raffle (up to $500) uses a blank raffle book, and the day’s raffles together stay under $1,000.'] },
+        members:{ paid: 'no', notes: ['Trade promotion: entry free, no permit.'] }
       },
       non_profit: {
-        bingo:  { paid: 'yes', notes: [
-          'You must be a declared community or charitable organisation first.',
-          'Seven days notice before a session. At least 20% of takings must go back as prizes in each game, and a session is capped at 30 games.'] },
-        raffle: { paid: 'yes', notes: [
-          'You must be a declared community or charitable organisation first.',
-          'Raffles up to $23,060 in prizes need no permit. Above that, a permit.'] },
-        members:{ paid: 'no', notes: ['Entry free as a trade promotion lottery.'] }
+        bingo:  { paid: 'yes', permit: 'required', notes: [
+          'You must be declared a community or charitable organisation by VGCCC, hold a minor gaming permit for bingo and have notified VGCCC that you will run it. Record the permit on the account page before you charge: Victoria bars anyone supplying bingo tickets or a number generator to an organisation without one (s8.4.4).',
+          'Prizes must be at least 20% of entry fees, and over any seven days between 50% and 90%. Prizes of $20,000 or more need VGCCC notification. Cash prizes of $1,000 or more are paid by cheque or EFT.',
+          'No minors, and players must be physically present. A jackpot may be carried from one game or session to a later one, but only one jackpot pool runs in a session.'] },
+        raffle: { paid: 'yes', permit: 'unless_exempt', notes: [
+          'Above $23,060 in prizes the raffle needs a VGCCC permit and printed tickets: record the permit on the account page. Below that, no permit.',
+          'Ticket sales must be between two and six times the prize pool. No cash prizes (travel money up to 10% is the exception; store gift cards fine, debit cards not). No reverse draws.',
+          'Small raffles (up to $500 each, $1,000 a day) use a blank raffle book.'] },
+        members:{ paid: 'no', notes: ['Entry free as a trade promotion, no permit.'] }
       }
     },
 
@@ -144,7 +181,9 @@
       confirmed: true, name: 'Western Australia', regulator: 'the Gaming and Wagering Commission',
       free: { all: ['In Western Australia this is a trade promotion, and any electronic cost of entering is capped at 55c.'] },
       phones: { bingo: true },
-      warn: 'A raffle using our draw needs independent certification BEFORE the permit is granted, and the venue pays for it. The Commission accepts a certificate from another state, so our Queensland one should cover it once granted. Verifying a win on screen needs separate approval.',
+      /* Anisimoff, 1 Oct 2026, point 4: the certification is the applicant's to provide, from a
+         university or a reputable accounting firm, and we can lodge ours with the Commission once. */
+      warn: 'A raffle drawn by our number generator needs independent certification that it picks at random, from a university or a reputable accounting firm, before the Commission grants the permit. The applicant provides it, and VenuePlay can lodge ours with the Commission (rgl@lgirs.wa.gov.au) once so that venues do not each have to. Ask us where that is up to before you apply.',
       for_profit: {
         bingo:  { paid: 'no', notes: ['No private gain is permitted at all in WA, so a for-profit venue cannot charge for entry. Free entry as a trade promotion is open to you, with any electronic entry cost capped at 55c.'] },
         raffle: { paid: 'cause', notes: ['No private gain is permitted. A pub can host a raffle for a cause, but the permitted body conducts it and holds the permit.'] },
@@ -184,49 +223,65 @@
 
     ACT: {
       confirmed: true, name: 'ACT', regulator: 'the Gambling and Racing Commission',
-      free: { all: ['In ACT a trade promotion is for prizes up to $3,000. Above $3,000, check with the Gambling and Racing Commission first.'] },
-      phones: { bingo: false },
-      paperBingo: 'ACT housie rules do not allow players to hold electronic devices in the playing area, so phones cannot be used as bingo tickets here. Run paper and use our calling and our screen. Trivia is unaffected.',
+      /* Anisimoff, 8 Oct 2026, table p.9. A phone as a bingo ticket is "not specifically prohibited",
+         so phones are back on here: they were off on the strength of the housie Model Rules, which
+         the letter does not raise. Anyone may run housie or a raffle in ACT and charge for it. */
+      free: { all: ['In ACT a trade promotion (free entry) is exempt up to $3,000 in prizes. Above that, check with the Gambling and Racing Commission first.'],
+              bingo: ['Housie is exempt from a permit up to $1,000 in prizes a session. Record the winning ticket and make the results available to the people who entered.'],
+              raffle: ['A raffle is exempt from a permit up to $2,500 in prizes.'] },
+      phones: { bingo: true },
+      ads: 'A housie ad in ACT must not encourage anyone to break a gaming law, show anyone under 25 gambling, encourage under-18s to gamble, suggest gambling is an investment, or show or promote drinking while gambling (Anisimoff, 8 Oct 2026, point 10).',
       for_profit: {
-        /* The ACT is the exception worth knowing: a for-profit may be its own beneficiary. */
-        bingo:  { paid: 'yes', notes: [
-          'Unusually, a for-profit venue may promote housie here and be its own beneficiary.',
-          'Exempt up to $1,000 a session. Any single housie cash prize is capped at $1,000.',
-          'Paper only: no phones in the playing area.'] },
-        raffle: { paid: 'yes', notes: [
-          'Unusually, a for-profit venue may promote raffles here and be its own beneficiary.',
-          'Exempt up to $2,500 in prizes. Above that you need a permit.'] },
-        members:{ paid: 'no', notes: ['Trade promotion: entry free, prizes up to $3,000.'] }
+        bingo:  { paid: 'yes', permit: 'unless_exempt', notes: [
+          'Anyone may run housie in ACT and charge for it. Exempt with no permit while the prize pool is $1,000 or less a session (or prizes are only rebates on goods or services, or it is members-only with no outside advertising).',
+          'Above $1,000 a session you need a permit, and no minors or intoxicated people may play. Record the permit on the account page.',
+          'Record the winning ticket and make the results available to the people who entered.'] },
+        raffle: { paid: 'yes', permit: 'unless_exempt', notes: [
+          'Anyone may run a raffle and charge. Exempt with no permit up to $2,500 in prizes. Above that a permit, and ticket sales no more than five times the prize pool (ten times at $10,000 or more).',
+          'Clubs and other organisations with members may run a serial raffle (same prizes and ticket price each draw) for up to 12 months.'] },
+        members:{ paid: 'no', notes: ['Trade promotion: entry free, exempt up to $3,000 in prizes.'] }
       },
       non_profit: {
-        bingo:  { paid: 'yes', notes: [
-          'Exempt up to $1,000 a session, and any single cash prize is capped at $1,000.',
-          'Above the exemption the full harm-minimisation code applies: a nominated contact officer, trained staff and an incident register. Keep the session under $1,000 if you can.',
-          'Paper only: no phones in the playing area.'] },
-        raffle: { paid: 'yes', notes: ['Exempt up to $2,500 in prizes. Above that, a permit.'] },
-        members:{ paid: 'no', notes: ['Trade promotion: entry free, prizes up to $3,000.'] }
+        bingo:  { paid: 'yes', permit: 'unless_exempt', notes: [
+          'Exempt with no permit while the prize pool is $1,000 or less a session (or prizes are only rebates on goods or services, or it is members-only with no outside advertising).',
+          'Above $1,000 a session you need a permit, and no minors or intoxicated people may play. Record the permit on the account page.',
+          'Record the winning ticket and make the results available to the people who entered.'] },
+        raffle: { paid: 'yes', permit: 'unless_exempt', notes: [
+          'Exempt with no permit up to $2,500 in prizes. Above that a permit, and ticket sales no more than five times the prize pool (ten times at $10,000 or more).',
+          'Organisations with members may run a serial raffle (same prizes and ticket price each draw) for up to 12 months.'] },
+        members:{ paid: 'no', notes: ['Trade promotion: entry free, exempt up to $3,000 in prizes.'] }
       }
     },
 
     TAS: {
       confirmed: true, name: 'Tasmania', regulator: 'Liquor and Gaming Tasmania',
+      /* Anisimoff, 8 Oct 2026, table p.9. Bingo and raffles can be run by anyone but only FOR a
+         non-profit; exempt social bingo (one fee a session of $30 or less, no prize over $300) needs
+         no permit and, technically, may use phone tickets. The phone page cannot tell which night
+         this is, so it plays safe and the host is told why. */
+      free: { bingo: ['Social bingo is exempt from a permit when it is mainly social, one entry fee a session of $30 or less is charged (or none), and no prize is over $300.'],
+              raffle: ['A free draw in Tasmania still follows the raffle rules: no minors may take part, cash prizes are capped at $5,000, and a prize pool above $10,000 needs a minor gaming permit.'],
+              members: ['A free draw in Tasmania still follows the raffle rules: no minors may take part, cash prizes are capped at $5,000, and a prize pool above $10,000 needs a minor gaming permit.'] },
       phones: { bingo: false },
-      paperBingo: 'Tasmanian bingo rules are written around a printed card that the supervisor collects, so phones cannot be used as tickets here. Run paper and use our calling and our screen. Trivia is unaffected.',
+      paperBingo: 'Tasmania does not allow a phone as a ticket for permit ("authorised") bingo: every card must carry a printed serial number. Exempt social bingo (mainly social, one entry fee of $30 or less a session, no prize over $300) is not caught by that rule, but the phone page cannot tell which night this is and plays safe. Run paper and use our calling and our screen. Trivia and musical bingo are unaffected.',
       for_profit: {
-        bingo:  { paid: 'cause', notes: [
-          'A venue can hold the permit, but the proceeds cannot go to private gain: what is left goes to a not-for-profit.',
-          'The economics are capped hard: cards at 50c, at least half of card sales back as prizes, operating costs capped at 5%. A venue can run it but cannot make money on it.',
-          'Paper cards only. Records kept 7 years.'] },
-        raffle: { paid: 'cause', notes: ['A venue can hold the permit, but proceeds cannot go to private gain. Prizes up to $10,000 are exempt, with cash prizes up to $5,000.'] },
-        members:{ paid: 'no', notes: ['Entry free.'] }
+        bingo:  { paid: 'cause', permit: 'unless_exempt', notes: [
+          'Anyone may run bingo in Tasmania, but only for a non-profit and with their authorisation. A minor gaming permit is needed unless the game is exempt: mainly social, one entry fee a session of $30 or less, and no prize over $300.',
+          'All prizes must be cash and at least 50% of proceeds. At most two jackpot games a session: the first jackpot is $300 or less, it grows by no more than $50 a session, and at $2,000 it must be paid out in that session.',
+          'Promotional games alongside bingo: no jackpot, prizes up to $1,000 a game and $2,000 a session. Records kept 7 years.'] },
+        raffle: { paid: 'cause', permit: 'unless_exempt', notes: [
+          'Anyone may run a raffle, but the proceeds go to a non-profit, with their authorisation. No permit up to $10,000 in prizes; above that a minor gaming permit. Cash and cash-equivalent prizes (prepaid cards) are capped at $5,000.',
+          'No minors may take part. No reverse draws (first ticket out wins the smallest prize).'] },
+        members:{ paid: 'no', notes: ['Entry free. No minors may take part, and cash prizes are capped at $5,000.'] }
       },
       non_profit: {
-        bingo:  { paid: 'yes', notes: [
-          'Exempt if entry is $30 or less and no prize is over $300.',
-          'Cards at 50c, at least half of card sales back as prizes, operating costs capped at 5%.',
-          'Paper cards only. Records kept 7 years.'] },
-        raffle: { paid: 'yes', notes: ['Prizes up to $10,000 are exempt, with cash prizes up to $5,000.'] },
-        members:{ paid: 'no', notes: ['Entry free.'] }
+        bingo:  { paid: 'yes', permit: 'unless_exempt', notes: [
+          'Exempt from a permit when mainly social, one entry fee a session of $30 or less, and no prize over $300. Otherwise a minor gaming permit, played only at the place and times on it.',
+          'All prizes must be cash and at least 50% of proceeds. At most two jackpot games a session: the first jackpot is $300 or less, it grows by no more than $50 a session, and at $2,000 it must be paid out in that session.',
+          'Promotional games alongside bingo: no jackpot, prizes up to $1,000 a game and $2,000 a session. Records kept 7 years.'] },
+        raffle: { paid: 'yes', permit: 'unless_exempt', notes: [
+          'No permit up to $10,000 in prizes for a non-profit; above that a minor gaming permit. Cash prizes are capped at $5,000. No minors may take part. No reverse draws.'] },
+        members:{ paid: 'no', notes: ['Entry free. No minors may take part, and cash prizes are capped at $5,000.'] }
       }
     },
 
@@ -255,15 +310,19 @@
   /* ---------------------------------------------------------------------------
      assess(): everything the popup needs, in one call.
 
-     opts: { state, entityType, format, paidEntry, paidEntryEnabled, venueName }
+     opts: { state, entityType, format, paidEntry, paidEntryEnabled, venueName, permits }
      Returns:
-       { applies, confirmed, ok, blocked, headline, points[], warnings[], paper, state }
-     ok=false means "do not go ahead as described", never "the button is disabled".
+       { applies, confirmed, ok, blocked, headline, points[], warnings[], paper, state,
+         hardBlock, permit, permitRecorded }
+     ok=false means "do not go ahead as described". hardBlock=true means the popup will not
+     offer to start a PAID game at all: only "Start as a free-entry game" (Dean, 15 Oct 2026,
+     on the lawyer's "prudent, not mandatory"). The free path is never blocked by anything here.
      --------------------------------------------------------------------------- */
   function assess(opts) {
     opts = opts || {};
     var out = { applies: true, confirmed: false, ok: true, blocked: null, paper: false,
-                headline: '', points: [], warnings: [], state: opts.state || null };
+                headline: '', points: [], warnings: [], state: opts.state || null,
+                hardBlock: false, permit: null, permitRecorded: false };
 
     var kind = kindOf(opts.format);
     if (!kind) {
@@ -288,9 +347,12 @@
 
     // Paper-ticket states: true whatever else is going on, so say it every time.
     /* NOT FOR MUSICAL BINGO. Dean, 21 Sep 2026: "musical bingo don't count that as bingo in
-       other states it's fine." The paper rules in SA, ACT and Tasmania are written around housie:
-       numbered sheets and printed cards. Musical bingo is a music quiz on a grid, and its
-       tickets stay on the phone. His call as the owner; Queensland is a separate matter. */
+       other states it's fine." The paper rules in SA, Victoria and Tasmania are written around
+       housie: numbered sheets and printed cards. Musical bingo is a music quiz on a grid, and its
+       tickets stay on the phone. His call as the owner; Queensland is a separate matter.
+       Asked again when the Victorian letter arrived (its table heading reads "Housie / Bingo
+       (incl. Musical)"), Dean, 15 Oct 2026: "musical bingo cards stay in every state. Its not
+       bingo." So this line is the same in Victoria as everywhere else. */
     if (kind === 'bingo' && opts.format !== 'musical' && st.phones && st.phones.bingo === false) {
       out.paper = true;
       out.warnings.push(st.paperBingo);
@@ -302,6 +364,10 @@
        "bingo must not be conducted online", and WA's independent certification. Placed here
        with the paper warning, before the early returns, so everybody sees it. */
     if (st.warn) out.warnings.push(st.warn);
+
+    /* What an ad for the game must not do, where a letter says (NSW, VIC, ACT). On both paths:
+       the rules are about advertising gambling, and a free game is advertised just the same. */
+    if (st.ads) out.warnings.push(st.ads);
 
     /* Something stopping the whole format in this state, regardless of the venue. This is about
        PAID gaming approval, so it must not appear on the free-entry path: free entry is a
@@ -352,25 +418,163 @@
     }
 
     var who = entity === 'non_profit' ? 'a non-profit' : 'a for-profit venue';
+    var game = formatName(opts.format).toLowerCase();
 
+    /* THE HARD BLOCK (Dean, 15 Oct 2026). Where the state says this venue may not charge, the
+       popup no longer offers to start a paid game: it offers a free-entry one. The same when the
+       state will not let the game be charged for without a permit and none is on record. The
+       free path is lawful everywhere and is never touched by any of this. */
     if (rule.paid === 'no') {
-      out.ok = false;
-      out.headline = 'In ' + st.name + ', ' + who + ' cannot charge for entry to ' + formatName(opts.format).toLowerCase() + '.';
+      out.ok = false; out.hardBlock = true;
+      out.headline = 'In ' + st.name + ', ' + who + ' cannot charge for entry to ' + game + '.';
       out.points = rule.notes.slice();
-      out.warnings.push('Switch this game to free entry, or check with ' + st.regulator + ' before you sell a ticket.');
+      out.warnings.push('This game can only start as free entry here. Check with ' + st.regulator + ' before you sell a ticket.');
       return out;
+    }
+
+    /* Permits, licences and authorities. The venue records them on the account page (Settings,
+       Permits and authorities); the gate reads them back here. permitRecorded is the one rule
+       for "is there one", shared with the settings page and HQ. */
+    out.permit = rule.permit || null;
+    out.permitRecorded = permitRecorded({ permits: opts.permits }, kind);
+    var permitWhat = rule.holder === 'npo' ? 'the organisation’s authority' : 'your permit';
+    var permitName = kind === 'members' ? 'members draw' : kind;
+    if (rule.permit === 'required' && !out.permitRecorded) {
+      out.ok = false; out.hardBlock = true;
+      out.headline = 'Before you charge for ' + game + ' in ' + st.name + ', record ' + permitWhat + ' on the account page.';
+      out.points = rule.notes.slice();
+      out.warnings.push('No permit or authority is recorded for ' + permitName + ' at this venue. ' +
+                        (rule.holder === 'npo'
+                          ? 'Add the organisation you are running it for and the date of their written authorisation under Settings, Permits and authorities, '
+                          : 'Add it under Settings, Permits and authorities, ') +
+                        'or run tonight as free entry.');
+      return out;
+    }
+    if (rule.permit === 'unless_exempt' && !out.permitRecorded) {
+      out.warnings.push('No permit is recorded for ' + permitName + ' at this venue. That is fine while the game stays inside the exemption above; beyond it, record the permit under Settings, Permits and authorities first.');
+    }
+    if (out.permitRecorded) {
+      var pr = permitSummary(opts.permits, kind);
+      if (pr) out.points.push(pr);
+      var exp = permitExpired(opts.permits, kind);
+      if (exp) out.warnings.push('The ' + permitName + ' permit recorded for this venue expired on ' + exp + '. Renew it and update the account page.');
     }
 
     if (rule.paid === 'cause') {
       out.headline = 'You can charge, but the game has to be run for a cause, not for the venue.';
-      out.points = rule.notes.slice();
+      out.points = rule.notes.concat(out.points);
       out.warnings.push('Get the benefiting organisation’s authorisation in writing before you sell a ticket, and keep it.');
       return out;
     }
 
     out.headline = 'You can charge for entry to this game in ' + st.name + '.';
-    out.points = rule.notes.slice();
+    out.points = rule.notes.concat(out.points);
     return out;
+  }
+
+  /* ---------------------------------------------------------------------------
+     PERMITS ON RECORD. vp_venues.permits (migration 100) is keyed by game kind:
+       { bingo: { number, holder: 'venue'|'npo', npo_name, authorised_on, expires, note },
+         raffle: {...}, members: {...} }
+     A kind counts as RECORDED when it has a permit number, OR the holder is the charity or
+     non-profit the game is run for and their name and the date of their written authorisation
+     are both there. That is the whole rule, shared with the settings page and HQ; nothing here
+     verifies a number with a regulator (the lawyer calls that prudent, not mandatory, and the
+     venue warrants it in the Terms). Never throws: a bad shape is simply "not recorded".
+     --------------------------------------------------------------------------- */
+  function permitOf(permits, kind) {
+    var p = permits;
+    if (typeof p === 'string') { try { p = JSON.parse(p); } catch (e) { return null; } }
+    var k = p && typeof p === 'object' ? p[kind] : null;
+    return (k && typeof k === 'object') ? k : null;
+  }
+  function permitRecorded(venue, kind) {
+    try {
+      var k = permitOf(venue && venue.permits, kind);
+      if (!k) return false;
+      if (String(k.number || '').trim()) return true;
+      return k.holder === 'npo' && !!String(k.npo_name || '').trim() &&
+             /^\d{4}-\d{2}-\d{2}$/.test(String(k.authorised_on || ''));
+    } catch (e) { return false; }
+  }
+  function permitSummary(permits, kind) {
+    var k = permitOf(permits, kind);
+    if (!k) return '';
+    var who = String(k.npo_name || '').trim(), num = String(k.number || '').trim();
+    var s = 'On record: ' + (num ? ('permit or authority ' + num) : 'written authorisation');
+    if (who) s += ' held by ' + who;
+    if (k.authorised_on) s += ', from ' + k.authorised_on;
+    if (k.expires) s += ', expires ' + k.expires;
+    return s + '.';
+  }
+  function permitExpired(permits, kind) {
+    var k = permitOf(permits, kind);
+    if (!k || !k.expires || !/^\d{4}-\d{2}-\d{2}$/.test(String(k.expires))) return '';
+    var d = new Date();
+    var today = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    return String(k.expires) < today ? String(k.expires) : '';
+  }
+
+  /* ---------------------------------------------------------------------------
+     THE JACKPOT FIGURE for a state, from the letters' tables. The members and raffle consoles
+     show it beside the "Maximum jackpot" field and warn when a jackpot passes it; they do not
+     enforce it, the venue's own cap does (Anisimoff, 1 Oct 2026, point 10: the jackpot must not
+     exceed the threshold for that type of activity, and the venue should set the figure first).
+       jackpotLimit({ state, entityType, format, paidEntry }) -> { cents: number|null, why }
+     null means no figure is confirmed for that case, and why says so. WA has no figure yet.
+     --------------------------------------------------------------------------- */
+  function jackpotLimit(opts) {
+    opts = opts || {};
+    var kind = kindOf(opts.format), state = String(opts.state || '').toUpperCase();
+    var np = opts.entityType === 'non_profit', paid = !!opts.paidEntry;
+    if (!kind) return { cents: null, why: 'Trivia is a game of skill: no prize limit applies.' };
+    var st = STATES[state];
+    if (!st) return { cents: null, why: state ? ('We have not confirmed a prize figure for ' + state + ' yet.') : 'We do not know which state this venue is in yet.' };
+    var T = {
+      NSW: {
+        members: [700000, 'NSW progressive lottery (a jackpot that rolls over week to week): cash prizes up to $7,000, no authority up to $30,000 in total'],
+        raffle: paid ? [3000000, 'NSW draw lottery: $30,000 in total prizes'] : [3000000, 'NSW free lottery: $30,000, and no cash prizes'],
+        bingo: (paid && np) ? [1000000, 'NSW charity housie: $10,000 in total prizes (club bingo: $70 a game, no cash prizes)'] : [3000000, 'NSW free lottery: $30,000, and no cash prizes']
+      },
+      QLD: {
+        members: [null, 'Queensland Category 4 promotional game: no prize limit'],
+        raffle: paid ? [2500000, 'Queensland Category 1 and 2 raffles: no more than $25,000 in cash prizes'] : [null, 'Queensland Category 4 promotional game: no prize limit'],
+        bingo: paid ? [100000, 'Queensland bingo: the first jackpot may start at no more than $1,000 (Category 1) or $5,000 (Category 2); after that only money set aside from earlier and current sessions'] : [null, 'Queensland Category 4 promotional game: no prize limit']
+      },
+      VIC: {
+        members: [null, 'Victoria trade promotion: no prize figure confirmed'],
+        raffle: paid ? [2306000, 'Victoria raffle: above $23,060 in prizes needs a VGCCC permit and printed tickets; no cash prizes'] : [null, 'Victoria trade promotion: no prize figure confirmed'],
+        bingo: paid ? [2000000, 'Victoria bingo: prizes of $20,000 or more need VGCCC notification; cash of $1,000 or more by cheque or EFT'] : [null, 'Victoria free-entry bingo: every entry fee back as prizes, no figure beyond that']
+      },
+      ACT: {
+        members: [300000, 'ACT trade promotion: $3,000'],
+        raffle: [250000, 'ACT raffle: $2,500 without a permit'],
+        bingo: [100000, 'ACT housie: $1,000 a session without a permit']
+      },
+      TAS: {
+        members: [500000, 'Tasmania: cash prizes capped at $5,000; a prize pool above $10,000 needs a minor gaming permit'],
+        raffle: [500000, 'Tasmania: cash prizes capped at $5,000; a prize pool above $10,000 needs a minor gaming permit'],
+        bingo: [200000, 'Tasmania jackpot bingo: the first jackpot is $300 or less, grows by no more than $50 a session, and is paid out at $2,000']
+      },
+      SA: {
+        members: [500000, 'South Australia trade promotion: $5,000 without a licence'],
+        raffle: paid ? [500000, 'South Australia minor lottery: $5,000 without a licence'] : [500000, 'South Australia trade promotion: $5,000 without a licence'],
+        bingo: [null, 'South Australia: no prize figure confirmed for bingo (the licence turns on gross takings a session)']
+      },
+      NT: {
+        members: [200000, 'Northern Territory members draw: $2,000'],
+        raffle: [500000, 'Northern Territory: $5,000 without a permit'],
+        bingo: [500000, 'Northern Territory: $5,000 without a permit']
+      },
+      WA: {
+        members: [null, 'Western Australia: no prize figure confirmed yet'],
+        raffle: [null, 'Western Australia: no prize figure confirmed yet'],
+        bingo: [null, 'Western Australia: no prize figure confirmed yet']
+      }
+    };
+    var row = (T[state] || {})[kind];
+    if (!row) return { cents: null, why: 'We have not confirmed a prize figure for ' + st.name + '.' };
+    return { cents: row[0], why: row[1] };
   }
 
   function money(cents) {
@@ -380,11 +584,14 @@
 
   /* The words the venue ticks. Deliberately says who does what, because the regulator's
      letter read as though WE supply the prizes and take the money. */
+  /* "and with every law that applies": Anisimoff, 1 Oct 2026, point 5, recommends the
+     acknowledgement extend to complying with all applicable laws, not just the category. */
   function declaration(venueName) {
     return 'I confirm that ' + (venueName || 'this venue') + ' is the conductor of this game. ' +
            'We provide the prize, we handle any ticket sales and we keep the proceeds. ' +
            'VenuePlay supplies the software only. We are responsible for meeting the rules ' +
-           'for our category, including any licence.';
+           'for our category, including any licence, and with every law that applies to this ' +
+           'game, including permits, attendance and age rules.';
   }
 
   /* ===========================================================================
@@ -394,14 +601,17 @@
      are about to start, and waits for them to press OK.
 
      Two things it deliberately does NOT do:
-       * It never blocks the game. Even when the rules say they cannot charge, the
-         button still says start, because we are not the regulator and a host mid-shift
-         with a room full of people is not who you argue with. It informs and records.
+       * It never blocks the GAME. When the state says this venue cannot charge, or will not
+         let it charge without a permit that is not on record, the popup no longer offers to
+         start a paid game (Dean, 15 Oct 2026): it offers "Start as a free-entry game", and
+         onProceed is called with { free: true } so the console switches its paid mode off
+         first. A free game is lawful everywhere, so a host mid-shift with a room full of
+         people always has a way on. It informs and records.
        * It does not fire before every single game. Once a night, per format, per venue.
          A popup on game 7 of a bingo night gets clicked through without being read,
          which is worse for everyone than showing it once when the night starts.
 
-     opts: { format, venue:{id,name,au_state,entity_type,paid_entry_enabled}, paidEntry, force }
+     opts: { format, venue:{id,name,au_state,entity_type,paid_entry_enabled,permits}, paidEntry, force }
      =========================================================================== */
 
   var CSS = [
@@ -496,7 +706,7 @@
     var a = assess({
       state: venue.au_state, entityType: venue.entity_type, format: format,
       paidEntry: !!opts.paidEntry, paidEntryEnabled: venue.paid_entry_enabled !== false,
-      venueName: venue.name
+      venueName: venue.name, permits: venue.permits
     });
 
     // One at a time. Two taps on Start used to stack two identical overlays, and because the
@@ -529,7 +739,7 @@
         '</div>' +
         '<div class="vpg-bd">' + body + '</div>' +
         '<div class="vpg-ft">' +
-          '<button type="button" class="vpg-go">I understand, start the game</button>' +
+          '<button type="button" class="vpg-go">' + (a.hardBlock ? 'Start as a free-entry game' : 'I understand, start the game') + '</button>' +
           '<button type="button" class="vpg-no">Not now</button>' +
         '</div>' +
         '<p class="vpg-fine">This is a prompt to check, not legal advice, and the rules change. ' +
@@ -541,14 +751,30 @@
 
     wrap.querySelector('.vpg-go').addEventListener('click', function () {
       markAcked(venue.id, format);
-      var rec = record(venue, format, a, opts.paidEntry);
+      /* THE FREE WAY ON. A hard block means the host pressed "Start as a free-entry game", so
+         what is recorded is the FREE assessment, as a declaration the host saw and accepted
+         (not the automatic kind: the Worker refuses a draw whose only record is automatic),
+         and the console is told { free: true } so it switches its paid mode off before it
+         starts. If the free assessment itself throws, the game still goes, as free. */
+      var arg;
+      var recA = a, recPaid = !!opts.paidEntry;
+      if (a.hardBlock) {
+        arg = { free: true };
+        recPaid = false;
+        try {
+          recA = assess({ state: venue.au_state, entityType: venue.entity_type, format: format,
+                          paidEntry: false, paidEntryEnabled: venue.paid_entry_enabled !== false,
+                          venueName: venue.name, permits: venue.permits }) || a;
+        } catch (e) { recA = a; }
+      }
+      var rec = record(venue, format, recA, recPaid);
       close();
       /* waitRecord: the raffle and members draw are refused by the Worker until this row exists
          (14 Oct 2026), so the draw waits for it to land, four seconds at most. Everything else
          goes straight on, as it always has: a record must never hold up a game. */
-      if (!opts.waitRecord || !rec || !rec.then) { proceed(); return; }
+      if (!opts.waitRecord || !rec || !rec.then) { proceed(arg); return; }
       var gone = false;
-      function go() { if (gone) return; gone = true; proceed(); }
+      function go() { if (gone) return; gone = true; proceed(arg); }
       rec.then(go, go);
       setTimeout(go, 4000);
     });
@@ -617,8 +843,13 @@
          selling tickets tonight was shown "Free entry, nobody pays to play", and
          handleGamingDeclare then wrote paid_entry:false into vp_gaming_declarations. The
          record we would hand a regulator said free entry on a night that took money. */
-      var thisGameIsPaid = (opts.gameIsPaid != null)
-        ? !!opts.gameIsPaid
+      /* freeEntry: THIS game is free and the host should still SEE the rules once a night (unlike
+         gameIsPaid:false, which records silently). The members draw is always free entry, so the
+         hard block above can never fire for it, and a raffle or musical night that chose "Start as
+         a free-entry game" passes it from then on. The Worker refuses a draw whose only record
+         tonight is the silent kind, which is why this is not the silent path. */
+      var thisGameIsPaid = opts.freeEntry ? false
+        : (opts.gameIsPaid != null) ? !!opts.gameIsPaid
         : (venue.paid_entry_enabled === true);
       gate({ format: format, venue: venue, paidEntry: thisGameIsPaid, force: !!opts.force, waitRecord: !!opts.waitRecord }, proceed);
     } catch (e) { proceed(); }
@@ -628,6 +859,7 @@
     NOT_SHOWN: NOT_SHOWN,
     assess: assess, isGaming: isGaming, kindOf: kindOf, formatName: formatName,
     money: money, declaration: declaration, states: STATES,
-    gate: gate, gateFor: gateFor, alreadyAcked: alreadyAcked
+    gate: gate, gateFor: gateFor, alreadyAcked: alreadyAcked,
+    permitRecorded: permitRecorded, jackpotLimit: jackpotLimit
   };
 })(window);

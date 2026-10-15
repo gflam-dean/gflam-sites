@@ -54,7 +54,9 @@ var PLAY = find("venueplay/play.html");
 var window = this, _keyReady = null, _signChain = Promise.resolve();
 // Since 14 Oct 2026 a join carries the phone's server device id, and a paper-ticket phone sends nothing.
 var _paper = false; function deviceId(){ return "dev-test-0001"; }
-var srcs = ["onChannelStatus", "send", "flushQueue", "wireOut", "setConn"].map(function (n) {
+// Since 15 Oct 2026 the join goes through sendJoin (the "I am 18 or over" hold); nothing is held here.
+var _ageHold = false, _agePendingJoin = false;
+var srcs = ["onChannelStatus", "send", "sendJoin", "flushQueue", "wireOut", "setConn"].map(function (n) {
   return [n, lift(PLAY, n)];
 });
 var missing = srcs.filter(function (p) { return !p[1]; }).map(function (p) { return p[0]; });
