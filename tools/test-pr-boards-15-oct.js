@@ -175,7 +175,9 @@ served.forEach(function (p) {
   });
 });
 ok('read ' + served.length + ' served files: no real board\'s question or answers in any', !leaks.length && served.length >= 12, leaks.slice(0, 6).join(', '));
-var gone = true; try { gone = !readFile('venueplay/app/topanswers/ta-boards.js'); } catch (e) { gone = true; }
+/* Absent, or a stub with no board in it: a stale Cloudflare copy of the old file outlived two full purges
+   (15 Oct 2026), so the path now serves a note that replaces it on the next revalidation. */
+var gone = true; try { var _o = readFile('venueplay/app/topanswers/ta-boards.js'); gone = !_o || (!/pts\s*:/.test(_o) && !/\bq\s*:/.test(_o)); } catch (e) { gone = true; }
 ok('/app/topanswers/ta-boards.js is no longer served', gone);
 /* PartyPlay's family boards (22 of them are these boards too) are checked the same way in
    partyplay-backend/lib/pp-gm-boards.test.js. */

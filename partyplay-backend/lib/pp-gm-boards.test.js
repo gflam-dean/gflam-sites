@@ -111,7 +111,8 @@ served.forEach(function (p) {
 });
 ok("read " + served.length + " served files: no board's question or answers in any", served.length >= 15 && !leaks.length && !missingFiles.length, leaks.concat(missingFiles).slice(0, 6).join(", "));
 ok("every script those pages load exists (none still asks for the old boards file)", !gone.length, gone.join(", "));
-var oldGone = true; try { oldGone = readFile("partyplay/lib/pp-great-minds-boards.js").length < 50; } catch (e) { oldGone = true; }
+/* Absent, or a stub with no board in it (a stale cached copy outlived the purges, 15 Oct 2026). */
+var oldGone = true; try { var _o = readFile("partyplay/lib/pp-great-minds-boards.js"); oldGone = !_o || (!/pts\s*:/.test(_o) && !/\bq\s*:/.test(_o)); } catch (e) { oldGone = true; }
 ok("/lib/pp-great-minds-boards.js is no longer served", oldGone);
 
 print("\n" + (ran - bad) + " of " + ran + " checks passed");

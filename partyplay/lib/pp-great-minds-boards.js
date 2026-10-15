@@ -1,0 +1,1 @@
+/* The Punters Reckon and Great Minds boards are no longer public. The console asks the game server for them with the host login (15 Oct 2026). This file stays only so caches holding the old copy get this one instead. */

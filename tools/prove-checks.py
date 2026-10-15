@@ -1385,6 +1385,8 @@ MUTATIONS = [
     ('test-bingo-tab-15-oct.js', 'venueplay/app/vp-onetab.js', '    post({ t: "free" });', '', 'End game frees nobody: the other tab stays locked out of the next night'),
     ('test-bingo-tab-15-oct.js', 'venueplay/app/vp-onetab.js', '    available: function(){ return !!bc; },', '    available: function(){ return true; },', 'with no BroadcastChannel the bingo console no longer restores its game the way it always did'),
     ('test-bingo-tab-15-oct.js', 'venueplay/app/vp-onetab.js', '    if (o.back) {', '    if (false) {', 'the notice in the menu tab has no way back to the games menu'),
+    ('test-pr-boards-15-oct.js', 'venueplay/app/topanswers/ta-boards.js', 'This file stays only so caches', 'q: "Name something", pts: 30, This file stays only so caches', 'the old public boards file comes back with answers in it'),
+    ('pp-gm-boards.test.js', 'partyplay/lib/pp-great-minds-boards.js', 'This file stays only so caches', 'q: "Name something", pts: 30, This file stays only so caches', 'the old public Great Minds file comes back with answers in it'),
     # The trivia night lost to a bounce through the bingo page.
     ('test-one-room-one-identity.js', 'venueplay/play.html',
      'if(k===OWN_TOKEN_KEY || localStorage.getItem(k+room)!==null) localStorage.setItem(k+room, tok);',
