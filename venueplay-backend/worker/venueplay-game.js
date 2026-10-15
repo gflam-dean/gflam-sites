@@ -142,7 +142,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '15 Oct 2026, 20:13 · 96bcb12e';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '16 Oct 2026, 04:25 · 5fd60dd1';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -167,7 +167,9 @@ const PAPER_BINGO_STATES = new Set(['SA', 'VIC', 'TAS']);
    required; in Tasmania no minors may take part in a raffle or draw (table p.9). The lawyer says
    the lock is the venue's to enforce, and this is the platform's help with it. NEVER for trivia
    (a game of skill), and NEVER for musical bingo: Dean, 15 Oct 2026, "musical bingo cards stay
-   in every state. Its not bingo." A format of '' is broadcast bingo (it has no session row). */
+   in every state. Its not bingo." A format of '' is a bingo night before ball one (a bingo lobby
+   writes no vp_games row and sets no lobby_format); the callers only ask while a session is
+   live, so a quiet night never reaches this. */
 function ageGateFor(state, format) {
   const st = String(state || '').toUpperCase();
   const f = String(format || '');
@@ -1045,9 +1047,14 @@ async function handleJoinInfo(request, env, json) {
      ever hopped to another game was the /play?venue= path off a table talker. */
   let format = '';
   let roomCode = '';   // set only when the code typed was the venue code and a session is live
+  /* liveNow: a session is open at this venue right now. The state's phone rules below (paper,
+     the age tick) are for the game that is ON; on a quiet night there is no game, so nothing
+     is asked (16 Oct 2026, see handlePlayLive). */
+  let liveNow = false;
   const sessions = await sbGet(env, 'vp_sessions', 'join_code=eq.' + enc(code) + '&status=in.(lobby,running,paused)&select=*&limit=1');
   if (sessions.length) {
     venueId = sessions[0].venue_id;
+    liveNow = true;
     /* The LATEST game of any status, not just a live one. No vp_games row is ever written with
        status 'lobby' (every insert is 'running'), so filtering on a live status meant the format
        was unknown in exactly the window the code is typed in: after the session opens and before
@@ -1077,6 +1084,7 @@ async function handleJoinInfo(request, env, json) {
       const live = await sbGet(env, 'vp_sessions',
         'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=*&order=created_at.desc&limit=1');
       if (live.length) {
+        liveNow = true;
         /* A RUNNING game only. This deliberately does NOT match the session branch above, which
            takes the latest game of any status so that a code typed between rounds still resolves.
            Here the code typed was the venue's PERMANENT one, which is also bingo's channel, so
@@ -1150,8 +1158,15 @@ async function handleJoinInfo(request, env, json) {
        play.html acts on it by wiping the page and printing "tonight you play on paper". So in
        SA, the ACT and Tasmania a punter typing the code for a TRIVIA night had their phone
        blanked and could not join anything. Trivia is a game of skill, is not gaming at all, and
-       has no ticket to print: the whole product says so. An unknown format means bingo here,
-       because broadcast bingo has no session and so never resolves one. */
+       has no ticket to print: the whole product says so. An unknown format on a LIVE session is
+       bingo here: a bingo lobby writes no vp_games row until the first game starts, and bingo
+       sets no lobby_format, so '' is what a bingo night looks like between the lobby opening and
+       ball one. */
+    /* AND NOT ON A QUIET NIGHT (live audit, 16 Oct 2026). With no session open, '' used to mean
+       bingo as well, so a Victorian or Tasmanian phone that typed the code before anything was
+       on was blanked with "Tonight you play on paper", and an ACT phone was asked its age, on a
+       trivia night, before the host had opened anything. Nothing is on, so nothing is asked: the
+       phone keeps asking /play/live and /join/info and is told the moment a bingo lobby opens. */
     /* AND NOT FOR MUSICAL BINGO. Dean, 21 Sep 2026: "musical bingo don't count that as bingo in
        other states it's fine." This flag was set for musical and the musical phone page never
        read it, so the two halves disagreed (audit finding 14). His ruling settles which half
@@ -1159,13 +1174,13 @@ async function handleJoinInfo(request, env, json) {
     /* Asked again when the Victorian letter arrived with "Housie / Bingo (incl. Musical)" as its
        heading. Dean, 15 Oct 2026: "musical bingo cards stay in every state. Its not bingo." So
        this line is musical-exempt in Victoria exactly as it is everywhere else. */
-    const paperFormat = !format || format.indexOf('bingo') === 0;
+    const paperFormat = liveNow && (!format || format.indexOf('bingo') === 0);
     if (paperFormat && vrows && vrows[0] && PAPER_BINGO_STATES.has(String(vrows[0].au_state || '').toUpperCase())) {
       paperBingo = true;
     }
     /* The age tick rides beside the paper flag, because this is the call the phone page acts on
        before it shows a ticket. Decided here, not on the phone, for the same reason as paper. */
-    if (vrows && vrows[0]) ageGate = ageGateFor(vrows[0].au_state, format);
+    if (liveNow && vrows && vrows[0]) ageGate = ageGateFor(vrows[0].au_state, format);
   } catch (e) { /* the notice falls back to "the venue you are playing at" */ }
   return json({ format: format, room_code: roomCode, channel: channel, venue_name: venueName, paper_bingo: paperBingo, age_gate: ageGate, collect: {
     first_name: cfg.collect_first_name !== false, // first name defaults on
@@ -2519,7 +2534,14 @@ async function handlePlayLive(request, env, json) {
 
   const sessions = await sbGet(env, 'vp_sessions',
     'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id,join_code,lobby_format&order=created_at.desc&limit=1');
-  if (!sessions.length) return json(Object.assign({ exists: true, name, live: false }, phoneRules('')));
+  /* A QUIET NIGHT ASKS NOTHING (live audit, 16 Oct 2026). This used to answer phoneRules(''),
+     and '' is bingo, so with nothing on at all a Victorian or Tasmanian phone was told "Tonight
+     you play on paper" and an ACT phone was asked "Are you 18 or over?", before the host had
+     opened anything and on nights that turned out to be trivia. The rules are for the game that
+     is on; the phone polls this again and is told the moment a bingo lobby opens. A bingo lobby
+     IS a session (status lobby, no vp_games row yet, no lobby_format), so it still answers
+     live:true with format '' below, and the paper and age rules apply to it as before. */
+  if (!sessions.length) return json({ exists: true, name, live: false, paper_bingo: false, age_gate: false });
   const games = await sbGet(env, 'vp_games',
     'session_id=eq.' + enc(sessions[0].id) + '&status=eq.running&select=format&order=seq.desc&limit=1');
   /* A TRIVIA OR MUSICAL LOBBY IS A FORMAT TOO. This answered '' until round one started, so a

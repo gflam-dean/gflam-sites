@@ -66,6 +66,8 @@ function makeDom(search, store0){
     var node={ id:id||"", textContent:"", value:"", disabled:false, checked:false, children:[], _on:{}, _attr:{},
       style:{ setProperty:function(){}, display:"" },
       appendChild:function(n){ this.children.push(n); n.parentNode=this; return n; },
+      // node.remove(), as the browser has it: the paper notice on play.html takes itself down with it (16 Oct 2026)
+      remove:function(){ var p=this.parentNode; if(!p) return; var k=p.children.indexOf(this); if(k>=0) p.children.splice(k,1); this.parentNode=null; },
       insertBefore:function(n){ this.children.unshift(n); return n; },
       removeChild:function(n){ return n; },
       addEventListener:function(ev,fn){ (this._on[ev]=this._on[ev]||[]).push(fn); },

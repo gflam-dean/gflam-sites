@@ -583,10 +583,19 @@
      where no figure is confirmed. paidEntry is whether THIS venue may charge, the same default
      gateFor uses. Guarded: an older vp-gaming.js, or no venue on file, warns about nothing.
      jackpotWarning is pure (limit object and dollars in, text out) so the suite can run it. */
+  /* Composed as plain sentences (live audit, 16 Oct 2026): the figure first, then the state's
+     reason as its own sentence. This used to splice the reason INTO "is above <why> of $23,060",
+     which read "is above Victoria raffle: above $23,060 in prizes needs ... of $23,060". A figure
+     of $0 (Victoria: no cash prizes in a raffle) is said as what it is, not "above $0". */
   function jackpotWarning(limit, jackOn, jackDollars){
     if(!jackOn || !limit || typeof limit.cents!=="number" || isNaN(jackDollars) || !(jackDollars>0)) return "";
     if(Math.round(jackDollars*100) <= limit.cents) return "";
-    return "This jackpot ("+money(jackDollars)+") is above "+(limit.why||"your state's figure")+" of "+money(limit.cents/100)+". You can still draw: the rules are yours to keep as the conductor of the raffle, so check them for your state first.";
+    var figure=limit.where||"your state's figure";   // "the Victorian figure", from jackpotLimit
+    var why=String(limit.why||"").trim().replace(/\.$/,"");
+    var first = limit.cents===0
+      ? "This jackpot ("+money(jackDollars)+") is a cash prize, and "+figure+" for cash prizes in a raffle is nil."
+      : "This jackpot ("+money(jackDollars)+") is above "+figure+" of "+money(limit.cents/100)+".";
+    return first+(why ? " "+why+"." : "")+" You can still draw: the rules are yours to keep as the conductor of the raffle, so check them for your state first.";
   }
   function stateLimit(){
     try{

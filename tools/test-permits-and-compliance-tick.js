@@ -247,7 +247,18 @@ function permit(over) { var p = { number: '', holder: 'venue', npo_name: '', aut
     var page = readFile(f);
     var label = (page.match(/<label class="ck"><input type="checkbox" id="vp-consent">[\s\S]*?<\/label>/) || [''])[0];
     check(f + ': the consent tick carries the compliance sentence, verbatim', label.indexOf('We are responsible for complying with the gaming laws that apply to our venue, including any permit, licence or authority, age limits and attendance rules. VenuePlay supplies the software only.') !== -1, label.slice(0, 200));
+    /* The refusal when the tick is off, scoped to the one statement that reads the tick (live audit,
+       16 Oct 2026: it said "agree to the Terms" and nothing about what the tick also confirms). */
+    var refusal = (page.match(/if \(consentEl && !consentEl\.checked\) \{ showErr\('([^']*)'\); return; \}/) || [])[1] || '';
+    check(f + ': refusing an unticked box says what the tick confirms', refusal === 'Please tick the box to agree to the Terms and Privacy Policy and confirm your venue is responsible for its gaming compliance.', refusal);
   });
+  /* The permits card on the account page: the bingo heading says both halves at once, because the
+     rules popup on the same screen says musical keeps its phone cards (live audit, 16 Oct 2026). */
+  var SETTINGS = readFile('venueplay/app/settings.html');
+  var kinds = (SETTINGS.match(/var PERMIT_KINDS=(\[[^\n]*\]);/) || [])[1] || '[]';
+  var bingoLabel = ((0, eval)(kinds).filter(function (k) { return k[0] === 'bingo'; })[0] || [])[1] || '';
+  check('settings: the Bingo permits heading says musical counts for permits AND keeps its phone cards, in one line', bingoLabel === 'Bingo (musical bingo counts as bingo for permits; phone cards stay on for musical bingo)', bingoLabel);
+  check('settings: nothing on the card still says "including musical bingo"', SETTINGS.indexOf('including musical bingo') < 0);
   finished = true;
 })().catch(function (e) { print('  FAIL the test itself threw: ' + e + '\n' + e.stack); fails++; });
 drainMicrotasks();

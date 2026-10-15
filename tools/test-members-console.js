@@ -265,6 +265,38 @@ check('coming back opens a fresh channel, because a CLOSED one never rejoins by 
 chans[chans.length - 1].cb('TIMED_OUT');
 check('a real drop on a live page still says Reconnecting', $('statusText').textContent === 'Reconnecting', $('statusText').textContent);
 
+/* ================= 7. "Drawn tonight, draw again?" is asked on the page ================= */
+section('7. Drawn tonight: the question is asked on the page, never with window.confirm()');
+/* A native confirm() on a kiosk tablet behind its lock screen blocks the console (live audit,
+   16 Oct 2026). So here the native one THROWS: if the page still reaches for it, this goes red. */
+eval(liftVar(/var _drawAgainOk=false;/));
+eval(lift('askDrawAgain')); eval(lift('closeDrawAgain')); eval(lift('drawAgainYes'));
+check('the page carries the in-page question and its two buttons', H.indexOf('id="drawAgainAsk"') > 0 && H.indexOf('id="drawAgainYes"') > 0 && H.indexOf('id="drawAgainNo"') > 0);
+check('and the buttons are wired to the lifted handlers', /\$\("drawAgainYes"\)[\s\S]{0,200}addEventListener\("click", drawAgainYes\)/.test(H) && /\$\("drawAgainNo"\)[\s\S]{0,200}addEventListener\("click", closeDrawAgain\)/.test(H));
+confirm = function () { throw new Error('window.confirm() was called: that blocks a kiosk tablet'); };
+freshG(); FAILS = {}; boot();
+subscribed = true;
+$('drawAgainAsk').classList.add('hidden');   // the markup ships it hidden
+G.draws[0].last_drawn_date = new Date().toISOString().slice(0, 10);   // the same clock alreadyDrawnTonight reads, so this IS "tonight"
+check('the fixture reads as drawn tonight', alreadyDrawnTonight() === true);
+var threw = null;
+try { startDraw(); } catch (e) { threw = e; }
+check('a second Draw tonight does not call window.confirm()', threw === null, threw && String(threw));
+check('nothing was drawn yet', apiCalls.indexOf('/host/members/draw') < 0 && !G.busy, apiCalls);
+check('the in-page question is up', $('drawAgainAsk').classList.contains('hidden') === false);
+closeDrawAgain();
+check('"Not now" closes it and still nothing is drawn', $('drawAgainAsk').classList.contains('hidden') === true && apiCalls.indexOf('/host/members/draw') < 0, apiCalls);
+drawAgainYes();
+check('"Draw again" closes it and the draw goes to the server', $('drawAgainAsk').classList.contains('hidden') === true && apiCalls.indexOf('/host/members/draw') >= 0, apiCalls);
+G.busy = false; G.round = null; apiCalls = [];
+try { startDraw(); } catch (e) { threw = e; }
+check('the yes is spent by that one draw: a third tap tonight asks again', threw === null && $('drawAgainAsk').classList.contains('hidden') === false && apiCalls.indexOf('/host/members/draw') < 0, apiCalls);
+closeDrawAgain();
+G.draws[0].last_drawn_date = '2020-01-01'; apiCalls = [];
+startDraw();
+check('CONTROL: a draw not yet drawn tonight is not asked and goes straight to the server', $('drawAgainAsk').classList.contains('hidden') === true && apiCalls.indexOf('/host/members/draw') >= 0, apiCalls);
+G.busy = false; G.round = null;
+
 drainMicrotasks();
 print('');
 print(PASS + ' passed, ' + FAIL + ' failed');

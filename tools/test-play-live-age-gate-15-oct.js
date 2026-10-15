@@ -5,10 +5,17 @@
    (s8.4.7B) or Tasmania (authorised bingo); ACT not prohibited, so ACT is back on the phone.
    Dean, 15 Oct 2026: musical bingo is not bingo, so it is never on paper and never asked its age.
 
+   AND ONLY WHILE SOMETHING IS ON (live audit, 16 Oct 2026). With no session open, '' was read as
+   bingo, so an idle ACT phone was asked its age and an idle Victorian phone was told "Tonight you
+   play on paper" before the host had opened anything, including on trivia nights. A quiet night
+   now asks nothing; a bingo LOBBY (a session with no game row and no lobby_format) still does.
+
    Part one RUNS the real handlePlayLive and handleJoinInfo out of the shipped game Worker on the
    rig (tools/rig-game-worker.js), against the fake database. Part two lifts the age-tick code out
    of the shipped play.html and RUNS it: the ticket is held until the tick, remembered for the
-   night, and released on its own when the Worker does not answer (fail open).
+   night, released on its own when the Worker does not answer (fail open), and taken down again
+   when the Worker stops asking. Part three lifts the paper notice and the /play/live poll handler
+   and RUNS them: the notice is a cover the Worker can take down, and the poll acts on both flags.
 
    Run from the repo root:  jsc tools/test-play-live-age-gate-15-oct.js */
 load('tools/rig-game-worker.js');
@@ -31,26 +38,43 @@ async function live(st) { var r = await handlePlayLive({ url: 'https://w/play/li
 async function info(code) { BODY = { code: code }; var r = await handleJoinInfo({}, ENV, json); return r.body; }
 
 (async function () {
-  print('/play/live on a quiet night (broadcast bingo: no session row, format is bingo)');
+  print('/play/live on a QUIET night (no session open): nothing is on, so nothing is asked');
   var r = await live('VIC');
-  show('VIC: age_gate true, paper_bingo true, not live', r.age_gate === true && r.paper_bingo === true && r.live === false && r.exists === true, JSON.stringify(r));
+  show('VIC quiet: live:false, NO paper notice, NO age tick', r.live === false && r.exists === true && r.paper_bingo === false && r.age_gate === false, JSON.stringify(r));
   r = await live('ACT');
-  show('ACT: age_gate true, paper_bingo FALSE (phones are back on)', r.age_gate === true && r.paper_bingo === false, JSON.stringify(r));
+  show('ACT quiet: no age tick (the idle phone of the 16 Oct audit)', r.live === false && r.age_gate === false && r.paper_bingo === false, JSON.stringify(r));
   r = await live('TAS');
-  show('TAS: bingo is paper, and bingo does not ask the age there', r.age_gate === false && r.paper_bingo === true, JSON.stringify(r));
+  show('TAS quiet: no paper notice', r.live === false && r.paper_bingo === false && r.age_gate === false, JSON.stringify(r));
   r = await live('SA');
-  show('SA: paper as before, no age tick', r.age_gate === false && r.paper_bingo === true, JSON.stringify(r));
+  show('SA quiet: no paper notice', r.paper_bingo === false && r.age_gate === false, JSON.stringify(r));
   r = await live('NSW');
-  show('NSW: neither', r.age_gate === false && r.paper_bingo === false, JSON.stringify(r));
+  show('NSW quiet: neither', r.age_gate === false && r.paper_bingo === false, JSON.stringify(r));
   r = await live('QLD');
-  show('QLD: neither', r.age_gate === false && r.paper_bingo === false, JSON.stringify(r));
+  show('QLD quiet: neither', r.age_gate === false && r.paper_bingo === false, JSON.stringify(r));
   r = await live('VICOFF');
   show('a suspended Victorian venue still answers live:false, suspended:true, and does not throw', r.live === false && r.suspended === true, JSON.stringify(r));
   r = await live('NOWHERE');
   show('an unknown code is exists:false', r.exists === false, JSON.stringify(r));
 
+  print('/play/live with a BINGO LOBBY open (a session, no game row yet, no lobby_format): the rules are on');
+  night('VIC', null, 'lobby', null);
+  r = await live('VIC');
+  show('VIC bingo lobby: live:true, format empty, paper notice AND age tick', r.live === true && r.format === '' && r.paper_bingo === true && r.age_gate === true, JSON.stringify(r));
+  clearNights(); night('ACT', null, 'lobby', null);
+  r = await live('ACT');
+  show('ACT bingo lobby: age tick, phones stay on', r.live === true && r.age_gate === true && r.paper_bingo === false, JSON.stringify(r));
+  clearNights(); night('TAS', null, 'lobby', null);
+  r = await live('TAS');
+  show('TAS bingo lobby: paper, no age tick', r.live === true && r.paper_bingo === true && r.age_gate === false, JSON.stringify(r));
+  clearNights(); night('SA', null, 'lobby', null);
+  r = await live('SA');
+  show('SA bingo lobby: paper as before, no age tick', r.paper_bingo === true && r.age_gate === false, JSON.stringify(r));
+  clearNights(); night('VIC', 'bingo90');
+  r = await live('VIC');
+  show('VIC bingo RUNNING: the same as the lobby', r.live === true && r.format === 'bingo90' && r.paper_bingo === true && r.age_gate === true, JSON.stringify(r));
+
   print('/play/live on a live night: the format that is on decides');
-  night('VIC', null, 'lobby', 'trivia');
+  clearNights(); night('VIC', null, 'lobby', 'trivia');
   r = await live('VIC');
   show('VIC trivia lobby: live, format trivia, NO age tick, no paper', r.live === true && r.format === 'trivia' && r.age_gate === false && r.paper_bingo === false, JSON.stringify(r));
   clearNights(); night('VIC', null, 'lobby', 'musical_bingo');
@@ -81,23 +105,37 @@ async function info(code) { BODY = { code: code }; var r = await handleJoinInfo(
 
   print('/join/info: the call the phone page acts on, beside paper_bingo');
   r = await info('VENUE-VIC');
-  show('VIC bingo: age_gate true and paper_bingo true', r.age_gate === true && r.paper_bingo === true, JSON.stringify(r).slice(0, 160));
+  show('VIC quiet: neither (the typed code sits waiting, nothing is blanked)', r.age_gate === false && r.paper_bingo === false && r.format === '', JSON.stringify(r).slice(0, 160));
   r = await info('VENUE-ACT');
-  show('ACT bingo: age_gate true, paper_bingo false', r.age_gate === true && r.paper_bingo === false, JSON.stringify(r).slice(0, 160));
+  show('ACT quiet: no age tick', r.age_gate === false && r.paper_bingo === false, JSON.stringify(r).slice(0, 160));
   r = await info('VENUE-TAS');
-  show('TAS bingo: paper, no age tick', r.age_gate === false && r.paper_bingo === true, JSON.stringify(r).slice(0, 160));
+  show('TAS quiet: no paper notice', r.age_gate === false && r.paper_bingo === false, JSON.stringify(r).slice(0, 160));
+  var vicLobby = night('VIC', null, 'lobby', null);
+  r = await info('VENUE-VIC');
+  show('VIC bingo lobby, by the venue code: age_gate true and paper_bingo true', r.age_gate === true && r.paper_bingo === true, JSON.stringify(r).slice(0, 160));
+  r = await info(vicLobby);
+  show('VIC bingo lobby, by the session\'s own join code: the same', r.age_gate === true && r.paper_bingo === true, JSON.stringify(r).slice(0, 160));
+  clearNights(); night('ACT', null, 'lobby', null);
+  r = await info('VENUE-ACT');
+  show('ACT bingo lobby: age_gate true, paper_bingo false', r.age_gate === true && r.paper_bingo === false, JSON.stringify(r).slice(0, 160));
+  clearNights(); night('TAS', null, 'lobby', null);
+  r = await info('VENUE-TAS');
+  show('TAS bingo lobby: paper, no age tick', r.age_gate === false && r.paper_bingo === true, JSON.stringify(r).slice(0, 160));
+  clearNights(); night('NSW', null, 'lobby', null);
   r = await info('VENUE-NSW');
-  show('NSW bingo: neither', r.age_gate === false && r.paper_bingo === false, JSON.stringify(r).slice(0, 160));
+  show('NSW bingo lobby: neither', r.age_gate === false && r.paper_bingo === false, JSON.stringify(r).slice(0, 160));
+  clearNights();
   var mu = await info(night('VIC', 'musical'));
   show('VIC musical: neither, and the format is musical', mu.format === 'musical' && mu.age_gate === false && mu.paper_bingo === false, JSON.stringify(mu).slice(0, 160));
   var tr = await info(night('VIC', 'trivia'));
   show('VIC trivia: neither', tr.format === 'trivia' && tr.age_gate === false && tr.paper_bingo === false, JSON.stringify(tr).slice(0, 160));
-  clearNights();
+  clearNights(); night('VIC', null, 'lobby', null);   // a bingo lobby IS open, so a false here is the fail-open, not the quiet night
   var realFetch = fetch;
   fetch = async function (u, o) { if (/vp_venues\?id=eq/.test(String(u))) return { ok: false, status: 503, json: async function () { return {}; }, text: async function () { return 'down'; } }; return realFetch(u, o); };
   r = await info('VENUE-VIC');
   fetch = realFetch;
   show('a database that cannot answer the venue row: no age tick, no paper, no throw (fails open)', r && r.age_gate === false && r.paper_bingo === false && !!r.collect, JSON.stringify(r).slice(0, 160));
+  clearNights();
   finished = true;
 })().catch(function (e) { print('  FAIL the test itself threw: ' + e + '\n' + e.stack); bad++; });
 drainMicrotasks();
@@ -107,20 +145,20 @@ if (!finished) { print('  FAIL the test did not run to the end'); bad++; }
 print('play.html: the age tick holds the ticket, remembers the night, and fails open');
 var PLAY = readFile('venueplay/play.html');
 var a0 = PLAY.indexOf('  var _ageHold=false'), a1 = PLAY.indexOf('  var PATTERN_NAMES', a0);
+var sent = [], store = {}, boxes = [];
+var P = { room: 'ROYAL1', pid: 'p1', name: 'Ann', numCards: 2 };
+var _paper = false;
+function send(m) { sent.push(m); }
+function deviceId() { return 'dev-1'; }
+var sessionStorage = { getItem: function (k) { return store[k] == null ? null : store[k]; }, setItem: function (k, v) { store[k] = String(v); }, removeItem: function (k) { delete store[k]; } };
+function fakeEl() { var e = { attrs: {}, listeners: {}, children: [], style: {}, _html: '', _q: {},
+  setAttribute: function (k, v) { this.attrs[k] = v; }, appendChild: function (c) { this.children.push(c); }, remove: function () { this._removed = true; },
+  addEventListener: function (t, f) { (this.listeners[t] = this.listeners[t] || []).push(f); },
+  querySelector: function (s) { if (!this._q[s]) this._q[s] = fakeEl(); return this._q[s]; } };
+  Object.defineProperty(e, 'innerHTML', { get: function () { return this._html; }, set: function (v) { this._html = String(v); } }); return e; }
+var document = { body: fakeEl(), createElement: function () { var e = fakeEl(); boxes.push(e); return e; } };
 if (a0 < 0 || a1 < 0) { print('  FAIL the age-tick block is not where this test lifts it from'); bad++; }
 else {
-  var sent = [], store = {}, boxes = [];
-  var P = { room: 'ROYAL1', pid: 'p1', name: 'Ann', numCards: 2 };
-  var _paper = false;
-  function send(m) { sent.push(m); }
-  function deviceId() { return 'dev-1'; }
-  var sessionStorage = { getItem: function (k) { return store[k] == null ? null : store[k]; }, setItem: function (k, v) { store[k] = String(v); }, removeItem: function (k) { delete store[k]; } };
-  function fakeEl() { var e = { attrs: {}, listeners: {}, children: [], style: {}, _html: '', _q: {},
-    setAttribute: function (k, v) { this.attrs[k] = v; }, appendChild: function (c) { this.children.push(c); }, remove: function () { this._removed = true; },
-    addEventListener: function (t, f) { (this.listeners[t] = this.listeners[t] || []).push(f); },
-    querySelector: function (s) { if (!this._q[s]) this._q[s] = fakeEl(); return this._q[s]; } };
-    Object.defineProperty(e, 'innerHTML', { get: function () { return this._html; }, set: function (v) { this._html = String(v); } }); return e; }
-  var document = { body: fakeEl(), createElement: function () { var e = fakeEl(); boxes.push(e); return e; } };
   (0, eval)(PLAY.slice(a0, a1));
   function tick() { var box = boxes[boxes.length - 1]; var chk = box.querySelector('#age18Chk'); chk.checked = true; box.querySelector('#age18Chk').listeners.change[0](); box.querySelector('#age18Btn').listeners.click[0](); }
 
@@ -128,6 +166,7 @@ else {
   ageAsk();
   ageAnswer({ age_gate: true });
   show('age_gate:true puts up the tick before anyone has joined', boxes.length === 1 && /18 or over/.test(boxes[0].innerHTML) && _ageHold === true, boxes[0] && boxes[0].innerHTML.slice(0, 80));
+  show('the backdrop is .97 and pinned to every edge of the viewport (the JOIN button read through .92 at desktop width)', /rgba\(8,6,12,\.97\)/.test(boxes[0].attrs.style) && /position:fixed/.test(boxes[0].attrs.style) && /top:0;left:0;right:0;bottom:0/.test(boxes[0].attrs.style) && /width:100%;height:100%/.test(boxes[0].attrs.style), boxes[0].attrs.style);
   show('and remembers that this room asks', store['vpAge18:ROYAL1'] === 'need', store);
   sendJoin();
   show('tapping Join under the tick queues the announcement: no ticket is asked for', sent.length === 0 && _agePendingJoin === true);
@@ -156,6 +195,14 @@ else {
   show('FAIL OPEN: with no answer from the Worker, nothing is held and the join goes out as it always did', sent.length === 1 && _ageHold === false, sent);
   ageAnswer(null); ageAnswer(undefined); ageAnswer({});
   show('an empty or missing answer holds nothing either', _ageHold === false && boxes.length === 2);
+  // THE ASK GOES AWAY (16 Oct 2026): the lobby that asked has closed, the Worker now says false
+  delete store['vpAge18:ROYAL1']; sent = []; _agePendingJoin = false; _ageHold = false; _ageBox = null;
+  ageAnswer({ age_gate: true }); sendJoin();
+  show('a tick is up and a join is held', boxes.length === 3 && _ageHold === true && sent.length === 0 && store['vpAge18:ROYAL1'] === 'need');
+  ageClear();
+  show('ageClear takes the tick down, releases the held join and forgets "need"', boxes[2]._removed === true && _ageBox === null && _ageHold === false && sent.length === 1 && store['vpAge18:ROYAL1'] == null, { sent: sent, store: store });
+  store['vpAge18:ROYAL1'] = 'ok'; ageClear();
+  show('ageClear leaves a tick already given tonight ("ok") alone, and does nothing when nothing is up', store['vpAge18:ROYAL1'] === 'ok' && boxes.length === 3, store);
   // the page cannot build the box
   delete store['vpAge18:ROYAL1']; sent = []; _agePendingJoin = false; _ageHold = false; _ageBox = null;
   var realCreate = document.createElement; document.createElement = function () { throw new Error('no DOM'); };
@@ -163,6 +210,85 @@ else {
   document.createElement = realCreate;
   show('FAIL OPEN: a page that cannot show the tick does not hold the ticket', sent.length === 1 && _ageHold === false, sent);
   show('the join is always the same five-field announcement the console seats', sent.every(function (m) { return m.t === 'join' && 'pid' in m && 'name' in m && 'cards' in m && 'did' in m; }));
+}
+
+/* ---- part three: the paper notice is a cover the Worker can take down, and the poll acts on both flags ---- */
+print('play.html: "Tonight you play on paper" comes down again, and the /play/live poll acts on the flags');
+var p0 = PLAY.indexOf('  var _paper=false;'), p1 = PLAY.indexOf('  function randId(){', p0);
+var w0 = PLAY.indexOf('function watchVenue(slug){'), w1 = w0 < 0 ? -1 : PLAY.indexOf('.then(function(d){', w0), w2 = w1 < 0 ? -1 : PLAY.indexOf('}).catch(function(){});', w1);
+if (p0 < 0 || p1 < 0 || w0 < 0 || w1 < 0 || w2 < 0) { print('  FAIL the paper block or the watchVenue poll is not where this test lifts it from'); bad++; }
+else {
+  var unsubs = 0, closes = 0, connects = [];
+  var ch = { unsubscribe: function () { unsubs++; } }, _room = { close: function () { closes++; } }, subscribed = true, sendQueue = [{ t: 'join' }];
+  function connect(room) { connects.push(room); }
+  boxes = [];
+  (0, eval)(PLAY.slice(p0, p1));
+  showPaperBingo();
+  show('the paper notice is a fixed, full-viewport cover appended to the body, not a wipe of it', _paper === true && boxes.length === 1 && /Tonight you play on paper/.test(boxes[0].innerHTML) && /position:fixed/.test(boxes[0].attrs.style) && /top:0;left:0;right:0;bottom:0/.test(boxes[0].attrs.style) && document.body.children.indexOf(boxes[0]) >= 0, boxes[0] && boxes[0].attrs.style);
+  show('and the phone has left the room: channel and room socket closed, queue emptied', unsubs === 1 && closes === 1 && ch === null && _room === null && subscribed === false && sendQueue.length === 0);
+  showPaperBingo();
+  show('a second paper answer shows nothing twice', boxes.length === 1);
+  hidePaperBingo();
+  show('the Worker stops saying paper: the notice comes down and the phone rejoins its room', _paper === false && boxes[0]._removed === true && connects.length === 1 && connects[0] === 'ROYAL1', { connects: connects, removed: boxes[0]._removed });
+  hidePaperBingo();
+  show('taking it down twice does nothing the second time', connects.length === 1);
+
+  var handler = (0, eval)('(' + PLAY.slice(w1 + '.then('.length, w2 + 1) + ')');
+  var calls = [], hops = [], hopped = false;
+  showPaperBingo = function () { calls.push('paper'); }; hidePaperBingo = function () { calls.push('nopaper'); };
+  ageAnswer = function (d) { calls.push(d && d.age_gate === true ? 'age' : 'age?'); }; ageClear = function () { calls.push('noage'); };
+  function hopToApp(u) { hops.push(u); }
+  function $(id) { return { textContent: '', classList: { remove: function () {}, add: function () {} } }; }
+  P.active = false;
+  handler({ exists: true, live: true, format: '', join_code: 'VENUE1', paper_bingo: true, age_gate: true });
+  show('a bingo lobby opens in Victoria: the poll shows the paper notice and asks the age, and does not hop', calls.join(',') === 'paper,age' && hops.length === 0, calls);
+  calls = [];
+  handler({ exists: true, live: false, paper_bingo: false, age_gate: false });
+  show('the lobby closes: the poll takes the notice and the tick down', calls.join(',') === 'nopaper,noage' && hops.length === 0, calls);
+  calls = [];
+  handler({ exists: true, live: true, format: 'trivia', join_code: 'TRIV01', paper_bingo: false, age_gate: false });
+  show('trivia opens instead: notice down, tick down, and the phone hops to the trivia room', calls.join(',') === 'nopaper,noage' && hops.length === 1 && /\/app\/trivia\/play\?room=TRIV01$/.test(hops[0]), { calls: calls, hops: hops });
+  calls = []; hops = []; hopped = false; P.active = true;
+  handler({ exists: true, live: true, format: 'trivia', join_code: 'TRIV01', paper_bingo: true, age_gate: true });
+  show('a phone mid-game still obeys the flags, and still does not get yanked into another game', calls.join(',') === 'paper,age' && hops.length === 0, { calls: calls, hops: hops });
+  calls = []; P.active = false;
+  handler(null);
+  show('no answer from the Worker: nothing is shown and nothing is touched', calls.length === 0, calls);
+  handler({ exists: false, live: false });
+  show('an unknown code (no flags in the answer): nothing is shown, the tick is left alone', calls.indexOf('paper') < 0 && calls.indexOf('age') < 0 && calls.indexOf('noage') < 0, calls);
+}
+
+/* ---- part four: a phone that TYPED the code keeps asking /join/info, and acts on the flags each time ---- */
+print('play.html: the typed-code lookup acts on both flags every time, and keeps asking after a paper notice');
+var k0 = PLAY.indexOf('    (function look(){'), k1 = k0 < 0 ? -1 : PLAY.indexOf('    })();', k0);
+if (k0 < 0 || k1 < 0) { print('  FAIL the look() loop is not where this test lifts it from'); bad++; }
+else {
+  // the text runs "function look(){ ... }" : from after the opening "(" to the "}" that "    })();" starts with
+  var look = (0, eval)('(' + PLAY.slice(k0 + '    ('.length, k1 + '    }'.length) + ')');
+  var timers = [], unknowns = 0, rehomes = [], answer = null, calls2 = [], hops2 = [];
+  var tries = 0, code = 'VENUE1', VP_LOOK_NOW = null, CODE_RE = /^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/;
+  function setTimeout(fn, ms) { timers.push(ms); return timers.length; }
+  function playingHere() { return false; }
+  function playerPost(path, body) { calls2.push(path + ':' + body.code); return Promise.resolve(answer); }
+  function unknownCode() { unknowns++; }
+  function rehome(c, shown) { rehomes.push(c); }
+  function playerAppFor(format) { var f = String(format || ''); return f.indexOf('trivia') === 0 ? '/app/trivia/play' : f.indexOf('musical') === 0 ? '/app/musical/play' : ''; }
+  hopToApp = function (u) { hops2.push(u); };
+  showPaperBingo = function () { calls.push('paper'); }; hidePaperBingo = function () { calls.push('nopaper'); };
+  ageAnswer = function (d) { calls.push(d && d.age_gate === true ? 'age' : 'age?'); }; ageClear = function () { calls.push('noage'); };
+  P.room = 'VENUE1';
+  calls = []; answer = { exists: true, format: '', paper_bingo: true, age_gate: true, channel: 'VENUE1' };
+  look(); drainMicrotasks();
+  show('a Victorian bingo lobby: the paper notice goes up, and the phone KEEPS asking (it used to stop for the night here)', calls.join(',') === 'paper' && timers.length === 1 && calls2[0] === '/join/info:VENUE1', { calls: calls, timers: timers });
+  calls = []; timers = []; answer = { exists: true, format: '', paper_bingo: false, age_gate: true, channel: 'VENUE1' };
+  look(); drainMicrotasks();
+  show('an ACT bingo lobby: notice down, age asked, no hop, asks again', calls.join(',') === 'nopaper,age' && hops2.length === 0 && timers.length === 1, calls);
+  calls = []; timers = []; answer = { exists: true, format: 'trivia', room_code: 'TRIV01', paper_bingo: false, age_gate: false };
+  look(); drainMicrotasks();
+  show('trivia opens: notice down, tick down, and the phone hops to the trivia room', calls.join(',') === 'nopaper,noage' && hops2.length === 1 && /\/app\/trivia\/play\?room=TRIV01$/.test(hops2[0]), { calls: calls, hops: hops2 });
+  calls = []; timers = []; answer = { exists: false, format: '', collect: null };
+  look(); drainMicrotasks();
+  show('a code nobody holds: told so, and the asking stops', unknowns === 1 && timers.length === 0, { unknowns: unknowns, timers: timers });
 }
 
 if (bad) throw new Error('age gate: ' + bad + ' of ' + ran + ' failed');

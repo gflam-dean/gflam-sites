@@ -361,6 +361,7 @@
   /* Shown instead of a ticket in the three states whose rules still require a printed card.
      Written so a punter understands it is normal, not a fault. */
   var _paper=false;   // set once this phone has been told it plays on paper: it then sends nothing
+  var _paperBox=null; // the notice itself, so a flag that clears later can take it down again
   function showPaperBingo(){
     if(_paper) return;
     _paper=true;
@@ -369,18 +370,32 @@
     try{ if(ch) ch.unsubscribe(); }catch(e){}
     try{ if(_room && _room.close) _room.close(); }catch(e){}
     ch=null; _room=null; subscribed=false; sendQueue=[];
-    var host=document.querySelector(".wrap")||document.body;
+    /* A COVER, NOT A WIPE (16 Oct 2026). This used to empty document.body, which could never be
+       undone: a phone told "paper" while a bingo lobby was open stayed on that notice after the
+       host closed the lobby and opened nothing, or opened trivia. The notice now sits OVER the page
+       (fixed, full viewport), and hidePaperBingo() takes it down and rejoins the room when the
+       Worker stops saying paper. */
     var d=document.createElement("div");
-    d.setAttribute("style","max-width:30em;margin:12vh auto 0;padding:0 22px;text-align:center;"+
+    d.setAttribute("role","status");
+    d.setAttribute("style","position:fixed;top:0;left:0;right:0;bottom:0;inset:0;width:100%;height:100%;z-index:99997;"+
+      "overflow-y:auto;background:#0B0A10;padding:12vh 22px 40px;text-align:center;"+
       "font:400 17px/1.6 system-ui,-apple-system,sans-serif;color:#E7E7EC");
-    d.innerHTML='<div style="font:800 26px/1.2 system-ui,sans-serif;color:#fff;margin-bottom:14px">'+
+    d.innerHTML='<div style="max-width:30em;margin:0 auto">'+
+      '<div style="font:800 26px/1.2 system-ui,sans-serif;color:#fff;margin-bottom:14px">'+
       'Tonight you play on paper</div>'+
       '<p style="color:#9A9AA4">Grab your bingo book from the bar and mark it off as the numbers are called. '+
       'The big screen shows every number, so you can always check back.</p>'+
       '<p style="color:#8A8A94;font-size:14px;margin-top:18px">Your state\u2019s rules ask for a printed ticket '+
-      'for bingo, so phones sit this one out. Everything else runs exactly the same.</p>';
-    try{ document.body.innerHTML=""; }catch(e){}
-    (document.body||host).appendChild(d);
+      'for bingo, so phones sit this one out. Everything else runs exactly the same.</p></div>';
+    try{ document.body.appendChild(d); _paperBox=d; }catch(e){ _paperBox=null; }
+  }
+  /* The Worker has stopped saying paper (the bingo lobby closed, or another game is on): take the
+     notice down and rejoin the room, so the phone is back where it was before the flag arrived. */
+  function hidePaperBingo(){
+    if(!_paper) return;
+    _paper=false;
+    if(_paperBox){ try{ _paperBox.remove(); }catch(e){} _paperBox=null; }
+    try{ if(P.room) connect(P.room); }catch(e){}
   }
   function randId(){ var s=""; for(var i=0;i<12;i++) s+="abcdefghijklmnopqrstuvwxyz0123456789".charAt(cryptoInt(36)); return s; }
 
@@ -420,12 +435,27 @@
     if(_ageBox){ try{ _ageBox.remove(); }catch(e){} _ageBox=null; }
     if(_agePendingJoin){ _agePendingJoin=false; sendJoin(); }
   }
+  /* THE ASK WENT AWAY (16 Oct 2026). The Worker now answers age_gate:false once the bingo lobby
+     that asked has closed (or another game is on), so a tick still on screen comes down, the
+     held join is released as it would have been with no gate at all, and the "need" note is
+     forgotten. A tick already given tonight ("ok") is kept: the same room may ask again. */
+  function ageClear(){
+    if(!_ageHold && !_ageBox) return;
+    _ageHold=false;
+    try{ if(sessionStorage.getItem(ageKey())==="need") sessionStorage.removeItem(ageKey()); }catch(e){}
+    if(_ageBox){ try{ _ageBox.remove(); }catch(e){} _ageBox=null; }
+    if(_agePendingJoin){ _agePendingJoin=false; sendJoin(); }
+  }
   function requireAge18(){
     if(_ageBox || _paper) return;
     try{
       var d=document.createElement("div");
       d.setAttribute("role","dialog"); d.setAttribute("aria-modal","true");
-      d.setAttribute("style","position:fixed;inset:0;z-index:99998;background:rgba(8,6,12,.92);display:flex;align-items:center;"+
+      /* Full viewport at every width (top/left/right/bottom as well as inset, for older WebKit),
+         and .97 rather than .92: at desktop width the JOIN button read straight through the
+         backdrop (live audit, 16 Oct 2026). */
+      d.setAttribute("style","position:fixed;top:0;left:0;right:0;bottom:0;inset:0;width:100%;height:100%;z-index:99998;"+
+        "background:rgba(8,6,12,.97);display:flex;align-items:center;overflow-y:auto;"+
         "justify-content:center;padding:22px;font:400 16px/1.5 system-ui,-apple-system,sans-serif;color:#E7E7EC");
       d.innerHTML='<div style="max-width:24em;width:100%;text-align:center">'+
         '<div style="font:800 24px/1.2 system-ui,sans-serif;color:#fff;margin-bottom:12px">Are you 18 or over?</div>'+
@@ -1813,7 +1843,13 @@
       if(playingHere()){ if(++tries<225) setTimeout(look, 8000); return; }   // see watchVenue
       playerPost("/join/info",{ code:code })
         .then(function(r){
-          if(r && r.paper_bingo){ showPaperBingo(); return; }
+          /* The paper notice and the age tick follow the Worker's answer EACH time (16 Oct 2026):
+             a flag that arrives once a bingo lobby opens is acted on, and one that clears later
+             (the lobby closed, trivia opened) takes the notice down again. A phone shown the paper
+             notice keeps asking, so it can still follow the room to trivia or musical. */
+          if(r && r.paper_bingo){ showPaperBingo(); if(++tries<225) setTimeout(look, 8000); return; }
+          hidePaperBingo();
+          if(r && r.age_gate===true) ageAnswer(r); else if(r && r.age_gate===false) ageClear();
           if(r && r.exists===false){ unknownCode(); return; }   // no game behind it: stop asking
           if(playingHere()){ if(++tries<225) setTimeout(look, 8000); return; }
           var to=playerAppFor(r && r.format);
@@ -1974,7 +2010,14 @@
         fetch(VP_GAME_API+"/play/live?code="+encodeURIComponent(code))
           .then(function(r){ return r.ok?r.json():null; })
           .then(function(d){
-            if(!d || hopped || P.active) return;
+            if(!d || hopped) return;
+            /* THE STATE'S PHONE RULES, ON EVERY POLL (16 Oct 2026). A phone off a table talker sat
+               here through the whole night, so a paper flag or an age tick that arrived once the
+               bingo lobby opened was never acted on, and one that cleared later never took the
+               notice down. The Worker decides; this only does what it says, each time it answers. */
+            if(d.paper_bingo===true) showPaperBingo(); else hidePaperBingo();
+            if(d.age_gate===true) ageAnswer(d); else if(d.age_gate===false) ageClear();
+            if(P.active) return;
             /* A mistyped or out-of-date slug (an old table talker, a typo on a printed sign)
                connects to a channel nobody is on, and the punter sat on "waiting for the host"
                all night with nothing to tell them why. The TV has warned about this since

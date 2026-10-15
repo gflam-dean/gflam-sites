@@ -25,11 +25,23 @@ function night(st, format) {   // a live session at that venue running that form
   DB.vp_games.push({ id: '30000000-0000-4000-8000-' + ('000000000000' + n).slice(-12), session_id: sid, seq: 1, format: format, status: 'running' });
   return code;
 }
-venueByCode = async function (env, code) { var m = /^VENUE-(\w+)$/.exec(code); return m ? V[m[1]] : null; };   // broadcast bingo: the venue's own code
+function lobby(st) {   // a bingo lobby: a session open, no game row yet, no lobby_format (what bingo looks like before ball one)
+  n++; var sid = '20000000-0000-4000-8000-' + ('000000000000' + n).slice(-12), code = 'CODE' + ('00' + n).slice(-2);
+  DB.vp_sessions.push({ id: sid, venue_id: V[st], status: 'lobby', join_code: code, lobby_format: null, created_at: '2026-09-19T09:00:00Z' });
+  return code;
+}
+venueByCode = async function (env, code) { var m = /^VENUE-(\w+)$/.exec(code); return m ? V[m[1]] : null; };   // the venue's own code
 
 (async function () {
   async function paper(code) { BODY = { code: code }; var r = await handleJoinInfo({}, ENV, json); return r.body; }
-  print('the three paper states');
+  print('the three paper states, while a bingo lobby is open');
+  /* QUIET FIRST (live audit, 16 Oct 2026): with nothing on, '' was read as bingo and an idle phone
+     was blanked before the host had opened anything. The flag is for the game that is ON. */
+  for (var st0 of ['SA', 'VIC', 'TAS']) {
+    var q = await paper('VENUE-' + st0);
+    show(st0 + ': a quiet night (no session open) puts nobody on paper', q.paper_bingo === false, JSON.stringify(q).slice(0, 120));
+  }
+  ['SA', 'VIC', 'TAS', 'NSW', 'ACT'].forEach(lobby);
   for (var st of ['SA', 'VIC', 'TAS']) {
     var b = await paper('VENUE-' + st);
     show(st + ': ordinary bingo is on paper', b.paper_bingo === true, JSON.stringify(b).slice(0, 120));

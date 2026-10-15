@@ -1526,7 +1526,7 @@
     if (!isAuMobile(mobile)) { showErr('Please enter a valid Australian mobile (starts 04).'); return; }
 
     var consentEl = document.getElementById('vp-consent');
-    if (consentEl && !consentEl.checked) { showErr('Please agree to the Terms and Privacy Policy to continue.'); return; }
+    if (consentEl && !consentEl.checked) { showErr('Please tick the box to agree to the Terms and Privacy Policy and confirm your venue is responsible for its gaming compliance.'); return; }
     var marketingEl = document.getElementById('vp-marketing');
     var marketingOptIn = marketingEl ? marketingEl.checked : false;
 

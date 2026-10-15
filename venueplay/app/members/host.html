@@ -128,6 +128,13 @@
   .errbar .ex:focus-visible{outline:2px solid #FF4D6D;outline-offset:2px}
 
   .hidden{display:none!important}
+  /* the in-page question (draw again?), styled like the rest of the console */
+  .ask{position:fixed;top:0;left:0;right:0;bottom:0;inset:0;z-index:9000;background:rgba(8,6,12,.82);display:flex;align-items:center;justify-content:center;padding:18px}
+  .askbox{max-width:30em;width:100%;background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  .askbox h3{margin:0 0 10px;font-size:18px;line-height:1.3}
+  .askbox p{margin:0 0 18px;color:var(--muted,#9A9AA4);font-size:14px;line-height:1.5}
+  .askbtns{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+  .askbtns .btn{min-height:44px}
 </style>
 </head>
 <body>
@@ -194,6 +201,18 @@
         <!-- Shown only when the draw has a maximum: whether the jackpot sits at it, and the reserve. -->
         <div class="since hidden" id="runCap"></div>
         <button class="btn pink big" id="drawBtn">Draw</button>
+        <!-- "Drawn tonight, draw again?" is asked HERE, never with window.confirm(): a native dialog
+             on a kiosk tablet behind its lock screen blocks the whole console (live audit, 16 Oct 2026). -->
+        <div class="ask hidden" id="drawAgainAsk" role="dialog" aria-modal="true" aria-labelledby="drawAgainTitle">
+          <div class="askbox">
+            <h3 id="drawAgainTitle">This draw has already been drawn tonight</h3>
+            <p>Only draw again if the first draw never showed a winner (for example the wifi dropped, or the tablet reloaded). Drawing again picks a new random member.</p>
+            <div class="askbtns">
+              <button type="button" class="btn ghost" id="drawAgainNo">Not now</button>
+              <button type="button" class="btn pink" id="drawAgainYes">Draw again</button>
+            </div>
+          </div>
+        </div>
 
         <div class="winner-card" id="winnerCard">
           <div class="eye" id="wcEye">Winning number</div>
@@ -512,7 +531,12 @@
     var base="Leave blank for no maximum. Once the jackpot reaches it, the draw keeps running at that figure until it is won, and each week's increase goes into a reserve.";
     var out={ hint:base, warn:"" };
     if(limit && typeof limit.cents==="number"){
-      out.hint=(limit.why||"Your state's figure")+": "+money(limit.cents)+". "+base;
+      /* The figure as a sentence, then the state's reason as its own sentence, then the generic
+         line (live audit, 16 Oct 2026). This used to read "<why>: $7,000. Leave blank...", so the
+         reason's own colon and figures ran straight into ours. */
+      var why=String(limit.why||"").trim().replace(/\.$/,"");
+      var figure=limit.where||"your state's figure";   // "the Victorian figure", from jackpotLimit
+      out.hint=figure.charAt(0).toUpperCase()+figure.slice(1)+" is "+money(limit.cents)+"."+(why ? " "+why+"." : "")+" "+base;
       var lim=limit.cents/100, over=[];
       if(capDollars!=null && !isNaN(capDollars) && capDollars>lim) over.push("the maximum you typed ("+money(Math.round(capDollars*100))+")");
       if(currentDollars!=null && !isNaN(currentDollars) && currentDollars>lim) over.push("the current jackpot ("+money(Math.round(currentDollars*100))+")");
@@ -613,7 +637,22 @@
     if(!e || e.status!==428 || !window.VPGaming) return;
     VPGaming.gateFor("members", startDraw, { force:true, waitRecord:true, freeEntry:true });
   }
+  /* DRAWN TONIGHT, DRAW AGAIN? Asked on the page, never with window.confirm() (live audit,
+     16 Oct 2026): a native dialog on a kiosk tablet behind its lock screen blocks the console, and
+     the TV keeps counting behind it. "Draw again" sets the flag and calls startDraw() once more;
+     the flag is spent by that one call, so the next tap tonight asks again. A page with no box
+     (none is expected) carries on as it always did. */
+  var _drawAgainOk=false;
+  function askDrawAgain(){
+    var a=$("drawAgainAsk"); if(!a){ _drawAgainOk=true; startDraw(); return; }
+    a.classList.remove("hidden");
+    try{ $("drawAgainYes").focus(); }catch(e){}
+  }
+  function closeDrawAgain(){ var a=$("drawAgainAsk"); if(a) a.classList.add("hidden"); }
+  function drawAgainYes(){ closeDrawAgain(); _drawAgainOk=true; startDraw(); }
   function startDraw(){
+    if(alreadyDrawnTonight() && !_drawAgainOk){ askDrawAgain(); return; }
+    _drawAgainOk=false;
     /* A CHANNEL BLIP DOES NOT STOP THE DRAW. This refused with "No TV connected yet" whenever
        the channel was between subscriptions, even with the TV on the wall, and the message then
        stayed up after the TV was back. The raffle queues in the same situation and so does this
@@ -622,7 +661,6 @@
        server side and logged either way. What the members draw does need is a draw that EXISTS
        and members that loaded, and those are checked below. */
     if(G.loadFailed){ hostError(LOAD_FAIL_MSG, "load"); return; }   // never draw off a list that did not load
-    if(alreadyDrawnTonight() && !confirm("This draw has already been drawn tonight.\n\nOnly draw again if the first draw never showed a winner (for example the wifi dropped, or the tablet reloaded). Drawing again picks a new random member.\n\nDraw again?")) return;
     if(G.busy || G.round) return;
     var d=curDraw();
     /* This told a host to fill in the settings on the right and tap Save, while applyRoleGates()
@@ -981,6 +1019,13 @@
   /* State gaming rules, once a night, before the first draw. */
   /* waitRecord: the draw is refused by the Worker until tonight's acceptance is on the record (14 Oct 2026). */
   $("drawBtn").addEventListener("click", function(){ if(window.VPGaming) VPGaming.gateFor("members", startDraw, { waitRecord:true, freeEntry:true }); else startDraw(); });
+  (function(){
+    var y=$("drawAgainYes"), no=$("drawAgainNo"), a=$("drawAgainAsk");
+    if(y) y.addEventListener("click", drawAgainYes);
+    if(no) no.addEventListener("click", closeDrawAgain);
+    if(a) a.addEventListener("click", function(e){ if(e.target===a) closeDrawAgain(); });
+    document.addEventListener("keydown", function(e){ if(e.key==="Escape" && a && !a.classList.contains("hidden")) closeDrawAgain(); });
+  })();
   $("claimBtn").addEventListener("click", onClaim);
   $("rollBtn").addEventListener("click", onRollover);
   $("saveSettingsBtn").addEventListener("click", saveSettings);

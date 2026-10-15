@@ -244,6 +244,8 @@ venueByCode({}, ROYAL.join_code).then(function (id) {
       function connect() {} function claimIdentity() {} function playingHere() { return false; }
       function $() { return null; }
       function hopToApp(u) { went = u; }
+      // the poll acts on the state's phone rules each time (16 Oct 2026); none apply here
+      function showPaperBingo() {} function hidePaperBingo() {} function ageAnswer() {} function ageClear() {}
       function setInterval() {}
       var fetch = function () { return Promise.resolve({ ok: true, json: function () { return Promise.resolve(answer); } }); };
       eval(liftFrom(PLAY, 'venueCode', 'play.html'));

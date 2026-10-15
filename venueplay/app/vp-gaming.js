@@ -409,11 +409,15 @@
     }
 
     // Paid entry, but we have not switched it on for this venue.
+    /* A HARD BLOCK TOO (live audit, 16 Oct 2026). This set ok:false and nothing else, so the popup
+       still said "I understand, start the game" and the console went ahead in its PAID mode at a
+       venue we have not unlocked to charge. Same rule as the two blocks below: the popup offers a
+       free-entry game and tells the console { free: true }. The free path is never blocked. */
     if (opts.paidEntryEnabled === false) {
-      out.ok = false;
+      out.ok = false; out.hardBlock = true;
       out.headline = 'Paid entry is switched off for this venue.';
       out.warnings.push('We turn paid entry on once we have recorded whether you are a club or a pub, because that is what the rules turn on. Email hello@venueplay.com.au and we will sort it.');
-      out.points.push('A free-entry game is open to you right now. Switch this game to free entry and the rules for it are shown here.');
+      out.points.push('A free-entry game is open to you right now: the button below starts tonight as free entry, and the rules for a free game are what is recorded.');
       return out;
     }
 
@@ -523,6 +527,11 @@
        jackpotLimit({ state, entityType, format, paidEntry }) -> { cents: number|null, why }
      null means no figure is confirmed for that case, and why says so. WA has no figure yet.
      --------------------------------------------------------------------------- */
+  /* "the Victorian figure", as a whole phrase, so no console ever composes "the ACT" (house rule:
+     write ACT, never "the ACT"). */
+  var FIGURE_PHRASE = { NSW: 'the New South Wales figure', QLD: 'the Queensland figure', VIC: 'the Victorian figure',
+                        ACT: 'the figure for ACT', TAS: 'the Tasmanian figure', SA: 'the South Australian figure',
+                        NT: 'the Northern Territory figure', WA: 'the Western Australian figure' };
   function jackpotLimit(opts) {
     opts = opts || {};
     var kind = kindOf(opts.format), state = String(opts.state || '').toUpperCase();
@@ -543,7 +552,11 @@
       },
       VIC: {
         members: [null, 'Victoria trade promotion: no prize figure confirmed'],
-        raffle: paid ? [2306000, 'Victoria raffle: above $23,060 in prizes needs a VGCCC permit and printed tickets; no cash prizes'] : [null, 'Victoria trade promotion: no prize figure confirmed'],
+        /* cents:0, not $23,060 (live audit, 16 Oct 2026): the letter's table says a Victorian raffle
+           has NO cash prizes (travel is the one exception, and at most 10% of the prize value), so
+           ANY cash jackpot is above the figure. $23,060 is the permit line for the prize pool as a
+           whole, which the why still says. */
+        raffle: paid ? [0, 'Victoria raffle: no cash prizes at all (the one exception is travel, up to 10% of the prize value); a prize pool above $23,060 needs a VGCCC permit and printed tickets'] : [null, 'Victoria trade promotion: no prize figure confirmed'],
         bingo: paid ? [2000000, 'Victoria bingo: prizes of $20,000 or more need VGCCC notification; cash of $1,000 or more by cheque or EFT'] : [null, 'Victoria free-entry bingo: every entry fee back as prizes, no figure beyond that']
       },
       ACT: {
@@ -574,7 +587,10 @@
     };
     var row = (T[state] || {})[kind];
     if (!row) return { cents: null, why: 'We have not confirmed a prize figure for ' + st.name + '.' };
-    return { cents: row[0], why: row[1] };
+    /* where: "the Victorian figure", so a console can compose a plain sentence around the figure
+       and put the why after it as its own sentence (16 Oct 2026). The raffle console used to
+       splice the why INTO "is above <why> of $23,060". */
+    return { cents: row[0], why: row[1], where: FIGURE_PHRASE[state] || ('the ' + st.name + ' figure') };
   }
 
   function money(cents) {

@@ -126,7 +126,12 @@ check('NSW raffle: $30,000', lim('NSW', 'non_profit', 'raffle', true).cents === 
 check('NSW charity housie: $10,000', lim('NSW', 'non_profit', 'bingo90', true).cents === 1000000);
 check('QLD free draw: no figure, and the reason says Category 4', lim('QLD', 'for_profit', 'members', false).cents === null && /Category 4/.test(lim('QLD', 'for_profit', 'members', false).why));
 check('QLD paid bingo: the $1,000 first jackpot', lim('QLD', 'non_profit', 'bingo90', true).cents === 100000);
-check('VIC paid raffle: $23,060', lim('VIC', 'non_profit', 'raffle', true).cents === 2306000);
+check('VIC paid raffle: cents:0, because the table says NO cash prizes (travel, up to 10%, is the one exception), with $23,060 as the permit line in the why (16 Oct 2026)', lim('VIC', 'non_profit', 'raffle', true).cents === 0 && /no cash prizes/i.test(lim('VIC', 'non_profit', 'raffle', true).why) && /travel/i.test(lim('VIC', 'non_profit', 'raffle', true).why) && /10%/.test(lim('VIC', 'non_profit', 'raffle', true).why) && /\$23,060/.test(lim('VIC', 'non_profit', 'raffle', true).why), lim('VIC', 'non_profit', 'raffle', true));
+check('VIC paid raffle: the same for a for-profit venue (it runs the raffle for the non-profit)', lim('VIC', 'for_profit', 'raffle', true).cents === 0);
+check('every confirmed figure names its state as a phrase for the consoles to compose with ("the Victorian figure"), and never "the ACT"', lim('VIC', 'non_profit', 'raffle', true).where === 'the Victorian figure' && lim('NSW', 'for_profit', 'members', false).where === 'the New South Wales figure' && lim('ACT', 'for_profit', 'raffle', true).where === 'the figure for ACT' && lim('TAS', 'non_profit', 'bingo90', true).where === 'the Tasmanian figure', lim('VIC', 'non_profit', 'raffle', true));
+var whereAct = [];
+STATES.forEach(function (s) { ENT.forEach(function (e) { FMT.forEach(function (f) { [true, false].forEach(function (p) { var r = lim(s, e, f, p); if (r && r.where && /\bthe ACT\b/.test(r.where)) whereAct.push(s + '/' + f); }); }); }); });
+check('no figure phrase reads "the ACT"', whereAct.length === 0, whereAct);
 check('VIC paid bingo: $20,000 notification', lim('VIC', 'non_profit', 'bingo90', true).cents === 2000000);
 check('ACT: $3,000 members, $2,500 raffle, $1,000 housie', lim('ACT', 'for_profit', 'members', false).cents === 300000 && lim('ACT', 'for_profit', 'raffle', true).cents === 250000 && lim('ACT', 'for_profit', 'bingo90', true).cents === 100000);
 check('TAS: $5,000 cash for draws, $2,000 jackpot bingo', lim('TAS', 'non_profit', 'raffle', true).cents === 500000 && lim('TAS', 'non_profit', 'members', false).cents === 500000 && lim('TAS', 'non_profit', 'bingo90', true).cents === 200000);
@@ -134,7 +139,7 @@ check('NT: $2,000 members, $5,000 raffle; SA: $5,000', lim('NT', 'for_profit', '
 check('WA: null, and says no figure yet', lim('WA', 'non_profit', 'raffle', true).cents === null && /no prize figure/i.test(lim('WA', 'non_profit', 'raffle', true).why));
 check('an unknown state and trivia: null, with a reason, never a throw', lim('XX', 'non_profit', 'raffle', true).cents === null && lim('', 'non_profit', 'raffle', true).cents === null && lim('NSW', 'non_profit', 'trivia', true).cents === null && !!lim('XX', 'non_profit', 'raffle', true).why);
 var allWhy = [];
-STATES.forEach(function (s) { ENT.forEach(function (e) { FMT.forEach(function (f) { [true, false].forEach(function (p) { var r = lim(s, e, f, p); if (!r || typeof r.why !== 'string' || !r.why || (r.cents !== null && !(r.cents > 0))) allWhy.push(s + '/' + e + '/' + f + '/' + p); }); }); }); });
+STATES.forEach(function (s) { ENT.forEach(function (e) { FMT.forEach(function (f) { [true, false].forEach(function (p) { var r = lim(s, e, f, p); if (!r || typeof r.why !== 'string' || !r.why || (r.cents !== null && !(r.cents >= 0))) allWhy.push(s + '/' + e + '/' + f + '/' + p); }); }); }); });
 check('every combination answers { cents: number|null, why: text }', allWhy.length === 0, allWhy);
 
 print('the declaration and the popup');
@@ -153,6 +158,18 @@ check('it carries the declaration with the every-law line', /every law that appl
 press(w);
 check('pressing it tells the console { free: true }', got.length === 1 && got[0] && got[0].free === true, got);
 check('and the record is of a FREE game the host saw, so a draw is not refused', posted.length === 1 && posted[0].body.paid_entry === false && /^Free entry/.test(posted[0].body.category_claimed) && posted[0].body.category_claimed.indexOf(G.NOT_SHOWN) !== 0, posted[0] && posted[0].body);
+
+/* PAID ENTRY SWITCHED OFF for the venue (live audit, 16 Oct 2026): the popup said so and then
+   offered "I understand, start the game", and the console kept its paid mode. */
+VENUE = { id: 'v-off', name: 'The Anchor', au_state: 'NSW', entity_type: 'non_profit', paid_entry_enabled: false, permits: null };
+got = []; posted = [];
+G.gateFor('bingo90', function (r) { got.push(r); }, { gameIsPaid: true });
+w = lastWrap();
+check('"Paid entry is switched off": the popup offers ONLY a free-entry game', /Paid entry is switched off/.test(w.innerHTML) && /Start as a free-entry game/.test(w.innerHTML) && !/I understand, start the game/.test(w.innerHTML), w.innerHTML.slice(0, 300));
+var offA = G.assess({ state: 'NSW', entityType: 'non_profit', format: 'bingo90', paidEntry: true, paidEntryEnabled: false });
+check('and assess() says hardBlock as well as ok:false', offA.hardBlock === true && offA.ok === false, offA);
+press(w);
+check('pressing it tells the console { free: true } and records a free game the host saw', got.length === 1 && got[0] && got[0].free === true && posted.length === 1 && posted[0].body.paid_entry === false && /^Free entry/.test(posted[0].body.category_claimed), { got: got, posted: posted[0] && posted[0].body });
 
 VENUE = { id: 'v-vic', name: 'The Lodge', au_state: 'VIC', entity_type: 'non_profit', paid_entry_enabled: true, permits: null };
 got = []; posted = [];

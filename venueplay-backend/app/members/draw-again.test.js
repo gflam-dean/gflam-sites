@@ -72,6 +72,12 @@ eval(lift(H, 'activeMembers'));
 eval(lift(H, 'alreadyDrawnTonight'));
 eval(lift(H, 'drawBtnIdle'));
 eval(lift(H, 'startDraw'));
+/* The question is asked ON THE PAGE since 16 Oct 2026 (a native confirm() blocks a kiosk tablet
+   behind its lock screen), so the lock is the in-page box and its two buttons. */
+var _m = /var _drawAgainOk=false;/.exec(H); if (!_m) throw new Error('cannot find _drawAgainOk in host.html'); eval(_m[0]);
+eval(lift(H, 'askDrawAgain')); eval(lift(H, 'closeDrawAgain')); eval(lift(H, 'drawAgainYes'));
+els.drawAgainAsk = { id: 'drawAgainAsk', hidden: true, classList: { add: function (c) { if (c === 'hidden') els.drawAgainAsk.hidden = true; }, remove: function (c) { if (c === 'hidden') els.drawAgainAsk.hidden = false; }, contains: function (c) { return c === 'hidden' && els.drawAgainAsk.hidden; } } };
+function askUp() { return !els.drawAgainAsk.hidden; }
 
 /* ---- 1. the button is never dead ---- */
 drawBtnIdle();
@@ -86,15 +92,17 @@ ok('and it says so, so nobody draws twice by accident', /Drawn tonight/.test($('
    $('drawBtn').textContent);
 ok('the source no longer disables it anywhere in drawBtnIdle', !/b\.disabled\s*=\s*true/.test(lift(H, 'drawBtnIdle')));
 
-/* ---- 2. the confirm is the lock ---- */
-confirmAnswer = false; confirms = []; sent = [];
+/* ---- 2. the in-page question is the lock ---- */
+confirm = function () { throw new Error('window.confirm() was called: that blocks a kiosk tablet (16 Oct 2026)'); };
+confirms = []; sent = [];
 startDraw();
-ok('drawing again asks first', confirms.length === 1 && /already been drawn tonight/.test(confirms[0]));
-ok('and saying no draws nothing', sent.length === 0 && G.busy === false);
+ok('drawing again asks first, on the page', askUp() && /already been drawn tonight/.test(H.slice(H.indexOf('id="drawAgainAsk"'), H.indexOf('id="drawAgainAsk"') + 600)));
+closeDrawAgain();
+ok('and saying Not now draws nothing', sent.length === 0 && G.busy === false && !askUp());
 
-confirmAnswer = true; confirms = []; sent = [];
-startDraw();
-ok('saying yes runs the draw', G.busy === true);
+sent = [];
+startDraw(); drawAgainYes();
+ok('saying Draw again runs the draw', G.busy === true && !askUp());
 ok('and the TV is told to spin', sent.length > 0 && sent[0].t === 'drawing');
 
 /* ---- 3. the spin uses numbers this club actually has ---- */
@@ -105,7 +113,7 @@ ok('a removed member is not in the spin range', drawing.maxNumber !== 9999);
 
 G.busy = false; G.draws[0].last_drawn_date = null; confirms = []; sent = [];
 startDraw();
-ok('the first draw of the night asks nothing at all', confirms.length === 0 && G.busy === true);
+ok('the first draw of the night asks nothing at all', !askUp() && G.busy === true);
 
 /* ---- 4. host and screen agree on how long a result stays up ---- */
 function num(src, name) { var m = new RegExp(name + '\\s*=\\s*(\\d+)').exec(src); return m ? parseInt(m[1], 10) : -1; }

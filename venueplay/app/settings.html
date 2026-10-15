@@ -233,7 +233,10 @@
      generic line.
      --------------------------------------------------------------------------- */
   var VP_WORKER="https://venueplay-api.dean-tindale.workers.dev";
-  var PERMIT_KINDS=[["bingo","Bingo (including musical bingo)"],["raffle","Raffles"],["members","Members draws"]];
+  /* The bingo heading says both halves at once (live audit, 16 Oct 2026): musical bingo IS bingo
+     for permits, and is NOT on paper on phones. The rules popup says the second; a publican reads
+     both on the same screen, so this says both. */
+  var PERMIT_KINDS=[["bingo","Bingo (musical bingo counts as bingo for permits; phone cards stay on for musical bingo)"],["raffle","Raffles"],["members","Members draws"]];
   var WHY={
     NSW:{ bingo:"In New South Wales, paid housie is for registered clubs (club bingo: no cash prizes, $70 a game) or is run to raise money for a charity (charity housie). Record the club's or the charity's authority here. Social housie needs nothing, and cannot be run at a pub.",
           raffle:"In New South Wales, a pub may run a paid raffle for a charity under the charity's authority from {reg}, with the charity's written authorisation. Record the charity and the date it authorised you. A club's promotional raffle (up to $5,000, no cash prizes) needs no authority.",
@@ -241,7 +244,7 @@
     QLD:{ bingo:"In Queensland, only an association may conduct bingo, and only a bingo centre needs a licence. Record the association and its category (category 1 up to $2,000 in ticket sales, category 2 up to $20,000) so it is on file.",
           raffle:"In Queensland, category 1 and 2 raffles (up to $50,000 in ticket sales) need no licence but must be run by an eligible association; category 3 (over $50,000) needs a licence from {reg}. Record the association or the licence.",
           members:"In Queensland, a free-entry members draw is a category 4 promotional game, which any business may run with no licence. Nothing to record unless you hold one." },
-    VIC:{ bingo:"In Victoria, paid bingo (including musical bingo) is for non-profits declared by {reg} that have notified it. Record your minor gaming permit or VGCCC declaration here: Victorian law bans supplying bingo tickets or a number generator to anyone without one, so we need to know you hold it.",
+    VIC:{ bingo:"In Victoria, paid bingo (and musical bingo counts as bingo for this) is for non-profits declared by {reg} that have notified it. Record your minor gaming permit or VGCCC declaration here: Victorian law bans supplying bingo tickets or a number generator to anyone without one, so we need to know you hold it.",
           raffle:"In Victoria, raffles are for non-profits; a prize pool over $23,060 needs a permit from {reg}. A for-profit venue needs the non-profit's written permission and a commercial organiser's licence. Record whichever applies.",
           members:"In Victoria, a free-entry members draw is a trade promotion and needs no permit. A draw run for a non-profit runs under that non-profit's permit; record it here." },
     ACT:{ bingo:"In ACT, housie with a prize pool over $1,000 a session needs a permit from {reg}, and no minors may play. Record the permit here.",

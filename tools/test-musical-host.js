@@ -161,5 +161,51 @@ print("5. A PLAYLIST CARD SAYS HOW MANY SONGS A GAME PLAYS");
 })();
 
 print("");
+print("6. TONIGHT: FREE ENTRY OR TICKETS SOLD, and what the rules gate is told (live audit, 16 Oct 2026)");
+(function(){
+  /* The gate was asked with no per-game flag, so a venue unlocked to charge saw every musical night
+     as ticketed and a FREE night was hard blocked where the state says the venue may not charge.
+     Lift the choice and the Start button's handler out of the page and run them. */
+  var a = host.indexOf("  function paidNightKey(){"), s = host.indexOf('$("startBtn").addEventListener("click", function(){', a), e = s < 0 ? -1 : host.indexOf("\n  });", s);
+  pass("the Tonight choice and the Start handler are where this test lifts them from", a > 0 && s > a && e > s);
+  if (!(a > 0 && s > a && e > s)) return;
+  pass("the markup has the choice, defaulting to free, hidden until the venue is known to be allowed to charge", /<select id="paidSel">\s*<option value="">Free entry/.test(host) && /id="paidField" style="display:none"/.test(host));
+  var SRC = host.slice(a, e + "\n  });".length);
+  var store = {}, els = {}, gated = [], opened = 0, started = 0;
+  function el(id){ if (!els[id]) els[id] = { id: id, value: "", style: {}, listeners: {}, addEventListener: function(t, f){ (this.listeners[t] = this.listeners[t] || []).push(f); } }; return els[id]; }
+  var fakeLocal = { getItem: function(k){ return store[k] == null ? null : store[k]; }, setItem: function(k, v){ store[k] = String(v); }, removeItem: function(k){ delete store[k]; } };
+  var G = { status: "setup", freeEntry: false };
+  var VPGaming = { gateFor: function(fmt, go, opts){ gated.push({ fmt: fmt, opts: opts }); VPGaming.last = go; } };
+  var RealDate = Date;
+  function fakeDate(ms){ var F = function(x){ return new RealDate(x); }; F.now = function(){ return ms; }; return F; }
+  var api = new Function("$", "localStorage", "G", "window", "VPGaming", "Date", "startGame", "openLobby",
+    SRC + "\n return { paidNightKey: paidNightKey, paidTonight: paidTonight, setPaidTonight: setPaidTonight, syncPaidSel: syncPaidSel, showPaidField: showPaidField };")(
+    el, fakeLocal, G, { VPGaming: VPGaming }, VPGaming, fakeDate(new RealDate(2026, 9, 17, 1, 0, 0).getTime()), function(){ started++; }, function(){ opened++; });
+  pass("by default tonight is free entry", api.paidTonight() === false && el("paidSel").value === "");
+  el("startBtn").listeners.click[0]();
+  pass("Start asks the gate for a FREE musical game (gameIsPaid:false, onlyIfPaid kept)", gated.length === 1 && gated[0].fmt === "musical" && gated[0].opts.gameIsPaid === false && gated[0].opts.onlyIfPaid === true && gated[0].opts.freeEntry === false, JSON.stringify(gated[0] && gated[0].opts));
+  VPGaming.last();
+  pass("and the lobby opens", opened === 1 && started === 0);
+  el("paidSel").value = "paid"; el("paidSel").listeners.change[0]();
+  pass("choosing Tickets sold is remembered for the night", api.paidTonight() === true && /^paid:\d{4}-\d{2}-\d{2}$/.test(store.vpMusicPaid || ""), store);
+  el("startBtn").listeners.click[0]();
+  pass("Start now asks the gate for a PAID game", gated.length === 2 && gated[1].opts.gameIsPaid === true, JSON.stringify(gated[1] && gated[1].opts));
+  VPGaming.last({ free: true });   // the state said no: "Start as a free-entry game" was pressed
+  pass("\"Start as a free-entry game\" switches tonight back to free, on the page and in storage, and still opens the lobby", G.freeEntry === true && api.paidTonight() === false && el("paidSel").value === "" && opened === 2, { free: G.freeEntry, store: store, sel: el("paidSel").value });
+  el("startBtn").listeners.click[0]();
+  pass("every gate from then on is for a free game", gated.length === 3 && gated[2].opts.gameIsPaid === false && gated[2].opts.freeEntry === true, JSON.stringify(gated[2].opts));
+  api.setPaidTonight(true); store.vpMusicPaid = "paid:2020-01-01";
+  pass("a choice from another night does not carry over", api.paidTonight() === false);
+  api.showPaidField({ paid_entry_enabled: true });
+  pass("the choice is shown when the venue may charge", el("paidField").style.display === "");
+  api.showPaidField({ paid_entry_enabled: false }); var d1 = el("paidField").style.display; api.showPaidField(null);
+  pass("and hidden when it may not, or no venue is known", d1 === "none" && el("paidField").style.display === "none");
+  /* the night key: 1am belongs to the night before, 7am to the new day */
+  var keyFn = new Function("Date", host.slice(a, host.indexOf("\n", a)) + "\n return paidNightKey;");
+  pass("1am still counts as the night before (a night runs past midnight)", keyFn(fakeDate(new RealDate(2026, 9, 17, 1, 0, 0).getTime()))() === "2026-10-16");
+  pass("7am is the new day", keyFn(fakeDate(new RealDate(2026, 9, 17, 7, 0, 0).getTime()))() === "2026-10-17");
+})();
+
+print("");
 print(bad ? ("  " + bad + " FAILED") : ("ALL " + ran + " CHECKS PASSED"));
 if (bad) throw new Error(bad + " failed");

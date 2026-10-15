@@ -160,7 +160,7 @@
   "counted_by": "lines"
  },
  "tools/test-bingo-seat-15-oct.js": {
-  "checks": 35,
+  "checks": 37,
   "counted_by": "lines"
  },
  "tools/test-bingo-tab-15-oct.js": {
@@ -232,11 +232,11 @@
   "counted_by": "lines"
  },
  "tools/test-gaming-rules-letters-15-oct.js": {
-  "checks": 66,
+  "checks": 72,
   "counted_by": "lines"
  },
  "tools/test-jackpot-cap-15-oct.js": {
-  "checks": 63,
+  "checks": 68,
   "counted_by": "lines"
  },
  "tools/test-jag-joker.js": {
@@ -272,7 +272,7 @@
   "counted_by": "lines"
  },
  "tools/test-members-console.js": {
-  "checks": 32,
+  "checks": 42,
   "counted_by": "lines"
  },
  "tools/test-members-paged.js": {
@@ -284,7 +284,7 @@
   "counted_by": "lines"
  },
  "tools/test-musical-host.js": {
-  "checks": 41,
+  "checks": 55,
   "counted_by": "lines"
  },
  "tools/test-musical-phone.js": {
@@ -316,7 +316,7 @@
   "counted_by": "lines"
  },
  "tools/test-paper-is-for-bingo-only.js": {
-  "checks": 9,
+  "checks": 12,
   "counted_by": "lines"
  },
  "tools/test-paper-night-event-private.js": {
@@ -332,7 +332,7 @@
   "counted_by": "lines"
  },
  "tools/test-permits-and-compliance-tick.js": {
-  "checks": 68,
+  "checks": 72,
   "counted_by": "lines"
  },
  "tools/test-phones-cannot-be-impersonated.js": {
@@ -348,7 +348,7 @@
   "counted_by": "lines"
  },
  "tools/test-play-live-age-gate-15-oct.js": {
-  "checks": 38,
+  "checks": 66,
   "counted_by": "lines"
  },
  "tools/test-pr-boards-15-oct.js": {

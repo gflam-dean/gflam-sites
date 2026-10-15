@@ -302,6 +302,14 @@
               <span>Auto play<small style="display:block;color:var(--faint);font-size:11.5px">The next song starts 8 seconds after the clip ends. It waits while a claim is on screen, and a song with no clip waits for you.</small></span>
             </label>
           </div>
+          <div class="field" id="paidField" style="display:none">
+            <label>Tonight</label>
+            <select id="paidSel">
+              <option value="">Free entry &middot; nobody pays to play</option>
+              <option value="paid">Tickets sold &middot; players pay to play</option>
+            </select>
+            <small class="fieldnote">Picked once for the night. Free entry is a promotional game and lawful everywhere; selling tickets brings up your state's bingo rules before you start.</small>
+          </div>
           <div class="field" id="paperField">
             <label>Paper cards <small style="color:var(--faint);font-weight:400">for regulars without a phone</small></label>
             <button type="button" class="btn ghost" id="paperPrintBtn" style="width:100%">Print paper cards</button>
@@ -1892,11 +1900,28 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
      switches itself back on if the venue is ever unlocked to charge. */
   /* G.freeEntry: the host pressed "Start as a free-entry game" on the rules popup (15 Oct 2026),
      because the state will not let this venue charge for bingo (or no permit is on record where
-     one is needed). Musical has no paid switch of its own, so the choice is remembered for the
-     night and every gate from then on is for a free game. */
+     one is needed). The choice is remembered for the night and every gate from then on is for a
+     free game. */
+  /* TONIGHT: FREE ENTRY OR TICKETS SOLD (live audit, 16 Oct 2026). The gate was asked with no
+     per-game paid flag, so at a venue unlocked to charge it assumed every musical night was
+     ticketed, and a FREE musical night in a state that will not let the venue charge was hard
+     blocked. Bingo has its paidSel for this; musical now has the same choice, shown only when the
+     venue may charge at all (a free-entry-only venue has nothing to pick), defaulting to free and
+     remembered for the night (a night runs past midnight, so "tonight" rolls over at 6am). */
+  function paidNightKey(){ var d=new Date(Date.now()-6*3600*1000); return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2); }
+  function paidTonight(){ try{ return localStorage.getItem("vpMusicPaid")===("paid:"+paidNightKey()); }catch(e){ return false; } }
+  function setPaidTonight(on){ try{ if(on) localStorage.setItem("vpMusicPaid","paid:"+paidNightKey()); else localStorage.removeItem("vpMusicPaid"); }catch(e){} }
+  function syncPaidSel(){ var s=$("paidSel"); if(s) s.value=paidTonight()?"paid":""; }
+  function showPaidField(venue){ var f=$("paidField"); if(f) f.style.display=(venue && venue.paid_entry_enabled===true)?"":"none"; }
+  (function bindPaid(){
+    var s=$("paidSel"); if(!s) return;
+    syncPaidSel();
+    s.addEventListener("change", function(){ setPaidTonight(s.value==="paid"); if(s.value==="paid") G.freeEntry=false; });
+  })();
   $("startBtn").addEventListener("click", function(){
-    if(window.VPGaming) VPGaming.gateFor("musical", go, { onlyIfPaid:true, freeEntry: !!G.freeEntry }); else go();
-    function go(r){ if(r && r.free) G.freeEntry=true; if(G.status==="lobby") startGame(); else openLobby(); }
+    var paid=!G.freeEntry && paidTonight();
+    if(window.VPGaming) VPGaming.gateFor("musical", go, { onlyIfPaid:true, freeEntry: !!G.freeEntry, gameIsPaid: paid }); else go();
+    function go(r){ if(r && r.free){ G.freeEntry=true; setPaidTonight(false); syncPaidSel(); } if(G.status==="lobby") startGame(); else openLobby(); }
   });
   $("cancelLobbyBtn").addEventListener("click", cancelLobby);
 
@@ -2165,6 +2190,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       if(!ctx.currentVenueId){ $("statusText").textContent="No venue"; showSignIn("This login is not linked to a venue yet."); return; }
       G.venueId=ctx.currentVenueId; G.venue=ctx.venue||null;
       G.slug=(ctx.venue && ctx.venue.slug) || "";   // so the console can show the code the ROOM is shown
+      showPaidField(ctx.venue);                      // "Tonight: free entry / tickets sold", only where the venue may charge
       weeklyPreCheck(ctx.venue);
       // Tell vp-session when a game is actually on, so the forced sign-out stops closing the
       // session out from under it. It still signs the host out; it just leaves the night open

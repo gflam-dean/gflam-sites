@@ -248,11 +248,19 @@ function hostSays(t, pid) { return LOG.filter(function (l) { return l && l.from 
   var store = {}; store['vp-name-' + SA_CODE] = 'Pat';
   var pat = bootPhone2('Pat', { search: '?venue=' + SA_SLUG, slug: SA_SLUG, store: store });
   await advance(3000);
-  var notice = pat.dom.document.body.children.map(function (n) { return n.innerHTML; }).join(' ');
-  check('is shown the paper notice, though she joined before and never sees the name box', /play on paper/.test(notice), notice.slice(0, 80));
+  function patNotice() { return pat.dom.document.body.children.map(function (n) { return n.innerHTML; }).join(' '); }
+  /* Nothing is on at the SA pub yet. Until 16 Oct 2026 the Worker read "no session" as bingo and
+     blanked her here, before the host had opened anything; a quiet night now asks nothing. */
+  check('with nothing on at her venue yet, her phone is NOT blanked (a quiet night asks nothing, 16 Oct 2026)', !/play on paper/.test(patNotice()), patNotice().slice(0, 80));
+  DB.vp_sessions.push({ id: 'sa-lobby-0001', venue_id: SA_VENUE, status: 'lobby', join_code: SA_CODE, lobby_format: 'bingo90', created_at: new Date().toISOString() });
+  await advance(31000);   // the table-talker poll runs every 30 seconds
+  check('once a bingo lobby opens there, she is shown the paper notice, though she joined before and never sees the name box', /play on paper/.test(patNotice()), patNotice().slice(0, 80));
   var sentBefore = LOG.filter(function (l) { return l && l.from === 'phone:Pat'; }).length;
   pat.onMsg({ t: 'rollcall' }); await advance(2000);
   check('and her phone says nothing on the channel after it, so no console deals to it', LOG.filter(function (l) { return l && l.from === 'phone:Pat'; }).length === sentBefore);
+  DB.vp_sessions = DB.vp_sessions.filter(function (x) { return x.id !== 'sa-lobby-0001'; });
+  await advance(31000);
+  check('and when that lobby closes with nothing on, the notice comes down again', !/play on paper/.test(patNotice()), patNotice().slice(0, 80));
 
   print('a code nobody holds');
   var typo = bootPhone2('Typo', { search: '?room=ZZZZZZ' });
