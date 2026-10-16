@@ -56,6 +56,7 @@ if (!fnApply || !fnSetLogo || !fnSetName) throw new Error("missing functions");
 /* A DOM small enough to run these and nothing more. */
 var made = {};
 function el(){ return { id:"", src:"", style:{ cssText:"", display:"" }, textContent:"",
+                        attrs:{}, setAttribute:function(k, v){ this.attrs[k] = String(v); },
                         getAttribute:function(){ return this.src || null; } }; }
 var document = {
   getElementById: function(id){ return made[id] || null; },

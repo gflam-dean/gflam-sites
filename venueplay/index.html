@@ -1020,14 +1020,8 @@
 </section>
 
 <!-- ===================== TRUSTED BY ===================== -->
-<style>
-  #trusted .marquee{overflow:hidden;position:relative;margin-top:22px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
-  #trusted .track{display:flex;gap:48px;align-items:center;width:max-content;animation:trustedScroll 45s linear infinite}
-  #trusted .marquee:hover .track{animation-play-state:paused}
-  .trustedlogo{height:64px;width:auto;max-width:210px;object-fit:contain;opacity:.9}
-  @keyframes trustedScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-  @media(prefers-reduced-motion:reduce){#trusted .track{animation:none;flex-wrap:wrap;justify-content:center}}
-</style>
+<!-- Hidden until /app/vp-trusted.js has six or more logos of live, paying venues to show. The
+     look and the rule live in that one file, shared with the other landing page. -->
 <section class="sec" id="trusted" style="display:none">
   <div class="wrap">
     <div class="sec-head"><div class="label">Trusted by</div><h2 class="sec-title">Venues already running VenuePlay</h2></div>
@@ -1335,6 +1329,7 @@
 
 <!-- ===================== SCRIPT ===================== -->
 <!-- Stripe.js: powers the embedded (on-page) card form. Harmless if embedded is off. -->
+<script src="/app/vp-trusted.js"></script>
 <script src="https://js.stripe.com/v3/"></script>
 <script>
 (function(){
@@ -1357,25 +1352,9 @@
   var PRICE = { monthly: 3.00, annual: 2.85 };
   var workerReady = VP_WORKER.indexOf('PASTE_') === -1;
   var keyReady = _SBK.indexOf('PASTE_') === -1;
-  // "Trusted by" strip: active venues that have uploaded a logo (public view v_vp_trusted).
-  // Hidden until there are 6+, so it never looks sparse at launch; fills itself as venues sign on.
-  if (keyReady) {
-    fetch(_SBU + '/rest/v1/v_vp_trusted?select=name,logo_url&limit=60', { headers: { 'apikey': _SBK, 'Authorization': 'Bearer ' + _SBK } })
-      .then(function(r){ return r.ok ? r.json() : []; })
-      .then(function(rows){
-        if (!Array.isArray(rows) || rows.length < 6) return;
-        var track = document.getElementById('trustedTrack'); if (!track) return;
-        // logo_url and name are VENUE-SUPPLIED (the Account page writes them, and the Worker only
-        // checks the URL starts with http). Dropped into src="..." raw, a logo URL ending in
-        // '" onerror="' runs script on the marketing site for every visitor. Escape both, and build
-        // the node rather than concatenating markup.
-        function attr(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-        var html = '';
-        [rows, rows].forEach(function(set){ set.forEach(function(v){ html += '<img class="trustedlogo" src="' + attr(v.logo_url) + '" alt="' + attr(v.name) + '" loading="lazy">'; }); });
-        track.innerHTML = html;
-        var sec = document.getElementById('trusted'); if (sec) sec.style.display = '';
-      }).catch(function(){});
-  }
+  // "Trusted by" strip: the billing Worker names the live, paying venues that agreed to be shown;
+  // /app/vp-trusted.js draws them, or nothing at all when there are fewer than six.
+  if (workerReady && window.VPTrusted) VPTrusted.load(VP_WORKER);
   var plan = 'monthly';
 
   document.getElementById('vp-year').textContent = new Date().getFullYear();

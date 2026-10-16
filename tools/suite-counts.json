@@ -459,8 +459,16 @@
   "checks": 10,
   "counted_by": "lines"
  },
+ "tools/test-trusted-logos.js": {
+  "checks": 43,
+  "counted_by": "lines"
+ },
  "tools/test-tv-does-not-flap.js": {
   "checks": 11,
+  "counted_by": "lines"
+ },
+ "tools/test-tv-logo-mark.js": {
+  "checks": 43,
   "counted_by": "lines"
  },
  "tools/test-tv-reads-its-venue.js": {
@@ -485,6 +493,10 @@
  },
  "tools/test-venue-list-paged.js": {
   "checks": 15,
+  "counted_by": "lines"
+ },
+ "tools/test-venue-logo-upload.js": {
+  "checks": 50,
   "counted_by": "lines"
  },
  "tools/test-venue-picker-scopes.js": {

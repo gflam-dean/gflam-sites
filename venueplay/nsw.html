@@ -954,6 +954,16 @@
   </div>
 </section>
 
+<!-- ===================== TRUSTED BY ===================== -->
+<!-- Hidden until /app/vp-trusted.js has six or more logos of live, paying venues to show. The
+     look and the rule live in that one file, shared with the other landing page. -->
+<section class="sec" id="trusted" style="display:none">
+  <div class="wrap">
+    <div class="sec-head"><div class="label">Trusted by</div><h2 class="sec-title">Venues already running VenuePlay</h2></div>
+    <div class="marquee"><div class="track" id="trustedTrack"></div></div>
+  </div>
+</section>
+
 <!-- ===================== FOUNDING OFFER ===================== -->
 <!-- ===================== THE BANKS ===================== -->
 <section class="sec sec-tight" id="banks">
@@ -1263,6 +1273,7 @@
 
 <!-- ===================== SCRIPT ===================== -->
 <!-- Stripe.js: powers the embedded (on-page) card form. Harmless if embedded is off. -->
+<script src="/app/vp-trusted.js"></script>
 <script src="https://js.stripe.com/v3/"></script>
 <script>
 (function(){
@@ -1285,6 +1296,9 @@
   var PRICE = { monthly: 2.50, annual: 2.30 };
   var workerReady = VP_WORKER.indexOf('PASTE_') === -1;
   var keyReady = _SBK.indexOf('PASTE_') === -1;
+  // "Trusted by" strip: the billing Worker names the live, paying venues that agreed to be shown;
+  // /app/vp-trusted.js draws them, or nothing at all when there are fewer than six.
+  if (workerReady && window.VPTrusted) VPTrusted.load(VP_WORKER);
   var plan = 'monthly';
 
   document.getElementById('vp-year').textContent = new Date().getFullYear();

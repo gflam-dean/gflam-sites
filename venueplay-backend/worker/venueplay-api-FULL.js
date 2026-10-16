@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '15 Oct 2026, 15:15 · 73730936';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '16 Oct 2026, 16:06 · f8056e76';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -111,6 +111,10 @@ export default {
                     200, { 'cache-control': 'public, max-age=300' });
       }
 
+      /* THE HOMEPAGE "TRUSTED BY" STRIP. Public, read-only, names and logo addresses of live,
+         paying, willing venues and nothing else. See vpbTrustedLogos. */
+      if (request.method === 'GET' && path === '/trusted-logos') return await vpbTrustedLogosRoute(env, json);
+
       if (request.method === 'POST' && path === '/checkout') return await handleCheckout(request, env, json);
       // Followed from an HQ-onboarded venue's welcome email, in a browser, so it answers with a
       // redirect rather than JSON. Signed, and it mints a fresh Checkout each time it is clicked.
@@ -128,6 +132,9 @@ export default {
       if (request.method === 'POST' && path === '/account/screen-get'  && typeof vpbScreenGet === 'function')    return await vpbScreenGet(request, env, json);
       if (request.method === 'POST' && path === '/account/screen-save' && typeof vpbScreenSave === 'function')   return await vpbScreenSave(request, env, json);
       if (request.method === 'POST' && path === '/account/screen-upload' && typeof vpbScreenUpload === 'function') return await vpbScreenUpload(request, env, json);
+      if (request.method === 'POST' && path === '/account/logo-upload' && typeof vpbLogoUpload === 'function') return await vpbLogoUpload(request, env, json);
+      if (request.method === 'POST' && path === '/account/logo-remove' && typeof vpbLogoRemove === 'function') return await vpbLogoRemove(request, env, json);
+      if (request.method === 'POST' && path === '/account/logo-site'   && typeof vpbLogoSite === 'function')   return await vpbLogoSite(request, env, json);
       if (request.method === 'POST' && path === '/account/marketing-add'    && typeof vpbMarketingAdd === 'function')    return await vpbMarketingAdd(request, env, json);
       if (request.method === 'POST' && path === '/account/marketing-list'   && typeof vpbMarketingList === 'function')   return await vpbMarketingList(request, env, json);
       if (request.method === 'POST' && path === '/account/marketing-remove' && typeof vpbMarketingRemove === 'function') return await vpbMarketingRemove(request, env, json);
@@ -7723,7 +7730,9 @@ function vpaB64ToBytes(b64) {
 
    HEAD is cheap and says the same thing. The create is still attempted when it is genuinely
    missing, and still swallowed if that races with another upload doing the same. */
-async function vpbEnsureBucket(env, id) {
+async function vpbEnsureBucket(env, id, opts) {
+  // opts { limit, types }: the logo bucket is 1 MB and PNG or WebP; the ad bucket keeps its own.
+  opts = opts || {};
   const auth = { 'Authorization': 'Bearer ' + env.SUPABASE_SERVICE_KEY, 'apikey': env.SUPABASE_SERVICE_KEY };
   try {
     const look = await fetch(env.SUPABASE_URL + '/storage/v1/bucket/' + encodeURIComponent(id), { headers: auth });
@@ -7733,7 +7742,7 @@ async function vpbEnsureBucket(env, id) {
     await fetch(env.SUPABASE_URL + '/storage/v1/bucket', {
       method: 'POST',
       headers: Object.assign({ 'Content-Type': 'application/json' }, auth),
-      body: JSON.stringify({ id: id, name: id, public: true, file_size_limit: VPB_MAX_IMAGE_BYTES, allowed_mime_types: ['image/png', 'image/jpeg', 'image/webp', 'image/gif'] }),
+      body: JSON.stringify({ id: id, name: id, public: true, file_size_limit: opts.limit || VPB_MAX_IMAGE_BYTES, allowed_mime_types: opts.types || ['image/png', 'image/jpeg', 'image/webp', 'image/gif'] }),
     });
   } catch (_) { /* two uploads racing to create it: the second 400s and the upload still works */ }
 }
@@ -7769,6 +7778,249 @@ async function vpbScreenUpload(request, env, json) {
   if (!up.ok) { const t = await up.text(); return json({ error: 'Upload failed. ' + t.slice(0, 160) }, 500); }
   return json({ ok: true, url: env.SUPABASE_URL + '/storage/v1/object/public/venue-ads/' + path });
 }
+
+/* ---------------------------------------------------------------------------------------
+   THE VENUE'S LOGO. Dean, 7 Aug 2026; built properly 16 Oct 2026 (migration 102).
+
+   The logo used to go up through /account/screen-upload, the ADVERTISING route: any image
+   type up to 5 MB, the type taken from what the browser SAID it was, into the ad bucket,
+   and then /account/screen-save stored whatever http address it was handed. That address
+   is painted on every TV the venue has AND on the public homepage strip, so a logo was the
+   one venue-supplied URL that reaches strangers, and it was the least checked.
+
+   Now a logo has its own route. It is a PNG or a WebP, judged by its first bytes and not by
+   its label; it is 1 MB or less; its width and height are read from the file header (never
+   decoded) and must be sensible; it goes to the public "venue-logos" bucket under
+   <venue_id>/<sha256>.<ext>, so the same file uploaded twice is one object and a changed
+   file is a new address no screen can have cached; and only the Worker writes the URL.
+   --------------------------------------------------------------------------------------- */
+const VPB_MAX_LOGO_BYTES = 1024 * 1024;   // 1 MB. billing.html quotes this same number.
+const VPB_LOGO_MIN_PX = 16, VPB_LOGO_MAX_PX = 4096;
+
+/* What the bytes ARE, from the header alone. { type, ext, w, h, alpha } or null.
+   PNG: the 8-byte signature, then IHDR's width and height (big-endian) at 16 and 20, and its
+        colour type at 25 (4 and 6 carry alpha; a tRNS chunk gives the others transparency).
+   WebP: RIFF....WEBP, then one of three chunks: 'VP8 ' (lossy, 14-bit sizes at 26), 'VP8L'
+        (lossless, 14-bit sizes packed from byte 21, alpha bit after them) or 'VP8X'
+        (extended: flags at 20 with alpha 0x10, 24-bit sizes minus one at 24 and 27). */
+function vpbLogoSniff(b) {
+  if (!b || b.length < 30) return null;
+  const u32be = function (i) { return ((b[i] << 24) >>> 0) + (b[i + 1] << 16) + (b[i + 2] << 8) + b[i + 3]; };
+  const PNG = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+  if (PNG.every(function (x, i) { return b[i] === x; })) {
+    if (String.fromCharCode(b[12], b[13], b[14], b[15]) !== 'IHDR') return null;
+    const ct = b[25];
+    let alpha = ct === 4 || ct === 6;
+    if (!alpha) {
+      // Walk the chunks to the first IDAT looking for tRNS. Header only: stop at the pixels.
+      let at = 8;
+      while (at + 8 <= b.length) {
+        const len = u32be(at), name = String.fromCharCode(b[at + 4], b[at + 5], b[at + 6], b[at + 7]);
+        if (name === 'tRNS') { alpha = true; break; }
+        if (name === 'IDAT' || name === 'IEND') break;
+        at += 12 + len;
+      }
+    }
+    return { type: 'image/png', ext: 'png', w: u32be(16), h: u32be(20), alpha: alpha };
+  }
+  const tag = function (i) { return String.fromCharCode(b[i], b[i + 1], b[i + 2], b[i + 3]); };
+  if (tag(0) === 'RIFF' && tag(8) === 'WEBP') {
+    const chunk = tag(12);
+    if (chunk === 'VP8 ') {
+      return { type: 'image/webp', ext: 'webp', w: (b[26] | (b[27] << 8)) & 0x3fff, h: (b[28] | (b[29] << 8)) & 0x3fff, alpha: false };
+    }
+    if (chunk === 'VP8L' && b[20] === 0x2f) {
+      const bits = (b[21] | (b[22] << 8) | (b[23] << 16) | (b[24] << 24)) >>> 0;
+      return { type: 'image/webp', ext: 'webp', w: (bits & 0x3fff) + 1, h: ((bits >>> 14) & 0x3fff) + 1, alpha: !!((bits >>> 28) & 1) };
+    }
+    if (chunk === 'VP8X') {
+      return { type: 'image/webp', ext: 'webp', w: (b[24] | (b[25] << 8) | (b[26] << 16)) + 1, h: (b[27] | (b[28] << 8) | (b[29] << 16)) + 1, alpha: !!(b[20] & 0x10) };
+    }
+  }
+  return null;
+}
+
+/* Is this a logo address this Worker could have written for this venue? Our public storage,
+   the venue's own folder, in the logo bucket (or the ad bucket, where every logo uploaded
+   before 16 Oct 2026 lives). Anything else is refused on save and left off the homepage. */
+function vpbOurLogoUrl(env, url, venueId) {
+  if (typeof url !== 'string' || !url || !env.SUPABASE_URL) return false;
+  const base = env.SUPABASE_URL + '/storage/v1/object/public/';
+  if (url.indexOf(base) !== 0) return false;
+  const rest = url.slice(base.length);
+  const m = /^(venue-logos|venue-ads)\/([0-9a-fA-F-]{36})\/[A-Za-z0-9._-]{1,120}$/.exec(rest);
+  if (!m) return false;
+  return venueId ? m[2] === venueId : true;
+}
+
+async function vpbSha256Hex(bytes) {
+  const d = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
+  let s = '';
+  for (let i = 0; i < d.length; i++) s += (d[i] < 16 ? '0' : '') + d[i].toString(16);
+  return s;
+}
+
+/* Write vp_venue_screen.logo_url for one venue, the same upsert /account/screen-save uses, so
+   saving the logo never touches the slides and saving the slides never touches the logo. */
+async function vpbWriteLogo(env, venue, url) {
+  const row = { venue_id: venue.id, slug: venue.slug, logo_url: url, updated_at: new Date().toISOString() };
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_venue_screen', {
+    method: 'POST',
+    headers: { ...vpaHeaders(env), 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+    body: JSON.stringify(row),
+  });
+  return res.ok;
+}
+
+/* The three logo routes share one door: signed in, owner or a manager with the advertising
+   right, and the venue named must be one this login holds. A host has no owner/manager row
+   and is refused by vpbRequireOwner before any of this. */
+async function vpbLogoDoor(request, env, json) {
+  const o = await vpbRequireOwner(request, env);
+  if (o.error) return { res: json({ error: o.error }, o.status) };
+  if (!vpbCan(o, 'advertising')) return { res: json({ error: 'You do not have permission to change the logo.' }, 403) };
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return { res: _b.res };
+  const b = _b.body;
+  const venueId = String(b.venue_id || '').trim();
+  const venue = o.venues.filter(function (v) { return v.id === venueId; })[0];
+  if (!venue) return { res: json({ error: 'That venue is not on your account.' }, 403) };
+  return { o: o, b: b, venue: venue };
+}
+
+/* --- POST /account/logo-upload { venue_id, data } : data is a data: URL or bare base64. --- */
+async function vpbLogoUpload(request, env, json) {
+  const g = await vpbLogoDoor(request, env, json);
+  if (g.res) return g.res;
+  const raw = String(g.b.data || '');
+  const m = raw.match(/^data:[^;,]*;base64,(.+)$/);
+  const b64 = (m ? m[1] : raw).replace(/\s+/g, '');
+  if (!b64 || !/^[A-Za-z0-9+/]+={0,2}$/.test(b64)) return json({ error: 'That did not look like an image.' }, 400);
+  // Refuse on the encoded length first: four characters carry three bytes, so nothing this
+  // long can decode to 1 MB or less, and a 40 MB string is never decoded at all.
+  if (Math.floor(b64.length * 3 / 4) > VPB_MAX_LOGO_BYTES + 2) {
+    return json({ error: 'That logo is too big. Keep it to 1MB or less.' }, 413);
+  }
+  let bytes;
+  try { bytes = vpaB64ToBytes(b64); } catch (_) { return json({ error: 'That did not look like an image.' }, 400); }
+  if (bytes.length > VPB_MAX_LOGO_BYTES) return json({ error: 'That logo is too big. Keep it to 1MB or less.' }, 413);
+  const kind = vpbLogoSniff(bytes);
+  if (!kind) return json({ error: 'Use a PNG (or a WebP). A PNG with a transparent background sits best on the screen.' }, 415);
+  if (kind.w < VPB_LOGO_MIN_PX || kind.h < VPB_LOGO_MIN_PX) {
+    return json({ error: 'That logo is only ' + kind.w + ' by ' + kind.h + ' pixels, too small to read on a TV. Use one at least 200 pixels wide.' }, 400);
+  }
+  if (kind.w > VPB_LOGO_MAX_PX || kind.h > VPB_LOGO_MAX_PX) {
+    return json({ error: 'That logo is ' + kind.w + ' by ' + kind.h + ' pixels. Keep it under ' + VPB_LOGO_MAX_PX + ' pixels each way.' }, 400);
+  }
+
+  await vpbEnsureBucket(env, 'venue-logos', { limit: VPB_MAX_LOGO_BYTES, types: ['image/png', 'image/webp'] });
+  const path = g.venue.id + '/' + (await vpbSha256Hex(bytes)) + '.' + kind.ext;
+  const up = await fetch(env.SUPABASE_URL + '/storage/v1/object/venue-logos/' + path, {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + env.SUPABASE_SERVICE_KEY, 'apikey': env.SUPABASE_SERVICE_KEY,
+               'Content-Type': kind.type, 'x-upsert': 'true', 'cache-control': 'max-age=31536000' },
+    body: bytes,
+  });
+  if (!up.ok) { const t = await up.text(); return json({ error: 'Upload failed. ' + t.slice(0, 160) }, 500); }
+  const url = env.SUPABASE_URL + '/storage/v1/object/public/venue-logos/' + path;
+  if (!(await vpbWriteLogo(env, g.venue, url))) return json({ error: 'The logo uploaded but could not be saved. Try again.' }, 500);
+  await vpaInsert(env, 'vp_admin_audit', {
+    ...vpbActorFields(g.o), action: 'logo_set', target: 'venue:' + g.venue.id,
+    detail: { bytes: bytes.length, type: kind.type, w: kind.w, h: kind.h, alpha: kind.alpha },
+  }, false).catch(function () {});
+  return json({ ok: true, url: url, width: kind.w, height: kind.h, transparent: kind.alpha });
+}
+
+/* --- POST /account/logo-remove { venue_id } : the TV and the website stop showing it. --- */
+async function vpbLogoRemove(request, env, json) {
+  const g = await vpbLogoDoor(request, env, json);
+  if (g.res) return g.res;
+  if (!(await vpbWriteLogo(env, g.venue, null))) return json({ error: 'Could not remove the logo. Try again.' }, 500);
+  await vpaInsert(env, 'vp_admin_audit', {
+    ...vpbActorFields(g.o), action: 'logo_removed', target: 'venue:' + g.venue.id, detail: {},
+  }, false).catch(function () {});
+  return json({ ok: true });
+}
+
+/* --- POST /account/logo-site { venue_id, show } : "Show our logo on the VenuePlay website". --- */
+async function vpbLogoSite(request, env, json) {
+  const g = await vpbLogoDoor(request, env, json);
+  if (g.res) return g.res;
+  if (typeof g.b.show !== 'boolean') return json({ error: 'Say yes or no.' }, 400);
+  try {
+    await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(g.venue.id), { show_logo_on_site: g.b.show });
+  } catch (e) {
+    // Migration 102 not run yet: say so rather than pretend it saved.
+    return json({ error: 'That setting is still being switched on. Try again later.' }, 503);
+  }
+  await vpaInsert(env, 'vp_admin_audit', {
+    ...vpbActorFields(g.o), action: 'logo_on_site', target: 'venue:' + g.venue.id, detail: { show: g.b.show },
+  }, false).catch(function () {});
+  return json({ ok: true, show_logo_on_site: g.b.show });
+}
+
+/* ---------------------------------------------------------------------------------------
+   GET /trusted-logos : the homepage "Trusted by" strip. PUBLIC, no login.
+
+   Answers ONLY { name, logo_url } per venue, and only for a venue that is all of:
+     live         vp_venues.status 'active', not HQ-hidden (hide_from_trusted, migration 54)
+     willing      show_logo_on_site true (migration 102). Asked of the DATABASE, so before
+                  migration 102 the read is refused and the strip shows nobody: consent
+                  fails closed.
+     paying       the overage code's own test for a real customer: its account has a Stripe
+                  subscription ("comp/test venue: never charge"), or bills by invoice, and is
+                  not 'comp' or still 'pending'
+     real         not one of Dean's test venues: no test-alpha/bravo/charlie or other
+                  "test" slug or name, and nothing on a 1-player plan (those twelve are his
+                  overage tests and friends, see the 1-player memory)
+     ours         a logo URL this Worker wrote, in our own public storage for that venue
+   Fewer than six and the PAGE hides the whole strip (VPTrusted.MIN in /app/vp-trusted.js),
+   so it never reads as one lonely logo. Cached for ten minutes: it changes when a venue
+   signs on, not by the second.
+   --------------------------------------------------------------------------------------- */
+const VPB_TEST_SLUG_RE = /(^|-)test(-|$)/i;
+function vpbTrustedVenueIsReal(v) {
+  if (!v) return false;
+  if (VPB_TEST_SLUG_RE.test(String(v.slug || '')) || /^\s*test\b/i.test(String(v.name || ''))) return false;
+  if (Number(v.max_players) <= 1) return false;
+  return true;
+}
+function vpbTrustedAccountPays(a) {
+  if (!a) return false;
+  if (a.status === 'comp' || a.status === 'pending') return false;
+  return !!a.stripe_subscription_id || a.bill_by_invoice === true;
+}
+async function vpbTrustedLogos(env) {
+  const venues = await vpaSelectAll(env, 'vp_venues',
+    'status=eq.active&hide_from_trusted=eq.false&show_logo_on_site=eq.true'
+    + '&select=id,name,slug,founding_id,max_players&order=id.asc');
+  const real = venues.filter(vpbTrustedVenueIsReal).filter(function (v) { return !!v.founding_id; });
+  if (!real.length) return [];
+  const inList = function (ids) { return '(' + ids.map(encodeURIComponent).join(',') + ')'; };
+  const fids = real.map(function (v) { return v.founding_id; }).filter(function (x, i, a) { return a.indexOf(x) === i; });
+  const accts = await vpaSelectAll(env, 'venueplay_founding',
+    'id=in.' + inList(fids) + '&select=id,status,stripe_subscription_id,bill_by_invoice&order=id.asc');
+  const pays = {};
+  accts.forEach(function (a) { if (vpbTrustedAccountPays(a)) pays[a.id] = true; });
+  const paying = real.filter(function (v) { return pays[v.founding_id]; });
+  if (!paying.length) return [];
+  const screens = await vpaSelectAll(env, 'vp_venue_screen',
+    'venue_id=in.' + inList(paying.map(function (v) { return v.id; })) + '&select=venue_id,logo_url&order=venue_id.asc');
+  const logoOf = {};
+  screens.forEach(function (s) { if (vpbOurLogoUrl(env, s.logo_url, s.venue_id)) logoOf[s.venue_id] = s.logo_url; });
+  return paying.filter(function (v) { return logoOf[v.id]; })
+    .map(function (v) { return { name: String(v.name || '').slice(0, 120), logo_url: logoOf[v.id] }; })
+    .sort(function (a, b) { return a.name < b.name ? -1 : (a.name > b.name ? 1 : 0); });
+}
+async function vpbTrustedLogosRoute(env, json) {
+  let logos = [];
+  try { logos = await vpbTrustedLogos(env); } catch (_) { logos = []; }   // closed, never a partial list
+  const res = json({ logos: logos }, 200);
+  // json() takes no headers, so the cache line goes on afterwards. Ten minutes at the edge and
+  // in the browser: the homepage is the busiest page there is, and this list barely moves.
+  try { res.headers.set('cache-control', 'public, max-age=600'); } catch (_) {}
+  return res;
+}
 function vpbCleanDraws(arr) {
   if (!Array.isArray(arr)) return [];
   return arr.slice(0, 7).map(function (d) {
@@ -7792,11 +8044,17 @@ async function vpbScreenGet(request, env, json) {
   const rows = await vpaSelect(env, 'vp_venue_screen',
     'venue_id=eq.' + encodeURIComponent(venueId) + '&select=slides,draws,raffle,logo_url');
   const cfg = (rows && rows[0]) || {};
+  /* Its own trip, so a column migration 102 has not added yet can never take the slides down
+     with it: vpaSelect answers [] on a refusal, and the tick then shows its default, on. */
+  const site = await vpaSelect(env, 'vp_venues',
+    'id=eq.' + encodeURIComponent(venueId) + '&select=show_logo_on_site&limit=1');
+  const showOnSite = !(site && site[0] && site[0].show_logo_on_site === false);
   return json({
     ok: true,
     venue: { id: venue.id, name: venue.name, slug: venue.slug },
     venues: o.venues.map(function (v) { return { id: v.id, name: v.name, slug: v.slug }; }),
     slides: cfg.slides || [], draws: cfg.draws || [], raffle: cfg.raffle || null, logo_url: cfg.logo_url || null,
+    show_logo_on_site: showOnSite,
   });
 }
 
@@ -7826,7 +8084,17 @@ async function vpbScreenSave(request, env, json) {
   if (b.slides !== undefined) row.slides = vpbCleanSlides(b.slides);
   if (b.draws !== undefined) row.draws = vpbCleanDraws(b.draws);
   if (b.raffle !== undefined) row.raffle = vpbCleanRaffle(b.raffle);
-  if (b.logo_url !== undefined) row.logo_url = (typeof b.logo_url === 'string' && b.logo_url.slice(0, 4) === 'http') ? b.logo_url.slice(0, 500) : null;
+  /* THE LOGO IS NOT A FREE-TEXT ADDRESS. This stored any string starting "http", and the logo is
+     painted on every TV the venue has and on the public homepage strip. A logo now goes up
+     through /account/logo-upload, which writes the address itself; here it can only be cleared,
+     or set to an address in our own storage for THIS venue (what that route, or the old ad
+     upload, produced). Same right as the slides: it is the venue's branding on its screens. */
+  if (b.logo_url !== undefined) {
+    if (!vpbCan(o, 'advertising')) return json({ error: 'You do not have permission to change the logo.' }, 403);
+    if (b.logo_url === null || b.logo_url === '') row.logo_url = null;
+    else if (vpbOurLogoUrl(env, b.logo_url, venueId)) row.logo_url = b.logo_url;
+    else return json({ error: 'Upload the logo on this page rather than pasting an address.' }, 400);
+  }
   const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_venue_screen', {
     method: 'POST',
     headers: { ...vpaHeaders(env), 'Prefer': 'resolution=merge-duplicates,return=minimal' },

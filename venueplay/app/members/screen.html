@@ -709,8 +709,8 @@
   function paintVenueLogo(url){
     var el=document.getElementById("venueLogo");
     if(!url){ if(el) el.style.display="none"; return; }   // logo removed: take it off the wall
-    if(!el){ el=document.createElement("img"); el.id="venueLogo";
-      el.style.cssText="position:fixed;top:20px;left:22px;max-height:64px;max-width:220px;z-index:60;pointer-events:none;filter:drop-shadow(0 2px 8px rgba(0,0,0,.55))";
+    if(!el){ el=document.createElement("img"); el.id="venueLogo"; el.setAttribute("data-fit-avoid","");   /* vp-fit keeps the wall out from under it */
+      el.style.cssText="position:fixed;top:14px;left:14px;max-width:120px;max-height:56px;width:auto;height:auto;object-fit:contain;z-index:60;pointer-events:none;filter:drop-shadow(0 2px 8px rgba(0,0,0,.55))";
       document.body.appendChild(el); }
     el.src=url; el.style.display="block";
   }

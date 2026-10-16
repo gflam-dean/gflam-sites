@@ -624,16 +624,22 @@
     </div>
     <div id="screenLoadErr" class="loadfail" hidden></div>
 
-    <div class="scard">
-      <div class="scardhead">Venue logo<span class="forvenue" id="logoForVenue"></span></div>
-      <p class="snote">Shows in the top-left corner of your TV, over games and between them. Use a PNG with a <b>transparent background</b>, and make sure the logo itself is <b>white or a bright colour</b>. The TV screen is dark, so a black or dark logo will disappear.</p>
+    <div class="scard" id="logoCard">
+      <div class="scardhead">Your logo<span class="forvenue" id="logoForVenue"></span></div>
+      <p class="snote">Shows small in the top-left corner of your TV during games. A <b>white or bright</b> logo reads best, because the screen is dark. PNG or WebP, up to 1MB.</p>
       <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-        <div id="logoThumb" style="width:130px;height:64px;border:1px solid var(--line);border-radius:10px;background:#0d0d12 center/contain no-repeat;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px">No logo</div>
+        <!-- The preview is a DARK chip on purpose: it is roughly what the TV is behind the logo, so a
+             venue sees a black logo vanish here, not on the night. -->
+        <div id="logoThumb" style="width:150px;height:72px;border:1px solid var(--line);border-radius:10px;background:#050506 center/contain no-repeat;background-origin:content-box;padding:8px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px">No logo</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <label class="addbtn" style="cursor:pointer" id="logoUploadBtn">Upload logo<input type="file" id="logoFile" accept="image/png,image/jpeg,image/webp" style="display:none"></label>
+          <label class="addbtn" style="cursor:pointer" id="logoUploadBtn">Upload logo<input type="file" id="logoFile" accept="image/png,image/webp" style="display:none"></label>
           <button class="addbtn" id="logoRemove" type="button" style="display:none">Remove</button>
         </div>
       </div>
+      <p class="snote" style="margin-top:10px">Use a PNG with a transparent background so it sits cleanly on the screen.</p>
+      <p class="snote" id="logoHint" style="color:var(--gold)" hidden></p>
+      <label class="hostchk" style="margin-top:6px"><input type="checkbox" id="logoOnSite" checked><span>Show our logo on the VenuePlay website</span></label>
+      <p class="snote" style="margin-top:4px">When ticked, your logo can appear in the "Trusted by" strip on venueplay.com.au with the other venues running VenuePlay. Untick it to keep your logo off our website. Your TV is not affected either way.</p>
     </div>
 
     <div class="scard">
@@ -1579,37 +1585,55 @@
     img.src = dataUrl;
   }
   var screenLogoUrl = "";
+  /* THE LOGO HAS ITS OWN ROUTES (16 Oct 2026). It used to ride the advertising upload and then
+     screen-save, which stored any address it was handed. Now /account/logo-upload checks the
+     file really is a PNG or WebP of 1MB or less and writes the address itself.
+     VP_MAX_LOGO_BYTES is the Worker's VPB_MAX_LOGO_BYTES: say the same number the Worker will. */
+  var VP_MAX_LOGO_BYTES = 1024 * 1024;
   function renderLogo(){
     var thumb=$("logoThumb"), rm=$("logoRemove"); if(!thumb) return;
-    if(screenLogoUrl){ thumb.textContent=""; thumb.style.backgroundImage="url("+screenLogoUrl+")"; if(rm) rm.style.display=""; }
+    if(screenLogoUrl){ thumb.textContent=""; thumb.style.backgroundImage="url(\""+String(screenLogoUrl).replace(/["\\]/g,"")+"\")"; if(rm) rm.style.display=""; }
     else { thumb.textContent="No logo"; thumb.style.backgroundImage=""; if(rm) rm.style.display="none"; }
   }
+  function logoHint(t){ var h=$("logoHint"); if(!h) return; h.textContent=t||""; h.hidden=!t; }
   function uploadLogo(file){
     if(!screenCurrent){ showMsg("Screen is still loading, one moment."); return; }
-    if(file.size > 3*1024*1024){ showMsg("Keep the logo under 3MB."); return; }
-    var thumb=$("logoThumb"); if(thumb){ thumb.textContent="Uploading…"; thumb.style.backgroundImage=""; }
+    logoHint("");
+    if(!/^image\/(png|webp)$/.test(file.type||"")){ showMsg("Use a PNG (or a WebP) for your logo. A PNG with a transparent background sits best on the screen."); return; }
+    if(file.size > VP_MAX_LOGO_BYTES){ showMsg("That logo is over 1MB. Save a smaller PNG and try again."); return; }
+    var thumb=$("logoThumb"); if(thumb){ thumb.textContent="Uploading\u2026"; thumb.style.backgroundImage=""; }
     var reader=new FileReader();
     reader.onload=function(){
-      api("/account/screen-upload",{ venue_id:screenCurrent.id, data:String(reader.result) }).then(function(r){
-        if(r.error){ showMsg(r.error); renderLogo(); return; }
-        screenLogoUrl=r.url;
-        api("/account/screen-save",{ venue_id:screenCurrent.id, logo_url:screenLogoUrl }).then(function(s){
-          if(s.error){ showMsg(s.error); return; }
-          renderLogo(); pushToScreen(); showMsg("Logo saved. It shows on your TV within a few seconds.", true);
-        });
+      api("/account/logo-upload",{ venue_id:screenCurrent.id, data:String(reader.result) }).then(function(r){
+        if(!r || r.error){ showMsg((r&&r.error)||"Could not upload the logo."); renderLogo(); return; }
+        screenLogoUrl=r.url; renderLogo(); pushToScreen();
+        if(r.transparent===false) logoHint("This logo has a solid background, so it will show as a box in the corner of the TV. A PNG with a transparent background sits more cleanly.");
+        showMsg("Logo saved. It shows on your TV within a few seconds.", true);
       });
     };
     reader.readAsDataURL(file);
   }
   function removeLogo(){
     if(!screenCurrent) return;
-    screenLogoUrl=""; renderLogo();
-    api("/account/screen-save",{ venue_id:screenCurrent.id, logo_url:"" }).then(function(s){ if(s.error){ showMsg(s.error); return; } pushToScreen(); showMsg("Logo removed. Your TV updates in a few seconds.", true); });
+    api("/account/logo-remove",{ venue_id:screenCurrent.id }).then(function(s){
+      if(!s || s.error){ showMsg((s&&s.error)||"Could not remove the logo."); return; }
+      screenLogoUrl=""; renderLogo(); logoHint(""); pushToScreen();
+      showMsg("Logo removed. Your TV updates in a few seconds.", true);
+    });
+  }
+  function setLogoOnSite(show){
+    if(!screenCurrent) return;
+    var box=$("logoOnSite");
+    api("/account/logo-site",{ venue_id:screenCurrent.id, show:!!show }).then(function(s){
+      if(!s || s.error){ if(box) box.checked=!show; showMsg((s&&s.error)||"Could not save that."); return; }
+      showMsg(show ? "Saved. Your logo can appear on the VenuePlay website." : "Saved. Your logo is kept off the VenuePlay website.", true);
+    });
   }
   (function(){
-    var lf=document.getElementById("logoFile"), lr=document.getElementById("logoRemove");
+    var lf=document.getElementById("logoFile"), lr=document.getElementById("logoRemove"), ls=document.getElementById("logoOnSite");
     if(lf) lf.addEventListener("change", function(){ var f=this.files&&this.files[0]; if(f) uploadLogo(f); this.value=""; });
     if(lr) lr.addEventListener("click", removeLogo);
+    if(ls) ls.addEventListener("change", function(){ setLogoOnSite(this.checked); });
     // Clicking the logo box itself opens the picker too, same as the slide image slot.
     var lt=document.getElementById("logoThumb");
     if(lt && lf){ lt.style.cursor="pointer"; lt.title="Click to upload a logo"; lt.addEventListener("click", function(){ lf.click(); }); }
@@ -1646,7 +1670,8 @@
   function fillScreen(cfg){
     var sl = $("slides"); sl.innerHTML = "";
     (cfg.slides||[]).forEach(function(s){ sl.appendChild(slideRow(s)); });
-    screenLogoUrl = cfg.logo_url || ""; renderLogo();
+    screenLogoUrl = cfg.logo_url || ""; renderLogo(); logoHint("");
+    var _los=$("logoOnSite"); if(_los) _los.checked = cfg.show_logo_on_site !== false;
     // Rows are rebuilt here, so their buttons need the venue name putting back on them.
     paintScreenVenue();
   }
@@ -1741,6 +1766,9 @@
         try{ window.scrollTo(0,0); }catch(e){}
       });
     }
+    // billing.html#screen opens on that tab: Venue settings links straight to the logo card.
+    try{ var h=/^#(screen|nights|draws|settings|billing)$/.exec(location.hash||"");
+         if(h){ var tb=document.querySelector('.tabs button[data-tab="'+h[1]+'"]'); if(tb) tb.click(); } }catch(e){}
   })();
   /* Tell the venue's TV that its screen content just changed.
      Uploading a slide or a logo wrote to the database and nothing told the screen, so the venue

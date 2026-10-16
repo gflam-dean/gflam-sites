@@ -3021,6 +3021,22 @@ def local_checks(which):
                    'venue\'s raffle, or a draw on Math.random, ships with a green gate otherwise')
 
         for label, fn, title, floor, why in (
+            # D50 to D52: the venue logo, banked by Dean 7 Aug 2026 and built 16 Oct 2026 (migration 102).
+            ('D50. A venue logo goes up through the Worker, as a real PNG or WebP of 1MB or less',
+             'test-venue-logo-upload.js',
+             'owner or advertising manager only; the bytes decide the type; oversize, JPEG, GIF and SVG refused; screen-save takes no pasted address', 45,
+             'The logo is painted on every TV the venue has and on the public homepage. A host '
+             'setting it, an SVG with script in it, or any pasted address reaching strangers ships green otherwise'),
+            ('D51. The Trusted by strip shows live, paying, willing venues, and nothing below six',
+             'test-trusted-logos.js',
+             'test venues, 1-player plans, comp, unpaid, HQ-hidden and unticked venues stay off; fewer than six paints nothing', 40,
+             'Dean\'s hard rule, 7 Aug 2026: only active, paying venues on the marketing site. A test '
+             'venue or a venue that said no on the homepage, or one lonely logo, is this check going red'),
+            ('D52. The TV mark is painted only when the venue has a logo, small, top-left and kept clear',
+             'test-tv-logo-mark.js',
+             'tv.html and the four game screens paint one 120x56 mark, 14px in, untappable, a vp-fit keep-out, and nothing with no logo', 40,
+             'A logo that covers a called number, the join code or the question, or a broken box on '
+             'the wall of a venue with no logo, reaches a room full of people otherwise'),
             # D47 and D46: the compliance build of 15 Oct 2026 (Anisimoff Legal 9380, letters of
             # 1 and 8 Oct 2026). Dean: build everything the lawyer called prudent.
             ('D47. The Terms put gaming compliance, permits, attendance, age, records and an indemnity on the venue',
