@@ -177,6 +177,37 @@
   .bnum.lit{background:var(--pink);color:#0A0A0B;border-color:transparent}   /* matches the wall (tv.html): called reads at a glance */
   .bnum.cur{background:var(--gold);color:#1a1000;border-color:transparent;box-shadow:0 0 14px rgba(255,194,75,.6)}
 
+  /* CALLER MODE (real balls): the 1 to 90 grid the operator taps as each ball is called. Ten
+     across, so a row is a decade and a number is found without reading. Sized for an iPad in
+     Split View (about 500px wide) and still a fingertip each at 375px. No text selection and no
+     iOS callout, because a long press is how the last call is taken back. */
+  #callerBlock{display:none}
+  #bingoView.callermode #callerBlock{display:block}
+  #bingoView.callermode #nextBtn,#bingoView.callermode .lastball,#bingoView.callermode #liveStats,
+  #bingoView.callermode #claimLbl,#bingoView.callermode #claimQueue{display:none}
+  #bingoView.callermode #allowEarlyLiveRow{display:none!important}   /* it carries an inline display:flex */
+  .callerhead{display:flex;align-items:center;gap:12px;margin:0 0 10px}
+  .callerhead .cl{font-family:'Anton',sans-serif;font-size:44px;line-height:1;color:#fff;min-width:2.2ch;text-align:center}
+  .callerhead .cs{font-size:12.5px;color:var(--muted);line-height:1.35;flex:1;min-width:0}
+  .callerhead .cs b{color:var(--gold);font-family:'JetBrains Mono',monospace}
+  .callerhead .btn{flex:none;min-height:46px;white-space:nowrap}
+  .callergrid{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:4px;touch-action:manipulation;
+    user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+  .callergrid .cg{aspect-ratio:1/1;min-height:30px;display:flex;align-items:center;justify-content:center;padding:0;
+    font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(13px,3.4vw,19px);color:#fff;
+    background:var(--ink-3);border:1px solid var(--line);border-radius:8px;cursor:pointer;
+    -webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
+  .callergrid .cg:active{border-color:var(--pink)}
+  .callergrid .cg.on{background:rgba(255,31,142,.22);color:#FF8CC4;border-color:rgba(255,31,142,.45)}
+  .callergrid .cg.cur{background:var(--gold);color:#1a1000;border-color:transparent;box-shadow:0 0 12px rgba(255,194,75,.55)}
+  .callernote{font-size:12px;color:var(--faint);margin-top:8px;line-height:1.45}
+  @media (max-width:520px){
+    .wrap:has(#bingoView.callermode:not(.hidden)){padding:12px}
+    #bingoView.callermode .panel{padding:12px}
+    .callergrid{gap:3px}
+    .callerhead .cl{font-size:36px}
+  }
+
   .pairedchip{font-size:11px;color:var(--win);font-weight:700;font-family:'Hanken Grotesk',sans-serif}
   /* THE SCREEN CODE, WHERE THE HOST CAN READ IT OFF THE IPAD.
      The venue TV asks for "the six characters on your host console" when it
@@ -397,6 +428,10 @@
             <input type="text" class="hostinput" id="prizeInput" placeholder="e.g. $50 bar tab">
           </div>
           <div class="field">
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" id="callerChk" style="width:auto;margin:0"><span>Real balls (caller mode)</span></label>
+            <div class="fieldnote vp-fine" style="margin-top:5px">For a ball machine, a barrel or a caller pulling real balls. You tap each number as it is called and the TV shows it. Phones get no tickets: the room plays paper books.</div>
+          </div>
+          <div class="field" id="ticketsField">
             <label>Tickets</label>
             <select id="paidSel">
               <option value="">Free &middot; everyone gets the same</option>
@@ -417,7 +452,7 @@
             </select>
             <div class="fieldnote vp-fine" style="margin-top:5px">Everyone gets this many tickets this game.</div>
           </div>
-          <div class="field">
+          <div class="field" id="allowEarlyField">
             <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" id="allowEarlyChk" style="width:auto;margin:0"><span>Allow early BINGO calls</span></label>
             <div class="fieldnote vp-fine" style="margin-top:5px">Lets players call BINGO even when it is not a win yet. A bit of fun for the room. A wrong call still lands with you, so you just tap Play on.</div>
           </div>
@@ -431,9 +466,9 @@
         </div>
 
         <div id="liveBlock" class="hidden">
-          <label style="display:flex;align-items:center;gap:9px;cursor:pointer;margin:0 0 12px;padding:9px 12px;background:var(--ink-3);border:1px solid var(--line);border-radius:10px;font-size:13px;color:var(--text)">
+          <label id="allowEarlyLiveRow" style="display:flex;align-items:center;gap:9px;cursor:pointer;margin:0 0 12px;padding:9px 12px;background:var(--ink-3);border:1px solid var(--line);border-radius:10px;font-size:13px;color:var(--text)">
             <input type="checkbox" id="allowEarlyLive" style="width:auto;margin:0"><span>Allow early BINGO calls</span></label>
-          <div class="stat">
+          <div class="stat" id="liveStats">
             <div class="box"><div class="k">Called</div><div class="v" id="liveCount">0 of 90</div></div>
             <div class="box"><div class="k">Pattern</div><div class="v" style="font-size:13px" id="livePattern">One line</div></div>
             <div class="box"><div class="k">Playing</div><div class="v g" id="livePlayers">0</div></div>
@@ -445,7 +480,16 @@
           </div>
           <div class="prizeline2" id="prizeLine2">Playing for <b>the prize</b></div>
           <button class="btn pink big" id="nextBtn">Next number</button>
-          <div class="lbl" style="margin-top:18px">Claim queue</div>
+          <div id="callerBlock">
+            <div class="callerhead">
+              <div class="cl" id="callerLast">&ndash;</div>
+              <div class="cs" id="callerSays">Tap each number as it is called.</div>
+              <button type="button" class="btn ghost" id="callerUndoBtn" disabled>Undo last</button>
+            </div>
+            <div class="callergrid" id="callerGrid" role="group" aria-label="Numbers 1 to 90"></div>
+            <div class="callernote">Tap a number to call it. Hold the last one called, or tap Undo last, to take it back.</div>
+          </div>
+          <div class="lbl" id="claimLbl" style="margin-top:18px">Claim queue</div>
           <div id="claimQueue"></div>
           <div class="resolve" style="margin-top:16px">
             <button class="btn ghost" id="newGameBtn">New game</button>
@@ -1115,6 +1159,7 @@
   // ================= GAME STATE (bingo) =================
   var G={
     code:"", status:"setup", pattern:"one", prize:"the prize", defaultCards:1, allowEarly:false,
+    caller:false,          // real balls (caller mode): the operator taps each ball, no phone tickets. See callerCall.
     paidMode:"",           // "" free | "card" | "sheet". Set once at setup, holds for the night.
     draw:[], idx:-1, called:{},
     pool:[],               // the balls NOT yet drawn. The future does not exist until it is called.
@@ -1196,7 +1241,7 @@
     var sel=document.getElementById("paidSel"); if(!sel) return;
     function syncPaidUI(){
       var paid=!!sel.value;
-      var cf=document.getElementById("cardsField"); if(cf) cf.style.display = paid ? "none" : "";
+      var cf=document.getElementById("cardsField"); if(cf) cf.style.display = (paid || callerChosen()) ? "none" : "";
       var nt=document.getElementById("paidNote");   if(nt) nt.style.display = paid ? "" : "none";
       G.paidMode=sel.value;
       renderPlayers();
@@ -1240,6 +1285,7 @@
              join_code null, the peak restarted from zero and early calls switched themselves off. */
           sessionId:G.sessionId||null, joinCode:G.joinCode||null, planCapAtStart:(G.planCapAtStart!=null?G.planCapAtStart:null),
           peak:G.peak||0, allowEarly:!!G.allowEarly,
+          caller:!!G.caller,   // real balls tonight: a reload must come back to the grid, not the draw
           night:NIGHT
         }));
       } else {
@@ -1326,6 +1372,7 @@
       G.drawId=s.drawId||null;
       G.drawMode=(s.drawMode==="server" && G.drawId) ? "server" : "local";
       restoreNightFields(s);
+      if(G.caller) G.drawWhy="caller";   // the record keeps saying where the balls came from after a reload
       return true;
     }catch(e){ return false; }
   }
@@ -1335,6 +1382,7 @@
     if(s.planCapAtStart!=null) G.planCapAtStart=s.planCapAtStart;
     if(typeof s.peak==="number") G.peak=s.peak;
     if(typeof s.allowEarly==="boolean"){ G.allowEarly=s.allowEarly; var a=$("allowEarlyChk"), b=$("allowEarlyLive"); if(a) a.checked=s.allowEarly; if(b) b.checked=s.allowEarly; }
+    if(typeof s.caller==="boolean"){ G.caller=s.caller; var cc=$("callerChk"); if(cc) cc.checked=s.caller; syncCallerUI(); }
     if(s.night && typeof s.night=="object"){ NIGHT={ games:s.night.games||0, peak:s.night.peak||0, prizes:Array.isArray(s.night.prizes)?s.night.prizes:[], startedAt:s.night.startedAt||null }; }
   }
   function syncNextBtn(){
@@ -1466,11 +1514,12 @@
      which balls came from where. A room never waits on a server. */
   var DRAW_CALL_MS=4000;
   function openServerDraw(){
-    G.drawId=null; G.drawMode="server"; G.drawOpening=null; G.drawWhy="";
+    G.drawId=null; G.drawMode="server"; G.drawOpening=null; G.drawWhy=G.caller ? "caller" : "";
     G.gen=(G.gen||0)+1;   // which game a reply belongs to; a reply for an earlier game is dropped
     var v=__ctx && __ctx.venue;
     if(!v || !v.id || !(window.VP && VP.gameApiCall)){ G.drawMode="local"; return; }
-    G.drawOpening=VP.gameApiCall("/host/bingo/draw", { venue_id:v.id, session_id:G.sessionId||null }, DRAW_CALL_MS)
+    // caller:true opens the record as a physical draw (the Worker refuses to hand out a ball on it).
+    G.drawOpening=VP.gameApiCall("/host/bingo/draw", G.caller ? { venue_id:v.id, session_id:G.sessionId||null, caller:true } : { venue_id:v.id, session_id:G.sessionId||null }, DRAW_CALL_MS)
       .then(function(r){
         if(r && r.status===200 && r.json && r.json.draw_id){ G.drawId=r.json.draw_id; saveGame(); }
         else goLocalDraw("draw open answered "+(r&&r.status));
@@ -1479,6 +1528,8 @@
   }
   function goLocalDraw(why){
     if(G.drawMode==="local") return;
+    // Real balls: there is nothing to fall back FROM, so no toast. Only the record is lost.
+    if(G.caller){ G.drawMode="local"; saveGame(); return; }
     G.drawMode="local"; G.drawWhy=String(why||"").slice(0,200);
     showToast("Server not answering. Calling from this tablet for the rest of this game.");
     saveGame();
@@ -1512,6 +1563,7 @@
   // A tablet-called ball goes on the server's record too, best effort. The Worker refuses a
   // repeat or a clash rather than write a record that lies, and the console does not care.
   function reportLocalBall(n, ordinal){
+    if(G.caller){ callerRecord({ number:n, ordinal:ordinal }); return; }   // real balls: in order, after the draw opens
     if(!G.drawId || !(window.VP && VP.gameApiPost)) return;
     try{ VP.gameApiPost("/host/bingo/fallback", { draw_id:G.drawId, number:n, ordinal:ordinal, reason:G.drawWhy||"worker unreachable" }).catch(function(){}); }catch(e){}
   }
@@ -1742,6 +1794,10 @@
   }
   var PAID_MAX_TICKETS=24;   // four sheets. Past that a phone is unreadable, not a licensing limit.
   function ticketsFor(p){
+    /* Real balls: the room plays paper books, so no phone holds a ticket. Every deal (the start,
+       a late join, a paid top-up) asks this, and sendCards sends nothing either. The Worker tells
+       each phone to use its book (paper_reason 'caller'); this is the console's half. */
+    if(G.caller) return 0;
     if(!G.paidMode) return clampCards(G.defaultCards);      // free night: everyone the same, as before
     var units=Math.max(0, parseInt(p && p.paid, 10) || 0);
     var t=(G.paidMode==="sheet") ? units*6 : units;
@@ -1786,7 +1842,7 @@
     var names=G.claims.map(function(c){ return c.name; });
     send({ t:"claim_pending", name:names[0], names:names });
   }
-  function sendCards(pid){ var p=G.players[pid]; if(!p||!p.cards) return; send({ t:"cards", pid:pid, cards:p.cards.map(function(c){ return { cells:c.card, cardNo:c.cardNo }; }) }); }
+  function sendCards(pid){ var p=G.players[pid]; if(!p||!p.cards||G.caller) return; send({ t:"cards", pid:pid, cards:p.cards.map(function(c){ return { cells:c.card, cardNo:c.cardNo }; }) }); }
   function sendPlayers(){ send({ t:"players", count:playerCount() }); }
 
   // ---- board ----
@@ -1812,6 +1868,13 @@
   function setCoach(){
     var el=$("coach"); if(!el) return;
     var n=playerCount(), called=G.idx+1, txt;
+    if(G.caller && G.status==="running" && !G.claims.length && !G.lastWins.length && !G.won){
+      el.innerHTML = called
+        ? ("<b>"+called+" of 90</b> called. Tap each number on the grid as it is called. Hold the last one, or tap <b>Undo</b>, to take back a mistake.")
+        : "Real balls tonight. Tap each number on the grid as the caller reads it out, and the TV shows it.";
+      return;
+    }
+    if(G.caller && G.status==="lobby"){ el.innerHTML="Real balls tonight: the room plays paper books, so phones get no tickets. Start calling numbers when the caller is ready."; return; }
     if(G.claims.length) txt="Check the ticket below against the called numbers, then <b>Confirm winner</b>, or <b>Play on</b> if it is not there yet.";
     else if(G.lastWins.length) txt="Announce it on the mic, then <b>Keep playing</b> for the next prize or <b>Finish game</b>.";
     else if(G.won) txt="That game is done. <b>New game</b> deals fresh tickets, <b>End game</b> puts the ads back on the TV.";
@@ -1873,7 +1936,9 @@
     $("setupCode").textContent=G.code;
     $("playerCount").textContent=playerCount();
     renderPlayers();
+    syncCallerUI();
     if(live) renderLive();
+    if(live && G.caller) renderCallerGrid();
     updateBoard();
   }
   // Open the join lobby: the TV shows the big QR + code and players can scan in and see
@@ -1961,6 +2026,7 @@
     var _p=requirePrize(); if(_p===null) return;
     G.prize=_p;
     G.defaultCards=clampCards($("cardsSel").value);
+    G.caller=callerChosen();
     G.status="lobby"; G.won=false; G.claims=[]; G.claimIdx=-1; G.lastWins=[];
     nightReset();
     send({ t:"mode", mode:"bingo" });   // TV switches from ads to the join screen
@@ -2000,7 +2066,8 @@
       // second one would leave the first counting a room that had already moved on.
       if(G.sessionId && G.joinCode){ sendState(); seatSoon(); return; }
       if(!(window.VP && VP.gameApiPost)) return;
-      VP.gameApiPost("/session", { venue_id: v.id, format: "bingo" }).then(function(r){
+      // caller says whether tonight is real balls: the Worker then tells every phone to use its paper book.
+      VP.gameApiPost("/session", { venue_id: v.id, format: "bingo", caller: !!G.caller }).then(function(r){
         if(!r || r.error || !r.session_id) return;
         G.sessionId = r.session_id;
         G.joinCode  = r.join_code || null;
@@ -2291,6 +2358,8 @@
     G.prize=_p;
     G.paidMode=$("paidSel").value;
     G.defaultCards=clampCards($("cardsSel").value);
+    G.caller=callerChosen();
+    if(G.caller) G.paidMode="";   // paper books are the venue's own sale, not tickets on this console
     G.draw=[]; G.pool=freshPool(); G.idx=-1; G.called={};
     openServerDraw();   // the ball order is shuffled on the server; the console asks for each ball
     G.status="running"; G.won=false; G.claims=[]; G.claimIdx=-1; G.lastWins=[];
@@ -2488,6 +2557,7 @@
   var BALL_HOLD_SECONDS=5;
   function nextBall(){
     if(G.status!=="running" || G.draw.length>=90) return;
+    if(G.caller) return;   // real balls: the numbers come off the grid (callerCall), never from a draw
     /* AFTER "Finish game" the status is still "running" and lastWins has been cleared by
        announce(), so every existing guard below passes and a tap here drew a ball. tv.html
        handles a ball with no win guard, so the winner card, confetti and fanfare were replaced by
@@ -2550,6 +2620,109 @@
     // tap to be a mistake rather than the next call. The label counts down so the host can see
     // the button is holding on purpose. Dean's call, 8 Sep 2026.
     else VP_HOLD.hold($("nextBtn"), BALL_HOLD_SECONDS, function(left){ return "Next number in "+left+"s"; }, syncNextBtn);
+  }
+  /* ---- CALLER MODE: REAL BALLS (17 Oct 2026) ----
+     A ball machine, a barrel, or the queens at Drag Bingo pulling balls out of a bag. The console's
+     own draw (the server's order and the tablet's cryptoInt pool) is not used: the operator taps
+     the number that was just called on a 1 to 90 grid, and that number goes down EXACTLY the road a
+     drawn ball takes (commitBall), so the TV's big-number pop-up, board, recent calls and sound,
+     the saved game and the night's report are all the ones a normal night uses. The crowd plays
+     paper books, so no phone is dealt a ticket (dealCards) and the Worker tells every phone so.
+     Each ball goes on the night's record through /host/bingo/fallback with the reason "caller".
+     Lighting is deliberately NOT here: it stays in its own app (Dean, 17 Oct 2026). */
+  var CALLER_HOLD_MS=600;          // a long press on the last number called takes it back
+  var CALLER_REVEAL_MS=2400;       // the TV's big-number reveal; an undo inside it is resent after it lands
+  function callerChosen(){ var c=$("callerChk"); return !!(c && c.checked); }
+  /* The setup form for a real-balls night: no ticket settings (paper books are the venue's own
+     sale) and no early calls (no phone claims). The live block swaps Next number for the grid. */
+  function syncCallerUI(){
+    var on=(G.status==="setup") ? callerChosen() : !!G.caller;
+    var tf=$("ticketsField"); if(tf) tf.style.display = on ? "none" : "";
+    var ae=$("allowEarlyField"); if(ae) ae.style.display = on ? "none" : "";
+    var ps=$("paidSel"), cf=$("cardsField");
+    if(on && ps && ps.value){ ps.value=""; try{ ps.dispatchEvent(new Event("change")); }catch(e){} G.paidMode=""; }
+    if(cf) cf.style.display = (on || (ps && ps.value)) ? "none" : "";
+    var bv=$("bingoView"); if(bv) bv.classList.toggle("callermode", !!on);
+    var cc=$("callerChk"); if(cc) cc.disabled = (G.status!=="setup");   // a night is real balls or not, from Open lobby to End game
+  }
+  /* Every record write in ORDER, after the draw has opened. A tap can land before the draw id
+     comes back, and an undo followed by the next call must reach the server in that order, or the
+     new ball would clash with the one being withdrawn. Best effort, as for any tablet ball. */
+  function callerRecord(body){
+    if(!(window.VP && VP.gameApiCall)) return;
+    var gen=G.gen;
+    G._callerRec=(G._callerRec||Promise.resolve()).then(function(){ return G.drawOpening; }).then(function(){
+      if(gen!==G.gen || !G.drawId) return null;
+      var b={ draw_id:G.drawId, number:body.number, ordinal:body.ordinal, reason:"caller" };
+      if(body.withdraw) b.withdraw=true;
+      return VP.gameApiCall("/host/bingo/fallback", b, 6000);
+    }).then(null, function(){ return null; });
+  }
+  function callerCall(n){
+    n=parseInt(n,10);
+    if(!G.caller || G.status!=="running" || !(n>=1 && n<=90)) return false;
+    if(G.won){ showToast("That game is done. Tap New game for another, or End game to put the ads back on."); return false; }
+    if(G.claims.length){ showToast("Sort the bingo call first, then keep calling."); return false; }
+    if(G.lastWins.length){ showToast("Announce the win first: keep playing, or finish the game."); return false; }
+    // A number already out is never called twice: the room has daubed it once. The pool is the
+    // numbers NOT yet called, rebuilt from the called list on a reload, so it is the one answer.
+    var k=G.pool.indexOf(n);
+    if(k<0){ showToast(n+" has already been called."); return false; }
+    G.pool.splice(k,1);
+    G._callerAt=Date.now();
+    commitBall(n, false);   // the same road as a drawn ball: TV, board, save, record
+    renderCallerGrid();
+    return true;
+  }
+  function callerUndo(){
+    if(!G.caller || G.status!=="running" || G.idx<0 || !G.draw.length) return false;
+    if(G.won || G.lastWins.length || G.claims.length){ showToast("A win is being sorted. Undo is for a number tapped by mistake."); return false; }
+    var n=G.draw.pop(), ordinal=G.idx+1;
+    G.idx=G.draw.length-1; delete G.called[n];
+    G.pool.push(n); G.pool.sort(function(a,b){ return a-b; });
+    callerRecord({ number:n, ordinal:ordinal, withdraw:true });
+    /* The TV and every screen redraw the board from the called list a state message carries. If
+       the big-number reveal of the withdrawn ball is still flying, it lands that number on the
+       resting ball, so say it again once the reveal is over. */
+    sendState();
+    var since=Date.now()-(G._callerAt||0), gen=G.gen, len=G.draw.length;
+    if(since<CALLER_REVEAL_MS) setTimeout(function(){ if(gen===G.gen && G.status==="running" && G.draw.length===len) sendState(); }, CALLER_REVEAL_MS-since+150);
+    saveGame();
+    renderLive(); updateBoard(); renderCallerGrid(); syncNextBtn();
+    showToast(n+" taken back. The TV board is corrected.");
+    return true;
+  }
+  // A long press: on the last number called it is the undo; anywhere else it only says how.
+  function callerHold(n){
+    n=parseInt(n,10);
+    if(!G.caller || G.status!=="running") return false;
+    var last=G.idx>=0 ? G.draw[G.idx] : 0;
+    if(n===last) return callerUndo();
+    showToast(last ? ("Only the last call can be taken back. Hold "+last+", or tap Undo last.") : "Nothing has been called yet.");
+    return false;
+  }
+  function renderCallerGrid(){
+    var grid=$("callerGrid"); if(!grid) return;
+    if(!grid._cells){
+      grid.innerHTML="";
+      var cells=[];
+      for(var i=1;i<=90;i++){
+        var b=document.createElement("button");
+        b.setAttribute("type","button"); b.setAttribute("data-n", String(i)); b.className="cg"; b.textContent=i;
+        grid.appendChild(b); cells.push(b);
+      }
+      grid._cells=cells;
+    }
+    var cur=G.idx>=0 ? G.draw[G.idx] : 0;
+    for(var n=1;n<=90;n++){
+      var el=grid._cells[n-1]; if(!el) continue;
+      el.className="cg"+(G.called[n]?" on":"")+(n===cur?" cur":"");
+      el.setAttribute("aria-pressed", G.called[n] ? "true" : "false");
+    }
+    var cl=$("callerLast"); if(cl) cl.textContent = cur ? cur : "\u2013";
+    // The stat boxes are hidden on a real-balls night so the whole grid fits a Split View iPad, so the count and pattern live here.
+    var cs=$("callerSays"); if(cs) cs.innerHTML = (cur ? ("<b>"+(G.idx+1)+"</b> of 90 called") : "Nothing called yet")+"<br>"+esc(PATTERN_NAMES[G.pattern]||"");
+    var ub=$("callerUndoBtn"); if(ub){ ub.disabled=!cur; ub.textContent = cur ? ("Undo "+cur) : "Undo last"; }
   }
   // Move one queued claim into the confirmed list. Nothing is broadcast yet: the host still has
   // to decide play on or finish, and with a tie they may confirm two or three people first.
@@ -3018,6 +3191,25 @@
     if(b) b.addEventListener("change", function(){ set(this.checked); });
   })();
   $("nextBtn").addEventListener("click", nextBall);
+  /* The real-balls grid. A tap calls; a press held CALLER_HOLD_MS takes back the last call, and
+     the click that follows the hold is swallowed so it does not call the number again. */
+  (function(){
+    var grid=$("callerGrid"), cc=$("callerChk"), ub=$("callerUndoBtn");
+    if(cc) cc.addEventListener("change", syncCallerUI);
+    if(ub) ub.addEventListener("click", function(){ callerUndo(); });
+    if(!grid) return;
+    var timer=0, swallow=false;
+    function cellOf(e){ var t=e && e.target; while(t && t!==grid){ if(t.getAttribute && t.getAttribute("data-n")) return t; t=t.parentNode; } return null; }
+    grid.addEventListener("pointerdown", function(e){
+      var c=cellOf(e); if(!c) return;
+      swallow=false; clearTimeout(timer);
+      timer=setTimeout(function(){ timer=0; swallow=true; callerHold(c.getAttribute("data-n")); }, CALLER_HOLD_MS);
+    });
+    function stop(){ if(timer){ clearTimeout(timer); timer=0; } }
+    grid.addEventListener("pointerup", stop); grid.addEventListener("pointercancel", stop);
+    grid.addEventListener("click", function(e){ if(swallow){ swallow=false; return; } var c=cellOf(e); if(c) callerCall(c.getAttribute("data-n")); });
+    grid.addEventListener("contextmenu", function(e){ if(e && e.preventDefault) e.preventDefault(); });
+  })();
   $("newGameBtn").addEventListener("click", newGamePrompt);
   $("endGameBtn").addEventListener("click", endGame);
   $("claimQueue").addEventListener("click", function(e){

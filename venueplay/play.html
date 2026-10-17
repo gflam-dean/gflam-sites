@@ -362,9 +362,33 @@
      Written so a punter understands it is normal, not a fault. */
   var _paper=false;   // set once this phone has been told it plays on paper: it then sends nothing
   var _paperBox=null; // the notice itself, so a flag that clears later can take it down again
-  function showPaperBingo(){
-    if(_paper) return;
+  /* WHY tonight is paper, worded for the room (17 Oct 2026). The Worker sends paper_reason:
+     'caller' is a night called with real balls (caller mode: a ball machine, a barrel, the queens
+     at Drag Bingo), and the crowd plays printed books in any state; anything else is the state's
+     rules, worded as before. */
+  function paperWhy(reason){
+    return reason==="caller"
+      ? 'Tonight\u2019s numbers come out of a real ball draw, so everyone plays on a paper book. Phones sit this one out.'
+      : 'Your state\u2019s rules ask for a printed ticket for bingo, so phones sit this one out. Everything else runs exactly the same.';
+  }
+  var _paperWhyNow="";   // the reason the notice up now was written for
+  function paperNoticeHtml(reason){
+    return '<div style="max-width:30em;margin:0 auto">'+
+      '<div style="font:800 26px/1.2 system-ui,sans-serif;color:#fff;margin-bottom:14px">'+
+      'Tonight you play on paper</div>'+
+      '<p style="color:#9A9AA4">Grab your bingo book from the bar and mark it off as the numbers are called. '+
+      'The big screen shows every number, so you can always check back.</p>'+
+      '<p data-paper-why style="color:#8A8A94;font-size:14px;margin-top:18px">'+paperWhy(reason)+'</p></div>';
+  }
+  function showPaperBingo(reason){
+    reason=(reason==="caller") ? "caller" : "state";
+    if(_paper){
+      // Already covered: the reason can still change (a caller night opening in a paper state), so the words follow it.
+      if(_paperBox && reason!==_paperWhyNow){ try{ _paperBox.innerHTML=paperNoticeHtml(reason); _paperWhyNow=reason; }catch(e){} }
+      return;
+    }
     _paper=true;
+    _paperWhyNow=reason;
     /* AND IT LEAVES THE ROOM. The page was blanked but the channel stayed open, so a phone that had
        joined before kept announcing itself and the console dealt it tickets it could not see. */
     try{ if(ch) ch.unsubscribe(); }catch(e){}
@@ -380,13 +404,7 @@
     d.setAttribute("style","position:fixed;top:0;left:0;right:0;bottom:0;inset:0;width:100%;height:100%;z-index:99997;"+
       "overflow-y:auto;background:#0B0A10;padding:12vh 22px 40px;text-align:center;"+
       "font:400 17px/1.6 system-ui,-apple-system,sans-serif;color:#E7E7EC");
-    d.innerHTML='<div style="max-width:30em;margin:0 auto">'+
-      '<div style="font:800 26px/1.2 system-ui,sans-serif;color:#fff;margin-bottom:14px">'+
-      'Tonight you play on paper</div>'+
-      '<p style="color:#9A9AA4">Grab your bingo book from the bar and mark it off as the numbers are called. '+
-      'The big screen shows every number, so you can always check back.</p>'+
-      '<p style="color:#8A8A94;font-size:14px;margin-top:18px">Your state\u2019s rules ask for a printed ticket '+
-      'for bingo, so phones sit this one out. Everything else runs exactly the same.</p></div>';
+    d.innerHTML=paperNoticeHtml(reason);
     try{ document.body.appendChild(d); _paperBox=d; }catch(e){ _paperBox=null; }
   }
   /* The Worker has stopped saying paper (the bingo lobby closed, or another game is on): take the
@@ -1196,7 +1214,7 @@
          phone must not show one. The Worker decides it from the venue's state and sends
          paper_bingo, rather than the console deciding, so a venue cannot route around it by
          handing out the phone link directly. */
-      if(r && r.paper_bingo){ showPaperBingo(); return; }
+      if(r && r.paper_bingo){ showPaperBingo(r.paper_reason); return; }
       ageAnswer(r);                // "I am 18 or over" where the state asks for it; releases the join otherwise
       if(r && r.exists===false){ unknownCode(); return; }
       /* A phone that has joined before still asks (the paper check above is the point: a regular
@@ -1847,7 +1865,7 @@
              a flag that arrives once a bingo lobby opens is acted on, and one that clears later
              (the lobby closed, trivia opened) takes the notice down again. A phone shown the paper
              notice keeps asking, so it can still follow the room to trivia or musical. */
-          if(r && r.paper_bingo){ showPaperBingo(); if(++tries<225) setTimeout(look, 8000); return; }
+          if(r && r.paper_bingo){ showPaperBingo(r.paper_reason); if(++tries<225) setTimeout(look, 8000); return; }
           hidePaperBingo();
           if(r && r.age_gate===true) ageAnswer(r); else if(r && r.age_gate===false) ageClear();
           if(r && r.exists===false){ unknownCode(); return; }   // no game behind it: stop asking
@@ -2015,7 +2033,7 @@
                here through the whole night, so a paper flag or an age tick that arrived once the
                bingo lobby opened was never acted on, and one that cleared later never took the
                notice down. The Worker decides; this only does what it says, each time it answers. */
-            if(d.paper_bingo===true) showPaperBingo(); else hidePaperBingo();
+            if(d.paper_bingo===true) showPaperBingo(d.paper_reason); else hidePaperBingo();
             if(d.age_gate===true) ageAnswer(d); else if(d.age_gate===false) ageClear();
             if(P.active) return;
             /* A mistyped or out-of-date slug (an old table talker, a typo on a printed sign)

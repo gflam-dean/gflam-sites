@@ -122,6 +122,9 @@ eval(liftLine(/^let screenPollRpcMissing[^\n]*/m));
 eval(lift('handleVenueLookup'));
 eval(lift('venueLookupThreeTrips'));
 eval(lift('venueLookupReply'));
+/* Caller mode (17 Oct 2026): both phone answers read the night's real-balls flag. */
+eval(liftLine(/^const CALLER_REASON[^\n]*/m));
+eval(lift('callerBingoNight'));
 eval(lift('handleJoinInfo'));
 eval(lift('handlePlayLive'));
 

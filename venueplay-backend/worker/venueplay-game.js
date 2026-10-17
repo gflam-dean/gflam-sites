@@ -142,7 +142,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '16 Oct 2026, 04:25 · 5fd60dd1';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Oct 2026, 11:49 · 99f9ee62';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -161,6 +161,31 @@ const ANSWER_MAX_PER_PLAYER = 30; // trivia answers per 60s per player. One answ
    TAS not permitted for permit ("authorised") bingo; ACT "not specifically prohibited", so ACT
    came OFF this list on 15 Oct 2026. SA stays on the rule we read ourselves (no letter yet). */
 const PAPER_BINGO_STATES = new Set(['SA', 'VIC', 'TAS']);
+/* CALLER MODE (17 Oct 2026). A bingo night called with REAL BALLS: a ball machine, a barrel, or
+   the queens at Drag Bingo pulling them out of a bag. The console taps each number as it is called
+   so the TVs pop it up, and the crowd plays printed books, so no phone is dealt a ticket. The
+   console says so when it opens the night (POST /session, format bingo, caller:true) and the flag
+   rides on the night's own row, vp_sessions.paper.bingo, beside the printed musical cards and
+   trivia sheets (migration 88): no new table and no migration. /join/info and /play/live read it
+   and tell a phone to use its paper book, exactly as the paper-ticket states do, so a phone that
+   opens the link directly cannot route around it. The balls go on the night's record through
+   /host/bingo/fallback with the reason 'caller', so the record says they came from a physical
+   draw and not from any number generator. */
+const CALLER_REASON = 'caller';
+function callerBingoNight(session) {
+  return !!(session && session.paper && typeof session.paper === 'object' &&
+            session.paper.bingo && session.paper.bingo.caller === true);
+}
+/* Writes the flag only when it changes, so a normal bingo night (caller:false on a session that
+   never had it) costs no write and its row is untouched. Tolerated: if the write fails the
+   console still deals nothing, and only the phone's notice is lost. */
+async function noteCallerBingo(env, session, on) {
+  if (!session || !session.id || callerBingoNight(session) === !!on) return;
+  const paper = Object.assign({}, (session.paper && typeof session.paper === 'object') ? session.paper : {});
+  if (on) paper.bingo = { caller: true, at: new Date().toISOString() };
+  else delete paper.bingo;
+  try { await sbPatch(env, 'vp_sessions', 'id=eq.' + enc(session.id), { paper: paper }); } catch (e) { /* tolerated */ }
+}
 /* AGE GATE. Which (state, format) pairs ask a phone to tick "I am 18 or over" before a ticket.
    Anisimoff, 8 Oct 2026: minors cannot take part in gambling in Victoria (point 8 and the table,
    "No minors" for all bingo, free or paid); in ACT minors cannot play housie where a permit is
@@ -958,13 +983,16 @@ async function handleCreateSession(request, env, json) {
   // TV), return THAT session instead of failing on the unique index. This makes
   // "open the session" safe to call repeatedly from the host console.
   const liveNow = await sbGet(env, 'vp_sessions',
-    'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id,join_code,tv_pairing_code,plan_cap_at_start&order=created_at.desc&limit=1');
+    'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id,join_code,tv_pairing_code,plan_cap_at_start,paper&order=created_at.desc&limit=1');
+  // Caller mode is a bingo console's choice; an older console sends no caller field and changes nothing.
+  const callerAsked = (lobbyFormat(b.format) === 'bingo90' && typeof b.caller === 'boolean') ? b.caller : null;
   if (liveNow.length) {
     /* Reusing a session is exactly the moment a venue can end up with two games
        believing they are on air. If the console told us which format it is
        starting, end any other one still running before we hand the session back. */
     if (b.format) await endOtherRunningGames(env, venueId, b.format);
     if (b.format) await noteLobbyFormat(env, liveNow[0].id, b.format);
+    if (callerAsked !== null) await noteCallerBingo(env, liveNow[0], callerAsked);
     return json({ session_id: liveNow[0].id, join_code: liveNow[0].join_code, tv_pairing_code: liveNow[0].tv_pairing_code, plan_cap: (liveNow[0].plan_cap_at_start != null ? liveNow[0].plan_cap_at_start : null), reused: true });
   }
 
@@ -1023,6 +1051,7 @@ async function handleCreateSession(request, env, json) {
   }
   if (!session) return json({ error: 'Could not allocate a unique join code, or a session is already live for this venue' }, 409);
   if (b.format) await noteLobbyFormat(env, session.id, b.format);
+  if (callerAsked !== null) await noteCallerBingo(env, session, callerAsked);
 
   return json({ session_id: session.id, join_code: session.join_code, tv_pairing_code: session.tv_pairing_code, plan_cap: (planCap != null ? planCap : null) });
 }
@@ -1051,10 +1080,12 @@ async function handleJoinInfo(request, env, json) {
      the age tick) are for the game that is ON; on a quiet night there is no game, so nothing
      is asked (16 Oct 2026, see handlePlayLive). */
   let liveNow = false;
+  let liveSession = null;   // the open session's row, for the caller-mode flag (vp_sessions.paper.bingo)
   const sessions = await sbGet(env, 'vp_sessions', 'join_code=eq.' + enc(code) + '&status=in.(lobby,running,paused)&select=*&limit=1');
   if (sessions.length) {
     venueId = sessions[0].venue_id;
     liveNow = true;
+    liveSession = sessions[0];
     /* The LATEST game of any status, not just a live one. No vp_games row is ever written with
        status 'lobby' (every insert is 'running'), so filtering on a live status meant the format
        was unknown in exactly the window the code is typed in: after the session opens and before
@@ -1085,6 +1116,7 @@ async function handleJoinInfo(request, env, json) {
         'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=*&order=created_at.desc&limit=1');
       if (live.length) {
         liveNow = true;
+        liveSession = live[0];
         /* A RUNNING game only. This deliberately does NOT match the session branch above, which
            takes the latest game of any status so that a code typed between rounds still resolves.
            Here the code typed was the venue's PERMANENT one, which is also bingo's channel, so
@@ -1131,6 +1163,7 @@ async function handleJoinInfo(request, env, json) {
      other venue data, so this stays what it has always been, a public lookup for one join code. */
   let venueName = '';
   let paperBingo = false;
+  let paperReason = '';   // 'state' (the state's rules) or 'caller' (real balls tonight): the phone words its notice by it
   let ageGate = false;
   /* THE CHANNEL THE ROOM IS ON.
      Bingo's broadcast channel is named from a hash of the slug: the television and
@@ -1176,13 +1209,18 @@ async function handleJoinInfo(request, env, json) {
        this line is musical-exempt in Victoria exactly as it is everywhere else. */
     const paperFormat = liveNow && (!format || format.indexOf('bingo') === 0);
     if (paperFormat && vrows && vrows[0] && PAPER_BINGO_STATES.has(String(vrows[0].au_state || '').toUpperCase())) {
-      paperBingo = true;
+      paperBingo = true; paperReason = 'state';
     }
     /* The age tick rides beside the paper flag, because this is the call the phone page acts on
        before it shows a ticket. Decided here, not on the phone, for the same reason as paper. */
     if (liveNow && vrows && vrows[0]) ageGate = ageGateFor(vrows[0].au_state, format);
   } catch (e) { /* the notice falls back to "the venue you are playing at" */ }
-  return json({ format: format, room_code: roomCode, channel: channel, venue_name: venueName, paper_bingo: paperBingo, age_gate: ageGate, collect: {
+  /* CALLER MODE: a bingo night called with real balls is a paper night in every state. Outside the
+     try above, so a failed venue read cannot hand a phone a ticket on a paper-book night. */
+  if (liveNow && (!format || format.indexOf('bingo') === 0) && callerBingoNight(liveSession)) {
+    paperBingo = true; paperReason = CALLER_REASON;
+  }
+  return json({ format: format, room_code: roomCode, channel: channel, venue_name: venueName, paper_bingo: paperBingo, paper_reason: paperReason, age_gate: ageGate, collect: {
     first_name: cfg.collect_first_name !== false, // first name defaults on
     last_name: !!cfg.collect_last_name,
     postcode: !!cfg.collect_postcode,
@@ -2513,10 +2551,17 @@ async function handlePlayLive(request, env, json) {
      the phone, decided by the Worker for whichever format is on tonight. Same two helpers as
      /join/info, so the two answers cannot disagree. Computed on the format resolved below. */
   const auState = (vrows && vrows[0] && vrows[0].au_state) || '';
-  const phoneRules = (format) => ({
-    paper_bingo: (!format || String(format).indexOf('bingo') === 0) && PAPER_BINGO_STATES.has(String(auState).toUpperCase()),
-    age_gate: ageGateFor(auState, format)
-  });
+  /* And caller mode (real balls, paper books) from the session's own row: a paper night in any state. */
+  const phoneRules = (format, session) => {
+    const bingoOn = !format || String(format).indexOf('bingo') === 0;
+    const caller = bingoOn && callerBingoNight(session);
+    const state = bingoOn && PAPER_BINGO_STATES.has(String(auState).toUpperCase());
+    return {
+      paper_bingo: caller || state,
+      paper_reason: caller ? CALLER_REASON : (state ? 'state' : ''),
+      age_gate: ageGateFor(auState, format)
+    };
+  };
   /* BILLING CLOSING SOMETHING HAS TO REACH THE WALL.
 
      This asked the session and nothing else, so a venue suspended for non-payment
@@ -2533,7 +2578,7 @@ async function handlePlayLive(request, env, json) {
   }
 
   const sessions = await sbGet(env, 'vp_sessions',
-    'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id,join_code,lobby_format&order=created_at.desc&limit=1');
+    'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id,join_code,lobby_format,paper&order=created_at.desc&limit=1');
   /* A QUIET NIGHT ASKS NOTHING (live audit, 16 Oct 2026). This used to answer phoneRules(''),
      and '' is bingo, so with nothing on at all a Victorian or Tasmanian phone was told "Tonight
      you play on paper" and an ACT phone was asked "Are you 18 or over?", before the host had
@@ -2555,7 +2600,7 @@ async function handlePlayLive(request, env, json) {
     exists: true, name, live: true,
     join_code: sessions[0].join_code,
     format,
-  }, phoneRules(format)));
+  }, phoneRules(format, sessions[0])));
 }
 
 async function abuseIpHash(request, env) {
@@ -6600,13 +6645,18 @@ async function handleBingoDrawStart(request, env, json) {
   let sessionId = null;
   if (b.session_id) { try { assertUuid(String(b.session_id), 'session_id'); sessionId = String(b.session_id); } catch (e) { sessionId = null; } }
 
-  const rows = await sbInsert(env, 'vp_bingo_draws', {
+  /* CALLER MODE: the balls are real, so the record says so from ball one. The draw opens already
+     'local' with the reason 'caller', which also makes /host/bingo/ball refuse it: no ball from
+     this server's order can ever land on a night the room is watching a barrel. The order is still
+     shuffled and stored (the column is not null) and is simply never used. */
+  const caller = b.caller === true;
+  const rows = await sbInsert(env, 'vp_bingo_draws', Object.assign({
     venue_id: venueId,
     session_id: sessionId,
     draw_seed: randomTokenHex(16),
     draw_order: shuffle1to90(),   // never leaves this function
     draw_index: 0,
-  }, true);
+  }, caller ? { mode: 'local', fallback_at: 1, fallback_why: 'caller' } : {}), true);
   const row = Array.isArray(rows) ? rows[0] : rows;
   return json({ draw_id: row.id });
 }
@@ -6732,7 +6782,7 @@ async function handleBingoFallback(request, env, json) {
   const drawId = String(b.draw_id || '').trim();
   if (!drawId) return json({ error: 'Missing draw_id' }, 400);
   assertUuid(drawId, 'draw_id');
-  const draws = await sbGet(env, 'vp_bingo_draws', 'id=eq.' + enc(drawId) + '&select=id,venue_id,draw_index,mode');
+  const draws = await sbGet(env, 'vp_bingo_draws', 'id=eq.' + enc(drawId) + '&select=id,venue_id,draw_index,mode,fallback_why');
   if (!draws.length) return json({ error: 'Draw not found' }, 404);
   const draw = draws[0];
   await requireStaff(env, authUserId, draw.venue_id);
@@ -6740,11 +6790,31 @@ async function handleBingoFallback(request, env, json) {
   const number = parseInt(b.number, 10);
   const ordinal = parseInt(b.ordinal, 10);
   if (!(number >= 1 && number <= 90) || !(ordinal >= 1 && ordinal <= 90)) return json({ error: 'Bad ball' }, 400);
+  /* 'caller' is the one reason sent exactly: a ball called off a real barrel (caller mode). Every
+     other reason is the console's own words about why the server could not be reached. */
+  const reason = String(b.reason || 'worker unreachable').slice(0, 200);
+  const callerBall = reason === 'caller';
+
+  /* CALLER MODE'S UNDO. The operator tapped the wrong number and withdrew it before the next call.
+     Only on a caller-mode draw, only the LAST ball on the record, and only a ball the tablet put
+     there: a server-drawn ball, or a ball on any other kind of night, is never taken off the record. */
+  if (b.withdraw === true) {
+    if (!callerBall || draw.mode !== 'local' || draw.fallback_why !== 'caller') {
+      return json({ error: 'Only a caller-mode ball can be withdrawn' }, 409);
+    }
+    const last = await sbGet(env, 'vp_bingo_draw_balls',
+      'draw_id=eq.' + enc(drawId) + '&select=ordinal,number,source&order=ordinal.desc&limit=1');
+    if (!last.length || last[0].ordinal !== ordinal || last[0].number !== number || last[0].source !== 'local') {
+      return json({ error: 'That is not the last call' }, 409);
+    }
+    await sbDelete(env, 'vp_bingo_draw_balls', 'draw_id=eq.' + enc(drawId) + '&ordinal=eq.' + ordinal + '&number=eq.' + number + '&source=eq.local');
+    return json({ ok: true, withdrawn: number });
+  }
 
   if (draw.mode !== 'local') {
     await sbPatch(env, 'vp_bingo_draws', 'id=eq.' + enc(drawId), {
       mode: 'local', fallback_at: ordinal,
-      fallback_why: String(b.reason || 'worker unreachable').slice(0, 200),
+      fallback_why: reason,
     });
   }
   // The unique (draw_id, number) and primary key (draw_id, ordinal) refuse a repeat or a clash
