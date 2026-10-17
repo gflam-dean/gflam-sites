@@ -44,7 +44,7 @@
   "counted_by": "lines"
  },
  "partyplay-backend/lib/pp-host-reload.test.js": {
-  "checks": 82,
+  "checks": 166,
   "counted_by": "lines"
  },
  "partyplay-backend/lib/pp-join-names.test.js": {

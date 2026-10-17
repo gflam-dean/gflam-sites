@@ -11,8 +11,14 @@ function findUp(rel) {
   throw new Error("cannot find " + rel);
 }
 load(findUp("tools/rig-fake-webcrypto.js"));
+/* Seeded, so a run is repeatable, and kept in 32 bits with Math.imul. It used to multiply in
+   floating point, which loses the low bits past 2^53: the stream collapsed to zeros after a few
+   hundred draws, every signed nonce came out AAAAAAAAAAAAAAAA, and the second message a phone saw
+   after that was dropped as a replay. A telly that says hello more often (18 Oct 2026) moved the
+   collapse onto a checked message. mulberry32: */
 var __rnd = 11;
-crypto.getRandomValues = function (a) { for (var i = 0; i < a.length; i++) { __rnd = (__rnd * 1103515245 + 12345) & 0x7fffffff; a[i] = (__rnd >>> 3) & 0xffffffff; } return a; };
+crypto.getRandomValues = function (a) { for (var i = 0; i < a.length; i++) { __rnd = (__rnd + 0x6D2B79F5) | 0;
+  var t = Math.imul(__rnd ^ (__rnd >>> 15), 1 | __rnd); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; a[i] = (t ^ (t >>> 14)) >>> 0; } return a; };
 var window = this;
 load(findUp("partyplay/lib/pp-config.js"));
 load(findUp("partyplay/lib/pp-ticket.js"));
@@ -150,7 +156,7 @@ ok("a repeat of the form while a phone is on it changes nothing (an old console'
 print("\n== the draw lets go when the next game starts with only a caption (finding 14) ==");
 con.dom.tap("back"); con.dom.tap("", { "data-run": "3" }); room.flush();
 con.dom.tap("drawnow"); room.flush();
-var w = con.x.G().last, wp = { Alice: alice, Bob: bob2, Dan: dan }[w], other = w === "Alice" ? dan : alice;
+var w = con.x.G().last, wp = { Alice: alice, Bob: bob2, Dan: dan, Erin: erin }[w], other = w === "Alice" ? dan : alice;
 ok("CONTROL: the winner's phone says so and the caption that follows does not replace it", wp && /You won/.test(wp.app()), w + " | " + (wp && wp.app()));
 ok("and everybody else's says who won", new RegExp(w + "[\\s\\S]*won that one").test(other.app()), other.app());
 /* No lobby in between: the next thing the room hears is only a caption (the draw's own "Start over",

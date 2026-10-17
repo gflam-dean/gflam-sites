@@ -256,8 +256,32 @@
   /* Whatever the host broadcasts, put it up. Each game sends its own shape and
      the TV stays dumb on purpose: a screen that knows the rules is a screen that
      has to be redeployed every time a game changes. */
+  /* THE TELLY KEEPS SAYING HELLO UNTIL THE HOST ANSWERS (18 Oct 2026). It used to say tv-here once,
+     on joining the channel. A broadcast nobody is listening for is gone, so a telly that reloaded
+     while the host's console was still reconnecting (the two reloaded one after the other) never
+     heard back, and sat on the join screen in the middle of Who here has ever. Now it asks again,
+     at 1, 2, 4 and 8 seconds and then every 15, until anything the host puts on the wall arrives;
+     the host answers every hello with the picture it already has, so asking twice costs nothing.
+     A rollcall means a console has just (re)joined, so it asks again then too: that is the other
+     order, the telly up first and the host reloading after, where what the console sends on
+     reconnecting can be lost the same way. */
+  var HELLO_FIRST_MS = 1000, HELLO_MAX_MS = 15000, PICTURE_T = { lobby:1, big:1, board:1, photoscreen:1, queue:1, ta_board:1 };
+  var helloCh = null, helloT = null, helloWait = HELLO_FIRST_MS;
+  function helloStop(){ if(helloT) clearTimeout(helloT); helloT = null; }
+  function helloSend(){
+    helloT = null;
+    if(!helloCh) return;
+    /* The next ask is armed BEFORE this one goes, so an answer that comes back at once stops it. */
+    helloT = setTimeout(helloSend, helloWait);
+    helloWait = Math.min(helloWait * 2, HELLO_MAX_MS);
+    try{ helloCh.send({ type:"broadcast", event:"msg", payload:{ t:"tv-here" } }); }catch(e){}
+  }
+  function helloStart(){ helloStop(); helloWait = HELLO_FIRST_MS; helloSend(); }
+
   function onMsg(m){
     if(!m || !m.t) return;
+    if(PICTURE_T[m.t]) helloStop();                   // the host has answered, or is already talking
+    else if(m.t === "rollcall"){ helloStart(); return; }
     if(m.t === "players"){ players = m.names || []; drawWho(); return; }
     /* GREAT MINDS: lib/pr-board.js, the same board VenuePlay's trivia TV mounts. It paints from
        these three messages alone and never holds an answer before somebody finds it. Sized in cqw,
@@ -399,7 +423,7 @@
            corner note; it goes the moment the party is back. */
         if(status === "SUBSCRIBED"){
           clearTimeout(lostT); lostT = null; lostNote(false);
-          ch.send({ type:"broadcast", event:"msg", payload:{ t:"tv-here" } });
+          helloCh = ch; helloStart();
         } else if(status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED"){
           if(!lostT) lostT = setTimeout(function(){ lostNote(true); }, LOST_MS);
         }

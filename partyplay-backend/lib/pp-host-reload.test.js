@@ -105,7 +105,7 @@ function openPage(store){
   g.PPLicence = { isLive:function(){ return true; }, timeLeft:function(){ return "23 hours left"; } };
   g.PPGames = libs.PPGames; g.PRGame = libs.PRGame;
   var EXPORT = "\n; globalThis.__X = { setSend:function(f){ send=f; }, setToast:function(f){ toast=f; }, setPlayers:function(p){ players=p; }," +
-    " getG:function(){ return G; }, fromRoom:fromRoom, openPick:openPick };\n";
+    " getG:function(){ return G; }, fromRoom:fromRoom, openPick:openPick, setCh:function(c){ ch=c; }, status:onChannelStatus };\n";
   /* send() is swapped for a recorder only AFTER load() has run, so the opening burst is caught
      by sendHook's own recorder below instead: everything the page sends goes through sendHook. */
   var harness = BODY.slice(0, CUT) + EXPORT + BODY.slice(CUT);
@@ -207,6 +207,152 @@ CASES.forEach(function(C){
     ok(C.name + ": and nothing of the game was sent to the room", B.sent.every(function(m){ return m.t === "lobby" || m.t === "rollcall" || m.t === "players"; }),
        B.sent.map(function(m){ return m.t; }).join(","));
   }
+});
+
+/* ---------------------------------------------------------------- a hello lost on the way --
+   Found 18 Oct 2026, in a browser: the telly reloaded straight after the host's console did, its one
+   tv-here went out while the console was still joining the channel, nobody heard it, and the telly
+   sat on the join screen in the middle of Who here has ever. A broadcast is gone if nobody is
+   listening, so the telly must keep asking and the host must answer every time.
+
+   This RUNS tv.html's own script against the console above over a pretend channel that can lose
+   the first N messages either way, with the telly's clock held so its retries are fired by hand.
+   "The same picture" is what a second telly that heard everything has on its screen. */
+var TV_BODY = readFile(ppFile("partyplay/tv.html")).match(/<script>([\s\S]*?)<\/script>\s*<\/body>/)[1];
+function bootTv(net){
+  var T = { timers:[], gm:[], recv:null, statusCb:null, said:0, net:net };
+  var els = {};
+  T.els = els;
+  var doc = {
+    getElementById:function(id){ if (id === "screen" || id === "who") return els[id] || (els[id] = { innerHTML:"", hidden:true, style:{} }); return els[id] || null; },
+    createElement:function(){ var n = { style:{}, setAttribute:function(){}, remove:function(){ delete els[n.id]; } }; return n; },
+    body:{ appendChild:function(n){ els[n.id] = n; } },
+    querySelector:function(){ return null; }, addEventListener:function(){}
+  };
+  var chan = {
+    on:function(a, b, f){ T.recv = f; return chan; },
+    subscribe:function(cb){ T.statusCb = cb; return chan; },
+    send:function(env){ T.said++; if (T.net) T.net.toHost(env.payload); }
+  };
+  var sb = { createClient:function(){ return { channel:function(){ return chan; } }; } };
+  var cfg = { API:"https://x", SUPA_URL:"https://y", SUPA_ANON:"z", channel:function(c){ return "pp-" + c; }, code:function(c){ return String(c || "").toUpperCase(); } };
+  var loc = { origin:"https://partyplay.com.au", search:"?code=ABCDEF" };
+  var ls = { getItem:function(){ return null; }, setItem:function(){}, removeItem:function(){} };
+  function USP(){ this.get = function(k){ return k === "code" ? "ABCDEF" : null; }; }
+  function f(){ return Promise.resolve({ status:200, json:function(){ return Promise.resolve({ status:"live" }); } }); }
+  function st(fn, ms){ T.timers.push({ f:fn, ms:ms, live:true }); return T.timers.length; }
+  function ct(id){ if (id && T.timers[id - 1]) T.timers[id - 1].live = false; }
+  var PRB = { mount:function(){ return { onMsg:function(m){ T.gm.push(m.t + ":" + (m.q || m.i || "")); } }; } };
+  (new Function("document","supabase","PPConfig","location","localStorage","URLSearchParams","fetch","setTimeout","clearTimeout",
+    "navigator","QRCode","window","PRBoard","getComputedStyle", TV_BODY))
+    (doc, sb, cfg, loc, ls, USP, f, st, ct, {}, null, {}, PRB, function(){ return {}; });
+  T.hear = function(m){ if (T.recv) { T.recv({ payload:JSON.parse(JSON.stringify(m)) }); drain(); } };
+  /* a Great Minds board is the last board put up and what has been found on it since */
+  T.screen = function(){
+    var s = els.screen ? els.screen.innerHTML : "";
+    if (/class="join"/.test(s)) return "JOIN SCREEN";
+    if (!/id="gmwrap"/.test(s)) return s;
+    var board = "", found = {};
+    T.gm.forEach(function(x){ if (/^ta_board:/.test(x)) { board = x; found = {}; } else found[x] = 1; });
+    return "GM " + board + " " + Object.keys(found).sort().join(",");
+  };
+  /* fire the telly's waiting retries, oldest first, as the clock would; never the 20 s "lost" note */
+  T.tick = function(rounds){
+    var fired = [];
+    for (var r = 0; r < rounds; r++) {
+      var next = null;
+      for (var i = 0; i < T.timers.length; i++) if (T.timers[i].live && T.timers[i].ms !== 20000) { next = T.timers[i]; break; }
+      if (!next) break;
+      next.live = false; fired.push(next.ms); next.f(); drain();
+    }
+    return fired;
+  };
+  T.waiting = function(){ return T.timers.some(function(t){ return t.live && t.ms !== 20000; }); };
+  return T;
+}
+/* One channel between one console and one telly; dropHost / dropTv lose that many messages next. */
+function wire(host){
+  var net = { host:host, tv:null, dropToHost:0, dropToTv:0, lostToHost:0, lostToTv:0 };
+  net.toHost = function(m){ if (net.dropToHost > 0) { net.dropToHost--; net.lostToHost++; return; } if (net.host) { net.host.X.fromRoom(JSON.parse(JSON.stringify(m))); drain(); } };
+  net.toTv = function(m){ if (net.dropToTv > 0) { net.dropToTv--; net.lostToTv++; return; } if (net.tv) net.tv.hear(m); };
+  host.X.setCh({ send:function(env){ net.toTv(env.payload); } });
+  return net;
+}
+function watcher(msgs){ var W = bootTv(null); W.statusCb("SUBSCRIBED"); msgs.forEach(function(m){ W.hear(m); }); return W; }
+
+print("== the telly asks again until somebody answers ==");
+var LONE = bootTv(null);
+LONE.statusCb("SUBSCRIBED");
+var gaps = LONE.tick(7);
+ok("with no host listening it says hello again, backing off 1, 2, 4, 8 s and then every 15", JSON.stringify(gaps) === "[1000,2000,4000,8000,15000,15000,15000]", JSON.stringify(gaps));
+ok("and has said it every time (8 hellos for 7 waits)", LONE.said === 8, String(LONE.said));
+LONE.hear({ t:"big", text:"Who here has ever been to Bali?" });
+ok("the first picture from the host stops it", !LONE.waiting() && LONE.tick(3).length === 0);
+LONE.hear({ t:"rollcall" });
+ok("a console joining the channel (its rollcall) starts it asking again", LONE.said === 9 && LONE.waiting(), String(LONE.said));
+LONE.hear({ t:"players", names:["Sam"] });
+ok("a names list is not the picture, so it keeps asking", LONE.waiting());
+LONE.hear({ t:"lobby" });
+ok("the join screen is a picture too", !LONE.waiting());
+
+CASES.forEach(function(C){
+  var store = {};
+  var A = openPage(store);
+  A.X.setPlayers(["Sam", "Jordan"]);
+  A.sent = [];
+  A.start(C.id);
+  C.play.forEach(function(b){ A.tap(b); });
+  var heard = A.sent.slice();
+  var everything = watcher(heard).screen();        // a telly that heard the whole game
+
+  /* THE TELLY RELOADS STRAIGHT AFTER THE HOST: its first three hellos are lost */
+  if (C.resume) {
+    var B = openPage(store);
+    var net = wire(B);
+    B.X.status("SUBSCRIBED"); drain();              // the console is back; what it flushes reaches no telly yet
+    var expect = watcher(heard.concat(B.sent)).screen();
+    net.dropToHost = 3;
+    var T = bootTv(net); net.tv = T;
+    T.statusCb("SUBSCRIBED");
+    ok(C.name + ": telly reloads after the host, first hello lost, so it is still on the join screen for now", T.screen() === "JOIN SCREEN" && net.lostToHost === 1, T.screen().slice(0, 60));
+    T.tick(6);
+    ok(C.name + ": it keeps asking and gets the game back, not the join screen", T.screen() === expect && expect === everything && net.lostToHost === 3,
+       "lost " + net.lostToHost + ", have [" + T.screen().slice(0, 70) + "] want [" + everything.slice(0, 70) + "]");
+    ok(C.name + ": and stops asking once it has it", !T.waiting());
+  }
+
+  /* THE OTHER ORDER: the telly is up, the host reloads, and everything the console sends on
+     reconnecting is lost except its rollcall */
+  var store2 = JSON.parse(JSON.stringify(store));
+  var T2 = watcher(heard);
+  var B2 = openPage(store2);
+  var net2 = wire(B2); net2.tv = T2; T2.net = net2;
+  var want2 = watcher(heard.concat(B2.sent)).screen();
+  var burst = B2.sent.length;
+  net2.dropToTv = burst;                           // the whole burst it flushes on joining
+  ok(C.name + ": host reloads under a telly that is up (" + burst + " of its messages will be lost)", burst > 0);
+  B2.X.status("SUBSCRIBED"); drain();
+  T2.tick(6);
+  ok(C.name + ": the telly still ends up on the console's picture", T2.screen() === want2 && net2.lostToTv === burst,
+     "have [" + T2.screen().slice(0, 70) + "] want [" + want2.slice(0, 70) + "]");
+  ok(C.name + ": and it is the picture the game should show (" + (C.resume ? "the game" : "the join screen") + ")",
+     C.resume ? want2 === everything : want2 === "JOIN SCREEN", want2.slice(0, 70));
+});
+
+print("== the host answers every hello the same way ==");
+CASES.filter(function(C){ return C.resume; }).forEach(function(C){
+  var store = {};
+  var H = openPage(store);
+  H.X.setPlayers(["Sam", "Jordan"]);
+  H.start(C.id);
+  C.play.forEach(function(b){ H.tap(b); });
+  var gBefore = JSON.stringify(H.X.getG(), function(k, v){ return /T$/.test(k) ? undefined : v; });
+  var answers = [];
+  for (var i = 0; i < 4; i++) { var n = H.sent.length; H.X.fromRoom({ t:"tv-here" }); drain(); answers.push(JSON.stringify(H.sent.slice(n))); }
+  ok(C.name + ": four hellos, four identical answers", answers.every(function(a){ return a === answers[0]; }) && answers[0] !== "[]", answers[0].slice(0, 80));
+  ok(C.name + ": every answer is for the telly only (or the names), so no phone acts on it twice",
+     JSON.parse(answers[0]).every(function(m){ return m.tvOnly || m.t === "players"; }), answers[0].slice(0, 80));
+  ok(C.name + ": and answering changed nothing in the game", JSON.stringify(H.X.getG(), function(k, v){ return /T$/.test(k) ? undefined : v; }) === gBefore);
 });
 
 print("== which game a reload reopens (openPick, run) ==");
