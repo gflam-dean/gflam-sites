@@ -1,11 +1,11 @@
-/* THE DRAW RECORD, AS A FILE. One copy, loaded by the members and raffle host consoles.
+/* THE DRAW RECORD, AS A FILE. One copy, loaded by the members, raffle and bingo host consoles.
 
    The venue is the conductor of every draw and keeps the winner and draw records (Anisimoff
    Legal, 1 Oct 2026, points 8 and 14; ACT, 8 Oct 2026 table: "winning ticket must be recorded
    and results must be available to entrants"). The product recorded every draw and handed the
    venue none of it. GET /host/draws/export on the game Worker answers with every members draw
-   and raffle result at the venue as CSV, oldest first, a 7 year retention note on the first
-   line. It needs the host's token in the Authorization header, so this is a fetch and a blob,
+   and raffle result, and every bingo ball called (18 Oct 2026), at the venue as CSV, oldest
+   first, a 7 year retention note on the first line. It needs the host's token in the Authorization header, so this is a fetch and a blob,
    not a plain link.
 
    Written once here because it was about to be pasted into two consoles, and the rule in

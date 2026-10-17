@@ -498,6 +498,10 @@
           <button class="btn pink big" id="startBtn">Open lobby</button>
           <button class="btn ghost big" id="cancelLobbyBtn" style="display:none;margin-top:8px">Close lobby</button>
           <p class="note vp-c" id="startNote" style="margin-top:10px">Puts the join screen on the TV so players can scan in. You start calling numbers when you are ready.</p>
+          <!-- Every ball of every bingo game here, as a file the venue keeps (the same record the
+               members and raffle consoles download). Between games, never in the middle of one. -->
+          <button type="button" class="btn ghost" id="downloadRecordBtn" style="margin-top:12px;width:100%">Download draw record</button>
+          <div class="note" id="downloadRecordMsg" style="margin-top:4px"></div>
         </div>
 
         <div id="liveBlock" class="hidden">
@@ -628,6 +632,7 @@
      first. It was calling navigator.vibrate itself, which is how a sales page ended up buzzing
      somebody reading it. Loaded here, before the script below uses it. -->
 <script src="/app/vp-celebrate.js"></script>
+<script src="/app/vp-drawrecord.js"></script>
 <script>
 (function(){
   "use strict";
@@ -3304,6 +3309,13 @@
   $("venueSwitchInline").addEventListener("click", trySwitchVenue);
 
   // ================= EVENTS =================
+  /* THE DRAW RECORD, as a file: one copy in /app/vp-drawrecord.js, shared with the members and
+     raffle consoles. The Worker adds every bingo ball called here, and where it was picked. */
+  $("downloadRecordBtn").addEventListener("click", function(){
+    if(!window.VPDrawRecord){ $("downloadRecordMsg").textContent="The download helper did not load. Reload the page and try again."; return; }
+    var v=__ctx && __ctx.venue;
+    VPDrawRecord.download({ api:VP_GAME_API, venueId:(v && v.id) || "", getToken:vpHostToken, button:$("downloadRecordBtn"), message:$("downloadRecordMsg") });
+  });
   /* State gaming rules, once a night: shown before the night opens, never mid-game. */
   $("startBtn").addEventListener("click", function(){
     /* DOUBLE TAP GUARD. openLobby() sets G.status="lobby" synchronously, and for a FREE game

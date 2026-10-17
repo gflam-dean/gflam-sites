@@ -158,15 +158,15 @@ function moneyStub(cents) { return '$' + ((cents || 0) / 100).toLocaleString('en
   var lines = (r._b || '').split('\r\n').filter(function (l) { return l !== ''; });
   show('CONTROL: staff get a 200 and a text/csv attachment with CORS', r.status === 200 && /^text\/csv/.test(r.headers['Content-Type'] || '') && /attachment/.test(r.headers['Content-Disposition'] || '') && r.headers['Access-Control-Allow-Origin'] === CORS['Access-Control-Allow-Origin'], JSON.stringify(r.headers));
   show('the first line is the retention note: keep it 7 years, the venue is the conductor', lines[0].charAt(0) === '#' && /7 years/.test(lines[0]) && /conductor/.test(lines[0]), lines[0]);
-  show('the second line is the header: when, game, draw name, number, winner, prize, outcome', lines[1] === 'when_utc,game,draw_name,number,winner,prize,outcome', lines[1]);
+  show('the second line is the header: when, game, draw name, number, winner, prize, outcome, then draw id, call order, source (bingo, 18 Oct 2026)', lines[1] === 'when_utc,game,draw_name,number,winner,prize,outcome,draw_id,call_order,source', lines[1]);
   var data = lines.slice(2);
   show('two members results and two raffle results: four rows', data.length === 4, data.length + ' rows: ' + JSON.stringify(data));
   // The rig's clock is 19 Sep 2026, so the two members rows (drawn "now") come before the 9 Oct raffle rows.
   show('oldest first', data[0].indexOf('2026-09-19') === 0 && data[1].indexOf('2026-09-19') === 0 && data[2].indexOf('2026-10-09T09:00') === 0 && data[3].indexOf('2026-10-09T09:05') === 0, JSON.stringify(data));
-  show('a members row names the draw, the member number, the winner (as the venue shows names) and the jackpot', /,members draw,Friday Badge Draw,1\d\d,Member N,\$500\.00,"not claimed, jackpot rolled over"$/.test(data[0]), data[0]);
-  show('and the claim: who was paid, and how much', /,members draw,Friday Badge Draw,1\d\d,Member N,\$600\.00,claimed$/.test(data[1]), data[1]);
-  show('a raffle row carries the ticket, the prize (quoted, with its quotes doubled) and the outcome in words', /,raffle,Meat tray raffle,42,,"Meat tray, ""the big one""",claimed$/.test(data[2]), data[2]);
-  show('a redrawn ticket says so, and a cash prize carries its value', /,raffle,Meat tray raffle,7,,Cash jackpot \$500\.50,"not claimed, redrawn"$/.test(data[3]), data[3]);
+  show('a members row names the draw, the member number, the winner (as the venue shows names) and the jackpot', /,members draw,Friday Badge Draw,1\d\d,Member N,\$500\.00,"not claimed, jackpot rolled over",55555555-5555-4555-8555-555555555555,,$/.test(data[0]), data[0]);
+  show('and the claim: who was paid, and how much', /,members draw,Friday Badge Draw,1\d\d,Member N,\$600\.00,claimed,55555555-5555-4555-8555-555555555555,,$/.test(data[1]), data[1]);
+  show('a raffle row carries the ticket, the prize (quoted, with its quotes doubled) and the outcome in words', /,raffle,Meat tray raffle,42,,"Meat tray, ""the big one""",claimed,bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb,1,$/.test(data[2]), data[2]);
+  show('a redrawn ticket says so, and a cash prize carries its value', /,raffle,Meat tray raffle,7,,Cash jackpot \$500\.50,"not claimed, redrawn",bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb,2,$/.test(data[3]), data[3]);
   DB.vp_member_draw_results[0].winner_name = '=HYPERLINK("x")';
   r = await exportCsv(EXPORT);
   show('a name that starts like a spreadsheet formula is neutralised', /,"'=HYPERLINK\(""x""\)",/.test(r._b), r._b.split('\r\n')[4]);
@@ -256,7 +256,8 @@ function moneyStub(cents) { return '$' + ((cents || 0) / 100).toLocaleString('en
   var ok2 = await DR.VPDrawRecord.download({ api: 'https://api', venueId: VENUE, getToken: function () { return Promise.resolve('tok-1'); }, button: btn, message: msgs, document: fakeDoc,
     fetch: function () { return Promise.resolve({ ok: false, status: 403, json: function () { return Promise.resolve({ error: 'Not authorised: you are not staff at this venue' }); } }); } });
   show('a refusal is shown in the Worker\'s words and the button comes back', ok2 === false && /not staff/.test(msgs.textContent) && btn.disabled === false, msgs.textContent);
-  show('both host consoles load /app/vp-drawrecord.js and have the button', [MHOST, HOST].every(function (p) { return p.indexOf('<script src="/app/vp-drawrecord.js"></script>') >= 0 && p.indexOf('id="downloadRecordBtn"') >= 0 && p.indexOf('VPDrawRecord.download({') >= 0; }));
+  var BHOST = readFile('venueplay/app/index.html');
+  show('all three host consoles (members, raffle, bingo) load /app/vp-drawrecord.js and have the button', [MHOST, HOST, BHOST].every(function (p) { return p.indexOf('<script src="/app/vp-drawrecord.js"></script>') >= 0 && p.indexOf('id="downloadRecordBtn"') >= 0 && p.indexOf('VPDrawRecord.download({') >= 0; }));
   finished = true;
 })().catch(function (e) { print('  FAIL the test itself threw: ' + e + '\n' + e.stack); bad++; });
 drainMicrotasks();

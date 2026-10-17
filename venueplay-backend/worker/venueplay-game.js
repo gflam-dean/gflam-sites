@@ -142,7 +142,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '17 Oct 2026, 20:01 · b30a9386';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '18 Oct 2026, 03:09 · 7ab55131';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -4227,9 +4227,23 @@ function membersNextJackpot(outcome, jackpotAtDraw, startingCents, incrementCent
  * member asks. PAGED with sbGetAll and an order on every read, because a club's record outgrows
  * one PostgREST page in a year of Fridays, and every id list is chunked so no querystring outgrows
  * a URL. Raffle rows reach the venue through vp_sessions, since vp_games carries no venue_id.
+ *
+ * BINGO TOO (18 Oct 2026). Every ball of every bingo game at this venue, one row each, from
+ * vp_bingo_draws and vp_bingo_draw_balls (migration 70): when it was called, which game (the
+ * draw id), its place in the call (call_order, 1 = the first ball), the number, and WHERE the
+ * pick was made, in words a regulator reads without us: "server draw" (the Worker's own order),
+ * "tablet fallback" with the console's reason (the wifi dropped and the tablet called the rest
+ * of that game), or "real ball caller" (caller mode: a barrel or a bag, the tablet only typed
+ * it in). A ball a caller took back with Undo (migration 103's withdrawn_at) is its OWN row,
+ * marked WITHDRAWN, beside the ball that took its place: the record shows the mistake and the
+ * correction. Migration 103 may not be run yet, so whether the column exists is asked first
+ * (one row, limited) and the read goes without it when it does not: before 103 an Undo deleted
+ * the row, so there is nothing withdrawn to miss. The server's ball ORDER and seed are never
+ * read here: only balls actually called leave the database. The Queensland OLGR RNG
+ * submission (rng-certification) points at this file as the bingo draw record.
  */
 const DRAWS_EXPORT_RETENTION_NOTE = '# VenuePlay draw record. Keep this file for at least 7 years: the venue is the conductor of every draw and keeps the winner and draw records (Anisimoff Legal, 1 Oct 2026, points 8 and 14). Times are UTC.';
-const DRAWS_EXPORT_HEADER = ['when_utc', 'game', 'draw_name', 'number', 'winner', 'prize', 'outcome'];
+const DRAWS_EXPORT_HEADER = ['when_utc', 'game', 'draw_name', 'number', 'winner', 'prize', 'outcome', 'draw_id', 'call_order', 'source'];
 function csvCell(v) {
   const s = (v == null) ? '' : String(v);
   // Leading = + - @ would make a spreadsheet run it as a formula; a winner's name is data.
@@ -4255,7 +4269,7 @@ async function drawsRecordRows(env, venueId) {
       rows.push({ when: r.drawn_at || '', game: 'members draw', name: drawName[r.draw_id] || 'Members draw',
         number: r.member_number != null ? r.member_number : '', winner: r.winner_name || '',
         prize: r.amount_cents != null ? '$' + (r.amount_cents / 100).toFixed(2) : '',
-        outcome: membersOutcomeWord(r.outcome) });
+        outcome: membersOutcomeWord(r.outcome), drawId: r.draw_id || '', order: '', source: '' });
     });
   }
   // Raffles: this venue's sessions, their raffle games, then every drawn ticket.
@@ -4275,11 +4289,51 @@ async function drawsRecordRows(env, venueId) {
       if (r.prize_value_cents != null) prize += (prize ? ' ' : '') + '$' + (r.prize_value_cents / 100).toFixed(2);
       rows.push({ when: r.drawn_at || '', game: 'raffle', name: gameName[r.game_id] || 'Raffle',
         number: r.ticket_number != null ? r.ticket_number : '', winner: '',
-        prize: prize, outcome: raffleOutcomeWord(r.outcome) });
+        prize: prize, outcome: raffleOutcomeWord(r.outcome), drawId: r.game_id || '', order: r.seq != null ? r.seq : '', source: '' });
     });
   }
+  (await bingoRecordRows(env, venueId)).forEach(function (r) { rows.push(r); });
   rows.sort(function (a, b) { return a.when < b.when ? -1 : (a.when > b.when ? 1 : 0); });
   return rows;
+}
+// Bingo: this venue's draws (never the order or the seed), then every ball they hold.
+async function bingoRecordRows(env, venueId) {
+  const out = [];
+  const draws = await sbGetAll(env, 'vp_bingo_draws', 'venue_id=eq.' + enc(venueId) + '&select=id,mode,fallback_at,fallback_why,created_at&order=created_at.asc,id.asc');
+  if (!draws.length) return out;
+  const drawById = {};
+  draws.forEach(function (d) { drawById[d.id] = d; });
+  const withdrawnCol = await bingoWithdrawnColumnPresent(env, draws[0].id);
+  const cols = 'draw_id,ordinal,number,source,drawn_at' + (withdrawnCol ? ',withdrawn_at' : '');
+  for (const ids of chunks(draws.map(function (d) { return d.id; }), 60)) {
+    const balls = await sbGetAll(env, 'vp_bingo_draw_balls',
+      'draw_id=in.(' + ids.map(enc).join(',') + ')&select=' + cols + '&order=drawn_at.asc,draw_id.asc,ordinal.asc,number.asc');
+    balls.forEach(function (b) {
+      const d = drawById[b.draw_id] || {};
+      const caller = d.fallback_why === CALLER_REASON;
+      out.push({ when: b.drawn_at || '', game: 'bingo', name: caller ? 'Bingo, real balls' : 'Bingo',
+        number: b.number != null ? b.number : '', winner: '', prize: '',
+        outcome: b.withdrawn_at ? 'WITHDRAWN at ' + b.withdrawn_at + ': called in error and taken back, not part of the game' : 'called',
+        drawId: b.draw_id || '', order: b.ordinal != null ? b.ordinal : '', source: bingoSourceWord(b.source, d) });
+    });
+  }
+  return out;
+}
+function bingoSourceWord(source, draw) {
+  if (source === 'server') return 'server draw';
+  if (source === 'local') {
+    if (draw && draw.fallback_why === CALLER_REASON) return 'real ball caller';
+    return 'tablet fallback' + (draw && draw.fallback_why ? ': ' + draw.fallback_why : '');
+  }
+  return source || '';
+}
+// Migration 103 run yet? One row of one of this venue's draws, asked for the column alone.
+async function bingoWithdrawnColumnPresent(env, drawId) {
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_bingo_draw_balls?draw_id=eq.' + enc(drawId) + '&select=withdrawn_at&limit=1', { headers: sbHeaders(env) });
+  if (res.ok) return true;
+  const text = await res.text();
+  if (withdrawnColumnMissing(res.status, text)) return false;
+  throw dbError('read', 'vp_bingo_draw_balls', text);
 }
 function membersOutcomeWord(o) {
   if (o === 'claimed') return 'claimed';
@@ -4304,7 +4358,7 @@ async function handleDrawsExport(request, env, json, cors) {
   await requireStaff(env, authUserId, venueId);                   // ENFORCED: staff at THIS venue (also kill-switch)
   const rows = await drawsRecordRows(env, venueId);
   const lines = [DRAWS_EXPORT_RETENTION_NOTE, csvLine(DRAWS_EXPORT_HEADER)];
-  rows.forEach(function (r) { lines.push(csvLine([r.when, r.game, r.name, r.number, r.winner, r.prize, r.outcome])); });
+  rows.forEach(function (r) { lines.push(csvLine([r.when, r.game, r.name, r.number, r.winner, r.prize, r.outcome, r.drawId, r.order, r.source])); });
   const body = lines.join('\r\n') + '\r\n';
   const stamp = new Date().toISOString().slice(0, 10);
   return new Response(body, { status: 200, headers: Object.assign({
