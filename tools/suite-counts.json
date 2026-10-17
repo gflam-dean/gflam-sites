@@ -463,6 +463,10 @@
   "checks": 10,
   "counted_by": "lines"
  },
+ "tools/test-trivia-nobody-answered.js": {
+  "checks": 8,
+  "counted_by": "lines"
+ },
  "tools/test-trusted-logos.js": {
   "checks": 43,
   "counted_by": "lines"
@@ -505,6 +509,10 @@
  },
  "tools/test-venue-picker-scopes.js": {
   "checks": 9,
+  "counted_by": "lines"
+ },
+ "tools/test-venue-search-au-state.js": {
+  "checks": 5,
   "counted_by": "lines"
  },
  "tools/test-venue-search-is-limited.js": {

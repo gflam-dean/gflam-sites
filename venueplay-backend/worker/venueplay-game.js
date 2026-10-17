@@ -142,7 +142,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '17 Oct 2026, 11:49 · 99f9ee62';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Oct 2026, 17:16 · b00eca4a';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -1901,10 +1901,14 @@ async function handleVenueLike(request, env, json) {
      still far too small a page to be worth scraping.
      A state can be given to narrow it, which is what the screen does once a
      family is too big to fit on a wall. */
+  /* au_state, NEVER state. vp_venues.state is an old column nothing writes any more; au_state is
+     what signup and the Account page set and what every gaming rule reads. The Mini Bar (NSW) has
+     state empty and au_state NSW, so its tile on the wall printed no state, and a search narrowed to
+     NSW would not have found it at all (17 Oct 2026). The answer keeps the name "state" for tv.html. */
   const state = String(url.searchParams.get('state') || '').trim().toUpperCase().slice(0, 3);
   const q = 'or=(slug.eq.' + enc(typed) + ',slug.like.' + enc(typed + '-*') + ')'
-          + (/^[A-Z]{2,3}$/.test(state) ? '&state=eq.' + enc(state) : '')
-          + '&select=slug,name,postcode,state&order=state.asc,postcode.asc&limit=200';
+          + (/^[A-Z]{2,3}$/.test(state) ? '&au_state=eq.' + enc(state) : '')
+          + '&select=slug,name,postcode,au_state&order=au_state.asc,postcode.asc&limit=200';
   let rows = [];
   try {
     rows = (await sbGet(env, 'vp_venues', q)) || [];
@@ -1914,7 +1918,7 @@ async function handleVenueLike(request, env, json) {
   return json({
     matches: rows.map((r) => ({
       slug: r.slug, name: r.name || r.slug,
-      postcode: r.postcode || '', state: r.state || '',
+      postcode: r.postcode || '', state: r.au_state || '',
     })),
   });
 }
@@ -7169,6 +7173,23 @@ async function handlePlayerScore(request, env, json) {
     let firstZero = board.findIndex((r) => (r.points || 0) <= 0);
     rank = firstZero >= 0 ? firstZero + 1 : board.length + 1;
   }
+  /* THE ROOM, NOT THE BOARD. The leaderboard view only holds players who have answered something,
+     so when NOBODY answered a question every phone in a room of three was told "1st of 1" (live
+     test, 17 Oct 2026). The field is every phone in this session that has held a question
+     (played_at, stamped by /player/alive) and was not removed. Counted with one HEAD, and kept
+     for the room under the same question key as the board, so it adds one trip per reveal, not
+     one per phone. It can only ever RAISE the count: if the read fails, or the column is not
+     there, the board's own count stands. A player who did not answer keeps their place on the
+     board, which is cumulative; only the "of N" was wrong. */
+  let room = qKey ? cached('n:' + gameId + ':' + qKey) : null;
+  if (room == null) {
+    try {
+      room = await sbCount(env, 'vp_players',
+        'session_id=eq.' + enc(game.session_id) + '&played_at=not.is.null&kicked=eq.false&select=id');
+      if (qKey) cache.set('n:' + gameId + ':' + qKey, { data: room, until: nowMs + 8000 });
+    } catch (e) { room = 0; }
+  }
+  if (Number.isFinite(room) && room > count) count = room;
 
   // The player's most recent stamped answer in this game. NOTE: this is not necessarily the
   // question just revealed. vp_trivia_answers is keyed by question_id, not qseq, and resolving a

@@ -8,7 +8,7 @@ load('tools/rig-game-worker.js');
 sha256Hex = async function (s) { return 'h-' + s; };      // the rig's digest is all zeros, so every network would be one network
 var finished = false;
 DB.vp_venues = [];
-for (var i = 0; i < 30; i++) DB.vp_venues.push({ id: 'v' + i, slug: 'the-royal-' + i, name: 'The Royal Hotel ' + i, postcode: String(2000 + i), state: 'NSW', status: 'active' });
+for (var i = 0; i < 30; i++) DB.vp_venues.push({ id: 'v' + i, slug: 'the-royal-' + i, name: 'The Royal Hotel ' + i, postcode: String(2000 + i), au_state: 'NSW', status: 'active' });
 function ask(ip) { return handleVenueLike({ url: 'https://w/venues/like?slug=the-royal', headers: { get: function (k) { return k === 'cf-connecting-ip' ? ip : ''; } } }, ENV, json); }
 (async function () {
   var okCount = 0, limited = 0, firstLimitedAt = 0;
