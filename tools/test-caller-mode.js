@@ -18,11 +18,19 @@
    record written with reason "caller", and a tablet reload in the middle that comes back to the
    same called list. Then a normal night at the same venue, to prove nothing changed with it off.
 
+   Added the same day, for Drag Bingo on 24 Oct 2026 (run by a lights operator, maybe on a phone):
+   the REAL tv.html runs here too (its whole inline script, on a fake DOM), fed every message the
+   console sends. On a real-balls night it must never show the join code, the QR or "scan to
+   play", only the game's title and the board, while a normal night keeps all of them. And the
+   WINNER button: the console asks which stage was won (in the page, no browser dialog), every TV
+   shows BINGO with the stage and the prize the host set up and "Show your book to the host",
+   with the celebration, until one tap on Back to the game closes it.
+
    Run from the repo root:  jsc tools/test-caller-mode.js */
 var CONSOLE_SRC = readFile('venueplay/app/index.html');
 load('tools/rig-game-worker.js');
 load('tools/rig-bingo-room.js');
-var PASS = 0, FAILN = 0, EXPECT = 54;
+var PASS = 0, FAILN = 0, EXPECT = 87;
 function check(name, cond, saw) {
   if (cond) { PASS++; print('  ok   ' + name); }
   else { FAILN++; print('  FAIL ' + name + (saw !== undefined ? '   saw: ' + JSON.stringify(saw) : '')); }
@@ -133,6 +141,47 @@ function holdOn(host, n) {   // a long press: pointerdown, the hold time passes,
   });
 }
 function liveSession() { return DB.vp_sessions.filter(function (s) { return s.status === 'lobby' || s.status === 'running' || s.status === 'paused'; })[0] || null; }
+/* THE REAL VENUE TV: tv.html's whole inline script on the rig's fake DOM, given only what a DOM
+   that cannot lay anything out lacks. It hears nothing on its own (its realtime client is deaf);
+   feedTV hands it, in order, every message the console speaking now has put on the channel. */
+var CELEB = { burst: 0, fanfare: 0 };
+function bootTV() {
+  var dom = makeDom('?venue=test-pub'), d = dom.document, gi = d.getElementById, ce = d.createElement, noop = function () {};
+  function more(n) {
+    if (!n || n._more) return n; n._more = 1;
+    Object.defineProperty(n, 'childNodes', { get: function () { return n.children; } });
+    Object.defineProperty(n, 'firstChild', { get: function () { return n.children[0] || null; } });
+    n.appendChild = function (c) { var op = c.parentNode; if (op && op.children) { var k = op.children.indexOf(c); if (k >= 0) op.children.splice(k, 1); } n.children.push(c); c.parentNode = n; return c; };
+    n.getBoundingClientRect = function () { return { left: 0, top: 0, width: 0, height: 0, right: 0, bottom: 0 }; };
+    n.offsetWidth = 0; n.offsetHeight = 0; n.clientWidth = 1920; n.clientHeight = 1080;
+    n.removeAttribute = function (k) { delete n._attr[k]; }; n.hasAttribute = function (k) { return n._attr[k] != null; };
+    n.getContext = function () { return null; }; n.dataset = {}; n.contentWindow = null;
+    return n;
+  }
+  d.getElementById = function (id) { return more(gi.call(d, id)); };
+  d.createElement = function (t) { return more(ce.call(d, t)); };
+  more(d.body); more(d.documentElement); d.head = more(ce.call(d, 'head')); d.fonts = { ready: Promise.resolve() };
+  var sb = baseSandbox(dom, 'tv');
+  var deaf = { on: function () { return deaf; }, subscribe: function () { return deaf; }, send: noop, unsubscribe: noop };
+  sb.supabase = { createClient: function () { return { channel: function () { return deaf; }, removeChannel: noop }; } };
+  sb.VPQR = { draw: function (el, url) { el._qr = url; } };
+  sb.VPCelebrate = dom.window.VPCelebrate = { burst: function () { CELEB.burst++; }, fanfare: function () { CELEB.fanfare++; } };
+  sb.Image = function () { return {}; };
+  sb.getComputedStyle = function () { return { getPropertyValue: function () { return ''; } }; };
+  sb.requestAnimationFrame = function (f) { return fSetTimeout(f, 16); };
+  sb.MutationObserver = sb.ResizeObserver = function () { return { observe: noop, disconnect: noop }; };
+  dom.window.innerWidth = 1920; dom.window.innerHeight = 1080;
+  dom.window.location.pathname = '/tv'; dom.window.location.origin = 'https://venueplay.com.au'; dom.window.location.reload = noop;
+  var ex = runPage(inlineScript('venueplay/tv.html'), sb, ['onMsg', 'state']);
+  ex.dom = dom; ex.$ = function (id) { return dom.document.getElementById(id); }; ex.at = LOG.length;
+  return ex;
+}
+function feedTV(tv, upTo) {   // every message the console speaking now (WHO) has sent since the TV last listened
+  var end = upTo == null ? LOG.length : upTo;
+  for (; tv.at < end; tv.at++) { var l = LOG[tv.at]; if (l && l.from === WHO && l.p) tv.onMsg(JSON.parse(JSON.stringify(l.p))); }
+}
+function shown(tv, id) { return !tv.$(id).classList.contains('hidden'); }
+function onWall(tv) { return ['tvLobby', 'tvRun', 'tvClaim', 'tvWin', 'tvHold'].filter(function (id) { return shown(tv, id); }).concat(shown(tv, 'tvJoinCorner') ? ['tvJoinCorner'] : []); }
 function ballsOn(drawId) { return (DB.vp_bingo_draw_balls || []).filter(function (r) { return r.draw_id === drawId; }).sort(function (a, b) { return a.ordinal - b.ordinal; }); }
 
 (async function () {
@@ -140,7 +189,11 @@ function ballsOn(drawId) { return (DB.vp_bingo_draw_balls || []).filter(function
   var norm = bootHostC(null, 'host-normal'); await advance(50);
   var ann0 = bootPhoneC('Ann0'); await advance(50); ann0.$('nameIn').value = 'Ann'; ann0.join(); await advance(6000);
   norm.$('prizeInput').value = 'Meat tray'; norm.$('patternSel').value = 'one'; norm.$('cardsSel').value = '1'; norm.$('paidSel').value = '';
+  var tv = bootTV(); await advance(50);
   norm.openLobby(); await advance(9000);
+  feedTV(tv);
+  check('CONTROL: on a normal night the TV puts up the join screen, with the QR drawn and the code', shown(tv, 'tvLobby') && !shown(tv, 'tvRun') && /play/.test(String(tv.$('qrBig')._qr)) && tv.$('lobbyCode').textContent.length === 6,
+        { wall: onWall(tv), qr: tv.$('qrBig')._qr, code: tv.$('lobbyCode').textContent });
   var nSess = liveSession();
   check('CONTROL: with the option off the console does not mark the night as real balls', !!nSess && !(nSess.paper && nSess.paper.bingo), nSess && nSess.paper);
   var jiOff = await worker('/join/info', { code: CODE });
@@ -152,8 +205,12 @@ function ballsOn(drawId) { return (DB.vp_bingo_draw_balls || []).filter(function
   var b0 = BALLCALLS;
   norm.nextBall(); await advance(6000);
   var normalBall = hostSent('ball').slice(-1)[0];
+  feedTV(tv);
+  check('CONTROL: and once numbers are called the "Join now" corner (QR and code) rides beside the board, with no real-balls title', shown(tv, 'tvRun') && shown(tv, 'tvJoinCorner') && tv.$('tvRunTitle').style.display === 'none' && tv.state.caller === false,
+        { wall: onWall(tv), title: tv.$('tvRunTitle').style.display });
   check('CONTROL: Next number still asks the server for the ball', BALLCALLS === b0 + 1 && !!normalBall, BALLCALLS - b0);
   norm.endGame(); await advance(3000);
+  feedTV(tv);
   retire('host-normal');
 
   print('A REAL-BALLS NIGHT: the option on, the lobby open');
@@ -165,7 +222,19 @@ function ballsOn(drawId) { return (DB.vp_bingo_draw_balls || []).filter(function
   (host.$('callerChk')._on.change || []).forEach(function (f) { f.call(host.$('callerChk'), {}); });
   check('ticking it takes the phone ticket settings off the form', host.$('ticketsField').style.display === 'none' && host.$('cardsField').style.display === 'none',
         [host.$('ticketsField').style.display, host.$('cardsField').style.display]);
+  var lobbyFrom = LOG.length;
+  tv.$('qrBig')._qr = null; tv.$('qrMini')._qr = null; tv.at = LOG.length;
   host.openLobby(); await advance(9000);
+  var firstMode = LOG.slice(lobbyFrom).filter(function (l) { return l.from === WHO && l.p.t === 'mode'; })[0];
+  var tv2 = bootTV(); await advance(50);
+  if (firstMode) tv2.onMsg(JSON.parse(JSON.stringify(firstMode.p)));
+  check('the very first thing a TV hears (the mode) already says real balls, so the join screen never flashes up', !!firstMode && firstMode.p.caller === true && !shown(tv2, 'tvLobby') && shown(tv2, 'tvRun') && !shown(tv2, 'tvJoinCorner'),
+        { mode: firstMode && firstMode.p, wall: onWall(tv2) });
+  feedTV(tv);
+  check('on a real-balls night the TV shows the game\'s title and the board instead of the join screen', !shown(tv, 'tvLobby') && shown(tv, 'tvRun') && tv.$('tvRunTitle').style.display === '',
+        { wall: onWall(tv), title: tv.$('tvRunTitle').style.display });
+  check('no join code, no QR, no "Join now" corner and no "scan to play" anywhere on the wall', !shown(tv, 'tvLobby') && !shown(tv, 'tvJoinCorner') && tv.$('qrBig')._qr == null && tv.$('qrMini')._qr == null,
+        { wall: onWall(tv), qr: [tv.$('qrBig')._qr, tv.$('qrMini')._qr] });
   var sess = liveSession();
   check('the night\'s session is marked real balls on the server (vp_sessions.paper.bingo, no new table)', !!sess && sess.paper && sess.paper.bingo && sess.paper.bingo.caller === true, sess && sess.paper);
   check('and the option is locked while the night is open', host.$('callerChk').disabled === true);
@@ -217,6 +286,9 @@ function ballsOn(drawId) { return (DB.vp_bingo_draw_balls || []).filter(function
   var first = order.slice(0, 10);
   for (i = 0; i < first.length; i++) { tap(host, first[i]); await advance(300); }
   var sentBalls = hostSent('ball').slice(balls0);
+  feedTV(tv);
+  check('while the numbers are called the TV has the board and its title, and still no join corner', shown(tv, 'tvRun') && !shown(tv, 'tvJoinCorner') && tv.$('tvRunTitle').style.display === '' && /\blit\b/.test(tv.$('tvb-' + first[0]).className),
+        { wall: onWall(tv), cell: tv.$('tvb-' + first[0]).className });
   check('ten taps, ten balls on the channel, in the order tapped', sentBalls.length === 10 && sentBalls.map(function (b) { return b.number; }).join() === first.join(), sentBalls.map(function (b) { return b.number; }));
   var cb = sentBalls[sentBalls.length - 1];
   check('the TV gets exactly the message a normal call sends: the same fields', !!normalBall && Object.keys(cb).sort().join() === Object.keys(normalBall).sort().join(),
@@ -275,6 +347,98 @@ function ballsOn(drawId) { return (DB.vp_bingo_draw_balls || []).filter(function
   check('and it can be called again, onto the same place in the record', host2.G.draw.length === 90 && ballsOn(draw.id).length === 90 && ballsOn(draw.id)[89].number === lastBack && hostSent('ball').length === dsBefore + 1);
   host2.endGame(); await advance(3000);
   check('End game closes the night', !liveSession(), liveSession());
+
+  feedTV(tv);
+  check('End game: the TV goes back to the ads and forgets it was a real-balls night', !onWall(tv).length && tv.state.caller === false, { wall: onWall(tv), caller: tv.state.caller });
+
+  print('WINNER: a paper book shouts BINGO');
+  WHO = 'host-win'; tv.at = LOG.length;
+  var hw = bootHostC(null, WHO); await advance(50);
+  var confirms = 0; hw.sb.confirm = function () { confirms++; return true; }; hw.sb.alert = function () { confirms++; };
+  hw.$('prizeInput').value = '$50 bar tab'; hw.$('patternSel').value = 'one'; hw.$('cardsSel').value = '1'; hw.$('paidSel').value = '';
+  hw.$('callerChk').checked = true; (hw.$('callerChk')._on.change || []).forEach(function (f) { f.call(hw.$('callerChk'), {}); });
+  check('the setup button says what it does on a real-balls night', /Put bingo on the TV/.test(hw.$('startBtn').textContent) && !/scan/i.test(hw.$('startNote').textContent), [hw.$('startBtn').textContent, hw.$('startNote').textContent]);
+  check('and the console drops the player count and its "scan the QR" panel: nobody joins on a phone', hw.$('playersPanel').style.display === 'none' && hw.$('setupStats').style.display === 'none' && !/join code/.test(hw.$('coach').innerHTML.replace(/No join code/, '')),
+        [hw.$('playersPanel').style.display, hw.$('setupStats').style.display, hw.$('coach').innerHTML]);
+  hw.openLobby(); await advance(9000); hw.startGame(); await advance(3000);
+  [5, 17, 42, 66, 89].forEach(function (n) { tap(hw, n); });
+  await advance(3000); feedTV(tv);
+  function click(id) { var b = hw.$(id); (b._on.click || []).forEach(function (f) { f.call(b, { target: b, preventDefault: function () {} }); }); }
+  function stageBtns() { return hw.$('cwStages').children; }
+  function pickStage(pat) { var box = hw.$('cwStages'), b = stageBtns().filter(function (x) { return x.getAttribute('data-pat') === pat; })[0]; (box._on.click || []).forEach(function (f) { f.call(box, { target: b || box }); }); }
+  var wins0 = hostSent('winner').length;
+  click('callerWinBtn');
+  check('WINNER asks, in the page, what was won: this pattern\'s stages in order', !hw.$('cwModal').classList.contains('hidden') && stageBtns().map(function (b) { return b.getAttribute('data-pat'); }).join() === 'one,two,full' && hostSent('winner').length === wins0,
+        stageBtns().map(function (b) { return b.getAttribute('data-pat'); }));
+  check('with the prize the host set up at the start already filled in', hw.$('cwPrize').value === '$50 bar tab', hw.$('cwPrize').value);
+  click('cwCancel');
+  check('Cancel puts nothing on the TV', hw.$('cwModal').classList.contains('hidden') && hostSent('winner').length === wins0 && !hw.G.callerWin);
+  click('callerWinBtn'); pickStage('one'); await advance(500);
+  var wmsg = hostSent('winner').slice(-1)[0];
+  check('one tap on One line sends the winner message every screen already knows, marked real balls, with the prize', !!wmsg && wmsg.caller === true && wmsg.pattern === 'one' && wmsg.prize === '$50 bar tab' && wmsg.cont === false && hw.$('cwModal').classList.contains('hidden'), wmsg);
+  check('and no browser dialog was used anywhere in it', confirms === 0, confirms);
+  var c0 = { burst: CELEB.burst, fanfare: CELEB.fanfare };
+  feedTV(tv);
+  check('the TV: a full-screen BINGO! with the stage and the prize', shown(tv, 'tvWin') && !shown(tv, 'tvRun') && tv.$('winName').textContent === 'One line' && tv.$('winPrizeVal').textContent === '$50 bar tab',
+        { wall: onWall(tv), name: tv.$('winName').textContent, prize: tv.$('winPrizeVal').textContent });
+  check('telling the room "Show your book to the host", not to show a phone', tv.$('winSubPaper').style.display === '' && tv.$('winSubPhone').style.display === 'none' && /Show your book to the host/.test(readFile('venueplay/tv.html')),
+        [tv.$('winSubPaper').style.display, tv.$('winSubPhone').style.display]);
+  check('with the celebration (vp-celebrate.js: confetti and the fanfare)', CELEB.burst > c0.burst && CELEB.fanfare > c0.fanfare, [CELEB.burst - c0.burst, CELEB.fanfare - c0.fanfare]);
+  check('the console shows what the TV says, with Back to the game', hw.$('callerBlock').classList.contains('winning') && hw.$('callerWinSays').textContent === 'BINGO! One line: $50 bar tab', hw.$('callerWinSays').textContent);
+  var d0 = hw.G.draw.length; tap(hw, 33);
+  check('a number tapped while the win is up is refused, so nothing hides the splash by accident', hw.G.draw.length === d0);
+  await advance(20000); feedTV(tv);
+  check('the splash stays up until the host closes it (it does not time out)', shown(tv, 'tvWin'), onWall(tv));
+  var hello0 = hostSent('winner').length;
+  hw.onMsg({ t: 'tv_here', hello: true }); await advance(500);
+  var b0 = CELEB.fanfare; feedTV(tv);
+  check('a TV that reloads mid-win is shown the win again, and the others do not fanfare twice', hostSent('winner').length === hello0 + 1 && shown(tv, 'tvWin') && CELEB.fanfare === b0, [hostSent('winner').length - hello0, CELEB.fanfare - b0]);
+  var saved2 = JSON.parse(JSON.stringify(hw.dom.localStorage._s));
+  click('callerBackBtn'); await advance(500); feedTV(tv);
+  check('Back to the game: one tap, and every TV is back on the board', shown(tv, 'tvRun') && !shown(tv, 'tvWin') && !shown(tv, 'tvJoinCorner') && !hw.G.callerWin && !hw.$('callerBlock').classList.contains('winning'), onWall(tv));
+  check('the line win is on the night\'s record and the room plays on for Two lines, for the same prize', hw.G.prizesWon.length === 1 && hw.G.prizesWon[0].pattern === 'one' && hw.G.prizesWon[0].prize === '$50 bar tab' && hw.G.pattern === 'two' && tv.$('tvPattern').textContent === 'Two lines',
+        { won: hw.G.prizesWon, pattern: hw.G.pattern, tv: tv.$('tvPattern').textContent });
+  tap(hw, 33); await advance(300);
+  check('and the grid calls numbers again', hw.G.draw.length === d0 + 1);
+  click('callerWinBtn');
+  check('the next WINNER starts from Two lines', stageBtns().map(function (b) { return b.getAttribute('data-pat'); }).join() === 'two,full');
+  pickStage('two'); await advance(500); feedTV(tv);
+  click('callerNotWinBtn'); await advance(500); feedTV(tv);
+  check('Not a win after all: the TV goes back to the board and nothing is recorded', shown(tv, 'tvRun') && hw.G.prizesWon.length === 1 && hw.G.pattern === 'two' && !hw.G.callerWin, { won: hw.G.prizesWon.length, pattern: hw.G.pattern });
+  click('callerWinBtn'); pickStage('full'); await advance(500); feedTV(tv);
+  check('a full house on the TV', shown(tv, 'tvWin') && tv.$('winName').textContent === 'Full house' && tv.$('winPrizeVal').textContent === '$50 bar tab', tv.$('winName').textContent);
+  click('callerBackBtn'); await advance(500); feedTV(tv);
+  var d1 = hw.G.draw.length; tap(hw, 34);
+  check('closed, the full house ends the game: the grid and WINNER wait for New game', hw.G.won === true && hw.G.prizesWon.length === 2 && hw.G.draw.length === d1 && hw.$('callerWinBtn').disabled === true && shown(tv, 'tvRun'),
+        { won: hw.G.won, prizes: hw.G.prizesWon.length });
+  check('New game asks to start the next game, not to deal tickets', (function () { click('newGameBtn'); return !hw.$('ngModal').classList.contains('hidden') && hw.$('ngGo').textContent === 'Start next game' && !/tickets/i.test(hw.$('ngNote').textContent); })(),
+        [hw.$('ngGo').textContent, hw.$('ngNote').textContent]);
+  hw.$('ngModal').classList.add('hidden');
+  print('a reload of the console with the win on the TV');
+  retire(WHO);
+  var hw2 = bootHostC(saved2, 'host-win'); await advance(3000);
+  check('comes back to the win, with Back to the game', !!hw2.G.callerWin && hw2.G.callerWin.pattern === 'one' && hw2.$('callerBlock').classList.contains('winning'), hw2.G.callerWin);
+  hw2.endGame(); await advance(3000);
+  var lastRep = (DB.vp_game_reports || []).slice(-1)[0] || {};
+  check('End game with a win still up counts it on the night\'s report, and closes the night', hw2.G.status === 'setup' && !liveSession() && Array.isArray(lastRep.prizes) && lastRep.prizes.some(function (z) { return z.pattern === 'one' && z.prize === '$50 bar tab' && z.winner_name === 'Paper book'; }),
+        { status: hw2.G.status, open: !!liveSession(), prizes: lastRep.prizes });
+  retire('host-win');
+  print('the normal winner card is untouched');
+  tv.onMsg({ t: 'started', pattern: 'one', prize: 'Meat tray', caller: false });
+  tv.onMsg({ t: 'winner', pid: 'p1', name: 'Ann', cardNo: 12, pattern: 'one', prize: 'Meat tray', winners: [{ pid: 'p1', name: 'Ann', cardNo: 12 }], shared: false, cont: false });
+  check('CONTROL: a phone win still names the winner, the card, and "show your phone to the host"', shown(tv, 'tvWin') && tv.$('winName').textContent === 'Ann' && tv.$('winCard').textContent === '#12' && tv.$('winSubPhone').style.display === '' && tv.$('winSubPaper').style.display === 'none',
+        { name: tv.$('winName').textContent, card: tv.$('winCard').textContent });
+
+  print('a phone (375px wide): the arithmetic of the shipped CSS');
+  /* Nothing in jsc lays a page out, so this reads the numbers the phone rule sets and does the
+     sum a browser would: the page gutter, the panel border and padding, the grid's bleed into the
+     padding, nine gaps. The pixels themselves were measured in headless Chrome at 375px. */
+  var mq = (CONSOLE_SRC.match(/@media \(max-width:420px\)\{([\s\S]*?)\n  \}/) || [])[1] || '';
+  function px(re) { var m = re.exec(mq); return m ? m.slice(1).map(Number) : null; }
+  var wrapP = px(/\.wrap:has\(#bingoView\.callermode:not\(\.hidden\)\)\{padding:(\d+)px (\d+)px\}/), panP = px(/#bingoView\.callermode \.panel\{padding:(\d+)px (\d+)px\}/),
+      gridG = px(/\.callergrid\{gap:(\d+)px;margin:0 -(\d+)px\}/), minH = px(/\.cg\{min-height:(\d+)px/);
+  var border = 1, cell = (wrapP && panP && gridG) ? (375 - 2 * wrapP[1] - 2 * border - 2 * panP[1] + 2 * gridG[1] - 9 * gridG[0]) / 10 : 0;
+  check('at 375px each of the 90 numbers is at least 34px wide and tall, ten across, with no sideways scroll', cell >= 34 && minH && minH[0] >= 34 && gridG[1] <= panP[1], { cell: cell, minH: minH, wrap: wrapP, panel: panP, grid: gridG });
 
   print('the Worker, directly');
   var nd = await worker('/host/bingo/draw', { venue_id: VENUE });

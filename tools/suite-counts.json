@@ -176,7 +176,7 @@
   "counted_by": "lines"
  },
  "tools/test-caller-mode.js": {
-  "checks": 54,
+  "checks": 87,
   "counted_by": "lines"
  },
  "tools/test-cant-sign-warns.js": {

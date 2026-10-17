@@ -466,6 +466,13 @@
   <!-- BINGO: running -->
   <div class="layer runlayer hidden" id="tvRun">
     <div class="runleft">
+      <!-- A REAL-BALLS NIGHT (caller mode) has no join code anywhere: the room plays paper books.
+           The game's name and the venue's take the code's place. Styled inline so a normal
+           night's look (and the sales mockups' fingerprint of it) is untouched. -->
+      <div id="tvRunTitle" style="display:none;text-align:center;margin:0 0 min(1.6cqw,2vh)">
+        <div class="lobbyname" style="font-size:clamp(20px,4.2cqw,60px)">Bingo</div>
+        <div class="lobbyat" id="tvRunAt" style="display:none;margin-top:.6cqw;max-width:36cqw">at <b id="tvRunAtName"></b></div>
+      </div>
       <div class="balleye">Number called</div>
       <div class="curball"><span class="cbnum" id="cbNum">--</span></div>
       <div class="prevballs" id="tvPrev"></div>
@@ -493,7 +500,8 @@
     <div class="wname" id="winName">Player</div>
     <div class="winslabel" id="winsLabel">Wins</div>
     <div class="winprize" id="winPrizeVal">the prize</div>
-    <div class="jsub">Card <b id="winCard">#000</b> &middot; show your phone to the host</div>
+    <div class="jsub" id="winSubPhone">Card <b id="winCard">#000</b> &middot; show your phone to the host</div>
+    <div class="jsub" id="winSubPaper" style="display:none;font-size:clamp(14px,2.6cqw,34px);color:#fff">Show your book to the host</div>
   </div>
 
   <!-- BINGO: persistent join corner -->
@@ -1313,7 +1321,13 @@
   }
 
   // ================= BINGO SCREEN =================
-  var state={ phase:"lobby", pattern:"one", prize:"the prize", called:[], winner:null, claimName:"Player", claimCount:1, celebrated:false };
+  var state={ phase:"lobby", pattern:"one", prize:"the prize", called:[], winner:null, claimName:"Player", claimCount:1, celebrated:false,
+              caller:false };   // a real-balls night (caller mode): paper books, so no join code, QR or "scan" on this wall
+  /* THE CONSOLE SAYS WHETHER TONIGHT IS REAL BALLS, on its mode, started and state messages (17 Oct
+     2026). Only a yes or no is believed, so a console from before this sends nothing and changes
+     nothing; going back to the ads forgets it, and the console says it again with the next game. */
+  /* Written inline where each message lands (no helper), because the screen suites lift those
+     functions out of this page one by one. */
 
   function buildBoard(){
     var wrap=$("tvBoard"); wrap.innerHTML="";
@@ -1350,6 +1364,7 @@
     drawQR($("qrMini"), playURL, 240);
   }
   function renderLobby(){
+    if(state.caller) return;   // never drawn on a real-balls night: the lobby there is the board (applyBingo)
     $("lobbyCode").textContent=joinCode;
     $("tvJoinCode").textContent=joinCode;
     drawQR($("qrBig"), playURL, 720);   // draw now the lobby is actually visible (not blank)
@@ -1492,6 +1507,17 @@
   }
   function renderWin(){
     var m=state.winner||{};
+    /* A REAL-BALLS WIN (caller mode). Nobody's phone holds the ticket, so there is no name and no
+       card number: the stage and its prize, and the paper book goes to the host to be checked. */
+    var paper=!!m.caller;
+    $("winSubPhone").style.display = paper ? "none" : "";
+    $("winSubPaper").style.display = paper ? "" : "none";
+    if(paper){
+      $("winName").textContent=PATTERN_NAMES[m.pattern]||"Bingo";
+      $("winsLabel").textContent="Prize";
+      $("winPrizeVal").textContent=(typeof m.prize==="string" && m.prize) ? m.prize : state.prize;
+      return;
+    }
     var ws=(m.winners&&m.winners.length) ? m.winners : [{ name:m.name, cardNo:m.cardNo }];
     $("winName").textContent=joinNames(ws.map(function(w){ return w.name; }));
     $("winsLabel").textContent = ws.length>1 ? "Share" : "Wins";
@@ -1564,10 +1590,17 @@
 
   function applyBingo(){
     if(tvMode!=="bingo") return;
-    if(state.phase==="lobby"){ showBingoLayer("tvLobby"); renderLobby(); }
+    if(state.phase==="lobby" && state.caller){ showBingoLayer("tvRun"); renderRun(); }   // real balls: the title and the board, never the join screen
+    else if(state.phase==="lobby"){ showBingoLayer("tvLobby"); renderLobby(); }
     else if(state.phase==="running"){ showBingoLayer("tvRun"); renderRun(); }
     else if(state.phase==="claim"){ showBingoLayer("tvClaim"); renderClaim(); }
     else if(state.phase==="win"){ showBingoLayer("tvWin"); renderWin(); if(!state.celebrated){ state.celebrated=true; celebrate(9000); } }
+    /* A REAL-BALLS NIGHT: the join furniture is off the wall entirely, and the game's name and the
+       venue's stand where the code was. Nothing here changes on a normal night. */
+    var _real=!!state.caller, _t=$("tvRunTitle"), _rl=document.querySelector ? document.querySelector("#tvRun .runleft") : null;
+    if(_real) $("tvJoinCorner").classList.add("hidden");   // no join badge
+    if(_t) _t.style.display = _real ? "" : "none";
+    if(_rl) _rl.style.paddingBottom = _real ? "0" : "";   // the corner badge it makes room for is not there
   }
 
   // ================= MODE SWITCH =================
@@ -2020,7 +2053,7 @@
          Musical..." card over the game that had just embedded, and nothing re-embedded it: the wall
          sat on the card for five minutes, then went to the ads (played at Test Charlie, 30 Sep 2026).
          The router owns every non-bingo embed, so an embed already on screen is left alone. */
-      if(m.mode==="bingo") enterBingo();
+      if(m.mode==="bingo"){ if(typeof m.caller==="boolean") state.caller=m.caller; enterBingo(); }
       else if(tvMode!=="embed") enterHolding(m.mode);
       return;
     }
@@ -2028,9 +2061,10 @@
        talking to nobody: it is not in HOST_TYPES and matched nothing, and was
        dropped silently. It means the same thing as idle on this channel - the
        host has finished with the room - so it lands in the same place. */
-    if(m.t==="idle" || m.t==="to_ads"){ enterAds(); return; }
+    if(m.t==="idle" || m.t==="to_ads"){ state.caller=false; enterAds(); return; }   // the next bingo night says again whether it is real balls
 
     if(m.t==="state"){
+      if(tvMode==="bingo" && typeof m.caller==="boolean") state.caller=m.caller;   // a state heard on the ads (End game's last word) does not carry into the next night
       /* THE CODE ON THE WALL DOES NOT CHANGE. It is deliberately the venue's permanent one: it is
          on the table talkers and the printed signs, and one sign has to work every week. A session
          code was briefly shown here instead, to give phones a server identity, and that was the
@@ -2050,6 +2084,7 @@
       applyBingo();
     }
     else if(m.t==="started"){
+      if(typeof m.caller==="boolean") state.caller=m.caller;
       if(m.pattern) state.pattern=m.pattern;
       if(typeof m.prize==="string") state.prize=m.prize;
       state.called=[]; state.winner=null; ballInFlight=false; stopCelebrate(); state.celebrated=false;
@@ -2082,7 +2117,11 @@
       state.phase="running"; applyBingo();
     }
     else if(m.t==="winner"){
+      /* The same real-balls win said again (a screen that reloaded asked the console to catch it
+         up): every other wall is already showing it, so it is not a second fanfare. */
+      var again=!!(m.caller && m.wid && state.phase==="win" && state.winner && state.winner.wid===m.wid);
       state.winner=m;
+      if(again){ applyBingo(); return; }
       if(m.cont && m.next) state.pattern=m.next;   // game plays on for the next prize
       if(m.cont && typeof m.nextPrize==="string" && m.nextPrize) state.prize=m.nextPrize;
       state.phase="win"; state.celebrated=false; applyBingo();
@@ -2470,6 +2509,8 @@
       el.textContent=nm; el.style.display = venueLogoUrl ? "none" : "block";   // the logo wins
       var la=document.getElementById("lobbyAt"), lan=document.getElementById("lobbyAtName");
       if(la && lan){ lan.textContent=nm; la.style.display=""; }
+      var ra=document.getElementById("tvRunAt"), ran=document.getElementById("tvRunAtName");   // the real-balls title
+      if(ra && ran){ ran.textContent=nm; ra.style.display=""; }
     }
     /* THE WHOLE SCREEN, IN ONE CALL, THROUGH THE WORKER.
        This used to read vp_venue_screen and v_vp_screen_draws straight from Supabase with the
