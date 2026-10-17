@@ -14,14 +14,26 @@
     overflow:hidden;-webkit-font-smoothing:antialiased}
   /* Everything scales off the viewport, because this is read from a couch and we
      have no idea whether it is a 24 inch monitor or a 65 inch television. */
-  .screen{height:100%;display:grid;place-items:center;padding:4vh 4vw;text-align:center}
+  /* THE NAMES STRIP TAKES ITS OWN ROOM (17 Oct 2026). It used to be position:fixed OVER the
+     screen, while .screen was the full height and centred its picture in all of it. At 1280x720
+     with a room joined, the strip's two rows sat over the bottom 90px of the QR card and over
+     "Wrong party? Use a different code". Now the page is a column: the screen gets what the
+     strip leaves, so every picture centres in the space nobody is sitting on. fitScreen() below
+     shrinks a picture that still does not fit, the way /app/vp-fit.js does for VenuePlay's walls. */
+  body{display:flex;flex-direction:column}
+  .screen{flex:1 1 auto;min-height:0;display:grid;place-items:center;padding:4vh 4vw;text-align:center;overflow:hidden}
+  .screen > *{transform-origin:center center}
+  .screen > * > :last-child{margin-bottom:0}   /* a trailing margin is measured as content and wasted the gap above the strip */
   h1,h2,.code,.big{font-family:'Hanken Grotesk',system-ui,sans-serif;font-weight:800;letter-spacing:-.02em;margin:0}
   .join .mark{width:14vh;height:12vh;margin-bottom:2vh}
   .join h1{font-size:clamp(30px,6.4vh,90px);line-height:1}
   .join .sub{color:var(--mute);font-size:clamp(15px,2.4vh,30px);margin:1.4vh 0 3vh}
   .joinrow{display:flex;align-items:center;gap:5vw;flex-wrap:wrap;justify-content:center}
   .qr{background:#fff;padding:1.4vh;border-radius:2vh;line-height:0}
-  .qr canvas{display:block;width:26vh;height:26vh}
+  /* !important, because the QR library writes its own pixel size onto the canvas (width:420 below
+     comes back as style="width:420px"), and an inline style beats any rule here. So the code was
+     420px on every telly: half the height of a 720 screen, and a stamp on a 4K one. */
+  .qr canvas{display:block;width:34vh !important;height:34vh !important}
   .codewrap{text-align:left}
   .codewrap .lbl{color:var(--mute);font-size:clamp(13px,2vh,24px);display:block;margin-bottom:.4vh}
   /* The address is the instruction, so it is set like one: big, in the party
@@ -50,8 +62,10 @@
   .entry button:disabled{background:rgba(255,241,230,.13);color:var(--mute);cursor:default}
   .entry .foot{color:var(--mute);font-size:clamp(12px,1.8vh,20px);margin-top:2.6vh;line-height:1.6}
   .entry .foot b{color:var(--paper)}
-  .who{position:fixed;left:0;right:0;bottom:0;padding:1.6vh 3vw;display:flex;gap:1vw;flex-wrap:wrap;
+  .who{flex:0 0 auto;padding:1.6vh 3vw;display:flex;gap:1vw;flex-wrap:wrap;
     justify-content:center;border-top:1px solid var(--line);background:rgba(18,16,26,.9)}
+  /* display:flex above beats the browser's own [hidden] rule, so an empty strip was still a bar. */
+  .who[hidden]{display:none}
   .who span{background:rgba(255,241,230,.08);border-radius:2vh;padding:.6vh 1.6vh;font-size:clamp(12px,1.8vh,22px)}
   .who .count{background:var(--pink);color:#fff;font-weight:700}
   /* margin-inline:auto, because max-width alone does not centre a block. The wrapper
@@ -121,7 +135,40 @@
   /* Anything else going up ends a Great Minds board: the board is only ever mounted by the branch
      below, and show() is how every other screen is drawn. */
   var gmBoard = null;
-  function show(html){ gmBoard = null; $("who").style.display = ""; $("screen").innerHTML = html; }
+  function show(html){ gmBoard = null; $("who").style.display = ""; $("screen").innerHTML = html; fitScreen(); }
+
+  /* WHATEVER IS UP MUST FIT IN WHAT THE STRIP LEAVES. The strip grows a row at a time as people
+     join (24 names and a count), so on a small telly the room left for the lobby shrinks under
+     it. The picture is measured unscaled and scaled down, never up, by the same rule vp-fit.js
+     uses on VenuePlay's walls: one transform about the centre keeps every proportion, where
+     smaller type would re-wrap and never settle. Pure, so a suite can run it. */
+  function fitScale(w, h, availW, availH){
+    if(!(w > 0) || !(h > 0) || !(availW > 0) || !(availH > 0)) return 1;
+    var s = Math.min(1, availW / w, availH / h);
+    s = Math.floor(s * 1000) / 1000;
+    if(s > 0.999) return 1;
+    return s < 0.4 ? 0.4 : s;            // something is wrong; do not vanish
+  }
+  function fitScreen(){ try{ fitNow(); }catch(e){} }   // a fit that cannot measure leaves the picture as drawn
+  function fitNow(){
+    var sc = $("screen"), el = sc && sc.firstElementChild;
+    if(!el || el.id === "gmwrap") return;       // the Great Minds board is the whole wall and sizes itself
+    el.style.transform = ""; el.style.transformOrigin = "";
+    var cs = getComputedStyle(sc);
+    var availW = sc.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    var availH = sc.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    var h = el.scrollHeight, s = fitScale(el.scrollWidth, h, availW, availH);
+    if(s >= 1) return;
+    /* A grid item taller than its area does not stay centred: it starts at the top padding and
+       runs out of the bottom. So scale from its top edge and move it down to the middle of the
+       room there is, or a scaled lobby still ends under the strip (measured, 1280x720). */
+    var off = el.getBoundingClientRect().top - (sc.getBoundingClientRect().top + parseFloat(cs.paddingTop));
+    var dy = Math.round((availH - h * s) / 2 - off);
+    el.style.transformOrigin = "center top";
+    el.style.transform = (dy ? "translateY(" + dy + "px) " : "") + "scale(" + s + ")";
+  }
+  if(window.addEventListener) window.addEventListener("resize", fitScreen, { passive:true });
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(fitScreen);   // web fonts change every measurement
 
   /* The lobby. This is what is on the television for most of the night, so it is
      the screen that matters most: a code big enough to read from the back of the
@@ -193,7 +240,7 @@
     var el = $("qr");
     if(window.QRCode && el){
       QRCode.toCanvas(el, SITE + "/play?code=" + encodeURIComponent(CODE),
-        { width: 420, margin: 1, color:{ dark:"#12101A", light:"#ffffff" } }, function(){});
+        { width: 420, margin: 1, color:{ dark:"#12101A", light:"#ffffff" } }, function(){ fitScreen(); });
     }
   }
 
@@ -203,6 +250,7 @@
     w.hidden = false;
     w.innerHTML = '<span class="count">' + players.length + ' playing</span>' +
       players.slice(-24).map(function(p){ return '<span>' + esc(p) + '</span>'; }).join("");
+    fitScreen();    // a new row of names takes height off the screen above it
   }
 
   /* Whatever the host broadcasts, put it up. Each game sends its own shape and
@@ -302,7 +350,7 @@
         }
         if(x.status === 200 && x.body && x.body.status === "finished"){
           var f = document.querySelector(".join .foot");
-          if(f) f.insertAdjacentHTML("beforebegin", '<p class="foot">This party has finished.</p>');
+          if(f) { f.insertAdjacentHTML("beforebegin", '<p class="foot">This party has finished.</p>'); fitScreen(); }
         }
         return true;
       })

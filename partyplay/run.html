@@ -522,7 +522,8 @@
            matched against it rather than each one asking. */
         if(PPS) PPS.initHost(API, CODE, KEY, signBar);
         roomList(false);
-        connect(); render();
+        connect();
+        if(!resumeOpenGame()) render();
       })
       .catch(function(e){
         /* A WRONG OR MISTYPED HOST KEY WAS A DEAD END: "Not your party to change." and nothing to
@@ -575,7 +576,60 @@
       });
   }
 
+  /* A RELOADED CONSOLE GOES BACK INTO THE GAME IT WAS RUNNING (17 Oct 2026). It used to land on the
+     games list, and drawing the list sends {t:"lobby"}: so reloading the tablet half way through
+     Who am I? put the join code back on the telly and sent every phone back to "Watch the big
+     screen". The host tapped Start again, the console and the phones picked the round back up from
+     what this tablet had saved, and the telly stayed on the join code until the next answer.
+     Found 17 Oct 2026 driving a pretend party in a browser.
+
+     So the open game is remembered, and a reload reopens it with nothing sent to the room first.
+     Only the games that save where they are up to (OPEN_RESUME): reopening heads or tails, the
+     draw, the playlist, two truths or guess the photo STARTS them again, and doing that to a room
+     unasked would wipe it. Those still come back to the list, as before, and the telly matches it.
+     The list itself forgets the open game, because a console on the list has no game open. */
+  var OPEN_RESUME = { bingo90:1, trivia:1, howwell:1, whohere:1, charades:1, guesswho:1, topanswers:1 };
+  function openKey(){ return "ppOpen:" + CODE; }
+  function openSave(g){ try{ if(g && g.id) localStorage.setItem(openKey(), JSON.stringify({ id:String(g.id), at:Date.now() })); }catch(e){} }
+  function openClear(){ try{ localStorage.removeItem(openKey()); }catch(e){} }
+  /* Pure, so a suite can run it: which of `games` to reopen from what was saved, or null. */
+  function openPick(saved, games, status, now){
+    if(status !== "live" || !saved || !saved.id) return null;
+    if(!(now - (saved.at || 0) < 12*3600*1000)) return null;
+    for(var i = 0; i < (games||[]).length; i++){
+      var g = games[i];
+      if(g && String(g.id) === String(saved.id)) return OPEN_RESUME[g.format] ? g : null;
+    }
+    return null;
+  }
+  function resumeOpenGame(){
+    var saved = null; try{ saved = JSON.parse(localStorage.getItem(openKey()) || "null"); }catch(e){}
+    var g = openPick(saved, GAMES, PARTY && PARTY.status, Date.now());
+    if(!g){ openClear(); return false; }
+    runGame(g);
+    return true;
+  }
+  function runGame(g){
+    openSave(g);
+    if(g.format==="bingo90") runBingo(g);
+    else if(g.format==="trivia"||g.format==="howwell") runTrivia(g);
+    else if(g.format==="headstails") runHeads(g);
+    else if(g.format==="draw") runDraw(g);
+    else if(g.format==="playlist") runPlaylist(g);
+    else if(g.format==="whohere") runWhoHere(g);
+    else if(g.format==="truths") runTruths(g);
+    else if(g.format==="photos") runPhotos(g);
+    else if(g.format==="charades") runCharades(g);
+    else if(g.format==="guesswho") runGuessWho(g);
+    else if(g.format==="topanswers") runGreatMinds(g);
+    /* AND THE SAME ON THE TELEVISION. This is the worse half: the slug went up on the big
+       screen in front of the whole room when the game started. */
+    else { var _n=PPGames.name(g.format,g.title);
+           send({t:"big",text:_n,sub:"Off we go"}); toast("Running "+_n); }
+  }
+
   function render(){
+    openClear();
     /* Three states. "ready" is where a licence spends most of its life: bought,
        built, and waiting for somebody to say go. */
     if(PARTY.status === "ready"){
@@ -968,11 +1022,14 @@
     if(typeof was.i!=="number" || was.i < 0 || was.i >= G.items.length) return;
     RUN_KEEP[G.mode].forEach(function(k){ if(was[k]!==undefined) G[k]=was[k]; });
     if(G.resend) try{ G.resend(); }catch(e){}
+    /* AND THE TELLY GETS ITS PICTURE BACK. resend() is the PHONES' message, which the telly
+       ignores, so a picked-up round left the wall on whatever it last had (17 Oct 2026). */
+    if(G.wall) try{ var w=G.wall(); if(w) send(w); }catch(e){}
   }
 
   function runWhoHere(g){
     G={ mode:"whohere", items:(g.config&&g.config.items)||[], i:-1, hands:[], repaint:paintWhoHere,
-        resend:resendWhoHere };
+        resend:resendWhoHere, wall:wallWhoHere };
     runRestore(g);
     paintWhoHere();
   }
@@ -980,6 +1037,13 @@
      on the wall. Heads or tails and guess the photo deliberately have no resend: a coin
      flip somebody joined halfway through is not a round they played, and a photo round
      builds its options from who was in the room when it started. */
+  /* What the telly shows for the prompt that is up: the question, and whoever has put a hand up. */
+  function wallWhoHere(){
+    var it = G && G.i >= 0 ? G.items[G.i] : null;
+    if(!it) return null;
+    var names = G.hands.filter(function(x){ return x.i===G.i; }).map(function(x){ return x.name; });
+    return {t:"big", text:it.q, sub: names.length ? names.join(", ") : "Tap if it is you"};
+  }
   function resendWhoHere(){
     if(!G || G.i < 0) return;
     var it = G.items[G.i];
@@ -1013,7 +1077,7 @@
      nothing else. */
   function runCharades(g){
     G={ mode:"charades", items:(g.config&&g.config.items)||[], i:-1, actor:null, got:[],
-        repaint:paintCharades, resend:resendCharades };
+        repaint:paintCharades, resend:resendCharades, wall:wallCharades };
     runRestore(g);
     if(G.i < 0) warnScreens("charades");   // before the first actor; a console picking a round back up has had it
     paintCharades();
@@ -1049,6 +1113,10 @@
   /* Say the current round again, for a phone that has only just joined. Safe to
      repeat: every phone works out what to show from the same message, so the
      actor sees the word again and everybody else sees who to watch again. */
+  function wallCharades(){
+    if(!G || !G.items[G.i] || !G.actor) return null;
+    return {t:"big", text:G.actor+" is acting", sub:"Shout your guesses"};
+  }
   function resendCharades(){
     var it = G.items[G.i];
     if(!it || !G.actor) return;
@@ -1063,7 +1131,7 @@
     G.got.push(G.actor);
     // The word goes to the phones, tagged with whose it is. The TV gets the name only.
     send({t:"charades", i:G.i, of:G.items.length, word:it.q, actor:G.actor});
-    send({t:"big", text:(G.actor||"Someone")+" is acting", sub:"Shout your guesses"});
+    send(wallCharades() || {t:"big", text:"Someone is acting", sub:"Shout your guesses"});
     paintCharades();
   }
 
@@ -1074,7 +1142,7 @@
      the telly, so say so, twice. */
   function runGuessWho(g){
     G={ mode:"guesswho", items:(g.config&&g.config.items)||[], i:-1, guesser:null, done:[],
-        repaint:paintGuessWho, resend:resendGuessWho };
+        repaint:paintGuessWho, resend:resendGuessWho, wall:wallGuessWho };
     runRestore(g);
     if(G.i < 0) warnScreens("guesswho");
     paintGuessWho();
@@ -1100,6 +1168,12 @@
     h+='<div class="bar2"><button class="sec" id="back">Back to games</button></div>';
     $("app").innerHTML=h;
   }
+  /* The answer on the wall, and the guesser told to look away: the picture a reload has to put back. */
+  function wallGuessWho(){
+    var it = G && G.i >= 0 ? G.items[G.i] : null;
+    if(!it || !G.guesser) return null;
+    return {t:"big", text:it.q, sub:G.guesser+", eyes off the screen"};
+  }
   function resendGuessWho(){
     var it = G.items[G.i];
     if(!it || !G.guesser) return;
@@ -1114,7 +1188,7 @@
     G.guesser=players[G.done.length % players.length];
     G.done.push(G.guesser);
     send({t:"guesswho", i:G.i, of:G.items.length, answer:it.q, guesser:G.guesser});
-    send({t:"big", text:it.q, sub:(G.guesser||"They")+", eyes off the screen"});
+    send(wallGuessWho());
     paintGuessWho();
   }
 
@@ -1192,7 +1266,10 @@
     gmBoards().then(function(boards){
       if(G!==was) return;   // the host tapped another game while the boards were on their way
       startGreatMinds(g, boards);
-    }, function(){ toast("The Great Minds boards did not load. Check the wifi and tap it again."); });
+    }, function(){
+      toast("The Great Minds boards did not load. Check the wifi and tap it again.");
+      if(G===was && !G) render();   // a reload reopening it would otherwise sit on "Loading..."
+    });
   }
   function startGreatMinds(g, boards){
     G={ mode:"gm", game:new PRGame.Game({ name:PPGames.name(g.format, g.title), boards:boards }), pub:null, feed:[], added:false,
@@ -1522,22 +1599,7 @@
     var el=ev.target.closest?ev.target.closest("[data-run],button[id]"):null;
     if(!el) return;
     if(el.hasAttribute("data-run")){
-      var g=GAMES[+el.getAttribute("data-run")];
-      if(g.format==="bingo90") runBingo(g);
-      else if(g.format==="trivia"||g.format==="howwell") runTrivia(g);
-      else if(g.format==="headstails") runHeads(g);
-      else if(g.format==="draw") runDraw(g);
-      else if(g.format==="playlist") runPlaylist(g);
-      else if(g.format==="whohere") runWhoHere(g);
-      else if(g.format==="truths") runTruths(g);
-      else if(g.format==="photos") runPhotos(g);
-      else if(g.format==="charades") runCharades(g);
-      else if(g.format==="guesswho") runGuessWho(g);
-      else if(g.format==="topanswers") runGreatMinds(g);
-      /* AND THE SAME ON THE TELEVISION. This is the worse half: the slug went up on the big
-         screen in front of the whole room when the game started. */
-      else { var _n=PPGames.name(g.format,g.title);
-             send({t:"big",text:_n,sub:"Off we go"}); toast("Running "+_n); }
+      runGame(GAMES[+el.getAttribute("data-run")]);
       return;
     }
     if(el.id==="charstart" || el.id==="charnext"){ charadesGo(); return; }

@@ -178,6 +178,7 @@
   "pp-guest-connection.test.js",
   "pp-health-private.test.js",
   "pp-host-channel.test.js",
+  "pp-host-reload.test.js",
   "pp-join-names.test.js",
   "pp-licence.test.js",
   "pp-photo-downloads.test.js",

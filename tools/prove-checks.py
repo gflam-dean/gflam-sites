@@ -2700,8 +2700,8 @@ MUTATIONS = [
 
     ('and the TELEVISION gets the name too, not the slug',
      'partyplay/run.html',
-     '      else { var _n=PPGames.name(g.format,g.title);',
-     '      else { var _n=(g.title||g.format);',
+     '    else { var _n=PPGames.name(g.format,g.title);',
+     '    else { var _n=(g.title||g.format);',
      'the raw format slug goes up on the big screen in front of the whole room when a game '
      'starts, which is the half everybody sees'),
 
@@ -3624,6 +3624,42 @@ MUTATIONS = [
      '<div id="ovgModal" class="hidden vp-modal">',
      '<div id="ovgModal" class="hidden" style="position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);padding:20px">',
      'the modal style is pasted back inline on one console, so a change to the class no longer reaches it'),
+
+    # 17 Oct 2026: the PartyPlay telly's lobby under the names strip, and the host reload that
+    # left the telly on the join code. Both suites RUN the page code (tv.html's fit, run.html twice).
+    ('pp-tv-layout.test.js', 'partyplay/tv.html',
+     '    var s = Math.min(1, availW / w, availH / h);', '    var s = Math.min(1, availW / w);',
+     'a PartyPlay lobby taller than the room the names strip leaves is not shrunk, and runs under the names'),
+    ('pp-tv-layout.test.js', 'partyplay/tv.html',
+     '    el.style.transformOrigin = "center top";\n', '',
+     'the lobby is shrunk about its middle while it sits from the top, so it still ends under the names strip'),
+    ('pp-tv-layout.test.js', 'partyplay/tv.html',
+     '    var dy = Math.round((availH - h * s) / 2 - off);', '    var dy = 0;',
+     'a shrunk lobby is left wherever the browser put it, half off the top of the telly'),
+    ('pp-tv-layout.test.js', 'partyplay/tv.html',
+     '  .who{flex:0 0 auto;padding', '  .who{position:fixed;left:0;right:0;bottom:0;padding',
+     'the names strip sits over the bottom of the QR card and the "Wrong party?" link again'),
+    ('pp-tv-layout.test.js', 'partyplay/tv.html',
+     '.qr canvas{display:block;width:34vh !important;height:34vh !important}', '.qr canvas{display:block;width:34vh;height:34vh}',
+     'the QR card is 420px on every telly, half the height of a 720 screen, because the library wins'),
+    ('pp-tv-layout.test.js', 'partyplay/tv.html',
+     '    fitScreen();    // a new row of names', '    // a new row of names',
+     'a new row of guest names takes height off the lobby and nothing shrinks it to make room'),
+    ('pp-host-reload.test.js', 'partyplay/run.html',
+     '        if(!resumeOpenGame()) render();', '        render();',
+     'reloading the PartyPlay host console mid-game puts the join code on the telly and sends every phone back to the lobby'),
+    ('pp-host-reload.test.js', 'partyplay/run.html',
+     '    if(G.wall) try{ var w=G.wall(); if(w) send(w); }catch(e){}\n', '',
+     'Who am I, charades or who here picked back up after a reload leaves the telly on the join code until the next round'),
+    ('pp-host-reload.test.js', 'partyplay/run.html',
+     '  var OPEN_RESUME = { bingo90:1,', '  var OPEN_RESUME = { headstails:1, bingo90:1,',
+     'a reload restarts heads or tails by itself and knocks the whole room back to round one'),
+    ('pp-host-reload.test.js', 'partyplay/run.html',
+     '    if(!(now - (saved.at || 0) < 12*3600*1000)) return null;\n', '',
+     'a console opened the next day drops straight into last night\'s game'),
+    ('pp-host-reload.test.js', 'partyplay/run.html',
+     '  function render(){\n    openClear();', '  function render(){',
+     'a host who went back to the games list is thrown back into the old game by the next reload'),
 ]
 
 

@@ -43,6 +43,10 @@
   "checks": 27,
   "counted_by": "lines"
  },
+ "partyplay-backend/lib/pp-host-reload.test.js": {
+  "checks": 82,
+  "counted_by": "lines"
+ },
  "partyplay-backend/lib/pp-join-names.test.js": {
   "checks": 9,
   "counted_by": "total"
@@ -92,7 +96,7 @@
   "counted_by": "lines"
  },
  "partyplay-backend/lib/pp-tv-layout.test.js": {
-  "checks": 9,
+  "checks": 27,
   "counted_by": "lines"
  },
  "partyplay-backend/lib/pp-tv-reconnect.test.js": {
