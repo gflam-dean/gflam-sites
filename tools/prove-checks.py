@@ -3527,6 +3527,26 @@ MUTATIONS = [
      "     and s.role in ('owner', 'manager', 'host')\n   limit 1;",
      "   limit 1;",
      'the database twin of the staff check accepts a marketing login'),
+
+    # The design review of 16 Oct 2026: seven type tokens on the sales pages, and one block
+    # of console classes on the five host consoles.
+    ('the sales pages size their type from the seven-step scale', 'venueplay/index.html',
+     ".hero-note{font-family:'Manrope',sans-serif;font-size:var(--fs-sm);",
+     ".hero-note{font-family:'Manrope',sans-serif;font-size:14.5px;",
+     'a half-pixel size typed by hand is back on the homepage and the scale starts to come apart'),
+
+    ('the sales pages size their type from the seven-step scale', 'partyplay/index.html',
+     "--fs-xs:12px;", "--fs-xs:11px;",
+     'the label floor drops under 12px on partyplay.com.au and the small print is small again'),
+
+    ('the host consoles share one set of console classes', 'venueplay/app/raffle/host.html',
+     ".vp-copy{font-size:14.5px;", ".vp-copy{font-size:15px;",
+     'one console is edited and the other four are not, which is how every size here drifted in the first place'),
+
+    ('the host consoles share one set of console classes', 'venueplay/app/trivia/host.html',
+     '<div id="ovgModal" class="hidden vp-modal">',
+     '<div id="ovgModal" class="hidden" style="position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);padding:20px">',
+     'the modal style is pasted back inline on one console, so a change to the class no longer reaches it'),
 ]
 
 

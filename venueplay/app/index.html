@@ -192,12 +192,39 @@
   .screencode b{font-family:'Hanken Grotesk',monospace;font-size:15px;letter-spacing:.18em;
                 color:#fff;font-weight:800}
   .hidden{display:none!important}
+
+  /* ---- Shared console classes (design review, 1 Oct 2026; moved 16 Oct 2026) ----
+     What used to be the same style="" attribute on every console, so a size is set once
+     and cannot drift between pages. This block is identical on all five consoles.
+     display:none stays inline on the elements that carry it, because the scripts toggle it.
+     Doubled selectors beat .btn.big and friends the way an inline style used to. */
+  .vp-modal{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);padding:20px}
+  .vp-modal-box{max-width:440px;width:100%;background:var(--ink-2);border:1px solid var(--line);border-radius:16px;padding:24px}
+  .vp-modal-box.wide{max-width:460px}
+  .vp-h{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;margin-bottom:10px}
+  .vp-copy{font-size:14.5px;color:var(--text);line-height:1.55}
+  .vp-row{display:flex;gap:10px}
+  .vp-grow.vp-grow{flex:1}
+  .vp-auto.vp-auto{flex:0 0 auto;width:auto}
+  .vp-c.vp-c{text-align:center}
+  .vp-gold{color:var(--gold)}
+  .vp-warn{margin:0 0 14px;padding:12px 16px;background:rgba(245,165,36,.14);border:1px solid rgba(245,165,36,.5);border-radius:12px;color:#F5A524;font-weight:600;font-size:14px}
+  .vp-week{margin:0 0 12px;padding:12px 14px;background:rgba(245,165,36,.12);border:1px solid rgba(245,165,36,.45);border-radius:11px;color:#F5A524;font-size:13.5px;line-height:1.5}
+  .vp-navlink.vp-navlink{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12.5px;color:var(--muted);text-decoration:none;margin-right:10px;white-space:nowrap}
+  .vp-hdrbtn.vp-hdrbtn{background:none;border:1px solid var(--line-2,var(--line));border-radius:10px;padding:10px 14px;min-height:42px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;margin-right:18px;white-space:nowrap}
+  .vp-inl.vp-inl{display:inline-block;text-decoration:none;margin-top:6px}
+  .vp-bigin.vp-bigin{width:100%;min-height:48px;font-size:20px;text-align:center}
+  .vp-err{color:var(--roll);font-size:13px;min-height:18px;margin-top:6px}
+  .vp-fine{color:var(--faint);font-size:12px}   /* was 11.5px inline: 12px is the label floor */
+  .vp-rate.vp-rate{flex:1;min-width:88px;font-size:13px}
+  .vp-wbtn.vp-wbtn{width:100%;margin-top:8px;font-size:13px}
+  .vp-check.vp-check{width:18px;height:18px;flex:none;accent-color:var(--pink)}
 </style>
 </head>
 <body>
 <header>
   <div class="bar">
-    <button type="button" id="gamesBack" style="display:none;background:none;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12.5px;color:var(--muted);text-decoration:none;margin-right:10px;white-space:nowrap;padding:0">&#8592; Games</button>
+    <button class="vp-navlink" type="button" id="gamesBack" style="display:none;background:none;border:none;cursor:pointer;padding:0">&#8592; Games</button>
     <div class="brand">
       <svg width="20" height="23" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
       <span class="div"></span><span class="word">VenuePlay</span>
@@ -229,20 +256,20 @@
       <div class="authsub">Sign in with a text code to your mobile.</div>
 
       <div class="authcard">
-        <div id="stepMobile" style="text-align:center">
+        <div class="vp-c" id="stepMobile">
           <label class="flabel">Mobile number</label>
-          <input id="mobileIn" type="tel" placeholder="0400 000 000" autocomplete="tel" style="text-align:center">
+          <input class="vp-c" id="mobileIn" type="tel" placeholder="0400 000 000" autocomplete="tel">
           <div class="cerr" id="mobileErr"></div>
           <button class="btn pink big" id="sendCodeBtn" style="margin-top:4px">Send code</button>
         </div>
 
-        <div id="stepCode" class="hidden" style="text-align:center">
+        <div id="stepCode" class="hidden vp-c">
           <label class="flabel">Enter the 6-digit code</label>
           <input id="otpIn" class="otpin" inputmode="numeric" maxlength="6" placeholder="------" autocomplete="one-time-code">
           <div class="cerr" id="otpErr"></div>
           <button class="btn pink big" id="verifyBtn" style="margin-top:4px">Verify</button>
-          <p class="note" style="text-align:center;margin-top:10px">We sent a code to <b id="sentTo" style="color:var(--muted)"></b>. It lasts a few minutes.</p>
-          <div style="text-align:center;margin-top:8px"><span class="skiplink" id="resendBtn">Resend code</span></div>
+          <p class="note vp-c" style="margin-top:10px">We sent a code to <b id="sentTo" style="color:var(--muted)"></b>. It lasts a few minutes.</p>
+          <div class="vp-c" style="margin-top:8px"><span class="skiplink" id="resendBtn">Resend code</span></div>
         </div>
 
       </div>
@@ -257,10 +284,10 @@
         <span class="word">VenuePlay</span>
       </div>
       <div class="authbig">VenuePlay Admin</div>
-      <div class="authcard" style="text-align:center">
+      <div class="authcard vp-c">
         <p style="font-size:14px;color:var(--text);line-height:1.6">VenuePlay Admin lands here.</p>
         <p class="note" style="margin-top:12px">The full admin (venues, billing, discounts) plugs in here. For this first cut the venue host path is the focus.</p>
-        <div style="text-align:center"><span class="skiplink" id="adminBack" style="margin-top:20px">Back to sign in</span></div>
+        <div class="vp-c"><span class="skiplink" id="adminBack" style="margin-top:20px">Back to sign in</span></div>
       </div>
     </div>
   </div>
@@ -273,10 +300,10 @@
         <span class="word">VenuePlay</span>
       </div>
       <div class="authbig">You are signed in</div>
-      <div class="authcard" style="text-align:center">
+      <div class="authcard vp-c">
         <p style="font-size:14px;color:var(--text);line-height:1.6">This login is not linked to a venue yet.</p>
         <p class="note" style="margin-top:12px">Ask your venue owner to add you as staff, then sign in again.</p>
-        <div style="text-align:center"><span class="skiplink" id="noVenueOut" style="margin-top:20px">Sign out</span></div>
+        <div class="vp-c"><span class="skiplink" id="noVenueOut" style="margin-top:20px">Sign out</span></div>
       </div>
     </div>
   </div>
@@ -295,13 +322,13 @@
     <div class="authwrap">
       <div class="authbig">Pair to your TV</div>
       <div class="authsub">This is the code on your venue screen. Check it matches, then connect.</div>
-      <div class="authcard" style="text-align:center">
+      <div class="authcard vp-c">
         <label class="flabel">Screen code</label>
         <input id="pairIn" class="codein" maxlength="6" placeholder="ABC123" autocomplete="off" autocapitalize="characters" spellcheck="false">
         <div class="cerr" id="pairErr"></div>
         <button class="btn pink big" id="pairBtn" style="margin-top:4px">Connect</button>
-        <div style="text-align:center"><span class="skiplink" id="diffTv">Use a different TV</span></div>
-        <p class="note" style="text-align:center;margin-top:10px">This screen is only for a TV that is not linked to your venue yet, and that TV shows its own code. A venue screen opened at <b style="color:var(--text)">venueplay.com.au/tv</b> with your venue link connects on its own, with no code to type.</p>
+        <div class="vp-c"><span class="skiplink" id="diffTv">Use a different TV</span></div>
+        <p class="note vp-c" style="margin-top:10px">This screen is only for a TV that is not linked to your venue yet, and that TV shows its own code. A venue screen opened at <b style="color:var(--text)">venueplay.com.au/tv</b> with your venue link connects on its own, with no code to type.</p>
       </div>
     </div>
   </div>
@@ -318,7 +345,7 @@
       <div id="venueBanner" style="display:none;margin-top:6px;padding:12px 14px;background:var(--ink-3);border:1px solid var(--line);border-radius:12px">
         <div style="font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--faint);font-weight:700;font-family:'Hanken Grotesk',sans-serif">You are running games at</div>
         <div style="display:flex;align-items:center;gap:12px;margin-top:3px;flex-wrap:wrap">
-          <span id="venueBannerName" style="font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff"></span>
+          <span class="vp-h" id="venueBannerName" style="margin-bottom:0"></span>
           <button type="button" id="venueSwitchInline" style="background:none;border:1px solid var(--line);border-radius:8px;padding:5px 10px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12px;color:var(--muted)">Not this one? Switch venue</button>
         </div>
       </div>
@@ -349,7 +376,7 @@
            on, and it sits above the whole console, so a message that grew from one line to two
            used to push the Next number button down the screen between taps. -->
       <div id="coach" style="grid-column:1/-1;margin:0 0 4px;padding:11px 15px;background:rgba(255,31,142,.08);border:1px solid rgba(255,31,142,.28);border-radius:12px;color:var(--text);font-size:13.5px;line-height:1.5;min-height:65px"></div>
-      <div id="overBanner" style="grid-column:1/-1;display:none;margin:0 0 4px;padding:12px 16px;background:rgba(245,165,36,.14);border:1px solid rgba(245,165,36,.5);border-radius:12px;color:#F5A524;font-weight:600;font-size:14px"></div>
+      <div class="vp-warn" id="overBanner" style="grid-column:1/-1;display:none;margin:0 0 4px"></div>
       <!-- left: run -->
       <div class="panel">
         <div id="setupBlock">
@@ -388,11 +415,11 @@
               <option value="5">5 tickets</option>
               <option value="6">6 tickets (a full book)</option>
             </select>
-            <div class="fieldnote" style="font-size:11.5px;color:var(--faint);margin-top:5px">Everyone gets this many tickets this game.</div>
+            <div class="fieldnote vp-fine" style="margin-top:5px">Everyone gets this many tickets this game.</div>
           </div>
           <div class="field">
             <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" id="allowEarlyChk" style="width:auto;margin:0"><span>Allow early BINGO calls</span></label>
-            <div class="fieldnote" style="font-size:11.5px;color:var(--faint);margin-top:5px">Lets players call BINGO even when it is not a win yet. A bit of fun for the room. A wrong call still lands with you, so you just tap Play on.</div>
+            <div class="fieldnote vp-fine" style="margin-top:5px">Lets players call BINGO even when it is not a win yet. A bit of fun for the room. A wrong call still lands with you, so you just tap Play on.</div>
           </div>
           <div class="stat">
             <div class="box"><div class="k">Players joined</div><div class="v" id="setupPlayers">0</div></div>
@@ -400,7 +427,7 @@
           </div>
           <button class="btn pink big" id="startBtn">Open lobby</button>
           <button class="btn ghost big" id="cancelLobbyBtn" style="display:none;margin-top:8px">Close lobby</button>
-          <p class="note" id="startNote" style="text-align:center;margin-top:10px">Puts the join screen on the TV so players can scan in. You start calling numbers when you are ready.</p>
+          <p class="note vp-c" id="startNote" style="margin-top:10px">Puts the join screen on the TV so players can scan in. You start calling numbers when you are ready.</p>
         </div>
 
         <div id="liveBlock" class="hidden">
@@ -430,11 +457,11 @@
       <!-- right: players + board -->
       <div>
         <div class="panel" style="margin-bottom:20px">
-          <div class="lbl" style="margin-bottom:0">Players <span class="mono" style="color:var(--gold)">(<span id="playerCount">0</span>)</span></div>
+          <div class="lbl" style="margin-bottom:0">Players <span class="mono vp-gold">(<span id="playerCount">0</span>)</span></div>
           <div class="players" id="playerList"></div>
         </div>
         <div class="panel">
-          <div class="lbl">Called board &middot; <span id="boardCount" class="mono" style="color:var(--gold)">0</span> of 90</div>
+          <div class="lbl">Called board &middot; <span id="boardCount" class="mono vp-gold">0</span> of 90</div>
           <div class="tvboard" id="hostBoard"></div>
         </div>
       </div>
@@ -444,20 +471,20 @@
 </div>
 
 <!-- Over-plan players popup: shown at Start when more players joined than the plan includes -->
-<div id="ovgModal" class="hidden" style="position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);padding:20px">
-  <div style="max-width:440px;width:100%;background:var(--ink-2);border:1px solid var(--line);border-radius:16px;padding:24px">
-    <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;margin-bottom:10px">More players than your plan</div>
-    <div id="ovgBody" style="font-size:14.5px;color:var(--text);line-height:1.55"></div>
-    <div style="display:flex;gap:10px;margin-top:20px">
-      <button type="button" id="ovgGo" class="btn pink big" style="flex:1">Start game</button>
-      <button type="button" id="ovgCancel" class="btn ghost big" style="flex:0 0 auto;width:auto">Cancel</button>
+<div id="ovgModal" class="hidden vp-modal">
+  <div class="vp-modal-box">
+    <div class="vp-h">More players than your plan</div>
+    <div class="vp-copy" id="ovgBody"></div>
+    <div class="vp-row" style="margin-top:20px">
+      <button type="button" id="ovgGo" class="btn pink big vp-grow">Start game</button>
+      <button type="button" id="ovgCancel" class="btn ghost big vp-auto">Cancel</button>
     </div>
   </div>
 </div>
 <!-- New game: pattern and prize for the next game, asked before the tickets go out -->
-<div id="ngModal" class="hidden" style="position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);padding:20px">
-  <div style="max-width:440px;width:100%;background:var(--ink-2);border:1px solid var(--line);border-radius:16px;padding:24px">
-    <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;margin-bottom:6px">New game</div>
+<div id="ngModal" class="hidden vp-modal">
+  <div class="vp-modal-box">
+    <div class="vp-h" style="margin-bottom:6px">New game</div>
     <div id="ngNote" style="font-size:13.5px;color:var(--muted);line-height:1.5;margin-bottom:14px">Everyone in the room gets fresh tickets.</div>
     <div class="field"><label for="ngPattern">Winning pattern</label>
       <select id="ngPattern">
@@ -471,21 +498,21 @@
       </select></div>
     <div class="field"><label for="ngPrize">Prize</label>
       <input type="text" class="hostinput" id="ngPrize" placeholder="e.g. $50 bar tab"></div>
-    <div style="display:flex;gap:10px;margin-top:6px">
-      <button type="button" id="ngGo" class="btn pink big" style="flex:1">Deal tickets</button>
-      <button type="button" id="ngCancel" class="btn ghost big" style="flex:0 0 auto;width:auto">Cancel</button>
+    <div class="vp-row" style="margin-top:6px">
+      <button type="button" id="ngGo" class="btn pink big vp-grow">Deal tickets</button>
+      <button type="button" id="ngCancel" class="btn ghost big vp-auto">Cancel</button>
     </div>
   </div>
 </div>
 <!-- End of night: one card with what happened, shown after End game -->
-<div id="nightModal" class="hidden" style="position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);padding:20px">
-  <div style="max-width:460px;width:100%;background:var(--ink-2);border:1px solid var(--line);border-radius:16px;padding:24px">
-    <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;margin-bottom:4px">Tonight at a glance</div>
+<div id="nightModal" class="hidden vp-modal">
+  <div class="vp-modal-box wide">
+    <div class="vp-h" style="margin-bottom:4px">Tonight at a glance</div>
     <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px">The TV is back on your ads. Here is how the night went.</div>
     <div class="stat" id="nightStats"></div>
     <div id="nightPrizes" style="font-size:13.5px;color:var(--text);line-height:1.6"></div>
-    <div style="display:flex;gap:10px;margin-top:18px">
-      <button type="button" id="nightDone" class="btn pink big" style="flex:1">Done</button>
+    <div class="vp-row" style="margin-top:18px">
+      <button type="button" id="nightDone" class="btn pink big vp-grow">Done</button>
     </div>
   </div>
 </div>

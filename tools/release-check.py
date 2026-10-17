@@ -2316,6 +2316,65 @@ def local_checks(which):
             hits.append(short(f))
         ok(label, not hits, why=', '.join(hits[:4]))
 
+    # THE TYPE SCALE. The design review of 1 Oct 2026 found 44 distinct font sizes on the
+    # homepage, many of them half-pixel apart (11.5, 12.5, 14.5, 15.5), which is how a page
+    # comes to look assembled rather than designed. On 16 Oct every size on the three sales
+    # pages became one of seven tokens (--fs-xs to --fs-hero) declared on :root, with --fs-xs
+    # pinned at 12px as the floor. A size typed by hand is the thing that creeps back, one
+    # edit at a time, so every font-size declaration on each page is read here: it must be a
+    # token, an em ratio of one (the headline's third line), or a cqw size inside the drawn
+    # telly on partyplay.com.au, which scales with its frame the way the real wall does.
+    scale = ('--fs-xs', '--fs-sm', '--fs-base', '--fs-md', '--fs-lg', '--fs-xl', '--fs-hero')
+    offscale = []
+    for rel in ('venueplay/index.html', 'venueplay/nsw.html', 'partyplay/index.html'):
+        f = os.path.join(ROOT, rel)
+        if not os.path.isfile(f):
+            offscale.append(rel + ' is missing')
+            continue
+        src = io.open(f, encoding='utf-8', errors='ignore').read()
+        missing = [t for t in scale if not re.search(r'%s\s*:' % re.escape(t), src)]
+        if missing:
+            offscale.append('%s declares no %s' % (rel, ', '.join(missing)))
+        if not re.search(r'--fs-xs\s*:\s*12px', src):
+            offscale.append('%s: --fs-xs is not 12px, the label floor' % rel)
+        for m in re.finditer(r'font(?:-size)?\s*:\s*([^;}"\']+)', src):
+            v = m.group(1).strip()
+            if v.startswith('var(--fs-') or re.search(r'\bvar\(--fs-', v) or 'cqw' in v or re.fullmatch(r'\.?\d+em', v):
+                continue
+            if m.group(0).startswith('font:') and 'var(--fs-' not in v:
+                offscale.append('%s: font:%s' % (rel, v[:40]))
+            elif m.group(0).startswith('font-size'):
+                offscale.append('%s: font-size:%s' % (rel, v[:40]))
+    ok('the sales pages size their type from the seven-step scale', not offscale,
+       why='; '.join(offscale[:4]) + '. Use one of --fs-xs/sm/base/md/lg/xl/hero, never a size typed by hand')
+
+    # THE CONSOLE CLASSES. The five host consoles carried 90-odd style="" attributes each,
+    # the same modal, heading, banner and button styles pasted onto every page, and that is
+    # why sizes drifted console to console (design review, 1 Oct 2026). They moved into one
+    # block of .vp-* classes on 16 Oct, the same text on every page. The rule of this repo
+    # is that the same answer lives in one place, so the five blocks must stay identical and
+    # the styles they replaced must not be pasted back inline.
+    consoles = ['venueplay/app/index.html', 'venueplay/app/trivia/host.html', 'venueplay/app/musical/host.html',
+                'venueplay/app/raffle/host.html', 'venueplay/app/members/host.html']
+    blocks, pasted = {}, []
+    for rel in consoles:
+        f = os.path.join(ROOT, rel)
+        src = io.open(f, encoding='utf-8', errors='ignore').read() if os.path.isfile(f) else ''
+        m = re.search(r'\n(  \.vp-modal\{[\s\S]*?\n  \.vp-check\.vp-check\{[^}]*\})', src)
+        blocks[rel] = re.sub(r'/\*.*?\*/', '', m.group(1), flags=re.S).strip() if m else None
+        head_end = src.rfind('</style>')
+        markup = src[head_end:src.find('<script', head_end)] if head_end > 0 else ''
+        if re.search(r'style="[^"]*position:fixed;inset:0;z-index:60', markup) or \
+           re.search(r'style="[^"]*font-family:\'Hanken Grotesk\',sans-serif;font-weight:800;font-size:19px', markup):
+            pasted.append(short(f))
+    absent = [short(os.path.join(ROOT, r)) for r, b in blocks.items() if not b]
+    distinct = len(set(b for b in blocks.values() if b))
+    ok('the host consoles share one set of console classes', not absent and distinct == 1 and not pasted,
+       detail='%d consoles, one block' % len(consoles) if distinct == 1 and not absent else '',
+       why=('no .vp-* block on ' + ', '.join(absent) + '. ' if absent else '') +
+           ('%d different versions of the block: one console was changed and the others were not. ' % distinct if distinct > 1 else '') +
+           ('modal or heading styles pasted back inline on ' + ', '.join(pasted) if pasted else ''))
+
     # A TERNARY WHOSE TWO ARMS ARE THE SAME STRING decides nothing, and it is
     # always a half-finished thought rather than a deliberate one. The photos
     # game carried `right.length===1 ? " got it" : " got it"` for its whole

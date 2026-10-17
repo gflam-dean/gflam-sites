@@ -137,13 +137,40 @@
   .errbar .ex:focus-visible{outline:2px solid #FF4D6D;outline-offset:2px}
 
   .hidden{display:none!important}
+
+  /* ---- Shared console classes (design review, 1 Oct 2026; moved 16 Oct 2026) ----
+     What used to be the same style="" attribute on every console, so a size is set once
+     and cannot drift between pages. This block is identical on all five consoles.
+     display:none stays inline on the elements that carry it, because the scripts toggle it.
+     Doubled selectors beat .btn.big and friends the way an inline style used to. */
+  .vp-modal{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);padding:20px}
+  .vp-modal-box{max-width:440px;width:100%;background:var(--ink-2);border:1px solid var(--line);border-radius:16px;padding:24px}
+  .vp-modal-box.wide{max-width:460px}
+  .vp-h{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;margin-bottom:10px}
+  .vp-copy{font-size:14.5px;color:var(--text);line-height:1.55}
+  .vp-row{display:flex;gap:10px}
+  .vp-grow.vp-grow{flex:1}
+  .vp-auto.vp-auto{flex:0 0 auto;width:auto}
+  .vp-c.vp-c{text-align:center}
+  .vp-gold{color:var(--gold)}
+  .vp-warn{margin:0 0 14px;padding:12px 16px;background:rgba(245,165,36,.14);border:1px solid rgba(245,165,36,.5);border-radius:12px;color:#F5A524;font-weight:600;font-size:14px}
+  .vp-week{margin:0 0 12px;padding:12px 14px;background:rgba(245,165,36,.12);border:1px solid rgba(245,165,36,.45);border-radius:11px;color:#F5A524;font-size:13.5px;line-height:1.5}
+  .vp-navlink.vp-navlink{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12.5px;color:var(--muted);text-decoration:none;margin-right:10px;white-space:nowrap}
+  .vp-hdrbtn.vp-hdrbtn{background:none;border:1px solid var(--line-2,var(--line));border-radius:10px;padding:10px 14px;min-height:42px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;margin-right:18px;white-space:nowrap}
+  .vp-inl.vp-inl{display:inline-block;text-decoration:none;margin-top:6px}
+  .vp-bigin.vp-bigin{width:100%;min-height:48px;font-size:20px;text-align:center}
+  .vp-err{color:var(--roll);font-size:13px;min-height:18px;margin-top:6px}
+  .vp-fine{color:var(--faint);font-size:12px}   /* was 11.5px inline: 12px is the label floor */
+  .vp-rate.vp-rate{flex:1;min-width:88px;font-size:13px}
+  .vp-wbtn.vp-wbtn{width:100%;margin-top:8px;font-size:13px}
+  .vp-check.vp-check{width:18px;height:18px;flex:none;accent-color:var(--pink)}
 </style>
 </head>
 <body>
 <header>
   <div class="bar">
-    <button type="button" id="toAdsBtn" title="Finish and put the venue ads back on the TV" style="background:none;border:1px solid var(--line-2,var(--line));border-radius:10px;padding:10px 14px;min-height:42px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;margin-right:18px;white-space:nowrap">End game</button>
-    <a href="/app" title="Back to games" style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12.5px;color:var(--muted);text-decoration:none;margin-right:10px;white-space:nowrap">&#8592; Games</a>
+    <button class="vp-hdrbtn" type="button" id="toAdsBtn" title="Finish and put the venue ads back on the TV">End game</button>
+    <a class="vp-navlink" href="/app" title="Back to games">&#8592; Games</a>
     <div class="brand">
       <svg width="20" height="23" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
       <span class="div"></span><span class="word">VenuePlay</span>
@@ -166,7 +193,7 @@
     <div class="connect">
       <div class="big">Sign in to run trivia</div>
       <div class="sub" id="signinSub">You need your venue host login to start a live quiz.</div>
-      <a class="btn pink big" id="signinLink" href="../index.html" style="display:inline-block;text-decoration:none;margin-top:6px">Go to sign in</a>
+      <a class="btn pink big vp-inl" id="signinLink" href="../index.html">Go to sign in</a>
       <p class="note" style="margin-top:14px">Trivia reads your venue's own question sets and the VenuePlay Trivia Library. The answers are held on the server and never reach a phone before you reveal.</p>
     </div>
   </div>
@@ -186,7 +213,7 @@
   <!-- CONSOLE -->
   <div id="consoleView" class="hidden">
     <div class="lbl">Host console<span id="roomCode" style="display:none"></span></div>
-    <div id="overBanner" style="display:none;margin:0 0 14px;padding:12px 16px;background:rgba(245,165,36,.14);border:1px solid rgba(245,165,36,.5);border-radius:12px;color:#F5A524;font-weight:600;font-size:14px"></div>
+    <div class="vp-warn" id="overBanner" style="display:none"></div>
     <div class="console">
 
       <!-- left: run -->
@@ -236,13 +263,13 @@
             <div class="note" id="paperNote" style="margin-top:4px">Up to 10 teams a night. With paper teams playing, the answers go up at the end of each round, after the host has their sheets. A paper team counts as a player once its score goes on the leaderboard.</div>
             <label id="paperRoundRow" style="display:none;margin-top:8px;color:var(--text);align-items:center;gap:8px;font-size:13.5px;font-weight:600;cursor:pointer"><input type="checkbox" id="paperRound" style="width:auto;margin:0"> Play this round on paper</label>
           </div>
-          <div id="weekBanner" style="display:none;margin:0 0 12px;padding:12px 14px;background:rgba(245,165,36,.12);border:1px solid rgba(245,165,36,.45);border-radius:11px;color:#F5A524;font-size:13.5px;line-height:1.5"></div>
+          <div class="vp-week" id="weekBanner" style="display:none"></div>
           <button class="btn pink big" id="startBtn">Open lobby</button>
           <button class="btn ghost big" id="cancelLobbyBtn" style="display:none;margin-top:8px">Close lobby</button>
-          <p class="note" style="text-align:center;margin-top:10px">Shows the join screen on the TV and gets the room ready. Then call the first question.</p>
+          <p class="note vp-c" style="margin-top:10px">Shows the join screen on the TV and gets the room ready. Then call the first question.</p>
           <div style="margin-top:14px;padding:12px 14px;background:var(--ink-3);border:1px solid var(--line-2);border-radius:11px">
             <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.1em;font-size:10px;color:var(--faint);margin-bottom:6px">How scoring works</div>
-            <div style="font-size:12.5px;color:var(--muted);line-height:1.5">A correct answer scores <b style="color:#fff" id="scBase">100</b> points. With the speed bonus on, answering fast adds up to <b style="color:var(--gold)">+50%</b> (a lightning-fast correct answer = <b style="color:#fff" id="scMax">150</b>). A wrong answer scores 0.</div>
+            <div style="font-size:12.5px;color:var(--muted);line-height:1.5">A correct answer scores <b style="color:#fff" id="scBase">100</b> points. With the speed bonus on, answering fast adds up to <b class="vp-gold">+50%</b> (a lightning-fast correct answer = <b style="color:#fff" id="scMax">150</b>). A wrong answer scores 0.</div>
           </div>
         </div>
 
@@ -254,7 +281,7 @@
       <!-- right: players + leaderboard -->
       <div>
         <div class="panel" style="margin-bottom:20px">
-          <div class="lbl" style="margin-bottom:0">Players <span class="mono" style="color:var(--gold)">(<span id="playerCount">0</span>)</span></div>
+          <div class="lbl" style="margin-bottom:0">Players <span class="mono vp-gold">(<span id="playerCount">0</span>)</span></div>
           <div class="players" id="playerList"></div>
         </div>
         <div class="panel">
@@ -268,26 +295,26 @@
 </div>
 
 <!-- Over-plan players popup (branded, same as bingo): shown at Start when over the plan -->
-<div id="ovgModal" class="hidden" style="position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);padding:20px">
-  <div style="max-width:440px;width:100%;background:var(--ink-2);border:1px solid var(--line);border-radius:16px;padding:24px">
-    <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;margin-bottom:10px">More players than your plan</div>
-    <div id="ovgBody" style="font-size:14.5px;color:var(--text);line-height:1.55"></div>
-    <div style="display:flex;gap:10px;margin-top:20px">
-      <button type="button" id="ovgGo" class="btn pink big" style="flex:1">Start game</button>
-      <button type="button" id="ovgCancel" class="btn ghost big" style="flex:0 0 auto;width:auto">Cancel</button>
+<div id="ovgModal" class="hidden vp-modal">
+  <div class="vp-modal-box">
+    <div class="vp-h">More players than your plan</div>
+    <div class="vp-copy" id="ovgBody"></div>
+    <div class="vp-row" style="margin-top:20px">
+      <button type="button" id="ovgGo" class="btn pink big vp-grow">Start game</button>
+      <button type="button" id="ovgCancel" class="btn ghost big vp-auto">Cancel</button>
     </div>
   </div>
 </div>
 <!-- Paper teams: how many answer sheets to print (Dean, 25 Sep 2026) -->
-<div id="paperModal" class="hidden" style="position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);padding:20px">
-  <div style="max-width:440px;width:100%;background:var(--ink-2);border:1px solid var(--line);border-radius:16px;padding:24px">
-    <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;margin-bottom:10px">Print answer sheets</div>
-    <div id="paperBody" style="font-size:14.5px;color:var(--text);line-height:1.55;margin-bottom:12px"></div>
-    <input type="number" id="paperCount" min="1" inputmode="numeric" style="width:100%;min-height:48px;font-size:20px;text-align:center">
-    <div id="paperErr" style="color:var(--roll);font-size:13px;min-height:18px;margin-top:6px"></div>
-    <div style="display:flex;gap:10px;margin-top:10px">
-      <button type="button" id="paperGo" class="btn pink big" style="flex:1">Print</button>
-      <button type="button" id="paperCancel" class="btn ghost big" style="flex:0 0 auto;width:auto">Cancel</button>
+<div id="paperModal" class="hidden vp-modal">
+  <div class="vp-modal-box">
+    <div class="vp-h">Print answer sheets</div>
+    <div class="vp-copy" id="paperBody" style="margin-bottom:12px"></div>
+    <input class="vp-bigin" type="number" id="paperCount" min="1" inputmode="numeric">
+    <div class="vp-err" id="paperErr"></div>
+    <div class="vp-row" style="margin-top:10px">
+      <button type="button" id="paperGo" class="btn pink big vp-grow">Print</button>
+      <button type="button" id="paperCancel" class="btn ghost big vp-auto">Cancel</button>
     </div>
   </div>
 </div>
