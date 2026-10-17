@@ -30,7 +30,7 @@
 var CONSOLE_SRC = readFile('venueplay/app/index.html');
 load('tools/rig-game-worker.js');
 load('tools/rig-bingo-room.js');
-var PASS = 0, FAILN = 0, EXPECT = 87;
+var PASS = 0, FAILN = 0, EXPECT = 105;
 function check(name, cond, saw) {
   if (cond) { PASS++; print('  ok   ' + name); }
   else { FAILN++; print('  FAIL ' + name + (saw !== undefined ? '   saw: ' + JSON.stringify(saw) : '')); }
@@ -42,9 +42,22 @@ drain = async function () { for (var r = 0; r < 6; r++) { for (var i = 0; i < 60
 sha256Hex = async function (s) { return 'h-' + s; };
 readJson = async function (req) { return (req && req._body) || {}; };
 /* The real table's keys: a ball is called once per draw, and one ball per ordinal. The rig's fake
-   PostgREST has no keys, and a fake that cannot refuse a repeat cannot show that it is refused. */
+   PostgREST has no keys, and a fake that cannot refuse a repeat cannot show that it is refused.
+   Since migration 103 both keys hold for the balls that STAND (withdrawn_at is null): a withdrawn
+   row stays beside the next ball in its place, and its number can be called again. PRE103 is the
+   database before 103 is run: no withdrawn_at column (PostgREST refuses a filter or a write on it,
+   400 naming the column, as the real one does), and the old whole-table keys. */
+var PRE103 = false;
+var RACE = false;   // the next mark lands after another Undo already marked the ball: PostgREST answers no rows
+function standing(r) { return PRE103 || r.withdrawn_at == null; }
 var _rigFetch = fetch;
 fetch = async function (url, opts) {
+  if (RACE && /\/rest\/v1\/vp_bingo_draw_balls/.test(String(url)) && String((opts && opts.method) || '').toUpperCase() === 'PATCH') { RACE = false; return resp(200, []); }
+  if (PRE103 && /\/rest\/v1\/vp_bingo_draw_balls/.test(String(url))) {
+    var m0 = String((opts && opts.method) || 'GET').toUpperCase();
+    if (/withdrawn_at/.test(String(url))) return resp(400, { code: '42703', message: 'column vp_bingo_draw_balls.withdrawn_at does not exist' });
+    if (m0 === 'PATCH' && /withdrawn_at/.test(String(opts.body))) return resp(400, { code: 'PGRST204', message: "Could not find the 'withdrawn_at' column of 'vp_bingo_draw_balls' in the schema cache" });
+  }
   if (opts && String(opts.method).toUpperCase() === 'POST' && /\/rest\/v1\/vp_players/.test(String(url))) {
     var b = JSON.parse(opts.body); (Array.isArray(b) ? b : [b]).forEach(function (r) { if (r.kicked == null) r.kicked = false; });
     opts = Object.assign({}, opts, { body: JSON.stringify(b) });
@@ -52,7 +65,7 @@ fetch = async function (url, opts) {
   if (opts && String(opts.method).toUpperCase() === 'POST' && /\/rest\/v1\/vp_bingo_draw_balls/.test(String(url))) {
     var rows = JSON.parse(opts.body); rows = Array.isArray(rows) ? rows : [rows];
     var have = DB.vp_bingo_draw_balls || [];
-    var clash = rows.some(function (r) { return have.some(function (x) { return x.draw_id === r.draw_id && (x.number === r.number || x.ordinal === r.ordinal); }); });
+    var clash = rows.some(function (r) { return have.some(function (x) { return x.draw_id === r.draw_id && standing(x) && (x.number === r.number || x.ordinal === r.ordinal); }); });
     if (clash) return resp(409, { message: 'duplicate key value violates unique constraint' });
   }
   return _rigFetch(url, opts);
@@ -182,7 +195,12 @@ function feedTV(tv, upTo) {   // every message the console speaking now (WHO) ha
 }
 function shown(tv, id) { return !tv.$(id).classList.contains('hidden'); }
 function onWall(tv) { return ['tvLobby', 'tvRun', 'tvClaim', 'tvWin', 'tvHold'].filter(function (id) { return shown(tv, id); }).concat(shown(tv, 'tvJoinCorner') ? ['tvJoinCorner'] : []); }
-function ballsOn(drawId) { return (DB.vp_bingo_draw_balls || []).filter(function (r) { return r.draw_id === drawId; }).sort(function (a, b) { return a.ordinal - b.ordinal; }); }
+// The balls that STAND on the record (what the room plays to), and every row including the withdrawn.
+function ballsOn(drawId) { return (DB.vp_bingo_draw_balls || []).filter(function (r) { return r.draw_id === drawId && r.withdrawn_at == null; }).sort(function (a, b) { return a.ordinal - b.ordinal; }); }
+function rowsOn(drawId) { return (DB.vp_bingo_draw_balls || []).filter(function (r) { return r.draw_id === drawId; }); }
+function withdrawnOn(drawId) { return rowsOn(drawId).filter(function (r) { return r.withdrawn_at != null; }); }
+var SHUFFLES = 0, _shuffle = shuffle1to90;
+shuffle1to90 = function () { SHUFFLES++; return _shuffle(); };
 
 (async function () {
   print('A NORMAL NIGHT FIRST, for the shape of a called ball and as the control');
@@ -202,6 +220,9 @@ function ballsOn(drawId) { return (DB.vp_bingo_draw_balls || []).filter(function
   check('CONTROL: a normal night deals the phone its ticket', ann0.P.cards.length === 1, ann0.P.cards.length);
   var nDraw = DB.vp_bingo_draws[DB.vp_bingo_draws.length - 1];
   check('CONTROL: a normal night opens a SERVER draw', nDraw && nDraw.mode !== 'local' && !nDraw.fallback_why, nDraw);
+  check('CONTROL: and the server shuffles and stores its order of all 90, with its seed', SHUFFLES === 1 && Array.isArray(nDraw.draw_order) && nDraw.draw_order.length === 90 &&
+        nDraw.draw_order.slice().sort(function (a, b) { return a - b; }).every(function (n, k) { return n === k + 1; }) && /^[0-9a-f]{32}$/.test(String(nDraw.draw_seed)),
+        { shuffles: SHUFFLES, len: nDraw && nDraw.draw_order && nDraw.draw_order.length, seed: nDraw && nDraw.draw_seed });
   var b0 = BALLCALLS;
   norm.nextBall(); await advance(6000);
   var normalBall = hostSent('ball').slice(-1)[0];
@@ -271,6 +292,8 @@ function ballsOn(drawId) { return (DB.vp_bingo_draw_balls || []).filter(function
         host.$('bingoView').className);
   var draw = DB.vp_bingo_draws[DB.vp_bingo_draws.length - 1];
   check('the night\'s record opens as a physical draw: local, reason "caller", from ball one', draw && draw.mode === 'local' && draw.fallback_why === 'caller' && draw.fallback_at === 1 && host.G.drawId === draw.id, draw);
+  check('and no shuffle is made or stored on a real-balls night: an empty order, no seed', SHUFFLES === 1 && Array.isArray(draw.draw_order) && draw.draw_order.length === 0 && draw.draw_index === 0 && !/^[0-9a-f]{32}$/.test(String(draw.draw_seed)),
+        { shuffles: SHUFFLES, order: draw && draw.draw_order, seed: draw && draw.draw_seed });
   var balls0 = hostSent('ball').length;
   host.nextBall(); await advance(6000);
   check('the console\'s own draw is not used: Next number calls nothing', hostSent('ball').length === balls0 && host.G.draw.length === 0, hostSent('ball').length - balls0);
@@ -312,7 +335,10 @@ function ballsOn(drawId) { return (DB.vp_bingo_draw_balls || []).filter(function
   check('the TV is sent the corrected called list, the message it redraws its board from', !!st && st.active === true && st.called.join() === first.join(), st);
   await advance(3000);
   check('it is said again once the big-number reveal has landed, so the wall cannot keep the withdrawn ball', hostSent('state').slice(states0).length >= 2 && hostSent('state').slice(-1)[0].called.join() === first.join());
-  check('the record lets go of the withdrawn ball', ballsOn(draw.id).length === 10 && !ballsOn(draw.id).some(function (r) { return r.number === 77; }), ballsOn(draw.id).map(function (r) { return r.number; }));
+  check('the withdrawn ball no longer stands on the record', ballsOn(draw.id).length === 10 && !ballsOn(draw.id).some(function (r) { return r.number === 77; }), ballsOn(draw.id).map(function (r) { return r.number; }));
+  var w77 = withdrawnOn(draw.id);
+  check('but its row is KEPT, marked withdrawn with the time, where it was called (11th, by the tablet)', rowsOn(draw.id).length === 11 && w77.length === 1 && w77[0].number === 77 && w77[0].ordinal === 11 && w77[0].source === 'local' && !isNaN(Date.parse(w77[0].withdrawn_at)),
+        rowsOn(draw.id).map(function (r) { return r.ordinal + ':' + r.number + (r.withdrawn_at ? ':W' : ''); }));
   await holdOn(host, first[2]); await advance(300);
   check('holding a number that is not the last call takes nothing back', host.G.draw.length === 10 && host.G.called[first[2]] === true);
 
@@ -328,6 +354,13 @@ function ballsOn(drawId) { return (DB.vp_bingo_draw_balls || []).filter(function
   check('and the grid marks them all again', before.every(function (n) { return /\bon\b/.test(cg(host2, n).className); }));
   tap(host2, before[0]); await advance(300);
   check('a number called before the reload is still refused after it', host2.G.draw.length === before.length);
+  check('the reload ignores the withdrawn 77: not in the called list, open on the grid, while its row is still on the record', host2.G.draw.indexOf(77) < 0 && host2.G.pool.indexOf(77) >= 0 && !/\bon\b/.test(cg(host2, 77).className) && withdrawnOn(draw.id).length === 1,
+        { draw: host2.G.draw.indexOf(77), pool: host2.G.pool.indexOf(77) });
+  var tvR = bootTV(); await advance(50);
+  host2.onMsg({ t: 'tv_here', hello: true }); await advance(500);
+  feedTV(tvR);
+  check('a TV that comes up after the reload is given the board without the withdrawn 77', shown(tvR, 'tvRun') && !/\blit\b/.test(tvR.$('tvb-77').className) && /\blit\b/.test(tvR.$('tvb-' + before[0]).className),
+        { wall: onWall(tvR), c77: tvR.$('tvb-77').className });
 
   print('the rest of the game, to all 90');
   var rest = order.filter(function (n) { return host2.G.draw.indexOf(n) < 0; });
@@ -337,6 +370,10 @@ function ballsOn(drawId) { return (DB.vp_bingo_draw_balls || []).filter(function
   var allBalls = ballsOn(draw.id);
   check('the record holds 90 balls, ordinals 1 to 90, matching the room', allBalls.length === 90 && allBalls.every(function (r, k) { return r.ordinal === k + 1 && r.number === host2.G.draw[k]; }),
         allBalls.length);
+  var r77 = rowsOn(draw.id).filter(function (r) { return r.number === 77; });
+  check('the withdrawn 77 was called again later: it stands once, and its withdrawn row is still there beside it', r77.length === 2 && r77.filter(function (r) { return r.withdrawn_at == null; }).length === 1 && r77.filter(function (r) { return r.withdrawn_at != null && r.ordinal === 11; }).length === 1 &&
+        r77.filter(function (r) { return r.withdrawn_at == null; })[0].number === host2.G.draw[r77.filter(function (r) { return r.withdrawn_at == null; })[0].ordinal - 1],
+        r77.map(function (r) { return r.ordinal + (r.withdrawn_at ? ':W' : ''); }));
   check('the reason "caller" is still sent after the reload', fallbacksFor(draw.id).slice(-rest.length).every(function (f) { return f.reason === 'caller'; }));
   check('the server was never asked for a ball all game', BALLCALLS === bCaller && host2.G.draw.length === 90, BALLCALLS - bCaller);
   var dsBefore = hostSent('ball').length;   // the reloaded tablet's own count
@@ -345,6 +382,8 @@ function ballsOn(drawId) { return (DB.vp_bingo_draw_balls || []).filter(function
   check('the Undo button takes back the 90th', host2.G.draw.length === 89 && host2.G.pool.length === 1 && ballsOn(draw.id).length === 89, host2.G.draw.length);
   tap(host2, lastBack); await advance(300);
   check('and it can be called again, onto the same place in the record', host2.G.draw.length === 90 && ballsOn(draw.id).length === 90 && ballsOn(draw.id)[89].number === lastBack && hostSent('ball').length === dsBefore + 1);
+  check('the night\'s record reads in full: 90 standing, and both withdrawals kept and marked', rowsOn(draw.id).length === 92 && withdrawnOn(draw.id).length === 2 &&
+        withdrawnOn(draw.id).some(function (r) { return r.number === lastBack && r.ordinal === 90; }), withdrawnOn(draw.id).map(function (r) { return r.ordinal + ':' + r.number; }));
   host2.endGame(); await advance(3000);
   check('End game closes the night', !liveSession(), liveSession());
 
@@ -454,6 +493,37 @@ function ballsOn(drawId) { return (DB.vp_bingo_draw_balls || []).filter(function
   check('only the LAST call can be withdrawn', notLast.status === 409 && ballsOn(cd.body.draw_id).length === 2, notLast);
   var dupe = await worker('/host/bingo/fallback', { draw_id: cd.body.draw_id, number: 20, ordinal: 3, reason: 'caller' });
   check('a repeat of a called number is refused by the record', dupe.status === 409 && ballsOn(cd.body.draw_id).length === 2, dupe.status);
+  var cdRow = DB.vp_bingo_draws.filter(function (d) { return d.id === cd.body.draw_id; })[0];
+  var sh0 = SHUFFLES;
+  check('a caller:true draw opened directly stores no shuffle, and keeps the record that it is local, reason caller', cdRow && cdRow.draw_order.length === 0 && cdRow.mode === 'local' && cdRow.fallback_why === 'caller' && cdRow.fallback_at === 1 && SHUFFLES === sh0, cdRow);
+  var w20 = await worker('/host/bingo/fallback', { draw_id: cd.body.draw_id, number: 20, ordinal: 2, reason: 'caller', withdraw: true });
+  check('the Worker withdraws the last call by MARKING it: the row stays, withdrawn_at set', w20.status === 200 && w20.body.kept === true && rowsOn(cd.body.draw_id).length === 2 && withdrawnOn(cd.body.draw_id).length === 1 && withdrawnOn(cd.body.draw_id)[0].number === 20, [w20.status, w20.body, rowsOn(cd.body.draw_id)]);
+  var w20b = await worker('/host/bingo/fallback', { draw_id: cd.body.draw_id, number: 20, ordinal: 2, reason: 'caller', withdraw: true });
+  check('a second Undo of the same ball is refused, and nothing more is marked', w20b.status === 409 && withdrawnOn(cd.body.draw_id).length === 1, w20b.status);
+  var w10 = await worker('/host/bingo/fallback', { draw_id: cd.body.draw_id, number: 10, ordinal: 1, reason: 'caller', withdraw: true });
+  check('the "last call" the Worker checks ignores the withdrawn row: 10 is now the last standing ball and can be taken back', w10.status === 200 && withdrawnOn(cd.body.draw_id).length === 2, [w10.status, w10.body]);
+  var re20 = await worker('/host/bingo/fallback', { draw_id: cd.body.draw_id, number: 20, ordinal: 1, reason: 'caller' });
+  check('a withdrawn number can be called again, into the place it left', re20.status === 200 && ballsOn(cd.body.draw_id).length === 1 && ballsOn(cd.body.draw_id)[0].number === 20 && ballsOn(cd.body.draw_id)[0].ordinal === 1 && rowsOn(cd.body.draw_id).length === 3, [re20.status, rowsOn(cd.body.draw_id)]);
+  var re20b = await worker('/host/bingo/fallback', { draw_id: cd.body.draw_id, number: 20, ordinal: 2, reason: 'caller' });
+  check('and once it stands again it is refused a second time', re20b.status === 409 && ballsOn(cd.body.draw_id).length === 1, re20b.status);
+  RACE = true;
+  var wr = await worker('/host/bingo/fallback', { draw_id: cd.body.draw_id, number: 20, ordinal: 1, reason: 'caller', withdraw: true });
+  check('an Undo that marks nothing (another got there first) is refused, not reported as kept', wr.status === 409 && RACE === false, [wr.status, wr.body]);
+  var srv = DB.vp_bingo_draw_balls.filter(function (r) { return r.draw_id === nd.body.draw_id; })[0];
+  check('CONTROL: the normal night\'s ball was never marked', !!srv && srv.withdrawn_at == null && rowsOn(nd.body.draw_id).length === 1, srv);
+
+  print('before migration 103 is run (no withdrawn_at column): the old behaviour, so either order is safe');
+  PRE103 = true;
+  var pd = await worker('/host/bingo/draw', { venue_id: VENUE, caller: true });
+  await worker('/host/bingo/fallback', { draw_id: pd.body.draw_id, number: 31, ordinal: 1, reason: 'caller' });
+  await worker('/host/bingo/fallback', { draw_id: pd.body.draw_id, number: 32, ordinal: 2, reason: 'caller' });
+  var pw = await worker('/host/bingo/fallback', { draw_id: pd.body.draw_id, number: 32, ordinal: 2, reason: 'caller', withdraw: true });
+  check('the Undo still works: the ball comes off as it always did, and the reply says it was not kept', pw.status === 200 && pw.body.kept === false && rowsOn(pd.body.draw_id).length === 1 && rowsOn(pd.body.draw_id)[0].number === 31, [pw.status, pw.body, rowsOn(pd.body.draw_id)]);
+  var pr = await worker('/host/bingo/fallback', { draw_id: pd.body.draw_id, number: 32, ordinal: 2, reason: 'caller' });
+  check('and the number can be called again into the same place', pr.status === 200 && ballsOn(pd.body.draw_id).length === 2, pr.status);
+  var pn = await worker('/host/bingo/fallback', { draw_id: pd.body.draw_id, number: 31, ordinal: 1, reason: 'caller', withdraw: true });
+  check('the last-call rule still holds there too', pn.status === 409, pn.status);
+  PRE103 = false;
 
   print('the flag is for the bingo night only');
   var s2 = await worker('/session', { venue_id: VENUE, format: 'bingo', caller: true });

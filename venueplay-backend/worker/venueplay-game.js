@@ -142,7 +142,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '17 Oct 2026, 17:16 · b00eca4a';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Oct 2026, 20:01 · b30a9386';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -172,6 +172,8 @@ const PAPER_BINGO_STATES = new Set(['SA', 'VIC', 'TAS']);
    /host/bingo/fallback with the reason 'caller', so the record says they came from a physical
    draw and not from any number generator. */
 const CALLER_REASON = 'caller';
+// A caller-mode draw stores no order and so no seed: the column is not null, and this says why it is empty.
+const CALLER_NO_SEED = 'none: real balls';
 function callerBingoNight(session) {
   return !!(session && session.paper && typeof session.paper === 'object' &&
             session.paper.bingo && session.paper.bingo.caller === true);
@@ -6651,16 +6653,23 @@ async function handleBingoDrawStart(request, env, json) {
 
   /* CALLER MODE: the balls are real, so the record says so from ball one. The draw opens already
      'local' with the reason 'caller', which also makes /host/bingo/ball refuse it: no ball from
-     this server's order can ever land on a night the room is watching a barrel. The order is still
-     shuffled and stored (the column is not null) and is simply never used. */
+     this server's order can ever land on a night the room is watching a barrel. And no order is
+     made at all: the barrel is the draw, so the row holds an empty order (the column is not null)
+     and no seed, rather than a shuffle nobody uses sitting beside the real record. */
   const caller = b.caller === true;
   const rows = await sbInsert(env, 'vp_bingo_draws', Object.assign({
     venue_id: venueId,
     session_id: sessionId,
+  }, caller ? {
+    draw_seed: CALLER_NO_SEED,
+    draw_order: [],
+    draw_index: 0,
+    mode: 'local', fallback_at: 1, fallback_why: CALLER_REASON,
+  } : {
     draw_seed: randomTokenHex(16),
     draw_order: shuffle1to90(),   // never leaves this function
     draw_index: 0,
-  }, caller ? { mode: 'local', fallback_at: 1, fallback_why: 'caller' } : {}), true);
+  }), true);
   const row = Array.isArray(rows) ? rows[0] : rows;
   return json({ draw_id: row.id });
 }
@@ -6760,6 +6769,8 @@ async function handleBingoBallManyTrips(request, env, json, pre) {
   // second console, or one request retried by a phone on bad wifi. Read from the ball log, so
   // it is the time the LAST ball was actually written, not a timestamp anyone else maintains.
   if (draw.draw_index > 0) {
+    // A server draw (this path refuses a 'local' one above) never has a withdrawn ball: only a
+    // tablet ball can be marked withdrawn (migration 103's check), so no filter is needed here.
     const last = await sbGet(env, 'vp_bingo_draw_balls',
       'draw_id=eq.' + enc(drawId) + '&select=drawn_at&order=ordinal.desc&limit=1');
     if (last.length && last[0].drawn_at) {
@@ -6780,6 +6791,36 @@ async function handleBingoBallManyTrips(request, env, json, pre) {
  * and every ball it calls from then on, so the game's record is complete and honest. Best
  * effort from the console's side; from ours, refuse anything that does not add up (a number
  * already out, an ordinal that skips) rather than write a record that lies. */
+/* WITHDRAWN BALLS (migration 103). vp_bingo_draw_balls.withdrawn_at marks a caller-mode ball that
+   was taken back; the row stays on the record. Every read of the balls that STAND asks for
+   withdrawn_at is null. PostgREST refuses a filter, or a write, on a column the table does not have
+   yet (400, naming the column), and that is the one failure read here as "not run yet": the read is
+   asked again without the filter (before 103 there are no withdrawn rows, so it is the same
+   answer), and the mark answers null so the caller can fall back. Never cached: the moment 103 is
+   run, the very next request keeps the record. */
+function withdrawnColumnMissing(status, text) {
+  return status === 400 && /withdrawn_at/.test(String(text || '')) &&
+    /42703|PGRST204|does not exist|Could not find/.test(String(text || ''));
+}
+async function sbGetStandingBalls(env, query) {
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_bingo_draw_balls?' + query + '&withdrawn_at=is.null', { headers: sbHeaders(env) });
+  if (res.ok) return await res.json();
+  const text = await res.text();
+  if (withdrawnColumnMissing(res.status, text)) return await sbGet(env, 'vp_bingo_draw_balls', query);
+  throw dbError('read', 'vp_bingo_draw_balls', text);
+}
+// The rows it marked ([] when none was still standing), or null when the column is not there yet.
+async function markBallWithdrawn(env, filter) {
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_bingo_draw_balls?' + filter + '&withdrawn_at=is.null', {
+    method: 'PATCH', headers: Object.assign({}, sbHeaders(env), { 'Prefer': 'return=representation' }),
+    body: JSON.stringify({ withdrawn_at: new Date().toISOString() }),
+  });
+  if (res.ok) { try { const r = await res.json(); return Array.isArray(r) ? r : []; } catch (e) { return []; } }
+  const text = await res.text();
+  if (withdrawnColumnMissing(res.status, text)) return null;
+  throw dbError('update', 'vp_bingo_draw_balls', text);
+}
+
 async function handleBingoFallback(request, env, json) {
   const authUserId = await verifyHostJwt(request, env);
   const b = await readJson(request);
@@ -6800,19 +6841,29 @@ async function handleBingoFallback(request, env, json) {
   const callerBall = reason === 'caller';
 
   /* CALLER MODE'S UNDO. The operator tapped the wrong number and withdrew it before the next call.
-     Only on a caller-mode draw, only the LAST ball on the record, and only a ball the tablet put
-     there: a server-drawn ball, or a ball on any other kind of night, is never taken off the record. */
+     Only on a caller-mode draw, only the LAST standing ball on the record, and only a ball the
+     tablet put there: a server-drawn ball, or a ball on any other kind of night, is never touched.
+     The row is KEPT and marked withdrawn (migration 103), so the night's record shows the number
+     was called and taken back; the next call can take its place and the number can be called
+     again, because the table's keys hold for standing balls only. Before 103 is run the column
+     is not there and the ball comes off the record as it always did, so either order is safe. */
   if (b.withdraw === true) {
     if (!callerBall || draw.mode !== 'local' || draw.fallback_why !== 'caller') {
       return json({ error: 'Only a caller-mode ball can be withdrawn' }, 409);
     }
-    const last = await sbGet(env, 'vp_bingo_draw_balls',
-      'draw_id=eq.' + enc(drawId) + '&select=ordinal,number,source&order=ordinal.desc&limit=1');
+    const lastQ = 'draw_id=eq.' + enc(drawId) + '&select=ordinal,number,source&order=ordinal.desc&limit=1';
+    const last = await sbGetStandingBalls(env, lastQ);
     if (!last.length || last[0].ordinal !== ordinal || last[0].number !== number || last[0].source !== 'local') {
       return json({ error: 'That is not the last call' }, 409);
     }
-    await sbDelete(env, 'vp_bingo_draw_balls', 'draw_id=eq.' + enc(drawId) + '&ordinal=eq.' + ordinal + '&number=eq.' + number + '&source=eq.local');
-    return json({ ok: true, withdrawn: number });
+    const which = 'draw_id=eq.' + enc(drawId) + '&ordinal=eq.' + ordinal + '&number=eq.' + number + '&source=eq.local';
+    const marked = await markBallWithdrawn(env, which);
+    if (marked === null) {   // migration 103 not run: the old behaviour, until it is
+      await sbDelete(env, 'vp_bingo_draw_balls', which);
+      return json({ ok: true, withdrawn: number, kept: false });
+    }
+    if (!marked.length) return json({ error: 'That is not the last call' }, 409);   // a second undo got there first
+    return json({ ok: true, withdrawn: number, kept: true });
   }
 
   if (draw.mode !== 'local') {

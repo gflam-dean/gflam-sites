@@ -204,3 +204,12 @@ increments the jackpot cannot take and seeds the next one. The game Worker reads
 only writes `reserve_cents` when the read succeeded, so either order is safe; run it BEFORE deploying that Worker so
 the cap is live on the first night. No RLS change (rides on vp_member_draws). NOT RUN. Rollback: drop the two columns
 (the file says how). 100 is agent B's (venue permits and compliance tick), written the same day.
+
+`venueplay-103-bingo-withdrawn-ball-kept.sql`: `vp_bingo_draw_balls.withdrawn_at` (timestamptz, null = the ball stands).
+Caller mode's Undo used to DELETE the ball's row, so the night's draw record had no trace of a number called and taken
+back (certification review, 17 Oct 2026). The game Worker now marks the row instead. The table's two keys (one ball per
+number, one per place) become partial unique indexes over standing balls only, because after an Undo the next ball takes
+the same place and the withdrawn number may be called again; a check stops a server ball ever being marked withdrawn.
+Replica identity set to full, since the primary key goes. Either order is safe: before it is run the Worker sees
+PostgREST refuse the column and deletes the row as before; with it run, the old Worker's delete still works. Run it
+BEFORE the Worker if possible so the first Undo is kept. No RLS change. NOT RUN. Rollback: in the file.
