@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>VenuePlay Admin</title>
+<!-- So HQ can be added to a phone's Home Screen: an iPhone only takes help desk alerts from a site opened that way. -->
+<link rel="manifest" href="/app/hq.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="/logos/venueplay_appicon_rebuilt.png">
 <link rel="icon" type="image/png" href="/logos/venueplay_appicon_rebuilt.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -3438,5 +3442,7 @@
   });
 })();
 </script>
+<!-- The help desk tab (vp-helpdesk-hq.js, 19 Oct 2026): tickets for both brands, HQ only. -->
+<script src="vp-helpdesk-hq.js"></script>
 </body>
 </html>

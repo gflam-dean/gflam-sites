@@ -9914,7 +9914,9 @@ async function helpAdminList(request, env, json) {
   const rows = await vpaSelectAll(env, 'vp_help_tickets', rest.join('&'));
   const venues = await helpVenueNames(env, rows.map((r) => r.venue_id));
   const admins = await vpaSelect(env, 'vp_platform_admins', 'select=label&order=label.asc');
-  return json({ tickets: rows, venues: venues, assignees: (admins || []).map((x) => x.label).filter(Boolean) });
+  // The venue picker for "Log a call". HQ only, like everything else here; paged and ordered.
+  const all = g.body.with_venues ? await vpaSelectAll(env, 'vp_venues', 'select=id,name&order=name.asc,id.asc') : undefined;
+  return json({ tickets: rows, venues: venues, assignees: (admins || []).map((x) => x.label).filter(Boolean), all_venues: all });
 }
 
 /* The HQ badge: how many are new (nobody has opened them), and how many of those are urgent. */
