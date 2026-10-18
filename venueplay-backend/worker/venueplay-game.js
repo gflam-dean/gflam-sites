@@ -4248,6 +4248,30 @@ async function bingoRecordRows(env, venueId) {
         outcome: b.withdrawn_at ? 'WITHDRAWN at ' + b.withdrawn_at + ': called in error and taken back, not part of the game' : 'called',
         drawId: b.draw_id || '', order: b.ordinal != null ? b.ordinal : '', source: bingoSourceWord(b.source, d) });
     });
+    /* EVERY TICKET AND EVERY CLAIM GOES IN THE RECORD TOO (audit, 19 Oct 2026): who held which ticket,
+       who dealt it (server or, in an outage, the tablet), when, and how many balls were out; every
+       BINGO pressed, the server's verdict, which check the host saw, and what was decided by whom.
+       The undealt pages of a strip are never listed. */
+    const tickets = await sbGetAll(env, 'vp_bingo_tickets', 'draw_id=in.(' + ids.map(enc).join(',') +
+      ')&dealt_at=not.is.null&select=draw_id,pid,card_no,source,dealt_at,tablet_dealt_at,balls_at_deal,voided_at,book,page&order=dealt_at.asc,draw_id.asc,pid.asc,book.asc,page.asc');
+    tickets.forEach(function (t) {
+      out.push({ when: t.dealt_at || '', game: 'bingo ticket', name: 'phone ' + (t.pid || ''),
+        number: t.card_no != null ? t.card_no : '', winner: '', prize: '',
+        outcome: 'dealt' + (t.balls_at_deal != null ? ' with ' + t.balls_at_deal + ' balls on the record' : '') +
+          (t.voided_at ? '; voided at ' + t.voided_at : ''),
+        drawId: t.draw_id || '', order: '',
+        source: t.source === 'tablet' ? 'tablet (outage), dealt on the tablet at ' + (t.tablet_dealt_at || 'unknown') : 'server' });
+    });
+    const claims = await sbGetAll(env, 'vp_bingo_claims', 'draw_id=in.(' + ids.map(enc).join(',') +
+      ')&select=id,draw_id,pid,card_no,card_no_called,pattern,balls,verdict,decided_on,tablet_verdict,status,resolved_at,resolved_by,claimed_at,record_note&order=claimed_at.asc,id.asc');
+    claims.forEach(function (c) {
+      out.push({ when: c.claimed_at || '', game: 'bingo claim', name: 'phone ' + (c.pid || ''),
+        number: c.card_no != null ? c.card_no : (c.card_no_called != null ? c.card_no_called : ''), winner: '', prize: '',
+        outcome: 'pattern ' + c.pattern + '; server verdict ' + c.verdict + '; host saw the ' + c.decided_on + ' check' +
+          (c.tablet_verdict ? ' (tablet said ' + c.tablet_verdict + ')' : '') + '; decision ' + c.status +
+          (c.resolved_at ? ' at ' + c.resolved_at + ' by ' + (c.resolved_by || 'unknown') : '') + (c.record_note ? '; ' + c.record_note : ''),
+        drawId: c.draw_id || '', order: c.balls != null ? c.balls : '', source: c.decided_on || '' });
+    });
   }
   return out;
 }
@@ -6321,7 +6345,7 @@ async function handleBingoSeat(request, env, json) {
       await markBroadcastGameLive(env, session.venue_id, 'bingo');
     }
   }
-  const out = { ok: true, seated: seated };
+  const out = { ok: true, seated: seated, fallback_off_states: fallbackOffList() };
   if (b.count === true) {
     // The very read and count chargeNightOverage makes, so the card cannot disagree with the bill.
     const all = await sbGet(env, 'vp_players', 'session_id=eq.' + enc(sessionId) + '&kicked=eq.false&select=id,device_id');
@@ -6350,6 +6374,34 @@ async function handleBingoSeat(request, env, json) {
  * long as it's foolproof and also legal".)
  */
 const BINGO_SERVER_HOLD_MS = 4000;   // the console holds 5s; this is the backstop against a double request
+
+/* THE ONE SWITCH FOR THE TABLET FALLBACKS (19 Oct 2026). A state named here gets NO tablet fallback:
+   no ball called on the tablet, no ticket dealt on it, no claim confirmed on its check. The server
+   refuses all three for that state's venues, and the console learns the list from /host/bingo/draw
+   and /host/bingo/seat (and keeps it on the tablet) so it waits for the server instead. Default:
+   none, which is Dean's decision to keep the fallbacks. If OLGR asks, Queensland off is this line:
+     const TABLET_FALLBACK_OFF_STATES = new Set(['QLD']);  */
+const TABLET_FALLBACK_OFF_STATES = new Set([]);
+function fallbackOffList() { return Array.from(TABLET_FALLBACK_OFF_STATES); }
+function tabletFallbackOk(state) { return !TABLET_FALLBACK_OFF_STATES.has(String(state || '').toUpperCase()); }
+async function venueState(env, venueId) {
+  const v = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=au_state&limit=1');
+  return String((v[0] && v[0].au_state) || '').toUpperCase();
+}
+// How many balls stand on the record (withdrawn ones do not count): the next ball's place is this + 1.
+async function standingBallCount(env, drawId) {
+  const r = await sbGetStandingBalls(env, 'draw_id=eq.' + enc(drawId) + '&select=ordinal&order=ordinal.desc&limit=1');
+  return r.length ? r[0].ordinal : 0;
+}
+// A draw opened for real balls (caller mode). Nothing else may post a 'caller' ball, and nothing
+// but a caller ball goes on one.
+function isCallerDraw(draw) { return !!draw && draw.draw_seed === CALLER_NO_SEED && draw.fallback_why === CALLER_REASON; }
+/* The server's own evidence that it failed to serve the ball at `ordinal`: it was asked for that
+   place (bingoRecordAsk) and the place is still empty (the caller checks ordinal = standing + 1). */
+function serverFailedBall(draw, ordinal) { return !!draw && draw.ball_asked_ordinal != null && draw.ball_asked_ordinal >= ordinal; }
+// A recorded outage on this draw: the server itself switched it to the tablet, or a deal it received failed.
+function drawHadOutage(draw) { return !!draw && ((draw.mode === 'local' && draw.fallback_why !== CALLER_REASON) || !!draw.deal_failed_at); }
+const BINGO_DRAW_COLS = 'id,venue_id,session_id,draw_index,draw_seed,mode,fallback_at,fallback_why,finished_at,ball_asked_ordinal,deal_failed_at';
 
 async function handleBingoDrawStart(request, env, json) {
   const authUserId = await verifyHostJwt(request, env);
@@ -6382,7 +6434,8 @@ async function handleBingoDrawStart(request, env, json) {
     draw_index: 0,
   }), true);
   const row = Array.isArray(rows) ? rows[0] : rows;
-  return json({ draw_id: row.id });
+  const state = await venueState(env, venueId);
+  return json({ draw_id: row.id, tablet_fallback: tabletFallbackOk(state), fallback_off_states: fallbackOffList() });
 }
 
 /* The host's Call a ball and Draw a member in ONE database trip each (migration 76).
@@ -6425,7 +6478,7 @@ async function hostDrawRpc(request, env, json, fn, extra, gate) {
   assertUuid(drawId, 'draw_id');
   // A check that has to run before EITHER path draws (the members draw's rules). Here, because
   // the body can only be read once and both paths start from this one.
-  if (gate) { const refused = await gate(env, json, authUserId, drawId); if (refused) return { reply: refused }; }
+  if (gate) { const refused = await gate(env, json, authUserId, drawId, b); if (refused) return { reply: refused }; }
   const pre = { authUserId, b, drawId };
   if (hostDrawRpcMissing) return { pre, drawId };
   const args = Object.assign({ p_draw_id: drawId, p_auth_user_id: authUserId }, extra || {});
@@ -6447,8 +6500,23 @@ async function hostDrawRpc(request, env, json, fn, extra, gate) {
   return { reply: json({ error: reply[1] }, reply[0]) };
 }
 
+/* THE SERVER'S OWN RECORD OF BEING ASKED (migration 105). The console says which place it wants
+   (ordinal = balls on its board + 1). Written BEFORE the draw, so if the draw then fails, or never
+   finishes, the server itself holds the proof: a place it was asked for and did not fill. That is
+   the only thing that lets the tablet call balls on a server draw (handleBingoFallback). The draw
+   id is a secret only the venue's own console holds; the staff check follows in the draw itself. */
+async function bingoRecordAsk(env, json, authUserId, drawId, b) {
+  const o = parseInt(b && b.ordinal, 10);
+  if (o >= 1 && o <= 90) {
+    try {
+      await sbPatch(env, 'vp_bingo_draws', 'id=eq.' + enc(drawId) + '&finished_at=is.null',
+        { ball_asked_ordinal: o, ball_asked_at: new Date().toISOString() });
+    } catch (e) { /* the ball itself is what matters; a lost ask only means no tablet fallback later */ }
+  }
+  return null;
+}
 async function handleBingoBall(request, env, json) {
-  const r = await hostDrawRpc(request, env, json, 'vp_bingo_ball', { p_hold_ms: BINGO_SERVER_HOLD_MS });
+  const r = await hostDrawRpc(request, env, json, 'vp_bingo_ball', { p_hold_ms: BINGO_SERVER_HOLD_MS }, bingoRecordAsk);
   if (r.reply) return r.reply;
   if (r.pre) return handleBingoBallManyTrips(request, env, json, r.pre);
   const d = r.rpc;
@@ -6538,10 +6606,11 @@ async function handleBingoFallback(request, env, json) {
   const drawId = String(b.draw_id || '').trim();
   if (!drawId) return json({ error: 'Missing draw_id' }, 400);
   assertUuid(drawId, 'draw_id');
-  const draws = await sbGet(env, 'vp_bingo_draws', 'id=eq.' + enc(drawId) + '&select=id,venue_id,draw_index,mode,fallback_why');
+  const draws = await sbGet(env, 'vp_bingo_draws', 'id=eq.' + enc(drawId) + '&select=' + BINGO_DRAW_COLS);
   if (!draws.length) return json({ error: 'Draw not found' }, 404);
   const draw = draws[0];
   await requireStaff(env, authUserId, draw.venue_id);
+  if (draw.finished_at) return json({ error: 'This game is finished' }, 409);
 
   const number = parseInt(b.number, 10);
   const ordinal = parseInt(b.ordinal, 10);
@@ -6558,6 +6627,11 @@ async function handleBingoFallback(request, env, json) {
      was called and taken back; the next call can take its place and the number can be called
      again, because the table's keys hold for standing balls only. Before 103 is run the column
      is not there and the ball comes off the record as it always did, so either order is safe. */
+  /* A 'caller' ball only on a draw OPENED for real balls, and only caller balls on one: a host cannot
+     call a server night "real balls" to post numbers on it (audit, 19 Oct 2026). */
+  if (callerBall !== isCallerDraw(draw)) {
+    return json({ error: callerBall ? 'Only a draw opened for real balls takes caller balls' : 'This draw is called with real balls' }, 409);
+  }
   if (b.withdraw === true) {
     if (!callerBall || draw.mode !== 'local' || draw.fallback_why !== 'caller') {
       return json({ error: 'Only a caller-mode ball can be withdrawn' }, 409);
@@ -6577,14 +6651,20 @@ async function handleBingoFallback(request, env, json) {
     return json({ ok: true, withdrawn: number, kept: true });
   }
 
-  if (draw.mode !== 'local') {
-    await sbPatch(env, 'vp_bingo_draws', 'id=eq.' + enc(drawId), {
-      mode: 'local', fallback_at: ordinal,
-      fallback_why: reason,
-    });
+  /* IN ORDER, NOTHING SKIPPED: the ball goes in the next empty place or not at all. */
+  const standing = await standingBallCount(env, drawId);
+  if (ordinal !== standing + 1) return json({ error: 'Out of order: the record holds ' + standing + ' balls, so the next is ball ' + (standing + 1) }, 409);
+  if (!callerBall) {
+    if (!tabletFallbackOk(await venueState(env, draw.venue_id))) return json({ error: 'Calling from the tablet is switched off at this venue' }, 403);
+    /* THE SERVER DECIDES THAT IT FAILED. A healthy server draw is handed to the tablet only when the
+       server itself was asked for this place and never filled it (bingoRecordAsk). A host cannot
+       declare an outage the server did not have. */
+    if (draw.mode !== 'local') {
+      if (!serverFailedBall(draw, ordinal)) return json({ error: 'The server has not failed to call this ball, so it does not take one from the tablet' }, 409);
+      await sbPatch(env, 'vp_bingo_draws', 'id=eq.' + enc(drawId) + '&mode=eq.server', { mode: 'local', fallback_at: ordinal, fallback_why: reason });
+    }
   }
-  // The unique (draw_id, number) and primary key (draw_id, ordinal) refuse a repeat or a clash
-  // with a server ball; sbInsert turns that into a 409, which the console ignores.
+  // The table's keys still refuse a repeat or a clash with a server ball; sbInsert turns that into a 409.
   await sbInsert(env, 'vp_bingo_draw_balls', { draw_id: drawId, ordinal, number, source: 'local' }, false);
   return json({ ok: true });
 }
@@ -6790,7 +6870,7 @@ function bingoTicketWins(cells, called, pattern) {
 async function bingoDrawForStaff(env, authUserId, drawId) {
   if (!drawId) throw httpError(400, 'Missing draw_id');
   assertUuid(drawId, 'draw_id');
-  const draws = await sbGet(env, 'vp_bingo_draws', 'id=eq.' + enc(drawId) + '&select=id,venue_id,session_id,mode,fallback_why,finished_at');
+  const draws = await sbGet(env, 'vp_bingo_draws', 'id=eq.' + enc(drawId) + '&select=' + BINGO_DRAW_COLS);
   if (!draws.length) throw httpError(404, 'Draw not found');
   const staff = await requireStaff(env, authUserId, draws[0].venue_id);   // staff at THIS venue, and the kill-switch
   return { draw: draws[0], staff };
@@ -6817,7 +6897,10 @@ async function handleBingoDeal(request, env, json) {
       h.tablet.slice(0, BINGO_DEAL_MAX_TICKETS).forEach(function (t) {
         const cells = ticketFlat27(t && t.cells);
         const no = parseInt(t && t.card_no, 10);
-        if (cells && no > 0 && no < 100000) hand.tablet.push({ cells, card_no: no });
+        // When the tablet says it dealt it: kept beside the server's own time, never in the future.
+        let at = Date.parse(t && t.dealt_at);
+        at = (Number.isFinite(at) && at <= Date.now()) ? new Date(at).toISOString() : null;
+        if (cells && no > 0 && no < 100000) hand.tablet.push({ cells, card_no: no, at });
       });
     } else {
       const want = parseInt(h.want, 10);
@@ -6831,14 +6914,14 @@ async function handleBingoDeal(request, env, json) {
      the phones from), and a real-balls night anywhere (caller mode). The phones there are already
      told to play on paper and never join the room; this is the server saying so too, so a stale page
      cannot be dealt one. Refused per phone, not as an error, so the console does not take the refusal
-     for an outage and deal from the tablet instead. Recording what a tablet already dealt is still
-     allowed: the record must say what happened. */
+     for an outage and deal from the tablet instead. Tablet tickets are refused here too (audit,
+     19 Oct 2026): a ticket the rules forbid does not become allowed by being dealt on a tablet. */
   let paperNight = draw.fallback_why === CALLER_REASON;
   if (!paperNight) {
     const v = await sbGet(env, 'vp_venues', 'id=eq.' + enc(draw.venue_id) + '&select=au_state&limit=1');
     paperNight = !!(v[0] && PAPER_BINGO_STATES.has(String(v[0].au_state || '').toUpperCase()));
   }
-  if (paperNight) hands = hands.filter(function (h) { if (h.tablet) return true; refused.push(h.pid); return false; });
+  if (paperNight) hands = hands.filter(function (h) { refused.push(h.pid); return false; });
   /* THE SEAT RULE. In a session, a ticket goes only to a phone whose device id holds a live row in
      it: the phone has been to /join for this night, and it is what the bill counts. A phone on the
      channel with no server identity is never dealt (it is asked to check in, by the console). */
@@ -6847,10 +6930,40 @@ async function handleBingoDeal(request, env, json) {
     const rows = dids.length ? await sbGet(env, 'vp_players', 'session_id=eq.' + enc(draw.session_id) + '&kicked=eq.false&device_id=in.(' +
       dids.map(enc).join(',') + ')&select=device_id&limit=' + (dids.length * 4)) : [];
     const known = new Set(rows.map((r) => r.device_id));
-    hands = hands.filter(function (h) { if (h.tablet || (h.did && known.has(h.did))) return true; refused.push(h.pid); return false; });
+    hands = hands.filter(function (h) { if (h.did && known.has(h.did)) return true; refused.push(h.pid); return false; });
+  }
+  /* TABLET TICKETS ONLY AFTER AN OUTAGE THE SERVER ITSELF RECORDED (audit, 19 Oct 2026). They used to be
+     taken for any phone at any time and judged like the server's own, so a host could put a made-up
+     ticket on the record after the balls were out and have a claim confirmed on it. Now a tablet
+     ticket is recorded only when: the server logged a failed deal on this draw (deal_failed_at), no
+     ball is on the record yet, the venue's state allows tablet fallbacks, and the phone holds no
+     ticket the server dealt. The seat rule and the paper refusal above apply to it like any ticket. */
+  const standingNow = await standingBallCount(env, drawId);
+  if (hands.some((h) => h.tablet)) {
+    const okHere = tabletFallbackOk(await venueState(env, draw.venue_id)) && !!draw.deal_failed_at && standingNow === 0;
+    let serverHeld = new Set();
+    if (okHere) {
+      const tpids = hands.filter((h) => h.tablet).map((h) => enc(h.pid));
+      (await sbGetAll(env, 'vp_bingo_tickets', 'draw_id=eq.' + enc(drawId) + '&pid=in.(' + tpids.join(',') +
+        ')&source=eq.server&dealt_at=not.is.null&voided_at=is.null&select=pid,book,page&order=pid.asc,book.asc,page.asc'))
+        .forEach(function (t) { serverHeld.add(t.pid); });
+    }
+    hands = hands.filter(function (h) { if (!h.tablet || (okHere && !serverHeld.has(h.pid))) return true; refused.push(h.pid); return false; });
   }
   if (!hands.length) return json({ ok: true, hands: {}, refused, paper: paperNight });
-
+  try {
+    return await bingoDealHands(env, json, draw, hands, refused, paperNight, standingNow);
+  } catch (e) {
+    /* THE SERVER'S OWN RECORD THAT A DEAL FAILED. A deal it received and could not complete is the one
+       outage the server can vouch for, and the only thing that lets tablet tickets on the record. */
+    if (!(e && e.status >= 400 && e.status < 500)) {
+      try { await sbPatch(env, 'vp_bingo_draws', 'id=eq.' + enc(drawId), { deal_failed_at: new Date().toISOString(), deal_fail_why: String((e && e.message) || e).slice(0, 200) }); } catch (e2) {}
+    }
+    throw e;
+  }
+}
+async function bingoDealHands(env, json, draw, hands, refused, paperNight, standingNow) {
+  const drawId = draw.id;
   const pidIn = 'pid=in.(' + hands.map((h) => enc(h.pid)).join(',') + ')';
   const held = await sbGetAll(env, 'vp_bingo_tickets', 'draw_id=eq.' + enc(drawId) + '&' + pidIn +
     '&select=id,pid,book,page,card_no,source,dealt_at,voided_at&order=pid.asc,book.asc,page.asc');
@@ -6870,7 +6983,7 @@ async function handleBingoDeal(request, env, json) {
         if (have.has(t.card_no)) return;
         have.add(t.card_no);
         inserts.push({ draw_id: drawId, pid: h.pid, device_id: h.did, book: book + Math.floor(k / 6), page: k % 6,
-                       cells: t.cells, card_no: t.card_no, source: 'tablet', dealt_at: now });
+                       cells: t.cells, card_no: t.card_no, source: 'tablet', dealt_at: now, tablet_dealt_at: t.at, balls_at_deal: standingNow });
         k++;
       });
       return;
@@ -6889,7 +7002,7 @@ async function handleBingoDeal(request, env, json) {
         for (let pg = 0; pg < 6; pg++) {
           const now1 = need > 0;
           inserts.push({ draw_id: drawId, pid: h.pid, device_id: h.did, book, page: pg, cells: strip[pg],
-                         card_no: now1 ? freshCardNo(used) : null, source: 'server', dealt_at: now1 ? now : null });
+                         card_no: now1 ? freshCardNo(used) : null, source: 'server', dealt_at: now1 ? now : null, balls_at_deal: standingNow });
           if (now1) need--;
         }
         book++;
@@ -6904,12 +7017,12 @@ async function handleBingoDeal(request, env, json) {
   } catch (e) {
     // A racing deal for the same game took a page or a number first. Nothing was written (the
     // insert is one statement); ask again and the next answer is computed from what is there now.
-    if (e && e.status === 409) return json({ error: 'Dealing already in progress. Try again.' }, 503);
+    if (e && e.status === 409) return json({ error: 'Dealing already in progress. Try again.' }, 429);
     throw e;
   }
   for (const d of deal) {
     await sbPatch(env, 'vp_bingo_tickets', 'id=eq.' + enc(d.id) + '&dealt_at=is.null',
-      { dealt_at: now, card_no: d.card_no, device_id: d.device_id });
+      { dealt_at: now, card_no: d.card_no, device_id: d.device_id, balls_at_deal: standingNow });
   }
   if (voids.length) {
     await sbPatch(env, 'vp_bingo_tickets', 'id=in.(' + voids.map(enc).join(',') + ')&voided_at=is.null', { voided_at: now });
@@ -6941,7 +7054,7 @@ async function handleBingoClaim(request, env, json) {
 
   // The same claim again (the console retrying after a timeout): the first verdict stands.
   const prior = await sbGet(env, 'vp_bingo_claims', 'draw_id=eq.' + enc(drawId) + '&ref=eq.' + enc(ref) + '&select=*&limit=1');
-  if (prior.length) return json(await bingoClaimReply(env, prior[0], authUserId, decision));
+  if (prior.length) return await bingoClaimAnswer(env, json, draw, prior[0], authUserId, decision);
 
   // THE BALLS: this server's own record, in the order they were called.
   const standing = await sbGetStandingBalls(env, 'draw_id=eq.' + enc(drawId) + '&select=ordinal,number,source&order=ordinal.asc&limit=90');
@@ -6953,14 +7066,17 @@ async function handleBingoClaim(request, env, json) {
       note = 'The tablet\'s called numbers disagree with the server record; the server record was used.';
     } else if (called.length > standing.length) {
       /* Balls the tablet called while it could not reach us, which the best-effort fallback reports
-         never delivered. Only on a draw the tablet has taken over (or says it has: tablet_draw, the
-         same statement /host/bingo/fallback accepts from a host), only appended in order after what
-         is here, and the table's keys refuse a repeat. On a server draw the tablet adds nothing. */
-      let local = draw.mode === 'local';
-      if (!local && b.tablet_draw === true) {
+         never delivered. Taken ONLY on the rules /host/bingo/fallback applies (audit, 19 Oct 2026):
+         never on a finished or real-balls draw, never where the state's tablet fallback is off, and on
+         a server draw only if the server itself was asked for the next place and never filled it.
+         The console's word (tablet_draw) is not enough. Appended in order; the table's keys refuse a
+         repeat. Otherwise the tablet adds nothing and the claim is judged on the server's record. */
+      let local = !draw.finished_at && !isCallerDraw(draw) && tabletFallbackOk(await venueState(env, draw.venue_id)) &&
+        (draw.mode === 'local' || serverFailedBall(draw, standing.length + 1));
+      if (local && draw.mode !== 'local') {
         await sbPatch(env, 'vp_bingo_draws', 'id=eq.' + enc(drawId) + '&mode=eq.server',
           { mode: 'local', fallback_at: standing.length + 1, fallback_why: String(b.tablet_why || 'worker unreachable').slice(0, 200) });
-        local = true;
+        draw.mode = 'local'; draw.fallback_why = String(b.tablet_why || 'worker unreachable').slice(0, 200);
       }
       if (local) {
         for (let i = standing.length; i < Math.min(called.length, balls); i++) {
@@ -6970,7 +7086,7 @@ async function handleBingoClaim(request, env, json) {
           } catch (e) { note = 'A tablet ball could not be added to the record.'; break; }
         }
       } else {
-        note = 'The tablet showed more numbers than the server drew; the server record was used.';
+        note = 'The tablet showed more numbers than the server has on its record, and the server did not fail to call them; the server record was used.';
       }
     }
   }
@@ -6978,8 +7094,11 @@ async function handleBingoClaim(request, env, json) {
   const set = new Set(out.map((r) => r.number));
 
   // THE TICKET: this server's copy, never anything the phone or the tablet says is on it.
-  const tickets = await sbGet(env, 'vp_bingo_tickets', 'draw_id=eq.' + enc(drawId) + '&pid=eq.' + enc(pid) +
-    '&dealt_at=not.is.null&voided_at=is.null&select=id,card_no,cells,source,device_id&order=book.asc,page.asc&limit=48');
+  /* A tablet ticket counts only if it was on the record before ANY ball (balls_at_deal 0): a ticket
+     recorded after the numbers it needs were out proves nothing (audit, 19 Oct 2026). */
+  const tickets = (await sbGet(env, 'vp_bingo_tickets', 'draw_id=eq.' + enc(drawId) + '&pid=eq.' + enc(pid) +
+    '&dealt_at=not.is.null&voided_at=is.null&select=id,card_no,cells,source,device_id,balls_at_deal&order=book.asc,page.asc&limit=48'))
+    .filter((t) => t.source !== 'tablet' || t.balls_at_deal === 0);
   let tk = cardNoCalled ? (tickets.find((t) => t.card_no === cardNoCalled) || null) : null, swapped = false;
   if (!tk) {
     // They pressed on a number we do not hold for them (they slept through a re-deal): check the
@@ -6996,7 +7115,6 @@ async function handleBingoClaim(request, env, json) {
     verdict, winning_cells: won.cells, decided_on: decidedOnTablet ? 'tablet' : 'server',
     tablet_verdict: decidedOnTablet ? tabletVerdict : null, record_note: note,
   };
-  if (decision) { row.status = decision; row.resolved_at = new Date().toISOString(); row.resolved_by = authUserId; }
   let saved;
   try {
     const rows = await sbInsert(env, 'vp_bingo_claims', row, true);
@@ -7008,7 +7126,24 @@ async function handleBingoClaim(request, env, json) {
     if (!again.length) throw e;
     saved = again[0];
   }
-  return json(await bingoClaimReply(env, saved, authUserId, decision, tk));
+  // record_short: the claim needs more balls than the server has on its record (the tablet called
+  // them in an outage the server did not see). The console then knows the server could not judge it.
+  return await bingoClaimAnswer(env, json, draw, saved, authUserId, decision, tk, { record_short: balls > out.length });
+}
+/* CONFIRMED ONLY WHAT THE SERVER CAN STAND BEHIND (audit, 19 Oct 2026). A claim is recorded as confirmed
+   only if the server's own verdict is a win, or the host had to decide it on the tablet's check during
+   an outage this server itself recorded on the draw (and the state allows tablet fallbacks). A host who
+   confirms anything else is refused: the claim stays on the record as it was, with the server's verdict. */
+async function bingoMayConfirm(env, draw, c) {
+  if (c.verdict === 'win') return true;
+  if (c.decided_on !== 'tablet' || !drawHadOutage(draw)) return false;
+  return tabletFallbackOk(await venueState(env, draw.venue_id));
+}
+async function bingoClaimAnswer(env, json, draw, c, authUserId, decision, tk, extra) {
+  if (decision === 'confirmed' && c.status === 'pending' && !(await bingoMayConfirm(env, draw, c))) {
+    return json({ error: 'The server checked this ticket and it is not a win, so it cannot be confirmed.', claim_id: c.id, verdict: c.verdict, status: c.status }, 409);
+  }
+  return json(Object.assign(await bingoClaimReply(env, c, authUserId, decision, tk), extra || {}));
 }
 // One shape for a claim's answer, whether it was just made or is being asked about again.
 async function bingoClaimReply(env, c, authUserId, decision, tk) {
@@ -7035,10 +7170,13 @@ async function handleBingoClaimResolve(request, env, json) {
   assertUuid(claimId, 'claim_id');
   const decision = String(b.decision || '');
   if (['confirmed', 'rejected', 'dropped'].indexOf(decision) < 0) return json({ error: 'Bad decision' }, 400);
-  const claims = await sbGet(env, 'vp_bingo_claims', 'id=eq.' + enc(claimId) + '&select=id,draw_id,status&limit=1');
+  const claims = await sbGet(env, 'vp_bingo_claims', 'id=eq.' + enc(claimId) + '&select=id,draw_id,status,verdict,decided_on&limit=1');
   if (!claims.length) return json({ error: 'Claim not found' }, 404);
-  await bingoDrawForStaff(env, authUserId, claims[0].draw_id);   // staff at the claim's venue
+  const { draw } = await bingoDrawForStaff(env, authUserId, claims[0].draw_id);   // staff at the claim's venue
   if (claims[0].status !== 'pending') return json({ ok: true, status: claims[0].status });   // a retry: already decided
+  if (decision === 'confirmed' && !(await bingoMayConfirm(env, draw, claims[0]))) {
+    return json({ error: 'The server checked this ticket and it is not a win, so it cannot be confirmed.', status: 'pending', verdict: claims[0].verdict }, 409);
+  }
   const done = await sbPatchReturning(env, 'vp_bingo_claims', 'id=eq.' + enc(claimId) + '&status=eq.pending',
     { status: decision, resolved_at: new Date().toISOString(), resolved_by: authUserId });
   return json({ ok: true, status: done.length ? decision : 'already decided' });
