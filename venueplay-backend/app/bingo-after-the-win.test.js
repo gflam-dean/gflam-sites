@@ -85,7 +85,7 @@ var NEED = ["isCalled", "rowComplete", "completeRows", "cornerNums", "checkPatte
    what happens AFTER a message is believed, so there is no VPPhoneKey here and the gate hands
    everything straight through, exactly as the page does when that script fails to load.
    Who is believed is tools/test-phones-cannot-be-impersonated.js. */
-var window = this, LEGACY_PHONES_OK = true, _phoneChain = Promise.resolve();
+var window = this, _phoneChain = Promise.resolve();
 /* Seating (14 Oct 2026): this room has no server session, so every phone is seated, which is the
    console with the Worker down. Asking the server is seatTick's business, not this suite's. */
 function seatSoon(){}

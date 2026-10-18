@@ -88,8 +88,7 @@ function tvHere() {} function ticketsFor() { return 1; } function dealFor(p) { p
 function dealSoon() { G.order.forEach(function (pid) { var p = G.players[pid]; if (p && (!p.cards || !p.cards.length)) dealFor(p); }); }
 function sendCards(pid) { send({ t: 'cards', pid: pid }); } function sendPlayers() {} function sendState() {} function saveGame() {}
 function renderJoinCounts() {} function renderConsole() {} function renderClaimQueue() {} function sendClaimPending() {} function claimChime() {} function checkPattern() { return true; }
-var m1 = /var LEGACY_PHONES_OK\s*=\s*(true|false);/.exec(html);
-var LEGACY_PHONES_OK = m1 ? (m1[1] === 'true') : true, _phoneChain = Promise.resolve();
+var _phoneChain = Promise.resolve();
 if (onMsgSrc && onPhoneSrc) { eval(onMsgSrc); eval(onPhoneSrc); }
 // Who is seated, and the name the console shows (14 Oct 2026): the real ones. This room has no
 // server session, so everyone is seated, which is exactly the console with the Worker down.
@@ -141,8 +140,8 @@ if (onMsgSrc && onPhoneSrc) {
 
   room();
   deliver({ t: 'join', pid: 'oldphone0001', name: 'Old page' });
-  check('a phone on the old page is ' + (LEGACY_PHONES_OK ? 'still heard while LEGACY_PHONES_OK is on' : 'refused now LEGACY_PHONES_OK is off'),
-    LEGACY_PHONES_OK ? !!G.players.oldphone0001 : !G.players.oldphone0001);
+  check('a phone on the old page (unsigned, random pid) is refused, and no switch is left that could let it in',
+    !G.players.oldphone0001 && !/var LEGACY_PHONES_OK/.test(html));
 }
 
 if (fails) throw new Error('phone impersonation: ' + fails + ' of ' + ran + ' failed');

@@ -21,7 +21,7 @@
 (function (root) {
   "use strict";
 
-  var GAMES = ["bingo", "trivia", "musical", "raffle", "members", "jag"];
+  var GAMES = ["bingo", "trivia", "musical", "raffle", "members"];
   /* No .html on any of these. Cloudflare Pages answers every .html URL with a
      308 to the extensionless one, so each hop was paying a whole extra round
      trip before the page even began to load. On pub wifi at eight o'clock that
@@ -32,8 +32,7 @@
     trivia:  "/app/trivia/screen?venue=",
     musical: "/app/musical/screen?venue=",
     raffle:  "/app/raffle/screen?venue=",
-    members: "/app/members/screen?venue=",
-    jag:     "/app/jag/screen?venue="
+    members: "/app/members/screen?venue="
   };
 
   /* Presence and housekeeping, never "a game is on air". Opening a console

@@ -324,7 +324,6 @@ export default {
       if (method === 'POST' && path === '/host/trivia/questions/remove')   return await handleTriviaRemove(request, env, json);
       if (method === 'POST' && path === '/host/overage/ack')   return await handleOverageAck(request, env, json);
       if (method === 'POST' && path === '/host/game/end')      return await handleGameEnd(request, env, json);
-      if (method === 'POST' && path === '/host/ball')          return await handleHostBall(request, env, json);
       if (method === 'POST' && path === '/host/bingo/draw')      return await handleBingoDrawStart(request, env, json);
       if (method === 'POST' && path === '/host/bingo/seat')      return await handleBingoSeat(request, env, json);
       if (method === 'POST' && path === '/host/bingo/ball')      return await handleBingoBall(request, env, json);
@@ -352,13 +351,6 @@ export default {
       if (method === 'POST' && path === '/host/members/draw-remove')   return await handleDrawRemove(request, env, json);
       if (method === 'POST' && path === '/host/raffle/prize-add')      return await handleRafflePrizeAdd(request, env, json);
       if (method === 'POST' && path === '/host/raffle/prize-remove')   return await handleRafflePrizeRemove(request, env, json);
-      /* Jag the Joker (migration 95). OFF unless JAG_ON=1: see jagOn(). */
-      if (method === 'GET'  && path === '/jag/board')           return await handleJagBoard(request, env, json);
-      if (method === 'GET'  && path === '/host/jag')            return await handleJagHost(request, env, json);
-      if (method === 'POST' && path === '/host/jag/start')      return await handleJagStart(request, env, json);
-      if (method === 'POST' && path === '/host/jag/turn')       return await handleJagTurn(request, env, json);
-      if (method === 'POST' && path === '/host/jag/jackpot')    return await handleJagJackpot(request, env, json);
-      if (method === 'POST' && path === '/host/jag/close')      return await handleJagClose(request, env, json);
       if (method === 'GET'  && path === '/player/card')        return await handlePlayerCard(request, env, json);
       if (method === 'POST' && path === '/player/claim')       return await handlePlayerClaim(request, env, json);
       if (method === 'POST' && path === '/player/answer')      return await handlePlayerAnswer(request, env, json);
@@ -2902,21 +2894,17 @@ async function handleHostGame(request, env, json) {
   // The format decides which per-format tables we write. Bingo is the default so the
   // existing bingo host (which sends no format) is unchanged. Pattern is a bingo-only
   // concept, so it is only required/validated on the bingo path.
-  const format = String(b.format || 'bingo90');
-  const bingoFormats = ['bingo90', 'bingo'];
+  /* NO BINGO HERE (19 Oct 2026). This route used to default to 90-ball bingo, with its own shuffle
+     (vp_bingo_games.draw_order) and its own one-ticket-per-phone deal into vp_cards. No page had
+     called it for bingo since the broadcast console took over, and a second, undescribed bingo
+     draw and ticket path in the live Worker is exactly what an OLGR assessor would ask about. Bingo
+     is drawn by /host/bingo/draw + /host/bingo/ball and dealt and judged by /host/bingo/deal and
+     /host/bingo/claim. A format must be named now; bingo90 is refused. */
+  const format = String(b.format || '');
   const isTrivia = format === 'trivia';
   const isMusical = format === 'musical' || format === 'musical_bingo';
   const isRaffle = format === 'raffle';
-  if (!isTrivia && !isMusical && !isRaffle && !bingoFormats.includes(format)) return json({ error: 'Unsupported format' }, 400);
-  // Pattern is validated per-format: 90-ball has three patterns and NO four_corners;
-  // musical bingo is a 5x5 grid that DOES include four_corners (see hostStartMusical).
-  // Raffle has no pattern at all (a random ticket number in a range).
-  let pattern = null;
-  if (!isTrivia && !isMusical && !isRaffle) {
-    pattern = b.pattern;
-    const validPatterns = ['one_line', 'two_lines', 'full_house'];   // 90-ball patterns; no four_corners
-    if (!validPatterns.includes(pattern)) return json({ error: 'Invalid pattern' }, 400);
-  }
+  if (!isTrivia && !isMusical && !isRaffle) return json({ error: 'Unsupported format' }, 400);
 
   const sessions = await sbGet(env, 'vp_sessions', 'id=eq.' + enc(sessionId) + '&select=*');
   /* THE SUSPEND CHECK USED TO SIT HERE, BEFORE requireStaff, AND THAT LEAKED.
@@ -3010,69 +2998,7 @@ async function handleHostGame(request, env, json) {
   if (isTrivia) return await hostStartTrivia(env, json, b, session, staff, seq);
   if (isMusical) return await hostStartMusical(env, json, b, session, staff, seq);
   if (isRaffle) return await hostStartRaffle(env, json, b, session, staff, seq);
-
-  const config = {};
-  if (b.prize) config.prize = String(b.prize).slice(0, 120);   // host-typed prize text, shown on TV
-  if (b.title) config.title = String(b.title).slice(0, 120);
-
-  // Cards per player: the host may ask for more than one card. SCHEMA LIMIT:
-  // vp_cards has a unique index (game_id, player_id) plus vp_cards_one_per_player_game,
-  // so at most ONE card per player per game can exist today. We therefore deal
-  // exactly one and record the requested number in config, so when that index is
-  // relaxed (a later slice) this endpoint can honour it without a client change.
-  let cardsPerPlayer = parseInt(b.cards_per_player, 10);
-  if (!(cardsPerPlayer >= 1)) cardsPerPlayer = 1;
-  if (cardsPerPlayer > 1) { config.cards_per_player_requested = cardsPerPlayer; cardsPerPlayer = 1; }
-
-  const gameRows = await sbInsert(env, 'vp_games', {
-    session_id: sessionId,
-    seq,
-    format: 'bingo90',   // 90-ball housie; migration 07 widened vp_games_format_check to allow this
-    status: 'running',
-    config,
-    started_at: new Date().toISOString(),
-  }, true);
-  const game = Array.isArray(gameRows) ? gameRows[0] : gameRows;
-  await finishOtherRunningGames(env, session.id, game.id);   // now safe: the new round exists
-
-  // The night is now underway: move the session from 'lobby' to 'running' on the
-  // first game so the status reflects reality (and stamps started_at once).
-  if (session.status === 'lobby') {
-    await sbPatch(env, 'vp_sessions', 'id=eq.' + enc(sessionId), { status: 'running', started_at: new Date().toISOString() });
-  }
-
-  // Server draw: a full CSPRNG Fisher-Yates permutation of 1..90. Stored in
-  // vp_bingo_games.draw_order and NEVER sent to any client.
-  const drawOrder = shuffle1to90();
-  const drawSeed = randomTokenHex(16);   // stored for audit ("prove the draw was fair")
-  await sbInsert(env, 'vp_bingo_games', {
-    game_id: game.id,
-    draw_seed: drawSeed,
-    draw_order: drawOrder,
-    draw_index: 0,
-    pattern,
-    auto_daub: false,
-  }, false);
-
-  // Deal one ticket to every current non-kicked PHONE. A paper musical card or trivia team from
-  // earlier in the same night is not a bingo player: VenuePlay prints no bingo tickets.
-  const players = (await sbGet(env, 'vp_players', 'session_id=eq.' + enc(sessionId) + '&kicked=eq.false&select=id,device_id'))
-    .filter((p) => !isPaperDevice(p.device_id));
-  const cards = players.map((p, i) => ({
-    game_id: game.id,
-    player_id: p.id,
-    card_no: i + 1,
-    cells: generateTicket(),
-  }));
-  if (cards.length) await sbInsert(env, 'vp_cards', cards, false);
-
-  // One broadcastable change: the game started.
-  await emitEvent(env, session, 'game.started', {
-    game_id: game.id, seq, format: 'bingo90', pattern,
-    prize: config.prize || null, title: config.title || null,
-  }, actorRef(staff));
-
-  return json({ game_id: game.id, seq, pattern, cards_dealt: cards.length });
+  return json({ error: 'Unsupported format' }, 400);
 }
 
 /* ------------------------------ TRIVIA: start a game ------------------------------
@@ -4901,247 +4827,9 @@ async function handleDrawRemove(request, env, json) {
   return json({ ok: true, name: dr[0].name || 'Members draw' });
 }
 
-/* =====================================================================
- * JAG THE JOKER  (migration 95, built 27 Sep 2026, OFF until JAG_ON=1)
- *
- * A weekly jackpot: a drawn ticket-holder turns one face-down card; the Joker wins, anything
- * else stays turned and the jackpot carries. Dean's condition: "prove the joker is in a random
- * spot where it stays". So the spot is picked HERE with randInt (this Worker's CSPRNG and
- * rejection rule, the same one every VenuePlay draw uses), a 128-bit salt is minted with it,
- * and the game is published with commitment = sha256('jag:<id>:<spot>:<salt>'). The spot and
- * salt go into vp_jag_secrets, readable by the service role only and frozen by a trigger.
- * When the Joker is found, or the game is closed, both are revealed and /jag-check recomputes
- * the hash in the browser. The spot is never sent to a console, screen or phone before then.
- *
- * LICENSING: a jackpotting game of chance. Refused in Queensland (OLGR approval, parked) and at
- * a venue with no state on file, on EVERY play (start, turn, jackpot), and every route is off
- * until the Worker has JAG_ON=1, which Dean switches on once the per-state position is
- * confirmed. Nothing here counts players, so it never touches billing.
- *
- * Reviewed 30 Sep 2026: one card a trading night unless an owner or manager overrides, a turn
- * names who it was for, the jackpot only goes down by an owner or manager and every change is
- * logged, ending a jackpot early is owner only with a reason the public can read, and its pot
- * carries into the next game. The SQL (migration 95) enforces all of it inside the transaction;
- * the state and staff check is ALSO made here, first, because this copy is the one the gate can
- * run (tools/test-jag-joker.js) and a refusal here costs the database nothing.
- * ===================================================================== */
-const JAG_STATUS = {
-  no_game:              [404, 'That Jag the Joker game is not here'],
-  no_venue:             [404, 'Venue not found'],
-  not_staff:            [403, 'Not authorised: you are not staff at this venue'],
-  venue_missing:        [403, 'Venue not available'],
-  venue_paused:         [403, 'Games are paused here tonight. Have a word with the staff.'],
-  no_state:             [403, 'Jag the Joker needs the venue\'s state on file first. Check the postcode on the Account page.'],
-  state_refused:        [403, 'Jag the Joker is not available in Queensland yet'],
-  not_owner:            [403, 'Only the venue owner can end a Jag the Joker jackpot early'],
-  not_owner_carry:      [403, 'Only the venue owner can start without carrying the last jackpot'],
-  not_manager_lower:    [403, 'Only an owner or manager can lower the jackpot'],
-  not_manager_override: [403, 'Only an owner or manager can turn a second card tonight'],
-  no_reason:            [400, 'Say why the jackpot is ending. It is shown on the public check page.'],
-  no_winner:            [400, 'Enter the ticket holder\'s name or ticket number'],
-  turned_tonight:       [409, 'A card has already been turned tonight. The next one is next trading night.'],
-  finished:             [409, 'This game has finished. Start a new one.'],
-  already_running:      [409, 'There is already a Jag the Joker game running here'],
-  already_turned:       [409, 'That card has already been turned. Pick another.'],
-  bad_card:             [400, 'That card is not on the board'],
-  bad_spot:             [500, 'The Joker could not be placed. Try again.'],
-};
-function jagOn(env) { return String(env.JAG_ON || '') === '1'; }
-function jagOff(json) { return json({ error: 'Jag the Joker is not switched on yet' }, 404); }
-function jagCents(v) {
-  const n = Math.round(Number(v));
-  return Number.isFinite(n) && n >= 0 && n <= 100000000 ? n : null;
-}
-function jagReply(json, status) {
-  const r = JAG_STATUS[status] || JAG_STATUS.not_staff;
-  return json({ error: r[1] }, r[0]);
-}
-async function jagRpc(env, json, fn, args) {
-  const d = await sbRpc(env, fn, args);
-  if (d && d.status === 'ok') return { d };
-  const r = JAG_STATUS[d && d.status];
-  if (!r) throw dbError('rpc', fn, 'unexpected status ' + (d && d.status));
-  return { reply: json({ error: r[1] }, r[0]) };
-}
-// The commitment. Also recomputed by the page at /jag-check, which must use the same string.
-async function jagCommitment(id, spot, salt) {
-  return await sha256Hex('jag:' + id + ':' + spot + ':' + salt);
-}
-
-/* STAFF FIRST, THEN THE STATE. The order is the point: somebody who is not staff at a venue is
-   told only that, never whether the venue is in Queensland or has no postcode. A null au_state
-   means the rules have not been confirmed for that venue (migration 44), and an owner can blank
-   the postcode and get exactly that (venueplay-api-FULL.js), so refusing only 'QLD' let a
-   Queensland venue clear its own refusal (review, 28 Sep 2026). vp_jag_gate in migration 95 says
-   the same thing in the same order inside every start, turn and jackpot change.
-   Returns { who } or { reply }. */
-async function jagGate(env, json, authUserId, venueId) {
-  const who = await sbRpc(env, 'vp_host_staff', { p_auth_user_id: authUserId, p_venue_id: venueId });
-  if (!who || who.status !== 'ok') return { reply: jagReply(json, who && who.status) };
-  const v = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=au_state&limit=1');
-  const st = String((v[0] && v[0].au_state) || '').toUpperCase();
-  if (!st) return { reply: jagReply(json, 'no_state') };
-  if (st === 'QLD') return { reply: jagReply(json, 'state_refused') };
-  return { who };
-}
-// A turn or a jackpot change is judged against the GAME's venue, never one the caller names.
-async function jagGameVenue(env, jagId) {
-  const g = await sbGet(env, 'vp_jag_games', 'id=eq.' + enc(jagId) + '&select=venue_id&limit=1');
-  return g.length ? g[0].venue_id : null;
-}
-
-/* The public board: which cards are gone, the jackpot, the fingerprint and, once it is over, the
-   card and key. Never who a card was turned for, and never the venue's id. */
-function jagPublicBoard(board) {
-  if (!board) return null;
-  const pub = Object.assign({}, board, {
-    turns: (board.turns || []).map(t => ({ card: t.card, is_joker: t.is_joker, jackpot_cents: t.jackpot_cents, turned_at: t.turned_at })),
-  });
-  delete pub.venue_id;
-  return pub;
-}
-
-/* GET /jag/board?venue=<slug>[&id=<game>]   PUBLIC: the TV fallback poll and the check page.
-
-   Public, so it is bounded twice. A few seconds of cache per venue (and game) in this isolate:
-   every TV in a venue and every phone that opened the check page share one database trip, and
-   a board only changes when a host turns a card, which the TV hears over the channel anyway.
-   And a per-network limit, the same soft in-memory limiter the join and report routes use. One
-   database trip either way: vp_jag_public resolves the slug, the board and the history at once. */
-const JAG_BOARD_TTL_MS = 5000;
-const JAG_BOARD_MAX_PER_IP = 120;         // a minute; a whole pub on one NAT reading the check page
-const jagBoardCache = new Map();          // 'slug|id' -> { until, status, body }
-async function handleJagBoard(request, env, json) {
-  if (!jagOn(env)) return jagOff(json);
-  const url = new URL(request.url);
-  const slug = String(url.searchParams.get('venue') || '').trim().toLowerCase().slice(0, 80);
-  if (!/^[a-z0-9-]+$/.test(slug)) return json({ error: 'Which venue?' }, 400);
-  const id = String(url.searchParams.get('id') || '').trim();
-  if (id) assertUuid(id, 'id');
-  const ipHash = await abuseIpHash(request, env);
-  if (ipHash) {
-    const rl = await rateLimit(env, 'jag:ip:' + ipHash, JAG_BOARD_MAX_PER_IP, 60);
-    if (!rl.ok) return json({ error: 'Too many requests from this network. Try again in a minute.' }, 429);
-  }
-  const key = slug + '|' + id, now = Date.now();
-  const hit = jagBoardCache.get(key);
-  if (hit && hit.until > now) return json(hit.body, hit.status);
-  if (jagBoardCache.size > 500) for (const [k, v] of jagBoardCache) if (v.until <= now) jagBoardCache.delete(k);
-  const d = await sbRpc(env, 'vp_jag_public', { p_slug: slug, p_jag_id: id || null });
-  let status = 200, body;
-  if (!d || d.status !== 'ok') {
-    const r = JAG_STATUS[d && d.status] || JAG_STATUS.no_venue;
-    status = r[0]; body = { error: r[1] };
-  } else {
-    body = { venue: d.venue, board: jagPublicBoard(d.board),
-             history: (d.history || []).map(h => ({ id: h.id, name: h.name, status: h.status, created_at: h.created_at,
-                                                  ended_at: h.ended_at, jackpot_cents: h.jackpot_cents, closed_reason: h.closed_reason })) };
-  }
-  jagBoardCache.set(key, { until: now + JAG_BOARD_TTL_MS, status, body });
-  return json(body, status);
-}
-
-/* GET /host/jag?venue_id=   staff: the console's view, names included, and the ended jackpot
-   whose pot is waiting to carry into the next game (if there is one). */
-async function handleJagHost(request, env, json) {
-  if (!jagOn(env)) return jagOff(json);
-  const authUserId = await verifyHostJwt(request, env);
-  const venueId = String(new URL(request.url).searchParams.get('venue_id') || '').trim();
-  assertUuid(venueId, 'venue_id');
-  const who = await sbRpc(env, 'vp_host_staff', { p_auth_user_id: authUserId, p_venue_id: venueId });
-  if (!who || who.status !== 'ok') return jagReply(json, who && who.status);
-  const board = await sbRpc(env, 'vp_jag_current', { p_venue_id: venueId });
-  const carry = board && board.status === 'closed' && !board.carried_into
-    ? { id: board.id, jackpot_cents: board.jackpot_cents } : null;
-  return json({ board: board || null, role: who.role, is_admin: !!who.is_admin, carry });
-}
-
-/* POST /host/jag/start { venue_id, name, deck_size, jackpot_cents, carry }
-   carry defaults to true: an ended jackpot's pot goes into the next one unless the OWNER says no. */
-async function handleJagStart(request, env, json) {
-  if (!jagOn(env)) return jagOff(json);
-  const authUserId = await verifyHostJwt(request, env);
-  const b = await readJson(request);
-  const venueId = String(b.venue_id || '').trim();
-  assertUuid(venueId, 'venue_id');
-  const deck = Math.round(Number(b.deck_size));
-  if (!(deck >= 10 && deck <= 100)) return json({ error: 'The board needs between 10 and 100 cards' }, 400);
-  const jackpot = jagCents(b.jackpot_cents);
-  if (jackpot === null) return json({ error: 'Enter the starting jackpot in dollars' }, 400);
-  const g = await jagGate(env, json, authUserId, venueId);
-  if (g.reply) return g.reply;
-  const id = crypto.randomUUID();
-  const spot = randInt(deck) + 1;
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  const salt = Array.from(bytes, x => x.toString(16).padStart(2, '0')).join('');
-  const commitment = await jagCommitment(id, spot, salt);
-  const r = await jagRpc(env, json, 'vp_jag_start', {
-    p_auth_user_id: authUserId, p_venue_id: venueId, p_jag_id: id,
-    p_name: String(b.name || '').trim().slice(0, 60), p_deck_size: deck, p_jackpot_cents: jackpot,
-    p_commitment: commitment, p_spot: spot, p_salt: salt, p_carry: b.carry !== false,
-  });
-  if (r.reply) return r.reply;
-  return json({ board: r.d.board });
-}
-
-/* POST /host/jag/turn { jag_id, card, winner_name, override }
-   No jackpot in here on purpose: the console used to send whatever was sitting in its jackpot
-   box, saved or not, and the turn quietly wrote it. A turn is recorded at the SAVED jackpot. */
-async function handleJagTurn(request, env, json) {
-  if (!jagOn(env)) return jagOff(json);
-  const authUserId = await verifyHostJwt(request, env);
-  const b = await readJson(request);
-  const jagId = String(b.jag_id || '').trim();
-  assertUuid(jagId, 'jag_id');
-  const card = Math.round(Number(b.card));
-  if (!(card >= 1 && card <= 100)) return json({ error: 'Pick a card on the board' }, 400);
-  const winner = String(b.winner_name || '').trim().slice(0, 60);
-  const venueId = await jagGameVenue(env, jagId);
-  if (!venueId) return jagReply(json, 'no_game');
-  const g = await jagGate(env, json, authUserId, venueId);
-  if (g.reply) return g.reply;
-  if (!winner) return jagReply(json, 'no_winner');
-  const r = await jagRpc(env, json, 'vp_jag_turn', {
-    p_auth_user_id: authUserId, p_jag_id: jagId, p_card: card,
-    p_winner_name: winner, p_override: b.override === true,
-  });
-  if (r.reply) return r.reply;
-  return json({ is_joker: !!r.d.is_joker, board: r.d.board });
-}
-
-/* POST /host/jag/jackpot { jag_id, jackpot_cents }   up by any host, down by an owner or manager. */
-async function handleJagJackpot(request, env, json) {
-  if (!jagOn(env)) return jagOff(json);
-  const authUserId = await verifyHostJwt(request, env);
-  const b = await readJson(request);
-  const jagId = String(b.jag_id || '').trim();
-  assertUuid(jagId, 'jag_id');
-  const jackpot = jagCents(b.jackpot_cents);
-  if (jackpot === null) return json({ error: 'Enter the jackpot in dollars' }, 400);
-  const venueId = await jagGameVenue(env, jagId);
-  if (!venueId) return jagReply(json, 'no_game');
-  const g = await jagGate(env, json, authUserId, venueId);
-  if (g.reply) return g.reply;
-  const r = await jagRpc(env, json, 'vp_jag_jackpot', { p_auth_user_id: authUserId, p_jag_id: jagId, p_jackpot_cents: jackpot });
-  if (r.reply) return r.reply;
-  return json({ board: r.d.board });
-}
-
-/* POST /host/jag/close { jag_id, reason }   OWNER (or HQ) only: stop without a winner, reveal the
-   spot, and say why on the public check page. The pot carries into the next game. */
-async function handleJagClose(request, env, json) {
-  if (!jagOn(env)) return jagOff(json);
-  const authUserId = await verifyHostJwt(request, env);
-  const b = await readJson(request);
-  const jagId = String(b.jag_id || '').trim();
-  assertUuid(jagId, 'jag_id');
-  const reason = String(b.reason || '').trim().slice(0, 200);
-  if (reason.length < 5) return jagReply(json, 'no_reason');
-  const r = await jagRpc(env, json, 'vp_jag_close', { p_auth_user_id: authUserId, p_jag_id: jagId, p_reason: reason });
-  if (r.reply) return r.reply;
-  return json({ board: r.d.board });
-}
+/* JAG THE JOKER was here (migration 95). Taken out of the live Worker on 19 Oct 2026: it is a random
+   draw game OLGR has not been asked about, and an assessor reading this file would rightly ask. The
+   whole feature is kept, untouched, on the branch jag-joker-parked (cut from main at 427f4f5). */
 
 /* POST /host/raffle/prize-add  (MANAGER/OWNER) : add a reusable prize to the venue's list.
    body: { venue_id, label }  -> { prize } */
@@ -6570,43 +6258,6 @@ async function handleHostRevealManyTrips(request, env, json, pre) {
   return json({ qseq: t.current_seq, correct_index: q.correct_index, split, leaderboard, already, double: mult === 2 });
 }
 
-/* ------------------------------ POST /host/ball ------------------------------
- * Host draws the next ball. Advance draw_index, read the next number from the
- * pre-shuffled order, broadcast bingo.ball_drawn.
- */
-async function handleHostBall(request, env, json) {
-  const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
-  const b = await readJson(request);
-  const gameId = String(b.game_id || '').trim();
-  if (!gameId) return json({ error: 'Missing game_id' }, 400);
-  assertUuid(gameId, 'game_id');   // reject non-UUID before it reaches PostgREST
-
-  const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,status');
-  if (!games.length) return json({ error: 'Game not found' }, 404);
-  // L9: a ball can only be drawn while the game is actually running.
-  if (games[0].status !== 'running') return json({ error: 'This game is not running' }, 409);
-  const session = await getSession(env, games[0].session_id);
-  // L9: and never on a session that has been closed.
-  if (session.status === 'finished' || session.status === 'cancelled') return json({ error: 'This session is closed' }, 409);
-  const staff = await requireStaff(env, authUserId, session.venue_id);   // ENFORCED: staff at the game's venue (also kill-switch)
-
-  // M2/M3: draw atomically in Postgres. vp_draw_next_ball advances draw_index and
-  // returns the newly drawn number in one statement, so two concurrent draws can
-  // never read the same index and emit the same ball. An empty result means every
-  // ball is already drawn (or the game has no bingo row).
-  const drawn = await sbRpc(env, 'vp_draw_next_ball', { p_game: gameId });
-  const row = Array.isArray(drawn) ? drawn[0] : drawn;
-  if (!row || row.number == null) return json({ error: 'All 90 balls have been drawn' }, 409);
-  const number = row.number;
-  const newIndex = row.new_index;
-
-  // 90-ball has no letter: emit just the number and its position in the draw.
-  await emitEvent(env, session, 'bingo.ball_drawn', {
-    number, index: newIndex, ordinal: newIndex, drawn_count: newIndex,
-  }, actorRef(staff));
-
-  return json({ number, index: newIndex });
-}
 
 /* ------------------------------ POST /host/bingo/seat ------------------------------
  * WHO IS REALLY IN THIS BINGO GAME, asked by the console that deals the tickets (14 Oct 2026).
@@ -6684,8 +6335,8 @@ async function handleBingoSeat(request, env, json) {
  * nothing recorded it until the end-of-game report, which the same tablet wrote.
  *
  * From 8 Sep 2026 the console asks the Worker for a draw at game start and for every ball
- * after that. The whole order of 1..90 is shuffled here (shuffle1to90, the same Fisher-Yates
- * the Worker-dealt bingo uses), written to vp_bingo_draws and NEVER returned to any client;
+ * after that. The whole order of 1..90 is shuffled here (shuffle1to90, the one bingo ball
+ * generator in this Worker), written to vp_bingo_draws and NEVER returned to any client;
  * each ball is handed over one at a time by vp_bingo_next_ball, which advances the index and
  * writes the ball row in one statement. Migration 70.
  *
@@ -7046,8 +6697,10 @@ function generateStrip() {
     }
     if (validStrip(tickets)) return tickets;
   }
-  // Never seen, but never deal nothing: six independent valid tickets (not a strip).
-  return [0, 1, 2, 3, 4, 5].map(() => generateTicket());
+  /* Never seen in 600,000 tries. There is ONE ticket generator on the server, this one, so it does not
+     fall back to another: it fails, the console reads that as an outage and deals that game from
+     the tablet, labelled and recorded (see dealTick in app/index.html). */
+  throw httpError(503, 'Could not build a strip of tickets. Try again.');
 }
 // A valid 90-ball ticket: 27 cells, 5 numbers a row, 1 to 3 a column, each in its column's range,
 // ascending down the column, no repeats.
@@ -7408,6 +7061,11 @@ async function handlePlayerClaim(request, env, json) {
   if (!games.length) return json({ error: 'Game not found' }, 404);
   const game = games[0];
   if (game.session_id !== player.session_id) return json({ error: 'Player is not in this game' }, 403);
+  /* MUSICAL BINGO ONLY (19 Oct 2026). A 90-ball bingo claim is pressed on the phone, carried by the
+     host console and decided by /host/bingo/claim from the server's own ticket and ball record. The
+     phone-side 90-ball path that used to live here judged a different, unused draw (vp_bingo_games)
+     and is gone, so there is one bingo claim path to describe to OLGR. */
+  if (game.format !== 'musical_bingo') return json({ error: 'Not a musical game' }, 404);
   // L9: claims are only accepted while the game is running.
   if (game.status !== 'running') return json({ error: 'This game is not running' }, 409);
 
@@ -7437,23 +7095,13 @@ async function handlePlayerClaim(request, env, json) {
   // copy of the card and its own record of what has been played, and computes the pattern
   // itself. BINGO checks drawn numbers on a 3x9 ticket; MUSICAL checks played songs on a
   // 5x5 card (FREE centre). Daubs and anything client-side are irrelevant either way.
-  let result;
-  let claimEvent = 'bingo.claim_submitted';
-  if (game.format === 'musical_bingo') {
-    const mg = await sbGet(env, 'vp_music_games', 'game_id=eq.' + enc(gameId) + '&select=pattern');
-    if (!mg.length) return json({ error: 'Not a musical game' }, 404);
-    // Only songs actually played (played_at set) count toward the claim.
-    const plays = await sbGet(env, 'vp_music_plays', 'game_id=eq.' + enc(gameId) + '&played_at=not.is.null&select=song_id');
-    const playedSet = new Set(plays.map((p) => p.song_id));
-    result = checkMusicPattern(mg[0].pattern, card.cells, playedSet);
-    claimEvent = 'music.claim_submitted';
-  } else {
-    const bg = await sbGet(env, 'vp_bingo_games', 'game_id=eq.' + enc(gameId) + '&select=draw_order,draw_index,pattern');
-    if (!bg.length) return json({ error: 'Not a bingo game' }, 404);
-    const order = bg[0].draw_order || [];
-    const drawnSet = new Set(order.slice(0, bg[0].draw_index || 0));   // only numbers actually drawn
-    result = checkPattern(bg[0].pattern, card.cells, drawnSet);        // no free centre in 90-ball
-  }
+  const mg = await sbGet(env, 'vp_music_games', 'game_id=eq.' + enc(gameId) + '&select=pattern');
+  if (!mg.length) return json({ error: 'Not a musical game' }, 404);
+  // Only songs actually played (played_at set) count toward the claim.
+  const plays = await sbGet(env, 'vp_music_plays', 'game_id=eq.' + enc(gameId) + '&played_at=not.is.null&select=song_id');
+  const playedSet = new Set(plays.map((p) => p.song_id));
+  const result = checkMusicPattern(mg[0].pattern, card.cells, playedSet);
+  const claimEvent = 'music.claim_submitted';
   const verdict = result.valid ? 'valid' : 'invalid';
 
   const claimRows = await sbInsert(env, 'vp_claims', {
@@ -7799,6 +7447,8 @@ async function handleClaimResolve(request, env, json) {
   if (!games.length) return json({ error: 'Game not found' }, 404);
   const session = await getSession(env, games[0].session_id);
   const staff = await requireStaff(env, authUserId, session.venue_id);   // ENFORCED: staff at the claim's venue (also kill-switch)
+  // Musical bingo only: a 90-ball claim is resolved on /host/bingo/claim/resolve (19 Oct 2026).
+  if (games[0].format !== 'musical_bingo') return json({ error: 'Not a musical game' }, 404);
 
   const status = decision === 'confirm' ? 'confirmed' : 'rejected';
   await sbPatch(env, 'vp_claims', 'id=eq.' + enc(claimId), {
@@ -7828,8 +7478,7 @@ async function handleClaimResolve(request, env, json) {
   };
   if (status === 'confirmed' && claim.winning_cells) payload.winning_cells = claim.winning_cells;
   // The result event name matches the game format so each TV/host listens for its own.
-  const resultEvent = games[0].format === 'musical_bingo' ? 'music.claim_result' : 'bingo.claim_result';
-  await emitEvent(env, session, resultEvent, payload, actorRef(staff));
+  await emitEvent(env, session, 'music.claim_result', payload, actorRef(staff));
 
   return json({ claim_id: claimId, status });
 }
@@ -7881,7 +7530,7 @@ async function handlePlayerCard(request, env, json) {
     fmt = g[0].format;
   } else {
     const games = await sbGet(env, 'vp_games',
-      'session_id=eq.' + enc(player.session_id) + '&format=in.(bingo90,musical_bingo)&status=eq.running&select=id,format&order=seq.desc&limit=1');
+      'session_id=eq.' + enc(player.session_id) + '&format=eq.musical_bingo&status=eq.running&select=id,format&order=seq.desc&limit=1');
     if (!games.length) return json({ game: null });   // nothing running yet; phone waits
     gameId = games[0].id;
     fmt = games[0].format;
@@ -7890,46 +7539,11 @@ async function handlePlayerCard(request, env, json) {
   const session = await getSession(env, player.session_id);
   await assertVenueActive(env, session.venue_id);   // kill-switch: a late-join deal is a metered write
 
-  // MUSICAL: a 5x5 card of song titles. Deals on demand for late joiners, same as bingo.
+  /* MUSICAL BINGO ONLY (19 Oct 2026). A 90-ball phone gets its tickets from the host console, which
+     the server deals through /host/bingo/deal. The on-demand 90-ball deal that used to sit here (one
+     ticket from vp_cards, against the unused vp_bingo_games draw) is gone: one bingo ticket path. */
   if (fmt === 'musical_bingo') return await playerMusicCard(env, json, gameId, player);
-
-  const bg = await sbGet(env, 'vp_bingo_games', 'game_id=eq.' + enc(gameId) + '&select=pattern,draw_order,draw_index');
-  if (!bg.length) return json({ error: 'Not a bingo game' }, 404);
-
-  // Find this player's ticket, dealing one if they joined after the deal. The
-  // retry loop copes with the two unique indexes on vp_cards: (game_id, player_id)
-  // -- if a concurrent call already dealt us a card we re-read and use it -- and
-  // (game_id, card_no) -- if another late joiner took the next number we retry.
-  let card = null;
-  for (let attempt = 0; attempt < 6 && !card; attempt++) {
-    const mine = await sbGet(env, 'vp_cards',
-      'game_id=eq.' + enc(gameId) + '&player_id=eq.' + enc(player.id) + '&select=id,card_no,cells');
-    if (mine.length) { card = mine[0]; break; }
-
-    // Phones only: printed musical cards sit at PAPER_CARD_BASE and up, and "top + 1" would
-    // hand a late phone card 911.
-    const top = await sbGet(env, 'vp_cards', 'game_id=eq.' + enc(gameId) + '&card_no=lt.' + PAPER_CARD_BASE + '&select=card_no&order=card_no.desc&limit=1');
-    const nextNo = top.length ? top[0].card_no + 1 : 1;
-    const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_cards', {
-      method: 'POST',
-      headers: { ...sbHeaders(env), 'Prefer': 'return=representation' },
-      body: JSON.stringify({ game_id: gameId, player_id: player.id, card_no: nextNo, cells: generateTicket() }),
-    });
-    if (res.ok) { const d = await res.json(); card = Array.isArray(d) ? d[0] : d; break; }
-    if (res.status === 409) continue;   // either index clashed; loop re-reads then retries
-    throw dbError('insert', 'vp_cards', await res.text());
-  }
-  if (!card) return json({ error: 'Could not deal a card, please try again' }, 409);
-
-  const order = bg[0].draw_order || [];
-  const called = order.slice(0, bg[0].draw_index || 0);   // only numbers actually drawn; never the whole order
-  return json({
-    game_id: gameId,
-    card_no: card.card_no,
-    cells: card.cells,
-    pattern: bg[0].pattern,
-    called_numbers: called,
-  });
+  return json({ game: null });
 }
 
 /* ------------------------------ MUSICAL: a player's 5x5 card ------------------------------
@@ -9212,30 +8826,8 @@ async function getPublicSnapshot(env, sessionId) {
     game: null,
   };
 
-  // Current running bingo game, public state only.
-  const games = runningOf('bingo90');
-  if (games.length) {
-    const g = games[0];
-    const bg = await sbGet(env, 'vp_bingo_games', 'game_id=eq.' + enc(g.id) + '&select=draw_order,draw_index,pattern');
-    if (bg.length) {
-      const b = bg[0];
-      const order = b.draw_order || [];
-      // ONLY the numbers already drawn are exposed; the full draw_order stays secret.
-      // 90-ball has no letter, so each called ball is just its number.
-      const called = order.slice(0, b.draw_index || 0).map((n) => ({ number: n }));
-      snap.game = {
-        game_id: g.id,
-        seq: g.seq,
-        format: g.format,
-        pattern: b.pattern,
-        prize: (g.config && g.config.prize) || null,
-        title: (g.config && g.config.title) || null,
-        called_balls: called,
-        called_count: called.length,
-        current_ball: called.length ? called[called.length - 1] : null,
-      };
-    }
-  }
+  /* 90-ball bingo has no public projection here: its balls go over the room channel and are kept in
+     vp_bingo_draw_balls. The block that read vp_bingo_games (an unused draw) is gone (19 Oct 2026). */
 
   // Current running trivia game, public state only (used by a reconnecting TV or a
   // late-joining phone). The correct_index is exposed ONLY once the phase is
@@ -9403,7 +8995,7 @@ function randInt(max) {
   return x % max;
 }
 
-// Fisher-Yates shuffle of 1..90. Stored as vp_bingo_games.draw_order.
+// Fisher-Yates shuffle of 1..90: THE bingo ball order (VP-SHUFFLE). Stored as vp_bingo_draws.draw_order.
 // Note: Postgres int[] is 1-indexed, so draw_order[1..draw_index] in the DB is
 // this JS array's slice(0, draw_index). We always read it back as a JS array
 // and use JS indexing, so the two conventions stay consistent.
@@ -9433,97 +9025,6 @@ function colRange(c) {
   return [c * 10, c * 10 + 9];
 }
 
-// Generate a valid 90-ball housie TICKET: a 3-row x 9-column grid holding exactly
-// 15 numbers (5 per row, 4 blanks per row). Every column holds 1..3 numbers drawn
-// from its range, ascending down the column. There is NO free centre. Blanks are
-// stored as 0. Returned row-major as 27 values for vp_cards.cells.
-function generateTicket() {
-  // 1. Choose a fill mask: per-column counts 1..3 summing to 15, laid out so each
-  //    row has exactly 5 filled cells. Retry the CSPRNG layout until it is valid.
-  let mask = null;
-  for (let attempt = 0; attempt < 1000 && !mask; attempt++) {
-    const colCount = new Array(9).fill(1);        // every column starts with one number (9 so far)
-    for (let extra = 0; extra < 6; extra++) {     // add 6 more to reach 15, capped at 3 per column
-      let c;
-      do { c = randInt(9); } while (colCount[c] >= 3);
-      colCount[c]++;
-    }
-    // Spread each column's cells across the 3 rows, then require exactly 5 per row.
-    const grid = [new Array(9).fill(false), new Array(9).fill(false), new Array(9).fill(false)];
-    for (let c = 0; c < 9; c++) {
-      const rows = [0, 1, 2];
-      for (let i = rows.length - 1; i > 0; i--) { const j = randInt(i + 1); const t = rows[i]; rows[i] = rows[j]; rows[j] = t; }
-      for (let k = 0; k < colCount[c]; k++) grid[rows[k]][c] = true;
-    }
-    const rowFilled = (r) => grid[r].reduce((n, v) => n + (v ? 1 : 0), 0);
-    if (rowFilled(0) === 5 && rowFilled(1) === 5 && rowFilled(2) === 5) mask = grid;
-  }
-  // The retry budget is generous; if it is somehow exhausted, fail cleanly rather
-  // than deal an invalid ticket.
-  if (!mask) throw httpError(500, 'Could not generate a valid ticket');
-
-  // 2. Fill numbers: per column, pick as many distinct values as the mask needs
-  //    from that column's range, sort ascending, and drop them down the filled rows.
-  const cells = new Array(27).fill(0);
-  for (let c = 0; c < 9; c++) {
-    const [lo, hi] = colRange(c);
-    const pool = [];
-    for (let n = lo; n <= hi; n++) pool.push(n);
-    for (let i = pool.length - 1; i > 0; i--) { const j = randInt(i + 1); const t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
-    const need = (mask[0][c] ? 1 : 0) + (mask[1][c] ? 1 : 0) + (mask[2][c] ? 1 : 0);
-    const picks = pool.slice(0, need).sort((a, b) => a - b);
-    let p = 0;
-    for (let r = 0; r < 3; r++) if (mask[r][c]) cells[r * 9 + c] = picks[p++];
-  }
-  return cells;
-}
-
-// Server-authoritative pattern check for a 90-ball ticket. cells is the 27-value
-// row-major ticket (blanks = 0); drawnSet is a Set of numbers actually drawn. A
-// number cell is covered once it has been called; blank cells (0) are never
-// required (no free centre in 90-ball). Returns {valid, cells:[row-major indices]}.
-function checkPattern(pattern, cells, drawnSet) {
-  // For each row: the indices of its number cells, and whether every one is called.
-  const rowCells = [];
-  const rowComplete = [];
-  for (let r = 0; r < 3; r++) {
-    const nums = [];
-    let all = true;
-    for (let col = 0; col < 9; col++) {
-      const idx = r * 9 + col;
-      const v = cells[idx];
-      if (v) {                                   // a real number, not a blank (0)
-        nums.push(idx);
-        if (!drawnSet.has(v)) all = false;
-      }
-    }
-    rowCells.push(nums);
-    rowComplete.push(nums.length > 0 && all);
-  }
-
-  if (pattern === 'one_line') {
-    for (let r = 0; r < 3; r++) if (rowComplete[r]) return { valid: true, cells: rowCells[r] };
-    return { valid: false, cells: [] };
-  }
-  if (pattern === 'two_lines') {
-    const done = [0, 1, 2].filter((r) => rowComplete[r]);
-    if (done.length >= 2) {
-      const cs = [];
-      done.slice(0, 2).forEach((r) => rowCells[r].forEach((idx) => cs.push(idx)));
-      return { valid: true, cells: cs };
-    }
-    return { valid: false, cells: [] };
-  }
-  if (pattern === 'full_house') {
-    if (rowComplete[0] && rowComplete[1] && rowComplete[2]) {
-      const cs = [];
-      for (let r = 0; r < 3; r++) rowCells[r].forEach((idx) => cs.push(idx));
-      return { valid: cs.length === 15, cells: cs };
-    }
-    return { valid: false, cells: [] };
-  }
-  return { valid: false, cells: [] };
-}
 
 /* ---- MUSICAL BINGO card + pattern (5x5, FREE centre) ---- */
 
