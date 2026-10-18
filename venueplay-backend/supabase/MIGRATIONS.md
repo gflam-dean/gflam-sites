@@ -213,3 +213,11 @@ the same place and the withdrawn number may be called again; a check stops a ser
 Replica identity set to full, since the primary key goes. Either order is safe: before it is run the Worker sees
 PostgREST refuse the column and deletes the row as before; with it run, the old Worker's delete still works. Run it
 BEFORE the Worker if possible so the first Undo is kept. No RLS change. NOT RUN. Rollback: in the file.
+
+`venueplay-104-bingo-server-tickets.sql`: `vp_bingo_tickets` (every bingo phone ticket: draw, pid, device id, strip book and
+page, 27 cells, card number, source server or tablet, dealt_at, voided_at) and `vp_bingo_claims` (every BINGO pressed: the
+ticket checked, the server's verdict from its own ticket and ball record, which check the host saw, the decision). Both
+service-role only. Dean, 19 Oct 2026: "Lets go the server". Branch `feature/bingo-server-tickets`. Run BEFORE deploying the
+game Worker that goes with it; either order is safe for a night (without the tables the console deals from the tablet as
+before). After running, `python3 venueplay-backend/tools/dump-rls-baseline.py` and commit RLS-BASELINE.json (two new locked
+tables). NOT RUN. Rollback: in the file.
