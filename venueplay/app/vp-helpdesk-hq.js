@@ -86,34 +86,61 @@
     var p = doc.createElement("div"); p.id = "paneHelpdesk"; p.className = "hidden";
     var today = ymd(new Date()), monthAgo = ymd(new Date(Date.now() - 30 * 86400000));
     p.innerHTML =
-      '<style>.hdbadge{display:inline-block;min-width:18px;padding:1px 7px;margin-left:4px;border-radius:999px;background:#FF1F8E;color:#0A0A0B;font-size:11.5px;font-weight:800}' +
-      '.hdbadge.urgent{background:#FF4D4D;color:#fff}.hdbrand{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.02em}' +
-      '.hdbrand.venueplay{background:rgba(255,31,142,.16);color:#FF6FB5}.hdbrand.partyplay{background:rgba(23,196,180,.16);color:#3FE0D0}' +
-      '.hdurg{color:#FF6B6B;font-weight:800}.hdrow{cursor:pointer}.hdrow:hover td{background:rgba(255,255,255,.03)}' +
-      '.hdgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;align-items:end}.hdgrid label{font-size:12px;color:var(--muted);display:block;margin-bottom:3px}' +
-      '.hdnote{border-left:3px solid rgba(255,255,255,.15);padding:6px 10px;margin:8px 0;white-space:pre-wrap}.hdnote.reply{border-color:#FF1F8E}.hdnote.email_in{border-color:#35D07F}.hdnote.change{border-color:rgba(255,255,255,.08);color:var(--muted);font-size:12.5px}' +
-      '.hdmeta{font-size:12px;color:var(--muted)}.hdmsg{white-space:pre-wrap;background:rgba(255,255,255,.03);border-radius:10px;padding:12px;margin:10px 0}' +
-      '.hdcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}.hdcols table td{padding:4px 8px}#paneHelpdesk textarea{width:100%;min-height:90px}</style>' +
-      '<div class="rowbetween" style="margin-bottom:12px;gap:8px;flex-wrap:wrap"><div class="lblk" style="margin:0">Help desk</div>' +
-      '<span><button class="btn ghost sp" id="hdLogCall">Log a call</button> <button class="btn ghost sp" id="hdAlert">Alert me on this device</button></span></div>' +
-      '<div class="panel pad hidden" id="hdAlertBox" style="margin-bottom:12px"></div>' +
-      '<div class="panel pad hidden" id="hdCallBox" style="margin-bottom:12px"></div>' +
-      '<div class="panel pad" style="margin-bottom:12px"><div class="hdgrid">' +
-        '<div><label>Brand</label><select id="hdfBrand">' + opts(BR, "Both") + '</select></div>' +
-        '<div><label>Status</label><select id="hdfStatus"><option value="not_closed">Not closed</option>' + opts(ST, "") .replace('<option value=""></option>', '<option value="">Any</option>') + '</select></div>' +
-        '<div><label>Kind</label><select id="hdfCat">' + opts(CAT, "Any") + '</select></div>' +
-        '<div><label>Came in by</label><select id="hdfCh">' + opts(CH, "Any") + '</select></div>' +
-        '<div><label>Venue</label><select id="hdfVenue"><option value="">Any</option></select></div>' +
-        '<div><label>From</label><input type="date" id="hdfFrom"></div><div><label>To</label><input type="date" id="hdfTo"></div>' +
-        '<div><button class="btn pink" id="hdfGo">Show</button></div></div></div>' +
-      '<div class="panel"><div class="tscroll"><table><thead><tr><th>#</th><th>Brand</th><th>Kind</th><th>Came in by</th><th>Status</th><th>Venue or party</th><th>Subject</th><th>Arrived</th></tr></thead><tbody id="hdRows"><tr><td colspan="8" class="note">Loading...</td></tr></tbody></table></div></div>' +
-      '<div class="panel pad hidden" id="hdTicket" style="margin-top:12px"></div>' +
-      '<div class="lblk" style="margin-top:26px">Report</div>' +
-      '<div class="panel pad"><div class="hdgrid"><div><label>From</label><input type="date" id="hdrFrom" value="' + monthAgo + '"></div>' +
-        '<div><label>To</label><input type="date" id="hdrTo" value="' + today + '"></div>' +
-        '<div><label>Brand</label><select id="hdrBrand">' + opts(BR, "Both") + '</select></div>' +
-        '<div><button class="btn pink" id="hdrGo">Run report</button></div><div><button class="btn ghost sp" id="hdrCsv" disabled>Download CSV</button></div></div>' +
-        '<div id="hdReport" style="margin-top:14px"></div></div>';
+      /* HQ's own components throughout (panel, filterbar, scard, badge, field, btn, mini); this block
+         only adds what HQ has no class for. HQ styles text, email and number inputs but not date
+         ones, so those get HQ's input look here. */
+      '<style>' +
+      '.hdbadge{display:inline-block;min-width:19px;padding:1px 7px;margin-left:7px;border-radius:999px;background:#E5484D;color:#fff;font-size:11px;font-weight:800;line-height:17px;text-align:center;vertical-align:1px}' +
+      '.navpills button.on .hdbadge{background:#fff;color:#C70F69}' +
+      '.badge.pp{background:rgba(23,196,180,.14);color:#3FE0D0}.badge.urgent{background:rgba(229,72,77,.16);color:#FF6B6B}' +
+      '.hdrow{cursor:pointer}.hdrow:hover td{background:rgba(255,255,255,.025)}.hdrow td .vt{display:block;margin-top:2px}' +
+      '#paneHelpdesk input[type=date]{background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 11px;font-family:Manrope,sans-serif;font-size:13.5px;outline:none;color-scheme:dark}' +
+      '#paneHelpdesk input[type=date]:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.15)}' +
+      '#paneHelpdesk textarea{min-height:96px;resize:vertical}' +
+      '.hdgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:4px 12px;align-items:end}' +
+      '.hdgrid .field{margin-bottom:8px}' +
+      '.hdmsg{white-space:pre-wrap;background:var(--ink-3);border:1px solid var(--line-2);border-radius:12px;padding:13px 14px;margin:12px 0 16px;font-size:13.5px;line-height:1.55}' +
+      '.hdnote{background:var(--ink-3);border:1px solid var(--line-2);border-left:3px solid var(--line);border-radius:10px;padding:9px 12px;margin:0 0 8px;white-space:pre-wrap;font-size:13px}' +
+      '.hdnote.reply{border-left-color:var(--pink)}.hdnote.email_in{border-left-color:var(--win)}.hdnote.change{background:none;border-color:transparent;color:var(--muted);font-size:12px;padding:3px 12px}' +
+      '.hdnote .k{font-size:11px;color:var(--faint);margin-bottom:3px;white-space:normal}' +
+      '.hdcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}' +
+      '.hdrep{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:12px}' +
+      '.hdrep table{min-width:0}.hdrep .panel .lblk{margin:14px 14px 4px}' +
+      '.hdstats{grid-template-columns:repeat(4,1fr)}@media (max-width:700px){.hdstats{grid-template-columns:repeat(2,1fr)}}' +
+      '.hdf{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}' +
+      '#paneHelpdesk .filterbar select{min-width:0;width:auto;padding-right:34px}#paneHelpdesk .filterbar input[type=date]{width:150px}' +
+      '</style>' +
+      '<div class="rowbetween">' +
+        '<div class="note" style="margin:0">Every ticket from both brands, newest first. Open one to work it.</div>' +
+        '<button class="btn ghost sp" id="hdLogCall">+ Log a call</button>' +
+        '<button class="btn ghost" id="hdAlert">Alert me on this device</button>' +
+      '</div>' +
+      '<div class="panel pad" style="margin-bottom:4px">' +
+        '<div class="filterbar">' +
+          '<select id="hdfBrand">' + opts(BR, "Both brands") + '</select>' +
+          '<select id="hdfStatus"><option value="not_closed">Not closed</option>' + opts(ST, "Any status") + '</select>' +
+          '<select id="hdfCat">' + opts(CAT, "Any kind") + '</select>' +
+          '<select id="hdfCh">' + opts(CH, "Came in any way") + '</select>' +
+          '<select id="hdfVenue"><option value="">Any venue</option></select>' +
+          '<label class="hdf">From <input type="date" id="hdfFrom"></label><label class="hdf">to <input type="date" id="hdfTo"></label>' +
+          '<button class="btn pink" id="hdfGo">Show</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="panel pad hidden" id="hdAlertBox" style="margin-bottom:14px"></div>' +
+      '<div class="panel pad hidden" id="hdCallBox" style="margin-bottom:14px"></div>' +
+      '<div class="lblk" id="hdLbl">Tickets</div>' +
+      '<div class="panel"><div class="tscroll"><table><thead><tr><th>#</th><th>Brand</th><th>Kind</th><th>Came in by</th><th>Status</th><th>Venue or party</th><th>Subject</th><th>Arrived</th></tr></thead>' +
+        '<tbody id="hdRows"><tr><td colspan="8" class="note">Loading...</td></tr></tbody></table></div></div>' +
+      '<div class="panel pad hidden" id="hdTicket" style="margin-top:14px"></div>' +
+      '<div class="lblk" style="margin-top:30px">Report</div>' +
+      '<div class="panel pad"><div class="filterbar">' +
+        '<label class="hdf">From <input type="date" id="hdrFrom" value="' + monthAgo + '"></label>' +
+        '<label class="hdf">to <input type="date" id="hdrTo" value="' + today + '"></label>' +
+        '<select id="hdrBrand">' + opts(BR, "Both brands") + '</select>' +
+        '<button class="btn pink" id="hdrGo">Run report</button>' +
+        '<button class="btn ghost" id="hdrCsv" disabled>Download CSV</button>' +
+      '</div><div class="note" style="margin-top:9px">Tickets that arrived in these dates. Time to close counts the ones of those that are closed. The CSV has no names or email addresses in it.</div></div>' +
+      '<div id="hdReport"></div>';
     host.appendChild(p);
     $("hdfGo").addEventListener("click", load);
     $("hdRows").addEventListener("click", function (e) { var tr = e.target.closest("tr[data-id]"); if (tr) openTicket(tr.getAttribute("data-id")); });
@@ -133,12 +160,16 @@
       if (j.error) { rows.innerHTML = '<tr><td colspan="8" class="note">' + hdEsc(j.error) + "</td></tr>"; return; }
       S.tickets = j.tickets || []; S.venues = j.venues || {}; S.assignees = j.assignees || [];
       if (j.all_venues) { S.allVenues = j.all_venues; var sel = $("hdfVenue"), keep = sel.value;
-        sel.innerHTML = '<option value="">Any</option>' + S.allVenues.map(function (v) { return '<option value="' + hdEsc(v.id) + '">' + hdEsc(v.name) + "</option>"; }).join(""); sel.value = keep; }
+        sel.innerHTML = '<option value="">Any venue</option>' + S.allVenues.map(function (v) { return '<option value="' + hdEsc(v.id) + '">' + hdEsc(v.name) + "</option>"; }).join(""); sel.value = keep; }
+      var lbl = $("hdLbl"); if (lbl) lbl.textContent = S.tickets.length + (S.tickets.length === 1 ? " ticket" : " tickets");
       rows.innerHTML = S.tickets.length ? S.tickets.map(function (t) {
-        return '<tr class="hdrow" data-id="' + hdEsc(t.id) + '"><td class="mono">' + t.ticket_no + '</td><td><span class="hdbrand ' + hdEsc(t.brand) + '">' + hdEsc(BR[t.brand] || t.brand) + "</span></td>" +
-          "<td>" + hdEsc(catLabel(t.category, t.brand)) + (t.priority === "urgent" ? ' <span class="hdurg">URGENT</span>' : "") + "</td><td>" + hdEsc(CH[t.channel] || t.channel) + "</td>" +
-          "<td>" + (t.status === "new" ? "<b>New</b>" : hdEsc(ST[t.status] || t.status)) + "</td><td>" + hdEsc(S.venues[t.venue_id] || (t.room_code ? (t.brand === "partyplay" ? "Party " : "Room ") + t.room_code : "")) + "</td>" +
-          "<td>" + hdEsc(t.subject) + "</td><td class=\"hdmeta\">" + hdEsc(when(t.created_at)) + "</td></tr>";
+        var st = { "new": "gold", open: "live", waiting: "indep", closed: "idle" }[t.status] || "idle";
+        return '<tr class="hdrow" data-id="' + hdEsc(t.id) + '"><td class="num">' + t.ticket_no + "</td>" +
+          '<td><span class="badge hdbrand ' + (t.brand === "partyplay" ? "pp" : "grouped") + '">' + hdEsc(BR[t.brand] || t.brand) + "</span></td>" +
+          '<td><span class="vn">' + hdEsc(catLabel(t.category, t.brand)) + "</span>" + (t.priority === "urgent" ? ' <span class="badge urgent">Urgent</span>' : "") + "</td>" +
+          "<td>" + hdEsc(CH[t.channel] || t.channel) + '</td><td><span class="badge ' + st + '">' + hdEsc(ST[t.status] || t.status) + "</span></td>" +
+          "<td>" + hdEsc(S.venues[t.venue_id] || (t.room_code ? (t.brand === "partyplay" ? "Party " : "Room ") + t.room_code : "")) + "</td>" +
+          "<td>" + hdEsc(t.subject) + '</td><td class="vt" style="white-space:nowrap">' + hdEsc(when(t.created_at)) + "</td></tr>";
       }).join("") : '<tr><td colspan="8" class="note">No tickets match.</td></tr>';
     });
     badge();
@@ -152,41 +183,48 @@
       var t = j.ticket; S.open = t;
       var from = t.category === "accounts" ? "accounts@" : (t.category === "venue_support" || t.category === "patron_support") ? "support@" : "hello@";
       from += t.brand + ".com.au";
+      function fld(label, html) { return '<div class="field"><label>' + label + "</label>" + html + "</div>"; }
       box.innerHTML =
-        '<div class="rowbetween"><div><span class="hdbrand ' + hdEsc(t.brand) + '">' + hdEsc(BR[t.brand]) + '</span> <b style="font-size:17px">#' + t.ticket_no + " " + hdEsc(t.subject) + "</b></div>" +
-        '<button class="mini" id="hdClose">Close panel</button></div>' +
-        '<div class="hdmeta" style="margin-top:6px">' + hdEsc(CH[t.channel] || t.channel) + " &middot; " + hdEsc(when(t.created_at)) +
-          (j.venue_name ? " &middot; " + hdEsc(j.venue_name) : "") + (t.room_code ? " &middot; " + (t.brand === "partyplay" ? "party " : "room ") + hdEsc(t.room_code) : "") +
-          (t.source_address ? " &middot; sent to " + hdEsc(t.source_address) : "") + "</div>" +
-        '<div class="hdmeta" style="margin-top:4px">' + hdEsc(t.contact_name || "") + (t.contact_email ? " &lt;" + hdEsc(t.contact_email) + "&gt;" : "") + (t.contact_phone ? " &middot; " + hdEsc(t.contact_phone) : "") + "</div>" +
+        '<div class="cxhead"><span class="badge hdbrand ' + (t.brand === "partyplay" ? "pp" : "grouped") + '">' + hdEsc(BR[t.brand]) + "</span>" +
+          '<span class="cxname">#' + t.ticket_no + " " + hdEsc(t.subject) + "</span>" +
+          (t.priority === "urgent" ? '<span class="badge urgent">Urgent</span>' : "") +
+          '<button class="mini" id="hdClose" style="margin-left:auto">Close</button></div>' +
+        '<div class="note" style="margin-top:0">' + hdEsc(CH[t.channel] || t.channel) + " &middot; " + hdEsc(when(t.created_at)) +
+          (j.venue_name ? " &middot; <b>" + hdEsc(j.venue_name) + "</b>" : "") + (t.room_code ? " &middot; " + (t.brand === "partyplay" ? "party " : "room ") + hdEsc(t.room_code) : "") +
+          (t.source_address ? " &middot; sent to " + hdEsc(t.source_address) : "") +
+          '<br><b>' + hdEsc(t.contact_name || "") + "</b>" + (t.contact_email ? " " + hdEsc(t.contact_email) : "") + (t.contact_phone ? " &middot; " + hdEsc(t.contact_phone) : "") + "</div>" +
         '<div class="hdmsg">' + hdEsc(t.message || "(no message)") + "</div>" +
-        '<div class="hdgrid"><div><label>Status</label><select id="hdtStatus">' + opts(ST) + '</select></div>' +
-          '<div><label>Kind</label><select id="hdtCat">' + Object.keys(CAT).map(function (k) { return '<option value="' + k + '">' + hdEsc(catLabel(k, t.brand)) + "</option>"; }).join("") + "</select></div>" +
-          '<div><label>Priority</label><select id="hdtPri"><option value="normal">Normal</option><option value="urgent">Urgent</option></select></div>' +
-          '<div><label>Brand</label><select id="hdtBrand">' + opts(BR) + "</select></div>" +
-          '<div><label>Who has it</label><input id="hdtWho" list="hdWhoList" value="' + hdEsc(t.assigned_to || "") + '"><datalist id="hdWhoList">' + S.assignees.map(function (a) { return '<option value="' + hdEsc(a) + '">'; }).join("") + "</datalist></div>" +
-          '<div><button class="btn pink" id="hdtSave">Save changes</button></div></div>' +
-        '<div class="lblk" style="margin-top:18px">History</div><div id="hdNotes">' + (j.notes || []).map(function (n) {
-          return '<div class="hdnote ' + hdEsc(n.kind) + '"><div class="hdmeta">' + hdEsc({ note: "Note", reply: "Emailed them", email_in: "They wrote", change: "Change" }[n.kind] || n.kind) + " &middot; " + hdEsc(n.author || "") + " &middot; " + hdEsc(when(n.created_at)) + "</div>" + hdEsc(n.body) + "</div>";
-        }).join("") + "</div>" +
-        '<div class="hdcols" style="margin-top:12px"><div><label class="hdmeta">Internal note (only HQ sees it)</label><textarea id="hdtNote"></textarea><button class="btn ghost sp" id="hdtNoteGo" style="margin-top:6px">Add note</button></div>' +
-        '<div><label class="hdmeta">' + (t.contact_email ? "Email " + hdEsc(t.contact_email) + " from " + hdEsc(from) : "No email address on this ticket") + "</label><textarea id=\"hdtReply\"" + (t.contact_email ? "" : " disabled") + "></textarea>" +
-        '<button class="btn pink" id="hdtReplyGo" style="margin-top:6px"' + (t.contact_email ? "" : " disabled") + ">Send reply</button></div></div>" +
-        '<div class="note" id="hdtMsg"></div>';
+        '<div class="hdgrid">' +
+          fld("Status", '<select id="hdtStatus">' + opts(ST) + "</select>") +
+          fld("Kind", '<select id="hdtCat">' + Object.keys(CAT).map(function (k) { return '<option value="' + k + '">' + hdEsc(catLabel(k, t.brand)) + "</option>"; }).join("") + "</select>") +
+          fld("Priority", '<select id="hdtPri"><option value="normal">Normal</option><option value="urgent">Urgent</option></select>') +
+          fld("Brand", '<select id="hdtBrand">' + opts(BR) + "</select>") +
+          fld("Who has it", '<input type="text" id="hdtWho" list="hdWhoList" placeholder="Nobody yet" value="' + hdEsc(t.assigned_to || "") + '"><datalist id="hdWhoList">' + S.assignees.map(function (a) { return '<option value="' + hdEsc(a) + '">'; }).join("") + "</datalist>") +
+          '<div class="field"><button class="btn pink" id="hdtSave" style="width:100%">Save changes</button></div>' +
+        "</div>" +
+        '<div class="lblk">History</div><div id="hdNotes">' + ((j.notes || []).map(function (n) {
+          return '<div class="hdnote ' + hdEsc(n.kind) + '"><div class="k">' + hdEsc({ note: "Note", reply: "Emailed them", email_in: "They wrote", change: "Change" }[n.kind] || n.kind) + " &middot; " + hdEsc(n.author || "") + " &middot; " + hdEsc(when(n.created_at)) + "</div>" + hdEsc(n.body) + "</div>";
+        }).join("") || '<div class="note">Nothing yet.</div>') + "</div>" +
+        '<div class="hdcols" style="margin-top:14px">' +
+          fld("Internal note, only HQ sees it", '<textarea id="hdtNote"></textarea><button class="btn ghost" id="hdtNoteGo" style="margin-top:8px">Add note</button>') +
+          fld(t.contact_email ? "Email " + hdEsc(t.contact_email) + " from " + hdEsc(from) : "No email address on this ticket",
+              '<textarea id="hdtReply"' + (t.contact_email ? "" : " disabled") + '></textarea><button class="btn pink" id="hdtReplyGo" style="margin-top:8px"' + (t.contact_email ? "" : " disabled") + ">Send reply</button>") +
+        "</div>" +
+        '<div class="errflash" id="hdtMsg"></div>';
       $("hdtStatus").value = t.status; $("hdtCat").value = t.category; $("hdtPri").value = t.priority; $("hdtBrand").value = t.brand;
       $("hdClose").addEventListener("click", function () { box.classList.add("hidden"); });
       $("hdtSave").addEventListener("click", function () {
         post("/admin/help/update", { id: t.id, status: $("hdtStatus").value, category: $("hdtCat").value, priority: $("hdtPri").value, brand: $("hdtBrand").value, assigned_to: $("hdtWho").value })
-          .then(function (r) { if (r.error) $("hdtMsg").textContent = r.error; else { openTicket(t.id); load(); } });
+          .then(function (r) { if (r.error) { $("hdtMsg").textContent = r.error; $("hdtMsg").classList.add("show"); } else { openTicket(t.id); load(); } });
       });
       $("hdtNoteGo").addEventListener("click", function () {
-        post("/admin/help/note", { id: t.id, body: $("hdtNote").value }).then(function (r) { if (r.error) $("hdtMsg").textContent = r.error; else openTicket(t.id); });
+        post("/admin/help/note", { id: t.id, body: $("hdtNote").value }).then(function (r) { if (r.error) { $("hdtMsg").textContent = r.error; $("hdtMsg").classList.add("show"); } else openTicket(t.id); });
       });
       $("hdtReplyGo").addEventListener("click", function () {
         var b = $("hdtReplyGo"); b.disabled = true; b.textContent = "Sending...";
         post("/admin/help/reply", { id: t.id, body: $("hdtReply").value }).then(function (r) {
           b.disabled = false; b.textContent = "Send reply";
-          if (r.error) $("hdtMsg").textContent = r.error; else { openTicket(t.id); load(); }
+          if (r.error) { $("hdtMsg").textContent = r.error; $("hdtMsg").classList.add("show"); } else { openTicket(t.id); load(); }
         });
       });
       badge();
@@ -198,22 +236,24 @@
   function logCallForm() {
     var box = $("hdCallBox"); box.classList.toggle("hidden"); if (box.classList.contains("hidden")) return;
     var vOpts = (S.allVenues || []).map(function (v) { return '<option value="' + hdEsc(v.id) + '">' + hdEsc(v.name) + "</option>"; }).join("");
-    box.innerHTML = '<div class="lblk" style="margin-top:0">Log a call</div><div class="hdgrid">' +
-      '<div><label>Brand</label><select id="hdcBrand">' + opts(BR) + "</select></div>" +
-      '<div><label>What kind of call</label><select id="hdcCat">' + opts(CAT, "Pick one") + "</select></div>" +
-      '<div><label>Venue (VenuePlay)</label><select id="hdcVenue"><option value="">None</option>' + vOpts + "</select></div>" +
-      '<div><label>Party code (PartyPlay)</label><input id="hdcCode" maxlength="8"></div>' +
-      '<div><label>Their name</label><input id="hdcName"></div><div><label>Their phone</label><input id="hdcPhone"></div><div><label>Their email</label><input id="hdcEmail" type="email"></div>' +
-      '<div><label>Priority</label><select id="hdcPri"><option value="normal">Normal</option><option value="urgent">Urgent</option></select></div>' +
-      '<div><label>Status</label><select id="hdcStatus"><option value="open">Still to do</option><option value="closed">Sorted on the call</option></select></div></div>' +
-      '<label class="hdmeta" style="display:block;margin-top:10px">Subject</label><input id="hdcSubject" style="width:100%">' +
-      '<label class="hdmeta" style="display:block;margin-top:10px">What was said</label><textarea id="hdcMsg"></textarea>' +
-      '<button class="btn pink" id="hdcGo" style="margin-top:8px">Save the call</button> <span class="note" id="hdcMsgOut"></span>';
+    function fld(label, html) { return '<div class="field"><label>' + label + "</label>" + html + "</div>"; }
+    box.innerHTML = '<div class="cxhead"><span class="cxname">Log a call</span><span class="note" style="margin:0">Pick what kind of call it was while it is fresh. That is what the report counts.</span></div>' +
+      '<div class="hdgrid">' +
+      fld("Brand", '<select id="hdcBrand">' + opts(BR) + "</select>") +
+      fld("What kind of call", '<select id="hdcCat">' + opts(CAT, "Pick one") + "</select>") +
+      fld("Venue (VenuePlay)", '<select id="hdcVenue"><option value="">None</option>' + vOpts + "</select>") +
+      fld("Party code (PartyPlay)", '<input type="text" id="hdcCode" maxlength="8" class="mono">') +
+      fld("Their name", '<input type="text" id="hdcName">') + fld("Their phone", '<input type="text" id="hdcPhone" inputmode="tel">') +
+      fld("Their email", '<input type="email" id="hdcEmail">') +
+      fld("Priority", '<select id="hdcPri"><option value="normal">Normal</option><option value="urgent">Urgent</option></select>') +
+      fld("Status", '<select id="hdcStatus"><option value="open">Still to do</option><option value="closed">Sorted on the call</option></select>') + "</div>" +
+      fld("Subject", '<input type="text" id="hdcSubject">') + fld("What was said", '<textarea id="hdcMsg"></textarea>') +
+      '<button class="btn pink" id="hdcGo">Save the call</button><div class="errflash" id="hdcMsgOut"></div>';
     $("hdcGo").addEventListener("click", function () {
       post("/admin/help/log-call", { brand: $("hdcBrand").value, category: $("hdcCat").value, venue_id: $("hdcVenue").value, room_code: $("hdcCode").value,
         contact_name: $("hdcName").value, contact_phone: $("hdcPhone").value, contact_email: $("hdcEmail").value, priority: $("hdcPri").value,
         status: $("hdcStatus").value, subject: $("hdcSubject").value, message: $("hdcMsg").value }).then(function (r) {
-        if (r.error) { $("hdcMsgOut").textContent = r.error; return; }
+        if (r.error) { $("hdcMsgOut").textContent = r.error; $("hdcMsgOut").classList.add("show"); return; }
         box.classList.add("hidden"); load();
       });
     });
@@ -223,21 +263,28 @@
   var lastReport = null;
   function table(title, obj, label) {
     var keys = Object.keys(obj || {}).sort(function (a, b) { return obj[b] - obj[a]; });
-    return '<div><b>' + hdEsc(title) + '</b><table>' + (keys.length ? keys.map(function (k) { return "<tr><td>" + hdEsc(label ? label(k) : k) + '</td><td class="num">' + obj[k] + "</td></tr>"; }).join("") : '<tr><td class="note">None</td></tr>') + "</table></div>";
+    return '<div class="panel"><div class="lblk">' + hdEsc(title) + '</div><table>' + (keys.length ? keys.map(function (k) { return "<tr><td>" + hdEsc(label ? label(k) : k) + '</td><td class="num" style="text-align:right">' + obj[k] + "</td></tr>"; }).join("") : '<tr><td class="note">None</td></tr>') + "</table></div>";
   }
   function report() {
     var out = $("hdReport"); out.innerHTML = '<div class="note">Counting...</div>';
     post("/admin/help/report", { from: $("hdrFrom").value, to: $("hdrTo").value, brand: $("hdrBrand").value }).then(function (j) {
-      if (j.error) { out.innerHTML = '<div class="note">' + hdEsc(j.error) + "</div>"; return; }
+      if (j.error) { out.innerHTML = '<div class="errflash show">' + hdEsc(j.error) + "</div>"; return; }
       lastReport = j; $("hdrCsv").disabled = false;
       var R = j.report;
-      out.innerHTML = '<div style="margin-bottom:10px"><b style="font-size:18px">' + R.total + " tickets</b> " +
-        '<span class="hdmeta">' + hdEsc(j.from) + " to " + hdEsc(j.to) + ". " + R.closed + " closed" +
-        (R.avg_hours_to_close != null ? ", " + R.avg_hours_to_close + " hours to close on average, longest " + R.longest_hours_to_close + " hours (#" + R.longest_ticket_no + ")" : "") + ".</span></div>" +
-        '<div class="hdcols">' + table("By brand", R.by_brand, function (k) { return BR[k] || k; }) +
-        table("By kind", R.by_brand_category, function (k) { var p = k.split(":"); return (BR[p[0]] || p[0]) + ": " + catLabel(p[1], p[0]); }) +
-        table("By how it came in", R.by_channel, function (k) { return CH[k] || k; }) + table("By status", R.by_status, function (k) { return ST[k] || k; }) +
-        '<div><b>Venues with the most</b><table>' + (R.top_venues.length ? R.top_venues.map(function (v) { return "<tr><td>" + hdEsc(v.name) + '</td><td class="num">' + v.count + "</td></tr>"; }).join("") : '<tr><td class="note">None</td></tr>') + "</table></div></div>";
+      function card(k, v, d) { return '<div class="scard"><div class="k">' + k + '</div><div class="v">' + v + '</div><div class="d">' + d + "</div></div>"; }
+      out.innerHTML =
+        '<div class="stats hdstats" style="margin-top:14px">' +
+          card("Tickets", R.total, R.total === 1 ? "1 ticket" : R.total + " tickets, " + hdEsc(j.from) + " to " + hdEsc(j.to)) +
+          card("Closed", R.closed, R.total ? Math.round(100 * R.closed / R.total) + "% of them" : "&nbsp;") +
+          card("Average to close", R.avg_hours_to_close != null ? R.avg_hours_to_close + "h" : "&ndash;", R.avg_hours_to_close != null ? R.avg_hours_to_close + " hours to close on average" : "none closed yet") +
+          card("Longest", R.longest_hours_to_close != null ? R.longest_hours_to_close + "h" : "&ndash;", R.longest_ticket_no ? "ticket #" + R.longest_ticket_no : "&nbsp;") +
+        "</div>" +
+
+        '<div class="hdrep">' + table("By brand", R.by_brand, function (k) { return BR[k] || k; }) +
+          table("By kind", R.by_brand_category, function (k) { var p = k.split(":"); return (BR[p[0]] || p[0]) + ": " + catLabel(p[1], p[0]); }) +
+          table("By how it came in", R.by_channel, function (k) { return CH[k] || k; }) + table("By status", R.by_status, function (k) { return ST[k] || k; }) +
+          '<div class="panel"><div class="lblk">Venues with the most</div><table>' + (R.top_venues.length ? R.top_venues.map(function (v) { return '<tr><td class="vn">' + hdEsc(v.name) + '</td><td class="num" style="text-align:right">' + v.count + "</td></tr>"; }).join("") : '<tr><td class="note">None</td></tr>') + "</table></div>" +
+        "</div>";
     });
   }
   /* Same rule as HQ's own CSV: a cell that starts like a formula gets a leading quote. No contact
@@ -263,11 +310,13 @@
     var box = $("hdAlertBox"); box.classList.toggle("hidden"); if (box.classList.contains("hidden")) return;
     var can = ("serviceWorker" in root.navigator) && ("PushManager" in root) && ("Notification" in root);
     var standalone = root.matchMedia && root.matchMedia("(display-mode: standalone)").matches;
-    box.innerHTML = '<div class="lblk" style="margin-top:0">Alerts on this device</div>' +
-      (can ? "" : '<div class="note">This browser cannot take alerts' + (/iPhone|iPad/.test(root.navigator.userAgent) && !standalone ? ". On an iPhone: tap Share, then Add to Home Screen, open HQ from that icon, and come back here." : ".") + "</div>") +
-      '<div class="note" style="margin:0 0 8px">A buzz on this phone or computer when a ticket comes in. It says the brand, the kind and the number, never the person or their message.</div>' +
-      '<label class="hdmeta"><input type="radio" name="hdaF" value="all" checked> Every ticket</label> &nbsp; <label class="hdmeta"><input type="radio" name="hdaF" value="urgent_sales"> Only urgent ones and sales</label><br>' +
-      '<button class="btn pink" id="hdaOn" style="margin-top:8px"' + (can ? "" : " disabled") + '>Turn alerts on</button> <button class="btn ghost sp" id="hdaOff"' + (can ? "" : " disabled") + '>Turn alerts off on this device</button> <span class="note" id="hdaMsg"></span>';
+    box.innerHTML = '<div class="cxhead"><span class="cxname">Alerts on this device</span></div>' +
+      (can ? "" : '<div class="restrict" style="margin:0 0 12px">This browser cannot take alerts' + (/iPhone|iPad/.test(root.navigator.userAgent) && !standalone ? ". On an iPhone: tap Share, then Add to Home Screen, open HQ from that icon, and come back here." : ".") + "</div>") +
+      '<div class="note" style="margin:0 0 12px">A buzz on this phone or computer when a ticket comes in. It says the brand, the kind and the number, never the person or their message.</div>' +
+      '<div class="checklist" style="max-width:520px;margin-bottom:12px"><label class="checkitem"><input type="radio" name="hdaF" value="all" checked> Every ticket</label>' +
+      '<label class="checkitem"><input type="radio" name="hdaF" value="urgent_sales"> Only urgent ones and sales</label></div>' +
+      '<button class="btn pink" id="hdaOn"' + (can ? "" : " disabled") + '>Turn alerts on</button> <button class="btn ghost" id="hdaOff"' + (can ? "" : " disabled") + '>Turn alerts off on this device</button>' +
+      '<div class="note" id="hdaMsg"></div>';
     if (!can) return;
     $("hdaOn").addEventListener("click", alertOn);
     $("hdaOff").addEventListener("click", alertOff);

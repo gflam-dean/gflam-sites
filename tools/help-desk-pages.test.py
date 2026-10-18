@@ -58,15 +58,6 @@ FIXTURES = {
 <script>window.VP={ready:function(){return Promise.resolve({currentVenueId:"11111111-2222-4333-8444-555555555555",staff:[{venue_id:"11111111-2222-4333-8444-555555555555"}]});},
 getClient:function(){return{auth:{getSession:function(){return Promise.resolve({data:{session:{access_token:"venue-login-token"}}});}}};}};</script>
 <script src="/app/vp-help.js" data-mode="venue" data-brand="venueplay"></script></body></html>''',
-    # The bones of HQ (its nav, its #app, a pane), with a stand-in VP, loading the REAL HQ help desk script.
-    '/__fixture/hq.html': '''<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<style>body{background:#0A0A0B;color:#eee;font-family:system-ui;margin:0;padding:12px}.hidden{display:none!important}.navpills button.on{background:#FF1F8E;color:#000}
-table{border-collapse:collapse;width:100%}td,th{padding:4px;border-bottom:1px solid #222;text-align:left}</style></head>
-<body><div id="app" style="display:none"><div class="navpills" id="hqNav"><button data-pane="venues" class="on">Venues</button><button data-pane="live">Live now</button>
-<label id="showTestWrap"><input type="checkbox"> Show test venues</label></div><div id="paneVenues">The venues pane</div><div id="paneLive" class="hidden">Live</div></div>
-<script>window.VP={getClient:function(){return{auth:{getSession:function(){return Promise.resolve({data:{session:{access_token:"hq-admin-token"}}});}}};}};
-setTimeout(function(){document.getElementById("app").style.display="block";},50);</script>
-<script src="/app/vp-helpdesk-hq.js"></script></body></html>''',
     '/__fixture/blank.html': '<!doctype html><html><head><meta charset="utf-8"></head><body>blank</body></html>',
 }
 
@@ -332,42 +323,109 @@ def main():
         check('partyplay home: no sideways scrolling', t.js('document.documentElement.scrollWidth<=window.innerWidth') is True)
         t.close()
 
-        print('HQ: THE HELP DESK TAB')
+        print('HQ: THE HELP DESK TAB, IN THE REAL hq.html WITH ITS OWN STYLES')
         routes = {
             '/admin/help/count': {'body': {'new': 2, 'urgent': 1}},
             '/admin/help/list': {'body': {'tickets': [
                 {'id': 'a1', 'ticket_no': 1001, 'brand': 'venueplay', 'category': 'patron_support', 'channel': 'patron_form', 'status': 'new', 'priority': 'urgent', 'venue_id': 'v1', 'subject': 'Tickets not showing', 'created_at': '2026-10-19T09:00:00Z'},
-                {'id': 'a2', 'ticket_no': 1002, 'brand': 'partyplay', 'category': 'venue_support', 'channel': 'patron_form', 'status': 'open', 'priority': 'normal', 'room_code': 'KFP7QX', 'subject': 'TV blank', 'created_at': '2026-10-19T10:00:00Z'}],
+                {'id': 'a2', 'ticket_no': 1002, 'brand': 'partyplay', 'category': 'venue_support', 'channel': 'patron_form', 'status': 'open', 'priority': 'normal', 'room_code': 'KFP7QX', 'subject': 'TV blank', 'created_at': '2026-10-19T10:00:00Z'},
+                {'id': 'a3', 'ticket_no': 1003, 'brand': 'venueplay', 'category': 'accounts', 'channel': 'email', 'status': 'waiting', 'priority': 'normal', 'venue_id': 'v1', 'subject': 'Invoice question', 'created_at': '2026-10-18T22:10:00Z'}],
                 'venues': {'v1': 'The Royal Hotel'}, 'assignees': ['Dean'], 'all_venues': [{'id': 'v1', 'name': 'The Royal Hotel'}]}},
             '/admin/help/get': {'body': {'ticket': {'id': 'a2', 'ticket_no': 1002, 'brand': 'partyplay', 'category': 'venue_support', 'channel': 'patron_form', 'status': 'open', 'priority': 'normal',
-                'subject': 'TV blank', 'message': 'The TV is blank', 'contact_email': 'host@example.com', 'room_code': 'KFP7QX', 'created_at': '2026-10-19T10:00:00Z'},
-                'notes': [{'kind': 'change', 'body': 'Opened by Dean', 'author': 'Dean', 'created_at': '2026-10-19T10:05:00Z'}], 'venue_name': ''}},
+                'subject': 'TV blank', 'message': 'The TV is blank since we pressed start.', 'contact_name': 'Pat', 'contact_email': 'host@example.com', 'room_code': 'KFP7QX', 'created_at': '2026-10-19T10:00:00Z'},
+                'notes': [{'kind': 'change', 'body': 'Opened by Dean', 'author': 'Dean', 'created_at': '2026-10-19T10:05:00Z'},
+                          {'kind': 'reply', 'body': 'Try reloading the party screen.', 'author': 'Dean (from support@partyplay.com.au)', 'created_at': '2026-10-19T10:07:00Z'}], 'venue_name': ''}},
             '/admin/help/report': {'body': {'from': '2026-10-01', 'to': '2026-10-19', 'rows': [], 'venues': {}, 'report': {'total': 3, 'by_brand': {'venueplay': 2, 'partyplay': 1},
                 'by_brand_category': {'venueplay:sales': 2, 'partyplay:venue_support': 1}, 'by_category': {}, 'by_channel': {'phone': 2, 'web_form': 1}, 'by_status': {'closed': 3},
                 'closed': 3, 'avg_hours_to_close': 6, 'longest_hours_to_close': 10, 'longest_ticket_no': 2, 'top_venues': [{'name': 'The Royal Hotel', 'count': 2}]}}},
         }
-        t = Tab(b, 1280, 900, mobile=False, pre='window.__routes=' + json.dumps(routes) + ';')
-        t.go(VP + '/__fixture/hq.html')
-        badge = t.until('(function(){var b=document.getElementById("hdBadge");return b&&!b.hidden?b.textContent:"";})()', 10)
-        check('hq: a Help desk tab with the count of new tickets, urgent called out', badge == '2 (1 urgent)', badge)
+        # Only the sign-in is stood in: vp-session.js and the Supabase library are blocked, and this
+        # VP answers as a signed-in HQ owner whose every database read comes back empty. Everything
+        # else (hq.html's markup, its stylesheet, its own scripts) is the real page.
+        FAKE_HQ_LOGIN = (
+            "(function () {"
+            " function q() { var res = { data: [], error: null, count: 0 }, o;"
+            "  o = new Proxy(function () {}, { get: function (t, k) { if (k === 'then') { var p = Promise.resolve(res); return p.then.bind(p); }"
+            "   if (k === 'catch') { var p2 = Promise.resolve(res); return p2.catch.bind(p2); } return function () { return o; }; }, apply: function () { return o; } });"
+            "  return o; }"
+            " var client = { from: q, rpc: q, storage: { from: q }, channel: function () { return { on: function () { return this; }, subscribe: function () { return this; }, send: function () {} }; },"
+            "  removeChannel: function () {}, auth: { getSession: function () { return Promise.resolve({ data: { session: { access_token: 'hq-admin-token', user: { id: 'u1' } } } }); },"
+            "   getUser: function () { return Promise.resolve({ data: { user: { id: 'u1' } } }); }, onAuthStateChange: function () { return { data: { subscription: { unsubscribe: function () {} } } }; } } };"
+            " window.VP = { getClient: function () { return client; }, requireAuth: function () { return Promise.resolve({ isAdmin: true, adminRole: 'owner', client: client, user: { id: 'u1' }, staff: [] }); },"
+            "  guardShift: function () {}, homeHref: function () { return '/app/'; }, signOut: function () {}, listVenues: function () { return Promise.resolve([]); }, setCurrentVenue: function () {} };"
+            "})();")
+        LIGHT = ('(function(sel){ var bad=[]; Array.prototype.forEach.call(document.querySelectorAll(sel), function(e){'
+                 ' var c=getComputedStyle(e).backgroundColor.match(/[0-9]+/g)||[255,255,255]; if (+c[0]+ +c[1]+ +c[2] > 200) bad.push(e.id||e.tagName); }); return bad; })')
+
+        def hq_tab(w, h, mobile):
+            t = Tab(b, w, h, mobile=mobile, pre='window.__routes=' + json.dumps(routes) + ';' + FAKE_HQ_LOGIN)
+            b.call('Network.setBlockedURLs', {'urls': ['*cdn.jsdelivr.net*', '*vp-session.js*', '*workers.dev*', '*googletagmanager*', '*facebook*']}, session=t.sid)
+            t.go(VP + '/app/hq.html')
+            return t
+        t = hq_tab(1280, 900, False)
+        badge = t.until('(function(){var b=document.getElementById("hdBadge");return b&&!b.hidden?b.textContent:"";})()', 12)
+        check('hq: a Help desk tab in the real HQ nav, with the count of new tickets and urgent called out', badge == '2 (1 urgent)', badge)
+        check('hq: the tab is one of HQ\'s own pills', t.js('(function(){var x=document.getElementById("hdTab");return !!x&&x.parentNode.id==="hqNav"&&getComputedStyle(x).borderRadius==="9px";})()') is True)
+        check('hq: the count badge is red', t.js('getComputedStyle(document.getElementById("hdBadge")).backgroundColor') == 'rgb(229, 72, 77)')
         t.js('document.getElementById("hdTab").click()')
         rows = t.until('document.querySelectorAll("#hdRows tr[data-id]").length', 8)
-        check('hq: the tab shows the desk and hides the other panes', rows == 2 and t.js('document.getElementById("paneVenues").classList.contains("hidden") && !document.getElementById("paneHelpdesk").classList.contains("hidden")') is True)
-        check('hq: every ticket shows its brand', t.js('Array.prototype.map.call(document.querySelectorAll("#hdRows .hdbrand"),function(x){return x.textContent}).join()') == 'VenuePlay,PartyPlay')
+        time.sleep(0.5)   # HQ's pills fade their colour over 0.15s: measure and photograph after it
+        check('hq: the tab shows the desk and hides the other panes', rows == 3 and t.js('document.getElementById("paneVenues").classList.contains("hidden") && !document.getElementById("paneHelpdesk").classList.contains("hidden")') is True)
+        check('hq: the Help desk pill is the pink one now, and Venues is not', t.js('getComputedStyle(document.getElementById("hdTab")).backgroundColor') == 'rgb(255, 31, 142)' and t.js('getComputedStyle(document.querySelector("[data-pane=venues]")).backgroundColor') != 'rgb(255, 31, 142)')
+        check('hq: every ticket shows its brand', t.js('Array.prototype.map.call(document.querySelectorAll("#hdRows .hdbrand"),function(x){return x.textContent}).join()') == 'VenuePlay,PartyPlay,VenuePlay')
         check('hq: a PartyPlay ticket says host support, not venue support', 'Host support' in (t.js('document.getElementById("hdRows").textContent') or ''))
         check('hq: every request carries the HQ login', all((p.get('headers') or {}).get('Authorization') == 'Bearer hq-admin-token' for p in (t.js('window.__posts') or [])))
+        light = t.js(LIGHT + '("#paneHelpdesk input:not([type=radio]):not([type=checkbox]), #paneHelpdesk select, #paneHelpdesk textarea")')
+        check('hq: the filters are HQ\'s dark inputs, dates included, not browser white', light == [], light)
+        check('hq: the list is HQ\'s card and table (rounded panel, capitals in the header row)',
+              t.js('(function(){var tb=document.getElementById("hdRows").closest(".panel"),th=document.querySelector("#paneHelpdesk th");return getComputedStyle(tb).borderRadius==="16px"&&getComputedStyle(th).textTransform==="uppercase";})()') is True)
+        t.shot('11-hq-help-desk-list')
         t.js('document.querySelector("#hdRows tr[data-id=a2]").click()')
         opened = t.until('(document.getElementById("hdTicket")||{}).textContent', 8) or ''
         check('hq: opening a ticket shows it, with the reply address for its brand', '#1002' in opened and 'support@partyplay.com.au' in opened, opened[:200])
-        t.shot('11-hq-help-desk')
+        time.sleep(0.6)
+        light = t.js(LIGHT + '("#hdTicket input, #hdTicket select, #hdTicket textarea")')
+        check('hq: the ticket card\'s fields and text boxes are HQ\'s dark ones', light == [], light)
+        t.js('document.documentElement.style.scrollBehavior="auto";window.scrollTo(0,document.getElementById("hdTicket").getBoundingClientRect().top+window.pageYOffset-20)')
+        time.sleep(0.4)
+        t.shot('12-hq-help-desk-ticket')
         t.js('document.getElementById("hdrGo").click()')
         rep = t.until('(function(){var x=document.getElementById("hdReport");return x&&/tickets/.test(x.textContent)?x.textContent:"";})()', 8) or ''
         check('hq: the report shows the counts, the time to close and the top venues', '3 tickets' in rep and '6 hours to close on average' in rep and 'The Royal Hotel' in rep, rep[:200])
+        check('hq: the report\'s headline numbers are HQ\'s stat cards', t.js('document.querySelectorAll("#hdReport .scard").length') == 4)
         check('hq: the CSV button is ready once a report has run', t.js('document.getElementById("hdrCsv").disabled') is False)
-        t.js('window.scrollTo(0, document.body.scrollHeight)')
-        t.shot('12-hq-report')
-        t.js('document.getElementById("hdLogCall").click()')
+        t.js('window.scrollTo(0,document.getElementById("hdrGo").getBoundingClientRect().top+window.pageYOffset-110)')
+        time.sleep(0.4)
+        t.shot('13-hq-report')
+        t.js('window.scrollTo(0,0);document.getElementById("hdLogCall").click()')
         check('hq: Log a call asks what kind of call it was, and for which brand', t.until('!!document.getElementById("hdcCat") && !!document.getElementById("hdcBrand")', 5) is True)
+        light = t.js(LIGHT + '("#hdCallBox input, #hdCallBox select, #hdCallBox textarea")')
+        check('hq: the Log a call form is HQ\'s dark fields too', light == [], light)
+        time.sleep(0.3)
+        t.js('window.scrollTo(0,document.getElementById("hdCallBox").getBoundingClientRect().top+window.pageYOffset-80)')
+        time.sleep(0.3)
+        t.shot('14-hq-log-a-call')
+        t.close()
+        t = hq_tab(390, 844, True)
+        t.until('!!document.getElementById("hdTab")', 12)
+        t.js('document.getElementById("hdTab").click()')
+        t.until('document.querySelectorAll("#hdRows tr[data-id]").length', 8)
+        time.sleep(0.5)
+        check('hq on a phone: no sideways scrolling of the page (the table scrolls inside its card)', t.js('document.documentElement.scrollWidth<=window.innerWidth+1') is True, t.js('[document.documentElement.scrollWidth,window.innerWidth]'))
+        t.js('document.documentElement.style.scrollBehavior="auto";window.scrollTo(0,document.getElementById("hqNav").getBoundingClientRect().top+window.pageYOffset-10)')
+        time.sleep(0.4)
+        t.shot('15-hq-help-desk-phone')
+        t.js('document.querySelector("#hdRows tr[data-id=a2]").click()')
+        t.until('(document.getElementById("hdTicket")||{}).textContent', 8)
+        time.sleep(0.6)
+        t.js('window.scrollTo(0,document.getElementById("hdTicket").getBoundingClientRect().top+window.pageYOffset-10)')
+        time.sleep(0.3)
+        t.shot('16-hq-ticket-phone')
+        t.js('document.getElementById("hdrGo").click()')
+        t.until('document.querySelectorAll("#hdReport .scard").length', 8)
+        t.js('window.scrollTo(0,document.getElementById("hdrGo").getBoundingClientRect().top+window.pageYOffset-140)')
+        time.sleep(0.4)
+        t.shot('17-hq-report-phone')
         t.close()
         hq = open(os.path.join(ROOT, 'venueplay', 'app', 'hq.html'), encoding='utf-8').read()
         hq_live = re.sub(r'<!--.*?-->', '', hq, flags=re.S)
