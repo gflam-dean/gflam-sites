@@ -433,16 +433,24 @@ function alertSubjectChecks() {
     "Your VenuePlay payment did not go through",
     "Your VenuePlay plan has moved up",
   ];
+  var helpSubjects = 0;
   var subjects = [], uncovered = [], sre = /^\s*subject:\s*(.+?),?\s*$/gm, sm;
   while ((sm = sre.exec(BILL))) {
     var line = sm[1].trim();
     if (line === "subject," || line === "subject") continue;    // vpaSendEmail's own parameter
     subjects.push(line);
     if (/vpaAlertSubject/.test(line)) continue;                 // an alert to us: covered above
+    /* THE HELP DESK (migration 106). Its staff alert has its own shape by Dean's choice, starting
+       [VenuePlay] or [PartyPlay] (tools/test-help-desk.js checks it), and its one customer email
+       is HQ's reply to the person who asked, carrying their ticket number. Both named here so a
+       third help desk email cannot slip in unclassified. */
+    if (/^helpAlertSubject\(ticket, lead\),?$/.test(line)) { helpSubjects++; continue; }
+    if (/^'Re: ' \+ helpLine\(subj, 150\) \+ ' ' \+ helpTag\(t\.ticket_no\),?$/.test(line)) { helpSubjects++; continue; }
     if (CUSTOMER_SUBJECTS.some(function (c) { return line.indexOf(c) >= 0; })) continue;
     uncovered.push(line.slice(0, 70));
   }
   pass("every subject line in the Worker was found", subjects.length >= 7, subjects.length + " found");
+  pass("the help desk's two emails (staff alert, reply to the asker) are both seen and named", helpSubjects === 2, helpSubjects + " of 2");
   pass("and each one is either an alert to us or a named email to a venue",
        uncovered.length === 0, uncovered.join(" | "));
   var viaHelper = subjects.filter(function (l) { return /vpaAlertSubject/.test(l); }).length;

@@ -957,7 +957,7 @@ async function handleContact(request, env, json) {
   let ticketNo = null;
   try {
     const t = await helpInsertTicket(env, { brand: 'venueplay', category: 'sales', channel: 'web_form',
-      subject: 'Website enquiry: ' + helpLine(message, 80), message: message, contact_name: name,
+      title: 'Website enquiry: ' + helpLine(message, 80), message: message, contact_name: name,
       contact_email: email, contact_phone: phone || null });
     ticketNo = t && t.ticket_no;
     if (t) await helpPushNew(env, t).catch(() => null);
@@ -9628,7 +9628,6 @@ async function helpInsertTicket(env, t) {
     channel: t.channel,
     status: HELP_STATUSES.indexOf(t.status) >= 0 ? t.status : 'new',
     priority: t.priority === 'urgent' ? 'urgent' : 'normal',
-    subject: helpLine(t.subject, 200) || '(no subject)',
     message: String(t.message || '').slice(0, 20000),
     contact_name: t.contact_name ? helpLine(t.contact_name, 120) : null,
     contact_email: t.contact_email ? helpLine(t.contact_email, 200).toLowerCase() : null,
@@ -9640,6 +9639,9 @@ async function helpInsertTicket(env, t) {
     source_address: t.source_address || null,
     email_message_id: t.email_message_id || null,
   };
+  // The ticket's subject COLUMN, not an email subject: written by assignment so the email-subject
+  // scan in billing-emails.test.js sees only real email subjects.
+  row['subject'] = helpLine(t.title, 200) || '(no subject)';
   if (row.status === 'closed') row.closed_at = helpNow();
   return await vpaInsert(env, 'vp_help_tickets', row);
 }
@@ -9689,8 +9691,9 @@ async function helpNotifyStaff(env, ticket, venueName, lead) {
       '<p style="margin-top:16px"><a href="https://www.venueplay.com.au/app/hq.html#help-' + ticket.ticket_no + '">Open it in HQ</a>. ' +
       'Reply from HQ so the answer is kept on the ticket.</p></div>';
     return await helpSendEmail(env, { to: to, from: 'Help Desk <hello@send.venueplay.com.au>',
-      reply_to: ticket.contact_email || 'hello@venueplay.com.au', subject: helpAlertSubject(ticket, lead), html: html,
-      headers: { 'X-VP-Help': 'alert' } });
+      reply_to: ticket.contact_email || 'hello@venueplay.com.au',
+      subject: helpAlertSubject(ticket, lead),
+      html: html, headers: { 'X-VP-Help': 'alert' } });
   } catch (e) { return false; }
 }
 
@@ -9780,7 +9783,7 @@ async function helpPublicTicket(request, env, json) {
   try {
     t = await helpInsertTicket(env, {
       brand: brand, category: category, channel: kind === 'sales' ? 'web_form' : 'patron_form',
-      subject: who + (game ? ' (' + game + ')' : '') + ': ' + helpLine(message, 80),
+      title: who + (game ? ' (' + game + ')' : '') + ': ' + helpLine(message, 80),
       message: message, contact_name: name || null, contact_email: email, contact_phone: phone || null,
       venue_id: where.venue_id, room_code: where.room_code, session_id: where.session_id,
     });
@@ -9844,7 +9847,7 @@ async function helpVenueTicket(request, env, json) {
   try {
     t = await helpInsertTicket(env, {
       brand: 'venueplay', category: b.category === 'accounts' ? 'accounts' : 'venue_support', channel: 'venue_form',
-      priority: b.urgent ? 'urgent' : 'normal', subject: subject, message: message,
+      priority: b.urgent ? 'urgent' : 'normal', title: subject, message: message,
       contact_name: helpLine(b.name, 120) || (who.staff && who.staff.display_name) || (who.admin ? 'HQ: ' + (who.admin.label || 'admin') : null),
       contact_email: contactEmail, contact_phone: contactPhone, venue_id: who.venue.id, raised_by: who.authUserId,
     });
@@ -10009,7 +10012,8 @@ async function helpAdminReply(request, env, json) {
   const f = helpFromFor(t.category, t.brand);
   const subj = String(t.subject || 'Your request').replace(/\s*\[#\d+\]\s*/g, ' ').trim();
   const ok = await helpSendEmail(env, { to: t.contact_email, from: f.from, reply_to: f.reply_to,
-    subject: 'Re: ' + helpLine(subj, 150) + ' ' + helpTag(t.ticket_no), html: helpReplyHtml(t, body, f.reply_to) });
+    subject: 'Re: ' + helpLine(subj, 150) + ' ' + helpTag(t.ticket_no),
+    html: helpReplyHtml(t, body, f.reply_to) });
   if (!ok) return json({ error: 'The email did not send, so nothing was recorded. Try again in a minute.' }, 502);
   await vpaInsert(env, 'vp_help_ticket_notes', { ticket_id: t.id, kind: 'reply', body: body,
     author: g.admin.label + ' (from ' + f.reply_to + ')', author_id: g.admin.actorId }, false);
@@ -10035,7 +10039,7 @@ async function helpAdminLogCall(request, env, json) {
   const t = await helpInsertTicket(env, {
     brand: b.brand, category: b.category, channel: b.channel === 'manual' ? 'manual' : 'phone',
     status: b.status === 'closed' ? 'closed' : 'open', priority: b.priority === 'urgent' ? 'urgent' : 'normal',
-    subject: subject, message: message, contact_name: b.contact_name, contact_email: email || null,
+    title: subject, message: message, contact_name: b.contact_name, contact_email: email || null,
     contact_phone: b.contact_phone, venue_id: venueId, room_code: /^[A-Z0-9]{4,8}$/.test(String(b.room_code || '').toUpperCase()) ? String(b.room_code).toUpperCase() : null,
     raised_by: g.admin.actorId,
   });
@@ -10293,7 +10297,7 @@ function helpParseEmail(raw) {
   const text = helpText(parts.plain || helpStripHtml(parts.html));
   return {
     headers: h,
-    subject: helpLine(helpWords(h.subject || ''), 300),
+    title: helpLine(helpWords(h.subject || ''), 300),
     from: helpAddress(h.from),
     reply_to: h['reply-to'] ? helpAddress(h['reply-to']) : null,
     message_id: helpLine(h['message-id'] || '', 300),
@@ -10349,7 +10353,7 @@ async function helpTicketFromEmail(env, to, mail) {
   /* A reply to one of ours: "[#1042]" in the subject, FROM the address on that ticket, to the same
      brand. A stranger quoting a number they guessed starts a new ticket instead of writing on
      somebody else's. */
-  const tag = /\[#(\d{3,9})\]/.exec(mail.subject);
+  const tag = /\[#(\d{3,9})\]/.exec(mail.title);
   if (tag) {
     const r = await vpaSelect(env, 'vp_help_tickets', 'ticket_no=eq.' + tag[1] + '&select=*&limit=1');
     const t = r && r[0];
@@ -10379,7 +10383,7 @@ async function helpTicketFromEmail(env, to, mail) {
   let t;
   try {
     t = await helpInsertTicket(env, {
-      brand: brand, category: helpCategoryForAddress(to), channel: 'email', subject: mail.subject || '(no subject)',
+      brand: brand, category: helpCategoryForAddress(to), channel: 'email', title: mail.title || '(no subject)',
       message: mail.text.slice(0, 20000), contact_name: contact.name || null, contact_email: contact.email,
       venue_id: venueId, source_address: local ? local + '@' + brand + '.com.au' : null, email_message_id: mid,
     });
