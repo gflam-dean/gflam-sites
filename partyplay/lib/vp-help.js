@@ -105,7 +105,10 @@
       ".vph .vph-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}" +
       ".vph .vph-x{background:#1E1E22;border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:999px;width:38px;height:38px;font:700 20px/1 system-ui;cursor:pointer;flex:none}" +
       ".vph details{border-top:1px solid rgba(255,255,255,.08);padding:2px 0}" +
-      ".vph summary{cursor:pointer;padding:11px 0;font-weight:700;color:#fff;list-style-position:outside}" +
+      ".vph summary{cursor:pointer;padding:11px 0;font-weight:700;color:#fff;list-style:none;display:flex;justify-content:space-between;gap:12px}" +
+      ".vph summary::-webkit-details-marker{display:none}" +
+      ".vph summary::after{content:'+';color:#FF1F8E;font-weight:800;flex:none}" +
+      ".vph details[open] summary::after{content:'\u2212'}" +
       ".vph details p{margin:0 0 12px;color:#C9C9D1}" +
       ".vph label{display:block;font-size:13px;color:#9A9AA4;margin:12px 0 5px}" +
       ".vph input[type=text],.vph input[type=email],.vph input[type=tel],.vph textarea,.vph select{width:100%;box-sizing:border-box;background:#17171A;border:1px solid rgba(255,255,255,.14);color:#E7E7EC;border-radius:10px;padding:12px;font:400 16px/1.4 'Manrope',system-ui,sans-serif;outline:none;text-align:left}" +
@@ -248,7 +251,7 @@
     var x = el("button", "vph-x", "×"); x.type = "button"; x.setAttribute("aria-label", "Close help");
     top.appendChild(h); top.appendChild(x); p.appendChild(top);
     var faqBox = el("div"); faqBox.id = "vphFaq"; p.appendChild(faqBox);
-    p.appendChild(el("h3", "", MODE === "venue" || MODE === "host" ? "Contact support" : "Contact support"));
+    p.appendChild(el("h3", "", "Contact support"));
     buildForm(p);
     bg.appendChild(p); doc.body.appendChild(bg);
     function close() { try { bg.parentNode.removeChild(bg); } catch (e) {} doc.removeEventListener("keydown", esck); try { lastFocus && lastFocus.focus(); } catch (e) {} }
