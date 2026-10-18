@@ -119,6 +119,17 @@ eval(lift('hostDrawRpc'));
 eval(lift('handleBingoBall'));
 eval(lift('handleBingoBallManyTrips'));
 eval(lift('handleBingoFallback'));
+/* The fallback's own rules since the audit of 19 Oct 2026 (migration 105): the real helpers, lifted, and
+   the standing-ball read answered from this suite's database (it has no withdrawn balls). */
+['venueState', 'tabletFallbackOk', 'fallbackOffList', 'standingBallCount', 'isCallerDraw', 'serverFailedBall', 'bingoRecordAsk'].forEach(function (n) { eval.call(null, lift(n)); });
+eval('var TABLET_FALLBACK_OFF_STATES = ' + /const TABLET_FALLBACK_OFF_STATES = (new Set\(\[[^\]]*\]\));/.exec(W)[1] + ';');
+eval('var CALLER_NO_SEED = ' + /const CALLER_NO_SEED = ('[^']*');/.exec(W)[1] + ', CALLER_REASON = ' + /const CALLER_REASON = ('[^']*');/.exec(W)[1] + ';');
+eval('var BINGO_DRAW_COLS = ' + /const BINGO_DRAW_COLS = ('[^']*');/.exec(W)[1] + ';');
+async function sbGetStandingBalls(env, q) {
+  var id = /draw_id=eq\.([^&]+)/.exec(q)[1];
+  return (DB.vp_bingo_draw_balls || []).filter(function (r) { return r.draw_id === decodeURIComponent(id); })
+    .sort(function (a, b) { return b.ordinal - a.ordinal; }).slice(0, 1);
+}
 var HOLD = /const BINGO_SERVER_HOLD_MS = (\d+)/.exec(W);
 ok('the server hold exists and is shorter than the 5s the console holds for', !!HOLD && +HOLD[1] > 0 && +HOLD[1] < 5000,
    'longer than the console hold and every honest fifth-second tap is refused');
@@ -195,9 +206,11 @@ var DRAW;
   ok('a fresh draw hands out its first ball', s1.status === 200 && s1.body.index === 1);
   // The console lost the Worker and called 17 itself as ball 2.
   var seventeen = s1.body.number === 17 ? 18 : 17;
+  // The console asked the server for ball 2 and never got it: the server's own record says so (bingoRecordAsk).
+  var d2row = DB.vp_bingo_draws.filter(function (r) { return r.id === d2; })[0];
+  d2row.ball_asked_ordinal = 2;
   BODY = { draw_id: d2, number: seventeen, ordinal: 2, reason: 'ball failed: timeout' };
   var f1 = await handleBingoFallback({}, {}, json);
-  var d2row = DB.vp_bingo_draws.filter(function (r) { return r.id === d2; })[0];
   ok('the fallback is accepted', f1.status === 200 && f1.body.ok === true);
   ok('the draw flips to local, and remembers at which ball and why', d2row.mode === 'local' && d2row.fallback_at === 2 && /timeout/.test(d2row.fallback_why));
   ok('the tablet ball is on the record, marked as the tablet\'s',
@@ -237,7 +250,7 @@ var DRAW;
   var DRAW_MS = /var DRAW_CALL_MS=(\d+);/.exec(CONSOLE);
   ok('each request gives up inside a few seconds', !!DRAW_MS && +DRAW_MS[1] <= 5000 && +DRAW_MS[1] >= 2000,
      'a room must never sit through a long timeout');
-  ok('no answer means the tablet calls the rest of the game', /goLocalDraw\("ball failed: "/.test(CONSOLE) && /if\(n==null\) n=drawFromPool\(\);/.test(CONSOLE));
+  ok('no answer means the tablet calls the rest of the game (where the state allows it)', /standInOrWait\("ball failed: "/.test(CONSOLE) && /goLocalDraw\(why\); return \{ local:true \};/.test(CONSOLE) && /if\(n==null\) n=drawFromPool\(\);/.test(CONSOLE));
   ok('a 429 means wait, not fall back', /if\(r && r\.status===429\) return \{ wait:/.test(CONSOLE) && /if\(res\.wait\)\{ showToast\(res\.wait\); syncNextBtn\(\); return; \}/.test(CONSOLE));
   ok('the host is told once, in plain words', /Calling from this tablet for the rest of this game/.test(CONSOLE));
   ok('a tablet ball is reported to the server', /function commitBall\(n, fromServer\)\{[\s\S]{0,200}if\(!fromServer\) reportLocalBall\(n, G\.idx\+1\);/.test(CONSOLE));

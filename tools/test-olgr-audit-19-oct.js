@@ -107,12 +107,12 @@ var ANN = 'k1_annphone', BOB = 'k1_bobphone';
   // Ball 1 was served. Now ball 2 is asked for and the server fails to fill it.
   DB.vp_bingo_draw_balls.push({ draw_id: d2, ordinal: 1, number: 11, source: 'server', withdrawn_at: null });
   draw(d2).ball_asked_ordinal = 2;
-  r = await W('/host/bingo/fallback', { draw_id: d2, number: 7, ordinal: 3, reason: 'worker unreachable' });
-  check('ATTACK: a ball that skips a place: refused, nothing switched', r.status === 409 && draw(d2).mode === 'server' && balls(d2).length === 1, r);
   r = await W('/host/bingo/fallback', { draw_id: d2, number: 7, ordinal: 2, reason: 'worker unreachable' });
   check('CONTROL: the place the server was asked for and failed to fill: taken from the tablet, the draw switched', r.status === 200 && draw(d2).mode === 'local' && balls(d2).length === 2, r);
   r = await W('/host/bingo/fallback', { draw_id: d2, number: 9, ordinal: 2, reason: 'worker unreachable' });
   check('ATTACK: a second ball into a place already taken: refused', r.status === 409 && balls(d2).length === 2, r);
+  r = await W('/host/bingo/fallback', { draw_id: d2, number: 9, ordinal: 4, reason: 'worker unreachable' });
+  check('ATTACK: on a draw already on the tablet, a ball that skips a place: refused (the record holds 2, so the next is 3)', r.status === 409 && balls(d2).length === 2, r);
   draw(d2).finished_at = new Date().toISOString();
   r = await W('/host/bingo/fallback', { draw_id: d2, number: 9, ordinal: 3, reason: 'worker unreachable' });
   check('ATTACK: a ball on a finished draw: refused', r.status === 409 && balls(d2).length === 2, r);
@@ -210,6 +210,21 @@ var ANN = 'k1_annphone', BOB = 'k1_bobphone';
   check('ATTACK: an early call the server says is not a win: on the queue to wave off, Confirm greyed out, and Confirm refuses',
         hE.G.claims.length === 1 && hE.G.claims[0].valid === false && confirmed === false && hE.G.lastWins.length === 0 && !!btn && / disabled/.test(btn[0]),
         { claims: hE.G.claims.length, valid: hE.G.claims[0] && hE.G.claims[0].valid, confirmed: confirmed, btn: btn && btn[0] });
+
+  // The server answers, but its record is short of balls this tablet called while it was away.
+  var hR = host(function (path) {
+    if (path === '/host/bingo/claim') return { status: 200, json: { claim_id: 'cccccccc-cccc-4ccc-8ccc-000000000002', verdict: 'not_yet', record_short: true, card_no: 101, cells: card, swapped: false, winning_cells: [], balls: 0, status: 'pending' } };
+    if (path === '/host/bingo/draw') return ok200.draw();
+    if (path === '/host/bingo/deal') return { status: 200, json: { ok: true, hands: { p1: [{ card_no: 101, cells: card, source: 'server' }] }, refused: [] } };
+    return { status: 200, json: { ok: true, seated: [], fallback_off_states: [] } };
+  });
+  await advance(50); room(hR); hR.startGame(); await advance(3000);
+  [1, 22, 44, 66, 81].forEach(function (n) { var k = hR.G.pool.indexOf(n); if (k >= 0) hR.G.pool.splice(k, 1); hR.commitBall(n, true); });
+  hR.onMsg({ t: 'claim', pid: 'p1', name: 'Ann', cardNo: 101 }); await advance(500);
+  var btnR = /<button class="btn win" data-act="confirm"[^>]*>/.exec(hR.$('claimQueue').innerHTML);
+  check('CONTROL: a claim the server cannot judge (its record is short of the tablet\'s balls) is checked on the tablet, labelled, and can be confirmed in the room',
+        hR.G.claims.length === 1 && hR.G.claims[0].by === 'tablet' && hR.G.claims[0].valid === true && !!btnR && !/ disabled/.test(btnR[0]) && /this tablet checked/.test(hR.$('claimQueue').innerHTML),
+        { by: hR.G.claims[0] && hR.G.claims[0].by, btn: btnR && btnR[0] });
 
   print('\n' + PASS + ' of ' + (PASS + FAILN) + ' checks passed');
   if (FAILN) throw new Error(FAILN + ' audit checks failed');
