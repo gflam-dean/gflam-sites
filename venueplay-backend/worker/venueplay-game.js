@@ -33,9 +33,15 @@
  *   POST  /session              host     {venue_id}                        -> {session_id, join_code, tv_pairing_code, reused?}
  *   POST  /session/close        host     {session_id}                      -> {session_id, status:'finished'}
  *   POST  /join                 player   {code, name?}                     -> {token, snapshot}
- *   POST  /host/game            host     {session_id, pattern,             -> {game_id, seq, pattern, cards_dealt}
- *                                          prize?, title?, cards_per_player?}
- *                                         BINGO (format omitted or 'bingo90') as above; TRIVIA below.
+ *   90-BALL BINGO (one draw, one ticket and one claim path, 19 Oct 2026):
+ *   POST  /host/bingo/draw      host     {venue_id, session_id?, caller?}  -> {draw_id}            the ball order (shuffle1to90)
+ *   POST  /host/bingo/ball      host     {draw_id}                         -> {number, index}      the next ball of that order
+ *   POST  /host/bingo/fallback  host     {draw_id, number, ordinal, reason} -> {ok}                a ball the tablet called
+ *   POST  /host/bingo/seat      host     {session_id, dids, deal?, count?} -> {ok, seated}
+ *   POST  /host/bingo/deal      host     {draw_id, hands:[{pid,did,want}]} -> {ok, hands, refused}  tickets (generateStrip)
+ *   POST  /host/bingo/claim     host     {draw_id, ref, pid, card_no, pattern, balls} -> {claim_id, verdict, ...}
+ *   POST  /host/bingo/claim/resolve host {claim_id, decision}               -> {ok, status}
+ *   /host/game takes no bingo (format must be trivia, musical or raffle).
  *   POST  /host/game (trivia)   host     {session_id, format:'trivia',     -> {game_id, seq, format:'trivia', question_count}
  *                                          question_set_id, title?, prize?,
  *                                          time_limit_s?, base_points?, speed_bonus?, colour?}
@@ -81,9 +87,8 @@
  *                                         Roster management (host-allowed): enable ('valid') / disable ('excluded') a
  *                                         saved member for the draw.
  *   POST  /host/game/end        host     {game_id}                         -> {game_id, status:'finished'}
- *   POST  /host/ball            host     {game_id}                         -> {number, index}
  *   POST  /host/play            host     {game_id, song_id}                -> {song_id, title, artist, seq, played_count}
- *                                         Musical bingo's equivalent of /host/ball: the host plays (reveals)
+ *                                         Musical bingo's equivalent of /host/bingo/ball: the host plays (reveals)
  *                                         the next song. Records vp_music_plays and emits PUBLIC 'music.song_played'
  *                                         (title + artist are public; players daub by ear). Idempotent per song.
  *   POST  /host/question        host     {game_id}                         -> {qseq, qi, qtotal, text, options, correct_index, ends_at, secs} | {done:true}
@@ -96,18 +101,16 @@
  *                                         The running totals only, read-only: a console reloaded mid-question refills its panel.
  *   GET   /host/pr/boards       host     ?venue_id=<uuid>                  -> {boards:[{id, q, answers:[{a, pts, also}]}]}
  *                                         Punters Reckon's boards WITH their answers, for the console only (15 Oct 2026).
- *   GET   /player/card          player   ?game=<id> (optional)             -> BINGO:   {game_id, card_no, cells, pattern, called_numbers}
- *                                         Serves BINGO tickets AND musical cards           MUSICAL: {game_id, format:'musical_bingo', card_no,
- *                                         (branches on the running game format).                     cells, pattern, played_songs} | {game:null}
+ *   GET   /player/card          player   ?game=<id> (optional)             -> MUSICAL: {game_id, format:'musical_bingo', card_no,
+ *                                         MUSICAL BINGO ONLY.                                cells, pattern, played_songs} | {game:null}
  *   POST  /player/claim         player   {game_id}                         -> {claim_id, auto_verdict, winning_cells, card_no}
- *                                         Works for BINGO (drawn numbers) AND musical bingo (played songs);
- *                                         the Worker loads its own card + play log and computes the verdict.
+ *                                         MUSICAL BINGO ONLY (played songs); the Worker loads its own card
+ *                                         + play log and computes the verdict.
  *   POST  /player/answer        player   {game_id, answer_index, qseq?}    -> {ok:true, recorded} (first answer is final; NO correctness returned)
  *   GET   /player/score         player   ?game=<id>                        -> {total, rank, players_count, last:{answered,is_correct,points_awarded}}
- *   POST  /host/claim/resolve   host     {claim_id, decision:confirm|reject} -> {claim_id, status}
+ *   POST  /host/claim/resolve   host     {claim_id, decision:confirm|reject} -> {claim_id, status}   MUSICAL BINGO ONLY
  *   GET   /snapshot?session=<id> public  (query only)                      -> public projection (no secrets), for TV + late joiners
  *
- *   pattern is one of: one_line | two_lines | full_house  (90-ball has no four_corners).
  *   The DB is the source of truth for EVERY write above. Pages may also mirror
  *   these changes over a Supabase Realtime broadcast for instant UX, but nothing
  *   a client broadcasts is authoritative; it is re-derivable from /snapshot.

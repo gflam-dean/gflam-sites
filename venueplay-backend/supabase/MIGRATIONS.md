@@ -175,7 +175,9 @@ before the paper teams handed in). The host's reply keeps the answer. Worker fal
 RUN ON SYDNEY 27 Sep 2026; proven live on test-bravo (event keys: deferred, leaderboard, options, qseq). Keeps 93's fix.
 Rollback: re-run 93.
 
-`venueplay-95-jag-the-joker.sql`: on branch `feature/jag-joker` only. NOT RUN. Number claimed so nothing else takes it.
+`venueplay-95-jag-the-joker.sql`: NOT RUN. Number claimed so nothing else takes it. 19 Oct 2026: Jag the Joker was taken out
+of the live code (an unapproved random draw game); the whole feature, this file included, is kept on branch
+`jag-joker-parked` (main at 427f4f5). Run this only when Jag comes back.
 Reworked in place 30 Sep 2026 (still NOT RUN): adds `vp_jag_log`, frozen turns/log/secrets (UPDATE and DELETE, cascade
 from a deleted venue let through), a guard on the game row's fingerprint fields, the state check inside every play
 (`vp_jag_gate`), one card a trading night, owner-only close with a reason, jackpot carry, and `vp_jag_public`.
@@ -202,7 +204,7 @@ and `reserve_cents` (int, not null, default 0, check >= 0). Anisimoff Legal 1 Oc
 a customer-set maximum jackpot, enforced before the draws, the draw continuing until won; the reserve banks the
 increments the jackpot cannot take and seeds the next one. The game Worker reads both in a forgiving second trip and
 only writes `reserve_cents` when the read succeeded, so either order is safe; run it BEFORE deploying that Worker so
-the cap is live on the first night. No RLS change (rides on vp_member_draws). NOT RUN. Rollback: drop the two columns
+the cap is live on the first night. No RLS change (rides on vp_member_draws). RUN on the live database (checked 19 Oct 2026 with the service key). Rollback: drop the two columns
 (the file says how). 100 is agent B's (venue permits and compliance tick), written the same day.
 
 `venueplay-103-bingo-withdrawn-ball-kept.sql`: `vp_bingo_draw_balls.withdrawn_at` (timestamptz, null = the ball stands).
@@ -212,7 +214,7 @@ number, one per place) become partial unique indexes over standing balls only, b
 the same place and the withdrawn number may be called again; a check stops a server ball ever being marked withdrawn.
 Replica identity set to full, since the primary key goes. Either order is safe: before it is run the Worker sees
 PostgREST refuse the column and deletes the row as before; with it run, the old Worker's delete still works. Run it
-BEFORE the Worker if possible so the first Undo is kept. No RLS change. NOT RUN. Rollback: in the file.
+BEFORE the Worker if possible so the first Undo is kept. No RLS change. RUN on the live database (checked 19 Oct 2026). Rollback: in the file.
 
 `venueplay-104-bingo-server-tickets.sql`: `vp_bingo_tickets` (every bingo phone ticket: draw, pid, device id, strip book and
 page, 27 cells, card number, source server or tablet, dealt_at, voided_at) and `vp_bingo_claims` (every BINGO pressed: the
@@ -220,4 +222,17 @@ ticket checked, the server's verdict from its own ticket and ball record, which 
 service-role only. Dean, 19 Oct 2026: "Lets go the server". Branch `feature/bingo-server-tickets`. Run BEFORE deploying the
 game Worker that goes with it; either order is safe for a night (without the tables the console deals from the tablet as
 before). After running, `python3 venueplay-backend/tools/dump-rls-baseline.py` and commit RLS-BASELINE.json (two new locked
-tables). NOT RUN. Rollback: in the file.
+tables). RUN on the live database 19 Oct 2026 (both tables answer the service key and refuse anon); RLS-BASELINE.json
+re-dumped and committed on the branch the same day. Rollback: in the file.
+
+`venueplay-100-permits-and-compliance-tick.sql`: RUN on the live database (checked 19 Oct 2026 with the service key).
+
+## Retired, unused, for a later drop (19 Oct 2026)
+
+Dean: "remove whatever doesn't need to be there or could jeopardise OLGR licensing". The game Worker no longer touches
+these; nothing was dropped, so an old Worker still deploys safely. Drop them in a later migration once no Worker that
+uses them can be redeployed.
+- `vp_bingo_games` (migration 06 era): the draw order of the old `/host/game` bingo90 path. No code reads or writes it.
+- `vp_draw_next_ball(p_game)`: the database function behind the old `/host/ball`. No code calls it.
+- `vp_cards` and `vp_claims` rows for a `bingo90` game: no longer written. The tables stay; musical bingo uses them.
+- The Jag tables and functions of migration 95 were never created on the live database.

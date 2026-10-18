@@ -1501,60 +1501,10 @@
     }catch(e){}
   }
 
-  // ---- 90-ball ticket: 3 rows x 9 cols, 15 numbers, exactly 5 per row ----
+  // ---- 90-ball ticket: 3 rows x 9 cols, 15 numbers, exactly 5 per row. Made only by makeStrip, below,
+  //      and only when the server cannot deal (dealTick). The single-ticket maker that used to sit here
+  //      as a second fallback is gone (19 Oct 2026): one tablet ticket generator to describe. ----
   function colRange(col){ if(col===0) return [1,9]; if(col===8) return [80,90]; return [col*10, col*10+9]; }
-  function pickColCounts(){
-    var c=[1,1,1,1,1,1,1,1,1], need=6;
-    while(need>0){ var col=cryptoInt(9); if(c[col]<3){ c[col]++; need--; } }
-    return c;
-  }
-  function assignRows(counts){
-    for(var attempt=0;attempt<400;attempt++){
-      var rowCount=[0,0,0], assign=[];
-      for(var col=0;col<9;col++){
-        var rows=[0,1,2];
-        for(var s=rows.length-1;s>0;s--){ var kk=cryptoInt(s+1); var tt=rows[s]; rows[s]=rows[kk]; rows[kk]=tt; }
-        var mark=[false,false,false];
-        for(var i=0;i<counts[col];i++){ mark[rows[i]]=true; rowCount[rows[i]]++; }
-        assign.push(mark);
-      }
-      if(rowCount[0]===5 && rowCount[1]===5 && rowCount[2]===5) return assign;
-    }
-    return null;
-  }
-  function pickNumbers(col,count){
-    var rg=colRange(col), pool=[], n;
-    for(n=rg[0];n<=rg[1];n++) pool.push(n);
-    var pick=[];
-    for(var i=0;i<count;i++){ var idx=cryptoInt(pool.length); pick.push(pool[idx]); pool.splice(idx,1); }
-    pick.sort(function(a,b){ return a-b; });
-    return pick;
-  }
-  function validTicket(t){
-    if(!t || t.length!==3) return false;
-    for(var r=0;r<3;r++){
-      if(t[r].length!==9) return false;
-      var cnt=0;
-      for(var c=0;c<9;c++){ var v=t[r][c]; if(!v) continue; cnt++; var rg=colRange(c); if(v<rg[0]||v>rg[1]) return false; }
-      if(cnt!==5) return false;
-    }
-    return true;
-  }
-  function makeCard(){
-    for(var attempt=0;attempt<500;attempt++){
-      var counts=pickColCounts();
-      var assign=assignRows(counts);
-      if(!assign) continue;
-      var t=[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]];
-      for(var col=0;col<9;col++){
-        var nums=pickNumbers(col, counts[col]);
-        var rows=[]; for(var r=0;r<3;r++){ if(assign[col][r]) rows.push(r); }
-        for(var i=0;i<rows.length;i++){ t[rows[i]][col]=nums[i]; }
-      }
-      if(validTicket(t)) return t;
-    }
-    return [[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]];
-  }
   /* DRAW EACH BALL WHEN IT IS CALLED, NOT ALL 90 UP FRONT.
      This used to shuffle the whole 90 at the start of the game and keep the order in G.draw,
      which saveGame() writes to localStorage. Every future ball was therefore sitting in the
@@ -2089,7 +2039,7 @@
 
   // a full strip of six tickets covering 1-90 exactly once
   function makeStrip(){
-    for(var attempt=0;attempt<200;attempt++){
+    for(var attempt=0;attempt<2000;attempt++){
       var m=stripCounts(); if(!m) continue;
       var assigns=[],t,ok=true;
       for(t=0;t<6;t++){ var a=stripRows(m[t]); if(!a){ ok=false; break; } assigns.push(a); }
@@ -2157,14 +2107,15 @@
     if(!p._books) p._books=[];
     var bi=Math.floor(k/6);
     if(p._books[bi]===undefined) p._books[bi]=makeStrip();
-    return p._books[bi] ? p._books[bi][k%6] : makeCard();      // makeCard is the fallback if a strip cannot be built
+    if(!p._books[bi]) p._books[bi]=undefined;                  // not built (never seen): try again next deal
+    return p._books[bi] ? p._books[bi][k%6] : null;
   }
   function topUpFor(p){
     var want=ticketsFor(p), have=(p.cards||[]).length;
     if(!p.cards) p.cards=[];
     if(want===have) return;
     if(want<have){ p.cards=p.cards.slice(0, want); return; }   // reduced: drop the newest, keep the rest (and the books)
-    for(var k=have;k<want;k++) p.cards.push({ card:ticketFrom(p, k), cardNo:nextCardNo(p), src:"tablet", rec:false });
+    for(var k=have;k<want;k++){ var t=ticketFrom(p, k); if(!t) break; p.cards.push({ card:t, cardNo:nextCardNo(p), src:"tablet", rec:false }); }
   }
   function dealFor(p){
     var want=ticketsFor(p);
@@ -2172,7 +2123,7 @@
     // Fewer than six is simply the front of the strip; more than six starts a fresh one, which is
     // exactly what holding two books is. A new deal is new books.
     p.cards=[]; p._books=[];
-    for(var k=0;k<want;k++) p.cards.push({ card:ticketFrom(p, k), cardNo:nextCardNo(p), src:"tablet", rec:false });
+    for(var k=0;k<want;k++){ var t=ticketFrom(p, k); if(!t) break; p.cards.push({ card:t, cardNo:nextCardNo(p), src:"tablet", rec:false }); }
   }
   // The TV's "Bingo claimed" card. names[] carries everyone who called on this ball; name stays
   // as the first so a screen still running the old shape shows something sensible.

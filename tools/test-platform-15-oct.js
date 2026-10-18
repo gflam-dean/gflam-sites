@@ -133,11 +133,11 @@ function resolves(path, depth) {
   return isFile(rel + '.html') || isFile(rel + '/index.html');
 }
 var ROUTES = ['/', '/tv', '/play', '/see-a-night', '/nsw', '/privacy', '/terms', '/unsubscribe', '/add-card',
-  '/signage', '/training', '/jag-check', '/screen-check', '/leave-behind', '/leave-behind-club', '/leave-behind-pub',
+  '/signage', '/training', '/screen-check', '/leave-behind', '/leave-behind-club', '/leave-behind-pub',
   '/leave-behind-rsl', '/app', '/app/', '/app/billing', '/app/hq', '/app/onboard', '/app/settings', '/app/marketing',
   '/app/trivia/host', '/app/trivia/play', '/app/trivia/screen', '/app/trivia/builder', '/app/musical/host',
   '/app/musical/play', '/app/musical/screen', '/app/raffle/host', '/app/raffle/screen', '/app/members/host',
-  '/app/members/screen', '/app/jag/host', '/app/jag/screen', '/app/topanswers/screen', '/offer', '/offer-oct',
+  '/app/members/screen', '/app/topanswers/screen', '/offer', '/offer-oct',
   '/offer-nov', '/qld', '/vic', '/last-call', '/email/signature', '/llms.txt', '/robots.txt', '/sitemap.xml',
   '/data/musical-library.json', '/data/trivia-count.json', '/data/music-count.json'];
 var dead = ROUTES.filter(function (r) { return !resolves(r); });
@@ -161,7 +161,7 @@ var llms = (read('venueplay/llms.txt').match(/https:\/\/venueplay\.com\.au(\/[^\
 ok('every llms.txt link resolves (/pricing and /contact were homepage soft 404s)', llms.length >= 5 && llms.every(function (l) { return resolves(l); }), llms.join(', '));
 
 print('\n== 5. internal pages stay out of search ==');
-['jag-check.html', 'leave-behind.html', 'leave-behind-club.html', 'leave-behind-pub.html', 'leave-behind-rsl.html',
+['leave-behind.html', 'leave-behind-club.html', 'leave-behind-pub.html', 'leave-behind-rsl.html',
  'training.html', 'signage.html', 'screen-check.html', 'unsubscribe.html'].forEach(function (f) {
   ok(f + ' is noindex', /<meta name="robots" content="noindex/.test(read('venueplay/' + f)));
 });

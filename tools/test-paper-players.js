@@ -103,11 +103,11 @@ function paperRows(){ return DB.vp_players.filter(function(p){ return /^paper-/.
   show('a late phone is dealt card 3, not 903', r.body.card_no === 3, JSON.stringify(r.body).slice(0,80));
 
   print('\n90-ball bingo in the same night');
+  /* /host/game deals no 90-ball bingo since 19 Oct 2026: the console's /host/bingo/deal does, to phones
+     only (tools/test-bingo-server-tickets.js). Asking here deals nobody, paper or phone. */
+  var cardsBefore = DB.vp_cards.length;
   r = await call(handleHostGame, { session_id:SESSION, format:'bingo90', pattern:'one_line' });
-  var bg = r.body.game_id;
-  var bcards = DB.vp_cards.filter(function(c){ return c.game_id === bg; });
-  var paperIds = paperRows().map(function(p){ return p.id; });
-  show('bingo deals the three phones and no paper player', r.status === 200 && bcards.length === 3 && !bcards.some(function(c){ return paperIds.indexOf(c.player_id) >= 0; }), r.status+' '+bcards.length);
+  show('bingo is not dealt here any more: refused, and no paper player (or anyone) gets a card', r.status === 400 && DB.vp_cards.length === cardsBefore, r.status+' '+(DB.vp_cards.length - cardsBefore));
 
   print('\ntrivia: a paper round');
   reset(0);

@@ -651,9 +651,9 @@ print("");
 print("== paid tickets bought one at a time cover the numbers like a book ==");
 /* The host taps + once per sale. A top-up used to start a brand new strip and take its second
    ticket, so six such sales were six tickets from six books: 24 numbers on two of them, 35 on
-   none (audit, 20 Sep 2026). Lifted here: the real makeStrip, makeCard, nextCardNo, dealFor and
+   none (audit, 20 Sep 2026). Lifted here: the real makeStrip, nextCardNo, dealFor and
    topUpFor out of the shipped console. */
-var DEAL = ["cryptoInt", "clampCards", "colRange", "pickColCounts", "pickNumbers", "assignRows", "validTicket", "makeCard", "stripCounts", "stripRows", "makeStrip", "nextCardNo", "ticketsFor", "ticketFrom", "dealFor", "topUpFor"];
+var DEAL = ["cryptoInt", "clampCards", "colRange", "stripCounts", "stripRows", "makeStrip", "nextCardNo", "ticketsFor", "ticketFrom", "dealFor", "topUpFor"];
 var COL_TOTAL = [9,10,10,10,10,10,10,10,11];   // the 90-ball column sizes the console declares beside stripCounts
 if (typeof crypto === "undefined") { crypto = { getRandomValues: function(a){ for (var i = 0; i < a.length; i++) a[i] = Math.floor(Math.random() * 4294967296); return a; } }; }
 var dealMissing = [];

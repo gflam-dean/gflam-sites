@@ -98,7 +98,6 @@ print('one mark, not five');
 var first = MARKS[0] || {};
 check('tv.html and the four game screens paint exactly the same box', MARKS.length === 5 && MARKS.every(function (m) { return m.css === first.css && m.avoid === ''; }),
       MARKS.map(function (m) { return m.label + ' ' + m.css; }));
-check('Jag the Joker paints no logo (its own title is in that corner)', readFile('venueplay/app/jag/screen.html').indexOf('venueLogo') === -1);
 check('the Punters Reckon demo screen paints no logo (it has no venue)', readFile('venueplay/app/topanswers/screen.html').indexOf('venueLogo') === -1);
 
 print('');

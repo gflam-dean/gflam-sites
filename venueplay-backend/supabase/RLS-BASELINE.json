@@ -1780,6 +1780,10 @@
    "enabled": true,
    "forced": false
   },
+  "vp_bingo_claims": {
+   "enabled": true,
+   "forced": false
+  },
   "vp_bingo_draw_balls": {
    "enabled": true,
    "forced": false
@@ -1789,6 +1793,10 @@
    "forced": false
   },
   "vp_bingo_games": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_bingo_tickets": {
    "enabled": true,
    "forced": false
   },
