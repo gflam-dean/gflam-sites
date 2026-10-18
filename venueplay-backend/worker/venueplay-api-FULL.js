@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '16 Oct 2026, 16:06 · f8056e76';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '19 Oct 2026, 08:40 · e85c2a94';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -9910,8 +9910,7 @@ async function helpAdminList(request, env, json) {
   const rest = q.filter((x) => !/^created_at=/.test(x));
   if (range.length === 2) rest.push('and=(' + range.map((x) => x.replace('=', '.')).join(',') + ')');
   else rest.push.apply(rest, range);
-  rest.push('order=created_at.desc,id.desc');
-  const rows = await vpaSelectAll(env, 'vp_help_tickets', rest.join('&'));
+  const rows = await vpaSelectAll(env, 'vp_help_tickets', rest.join('&') + '&order=created_at.desc,id.desc');
   const venues = await helpVenueNames(env, rows.map((r) => r.venue_id));
   const admins = await vpaSelect(env, 'vp_platform_admins', 'select=label&order=label.asc');
   // The venue picker for "Log a call". HQ only, like everything else here; paged and ordered.
@@ -10081,8 +10080,8 @@ async function helpAdminReport(request, env, json) {
   if (!from || !to) return json({ error: 'Pick a from and a to date.' }, 400);
   const q = ['and=(created_at.gte.' + encodeURIComponent(from) + ',created_at.lte.' + encodeURIComponent(to) + ')'];
   if (HELP_BRANDS.indexOf(g.body.brand) >= 0) q.push('brand=eq.' + g.body.brand);
-  q.push('select=id,ticket_no,brand,created_at,closed_at,category,channel,status,priority,venue_id,room_code,subject&order=created_at.asc,id.asc');
-  const rows = await vpaSelectAll(env, 'vp_help_tickets', q.join('&'));
+  q.push('select=id,ticket_no,brand,created_at,closed_at,category,channel,status,priority,venue_id,room_code,subject');
+  const rows = await vpaSelectAll(env, 'vp_help_tickets', q.join('&') + '&order=created_at.asc,id.asc');
   const names = await helpVenueNames(env, rows.map((r) => r.venue_id));
   return json({ from: g.body.from, to: g.body.to, report: helpReport(rows, names), rows: rows, venues: names });
 }

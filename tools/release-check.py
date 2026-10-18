@@ -3270,6 +3270,12 @@ def local_checks(which):
              'test-webhook-retry-is-not-dropped.js',
              'only a FINISHED Stripe event is answered 200; a failed one is retried', 10,
              'A 200 tells Stripe never to send it again. Paid, no venue, and nothing says so'),
+            ('D53. The help desk: anyone can ask, only HQ can read',
+             'test-help-desk.js',
+             'tickets from every form, rate limits, HQ-only reads, the report, email in, phone alerts', 140,
+             'A venue, a host, a PartyPlay host or a stranger reading tickets is every customer\'s '
+             'email and complaint handed out; a report that miscounts, or an alert that carries a '
+             'customer\'s name through Google or Apple, is the same fault more quietly'),
             ('D15. A refused "Keep this venue" leaves the venue exactly as it was',
              'test-undo-cancel-rolls-back.js',
              'a refused undo puts back every field it wrote, the 90-day clock included', 12,
