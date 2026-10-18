@@ -9492,3 +9492,867 @@ async function vpbMyVenues(request, env, json) {
      login to its own page instead of showing it game buttons it could only be refused by. */
   return json({ venues: venues || [], marketing_only: staff.every((x) => x.role === 'marketing') });
 }
+
+/* ==========================================================================================
+   THE HELP DESK (migration 106, 19 Oct 2026), for VenuePlay AND PartyPlay
+
+   Dean, 19 Oct 2026: "add a small 'Help' link to a short FAQ, plus a 'Contact support' form that
+   creates a ticket ... That gives you a record without phone calls ... sales, support (venue and
+   customer) and also we could categorise calls as well? Nothing super fancy, just a bit of a
+   report after." Then: "We need to know if it is sales, support, accounts etc enquiry." Then:
+   "can we dual brand this helpdesk with partyplay as well?" Then: tickets are for STAFF only.
+
+   THE ONE RULE: TICKETS ARE READ BY HQ AND NOBODY ELSE. A patron, a guest, a venue owner, a host
+   and a PartyPlay host can SUBMIT. None of them can read a ticket, a list of tickets or a count,
+   for either brand, not even their own. Every route here that returns ticket data starts with
+   helpAdmin(), which is vpaRequireAdmin with HELP_ADMIN_ROLES. The one exception is
+   /help/push/peek, which answers a staff device's own push secret with brand, category and
+   ticket number only (see there). The tables are service role only, so this file is the only
+   door.
+
+   HELP_ADMIN_ROLES is owner, accounts AND staff. 'staff' is the existing Gflam staff role in
+   vp_platform_admins (HQ already hides Audit and Flagged from it, and the game Worker refuses it
+   any venue action), which makes it the support role Dean asked for without a new role: adding
+   one would have needed every vp_is_platform_admin() policy in the database reviewed.
+
+   WAYS IN, all making the same kind of row:
+     POST /help/ticket           public: a VenuePlay patron, a PartyPlay guest, a PartyPlay host
+                                 (by party code; PartyPlay hosts have no login this Worker can
+                                 check, so it is recorded as what they typed), a PartyPlay sales
+                                 enquiry. Rate limited by network, device and email; honeypot.
+     POST /contact               the VenuePlay website's "Talk to us" form, now also a sales ticket.
+     POST /help/venue/ticket     a signed-in VenuePlay venue login (any staff role at that venue).
+     email()                     Cloudflare Email Routing (see ~/venue-enrich/HELP-DESK-EMAIL-SETUP.md).
+     POST /admin/help/*          HQ only.
+
+   NOTHING IS AUTO-REPLIED TO WHOEVER FILLED IN A FORM. An acknowledgement to any typed address
+   would make a public form a way to send our mail to strangers. The page shows the number.
+   ========================================================================================== */
+const HELP_BRANDS     = ['venueplay', 'partyplay'];
+const HELP_CATEGORIES = ['sales', 'venue_support', 'patron_support', 'accounts', 'general'];
+const HELP_CHANNELS   = ['patron_form', 'venue_form', 'web_form', 'email', 'phone', 'manual'];
+const HELP_STATUSES   = ['new', 'open', 'waiting', 'closed'];
+const HELP_PRIORITIES = ['normal', 'urgent'];
+const HELP_ADMIN_ROLES = ['owner', 'accounts', 'staff'];
+const HELP_STAFF_ROLES = ['owner', 'manager', 'host', 'marketing'];
+const HELP_BRAND_LABEL = { venueplay: 'VenuePlay', partyplay: 'PartyPlay' };
+function helpCategoryLabel(category, brand) {
+  // PartyPlay has hosts and guests, not venues and patrons.
+  if (brand === 'partyplay') return ({ sales: 'Sales', venue_support: 'Host support', patron_support: 'Guest support', accounts: 'Accounts', general: 'General' })[category] || 'General';
+  return ({ sales: 'Sales', venue_support: 'Venue support', patron_support: 'Player support', accounts: 'Accounts', general: 'General' })[category] || 'General';
+}
+const HELP_MAX_PER_IP = 20;        // an hour. A pub's wifi is ONE address for the whole room
+const HELP_MAX_PER_DEVICE = 3;     // ten minutes
+const HELP_MAX_PER_EMAIL = 5;      // an hour
+const HELP_MAX_PER_STAFF = 10;     // an hour, a signed-in venue login
+const HELP_MESSAGE_MAX = 4000;
+const HELP_UUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+const HELP_EMAIL_RE = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/;
+
+/* WHICH ADDRESS ANSWERS WHICH TICKET. The From must be on the brand's send. subdomain, the only
+   domains Resend sends for; venueplay.com.au and partyplay.com.au are at DMARC quarantine with
+   Migadu as their only sender, so a From of support@venueplay.com.au sent through Resend would
+   land in junk. The Reply-To is the real Migadu mailbox, and from there the help subdomain copy
+   threads the answer back onto the ticket. */
+function helpFromFor(category, brand) {
+  const b = brand === 'partyplay' ? 'partyplay' : 'venueplay';
+  const local = (category === 'venue_support' || category === 'patron_support') ? 'support'
+              : category === 'accounts' ? 'accounts' : 'hello';
+  const who = HELP_BRAND_LABEL[b] + (local === 'support' ? ' Support' : local === 'accounts' ? ' Accounts' : '');
+  return { from: who + ' <' + local + '@send.' + b + '.com.au>', reply_to: local + '@' + b + '.com.au' };
+}
+/* The address a message was sent TO decides its category and brand. Migadu copies support@,
+   accounts@, sales@ and hello@ to the same name on each brand's help subdomain. */
+function helpCategoryForAddress(addr) {
+  const local = String(addr || '').toLowerCase().trim().split('@')[0].replace(/\+.*$/, '');
+  if (local === 'support') return 'venue_support';
+  if (local === 'accounts') return 'accounts';
+  if (local === 'sales') return 'sales';
+  return 'general';
+}
+function helpBrandForAddress(addr) {
+  return /@([a-z0-9-]+\.)*partyplay\.com\.au$/i.test(String(addr || '').trim()) ? 'partyplay' : 'venueplay';
+}
+
+function helpLine(v, max) { return String(v == null ? '' : v).replace(/[\x00-\x1f\x7f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max); }
+function helpText(v) { return String(v == null ? '' : v).replace(/\r\n?/g, '\n').replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]+/g, ' ').trim(); }
+function helpHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function helpTag(no) { return '[#' + no + ']'; }
+function helpNow() { return new Date().toISOString(); }
+
+async function helpInsertTicket(env, t) {
+  const row = {
+    brand: t.brand === 'partyplay' ? 'partyplay' : 'venueplay',
+    category: HELP_CATEGORIES.indexOf(t.category) >= 0 ? t.category : 'general',
+    channel: t.channel,
+    status: HELP_STATUSES.indexOf(t.status) >= 0 ? t.status : 'new',
+    priority: t.priority === 'urgent' ? 'urgent' : 'normal',
+    subject: helpLine(t.subject, 200) || '(no subject)',
+    message: String(t.message || '').slice(0, 20000),
+    contact_name: t.contact_name ? helpLine(t.contact_name, 120) : null,
+    contact_email: t.contact_email ? helpLine(t.contact_email, 200).toLowerCase() : null,
+    contact_phone: t.contact_phone ? helpLine(t.contact_phone, 40) : null,
+    venue_id: t.venue_id || null,
+    room_code: t.room_code || null,
+    session_id: t.session_id || null,
+    raised_by: t.raised_by || null,
+    source_address: t.source_address || null,
+    email_message_id: t.email_message_id || null,
+  };
+  if (row.status === 'closed') row.closed_at = helpNow();
+  return await vpaInsert(env, 'vp_help_tickets', row);
+}
+
+async function helpVenueName(env, venueId) {
+  if (!venueId) return '';
+  const r = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=name&limit=1');
+  return (r && r[0] && r[0].name) || '';
+}
+
+/* One place that posts a help desk email to Resend. Not vpaSendEmail, because that one fixes the
+   From to VenuePlay hello@, and a reply on a PartyPlay accounts ticket must come from PartyPlay
+   accounts. Returns true when Resend took it (accepted, not delivered: see vpaSendEmail). */
+async function helpSendEmail(env, m) {
+  if (!env.RESEND_API_KEY || !m.to) return false;
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ from: m.from, reply_to: m.reply_to, to: [m.to], subject: m.subject, html: m.html,
+                           headers: m.headers || undefined }),
+  });
+  return !!(res && res.ok);
+}
+
+/* THE STAFF ALERT, on every ticket that did not start in HQ. Subject: [VenuePlay] or [PartyPlay],
+   URGENT when it is, the kind, the number. To VP_HELP_ALERT_EMAIL, else VP_INTERNAL_EMAIL, else
+   hello@venueplay.com.au, where every other staff alert in this Worker goes. The X-VP-Help header
+   and the send. domain stop this alert, copied from hello@ to the help subdomain, coming straight
+   back in as a ticket of its own. */
+function helpAlertSubject(ticket, lead) {
+  return '[' + (HELP_BRAND_LABEL[ticket.brand] || 'VenuePlay') + '] ' + (ticket.priority === 'urgent' ? 'URGENT ' : '') +
+         helpCategoryLabel(ticket.category, ticket.brand) + ' ' + helpTag(ticket.ticket_no) + ': ' + helpLine(lead || ticket.subject, 90);
+}
+async function helpNotifyStaff(env, ticket, venueName, lead) {
+  try {
+    const to = env.VP_HELP_ALERT_EMAIL || env.VP_INTERNAL_EMAIL || 'hello@venueplay.com.au';
+    const row = (k, v) => v ? '<p style="margin:4px 0"><b>' + k + ':</b> ' + helpHtml(v) + '</p>' : '';
+    const html = '<div style="font-family:Arial,sans-serif;font-size:14px;color:#111">' +
+      '<h2 style="margin:0 0 10px">' + helpHtml(helpAlertSubject(ticket, lead)) + '</h2>' +
+      row('Brand', HELP_BRAND_LABEL[ticket.brand]) + row('Kind', helpCategoryLabel(ticket.category, ticket.brand)) +
+      row('Came in by', ticket.channel) + row('Venue', venueName) +
+      row(ticket.brand === 'partyplay' ? 'Party code' : 'Room code', ticket.room_code) +
+      row('Name', ticket.contact_name) + row('Email', ticket.contact_email) + row('Phone', ticket.contact_phone) +
+      row('Subject', ticket.subject) +
+      '<p style="margin:12px 0 4px"><b>Message:</b></p><div style="white-space:pre-wrap;border-left:3px solid #FF1F8E;padding-left:10px">' +
+      helpHtml(lead && lead !== ticket.subject ? lead : ticket.message) + '</div>' +
+      '<p style="margin-top:16px"><a href="https://www.venueplay.com.au/app/hq.html#help-' + ticket.ticket_no + '">Open it in HQ</a>. ' +
+      'Reply from HQ so the answer is kept on the ticket.</p></div>';
+    return await helpSendEmail(env, { to: to, from: 'Help Desk <hello@send.venueplay.com.au>',
+      reply_to: ticket.contact_email || 'hello@venueplay.com.au', subject: helpAlertSubject(ticket, lead), html: html,
+      headers: { 'X-VP-Help': 'alert' } });
+  } catch (e) { return false; }
+}
+
+/* Everything a new ticket sets off. Email to staff and a push to every staff device that asked,
+   each on its own so one failing never stops the other. */
+async function helpAnnounce(env, ticket, venueName) {
+  const mailed = await helpNotifyStaff(env, ticket, venueName);
+  let pushed = { sent: 0 };
+  try { pushed = await helpPushNew(env, ticket); } catch (e) { pushed = { sent: 0, error: String(e && e.message || e).slice(0, 200) }; }
+  return { mailed: mailed, pushed: pushed };
+}
+
+/* WHICH VENUE A PHONE WAS IN. The room code on the phone is the venue's join code, or a live
+   session's code; a phone that arrived off a table talker also has the venue's slug. Any of them
+   failing is fine: the ticket is still made, with the code the patron saw. */
+async function helpVenueFromRoom(env, code, slug) {
+  const out = { venue_id: null, session_id: null, room_code: null };
+  const c = String(code || '').trim().toUpperCase();
+  if (/^[A-Z0-9]{6}$/.test(c)) {
+    out.room_code = c;
+    const v = await vpaSelect(env, 'vp_venues', 'join_code=eq.' + encodeURIComponent(c) + '&select=id&limit=2');
+    if (v && v.length === 1) out.venue_id = v[0].id;
+    else {
+      const s = await vpaSelect(env, 'vp_sessions', 'join_code=eq.' + encodeURIComponent(c) +
+        '&status=in.(lobby,running,paused)&select=id,venue_id&limit=1');
+      if (s && s[0]) { out.venue_id = s[0].venue_id; out.session_id = s[0].id; }
+    }
+  }
+  const sl = String(slug || '').trim().toLowerCase();
+  if (!out.venue_id && /^[a-z0-9-]{1,80}$/.test(sl)) {
+    const v = await vpaSelect(env, 'vp_venues', 'slug=eq.' + encodeURIComponent(sl) + '&select=id&limit=1');
+    if (v && v[0]) out.venue_id = v[0].id;
+  }
+  if (out.venue_id && !out.session_id) {
+    const s = await vpaSelect(env, 'vp_sessions', 'venue_id=eq.' + encodeURIComponent(out.venue_id) +
+      '&status=in.(lobby,running,paused)&select=id&limit=1');
+    if (s && s[0]) out.session_id = s[0].id;
+  }
+  return out;
+}
+
+/* ------------------------------ POST /help/ticket (public) ------------------------------
+   brand venueplay: kind patron (a phone) or sales.
+   brand partyplay: kind patron (a guest), host (by party code) or sales.
+   A VenuePlay HOST is refused here: they are signed in, and go through /help/venue/ticket so the
+   venue is the one their login holds, not one they typed. */
+async function helpPublicTicket(request, env, json) {
+  const ip = request.headers.get('cf-connecting-ip') || '';   // Cloudflare-set; never stored
+  if (ip && !rateLimit('help:ip:' + ip, HELP_MAX_PER_IP, 3600)) {
+    return json({ error: 'Too many messages from this network. Please try again later.' }, 429);
+  }
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
+  // The honeypot: a field no person sees. Told it worked, and nothing is made.
+  if (String(b.website || '').trim()) return json({ ok: true, ticket_no: null });
+  const brand = b.brand === 'partyplay' ? 'partyplay' : 'venueplay';
+  const kind = ['patron', 'host', 'sales'].indexOf(b.kind) >= 0 ? b.kind : 'patron';
+  if (brand === 'venueplay' && kind === 'host') return json({ error: 'Sign in to the console and use Help there.' }, 400);
+  const support = 'support@' + brand + '.com.au';
+  const name = helpLine(b.name, 200);
+  const email = helpLine(b.email, 300).toLowerCase();
+  const phone = helpLine(b.phone, 60);
+  const message = helpText(b.message);
+  if (!message) return json({ error: 'Type your message first.' }, 400);
+  if (!email) return json({ error: 'Put in your email so we can reply.' }, 400);
+  if (name.length > 120 || email.length > 200 || phone.length > 40 || message.length > HELP_MESSAGE_MAX || !HELP_EMAIL_RE.test(email)) {
+    return json({ error: 'That message is too long or the email address does not look right.' }, 400);
+  }
+  const device = helpLine(b.device, 64);
+  if (device && !rateLimit('help:dev:' + device, HELP_MAX_PER_DEVICE, 600)) {
+    return json({ error: 'You have sent a few already. Give us a little while to reply.' }, 429);
+  }
+  if (!rateLimit('help:em:' + email, HELP_MAX_PER_EMAIL, 3600)) {
+    return json({ error: 'You have sent a few already. Give us a little while to reply.' }, 429);
+  }
+  let where = { venue_id: null, session_id: null, room_code: null };
+  if (brand === 'venueplay' && kind === 'patron') where = await helpVenueFromRoom(env, b.code, b.slug);
+  else {
+    const c = String(b.code || '').trim().toUpperCase();
+    if (/^[A-Z0-9]{4,8}$/.test(c)) where.room_code = c;    // a PartyPlay party code, as typed
+  }
+  const game = helpLine(b.game, 24).toLowerCase().replace(/[^a-z ]/g, '');
+  const category = kind === 'sales' ? 'sales' : kind === 'host' ? 'venue_support' : 'patron_support';
+  const who = kind === 'sales' ? 'Enquiry' : kind === 'host' ? 'Host help' : (brand === 'partyplay' ? 'Guest help' : 'Player help');
+  let t;
+  try {
+    t = await helpInsertTicket(env, {
+      brand: brand, category: category, channel: kind === 'sales' ? 'web_form' : 'patron_form',
+      subject: who + (game ? ' (' + game + ')' : '') + ': ' + helpLine(message, 80),
+      message: message, contact_name: name || null, contact_email: email, contact_phone: phone || null,
+      venue_id: where.venue_id, room_code: where.room_code, session_id: where.session_id,
+    });
+  } catch (e) {
+    return json({ error: 'We could not send that just now. Please email ' + support + '.' }, 503);
+  }
+  await helpAnnounce(env, t, await helpVenueName(env, t.venue_id));
+  return json({ ok: true, ticket_no: t.ticket_no });
+}
+
+/* A signed-in VenuePlay login at THIS venue (any staff role), or an HQ admin viewing as it. */
+async function helpRequireVenueStaff(request, env, venueId) {
+  const token = (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '').trim();
+  if (!token) return { error: 'Not signed in.', status: 401 };
+  const payload = await vpaVerifyJWT(token, env.SUPABASE_JWT_SECRET, env);
+  if (!payload || !payload.sub) return { error: 'Invalid or expired session. Please sign in again.', status: 401 };
+  if (!HELP_UUID.test(String(venueId || ''))) return { error: 'Which venue is this about?', status: 400 };
+  const staff = await vpaSelect(env, 'vp_venue_staff', 'auth_user_id=eq.' + encodeURIComponent(payload.sub) +
+    '&venue_id=eq.' + encodeURIComponent(venueId) + '&role=in.(' + HELP_STAFF_ROLES.join(',') + ')&select=venue_id,role,display_name&limit=1');
+  let admin = null;
+  if (!staff || !staff.length) {
+    const a = await vpaSelect(env, 'vp_platform_admins', 'auth_user_id=eq.' + encodeURIComponent(payload.sub) +
+      '&role=in.(owner,accounts)&select=auth_user_id,label,role&limit=1');
+    if (!a || !a.length) return { error: 'This login is not staff at that venue.', status: 403 };
+    admin = a[0];
+  }
+  const v = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=id,name,founding_id&limit=1');
+  if (!v || !v.length) return { error: 'No such venue.', status: 404 };
+  return { authUserId: payload.sub, staff: (staff && staff[0]) || null, admin: admin, venue: v[0] };
+}
+
+/* ------------------------------ POST /help/venue/ticket ------------------------------
+   Submit only. It answers with the ticket number and nothing else: not the account's email it
+   will reply to, and there is no route that lists a venue's tickets back. */
+async function helpVenueTicket(request, env, json) {
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
+  const who = await helpRequireVenueStaff(request, env, b.venue_id);
+  if (who.error) return json({ error: who.error }, who.status);
+  if (!rateLimit('help:staff:' + who.authUserId, HELP_MAX_PER_STAFF, 3600)) {
+    return json({ error: 'That is a lot of requests in an hour. Email support@venueplay.com.au if it is urgent.' }, 429);
+  }
+  const subject = helpLine(b.subject, 300);
+  const message = helpText(b.message);
+  const replyEmail = helpLine(b.reply_email, 300).toLowerCase();
+  if (!subject) return json({ error: 'Give it a short subject.' }, 400);
+  if (!message) return json({ error: 'Tell us what is happening.' }, 400);
+  if (subject.length > 200 || message.length > HELP_MESSAGE_MAX) return json({ error: 'That is too long. Keep it under 4,000 characters.' }, 400);
+  if (replyEmail && !HELP_EMAIL_RE.test(replyEmail)) return json({ error: 'That email address does not look right.' }, 400);
+  let contactEmail = replyEmail, contactPhone = null;
+  if (!contactEmail && who.venue.founding_id) {
+    const acc = await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(who.venue.founding_id) + '&select=contact_email&limit=1');
+    contactEmail = (acc && acc[0] && acc[0].contact_email) || null;
+  }
+  if (!who.admin) {
+    const u = await vpaAuthGetUser(env, who.authUserId);
+    contactPhone = (u && u.phone) ? ('+' + String(u.phone).replace(/^\+/, '')) : null;
+  }
+  let t;
+  try {
+    t = await helpInsertTicket(env, {
+      brand: 'venueplay', category: b.category === 'accounts' ? 'accounts' : 'venue_support', channel: 'venue_form',
+      priority: b.urgent ? 'urgent' : 'normal', subject: subject, message: message,
+      contact_name: helpLine(b.name, 120) || (who.staff && who.staff.display_name) || (who.admin ? 'HQ: ' + (who.admin.label || 'admin') : null),
+      contact_email: contactEmail, contact_phone: contactPhone, venue_id: who.venue.id, raised_by: who.authUserId,
+    });
+  } catch (e) {
+    return json({ error: 'We could not send that just now. Please email support@venueplay.com.au.' }, 503);
+  }
+  await helpAnnounce(env, t, who.venue.name);
+  return json({ ok: true, ticket_no: t.ticket_no });
+}
+
+/* ------------------------------ HQ ------------------------------ */
+function helpDay(s, end) {
+  // A date in Brisbane (no daylight saving), so "19 Oct" means the day Dean lived through.
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(s || ''))) return null;
+  return s + (end ? 'T23:59:59.999+10:00' : 'T00:00:00+10:00');
+}
+/* EVERY route that returns ticket data starts here. */
+async function helpAdmin(request, env, json) {
+  const a = await vpaRequireAdmin(request, env, HELP_ADMIN_ROLES);
+  if (a.error) return { res: json({ error: a.error }, a.status) };
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return { res: _b.res };
+  return { admin: a, body: _b.body };
+}
+async function helpVenueNames(env, ids) {
+  const out = {};
+  const uniq = ids.filter((x, i) => x && ids.indexOf(x) === i && HELP_UUID.test(x));
+  for (let i = 0; i < uniq.length; i += 100) {
+    const part = uniq.slice(i, i + 100);
+    const rows = await vpaSelect(env, 'vp_venues', 'id=in.(' + part.map(encodeURIComponent).join(',') + ')&select=id,name');
+    (rows || []).forEach((r) => { out[r.id] = r.name; });
+  }
+  return out;
+}
+async function helpFindTicket(env, id) {
+  if (!HELP_UUID.test(String(id || ''))) return null;
+  const r = await vpaSelect(env, 'vp_help_tickets', 'id=eq.' + encodeURIComponent(id) + '&select=*&limit=1');
+  return (r && r[0]) || null;
+}
+function helpFilters(b) {
+  const q = [];
+  if (b.status === 'not_closed') q.push('status=neq.closed');
+  else if (HELP_STATUSES.indexOf(b.status) >= 0) q.push('status=eq.' + b.status);
+  if (HELP_BRANDS.indexOf(b.brand) >= 0) q.push('brand=eq.' + b.brand);
+  if (HELP_CATEGORIES.indexOf(b.category) >= 0) q.push('category=eq.' + b.category);
+  if (HELP_CHANNELS.indexOf(b.channel) >= 0) q.push('channel=eq.' + b.channel);
+  if (HELP_UUID.test(String(b.venue_id || ''))) q.push('venue_id=eq.' + b.venue_id);
+  const from = helpDay(b.from), to = helpDay(b.to, true);
+  if (from) q.push('created_at=gte.' + encodeURIComponent(from));
+  if (to) q.push('created_at=lte.' + encodeURIComponent(to).replace(/^/, '') );
+  return q;
+}
+
+async function helpAdminList(request, env, json) {
+  const g = await helpAdmin(request, env, json); if (g.res) return g.res;
+  const q = ['select=*'].concat(helpFilters(g.body));
+  // created_at=gte and created_at=lte cannot share a key in a query string PostgREST reads as one
+  // filter each, so a range goes in as and=(...). Rebuilt here from the two halves.
+  const range = q.filter((x) => /^created_at=/.test(x));
+  const rest = q.filter((x) => !/^created_at=/.test(x));
+  if (range.length === 2) rest.push('and=(' + range.map((x) => x.replace('=', '.')).join(',') + ')');
+  else rest.push.apply(rest, range);
+  rest.push('order=created_at.desc,id.desc');
+  const rows = await vpaSelectAll(env, 'vp_help_tickets', rest.join('&'));
+  const venues = await helpVenueNames(env, rows.map((r) => r.venue_id));
+  const admins = await vpaSelect(env, 'vp_platform_admins', 'select=label&order=label.asc');
+  return json({ tickets: rows, venues: venues, assignees: (admins || []).map((x) => x.label).filter(Boolean) });
+}
+
+/* The HQ badge: how many are new (nobody has opened them), and how many of those are urgent. */
+async function helpAdminCount(request, env, json) {
+  const g = await helpAdmin(request, env, json); if (g.res) return g.res;
+  const rows = await vpaSelectAll(env, 'vp_help_tickets', 'status=eq.new&select=id,priority,brand&order=id.asc');
+  return json({ new: rows.length, urgent: rows.filter((r) => r.priority === 'urgent').length });
+}
+
+async function helpAdminGet(request, env, json) {
+  const g = await helpAdmin(request, env, json); if (g.res) return g.res;
+  let t = await helpFindTicket(env, g.body.id);
+  if (!t && /^\d{1,9}$/.test(String(g.body.ticket_no || ''))) {
+    const r = await vpaSelect(env, 'vp_help_tickets', 'ticket_no=eq.' + g.body.ticket_no + '&select=*&limit=1');
+    t = (r && r[0]) || null;
+  }
+  if (!t) return json({ error: 'That ticket is not there any more.' }, 404);
+  // Opening a new ticket is reading it: it stops counting on the badge.
+  if (t.status === 'new') {
+    const patch = { status: 'open', updated_at: helpNow() };
+    await vpaPatch(env, 'vp_help_tickets', 'id=eq.' + encodeURIComponent(t.id), patch);
+    await vpaInsert(env, 'vp_help_ticket_notes', { ticket_id: t.id, kind: 'change', body: 'Opened by ' + g.admin.label,
+      author: g.admin.label, author_id: g.admin.actorId }, false);
+    t = Object.assign({}, t, patch);
+  }
+  const notes = await vpaSelectAll(env, 'vp_help_ticket_notes', 'ticket_id=eq.' + encodeURIComponent(t.id) + '&select=*&order=created_at.asc,id.asc');
+  return json({ ticket: t, notes: notes, venue_name: await helpVenueName(env, t.venue_id) });
+}
+
+async function helpAdminUpdate(request, env, json) {
+  const g = await helpAdmin(request, env, json); if (g.res) return g.res;
+  const b = g.body;
+  const t = await helpFindTicket(env, b.id);
+  if (!t) return json({ error: 'That ticket is not there any more.' }, 404);
+  const patch = {}, said = [];
+  function field(k, list, label) {
+    if (b[k] === undefined || b[k] === t[k]) return true;
+    if (list.indexOf(b[k]) < 0) return false;
+    said.push(label + ': ' + t[k] + ' to ' + b[k]); patch[k] = b[k]; return true;
+  }
+  if (!field('status', HELP_STATUSES, 'Status') || !field('category', HELP_CATEGORIES, 'Kind') ||
+      !field('priority', HELP_PRIORITIES, 'Priority') || !field('brand', HELP_BRANDS, 'Brand')) {
+    return json({ error: 'That is not one of the choices.' }, 400);
+  }
+  if (b.assigned_to !== undefined) {
+    const who = helpLine(b.assigned_to, 120) || null;
+    if (who !== (t.assigned_to || null)) { patch.assigned_to = who; said.push('Assigned to ' + (who || 'nobody')); }
+  }
+  if (!said.length) return json({ ok: true, ticket: t, unchanged: true });
+  if (patch.status === 'closed') patch.closed_at = helpNow();
+  else if (patch.status) patch.closed_at = null;
+  patch.updated_at = helpNow();
+  await vpaPatch(env, 'vp_help_tickets', 'id=eq.' + encodeURIComponent(t.id), patch);
+  await vpaInsert(env, 'vp_help_ticket_notes', { ticket_id: t.id, kind: 'change', body: said.join('. '),
+    author: g.admin.label, author_id: g.admin.actorId }, false);
+  return json({ ok: true, ticket: Object.assign({}, t, patch) });
+}
+
+async function helpAdminNote(request, env, json) {
+  const g = await helpAdmin(request, env, json); if (g.res) return g.res;
+  const t = await helpFindTicket(env, g.body.id);
+  if (!t) return json({ error: 'That ticket is not there any more.' }, 404);
+  const body = helpText(g.body.body);
+  if (!body) return json({ error: 'Type the note first.' }, 400);
+  if (body.length > 8000) return json({ error: 'That note is too long.' }, 400);
+  await vpaInsert(env, 'vp_help_ticket_notes', { ticket_id: t.id, kind: 'note', body: body, author: g.admin.label, author_id: g.admin.actorId }, false);
+  const patch = { updated_at: helpNow() };
+  if (t.status === 'new') patch.status = 'open';
+  await vpaPatch(env, 'vp_help_tickets', 'id=eq.' + encodeURIComponent(t.id), patch);
+  return json({ ok: true });
+}
+
+/* The email the contact gets, in the ticket's own brand. Transactional, so it carries the ABN and
+   a way to reach us (as venueplay/emails/*.html do); the number is in the subject so their reply
+   threads back. Both brands are Gflam Group's, ABN 35 679 383 049. */
+function helpReplyHtml(ticket, body, replyTo) {
+  const pp = ticket.brand === 'partyplay';
+  const brand = pp ? 'PartyPlay' : 'VenuePlay';
+  const site = pp ? 'partyplay.com.au' : 'venueplay.com.au';
+  return '<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.55;color:#111;max-width:560px">' +
+    '<div style="font-weight:800;font-size:18px;color:#FF1F8E;margin-bottom:14px">' + brand + '</div>' +
+    '<div style="white-space:pre-wrap">' + helpHtml(body) + '</div>' +
+    '<p style="margin-top:22px">' + brand + '<br><a href="mailto:' + replyTo + '" style="color:#C70F69">' + replyTo + '</a></p>' +
+    '<p style="margin-top:22px;font-size:12px;color:#666">Your request number is #' + ticket.ticket_no +
+    '. Reply to this email to add to it.<br>' + brand + ' (' + site + ') is made by Gflam Group Pty Ltd on the Gold Coast. ABN 35 679 383 049.</p></div>';
+}
+async function helpAdminReply(request, env, json) {
+  const g = await helpAdmin(request, env, json); if (g.res) return g.res;
+  const t = await helpFindTicket(env, g.body.id);
+  if (!t) return json({ error: 'That ticket is not there any more.' }, 404);
+  if (!t.contact_email) return json({ error: 'This ticket has no email address to reply to. Add a note instead.' }, 400);
+  const body = helpText(g.body.body);
+  if (!body) return json({ error: 'Type the reply first.' }, 400);
+  if (body.length > 8000) return json({ error: 'That reply is too long.' }, 400);
+  const f = helpFromFor(t.category, t.brand);
+  const subj = String(t.subject || 'Your request').replace(/\s*\[#\d+\]\s*/g, ' ').trim();
+  const ok = await helpSendEmail(env, { to: t.contact_email, from: f.from, reply_to: f.reply_to,
+    subject: 'Re: ' + helpLine(subj, 150) + ' ' + helpTag(t.ticket_no), html: helpReplyHtml(t, body, f.reply_to) });
+  if (!ok) return json({ error: 'The email did not send, so nothing was recorded. Try again in a minute.' }, 502);
+  await vpaInsert(env, 'vp_help_ticket_notes', { ticket_id: t.id, kind: 'reply', body: body,
+    author: g.admin.label + ' (from ' + f.reply_to + ')', author_id: g.admin.actorId }, false);
+  const patch = { updated_at: helpNow() };
+  if (t.status === 'new' || t.status === 'open') patch.status = 'waiting';
+  await vpaPatch(env, 'vp_help_tickets', 'id=eq.' + encodeURIComponent(t.id), patch);
+  return json({ ok: true, sent_from: f.reply_to, status: patch.status || t.status });
+}
+
+/* LOG A CALL. This is how a phone call gets a category: HQ picks one while the call is fresh.
+   No alert: the person logging it is the alert. */
+async function helpAdminLogCall(request, env, json) {
+  const g = await helpAdmin(request, env, json); if (g.res) return g.res;
+  const b = g.body;
+  if (HELP_CATEGORIES.indexOf(b.category) < 0) return json({ error: 'Pick what kind of call it was.' }, 400);
+  if (HELP_BRANDS.indexOf(b.brand) < 0) return json({ error: 'Pick VenuePlay or PartyPlay.' }, 400);
+  const subject = helpLine(b.subject, 300), message = helpText(b.message);
+  if (!subject) return json({ error: 'Give the call a short subject.' }, 400);
+  if (subject.length > 200 || message.length > 8000) return json({ error: 'That is too long.' }, 400);
+  const email = helpLine(b.contact_email, 300).toLowerCase();
+  if (email && !HELP_EMAIL_RE.test(email)) return json({ error: 'That email address does not look right.' }, 400);
+  const venueId = b.brand === 'venueplay' && HELP_UUID.test(String(b.venue_id || '')) ? b.venue_id : null;
+  const t = await helpInsertTicket(env, {
+    brand: b.brand, category: b.category, channel: b.channel === 'manual' ? 'manual' : 'phone',
+    status: b.status === 'closed' ? 'closed' : 'open', priority: b.priority === 'urgent' ? 'urgent' : 'normal',
+    subject: subject, message: message, contact_name: b.contact_name, contact_email: email || null,
+    contact_phone: b.contact_phone, venue_id: venueId, room_code: /^[A-Z0-9]{4,8}$/.test(String(b.room_code || '').toUpperCase()) ? String(b.room_code).toUpperCase() : null,
+    raised_by: g.admin.actorId,
+  });
+  await vpaInsert(env, 'vp_help_ticket_notes', { ticket_id: t.id, kind: 'change',
+    body: 'Logged by ' + g.admin.label + (t.status === 'closed' ? ', sorted on the call' : ''), author: g.admin.label, author_id: g.admin.actorId }, false);
+  return json({ ok: true, ticket: t });
+}
+
+/* THE REPORT. Pure, so a test can hand it rows and check every number against them. Tickets
+   CREATED in the range; time to close is over the ones of those that are closed. */
+function helpReport(rows, venueNames) {
+  const count = (k) => { const o = {}; rows.forEach((r) => { o[r[k]] = (o[r[k]] || 0) + 1; }); return o; };
+  const closed = rows.filter((r) => r.status === 'closed' && r.closed_at);
+  const hours = closed.map((r) => ({ no: r.ticket_no, h: (Date.parse(r.closed_at) - Date.parse(r.created_at)) / 3600000 }))
+                      .filter((x) => isFinite(x.h) && x.h >= 0);
+  const longest = hours.reduce((m, x) => (!m || x.h > m.h ? x : m), null);
+  const byVenue = {};
+  rows.forEach((r) => { if (r.venue_id) byVenue[r.venue_id] = (byVenue[r.venue_id] || 0) + 1; });
+  const top = Object.keys(byVenue).map((id) => ({ venue_id: id, name: (venueNames && venueNames[id]) || '(unknown venue)', count: byVenue[id] }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name)).slice(0, 10);
+  const byBrandCategory = {};
+  rows.forEach((r) => { const k = r.brand + ':' + r.category; byBrandCategory[k] = (byBrandCategory[k] || 0) + 1; });
+  return {
+    total: rows.length,
+    by_brand: count('brand'), by_category: count('category'), by_channel: count('channel'), by_status: count('status'),
+    by_brand_category: byBrandCategory,
+    closed: hours.length,
+    avg_hours_to_close: hours.length ? Math.round(10 * hours.reduce((s, x) => s + x.h, 0) / hours.length) / 10 : null,
+    longest_hours_to_close: longest ? Math.round(10 * longest.h) / 10 : null,
+    longest_ticket_no: longest ? longest.no : null,
+    top_venues: top,
+  };
+}
+async function helpAdminReport(request, env, json) {
+  const g = await helpAdmin(request, env, json); if (g.res) return g.res;
+  const from = helpDay(g.body.from), to = helpDay(g.body.to, true);
+  if (!from || !to) return json({ error: 'Pick a from and a to date.' }, 400);
+  const q = ['and=(created_at.gte.' + encodeURIComponent(from) + ',created_at.lte.' + encodeURIComponent(to) + ')'];
+  if (HELP_BRANDS.indexOf(g.body.brand) >= 0) q.push('brand=eq.' + g.body.brand);
+  q.push('select=id,ticket_no,brand,created_at,closed_at,category,channel,status,priority,venue_id,room_code,subject&order=created_at.asc,id.asc');
+  const rows = await vpaSelectAll(env, 'vp_help_tickets', q.join('&'));
+  const names = await helpVenueNames(env, rows.map((r) => r.venue_id));
+  return json({ from: g.body.from, to: g.body.to, report: helpReport(rows, names), rows: rows, venues: names });
+}
+
+/* ------------------------------ PHONE ALERTS (Web Push) ------------------------------
+   Dean: "can we somehow get an alert on it?" Standard Web Push, no paid service. A staff member
+   taps "Alert me on this device" in HQ once; the Worker then pushes to that device on every new
+   ticket (or only urgent and sales, their choice).
+
+   THE PUSH CARRIES NOTHING. A Web Push payload has to be encrypted with a fresh ECDH key per
+   message, and this runtime will not generate EC key pairs (see the signing keys note in
+   memory, "Workers cannot mint ECDSA"). So the push is EMPTY: it only wakes the phone. The phone's
+   service worker then asks /help/push/peek, with that device's own secret, what arrived, and is
+   told brand, category, ticket number and whether it is urgent. Nothing else, and nothing of a
+   customer's ever passes through Apple's or Google's push servers.
+
+   Secrets (Dean sets them; see ~/venue-enrich/HELP-DESK-ALERTS.md): VAPID_PUBLIC_KEY (base64url,
+   65 bytes), VAPID_PRIVATE_JWK (the private key as a JWK), optional VAPID_SUBJECT. Without them
+   every push quietly reports "not set up" and the email alert still goes. */
+const HELP_PUSH_HOSTS = /^https:\/\/([a-z0-9-]+\.)*(fcm\.googleapis\.com|push\.services\.mozilla\.com|push\.apple\.com|notify\.windows\.com|windows\.com)(:\d+)?\//i;
+function helpB64url(bytes) {
+  const A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+  let out = '', i = 0;
+  for (; i + 2 < bytes.length; i += 3) { const n = (bytes[i] << 16) | (bytes[i + 1] << 8) | bytes[i + 2];
+    out += A[(n >> 18) & 63] + A[(n >> 12) & 63] + A[(n >> 6) & 63] + A[n & 63]; }
+  if (i < bytes.length) { const n = (bytes[i] << 16) | ((bytes[i + 1] || 0) << 8);
+    out += A[(n >> 18) & 63] + A[(n >> 12) & 63] + (i + 1 < bytes.length ? A[(n >> 6) & 63] : ''); }
+  return out;
+}
+function helpUtf8Bytes(s) {
+  const bin = unescape(encodeURIComponent(String(s))), out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+async function helpSha256Hex(s) {
+  const d = new Uint8Array(await crypto.subtle.digest('SHA-256', helpUtf8Bytes(s)));
+  let h = ''; for (let i = 0; i < d.length; i++) h += ('0' + d[i].toString(16)).slice(-2);
+  return h;
+}
+/* The VAPID Authorization header (RFC 8292): an ES256 JWT for the push service's origin, signed
+   with the IMPORTED private key. Workers can import and sign with ECDSA; only generating is out. */
+async function helpVapidAuth(env, endpoint) {
+  const jwk = JSON.parse(env.VAPID_PRIVATE_JWK);
+  const aud = (/^(https:\/\/[^/]+)/.exec(endpoint) || [])[1];
+  const enc = (o) => helpB64url(helpUtf8Bytes(JSON.stringify(o)));
+  const unsigned = enc({ typ: 'JWT', alg: 'ES256' }) + '.' +
+    enc({ aud: aud, exp: Math.floor(Date.now() / 1000) + 12 * 3600, sub: env.VAPID_SUBJECT || 'mailto:hello@venueplay.com.au' });
+  const key = await crypto.subtle.importKey('jwk', { kty: 'EC', crv: 'P-256', d: jwk.d, x: jwk.x, y: jwk.y, ext: true },
+    { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
+  const sig = new Uint8Array(await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, key, helpUtf8Bytes(unsigned)));
+  return 'vapid t=' + unsigned + '.' + helpB64url(sig) + ', k=' + env.VAPID_PUBLIC_KEY;
+}
+function helpPushWants(sub, ticket) {
+  if (sub.filter === 'urgent_sales') return ticket.priority === 'urgent' || ticket.category === 'sales';
+  return true;
+}
+async function helpPushNew(env, ticket) {
+  if (!env.VAPID_PRIVATE_JWK || !env.VAPID_PUBLIC_KEY) return { sent: 0, why: 'phone alerts are not set up' };
+  let subs;
+  try { subs = await vpaSelectAll(env, 'vp_help_push_subs', 'select=id,endpoint,filter&order=id.asc'); }
+  catch (e) { return { sent: 0, why: 'could not read the alert list' }; }
+  let sent = 0, gone = 0, failed = 0;
+  for (const s of subs) {
+    if (!helpPushWants(s, ticket) || !HELP_PUSH_HOSTS.test(s.endpoint)) continue;
+    try {
+      const res = await fetch(s.endpoint, { method: 'POST', body: '', headers: {
+        'TTL': '86400', 'Urgency': ticket.priority === 'urgent' ? 'high' : 'normal',
+        'Authorization': await helpVapidAuth(env, s.endpoint), 'Content-Length': '0' } });
+      if (res.status === 404 || res.status === 410) {
+        // The device unsubscribed itself or the browser was reset: forget it, or it is tried for ever.
+        await vpaDelete(env, 'vp_help_push_subs', 'id=eq.' + encodeURIComponent(s.id)); gone++;
+      } else if (res.ok) sent++; else failed++;
+    } catch (e) { failed++; }
+  }
+  return { sent: sent, gone: gone, failed: failed };
+}
+async function helpAdminPushKey(request, env, json) {
+  const g = await helpAdmin(request, env, json); if (g.res) return g.res;
+  if (!env.VAPID_PUBLIC_KEY || !env.VAPID_PRIVATE_JWK) return json({ error: 'Phone alerts are not switched on yet. See HELP-DESK-ALERTS.md.' }, 503);
+  return json({ key: env.VAPID_PUBLIC_KEY });
+}
+async function helpAdminPushSubscribe(request, env, json) {
+  const g = await helpAdmin(request, env, json); if (g.res) return g.res;
+  const endpoint = String(g.body.endpoint || '').trim();
+  if (!HELP_PUSH_HOSTS.test(endpoint) || endpoint.length > 1000) return json({ error: 'That is not a push address this desk knows.' }, 400);
+  const filter = g.body.filter === 'urgent_sales' ? 'urgent_sales' : 'all';
+  const raw = new Uint8Array(32); crypto.getRandomValues(raw);
+  const token = helpB64url(raw);
+  await vpaDelete(env, 'vp_help_push_subs', 'endpoint=eq.' + encodeURIComponent(endpoint));
+  await vpaInsert(env, 'vp_help_push_subs', { endpoint: endpoint, filter: filter, auth_user_id: g.admin.actorId,
+    admin_label: g.admin.label, token_hash: await helpSha256Hex(token), last_peek_at: helpNow(),
+    device_label: helpLine(g.body.device_label, 80) || null }, false);
+  return json({ ok: true, token: token, filter: filter });
+}
+async function helpAdminPushUnsubscribe(request, env, json) {
+  const g = await helpAdmin(request, env, json); if (g.res) return g.res;
+  const endpoint = String(g.body.endpoint || '').trim();
+  if (!endpoint) return json({ error: 'Which device?' }, 400);
+  const gone = await vpaDelete(env, 'vp_help_push_subs', 'endpoint=eq.' + encodeURIComponent(endpoint));
+  return json({ ok: true, removed: gone.length });
+}
+/* What woke this phone up. Answers ONLY a device holding its own secret, and only with brand,
+   category, number and urgency: never a name, an email, a subject or a message. */
+async function helpPushPeek(request, env, json) {
+  const ip = request.headers.get('cf-connecting-ip') || '';
+  if (ip && !rateLimit('help:peek:' + ip, 120, 3600)) return json({ error: 'slow down' }, 429);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const endpoint = String(_b.body.endpoint || '').trim(), token = String(_b.body.token || '');
+  if (!endpoint || token.length < 20) return json({ error: 'not allowed' }, 403);
+  const r = await vpaSelect(env, 'vp_help_push_subs', 'endpoint=eq.' + encodeURIComponent(endpoint) + '&select=id,filter,token_hash,last_peek_at&limit=1');
+  const sub = r && r[0];
+  if (!sub || sub.token_hash !== await helpSha256Hex(token)) return json({ error: 'not allowed' }, 403);
+  const since = sub.last_peek_at || helpNow();
+  const rows = await vpaSelect(env, 'vp_help_tickets', 'created_at=gt.' + encodeURIComponent(since) +
+    '&channel=neq.phone&channel=neq.manual&select=ticket_no,brand,category,priority,created_at&order=created_at.desc&limit=50');
+  const mine = (rows || []).filter((t) => helpPushWants(sub, t));
+  await vpaPatch(env, 'vp_help_push_subs', 'id=eq.' + encodeURIComponent(sub.id), { last_peek_at: helpNow() });
+  const t = mine[0];
+  if (!t) return json({ count: 0 });
+  return json({ count: mine.length, ticket_no: t.ticket_no, brand: t.brand, category: t.category,
+                urgent: t.priority === 'urgent', label: helpCategoryLabel(t.category, t.brand) });
+}
+
+/* ------------------------------ INBOUND EMAIL ------------------------------
+   A small MIME reader: headers, encoded words, multipart, quoted-printable, base64, UTF-8. Enough
+   for what people send to a support address. Anything it cannot read becomes "(could not read the
+   message body)" and the ticket is still made: the email is also in the Migadu inbox. */
+function helpB64(s) {
+  const A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  s = String(s || '').replace(/[^A-Za-z0-9+/]/g, '');
+  let out = '', bits = 0, acc = 0;
+  for (let i = 0; i < s.length; i++) { acc = ((acc << 6) | A.indexOf(s[i])) & 0xffffff; bits += 6;
+    if (bits >= 8) { bits -= 8; out += String.fromCharCode((acc >> bits) & 255); } }
+  return out;
+}
+function helpQP(s, header) {
+  if (header) s = String(s || '').replace(/_/g, ' ');
+  return String(s || '').replace(/=\r?\n/g, '').replace(/=([0-9A-Fa-f]{2})/g, (m, h) => String.fromCharCode(parseInt(h, 16)));
+}
+function helpUtf8(bin, charset) {
+  if (charset && !/utf-?8/i.test(charset)) return bin;            // latin1 and friends read as-is
+  try { return decodeURIComponent(bin.replace(/[%\x80-\xff]/g, (c) => '%' + ('0' + c.charCodeAt(0).toString(16)).slice(-2))); }
+  catch (e) { return bin; }
+}
+function helpWords(s) {
+  return String(s || '').replace(/\?=\s+=\?/g, '?==?').replace(/=\?([^?]+)\?([BbQq])\?([^?]*)\?=/g, (m, cs, enc, txt) =>
+    helpUtf8(/b/i.test(enc) ? helpB64(txt) : helpQP(txt, true), cs));
+}
+function helpHeaders(block) {
+  const h = {};
+  String(block || '').replace(/\r?\n[ \t]+/g, ' ').split(/\r?\n/).forEach((line) => {
+    const i = line.indexOf(':'); if (i <= 0) return;
+    const k = line.slice(0, i).trim().toLowerCase(), v = line.slice(i + 1).trim();
+    if (!(k in h)) h[k] = v;
+  });
+  return h;
+}
+function helpParam(v, name) {
+  const m = new RegExp(name + '\\s*=\\s*(?:"([^"]*)"|([^;\\s]+))', 'i').exec(String(v || ''));
+  return m ? (m[1] !== undefined ? m[1] : m[2]) : '';
+}
+function helpSplit(raw) {
+  const m = /\r?\n\r?\n/.exec(raw);
+  return m ? { head: raw.slice(0, m.index), body: raw.slice(m.index + m[0].length) } : { head: raw, body: '' };
+}
+function helpStripHtml(s) {
+  return String(s || '').replace(/<(style|script|head)[\s\S]*?<\/\1>/gi, '').replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|tr|li|h[1-6])>/gi, '\n').replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&')
+    .replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n');
+}
+function helpPartText(headers, body, depth) {
+  const ct = headers['content-type'] || 'text/plain';
+  if (/^multipart\//i.test(ct) && depth < 6) {
+    const boundary = helpParam(ct, 'boundary');
+    if (!boundary) return { plain: '', html: '' };
+    const parts = body.split('--' + boundary);
+    let plain = '', html = '';
+    for (let i = 1; i < parts.length; i++) {
+      const p = parts[i];
+      if (/^--/.test(p)) break;
+      const s = helpSplit(p.replace(/^\r?\n/, ''));
+      const got = helpPartText(helpHeaders(s.head), s.body, depth + 1);
+      if (!plain && got.plain) plain = got.plain;
+      if (!html && got.html) html = got.html;
+    }
+    return { plain: plain, html: html };
+  }
+  if (/attachment/i.test(headers['content-disposition'] || '')) return { plain: '', html: '' };
+  const te = (headers['content-transfer-encoding'] || '').toLowerCase();
+  const bin = te === 'base64' ? helpB64(body) : te === 'quoted-printable' ? helpQP(body) : body;
+  const text = helpUtf8(bin, helpParam(ct, 'charset'));
+  if (/^text\/plain/i.test(ct)) return { plain: text, html: '' };
+  if (/^text\/html/i.test(ct)) return { plain: '', html: text };
+  return { plain: '', html: '' };
+}
+function helpAddress(v) {
+  const s = helpWords(v || '');
+  const m = /^(.*?)<([^>]+)>/.exec(s);
+  const email = (m ? m[2] : s).trim().toLowerCase();
+  const name = m ? m[1].replace(/^\s*"|"\s*$/g, '').trim() : '';
+  return { name: name, email: HELP_EMAIL_RE.test(email) ? email : '' };
+}
+function helpParseEmail(raw) {
+  const s = helpSplit(String(raw || ''));
+  const h = helpHeaders(s.head);
+  const parts = helpPartText(h, s.body, 0);
+  const text = helpText(parts.plain || helpStripHtml(parts.html));
+  return {
+    headers: h,
+    subject: helpLine(helpWords(h.subject || ''), 300),
+    from: helpAddress(h.from),
+    reply_to: h['reply-to'] ? helpAddress(h['reply-to']) : null,
+    message_id: helpLine(h['message-id'] || '', 300),
+    text: text || '(could not read the message body)',
+  };
+}
+/* The new part of a reply, without the quoted history every mail program appends. */
+function helpStripQuoted(text) {
+  const lines = String(text || '').split('\n');
+  for (let i = 1; i < lines.length; i++) {
+    const l = lines[i];
+    if (/^\s*>/.test(l) || /^On .+wrote:\s*$/.test(l) || /^-{2,}\s*Original Message/i.test(l) ||
+        /^_{5,}\s*$/.test(l) || (/^From:\s.+/.test(l) && /^\s*$/.test(lines[i - 1] || ''))) {
+      // "On Mon, 19 Oct 2026 at 10:02, VenuePlay <...> wrote:" can wrap onto two lines.
+      let cut = i;
+      if (/^On .+/.test(lines[i - 1] || '') && /wrote:\s*$/.test(l) && !/^On .+wrote:\s*$/.test(l)) cut = i - 1;
+      const kept = lines.slice(0, cut).join('\n').trim();
+      return kept || String(text).trim();
+    }
+  }
+  return String(text || '').trim();
+}
+/* Mail that must never become a ticket: our own alerts and replies coming back round through the
+   hello@ copy, bounces, out-of-office, newsletters. A loop here would be a ticket per alert per
+   alert, so this errs on the side of ignoring. It is all in the Migadu inbox regardless. */
+function helpIgnoreEmail(mail) {
+  const h = mail.headers || {}, from = mail.from.email;
+  if (!from) return 'no sender';
+  if (/@send\.(venueplay|partyplay)\.com\.au$/.test(from)) return 'our own sending domain';
+  if (h['x-vp-help']) return 'one of our help desk emails';
+  if (h['auto-submitted'] && !/^no$/i.test(h['auto-submitted'])) return 'automatic reply';
+  if (/^(bulk|junk|list|auto_reply)$/i.test(h.precedence || '')) return 'bulk mail';
+  if (h['list-unsubscribe'] || h['list-id']) return 'a mailing list';
+  if (/^(mailer-daemon|postmaster|no-?reply|do-?not-?reply)@/i.test(from)) return 'an automatic sender';
+  return '';
+}
+async function helpReadRaw(message) {
+  if (typeof message.raw === 'string') return message.raw.slice(0, 2000000);
+  const text = await new Response(message.raw).text();
+  return text.slice(0, 2000000);
+}
+async function helpTicketFromEmail(env, to, mail) {
+  const why = helpIgnoreEmail(mail);
+  if (why) return { action: 'ignored', why: why };
+  const mid = mail.message_id || null;
+  if (mid) {
+    const a = await vpaSelect(env, 'vp_help_tickets', 'email_message_id=eq.' + encodeURIComponent(mid) + '&select=ticket_no&limit=1');
+    const b = await vpaSelect(env, 'vp_help_ticket_notes', 'email_message_id=eq.' + encodeURIComponent(mid) + '&select=id&limit=1');
+    if ((a && a.length) || (b && b.length)) return { action: 'duplicate' };
+  }
+  const contact = (mail.reply_to && mail.reply_to.email) ? mail.reply_to : mail.from;
+  const brand = helpBrandForAddress(to);
+  /* A reply to one of ours: "[#1042]" in the subject, FROM the address on that ticket, to the same
+     brand. A stranger quoting a number they guessed starts a new ticket instead of writing on
+     somebody else's. */
+  const tag = /\[#(\d{3,9})\]/.exec(mail.subject);
+  if (tag) {
+    const r = await vpaSelect(env, 'vp_help_tickets', 'ticket_no=eq.' + tag[1] + '&select=*&limit=1');
+    const t = r && r[0];
+    const addr = t && String(t.contact_email || '').toLowerCase();
+    if (t && addr && t.brand === brand && (addr === contact.email || addr === mail.from.email)) {
+      const body = helpStripQuoted(mail.text).slice(0, 20000);
+      await vpaInsert(env, 'vp_help_ticket_notes', { ticket_id: t.id, kind: 'email_in', body: body,
+        author: (contact.name ? contact.name + ' ' : '') + '<' + contact.email + '>', email_message_id: mid }, false);
+      const patch = { updated_at: helpNow() };
+      if (t.status === 'waiting' || t.status === 'closed') { patch.status = 'open'; patch.closed_at = null; }
+      await vpaPatch(env, 'vp_help_tickets', 'id=eq.' + encodeURIComponent(t.id), patch);
+      await helpNotifyStaff(env, Object.assign({}, t, patch), await helpVenueName(env, t.venue_id), 'Reply on #' + t.ticket_no + ': ' + body.slice(0, 400));
+      return { action: 'note', ticket_no: t.ticket_no };
+    }
+  }
+  const local = String(to || '').toLowerCase().split('@')[0].replace(/\+.*$/, '');
+  // A VenuePlay sender whose address is an account's contact email is matched to that account's first venue.
+  let venueId = null;
+  if (brand === 'venueplay') {
+    const acc = await vpaSelect(env, 'venueplay_founding', 'contact_email=' + vpaEmailIs(contact.email) + '&select=id,contact_email&limit=5');
+    const mine = (acc || []).filter((x) => String(x.contact_email || '').toLowerCase() === contact.email)[0];
+    if (mine) {
+      const v = await vpaSelect(env, 'vp_venues', 'founding_id=eq.' + encodeURIComponent(mine.id) + '&select=id&order=created_at.asc&limit=1');
+      if (v && v[0]) venueId = v[0].id;
+    }
+  }
+  let t;
+  try {
+    t = await helpInsertTicket(env, {
+      brand: brand, category: helpCategoryForAddress(to), channel: 'email', subject: mail.subject || '(no subject)',
+      message: mail.text.slice(0, 20000), contact_name: contact.name || null, contact_email: contact.email,
+      venue_id: venueId, source_address: local ? local + '@' + brand + '.com.au' : null, email_message_id: mid,
+    });
+  } catch (e) {
+    // Two deliveries of one message racing each other: the unique Message-ID let only one in.
+    if (mid && /duplicate|unique|23505/i.test(String(e && e.message))) return { action: 'duplicate' };
+    throw e;
+  }
+  await helpAnnounce(env, t, await helpVenueName(env, venueId));
+  return { action: 'ticket', ticket_no: t.ticket_no };
+}
+async function helpInboundEmail(message, env) {
+  try {
+    const raw = await helpReadRaw(message);
+    return await helpTicketFromEmail(env, message.to, helpParseEmail(raw));
+  } catch (e) {
+    /* Never reject the message: Migadu already has its own copy, and a bounce would tell the
+       sender their email failed when it did not. Log it and carry on. */
+    console.log('[help] inbound email not ticketed: ' + String((e && e.message) || e).slice(0, 300));
+    return { action: 'failed' };
+  }
+}
