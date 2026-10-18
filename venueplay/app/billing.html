@@ -989,7 +989,7 @@
             if (r.credit_failed){
               // They have given up capacity they paid a year for. Saying nothing about the credit
               // would be taking it silently.
-              showMsg("Reduced to " + n + " players, releasing " + freed + " from today. We could not apply your credit automatically, so we will sort it by hand. Email hello@venueplay.com.au if you do not see it on your next invoice.", true);
+              showMsg("Reduced to " + n + " players, releasing " + freed + " from today. We could not apply your credit automatically, so we will sort it by hand. Email accounts@venueplay.com.au if you do not see it on your next invoice.", true);
             } else {
               showMsg("Reduced to " + n + " players, releasing " + freed + " from today." +
                       (r.credit_cents ? " $" + (r.credit_cents/100).toFixed(2) + " credited for the rest of your year; it comes off your next invoice." : ""), true);

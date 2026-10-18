@@ -4954,7 +4954,7 @@ async function vpaFireInvoiceEmail(env, invoice) {
       + (pdf ? ' <a href="' + pdf + '" style="display:inline-block;color:#12101a;text-decoration:none;font-size:14px;font-weight:700;border:1.5px solid #12101a;padding:9.5px 22px;border-radius:8px">Download PDF</a>' : '')
       + '<p style="font-size:13.5px;color:#12101a;margin:26px 0 0">We know a quiet Tuesday is worth as much as a packed Saturday, '
       + 'so thank you for backing us early. If there is anything you want the games to do that they do not, tell us.</p>'
-      + '<p style="font-size:12.5px;color:#9a9aa4;margin:14px 0 0">Questions about your bill? Reply to this email or contact hello@venueplay.com.au</p>'
+      + '<p style="font-size:12.5px;color:#9a9aa4;margin:14px 0 0">Questions about your bill? Reply to this email or contact accounts@venueplay.com.au</p>'
       + '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay.com.au &middot; Gflam Group, ABN ' + VP_ABN + '</p>'
       + '</div>';
     const res = await fetch('https://api.resend.com/emails', {
@@ -4962,7 +4962,7 @@ async function vpaFireInvoiceEmail(env, invoice) {
       headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from: 'VenuePlay <hello@send.venueplay.com.au>',
-        reply_to: 'hello@venueplay.com.au', // replies reach the real monitored inbox
+        reply_to: 'accounts@venueplay.com.au', // replies reach the real monitored inbox
         to: [email],
         subject: 'Your VenuePlay invoice' + (number ? ' ' + number : '') + ' - ' + amount,
         html: html,
@@ -5046,7 +5046,7 @@ async function vpaFireUpcomingEmail(env, invoice) {
           : '')
       + '<a href="' + billing + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">Manage your plan</a>'
       + '<p style="font-size:13px;color:#6a6a75;margin:22px 0 0">You can add or reduce players anytime from your billing page. On monthly, added players are a full month and reductions start at your next renewal. On annual, added players are pro rata to your renewal, and if you reduce, the unused value is held as credit against next year rather than lost.</p>'
-      + '<p style="font-size:12.5px;color:#9a9aa4;margin:22px 0 0">Prefer not to get these? Turn payment reminders off on your billing page. Questions? Reply to this email or contact hello@venueplay.com.au</p>'
+      + '<p style="font-size:12.5px;color:#9a9aa4;margin:22px 0 0">Prefer not to get these? Turn payment reminders off on your billing page. Questions? Reply to this email or contact accounts@venueplay.com.au</p>'
       + '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay.com.au &middot; Gflam Group, ABN ' + VP_ABN + '</p>'
       + '</div>';
     const res = await fetch('https://api.resend.com/emails', {
@@ -5054,7 +5054,7 @@ async function vpaFireUpcomingEmail(env, invoice) {
       headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from: 'VenuePlay <hello@send.venueplay.com.au>',
-        reply_to: 'hello@venueplay.com.au',
+        reply_to: 'accounts@venueplay.com.au',
         to: [email],
         subject: 'Your VenuePlay payment is coming up' + (when ? ' - ' + when : '') + ' (' + amount + ')',
         html: html,
@@ -5467,14 +5467,14 @@ async function vpaFirePaymentFailedEmail(env, invoice, moved, declineKnown) {
       + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">' + (why.ours ? 'A payment did not go through.' : 'Your card did not go through.') + '</p>'
       + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">We tried to charge ' + amount + ' for ' + what + (why.ours ? '. ' : ' and it was declined. ') + why.line + '</p>'
       + vpaPaymentFailedNextStep(moved, payNow, billing)
-      + '<p style="font-size:12.5px;color:#9a9aa4;margin:22px 0 0">Questions? Reply to this email or contact hello@venueplay.com.au</p>'
+      + '<p style="font-size:12.5px;color:#9a9aa4;margin:22px 0 0">Questions? Reply to this email or contact accounts@venueplay.com.au</p>'
       + '</div>';
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from: 'VenuePlay <hello@send.venueplay.com.au>',
-        reply_to: 'hello@venueplay.com.au',
+        reply_to: 'accounts@venueplay.com.au',
         to: [email],
         subject: 'Your VenuePlay payment did not go through',
         html: html,
@@ -7661,7 +7661,7 @@ async function vpbCancelVenue(request, env, json) {
   // the change is a promise about their money that we have not kept.
   if (info && info.syncFailed) {
     await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), before);
-    return json({ error: 'We could not update your billing just now, so nothing has changed. Please try again in a minute, or email hello@venueplay.com.au.' }, 502);
+    return json({ error: 'We could not update your billing just now, so nothing has changed. Please try again in a minute, or email accounts@venueplay.com.au.' }, 502);
   }
   const endsDate = info && info.periodEnd ? vpaFmtDate(info.periodEnd) : null;
   await vpaInsert(env, 'vp_admin_audit', {

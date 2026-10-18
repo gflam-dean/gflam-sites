@@ -381,6 +381,43 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('a look-alike domain is not let in', (await preflight('/help/ticket', 'https://partyplay.com.au.evil.example')) !== 'https://partyplay.com.au.evil.example');
   check('VenuePlay pages still are', (await preflight('/help/ticket', 'https://www.venueplay.com.au')) === 'https://www.venueplay.com.au');
 
+  print('THE PHONE\'S SERVICE WORKER (venueplay/app/vp-help-sw.js), RUN');
+  async function swRun(peekAnswer, peekOk) {
+    var L = {}, shown = [], opened = [], asked = [];
+    var self = { addEventListener: function (k, f) { L[k] = f; }, skipWaiting: function () {},
+      registration: { showNotification: function (t, o) { shown.push({ title: t, opts: o }); return Promise.resolve(); } },
+      clients: { claim: function () { return Promise.resolve(); }, openWindow: function (u) { opened.push(u); return Promise.resolve(); } } };
+    var caches = { open: function () { return Promise.resolve({ match: function () { return Promise.resolve({ json: function () { return Promise.resolve({ api: 'https://api.test', endpoint: 'https://fcm.googleapis.com/x', token: 'secret-token-0123456789' }); } }); } }); } };
+    var fetch = function (u, o) { asked.push({ url: u, body: JSON.parse(o.body) }); return Promise.resolve({ ok: peekOk, json: function () { return Promise.resolve(peekAnswer); } }); };
+    (new Function('self', 'caches', 'fetch', readFile('venueplay/app/vp-help-sw.js')))(self, caches, fetch);
+    var waits = []; L.push({ waitUntil: function (p) { waits.push(p); } }); await Promise.all(waits);
+    var w2 = []; if (shown[0]) L.notificationclick({ notification: { close: function () {}, data: shown[0].opts.data }, waitUntil: function (p) { w2.push(p); } }); await Promise.all(w2);
+    return { shown: shown, opened: opened, asked: asked };
+  }
+  var sw = await swRun({ count: 2, ticket_no: 1042, brand: 'partyplay', category: 'venue_support', urgent: true, label: 'Host support' }, true);
+  check('a push asks the Worker what arrived, with this device\'s own endpoint and secret', sw.asked.length === 1 && sw.asked[0].url === 'https://api.test/help/push/peek' && sw.asked[0].body.token === 'secret-token-0123456789', sw.asked);
+  check('and shows brand, URGENT and the kind in the title', sw.shown.length === 1 && sw.shown[0].title === '[PartyPlay] URGENT Host support', sw.shown[0] && sw.shown[0].title);
+  check('the ticket number in the body, and how many more', /Ticket #1042 and 1 more/.test(sw.shown[0].opts.body), sw.shown[0].opts.body);
+  check('tapping it opens that ticket in HQ', sw.opened.join() === '/app/hq.html#help-1042', sw.opened);
+  var sw2 = await swRun(null, false);
+  check('if the Worker cannot be asked, a notification still shows (an iPhone switches alerts off otherwise)', sw2.shown.length === 1 && sw2.shown[0].title === 'Help desk', sw2.shown);
+  check('and it opens the help desk', sw2.opened.join() === '/app/hq.html#helpdesk', sw2.opened);
+  check('the service worker has no fetch handler, so it can never get between a page and the network', !/addEventListener\(\s*["']fetch["']/.test(readFile('venueplay/app/vp-help-sw.js')));
+
+  print('ONE WIDGET, TWO SITES; AND THE WORDS');
+  check('partyplay/lib/vp-help.js is byte for byte venueplay/app/vp-help.js', readFile('partyplay/lib/vp-help.js') === readFile('venueplay/app/vp-help.js'));
+  var VPF = JSON.parse(readFile('venueplay/data/help-faq.json')), PPF = JSON.parse(readFile('partyplay/data/help-faq.json'));
+  check('the VenuePlay FAQ has its patron and venue sections', VPF.patron.items.length >= 6 && VPF.venue.items.length >= 6);
+  check('the PartyPlay FAQ has its guest and host sections', PPF.guest.items.length >= 5 && PPF.host.items.length >= 5);
+  function words(f) { var out = []; ['patron', 'venue', 'guest', 'host'].forEach(function (k) { (f[k] && f[k].items || []).forEach(function (i) { out.push(i.q + ' ' + i.a); }); }); return out.join('\n'); }
+  var allWords = words(VPF) + '\n' + words(PPF);
+  check('no long dashes anywhere in either FAQ', !/[\u2013\u2014]/.test(allWords));
+  check('never "roster"; it is your members list', !/roster/i.test(allWords) && /members list/.test(words(VPF)));
+  check('never "the ACT"', !/\bthe ACT\b/.test(allWords));
+  var claim = VPF.patron.items.filter(function (i) { return /BINGO/.test(i.q); })[0];
+  check('a bingo prize is claimed from the host, never the bar', claim && /claimed from the host, never the bar/.test(claim.a) && !/claim[^.]*from the bar/i.test(allWords.replace('never the bar', '')), claim && claim.a);
+  check('each Help panel names its own support address', VPF.support_email === 'support@venueplay.com.au' && PPF.support_email === 'support@partyplay.com.au' && /support@venueplay\.com\.au/.test(words(VPF)) && /support@partyplay\.com\.au/.test(words(PPF)));
+
   print('');
   print(fails ? (fails + ' FAILED, ' + ran + ' run') : ('ALL ' + ran + ' CHECKS PASSED'));
 })().catch(function (e) { print('  FAIL the suite threw: ' + (e && e.stack || e)); print('1 FAILED'); });

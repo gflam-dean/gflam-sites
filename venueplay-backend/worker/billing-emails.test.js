@@ -323,6 +323,9 @@ function extrasChecks() {
     }).then(function () {
       var h = sent[2] && sent[2].body.html;
       pass("REAL email, subscription: for your VenuePlay subscription, the pause warning, the button", !!h && /for your VenuePlay subscription/.test(h) && /games will pause/.test(h) && /Pay now/.test(h));
+      /* ACCOUNTS ANSWERS BILLS (help desk, 19 Oct 2026). A reply to a payment email reaches accounts@,
+         which Migadu copies to the help desk as an accounts ticket. */
+      pass("REAL email: a payment email replies to accounts@ and names it", sent[2] && sent[2].body.reply_to === "accounts@venueplay.com.au" && /accounts@venueplay\.com\.au/.test(h) && !/hello@venueplay\.com\.au/.test(h), sent[2] && sent[2].body.reply_to);
     }).then(webhookWiring);
   });
 }
@@ -596,6 +599,7 @@ function receiptChecks() {
   return run(ENV, paid).then(function () {
     var r = audits.filter(function (a) { return a.row.action === "invoice_receipt_email"; });
     pass("a paid invoice sends a receipt", sent.length === 1 && /api\.resend\.com/.test(sent[0].url));
+    pass("the receipt replies to accounts@ and names it, not hello@", sent[0] && sent[0].body && sent[0].body.reply_to === "accounts@venueplay.com.au" && /accounts@venueplay\.com\.au/.test(sent[0].body.html) && !/hello@venueplay\.com\.au/.test(sent[0].body.html), sent[0] && sent[0].body && sent[0].body.reply_to);
     pass("and it is RECORDED, so nobody has to ask the customer", r.length === 1,
          JSON.stringify(audits.map(function (a) { return a.row.action; })));
     pass("naming who, how much, and Resend's id",
