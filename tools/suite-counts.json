@@ -168,7 +168,11 @@
   "counted_by": "lines"
  },
  "tools/test-bingo-seat-15-oct.js": {
-  "checks": 37,
+  "checks": 38,
+  "counted_by": "lines"
+ },
+ "tools/test-bingo-server-tickets.js": {
+  "checks": 45,
   "counted_by": "lines"
  },
  "tools/test-bingo-tab-15-oct.js": {

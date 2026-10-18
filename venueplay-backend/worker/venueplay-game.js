@@ -142,7 +142,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '18 Oct 2026, 03:09 · 7ab55131';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '19 Oct 2026, 05:57 · ee9a7b6e';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows

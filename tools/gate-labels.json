@@ -158,7 +158,7 @@
   "owner or advertising manager only; the bytes decide the type; oversize, JPEG, GIF and SVG refused; screen-save takes no pasted address",
   "owner-only-routes.test.js",
   "paged reads in venueplay-api-FULL.js are ordered (27)",
-  "paged reads in venueplay-game.js are ordered (26)",
+  "paged reads in venueplay-game.js are ordered (29)",
   "paper cards and sheets bill once, stop at ten, and keep a paper round's answers off every screen",
   "parked questions are not advertised, and a bad count writes nothing (9 checks)",
   "partyplay-api.test.js",
