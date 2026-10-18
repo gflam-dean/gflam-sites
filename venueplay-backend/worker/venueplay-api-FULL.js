@@ -10193,8 +10193,13 @@ async function helpPushPeek(request, env, json) {
   const since = sub.last_peek_at || helpNow();
   const rows = await vpaSelect(env, 'vp_help_tickets', 'created_at=gt.' + encodeURIComponent(since) +
     '&channel=in.(patron_form,venue_form,web_form,email)&select=ticket_no,brand,category,priority,created_at&order=created_at.desc&limit=50');
-  const mine = (rows || []).filter((t) => helpPushWants(sub, t));
-  await vpaPatch(env, 'vp_help_push_subs', 'id=eq.' + encodeURIComponent(sub.id), { last_peek_at: helpNow() });
+  const mine = (rows || []).filter((t) => helpPushWants(sub, t))
+    .sort((x, y) => String(y.created_at).localeCompare(String(x.created_at)));   // newest first, whatever order came back
+  /* The cursor moves to the newest ticket SEEN as well as to now: the database's clock and this
+     Worker's can disagree by a second or two, and a cursor behind the newest ticket would report
+     the same ticket on every push after it. */
+  const seen = (rows || []).reduce((m, x) => (String(x.created_at) > m ? String(x.created_at) : m), helpNow());
+  await vpaPatch(env, 'vp_help_push_subs', 'id=eq.' + encodeURIComponent(sub.id), { last_peek_at: seen });
   const t = mine[0];
   if (!t) return json({ count: 0 });
   return json({ count: mine.length, ticket_no: t.ticket_no, brand: t.brand, category: t.category,

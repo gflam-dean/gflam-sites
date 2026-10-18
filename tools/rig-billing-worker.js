@@ -25,10 +25,16 @@ function match(row,q){
     if(k==='or'){ var parts=v.replace(/^\(|\)$/g,'').split(','); var any=false;
       parts.forEach(function(p){var m=/^([a-z_]+)\.(eq|ilike)\.(.*)$/.exec(p); if(!m) return; var have=String(row[m[1]]==null?'':row[m[1]]);
         if(m[2]==='eq' ? have===m[3] : new RegExp('^'+m[3].replace(/[.+?^${}()|[\]\\]/g,'\\$&').replace(/_/g,'.')+'$','i').test(have)) any=true;}); if(!any) return false; continue;}
-    var m=/^(eq|neq|is|in|gt|lt|ilike)\.(.*)$/.exec(v); if(!m) throw new Error('the fake database cannot answer '+k+'='+v);
+    if(k==='and'){ var conds=v.replace(/^\(|\)$/g,'').split(','); var all=true;   // and=(col.op.val,...), as PostgREST
+      conds.forEach(function(c){ var mm=/^([a-z_]+)\.(eq|gte|lte|gt|lt)\.(.*)$/.exec(c); if(!mm) throw new Error('the fake database cannot answer and='+v);
+        var one={}; one[mm[1]]=mm[2]+'.'+mm[3]; if(!match(row,one)) all=false; }); if(!all) return false; continue; }
+    var m=/^(eq|neq|is|in|gte|lte|gt|lt|ilike)\.(.*)$/.exec(v); if(!m) throw new Error('the fake database cannot answer '+k+'='+v);
     var have=row[k];
     if(m[1]==='in'){ var list=m[2].replace(/^\(|\)$/g,'').split(',').map(function(x){return x.replace(/^"|"$/g,'');}); if(list.indexOf(String(have))===-1) return false; continue; }
     if(m[1]==='gt'){ if(!(have!=null && String(have)>m[2])) return false; continue; }
+    /* Timestamps compare as instants, not strings: the help desk sends +10:00 offsets and rows are Z. */
+    if(m[1]==='gte'||m[1]==='lte'){ var a1=Date.parse(have), b1=Date.parse(m[2]); var cmp=(isFinite(a1)&&isFinite(b1))?(a1-b1):(String(have)<m[2]?-1:String(have)>m[2]?1:0);
+      if(have==null || (m[1]==='gte'?cmp<0:cmp>0)) return false; continue; }
     if(m[1]==='lt'){ if(!(have!=null && String(have)<m[2])) return false; continue; }
     if(m[1]==='is'){ if(m[2]==='null' ? have!=null : String(have)!==m[2]) return false; continue; }
     if(m[1]==='ilike'){ var rx=new RegExp('^'+m[2].replace(/[.+?^${}()|[\]\\]/g,'\\$&').replace(/\*/g,'.*').replace(/_/g,'.')+'$','i'); if(!rx.test(String(have==null?'':have))) return false; continue; }
