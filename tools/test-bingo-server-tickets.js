@@ -132,7 +132,7 @@ function bootHost3() {
   sb.VP_HOLD = HOLD; dom.window.VP_HOLD = HOLD;
   sb.fetch = pageFetch('host-page');
   var toasts = [];
-  var ex = runPage(inlineScript("venueplay/app/index.html"), sb, ["G", "startGame", "openLobby", "newGame", "endGame", "onMsg", "nextBall",
+  var ex = runPage(consoleScript(), sb, ["G", "startGame", "openLobby", "newGame", "endGame", "onMsg", "nextBall",
     "hostConfirm", "hostReject", "keepPlaying", "finishGame", "dealSoon", "checkPattern", "renderClaimQueue", "showToast"]);
   ex.dom = dom; ex.sb = sb; ex.$ = function (id) { return dom.document.getElementById(id); };
   return ex;
@@ -188,12 +188,10 @@ function frontOfDraw(numbers) {
     var bad = 0;
     for (var i = 0; i < 300; i++) { var s = generateStrip(); if (!(s.length === 6 && s.every(goodTicket) && coversOnce(s))) bad++; }
     check('300 strips from the server: every ticket a valid housie ticket, every strip 1 to 90 exactly once', bad === 0, bad + ' bad');
-    // The console's own checkPattern, lifted from the shipped page, against the server's rule, on the same tickets.
-    var html = readFile('venueplay/app/index.html');
-    function grab(n) { var i0 = html.indexOf('function ' + n + '('), d = 0, st = false; for (var j = i0; j < html.length; j++) { if (html[j] === '{') { d++; st = true; } else if (html[j] === '}') { d--; if (st && !d) return html.slice(i0, j + 1); } } }
+    // The tablet's claim rule, from the shipped /app/vp-draw.js the console loads, against the server's rule, on the same tickets.
+    var box = {}; (new Function('window', 'crypto', readFile('venueplay/app/vp-draw.js')))(box, globalThis.crypto);
     var G = { called: {}, pattern: 'one' };
-    var f = new Function('G', ['isCalled', 'rowComplete', 'completeRows', 'cornerNums', 'checkPattern'].map(grab).join('\n') + '\nreturn checkPattern;');
-    var consoleCheck = f(G), disagree = [], wins = 0;
+    var consoleCheck = function (card) { return box.VPDraw.cardWins(card, G.called, G.pattern); }, disagree = [], wins = 0;
     ['one', 'two', 'full', 'top', 'middle', 'bottom', 'corners'].forEach(function (pat) {
       for (var k = 0; k < 400; k++) {
         var t = generateStrip()[k % 6], set = new Set(), take = 10 + Math.floor(Math.random() * 70);

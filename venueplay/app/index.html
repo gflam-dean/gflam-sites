@@ -630,6 +630,8 @@
      somebody reading it. Loaded here, before the script below uses it. -->
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-drawrecord.js"></script>
+<!-- VP-DRAW: the regulated bingo code that runs on this tablet (draw, tickets, claim rule, fallback switch). -->
+<script src="/app/vp-draw.js"></script>
 <script>
 (function(){
   "use strict";
@@ -1502,10 +1504,7 @@
     }catch(e){}
   }
 
-  // ---- 90-ball ticket: 3 rows x 9 cols, 15 numbers, exactly 5 per row. Made only by makeStrip, below,
-  //      and only when the server cannot deal (dealTick). The single-ticket maker that used to sit here
-  //      as a second fallback is gone (19 Oct 2026): one tablet ticket generator to describe. ----
-  function colRange(col){ if(col===0) return [1,9]; if(col===8) return [80,90]; return [col*10, col*10+9]; }
+  // ---- 90-ball tickets are made by VPDraw.makeStrip (/app/vp-draw.js), and only when the server cannot deal. ----
   /* DRAW EACH BALL WHEN IT IS CALLED, NOT ALL 90 UP FRONT.
      This used to shuffle the whole 90 at the start of the game and keep the order in G.draw,
      which saveGame() writes to localStorage. Every future ball was therefore sitting in the
@@ -1519,11 +1518,7 @@
      public information anyway, and every index into it still means what it used to.
      cryptoInt is rejection-sampled over crypto.getRandomValues, so the pick is unbiased. */
   function freshPool(){ var a=[],i; for(i=1;i<=90;i++) a.push(i); return a; }
-  function drawFromPool(){
-    if(!G.pool || !G.pool.length) return null;
-    var k=cryptoInt(G.pool.length);
-    return G.pool.splice(k,1)[0];   // removed from the pool: never drawn twice
-  }
+  function drawFromPool(){ return window.VPDraw.drawFromPool(G.pool); }   // the regulated draw, /app/vp-draw.js
   function isCalled(n){ return !!G.called[n]; }
 
   /* ---- THE BALL ORDER LIVES ON THE SERVER (migration 70, 8 Sep 2026) ----
@@ -1540,7 +1535,7 @@
      network error, or the server itself failing (5xx). A 4xx is the server saying NO: signed out after
      the 4 hour limit (401), games paused or this venue not allowed (403), the game finished (409). The
      night must not carry on round that on the tablet, so the game stops and says why. 429 is "wait". */
-  function isRefusal(r){ return !!r && r.status>=400 && r.status<500 && r.status!==429; }
+  function isRefusal(r){ return window.VPDraw.isRefusal(r); }   // /app/vp-draw.js
   function serverRefused(r, what){
     var st=r && r.status, err=(r && r.json && r.json.error) || "";
     var msg = st===401 ? "You have been signed out (that happens after 4 hours). Sign in again, then reload this page: the game comes back where it was."
@@ -1550,16 +1545,9 @@
     G.halt={ status:st, msg:msg, what:String(what||"") };
     showToast(msg); syncNextBtn(); setCoach(); saveGame();
   }
-  /* THE TABLET FALLBACK SWITCH (19 Oct 2026). The Worker holds the list of states where the tablet may
-     not stand in for the server (TABLET_FALLBACK_OFF_STATES in venueplay-game.js, empty by default) and
-     sends it with every draw and seat answer. It is kept on this tablet, so it still holds when the
-     server cannot be reached, which is the only time it matters. */
-  function learnFallbackOff(list){ if(!Array.isArray(list)) return; try{ localStorage.setItem("vpFallbackOff", JSON.stringify(list.map(String))); }catch(e){} }
-  function tabletMayStandIn(){
-    var st=String((__ctx && __ctx.venue && __ctx.venue.au_state) || "").toUpperCase(), l=[];
-    try{ l=JSON.parse(localStorage.getItem("vpFallbackOff")||"[]")||[]; }catch(e){ l=[]; }
-    return !st || l.indexOf(st)<0;
-  }
+  /* THE TABLET FALLBACK SWITCH (19 Oct 2026) is a constant in /app/vp-draw.js, the same list as the
+     Worker's. Nothing the server, a venue or a host sends can change it on this tablet. */
+  function tabletMayStandIn(){ return window.VPDraw.standInAllowed((__ctx && __ctx.venue && __ctx.venue.au_state) || ""); }
   var NO_STAND_IN="The server is not answering, and this venue does not let the tablet stand in for it. Try again in a moment.";
   function openServerDraw(){
     G.drawId=null; G.drawMode="server"; G.drawOpening=null; G.drawWhy=G.caller ? "caller" : "";
@@ -1570,7 +1558,7 @@
     // caller:true opens the record as a physical draw (the Worker refuses to hand out a ball on it).
     G.drawOpening=VP.gameApiCall("/host/bingo/draw", G.caller ? { venue_id:v.id, session_id:G.sessionId||null, caller:true } : { venue_id:v.id, session_id:G.sessionId||null }, DRAW_CALL_MS)
       .then(function(r){
-        if(r && r.status===200 && r.json && r.json.draw_id){ G.drawId=r.json.draw_id; learnFallbackOff(r.json.fallback_off_states); saveGame(); }
+        if(r && r.status===200 && r.json && r.json.draw_id){ G.drawId=r.json.draw_id; saveGame(); }
         else if(isRefusal(r)){ G.drawRefused=true; serverRefused(r, "draw"); }
         else goLocalDraw("draw open answered "+(r&&r.status));
       }, function(err){ goLocalDraw("draw open failed: "+(err&&err.message||err)); })
@@ -1660,7 +1648,7 @@
         /* Balls already called on this tablet are NOT posted to this new record: the server never
            failed to call them (it was never asked), so it rightly refuses them (audit, 19 Oct 2026).
            Its record starts here, and a claim that needs those balls is judged on the tablet. */
-        G.drawId=r.json.draw_id; learnFallbackOff(r.json.fallback_off_states);
+        G.drawId=r.json.draw_id;
         saveGame();
         return { id:G.drawId };
       }
@@ -1930,28 +1918,8 @@
       clearTimeout(_logT); _logT=setTimeout(flushClaimLog, 15000);
     }, function(){ _logBusy=false; clearTimeout(_logT); _logT=setTimeout(flushClaimLog, 15000); });
   }
-  function rowComplete(card,row){ for(var c=0;c<9;c++){ var v=card[row][c]; if(v && !isCalled(v)) return false; } return true; }
-  function completeRows(card){ var n=0; for(var r=0;r<3;r++){ if(rowComplete(card,r)) n++; } return n; }
-  // the four "corners" of a 3x9 ticket = the first and last actual number of the top and bottom rows
-  function cornerNums(card){
-    var out=[]; [0,2].forEach(function(r){ var row=card[r], first=0, last=0;
-      for(var c=0;c<9;c++){ if(row[c]){ if(!first) first=row[c]; last=row[c]; } }
-      if(first) out.push(first); if(last && last!==first) out.push(last); });
-    return out;
-  }
-  function checkPattern(card){
-    if(!card) return false;
-    switch(G.pattern){
-      case "one": return completeRows(card)>=1;
-      case "two": return completeRows(card)>=2;
-      case "full": return completeRows(card)>=3;
-      case "top": return rowComplete(card,0);
-      case "middle": return rowComplete(card,1);
-      case "bottom": return rowComplete(card,2);
-      case "corners": var cn=cornerNums(card); if(!cn.length) return false; for(var i=0;i<cn.length;i++){ if(!isCalled(cn[i])) return false; } return true;
-    }
-    return false;
-  }
+  // The claim rule is the regulated one in /app/vp-draw.js, the same rule the server applies.
+  function checkPattern(card){ return window.VPDraw.cardWins(card, G.called, G.pattern); }
   function calledArray(){ var a=[]; for(var i=0;i<=G.idx;i++) a.push(G.draw[i]); return a; }
   /* ONE PERSON, ONE PLAYER, AND ONLY PEOPLE WHO ARE REALLY HERE (14 Oct 2026).
      The room used to be whoever signed a join on the channel, which anybody anywhere can do, while
@@ -2020,7 +1988,6 @@
       if(sid!==G.sessionId) return;                      // a reply about the session before this one
       var j=r && r.json;
       if(!(r && r.status===200 && j && j.ok && Array.isArray(j.seated))){ seatFailed(); return; }
-      learnFallbackOff(j.fallback_off_states);
       var wasDown=G.seatDown; G.seatDown=false;
       var seated={}; j.seated.forEach(function(d){ seated[d]=true; });
       wantP.forEach(function(pid){
@@ -2050,97 +2017,7 @@
     dealSoon(0);                                         // the server deals them (dealTick); this tablet only in an outage
     seatSoon(800);                                       // and get the new ones stamped as dealt
   }
-  /* ---- strips ----
-     Paper bingo is sold in STRIPS of six: between them the six tickets carry all 90
-     numbers exactly once, so every number called marks exactly one of your tickets.
-     Dealing six independent tickets instead meant about a third of calls landed on
-     none of a player's tickets and about a quarter landed on two, which is both
-     unfamiliar to anyone who has played on paper and miserable on a phone, where
-     you cannot see six tickets at once.
-
-     COL_TOTAL is how many numbers each column contributes to a whole strip
-     (column 0 is 1-9, column 8 is 80-90, the rest are ten each) and sums to 90. */
-  var COL_TOTAL=[9,10,10,10,10,10,10,10,11];
-
-  // 6 x 9 grid of per-ticket column counts: every entry 1-3, every ticket totals 15,
-  // every column totals COL_TOTAL. That is what makes the six tickets a true strip.
-  function stripCounts(){
-    for(var attempt=0;attempt<600;attempt++){
-      var extra=[],rowLeft=[],r,c;
-      for(r=0;r<6;r++){ extra.push([0,0,0,0,0,0,0,0,0]); rowLeft.push(6); }  // 15 - 9 baseline
-      var cols=[0,1,2,3,4,5,6,7,8];
-      for(var i=cols.length-1;i>0;i--){ var j=cryptoInt(i+1),t=cols[i]; cols[i]=cols[j]; cols[j]=t; }
-      var ok=true;
-      for(var ci=0;ci<cols.length;ci++){
-        c=cols[ci];
-        var need=COL_TOTAL[c]-6;
-        // fill from the tickets with most room left, so nothing gets stranded
-        var order=[0,1,2,3,4,5].sort(function(a,b){ return rowLeft[b]-rowLeft[a] || (cryptoInt(2)?1:-1); });
-        for(var oi=0;oi<order.length && need>0;oi++){
-          r=order[oi];
-          var take=Math.min(2-extra[r][c], rowLeft[r], need);
-          if(take<=0) continue;
-          extra[r][c]+=take; rowLeft[r]-=take; need-=take;
-        }
-        if(need>0){ ok=false; break; }
-      }
-      if(!ok) continue;
-      var clean=true;
-      for(r=0;r<6;r++) if(rowLeft[r]!==0) clean=false;
-      if(!clean) continue;
-      var out=[];
-      for(r=0;r<6;r++){ var row=[]; for(c=0;c<9;c++) row.push(1+extra[r][c]); out.push(row); }
-      return out;
-    }
-    return null;
-  }
-
-  // place one ticket's nine column counts into three rows holding exactly five each
-  function stripRows(counts){
-    for(var attempt=0;attempt<400;attempt++){
-      var assign=[],tally=[0,0,0],c,i;
-      for(c=0;c<9;c++){
-        var pick=[0,1,2];
-        for(i=pick.length-1;i>0;i--){ var j=cryptoInt(i+1),t=pick[i]; pick[i]=pick[j]; pick[j]=t; }
-        pick=pick.slice(0,counts[c]).sort();
-        assign.push(pick);
-        for(i=0;i<pick.length;i++) tally[pick[i]]++;
-      }
-      if(tally[0]===5 && tally[1]===5 && tally[2]===5) return assign;
-    }
-    return null;
-  }
-
-  // a full strip of six tickets covering 1-90 exactly once
-  function makeStrip(){
-    for(var attempt=0;attempt<2000;attempt++){
-      var m=stripCounts(); if(!m) continue;
-      var assigns=[],t,ok=true;
-      for(t=0;t<6;t++){ var a=stripRows(m[t]); if(!a){ ok=false; break; } assigns.push(a); }
-      if(!ok) continue;
-      var pools=[],c,i,j,tmp;
-      for(c=0;c<9;c++){
-        var rg=colRange(c),p=[];
-        for(i=rg[0];i<=rg[1];i++) p.push(i);
-        for(i=p.length-1;i>0;i--){ j=cryptoInt(i+1); tmp=p[i]; p[i]=p[j]; p[j]=tmp; }
-        pools.push(p);
-      }
-      var tickets=[];
-      for(t=0;t<6;t++) tickets.push([[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]]);
-      for(c=0;c<9;c++){
-        var at=0;
-        for(t=0;t<6;t++){
-          var chunk=pools[c].slice(at, at+m[t][c]).sort(function(a,b){ return a-b; });
-          at+=m[t][c];
-          var rows=assigns[t][c];
-          for(i=0;i<rows.length;i++) tickets[t][rows[i]][c]=chunk[i];
-        }
-      }
-      return tickets;
-    }
-    return null;
-  }
-
+  /* The strips themselves (makeStrip) are in /app/vp-draw.js, the regulated module (19 Oct 2026). */
   // A sheet is a full strip of six: the six tickets between them hold all 90 numbers, which is
   // what a book means in housie. So "2 sheets" is 12 tickets, dealt as two strips.
   /* A ticket number must be unique WITHIN a player's hand. It was drawn independently per ticket
@@ -2180,7 +2057,7 @@
   function ticketFrom(p, k){
     if(!p._books) p._books=[];
     var bi=Math.floor(k/6);
-    if(p._books[bi]===undefined) p._books[bi]=makeStrip();
+    if(p._books[bi]===undefined) p._books[bi]=window.VPDraw.makeStrip();
     if(!p._books[bi]) p._books[bi]=undefined;                  // not built (never seen): try again next deal
     return p._books[bi] ? p._books[bi][k%6] : null;
   }
@@ -2398,7 +2275,7 @@
     VP.confirmTakeover(slug).then(function(ok){ _lobbyAsking=false; if(ok) openLobbyNow(); });
   }
   function openLobbyNow(){
-    if(blockedByHold()) return;
+    if(blockedByHold() || drawRulesMissing()) return;
     clearCallGuards();
     G.pattern=$("patternSel").value;
     var _p=requirePrize(); if(_p===null) return;
@@ -2739,8 +2616,10 @@
     };
     $("ovgCancel").onclick=function(){ m.classList.add("hidden"); };
   }
+  /* No bingo without its regulated rules: if /app/vp-draw.js did not load, nothing is dealt, drawn or judged. */
+  function drawRulesMissing(){ if(window.VPDraw) return false; showToast("This page could not load its bingo rules. Reload it, and check the connection."); return true; }
   function startGame(){
-    if(blockedByHold()) return;
+    if(blockedByHold() || drawRulesMissing()) return;
     var _cnt=playerCount(), _cap=playerCap();
     if(_cap>0 && _cnt>_cap && !inFirstMonth() && !overageAcked){ showOverage(_cnt, _cap, startGame); return; }
     clearCallGuards();
@@ -2795,6 +2674,7 @@
     $("ngCancel").onclick=function(){ m.classList.add("hidden"); };
   }
   function newGame(){
+    if(drawRulesMissing()) return;
     clearCallGuards();
     if(G.callerWin) callerWinSettle();   // a real-balls win still on the TV counts: the room saw it
     postReport();   // report the round just finished before a fresh one begins

@@ -127,6 +127,10 @@
   "checks": 12,
   "counted_by": "lines"
  },
+ "tools/regulated.test.py": {
+  "checks": 19,
+  "counted_by": "lines"
+ },
  "tools/test-a-player-bills-once-alive.js": {
   "checks": 10,
   "counted_by": "lines"
@@ -248,7 +252,7 @@
   "counted_by": "lines"
  },
  "tools/test-fallback-switch.js": {
-  "checks": 13,
+  "checks": 14,
   "counted_by": "lines"
  },
  "tools/test-free-entry-rules-are-the-states-own.js": {

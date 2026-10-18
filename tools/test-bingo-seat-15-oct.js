@@ -110,7 +110,7 @@ function bootHost2(cap) {
   var HOLD = { busy: function () { return false; }, hold: function () {}, release: function () {} };
   sb.VP_HOLD = HOLD; dom.window.VP_HOLD = HOLD;
   sb.fetch = pageFetch('host');
-  var ex = runPage(inlineScript("venueplay/app/index.html"), sb, ["G", "startGame", "openLobby", "newGame", "endGame", "onMsg", "commitBall",
+  var ex = runPage(consoleScript(), sb, ["G", "startGame", "openLobby", "newGame", "endGame", "onMsg", "commitBall",
     "hostConfirm", "keepPlaying", "finishGame", "playerCount", "shownName", "isSeated", "renderPlayers"]);
   ex.dom = dom; ex.sb = sb; ex.$ = function (id) { return dom.document.getElementById(id); };
   return ex;

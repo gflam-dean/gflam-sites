@@ -89,6 +89,9 @@ function makeDom(search, store0){
   return { document:document, window:window, localStorage:ls, sessionStorage:{getItem:function(){return null;},setItem:function(){},removeItem:function(){}}, made:made };
 }
 var fakeCrypto={ getRandomValues:function(a){ for(var i=0;i<a.length;i++) a[i]=Math.floor(Math.random()*4294967296); return a; } };
+/* The bingo console loads /app/vp-draw.js (its regulated bingo rules, 19 Oct 2026) before its own
+   inline script, so the console is that file and then the page's script, in that order. */
+function consoleScript(){ return readFile(REPO+"venueplay/app/vp-draw.js")+"\n"+inlineScript("venueplay/app/index.html"); }
 function runPage(src, sandbox, exportsList){
   var tail="__export({"+exportsList.map(function(n){ return n+":(typeof "+n+"!=='undefined'?"+n+":undefined)"; }).join(",")+"});";
   var k=src.lastIndexOf("})();");
@@ -124,7 +127,7 @@ function bootHost(opts){
   sb.VP=VP; dom.window.VP=VP;
   var HOLD={ busy:function(){ return false; }, hold:function(){}, release:function(){} };
   sb.VP_HOLD=HOLD; dom.window.VP_HOLD=HOLD;
-  var ex=runPage(inlineScript("venueplay/app/index.html"), sb, ["G","nextBall","startGame","openLobby","newGame","endGame","hostConfirm","hostReject","keepPlaying","finishGame","onMsg","commitBall","NIGHT","topUpFor","dealFor","makeStrip","checkPattern","saveGame","restoreGame"]);
+  var ex=runPage(consoleScript(), sb, ["G","nextBall","startGame","openLobby","newGame","endGame","hostConfirm","hostReject","keepPlaying","finishGame","onMsg","commitBall","NIGHT","topUpFor","dealFor","makeStrip","checkPattern","saveGame","restoreGame"]);
   ex.dom=dom; ex.sb=sb; ex.$=function(id){ return dom.document.getElementById(id); };
   return ex;
 }

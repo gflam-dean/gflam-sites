@@ -26,7 +26,7 @@ function lift(n) {
 var EXPECT = 12, bad = 0, ran = 0;
 function ok(n, c, extra) { ran++; if (c) print('  ok   ' + n); else { bad++; print('  FAIL ' + n + (extra ? '   ' + extra : '')); } }
 
-var BUILD = 'test';
+var BUILD = 'test', VP_DRAW_VERSION = 'VP-DRAW-test', VP_DRAW_MANIFEST = 'manifest-test';   // /health also names the regulated bingo code (19 Oct 2026)
 var _vcDupes = [];
 var scans = 0, counts = [], fetches = [];
 function refreshVenueCodes() { scans++; return Promise.resolve(); }

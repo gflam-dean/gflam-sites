@@ -1,8 +1,11 @@
 /* THE TABLET FALLBACK SWITCH, TURNED OFF FOR QUEENSLAND (19 Oct 2026).
 
    Dean keeps the tablet fallbacks (ball, ticket deal, claim check). If OLGR asks, Queensland goes off
-   with one line in the game Worker:  const TABLET_FALLBACK_OFF_STATES = new Set(['QLD']);
-   This suite MAKES that one-line change in memory, loads the real Worker and the real console with it,
+   with one line in each half of the regulated module VP-DRAW (the gate refuses the two differing):
+     venueplay-backend/worker/vp-draw.js   const TABLET_FALLBACK_OFF_STATES = new Set(['QLD']);
+     venueplay/app/vp-draw.js              var TABLET_FALLBACK_OFF_STATES = ['QLD'];
+   (then raise the version and run tools/regulated.py --update, as for any regulated change).
+   This suite MAKES that change in memory, loads the real Worker and the real console with it,
    and shows the switch is real: the server refuses all three fallbacks for a QLD venue, the console
    learns the list and waits for the server instead of standing in, even with no server at all, and a
    venue in another state is untouched. If the line moves or changes shape, the first check goes red.
@@ -10,14 +13,15 @@
    Run from the repo root:  jsc tools/test-fallback-switch.js */
 var LINE = "const TABLET_FALLBACK_OFF_STATES = new Set([]);";
 var PATCHED = "const TABLET_FALLBACK_OFF_STATES = new Set(['QLD']);";
-var _readFile = readFile, LINE_COUNT = -1;
+var CLINE = "  var TABLET_FALLBACK_OFF_STATES = [];", CPATCHED = "  var TABLET_FALLBACK_OFF_STATES = ['QLD'];";
+var _readFile = readFile, LINE_COUNT = -1, CLINE_COUNT = -1;
 readFile = function (p) {
   var t = _readFile(p);
   if (/venueplay-game\.js$/.test(p)) { LINE_COUNT = t.split(LINE).length - 1; t = t.replace(LINE, PATCHED); }
+  if (/app\/vp-draw\.js$/.test(p)) { CLINE_COUNT = t.split(CLINE).length - 1; t = t.replace(CLINE, CPATCHED); }
   return t;
 };
-load('tools/rig-game-worker.js');
-readFile = _readFile;
+load('tools/rig-game-worker.js');   // readFile stays patched: the rig reads /app/vp-draw.js each time it boots a console
 load('tools/rig-bingo-room.js');
 var PASS = 0, FAILN = 0;
 function check(name, cond, saw) {
@@ -52,7 +56,9 @@ async function W(path, body) {
 function draw(id) { return DB.vp_bingo_draws.filter(function (d) { return d.id === id; })[0]; }
 
 (async function () {
-  check('the switch is ONE line in the game Worker, and that line is where this suite expects it', LINE_COUNT === 1, LINE_COUNT);
+  check('the switch is ONE line in the Worker module\'s copy in the game Worker', LINE_COUNT === 1, LINE_COUNT);
+  var _cm = readFile('venueplay/app/vp-draw.js');
+  check('and ONE line in the console module, where this suite expects it', CLINE_COUNT === 1, CLINE_COUNT);
 
   print('the server, with Queensland switched off');
   var dq = await W('/host/bingo/draw', { venue_id: VENUE, session_id: SESSION });
@@ -99,15 +105,15 @@ function draw(id) { return DB.vp_bingo_draws.filter(function (d) { return d.id =
   hq.nextBall(); await advance(6000);
   check('the server cannot call a ball: the tablet does NOT call one, and says why', hq.G.draw.length === 0 && hq.G.drawMode === 'server' && /does not let the tablet/.test(hq.$('greetToast').textContent),
         { draw: hq.G.draw, mode: hq.G.drawMode, toast: hq.$('greetToast').textContent });
-  var stored = hq.dom.localStorage.getItem('vpFallbackOff');
-  check('the console keeps the list on the tablet', stored === '["QLD"]', stored);
-  // A tablet that has the list from an earlier night, with no server at all tonight.
+  var lst = hq.dom.window.VPDraw.TABLET_FALLBACK_OFF_STATES, pushed = false;
+  try { lst.push('NSW'); pushed = true; } catch (e) {}
+  check('the console\'s list is the module constant, and nothing on the page can change it', JSON.stringify(lst) === '["QLD"]' && !pushed && Object.isFrozen(hq.dom.window.VPDraw), lst);
+  // No server at all tonight, from the moment the page opened.
   down = true;
-  var store = { vpFallbackOff: '["QLD"]' };
-  var hq2 = await boot('QLD', store);
+  var hq2 = await boot('QLD');
   hq2.startGame(); await advance(15000);
   hq2.nextBall(); await advance(6000);
-  check('with NO server at all, a tablet that knows the list still does not stand in', hq2.G.dealMode !== 'tablet' && hq2.G.draw.length === 0, { mode: hq2.G.dealMode, draw: hq2.G.draw });
+  check('with NO server at all, from the start, the tablet still does not stand in', hq2.G.dealMode !== 'tablet' && hq2.G.draw.length === 0, { mode: hq2.G.dealMode, draw: hq2.G.draw });
   var card = [[1, 0, 22, 0, 44, 0, 66, 0, 81], [0, 16, 28, 36, 0, 57, 0, 73, 0], [7, 0, 0, 37, 47, 56, 0, 77, 82]];
   hq2.G.players.p1.cards = [{ card: card, cardNo: 101, src: 'server', rec: true }];
   hq2.G.drawId = '99999999-9999-4999-8999-0000000000cc';
@@ -117,7 +123,7 @@ function draw(id) { return DB.vp_bingo_draws.filter(function (d) { return d.id =
   check('a BINGO the server cannot check is NOT decided on the tablet: it waits for the server, Confirm greyed out and refused',
         hq2.G.claims.length === 1 && hq2.G.claims[0].by === 'waiting' && !!btn && / disabled/.test(btn[0]) && hq2.hostConfirm(0) === false && /Waiting for the server/.test(hq2.$('claimQueue').innerHTML),
         { by: hq2.G.claims[0] && hq2.G.claims[0].by, btn: btn && btn[0] });
-  var hn = await boot('NSW', { vpFallbackOff: '["QLD"]' });
+  var hn = await boot('NSW');
   hn.startGame(); await advance(15000);
   check('CONTROL: an NSW tablet with the same list stands in as before', hn.G.dealMode === 'tablet' && hn.G.players.p1.cards.length === 1, hn.G.dealMode);
 

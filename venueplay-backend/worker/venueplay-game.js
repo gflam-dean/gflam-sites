@@ -145,7 +145,10 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '19 Oct 2026, 08:01 · c0c0d614';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '19 Oct 2026, 08:10 · 96111d64';   // tools/stamp-workers.py, do not edit by hand
+/* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
+   (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
+const VP_DRAW_MANIFEST = '02ce7cd0d36934735034a4a3fd17f02dd0d05cb23ce4367e6817c9b2c8ef4a68';
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -950,6 +953,8 @@ try {
     worker: 'venueplay-game',
     host_login: hostLogin,
     build: BUILD,
+    draw_module: VP_DRAW_VERSION,     // the regulated bingo code (VP-DRAW) this Worker is running
+    draw_manifest: VP_DRAW_MANIFEST,  // the SHA-256 over its files, as in tools/regulated-manifest.json
     ok: !missing.length && rl && !clashes.length,
     missing,
     rateLimiter: detail ? 'memory' : undefined,   // per isolate since 8 Sep 2026; no store on the request path
@@ -6354,6 +6359,126 @@ async function handleBingoSeat(request, env, json) {
   return json(out);
 }
 
+/* The host's Call a ball and Draw a member in ONE database trip each (migration 76).
+ * Measured from Dean's machine on 10 Sep 2026, three samples each: a Cloudflare-only call
+ * (room presence) answers in 0.09 s and a single Supabase read through this Worker takes
+ * 0.84 s, because the live database is in Singapore and the Worker runs at an Australian
+ * edge. Calling a ball made six of those reads one after another (the draw row, the staff
+ * row, the venue, its group, the last ball, then the draw itself), so the host waited two
+ * to three seconds while the room, which gets the ball over the Cloudflare room in a tenth
+ * of a second, watched the host's finger. The members draw made eight to ten.
+ *
+ * vp_bingo_ball and vp_members_draw make the same checks in the same order, including the
+ * staff check in full, and return a status word plus the same fields; the table below maps
+ * the word to the exact reply the many-trip path gave. The randomness has not moved: bingo
+ * still hands out the order vp_bingo_next_ball wrote at game start, and the members draw
+ * still picks with random values minted HERE by crypto.getRandomValues under the same
+ * rejection rule randInt uses.
+ *
+ * If the functions are not there yet (migration 76 not run) PostgREST answers 404 and we
+ * fall back to the old path, so the paste order cannot break a night. */
+const HOST_DRAW_STATUS = {
+  no_draw:       [404, 'Draw not found'],
+  not_staff:     [403, 'Not authorised: you are not staff at this venue'],
+  venue_missing: [403, 'Venue not available'],
+  venue_paused:  [403, 'Games are paused here tonight. Have a word with the staff.'],
+  finished:      [409, 'This game is finished'],
+  local_mode:    [409, 'This game is being called from the tablet'],
+  all_drawn:     [409, 'All 90 balls have been drawn'],
+  no_members:    [409, 'No valid members to draw from'],
+};
+let hostDrawRpcMissing = false;   // per isolate: once PostgREST says the functions are not there, stop asking
+// Common front half of both host draw routes: verify the host, read the body, ask the function.
+// Returns { rpc: <parsed jsonb> } on success, { pre } when the function is missing (fall back),
+// or { reply } when the status word maps to an error reply.
+async function hostDrawRpc(request, env, json, fn, extra, gate) {
+  const authUserId = await verifyHostJwt(request, env);          // ENFORCED: valid host JWT
+  const b = await readJson(request);
+  const drawId = String(b.draw_id || '').trim();
+  if (!drawId) return { reply: json({ error: 'Missing draw_id' }, 400) };
+  assertUuid(drawId, 'draw_id');
+  // A check that has to run before EITHER path draws (the members draw's rules). Here, because
+  // the body can only be read once and both paths start from this one.
+  if (gate) { const refused = await gate(env, json, authUserId, drawId, b); if (refused) return { reply: refused }; }
+  const pre = { authUserId, b, drawId };
+  if (hostDrawRpcMissing) return { pre, drawId };
+  const args = Object.assign({ p_draw_id: drawId, p_auth_user_id: authUserId }, extra || {});
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/' + fn, {
+    method: 'POST', headers: sbHeaders(env), body: JSON.stringify(args),
+  });
+  if (res.status === 404) {   // function not deployed yet: old path, and remember for this isolate
+    hostDrawRpcMissing = true;
+    console.warn(fn + ' missing (migration 76 not run); answering the slow way');
+    return { pre, drawId };
+  }
+  if (!res.ok) throw dbError('rpc', fn, await res.text());
+  const rpc = await res.json();
+  const status = rpc && rpc.status;
+  if (status === 'ok' || status === 'hold' || status === 'pending') return { rpc, drawId };
+  if (status === 'retry') return { pre, drawId };   // every random value was rejected: draw the old way
+  const reply = HOST_DRAW_STATUS[status];
+  if (!reply) throw dbError('rpc', fn, 'unexpected status ' + status);
+  return { reply: json({ error: reply[1] }, reply[0]) };
+}
+
+/* ===== VP-DRAW BEGIN: generated from venueplay-backend/worker/vp-draw.js by tools/regulated.py. Do not edit here. ===== */
+/* =====================================================================
+ * VP-DRAW: THE REGULATED BINGO CODE OF THE VENUEPLAY GAME WORKER
+ * =====================================================================
+ * Everything an OLGR assessor needs to read about how a bingo game is drawn, dealt and judged on the
+ * server, and when the venue's tablet may stand in for it, is in this one file:
+ *
+ *   randInt            the scaler: a uniform integer from crypto.getRandomValues by rejection sampling
+ *   shuffle1to90       THE ball order (one Fisher-Yates over 1..90 at game start, kept on the server)
+ *   generateStrip      THE ticket maker (a strip of six housie tickets holding 1..90 once)
+ *   bingoTicketWins    THE claim rule (one/two/full house, top/middle/bottom line, four corners)
+ *   /host/bingo/draw, /ball, /fallback, /deal, /claim, /claim/resolve   the routes that use them
+ *   TABLET_FALLBACK_OFF_STATES and the gates that let the tablet stand in only after an outage the
+ *   server itself recorded
+ *
+ * HOW IT SHIPS. This file is the source. tools/regulated.py copies it, byte for byte, into
+ * venueplay-game.js between the VP-DRAW BEGIN and END markers (a Worker deploys as one file), and the
+ * gate refuses the Worker if that copy differs from this file. Nothing in here reads a setting from a
+ * venue, a host, HQ, an environment variable or a database row: its rules are constants in this file.
+ *
+ * HOW IT CHANGES. Any change to this file must raise VP_DRAW_VERSION and regenerate
+ * tools/regulated-manifest.json (python3 tools/regulated.py --update) in the same commit. The local gate
+ * and release.py refuse anything else, and /health reports the version and the manifest hash, so what
+ * is running can be checked against what was described to OLGR.
+ */
+const VP_DRAW_VERSION = 'VP-DRAW-1.0';
+
+// Uniform random integer in [0, max) using rejection sampling over getRandomValues.
+function randInt(max) {
+  const buf = new Uint32Array(1);
+  const limit = Math.floor(0x100000000 / max) * max;
+  let x;
+  do { crypto.getRandomValues(buf); x = buf[0]; } while (x >= limit);
+  return x % max;
+}
+
+// Fisher-Yates shuffle of 1..90: THE bingo ball order (VP-SHUFFLE). Stored as vp_bingo_draws.draw_order.
+// Note: Postgres int[] is 1-indexed, so draw_order[1..draw_index] in the DB is
+// this JS array's slice(0, draw_index). We always read it back as a JS array
+// and use JS indexing, so the two conventions stay consistent.
+function shuffle1to90() {
+  const a = [];
+  for (let i = 1; i <= 90; i++) a.push(i);
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = randInt(i + 1);
+    const t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+// Column number range for a 90-ball ticket column (0..8):
+//   col 0 -> 1-9, col 1 -> 10-19, ... col 7 -> 70-79, col 8 -> 80-90.
+function colRange(c) {
+  if (c === 0) return [1, 9];
+  if (c === 8) return [80, 90];
+  return [c * 10, c * 10 + 9];
+}
+
 /* ------------------------------ POST /host/bingo/draw ------------------------------
  * THE BINGO CONSOLE'S DRAW LIVES HERE NOW. The console on /app is broadcast-only: it deals
  * its own cards and talks to the TV and the phones over the realtime channel, and for two
@@ -6436,68 +6561,6 @@ async function handleBingoDrawStart(request, env, json) {
   const row = Array.isArray(rows) ? rows[0] : rows;
   const state = await venueState(env, venueId);
   return json({ draw_id: row.id, tablet_fallback: tabletFallbackOk(state), fallback_off_states: fallbackOffList() });
-}
-
-/* The host's Call a ball and Draw a member in ONE database trip each (migration 76).
- * Measured from Dean's machine on 10 Sep 2026, three samples each: a Cloudflare-only call
- * (room presence) answers in 0.09 s and a single Supabase read through this Worker takes
- * 0.84 s, because the live database is in Singapore and the Worker runs at an Australian
- * edge. Calling a ball made six of those reads one after another (the draw row, the staff
- * row, the venue, its group, the last ball, then the draw itself), so the host waited two
- * to three seconds while the room, which gets the ball over the Cloudflare room in a tenth
- * of a second, watched the host's finger. The members draw made eight to ten.
- *
- * vp_bingo_ball and vp_members_draw make the same checks in the same order, including the
- * staff check in full, and return a status word plus the same fields; the table below maps
- * the word to the exact reply the many-trip path gave. The randomness has not moved: bingo
- * still hands out the order vp_bingo_next_ball wrote at game start, and the members draw
- * still picks with random values minted HERE by crypto.getRandomValues under the same
- * rejection rule randInt uses.
- *
- * If the functions are not there yet (migration 76 not run) PostgREST answers 404 and we
- * fall back to the old path, so the paste order cannot break a night. */
-const HOST_DRAW_STATUS = {
-  no_draw:       [404, 'Draw not found'],
-  not_staff:     [403, 'Not authorised: you are not staff at this venue'],
-  venue_missing: [403, 'Venue not available'],
-  venue_paused:  [403, 'Games are paused here tonight. Have a word with the staff.'],
-  finished:      [409, 'This game is finished'],
-  local_mode:    [409, 'This game is being called from the tablet'],
-  all_drawn:     [409, 'All 90 balls have been drawn'],
-  no_members:    [409, 'No valid members to draw from'],
-};
-let hostDrawRpcMissing = false;   // per isolate: once PostgREST says the functions are not there, stop asking
-// Common front half of both host draw routes: verify the host, read the body, ask the function.
-// Returns { rpc: <parsed jsonb> } on success, { pre } when the function is missing (fall back),
-// or { reply } when the status word maps to an error reply.
-async function hostDrawRpc(request, env, json, fn, extra, gate) {
-  const authUserId = await verifyHostJwt(request, env);          // ENFORCED: valid host JWT
-  const b = await readJson(request);
-  const drawId = String(b.draw_id || '').trim();
-  if (!drawId) return { reply: json({ error: 'Missing draw_id' }, 400) };
-  assertUuid(drawId, 'draw_id');
-  // A check that has to run before EITHER path draws (the members draw's rules). Here, because
-  // the body can only be read once and both paths start from this one.
-  if (gate) { const refused = await gate(env, json, authUserId, drawId, b); if (refused) return { reply: refused }; }
-  const pre = { authUserId, b, drawId };
-  if (hostDrawRpcMissing) return { pre, drawId };
-  const args = Object.assign({ p_draw_id: drawId, p_auth_user_id: authUserId }, extra || {});
-  const res = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/' + fn, {
-    method: 'POST', headers: sbHeaders(env), body: JSON.stringify(args),
-  });
-  if (res.status === 404) {   // function not deployed yet: old path, and remember for this isolate
-    hostDrawRpcMissing = true;
-    console.warn(fn + ' missing (migration 76 not run); answering the slow way');
-    return { pre, drawId };
-  }
-  if (!res.ok) throw dbError('rpc', fn, await res.text());
-  const rpc = await res.json();
-  const status = rpc && rpc.status;
-  if (status === 'ok' || status === 'hold' || status === 'pending') return { rpc, drawId };
-  if (status === 'retry') return { pre, drawId };   // every random value was rejected: draw the old way
-  const reply = HOST_DRAW_STATUS[status];
-  if (!reply) throw dbError('rpc', fn, 'unexpected status ' + status);
-  return { reply: json({ error: reply[1] }, reply[0]) };
 }
 
 /* THE SERVER'S OWN RECORD OF BEING ASKED (migration 105). The console says which place it wants
@@ -7181,6 +7244,7 @@ async function handleBingoClaimResolve(request, env, json) {
     { status: decision, resolved_at: new Date().toISOString(), resolved_by: authUserId });
   return json({ ok: true, status: done.length ? decision : 'already decided' });
 }
+/* ===== VP-DRAW END ===== */
 
 /* ------------------------------ POST /player/claim ------------------------------
  * Player taps BINGO. The Worker NEVER trusts the phone: it loads the server's
@@ -9127,28 +9191,7 @@ async function getPublicSnapshot(env, sessionId) {
  * GAME LOGIC  (all CSPRNG)
  * ===================================================================== */
 
-// Uniform random integer in [0, max) using rejection sampling over getRandomValues.
-function randInt(max) {
-  const buf = new Uint32Array(1);
-  const limit = Math.floor(0x100000000 / max) * max;
-  let x;
-  do { crypto.getRandomValues(buf); x = buf[0]; } while (x >= limit);
-  return x % max;
-}
 
-// Fisher-Yates shuffle of 1..90: THE bingo ball order (VP-SHUFFLE). Stored as vp_bingo_draws.draw_order.
-// Note: Postgres int[] is 1-indexed, so draw_order[1..draw_index] in the DB is
-// this JS array's slice(0, draw_index). We always read it back as a JS array
-// and use JS indexing, so the two conventions stay consistent.
-function shuffle1to90() {
-  const a = [];
-  for (let i = 1; i <= 90; i++) a.push(i);
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = randInt(i + 1);
-    const t = a[i]; a[i] = a[j]; a[j] = t;
-  }
-  return a;
-}
 // Fair (CSPRNG) in-place Fisher-Yates shuffle for any array. Used to randomise trivia questions.
 function shuffleArray(a) {
   for (let i = a.length - 1; i > 0; i--) {
@@ -9158,13 +9201,6 @@ function shuffleArray(a) {
   return a;
 }
 
-// Column number range for a 90-ball ticket column (0..8):
-//   col 0 -> 1-9, col 1 -> 10-19, ... col 7 -> 70-79, col 8 -> 80-90.
-function colRange(c) {
-  if (c === 0) return [1, 9];
-  if (c === 8) return [80, 90];
-  return [c * 10, c * 10 + 9];
-}
 
 
 /* ---- MUSICAL BINGO card + pattern (5x5, FREE centre) ---- */
