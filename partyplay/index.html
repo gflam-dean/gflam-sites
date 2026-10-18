@@ -359,6 +359,11 @@
     <a class="cta" href="/start">Book your party</a>
     <span class="under">Nothing ticks until you press start. Write the questions whenever.</span>
   </div>
+  <div class="end" id="contact" style="padding-top:0">
+    <span class="shout" style="font-size:var(--fs-xl)">Ask us anything</span>
+    <span class="under" style="max-width:none;margin-bottom:18px">Questions before you book, or a party that needs a hand. We reply by email.</span>
+    <div id="ppContact"></div>
+  </div>
   <footer>
     PartyPlay is made by Gflam Group Pty Ltd on the Gold Coast.
     <a href="/terms">Terms</a> &middot; <a href="/privacy">Privacy</a> &middot;
@@ -402,5 +407,7 @@
   gtag('js', new Date());
   gtag('config', 'G-73XKQG9TBN', { page_location: location.origin + location.pathname, anonymize_ip: true });
 </script>
+<!-- Help: a short FAQ and a contact form that makes a help desk ticket (vp-help.js, 19 Oct 2026). -->
+<script src="/lib/vp-help.js" data-mode="sales" data-brand="partyplay" data-mount="ppContact"></script>
 </body>
 </html>
