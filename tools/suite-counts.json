@@ -196,7 +196,7 @@
   "counted_by": "lines"
  },
  "tools/test-channel-recovery-consoles.js": {
-  "checks": 30,
+  "checks": 21,
   "counted_by": "lines"
  },
  "tools/test-channel-recovery-phones.js": {
@@ -255,14 +255,6 @@
   "checks": 68,
   "counted_by": "lines"
  },
- "tools/test-jag-joker.js": {
-  "checks": 74,
-  "counted_by": "lines"
- },
- "tools/test-jag-pages.js": {
-  "checks": 68,
-  "counted_by": "lines"
- },
  "tools/test-library-pull-reaches-the-whole-bank.js": {
   "checks": 10,
   "counted_by": "lines"
@@ -311,6 +303,10 @@
   "checks": 13,
   "counted_by": "lines"
  },
+ "tools/test-one-bingo-path.js": {
+  "checks": 18,
+  "counted_by": "lines"
+ },
  "tools/test-one-room-one-identity.js": {
   "checks": 37,
   "counted_by": "lines"
@@ -356,7 +352,7 @@
   "counted_by": "lines"
  },
  "tools/test-platform-15-oct.js": {
-  "checks": 63,
+  "checks": 62,
   "counted_by": "lines"
  },
  "tools/test-platform-worker-15-oct.js": {
@@ -488,7 +484,7 @@
   "counted_by": "lines"
  },
  "tools/test-tv-logo-mark.js": {
-  "checks": 43,
+  "checks": 42,
   "counted_by": "lines"
  },
  "tools/test-tv-reads-its-venue.js": {
@@ -532,7 +528,7 @@
   "counted_by": "lines"
  },
  "tools/test-venue-url.js": {
-  "checks": 111,
+  "checks": 101,
   "counted_by": "lines"
  },
  "tools/test-webhook-retry-is-not-dropped.js": {
