@@ -1,26 +1,27 @@
 -- =====================================================================
--- Migration 106: the help desk (tickets and their notes)
+-- Migration 106: the help desk (tickets, their notes, staff phone alerts), VenuePlay and PartyPlay
 -- ---------------------------------------------------------------------
 -- Dean, 19 Oct 2026: "a 'Contact support' form that creates a ticket ... It should be able to do
 -- sales, support (venue and customer) and also we could categorise calls as well? Nothing super
 -- fancy, just a bit of a report after." And later the same day: "We need to know if it is sales,
 -- support, accounts etc enquiry."
 --
--- Two tables, both SERVICE ROLE ONLY. Nothing in a browser reads or writes them directly: the
+-- Three tables, all SERVICE ROLE ONLY. Nothing in a browser reads or writes them directly: the
 -- patron form, the venue form, the website contact form, the email path and HQ all go through
 -- the billing Worker (venueplay-api), which checks who is asking before it touches a row.
 -- PartyPlay's forms post to the same Worker (PartyPlay has its own database, but one desk means
 -- one table), marked brand 'partyplay'.
 --   - a patron can create a ticket and can never read one back (not even their own)
---   - a venue can create one and can list ONLY the ones its own staff raised from the venue
---     form, never a patron's ticket about that venue and never another venue's
---   - HQ (vp_platform_admins, role owner or accounts) reads and changes everything
+--   - a venue, a host, a PartyPlay host and a PartyPlay guest can create one and can never read
+--     one back, list them or count them, for either brand (Dean, 19 Oct 2026: tickets are for
+--     STAFF only)
+--   - HQ (vp_platform_admins, role owner, accounts or staff) reads and changes everything
 --
 -- Branch feature/help-desk. Run BEFORE deploying the billing Worker that goes with it. Either
 -- order is safe for a venue night: the help desk is not on any game path, and without these
 -- tables the forms answer "we could not send that, email support@venueplay.com.au" instead.
 -- After running: python3 venueplay-backend/tools/dump-rls-baseline.py and commit
--- RLS-BASELINE.json (two new locked tables).
+-- RLS-BASELINE.json (three new locked tables).
 --
 -- Safe to run twice. Rollback at the bottom.
 -- =====================================================================
@@ -35,7 +36,7 @@ create table if not exists public.vp_help_tickets (
   created_at      timestamptz not null default now(),
   updated_at      timestamptz not null default now(),
   -- One desk for both products (Dean, 19 Oct 2026: "can we dual brand this helpdesk with
-  -- partyplay as well?"). Every ticket says which, and a venue can only ever list venueplay ones.
+  -- partyplay as well?"). Every ticket says which, and HQ filters and reports by it.
   brand           text not null default 'venueplay'
                   check (brand in ('venueplay','partyplay')),
   category        text not null default 'general'
@@ -89,24 +90,43 @@ create table if not exists public.vp_help_ticket_notes (
 
 create index if not exists vp_help_ticket_notes_ticket_idx on public.vp_help_ticket_notes (ticket_id, created_at);
 
+-- Staff phones and browsers that asked for an alert on a new ticket (Web Push). One row per device.
+-- token_hash is the SHA-256 of a secret only that device holds; it is how the device asks what
+-- woke it (brand, kind and number, nothing more). filter: every ticket, or only urgent and sales.
+create table if not exists public.vp_help_push_subs (
+  id            uuid primary key default gen_random_uuid(),
+  created_at    timestamptz not null default now(),
+  endpoint      text not null unique check (char_length(endpoint) <= 1000),
+  filter        text not null default 'all' check (filter in ('all','urgent_sales')),
+  auth_user_id  uuid,
+  admin_label   text check (admin_label is null or char_length(admin_label) <= 200),
+  device_label  text check (device_label is null or char_length(device_label) <= 80),
+  token_hash    text not null check (char_length(token_hash) = 64),
+  last_peek_at  timestamptz
+);
+
 -- LOCKED. Supabase grants anon and authenticated explicitly, so the revoke names them; a revoke
 -- FROM public alone reads as a lock and does nothing (migration 32's lesson). No policies are
 -- created, so with RLS on and no grants, only the service role (the Worker) can reach a row.
 alter table public.vp_help_tickets      enable row level security;
 alter table public.vp_help_ticket_notes enable row level security;
+alter table public.vp_help_push_subs    enable row level security;
 revoke all on public.vp_help_tickets      from public, anon, authenticated;
 revoke all on public.vp_help_ticket_notes from public, anon, authenticated;
+revoke all on public.vp_help_push_subs    from public, anon, authenticated;
 grant select, insert, update, delete on public.vp_help_tickets      to service_role;
 grant select, insert, update, delete on public.vp_help_ticket_notes to service_role;
+grant select, insert, update, delete on public.vp_help_push_subs    to service_role;
 
 commit;
 
--- Read back. Both should show rowsecurity = true, and the second query should return NO rows.
+-- Read back. All three should show rowsecurity = true, and the second query should return NO rows.
 --   select tablename, rowsecurity from pg_tables
---    where schemaname = 'public' and tablename in ('vp_help_tickets','vp_help_ticket_notes');
+--    where schemaname = 'public' and tablename in ('vp_help_tickets','vp_help_ticket_notes','vp_help_push_subs');
 --   select grantee, table_name, privilege_type from information_schema.role_table_grants
---    where table_name in ('vp_help_tickets','vp_help_ticket_notes') and grantee in ('anon','authenticated');
+--    where table_name in ('vp_help_tickets','vp_help_ticket_notes','vp_help_push_subs') and grantee in ('anon','authenticated');
 
 -- ROLLBACK (deletes every ticket; only if the help desk is being removed):
+--   drop table if exists public.vp_help_push_subs;
 --   drop table if exists public.vp_help_ticket_notes;
 --   drop table if exists public.vp_help_tickets;

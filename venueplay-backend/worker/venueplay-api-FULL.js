@@ -41,7 +41,11 @@ export default {
     // Safe with no env var set: venueplay.com.au origins are reflected, anything else gets the
     // canonical site (which the browser will refuse), never a wildcard. ALLOW_ORIGIN is now
     // purely additive, for a staging or preview host.
-    const origin = originOk ? reqOrigin : (allowList[0] || CANONICAL);
+    /* PARTYPLAY'S HELP FORMS post here too (one help desk for both brands, 19 Oct 2026). Its
+       origins are reflected for /help/ routes ONLY: nothing else in this Worker is PartyPlay's. */
+    const helpPath = /^\/help\//.test(new URL(request.url).pathname);
+    const ppOk = helpPath && /^https:\/\/([a-z0-9-]+\.)?partyplay\.com\.au$/.test(reqOrigin);
+    const origin = (originOk || ppOk) ? reqOrigin : (allowList[0] || CANONICAL);
     const cors = {
       'Access-Control-Allow-Origin': origin,
       'Vary': 'Origin',
@@ -120,6 +124,22 @@ export default {
       // redirect rather than JSON. Signed, and it mints a fresh Checkout each time it is clicked.
       if (request.method === 'GET'  && path === '/add-card' && typeof vpaAddCardRedirect === 'function') return await vpaAddCardRedirect(request, env);
       if (request.method === 'POST' && path === '/contact')  return await handleContact(request, env, json);
+      // The help desk (migration 106). Submit-only routes for the public and venue staff; every
+      // route that READS a ticket is /admin/help/ and HQ only. See helpAdmin.
+      if (request.method === 'POST' && path === '/help/ticket')            return await helpPublicTicket(request, env, json);
+      if (request.method === 'POST' && path === '/help/venue/ticket')      return await helpVenueTicket(request, env, json);
+      if (request.method === 'POST' && path === '/help/push/peek')         return await helpPushPeek(request, env, json);
+      if (request.method === 'POST' && path === '/admin/help/list')        return await helpAdminList(request, env, json);
+      if (request.method === 'POST' && path === '/admin/help/count')       return await helpAdminCount(request, env, json);
+      if (request.method === 'POST' && path === '/admin/help/get')         return await helpAdminGet(request, env, json);
+      if (request.method === 'POST' && path === '/admin/help/update')      return await helpAdminUpdate(request, env, json);
+      if (request.method === 'POST' && path === '/admin/help/note')        return await helpAdminNote(request, env, json);
+      if (request.method === 'POST' && path === '/admin/help/reply')       return await helpAdminReply(request, env, json);
+      if (request.method === 'POST' && path === '/admin/help/log-call')    return await helpAdminLogCall(request, env, json);
+      if (request.method === 'POST' && path === '/admin/help/report')      return await helpAdminReport(request, env, json);
+      if (request.method === 'POST' && path === '/admin/help/push/key')    return await helpAdminPushKey(request, env, json);
+      if (request.method === 'POST' && path === '/admin/help/push/subscribe')   return await helpAdminPushSubscribe(request, env, json);
+      if (request.method === 'POST' && path === '/admin/help/push/unsubscribe') return await helpAdminPushUnsubscribe(request, env, json);
       if (request.method === 'POST' && path === '/webhook')  return await handleWebhook(request, env, cors);
       // Owner self-serve billing (vpb* functions pasted in from venueplay-api-account.js).
       if (request.method === 'POST' && path === '/account/summary'   && typeof vpbAccountSummary === 'function') return await vpbAccountSummary(request, env, json);
@@ -187,6 +207,12 @@ export default {
       }
       return json(body, 500);
     }
+  },
+
+  /* INBOUND EMAIL TO THE HELP DESK. Cloudflare Email Routing on the help subdomains delivers here
+     (see ~/venue-enrich/HELP-DESK-EMAIL-SETUP.md). Never rejects: Migadu keeps its own copy. */
+  async email(message, env, ctx) {
+    await helpInboundEmail(message, env);
   },
 
   /* THE 30-DAY ARCHIVE, unattended.
@@ -924,9 +950,22 @@ async function handleContact(request, env, json) {
     return json({ error: 'That message is too long or the email address does not look right.' }, 400);
   }
 
+  /* A SALES TICKET TOO (help desk, migration 106), so the enquiry is on the record and in the
+     report. Best effort: before the migration is run, or on any database blip, the enquiry still
+     goes out by email exactly as it always did. The email below is the staff alert, so the help
+     desk sends no second one; it only pushes to the staff phones that asked. */
+  let ticketNo = null;
+  try {
+    const t = await helpInsertTicket(env, { brand: 'venueplay', category: 'sales', channel: 'web_form',
+      subject: 'Website enquiry: ' + helpLine(message, 80), message: message, contact_name: name,
+      contact_email: email, contact_phone: phone || null });
+    ticketNo = t && t.ticket_no;
+    if (t) await helpPushNew(env, t).catch(() => null);
+  } catch (e) { ticketNo = null; }
+
   const esc = (s) => String(s).replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
   const html =
-    '<h2>New VenuePlay enquiry</h2>' +
+    '<h2>New VenuePlay enquiry' + (ticketNo ? ' (ticket #' + ticketNo + ')' : '') + '</h2>' +
     '<p><b>Name:</b> ' + esc(name) + '</p>' +
     '<p><b>Email:</b> ' + esc(email) + '</p>' +
     (phone ? '<p><b>Phone:</b> ' + esc(phone) + '</p>' : '') +
@@ -939,12 +978,14 @@ async function handleContact(request, env, json) {
       from: 'VenuePlay <hello@send.venueplay.com.au>',   // sending domain must be verified in Resend
       to: ['dean@venueplay.com.au', 'hello@venueplay.com.au'],
       reply_to: email,
-      subject: vpaAlertSubject('enquiry', name),
+      subject: vpaAlertSubject('enquiry', name + (ticketNo ? ' ' + helpTag(ticketNo) : '')),
       html: html,
+      headers: { 'X-VP-Help': 'alert' },   // so the hello@ copy to the help subdomain is not a second ticket
     }),
   });
-  if (!res.ok) return json({ error: 'Email send failed.' }, 502);
-  return json({ ok: true });
+  /* The enquiry is safe once it is a ticket, so a failed email is not the visitor's problem then. */
+  if (!res.ok && !ticketNo) return json({ error: 'Email send failed.' }, 502);
+  return json({ ok: true, ticket_no: ticketNo });
 }
 
 /* ------------------------------ Supabase helpers ------------------------------ */
@@ -9853,7 +9894,7 @@ function helpFilters(b) {
   if (HELP_UUID.test(String(b.venue_id || ''))) q.push('venue_id=eq.' + b.venue_id);
   const from = helpDay(b.from), to = helpDay(b.to, true);
   if (from) q.push('created_at=gte.' + encodeURIComponent(from));
-  if (to) q.push('created_at=lte.' + encodeURIComponent(to).replace(/^/, '') );
+  if (to) q.push('created_at=lte.' + encodeURIComponent(to));
   return q;
 }
 
@@ -10151,7 +10192,7 @@ async function helpPushPeek(request, env, json) {
   if (!sub || sub.token_hash !== await helpSha256Hex(token)) return json({ error: 'not allowed' }, 403);
   const since = sub.last_peek_at || helpNow();
   const rows = await vpaSelect(env, 'vp_help_tickets', 'created_at=gt.' + encodeURIComponent(since) +
-    '&channel=neq.phone&channel=neq.manual&select=ticket_no,brand,category,priority,created_at&order=created_at.desc&limit=50');
+    '&channel=in.(patron_form,venue_form,web_form,email)&select=ticket_no,brand,category,priority,created_at&order=created_at.desc&limit=50');
   const mine = (rows || []).filter((t) => helpPushWants(sub, t));
   await vpaPatch(env, 'vp_help_push_subs', 'id=eq.' + encodeURIComponent(sub.id), { last_peek_at: helpNow() });
   const t = mine[0];
