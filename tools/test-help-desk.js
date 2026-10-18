@@ -388,7 +388,9 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
       registration: { showNotification: function (t, o) { shown.push({ title: t, opts: o }); return Promise.resolve(); } },
       clients: { claim: function () { return Promise.resolve(); }, openWindow: function (u) { opened.push(u); return Promise.resolve(); } } };
     var caches = { open: function () { return Promise.resolve({ match: function () { return Promise.resolve({ json: function () { return Promise.resolve({ api: 'https://api.test', endpoint: 'https://fcm.googleapis.com/x', token: 'secret-token-0123456789' }); } }); } }); } };
-    var fetch = function (u, o) { asked.push({ url: u, body: JSON.parse(o.body) }); return Promise.resolve({ ok: peekOk, json: function () { return Promise.resolve(peekAnswer); } }); };
+    var fetch = function (u, o) { asked.push({ url: u, body: JSON.parse(o.body) });
+      if (peekOk === 'offline') return Promise.reject(new TypeError('Failed to fetch'));   // the phone has no signal
+      return Promise.resolve({ ok: peekOk, json: function () { return Promise.resolve(peekAnswer); } }); };
     (new Function('self', 'caches', 'fetch', readFile('venueplay/app/vp-help-sw.js')))(self, caches, fetch);
     var waits = []; L.push({ waitUntil: function (p) { waits.push(p); } }); await Promise.all(waits);
     var w2 = []; if (shown[0]) L.notificationclick({ notification: { close: function () {}, data: shown[0].opts.data }, waitUntil: function (p) { w2.push(p); } }); await Promise.all(w2);
@@ -402,6 +404,8 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   var sw2 = await swRun(null, false);
   check('if the Worker cannot be asked, a notification still shows (an iPhone switches alerts off otherwise)', sw2.shown.length === 1 && sw2.shown[0].title === 'Help desk', sw2.shown);
   check('and it opens the help desk', sw2.opened.join() === '/app/hq.html#helpdesk', sw2.opened);
+  var sw3 = await swRun(null, 'offline').catch(function (e) { return { shown: [], err: String(e) }; });
+  check('with no signal at all (the question itself fails), a notification still shows', sw3.shown.length === 1 && sw3.shown[0].title === 'Help desk', sw3);
   check('the service worker has no fetch handler, so it can never get between a page and the network', !/addEventListener\(\s*["']fetch["']/.test(readFile('venueplay/app/vp-help-sw.js')));
 
   print('ONE WIDGET, TWO SITES; AND THE WORDS');

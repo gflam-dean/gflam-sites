@@ -415,6 +415,23 @@ def main():
         check('and does NOT verify under any other key', res.get('wrong') is False, res)
         check('it is for the push service\'s origin, names the public key, and lasts at most a day',
               res.get('aud') == 'https://fcm.googleapis.com' and res.get('k') is True and 0 < (res.get('exp') or 0) <= 86400, res)
+        # The keys Dean will make with tools/make-vapid-keys.py must be keys the Worker can sign with
+        # and a push service can check. Run the real tool, then sign with the real Worker code.
+        import subprocess
+        out = subprocess.run([sys.executable, os.path.join(ROOT, 'tools', 'make-vapid-keys.py')], capture_output=True, text=True).stdout
+        pub = re.search(r'^VAPID_PUBLIC_KEY\s+(\S+)$', out, re.M)
+        jwk = re.search(r'^VAPID_PRIVATE_JWK\s+(\{.*\})$', out, re.M)
+        check('make-vapid-keys.py prints a public key and a private JWK', bool(pub and jwk), out[:200])
+        if pub and jwk:
+            res2 = t.js('(async function(){' + src + r'''
+              var env = { VAPID_PRIVATE_JWK: ''' + json.dumps(jwk.group(1)) + ''', VAPID_PUBLIC_KEY: ''' + json.dumps(pub.group(1)) + r''' };
+              function un(s){ s=s.replace(/-/g,"+").replace(/_/g,"/"); while(s.length%4) s+="="; var b=atob(s), o=new Uint8Array(b.length); for(var i=0;i<b.length;i++) o[i]=b.charCodeAt(i); return o; }
+              var pk = await crypto.subtle.importKey("raw", un(env.VAPID_PUBLIC_KEY), {name:"ECDSA",namedCurve:"P-256"}, false, ["verify"]);
+              var h = await helpVapidAuth(env, "https://web.push.apple.com/abc");
+              var m = /^vapid t=([^.]+)\.([^.]+)\.([^,]+), k=(.+)$/.exec(h);
+              return await crypto.subtle.verify({name:"ECDSA",hash:"SHA-256"}, pk, un(m[3]), new TextEncoder().encode(m[1]+"."+m[2]));
+            })()''', wait=True)
+            check('keys from make-vapid-keys.py sign in the Worker and verify under the public key it printed', res2 is True, res2)
         t.close()
     finally:
         b.close()
