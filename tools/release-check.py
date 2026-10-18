@@ -3058,7 +3058,10 @@ def local_checks(which):
             m = re.search(r'(\d+) suites ran (\d+) checks', out)
             ok('every suite still runs at least the checks the ledger recorded',
                r.returncode == 0 and not bad and bool(m) and int(m.group(1)) >= 100,
-               detail=('; '.join(b[:120] for b in bad[:3]) if bad else (m.group(0) if m else out[-120:])),
+               # Every failing suite is NAMED, past the first three in full: one Worker fault can fail five
+               # suites, and a line that named only three hid the rest (prove-checks read them as blind).
+               detail=('; '.join(b[:120] for b in bad[:3]) + ('' if len(bad) <= 3 else '; also: ' + ', '.join(
+                   (b.split() + ['', ''])[1] for b in bad[3:])) if bad else (m.group(0) if m else out[-120:])),
                why='run python3 tools/check-suite-ledger.py. If a suite was shrunk ON PURPOSE, run it '
                    'with --update and commit the ledger: the diff is the record that it was a decision')
 
