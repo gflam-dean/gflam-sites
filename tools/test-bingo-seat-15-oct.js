@@ -240,7 +240,12 @@ function hostSays(t, pid) { return LOG.filter(function (l) { return l && l.from 
   DOWN = true; slowJoin = false;
   host.openLobby(); await advance(9000);
   host.startGame(); await advance(500); if (!host.$('ovgModal').classList.contains('hidden')) host.$('ovgGo').onclick();
-  await advance(5000);
+  /* The SERVER deals since 19 Oct 2026, so a silent server is asked again for a few seconds first
+     (DEAL_BUDGET_MS) and the first ball waits, saying why. Then the tablet deals, as it always did. */
+  await advance(3000);
+  check('with the server silent, the first seconds are spent asking it, and Start calling says so', phones.every(function (ph) { return ph.P.cards.length === 0; }) && host.$('nextBtn').textContent === 'Dealing tickets...',
+        { cards: phones.map(function (ph) { return ph.P.cards.length; }), btn: host.$('nextBtn').textContent });
+  await advance(7000);
   check('bingo still deals with no answer from the server: every phone has a ticket', phones.every(function (ph) { return ph.P.cards.length === 1; }), phones.map(function (ph) { return ph.P.cards.length; }));
   DOWN = false; host.endGame(); await advance(3000);
 

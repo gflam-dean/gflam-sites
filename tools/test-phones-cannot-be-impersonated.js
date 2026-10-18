@@ -84,6 +84,8 @@ check('the console has a gate in front of its phone handler', !!onMsgSrc && !!on
 var sent = []; function send(o) { sent.push(o); }
 var CARD = [[1, 0, 0, 0, 0, 0, 0, 0, 0]], MAX_TIE = 5, G;
 function tvHere() {} function ticketsFor() { return 1; } function dealFor(p) { p.cards = [{ cardNo: 99, card: [[2]] }]; }
+// The server deals since 19 Oct 2026 (dealSoon asks it). Here the deal lands at once, so "she was dealt" still marks a join handled.
+function dealSoon() { G.order.forEach(function (pid) { var p = G.players[pid]; if (p && (!p.cards || !p.cards.length)) dealFor(p); }); }
 function sendCards(pid) { send({ t: 'cards', pid: pid }); } function sendPlayers() {} function sendState() {} function saveGame() {}
 function renderJoinCounts() {} function renderConsole() {} function renderClaimQueue() {} function sendClaimPending() {} function claimChime() {} function checkPattern() { return true; }
 var m1 = /var LEGACY_PHONES_OK\s*=\s*(true|false);/.exec(html);
@@ -92,6 +94,13 @@ if (onMsgSrc && onPhoneSrc) { eval(onMsgSrc); eval(onPhoneSrc); }
 // Who is seated, and the name the console shows (14 Oct 2026): the real ones. This room has no
 // server session, so everyone is seated, which is exactly the console with the Worker down.
 ['seatOpen', 'isSeated', 'playerCount', 'shownName'].forEach(function (n) { var s = grab(n); if (s) eval.call(null, s); });
+/* A claim that gets through is checked by the server since 19 Oct 2026. There is no server here, so
+   the real claim path decides it on the tablet, which is the console with the Worker down. */
+var CLAIM_CALL_MS = 4000, CLAIM_RETRY_MS = 5000, _claimRetryT = 0, _logBusy = false, _logT = 0;
+var crypto = { getRandomValues: function (a) { for (var i = 0; i < a.length; i++) a[i] = Math.floor(Math.random() * 4294967296); return a; } };
+function calledArray() { return []; } function syncNextBtn() {} function showToast() {}
+['cryptoInt', 'claimRef', 'claimsChecking', 'ticketOf', 'claimCheck', 'claimShown', 'claimDone', 'claimShow', 'claimRefuse',
+ 'claimVerdict', 'claimOnTablet', 'claimRetrySoon', 'recordDecision', 'flushClaimLog'].forEach(function (n) { var s = grab(n); if (s) eval.call(null, s); });
 function seatSoon() {}
 function room() { G = { status: 'running', won: false, idx: 10, claimIdx: -1, claims: [], lastWins: [], claimSeq: 0, allowEarly: false, peak: 1, players: {}, order: [], seenN: {} };
   G.players[marg.pid] = { name: 'Margaret', cards: [{ cardNo: 7, card: CARD }], paid: 0 }; G.order = [marg.pid]; }

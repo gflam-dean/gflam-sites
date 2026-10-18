@@ -329,6 +329,9 @@ export default {
       if (method === 'POST' && path === '/host/bingo/seat')      return await handleBingoSeat(request, env, json);
       if (method === 'POST' && path === '/host/bingo/ball')      return await handleBingoBall(request, env, json);
       if (method === 'POST' && path === '/host/bingo/fallback')  return await handleBingoFallback(request, env, json);
+      if (method === 'POST' && path === '/host/bingo/deal')      return await handleBingoDeal(request, env, json);
+      if (method === 'POST' && path === '/host/bingo/claim')     return await handleBingoClaim(request, env, json);
+      if (method === 'POST' && path === '/host/bingo/claim/resolve') return await handleBingoClaimResolve(request, env, json);
       if (method === 'POST' && path === '/host/play')          return await handleHostPlay(request, env, json);
       if (method === 'POST' && path === '/host/song/flag')      return await handleSongFlag(request, env, json);
       if (method === 'POST' && path === '/host/question')      return await handleHostQuestion(request, env, json);
@@ -6930,6 +6933,447 @@ async function handleBingoFallback(request, env, json) {
   // with a server ball; sbInsert turns that into a 409, which the console ignores.
   await sbInsert(env, 'vp_bingo_draw_balls', { draw_id: drawId, ordinal, number, source: 'local' }, false);
   return json({ ok: true });
+}
+
+/* ------------------------------ BINGO PHONE TICKETS, ON THE SERVER ------------------------------
+ * Dean, 19 Oct 2026: "Lets go the server". The bingo console used to make every phone ticket on the
+ * host's tablet and check every BINGO against its own copy, so the record of who held what, and
+ * whether a claim was good, lived in the tablet's browser storage. The system that draws the balls
+ * now also deals the tickets and decides the claims, and keeps both (migration 104):
+ *
+ *   POST /host/bingo/deal           {draw_id, hands:[{pid, did, want}]}
+ *        -> {ok, hands:{pid:[{card_no, cells:3x9, source}]}, refused:[pid]}
+ *        "Make sure this phone holds `want` tickets in this game", for every phone named. Idempotent:
+ *        asking again for the same count deals nothing and answers the same hand, so a console that
+ *        timed out and asks again cannot double anybody's tickets. A count corrected DOWN (a paid
+ *        sale undone) voids the newest tickets; the rows stay. Tickets come in STRIPS of six, so a
+ *        player's book holds every number once, and a ticket bought later is the next page of the
+ *        same book. The pages not dealt yet sit here with dealt_at null and are never sent anywhere.
+ *        In a session, only a phone whose device id holds a row in that session is dealt: the same
+ *        rule /host/bingo/seat applies, so a stranger on the channel is never given a ticket.
+ *        A hand with `tablet:[{cells, card_no}]` instead RECORDS tickets the tablet dealt while it
+ *        could not reach us, marked source 'tablet', so the record is complete after an outage.
+ *
+ *   POST /host/bingo/claim          {draw_id, ref, pid, card_no, pattern, balls, called?, tablet_draw?}
+ *        -> {claim_id, verdict:'win'|'not_yet'|'no_ticket', card_no, cells, swapped, winning_cells, balls}
+ *        The verdict is computed HERE from this server's copy of the ticket and this server's record
+ *        of the balls (the first `balls` of them: the ones out when the player pressed BINGO). The
+ *        console's list of called numbers is used for one thing only: on a draw the tablet has taken
+ *        over (its fallback), balls the server never heard about are appended to the record in
+ *        order, exactly as /host/bingo/fallback would have. On a server draw the tablet can add
+ *        nothing. Every claim is written to vp_bingo_claims, the false ones too. `ref` is the
+ *        console's key for the claim, so a retry is the same row. With decided_on:'tablet' and
+ *        decision, the console records a claim it had to decide on its own check in an outage.
+ *
+ *   POST /host/bingo/claim/resolve  {claim_id, decision:'confirmed'|'rejected'|'dropped'} -> {ok, status}
+ *
+ * THE NIGHT STILL SURVIVES THIS WORKER BEING DOWN. The console tries the server for a few seconds,
+ * then deals that game from the tablet and says so (and records the tickets here once it can), and
+ * a claim the server cannot check inside four seconds is shown to the host as checked on the
+ * tablet, labelled. Same shape as the ball fallback Dean kept on 8 Sep 2026.
+ */
+const BINGO_PID_RE = /^[A-Za-z0-9_-]{1,40}$/;
+const BINGO_DID_RE = /^[A-Za-z0-9_-]{6,64}$/;
+const BINGO_REF_RE = /^[A-Za-z0-9_-]{6,80}$/;
+const BINGO_DEAL_MAX_HANDS = 120;
+const BINGO_DEAL_MAX_TICKETS = 24;   // the console's PAID_MAX_TICKETS: four sheets
+const BINGO_CLAIM_PATTERNS = ['one', 'two', 'full', 'top', 'middle', 'bottom', 'corners'];
+
+/* VP-TICKET-2: a STRIP of six 90-ball tickets that between them hold 1..90 exactly once, the way
+   paper housie is sold. The same construction the console used (makeStrip in app/index.html), with
+   this Worker's randInt (rejection-sampled crypto.getRandomValues) in place of the console's
+   cryptoInt. Returns six tickets, each 27 values row-major, blanks 0. */
+const STRIP_COL_TOTAL = [9, 10, 10, 10, 10, 10, 10, 10, 11];   // numbers per column across a strip: sums to 90
+function stripColCounts() {
+  for (let attempt = 0; attempt < 600; attempt++) {
+    const extra = [], rowLeft = [];
+    for (let r = 0; r < 6; r++) { extra.push([0, 0, 0, 0, 0, 0, 0, 0, 0]); rowLeft.push(6); }   // 15 - the 9 every ticket starts with
+    const cols = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+    for (let i = cols.length - 1; i > 0; i--) { const j = randInt(i + 1); const t = cols[i]; cols[i] = cols[j]; cols[j] = t; }
+    let ok = true;
+    for (const c of cols) {
+      let need = STRIP_COL_TOTAL[c] - 6;
+      // fill from the tickets with most room left, so nothing gets stranded; ties broken at random
+      const order = [0, 1, 2, 3, 4, 5].map((r) => ({ r, k: randInt(1000000) }))
+        .sort((a, b) => (rowLeft[b.r] - rowLeft[a.r]) || (a.k - b.k)).map((x) => x.r);
+      for (const r of order) {
+        if (need <= 0) break;
+        const take = Math.min(2 - extra[r][c], rowLeft[r], need);
+        if (take <= 0) continue;
+        extra[r][c] += take; rowLeft[r] -= take; need -= take;
+      }
+      if (need > 0) { ok = false; break; }
+    }
+    if (!ok || rowLeft.some((v) => v !== 0)) continue;
+    return extra.map((row) => row.map((e) => 1 + e));
+  }
+  return null;
+}
+function stripTicketRows(counts) {
+  for (let attempt = 0; attempt < 400; attempt++) {
+    const assign = [], tally = [0, 0, 0];
+    for (let c = 0; c < 9; c++) {
+      const pick = [0, 1, 2];
+      for (let i = pick.length - 1; i > 0; i--) { const j = randInt(i + 1); const t = pick[i]; pick[i] = pick[j]; pick[j] = t; }
+      const rows = pick.slice(0, counts[c]).sort((a, b) => a - b);
+      assign.push(rows);
+      rows.forEach((r) => { tally[r]++; });
+    }
+    if (tally[0] === 5 && tally[1] === 5 && tally[2] === 5) return assign;
+  }
+  return null;
+}
+function generateStrip() {
+  for (let attempt = 0; attempt < 200; attempt++) {
+    const m = stripColCounts(); if (!m) continue;
+    const assigns = [];
+    let ok = true;
+    for (let t = 0; t < 6; t++) { const a = stripTicketRows(m[t]); if (!a) { ok = false; break; } assigns.push(a); }
+    if (!ok) continue;
+    const tickets = [];
+    for (let t = 0; t < 6; t++) tickets.push(new Array(27).fill(0));
+    for (let c = 0; c < 9; c++) {
+      const [lo, hi] = colRange(c);
+      const pool = [];
+      for (let n = lo; n <= hi; n++) pool.push(n);
+      for (let i = pool.length - 1; i > 0; i--) { const j = randInt(i + 1); const t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
+      let at = 0;
+      for (let t = 0; t < 6; t++) {
+        const chunk = pool.slice(at, at + m[t][c]).sort((a, b) => a - b);
+        at += m[t][c];
+        assigns[t][c].forEach((r, i) => { tickets[t][r * 9 + c] = chunk[i]; });
+      }
+    }
+    if (validStrip(tickets)) return tickets;
+  }
+  // Never seen, but never deal nothing: six independent valid tickets (not a strip).
+  return [0, 1, 2, 3, 4, 5].map(() => generateTicket());
+}
+// A valid 90-ball ticket: 27 cells, 5 numbers a row, 1 to 3 a column, each in its column's range,
+// ascending down the column, no repeats.
+function validTicket27(cells) {
+  if (!Array.isArray(cells) || cells.length !== 27) return false;
+  const seen = new Set();
+  for (let r = 0; r < 3; r++) {
+    let n = 0;
+    for (let c = 0; c < 9; c++) { if (cells[r * 9 + c]) n++; }
+    if (n !== 5) return false;
+  }
+  for (let c = 0; c < 9; c++) {
+    const [lo, hi] = colRange(c);
+    let last = 0, n = 0;
+    for (let r = 0; r < 3; r++) {
+      const v = cells[r * 9 + c];
+      if (!v) continue;
+      if (!Number.isInteger(v) || v < lo || v > hi || v <= last || seen.has(v)) return false;
+      seen.add(v); last = v; n++;
+    }
+    if (n < 1 || n > 3) return false;
+  }
+  return true;
+}
+function validStrip(tickets) {
+  if (!Array.isArray(tickets) || tickets.length !== 6) return false;
+  const seen = new Set();
+  for (const t of tickets) {
+    if (!validTicket27(t)) return false;
+    for (const v of t) { if (v) { if (seen.has(v)) return false; seen.add(v); } }
+  }
+  return seen.size === 90;
+}
+function ticketRows3x9(cells) { return [cells.slice(0, 9), cells.slice(9, 18), cells.slice(18, 27)]; }
+function ticketFlat27(t) {
+  if (Array.isArray(t) && t.length === 3 && t.every((r) => Array.isArray(r) && r.length === 9)) t = [].concat(t[0], t[1], t[2]);
+  if (!Array.isArray(t) || t.length !== 27) return null;
+  const out = t.map((v) => parseInt(v, 10) || 0);
+  return validTicket27(out) ? out : null;
+}
+// A ticket number for the server to hand out: 100 to 999 at random, never one already in this game;
+// past 900 tickets in one game, the next free number from 1000.
+function freshCardNo(used) {
+  for (let tries = 0; tries < 400; tries++) { const n = 100 + randInt(900); if (!used.has(n)) { used.add(n); return n; } }
+  let n = 1000; while (used.has(n)) n++;
+  used.add(n); return n;
+}
+
+/* THE CLAIM RULE, in the console's words (checkPattern in app/index.html, which stays there as the
+   display aid and the outage check). A row is complete when every number on it has been called.
+   one/two/full = at least that many complete rows; top/middle/bottom = that row; corners = the first
+   and last number of the top and bottom rows. Returns {win, cells:[row-major indices that won]}. */
+function bingoTicketWins(cells, called, pattern) {
+  const rowIdx = [], rowDone = [];
+  for (let r = 0; r < 3; r++) {
+    const idx = []; let done = true;
+    for (let c = 0; c < 9; c++) { const v = cells[r * 9 + c]; if (v) { idx.push(r * 9 + c); if (!called.has(v)) done = false; } }
+    rowIdx.push(idx); rowDone.push(done);
+  }
+  const rows = (list) => { const out = []; list.forEach((r) => rowIdx[r].forEach((i) => out.push(i))); return out; };
+  const doneRows = [0, 1, 2].filter((r) => rowDone[r]);
+  switch (pattern) {
+    case 'one': return doneRows.length >= 1 ? { win: true, cells: rows(doneRows.slice(0, 1)) } : { win: false, cells: [] };
+    case 'two': return doneRows.length >= 2 ? { win: true, cells: rows(doneRows.slice(0, 2)) } : { win: false, cells: [] };
+    case 'full': return doneRows.length === 3 ? { win: true, cells: rows([0, 1, 2]) } : { win: false, cells: [] };
+    case 'top': return rowDone[0] ? { win: true, cells: rows([0]) } : { win: false, cells: [] };
+    case 'middle': return rowDone[1] ? { win: true, cells: rows([1]) } : { win: false, cells: [] };
+    case 'bottom': return rowDone[2] ? { win: true, cells: rows([2]) } : { win: false, cells: [] };
+    case 'corners': {
+      const cs = [];
+      [0, 2].forEach((r) => {
+        const idx = rowIdx[r]; if (!idx.length) return;
+        cs.push(idx[0]); if (idx[idx.length - 1] !== idx[0]) cs.push(idx[idx.length - 1]);
+      });
+      if (!cs.length) return { win: false, cells: [] };
+      return cs.every((i) => called.has(cells[i])) ? { win: true, cells: cs } : { win: false, cells: [] };
+    }
+  }
+  return { win: false, cells: [] };
+}
+
+// The draw a host route is about, after proving the host works at its venue. Shared by the three
+// ticket routes: each one still calls verifyHostJwt and requireStaff itself, through this.
+async function bingoDrawForStaff(env, authUserId, drawId) {
+  if (!drawId) throw httpError(400, 'Missing draw_id');
+  assertUuid(drawId, 'draw_id');
+  const draws = await sbGet(env, 'vp_bingo_draws', 'id=eq.' + enc(drawId) + '&select=id,venue_id,session_id,mode,fallback_why,finished_at');
+  if (!draws.length) throw httpError(404, 'Draw not found');
+  const staff = await requireStaff(env, authUserId, draws[0].venue_id);   // staff at THIS venue, and the kill-switch
+  return { draw: draws[0], staff };
+}
+
+async function handleBingoDeal(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const { draw } = await bingoDrawForStaff(env, authUserId, String(b.draw_id || '').trim());
+  if (draw.finished_at) return json({ error: 'This game is finished' }, 409);
+  const drawId = draw.id;
+
+  // What was asked: one hand per phone, a sane count, and tablet tickets only in a sane shape.
+  let hands = [];
+  const named = new Set();
+  (Array.isArray(b.hands) ? b.hands : []).slice(0, BINGO_DEAL_MAX_HANDS).forEach(function (h) {
+    if (!h) return;
+    const pid = String(h.pid || '');
+    if (!BINGO_PID_RE.test(pid) || named.has(pid)) return;
+    const did = (typeof h.did === 'string' && BINGO_DID_RE.test(h.did) && !isPaperDevice(h.did)) ? h.did : null;
+    const hand = { pid, did };
+    if (Array.isArray(h.tablet)) {
+      hand.tablet = [];
+      h.tablet.slice(0, BINGO_DEAL_MAX_TICKETS).forEach(function (t) {
+        const cells = ticketFlat27(t && t.cells);
+        const no = parseInt(t && t.card_no, 10);
+        if (cells && no > 0 && no < 100000) hand.tablet.push({ cells, card_no: no });
+      });
+    } else {
+      const want = parseInt(h.want, 10);
+      hand.want = Math.max(0, Math.min(BINGO_DEAL_MAX_TICKETS, Number.isFinite(want) ? want : 0));
+    }
+    named.add(pid);
+    hands.push(hand);
+  });
+  const refused = [];
+  /* THE SEAT RULE. In a session, a ticket goes only to a phone whose device id holds a live row in
+     it: the phone has been to /join for this night, and it is what the bill counts. A phone on the
+     channel with no server identity is never dealt (it is asked to check in, by the console). */
+  if (draw.session_id && hands.length) {
+    const dids = hands.filter((h) => h.did).map((h) => h.did);
+    const rows = dids.length ? await sbGet(env, 'vp_players', 'session_id=eq.' + enc(draw.session_id) + '&kicked=eq.false&device_id=in.(' +
+      dids.map(enc).join(',') + ')&select=device_id&limit=' + (dids.length * 4)) : [];
+    const known = new Set(rows.map((r) => r.device_id));
+    hands = hands.filter(function (h) { if (h.did && known.has(h.did)) return true; refused.push(h.pid); return false; });
+  }
+  if (!hands.length) return json({ ok: true, hands: {}, refused });
+
+  const pidIn = 'pid=in.(' + hands.map((h) => enc(h.pid)).join(',') + ')';
+  const held = await sbGetAll(env, 'vp_bingo_tickets', 'draw_id=eq.' + enc(drawId) + '&' + pidIn +
+    '&select=id,pid,book,page,card_no,source,dealt_at,voided_at&order=pid.asc,book.asc,page.asc');
+  const used = new Set((await sbGetAll(env, 'vp_bingo_tickets', 'draw_id=eq.' + enc(drawId) +
+    '&source=eq.server&card_no=not.is.null&select=card_no&order=card_no.asc')).map((r) => r.card_no));
+  const now = new Date().toISOString();
+  const inserts = [], deal = [], voids = [];
+  hands.forEach(function (h) {
+    const mine = held.filter((t) => t.pid === h.pid);
+    let book = mine.reduce((m, t) => Math.max(m, t.book + 1), 0);
+    if (h.tablet) {
+      // Recording what the tablet dealt in an outage. A number already on the record for this
+      // player is already recorded (the console sends the whole hand each time it tries).
+      const have = new Set(mine.filter((t) => t.card_no != null).map((t) => t.card_no));
+      let k = 0;
+      h.tablet.forEach(function (t) {
+        if (have.has(t.card_no)) return;
+        have.add(t.card_no);
+        inserts.push({ draw_id: drawId, pid: h.pid, device_id: h.did, book: book + Math.floor(k / 6), page: k % 6,
+                       cells: t.cells, card_no: t.card_no, source: 'tablet', dealt_at: now });
+        k++;
+      });
+      return;
+    }
+    const live = mine.filter((t) => t.dealt_at && !t.voided_at);
+    if (h.want > live.length) {
+      let need = h.want - live.length;
+      // The next pages of a book this player already holds come first: the same book, continued.
+      mine.filter((t) => !t.dealt_at && !t.voided_at && t.source === 'server').forEach(function (t) {
+        if (need <= 0) return;
+        deal.push({ id: t.id, card_no: freshCardNo(used), device_id: h.did });
+        need--;
+      });
+      while (need > 0) {
+        const strip = generateStrip();
+        for (let pg = 0; pg < 6; pg++) {
+          const now1 = need > 0;
+          inserts.push({ draw_id: drawId, pid: h.pid, device_id: h.did, book, page: pg, cells: strip[pg],
+                         card_no: now1 ? freshCardNo(used) : null, source: 'server', dealt_at: now1 ? now : null });
+          if (now1) need--;
+        }
+        book++;
+      }
+    } else if (h.want < live.length) {
+      // Fewer than they hold (a sale corrected at the bar): the newest go back. Voided, never deleted.
+      live.slice(h.want).forEach((t) => voids.push(t.id));
+    }
+  });
+  try {
+    if (inserts.length) await sbInsert(env, 'vp_bingo_tickets', inserts, false);
+  } catch (e) {
+    // A racing deal for the same game took a page or a number first. Nothing was written (the
+    // insert is one statement); ask again and the next answer is computed from what is there now.
+    if (e && e.status === 409) return json({ error: 'Dealing already in progress. Try again.' }, 503);
+    throw e;
+  }
+  for (const d of deal) {
+    await sbPatch(env, 'vp_bingo_tickets', 'id=eq.' + enc(d.id) + '&dealt_at=is.null',
+      { dealt_at: now, card_no: d.card_no, device_id: d.device_id });
+  }
+  if (voids.length) {
+    await sbPatch(env, 'vp_bingo_tickets', 'id=in.(' + voids.map(enc).join(',') + ')&voided_at=is.null', { voided_at: now });
+  }
+  // The answer is what is ON THE RECORD now, read back, not what this request meant to write.
+  const after = await sbGetAll(env, 'vp_bingo_tickets', 'draw_id=eq.' + enc(drawId) + '&' + pidIn +
+    '&dealt_at=not.is.null&voided_at=is.null&select=pid,book,page,cells,card_no,source&order=pid.asc,book.asc,page.asc');
+  const out = {};
+  hands.forEach((h) => { out[h.pid] = []; });
+  after.forEach((t) => { if (out[t.pid]) out[t.pid].push({ card_no: t.card_no, cells: ticketRows3x9(t.cells), source: t.source }); });
+  return json({ ok: true, hands: out, refused });
+}
+
+async function handleBingoClaim(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const { draw } = await bingoDrawForStaff(env, authUserId, String(b.draw_id || '').trim());
+  const drawId = draw.id;
+  const pid = String(b.pid || ''), ref = String(b.ref || ''), pattern = String(b.pattern || '');
+  if (!BINGO_PID_RE.test(pid)) return json({ error: 'Bad player' }, 400);
+  if (!BINGO_REF_RE.test(ref)) return json({ error: 'Bad claim reference' }, 400);
+  if (BINGO_CLAIM_PATTERNS.indexOf(pattern) < 0) return json({ error: 'Bad pattern' }, 400);
+  const balls = parseInt(b.balls, 10);
+  if (!(balls >= 0 && balls <= 90)) return json({ error: 'Bad ball count' }, 400);
+  const cardNoCalled = parseInt(b.card_no, 10) || null;
+  const decision = ['confirmed', 'rejected', 'dropped'].indexOf(b.decision) >= 0 ? b.decision : null;
+  const decidedOnTablet = b.decided_on === 'tablet';
+  const tabletVerdict = (b.tablet_verdict === 'win' || b.tablet_verdict === 'not_yet') ? b.tablet_verdict : null;
+
+  // The same claim again (the console retrying after a timeout): the first verdict stands.
+  const prior = await sbGet(env, 'vp_bingo_claims', 'draw_id=eq.' + enc(drawId) + '&ref=eq.' + enc(ref) + '&select=*&limit=1');
+  if (prior.length) return json(await bingoClaimReply(env, prior[0], authUserId, decision));
+
+  // THE BALLS: this server's own record, in the order they were called.
+  const standing = await sbGetStandingBalls(env, 'draw_id=eq.' + enc(drawId) + '&select=ordinal,number,source&order=ordinal.asc&limit=90');
+  let note = null;
+  const called = Array.isArray(b.called) ? b.called.map((n) => parseInt(n, 10)) : null;
+  if (called && called.length <= 90 && called.every((n) => n >= 1 && n <= 90) && new Set(called).size === called.length) {
+    const agrees = standing.every((r, i) => called[i] === r.number);
+    if (!agrees) {
+      note = 'The tablet\'s called numbers disagree with the server record; the server record was used.';
+    } else if (called.length > standing.length) {
+      /* Balls the tablet called while it could not reach us, which the best-effort fallback reports
+         never delivered. Only on a draw the tablet has taken over (or says it has: tablet_draw, the
+         same statement /host/bingo/fallback accepts from a host), only appended in order after what
+         is here, and the table's keys refuse a repeat. On a server draw the tablet adds nothing. */
+      let local = draw.mode === 'local';
+      if (!local && b.tablet_draw === true) {
+        await sbPatch(env, 'vp_bingo_draws', 'id=eq.' + enc(drawId) + '&mode=eq.server',
+          { mode: 'local', fallback_at: standing.length + 1, fallback_why: String(b.tablet_why || 'worker unreachable').slice(0, 200) });
+        local = true;
+      }
+      if (local) {
+        for (let i = standing.length; i < Math.min(called.length, balls); i++) {
+          try {
+            await sbInsert(env, 'vp_bingo_draw_balls', { draw_id: drawId, ordinal: i + 1, number: called[i], source: 'local' }, false);
+            standing.push({ ordinal: i + 1, number: called[i], source: 'local' });
+          } catch (e) { note = 'A tablet ball could not be added to the record.'; break; }
+        }
+      } else {
+        note = 'The tablet showed more numbers than the server drew; the server record was used.';
+      }
+    }
+  }
+  const out = standing.slice(0, balls);
+  const set = new Set(out.map((r) => r.number));
+
+  // THE TICKET: this server's copy, never anything the phone or the tablet says is on it.
+  const tickets = await sbGet(env, 'vp_bingo_tickets', 'draw_id=eq.' + enc(drawId) + '&pid=eq.' + enc(pid) +
+    '&dealt_at=not.is.null&voided_at=is.null&select=id,card_no,cells,source,device_id&order=book.asc,page.asc&limit=48');
+  let tk = cardNoCalled ? (tickets.find((t) => t.card_no === cardNoCalled) || null) : null, swapped = false;
+  if (!tk) {
+    // They pressed on a number we do not hold for them (they slept through a re-deal): check the
+    // ticket of theirs that does win, if any, and say it was swapped. The console's rule exactly.
+    tk = tickets.find((t) => bingoTicketWins(t.cells, set, pattern).win) || null;
+    if (tk) swapped = true;
+  }
+  const won = tk ? bingoTicketWins(tk.cells, set, pattern) : { win: false, cells: [] };
+  const verdict = !tickets.length ? 'no_ticket' : (won.win ? 'win' : 'not_yet');
+  const row = {
+    draw_id: drawId, ref, pid, device_id: (tk && tk.device_id) || (tickets[0] && tickets[0].device_id) || null,
+    card_no_called: cardNoCalled, ticket_id: tk ? tk.id : null, card_no: tk ? tk.card_no : null, swapped,
+    pattern, balls: out.length, last_ball: out.length ? out[out.length - 1].number : null,
+    verdict, winning_cells: won.cells, decided_on: decidedOnTablet ? 'tablet' : 'server',
+    tablet_verdict: decidedOnTablet ? tabletVerdict : null, record_note: note,
+  };
+  if (decision) { row.status = decision; row.resolved_at = new Date().toISOString(); row.resolved_by = authUserId; }
+  let saved;
+  try {
+    const rows = await sbInsert(env, 'vp_bingo_claims', row, true);
+    saved = Array.isArray(rows) ? rows[0] : rows;
+  } catch (e) {
+    if (!(e && e.status === 409)) throw e;
+    // Two copies of the same retry crossed: the one that landed first is the claim.
+    const again = await sbGet(env, 'vp_bingo_claims', 'draw_id=eq.' + enc(drawId) + '&ref=eq.' + enc(ref) + '&select=*&limit=1');
+    if (!again.length) throw e;
+    saved = again[0];
+  }
+  return json(await bingoClaimReply(env, saved, authUserId, decision, tk));
+}
+// One shape for a claim's answer, whether it was just made or is being asked about again.
+async function bingoClaimReply(env, c, authUserId, decision, tk) {
+  if (decision && c.status === 'pending') {
+    await sbPatch(env, 'vp_bingo_claims', 'id=eq.' + enc(c.id) + '&status=eq.pending',
+      { status: decision, resolved_at: new Date().toISOString(), resolved_by: authUserId });
+    c.status = decision;
+  }
+  let ticket = tk || null;
+  if (!ticket && c.ticket_id) {
+    const t = await sbGet(env, 'vp_bingo_tickets', 'id=eq.' + enc(c.ticket_id) + '&select=card_no,cells,source&limit=1');
+    ticket = t[0] || null;
+  }
+  return { claim_id: c.id, verdict: c.verdict, card_no: c.card_no, swapped: !!c.swapped,
+           cells: ticket ? ticketRows3x9(ticket.cells) : null, ticket_source: ticket ? ticket.source : null,
+           winning_cells: c.winning_cells || [], balls: c.balls, status: c.status, note: c.record_note || null };
+}
+
+async function handleBingoClaimResolve(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const claimId = String(b.claim_id || '').trim();
+  if (!claimId) return json({ error: 'Missing claim_id' }, 400);
+  assertUuid(claimId, 'claim_id');
+  const decision = String(b.decision || '');
+  if (['confirmed', 'rejected', 'dropped'].indexOf(decision) < 0) return json({ error: 'Bad decision' }, 400);
+  const claims = await sbGet(env, 'vp_bingo_claims', 'id=eq.' + enc(claimId) + '&select=id,draw_id,status&limit=1');
+  if (!claims.length) return json({ error: 'Claim not found' }, 404);
+  await bingoDrawForStaff(env, authUserId, claims[0].draw_id);   // staff at the claim's venue
+  if (claims[0].status !== 'pending') return json({ ok: true, status: claims[0].status });   // a retry: already decided
+  const done = await sbPatchReturning(env, 'vp_bingo_claims', 'id=eq.' + enc(claimId) + '&status=eq.pending',
+    { status: decision, resolved_at: new Date().toISOString(), resolved_by: authUserId });
+  return json({ ok: true, status: done.length ? decision : 'already decided' });
 }
 
 /* ------------------------------ POST /player/claim ------------------------------

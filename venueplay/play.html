@@ -845,6 +845,8 @@
         ? "The game ended before the host checked your BINGO"+(P.droppedClaim>0?" on card #"+esc(String(P.droppedClaim)):"")+". <b>See the host now</b> and show them this screen."
         : (P.paidMode && P.active && !P.cards.length)
         ? "Tickets are on sale at the bar tonight. Grab one and the staff will put it straight on your phone."
+        : (P.active && !P.cards.length)
+        ? "The game is on. Your tickets are on the way, hang on a moment."
         : (P.stageWins.length
           ? "You won <b>"+esc(PATTERN_NAMES[P.stageWins[P.stageWins.length-1].pattern]||"a line")+"</b> last game (card #"+esc(String(P.stageWins[P.stageWins.length-1].cardNo||""))+"). See the host to collect. Your next ticket will appear here."
           : "Waiting for the host to start the game. Your card will appear here.");
@@ -1553,6 +1555,10 @@
       // fresh round: the host deals new tickets (t:"cards") just before this. Reset the
       // round but keep whatever tickets we're holding.
       P.called=[]; P.active=true; P.won=false; P.ended=false; P.claimPending=false; P.wonCardNo=0; P.droppedClaim=0; _celebrated=false; clearWin(P.room);   // new round starting
+      /* The SERVER deals this game's tickets now (19 Oct 2026), a moment after this message. Drop last
+         game's here so nobody marks or claims on a ticket that is no longer in play; the waiting screen
+         says they are on the way. An older console sends no dealing flag and deals first, as before. */
+      if(m.dealing){ P.cards=[]; P.dealSeq++; }
       P.shared=false; P.sharedWith=[]; clearStage(P.room); P.lostBy="";
       for(var i=0;i<P.cards.length;i++) P.cards[i].daubs={};
       clearDaubs();   // a new game starts on a clean ticket
