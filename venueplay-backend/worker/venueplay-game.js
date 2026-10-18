@@ -142,7 +142,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '19 Oct 2026, 05:57 · ee9a7b6e';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '19 Oct 2026, 06:01 · c9db0664';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -7171,6 +7171,18 @@ async function handleBingoDeal(request, env, json) {
     hands.push(hand);
   });
   const refused = [];
+  /* NO PHONE TICKET WHERE BINGO IS PLAYED ON PAPER: SA, VIC and TAS (the same list /join/info tells
+     the phones from), and a real-balls night anywhere (caller mode). The phones there are already
+     told to play on paper and never join the room; this is the server saying so too, so a stale page
+     cannot be dealt one. Refused per phone, not as an error, so the console does not take the refusal
+     for an outage and deal from the tablet instead. Recording what a tablet already dealt is still
+     allowed: the record must say what happened. */
+  let paperNight = draw.fallback_why === CALLER_REASON;
+  if (!paperNight) {
+    const v = await sbGet(env, 'vp_venues', 'id=eq.' + enc(draw.venue_id) + '&select=au_state&limit=1');
+    paperNight = !!(v[0] && PAPER_BINGO_STATES.has(String(v[0].au_state || '').toUpperCase()));
+  }
+  if (paperNight) hands = hands.filter(function (h) { if (h.tablet) return true; refused.push(h.pid); return false; });
   /* THE SEAT RULE. In a session, a ticket goes only to a phone whose device id holds a live row in
      it: the phone has been to /join for this night, and it is what the bill counts. A phone on the
      channel with no server identity is never dealt (it is asked to check in, by the console). */
@@ -7179,9 +7191,9 @@ async function handleBingoDeal(request, env, json) {
     const rows = dids.length ? await sbGet(env, 'vp_players', 'session_id=eq.' + enc(draw.session_id) + '&kicked=eq.false&device_id=in.(' +
       dids.map(enc).join(',') + ')&select=device_id&limit=' + (dids.length * 4)) : [];
     const known = new Set(rows.map((r) => r.device_id));
-    hands = hands.filter(function (h) { if (h.did && known.has(h.did)) return true; refused.push(h.pid); return false; });
+    hands = hands.filter(function (h) { if (h.tablet || (h.did && known.has(h.did))) return true; refused.push(h.pid); return false; });
   }
-  if (!hands.length) return json({ ok: true, hands: {}, refused });
+  if (!hands.length) return json({ ok: true, hands: {}, refused, paper: paperNight });
 
   const pidIn = 'pid=in.(' + hands.map((h) => enc(h.pid)).join(',') + ')';
   const held = await sbGetAll(env, 'vp_bingo_tickets', 'draw_id=eq.' + enc(drawId) + '&' + pidIn +
@@ -7252,7 +7264,7 @@ async function handleBingoDeal(request, env, json) {
   const out = {};
   hands.forEach((h) => { out[h.pid] = []; });
   after.forEach((t) => { if (out[t.pid]) out[t.pid].push({ card_no: t.card_no, cells: ticketRows3x9(t.cells), source: t.source }); });
-  return json({ ok: true, hands: out, refused });
+  return json({ ok: true, hands: out, refused, paper: paperNight });
 }
 
 async function handleBingoClaim(request, env, json) {

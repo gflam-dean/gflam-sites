@@ -1695,6 +1695,7 @@
       if(want===have) continue;
       if(p.dealNo && p.dealNo>now) continue;      // the server just said this phone is not in tonight's session
       out.push({ pid:pid, did:p.did||null, want:want });
+      if(out.length>=100) break;                  // the Worker takes 120 a request; the rest go on the next one
     }
     return out;
   }

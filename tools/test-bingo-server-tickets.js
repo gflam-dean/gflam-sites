@@ -403,6 +403,17 @@ function frontOfDraw(numbers) {
   var c4 = await worker('/host/bingo/claim', { draw_id: D5, ref: 'ref-direct-3', pid: ann.P.pid, card_no: 99999, pattern: 'top', balls: 5 }, {}, 'direct');
   check('a claim on a number they do not hold is checked on the ticket of theirs that wins, and says so', c4.body.verdict === 'win' && c4.body.swapped === true && c4.body.card_no === t0.card_no, c4.body);
 
+  print('where bingo is played on paper');
+  var VIC = '44444444-4444-4444-8444-444444444444';
+  DB.vp_venues.push({ id: VIC, name: 'Vic Pub', slug: 'vic-pub', status: 'active', join_code: 'VICVIC', au_state: 'VIC' });
+  var DV = (await worker('/host/bingo/draw', { venue_id: VIC }, {}, 'direct')).body.draw_id;
+  var rv = await worker('/host/bingo/deal', { draw_id: DV, hands: [{ pid: 'k1_vicphone', did: 'vic-device-1', want: 1 }] }, {}, 'direct');
+  check('in Victoria the server deals no phone ticket, and says so per phone rather than as an outage',
+        rv.status === 200 && rv.body.paper === true && rv.body.refused.indexOf('k1_vicphone') >= 0 && DB.vp_bingo_tickets.filter(function (t) { return t.draw_id === DV; }).length === 0, rv.body);
+  var DC = (await worker('/host/bingo/draw', { venue_id: VENUE, caller: true }, {}, 'direct')).body.draw_id;
+  var rc = await worker('/host/bingo/deal', { draw_id: DC, hands: [{ pid: ann.P.pid, did: annDid, want: 1 }] }, {}, 'direct');
+  check('on a real-balls night the server deals no phone ticket in any state', rc.status === 200 && rc.body.paper === true && DB.vp_bingo_tickets.filter(function (t) { return t.draw_id === DC; }).length === 0, rc.body);
+
   print('\n' + PASS + ' of ' + (PASS + FAILN) + ' checks passed');
   if (FAILN) throw new Error(FAILN + ' server ticket checks failed');
 })().catch(function (e) { print('CRASH ' + (e && e.stack || e)); throw e; });
