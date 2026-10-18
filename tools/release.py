@@ -35,6 +35,7 @@ LIVE_WORKERS = {
     'venueplay-backend/worker/venueplay-api-FULL.js': 'venueplay-api',
     'partyplay-backend/worker/DEPLOY-partyplay-api.js': 'partyplay-api',
     'venueplay-backend/worker/venueplay-sms-hook.js': 'venueplay-sms',
+    'touring-backend/worker/DEPLOY-touring-api.js': 'touring-api',
 }
 SCREEN_FILES = ('venueplay/tv.html', 'venueplay/app/trivia/screen.html', 'venueplay/app/musical/screen.html',
                 'venueplay/app/raffle/screen.html', 'venueplay/app/members/screen.html', 'venueplay/app/vp-',

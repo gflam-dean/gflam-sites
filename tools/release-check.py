@@ -1298,6 +1298,15 @@ def local_checks(which):
                 leaks.append('%s writes %s with the public key' % (short(mp), m.group(1)))
         if 'PIN_HASH' in body:
             leaks.append('%s still carries a PIN hash in its source' % short(mp))
+        # 19 Oct 2026. Pictures too: the page uploaded tour card pictures straight into
+        # the tour-images bucket with the public key (which only worked because anybody
+        # could), and kept every banner base64 INSIDE the show row, which is what made
+        # adding a show time out. Both go through touring-api now.
+        for m in re.finditer(r'fetch\(\s*`?\$?\{?SUPABASE_URL\}?/storage/v1/object/', body):
+            leaks.append('%s uploads to Storage with the public key' % short(mp))
+        if 'readAsDataURL' in body:
+            leaks.append('%s reads a picture into a data: URL, which is how pictures ended '
+                         'up inside the show rows' % short(mp))
     ok('the public key cannot write the tour tables', not leaks,
        why='; '.join(leaks[:3]) + '. Those tables answer 42501 now, so the write '
            'fails anyway - route it through touring-api.')

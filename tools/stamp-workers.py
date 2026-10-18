@@ -40,6 +40,9 @@ WORKERS = [
     # is a question worth being able to answer about it. Added 12 Sep 2026, after it turned
     # out to be the last unproved leg of the Sydney move.
     'venueplay-backend/worker/venueplay-sms-hook.js',
+    # The touring Worker writes the tour listings and, since 19 Oct 2026, the tour
+    # pictures. It was the last one deployed by paste, with a hand-written build line.
+    'touring-backend/worker/DEPLOY-touring-api.js',
 ]
 LINE = re.compile(r"^const BUILD = '[^']*';.*$", re.M)
 # For hashing: exactly the stamp line and its own newline. NOT the blank lines

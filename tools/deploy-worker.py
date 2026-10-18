@@ -47,6 +47,9 @@ SLOT_OF_FILE = {
     'venueplay-api-FULL.js':        'venueplay-api',
     'DEPLOY-partyplay-api.js':      'partyplay-api',
     'touring-api.js':               'touring-api',
+    # The file is named DEPLOY-touring-api.js, so the line above never matched it and the
+    # touring Worker could only be pasted. Added 19 Oct 2026.
+    'DEPLOY-touring-api.js':        'touring-api',
     'venueplay-sms-hook.js':        'venueplay-sms',
 }
 NEVER_PASTE = {'venueplay-api.js', 'SOURCE-do-not-paste-partyplay-api.js'}   # stubs and sources

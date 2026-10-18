@@ -155,6 +155,29 @@ html,body{background:var(--dark);color:#fff;font-family:"DM Sans",sans-serif;fon
 }
 .tour-ico{width:40px;height:40px;border-radius:8px;background:rgba(254,101,195,.12);display:flex;align-items:center;justify-content:center;margin-bottom:12px}.tour-ico svg{width:22px;height:22px;color:var(--pink)}@media(max-width:900px){.tour-card{text-align:center}.tour-ico{margin-left:auto;margin-right:auto}}
 .tour-flex{display:flex;flex-wrap:wrap;gap:14px;justify-content:center}.tour-flex>.tour-card{flex:1 1 205px;max-width:270px;min-width:190px}@media(max-width:600px){.tour-flex>.tour-card{flex-basis:100%;max-width:100%}}
+
+/* Homepage tour cards (19 Oct 2026). The picture is shown whole, never cropped, and the
+   text sits in the middle of its half whatever the picture's height. On a phone the
+   picture goes on top and the text and show list stack under it. */
+.tc-card{background:var(--dark);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;margin-bottom:20px;transition:border-color .2s}
+.tc-card:hover{border-color:rgba(254,101,195,.4)}
+.tc-left{padding:40px 44px;display:flex;flex-direction:column;justify-content:center;min-width:0}
+.tc-img{border-left:1px solid var(--border);background:#000;display:flex;align-items:center;justify-content:center;min-width:0}
+.tc-img img{width:100%;height:auto;display:block}
+.tc-shows{list-style:none;margin:0 0 24px;padding:0;border-top:1px solid var(--border)}
+.tc-show{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:11px 0;border-bottom:1px solid var(--border);font-size:14px;line-height:1.5;color:rgba(255,255,255,.85)}
+.tc-show-when{font-weight:600;color:#fff}
+.tc-show-tix{flex-shrink:0;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--pink);text-decoration:none;border:1px solid rgba(254,101,195,.4);border-radius:4px;padding:5px 12px;transition:background .2s}
+.tc-show-tix:hover{background:rgba(254,101,195,.12)}
+.tc-show-out{flex-shrink:0;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.tc-more{display:inline-block;font-size:13px;font-weight:600;color:var(--pink);text-decoration:none;margin:-12px 0 24px}
+.tc-more:hover{text-decoration:underline}
+@media(max-width:760px){
+  .tc-card{grid-template-columns:1fr}
+  .tc-img{order:-1;border-left:0;border-bottom:1px solid var(--border)}
+  .tc-left{padding:28px 22px}
+  .tc-show{font-size:13px}
+}
 </style></head><body><nav class="nav"><div class="nav-logo"><a href="/"><img src="/logo.png" alt="Gflam Touring" style="height:44px;width:auto;display:block"></a></div><div class="nav-links"><a href="/who-we-are">Who We Are</a><a href="/what-we-do">What We Do</a><a href="/current-tours">Current Tours</a><a href="/work-with-us">Work With Us</a><a href="/contact" class="nav-links nav-cta">Get in Touch</a></div><button class="hamburger" onclick="document.getElementById('tm').classList.add('open')"><span></span><span></span><span></span></button></nav><div class="mob-menu" id="tm"><button class="mob-close" onclick="document.getElementById('tm').classList.remove('open')">&#10005;</button><a href="/" onclick="document.getElementById('tm').classList.remove('open')">Home</a><a href="/who-we-are" onclick="document.getElementById('tm').classList.remove('open')">Who We Are</a><a href="/what-we-do" onclick="document.getElementById('tm').classList.remove('open')">What We Do</a><a href="/current-tours" onclick="document.getElementById('tm').classList.remove('open')">Current Tours</a><a href="/work-with-us" onclick="document.getElementById('tm').classList.remove('open')">Work With Us</a><a href="/contact" onclick="document.getElementById('tm').classList.remove('open')">Get in Touch</a></div>
 <div style="position:relative;min-height:88vh;display:flex;align-items:center;justify-content:center;overflow:hidden;text-align:center;padding:80px 48px">
   <div style="position:absolute;inset:0;background:linear-gradient(135deg,#0a0a0a 0%,#1a0a1a 50%,#0a0a0a 100%)"></div>
@@ -329,39 +352,102 @@ function numToWords(n){
       </div>
     </div>`;
   function esc(x){return (x||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
-  function cardHTML(c){
+  /* UPCOMING SHOWS ON EACH CARD (Dean, 19 Oct 2026: "it's a tour card so it'll be
+     multiple shows"). The same shows the tour's own page lists: matched to the card by
+     tour_key, the way auto-hide already matches them, on or after today in Queensland,
+     and past their go-live time. Up to four, then a link to the rest. */
+  const TC_MAX_SHOWS = 4;
+  const TC_DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const TC_MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  function tcVisible(s, now){
+    if(!s.show_date) return false;
+    if(s.go_live_date){
+      const gl = new Date(s.go_live_date+"T"+String(s.go_live_time||"00:00").substring(0,5)+":00+10:00");
+      if(now < gl) return false;
+    }
+    return now <= new Date(s.show_date+"T23:59:59+10:00");
+  }
+  function tcDate(d){
+    const x = new Date(d+"T12:00:00+10:00");
+    const q = new Date(x.getTime() + 10*3600*1000);      // read it as Queensland, whatever the visitor's clock
+    return TC_DAYS[q.getUTCDay()]+" "+q.getUTCDate()+" "+TC_MONTHS[q.getUTCMonth()];
+  }
+  function tcTime(t){
+    const m = String(t||"").trim().match(/^(\d{1,2})(?::(\d{2}))?\s*([ap])\.?\s*m\.?$/i);
+    if(!m) return String(t||"").trim();
+    return m[1]+(m[2] && m[2]!=="00" ? ":"+m[2] : "")+m[3].toLowerCase()+"m";
+  }
+  function tcTicketUrl(u){
+    u = String(u||"").trim();
+    if(!u) return "";
+    if(u.indexOf("//")===0) u = "https:"+u;
+    else if(!/^https?:\/\//i.test(u) && u.charAt(0)!=="/") u = "https://"+u;
+    try{
+      const url = new URL(u, location.href);
+      if(!url.searchParams.has("ref")) url.searchParams.set("ref","gflamweb");  // never replaces a ref already there
+      return url.toString();
+    }catch(e){ return u; }
+  }
+  function tcShowsHTML(c, list){
+    if(!list || !list.length) return "";
+    const rows = list.slice(0, TC_MAX_SHOWS).map(function(s){
+      const where = [s.venue, s.suburb].filter(Boolean).join(", ");
+      const time = tcTime(s.time);
+      const parts = [`<span class="tc-show-when">${esc(tcDate(s.show_date))}</span>`];
+      if(where) parts.push(esc(where));
+      if(time) parts.push(esc(time));
+      const href = tcTicketUrl(s.ticket_url);
+      const tix = href
+        ? `<a class="tc-show-tix" href="${esc(href)}" target="_blank" rel="noopener">Tickets</a>`
+        : `<span class="tc-show-out">Sold out</span>`;
+      return `<li class="tc-show"><span>${parts.join(" &middot; ")}</span>${tix}</li>`;
+    }).join("");
+    const extra = list.length - TC_MAX_SHOWS;
+    const more = (extra > 0 && c.button_link)
+      ? `<a class="tc-more" href="${esc(c.button_link)}">+${extra} more show${extra===1?"":"s"}</a>` : "";
+    return `<ul class="tc-shows">${rows}</ul>${more}`;
+  }
+  function cardHTML(c, list){
     const right = c.image_url
-      ? `<div style="border-left:1px solid var(--border);background:#000;aspect-ratio:6/5"><img src="${esc(c.image_url)}" alt="${esc(c.name)}" style="width:100%;height:100%;object-fit:cover;display:block"></div>`
-      : `<div style="background:var(--dark3);display:flex;align-items:center;justify-content:center;border-left:1px solid var(--border);min-height:220px;padding:40px;text-align:center"><div><div style="font-size:48px;margin-bottom:12px">&#127914;</div><div style="font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase">${esc(c.name)}</div></div></div>`;
+      ? `<div class="tc-img"><img src="${esc(c.image_url)}" alt="${esc(c.name)}"></div>`
+      : `<div class="tc-img" style="background:var(--dark3);min-height:220px;padding:40px;text-align:center"><div><div style="font-size:48px;margin-bottom:12px">&#127914;</div><div style="font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase">${esc(c.name)}</div></div></div>`;
     const btn = (c.button_link && c.button_label)
-      ? `<a href="${esc(c.button_link)}" class="btn btn-pink">${esc(c.button_label)}</a>` : "";
-    return `<div style="background:var(--dark);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;margin-bottom:20px;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(254,101,195,.4)'" onmouseout="this.style.borderColor='rgba(255,255,255,.1)'">
-      <div style="padding:40px">
+      ? `<div><a href="${esc(c.button_link)}" class="btn btn-pink">${esc(c.button_label)}</a></div>` : "";
+    return `<div class="tc-card">
+      <div class="tc-left">
         ${c.eyebrow?`<div class="eyebrow" style="margin-bottom:14px">${esc(c.eyebrow)}</div>`:""}
         <div style="font-family:'DM Serif Display',serif;font-size:clamp(24px,3.5vw,36px);letter-spacing:-1px;color:#fff;margin-bottom:14px;line-height:1.1">${esc(c.name)}<span class="dot">.</span></div>
         <p class="muted" style="font-size:15px;margin-bottom:24px">${esc(c.description)}</p>
+        ${tcShowsHTML(c, list)}
         ${btn}
       </div>
       ${right}
     </div>`;
   }
   try{
-    const today=new Date().toISOString().slice(0,10);
+    const now=new Date();
+    // Yesterday in UTC is never later than today in Queensland; tcVisible does the exact cut.
+    const since=new Date(now.getTime()-36*3600*1000).toISOString().slice(0,10);
     const [catsR, showsR] = await Promise.all([
       fetch(SBU+"/rest/v1/tour_categories?order=priority.asc",{headers:SBH}),
-      fetch(SBU+"/rest/v1/shows?select=show_type,show_date&show_date=gte."+today,{headers:SBH})
+      fetch(SBU+"/rest/v1/shows?select=show_type,show_date,venue,suburb,time,ticket_url,go_live_date,go_live_time&show_date=gte."+since+"&order=show_date.asc",{headers:SBH})
     ]);
     if(!catsR.ok) throw new Error("cats");
     const cats=await catsR.json();
     if(!Array.isArray(cats)||!cats.length){ wrap.innerHTML=comingSoonHTML; return; }
-    let counts={};
-    if(showsR.ok){(await showsR.json()).forEach(function(x){counts[x.show_type]=(counts[x.show_type]||0)+1;});}
+    const today=now.toISOString().slice(0,10);      // the date auto-hide has always used
+    let counts={}, upcoming={};
+    if(showsR.ok){(await showsR.json()).forEach(function(x){
+      // auto-hide counts exactly as it always has: any show dated today or later
+      if(x.show_date >= today) counts[x.show_type]=(counts[x.show_type]||0)+1;
+      if(tcVisible(x, now)) (upcoming[x.show_type]=upcoming[x.show_type]||[]).push(x);
+    });}
     const visible=cats.filter(function(c){
       if(c.auto_hide && c.tour_key){ return (counts[c.tour_key]||0) > 0; }
       return true;
     });
     if(!visible.length){ wrap.innerHTML=comingSoonHTML; return; }
-    wrap.innerHTML=visible.map(cardHTML).join("");
+    wrap.innerHTML=visible.map(function(c){ return cardHTML(c, c.tour_key ? upcoming[c.tour_key] : []); }).join("");
   }catch(e){ /* leave fallback card in place */ }
 })();
 

@@ -119,6 +119,10 @@
   "checks": 8,
   "counted_by": "lines"
  },
+ "tools/move-show-images.test.py": {
+  "checks": 13,
+  "counted_by": "lines"
+ },
  "tools/redirect-verdict.test.py": {
   "checks": 12,
   "counted_by": "lines"
@@ -547,8 +551,20 @@
   "checks": 10,
   "counted_by": "lines"
  },
+ "tools/touring-cards.test.py": {
+  "checks": 70,
+  "counted_by": "lines"
+ },
+ "tools/touring-lock.test.py": {
+  "checks": 24,
+  "counted_by": "lines"
+ },
+ "tools/touring-manage.test.py": {
+  "checks": 21,
+  "counted_by": "lines"
+ },
  "touring-backend/lib/touring-api.test.js": {
-  "checks": 36,
+  "checks": 56,
   "counted_by": "lines"
  },
  "venueplay-backend/app/billing-hosts.test.js": {

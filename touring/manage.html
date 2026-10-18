@@ -125,6 +125,8 @@ html,body{background:var(--dark);color:#fff;font-family:"DM Sans",sans-serif;fon
   </div>
 
   <div class="show-items" id="showItems"></div>
+  <datalist id="artistList"></datalist>
+  <datalist id="venueList"></datalist>
 
   <div class="actions">
     <button class="btn btn-outline" onclick="addShow()">+ Add Show</button>
@@ -226,6 +228,125 @@ async function apiSave(table, body) {
   }
   return d;
 }
+/* PICTURES GO TO STORAGE, NOT INTO THE ROW (19 Oct 2026).
+   Dean: "Error saving: save failed: canceling statement due to statement timeout".
+   handleImg used to keep the whole picture, base64, in shows.img_src: the Tugun row
+   was two million characters, and every Save re-sent every row with its picture, so
+   one more big PNG ran the upsert past the database's eight second limit. Now the
+   picture is shrunk here (1600px wide at most, JPEG), uploaded on its own through
+   touring-api, and the row keeps only the address it gives back. */
+const IMG_MAX_W = 1600;
+const IMG_MAX_H = 1600;
+const IMG_QUALITY = [0.82, 0.72, 0.6, 0.5];
+const IMG_TARGET_BYTES = 600 * 1024;
+let uploadsInFlight = 0;
+
+function loadImageFile(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("That file is not a picture this browser can open.")); };
+    img.src = url;
+  });
+}
+
+async function shrinkImage(file) {
+  const img = await loadImageFile(file);
+  const w0 = img.naturalWidth || img.width, h0 = img.naturalHeight || img.height;
+  if (!w0 || !h0) throw new Error("That picture has no size.");
+  const scale = Math.min(1, IMG_MAX_W / w0, IMG_MAX_H / h0);
+  const w = Math.max(1, Math.round(w0 * scale)), h = Math.max(1, Math.round(h0 * scale));
+  const c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = "#111";                 // a see-through PNG lands on the site's own dark
+  ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(img, 0, 0, w, h);
+  let blob = null;
+  for (const q of IMG_QUALITY) {
+    blob = await new Promise((res) => c.toBlob(res, "image/jpeg", q));
+    if (blob && blob.size <= IMG_TARGET_BYTES) break;
+  }
+  if (!blob) throw new Error("This browser could not shrink the picture.");
+  return { blob, width: w, height: h };
+}
+
+async function uploadImage(file, kind) {
+  if (!MANAGE_KEY) throw new Error("Session expired. Reload and sign in again.");
+  const small = await shrinkImage(file);
+  const r = await fetch(`${TOURING_API}/upload?kind=${kind === "card" ? "card" : "show"}`, {
+    method: "POST",
+    headers: { "content-type": "image/jpeg", "X-Manage-Key": MANAGE_KEY },
+    body: small.blob
+  });
+  let d = null;
+  try { d = await r.json(); } catch (e) {}
+  if (!r.ok || !d || !d.url) {
+    if (r.status === 401) throw new Error("Wrong password. Reload and try again.");
+    throw new Error((d && d.error) || `upload failed (${r.status})`);
+  }
+  return d.url;
+}
+
+/* PICK LISTS (19 Oct 2026). Dean: "should it not save the artists for next time?"
+   The queen, host and venue boxes offer every name used before: the artists and
+   venues tables plus whatever is already on a show. A new name is remembered by
+   touring-api when the show is saved, so it is offered next time. */
+let knownArtists = [];
+let knownVenues = [];        // [{name, suburb}]
+
+function addKnown(list, name) {
+  const n = String(name || "").replace(/\s+/g, " ").trim();
+  if (!n || /^(tba|tbc|tbd)$/i.test(n)) return;
+  if (!list.some((x) => (typeof x === "string" ? x : x.name).toLowerCase() === n.toLowerCase())) list.push(n);
+}
+
+function rebuildPickLists() {
+  const people = [];
+  knownArtists.forEach((n) => addKnown(people, n));
+  shows.forEach((s) => { (s.queens || []).forEach((q) => addKnown(people, q)); addKnown(people, s.host); });
+  people.sort((a, b) => a.localeCompare(b));
+  const places = [];
+  const seen = {};
+  const addPlace = (name, suburb) => {
+    const n = String(name || "").replace(/\s+/g, " ").trim();
+    if (!n || seen[n.toLowerCase()]) return;
+    seen[n.toLowerCase()] = 1;
+    places.push({ name: n, suburb: String(suburb || "").trim() });
+  };
+  knownVenues.forEach((v) => addPlace(v.name, v.suburb));
+  shows.forEach((s) => addPlace(s.venue, s.suburb));
+  places.sort((a, b) => a.name.localeCompare(b.name));
+  window._places = places;
+  const opt = (v, label) => `<option value="${escapeHtml(v)}">${label ? escapeHtml(label) : ""}</option>`;
+  document.getElementById("artistList").innerHTML = people.map((n) => opt(n)).join("");
+  document.getElementById("venueList").innerHTML = places.map((p) => opt(p.name, p.suburb)).join("");
+}
+
+async function loadPickLists() {
+  try {
+    const [a, v] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/artists?select=name&order=name.asc`, { headers: SB_HEADERS }),
+      fetch(`${SUPABASE_URL}/rest/v1/venues?select=name,suburb&order=name.asc`, { headers: SB_HEADERS })
+    ]);
+    knownArtists = a.ok ? (await a.json()).map((x) => x.name).filter(Boolean) : [];
+    knownVenues = v.ok ? (await v.json()).filter((x) => x && x.name) : [];
+  } catch (e) { /* the lists are a convenience; typing still works without them */ }
+  rebuildPickLists();
+}
+
+// Picking a saved venue fills its suburb too.
+function pickVenue(i, el) {
+  shows[i].venue = el.value;
+  const p = (window._places || []).find((x) => x.name.toLowerCase() === el.value.trim().toLowerCase());
+  if (p && p.suburb) {
+    shows[i].suburb = p.suburb;
+    const sub = el.closest(".show-item").querySelector(".suburb-input");
+    if (sub) sub.value = p.suburb;
+  }
+}
+
 const SUPABASE_KEY = "sb_publishable_9v83FWCSt7Di-jkgTvsMJQ_f6lJPovb";
 const SB_HEADERS = {
   "apikey": SUPABASE_KEY,
@@ -270,7 +391,7 @@ function unlock() {
   document.getElementById("gate").style.display = "none";
   document.getElementById("app").classList.add("show");
   document.getElementById("lockBtn").style.display = "inline-block";
-  loadShows();
+  loadShows().then(loadPickLists);
   loadTkts();
   loadExps();
   loadTCs();
@@ -317,6 +438,33 @@ function mapShow(s) {
   };
 }
 
+/* WHAT THE DATABASE HOLDS, row by row, as the save would write it. Save sends only
+   the rows that differ from this, and leaves img_src out of any row whose picture
+   did not change, so a save can never again carry a picture it is not changing. */
+let savedShows = {};
+function showRow(show) {
+  return {
+    show_date: show.showDate || null,
+    time: show.time || "",
+    doors: show.doors || "",
+    venue: show.venue || "",
+    suburb: show.suburb || "",
+    host: show.host || "",
+    queens: show.queens || [],
+    price: show.price || "",
+    ticket_url: show.ticketUrl || "",
+    discount_url: show.discountUrl || "",
+    img_src: show.imgSrc || "",
+    go_live_date: show.displayDate || null,
+    go_live_time: show.displayTime || "00:00",
+    show_type: show.showType || "other"
+  };
+}
+function snapshotShows() {
+  savedShows = {};
+  shows.forEach((s) => { if (typeof s.id === "string" && s.id.length === 36) savedShows[s.id] = showRow(s); });
+}
+
 async function loadShows() {
   setStatus("Loading shows from Supabase&hellip;", false);
   try {
@@ -324,6 +472,7 @@ async function loadShows() {
     if (!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
     shows = Array.isArray(data) ? data.map(mapShow) : [];
+    snapshotShows();
     setStatus(`<strong>${shows.length}</strong> show${shows.length === 1 ? "" : "s"} loaded. Edit fields below, then Save All Shows.`, false);
   } catch (e) {
     shows = [];
@@ -370,11 +519,11 @@ function renderShows() {
       <div class="arow">
         <div class="afield"><label>Show Time</label><input value="${s.time || ""}" onchange="shows[${i}].time=this.value" placeholder="7:00 PM"></div>
         <div class="afield"><label>Doors Open</label><input value="${s.doors || ""}" onchange="shows[${i}].doors=this.value" placeholder="6:30 PM"></div>
-        <div class="afield"><label>Venue</label><input value="${s.venue || ""}" onchange="shows[${i}].venue=this.value" placeholder="Venue Name"></div>
-        <div class="afield"><label>Suburb / City</label><input value="${s.suburb || ""}" onchange="shows[${i}].suburb=this.value" placeholder="Suburb"></div>
+        <div class="afield"><label>Venue</label><input list="venueList" autocomplete="off" value="${escapeHtml(s.venue || "")}" onchange="pickVenue(${i},this)" placeholder="Pick or type a venue"></div>
+        <div class="afield"><label>Suburb / City</label><input class="suburb-input" value="${escapeHtml(s.suburb || "")}" onchange="shows[${i}].suburb=this.value" placeholder="Suburb"></div>
       </div>
       <div class="arow">
-        <div class="afield"><label>Host / Headliner</label><input value="${s.host || ""}" onchange="shows[${i}].host=this.value" placeholder="Artist or host name"></div>
+        <div class="afield"><label>Host / Headliner</label><input list="artistList" autocomplete="off" value="${escapeHtml(s.host || "")}" onchange="shows[${i}].host=this.value" placeholder="Pick or type a name"></div>
         <div class="afield" style="flex:2">
           <label>Ticket URL</label>
           <input value="${s.ticketUrl || ""}" onchange="shows[${i}].ticketUrl=this.value" placeholder="https://...">
@@ -402,8 +551,8 @@ function renderShows() {
           <label>Banner Image (1200&times;525px ideal)</label>
           <div class="img-upload">
             <input type="file" accept="image/*" onchange="handleImg(${i},this)">
-            <div class="img-upload-label">Click to upload</div>
-            ${s.imgSrc ? `<img src="${s.imgSrc}" class="img-preview">` : ""}
+            <div class="img-upload-label">${s._uploading ? "Uploading&hellip;" : (s._imgError ? escapeHtml(s._imgError) : "Click to upload")}</div>
+            ${s.imgSrc ? `<img src="${escapeHtml(s.imgSrc)}" class="img-preview">` : ""}
           </div>
         </div>
       </div>
@@ -411,7 +560,7 @@ function renderShows() {
         <label>Special Guests / Support Acts</label>
         <div class="q-chips">${(s.queens || []).map((q, qi) => `<div class="q-chip"><span>${escapeHtml(q)}</span><button onclick="removeQueen(${i},${qi})" title="Remove">&#10005;</button></div>`).join("")}</div>
         <div class="q-add-row">
-          <input id="qi-${s.id}" placeholder="Name..." onkeydown="if(event.key==='Enter')addQueen(${i},'${s.id}')">
+          <input id="qi-${s.id}" list="artistList" autocomplete="off" placeholder="Pick or type a name..." onkeydown="if(event.key==='Enter')addQueen(${i},'${s.id}')">
           <button class="q-add-btn" onclick="addQueen(${i},'${s.id}')">+ Add</button>
         </div>
       </div>
@@ -425,11 +574,22 @@ function escapeHtml(s) {
 }
 
 // ─── EDIT ACTIONS ──────────────────────────────────────────────────────────
-function handleImg(i, input) {
+async function handleImg(i, input) {
   const f = input.files[0]; if (!f) return;
-  const r = new FileReader();
-  r.onload = e => { shows[i].imgSrc = e.target.result; renderShows(); };
-  r.readAsDataURL(f);
+  const show = shows[i];
+  show._uploading = true; show._imgError = "";
+  uploadsInFlight++;
+  renderShows();
+  try {
+    show.imgSrc = await uploadImage(f, "show");
+  } catch (e) {
+    show._imgError = "Upload failed: " + e.message;
+    alert("The picture did not upload: " + e.message);
+  } finally {
+    uploadsInFlight--;
+    show._uploading = false;
+    renderShows();
+  }
 }
 
 function addQueen(si, sid) {
@@ -441,6 +601,7 @@ function addQueen(si, sid) {
   shows[si].queens.push(v);
   inp.value = "";
   renderShows();
+  rebuildPickLists();
 }
 
 function removeQueen(si, qi) {
@@ -485,55 +646,46 @@ async function saveShows() {
   btn.disabled = true;
   btn.textContent = "Saving...";
   try {
-    // One call: the ids to drop, then every row on screen. The worker deletes
-    // first so a row removed and re-added in the same Save cannot collide.
-    const rows = shows.map((show) => {
-      const row = {
-        show_date: show.showDate || null,
-        time: show.time || "",
-        doors: show.doors || "",
-        venue: show.venue || "",
-        suburb: show.suburb || "",
-        host: show.host || "",
-        queens: show.queens || [],
-        price: show.price || "",
-        ticket_url: show.ticketUrl || "",
-        discount_url: show.discountUrl || "",
-        img_src: show.imgSrc || "",
-        go_live_date: show.displayDate || null,
-        go_live_time: show.displayTime || "00:00",
-        show_type: show.showType || "other"
-      };
-      /* EVERY ROW GETS AN id, INCLUDING A BRAND NEW ONE.
-         PostgREST refuses a bulk insert whose objects do not all carry the same
-         keys, so a save with two existing shows and one new one - id, id, no id -
-         was rejected outright and the page just said it failed. Minting the id
-         here rather than letting the database do it makes the keys match, and it
-         makes the save idempotent: pressing Save twice upserts the same row
-         instead of inserting a second copy. */
+    if (uploadsInFlight > 0) throw new Error("a picture is still uploading. Wait for it to finish, then Save again.");
+    /* ONLY WHAT CHANGED. Every row used to go up on every Save, pictures and all,
+       which is how one save grew past the database's time limit. A row goes up only
+       if it is new or differs from what was loaded, and its img_src only if the
+       picture itself changed. touring-api groups rows by the keys they carry, so a
+       row without img_src keeps the picture it has. */
+    const rows = [];
+    shows.forEach((show) => {
+      const row = showRow(show);
+      /* EVERY ROW GETS AN id, INCLUDING A BRAND NEW ONE, minted here so pressing
+         Save twice upserts the same row instead of inserting a second copy. */
       row.id = (typeof show.id === "string" && show.id.length === 36)
         ? show.id
         : (show.id = newId());
-      return row;
+      const before = savedShows[row.id];
+      if (before && JSON.stringify(before) === JSON.stringify(showRow(show))) return;
+      if (before && before.img_src === row.img_src) delete row.img_src;
+      if (typeof row.img_src === "string" && /^data:/i.test(row.img_src)) {
+        throw new Error("a picture is still inside the show at " + (show.venue || "a venue") + ". Choose the picture again so it uploads.");
+      }
+      rows.push(row);
     });
+    if (!rows.length && !pendingDeletes.length) {
+      setStatus("Nothing has changed since the last save.", false);
+      return;
+    }
     const res = await apiSave("shows", { rows: rows, delete: pendingDeletes.slice() });
     pendingDeletes.length = 0;
-    // Take the new ids back, or the next Save inserts duplicates instead of
-    // editing the rows it just created.
-    if (res && Array.isArray(res.rows)) {
-      res.rows.forEach((saved) => {
-        if (!saved || !saved.id) return;
-        const match = shows.find((sh) =>
-          sh.id === saved.id ||
-          (!sh.id && sh.venue === saved.venue && (sh.showDate || null) === saved.show_date));
-        if (match) match.id = saved.id;
-      });
-    }
+    // What was sent is now what the database holds.
+    rows.forEach((r) => {
+      const sh = shows.find((x) => x.id === r.id);
+      if (sh) savedShows[r.id] = showRow(sh);
+    });
+    Object.keys(savedShows).forEach((id) => { if (!shows.some((x) => x.id === id)) delete savedShows[id]; });
+    rebuildPickLists();
 
     const t = document.getElementById("toast");
     t.classList.add("show");
     setTimeout(() => t.classList.remove("show"), 2800);
-    setStatus(`<strong>${shows.length}</strong> show${shows.length === 1 ? "" : "s"} saved. Live on the public sites now.`, false);
+    setStatus(`<strong>${rows.length}</strong> change${rows.length === 1 ? "" : "s"} saved. Live on the public sites now.`, false);
   } catch (e) {
     alert("Error saving: " + e.message);
   } finally {
@@ -713,16 +865,17 @@ function renderTCs(){
 }
 function addTC(){ tcs.push({name:'',eyebrow:'Touring Now',description:'',button_label:'View Shows & Tickets',button_link:'',image_url:'',auto_hide:false,categories:[],priority:(tcs.length+1)*10,tour_key:''}); renderTCs(); }
 function removeTC(i){ tcs.splice(i,1); renderTCs(); }
+/* THROUGH touring-api, NOT STRAIGHT INTO THE BUCKET. This uploaded with the public
+   key, which only worked because anybody at all could write to tour-images. The
+   Worker holds the only key that may write there now. */
 async function uploadTCImage(i,el){
   const file=el.files&&el.files[0]; if(!file)return;
-  if(file.size>5*1024*1024){alert('Image too large - keep it under 5MB.');el.value='';return;}
-  const safe=Date.now()+'-'+file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+  uploadsInFlight++;
   try{
-    const up=await fetch(`${SUPABASE_URL}/storage/v1/object/tour-images/${safe}`,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':file.type||'application/octet-stream'},body:file});
-    if(!up.ok)throw new Error(up.status);
-    tcs[i].image_url=`${SUPABASE_URL}/storage/v1/object/public/tour-images/${safe}`;
+    tcs[i].image_url=await uploadImage(file,'card');
     renderTCs();
-  }catch(e){alert('Image upload failed - has the public "tour-images" bucket been created? ('+e.message+')');}
+  }catch(e){alert('Image upload failed: '+e.message);}
+  finally{uploadsInFlight--;}
 }
 // ─── GENERATE SEO-READY TOUR PAGE ───
 function genTourPage(i){
@@ -851,6 +1004,7 @@ document.getElementById("yr").textContent=new Date().getFullYear();
 async function saveTCs(){
   const btn=document.getElementById('tcSaveBtn');btn.disabled=true;btn.textContent='Saving…';
   try{
+    if(uploadsInFlight>0) throw new Error('a picture is still uploading, wait for it then Save again');
     const clean=tcs.filter(c=>(c.name||'').trim()).map(c=>({
       name:c.name.trim(),eyebrow:(c.eyebrow||'').trim(),description:(c.description||'').trim(),
       button_label:(c.button_label||'').trim(),button_link:(c.button_link||'').trim(),
