@@ -29,7 +29,9 @@ globalThis.crypto.getRandomValues = function (b) { for (var i = 0; i < b.length;
 /* ---- one clock for both rigs ---- */
 Date = function (v) { return arguments.length ? new _D(v) : new _D(NOWMS + NOW); };
 Date.now = function () { return NOWMS + NOW; }; Date.parse = _D.parse; Date.UTC = _D.UTC; Date.prototype = _D.prototype;
-drain = async function () { for (var r = 0; r < 8; r++) { for (var i = 0; i < 80; i++) await Promise.resolve(); pump(); } };
+// The real Worker awaits many times per request. Give every tick enough turns that a request finishes at the
+// virtual moment it was made, not at the next timer (a ball stamped late reads as the Worker's 4 second hold).
+drain = async function () { for (var r = 0; r < 12; r++) { for (var i = 0; i < 400; i++) await Promise.resolve(); pump(); } };
 sha256Hex = async function (s) { return 'h-' + s; };
 readJson = async function (req) { return (req && req._body) || {}; };
 
@@ -170,7 +172,9 @@ function coversOnce(list) { var seen = {}, n = 0; for (var i = 0; i < list.lengt
 function hostSaid(t, test) { return LOG.filter(function (l) { return l && l.from === 'host' && l.p && l.p.t === t && (!test || test(l.p)); }); }
 function queueHtml(host) { return host.$('claimQueue').innerHTML; }
 function confirmDisabled(host) { var m = /<button class="btn win" data-act="confirm"[^>]*>/.exec(queueHtml(host)); return !!m && / disabled/.test(m[0]); }
-async function callBalls(host, n) { for (var i = 0; i < n; i++) { host.nextBall(); await advance(6000); } }
+/* drain() first: the rig only runs pending promise work after the next TIMER, by which time its clock
+   has jumped, so a tap's request would otherwise reach the Worker seconds late in virtual time. */
+async function callBalls(host, n) { for (var i = 0; i < n; i++) { host.nextBall(); await drain(); await advance(6000); } }
 // Put these numbers at the front of the server's own order for the game, so the test knows what comes out.
 function frontOfDraw(numbers) {
   var d = lastDraw(), rest = d.draw_order.slice(d.draw_index).filter(function (x) { return numbers.indexOf(x) < 0; });
@@ -248,7 +252,7 @@ function frontOfDraw(numbers) {
   var catCard = [annTop.slice(0, 5).concat([0, 0, 0, 0]), [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0]];
   host.G.players[cat.P.pid].cards[0].card = catCard; cat.P.cards[0].cells = catCard;
   SLOW['/host/bingo/claim'] = 1500;
-  cat.pressBingo(); await advance(600);
+  cat.pressBingo(); await drain(); await advance(600);
   check('the claim shows at once, says the server is checking, and Confirm is greyed out', /Cat/.test(queueHtml(host)) && /Checking with the server/.test(queueHtml(host)) && confirmDisabled(host),
         queueHtml(host).slice(0, 200));
   var drawn = host.G.draw.length; host.nextBall(); await advance(100);
@@ -263,14 +267,18 @@ function frontOfDraw(numbers) {
   var bobRows = nums(bob.P.cards[0].cells[0]);
   bob.P.called = bob.P.called.concat(bobRows);
   var pendingBefore = hostSaid('claim_pending').length;
-  bob.pressBingo(); await advance(2500);
+  SLOW['/host/bingo/claim'] = 1500;
+  bob.pressBingo(); await drain(); await advance(300);
+  var drawn2 = host.G.draw.length; host.nextBall(); await advance(100);
+  check('while the server checks it, out of sight, no ball can be called past it', host.G.draw.length === drawn2, host.G.draw.length - drawn2);
+  await advance(2500); SLOW = {};
   check('the server says not yet, and the room never sees it: no claim card, nothing on the TV', host.G.claims.length === 0 && hostSaid('claim_pending').length === pendingBefore && bob.P.claimPending === false,
         { claims: host.G.claims.length, pending: hostSaid('claim_pending').length - pendingBefore, phone: bob.P.claimPending });
   check('and it is on the record as not a win, on the five balls actually out', !!lastClaim(bob.P.pid) && lastClaim(bob.P.pid).verdict === 'not_yet' && lastClaim(bob.P.pid).balls === 5, lastClaim(bob.P.pid));
 
   print('a real win');
   await advance(2500);
-  ann.pressBingo(); await advance(800);
+  ann.pressBingo(); await drain(); await advance(800);
   var annClaim = lastClaim(ann.P.pid);
   check('Ann\'s BINGO is decided by the server: a win, on its ticket, on five balls', !!annClaim && annClaim.verdict === 'win' && annClaim.balls === 5 && annClaim.card_no === ann.P.cards[0].cardNo && annClaim.decided_on === 'server', annClaim);
   check('the host is told the server checked it, and Confirm is live', /checked by the server/.test(queueHtml(host)) && !confirmDisabled(host), queueHtml(host).slice(0, 300));
@@ -281,7 +289,7 @@ function frontOfDraw(numbers) {
   print('the server goes quiet while Ann claims two lines');
   await callBalls(host, 5);
   SLOW['/host/bingo/claim'] = DEAD; SLOW['/host/bingo/claim/resolve'] = DEAD;
-  ann.pressBingo(); await advance(1000);
+  ann.pressBingo(); await drain(); await advance(1000);
   check('for the first seconds the host is told it is being checked, and cannot confirm', /Checking with the server/.test(queueHtml(host)) && confirmDisabled(host));
   await advance(3500);
   check('after four seconds the TABLET\'s check stands in, says so, and Confirm comes back', /Valid on this tablet/.test(queueHtml(host)) && /server did not answer/.test(queueHtml(host)) && !confirmDisabled(host),
@@ -296,6 +304,16 @@ function frontOfDraw(numbers) {
         claimsFor(ann.P.pid).length === before + 1 && late.decided_on === 'tablet' && late.tablet_verdict === 'win' && late.verdict === 'win' && late.status === 'confirmed' && late.pattern === 'two',
         late);
   host.finishGame(); await advance(300);
+  print('New game, same night, the server slow to deal');
+  var oldNos = ann.P.cards.map(function (c) { return c.cardNo; }).join(',');
+  SLOW['/host/bingo/deal'] = 2000;
+  host.newGame(); await advance(400);
+  check('the phones put last game\'s tickets away at once and say the new ones are on the way',
+        phones.every(function (ph) { return ph.P.cards.length === 0; }) && /on the way/.test(ann.$('waitNote').innerHTML), { cards: phones.map(function (ph) { return ph.P.cards.length; }), note: ann.$('waitNote').innerHTML });
+  await advance(3000);
+  var DN = lastDraw().id;
+  check('then the server\'s new tickets arrive, on the new game\'s draw', DN !== D1 && phones.every(function (ph) { return phoneMatchesRecord(ph, DN); }) && ann.P.cards.map(function (c) { return c.cardNo; }).join(',') !== oldNos);
+  SLOW = {};
   host.endGame(); await advance(3000);
 
   print('GAME TWO: a paid night, tickets bought one at a time');
@@ -347,7 +365,7 @@ function frontOfDraw(numbers) {
         phones.map(function (ph) { return ticketsOf(D3, ph.P.pid).length; }));
   frontOfDraw(nums(ann.P.cards[0].cells[0]));
   await callBalls(host, 5);
-  ann.pressBingo(); await advance(800);
+  ann.pressBingo(); await drain(); await advance(800);
   check('a claim on a recorded tablet ticket is still decided by the server', !!lastClaim(ann.P.pid) && lastClaim(ann.P.pid).verdict === 'win' && lastClaim(ann.P.pid).decided_on === 'server' && /checked by the server/.test(queueHtml(host)),
         lastClaim(ann.P.pid));
   host.hostConfirm(0); await advance(300); host.finishGame(); await advance(300);

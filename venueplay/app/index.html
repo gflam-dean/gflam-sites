@@ -1705,7 +1705,7 @@
     _dealAt=at; _dealT=setTimeout(function(){ _dealT=0; _dealAt=0; dealTick(); }, d);
   }
   function dealTick(){
-    if(G.status!=="running" || G.caller || standingDown()) return;
+    if(G.status!=="running" || standingDown()) return;   // a real-balls night asks for nothing: ticketsFor is 0 for everyone
     if(G.dealMode==="tablet"){ dealOnTablet(); return; }
     var hands=handsToDeal();
     if(!hands.length){ if(G.dealSince){ G.dealSince=0; syncNextBtn(); setCoach(); } return; }

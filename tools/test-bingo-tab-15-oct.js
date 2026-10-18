@@ -231,6 +231,8 @@ function makeConsole(name, win) {
     'function showGameSelect(){ currentGame=""; menus++; }' +
     'function openLobbyNow(){ lobbiesOpened++; G.status="lobby"; send({ t:"mode", mode:"bingo" }); sendState(); saveGame(); }' +
     'function onMsg(m){ heard.push(m.t); }' +
+    // The server's ticket and claim record (19 Oct 2026): a restored night asks it again later. Not this suite's subject.
+    'function claimCheck(){} function claimRetrySoon(){} function flushClaimLog(){} function recordTabletTickets(){} function dealSoon(){} function recordDecision(){}' +
     SRC +
     'return { G:function(){ return G; }, connect:connect, openLobby:openLobby, cancelLobby:cancelLobby, endGame:endGame,' +
     '  selectGame:selectGame, send:send, rawSend:rawSend, saveGame:saveGame, standingDown:standingDown,' +
