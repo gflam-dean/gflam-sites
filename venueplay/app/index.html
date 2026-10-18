@@ -1463,7 +1463,8 @@
     /* The biggest button on the screen has to say what the game is doing. It used to read "Next
        number" after Finish game (a tap only produced a toast) and while a claim sat waiting (a
        fumbled tap was refused, but the button did not say why). */
-    if(G.status==="running" && G.won){ b.disabled=true; b.textContent="Game done"; }
+    if(G.status==="running" && G.halt){ b.disabled=true; b.textContent="Stopped by the server: see the message"; }
+    else if(G.status==="running" && G.won){ b.disabled=true; b.textContent="Game done"; }
     else if(G.status==="running" && G.claims.length){ b.disabled=true; b.classList.add("waiting"); b.textContent="Claim waiting"; }
     /* Not orange, and not "Announce the win". It read like the button that announces the win, so
        hosts pressed it over and over while the TV sat on "checking" (audit, 25 Sep 2026, found by
@@ -1534,6 +1535,32 @@
      and reports each tablet ball to the server best-effort so the record stays honest about
      which balls came from where. A room never waits on a server. */
   var DRAW_CALL_MS=4000;
+  /* ---- A REFUSAL IS NOT AN OUTAGE (audit, 19 Oct 2026) ----
+     The tablet stands in for the server only when the server cannot be reached: no answer in time, a
+     network error, or the server itself failing (5xx). A 4xx is the server saying NO: signed out after
+     the 4 hour limit (401), games paused or this venue not allowed (403), the game finished (409). The
+     night must not carry on round that on the tablet, so the game stops and says why. 429 is "wait". */
+  function isRefusal(r){ return !!r && r.status>=400 && r.status<500 && r.status!==429; }
+  function serverRefused(r, what){
+    var st=r && r.status, err=(r && r.json && r.json.error) || "";
+    var msg = st===401 ? "You have been signed out (that happens after 4 hours). Sign in again, then reload this page: the game comes back where it was."
+            : st===403 ? (err || "The server will not run this game for the venue right now.")
+            : st===409 ? (err || "The server says this game is finished. Start a new game.")
+            : (err || ("The server refused ("+st+")."));
+    G.halt={ status:st, msg:msg, what:String(what||"") };
+    showToast(msg); syncNextBtn(); setCoach(); saveGame();
+  }
+  /* THE TABLET FALLBACK SWITCH (19 Oct 2026). The Worker holds the list of states where the tablet may
+     not stand in for the server (TABLET_FALLBACK_OFF_STATES in venueplay-game.js, empty by default) and
+     sends it with every draw and seat answer. It is kept on this tablet, so it still holds when the
+     server cannot be reached, which is the only time it matters. */
+  function learnFallbackOff(list){ if(!Array.isArray(list)) return; try{ localStorage.setItem("vpFallbackOff", JSON.stringify(list.map(String))); }catch(e){} }
+  function tabletMayStandIn(){
+    var st=String((__ctx && __ctx.venue && __ctx.venue.au_state) || "").toUpperCase(), l=[];
+    try{ l=JSON.parse(localStorage.getItem("vpFallbackOff")||"[]")||[]; }catch(e){ l=[]; }
+    return !st || l.indexOf(st)<0;
+  }
+  var NO_STAND_IN="The server is not answering, and this venue does not let the tablet stand in for it. Try again in a moment.";
   function openServerDraw(){
     G.drawId=null; G.drawMode="server"; G.drawOpening=null; G.drawWhy=G.caller ? "caller" : "";
     G.drawRefused=false;   // the server ANSWERED no: asking again for the tickets' sake is pointless
@@ -1543,8 +1570,9 @@
     // caller:true opens the record as a physical draw (the Worker refuses to hand out a ball on it).
     G.drawOpening=VP.gameApiCall("/host/bingo/draw", G.caller ? { venue_id:v.id, session_id:G.sessionId||null, caller:true } : { venue_id:v.id, session_id:G.sessionId||null }, DRAW_CALL_MS)
       .then(function(r){
-        if(r && r.status===200 && r.json && r.json.draw_id){ G.drawId=r.json.draw_id; saveGame(); }
-        else { G.drawRefused=true; goLocalDraw("draw open answered "+(r&&r.status)); }
+        if(r && r.status===200 && r.json && r.json.draw_id){ G.drawId=r.json.draw_id; learnFallbackOff(r.json.fallback_off_states); saveGame(); }
+        else if(isRefusal(r)){ G.drawRefused=true; serverRefused(r, "draw"); }
+        else goLocalDraw("draw open answered "+(r&&r.status));
       }, function(err){ goLocalDraw("draw open failed: "+(err&&err.message||err)); })
       .then(function(){ G.drawOpening=null; });
   }
@@ -1552,6 +1580,7 @@
     if(G.drawMode==="local") return;
     // Real balls: there is nothing to fall back FROM, so no toast. Only the record is lost.
     if(G.caller){ G.drawMode="local"; saveGame(); return; }
+    if(!tabletMayStandIn()) return;   // switched off for this venue's state: the server is asked again next tap
     G.drawMode="local"; G.drawWhy=String(why||"").slice(0,200);
     showToast("Server not answering. Calling from this tablet for the rest of this game.");
     saveGame();
@@ -1559,6 +1588,7 @@
   /* Resolves {number} from the server, {wait:msg} when the server says the last ball is still
      going up, or {local:true} when the console should draw the ball itself. Never rejects. */
   function serverBall(){
+    if(G.halt) return Promise.resolve({ halt:true });
     if(G.drawMode!=="server" || !(window.VP && VP.gameApiCall)) return Promise.resolve({ local:true });
     /* ONE BUDGET FOR THE WHOLE TAP, NOT ONE PER ROUND TRIP.
        The FIRST ball of a game waits on two: the draw being opened, then the ball itself. Each
@@ -1570,17 +1600,24 @@
     var deadline=Date.now()+DRAW_CALL_MS;
     var open=G.drawOpening || Promise.resolve();
     return open.then(function(){
-      if(G.drawMode!=="server" || !G.drawId) return { local:true };
+      if(G.halt) return { halt:true };
+      if(G.drawMode!=="server") return { local:true };
+      if(!G.drawId) return ensureDraw().then(function(d){ return d.id ? { wait:"Connected again. Tap to call the ball." } : (G.halt ? { halt:true } : standInOrWait("no draw on the server")); });
       var left=Math.max(1200, deadline-Date.now());
-      return VP.gameApiCall("/host/bingo/ball", { draw_id:G.drawId }, left).then(function(r){
+      // ordinal: the place this console is asking for, so the server records being asked (migration 105)
+      return VP.gameApiCall("/host/bingo/ball", { draw_id:G.drawId, ordinal:G.idx+2 }, left).then(function(r){
         var j=r && r.json;
         if(r && r.status===200 && j && j.number>=1 && j.number<=90) return { number:j.number };
         if(r && r.status===429) return { wait:(j && j.error) || "Wait a moment, then call again." };
-        // Anything else (server error, signed out, draw gone): the night carries on from here.
-        goLocalDraw("ball answered "+(r&&r.status)+(j&&j.error?" "+j.error:""));
-        return { local:true };
-      }, function(err){ goLocalDraw("ball failed: "+(err&&err.message||err)); return { local:true }; });
+        if(isRefusal(r)){ serverRefused(r, "ball"); return { halt:true }; }
+        return standInOrWait("ball answered "+(r&&r.status)+(j&&j.error?" "+j.error:""));
+      }, function(err){ return standInOrWait("ball failed: "+(err&&err.message||err)); });
     });
+  }
+  // The server could not be reached (or failed). The tablet calls the rest of the game, unless the switch says not here.
+  function standInOrWait(why){
+    if(!tabletMayStandIn()) return { wait:NO_STAND_IN };
+    goLocalDraw(why); return { local:true };
   }
   // A tablet-called ball goes on the server's record too, best effort. The Worker refuses a
   // repeat or a clash rather than write a record that lies, and the console does not care.
@@ -1615,18 +1652,20 @@
     if(G.drawId) return Promise.resolve({ id:G.drawId });
     if(G.drawOpening) return G.drawOpening.then(function(){ return ensureDraw(); });
     var v=__ctx && __ctx.venue;
-    if(G.drawRefused || G.caller || !v || !v.id || !(window.VP && VP.gameApiCall)) return Promise.resolve({ hard:true });
+    if(G.halt || G.drawRefused || G.caller || !v || !v.id || !(window.VP && VP.gameApiCall)) return Promise.resolve({ hard:true });
     var gen=G.gen;
     var p=VP.gameApiCall("/host/bingo/draw", { venue_id:v.id, session_id:G.sessionId||null }, DRAW_CALL_MS).then(function(r){
       if(gen!==G.gen) return {};
       if(r && r.status===200 && r.json && r.json.draw_id){
-        G.drawId=r.json.draw_id;
-        // Balls called before this record existed came off the tablet: say so, in order.
-        for(var i=0;i<=G.idx;i++){ try{ VP.gameApiPost("/host/bingo/fallback", { draw_id:G.drawId, number:G.draw[i], ordinal:i+1, reason:G.drawWhy||"worker unreachable" }).catch(function(){}); }catch(e){} }
+        /* Balls already called on this tablet are NOT posted to this new record: the server never
+           failed to call them (it was never asked), so it rightly refuses them (audit, 19 Oct 2026).
+           Its record starts here, and a claim that needs those balls is judged on the tablet. */
+        G.drawId=r.json.draw_id; learnFallbackOff(r.json.fallback_off_states);
         saveGame();
         return { id:G.drawId };
       }
-      G.drawRefused=true; return { hard:true };
+      if(isRefusal(r)){ G.drawRefused=true; serverRefused(r, "draw"); return { hard:true, refused:true }; }
+      return (r && r.status>=500) ? { hard:true } : {};   // 5xx: the server failed; 429: try again shortly
     }, function(){ return {}; });
     G.drawOpening=p.then(function(){ G.drawOpening=null; });
     return p;
@@ -1653,7 +1692,7 @@
     _dealAt=at; _dealT=setTimeout(function(){ _dealT=0; _dealAt=0; dealTick(); }, d);
   }
   function dealTick(){
-    if(G.status!=="running" || standingDown()) return;   // a real-balls night asks for nothing: ticketsFor is 0 for everyone
+    if(G.status!=="running" || standingDown() || G.halt) return;   // a real-balls night asks for nothing: ticketsFor is 0 for everyone
     if(G.dealMode==="tablet"){ dealOnTablet(); return; }
     var hands=handsToDeal();
     if(!hands.length){ if(G.dealSince){ G.dealSince=0; syncNextBtn(); setCoach(); } return; }
@@ -1663,18 +1702,21 @@
     var gen=G.gen;
     ensureDraw().then(function(d){
       if(gen!==G.gen) return { skip:true };
-      if(!d.id) return { hard:!!d.hard, fail:"no draw on the server" };
+      if(!d.id) return { refused:!!d.refused, hard:!!d.hard, fail:"no draw on the server" };
       return VP.gameApiCall("/host/bingo/deal", { draw_id:d.id, hands:hands }, DEAL_CALL_MS).then(function(r){
         if(r && r.status===200 && r.json && r.json.ok && r.json.hands) return { ok:r.json };
-        // 429 is the server saying "busy, ask again". Any other answer it will not change its mind on.
+        if(isRefusal(r)){ serverRefused(r, "deal"); return { refused:true }; }
+        // 429: busy, ask again. 5xx: the server failed (and wrote that down on the draw), so the tablet
+        // stands in at once, where the switch allows; it does not wait out the budget for an answer it has.
         return { hard:!(r && r.status===429), fail:"deal answered "+(r&&r.status)+(r&&r.json&&r.json.error?" "+r.json.error:"") };
       }, function(err){ return { fail:"deal failed: "+(err&&err.message||err) }; });
     }).then(function(res){
       _dealBusy=false;
       if(res.skip || gen!==G.gen || G.status!=="running") return;
       if(res.ok){ applyDeal(res.ok); return; }
+      if(res.refused || G.halt){ G.dealSince=0; syncNextBtn(); setCoach(); return; }   // a refusal stops the game; it is not an outage
       G.dealFails=(G.dealFails||0)+1;
-      if(res.hard || Date.now()-G.dealSince>=DEAL_BUDGET_MS){ goTabletDeal(res.fail); return; }
+      if((res.hard || Date.now()-G.dealSince>=DEAL_BUDGET_MS) && tabletMayStandIn()){ goTabletDeal(res.fail); return; }
       dealSoon(Math.min(2000, 500*G.dealFails));
     }, function(){ _dealBusy=false; dealSoon(1000); });
   }
@@ -1710,7 +1752,10 @@
       if(!p || !isSeated(p)) continue;
       var want=ticketsFor(p), have=(p.cards||[]).length;
       if(want===have) continue;
+      var before=have;
       if(!have) dealFor(p); else topUpFor(p);
+      var at=new Date().toISOString();
+      for(var k=(have?before:0);k<(p.cards||[]).length;k++){ if(p.cards[k].src==="tablet" && !p.cards[k].at) p.cards[k].at=at; }
       sendCards(pid); any=true;
     }
     if(any){ saveGame(); seatSoon(800); }
@@ -1726,7 +1771,7 @@
       var pid=G.order[i], p=G.players[pid]; if(!p || !p.cards) continue;
       var t=p.cards.filter(function(c){ return c.src==="tablet" && !c.rec; });
       if(!t.length) continue;
-      hands.push({ pid:pid, did:p.did||null, tablet:t.map(function(c){ return { cells:c.card, card_no:c.cardNo }; }) });
+      hands.push({ pid:pid, did:p.did||null, tablet:t.map(function(c){ return { cells:c.card, card_no:c.cardNo, dealt_at:c.at||null }; }) });
       sent.push(t);
     }
     if(!hands.length) return;
@@ -1735,7 +1780,14 @@
     VP.gameApiCall("/host/bingo/deal", { draw_id:G.drawId, hands:hands }, DEAL_CALL_MS).then(function(r){
       _recBusy=false;
       if(gen!==G.gen) return;
-      if(r && r.status===200 && r.json && r.json.ok){ sent.forEach(function(t){ t.forEach(function(c){ c.rec=true; }); }); saveGame(); }
+      if(r && r.status===200 && r.json && r.json.ok){
+        /* Recorded, or refused for good: the server takes tablet tickets only after a deal failure it
+           recorded itself, before the first ball, for a seated phone (audit, 19 Oct 2026). A refused
+           ticket stays this tablet's alone, and a claim on it is checked here, labelled. */
+        var no=(r.json.refused||[]);
+        sent.forEach(function(t, i){ var pid=hands[i].pid; t.forEach(function(c){ c.rec = no.indexOf(pid)>=0 ? "refused" : true; }); });
+        saveGame();
+      }
       else if(r && r.status!==429 && r.status<500) return;   // it will never take them: stop asking
       else { clearTimeout(_recT); _recT=setTimeout(recordTabletTickets, 15000); }
     }, function(){ _recBusy=false; clearTimeout(_recT); _recT=setTimeout(recordTabletTickets, 15000); });
@@ -1750,14 +1802,20 @@
   function claimCheck(c){
     var tk=ticketOf(c.pid, c.cardNo);
     // A tablet ticket the server has no record of yet cannot be checked there. The tablet decides.
-    if(!G.drawId || !(window.VP && VP.gameApiCall) || (tk && tk.src==="tablet" && !tk.rec)){ claimOnTablet(c, G.drawId ? "a tablet ticket the server has not recorded yet" : "no draw on the server"); return; }
+    if(!G.drawId || !(window.VP && VP.gameApiCall) || (tk && tk.src==="tablet" && tk.rec!==true)){ claimOnTablet(c, G.drawId ? "a tablet ticket the server has not recorded yet" : "no draw on the server"); return; }
     var gen=G.gen;
     VP.gameApiCall("/host/bingo/claim", { draw_id:G.drawId, ref:c.ref, pid:c.pid, card_no:(c.claimedNo||c.cardNo), pattern:c.pattern, balls:c.balls,
         called:calledArray().slice(0, c.balls), tablet_draw:(G.drawMode==="local"), tablet_why:(G.drawWhy||"") }, CLAIM_CALL_MS)
       .then(function(r){
         if(gen!==G.gen) return;
         var j=r && r.json;
-        if(r && r.status===200 && j && j.claim_id && j.verdict) claimVerdict(c, j);
+        if(r && r.status===200 && j && j.claim_id && j.verdict){
+          // The server answered but its record is short of balls the tablet called while it was away:
+          // it cannot judge this one, and says so. The tablet's check stands in, labelled.
+          if(j.record_short && j.verdict!=="win"){ c.claimId=j.claim_id; claimOnTablet(c, "the server's record is missing balls this tablet called"); }
+          else claimVerdict(c, j);
+        }
+        else if(isRefusal(r)){ claimRefusedByServer(c, r); }
         else claimOnTablet(c, "claim check answered "+(r&&r.status));
       }, function(err){ if(gen===G.gen) claimOnTablet(c, "claim check failed: "+(err&&err.message||err)); });
   }
@@ -1787,7 +1845,7 @@
     if(c.decided){ c.claimId=c.claimId||j.claim_id; return; }   // the host already decided it; the record has it queued
     if(c.by==="server") return;
     var tk=ticketOf(c.pid, c.cardNo);
-    if(j.verdict!=="win" && tk && tk.src==="tablet" && !tk.rec){ claimOnTablet(c, "a tablet ticket the server has not recorded yet"); return; }
+    if(j.verdict!=="win" && tk && tk.src==="tablet" && tk.rec!==true){ claimOnTablet(c, "a tablet ticket the server has not recorded yet"); return; }
     var was=c.by;
     c.by="server"; c.claimId=j.claim_id; c.note=j.note||"";
     // The server checked ITS ticket. If that is a different one from the one in the console's copy
@@ -1809,8 +1867,22 @@
     }
     saveGame(); renderClaimQueue(); syncNextBtn();
   }
+  // The server said no to the check itself (signed out, paused, finished): nobody decides this claim here.
+  function claimRefusedByServer(c, r){
+    if(c.decided) return;
+    claimDone(c); c.by="refused"; c.valid=false;
+    serverRefused(r, "claim");
+    saveGame(); renderClaimQueue(); syncNextBtn();
+  }
   function claimOnTablet(c, why){
     if(c.decided || c.by==="server") return;
+    /* Switched off for this venue's state: the tablet does not decide. The claim waits for the server
+       (asked again every CLAIM_RETRY_MS) and Confirm stays greyed out. */
+    if(!tabletMayStandIn()){
+      claimDone(c); c.by="waiting"; c.why=String(why||"").slice(0,200);
+      if(!claimShown(c) && c.card && (checkPattern(c.card) || G.allowEarly)) claimShow(c);
+      claimRetrySoon(); saveGame(); renderClaimQueue(); syncNextBtn(); return;
+    }
     var first=(c.by!=="tablet");
     c.by="tablet"; c.why=String(why||"").slice(0,200);
     claimDone(c);
@@ -1826,7 +1898,7 @@
     if(_claimRetryT) return;
     _claimRetryT=setTimeout(function(){
       _claimRetryT=0;
-      var again=G.claims.filter(function(c){ return c.by==="tablet"; });
+      var again=G.claims.filter(function(c){ return c.by==="tablet" || c.by==="waiting"; });
       again.forEach(function(c){ c.by="retry"; claimCheck(c); });
       // claimCheck puts each one back to "tablet" (and schedules this again) if the server is still silent
     }, CLAIM_RETRY_MS);
@@ -1850,6 +1922,7 @@
     _logBusy=true;
     VP.gameApiCall(e.claim_id ? "/host/bingo/claim/resolve" : "/host/bingo/claim", e, CLAIM_CALL_MS).then(function(r){
       _logBusy=false;
+      if(r && r.status===409 && e.decision==="confirmed") showToast("The server did not record that win: its own check says it is not one.");
       if(r && (r.status===200 || (r.status>=400 && r.status<500 && r.status!==429))){   // done, or never going to be
         if(G.claimLog[0]===e) G.claimLog.shift();
         saveGame(); flushClaimLog(); return;
@@ -1947,6 +2020,7 @@
       if(sid!==G.sessionId) return;                      // a reply about the session before this one
       var j=r && r.json;
       if(!(r && r.status===200 && j && j.ok && Array.isArray(j.seated))){ seatFailed(); return; }
+      learnFallbackOff(j.fallback_off_states);
       var wasDown=G.seatDown; G.seatDown=false;
       var seated={}; j.seated.forEach(function(d){ seated[d]=true; });
       wantP.forEach(function(pid){
@@ -2174,6 +2248,7 @@
     }
     if(G.status==="setup" && callerChosen()){ el.innerHTML="Real balls: set the pattern and the prize, then tap <b>Put bingo on the TV</b>. No join code goes up."; return; }
     if(G.caller && G.status==="lobby"){ el.innerHTML="Real balls tonight: the room plays paper books, so phones get no tickets. Start calling numbers when the caller is ready."; return; }
+    if(G.status==="running" && G.halt){ el.innerHTML="<b>Stopped.</b> "+esc(G.halt.msg); return; }
     if(G.claims.length) txt="Check the ticket below against the called numbers, then <b>Confirm winner</b>, or <b>Play on</b> if it is not there yet.";
     else if(G.lastWins.length) txt="Announce it on the mic, then <b>Keep playing</b> for the next prize or <b>Finish game</b>.";
     else if(G.won) txt="That game is done. <b>New game</b> deals fresh tickets, <b>End game</b> puts the ads back on the TV.";
@@ -2555,14 +2630,16 @@
       /* WHO CHECKED IT. The server's verdict is the one that counts (19 Oct 2026). Until it lands,
          at most CLAIM_CALL_MS, the card says so and Confirm is greyed out. If the server could not
          be reached, the tablet's own check of the server's ticket stands in, and says so. */
-      var checking=(c.by==="checking"), onTablet=(c.by==="tablet" || c.by==="retry");
+      var checking=(c.by==="checking" || c.by==="waiting"), onTablet=(c.by==="tablet" || c.by==="retry");
       var nCalled=(typeof c.balls==="number") ? c.balls : (G.idx+1);
       var badge=checking ? '<span class="vbadge" style="background:var(--line-2);color:var(--muted)">Checking with the server</span>'
               : valid ? '<span class="vbadge valid">'+(onTablet?'Valid on this tablet':'Valid')+'</span>'
                       : '<span class="vbadge" style="background:#F5A524;color:#180d00">Not a win yet</span>';
       var sub=valid ? (PATTERN_NAMES[G.pattern]+' &middot; '+(checking ? 'the server is checking it against ' : (onTablet ? 'checked on this tablet against ' : 'checked by the server against '))+nCalled+' called numbers &middot; card #'+c.cardNo)
                     : ('Called early &middot; '+PATTERN_NAMES[G.pattern]+' is not complete on card #'+c.cardNo+'. Wave it off to keep the game moving.');
-      if(onTablet) sub+='<br><b style="color:var(--roll)">The server did not answer, so this tablet checked the ticket.</b> It goes on the record when the server is back.';
+      if(onTablet) sub+='<br><b style="color:var(--roll)">The server could not check this one, so this tablet checked the ticket.</b> It goes on the record when the server is back.';
+      if(c.by==="waiting") sub+='<br><b style="color:var(--roll)">The server is not answering, and this venue does not let the tablet decide.</b> Waiting for the server.';
+      if(c.by==="refused") sub+='<br><b style="color:var(--roll)">The server refused to check this claim.</b> See the message above.';
       // Never let the host read numbers off one ticket while the player reads another.
       if(c.swapped){
         sub = '<b style="color:var(--roll)">They called on card #'+esc(String(c.calledOn||'?'))+', which is not a ticket they hold any more.</b> '+
@@ -2572,7 +2649,7 @@
       html+='<div class="claimcard"><div class="top"><span class="cn">'+esc(c.name)+'</span>'+badge+'</div>'+
         '<div class="card9" id="claimCard-'+ci+'"></div>'+
         '<div class="claimsub">'+sub+'</div>'+
-        '<div class="resolve" style="margin-top:12px"><button class="btn win" data-act="confirm" data-i="'+ci+'"'+(_hold||(checking?" disabled":""))+'>Confirm winner</button>'+
+        '<div class="resolve" style="margin-top:12px"><button class="btn win" data-act="confirm" data-i="'+ci+'"'+(_hold||((checking || !valid || c.by==="refused")?" disabled":""))+'>Confirm winner</button>'+
         // "Play on" only when waving this one off actually resumes the ROOM. If anyone else is
         // still queued or already confirmed, it only releases this player.
         '<button class="btn roll" data-act="reject" data-i="'+ci+'"'+_hold+'>'+((G.claims.length>1||G.lastWins.length)?"Not this one":"Play on")+'</button></div></div>';
@@ -2588,7 +2665,7 @@
        by "started" (dealing:true) to show "your tickets are on the way". A phone not yet seated in
        this session gets its tickets the moment it is (dealSeated). */
     for(var i=0;i<G.order.length;i++){ var p=G.players[G.order[i]]; if(p){ p.cards=null; p._books=[]; p.dealNo=0; } }
-    G.dealMode="server"; G.dealWhy=""; G.dealSince=0; G.dealFails=0; G._checking={};
+    G.dealMode="server"; G.dealWhy=""; G.dealSince=0; G.dealFails=0; G._checking={}; G.halt=null;
     dealSoon(0);
     seatSoon(300);   // tell the server who was dealt: that is who this game bills
   }
@@ -2817,7 +2894,7 @@
          approval. Every game after the first, all night, was billed nothing.
          Only reloading the page cleared it. */
       overageAcked=false; overageApproved=0;
-    G.status="setup"; G.claims=[]; G.claimIdx=-1; G.won=false; G.lastWins=[];
+    G.status="setup"; G.claims=[]; G.claimIdx=-1; G.won=false; G.lastWins=[]; G.halt=null;
     /* THE CALLED BOARD GOES WITH THE GAME. It kept the last game's balls lit, and "3 of 90", into
        the next lobby, so a host opening a fresh game read numbers as already called (played at
        Test Alpha, 30 Sep 2026). postReport above has already taken this game's figures. */
@@ -2883,6 +2960,7 @@
        handles a ball with no win guard, so the winner card, confetti and fanfare were replaced by
        the board mid-celebration, with no way back. */
     if(G.won){ showToast("That game is done. Tap New game for another, or End game to put the ads back on."); return; }
+    if(G.halt){ showToast(G.halt.msg); return; }
     /* No debounce existed here at all. A fumbled double tap on a bar tablet drew TWO balls, and
        the TV abandons the first reveal mid-flight, so the room hears one number called while two
        are on the board. There is no undo. The hold itself lives in /app/vp-hold.js (one copy for
@@ -2913,6 +2991,7 @@
       G.calling=false;
       // The host ended the game or started a new one while this was out: the ball is not ours.
       if(_gen!==G.gen || G.status!=="running"){ syncNextBtn(); return; }
+      if(res.halt){ syncNextBtn(); return; }
       if(res.wait){ showToast(res.wait); syncNextBtn(); return; }
       var n=null, fromServer=false;
       if(res.number!=null){
@@ -3132,7 +3211,8 @@
   // mid-game. Never write a loop here whose termination depends on what this function does.
   function hostConfirm(i){
     var c=G.claims[i]; if(!c) return false;
-    if(c.by==="checking") return false;   // the server has not answered yet (at most CLAIM_CALL_MS): Confirm is greyed out
+    if(c.by==="checking" || c.by==="waiting" || c.by==="refused") return false;   // no verdict to stand on yet: Confirm is greyed out
+    if(c.valid===false) return false;   // the check says not a win (an early call): it can be waved off, never confirmed
     for(var k=0;k<G.lastWins.length;k++){ if(G.lastWins[k].pid===c.pid){ G.claims.splice(i,1); renderClaimQueue(); return false; } }
     G.lastWins.push({ pid:c.pid, name:c.name, cardNo:c.cardNo, pattern:G.pattern, seq:c.seq });
     G.claims.splice(i,1);

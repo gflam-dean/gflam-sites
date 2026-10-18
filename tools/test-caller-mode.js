@@ -89,6 +89,10 @@ async function worker(path, body, headers, who) {
     if (p === '/session') return await handleCreateSession(req, ENV, json);
     if (p === '/session/close') return await handleSessionClose(req, ENV, json);
     if (p === '/host/bingo/seat') return await handleBingoSeat(req, ENV, json);
+    // The server deals and judges bingo since 19 Oct 2026, and a 4xx stops a game, so the rig answers these for real.
+    if (p === '/host/bingo/deal') return await handleBingoDeal(req, ENV, json);
+    if (p === '/host/bingo/claim') return await handleBingoClaim(req, ENV, json);
+    if (p === '/host/bingo/claim/resolve') return await handleBingoClaimResolve(req, ENV, json);
     if (p === '/host/bingo/draw') return await handleBingoDrawStart(req, ENV, json);
     if (p === '/host/bingo/ball') { BALLCALLS++; return await handleBingoBall(req, ENV, json); }
     if (p === '/host/bingo/fallback') { FALLBACKS.push(body); return await handleBingoFallback(req, ENV, json); }
@@ -483,6 +487,9 @@ shuffle1to90 = function () { SHUFFLES++; return _shuffle(); };
   var nd = await worker('/host/bingo/draw', { venue_id: VENUE });
   var ndRow = DB.vp_bingo_draws.filter(function (d) { return d.id === nd.body.draw_id; })[0];
   check('a draw opened without caller is a normal server draw, as before', ndRow && (ndRow.mode == null || ndRow.mode === 'server') && !ndRow.fallback_why, ndRow);
+  // The server must itself have failed to serve ball 1 before it takes one from the tablet (migration 105):
+  // it was asked for place 1 (what bingoRecordAsk writes) and the place is empty.
+  ndRow.ball_asked_ordinal = 1;
   var fw = await worker('/host/bingo/fallback', { draw_id: nd.body.draw_id, number: 5, ordinal: 1, reason: 'worker unreachable' });
   var wd = await worker('/host/bingo/fallback', { draw_id: nd.body.draw_id, number: 5, ordinal: 1, reason: 'caller', withdraw: true });
   check('a withdraw on a night that is not real balls is refused, and the ball stays on the record', fw.status === 200 && wd.status === 409 && ballsOn(nd.body.draw_id).length === 1, [fw.status, wd.status]);

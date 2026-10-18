@@ -36,7 +36,7 @@ sha256Hex = async function (s) { return 'h-' + s; };
 readJson = async function (req) { return (req && req._body) || {}; };
 
 /* ---- the database: the rig's PostgREST, plus table defaults and vp_bingo_next_ball ---- */
-var _rigFetch = fetch;
+var _rigFetch = fetch, FAILDEAL = false;
 fetch = async function (url, opts) {
   var u = String(url), m = String((opts && opts.method) || 'GET').toUpperCase();
   if (m === 'POST' && /\/rest\/v1\/rpc\/vp_bingo_next_ball/.test(u)) {
@@ -47,6 +47,7 @@ fetch = async function (url, opts) {
     DB.vp_bingo_draw_balls.push({ draw_id: p, ordinal: d.draw_index, number: n, source: 'server', drawn_at: new Date().toISOString(), withdrawn_at: null });
     return resp(200, [{ number: n, new_index: d.draw_index }]);
   }
+  if (FAILDEAL && m === 'POST' && /\/rest\/v1\/vp_bingo_tickets/.test(u)) return resp(500, { message: 'database unavailable' });
   if (m === 'POST' && /\/rest\/v1\/(vp_players|vp_bingo_draws|vp_bingo_tickets|vp_bingo_claims|vp_bingo_draw_balls)(\?|$)/.test(u)) {
     var b = JSON.parse(opts.body), t = /\/rest\/v1\/(\w+)/.exec(u)[1];
     (Array.isArray(b) ? b : [b]).forEach(function (r) {
@@ -292,7 +293,7 @@ function frontOfDraw(numbers) {
   ann.pressBingo(); await drain(); await advance(1000);
   check('for the first seconds the host is told it is being checked, and cannot confirm', /Checking with the server/.test(queueHtml(host)) && confirmDisabled(host));
   await advance(3500);
-  check('after four seconds the TABLET\'s check stands in, says so, and Confirm comes back', /Valid on this tablet/.test(queueHtml(host)) && /server did not answer/.test(queueHtml(host)) && !confirmDisabled(host),
+  check('after four seconds the TABLET\'s check stands in, says so, and Confirm comes back', /Valid on this tablet/.test(queueHtml(host)) && /server could not check this one/.test(queueHtml(host)) && !confirmDisabled(host),
         queueHtml(host).slice(0, 400));
   var before = claimsFor(ann.P.pid).length;
   host.hostConfirm(0); await advance(500);
@@ -360,9 +361,34 @@ function frontOfDraw(numbers) {
   var D3 = lastDraw().id;
   SLOW = {};
   await advance(20000);
-  check('when the server answers again, the tablet\'s tickets go on its record, marked as the tablet\'s',
-        phones.every(function (ph) { var r = ticketsOf(D3, ph.P.pid); return r.length === 1 && r[0].source === 'tablet' && r[0].card_no === ph.P.cards[0].cardNo && JSON.stringify(rows3(r[0].cells)) === JSON.stringify(ph.P.cards[0].cells); }),
-        phones.map(function (ph) { return ticketsOf(D3, ph.P.pid).length; }));
+  /* The deal never REACHED the server, so the server has no outage of its own on this draw, and it does
+     not take the tablet's word for one (audit B1, 19 Oct 2026). */
+  check('a server that never heard the deal does not take the tablet\'s tickets: none on its record, the tablet knows',
+        phones.every(function (ph) { return ticketsOf(D3, ph.P.pid, true).length === 0 && host.G.players[ph.P.pid].cards[0].rec === 'refused'; }),
+        phones.map(function (ph) { return [ticketsOf(D3, ph.P.pid, true).length, host.G.players[ph.P.pid].cards[0].rec]; }));
+  frontOfDraw(nums(ann.P.cards[0].cells[0]));
+  await callBalls(host, 5);
+  ann.pressBingo(); await drain(); await advance(800);
+  check('a claim on that ticket is checked on the tablet, and says so', /Valid on this tablet/.test(queueHtml(host)) && !confirmDisabled(host), queueHtml(host).slice(0, 300));
+  host.hostConfirm(0); await advance(2000);
+  var c3a = lastClaim(ann.P.pid);
+  check('the host can confirm it in the room, but the server will not record it as confirmed: no outage of its own, no ticket of its own',
+        !!c3a && c3a.draw_id === D3 && c3a.decided_on === 'tablet' && c3a.verdict === 'no_ticket' && c3a.status === 'pending', c3a);
+  host.finishGame(); await advance(300);
+  host.endGame(); await advance(3000);
+
+  print('GAME THREE B: the server is up but its deal fails');
+  host.openLobby(); await advance(9000);
+  FAILDEAL = true;
+  host.startGame(); await advance(1500);
+  var D3b = lastDraw();
+  check('the server records its own failed deal, and the tablet deals at once (it does not wait out the budget)',
+        !!D3b.deal_failed_at && phones.every(function (ph) { return ph.P.cards.length === 1; }) && host.G.dealMode === 'tablet', { failed: D3b.deal_failed_at, cards: phones.map(function (ph) { return ph.P.cards.length; }) });
+  FAILDEAL = false;
+  await advance(20000);
+  check('those tablet tickets go on the record, marked the tablet\'s, dealt before any ball, with the tablet\'s own time',
+        phones.every(function (ph) { var r = ticketsOf(D3b.id, ph.P.pid); return r.length === 1 && r[0].source === 'tablet' && r[0].balls_at_deal === 0 && !!r[0].tablet_dealt_at && r[0].card_no === ph.P.cards[0].cardNo && JSON.stringify(rows3(r[0].cells)) === JSON.stringify(ph.P.cards[0].cells); }),
+        phones.map(function (ph) { return ticketsOf(D3b.id, ph.P.pid); }));
   frontOfDraw(nums(ann.P.cards[0].cells[0]));
   await callBalls(host, 5);
   ann.pressBingo(); await drain(); await advance(800);
@@ -395,6 +421,8 @@ function frontOfDraw(numbers) {
         DB.vp_bingo_draw_balls.filter(function (b) { return b.draw_id === D5; }).length === 0, c1.body);
   var c2 = await worker('/host/bingo/claim', { draw_id: D5, ref: 'ref-direct-1', pid: ann.P.pid, card_no: t0.card_no, pattern: 'top', balls: 5, called: row0 }, {}, 'direct');
   check('the same claim sent twice is one claim on the record', c2.body.claim_id === c1.body.claim_id && DB.vp_bingo_claims.filter(function (c) { return c.ref === 'ref-direct-1'; }).length === 1);
+  // The server was asked for ball 1 on this draw and never filled it (what bingoRecordAsk writes): its own outage.
+  DB.vp_bingo_draws.filter(function (d) { return d.id === D5; })[0].ball_asked_ordinal = 1;
   var c3 = await worker('/host/bingo/claim', { draw_id: D5, ref: 'ref-direct-2', pid: ann.P.pid, card_no: t0.card_no, pattern: 'top', balls: 5, called: row0, tablet_draw: true, tablet_why: 'test' }, {}, 'direct');
   var balls5 = DB.vp_bingo_draw_balls.filter(function (b) { return b.draw_id === D5; });
   check('on a draw the tablet has taken over, its unreported balls go on the record in order, and the claim is judged on them',

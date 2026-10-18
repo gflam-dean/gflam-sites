@@ -320,6 +320,7 @@ eval(lift('rulesAccepted'));
 eval(lift('rulesRefusal'));
 eval(lift('membersRulesGate'));
 eval(lift('hostDrawRpc'));
+eval(lift('bingoRecordAsk'));   // writes the asked place only when the console names one (migration 105)
 eval(lift('handleBingoBall'));
 eval(lift('handleBingoBallManyTrips'));
 eval(lift('handleMembersDraw'));

@@ -80,7 +80,7 @@ var NEED = ["isCalled", "rowComplete", "completeRows", "cornerNums", "checkPatte
                the same verdict, the same queue, labelled. bingo-server-tickets.js runs the server half. */
             "dealPending", "claimsChecking", "claimRef", "ticketOf", "claimCheck", "claimShown", "claimDone",
             "claimShow", "claimRefuse", "claimVerdict", "claimOnTablet", "claimRetrySoon", "recordDecision",
-            "flushClaimLog", "cryptoInt"];
+            "flushClaimLog", "cryptoInt", "isRefusal", "serverRefused", "tabletMayStandIn", "standInOrWait", "claimRefusedByServer", "learnFallbackOff"];
 /* onMsg is now a gate in front of onPhoneMsg (vp-phonekey.js, 20 Sep 2026). This suite is about
    what happens AFTER a message is believed, so there is no VPPhoneKey here and the gate hands
    everything straight through, exactly as the page does when that script fails to load.
@@ -152,7 +152,7 @@ function sendPlayers(){ send({ t:"players", count: playerCount() }); }
 var VP_HOLD = { busy: function(){ return false; }, hold: function(){}, release: function(){} };
 var window = { VP_HOLD: VP_HOLD };
 var MAX_TIE = 8;
-var CLAIM_CALL_MS = 4000, CLAIM_RETRY_MS = 5000, _claimRetryT = 0, _logBusy = false, _logT = 0;
+var CLAIM_CALL_MS = 4000, CLAIM_RETRY_MS = 5000, _claimRetryT = 0, _logBusy = false, _logT = 0; var NO_STAND_IN = "wait", __ctx = { venue: { au_state: "QLD" } }; function setCoach(){}
 var crypto = { getRandomValues: function(a){ for (var i = 0; i < a.length; i++) a[i] = Math.floor(Math.random() * 4294967296); return a; } };
 /* A guard that has been taken out must produce a NAMED red line, not an exception from a
    stub. So the server is a counter and a promise that never settles: nextBall gets all the
