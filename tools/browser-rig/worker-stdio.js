@@ -52,6 +52,10 @@ for (;;) {
   var line = readline();
   if (!line) break;   // jsc's readline gives "" at the end of input: the test never sends a blank line
   var rq = JSON.parse(line), out = null;
+  /* The test's own hands on the fake database (tools/pickup-in-chrome.test.py, 20 Oct 2026): put rows
+     in before a scene, read a table back after one. Never a Worker route: the pages cannot reach it. */
+  if (rq.seed) { DB[rq.seed] = (rq.replace ? [] : (DB[rq.seed] || [])).concat(rq.rows || []); print(JSON.stringify({ status: 200, body: { ok: true } })); continue; }
+  if (rq.table) { print(JSON.stringify({ status: 200, body: DB[rq.table] || [] })); continue; }
   var h = rq.headers || {};
   var req = { method: rq.method || 'GET', url: 'https://game.test' + rq.path, _body: rq.body || {},
               headers: { get: function (k) { for (var x in h) { if (x.toLowerCase() === String(k).toLowerCase()) return h[x]; } return null; } } };
