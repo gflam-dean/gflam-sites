@@ -2849,10 +2849,12 @@
       catch(e){ return false; }
     }
     /* A SETUP CONTROL, NOT FURNITURE (live play audit, 20 Oct 2026). The chip sat on the venue's
-       own advertising all night. It now goes after its first use, or after ten seconds untouched,
-       and comes back for ten seconds whenever somebody moves the mouse, touches the screen or
-       presses a key: the person setting the TV up still finds it, the room never sees it. */
-    var used=!!DEMO, shownUntil=Date.now()+10000, fsHideT=null;   // a demo never shows it (hideSetup above)
+       own advertising all night. It now goes after its first use, or after three minutes untouched
+       (Dean, 20 Oct 2026: time to walk over with the remote), and comes back for three minutes
+       whenever somebody moves the mouse, touches the screen or presses a key: the person setting
+       the TV up still finds it, the room never sees it for long. */
+    var FS_HOLD_MS=3*60*1000;
+    var used=!!DEMO, shownUntil=Date.now()+FS_HOLD_MS, fsHideT=null;   // a demo never shows it (hideSetup above)
     btn.addEventListener("click", function(){
       used=true; sync();
       if(fsElement()) return;
@@ -2864,7 +2866,7 @@
       if(fsHideT){ clearTimeout(fsHideT); fsHideT=null; }
       if(on) fsHideT=setTimeout(sync, Math.max(50, shownUntil-Date.now()));
     }
-    function wake(){ if(used) return; shownUntil=Date.now()+10000; sync(); }
+    function wake(){ if(used) return; shownUntil=Date.now()+FS_HOLD_MS; sync(); }
     ["pointermove","pointerdown","keydown","touchstart"].forEach(function(ev){
       document.addEventListener(ev, wake, { passive:true });
     });
