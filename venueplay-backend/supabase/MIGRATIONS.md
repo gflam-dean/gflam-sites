@@ -242,7 +242,7 @@ uses them can be redeployed.
 `deal_fail_why` (a deal the server received and could not finish); `vp_bingo_tickets.balls_at_deal`, `tablet_dealt_at`.
 The tablet may stand in for the server only where these prove the server itself failed. MUST be run BEFORE the game
 Worker of branch feature/bingo-server-tickets (VP-DRAW-1.0) is deployed: that Worker selects these columns and its bingo
-routes error without them. No RLS change. NOT RUN. Rollback: in the file (deploy the previous Worker first).
+routes error without them. No RLS change. RUN on the live database (19 Oct 2026; ball_asked_ordinal and the rest answer 200). Rollback: in the file (deploy the previous Worker first).
 
 `venueplay-106-help-desk.sql`: the help desk, for VenuePlay AND PartyPlay (Dean, 19 Oct 2026). `vp_help_tickets` (ticket_no from
 1001, brand venueplay or partyplay, category sales / venue_support / patron_support / accounts / general, channel patron_form /
@@ -275,4 +275,11 @@ statement per hit, so they hold across every Worker instance (keys hold a salted
 (a Reply-To held until HQ confirms it), `contact_typed` (an address HQ typed in; replies need the owner or a confirm).
 `vp_help_push_subs.last_peek_at` defaults to now(), the only clock the phone-alert cursor uses. Run BEFORE the billing Worker of
 that branch: it writes reply_token and contact_typed on every new ticket. After running, dump RLS-BASELINE.json (one new locked
-table, one new definer function). NOT YET RUN. Rollback: in the file. (107 is claimed by feature/venue-switches-logos-dropdowns.)
+table, one new definer function). RUN by Dean 20 Oct 2026. Rollback: in the file. (107 is claimed by feature/venue-switches-logos-dropdowns.)
+
+`venueplay-109-bingo-unseen-and-finished.sql` (VP-DRAW-1.1, review of 1.0, 19 Oct 2026): `vp_bingo_draw_balls.void_reason`
+and `vp_bingo_tickets.void_reason` (a server ball or ticket the room never saw, kept on the record as void with the
+reason: a slow server answered after the console had called that place, or dealt that phone, from the tablet);
+`vp_bingo_draws.deal_asked_at`; the check on withdrawn balls becomes "a tablet ball, or a server ball with a void reason"
+(`vp_bingo_draw_balls_withdrawn_why`, replacing `_withdrawn_local`). MUST be run BEFORE the VP-DRAW-1.1 Worker. No RLS
+change. RUN by Dean 20 Oct 2026. Rollback: in the file.

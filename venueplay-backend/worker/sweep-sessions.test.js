@@ -41,6 +41,8 @@ function lift(src, name) {
 var GAME = find("venueplay-backend/worker/venueplay-game.js");
 var sweepSrc = lift(GAME, "sweepStaleSessions");
 var hourSrc = lift(GAME, "venueLocalHour");
+var finishSrc = lift(GAME, "bingoFinishDraws");   // the real one: the sweep finishes the night's bingo draws (VP-DRAW-1.1)
+pass("bingoFinishDraws came out of the shipped Worker", !!finishSrc, finishSrc ? "" : "renamed or deleted, so the sweep cannot finish a draw");
 pass("venueLocalHour came out of the shipped Worker too", !!hourSrc,
      hourSrc ? "" : "it was renamed or deleted, so the 3am rule is untested");
 pass("the real sweep came out of the shipped Worker", !!sweepSrc,
@@ -95,6 +97,7 @@ function getSession(env, id) {
 function emitEvent() { events++; return Promise.resolve(); }
 function chargeNightOverage(env, session) { billed.push(session.id); return Promise.resolve(); }
 eval(hourSrc);
+eval(finishSrc);
 eval(sweepSrc);
 
 function run(rows) {
@@ -125,6 +128,8 @@ r = run([{ id: "s-running", venue_id: "v1", status: "running", opened_at: hoursA
 pass("a night the host walked away from is closed", r && r.closed === 1);
 pass("and it IS billed, exactly as a host closing it would be", billed.length === 1 && billed[0] === "s-running");
 pass("its games are finished too", patched.join(" ").indexOf("vp_games") !== -1);
+pass("and its bingo draws are finished on the record (only the ones still open)",
+     patched.indexOf("vp_bingo_draws session_id=eq.s-running&finished_at=is.null") !== -1, patched.join(" | ").slice(0, 160));
 
 r = run([{ id: "s-lobby", venue_id: "v1", status: "lobby", opened_at: hoursAgo(20), ended_at: null }]);
 pass("a lobby left open overnight is closed and billed like any other night",

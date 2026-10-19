@@ -145,10 +145,10 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '19 Oct 2026, 21:58 · 5190d134';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '19 Oct 2026, 22:04 · 593ce5b4';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
-const VP_DRAW_MANIFEST = 'f486c411f8f7aafebe9c60d1331b38697df9143f99339af3fb239f01ccce6c63';
+const VP_DRAW_MANIFEST = '9d1b390ad1e63d30fd8e7e358726c0ca0630d9114fcb808c25556fd4a4b366ae';
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -6738,7 +6738,7 @@ async function handleBingoFallback(request, env, json) {
     /* A SLOW SERVER, NOT A DEAD ONE (VP-DRAW-1.1). The console gave up on ball N after four seconds and
        called it from the tablet; this server answered late and recorded its own ball N, which the room
        never saw. The room's ball is the one that was called, so it takes place N, and the server's is
-       kept on the record as VOID with the reason (migration 108). Only for the very last place, only a
+       kept on the record as VOID with the reason (migration 109). Only for the very last place, only a
        server ball, and only one drawn moments ago: a ball the room has had time to see is never undone. */
     if (draw.mode !== 'local' && standing === ordinal) {
       const at = await sbGetStandingBalls(env, 'draw_id=eq.' + enc(drawId) + '&ordinal=eq.' + ordinal + '&select=ordinal,number,source,drawn_at&limit=1');
@@ -7042,16 +7042,14 @@ async function handleBingoDeal(request, env, json) {
     const known = new Set(rows.map((r) => r.device_id));
     hands = hands.filter(function (h) { if (h.did && known.has(h.did)) return true; refused.push(h.pid); return false; });
   }
-  /* TABLET TICKETS ONLY AFTER AN OUTAGE THE SERVER ITSELF RECORDED (audit, 19 Oct 2026). They used to be
-     taken for any phone at any time and judged like the server's own, so a host could put a made-up
-     ticket on the record after the balls were out and have a claim confirmed on it. Now a tablet
-     ticket is recorded only when: the server logged a failed deal on this draw (deal_failed_at), no
-     ball is on the record yet, the venue's state allows tablet fallbacks, and the phone holds no
-     ticket the server dealt. The seat rule and the paper refusal above apply to it like any ticket. */
+  /* TABLET TICKETS (audit, 19 Oct 2026). They used to be taken for any phone at any time and judged like
+     the server's own, so a host could put a made-up ticket on the record after the balls were out and
+     have a claim confirmed on it. The rule from VP-DRAW-1.1 is below: before the first ball only. The
+     seat rule and the paper refusal above apply to a tablet ticket like any ticket. */
   const standingNow = await standingBallCount(env, drawId);
-  /* THE SERVER WAS ASKED TO DEAL (migration 108). Written once per draw, after the staff check. With no
-     ball yet on the record, it is the server's own evidence that the console asked, which is what lets the
-     tablet's tickets on when the console never got the answer (a slow server, not only a dead one). */
+  /* THE SERVER WAS ASKED TO DEAL (migration 109). Written once per draw, after the staff check. Kept for
+     the audit trail: when tablet tickets arrive before the first ball, the record shows whether the
+     server had been asked to deal first. */
   if (hands.some((h) => !h.tablet) && !draw.deal_asked_at) {
     try { await sbPatch(env, 'vp_bingo_draws', 'id=eq.' + enc(drawId) + '&deal_asked_at=is.null', { deal_asked_at: new Date().toISOString() }); draw.deal_asked_at = 'now'; }
     catch (e) { /* the deal itself is what matters */ }
@@ -7082,7 +7080,7 @@ async function handleBingoDeal(request, env, json) {
     return await bingoDealHands(env, json, draw, hands, refused, paperNight, standingNow);
   } catch (e) {
     /* THE SERVER'S OWN RECORD THAT A DEAL FAILED. A deal it received and could not complete is the one
-       outage the server can vouch for, and the only thing that lets tablet tickets on the record. */
+       outage the server can vouch for (kept on the record for the audit trail). */
     if (!(e && e.status >= 400 && e.status < 500)) {
       try { await sbPatch(env, 'vp_bingo_draws', 'id=eq.' + enc(drawId), { deal_failed_at: new Date().toISOString(), deal_fail_why: String((e && e.message) || e).slice(0, 200) }); } catch (e2) {}
     }

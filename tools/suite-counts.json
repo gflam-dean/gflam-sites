@@ -156,7 +156,7 @@
   "counted_by": "lines"
  },
  "tools/regulated.test.py": {
-  "checks": 19,
+  "checks": 23,
   "counted_by": "lines"
  },
  "tools/test-a-player-bills-once-alive.js": {
@@ -356,7 +356,7 @@
   "counted_by": "lines"
  },
  "tools/test-one-room-one-identity.js": {
-  "checks": 38,
+  "checks": 39,
   "counted_by": "lines"
  },
  "tools/test-optin-export-gate.js": {
@@ -585,6 +585,10 @@
  },
  "tools/test-venue-url.js": {
   "checks": 101,
+  "counted_by": "lines"
+ },
+ "tools/test-vp-draw-11.js": {
+  "checks": 25,
   "counted_by": "lines"
  },
  "tools/test-webhook-retry-is-not-dropped.js": {
@@ -860,7 +864,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/sweep-sessions.test.js": {
-  "checks": 24,
+  "checks": 26,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/token-refusal.test.js": {

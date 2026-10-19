@@ -1,9 +1,11 @@
 -- =====================================================================
--- Migration 108: a ball or ticket the room never saw is kept on the record
+-- Migration 109: a ball or ticket the room never saw is kept on the record
 --                as VOID, and a deal the server was asked for is recorded
 -- ---------------------------------------------------------------------
 --   Run this BEFORE deploying the VP-DRAW-1.1 game Worker. Safe to run any
 --   number of times. No RLS change (the tables stay service-role only).
+--
+-- NUMBER: 108 is taken by fix/help-desk-review (help desk hardening).
 --
 -- WHY (review of VP-DRAW-1.0, 19 Oct 2026). A SLOW server, not a dead one:
 -- the console gives up on a ball after four seconds and calls it from the
@@ -19,8 +21,8 @@
 --   vp_bingo_tickets.void_reason      why a ticket was voided (a sale taken
 --       back, or a server ticket the phone never received in an outage).
 --   vp_bingo_draws.deal_asked_at      the server was asked to deal on this
---       draw. With no ball yet on the record, that is the evidence that lets
---       tablet tickets on, when the console never got the answer.
+--       draw (kept for the audit trail: when tablet tickets arrive before the
+--       first ball, the record shows whether the server had been asked first).
 --
 -- CHECK AFTERWARDS (read-only):
 --   select table_name, column_name from information_schema.columns
@@ -62,6 +64,6 @@ $do$;
 comment on column public.vp_bingo_draw_balls.void_reason is
   'Why a server ball was voided: the room never saw it (the tablet called that place in an outage). The row stays on the record.';
 comment on column public.vp_bingo_draws.deal_asked_at is
-  'The server was asked to deal on this draw. With no ball on the record, it lets tablet tickets on when the console never got the answer.';
+  'The server was asked to deal on this draw. Audit trail for tablet tickets dealt before the first ball.';
 
 commit;

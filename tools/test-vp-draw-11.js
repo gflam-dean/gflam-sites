@@ -271,8 +271,13 @@ function ballAt(id, n) { return { draw_id: id, ordinal: n, number: 0 }; }
   check('CONTROL: the server answered late and its own ball 5 landed on the record', ballsOn(G1, true).filter(function (b) { return b.ordinal === k && b.source === 'server'; }).length === 1);
   await advance(10000);
   var at5 = ballsOn(G1).filter(function (b) { return b.ordinal === k; })[0];
+  /* The tablet draws at random, so about one night in 86 it calls the very number the server's unseen
+     ball holds. Then nothing differs between what the room heard and the record: the server's ball
+     stands, nothing is voided. Either way the record at place 5 must be the number the room heard. */
+  var sameN = ballsOn(G1, true).some(function (b) { return b.ordinal === k && b.source === 'server' && b.number === tabletN; });
   check('then the tablet\'s ball 5, asked again, takes its place on the record and the server\'s is VOID with its reason',
-        !!at5 && at5.source === 'local' && at5.number === tabletN && ballsOn(G1, true).some(function (b) { return b.ordinal === k && b.source === 'server' && b.withdrawn_at && /never seen/.test(b.void_reason || ''); }),
+        !!at5 && at5.number === tabletN && (sameN ? (at5.source === 'server' && !at5.withdrawn_at) :
+        (at5.source === 'local' && ballsOn(G1, true).some(function (b) { return b.ordinal === k && b.source === 'server' && b.withdrawn_at && /never seen/.test(b.void_reason || ''); }))),
         ballsOn(G1, true).map(function (b) { return [b.ordinal, b.number, b.source, !!b.withdrawn_at]; }));
   // Make the room's ball 5 Ann's last number if it was not (the tablet drew at random): call on until her row is out.
   for (var guard = 0; guard < 85 && !row.every(function (n) { return host.G.called[n]; }); guard++) { host.nextBall(); await drain(); await advance(6000); }
@@ -289,6 +294,10 @@ function ballAt(id, n) { return { draw_id: id, ordinal: n, number: 0 }; }
   f = await W('/host/bingo/fallback', { draw_id: G1, number: 33, ordinal: host.G.draw.length + 1, reason: 'after' });
   dr = await W('/host/bingo/deal', { draw_id: G1, hands: [{ pid: bob.P.pid, did: bob.dom.localStorage.getItem('vpDeviceId'), want: 3 }] });
   check('and a finished draw takes no ball and deals no ticket', f.status === 409 && dr.status === 409, [f.status, dr.status]);
+  var deals0 = CALLS.filter(function (c) { return c === '/host/bingo/deal'; }).length;
+  var cat = bootPhone3('Cat'); await advance(50); cat.$('nameIn').value = 'Cat'; cat.join(); await advance(8000);
+  check('a phone arriving after Finish game is not dealt (the server would refuse), and the console is not stopped',
+        CALLS.filter(function (c) { return c === '/host/bingo/deal'; }).length === deals0 && !host.G.halt, [CALLS.filter(function (c) { return c === '/host/bingo/deal'; }).length - deals0, host.G.halt]);
   host.newGame(); await advance(4000);
   var G2 = lastDraw().id;
   host.endGame(); await advance(3000);

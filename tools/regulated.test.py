@@ -110,6 +110,12 @@ p = R.check(d, base)
 ok('the strip algorithm edited in the tablet half only: refused (both halves must make tickets the same way)', any('VP-STRIP' in x for x in p), p)
 m = manifest(fresh())
 ok('the manifest records a reason for the version in force', any(c.get('version') == m.get('version') and c.get('reason') for c in m.get('changes', [])), m.get('changes'))
+d = fresh(); mm = manifest(d)
+for c in mm.get('changes', []):
+    if c.get('version') == mm.get('version'): c['reason'] = ''
+io.open(os.path.join(d, R.MANIFEST), 'w', encoding='utf-8').write(json.dumps(mm, indent=2))
+p = R.check(d)
+ok('a manifest whose version in force has no reason on the record: refused', any('no reason' in x for x in p), p)
 
 print('\n%d of %d checks passed' % (ran - bad, ran))
 sys.exit(1 if bad else 0)

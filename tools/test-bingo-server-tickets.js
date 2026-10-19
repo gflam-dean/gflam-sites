@@ -359,19 +359,19 @@ function frontOfDraw(numbers) {
   var D3 = lastDraw().id;
   SLOW = {};
   await advance(20000);
-  /* The deal never REACHED the server, so the server has no outage of its own on this draw, and it does
-     not take the tablet's word for one (audit B1, 19 Oct 2026). */
-  check('a server that never heard the deal does not take the tablet\'s tickets: none on its record, the tablet knows',
-        phones.every(function (ph) { return ticketsOf(D3, ph.P.pid, true).length === 0 && host.G.players[ph.P.pid].cards[0].rec === 'refused'; }),
+  /* The deal never REACHED the server. Before the first ball no ticket is worth more than another, so
+     the tablet's tickets still go on the record (VP-DRAW-1.1; 1.0 refused them without a failure the
+     server had recorded, which a slow server can never record in time). */
+  check('a deal that never reached the server: the tablet\'s tickets still go on the record, before the first ball',
+        phones.every(function (ph) { var r = ticketsOf(D3, ph.P.pid); return r.length === 1 && r[0].source === 'tablet' && r[0].balls_at_deal === 0 && host.G.players[ph.P.pid].cards[0].rec === true; }),
         phones.map(function (ph) { return [ticketsOf(D3, ph.P.pid, true).length, host.G.players[ph.P.pid].cards[0].rec]; }));
   frontOfDraw(nums(ann.P.cards[0].cells[0]));
   await callBalls(host, 5);
   ann.pressBingo(); await drain(); await advance(800);
-  check('a claim on that ticket is checked on the tablet, and says so', /Valid on this tablet/.test(queueHtml(host)) && !confirmDisabled(host), queueHtml(host).slice(0, 300));
+  check('a win on that tablet ticket is decided by the server, from its record', /checked by the server/.test(queueHtml(host)) && !confirmDisabled(host), queueHtml(host).slice(0, 300));
   host.hostConfirm(0); await advance(2000);
   var c3a = lastClaim(ann.P.pid);
-  check('the host can confirm it in the room, but the server will not record it as confirmed: no outage of its own, no ticket of its own',
-        !!c3a && c3a.draw_id === D3 && c3a.decided_on === 'tablet' && c3a.verdict === 'no_ticket' && c3a.status === 'pending', c3a);
+  check('and the host\'s Confirm is on the record', !!c3a && c3a.draw_id === D3 && c3a.decided_on === 'server' && c3a.verdict === 'win' && c3a.status === 'confirmed', c3a);
   host.finishGame(); await advance(300);
   host.endGame(); await advance(3000);
 

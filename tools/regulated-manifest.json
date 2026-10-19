@@ -10,10 +10,10 @@
   }
  ],
  "files": {
-  "venueplay-backend/worker/vp-draw.js": "42f33761d32ef02337ba5d664ac7096b56a884444960bdb59907e84d4a669cab",
+  "venueplay-backend/worker/vp-draw.js": "4dff7eb03ec690fce38c23ae65602fd2449e6e04e9415c09e2e7db9a76fd2ca2",
   "venueplay/app/vp-draw.js": "da88a2334d8ac00c30565a8f70422c24be7ed2d63f35ecca37bf982ee451845b"
  },
- "manifest_hash": "f486c411f8f7aafebe9c60d1331b38697df9143f99339af3fb239f01ccce6c63",
+ "manifest_hash": "9d1b390ad1e63d30fd8e7e358726c0ca0630d9114fcb808c25556fd4a4b366ae",
  "name": "VP-DRAW",
  "note": "Written by tools/regulated.py --update. Never edit by hand: the gate recomputes every hash.",
  "version": "VP-DRAW-1.1"
