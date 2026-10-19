@@ -48,6 +48,16 @@ html,body{background:var(--dark);color:#fff;font-family:"DM Sans",sans-serif;fon
 .afield{display:flex;flex-direction:column;gap:5px;flex:1;min-width:140px}
 .afield label{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
 .afield input,.afield select,.afield textarea{background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:5px;color:#fff;font-family:"DM Sans",sans-serif;font-size:14px;padding:10px 12px;outline:none;transition:border-color .2s;width:100%}
+/* ON-BRAND DROPDOWNS (Dean, 19 Oct 2026). The tour picker was the browser's own grey control. Same box as the
+   inputs beside it, the browser's arrow replaced by a pink chevron, a dark open list (color-scheme), a pink focus
+   ring, and 16px text on a phone so iOS Safari does not zoom the page when it is tapped. */
+.afield select{-webkit-appearance:none;-moz-appearance:none;appearance:none;color-scheme:dark;cursor:pointer;
+  background-color:rgba(255,255,255,0.05);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23fe65c3' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;background-size:12px 8px;padding-right:36px}
+.afield select:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(254,101,195,0.2)}
+.afield select option{background-color:#1a1a1a;color:#fff}
+@media(max-width:640px){.afield select{font-size:16px}}
 .afield input:focus,.afield select:focus,.afield textarea:focus{border-color:rgba(254,101,195,0.5)}
 .afield input::placeholder{color:rgba(255,255,255,0.2)}
 .afield select option{background:var(--dark3);color:#fff}

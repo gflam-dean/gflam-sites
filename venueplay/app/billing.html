@@ -223,6 +223,16 @@
      own block now, the ticks are full-width rows a fingertip can hit, and a line underneath says in
      plain English what the ticks add up to. */
   .hostvenues{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin:4px 0 2px}
+  .logoedit{margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.02)}
+  /* A checkerboard behind the preview, so what is see-through LOOKS see-through. */
+  .logoprev{display:flex;align-items:center;justify-content:center;min-height:120px;max-height:260px;padding:10px;border-radius:10px;margin-bottom:10px;
+    background-color:#2a2a30;background-image:linear-gradient(45deg,#3a3a42 25%,transparent 25%),linear-gradient(-45deg,#3a3a42 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#3a3a42 75%),linear-gradient(-45deg,transparent 75%,#3a3a42 75%);
+    background-size:16px 16px;background-position:0 0,0 8px,8px -8px,-8px 0}
+  .logoprev canvas{max-width:100%;max-height:240px;width:auto;height:auto;display:block}
+  .logomodes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+  .logotol{margin:10px 0 4px}
+  .logotol input[type=range]{width:100%;accent-color:var(--pink)}
+  .addbtn.logosave{background:var(--pink);border:1px solid var(--pink);color:#fff}
   .hostchk{display:flex;align-items:center;gap:10px;min-height:44px;background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13.5px;line-height:1.3;cursor:pointer}
   .hostchk span{min-width:0;overflow-wrap:anywhere}
   .hostchk input{accent-color:var(--pink);width:18px;height:18px;flex:0 0 auto}
@@ -276,6 +286,8 @@
   @media(max-width:420px){ .dlgacts{flex-direction:column-reverse;align-items:stretch}
     .dlgacts .dlgbtn{width:100%} }
 </style>
+<!-- On-brand dropdowns: one shared rule set, linked last so it is the answer (19 Oct 2026). -->
+<link rel="stylesheet" href="/app/vp-select.css">
 </head>
 <body>
 <header>
@@ -293,7 +305,7 @@
 </header>
 <div class="wrap">
   <h1>Your account</h1>
-  <p class="lede" id="lede">Your plan, venues, hosts and next payment. Add players or venues anytime.</p>
+  <p class="lede" id="lede">Your plan, venues, hosts and next payment. You can add players or venues anytime and they apply straight away.</p>
   <!-- Only for a login with venues on more than one account. Everyone else never sees it. -->
   <p class="lede" id="otherAccounts" hidden></p>
 
@@ -626,17 +638,37 @@
 
     <div class="scard" id="logoCard">
       <div class="scardhead">Your logo<span class="forvenue" id="logoForVenue"></span></div>
-      <p class="snote">Shows small in the top-left corner of your TV during games. A <b>white or bright</b> logo reads best, because the screen is dark. PNG or WebP, up to 1MB.</p>
+      <p class="snote">Shows small in the top-left corner of your TV during games. A <b>white or bright</b> logo reads best, because the screen is dark. Any PNG, JPG or WebP: we shrink it to fit, and you can take off a plain background before you save.</p>
       <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
         <!-- The preview is a DARK chip on purpose: it is roughly what the TV is behind the logo, so a
              venue sees a black logo vanish here, not on the night. -->
         <div id="logoThumb" style="width:150px;height:72px;border:1px solid var(--line);border-radius:10px;background:#050506 center/contain no-repeat;background-origin:content-box;padding:8px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px">No logo</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <label class="addbtn" style="cursor:pointer" id="logoUploadBtn">Upload logo<input type="file" id="logoFile" accept="image/png,image/webp" style="display:none"></label>
+          <label class="addbtn" style="cursor:pointer" id="logoUploadBtn">Upload logo<input type="file" id="logoFile" accept="image/*" style="display:none"></label>
           <button class="addbtn" id="logoRemove" type="button" style="display:none">Remove</button>
         </div>
       </div>
-      <p class="snote" style="margin-top:10px">Use a PNG with a transparent background so it sits cleanly on the screen.</p>
+      <!-- THE LOGO EDITOR (19 Oct 2026). A chosen picture is shrunk here first (vp-logo.js), shown on a
+           checkerboard so a see-through background is visible, and only sent on Save. "Remove
+           background" takes off a plain background from the edges in; the original stays one tap away. -->
+      <div id="logoEdit" class="logoedit" hidden>
+        <div class="logoprev" id="logoPrev"><canvas id="logoCanvas"></canvas></div>
+        <div class="logomodes" id="logoModes" hidden>
+          <label class="hostchk"><input type="radio" name="logoMode" value="orig" id="logoModeOrig"><span>Original</span></label>
+          <label class="hostchk"><input type="radio" name="logoMode" value="cut" id="logoModeCut"><span>Background removed</span></label>
+        </div>
+        <button class="addbtn" id="logoCutBtn" type="button">Remove background</button>
+        <div class="logotol" id="logoTolWrap" hidden>
+          <label class="flabel" for="logoTol">How much background to remove</label>
+          <input type="range" id="logoTol" min="0" max="100" step="1" value="20">
+        </div>
+        <p class="snote" id="logoEditNote"></p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="addbtn logosave" id="logoSave" type="button">Save logo</button>
+          <button class="addbtn" id="logoCancel" type="button">Cancel</button>
+        </div>
+      </div>
+      <p class="snote" style="margin-top:10px">A logo with a see-through background sits cleanly on the screen. If yours has a plain white or coloured box behind it, choose it and tap Remove background.</p>
       <p class="snote" id="logoHint" style="color:var(--gold)" hidden></p>
       <label class="hostchk" style="margin-top:6px"><input type="checkbox" id="logoOnSite" checked><span>Show our logo on the VenuePlay website</span></label>
       <p class="snote" style="margin-top:4px">When ticked, your logo can appear in the "Trusted by" strip on venueplay.com.au with the other venues running VenuePlay. Untick it to keep your logo off our website. Your TV is not affected either way.</p>
@@ -669,6 +701,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="vp-session.js"></script>
+<script src="/app/vp-logo.js"></script>
 <script>if(window.VP && VP.guardShift) VP.guardShift();   /* the 4h forced sign-out reaches every page with player data */</script>
 <script>
 (function(){
@@ -1152,10 +1185,12 @@
       $("content").style.display = "";
       // The two plans reduce differently and the page has to say which one you are on.
       var _l=$("lede");
-      if(_l) _l.textContent = "Your plan, venues, hosts and next payment. Add players or venues anytime. " +
+      /* "Reductions apply from your next renewal" read as "deductions" (Dean, 19 Oct 2026). Say what
+         happens in plain words: adding is immediate, lowering waits for the renewal. */
+      if(_l) _l.textContent = "Your plan, venues, hosts and next payment. You can add players or venues anytime and they apply straight away. " +
         (d.plan === "annual"
           ? "Your year is already paid, so releasing players frees them straight away and credits the rest of the year to your next invoice."
-          : "Reductions apply from your next renewal, so you are never left short.");
+          : "If you lower your players or remove a venue, that change applies from your next renewal, so you're never left short.");
       render(d);
       renderOtherAccounts(d.other_accounts || []);
     }).catch(function(){
@@ -1596,22 +1631,73 @@
     else { thumb.textContent="No logo"; thumb.style.backgroundImage=""; if(rm) rm.style.display="none"; }
   }
   function logoHint(t){ var h=$("logoHint"); if(!h) return; h.textContent=t||""; h.hidden=!t; }
-  function uploadLogo(file){
+  /* THE LOGO EDITOR. Choosing a file no longer uploads it: it is opened here, shrunk to 1200px
+     (vp-logo.js), and shown on a checkerboard. "Remove background" takes off a plain background from
+     the edges in, with a slider for how much; Original stays selectable. Save encodes it under the
+     Worker's 1MB (PNG if anything is see-through, otherwise WebP) and sends it. The "over 1MB" refusal
+     is gone because nothing the editor sends can be over it. */
+  var logoEd = { orig:null, cut:null, mode:"orig" };
+  function logoEditShow(on){ var e=$("logoEdit"); if(e) e.hidden=!on; }
+  function logoPaint(){
+    var c=$("logoCanvas"); if(!c || !logoEd.orig) return;
+    var img = (logoEd.mode==="cut" && logoEd.cut) ? logoEd.cut.image : logoEd.orig;
+    c.width=img.width; c.height=img.height; c.getContext("2d").putImageData(img,0,0);
+    var mo=$("logoModeOrig"), mc=$("logoModeCut");
+    if(mo) mo.checked = logoEd.mode!=="cut"; if(mc) mc.checked = logoEd.mode==="cut";
+    var tw=$("logoTolWrap"); if(tw) tw.hidden = logoEd.mode!=="cut";
+    var note=$("logoEditNote");
+    if(note){
+      if(logoEd.mode==="cut" && logoEd.cut){
+        note.textContent = !logoEd.cut.removed
+          ? "No plain background found at the edges. Try moving the slider right, or keep the original."
+          : (logoEd.cut.share < 0.6
+              ? "Your picture's edges are not one plain colour, so some background may be left. Check the preview, or keep the original."
+              : "Background removed. Move the slider if the edges look rough or too much was taken.");
+      } else {
+        note.textContent = (logoEd.w+" by "+logoEd.h+" pixels. ")+
+          (window.VPLogo && VPLogo.hasAlpha(logoEd.orig) ? "It already has a see-through background." : "If it has a plain background, tap Remove background.");
+      }
+    }
+  }
+  function logoCut(){
+    if(!logoEd.orig || !window.VPLogo) return;
+    var tol=+(($("logoTol")||{}).value||20);
+    logoEd.cut = VPLogo.removeBackground(logoEd.orig, tol);
+    logoEd.mode = "cut";
+    var m=$("logoModes"); if(m) m.hidden=false;
+    logoPaint();
+  }
+  function openLogoEditor(file){
     if(!screenCurrent){ showMsg("Screen is still loading, one moment."); return; }
     logoHint("");
-    if(!/^image\/(png|webp)$/.test(file.type||"")){ showMsg("Use a PNG (or a WebP) for your logo. A PNG with a transparent background sits best on the screen."); return; }
-    if(file.size > VP_MAX_LOGO_BYTES){ showMsg("That logo is over 1MB. Save a smaller PNG and try again."); return; }
-    var thumb=$("logoThumb"); if(thumb){ thumb.textContent="Uploading\u2026"; thumb.style.backgroundImage=""; }
-    var reader=new FileReader();
-    reader.onload=function(){
-      api("/account/logo-upload",{ venue_id:screenCurrent.id, data:String(reader.result) }).then(function(r){
+    if(!window.VPLogo){ showMsg("The logo tools did not load. Please reload the page and try again."); return; }
+    if(file.type && !/^image\//.test(file.type)){ showMsg("That file is not a picture. Choose a PNG, JPG or WebP of your logo."); return; }
+    VPLogo.load(file).then(function(img){
+      var c=VPLogo.toCanvas(img, VPLogo.MAX_SIDE);
+      logoEd = { orig:c.getContext("2d").getImageData(0,0,c.width,c.height), cut:null, mode:"orig", w:c.width, h:c.height };
+      var m=$("logoModes"); if(m) m.hidden=true;
+      var tl=$("logoTol"); if(tl) tl.value="20";
+      logoEditShow(true); logoPaint();
+      var e=$("logoEdit"); if(e && e.scrollIntoView) try{ e.scrollIntoView({behavior:"smooth", block:"nearest"}); }catch(_){}
+    }).catch(function(err){ showMsg((err && err.message) || "That picture could not be opened. Try a PNG or JPG."); });
+  }
+  function saveLogo(){
+    if(!screenCurrent || !logoEd.orig) return;
+    var img = (logoEd.mode==="cut" && logoEd.cut) ? logoEd.cut.image : logoEd.orig;
+    var c=document.createElement("canvas"); c.width=img.width; c.height=img.height; c.getContext("2d").putImageData(img,0,0);
+    var btn=$("logoSave"); if(btn){ btn.disabled=true; btn.textContent="Saving\u2026"; }
+    function done(){ if(btn){ btn.disabled=false; btn.textContent="Save logo"; } }
+    VPLogo.encode(c).then(function(out){
+      if(out.bytes > VP_MAX_LOGO_BYTES){ done(); showMsg("That logo is still too big to send. Try a simpler file."); return; }
+      var thumb=$("logoThumb"); if(thumb){ thumb.textContent="Uploading\u2026"; thumb.style.backgroundImage=""; }
+      return api("/account/logo-upload",{ venue_id:screenCurrent.id, data:out.dataUrl }).then(function(r){
+        done();
         if(!r || r.error){ showMsg((r&&r.error)||"Could not upload the logo."); renderLogo(); return; }
-        screenLogoUrl=r.url; renderLogo(); pushToScreen();
-        if(r.transparent===false) logoHint("This logo has a solid background, so it will show as a box in the corner of the TV. A PNG with a transparent background sits more cleanly.");
+        screenLogoUrl=r.url; renderLogo(); pushToScreen(); logoEditShow(false);
+        if(r.transparent===false) logoHint("This logo has a solid background, so it will show as a box in the corner of the TV. Choose it again and tap Remove background to take the box off.");
         showMsg("Logo saved. It shows on your TV within a few seconds.", true);
       });
-    };
-    reader.readAsDataURL(file);
+    }).catch(function(err){ done(); showMsg((err && err.message) || "Could not prepare the logo."); });
   }
   function removeLogo(){
     if(!screenCurrent) return;
@@ -1631,7 +1717,14 @@
   }
   (function(){
     var lf=document.getElementById("logoFile"), lr=document.getElementById("logoRemove"), ls=document.getElementById("logoOnSite");
-    if(lf) lf.addEventListener("change", function(){ var f=this.files&&this.files[0]; if(f) uploadLogo(f); this.value=""; });
+    if(lf) lf.addEventListener("change", function(){ var f=this.files&&this.files[0]; if(f) openLogoEditor(f); this.value=""; });
+    var cb=$("logoCutBtn"), tl=$("logoTol"), mo=$("logoModeOrig"), mc=$("logoModeCut"), sv=$("logoSave"), cn=$("logoCancel");
+    if(cb) cb.addEventListener("click", logoCut);
+    if(tl) tl.addEventListener("input", function(){ if(logoEd.mode==="cut") logoCut(); });
+    if(mo) mo.addEventListener("change", function(){ if(this.checked){ logoEd.mode="orig"; logoPaint(); } });
+    if(mc) mc.addEventListener("change", function(){ if(this.checked){ if(!logoEd.cut) logoCut(); else { logoEd.mode="cut"; logoPaint(); } } });
+    if(sv) sv.addEventListener("click", saveLogo);
+    if(cn) cn.addEventListener("click", function(){ logoEd={ orig:null, cut:null, mode:"orig" }; logoEditShow(false); });
     if(lr) lr.addEventListener("click", removeLogo);
     if(ls) ls.addEventListener("change", function(){ setLogoOnSite(this.checked); });
     // Clicking the logo box itself opens the picker too, same as the slide image slot.

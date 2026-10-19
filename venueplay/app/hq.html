@@ -187,6 +187,8 @@
 
   .foot{max-width:1240px;margin:0 auto 44px;padding:0 22px;font-size:12px;color:var(--faint);line-height:1.6}
 </style>
+<!-- On-brand dropdowns: one shared rule set, linked last so it is the answer (19 Oct 2026). -->
+<link rel="stylesheet" href="/app/vp-select.css">
 </head>
 <body>
 
@@ -2145,7 +2147,8 @@
     workerPost("/admin/venue-gaming", { venue_id:id, weekly_limit_off: !!on }).then(function(res){
       el.disabled=false;
       if(res.error){ alert(res.error); renderVenues(); return; }
-      S.weeklyOff[id] = !!(res.venue && res.venue.weekly_limit_off === true);
+      // The saved row when the Worker sends it back; otherwise what was asked for (it answered ok).
+      S.weeklyOff[id] = (res.venue && res.venue.weekly_limit_off !== undefined) ? res.venue.weekly_limit_off === true : !!on;
       renderVenues(); loadAuditOnly();
     });
   }

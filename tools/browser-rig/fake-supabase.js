@@ -10,7 +10,7 @@
 (function () {
   var DB = window.__FAKE_DB || {};
   var SIGNED_IN = !!window.__FAKE_SIGNED_IN;
-  function Query(table) { this.t = table; this.f = []; this.one = false; this.lim = null; }
+  function Query(table) { this.t = table; this.f = []; this.one = false; this.lim = null; this.write = false; }
   Query.prototype.select = function () { return this; };
   Query.prototype.eq = function (k, v) { this.f.push(function (r) { return String(r[k]) === String(v); }); return this; };
   Query.prototype.neq = function (k, v) { this.f.push(function (r) { return String(r[k]) !== String(v); }); return this; };
@@ -43,7 +43,17 @@
         signInWithOtp: function () { return Promise.resolve({ error: null }); },
         verifyOtp: function () { return Promise.resolve({ data: {}, error: null }); }
       },
-      from: function (t) { return new Query(t); },
+      /* Any query method this stand-in does not model (gte, lt, not, or, csv...) chains and filters
+         nothing, so an admin page that narrows a read differently still gets its rows rather than a
+         TypeError. Added 19 Oct 2026 for the admin pages (tools/browser-rig/admin_site.py). */
+      from: function (t) {
+        var q = new Query(t);
+        return typeof Proxy === 'undefined' ? q : new Proxy(q, { get: function (o, k) {
+          if (k in o) return o[k];
+          if (typeof k === 'string') return function () { return this; };
+          return undefined;
+        } });
+      },
       rpc: function () { return Promise.resolve({ data: null, error: null }); },
       channel: function (name) {
         var handlers = [], bc = null, statusCb = null;

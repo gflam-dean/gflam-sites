@@ -1,0 +1,65 @@
+/* ON-BRAND DROPDOWNS, ONE RULE SET FOR EVERY ADMIN PAGE (Dean, 19 Oct 2026: "customer-facing admin
+   dropdowns are off-brand").
+
+   Before this, each page styled its own <select>: some had a dark box and a drawn arrow, some had
+   a dark box and NO arrow (a page rule's `background:` shorthand wiped the arrow image), and some
+   (Your account, the raffle console) were the browser's own light-grey control on a black page.
+   This file is linked LAST in the <head> of every page that has a dropdown, so it is the one
+   answer:
+
+     - no native chrome (appearance:none) and one drawn chevron, centred whatever the height
+     - a dark box with the page's own colours when it has them (var(--ink-3), var(--line))
+     - a pink focus ring, the same as the inputs
+     - color-scheme: dark, so the OPEN list (drawn by the operating system on iPhone and Mac)
+       is dark with light text, not white-on-white or black-on-black
+     - 16px text on a phone, because iOS Safari zooms the whole page into any field under 16px
+
+   The arrow, the appearance and the right padding are !important on purpose: a page rule such as
+   `.mdf select{background:var(--ink-3)}` or an inline style="background:..." is a shorthand that
+   resets background-image, and that is exactly how half the arrows went missing. Colours are not
+   !important, so a page can still tint its own box. */
+select {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  color-scheme: dark;
+  background-color: var(--ink-3, #17171A);
+  color: var(--text, #E7E7EC);
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.12));
+  border-radius: 10px;
+  font-family: inherit;
+  line-height: 1.3;
+  cursor: pointer;
+  /* A chevron in the brand's muted grey, 12 x 8, 14px in from the right, vertically centred. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23A6A6B0' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 14px center !important;
+  background-size: 12px 8px !important;
+  padding-right: 38px !important;
+  text-overflow: ellipsis;
+}
+select::-ms-expand { display: none; }
+select:hover:not(:disabled) { border-color: rgba(255, 255, 255, 0.24); }
+select:focus { outline: none; }
+select:focus-visible,
+select:focus {
+  border-color: var(--pink, #FF1F8E);
+  box-shadow: 0 0 0 3px rgba(255, 31, 142, 0.22);
+}
+select:disabled { opacity: 0.55; cursor: not-allowed; }
+/* The open list, where the browser lets a page colour it (Chrome on Windows, Android). */
+select option,
+select optgroup {
+  background-color: #17171A;
+  color: #E7E7EC;
+}
+select option:disabled { color: #8A8A94; }
+/* A list box (multiple, or size > 1) has no button to point at. */
+select[multiple],
+select[size]:not([size="1"]):not([size="0"]) {
+  background-image: none !important;
+  padding-right: 12px !important;
+}
+@media (max-width: 640px) {
+  select { font-size: 16px !important; }
+}
