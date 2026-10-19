@@ -1841,7 +1841,10 @@
      list; seen on Test Alpha 25 Sep 2026). The name rides in THIS TAB's sessionStorage, never the
      address: analytics records addresses, and a player's name is not ours to send to Google. */
   function hopToApp(url){
-    try{ var nm=(($("nameIn")||{}).value||"").trim(); if(nm) sessionStorage.setItem("vpHopName", nm.slice(0,20)); }catch(e){}
+    /* Or the name this phone already played under. A phone that joined bingo and was then moved to
+       musical had an empty name box (it rejoined from storage, nothing was typed), so the name was
+       asked for again on the next format (live audit, 19 Oct 2026). */
+    try{ var nm=(($("nameIn")||{}).value||"").trim() || String(P.name||"").trim() || String(loadName(P.room||"")||"").trim(); if(nm) sessionStorage.setItem("vpHopName", nm.slice(0,20)); }catch(e){}
     window.location.replace(url);
   }
   function goToCode(code){

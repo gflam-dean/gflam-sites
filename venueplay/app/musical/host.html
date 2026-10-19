@@ -1491,7 +1491,19 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     G.status="setup";
     bcast({ t:"idle" });   // TV back to the idle join screen
     sendState();
+    closeNight(null);
     renderConsole();
+  }
+  /* "I'M DONE" CLOSES THE SESSION (live audit, 19 Oct 2026). The Worker kept it live "so the next
+     round reuses it", so after End game or Close lobby HQ read the venue as live, phones saw a live
+     game and the next format on this tablet was asked about a game "on another device". Close lobby,
+     End game and the end of a full house close it now; New game still reuses it. The id is taken
+     off G at once, so an Open lobby tapped straight after makes a fresh session. */
+  var _fbSid="";
+  function closeNight(ended){
+    var sid=G.sessionId; if(!sid) return;
+    _fbSid=sid; G.sessionId=""; G.joinCode="";
+    (ended || Promise.resolve()).then(function(){ if(window.VP && VP.closeSession) VP.closeSession(sid); });
   }
   function startGame(){
     if(!libLoaded || G.busy) return;
@@ -1579,7 +1591,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     sendState();
     try{ send({ t:"to_ads" }); }catch(e){}   // and back to the venue's own advertising
     renderConsole();
-    if(gid){ apiPost("/host/game/end",{ game_id:gid }).catch(function(e){ hostError(e.message); }); }
+    closeNight(gid ? apiPost("/host/game/end",{ game_id:gid }).catch(function(e){ hostError(e.message); }) : null);
     showRoomVerdict(gid);
   }
 
@@ -1604,8 +1616,8 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     });
   }
   function readVerdict(){
-    if(!G.sessionId) return;
-    fetch(VP_GAME_API+"/feedback/tally?session="+encodeURIComponent(G.sessionId))
+    var sid=G.sessionId||_fbSid; if(!sid) return;   // the night may be closed by now: its ratings are still its own
+    fetch(VP_GAME_API+"/feedback/tally?session="+encodeURIComponent(sid))
       .then(function(r){ return r.ok?r.json():null; })
       .then(function(d){
         if(!d || !d.ratings) return;
@@ -1621,7 +1633,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     if(!b) return;
     var rating=parseInt(b.getAttribute("data-hostrate"),10);
     b.parentNode.innerHTML='<div style="font-size:13px;color:var(--win);font-weight:700">Thanks, noted against tonight</div>';
-    apiPost("/feedback", { rating:rating, source:"host", session_id:G.sessionId||undefined,
+    apiPost("/feedback", { rating:rating, source:"host", session_id:G.sessionId||_fbSid||undefined,
                            game_id:_fbGid||undefined, format:"musical" }).catch(function(){});
   });
   // Progressive prizes: after a win we can carry the SAME cards on to the next pattern with a new
@@ -1717,7 +1729,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     bcast({ t:"idle" });
     sendState();
     try{ send({ t:"to_ads" }); }catch(e){}   // and back to the venue's own advertising
-    if(G.gameId){ apiPost("/host/game/end",{ game_id:G.gameId }).catch(function(){}); }
+    closeNight(G.gameId ? apiPost("/host/game/end",{ game_id:G.gameId }).catch(function(){}) : null);
     renderConsole();   // back to setup for the next game
   }
   function carryOn(){

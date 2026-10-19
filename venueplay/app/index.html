@@ -79,6 +79,11 @@
   /* The one button a host taps all night. Tall enough to hit without looking. */
   #nextBtn{min-height:64px;font-size:19px}
   #nextBtn.waiting{background:var(--roll);color:#1a1000;opacity:1;box-shadow:none}
+  /* A notice, not a dead button (live audit, 19 Oct 2026): "Winner confirmed" sat in the big pink
+     pill, greyed, and hosts tapped it. Flat, outlined, plain text, no pointer. */
+  #nextBtn.notice{background:none;border:1px dashed rgba(255,255,255,.35);color:var(--win);opacity:1;cursor:default;box-shadow:none;font-size:15px;text-transform:none;letter-spacing:0}
+  /* A disabled Confirm winner stayed green and read as tappable. Grey, and it says why. */
+  .btn.win:disabled{background:rgba(255,255,255,.14);color:rgba(255,255,255,.7);filter:none}
   .resolve .btn{min-height:44px}
   .btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
   .skiplink{display:inline-block;margin-top:16px;color:var(--muted);font-size:12.5px;text-decoration:underline;cursor:pointer}
@@ -1471,7 +1476,7 @@
     var b=$("nextBtn"); if(!b) return;
     if(VP_HOLD.busy(b)) return;   // mid-hold: the countdown owns the button until it ends
     if(G.calling) return;         // a ball is being fetched: nextBall owns the label until it lands
-    b.classList.remove("waiting");
+    b.classList.remove("waiting"); b.classList.remove("notice");
     /* The biggest button on the screen has to say what the game is doing. It used to read "Next
        number" after Finish game (a tap only produced a toast) and while a claim sat waiting (a
        fumbled tap was refused, but the button did not say why). */
@@ -1481,7 +1486,7 @@
     /* Not orange, and not "Announce the win". It read like the button that announces the win, so
        hosts pressed it over and over while the TV sat on "checking" (audit, 25 Sep 2026, found by
        playing). The real choice is the two buttons under the claim: Keep playing or Finish game. */
-    else if(G.status==="running" && G.lastWins.length){ b.disabled=true; b.textContent="Winner confirmed: keep playing or finish, below"; }
+    else if(G.status==="running" && G.lastWins.length){ b.disabled=true; b.classList.add("notice"); b.textContent="Winner confirmed: keep playing or finish, below"; }
     else if(G.status==="running" && G.idx>=89){ b.disabled=true; b.textContent="All 90 called"; }
     else if(G.status==="running" && G.idx<0 && dealPending()){ b.disabled=true; b.classList.add("waiting"); b.textContent="Dealing tickets..."; }
     // Before the first ball it is not "next", it is the start of the game. Hosts read the button.
@@ -2016,8 +2021,11 @@
      consent screen and billed. Seating is per session, so game two seats everyone afresh.
      BINGO STILL RUNS WITHOUT THE SERVER: with no session, or a seat check that gets no answer,
      everybody is seated, exactly as before. */
-  function seatOpen(){ return !G.sessionId || !!G.seatDown; }
-  function isSeated(p){ return !!p && (seatOpen() || p.seatSid===G.sessionId); }
+  /* No session used to mean "everyone is seated" (the offline fallback), so after End game, with the
+     session gone, every phone still on the page turned into a named chip (live audit, 19 Oct 2026).
+     Between games nobody is seated; the fallback only applies while a game is open. */
+  function seatOpen(){ return !!G.seatDown || (!G.sessionId && G.status!=="setup"); }
+  function isSeated(p){ return !!p && (seatOpen() || (!!G.sessionId && p.seatSid===G.sessionId)); }   // no session: a null seatSid is not "seated in it"
   function playerCount(){ var n=0; for(var i=0;i<G.order.length;i++){ if(isSeated(G.players[G.order[i]])) n++; } return n; }
   /* Two phones called Margaret are two people. The console showed them identically, so the host
      could not tell whose ticket was whose. The second one is "Margaret (2)", everywhere the console
@@ -2363,6 +2371,7 @@
     if(blockedByHold()) return;
     var slug=(__ctx&&__ctx.venue&&__ctx.venue.slug)||"";
     if(G.sessionId || !slug || !(window.VP && VP.confirmTakeover)){ openLobbyNow(); return; }
+    if(requirePrize()===null) return;   // the prize first: the takeover question, answered, then "put in a prize" was two stops for one (live audit, 19 Oct 2026)
     if(_lobbyAsking) return;   // a second tap while the server is being asked must not open two
     _lobbyAsking=true;
     VP.confirmTakeover(slug).then(function(ok){ _lobbyAsking=false; if(ok) openLobbyNow(); });
@@ -2471,6 +2480,11 @@
     G.status="setup";
     send({ t:"idle" });                  // TV back to the advertising loop
     sendState();
+    /* AND THE SESSION IS CLOSED, the same as End game (live audit, 19 Oct 2026). Left open, HQ read
+       the venue as live, phones saw a live game, and the next format on this same tablet was asked
+       about "a game already open on another device". A lobby-only session closes like any other. */
+    var _sid=G.sessionId; G.sessionId=null; G.joinCode=null;
+    if(_sid && window.VP && VP.closeSession) VP.closeSession(_sid);
     saveGame(); renderConsole();
     if(window.VP_ONETAB) VP_ONETAB.release(oneTabKey());   // the night is closed: any tab may open the next
   }
@@ -2621,7 +2635,7 @@
       html+='<div class="claimcard"><div class="top"><span class="cn">'+esc(c.name)+'</span>'+badge+'</div>'+
         '<div class="card9" id="claimCard-'+ci+'"></div>'+
         '<div class="claimsub">'+sub+'</div>'+
-        '<div class="resolve" style="margin-top:12px"><button class="btn win" data-act="confirm" data-i="'+ci+'"'+(_hold||((checking || !valid || c.by==="refused")?" disabled":""))+'>Confirm winner</button>'+
+        '<div class="resolve" style="margin-top:12px"><button class="btn win" data-act="confirm" data-i="'+ci+'"'+(_hold||((checking || !valid || c.by==="refused")?" disabled":""))+'>'+((!_hold && !checking && (!valid || c.by==="refused"))?"Not a win yet":"Confirm winner")+'</button>'+
         // "Play on" only when waving this one off actually resumes the ROOM. If anyone else is
         // still queued or already confirmed, it only releases this player.
         '<button class="btn roll" data-act="reject" data-i="'+ci+'"'+_hold+'>'+((G.claims.length>1||G.lastWins.length)?"Not this one":"Play on")+'</button></div></div>';

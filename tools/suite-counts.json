@@ -116,7 +116,7 @@
   "counted_by": "total"
  },
  "tools/console-in-chrome.test.py": {
-  "checks": 45,
+  "checks": 63,
   "counted_by": "lines"
  },
  "tools/dropdowns-in-chrome.test.py": {
@@ -204,7 +204,7 @@
   "counted_by": "lines"
  },
  "tools/test-bingo-seat-15-oct.js": {
-  "checks": 38,
+  "checks": 39,
   "counted_by": "lines"
  },
  "tools/test-bingo-server-tickets.js": {
@@ -632,7 +632,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/bingo-after-the-win.test.js": {
-  "checks": 145,
+  "checks": 149,
   "counted_by": "lines"
  },
  "venueplay-backend/app/bingo-console.test.js": {
@@ -720,7 +720,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/trivia/trivia-night.test.js": {
-  "checks": 111,
+  "checks": 114,
   "counted_by": "lines"
  },
  "venueplay-backend/app/tv-ads-rebuild.test.js": {

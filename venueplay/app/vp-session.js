@@ -747,6 +747,21 @@
       });
     }).catch(function () { return 0; });
   }
+  /* CLOSE THIS NIGHT NOW, WHEN THE HOST SAYS THEY ARE DONE (live audit, 19 Oct 2026).
+     Close lobby, End game and End game / back to ads left the session open: only bingo's End game
+     closed it. HQ read the venue as live, phones saw a live game, and the next format opened on
+     the SAME tablet was asked about "a game already open at this venue on another device".
+     The id is flagged `closing` first, so a close lost to the wifi is retried by
+     retryPendingCloses() on the next load, exactly as a sign-out's would be. Resolves the number
+     closed. "New game" and the next round never call this: they reuse the session. */
+  function closeSession(id) {
+    if (!id) return Promise.resolve(0);
+    var list = readOpenSessions(), found = false;
+    for (var i = 0; i < list.length; i++) { if (list[i].id === id) { list[i].closing = true; found = true; } }
+    if (!found) list.push({ id: id, venue: null, uid: currentUid(), closing: true });
+    writeOpenSessions(list);
+    return closeOpenSessions(true);
+  }
   // Drain closes that failed earlier. Only touches records already flagged `closing`, so a night
   // the host is still running is never closed out from under them.
   function retryPendingCloses() {
@@ -989,6 +1004,7 @@
     suspensionBanner: suspensionBanner,
     noteOpenSession: noteOpenSession,
     closeOpenSessions: closeOpenSessions,
+    closeSession: closeSession,
     retryPendingCloses: retryPendingCloses,
     enforceShift: enforceShift,
     guardShift: guardShift,

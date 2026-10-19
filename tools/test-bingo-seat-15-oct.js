@@ -242,6 +242,10 @@ function hostSays(t, pid) { return LOG.filter(function (l) { return l && l.from 
         [S1, S2, S3].every(function (sid) { return phones.every(function (ph) { return rowsIn(sid).filter(function (r) { return r.device_id === didOf(ph); }).length === 1; }); }));
   check('and the stranger was never dealt a ticket all night', stranger.P.cards.length === 0, stranger.P.cards.length);
   host.endGame(); await advance(3000);
+  /* After End game there is no session. That used to mean "everyone is seated", so the stranger on the
+     channel turned into a named chip on the console (live audit, 19 Oct 2026). Between games: nobody. */
+  host.renderPlayers();
+  check('after End game a phone the server never seated is not a named chip on the console', host.$('playerList').innerHTML.indexOf('Dazza') < 0, host.$('playerList').innerHTML.slice(0, 200));
 
   print('GAME FOUR: the Worker goes down');
   DOWN = true; slowJoin = false;

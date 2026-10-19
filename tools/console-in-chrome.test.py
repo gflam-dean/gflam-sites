@@ -63,6 +63,8 @@ FAKE_DB = {
                    'join_code': W.info['code'], 'au_state': 'QLD', 'max_players': 100, 'included_players': None,
                    'created_at': '2026-01-01T00:00:00Z', 'postcode': '4000', 'logo_url': None, 'paid_entry_enabled': False}],
     'vp_venue_settings': [],
+    'vp_question_sets': [{'id': '33333333-3333-4333-8333-333333333333', 'title': 'Pub Classics', 'question_count': 10, 'visibility': 'public',
+                          'owner_venue_id': None, 'status': 'active'}],
 }
 
 # ---------------- the local site ----------------
@@ -110,6 +112,7 @@ class Site(http.server.BaseHTTPRequestHandler):
         elif p == '/play': p = '/play.html'
         elif p == '/tv': p = '/tv.html'
         f = os.path.normpath(os.path.join(ROOT, 'venueplay', p.lstrip('/')))
+        if not os.path.splitext(f)[1] and os.path.isfile(f + '.html'): f = f + '.html'; p = p + '.html'   # Pages serves /app/musical/play as play.html
         if not f.startswith(os.path.join(ROOT, 'venueplay')) or not os.path.isfile(f):
             return self.send(404, 'not here', 'text/plain')
         ext = os.path.splitext(f)[1].lower()
@@ -211,6 +214,11 @@ def leftover():
     until(host, '!!document.querySelector(\'[data-game="bingo"]\') && document.querySelector(\'[data-game="bingo"]\').offsetParent!==null', 20)
     ask(host, 'document.querySelector(\'[data-game="bingo"]\').click(); true')
     until(host, '!document.getElementById("setupBlock").classList.contains("hidden")'); until(host, ONETAB_SETTLED)
+    ask(host, 'document.getElementById("prizeInput").value=""; setTimeout(function(){ document.getElementById("startBtn").click(); }, 0); true')
+    time.sleep(4)
+    ok('with no prize typed, the prize is asked for first, before any question about the other device',
+       ask(host, '!document.getElementById("vpTakeover") && document.activeElement===document.getElementById("prizeInput")') is True,
+       ask(host, '(document.activeElement&&document.activeElement.id)+" takeover:"+!!document.getElementById("vpTakeover")'))
     ask(host, 'var $=function(i){return document.getElementById(i)};$("prizeInput").value="Meat tray";true')
     ask(host, 'setTimeout(function(){ document.getElementById("startBtn").click(); }, 0); true')
     time.sleep(4)
@@ -330,6 +338,120 @@ def raffle_settings():
        and alive(host), ask(host, 'document.body.innerText.replace(/\\s+/g," ").slice(0,300)'))
     B.close_tab(ctid)
 
+def live_now():
+    return W.ask('GET', '/play/live?code=' + W.info['code'], {}, {})['body'].get('live') is True
+def until_live(want, secs=8):
+    t = time.time() + secs
+    while time.time() < t:
+        if live_now() == want: return True
+        time.sleep(0.3)
+    return False
+def visible(sid, el_id):
+    return ask(sid, '(function(){var e=document.getElementById("%s"); return !!e && e.offsetParent!==null && getComputedStyle(e).display!=="none";})()' % el_id)
+
+def done_closes_the_night():
+    """Live audit, 19 Oct 2026: Close lobby and End game left the session open, so the venue read live and
+    the next format on the SAME tablet was asked about a game "on another device"."""
+    print('\nClose lobby and End game close the night, on every console, and the next format is not asked about another device')
+    ctid, host = B.open_tab(BASE + '/app/')
+    until(host, '!!document.querySelector(\'[data-game="bingo"]\') && document.querySelector(\'[data-game="bingo"]\').offsetParent!==null', 20)
+    ask(host, 'document.querySelector(\'[data-game="bingo"]\').click(); true')
+    until(host, '!document.getElementById("setupBlock").classList.contains("hidden")'); time.sleep(1.5)
+    ask(host, 'document.getElementById("prizeInput").value="Meat tray"; true')
+    tap(host, 'document.getElementById("startBtn").click();')
+    ok('CONTROL: bingo Open lobby makes the venue live', until(host, 'document.getElementById("startBtn").textContent==="Start calling numbers"') is True and until_live(True))
+    tap(host, 'document.getElementById("cancelLobbyBtn").click();')
+    ok('bingo Close lobby closes the night: /play/live is not live', until_live(False), 'still live after Close lobby')
+    ok('and the console still answers', alive(host))
+    B.close_tab(ctid)
+
+    ctid, host = B.open_tab(BASE + '/app/musical/host.html')
+    until(host, 'document.readyState==="complete" && !!document.getElementById("startBtn")', 20); time.sleep(4)
+    ask(host, 'document.getElementById("prizeInput").value="Bar tab"; true')
+    tap(host, 'document.getElementById("startBtn").click();')
+    time.sleep(3)
+    ok('the next format on the same tablet (musical) opens with no takeover question', not ask(host, '!!document.getElementById("vpTakeover")') and
+       until(host, '(function(){var e=document.getElementById("cancelLobbyBtn"); return !!e && e.style.display!=="none";})()', 10) is True,
+       ask(host, 'document.body.innerText.replace(/\\s+/g," ").slice(0,300)'))
+    ok('CONTROL: the musical lobby is live', until_live(True))
+    tap(host, 'document.getElementById("cancelLobbyBtn").click();')
+    ok('musical Close lobby closes the night', until_live(False))
+    tap(host, 'document.getElementById("startBtn").click();')
+    until(host, '(function(){var e=document.getElementById("cancelLobbyBtn"); return !!e && e.style.display!=="none";})()', 10)
+    ok('CONTROL: a second musical lobby is live again, still no takeover question', until_live(True) and not ask(host, '!!document.getElementById("vpTakeover")'))
+    tap(host, 'document.getElementById("endGameBtn").click();')
+    asked(host, 'End this game')
+    tap(host, 'document.getElementById("vpAskGo").click();')
+    ok('musical End game closes the night', until_live(False))
+    B.close_tab(ctid)
+
+    ctid, host = B.open_tab(BASE + '/app/trivia/host.html')
+    until(host, 'document.readyState==="complete" && !!document.getElementById("startBtn")', 20); time.sleep(4)
+    tap(host, 'document.getElementById("startBtn").click();')
+    time.sleep(3)
+    ok('trivia on the same tablet opens its lobby with no takeover question', not ask(host, '!!document.getElementById("vpTakeover")') and
+       until(host, '(function(){var e=document.getElementById("cancelLobbyBtn"); return !!e && e.style.display!=="none";})()', 10) is True,
+       ask(host, '((document.getElementById("hostErrText")||{}).textContent||"")+" | "+(window.__errs||[]).join(" | ")+" | "+document.getElementById("startBtn").textContent'))
+    ok('CONTROL: the trivia lobby is live', until_live(True))
+    tap(host, 'document.getElementById("cancelLobbyBtn").click();')
+    ok('trivia Close lobby closes the night', until_live(False))
+    tap(host, 'document.getElementById("startBtn").click();')
+    until(host, '(function(){var e=document.getElementById("cancelLobbyBtn"); return !!e && e.style.display!=="none";})()', 10)
+    ok('CONTROL: a second trivia lobby is live', until_live(True))
+    tap(host, 'document.getElementById("toAdsBtn").click();')
+    time.sleep(0.5)
+    if ask(host, '!!document.getElementById("vpAsk")') is True: tap(host, 'document.getElementById("vpAskGo").click();')
+    ok('trivia End game (back to ads) closes the night', until_live(False))
+    ok('and the console still answers', alive(host))
+    B.close_tab(ctid)
+
+def name_follows_the_phone():
+    """Live audit, 19 Oct 2026: a phone that played bingo was asked its name again when the room went to
+    musical bingo. The phone is its own browser here (its own profile and storage), not a tab of the host's."""
+    print('\nA phone that played bingo keeps its name when the room moves to musical bingo (phone in its own browser)')
+    PB = VL.Browser()
+    try:
+        ptid, phone = PB.open_tab(BASE + '/play?room=' + W.info['code'])
+        def pask(expr, wait=8):
+            PB.ws.s.settimeout(wait)
+            try: return PB.eval(phone, expr)
+            except (socket.timeout, OSError): return 'HUNG'
+            finally: PB.ws.s.settimeout(60)
+        def puntil(expr, secs=20):
+            t = time.time() + secs
+            while time.time() < t:
+                v = pask(expr)
+                if v == 'HUNG' or v: return v
+                time.sleep(0.4)
+            return False
+        puntil('!!document.getElementById("joinBtn")'); time.sleep(2)
+        pask('document.getElementById("nameIn").value="Ann"; document.getElementById("joinBtn").click(); true')
+        ok('CONTROL: the phone joins bingo as Ann', puntil('/YOU.RE IN/i.test(document.body.innerText)', 15) is True)
+        ctid, host = B.open_tab(BASE + '/app/')
+        until(host, '!!document.querySelector(\'[data-game="bingo"]\') && document.querySelector(\'[data-game="bingo"]\').offsetParent!==null', 20)
+        ask(host, 'document.querySelector(\'[data-game="bingo"]\').click(); true')
+        until(host, '!document.getElementById("setupBlock").classList.contains("hidden")'); time.sleep(1.5)
+        ask(host, 'document.getElementById("prizeInput").value="Meat tray"; true')
+        tap(host, 'document.getElementById("startBtn").click();')
+        until(host, 'document.getElementById("startBtn").textContent==="Start calling numbers"')
+        time.sleep(3)
+        tap(host, 'document.getElementById("cancelLobbyBtn").click();')
+        until_live(False)
+        B.close_tab(ctid)
+        mtid, mhost = B.open_tab(BASE + '/app/musical/host.html')
+        until(mhost, 'document.readyState==="complete" && !!document.getElementById("startBtn")', 20); time.sleep(4)
+        ask(mhost, 'document.getElementById("prizeInput").value="Bar tab"; true')
+        tap(mhost, 'document.getElementById("startBtn").click();')
+        moved = puntil('/\\/app\\/musical\\/play/.test(location.pathname)', 40)
+        ok('CONTROL: the phone follows the room to musical bingo', moved is True, pask('location.href'))
+        time.sleep(3)
+        ok('and is not asked for its name again: the box already says Ann, or it is already in',
+           puntil('(document.getElementById("nameIn") && document.getElementById("nameIn").value==="Ann") || /YOU.RE IN/i.test(document.body.innerText)', 10) is True,
+           pask('(document.getElementById("nameIn")||{}).value+" | "+document.body.innerText.replace(/\\s+/g," ").slice(0,200)'))
+        B.close_tab(mtid)
+    finally:
+        PB.close()
+
 def fresh():
     """A new database and a new browser profile for each scene: nothing left over from the last."""
     global W, B
@@ -346,6 +468,8 @@ try:
     fresh(); sign_out()
     fresh(); musical_end()
     fresh(); raffle_settings()
+    fresh(); done_closes_the_night()
+    fresh(); name_follows_the_phone()
 finally:
     B.close(); W.close(); srv.shutdown()
 

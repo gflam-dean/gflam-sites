@@ -318,9 +318,39 @@ pass("the page marks itself as leaving before it goes", /addEventListener\("befo
   pass("waking the iPad (pageshow) clears the leaving flag and reopens the channel",
        /addEventListener\("pageshow", function\(e\)\{\s*_leaving=false;/.test(host));
   pass("a successful Worker call no longer hides 'Lost the connection' while the phones are still down",
-       host.indexOf("if(!gLostShown) clearHostError(); return data;") > 0);
+       host.indexOf("if(!gLostShown && !_errSticky) clearHostError(); return data;") > 0);
   pass("the game and the sheets read the same number (readSettings uses it)", host.indexOf("G.count=effectiveCount();") > 0);
   pass("typing in the round box repaints it", host.indexOf('$("cfgCount").addEventListener("input", function(){ renderPaperSetup(); paintRoundQs(); });') > 0);
+})();
+
+print("");
+print("15. A REFUSAL STAYS UP UNTIL THE HOST ACTS (live audit, 19 Oct 2026: 'Trivia runs once a week' vanished in 3 s)");
+(function(){
+  /* The real hostError, clearHostError and apiPost, run, with the page's bar as a fake element. */
+  var bar = { cls: {}, parentNode: null, style: {}, classList: { add: function(c){ bar.cls[c] = true; }, remove: function(c){ delete bar.cls[c]; } } };
+  var txt = { textContent: "" };
+  var els = { hostErrBar: bar, hostErrText: txt, statusText: { textContent: "" } };
+  var $ = function(id){ return els[id] || null; };
+  var document = { body: { appendChild: function(){} }, querySelector: function(){ return null; } };
+  var window = { scrollTo: function(){} };
+  var gLostShown = false, VP_GAME_API = "https://w", VPWeekly = null;
+  function friendlyMsg(m){ return String(m == null ? "" : m); }
+  function getToken(){ return Promise.resolve("t"); }
+  function confirmOverage(){ return Promise.resolve(true); }
+  function fetch(){ return Promise.resolve({ ok: true, status: 200, json: function(){ return Promise.resolve({ ok: true }); } }); }
+  function setTimeout(){ return 1; } function clearTimeout(){}
+  var src = "var _errSticky=false;" + grab("hostError", host) + grab("clearHostError", host) + grab("apiPost", host) +
+            " return { hostError: hostError, clearHostError: clearHostError, apiPost: apiPost };";
+  var f = (new Function("$", "document", "window", "gLostShown", "VP_GAME_API", "VPWeekly", "friendlyMsg", "getToken", "confirmOverage", "fetch", "setTimeout", "clearTimeout", src))(
+    $, document, window, gLostShown, VP_GAME_API, VPWeekly, friendlyMsg, getToken, confirmOverage, fetch, setTimeout, clearTimeout);
+  f.hostError("Trivia runs once a week per venue. Your next trivia night is available from 2026-10-26.");
+  f.apiPost("/host/heartbeat", {}); drainMicrotasks();
+  pass("the weekly refusal is still showing after the next call that worked", !!bar.cls.show && /once a week/.test(txt.textContent));
+  f.clearHostError();
+  pass("and goes when the host closes it", !bar.cls.show);
+  f.hostError("Something else went wrong.");
+  f.apiPost("/host/heartbeat", {}); drainMicrotasks();
+  pass("CONTROL: an ordinary error is still cleared by the next call that worked", !bar.cls.show);
 })();
 
 print("");

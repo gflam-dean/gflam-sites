@@ -268,6 +268,16 @@ ok("the tablet chimes so the host looks up", chimes === 1, String(chimes));
 var qHtml = $("claimQueue").innerHTML;
 ok("the host is shown a Confirm winner button", !!findBtn("confirm", 0), qHtml.slice(0, 120));
 ok("the card names the player and the ticket", qHtml.indexOf("Kate") >= 0 && qHtml.indexOf("#332") >= 0);
+/* A claim that is not a win: Confirm stayed green, disabled, and read as tappable (live audit, 19 Oct 2026). */
+(function(){
+  var c = G.claims[0], was = c.valid; c.valid = false; renderClaimQueue();
+  var b = /<button class="btn win" data-act="confirm"[^>]*>([^<]*)</.exec($("claimQueue").innerHTML);
+  ok("a claim that is not a win: Confirm is disabled and says Not a win yet", !!b && / disabled/.test(b[0]) && b[1] === "Not a win yet", b && b[0] + b[1]);
+  ok("and a disabled Confirm is grey, not green", /\.btn\.win:disabled\{background:rgba\(255,255,255,\.14\)/.test(html));
+  c.valid = was; renderClaimQueue();
+  var b2 = /<button class="btn win" data-act="confirm"[^>]*>([^<]*)</.exec($("claimQueue").innerHTML);
+  ok("CONTROL: a valid claim still reads Confirm winner", !!b2 && b2[1] === "Confirm winner", b2 && b2[1]);
+})();
 
 MSGS = [];
 ok("the host taps Confirm winner and it goes through the delegated listener", click("confirm", 0));
@@ -280,6 +290,8 @@ print("== the Next number button becomes a label, not a way out ==");
 ok("the big button is disabled while a win is unannounced", $("nextBtn").disabled === true);
 ok("and it says what to do instead (25 Sep 2026: it used to read Announce the win, and was pressed)", $("nextBtn").textContent === "Winner confirmed: keep playing or finish, below",
    "got '" + $("nextBtn").textContent + "'");
+ok("and it is drawn as a notice, not a greyed-out button (live audit, 19 Oct 2026: it looked dead and was tapped)",
+   $("nextBtn").classList.contains("notice") && /#nextBtn\.notice\{background:none;border:1px dashed/.test(html));
 MSGS = []; toasts = [];
 nextBall();
 ok("tapping it draws no ball", G.draw.length === DRAW.length && MSGS.length === 0);
