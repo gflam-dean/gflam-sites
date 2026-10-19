@@ -853,7 +853,16 @@
      phone off the live game, and Start round ended it outright (break test, 14 Oct 2026). Every
      console asks this before opening a lobby it does not already own. Resolves true to go ahead.
      An unreachable server, or no answer in three seconds, never stops a lobby opening. */
+  /* ONE QUESTION AT A TIME (19 Oct 2026 review). A second tap while the takeover question is up gets the
+     SAME answer as the first, rather than a second dialog that replaced the first unanswered and left the
+     first tap waiting for ever (trivia and musical had no double-tap guard of their own). */
+  var _takeoverAsk = null;
   function confirmTakeover(slug) {
+    if (_takeoverAsk) return _takeoverAsk;
+    _takeoverAsk = confirmTakeoverOnce(slug).then(function (v) { _takeoverAsk = null; return v; });
+    return _takeoverAsk;
+  }
+  function confirmTakeoverOnce(slug) {
     return new Promise(function (resolve) {
       if (!slug) { resolve(true); return; }
       var done = false;
@@ -883,7 +892,8 @@
     return new Promise(function (resolve) {
       var d = root.document;
       if (!d || !d.body) { resolve(true); return; }
-      var old = d.getElementById('vpTakeover'); if (old && old.parentNode) old.parentNode.removeChild(old);
+      // A question already up is answered "no" before a new one replaces it: nothing is ever left waiting.
+      var old = d.getElementById('vpTakeover'); if (old) { var oc = d.getElementById('vpTakeoverCancel'); if (oc) oc.click(); else if (old.parentNode) old.parentNode.removeChild(old); }
       var box = d.createElement('div');
       box.id = 'vpTakeover';
       box.setAttribute('role', 'alertdialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-labelledby', 'vpTakeoverT');

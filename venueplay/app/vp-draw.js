@@ -19,105 +19,120 @@
  */
 (function (root) {
   "use strict";
-  var VERSION = "VP-DRAW-1.0";
+  var VERSION = "VP-DRAW-1.1";
   /* The states where the tablet may never stand in. MUST equal the Worker's TABLET_FALLBACK_OFF_STATES
      (tools/regulated.py refuses the release if they differ). Default none: Dean keeps the fallbacks. */
   var TABLET_FALLBACK_OFF_STATES = [];
 
   function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
 
-  // the numbers a 90-ball ticket column holds: 1-9, 10-19, ... 70-79, 80-90
-  function colRange(col){ if(col===0) return [1,9]; if(col===8) return [80,90]; return [col*10, col*10+9]; }
-
-  /* ---- strips ----
-     Paper bingo is sold in STRIPS of six: between them the six tickets carry all 90
-     numbers exactly once, so every number called marks exactly one of your tickets.
-     Dealing six independent tickets instead meant about a third of calls landed on
-     none of a player's tickets and about a quarter landed on two, which is both
-     unfamiliar to anyone who has played on paper and miserable on a phone, where
-     you cannot see six tickets at once.
-
-     COL_TOTAL is how many numbers each column contributes to a whole strip
-     (column 0 is 1-9, column 8 is 80-90, the rest are ten each) and sums to 90. */
-  var COL_TOTAL=[9,10,10,10,10,10,10,10,11];
-
-  // 6 x 9 grid of per-ticket column counts: every entry 1-3, every ticket totals 15,
-  // every column totals COL_TOTAL. That is what makes the six tickets a true strip.
-  function stripCounts(){
-    for(var attempt=0;attempt<600;attempt++){
-      var extra=[],rowLeft=[],r,c;
-      for(r=0;r<6;r++){ extra.push([0,0,0,0,0,0,0,0,0]); rowLeft.push(6); }  // 15 - 9 baseline
-      var cols=[0,1,2,3,4,5,6,7,8];
-      for(var i=cols.length-1;i>0;i--){ var j=cryptoInt(i+1),t=cols[i]; cols[i]=cols[j]; cols[j]=t; }
-      var ok=true;
-      for(var ci=0;ci<cols.length;ci++){
-        c=cols[ci];
-        var need=COL_TOTAL[c]-6;
-        // fill from the tickets with most room left, so nothing gets stranded
-        var order=[0,1,2,3,4,5].sort(function(a,b){ return rowLeft[b]-rowLeft[a] || (cryptoInt(2)?1:-1); });
-        for(var oi=0;oi<order.length && need>0;oi++){
-          r=order[oi];
-          var take=Math.min(2-extra[r][c], rowLeft[r], need);
-          if(take<=0) continue;
-          extra[r][c]+=take; rowLeft[r]-=take; need-=take;
+  // ---- VP-STRIP BEGIN: the one strip algorithm, the same text in both halves of VP-DRAW (tools/regulated.py refuses a difference) ----
+  /* A STRIP of six 90-ball tickets that between them hold 1..90 exactly once, the way paper housie is sold.
+     rnd(n) is the half's own uniform integer in [0, n): randInt on the server, cryptoInt on the tablet,
+     the same rejection sampler over crypto.getRandomValues. Every strip is checked before it is returned
+     (stripIsValid); one that is not is thrown away and another made. Returns six tickets of 27 values,
+     row-major, blanks 0, or null if 200 tries all failed (never seen). */
+  function stripColRange(c){ return c === 0 ? [1, 9] : (c === 8 ? [80, 90] : [c * 10, c * 10 + 9]); }
+  function stripColCounts(rnd){
+    var TOTAL = [9, 10, 10, 10, 10, 10, 10, 10, 11];   // numbers per column across a strip: sums to 90
+    for (var attempt = 0; attempt < 600; attempt++) {
+      var extra = [], rowLeft = [], r, c, i, ok = true;
+      for (r = 0; r < 6; r++) { extra.push([0, 0, 0, 0, 0, 0, 0, 0, 0]); rowLeft.push(6); }   // 15 - the 9 every ticket starts with
+      var cols = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+      for (i = cols.length - 1; i > 0; i--) { var j = rnd(i + 1), t = cols[i]; cols[i] = cols[j]; cols[j] = t; }
+      for (var ci = 0; ci < 9 && ok; ci++) {
+        c = cols[ci];
+        var need = TOTAL[c] - 6, keys = [];
+        for (r = 0; r < 6; r++) keys.push({ r: r, k: rnd(1000000) });
+        // fill from the tickets with most room left, so nothing gets stranded; ties broken at random
+        keys.sort(function (a, b) { return (rowLeft[b.r] - rowLeft[a.r]) || (a.k - b.k); });
+        for (i = 0; i < 6 && need > 0; i++) {
+          r = keys[i].r;
+          var take = Math.min(2 - extra[r][c], rowLeft[r], need);
+          if (take <= 0) continue;
+          extra[r][c] += take; rowLeft[r] -= take; need -= take;
         }
-        if(need>0){ ok=false; break; }
+        if (need > 0) ok = false;
       }
-      if(!ok) continue;
-      var clean=true;
-      for(r=0;r<6;r++) if(rowLeft[r]!==0) clean=false;
-      if(!clean) continue;
-      var out=[];
-      for(r=0;r<6;r++){ var row=[]; for(c=0;c<9;c++) row.push(1+extra[r][c]); out.push(row); }
+      for (r = 0; r < 6 && ok; r++) { if (rowLeft[r] !== 0) ok = false; }
+      if (!ok) continue;
+      var out = [];
+      for (r = 0; r < 6; r++) { var row = []; for (c = 0; c < 9; c++) row.push(1 + extra[r][c]); out.push(row); }
       return out;
     }
     return null;
   }
-
-  // place one ticket's nine column counts into three rows holding exactly five each
-  function stripRows(counts){
-    for(var attempt=0;attempt<400;attempt++){
-      var assign=[],tally=[0,0,0],c,i;
-      for(c=0;c<9;c++){
-        var pick=[0,1,2];
-        for(i=pick.length-1;i>0;i--){ var j=cryptoInt(i+1),t=pick[i]; pick[i]=pick[j]; pick[j]=t; }
-        pick=pick.slice(0,counts[c]).sort();
-        assign.push(pick);
-        for(i=0;i<pick.length;i++) tally[pick[i]]++;
+  function stripTicketRows(rnd, counts){
+    for (var attempt = 0; attempt < 400; attempt++) {
+      var assign = [], tally = [0, 0, 0], c, i;
+      for (c = 0; c < 9; c++) {
+        var pick = [0, 1, 2];
+        for (i = pick.length - 1; i > 0; i--) { var j = rnd(i + 1), t = pick[i]; pick[i] = pick[j]; pick[j] = t; }
+        var rows = pick.slice(0, counts[c]).sort(function (a, b) { return a - b; });
+        assign.push(rows);
+        for (i = 0; i < rows.length; i++) tally[rows[i]]++;
       }
-      if(tally[0]===5 && tally[1]===5 && tally[2]===5) return assign;
+      if (tally[0] === 5 && tally[1] === 5 && tally[2] === 5) return assign;
     }
     return null;
   }
-
-  // a full strip of six tickets covering 1-90 exactly once
-  function makeStrip(){
-    for(var attempt=0;attempt<2000;attempt++){
-      var m=stripCounts(); if(!m) continue;
-      var assigns=[],t,ok=true;
-      for(t=0;t<6;t++){ var a=stripRows(m[t]); if(!a){ ok=false; break; } assigns.push(a); }
-      if(!ok) continue;
-      var pools=[],c,i,j,tmp;
-      for(c=0;c<9;c++){
-        var rg=colRange(c),p=[];
-        for(i=rg[0];i<=rg[1];i++) p.push(i);
-        for(i=p.length-1;i>0;i--){ j=cryptoInt(i+1); tmp=p[i]; p[i]=p[j]; p[j]=tmp; }
-        pools.push(p);
+  // A valid 90-ball ticket: 27 cells, 5 numbers a row, 1 to 3 a column, each in its column's range,
+  // ascending down the column, no repeats.
+  function ticketIsValid(cells){
+    if (!cells || cells.length !== 27) return false;
+    var seen = {}, r, c;
+    for (r = 0; r < 3; r++) { var n = 0; for (c = 0; c < 9; c++) { if (cells[r * 9 + c]) n++; } if (n !== 5) return false; }
+    for (c = 0; c < 9; c++) {
+      var rg = stripColRange(c), last = 0, k = 0;
+      for (r = 0; r < 3; r++) {
+        var v = cells[r * 9 + c];
+        if (!v) continue;
+        if (v !== Math.floor(v) || v < rg[0] || v > rg[1] || v <= last || seen[v]) return false;
+        seen[v] = true; last = v; k++;
       }
-      var tickets=[];
-      for(t=0;t<6;t++) tickets.push([[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]]);
-      for(c=0;c<9;c++){
-        var at=0;
-        for(t=0;t<6;t++){
-          var chunk=pools[c].slice(at, at+m[t][c]).sort(function(a,b){ return a-b; });
-          at+=m[t][c];
-          var rows=assigns[t][c];
-          for(i=0;i<rows.length;i++) tickets[t][rows[i]][c]=chunk[i];
+      if (k < 1 || k > 3) return false;
+    }
+    return true;
+  }
+  function stripIsValid(tickets){
+    if (!tickets || tickets.length !== 6) return false;
+    var seen = {}, n = 0;
+    for (var t = 0; t < 6; t++) {
+      if (!ticketIsValid(tickets[t])) return false;
+      for (var i = 0; i < 27; i++) { var v = tickets[t][i]; if (v) { if (seen[v]) return false; seen[v] = true; n++; } }
+    }
+    return n === 90;
+  }
+  function stripOfSix(rnd){
+    for (var attempt = 0; attempt < 200; attempt++) {
+      var m = stripColCounts(rnd); if (!m) continue;
+      var assigns = [], t, c, i, ok = true;
+      for (t = 0; t < 6 && ok; t++) { var a = stripTicketRows(rnd, m[t]); if (!a) ok = false; else assigns.push(a); }
+      if (!ok) continue;
+      var tickets = [];
+      for (t = 0; t < 6; t++) { var cells = []; for (i = 0; i < 27; i++) cells.push(0); tickets.push(cells); }
+      for (c = 0; c < 9; c++) {
+        var rg = stripColRange(c), pool = [];
+        for (i = rg[0]; i <= rg[1]; i++) pool.push(i);
+        for (i = pool.length - 1; i > 0; i--) { var j = rnd(i + 1), x = pool[i]; pool[i] = pool[j]; pool[j] = x; }
+        var at = 0;
+        for (t = 0; t < 6; t++) {
+          var chunk = pool.slice(at, at + m[t][c]).sort(function (p, q) { return p - q; });
+          at += m[t][c];
+          for (i = 0; i < assigns[t][c].length; i++) tickets[t][assigns[t][c][i] * 9 + c] = chunk[i];
         }
       }
-      return tickets;
+      if (stripIsValid(tickets)) return tickets;
     }
     return null;
+  }
+  // ---- VP-STRIP END ----
+
+  // The tablet's strip: the same algorithm as the server's, with the tablet's sampler, checked, as 3 rows of 9.
+  function makeStrip(){
+    var s = stripOfSix(cryptoInt);
+    if (!s) return null;
+    return s.map(function (c) { return [c.slice(0, 9), c.slice(9, 18), c.slice(18, 27)]; });
   }
 
   // A ball from the pool of numbers not yet called. Removed from the pool: never drawn twice.

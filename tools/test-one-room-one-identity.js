@@ -113,8 +113,8 @@ print('\n== a second console is asked before it takes the room ==');
         return { then: function (g) { g(v); } }; } };
     }
     var Promise = function (ex) { ex(function (v) { result = v; }); };
-    eval(lift(SESSION, 'confirmTakeover', 'vp-session.js'));
-    confirmTakeover('test-alpha');
+    eval(lift(SESSION, 'confirmTakeoverOnce', 'vp-session.js'));   // the question itself; one-at-a-time is checked below
+    confirmTakeoverOnce('test-alpha');
     return { asked: asked, result: result, native: native };
   }
   var a = run({ live: true, format: 'trivia' }, false);
@@ -122,6 +122,20 @@ print('\n== a second console is asked before it takes the room ==');
   var b = run({ live: true, format: 'bingo90' }, true);
   ok('Yes goes ahead', b.result === true && /bingo game/.test(b.asked || ''));
   ok('and never with a native browser dialog', !a.native && !b.native, JSON.stringify([a.native, b.native]));
+  // Two taps while the question is up: ONE question, and both taps get its answer.
+  (function () {
+    var asks = 0, answers = [], held = null;
+    var root = { confirm: function () { return true; } };
+    var GAME_API = 'https://w';
+    function venueCode() { return 'CODE12'; }
+    function setTimeout() {}
+    function fetch() { return { then: function (f) { var v = f({ ok: true, json: function () { return { live: true, format: 'trivia' }; } }); return { then: function (g) { g(v); } }; } }; }
+    function askOnPage() { asks++; return { then: function (f) { held = f; } }; }
+    eval(lift(SESSION, 'confirmTakeover', 'vp-session.js').replace('function confirmTakeover', 'var _takeoverAsk = null; function confirmTakeover'));
+    eval(lift(SESSION, 'confirmTakeoverOnce', 'vp-session.js'));
+    var p1 = confirmTakeover('test-alpha'), p2 = confirmTakeover('test-alpha');
+    ok('a second tap while the takeover question is up asks nothing new and shares the first answer', asks === 1 && p1 === p2, asks);
+  })();
   var c = run({ live: false }, false);
   ok('nothing open: no question, straight in', c.asked === null && c.result === true, JSON.stringify(c));
   [['bingo', find('venueplay/app/index.html'), /VP\.confirmTakeover\(slug\)\.then/],

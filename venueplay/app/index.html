@@ -1343,6 +1343,7 @@
           drawId:G.drawId||null, drawMode:G.drawMode||"local",
           dealMode:G.dealMode||"server", dealWhy:G.dealWhy||"",   // a game dealt by this tablet in an outage stays that way
           claimLog:G.claimLog||[],   // decisions not yet on the server's record
+          ballLog:G.ballLog||[],     // tablet balls not yet on the server's record
           /* A reload used to lose all five of these: End game then never closed the session (so
              the night was not metered until the sign-out backstop hours later), the TV was sent
              join_code null, the peak restarted from zero and early calls switched themselves off. */
@@ -1438,12 +1439,13 @@
       G.drawMode=(s.drawMode==="server" && G.drawId) ? "server" : "local";
       G.dealMode=(s.dealMode==="tablet") ? "tablet" : "server"; G.dealWhy=s.dealWhy||"";
       G.claimLog=Array.isArray(s.claimLog)?s.claimLog:[];
+      G.ballLog=Array.isArray(s.ballLog)?s.ballLog:[];
       /* A claim the server had not answered about when the tablet reloaded is asked again, and a
          decision not yet on the record is sent, once this console is up. */
       setTimeout(function(){
         G._checking={};
         G.claims.forEach(function(c){ if(c.by==="checking" || c.by==="retry"){ if(c.by==="checking") G._checking[c.pid]=c.ref; claimCheck(c); } else if(c.by==="tablet") claimRetrySoon(); });
-        flushClaimLog(); recordTabletTickets(); dealSoon(500);
+        flushClaimLog(); flushBallLog(); recordTabletTickets(); dealSoon(500);
       }, 1500);
       restoreNightFields(s);
       if(G.caller) G.drawWhy="caller";   // the record keeps saying where the balls came from after a reload
@@ -1613,8 +1615,33 @@
   // repeat or a clash rather than write a record that lies, and the console does not care.
   function reportLocalBall(n, ordinal){
     if(G.caller){ callerRecord({ number:n, ordinal:ordinal }); return; }   // real balls: in order, after the draw opens
+    if(!G.drawId || !(window.VP && VP.gameApiCall)) return;
+    (G.ballLog||(G.ballLog=[])).push({ draw_id:G.drawId, number:n, ordinal:ordinal, reason:G.drawWhy||"worker unreachable", at:Date.now() });
+    flushBallLog();
+  }
+  /* TABLET BALLS GO ON THE RECORD IN ORDER, AND ARE ASKED AGAIN (VP-DRAW-1.1). A SLOW server can answer
+     the ball this tablet gave up on AFTER the tablet's ball reached it, and then the server refuses the
+     tablet's ball (it has not failed). Asked again a few seconds later, the server finds its own late
+     ball in that place, voids it as never seen by the room, and takes the tablet's. In order: ball N+1
+     waits for N. Given up after BALL_LOG_MS: the server never heard the tablet's request, so its record
+     ends where it is and claims after that are checked on the tablet. */
+  var BALL_LOG_MS=45000, _ballBusy=false, _ballT=0;
+  function flushBallLog(){
+    if(_ballBusy || !G.ballLog || !G.ballLog.length || !(window.VP && VP.gameApiCall)) return;
+    var e=G.ballLog[0];
+    if(e.draw_id!==G.drawId || Date.now()-e.at>BALL_LOG_MS){ G.ballLog=[]; saveGame(); return; }
+    _ballBusy=true;
+    VP.gameApiCall("/host/bingo/fallback", { draw_id:e.draw_id, number:e.number, ordinal:e.ordinal, reason:e.reason }, 6000).then(function(r){
+      _ballBusy=false;
+      if(r && r.status===200){ if(G.ballLog[0]===e) G.ballLog.shift(); saveGame(); flushBallLog(); return; }
+      if(r && r.status===409){ clearTimeout(_ballT); _ballT=setTimeout(flushBallLog, 4000); return; }   // not yet: ask again
+      G.ballLog=[]; saveGame();                                                                     // refused for good
+    }, function(){ _ballBusy=false; clearTimeout(_ballT); _ballT=setTimeout(flushBallLog, 4000); });
+  }
+  // The game is over: its draw is finished on the server's record too (VP-DRAW-1.1). Best effort.
+  function finishDrawRecord(){
     if(!G.drawId || !(window.VP && VP.gameApiPost)) return;
-    try{ VP.gameApiPost("/host/bingo/fallback", { draw_id:G.drawId, number:n, ordinal:ordinal, reason:G.drawWhy||"worker unreachable" }).catch(function(){}); }catch(e){}
+    try{ VP.gameApiPost("/host/bingo/finish", { draw_id:G.drawId }).catch(function(){}); }catch(e){}
   }
   /* ---- THE TICKETS AND THE CLAIMS LIVE ON THE SERVER TOO (Dean, 19 Oct 2026: "Lets go the server") ----
      This console used to make every phone ticket (makeStrip, below) and decide every BINGO against
@@ -1682,7 +1709,7 @@
     _dealAt=at; _dealT=setTimeout(function(){ _dealT=0; _dealAt=0; dealTick(); }, d);
   }
   function dealTick(){
-    if(G.status!=="running" || standingDown() || G.halt) return;   // a real-balls night asks for nothing: ticketsFor is 0 for everyone
+    if(G.status!=="running" || standingDown() || G.halt || G.won) return;   // a finished game deals nobody; a real-balls night asks for nothing
     if(G.dealMode==="tablet"){ dealOnTablet(); return; }
     var hands=handsToDeal();
     if(!hands.length){ if(G.dealSince){ G.dealSince=0; syncNextBtn(); setCoach(); } return; }
@@ -2748,6 +2775,7 @@
       }
     }
     G._endAsked=0;
+    finishDrawRecord();
     clearCallGuards();
     if(G.callerWin) callerWinSettle();   // a real-balls win still on the TV counts: the room saw it
     postReport();   // send this game's figures to the backend before returning to ads
@@ -3172,6 +3200,7 @@
     if(!G.lastWins.length) return;
     announce(false);
     G.won=true;
+    finishDrawRecord();
     saveGame(); renderConsole(); syncNextBtn();
   }
 

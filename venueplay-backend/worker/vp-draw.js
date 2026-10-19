@@ -22,7 +22,7 @@
  * and release.py refuse anything else, and /health reports the version and the manifest hash, so what
  * is running can be checked against what was described to OLGR.
  */
-const VP_DRAW_VERSION = 'VP-DRAW-1.0';
+const VP_DRAW_VERSION = 'VP-DRAW-1.1';
 
 // Uniform random integer in [0, max) using rejection sampling over getRandomValues.
 function randInt(max) {
@@ -47,13 +47,6 @@ function shuffle1to90() {
   return a;
 }
 
-// Column number range for a 90-ball ticket column (0..8):
-//   col 0 -> 1-9, col 1 -> 10-19, ... col 7 -> 70-79, col 8 -> 80-90.
-function colRange(c) {
-  if (c === 0) return [1, 9];
-  if (c === 8) return [80, 90];
-  return [c * 10, c * 10 + 9];
-}
 
 /* ------------------------------ POST /host/bingo/draw ------------------------------
  * THE BINGO CONSOLE'S DRAW LIVES HERE NOW. The console on /app is broadcast-only: it deals
@@ -98,11 +91,20 @@ async function standingBallCount(env, drawId) {
 // but a caller ball goes on one.
 function isCallerDraw(draw) { return !!draw && draw.draw_seed === CALLER_NO_SEED && draw.fallback_why === CALLER_REASON; }
 /* The server's own evidence that it failed to serve the ball at `ordinal`: it was asked for that
-   place (bingoRecordAsk) and the place is still empty (the caller checks ordinal = standing + 1). */
-function serverFailedBall(draw, ordinal) { return !!draw && draw.ball_asked_ordinal != null && draw.ball_asked_ordinal >= ordinal; }
+   place and failed (bingoRecordFailedAsk), and the place is still empty (ordinal = standing + 1). */
+function serverFailedBall(draw, ordinal) { return !!draw && draw.ball_asked_ordinal != null && draw.ball_asked_ordinal === ordinal; }
 // A recorded outage on this draw: the server itself switched it to the tablet, or a deal it received failed.
 function drawHadOutage(draw) { return !!draw && ((draw.mode === 'local' && draw.fallback_why !== CALLER_REASON) || !!draw.deal_failed_at); }
-const BINGO_DRAW_COLS = 'id,venue_id,session_id,draw_index,draw_seed,mode,fallback_at,fallback_why,finished_at,ball_asked_ordinal,deal_failed_at';
+const BINGO_DRAW_COLS = 'id,venue_id,session_id,draw_index,draw_seed,mode,fallback_at,fallback_why,finished_at,ball_asked_ordinal,deal_failed_at,deal_asked_at';
+/* A server ball drawn this recently, in the very place the tablet has just called, is one the room never
+   saw: the console gave up waiting (4 s) and the server answered late. Past this, a "the server never
+   answered" for a place the server filled is not believed. */
+const BINGO_UNSEEN_WINDOW_MS = 30000;
+// A game is over: its draw is finished (Finish game, End game, a new game, the session closing, the 3am sweep).
+async function bingoFinishDraws(env, filter) {
+  try { await sbPatch(env, 'vp_bingo_draws', filter + '&finished_at=is.null', { finished_at: new Date().toISOString() }); }
+  catch (e) { /* the night goes on; the next close or the sweep finishes it */ }
+}
 
 async function handleBingoDrawStart(request, env, json) {
   const authUserId = await verifyHostJwt(request, env);
@@ -135,30 +137,43 @@ async function handleBingoDrawStart(request, env, json) {
     draw_index: 0,
   }), true);
   const row = Array.isArray(rows) ? rows[0] : rows;
+  // A new game is the end of the last one at this venue: its draw is finished on the record (VP-DRAW-1.1).
+  await bingoFinishDraws(env, 'venue_id=eq.' + enc(venueId) + '&id=neq.' + enc(row.id));
   const state = await venueState(env, venueId);
   return json({ draw_id: row.id, tablet_fallback: tabletFallbackOk(state), fallback_off_states: fallbackOffList() });
 }
 
-/* THE SERVER'S OWN RECORD OF BEING ASKED (migration 105). The console says which place it wants
-   (ordinal = balls on its board + 1). Written BEFORE the draw, so if the draw then fails, or never
-   finishes, the server itself holds the proof: a place it was asked for and did not fill. That is
-   the only thing that lets the tablet call balls on a server draw (handleBingoFallback). The draw
-   id is a secret only the venue's own console holds; the staff check follows in the draw itself. */
-async function bingoRecordAsk(env, json, authUserId, drawId, b) {
-  const o = parseInt(b && b.ordinal, 10);
-  if (o >= 1 && o <= 90) {
-    try {
-      await sbPatch(env, 'vp_bingo_draws', 'id=eq.' + enc(drawId) + '&finished_at=is.null',
-        { ball_asked_ordinal: o, ball_asked_at: new Date().toISOString() });
-    } catch (e) { /* the ball itself is what matters; a lost ask only means no tablet fallback later */ }
-  }
-  return null;
+/* THE SERVER'S OWN RECORD OF FAILING TO CALL A BALL (migration 105; tightened in VP-DRAW-1.1).
+   Written only when this server was asked for a ball and FAILED to call it (the draw threw), only after
+   the host has been checked as staff at the draw's venue, and only for the next empty place
+   (ordinal = balls on the record + 1). Never on a refusal and never on the 4 second hold: those are
+   answers, not failures. That record is what lets the tablet call that one place on a server draw. */
+async function bingoRecordFailedAsk(env, authUserId, drawId, b) {
+  try {
+    const o = parseInt(b && b.ordinal, 10);
+    if (!(o >= 1 && o <= 90) || !drawId) return;
+    const d = await sbGet(env, 'vp_bingo_draws', 'id=eq.' + enc(drawId) + '&select=id,venue_id,mode,finished_at&limit=1');
+    if (!d.length || d[0].finished_at || d[0].mode !== 'server') return;
+    await requireStaff(env, authUserId, d[0].venue_id);
+    if (o !== (await standingBallCount(env, drawId)) + 1) return;
+    await sbPatch(env, 'vp_bingo_draws', 'id=eq.' + enc(drawId) + '&finished_at=is.null&mode=eq.server',
+      { ball_asked_ordinal: o, ball_asked_at: new Date().toISOString() });
+  } catch (e) { /* the database is down too: nothing to record with, and nothing is believed without it */ }
 }
 async function handleBingoBall(request, env, json) {
-  const r = await hostDrawRpc(request, env, json, 'vp_bingo_ball', { p_hold_ms: BINGO_SERVER_HOLD_MS }, bingoRecordAsk);
-  if (r.reply) return r.reply;
-  if (r.pre) return handleBingoBallManyTrips(request, env, json, r.pre);
-  const d = r.rpc;
+  const seen = {};   // the request as hostDrawRpc read it (a body can be read once): kept for a failure record
+  const keep = async function (env2, json2, authUserId, drawId, b) { seen.uid = authUserId; seen.drawId = drawId; seen.b = b; return null; };
+  try {
+    const r = await hostDrawRpc(request, env, json, 'vp_bingo_ball', { p_hold_ms: BINGO_SERVER_HOLD_MS }, keep);
+    if (r.reply) return r.reply;
+    if (r.pre) return await handleBingoBallManyTrips(request, env, json, r.pre);
+    return bingoBallReply(json, r.rpc);
+  } catch (e) {
+    if (!(e && e.status >= 400 && e.status < 500)) await bingoRecordFailedAsk(env, seen.uid, seen.drawId, seen.b);
+    throw e;
+  }
+}
+function bingoBallReply(json, d) {
   if (d.status === 'hold') {
     return json({ error: 'The last ball is still going up. You can call again in ' + d.wait_seconds + ' seconds.' }, 429);
   }
@@ -290,18 +305,35 @@ async function handleBingoFallback(request, env, json) {
     return json({ ok: true, withdrawn: number, kept: true });
   }
 
-  /* IN ORDER, NOTHING SKIPPED: the ball goes in the next empty place or not at all. */
-  const standing = await standingBallCount(env, drawId);
-  if (ordinal !== standing + 1) return json({ error: 'Out of order: the record holds ' + standing + ' balls, so the next is ball ' + (standing + 1) }, 409);
+  let standing = await standingBallCount(env, drawId);
+  let unseen = false;
   if (!callerBall) {
     if (!tabletFallbackOk(await venueState(env, draw.venue_id))) return json({ error: 'Calling from the tablet is switched off at this venue' }, 403);
-    /* THE SERVER DECIDES THAT IT FAILED. A healthy server draw is handed to the tablet only when the
-       server itself was asked for this place and never filled it (bingoRecordAsk). A host cannot
-       declare an outage the server did not have. */
-    if (draw.mode !== 'local') {
-      if (!serverFailedBall(draw, ordinal)) return json({ error: 'The server has not failed to call this ball, so it does not take one from the tablet' }, 409);
-      await sbPatch(env, 'vp_bingo_draws', 'id=eq.' + enc(drawId) + '&mode=eq.server', { mode: 'local', fallback_at: ordinal, fallback_why: reason });
+    /* A SLOW SERVER, NOT A DEAD ONE (VP-DRAW-1.1). The console gave up on ball N after four seconds and
+       called it from the tablet; this server answered late and recorded its own ball N, which the room
+       never saw. The room's ball is the one that was called, so it takes place N, and the server's is
+       kept on the record as VOID with the reason (migration 108). Only for the very last place, only a
+       server ball, and only one drawn moments ago: a ball the room has had time to see is never undone. */
+    if (draw.mode !== 'local' && standing === ordinal) {
+      const at = await sbGetStandingBalls(env, 'draw_id=eq.' + enc(drawId) + '&ordinal=eq.' + ordinal + '&select=ordinal,number,source,drawn_at&limit=1');
+      const late = at[0];
+      if (late && late.source === 'server' && late.number !== number && late.drawn_at &&
+          Date.now() - new Date(late.drawn_at).getTime() <= BINGO_UNSEEN_WINDOW_MS) {
+        const why = 'never seen by the room: the server answered after the console had called this place from the tablet (' + reason + ')';
+        const marked = await sbPatchReturning(env, 'vp_bingo_draw_balls', 'draw_id=eq.' + enc(drawId) + '&ordinal=eq.' + ordinal +
+          '&source=eq.server&withdrawn_at=is.null', { withdrawn_at: new Date().toISOString(), void_reason: why });
+        if (marked.length) { unseen = true; standing = ordinal - 1; }
+      }
     }
+  }
+  /* IN ORDER, NOTHING SKIPPED: the ball goes in the next empty place or not at all. */
+  if (ordinal !== standing + 1) return json({ error: 'Out of order: the record holds ' + standing + ' balls, so the next is ball ' + (standing + 1) }, 409);
+  if (!callerBall && draw.mode !== 'local') {
+    /* THE SERVER DECIDES THAT IT FAILED. A healthy server draw is handed to the tablet only when the
+       server answered this place late (above) or itself failed to call exactly this place
+       (bingoRecordFailedAsk). A host cannot declare an outage the server did not have. */
+    if (!unseen && !serverFailedBall(draw, ordinal)) return json({ error: 'The server has not failed to call this ball, so it does not take one from the tablet' }, 409);
+    await sbPatch(env, 'vp_bingo_draws', 'id=eq.' + enc(drawId) + '&mode=eq.server', { mode: 'local', fallback_at: ordinal, fallback_why: reason });
   }
   // The table's keys still refuse a repeat or a clash with a server ball; sbInsert turns that into a 409.
   await sbInsert(env, 'vp_bingo_draw_balls', { draw_id: drawId, ordinal, number, source: 'local' }, false);
@@ -352,110 +384,118 @@ const BINGO_DEAL_MAX_HANDS = 120;
 const BINGO_DEAL_MAX_TICKETS = 24;   // the console's PAID_MAX_TICKETS: four sheets
 const BINGO_CLAIM_PATTERNS = ['one', 'two', 'full', 'top', 'middle', 'bottom', 'corners'];
 
-/* VP-TICKET-2: a STRIP of six 90-ball tickets that between them hold 1..90 exactly once, the way
-   paper housie is sold. The same construction the console used (makeStrip in app/index.html), with
-   this Worker's randInt (rejection-sampled crypto.getRandomValues) in place of the console's
-   cryptoInt. Returns six tickets, each 27 values row-major, blanks 0. */
-const STRIP_COL_TOTAL = [9, 10, 10, 10, 10, 10, 10, 10, 11];   // numbers per column across a strip: sums to 90
-function stripColCounts() {
-  for (let attempt = 0; attempt < 600; attempt++) {
-    const extra = [], rowLeft = [];
-    for (let r = 0; r < 6; r++) { extra.push([0, 0, 0, 0, 0, 0, 0, 0, 0]); rowLeft.push(6); }   // 15 - the 9 every ticket starts with
-    const cols = [0, 1, 2, 3, 4, 5, 6, 7, 8];
-    for (let i = cols.length - 1; i > 0; i--) { const j = randInt(i + 1); const t = cols[i]; cols[i] = cols[j]; cols[j] = t; }
-    let ok = true;
-    for (const c of cols) {
-      let need = STRIP_COL_TOTAL[c] - 6;
-      // fill from the tickets with most room left, so nothing gets stranded; ties broken at random
-      const order = [0, 1, 2, 3, 4, 5].map((r) => ({ r, k: randInt(1000000) }))
-        .sort((a, b) => (rowLeft[b.r] - rowLeft[a.r]) || (a.k - b.k)).map((x) => x.r);
-      for (const r of order) {
-        if (need <= 0) break;
-        const take = Math.min(2 - extra[r][c], rowLeft[r], need);
-        if (take <= 0) continue;
-        extra[r][c] += take; rowLeft[r] -= take; need -= take;
+/* VP-TICKET-2: THE TICKET MAKER. The strip algorithm below is shared, byte for byte, with the tablet half
+   (venueplay/app/vp-draw.js), so the tablet in an outage makes tickets exactly the way the server does. */
+  // ---- VP-STRIP BEGIN: the one strip algorithm, the same text in both halves of VP-DRAW (tools/regulated.py refuses a difference) ----
+  /* A STRIP of six 90-ball tickets that between them hold 1..90 exactly once, the way paper housie is sold.
+     rnd(n) is the half's own uniform integer in [0, n): randInt on the server, cryptoInt on the tablet,
+     the same rejection sampler over crypto.getRandomValues. Every strip is checked before it is returned
+     (stripIsValid); one that is not is thrown away and another made. Returns six tickets of 27 values,
+     row-major, blanks 0, or null if 200 tries all failed (never seen). */
+  function stripColRange(c){ return c === 0 ? [1, 9] : (c === 8 ? [80, 90] : [c * 10, c * 10 + 9]); }
+  function stripColCounts(rnd){
+    var TOTAL = [9, 10, 10, 10, 10, 10, 10, 10, 11];   // numbers per column across a strip: sums to 90
+    for (var attempt = 0; attempt < 600; attempt++) {
+      var extra = [], rowLeft = [], r, c, i, ok = true;
+      for (r = 0; r < 6; r++) { extra.push([0, 0, 0, 0, 0, 0, 0, 0, 0]); rowLeft.push(6); }   // 15 - the 9 every ticket starts with
+      var cols = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+      for (i = cols.length - 1; i > 0; i--) { var j = rnd(i + 1), t = cols[i]; cols[i] = cols[j]; cols[j] = t; }
+      for (var ci = 0; ci < 9 && ok; ci++) {
+        c = cols[ci];
+        var need = TOTAL[c] - 6, keys = [];
+        for (r = 0; r < 6; r++) keys.push({ r: r, k: rnd(1000000) });
+        // fill from the tickets with most room left, so nothing gets stranded; ties broken at random
+        keys.sort(function (a, b) { return (rowLeft[b.r] - rowLeft[a.r]) || (a.k - b.k); });
+        for (i = 0; i < 6 && need > 0; i++) {
+          r = keys[i].r;
+          var take = Math.min(2 - extra[r][c], rowLeft[r], need);
+          if (take <= 0) continue;
+          extra[r][c] += take; rowLeft[r] -= take; need -= take;
+        }
+        if (need > 0) ok = false;
       }
-      if (need > 0) { ok = false; break; }
+      for (r = 0; r < 6 && ok; r++) { if (rowLeft[r] !== 0) ok = false; }
+      if (!ok) continue;
+      var out = [];
+      for (r = 0; r < 6; r++) { var row = []; for (c = 0; c < 9; c++) row.push(1 + extra[r][c]); out.push(row); }
+      return out;
     }
-    if (!ok || rowLeft.some((v) => v !== 0)) continue;
-    return extra.map((row) => row.map((e) => 1 + e));
+    return null;
   }
-  return null;
-}
-function stripTicketRows(counts) {
-  for (let attempt = 0; attempt < 400; attempt++) {
-    const assign = [], tally = [0, 0, 0];
-    for (let c = 0; c < 9; c++) {
-      const pick = [0, 1, 2];
-      for (let i = pick.length - 1; i > 0; i--) { const j = randInt(i + 1); const t = pick[i]; pick[i] = pick[j]; pick[j] = t; }
-      const rows = pick.slice(0, counts[c]).sort((a, b) => a - b);
-      assign.push(rows);
-      rows.forEach((r) => { tally[r]++; });
+  function stripTicketRows(rnd, counts){
+    for (var attempt = 0; attempt < 400; attempt++) {
+      var assign = [], tally = [0, 0, 0], c, i;
+      for (c = 0; c < 9; c++) {
+        var pick = [0, 1, 2];
+        for (i = pick.length - 1; i > 0; i--) { var j = rnd(i + 1), t = pick[i]; pick[i] = pick[j]; pick[j] = t; }
+        var rows = pick.slice(0, counts[c]).sort(function (a, b) { return a - b; });
+        assign.push(rows);
+        for (i = 0; i < rows.length; i++) tally[rows[i]]++;
+      }
+      if (tally[0] === 5 && tally[1] === 5 && tally[2] === 5) return assign;
     }
-    if (tally[0] === 5 && tally[1] === 5 && tally[2] === 5) return assign;
+    return null;
   }
-  return null;
-}
+  // A valid 90-ball ticket: 27 cells, 5 numbers a row, 1 to 3 a column, each in its column's range,
+  // ascending down the column, no repeats.
+  function ticketIsValid(cells){
+    if (!cells || cells.length !== 27) return false;
+    var seen = {}, r, c;
+    for (r = 0; r < 3; r++) { var n = 0; for (c = 0; c < 9; c++) { if (cells[r * 9 + c]) n++; } if (n !== 5) return false; }
+    for (c = 0; c < 9; c++) {
+      var rg = stripColRange(c), last = 0, k = 0;
+      for (r = 0; r < 3; r++) {
+        var v = cells[r * 9 + c];
+        if (!v) continue;
+        if (v !== Math.floor(v) || v < rg[0] || v > rg[1] || v <= last || seen[v]) return false;
+        seen[v] = true; last = v; k++;
+      }
+      if (k < 1 || k > 3) return false;
+    }
+    return true;
+  }
+  function stripIsValid(tickets){
+    if (!tickets || tickets.length !== 6) return false;
+    var seen = {}, n = 0;
+    for (var t = 0; t < 6; t++) {
+      if (!ticketIsValid(tickets[t])) return false;
+      for (var i = 0; i < 27; i++) { var v = tickets[t][i]; if (v) { if (seen[v]) return false; seen[v] = true; n++; } }
+    }
+    return n === 90;
+  }
+  function stripOfSix(rnd){
+    for (var attempt = 0; attempt < 200; attempt++) {
+      var m = stripColCounts(rnd); if (!m) continue;
+      var assigns = [], t, c, i, ok = true;
+      for (t = 0; t < 6 && ok; t++) { var a = stripTicketRows(rnd, m[t]); if (!a) ok = false; else assigns.push(a); }
+      if (!ok) continue;
+      var tickets = [];
+      for (t = 0; t < 6; t++) { var cells = []; for (i = 0; i < 27; i++) cells.push(0); tickets.push(cells); }
+      for (c = 0; c < 9; c++) {
+        var rg = stripColRange(c), pool = [];
+        for (i = rg[0]; i <= rg[1]; i++) pool.push(i);
+        for (i = pool.length - 1; i > 0; i--) { var j = rnd(i + 1), x = pool[i]; pool[i] = pool[j]; pool[j] = x; }
+        var at = 0;
+        for (t = 0; t < 6; t++) {
+          var chunk = pool.slice(at, at + m[t][c]).sort(function (p, q) { return p - q; });
+          at += m[t][c];
+          for (i = 0; i < assigns[t][c].length; i++) tickets[t][assigns[t][c][i] * 9 + c] = chunk[i];
+        }
+      }
+      if (stripIsValid(tickets)) return tickets;
+    }
+    return null;
+  }
+  // ---- VP-STRIP END ----
 function generateStrip() {
-  for (let attempt = 0; attempt < 200; attempt++) {
-    const m = stripColCounts(); if (!m) continue;
-    const assigns = [];
-    let ok = true;
-    for (let t = 0; t < 6; t++) { const a = stripTicketRows(m[t]); if (!a) { ok = false; break; } assigns.push(a); }
-    if (!ok) continue;
-    const tickets = [];
-    for (let t = 0; t < 6; t++) tickets.push(new Array(27).fill(0));
-    for (let c = 0; c < 9; c++) {
-      const [lo, hi] = colRange(c);
-      const pool = [];
-      for (let n = lo; n <= hi; n++) pool.push(n);
-      for (let i = pool.length - 1; i > 0; i--) { const j = randInt(i + 1); const t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
-      let at = 0;
-      for (let t = 0; t < 6; t++) {
-        const chunk = pool.slice(at, at + m[t][c]).sort((a, b) => a - b);
-        at += m[t][c];
-        assigns[t][c].forEach((r, i) => { tickets[t][r * 9 + c] = chunk[i]; });
-      }
-    }
-    if (validStrip(tickets)) return tickets;
-  }
-  /* Never seen in 600,000 tries. There is ONE ticket generator on the server, this one, so it does not
-     fall back to another: it fails, the console reads that as an outage and deals that game from
-     the tablet, labelled and recorded (see dealTick in app/index.html). */
+  const t = stripOfSix(randInt);
+  if (t) return t;
+  /* There is ONE ticket maker on the server, this one, so it does not fall back to another: it fails, the
+     console reads that as an outage and deals that game from the tablet, labelled and recorded. */
   throw httpError(503, 'Could not build a strip of tickets. Try again.');
 }
-// A valid 90-ball ticket: 27 cells, 5 numbers a row, 1 to 3 a column, each in its column's range,
-// ascending down the column, no repeats.
-function validTicket27(cells) {
-  if (!Array.isArray(cells) || cells.length !== 27) return false;
-  const seen = new Set();
-  for (let r = 0; r < 3; r++) {
-    let n = 0;
-    for (let c = 0; c < 9; c++) { if (cells[r * 9 + c]) n++; }
-    if (n !== 5) return false;
-  }
-  for (let c = 0; c < 9; c++) {
-    const [lo, hi] = colRange(c);
-    let last = 0, n = 0;
-    for (let r = 0; r < 3; r++) {
-      const v = cells[r * 9 + c];
-      if (!v) continue;
-      if (!Number.isInteger(v) || v < lo || v > hi || v <= last || seen.has(v)) return false;
-      seen.add(v); last = v; n++;
-    }
-    if (n < 1 || n > 3) return false;
-  }
-  return true;
-}
-function validStrip(tickets) {
-  if (!Array.isArray(tickets) || tickets.length !== 6) return false;
-  const seen = new Set();
-  for (const t of tickets) {
-    if (!validTicket27(t)) return false;
-    for (const v of t) { if (v) { if (seen.has(v)) return false; seen.add(v); } }
-  }
-  return seen.size === 90;
-}
+function validTicket27(cells) { return ticketIsValid(cells); }
+function validStrip(tickets) { return stripIsValid(tickets); }
 function ticketRows3x9(cells) { return [cells.slice(0, 9), cells.slice(9, 18), cells.slice(18, 27)]; }
 function ticketFlat27(t) {
   if (Array.isArray(t) && t.length === 3 && t.every((r) => Array.isArray(r) && r.length === 9)) t = [].concat(t[0], t[1], t[2]);
@@ -578,16 +618,30 @@ async function handleBingoDeal(request, env, json) {
      ball is on the record yet, the venue's state allows tablet fallbacks, and the phone holds no
      ticket the server dealt. The seat rule and the paper refusal above apply to it like any ticket. */
   const standingNow = await standingBallCount(env, drawId);
+  /* THE SERVER WAS ASKED TO DEAL (migration 108). Written once per draw, after the staff check. With no
+     ball yet on the record, it is the server's own evidence that the console asked, which is what lets the
+     tablet's tickets on when the console never got the answer (a slow server, not only a dead one). */
+  if (hands.some((h) => !h.tablet) && !draw.deal_asked_at) {
+    try { await sbPatch(env, 'vp_bingo_draws', 'id=eq.' + enc(drawId) + '&deal_asked_at=is.null', { deal_asked_at: new Date().toISOString() }); draw.deal_asked_at = 'now'; }
+    catch (e) { /* the deal itself is what matters */ }
+  }
   if (hands.some((h) => h.tablet)) {
-    const okHere = tabletFallbackOk(await venueState(env, draw.venue_id)) && !!draw.deal_failed_at && standingNow === 0;
-    let serverHeld = new Set();
+    /* Tablet tickets go on the record only before the first ball, only where the state allows the tablet
+       to stand in, and only on a draw the server was asked to deal on (or failed a deal on). A server
+       ticket the same phone holds was then never seen by it (the console gave up before the answer): it
+       is kept on the record as VOID, with the reason, and the phone's tablet ticket stands. Before the
+       first ball no ticket is worth more than another, so the swap gives nobody anything. */
+    const okHere = tabletFallbackOk(await venueState(env, draw.venue_id)) && standingNow === 0 && !!(draw.deal_failed_at || draw.deal_asked_at);
     if (okHere) {
-      const tpids = hands.filter((h) => h.tablet).map((h) => enc(h.pid));
-      (await sbGetAll(env, 'vp_bingo_tickets', 'draw_id=eq.' + enc(drawId) + '&pid=in.(' + tpids.join(',') +
-        ')&source=eq.server&dealt_at=not.is.null&voided_at=is.null&select=pid,book,page&order=pid.asc,book.asc,page.asc'))
-        .forEach(function (t) { serverHeld.add(t.pid); });
+      const tp = hands.filter((h) => h.tablet).map((h) => h.pid);
+      const unseen = (await sbGetAll(env, 'vp_bingo_tickets', 'draw_id=eq.' + enc(drawId) + '&pid=in.(' + tp.map(enc).join(',') +
+        ')&source=eq.server&dealt_at=not.is.null&voided_at=is.null&select=id,pid,book,page&order=pid.asc,book.asc,page.asc')).map((t) => t.id);
+      if (unseen.length) {
+        await sbPatch(env, 'vp_bingo_tickets', 'id=in.(' + unseen.map(enc).join(',') + ')&voided_at=is.null',
+          { voided_at: new Date().toISOString(), void_reason: 'never reached the phone: the console dealt this phone from the tablet in an outage, before any ball' });
+      }
     }
-    hands = hands.filter(function (h) { if (!h.tablet || (okHere && !serverHeld.has(h.pid))) return true; refused.push(h.pid); return false; });
+    hands = hands.filter(function (h) { if (!h.tablet || okHere) return true; refused.push(h.pid); return false; });
   }
   if (!hands.length) return json({ ok: true, hands: {}, refused, paper: paperNight });
   try {
@@ -799,6 +853,16 @@ async function bingoClaimReply(env, c, authUserId, decision, tk) {
   return { claim_id: c.id, verdict: c.verdict, card_no: c.card_no, swapped: !!c.swapped,
            cells: ticket ? ticketRows3x9(ticket.cells) : null, ticket_source: ticket ? ticket.source : null,
            winning_cells: c.winning_cells || [], balls: c.balls, status: c.status, note: c.record_note || null };
+}
+
+/* POST /host/bingo/finish {draw_id}: the game is over (Finish game, End game). The draw is finished on the
+   record, so no ball, deal or tablet fallback is taken on it after (VP-DRAW-1.1). Idempotent. */
+async function handleBingoFinish(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const { draw } = await bingoDrawForStaff(env, authUserId, String(b.draw_id || '').trim());
+  await bingoFinishDraws(env, 'id=eq.' + enc(draw.id));
+  return json({ ok: true });
 }
 
 async function handleBingoClaimResolve(request, env, json) {

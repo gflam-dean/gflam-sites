@@ -68,6 +68,16 @@ def console_switch(text):
     return None if not m else sorted(x.strip().strip('\'"') for x in m.group(1).split(',') if x.strip())
 
 
+STRIP_BEGIN = '  // ---- VP-STRIP BEGIN'
+STRIP_END = '  // ---- VP-STRIP END ----'
+
+
+def strip_block(text):
+    """The shared strip algorithm, as text, or None. Both halves must carry exactly the same block."""
+    i, j = text.find(STRIP_BEGIN), text.find(STRIP_END)
+    return None if i < 0 or j < i else text[i:j + len(STRIP_END)]
+
+
 def manifest_hash(version, files):
     lines = [version] + ['%s %s' % (files[k], k) for k in sorted(files)]
     return sha('\n'.join(lines) + '\n')
@@ -130,6 +140,11 @@ def check(root, base=None, base_why=''):
     ws, cs = worker_switch(wm), console_switch(cm)
     if ws is None or cs is None or ws != cs:
         bad.append('the tablet fallback switch differs between the halves (server %s, tablet %s)' % (ws, cs))
+    sw, sc = strip_block(wm), strip_block(cm)
+    if sw is None or sc is None or sw != sc:
+        bad.append('the strip algorithm (VP-STRIP) is not the same text in both halves: the tablet must make tickets exactly as the server does')
+    if not any(c.get('version') == man.get('version') and c.get('reason') for c in man.get('changes', [])):
+        bad.append('the manifest records no reason for version %s: run --update with --reason "why"' % man.get('version'))
     mh = manifest_hash(man.get('version', ''), man.get('files', {}))
     if man.get('manifest_hash') != mh:
         bad.append('the manifest hash does not match its own contents')
@@ -143,8 +158,10 @@ def check(root, base=None, base_why=''):
     return bad
 
 
-def update(root):
+def update(root, reason=''):
     wm, cm = read(root, WORKER_MODULE), read(root, CONSOLE_MODULE)
+    if strip_block(wm) is None or strip_block(wm) != strip_block(cm):
+        raise SystemExit('REFUSED: the strip algorithm (VP-STRIP) must be the same text in both halves')
     wv, cv = worker_version(wm), console_version(cm)
     if not wv or wv != cv:
         raise SystemExit('REFUSED: the two halves must carry the same version (server %s, tablet %s)' % (wv, cv))
@@ -158,7 +175,15 @@ def update(root):
     if old and old.get('files') != files and old.get('version') == wv:
         raise SystemExit('REFUSED: the regulated files changed but the version is still %s. Raise VP_DRAW_VERSION '
                          'in venueplay-backend/worker/vp-draw.js and VERSION in venueplay/app/vp-draw.js first.' % wv)
-    man = {'name': 'VP-DRAW', 'version': wv, 'files': files, 'manifest_hash': manifest_hash(wv, files),
+    changes = list((old or {}).get('changes', []))
+    if not any(c.get('version') == wv for c in changes):
+        if not reason:
+            raise SystemExit('REFUSED: a new version needs its reason on the record: --reason "what changed and why"')
+        changes.append({'version': wv, 'reason': reason})
+    elif reason:
+        for c in changes:
+            if c.get('version') == wv: c['reason'] = reason
+    man = {'name': 'VP-DRAW', 'version': wv, 'files': files, 'manifest_hash': manifest_hash(wv, files), 'changes': changes,
            'note': 'Written by tools/regulated.py --update. Never edit by hand: the gate recomputes every hash.'}
     io.open(os.path.join(root, MANIFEST), 'w', encoding='utf-8').write(json.dumps(man, indent=1, sort_keys=True) + '\n')
     game = inline_block(read(root, GAME), wm)
@@ -174,7 +199,7 @@ if __name__ == '__main__':
     if '--root' in sys.argv:
         root = sys.argv[sys.argv.index('--root') + 1]
     if '--update' in sys.argv:
-        update(root)
+        update(root, sys.argv[sys.argv.index('--reason') + 1] if '--reason' in sys.argv else '')
         sys.exit(0)
     base, why = (None, 'not asked') if '--no-base' in sys.argv else base_manifest(root)
     problems = check(root, base, why)
