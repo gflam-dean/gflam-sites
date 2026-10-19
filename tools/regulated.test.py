@@ -33,6 +33,11 @@ def update(d):
     try: R.update(d); return ''
     except SystemExit as e: return str(e)
 
+CUR = R.worker_version(io.open(os.path.join(ROOT, R.WORKER_MODULE), encoding='utf-8').read())
+NXT = CUR + '-next'
+def bump(d):
+    edit(d, R.WORKER_MODULE, "const VP_DRAW_VERSION = '%s';" % CUR, "const VP_DRAW_VERSION = '%s';" % NXT)
+    edit(d, R.CONSOLE_MODULE, 'var VERSION = "%s";' % CUR, 'var VERSION = "%s";' % NXT)
 real = R.check(ROOT)
 ok('the repo as committed is clean: both halves match the manifest, the copy and the /health hash', real == [], real)
 base = manifest(fresh())
@@ -52,26 +57,29 @@ p = R.check(d, base)
 ok('an edit to the copy inside venueplay-game.js, the module untouched: refused', any('copy inside venueplay-game.js differs' in x for x in p), p)
 
 d = fresh(); edit(d, R.WORKER_MODULE, "const TABLET_FALLBACK_OFF_STATES = new Set([]);", "const TABLET_FALLBACK_OFF_STATES = new Set(['QLD']);")
-edit(d, R.WORKER_MODULE, "const VP_DRAW_VERSION = 'VP-DRAW-1.0';", "const VP_DRAW_VERSION = 'VP-DRAW-1.1';")
-edit(d, R.CONSOLE_MODULE, 'var VERSION = "VP-DRAW-1.0";', 'var VERSION = "VP-DRAW-1.1";')
+bump(d)
 why = update(d)
 ok('switching Queensland off in the server half only: --update refuses (the halves must agree)', 'REFUSED' in why and 'switch' in why, why)
 edit(d, R.CONSOLE_MODULE, "var TABLET_FALLBACK_OFF_STATES = [];", "var TABLET_FALLBACK_OFF_STATES = ['QLD'];")
-why = update(d); p = R.check(d, base)
-ok('switching it off in both halves, version raised in both, --update run: accepted, and clean against what is live', why == '' and p == [], (why, p))
+why = update(d)
+ok('a new version with no reason on the record: --update refuses', 'REFUSED' in why and 'reason' in why, why)
+try: R.update(d, 'test: Queensland off'); why = ''
+except SystemExit as e: why = str(e)
+p = R.check(d, base)
+ok('switching it off in both halves, version raised in both, --update run with its reason: accepted, and clean against what is live', why == '' and p == [], (why, p))
 ok('and /health would report the new version and the new manifest hash',
-   re.search(r"^const VP_DRAW_MANIFEST = '%s';" % manifest(d)['manifest_hash'], io.open(os.path.join(d, R.GAME), encoding='utf-8').read(), re.M) is not None and manifest(d)['version'] == 'VP-DRAW-1.1')
+   re.search(r"^const VP_DRAW_MANIFEST = '%s';" % manifest(d)['manifest_hash'], io.open(os.path.join(d, R.GAME), encoding='utf-8').read(), re.M) is not None and manifest(d)['version'] == NXT and any(c.get('version') == NXT and c.get('reason') for c in manifest(d).get('changes', [])))
 
 d = fresh(); edit(d, R.WORKER_MODULE, "const TABLET_FALLBACK_OFF_STATES = new Set([]);", "const TABLET_FALLBACK_OFF_STATES = new Set(['QLD']);")
 p = R.check(d, base)
 ok('the gate itself names a switch that differs between the halves', any('switch differs' in x for x in p), p)
 
-d = fresh(); edit(d, R.WORKER_MODULE, "const VP_DRAW_VERSION = 'VP-DRAW-1.0';", "const VP_DRAW_VERSION = 'VP-DRAW-1.1';")
+d = fresh(); edit(d, R.WORKER_MODULE, "const VP_DRAW_VERSION = '%s';" % CUR, "const VP_DRAW_VERSION = '%s';" % NXT)
 p = R.check(d, base)
 ok('raising the version in one half only: refused', any('different versions' in x for x in p), p)
 
 d = fresh(); edit(d, R.WORKER_MODULE, "  return x % max;", "  return (x + 1) % max;")
-os.remove(os.path.join(d, R.MANIFEST)); update(d)
+os.remove(os.path.join(d, R.MANIFEST)); R.update(d, 'pretending this is new')
 p = R.check(d, base)
 ok('a change blessed by deleting the manifest and regenerating it at the same version: refused against what is live', any('changed since what is on main but the version is still' in x for x in p), p)
 
@@ -96,6 +104,12 @@ ok('no environment variable can change the server half: the only one it reads is
 ok('no venue, host or HQ setting can change it: it reads no settings or admin table', not re.search(r"vp_venue_settings|vp_platform_admins|vp_group|config\.", wm))
 ok('nothing on the page can change the tablet half: no storage, no address bar, no network, and its rules are frozen',
    not re.search(r'localStorage|sessionStorage|location\.|fetch\(|XMLHttpRequest', cm) and 'Object.freeze(' in cm)
+
+d = fresh(); edit(d, R.CONSOLE_MODULE, "  function stripTicketRows(rnd, counts){", "  function stripTicketRows(rnd, counts){ counts = counts.slice();")
+p = R.check(d, base)
+ok('the strip algorithm edited in the tablet half only: refused (both halves must make tickets the same way)', any('VP-STRIP' in x for x in p), p)
+m = manifest(fresh())
+ok('the manifest records a reason for the version in force', any(c.get('version') == m.get('version') and c.get('reason') for c in m.get('changes', [])), m.get('changes'))
 
 print('\n%d of %d checks passed' % (ran - bad, ran))
 sys.exit(1 if bad else 0)

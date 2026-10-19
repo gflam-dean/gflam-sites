@@ -83,7 +83,7 @@ var NEED = ["isCalled", "checkPattern",
                the same verdict, the same queue, labelled. bingo-server-tickets.js runs the server half. */
             "dealPending", "claimsChecking", "claimRef", "ticketOf", "claimCheck", "claimShown", "claimDone",
             "claimShow", "claimRefuse", "claimVerdict", "claimOnTablet", "claimRetrySoon", "recordDecision",
-            "flushClaimLog", "cryptoInt", "isRefusal", "serverRefused", "tabletMayStandIn", "standInOrWait", "claimRefusedByServer"];
+            "flushClaimLog", "finishDrawRecord", "cryptoInt", "isRefusal", "serverRefused", "tabletMayStandIn", "standInOrWait", "claimRefusedByServer"];
 /* onMsg is now a gate in front of onPhoneMsg (vp-phonekey.js, 20 Sep 2026). This suite is about
    what happens AFTER a message is believed, so there is no VPPhoneKey here and the gate hands
    everything straight through, exactly as the page does when that script fails to load.

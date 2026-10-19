@@ -5,15 +5,15 @@
    "version": "VP-DRAW-1.0"
   },
   {
-   "reason": "19 Oct 2026 review of VP-DRAW-1.0: the outage record is written only after a real failure, staff-checked, for exactly the next place (not on a hold); a server ball or ticket the room never saw (slow server) is voided on the record and the room's one stands; deal requests are recorded; draws are finished on Finish game, End game, a new game, session close and the 3am sweep; the tablet's strip maker is the server's algorithm, shared and validated.",
+   "reason": "19 Oct 2026 review of VP-DRAW-1.0: the record of a failed ball is written only after a real failure, staff-checked, for exactly the next place, never on a hold; a server ball the room never saw (slow server) is voided on the record and the room's ball stands; tablet tickets only before the first ball, a server ticket the phone never saw voided; deal requests recorded; draws finished on Finish game, End game, a new game, session close and the 3am sweep; the tablet's strip maker is the server's algorithm, shared and validated.",
    "version": "VP-DRAW-1.1"
   }
  ],
  "files": {
-  "venueplay-backend/worker/vp-draw.js": "b7463be157e3517079ce7da08e11d231c110b21deec1e4d431900320136a3505",
+  "venueplay-backend/worker/vp-draw.js": "42f33761d32ef02337ba5d664ac7096b56a884444960bdb59907e84d4a669cab",
   "venueplay/app/vp-draw.js": "da88a2334d8ac00c30565a8f70422c24be7ed2d63f35ecca37bf982ee451845b"
  },
- "manifest_hash": "ccccc5966a6fb49a1d7f0d7cdcf418d71ab57cdf9b8dead98ae061c410aa9a1a",
+ "manifest_hash": "f486c411f8f7aafebe9c60d1331b38697df9143f99339af3fb239f01ccce6c63",
  "name": "VP-DRAW",
  "note": "Written by tools/regulated.py --update. Never edit by hand: the gate recomputes every hash.",
  "version": "VP-DRAW-1.1"

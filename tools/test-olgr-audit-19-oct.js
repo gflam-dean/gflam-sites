@@ -66,8 +66,9 @@ var ANN = 'k1_annphone', BOB = 'k1_bobphone';
   var d1 = (await W('/host/bingo/draw', { venue_id: VENUE, session_id: SESSION })).body.draw_id;
   var fake = strip()[0], tab = [{ cells: fake, card_no: 777, dealt_at: new Date(Date.now() - 1000).toISOString() }];
   var r = await W('/host/bingo/deal', { draw_id: d1, hands: [{ pid: ANN, did: 'device-ann-1', tablet: tab }] });
-  check('ATTACK: tablet tickets on a draw whose deal never failed on the server are refused', r.status === 200 && r.body.refused.indexOf(ANN) >= 0 && tickets(d1).length === 0, r.body);
-  draw(d1).deal_failed_at = new Date().toISOString();   // the server's own record of a failed deal (what the deal handler writes)
+  check('VP-DRAW-1.1: before any ball, tablet tickets are taken for a seated phone (no ticket is worth more than another yet)',
+        r.status === 200 && r.body.refused.indexOf(ANN) < 0 && tickets(d1).length === 1 && tickets(d1)[0].source === 'tablet', r.body);
+  DB.vp_bingo_tickets = DB.vp_bingo_tickets.filter(function (t) { return t.draw_id !== d1; });
   DB.vp_bingo_draw_balls.push({ draw_id: d1, ordinal: 1, number: 5, source: 'server', withdrawn_at: null });
   r = await W('/host/bingo/deal', { draw_id: d1, hands: [{ pid: ANN, did: 'device-ann-1', tablet: tab }] });
   check('ATTACK: after a recorded failure, but with a ball already on the record: refused', r.body.refused.indexOf(ANN) >= 0 && tickets(d1).length === 0, r.body);
@@ -76,7 +77,10 @@ var ANN = 'k1_annphone', BOB = 'k1_bobphone';
   check('ATTACK: a tablet ticket for a phone that is not in the session: refused (the seat rule holds for tablet tickets)', r.body.refused.indexOf('k1_stranger') >= 0 && tickets(d1).length === 0, r.body);
   await W('/host/bingo/deal', { draw_id: d1, hands: [{ pid: BOB, did: 'device-bob-1', want: 1 }] });
   r = await W('/host/bingo/deal', { draw_id: d1, hands: [{ pid: BOB, did: 'device-bob-1', tablet: tab }] });
-  check('ATTACK: a tablet ticket for a phone that already holds a server ticket: refused', r.body.refused.indexOf(BOB) >= 0 && tickets(d1, BOB).every(function (t) { return t.source === 'server'; }), r.body);
+  var bobRows = tickets(d1, BOB).concat(DB.vp_bingo_tickets.filter(function (t) { return t.draw_id === d1 && t.pid === BOB && t.voided_at; }));
+  check('VP-DRAW-1.1: before any ball, a tablet ticket for a phone whose server ticket never reached it stands, and the server one is kept as VOID with the reason',
+        r.status === 200 && r.body.refused.indexOf(BOB) < 0 && tickets(d1, BOB).filter(function (t) { return t.dealt_at && !t.voided_at; }).map(function (t) { return t.source; }).join() === 'tablet' &&
+        DB.vp_bingo_tickets.some(function (t) { return t.draw_id === d1 && t.pid === BOB && t.source === 'server' && t.voided_at && /never reached the phone/.test(t.void_reason || ''); }), bobRows);
   r = await W('/host/bingo/deal', { draw_id: d1, hands: [{ pid: ANN, did: 'device-ann-1', tablet: tab }] });
   var at = tickets(d1, ANN)[0];
   check('CONTROL: after a recorded failure, before any ball, for a seated phone: recorded, with balls at deal 0 and the tablet\'s time',
@@ -103,10 +107,10 @@ var ANN = 'k1_annphone', BOB = 'k1_bobphone';
   r = await W('/host/bingo/fallback', { draw_id: d2, number: 7, ordinal: 1, reason: 'caller' });
   check('ATTACK: calling a server night "real balls" to post a number: refused', r.status === 409 && balls(d2).length === 0, r);
   r = await W('/host/bingo/ball', { draw_id: d2, ordinal: 1 });
-  check('CONTROL: asking the server for ball 1 writes that it was asked', draw(d2).ball_asked_ordinal === 1, draw(d2));
-  // Ball 1 was served. Now ball 2 is asked for and the server fails to fill it.
+  check('CONTROL: a ball the server FAILED to call (its database threw) is recorded as its own failure, for that place', r.status >= 500 && draw(d2).ball_asked_ordinal === 1, [r.status, draw(d2)]);
+  // Ball 1 was served. Now ball 2 is asked for and the server fails again: a real failure, not one set by hand.
   DB.vp_bingo_draw_balls.push({ draw_id: d2, ordinal: 1, number: 11, source: 'server', withdrawn_at: null });
-  draw(d2).ball_asked_ordinal = 2;
+  r = await W('/host/bingo/ball', { draw_id: d2, ordinal: 2 });
   r = await W('/host/bingo/fallback', { draw_id: d2, number: 7, ordinal: 2, reason: 'worker unreachable' });
   check('CONTROL: the place the server was asked for and failed to fill: taken from the tablet, the draw switched', r.status === 200 && draw(d2).mode === 'local' && balls(d2).length === 2, r);
   r = await W('/host/bingo/fallback', { draw_id: d2, number: 9, ordinal: 2, reason: 'worker unreachable' });

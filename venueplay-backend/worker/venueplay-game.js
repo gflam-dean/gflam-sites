@@ -145,10 +145,10 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '19 Oct 2026, 21:04 · 65cec504';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '19 Oct 2026, 21:58 · 5190d134';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
-const VP_DRAW_MANIFEST = 'ccccc5966a6fb49a1d7f0d7cdcf418d71ab57cdf9b8dead98ae061c410aa9a1a';
+const VP_DRAW_MANIFEST = 'f486c411f8f7aafebe9c60d1331b38697df9143f99339af3fb239f01ccce6c63';
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -6743,8 +6743,13 @@ async function handleBingoFallback(request, env, json) {
     if (draw.mode !== 'local' && standing === ordinal) {
       const at = await sbGetStandingBalls(env, 'draw_id=eq.' + enc(drawId) + '&ordinal=eq.' + ordinal + '&select=ordinal,number,source,drawn_at&limit=1');
       const late = at[0];
-      if (late && late.source === 'server' && late.number !== number && late.drawn_at &&
-          Date.now() - new Date(late.drawn_at).getTime() <= BINGO_UNSEEN_WINDOW_MS) {
+      const fresh = late && late.source === 'server' && late.drawn_at && Date.now() - new Date(late.drawn_at).getTime() <= BINGO_UNSEEN_WINDOW_MS;
+      if (fresh && late.number === number) {
+        // The late server ball IS the number the room was given: nothing to undo. The tablet calls from here.
+        await sbPatch(env, 'vp_bingo_draws', 'id=eq.' + enc(drawId) + '&mode=eq.server', { mode: 'local', fallback_at: ordinal + 1, fallback_why: reason });
+        return json({ ok: true, already: true });
+      }
+      if (fresh) {
         const why = 'never seen by the room: the server answered after the console had called this place from the tablet (' + reason + ')';
         const marked = await sbPatchReturning(env, 'vp_bingo_draw_balls', 'draw_id=eq.' + enc(drawId) + '&ordinal=eq.' + ordinal +
           '&source=eq.server&withdrawn_at=is.null', { withdrawn_at: new Date().toISOString(), void_reason: why });
@@ -7052,12 +7057,15 @@ async function handleBingoDeal(request, env, json) {
     catch (e) { /* the deal itself is what matters */ }
   }
   if (hands.some((h) => h.tablet)) {
-    /* Tablet tickets go on the record only before the first ball, only where the state allows the tablet
-       to stand in, and only on a draw the server was asked to deal on (or failed a deal on). A server
-       ticket the same phone holds was then never seen by it (the console gave up before the answer): it
-       is kept on the record as VOID, with the reason, and the phone's tablet ticket stands. Before the
-       first ball no ticket is worth more than another, so the swap gives nobody anything. */
-    const okHere = tabletFallbackOk(await venueState(env, draw.venue_id)) && standingNow === 0 && !!(draw.deal_failed_at || draw.deal_asked_at);
+    /* Tablet tickets go on the record only BEFORE THE FIRST BALL, and only where the state allows the
+       tablet to stand in (and, above, only for a seated phone in a state that plays on phones). Before
+       the first ball no ticket is worth more than another: the order is secret and nothing is called,
+       so a tablet ticket gives nobody anything. That is the rule, rather than "only after a deal failure
+       the server recorded" (VP-DRAW-1.0), because a SLOW server cannot record a failure in time: the
+       console gives up, deals from the tablet, and the server's own deal lands later (review, 19 Oct).
+       A server ticket the same phone holds was then never seen by it: it is kept on the record as VOID,
+       with the reason, and the phone's tablet ticket stands. After the first ball, nothing is taken. */
+    const okHere = tabletFallbackOk(await venueState(env, draw.venue_id)) && standingNow === 0;
     if (okHere) {
       const tp = hands.filter((h) => h.tablet).map((h) => h.pid);
       const unseen = (await sbGetAll(env, 'vp_bingo_tickets', 'draw_id=eq.' + enc(drawId) + '&pid=in.(' + tp.map(enc).join(',') +

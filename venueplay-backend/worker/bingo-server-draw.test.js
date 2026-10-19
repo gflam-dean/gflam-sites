@@ -71,14 +71,20 @@ async function sbInsert(env, table, obj, ret) {
     }
     obj.drawn_at = new Date(NOW).toISOString();
   }
+  if (table === 'vp_bingo_draws' && obj.mode == null) obj.mode = 'server';   // the column's default (migration 70)
   if (!obj.id) obj.id = '00000000-0000-4000-8000-00000000000' + DB[table].length;
   DB[table].push(obj);
   return ret ? [obj] : null;
 }
 async function sbPatch(env, table, q, obj) {
   LOG.push(['patch', table, q, obj]);
-  var f = parseFilter(q);
-  (DB[table] || []).forEach(function (r) { if (String(r[f.k]) === f.v) Object.keys(obj).forEach(function (k) { r[k] = obj[k]; }); });
+  // Every eq, neq and is.null in the filter, as PostgREST applies them (the draw start finishes OTHER draws with neq).
+  var parts = q.split('&').map(function (p) { var m = /^(\w+)=(eq|neq)\.(.*)$/.exec(p), n = /^(\w+)=is\.null$/.exec(p);
+    return m ? { k: m[1], op: m[2], v: decodeURIComponent(m[3]) } : (n ? { k: n[1], op: 'null' } : null); }).filter(Boolean);
+  (DB[table] || []).forEach(function (r) {
+    var hit = parts.every(function (c) { return c.op === 'eq' ? String(r[c.k]) === c.v : c.op === 'neq' ? String(r[c.k]) !== c.v : r[c.k] == null; });
+    if (hit) Object.keys(obj).forEach(function (k) { r[k] = obj[k]; });
+  });
 }
 /* The real RPC is SQL (migration 70). This fake does exactly what that SQL does so
    the handler around it is tested for real; the SQL itself is read below. */
@@ -121,9 +127,10 @@ eval(lift('handleBingoBallManyTrips'));
 eval(lift('handleBingoFallback'));
 /* The fallback's own rules since the audit of 19 Oct 2026 (migration 105): the real helpers, lifted, and
    the standing-ball read answered from this suite's database (it has no withdrawn balls). */
-['venueState', 'tabletFallbackOk', 'fallbackOffList', 'standingBallCount', 'isCallerDraw', 'serverFailedBall', 'bingoRecordAsk'].forEach(function (n) { eval.call(null, lift(n)); });
+['venueState', 'tabletFallbackOk', 'fallbackOffList', 'standingBallCount', 'isCallerDraw', 'serverFailedBall', 'bingoRecordFailedAsk', 'bingoBallReply', 'bingoFinishDraws'].forEach(function (n) { eval.call(null, lift(n)); });
 eval('var TABLET_FALLBACK_OFF_STATES = ' + /const TABLET_FALLBACK_OFF_STATES = (new Set\(\[[^\]]*\]\));/.exec(W)[1] + ';');
 eval('var CALLER_NO_SEED = ' + /const CALLER_NO_SEED = ('[^']*');/.exec(W)[1] + ', CALLER_REASON = ' + /const CALLER_REASON = ('[^']*');/.exec(W)[1] + ';');
+eval('var BINGO_UNSEEN_WINDOW_MS = ' + /const BINGO_UNSEEN_WINDOW_MS = (\d+);/.exec(W)[1] + ';');
 eval('var BINGO_DRAW_COLS = ' + /const BINGO_DRAW_COLS = ('[^']*');/.exec(W)[1] + ';');
 async function sbGetStandingBalls(env, q) {
   var id = /draw_id=eq\.([^&]+)/.exec(q)[1];
