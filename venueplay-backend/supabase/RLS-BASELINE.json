@@ -148,7 +148,6 @@
   "show_artists authenticated UPDATE",
   "shows anon SELECT",
   "shows authenticated SELECT",
-  "signups anon SELECT",
   "signups authenticated SELECT",
   "ticket_milestones anon SELECT",
   "ticket_milestones authenticated SELECT",
@@ -225,20 +224,6 @@
   "v_vp_trivia_leaderboard authenticated TRIGGER",
   "v_vp_trivia_leaderboard authenticated TRUNCATE",
   "v_vp_trivia_leaderboard authenticated UPDATE",
-  "v_vp_trusted anon DELETE",
-  "v_vp_trusted anon INSERT",
-  "v_vp_trusted anon REFERENCES",
-  "v_vp_trusted anon SELECT",
-  "v_vp_trusted anon TRIGGER",
-  "v_vp_trusted anon TRUNCATE",
-  "v_vp_trusted anon UPDATE",
-  "v_vp_trusted authenticated DELETE",
-  "v_vp_trusted authenticated INSERT",
-  "v_vp_trusted authenticated REFERENCES",
-  "v_vp_trusted authenticated SELECT",
-  "v_vp_trusted authenticated TRIGGER",
-  "v_vp_trusted authenticated TRUNCATE",
-  "v_vp_trusted authenticated UPDATE",
   "venueplay_founding anon DELETE",
   "venueplay_founding anon INSERT",
   "venueplay_founding anon REFERENCES",
@@ -1034,12 +1019,12 @@
    "using": "vp_is_platform_admin()",
    "with_check": ""
   },
-  "signups.Public insert signups": {
+  "signups.Website forms add a signup": {
    "cmd": "INSERT",
    "permissive": "PERMISSIVE",
-   "roles": "public",
+   "roles": "anon",
    "using": "",
-   "with_check": "true"
+   "with_check": "((email IS NOT NULL) AND ((length(email) >= 5) AND (length(email) <= 254)) AND (email ~~ '%_@_%._%'::text) AND (COALESCE(length(first_name), 0) <= 80) AND (COALESCE(length(mobile), 0) <= 30) AND (COALESCE(length(postcode), 0) <= 10) AND (COALESCE(length(state), 0) <= 200) AND (source = ANY (ARRAY['gflam_touring'::text, 'gflam_group'::text, 'drag_bingo'::text, 'nextevent_discount'::text, 'website'::text])) AND (COALESCE(signup_type, 'signup'::text) = 'signup'::text))"
   },
   "ticket_milestones.Anon delete ticket_milestones": {
    "cmd": "DELETE",
