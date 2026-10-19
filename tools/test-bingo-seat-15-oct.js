@@ -73,13 +73,6 @@ async function worker(path, body, headers, who) {
     if (p === '/session') return openSession();
     if (p === '/session/close') return await handleSessionClose(req, ENV, json);
     if (p === '/host/bingo/seat') { SEATCALLS++; return await handleBingoSeat(req, ENV, json); }
-    // The server deals and judges bingo since 19 Oct 2026, and a 4xx stops a game, so the rig answers these for real.
-    if (p === '/host/bingo/draw') return await handleBingoDrawStart(req, ENV, json);
-    if (p === '/host/bingo/ball') return await handleBingoBall(req, ENV, json);
-    if (p === '/host/bingo/fallback') return await handleBingoFallback(req, ENV, json);
-    if (p === '/host/bingo/deal') return await handleBingoDeal(req, ENV, json);
-    if (p === '/host/bingo/claim') return await handleBingoClaim(req, ENV, json);
-    if (p === '/host/bingo/claim/resolve') return await handleBingoClaimResolve(req, ENV, json);
     if (p === '/host/overage/ack') return await handleOverageAck(req, ENV, json);
     if (p === '/snapshot') return await handleSnapshot(req, ENV, json);
     return { status: 404, body: { error: 'not routed: ' + p } };
@@ -97,8 +90,8 @@ function pageFetch(who, gate) {
 /* ---- the console and the phones: the rig's boot, with the Worker wired in ---- */
 function bootHost2(cap) {
   var dom = makeDom(""), sb = baseSandbox(dom, "host");
-  var ctx = { authed: true, scope: "staff", role: "owner", isAdmin: false, currentVenueId: VENUE, user: { user_metadata: { name: "Dean" } },
-              venue: { id: VENUE, slug: "test-pub", name: "Test Pub", status: "active", max_players: cap, created_at: "2026-01-01T00:00:00Z" }, staff: [{ venue_id: VENUE }] };
+  var ctx = { authed: true, scope: "staff", role: "owner", isAdmin: false, currentVenueId: "v1", user: { user_metadata: { name: "Dean" } },
+              venue: { id: "v1", slug: "test-pub", name: "Test Pub", status: "active", max_players: cap, created_at: "2026-01-01T00:00:00Z" }, staff: [{ venue_id: "v1" }] };
   var VP = { useClient: function () {}, ready: function () { return Promise.resolve(ctx); }, refresh: function () { return Promise.resolve(ctx); }, suspensionBanner: function () {},
     venueCode: function () { return CODE; }, venueJoinCode: function () { return Promise.resolve(null); },
     getClient: function () { return { auth: { getSession: function () { return Promise.resolve({ data: { session: { access_token: 'tok' } } }); } } }; },
@@ -110,7 +103,7 @@ function bootHost2(cap) {
   var HOLD = { busy: function () { return false; }, hold: function () {}, release: function () {} };
   sb.VP_HOLD = HOLD; dom.window.VP_HOLD = HOLD;
   sb.fetch = pageFetch('host');
-  var ex = runPage(consoleScript(), sb, ["G", "startGame", "openLobby", "newGame", "endGame", "onMsg", "commitBall",
+  var ex = runPage(inlineScript("venueplay/app/index.html"), sb, ["G", "startGame", "openLobby", "newGame", "endGame", "onMsg", "commitBall",
     "hostConfirm", "keepPlaying", "finishGame", "playerCount", "shownName", "isSeated", "renderPlayers"]);
   ex.dom = dom; ex.sb = sb; ex.$ = function (id) { return dom.document.getElementById(id); };
   return ex;

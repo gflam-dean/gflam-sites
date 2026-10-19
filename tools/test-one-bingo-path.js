@@ -86,10 +86,8 @@ verifyPlayerToken = async function () { return { id: 'p-1', session_id: SESSION,
   check('the Worker shuffles 1 to 90 in one place, called once (the draw at /host/bingo/draw)',
         (SRC_W.match(/function shuffle1to90\(/g) || []).length === 1 && (SRC_W.match(/shuffle1to90\(/g) || []).length - 1 === 1 && /draw_order: shuffle1to90\(\)/.test(SRC_W));
   check('the Worker makes tickets in one place (generateStrip): the single-ticket maker is gone', !/function generateTicket\(/.test(SRC_W) && /function generateStrip\(/.test(SRC_W));
-  var SRC_D = readFile('venueplay/app/vp-draw.js');
-  check('the tablet has one ticket maker for an outage (makeStrip, in /app/vp-draw.js), none in the console page itself',
-        !/function makeCard\(|function pickColCounts\(|function assignRows\(|function pickNumbers\(|function makeStrip\(/.test(SRC_C + SRC_D.replace(/function makeStrip\(/, '')) &&
-        (SRC_D.match(/function makeStrip\(/g) || []).length === 1 && /VPDraw\.makeStrip\(\)/.test(SRC_C));
+  check('the console keeps one ticket maker for an outage (makeStrip): the single-ticket fallback is gone',
+        !/function makeCard\(|function pickColCounts\(|function assignRows\(|function pickNumbers\(/.test(SRC_C) && /function makeStrip\(/.test(SRC_C));
   check('the console has no Jag tile and no route to a Jag page', !/jagTile|\/app\/jag\/|data-game="jag"/.test(SRC_C));
   check('the Jag pages are gone from the site', !exists('venueplay/app/jag/host.html') && !exists('venueplay/app/jag/screen.html') && !exists('venueplay/jag-check.html'));
   check('no screen still watches a Jag channel', !/"jag"/.test(readFile('venueplay/tv.html')) && !/jag/.test(readFile('venueplay/app/vp-screen-router.js')));

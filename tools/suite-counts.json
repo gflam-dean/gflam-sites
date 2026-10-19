@@ -127,10 +127,6 @@
   "checks": 12,
   "counted_by": "lines"
  },
- "tools/regulated.test.py": {
-  "checks": 19,
-  "counted_by": "lines"
- },
  "tools/test-a-player-bills-once-alive.js": {
   "checks": 10,
   "counted_by": "lines"
@@ -180,7 +176,7 @@
   "counted_by": "lines"
  },
  "tools/test-bingo-server-tickets.js": {
-  "checks": 51,
+  "checks": 47,
   "counted_by": "lines"
  },
  "tools/test-bingo-tab-15-oct.js": {
@@ -251,10 +247,6 @@
   "checks": 28,
   "counted_by": "lines"
  },
- "tools/test-fallback-switch.js": {
-  "checks": 14,
-  "counted_by": "lines"
- },
  "tools/test-free-entry-rules-are-the-states-own.js": {
   "checks": 36,
   "counted_by": "lines"
@@ -313,10 +305,6 @@
  },
  "tools/test-musical-print.js": {
   "checks": 13,
-  "counted_by": "lines"
- },
- "tools/test-olgr-audit-19-oct.js": {
-  "checks": 28,
   "counted_by": "lines"
  },
  "tools/test-one-bingo-path.js": {
