@@ -3802,6 +3802,10 @@ MUTATIONS = [
      '    <div class="card" id="logoSignpost"><div class="lbl">Your logo</div><a class="link" href="billing.html#screen">Set your logo</a></div>\n    <!-- The logo is set in ONE place:',
      'the second logo option comes back on Venue settings'),
 
+    ('logo-tools-in-chrome.test.py', 'venueplay/app/billing.html',
+     '  .logomodes:not([hidden]){display:grid;',
+     '  .logomodes{display:grid;',
+     'the Original / Background removed choice shows before anything has been removed'),
     # HQ lists (Dean, 19 Oct 2026): venues that have left hidden but searchable; Quiet and Cancelled tab badges.
     ('hq-lists-in-chrome.test.py', 'venueplay/app/hq.html',
      '       hasLeft(v) && !S.showLeft && !searching) return false;',

@@ -119,12 +119,28 @@
   "checks": 26,
   "counted_by": "lines"
  },
+ "tools/dropdowns-in-chrome.test.py": {
+  "checks": 43,
+  "counted_by": "lines"
+ },
  "tools/help-desk-pages.test.py": {
   "checks": 114,
   "counted_by": "lines"
  },
+ "tools/hq-lists-in-chrome.test.py": {
+  "checks": 19,
+  "counted_by": "lines"
+ },
  "tools/livenorm.test.py": {
   "checks": 8,
+  "counted_by": "lines"
+ },
+ "tools/logo-tools-in-chrome.test.py": {
+  "checks": 27,
+  "counted_by": "lines"
+ },
+ "tools/migrations-parse.test.py": {
+  "checks": 9,
   "counted_by": "lines"
  },
  "tools/move-show-images.test.py": {
@@ -529,6 +545,14 @@
  },
  "tools/test-undo-cancel-rolls-back.js": {
   "checks": 13,
+  "counted_by": "lines"
+ },
+ "tools/test-unlimited-nights-hq.js": {
+  "checks": 17,
+  "counted_by": "lines"
+ },
+ "tools/test-unlimited-nights.js": {
+  "checks": 19,
   "counted_by": "lines"
  },
  "tools/test-unsubscribe-is-honoured.js": {

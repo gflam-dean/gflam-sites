@@ -229,7 +229,7 @@
     background-color:#2a2a30;background-image:linear-gradient(45deg,#3a3a42 25%,transparent 25%),linear-gradient(-45deg,#3a3a42 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#3a3a42 75%),linear-gradient(-45deg,transparent 75%,#3a3a42 75%);
     background-size:16px 16px;background-position:0 0,0 8px,8px -8px,-8px 0}
   .logoprev canvas{max-width:100%;max-height:240px;width:auto;height:auto;display:block}
-  .logomodes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+  .logomodes:not([hidden]){display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
   .logotol{margin:10px 0 4px}
   .logotol input[type=range]{width:100%;accent-color:var(--pink)}
   .addbtn.logosave{background:var(--pink);border:1px solid var(--pink);color:#fff}

@@ -149,6 +149,8 @@ try:
     ok('CONTROL: the boxed logo is stored over 1 MB', boxed_bytes > 1024 * 1024, '%d bytes' % boxed_bytes)
     choose(sid, BOXED, 1200, 600)
     ok('Original is shown first, opaque', S.js(sid, PIXEL % (W, 10, 10))[3] == 255, S.js(sid, PIXEL % (W, 10, 10)))
+    ok('before Remove background, the Original / Background removed choice is not on screen',
+       S.js(sid, 'document.getElementById("logoModes").offsetParent === null') is True)
     S.js(sid, 'document.getElementById("logoCutBtn").click(); true')
     time.sleep(0.4)
     corner = S.js(sid, PIXEL % (W, 10, 10))
@@ -241,7 +243,7 @@ finally:
 total = PASS[0] + FAIL[0]
 print('')
 print('%d of %d checks passed' % (PASS[0], total))
-EXPECTED = 27
+EXPECTED = 28
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)
