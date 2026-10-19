@@ -14,6 +14,9 @@ switch) from the parse tree rather than by word search:
   - the guard function lets the service role and a platform admin through, and puts the old
     value back for anybody else (assignment new.weekly_limit_off := old.weekly_limit_off)
   - it is NOT security definer (RLS-BASELINE.json lists definer functions; this adds none)
+And the same of migration 110 (the one-night pass): its seven vp_venues columns and
+vp_sessions.console_holders, a guard trigger on INSERT and UPDATE OF every pass column, a guard
+that puts every one back for a venue login, and no security definer.
 
     python3 tools/migrations-parse.test.py
 """
@@ -124,10 +127,48 @@ ok('...and puts the old value back for a venue login',
    'new.weekly_limit_off := old.weekly_limit_off;' in low and "new.weekly_limit_off := false;" in low, low[-200:])
 ok('...and is not security definer (no change to the RLS baseline)', fn and not definer, definer)
 
+# ---- migration 110 (Dean, 20 Oct 2026): the one-night pass, and picking up a running game ----------
+M = 'venueplay-110-night-pass-and-console-pickup.sql'
+st = trees.get(M)
+ok('migration 110 is present and parses', st is not None)
+st = st or []
+PASS_COLS = ['night_pass_format', 'night_pass_until', 'night_pass_granted_at', 'night_pass_granted_by',
+             'night_pass_used_at', 'night_pass_used_format', 'night_pass_used_session']
+added = {}
+for x in st:
+    if kind(x) == 'AlterTableStmt':
+        for c in x.stmt.cmds:
+            d = getattr(c, 'def_', None)
+            if d is not None and type(d).__name__ == 'ColumnDef':
+                added[(x.stmt.relation.relname, d.colname)] = '.'.join(n.sval for n in d.typeName.names)
+ok('110 adds the seven pass columns to vp_venues and console_holders (jsonb) to vp_sessions',
+   all(('vp_venues', c) in added for c in PASS_COLS) and added.get(('vp_sessions', 'console_holders'), '').endswith('jsonb'),
+   sorted(added.items()))
+trig = [x.stmt for x in st if kind(x) == 'CreateTrigStmt' and x.stmt.trigname == 'vp_venues_night_pass_guard']
+t = trig[0] if trig else None
+cols = sorted(c.sval for c in (t.columns or ())) if t else []
+ok('110 guard trigger is BEFORE, FOR EACH ROW, on INSERT and on UPDATE OF every pass column',
+   t is not None and t.relation.relname == 'vp_venues' and t.row and (t.timing & 2) == 2 and (t.events & 4) and (t.events & 16)
+   and cols == sorted(PASS_COLS), t and ('timing=%s events=%s columns=%s' % (t.timing, t.events, cols)))
+fn = [x for x in st if kind(x) == 'CreateFunctionStmt' and x.stmt.funcname[-1].sval == 'vp_venues_night_pass_guard']
+body, definer = '', None
+if fn:
+    for o in fn[0].stmt.options or ():
+        if o.defname == 'as':
+            body = ''.join(a.sval for a in o.arg)
+        if o.defname == 'security':
+            definer = bool(o.arg.boolval)
+low = ' '.join(body.lower().split())
+ok('110 guard lets only the service role and a platform admin set a pass',
+   "coalesce(auth.role(), '') not in ('anon', 'authenticated') or public.vp_is_platform_admin()" in low, low[:160])
+missing = [c for c in PASS_COLS if ('new.%s := old.%s;' % (c, c)) not in low or ('new.%s := null;' % c) not in low]
+ok('...and puts back (or empties) every pass column for a venue login', not missing, missing)
+ok('...and is not security definer (no change to the RLS baseline)', fn and not definer, definer)
+
 total = PASS[0] + FAIL[0]
 print('')
 print('%d of %d checks passed' % (PASS[0], total))
-EXPECTED = 9
+EXPECTED = 15
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)

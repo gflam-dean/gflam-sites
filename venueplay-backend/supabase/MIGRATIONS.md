@@ -283,3 +283,17 @@ reason: a slow server answered after the console had called that place, or dealt
 `vp_bingo_draws.deal_asked_at`; the check on withdrawn balls becomes "a tablet ball, or a server ball with a void reason"
 (`vp_bingo_draw_balls_withdrawn_why`, replacing `_withdrawn_local`). MUST be run BEFORE the VP-DRAW-1.1 Worker. No RLS
 change. RUN by Dean 20 Oct 2026. Rollback: in the file.
+
+fail-safe). Branch `feature/venue-switches-logos-dropdowns`. NOT RUN. Rollback: in the file.
+`venueplay-110-night-pass-and-console-pickup.sql`: Dean, 20 Oct 2026, "it would be shit to not be able to fix something to let
+a venue play a night on a night". (1) A one-night pass: `vp_venues.night_pass_format` ('trivia', 'musical_bingo' or 'either'),
+`night_pass_until` (granted + 24 hours), `night_pass_granted_at`, `night_pass_granted_by`, `night_pass_used_at`,
+`night_pass_used_format`, `night_pass_used_session`, and the `vp_venues_night_pass_guard` trigger (a venue's own login cannot set
+or clear any of them; the old values are put back, the same way as 107). Granted and cancelled only from HQ (Venues > Details >
+"Let them run one more night", billing Worker `/admin/night-pass`, owner or accounts admins, audited as
+`venue_night_pass_granted` / `_cancelled`); spent by the game Worker the first time the once-a-week rule would have refused a
+night of that format (audited as `venue_night_pass_used`), without moving `last_trivia_at` / `last_musical_at`. (2) Picking up a
+running game from another device: `vp_sessions.console_holders` (jsonb, per format: the console that last picked it up),
+written by the game Worker's `/host/running/take` (staff at the venue only). Not security definer, no new policy or grant, so
+RLS-BASELINE.json does not change. Either order with the Workers is safe (both read the new columns fail-safe). Branch
+`feature/trivia-recover-and-night-pass`. NOT RUN. Rollback: in the file.

@@ -3333,6 +3333,23 @@ def local_checks(which):
              'test-unlimited-nights-hq.js',
              'owner/accounts admins set it with an audit row; staff admins, venue logins and strangers are refused; only true/false', 17,
              'A venue switching its own limit off, or a switch nobody can trace back to who turned it on'),
+            # D58 to D60: one more night from HQ, and picking up a running game from another device
+            # (Dean, 20 Oct 2026: "it would be shit to not be able to fix something to let a venue play
+            # a night on a night"; migration 110).
+            ('D58. A one-night pass lets ONE more trivia or musical night start, then it is used up',
+             'test-night-pass.js',
+             'a waiting pass for the format opens one night inside the week and is spent by it; the week does not move; expired or used does nothing; the console agrees', 39,
+             'A venue HQ let back in refused at Start in front of a full room, a pass that never runs out, '
+             'or a pass night that pushes the next ordinary night back by days'),
+            ('D59. Only HQ owner and accounts admins give a one-night pass, and every pass is audited',
+             'test-night-pass-hq.js',
+             'owner/accounts admins grant and cancel with an audit row; staff admins, venue logins and strangers are refused; three formats only', 23,
+             'A venue giving itself extra nights, or a pass nobody can trace back to who gave it'),
+            ('D60. A running quiz or musical game can be picked up from any device, by staff, and the old console stands down',
+             'test-console-pickup.js',
+             'staff at the venue find its running game and the open question; a pickup is recorded per format; a replaced console stands down only on the Worker\'s word', 44,
+             'A dead tablet leaves the host on a fresh setup screen with the room seated, another venue\'s '
+             'quiz is picked up, or two consoles run one quiz'),
             ('D52. The TV mark is painted only when the venue has a logo, small, top-left and kept clear',
              'test-tv-logo-mark.js',
              'tv.html and the four game screens paint one 120x56 mark, 14px in, untappable, a vp-fit keep-out, and nothing with no logo', 40,
