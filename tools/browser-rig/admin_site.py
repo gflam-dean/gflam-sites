@@ -107,8 +107,10 @@ TOURING = {
 
 
 class Site(object):
-    def __init__(self, root=REPO, fonts=False):
+    def __init__(self, root=REPO, fonts=False, extra_db=None, live_tables=None):
         self.root = os.path.abspath(root)
+        self.extra_db = extra_db or {}          # more rows for the stand-in supabase-js, by table
+        self.live_tables = live_tables or []    # tables the page reads from the Worker rig's database
         self.fonts = fonts
         self.W = BillingWorker(self.root)
         site = self
@@ -153,12 +155,17 @@ class Site(object):
                 if u.path.startswith('/__sb/rest/v1/'):
                     table = u.path[len('/__sb/rest/v1/'):]
                     return self.send(200, json.dumps(TOURING.get(table, [])), 'application/json')
+                if u.path.startswith('/__db/'):
+                    return self.send(200, json.dumps(site.W.table(u.path[len('/__db/'):])), 'application/json')
                 if u.path.startswith('/__game'):
                     return self.send(404, '{"error":"not reachable in this test"}', 'application/json')
                 if u.path == '/__fake/supabase.js':
                     admin = urllib.parse.parse_qs(u.query).get('as', ['owner'])[0] == 'admin'
-                    pre = 'window.__FAKE_DB=%s;window.__FAKE_SIGNED_IN=true;window.__FAKE_UID=%s;\n' % (
-                        json.dumps(fake_db(site.W.info, admin)), json.dumps(site.W.info['uid']))
+                    db = fake_db(site.W.info, admin)
+                    for t, rows in site.extra_db.items():
+                        db[t] = (db.get(t) or []) + rows if t != 'vp_venues' else rows
+                    pre = 'window.__FAKE_DB=%s;window.__FAKE_SIGNED_IN=true;window.__FAKE_UID=%s;window.__LIVE_TABLES=%s;\n' % (
+                        json.dumps(db), json.dumps(site.W.info['uid']), json.dumps(site.live_tables))
                     return self.send(200, pre + io.open(os.path.join(HERE, 'fake-supabase.js'), encoding='utf-8').read(),
                                      'application/javascript')
                 if u.path == '/__fake/blank.css':

@@ -23,7 +23,10 @@ function match(row,q){
   for(var k in q){ if(['select','order','limit','offset'].indexOf(k)!==-1) continue;
     var v=q[k];
     if(k==='or'){ var parts=v.replace(/^\(|\)$/g,'').split(','); var any=false;
-      parts.forEach(function(p){var m=/^([a-z_]+)\.(eq|ilike)\.(.*)$/.exec(p); if(!m) return; var have=String(row[m[1]]==null?'':row[m[1]]);
+      parts.forEach(function(p){
+        /* or=(col.gte.x,...) as /admin/quiet-venues asks it (19 Oct 2026): compared through the same rules as a plain filter. */
+        var g=/^([a-z_]+)\.(gte|lte|gt|lt)\.(.*)$/.exec(p); if(g){ var one={}; one[g[1]]=g[2]+'.'+g[3]; if(match(row,one)) any=true; return; }
+        var m=/^([a-z_]+)\.(eq|ilike)\.(.*)$/.exec(p); if(!m) return; var have=String(row[m[1]]==null?'':row[m[1]]);
         if(m[2]==='eq' ? have===m[3] : new RegExp('^'+m[3].replace(/[.+?^${}()|[\]\\]/g,'\\$&').replace(/_/g,'.')+'$','i').test(have)) any=true;}); if(!any) return false; continue;}
     if(k==='and'){ var conds=v.replace(/^\(|\)$/g,'').split(','); var all=true;   // and=(col.op.val,...), as PostgREST
       conds.forEach(function(c){ var mm=/^([a-z_]+)\.(eq|gte|lte|gt|lt)\.(.*)$/.exec(c); if(!mm) throw new Error('the fake database cannot answer and='+v);

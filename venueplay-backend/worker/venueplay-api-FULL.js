@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '19 Oct 2026, 17:17 · 0c7c6d5a';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '19 Oct 2026, 21:44 · 80943679';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -2568,6 +2568,10 @@ async function vpaHandleQuietVenues(request, env, json) {
       status: v.status, suspended_reason: v.suspended_reason || null,
       days_quiet: quiet,
       last_game: last ? new Date(last).toISOString().slice(0, 10) : null,
+      // When this quiet spell began (their last night, or set-up if none). HQ counts a
+      // "Contacted" mark only if it was made after this, so a venue that played again and then
+      // went quiet again is a new name on the chase list (Dean, 19 Oct 2026).
+      quiet_since: new Date(since).toISOString(),
       never_played: neverPlayed,
       // No trace in the window, but they are older than it: we genuinely do not know.
       long_gone: !last && !neverPlayed,

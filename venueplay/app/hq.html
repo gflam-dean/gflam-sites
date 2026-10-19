@@ -247,6 +247,12 @@
           <option value="suspended">Suspended</option>
           <option value="archived">Archived</option>
         </select>
+        <!-- Venues that have LEFT (ended, cancelled, archived) are off the list unless this is ticked.
+             The search box still finds them. Unpaid venues stay: they need chasing (Dean, 19 Oct 2026). -->
+        <label id="showLeftWrap" style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);cursor:pointer;white-space:nowrap">
+          <input type="checkbox" id="showLeft" style="accent-color:var(--pink);width:15px;height:15px;cursor:pointer">
+          Show cancelled <span id="leftHiddenN"></span>
+        </label>
       </div>
       <button class="btn ghost sp" id="addVenueToggle">+ Add venue</button>
       <a class="btn pink" href="onboard.html">Full onboarding</a>
@@ -718,7 +724,7 @@
   var S={ ctx:null, adminRole:null,
           venues:[], groups:[], groupById:{}, discounts:[], usage:[], usageMonth:null,
           admins:[], audit:[], live:{}, liveSessions:[], gameBySession:{}, spots:null, hideHp:{},
-          testFlag:{}, showTest:false,
+          testFlag:{}, showTest:false, showLeft:false, quietSince:{},
           cancelling:{}, cancelAudit:null,
           /* OPENS ON THE ONES THAT NEED DOING. Dean, 12 Sep 2026: "can we have that default
              filter to say not contacted yet when you open that page?" A retention screen is a
@@ -882,6 +888,7 @@
       (function(){ var p=$("gstPanel"); if(p) p.style.display = canBilling() ? "" : "none"; })();
     if(canBilling()) renderGst(0);
     renderStats(); renderVenues(); renderLive(); renderBilling(); renderGroups(); renderUsage(); renderTeam(); renderFlagged(); renderOptin(); renderAudit(); populateGroupSelect();
+    loadTabBadges();
     }).catch(function(e){
       $("venueRows").innerHTML='<tr><td colspan="5" class="empty" style="border:none;background:none">Could not load venues: '+esc(e&&e.message||e)+'</td></tr>';
     });
@@ -891,7 +898,8 @@
   function renderStats(){
     // Archived venues are not customers, so they are not in any headline number.
     // A test venue is not a customer and was inflating every card at the top of this page.
-    var active=S.venues.filter(function(v){ return !isArchived(v) && !hideAsTest(v); });
+    // Nor is a venue that has ended or cancelled (hasLeft), the same rule the Venues list uses.
+    var active=S.venues.filter(function(v){ return !hasLeft(v) && !hideAsTest(v); });
     var grouped=active.filter(function(v){ return !!v.group_id; }).length;
     var indep=active.length-grouped;
     var susp=active.filter(function(v){ return v.status==="suspended"; }).length;
@@ -1114,7 +1122,59 @@
      above for when a cancellation ticks this one too. */
   function quietContacted(id){
     var a=S.quietContact && S.quietContact[id];
-    return (a && a.action==="venue_quiet_contacted") ? a : null;
+    if(!(a && a.action==="venue_quiet_contacted")) return null;
+    /* A MARK FROM AN EARLIER QUIET SPELL IS NOT THIS ONE. A venue rung in September that played
+       again and has gone quiet again is a new name on the list, so its old tick must not hide it
+       (Dean, 19 Oct 2026: the badge counts venues that newly appeared and nobody has contacted). */
+    var since=S.quietSince && S.quietSince[id];
+    if(since && Date.parse(a.created_at) < since) return null;
+    return a;
+  }
+  /* WHO IS ON THE QUIET LIST, from what /admin/quiet-venues returned. One filter for the screen and
+     the tab badge, so the number on the tab is the number of rows. */
+  function quietListFrom(res){
+    S.quietSince=S.quietSince||{};
+    return (res.venues||[]).filter(function(v){
+      if(v.suspended_reason==="archived" || v.suspended_reason==="archived_cancelling") return false;
+      var mine=venueById(v.id);
+      if(mine && hideAsTest(mine)) return false;
+      // A venue that has LEFT (ended, cancelled) is not a retention call either, same as archived.
+      if(hasLeft(mine || v)) return false;
+      var t=Date.parse(v.quiet_since||"");
+      // An older Worker does not send quiet_since: work it back from the days quiet.
+      S.quietSince[v.id] = isFinite(t) ? t : (Date.now() - (v.days_quiet||0)*86400000 - 86400000);
+      return true;
+    });
+  }
+  /* COUNT BADGES ON THE QUIET AND CANCELLED TABS (Dean, 19 Oct 2026), in the help desk tab's red
+     badge style (.hdbadge, from vp-helpdesk-hq.js). The number is the venues on that list nobody
+     has marked Contacted for this spell. The marks are vp_admin_audit rows (/admin/audit), so the
+     count is the same for every HQ admin. Loaded with the page, so nobody has to open a tab to
+     find out there is somebody to ring. */
+  function setTabBadge(pane, n){
+    var b=document.querySelector('#hqNav button[data-pane="'+pane+'"]'); if(!b) return;
+    var sp=b.querySelector(".tabcount");
+    if(!sp){ sp=document.createElement("span"); sp.className="hdbadge tabcount"; b.appendChild(sp); }
+    sp.textContent = n>99 ? "99+" : String(n||0);
+    sp.hidden = !n;
+    sp.setAttribute("aria-label", (n||0)+" not contacted yet");
+  }
+  function cancelledToChase(){ return cxStories().filter(function(st){ return !st.contacted; }).length; }
+  function loadTabBadges(){
+    if(canBilling()){
+      var days=parseInt(($("quietDays")||{}).value,10)||7;
+      Promise.all([ workerPost("/admin/quiet-venues", { days:days }), loadQuietContacts() ]).then(function(both){
+        var res=both[0]; if(!res || res.error) return;
+        setTabBadge("quiet", quietListFrom(res).filter(function(v){ return !quietContacted(v.id); }).length);
+      }).catch(function(){});
+    }
+    VP.getClient().from("vp_admin_audit").select("*").in("action", CX_ACTIONS)
+      .order("created_at",{ascending:false}).limit(2000)
+      .then(function(r){
+        if(!r || r.error) return;
+        if(!S.cancelAudit) S.cancelAudit=(r.data)||[];
+        setTabBadge("cancelled", cancelledToChase());
+      }).catch(function(){});
   }
   function loadQuietContacts(){
     return VP.getClient().from("vp_admin_audit").select("action,target,created_at,actor_label")
@@ -1145,11 +1205,7 @@
          top of the chase list for that exact reason. Dean, 12 Sep 2026: "in the quiet screen we
          need to hide of archived and label those venues cancelled if they have cancelled".
          Test venues go too, for the same reason they go everywhere else. */
-      var list=(res.venues||[]).filter(function(v){
-        if(v.suspended_reason==="archived" || v.suspended_reason==="archived_cancelling") return false;
-        var mine=venueById(v.id);
-        return !(mine && hideAsTest(mine));
-      });
+      var list=quietListFrom(res);
       /* NOT CONTACTED FIRST. Same reason the Cancelled screen opens on them: this is a to-do
          list. Contacted ones stay on it, at the bottom, because "we rang them three weeks ago
          and nothing changed" is the next conversation, not a finished one. */
@@ -1163,6 +1219,7 @@
          and re-sorted the table under the cursor. */
       S.quietList = list;
       var todo=list.filter(function(v){ return !quietContacted(v.id); }).length;
+      setTabBadge("quiet", todo);
       $("quietCount").textContent = list.length
         ? (todo ? (todo+" to chase"+(todo<list.length?" of "+list.length:"")) : "all "+list.length+" contacted")
         : "none, all busy";
@@ -1190,7 +1247,8 @@
         var state = stateBadgeFor(mine || { id:v.id, status:v.status, suspended_reason:v.suspended_reason });
         var con=quietContacted(v.id);
         var conCell = con
-          ? '<span class="badge live">Contacted '+esc(cxWhen(con.created_at))+'</span>'
+          ? '<span class="badge live">Contacted '+esc(cxWhen(con.created_at))
+            + (con.actor_label ? ' by '+esc(con.actor_label) : '')+'</span>'
             + ' <button class="mini" data-quncontact="'+esc(v.id)+'">Undo</button>'
           : '<button class="mini" data-qcontact="'+esc(v.id)+'">Contacted</button>';
         html += '<tr'+(con?' style="opacity:.62"':'')+'><td><b>'+esc(v.name||"Venue")+'</b></td>'
@@ -1461,8 +1519,11 @@
       var gone=isArchived(v), leaving=isCancelling(v) && !gone;
       if(!gone && !leaving) return;
       st.v=v; st.gone=gone; st.leaving=leaving;
-      st.contacted = (st.contactState && st.contactState.action==="venue_cancel_contacted") ? st.contactState : null;
       st.when = (st.scheduled && st.scheduled.created_at) || (st.archived && st.archived.created_at) || null;
+      st.contacted = (st.contactState && st.contactState.action==="venue_cancel_contacted") ? st.contactState : null;
+      /* A tick from before THIS cancellation (they cancelled, we rang, they stayed, and now they have
+         cancelled again) is not a call about this one. */
+      if(st.contacted && st.when && Date.parse(st.contacted.created_at) < Date.parse(st.when)) st.contacted=null;
       out.push(st);
     });
     out.sort(function(a,b){ return String(b.when||"").localeCompare(String(a.when||"")); });
@@ -1620,6 +1681,7 @@
   function renderCancelled(){
     var wrap=$("cxList"); if(!wrap) return;
     var all=cxStories(), list=all.filter(cxPasses);
+    setTabBadge("cancelled", all.filter(function(st){ return !st.contacted; }).length);
     if(!all.length){
       wrap.innerHTML='<div class="empty">Nobody has cancelled. Long may it last.</div>';
       return;
@@ -1730,6 +1792,17 @@
 
   /* ================= VENUES ================= */
   function isArchived(v){ return v.suspended_reason==="archived" || v.suspended_reason==="archived_cancelling"; }
+  /* HAS THIS VENUE LEFT US? Archived, or switched off because it ended or cancelled (the same
+     reasons migration 84 starts the data clock for). NOT a venue that has asked to cancel and is
+     still playing out its paid period (that is "Cancelling", still a customer), and NOT an unpaid
+     one: Dean, 19 Oct 2026, "keep unpaid visible, those need chasing". */
+  var LEFT_REASONS = ["ended", "cancelled", "archived", "archived_cancelling"];
+  function hasLeft(v){
+    if(!v) return false;
+    if(isArchived(v)) return true;
+    if(v.status==="cancelled" || v.status==="ended" || v.status==="closed") return true;
+    return v.status==="suspended" && LEFT_REASONS.indexOf(v.suspended_reason)>=0;
+  }
   // Reads the side-loaded map, never v.cancel_at_period_end: that column is not in listVenues.
   function isCancelling(v){ return !!(S.cancelling && S.cancelling[v.id]); }
 
@@ -1784,13 +1857,17 @@
     for(var i=0;i<S.venues.length;i++){ if(S.venues[i].id===id) return S.venues[i]; }
     return null;
   }
-  function venuePasses(v){
-    /* Archived venues are off every list unless you go looking for them. They are not customers
-       any more, and leaving them in the main view makes every count wrong and every scan slower.
-       Billing still sees them for the month they were archived in, because that month's invoice
+  function venuePasses(v, ignoreSearch){
+    /* Venues that have LEFT (archived, ended, cancelled) are off the list unless you go looking:
+       tick "Show cancelled", choose Archived or Suspended, or SEARCH. A search finds them whatever
+       the tick says, because "where did that venue go" must always be one search away (Dean,
+       19 Oct 2026). They are not customers any more, and leaving them in the main view makes every
+       scan slower. Billing still sees them for the month they left, because that month's invoice
        is real; that filtering lives in renderBilling, not here. */
-    if(S.vFilter!=="archived" && isArchived(v)) return false;
+    var searching = !ignoreSearch && !!S.vSearch;
     if(S.vFilter==="archived" && !isArchived(v)) return false;
+    if(S.vFilter!=="archived" && S.vFilter!=="suspended" && S.vFilter!=="test" &&
+       hasLeft(v) && !S.showLeft && !searching) return false;
     if(S.vFilter==="grouped" && !v.group_id) return false;
     if(S.vFilter==="independent" && v.group_id) return false;
     if(S.vFilter==="live" && !S.live[v.id]) return false;
@@ -1802,7 +1879,7 @@
     // "Test venues" is the one filter that goes looking for them; everything else hides them.
     if(S.vFilter==="test") return isTest(v);
     if(hideAsTest(v)) return false;
-    if(S.vSearch){
+    if(S.vSearch && !ignoreSearch){
       var q=S.vSearch.toLowerCase();
       if(String(v.name||"").toLowerCase().indexOf(q)<0 && String(v.slug||"").toLowerCase().indexOf(q)<0) return false;
     }
@@ -1810,12 +1887,11 @@
   }
   function renderVenues(){
     var b=$("venueRows"); b.innerHTML="";
-    var list=S.venues.filter(venuePasses);
-    var pool=S.venues.filter(function(v){
-      if(S.vFilter==="test") return isTest(v);
-      if(hideAsTest(v)) return false;
-      return S.vFilter==="archived" ? isArchived(v) : !isArchived(v);
-    });
+    var list=S.venues.filter(function(v){ return venuePasses(v); });
+    var pool=S.venues.filter(function(v){ return venuePasses(v, true); });
+    // Say how many the tick is hiding, so an empty-looking list is never a mystery.
+    var hiddenLeft=S.venues.filter(function(v){ return hasLeft(v) && !hideAsTest(v); }).length;
+    var hn=$("leftHiddenN"); if(hn) hn.textContent = (!S.showLeft && hiddenLeft) ? "("+hiddenLeft+" hidden)" : "";
     /* SAY WHICH FILTER IS ON. Only "archived" ever changed this heading, so choosing
        Cancelling gave "All venues (3 of 17)", which reads as a bug in the count rather than
        a filter doing its job. */
@@ -2029,6 +2105,7 @@
     syncWhen();
   })();
   $("venueSearch").addEventListener("input", function(){ S.vSearch=this.value.trim(); renderVenues(); });
+  $("showLeft").addEventListener("change", function(){ S.showLeft=this.checked; renderVenues(); });
   $("venueFilter").addEventListener("change", function(){ S.vFilter=this.value; renderVenues(); });
   $("venueRows").addEventListener("click", function(e){
     var va=e.target.closest("button[data-viewas]");

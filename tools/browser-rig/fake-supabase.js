@@ -10,24 +10,47 @@
 (function () {
   var DB = window.__FAKE_DB || {};
   var SIGNED_IN = !!window.__FAKE_SIGNED_IN;
-  function Query(table) { this.t = table; this.f = []; this.one = false; this.lim = null; this.write = false; }
+  function Query(table) { this.t = table; this.f = []; this.one = false; this.lim = null; this.write = false; this.ord = null; }
   Query.prototype.select = function () { return this; };
   Query.prototype.eq = function (k, v) { this.f.push(function (r) { return String(r[k]) === String(v); }); return this; };
   Query.prototype.neq = function (k, v) { this.f.push(function (r) { return String(r[k]) !== String(v); }); return this; };
   Query.prototype.in = function (k, vs) { this.f.push(function (r) { return vs.map(String).indexOf(String(r[k])) >= 0; }); return this; };
   Query.prototype.is = function (k, v) { this.f.push(function (r) { return (r[k] == null) === (v == null); }); return this; };
   Query.prototype.ilike = Query.prototype.like = function () { return this; };
-  Query.prototype.order = function () { return this; };
+  /* ORDER, the way PostgREST does it, for the HQ screens that read the audit newest first
+     (19 Oct 2026). Nulls last. Unordered reads keep the stored order, as before. */
+  Query.prototype.order = function (k, o) { (this.ord = this.ord || []).push({ k: k, asc: !(o && o.ascending === false) }); return this; };
   Query.prototype.range = function () { return this; };
   Query.prototype.limit = function (n) { this.lim = n; return this; };
   Query.prototype.maybeSingle = function () { this.one = 'maybe'; return this; };
   Query.prototype.single = function () { this.one = 'single'; return this; };
   Query.prototype.upsert = Query.prototype.insert = Query.prototype.update = Query.prototype.delete = function () { this.write = true; return this; };
+  /* LIVE TABLES. A table named in window.__LIVE_TABLES is read from the test's server (/__db/<table>)
+     on every query, so what the real Worker writes (an audit row from /admin/audit) is what the page
+     reads back, as it would be live. Added 19 Oct 2026 for tools/hq-lists-in-chrome.test.py. */
   Query.prototype.then = function (res, rej) {
+    var self = this;
+    if (window.__LIVE_TABLES && window.__LIVE_TABLES.indexOf(this.t) >= 0 && !this.write) {
+      return fetch('/__db/' + this.t).then(function (r) { return r.json(); })
+        .then(function (rows) { DB[self.t] = rows || []; return self._answer(); }).then(res, rej);
+    }
+    return Promise.resolve(this._answer()).then(res, rej);
+  };
+  Query.prototype._answer = function () {
     var rows = (DB[this.t] || []).filter(function (r) { return this.f.every(function (f) { return f(r); }); }, this);
+    if (this.ord) {
+      var ord = this.ord;
+      rows = rows.slice().sort(function (a, b) {
+        for (var i = 0; i < ord.length; i++) {
+          var x = a[ord[i].k], y = b[ord[i].k];
+          if (x == null && y == null) continue; if (x == null) return 1; if (y == null) return -1;
+          if (x < y) return ord[i].asc ? -1 : 1; if (x > y) return ord[i].asc ? 1 : -1;
+        }
+        return 0;
+      });
+    }
     if (this.lim != null) rows = rows.slice(0, this.lim);
-    var out = this.write ? { data: null, error: null } : (this.one ? { data: rows[0] || null, error: null } : { data: rows, error: null, count: rows.length });
-    return Promise.resolve(out).then(res, rej);
+    return this.write ? { data: null, error: null } : (this.one ? { data: rows[0] || null, error: null } : { data: rows, error: null, count: rows.length });
   };
   function session() {
     return SIGNED_IN ? { access_token: 'fake-token', user: { id: window.__FAKE_UID, email: 'host@test.local', user_metadata: { name: 'Test Host' } } } : null;
