@@ -137,7 +137,8 @@ MUTATIONS = [
      '      (issue._startP || Promise.resolve()).then(function () { send({ proof: issue._proof || "" }); });',
      '      send({});',
      "the Help panel's answers stop carrying the proof, so none of them count"),
-    ('help-desk-pages.test.py', 'venueplay/app/vp-help.js',
+    # The Turnstile test drives the PartyPlay guest page, which loads the PartyPlay copy of the widget.
+    ('help-desk-pages.test.py', 'partyplay/lib/vp-help.js',
      '          body.turnstile = tok;\n',
      '',
      'the form passes Turnstile and then forgets to send its answer, so every message is refused'),
