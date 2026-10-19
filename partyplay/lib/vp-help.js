@@ -141,6 +141,7 @@
       ".vph .vph-faqwrap{border-top:none;margin-bottom:6px}" +
       ".vph .vph-faqwrap>summary{color:#C9C9D1;font-weight:700}" +
       ".vph .vph-faqwrap details{margin-left:2px}" +
+      ".vph .vph-ts{margin-top:12px}.vph .vph-ts:empty{display:none}" +
       ".vph .vph-about{font-size:14px;color:#C9C9D1;background:#1B1B20;border-radius:10px;padding:10px 12px;margin-bottom:4px}" +
       ".vph-inline .vph{background:transparent;box-shadow:none;max-height:none;padding:0;border-radius:0;max-width:none}";
     doc.head.appendChild(s);
@@ -162,12 +163,45 @@
       });
     return contentP;
   }
-  /* One answer on the triage, best effort: a lost answer must never hold up the person asking. */
+  /* One answer on the triage, best effort: a lost answer must never hold up the person asking.
+     Opening an issue ("start") is answered with a proof; every answer after it carries that proof,
+     because the Worker only counts answers from a device that really opened the issue. An answer
+     waits for its start to come back first. */
   function triage(issue, step, kind) {
     try {
-      root.fetch(API + "/help/triage", { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ brand: BRAND, issue_id: issue.id, step_id: step ? step.id : undefined, kind: kind, device: deviceId() }) }).catch(function () {});
+      var send = function (extra) {
+        var body = { brand: BRAND, issue_id: issue.id, step_id: step ? step.id : undefined, kind: kind, device: deviceId() };
+        for (var k in extra) body[k] = extra[k];
+        return root.fetch(API + "/help/triage", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+          .then(function (r) { return r.json(); }).catch(function () { return {}; });
+      };
+      if (kind === "start") { issue._startP = send({}).then(function (j) { issue._proof = (j && j.proof) || ""; }); return; }
+      (issue._startP || Promise.resolve()).then(function () { send({ proof: issue._proof || "" }); });
     } catch (e) {}
+  }
+
+  /* ---- Cloudflare Turnstile, when HQ has switched it on ----
+     The Worker hands the page its site key (in /help/content, or /help/config for the sales form),
+     so switching it on is a Worker setting and never a page edit. No key: nothing is loaded and the
+     form is exactly as before. The widget is the managed kind: most people never see it. */
+  var tsKeyP = null, tsScriptP = null;
+  function turnstileKey() {
+    if (tsKeyP) return tsKeyP;
+    tsKeyP = MODE === "venue" ? Promise.resolve(null)
+      : MODE === "sales" ? root.fetch(API + "/help/config?brand=" + BRAND).then(function (r) { return r.json(); }).then(function (j) { return (j && j.turnstile) || null; }).catch(function () { return null; })
+      : loadContent().then(function (d) { return (d && d.turnstile) || null; });
+    return tsKeyP;
+  }
+  function turnstileScript() {
+    if (root.turnstile) return Promise.resolve(root.turnstile);
+    if (tsScriptP) return tsScriptP;
+    tsScriptP = new Promise(function (res) {
+      var sc = doc.createElement("script"); sc.async = true;
+      sc.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+      sc.onload = function () { res(root.turnstile || null); }; sc.onerror = function () { res(null); };
+      doc.head.appendChild(sc);
+    });
+    return tsScriptP;
   }
 
   /* ---- the form ---- */
@@ -206,6 +240,17 @@
       c.appendChild(doc.createTextNode("Happening now: a game night is going wrong"));
       f.appendChild(c);
     }
+    // Turnstile sits just above Send, and only when it is switched on.
+    var ts = { box: el("div", "vph-ts"), id: null, on: false };
+    f.appendChild(ts.box);
+    if (!venueMode) turnstileKey().then(function (key) {
+      if (!key) return;
+      ts.on = true;
+      return turnstileScript().then(function (T) {
+        if (!T) return;
+        try { ts.id = T.render(ts.box, { sitekey: key, appearance: "interaction-only", theme: "dark", action: "help-" + MODE }); } catch (e) {}
+      });
+    });
     var go = el("button", "vph-go", "Send"); go.type = "submit"; f.appendChild(go);
     var err = el("div", "vph-err"); err.setAttribute("role", "alert"); f.appendChild(err);
     var fine = el("div", "vph-fine");
@@ -234,6 +279,11 @@
         body = { brand: BRAND, kind: sales ? "sales" : (MODE === "host" ? "host" : "patron"), name: name.value, email: em,
                  phone: phone ? phone.value : "", message: m, code: roomCode(), slug: BRAND === "venueplay" ? venueSlug() : "",
                  game: sales ? "" : gameName(), device: deviceId(), website: hp.value, issue_id: issue ? issue.id : undefined };
+        if (ts.on) {
+          var tok = ""; try { tok = root.turnstile && ts.id !== null ? root.turnstile.getResponse(ts.id) : ""; } catch (e) {}
+          if (!tok) { err.textContent = "One moment while we check you are a person, then press Send again. If it will not go, email " + SUPPORT + "."; return; }
+          body.turnstile = tok;
+        }
       }
       go.disabled = true; go.textContent = "Sending...";
       authHeader(venueMode).then(function (h) {
@@ -251,6 +301,7 @@
         f.parentNode.replaceChild(done, f);
       }).catch(function (x) {
         go.disabled = false; go.textContent = "Send";
+        try { if (ts.on && root.turnstile && ts.id !== null) root.turnstile.reset(ts.id); } catch (e) {}
         err.textContent = (x && x.message) || ("We could not send that. Please try again, or email " + SUPPORT + ".");
       });
     });

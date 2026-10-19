@@ -209,7 +209,11 @@
         '<div class="note" style="margin-top:0">' + hdEsc(CH[t.channel] || t.channel) + " &middot; " + hdEsc(when(t.created_at)) +
           (j.venue_name ? " &middot; <b>" + hdEsc(j.venue_name) + "</b>" : "") + (t.room_code ? " &middot; " + (t.brand === "partyplay" ? "party " : "room ") + hdEsc(t.room_code) : "") +
           (t.source_address ? " &middot; sent to " + hdEsc(t.source_address) : "") +
-          '<br><b>' + hdEsc(t.contact_name || "") + "</b>" + (t.contact_email ? " " + hdEsc(t.contact_email) : "") + (t.contact_phone ? " &middot; " + hdEsc(t.contact_phone) : "") + "</div>" +
+          '<br><b>' + hdEsc(t.contact_name || "") + "</b>" + (t.contact_email ? " " + hdEsc(t.contact_email) : "") +
+          (t.contact_typed ? ' <span class="badge gold" title="HQ typed this address in; the customer did not give it in writing">typed by HQ</span>' : "") +
+          (t.contact_phone ? " &middot; " + hdEsc(t.contact_phone) : "") + "</div>" +
+        (t.contact_email_pending ? '<div class="restrict" id="hdPending">They asked for replies to go to <b>' + hdEsc(t.contact_email_pending) + "</b>. Nothing has been sent there. " +
+          '<button class="mini" id="hdUsePending">Use ' + hdEsc(t.contact_email_pending) + '</button> <button class="mini" id="hdKeepContact">Keep ' + hdEsc(t.contact_email || "the original") + "</button></div>" : "") +
         '<div class="hdmsg">' + hdEsc(t.message || "(no message)") + "</div>" +
         '<div class="hdgrid">' +
           fld("Status", '<select id="hdtStatus">' + opts(ST) + "</select>") +
@@ -237,13 +241,31 @@
       $("hdtNoteGo").addEventListener("click", function () {
         post("/admin/help/note", { id: t.id, body: $("hdtNote").value }).then(function (r) { if (r.error) { $("hdtMsg").textContent = r.error; $("hdtMsg").classList.add("show"); } else openTicket(t.id); });
       });
-      $("hdtReplyGo").addEventListener("click", function () {
+      /* A reply to an address HQ typed in: the Worker asks for that exact address to be confirmed
+         (unless the owner is sending). The question is asked here, on the page, never in a native
+         dialog, which can freeze a tab. */
+      function sendReply(confirmTo) {
         var b = $("hdtReplyGo"); b.disabled = true; b.textContent = "Sending...";
-        post("/admin/help/reply", { id: t.id, body: $("hdtReply").value }).then(function (r) {
+        var body = { id: t.id, body: $("hdtReply").value }; if (confirmTo) body.confirm_to = confirmTo;
+        post("/admin/help/reply", body).then(function (r) {
           b.disabled = false; b.textContent = "Send reply";
+          if (r.confirm_needed) {
+            var box2 = $("hdConfirm") || doc.createElement("div"); box2.id = "hdConfirm"; box2.className = "restrict";
+            box2.innerHTML = hdEsc(r.error) + '<br><b>' + hdEsc(r.address) + '</b> <button class="btn pink" id="hdConfirmGo" style="padding:7px 12px;margin-left:8px">Yes, send it to this address</button>';
+            $("hdtReplyGo").parentNode.appendChild(box2);
+            $("hdConfirmGo").addEventListener("click", function () { box2.parentNode.removeChild(box2); sendReply(r.address); });
+            return;
+          }
           if (r.error) { $("hdtMsg").textContent = r.error; $("hdtMsg").classList.add("show"); } else { openTicket(t.id); load(); }
         });
-      });
+      }
+      $("hdtReplyGo").addEventListener("click", function () { sendReply(null); });
+      function pending(use) {
+        post("/admin/help/contact", { id: t.id, use: use }).then(function (r) {
+          if (r.error) { $("hdtMsg").textContent = r.error; $("hdtMsg").classList.add("show"); } else openTicket(t.id);
+        });
+      }
+      if ($("hdUsePending")) { $("hdUsePending").addEventListener("click", function () { pending(true); }); $("hdKeepContact").addEventListener("click", function () { pending(false); }); }
       badge();
       try { box.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) {}
     });

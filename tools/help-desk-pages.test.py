@@ -122,7 +122,7 @@ ISSUES = {'venueplay:patron': [_iss(1, 'My game is not showing', 4), _iss(2, 'So
           'partyplay:guest': [_iss(5, 'I cannot join the party', 3)], 'partyplay:host': [_iss(6, 'The party screen is blank', 3)]}
 ISSUES['venueplay:patron'][0]['steps'][0]['body'] = 'Pull down to refresh the page.'
 ISSUES['venueplay:patron'][0]['steps'][3]['body'] = 'Ask the host. They can see who has joined and can get you going.'
-DEFAULT_ROUTES = {}
+DEFAULT_ROUTES = {'/help/triage': {'body': {'ok': True, 'proof': 'proof-from-start'}}}
 for key, data in (('venueplay:patron', _vp['patron']), ('venueplay:venue', _vp['venue']), ('partyplay:guest', _pp['guest']), ('partyplay:host', _pp['host'])):
     b_, a_ = key.split(':')
     DEFAULT_ROUTES['/help/content?brand=%s&audience=%s' % (b_, a_)] = _content(data['items'], ISSUES[key])
@@ -267,6 +267,7 @@ def main():
         P = posts(t)
         check('triage: "Still not working" brings step 2, and only step 2', two == 'Step 2 of 4' and t.js('document.querySelector(".vph-stepbody").textContent') == 'Step body 1.2' and t.js('document.querySelectorAll(".vph-step").length') == 1, two)
         check('triage: and counts "not fixed" for step 1', P[-1]['body'].get('kind') == 'not_fixed' and P[-1]['body'].get('step_id') == STEPS1[0], P[-1])
+        check('triage: the answer carries the proof its issue\'s start was given', P[-1]['body'].get('proof') == 'proof-from-start' and len(P[-1]['body'].get('device') or '') >= 16, P[-1]['body'])
         t.js('document.querySelector(".vph-fixed").click()')
         done = t.until('(document.querySelector(".vph-done")||{}).textContent', 5)
         P = posts(t)
@@ -418,6 +419,46 @@ def main():
         check('partyplay home: no sideways scrolling', t.js('document.documentElement.scrollWidth<=window.innerWidth') is True)
         t.close()
 
+        print('TURNSTILE ON THE PUBLIC FORMS (stand-in Turnstile: the gate never depends on Cloudflare)')
+        FAKE_TS = ("window.turnstile={_opts:null,_tok:'',_resets:0,render:function(el,o){this._opts=o;el.setAttribute('data-ts','1');return 'w1';},"
+                   "getResponse:function(){return this._tok;},reset:function(){this._resets++;}};")
+        ts_routes = {'/help/content?brand=partyplay&audience=guest': {'body': dict(DEFAULT_ROUTES['/help/content?brand=partyplay&audience=guest']['body'], turnstile='0x4AAA-test-site')}}
+        t = Tab(b, pre=FAKE_TS, routes=ts_routes)
+        t.go(PP + '/play?code=KFP7QX')
+        t.until('!!document.getElementById("vphLink")', 15)
+        t.js('document.getElementById("vphLink").click()')
+        t.until('!!document.querySelector(".vph-msg")', 8)
+        to_form(t)
+        opts = t.until('window.turnstile._opts', 5)
+        check('turnstile: with a site key from the Worker, the form shows the managed check above Send', bool(opts) and opts.get('sitekey') == '0x4AAA-test-site' and opts.get('appearance') == 'interaction-only' and t.js('!!document.querySelector(".vph-ts[data-ts]")') is True, opts)
+        n0 = len(posts(t))
+        t.js('document.getElementById("vphEmail").value="g@example.com";document.getElementById("vphMsg").value="Hi";document.querySelector(".vph-go").click()')
+        time.sleep(0.3)
+        check('turnstile: until it has answered, Send says to wait and sends nothing', len([x for x in posts(t)[n0:] if x['path'] == '/help/ticket']) == 0 and 'check you are a person' in (t.js('document.querySelector(".vph-err").textContent') or ''))
+        t.js('window.turnstile._tok="ts-token-123";document.querySelector(".vph-go").click()')
+        t.until('(document.querySelector(".vph-done")||{}).textContent', 5)
+        tb = [x for x in posts(t) if x['path'] == '/help/ticket'][-1]['body']
+        check('turnstile: its answer goes with the ticket for the Worker to check', tb.get('turnstile') == 'ts-token-123', tb)
+        t.close()
+        t = Tab(b, 390, 900, pre=FAKE_TS, routes={'/help/config?brand=partyplay': {'body': {'turnstile': '0x4AAA-test-site'}},
+                                                   '/help/ticket': {'status': 403, 'body': {'error': 'Please complete the check above Send, then try again.', 'turnstile': True}}})
+        t.go(PP + '/')
+        t.until('!!document.querySelector("#ppContact .vph-form")', 10)
+        check('turnstile: the PartyPlay home page form gets its key from /help/config', t.until('window.turnstile._opts && window.turnstile._opts.sitekey', 5) == '0x4AAA-test-site')
+        t.js('window.turnstile._tok="t";document.getElementById("vphName").value="Pat";document.getElementById("vphEmail").value="pat@example.com";document.getElementById("vphMsg").value="Hi";document.querySelector(".vph-go").click()')
+        err = t.until('(document.querySelector(".vph-err")||{}).textContent', 5)
+        check('turnstile: when the Worker refuses the check, the person is told, and the check resets for another go', err == 'Please complete the check above Send, then try again.' and t.js('window.turnstile._resets') == 1, err)
+        t.close()
+        t = Tab(b)
+        t.go(VP + '/play?demo=1')
+        t.until('!!document.getElementById("vphLink")', 15)
+        t.js('document.getElementById("vphLink").click()')
+        t.until('!!document.querySelector(".vph-msg")', 8)
+        to_form(t)
+        time.sleep(0.4)
+        check('turnstile: with no key from the Worker, nothing is loaded and the form is as before', t.js('!window.turnstile && !document.querySelector("script[src*=turnstile]") && !document.querySelector(".vph-ts[data-ts]")') is True)
+        t.close()
+
         print('HQ: THE HELP DESK TAB, IN THE REAL hq.html WITH ITS OWN STYLES')
         routes = {
             '/admin/help/count': {'body': {'new': 2, 'urgent': 1}},
@@ -427,7 +468,8 @@ def main():
                 {'id': 'a3', 'ticket_no': 1003, 'brand': 'venueplay', 'category': 'accounts', 'channel': 'email', 'status': 'waiting', 'priority': 'normal', 'venue_id': 'v1', 'subject': 'Invoice question', 'created_at': '2026-10-18T22:10:00Z'}],
                 'venues': {'v1': 'The Royal Hotel'}, 'assignees': ['Dean'], 'all_venues': [{'id': 'v1', 'name': 'The Royal Hotel'}]}},
             '/admin/help/get': {'body': {'ticket': {'id': 'a2', 'ticket_no': 1002, 'brand': 'partyplay', 'category': 'venue_support', 'channel': 'patron_form', 'status': 'open', 'priority': 'normal',
-                'subject': 'TV blank', 'message': 'The TV is blank since we pressed start.', 'contact_name': 'Pat', 'contact_email': 'host@example.com', 'room_code': 'KFP7QX', 'created_at': '2026-10-19T10:00:00Z'},
+                'subject': 'TV blank', 'message': 'The TV is blank since we pressed start.', 'contact_name': 'Pat', 'contact_email': 'host@example.com', 'room_code': 'KFP7QX', 'created_at': '2026-10-19T10:00:00Z',
+                'contact_typed': True, 'contact_email_pending': 'pat@work.example.com'},
                 'notes': [{'kind': 'change', 'body': 'Opened by Dean', 'author': 'Dean', 'created_at': '2026-10-19T10:05:00Z'},
                           {'kind': 'reply', 'body': 'Try reloading the party screen.', 'author': 'Dean (from support@partyplay.com.au)', 'created_at': '2026-10-19T10:07:00Z'}], 'venue_name': ''}},
             '/admin/help/report': {'body': {'from': '2026-10-01', 'to': '2026-10-19', 'rows': [], 'venues': {}, 'report': {'total': 3, 'by_brand': {'venueplay': 2, 'partyplay': 1},
@@ -493,6 +535,22 @@ def main():
         opened = t.until('(document.getElementById("hdTicket")||{}).textContent', 8) or ''
         check('hq: opening a ticket shows it, with the reply address for its brand', '#1002' in opened and 'support@partyplay.com.au' in opened, opened[:200])
         time.sleep(0.6)
+        check('hq: an address HQ typed in is marked as such', 'typed by HQ' in opened)
+        check('hq: a reply address the customer asked for is held, with a choice, and nothing sent there', 'pat@work.example.com' in (t.js('(document.getElementById("hdPending")||{}).textContent') or '') and t.js('!!document.getElementById("hdUsePending")') is True)
+        t.js('document.getElementById("hdUsePending").click()')
+        time.sleep(0.4)
+        check('hq: "Use" sends HQ\'s decision to the Worker', [x['body'] for x in posts(t) if x['path'] == '/admin/help/contact'][-1:] == [{'id': 'a2', 'use': True}])
+        t.until('!!document.getElementById("hdtReplyGo")', 5)
+        t.js('window.__routes["/admin/help/reply"]={status:409,body:{error:"This address was typed in by HQ, not given to us by the customer. Check it is right, then confirm to send.",confirm_needed:true,address:"host@example.com"}};'
+             'document.getElementById("hdtReply").value="Try reloading";document.getElementById("hdtReplyGo").click()')
+        cbox = t.until('(document.getElementById("hdConfirm")||{}).textContent', 5) or ''
+        check('hq: a reply to a typed-in address asks, on the page, to confirm that exact address', 'host@example.com' in cbox and 'typed in by HQ' in cbox and t.js('!!document.getElementById("hdConfirmGo")') is True, cbox)
+        t.shot('22-hq-typed-address-confirm')
+        t.js('window.__routes["/admin/help/reply"]={status:200,body:{ok:true}};document.getElementById("hdConfirmGo").click()')
+        time.sleep(0.4)
+        rb = [x['body'] for x in posts(t) if x['path'] == '/admin/help/reply'][-1]
+        check('hq: confirming resends with that address named', rb.get('confirm_to') == 'host@example.com' and rb.get('body') == 'Try reloading', rb)
+        t.until('!!document.getElementById("hdtReply")', 5)
         light = t.js(LIGHT + '("#hdTicket input, #hdTicket select, #hdTicket textarea")')
         check('hq: the ticket card\'s fields and text boxes are HQ\'s dark ones', light == [], light)
         t.js('document.documentElement.style.scrollBehavior="auto";window.scrollTo(0,document.getElementById("hdTicket").getBoundingClientRect().top+window.pageYOffset-20)')

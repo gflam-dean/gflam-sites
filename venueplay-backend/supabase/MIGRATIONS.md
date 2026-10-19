@@ -266,4 +266,13 @@ once-a-week trivia and musical bingo rule. Set only from HQ (Venues > Details > 
 nights", billing Worker `/admin/venue-gaming`, owner or accounts admins, audited as `venue_unlimited_nights_on` /
 `_off`); the trigger puts the old value back when a venue's own login writes it. Not security definer and no new
 policy or grant, so RLS-BASELINE.json does not change. Either order with the Workers is safe (both read the column
-fail-safe). Branch `feature/venue-switches-logos-dropdowns`. NOT RUN. Rollback: in the file.
+fail-safe). Branch `feature/venue-switches-logos-dropdowns`. RUN by Dean 20 Oct 2026. Rollback: in the file.
+
+`venueplay-108-help-desk-hardening.sql`: help desk hardening after the independent review (19 Oct 2026, branch
+`fix/help-desk-review`). `vp_help_limits` and `vp_help_hit(key, window_secs, limit)`: rate limits kept in the database, one atomic
+statement per hit, so they hold across every Worker instance (keys hold a salted hash of a network address, never the address).
+`vp_help_tickets.reply_token` (a per-ticket secret an emailed reply must quote; existing tickets get one), `contact_email_pending`
+(a Reply-To held until HQ confirms it), `contact_typed` (an address HQ typed in; replies need the owner or a confirm).
+`vp_help_push_subs.last_peek_at` defaults to now(), the only clock the phone-alert cursor uses. Run BEFORE the billing Worker of
+that branch: it writes reply_token and contact_typed on every new ticket. After running, dump RLS-BASELINE.json (one new locked
+table, one new definer function). NOT YET RUN. Rollback: in the file. (107 is claimed by feature/venue-switches-logos-dropdowns.)
