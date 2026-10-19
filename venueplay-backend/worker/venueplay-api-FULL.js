@@ -2744,6 +2744,22 @@ async function vpaHandleVenueGaming(request, env, json) {
   if (patch.entity_type === null) {
     patch.paid_entry_enabled = false;   // unconditional: clearing what a venue IS always locks it
   }
+  /* UNLIMITED TRIVIA AND MUSICAL BINGO NIGHTS (migration 107, Dean 19 Oct 2026, for Deepwater
+     Hotel). The game Worker skips its once-a-week check for a venue with this set. HQ only: this
+     route is owner/accounts admins, and a trigger in 107 puts the old value back when a venue's
+     own login tries to write it. A real true or false only, so a stray string cannot switch it on.
+     Its own audit row, so "who gave this venue unlimited nights, and when" is one search. */
+  let weeklyBefore;
+  if (b.weekly_limit_off !== undefined) {
+    if (b.weekly_limit_off !== true && b.weekly_limit_off !== false) {
+      return json({ error: 'weekly_limit_off must be true or false.' }, 400);
+    }
+    patch.weekly_limit_off = b.weekly_limit_off;
+    // Read on its own: naming the column in the select above would 404 every gaming edit
+    // until migration 107 is run.
+    const wl = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=id,weekly_limit_off');
+    weeklyBefore = (wl && wl[0] && wl[0].weekly_limit_off === true);
+  }
   if (!Object.keys(patch).length) return json({ error: 'Nothing to change.' }, 400);
 
   const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_venues?id=eq.' + encodeURIComponent(venueId), {
@@ -2751,14 +2767,33 @@ async function vpaHandleVenueGaming(request, env, json) {
     headers: { ...vpaHeaders(env), 'Prefer': 'return=representation' },
     body: JSON.stringify(patch),
   });
-  if (!res.ok) return json({ error: 'Could not save. ' + (await res.text()).slice(0, 180) }, 500);
+  if (!res.ok) {
+    const t = (await res.text()).slice(0, 180);
+    if (patch.weekly_limit_off !== undefined && /weekly_limit_off/.test(t)) {
+      return json({ error: 'Run migration 107 first: the unlimited nights switch is not in the database yet. Nothing was changed.' }, 409);
+    }
+    return json({ error: 'Could not save. ' + t }, 500);
+  }
   const saved = (await res.json())[0] || {};
 
-  await vpaInsert(env, 'vp_admin_audit', {
-    actor_admin: actor.actorId || null, actor_label: actor.label || 'admin',
-    action: 'venue_gaming_updated', target: 'venue:' + venueId,
-    detail: { name: prior.name, from: { entity_type: prior.entity_type, paid_entry_enabled: prior.paid_entry_enabled }, to: patch },
-  }, false).catch(function () {});
+  const gamingKeys = Object.keys(patch).filter(function (k) { return k !== 'weekly_limit_off'; });
+  if (gamingKeys.length) {
+    const gp = {};
+    gamingKeys.forEach(function (k) { gp[k] = patch[k]; });
+    await vpaInsert(env, 'vp_admin_audit', {
+      actor_admin: actor.actorId || null, actor_label: actor.label || 'admin',
+      action: 'venue_gaming_updated', target: 'venue:' + venueId,
+      detail: { name: prior.name, from: { entity_type: prior.entity_type, paid_entry_enabled: prior.paid_entry_enabled }, to: gp },
+    }, false).catch(function () {});
+  }
+  if (patch.weekly_limit_off !== undefined) {
+    await vpaInsert(env, 'vp_admin_audit', {
+      actor_admin: actor.actorId || null, actor_label: actor.label || 'admin',
+      action: patch.weekly_limit_off ? 'venue_unlimited_nights_on' : 'venue_unlimited_nights_off',
+      target: 'venue:' + venueId,
+      detail: { name: prior.name, from: weeklyBefore, to: patch.weekly_limit_off },
+    }, false).catch(function () {});
+  }
 
   return json({ ok: true, venue: saved });
 }

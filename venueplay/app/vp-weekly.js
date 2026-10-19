@@ -57,6 +57,9 @@
      Returns null when there is nothing to say, otherwise { nextIso, nextDay, text }. */
   function check(venue, format, now) {
     if (!venue) return null;
+    // HQ lifted the rule for this venue (vp_venues.weekly_limit_off, migration 107): the Worker
+    // skips it, so the console must not warn about it either.
+    if (venue.weekly_limit_off === true) return null;
     var col = format === 'musical' ? 'last_musical_at' : 'last_trivia_at';
     var label = format === 'musical' ? 'Musical bingo' : 'Trivia';
     var lastAt = venue[col];

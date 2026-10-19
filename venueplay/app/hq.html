@@ -811,7 +811,10 @@
        .order("created_at",{ascending:false}).limit(500),
       // Who may collect player contact details. Its own query so a failure here cannot take
       // the venue list down with it; the panel says so rather than rendering empty.
-      c.from("venueplay_founding").select("id,venue_name,contact_email,optin_release_approved")
+      c.from("venueplay_founding").select("id,venue_name,contact_email,optin_release_approved"),
+      /* UNLIMITED NIGHTS (migration 107). Its own query for the same reason as hide_from_trusted:
+         before 107 is run this one 400s and every switch reads "off"; the venue list is untouched. */
+      c.from("vp_venues").select("id,weekly_limit_off")
     ]).then(function(settled){
       var r = settled.map(function(x){ return x.status==="fulfilled" ? x.value : null; });
       var venuesFailed = settled[0].status !== "fulfilled";
@@ -828,6 +831,8 @@
         S.screenSeen[v.id]=v.screen_seen_at||null;                 // heartbeat (migration 64)
         S.screenVer[v.id]=v.screen_version||null;                  // which page it runs (migration 66)
       });
+      S.weeklyOff={}; S.weeklyOffKnown = !!(r[14] && !r[14].error && r[14].data);
+      ((r[14] && r[14].data) || []).forEach(function(v){ S.weeklyOff[v.id]=v.weekly_limit_off===true; });
       S.accounts=(r[13] && r[13].data) || [];
       S.accountsFailed = settled[13] && settled[13].status !== "fulfilled";
       S.groups=(r[1] && r[1].data) || [];
@@ -1935,6 +1940,7 @@
               : "Free entry only, which is a promotional game and lawful everywhere. Set what they are, then switch paid entry on.")+
           '</div>'+
         '</div>'+
+        weeklyOffHtml(v)+
         complianceHtml(v, ent);
       dt.innerHTML='<td colspan="5">'+
         '<b>Screen address</b> screen.venueplay.com.au/'+esc(v.slug||"")+' &middot; '+
@@ -2111,7 +2117,38 @@
   $("venueRows").addEventListener("change", function(e){
     var sel=e.target.closest("select.gament");
     if(sel) setVenueGaming(sel.getAttribute("data-vid"), { entity_type: sel.value || null }, sel);
+    var wo=e.target.closest("input.weeklyoff");
+    if(wo) setWeeklyOff(wo.getAttribute("data-vid"), wo.checked, wo);
   });
+
+  /* UNLIMITED TRIVIA AND MUSICAL BINGO NIGHTS (migration 107, Dean 19 Oct 2026). Trivia and musical
+     bingo run once a week per venue; this lifts that for ONE venue. Owner and accounts admins only,
+     the same people the Worker route lets through, and the Worker writes the audit row
+     (venue_unlimited_nights_on / _off), so the log says who did it whatever this page does. */
+  function weeklyOffHtml(v){
+    if(!canBilling()) return "";
+    var on = !!(S.weeklyOff && S.weeklyOff[v.id]);
+    return '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line-2)">'+
+      '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:700">'+
+        '<input type="checkbox" class="weeklyoff" data-vid="'+esc(v.id)+'"'+(on?" checked":"")+
+        (S.weeklyOffKnown?"":" disabled")+' style="accent-color:var(--pink);width:16px;height:16px;margin:0">'+
+        'Unlimited trivia and musical bingo nights</label>'+
+      '<div class="note" style="margin-top:4px">'+
+        (!S.weeklyOffKnown ? "Not available until migration 107 is run."
+          : on ? "ON: this venue can start trivia and musical bingo as often as it likes."
+               : "Off: trivia and musical bingo run once a week each, the standard rule.")+
+        ' Every change is recorded in the audit log.</div>'+
+    '</div>';
+  }
+  function setWeeklyOff(id, on, el){
+    el.disabled=true;
+    workerPost("/admin/venue-gaming", { venue_id:id, weekly_limit_off: !!on }).then(function(res){
+      el.disabled=false;
+      if(res.error){ alert(res.error); renderVenues(); return; }
+      S.weeklyOff[id] = !!(res.venue && res.venue.weekly_limit_off === true);
+      renderVenues(); loadAuditOnly();
+    });
+  }
 
   /* COMPLIANCE, ON THE CARD. What the venue said it is, whether and when it accepted the
      compliance line, the permits it has recorded, and (on request) the last three nights it

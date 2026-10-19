@@ -8784,10 +8784,23 @@ async function chargeNightOverage(env, session) {
 async function checkWeeklyFormatLimit(env, session, isTrivia) {
   const col = isTrivia ? 'last_trivia' : 'last_musical';
   const label = isTrivia ? 'Trivia' : 'Musical bingo';
-  const venues = await sbGet(env, 'vp_venues',
-    'id=eq.' + enc(session.venue_id) + '&select=id,' + col + '_at,' + col + '_session_id');
+  const base = 'id=eq.' + enc(session.venue_id) + '&select=id,' + col + '_at,' + col + '_session_id';
+  /* UNLIMITED NIGHTS, A VENUE AT A TIME (migration 107, Dean 19 Oct 2026, for Deepwater Hotel).
+     vp_venues.weekly_limit_off is set ONLY from HQ by a platform admin (billing Worker
+     /admin/venue-gaming, audited; a trigger keeps a venue's own login off it). When it is true
+     this venue may start trivia and musical bingo as often as it likes.
+     ASKED FOR SEPARATELY ON PURPOSE. Before migration 107 is run, PostgREST refuses a select
+     naming the column, and a refusal here would stop EVERY trivia and musical night starting.
+     So a failed read falls back to the old select and the old rule: the switch is simply off. */
+  let venues;
+  try {
+    venues = await sbGet(env, 'vp_venues', base + ',weekly_limit_off');
+  } catch (_) {
+    venues = await sbGet(env, 'vp_venues', base);
+  }
   const v = venues && venues[0];
   if (!v) return null;
+  if (v.weekly_limit_off === true) return null;   // HQ lifted the once-a-week rule for this venue
   const lastAt = v[col + '_at'];
   const lastSession = v[col + '_session_id'];
   const WEEK = 7 * 24 * 60 * 60 * 1000;
