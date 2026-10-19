@@ -498,6 +498,7 @@
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-hold.js"></script>
 <script src="/app/vp-onetab.js"></script>
+<script src="/app/vp-pickup.js"></script>
 <script src="/app/vp-print.js"></script>
 <script>
 (function(){
@@ -778,6 +779,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   // the song list, the "now playing" panel and the cosmetic daub broadcast.
   var G={
     venueId:null, pairCode:"", sessionId:"", joinCode:"", gameId:"", slug:"",
+    consoleId:(window.VP_PICKUP ? VP_PICKUP.newId() : ""),   // this console, so a pickup elsewhere can stand it down (vp-pickup.js)
     status:"setup", pattern:"one", prize:"the prize", autoDaub:true,
     playlistId:"", playlistName:"All songs", hitsOnly:true,
     songs:[],              // song objects in play this game (each gains song_id from the Worker at start)
@@ -883,14 +885,39 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   var WORKER_TO_PAT={ one_line:"one", two_lines:"two", four_corners:"corners", full_house:"full" };
   function musicKey(){ return "vpMusicGame-"+(G.venueId||""); }
   function saveMusic(){
-    try{ if(G.gameId && G.sessionId && G.status==="running"){ localStorage.setItem(musicKey(), JSON.stringify({ v:1, ts:Date.now(), sessionId:G.sessionId })); } }catch(e){}
+    try{ if(G.gameId && G.sessionId && G.status==="running"){ localStorage.setItem(musicKey(), JSON.stringify({ v:1, ts:Date.now(), sessionId:G.sessionId, cid:G.consoleId })); } }catch(e){}
   }
   function clearMusic(){ try{ localStorage.removeItem(musicKey()); }catch(e){} }
+  function readMusicSave(){
+    var raw; try{ raw=localStorage.getItem(musicKey()); }catch(e){ return null; }
+    if(!raw) return null;
+    var p; try{ p=JSON.parse(raw); }catch(e){ clearMusic(); return null; }
+    if(!p || !p.sessionId || !p.ts || (Date.now()-p.ts)>MUSIC_SAVE_MAX_AGE){ clearMusic(); return null; }
+    return p;
+  }
+  /* PICK UP A RUNNING GAME FROM ANY DEVICE (Dean, 20 Oct 2026), the same as trivia: the server is
+     asked first (/app/vp-pickup.js); this tablet's own game comes back silently, one started or
+     picked up on another device is offered ("Pick it up?") and restored the same way on yes. */
   function restoreMusic(){
-    var raw; try{ raw=localStorage.getItem(musicKey()); }catch(e){ return Promise.resolve(false); }
-    if(!raw) return Promise.resolve(false);
-    var p; try{ p=JSON.parse(raw); }catch(e){ clearMusic(); return Promise.resolve(false); }
-    if(!p || !p.sessionId || !p.ts || (Date.now()-p.ts)>MUSIC_SAVE_MAX_AGE){ clearMusic(); return Promise.resolve(false); }
+    var p=readMusicSave();
+    if(!window.VP_PICKUP) return p ? restoreMusicFrom(p) : Promise.resolve(false);
+    return VP_PICKUP.find(apiPost, G.venueId, "musical_bingo").then(function(run){
+      if(run===undefined) return p ? restoreMusicFrom(p) : false;
+      var d=VP_PICKUP.decide(p, run);
+      if(d==="none"){ if(p) clearMusic(); return false; }
+      if(p && p.sessionId!==run.session_id){ clearMusic(); p=null; }   // an older night's pointer
+      if(d==="restore"){ if(p.cid) G.consoleId=p.cid; return restoreMusicFrom(p); }
+      return VP_PICKUP.ask("musical_bingo").then(function(yes){
+        if(!yes) return false;
+        var cid=VP_PICKUP.newId();
+        return VP_PICKUP.take(apiPost, G.venueId, run, cid).then(function(){
+          G.consoleId=cid;
+          return restoreMusicFrom({ sessionId:run.session_id, cid:cid });
+        }, function(e){ hostError((e && e.message) || "Could not pick the game up. Try again."); return false; });
+      });
+    });
+  }
+  function restoreMusicFrom(p){
     return fetch(VP_GAME_API+"/snapshot?session="+encodeURIComponent(p.sessionId))
       .then(function(res){ return res.ok ? res.json() : null; })
       .then(function(snap){
@@ -931,6 +958,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
         VP_HOLD.release($("playNextBtn")); $("playNextBtn").disabled=false; syncPlayBtn();
         $("statusText").textContent="Recovered your live game";
         renderConsole();   // connect() replays the running state to the TV once it (re)subscribes
+        saveMusic();       // this device's own save now, so a reload here picks it straight back up
         return true;
       })
       .catch(function(){ return false; });
@@ -966,6 +994,8 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   var HEARTBEAT_MS = 30000;
   setInterval(function(){
     if(G.status === "lobby" || G.status === "running") sendState();
+    // Carries this console's id, so a second console on the same game finds out (vp-pickup.js).
+    if(G.status === "running") send({ t:"host_here", cid:G.consoleId });
   }, HEARTBEAT_MS);
 
   // ================= AUDIO ENGINE (this device is plugged into the PA) =================
@@ -1769,7 +1799,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     // A freshly (re)loaded screen announces itself with hello:true. Re-hand the session and,
     // if a game is live, replay state + the current song so the TV catches up.
     if(m && m.hello){
-      send({ t:"host_here" });
+      send({ t:"host_here", cid:G.consoleId });
       if(G.sessionId && G.joinCode) send({ t:"session", session_id:G.sessionId, join_code:G.joinCode });
       // State the volume rather than trusting the screen's default to match ours.
       try{ bcast({ t:"volume", level:_hboost }); }catch(e){}
@@ -1795,7 +1825,9 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       hostError("The TV cannot play the music (autoplay is blocked on that screen). Turn on the monitor switch here and put this device through the PA, or allow autoplay on the TV.");
       return;
     }
-    if(m.t==="host_here") return; // ignore our own presence pings
+    /* Another console's presence ping. Never acted on by itself (anybody can send one): it only makes
+       this console ask the Worker whether its game was picked up elsewhere (/app/vp-pickup.js). */
+    if(m.t==="host_here"){ if(window.VP_PICKUP) VP_PICKUP.heard(m.cid); return; }
     if(m.t==="join"){
       // Cosmetic roster only: the Worker meters vp_players and deals the card. The phone
       // fetches its own card via /player/card off the "started"/"state" broadcast.
@@ -1836,7 +1868,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
         if(status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") subscribed = false;
       if(status==="SUBSCRIBED"){
         subscribed=true;
-        send({ t:"host_here" });   // announce to the screen; it replies with tv_here
+        send({ t:"host_here", cid:G.consoleId });   // announce to the screen; it replies with tv_here
         flushQueue();
         $("statusDot").classList.remove("on"); $("statusText").textContent="Waiting for screen";
         // replay so a screen/players who joined before us (or reloaded) catch up
@@ -2116,7 +2148,9 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     var now = Date.now();
     if(now - _lastReassert < 1200) return;
     _lastReassert = now;
-    reassertToTv();
+    // Picked up on another device while this one slept? Ask before replaying anything (vp-pickup.js).
+    if(window.VP_PICKUP) VP_PICKUP.check().then(function(still){ if(still) reassertToTv(); });
+    else reassertToTv();
   }
   window.addEventListener("pageshow", reassertOnReturn);
   document.addEventListener("visibilitychange", function(){
@@ -2260,6 +2294,11 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       var _oneTab=(window.VP_ONETAB ? VP_ONETAB.claim("musical:"+G.venueId) : Promise.resolve(true));
       Promise.all([libReady, _oneTab]).then(function(){   // library must be loaded before we rebuild a game's song list
         restoreMusic().then(function(){         // recover a live game first (accidental reload), then pair the TV as normal
+          /* Picked up on another device: stand down and fall silent (/app/vp-pickup.js). */
+          if(window.VP_PICKUP) VP_PICKUP.arm({ post:apiPost, venueId:G.venueId, format:"musical_bingo",
+            sessionId:function(){ return (G.gameId && G.status==="running") ? G.sessionId : ""; },
+            cid:function(){ return G.consoleId; },
+            onMoved:function(){ try{ audio.pause(); }catch(e){} clearMusic(); VP_PICKUP.standDownNotice("musical_bingo"); } });
           if(tv){ connect(tv); }                // paired from the screen QR
           else if(slug && window.VP && VP.venueCode){ connect(VP.venueCode("musical-"+slug)); }
           else { $("connectView").classList.remove("hidden"); }

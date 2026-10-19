@@ -823,7 +823,10 @@
       c.from("venueplay_founding").select("id,venue_name,contact_email,optin_release_approved"),
       /* UNLIMITED NIGHTS (migration 107). Its own query for the same reason as hide_from_trusted:
          before 107 is run this one 400s and every switch reads "off"; the venue list is untouched. */
-      c.from("vp_venues").select("id,weekly_limit_off")
+      c.from("vp_venues").select("id,weekly_limit_off"),
+      /* ONE-NIGHT PASS (migration 110). Its own query, same reason: before 110 is run this one 400s
+         and the venue card says the pass is not available yet; nothing else is touched. */
+      c.from("vp_venues").select(NIGHT_PASS_COLS)
     ]).then(function(settled){
       var r = settled.map(function(x){ return x.status==="fulfilled" ? x.value : null; });
       var venuesFailed = settled[0].status !== "fulfilled";
@@ -842,6 +845,8 @@
       });
       S.weeklyOff={}; S.weeklyOffKnown = !!(r[14] && !r[14].error && r[14].data);
       ((r[14] && r[14].data) || []).forEach(function(v){ S.weeklyOff[v.id]=v.weekly_limit_off===true; });
+      S.nightPass={}; S.nightPassKnown = !!(r[15] && !r[15].error && r[15].data);
+      ((r[15] && r[15].data) || []).forEach(function(v){ S.nightPass[v.id]=v; });
       S.accounts=(r[13] && r[13].data) || [];
       S.accountsFailed = settled[13] && settled[13].status !== "fulfilled";
       S.groups=(r[1] && r[1].data) || [];
@@ -2027,6 +2032,7 @@
           '</div>'+
         '</div>'+
         weeklyOffHtml(v)+
+        nightPassHtml(v)+
         complianceHtml(v, ent);
       dt.innerHTML='<td colspan="5">'+
         '<b>Screen address</b> screen.venueplay.com.au/'+esc(v.slug||"")+' &middot; '+
@@ -2208,6 +2214,67 @@
     var wo=e.target.closest("input.weeklyoff");
     if(wo) setWeeklyOff(wo.getAttribute("data-vid"), wo.checked, wo);
   });
+  $("venueRows").addEventListener("click", function(e){
+    var g=e.target.closest("button[data-npgrant]");
+    if(g){ var f=document.querySelector('select.npfmt[data-vid="'+g.getAttribute("data-npgrant")+'"]');
+           setNightPass(g.getAttribute("data-npgrant"), "grant", f ? f.value : "either", g); return; }
+    var c=e.target.closest("button[data-npcancel]");
+    if(c) setNightPass(c.getAttribute("data-npcancel"), "cancel", null, c);
+  });
+
+  /* ONE MORE NIGHT, ONCE (migration 110, Dean 20 Oct 2026: "it would be shit to not be able to fix
+     something to let a venue play a night on a night"). The switch above lifts the once-a-week rule
+     for good; this lets the venue start ONE more trivia or musical bingo night in the next 24 hours,
+     and then it is used up on its own. The game Worker enforces it and marks it used; the billing
+     Worker grants it (owner and accounts admins, the same people as the switch) and writes the audit
+     row. Its state is one function, so the card and the test read the same answer. */
+  var NIGHT_PASS_COLS = "id,night_pass_format,night_pass_until,night_pass_granted_at,night_pass_granted_by,night_pass_used_at,night_pass_used_format";
+  function nightPassState(p, now){
+    if(!p || !p.night_pass_until) return "none";
+    if(p.night_pass_used_at) return "used";
+    return Date.parse(p.night_pass_until) > (now==null ? Date.now() : now) ? "waiting" : "expired";
+  }
+  function nightPassWhat(f){
+    return f==="trivia" ? "trivia" : f==="musical_bingo" ? "musical bingo" : "trivia or musical bingo";
+  }
+  function bneWhen(iso){
+    var t=Date.parse(iso||""); if(isNaN(t)) return "";
+    try{ return new Date(t).toLocaleString("en-AU",{ timeZone:"Australia/Brisbane", weekday:"short", day:"numeric", month:"short", hour:"numeric", minute:"2-digit" }); }
+    catch(e){ return new Date(t).toISOString().slice(0,16).replace("T"," "); }
+  }
+  function nightPassHtml(v){
+    if(!canBilling()) return "";
+    var p=(S.nightPass && S.nightPass[v.id]) || null, st=nightPassState(p);
+    var who = p && p.night_pass_granted_by ? ' Granted by '+esc(p.night_pass_granted_by)+(p.night_pass_granted_at?' on '+esc(bneWhen(p.night_pass_granted_at)):'')+'.' : '';
+    var line = !S.nightPassKnown ? "Not available until migration 110 is run."
+      : st==="waiting" ? '<span class="badge live" data-npstate="waiting">Waiting</span> One more '+esc(nightPassWhat(p.night_pass_format))+' night, until '+esc(bneWhen(p.night_pass_until))+'.'+who
+      : st==="used"    ? '<span class="badge" data-npstate="used">Used</span> Used for a '+esc(nightPassWhat(p.night_pass_used_format))+' night on '+esc(bneWhen(p.night_pass_used_at))+'.'+who
+      : st==="expired" ? '<span class="badge" data-npstate="expired">Expired</span> Not used. It lapsed on '+esc(bneWhen(p.night_pass_until))+'.'+who
+      : "None given.";
+    var off=S.nightPassKnown ? "" : " disabled";
+    return '<div class="nightpass" data-vid="'+esc(v.id)+'" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line-2)">'+
+      '<div style="font-weight:700">Let them run one more night</div>'+
+      '<div class="note" style="margin-top:4px">For a night that went wrong, or a one-off. They can start ONE more trivia or musical bingo night in the next 24 hours, even if they have already had their night this week. Used up on its own. Every pass is recorded in the audit log.</div>'+
+      '<div class="note npline" style="margin-top:6px">'+line+'</div>'+
+      '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px">'+
+        '<select class="npfmt" data-vid="'+esc(v.id)+'"'+off+' style="width:auto;display:inline-block;padding:5px 26px 5px 9px;font-size:12.5px">'+
+          '<option value="either">Trivia or musical bingo</option><option value="trivia">Trivia</option><option value="musical_bingo">Musical bingo</option>'+
+        '</select>'+
+        '<button class="mini" data-npgrant="'+esc(v.id)+'"'+off+'>'+(st==="waiting" ? "Give a fresh 24 hours" : "Let them run one more night")+'</button>'+
+        (st==="waiting" ? '<button class="mini" data-npcancel="'+esc(v.id)+'">Cancel the pass</button>' : '')+
+      '</div>'+
+    '</div>';
+  }
+  function setNightPass(id, action, format, el){
+    el.disabled=true;
+    workerPost("/admin/night-pass", { venue_id:id, action:action, format:format }).then(function(res){
+      el.disabled=false;
+      if(res.error){ var ln=document.querySelector('.nightpass[data-vid="'+id+'"] .npline'); if(ln) ln.textContent=res.error; return; }
+      var p=res.pass||{}; p.id=id;
+      S.nightPass=S.nightPass||{}; S.nightPass[id]=p;
+      renderVenues(); loadAuditOnly();
+    });
+  }
 
   /* UNLIMITED TRIVIA AND MUSICAL BINGO NIGHTS (migration 107, Dean 19 Oct 2026). Trivia and musical
      bingo run once a week per venue; this lifts that for ONE venue. Owner and accounts admins only,

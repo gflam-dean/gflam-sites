@@ -7795,7 +7795,7 @@ async function handleSnapshot(request, env, json) {
  *
  * Body { venue_id, format: 'trivia' | 'musical_bingo' }. Answers { running: null } or
  * { running: { session_id, game_id, format, join_code, holder, taken_at, current } }.
- *   holder   the console that last picked it up (vp_games.console_id, migration 110), or null when
+ *   holder   the console that last picked it up (vp_sessions.console_holders, migration 110), or null when
  *            nobody has: the console that started it is the holder then
  *   current  trivia only, an open question: its correct answer and the phones already in. The
  *            console that started the question knew both; this is staff-only, like /host/question.
@@ -7816,22 +7816,25 @@ async function handleHostRunning(request, env, json) {
 /* The newest running game of this format at this venue, in an open session. Shared by the two
    routes so "which game" has one answer. withCurrent: add the trivia question detail. */
 async function findRunningGame(env, venueId, format, withCurrent) {
-  const sessions = await sbGet(env, 'vp_sessions',
-    'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id,join_code,status&order=created_at.desc&limit=5');
+  /* WHO HOLDS IT is kept on the SESSION, per format (vp_sessions.console_holders, migration 110), not
+     on the game: the next round is a new game row in the same night, and a console that was replaced
+     during round one must still know it was replaced in round two. Before 110, the read without it:
+     nobody holds anything, which is how it has always been. */
+  const sbase = 'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&order=created_at.desc&limit=5&select=id,join_code,status';
+  let sessions;
+  try { sessions = await sbGet(env, 'vp_sessions', sbase + ',console_holders'); }
+  catch (_) { sessions = await sbGet(env, 'vp_sessions', sbase); }
   if (!sessions.length) return null;
   const ids = sessions.map((x) => x.id);
-  const base = 'session_id=in.(' + ids.map(enc).join(',') + ')&format=eq.' + enc(format) +
-               '&status=eq.running&order=seq.desc&limit=1&select=id,session_id,seq,format';
-  // console_id arrives with migration 110. Before it, the read without it: nobody holds the game.
-  let games;
-  try { games = await sbGet(env, 'vp_games', base + ',console_id,console_taken_at'); }
-  catch (_) { games = await sbGet(env, 'vp_games', base); }
+  const games = await sbGet(env, 'vp_games', 'session_id=in.(' + ids.map(enc).join(',') + ')&format=eq.' + enc(format) +
+    '&status=eq.running&order=seq.desc&limit=1&select=id,session_id,seq,format');
   if (!games.length) return null;
   const g = games[0];
   const sess = sessions.find((x) => x.id === g.session_id) || {};
+  const h = (sess.console_holders && typeof sess.console_holders === 'object') ? sess.console_holders[format] : null;
   const out = {
     session_id: g.session_id, game_id: g.id, format: g.format, join_code: sess.join_code || '',
-    holder: g.console_id || null, taken_at: g.console_taken_at || null, current: null,
+    holder: (h && h.id) || null, taken_at: (h && h.at) || null, current: null,
   };
   if (withCurrent && format === 'trivia') {
     const tg = await sbGet(env, 'vp_trivia_games',
@@ -7859,8 +7862,8 @@ async function findRunningGame(env, venueId, format, withCurrent) {
 }
 
 /* ------------------------------ POST /host/running/take ------------------------------
- * "Pick it up here": this console now runs the game. Records it on the game row (vp_games.
- * console_id and console_taken_at, migration 110), so any other console still open on the game
+ * "Pick it up here": this console now runs the game. Records it on the night (vp_sessions.
+ * console_holders[format], migration 110), so any other console still open on the game
  * finds out it has been replaced the next time it asks (/host/running, on waking, on hearing
  * another console, and every two minutes) and stands down. Two consoles never run one quiz.
  *
@@ -7888,8 +7891,14 @@ async function handleHostRunningTake(request, env, json) {
   if (g.status !== 'running') return json({ error: 'That game has finished.' }, 409);
   if (g.format !== 'trivia' && g.format !== 'musical_bingo') return json({ error: 'Unsupported format' }, 400);
   const takenAt = new Date().toISOString();
+  /* One entry per format, so a trivia pickup never stands down a musical console running in the same
+     night. Read, then write the whole object back: a second pickup in the same second is the only race,
+     and the later one winning is the right answer anyway. */
   try {
-    await sbPatch(env, 'vp_games', 'id=eq.' + enc(gameId), { console_id: consoleId, console_taken_at: takenAt });
+    const srows = await sbGet(env, 'vp_sessions', 'id=eq.' + enc(g.session_id) + '&select=id,console_holders&limit=1');
+    const holders = (srows[0] && srows[0].console_holders && typeof srows[0].console_holders === 'object') ? srows[0].console_holders : {};
+    holders[g.format] = { id: consoleId, at: takenAt, game_id: gameId };
+    await sbPatch(env, 'vp_sessions', 'id=eq.' + enc(g.session_id), { console_holders: holders });
   } catch (e) {
     return json({ ok: true, held: false, game_id: gameId, session_id: g.session_id });   // before migration 110
   }

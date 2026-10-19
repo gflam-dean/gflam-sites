@@ -327,6 +327,7 @@
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-print.js"></script>
 <script src="/app/vp-onetab.js"></script>
+<script src="/app/vp-pickup.js"></script>
 <script src="/app/topanswers/ta-match.js"></script>
 <!-- Punters Reckon's boards are NOT a script: the console asks the game Worker for them (prLoadBoards). -->
 <script src="/app/topanswers/pr-game.js"></script>
@@ -408,7 +409,7 @@
   var HEARTBEAT_MS = 30000;
   var _leaving=false;   // set as the page is left, so closing its channel is not reported as a drop
   setInterval(function(){
-    if(G.status && G.status !== "setup") bcast({ t:"host_here" });
+    if(G.status && G.status !== "setup") bcast({ t:"host_here", cid:G.consoleId });
   }, HEARTBEAT_MS);
   var LOST_MSG="Lost the connection to the players' phones. Reconnecting: hold off on the next question for a moment.";
   var gRetryT=null, gTries=0, gLostT=null, gLostShown=false;
@@ -475,6 +476,7 @@
     board:[],                       // latest leaderboard rows [{name,points}] from /host/reveal
     players:{}, order:[],           // cosmetic roster (pid -> {name}) from phone broadcasts
     answeredPids:{}, answeredQseq:0,
+    consoleId:(window.VP_PICKUP ? VP_PICKUP.newId() : ""),   // this console, so a pickup elsewhere can stand it down (vp-pickup.js)
     busy:false, tick:null
   };
 
@@ -553,16 +555,46 @@
            host the right answer and "4/7 in", not "0/7" and no tick (break test, 14 Oct 2026). This
            tablet only; it never goes on a channel. */
         var cur = (G.current && G.status==="question") ? { qseq:G.current.qseq, ci:G.current.correctIndex, pids:G.answeredPids||{} } : null;
-        localStorage.setItem(triviaKey(), JSON.stringify({ v:1, ts:Date.now(), sessionId:G.sessionId, cur:cur }));
+        localStorage.setItem(triviaKey(), JSON.stringify({ v:1, ts:Date.now(), sessionId:G.sessionId, cur:cur, cid:G.consoleId }));
       }
     }catch(e){}
   }
   function clearTrivia(){ try{ localStorage.removeItem(triviaKey()); }catch(e){} }
+  /* This tablet's own saved quiz, or null. Clears a stale or broken one. */
+  function readTriviaSave(){
+    var raw; try{ raw=localStorage.getItem(triviaKey()); }catch(e){ return null; }
+    if(!raw) return null;
+    var p; try{ p=JSON.parse(raw); }catch(e){ clearTrivia(); return null; }
+    if(!p || !p.sessionId || !p.ts || (Date.now()-p.ts)>TRIVIA_SAVE_MAX_AGE){ clearTrivia(); return null; }
+    return p;
+  }
+  /* PICK UP A RUNNING QUIZ FROM ANY DEVICE (Dean, 20 Oct 2026). The server is asked first
+     (/app/vp-pickup.js, /host/running, staff only): this tablet's own quiz, not picked up anywhere
+     else since, comes back silently as it always has; a quiz started or picked up on another device
+     is offered ("A quiz is running at this venue. Pick it up?") and, on yes, recorded as this
+     console's and restored exactly the same way. If the server cannot say (an old Worker, no
+     network), this tablet's own save is all there is, as before. */
   function restoreTrivia(){
-    var raw; try{ raw=localStorage.getItem(triviaKey()); }catch(e){ return Promise.resolve(false); }
-    if(!raw) return Promise.resolve(false);
-    var p; try{ p=JSON.parse(raw); }catch(e){ clearTrivia(); return Promise.resolve(false); }
-    if(!p || !p.sessionId || !p.ts || (Date.now()-p.ts)>TRIVIA_SAVE_MAX_AGE){ clearTrivia(); return Promise.resolve(false); }
+    var p=readTriviaSave();
+    if(!window.VP_PICKUP) return p ? restoreTriviaFrom(p) : Promise.resolve(false);
+    return VP_PICKUP.find(apiPost, G.venueId, "trivia").then(function(run){
+      if(run===undefined) return p ? restoreTriviaFrom(p) : false;
+      var d=VP_PICKUP.decide(p, run);
+      if(d==="none"){ if(p) clearTrivia(); return false; }
+      if(p && p.sessionId!==run.session_id){ clearTrivia(); p=null; }   // an older night's pointer
+      if(d==="restore"){ if(p.cid) G.consoleId=p.cid; return restoreTriviaFrom(p); }
+      return VP_PICKUP.ask("trivia").then(function(yes){
+        if(!yes) return false;
+        var cid=VP_PICKUP.newId();
+        return VP_PICKUP.take(apiPost, G.venueId, run, cid).then(function(){
+          G.consoleId=cid;
+          // The open question's answer and who is in come from the server, as this tablet would have known them.
+          return restoreTriviaFrom({ sessionId:run.session_id, cur:run.current||null, cid:cid });
+        }, function(e){ hostError((e && e.message) || "Could not pick the quiz up. Try again."); return false; });
+      });
+    });
+  }
+  function restoreTriviaFrom(p){
     return fetch(VP_GAME_API+"/snapshot?session="+encodeURIComponent(p.sessionId))
       .then(function(res){ return res.ok ? res.json() : null; })
       .then(function(snap){
@@ -606,6 +638,7 @@
         }
         $("statusText").textContent="Recovered your live quiz";
         renderConsole();
+        saveTrivia();   // this device's own save now, so a reload here picks it straight back up
         return true;
       })
       .catch(function(){ return false; });
@@ -1313,6 +1346,9 @@
   //      game channel; both flow through onMsg) ----
   function onMsg(m){
     if(!m||!m.t) return;
+    /* Another console's heartbeat. Never acted on by itself (anybody can send one): it only makes
+       this console ask the Worker whether its quiz was picked up elsewhere (/app/vp-pickup.js). */
+    if(m.t==="host_here"){ if(window.VP_PICKUP) VP_PICKUP.heard(m.cid); return; }
 
   /* WHAT IS ON RIGHT NOW, SENT TO SOMEBODY WHO MISSED IT.
      The big screen has had this since the day it sat on a join QR through a live question.
@@ -1364,7 +1400,7 @@
       $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
       if(m.hello){
         // A freshly (re)loaded screen: re-hand the session + replay the running state.
-        send({ t:"host_here" });
+        send({ t:"host_here", cid:G.consoleId });
         if(G.sessionId && G.joinCode) send({ t:"session", session_id:G.sessionId, join_code:G.joinCode });
         if(G.status!=="setup"){ send({ t:"mode", mode:"trivia", title:G.setTitle }); send({ t:"players", count:playerCount() }); }
         /* REPLAY WHAT IS ACTUALLY ON. trivia/screen.html never calls the game Worker, so a
@@ -1416,7 +1452,7 @@
     ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
     ch.subscribe(function(status){
       if(status==="SUBSCRIBED"){
-        subscribed=true; send({ t:"host_here" }); flushQueue();
+        subscribed=true; send({ t:"host_here", cid:G.consoleId }); flushQueue();
         $("statusDot").classList.remove("on"); $("statusText").textContent="Waiting for screen";
       } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){
         /* Reset the flag. Without this, send() kept thinking the channel was up and posted into a
@@ -1852,6 +1888,11 @@
       /* ONE CONSOLE PER TABLET: a second tab used to restore this same quiz as a second live
          console. Ask the other tabs first (/app/vp-onetab.js, 14 Oct 2026). */
       (window.VP_ONETAB ? VP_ONETAB.claim("trivia:"+G.venueId) : Promise.resolve(true)).then(function(){ return restoreTrivia().then(function(ok){ return ok || restorePR(); }); }).then(function(){   // recover a live quiz first (if this was an accidental reload), then pair the TV as normal
+        /* Picked up on another device: stand down (/app/vp-pickup.js). Asks only while a quiz is on. */
+        if(window.VP_PICKUP) VP_PICKUP.arm({ post:apiPost, venueId:G.venueId, format:"trivia",
+          sessionId:function(){ return (G.gameId && G.status!=="setup" && G.status!=="ended") ? G.sessionId : ""; },
+          cid:function(){ return G.consoleId; },
+          onMoved:function(){ clearTick(); clearTrivia(); VP_PICKUP.standDownNotice("trivia"); } });
         var tv=tvFromUrl();
         var slug=(ctx.venue && ctx.venue.slug) || "";
         if(slug && window.VPSign){ VPSign.initHost(VP_GAME_API, slug, vpHostToken); }   // this venue's signing key
@@ -1904,7 +1945,10 @@
     var now = Date.now();
     if(now - _lastReassert < 1200) return;
     _lastReassert = now;
-    reassertToTv();
+    /* Ask first whether this quiz was picked up on another device while this one slept, so a
+       replaced console never puts its stale question back on the wall (/app/vp-pickup.js). */
+    if(window.VP_PICKUP) VP_PICKUP.check().then(function(still){ if(still) reassertToTv(); });
+    else reassertToTv();
   }
   window.addEventListener("pageshow", reassertOnReturn);
   document.addEventListener("visibilitychange", function(){

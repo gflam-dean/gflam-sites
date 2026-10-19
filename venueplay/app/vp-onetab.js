@@ -134,18 +134,23 @@
     var h = d.createElement("div");
     h.id = "vpOneTabT";
     h.style.cssText = "font-size:20px;font-weight:800;margin-bottom:8px";
-    h.textContent = wasStoodDown ? "This game moved to another tab" : "This game is already open in another tab";
+    h.textContent = o.title || (wasStoodDown ? "This game moved to another tab" : "This game is already open in another tab");
     var p = d.createElement("div");
     p.style.cssText = "font-size:15px;opacity:.85;margin-bottom:18px";
-    p.textContent = wasStoodDown
+    p.textContent = o.text || (wasStoodDown
       ? "You opened it again in another tab on this device, so this one has stepped back. Use that tab, or bring the game back here."
-      : "Running it in two tabs at once splits the game: what you do in one is not in the other. Use the other tab, or move the game here.";
+      : "Running it in two tabs at once splits the game: what you do in one is not in the other. Use the other tab, or move the game here.");
     var b = d.createElement("button");
     b.type = "button"; b.id = "vpOneTabTake";
     b.style.cssText = "font:inherit;font-size:16px;font-weight:800;padding:12px 20px;border:0;border-radius:999px;" +
       "background:#ff1f8e;color:#fff;cursor:pointer;min-width:220px";
-    b.textContent = "Use this tab instead";
-    b.addEventListener("click", function(){ b.disabled = true; b.textContent = "Moving the game here..."; take(); });
+    b.textContent = o.takeLabel || "Use this tab instead";
+    b.addEventListener("click", function(){
+      b.disabled = true; b.textContent = o.takingLabel || "Moving the game here...";
+      // Picked up on ANOTHER DEVICE: there is no tab here to tell, so just come back to life by reloading.
+      if (o.onTake) { try { o.onTake(); } catch (e) {} return; }
+      take();
+    });
     card.appendChild(h); card.appendChild(p); card.appendChild(b);
     if (o.back) {
       var bk = d.createElement("button");
@@ -243,6 +248,18 @@
     return true;
   }
 
+  /* PICKED UP ON ANOTHER DEVICE (vp-pickup.js, 20 Oct 2026). The other console is not a tab on this
+     tablet, so BroadcastChannel never hears it; the game Worker says so instead. This tab stands
+     down exactly as if another tab had taken over (live() false, so every send and API call
+     refuses), and covers the page with the notice, worded for a device. Its button reloads, and the
+     reload asks the host whether to pick the game back up here. */
+  function moved(opts){
+    state = "down";
+    noticeOpts = opts || {};
+    hideNotice();
+    showNotice(true);
+  }
+
   /* An iPad suspends a background tab outright, so it cannot answer while it
      sleeps. When it wakes, say so; whichever of the two is older stands down. */
   function onFront(){ if (root.document && root.document.visibilityState === "visible") sayLive(); }
@@ -256,6 +273,7 @@
     watch: watch,
     release: release,
     notice: notice,
+    moved: moved,
     // False with no BroadcastChannel: the page then runs exactly as it did before any of this.
     available: function(){ return !!bc; },
     // False only once this tab has been stood down or is waiting behind another.

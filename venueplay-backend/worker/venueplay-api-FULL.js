@@ -191,6 +191,7 @@ export default {
       if (request.method === 'POST' && path === '/admin/auto-archive'   && typeof vpaHandleAutoArchive === 'function')   return await vpaHandleAutoArchive(request, env, json);
       if (request.method === 'POST' && path === '/admin/venue-status'    && typeof vpaHandleVenueStatus === 'function')    return await vpaHandleVenueStatus(request, env, json);
       if (request.method === 'POST' && path === '/admin/venue-gaming'    && typeof vpaHandleVenueGaming === 'function')    return await vpaHandleVenueGaming(request, env, json);
+      if (request.method === 'POST' && path === '/admin/night-pass'      && typeof vpaHandleNightPass === 'function')      return await vpaHandleNightPass(request, env, json);
       if (request.method === 'POST' && path === '/admin/gst'             && typeof vpaHandleGst === 'function')            return await vpaHandleGst(request, env, json);
       if (request.method === 'GET'  && path === '/admin/venue-detail'    && typeof vpaHandleVenueDetail === 'function')    return await vpaHandleVenueDetail(request, env, json);
       if (request.method === 'GET'  && path === '/admin/venue-compliance' && typeof vpaHandleVenueCompliance === 'function') return await vpaHandleVenueCompliance(request, env, json);
@@ -2677,6 +2678,85 @@ async function vpaHandleGst(request, env, json) {
     total_cents: netCents, gst_cents: gstCents,
     truncated: truncated,
   });
+}
+
+/* ONE MORE NIGHT, ONCE (migration 110, Dean 20 Oct 2026: "it would be shit to not be able to fix
+   something to let a venue play a night on a night").
+
+   Trivia and musical bingo run once a week per venue. 107's switch lifts that for good; this lets
+   a venue run ONE more night inside the next 24 hours and then it is gone on its own. The game
+   Worker enforces it (checkWeeklyFormatLimit / stampWeeklyFormat) and marks it used; this only
+   grants and cancels. Owner and accounts HQ admins only, the same people as the 107 switch.
+
+   Body { venue_id, action: 'grant' | 'cancel', format: 'trivia' | 'musical_bingo' | 'either' }.
+   A grant replaces any earlier pass (a fresh 24 hours, nothing used). Every grant and cancel is an
+   audit row (venue_night_pass_granted / _cancelled) with who, and the game Worker writes
+   venue_night_pass_used when a night spends it. */
+const VPA_NIGHT_PASS_HOURS = 24;
+const VPA_NIGHT_PASS_FORMATS = ['trivia', 'musical_bingo', 'either'];
+const VPA_NIGHT_PASS_SELECT = 'id,name,night_pass_format,night_pass_until,night_pass_granted_at,night_pass_granted_by,' +
+  'night_pass_used_at,night_pass_used_format,night_pass_used_session';
+async function vpaHandleNightPass(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
+  const venueId = b.venue_id;
+  if (!venueId) return json({ error: 'venue_id is required.' }, 400);
+  const action = b.action;
+  if (action !== 'grant' && action !== 'cancel') return json({ error: "action must be 'grant' or 'cancel'." }, 400);
+  if (action === 'grant' && VPA_NIGHT_PASS_FORMATS.indexOf(b.format) === -1) {
+    return json({ error: 'format must be one of ' + VPA_NIGHT_PASS_FORMATS.join(', ') + '.' }, 400);
+  }
+  // Read on its own and fail-safe: before migration 110 the pass columns are refused.
+  const res0 = await fetch(env.SUPABASE_URL + '/rest/v1/vp_venues?id=eq.' + encodeURIComponent(venueId) + '&select=' + VPA_NIGHT_PASS_SELECT, {
+    method: 'GET', headers: vpaHeaders(env),
+  });
+  if (!res0.ok) {
+    const t0 = (await res0.text()).slice(0, 180);
+    if (/night_pass/.test(t0)) return json({ error: 'Run migration 110 first: the one-night pass is not in the database yet. Nothing was changed.' }, 409);
+    return json({ error: 'Could not read that venue. ' + t0 }, 500);
+  }
+  const prior = (await res0.json())[0];
+  if (!prior) return json({ error: 'That venue no longer exists.' }, 404);
+
+  const now = new Date();
+  let patch;
+  if (action === 'grant') {
+    patch = {
+      night_pass_format: b.format,
+      night_pass_until: new Date(now.getTime() + VPA_NIGHT_PASS_HOURS * 3600 * 1000).toISOString(),
+      night_pass_granted_at: now.toISOString(),
+      night_pass_granted_by: actor.label || 'admin',
+      night_pass_used_at: null, night_pass_used_format: null, night_pass_used_session: null,
+    };
+  } else {
+    // Cancel a pass that is still waiting. One already used is history and stays as it is.
+    if (!prior.night_pass_until || prior.night_pass_used_at) return json({ error: 'There is no waiting pass to cancel.' }, 409);
+    patch = { night_pass_until: now.toISOString() };
+  }
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_venues?id=eq.' + encodeURIComponent(venueId), {
+    method: 'PATCH',
+    headers: { ...vpaHeaders(env), 'Prefer': 'return=representation' },
+    body: JSON.stringify(patch),
+  });
+  if (!res.ok) {
+    const t = (await res.text()).slice(0, 180);
+    if (/night_pass/.test(t)) return json({ error: 'Run migration 110 first: the one-night pass is not in the database yet. Nothing was changed.' }, 409);
+    return json({ error: 'Could not save. ' + t }, 500);
+  }
+  await vpaInsert(env, 'vp_admin_audit', {
+    actor_admin: actor.actorId || null, actor_label: actor.label || 'admin',
+    action: action === 'grant' ? 'venue_night_pass_granted' : 'venue_night_pass_cancelled',
+    target: 'venue:' + venueId,
+    detail: action === 'grant'
+      ? { name: prior.name, format: b.format, hours: VPA_NIGHT_PASS_HOURS, until: patch.night_pass_until }
+      : { name: prior.name, format: prior.night_pass_format, was_until: prior.night_pass_until },
+  }, false).catch(function () {});
+  const pass = {};
+  VPA_NIGHT_PASS_SELECT.split(',').forEach(function (k) { if (k.indexOf('night_pass_') === 0) pass[k] = (k in patch) ? patch[k] : prior[k]; });
+  return json({ ok: true, pass: pass });
 }
 
 async function vpaHandleVenueGaming(request, env, json) {

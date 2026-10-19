@@ -1009,6 +1009,7 @@
     enforceShift: enforceShift,
     guardShift: guardShift,
     confirmTakeover: confirmTakeover,
+    askOnPage: askOnPage,   // the same on-page question, for the "pick it up?" prompt (vp-pickup.js)
     endShift: endShift,
     setGameActive: setGameActive
   };

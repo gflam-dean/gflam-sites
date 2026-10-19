@@ -62,18 +62,23 @@
     if (venue.weekly_limit_off === true) return null;
     var col = format === 'musical' ? 'last_musical_at' : 'last_trivia_at';
     var label = format === 'musical' ? 'Musical bingo' : 'Trivia';
+    var t = (now == null ? Date.now() : now);
+    // A night the one-night pass paid for is picked back up like any other (migration 110).
+    if (passNight(venue, format, t)) return null;
     var lastAt = venue[col];
     if (!lastAt) return null;
     var last = new Date(lastAt).getTime();
     if (isNaN(last)) return null;
 
-    var elapsed = (now == null ? Date.now() : now) - last;
+    var elapsed = t - last;
     // Negative means the row is ahead of this device's clock. Say nothing rather than
     // guess: the Worker will decide, and a wrong warning is worse than none.
     if (elapsed < 0) return null;
     if (elapsed < RESUME_GRACE) return null;   // same night, picking it back up
     if (elapsed >= WEEK) return null;          // the week is up, nothing to warn about
 
+    // HQ gave one more night and it is still waiting: the Worker will let this one start.
+    if (passWaiting(venue, format, t)) return null;
     var nextIso = new Date(last + WEEK + BNE_OFFSET).toISOString().slice(0, 10);
     return {
       nextIso: nextIso,
@@ -83,6 +88,24 @@
     };
   }
 
+  /* THE ONE-NIGHT PASS (migration 110, Dean 20 Oct 2026). HQ can let a venue start ONE more trivia
+     or musical bingo night inside 24 hours. These are the game Worker's nightPassWaiting and its
+     "a pass night is its own night" rule, in the same words, so the console never says "Trivia ran
+     this week" to a host whose night the server is about to let start.
+     format here is the console's word ("trivia" or "musical"); the venue row says musical_bingo. */
+  function passFmt(format) { return format === 'musical' ? 'musical_bingo' : 'trivia'; }
+  function passWaiting(venue, format, now) {
+    if (!venue || !venue.night_pass_until || venue.night_pass_used_at) return false;
+    var until = new Date(venue.night_pass_until).getTime();
+    if (!(until > (now == null ? Date.now() : now))) return false;
+    return venue.night_pass_format === 'either' || venue.night_pass_format === passFmt(format);
+  }
+  function passNight(venue, format, now) {
+    if (!venue || !venue.night_pass_used_at || venue.night_pass_used_format !== passFmt(format)) return false;
+    var since = (now == null ? Date.now() : now) - new Date(venue.night_pass_used_at).getTime();
+    return since >= 0 && since < RESUME_GRACE;
+  }
+
   root.VPWeekly = { check: check, friendlyDay: friendlyDay, friendlyMsg: friendlyMsg,
-                    WEEK: WEEK, RESUME_GRACE: RESUME_GRACE };
+                    passWaiting: passWaiting, WEEK: WEEK, RESUME_GRACE: RESUME_GRACE };
 }(typeof globalThis === 'object' ? globalThis : this));

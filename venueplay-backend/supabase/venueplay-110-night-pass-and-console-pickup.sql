@@ -43,12 +43,15 @@
 --     role (both Workers), a platform admin and the SQL editor may.
 --
 --  2. PICK UP A RUNNING GAME FROM ANOTHER DEVICE.
---       vp_games.console_id        the console that last picked this game up
---       vp_games.console_taken_at  when
+--       vp_sessions.console_holders  jsonb, per format:
+--                                    { "trivia": { "id": <console>, "at": <when>, "game_id": <game> } }
+--     Kept on the NIGHT, not the game, because the next round is a new game row
+--     and a console replaced in round one must still know it in round two. Per
+--     format, so a trivia pickup never stands down a musical console.
 --     Written by the game Worker's /host/running/take (staff at the venue only).
 --     A console still open on the game asks /host/running, sees another holder,
---     and stands down, so two consoles never run one quiz. vp_games has no
---     venue write policy, so no guard is needed.
+--     and stands down, so two consoles never run one quiz. Not secret (a random
+--     id per console), and vp_sessions gets no new policy or grant.
 --
 -- NOT security definer, no new policy, no new grant: RLS-BASELINE.json does not
 -- change.
@@ -57,7 +60,7 @@
 --   select count(*) filter (where night_pass_until is not null) as passes_ever,
 --          count(*) as venues from public.vp_venues;                 -- 0 of N until HQ grants one
 --   select column_name from information_schema.columns
---    where table_schema = 'public' and table_name = 'vp_games' and column_name like 'console_%';  -- 2 rows
+--    where table_schema = 'public' and table_name = 'vp_sessions' and column_name = 'console_holders';  -- 1 row
 --   select tgname from pg_trigger
 --    where tgrelid = 'public.vp_venues'::regclass and tgname = 'vp_venues_night_pass_guard';
 --
@@ -69,7 +72,7 @@
 --   drop trigger if exists vp_venues_night_pass_guard on public.vp_venues;
 --   drop function if exists public.vp_venues_night_pass_guard();
 --   alter table public.vp_venues drop column if exists night_pass_format, drop column if exists night_pass_until, drop column if exists night_pass_granted_at, drop column if exists night_pass_granted_by, drop column if exists night_pass_used_at, drop column if exists night_pass_used_format, drop column if exists night_pass_used_session;
---   alter table public.vp_games drop column if exists console_id, drop column if exists console_taken_at;
+--   alter table public.vp_sessions drop column if exists console_holders;
 --   (Deploy Workers first? Not needed: both read the columns fail-safe.)
 -- =====================================================================
 
@@ -139,12 +142,12 @@ create trigger vp_venues_night_pass_guard
   on public.vp_venues
   for each row execute function public.vp_venues_night_pass_guard();
 
-alter table public.vp_games
-  add column if not exists console_id text,
-  add column if not exists console_taken_at timestamptz;
+alter table public.vp_sessions
+  add column if not exists console_holders jsonb;
 
-comment on column public.vp_games.console_id is
-  'Migration 110. The console that last picked this running game up from another device '
-  '(game Worker /host/running/take, staff only). Any other console open on the game stands down.';
+comment on column public.vp_sessions.console_holders is
+  'Migration 110. Per format, the console that last picked this night''s running game up from another '
+  'device: {"trivia": {"id", "at", "game_id"}}. Written by the game Worker /host/running/take (staff only). '
+  'Any other console open on that format stands down.';
 
 commit;
