@@ -247,10 +247,13 @@ routes error without them. No RLS change. NOT RUN. Rollback: in the file (deploy
 1001, brand venueplay or partyplay, category sales / venue_support / patron_support / accounts / general, channel patron_form /
 venue_form / web_form / email / phone / manual, status new / open / waiting / closed, priority, subject, message, contact name,
 email and phone, venue, room or party code, session, who raised it, who has it, closed_at, the address an email was sent to and its
-Message-ID), `vp_help_ticket_notes` (internal notes, replies sent, emails in, changes) and `vp_help_push_subs` (staff devices that
-asked for phone alerts; a hash of each device's secret, never the secret). All three service role only: no grants to anon or
+Message-ID), `vp_help_ticket_notes` (internal notes, replies sent, emails in, changes), `vp_help_push_subs` (staff devices that
+asked for phone alerts; a hash of each device's secret, never the secret), and the help words HQ edits: `vp_help_faq`,
+`vp_help_issues` and `vp_help_steps` (guided triage, with try and fix counts and pins), `vp_help_triage_events` (each answer, for the
+report) and `vp_help_reorders` (automatic step moves, with Undo). Seeded with the FAQ wording Dean approved and starter issues.
+All eight service role only: no grants to anon or
 authenticated and no policies, so the billing Worker is the only door, and it answers ticket reads to HQ (vp_platform_admins
 owner, accounts, staff) and nobody else. Branch `feature/help-desk`. Run BEFORE deploying the billing Worker that goes with it;
 either order is safe for a night (no game path touches it, and the website enquiry form still emails as before if the table is
-missing). After running, `python3 venueplay-backend/tools/dump-rls-baseline.py` and commit RLS-BASELINE.json (three new locked
+missing). After running, `python3 venueplay-backend/tools/dump-rls-baseline.py` and commit RLS-BASELINE.json (eight new locked
 tables). NOT YET RUN. Rollback: in the file.

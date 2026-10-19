@@ -246,7 +246,7 @@ insert into public.vp_help_faq (id, brand, audience, position, question, answer)
 insert into public.vp_help_faq (id, brand, audience, position, question, answer) values ('13eada5b-1c23-5382-aa19-466a67e7cbdd', 'partyplay', 'host', 70, 'Contacting us', 'Use the form below and we will reply by email, or email support@partyplay.com.au.') on conflict (id) do nothing;
 insert into public.vp_help_issues (id, brand, audience, position, title, category) values ('72e98832-14f7-5246-963a-3d182327accf', 'venueplay', 'patron', 10, 'My game is not showing', 'patron_support') on conflict (id) do nothing;
 insert into public.vp_help_steps (id, issue_id, position, body, pinned) values ('d7307b06-d1f0-5783-8be3-ca3107760225', '72e98832-14f7-5246-963a-3d182327accf', 10, 'Pull down to refresh the page.', false) on conflict (id) do nothing;
-insert into public.vp_help_steps (id, issue_id, position, body, pinned) values ('3a4d871c-0aaa-59da-a2ef-f900d9b8b991', '72e98832-14f7-5246-963a-3d182327accf', 20, 'Check the code at the top of your phone matches the code on the big screen. If it does not, scan the QR code again.', false) on conflict (id) do nothing;
+insert into public.vp_help_steps (id, issue_id, position, body, pinned) values ('3a4d871c-0aaa-59da-a2ef-f900d9b8b991', '72e98832-14f7-5246-963a-3d182327accf', 20, 'Scan the QR code on the big screen again, so your phone joins the game in this room.', false) on conflict (id) do nothing;
 insert into public.vp_help_steps (id, issue_id, position, body, pinned) values ('4299df47-6478-55d7-ba54-1965f7633569', '72e98832-14f7-5246-963a-3d182327accf', 30, 'Check your phone is online: open any other website, or switch between wifi and mobile data.', false) on conflict (id) do nothing;
 insert into public.vp_help_steps (id, issue_id, position, body, pinned) values ('33b034ef-4f23-5b15-af96-fba87a982bc0', '72e98832-14f7-5246-963a-3d182327accf', 40, 'Ask the host. They can see who has joined and can get you going.', true) on conflict (id) do nothing;
 insert into public.vp_help_issues (id, brand, audience, position, title, category) values ('d8b01e1d-9fe8-51c4-a0f7-8dcc04d8237a', 'venueplay', 'patron', 20, 'The numbers or questions are not updating', 'patron_support') on conflict (id) do nothing;
@@ -291,6 +291,7 @@ insert into public.vp_help_steps (id, issue_id, position, body, pinned) values (
 insert into public.vp_help_steps (id, issue_id, position, body, pinned) values ('e46d5877-4f31-5b68-8cd4-08bf3a672180', '41c6f70c-ac72-59e1-9362-489c8f3c58ac', 30, 'Remember a party holds up to 50 guests.', false) on conflict (id) do nothing;
 insert into public.vp_help_issues (id, brand, audience, position, title, category) values ('ecd42b28-0e38-53aa-8912-2272341be383', 'partyplay', 'host', 30, 'A question about my payment or a refund', 'accounts') on conflict (id) do nothing;
 insert into public.vp_help_issues (id, brand, audience, position, title, category) values ('df971843-0357-5f71-93a7-f77b98541aba', 'partyplay', 'host', 40, 'Something else', 'venue_support') on conflict (id) do nothing;
+In some states bingo is played on paper. If your phone says "Tonight you play on paper", grab a bingo book and mark it off as the numbers are called.') on conflict (id) do nothing;
 
 
 commit;
