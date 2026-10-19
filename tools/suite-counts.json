@@ -136,7 +136,7 @@
   "counted_by": "lines"
  },
  "tools/logo-tools-in-chrome.test.py": {
-  "checks": 27,
+  "checks": 28,
   "counted_by": "lines"
  },
  "tools/migrations-parse.test.py": {
