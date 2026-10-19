@@ -260,3 +260,10 @@ missing). After running, `python3 venueplay-backend/tools/dump-rls-baseline.py` 
 tables). RUN on the live database 19 Oct 2026 (eight locked tables; FAQ rows 7, 7, 7, 6), after a stray duplicated line from
 the seed was removed (commit 2373a94: a FAQ answer with a line break had been spliced twice). RLS-BASELINE.json re-dumped the same
 night. Rollback: in the file.
+`venueplay-107-unlimited-nights-switch.sql`: `vp_venues.weekly_limit_off` (boolean, not null, default false) and the
+`vp_venues_weekly_limit_guard` trigger. Dean, 19 Oct 2026, for Deepwater Hotel: a per-venue switch that lifts the
+once-a-week trivia and musical bingo rule. Set only from HQ (Venues > Details > "Unlimited trivia and musical bingo
+nights", billing Worker `/admin/venue-gaming`, owner or accounts admins, audited as `venue_unlimited_nights_on` /
+`_off`); the trigger puts the old value back when a venue's own login writes it. Not security definer and no new
+policy or grant, so RLS-BASELINE.json does not change. Either order with the Workers is safe (both read the column
+fail-safe). Branch `feature/venue-switches-logos-dropdowns`. NOT RUN. Rollback: in the file.

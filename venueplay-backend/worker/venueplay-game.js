@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '19 Oct 2026, 08:10 · 96111d64';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '19 Oct 2026, 21:04 · 65cec504';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '02ce7cd0d36934735034a4a3fd17f02dd0d05cb23ce4367e6817c9b2c8ef4a68';

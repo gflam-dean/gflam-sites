@@ -3139,6 +3139,17 @@ def local_checks(which):
              'test venues, 1-player plans, comp, unpaid, HQ-hidden and unticked venues stay off; fewer than six paints nothing', 40,
              'Dean\'s hard rule, 7 Aug 2026: only active, paying venues on the marketing site. A test '
              'venue or a venue that said no on the homepage, or one lonely logo, is this check going red'),
+            # D56 and D57: the per-venue unlimited trivia and musical bingo switch (Dean, 19 Oct 2026,
+            # for Deepwater Hotel; migration 107).
+            ('D56. A venue HQ has given unlimited nights starts trivia and musical bingo any night; nobody else does',
+             'test-unlimited-nights.js',
+             'the game Worker and the console mirror skip the once-a-week rule only for weekly_limit_off true, and keep it before 107', 19,
+             'A venue told it can run trivia twice a week refused at Start in front of a full room, or every '
+             'venue let off the once-a-week rule, or a night lost to a 500 before migration 107 is run'),
+            ('D57. Only HQ owner and accounts admins flip unlimited nights, and every flip is audited',
+             'test-unlimited-nights-hq.js',
+             'owner/accounts admins set it with an audit row; staff admins, venue logins and strangers are refused; only true/false', 17,
+             'A venue switching its own limit off, or a switch nobody can trace back to who turned it on'),
             ('D52. The TV mark is painted only when the venue has a logo, small, top-left and kept clear',
              'test-tv-logo-mark.js',
              'tv.html and the four game screens paint one 120x56 mark, 14px in, untappable, a vp-fit keep-out, and nothing with no logo', 40,

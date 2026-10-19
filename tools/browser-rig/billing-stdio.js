@@ -35,6 +35,15 @@ DB.vp_venue_staff = [{ id: 's1', auth_user_id: UID, venue_id: VENUE, role: 'owne
 DB.vp_venue_screen = []; DB.vp_admin_audit = []; DB.vp_venue_settings = []; DB.vp_screens = [];
 DB.vp_raffle_settings = []; DB.vp_raffle_prizes = []; DB.vp_member_draws = []; DB.vp_sessions = [];
 
+/* jsc has no WebCrypto. The Worker names a stored logo by the SHA-256 of its bytes; a stand-in digest
+   that is a pure function of the bytes keeps "same file, same address" true, which is all a page needs. */
+if (typeof crypto === 'undefined') {
+  crypto = { subtle: { digest: function (alg, bytes) {
+    var b = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes), out = new Uint8Array(32), h = 2166136261 >>> 0;
+    for (var i = 0; i < b.length; i++) { h ^= b[i]; h = Math.imul(h, 16777619) >>> 0; out[i % 32] ^= h & 255; }
+    return Promise.resolve(out.buffer);
+  } }, getRandomValues: function (a) { for (var i = 0; i < a.length; i++) a[i] = (i * 2654435761) & 255; return a; } };
+}
 var STORED = [];
 var _rf = globalThis.fetch;
 globalThis.fetch = function (url, opts) {
