@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '19 Oct 2026, 22:13 · 942f18a6';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '19 Oct 2026, 22:24 · 58955d43';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -934,7 +934,7 @@ const CONTACT_MAX_PER_IP = 6;   // a real enquiry is a one-off; six in an hour i
 async function handleContact(request, env, json) {
   const ip = request.headers.get('cf-connecting-ip') || '';   // Cloudflare-set; x-real-ip is client-suppliable
   // Durable across Worker instances (help desk, migration 108); this instance's memory if the database cannot be asked.
-  if (ip && !(await helpLimit(env, 'contact:' + (await helpIpKey(env, ip)), CONTACT_MAX_PER_IP, 3600))) {
+  if (ip && !(await helpIpLimit(env, 'contact', ip, CONTACT_MAX_PER_IP, 3600))) {
     return json({ error: 'Too many messages from this network. Please try again in a while, or call us.' }, 429);
   }
   const _b = await vpaBody(request, json);
@@ -9694,6 +9694,14 @@ async function helpLimit(env, key, limit, windowSecs) {
 async function helpIpKey(env, ip) {
   return 'ip:' + (await helpSha256Hex((env.HELP_LIMIT_SALT || env.SUPABASE_SERVICE_KEY || 'vp-help') + '|' + ip)).slice(0, 32);
 }
+/* The per-network limit, never able to take a form down: if the address cannot be hashed, this
+   instance's memory counts it (memory is never written anywhere, so the raw address is fine there). */
+async function helpIpLimit(env, prefix, ip, limit, windowSecs) {
+  if (!ip) return true;
+  let key;
+  try { key = await helpIpKey(env, ip); } catch (e) { return rateLimit('mem:' + prefix + ':' + ip, limit, windowSecs); }
+  return helpLimit(env, prefix + ':' + key, limit, windowSecs);
+}
 
 /* CLOUDFLARE TURNSTILE on the public forms. Switched on by two Worker settings Dean adds:
    TURNSTILE_SITEKEY (plain; the pages are handed it by /help/content and /help/config, so no page
@@ -9858,8 +9866,7 @@ async function helpVenueFromRoom(env, code, slug) {
    venue is the one their login holds, not one they typed. */
 async function helpPublicTicket(request, env, json) {
   const ip = request.headers.get('cf-connecting-ip') || '';   // Cloudflare-set; kept only as a salted hash
-  const ipKey = ip ? await helpIpKey(env, ip) : '';
-  if (ipKey && !(await helpLimit(env, 'tk:' + ipKey, HELP_MAX_PER_IP, 3600))) {
+  if (!(await helpIpLimit(env, 'tk', ip, HELP_MAX_PER_IP, 3600))) {
     return json({ error: 'Too many messages from this network. Please try again later.' }, 429);
   }
   const _b = await vpaBody(request, json);
@@ -10340,7 +10347,7 @@ async function helpAdminPushUnsubscribe(request, env, json) {
    category, number and urgency: never a name, an email, a subject or a message. */
 async function helpPushPeek(request, env, json) {
   const ip = request.headers.get('cf-connecting-ip') || '';
-  if (ip && !(await helpLimit(env, 'peek:' + (await helpIpKey(env, ip)), 120, 3600))) return json({ error: 'slow down' }, 429);
+  if (!(await helpIpLimit(env, 'peek', ip, 120, 3600))) return json({ error: 'slow down' }, 429);
   const _b = await vpaBody(request, json);
   if (!_b.ok) return _b.res;
   const endpoint = String(_b.body.endpoint || '').trim(), token = String(_b.body.token || '');
@@ -10683,8 +10690,7 @@ async function helpTriageProof(env, device, issueId, day) {
 function helpYesterday() { return new Date(Date.now() - 86400000).toISOString().slice(0, 10); }
 async function helpTriageEvent(request, env, json) {
   const ip = request.headers.get('cf-connecting-ip') || '';
-  const ipKey = ip ? await helpIpKey(env, ip) : '';
-  if (ipKey && !(await helpLimit(env, 'tri:' + ipKey, HELP_TRIAGE_MAX_PER_IP, 3600))) return json({ ok: true, throttled: true });
+  if (!(await helpIpLimit(env, 'tri', ip, HELP_TRIAGE_MAX_PER_IP, 3600))) return json({ ok: true, throttled: true });
   const _b = await vpaBody(request, json);
   if (!_b.ok) return _b.res;
   const b = _b.body;

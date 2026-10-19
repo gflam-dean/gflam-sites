@@ -124,7 +124,11 @@
   "counted_by": "lines"
  },
  "tools/help-desk-pages.test.py": {
-  "checks": 114,
+  "checks": 126,
+  "counted_by": "lines"
+ },
+ "tools/help-seed-matches-faq.test.py": {
+  "checks": 10,
   "counted_by": "lines"
  },
  "tools/hq-lists-in-chrome.test.py": {
@@ -288,7 +292,7 @@
   "counted_by": "lines"
  },
  "tools/test-help-desk.js": {
-  "checks": 200,
+  "checks": 240,
   "counted_by": "lines"
  },
  "tools/test-jackpot-cap-15-oct.js": {

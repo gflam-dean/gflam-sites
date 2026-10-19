@@ -448,12 +448,14 @@ function alertSubjectChecks() {
        is HQ's reply to the person who asked, carrying their ticket number. Both named here so a
        third help desk email cannot slip in unclassified. */
     if (/^helpAlertSubject\(ticket, lead\),?$/.test(line)) { helpSubjects++; continue; }
-    if (/^'Re: ' \+ helpLine\(subj, 150\) \+ ' ' \+ helpTag\(t\.ticket_no\),?$/.test(line)) { helpSubjects++; continue; }
+    if (/^'Re: ' \+ helpLine\(subj, 150\) \+ ' ' \+ helpReplyTag\(t\),?$/.test(line)) { helpSubjects++; continue; }
+    // The once-a-day "alerts paused" email, to us, when the help desk's daily alert cap is reached.
+    if (/^'\[Help desk\] Alerts paused for today: ' \+ cap \+ ' reached',?$/.test(line)) { helpSubjects++; continue; }
     if (CUSTOMER_SUBJECTS.some(function (c) { return line.indexOf(c) >= 0; })) continue;
     uncovered.push(line.slice(0, 70));
   }
   pass("every subject line in the Worker was found", subjects.length >= 7, subjects.length + " found");
-  pass("the help desk's two emails (staff alert, reply to the asker) are both seen and named", helpSubjects === 2, helpSubjects + " of 2");
+  pass("the help desk's three emails (staff alert, reply to the asker, alerts paused) are all seen and named", helpSubjects === 3, helpSubjects + " of 3");
   pass("and each one is either an alert to us or a named email to a venue",
        uncovered.length === 0, uncovered.join(" | "));
   var viaHelper = subjects.filter(function (l) { return /vpaAlertSubject/.test(l); }).length;

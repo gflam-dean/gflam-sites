@@ -597,7 +597,7 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   var keys = (DB.vp_help_limits || []).map(function (r) { return r.key; });
   check('a ticket\'s limits are counted in the database, not just this instance', keys.some(function (k) { return /^tk:ip:/.test(k); }) && keys.indexOf('tk:dev:dl-1') >= 0 && keys.indexOf('tk:em:dl1@example.com') >= 0, keys);
   check('and the network address is never stored, only a salted hash of it', keys.every(function (k) { return k.indexOf('203.0.113') < 0; }) && keys.some(function (k) { return /^tk:ip:[0-9a-f]{32}$/.test(k); }), keys);
-  var hk = 'tk:' + (await helpIpKey(ENV, '203.0.113.32'));
+  var hk = 'tk:' + (await helpIpKey(ENV, '203.0.113.32'));   // the same key helpIpLimit builds
   DB.vp_help_limits.push({ key: hk, w: Math.floor(Date.now() / 1000 / 3600), hits: 20 });   // another instance has already counted 20
   var other = await call(helpPublicTicket, null, Object.assign({}, PATRON, { device: 'dl-2', email: 'dl2@example.com' }), { ip: 32 });
   check('twenty counted by another Worker instance stop the twenty-first here, though this one has seen none', other.status === 429, other);

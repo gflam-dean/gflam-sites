@@ -3456,7 +3456,7 @@ MUTATIONS = [
      'the stamp is read and thrown away: broadcast bingo bills every phone that opened the join page again'),
 
     ('a manager whose permissions cannot be read is refused', 'venueplay-backend/worker/venueplay-api-FULL.js',
-     "  if (ip && !(await helpLimit(env, 'contact:' + (await helpIpKey(env, ip)), CONTACT_MAX_PER_IP, 3600))) {",
+     "  if (ip && !(await helpIpLimit(env, 'contact', ip, CONTACT_MAX_PER_IP, 3600))) {",
      "  if (false) {",
      '/contact sends an email per request again with no limit at all, on the same Resend key '
      'as every invoice and welcome email'),
