@@ -123,6 +123,7 @@
 </dialog>
 <div class="saved" id="toast"></div>
 
+<script src="/lib/vp-ask.js"></script>
 <script src="/lib/pp-config.js"></script>
 <script src="/lib/pp-games.js"></script>
 <script src="/lib/pp-photo.js"></script>
@@ -786,18 +787,20 @@
       var n = (g2 && g2.config && g2.config.items && g2.config.items.length) || 0;
       // Only ask when there is something to lose. Confirming a game with no
       // content in it is friction for nothing.
-      if(n && !window.confirm("Remove this game? It has " + n + (n===1?" item":" items") + " in it.")) return;
+      (n ? vpAsk("Remove this game? It has " + n + (n===1?" item":" items") + " in it.") : Promise.resolve(true)).then(function(ok){
+      if(!ok) return;
       api("/games/delete", { method:"POST", body: JSON.stringify({ code:CODE, key:KEY, id:id }) })
         .then(function(){ GAMES = GAMES.filter(function(x){ return String(x.id) !== id; }); render(); toast("Removed"); })
         .catch(function(e){ toast(e.message); });
+      });
       return;
     }
     if(el.id === "dlAll"){ downloadAll(); return; }
     if(el.id === "copyShare"){
       var link = $("album").getAttribute("data-share") || "";
       if(navigator.clipboard) navigator.clipboard.writeText(link).then(function(){ toast("Link copied"); },
-        function(){ window.prompt("Copy this link", link); });
-      else window.prompt("Copy this link", link);
+        function(){ vpAskText("Copy this link", link); });
+      else vpAskText("Copy this link", link);
       return;
     }
     if(el.id === "addItem"){ harvest(); editing.items.push({ q:"", a:"" }); drawItems(); return; }

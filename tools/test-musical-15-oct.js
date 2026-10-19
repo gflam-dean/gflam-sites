@@ -329,9 +329,9 @@ print('\n== 4. Play next: a double tap is refused, a deliberate tap four seconds
   var src = 'var SONG_HOLD_SECONDS=20, NO_CLIP_HOLD_SECONDS=1.2;' +
     MHOST.slice(MHOST.indexOf('var SKIP_ASK_SECONDS='), MHOST.indexOf('function holdLabel(')) +
     lift(MHOST, 'holdLabel', 'musical host') + lift(MHOST, 'playNext', 'musical host');
-  var playNext = (new Function('$', 'VP_HOLD', 'G', 'confirm', 'cancelAuto', 'songKey', 'playSong', 'syncPlayBtn', src + ' return playNext;'))(
+  var playNext = (new Function('$', 'VP_HOLD', 'G', 'vpAsk', 'cancelAuto', 'songKey', 'playSong', 'syncPlayBtn', src + ' return playNext;'))(
     function (id) { return doc[id]; }, VP_HOLD, G,
-    function (q) { asked.push(q); return answer; }, function () {}, function (s) { return s.title; },
+    function (q) { asked.push(q); var a = answer; return { then: function (f) { f(a); } }; }, function () {}, function (s) { return s.title; },
     function (s) { played.push(s.title); G.played[s.title] = true; G.nowSong = s; }, function () {});
   function tick() { intervals.forEach(function (f) { f(); }); }
   playNext(); tick();

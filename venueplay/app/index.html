@@ -619,6 +619,7 @@
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/app/vp-ask.js"></script>
 <script src="vp-session.js"></script>
 <script src="vp-gaming.js"></script>
 <script src="/app/vp-sign.js"></script>
@@ -940,13 +941,17 @@
   }
   $("signoutBtn").addEventListener("click", function(){
     var live=liveNightElsewhere();
-    if(live && !confirm("There is a "+live+" still running. Signing out ends it and puts the venue ads back on the TV.\n\nSign out anyway?")) return;
+    function signOutNow(){
     // endShift() is what closes the night, which is what bills any approved overage. This is the
     // button hosts actually press, so it has to be here and not only on the 4 hour timeout.
     endShift();
     showToast("Thanks for using VenuePlay" + (vpWho ? (", " + vpWho) : "") + ". Have a great " + dayNight() + ".");
     try{ sessionStorage.removeItem("vpGreeted"); }catch(e){}
     setTimeout(function(){ if(window.VP){ VP.signOut(); } else { go("vSignIn"); } }, 1600);
+    }
+    // Asked on the page (vp-ask.js), never with confirm(): a native dialog stops the console (19 Oct 2026).
+    if(!live){ signOutNow(); return; }
+    vpAsk("There is a "+live+" still running. Signing out ends it and puts the venue ads back on the TV.\n\nSign out anyway?").then(function(ok){ if(ok) signOutNow(); });
   });
   /* NO SWITCHING VENUE WITH A GAME OPEN. The console kept the open game, its session, its draw and
      the old venue's channel across a switch, so venue A's game went up on venue B's TV and B's End

@@ -889,35 +889,12 @@
      Open lobby was pressed at a venue with an earlier game still open. The members draw learnt this on
      the live audit; the raffle too. Same question, same two answers, on the page. Resolves true or false. */
   function askOnPage(title, text, yes, no) {
-    return new Promise(function (resolve) {
-      var d = root.document;
-      if (!d || !d.body) { resolve(true); return; }
-      // A question already up is answered "no" before a new one replaces it: nothing is ever left waiting.
-      var old = d.getElementById('vpTakeover'); if (old) { var oc = d.getElementById('vpTakeoverCancel'); if (oc) oc.click(); else if (old.parentNode) old.parentNode.removeChild(old); }
-      var box = d.createElement('div');
-      box.id = 'vpTakeover';
-      box.setAttribute('role', 'alertdialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-labelledby', 'vpTakeoverT');
-      box.style.cssText = 'position:fixed;inset:0;z-index:2147483645;display:flex;align-items:center;justify-content:center;' +
-        'padding:16px;background:rgba(10,6,20,.9);font-family:Manrope,system-ui,-apple-system,sans-serif;color:#fff';
-      var card = d.createElement('div');
-      card.style.cssText = 'max-width:440px;width:100%;background:#1b1230;border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:24px;line-height:1.5';
-      var h = d.createElement('div'); h.id = 'vpTakeoverT';
-      h.style.cssText = 'font-size:19px;font-weight:800;margin-bottom:8px'; h.textContent = title;
-      var p = d.createElement('div'); p.style.cssText = 'font-size:15px;opacity:.85;margin-bottom:18px'; p.textContent = text;
-      var row = d.createElement('div'); row.style.cssText = 'display:flex;gap:10px;flex-wrap:wrap';
-      function btn(id, label, primary, v) {
-        var b = d.createElement('button'); b.type = 'button'; b.id = id; b.textContent = label;
-        b.style.cssText = 'flex:1;min-width:140px;font:inherit;font-size:16px;font-weight:800;padding:12px 16px;border-radius:999px;cursor:pointer;' +
-          (primary ? 'border:0;background:#ff1f8e;color:#fff' : 'border:1px solid rgba(255,255,255,.3);background:none;color:#fff');
-        b.addEventListener('click', function () { if (box.parentNode) box.parentNode.removeChild(box); resolve(v); });
-        return b;
-      }
-      row.appendChild(btn('vpTakeoverCancel', no, false, false));
-      row.appendChild(btn('vpTakeoverGo', yes, true, true));
-      card.appendChild(h); card.appendChild(p); card.appendChild(row);
-      box.appendChild(card); d.body.appendChild(box);
-    });
+    /* The one on-page dialog, /app/vp-ask.js (Enter, Escape, a focus trap, phones). Every page that
+       can open a lobby loads it; the gate checks that. */
+    if (!root.vpAsk) return Promise.resolve(true);
+    return root.vpAsk(title + "\n\n" + text, { yes: yes, no: no, id: "vpTakeover" });
   }
+
 
   /* A suspended venue used to look completely healthy until the host tapped Start in front of a
      room and got "This venue is suspended". Nothing in the venue-facing app checked the status at

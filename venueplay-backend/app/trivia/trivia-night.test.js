@@ -171,7 +171,7 @@ print("7. NOBODY ENDS THE NIGHT BY ACCIDENT (finding 3)");
 (function(){
   var fn = grab("endBtn", host);
   pass("host.html still builds its End round buttons in one place", !!fn);
-  pass("and every one of them asks first", !!fn && fn.indexOf("confirm(") > 0);
+  pass("and every one of them asks first", !!fn && fn.indexOf("vpAsk(") > 0);
 })();
 
 print("");

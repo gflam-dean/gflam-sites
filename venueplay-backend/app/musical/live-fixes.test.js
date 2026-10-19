@@ -190,7 +190,7 @@ pass("the host device stops with the room",
    marked two songs played while the room heard one. A card could then be certified
    on a song nobody heard. */
 pass("End game asks first",
-     /confirm\("End this game\?/.test(hostSrc),
+     /vpAsk\("End this game\?/.test(hostSrc),
      "one stray tap clears the game and sends the TV back to the ads mid-round");
 pass("the song list has the same hold as the big button",
      /VP_HOLD\.busy\(_hb\)/.test(hostSrc) && /Stop \\"/.test(hostSrc),

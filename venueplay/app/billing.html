@@ -700,6 +700,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/app/vp-ask.js"></script>
 <script src="vp-session.js"></script>
 <script src="/app/vp-logo.js"></script>
 <script>if(window.VP && VP.guardShift) VP.guardShift();   /* the 4h forced sign-out reaches every page with player data */</script>
@@ -937,10 +938,11 @@
           '<div class="cxbanner"><span>This venue is set to cancel. It stays live' + until + '.</span>' +
           '<button class="keep" type="button">Keep this venue</button></div>';
         row.querySelector(".keep").addEventListener("click", function(){
-          if (!confirm("Keep " + v.name + " on your account? Billing continues as normal.")) return;
+          vpAsk("Keep " + v.name + " on your account? Billing continues as normal.").then(function(ok){ if (!ok) return;
           api("/account/cancel-venue", { venue_id:v.id, undo:true }).then(function(r){
             if (r.error){ showMsg(r.error); return; }
             showMsg(v.name + " will stay on your account.", true); load();
+          });
           });
         });
         wrap.appendChild(row); return;
@@ -1001,8 +1003,9 @@
                  "\nThe extra players are available straight away." +
                  "\n\nGo ahead?")
               : ("Change " + v.players + " players to " + n + "?");
-            if (!confirm(words)) return;
+            vpAsk(words).then(function(ok){ if (!ok) return;
             doSavePlayers(n);
+            });
           });
           return;
         }
@@ -1366,11 +1369,12 @@
         rm.addEventListener("click", function(){
           // Remove used to fire on one click and take the person off EVERY venue. One slip and a
           // host is gone from the whole account on a Friday night.
-          if (!confirm("Remove " + (h.label || "this person") + " from " + (venues.length > 1 ? "every venue on this account" : "this venue") + "?\n\nThey lose their sign-in straight away. You can add them again anytime.")) return;
+          vpAsk("Remove " + (h.label || "this person") + " from " + (venues.length > 1 ? "every venue on this account" : "this venue") + "?\n\nThey lose their sign-in straight away. You can add them again anytime.").then(function(ok){ if (!ok) return;
           rm.disabled = true; rm.textContent = "Removing…";
           api("/account/host-remove", { auth_user_id: h.auth_user_id, all_venues: true }).then(function(r){
             if (r.error){ showMsg(r.error); rm.disabled = false; rm.textContent = "Remove"; return; }
             showMsg((h.label || "That person") + " has been removed. Their login no longer works and your screens have been re-secured; they reconnect on their own within a few minutes.", true); loadHosts();
+          });
           });
         });
       }
@@ -1380,12 +1384,13 @@
   (function(){
     var b = $("resecureBtn"); if (!b) return;
     b.addEventListener("click", function(){
-      if (!confirm("Re-secure every screen on this account?\n\nThe screens stop trusting the current key and pick up a new one within a few minutes. A game that is running keeps running. Nobody is signed out.")) return;
+      vpAsk("Re-secure every screen on this account?\n\nThe screens stop trusting the current key and pick up a new one within a few minutes. A game that is running keeps running. Nobody is signed out.").then(function(ok){ if (!ok) return;
       b.disabled = true; b.textContent = "Working…";
       api("/account/screens-resecure", {}).then(function(r){
         b.disabled = false; b.textContent = "Re-secure";
         if (r.error){ showMsg(r.error); return; }
         showMsg("Done. " + r.venues + " venue" + (r.venues === 1 ? "" : "s") + " re-secured. The screens pick up the new key on their own.", true);
+      });
       });
     });
   })();
@@ -2204,7 +2209,7 @@
     if (mdNotReady()) return;
     var num = $("md-remove").value.trim();
     if (!num){ showMsg("Enter the member number to remove."); return; }
-    if (!confirm("Remove member " + num + " from your members list?\n\nThey stop being drawn. Any draws they have already won stay on your records.")) return;
+    vpAsk("Remove member " + num + " from your members list?\n\nThey stop being drawn. Any draws they have already won stay on your records.").then(function(ok){ if (!ok) return;
     var btn=$("mdRemove"); btn.disabled=true; btn.textContent="Removing…";
     var body = mdDraw ? { draw_id: mdDraw.id, number: num } : { venue_id: mdCurrent, number: num };
     gameApi("/host/members/remove", body).then(function(r){
@@ -2215,6 +2220,7 @@
       showMsg("Member " + num + who + " removed.", true);
       loadMembersDrawFor(mdCurrent);   // refreshes the count (and the draw picker) in one pass
     });
+    });
   }
 
   /* Retiring a draw archives it: gone from the pickers and off the TV, but its winners stay
@@ -2222,7 +2228,7 @@
   function removeDraw(){
     if (!mdDraw){ showMsg("Pick a draw first."); return; }
     var nm = mdDraw.name || "this draw";
-    if (!confirm("Remove " + nm + "?\n\nIt comes off your TV and out of the list of draws. Past winners are kept on your records. This does not delete your members list, which your other draws still use.")) return;
+    vpAsk("Remove " + nm + "?\n\nIt comes off your TV and out of the list of draws. Past winners are kept on your records. This does not delete your members list, which your other draws still use.").then(function(ok){ if (!ok) return;
     var btn=$("mdRemoveDraw"); btn.disabled=true; btn.textContent="Removing…";
     gameApi("/host/members/draw-remove", { draw_id: mdDraw.id }).then(function(r){
       btn.disabled=false; btn.textContent="Remove this draw";
@@ -2230,6 +2236,7 @@
       pushToScreen(mdCurrent);
       showMsg(nm + " removed.", true);
       loadMembersDrawFor(mdCurrent);   // reload the picker without it
+    });
     });
   }
 
@@ -2387,10 +2394,11 @@
     });
     box.querySelectorAll("[data-rmmgr]").forEach(function(btn){
       btn.addEventListener("click", function(){
-        if (!confirm("Remove this manager from all your venues?")) return;
+        vpAsk("Remove this manager from all your venues?").then(function(ok){ if (!ok) return;
         api("/account/host-remove", { auth_user_id: btn.getAttribute("data-rmmgr"), all_venues:true }).then(function(r){
           if (r.error){ showMsg(r.error); return; }
           showMsg("Manager removed.", true); loadManagers();
+        });
         });
       });
     });
@@ -2543,7 +2551,7 @@
      empty routine stores null, and the screen drops the card on its next refresh. */
   function clearRaffleRoutine(){
     if (!rfCurrent){ showMsg("Pick a venue first."); return; }
-    if (!confirm("Take the raffle off the TV?\n\nIt stops showing between games. Your prize list is kept, and you can put it back any time.")) return;
+    vpAsk("Take the raffle off the TV?\n\nIt stops showing between games. Your prize list is kept, and you can put it back any time.").then(function(ok){ if (!ok) return;
     var btn=$("rfClear"); btn.disabled=true; btn.textContent="Removing…";
     api("/account/screen-save", { venue_id:rfCurrent, raffle:{ label:"", day:"", time:"" } }).then(function(r){
       btn.disabled=false; btn.textContent="Take off the TV";
@@ -2552,13 +2560,14 @@
       pushToScreen(rfCurrent);
       showMsg("Raffle taken off the TV. It stops showing in a few seconds.", true);
     });
+    });
   }
   /* Same idea for a members draw, except the draw itself is valuable: the jackpot and the
      members list stay exactly as they are, and only the advertised night and time are cleared. */
   function membersDrawOffTv(){
     if (mdNotReady()) return;
     if (!mdDraw){ showMsg("Save the draw first."); return; }
-    if (!confirm("Take this members draw off the TV?\n\nIt stops showing between games. The draw, its jackpot and your members list are all kept.")) return;
+    vpAsk("Take this members draw off the TV?\n\nIt stops showing between games. The draw, its jackpot and your members list are all kept.").then(function(ok){ if (!ok) return;
     var btn=$("mdOffTv"); btn.disabled=true; btn.textContent="Removing…";
     gameApi("/host/members/settings", { draw_id: mdDraw.id, name: (mdDraw.name || $("md-name").value.trim() || "Members draw"), draw_day:"", draw_time:"" }).then(function(r){
       btn.disabled=false; btn.textContent="Take off the TV";
@@ -2567,6 +2576,7 @@
       $("md-day").value=""; $("md-time").value="";
       pushToScreen(mdCurrent);
       showMsg("Members draw taken off the TV. It stops showing in a few seconds.", true);
+    });
     });
   }
   function addRafflePrize(){
@@ -2698,10 +2708,11 @@
     if (!startDate){ showMsg("Set the start date first."); return; }
     var start=parseFloat($("md-startjp").value)||0, inc=parseFloat($("md-inc").value)||0;
     var weeks = mdWeeksSince(startDate), amount = Math.round(start + inc*weeks);
-    if (!confirm("Set the current jackpot to $" + amount + "?\n\nThat is the starting jackpot plus " + weeks + " week" + (weeks===1?"":"s") +
-                 " of increases since the start date, which is only right if nobody has won it since then. It goes on the TV when you save.")) return;
+    vpAsk("Set the current jackpot to $" + amount + "?\n\nThat is the starting jackpot plus " + weeks + " week" + (weeks===1?"":"s") +
+                 " of increases since the start date, which is only right if nobody has won it since then. It goes on the TV when you save.").then(function(ok){ if (!ok) return;
     $("md-curjp").value = String(amount);
     mdCurTouched = true;
+    });
   }
   function initMembersDraws(){
     $("mdSave").addEventListener("click", saveMembersDraw);

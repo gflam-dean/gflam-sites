@@ -288,6 +288,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/app/vp-ask.js"></script>
 <script src="../vp-session.js"></script>
 <script>if(window.VP && VP.guardShift) VP.guardShift();   /* the 4h forced sign-out reaches every page with player data */</script>
 <script>
@@ -698,13 +699,17 @@
   function deleteSet(){
     if(!G.setId) return;
     var name=G.title||"this night", n=(G.questions||[]).length;
-    if(n<=5){
-      if(!confirm('Delete "'+name+'" and its '+n+' question'+(n===1?"":"s")+'?\n\nThis cannot be undone.')) return;
-    } else {
-      var typed=prompt('Delete "'+name+'" and every one of its '+n+' questions?\n\nThis cannot be undone.\nType the night\'s name to confirm:');
-      if(typed===null) return;
-      if(typed.trim().toLowerCase()!==name.trim().toLowerCase()){ setStatus("delStatus","That did not match the name, so nothing was deleted.","err"); return; }
-    }
+    /* Asked on the page (vp-ask.js), never with a native dialog: those stop the page until answered. */
+    var asked = n<=5
+      ? vpAsk('Delete "'+name+'" and its '+n+' question'+(n===1?"":"s")+'?\n\nThis cannot be undone.')
+      : vpAskText('Delete "'+name+'" and every one of its '+n+' questions?\n\nThis cannot be undone.\nType the night\'s name to confirm:', "").then(function(typed){
+          if(typed===null) return false;
+          if(typed.trim().toLowerCase()!==name.trim().toLowerCase()){ setStatus("delStatus","That did not match the name, so nothing was deleted.","err"); return false; }
+          return true;
+        });
+    asked.then(function(ok){ if(ok) deleteSetNow(); });
+  }
+  function deleteSetNow(){
     var b=$("delSetBtn"); b.disabled=true; b.textContent="Deleting…";
     req("POST","/host/trivia/set/delete",{ set_id:G.setId }).then(function(){
       clearDraft(); G.setId=""; G.title=""; G.questions=[]; setStatus("delStatus","");

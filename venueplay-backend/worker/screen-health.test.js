@@ -192,7 +192,7 @@ ok("3am is the default, because it interrupts nobody",
    /value="3am" selected/.test(HQ));
 ok("and the choice is read from the dropdown", /sel \? sel\.value : "3am"/.test(HQ));
 ok("it still confirms before acting, naming how many screens",
-   /confirm\([\s\S]{0,200}targets\.length \+ " screen"/.test(HQ));
+   /vpAsk\([\s\S]{0,200}targets\.length \+ " screen"/.test(HQ));
 ok("3am is computed as 17:00 UTC (Brisbane has no daylight saving)",
    /setUTCHours\(17, 0, 0, 0\)/.test(HQ));
 ok("and rolls to tomorrow if 3am has passed", /\+ 24 \* 3600 \* 1000/.test(HQ));
@@ -293,9 +293,9 @@ ok("Details toggles to Close so the row says what the button will do",
 /* THE TWO THAT STOP A VENUE TRADING. A confirm() is muscle memory by the fiftieth
    venue. Typing the name is not. */
 ok("there is a type-the-name confirmation", /function confirmByName/.test(HQ));
-ok("pausing requires it", /if\(to==="suspended"\)\{\s*\n\s*if\(!confirmByName/.test(HQ));
+ok("pausing requires it", /\(to==="suspended" \? confirmByName\(name, q\)/.test(HQ));
 ok("archiving requires it", /confirmByName\(name, "Archive "/.test(HQ));
-ok("reactivating does NOT require it", /\} else if\(!confirm\(q\)\) return;/.test(HQ),
+ok("reactivating does NOT require it", /: vpAsk\(q\)\)\.then/.test(HQ),
    "putting a venue back on air harms nobody");
 ok("a mismatch changes nothing and says so", /so nothing was changed/.test(HQ));
 

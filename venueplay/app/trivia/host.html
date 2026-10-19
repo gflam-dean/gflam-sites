@@ -321,6 +321,7 @@
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/app/vp-ask.js"></script>
 <script src="../vp-session.js"></script>
 <script src="/app/vp-weekly.js"></script>
 <script src="/app/vp-sign.js"></script>
@@ -790,8 +791,7 @@
          timer, wipes the recovery pointer, sends the TV and every phone to idle and ends the game
          on the server, with no undo. */
       endb.addEventListener("click", function(){
-        if(!confirm("End the whole quiz now?\n\nThis finishes the round for the room. It cannot be undone.")) return;
-        endRound();
+        vpAsk("End the whole quiz now?\n\nThis finishes the round for the room. It cannot be undone.").then(function(ok){ if(ok) endRound(); });
       }); brow.appendChild(endb);
       body.appendChild(brow);
       if(!isLast){ var nu2=nextUpPanel(); if(nu2) body.appendChild(nu2); }
@@ -809,8 +809,7 @@
   /* Confirm on EVERY End round. Two of the three sat directly under Reveal answer with no
      confirm, so one fat finger in a dark pub ended the night for the room mid-question. */
   function endBtn(label){ var b=el("button","btn ghost",label||"End round"); b.style.width="100%"; b.style.marginTop="10px"; b.addEventListener("click", function(){
-    if(!confirm("End the whole quiz now?\n\nThis finishes the round for the room. It cannot be undone.")) return;
-    endRound();
+    vpAsk("End the whole quiz now?\n\nThis finishes the round for the room. It cannot be undone.").then(function(ok){ if(ok) endRound(); });
   }); return b; }
 
   /* MORE TIME, ASKED OF THE SERVER. The Worker owns the deadline and throws away a late
@@ -1913,12 +1912,15 @@
   (function(){ var b=document.getElementById("toAdsBtn"); if(!b) return;
     b.addEventListener("click", function(){
       var live = G.status==="question" || G.status==="reveal" || G.status==="ready";
-      if(live && !confirm("End the quiz and put the venue ads back on the TV?\n\nThe round in progress will finish and every player will see \"thanks for playing\".")) return;
+      function toAds(){
       if(live) endRound();          // actually end it, rather than only telling the room it ended
       else { try{ bcast({ t:"idle" }); }catch(e){} }
       try{ bcast({ t:"to_ads" }); }catch(e){}
       b.textContent="Ads are back on";
       setTimeout(function(){ b.textContent="End game"; }, 2500);
+      }
+      if(!live){ toAds(); return; }
+      vpAsk("End the quiz and put the venue ads back on the TV?\n\nThe round in progress will finish and every player will see \"thanks for playing\".").then(function(ok){ if(ok) toAds(); });
     });
   })();
 })();

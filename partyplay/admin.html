@@ -75,6 +75,7 @@
   <div id="app"></div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/lib/vp-ask.js"></script>
 <script src="/lib/pp-config.js"></script>
 <script>
 (function(){
@@ -484,14 +485,14 @@
         var v = b.getAttribute("data-cp");
         if(navigator.clipboard) navigator.clipboard.writeText(v).then(function(){
           var t=b.textContent; b.textContent="Copied"; setTimeout(function(){ b.textContent=t; },1200); });
-        else window.prompt("Copy this", v);
+        else vpAskText("Copy this", v);
         return;
       }
       var act = b.getAttribute("data-do"), code = b.getAttribute("data-code");
       /* Every one of these changes somebody's paid-for thing, so it asks why and
          the answer goes in the log. Nobody should be able to give away a day and
          leave no trace. */
-      var why = window.prompt("Why? (goes in the log)\n\n" + act + " on " + code);
+      vpAskText("Why? (goes in the log)\n\n" + act + " on " + code, "").then(function(why){
       if(why === null) return;
       var out = $("act-"+code);
       out.className = "out show"; out.textContent = "Working...";
@@ -499,6 +500,7 @@
         body: JSON.stringify({ code:code, action:act, why:why, hours:24 }) })
         .then(function(j){ out.textContent = j.did; setTimeout(lookup, 600); })
         .catch(function(e){ out.className = "out show bad"; out.textContent = e.message; });
+      });
     });
     }
 

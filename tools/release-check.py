@@ -2143,6 +2143,81 @@ def local_checks(which):
        '%d console(s) read' % seen,
        why=('a dialog freezes the whole page until somebody taps OK: ' + ', '.join(noisy)))
 
+    head('D. No page anyone is served can be frozen by a native browser dialog')
+    """confirm(), alert() AND prompt(), EVERYWHERE, ALLOW-LIST NONE (19 Oct 2026).
+
+    The check above spared confirm() because "it asks a question and waits for an answer from
+    a host who is standing right there". On 19 Oct 2026 that was proven wrong: the takeover
+    question in vp-session.js was a window.confirm(), and Open lobby at a venue with an
+    earlier game still open froze the console under browser automation, and a kiosk browser
+    that blocks dialogs answers it "no" for the host without a word. Every question is now
+    asked on the page by /app/vp-ask.js (and its twin /lib/vp-ask.js on PartyPlay): vpAsk,
+    vpTell, vpAskText. This reads every .html and .js under venueplay/ and partyplay/ with
+    comments taken out, and any call to a native dialog, bare or through window, self, top,
+    parent, globalThis or root, or by window["confirm"], is a failure. There is no
+    allow-list, on purpose."""
+    def _dialog_free(src):
+        src = re.sub(r'<!--[\s\S]*?-->', ' ', src)
+        src = re.sub(r'(?<![\w"\'/=*])/\*[\s\S]*?\*/', ' ', src)   # not image/* or */* in a string
+        return re.sub(r'(^|[\s;{}()])//[^\n]*', r'\1', src)
+    native, pages_read = [], 0
+    call = re.compile(r'(confirm|alert|prompt)\s*\(')
+    bracket = re.compile(r'\[\s*[\'"](confirm|alert|prompt)[\'"]\s*\]\s*\(')
+    for base in ('venueplay', 'partyplay'):
+        for d, dirs, fs in os.walk(os.path.join(ROOT, base)):
+            dirs[:] = [x for x in dirs if x not in ('node_modules', '.git')]
+            for f in sorted(fs):
+                if not (f.endswith('.html') or f.endswith('.js')) or f.endswith('.test.js'):
+                    continue
+                full = os.path.join(d, f)
+                rel = os.path.relpath(full, ROOT)
+                src = _dialog_free(io.open(full, encoding='utf-8', errors='replace').read())
+                pages_read += 1
+                for m in call.finditer(src):
+                    before = src[:m.start()]
+                    prev = before.rstrip()[-1:] if before.rstrip() else ''
+                    if before[-1:] and (before[-1].isalnum() or before[-1] in '_$'):
+                        continue                                  # myconfirm(, onalert(
+                    if re.search(r'function\s*$', before[-40:]):
+                        continue                                  # function confirm( defines, never calls
+                    if prev == '.':
+                        if not re.search(r'(?<![\w$.])(window|self|top|parent|globalThis|root)\s*\.\s*$', before[-40:]):
+                            continue                              # something.confirm( is somebody's method
+                    native.append('%s:%d %s()' % (rel, before.count('\n') + 1, m.group(1)))
+                for m in bracket.finditer(src):
+                    native.append('%s:%d %s()' % (rel, src[:m.start()].count('\n') + 1, m.group(1)))
+    ok('no page calls a native confirm(), alert() or prompt()', pages_read > 50 and not native,
+       '%d page(s) and script(s) read' % pages_read,
+       why=('a native dialog stops the whole page and a kiosk browser answers it no; ask with vpAsk/vpTell/vpAskText '
+            '(/app/vp-ask.js): ' + ', '.join(native[:8]) + ('' if len(native) <= 8 else ' and %d more' % (len(native) - 8))))
+
+    """The on-page dialog only works on a page that loads it: a page calling vpAsk without the
+    script throws, and the button that asked does nothing at all. And the two products serve
+    one file, so a fix to one copy is a fix to both."""
+    twin_a = os.path.join(ROOT, 'venueplay/app/vp-ask.js')
+    twin_b = os.path.join(ROOT, 'partyplay/lib/vp-ask.js')
+    same = (os.path.isfile(twin_a) and os.path.isfile(twin_b)
+            and io.open(twin_a, 'rb').read() == io.open(twin_b, 'rb').read())
+    unloaded, askers = [], 0
+    for base, tag in (('venueplay', '/app/vp-ask.js'), ('partyplay', '/lib/vp-ask.js')):
+        for d, dirs, fs in os.walk(os.path.join(ROOT, base)):
+            dirs[:] = [x for x in dirs if x not in ('node_modules', '.git')]
+            for f in sorted(fs):
+                if not f.endswith('.html'):
+                    continue
+                full = os.path.join(d, f)
+                src = _dialog_free(io.open(full, encoding='utf-8', errors='replace').read())
+                if not re.search(r'(?<![\w$.])(vpAsk|vpTell|vpAskText)\s*\(|VP\.confirmTakeover\s*\(', src):
+                    continue
+                askers += 1
+                raw = re.sub(r'<!--[\s\S]*?-->', ' ', io.open(full, encoding='utf-8', errors='replace').read())
+                if not re.search(r'<script[^>]*src="' + re.escape(tag) + r'"', raw):
+                    unloaded.append(os.path.relpath(full, ROOT))
+    ok('every page that asks on the page loads vp-ask.js, one file in both products', same and askers >= 10 and not unloaded,
+       '%d page(s) ask on the page' % askers,
+       why=(('' if same else 'venueplay/app/vp-ask.js and partyplay/lib/vp-ask.js differ (or one is missing). ') +
+            ('pages that call vpAsk/vpTell/vpAskText without loading it: ' + ', '.join(unloaded) if unloaded else '')))
+
     head('D. The sales pages still show the real screen')
     """Dean, 12 Sep 2026: "Can you double check that the set up guide and the look at a
     night things both have the current look of the screens? Can you do that say once a

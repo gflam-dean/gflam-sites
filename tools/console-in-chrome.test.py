@@ -116,7 +116,7 @@ class Site(http.server.BaseHTTPRequestHandler):
         if ext in ('.html', '.js', '.json', '.css', '.txt'):
             text = io.open(f, encoding='utf-8').read()
             ctype = {'.html': 'text/html', '.js': 'application/javascript', '.json': 'application/json', '.css': 'text/css'}.get(ext, 'text/plain')
-            return self.send(200, rewrite(text, p == '/app/index.html'), ctype + '; charset=utf-8')
+            return self.send(200, rewrite(text, p == '/app/index.html' or bool(re.match(r'^/app/\w+/host\.html$', p))), ctype + '; charset=utf-8')
         ctype = {'.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.mp3': 'audio/mpeg', '.woff2': 'font/woff2'}.get(ext, 'application/octet-stream')
         return self.send(200, io.open(f, 'rb').read(), ctype)
 
@@ -226,6 +226,110 @@ def leftover():
        ask(host, 'document.body.innerText.replace(/\\s+/g," ").slice(0,200)'))
     B.close_tab(ctid)
 
+# ---------------- every question on the page, never a native dialog (19 Oct 2026) ----------------
+def no_native(sid):
+    """True when no native browser dialog is open on the page. Page.handleJavaScriptDialog only succeeds
+    when one is, and answering it here also frees the page so the rest of the run can carry on."""
+    try:
+        B.call('Page.handleJavaScriptDialog', {'accept': False}, session=sid); return False
+    except Exception:
+        return True
+def key(sid, k):
+    code = {'Enter': 13, 'Escape': 27, 'Tab': 9}[k]
+    for t in ('keyDown', 'keyUp'):
+        B.call('Input.dispatchKeyEvent', {'type': t, 'key': k, 'code': k, 'windowsVirtualKeyCode': code}, session=sid)
+def asked(sid, words):
+    return until(sid, '!!document.getElementById("vpAsk") && /%s/.test(document.getElementById("vpAsk").innerText)' % words, 6)
+def tap(sid, expr):
+    """Click in a timer, so a native dialog it opens cannot hold the evaluation that clicked."""
+    return ask(sid, 'setTimeout(function(){ %s }, 0); true' % expr)
+
+def sign_out():
+    print('\nSign out of the bingo console with a trivia night still running here (was a native confirm())')
+    ctid, host = B.open_tab(BASE + '/app/')
+    B.call('Page.enable', {}, session=host)
+    until(host, '!!document.querySelector(\'[data-game="bingo"]\') && document.querySelector(\'[data-game="bingo"]\').offsetParent!==null', 20)
+    ask(host, 'localStorage.setItem("vpTriviaGame-%s", JSON.stringify({ts:Date.now()})); true' % W.info['venue'])
+    tap(host, 'document.getElementById("signoutBtn").click();')
+    time.sleep(1)
+    ok('after Sign out the console still answers inside 6 seconds', alive(host), 'the page did not answer within 6 seconds')
+    ok('no native browser dialog is holding it', no_native(host), 'a native dialog was open')
+    ok('the question is asked on the page, in the same words', asked(host, 'still running') is True and
+       asked(host, 'Sign out anyway') is True, ask(host, 'document.body.innerText.replace(/\\s+/g," ").slice(0,200)'))
+    ok('the answer it starts on is Sign out (OK has the focus, as the native box had)',
+       ask(host, 'document.activeElement && document.activeElement.id') == 'vpAskGo', ask(host, 'document.activeElement && document.activeElement.id'))
+    key(host, 'Tab')
+    ok('Tab stays inside the question', ask(host, 'document.activeElement && document.activeElement.id') == 'vpAskCancel',
+       ask(host, 'document.activeElement && document.activeElement.id'))
+    key(host, 'Escape')
+    ok('Escape answers no: the question goes and the host is still signed in',
+       until(host, '!document.getElementById("vpAsk")', 4) is True and alive(host) and
+       not ask(host, '/Thanks for using VenuePlay/.test(document.body.innerText)'))
+    tap(host, 'document.getElementById("signoutBtn").click();')
+    asked(host, 'Sign out anyway')
+    key(host, 'Enter')
+    ok('Enter answers yes: the host is signed out', until(host, '/Thanks for using VenuePlay/.test(document.body.innerText)', 6) is True and alive(host),
+       ask(host, 'document.body.innerText.replace(/\\s+/g," ").slice(0,200)'))
+    B.close_tab(ctid)
+
+def musical_end():
+    print('\nEnd game on the musical bingo console (was a native confirm())')
+    ctid, host = B.open_tab(BASE + '/app/musical/host.html')
+    B.call('Page.enable', {}, session=host)
+    ok('the musical console loads', until(host, 'document.readyState==="complete" && !!document.getElementById("endGameBtn")', 20) is True)
+    time.sleep(2)
+    tap(host, 'document.getElementById("endGameBtn").click();')
+    time.sleep(1)
+    ok('after End game the console still answers inside 6 seconds', alive(host), 'the page did not answer within 6 seconds')
+    ok('no native browser dialog is holding it', no_native(host), 'a native dialog was open')
+    ok('End this game? is asked on the page', asked(host, 'End this game') is True, ask(host, 'document.body.innerText.replace(/\\s+/g," ").slice(0,200)'))
+    tap(host, 'document.getElementById("vpAskCancel").click();')
+    ok('Cancel leaves the game alone and the console answers', until(host, '!document.getElementById("vpAsk")', 4) is True and alive(host))
+    tap(host, 'document.getElementById("endGameBtn").click();')
+    asked(host, 'End this game')
+    tap(host, 'document.getElementById("vpAskGo").click();')
+    ok('End game, answered yes on the page, goes through and the console answers', until(host, '!document.getElementById("vpAsk")', 4) is True and alive(host)
+       and not ask(host, '(window.__errs||[]).join(" | ")'), ask(host, '(window.__errs||[]).join(" | ")'))
+    B.close_tab(ctid)
+
+def raffle_settings():
+    print('\nChange the raffle settings after a number has been drawn tonight (was a native confirm())')
+    venue = W.info['venue']
+    W.ask('POST', '/host/gaming/declare', {'venue_id': venue, 'format': 'raffle', 'state': 'QLD', 'category_claimed': 'test rig'}, {})
+    sess = W.ask('POST', '/session', {'venue_id': venue, 'format': 'raffle'}, {})['body'].get('session_id')
+    game = W.ask('POST', '/host/game', {'session_id': sess, 'format': 'raffle', 'range_min': 1, 'range_max': 150, 'excluded_ranges': [], 'winners': 1,
+                                        'time_to_present': 0, 'spin_seconds': 3, 'allow_redraw': True, 'leading_zeros': True, 'jackpot_on': False,
+                                        'jackpot_amount_cents': None, 'prize': 'Meat tray', 'prize_type': 'other', 'prizes': []}, {})['body'].get('game_id')
+    drew = W.ask('POST', '/host/draw', {'game_id': game, 'winners': 1, 'spin_seconds': 3, 'prize': 'Meat tray', 'prize_type': 'other'}, {})
+    ok('CONTROL: a raffle is running at the venue with a number drawn tonight', drew.get('status') == 200 and (drew.get('body') or {}).get('tickets'), drew)
+    ctid, host = B.open_tab(BASE + '/app/raffle/host.html')
+    B.call('Page.enable', {}, session=host)
+    until(host, 'document.readyState==="complete"', 20)
+    ask(host, ('localStorage.setItem("vpRaffleGame-%s", JSON.stringify({v:2, ts:Date.now(), sessionId:%s, prizes:["Meat tray","Meat tray"], prizeIdx:1}));'
+               'location.reload(); true') % (venue, json.dumps(sess)))
+    time.sleep(1)
+    ok('the raffle console picks the running raffle back up', until(host, 'document.readyState==="complete" && document.getElementById("rfEnd").value==="150"', 20) is True,
+       ask(host, 'document.body.innerText.replace(/\\s+/g," ").slice(0,200)'))
+    time.sleep(2)
+    for i in range(3):    # the night's rules, asked once a day on the page, then the prize card if one is up
+        tap(host, 'var w=document.getElementById("winnerCard"); var c=document.getElementById("claimBtn"); if(w && w.classList.contains("show") && c) c.click();')
+        time.sleep(1)
+    ask(host, 'var e=document.getElementById("rfEnd"); e.value="200"; e.dispatchEvent(new Event("input")); e.dispatchEvent(new Event("change")); true')
+    tap(host, 'document.getElementById("drawBtn").click();')
+    time.sleep(1)
+    for i in range(6):    # vp-gaming.js may put the state rules up first; accept them in the rig, then the question comes
+        if ask(host, '!!document.getElementById("vpAsk")') is True: break
+        tap(host, 'var b=[].slice.call(document.querySelectorAll("button")).filter(function(x){ return x.offsetParent!==null && /I understand|Accept|Start as a free/i.test(x.textContent); })[0]; if(b) b.click();')
+        time.sleep(1)
+    ok('after Draw with new settings the console still answers inside 6 seconds', alive(host), 'the page did not answer within 6 seconds')
+    ok('no native browser dialog is holding it', no_native(host), 'a native dialog was open')
+    ok('Start a fresh raffle? is asked on the page, in the same words', asked(host, 'starts a FRESH raffle') is True,
+       ask(host, 'document.body.innerText.replace(/\\s+/g," ").slice(0,300)'))
+    key(host, 'Escape')
+    ok('No keeps the raffle that is running and says so', until(host, '!document.getElementById("vpAsk") && /Kept the current raffle/.test(document.body.innerText)', 6) is True
+       and alive(host), ask(host, 'document.body.innerText.replace(/\\s+/g," ").slice(0,300)'))
+    B.close_tab(ctid)
+
 def fresh():
     """A new database and a new browser profile for each scene: nothing left over from the last."""
     global W, B
@@ -239,6 +343,9 @@ try:
     leftover()
     fresh(); scene(True)
     fresh(); scene(False)
+    fresh(); sign_out()
+    fresh(); musical_end()
+    fresh(); raffle_settings()
 finally:
     B.close(); W.close(); srv.shutdown()
 

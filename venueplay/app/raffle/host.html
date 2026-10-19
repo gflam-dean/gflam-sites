@@ -294,6 +294,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/app/vp-ask.js"></script>
 <script src="../vp-session.js"></script>
 <script src="../vp-gaming.js"></script>
 <script src="/app/vp-sign.js"></script>
@@ -813,12 +814,13 @@
     if(G.gameId && G.gameSig===sig) return Promise.resolve();
     // A range/jackpot change bakes a fresh raffle, which RESETS the drawn tickets. If some have
     // already been drawn tonight, never do that silently - warn, or already-drawn numbers repeat.
-    if(G.gameId && G.drawn && Object.keys(G.drawn).length>0){
-      if(!window.confirm("You've changed the raffle settings. That starts a FRESH raffle, so the numbers already drawn tonight can come up again.\n\nStart a fresh raffle?")){
-        return Promise.reject(new Error("Kept the current raffle - change the settings back to keep drawing."));
-      }
-    }
-    return openSession().then(function(){
+    // Asked on the page (vp-ask.js): a native dialog stops the console until it is answered.
+    var asked = (G.gameId && G.drawn && Object.keys(G.drawn).length>0)
+      ? vpAsk("You've changed the raffle settings. That starts a FRESH raffle, so the numbers already drawn tonight can come up again.\n\nStart a fresh raffle?").then(function(ok){
+          if(!ok) throw new Error("Kept the current raffle - change the settings back to keep drawing.");
+        })
+      : Promise.resolve();
+    return asked.then(openSession).then(function(){
       return apiPost("/host/game",{
         session_id:G.sessionId, format:"raffle",
         range_min:G.min, range_max:G.max, excluded_ranges:parseSkips(),
@@ -1016,7 +1018,10 @@
        whole prize list with no undo. It also left the saved recovery pointer behind, so the next
        reload restored a dead game id and every Draw failed against it. */
     var started = !!G.gameId || Object.keys(G.drawn||{}).length>0;
-    if(started && !confirm("Start a brand new raffle?\n\nThe drawn tickets and the prize list are cleared. This cannot be undone.")) return;
+    if(!started){ newRaffleNow(); return; }
+    vpAsk("Start a brand new raffle?\n\nThe drawn tickets and the prize list are cleared. This cannot be undone.").then(function(ok){ if(ok) newRaffleNow(); });
+  }
+  function newRaffleNow(){
     clearRaffle();
     clearTimers(); G.round=null; G.drawn={}; clearHostErrorIf("timeup");
     G.prizes=[]; G.prizeIdx=0; renderPrizeList();   // a brand new raffle starts with a fresh prize list

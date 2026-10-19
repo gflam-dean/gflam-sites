@@ -40,6 +40,7 @@
   <footer>Made with <a href="/">PartyPlay</a>. In one of these and want it gone?
     <a href="mailto:hello@partyplay.com.au">Tell us</a> and we will remove it.</footer>
 </div>
+<script src="/lib/vp-ask.js"></script>
 <script src="/lib/pp-config.js"></script>
 <script>
 (function(){
@@ -118,7 +119,7 @@
       $("print").addEventListener("click", function(){
         // TODO: hand off to the print partner once one is chosen. Deliberately not
         // a dead link in the meantime.
-        alert("Printing is coming very soon. Save the ones you want in the meantime, and they are yours to print anywhere.");
+        vpTell("Printing is coming very soon. Save the ones you want in the meantime, and they are yours to print anywhere.");
       });
     })
     .catch(function(e){

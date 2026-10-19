@@ -491,6 +491,7 @@
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/app/vp-ask.js"></script>
 <script src="../vp-session.js"></script>
 <script src="../vp-gaming.js"></script>
 <script src="/app/vp-weekly.js"></script>
@@ -1176,11 +1177,14 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
      the same question the song list already asks. Inside the window it is still refused. */
   var SKIP_ASK_SECONDS=2;
   function holdLabel(left){ return (SONG_HOLD_SECONDS-left>=SKIP_ASK_SECONDS) ? "Next song in "+left+"s (tap to skip)" : "Next song in "+left+"s"; }
-  function playNext(){
+  function playNext(skipAsked){
     var b=$("playNextBtn");
     if(VP_HOLD.busy(b)){
       if(!VP_HOLD.soft(b)) return;                       // a double tap: refused, as before
-      if(G.nowSong && !confirm("Skip \""+G.nowSong.title+"\" and play the next song?")) return;
+      if(G.nowSong && skipAsked!==true){                 // asked on the page (vp-ask.js), then back in here
+        vpAsk("Skip \""+G.nowSong.title+"\" and play the next song?").then(function(ok){ if(ok) playNext(true); });
+        return;
+      }
       VP_HOLD.release(b);
     }
     cancelAuto();
@@ -1512,8 +1516,10 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     if(G.busy) return;
     /* Sits 16px below the scrolling song list the host taps on every song, so a momentum scroll
        ending in a tap lands here. It wipes every song played and deals the whole room new cards. */
-    if(G.playedOrder.length && !confirm("Start a brand new game?\n\nEveryone in the room gets a new card and the songs played so far are cleared.")) return;
-    beginRound($("newGameBtn"),"New game");
+    if(!G.playedOrder.length){ beginRound($("newGameBtn"),"New game"); return; }
+    vpAsk("Start a brand new game?\n\nEveryone in the room gets a new card and the songs played so far are cleared.").then(function(ok){
+      if(ok && !G.busy) beginRound($("newGameBtn"),"New game");
+    });
   }
   // Open the session (once), start a musical game on the Worker (which deals every card),
   // then rebuild G.songs from the Worker response so each song carries its DB song_id for
@@ -1561,7 +1567,9 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     if(G.busy) return;
     /* Same guard as New game. One stray tap here used to clear the songs, close every card and
        send the TV back to the ads mid-round, in front of the room. */
-    if(!confirm("End this game?\n\nThe TV goes back to your ads and everyone's card is closed.")) return;
+    vpAsk("End this game?\n\nThe TV goes back to your ads and everyone's card is closed.").then(function(ok){ if(ok && !G.busy) endGameAsked(); });
+  }
+  function endGameAsked(){
     clearMusic();
     var gid=G.gameId;
     postMusicReport(gid);
@@ -2174,12 +2182,17 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
        and told the Worker so, while the room heard only the second: a card could then be
        certified on a song nobody heard. Inside the hold the host is asked, not ignored. */
     var _hb=$("playNextBtn");
-    if(VP_HOLD.busy(_hb) && G.nowSong && !confirm("Stop \""+G.nowSong.title+"\" and play \""+_ps.title+"\" instead?")) return;
+    function playPicked(){
     cancelAuto();
     playSong(_ps);
     VP_HOLD.hold(_hb, _ps.previewUrl ? SONG_HOLD_SECONDS : NO_CLIP_HOLD_SECONDS, holdLabel,
       function(){ var bb=$("playNextBtn"); if(bb && bb.textContent!=="All songs played") syncPlayBtn(); },
       SKIP_ASK_SECONDS);
+    }
+    if(!(VP_HOLD.busy(_hb) && G.nowSong)){ playPicked(); return; }
+    vpAsk("Stop \""+G.nowSong.title+"\" and play \""+_ps.title+"\" instead?").then(function(ok){
+      if(ok && G.status==="running" && !(G.nowSong && songKey(_ps)===songKey(G.nowSong))) playPicked();
+    });
   });
   $("claimQueue").addEventListener("click", function(e){
     var b=e.target.closest("button[data-act]"); if(!b) return;

@@ -149,6 +149,8 @@ function makePage(opts) {
   var messages = [], apiCalls = [], gameCalls = [];
   var showMsg = function (t) { messages.push(String(t)); };
   var confirm = function () { return opts.confirm !== false; };
+  /* The page asks on the page now (vp-ask.js); answered at once, the same answer. */
+  var vpAsk = function () { var a = opts.confirm !== false; return { then: function (f) { f(a); } }; };
   var setTimeout = function () {};
   var venues = opts.venues || [];
 

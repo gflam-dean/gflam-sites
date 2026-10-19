@@ -41,6 +41,7 @@ fetch = async function (url, opts) {
       if (t === 'vp_bingo_tickets') { if (r.voided_at === undefined) r.voided_at = null; }
       if (t === 'vp_bingo_claims') { if (r.status == null) r.status = 'pending'; }
       if (t === 'vp_bingo_draw_balls') { if (r.withdrawn_at === undefined) r.withdrawn_at = null; }
+      if (t === 'vp_gaming_declarations') { if (r.declared_at == null) r.declared_at = new Date().toISOString(); }
     });
     opts = Object.assign({}, opts, { body: JSON.stringify(b) });
   }

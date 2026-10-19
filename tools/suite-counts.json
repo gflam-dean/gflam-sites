@@ -116,7 +116,7 @@
   "counted_by": "total"
  },
  "tools/console-in-chrome.test.py": {
-  "checks": 26,
+  "checks": 45,
   "counted_by": "lines"
  },
  "tools/dropdowns-in-chrome.test.py": {

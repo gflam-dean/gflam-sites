@@ -91,6 +91,7 @@
 </div>
 <div class="toast" id="toast"></div>
 
+<script src="/lib/vp-ask.js"></script>
 <script src="/lib/pp-config.js"></script>
 <script src="/lib/pp-games.js"></script>
 <script src="/lib/pp-licence.js"></script>
@@ -561,7 +562,9 @@
   }
 
   function startClock(){
-    if(!window.confirm(PARTY.startWarning)) return;
+    vpAsk(PARTY.startWarning).then(function(ok){ if(ok) startClockNow(); });
+  }
+  function startClockNow(){
     var btn = $("startnow");
     if(btn){ btn.disabled = true; btn.textContent = "Starting..."; }
     api("/licence/start", { method:"POST", body: JSON.stringify({ code:CODE, key:KEY }) })
@@ -1693,8 +1696,10 @@
     if(el.id==="askphotos"){ send({t:"askphotos"}); toast("Asked everyone"); return; }
     if(el.id==="shownight"){ send({t:"board", title:"Tonight", rows:nightBoard().slice(0,12)}); toast("On the screen"); return; }
     if(el.id==="resetnight"){
-      if(!window.confirm("Clear tonight's scores? The games stay, only the running total goes.")) return;
-      NIGHT={}; nightSave(); render(); toast("Scores cleared"); return;
+      vpAsk("Clear tonight's scores? The games stay, only the running total goes.").then(function(ok){
+        if(ok){ NIGHT={}; nightSave(); render(); toast("Scores cleared"); }
+      });
+      return;
     }
     if(el.id==="call"){ nextBall(); return; }
     if(el.id==="again"){ runBingo(G && G.gref, true); return; }   // Start over IS a new game

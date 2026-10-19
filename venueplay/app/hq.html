@@ -585,6 +585,7 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/app/vp-ask.js"></script>
 <script src="vp-session.js"></script>
 <script>if(window.VP && VP.guardShift) VP.guardShift();   /* the 4h forced sign-out reaches every page with player data */</script>
 <script>
@@ -977,14 +978,15 @@
       : "";
     var sb=$("sweepBtn");
     if(sb) sb.addEventListener("click", function(){
-      if(!canBilling()){ alert("Owner or accounts only."); return; }
-      if(!confirm("Close "+staleN+" stale session"+(staleN===1?"":"s")+"?\n\nAny approved busy-night overage is billed exactly as it would have been if the host had closed the night themselves. Sessions younger than 12 hours are left alone.")) return;
+      if(!canBilling()){ vpTell("Owner or accounts only."); return; }
+      vpAsk("Close "+staleN+" stale session"+(staleN===1?"":"s")+"?\n\nAny approved busy-night overage is billed exactly as it would have been if the host had closed the night themselves. Sessions younger than 12 hours are left alone.").then(function(ok){ if (!ok) return;
       sb.disabled=true; sb.textContent="Closing…";
       gameWorkerPost("/admin/sweep-sessions", { stale_hours:12 }).then(function(r){
         sb.disabled=false; sb.textContent="Close them now";
-        if(r.error){ alert(r.error); return; }
-        alert("Closed "+r.closed+" of "+r.found+" stale session"+(r.found===1?"":"s")+(r.failed?(", "+r.failed+" failed"):"")+".");
+        if(r.error){ vpTell(r.error); return; }
+        vpTell("Closed "+r.closed+" of "+r.found+" stale session"+(r.found===1?"":"s")+(r.failed?(", "+r.failed+" failed"):"")+".");
         loadAll();
+      });
       });
     });
     if(!sessions.length){ b.innerHTML='<tr><td colspan="5"><div class="empty" style="border:none;background:none">No venues are live right now.</div></td></tr>'; return; }
@@ -1298,7 +1300,7 @@
       var id=(qc||qu).getAttribute(qc?"data-qcontact":"data-quncontact");
       b.disabled=true; b.textContent="Saving\u2026";
       setContacted(id, !!qc).then(function(res){
-        if(res && res.error){ b.disabled=false; b.textContent=qc?"Contacted":"Undo"; alert("That did not save: "+res.error); return; }
+        if(res && res.error){ b.disabled=false; b.textContent=qc?"Contacted":"Undo"; vpTell("That did not save: "+res.error); return; }
         refreshContactScreens();
       });
     });
@@ -1774,7 +1776,7 @@
       var on=!!id;
       b.disabled=true; b.textContent="Saving\u2026";
       setContacted(id||uid, on).then(function(res){
-        if(res && res.error){ b.disabled=false; b.textContent=on?"Mark contacted":"Undo"; alert("That did not save: "+res.error); return; }
+        if(res && res.error){ b.disabled=false; b.textContent=on?"Mark contacted":"Undo"; vpTell("That did not save: "+res.error); return; }
         refreshContactScreens();
       });
       return;
@@ -1788,7 +1790,7 @@
       b.disabled=true; b.textContent="Saving…";
       workerPost("/admin/audit", { action:"venue_cancel_note", target:"venue:"+sid,
                                    detail:{ note:note, name:(sv&&sv.name)||null } }).then(function(res){
-        if(res && res.error){ b.disabled=false; b.textContent="Save note"; alert("That note did not save: "+res.error); return; }
+        if(res && res.error){ b.disabled=false; b.textContent="Save note"; vpTell("That note did not save: "+res.error); return; }
         loadCancelled(true);
       });
     }
@@ -2119,17 +2121,18 @@
     var rs=e.target.closest("button[data-resend]");
     if(rs){
       var rid=rs.getAttribute("data-resend"), rname=(S.venues.filter(function(x){return x.id===rid;})[0]||{}).name||"this venue";
-      if(!confirm("Send "+rname+" their welcome email again?\n\nIf they have not added a card it carries the secure link to do it.")) return;
+      vpAsk("Send "+rname+" their welcome email again?\n\nIf they have not added a card it carries the secure link to do it.").then(function(ok){ if (!ok) return;
       rs.disabled=true; rs.textContent="Sending\u2026";
       workerPost("/admin/resend-welcome", { venue_id: rid }).then(function(r){
         rs.disabled=false; rs.textContent="Resend welcome";
-        if(r.error){ alert(r.error); return; }
+        if(r.error){ vpTell(r.error); return; }
         // The link is worth having on screen whether or not the email went: a publican who
         // ignored one email will ignore the second, and this is pasteable into a text message.
         var msg = r.sent ? ("Sent to "+r.to+".") : ("The email did NOT send. Nothing has reached "+r.to+".");
         if(r.card_url) msg += "\n\nTheir card link, if you would rather send it yourself:\n"+r.card_url;
         else if(r.comp) msg += "\n\nThis is a comp venue, so the email carries no card link.";
-        alert(msg);
+        vpTell(msg);
+      });
       });
       return;
     }
@@ -2157,7 +2160,7 @@
           form.scrollIntoView({behavior:"smooth", block:"center"});
           var v=form.querySelector(".dcValue"); if(v) try{ v.focus(); }catch(e){}
         } else {
-          alert("That venue has no billing row yet, so there is nothing to discount against.");
+          vpTell("That venue has no billing row yet, so there is nothing to discount against.");
         }
       }, 60);
       return;
@@ -2174,7 +2177,7 @@
                                    target:"venue:"+tid, detail:{ name:(tv&&tv.name)||null } })
         .then(function(res){
           tf.disabled=false;
-          if(res && res.error){ tf.textContent = was?"Not a test venue":"Mark as a test venue"; alert("That did not save: "+res.error); return; }
+          if(res && res.error){ tf.textContent = was?"Not a test venue":"Mark as a test venue"; vpTell("That did not save: "+res.error); return; }
           S.testFlag[tid] = !was;
           /* Repaint everything it touches. It changes the headline numbers, the chase list and
              the departures screen, and leaving those stale is how two screens end up disagreeing. */
@@ -2190,7 +2193,7 @@
       var vid=pcb.getAttribute("data-pcsave");
       var inp=document.querySelector('input.gampc[data-vid="'+vid+'"]');
       var pc=(inp&&inp.value||"").replace(/\D/g,"");
-      if(pc.length!==4){ alert("A postcode is 4 digits."); return; }
+      if(pc.length!==4){ vpTell("A postcode is 4 digits."); return; }
       setVenueGaming(vid, { postcode: pc }, pcb);
       return;
     }
@@ -2308,7 +2311,7 @@
     el.disabled=true;
     workerPost("/admin/venue-gaming", Object.assign({ venue_id:id }, patch)).then(function(res){
       el.disabled=false;
-      if(res.error){ alert(res.error); renderVenues(); return; }
+      if(res.error){ vpTell(res.error); renderVenues(); return; }
       for(var i=0;i<S.venues.length;i++){
         if(S.venues[i].id===id){
           if(patch.entity_type!==undefined) S.venues[i].entity_type=res.venue&&res.venue.entity_type||null;
@@ -2346,17 +2349,18 @@
      two minutes afterwards so a console still announcing a dead game cannot undo it.
      The hold expires on its own, so a real night starting is never blocked. */
   function adsBackOn(id, btn){
-    var v=venueById(id); if(!v || !v.slug){ alert("That venue has no screen address yet."); return; }
-    if(!confirm("Put the venue's advertising back on the screen at "+v.name+"?\n\nIf a game is genuinely running there it will be taken off the wall. The screen acts within 30 seconds and holds the ads for two minutes.")) return;
+    var v=venueById(id); if(!v || !v.slug){ vpTell("That venue has no screen address yet."); return; }
+    vpAsk("Put the venue's advertising back on the screen at "+v.name+"?\n\nIf a game is genuinely running there it will be taken off the wall. The screen acts within 30 seconds and holds the ads for two minutes.").then(function(ok){ if (!ok) return;
     btn.disabled=true; var old=btn.textContent; btn.textContent="…";
     gameWorkerPost("/screen/command", { slug:v.slug, command:"ads" }).then(function(r){
       /* alert, not flash: the two ids I first used here (venueOk, venueErr) do not
          exist on this page, so every result would have been swallowed in silence -
          which is the exact failure mode this whole exercise was about. */
-      if(r && r.error) alert("Could not do that: " + r.error);
+      if(r && r.error) vpTell("Could not do that: " + r.error);
       btn.disabled=false; btn.textContent=old;
     });
     auditBestEffort("screen_ads", "venue:"+id, { name:v.name });
+    });
   }
 
   /* THE BROADCAST PATH IS GONE FROM HERE, ON PURPOSE.
@@ -2447,10 +2451,10 @@
     var what = (cmd === "reload")
       ? "restart the page on"
       : "put the venue's advertising back on";
-    if(!confirm(
+    vpAsk(
         "This will " + what + " " + targets.length + " screen" + (targets.length===1?"":"s") + ".\n\n" +
         (at ? ("When: " + pretty + " Brisbane. Nothing is interrupted, and a screen switched off now still takes it when it comes back.")
-            : ("When: within 30 seconds. Any game currently on a wall WILL be taken off it.")))) return;
+            : ("When: within 30 seconds. Any game currently on a wall WILL be taken off it."))).then(function(ok){ if (!ok) return;
 
     var btn=$("reloadScreens"); if(btn){ btn.disabled=true; btn.textContent="Sending…"; }
     if(out) out.textContent="Sending…";
@@ -2468,6 +2472,7 @@
              " now. They act within 30 seconds.");
       }
       auditBestEffort("screens_all", "venues:"+n, { command: cmd, at: at || "now" });
+    });
     });
   }
 
@@ -2513,18 +2518,19 @@
   function archiveVenue(id, btn){
     if(!canBilling()) return;
     var name=venueName(id);
-    if(!confirmByName(name, "Archive "+name+"?\n\nTheir games stop, they drop off the active list, and we stop billing them at the end of the period they have already paid for. Nothing is deleted and you can bring them back any time, billing included. Worth a retention call first.")) return;
+    confirmByName(name, "Archive "+name+"?\n\nTheir games stop, they drop off the active list, and we stop billing them at the end of the period they have already paid for. Nothing is deleted and you can bring them back any time, billing included. Worth a retention call first.").then(function(ok){ if (!ok) return;
     btn.disabled=true; var old=btn.textContent; btn.textContent="…";
     workerPost("/admin/venue-status", { venue_id:id, status:"archived" }).then(function(res){
       btn.disabled=false; btn.textContent=old;
-      if(res.error){ alert(res.error); return; }
+      if(res.error){ vpTell(res.error); return; }
       // Stripe is best-effort inside the Worker so the games always stop. If it did not land,
       // say so here rather than let the venue quietly keep paying.
       if(res.billing && res.billing.changed===false){
-        alert("Archived, and their games have stopped.\n\nBut the billing change did not go through:\n"+(res.billing.error||"unknown error")+"\n\nCheck this one in Stripe so they are not charged again.");
+        vpTell("Archived, and their games have stopped.\n\nBut the billing change did not go through:\n"+(res.billing.error||"unknown error")+"\n\nCheck this one in Stripe so they are not charged again.");
       }
       for(var i=0;i<S.venues.length;i++){ if(S.venues[i].id===id){ S.venues[i].status="suspended"; S.venues[i].suspended_reason="archived"; } }
       renderStats(); renderVenues(); loadAuditOnly();
+    });
     });
   }
   /* TYPE THE NAME, DO NOT CLICK OK.
@@ -2537,13 +2543,15 @@
      Case and surrounding space are forgiven, because this is a safety check and not a
      spelling test. */
   function confirmByName(name, heading){
-    var typed = prompt(heading + "\n\nType the venue's name to confirm:\n" + name, "");
-    if(typed === null) return false;
-    if(String(typed).trim().toLowerCase() !== String(name).trim().toLowerCase()){
-      alert("That did not match \"" + name + "\", so nothing was changed.");
-      return false;
-    }
-    return true;
+    // Asked on the page (vp-ask.js). Resolves true only when the name typed matches.
+    return vpAskText(heading + "\n\nType the venue's name to confirm:\n" + name, "").then(function(typed){
+      if(typed === null) return false;
+      if(String(typed).trim().toLowerCase() !== String(name).trim().toLowerCase()){
+        vpTell("That did not match \"" + name + "\", so nothing was changed.");
+        return false;
+      }
+      return true;
+    });
   }
 
   function suspendVenue(id, to, btn){
@@ -2555,21 +2563,20 @@
     var q = live
       ? ("⚠️ "+name+" has a GAME RUNNING RIGHT NOW.\n\nSuspending it ends that game immediately, mid-round, in front of the room.\n\nSuspend anyway?")
       : ((to==="suspended"?"Suspend ":"Reactivate ")+name+"?");
-    if(to==="suspended"){
-      if(!confirmByName(name, q)) return;
-    } else if(!confirm(q)) return;
+    (to==="suspended" ? confirmByName(name, q) : vpAsk(q)).then(function(ok){ if (!ok) return;
     btn.disabled=true; var old=btn.textContent; btn.textContent="…";
     workerPost("/admin/venue-status", { venue_id:id, status:to }).then(function(res){
       btn.disabled=false; btn.textContent=old;
-      if(res.error){ alert(res.error); return; }
+      if(res.error){ vpTell(res.error); return; }
       // Reactivating an archived venue can fail on the Stripe side while the games come back on.
       // Unreported, that is a venue playing for free forever.
       if(res.billing && res.billing.changed===false){
-        alert((to==="active"?"Switched back on, ":"Done, ")+"but the billing side did not go through:\n\n"+(res.billing.error||"unknown error")+"\n\nCheck this one in Stripe before they play again.");
+        vpTell((to==="active"?"Switched back on, ":"Done, ")+"but the billing side did not go through:\n\n"+(res.billing.error||"unknown error")+"\n\nCheck this one in Stripe before they play again.");
       }
       for(var i=0;i<S.venues.length;i++){ if(S.venues[i].id===id) S.venues[i].status=to; }
       renderStats(); renderVenues();
       loadAuditOnly();
+    });
     });
   }
   /* Show/hide a venue on the public "Trusted by" homepage marquee. Direct client update: admins have
@@ -2580,7 +2587,7 @@
     btn.disabled=true; var old=btn.textContent; btn.textContent="…";
     VP.getClient().from("vp_venues").update({ hide_from_trusted: next }).eq("id", id).then(function(r){
       btn.disabled=false;
-      if(r.error){ btn.textContent=old; alert("Could not change homepage visibility: "+(r.error.message||r.error)+"\n\n(If this says the column is missing, run migration 54 first.)"); return; }
+      if(r.error){ btn.textContent=old; vpTell("Could not change homepage visibility: "+(r.error.message||r.error)+"\n\n(If this says the column is missing, run migration 54 first.)"); return; }
       S.hideHp[id]=next; renderVenues();
     });
   }
@@ -2832,13 +2839,14 @@
   document.addEventListener("click", function(e){
     var b=e.target.closest && e.target.closest("button[data-drem]");
     if(!b) return;
-    if(!canBilling()){ alert("Discounts are restricted to Owner and Accounts."); return; }
-    if(!confirm("Remove this discount?\n\nIt is deleted, not paused. The coupon comes off their Stripe subscription, or a dollar credit is taken back off their balance, and the venue goes back to its normal rate from the next invoice.")) return;
+    if(!canBilling()){ vpTell("Discounts are restricted to Owner and Accounts."); return; }
+    vpAsk("Remove this discount?\n\nIt is deleted, not paused. The coupon comes off their Stripe subscription, or a dollar credit is taken back off their balance, and the venue goes back to its normal rate from the next invoice.").then(function(ok){ if (!ok) return;
     b.disabled=true; var old=b.textContent; b.textContent="\u2026";
     workerPost("/admin/discount-remove", { discount_id:b.getAttribute("data-drem") }).then(function(r){
-      if(r && r.reversed) alert("Removed, and " + r.reversed + ".");
-      if(r && r.error){ alert(r.error); b.disabled=false; b.textContent=old; return; }
+      if(r && r.reversed) vpTell("Removed, and " + r.reversed + ".");
+      if(r && r.error){ vpTell(r.error); b.disabled=false; b.textContent=old; return; }
       loadAll();   // there is no load() in this file: this threw, so a removed discount stayed on screen
+    });
     });
   });
   function discLine(d){
@@ -2910,8 +2918,11 @@
           // A group percentage covers every venue on the account. That is a warning, not a hard stop:
           // let the operator confirm and re-send to apply it across the whole account.
           if(res.needs_confirm && !applyToAccount){
-            if(confirm(res.error + "\n\nApply this " + value + "% across the whole account (" + (res.venue_count||"all") + " venues)?")){ submitDiscount(true); return; }
-            msg.style.color="var(--muted)"; msg.textContent="Cancelled."; return;
+            vpAsk(res.error + "\n\nApply this " + value + "% across the whole account (" + (res.venue_count||"all") + " venues)?").then(function(ok){
+              if(ok){ submitDiscount(true); return; }
+              msg.style.color="var(--muted)"; msg.textContent="Cancelled.";
+            });
+            return;
           }
           msg.style.color="var(--roll)"; msg.textContent=res.error; return;
         }
@@ -3037,13 +3048,14 @@
   }
   function renameGroup(id){
     var g=S.groupById[id]; if(!g) return;
-    var name=prompt("Group name", (g.name&&g.name.trim())?g.name:"");
+    vpAskText("Group name", (g.name&&g.name.trim())?g.name:"").then(function(name){
     if(name==null) return;
     name=name.trim();
-    if(!name){ alert("Enter a group name."); return; }
+    if(!name){ vpTell("Enter a group name."); return; }
     VP.getClient().from("vp_venue_groups").update({ name:name }).eq("id",id).then(function(r){
-      if(r.error){ alert("Could not rename: "+(r.error.message||r.error)); return; }
+      if(r.error){ vpTell("Could not rename: "+(r.error.message||r.error)); return; }
       g.name=name; renderStats(); renderVenues(); renderGroups(); populateGroupSelect();
+    });
     });
   }
   function renderGroups(){
@@ -3122,12 +3134,12 @@
     if(newGroup===null){
       // unchecking would orphan the venue's billing parent (violates the one-parent constraint); block it.
       chk.checked=true; chk.disabled=false;
-      alert("A venue must belong to a group. To remove it from all groups, convert it to independent card billing at onboarding.");
+      vpTell("A venue must belong to a group. To remove it from all groups, convert it to independent card billing at onboarding.");
       return;
     }
     VP.getClient().from("vp_venues").update({ group_id:gid }).eq("id",vid).then(function(r){
       chk.disabled=false;
-      if(r.error){ alert("Could not reassign: "+r.error.message); chk.checked=(function(){ for(var i=0;i<S.venues.length;i++){ if(S.venues[i].id===vid) return S.venues[i].group_id===gid; } return false; })(); return; }
+      if(r.error){ vpTell("Could not reassign: "+r.error.message); chk.checked=(function(){ for(var i=0;i<S.venues.length;i++){ if(S.venues[i].id===vid) return S.venues[i].group_id===gid; } return false; })(); return; }
       for(var i=0;i<S.venues.length;i++){ if(S.venues[i].id===vid) S.venues[i].group_id=gid; }
       S.openGroup=gid; renderStats(); renderVenues(); renderGroups();
     });
@@ -3204,14 +3216,15 @@
   $("teamRows").addEventListener("click", function(e){
     var b=e.target.closest("button[data-rmadmin]"); if(!b || !canTeam()) return;
     var uid=b.getAttribute("data-rmadmin"), label=b.getAttribute("data-label");
-    if(!confirm("Remove the VenuePlay staff login "+(label||uid)+"? This strips their admin access.")) return;
+    vpAsk("Remove the VenuePlay staff login "+(label||uid)+"? This strips their admin access.").then(function(ok){ if (!ok) return;
     b.disabled=true;
     // Direct browser delete allowed by RLS (admin FOR ALL on vp_platform_admins). The auth user
     // itself is left intact; the Worker can fully delete it later.
     VP.getClient().from("vp_platform_admins").delete().eq("auth_user_id",uid).then(function(r){
-      if(r.error){ b.disabled=false; alert("Could not remove: "+r.error.message); return; }
+      if(r.error){ b.disabled=false; vpTell("Could not remove: "+r.error.message); return; }
       S.admins=S.admins.filter(function(a){ return a.auth_user_id!==uid; });
       renderTeam();
+    });
     });
   });
   $("tmAdd").addEventListener("click", function(){
@@ -3360,7 +3373,7 @@
       var btn=ap||lk, fid=btn.getAttribute(ap?"data-appr":"data-lock"), approved=!!ap;
       btn.disabled=true; btn.textContent=approved?"Approving...":"Turning off...";
       workerPost("/admin/optin-approve",{ founding_id:fid, approved:approved }).then(function(r){
-        if(r && r.error){ alert(r.error); btn.disabled=false; renderOptin(); renderFlagged(); return; }
+        if(r && r.error){ vpTell(r.error); btn.disabled=false; renderOptin(); renderFlagged(); return; }
         var c=VP.getClient();
         Promise.all([
           c.from("venueplay_founding").select("id,venue_name,contact_email,optin_release_approved"),
@@ -3476,7 +3489,7 @@
       var btn=ap||lk, fid=btn.getAttribute(ap?"data-appr":"data-lock"), approved=!!ap;
       btn.disabled=true;
       workerPost("/admin/optin-approve",{ founding_id:fid, approved:approved }).then(function(r){
-        if(r && r.error){ alert(r.error); btn.disabled=false; return; }
+        if(r && r.error){ vpTell(r.error); btn.disabled=false; return; }
         VP.getClient().from("vp_admin_audit").select("*").order("created_at",{ascending:false}).limit(250).then(function(rr){ S.audit=(rr&&rr.data)||[]; renderFlagged(); renderAudit(); });
       });
     });
