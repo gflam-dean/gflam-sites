@@ -1761,6 +1761,10 @@
    "enabled": true,
    "forced": false
   },
+  "vp_help_limits": {
+   "enabled": true,
+   "forced": false
+  },
   "vp_help_push_subs": {
    "enabled": true,
    "forced": false
@@ -1978,6 +1982,10 @@
   "vp_gate_marketing_collect()": {
    "anon": true,
    "authenticated": true
+  },
+  "vp_help_hit(p_key text, p_window_secs integer, p_limit integer)": {
+   "anon": false,
+   "authenticated": false
   },
   "vp_host_question(p_game_id uuid, p_auth_user_id uuid)": {
    "anon": false,
