@@ -269,6 +269,7 @@
   "touring-cards.test.py",
   "touring-lock.test.py",
   "touring-manage.test.py",
+  "touring-signups.test.py",
   "trivia-catchup.test.js",
   "trivia-night.test.js",
   "trivia-reveal.test.js",

@@ -563,6 +563,10 @@
   "checks": 21,
   "counted_by": "lines"
  },
+ "tools/touring-signups.test.py": {
+  "checks": 24,
+  "counted_by": "lines"
+ },
  "touring-backend/lib/touring-api.test.js": {
   "checks": 56,
   "counted_by": "lines"

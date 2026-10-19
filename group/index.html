@@ -255,9 +255,12 @@ function doGSU(){
   fetch(_SBU+'/rest/v1/signups',{
     method:'POST',headers:_SBH,
     body:JSON.stringify({first_name:f,mobile:document.getElementById('gsfb').value.trim(),email:e,postcode:document.getElementById('gsfd').value.trim(),source:'gflam_group',signup_type:'signup'})
-  }).catch(function(){});
-  document.getElementById('gsf').style.display='none';
-  document.getElementById('gsfz').classList.add('show');
+  }).then(function(r){
+    // Only a stored signup gets a thank-you. Until 19 Oct 2026 this said thanks whatever
+    // happened, and every signup was being refused.
+    if(r.ok){document.getElementById('gsf').style.display='none';document.getElementById('gsfz').classList.add('show');}
+    else{alert("Sorry - that didn't go through. Please try again.");}
+  }).catch(function(){alert("Sorry - that didn't go through. Please check your connection and try again.");});
 }
 
 // Keyboard support for cards

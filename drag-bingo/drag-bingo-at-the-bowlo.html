@@ -350,9 +350,7 @@ function doDBSU() {
     first_name:first,mobile:document.getElementById('dbsfb').value.trim(),
     email:email,postcode:document.getElementById('dbsfd').value.trim(),
     source:'drag_bingo',signup_type:'signup'
-  })}).catch(function(){});
-  document.getElementById('dbsf').style.display='none';
-  document.getElementById('dbsfz').classList.add('show');
+  })}).then(function(r){if(r.ok){document.getElementById('dbsf').style.display='none';document.getElementById('dbsfz').classList.add('show');}else{alert("Sorry - that didn't go through. Please try again.");}}).catch(function(){alert("Sorry - that didn't go through. Please check your connection and try again.");});
 }
 
 loadShows();
