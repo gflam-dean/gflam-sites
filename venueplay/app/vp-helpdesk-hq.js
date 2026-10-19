@@ -108,6 +108,14 @@
       '.hdrep table{min-width:0}.hdrep .panel .lblk{margin:14px 14px 4px}' +
       '.hdstats{grid-template-columns:repeat(4,1fr)}@media (max-width:700px){.hdstats{grid-template-columns:repeat(2,1fr)}}' +
       '.hdf{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}' +
+      '.hwrow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start;padding:12px 0;border-bottom:1px solid var(--line-2)}.hwrow:last-child{border-bottom:none}' +
+      '.hwacts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center}' +
+      '.hwchk{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);white-space:nowrap}.hwchk input{width:auto}' +
+      '.hwsteps{margin:10px 0 0 0;padding-left:14px;border-left:2px solid var(--line)}' +
+      '.hwstat{font-size:11.5px;color:var(--faint);white-space:nowrap}.hwhide{opacity:.55}' +
+      '.hwnum{font-family:JetBrains Mono,monospace;color:var(--faint);font-size:12px;margin-right:6px}' +
+      '.hwtwo{display:grid;grid-template-columns:2fr 1fr;gap:4px 12px}.hwfaqadd{display:grid;grid-template-columns:1fr 2fr auto;gap:8px;margin-top:12px}' +
+      '@media (max-width:700px){.hwrow{grid-template-columns:1fr}.hwacts{justify-content:flex-start}.hwtwo,.hwfaqadd{grid-template-columns:1fr}.hwsteps{padding-left:10px}}' +
       '#paneHelpdesk .filterbar select{min-width:0;width:auto;padding-right:34px}#paneHelpdesk .filterbar input[type=date]{width:150px}' +
       '</style>' +
       '<div class="rowbetween">' +
@@ -140,7 +148,15 @@
         '<button class="btn pink" id="hdrGo">Run report</button>' +
         '<button class="btn ghost" id="hdrCsv" disabled>Download CSV</button>' +
       '</div><div class="note" style="margin-top:9px">Tickets that arrived in these dates. Time to close counts the ones of those that are closed. The CSV has no names or email addresses in it.</div></div>' +
-      '<div id="hdReport"></div>';
+      '<div id="hdReport"></div>' +
+      '<div class="lblk" style="margin-top:30px">Help words and guided steps</div>' +
+      '<div class="panel pad"><div class="filterbar">' +
+        '<select id="hwSet"><option value="venueplay:patron">VenuePlay players</option><option value="venueplay:venue">VenuePlay venues</option>' +
+        '<option value="partyplay:guest">PartyPlay guests</option><option value="partyplay:host">PartyPlay hosts</option></select>' +
+        '<button class="btn pink" id="hwGo">Open</button>' +
+      '</div><div class="note" style="margin-top:9px">What the Help panel shows, for each brand and who is asking. Changes show on phones straight away. ' +
+        'Steps move themselves up when they fix more, once each has about 20 answers; a pinned step stays where it is.</div></div>' +
+      '<div id="hwBox"></div>';
     host.appendChild(p);
     $("hdfGo").addEventListener("click", load);
     $("hdRows").addEventListener("click", function (e) { var tr = e.target.closest("tr[data-id]"); if (tr) openTicket(tr.getAttribute("data-id")); });
@@ -148,6 +164,7 @@
     $("hdAlert").addEventListener("click", alertForm);
     $("hdrGo").addEventListener("click", report);
     $("hdrCsv").addEventListener("click", csv);
+    $("hwGo").addEventListener("click", editorLoad);
   }
 
   function filters() {
@@ -284,8 +301,19 @@
           table("By kind", R.by_brand_category, function (k) { var p = k.split(":"); return (BR[p[0]] || p[0]) + ": " + catLabel(p[1], p[0]); }) +
           table("By how it came in", R.by_channel, function (k) { return CH[k] || k; }) + table("By status", R.by_status, function (k) { return ST[k] || k; }) +
           '<div class="panel"><div class="lblk">Venues with the most</div><table>' + (R.top_venues.length ? R.top_venues.map(function (v) { return '<tr><td class="vn">' + hdEsc(v.name) + '</td><td class="num" style="text-align:right">' + v.count + "</td></tr>"; }).join("") : '<tr><td class="note">None</td></tr>') + "</table></div>" +
-        "</div>";
+        "</div>" + triageTable(j.triage || []);
     });
+  }
+  function triageTable(rows) {
+    var body = rows.length ? rows.map(function (r) {
+      var steps = Object.keys(r.by_step || {}).sort(function (a, b) { return r.by_step[b] - r.by_step[a]; })
+        .map(function (k) { return hdEsc(k) + " <b>" + r.by_step[k] + "</b>"; }).join("<br>");
+      return '<tr><td><span class="badge hdbrand ' + (r.brand === "partyplay" ? "pp" : "grouped") + '">' + hdEsc(BR[r.brand] || r.brand) + "</span></td>" +
+        '<td class="vn">' + hdEsc(r.title) + '</td><td class="num">' + r.started + '</td><td class="num" style="color:var(--win)">' + r.solved +
+        '</td><td class="num">' + r.tickets + '</td><td class="num">' + r.left + '</td><td class="vt">' + (steps || "&ndash;") + "</td></tr>";
+    }).join("") : '<tr><td colspan="7" class="note">Nobody used the guided steps in these dates.</td></tr>';
+    return '<div class="lblk">Guided steps: solved without a ticket</div><div class="panel" id="hdTriage"><div class="tscroll"><table><thead><tr><th>Brand</th><th>Issue</th>' +
+      '<th>Picked it</th><th>Solved, no ticket</th><th>Sent a ticket</th><th>Left</th><th>Which step fixed it</th></tr></thead><tbody>' + body + "</tbody></table></div></div>";
   }
   /* Same rule as HQ's own CSV: a cell that starts like a formula gets a leading quote. No contact
      details in the file: it is a count of the work, and a CSV travels further than this page. */
@@ -302,6 +330,86 @@
     var a = doc.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "help-desk-" + lastReport.from + "-to-" + lastReport.to + ".csv";
     doc.body.appendChild(a); a.click(); doc.body.removeChild(a);
   }
+
+  /* ---- the help words editor ---- */
+  var HW = null;
+  function hwSet() { var v = $("hwSet").value.split(":"); return { brand: v[0], audience: v[1] }; }
+  function editorLoad() {
+    var box = $("hwBox"); box.innerHTML = '<div class="note">Opening...</div>';
+    var set = hwSet();
+    post("/admin/help/content/get", set).then(function (j) {
+      if (j.error) { box.innerHTML = '<div class="errflash show">' + hdEsc(j.error) + "</div>"; return; }
+      HW = j; HW.set = set; editorDraw();
+    });
+  }
+  function catOpts(brand, cur) { return Object.keys(CAT).map(function (k) { return '<option value="' + k + '"' + (k === cur ? " selected" : "") + ">" + hdEsc(catLabel(k, brand)) + "</option>"; }).join(""); }
+  function moveBtns(kind, id) { return '<button class="mini" data-hw="move" data-kind="' + kind + '" data-id="' + id + '" data-dir="up" title="Move up">&#8593;</button>' +
+    '<button class="mini" data-hw="move" data-kind="' + kind + '" data-id="' + id + '" data-dir="down" title="Move down">&#8595;</button>'; }
+  function editorDraw() {
+    var box = $("hwBox"), b = HW.set.brand, steps = function (i) { return i.steps || []; };
+    var stepTitle = {}; HW.issues.forEach(function (i) { steps(i).forEach(function (s) { stepTitle[s.id] = s.body; }); });
+    var issuesHtml = HW.issues.map(function (i) {
+      return '<div class="hwrow' + (i.hidden ? " hwhide" : "") + '" data-issue="' + i.id + '"><div>' +
+        '<div class="hwtwo"><div class="field"><label>Issue, as the list shows it</label><input type="text" data-f="title" value="' + hdEsc(i.title) + '"></div>' +
+        '<div class="field"><label>If not fixed, the ticket is</label><select data-f="category">' + catOpts(b, i.category) + "</select></div></div>" +
+        '<div class="hwsteps">' + (steps(i).length ? steps(i).map(function (s, n) {
+          return '<div class="hwrow' + (s.hidden ? " hwhide" : "") + '" data-step="' + s.id + '"><div><span class="hwnum">Step ' + (n + 1) + "</span>" +
+            (s.flagged ? '<span class="badge urgent" title="Fixes under 5% after 30 tries">Rarely helps</span> ' : "") +
+            '<input type="text" data-f="body" value="' + hdEsc(s.body) + '" style="margin-top:6px">' +
+            '<div class="hwstat" style="margin-top:5px">' + (s.tries ? s.tries + " answers, fixed it " + s.rate + "%" : "no answers yet") + "</div></div>" +
+            '<div class="hwacts"><label class="hwchk"><input type="checkbox" data-f="pinned"' + (s.pinned ? " checked" : "") + "> Pinned</label>" +
+            '<label class="hwchk"><input type="checkbox" data-f="hidden"' + (s.hidden ? " checked" : "") + "> Hidden</label>" +
+            moveBtns("step", s.id) + '<button class="mini" data-hw="save-step" data-id="' + s.id + '">Save</button></div></div>';
+        }).join("") : '<div class="note" style="margin:6px 0">No steps: this goes straight to the contact form.</div>') +
+        '<div style="margin-top:8px"><input type="text" placeholder="A new step, one short instruction" data-new-step="' + i.id + '" style="max-width:480px"> ' +
+        '<button class="mini" data-hw="add-step" data-id="' + i.id + '">+ Add step</button></div></div></div>' +
+        '<div class="hwacts"><label class="hwchk"><input type="checkbox" data-f="auto_order"' + (i.auto_order !== false ? " checked" : "") + "> Reorder steps automatically</label>" +
+        '<label class="hwchk"><input type="checkbox" data-f="hidden"' + (i.hidden ? " checked" : "") + "> Hidden</label>" +
+        moveBtns("issue", i.id) + '<button class="btn pink" data-hw="save-issue" data-id="' + i.id + '" style="padding:8px 14px">Save</button></div></div>';
+    }).join("");
+    var faqHtml = HW.faq.map(function (f) {
+      return '<div class="hwrow' + (f.hidden ? " hwhide" : "") + '" data-faq="' + f.id + '"><div>' +
+        '<div class="field"><label>Question</label><input type="text" data-f="question" value="' + hdEsc(f.question) + '"></div>' +
+        '<div class="field"><label>Answer</label><textarea data-f="answer">' + hdEsc(f.answer) + "</textarea></div></div>" +
+        '<div class="hwacts"><label class="hwchk"><input type="checkbox" data-f="hidden"' + (f.hidden ? " checked" : "") + "> Hidden</label>" +
+        moveBtns("faq", f.id) + '<button class="btn pink" data-hw="save-faq" data-id="' + f.id + '" style="padding:8px 14px">Save</button></div></div>';
+    }).join("");
+    var logHtml = HW.reorders.length ? HW.reorders.map(function (l) {
+      var iss = HW.issues.filter(function (i) { return i.id === l.issue_id; })[0];
+      function names(ids) { return (ids || []).map(function (id, n) { return (n + 1) + ". " + hdEsc((stepTitle[id] || "(removed)").slice(0, 46)); }).join("<br>"); }
+      return "<tr><td class=\"vt\" style=\"white-space:nowrap\">" + hdEsc(when(l.created_at)) + '</td><td class="vn">' + hdEsc(iss ? iss.title : "") + '</td><td class="vt">' + names(l.before_ids) +
+        '</td><td class="vt">' + names(l.after_ids) + '</td><td class="vt">' + hdEsc(l.reason || "") + "</td><td>" +
+        (l.undone_at ? '<span class="badge idle">Undone by ' + hdEsc(l.undone_by || "") + "</span>" : '<button class="mini" data-hw="undo" data-id="' + l.id + '">Undo</button>') + "</td></tr>";
+    }).join("") : '<tr><td colspan="6" class="note">No automatic changes yet.</td></tr>';
+    box.innerHTML =
+      '<div class="lblk">What\'s your issue? (one step at a time)</div><div class="panel pad">' + (issuesHtml || '<div class="note">No issues yet.</div>') +
+        '<div style="margin-top:12px"><input type="text" id="hwNewIssue" placeholder="A new issue, as people would say it" style="max-width:420px"> <button class="btn ghost" data-hw="add-issue">+ Add issue</button></div></div>' +
+      '<div class="lblk">Questions and answers</div><div class="panel pad">' + (faqHtml || '<div class="note">No questions yet.</div>') +
+        '<div class="hwfaqadd"><input type="text" id="hwNewQ" placeholder="New question"><input type="text" id="hwNewA" placeholder="Its answer"><button class="btn ghost" data-hw="add-faq">+ Add question</button></div></div>' +
+      '<div class="lblk">Steps the desk moved by itself</div><div class="panel" id="hwLog"><div class="tscroll"><table><thead><tr><th>When</th><th>Issue</th><th>Before</th><th>After</th><th>Why</th><th></th></tr></thead><tbody>' + logHtml + "</tbody></table></div></div>" +
+      '<div class="errflash" id="hwMsg"></div>';
+  }
+  function hwSay(m) { var n = $("hwMsg"); if (n) { n.textContent = m; n.classList.add("show"); } }
+  function fields(row) { var o = {}; Array.prototype.forEach.call(row.querySelectorAll(":scope > div [data-f], :scope > .hwacts [data-f]"), function (e) {
+    o[e.getAttribute("data-f")] = e.type === "checkbox" ? e.checked : e.value; }); return o; }
+  doc.addEventListener("click", function (e) {
+    var t = e.target.closest && e.target.closest("[data-hw]"); if (!t || !$("hwBox") || !$("hwBox").contains(t)) return;
+    var act = t.getAttribute("data-hw"), id = t.getAttribute("data-id"), set = HW && HW.set, req;
+    if (act === "move") req = post("/admin/help/content/move", { kind: t.getAttribute("data-kind"), id: id, dir: t.getAttribute("data-dir") });
+    else if (act === "save-faq") req = post("/admin/help/content/save", Object.assign({ kind: "faq", id: id }, fields(t.closest("[data-faq]"))));
+    else if (act === "save-issue") { var row = t.closest("[data-issue]"), o = {};
+      Array.prototype.forEach.call(row.querySelectorAll("[data-f]"), function (x) { if (x.closest("[data-step]")) return; o[x.getAttribute("data-f")] = x.type === "checkbox" ? x.checked : x.value; });
+      req = post("/admin/help/content/save", Object.assign({ kind: "issue", id: id }, o)); }
+    else if (act === "save-step") req = post("/admin/help/content/save", Object.assign({ kind: "step", id: id }, fields(t.closest("[data-step]"))));
+    else if (act === "add-step") { var inp = doc.querySelector('[data-new-step="' + id + '"]'); req = post("/admin/help/content/save", { kind: "step", issue_id: id, body: inp.value }); }
+    else if (act === "add-issue") req = post("/admin/help/content/save", { kind: "issue", brand: set.brand, audience: set.audience, title: $("hwNewIssue").value,
+      category: set.audience === "venue" || set.audience === "host" ? "venue_support" : "patron_support" });
+    else if (act === "add-faq") req = post("/admin/help/content/save", { kind: "faq", brand: set.brand, audience: set.audience, question: $("hwNewQ").value, answer: $("hwNewA").value });
+    else if (act === "undo") req = post("/admin/help/reorder/undo", { id: id });
+    if (!req) return;
+    t.disabled = true;
+    req.then(function (r) { t.disabled = false; if (r.error) { hwSay(r.error); return; } editorLoad(); });
+  });
 
   /* ---- phone alerts ---- */
   function b64ToBytes(s) { s = s.replace(/-/g, "+").replace(/_/g, "/"); while (s.length % 4) s += "="; var bin = atob(s), out = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i); return out; }

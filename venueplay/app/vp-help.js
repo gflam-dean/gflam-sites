@@ -125,35 +125,70 @@
       ".vph .vph-done b{color:#35D07F}" +
       ".vph .vph-hp{position:absolute!important;left:-9999px!important;width:1px!important;height:1px!important;overflow:hidden!important}" +
       ".vph-inline{max-width:560px;margin:0 auto;text-align:left;font:400 15px/1.5 'Manrope',system-ui,sans-serif}" +
+      ".vph .vph-q{margin-top:6px}" +
+      ".vph .vph-issues{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}" +
+      ".vph .vph-issue{text-align:left;background:#1B1B20;border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:12px;padding:14px 16px;font:700 15px/1.3 'Manrope',system-ui,sans-serif;cursor:pointer}" +
+      ".vph .vph-issue:active{border-color:#FF1F8E}" +
+      ".vph .vph-issuename{font-size:13px;color:#9A9AA4;margin:4px 0 10px}" +
+      ".vph .vph-step{background:#1B1B20;border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:18px 16px}" +
+      ".vph .vph-stepno{font:800 12px/1 'Hanken Grotesk',system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#FF1F8E;margin-bottom:10px}" +
+      ".vph .vph-stepbody{font-size:17px;line-height:1.45;color:#fff}" +
+      ".vph .vph-steprow{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}" +
+      ".vph .vph-steprow .vph-go{margin-top:0;flex:1;min-width:130px}" +
+      ".vph .vph-still{flex:1;min-width:130px;border:1px solid rgba(255,255,255,.2);background:transparent;color:#E7E7EC;border-radius:12px;padding:15px;font:700 15px/1 'Hanken Grotesk',system-ui,sans-serif;cursor:pointer}" +
+      ".vph .vph-back{display:block;background:none;border:none;color:#9A9AA4;text-decoration:underline;text-underline-offset:3px;font:600 13px/1.4 'Manrope',system-ui,sans-serif;padding:14px 0 0;cursor:pointer}" +
+      ".vph .vph-msg{padding-top:6px}" +
+      ".vph .vph-faqwrap{border-top:none;margin-bottom:6px}" +
+      ".vph .vph-faqwrap>summary{color:#C9C9D1;font-weight:700}" +
+      ".vph .vph-faqwrap details{margin-left:2px}" +
+      ".vph .vph-about{font-size:14px;color:#C9C9D1;background:#1B1B20;border-radius:10px;padding:10px 12px;margin-bottom:4px}" +
       ".vph-inline .vph{background:transparent;box-shadow:none;max-height:none;padding:0;border-radius:0;max-width:none}";
     doc.head.appendChild(s);
   }
 
-  /* ---- the FAQ ---- */
-  var faqP = null;
-  function loadFaq() {
-    if (!faqP) faqP = root.fetch("/data/help-faq.json", { cache: "no-cache" })
+  /* ---- the words: from HQ's editor, through the Worker; the file on this site if that fails ---- */
+  var contentP = null;
+  function loadContent() {
+    if (contentP) return contentP;
+    contentP = root.fetch(API + "/help/content?brand=" + BRAND + "&audience=" + FAQ_KEY)
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-      .catch(function () { return null; });
-    return faqP;
+      .then(function (j) { if (!j || !j.faq) throw new Error("empty"); return j; })
+      .catch(function () {
+        // The Worker could not be reached: the FAQ that ships with the site, and no triage.
+        return root.fetch("/data/help-faq.json", { cache: "no-cache" })
+          .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+          .then(function (d) { var sec = d && d[FAQ_KEY]; return sec ? { faq: sec.items || [], issues: [], fallback: true } : null; })
+          .catch(function () { return null; });
+      });
+    return contentP;
+  }
+  /* One answer on the triage, best effort: a lost answer must never hold up the person asking. */
+  function triage(issue, step, kind) {
+    try {
+      root.fetch(API + "/help/triage", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ brand: BRAND, issue_id: issue.id, step_id: step ? step.id : undefined, kind: kind, device: deviceId() }) }).catch(function () {});
+    } catch (e) {}
   }
 
   /* ---- the form ---- */
   function field(label, input) { var w = el("div"); var l = el("label", "", label); if (input.id) l.setAttribute("for", input.id); w.appendChild(l); w.appendChild(input); return w; }
   function input(type, id, extra) { var i = el(type === "textarea" ? "textarea" : "input"); if (type !== "textarea") i.type = type; i.id = id; for (var k in (extra || {})) i.setAttribute(k, extra[k]); return i; }
 
-  function buildForm(box) {
+  function buildForm(box, issue) {
     var venueMode = MODE === "venue", sales = MODE === "sales";
     var f = el("form"); f.setAttribute("novalidate", ""); f.className = "vph-form";
+    if (issue && !venueMode) { var about = el("div", "vph-about"); about.appendChild(el("span", "", "About: ")); about.appendChild(el("b", "", issue.title)); f.appendChild(about); }
     var hp = input("text", "vphWebsite", { name: "website", tabindex: "-1", autocomplete: "off", "aria-hidden": "true" });
     var hpw = el("div", "vph-hp"); hpw.appendChild(hp); f.appendChild(hpw);
 
     var name, email, phone, subject, kind, urgent;
     if (venueMode) {
       subject = input("text", "vphSubject", { maxlength: "200", placeholder: "e.g. TV not showing the game" });
+      if (issue) subject.value = issue.title;
       f.appendChild(field("What is it about?", subject));
       kind = el("select"); kind.id = "vphKind";
       [["venue_support", "Help with VenuePlay"], ["accounts", "Billing or an invoice"]].forEach(function (o) { var op = el("option", "", o[1]); op.value = o[0]; kind.appendChild(op); });
+      if (issue && /bill|invoice|payment|refund/i.test(issue.title)) kind.value = "accounts";
       f.appendChild(field("Kind of request", kind));
     } else {
       name = input("text", "vphName", { maxlength: "120", autocomplete: "name", placeholder: sales ? "Your name" : "Optional" });
@@ -188,7 +223,8 @@
       if (m.length > 4000) { err.textContent = "That is a bit long. Keep it under 4,000 characters."; return; }
       if (venueMode) {
         if (!String(subject.value || "").trim()) { err.textContent = "Give it a short subject."; subject.focus(); return; }
-        body = { venue_id: venueId(), subject: subject.value, message: m, category: kind.value, urgent: !!urgent.checked, reply_email: replyTo.value };
+        body = { venue_id: venueId(), subject: subject.value, message: m, category: kind.value, urgent: !!urgent.checked, reply_email: replyTo.value,
+                 issue_id: issue ? issue.id : undefined };
         url = API + "/help/venue/ticket";
         if (!body.venue_id) { err.textContent = "Pick your venue first, then try again."; return; }
       } else {
@@ -197,7 +233,7 @@
         if (sales && !String(name.value || "").trim()) { err.textContent = "Put in your name."; name.focus(); return; }
         body = { brand: BRAND, kind: sales ? "sales" : (MODE === "host" ? "host" : "patron"), name: name.value, email: em,
                  phone: phone ? phone.value : "", message: m, code: roomCode(), slug: BRAND === "venueplay" ? venueSlug() : "",
-                 game: sales ? "" : gameName(), device: deviceId(), website: hp.value };
+                 game: sales ? "" : gameName(), device: deviceId(), website: hp.value, issue_id: issue ? issue.id : undefined };
       }
       go.disabled = true; go.textContent = "Sending...";
       authHeader(venueMode).then(function (h) {
@@ -219,6 +255,7 @@
       });
     });
     box.appendChild(f);
+    try { (venueMode ? (issue ? msg : subject) : email).focus(); } catch (e) {}
     return f;
   }
 
@@ -239,7 +276,11 @@
     } catch (e) { return Promise.resolve(""); }
   }
 
-  /* ---- the panel ---- */
+  /* ---- the panel: "What's your issue?", then ONE step at a time, then the form ----
+     Never a wall of text. The issue list first; pick one and the screen holds a single step with
+     two buttons. "Still not working" brings the next step and nothing else. After the last one
+     (or for an issue with no steps, or "send us a message") the contact form opens, already
+     about that issue. The FAQ sits under the list, folded, and is not shown during the steps. */
   var lastFocus = null;
   function openPanel() {
     styles();
@@ -250,9 +291,7 @@
     var top = el("div", "vph-top"); var h = el("h2", "", MODE === "venue" ? "Help for venues" : MODE === "host" ? "Help for hosts" : "Help"); h.id = "vphTitle";
     var x = el("button", "vph-x", "×"); x.type = "button"; x.setAttribute("aria-label", "Close help");
     top.appendChild(h); top.appendChild(x); p.appendChild(top);
-    var faqBox = el("div"); faqBox.id = "vphFaq"; p.appendChild(faqBox);
-    p.appendChild(el("h3", "", "Contact support"));
-    buildForm(p);
+    var flow = el("div"); flow.id = "vphFlow"; p.appendChild(flow);
     bg.appendChild(p); doc.body.appendChild(bg);
     function close() { try { bg.parentNode.removeChild(bg); } catch (e) {} doc.removeEventListener("keydown", esck); try { lastFocus && lastFocus.focus(); } catch (e) {} }
     function esck(e) { if (e.key === "Escape") close(); }
@@ -260,14 +299,74 @@
     on(bg, "click", function (e) { if (e.target === bg) close(); });
     doc.addEventListener("keydown", esck);
     try { x.focus(); } catch (e) {}
-    loadFaq().then(function (data) {
-      var sec = data && data[FAQ_KEY];
-      if (sec && sec.title) h.textContent = sec.title;
-      (sec && sec.items || []).forEach(function (it) {
-        var d = el("details"); var s = el("summary", "", it.q); d.appendChild(s); d.appendChild(lines(el("p"), it.a)); faqBox.appendChild(d);
+    function clear() { while (flow.firstChild) flow.removeChild(flow.firstChild); try { p.scrollTop = 0; } catch (e) {} }
+    function backLink(label, fn) { var b = el("button", "vph-back", label); b.type = "button"; on(b, "click", fn); return b; }
+    var data = null;
+
+    function showIssues() {
+      clear();
+      var issues = (data && data.issues) || [];
+      if (issues.length) {
+        flow.appendChild(el("h3", "vph-q", "What's your issue?"));
+        var list = el("div", "vph-issues");
+        issues.forEach(function (it) {
+          var b = el("button", "vph-issue", it.title); b.type = "button"; b.setAttribute("data-issue", it.id);
+          on(b, "click", function () { triage(it, null, "start"); if (it.steps && it.steps.length) showStep(it, 0); else showForm(it); });
+          list.appendChild(b);
+        });
+        flow.appendChild(list);
+      }
+      var faq = (data && data.faq) || [];
+      if (faq.length) {
+        var det = el("details", "vph-faqwrap"); det.id = "vphFaq";
+        det.appendChild(el("summary", "", "Questions and answers"));
+        if (!issues.length) det.open = true;
+        faq.forEach(function (it) {
+          var d = el("details"); d.appendChild(el("summary", "", it.q)); d.appendChild(lines(el("p"), it.a)); det.appendChild(d);
+        });
+        flow.appendChild(det);
+      }
+      if (!data) flow.appendChild(lines(el("p", "vph-fine"), "Help could not load just now. You can still send us a message."));
+      var msgLink = el("button", "vph-back vph-msg", issues.length ? "Or send us a message" : "Send us a message"); msgLink.type = "button";
+      on(msgLink, "click", function () { showForm(null); });
+      flow.appendChild(msgLink);
+    }
+
+    function showStep(issue, i) {
+      clear();
+      var step = issue.steps[i], n = issue.steps.length;
+      flow.appendChild(el("div", "vph-issuename", issue.title));
+      var card = el("div", "vph-step"); card.setAttribute("data-step", step.id);
+      card.appendChild(el("div", "vph-stepno", "Step " + (i + 1) + " of " + n));
+      card.appendChild(el("div", "vph-stepbody", step.body));
+      var row = el("div", "vph-steprow");
+      var fixed = el("button", "vph-go vph-fixed", "Fixed it"); fixed.type = "button";
+      var still = el("button", "vph-still", "Still not working"); still.type = "button";
+      on(fixed, "click", function () {
+        triage(issue, step, "fixed");
+        clear();
+        var done = el("div", "vph-done"); done.setAttribute("role", "status");
+        done.appendChild(el("b", "", "Good, glad that sorted it.")); flow.appendChild(done);
+        var ok = el("button", "vph-go", "Done"); ok.type = "button"; on(ok, "click", close); flow.appendChild(ok);
       });
-      if (!sec) faqBox.appendChild(lines(el("p", "vph-fine"), "Questions and answers could not load just now. You can still send us a message below."));
-    });
+      on(still, "click", function () {
+        triage(issue, step, "not_fixed");
+        if (i + 1 < n) showStep(issue, i + 1); else showForm(issue);
+      });
+      row.appendChild(fixed); row.appendChild(still); card.appendChild(row);
+      flow.appendChild(card);
+      flow.appendChild(backLink("Back to the list", showIssues));
+      try { fixed.focus(); } catch (e) {}
+    }
+
+    function showForm(issue) {
+      clear();
+      flow.appendChild(el("h3", "vph-q", issue && issue.steps && issue.steps.length ? "Sorry that did not fix it. Tell us what is happening." : "Contact support"));
+      buildForm(flow, issue);
+      flow.appendChild(backLink("Back to the list", showIssues));
+    }
+
+    loadContent().then(function (d) { data = d; showIssues(); });
   }
   root.VPHelp = { open: openPanel, mode: MODE, brand: BRAND };
 

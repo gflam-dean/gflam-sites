@@ -100,7 +100,7 @@ window.__routes = window.__routes || {};
       var b = {}; try { b = JSON.parse((o && o.body) || "{}"); } catch (e) {}
       var path = u.slice("https://help.test".length);
       window.__posts.push({ path: path, body: b, headers: (o && o.headers) || {} });
-      var r = window.__routes[path] || { status: 200, body: { ok: true, ticket_no: 1042 } };
+      var r = window.__routes[path] || window.__routes[path.split("?")[0]] || { status: 200, body: { ok: true, ticket_no: 1042 } };
       return Promise.resolve(new Response(JSON.stringify(r.body), { status: r.status || 200, headers: { "Content-Type": "application/json" } }));
     }
     if (/workers\.dev/.test(u)) return Promise.reject(new Error("the real Worker is never called from this test"));
@@ -110,8 +110,29 @@ window.__routes = window.__routes || {};
 '''
 
 
+def _content(faq_items, issues):
+    return {'body': {'faq': faq_items, 'issues': issues}}
+def _iss(i, title, n):
+    return {'id': '0000000%d-0000-4000-8000-%012d' % (i, i), 'title': title,
+            'steps': [{'id': '0000000%d-0000-4000-8000-%012d' % (i, 100 * i + k), 'body': 'Step body %d.%d' % (i, k + 1)} for k in range(n)]}
+_vp = json.load(open(os.path.join(ROOT, 'venueplay', 'data', 'help-faq.json')))
+_pp = json.load(open(os.path.join(ROOT, 'partyplay', 'data', 'help-faq.json')))
+ISSUES = {'venueplay:patron': [_iss(1, 'My game is not showing', 4), _iss(2, 'Something else', 0)],
+          'venueplay:venue': [_iss(3, 'The TV is not showing the game', 3), _iss(4, 'A question about my bill', 0)],
+          'partyplay:guest': [_iss(5, 'I cannot join the party', 3)], 'partyplay:host': [_iss(6, 'The party screen is blank', 3)]}
+ISSUES['venueplay:patron'][0]['steps'][0]['body'] = 'Pull down to refresh the page.'
+ISSUES['venueplay:patron'][0]['steps'][3]['body'] = 'Ask the host. They can see who has joined and can get you going.'
+DEFAULT_ROUTES = {}
+for key, data in (('venueplay:patron', _vp['patron']), ('venueplay:venue', _vp['venue']), ('partyplay:guest', _pp['guest']), ('partyplay:host', _pp['host'])):
+    b_, a_ = key.split(':')
+    DEFAULT_ROUTES['/help/content?brand=%s&audience=%s' % (b_, a_)] = _content(data['items'], ISSUES[key])
+
+
 class Tab(object):
-    def __init__(self, b, w=375, h=740, mobile=True, pre=''):
+    def __init__(self, b, w=375, h=740, mobile=True, pre='', routes=None):
+        merged = dict(DEFAULT_ROUTES)
+        merged.update(routes or {})
+        pre = 'window.__routes=' + json.dumps(merged) + ';' + pre
         self.b = b
         self.tid = b.call('Target.createTarget', {'url': 'about:blank'})['targetId']
         self.sid = b.call('Target.attachToTarget', {'targetId': self.tid, 'flatten': True})['sessionId']
@@ -187,10 +208,20 @@ def link_checks(t, where):
 def panel_checks(t, where, faq_items, title_has):
     t.js('document.getElementById("vphLink").click()')
     got = t.until('document.querySelectorAll("#vphFaq details").length || 0', 8)
-    check(where + ': Help opens the panel with the FAQ from the data file (%d questions)' % faq_items, got == faq_items, got)
+    check(where + ': Help opens with the questions and answers HQ keeps (%d), folded under the issues' % faq_items, got == faq_items and t.js('document.getElementById("vphFaq").open') is False, got)
     check(where + ': its title is right', title_has in (t.js('(document.getElementById("vphTitle")||{}).textContent') or ''), t.js('(document.getElementById("vphTitle")||{}).textContent'))
-    priv = t.js('Array.prototype.some.call(document.querySelectorAll(".vph-fine a"), function(a){ return a.getAttribute("href")==="/privacy"; })')
-    return priv
+    check(where + ': it starts with "What\'s your issue?" and the issues, not a form', t.js('document.querySelectorAll("#vphFlow .vph-issue").length') >= 1 and t.js('!document.getElementById("vphMsg")') is True)
+    return None
+
+
+def to_form(t):
+    t.js('document.querySelector(".vph-msg").click()')
+    t.until('!!document.getElementById("vphMsg")', 5)
+    return t.js('Array.prototype.some.call(document.querySelectorAll(".vph-fine a"), function(a){ return a.getAttribute("href")==="/privacy"; })')
+
+
+def posts(t):
+    return t.js('window.__posts') or []
 
 
 def main():
@@ -218,12 +249,48 @@ def main():
         t.shot('02-bingo-phone-help-link')
         check('bingo phone: Help is also in the phone menu, above Leave game',
               t.js('(function(){var m=document.getElementById("vphMenu"),l=document.getElementById("leaveBtn");return !!(m&&l&&m.parentNode===l.parentNode&&m.nextElementSibling===l);})()') is True)
-        priv = panel_checks(t, 'bingo phone', len(vp_faq['patron']['items']), 'Help')
-        check('bingo phone: the privacy line links the privacy policy', priv is True)
+        panel_checks(t, 'bingo phone', len(vp_faq['patron']['items']), 'Help')
         t.shot('03-bingo-phone-help-panel')
+        I1 = ISSUES['venueplay:patron'][0]
+        STEPS1 = [x['id'] for x in I1['steps']]
+        t.js('document.querySelector("[data-issue=\'%s\']").click()' % I1['id'])
+        t.until('!!document.querySelector(".vph-step")', 5)
+        one = t.js('(function(){var s=document.querySelectorAll(".vph-step");return {n:s.length,no:(document.querySelector(".vph-stepno")||{}).textContent,body:(document.querySelector(".vph-stepbody")||{}).textContent,text:document.getElementById("vphFlow").textContent,faq:!!document.getElementById("vphFaq"),form:!!document.getElementById("vphMsg")};})()')
+        check('triage: picking an issue shows ONE step, "Step 1 of 4"', one['n'] == 1 and one['no'] == 'Step 1 of 4' and one['body'] == 'Pull down to refresh the page.', one)
+        check('triage: and nothing else: not the next steps, not the FAQ, not the form', 'Step body 1.2' not in one['text'] and 'Ask the host' not in one['text'] and not one['faq'] and not one['form'], one)
+        check('triage: two answers only, "Fixed it" and "Still not working"', t.js('Array.prototype.map.call(document.querySelectorAll(".vph-steprow button"),function(b){return b.textContent}).join()') == 'Fixed it,Still not working')
+        P = posts(t)
+        check('triage: picking it is counted (start)', P and P[-1]['path'] == '/help/triage' and P[-1]['body'].get('kind') == 'start' and P[-1]['body'].get('issue_id') == I1['id'], P[-1:] )
+        t.shot('03b-bingo-phone-step-1')
+        t.js('document.querySelector(".vph-still").click()')
+        two = t.until('(document.querySelector(".vph-stepno")||{}).textContent', 5)
+        P = posts(t)
+        check('triage: "Still not working" brings step 2, and only step 2', two == 'Step 2 of 4' and t.js('document.querySelector(".vph-stepbody").textContent') == 'Step body 1.2' and t.js('document.querySelectorAll(".vph-step").length') == 1, two)
+        check('triage: and counts "not fixed" for step 1', P[-1]['body'].get('kind') == 'not_fixed' and P[-1]['body'].get('step_id') == STEPS1[0], P[-1])
+        t.js('document.querySelector(".vph-fixed").click()')
+        done = t.until('(document.querySelector(".vph-done")||{}).textContent', 5)
+        P = posts(t)
+        check('triage: "Fixed it" thanks them and stops there', bool(done) and 'glad that sorted it' in done and t.js('!document.getElementById("vphMsg")') is True, done)
+        check('triage: and counts "fixed" for step 2', P[-1]['body'].get('kind') == 'fixed' and P[-1]['body'].get('step_id') == STEPS1[1], P[-1])
+        t.js('document.querySelector("#vphFlow .vph-go").click()')
+        check('triage: Done closes Help', t.until('!document.getElementById("vphBg")', 3) is True)
+        t.js('document.getElementById("vphLink").click()')
+        t.until('!!document.querySelector("[data-issue]")', 5)
+        t.js('document.querySelector("[data-issue=\'%s\']").click()' % I1['id'])
+        for k in range(3):
+            t.until('!!document.querySelector(".vph-still")', 3)
+            t.js('document.querySelector(".vph-still").click()')
+        four = t.until('(document.querySelector(".vph-stepno")||{}).textContent', 3)
+        check('triage: the last step is the pinned one, "Ask the host", Step 4 of 4', four == 'Step 4 of 4' and 'Ask the host' in (t.js('document.querySelector(".vph-stepbody").textContent') or ''), four)
+        t.js('document.querySelector(".vph-still").click()')
+        about = t.until('(document.querySelector(".vph-about")||{}).textContent', 5)
+        check('triage: after the last "Still not working", the form opens, already about that issue', about == 'About: My game is not showing' and t.js('!!document.getElementById("vphMsg") && !document.querySelector(".vph-step")') is True, about)
+        t.shot('03c-bingo-phone-form-after-steps')
+        check('bingo phone: the privacy line links the privacy policy', t.js('Array.prototype.some.call(document.querySelectorAll(".vph-fine a"), function(a){ return a.getAttribute("href")==="/privacy"; })') is True)
+        n_before = len(posts(t))
         t.js('document.getElementById("vphMsg").value="My tickets are not showing";document.querySelector(".vph-go").click()')
         time.sleep(0.4)
-        check('bingo phone: no email, no send, and it says why', t.js('window.__posts.length') == 0 and 'email' in (t.js('document.querySelector(".vph-err").textContent') or ''))
+        check('bingo phone: no email, no send, and it says why', len(posts(t)) == n_before and 'email' in (t.js('document.querySelector(".vph-err").textContent') or ''))
         # On a real night connect(room) writes the room into #roomLabel, and that is what the widget
         # reads. The scripted demo never connects, so do here exactly what connect() does.
         t.js('document.getElementById("roomLabel").textContent="RYL234"')
@@ -232,6 +299,7 @@ def main():
         post = (t.js('window.__posts') or [{}])[-1]
         body = post.get('body', {})
         check('bingo phone: the form posts a patron ticket to /help/ticket', post.get('path') == '/help/ticket' and body.get('brand') == 'venueplay' and body.get('kind') == 'patron', post)
+        check('triage: the ticket carries the issue, so the desk names it and picks its kind', body.get('issue_id') == I1['id'], body)
         check('bingo phone: the room code and the game ride along, the honeypot is empty, a device id is sent',
               body.get('code') == 'RYL234' and body.get('game') == 'bingo' and body.get('website') == '' and len(body.get('device') or '') >= 16, body)
         check('bingo phone: no login token is sent from a patron page', 'Authorization' not in (post.get('headers') or {}), post.get('headers'))
@@ -239,17 +307,29 @@ def main():
         t.shot('04-bingo-phone-sent')
         t.js('document.querySelector(".vph-x").click()')
         check('bingo phone: the panel closes and the game is back', t.js('!document.getElementById("vphBg") && !!document.getElementById("bingoBtn").offsetParent') is True)
+        t.js('document.getElementById("vphLink").click()')
+        t.until('!!document.querySelector("[data-issue]")', 5)
+        t.js('document.querySelector("[data-issue=\'%s\']").click()' % ISSUES['venueplay:patron'][1]['id'])
+        check('triage: an issue with no steps ("Something else") goes straight to the form', t.until('!!document.getElementById("vphMsg")', 4) is True and t.js('!document.querySelector(".vph-step")') is True)
         t.close()
 
         for path, name in (('/app/musical/play?demo=1', 'musical phone'), ('/app/trivia/play?demo=1', 'trivia phone')):
             print(name.upper())
-            t = Tab(b)
+            # The musical phone also proves the fallback: the Worker cannot be reached, so Help shows the
+            # FAQ that ships with the site, open, and the form, and no guided steps.
+            down = {'/help/content?brand=venueplay&audience=patron': {'status': 500, 'body': {}}} if 'musical' in name else None
+            t = Tab(b, routes=down)
             t.go(VP + path)
             t.until('!!document.getElementById("vphLink")', 15)
             time.sleep(1.5)
             link_checks(t, name)
             t.shot(('05-' if 'musical' in name else '06-') + name.replace(' ', '-'))
             check(name + ': Help is in the phone menu too', t.js('!!document.getElementById("vphMenu")') is True)
+            if down:
+                t.js('document.getElementById("vphLink").click()')
+                got = t.until('document.querySelectorAll("#vphFaq details").length || 0', 8)
+                check('Worker down: Help still shows the FAQ from the site, open, and a way to send a message, with no steps',
+                      got == len(vp_faq['patron']['items']) and t.js('document.getElementById("vphFaq").open') is True and t.js('!document.querySelector(".vph-issue") && !!document.querySelector(".vph-msg")') is True, got)
             t.close()
 
         print('VENUEPLAY CONSOLE HEADER (the venue form)')
@@ -258,9 +338,18 @@ def main():
         check('venue: a Help button sits in the header beside Account', t.until('(function(){var x=document.getElementById("vphLink");return !!x&&x.parentNode.className==="hactions"&&x.nextElementSibling.textContent==="Account";})()', 8) is True)
         panel_checks(t, 'venue', len(vp_faq['venue']['items']), 'venues')
         t.shot('07-venue-help-panel')
-        t.js('document.getElementById("vphMsg").value="TV blank";document.querySelector(".vph-go").click()')
+        I3 = ISSUES['venueplay:venue'][0]
+        t.js('document.querySelector("[data-issue=\'%s\']").click()' % I3['id'])
+        for k in range(3):
+            t.until('!!document.querySelector(".vph-still")', 3)
+            if k == 0:
+                t.shot('07b-venue-step-1')
+            t.js('document.querySelector(".vph-still").click()')
+        t.until('!!document.getElementById("vphSubject")', 5)
+        check('venue: after the steps, the form opens with the issue as the subject', t.js('document.getElementById("vphSubject").value') == I3['title'], t.js('document.getElementById("vphSubject").value'))
+        t.js('document.getElementById("vphSubject").value="";document.getElementById("vphMsg").value="TV blank";document.querySelector(".vph-go").click()')
         time.sleep(0.3)
-        check('venue: no subject, no send', t.js('window.__posts.length') == 0)
+        check('venue: no subject, no send', not [x for x in posts(t) if x['path'] == '/help/venue/ticket'])
         t.js('document.getElementById("vphSubject").value="TV not showing";document.getElementById("vphKind").value="accounts";document.getElementById("vphUrgent").checked=true;document.querySelector(".vph-go").click()')
         done = t.until('(document.querySelector(".vph-done")||{}).textContent', 8)
         post = (t.js('window.__posts') or [{}])[-1]
@@ -269,8 +358,10 @@ def main():
               post.get('path') == '/help/venue/ticket' and body.get('venue_id') == '11111111-2222-4333-8444-555555555555' and body.get('category') == 'accounts' and body.get('urgent') is True, post)
         check('venue: with the signed-in login\'s token', (post.get('headers') or {}).get('Authorization') == 'Bearer venue-login-token', post.get('headers'))
         check('venue: shows the ticket number', bool(done) and '#1042' in done, done)
+        check('venue: the ticket carries the issue the steps were for', body.get('issue_id') == I3['id'], body)
         t.js('window.__routes["/help/venue/ticket"]={status:429,body:{error:"That is a lot of requests in an hour."}};document.querySelector(".vph-x").click();document.getElementById("vphLink").click()')
-        t.until('!!document.getElementById("vphSubject")', 5)
+        t.until('!!document.querySelector(".vph-msg")', 5)
+        to_form(t)
         t.js('document.getElementById("vphSubject").value="x";document.getElementById("vphMsg").value="y";document.querySelector(".vph-go").click()')
         err = t.until('(document.querySelector(".vph-err")||{}).textContent', 5)
         check('venue: a refusal from the Worker is shown in its own words, and Send works again',
@@ -288,11 +379,13 @@ def main():
         check('partyplay guest: the camera and video buttons, when showing, do not cover it', m and m['hits'] == [] and m['centre'], m and m['hits'])
         panel_checks(t, 'partyplay guest', len(pp_faq['guest']['items']), 'Help')
         t.shot('08-partyplay-guest-panel')
+        check('partyplay guest: its own issues ("I cannot join the party")', 'I cannot join the party' in (t.js('document.getElementById("vphFlow").textContent') or ''))
+        to_form(t)
+        check('partyplay guest: the panel says support@partyplay.com.au, not VenuePlay', 'support@partyplay.com.au' in (t.js('document.body.textContent') or '') and 'venueplay.com.au' not in (t.js('(document.getElementById("vphBg")||document.body).textContent') or ''))
         t.js('document.getElementById("vphEmail").value="guest@example.com";document.getElementById("vphMsg").value="Cannot join";document.querySelector(".vph-go").click()')
         t.until('(document.querySelector(".vph-done")||{}).textContent', 8)
         body = ((t.js('window.__posts') or [{}])[-1]).get('body', {})
         check('partyplay guest: a PartyPlay guest ticket with the party code', body.get('brand') == 'partyplay' and body.get('kind') == 'patron' and body.get('code') == 'KFP7QX', body)
-        check('partyplay guest: the panel says support@partyplay.com.au, not VenuePlay', 'support@partyplay.com.au' in (t.js('document.body.textContent') or '') and 'venueplay.com.au' not in (t.js('(document.getElementById("vphBg")||document.body).textContent') or ''))
         t.close()
 
         print('PARTYPLAY HOST CONSOLE')
@@ -301,6 +394,8 @@ def main():
         check('partyplay host: Help sits in the top bar', t.until('(function(){var x=document.getElementById("vphLink");return !!x&&x.parentNode.className==="top";})()', 10) is True)
         panel_checks(t, 'partyplay host', len(pp_faq['host']['items']), 'hosts')
         t.shot('09-partyplay-host-panel')
+        check('partyplay host: its own issues ("The party screen is blank")', 'The party screen is blank' in (t.js('document.getElementById("vphFlow").textContent') or ''))
+        to_form(t)
         t.js('document.getElementById("vphEmail").value="host@example.com";document.getElementById("vphMsg").value="The TV is blank";document.querySelector(".vph-go").click()')
         t.until('(document.querySelector(".vph-done")||{}).textContent', 8)
         post = (t.js('window.__posts') or [{}])[-1]
@@ -337,7 +432,21 @@ def main():
                           {'kind': 'reply', 'body': 'Try reloading the party screen.', 'author': 'Dean (from support@partyplay.com.au)', 'created_at': '2026-10-19T10:07:00Z'}], 'venue_name': ''}},
             '/admin/help/report': {'body': {'from': '2026-10-01', 'to': '2026-10-19', 'rows': [], 'venues': {}, 'report': {'total': 3, 'by_brand': {'venueplay': 2, 'partyplay': 1},
                 'by_brand_category': {'venueplay:sales': 2, 'partyplay:venue_support': 1}, 'by_category': {}, 'by_channel': {'phone': 2, 'web_form': 1}, 'by_status': {'closed': 3},
-                'closed': 3, 'avg_hours_to_close': 6, 'longest_hours_to_close': 10, 'longest_ticket_no': 2, 'top_venues': [{'name': 'The Royal Hotel', 'count': 2}]}}},
+                'closed': 3, 'avg_hours_to_close': 6, 'longest_hours_to_close': 10, 'longest_ticket_no': 2, 'top_venues': [{'name': 'The Royal Hotel', 'count': 2}]},
+                'triage': [{'issue_id': 'i1', 'title': 'My game is not showing', 'brand': 'venueplay', 'started': 42, 'solved': 31, 'tickets': 4, 'left': 7,
+                            'by_step': {'Pull down to refresh the page.': 22, 'Check your phone is online.': 9}}]}},
+            '/admin/help/content/get': {'body': {
+                'faq': [{'id': 'f1', 'question': 'How do I join a game?', 'answer': 'Scan the QR code.', 'hidden': False},
+                        {'id': 'f2', 'question': 'Who gives out the prizes?', 'answer': 'The venue.', 'hidden': True}],
+                'issues': [{'id': 'i1', 'title': 'My game is not showing', 'category': 'patron_support', 'hidden': False, 'auto_order': True, 'steps': [
+                    {'id': 's1', 'body': 'Pull down to refresh the page.', 'pinned': False, 'hidden': False, 'tries': 64, 'fixes': 22, 'rate': 34.4, 'flagged': False},
+                    {'id': 's2', 'body': 'Check your phone is online.', 'pinned': False, 'hidden': False, 'tries': 42, 'fixes': 9, 'rate': 21.4, 'flagged': False},
+                    {'id': 's3', 'body': 'Turn it off and on again.', 'pinned': False, 'hidden': False, 'tries': 33, 'fixes': 1, 'rate': 3.0, 'flagged': True},
+                    {'id': 's4', 'body': 'Ask the host. They can see who has joined and can get you going.', 'pinned': True, 'hidden': False, 'tries': 32, 'fixes': 20, 'rate': 62.5, 'flagged': False}]},
+                    {'id': 'i2', 'title': 'Something else', 'category': 'patron_support', 'hidden': False, 'auto_order': True, 'steps': []}],
+                'reorders': [{'id': 'r1', 'created_at': '2026-10-19T03:00:00Z', 'issue_id': 'i1', 'before_ids': ['s2', 's1', 's3', 's4'], 'after_ids': ['s1', 's2', 's3', 's4'],
+                              'reason': 'By how often each step fixed it: 1. 34% of 64, 2. 21% of 42, 3. 3% of 33, 4. 63% of 32', 'undone_at': None}],
+                'rules': {'min_tries': 20, 'flag_tries': 30, 'flag_rate': 0.05}}},
         }
         # Only the sign-in is stood in: vp-session.js and the Supabase library are blocked, and this
         # VP answers as a signed-in HQ owner whose every database read comes back empty. Everything
@@ -358,7 +467,7 @@ def main():
                  ' var c=getComputedStyle(e).backgroundColor.match(/[0-9]+/g)||[255,255,255]; if (+c[0]+ +c[1]+ +c[2] > 200) bad.push(e.id||e.tagName); }); return bad; })')
 
         def hq_tab(w, h, mobile):
-            t = Tab(b, w, h, mobile=mobile, pre='window.__routes=' + json.dumps(routes) + ';' + FAKE_HQ_LOGIN)
+            t = Tab(b, w, h, mobile=mobile, pre=FAKE_HQ_LOGIN, routes=routes)
             b.call('Network.setBlockedURLs', {'urls': ['*cdn.jsdelivr.net*', '*vp-session.js*', '*workers.dev*', '*googletagmanager*', '*facebook*']}, session=t.sid)
             t.go(VP + '/app/hq.html')
             return t
@@ -397,6 +506,50 @@ def main():
         t.js('window.scrollTo(0,document.getElementById("hdrGo").getBoundingClientRect().top+window.pageYOffset-110)')
         time.sleep(0.4)
         t.shot('13-hq-report')
+        check('hq: the report shows the guided steps: solved without a ticket, and which step fixed it',
+              'Solved, no ticket' in (t.js('document.getElementById("hdTriage").textContent') or '') and 'Pull down to refresh the page. 22' in (t.js('document.getElementById("hdTriage").innerText') or '').replace('\n', ' '),
+              (t.js('document.getElementById("hdTriage").innerText') or '')[:200])
+        t.js('window.scrollTo(0,document.getElementById("hdTriage").getBoundingClientRect().top+window.pageYOffset-120)')
+        time.sleep(0.3)
+        t.shot('18-hq-triage-report')
+        print('HQ: THE HELP WORDS EDITOR')
+        t.js('document.getElementById("hwSet").value="venueplay:patron";document.getElementById("hwGo").click()')
+        t.until('!!document.querySelector("#hwBox [data-issue]")', 8)
+        check('hq editor: asks the Worker for one brand and audience', [x for x in posts(t) if x['path'] == '/admin/help/content/get' and x['body'].get('brand') == 'venueplay' and x['body'].get('audience') == 'patron'] != [])
+        check('hq editor: each issue with its steps, numbered, with how often each fixed it', t.js('document.querySelectorAll("#hwBox [data-step]").length') == 4 and '64 answers, fixed it 34.4%' in (t.js('document.getElementById("hwBox").textContent') or ''))
+        check('hq editor: a step that rarely helps is flagged', t.js('!!document.querySelector("[data-step=s3] .badge.urgent")') is True and t.js('!document.querySelector("[data-step=s1] .badge.urgent")') is True)
+        check('hq editor: the pinned step shows as pinned', t.js('document.querySelector("[data-step=s4] [data-f=pinned]").checked') is True)
+        check('hq editor: a hidden question shows, dimmed', t.js('document.querySelector("[data-faq=f2]").classList.contains("hwhide")') is True)
+        light = t.js(LIGHT + '("#hwBox input:not([type=checkbox]), #hwBox select, #hwBox textarea")')
+        check('hq editor: HQ\'s dark fields throughout', light == [], light)
+        t.js('window.scrollTo(0,document.getElementById("hwBox").getBoundingClientRect().top+window.pageYOffset-140)')
+        time.sleep(0.3)
+        t.shot('19-hq-help-words-editor')
+        def last(path):
+            xs = [x for x in posts(t) if x['path'] == path]
+            return xs[-1]['body'] if xs else {}
+        t.js('document.querySelector("[data-faq=f1] [data-f=question]").value="How do I join?";document.querySelector("[data-hw=save-faq][data-id=f1]").click()')
+        time.sleep(0.4)
+        check('hq editor: Save on a question sends its new words', last('/admin/help/content/save') == {'kind': 'faq', 'id': 'f1', 'question': 'How do I join?', 'answer': 'Scan the QR code.', 'hidden': False}, last('/admin/help/content/save'))
+        t.js('document.querySelector("[data-step=s3] [data-f=hidden]").checked=true;document.querySelector("[data-hw=save-step][data-id=s3]").click()')
+        time.sleep(0.4)
+        check('hq editor: hiding a step and saving sends hidden, and only that step', last('/admin/help/content/save') == {'kind': 'step', 'id': 's3', 'body': 'Turn it off and on again.', 'pinned': False, 'hidden': True}, last('/admin/help/content/save'))
+        t.js('document.querySelector("[data-hw=move][data-kind=issue][data-id=i2][data-dir=up]").click()')
+        time.sleep(0.4)
+        check('hq editor: the arrows move an issue up', last('/admin/help/content/move') == {'kind': 'issue', 'id': 'i2', 'dir': 'up'}, last('/admin/help/content/move'))
+        t.js('document.querySelector("[data-new-step=i2]").value="Check your email for our reply.";document.querySelector("[data-hw=add-step][data-id=i2]").click()')
+        time.sleep(0.4)
+        check('hq editor: + Add step adds one to that issue', last('/admin/help/content/save') == {'kind': 'step', 'issue_id': 'i2', 'body': 'Check your email for our reply.'}, last('/admin/help/content/save'))
+        t.js('document.querySelector("[data-issue=i1] > .hwacts [data-f=auto_order]").checked=false;document.querySelector("[data-hw=save-issue][data-id=i1]").click()')
+        time.sleep(0.4)
+        check('hq editor: an issue can be told not to reorder itself', last('/admin/help/content/save') == {'kind': 'issue', 'id': 'i1', 'title': 'My game is not showing', 'category': 'patron_support', 'auto_order': False, 'hidden': False}, last('/admin/help/content/save'))
+        check('hq editor: the automatic change is listed, before and after', 'Check your phone is online.' in (t.js('document.getElementById("hwLog").textContent') or '') and t.js('!!document.querySelector("[data-hw=undo][data-id=r1]")') is True)
+        t.js('window.scrollTo(0,document.getElementById("hwLog").getBoundingClientRect().top+window.pageYOffset-200)')
+        time.sleep(0.3)
+        t.shot('20-hq-reorder-log')
+        t.js('document.querySelector("[data-hw=undo][data-id=r1]").click()')
+        time.sleep(0.4)
+        check('hq editor: Undo sends that change back', last('/admin/help/reorder/undo') == {'id': 'r1'}, last('/admin/help/reorder/undo'))
         t.js('window.scrollTo(0,0);document.getElementById("hdLogCall").click()')
         check('hq: Log a call asks what kind of call it was, and for which brand', t.until('!!document.getElementById("hdcCat") && !!document.getElementById("hdcBrand")', 5) is True)
         light = t.js(LIGHT + '("#hdCallBox input, #hdCallBox select, #hdCallBox textarea")')
@@ -426,6 +579,16 @@ def main():
         t.js('window.scrollTo(0,document.getElementById("hdrGo").getBoundingClientRect().top+window.pageYOffset-140)')
         time.sleep(0.4)
         t.shot('17-hq-report-phone')
+        t.js('document.getElementById("hwGo").click()')
+        t.until('!!document.querySelector("#hwBox [data-step]")', 8)
+        time.sleep(0.4)
+        check('hq editor on a phone: no sideways scrolling', t.js('document.documentElement.scrollWidth<=window.innerWidth+1') is True, t.js('[document.documentElement.scrollWidth,window.innerWidth]'))
+        # A card hides what spills out of it, so "no page scroll" can hide a cut-off control. Measure them.
+        cut = t.js('(function(){var w=window.innerWidth,out=[];Array.prototype.forEach.call(document.querySelectorAll("#hwBox button, #hwBox input, #hwBox select, #hwBox textarea, #hwBox label"),function(e){if(e.closest(".tscroll"))return;var r=e.getBoundingClientRect();if(r.width&&(r.right>w-8||r.left<8))out.push((e.textContent||e.getAttribute("data-f")||e.tagName).trim().slice(0,24));});return out.slice(0,6);})()')
+        check('hq editor on a phone: every control is inside the screen, none cut off (tables scroll inside their card, as in all of HQ)', cut == [], cut)
+        t.js('window.scrollTo(0,document.querySelector("#hwBox [data-issue]").getBoundingClientRect().top+window.pageYOffset-80)')
+        time.sleep(0.3)
+        t.shot('21-hq-editor-phone')
         t.close()
         hq = open(os.path.join(ROOT, 'venueplay', 'app', 'hq.html'), encoding='utf-8').read()
         hq_live = re.sub(r'<!--.*?-->', '', hq, flags=re.S)
