@@ -119,6 +119,10 @@
   "checks": 26,
   "counted_by": "lines"
  },
+ "tools/help-desk-pages.test.py": {
+  "checks": 114,
+  "counted_by": "lines"
+ },
  "tools/livenorm.test.py": {
   "checks": 8,
   "counted_by": "lines"
@@ -265,6 +269,10 @@
  },
  "tools/test-gaming-rules-letters-15-oct.js": {
   "checks": 72,
+  "counted_by": "lines"
+ },
+ "tools/test-help-desk.js": {
+  "checks": 200,
   "counted_by": "lines"
  },
  "tools/test-jackpot-cap-15-oct.js": {
@@ -712,7 +720,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/billing-emails.test.js": {
-  "checks": 121,
+  "checks": 124,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/bingo-server-draw.test.js": {

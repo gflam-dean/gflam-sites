@@ -74,6 +74,15 @@ MUTATIONS = [
     ('console-in-chrome.test.py', 'venueplay/app/vp-session.js', '          askOnPage("A " + what + " is already open at this venue on another device.",', '          resolve(root.confirm("A " + what)); return; askOnPage("A " + what + " is already open at this venue on another device.",', 'Open lobby at a venue with a game still open puts up a native dialog and the console stops answering'),
     ('test-one-room-one-identity.js', 'venueplay/app/vp-session.js', '          askOnPage("A " + what + " is already open at this venue on another device.",', '          resolve(root.confirm("A " + what)); return; askOnPage("A " + what + " is already open at this venue on another device.",', 'the takeover question goes back to a native confirm()'),
 
+    # THE MIGRATION PARSE CHECK, 19 Oct 2026: the exact fault that reached Dean, a stray half-line after an INSERT.
+    ('every migration file has its quotes closed, brackets matched and statements ended', 'venueplay-backend/supabase/venueplay-98-gflam-signups-admin-only.sql',
+     'begin;\n\ndrop policy if exists "Auth read signups" on public.signups;',
+     'begin;\n\nand mark it off as the numbers are called.\') on conflict (id) do nothing;\ndrop policy if exists "Auth read signups" on public.signups;',
+     'a stray line of text, spliced in from a seed, reaches the SQL editor and stops the migration'),
+    ('every migration file has its quotes closed, brackets matched and statements ended', 'venueplay-backend/supabase/venueplay-34-song-flags.sql',
+     '$fn$\n;\n',
+     '$fn$\n',
+     'a migration ends on a statement with no ; and the next thing appended to it breaks'),
     # THE HELP DESK, 19 Oct 2026 (migration 106). D53 runs the Worker; help-desk-pages.test.py runs the pages.
     ('tickets from every form, rate limits, HQ-only reads, the report, email in, phone alerts', 'venueplay-backend/worker/venueplay-api-FULL.js',
      '  const free = cur.filter((s) => !s.pinned);',

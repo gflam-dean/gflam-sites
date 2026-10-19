@@ -3080,6 +3080,23 @@ def local_checks(which):
 
         # D19 and D20: the audit made five careless edits to a Worker, one at a time, and the
         # whole local gate stayed green for every one of them.
+        # D54: migration 106 reached Dean's SQL editor with a stray half-line in it (19 Oct 2026) and
+        # stopped at "syntax error at line 294". Nothing in the gate had ever read a migration file.
+        head('D54. Every migration file parses before anyone pastes it')
+        t = os.path.join(ROOT, 'tools', 'check-migrations-parse.py')
+        if not os.path.isfile(t):
+            ok('the migration parse check exists', False, why='tools/check-migrations-parse.py is missing')
+        else:
+            r = subprocess.run([sys.executable, t], capture_output=True, text=True, timeout=120, cwd=ROOT)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+            m = re.search(r'(\d+) migration file\(s\) read', out)
+            ok('every migration file has its quotes closed, brackets matched and statements ended',
+               r.returncode == 0 and not bad and bool(m) and int(m.group(1)) >= 100,
+               detail=('; '.join(b[:160] for b in bad[:3]) if bad else (m.group(0) if m else out[-120:])),
+               why='run python3 tools/check-migrations-parse.py. A migration that does not parse stops in the SQL '
+                   'editor with nothing changed, on the night it was needed')
+
         head('D20. A host route cannot lose its staff check, nor a draw its generator')
         t = os.path.join(ROOT, 'tools', 'check-worker-guards.py')
         if not os.path.isfile(t):

@@ -64,3 +64,4 @@ AS $fn$
    WHERE venues >= min_venues
    ORDER BY venues DESC, last_flagged DESC
 $fn$
+;
