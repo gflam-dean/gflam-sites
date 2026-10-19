@@ -48,6 +48,11 @@ globalThis.fetch = function (url, opts) {
 };
 var clock = Date.parse('2026-10-19T00:00:00Z');
 function NOW() { clock += 1000; return new Date(clock).toISOString(); }
+/* ONE CLOCK FOR THE WHOLE SUITE. The Worker stamps updated_at, closed_at and the push cursor with
+   helpNow(); the fake database stamps tickets with NOW(). Left on the real clock, the push checks
+   passed in the morning and failed by afternoon (a ticket "older" than the phone that asked).
+   Fixed time, never the machine's (CLAUDE.md: never derive a fixture from the current clock). */
+helpNow = function () { return NOW(); };
 
 function U(n) { return '60000000-0000-4000-8000-' + ('000000000000' + n).slice(-12); }
 var OWNER_A = U(1), HOST_A = U(2), MKT_A = U(3), OWNER_B = U(4), ADMIN = U(9), STAFF_ADMIN = U(10), NOBODY = U(11);
