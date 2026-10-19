@@ -199,11 +199,14 @@ function ballAt(id, n) { return { draw_id: id, ordinal: n, number: 0 }; }
   var f = await W('/host/bingo/fallback', { draw_id: D, number: 50, ordinal: 90, reason: 'forged' });
   var f2 = await W('/host/bingo/fallback', { draw_id: D, number: 50, ordinal: 2, reason: 'forged' });
   check('and unlocks nothing: neither place 90 nor the next place takes a tablet ball', f.status === 409 && f2.status === 409 && drawRow(D).mode === 'server' && ballsOn(D).length === 1, [f.status, f2.status, drawRow(D).mode]);
-  var realStaff = requireStaff;
-  requireStaff = async function () { var e = new Error('Not authorised'); e.status = 403; throw e; };
+  /* Live, the staff check for a ball is inside the database call (vp_bingo_ball). When that call fails,
+     nobody has checked the caller, so the failure record's own staff check is the only one. Modelled
+     here: the draw path lets the caller through and the failure record's check refuses them. */
+  var realStaff = requireStaff, staffCalls = 0;
+  requireStaff = async function (env, uid, venueId) { if (++staffCalls === 1) return realStaff(env, uid, venueId); var e = new Error('Not authorised'); e.status = 403; throw e; };
   r = await W('/host/bingo/ball', { draw_id: D, ordinal: 2 });
   requireStaff = realStaff;
-  check('ATTACK: a failing ball asked for by someone who is not staff at the venue records nothing', drawRow(D).ball_asked_ordinal == null, drawRow(D).ball_asked_ordinal);
+  check('ATTACK: a failing ball asked for by someone who is not staff at the venue records nothing', r.status >= 500 && staffCalls === 2 && drawRow(D).ball_asked_ordinal == null, [r.status, staffCalls, drawRow(D).ball_asked_ordinal]);
   FAILBALL = false;
   r = await W('/host/bingo/ball', { draw_id: D, ordinal: 2 });   // ball 2 is served...
   var r3 = await W('/host/bingo/ball', { draw_id: D, ordinal: 3 });   // ...and ball 3 asked for at once: the hold
@@ -300,8 +303,12 @@ function ballAt(id, n) { return { draw_id: id, ordinal: n, number: 0 }; }
         CALLS.filter(function (c) { return c === '/host/bingo/deal'; }).length === deals0 && !host.G.halt, [CALLS.filter(function (c) { return c === '/host/bingo/deal'; }).length - deals0, host.G.halt]);
   host.newGame(); await advance(4000);
   var G2 = lastDraw().id;
+  var fin0 = CALLS.filter(function (c) { return c === '/host/bingo/finish'; }).length;
   host.endGame(); await advance(3000);
-  check('End game finishes the next game\'s draw too', G2 !== G1 && !!drawRow(G2).finished_at, drawRow(G2));
+  /* End game also closes the session, which finishes the draw on its own. The console asks for the
+     draw itself as well, so a session close that never lands still leaves the draw finished. */
+  check('End game finishes the next game\'s draw too, and the console asked for it itself', G2 !== G1 && !!drawRow(G2).finished_at &&
+        CALLS.filter(function (c) { return c === '/host/bingo/finish'; }).length === fin0 + 1, [drawRow(G2).finished_at, CALLS.filter(function (c) { return c === '/host/bingo/finish'; }).length - fin0]);
   var sid = openSession().body.session_id;
   var other = (await W('/host/bingo/draw', { venue_id: VENUE, session_id: sid })).body.draw_id;
   var newer = (await W('/host/bingo/draw', { venue_id: VENUE, session_id: sid })).body.draw_id;
