@@ -395,6 +395,22 @@ function frontOfDraw(numbers) {
   host.hostConfirm(0); await advance(300); host.finishGame(); await advance(300);
   host.endGame(); await advance(3000);
 
+  print('GAME THREE C: the tablet\'s tickets reach the server only after a ball is out');
+  host.openLobby(); await advance(9000);
+  SLOW['/host/bingo/deal'] = DEAD;
+  host.startGame(); await advance(10500);
+  var D3c = lastDraw().id;
+  host.nextBall(); await drain(); await advance(6000);   // balls still reach the server; deals do not
+  check('CONTROL: the tablet dealt every phone and a ball is on the record', phones.every(function (ph) { return ph.P.cards.length === 1; }) && host.G.dealMode === 'tablet' && DB.vp_bingo_draw_balls.filter(function (b) { return b.draw_id === D3c && !b.withdrawn_at; }).length === 1,
+        { cards: phones.map(function (ph) { return ph.P.cards.length; }), mode: host.G.dealMode, balls: DB.vp_bingo_draw_balls.filter(function (b) { return b.draw_id === D3c; }).length, draw: host.G.draw });
+  SLOW = {};
+  await advance(20000);
+  check('the server refuses those tablet tickets (a ball was out), and the console knows they are refused, not on the record',
+        phones.every(function (ph) { return ticketsOf(D3c, ph.P.pid, true).filter(function (r) { return r.source === 'tablet'; }).length === 0 && host.G.players[ph.P.pid].cards[0].rec === 'refused'; }),
+        phones.map(function (ph) { return [ticketsOf(D3c, ph.P.pid, true).length, host.G.players[ph.P.pid].cards[0].rec]; }));
+  host.finishGame(); await advance(300);
+  host.endGame(); await advance(3000);
+
   print('GAME FOUR: real balls, the room plays paper books');
   host.$('callerChk').checked = true;
   var dealCalls = CALLS.filter(function (p) { return p === '/host/bingo/deal'; }).length;
