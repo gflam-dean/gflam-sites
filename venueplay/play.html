@@ -36,6 +36,9 @@
 
   .view{flex:1;display:flex;flex-direction:column;padding:22px 18px}
   .center{justify-content:center;text-align:center}
+  .paperview .pbig{font-size:40px;margin-bottom:16px}
+  .paperview .paperlead{font-size:19px;line-height:1.5;color:var(--text);margin:0 auto 14px;max-width:24em}
+  .paperview .paperwhy{font-size:16px;line-height:1.5;color:var(--muted);margin:0 auto;max-width:24em}
   .hidden{display:none!important}
 
   .pbig{font-family:'Anton',sans-serif;font-size:34px;color:#fff;text-transform:uppercase;line-height:1.02;margin-bottom:8px}
@@ -290,6 +293,9 @@
     <div class="pnote">No app and no account. Your game appears here when the host starts.</div>
   </div>
 
+  <!-- PAPER: a real-balls night, or a state whose rules ask for a printed ticket. Filled by showPaperBingo(). -->
+  <div class="view center hidden paperview" id="vPaper" role="status"></div>
+
   <!-- WAIT -->
   <div class="view center hidden" id="vWait">
     <div style="font-size:44px">&#127921;</div>
@@ -373,12 +379,11 @@
   }
   var _paperWhyNow="";   // the reason the notice up now was written for
   function paperNoticeHtml(reason){
-    return '<div style="max-width:30em;margin:0 auto">'+
-      '<div style="font:800 26px/1.2 system-ui,sans-serif;color:#fff;margin-bottom:14px">'+
-      'Tonight you play on paper</div>'+
-      '<p style="color:#9A9AA4">Grab your bingo book from the bar and mark it off as the numbers are called. '+
+    return '<div style="font-size:44px">&#128214;</div>'+
+      '<div class="pbig" style="color:var(--gold)">Tonight you play on paper</div>'+
+      '<p class="paperlead">Grab your bingo book from the bar and mark it off as the numbers are called. '+
       'The big screen shows every number, so you can always check back.</p>'+
-      '<p data-paper-why style="color:#8A8A94;font-size:14px;margin-top:18px">'+paperWhy(reason)+'</p></div>';
+      '<p class="paperwhy" data-paper-why>'+paperWhy(reason)+'</p>';
   }
   function showPaperBingo(reason){
     reason=(reason==="caller") ? "caller" : "state";
@@ -394,25 +399,32 @@
     try{ if(ch) ch.unsubscribe(); }catch(e){}
     try{ if(_room && _room.close) _room.close(); }catch(e){}
     ch=null; _room=null; subscribed=false; sendQueue=[];
-    /* A COVER, NOT A WIPE (16 Oct 2026). This used to empty document.body, which could never be
-       undone: a phone told "paper" while a bingo lobby was open stayed on that notice after the
-       host closed the lobby and opened nothing, or opened trivia. The notice now sits OVER the page
-       (fixed, full viewport), and hidePaperBingo() takes it down and rejoins the room when the
-       Worker stops saying paper. */
-    var d=document.createElement("div");
-    d.setAttribute("role","status");
-    d.setAttribute("style","position:fixed;top:0;left:0;right:0;bottom:0;inset:0;width:100%;height:100%;z-index:99997;"+
-      "overflow-y:auto;background:#0B0A10;padding:12vh 22px 40px;text-align:center;"+
-      "font:400 17px/1.6 system-ui,-apple-system,sans-serif;color:#E7E7EC");
-    d.innerHTML=paperNoticeHtml(reason);
-    try{ document.body.appendChild(d); _paperBox=d; }catch(e){ _paperBox=null; }
+    /* AND IT IS NOT IN A GAME. Off the channel it will never hear the idle that ends one, so a phone
+       that had a ticket or a ball when the flag arrived stayed "active" for good, and the /play/live
+       poll never moved it on again (live play audit, 20 Oct 2026). When the paper comes down it
+       starts clean, on the waiting screen, and the console deals it whatever is on next. */
+    P.active=false; P.cards=[]; P.called=[]; P.claimPending=false;
+    try{ setHeaderBall(0); }catch(e){}
+    /* AN AGE TICK GOES BEHIND IT. There is no ticket to hold tonight; if the Worker still asks
+       once the paper comes down, the tick comes back (hidePaperBingo). */
+    if(_ageBox){ try{ _ageBox.remove(); }catch(e){} _ageBox=null; }
+    /* A VIEW IN THE PAGE, NOT A WIPE AND NOT A COVER (20 Oct 2026). It emptied document.body once,
+       which could never be undone; then it was a full-viewport cover over everything, which hid the
+       VenuePlay header, the venue's logo and the Help link, so a punter told to put the phone away
+       had nobody's name on the screen and no way to ask why. It is now one of the page's own views,
+       in the normal frame, and hidePaperBingo() puts the page back when the Worker stops saying paper. */
+    var d=$("vPaper");
+    try{ d.innerHTML=paperNoticeHtml(reason); _paperBox=d; show("vPaper"); }catch(e){ _paperBox=null; }
+    try{ setConn("paper"); }catch(e){}
   }
   /* The Worker has stopped saying paper (the bingo lobby closed, or another game is on): take the
      notice down and rejoin the room, so the phone is back where it was before the flag arrived. */
   function hidePaperBingo(){
     if(!_paper) return;
     _paper=false;
-    if(_paperBox){ try{ _paperBox.remove(); }catch(e){} _paperBox=null; }
+    if(_paperBox){ try{ _paperBox.classList.add("hidden"); _paperBox.innerHTML=""; }catch(e){} _paperBox=null; }
+    try{ setConn("connecting"); route(); }catch(e){}
+    try{ if(_ageHold && !_ageBox) requireAge18(); }catch(e){}
     try{ if(P.room) connect(P.room); }catch(e){}
   }
   function randId(){ var s=""; for(var i=0;i<12;i++) s+="abcdefghijklmnopqrstuvwxyz0123456789".charAt(cryptoInt(36)); return s; }
@@ -615,6 +627,7 @@
   // channel, so it can never say "Connected" while nobody is running the game.
   function setConn(state){
     var d=$("statusDot"), t=$("statusText");
+    if(_paper || state==="paper"){ d.classList.remove("on"); t.textContent="Paper tonight"; return; }   // off the channel on purpose: never "Reconnecting"
     if(state==="live"){ d.classList.add("on"); t.textContent="Connected"; return; }
     d.classList.remove("on");
     t.textContent = state==="waiting" ? "Waiting for the host" : state==="reconnecting" ? "Reconnecting" : state==="ready" ? "Ready to join" : "Connecting";
@@ -773,8 +786,9 @@
   }
 
   // ---- views ----
-  var VIEWS=["vNoRoom","vJoin","vWait","vCard","vWon","vLost"];
-  function show(which){ for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==which); } }
+  var VIEWS=["vNoRoom","vJoin","vWait","vCard","vWon","vLost","vPaper"];
+  function show(which){ if(_paper) which="vPaper";   /* nothing paints over the paper notice while it stands */
+    for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==which); } }
   /* "How was that?", one tap, on the screen the punter is already looking at.
 
      Broadcast bingo has no game id and no session id on the phone, so the widget
@@ -826,7 +840,14 @@
       show("vWon"); askHowItWent("vWon"); return;
     }
     if(P.ended){
-      var ls=$("lostSub"); if(ls) ls.innerHTML = P.lostBy ? P.lostBy : "Good luck next round.";
+      /* A LINE WON EARLIER IN THIS GAME IS STILL OWED (live play audit, 20 Oct 2026). Somebody else
+         taking two lines put "Nice game! Sam won Two lines" over the line this phone had won, and the
+         punter walked away from a prize. Say both, the prize owed first. */
+      var _owed=(P.stageWins||[]).filter(function(w){ return w && w.pattern; });
+      var _owedHtml=_owed.length ? '<span class="owed" style="display:block;color:var(--win);font-weight:700;font-size:17px;margin-bottom:10px">You won '+
+        _owed.map(function(w){ return esc(PATTERN_NAMES[w.pattern]||"a line")+(w.cardNo?" on card #"+esc(String(w.cardNo)):""); }).join(" and ")+
+        ', see the host.</span>' : "";
+      var ls=$("lostSub"); if(ls) ls.innerHTML = _owedHtml + (P.lostBy ? P.lostBy : "Good luck next round.");
       show("vLost"); askHowItWent("vLost"); return;
     }
     if(!P.room){ show("vNoRoom"); return; }
@@ -1547,8 +1568,18 @@
       if(typeof m.paidMode==="string") P.paidMode=m.paidMode;
       P.called=cleanCalled(m.called); P.active=!!m.active;
       if(m.join_code && P.joined) joinServerSession(m.join_code, m.session_id);   // a new game, or a phone that arrived before the lobby opened
-      // A new lobby is a new game: last game's "that game is over" gives way to the waiting screen.
-      if(m.session_id && P.lastSid && m.session_id!==P.lastSid && P.ended && !P.won){ P.ended=false; P.lostBy=""; }
+      /* A new lobby is a new game: last game's "that game is over" gives way to the waiting screen.
+         AND SO DOES LAST GAME'S "YOU WON" (live play audit, 20 Oct 2026). The winner's phone kept
+         "Show this screen to the host" through the whole next lobby, until Start, looking like a
+         claim on a game that had not begun. A new lobby is a new session, or a session with nothing
+         running and no ball called; the same game's routine refresh always has its balls. End game
+         sends no session, so the winner still has the screen to show at the bar until the next
+         lobby actually opens. */
+      var _newLobby=!!m.session_id && ((P.lastSid && m.session_id!==P.lastSid) || (!m.active && P.called.length===0));
+      if(_newLobby && (P.won || P.ended)){
+        P.won=false; P.ended=false; P.lostBy=""; P.wonCardNo=0; P.shared=false; P.sharedWith=[];
+        _celebrated=false; clearWin(P.room);
+      }
       if(m.session_id) P.lastSid=m.session_id;
       autoDaub(); if(!P.won && !P.ended) route();
     }
@@ -1866,9 +1897,23 @@
        the lobby and that is when people type it. They then sat on the bingo channel all night
        with no way back. Poll until we learn what this is, the player joins something here, or we
        give up. Cheap, and it stops the moment it has an answer. */
-    var tries=0;
-    (function look(){
-      VP_LOOK_NOW = look;   // a console announcing its mode moves this phone now, as on a ?venue link
+    /* ONE LOOKUP AT A TIME, AND IT NEVER STOPS FOR GOOD (live play audit, 20 Oct 2026).
+       Two faults left a phone on "Tonight you play on paper" into the next game. Every mode message
+       started ANOTHER chain of this lookup (VP_LOOK_NOW was this function, and each call scheduled
+       its own next call), all counting down the same 225 tries; and 225 tries at eight seconds is
+       thirty minutes, far shorter than a night. A phone on the paper notice is off the channel, so
+       this poll is its ONLY way to learn the room has moved on, and on a Drag Bingo night it had run
+       out long before the musical lobby opened. Now there is exactly one timer (a push only brings
+       the next lookup forward), and after the first half hour it slows to every thirty seconds, the
+       same as the table-talker poll, instead of stopping. */
+    var tries=0, lookT=0, lastPush=0;
+    function lookLater(){ clearTimeout(lookT); tries++; lookT=setTimeout(look, tries<225 ? 8000 : 30000); }
+    /* A push (a console announcing its mode) asks now, at most once every two seconds, and never adds
+       a second chain: look() replaces the pending timer with its own single next one. */
+    function lookNow(){ if(Date.now()-lastPush<2000) return; lastPush=Date.now(); look(); }
+    function look(){
+      clearTimeout(lookT); lookT=0;
+      VP_LOOK_NOW = lookNow;   // a console announcing its mode moves this phone now, as on a ?venue link
       /* "Already in a game here" must mean a game, not a remembered name. connect() sets
          P.joined=true whenever localStorage has a name for this room, and the room key is now the
          venue's PERMANENT code, so it matches for every regular who has ever played bingo here.
@@ -1876,18 +1921,18 @@
          this lookup never running once. Only a live game here should stop the hop. */
       // Busy with bingo: ask again later rather than stop asking. Returning here ended the lookup
       // for the night, so a phone could never follow the room to trivia (14 Oct 2026).
-      if(playingHere()){ if(++tries<225) setTimeout(look, 8000); return; }   // see watchVenue
+      if(playingHere()){ lookLater(); return; }   // see watchVenue
       playerPost("/join/info",{ code:code })
         .then(function(r){
           /* The paper notice and the age tick follow the Worker's answer EACH time (16 Oct 2026):
              a flag that arrives once a bingo lobby opens is acted on, and one that clears later
              (the lobby closed, trivia opened) takes the notice down again. A phone shown the paper
              notice keeps asking, so it can still follow the room to trivia or musical. */
-          if(r && r.paper_bingo){ showPaperBingo(r.paper_reason); if(++tries<225) setTimeout(look, 8000); return; }
+          if(r && r.paper_bingo){ showPaperBingo(r.paper_reason); lookLater(); return; }
           hidePaperBingo();
           if(r && r.age_gate===true) ageAnswer(r); else if(r && r.age_gate===false) ageClear();
           if(r && r.exists===false){ unknownCode(); return; }   // no game behind it: stop asking
-          if(playingHere()){ if(++tries<225) setTimeout(look, 8000); return; }
+          if(playingHere()){ lookLater(); return; }
           var to=playerAppFor(r && r.format);
           /* room_code is set when the code typed was the VENUE code (the permanent one on the
              wall) and a trivia or musical session is live under it. Hop to THAT room, not the
@@ -1901,10 +1946,11 @@
              nothing on the console or the TV looked wrong. The Worker sends the venue's channel
              back; if this phone is not on it, move over. Once: P.room matches from then on. */
           if(r && r.channel && CODE_RE.test(r.channel) && r.channel!==P.room){ rehome(r.channel, code); }
-          if(++tries<225) setTimeout(look, 8000);     // ~30 minutes: a lobby routinely outlasts 4
+          lookLater();     // eight seconds for the first half hour (a lobby routinely outlasts 4), then thirty
         })
-        .catch(function(){ if(++tries<225) setTimeout(look, 8000); });  // worker blip: bingo still works
-    })();
+        .catch(function(){ lookLater(); });  // worker blip: bingo still works
+    }
+    look();
   }
   function rehome(channel, shown){
     // Carry this phone's identity across, so a regular is the same player to the host either way.

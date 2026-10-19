@@ -143,7 +143,9 @@ function hostSent(t) { return LOG.filter(function (l) { return l && l.from === W
 // A tablet that has been put down (or reloaded) hears nothing more.
 function retire(who) { Object.keys(BUS).forEach(function (k) { BUS[k].forEach(function (sub) { if (sub.who === who) sub.live = false; }); }); }
 function phoneSaid(ph) { return LOG.filter(function (l) { return l && l.from === 'phone:' + ph.name; }).length; }
-function notice(ph) { return ph.dom.document.body.children.map(function (n) { return n.innerHTML; }).join(' '); }
+// The paper notice is the page's own #vPaper view since 20 Oct 2026 (it was a cover appended to the body): read it while it is SHOWN.
+function notice(ph) { var v = ph.$('vPaper'); var shown = v && v.classList && !v.classList.contains('hidden') ? (v.innerHTML || '') : '';
+  return shown + ' ' + ph.dom.document.body.children.map(function (n) { return n.innerHTML; }).join(' '); }
 function cg(host, n) { return host.$('callerGrid').children[n - 1] || { className: '', textContent: '' }; }   // the grid's own cells, as a browser lays them out
 function tap(host, n) {   // a real tap on the grid: the click handler on #callerGrid, with the cell as its target
   var grid = host.$('callerGrid'), cell = grid.children[n - 1];

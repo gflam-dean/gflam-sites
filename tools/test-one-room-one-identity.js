@@ -93,7 +93,7 @@ print('\n== a trivia round starting is not a bingo round ==');
   r = fn({ t: 'started', pattern: 'one_line' }, VP_LOOK_NOW, PLAY_TYPES, st);
   ok('bingo\'s own started is still bingo play', st.lastPlay === 1 && r === 'fell through');
   ok('a busy bingo page keeps asking instead of stopping for the night',
-     (BINGO.match(/if\(playingHere\(\)\)\{ if\(\+\+tries<225\) setTimeout\(look, 8000\); return; \}/g) || []).length === 2);
+     (BINGO.match(/if\(playingHere\(\)\)\{ lookLater\(\); return; \}/g) || []).length === 2);   // the lookup itself is RUN by test-play-live-age-gate-15-oct.js (20 Oct 2026)
 })();
 
 print('\n== a second console is asked before it takes the room ==');

@@ -71,12 +71,20 @@ var adsStarted = 0;
 function startAds(){ adsStarted++; }
 function setTimeout_(fn, ms){ timers.push({fn:fn, ms:ms}); return timers.length; }
 var setTimeout = setTimeout_;
-eval(fnAds); eval(fnHold); eval(fnFrozen);
+var fnForget = grab("forgetLastGame");
+ok("forgetLastGame is still in tv.html", !!fnForget);
+var state = { phase: "win", winner: { name: "Sam" }, celebrated: true, called: [4, 8] };
+eval(fnForget); eval(fnAds); eval(fnHold); eval(fnFrozen);
 
 print("== a ball in the air does not follow the wall to the next state ==");
 revealsStopped = 0; enterAds();
 ok("going to the ads stops a reveal", revealsStopped === 1,
    "a bingo ball left mid-flight paints over the venue's advertising");
+/* Live play audit, 20 Oct 2026: End game put the ads up with "BINGO! Sam WINS" still in the
+   state, and the next Open lobby repainted it over the QR. */
+ok("going to the ads forgets last game's winner, so the next lobby shows the QR",
+   state.phase === "lobby" && state.winner === null && state.celebrated === false,
+   "the ads went up with phase " + state.phase + " and a winner still held");
 revealsStopped = 0; enterHolding("bingo");
 ok("going to the holding card stops a reveal", revealsStopped === 1);
 

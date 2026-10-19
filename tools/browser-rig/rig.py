@@ -1,0 +1,159 @@
+"""THE BROWSER RIG AS A MODULE: the repo's real venueplay/ pages, served locally, against the REAL game
+Worker running in jsc behind a pipe, with supabase-js swapped for tools/browser-rig/fake-supabase.js
+(realtime carried between tabs by BroadcastChannel). The same rig tools/console-in-chrome.test.py
+builds inline, lifted out so more than one suite can stand it up. Never shipped: it lives under tools/.
+
+    import rig;  r = rig.Rig();  tid, sid = r.open('/tv?venue=test-alpha');  ...;  r.close()
+"""
+import base64, http.server, importlib.util, io, json, os, socket, subprocess, threading, time, urllib.parse
+
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+JSC = '/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc'
+_spec = importlib.util.spec_from_file_location('verify_live', os.path.join(ROOT, 'tools', 'verify-live.py'))
+VL = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(VL)
+UID = '11111111-1111-4111-8111-111111111111'
+
+
+class Worker(object):
+    def __init__(self):
+        self.p = subprocess.Popen([JSC, 'tools/browser-rig/worker-stdio.js'], cwd=ROOT, stdin=subprocess.PIPE,
+                                  stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, bufsize=1)
+        self.lock = threading.Lock()
+        self.info = json.loads(self.p.stdout.readline())
+
+    def ask(self, method, path, body=None, headers=None):
+        with self.lock:
+            self.p.stdin.write(json.dumps({'method': method, 'path': path, 'body': body or {}, 'headers': headers or {}}) + '\n')
+            self.p.stdin.flush()
+            line = self.p.stdout.readline()
+        return json.loads(line) if line else {'status': 502, 'body': {'error': 'worker rig died'}}
+
+    def close(self):
+        try: self.p.stdin.close(); self.p.terminate()
+        except Exception: pass
+
+
+ERRS = ('<script>window.__errs=[];window.addEventListener("error",function(e){__errs.push(String(e.message)+" @"+(e.filename||"").split("/").pop()+":"+e.lineno)});'
+        'window.addEventListener("unhandledrejection",function(e){__errs.push("rejected: "+String(e.reason&&e.reason.message||e.reason))});</script>')
+
+
+class Rig(object):
+    def __init__(self):
+        self.W = Worker()
+        W = self.W
+        self.db = {
+            'vp_platform_admins': [],
+            'vp_venue_staff': [{'auth_user_id': UID, 'venue_id': W.info['venue'], 'role': 'owner', 'display_name': 'Test Host'}],
+            'vp_venues': [{'id': W.info['venue'], 'name': 'Test Alpha', 'slug': W.info['slug'], 'status': 'active', 'suspended_reason': None,
+                           'join_code': W.info['code'], 'au_state': 'QLD', 'max_players': 100, 'included_players': None,
+                           'created_at': '2026-01-01T00:00:00Z', 'postcode': '4000', 'logo_url': None, 'paid_entry_enabled': False}],
+            'vp_venue_settings': [],
+        }
+        rig = self
+
+        class Site(http.server.BaseHTTPRequestHandler):
+            def log_message(self, *a): pass
+            def send(self, code, body, ctype):
+                b = body.encode('utf-8') if isinstance(body, str) else body
+                self.send_response(code)
+                self.send_header('Content-Type', ctype); self.send_header('Content-Length', str(len(b)))
+                self.send_header('Cache-Control', 'no-store')
+                self.end_headers(); self.wfile.write(b)
+            def worker(self, method):
+                n = int(self.headers.get('Content-Length') or 0)
+                body = json.loads(self.rfile.read(n) or b'{}') if n else {}
+                path = self.path[len('/__worker'):] or '/'
+                r = rig.W.ask(method, path, body, {k: v for k, v in self.headers.items()})
+                self.send(r.get('status', 500), json.dumps(r.get('body')), 'application/json')
+            def do_POST(self):
+                if self.path.startswith('/__worker'): return self.worker('POST')
+                self.send(404, '{}', 'application/json')
+            def do_GET(self):
+                u = urllib.parse.urlparse(self.path)
+                if u.path.startswith('/__worker'): return self.worker('GET')
+                if u.path == '/__fake/supabase.js':
+                    host = urllib.parse.parse_qs(u.query).get('host', ['0'])[0] == '1'
+                    pre = 'window.__FAKE_DB=%s;window.__FAKE_SIGNED_IN=%s;window.__FAKE_UID=%s;\n' % (json.dumps(rig.db), 'true' if host else 'false', json.dumps(UID))
+                    return self.send(200, pre + io.open(os.path.join(ROOT, 'tools/browser-rig/fake-supabase.js'), encoding='utf-8').read(), 'application/javascript')
+                if u.path == '/__fake/qrcode.js':
+                    return self.send(200, 'window.QRCode={toCanvas:function(c,t,o,cb){if(typeof o==="function")o(null);else if(cb)cb(null);},toDataURL:function(t,o,cb){var f=typeof o==="function"?o:cb;if(f)f(null,"data:,");return Promise.resolve("data:,");}};', 'application/javascript')
+                if u.path == '/__blank':
+                    return self.send(200, '<!doctype html><html><head><meta charset="utf-8"></head><body style="margin:0;background:#000"></body></html>', 'text/html')
+                p = u.path
+                if p in ('/app', '/app/'): p = '/app/index.html'
+                elif p == '/play': p = '/play.html'
+                elif p == '/tv': p = '/tv.html'
+                elif not os.path.splitext(p)[1]: p = p + '.html'
+                f = os.path.normpath(os.path.join(ROOT, 'venueplay', p.lstrip('/')))
+                if not f.startswith(os.path.join(ROOT, 'venueplay')) or not os.path.isfile(f):
+                    return self.send(404, 'not here', 'text/plain')
+                ext = os.path.splitext(f)[1].lower()
+                if ext in ('.html', '.js', '.json', '.css', '.txt'):
+                    text = io.open(f, encoding='utf-8').read()
+                    host_page = p == '/app/index.html'
+                    if '<head>' in text: text = text.replace('<head>', '<head>' + ERRS, 1)
+                    text = text.replace('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', '/__fake/supabase.js?host=%d' % (1 if host_page else 0))
+                    text = text.replace('https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js', '/__fake/qrcode.js')
+                    text = text.replace('https://venueplay-game.dean-tindale.workers.dev', '/__worker')
+                    ctype = {'.html': 'text/html', '.js': 'application/javascript', '.json': 'application/json', '.css': 'text/css'}.get(ext, 'text/plain')
+                    return self.send(200, text, ctype + '; charset=utf-8')
+                ctype = {'.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.mp3': 'audio/mpeg', '.woff2': 'font/woff2'}.get(ext, 'application/octet-stream')
+                return self.send(200, io.open(f, 'rb').read(), ctype)
+
+        self.srv = http.server.ThreadingHTTPServer(('127.0.0.1', 0), Site)
+        threading.Thread(target=self.srv.serve_forever, daemon=True).start()
+        self.base = 'http://127.0.0.1:%d' % self.srv.server_address[1]
+        self.B = VL.Browser()
+
+    # ---- tabs ----
+    def open(self, path, before=None, width=None, height=None):
+        """Open a tab on the local site. `before` is script run in the page before any of its own."""
+        tid = self.B.call('Target.createTarget', {'url': 'about:blank'})['targetId']
+        sid = self.B.call('Target.attachToTarget', {'targetId': tid, 'flatten': True})['sessionId']
+        self.B.call('Page.enable', {}, session=sid)
+        if width:
+            self.B.call('Emulation.setDeviceMetricsOverride', {'width': width, 'height': height or 800, 'deviceScaleFactor': 1, 'mobile': width < 600}, session=sid)
+        if before:
+            self.B.call('Page.addScriptToEvaluateOnNewDocument', {'source': before}, session=sid)
+        self.B.call('Page.navigate', {'url': self.base + path}, session=sid)
+        return tid, sid
+
+    def ask(self, sid, expr, wait=8):
+        self.B.ws.s.settimeout(wait)
+        try:
+            return self.B.eval(sid, expr)
+        except (socket.timeout, OSError):
+            return 'HUNG'
+        finally:
+            self.B.ws.s.settimeout(60)
+
+    def until(self, sid, expr, secs=15):
+        t = time.time() + secs
+        while time.time() < t:
+            v = self.ask(sid, expr)
+            if v == 'HUNG' or v: return v
+            time.sleep(0.25)
+        return False
+
+    def front(self, sid):
+        """Bring a tab to the front. Chrome throttles a background tab's timers hard (a minute apart
+        once it has been hidden a while), and a phone in a pocket-sized test is always the front tab."""
+        try: self.B.call('Page.bringToFront', {}, session=sid)
+        except Exception: pass
+
+    def shot(self, sid, path):
+        try:
+            r = self.B.call('Page.captureScreenshot', {'format': 'jpeg', 'quality': 70}, session=sid)
+            with open(path, 'wb') as f: f.write(base64.b64decode(r['data']))
+        except Exception:
+            pass
+
+    def close_tab(self, tid):
+        self.B.close_tab(tid)
+
+    def close(self):
+        try: self.B.close()
+        except Exception: pass
+        self.W.close()
+        try: self.srv.shutdown()
+        except Exception: pass

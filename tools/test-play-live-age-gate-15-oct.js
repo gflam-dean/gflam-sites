@@ -218,18 +218,33 @@ var p0 = PLAY.indexOf('  var _paper=false;'), p1 = PLAY.indexOf('  function rand
 var w0 = PLAY.indexOf('function watchVenue(slug){'), w1 = w0 < 0 ? -1 : PLAY.indexOf('.then(function(d){', w0), w2 = w1 < 0 ? -1 : PLAY.indexOf('}).catch(function(){});', w1);
 if (p0 < 0 || p1 < 0 || w0 < 0 || w1 < 0 || w2 < 0) { print('  FAIL the paper block or the watchVenue poll is not where this test lifts it from'); bad++; }
 else {
-  var unsubs = 0, closes = 0, connects = [];
+  var unsubs = 0, closes = 0, connects = [], routes = 0, views = [], conns = [];
   var ch = { unsubscribe: function () { unsubs++; } }, _room = { close: function () { closes++; } }, subscribed = true, sendQueue = [{ t: 'join' }];
   function connect(room) { connects.push(room); }
-  boxes = [];
-  (0, eval)(PLAY.slice(p0, p1));
+  // The notice is the page's own #vPaper view since 20 Oct 2026, shown by show() in the normal frame.
+  var vPaper = fakeEl(); vPaper.classList = { _h: true, add: function (c) { if (c === 'hidden') this._h = true; }, remove: function (c) { if (c === 'hidden') this._h = false; }, contains: function (c) { return c === 'hidden' && this._h; } };
+  globalThis.$ = function (id) { return id === 'vPaper' ? vPaper : fakeEl(); };
+  // the page's show() is renamed on the way in: this suite's own check function is called show
+  var __pageShow = function (v) { views.push(v); if (v === 'vPaper') vPaper.classList.remove('hidden'); };
+  globalThis.route = function () { routes++; };
+  globalThis.setConn = function (st) { conns.push(st); };
+  globalThis.setHeaderBall = function () {};
+  var ageBox0 = fakeEl(); _ageBox = ageBox0; _ageHold = true;
+  P.active = true; P.cards = [{ cardNo: 1 }]; P.called = [5, 9];
+  boxes = []; var bodyKids = document.body.children.length;
+  (0, eval)(PLAY.slice(p0, p1).replace(/\bshow\("vPaper"\)/g, '__pageShow("vPaper")'));
   showPaperBingo();
-  show('the paper notice is a fixed, full-viewport cover appended to the body, not a wipe of it', _paper === true && boxes.length === 1 && /Tonight you play on paper/.test(boxes[0].innerHTML) && /position:fixed/.test(boxes[0].attrs.style) && /top:0;left:0;right:0;bottom:0/.test(boxes[0].attrs.style) && document.body.children.indexOf(boxes[0]) >= 0, boxes[0] && boxes[0].attrs.style);
+  show('the paper notice is the page\'s own view, shown in the normal frame (header, logo, Help), not a cover over the body', _paper === true && boxes.length === 0 && views[views.length - 1] === 'vPaper' && /Tonight you play on paper/.test(vPaper.innerHTML) && document.body.children.length === bodyKids, { views: views, kids: document.body.children.length - bodyKids, html: vPaper.innerHTML.slice(0, 80) });
   show('and the phone has left the room: channel and room socket closed, queue emptied', unsubs === 1 && closes === 1 && ch === null && _room === null && subscribed === false && sendQueue.length === 0);
+  show('and it is no longer in a game: off the channel it would never hear the idle that ends one (20 Oct 2026)', P.active === false && P.cards.length === 0 && P.called.length === 0, { active: P.active, cards: P.cards.length });
+  show('an age tick already up goes behind it, the hold kept for when the paper comes down', ageBox0._removed === true && _ageBox === null && _ageHold === true);
+  show('the header says paper tonight, not "Reconnecting"', conns.indexOf('paper') >= 0, conns);
   showPaperBingo();
-  show('a second paper answer shows nothing twice', boxes.length === 1);
+  show('a second paper answer shows nothing twice', boxes.length === 0 && unsubs === 1);
+  var ageAsked = 0; requireAge18 = function () { ageAsked++; };
   hidePaperBingo();
-  show('the Worker stops saying paper: the notice comes down and the phone rejoins its room', _paper === false && boxes[0]._removed === true && connects.length === 1 && connects[0] === 'ROYAL1', { connects: connects, removed: boxes[0]._removed });
+  show('the Worker stops saying paper: the notice comes down, the page routes back, and the phone rejoins its room', _paper === false && vPaper.classList.contains('hidden') && routes === 1 && connects.length === 1 && connects[0] === 'ROYAL1', { connects: connects, routes: routes });
+  show('and an age tick it was holding comes back up', ageAsked === 1, ageAsked);
   hidePaperBingo();
   show('taking it down twice does nothing the second time', connects.length === 1);
 
@@ -260,14 +275,15 @@ else {
 
 /* ---- part four: a phone that TYPED the code keeps asking /join/info, and acts on the flags each time ---- */
 print('play.html: the typed-code lookup acts on both flags every time, and keeps asking after a paper notice');
-var k0 = PLAY.indexOf('    (function look(){'), k1 = k0 < 0 ? -1 : PLAY.indexOf('    })();', k0);
+// Since 20 Oct 2026 the loop is three functions over one timer: lookLater, lookNow and look.
+var k0 = PLAY.indexOf('    var tries=0, lookT=0, lastPush=0;'), k1 = k0 < 0 ? -1 : PLAY.indexOf('    look();\n  }', k0);
 if (k0 < 0 || k1 < 0) { print('  FAIL the look() loop is not where this test lifts it from'); bad++; }
 else {
-  // the text runs "function look(){ ... }" : from after the opening "(" to the "}" that "    })();" starts with
-  var look = (0, eval)('(' + PLAY.slice(k0 + '    ('.length, k1 + '    }'.length) + ')');
-  var timers = [], unknowns = 0, rehomes = [], answer = null, calls2 = [], hops2 = [];
-  var tries = 0, code = 'VENUE1', VP_LOOK_NOW = null, CODE_RE = /^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/;
+  var timers = [], cleared = 0, unknowns = 0, rehomes = [], answer = null, calls2 = [], hops2 = [];
+  var code = 'VENUE1', VP_LOOK_NOW = null, CODE_RE = /^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/;
   function setTimeout(fn, ms) { timers.push(ms); return timers.length; }
+  function clearTimeout(id) { if (id) cleared++; }
+  (0, eval)(PLAY.slice(k0, k1));
   function playingHere() { return false; }
   function playerPost(path, body) { calls2.push(path + ':' + body.code); return Promise.resolve(answer); }
   function unknownCode() { unknowns++; }
@@ -289,6 +305,20 @@ else {
   calls = []; timers = []; answer = { exists: false, format: '', collect: null };
   look(); drainMicrotasks();
   show('a code nobody holds: told so, and the asking stops', unknowns === 1 && timers.length === 0, { unknowns: unknowns, timers: timers });
+
+  /* THE NIGHT IS LONGER THAN THIRTY MINUTES (live play audit, 20 Oct 2026): a phone on the paper
+     notice is off the channel, so this lookup is its only way out, and it gave up after 225 tries. */
+  answer = { exists: true, format: '', paper_bingo: true, paper_reason: 'caller', age_gate: false, channel: 'VENUE1' };
+  timers = []; tries = 0;
+  for (var i = 0; i < 400; i++) { look(); drainMicrotasks(); }
+  show('four hundred lookups into a paper night (over an hour) it is STILL asking, every thirty seconds by then', timers.length === 400 && timers[0] === 8000 && timers[223] === 8000 && timers[399] === 30000, { n: timers.length, first: timers[0], last: timers[399] });
+  timers = []; cleared = 0;
+  look(); drainMicrotasks(); look(); drainMicrotasks();
+  show('ONE timer: a lookup run early replaces the pending one instead of starting a second chain', cleared >= 2 && timers.length === 2, { cleared: cleared, timers: timers.length });
+  show('a console announcing its mode brings the lookup forward through lookNow', VP_LOOK_NOW === lookNow);
+  var before = calls2.length; lastPush = 0;
+  VP_LOOK_NOW(); VP_LOOK_NOW(); VP_LOOK_NOW(); drainMicrotasks();
+  show('three mode messages at once ask the Worker once, not three times', calls2.length - before === 1, calls2.length - before);
 }
 
 if (bad) throw new Error('age gate: ' + bad + ' of ' + ran + ' failed');

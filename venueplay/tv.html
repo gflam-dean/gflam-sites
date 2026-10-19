@@ -1710,9 +1710,20 @@
      reload stops waiting for it. Longer than BINGO_LIVE_MS so a real round is never
      interrupted, far shorter than the 90 minute host-silence timeout. */
   var STUCK_MS=3*60*1000;
+  /* THE GAME IS OVER WHEN THE ADS GO UP (live play audit, 20 Oct 2026). The ads never touched the
+     bingo state, so the last winner rode along underneath them: End game, then Open lobby, and the
+     console's mode:"bingo" repainted "BINGO! Sam WINS the meat tray" over the new lobby, and the
+     state guard below (which protects a win from a routine refresh) swallowed the lobby itself. The
+     room saw last game's winner where the QR should be, for as long as the lobby stayed open. Only
+     a claim or a winner is cleared: the pattern and prize are re-sent by every lobby anyway. */
+  function forgetLastGame(){
+    if(state.phase==="claim" || state.phase==="win") state.phase="lobby";
+    state.winner=null; state.celebrated=false; ballInFlight=false;
+  }
   function enterAds(){
     stopReveal();   // a ball in the air must not paint over wherever the screen goes next
     tvMode="ads"; stopCelebrate(); cancelHolding(); cancelEmbedWatch(); hideGameFrame();
+    forgetLastGame();
     hideBingoLayers();
     $("tvCorner").style.display="none";   // venue's own advertising: no VenuePlay logo over it
     $("adsRoot").classList.remove("hidden");
@@ -2078,7 +2089,11 @@
          reconnects. So one punter's phone coming out of sleep used to erase "BINGO! Ann wins $50"
          mid-announcement and put the board back. The phone page already guards this; the TV did
          not. A new round arrives as t:"started", which sets the phase properly. */
-      if(state.phase==="claim" || state.phase==="win"){ applyBingo(); return; }
+      /* EXCEPT A NEW LOBBY, which is not a refresh: nothing running and no ball called is a game
+         that has not started, so there is no claim or winner on it to protect (20 Oct 2026). */
+      var freshLobby=!m.active && state.called.length===0;
+      if((state.phase==="claim" || state.phase==="win") && !freshLobby){ applyBingo(); return; }
+      if(freshLobby){ state.winner=null; ballInFlight=false; }
       if(m.active && state.called.length>0){ state.phase="running"; }
       else { state.phase="lobby"; stopCelebrate(); state.celebrated=false; }
       applyBingo();
@@ -2833,11 +2848,26 @@
       try{ var r=fn.call(node); if(r&&typeof r.catch==="function") r.catch(function(){}); return true; }
       catch(e){ return false; }
     }
+    /* A SETUP CONTROL, NOT FURNITURE (live play audit, 20 Oct 2026). The chip sat on the venue's
+       own advertising all night. It now goes after its first use, or after ten seconds untouched,
+       and comes back for ten seconds whenever somebody moves the mouse, touches the screen or
+       presses a key: the person setting the TV up still finds it, the room never sees it. */
+    var used=!!DEMO, shownUntil=Date.now()+10000, fsHideT=null;   // a demo never shows it (hideSetup above)
     btn.addEventListener("click", function(){
+      used=true; sync();
       if(fsElement()) return;
       if(!requestOn(el)) requestOn(root);
     });
-    function sync(){ btn.style.display = fsElement() ? "none" : ""; }
+    function sync(){
+      var on=!fsElement() && !used && Date.now()<shownUntil;
+      btn.style.display = on ? "" : "none";
+      if(fsHideT){ clearTimeout(fsHideT); fsHideT=null; }
+      if(on) fsHideT=setTimeout(sync, Math.max(50, shownUntil-Date.now()));
+    }
+    function wake(){ if(used) return; shownUntil=Date.now()+10000; sync(); }
+    ["pointermove","pointerdown","keydown","touchstart"].forEach(function(ev){
+      document.addEventListener(ev, wake, { passive:true });
+    });
     document.addEventListener("fullscreenchange", sync);
     document.addEventListener("webkitfullscreenchange", sync);
     document.addEventListener("msfullscreenchange", sync);

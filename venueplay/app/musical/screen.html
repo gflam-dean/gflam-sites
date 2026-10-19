@@ -743,13 +743,17 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
     if(_audioWarned) return; _audioWarned=true;
     var w=document.getElementById("audioWarn");
     if(!w){
+      /* TOP CENTRE, AND IT GOES (live play audit, 20 Oct 2026). Bottom left it sat on the JOIN NOW
+         QR for the whole night, so nobody could scan in. The host console is told as well, so eight
+         seconds on the wall is enough for whoever is looking at it. */
       w=document.createElement("div"); w.id="audioWarn";
-      w.setAttribute("style","position:fixed;left:2cqw;bottom:2cqw;z-index:99;max-width:60cqw;"+
+      w.setAttribute("style","position:fixed;top:2cqw;left:50%;transform:translateX(-50%);z-index:99;max-width:60cqw;text-align:center;"+
         "background:rgba(255,45,85,.92);color:#fff;border-radius:1cqw;padding:1.2cqw 1.8cqw;"+
         "font:700 clamp(12px,1.9cqw,22px)/1.35 system-ui,-apple-system,sans-serif");
       w.textContent="No sound on this screen. Allow autoplay on the TV, or play the music from another device.";
       document.body.appendChild(w);
     }
+    setTimeout(function(){ var x=document.getElementById("audioWarn"); if(x) x.remove(); }, 8000);
     try{ tvSend({ t:"tv_audio_blocked" }); }catch(e){}
   }
   function audioOk(){ _audioWarned=false; var w=document.getElementById("audioWarn"); if(w) w.remove(); }

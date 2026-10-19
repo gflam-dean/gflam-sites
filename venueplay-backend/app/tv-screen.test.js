@@ -75,7 +75,7 @@ var NEED = ["adsSignature","buildAds","stopAds","startAds","loopEntries","entryC
             "slideVisible","todayStr","hasRaffle","accentClass","accentHex","esc","escBr",
             "landBall","revealBall","bingoCall","renderRun","calledSet","updateBoard","hideBingoLayers",
             "showBingoLayer","applyBingo","hideGameFrame","applyVenueLogo","stopCelebrate",
-            "cancelHolding","cancelEmbedWatch","gameLabel","enterAds","enterBingo","enterEmbed",
+            "cancelHolding","cancelEmbedWatch","gameLabel","forgetLastGame","enterAds","enterBingo","enterEmbed",
             "enterHolding"];
 var SRC = {}, missing = [];
 for (var ni = 0; ni < NEED.length; ni++) {

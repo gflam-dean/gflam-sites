@@ -428,7 +428,7 @@
   "counted_by": "lines"
  },
  "tools/test-play-live-age-gate-15-oct.js": {
-  "checks": 66,
+  "checks": 74,
   "counted_by": "lines"
  },
  "tools/test-pr-boards-15-oct.js": {
@@ -643,6 +643,10 @@
   "checks": 24,
   "counted_by": "lines"
  },
+ "tools/tv-and-phone-in-chrome.test.py": {
+  "checks": 60,
+  "counted_by": "lines"
+ },
  "touring-backend/lib/touring-api.test.js": {
   "checks": 56,
   "counted_by": "lines"
@@ -764,7 +768,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/tv-states.test.js": {
-  "checks": 21,
+  "checks": 23,
   "counted_by": "lines"
  },
  "venueplay-backend/app/vp-ask-once.test.js": {

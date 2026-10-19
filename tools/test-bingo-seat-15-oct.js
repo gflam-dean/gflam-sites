@@ -264,7 +264,8 @@ function hostSays(t, pid) { return LOG.filter(function (l) { return l && l.from 
   var store = {}; store['vp-name-' + SA_CODE] = 'Pat';
   var pat = bootPhone2('Pat', { search: '?venue=' + SA_SLUG, slug: SA_SLUG, store: store });
   await advance(3000);
-  function patNotice() { return pat.dom.document.body.children.map(function (n) { return n.innerHTML; }).join(' '); }
+  function patNotice() { var v = pat.$ ? pat.$('vPaper') : pat.dom.document.getElementById('vPaper'); var shown = v && v.classList && !v.classList.contains('hidden') ? (v.innerHTML || '') : '';   // the page's own view since 20 Oct 2026
+    return shown + ' ' + pat.dom.document.body.children.map(function (n) { return n.innerHTML; }).join(' '); }
   /* Nothing is on at the SA pub yet. Until 16 Oct 2026 the Worker read "no session" as bingo and
      blanked her here, before the host had opened anything; a quiet night now asks nothing. */
   check('with nothing on at her venue yet, her phone is NOT blanked (a quiet night asks nothing, 16 Oct 2026)', !/play on paper/.test(patNotice()), patNotice().slice(0, 80));
