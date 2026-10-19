@@ -39,6 +39,9 @@ for (var ci = 0; ci < CANDIDATES.length; ci++) {
   try { var t = readFile(CANDIDATES[ci]); if (t && t.length > 40000) { html = t; break; } } catch (e) {}
 }
 if (html === null) { print("FAIL could not find the bingo console index.html"); throw new Error("no source"); }
+/* The console loads /app/vp-draw.js, its regulated bingo rules (19 Oct 2026): the claim rule and the
+   strips are there now, so they are run from there, the file the page actually loads. */
+var DRAW_SRC = readFile("venueplay/app/vp-draw.js");
 
 function grab(name){
   var i = html.indexOf("function " + name + "(");
@@ -69,7 +72,7 @@ function grabCall(prefix){
 }
 
 print("== the end of a game is still written in the console ==");
-var NEED = ["isCalled", "rowComplete", "completeRows", "cornerNums", "checkPattern",
+var NEED = ["isCalled", "checkPattern",
             "calledArray", "seatOpen", "isSeated", "playerCount", "shownName", "sendState", "sendClaimPending",
             "winnerNames", "renderClaimCard", "renderClaimQueue", "syncNextBtn",
             "nextPattern", "hostConfirm", "hostConfirmAll", "hostReject",
@@ -80,7 +83,7 @@ var NEED = ["isCalled", "rowComplete", "completeRows", "cornerNums", "checkPatte
                the same verdict, the same queue, labelled. bingo-server-tickets.js runs the server half. */
             "dealPending", "claimsChecking", "claimRef", "ticketOf", "claimCheck", "claimShown", "claimDone",
             "claimShow", "claimRefuse", "claimVerdict", "claimOnTablet", "claimRetrySoon", "recordDecision",
-            "flushClaimLog", "cryptoInt"];
+            "flushClaimLog", "cryptoInt", "isRefusal", "serverRefused", "tabletMayStandIn", "standInOrWait", "claimRefusedByServer"];
 /* onMsg is now a gate in front of onPhoneMsg (vp-phonekey.js, 20 Sep 2026). This suite is about
    what happens AFTER a message is believed, so there is no VPPhoneKey here and the gate hands
    everything straight through, exactly as the page does when that script fails to load.
@@ -151,8 +154,9 @@ function sendCards(pid){ pushedCards++; var p = G.players[pid]; if (!p || !p.car
 function sendPlayers(){ send({ t:"players", count: playerCount() }); }
 var VP_HOLD = { busy: function(){ return false; }, hold: function(){}, release: function(){} };
 var window = { VP_HOLD: VP_HOLD };
+(new Function("window", DRAW_SRC))(window);
 var MAX_TIE = 8;
-var CLAIM_CALL_MS = 4000, CLAIM_RETRY_MS = 5000, _claimRetryT = 0, _logBusy = false, _logT = 0;
+var CLAIM_CALL_MS = 4000, CLAIM_RETRY_MS = 5000, _claimRetryT = 0, _logBusy = false, _logT = 0; var NO_STAND_IN = "wait", __ctx = { venue: { au_state: "QLD" } }; function setCoach(){}
 var crypto = { getRandomValues: function(a){ for (var i = 0; i < a.length; i++) a[i] = Math.floor(Math.random() * 4294967296); return a; } };
 /* A guard that has been taken out must produce a NAMED red line, not an exception from a
    stub. So the server is a counter and a promise that never settles: nextBall gets all the
@@ -653,7 +657,7 @@ print("== paid tickets bought one at a time cover the numbers like a book ==");
    ticket, so six such sales were six tickets from six books: 24 numbers on two of them, 35 on
    none (audit, 20 Sep 2026). Lifted here: the real makeStrip, nextCardNo, dealFor and
    topUpFor out of the shipped console. */
-var DEAL = ["cryptoInt", "clampCards", "colRange", "stripCounts", "stripRows", "makeStrip", "nextCardNo", "ticketsFor", "ticketFrom", "dealFor", "topUpFor"];
+var DEAL = ["cryptoInt", "clampCards", "nextCardNo", "ticketsFor", "ticketFrom", "dealFor", "topUpFor"];
 var COL_TOTAL = [9,10,10,10,10,10,10,10,11];   // the 90-ball column sizes the console declares beside stripCounts
 if (typeof crypto === "undefined") { crypto = { getRandomValues: function(a){ for (var i = 0; i < a.length; i++) a[i] = Math.floor(Math.random() * 4294967296); return a; } }; }
 var dealMissing = [];

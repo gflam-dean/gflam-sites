@@ -86,6 +86,13 @@ def main():
     r = sh([PY, 'tools/stamp-workers.py', '--check'])
     if r.returncode != 0:
         stop('a Worker changed without being restamped. Run python3 tools/stamp-workers.py, commit, and release again.')
+    # THE REGULATED BINGO CODE (VP-DRAW, 19 Oct 2026). Nothing in it ships unless the version was raised and the
+    # manifest regenerated in the same commit, compared with what is on main. The pre-push gate checks it too;
+    # it is here as well so a release refuses before it pushes anything, whatever the hook does.
+    r = sh([PY, 'tools/regulated.py', '--check'])
+    if r.returncode != 0:
+        stop('the regulated bingo code (VP-DRAW) does not match its manifest or its version:\n' + (r.stdout + r.stderr)[-800:] +
+             '\nRaise the version in both halves of vp-draw.js, run python3 tools/regulated.py --update, then stamp, commit and release again.')
     print('  ok')
 
     step(1, 'push HEAD:main (the hook runs the local gate)')

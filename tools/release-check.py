@@ -491,7 +491,11 @@ def local_checks(which):
     if not os.path.isfile(checker):
         checker = os.path.join(PARTYPLAY_LOCAL, 'check-defs.py')
     if os.path.isfile(checker):
-        args = [a for a in files if a.endswith('.html') or a.endswith('.js')]
+        # The Worker half of VP-DRAW never runs on its own: it runs as the copy inside venueplay-game.js,
+        # which IS checked here, and D30 proves that copy is the module byte for byte. Checked alone it
+        # would name every database helper the game Worker gives it.
+        args = [a for a in files if (a.endswith('.html') or a.endswith('.js'))
+                and not a.replace(os.sep, '/').endswith('venueplay-backend/worker/vp-draw.js')]
         r = subprocess.run([sys.executable, checker] + args,
                            capture_output=True, text=True, cwd=ROOT)
         out = (r.stdout + r.stderr).strip().splitlines()
@@ -3054,7 +3058,10 @@ def local_checks(which):
             m = re.search(r'(\d+) suites ran (\d+) checks', out)
             ok('every suite still runs at least the checks the ledger recorded',
                r.returncode == 0 and not bad and bool(m) and int(m.group(1)) >= 100,
-               detail=('; '.join(b[:120] for b in bad[:3]) if bad else (m.group(0) if m else out[-120:])),
+               # Every failing suite is NAMED, past the first three in full: one Worker fault can fail five
+               # suites, and a line that named only three hid the rest (prove-checks read them as blind).
+               detail=('; '.join(b[:120] for b in bad[:3]) + ('' if len(bad) <= 3 else '; also: ' + ', '.join(
+                   (b.split() + ['', ''])[1] for b in bad[3:])) if bad else (m.group(0) if m else out[-120:])),
                why='run python3 tools/check-suite-ledger.py. If a suite was shrunk ON PURPOSE, run it '
                    'with --update and commit the ledger: the diff is the record that it was a decision')
 
@@ -3087,6 +3094,21 @@ def local_checks(which):
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run python3 tools/check-worker-guards.py. Any signed-in host drawing any '
                    'venue\'s raffle, or a draw on Math.random, ships with a green gate otherwise')
+
+        # 19 Oct 2026, Dean: "it has to be perfect and nothing can change those OLGR settings".
+        head('D30. The regulated bingo code (VP-DRAW) cannot change silently')
+        t = os.path.join(ROOT, 'tools', 'regulated.py')
+        if not os.path.isfile(t):
+            ok('the regulated bingo code matches its manifest and its version', False, why='tools/regulated.py is missing')
+        else:
+            r = subprocess.run([sys.executable, t, '--check'], capture_output=True, text=True, timeout=120, cwd=ROOT)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l.strip()[5:] for l in out.splitlines() if l.strip().startswith('FAIL')]
+            ok('the regulated bingo code matches its manifest and its version', r.returncode == 0 and not bad,
+               detail=('; '.join(bad[:2]) if bad else out.splitlines()[-1][:120] if out else ''),
+               why='the draw, the tickets, the claim rule or the tablet fallback switch changed without its version being '
+                   'raised and tools/regulated-manifest.json regenerated in the same commit. Run python3 tools/regulated.py --update '
+                   'after raising the version in BOTH halves of vp-draw.js')
 
         for label, fn, title, floor, why in (
             # D50 to D52: the venue logo, banked by Dean 7 Aug 2026 and built 16 Oct 2026 (migration 102).
