@@ -1,19 +1,11 @@
 {
  "grants": [
-  "artists anon DELETE",
-  "artists anon INSERT",
   "artists anon REFERENCES",
   "artists anon SELECT",
   "artists anon TRIGGER",
-  "artists anon TRUNCATE",
-  "artists anon UPDATE",
-  "artists authenticated DELETE",
-  "artists authenticated INSERT",
   "artists authenticated REFERENCES",
   "artists authenticated SELECT",
   "artists authenticated TRIGGER",
-  "artists authenticated TRUNCATE",
-  "artists authenticated UPDATE",
   "contacts anon SELECT",
   "contacts authenticated SELECT",
   "experience anon SELECT",
@@ -132,20 +124,12 @@
   "pp_subscribers authenticated UPDATE",
   "reviews anon SELECT",
   "reviews authenticated SELECT",
-  "show_artists anon DELETE",
-  "show_artists anon INSERT",
   "show_artists anon REFERENCES",
   "show_artists anon SELECT",
   "show_artists anon TRIGGER",
-  "show_artists anon TRUNCATE",
-  "show_artists anon UPDATE",
-  "show_artists authenticated DELETE",
-  "show_artists authenticated INSERT",
   "show_artists authenticated REFERENCES",
   "show_artists authenticated SELECT",
   "show_artists authenticated TRIGGER",
-  "show_artists authenticated TRUNCATE",
-  "show_artists authenticated UPDATE",
   "shows anon SELECT",
   "shows authenticated SELECT",
   "signups authenticated SELECT",
@@ -935,20 +919,6 @@
    "using": "",
    "with_check": "true"
   },
-  "experience.Anon delete experience": {
-   "cmd": "DELETE",
-   "permissive": "PERMISSIVE",
-   "roles": "public",
-   "using": "true",
-   "with_check": ""
-  },
-  "experience.Anon insert experience": {
-   "cmd": "INSERT",
-   "permissive": "PERMISSIVE",
-   "roles": "public",
-   "using": "",
-   "with_check": "true"
-  },
   "experience.Public read experience": {
    "cmd": "SELECT",
    "permissive": "PERMISSIVE",
@@ -984,13 +954,6 @@
    "using": "true",
    "with_check": ""
   },
-  "reviews.Public write reviews": {
-   "cmd": "ALL",
-   "permissive": "PERMISSIVE",
-   "roles": "public",
-   "using": "true",
-   "with_check": "true"
-  },
   "show_artists.Public can read show_artists": {
    "cmd": "SELECT",
    "permissive": "PERMISSIVE",
@@ -1004,13 +967,6 @@
    "roles": "public",
    "using": "true",
    "with_check": ""
-  },
-  "shows.Public write shows": {
-   "cmd": "ALL",
-   "permissive": "PERMISSIVE",
-   "roles": "public",
-   "using": "true",
-   "with_check": "true"
   },
   "signups.Auth read signups": {
    "cmd": "SELECT",
@@ -1026,40 +982,12 @@
    "using": "",
    "with_check": "((email IS NOT NULL) AND ((length(email) >= 5) AND (length(email) <= 254)) AND (email ~~ '%_@_%._%'::text) AND (COALESCE(length(first_name), 0) <= 80) AND (COALESCE(length(mobile), 0) <= 30) AND (COALESCE(length(postcode), 0) <= 10) AND (COALESCE(length(state), 0) <= 200) AND (source = ANY (ARRAY['gflam_touring'::text, 'gflam_group'::text, 'drag_bingo'::text, 'nextevent_discount'::text, 'website'::text])) AND (COALESCE(signup_type, 'signup'::text) = 'signup'::text))"
   },
-  "ticket_milestones.Anon delete ticket_milestones": {
-   "cmd": "DELETE",
-   "permissive": "PERMISSIVE",
-   "roles": "public",
-   "using": "true",
-   "with_check": ""
-  },
-  "ticket_milestones.Anon insert ticket_milestones": {
-   "cmd": "INSERT",
-   "permissive": "PERMISSIVE",
-   "roles": "public",
-   "using": "",
-   "with_check": "true"
-  },
   "ticket_milestones.Public read ticket_milestones": {
    "cmd": "SELECT",
    "permissive": "PERMISSIVE",
    "roles": "public",
    "using": "true",
    "with_check": ""
-  },
-  "tour_categories.Anon delete tour_categories": {
-   "cmd": "DELETE",
-   "permissive": "PERMISSIVE",
-   "roles": "public",
-   "using": "true",
-   "with_check": ""
-  },
-  "tour_categories.Anon insert tour_categories": {
-   "cmd": "INSERT",
-   "permissive": "PERMISSIVE",
-   "roles": "public",
-   "using": "",
-   "with_check": "true"
   },
   "tour_categories.Public read tour_categories": {
    "cmd": "SELECT",

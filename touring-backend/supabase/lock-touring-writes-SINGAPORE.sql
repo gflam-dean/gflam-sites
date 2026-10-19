@@ -74,7 +74,8 @@ begin
     cross join (values ('INSERT'), ('UPDATE'), ('DELETE')) p(priv)
    where c.relnamespace = 'public'::regnamespace
      and c.relname in ('shows', 'reviews', 'experience', 'ticket_milestones', 'tour_categories', 'artists', 'venues', 'show_artists')
-     and has_any_column_privilege(r.rolname, c.oid, p.priv);
+     and (case when p.priv = 'DELETE' then has_table_privilege(r.rolname, c.oid, 'DELETE')
+               else has_any_column_privilege(r.rolname, c.oid, p.priv) end);
   if bad is not null then raise exception 'A PUBLIC ROLE CAN STILL WRITE: %', bad; end if;
 
   if not has_table_privilege('anon', 'public.shows', 'SELECT') then
