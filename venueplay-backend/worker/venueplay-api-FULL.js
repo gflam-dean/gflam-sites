@@ -129,6 +129,12 @@ export default {
       if (request.method === 'POST' && path === '/help/ticket')            return await helpPublicTicket(request, env, json);
       if (request.method === 'POST' && path === '/help/venue/ticket')      return await helpVenueTicket(request, env, json);
       if (request.method === 'POST' && path === '/help/push/peek')         return await helpPushPeek(request, env, json);
+      if (request.method === 'GET'  && path === '/help/content')           return await helpPublicContent(request, env, json);
+      if (request.method === 'POST' && path === '/help/triage')            return await helpTriageEvent(request, env, json);
+      if (request.method === 'POST' && path === '/admin/help/content/get')  return await helpAdminContentGet(request, env, json);
+      if (request.method === 'POST' && path === '/admin/help/content/save') return await helpAdminContentSave(request, env, json);
+      if (request.method === 'POST' && path === '/admin/help/content/move') return await helpAdminContentMove(request, env, json);
+      if (request.method === 'POST' && path === '/admin/help/reorder/undo') return await helpAdminReorderUndo(request, env, json);
       if (request.method === 'POST' && path === '/admin/help/list')        return await helpAdminList(request, env, json);
       if (request.method === 'POST' && path === '/admin/help/count')       return await helpAdminCount(request, env, json);
       if (request.method === 'POST' && path === '/admin/help/get')         return await helpAdminGet(request, env, json);
@@ -9777,19 +9783,22 @@ async function helpPublicTicket(request, env, json) {
     if (/^[A-Z0-9]{4,8}$/.test(c)) where.room_code = c;    // a PartyPlay party code, as typed
   }
   const game = helpLine(b.game, 24).toLowerCase().replace(/[^a-z ]/g, '');
-  const category = kind === 'sales' ? 'sales' : kind === 'host' ? 'venue_support' : 'patron_support';
+  // From the guided triage: the issue, as the database has it, names the ticket and picks its kind.
+  const issue = kind === 'sales' ? null : await helpIssueFor(env, b.issue_id, brand);
+  const category = issue ? issue.category : kind === 'sales' ? 'sales' : kind === 'host' ? 'venue_support' : 'patron_support';
   const who = kind === 'sales' ? 'Enquiry' : kind === 'host' ? 'Host help' : (brand === 'partyplay' ? 'Guest help' : 'Player help');
   let t;
   try {
     t = await helpInsertTicket(env, {
       brand: brand, category: category, channel: kind === 'sales' ? 'web_form' : 'patron_form',
-      title: who + (game ? ' (' + game + ')' : '') + ': ' + helpLine(message, 80),
+      title: issue ? issue.title + (game ? ' (' + game + ')' : '') : who + (game ? ' (' + game + ')' : '') + ': ' + helpLine(message, 80),
       message: message, contact_name: name || null, contact_email: email, contact_phone: phone || null,
       venue_id: where.venue_id, room_code: where.room_code, session_id: where.session_id,
     });
   } catch (e) {
     return json({ error: 'We could not send that just now. Please email ' + support + '.' }, 503);
   }
+  await helpNoteTicketFromIssue(env, issue);
   await helpAnnounce(env, t, await helpVenueName(env, t.venue_id));
   return json({ ok: true, ticket_no: t.ticket_no });
 }
@@ -9843,10 +9852,11 @@ async function helpVenueTicket(request, env, json) {
     const u = await vpaAuthGetUser(env, who.authUserId);
     contactPhone = (u && u.phone) ? ('+' + String(u.phone).replace(/^\+/, '')) : null;
   }
+  const issue = await helpIssueFor(env, b.issue_id, 'venueplay');
   let t;
   try {
     t = await helpInsertTicket(env, {
-      brand: 'venueplay', category: b.category === 'accounts' ? 'accounts' : 'venue_support', channel: 'venue_form',
+      brand: 'venueplay', category: issue ? issue.category : b.category === 'accounts' ? 'accounts' : 'venue_support', channel: 'venue_form',
       priority: b.urgent ? 'urgent' : 'normal', title: subject, message: message,
       contact_name: helpLine(b.name, 120) || (who.staff && who.staff.display_name) || (who.admin ? 'HQ: ' + (who.admin.label || 'admin') : null),
       contact_email: contactEmail, contact_phone: contactPhone, venue_id: who.venue.id, raised_by: who.authUserId,
@@ -9854,6 +9864,7 @@ async function helpVenueTicket(request, env, json) {
   } catch (e) {
     return json({ error: 'We could not send that just now. Please email support@venueplay.com.au.' }, 503);
   }
+  await helpNoteTicketFromIssue(env, issue);
   await helpAnnounce(env, t, who.venue.name);
   return json({ ok: true, ticket_no: t.ticket_no });
 }
@@ -10083,7 +10094,9 @@ async function helpAdminReport(request, env, json) {
   q.push('select=id,ticket_no,brand,created_at,closed_at,category,channel,status,priority,venue_id,room_code,subject');
   const rows = await vpaSelectAll(env, 'vp_help_tickets', q.join('&') + '&order=created_at.asc,id.asc');
   const names = await helpVenueNames(env, rows.map((r) => r.venue_id));
-  return json({ from: g.body.from, to: g.body.to, report: helpReport(rows, names), rows: rows, venues: names });
+  // The guided triage over the same dates: solved without a ticket, per issue, and by which step.
+  const triage = await helpTriageForRange(env, from, to, g.body.brand);
+  return json({ from: g.body.from, to: g.body.to, report: helpReport(rows, names), rows: rows, venues: names, triage: triage });
 }
 
 /* ------------------------------ PHONE ALERTS (Web Push) ------------------------------
@@ -10406,4 +10419,291 @@ async function helpInboundEmail(message, env) {
     console.log('[help] inbound email not ticketed: ' + String((e && e.message) || e).slice(0, 300));
     return { action: 'failed' };
   }
+}
+
+/* ==========================================================================================
+   HELP CONTENT AND GUIDED TRIAGE (migration 106, 19 Oct 2026)
+
+   Dean: an HQ editor for the FAQ per brand ("add, edit, reorder, hide questions with no code"),
+   and on every Help panel a guided "What's your issue?" that shows ONE step at a time, the next
+   only after "Still not working", three or four at most, then the contact form already filled in.
+   Steps that fix more get moved up on their own once they have enough answers; a pinned step
+   stays put; every automatic move is logged in HQ with Undo; a step that almost never helps is
+   flagged.
+
+   PUBLIC: GET /help/content (the words, never the counts) and POST /help/triage (one answer).
+   HQ ONLY: /admin/help/content/*, /admin/help/reorder/undo, and the triage half of the report.
+   ========================================================================================== */
+const HELP_AUDIENCES = { venueplay: ['patron', 'venue'], partyplay: ['guest', 'host'] };
+const HELP_REORDER_MIN_TRIES = 20;   // every unpinned step needs this many answers before any move
+const HELP_REORDER_MARGIN = 0.05;    // a step passes the one above only when it fixes 5 points more
+const HELP_FLAG_TRIES = 30;          // after this many answers...
+const HELP_FLAG_RATE = 0.05;         // ...a step fixing under 5% is flagged in HQ
+const HELP_TRIAGE_MAX_PER_IP = 300;  // an hour: a pub's wifi is one address
+const HELP_TRIAGE_MAX_PER_DEVICE = 40;   // ten minutes
+
+function helpAudienceOk(brand, audience) {
+  return !!(HELP_AUDIENCES[brand] && HELP_AUDIENCES[brand].indexOf(audience) >= 0);
+}
+function helpRate(s) { return s.tries > 0 ? s.fixes / s.tries : 0; }
+function helpFlagged(s) { return s.tries >= HELP_FLAG_TRIES && helpRate(s) < HELP_FLAG_RATE; }
+
+/* THE ORDER, decided in one pure function so a test can hand it any steps. Steps come in their
+   current order. Pinned steps keep their slots. Nothing moves until EVERY unpinned step has
+   HELP_REORDER_MIN_TRIES answers (a step that has only been seen five times has no rate worth
+   trusting, and moving the others around it would starve it of answers). Then the unpinned steps
+   are re-sorted by fix rate, but a step only passes the one above it by beating it by
+   HELP_REORDER_MARGIN, so two steps a point apart do not swap back and forth all week.
+   Returns the ids in the new order. */
+function helpOrder(steps) {
+  const cur = steps.slice();
+  const free = cur.filter((s) => !s.pinned);
+  if (free.length < 2 || free.some((s) => (s.tries || 0) < HELP_REORDER_MIN_TRIES)) return cur.map((s) => s.id);
+  const sorted = [];
+  free.forEach((s) => {
+    let i = sorted.length;
+    while (i > 0 && helpRate(s) > helpRate(sorted[i - 1]) + HELP_REORDER_MARGIN) i--;
+    sorted.splice(i, 0, s);
+  });
+  let k = 0;
+  return cur.map((s) => (s.pinned ? s.id : sorted[k++].id));
+}
+
+async function helpIssueSteps(env, issueId, withHidden) {
+  return await vpaSelect(env, 'vp_help_steps', 'issue_id=eq.' + encodeURIComponent(issueId) +
+    (withHidden ? '' : '&hidden=eq.false') + '&select=*&order=position.asc,id.asc&limit=50');
+}
+
+/* Look at one issue after an answer and move its steps if helpOrder says so. Only visible steps
+   take part; they swap among the positions they already hold. Logged, with what it was before,
+   so HQ can put it back. */
+async function helpMaybeReorder(env, issue) {
+  if (!issue || issue.auto_order === false) return null;
+  const steps = await helpIssueSteps(env, issue.id, false);
+  const before = steps.map((s) => s.id);
+  const after = helpOrder(steps);
+  if (after.join() === before.join()) return null;
+  const slots = steps.map((s) => s.position);
+  const byId = {}; steps.forEach((s) => { byId[s.id] = s; });
+  for (let i = 0; i < after.length; i++) {
+    if (byId[after[i]].position !== slots[i]) await vpaPatch(env, 'vp_help_steps', 'id=eq.' + encodeURIComponent(after[i]), { position: slots[i] });
+  }
+  const why = after.map((id, i) => (i + 1) + '. ' + Math.round(100 * helpRate(byId[id])) + '% of ' + byId[id].tries).join(', ');
+  const log = await vpaInsert(env, 'vp_help_reorders', { issue_id: issue.id, before_ids: before, after_ids: after,
+    reason: 'By how often each step fixed it: ' + why });
+  return log;
+}
+
+/* GET /help/content?brand=venueplay&audience=patron : the words for one Help panel. Never the
+   counts, never a hidden item, never anything else's. */
+async function helpPublicContent(request, env, json) {
+  const url = new URL(request.url);
+  const brand = url.searchParams.get('brand') || '', audience = url.searchParams.get('audience') || '';
+  if (!helpAudienceOk(brand, audience)) return json({ error: 'Which help is this?' }, 400);
+  const set = 'brand=eq.' + brand + '&audience=eq.' + audience + '&hidden=eq.false';
+  const faq = await vpaSelect(env, 'vp_help_faq', set + '&select=question,answer&order=position.asc,id.asc&limit=200');
+  const issues = await vpaSelect(env, 'vp_help_issues', set + '&select=id,title&order=position.asc,id.asc&limit=50');
+  let steps = [];
+  if (issues && issues.length) {
+    steps = await vpaSelect(env, 'vp_help_steps', 'issue_id=in.(' + issues.map((i) => i.id).join(',') +
+      ')&hidden=eq.false&select=id,issue_id,body&order=position.asc,id.asc&limit=500');
+  }
+  return json({
+    faq: (faq || []).map((f) => ({ q: f.question, a: f.answer })),
+    issues: (issues || []).map((i) => ({ id: i.id, title: i.title,
+      steps: (steps || []).filter((s) => s.issue_id === i.id).map((s) => ({ id: s.id, body: s.body })) })),
+  });
+}
+
+/* POST /help/triage {brand, issue_id, step_id?, kind, device} : one answer on a Help panel.
+   Stores what happened and nothing about who. The counts it moves decide the order, so it is
+   limited per network and per device, and it only counts a step that belongs to that issue. */
+async function helpTriageEvent(request, env, json) {
+  const ip = request.headers.get('cf-connecting-ip') || '';
+  if (ip && !rateLimit('help:tri:ip:' + ip, HELP_TRIAGE_MAX_PER_IP, 3600)) return json({ ok: true, throttled: true });
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
+  const device = helpLine(b.device, 64);
+  if (device && !rateLimit('help:tri:dev:' + device, HELP_TRIAGE_MAX_PER_DEVICE, 600)) return json({ ok: true, throttled: true });
+  if (['start', 'fixed', 'not_fixed'].indexOf(b.kind) < 0) return json({ error: 'kind?' }, 400);
+  if (!HELP_UUID.test(String(b.issue_id || ''))) return json({ error: 'issue?' }, 400);
+  const ir = await vpaSelect(env, 'vp_help_issues', 'id=eq.' + encodeURIComponent(b.issue_id) + '&select=*&limit=1');
+  const issue = ir && ir[0];
+  if (!issue || issue.brand !== b.brand) return json({ error: 'issue?' }, 404);
+  let step = null;
+  if (b.kind !== 'start') {
+    if (!HELP_UUID.test(String(b.step_id || ''))) return json({ error: 'step?' }, 400);
+    const sr = await vpaSelect(env, 'vp_help_steps', 'id=eq.' + encodeURIComponent(b.step_id) + '&issue_id=eq.' + encodeURIComponent(issue.id) + '&select=*&limit=1');
+    step = sr && sr[0];
+    if (!step) return json({ error: 'step?' }, 404);
+  }
+  await vpaInsert(env, 'vp_help_triage_events', { brand: issue.brand, issue_id: issue.id, step_id: step ? step.id : null, kind: b.kind }, false);
+  if (step) {
+    /* Read, add, write. Two answers to the same step in the same instant can lose one count; for
+       a number that only has to be roughly right to order three steps, that is fine. */
+    await vpaPatch(env, 'vp_help_steps', 'id=eq.' + encodeURIComponent(step.id),
+      { tries: (step.tries || 0) + 1, fixes: (step.fixes || 0) + (b.kind === 'fixed' ? 1 : 0) });
+    try { await helpMaybeReorder(env, issue); } catch (e) { /* the answer is kept either way */ }
+  }
+  return json({ ok: true });
+}
+
+/* The issue a form was sent from, checked against the database: its title becomes the subject
+   and its category the ticket's, so a page cannot pick a category the issue does not have. */
+async function helpIssueFor(env, issueId, brand) {
+  if (!HELP_UUID.test(String(issueId || ''))) return null;
+  const r = await vpaSelect(env, 'vp_help_issues', 'id=eq.' + encodeURIComponent(issueId) + '&select=id,brand,audience,title,category&limit=1');
+  const i = r && r[0];
+  return i && i.brand === brand ? i : null;
+}
+async function helpNoteTicketFromIssue(env, issue) {
+  if (!issue) return;
+  try { await vpaInsert(env, 'vp_help_triage_events', { brand: issue.brand, issue_id: issue.id, step_id: null, kind: 'ticket' }, false); } catch (e) {}
+}
+
+/* ------------------------------ HQ: the editor ------------------------------ */
+async function helpAdminContentGet(request, env, json) {
+  const g = await helpAdmin(request, env, json); if (g.res) return g.res;
+  const brand = g.body.brand, audience = g.body.audience;
+  if (!helpAudienceOk(brand, audience)) return json({ error: 'Pick a brand and who it is for.' }, 400);
+  const set = 'brand=eq.' + brand + '&audience=eq.' + audience;
+  const faq = await vpaSelect(env, 'vp_help_faq', set + '&select=*&order=position.asc,id.asc&limit=500');
+  const issues = await vpaSelect(env, 'vp_help_issues', set + '&select=*&order=position.asc,id.asc&limit=200');
+  const ids = (issues || []).map((i) => i.id);
+  let steps = [], log = [];
+  if (ids.length) {
+    steps = await vpaSelect(env, 'vp_help_steps', 'issue_id=in.(' + ids.join(',') + ')&select=*&order=position.asc,id.asc&limit=2000');
+    log = await vpaSelect(env, 'vp_help_reorders', 'issue_id=in.(' + ids.join(',') + ')&select=*&order=created_at.desc,id.desc&limit=40');
+  }
+  return json({
+    faq: faq || [],
+    issues: (issues || []).map((i) => Object.assign({}, i, { steps: (steps || []).filter((s) => s.issue_id === i.id)
+      .map((s) => Object.assign({}, s, { rate: s.tries ? Math.round(1000 * helpRate(s)) / 10 : null, flagged: helpFlagged(s) })) })),
+    reorders: log || [],
+    rules: { min_tries: HELP_REORDER_MIN_TRIES, flag_tries: HELP_FLAG_TRIES, flag_rate: HELP_FLAG_RATE },
+  });
+}
+
+/* Add or change one FAQ item, issue or step. A new one goes to the end of its list. */
+async function helpAdminContentSave(request, env, json) {
+  const g = await helpAdmin(request, env, json); if (g.res) return g.res;
+  const b = g.body, who = g.admin.label, now = helpNow();
+  const T = { faq: 'vp_help_faq', issue: 'vp_help_issues', step: 'vp_help_steps' }[b.kind];
+  if (!T) return json({ error: 'What are you saving?' }, 400);
+  const row = { updated_at: now, updated_by: who };
+  if (b.hidden !== undefined) row.hidden = !!b.hidden;
+  if (b.kind === 'faq') {
+    if (b.question !== undefined) row.question = helpLine(b.question, 300);
+    if (b.answer !== undefined) row.answer = helpText(b.answer).slice(0, 3000);
+    if (row.question === '' || row.answer === '') return json({ error: 'A question needs words and an answer.' }, 400);
+  } else if (b.kind === 'issue') {
+    if (b.title !== undefined) row.title = helpLine(b.title, 120);
+    if (row.title === '') return json({ error: 'Give the issue a name.' }, 400);
+    if (b.category !== undefined) { if (HELP_CATEGORIES.indexOf(b.category) < 0) return json({ error: 'That is not one of the kinds.' }, 400); row.category = b.category; }
+    if (b.auto_order !== undefined) row.auto_order = !!b.auto_order;
+  } else {
+    if (b.body !== undefined) row.body = helpLine(b.body, 300);
+    if (row.body === '') return json({ error: 'A step needs words.' }, 400);
+    if (b.pinned !== undefined) row.pinned = !!b.pinned;
+  }
+  if (b.id) {
+    if (!HELP_UUID.test(String(b.id))) return json({ error: 'Which one?' }, 400);
+    const ex = await vpaSelect(env, T, 'id=eq.' + encodeURIComponent(b.id) + '&select=id&limit=1');
+    if (!ex || !ex.length) return json({ error: 'That is not there any more.' }, 404);
+    await vpaPatch(env, T, 'id=eq.' + encodeURIComponent(b.id), row);
+    return json({ ok: true, id: b.id });
+  }
+  // New: everything it needs, at the end of its list.
+  let siblings;
+  if (b.kind === 'step') {
+    if (!HELP_UUID.test(String(b.issue_id || ''))) return json({ error: 'Which issue is the step for?' }, 400);
+    const ir = await vpaSelect(env, 'vp_help_issues', 'id=eq.' + encodeURIComponent(b.issue_id) + '&select=id&limit=1');
+    if (!ir || !ir.length) return json({ error: 'That issue is not there any more.' }, 404);
+    if (!row.body) return json({ error: 'A step needs words.' }, 400);
+    row.issue_id = b.issue_id;
+    siblings = await vpaSelect(env, T, 'issue_id=eq.' + encodeURIComponent(b.issue_id) + '&select=position&order=position.desc&limit=1');
+  } else {
+    if (!helpAudienceOk(b.brand, b.audience)) return json({ error: 'Pick a brand and who it is for.' }, 400);
+    if (b.kind === 'faq' && (!row.question || !row.answer)) return json({ error: 'A question needs words and an answer.' }, 400);
+    if (b.kind === 'issue' && !row.title) return json({ error: 'Give the issue a name.' }, 400);
+    row.brand = b.brand; row.audience = b.audience;
+    siblings = await vpaSelect(env, T, 'brand=eq.' + b.brand + '&audience=eq.' + b.audience + '&select=position&order=position.desc&limit=1');
+  }
+  row.position = ((siblings && siblings[0] && siblings[0].position) || 0) + 10;
+  if (row.hidden === undefined) row.hidden = false;
+  if (b.kind === 'step') { if (row.pinned === undefined) row.pinned = false; row.tries = 0; row.fixes = 0; }
+  if (b.kind === 'issue') { if (row.auto_order === undefined) row.auto_order = true; if (!row.category) row.category = 'general'; }
+  const made = await vpaInsert(env, T, row);
+  return json({ ok: true, id: made && made.id });
+}
+
+/* Move one item up or down its list: swaps places with its neighbour. */
+async function helpAdminContentMove(request, env, json) {
+  const g = await helpAdmin(request, env, json); if (g.res) return g.res;
+  const b = g.body;
+  const T = { faq: 'vp_help_faq', issue: 'vp_help_issues', step: 'vp_help_steps' }[b.kind];
+  if (!T || !HELP_UUID.test(String(b.id || '')) || (b.dir !== 'up' && b.dir !== 'down')) return json({ error: 'Move what, which way?' }, 400);
+  const r = await vpaSelect(env, T, 'id=eq.' + encodeURIComponent(b.id) + '&select=*&limit=1');
+  const me = r && r[0];
+  if (!me) return json({ error: 'That is not there any more.' }, 404);
+  const set = b.kind === 'step' ? 'issue_id=eq.' + encodeURIComponent(me.issue_id) : 'brand=eq.' + me.brand + '&audience=eq.' + me.audience;
+  const all = await vpaSelect(env, T, set + '&select=id,position&order=position.asc,id.asc&limit=2000');
+  const i = all.findIndex((x) => x.id === me.id), j = b.dir === 'up' ? i - 1 : i + 1;
+  if (j < 0 || j >= all.length) return json({ ok: true, unchanged: true });
+  // Renumber the whole list first, so two items that share a position still swap cleanly.
+  const order = all.map((x) => x.id); const t = order[i]; order[i] = order[j]; order[j] = t;
+  for (let k = 0; k < order.length; k++) {
+    const want = (k + 1) * 10, was = all.find((x) => x.id === order[k]).position;
+    if (want !== was) await vpaPatch(env, T, 'id=eq.' + encodeURIComponent(order[k]), { position: want, updated_at: helpNow(), updated_by: g.admin.label });
+  }
+  return json({ ok: true });
+}
+
+/* UNDO an automatic reorder: the steps go back where they were, and the issue stops reordering on
+   its own until HQ switches it back on, or the next answer would just do it again. */
+async function helpAdminReorderUndo(request, env, json) {
+  const g = await helpAdmin(request, env, json); if (g.res) return g.res;
+  if (!HELP_UUID.test(String(g.body.id || ''))) return json({ error: 'Which change?' }, 400);
+  const r = await vpaSelect(env, 'vp_help_reorders', 'id=eq.' + encodeURIComponent(g.body.id) + '&select=*&limit=1');
+  const log = r && r[0];
+  if (!log) return json({ error: 'That change is not there any more.' }, 404);
+  if (log.undone_at) return json({ error: 'That change was already undone.' }, 409);
+  const steps = await helpIssueSteps(env, log.issue_id, true);
+  const byId = {}; steps.forEach((s) => { byId[s.id] = s; });
+  const ids = (log.before_ids || []).filter((id) => byId[id]);
+  const slots = ids.map((id) => byId[id].position).sort((a, b) => a - b);
+  for (let k = 0; k < ids.length; k++) {
+    if (byId[ids[k]].position !== slots[k]) await vpaPatch(env, 'vp_help_steps', 'id=eq.' + encodeURIComponent(ids[k]), { position: slots[k] });
+  }
+  await vpaPatch(env, 'vp_help_reorders', 'id=eq.' + encodeURIComponent(log.id), { undone_at: helpNow(), undone_by: g.admin.label });
+  await vpaPatch(env, 'vp_help_issues', 'id=eq.' + encodeURIComponent(log.issue_id), { auto_order: false, updated_at: helpNow(), updated_by: g.admin.label });
+  return json({ ok: true, auto_order: false });
+}
+
+/* THE TRIAGE REPORT, pure like helpReport. Per issue: how many picked it, how many were sorted
+   without a ticket and by which step, how many went on to send one, and how many just left. */
+function helpTriageReport(events, issues, steps) {
+  const byIssue = {};
+  issues.forEach((i) => { byIssue[i.id] = { issue_id: i.id, title: i.title, brand: i.brand, audience: i.audience, started: 0, solved: 0, tickets: 0, left: 0, by_step: {} }; });
+  const stepBody = {}; steps.forEach((s) => { stepBody[s.id] = s.body; });
+  events.forEach((e) => {
+    const r = byIssue[e.issue_id]; if (!r) return;
+    if (e.kind === 'start') r.started++;
+    else if (e.kind === 'ticket') r.tickets++;
+    else if (e.kind === 'fixed') { r.solved++; const k = stepBody[e.step_id] || '(a step since removed)'; r.by_step[k] = (r.by_step[k] || 0) + 1; }
+  });
+  return Object.keys(byIssue).map((k) => byIssue[k]).filter((r) => r.started || r.solved || r.tickets)
+    .map((r) => Object.assign(r, { left: Math.max(0, r.started - r.solved - r.tickets) }))
+    .sort((a, b) => b.started - a.started || a.title.localeCompare(b.title));
+}
+async function helpTriageForRange(env, from, to, brand) {
+  const q = 'and=(created_at.gte.' + encodeURIComponent(from) + ',created_at.lte.' + encodeURIComponent(to) + ')' +
+    (HELP_BRANDS.indexOf(brand) >= 0 ? '&brand=eq.' + brand : '') + '&select=issue_id,step_id,kind';
+  const events = await vpaSelectAll(env, 'vp_help_triage_events', q + '&order=created_at.asc,id.asc');
+  const ids = events.map((e) => e.issue_id).filter((x, i, a) => a.indexOf(x) === i);
+  if (!ids.length) return [];
+  const issues = await vpaSelect(env, 'vp_help_issues', 'id=in.(' + ids.join(',') + ')&select=id,title,brand,audience');
+  const steps = await vpaSelect(env, 'vp_help_steps', 'issue_id=in.(' + ids.join(',') + ')&select=id,body&limit=2000');
+  return helpTriageReport(events, issues || [], steps || []);
 }

@@ -194,7 +194,7 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('there is no route that lists tickets for a venue (the earlier "my requests" route is gone)', typeof helpVenueMine === 'undefined');
   var routes = readFile('venueplay-backend/worker/venueplay-api-FULL.js').match(/path === '\/[a-z\/-]*help[a-z\/-]*'/g) || [];
   var publicHelp = routes.filter(function (p) { return !/'\/admin\/help\//.test(p); }).map(function (p) { return p.replace(/path === /, ''); }).sort().join();
-  check('the only non-HQ help routes are the three submit-or-peek ones', publicHelp === "'/help/push/peek','/help/ticket','/help/venue/ticket'", publicHelp);
+  check('the only non-HQ help routes: submit (ticket, venue ticket, triage answer), the help words, and the phone peek', publicHelp === "'/help/content','/help/push/peek','/help/ticket','/help/triage','/help/venue/ticket'", publicHelp);
 
   print('HQ: THE DESK');
   world();
@@ -385,6 +385,147 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('nor to /admin/help', (await preflight('/admin/help/list', 'https://partyplay.com.au')) !== 'https://partyplay.com.au');
   check('a look-alike domain is not let in', (await preflight('/help/ticket', 'https://partyplay.com.au.evil.example')) !== 'https://partyplay.com.au.evil.example');
   check('VenuePlay pages still are', (await preflight('/help/ticket', 'https://www.venueplay.com.au')) === 'https://www.venueplay.com.au');
+
+  print('HELP CONTENT: THE WORDS A PANEL GETS');
+  function contentWorld() {
+    world();
+    DB.vp_help_faq = [{ id: U(701), brand: 'venueplay', audience: 'patron', position: 20, question: 'Second?', answer: 'B', hidden: false },
+                      { id: U(702), brand: 'venueplay', audience: 'patron', position: 10, question: 'First?', answer: 'A', hidden: false },
+                      { id: U(703), brand: 'venueplay', audience: 'patron', position: 30, question: 'Hidden?', answer: 'H', hidden: true },
+                      { id: U(704), brand: 'partyplay', audience: 'guest', position: 10, question: 'Party?', answer: 'P', hidden: false }];
+    DB.vp_help_issues = [{ id: U(801), brand: 'venueplay', audience: 'patron', position: 10, title: 'My game is not showing', category: 'patron_support', hidden: false, auto_order: true },
+                         { id: U(802), brand: 'venueplay', audience: 'patron', position: 20, title: 'A bill', category: 'accounts', hidden: false, auto_order: true },
+                         { id: U(803), brand: 'venueplay', audience: 'patron', position: 30, title: 'Hidden issue', category: 'general', hidden: true, auto_order: true },
+                         { id: U(804), brand: 'partyplay', audience: 'guest', position: 10, title: 'Cannot join', category: 'patron_support', hidden: false, auto_order: true }];
+    DB.vp_help_steps = [{ id: U(901), issue_id: U(801), position: 10, body: 'Pull down to refresh the page.', pinned: false, hidden: false, tries: 0, fixes: 0 },
+                        { id: U(902), issue_id: U(801), position: 20, body: 'Check the code matches the screen.', pinned: false, hidden: false, tries: 0, fixes: 0 },
+                        { id: U(903), issue_id: U(801), position: 30, body: 'Check your phone is online.', pinned: false, hidden: false, tries: 0, fixes: 0 },
+                        { id: U(904), issue_id: U(801), position: 40, body: 'Ask the host.', pinned: true, hidden: false, tries: 0, fixes: 0 },
+                        { id: U(905), issue_id: U(801), position: 50, body: 'A hidden step.', pinned: false, hidden: true, tries: 0, fixes: 0 },
+                        { id: U(906), issue_id: U(804), position: 10, body: 'Check the party code.', pinned: false, hidden: false, tries: 0, fixes: 0 }];
+    DB.vp_help_triage_events = []; DB.vp_help_reorders = [];
+  }
+  function getReq(qs) { return { url: 'https://api.test/help/content?' + qs, headers: hdr({ 'cf-connecting-ip': '203.0.113.9' }), text: function () { return Promise.resolve(''); } }; }
+  contentWorld();
+  var C1 = await helpPublicContent(getReq('brand=venueplay&audience=patron'), ENV, J);
+  check('a phone gets its FAQ in HQ\'s order, without the hidden one', C1.status === 200 && C1.body.faq.map(function (f) { return f.q; }).join() === 'First?,Second?', C1.body.faq);
+  check('and its issues, without the hidden one', C1.body.issues.map(function (i) { return i.title; }).join() === 'My game is not showing,A bill');
+  check('each issue\'s steps in order, without the hidden step', C1.body.issues[0].steps.map(function (x) { return x.body; }).join('|') === 'Pull down to refresh the page.|Check the code matches the screen.|Check your phone is online.|Ask the host.');
+  check('an issue with no steps comes with none (it goes straight to the form)', C1.body.issues[1].steps.length === 0);
+  check('the counts, positions, pins and categories never reach a phone', !/tries|fixes|position|pinned|category|hidden|auto_order/.test(JSON.stringify(C1.body)), JSON.stringify(C1.body).slice(0, 200));
+  var C2 = await helpPublicContent(getReq('brand=partyplay&audience=guest'), ENV, J);
+  check('PartyPlay guests get PartyPlay\'s words and none of VenuePlay\'s', C2.body.faq.length === 1 && C2.body.faq[0].q === 'Party?' && C2.body.issues.length === 1 && C2.body.issues[0].title === 'Cannot join');
+  check('a made-up audience is refused', (await helpPublicContent(getReq('brand=venueplay&audience=guest'), ENV, J)).status === 400);
+
+  print('GUIDED TRIAGE: EACH ANSWER');
+  contentWorld();
+  function tri(body, ip) { return call(helpTriageEvent, null, Object.assign({ brand: 'venueplay', device: 'tri-' + (ip || 1) }, body), { ip: ip || 50 }); }
+  await tri({ issue_id: U(801), kind: 'start' });
+  await tri({ issue_id: U(801), step_id: U(901), kind: 'not_fixed' });
+  await tri({ issue_id: U(801), step_id: U(902), kind: 'fixed' });
+  function S(n) { return DB.vp_help_steps.filter(function (x) { return x.id === U(n); })[0]; }
+  check('"Still not working" counts a try', S(901).tries === 1 && S(901).fixes === 0);
+  check('"Fixed it" counts a try and a fix', S(902).tries === 1 && S(902).fixes === 1);
+  check('every answer is kept for the report, with nothing about who', DB.vp_help_triage_events.length === 3 && DB.vp_help_triage_events.every(function (e) { return Object.keys(e).sort().join() === 'brand,created_at,id,issue_id,kind,step_id'; }), DB.vp_help_triage_events);
+  check('a step from another issue is refused, and counts nothing', (await tri({ issue_id: U(801), step_id: U(906), kind: 'fixed' })).status === 404 && S(906).tries === 0);
+  check('an issue from the other brand is refused', (await tri({ brand: 'partyplay', issue_id: U(801), kind: 'start' })).status === 404);
+  check('a made-up answer is refused', (await tri({ issue_id: U(801), step_id: U(901), kind: 'bogus' })).status === 400);
+  var before = DB.vp_help_triage_events.length, thr = 0;
+  for (i = 0; i < 45; i++) { var rr = await tri({ issue_id: U(801), kind: 'start' }, 77); if (rr.body && rr.body.throttled) thr++; }
+  check('one device cannot pour answers in: forty in ten minutes, then nothing counts', DB.vp_help_triage_events.length - before === 40 && thr === 5, [DB.vp_help_triage_events.length - before, thr]);
+
+  print('GUIDED TRIAGE: THE ORDER LOOKS AFTER ITSELF');
+  function st(id, tries, fixes, pinned) { return { id: id, tries: tries, fixes: fixes, pinned: !!pinned }; }
+  check('nothing moves until every unpinned step has 20 answers', helpOrder([st('a', 19, 0), st('b', 40, 30), st('c', 40, 0)]).join() === 'a,b,c');
+  check('then the step that fixes most goes first', helpOrder([st('a', 20, 2), st('b', 20, 15), st('c', 20, 8)]).join() === 'b,c,a');
+  check('a pinned step keeps its place: "Ask the host" stays last', helpOrder([st('a', 20, 1), st('b', 20, 9), st('h', 20, 19, true)]).join() === 'b,a,h');
+  check('a pinned step in the middle stays in the middle', helpOrder([st('a', 20, 1), st('p', 20, 0, true), st('b', 20, 9)]).join() === 'b,p,a');
+  check('two steps less than 5 points apart do not swap (no flapping)', helpOrder([st('a', 100, 30), st('b', 100, 33)]).join() === 'a,b');
+  check('5 points or more apart, they do', helpOrder([st('a', 100, 30), st('b', 100, 36)]).join() === 'b,a');
+  contentWorld();
+  for (i = 0; i < 20; i++) { await tri({ issue_id: U(801), step_id: U(901), kind: 'not_fixed' }, 100 + i); await tri({ issue_id: U(801), step_id: U(903), kind: i < 15 ? 'fixed' : 'not_fixed' }, 100 + i); }
+  check('with step 2 short of 20 answers, nothing has moved yet', DB.vp_help_reorders.length === 0 && S(901).position === 10 && S(903).position === 30);
+  for (i = 0; i < 20; i++) await tri({ issue_id: U(801), step_id: U(902), kind: i < 6 ? 'fixed' : 'not_fixed' }, 200 + i);
+  check('once every step has 20, the one fixing 75% moves to first, 30% second, 0% third', S(903).position === 10 && S(902).position === 20 && S(901).position === 30, [S(901).position, S(902).position, S(903).position]);
+  check('the pinned "Ask the host" is still last', S(904).position === 40);
+  check('the hidden step was not moved', S(905).position === 50);
+  var LOG = DB.vp_help_reorders[0];
+  check('the move is logged with what it was before and after, and why', DB.vp_help_reorders.length === 1 && LOG.before_ids.join() === [U(901), U(902), U(903), U(904)].join() && LOG.after_ids.join() === [U(903), U(902), U(901), U(904)].join() && /75% of 20/.test(LOG.reason), LOG);
+  check('the phones get the new order', (await helpPublicContent(getReq('brand=venueplay&audience=patron'), ENV, J)).body.issues[0].steps[0].body === 'Check your phone is online.');
+  await tri({ issue_id: U(801), step_id: U(903), kind: 'fixed' }, 300);
+  check('another answer that changes nothing logs nothing', DB.vp_help_reorders.length === 1);
+  var undo = await call(helpAdminReorderUndo, ADMIN, { id: LOG.id });
+  check('Undo in HQ puts the steps back where they were', undo.status === 200 && S(901).position === 10 && S(902).position === 20 && S(903).position === 30 && S(904).position === 40, [S(901).position, S(902).position, S(903).position]);
+  check('and says who undid it, and stops this issue reordering itself', !!DB.vp_help_reorders[0].undone_at && DB.vp_help_reorders[0].undone_by === 'Dean' && DB.vp_help_issues[0].auto_order === false);
+  for (i = 0; i < 5; i++) await tri({ issue_id: U(801), step_id: U(903), kind: 'fixed' }, 400 + i);
+  check('so the next answers do not just move them again', S(901).position === 10 && DB.vp_help_reorders.length === 1);
+  check('the same change cannot be undone twice', (await call(helpAdminReorderUndo, ADMIN, { id: LOG.id })).status === 409);
+  check('a venue owner cannot undo anything', (await call(helpAdminReorderUndo, OWNER_A, { id: LOG.id })).status === 403);
+
+  print('HQ: THE EDITOR');
+  contentWorld();
+  S(901).tries = 30; S(901).fixes = 1; S(902).tries = 29; S(902).fixes = 0; S(903).tries = 30; S(903).fixes = 2;
+  var E = await call(helpAdminContentGet, STAFF_ADMIN, { brand: 'venueplay', audience: 'patron' });
+  var es = E.body.issues && E.body.issues[0].steps;
+  check('HQ sees everything for one brand and audience, hidden items included', E.status === 200 && E.body.faq.length === 3 && E.body.issues.length === 3 && es.length === 5);
+  check('a step under 5% after 30 tries is flagged', es[0].flagged === true && es[0].rate === 3.3, es[0]);
+  check('29 tries is not enough to flag, and 6.7% is not under 5%', es[1].flagged === false && es[2].flagged === false);
+  var add = await call(helpAdminContentSave, ADMIN, { kind: 'faq', brand: 'venueplay', audience: 'patron', question: 'New one?', answer: 'Yes.' });
+  var nf = DB.vp_help_faq.filter(function (f) { return f.question === 'New one?'; })[0];
+  check('a new question goes on the end of the list', add.status === 200 && nf && nf.position === 40 && nf.updated_by === 'Dean', nf);
+  await call(helpAdminContentSave, ADMIN, { kind: 'faq', id: nf.id, answer: 'Yes, edited.' });
+  check('editing changes the words', nf.answer === 'Yes, edited.');
+  await call(helpAdminContentMove, ADMIN, { kind: 'faq', id: nf.id, dir: 'up' });
+  var hqOrder = (await call(helpAdminContentGet, ADMIN, { brand: 'venueplay', audience: 'patron' })).body.faq.map(function (f) { return f.question; }).join();
+  check('moving it up swaps it with the one above in HQ\'s list (hidden ones included, as HQ shows them)', hqOrder === 'First?,Second?,New one?,Hidden?', hqOrder);
+  var pub;
+  await call(helpAdminContentMove, ADMIN, { kind: 'faq', id: nf.id, dir: 'up' }); await call(helpAdminContentMove, ADMIN, { kind: 'faq', id: nf.id, dir: 'up' });
+  pub = (await helpPublicContent(getReq('brand=venueplay&audience=patron'), ENV, J)).body.faq.map(function (f) { return f.q; }).join();
+  check('moved to the top, it is first on the phones', pub.indexOf('New one?') === 0, pub);
+  await call(helpAdminContentSave, ADMIN, { kind: 'faq', id: nf.id, hidden: true });
+  check('hiding it takes it off the phones, and it stays in HQ', (await helpPublicContent(getReq('brand=venueplay&audience=patron'), ENV, J)).body.faq.every(function (f) { return f.q !== 'New one?'; }) && DB.vp_help_faq.indexOf(nf) >= 0);
+  var ns = await call(helpAdminContentSave, ADMIN, { kind: 'step', issue_id: U(802), body: 'Check your last invoice email.', pinned: true });
+  check('a step can be added to an issue, pinned', ns.status === 200 && DB.vp_help_steps.some(function (x) { return x.issue_id === U(802) && x.pinned === true && x.position === 10; }));
+  check('a step needs an issue that exists', (await call(helpAdminContentSave, ADMIN, { kind: 'step', issue_id: U(999), body: 'x' })).status === 404);
+  var ni = await call(helpAdminContentSave, ADMIN, { kind: 'issue', brand: 'partyplay', audience: 'host', title: 'Refund', category: 'accounts' });
+  check('an issue can be added for PartyPlay hosts, with its ticket kind', ni.status === 200 && DB.vp_help_issues.some(function (x) { return x.title === 'Refund' && x.brand === 'partyplay' && x.category === 'accounts'; }));
+  check('a made-up ticket kind is refused', (await call(helpAdminContentSave, ADMIN, { kind: 'issue', id: U(801), category: 'whatever' })).status === 400);
+  check('an empty question is refused', (await call(helpAdminContentSave, ADMIN, { kind: 'faq', brand: 'venueplay', audience: 'patron', question: '', answer: 'x' })).status === 400);
+  var CONTENT = { helpAdminContentGet: helpAdminContentGet, helpAdminContentSave: helpAdminContentSave, helpAdminContentMove: helpAdminContentMove, helpAdminReorderUndo: helpAdminReorderUndo };
+  var leaks2 = [], snap = JSON.stringify([DB.vp_help_faq, DB.vp_help_issues, DB.vp_help_steps]);
+  for (who in WHO) for (name in CONTENT) {
+    var rz = await call(CONTENT[name], WHO[who], { brand: 'venueplay', audience: 'patron', kind: 'faq', id: U(701), question: 'HACKED', answer: 'x', dir: 'up' });
+    if (!(rz.status === 401 || rz.status === 403)) leaks2.push(who + ' > ' + name + ' ' + rz.status);
+  }
+  check('nobody but HQ can read or change the help words: anon, venue owners, hosts, marketing, strangers', leaks2.length === 0 && JSON.stringify([DB.vp_help_faq, DB.vp_help_issues, DB.vp_help_steps]) === snap, leaks2);
+
+  print('A TICKET FROM THE TRIAGE');
+  contentWorld();
+  var tk = await call(helpPublicTicket, null, Object.assign({}, PATRON, { issue_id: U(802), message: 'Steps did not help', device: 'tk1' }));
+  var tt = T(tk.body.ticket_no);
+  check('the issue names the ticket and picks its kind (a bill: accounts)', tt && tt.subject.indexOf('A bill') === 0 && tt.category === 'accounts', tt && [tt.subject, tt.category]);
+  check('and the report hears that this issue ended in a ticket', DB.vp_help_triage_events.some(function (e) { return e.kind === 'ticket' && e.issue_id === U(802); }));
+  var tk2 = await call(helpPublicTicket, null, Object.assign({}, PATRON, { issue_id: U(804), device: 'tk2', email: 'tk2@example.com' }));
+  check('an issue from the other brand is ignored: an ordinary player ticket', T(tk2.body.ticket_no).category === 'patron_support' && /^Player help/.test(T(tk2.body.ticket_no).subject));
+  var vt = await call(helpVenueTicket, OWNER_A, { venue_id: VA, subject: 'My game is not showing', message: 'Still blank', issue_id: U(801) });
+  check('the venue form takes the issue\'s kind too', vt.status === 200 && T(vt.body.ticket_no).category === 'patron_support');
+
+  print('THE REPORT: SOLVED WITHOUT A TICKET');
+  contentWorld();
+  function ev(kind, issue, step, when) { DB.vp_help_triage_events.push({ id: 'e' + DB.vp_help_triage_events.length, brand: 'venueplay', issue_id: U(issue), step_id: step ? U(step) : null, kind: kind, created_at: when || '2026-10-10T01:00:00Z' }); }
+  for (i = 0; i < 10; i++) ev('start', 801);
+  for (i = 0; i < 4; i++) ev('fixed', 801, 901);
+  for (i = 0; i < 2; i++) ev('fixed', 801, 903);
+  for (i = 0; i < 3; i++) ev('not_fixed', 801, 902);
+  ev('ticket', 801);
+  ev('start', 802); ev('ticket', 802);
+  ev('start', 801, null, '2026-09-01T00:00:00Z'); ev('fixed', 801, 901, '2026-09-01T00:00:00Z');
+  var TR = (await call(helpAdminReport, ADMIN, { from: '2026-10-01', to: '2026-10-31' })).body.triage;
+  var g801 = TR.filter(function (r) { return r.issue_id === U(801); })[0], g802 = TR.filter(function (r) { return r.issue_id === U(802); })[0];
+  check('per issue: 10 picked it, 6 sorted without a ticket, 1 sent one, 3 left', g801 && g801.started === 10 && g801.solved === 6 && g801.tickets === 1 && g801.left === 3, g801);
+  check('and which step did the fixing: refresh 4, phone online 2', g801 && g801.by_step['Pull down to refresh the page.'] === 4 && g801.by_step['Check your phone is online.'] === 2 && Object.keys(g801.by_step).length === 2, g801 && g801.by_step);
+  check('an issue with no steps: 1 picked it, 1 ticket, none solved', g802 && g802.started === 1 && g802.tickets === 1 && g802.solved === 0 && g802.left === 0, g802);
+  check('answers outside the dates are not counted', g801 && g801.started === 10);
 
   print('THE PHONE\'S SERVICE WORKER (venueplay/app/vp-help-sw.js), RUN');
   async function swRun(peekAnswer, peekOk) {

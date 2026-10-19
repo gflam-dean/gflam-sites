@@ -57,7 +57,12 @@ globalThis.fetch=function(url,opts){
   var t=m[1], q=parseQ(m[2]); var key=t+':'+method;
   if(FAIL[key]>0){FAIL[key]--;return Promise.resolve(resp(503,'upstream blip'));}
   if(t.indexOf('rpc/')===0) return Promise.resolve(resp(200,0));
-  if(method==='GET'){var rows=tbl(t).filter(function(r){return match(r,q)});var off=parseInt(q.offset||'0',10);var lim=Math.min(parseInt(q.limit||'1000',10),1000);return Promise.resolve(resp(200,rows.slice(off,off+lim)));}
+  if(method==='GET'){var rows=tbl(t).filter(function(r){return match(r,q)});
+    /* ORDER, the way PostgREST does it (added 19 Oct 2026 for the help desk, whose whole point is an order HQ
+       sets): order=col.asc,col2.desc. Stable, nulls last. Without it an ordering test can neither pass nor fail. */
+    if(q.order){ var keys=q.order.split(',').map(function(k){var p=k.split('.');return {c:p[0],d:p[1]==='desc'?-1:1};});
+      rows=rows.map(function(r,i){return {r:r,i:i};}).sort(function(x,y){ for(var n=0;n<keys.length;n++){ var a=x.r[keys[n].c], b2=y.r[keys[n].c];
+        if(a==null&&b2==null) continue; if(a==null) return 1; if(b2==null) return -1; if(a<b2) return -keys[n].d; if(a>b2) return keys[n].d; } return x.i-y.i; }).map(function(o){return o.r;}); }var off=parseInt(q.offset||'0',10);var lim=Math.min(parseInt(q.limit||'1000',10),1000);return Promise.resolve(resp(200,rows.slice(off,off+lim)));}
   if(method==='POST'){var o=JSON.parse(opts.body);o.id=o.id||newId();o.created_at=o.created_at||new Date().toISOString();tbl(t).push(o);return Promise.resolve(resp(201,[o]));}
   if(method==='PATCH'){var o2=JSON.parse(opts.body);tbl(t).filter(function(r){return match(r,q)}).forEach(function(r){for(var k in o2)r[k]=o2[k];});return Promise.resolve(resp(204,''));}
   if(method==='DELETE'){var gone=tbl(t).filter(function(r){return match(r,q)});DB[t]=tbl(t).filter(function(r){return gone.indexOf(r)===-1});return Promise.resolve(resp(200,gone));}
