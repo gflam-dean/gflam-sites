@@ -118,9 +118,11 @@ def tv_old_winner():
         end_game(r, host)
         ok('End game: the TV goes to the ads', r.until(tv, vis('adsRoot'), 10) is True)
         r.front(tv); time.sleep(1.5)   # a venue TV is the front tab; a background tab's timers are throttled by Chrome
-        ok('the Go fullscreen chip is still there inside its three minute hold', r.ask(tv, vis('tvFsBtn')) is True)
-        r.ask(tv, 'window.__shift=181000; document.dispatchEvent(new Event("fullscreenchange")); true'); time.sleep(0.5)
-        ok('and the Go fullscreen chip is not on the venue\'s ads any more (three minutes untouched)', r.ask(tv, vis('tvFsBtn')) is False)
+        # Somebody touches the remote: the chip is back for its thirty second hold, measured from now.
+        r.ask(tv, 'document.dispatchEvent(new Event("keydown")); window.__shift=25000; document.dispatchEvent(new Event("fullscreenchange")); true'); time.sleep(0.5)
+        ok('a key brings the Go fullscreen chip back, and it is still there 25 seconds on', r.ask(tv, vis('tvFsBtn')) is True)
+        r.ask(tv, 'window.__shift=31000; document.dispatchEvent(new Event("fullscreenchange")); true'); time.sleep(0.5)
+        ok('and the Go fullscreen chip is not on the venue\'s ads any more (thirty seconds untouched)', r.ask(tv, vis('tvFsBtn')) is False)
         r.ask(tv, 'window.__shift=0; true')   # the clock back, so nothing after this runs three minutes late
         shot(r, tv, 'tv-1b-ads-no-fullscreen-chip')
         # from here on, record whether the old winner card is EVER painted, even for a moment
