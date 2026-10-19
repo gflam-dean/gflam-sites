@@ -1825,6 +1825,38 @@
    "enabled": true,
    "forced": false
   },
+  "vp_help_faq": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_help_issues": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_help_push_subs": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_help_reorders": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_help_steps": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_help_ticket_notes": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_help_tickets": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_help_triage_events": {
+   "enabled": true,
+   "forced": false
+  },
   "vp_jag_games": {
    "enabled": true,
    "forced": false

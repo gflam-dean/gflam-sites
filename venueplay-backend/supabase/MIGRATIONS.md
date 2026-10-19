@@ -243,6 +243,7 @@ uses them can be redeployed.
 The tablet may stand in for the server only where these prove the server itself failed. MUST be run BEFORE the game
 Worker of branch feature/bingo-server-tickets (VP-DRAW-1.0) is deployed: that Worker selects these columns and its bingo
 routes error without them. No RLS change. NOT RUN. Rollback: in the file (deploy the previous Worker first).
+
 `venueplay-106-help-desk.sql`: the help desk, for VenuePlay AND PartyPlay (Dean, 19 Oct 2026). `vp_help_tickets` (ticket_no from
 1001, brand venueplay or partyplay, category sales / venue_support / patron_support / accounts / general, channel patron_form /
 venue_form / web_form / email / phone / manual, status new / open / waiting / closed, priority, subject, message, contact name,
@@ -256,4 +257,6 @@ authenticated and no policies, so the billing Worker is the only door, and it an
 owner, accounts, staff) and nobody else. Branch `feature/help-desk`. Run BEFORE deploying the billing Worker that goes with it;
 either order is safe for a night (no game path touches it, and the website enquiry form still emails as before if the table is
 missing). After running, `python3 venueplay-backend/tools/dump-rls-baseline.py` and commit RLS-BASELINE.json (eight new locked
-tables). NOT YET RUN. Rollback: in the file.
+tables). RUN on the live database 19 Oct 2026 (eight locked tables; FAQ rows 7, 7, 7, 6), after a stray duplicated line from
+the seed was removed (commit 2373a94: a FAQ answer with a line break had been spliced twice). RLS-BASELINE.json re-dumped the same
+night. Rollback: in the file.
