@@ -236,3 +236,10 @@ uses them can be redeployed.
 - `vp_draw_next_ball(p_game)`: the database function behind the old `/host/ball`. No code calls it.
 - `vp_cards` and `vp_claims` rows for a `bingo90` game: no longer written. The tables stay; musical bingo uses them.
 - The Jag tables and functions of migration 95 were never created on the live database.
+
+`venueplay-105-bingo-outage-record.sql`: the server's own outage record (audit of a16446c, 19 Oct 2026).
+`vp_bingo_draws.ball_asked_ordinal`, `ball_asked_at` (the place the console last asked the server for), `deal_failed_at`,
+`deal_fail_why` (a deal the server received and could not finish); `vp_bingo_tickets.balls_at_deal`, `tablet_dealt_at`.
+The tablet may stand in for the server only where these prove the server itself failed. MUST be run BEFORE the game
+Worker of branch feature/bingo-server-tickets (VP-DRAW-1.0) is deployed: that Worker selects these columns and its bingo
+routes error without them. No RLS change. NOT RUN. Rollback: in the file (deploy the previous Worker first).
