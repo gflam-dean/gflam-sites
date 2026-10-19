@@ -7,7 +7,7 @@ stopped at "syntax error at line 294". Nothing broke, because a migration runs i
 but a migration that does not run is a night that waits for it. Nothing in the gate had ever read
 a migration file at all.
 
-This reads every .sql file under venueplay-backend/supabase and partyplay-backend/supabase the
+This reads every .sql file under venueplay-backend, partyplay-backend and touring-backend /supabase the
 way Postgres reads it: single-quoted strings (a doubled '' is a quote inside one), double-quoted
 names, -- line comments, /* */ block comments (which nest in Postgres), and $tag$ ... $tag$
 bodies. Then it requires:
@@ -30,7 +30,7 @@ Usage:  python3 tools/check-migrations-parse.py [file ...]
 import glob, os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DIRS = ['venueplay-backend/supabase', 'partyplay-backend/supabase']
+DIRS = ['venueplay-backend/supabase', 'partyplay-backend/supabase', 'touring-backend/supabase']
 
 # Words a statement in these files may begin with. Anything else at the start of a statement is
 # text that has escaped from a string or a comment.
