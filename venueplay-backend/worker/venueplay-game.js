@@ -7807,10 +7807,10 @@ async function handleHostRunning(request, env, json) {
   const venueId = String(b.venue_id || '').trim();
   if (!venueId) return json({ error: 'Missing venue_id' }, 400);
   assertUuid(venueId, 'venue_id');
-  const format = String(b.format || '');
-  if (format !== 'trivia' && format !== 'musical_bingo') return json({ error: 'Unsupported format' }, 400);
+  const wanted = String(b.format || '');
+  if (wanted !== 'trivia' && wanted !== 'musical_bingo') return json({ error: 'Unsupported format' }, 400);
   await requireStaff(env, authUserId, venueId, 'host');           // ENFORCED: staff at this venue
-  return json({ running: await findRunningGame(env, venueId, format, true) });
+  return json({ running: await findRunningGame(env, venueId, wanted, true) });
 }
 
 /* The newest running game of this format at this venue, in an open session. Shared by the two
