@@ -130,6 +130,8 @@ export default {
       if (request.method === 'POST' && path === '/help/venue/ticket')      return await helpVenueTicket(request, env, json);
       if (request.method === 'POST' && path === '/help/push/peek')         return await helpPushPeek(request, env, json);
       if (request.method === 'GET'  && path === '/help/content')           return await helpPublicContent(request, env, json);
+      if (request.method === 'GET'  && path === '/help/config')            return json({ turnstile: env.TURNSTILE_SITEKEY || null });
+      if (request.method === 'POST' && path === '/admin/help/contact')      return await helpAdminContactConfirm(request, env, json);
       if (request.method === 'POST' && path === '/help/triage')            return await helpTriageEvent(request, env, json);
       if (request.method === 'POST' && path === '/admin/help/content/get')  return await helpAdminContentGet(request, env, json);
       if (request.method === 'POST' && path === '/admin/help/content/save') return await helpAdminContentSave(request, env, json);
@@ -931,7 +933,8 @@ const CONTACT_MAX_PER_IP = 6;   // a real enquiry is a one-off; six in an hour i
 
 async function handleContact(request, env, json) {
   const ip = request.headers.get('cf-connecting-ip') || '';   // Cloudflare-set; x-real-ip is client-suppliable
-  if (ip && !rateLimit('contact:' + ip, CONTACT_MAX_PER_IP, 3600)) {
+  // Durable across Worker instances (help desk, migration 108); this instance's memory if the database cannot be asked.
+  if (ip && !(await helpLimit(env, 'contact:' + (await helpIpKey(env, ip)), CONTACT_MAX_PER_IP, 3600))) {
     return json({ error: 'Too many messages from this network. Please try again in a while, or call us.' }, 429);
   }
   const _b = await vpaBody(request, json);
@@ -968,6 +971,10 @@ async function handleContact(request, env, json) {
     ticketNo = t && t.ticket_no;
     if (t) await helpPushNew(env, t).catch(() => null);
   } catch (e) { ticketNo = null; }
+
+  // This email is the enquiry's staff alert, so it shares the help desk's daily cap. Once the
+  // enquiry is safely a ticket, a capped day skips the email; without a ticket it always goes.
+  if (ticketNo && !(await helpAlertAllowed(env))) return json({ ok: true, ticket_no: ticketNo });
 
   const esc = (s) => String(s).replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
   const html =
@@ -9664,7 +9671,49 @@ function helpLine(v, max) { return String(v == null ? '' : v).replace(/[\x00-\x1
 function helpText(v) { return String(v == null ? '' : v).replace(/\r\n?/g, '\n').replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]+/g, ' ').trim(); }
 function helpHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 function helpTag(no) { return '[#' + no + ']'; }
+/* What a customer's email subject carries: the number AND the ticket's secret. A reply has to
+   quote both before it is added to the ticket (migration 108). Staff alerts carry the number only. */
+function helpReplyTag(t) { return t.reply_token ? '[#' + t.ticket_no + '-' + t.reply_token + ']' : helpTag(t.ticket_no); }
 function helpNow() { return new Date().toISOString(); }
+function helpDayKey() { return new Date(Date.now()).toISOString().slice(0, 10); }   // same clock as helpYesterday
+
+/* DURABLE LIMITS (migration 108). One count per key per window, kept in the database by one atomic
+   function, so it holds across every Worker instance; the in-memory rateLimit only ever saw one
+   instance's share, and an instance restart forgot it. If the database cannot be asked (the
+   migration not run yet, or a blip), this instance's memory counts instead, which is what the
+   help desk did before: a limit that degrades, never one that vanishes. */
+async function helpLimit(env, key, limit, windowSecs) {
+  try {
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/vp_help_hit', { method: 'POST', headers: vpaHeaders(env),
+      body: JSON.stringify({ p_key: String(key).slice(0, 200), p_window_secs: windowSecs, p_limit: limit }) });
+    if (res && res.ok) { const v = await res.json(); if (v === true || v === false) return v; }
+  } catch (e) { /* fall through */ }
+  return rateLimit('mem:' + key, limit, windowSecs);
+}
+/* A network address as a limit key: hashed with a secret, so the table never holds an address. */
+async function helpIpKey(env, ip) {
+  return 'ip:' + (await helpSha256Hex((env.HELP_LIMIT_SALT || env.SUPABASE_SERVICE_KEY || 'vp-help') + '|' + ip)).slice(0, 32);
+}
+
+/* CLOUDFLARE TURNSTILE on the public forms. Switched on by two Worker settings Dean adds:
+   TURNSTILE_SITEKEY (plain; the pages are handed it by /help/content and /help/config, so no page
+   edit is needed) and TURNSTILE_SECRET (secret). Without the secret nothing is asked of the page
+   and the durable limits are the guard, exactly as before. A NO from Cloudflare refuses the form; a
+   Cloudflare outage lets it through to the limits, because a punter who cannot ask for help is
+   worse than one more ticket the limits would catch anyway. */
+async function helpTurnstile(env, token, ip) {
+  if (!env.TURNSTILE_SECRET) return { ok: true, skipped: true };
+  if (!token) return { ok: false };
+  try {
+    const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secret: env.TURNSTILE_SECRET, response: String(token).slice(0, 2048), remoteip: ip || undefined }) });
+    if (!res || !res.ok) return { ok: true, unchecked: true };
+    const j = await res.json();
+    return { ok: !!(j && j.success) };
+  } catch (e) { return { ok: true, unchecked: true }; }
+}
+function helpRandomToken(bytes) { const a = new Uint8Array(bytes || 9); crypto.getRandomValues(a); return helpB64url(a); }
 
 async function helpInsertTicket(env, t) {
   const row = {
@@ -9687,6 +9736,9 @@ async function helpInsertTicket(env, t) {
   // The ticket's subject COLUMN, not an email subject: written by assignment so the email-subject
   // scan in billing-emails.test.js sees only real email subjects.
   row['subject'] = helpLine(t.title, 200) || '(no subject)';
+  row.reply_token = helpRandomToken(9);
+  row.contact_typed = !!t.contact_typed;
+  if (t.contact_email_pending) row.contact_email_pending = helpLine(t.contact_email_pending, 200).toLowerCase();
   if (row.status === 'closed') row.closed_at = helpNow();
   return await vpaInsert(env, 'vp_help_tickets', row);
 }
@@ -9720,8 +9772,27 @@ function helpAlertSubject(ticket, lead) {
   return '[' + (HELP_BRAND_LABEL[ticket.brand] || 'VenuePlay') + '] ' + (ticket.priority === 'urgent' ? 'URGENT ' : '') +
          helpCategoryLabel(ticket.category, ticket.brand) + ' ' + helpTag(ticket.ticket_no) + ': ' + helpLine(lead || ticket.subject, 90);
 }
+/* A DAILY CAP ON ALERT EMAILS. The alerts go out on the same Resend account as every invoice and
+   receipt, so a flood of tickets must never become a flood of email. Past the cap the tickets are
+   still made, counted on the HQ badge and pushed to phones; one email says the alerts have paused. */
+async function helpAlertAllowed(env) {
+  const cap = Math.max(1, parseInt(env.HELP_ALERT_DAILY_CAP || '150', 10) || 150);
+  if (await helpLimit(env, 'alert:' + helpDayKey(), cap, 86400)) return true;
+  if (await helpLimit(env, 'alert-paused:' + helpDayKey(), 1, 86400)) {
+    try {
+      await helpSendEmail(env, { to: env.VP_HELP_ALERT_EMAIL || env.VP_INTERNAL_EMAIL || 'hello@venueplay.com.au',
+        from: 'Help Desk <hello@send.venueplay.com.au>', reply_to: 'hello@venueplay.com.au',
+        subject: '[Help desk] Alerts paused for today: ' + cap + ' reached',
+        html: '<p>The help desk has sent ' + cap + ' alert emails today, its daily limit, so it has stopped emailing until tomorrow. ' +
+              'Tickets are still being made: open HQ to see them. If this is a flood, the rate limits are holding it.</p>',
+        headers: { 'X-VP-Help': 'alert' } });
+    } catch (e) {}
+  }
+  return false;
+}
 async function helpNotifyStaff(env, ticket, venueName, lead) {
   try {
+    if (!(await helpAlertAllowed(env))) return false;
     const to = env.VP_HELP_ALERT_EMAIL || env.VP_INTERNAL_EMAIL || 'hello@venueplay.com.au';
     const row = (k, v) => v ? '<p style="margin:4px 0"><b>' + k + ':</b> ' + helpHtml(v) + '</p>' : '';
     const html = '<div style="font-family:Arial,sans-serif;font-size:14px;color:#111">' +
@@ -9786,8 +9857,9 @@ async function helpVenueFromRoom(env, code, slug) {
    A VenuePlay HOST is refused here: they are signed in, and go through /help/venue/ticket so the
    venue is the one their login holds, not one they typed. */
 async function helpPublicTicket(request, env, json) {
-  const ip = request.headers.get('cf-connecting-ip') || '';   // Cloudflare-set; never stored
-  if (ip && !rateLimit('help:ip:' + ip, HELP_MAX_PER_IP, 3600)) {
+  const ip = request.headers.get('cf-connecting-ip') || '';   // Cloudflare-set; kept only as a salted hash
+  const ipKey = ip ? await helpIpKey(env, ip) : '';
+  if (ipKey && !(await helpLimit(env, 'tk:' + ipKey, HELP_MAX_PER_IP, 3600))) {
     return json({ error: 'Too many messages from this network. Please try again later.' }, 429);
   }
   const _b = await vpaBody(request, json);
@@ -9808,11 +9880,13 @@ async function helpPublicTicket(request, env, json) {
   if (name.length > 120 || email.length > 200 || phone.length > 40 || message.length > HELP_MESSAGE_MAX || !HELP_EMAIL_RE.test(email)) {
     return json({ error: 'That message is too long or the email address does not look right.' }, 400);
   }
+  const ts = await helpTurnstile(env, b.turnstile, ip);
+  if (!ts.ok) return json({ error: 'Please complete the check above Send, then try again.', turnstile: true }, 403);
   const device = helpLine(b.device, 64);
-  if (device && !rateLimit('help:dev:' + device, HELP_MAX_PER_DEVICE, 600)) {
+  if (device && !(await helpLimit(env, 'tk:dev:' + device, HELP_MAX_PER_DEVICE, 600))) {
     return json({ error: 'You have sent a few already. Give us a little while to reply.' }, 429);
   }
-  if (!rateLimit('help:em:' + email, HELP_MAX_PER_EMAIL, 3600)) {
+  if (!(await helpLimit(env, 'tk:em:' + email, HELP_MAX_PER_EMAIL, 3600))) {
     return json({ error: 'You have sent a few already. Give us a little while to reply.' }, 429);
   }
   let where = { venue_id: null, session_id: null, room_code: null };
@@ -9872,7 +9946,7 @@ async function helpVenueTicket(request, env, json) {
   const b = _b.body;
   const who = await helpRequireVenueStaff(request, env, b.venue_id);
   if (who.error) return json({ error: who.error }, who.status);
-  if (!rateLimit('help:staff:' + who.authUserId, HELP_MAX_PER_STAFF, 3600)) {
+  if (!(await helpLimit(env, 'tk:staff:' + who.authUserId, HELP_MAX_PER_STAFF, 3600))) {
     return json({ error: 'That is a lot of requests in an hour. Email support@venueplay.com.au if it is urgent.' }, 429);
   }
   const subject = helpLine(b.subject, 300);
@@ -10060,18 +10134,45 @@ async function helpAdminReply(request, env, json) {
   const body = helpText(g.body.body);
   if (!body) return json({ error: 'Type the reply first.' }, 400);
   if (body.length > 8000) return json({ error: 'That reply is too long.' }, 400);
+  /* AN ADDRESS HQ TYPED IN (a logged call, a manual ticket) was never given to us by that person in
+     writing. Brand mail to it needs the owner, or whoever is sending to confirm that exact address,
+     so a staff login cannot log a "call" and then send VenuePlay mail to anyone it likes. */
+  const to = String(t.contact_email).toLowerCase();
+  if (t.contact_typed && g.admin.role !== 'owner' && String(g.body.confirm_to || '').toLowerCase() !== to) {
+    return json({ error: 'This address was typed in by HQ, not given to us by the customer. Check it is right, then confirm to send.',
+                  confirm_needed: true, address: to }, 409);
+  }
   const f = helpFromFor(t.category, t.brand);
-  const subj = String(t.subject || 'Your request').replace(/\s*\[#\d+\]\s*/g, ' ').trim();
-  const ok = await helpSendEmail(env, { to: t.contact_email, from: f.from, reply_to: f.reply_to,
-    subject: 'Re: ' + helpLine(subj, 150) + ' ' + helpTag(t.ticket_no),
+  const subj = String(t.subject || 'Your request').replace(/\s*\[#[^\]]*\]\s*/g, ' ').trim();
+  const ok = await helpSendEmail(env, { to: to, from: f.from, reply_to: f.reply_to,
+    subject: 'Re: ' + helpLine(subj, 150) + ' ' + helpReplyTag(t),
     html: helpReplyHtml(t, body, f.reply_to) });
   if (!ok) return json({ error: 'The email did not send, so nothing was recorded. Try again in a minute.' }, 502);
   await vpaInsert(env, 'vp_help_ticket_notes', { ticket_id: t.id, kind: 'reply', body: body,
-    author: g.admin.label + ' (from ' + f.reply_to + ')', author_id: g.admin.actorId }, false);
+    author: g.admin.label + ' (from ' + f.reply_to + ' to ' + to + (t.contact_typed && g.admin.role !== 'owner' ? ', typed address confirmed' : '') + ')', author_id: g.admin.actorId }, false);
   const patch = { updated_at: helpNow() };
   if (t.status === 'new' || t.status === 'open') patch.status = 'waiting';
   await vpaPatch(env, 'vp_help_tickets', 'id=eq.' + encodeURIComponent(t.id), patch);
   return json({ ok: true, sent_from: f.reply_to, status: patch.status || t.status });
+}
+
+/* HQ CONFIRMS A NEW REPLY ADDRESS. An email asked for replies to go somewhere else (a Reply-To unlike
+   its From, or a reply from another address quoting the ticket's secret); nothing was sent there.
+   This is the one way that address becomes the ticket's, and it says who decided. */
+async function helpAdminContactConfirm(request, env, json) {
+  const g = await helpAdmin(request, env, json); if (g.res) return g.res;
+  const t = await helpFindTicket(env, g.body.id);
+  if (!t) return json({ error: 'That ticket is not there any more.' }, 404);
+  if (!t.contact_email_pending) return json({ error: 'There is no other address waiting on this ticket.' }, 400);
+  const was = t.contact_email || '(none)', now = t.contact_email_pending;
+  if (g.body.use !== true) {
+    await vpaPatch(env, 'vp_help_tickets', 'id=eq.' + encodeURIComponent(t.id), { contact_email_pending: null, updated_at: helpNow() });
+    await vpaInsert(env, 'vp_help_ticket_notes', { ticket_id: t.id, kind: 'change', body: 'Kept replies going to ' + was + ', not ' + now, author: g.admin.label, author_id: g.admin.actorId }, false);
+    return json({ ok: true, contact_email: was });
+  }
+  await vpaPatch(env, 'vp_help_tickets', 'id=eq.' + encodeURIComponent(t.id), { contact_email: now, contact_email_pending: null, contact_typed: false, updated_at: helpNow() });
+  await vpaInsert(env, 'vp_help_ticket_notes', { ticket_id: t.id, kind: 'change', body: 'Replies now go to ' + now + ' (was ' + was + ')', author: g.admin.label, author_id: g.admin.actorId }, false);
+  return json({ ok: true, contact_email: now });
 }
 
 /* LOG A CALL. This is how a phone call gets a category: HQ picks one while the call is fresh.
@@ -10090,7 +10191,7 @@ async function helpAdminLogCall(request, env, json) {
   const t = await helpInsertTicket(env, {
     brand: b.brand, category: b.category, channel: b.channel === 'manual' ? 'manual' : 'phone',
     status: b.status === 'closed' ? 'closed' : 'open', priority: b.priority === 'urgent' ? 'urgent' : 'normal',
-    title: subject, message: message, contact_name: b.contact_name, contact_email: email || null,
+    title: subject, message: message, contact_name: b.contact_name, contact_email: email || null, contact_typed: !!email,
     contact_phone: b.contact_phone, venue_id: venueId, room_code: /^[A-Z0-9]{4,8}$/.test(String(b.room_code || '').toUpperCase()) ? String(b.room_code).toUpperCase() : null,
     raised_by: g.admin.actorId,
   });
@@ -10224,7 +10325,7 @@ async function helpAdminPushSubscribe(request, env, json) {
   const token = helpB64url(raw);
   await vpaDelete(env, 'vp_help_push_subs', 'endpoint=eq.' + encodeURIComponent(endpoint));
   await vpaInsert(env, 'vp_help_push_subs', { endpoint: endpoint, filter: filter, auth_user_id: g.admin.actorId,
-    admin_label: g.admin.label, token_hash: await helpSha256Hex(token), last_peek_at: helpNow(),
+    admin_label: g.admin.label, token_hash: await helpSha256Hex(token),   // last_peek_at: the database's now() (migration 108)
     device_label: helpLine(g.body.device_label, 80) || null }, false);
   return json({ ok: true, token: token, filter: filter });
 }
@@ -10239,7 +10340,7 @@ async function helpAdminPushUnsubscribe(request, env, json) {
    category, number and urgency: never a name, an email, a subject or a message. */
 async function helpPushPeek(request, env, json) {
   const ip = request.headers.get('cf-connecting-ip') || '';
-  if (ip && !rateLimit('help:peek:' + ip, 120, 3600)) return json({ error: 'slow down' }, 429);
+  if (ip && !(await helpLimit(env, 'peek:' + (await helpIpKey(env, ip)), 120, 3600))) return json({ error: 'slow down' }, 429);
   const _b = await vpaBody(request, json);
   if (!_b.ok) return _b.res;
   const endpoint = String(_b.body.endpoint || '').trim(), token = String(_b.body.token || '');
@@ -10247,16 +10348,23 @@ async function helpPushPeek(request, env, json) {
   const r = await vpaSelect(env, 'vp_help_push_subs', 'endpoint=eq.' + encodeURIComponent(endpoint) + '&select=id,filter,token_hash,last_peek_at&limit=1');
   const sub = r && r[0];
   if (!sub || sub.token_hash !== await helpSha256Hex(token)) return json({ error: 'not allowed' }, 403);
-  const since = sub.last_peek_at || helpNow();
+  /* THE CURSOR IS THE DATABASE'S CLOCK, never this Worker's: it starts at the database's now() when
+     the device signed up (migration 108) and only ever moves to the created_at of a ticket the
+     database returned. Two clocks a second apart is how a phone gets told about a ticket twice,
+     or never. A device with no cursor yet starts from the newest ticket there is. */
+  let since = sub.last_peek_at;
+  if (!since) {
+    const newest = await vpaSelect(env, 'vp_help_tickets', 'select=created_at&order=created_at.desc&limit=1');
+    since = (newest && newest[0] && newest[0].created_at) || '1970-01-01T00:00:00Z';
+    await vpaPatch(env, 'vp_help_push_subs', 'id=eq.' + encodeURIComponent(sub.id), { last_peek_at: since });
+    return json({ count: 0 });
+  }
   const rows = await vpaSelect(env, 'vp_help_tickets', 'created_at=gt.' + encodeURIComponent(since) +
     '&channel=in.(patron_form,venue_form,web_form,email)&select=ticket_no,brand,category,priority,created_at&order=created_at.desc&limit=50');
   const mine = (rows || []).filter((t) => helpPushWants(sub, t))
-    .sort((x, y) => String(y.created_at).localeCompare(String(x.created_at)));   // newest first, whatever order came back
-  /* The cursor moves to the newest ticket SEEN as well as to now: the database's clock and this
-     Worker's can disagree by a second or two, and a cursor behind the newest ticket would report
-     the same ticket on every push after it. */
-  const seen = (rows || []).reduce((m, x) => (String(x.created_at) > m ? String(x.created_at) : m), helpNow());
-  await vpaPatch(env, 'vp_help_push_subs', 'id=eq.' + encodeURIComponent(sub.id), { last_peek_at: seen });
+    .sort((x, y) => String(y.created_at).localeCompare(String(x.created_at)));
+  const seen = (rows || []).reduce((m, x) => (String(x.created_at) > m ? String(x.created_at) : m), String(since));
+  if (seen !== String(since)) await vpaPatch(env, 'vp_help_push_subs', 'id=eq.' + encodeURIComponent(sub.id), { last_peek_at: seen });
   const t = mine[0];
   if (!t) return json({ count: 0 });
   return json({ count: mine.length, ticket_no: t.ticket_no, brand: t.brand, category: t.category,
@@ -10401,22 +10509,30 @@ async function helpTicketFromEmail(env, to, mail) {
     const b = await vpaSelect(env, 'vp_help_ticket_notes', 'email_message_id=eq.' + encodeURIComponent(mid) + '&select=id&limit=1');
     if ((a && a.length) || (b && b.length)) return { action: 'duplicate' };
   }
-  const contact = (mail.reply_to && mail.reply_to.email) ? mail.reply_to : mail.from;
+  /* WHO WROTE IT: the From address. A Reply-To that differs is only a request, held on the ticket
+     until HQ confirms it, because headers are the sender's to write and a reply sent to a Reply-To
+     nobody checked is our brand's mail going wherever a stranger pointed it. */
+  const contact = mail.from;
+  const askedElsewhere = (mail.reply_to && mail.reply_to.email && mail.reply_to.email !== mail.from.email) ? mail.reply_to.email : null;
   const brand = helpBrandForAddress(to);
-  /* A reply to one of ours: "[#1042]" in the subject, FROM the address on that ticket, to the same
-     brand. A stranger quoting a number they guessed starts a new ticket instead of writing on
-     somebody else's. */
-  const tag = /\[#(\d{3,9})\]/.exec(mail.title);
+  /* A reply to one of ours has to quote the ticket's number AND its secret ("[#1042-k7Qp2x...]" in
+     the subject, which every email we send carries, or support+1042-k7Qp2x...@ as the address).
+     From and Reply-To can be forged; the secret cannot be guessed. Anything without it, including a
+     bare "[#1042]", starts a new ticket instead of writing on somebody else's. */
+  const plus = /\+(\d{3,9})-([A-Za-z0-9_-]{8,40})@/.exec(String(to || ''));
+  const tag = /\[#(\d{3,9})-([A-Za-z0-9_-]{8,40})\]/.exec(mail.title) || plus;
   if (tag) {
     const r = await vpaSelect(env, 'vp_help_tickets', 'ticket_no=eq.' + tag[1] + '&select=*&limit=1');
     const t = r && r[0];
-    const addr = t && String(t.contact_email || '').toLowerCase();
-    if (t && addr && t.brand === brand && (addr === contact.email || addr === mail.from.email)) {
+    if (t && t.reply_token && t.reply_token === tag[2] && t.brand === brand) {
       const body = helpStripQuoted(mail.text).slice(0, 20000);
+      const known = String(t.contact_email || '').toLowerCase() === contact.email;
       await vpaInsert(env, 'vp_help_ticket_notes', { ticket_id: t.id, kind: 'email_in', body: body,
-        author: (contact.name ? contact.name + ' ' : '') + '<' + contact.email + '>', email_message_id: mid }, false);
+        author: (contact.name ? contact.name + ' ' : '') + '<' + contact.email + '>' + (known ? '' : ' (not the address on this ticket)'), email_message_id: mid }, false);
       const patch = { updated_at: helpNow() };
       if (t.status === 'waiting' || t.status === 'closed') { patch.status = 'open'; patch.closed_at = null; }
+      const wants = askedElsewhere || (known ? null : contact.email);
+      if (wants && wants !== String(t.contact_email || '').toLowerCase()) patch.contact_email_pending = wants;
       await vpaPatch(env, 'vp_help_tickets', 'id=eq.' + encodeURIComponent(t.id), patch);
       await helpNotifyStaff(env, Object.assign({}, t, patch), await helpVenueName(env, t.venue_id), 'Reply on #' + t.ticket_no + ': ' + body.slice(0, 400));
       return { action: 'note', ticket_no: t.ticket_no };
@@ -10438,7 +10554,7 @@ async function helpTicketFromEmail(env, to, mail) {
     t = await helpInsertTicket(env, {
       brand: brand, category: helpCategoryForAddress(to), channel: 'email', title: mail.title || '(no subject)',
       message: mail.text.slice(0, 20000), contact_name: contact.name || null, contact_email: contact.email,
-      venue_id: venueId, source_address: local ? local + '@' + brand + '.com.au' : null, email_message_id: mid,
+      contact_email_pending: askedElsewhere, venue_id: venueId, source_address: local ? local + '@' + brand + '.com.au' : null, email_message_id: mid,
     });
   } catch (e) {
     // Two deliveries of one message racing each other: the unique Message-ID let only one in.
@@ -10548,6 +10664,7 @@ async function helpPublicContent(request, env, json) {
       ')&hidden=eq.false&select=id,issue_id,body&order=position.asc,id.asc&limit=500');
   }
   return json({
+    turnstile: env.TURNSTILE_SITEKEY || null,
     faq: (faq || []).map((f) => ({ q: f.question, a: f.answer })),
     issues: (issues || []).map((i) => ({ id: i.id, title: i.title,
       steps: (steps || []).filter((s) => s.issue_id === i.id).map((s) => ({ id: s.id, body: s.body })) })),
@@ -10557,27 +10674,53 @@ async function helpPublicContent(request, env, json) {
 /* POST /help/triage {brand, issue_id, step_id?, kind, device} : one answer on a Help panel.
    Stores what happened and nothing about who. The counts it moves decide the order, so it is
    limited per network and per device, and it only counts a step that belongs to that issue. */
+/* The proof a device opened an issue: handed out by its "start", needed by every answer after it.
+   Keyed to device, issue and day with a server secret, so it cannot be made up, cannot be moved to
+   another issue, and lapses overnight (yesterday's still counts, for a night that crosses midnight). */
+async function helpTriageProof(env, device, issueId, day) {
+  return (await helpSha256Hex((env.HELP_TRIAGE_SECRET || env.SUPABASE_SERVICE_KEY || 'vp-help') + '|tri|' + device + '|' + issueId + '|' + day)).slice(0, 32);
+}
+function helpYesterday() { return new Date(Date.now() - 86400000).toISOString().slice(0, 10); }
 async function helpTriageEvent(request, env, json) {
   const ip = request.headers.get('cf-connecting-ip') || '';
-  if (ip && !rateLimit('help:tri:ip:' + ip, HELP_TRIAGE_MAX_PER_IP, 3600)) return json({ ok: true, throttled: true });
+  const ipKey = ip ? await helpIpKey(env, ip) : '';
+  if (ipKey && !(await helpLimit(env, 'tri:' + ipKey, HELP_TRIAGE_MAX_PER_IP, 3600))) return json({ ok: true, throttled: true });
   const _b = await vpaBody(request, json);
   if (!_b.ok) return _b.res;
   const b = _b.body;
   const device = helpLine(b.device, 64);
-  if (device && !rateLimit('help:tri:dev:' + device, HELP_TRIAGE_MAX_PER_DEVICE, 600)) return json({ ok: true, throttled: true });
+  // A device id is what makes "once per device" mean anything, so an answer without one is not counted.
+  if (!/^[A-Za-z0-9_-]{16,64}$/.test(device)) return json({ error: 'device?' }, 400);
+  if (!(await helpLimit(env, 'tri:dev:' + device, HELP_TRIAGE_MAX_PER_DEVICE, 600))) return json({ ok: true, throttled: true });
   if (['start', 'fixed', 'not_fixed'].indexOf(b.kind) < 0) return json({ error: 'kind?' }, 400);
   if (!HELP_UUID.test(String(b.issue_id || ''))) return json({ error: 'issue?' }, 400);
   const ir = await vpaSelect(env, 'vp_help_issues', 'id=eq.' + encodeURIComponent(b.issue_id) + '&select=*&limit=1');
   const issue = ir && ir[0];
   if (!issue || issue.brand !== b.brand) return json({ error: 'issue?' }, 404);
+  const day = helpDayKey();
+  if (b.kind === 'start') {
+    const proof = await helpTriageProof(env, device, issue.id, day);
+    // Counted once per device per issue per day; the proof comes back every time.
+    if (await helpLimit(env, 'tri:start:' + device + ':' + issue.id + ':' + day, 1, 2 * 86400)) {
+      await vpaInsert(env, 'vp_help_triage_events', { brand: issue.brand, issue_id: issue.id, step_id: null, kind: 'start' }, false);
+    }
+    return json({ ok: true, proof: proof });
+  }
+  // An answer only counts from a device that opened this issue, today (or last night).
+  const pr = String(b.proof || '');
+  if (!pr || (pr !== await helpTriageProof(env, device, issue.id, day) && pr !== await helpTriageProof(env, device, issue.id, helpYesterday()))) {
+    return json({ ok: true, counted: false, why: 'not opened' }, 403);
+  }
   let step = null;
-  if (b.kind !== 'start') {
+  {
     if (!HELP_UUID.test(String(b.step_id || ''))) return json({ error: 'step?' }, 400);
     const sr = await vpaSelect(env, 'vp_help_steps', 'id=eq.' + encodeURIComponent(b.step_id) + '&issue_id=eq.' + encodeURIComponent(issue.id) + '&select=*&limit=1');
     step = sr && sr[0];
     if (!step) return json({ error: 'step?' }, 404);
   }
-  await vpaInsert(env, 'vp_help_triage_events', { brand: issue.brand, issue_id: issue.id, step_id: step ? step.id : null, kind: b.kind }, false);
+  // Each step's answer counts once per device per day: tapping "Still not working" twenty times is one answer.
+  if (!(await helpLimit(env, 'tri:ans:' + device + ':' + step.id + ':' + day, 1, 2 * 86400))) return json({ ok: true, counted: false });
+  await vpaInsert(env, 'vp_help_triage_events', { brand: issue.brand, issue_id: issue.id, step_id: step.id, kind: b.kind }, false);
   if (step) {
     /* Read, add, write. Two answers to the same step in the same instant can lose one count; for
        a number that only has to be roughly right to order three steps, that is fine. */

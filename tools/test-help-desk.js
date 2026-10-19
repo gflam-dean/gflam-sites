@@ -21,7 +21,7 @@ vpaVerifyJWT = async function (t) { return t ? { sub: t } : null; };
 /* jsc has no WebCrypto. A digest that is a real function of its input (so a wrong token is a
    wrong hash), random bytes, and an ECDSA that just has to hand back 64 bytes. */
 var __rnd = 7;
-var crypto = { getRandomValues: function (a) { for (var i = 0; i < a.length; i++) { __rnd = (__rnd * 1103515245 + 12345) >>> 0; a[i] = __rnd & 255; } return a; },
+var crypto = { getRandomValues: function (a) { for (var i = 0; i < a.length; i++) { __rnd = (Math.imul(__rnd, 1103515245) + 12345) >>> 0; a[i] = (__rnd >>> 16) & 255; } return a; },
   subtle: { digest: function (alg, data) { var b = new Uint8Array(data), out = new Uint8Array(32), h = 2166136261;
       for (var r = 0; r < 32; r++) { for (var i = 0; i < b.length; i++) { h ^= b[i] + r; h = Math.imul(h, 16777619) >>> 0; } out[r] = h & 255; } return Promise.resolve(out.buffer); },
     importKey: function () { return Promise.resolve({ fake: true }); },
@@ -39,6 +39,23 @@ globalThis.fetch = function (url, opts) {
   if (/^https:\/\/([a-z0-9-]+\.)*(fcm\.googleapis\.com|push\.apple\.com|evil\.example)\//.test(url)) {
     pushes.push({ url: url, body: opts.body, headers: opts.headers || {} });
     return Promise.resolve({ ok: PUSH_STATUS < 300, status: PUSH_STATUS, json: function () { return Promise.resolve({}); }, text: function () { return Promise.resolve(''); } });
+  }
+  /* vp_help_hit (migration 108), the way the SQL does it: one row per key and window, add one, say
+     whether the count is within the limit. FAIL['rpc/vp_help_hit:POST'] makes it fail, so the
+     in-memory fallback can be tested. */
+  if (/\/rest\/v1\/rpc\/vp_help_hit$/.test(url)) {
+    if (FAIL['rpc/vp_help_hit:POST'] > 0) { FAIL['rpc/vp_help_hit:POST']--; return Promise.resolve({ ok: false, status: 503, json: function () { return Promise.resolve({}); }, text: function () { return Promise.resolve('blip'); } }); }
+    var a = JSON.parse(opts.body), w = Math.floor(Date.now() / 1000 / Math.max(a.p_window_secs, 1)), L = DB.vp_help_limits || (DB.vp_help_limits = []);
+    var row = L.filter(function (r) { return r.key === a.p_key && r.w === w; })[0];
+    if (a.p_limit <= 0) { var ans0 = (row ? row.hits : 0) < Math.abs(a.p_limit); return Promise.resolve({ ok: true, status: 200, json: function () { return Promise.resolve(ans0); } }); }
+    if (!row) { row = { key: a.p_key, w: w, hits: 0 }; L.push(row); }
+    row.hits++;
+    var ans = row.hits <= a.p_limit;
+    return Promise.resolve({ ok: true, status: 200, json: function () { return Promise.resolve(ans); } });
+  }
+  if (/\/rest\/v1\/vp_help_push_subs/.test(url) && (opts.method || 'GET') === 'POST') {
+    var ps = JSON.parse(opts.body); if (!ps.last_peek_at) ps.last_peek_at = NOW();   // the column's default, now(), as the database sets it
+    opts = Object.assign({}, opts, { body: JSON.stringify(ps) });
   }
   if (/\/rest\/v1\/vp_help_tickets/.test(url) && (opts.method || 'GET') === 'POST') {
     var o = JSON.parse(opts.body); o.ticket_no = nextNo++; o.created_at = o.created_at || NOW(); o.updated_at = o.created_at;
@@ -194,7 +211,7 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('there is no route that lists tickets for a venue (the earlier "my requests" route is gone)', typeof helpVenueMine === 'undefined');
   var routes = readFile('venueplay-backend/worker/venueplay-api-FULL.js').match(/path === '\/[a-z\/-]*help[a-z\/-]*'/g) || [];
   var publicHelp = routes.filter(function (p) { return !/'\/admin\/help\//.test(p); }).map(function (p) { return p.replace(/path === /, ''); }).sort().join();
-  check('the only non-HQ help routes: submit (ticket, venue ticket, triage answer), the help words, and the phone peek', publicHelp === "'/help/content','/help/push/peek','/help/ticket','/help/triage','/help/venue/ticket'", publicHelp);
+  check('the only non-HQ help routes: submit (ticket, venue ticket, triage answer), the help words and settings, and the phone peek', publicHelp === "'/help/config','/help/content','/help/push/peek','/help/ticket','/help/triage','/help/venue/ticket'", publicHelp);
 
   print('HQ: THE DESK');
   world();
@@ -230,7 +247,7 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   var rp = await call(helpAdminReply, ADMIN, { id: T(1002).id, body: 'Refunded the second charge.' });
   var m = sent[0];
   check('an accounts reply goes from VenuePlay accounts, replies to accounts@', rp.status === 200 && m && m.from === 'VenuePlay Accounts <accounts@send.venueplay.com.au>' && m.reply_to === 'accounts@venueplay.com.au', m && [m.from, m.reply_to]);
-  check('to the contact, with the ticket number in the subject', m && m.to.join() === 'owner@royalhotel.com.au' && /\[#1002\]$/.test(m.subject), m && m.subject);
+  check('to the contact, with the ticket number AND its secret in the subject', m && m.to.join() === 'owner@royalhotel.com.au' && m.subject.slice(-('[#1002-' + T(1002).reply_token + ']').length) === '[#1002-' + T(1002).reply_token + ']' && T(1002).reply_token.length === 12 && T(1002).reply_token !== T(1001).reply_token, m && [m.subject, T(1002).reply_token]);
   check('it carries the ABN and a way to reach us', m && /ABN 35 679 383 049/.test(m.html) && /accounts@venueplay\.com\.au/.test(m.html));
   check('the reply is recorded on the ticket, which now waits on them', notesOf(T(1002)).some(function (n) { return n.kind === 'reply' && /Refunded/.test(n.body); }) && T(1002).status === 'waiting');
   sent.length = 0;
@@ -308,16 +325,35 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('a venue owner writing from their account email is matched to their venue', DB.vp_help_tickets[5].venue_id === VA, DB.vp_help_tickets[5].venue_id);
   // Threading.
   var first = DB.vp_help_tickets[0]; first.status = 'waiting';
-  var re = await inbound('support@help.venueplay.com.au', mail({ mid: '<r1@x>', subject: 'Re: Help with the TV [#' + first.ticket_no + ']',
+  var bare = await inbound('support@help.venueplay.com.au', mail({ mid: '<r0@x>', subject: 'Re: Help with the TV [#' + first.ticket_no + ']' }));
+  check('a reply quoting only the number, even from the right address, starts a new ticket: headers can be forged', bare.action === 'ticket' && notesOf(first).filter(function (x) { return x.kind === 'email_in'; }).length === 0, bare);
+  var wrongTok = await inbound('support@help.venueplay.com.au', mail({ mid: '<r00@x>', subject: 'Re: [#' + first.ticket_no + '-AAAAAAAAAAAA]' }));
+  check('a made-up secret starts a new ticket too', wrongTok.action === 'ticket' && notesOf(first).filter(function (x) { return x.kind === 'email_in'; }).length === 0, wrongTok);
+  var re = await inbound('support@help.venueplay.com.au', mail({ mid: '<r1@x>', subject: 'Re: Help with the TV [#' + first.ticket_no + '-' + first.reply_token + ']',
     body: 'Still blank after a restart.\r\n\r\nOn Mon, 19 Oct 2026 at 10:02, VenuePlay Support <support@send.venueplay.com.au> wrote:\r\n> Try turning it off and on.' }));
   var n = notesOf(first).filter(function (x) { return x.kind === 'email_in'; })[0];
-  check('a reply quoting [#n] from the same person goes onto that ticket as a note', re.action === 'note' && n && DB.vp_help_tickets.length === 6, re);
+  check('a reply quoting the number and the secret goes onto that ticket as a note', re.action === 'note' && n && DB.vp_help_tickets.length === 8, re);
   check('without the quoted history', n && n.body === 'Still blank after a restart.', n && n.body);
   check('and a ticket waiting on them is open again', first.status === 'open');
   var guess = await inbound('support@help.venueplay.com.au', mail({ mid: '<r2@x>', from: 'stranger@example.com', subject: 'Re: [#' + first.ticket_no + ']' }));
   check('a stranger quoting somebody else\'s number starts a new ticket, never writes on theirs', guess.action === 'ticket' && notesOf(first).filter(function (x) { return x.kind === 'email_in'; }).length === 1);
-  var cross = await inbound('support@help.partyplay.com.au', mail({ mid: '<r3@x>', subject: 'Re: [#' + first.ticket_no + ']' }));
-  check('a VenuePlay number quoted to a PartyPlay address does not thread across brands', cross.action === 'ticket');
+  var cross = await inbound('support@help.partyplay.com.au', mail({ mid: '<r3@x>', subject: 'Re: [#' + first.ticket_no + '-' + first.reply_token + ']' }));
+  check('a VenuePlay ticket\'s secret quoted to a PartyPlay address does not thread across brands', cross.action === 'ticket');
+  var fwd = await inbound('support@help.venueplay.com.au', mail({ mid: '<r4@x>', from: 'Jo Work <jo@work.example.com>', subject: 'Re: [#' + first.ticket_no + '-' + first.reply_token + ']', body: 'From my work address.' }));
+  var fn = notesOf(first).filter(function (x) { return x.kind === 'email_in'; }).pop();
+  check('the secret from another address is added, marked as not the ticket\'s address', fwd.action === 'note' && /not the address on this ticket/.test(fn.author), fn && fn.author);
+  check('and its address waits for HQ: replies still go to the original', first.contact_email === 'jo@example.com' && first.contact_email_pending === 'jo@work.example.com', [first.contact_email, first.contact_email_pending]);
+  var plusRe = await inbound('support+' + first.ticket_no + '-' + first.reply_token + '@help.venueplay.com.au', mail({ mid: '<r5@x>', subject: 'No tag in this subject', body: 'Via the plus address.' }));
+  check('the secret in a plus-address works as well as in the subject', plusRe.action === 'note');
+  var rt = await inbound('support@help.venueplay.com.au', mail({ mid: '<r6@x>', from: 'Real Person <real@example.com>', headers: ['Reply-To: elsewhere@evil.example'], subject: 'New question' }));
+  var rtt = T(rt.ticket_no);
+  check('a new email whose Reply-To differs from its From: the ticket answers the From, and holds the Reply-To for HQ', rtt.contact_email === 'real@example.com' && rtt.contact_email_pending === 'elsewhere@evil.example', [rtt.contact_email, rtt.contact_email_pending]);
+  sent.length = 0;
+  await call(helpAdminReply, ADMIN, { id: rtt.id, body: 'Hello' });
+  check('so an HQ reply goes to the From, never the unconfirmed Reply-To', sent.length === 1 && sent[0].to.join() === 'real@example.com', sent.map(function (x) { return x.to; }));
+  check('a venue owner cannot confirm a new reply address', (await call(helpAdminContactConfirm, OWNER_A, { id: rtt.id, use: true })).status === 403 && rtt.contact_email === 'real@example.com');
+  var cf = await call(helpAdminContactConfirm, ADMIN, { id: rtt.id, use: true });
+  check('HQ confirming it moves replies there, and says who decided', cf.status === 200 && rtt.contact_email === 'elsewhere@evil.example' && !rtt.contact_email_pending && notesOf(rtt).some(function (x) { return /Replies now go to elsewhere@evil.example/.test(x.body) && x.author === 'Dean'; }), cf);
   var nT = DB.vp_help_tickets.length;
   check('our own alert coming back round through hello@ is ignored', (await inbound('hello@help.venueplay.com.au', mail({ mid: '<a1@x>', from: 'Help Desk <hello@send.venueplay.com.au>' }))).action === 'ignored');
   check('anything carrying X-VP-Help is ignored', (await inbound('hello@help.venueplay.com.au', mail({ mid: '<a2@x>', headers: ['X-VP-Help: alert'] }))).action === 'ignored');
@@ -363,7 +399,7 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('the phone asks what woke it and is told brand, kind and number', peek.status === 200 && peek.body.ticket_no === 1002 && peek.body.brand === 'venueplay' && peek.body.category === 'venue_support' && peek.body.urgent === true, peek.body);
   check('and NOTHING personal: only count, number, brand, kind, label and urgency', Object.keys(peek.body).sort().join() === 'brand,category,count,label,ticket_no,urgent' && !/example|Down|All down|Royal|owner@/.test(JSON.stringify(peek.body)), peek.body);
   check('asking again with nothing new says nothing new', (await pcall(helpPushPeek, null, { endpoint: EP_ALL, token: s1.body.token })).body.count === 0);
-  check('the wrong secret is refused', (await pcall(helpPushPeek, null, { endpoint: EP_ALL, token: 'x' + s1.body.token.slice(1) })).status === 403);
+  check('the wrong secret is refused', (await pcall(helpPushPeek, null, { endpoint: EP_ALL, token: (s1.body.token.charAt(0) === 'x' ? 'y' : 'x') + s1.body.token.slice(1) })).status === 403);
   check('another device\'s secret is refused', (await pcall(helpPushPeek, null, { endpoint: EP_URG, token: s1.body.token })).status === 403);
   var un = await pcall(helpAdminPushUnsubscribe, ADMIN, { endpoint: EP_ALL });
   pushes.length = 0;
@@ -419,7 +455,20 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
 
   print('GUIDED TRIAGE: EACH ANSWER');
   contentWorld();
-  function tri(body, ip) { return call(helpTriageEvent, null, Object.assign({ brand: 'venueplay', device: 'tri-' + (ip || 1) }, body), { ip: ip || 50 }); }
+  /* Like the real panel: an answer comes from a device that opened the issue, and sends the proof it got back. */
+  var proofs = {};
+  function dev(ip) { return 'tri-device-' + ('00000000' + (ip || 50)).slice(-8); }
+  async function tri(body, ip) {
+    var d = body.device || dev(ip), b2 = Object.assign({ brand: 'venueplay', device: d }, body);
+    if (b2.kind !== 'start' && b2.proof === undefined) {
+      var k = d + '|' + b2.issue_id;
+      if (!proofs[k]) { var st0 = await call(helpTriageEvent, null, { brand: b2.brand, device: d, issue_id: b2.issue_id, kind: 'start' }, { ip: ip || 50 }); proofs[k] = st0.body && st0.body.proof; }
+      b2.proof = proofs[k];
+    }
+    var r = await call(helpTriageEvent, null, b2, { ip: ip || 50 });
+    if (b2.kind === 'start' && r.body && r.body.proof) proofs[d + '|' + b2.issue_id] = r.body.proof;
+    return r;
+  }
   await tri({ issue_id: U(801), kind: 'start' });
   await tri({ issue_id: U(801), step_id: U(901), kind: 'not_fixed' });
   await tri({ issue_id: U(801), step_id: U(902), kind: 'fixed' });
@@ -432,7 +481,22 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('a made-up answer is refused', (await tri({ issue_id: U(801), step_id: U(901), kind: 'bogus' })).status === 400);
   var before = DB.vp_help_triage_events.length, thr = 0;
   for (i = 0; i < 45; i++) { var rr = await tri({ issue_id: U(801), kind: 'start' }, 77); if (rr.body && rr.body.throttled) thr++; }
-  check('one device cannot pour answers in: forty in ten minutes, then nothing counts', DB.vp_help_triage_events.length - before === 40 && thr === 5, [DB.vp_help_triage_events.length - before, thr]);
+  check('one device opening an issue 45 times: counted once today, and past forty a minute nothing is even looked at', DB.vp_help_triage_events.length - before === 1 && thr === 5, [DB.vp_help_triage_events.length - before, thr]);
+  var t0 = S(901).tries;
+  var noProof = await call(helpTriageEvent, null, { brand: 'venueplay', device: dev(81), issue_id: U(801), step_id: U(901), kind: 'fixed', proof: '' }, { ip: 81 });
+  check('an answer from a device that never opened the issue is refused, and counts nothing', noProof.status === 403 && S(901).tries === t0, noProof);
+  var otherIssueProof = (await call(helpTriageEvent, null, { brand: 'venueplay', device: dev(82), issue_id: U(802), kind: 'start' }, { ip: 82 })).body.proof;
+  check('the proof from one issue does not count for another', (await call(helpTriageEvent, null, { brand: 'venueplay', device: dev(82), issue_id: U(801), step_id: U(901), kind: 'fixed', proof: otherIssueProof }, { ip: 82 })).status === 403 && S(901).tries === t0);
+  var p83 = (await call(helpTriageEvent, null, { brand: 'venueplay', device: dev(83), issue_id: U(801), kind: 'start' }, { ip: 83 })).body.proof;
+  check('nor for another device', (await call(helpTriageEvent, null, { brand: 'venueplay', device: dev(84), issue_id: U(801), step_id: U(901), kind: 'fixed', proof: p83 }, { ip: 84 })).status === 403 && S(901).tries === t0);
+  await tri({ issue_id: U(801), step_id: U(901), kind: 'not_fixed' }, 85);
+  var twice = await tri({ issue_id: U(801), step_id: U(901), kind: 'not_fixed' }, 85);
+  check('one device answering the same step twice in a day counts once', S(901).tries === t0 + 1 && twice.body.counted === false, [S(901).tries, twice.body]);
+  var yest = await helpTriageProof(ENV, dev(86), U(801), helpYesterday());
+  check('yesterday\'s proof still counts (a night that crosses midnight)', (await call(helpTriageEvent, null, { brand: 'venueplay', device: dev(86), issue_id: U(801), step_id: U(901), kind: 'fixed', proof: yest }, { ip: 86 })).status === 200 && S(901).tries === t0 + 2);
+  var old = await helpTriageProof(ENV, dev(87), U(801), new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10));
+  check('the day before is too old', (await call(helpTriageEvent, null, { brand: 'venueplay', device: dev(87), issue_id: U(801), step_id: U(901), kind: 'fixed', proof: old }, { ip: 87 })).status === 403);
+  check('no device id, no counting', (await call(helpTriageEvent, null, { brand: 'venueplay', issue_id: U(801), kind: 'start' }, { ip: 88 })).status === 400);
 
   print('GUIDED TRIAGE: THE ORDER LOOKS AFTER ITSELF');
   function st(id, tries, fixes, pinned) { return { id: id, tries: tries, fixes: fixes, pinned: !!pinned }; }
@@ -526,6 +590,83 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('and which step did the fixing: refresh 4, phone online 2', g801 && g801.by_step['Pull down to refresh the page.'] === 4 && g801.by_step['Check your phone is online.'] === 2 && Object.keys(g801.by_step).length === 2, g801 && g801.by_step);
   check('an issue with no steps: 1 picked it, 1 ticket, none solved', g802 && g802.started === 1 && g802.tickets === 1 && g802.solved === 0 && g802.left === 0, g802);
   check('answers outside the dates are not counted', g801 && g801.started === 10);
+
+  print('LIMITS THAT HOLD ACROSS EVERY WORKER INSTANCE (migration 108)');
+  world();
+  await call(helpPublicTicket, null, Object.assign({}, PATRON, { device: 'dl-1', email: 'dl1@example.com' }), { ip: 31 });
+  var keys = (DB.vp_help_limits || []).map(function (r) { return r.key; });
+  check('a ticket\'s limits are counted in the database, not just this instance', keys.some(function (k) { return /^tk:ip:/.test(k); }) && keys.indexOf('tk:dev:dl-1') >= 0 && keys.indexOf('tk:em:dl1@example.com') >= 0, keys);
+  check('and the network address is never stored, only a salted hash of it', keys.every(function (k) { return k.indexOf('203.0.113') < 0; }) && keys.some(function (k) { return /^tk:ip:[0-9a-f]{32}$/.test(k); }), keys);
+  var hk = 'tk:' + (await helpIpKey(ENV, '203.0.113.32'));
+  DB.vp_help_limits.push({ key: hk, w: Math.floor(Date.now() / 1000 / 3600), hits: 20 });   // another instance has already counted 20
+  var other = await call(helpPublicTicket, null, Object.assign({}, PATRON, { device: 'dl-2', email: 'dl2@example.com' }), { ip: 32 });
+  check('twenty counted by another Worker instance stop the twenty-first here, though this one has seen none', other.status === 429, other);
+  FAIL['rpc/vp_help_hit:POST'] = 3;
+  var blip = await call(helpPublicTicket, null, Object.assign({}, PATRON, { device: 'dl-3', email: 'dl3@example.com' }), { ip: 33 });
+  check('if the database cannot be asked, the form still works on this instance\'s own count', blip.status === 200 && FAIL['rpc/vp_help_hit:POST'] === 0, blip);
+
+  print('CLOUDFLARE TURNSTILE');
+  world();
+  var VERIFY = { success: true }, verifyStatus = 200, verified = [];
+  var preTs = globalThis.fetch;
+  globalThis.fetch = function (u, o) { if (/challenges\.cloudflare\.com/.test(String(u))) { verified.push(JSON.parse(o.body));
+    return Promise.resolve({ ok: verifyStatus === 200, status: verifyStatus, json: function () { return Promise.resolve(VERIFY); } }); } return preTs(u, o); };
+  var TENV = Object.assign({}, ENV, { TURNSTILE_SECRET: 'ts-secret', TURNSTILE_SITEKEY: '0x4AAA-site' });
+  async function tcall(body, ip) { try { return await helpPublicTicket(req(null, body, { ip: ip }), TENV, J); } catch (e) { return { status: 'THREW', body: String(e) }; } }
+  check('without the secret set, no check is asked for (today\'s forms keep working)', (await call(helpPublicTicket, null, Object.assign({}, PATRON, { device: 'ts-0', email: 'ts0@example.com' }), { ip: 40 })).status === 200 && verified.length === 0);
+  var t1 = await tcall(Object.assign({}, PATRON, { device: 'ts-1', email: 'ts1@example.com' }), 41);
+  check('with it set, a form with no Turnstile answer is refused, and nothing is made', t1.status === 403 && t1.body.turnstile === true && DB.vp_help_tickets.length === 1, t1);
+  VERIFY = { success: false };
+  check('a NO from Cloudflare is refused', (await tcall(Object.assign({}, PATRON, { device: 'ts-2', email: 'ts2@example.com', turnstile: 'bad' }), 42)).status === 403 && DB.vp_help_tickets.length === 1);
+  VERIFY = { success: true };
+  var t3 = await tcall(Object.assign({}, PATRON, { device: 'ts-3', email: 'ts3@example.com', turnstile: 'good-token' }), 43);
+  check('a YES lets it through, and the secret and the answer went to Cloudflare, not the page', t3.status === 200 && verified.pop().secret === 'ts-secret' && verified.length >= 1, t3);
+  verifyStatus = 500;
+  check('if Cloudflare itself is down, the form goes through to the limits rather than locking people out', (await tcall(Object.assign({}, PATRON, { device: 'ts-4', email: 'ts4@example.com', turnstile: 'x' }), 44)).status === 200);
+  globalThis.fetch = preTs;
+  var cfg = await helpPublicContent({ url: 'https://api.test/help/content?brand=venueplay&audience=patron', headers: hdr({}), text: function () { return Promise.resolve(''); } }, TENV, J);
+  check('the pages are handed the site key by the Worker, so no page needs editing to switch it on', cfg.body.turnstile === '0x4AAA-site');
+  check('and nothing when it is not set', (await helpPublicContent({ url: 'https://api.test/help/content?brand=venueplay&audience=patron', headers: hdr({}), text: function () { return Promise.resolve(''); } }, ENV, J)).body.turnstile === null);
+
+  print('A DAILY CAP ON ALERT EMAILS');
+  world();
+  var CENV = Object.assign({}, ENV, { HELP_ALERT_DAILY_CAP: '3' });
+  for (i = 0; i < 5; i++) await helpPublicTicket(req(null, Object.assign({}, PATRON, { device: 'cap-' + i, email: 'cap' + i + '@example.com' }), { ip: 60 + i }), CENV, J);
+  var alerts = sent.filter(function (m2) { return /^\[VenuePlay\]/.test(m2.subject); }), paused = sent.filter(function (m2) { return /Alerts paused/.test(m2.subject); });
+  check('five tickets on a day capped at three: three alerts, then one "alerts paused" email, and no more', alerts.length === 3 && paused.length === 1 && sent.length === 4, sent.map(function (m2) { return m2.subject; }));
+  check('every one of the five tickets was still made', DB.vp_help_tickets.length === 5);
+  var cc = await handleContact(req(null, { name: 'Lee', email: 'lee@pub.com.au', message: 'Over the cap' }, { ip: 70 }), CENV, J);
+  check('the website enquiry form shares the cap: its ticket is made, its email waits', cc.status === 200 && cc.body.ticket_no && sent.length === 4, [cc.body, sent.length]);
+
+  print('AN ADDRESS HQ TYPED IN');
+  world();
+  var lcall = await call(helpAdminLogCall, STAFF_ADMIN, { brand: 'venueplay', category: 'sales', subject: 'Call', contact_email: 'someone@anywhere.example', status: 'open' });
+  var lt = lcall.body.ticket;
+  check('a logged call\'s address is marked as typed by HQ', lt.contact_typed === true);
+  sent.length = 0;
+  var r1 = await call(helpAdminReply, STAFF_ADMIN, { id: lt.id, body: 'Hi' });
+  check('a staff login cannot send brand mail to an address it typed in without confirming it', r1.status === 409 && r1.body.confirm_needed === true && r1.body.address === 'someone@anywhere.example' && sent.length === 0, r1);
+  check('confirming a different address does not count', (await call(helpAdminReply, STAFF_ADMIN, { id: lt.id, body: 'Hi', confirm_to: 'other@x.example' })).status === 409 && sent.length === 0);
+  var r2 = await call(helpAdminReply, STAFF_ADMIN, { id: lt.id, body: 'Hi', confirm_to: 'Someone@Anywhere.example' });
+  check('confirming that exact address sends it, and the note says it was confirmed', r2.status === 200 && sent.length === 1 && notesOf(lt).some(function (x) { return x.kind === 'reply' && /typed address confirmed/.test(x.author); }), r2);
+  var r3 = await call(helpAdminReply, ADMIN, { id: lt.id, body: 'From the owner' });
+  check('the owner role can send without the extra step', r3.status === 200 && sent.length === 2);
+  var pt = await call(helpPublicTicket, null, Object.assign({}, PATRON, { device: 'typ-1', email: 'given@example.com' }));
+  check('an address the customer gave us themselves needs no confirm, for staff either', (await call(helpAdminReply, STAFF_ADMIN, { id: T(pt.body.ticket_no).id, body: 'Hi' })).status === 200);
+
+  print('THE PHONE ALERT CURSOR IS THE DATABASE\'S CLOCK');
+  world();
+  var PENV2 = Object.assign({}, ENV, { VAPID_PUBLIC_KEY: 'BPub', VAPID_PRIVATE_JWK: JSON.stringify({ d: 'd', x: 'x', y: 'y' }) });
+  var sub2 = await helpAdminPushSubscribe(req(ADMIN, { endpoint: 'https://fcm.googleapis.com/fcm/send/clock' }), PENV2, J);
+  check('a new device\'s cursor is the database\'s now(), not the Worker\'s clock', !!DB.vp_help_push_subs[0].last_peek_at && !('last_peek_at' in JSON.parse(JSON.stringify(Object.assign({}, DB.vp_help_push_subs[0], { last_peek_at: undefined })))));
+  var realHelpNow = helpNow;
+  helpNow = function () { return '2099-01-01T00:00:00.000Z'; };   // a Worker whose clock is wildly wrong
+  await helpPublicTicket(req(null, Object.assign({}, PATRON, { device: 'clk-1', email: 'clk@example.com' })), PENV2, J);
+  var pk = await helpPushPeek(req(null, { endpoint: 'https://fcm.googleapis.com/fcm/send/clock', token: sub2.body.token }), PENV2, J);
+  check('even with the Worker\'s clock years out, the phone is told about the new ticket', pk.body.count === 1 && pk.body.ticket_no === 1001, pk.body);
+  check('and the cursor moved to that ticket\'s own time, from the database', DB.vp_help_push_subs[0].last_peek_at === DB.vp_help_tickets[0].created_at, [DB.vp_help_push_subs[0].last_peek_at, DB.vp_help_tickets[0].created_at]);
+  check('asking again: nothing new', (await helpPushPeek(req(null, { endpoint: 'https://fcm.googleapis.com/fcm/send/clock', token: sub2.body.token }), PENV2, J)).body.count === 0);
+  helpNow = realHelpNow;
 
   print('THE PHONE\'S SERVICE WORKER (venueplay/app/vp-help-sw.js), RUN');
   async function swRun(peekAnswer, peekOk) {
