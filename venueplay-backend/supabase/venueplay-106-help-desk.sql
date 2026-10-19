@@ -291,7 +291,6 @@ insert into public.vp_help_steps (id, issue_id, position, body, pinned) values (
 insert into public.vp_help_steps (id, issue_id, position, body, pinned) values ('e46d5877-4f31-5b68-8cd4-08bf3a672180', '41c6f70c-ac72-59e1-9362-489c8f3c58ac', 30, 'Remember a party holds up to 50 guests.', false) on conflict (id) do nothing;
 insert into public.vp_help_issues (id, brand, audience, position, title, category) values ('ecd42b28-0e38-53aa-8912-2272341be383', 'partyplay', 'host', 30, 'A question about my payment or a refund', 'accounts') on conflict (id) do nothing;
 insert into public.vp_help_issues (id, brand, audience, position, title, category) values ('df971843-0357-5f71-93a7-f77b98541aba', 'partyplay', 'host', 40, 'Something else', 'venue_support') on conflict (id) do nothing;
-In some states bingo is played on paper. If your phone says "Tonight you play on paper", grab a bingo book and mark it off as the numbers are called.') on conflict (id) do nothing;
 
 
 commit;
