@@ -314,6 +314,9 @@ export default {
       if (method === 'GET'  && path === '/play/live')          return await handlePlayLive(request, env, json);
       if (method === 'GET'  && path === '/screen')             return await handleScreen(request, env, json);
       if (method === 'POST' && path === '/host/game')          return await handleHostGame(request, env, json);
+      /* Pick up a running quiz or musical game from ANY device (Dean, 20 Oct 2026). Staff only. */
+      if (method === 'POST' && path === '/host/running')       return await handleHostRunning(request, env, json);
+      if (method === 'POST' && path === '/host/running/take')  return await handleHostRunningTake(request, env, json);
       if (method === 'POST' && path === '/host/game/pattern')  return await handleMusicPattern(request, env, json);
       if (method === 'POST' && path === '/host/trivia/set')                return await handleTriviaSet(request, env, json);
       if (method === 'POST' && path === '/host/trivia/set/delete')         return await handleTriviaSetDelete(request, env, json);
@@ -7781,6 +7784,118 @@ async function handleSnapshot(request, env, json) {
   return json(snapshot);
 }
 
+/* ------------------------------ POST /host/running ------------------------------
+ * PICK UP A RUNNING GAME FROM ANY DEVICE (Dean, 20 Oct 2026: "it would be shit to not be able to
+ * fix something to let a venue play a night on a night").
+ *
+ * The consoles recovered a live trivia or musical game only from THIS tablet's localStorage, so a
+ * tablet that died mid-quiz left the host on a fresh setup screen on any other device, with the
+ * game still running on the server and the room still seated. This answers "is one running at my
+ * venue?" for a signed-in member of that venue's staff, and nobody else.
+ *
+ * Body { venue_id, format: 'trivia' | 'musical_bingo' }. Answers { running: null } or
+ * { running: { session_id, game_id, format, join_code, holder, taken_at, current } }.
+ *   holder   the console that last picked it up (vp_games.console_id, migration 110), or null when
+ *            nobody has: the console that started it is the holder then
+ *   current  trivia only, an open question: its correct answer and the phones already in. The
+ *            console that started the question knew both; this is staff-only, like /host/question.
+ * Auth: host JWT + staff at THAT venue (requireStaff, which also applies the kill-switch).
+ */
+async function handleHostRunning(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
+  const b = await readJson(request);
+  const venueId = String(b.venue_id || '').trim();
+  if (!venueId) return json({ error: 'Missing venue_id' }, 400);
+  assertUuid(venueId, 'venue_id');
+  const format = String(b.format || '');
+  if (format !== 'trivia' && format !== 'musical_bingo') return json({ error: 'Unsupported format' }, 400);
+  await requireStaff(env, authUserId, venueId, 'host');           // ENFORCED: staff at this venue
+  return json({ running: await findRunningGame(env, venueId, format, true) });
+}
+
+/* The newest running game of this format at this venue, in an open session. Shared by the two
+   routes so "which game" has one answer. withCurrent: add the trivia question detail. */
+async function findRunningGame(env, venueId, format, withCurrent) {
+  const sessions = await sbGet(env, 'vp_sessions',
+    'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id,join_code,status&order=created_at.desc&limit=5');
+  if (!sessions.length) return null;
+  const ids = sessions.map((x) => x.id);
+  const base = 'session_id=in.(' + ids.map(enc).join(',') + ')&format=eq.' + enc(format) +
+               '&status=eq.running&order=seq.desc&limit=1&select=id,session_id,seq,format';
+  // console_id arrives with migration 110. Before it, the read without it: nobody holds the game.
+  let games;
+  try { games = await sbGet(env, 'vp_games', base + ',console_id,console_taken_at'); }
+  catch (_) { games = await sbGet(env, 'vp_games', base); }
+  if (!games.length) return null;
+  const g = games[0];
+  const sess = sessions.find((x) => x.id === g.session_id) || {};
+  const out = {
+    session_id: g.session_id, game_id: g.id, format: g.format, join_code: sess.join_code || '',
+    holder: g.console_id || null, taken_at: g.console_taken_at || null, current: null,
+  };
+  if (withCurrent && format === 'trivia') {
+    const tg = await sbGet(env, 'vp_trivia_games',
+      'game_id=eq.' + enc(g.id) + '&select=question_set_id,current_seq,phase&limit=1');
+    const t = tg[0];
+    if (t && t.current_seq && (t.phase === 'asking' || t.phase === 'locked')) {
+      const q = await sbGet(env, 'vp_questions',
+        'set_id=eq.' + enc(t.question_set_id) + '&seq=eq.' + t.current_seq + '&select=id,correct_index&limit=1');
+      if (q.length) {
+        const ans = await sbGetAll(env, 'vp_trivia_answers',
+          'game_id=eq.' + enc(g.id) + '&question_id=eq.' + enc(q[0].id) + '&select=player_id&order=player_id.asc');
+        const pids = {};
+        if (ans.length) {
+          const players = await sbGetAll(env, 'vp_players',
+            'session_id=eq.' + enc(g.session_id) + '&select=id,device_id&order=id.asc');
+          const dev = {};
+          players.forEach((p) => { dev[p.id] = p.device_id || p.id; });
+          ans.forEach((a) => { pids[dev[a.player_id] || a.player_id] = true; });
+        }
+        out.current = { qseq: t.current_seq, ci: q[0].correct_index, pids: pids };
+      }
+    }
+  }
+  return out;
+}
+
+/* ------------------------------ POST /host/running/take ------------------------------
+ * "Pick it up here": this console now runs the game. Records it on the game row (vp_games.
+ * console_id and console_taken_at, migration 110), so any other console still open on the game
+ * finds out it has been replaced the next time it asks (/host/running, on waking, on hearing
+ * another console, and every two minutes) and stands down. Two consoles never run one quiz.
+ *
+ * Body { venue_id, game_id, console_id }. The game must be running, at THIS venue. Before migration
+ * 110 the record cannot be written: the pickup still goes ahead (held:false), which is exactly how
+ * a reload on the same tablet has always worked. Auth: host JWT + staff at the game's venue.
+ */
+async function handleHostRunningTake(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
+  const b = await readJson(request);
+  const venueId = String(b.venue_id || '').trim();
+  const gameId = String(b.game_id || '').trim();
+  const consoleId = String(b.console_id || '');
+  if (!venueId || !gameId) return json({ error: 'Missing venue_id or game_id' }, 400);
+  assertUuid(venueId, 'venue_id');
+  assertUuid(gameId, 'game_id');
+  if (!/^[A-Za-z0-9_-]{8,64}$/.test(consoleId)) return json({ error: 'Missing console_id' }, 400);
+  await requireStaff(env, authUserId, venueId, 'host');           // ENFORCED: staff at this venue
+  const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,status,format&limit=1');
+  if (!games.length) return json({ error: 'Game not found' }, 404);
+  const g = games[0];
+  const session = await getSession(env, g.session_id);
+  // The venue in the body is only trusted after it matches the game's own: no picking up another venue's game.
+  if (session.venue_id !== venueId) return json({ error: 'Not authorised: that game is not at this venue' }, 403);
+  if (g.status !== 'running') return json({ error: 'That game has finished.' }, 409);
+  if (g.format !== 'trivia' && g.format !== 'musical_bingo') return json({ error: 'Unsupported format' }, 400);
+  const takenAt = new Date().toISOString();
+  try {
+    await sbPatch(env, 'vp_games', 'id=eq.' + enc(gameId), { console_id: consoleId, console_taken_at: takenAt });
+  } catch (e) {
+    return json({ ok: true, held: false, game_id: gameId, session_id: g.session_id });   // before migration 110
+  }
+  return json({ ok: true, held: true, game_id: gameId, session_id: g.session_id, taken_at: takenAt });
+}
+
 /* ------------------------------ GET /player/card ------------------------------
  * A joined player fetches THEIR ticket for the running game. The Worker deals
  * cards (never the phone), so this is how a phone learns its ticket. It also
@@ -8865,11 +8980,21 @@ async function checkWeeklyFormatLimit(env, session, isTrivia) {
      ASKED FOR SEPARATELY ON PURPOSE. Before migration 107 is run, PostgREST refuses a select
      naming the column, and a refusal here would stop EVERY trivia and musical night starting.
      So a failed read falls back to the old select and the old rule: the switch is simply off. */
+  /* ONE-NIGHT PASS (migration 110, Dean 20 Oct 2026): "it would be shit to not be able to fix
+     something to let a venue play a night on a night". HQ grants ONE more trivia or musical night
+     inside 24 hours (billing Worker /admin/night-pass, platform admins only, audited). Read in the
+     same trip as the switch, with the same fail-safe ladder: before 110 the pass columns are
+     refused, so the read falls back to 107's, and before 107 to the original. A refused column
+     never stops a night; it only means there is no pass. */
   let venues;
   try {
-    venues = await sbGet(env, 'vp_venues', base + ',weekly_limit_off');
+    venues = await sbGet(env, 'vp_venues', base + ',weekly_limit_off' + NIGHT_PASS_COLS);
   } catch (_) {
-    venues = await sbGet(env, 'vp_venues', base);
+    try {
+      venues = await sbGet(env, 'vp_venues', base + ',weekly_limit_off');
+    } catch (__) {
+      venues = await sbGet(env, 'vp_venues', base);
+    }
   }
   const v = venues && venues[0];
   if (!v) return null;
@@ -8877,9 +9002,19 @@ async function checkWeeklyFormatLimit(env, session, isTrivia) {
   const lastAt = v[col + '_at'];
   const lastSession = v[col + '_session_id'];
   const WEEK = 7 * 24 * 60 * 60 * 1000;
+  const fmt = isTrivia ? 'trivia' : 'musical_bingo';
 
   // Already running this format in THIS session: it is the same night, always allow.
   if (lastSession && lastSession === session.id) return null;
+  /* A NIGHT THE PASS PAID FOR IS ITS OWN NIGHT. Using the pass does not move last_*_at (that would
+     push the venue's NEXT ordinary night back by days), so the pass night is recognised here
+     instead: another round in the same session, or a restart inside the resume window, is the
+     same night and costs nothing. */
+  if (v.night_pass_used_at && v.night_pass_used_format === fmt) {
+    if (v.night_pass_used_session && v.night_pass_used_session === session.id) return null;
+    const sinceUse = Date.now() - new Date(v.night_pass_used_at).getTime();
+    if (sinceUse >= 0 && sinceUse < 8 * 60 * 60 * 1000) return null;
+  }
 
   // Same night, NEW session id: allow. A session can end while the night is still going on
   // (the 4 hour forced sign-out, a host signing out at handover, a closed tablet), and the
@@ -8893,6 +9028,10 @@ async function checkWeeklyFormatLimit(env, session, isTrivia) {
     const elapsed = Date.now() - new Date(lastAt).getTime();
     if (elapsed >= 0 && elapsed < RESUME_GRACE) return null;
     if (elapsed >= 0 && elapsed < WEEK) {
+      /* The weekly rule says no. A waiting pass for this format says yes, once: it is marked for
+         stampWeeklyFormat, which uses it up only after the game row exists, so a start that fails
+         validation never spends it. */
+      if (nightPassWaiting(v, fmt, Date.now())) { session.__nightPass = fmt; return null; }
       // Display the "available from" day in Brisbane (UTC+10, no DST in QLD).
       const nextDay = new Date(new Date(lastAt).getTime() + WEEK + 10 * 3600 * 1000).toISOString().slice(0, 10);
       return label + ' runs once a week per venue. Your next ' + label.toLowerCase() +
@@ -8906,10 +9045,49 @@ async function checkWeeklyFormatLimit(env, session, isTrivia) {
 // is inserted, so a start that fails validation never burns the once-a-week slot.
 async function stampWeeklyFormat(env, session, isTrivia) {
   const col = isTrivia ? 'last_trivia' : 'last_musical';
+  const fmt = isTrivia ? 'trivia' : 'musical_bingo';
+  /* THIS NIGHT RAN ON A PASS: use the pass up, and leave last_*_at where it was, so the venue's
+     next ordinary night is still due when it would have been. Compare-and-set on used_at being
+     empty, so two starts racing cannot both spend one pass; whatever happens the game has
+     started, and the audit row says who granted the pass and which night used it. */
+  if (session.__nightPass === fmt) {
+    session.__nightPass = null;
+    const usedAt = new Date().toISOString();
+    let used = [];
+    try {
+      used = await sbPatchReturning(env, 'vp_venues',
+        'id=eq.' + enc(session.venue_id) + '&night_pass_used_at=is.null',
+        { night_pass_used_at: usedAt, night_pass_used_format: fmt, night_pass_used_session: session.id });
+    } catch (e) { used = []; }
+    if (used && used.length) {
+      try {
+        await sbInsert(env, 'vp_admin_audit', {
+          actor_label: 'game Worker', action: 'venue_night_pass_used', target: 'venue:' + session.venue_id,
+          detail: { format: fmt, session_id: session.id, granted_by: used[0].night_pass_granted_by || null,
+                    granted_at: used[0].night_pass_granted_at || null },
+        }, false);
+      } catch (e) { /* the record is a courtesy; the pass is spent either way */ }
+      return;
+    }
+    // Somebody else spent it a moment ago: this night counts the ordinary way.
+  }
   const patch = {};
   patch[col + '_at'] = new Date().toISOString();
   patch[col + '_session_id'] = session.id;
   await sbPatch(env, 'vp_venues', 'id=eq.' + enc(session.venue_id), patch);
+}
+
+/* The pass columns (migration 110), asked for in the same read as the once-a-week columns. */
+const NIGHT_PASS_COLS = ',night_pass_format,night_pass_until,night_pass_used_at,night_pass_used_format,night_pass_used_session';
+
+/* Is a one-night pass waiting for this format? Granted (has an expiry), not yet used, not yet
+   expired, and for this format or for either. The console mirror (vp-weekly.js passWaiting)
+   answers the same question in the same words. */
+function nightPassWaiting(v, fmt, now) {
+  if (!v || !v.night_pass_until || v.night_pass_used_at) return false;
+  const until = new Date(v.night_pass_until).getTime();
+  if (!(until > now)) return false;
+  return v.night_pass_format === 'either' || v.night_pass_format === fmt;
 }
 
 /* =====================================================================
