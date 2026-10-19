@@ -72,6 +72,7 @@
   "check-tv-watchdog.py",
   "check-venue-scoping.py",
   "closed venues lose their player details, and nobody else does (40 checks)",
+  "console-in-chrome.test.py",
   "cryptoInt() is the same in all 12 file(s)",
   "definition check across 104 file(s)",
   "demo-hermetic.test.js",
