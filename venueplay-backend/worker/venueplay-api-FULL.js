@@ -2733,7 +2733,9 @@ async function vpaHandleNightPass(request, env, json) {
     };
   } else {
     // Cancel a pass that is still waiting. One already used is history and stays as it is.
-    if (!prior.night_pass_until || prior.night_pass_used_at) return json({ error: 'There is no waiting pass to cancel.' }, 409);
+    if (!prior.night_pass_until || prior.night_pass_used_at || !(Date.parse(prior.night_pass_until) > now.getTime())) {
+      return json({ error: 'There is no waiting pass to cancel.' }, 409);
+    }
     patch = { night_pass_until: now.toISOString() };
   }
   const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_venues?id=eq.' + encodeURIComponent(venueId), {

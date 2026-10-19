@@ -9020,9 +9020,10 @@ async function checkWeeklyFormatLimit(env, session, isTrivia) {
      instead: another round in the same session, or a restart inside the resume window, is the
      same night and costs nothing. */
   if (v.night_pass_used_at && v.night_pass_used_format === fmt) {
-    if (v.night_pass_used_session && v.night_pass_used_session === session.id) return null;
+    // __passNight tells stampWeeklyFormat to leave the week alone for this round too.
+    if (v.night_pass_used_session && v.night_pass_used_session === session.id) { session.__passNight = true; return null; }
     const sinceUse = Date.now() - new Date(v.night_pass_used_at).getTime();
-    if (sinceUse >= 0 && sinceUse < 8 * 60 * 60 * 1000) return null;
+    if (sinceUse >= 0 && sinceUse < 8 * 60 * 60 * 1000) { session.__passNight = true; return null; }
   }
 
   // Same night, NEW session id: allow. A session can end while the night is still going on
@@ -9080,6 +9081,8 @@ async function stampWeeklyFormat(env, session, isTrivia) {
     }
     // Somebody else spent it a moment ago: this night counts the ordinary way.
   }
+  // Another round, or a restart, of a night the pass paid for: the week stays where it was.
+  if (session.__passNight) { session.__passNight = false; return; }
   const patch = {};
   patch[col + '_at'] = new Date().toISOString();
   patch[col + '_session_id'] = session.id;
