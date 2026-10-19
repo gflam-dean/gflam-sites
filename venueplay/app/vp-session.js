@@ -868,10 +868,44 @@
           var what = f.indexOf("trivia") === 0 ? "trivia night" : f.indexOf("musical") === 0 ? "musical bingo game"
                    : f.indexOf("bingo") === 0 ? "bingo game" : "game";
           done = true;
-          resolve(root.confirm("A " + what + " is already open at this venue on another device.\n\n" +
-            "Opening a lobby here takes the TV and every phone away from it, and starting a round here ends it.\n\n" +
-            "Open the lobby here anyway?"));
+          askOnPage("A " + what + " is already open at this venue on another device.",
+            "Opening a lobby here takes the TV and every phone away from it, and starting a round here ends it.",
+            "Open the lobby here", "Cancel").then(resolve);
         }, function () { finish(true); });
+    });
+  }
+  /* ASKED ON THE PAGE, NEVER WITH window.confirm() (19 Oct 2026). A native dialog stops the whole page
+     until somebody answers it: a kiosk browser that blocks dialogs answers "no" for the host without a
+     word, and under the browser's own automation (the live tests) the console simply froze the moment
+     Open lobby was pressed at a venue with an earlier game still open. The members draw learnt this on
+     the live audit; the raffle too. Same question, same two answers, on the page. Resolves true or false. */
+  function askOnPage(title, text, yes, no) {
+    return new Promise(function (resolve) {
+      var d = root.document;
+      if (!d || !d.body) { resolve(true); return; }
+      var old = d.getElementById('vpTakeover'); if (old && old.parentNode) old.parentNode.removeChild(old);
+      var box = d.createElement('div');
+      box.id = 'vpTakeover';
+      box.setAttribute('role', 'alertdialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-labelledby', 'vpTakeoverT');
+      box.style.cssText = 'position:fixed;inset:0;z-index:2147483645;display:flex;align-items:center;justify-content:center;' +
+        'padding:16px;background:rgba(10,6,20,.9);font-family:Manrope,system-ui,-apple-system,sans-serif;color:#fff';
+      var card = d.createElement('div');
+      card.style.cssText = 'max-width:440px;width:100%;background:#1b1230;border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:24px;line-height:1.5';
+      var h = d.createElement('div'); h.id = 'vpTakeoverT';
+      h.style.cssText = 'font-size:19px;font-weight:800;margin-bottom:8px'; h.textContent = title;
+      var p = d.createElement('div'); p.style.cssText = 'font-size:15px;opacity:.85;margin-bottom:18px'; p.textContent = text;
+      var row = d.createElement('div'); row.style.cssText = 'display:flex;gap:10px;flex-wrap:wrap';
+      function btn(id, label, primary, v) {
+        var b = d.createElement('button'); b.type = 'button'; b.id = id; b.textContent = label;
+        b.style.cssText = 'flex:1;min-width:140px;font:inherit;font-size:16px;font-weight:800;padding:12px 16px;border-radius:999px;cursor:pointer;' +
+          (primary ? 'border:0;background:#ff1f8e;color:#fff' : 'border:1px solid rgba(255,255,255,.3);background:none;color:#fff');
+        b.addEventListener('click', function () { if (box.parentNode) box.parentNode.removeChild(box); resolve(v); });
+        return b;
+      }
+      row.appendChild(btn('vpTakeoverCancel', no, false, false));
+      row.appendChild(btn('vpTakeoverGo', yes, true, true));
+      card.appendChild(h); card.appendChild(p); card.appendChild(row);
+      box.appendChild(card); d.body.appendChild(box);
     });
   }
 

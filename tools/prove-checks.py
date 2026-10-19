@@ -70,6 +70,9 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 # wholeness check is reached. Zero bytes parses perfectly, which is the case
 # that check was actually written for.
 MUTATIONS = [
+    # 19 Oct 2026: Open lobby froze the live console at a venue with an earlier game still open (a native confirm()).
+    ('console-in-chrome.test.py', 'venueplay/app/vp-session.js', '          askOnPage("A " + what + " is already open at this venue on another device.",', '          resolve(root.confirm("A " + what)); return; askOnPage("A " + what + " is already open at this venue on another device.",', 'Open lobby at a venue with a game still open puts up a native dialog and the console stops answering'),
+    ('test-one-room-one-identity.js', 'venueplay/app/vp-session.js', '          askOnPage("A " + what + " is already open at this venue on another device.",', '          resolve(root.confirm("A " + what)); return; askOnPage("A " + what + " is already open at this venue on another device.",', 'the takeover question goes back to a native confirm()'),
     ('the image size limit is a named number in the Worker',
      'venueplay-backend/worker/venueplay-api-FULL.js',
      'const VPB_MAX_IMAGE_BYTES = 5 * 1024 * 1024;',

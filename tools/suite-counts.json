@@ -115,6 +115,10 @@
   "checks": 155,
   "counted_by": "total"
  },
+ "tools/console-in-chrome.test.py": {
+  "checks": 26,
+  "counted_by": "lines"
+ },
  "tools/livenorm.test.py": {
   "checks": 8,
   "counted_by": "lines"
@@ -312,7 +316,7 @@
   "counted_by": "lines"
  },
  "tools/test-one-room-one-identity.js": {
-  "checks": 37,
+  "checks": 38,
   "counted_by": "lines"
  },
  "tools/test-optin-export-gate.js": {

@@ -99,8 +99,12 @@ print('\n== a trivia round starting is not a bingo round ==');
 print('\n== a second console is asked before it takes the room ==');
 (function () {
   function run(answer, confirmSays) {
-    var asked = null, result = null, pending = [];
-    var root = { confirm: function (t) { asked = t; return confirmSays; } };
+    var asked = null, result = null, pending = [], native = false;
+    var root = { confirm: function (t) { native = true; asked = t; return confirmSays; } };
+    /* Asked on the page since 19 Oct 2026 (a native confirm() froze the console under automation and is
+       answered "no" by kiosk browsers). The real dialog is driven in Chrome by console-in-chrome.test.py;
+       here it is the question and the answer that matter. */
+    function askOnPage(title, text) { asked = title + ' ' + text; return { then: function (f) { f(confirmSays); } }; }
     var GAME_API = 'https://w';
     function venueCode() { return 'CODE12'; }
     function setTimeout() {}
@@ -111,12 +115,13 @@ print('\n== a second console is asked before it takes the room ==');
     var Promise = function (ex) { ex(function (v) { result = v; }); };
     eval(lift(SESSION, 'confirmTakeover', 'vp-session.js'));
     confirmTakeover('test-alpha');
-    return { asked: asked, result: result };
+    return { asked: asked, result: result, native: native };
   }
   var a = run({ live: true, format: 'trivia' }, false);
   ok('a live trivia night elsewhere: the host is asked, and No leaves it alone', a.asked && /trivia night/.test(a.asked) && a.result === false, JSON.stringify(a));
   var b = run({ live: true, format: 'bingo90' }, true);
   ok('Yes goes ahead', b.result === true && /bingo game/.test(b.asked || ''));
+  ok('and never with a native browser dialog', !a.native && !b.native, JSON.stringify([a.native, b.native]));
   var c = run({ live: false }, false);
   ok('nothing open: no question, straight in', c.asked === null && c.result === true, JSON.stringify(c));
   [['bingo', find('venueplay/app/index.html'), /VP\.confirmTakeover\(slug\)\.then/],
