@@ -102,12 +102,14 @@ await (async function () {
   // and restoreTrivia's "asking" branch is what calls it
   var called = 0, sent = [];
   var G2 = { venueId: 'v', questionCount: 0, qtotal: 0, board: [] };
-  var src = lift(HOSTP, 'restoreTrivia', 'trivia/host.html');
+  // The snapshot half of the restore (restoreTriviaFrom since 20 Oct 2026: the same restore, whether the
+  // pointer came from this tablet's save or from a pickup on another device).
+  var src = lift(HOSTP, 'restoreTriviaFrom', 'trivia/host.html');
   var snap = { status: 'running', session_id: 's', join_code: 'ACDEFG', game: { format: 'trivia', game_id: 'g1', phase: 'asking', question_count: 10,
     question: { qseq: 3, qi: 3, text: 'Q', options: ['a', 'b', 'c', 'd'], ends_at: new Date(NOWMS + 20000).toISOString() } } };
   var f = new Function('G', 'localStorage', 'fetch', 'readBoard', 'send', 'openGameChannel', 'loadPaperRound', 'isDouble', 'remainingSecs', 'setInterval',
     'updateLive', 'clearTick', 'rebuildBoard', '$', 'renderConsole', 'clearTrivia', 'triviaKey', 'TRIVIA_SAVE_MAX_AGE', 'VP_GAME_API',
-    src + '; return restoreTrivia();');
+    src + '; var saveTrivia = function () {}; return restoreTriviaFrom({ v: 1, ts: NOWMS, sessionId: "s" });');
   var p = f(G2, { getItem: function () { return JSON.stringify({ v: 1, ts: NOWMS, sessionId: 's' }); } },
     function () { return Promise.resolve({ ok: true, json: function () { return Promise.resolve(snap); } }); },
     function () { called++; }, function (o) { sent.push(o.t); }, function () {}, function () {}, function () { return false; }, function () { return 20; },

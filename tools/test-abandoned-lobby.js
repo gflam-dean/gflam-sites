@@ -24,7 +24,7 @@ print('an abandoned lobby goes back to ads; a live game does not');
       something. Before today, four of five did. */
 var beats = [
   ['bingo',   CONSOLE, /setInterval\(function\(\)\{\s*if\(G\.status==="running" \|\| G\.status==="lobby"\) send\(\{ t:"host_here" \}\);/],
-  ['trivia',  readFile('venueplay/app/trivia/host.html'),  /bcast\(\{ t:"host_here" \}\)/],
+  ['trivia',  readFile('venueplay/app/trivia/host.html'),  /bcast\(\{ t:"host_here"(, cid:G\.consoleId)? \}\)/],
   ['musical', readFile('venueplay/app/musical/host.html'), /t:"host_here"/],
   ['raffle',  readFile('venueplay/app/raffle/host.html'),  /t:"host_here"/],
   ['members', readFile('venueplay/app/members/host.html'), /t:"host_here"/],
