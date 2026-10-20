@@ -253,6 +253,10 @@ function sess() { return DB.vp_sessions.filter(function (s) { return s.id === SE
   for (var j = 0; j < 50; j++) await Promise.resolve();
   var asks = LOG.slice(asked).filter(function (l) { return /^GET vp_sessions/.test(l); }).length;
   show('a burst of heartbeats is one question to the Worker', asks === 1, LOG.slice(asked).join(' | '));
+  asked = LOG.length;   // the clock has not moved: a heartbeat 0 seconds after that answer
+  VP_PICKUP.heard('cFAKE0000096');
+  for (var k = 0; k < 50; k++) await Promise.resolve();
+  show('another heartbeat inside 15 seconds of the last question asks nothing', LOG.slice(asked).filter(function (l) { return /^GET vp_sessions/.test(l); }).length === 0, LOG.slice(asked).join(' | '));
   show('a stranger\'s heartbeat alone never stands it down: the Worker says it still holds the game', moved === 1 && VP_PICKUP.isDown() === false, 'moved=' + moved);
   mySession = '';
   still = await VP_PICKUP.check();

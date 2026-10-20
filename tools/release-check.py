@@ -3347,7 +3347,7 @@ def local_checks(which):
              'A venue giving itself extra nights, or a pass nobody can trace back to who gave it'),
             ('D60. A running quiz or musical game can be picked up from any device, by staff, and the old console stands down',
              'test-console-pickup.js',
-             'staff at the venue find its running game and the open question; a pickup is recorded per format; a replaced console stands down only when the Worker says so', 52,
+             'staff at the venue find its running game and the open question; a pickup is recorded per format; a replaced console stands down only when the Worker says so', 53,
              'A dead tablet leaves the host on a fresh setup screen with the room seated, another venue\'s '
              'quiz is picked up, or two consoles run one quiz'),
             ('D52. The TV mark is painted only when the venue has a logo, small, top-left and kept clear',
