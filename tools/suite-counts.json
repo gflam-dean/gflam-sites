@@ -128,11 +128,11 @@
   "counted_by": "lines"
  },
  "tools/help-desk-pages.test.py": {
-  "checks": 126,
+  "checks": 135,
   "counted_by": "lines"
  },
  "tools/help-seed-matches-faq.test.py": {
-  "checks": 10,
+  "checks": 11,
   "counted_by": "lines"
  },
  "tools/hq-lists-in-chrome.test.py": {
@@ -169,6 +169,10 @@
  },
  "tools/regulated.test.py": {
   "checks": 23,
+  "counted_by": "lines"
+ },
+ "tools/support-phone.test.py": {
+  "checks": 26,
   "counted_by": "lines"
  },
  "tools/test-a-player-bills-once-alive.js": {
@@ -905,6 +909,10 @@
  },
  "venueplay-backend/worker/stripe-idempotency.test.js": {
   "checks": 5,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/support-phone-emails.test.js": {
+  "checks": 18,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/suspend-not-before-auth.test.js": {

@@ -245,6 +245,8 @@
   "staff at the venue find its running game and the open question; a pickup is recorded per format; a replaced console stands down only when the Worker says so",
   "staff of the Royal are offered the Royal and nothing else; an admin sees one account, never the database",
   "stripe-idempotency.test.js",
+  "support-phone-emails.test.js",
+  "support-phone.test.py",
   "suspend-not-before-auth.test.js",
   "sweep-sessions.test.js",
   "ten weeks of \"add 20\" reach past the first hundred rows, and no parked question is dealt",
