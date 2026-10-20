@@ -3345,6 +3345,11 @@ def local_checks(which):
              'test-night-pass-hq.js',
              'owner/accounts admins grant and cancel with an audit row; staff admins, venue logins and strangers are refused; three formats only', 23,
              'A venue giving itself extra nights, or a pass nobody can trace back to who gave it'),
+            ('D61. On slow wifi a new device keeps asking whether a game is running, and offers to pick it up when one turns up',
+             'test-pickup-retry.js',
+             'a slow first answer is asked again on a backoff until one answer or the host moves on; a game found late gets the same question, on both consoles', 25,
+             'A host on a new tablet left on the setup screen with the room seated because the first lookup timed '
+             'out, or a background task that asks for the rest of the night'),
             ('D60. A running quiz or musical game can be picked up from any device, by staff, and the old console stands down',
              'test-console-pickup.js',
              'staff at the venue find its running game and the open question; a pickup is recorded per format; a replaced console stands down only when the Worker says so', 53,
