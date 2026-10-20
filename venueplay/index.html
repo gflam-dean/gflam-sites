@@ -1456,7 +1456,7 @@
     fetch(VP_WORKER + '/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name, email: email, mobile: mobile, postcode: (venues[0] && venues[0].postcode) || '', plan: plan, venues: venues, venue: venues[0].name, seats: venues[0].seats, marketing_opt_in: marketingOptIn, embedded: wantEmbedded })
+      body: JSON.stringify({ name: name, email: email, mobile: mobile, postcode: (venues[0] && venues[0].postcode) || '', plan: plan, venues: venues, venue: venues[0].name, seats: venues[0].seats, marketing_opt_in: marketingOptIn, compliance_accepted: !!(consentEl && consentEl.checked), embedded: wantEmbedded })
     })
     .then(function(r){ return r.json(); })
     .then(function(data){

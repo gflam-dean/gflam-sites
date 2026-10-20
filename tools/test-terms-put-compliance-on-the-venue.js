@@ -76,10 +76,11 @@ check('it names permits, age limits and attendance, and says software only',
   var page = readFile(f);
   check(f + ' shows exactly that sentence beside its tick box', !!tick && page.indexOf(tick) !== -1, f);
   check(f + ' sends compliance accepted:true with a name', /compliance=\{ accepted:true, by:by \}/.test(page), f);
-  check(f + ' sends the venue kind', /venue_kind=kind/.test(page), f);
+  check(f + ' asks club or pub, the signup question, and sends it as entity_type', /body\.entity_type=kind;/.test(page) &&
+        /<option value="non_profit">Club \(RSL, bowls, leagues, non-profit\)<\/option>/.test(page) && /<option value="for_profit">Pub \(hotel or tavern\)<\/option>/.test(page), f);
 });
 check('the Worker refuses the onboarding without the tick', /if \(comp\.accepted !== true\) \{\s*\n\s*return json\(/.test(api));
-check('the Worker refuses an unknown venue kind', /VPA_VENUE_KINDS\.indexOf\(venueKind\) === -1/.test(api));
+check('the Worker refuses an onboarding with no club-or-pub answer', /if \(entityType !== 'non_profit' && entityType !== 'for_profit'\) \{/.test(api));
 
 print('PartyPlay: not at a pub, club or other licensed venue (NSW social housie, 1 Oct point 11)');
 var pp = readFile('partyplay/terms.html');

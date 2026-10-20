@@ -1,9 +1,10 @@
 /* vp-trusted.js  -- THE "TRUSTED BY" STRIP ON THE MARKETING PAGES.
 
-   Dean, 7 Aug 2026: a slow scroll of the logos of venues already running VenuePlay. His hard
-   rule: ACTIVE, PAYING venues only. The billing Worker's GET /trusted-logos decides who that is
-   (live, paying, not a test venue, not on a 1-player plan, and the venue has left "Show our
-   logo on the VenuePlay website" ticked) and answers names and logo addresses and nothing else.
+   Dean, 7 Aug 2026: a slow scroll of the logos of venues already running VenuePlay. Since
+   20 Oct 2026 (migration 111) HQ chooses who is on it: "I dont want a venue to be able to put it
+   on our website we should choose". The billing Worker's GET /trusted-logos answers the venues
+   HQ switched on (HQ > Venues > Details > "Show logo on our website") that are active, have a
+   logo they uploaded, and are not a test venue, with names and logo addresses and nothing else.
 
    This file decides only how it LOOKS, and whether it shows at all: fewer than MIN logos and the
    whole section stays hidden, so the homepage never shows one lonely logo in a long strip.

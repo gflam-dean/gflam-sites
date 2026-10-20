@@ -357,6 +357,15 @@ async function handleCheckout(request, env, json) {
   if (email.indexOf('@') === -1 || !venues.length) {
     return json({ error: 'Missing contact email or venue details.' }, 400);
   }
+  /* THE SIGNUP TICK, AS A FACT (audit 20 Oct 2026, C5). The tick (the Terms and Privacy Policy,
+     and "our venue is responsible for its gaming compliance") was checked only in the browser,
+     and provisioning then recorded it as accepted by the contact: an inference. The page now
+     sends it, and nothing is saved and Stripe is never asked without it. The time it was given
+     rides on each venue to provisioning, which records it on the venue. */
+  if (b.compliance_accepted !== true) {
+    return json({ error: 'Please tick the box to agree to the Terms and Privacy Policy and confirm your venue is responsible for its gaming compliance.' }, 400);
+  }
+  const acceptedAt = new Date().toISOString();
 
   // Make venue names unique within a group, so two identically-named rows can't be
   // billed as two venues but provision as one (provisioning matches by name).
@@ -365,7 +374,7 @@ async function handleCheckout(request, env, json) {
     let nm = v.name, k = 2;
     while (seenNames[nm.toLowerCase()]) { nm = v.name + ' (' + k + ')'; k++; }
     seenNames[nm.toLowerCase()] = true;
-    return { name: nm, seats: v.seats, postcode: v.postcode, entity_type: v.entity_type, bingo_review: v.bingo_review };
+    return { name: nm, seats: v.seats, postcode: v.postcode, entity_type: v.entity_type, bingo_review: v.bingo_review, compliance_accepted_at: acceptedAt };
   });
 
   const venueCount = venues.length;
@@ -1856,14 +1865,16 @@ function vpaQueryParam(request, name) {
  *    optional first-manager Auth user + vp_venue_staff row. Then an audit row.
  *    Body (from hq.html and onboard.html):
  *      { name, slug, timezone, postcode,
- *        venue_kind: 'pub'|'hotel'|'club'|'rsl'|'charity'|'association'|'other',
+ *        entity_type: 'non_profit'|'for_profit'   (club or pub, the signup question; required)
+ *        venue_kind?: 'pub'|'hotel'|'club'|'rsl'|'charity'|'association'|'other' (optional; derived
+ *                     from entity_type when absent, for the HQ compliance card)
  *        compliance: { accepted: true, by: 'name of who agreed' },
  *        billing:{ type:'founding'|'group', group_id?, included_players?,
  *                  founding?:{ contact_email, mobile, postcode, max_seats, plan },
  *                  founding_id? (link an EXISTING venueplay_founding row instead) },
  *        manager?:{ mobile?, email?, display_name } }
  *    -> { ok:true, venue:{id,name,slug}, founding_id?, manager?:{auth_user_id} }
- *    Refused without the compliance tick and a venue kind: a venue we cannot say accepted
+ *    Refused without the compliance tick and a club-or-pub answer: a venue we cannot say accepted
  *    the gaming laws as its own is not one we onboard (Anisimoff, 1 Oct 2026, point 3).
  * ======================================================================== */
 async function vpaHandleVenue(request, env, json) {
@@ -1896,10 +1907,20 @@ async function vpaHandleVenue(request, env, json) {
   }
   const acceptedBy = String(comp.by || '').trim().slice(0, 120);
   if (!acceptedBy) return json({ error: 'Enter the name of the person at the venue who accepted the compliance line, so the record says who said it.' }, 400);
-  const venueKind = String(b.venue_kind || '').trim();
-  if (VPA_VENUE_KINDS.indexOf(venueKind) === -1) {
-    return json({ error: 'Pick what the venue is, in its own words: pub, hotel, club, rsl, charity, association or other.' }, 400);
+  /* CLUB OR PUB, the same two-option question signup asks (audit 20 Oct 2026, C4). HQ's form used
+     to ask a seven-option "what the venue is, in their words" that never set entity_type, so every
+     hand-onboarded venue arrived with no club-or-pub answer and HQ had to remember to set it. The
+     answer now IS entity_type, and paid entry defaults from it exactly as at signup. venue_kind
+     stays for the HQ compliance card: what was sent, else what the answer implies. */
+  const entityType = b.entity_type;
+  if (entityType !== 'non_profit' && entityType !== 'for_profit') {
+    return json({ error: 'Ask them: is the venue a club (RSL, bowls, leagues, non-profit) or a pub (hotel or tavern)? Nothing was created.' }, 400);
   }
+  const kindIn = String(b.venue_kind || '').trim();
+  if (kindIn && VPA_VENUE_KINDS.indexOf(kindIn) === -1) {
+    return json({ error: 'venue_kind must be one of ' + VPA_VENUE_KINDS.join(', ') + '.' }, 400);
+  }
+  const venueKind = kindIn || (entityType === 'non_profit' ? 'club' : 'pub');
 
   const slug = await vpaUniqueSlug(env, slugIn, name, String((b.postcode || '')).replace(/\D/g, '').slice(0, 4));
   let foundingId = null;
@@ -1923,16 +1944,19 @@ async function vpaHandleVenue(request, env, json) {
   const venueRow = { name: name, slug: slug, timezone: timezone,
     /* Migration 100. What they said they are, and the tick with a name and a time on it. */
     venue_kind: venueKind,
+    entity_type: entityType,
     compliance_accepted_at: new Date().toISOString(),
     compliance_accepted_by: acceptedBy };
   let linkedFounding = false;   // true when billing.founding_id named an existing record
-  // HQ's Add venue form does not ask the question, so this stays null and HQ prompts for it.
-  // A guess must never occupy this column: see vpaProvisionOneVenue.
+  // entity_type is the venue's own answer, asked on the call (above). A guess must never occupy
+  // this column: see vpaProvisionOneVenue.
   if (venuePostcode) {
     venueRow.postcode = venuePostcode;
     const st = (typeof vpaStateFromPostcode === 'function') ? vpaStateFromPostcode(venuePostcode) : null;
     if (st) venueRow.au_state = st;
   }
+  // Paid entry defaults from what the venue is and where, the same rule as self-serve signup.
+  venueRow.paid_entry_enabled = vpaPaidEntryDefault(entityType, venueRow.au_state || null);
 
   if (billing.type === 'group') {
     const groupId = billing.group_id;
@@ -2070,7 +2094,7 @@ async function vpaHandleVenue(request, env, json) {
     comp: isComp || undefined, comp_status_fallback: compFellBack || undefined,
     welcome_sent: welcomeSent,
     /* The record of the tick lives on the venue row; the audit says it was taken, by whom. */
-    venue_kind: venueKind, compliance_accepted_by: acceptedBy,
+    venue_kind: venueKind, entity_type: entityType, compliance_accepted_by: acceptedBy,
   });
 
   const out = { ok: true, venue: { id: venue.id, name: venue.name, slug: venue.slug } };
@@ -2903,6 +2927,21 @@ async function vpaHandleVenueGaming(request, env, json) {
     const nb = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=id,number_bingo_on');
     bingoBefore = (nb && nb[0] && nb[0].number_bingo_on === true);
   }
+  /* "SHOW LOGO ON OUR WEBSITE" (migration 111, Dean 20 Oct 2026: "I dont want a venue to be able
+     to put it on our website we should choose"). HQ picks which venues appear in the Trusted by
+     strip; the venue's own tick on Your account is gone and its old route answers 410. Same door
+     as unlimited nights: owner and accounts admins only (vpaRequireAdmin above), a real true or
+     false only, its own audit row, and a trigger in 111 puts the old value back when a venue's own
+     login writes vp_venues directly. */
+  let logoBefore;
+  if (b.show_logo_on_site !== undefined) {
+    if (b.show_logo_on_site !== true && b.show_logo_on_site !== false) {
+      return json({ error: 'show_logo_on_site must be true or false.' }, 400);
+    }
+    patch.show_logo_on_site = b.show_logo_on_site;
+    const ls = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=id,show_logo_on_site');
+    logoBefore = (ls && ls[0] && ls[0].show_logo_on_site === true);
+  }
   if (!Object.keys(patch).length) return json({ error: 'Nothing to change.' }, 400);
 
   const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_venues?id=eq.' + encodeURIComponent(venueId), {
@@ -2925,7 +2964,7 @@ async function vpaHandleVenueGaming(request, env, json) {
   }
   const saved = (await res.json())[0] || {};
 
-  const gamingKeys = Object.keys(patch).filter(function (k) { return k !== 'weekly_limit_off' && k !== 'purchase_raffle_on' && k !== 'number_bingo_on'; });
+  const gamingKeys = Object.keys(patch).filter(function (k) { return k !== 'weekly_limit_off' && k !== 'purchase_raffle_on' && k !== 'number_bingo_on' && k !== 'show_logo_on_site'; });
   if (gamingKeys.length) {
     const gp = {};
     gamingKeys.forEach(function (k) { gp[k] = patch[k]; });
@@ -2959,6 +2998,14 @@ async function vpaHandleVenueGaming(request, env, json) {
       target: 'venue:' + venueId,
       detail: { name: prior.name, state: prior.au_state || null, entity_type: prior.entity_type || null,
                 from: bingoBefore, to: patch.number_bingo_on },
+    }, false).catch(function () {});
+  }
+  if (patch.show_logo_on_site !== undefined) {
+    await vpaInsert(env, 'vp_admin_audit', {
+      actor_admin: actor.actorId || null, actor_label: actor.label || 'admin',
+      action: patch.show_logo_on_site ? 'venue_logo_on_site_on' : 'venue_logo_on_site_off',
+      target: 'venue:' + venueId,
+      detail: { name: prior.name, from: logoBefore, to: patch.show_logo_on_site },
     }, false).catch(function () {});
   }
 
@@ -3815,10 +3862,13 @@ async function vpaProvisionFromCheckout(env, session) {
     // ---- Venue: find the existing one for this founding_id, or create it. ----
     step = 'venue';
     let declaredEntity1 = null;
+    let tickedAt1 = null;   // when the signup tick was given, as /checkout recorded it (C5, 20 Oct 2026)
     try {
       const vlist = f.venues_json ? (typeof f.venues_json === 'string' ? JSON.parse(f.venues_json) : f.venues_json) : null;
       const e = vlist && vlist[0] && vlist[0].entity_type;
       if (e === 'non_profit' || e === 'for_profit') declaredEntity1 = e;
+      const t = vlist && vlist[0] && vlist[0].compliance_accepted_at;
+      if (typeof t === 'string' && !isNaN(Date.parse(t))) tickedAt1 = t;
     } catch (e) { /* older signup with no answer: falls back to the name guess */ }
     let venue = (await vpaSelect(env, 'vp_venues',
       'founding_id=eq.' + encodeURIComponent(foundingId) + '&select=id,name,slug'))[0];
@@ -3836,6 +3886,11 @@ async function vpaProvisionFromCheckout(env, session) {
            unlocks paid entry: only a declaration does that. */
         entity_type: declaredEntity1,   // declared only, never a guess: see vpaProvisionOneVenue
         paid_entry_enabled: vpaPaidEntryDefault(declaredEntity1, vpaStateFromPostcode(f.postcode)),
+        /* The signup tick, recorded from the fact /checkout saved (it refuses without the tick).
+           Before 20 Oct 2026 this path recorded nothing at all, so a single-venue signup read
+           "NOT accepted" in HQ. A lead with no record of the tick stays null: never assumed. */
+        compliance_accepted_at: tickedAt1,
+        compliance_accepted_by: tickedAt1 ? (String(f.contact_name || cd.name || '').trim().slice(0, 200) || 'the signup contact') : null,
         status: 'active',
         timezone: vpaTimezoneFromPostcode(f.postcode),
       });
@@ -4189,7 +4244,7 @@ async function vpaProvisionOneVenue(env, opts) {
          the tick, so a venue provisioned from a paid signup HAS accepted it. Record who, from the
          founding contact, the way /admin/venue records the name typed in HQ. Without this every
          self-serve venue read "NOT accepted" on the HQ compliance card. */
-      compliance_accepted_at: opts.complianceBy ? new Date().toISOString() : null,
+      compliance_accepted_at: opts.complianceBy ? (opts.complianceAt || new Date().toISOString()) : null,
       compliance_accepted_by: opts.complianceBy || null,
     });
     created = true;
@@ -4262,13 +4317,18 @@ async function vpaProvisionGroup(env, session, f) {
     step = 'venues';
     let anyCreated = false;
     // Who ticked the compliance sentence at checkout: the founding contact, or the card holder.
+    // Recorded only for a venue the checkout says WAS ticked (compliance_accepted_at on its
+    // venues_json row, set by /checkout since 20 Oct 2026). A lead saved before then has no such
+    // fact, so the venue shows "NOT accepted" in HQ and is asked, rather than assumed.
     const complianceBy = String(f.contact_name || cd.name || '').trim().slice(0, 200) || 'the signup contact';
     for (let i = 0; i < venues.length; i++) {
       const v = venues[i] || {};
       const name = String(v.name || '').trim() || ('Venue ' + (i + 1));
       const seats = parseInt(v.seats, 10) || null;
       const postcode = String(v.postcode || '').replace(/\D/g, '').slice(0, 4);
-      const r = await vpaProvisionOneVenue(env, { foundingId: foundingId, groupId: null, name: name, seats: seats, postcode: postcode, entityType: v.entity_type || null, authUserId: authUserId, complianceBy: complianceBy });
+      const ticked = typeof v.compliance_accepted_at === 'string' && !isNaN(Date.parse(v.compliance_accepted_at));
+      const r = await vpaProvisionOneVenue(env, { foundingId: foundingId, groupId: null, name: name, seats: seats, postcode: postcode, entityType: v.entity_type || null, authUserId: authUserId,
+                                                  complianceBy: ticked ? complianceBy : null, complianceAt: ticked ? v.compliance_accepted_at : null });
       if (r.created) anyCreated = true;
       // The welcome email needs each venue's OWN screen link, and the slug only exists
       // once the venue does. Without this every card in the email pointed at a bare /tv.
@@ -8443,73 +8503,53 @@ async function vpbLogoRemove(request, env, json) {
   return json({ ok: true });
 }
 
-/* --- POST /account/logo-site { venue_id, show } : "Show our logo on the VenuePlay website". --- */
+/* --- POST /account/logo-site : RETIRED 20 Oct 2026 (migration 111). ---
+   Dean: "I dont want a venue to be able to put it on our website we should choose". Whether a
+   venue's logo is on venueplay.com.au is now HQ's switch (/admin/venue-gaming show_logo_on_site,
+   owner and accounts admins only). This answers 410 for any page still open from before the
+   release, and writes nothing. */
 async function vpbLogoSite(request, env, json) {
-  const g = await vpbLogoDoor(request, env, json);
-  if (g.res) return g.res;
-  if (typeof g.b.show !== 'boolean') return json({ error: 'Say yes or no.' }, 400);
-  try {
-    await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(g.venue.id), { show_logo_on_site: g.b.show });
-  } catch (e) {
-    // Migration 102 not run yet: say so rather than pretend it saved.
-    return json({ error: 'That setting is still being switched on. Try again later.' }, 503);
-  }
-  await vpaInsert(env, 'vp_admin_audit', {
-    ...vpbActorFields(g.o), action: 'logo_on_site', target: 'venue:' + g.venue.id, detail: { show: g.b.show },
-  }, false).catch(function () {});
-  return json({ ok: true, show_logo_on_site: g.b.show });
+  return json({ error: 'VenuePlay now chooses which venue logos appear on its website. Nothing was changed.' }, 410);
 }
 
 /* ---------------------------------------------------------------------------------------
    GET /trusted-logos : the homepage "Trusted by" strip. PUBLIC, no login.
 
    Answers ONLY { name, logo_url } per venue, and only for a venue that is all of:
-     live         vp_venues.status 'active', not HQ-hidden (hide_from_trusted, migration 54)
-     willing      show_logo_on_site true (migration 102). Asked of the DATABASE, so before
-                  migration 102 the read is refused and the strip shows nobody: consent
-                  fails closed.
-     paying       the overage code's own test for a real customer: its account has a Stripe
-                  subscription ("comp/test venue: never charge"), or bills by invoice, and is
-                  not 'comp' or still 'pending'
-     real         not one of Dean's test venues: no test-alpha/bravo/charlie or other
-                  "test" slug or name, and nothing on a 1-player plan (those twelve are his
-                  overage tests and friends, see the 1-player memory)
+     chosen       show_logo_on_site true. Since migration 111 (20 Oct 2026) that is HQ's switch
+                  (HQ > Venues > Details > "Show logo on our website"), never the venue's: Dean,
+                  "I dont want a venue to be able to put it on our website we should choose".
+                  Asked of the DATABASE, so if the column is missing the read is refused and the
+                  strip shows nobody: it fails closed.
+     live         vp_venues.status 'active'
+     real         not one of Dean's test venues: no test-alpha/bravo/charlie or other "test"
+                  slug or name, even if somebody switches one on
      ours         a logo URL this Worker wrote, in our own public storage for that venue
+   Because a person at HQ now chooses each venue, the old "paying" and "not a 1-player plan"
+   rules are gone: Dean wants The Mini Bar (his own real business, on a 1-player plan) shown.
+   hide_from_trusted (migration 54, HQ's old "Hide from homepage") is no longer read: one HQ
+   switch says yes or no, so there are not two flags to disagree.
    Fewer than six and the PAGE hides the whole strip (VPTrusted.MIN in /app/vp-trusted.js),
-   so it never reads as one lonely logo. Cached for ten minutes: it changes when a venue
-   signs on, not by the second.
+   so it never reads as one lonely logo. Cached for ten minutes.
    --------------------------------------------------------------------------------------- */
 const VPB_TEST_SLUG_RE = /(^|-)test(-|$)/i;
 function vpbTrustedVenueIsReal(v) {
   if (!v) return false;
   if (VPB_TEST_SLUG_RE.test(String(v.slug || '')) || /^\s*test\b/i.test(String(v.name || ''))) return false;
-  if (Number(v.max_players) <= 1) return false;
   return true;
-}
-function vpbTrustedAccountPays(a) {
-  if (!a) return false;
-  if (a.status === 'comp' || a.status === 'pending') return false;
-  return !!a.stripe_subscription_id || a.bill_by_invoice === true;
 }
 async function vpbTrustedLogos(env) {
   const venues = await vpaSelectAll(env, 'vp_venues',
-    'status=eq.active&hide_from_trusted=eq.false&show_logo_on_site=eq.true'
-    + '&select=id,name,slug,founding_id,max_players&order=id.asc');
-  const real = venues.filter(vpbTrustedVenueIsReal).filter(function (v) { return !!v.founding_id; });
+    'status=eq.active&show_logo_on_site=eq.true'
+    + '&select=id,name,slug&order=id.asc');
+  const real = venues.filter(vpbTrustedVenueIsReal);
   if (!real.length) return [];
   const inList = function (ids) { return '(' + ids.map(encodeURIComponent).join(',') + ')'; };
-  const fids = real.map(function (v) { return v.founding_id; }).filter(function (x, i, a) { return a.indexOf(x) === i; });
-  const accts = await vpaSelectAll(env, 'venueplay_founding',
-    'id=in.' + inList(fids) + '&select=id,status,stripe_subscription_id,bill_by_invoice&order=id.asc');
-  const pays = {};
-  accts.forEach(function (a) { if (vpbTrustedAccountPays(a)) pays[a.id] = true; });
-  const paying = real.filter(function (v) { return pays[v.founding_id]; });
-  if (!paying.length) return [];
   const screens = await vpaSelectAll(env, 'vp_venue_screen',
-    'venue_id=in.' + inList(paying.map(function (v) { return v.id; })) + '&select=venue_id,logo_url&order=venue_id.asc');
+    'venue_id=in.' + inList(real.map(function (v) { return v.id; })) + '&select=venue_id,logo_url&order=venue_id.asc');
   const logoOf = {};
   screens.forEach(function (s) { if (vpbOurLogoUrl(env, s.logo_url, s.venue_id)) logoOf[s.venue_id] = s.logo_url; });
-  return paying.filter(function (v) { return logoOf[v.id]; })
+  return real.filter(function (v) { return logoOf[v.id]; })
     .map(function (v) { return { name: String(v.name || '').slice(0, 120), logo_url: logoOf[v.id] }; })
     .sort(function (a, b) { return a.name < b.name ? -1 : (a.name > b.name ? 1 : 0); });
 }
@@ -8545,17 +8585,13 @@ async function vpbScreenGet(request, env, json) {
   const rows = await vpaSelect(env, 'vp_venue_screen',
     'venue_id=eq.' + encodeURIComponent(venueId) + '&select=slides,draws,raffle,logo_url');
   const cfg = (rows && rows[0]) || {};
-  /* Its own trip, so a column migration 102 has not added yet can never take the slides down
-     with it: vpaSelect answers [] on a refusal, and the tick then shows its default, on. */
-  const site = await vpaSelect(env, 'vp_venues',
-    'id=eq.' + encodeURIComponent(venueId) + '&select=show_logo_on_site&limit=1');
-  const showOnSite = !(site && site[0] && site[0].show_logo_on_site === false);
+  /* No show_logo_on_site here any more: whether the logo is on our website is HQ's choice since
+     migration 111, and the Screen tab no longer has the tick. */
   return json({
     ok: true,
     venue: { id: venue.id, name: venue.name, slug: venue.slug },
     venues: o.venues.map(function (v) { return { id: v.id, name: v.name, slug: v.slug }; }),
     slides: cfg.slides || [], draws: cfg.draws || [], raffle: cfg.raffle || null, logo_url: cfg.logo_url || null,
-    show_logo_on_site: showOnSite,
   });
 }
 

@@ -131,6 +131,10 @@
   "checks": 63,
   "counted_by": "lines"
  },
+ "tools/console-paid-and-draw-max-in-chrome.test.py": {
+  "checks": 13,
+  "counted_by": "lines"
+ },
  "tools/dropdowns-in-chrome.test.py": {
   "checks": 43,
   "counted_by": "lines"
@@ -387,6 +391,10 @@
   "checks": 9,
   "counted_by": "lines"
  },
+ "tools/test-logo-on-site-hq.js": {
+  "checks": 18,
+  "counted_by": "lines"
+ },
  "tools/test-manager-permissions.js": {
   "checks": 14,
   "counted_by": "lines"
@@ -595,6 +603,10 @@
   "checks": 9,
   "counted_by": "lines"
  },
+ "tools/test-settings-asks-only-what-applies.js": {
+  "checks": 33,
+  "counted_by": "lines"
+ },
  "tools/test-shared-links-absolute.js": {
   "checks": 6,
   "counted_by": "lines"
@@ -688,7 +700,7 @@
   "counted_by": "lines"
  },
  "tools/test-venue-logo-upload.js": {
-  "checks": 50,
+  "checks": 45,
   "counted_by": "lines"
  },
  "tools/test-venue-picker-scopes.js": {

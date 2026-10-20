@@ -203,17 +203,52 @@ async function noteCallerBingo(env, session, on) {
    in every state. Its not bingo." A format of '' is a bingo night before ball one (a bingo lobby
    writes no vp_games row and sets no lobby_format); the callers only ask while a session is
    live, so a quiet night never reaches this. */
-function ageGateFor(state, format) {
+/* NARROWED TO WHAT EACH LAW SAYS (state audit C11, 20 Oct 2026):
+     VIC  bingo, free or paid (the table's "No minors"); a raffle only when tonight's raffle is PAID,
+          because a free draw is not gambling under s1.3AA(4) (quoted in the 8 Oct letter, point 7);
+          never a members draw, which is free entry in every state
+     ACT  housie only where a permit is required, so only when the venue has a bingo permit on
+          record (the same rule as vp-gaming.js permitRecorded: a number, or a charity named with
+          the date it authorised the venue); every other ACT bingo game is exempt and asks nothing
+     TAS  raffles and draws, as before
+   ctx: { permits: vp_venues.permits, rafflePaid: tonight's raffle declaration said paid entry }. */
+function agePermitRecorded(permits, kind) {
+  let p = permits;
+  if (typeof p === 'string') { try { p = JSON.parse(p); } catch (e) { return false; } }
+  const k = p && typeof p === 'object' ? p[kind] : null;
+  if (!k || typeof k !== 'object') return false;
+  if (String(k.number || '').trim()) return true;
+  return k.holder === 'npo' && !!String(k.npo_name || '').trim() && /^\d{4}-\d{2}-\d{2}$/.test(String(k.authorised_on || ''));
+}
+function ageGateFor(state, format, ctx) {
   const st = String(state || '').toUpperCase();
   const f = String(format || '');
+  const c = ctx || {};
   const kind = (!f || f.indexOf('bingo') === 0) ? 'bingo'
              : (f === 'raffle' || f === 'members') ? f
              : null;                                   // trivia, musical, musical_bingo: never
   if (!kind) return false;
-  if (st === 'VIC') return true;
-  if (st === 'ACT') return kind === 'bingo';
+  if (st === 'VIC') return kind === 'bingo' || (kind === 'raffle' && c.rafflePaid === true);
+  if (st === 'ACT') return kind === 'bingo' && agePermitRecorded(c.permits, 'bingo');
   if (st === 'TAS') return kind !== 'bingo';
   return false;
+}
+/* Whether TONIGHT's raffle charges for entry, for the Victorian age tick: the newest rules
+   declaration for a raffle at this venue in the last 24 hours (the same window rulesAccepted uses)
+   says paid_entry. Only asked for a Victorian raffle. A failed read answers false, the same way
+   the venue read above fails open: the lawyer puts the lock on the venue, this is our help. */
+async function rafflePaidTonight(env, venueId) {
+  try {
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const rows = await sbGet(env, 'vp_gaming_declarations', 'venue_id=eq.' + enc(venueId) +
+      '&format=eq.raffle&declared_at=gt.' + enc(since) + '&select=paid_entry&order=declared_at.desc&limit=1');
+    return !!(rows && rows[0] && rows[0].paid_entry === true);
+  } catch (e) { return false; }
+}
+async function ageGateNow(env, venueId, state, format, permits) {
+  const st = String(state || '').toUpperCase();
+  const rafflePaid = (st === 'VIC' && String(format || '') === 'raffle') ? await rafflePaidTonight(env, venueId) : false;
+  return ageGateFor(state, format, { permits: permits, rafflePaid: rafflePaid });
 }
 /* PAPER PLAYERS (migration 88). Dean, 25 Sep 2026: printed musical bingo cards and trivia answer
    sheets for the regulars who will not use a phone. Ten a night; during the free month a venue may
@@ -1267,7 +1302,7 @@ async function handleJoinInfo(request, env, json) {
      returns, so nothing new is exposed. */
   let channel = '';
   try {
-    const vrows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name,au_state,slug&limit=1');
+    const vrows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name,au_state,slug,permits&limit=1');
     if (vrows && vrows[0] && vrows[0].name) venueName = String(vrows[0].name);
     if (vrows && vrows[0] && vrows[0].slug) channel = fnvVenueCode(vrows[0].slug);
     /* PAPER-TICKET STATES. Three jurisdictions still expect a printed ticket in the player's hand
@@ -1304,7 +1339,7 @@ async function handleJoinInfo(request, env, json) {
     }
     /* The age tick rides beside the paper flag, because this is the call the phone page acts on
        before it shows a ticket. Decided here, not on the phone, for the same reason as paper. */
-    if (liveNow && vrows && vrows[0]) ageGate = ageGateFor(vrows[0].au_state, format);
+    if (liveNow && vrows && vrows[0]) ageGate = await ageGateNow(env, venueId, vrows[0].au_state, format, vrows[0].permits);
   } catch (e) { /* the notice falls back to "the venue you are playing at" */ }
   /* CALLER MODE: a bingo night called with real balls is a paper night in every state. Outside the
      try above, so a failed venue read cannot hand a phone a ticket on a paper-book night. */
@@ -2640,21 +2675,22 @@ async function handlePlayLive(request, env, json) {
      lookup answers null for a suspended venue and this returned exists:false first. */
   const venueId = await venueByCode(env, url.searchParams.get('code') || '', { includeSuspended: true });
   if (!venueId) return json({ exists: false, live: false });
-  const vrows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name,status,au_state&limit=1');
+  const vrows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name,status,au_state,permits&limit=1');
   const name = (vrows && vrows[0] && vrows[0].name) || '';
   /* paper_bingo and age_gate here as well as on /join/info (15 Oct 2026): the state's rules for
      the phone, decided by the Worker for whichever format is on tonight. Same two helpers as
      /join/info, so the two answers cannot disagree. Computed on the format resolved below. */
   const auState = (vrows && vrows[0] && vrows[0].au_state) || '';
   /* And caller mode (real balls, paper books) from the session's own row: a paper night in any state. */
-  const phoneRules = (format, session) => {
+  const permits = (vrows && vrows[0] && vrows[0].permits) || null;
+  const phoneRules = async (format, session) => {
     const bingoOn = !format || String(format).indexOf('bingo') === 0;
     const caller = bingoOn && callerBingoNight(session);
     const state = bingoOn && PAPER_BINGO_STATES.has(String(auState).toUpperCase());
     return {
       paper_bingo: caller || state,
       paper_reason: caller ? CALLER_REASON : (state ? 'state' : ''),
-      age_gate: ageGateFor(auState, format)
+      age_gate: await ageGateNow(env, venueId, auState, format, permits)
     };
   };
   /* BILLING CLOSING SOMETHING HAS TO REACH THE WALL.
@@ -2695,7 +2731,7 @@ async function handlePlayLive(request, env, json) {
     exists: true, name, live: true,
     join_code: sessions[0].join_code,
     format,
-  }, phoneRules(format, sessions[0])));
+  }, await phoneRules(format, sessions[0])));
 }
 
 async function abuseIpHash(request, env) {

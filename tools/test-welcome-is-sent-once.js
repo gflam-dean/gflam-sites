@@ -15,7 +15,7 @@ function reset() { DB = {}; sent.length = 0; stripeCalls.length = 0; FAIL = {}; 
 function toCustomer(addr) { return sent.filter(function (m) { return (m.to || [])[0] === addr; }); }
 async function signup(email, venues) {
   await handleCheckout(REQ({ name: 'Bob', email: email, mobile: '0412 345 678', postcode: '2000', plan: 'monthly',
-    founding_code: 'NSW-SEP-2026', venues: venues }), ENV, J);
+    founding_code: 'NSW-SEP-2026', venues: venues, compliance_accepted: true }), ENV, J);
   var rowId = DB.venueplay_founding[DB.venueplay_founding.length - 1].id;
   return { client_reference_id: rowId, metadata: { tier: 'founding', row_id: rowId }, customer: 'cus_1', subscription: 'sub_1',
            created: Math.floor(Date.now() / 1000) };

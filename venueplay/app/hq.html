@@ -361,21 +361,16 @@
         <div class="field nvFoundF"><label>Contact email</label><input type="email" id="nvEmail" placeholder="owner@venue.com.au"></div>
         <div class="field"><label>Venue postcode</label><input type="text" id="nvPostcode" placeholder="e.g. 4224" class="mono" maxlength="4" inputmode="numeric"><div class="note" style="margin-top:4px">The VENUE's postcode, not the account's. It sets the state, which decides which gaming rules apply and whether players can use phones for bingo.</div><div class="note hidden" id="nvNoBingo" style="margin-top:6px;color:var(--roll)"></div></div>
         <div class="field"><label>First manager's mobile</label><input type="text" id="nvMobile" placeholder="e.g. 0412 345 678" class="mono"><div class="note" style="margin-top:4px">They are texted a login invite. Without this nobody at the venue can sign in.</div></div>
-        <!-- What the venue says it is, and the compliance tick. Anisimoff Legal 9380, 1 Oct 2026, point 3:
+        <!-- Club or pub, and the compliance tick. Anisimoff Legal 9380, 1 Oct 2026, point 3:
              compliance is the venue's, and an active tick box confirming that is prudent. Read the line to
              them on the onboarding call and tick it in their name; the Worker refuses the onboarding without
-             it. Their answer to "what are you" is a SUGGESTION for the club/pub dropdown on the card, never
-             set automatically (HQ still decides entity_type). -->
-        <div class="field"><label>What the venue is (their words)</label><select id="nvKind">
+             it. Club or pub is the SAME two-option question signup asks, and it sets entity_type (and so
+             whether paid entry starts on), as signup does (audit 20 Oct 2026, C4). -->
+        <div class="field"><label>Club or pub?</label><select id="nvKind">
           <option value="">Ask them...</option>
-          <option value="pub">Pub</option>
-          <option value="hotel">Hotel</option>
-          <option value="club">Registered club</option>
-          <option value="rsl">RSL</option>
-          <option value="charity">Charity</option>
-          <option value="association">Association (community, sporting, P and C)</option>
-          <option value="other">Other</option>
-        </select><div class="note" style="margin-top:4px">A club, RSL, charity or association suggests non-profit on the card; a pub or hotel suggests for-profit. You still set it there.</div></div>
+          <option value="non_profit">Club (RSL, bowls, leagues, non-profit)</option>
+          <option value="for_profit">Pub (hotel or tavern)</option>
+        </select><div class="note" style="margin-top:4px">The same question the signup page asks. It sets club or pub on the venue's card.</div></div>
         <div class="field" style="grid-column:1 / -1"><label style="display:flex;align-items:flex-start;gap:8px;font-weight:400;text-transform:none;letter-spacing:0;line-height:1.45"><input type="checkbox" id="nvCompliance" style="width:auto;margin:3px 0 0"> <span id="nvComplianceText">We are responsible for complying with the gaming laws that apply to our venue, including any permit, licence or authority, age limits and attendance rules. VenuePlay supplies the software only.</span></label>
           <input type="text" id="nvComplianceBy" placeholder="Name of the person at the venue who agreed (e.g. Jane Smith, licensee)" style="margin-top:8px">
           <div class="note" style="margin-top:4px">Read it to them on the call, then tick it in their name. The venue cannot be created without it, and the record says who agreed and when.</div></div>
@@ -866,7 +861,7 @@
   /* ---- state ---- */
   var S={ ctx:null, adminRole:null,
           venues:[], groups:[], groupById:{}, discounts:[], usage:[], usageMonth:null,
-          admins:[], audit:[], live:{}, liveSessions:[], gameBySession:{}, spots:null, hideHp:{},
+          admins:[], audit:[], live:{}, liveSessions:[], gameBySession:{}, spots:null, logoSite:{}, logoUrl:{},
           testFlag:{}, showTest:false, showLeft:false, quietSince:{},
           cancelling:{}, cancelAudit:null,
           /* OPENS ON THE ONES THAT NEED DOING. Dean, 12 Sep 2026: "can we have that default
@@ -941,10 +936,10 @@
       c.from("vp_sessions").select("id,venue_id,status,opened_at,started_at").in("status",["lobby","running","paused"]),
       c.rpc("venueplay_spots_taken"),
       c.from("vp_games").select("session_id,format,started_at,status").eq("status","running"),
-      // Separate + fault-tolerant on purpose: hide_from_trusted (migration 54) is NOT named in
-      // listVenues, because a not-yet-migrated column there would 400 and empty the whole list. Here
-      // a 400 just leaves the flag map empty and every Hide button defaults to "Hide from homepage".
-      c.from("vp_venues").select("id,hide_from_trusted"),
+      /* "Show logo on our website" (migration 102 column, HQ's own switch since migration 111).
+         Separate and fault-tolerant on purpose: a column named in listVenues that a database
+         refuses would 400 and empty the whole list. Here a 400 leaves every switch reading off. */
+      c.from("vp_venues").select("id,show_logo_on_site"),
       /* Separate and fault-tolerant for the same reason as the line above: naming
          screen_seen_at in listVenues would 400 the whole venue list on a database
          that has not run migration 64, and an ops indicator is never worth the list
@@ -963,7 +958,7 @@
       // Who may collect player contact details. Its own query so a failure here cannot take
       // the venue list down with it; the panel says so rather than rendering empty.
       c.from("venueplay_founding").select("id,venue_name,contact_email,optin_release_approved"),
-      /* UNLIMITED NIGHTS (migration 107). Its own query for the same reason as hide_from_trusted:
+      /* UNLIMITED NIGHTS (migration 107). Its own query for the same reason as show_logo_on_site above:
          before 107 is run this one 400s and every switch reads "off"; the venue list is untouched. */
       c.from("vp_venues").select("id,weekly_limit_off"),
       /* ONE-NIGHT PASS (migration 110). Its own query, same reason: before 110 is run this one 400s
@@ -983,7 +978,10 @@
       c.from("vp_venues").select("id,purchase_raffle_on"),
       /* NUMBER BINGO SWITCH (migration 116). Its own query, same reason: before 116 is run this one
          400s and the card says the switch is not available yet; the venue list is untouched. */
-      c.from("vp_venues").select("id,number_bingo_on")
+      c.from("vp_venues").select("id,number_bingo_on"),
+      /* Which venues have a logo, so the website switch can say "no logo yet, it will not show".
+         Its own query: a failure leaves the note unsaid, never the list empty. */
+      c.from("vp_venue_screen").select("venue_id,logo_url")
     ]).then(function(settled){
       var r = settled.map(function(x){ return x.status==="fulfilled" ? x.value : null; });
       var venuesFailed = settled[0].status !== "fulfilled";
@@ -992,7 +990,10 @@
         $("venueRows").innerHTML='<tr><td colspan="5" class="empty" style="border:none;background:none">Could not load venues: '+esc(why)+'</td></tr>';
       }
       S.venues=(r[0]||[]).slice().sort(function(a,b){ return String(a.name||"").localeCompare(String(b.name||"")); });
-      S.hideHp={}; ((r[9] && r[9].data) || []).forEach(function(v){ S.hideHp[v.id]=!!v.hide_from_trusted; });   // homepage-marquee visibility (migration 54)
+      S.logoSite={}; S.logoSiteKnown = !!(r[9] && !r[9].error && r[9].data);
+      ((r[9] && r[9].data) || []).forEach(function(v){ S.logoSite[v.id]=v.show_logo_on_site===true; });   // HQ's website-logo switch (migration 111)
+      S.logoUrl={}; S.logoUrlKnown = !!(r[20] && !r[20].error && r[20].data);
+      ((r[20] && r[20].data) || []).forEach(function(x){ if(x.logo_url) S.logoUrl[x.venue_id]=x.logo_url; });
       S.cancelling={}; ((r[11] && r[11].data) || []).forEach(function(v){ S.cancelling[v.id]=!!v.cancel_at_period_end; });
       loadTestFlags((r[12] && r[12].data) || []);
       S.screenSeen={}; S.screenVer={};
@@ -2183,7 +2184,6 @@
            fires once, at creation, and there was no second chance: the only fix was to
            delete the venue and build it again. */
         (canBilling() ? '<button class="mini" data-resend="'+esc(v.id)+'">Resend welcome</button>' : '')+
-        '<button class="mini" data-hidehp="'+esc(v.id)+'">'+(S.hideHp[v.id]?"Show on homepage":"Hide from homepage")+'</button>'+
         // Marks it ours. Off every count and chase list, still reachable under Test venues.
         '<button class="mini" data-testflag="'+esc(v.id)+'">'+(isTest(v)?"Not a test venue":"Mark as a test venue")+'</button>'+
         '<a class="mini" href="settings.html?venue='+encodeURIComponent(v.id)+'">Settings</a>';
@@ -2241,6 +2241,7 @@
         praffleHtml(v)+
         nightPassHtml(v)+
         numberBingoHtml(v, ent)+
+        logoSiteHtml(v)+
         complianceHtml(v, ent)+
         screenHistoryHtml(v);
       dt.innerHTML='<td colspan="5">'+
@@ -2387,8 +2388,6 @@
     }
     var ta=e.target.closest("button[data-tvads]");
     if(ta){ adsBackOn(ta.getAttribute("data-tvads"), ta); return; }
-    var hh=e.target.closest("button[data-hidehp]");
-    if(hh){ toggleHideHomepage(hh.getAttribute("data-hidehp"), hh); return; }
     var tf=e.target.closest("button[data-testflag]");
     if(tf){
       var tid=tf.getAttribute("data-testflag"), tv=venueById(tid), was=isTest(tv);
@@ -2431,6 +2430,8 @@
     if(pr) setPraffle(pr.getAttribute("data-vid"), pr.checked, pr);
     var nb=e.target.closest("input.numbingo");
     if(nb) setNumberBingo(nb.getAttribute("data-vid"), nb.checked, nb);
+    var lo=e.target.closest("input.logosite");
+    if(lo) setLogoSite(lo.getAttribute("data-vid"), lo.checked, lo);
   });
   $("venueRows").addEventListener("click", function(e){
     var g=e.target.closest("button[data-npgrant]");
@@ -2597,6 +2598,39 @@
       el.disabled=false;
       if(res.error){ vpTell(res.error); renderVenues(); return; }
       S.praffle[id] = (res.venue && res.venue.purchase_raffle_on !== undefined) ? res.venue.purchase_raffle_on === true : !!on;
+      renderVenues(); loadAuditOnly();
+    });
+  }
+
+  /* SHOW LOGO ON OUR WEBSITE (migration 111, Dean 20 Oct 2026: "I dont want a venue to be able to
+     put it on our website we should choose"). HQ picks the venues in the Trusted by strip on
+     venueplay.com.au; the venue's own tick is gone. Owner and accounts admins only, the same
+     people the Worker lets through, and the Worker writes the audit row (venue_logo_on_site_on /
+     _off). The strip itself still needs an active venue, a logo it uploaded, and never a test
+     venue, and the page shows nothing until six venues qualify (VPTrusted.MIN). */
+  function logoSiteHtml(v){
+    if(!canBilling()) return "";
+    var on = !!(S.logoSite && S.logoSite[v.id]);
+    var hasLogo = !!(S.logoUrl && S.logoUrl[v.id]);
+    return '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line-2)">'+
+      '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:700">'+
+        '<input type="checkbox" class="logosite" data-vid="'+esc(v.id)+'"'+(on?" checked":"")+
+        (S.logoSiteKnown?"":" disabled")+' style="accent-color:var(--pink);width:16px;height:16px;margin:0">'+
+        'Show logo on our website</label>'+
+      '<div class="note" style="margin-top:4px">'+
+        (!S.logoSiteKnown ? "Could not read this switch just now. Reload the page."
+          : on ? "ON: this venue's logo is in the Trusted by strip on venueplay.com.au."
+               : "Off: this venue's logo is not on our website.")+
+        ((S.logoUrlKnown && !hasLogo) ? " This venue has no logo uploaded yet, so nothing shows until it adds one." : "")+
+        ' The strip appears once six venues are switched on. Every change is recorded in the audit log.</div>'+
+    '</div>';
+  }
+  function setLogoSite(id, on, el){
+    el.disabled=true;
+    workerPost("/admin/venue-gaming", { venue_id:id, show_logo_on_site: !!on }).then(function(res){
+      el.disabled=false;
+      if(res.error){ vpTell(res.error); renderVenues(); return; }
+      S.logoSite[id] = (res.venue && res.venue.show_logo_on_site !== undefined) ? res.venue.show_logo_on_site === true : !!on;
       renderVenues(); loadAuditOnly();
     });
   }
@@ -3029,19 +3063,6 @@
     });
     });
   }
-  /* Show/hide a venue on the public "Trusted by" homepage marquee. Direct client update: admins have
-     FOR ALL on vp_venues (same policy HQ already uses to reassign a venue's group). No Worker needed.
-     v_vp_trusted (migration 54) excludes venues with hide_from_trusted=true. */
-  function toggleHideHomepage(id, btn){
-    var next = !S.hideHp[id];
-    btn.disabled=true; var old=btn.textContent; btn.textContent="…";
-    VP.getClient().from("vp_venues").update({ hide_from_trusted: next }).eq("id", id).then(function(r){
-      btn.disabled=false;
-      if(r.error){ btn.textContent=old; vpTell("Could not change homepage visibility: "+(r.error.message||r.error)+"\n\n(If this says the column is missing, run migration 54 first.)"); return; }
-      S.hideHp[id]=next; renderVenues();
-    });
-  }
-
   /* ================= BILLING ================= */
   /* ONE SOURCE. usageForMonth used to read S.usage (vp_billing_usage), which no code anywhere
      has ever written a row to, while the billing table beside it now reads the live meter. Two
@@ -4144,8 +4165,8 @@
     /* The compliance tick and what they are. The Worker refuses without both; checked here as
        well so the person on the call is told before the form clears. */
     var kind=$("nvKind").value;
-    if(!kind){ errFlash("addVenueErr","Pick what the venue is, in their words (pub, hotel, club, RSL, charity, association or other)."); return; }
-    body.venue_kind=kind;
+    if(kind!=="non_profit" && kind!=="for_profit"){ errFlash("addVenueErr","Ask them: is the venue a club or a pub?"); return; }
+    body.entity_type=kind;
     if(!$("nvCompliance").checked){ errFlash("addVenueErr","Read them the compliance line and tick it. The venue must accept that the gaming laws are its responsibility before it is created."); return; }
     var by=$("nvComplianceBy").value.trim();
     if(!by){ errFlash("addVenueErr","Enter the name of the person at the venue who agreed to the compliance line."); return; }

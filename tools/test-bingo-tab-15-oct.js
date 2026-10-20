@@ -232,6 +232,8 @@ function makeConsole(name, win) {
     'function attachPats(o){ return o; } function loadCustomPatterns(){}' +   // the venue's own patterns (24 Oct 2026): not this suite's subject
     'function postReport(){} function showNightCard(){ nights++; } function blockedByHold(){ return false; }' +
     'function showGameSelect(){ currentGame=""; menus++; }' +
+    // The Tickets choice shown only where paid entry is unlocked (state audit C6): not this suite's subject.
+    'function syncBingoPaidChoice(){}' +
     'function openLobbyNow(){ lobbiesOpened++; G.status="lobby"; send({ t:"mode", mode:"bingo" }); sendState(); saveGame(); }' +
     'function onMsg(m){ heard.push(m.t); }' +
     // The server's ticket and claim record (19 Oct 2026): a restored night asks it again later. Not this suite's subject.
@@ -379,6 +381,7 @@ print('\n== 2b. the Open lobby button asks the other tabs BEFORE the state gamin
     var f = new Function('window', 'VP_ONETAB', 'setTimeout', 'log',
       'var _startBusy=false; var G={ status:"setup", paidMode:"" }; var __ctx={ venue:{ id:"venue-1" } };' +
       lift(CONSOLE, 'oneTabOn', 'index.html') + lift(CONSOLE, 'oneTabKey', 'index.html') +
+      'var FREE_BINGO_RULES_STATES={ NSW:1, VIC:1, ACT:1, TAS:1 };' + lift(CONSOLE, 'bingoGateOpts', 'index.html') +
       'function oneTabNoticeOpts(){ return {}; } function startGame(){ log.push("start"); } function openLobby(){ log.push("openLobby"); }' +
       'var VPGaming = window.VPGaming = { gateFor:function(g, go){ log.push("rules"); go(); } };' +
       'return ' + HANDLER + ';');

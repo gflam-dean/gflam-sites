@@ -633,7 +633,13 @@
         <div class="mdf"><label class="flabel" for="md-startjp">Starting jackpot ($)</label><input type="number" id="md-startjp" min="0" step="1" inputmode="numeric"></div>
         <div class="mdf"><label class="flabel" for="md-inc">Weekly increase ($)</label><input type="number" id="md-inc" min="0" step="1" inputmode="numeric"></div>
         <div class="mdf"><label class="flabel" for="md-curjp">Current jackpot ($)</label><input type="number" id="md-curjp" min="0" step="1" inputmode="numeric"></div>
+        <!-- MAXIMUM JACKPOT (migration 101; state audit C12, 20 Oct 2026). The lawyer "strongly
+             recommends" a customer-set maximum before the draws (Anisimoff Legal, 1 Oct 2026 point 10,
+             8 Oct 2026 point 6). It was only on the members console; it is here too, saved through
+             the same /host/members/settings field, so setting up a draw asks it in one place. -->
+        <div class="mdf"><label class="flabel" for="md-max">Maximum jackpot ($)</label><input type="number" id="md-max" min="0" step="1" inputmode="numeric" placeholder="No maximum"></div>
       </div>
+      <p class="snote" style="margin:8px 0 0">Maximum jackpot: leave it blank for no maximum. Once the jackpot reaches it, the draw keeps running at that figure until it is won, and each week's increase goes into a reserve that seeds the next jackpot.</p>
       <p class="snote" style="margin:8px 0 0">The draw day comes from your start date. The current jackpot is the live amount on your TV: it resets to the starting jackpot when someone claims it and grows by the weekly increase when it rolls over, so changing the starting jackpot or the weekly increase does not touch it. Type a new amount to change it.</p>
       <button class="addbtn" id="mdCalcJp" type="button" style="margin-top:8px">Work out the jackpot from the start date</button>
       <div class="btnrow">
@@ -728,8 +734,9 @@
       </div>
       <p class="snote" style="margin-top:10px">A logo with a see-through background sits cleanly on the screen. If yours has a plain white or coloured box behind it, choose it and tap Remove background.</p>
       <p class="snote" id="logoHint" style="color:var(--gold)" hidden></p>
-      <label class="hostchk" style="margin-top:6px"><input type="checkbox" id="logoOnSite" checked><span>Show our logo on the VenuePlay website</span></label>
-      <p class="snote" style="margin-top:4px">When ticked, your logo can appear in the "Trusted by" strip on venueplay.com.au with the other venues running VenuePlay. Untick it to keep your logo off our website. Your TV is not affected either way.</p>
+      <!-- "Show our logo on the VenuePlay website" was a tick here until 20 Oct 2026. Dean: "I dont
+           want a venue to be able to put it on our website we should choose". HQ chooses now
+           (HQ > Venues > Details, migration 111); the old route answers 410. -->
     </div>
 
     <div class="scard">
@@ -1810,16 +1817,8 @@
       showMsg("Logo removed. Your TV updates in a few seconds.", true);
     });
   }
-  function setLogoOnSite(show){
-    if(!screenCurrent) return;
-    var box=$("logoOnSite");
-    api("/account/logo-site",{ venue_id:screenCurrent.id, show:!!show }).then(function(s){
-      if(!s || s.error){ if(box) box.checked=!show; showMsg((s&&s.error)||"Could not save that."); return; }
-      showMsg(show ? "Saved. Your logo can appear on the VenuePlay website." : "Saved. Your logo is kept off the VenuePlay website.", true);
-    });
-  }
   (function(){
-    var lf=document.getElementById("logoFile"), lr=document.getElementById("logoRemove"), ls=document.getElementById("logoOnSite");
+    var lf=document.getElementById("logoFile"), lr=document.getElementById("logoRemove");
     if(lf) lf.addEventListener("change", function(){ var f=this.files&&this.files[0]; if(f) openLogoEditor(f); this.value=""; });
     var cb=$("logoCutBtn"), tl=$("logoTol"), mo=$("logoModeOrig"), mc=$("logoModeCut"), sv=$("logoSave"), cn=$("logoCancel");
     if(cb) cb.addEventListener("click", logoCut);
@@ -1837,7 +1836,6 @@
       if(had) showMsg(saved ? "Kept the logo as you first chose it. The background-removed version was not saved." : "Nothing was saved.");
     });
     if(lr) lr.addEventListener("click", removeLogo);
-    if(ls) ls.addEventListener("change", function(){ setLogoOnSite(this.checked); });
     // Clicking the logo box itself opens the picker too, same as the slide image slot.
     var lt=document.getElementById("logoThumb");
     if(lt && lf){ lt.style.cursor="pointer"; lt.title="Click to upload a logo"; lt.addEventListener("click", function(){ lf.click(); }); }
@@ -1879,7 +1877,6 @@
     var sl = $("slides"); sl.innerHTML = "";
     (cfg.slides||[]).forEach(function(s){ sl.appendChild(slideRow(s)); });
     screenLogoUrl = cfg.logo_url || ""; renderLogo(); logoHint("");
-    var _los=$("logoOnSite"); if(_los) _los.checked = cfg.show_logo_on_site !== false;
     // Rows are rebuilt here, so their buttons need the venue name putting back on them.
     paintScreenVenue();
   }
@@ -2228,6 +2225,11 @@
      only when the owner typed in that box (or pressed "Work out the jackpot"), so an unrelated
      edit cannot put back a figure the host console has moved on from since the page opened. */
   var mdCurTouched = false;
+  /* The maximum is sent only when the owner typed in its box, for the same reason as the current
+     jackpot: the members console can set it too, and an unrelated save from a page opened earlier
+     must not put back (or clear) a maximum the console changed since. A blank box, once typed in,
+     is a real instruction: no maximum (null). */
+  var mdMaxTouched = false;
   function fillMembersDraw(d){
     mdCurTouched = false;
     d = d || {};
@@ -2239,6 +2241,8 @@
     $("md-startjp").value = toDollars(d.starting_amount_cents);
     $("md-inc").value = toDollars(d.increment_cents);
     $("md-curjp").value = toDollars(d.current_jackpot_cents);
+    mdMaxTouched = false;
+    $("md-max").value = toDollars(d.max_jackpot_cents);
   }
   var mdDraws = [];
   /* A club can run more than one draw: a Friday members draw and a Sunday one, different jackpots,
@@ -2350,6 +2354,7 @@
     var sj=toCents($("md-startjp").value); if(sj!==undefined) body.starting_amount_cents=sj;
     var ic=toCents($("md-inc").value);     if(ic!==undefined) body.increment_cents=ic;
     if (mdCurTouched){ var cj=toCents($("md-curjp").value); if(cj!==undefined) body.current_jackpot_cents=cj; }
+    if (mdMaxTouched){ var mx=toCents($("md-max").value); body.max_jackpot_cents = (mx===undefined) ? null : mx; }
     // Always send the day and time, even when they are empty. Sending them only when filled
     // meant a venue could set a draw night but never unset one, so the TV kept advertising a
     // draw that was not running. An empty string is a real instruction: take it off the board.
@@ -2367,6 +2372,7 @@
       // Show the jackpot the Worker now holds, and forget the edit: it has been sent.
       if (r.draw && r.draw.current_jackpot_cents != null) $("md-curjp").value = toDollars(r.draw.current_jackpot_cents);
       mdCurTouched = false;
+      if (r.draw){ $("md-max").value = toDollars(r.draw.max_jackpot_cents); mdMaxTouched = false; }
       pushToScreen(mdCurrent);
       showMsg("Members draw saved. Your TV updates in a few seconds.", true);
     });
@@ -2958,6 +2964,7 @@
     $("mdImport").addEventListener("click", importMembers);
     ["md-start","md-startjp","md-inc"].forEach(function(id){ $(id).addEventListener("input", mdRecalc); $(id).addEventListener("change", mdRecalc); });
     ["input","change"].forEach(function(ev){ $("md-curjp").addEventListener(ev, function(){ mdCurTouched = true; }); });
+    ["input","change"].forEach(function(ev){ $("md-max").addEventListener(ev, function(){ mdMaxTouched = true; }); });
     $("mdCalcJp").addEventListener("click", mdWorkOutJackpot);
     $("md-csvbtn").addEventListener("click", function(){ $("md-csv").click(); });
     $("md-csv").addEventListener("change", function(){

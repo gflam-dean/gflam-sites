@@ -96,6 +96,7 @@ function signup(opts) {
     founding_code: ('code' in opts) ? opts.code : 'NSW-DEC-2099',
     plan: 'monthly',
     venues: opts.venues || [{ name: 'The Pub', seats: 50, postcode: opts.postcode || '2000' }],
+    compliance_accepted: true,   // the signup tick, sent since 20 Oct 2026 (the Worker refuses without it)
   };
   /* text() as well as json(): vpaBody() reads the body as text so it can tell an
      empty body from a malformed one, and a real Request has both. */

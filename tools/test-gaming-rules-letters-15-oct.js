@@ -43,7 +43,7 @@ var EMDASH = new RegExp(String.fromCharCode(8212));   // built from the code so 
 STATES.forEach(function (s) { ENT.forEach(function (e) { FMT.forEach(function (f) {
   var a = paid(s, e, f), t = text(a), tag = s + '/' + e + '/' + f;
   var rule = G.states[s][e][G.kindOf(f)];
-  if (!rule) noRule.push(tag);
+  if (!rule && f !== 'musical') noRule.push(tag);   // musical bingo is its own kind with no state table (Dean, 19 Oct 2026)
   if (/gaming machines/i.test(t)) machines.push(tag);
   if (EMDASH.test(t)) emdash.push(tag);
   if (/\bthe ACT\b/.test(t)) theAct.push(tag);

@@ -147,25 +147,20 @@
       </div>
     </div>
 
-    <!-- What the venue says it is, and the compliance tick. Anisimoff Legal 9380, 1 Oct 2026,
-         point 3: compliance is the venue's, and an active tick box confirming it is prudent. The
-         Worker refuses the onboarding without both. The venue's own answer SUGGESTS club or pub
-         on the HQ card; HQ still sets entity_type and paid entry by hand (migration 44). -->
+    <!-- Club or pub, and the compliance tick. Anisimoff Legal 9380, 1 Oct 2026, point 3: compliance is
+         the venue's, and an active tick box confirming it is prudent. The Worker refuses the onboarding
+         without both. Club or pub is the SAME two-option question signup asks, and it sets entity_type
+         (and so whether paid entry starts on), as signup does (audit 20 Oct 2026, C4). -->
     <div class="card">
       <div class="lbl">Compliance (required)</div>
       <div class="field">
-        <label>What the venue is, in their words</label>
+        <label>Club or pub?</label>
         <select id="vkind">
           <option value="">Ask them...</option>
-          <option value="pub">Pub</option>
-          <option value="hotel">Hotel</option>
-          <option value="club">Registered club</option>
-          <option value="rsl">RSL</option>
-          <option value="charity">Charity</option>
-          <option value="association">Association (community, sporting, P and C)</option>
-          <option value="other">Other</option>
+          <option value="non_profit">Club (RSL, bowls, leagues, non-profit)</option>
+          <option value="for_profit">Pub (hotel or tavern)</option>
         </select>
-        <div class="note">A club, RSL, charity or association suggests non-profit in HQ; a pub or hotel suggests for-profit. HQ confirms it before paid entry is switched on.</div>
+        <div class="note">The same question the signup page asks. It sets club or pub on the venue's card in HQ.</div>
       </div>
       <div class="field">
         <label style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--text);line-height:1.5;text-transform:none;letter-spacing:0;font-weight:500">
@@ -355,8 +350,8 @@
     /* The compliance tick and what they are. The Worker refuses without both; checked here too
        so the person on the call is told before anything is sent. */
     var kind=$("vkind").value;
-    if(!kind){ $("err").textContent="Pick what the venue is, in their words (pub, hotel, club, RSL, charity, association or other)."; return; }
-    body.venue_kind=kind;
+    if(kind!=="non_profit" && kind!=="for_profit"){ $("err").textContent="Ask them: is the venue a club or a pub?"; return; }
+    body.entity_type=kind;
     if(!$("vcompliance").checked){ $("err").textContent="Read them the compliance line and tick it. The venue must accept that the gaming laws are its responsibility before it is created."; return; }
     var by=($("vcomplianceby").value||"").trim();
     if(!by){ $("err").textContent="Enter the name of the person at the venue who agreed to the compliance line."; return; }

@@ -25,7 +25,7 @@ STATES.forEach(function (s) { ENT.forEach(function (e) { FMT.forEach(function (f
   var a = free(s, e, f), t = text(a);
   if (/anywhere/i.test(t)) absolute.push(s + '/' + e + '/' + f);
   if (/no (prize )?limit/i.test(t) && s !== 'QLD') noLimit.push(s + '/' + e + '/' + f);   // Queensland Category 4 really has none
-  if (a.points.length < 2) silent.push(s + '/' + e + '/' + f);
+  if (a.points.length < 2 && f !== 'musical') silent.push(s + '/' + e + '/' + f);   // musical bingo has no state rules at all (Dean, 19 Oct 2026)
   if (a.hardBlock || a.blocked || a.ok === false) blocked.push(s + '/' + e + '/' + f);
   if (/gaming machines/i.test(t)) machines.push(s + '/' + e + '/' + f);
   if (EMDASH.test(t)) emdash.push(s + '/' + e + '/' + f);

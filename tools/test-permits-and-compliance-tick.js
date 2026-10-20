@@ -76,7 +76,7 @@ function world() {
 var TICK = { accepted: true, by: 'Jane Smith, licensee' };
 function onboarding(extra) {
   var b = { name: 'The New Tavern', slug: 'new-tavern-2000', timezone: 'Australia/Sydney', postcode: '2000',
-            billing: { type: 'group', group_id: 'g1', included_players: 60 }, venue_kind: 'hotel', compliance: TICK };
+            billing: { type: 'group', group_id: 'g1', included_players: 60 }, entity_type: 'for_profit', venue_kind: 'hotel', compliance: TICK };
   for (var k in (extra || {})) b[k] = extra[k];
   return b;
 }
@@ -94,9 +94,11 @@ function permit(over) { var p = { number: '', holder: 'venue', npo_name: '', aut
   r = await vpaHandleVenue(as(ADMIN, onboarding({ compliance: { accepted: true, by: '   ' } })), ENV, J);
   check('ticked with nobody named: 400', r.status === 400 && /name/i.test(r.body.error) && venuesCreated() === 0, r);
   r = await vpaHandleVenue(as(ADMIN, onboarding({ venue_kind: 'nightclub' })), ENV, J);
-  check('a venue kind outside the seven: 400', r.status === 400 && /pub, hotel, club/.test(r.body.error) && venuesCreated() === 0, r);
-  r = await vpaHandleVenue(as(ADMIN, onboarding({ venue_kind: '' })), ENV, J);
-  check('no venue kind: 400', r.status === 400 && venuesCreated() === 0, r);
+  check('a venue kind outside the seven: 400', r.status === 400 && /venue_kind must be one of/.test(r.body.error) && venuesCreated() === 0, r);
+  r = await vpaHandleVenue(as(ADMIN, onboarding({ entity_type: undefined })), ENV, J);
+  check('no club-or-pub answer (the signup question): 400, nothing created', r.status === 400 && /club/.test(r.body.error) && /pub/.test(r.body.error) && venuesCreated() === 0, r);
+  r = await vpaHandleVenue(as(ADMIN, onboarding({ entity_type: 'club' })), ENV, J);
+  check('only non_profit or for_profit is an answer: 400', r.status === 400 && venuesCreated() === 0, r);
   check('the audit trail has nothing, because nothing happened', DB.vp_admin_audit.length === 0, DB.vp_admin_audit);
 
   print('with the tick and a kind, the venue carries the record');
@@ -105,6 +107,8 @@ function permit(over) { var p = { number: '', holder: 'venue', npo_name: '', aut
   check('created', r.status === 200 && r.body.ok === true && r.body.venue && r.body.venue.slug === 'new-tavern-2000', r.body);
   var row = DB.vp_venues.filter(function (v) { return v.slug === 'new-tavern-2000'; })[0] || {};
   check('venue_kind written', row.venue_kind === 'hotel', row);
+  check('entity_type written from the club-or-pub answer (audit C4: it never was)', row.entity_type === 'for_profit', row.entity_type);
+  check('a pub starts with paid entry off, the same rule as signup', row.paid_entry_enabled === false, row.paid_entry_enabled);
   check('compliance_accepted_by is the name given', row.compliance_accepted_by === 'Jane Smith, licensee', row.compliance_accepted_by);
   check('compliance_accepted_at is a timestamp from now, not a flag', /^\d{4}-\d{2}-\d{2}T/.test(String(row.compliance_accepted_at)) && Math.abs(Date.parse(row.compliance_accepted_at) - Date.now()) < 60000, row.compliance_accepted_at);
   check('au_state still comes from the postcode (the Worker path onboard.html now uses)', row.au_state === 'NSW' && row.postcode === '2000', row);
@@ -113,6 +117,13 @@ function permit(over) { var p = { number: '', holder: 'venue', npo_name: '', aut
   r = await vpaHandleVenue(as(ADMIN, onboarding({ slug: 'another-2000', name: 'Another', venue_kind: 'rsl', compliance: { accepted: true, by: 'x'.repeat(300) } })), ENV, J);
   var row2 = DB.vp_venues.filter(function (v) { return v.slug === 'another-2000'; })[0] || {};
   check('a very long name is kept to 120 characters, not refused', r.status === 200 && row2.compliance_accepted_by.length === 120, row2.compliance_accepted_by && row2.compliance_accepted_by.length);
+  r = await vpaHandleVenue(as(ADMIN, onboarding({ slug: 'club-2000', name: 'The Bowls Club', entity_type: 'non_profit', venue_kind: undefined })), ENV, J);
+  var row3 = DB.vp_venues.filter(function (v) { return v.slug === 'club-2000'; })[0] || {};
+  check('an NSW club onboarded by HQ: non_profit, paid entry on as at signup, venue_kind "club" for the HQ card',
+        r.status === 200 && row3.entity_type === 'non_profit' && row3.paid_entry_enabled === true && row3.venue_kind === 'club', row3);
+  r = await vpaHandleVenue(as(ADMIN, onboarding({ slug: 'club-4224', name: 'The QLD Club', postcode: '4224', entity_type: 'non_profit' })), ENV, J);
+  var row4 = DB.vp_venues.filter(function (v) { return v.slug === 'club-4224'; })[0] || {};
+  check('a Queensland club: non_profit, paid entry stays off (blocked until OLGR approval)', r.status === 200 && row4.entity_type === 'non_profit' && row4.paid_entry_enabled === false, row4);
   r = await vpaHandleVenue(as(OWNER, onboarding({ slug: 'owner-try-2000' })), ENV, J);
   check('a venue owner (not a Gflam admin) cannot onboard a venue', r.status === 403 && DB.vp_venues.filter(function (v) { return v.slug === 'owner-try-2000'; }).length === 0, r);
 
@@ -243,6 +254,55 @@ function permit(over) { var p = { number: '', holder: 'venue', npo_name: '', aut
   r = await vpaProvisionOneVenue(ENV, { foundingId: 'f1', groupId: null, name: 'The Untouched Arms', seats: 60, postcode: '2000', authUserId: 'u1' });
   var made2 = (DB.vp_venues || []).filter(function (v) { return v.name === 'The Untouched Arms'; })[0];
   check('no contact, nothing recorded: null is the truth, never a made-up name', !!made2 && made2.compliance_accepted_by === null && made2.compliance_accepted_at === null, made2);
+  /* THE TICK REACHES THE WORKER (audit 20 Oct 2026, C5). Run the real /checkout both ways. */
+  print('the signup tick is sent, and /checkout refuses without it');
+  function checkoutBody(over) {
+    var b = { name: 'Sam Signup', email: 'sam@thearms.com.au', mobile: '0412 345 678', postcode: '2000', plan: 'monthly',
+              founding_code: 'NSW-DEC-2099', venues: [{ name: 'The Ticked Arms', seats: 60, postcode: '2000', entity_type: 'for_profit' }] };
+    for (var k in (over || {})) b[k] = over[k];
+    return b;
+  }
+  world(); stripeCalls.length = 0;
+  var foundingBefore = DB.venueplay_founding.length;
+  r = await handleCheckout(REQ(checkoutBody()), ENV, J);
+  check('no tick sent: 400 with the words on the page', r.status === 400 && /tick the box/.test(r.body.error || '') && /gaming compliance/.test(r.body.error || ''), r);
+  check('...nothing saved and Stripe never asked', DB.venueplay_founding.length === foundingBefore && stripeCalls.length === 0, [DB.venueplay_founding.length, stripeCalls.length]);
+  r = await handleCheckout(REQ(checkoutBody({ compliance_accepted: 'true' })), ENV, J);
+  check('a string "true" is not a tick: 400, Stripe never asked', r.status === 400 && stripeCalls.length === 0, r);
+  r = await handleCheckout(REQ(checkoutBody({ compliance_accepted: true })), ENV, J);
+  var lead = DB.venueplay_founding[DB.venueplay_founding.length - 1] || {};
+  var vj = (lead.venues_json || [])[0] || {};
+  check('ticked: the checkout goes ahead', r.status === 200 && (r.body.url || r.body.client_secret) && stripeCalls.length > 0, r);
+  check('...and the lead carries WHEN it was ticked, on the venue', !isNaN(Date.parse(vj.compliance_accepted_at)) && Math.abs(Date.parse(vj.compliance_accepted_at) - Date.now()) < 60000, vj);
+  lead.contact_name = 'Sam Signup';
+  await vpaProvisionFromCheckout(ENV, { client_reference_id: lead.id, metadata: { tier: 'founding', row_id: lead.id }, customer: 'cus_t', subscription: 'sub_t',
+                                         created: Math.floor(Date.now() / 1000), customer_details: { name: 'Sam Signup' } }).catch(function () {});
+  var prov = (DB.vp_venues || []).filter(function (v) { return v.name === 'The Ticked Arms'; })[0] || {};
+  check('provisioning records the tick from that fact: by the contact, at the time it was ticked',
+        prov.compliance_accepted_by === 'Sam Signup' && prov.compliance_accepted_at === vj.compliance_accepted_at, prov);
+  var old = { id: 'f-old', venue_name: 'The Unticked Inn', postcode: '2000', contact_email: 'old@thepub.com.au', contact_name: 'Olly Old', plan: 'monthly', status: 'pending', max_seats: 40, is_group: false,
+              venues_json: [{ name: 'The Unticked Inn', seats: 40, postcode: '2000', entity_type: 'for_profit' }] };
+  DB.venueplay_founding.push(old);
+  await vpaProvisionFromCheckout(ENV, { client_reference_id: 'f-old', metadata: { tier: 'founding', row_id: 'f-old' }, customer: 'cus_o', subscription: 'sub_o',
+                                         created: Math.floor(Date.now() / 1000), customer_details: { name: 'Olly Old' } }).catch(function () {});
+  var provOld = (DB.vp_venues || []).filter(function (v) { return v.name === 'The Unticked Inn'; })[0] || {};
+  check('a lead with no record of the tick is provisioned as NOT accepted, never assumed', !!provOld.id && provOld.compliance_accepted_by === null && provOld.compliance_accepted_at === null, provOld);
+  var grp = { id: 'f-grp', venue_name: 'Group One', postcode: '2000', contact_email: 'grp@thepubs.com.au', contact_name: 'Gina Group', plan: 'monthly', status: 'pending', max_seats: 80, is_group: true,
+              venues_json: [{ name: 'Group Ticked', seats: 40, postcode: '2000', entity_type: 'for_profit', compliance_accepted_at: '2026-10-20T01:02:03.000Z' },
+                            { name: 'Group Unticked', seats: 40, postcode: '2000', entity_type: 'for_profit' }] };
+  DB.venueplay_founding.push(grp);
+  await vpaProvisionFromCheckout(ENV, { client_reference_id: 'f-grp', metadata: { tier: 'founding', row_id: 'f-grp' }, customer: 'cus_g', subscription: 'sub_g',
+                                         created: Math.floor(Date.now() / 1000), customer_details: { name: 'Gina Group' } }).catch(function () {});
+  var gT = (DB.vp_venues || []).filter(function (v) { return v.name === 'Group Ticked'; })[0] || {};
+  var gU = (DB.vp_venues || []).filter(function (v) { return v.name === 'Group Unticked'; })[0] || {};
+  check('a group signup: the venue whose tick was recorded is accepted, at that time, by the contact',
+        gT.compliance_accepted_by === 'Gina Group' && gT.compliance_accepted_at === '2026-10-20T01:02:03.000Z', gT);
+  check('...and a venue with no record of the tick is NOT accepted', !!gU.id && gU.compliance_accepted_by === null && gU.compliance_accepted_at === null, gU);
+  ['venueplay/index.html', 'venueplay/nsw.html'].forEach(function (f) {
+    var page = readFile(f);
+    var send = (page.match(/fetch\(VP_WORKER \+ '\/checkout', \{[\s\S]*?body: JSON\.stringify\((\{[^\n]*\})\)/) || [])[1] || '';
+    check(f + ': the checkout request carries the tick itself', send.indexOf('compliance_accepted: !!(consentEl && consentEl.checked)') !== -1, send.slice(0, 300));
+  });
   ['venueplay/index.html', 'venueplay/nsw.html'].forEach(function (f) {
     var page = readFile(f);
     var label = (page.match(/<label class="ck"><input type="checkbox" id="vp-consent">[\s\S]*?<\/label>/) || [''])[0];

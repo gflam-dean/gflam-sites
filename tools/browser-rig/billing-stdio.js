@@ -27,9 +27,9 @@ DB.vp_platform_admins = [];
 DB.venueplay_founding = [{ id: 'f1', contact_email: 'owner@test.local', contact_name: 'Olive Owner', venue_name: 'Deepwater Hotel', plan: 'monthly', status: 'card_on_file',
                            max_seats: 80, stripe_customer_id: 'cus_1', stripe_subscription_id: 'sub_1', created_at: '2026-09-01T00:00:00Z' }];
 DB.vp_venues = [{ id: VENUE, name: 'Deepwater Hotel', slug: 'deepwater-hotel', founding_id: 'f1', status: 'active', max_players: 80, au_state: 'NSW', postcode: '2371',
-                  created_at: '2026-09-01T00:00:00Z', timezone: 'Australia/Sydney', join_code: 'DPW123', show_logo_on_site: true },
+                  created_at: '2026-09-01T00:00:00Z', timezone: 'Australia/Sydney', join_code: 'DPW123', show_logo_on_site: false },
                 { id: VENUE2, name: 'The Royal Arms', slug: 'the-royal-arms', founding_id: 'f1', status: 'active', max_players: 60, au_state: 'NSW', postcode: '2000',
-                  created_at: '2026-09-02T00:00:00Z', timezone: 'Australia/Sydney', join_code: 'RYL456', show_logo_on_site: true }];
+                  created_at: '2026-09-02T00:00:00Z', timezone: 'Australia/Sydney', join_code: 'RYL456', show_logo_on_site: false }];
 DB.vp_venue_staff = [{ id: 's1', auth_user_id: UID, venue_id: VENUE, role: 'owner', permissions: null, display_name: 'Olive Owner' },
                      { id: 's2', auth_user_id: UID, venue_id: VENUE2, role: 'owner', permissions: null, display_name: 'Olive Owner' }];
 DB.vp_venue_screen = []; DB.vp_admin_audit = []; DB.vp_venue_settings = []; DB.vp_screens = [];

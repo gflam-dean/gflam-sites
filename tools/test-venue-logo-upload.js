@@ -12,9 +12,9 @@
                       refused by the header's own width and height; written to the public
                       venue-logos bucket as <venue_id>/<sha256>.png and the URL saved on the venue
      vpbLogoRemove    clears the URL, and a host cannot
-     vpbLogoSite      writes show_logo_on_site both ways, refuses a non-answer, refuses a manager
-                      without the right, and says so when migration 102 is not run yet
-     vpbScreenGet     hands the tick back to the page
+     vpbLogoSite      RETIRED (migration 111): answers 410 to anyone and writes nothing; HQ
+                      chooses whose logo is on our website (tools/test-logo-on-site-hq.js)
+     vpbScreenGet     no longer hands the page a website tick
      vpbScreenSave    no longer stores a pasted address; our own storage address, or a clear, only
 
    Run from the repo root:  jsc tools/test-venue-logo-upload.js
@@ -212,27 +212,18 @@ var PUBLIC = ENV.SUPABASE_URL + '/storage/v1/object/public/venue-logos/' + ROYAL
   check('and the slides are still there', (screenRow().slides || []).length === 1, screenRow());
   check('an audit row says so', DB.vp_admin_audit.some(function (a) { return a.action === 'logo_removed'; }), DB.vp_admin_audit);
 
-  print('"Show our logo on the VenuePlay website"');
+  print('"Show our logo on the VenuePlay website" is HQ\'s now (migration 111, 20 Oct 2026)');
   world();
   r = await vpbLogoSite(as(OWNER, { venue_id: ROYAL, show: false }), ENV, J);
-  check('unticked: written false on the venue', r.status === 200 && DB.vp_venues[0].show_logo_on_site === false && r.body.show_logo_on_site === false, [r, DB.vp_venues[0]]);
-  r = await vpbScreenGet(as(OWNER, { venue_id: ROYAL }), ENV, J);
-  check('the Screen tab reads it back unticked', r.status === 200 && r.body.show_logo_on_site === false, r.body);
+  check('the owner unticking it: 410, and the venue stays as HQ set it', r.status === 410 && !r.body.ok && DB.vp_venues[0].show_logo_on_site === true, [r, DB.vp_venues[0]]);
+  DB.vp_venues[0].show_logo_on_site = false;
+  r = await vpbLogoSite(as(OWNER, { venue_id: ROYAL, show: true }), ENV, J);
+  check('the owner putting itself on our website: 410, nothing moves', r.status === 410 && DB.vp_venues[0].show_logo_on_site === false, [r, DB.vp_venues[0]]);
   r = await vpbLogoSite(as(MANAGER, { venue_id: ROYAL, show: true }), ENV, J);
-  check('ticked again by a manager with the advertising right: true', r.status === 200 && DB.vp_venues[0].show_logo_on_site === true, DB.vp_venues[0]);
-  r = await vpbLogoSite(as(NOADS, { venue_id: ROYAL, show: false }), ENV, J);
-  check('a manager without the right is refused and nothing moves', r.status === 403 && DB.vp_venues[0].show_logo_on_site === true, r);
-  r = await vpbLogoSite(as(HOST, { venue_id: ROYAL, show: false }), ENV, J);
-  check('a host is refused and nothing moves', (r.status === 403 || r.status === 401) && DB.vp_venues[0].show_logo_on_site === true, r);
-  r = await vpbLogoSite(as(OWNER, { venue_id: ROYAL, show: 'no' }), ENV, J);
-  check('"no" as a string is not an answer: 400, nothing moves', r.status === 400 && DB.vp_venues[0].show_logo_on_site === true, r);
-  r = await vpbLogoSite(as(STRANGER, { venue_id: ROYAL, show: false }), ENV, J);
-  check('another venue\'s owner cannot untick it for this one', r.status === 403 && DB.vp_venues[0].show_logo_on_site === true, r);
-  world(); REFUSE_COLUMN = 'show_logo_on_site'; delete DB.vp_venues[0].show_logo_on_site;
-  r = await vpbLogoSite(as(OWNER, { venue_id: ROYAL, show: false }), ENV, J);
-  check('before migration 102 it says it is not switched on yet, never "saved"', r.status === 503 && !r.body.ok, r);
+  check('a manager with the advertising right: 410, nothing moves', r.status === 410 && DB.vp_venues[0].show_logo_on_site === false, r);
+  check('and no audit row claims a change', !DB.vp_admin_audit.some(function (a) { return a.action === 'logo_on_site'; }), DB.vp_admin_audit);
   r = await vpbScreenGet(as(OWNER, { venue_id: ROYAL }), ENV, J);
-  check('and the Screen tab still loads, the tick showing its default, on', r.status === 200 && r.body.show_logo_on_site === true && Array.isArray(r.body.slides) && r.body.slides.length === 1, r.body);
+  check('the Screen tab no longer hands the page a website tick', r.status === 200 && !('show_logo_on_site' in r.body) && Array.isArray(r.body.slides), r.body);
 
   print('screen-save no longer stores a pasted address');
   world();
@@ -249,7 +240,7 @@ var PUBLIC = ENV.SUPABASE_URL + '/storage/v1/object/public/venue-logos/' + ROYAL
 
   print('the routes are reachable');
   var src = readFile('venueplay-backend/worker/venueplay-api-FULL.js');
-  ['logo-upload', 'logo-remove', 'logo-site'].forEach(function (p) {
+  ['logo-upload', 'logo-remove'].forEach(function (p) {
     check('the dispatcher routes POST /account/' + p, src.indexOf("request.method === 'POST' && path === '/account/" + p + "'") !== -1);
   });
   finished = true;

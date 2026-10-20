@@ -1,16 +1,19 @@
-/* The homepage "Trusted by" strip shows live, paying, willing venues, and nothing at all below six.
+/* The homepage "Trusted by" strip shows the live venues HQ chose, and nothing at all below six.
 
    Dean, 7 Aug 2026, hard rule: only ACTIVE venues (live and paying) on the marketing site.
-   Recommended with it: the venue's own "show our logo" consent, and a launch guard so the strip
-   never reads as one lonely logo. Built 16 Oct 2026 with migration 102.
+   Recommended with it: a launch guard so the strip never reads as one lonely logo. Built 16 Oct
+   2026 with migration 102. Changed 20 Oct 2026 with migration 111: HQ, not the venue, chooses
+   ("I dont want a venue to be able to put it on our website we should choose"), so the old
+   "paying" and "not a 1-player plan" rules are gone (The Mini Bar is Dean's own business on a
+   1-player plan, and he wants it shown) and HQ's old hide_from_trusted flag is not read.
 
    Runs the REAL billing Worker's vpbTrustedLogosRoute on tools/rig-billing-worker.js against a
    world holding one venue for each way to be left off, and the REAL /app/vp-trusted.js (the one
    file index.html and nsw.html both load) against a small DOM:
-     the Worker   only name and logo_url go out; inactive, HQ-hidden, unticked, comp, pending,
-                  unpaid, test-alpha/bravo/charlie, 1-player plans and foreign addresses are all
-                  left off; an invoice-billed account counts as paying; before migration 102 the
-                  answer is an empty list (consent fails closed), never an error page
+     the Worker   only name and logo_url go out; a venue HQ did not choose, an inactive one,
+                  test-alpha/bravo/charlie and any "test" name, no logo and foreign or borrowed
+                  addresses are all left off; a chosen venue on a 1-player plan or a comp or
+                  unpaid account IS shown; a missing column gives an empty list, never an error
      the page     five logos paint nothing and hide the section; six paint, twice over for the
                   loop, with the second copy hidden from screen readers; an address that is not
                   https is dropped; a name is text, never markup; the motion pauses on hover and
@@ -25,6 +28,7 @@ function check(name, ok, saw) { ran++; if (ok) print('  ok   ' + name); else { p
 var rigFetch = globalThis.fetch, REFUSE_COLUMN = '';
 globalThis.fetch = function (url, opts) {
   var u = String(url);
+  (globalThis.__asked = globalThis.__asked || []).push(u);
   if (REFUSE_COLUMN && u.indexOf('/rest/v1/vp_venues') !== -1 && u.indexOf(REFUSE_COLUMN) !== -1) {
     return Promise.resolve({ ok: false, status: 400, json: function () { return Promise.resolve({}); },
       text: function () { return Promise.resolve('{"code":"42703","message":"column vp_venues.' + REFUSE_COLUMN + ' does not exist"}'); } });
@@ -49,21 +53,18 @@ function venue(name, over, acct, logo) {
   return v;
 }
 function world() {
-  DB = {}; FAIL = {}; REFUSE_COLUMN = ''; n = 0;
+  DB = {}; FAIL = {}; REFUSE_COLUMN = ''; n = 0; globalThis.__asked = [];
   DB.vp_venues = []; DB.venueplay_founding = []; DB.vp_venue_screen = [];
-  GOOD.forEach(function (g, i) { venue(g, {}, i === 5 ? { stripe_subscription_id: null, bill_by_invoice: true } : {}); });
+  GOOD.forEach(function (g, i) { venue(g, i === 5 ? { max_players: 1 } : (i === 4 ? { hide_from_trusted: true } : {}),
+                                       i === 3 ? { status: 'comp', stripe_subscription_id: null } : (i === 2 ? { stripe_subscription_id: null } : {})); });
   // One of each way to be left off. Every one of them is otherwise a perfectly good row.
   venue('Test Alpha', { slug: 'test-alpha' });
   venue('Test Bravo', { slug: 'test-bravo' });
   venue('Charlie Testing Rooms', { slug: 'test-charlie' });
-  venue('Friends Bar', { max_players: 1 });
+  venue('Test Lounge', { slug: 'lounge-two' });
   venue('Gone Hotel', { status: 'archived' });
   venue('Suspended Arms', { status: 'suspended' });
-  venue('Hidden By HQ', { hide_from_trusted: true });
-  venue('Said No Hotel', { show_logo_on_site: false });
-  venue('Comp Demo Club', {}, { status: 'comp', stripe_subscription_id: 'sub_once_had_a_card' });   // comp, even with a card on file
-  venue('Pending Pub', {}, { status: 'pending', stripe_subscription_id: null });
-  venue('Never Paid Inn', {}, { stripe_subscription_id: null });
+  venue('Not Chosen Hotel', { show_logo_on_site: false });
   venue('Foreign Logo Hotel', {}, {}, 'https://evil.example/logo.png');
   venue('Borrowed Logo Hotel', {}, {}, OUR + 'venue-logos/' + V(1) + '/' + '1'.repeat(64) + '.png');   // venue 1's folder
   venue('No Logo Hotel', {}, {}, null);
@@ -81,23 +82,28 @@ function world() {
   var want = GOOD.concat(['Old Ad Bucket Logo']).sort();
   check('exactly the six good venues and the one whose logo predates the logo bucket, in name order', JSON.stringify(names) === JSON.stringify(want), names);
   check('each entry is a name and a logo address and NOTHING else (no id, slug, plan or contact)', logos.every(function (l) { return JSON.stringify(Object.keys(l).sort()) === '["logo_url","name"]'; }), logos[0]);
-  check('an invoice-billed account counts as paying', names.indexOf('Ferry RSL') !== -1, names);
+  check('HQ chose a venue on a 1-player plan (The Mini Bar\'s case): it is shown', names.indexOf('Ferry RSL') !== -1, names);
+  check('HQ chose a venue whose account never paid: it is shown (HQ decides now, not the meter)', names.indexOf('Coral Hotel') !== -1, names);
+  check('HQ chose a comp account: it is shown', names.indexOf('Dock Inn') !== -1, names);
+  check('HQ\'s old hide_from_trusted flag no longer overrules HQ\'s new switch', names.indexOf('Esplanade Bar') !== -1, names);
   [['Test Alpha', 'test-alpha'], ['Test Bravo', 'test-bravo'], ['Charlie Testing Rooms', 'test-charlie (by its slug, whatever its name)'],
-   ['Friends Bar', 'a 1-player plan'], ['Gone Hotel', 'an archived venue'], ['Suspended Arms', 'a suspended venue'],
-   ['Hidden By HQ', 'a venue HQ hid'], ['Said No Hotel', 'a venue that unticked "Show our logo"'],
-   ['Comp Demo Club', 'a comp (demo) account'], ['Pending Pub', 'an account that never finished signing up'],
-   ['Never Paid Inn', 'an account with no subscription and no invoice billing'],
+   ['Test Lounge', 'a venue named "Test ..." (by its name, whatever its slug)'],
+   ['Gone Hotel', 'an archived venue'], ['Suspended Arms', 'a suspended venue'],
+   ['Not Chosen Hotel', 'a venue HQ has not switched on'],
    ['Foreign Logo Hotel', 'a logo address outside our storage'], ['Borrowed Logo Hotel', 'a logo in ANOTHER venue\'s folder'],
-   ['No Logo Hotel', 'a venue with no logo']].forEach(function (p) {
+   ['No Logo Hotel', 'a venue with no logo (Tugun Bowls Club today)']].forEach(function (p) {
     check('left off: ' + p[1], names.indexOf(p[0]) === -1, names);
   });
-  print('the Worker: before migration 102');
+  var asked = (globalThis.__asked || []).filter(function (u) { return u.indexOf('/rest/v1/vp_venues') !== -1; });
+  check('the venue read asks the database for show_logo_on_site=true, so a missing switch can never mean yes',
+        asked.length >= 1 && asked.every(function (u) { return u.indexOf('show_logo_on_site=eq.true') !== -1 && u.indexOf('status=eq.active') !== -1; }), asked);
+  print('the Worker: when the database refuses the switch');
   world(); REFUSE_COLUMN = 'show_logo_on_site';
   r = await vpbTrustedLogosRoute(ENV, J);
-  check('the database refuses the consent filter, and the answer is an empty list, not an error', r.status === 200 && Array.isArray(r.body.logos) && r.body.logos.length === 0, r);
-  world(); FAIL['venueplay_founding:GET'] = 1;
+  check('the database refuses the switch filter, and the answer is an empty list, not an error', r.status === 200 && Array.isArray(r.body.logos) && r.body.logos.length === 0, r);
+  world(); FAIL['vp_venue_screen:GET'] = 1;
   r = await vpbTrustedLogosRoute(ENV, J);
-  check('a failed read of the accounts shows nobody, never the unpaid venues', r.status === 200 && r.body.logos.length === 0, r.body);
+  check('a failed read of the logos shows nobody, never a half list', r.status === 200 && r.body.logos.length === 0, r.body);
   var src = readFile('venueplay-backend/worker/venueplay-api-FULL.js');
   check('the dispatcher answers GET /trusted-logos with no login', src.indexOf("if (request.method === 'GET' && path === '/trusted-logos') return await vpbTrustedLogosRoute(env, json);") !== -1);
 

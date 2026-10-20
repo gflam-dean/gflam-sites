@@ -3489,9 +3489,26 @@
   function callerChosen(){ var c=$("callerChk"); return !!(c && c.checked); }
   /* The setup form for a real-balls night: no ticket settings (paper books are the venue's own
      sale) and no early calls (no phone claims). The live block swaps Next number for the grid. */
+  /* PAID TICKETS ONLY WHERE THE VENUE MAY CHARGE (state audit C6, 20 Oct 2026). The Tickets choice
+     offered "Paid, sold by the ticket / by the sheet" to every venue, every pub and every Queensland
+     and Northern Territory venue included, where the only outcome was a hard block and a free game.
+     Now it shows only when HQ has unlocked paid entry for this venue, as the musical console's
+     "Tonight" choice already does. A venue we do not know yet (no context) keeps it, so nothing is
+     taken away from a page that has not loaded its venue. */
+  function bingoVenueMayCharge(){
+    var v=__ctx && __ctx.venue;
+    return !(v && v.paid_entry_enabled !== true);
+  }
+  function syncBingoPaidChoice(){
+    var ps=$("paidSel");
+    if(!bingoVenueMayCharge() && G.status==="setup" && ps && ps.value){
+      ps.value=""; try{ ps.dispatchEvent(new Event("change")); }catch(e){} G.paidMode="";
+    }
+    syncCallerUI();
+  }
   function syncCallerUI(){
     var on=(G.status==="setup") ? callerChosen() : !!G.caller;
-    var tf=$("ticketsField"); if(tf) tf.style.display = on ? "none" : "";
+    var tf=$("ticketsField"); if(tf) tf.style.display = (on || !bingoVenueMayCharge()) ? "none" : "";
     var ae=$("allowEarlyField"); if(ae) ae.style.display = on ? "none" : "";
     var ps=$("paidSel"), cf=$("cardsField");
     if(on && ps && ps.value){ ps.value=""; try{ ps.dispatchEvent(new Event("change")); }catch(e){} G.paidMode=""; }
@@ -4126,6 +4143,7 @@
     $("gamesBack").style.display="";
     $("headerTag").textContent="Bingo";
     loadCustomPatterns();   // the venue's own patterns into every pattern list (nothing shows until migration 118 is live)
+    syncBingoPaidChoice();
   }
 
   function landAfterConnect(){
@@ -4175,7 +4193,7 @@
       return;
     }
     gate();
-    function gate(){ if(window.VPGaming) VPGaming.gateFor("bingo90", go, { gameIsPaid: !!G.paidMode }); else go(); }
+    function gate(){ if(window.VPGaming) VPGaming.gateFor("bingo90", go, bingoGateOpts()); else go(); }
     /* { free:true }: the state says this venue may not charge tonight (or has no permit on record
        where one is needed), and the host pressed "Start as a free-entry game" (15 Oct 2026). Put
        the night back to free BEFORE it opens: the dropdown is the one truth about paid mode, so
@@ -4186,6 +4204,19 @@
     }
   });
   var _startBusy = false;
+  /* FREE BINGO SHOWS ITS STATE'S RULES ONCE A NIGHT where a letter attaches conditions to it (state
+     audit C9, 20 Oct 2026): VIC (s8.2.4A: not advertised, not open to the public, not for the
+     venue's commercial benefit), ACT (exempt to $1,000, record the winning ticket), TAS (social
+     bingo: $30 entry, $300 prize) and NSW (a free lottery: no cash prizes, $30,000 cap). A free
+     night there used to be recorded silently with nothing shown, which in Victoria let a pub start
+     a "free" game that is not automatically lawful. freeEntry shows the free-entry rules once a
+     night, as raffles and members draws already do; everywhere else a free night stays silent. */
+  var FREE_BINGO_RULES_STATES={ NSW:1, VIC:1, ACT:1, TAS:1 };
+  function bingoGateOpts(){
+    if(G.paidMode) return { gameIsPaid:true };
+    var st=String((__ctx && __ctx.venue && __ctx.venue.au_state) || "").toUpperCase();
+    return FREE_BINGO_RULES_STATES[st] ? { freeEntry:true } : { gameIsPaid:false };
+  }
   $("cancelLobbyBtn").addEventListener("click", cancelLobby);
 
   // The same setting in two places, because the host needs it before the game AND during it.

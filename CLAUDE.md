@@ -232,6 +232,14 @@ members list" (table and route names keep it). A bingo or paid-ticket winner
 claims from **the host**, never the bar. All four are enforced by the gate, in
 `.js` as well as `.html`.
 
+Ask a venue only what the law or the product actually needs, and only the venue it applies to
+(by state and by the games they run). Every page a customer sees must look finished: grouped
+sections, even spacing, the shared on-brand controls, working at phone width. A new field or
+page is not done until it meets both. (Dean, 20 Oct 2026. The Settings page's permit questions
+come from `VPGaming.permitsToAsk` in `venueplay/app/vp-gaming.js`, the same table the console's
+gate reads, and `tools/settings-and-logos-in-chrome.test.py` opens it as an NSW club, a VIC club
+and a Queensland club.)
+
 ## Where things are
 
     tools/release-check.py            the gate. Run it for the count; a number

@@ -353,6 +353,10 @@
   "vp-ask-once.test.js",
   "vp-follow.test.js",
   "webhook-ledger.test.js",
-  "weekly-before-the-room.test.js"
+  "weekly-before-the-room.test.js",
+  "an NSW club and every Queensland venue are asked nothing; every permit the gate requires is asked; no members draw permit; musical bingo never blocked",
+  "console-paid-and-draw-max-in-chrome.test.py",
+  "only venues HQ switched on, active, with our stored logo; test venues never; fewer than six paints nothing",
+  "settings-and-logos-in-chrome.test.py"
  ]
 }

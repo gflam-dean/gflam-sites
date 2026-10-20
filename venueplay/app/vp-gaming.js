@@ -49,14 +49,15 @@
 
   /* ---------------------------------------------------------------------------
      Which of our formats is which kind of game.
-     The musical format maps to the bingo RULES only so a venue that is unlocked to charge sees
-     the paid-entry rules on a paid musical night; musical bingo itself is not bingo (a free game,
-     no permit, its phone cards stay on in every state: see the NOT FOR MUSICAL BINGO note below,
-     and gateFor's onlyIfPaid). A members draw is a draw, which nearly everywhere is
+     Musical bingo is its OWN kind, 'musical', with no state table. Dean, 19 Oct 2026, every
+     state, Queensland included: "Musical bingo is not bingo, not the bingo rules". So no paper
+     rule, permit, jackpot figure, bingo hard block or OLGR block reaches it; a paid musical
+     night shows only that the venue conducts it (assess, below). A members draw is a draw, which nearly everywhere is
      a trade promotion when entry is free. Trivia is skill and never appears here.
      --------------------------------------------------------------------------- */
   function kindOf(format) {
-    if (format === 'bingo90' || format === 'bingo' || format === 'musical') return 'bingo';
+    if (format === 'bingo90' || format === 'bingo') return 'bingo';
+    if (format === 'musical' || format === 'musical_bingo') return 'musical';
     if (format === 'raffle') return 'raffle';
     if (format === 'members') return 'members';
     return null;                       // trivia, or anything not gaming
@@ -136,7 +137,7 @@
       phones: { bingo: true },
       /* Our number generator is not yet approved here, which blocks the DRAW itself
          regardless of what the venue is allowed to do. This is about us, not them. */
-      blocked: 'Our number generator is still going through OLGR approval, so we cannot run bingo, musical bingo, raffles or members draws in Queensland yet. Trivia is unaffected: it is a game of skill and OLGR do not regulate it.',
+      blocked: 'Our number generator is still going through OLGR approval, so we cannot run paid bingo, raffles or members draws in Queensland yet. Trivia and musical bingo are unaffected.',
       for_profit: {
         bingo:  { paid: 'no', notes: [
           'Businesses cannot conduct bingo in Queensland. Bingo is for an association (four or more people with a common purpose) or for an individual who takes no personal gain and returns every cent as prizes.',
@@ -363,6 +364,19 @@
      offer to start a PAID game at all: only "Start as a free-entry game" (Dean, 15 Oct 2026,
      on the lawyer's "prudent, not mandatory"). The free path is never blocked by anything here.
      --------------------------------------------------------------------------- */
+  /* WHY PAID ENTRY IS OFF, in words that are true for THIS venue (state audit, 20 Oct 2026, C7).
+     It used to tell every venue "we turn paid entry on once we know club or pub, email us", which
+     was false for a pub (the Worker never unlocks a for-profit venue) and for Queensland and the
+     Northern Territory (blocked whatever the venue is). Mirrors the billing Worker's
+     vpaPaidEntryDefault and /admin/venue-gaming. */
+  function paidOffWhy(opts) {
+    var st = STATES[String(opts.state || '').toUpperCase()];
+    if (st && st.blocked) return 'Paid entry is not available in ' + st.name + ' yet, for any venue. Free entry is open to you every night.';
+    if (opts.entityType === 'for_profit') return 'Paid entry is for clubs and other non-profits. A pub runs games as free entry.';
+    if (opts.entityType !== 'non_profit') return 'We have not recorded whether this venue is a club or a pub yet. Until we have, games run as free entry.';
+    return 'Paid entry has not been switched on for this venue yet. Until it is, games run as free entry.';
+  }
+
   function assess(opts) {
     opts = opts || {};
     var out = { applies: true, confirmed: false, ok: true, blocked: null, paper: false,
@@ -374,6 +388,28 @@
       out.applies = false;
       out.headline = 'Trivia is a game of skill, so the gaming rules do not apply.';
       out.points.push('Competition rules still apply. Those sit with Fair Trading and the ACCC, not the gaming regulator.');
+      return out;
+    }
+
+    /* MUSICAL BINGO (Dean, 19 Oct 2026): not bingo in any state. Nothing from the state table
+       applies. A free night is a promotional game; a paid night still needs this venue unlocked
+       to charge (that is ours, not a bingo rule), and then only says who conducts it. */
+    if (kind === 'musical') {
+      out.confirmed = !!(STATES[opts.state] && STATES[opts.state].confirmed);
+      if (!opts.paidEntry) {
+        out.headline = 'Free entry. Nobody pays to play musical bingo tonight.';
+        out.points.push('Musical bingo is a music quiz on a grid, not bingo, so no bingo rules apply.');
+        return out;
+      }
+      if (opts.paidEntryEnabled === false) {
+        out.ok = false; out.hardBlock = true;
+        out.headline = 'Paid entry is switched off for this venue.';
+        out.warnings.push(paidOffWhy(opts));
+        out.points.push('A free-entry game is open to you right now: the button below starts tonight as free entry.');
+        return out;
+      }
+      out.headline = 'Musical bingo is a music quiz on a grid, not bingo, so no state bingo rules apply.';
+      out.points.push('Your venue conducts tonight\u2019s game and is responsible for it, including what you charge and the prizes you give.');
       return out;
     }
 
@@ -398,7 +434,7 @@
        Asked again when the Victorian letter arrived (its table heading reads "Housie / Bingo
        (incl. Musical)"), Dean, 15 Oct 2026: "musical bingo cards stay in every state. Its not
        bingo." So this line is the same in Victoria as everywhere else. */
-    if (kind === 'bingo' && opts.format !== 'musical' && st.phones && st.phones.bingo === false) {
+    if (kind === 'bingo' && st.phones && st.phones.bingo === false) {   // musical is its own kind (kindOf), so never here
       out.paper = true;
       out.warnings.push(st.paperBingo);
     }
@@ -408,7 +444,9 @@
        pub in any configuration. That silently hid the two that matter most: Victoria's
        "bingo must not be conducted online", and WA's independent certification. Placed here
        with the paper warning, before the early returns, so everybody sees it. */
-    if (st.warn) out.warnings.push(st.warn);
+    /* WA's warning is about a RAFFLE's number generator (Anisimoff, 1 Oct 2026, point 4), so
+       it goes on raffles only (state audit, 20 Oct 2026: it was on bingo and members draws too). */
+    if (st.warn && kind === 'raffle') out.warnings.push(st.warn);
 
     /* What an ad for the game must not do, where a letter says (NSW, VIC, ACT). On both paths:
        the rules are about advertising gambling, and a free game is advertised just the same. */
@@ -420,6 +458,8 @@
        Queensland venue a red "we cannot run bingo here" box before a free game made the product
        look unlawful in the state the regulator's letter came from, and it was the default for
        every venue, because paid entry ships switched off. */
+    /* Never musical bingo: it returned above with no state rules (Dean, 19 Oct 2026, Queensland
+       included: it is out of the OLGR submission, so the wait on OLGR does not stop it). */
     if (st.blocked && opts.paidEntry) { out.blocked = st.blocked; out.ok = false; }
 
     var entity = (opts.entityType === 'non_profit') ? 'non_profit' : 'for_profit';
@@ -462,7 +502,7 @@
     if (opts.paidEntryEnabled === false) {
       out.ok = false; out.hardBlock = true;
       out.headline = 'Paid entry is switched off for this venue.';
-      out.warnings.push('We turn paid entry on once we have recorded whether you are a club or a pub, because that is what the rules turn on. Email support@venueplay.com.au and we will sort it.');
+      out.warnings.push(paidOffWhy(opts));
       out.points.push('A free-entry game is open to you right now: the button below starts tonight as free entry, and the rules for a free game are what is recorded.');
       return out;
     }
@@ -583,6 +623,7 @@
     var kind = kindOf(opts.format), state = String(opts.state || '').toUpperCase();
     var np = opts.entityType === 'non_profit', paid = !!opts.paidEntry;
     if (!kind) return { cents: null, why: 'Trivia is a game of skill: no prize limit applies.' };
+    if (kind === 'musical') return { cents: null, why: 'Musical bingo is not bingo: no bingo prize limit applies.' };
     var st = STATES[state];
     if (!st) return { cents: null, why: state ? ('We have not confirmed a prize figure for ' + state + ' yet.') : 'We do not know which state this venue is in yet.' };
     var T = {

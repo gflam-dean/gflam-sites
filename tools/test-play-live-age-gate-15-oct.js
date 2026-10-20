@@ -1,7 +1,9 @@
 /* THE AGE TICK AND THE PAPER FLAG, decided by the Worker, for the format that is on.
 
    Anisimoff Legal, 8 Oct 2026: no minors in Victorian bingo (free or paid), none in ACT housie
-   under a permit, none in a Tasmanian raffle or draw. Phones as bingo tickets: not in Victoria
+   under a permit, none in a Tasmanian raffle or draw. Narrowed 20 Oct 2026 (state audit C11): ACT
+   asks only when a bingo permit is on record; Victoria asks on a raffle only when tonight's raffle
+   was declared paid, never on a members draw (a free draw is not gambling, s1.3AA(4)). Phones as bingo tickets: not in Victoria
    (s8.4.7B) or Tasmania (authorised bingo); ACT not prohibited, so ACT is back on the phone.
    Dean, 15 Oct 2026: musical bingo is not bingo, so it is never on paper and never asked its age.
 
@@ -62,7 +64,20 @@ async function info(code) { BODY = { code: code }; var r = await handleJoinInfo(
   show('VIC bingo lobby: live:true, format empty, paper notice AND age tick', r.live === true && r.format === '' && r.paper_bingo === true && r.age_gate === true, JSON.stringify(r));
   clearNights(); night('ACT', null, 'lobby', null);
   r = await live('ACT');
-  show('ACT bingo lobby: age tick, phones stay on', r.live === true && r.age_gate === true && r.paper_bingo === false, JSON.stringify(r));
+  show('ACT bingo lobby with NO permit on record: exempt housie, no age tick, phones on (state audit C11)', r.live === true && r.age_gate === false && r.paper_bingo === false, JSON.stringify(r));
+  DB.vp_venues.filter(function (v) { return v.id === V.ACT; })[0].permits = { bingo: { number: 'ACT-H-1101', holder: 'venue' } };
+  r = await live('ACT');
+  show('ACT bingo lobby with a housie permit on record: age tick, phones stay on', r.live === true && r.age_gate === true && r.paper_bingo === false, JSON.stringify(r));
+  DB.vp_venues.filter(function (v) { return v.id === V.ACT; })[0].permits = { bingo: { holder: 'npo', npo_name: 'Belconnen Lions', authorised_on: '2026-10-01' } };
+  r = await live('ACT');
+  show('ACT: a charity named with the date it authorised the venue counts as a permit on record (the same rule as the console)', r.age_gate === true, JSON.stringify(r));
+  DB.vp_venues.filter(function (v) { return v.id === V.ACT; })[0].permits = { bingo: { holder: 'npo', npo_name: 'Belconnen Lions', authorised_on: '' } };
+  r = await live('ACT');
+  show('ACT: a charity with no date is not a permit on record: no tick', r.age_gate === false, JSON.stringify(r));
+  DB.vp_venues.filter(function (v) { return v.id === V.ACT; })[0].permits = { raffle: { number: 'ACT-R-9' } };
+  r = await live('ACT');
+  show('ACT: a RAFFLE permit does not make bingo ask', r.age_gate === false, JSON.stringify(r));
+  DB.vp_venues.filter(function (v) { return v.id === V.ACT; })[0].permits = null;
   clearNights(); night('TAS', null, 'lobby', null);
   r = await live('TAS');
   show('TAS bingo lobby: paper, no age tick', r.live === true && r.paper_bingo === true && r.age_gate === false, JSON.stringify(r));
@@ -85,7 +100,20 @@ async function info(code) { BODY = { code: code }; var r = await handleJoinInfo(
   show('VIC musical running: the same', r.format === 'musical' && r.age_gate === false && r.paper_bingo === false, JSON.stringify(r));
   clearNights(); night('VIC', 'members');
   r = await live('VIC');
-  show('VIC members draw running: age tick, no paper', r.format === 'members' && r.age_gate === true && r.paper_bingo === false, JSON.stringify(r));
+  show('VIC members draw running: NO age tick (free entry is not gambling, s1.3AA(4)), no paper', r.format === 'members' && r.age_gate === false && r.paper_bingo === false, JSON.stringify(r));
+  clearNights(); night('VIC', 'raffle'); DB.vp_gaming_declarations = [];
+  r = await live('VIC');
+  show('VIC raffle with no paid declaration tonight: no age tick', r.format === 'raffle' && r.age_gate === false, JSON.stringify(r));
+  DB.vp_gaming_declarations = [{ id: 'd1', venue_id: V.VIC, format: 'raffle', paid_entry: false, declared_at: new Date(Date.now() - 3600e3).toISOString(), category_claimed: 'x' }];
+  r = await live('VIC');
+  show('VIC raffle declared FREE tonight: no age tick', r.age_gate === false, JSON.stringify(r));
+  DB.vp_gaming_declarations.push({ id: 'd2', venue_id: V.VIC, format: 'raffle', paid_entry: true, declared_at: new Date(Date.now() - 600e3).toISOString(), category_claimed: 'x' });
+  r = await live('VIC');
+  show('VIC raffle declared PAID tonight: age tick (no minors in Victorian gambling)', r.age_gate === true, JSON.stringify(r));
+  DB.vp_gaming_declarations = [{ id: 'd3', venue_id: V.VIC, format: 'raffle', paid_entry: true, declared_at: new Date(Date.now() - 30 * 3600e3).toISOString(), category_claimed: 'x' }];
+  r = await live('VIC');
+  show('VIC raffle declared paid YESTERDAY, nothing tonight: no age tick', r.age_gate === false, JSON.stringify(r));
+  DB.vp_gaming_declarations = [];
   clearNights(); night('TAS', 'raffle');
   r = await live('TAS');
   show('TAS raffle running: age tick (no minors in a Tasmanian raffle), no paper', r.format === 'raffle' && r.age_gate === true && r.paper_bingo === false, JSON.stringify(r));
@@ -97,7 +125,11 @@ async function info(code) { BODY = { code: code }; var r = await handleJoinInfo(
   show('ACT raffle running: no age tick (ACT asks only for housie)', r.format === 'raffle' && r.age_gate === false, JSON.stringify(r));
   clearNights(); night('ACT', 'bingo90');
   r = await live('ACT');
-  show('ACT bingo running: age tick, on the phone', r.age_gate === true && r.paper_bingo === false, JSON.stringify(r));
+  show('ACT bingo running with no permit: no age tick, on the phone', r.age_gate === false && r.paper_bingo === false, JSON.stringify(r));
+  DB.vp_venues.filter(function (v) { return v.id === V.ACT; })[0].permits = { bingo: { number: 'ACT-H-1101' } };
+  r = await live('ACT');
+  show('ACT bingo running with a permit: age tick, on the phone', r.age_gate === true && r.paper_bingo === false, JSON.stringify(r));
+  DB.vp_venues.filter(function (v) { return v.id === V.ACT; })[0].permits = null;
   clearNights(); night('NSW', 'trivia');
   r = await live('NSW');
   show('CONTROL: NSW trivia: live, nothing asked', r.live === true && r.join_code && r.age_gate === false && r.paper_bingo === false, JSON.stringify(r));
@@ -117,7 +149,11 @@ async function info(code) { BODY = { code: code }; var r = await handleJoinInfo(
   show('VIC bingo lobby, by the session\'s own join code: the same', r.age_gate === true && r.paper_bingo === true, JSON.stringify(r).slice(0, 160));
   clearNights(); night('ACT', null, 'lobby', null);
   r = await info('VENUE-ACT');
-  show('ACT bingo lobby: age_gate true, paper_bingo false', r.age_gate === true && r.paper_bingo === false, JSON.stringify(r).slice(0, 160));
+  show('ACT bingo lobby, no permit: age_gate false, paper_bingo false', r.age_gate === false && r.paper_bingo === false, JSON.stringify(r).slice(0, 160));
+  DB.vp_venues.filter(function (v) { return v.id === V.ACT; })[0].permits = { bingo: { number: 'ACT-H-1101' } };
+  r = await info('VENUE-ACT');
+  show('ACT bingo lobby with a permit, by /join/info too: age_gate true', r.age_gate === true && r.paper_bingo === false, JSON.stringify(r).slice(0, 160));
+  DB.vp_venues.filter(function (v) { return v.id === V.ACT; })[0].permits = null;
   clearNights(); night('TAS', null, 'lobby', null);
   r = await info('VENUE-TAS');
   show('TAS bingo lobby: paper, no age tick', r.age_gate === false && r.paper_bingo === true, JSON.stringify(r).slice(0, 160));

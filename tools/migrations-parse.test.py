@@ -17,6 +17,8 @@ switch) from the parse tree rather than by word search:
 And the same of migration 110 (the one-night pass): its seven vp_venues columns and
 vp_sessions.console_holders, a guard trigger on INSERT and UPDATE OF every pass column, a guard
 that puts every one back for a venue login, and no security definer.
+And migration 111 (HQ chooses the website logos, 20 Oct 2026): default false, the two venues
+Dean chose and nobody else, an audit row per change, and the same guard.
 
     python3 tools/migrations-parse.test.py
 """
@@ -165,10 +167,52 @@ missing = [c for c in PASS_COLS if ('new.%s := old.%s;' % (c, c)) not in low or 
 ok('...and puts back (or empties) every pass column for a venue login', not missing, missing)
 ok('...and is not security definer (no change to the RLS baseline)', fn and not definer, definer)
 
+# ---- migration 111 (HQ chooses the website logos, 20 Oct 2026) ------------------------
+M = 'venueplay-111-hq-chooses-trusted-logos.sql'
+st = trees.get(M)
+ok('migration 111 is present and parses', st is not None)
+st = st or []
+dflt = None
+for x in st:
+    if kind(x) == 'AlterTableStmt' and x.stmt.relation.relname == 'vp_venues':
+        for c in x.stmt.cmds:
+            if c.name == 'show_logo_on_site' and c.def_ is not None:
+                dflt = RawStream()(c.def_).lower()
+ok('111 makes show_logo_on_site default false (a new venue is not on the website until HQ chooses it)',
+   dflt == 'false', dflt)
+upd = ''
+for x in st:
+    if kind(x) == 'InsertStmt' and x.stmt.withClause is not None:
+        upd = ' '.join(RawStream()(x.stmt).lower().split())
+ok('111 sets the switch to (slug is deepwater-hotel or the-mini-bar) for EVERY venue, with an audit row each',
+   "set show_logo_on_site = slug in ('deepwater-hotel', 'the-mini-bar')" in upd and ' where ' in upd
+   and 'insert into public.vp_admin_audit' in upd and 'venue_logo_on_site_on' in upd and 'venue_logo_on_site_off' in upd,
+   upd[:260])
+trig = [x.stmt for x in st if kind(x) == 'CreateTrigStmt' and x.stmt.trigname == 'vp_venues_logo_on_site_guard']
+t = trig[0] if trig else None
+cols = [c.sval for c in (t.columns or ())] if t else []
+ok('111 guard trigger is BEFORE, FOR EACH ROW, on INSERT and UPDATE OF show_logo_on_site',
+   t is not None and t.relation.relname == 'vp_venues' and t.row and (t.timing & 2) == 2
+   and (t.events & 4) and (t.events & 16) and cols == ['show_logo_on_site'],
+   t and ('timing=%s events=%s columns=%s' % (t.timing, t.events, cols)))
+fn = [x for x in st if kind(x) == 'CreateFunctionStmt' and x.stmt.funcname[-1].sval == 'vp_venues_logo_on_site_guard']
+body, definer = '', None
+if fn:
+    for o in fn[0].stmt.options or ():
+        if o.defname == 'as':
+            body = ''.join(a.sval for a in o.arg)
+        if o.defname == 'security':
+            definer = bool(o.arg.boolval)
+low = ' '.join(body.lower().split())
+ok('111 guard lets only the service role and a platform admin set it, and puts the old value back for a venue login',
+   "coalesce(auth.role(), '') not in ('anon', 'authenticated') or public.vp_is_platform_admin()" in low
+   and 'new.show_logo_on_site := old.show_logo_on_site;' in low and 'new.show_logo_on_site := false;' in low, low[:200])
+ok('...and is not security definer (no change to the RLS baseline)', fn and not definer, definer)
+
 total = PASS[0] + FAIL[0]
 print('')
 print('%d of %d checks passed' % (PASS[0], total))
-EXPECTED = 15
+EXPECTED = 21
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)

@@ -65,7 +65,9 @@ def console_bingo(sid):
     S.js(sid, '(function(){var b=document.querySelector("#venuePickList button, #venuePickList [data-id], #venuePickList a"); if(b) b.click(); return true;})()')
     S.until(sid, '!!document.querySelector(\'[data-game="bingo"]\') && document.querySelector(\'[data-game="bingo"]\').offsetParent!==null', 20)
     S.js(sid, 'document.querySelector(\'[data-game="bingo"]\').click(); true')
-    S.until(sid, '!!document.getElementById("paidSel") && document.getElementById("paidSel").offsetParent!==null', 10)
+    # cardsSel, not paidSel: the Tickets choice now shows only where HQ has unlocked paid entry
+    # (state audit C6, 20 Oct 2026), and this rig's venue has not been.
+    S.until(sid, '!!document.getElementById("cardsSel") && document.getElementById("cardsSel").offsetParent!==null', 10)
     time.sleep(0.6)
 
 
