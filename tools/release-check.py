@@ -1776,9 +1776,14 @@ def local_checks(which):
         if b != 'nsw.html':
             continue
         src = io.open(f, encoding='utf-8').read()
-        row = re.search(r"oct:\s*\{\s*code:\s*'([A-Z]+)-([A-Z]{3})-(20\d\d)'", src)
+        # 20 Oct 2026: the words typed into the file are written for the row WRITTEN_FOR names
+        # (the campaign being sent now), not always October. /offer-nov served "31 October" to
+        # anything that read the HTML without running the script.
+        wf = re.search(r"var\s+WRITTEN_FOR\s*=\s*'([a-z]{3})'", src)
+        key = wf.group(1) if wf else 'oct'
+        row = re.search(key + r":\s*\{\s*code:\s*'([A-Z]+)-([A-Z]{3})-(20\d\d)'", src)
         if not row:
-            wrong.append('nsw.html has no October row in OFFERS')
+            wrong.append('nsw.html has no %s row in OFFERS' % key)
             continue
         mon3, yr = row.group(2), row.group(3)
         if row.group(1) != 'OFFER':
@@ -1800,6 +1805,105 @@ def local_checks(which):
                 wrong.append('%s says %s %s, but %s %s has %d days'
                              % (b, day, said, said, yr, last)); break
     ok('every founding page agrees with its own code', not wrong, why='; '.join(wrong[:3]))
+
+    # THE OFFER PAGE'S TYPED DATES ARE THE ROW IT SAYS THEY ARE FOR, AND THAT ROW HAS NOT ENDED.
+    # 20 Oct 2026: every /offer-<mon> is one file (nsw.html, by _redirects), and its HTML said
+    # "31 October" on /offer-nov while the script showed "30 November". A crawler, a link preview
+    # or curl reads the HTML, not the script. The page names the row its words are written for
+    # (WRITTEN_FOR); every vpc-date and vpc-day span must say exactly that row's date and day,
+    # and the row's month must not have ended, so a page left on last month's words goes red.
+    import datetime as _dt2
+    import calendar as _cal2
+    offer = os.path.join(ROOT, 'venueplay', 'nsw.html')
+    if os.path.isfile(offer):
+        osrc = io.open(offer, encoding='utf-8').read()
+        owrong = []
+        wf = re.search(r"var\s+WRITTEN_FOR\s*=\s*'([a-z]{3})'", osrc)
+        orow = wf and re.search(wf.group(1) + r":\s*\{\s*code:\s*'OFFER-([A-Z]{3})-(20\d\d)',\s*"
+                                 r"date:\s*'([^']+)',\s*day:\s*'([^']+)'", osrc)
+        if not wf:
+            owrong.append('nsw.html does not say which month its typed dates are for (var WRITTEN_FOR)')
+        elif not orow:
+            owrong.append('nsw.html has no OFFERS row for WRITTEN_FOR %r' % wf.group(1))
+        else:
+            mon3, yr, odate, oday = orow.groups()
+            html = re.sub(r'<script.*?</script>|<!--.*?-->', '', osrc, flags=re.S)
+            spans = re.findall(r'<span class="vpc-(date|day)"[^>]*>([^<]*)</span>', html)
+            if not spans:
+                owrong.append('nsw.html has no vpc-date or vpc-day span to check')
+            for kind, said in spans:
+                want = odate if kind == 'date' else oday
+                if said.strip() != want:
+                    owrong.append('a vpc-%s span says %r, the %s row says %r' % (kind, said.strip(), wf.group(1), want))
+                    break
+            mi = [m.upper()[:3] for m in _cal2.month_name].index(mon3) if mon3 in [m.upper()[:3] for m in _cal2.month_name] else 0
+            if mi:
+                end = _dt2.date(int(yr), mi, _cal2.monthrange(int(yr), mi)[1])
+                if _dt2.date.today() > end:
+                    owrong.append('its words are written for OFFER-%s-%s, which ended %s' % (mon3, yr, end))
+        ok('the offer page types the dates of the month it is written for', not owrong,
+           detail=(wf.group(1) if wf else ''), why='; '.join(owrong[:3]))
+
+    head('D. The site says what the product does about bingo and gaming')
+    # THE PAPER-BINGO FAQ NAMES EXACTLY THE STATES THE GAME WORKER PUTS ON PAPER. 20 Oct 2026:
+    # the homepage still said ACT was paper-only and never mentioned Victoria, five days after
+    # the 15 Oct release turned ACT phone tickets ON and Victoria's OFF. The Worker's
+    # PAPER_BINGO_STATES is what /join/info acts on, so it is the truth; the FAQ answer that
+    # names the paper states (in bold) must name that set, no more and no fewer.
+    _STATE_NAMES = {'South Australia': 'SA', 'Victoria': 'VIC', 'Tasmania': 'TAS', 'ACT': 'ACT',
+                    'Queensland': 'QLD', 'New South Wales': 'NSW', 'Western Australia': 'WA',
+                    'Northern Territory': 'NT'}
+    game = os.path.join(ROOT, 'venueplay-backend', 'worker', 'venueplay-game.js')
+    home = os.path.join(ROOT, 'venueplay', 'index.html')
+    pwrong = []
+    if os.path.isfile(game) and os.path.isfile(home):
+        gsrc = io.open(game, encoding='utf-8').read()
+        gm = re.search(r"^const\s+PAPER_BINGO_STATES\s*=\s*new\s+Set\(\[([^\]]*)\]\)", gsrc, re.M)
+        code_set = set(re.findall(r"'([A-Z]+)'", gm.group(1))) if gm else None
+        hsrc = re.sub(r'<!--.*?-->', '', io.open(home, encoding='utf-8').read(), flags=re.S)
+        qa = re.search(r'<summary>Can players use their phones for bingo tickets in my state\?.*?'
+                       r'<div class="a">(.*?)</div></details>', hsrc, re.S)
+        if code_set is None:
+            pwrong.append('PAPER_BINGO_STATES not found in venueplay-game.js')
+        elif not qa:
+            pwrong.append('the homepage FAQ "Can players use their phones for bingo tickets" is gone')
+        else:
+            said = re.findall(r'<b>([^<]+)</b>', qa.group(1))
+            faq_set = set(_STATE_NAMES.get(n.strip(), '?' + n.strip()) for n in said)
+            if faq_set != code_set:
+                pwrong.append('the FAQ puts %s on paper, the Worker puts %s on paper'
+                              % (', '.join(sorted(faq_set)) or 'nothing', ', '.join(sorted(code_set))))
+    ok('the paper-bingo FAQ names the states the Worker puts on paper', not pwrong,
+       why='; '.join(pwrong[:2]))
+
+    # MUSICAL BINGO IS NOT BINGO AND NOT GAMING (Dean, 15 and 20 Oct 2026, every state, QLD
+    # included). The homepage FAQ listed it with bingo, raffles and members draws as gaming,
+    # and as needing OLGR approval. Scoped to the FAQ answers people read (every
+    # <details class="q"> on a public page, and the help desk FAQ): any sentence that names
+    # musical bingo next to a gaming word must say it is NOT, or it is a claim the product
+    # does not make. terms.html is the lawyer's text and is not an FAQ, so it is not read here.
+    gaming_word = re.compile(r'\b(gaming|gambling|game of chance|OLGR|regulator|random number generator|permit)\b', re.I)
+    mwrong = []
+    faq_answers = []
+    for f in sorted(os.listdir(os.path.join(ROOT, 'venueplay'))):
+        if f.endswith('.html'):
+            p = os.path.join(ROOT, 'venueplay', f)
+            t = re.sub(r'<!--.*?-->', '', io.open(p, encoding='utf-8').read(), flags=re.S)
+            for m in re.finditer(r'<details class="q">(.*?)</details>', t, re.S):
+                faq_answers.append((f, re.sub(r'<[^>]+>', ' ', m.group(1))))
+    hf = os.path.join(ROOT, 'venueplay', 'data', 'help-faq.json')
+    if os.path.isfile(hf):
+        for grp in json.load(io.open(hf, encoding='utf-8')).values():
+            if isinstance(grp, dict):
+                for it in grp.get('items', []):
+                    faq_answers.append(('data/help-faq.json', it.get('q', '') + ' ' + it.get('a', '')))
+    for where, txt in faq_answers:
+        for sent in re.split(r'(?<=[.?!])\s+', re.sub(r'\s+', ' ', txt)):
+            if re.search(r'musical bingo', sent, re.I) and gaming_word.search(sent) \
+                    and not re.search(r'\bnot\b|\bno\b', sent, re.I):
+                mwrong.append('%s: "%s"' % (where, sent.strip()[:120]))
+    ok('no FAQ calls musical bingo gaming', not mwrong, detail='%d FAQ answers' % len(faq_answers),
+       why='; '.join(mwrong[:2]))
 
     """EVERY PAGE THAT JOINS A PLAYER MUST SAY WHICH DEVICE IT IS.
 

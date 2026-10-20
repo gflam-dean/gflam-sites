@@ -79,7 +79,7 @@ ok("then musical bingo, then bingo, as on the homepage", /"musical"/.test(opts[1
 
 /* The offer badge on a phone (27 Sep 2026): the date must sit in the same flex item as its words. */
 ok("the offer badge keeps its words and date in one piece, so it cannot wrap into two columns",
-   /<span class="eyebrow"><span class="live-dot"><\/span> <span class="eb-text">\$2\.50 a player, if you lock it in by <span class="vpc-day"[^>]*>31 October<\/span><\/span><\/span>/.test(OFFER));
+   /<span class="eyebrow"><span class="live-dot"><\/span> <span class="eb-text">\$2\.50 a player, if you lock it in by <span class="vpc-day"[^>]*>\d{1,2} [A-Z][a-z]+<\/span><\/span><\/span>/.test(OFFER));
 print("");
 if (bad) { print(bad + " OF " + ran + " CHECKS FAILED"); throw new Error(bad + " failed"); }
 print("ALL " + ran + " CHECKS PASSED");

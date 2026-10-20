@@ -2701,8 +2701,23 @@ MUTATIONS = [
     # That is a check nobody is proving, dressed up as a tidy line of output. Caught 17 Sep 2026.
     # If a date in the copy moves, move it here too.
     ('every founding page agrees with its own code', 'venueplay/nsw.html',
-     '<<ALL:31 October 2026>>', '31 November 2026',
+     '<<ALL:30 November 2026>>', '31 November 2026',
      'a founding page carries a date that does not exist'),
+    # 20 Oct 2026: /offer-nov's HTML said 31 October while its script said 30 November.
+    ('the offer page types the dates of the month it is written for', 'venueplay/nsw.html',
+     'lock it in by <span class="vpc-day" style="white-space:nowrap">30 November</span>',
+     'lock it in by <span class="vpc-day" style="white-space:nowrap">31 October</span>',
+     'the offer page goes back to typing last month\'s closing date, so anything that reads '
+     'the HTML without the script (a crawler, a link preview) is told the wrong deadline'),
+    ('the paper-bingo FAQ names the states the Worker puts on paper', 'venueplay/index.html',
+     '<b>Victoria</b>', '<b>ACT</b>',
+     'the homepage tells ACT venues bingo is paper-only and Victorian venues nothing, when '
+     'the Worker deals ACT phones a ticket and puts Victoria on paper (the 20 Oct 2026 fault)'),
+    ('no FAQ calls musical bingo gaming', 'venueplay/index.html',
+     'Bingo, raffles and members draws are gaming,',
+     'Bingo, musical bingo, raffles and members draws are gaming,',
+     'the FAQ lists musical bingo as gaming again, against Dean\'s ruling that it is a music '
+     'game and not bingo in any state'),
     ('no screen leaves a second code up once the host is connected',
      'venueplay/app/musical/screen.html',
      '<<ALL:hostSeen>>', 'hostSighted',
