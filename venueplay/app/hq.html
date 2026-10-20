@@ -1680,6 +1680,12 @@
 
   function renderCancelled(){
     var wrap=$("cxList"); if(!wrap) return;
+    /* NO HISTORY YET, NOTHING DRAWN (20 Oct 2026). The history is thrown away whenever a contact is
+       marked (refreshContactScreens) and reloaded when this tab opens. Changing the filter in that gap
+       drew the list from no history at all: every venue that had left said "Mark contacted", the
+       ones already rung included, and the badge counted them. Leave "Loading" (or the load's own
+       error) on screen; loadCancelled draws the list the moment the history lands. */
+    if(!S.cancelAudit) return;
     var all=cxStories(), list=all.filter(cxPasses);
     setTabBadge("cancelled", all.filter(function(st){ return !st.contacted; }).length);
     if(!all.length){

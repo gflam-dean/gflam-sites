@@ -127,14 +127,14 @@ BASE = 'http://127.0.0.1:%d' % srv.server_address[1]
 # ---------------- Chrome ----------------
 B = VL.Browser()
 def ask(sid, expr, wait=8):
-    """Evaluate in the page and return the value, or the string 'HUNG' if the page does not answer in time."""
-    B.ws.s.settimeout(wait)
-    try:
-        return B.eval(sid, expr)
-    except (socket.timeout, OSError):
-        return 'HUNG'
-    finally:
-        B.ws.s.settimeout(60)
+    """Evaluate in the page and return the value, or the string 'HUNG' if the PAGE has stopped.
+
+    Until 20 Oct 2026 HUNG meant "no answer in 8 seconds", and on a busy machine the answer to a page
+    that was idle sometimes took 40 to 96 seconds. Browser.evaluate (tools/verify-live.py) now asks the
+    page's own CPU clock which it was: a page that spun, or never answered, is HUNG; a page that sat
+    idle waiting for a core is not, and its answer stands."""
+    r = B.evaluate(sid, expr, wait)
+    return 'HUNG' if r is None else r.get('result', {}).get('value')
 def until(sid, expr, secs=15):
     t = time.time() + secs
     while time.time() < t:
@@ -145,19 +145,37 @@ def until(sid, expr, secs=15):
 def alive(sid):
     return ask(sid, '1+1', 6) == 2
 
+# After Bingo is tapped the console asks the other tabs on this tablet for half a second whether one
+# of them is already running the night (vp-onetab.js). This slept 1.5 seconds and hoped; on a busy
+# machine half a second of page time is longer than that. Wait for the answer instead.
+ONETAB_SETTLED = '!(window.VP_ONETAB && VP_ONETAB.state && VP_ONETAB.state()==="asking")'
+
 def scene(early):
     print('\nOpen lobby with a phone already waiting%s' % (', Allow early BINGO ticked' if early else ''))
     ptid, phone = B.open_tab(BASE + '/play?room=' + W.info['code'])
-    ok('the phone page loads (the real play.html)', until(phone, '!!document.getElementById("joinBtn")') is True)
-    time.sleep(2)   # the phone asks the Worker about the room first (/join/info) before Join does anything
+    """READY MEANS THE SCRIPT HAS RUN, NOT THAT THE BUTTON IS THERE (20 Oct 2026).
+    The Join button is in play.html's markup, above the eight scripts that make it do anything, so
+    it exists from the moment the parser passes it. This waited for the button, slept two seconds,
+    and tapped. On a busy machine the scripts were still arriving after two seconds: every run that
+    failed "the phone is in, waiting for the game" had tapped with document.readyState "loading",
+    and every run that passed had tapped with it "complete" (12 of 12 under load). The tap landed
+    on a button with no listener, the phone sat on JOIN THE GAME, and the release was blocked.
+    So: the page has finished parsing (every script tag above has run, so Join is wired), and the
+    Worker has been asked about the room, as it is before a punter can type a name. Up to two
+    minutes: play.html fetches eight scripts one after another, each a trip through Chrome and this
+    test's server, and at load 650 that took 10 to 13 seconds a time and once over 30."""
+    ok('the phone page loads (the real play.html)', until(phone, 'document.readyState!=="loading" && !!document.getElementById("joinBtn")', 120) is True,
+       ask(phone, 'document.readyState'))
+    t_end = time.time() + 15
+    while time.time() < t_end and '/join/info' not in W.calls: time.sleep(0.1)
     ask(phone, 'document.getElementById("nameIn").value="Ann"; document.getElementById("joinBtn").click(); true')
-    until(phone, '/YOU.RE IN/i.test(document.body.innerText)', 10)
+    until(phone, '/YOU.RE IN/i.test(document.body.innerText)', 15)
     ctid, host = B.open_tab(BASE + '/app/')
     ok('the console loads, signed in, on the games menu', until(host, '!!document.querySelector(\'[data-game="bingo"]\') && document.querySelector(\'[data-game="bingo"]\').offsetParent!==null', 20) is True,
        ask(host, 'document.body.innerText.slice(0,200)'))
     ask(host, 'document.querySelector(\'[data-game="bingo"]\').click(); true')
     ok('bingo opens', until(host, '!document.getElementById("setupBlock").classList.contains("hidden")') is True)
-    time.sleep(1.5)   # the console asks the other tabs for half a second after Bingo is tapped (vp-onetab.js)
+    until(host, ONETAB_SETTLED)
     ask(host, ('var $=function(i){return document.getElementById(i)};$("prizeInput").value="Meat tray";'
                '$("paidSel").value="";$("paidSel").dispatchEvent(new Event("change"));$("cardsSel").value="1";'
                '$("allowEarlyChk").checked=%s;$("allowEarlyChk").dispatchEvent(new Event("change"));true') % ('true' if early else 'false'))
@@ -174,7 +192,9 @@ def scene(early):
     ask(host, 'setTimeout(function(){ document.getElementById("startBtn").click(); }, 0); true')
     time.sleep(4)
     ok('after Start the console still answers', alive(host))
-    ok('the phone is dealt its ticket by the server', until(phone, 'document.querySelectorAll(".bcard, .ticket, [data-cardno]").length>0 || /Ticket 1 of 1/.test(document.body.innerText)', 15) is True,
+    # 45 s, not 15: when /host/bingo/seat gives up after its own 6 s the console deals on its next try,
+    # 15 s later (seatFailed in index.html), and on a starved machine that path is the normal one.
+    ok('the phone is dealt its ticket by the server', until(phone, 'document.querySelectorAll(".bcard, .ticket, [data-cardno]").length>0 || /Ticket 1 of 1/.test(document.body.innerText)', 45) is True,
        ask(phone, 'document.body.innerText.slice(0,300)'))
     ask(host, 'setTimeout(function(){ document.getElementById("nextBtn").click(); }, 0); true')
     time.sleep(3)
@@ -190,7 +210,7 @@ def leftover():
     B.call('Page.enable', {}, session=host)
     until(host, '!!document.querySelector(\'[data-game="bingo"]\') && document.querySelector(\'[data-game="bingo"]\').offsetParent!==null', 20)
     ask(host, 'document.querySelector(\'[data-game="bingo"]\').click(); true')
-    until(host, '!document.getElementById("setupBlock").classList.contains("hidden")'); time.sleep(1.5)
+    until(host, '!document.getElementById("setupBlock").classList.contains("hidden")'); until(host, ONETAB_SETTLED)
     ask(host, 'var $=function(i){return document.getElementById(i)};$("prizeInput").value="Meat tray";true')
     ask(host, 'setTimeout(function(){ document.getElementById("startBtn").click(); }, 0); true')
     time.sleep(4)

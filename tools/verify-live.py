@@ -115,14 +115,19 @@ class WS(object):
             buf += chunk
         self.buf = buf.split(b'\r\n\r\n', 1)[1]
 
-    def _read(self, n):
+    def _fill(self, n):
+        """Make sure n bytes are buffered, WITHOUT taking any of them.
+
+        A caller can put a short timeout on the socket (console-in-chrome.test.py asks a page
+        with 8 seconds, so that a hung page is a FAIL and not a wait). When that timeout went
+        off halfway through a frame, the old reader had already taken the frame's first bytes
+        out of the buffer, and every message after it was read from the wrong place. Nothing
+        is taken now until the whole frame is here, so a timeout leaves the stream intact."""
         while len(self.buf) < n:
             d = self.s.recv(65536)
             if not d:
                 raise IOError('Chrome closed the debug socket')
             self.buf += d
-        out, self.buf = self.buf[:n], self.buf[n:]
-        return out
 
     def send(self, obj):
         p = json.dumps(obj).encode()
@@ -139,15 +144,17 @@ class WS(object):
 
     def recv(self):
         while True:
-            b0, b1 = self._read(2)
-            n = b1 & 127
+            self._fill(2)
+            b0, b1 = self.buf[0], self.buf[1]
+            n, at = b1 & 127, 2
             if n == 126:
-                n = struct.unpack('>H', self._read(2))[0]
+                self._fill(4); n = struct.unpack('>H', self.buf[2:4])[0]; at = 4
             elif n == 127:
-                n = struct.unpack('>Q', self._read(8))[0]
+                self._fill(10); n = struct.unpack('>Q', self.buf[2:10])[0]; at = 10
             if b1 & 0x80:
-                self._read(4)
-            payload = self._read(n)
+                at += 4
+            self._fill(at + n)
+            payload, self.buf = self.buf[at:at + n], self.buf[at + n:]
             op = b0 & 0x0F
             if op == 1:
                 return json.loads(payload.decode('utf-8', 'replace'))
@@ -174,8 +181,13 @@ class Browser(object):
              '--user-data-dir=' + self.profile,
              '--remote-debugging-port=%d' % self.port, 'about:blank'],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        # Two minutes, not forty seconds, and stop early if Chrome has died. On 20 Oct 2026, with the
+        # machine at a load average of 700 to 900 (other agents' suites), a plain Chrome took 25
+        # seconds to open its port and sometimes more than 40, and every suite then said "Nothing
+        # was checked". A Chrome that is starting is not a Chrome that failed.
         ver = None
-        for _ in range(80):
+        end = time.time() + 120
+        while time.time() < end and self.proc.poll() is None:
             try:
                 ver = json.loads(urllib.request.urlopen(
                     'http://127.0.0.1:%d/json/version' % self.port, timeout=2).read())
@@ -213,7 +225,15 @@ class Browser(object):
                 return m.get('result', {})
 
     def open_tab(self, url):
-        tid = self.call('Target.createTarget', {'url': url})['targetId']
+        """Every page gets a WINDOW of its own, so every page is on screen.
+
+        A second tab in the same window put the first one behind it: document.visibilityState
+        "hidden", timers held to once a second, and its renderer given background priority by
+        macOS. On a busy machine that starved tab went 10 seconds and more without running
+        (console-in-chrome.test.py, 20 Oct 2026: the phone "did not answer" while the console was
+        in front, and blocked three releases). A phone and a bar tablet are two devices, each
+        with its own screen on, so two windows is the faithful model and two tabs never was."""
+        tid = self.call('Target.createTarget', {'url': url, 'newWindow': True})['targetId']
         sid = self.call('Target.attachToTarget', {'targetId': tid, 'flatten': True})['sessionId']
         return tid, sid
 
@@ -222,6 +242,63 @@ class Browser(object):
                       {'expression': expr, 'returnByValue': True, 'awaitPromise': False},
                       session=session)
         return r.get('result', {}).get('value')
+
+    # ---- "is the page hung, or is the machine slow?" ----
+    BUSY_S = 5        # this much of the page's OWN main-thread CPU spent while it did not answer: it stopped
+    PATIENCE = 60     # how long a page that is NOT busy may take to answer on a starved machine
+
+    def _timed(self, method, params, session, wait):
+        self.ws.s.settimeout(wait)
+        try:
+            return True, self.call(method, params, session=session)
+        except (socket.timeout, OSError):
+            return False, None
+        finally:
+            self.ws.s.settimeout(60)
+
+    def page_cpu(self, sid, wait):
+        """The page's main-thread CPU seconds (Performance.getMetrics in thread ticks), or None."""
+        self._cpu = getattr(self, '_cpu', {})
+        if ('on', sid) not in self._cpu:
+            if not self._timed('Performance.enable', {'timeDomain': 'threadTicks'}, sid, wait)[0]:
+                return None
+            self._cpu[('on', sid)] = True
+        got, r = self._timed('Performance.getMetrics', {}, sid, wait)
+        v = [m['value'] for m in (r or {}).get('metrics', []) if m['name'] == 'TaskDuration'] if got else []
+        if v:
+            self._cpu[sid] = v[0]
+        return v[0] if v else None
+
+    def evaluate(self, sid, expr, wait=8, await_promise=False):
+        """Runtime.evaluate's result, or None when the PAGE has stopped (a hung page).
+
+        "No answer in 8 seconds" is not the same as hung on a busy machine (20 Oct 2026). With the
+        gate running beside other agents' Chrome suites (load average 400 to 900 on eight cores) an
+        answer sometimes took 40 to 96 seconds to come back while the page itself was idle: it, the
+        browser and this process were all waiting for a CPU. So a late answer is a question, not a
+        verdict, and the page's own CPU clock answers it:
+          - no answer at all inside PATIENCE                  hung (a native dialog never answers)
+          - an answer, but BUSY_S or more of the page's own main-thread CPU spent since the question
+            was put                                           hung (a loop, even one that ends)
+          - an answer, and the page was not busy              the machine was slow; the answer stands
+        CPU time does not grow while a process waits for a core, and it does grow while a page
+        spins, so it is the one measure that separates the two. Proven both ways in prove-checks.py
+        for console-in-chrome.test.py: the native dialog, and a twelve-second loop on Open lobby."""
+        base = self.page_cpu(sid, wait)
+        if base is None:
+            base = getattr(self, '_cpu', {}).get(sid)      # the last reading, a little older: errs towards hung
+        params = {'expression': expr, 'returnByValue': True, 'awaitPromise': bool(await_promise)}
+        if base is not None:
+            answered, r = self._timed('Runtime.evaluate', params, sid, wait)
+            if answered:
+                return r
+        answered, r = self._timed('Runtime.evaluate', params, sid, self.PATIENCE)
+        if not answered:
+            return None
+        now = self.page_cpu(sid, self.PATIENCE)
+        if base is None or now is None or now - base >= self.BUSY_S:
+            return None
+        return r
 
     def close_tab(self, tid):
         try:

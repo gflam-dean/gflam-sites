@@ -101,9 +101,10 @@ def names(sid):
     return S.js(sid, '[].map.call(document.querySelectorAll("#venueRows .vn"), function(e){return e.textContent;})') or []
 
 
+BADGE_JS = ('(function(){var s=document.querySelector(\'#hqNav button[data-pane="%s"] .tabcount\');'
+            'return s ? (s.hidden ? "hidden" : s.textContent) : "none";})()')
 def badge(sid, pane):
-    return S.js(sid, '(function(){var s=document.querySelector(\'#hqNav button[data-pane="%s"] .tabcount\');'
-                     'return s ? (s.hidden ? "hidden" : s.textContent) : "none";})()' % pane)
+    return S.js(sid, BADGE_JS % pane)
 
 
 def shot(sid, name):
@@ -159,7 +160,9 @@ try:
     ok('the one rung this spell shows who and when', 'by sam' in (S.js(sid, 'document.getElementById("quietRows").innerText') or '').lower())
     S.js(sid, 'document.querySelector(\'#quietRows button[data-qcontact="%s"]\').click(); true' % vid(4))
     S.until(sid, '!document.querySelector(\'#quietRows button[data-qcontact="%s"]\')' % vid(4), 15)
-    time.sleep(0.5)
+    # The button goes at once; the row and the badge are redrawn when the Worker has answered. Wait
+    # for that, not half a second: on a busy machine (20 Oct 2026) half a second was not enough.
+    S.until(sid, '/by dean/i.test(document.getElementById("quietRows").innerText) && ' + BADGE_JS % 'quiet' + '==="1"', 30)
     mark = [a for a in S.W.table('vp_admin_audit') if a.get('action') == 'venue_quiet_contacted' and a.get('target') == 'venue:' + vid(4)]
     ok('the mark is an audit row, by Dean, for that venue', len(mark) == 1 and mark[0].get('actor_label') == 'Dean', mark)
     ok('the row now says Contacted by Dean', 'by dean' in (S.js(sid, 'document.getElementById("quietRows").innerText') or '').lower())
@@ -167,15 +170,24 @@ try:
     shot(sid, 'hq-quiet-after-mark')
 
     print('\nMark contacted on the Cancelled tab')
-    S.js(sid, 'document.querySelector(\'#hqNav button[data-pane="cancelled"]\').click(); true')
-    S.js(sid, 'var f=document.getElementById("cxFilter"); f.value="all"; f.dispatchEvent(new Event("change")); true')
+    """WHILE THE HISTORY IS STILL LOADING (20 Oct 2026). Marking a venue contacted on the Quiet tab throws
+    the cancellation history away, so opening this tab reloads it. Changing the filter before the reload
+    landed drew the list from NO history: every venue that had left showed "Mark contacted", the one
+    already rung included, and the badge counted it. Found because this suite, under load, read the
+    list in that gap. Tab, filter and read happen in ONE evaluation here, so the reload cannot land in
+    between, whatever the machine is doing: the gap is reproduced every run, not by luck."""
+    in_gap = S.js(sid, '(function(){document.querySelector(\'#hqNav button[data-pane="cancelled"]\').click();'
+                       'var f=document.getElementById("cxFilter"); f.value="all"; f.dispatchEvent(new Event("change"));'
+                       'return {offered:!!document.querySelector(\'button[data-cxcontact="%s"]\'), badge:%s};})()' % (vid(8), BADGE_JS % 'cancelled'))
+    ok('while the history is still loading, a venue already rung is not offered Mark contacted and the badge does not count it',
+       isinstance(in_gap, dict) and in_gap.get('offered') is False and in_gap.get('badge') == '2', in_gap)
     S.until(sid, '!!document.querySelector(\'button[data-cxcontact="%s"]\')' % vid(9), 15)
     ok('the venue rung about an earlier cancellation is offered Mark contacted again',
        S.js(sid, '!!document.querySelector(\'button[data-cxcontact="%s"]\')' % vid(9)) is True)
     ok('the one rung about this cancellation is not', S.js(sid, '!document.querySelector(\'button[data-cxcontact="%s"]\')' % vid(8)) is True)
     S.js(sid, 'document.querySelector(\'button[data-cxcontact="%s"]\').click(); true' % vid(9))
     S.until(sid, '!document.querySelector(\'button[data-cxcontact="%s"]\')' % vid(9), 15)
-    time.sleep(0.5)
+    S.until(sid, BADGE_JS % 'cancelled' + '==="1"', 30)
     mark = [a for a in S.W.table('vp_admin_audit') if a.get('action') == 'venue_cancel_contacted' and a.get('target') == 'venue:' + vid(9)]
     ok('written to the audit log by Dean', len(mark) == 2 and any(m.get('actor_label') == 'Dean' for m in mark), mark)
     ok('and the Cancelled badge drops to 1', badge(sid, 'cancelled') == '1', badge(sid, 'cancelled'))
@@ -189,7 +201,7 @@ finally:
 total = PASS[0] + FAIL[0]
 print('')
 print('%d of %d checks passed' % (PASS[0], total))
-EXPECTED = 19
+EXPECTED = 20
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)

@@ -72,6 +72,11 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 MUTATIONS = [
     # 19 Oct 2026: Open lobby froze the live console at a venue with an earlier game still open (a native confirm()).
     ('console-in-chrome.test.py', 'venueplay/app/vp-session.js', '          askOnPage("A " + what + " is already open at this venue on another device.",', '          resolve(root.confirm("A " + what)); return; askOnPage("A " + what + " is already open at this venue on another device.",', 'Open lobby at a venue with a game still open puts up a native dialog and the console stops answering'),
+    # 20 Oct 2026: the suite now waits out a SLOW machine (an idle page that answers late is not hung), so prove that
+    # a page that genuinely stops, for twelve seconds of its own CPU and then carries on, is still HUNG and still red.
+    ('console-in-chrome.test.py', 'venueplay/app/index.html', '  function openLobbyNow(){\n    if(blockedByHold() || drawRulesMissing()) return;', '  function openLobbyNow(){\n    var __spin=Date.now()+12000; while(Date.now()<__spin){}\n    if(blockedByHold() || drawRulesMissing()) return;', 'Open lobby freezes the console for twelve seconds and then carries on: a slow-machine allowance must not pass it'),
+    # 20 Oct 2026: HQ's Cancelled list drew itself from NO history while the history was reloading.
+    ('hq-lists-in-chrome.test.py', 'venueplay/app/hq.html', '    if(!S.cancelAudit) return;\n', '', 'the Cancelled list is drawn before its history has loaded, offering Mark contacted on a venue already rung'),
     ('test-one-room-one-identity.js', 'venueplay/app/vp-session.js', '          askOnPage("A " + what + " is already open at this venue on another device.",', '          resolve(root.confirm("A " + what)); return; askOnPage("A " + what + " is already open at this venue on another device.",', 'the takeover question goes back to a native confirm()'),
 
     # THE MIGRATION PARSE CHECK, 19 Oct 2026: the exact fault that reached Dean, a stray half-line after an INSERT.

@@ -174,13 +174,17 @@ try:
             del STATE['rows'][:]
             del STATE['refusals'][:]
             tid, sid = br.open_tab(BASE + '/' + page)
-            end = time.time() + 15
+            # Two minutes, and a page that never loads is said out loud rather than filled in half
+            # loaded (this was 15 seconds and the answer was ignored; 20 Oct 2026, under load).
+            end = time.time() + 120
             while time.time() < end and br.eval(sid, 'document.readyState') != 'complete':
                 time.sleep(0.2)
+            if br.eval(sid, 'document.readyState') != 'complete':
+                raise RuntimeError('%s had not finished loading after two minutes' % page)
             br.eval(sid, "window._alerts=[];window.alert=function(m){window._alerts.push(String(m));};true")
             br.eval(sid, '(function(){' + fill + 'return true;})()')
             thanked, alerts = False, []
-            end = time.time() + 8
+            end = time.time() + 30          # returns the moment the page answers; 8 s was too short on a busy machine
             while time.time() < end:
                 thanked = bool(br.eval(sid, '(function(){try{return ' + success + ';}catch(e){return false;}})()'))
                 alerts = br.eval(sid, 'window._alerts') or []

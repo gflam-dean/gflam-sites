@@ -128,7 +128,7 @@
   "counted_by": "lines"
  },
  "tools/hq-lists-in-chrome.test.py": {
-  "checks": 19,
+  "checks": 20,
   "counted_by": "lines"
  },
  "tools/livenorm.test.py": {

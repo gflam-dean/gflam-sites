@@ -203,13 +203,17 @@ def posts(prefix):
 
 try:
     tid, sid = br.open_tab('http://127.0.0.1:%d/manage.html' % PORT)
-    until(sid, 'document.readyState === "complete"')
+    # Wait for what the next line USES, and say so if it never comes. This waited 20 seconds for
+    # readyState, ignored the answer, and called submitPin(): on a machine at load 600 (20 Oct 2026)
+    # the page was not loaded yet and the run ended "page threw: submitPin is not defined".
+    if not until(sid, 'document.readyState === "complete" && typeof submitPin === "function"', 120):
+        raise RuntimeError('manage.html had not finished loading after two minutes')
     # A dialog would freeze the page under the debugger, so collect them instead.
     js(sid, 'window._alerts = []; window.alert = function (m) { window._alerts.push(String(m)); };'
             'window.confirm = function () { return true; }; true')
     js(sid, 'document.getElementById("pinInput").value = "pw"; submitPin()')
     ok('the manager unlocks and loads the three shows',
-       until(sid, 'document.querySelectorAll(".show-item input[type=file]").length === 3'))
+       until(sid, 'document.querySelectorAll(".show-item input[type=file]").length === 3', 60))
     until(sid, 'document.querySelectorAll("#artistList option").length > 0')
 
     # ---- 1. type-ahead lists ------------------------------------------------------
@@ -255,7 +259,7 @@ try:
     js(sid, 'shows[3].showDate = "2027-03-06"; true')
     set_file(sid, '.show-item:last-child input[type=file]', PNG)
     up_done = until(sid, 'typeof uploadsInFlight !== "undefined" && uploadsInFlight === 0 && '
-                         'shows[3].imgSrc && shows[3].imgSrc.indexOf("/public/shows/") > 0', 30)
+                         'shows[3].imgSrc && shows[3].imgSrc.indexOf("/public/shows/") > 0', 120)   # a 5 MB PNG decoded and shrunk on a busy machine
     ups = posts('/api/upload')
     ok('the picture uploads on its own, through touring-api', up_done and len(ups) == 1, '%d upload(s)' % len(ups))
     pic = ups[0][3] if ups else b''
@@ -292,7 +296,7 @@ try:
     del LOG[:]
     until(sid, 'document.querySelectorAll("#tcItems input[type=file]").length === 1')
     set_file(sid, '#tcItems input[type=file]', PNG)
-    until(sid, 'tcs[0].image_url && tcs[0].image_url.indexOf("/public/cards/") > 0', 30)
+    until(sid, 'tcs[0].image_url && tcs[0].image_url.indexOf("/public/cards/") > 0', 120)
     cu = posts('/api/upload')
     ok('a tour card picture uploads through touring-api as a card',
        len(cu) == 1 and 'kind=card' in cu[0][1] and len(cu[0][3]) < 600 * 1024,

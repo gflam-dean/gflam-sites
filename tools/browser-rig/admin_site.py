@@ -228,13 +228,11 @@ class Site(object):
         return tid, sid
 
     def js(self, sid, expr, wait=False, secs=10):
-        self.B.ws.s.settimeout(secs)
-        try:
-            r = self.B.call('Runtime.evaluate', {'expression': expr, 'returnByValue': True, 'awaitPromise': wait}, session=sid)
-        except (socket.timeout, OSError):
+        # HUNG is the PAGE stopping (no answer, or its own CPU spent spinning), never just a slow
+        # machine: see Browser.evaluate in tools/verify-live.py (20 Oct 2026).
+        r = self.B.evaluate(sid, expr, secs, await_promise=wait)
+        if r is None:
             return 'HUNG'
-        finally:
-            self.B.ws.s.settimeout(60)
         if r.get('exceptionDetails'):
             return {'__threw': json.dumps(r['exceptionDetails'])[:300]}
         return r.get('result', {}).get('value')

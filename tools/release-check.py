@@ -527,7 +527,11 @@ def local_checks(which):
                            capture_output=True, text=True, cwd=ROOT)
         last = (r.stdout.strip().splitlines() or [''])[-1]
         _SUITES_RUN.add(os.path.abspath(os.path.join(ROOT, 'tools', f)))
-        ok(f, r.returncode == 0 and suite_passed(last), last)
+        # Say WHICH check failed, whole. "24 of 26 checks passed" with the reason cut off at
+        # "FAIL the phone is i" was all three blocked releases on 20 Oct 2026 had to go on.
+        fails = [l.strip() for l in r.stdout.splitlines() if l.strip().startswith('FAIL')]
+        ok(f, r.returncode == 0 and suite_passed(last), last,
+           why=('| ' + ' | '.join(fails[:3])) if fails else '')
 
     for f in ['check-tv-watchdog.py', 'check-venue-scoping.py']:
         p = os.path.join(ROOT, 'venueplay-backend', 'tools', f)
