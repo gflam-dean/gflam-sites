@@ -1,0 +1,169 @@
+#!/usr/bin/env python3
+"""THE SUPPORT PHONE: ONE NUMBER, WHERE A VENUE LOOKS, AND NOWHERE A PLAYER DOES (20 Oct 2026).
+
+Dean: VenuePlay has a support line, 07 5228 3667, a Crazytel menu (1 sales, 2 a venue running a
+game, 3 players, 4 accounts). Written exactly "07 5228 3667", linked as tel:+61752283667, wherever
+a venue or a venue that might be one looks for help; never on a player's phone screen.
+
+THE ONE PLACE is the billing Worker: VP_SUPPORT_PHONE and VP_SUPPORT_TEL. Every email takes it
+from there (venueplay-backend/worker/support-phone-emails.test.js runs them). A static page cannot
+import a constant, so the site carries the number as text, and this suite is what makes those
+copies one answer: it reads the Worker's two strings and then
+
+  - every phone number and every tel: link in every file we serve, every migration and the Worker
+    must be THAT number (a typo, an old number or a second number anywhere is red)
+  - the help widget's own copy is the same two strings
+  - the places a venue looks all have it: the sales pages (footer, contact, FAQ), terms, privacy,
+    llms.txt, the structured data, the venue FAQ, and the four email templates (as the tags the
+    Worker fills)
+  - the places a player looks never do: the bingo, musical bingo and trivia phones, the TV, the
+    player FAQ, and all of PartyPlay bar the one shared widget file (where it is gated to
+    VenuePlay venues, which help-desk-pages.test.py proves in a browser)
+
+Run from the repo root:  python3 tools/support-phone.test.py
+"""
+import io, json, os, re, sys
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+fails = ran = 0
+
+
+def check(name, ok, saw=None):
+    global fails, ran
+    ran += 1
+    print(('  ok   ' if ok else '  FAIL ') + name + ('' if ok or saw is None else '   saw: ' + json.dumps(saw, default=str)[:300]))
+    if not ok:
+        fails += 1
+
+
+def read(rel):
+    with io.open(os.path.join(ROOT, rel), encoding='utf-8', errors='replace') as f:
+        return f.read()
+
+
+def no_comments(s, kind):
+    if kind == 'html':
+        return re.sub(r'<!--.*?-->', ' ', s, flags=re.S)
+    if kind == 'js':
+        s = re.sub(r'/\*.*?\*/', ' ', s, flags=re.S)
+        return re.sub(r'(^|[^:\\])//[^\n]*', r'\1', s)
+    if kind == 'sql':
+        return re.sub(r'--[^\n]*', ' ', s)
+    return s
+
+
+# ---------------------------------------------------------------- the one place
+W = read('venueplay-backend/worker/venueplay-api-FULL.js')
+m1 = re.findall(r"^const VP_SUPPORT_PHONE = '([^']+)';", W, re.M)
+m2 = re.findall(r"^const VP_SUPPORT_TEL = '([^']+)';", W, re.M)
+check('the billing Worker defines the number once, VP_SUPPORT_PHONE and VP_SUPPORT_TEL', len(m1) == 1 and len(m2) == 1, [m1, m2])
+SHOW = m1[0] if m1 else '07 5228 3667'
+TEL = m2[0] if m2 else '+61752283667'
+DIGITS = re.sub(r'\D', '', SHOW)
+check('it is written the Australian way, "07 5228 3667", and the tel: link is the same number in +61 form',
+      SHOW == '07 5228 3667' and TEL == '+61' + DIGITS[1:], [SHOW, TEL])
+
+# ---------------------------------------------------------------- every copy is this one
+SERVED = []
+for base in ('venueplay', 'partyplay'):
+    for d, dirs, fs in os.walk(os.path.join(ROOT, base)):
+        dirs[:] = [x for x in dirs if x not in ('node_modules', '.git')]
+        for f in fs:
+            # JSON is words only where a person reads it: the Help FAQ. The rest is song and question
+            # data, whose catalogue codes look like phone numbers and are not.
+            if f.endswith('.json') and f != 'help-faq.json':
+                continue
+            if f.endswith(('.html', '.js', '.json', '.txt', '.xml', '.css')) and not f.endswith('.test.js'):
+                SERVED.append(os.path.relpath(os.path.join(d, f), ROOT))
+OTHER = ['venueplay-backend/worker/venueplay-api-FULL.js', 'venueplay-backend/worker/venueplay-game.js']
+for d in ('venueplay-backend/supabase', 'partyplay-backend/supabase'):
+    if os.path.isdir(os.path.join(ROOT, d)):
+        OTHER += [os.path.join(d, f) for f in sorted(os.listdir(os.path.join(ROOT, d))) if f.endswith('.sql')]
+
+# An Australian landline or 13/1300/1800 number, spaced any way, and any tel: link with digits in it.
+# Mobiles (04..) are left alone: the sites show "0400 000 000" as a placeholder in phone fields.
+LANDLINE = re.compile(r'(?<![\d+])(?:\(0[2378]\)\s?|0[2378][\s-]?)\d{4}[\s-]?\d{4}(?!\d)|(?<!\d)1[38]00[\s-]?\d{3}[\s-]?\d{3}(?!\d)')
+INTL = re.compile(r'\+61[\s-]?\(?[2378]\)?[\s-]?\d{4}[\s-]?\d{4}(?!\d)')
+TEL_LINK = re.compile(r'tel:([+\d][\d\s().-]*\d)')
+wrong, where_found = [], []
+for rel in SERVED + OTHER:
+    kind = 'html' if rel.endswith('.html') else 'js' if rel.endswith('.js') else 'sql' if rel.endswith('.sql') else ''
+    s = no_comments(read(rel), kind)
+    hits = [(h, 'display') for h in LANDLINE.findall(s)] + [(h, 'intl') for h in INTL.findall(s)] + [(h, 'tel') for h in TEL_LINK.findall(s)]
+    for h, k in hits:
+        ok_ = (h == SHOW) if k == 'display' else (re.sub(r'[^\d+]', '', h) == TEL and (k != 'tel' or h == TEL))
+        if not ok_:
+            wrong.append('%s: %s' % (rel, h))
+    if hits:
+        where_found.append(rel)
+SEEN = ['venueplay/index.html', 'venueplay/nsw.html', 'venueplay/terms.html', 'venueplay/privacy.html', 'venueplay/llms.txt',
+        'venueplay/data/help-faq.json', 'venueplay/app/vp-help.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+        'venueplay-backend/supabase/venueplay-112-help-faq-support-phone.sql']
+check('the sweep below is not blind: it found the number in each place it is meant to be', all(x in where_found for x in SEEN),
+      [x for x in SEEN if x not in where_found])
+check('every phone number and tel: link we serve, send or store is exactly "%s" / tel:%s' % (SHOW, TEL), not wrong, wrong[:6])
+
+# ---------------------------------------------------------------- the widget's own copy
+H = read('venueplay/app/vp-help.js')
+mw = re.search(r'var PHONE = BRAND === "venueplay" && MODE === "venue" \? \{ show: "([^"]+)", tel: "([^"]+)" \} : null;', H)
+check('the help widget holds the same two strings, and only for a VenuePlay venue', bool(mw) and mw.group(1) == SHOW and mw.group(2) == TEL, mw and mw.groups())
+check('the PartyPlay copy of the widget is the same file, so it is gated the same way', read('partyplay/lib/vp-help.js') == H)
+
+# ---------------------------------------------------------------- where a venue looks
+def has_link(s):
+    return ('<a href="tel:%s">%s</a>' % (TEL, SHOW)) in s or re.search(r'<a [^>]*href="tel:%s"[^>]*>%s</a>' % (re.escape(TEL), re.escape(SHOW)), s) is not None
+
+
+for page in ('venueplay/index.html', 'venueplay/nsw.html'):
+    s = no_comments(read(page), 'html')
+    foot = s[s.find('<footer'):s.find('</footer>')]
+    check(page + ': the footer has the number, tappable, under the email', has_link(foot) and foot.find('hello@venueplay.com.au') < foot.find('tel:' + TEL), foot[-300:])
+    form = re.search(r'<p class="form-fine">Or email us directly at hello@venueplay\.com\.au, or call (<a [^>]*>[^<]*</a>)</p>', s)
+    check(page + ': the contact form says "or call 07 5228 3667", tappable', bool(form) and has_link(form.group(1)), form and form.group(0))
+    faq = re.search(r'<summary>What support do I get\?.*?</details>', s, re.S)
+    check(page + ': the "What support do I get?" answer gives the number and says press 2 on a game night',
+          bool(faq) and has_link(faq.group(0)) and 'press 2' in faq.group(0), faq and faq.group(0)[-260:])
+for page in ('venueplay/terms.html', 'venueplay/privacy.html'):
+    s = no_comments(read(page), 'html')
+    block = re.search(r'Contact us</h2>\s*<p>(.*?)</p>', s, re.S)
+    check(page + ': "Contact us" lists Phone: 07 5228 3667, tappable, beside the email', bool(block) and 'Phone: ' in block.group(1) and has_link(block.group(1)), block and block.group(1))
+    foot = s[s.find('<footer'):s.find('</footer>')]
+    check(page + ': and so does the footer', has_link(foot))
+
+s = read('venueplay/index.html')
+ld = re.search(r'<script type="application/ld\+json">(.*?)</script>', s, re.S)
+try:
+    data = json.loads(ld.group(1)) if ld else {}
+except Exception as e:
+    data = {'error': str(e)}
+pub = data.get('publisher') or {}
+cp = pub.get('contactPoint') or {}
+check('the home page structured data still parses, and names VenuePlay\'s support line as a ContactPoint',
+      pub.get('@type') == 'Organization' and cp.get('@type') == 'ContactPoint' and cp.get('telephone') == TEL
+      and cp.get('contactType') == 'customer support' and pub.get('telephone') == TEL, data)
+
+llms = read('venueplay/llms.txt')
+check('llms.txt (what an assistant reads about us) gives the number and the menu', ('Phone: ' + SHOW) in llms and 'press 1 for sales' in llms)
+
+faq = json.load(open(os.path.join(ROOT, 'venueplay', 'data', 'help-faq.json'), encoding='utf-8'))
+contact = [it for it in faq['venue']['items'] if it['q'] == 'Contacting us']
+check('the venue FAQ "Contacting us" says: if a game is on right now, call %s and press 2' % SHOW,
+      len(contact) == 1 and ('call %s and press 2' % SHOW) in contact[0]['a'], contact)
+
+for t in ('welcome', 'welcome-group', 'welcome-hq', 'venue-onboarding'):
+    s = no_comments(read('venueplay/emails/%s.html' % t), 'html')
+    check('email template %s: its footer has the call line, as the tags the Worker fills (one place)' % t,
+          re.search(r'<a href="tel:\{\{support_tel\}\}"[^>]*>\{\{support_phone\}\}</a> and press 2', s) is not None and SHOW not in s)
+
+# ---------------------------------------------------------------- where a player looks
+PLAYER = ['venueplay/play.html', 'venueplay/app/musical/play.html', 'venueplay/app/trivia/play.html', 'venueplay/tv.html']
+bad = [p for p in PLAYER if SHOW in read(p) or DIGITS in read(p) or 'tel:' in read(p)]
+check('no player phone screen and not the TV: bingo, musical bingo, trivia, tv.html', not bad, bad)
+pat = [it['q'] for it in faq['patron']['items'] if SHOW in it['a'] or DIGITS in it['a']]
+check('the player FAQ has no phone line (players use Help; the menu sends them to voicemail)', not pat, pat)
+pp = [p for p in SERVED if p.startswith('partyplay/') and p != 'partyplay/lib/vp-help.js' and (SHOW in read(p) or DIGITS in read(p) or TEL in read(p))]
+check('nothing in PartyPlay carries the VenuePlay number (bar the shared widget, gated off there)', not pp, pp)
+
+print('')
+print(('%d FAILED, %d run' % (fails, ran)) if fails else ('ALL %d CHECKS PASSED' % ran))
+sys.exit(1 if fails else 0)

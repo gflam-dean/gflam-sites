@@ -52,6 +52,12 @@
   var SUPPORT = "support@" + BRAND + ".com.au";
   var NAME = BRAND === "partyplay" ? "PartyPlay" : "VenuePlay";
   var FAQ_KEY = { patron: "patron", venue: "venue", guest: "guest", host: "host" }[MODE] || "";
+  /* THE SUPPORT PHONE (Dean, 20 Oct 2026). VenuePlay VENUES only: the console, settings and the
+     account page. Never a player's phone (they use this Help, and the phone menu sends players to
+     voicemail) and never PartyPlay, which has no line. The billing Worker's VP_SUPPORT_PHONE and
+     VP_SUPPORT_TEL are the same two strings, and tools/test-support-phone.py fails if any copy
+     anywhere differs. */
+  var PHONE = BRAND === "venueplay" && MODE === "venue" ? { show: "07 5228 3667", tel: "+61752283667" } : null;
 
   function el(tag, cls, text) { var n = doc.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
   function on(n, ev, fn) { n.addEventListener(ev, function (e) { try { fn(e); } catch (x) {} }); }
@@ -142,6 +148,8 @@
       ".vph .vph-faqwrap>summary{color:#C9C9D1;font-weight:700}" +
       ".vph .vph-faqwrap details{margin-left:2px}" +
       ".vph .vph-ts{margin-top:12px}.vph .vph-ts:empty{display:none}" +
+      ".vph .vph-call{background:#1B1B20;border:1px solid rgba(255,31,142,.35);border-radius:12px;padding:12px 14px;margin:0 0 14px;color:#E7E7EC;font-size:15px;line-height:1.45}" +
+      ".vph .vph-call a{color:#FF8AC4;font-weight:800;white-space:nowrap;text-decoration:underline;text-underline-offset:3px}" +
       ".vph .vph-about{font-size:14px;color:#C9C9D1;background:#1B1B20;border-radius:10px;padding:10px 12px;margin-bottom:4px}" +
       ".vph-inline .vph{background:transparent;box-shadow:none;max-height:none;padding:0;border-radius:0;max-width:none}";
     doc.head.appendChild(s);
@@ -204,6 +212,15 @@
     return tsScriptP;
   }
 
+  /* "Call us on 07 5228 3667", a real tel: link, for a venue. Built as nodes like everything else. */
+  function callLine() {
+    var p = el("p", "vph-call"); p.id = "vphCall";
+    p.appendChild(doc.createTextNode("Call us on "));
+    var a = el("a", "", PHONE.show); a.href = "tel:" + PHONE.tel; p.appendChild(a);
+    p.appendChild(doc.createTextNode(". If a game is on right now, press 2."));
+    return p;
+  }
+
   /* ---- the form ---- */
   function field(label, input) { var w = el("div"); var l = el("label", "", label); if (input.id) l.setAttribute("for", input.id); w.appendChild(l); w.appendChild(input); return w; }
   function input(type, id, extra) { var i = el(type === "textarea" ? "textarea" : "input"); if (type !== "textarea") i.type = type; i.id = id; for (var k in (extra || {})) i.setAttribute(k, extra[k]); return i; }
@@ -211,6 +228,7 @@
   function buildForm(box, issue) {
     var venueMode = MODE === "venue", sales = MODE === "sales";
     var f = el("form"); f.setAttribute("novalidate", ""); f.className = "vph-form";
+    if (PHONE) f.appendChild(callLine());
     if (issue && !venueMode) { var about = el("div", "vph-about"); about.appendChild(el("span", "", "About: ")); about.appendChild(el("b", "", issue.title)); f.appendChild(about); }
     var hp = input("text", "vphWebsite", { name: "website", tabindex: "-1", autocomplete: "off", "aria-hidden": "true" });
     var hpw = el("div", "vph-hp"); hpw.appendChild(hp); f.appendChild(hpw);
@@ -356,6 +374,7 @@
 
     function showIssues() {
       clear();
+      if (PHONE) flow.appendChild(callLine());
       var issues = (data && data.issues) || [];
       if (issues.length) {
         flow.appendChild(el("h3", "vph-q", "What's your issue?"));

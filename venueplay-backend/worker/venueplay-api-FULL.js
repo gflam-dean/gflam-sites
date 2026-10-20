@@ -3533,7 +3533,7 @@ async function vpaHandlePlayerRemove(request, env, json) {
           + '<strong>Please delete them from that file and from anything you loaded it into</strong> (your email or SMS tool, a spreadsheet, a CRM), and do not contact them again. '
           + 'The Spam Act gives a business five working days to act on a request like this.</p>'
           + '<p>Nothing else is needed, and you do not need to reply. If you have a question, just answer this email.</p>'
-          + '<p>VenuePlay<br>hello@venueplay.com.au</p></div>';
+          + '<p>VenuePlay<br>hello@venueplay.com.au</p>' + vpaSupportPhoneHtml() + '</div>';
         emailed = 'sent';
         for (const addr of recipients) {
           try { if (!(await vpaSendEmail(env, addr, 'Please remove one person from your ' + v.venue_name + ' players list', html))) emailed = 'failed'; }
@@ -4310,6 +4310,7 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
          a cancellation email; getting that the wrong way round would be far worse. */
       .replace(/\{\{unsubscribe_url\}\}/g, site + '/unsubscribe?e=' + encodeURIComponent(email || ''))
       .replace(/{{support_email}}/g, support);
+    html = vpaFillSupport(html);
 
     const sentRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -4454,6 +4455,7 @@ async function vpaAddCardRedirect(request, env) {
     + '<h1 style="font-size:22px;margin:0 0 12px">' + title + '</h1>'
     + '<p style="font-size:16px;line-height:1.6;color:#c9c7d4;margin:0">' + body + '</p>'
     + '<p style="margin:22px 0 0"><a href="mailto:hello@venueplay.com.au" style="color:#FF1F8E;font-weight:700">hello@venueplay.com.au</a></p>'
+    + '<p style="margin:10px 0 0;font-size:15px;color:#c9c7d4">or call <a href="tel:' + VP_SUPPORT_TEL + '" style="color:#FF1F8E;font-weight:700">' + VP_SUPPORT_PHONE + '</a></p>'
     + '</div></body>',
     { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } }
   );
@@ -4644,6 +4646,7 @@ async function vpaFireHqWelcome(env, o) {
       .replace(/{{privacy_url}}/g, site + '/privacy')
       .replace(/\{\{unsubscribe_url\}\}/g, site + '/unsubscribe?e=' + encodeURIComponent(email || ''))
       .replace(/{{support_email}}/g, 'hello@venueplay.com.au');
+    html = vpaFillSupport(html);
 
     return await vpaSendEmail(env, email,
       comp ? 'Your VenuePlay account is ready, and it is on us'
@@ -4672,6 +4675,7 @@ async function vpbFireVenueOnboarding(env, o) {
       .replace(/{{tv_url}}/g, site + '/tv?' + encodeURIComponent(o.slug || ''))
       .replace(/\{\{unsubscribe_url\}\}/g, site + '/unsubscribe?e=' + encodeURIComponent(email || ''))
       .replace(/{{support_email}}/g, 'hello@venueplay.com.au');
+    html = vpaFillSupport(html);
 
     return await vpaSendEmail(env, email,
       'Setup guide for ' + (o.venueName || 'your new venue') + ' (forward this on)', html);
@@ -4819,6 +4823,40 @@ async function vpaNotifyNewSignup(env, session, f, venues, isGroup) {
    The ABN is the one on terms.html. If it ever changes it has to change in both, which
    is why it says so here. */
 const VP_ABN = '35 679 383 049';   // also on venueplay/terms.html; keep them the same
+
+/* THE SUPPORT PHONE. Dean, 20 Oct 2026: VenuePlay has a phone number now, a Crazytel line with a
+   menu (1 sales, 2 a venue running a game, 3 players, 4 accounts). It goes wherever a VENUE looks
+   for help, and never on a player's phone screen: players use Help on the phone, and key 3 only
+   reaches voicemail.
+
+   THIS IS THE ONE PLACE IN THIS WORKER IT IS WRITTEN. Every email below takes it from here, the
+   site templates get it through {{support_phone}} and {{support_tel}} (vpaFillSupport), and the
+   footer of every venue email is vpaVenueEmailFoot. The site's own copies (vp-help.js, the sales
+   pages, terms, privacy, the venue FAQ) are held to these two strings by
+   tools/test-support-phone.py, which fails on any other number or tel: link anywhere served. */
+const VP_SUPPORT_PHONE = '07 5228 3667';
+const VP_SUPPORT_TEL = '+61752283667';
+
+/* One line, the same in every venue email: the number, tappable, and which key a game night
+   wants. */
+function vpaSupportPhoneHtml() {
+  return '<p style="font-size:12.5px;color:#9a9aa4;margin:14px 0 0">Need us? Call '
+    + '<a href="tel:' + VP_SUPPORT_TEL + '" style="color:#9a9aa4;font-weight:700">' + VP_SUPPORT_PHONE + '</a>'
+    + '. If a game is on right now, press 2.</p>';
+}
+/* THE FOOTER OF EVERY EMAIL A VENUE GETS FROM THIS WORKER. The support line, then the small
+   print. withAbn: a receipt, a reminder or a plan change carries the ABN; the leaving emails do
+   not (Dean's call, see vpaLeavingHtml). */
+function vpaVenueEmailFoot(withAbn) {
+  return vpaSupportPhoneHtml()
+    + '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay.com.au'
+    + (withAbn ? ' &middot; Gflam Group, ABN ' + VP_ABN : '') + '</p>';
+}
+/* The site's email templates ask for the number with two tags; every template the Worker sends
+   goes through here, so none of them can be filled one way and another a different way. */
+function vpaFillSupport(html) {
+  return String(html).replace(/\{\{support_phone\}\}/g, VP_SUPPORT_PHONE).replace(/\{\{support_tel\}\}/g, VP_SUPPORT_TEL);
+}
 
 /* TELL THEM BEFORE IT HAPPENS, AND TELL THEM WHEN IT HAS.
 
@@ -5010,7 +5048,7 @@ async function vpaFirePlanUpliftEmail(env, customerId) {
       + '<p style="margin:22px 0"><a href="' + site + '/app/billing.html" '
       + 'style="background:#e6007e;color:#fff;text-decoration:none;padding:11px 18px;border-radius:9px;font-weight:600">'
       + 'See your plan</a></p>'
-      + '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay.com.au &middot; Gflam Group, ABN ' + VP_ABN + '</p>'
+      + vpaVenueEmailFoot(true)
       + '</div>';
     const ok = await vpaSendEmail(env, email, 'Your VenuePlay plan has moved up', html);
     await say(ok ? 'sent' : 'not sent: Resend refused it',
@@ -5089,7 +5127,7 @@ async function vpaFireInvoiceEmail(env, invoice) {
       + '<p style="font-size:13.5px;color:#12101a;margin:26px 0 0">We know a quiet Tuesday is worth as much as a packed Saturday, '
       + 'so thank you for backing us early. If there is anything you want the games to do that they do not, tell us.</p>'
       + '<p style="font-size:12.5px;color:#9a9aa4;margin:14px 0 0">Questions about your bill? Reply to this email or contact accounts@venueplay.com.au</p>'
-      + '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay.com.au &middot; Gflam Group, ABN ' + VP_ABN + '</p>'
+      + vpaVenueEmailFoot(true)
       + '</div>';
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -5181,7 +5219,7 @@ async function vpaFireUpcomingEmail(env, invoice) {
       + '<a href="' + billing + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">Manage your plan</a>'
       + '<p style="font-size:13px;color:#6a6a75;margin:22px 0 0">You can add or reduce players anytime from your billing page. On monthly, added players are a full month and reductions start at your next renewal. On annual, added players are pro rata to your renewal, and if you reduce, the unused value is held as credit against next year rather than lost.</p>'
       + '<p style="font-size:12.5px;color:#9a9aa4;margin:22px 0 0">Prefer not to get these? Turn payment reminders off on your billing page. Questions? Reply to this email or contact accounts@venueplay.com.au</p>'
-      + '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay.com.au &middot; Gflam Group, ABN ' + VP_ABN + '</p>'
+      + vpaVenueEmailFoot(true)
       + '</div>';
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -5602,6 +5640,7 @@ async function vpaFirePaymentFailedEmail(env, invoice, moved, declineKnown) {
       + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">We tried to charge ' + amount + ' for ' + what + (why.ours ? '. ' : ' and it was declined. ') + why.line + '</p>'
       + vpaPaymentFailedNextStep(moved, payNow, billing)
       + '<p style="font-size:12.5px;color:#9a9aa4;margin:22px 0 0">Questions? Reply to this email or contact accounts@venueplay.com.au</p>'
+      + vpaVenueEmailFoot(false)
       + '</div>';
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -7340,7 +7379,7 @@ function vpaLeavingHtml(env, opts) {
        "your last night is Friday" reads like a letter from a solicitor. The ABN stays
        where it is actually required, on the receipt, which also carries "Prices include
        GST" and is a tax invoice. */
-    + '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay.com.au</p>'
+    + vpaVenueEmailFoot(false)
     + '</div>';
 }
 
@@ -10211,7 +10250,13 @@ function helpReplyHtml(ticket, body, replyTo) {
   return '<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.55;color:#111;max-width:560px">' +
     '<div style="font-weight:800;font-size:18px;color:#FF1F8E;margin-bottom:14px">' + brand + '</div>' +
     '<div style="white-space:pre-wrap">' + helpHtml(body) + '</div>' +
-    '<p style="margin-top:22px">' + brand + '<br><a href="mailto:' + replyTo + '" style="color:#C70F69">' + replyTo + '</a></p>' +
+    '<p style="margin-top:22px">' + brand + '<br><a href="mailto:' + replyTo + '" style="color:#C70F69">' + replyTo + '</a>' +
+    /* The phone line goes to a venue or a prospective venue only: a VenuePlay ticket about a
+       venue, a bill or a sale. Never a player's (the menu sends players to voicemail) and never
+       PartyPlay, which has no line. */
+    (!pp && ['venue_support', 'accounts', 'sales'].indexOf(ticket.category) !== -1
+      ? '<br><a href="tel:' + VP_SUPPORT_TEL + '" style="color:#C70F69">' + VP_SUPPORT_PHONE + '</a>' : '') +
+    '</p>' +
     '<p style="margin-top:22px;font-size:12px;color:#666">Your request number is #' + ticket.ticket_no +
     '. Reply to this email to add to it.<br>' + brand + ' (' + site + ') is made by Gflam Group Pty Ltd on the Gold Coast. ABN 35 679 383 049.</p></div>';
 }

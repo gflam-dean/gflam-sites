@@ -224,6 +224,20 @@ def posts(t):
     return t.js('window.__posts') or []
 
 
+# THE SUPPORT PHONE (20 Oct 2026): 07 5228 3667 is for VENUES. These read what the page has drawn.
+NO_PHONE = ('(function(){var t=(document.body.innerText||"")+(document.body.textContent||"");'
+            'return !document.querySelector("a[href^=\'tel:\']") && t.indexOf("5228 3667")===-1 && t.indexOf("52283667")===-1;})()')
+CALL_LINE = ('(function(){var c=document.getElementById("vphCall");if(!c)return null;var a=c.querySelector("a"),r=c.getBoundingClientRect(),'
+             'p=document.querySelector("#vphBg .vph").getBoundingClientRect();'
+             'return {text:c.textContent,href:a&&a.getAttribute("href"),link:a&&a.textContent,shown:r.width>0&&r.height>0,'
+             'inside:r.left>=p.left-1&&r.right<=p.right+1,scrollW:document.documentElement.scrollWidth,innerW:window.innerWidth};})()')
+
+
+def call_ok(c):
+    return bool(c) and c['href'] == 'tel:+61752283667' and c['link'] == '07 5228 3667' and c['shown'] and c['inside'] \
+        and c['text'] == 'Call us on 07 5228 3667. If a game is on right now, press 2.' and c['scrollW'] <= c['innerW']
+
+
 def main():
     if not os.path.exists(vl.CHROME):
         check('Google Chrome is installed (this suite needs a real browser)', False, vl.CHROME)
@@ -287,6 +301,7 @@ def main():
         about = t.until('(document.querySelector(".vph-about")||{}).textContent', 5)
         check('triage: after the last "Still not working", the form opens, already about that issue', about == 'About: My game is not showing' and t.js('!!document.getElementById("vphMsg") && !document.querySelector(".vph-step")') is True, about)
         t.shot('03c-bingo-phone-form-after-steps')
+        check('bingo phone: no support phone number or tel: link anywhere, Help and its form included (players use Help)', t.js(NO_PHONE) is True)
         check('bingo phone: the privacy line links the privacy policy', t.js('Array.prototype.some.call(document.querySelectorAll(".vph-fine a"), function(a){ return a.getAttribute("href")==="/privacy"; })') is True)
         n_before = len(posts(t))
         t.js('document.getElementById("vphMsg").value="My tickets are not showing";document.querySelector(".vph-go").click()')
@@ -326,6 +341,12 @@ def main():
             link_checks(t, name)
             t.shot(('05-' if 'musical' in name else '06-') + name.replace(' ', '-'))
             check(name + ': Help is in the phone menu too', t.js('!!document.getElementById("vphMenu")') is True)
+            t.js('document.getElementById("vphLink").click()')
+            t.until('!!document.querySelector(".vph-msg")', 8)
+            t.js('document.querySelector(".vph-msg").click()')
+            t.until('!!document.getElementById("vphMsg")', 4)
+            check(name + ': no support phone number or tel: link, on the page, in Help or in its form', t.js(NO_PHONE) is True)
+            t.js('document.querySelector(".vph-x").click()')
             if down:
                 t.js('document.getElementById("vphLink").click()')
                 got = t.until('document.querySelectorAll("#vphFaq details").length || 0', 8)
@@ -339,6 +360,13 @@ def main():
         check('venue: a Help button sits in the header beside Account', t.until('(function(){var x=document.getElementById("vphLink");return !!x&&x.parentNode.className==="hactions"&&x.nextElementSibling.textContent==="Account";})()', 8) is True)
         panel_checks(t, 'venue', len(vp_faq['venue']['items']), 'venues')
         t.shot('07-venue-help-panel')
+        c = t.js(CALL_LINE)
+        check('venue: Help opens with "Call us on 07 5228 3667", a tel:+61752283667 link, inside the panel, no sideways scroll', call_ok(c), c)
+        check('venue: the call line is first, above the issues', t.js('(function(){var f=document.getElementById("vphFlow");return !!f.firstElementChild&&f.firstElementChild.id==="vphCall";})()') is True)
+        t.js('document.getElementById("vphFaq").open=true;Array.prototype.forEach.call(document.querySelectorAll("#vphFaq details"),function(d){d.open=true;})')
+        check('venue: the FAQ says to call 07 5228 3667 and press 2 if a game is on right now',
+              'call 07 5228 3667 and press 2' in (t.js('document.getElementById("vphFaq").textContent') or ''))
+        t.js('document.getElementById("vphFaq").open=false')
         I3 = ISSUES['venueplay:venue'][0]
         t.js('document.querySelector("[data-issue=\'%s\']").click()' % I3['id'])
         for k in range(3):
@@ -348,6 +376,9 @@ def main():
             t.js('document.querySelector(".vph-still").click()')
         t.until('!!document.getElementById("vphSubject")', 5)
         check('venue: after the steps, the form opens with the issue as the subject', t.js('document.getElementById("vphSubject").value') == I3['title'], t.js('document.getElementById("vphSubject").value'))
+        c = t.js(CALL_LINE)
+        check('venue: the contact form has "Call us on 07 5228 3667" beside it, tappable', call_ok(c) and t.js('!!document.querySelector(".vph-form #vphCall")') is True, c)
+        t.shot('07c-venue-form-call-line')
         t.js('document.getElementById("vphSubject").value="";document.getElementById("vphMsg").value="TV blank";document.querySelector(".vph-go").click()')
         time.sleep(0.3)
         check('venue: no subject, no send', not [x for x in posts(t) if x['path'] == '/help/venue/ticket'])
@@ -387,6 +418,7 @@ def main():
         t.until('(document.querySelector(".vph-done")||{}).textContent', 8)
         body = ((t.js('window.__posts') or [{}])[-1]).get('body', {})
         check('partyplay guest: a PartyPlay guest ticket with the party code', body.get('brand') == 'partyplay' and body.get('kind') == 'patron' and body.get('code') == 'KFP7QX', body)
+        check('partyplay guest: no VenuePlay support phone anywhere', t.js(NO_PHONE) is True)
         t.close()
 
         print('PARTYPLAY HOST CONSOLE')
@@ -397,6 +429,7 @@ def main():
         t.shot('09-partyplay-host-panel')
         check('partyplay host: its own issues ("The party screen is blank")', 'The party screen is blank' in (t.js('document.getElementById("vphFlow").textContent') or ''))
         to_form(t)
+        check('partyplay host: no VenuePlay support phone, in Help or its form', t.js(NO_PHONE) is True)
         t.js('document.getElementById("vphEmail").value="host@example.com";document.getElementById("vphMsg").value="The TV is blank";document.querySelector(".vph-go").click()')
         t.until('(document.querySelector(".vph-done")||{}).textContent', 8)
         post = (t.js('window.__posts') or [{}])[-1]

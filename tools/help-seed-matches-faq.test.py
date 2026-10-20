@@ -15,7 +15,7 @@ the repo is meant to follow them. This guards the starting point, which is what 
 
 Run from the repo root:  python3 tools/help-seed-matches-faq.test.py
 """
-import importlib.util, json, os, re, sys
+import glob, importlib.util, json, os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 spec = importlib.util.spec_from_file_location('cmp', os.path.join(ROOT, 'tools', 'check-migrations-parse.py'))
@@ -66,10 +66,45 @@ mig = os.path.join(ROOT, 'venueplay-backend', 'supabase', 'venueplay-106-help-de
 stmts, fault = cmp_.scan(open(mig, encoding='utf-8').read())
 check('migration 106 reads cleanly', fault is None, fault)
 seed = {}
+rows = {}                                      # id -> [brand, audience, position, question, answer]
 for _, body in stmts:
     if re.match(r'insert\s+into\s+public\.vp_help_faq\b', body, re.I):
         v = values(body)                       # id, brand, audience, position, question, answer
-        seed.setdefault((v[1], v[2]), []).append((int(v[3]), v[4], v[5]))
+        rows[v[0]] = [v[1], v[2], int(v[3]), v[4], v[5]]
+
+
+def quoted(stmt, after):
+    """The single-quoted literal that follows the words `after` in one statement ('' is a quote)."""
+    m = re.search(after + r"\s*'((?:[^']|'')*)'", stmt, re.I | re.S)
+    return m.group(1).replace("''", "'") if m else None
+
+
+# LATER MIGRATIONS THAT CHANGE AN ANSWER (20 Oct 2026, migration 112: the venue "Contacting us"
+# names the support phone). The starting point the tests use is 106 PLUS every later
+# "update public.vp_help_faq set answer = ... where id = ... and answer = ...", applied in number
+# order and only when the guard matches, exactly as Postgres would. Without this the JSON and the
+# database would have to disagree for ever after the first change of words.
+later = sorted(glob.glob(os.path.join(ROOT, 'venueplay-backend', 'supabase', 'venueplay-*.sql')),
+               key=lambda f: int(re.search(r'venueplay-(\d+)-', os.path.basename(f)).group(1)))
+applied = []
+for f in later:
+    n = int(re.search(r'venueplay-(\d+)-', os.path.basename(f)).group(1))
+    if n <= 106:
+        continue
+    st, flt = cmp_.scan(open(f, encoding='utf-8').read())
+    for _, body in st or []:
+        if not re.match(r'update\s+public\.vp_help_faq\b', body, re.I):
+            continue
+        new_answer = quoted(body, r'set\s+answer\s*=')
+        rid = quoted(body, r'where\s+id\s*=')
+        guard = quoted(body, r'and\s+answer\s*=')
+        check('migration %d: its FAQ update names a row 106 seeded, and the answer it expects' % n,
+              bool(new_answer) and rid in rows and guard is not None, [rid, guard is not None])
+        if rid in rows and guard is not None and rows[rid][4] == guard:
+            rows[rid][4] = new_answer
+            applied.append(n)
+for rid, r in rows.items():
+    seed.setdefault((r[0], r[1]), []).append((r[2], r[3], r[4]))
 vp = json.load(open(os.path.join(ROOT, 'venueplay', 'data', 'help-faq.json'), encoding='utf-8'))
 pp = json.load(open(os.path.join(ROOT, 'partyplay', 'data', 'help-faq.json'), encoding='utf-8'))
 want = {('venueplay', 'patron'): vp['patron']['items'], ('venueplay', 'venue'): vp['venue']['items'],

@@ -11,6 +11,12 @@ var GAME=find("venueplay-backend/worker/venueplay-game.js");
 var abn=/const VP_ABN = '([^']+)'/.exec(BILL);
 pass("the ABN is defined once in the Worker", !!abn, abn?abn[1]:"not found");
 var VP_ABN = abn?abn[1]:"";
+/* The support phone (20 Oct 2026): every venue email's footer is vpaVenueEmailFoot now, so the
+   lifted senders need it and the two constants it reads, from the Worker itself. */
+var VP_SUPPORT_PHONE=(/const VP_SUPPORT_PHONE = '([^']+)'/.exec(BILL)||[,""])[1];
+var VP_SUPPORT_TEL=(/const VP_SUPPORT_TEL = '([^']+)'/.exec(BILL)||[,""])[1];
+eval(lift(BILL,"vpaSupportPhoneHtml"));
+eval(lift(BILL,"vpaVenueEmailFoot"));
 eval(lift(BILL,"vpaEsc"));
 eval(lift(BILL,"vpaInvoiceLinesHtml"));
 eval(lift(BILL,"vpaTaxSummaryHtml"));

@@ -14,6 +14,12 @@ function lift(src,name){ var m=new RegExp("(?:async\\s+)?function\\s+"+name+"\\s
 
 var BILL=find("venueplay-backend/worker/venueplay-api-FULL.js");
 var VP_ABN=(/const VP_ABN = '([^']+)'/.exec(BILL)||[,""])[1];
+/* The support phone (20 Oct 2026): every venue email's footer is vpaVenueEmailFoot now, so the
+   lifted senders need it and the two constants it reads, from the Worker itself. */
+var VP_SUPPORT_PHONE=(/const VP_SUPPORT_PHONE = '([^']+)'/.exec(BILL)||[,""])[1];
+var VP_SUPPORT_TEL=(/const VP_SUPPORT_TEL = '([^']+)'/.exec(BILL)||[,""])[1];
+eval(lift(BILL,"vpaSupportPhoneHtml"));
+eval(lift(BILL,"vpaVenueEmailFoot"));
 
 eval(lift(BILL,"vpaEsc"));
 eval(lift(BILL,"vpaFmtDate"));

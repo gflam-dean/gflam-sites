@@ -294,6 +294,7 @@
   }
   #vp-submit,#ct-submit{width:100%;margin-top:20px;padding:16px;font-size:var(--fs-base)}
   #vp-submit:disabled{opacity:.6;cursor:default;transform:none}
+  a.vp-tel{color:var(--pink);white-space:nowrap}
   .form-fine{font-family:'JetBrains Mono',monospace;font-size:var(--fs-xs);color:var(--muted-2);text-align:center;margin-top:16px}
   .consent{margin-top:16px;display:flex;flex-direction:column;gap:9px}
   .consent .ck{display:flex;gap:9px;align-items:flex-start;font-size:var(--fs-xs);color:var(--muted);line-height:1.45;cursor:pointer}
@@ -957,7 +958,7 @@
       <details class="q"><summary>Can I change my max players?<span class="pm"></span></summary><div class="a">Any time, from your account. Adding players applies straight away so you are covered that night, and the extra is on your next bill. Dropping down takes effect at your next renewal, so you keep what you have paid for until then. On an annual plan, added players are charged pro rata to your renewal date, and if you drop your max the unused value is not lost: it is held as a credit against your next renewal.</div></details>
       <details class="q"><summary>What do I need to run it?<span class="pm"></span></summary><div class="a">A screen, an internet connection, and a way to get the display onto that screen: a smart TV with a browser, a streaming stick, or an HDMI cable from a laptop or tablet all work. Players bring their own phones. For a rock-solid night we'd point you toward a stick or a cable over wireless casting, since that doesn't lean on venue wifi.</div></details>
       <details class="q"><summary>Is there a lock-in contract?<span class="pm"></span></summary><div class="a">No lock-in. It's a rolling subscription you can cancel anytime. Your price stays locked for as long as you're with us, and if you cancel before your first payment, you're never charged.</div></details>
-      <details class="q"><summary>What support do I get?<span class="pm"></span></summary><div class="a">We get your first night running with you, and after that we are on the end of an email or the phone whenever something comes up. The whole thing is built so your bar staff can run it without a tech in the room.</div></details>
+      <details class="q"><summary>What support do I get?<span class="pm"></span></summary><div class="a">We get your first night running with you, and after that we are on the end of an email or the phone whenever something comes up. Call <a class="vp-tel" href="tel:+61752283667">07 5228 3667</a>, and if a game is on right now, press 2. The whole thing is built so your bar staff can run it without a tech in the room.</div></details>
       <details class="q"><summary>Can players win prizes?<span class="pm"></span></summary><div class="a">Yep, you set the prizes, exactly like you do now. Bar tabs, meat trays, members jackpots, vouchers, whatever suits your venue. Your venue conducts the game and VenuePlay supplies the software: your host runs it on the night, confirms each winner, and winners claim their prize from the host. The prizes are yours to decide.</div></details>
       <details class="q"><summary>Is players' data safe?<span class="pm"></span></summary><div class="a">Players join with just a name, no account, no login, nothing they have to hand over. Anything captured is opt-in and handled under Australian privacy rules.</div></details>
       <details class="q"><summary>I am a trivia host at multiple venues. Do I keep the players' details?<span class="pm"></span></summary><div class="a">No, and that's by design. A venue's player data belongs to that venue. If you run games at a venue you don't own, VenuePlay only ever collects a player's first and last name for the game itself: it can't switch on email, mobile, postcode or marketing opt-in, so there's no marketing list to take. Nothing is held on the side or handed over later. Each venue's opt-in players stay with that venue.</div></details>
@@ -998,7 +999,7 @@
           </div>
           <button class="btn btn-primary" id="ct-submit" type="button">Send message</button>
           <p class="form-err" id="ct-err"></p>
-          <p class="form-fine">Or email us directly at hello@venueplay.com.au</p>
+          <p class="form-fine">Or email us directly at hello@venueplay.com.au, or call <a class="vp-tel" href="tel:+61752283667">07 5228 3667</a></p>
         </div>
 
         <div class="success" id="ct-success">
@@ -1023,6 +1024,7 @@
     <div class="foot-meta">
       <a href="/play">Play</a> · <a href="#modes">Game modes</a> · <a href="#faq">FAQs</a> · <a href="#contact">Contact</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a><br>
       <a href="mailto:hello@venueplay.com.au">hello@venueplay.com.au</a><br>
+      <a href="tel:+61752283667">07 5228 3667</a><br>
       &copy; <span id="vp-year"></span> VenuePlay
     </div>
   </div>
