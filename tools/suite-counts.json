@@ -176,7 +176,7 @@
   "counted_by": "lines"
  },
  "tools/migrations-parse.test.py": {
-  "checks": 15,
+  "checks": 21,
   "counted_by": "lines"
  },
  "tools/move-show-images.test.py": {

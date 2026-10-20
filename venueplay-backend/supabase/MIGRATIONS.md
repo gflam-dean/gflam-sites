@@ -343,6 +343,16 @@ hidden for SA and NT venues not recorded as a club; this switch, set only from H
 it. Not security definer, no new policy or grant, so RLS-BASELINE.json does not change. Either order with the Workers is safe
 (both read the column fail-safe). Branch `feature/sant-bingo`. NOT RUN. Rollback: in the file.
 
+`venueplay-111-hq-chooses-trusted-logos.sql`: Dean, 20 Oct 2026, "I dont want a venue to be able to put it on our website we
+should choose". `vp_venues.show_logo_on_site` (migration 102) becomes HQ's switch: default false, true only for
+`deepwater-hotel` and `the-mini-bar` and false for every other venue (an audit row per change), and the
+`vp_venues_logo_on_site_guard` trigger (a venue's own login cannot set it; the old value is put back, the same way as 107). Set
+only from HQ (Venues > Details > "Show logo on our website", billing Worker `/admin/venue-gaming`, owner or accounts admins,
+audited as `venue_logo_on_site_on` / `_off`). `hide_from_trusted` (54) is left in place and no longer read. Not security
+definer, no new policy or grant. RUN IT BEFORE the billing Worker that comes with it: the new Worker drops the old "paying" and
+"not a 1-player plan" rules, so on today's data (every venue true) it would show venues HQ never chose. Branch
+`feature/hq-picks-logos-settings-tidy`. NOT RUN. Rollback: in the file.
+
 `venueplay-118-custom-bingo-patterns.sql` (Dean, 24 Oct 2026, after a Drag Bingo show played "any 5 numbers on the card"): a
 venue's own NAMED winning patterns for number bingo. New table `vp_bingo_patterns` (venue_id, name 1 to 30 characters, rule
 jsonb `{"type":"any","n":1..15}` or `{"type":"shape","cells":[0..26]}`, deleted_at kept so a game playing a deleted pattern is
