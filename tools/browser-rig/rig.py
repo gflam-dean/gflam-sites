@@ -5,7 +5,7 @@ builds inline, lifted out so more than one suite can stand it up. Never shipped:
 
     import rig;  r = rig.Rig();  tid, sid = r.open('/tv?venue=test-alpha');  ...;  r.close()
 """
-import base64, http.server, importlib.util, io, json, os, socket, subprocess, threading, time, urllib.parse
+import base64, http.server, importlib.util, io, json, os, subprocess, threading, time, urllib.parse
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 JSC = '/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc'
@@ -19,10 +19,12 @@ class Worker(object):
         self.p = subprocess.Popen([JSC, 'tools/browser-rig/worker-stdio.js'], cwd=ROOT, stdin=subprocess.PIPE,
                                   stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, bufsize=1)
         self.lock = threading.Lock()
+        self.calls = []      # every path the pages asked, so a test can wait for "the Worker has been asked"
         self.info = json.loads(self.p.stdout.readline())
 
     def ask(self, method, path, body=None, headers=None):
         with self.lock:
+            self.calls.append(path.split('?')[0])
             self.p.stdin.write(json.dumps({'method': method, 'path': path, 'body': body or {}, 'headers': headers or {}}) + '\n')
             self.p.stdin.flush()
             line = self.p.stdout.readline()
@@ -38,7 +40,10 @@ ERRS = ('<script>window.__errs=[];window.addEventListener("error",function(e){__
 
 
 class Rig(object):
-    def __init__(self):
+    def __init__(self, hold=None):
+        """`hold` is {path: seconds}: the local site sits on that file for that long before serving it,
+        as slow pub wifi does, so a test can look at a page whose scripts have not all arrived."""
+        self.hold = dict(hold or {})
         self.W = Worker()
         W = self.W
         self.db = {
@@ -71,6 +76,7 @@ class Rig(object):
             def do_GET(self):
                 u = urllib.parse.urlparse(self.path)
                 if u.path.startswith('/__worker'): return self.worker('GET')
+                if u.path in rig.hold: time.sleep(rig.hold[u.path])
                 if u.path == '/__fake/supabase.js':
                     host = urllib.parse.parse_qs(u.query).get('host', ['0'])[0] == '1'
                     pre = 'window.__FAKE_DB=%s;window.__FAKE_SIGNED_IN=%s;window.__FAKE_UID=%s;\n' % (json.dumps(rig.db), 'true' if host else 'false', json.dumps(UID))
@@ -107,8 +113,15 @@ class Rig(object):
 
     # ---- tabs ----
     def open(self, path, before=None, width=None, height=None):
-        """Open a tab on the local site. `before` is script run in the page before any of its own."""
-        tid = self.B.call('Target.createTarget', {'url': 'about:blank'})['targetId']
+        """Open a page on the local site, in a WINDOW of its own. `before` is script run in the page
+        before any of its own.
+
+        Its own window, not a second tab (20 Oct 2026, as verify-live's Browser.open_tab): a tab behind
+        another is "hidden", its timers held to once a second and its renderer given background
+        priority, and on a busy machine it went 10 s and more without running. A TV, a phone and a bar
+        tablet are three screens, each switched on, so three windows is the faithful model. That also
+        retires front(): there is no tab to bring forward."""
+        tid = self.B.call('Target.createTarget', {'url': 'about:blank', 'newWindow': True})['targetId']
         sid = self.B.call('Target.attachToTarget', {'targetId': tid, 'flatten': True})['sessionId']
         self.B.call('Page.enable', {}, session=sid)
         if width:
@@ -119,13 +132,11 @@ class Rig(object):
         return tid, sid
 
     def ask(self, sid, expr, wait=8):
-        self.B.ws.s.settimeout(wait)
-        try:
-            return self.B.eval(sid, expr)
-        except (socket.timeout, OSError):
-            return 'HUNG'
-        finally:
-            self.B.ws.s.settimeout(60)
+        """The value, or 'HUNG' if the PAGE has stopped. Browser.evaluate (tools/verify-live.py) judges
+        that by the page's own main-thread CPU, so an idle page that answered late on a starved machine
+        is not called hung, and one that spun or never answered (a native dialog) still is."""
+        r = self.B.evaluate(sid, expr, wait)
+        return 'HUNG' if r is None else r.get('result', {}).get('value')
 
     def until(self, sid, expr, secs=15):
         t = time.time() + secs
@@ -135,11 +146,22 @@ class Rig(object):
             time.sleep(0.25)
         return False
 
-    def front(self, sid):
-        """Bring a tab to the front. Chrome throttles a background tab's timers hard (a minute apart
-        once it has been hidden a while), and a phone in a pocket-sized test is always the front tab."""
-        try: self.B.call('Page.bringToFront', {}, session=sid)
-        except Exception: pass
+    # The phone is ready for a name when its scripts have run (Join is enabled and says Join; until
+    # then play.html shows it disabled, "Loading...") and the Worker has been asked about the room
+    # (/join/info), as it is before a punter could have typed anything. Waiting for the BUTTON was the
+    # console suite's flake (20 Oct 2026): it is in the markup above the scripts that wire it.
+    JOIN_READY = ('document.readyState!=="loading" && (function(b){return !!b && !b.disabled && b.textContent.trim()==="Join";})'
+                  '(document.getElementById("joinBtn"))')
+
+    def phone_ready(self, sid, secs=120):
+        """True once the phone could take a name (see JOIN_READY), or what it was showing instead."""
+        v = self.until(sid, self.JOIN_READY, secs)
+        if v is not True:
+            return v
+        t = time.time() + 15
+        while time.time() < t and '/join/info' not in self.W.calls:
+            time.sleep(0.1)
+        return '/join/info' in self.W.calls
 
     def shot(self, sid, path):
         try:

@@ -644,7 +644,7 @@
   "counted_by": "lines"
  },
  "tools/tv-and-phone-in-chrome.test.py": {
-  "checks": 60,
+  "checks": 67,
   "counted_by": "lines"
  },
  "touring-backend/lib/touring-api.test.js": {

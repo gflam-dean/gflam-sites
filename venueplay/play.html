@@ -289,7 +289,9 @@
     <div class="field"><input type="text" id="nameIn" placeholder="Your name" maxlength="20" autocomplete="given-name"></div>
     <div id="joinExtra"></div>
     <div class="cerr" id="joinErr"></div>
-    <div class="field"><button class="btn pink" id="joinBtn">Join</button></div>
+    <!-- Loading... until the script below has wired Join (the last line of its setup turns it into "Join").
+         A tap on slow pub wifi before then is refused visibly, never silently lost (20 Oct 2026). -->
+    <div class="field"><button class="btn pink" id="joinBtn" disabled aria-busy="true">Loading...</button></div>
     <div class="pnote">No app and no account. Your game appears here when the host starts.</div>
   </div>
 
@@ -1971,6 +1973,10 @@
   $("roomBtn").addEventListener("click", roomGo);
   $("nameIn").addEventListener("keydown", function(e){ if(e.key==="Enter") join(); });
   $("joinBtn").addEventListener("click", join);
+  /* JOIN IS READY NOW, AND SAYS SO (20 Oct 2026). The button is in the markup above the eight
+     scripts that make it do anything, so until this line it was a Join that did nothing when tapped.
+     It ships disabled, reading "Loading...", and becomes Join here, the moment it has a listener. */
+  (function(b){ b.disabled=false; b.setAttribute("aria-busy","false"); b.textContent="Join"; })($("joinBtn"));
   $("bingoBtn").addEventListener("click", pressBingo);
   // Card zoom + full screen: older players struggle to read a 9-wide card, or to see several
   // tickets at once. Zoom bigger (scroll to pan) or smaller (fit every ticket); full screen

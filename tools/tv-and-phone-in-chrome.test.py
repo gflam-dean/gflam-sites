@@ -57,11 +57,11 @@ FAST = r'''(function(){
 def fast(k=40): return FAST.replace('__F__', str(k))
 
 def join(r, phone, name):
-    """Type a name and tap Join, as a punter does; tap again if the page was still asking the Worker."""
-    for _ in range(3):
-        r.ask(phone, 'document.getElementById("nameIn").value=%s; document.getElementById("joinBtn").click(); true' % json.dumps(name))
-        if r.until(phone, vis('vWait'), 6) is True: return True
-    return False
+    """Type a name and tap Join ONCE, as a punter does. The test waited for the page first (r.phone_ready:
+    the scripts have run and Join says Join, and the Worker has been asked about the room), so a second
+    tap is never needed; this used to tap up to three times, which hid the very fault it was retrying."""
+    r.ask(phone, 'document.getElementById("nameIn").value=%s; document.getElementById("joinBtn").click(); true' % json.dumps(name))
+    return r.until(phone, vis('vWait'), 15) is True
 
 def console(r):
     tid, host = r.open('/app/')
@@ -103,7 +103,7 @@ def tv_old_winner():
     print('\nFAULT 1: a real-balls winner, End game, then Open lobby: the TV must show the QR, not last game\'s winner')
     r = RIG.Rig()
     try:
-        # The TV's clock can be moved forward (window.__shift ms), so three minutes of the chip's hold pass in a moment.
+        # The TV's clock can be moved forward (window.__shift ms), so the chip's thirty second hold passes in a moment.
         ttid, tv = r.open('/tv?venue=' + r.W.info['slug'], before='(function(){var n=Date.now;window.__shift=0;Date.now=function(){return n()+window.__shift;};})();')
         ok('the TV loads on the ads', r.until(tv, vis('adsRoot'), 15) is True)
         time.sleep(2)
@@ -117,13 +117,13 @@ def tv_old_winner():
         shot(r, tv, 'tv-1-winner-during-game')
         end_game(r, host)
         ok('End game: the TV goes to the ads', r.until(tv, vis('adsRoot'), 10) is True)
-        r.front(tv); time.sleep(1.5)   # a venue TV is the front tab; a background tab's timers are throttled by Chrome
+        time.sleep(1.5)   # the TV is a window of its own (rig.open), so its timers run as a venue TV's do
         # Somebody touches the remote: the chip is back for its thirty second hold, measured from now.
         r.ask(tv, 'document.dispatchEvent(new Event("keydown")); window.__shift=25000; document.dispatchEvent(new Event("fullscreenchange")); true'); time.sleep(0.5)
         ok('a key brings the Go fullscreen chip back, and it is still there 25 seconds on', r.ask(tv, vis('tvFsBtn')) is True)
         r.ask(tv, 'window.__shift=31000; document.dispatchEvent(new Event("fullscreenchange")); true'); time.sleep(0.5)
         ok('and the Go fullscreen chip is not on the venue\'s ads any more (thirty seconds untouched)', r.ask(tv, vis('tvFsBtn')) is False)
-        r.ask(tv, 'window.__shift=0; true')   # the clock back, so nothing after this runs three minutes late
+        r.ask(tv, 'window.__shift=0; true')   # the clock back, so nothing after this runs half a minute late
         shot(r, tv, 'tv-1b-ads-no-fullscreen-chip')
         # from here on, record whether the old winner card is EVER painted, even for a moment
         r.ask(tv, 'window.__winSeen=0; setInterval(function(){ if(%s) window.__winSeen++; }, 20); true' % vis('tvWin'))
@@ -173,12 +173,11 @@ def phone_paper(entry):
     try:
         path = '/play?room=' + r.W.info['code'] if entry == 'typed code' else '/play?venue=' + r.W.info['slug']
         ptid, phone = r.open(path, before=fast(), width=390, height=844)
-        ok('the phone page loads', r.until(phone, '!!document.getElementById("joinBtn")') is True)
-        time.sleep(1.5)
+        ok('the phone page loads, its scripts have run and the Worker has been asked about the room', r.phone_ready(phone) is True,
+           r.ask(phone, 'document.readyState + " | " + document.getElementById("joinBtn").textContent'))
         ok('CONTROL: the phone joins', join(r, phone, 'Bea'))
         ctid, host = console(r)
         caller_night(r, host, [3, 33])
-        r.front(phone)
         ok('a real-balls night: the phone is told to play on paper', r.until(phone, vis('vPaper'), 15) is True,
            r.ask(phone, 'document.body.innerText.replace(/\\s+/g," ").slice(0,200)'))
         shot(r, phone, 'phone-1-paper-%s' % entry.replace(' ', '-'))
@@ -196,7 +195,7 @@ def phone_paper(entry):
         n1 = len(r.ask(phone, 'window.__calls.filter(function(c){return /join\\/info|play\\/live/.test(c.u)}).map(function(c){return c.t})') or [])
         ok('the phone is STILL asking where the room is (it used to give up after thirty minutes)', n1 - n0 >= 2, '%d asks in 6 s' % (n1 - n0))
         ok('and no faster than the slow poll allows (6 real s = 4 phone min; at most ~10 asks, not a runaway)', n1 - n0 <= 14, '%d asks in 6 s' % (n1 - n0))
-        end_game(r, host); r.front(phone)
+        end_game(r, host)
         ok('End game: the paper notice comes down and the phone is back waiting', r.until(phone, vis('vWait'), 10) is True and r.ask(phone, vis('vPaper')) is False,
            r.ask(phone, 'document.body.innerText.replace(/\\s+/g," ").slice(0,200)'))
         shot(r, phone, 'phone-2-after-end-%s' % entry.replace(' ', '-'))
@@ -214,9 +213,9 @@ def phone_one_chain():
     r = RIG.Rig()
     try:
         ptid, phone = r.open('/play?room=' + r.W.info['code'], before=fast(8), width=390, height=844)
-        r.until(phone, '!!document.getElementById("joinBtn")'); time.sleep(1.5)
+        r.phone_ready(phone)
         ok('CONTROL: the phone joins', join(r, phone, 'Cal'))
-        None; time.sleep(2)
+        time.sleep(2)
         count = 'window.__calls.filter(function(c){return /join\\/info/.test(c.u)}).length'
         a0 = r.ask(phone, count); time.sleep(4); a1 = r.ask(phone, count)
         for i in range(12):
@@ -236,7 +235,7 @@ def phone_after_win():
     r = RIG.Rig()
     try:
         ptid, phone = r.open('/play?room=' + r.W.info['code'], before=fast(), width=390, height=844)
-        r.until(phone, '!!document.getElementById("joinBtn")'); time.sleep(1.5)
+        r.phone_ready(phone)
         r.ask(phone, 'window.__pid=null; window.__bc.forEach(function(n){ if(n.indexOf("fake-rt:")===0){ var c=new window.__BC(n); c.onmessage=function(e){ var m=e.data&&e.data.payload; if(m&&m.t==="join"&&m.pid) window.__pid=m.pid; }; } }); true')
         ok('CONTROL: the phone joins', join(r, phone, 'Dee'))
         time.sleep(2)
@@ -265,6 +264,31 @@ def phone_after_win():
         shot(r, phone, 'phone-4-line-winner-nice-game')
         ok('the line this phone won is still there: "You won One line ... see the host"', isinstance(txt, str) and 'You won One line' in txt and 'see the host' in txt, txt)
         ok('and who won the two lines', isinstance(txt, str) and 'Sam won' in txt, txt)
+    finally:
+        r.close()
+
+
+# ======================================================================================
+def join_loading():
+    print('\nSlow pub wifi: Join says "Loading..." and does nothing until the page\'s scripts are ready, then says Join')
+    # The local site sits on the last script above play.html's own for eight seconds, as a slow
+    # connection does: the Join button (in the markup above it) is on the page, its listener is not.
+    r = RIG.Rig(hold={'/app/vp-venueurl.js': 8})
+    try:
+        ptid, phone = r.open('/play?room=' + r.W.info['code'], width=390, height=844)
+        ok('CONTROL: the Join button is on the page while the scripts are still arriving',
+           r.until(phone, 'document.readyState==="loading" && !!document.getElementById("joinBtn")', 6) is True,
+           r.ask(phone, 'document.readyState'))
+        b = r.ask(phone, '(function(b){return {d:b.disabled, t:b.textContent.trim()};})(document.getElementById("joinBtn"))') or {}
+        ok('until then it is disabled and reads "Loading..." (a tap is refused where the punter can see it)',
+           b.get('d') is True and b.get('t') == 'Loading...', b)
+        r.ask(phone, 'document.getElementById("joinBtn").click(); true')
+        ok('CONTROL: still loading after that early tap (the hold is what this scene tests)', r.ask(phone, 'document.readyState') == 'loading')
+        ok('the page is ready by itself once the scripts arrive: enabled, and it says Join', r.phone_ready(phone, 60) is True,
+           r.ask(phone, 'document.readyState + " | " + document.getElementById("joinBtn").textContent + " | disabled " + document.getElementById("joinBtn").disabled'))
+        ok('and one tap then puts the punter in', join(r, phone, 'Eve'),
+           r.ask(phone, 'document.body.innerText.replace(/\\s+/g," ").slice(0,160)'))
+        ok('no script errors on the phone', r.ask(phone, 'window.__errs.length') == 0, r.ask(phone, 'JSON.stringify(window.__errs)'))
     finally:
         r.close()
 
@@ -303,6 +327,7 @@ try:
     phone_paper('table talker')
     phone_one_chain()
     phone_after_win()
+    join_loading()
     musical_toast()
 except Exception as e:
     import traceback; traceback.print_exc(); bad += 1

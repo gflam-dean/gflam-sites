@@ -2849,11 +2849,11 @@
       catch(e){ return false; }
     }
     /* A SETUP CONTROL, NOT FURNITURE (live play audit, 20 Oct 2026). The chip sat on the venue's
-       own advertising all night. It now goes after its first use, or after three minutes untouched
-       (Dean, 20 Oct 2026: time to walk over with the remote), and comes back for three minutes
-       whenever somebody moves the mouse, touches the screen or presses a key: the person setting
-       the TV up still finds it, the room never sees it for long. */
-    var FS_HOLD_MS=3*60*1000;
+       own advertising all night. It now goes after its first use, or after thirty seconds untouched,
+       and comes back for thirty seconds whenever somebody moves the mouse, touches the screen or
+       presses a key (Dean, 20 Oct 2026: a mouse or a key brings it back, so it need not wait long):
+       the person setting the TV up still finds it, the room never sees it for long. */
+    var FS_HOLD_MS=30*1000;
     var used=!!DEMO, shownUntil=Date.now()+FS_HOLD_MS, fsHideT=null;   // a demo never shows it (hideSetup above)
     btn.addEventListener("click", function(){
       used=true; sync();
