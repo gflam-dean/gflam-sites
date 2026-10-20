@@ -144,11 +144,19 @@
   "counted_by": "lines"
  },
  "tools/migrations-parse.test.py": {
-  "checks": 9,
+  "checks": 15,
   "counted_by": "lines"
  },
  "tools/move-show-images.test.py": {
   "checks": 13,
+  "counted_by": "lines"
+ },
+ "tools/night-pass-hq-in-chrome.test.py": {
+  "checks": 13,
+  "counted_by": "lines"
+ },
+ "tools/pickup-in-chrome.test.py": {
+  "checks": 38,
   "counted_by": "lines"
  },
  "tools/redirect-verdict.test.py": {
@@ -255,6 +263,10 @@
   "checks": 28,
   "counted_by": "lines"
  },
+ "tools/test-console-pickup.js": {
+  "checks": 53,
+  "counted_by": "lines"
+ },
  "tools/test-console-venue-from-link.js": {
   "checks": 12,
   "counted_by": "lines"
@@ -345,6 +357,14 @@
  },
  "tools/test-musical-print.js": {
   "checks": 13,
+  "counted_by": "lines"
+ },
+ "tools/test-night-pass-hq.js": {
+  "checks": 23,
+  "counted_by": "lines"
+ },
+ "tools/test-night-pass.js": {
+  "checks": 39,
   "counted_by": "lines"
  },
  "tools/test-olgr-audit-19-oct.js": {

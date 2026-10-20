@@ -296,4 +296,4 @@ night of that format (audited as `venue_night_pass_used`), without moving `last_
 running game from another device: `vp_sessions.console_holders` (jsonb, per format: the console that last picked it up),
 written by the game Worker's `/host/running/take` (staff at the venue only). Not security definer, no new policy or grant, so
 RLS-BASELINE.json does not change. Either order with the Workers is safe (both read the new columns fail-safe). Branch
-`feature/trivia-recover-and-night-pass`. NOT RUN. Rollback: in the file.
+`feature/trivia-recover-and-night-pass`. RUN by Dean 20 Oct 2026. Rollback: in the file.
