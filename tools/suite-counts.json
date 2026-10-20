@@ -631,6 +631,10 @@
   "checks": 19,
   "counted_by": "lines"
  },
+ "venueplay-backend/app/billing-resecure-hq.test.js": {
+  "checks": 15,
+  "counted_by": "lines"
+ },
  "venueplay-backend/app/bingo-after-the-win.test.js": {
   "checks": 149,
   "counted_by": "lines"

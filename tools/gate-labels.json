@@ -64,6 +64,7 @@
   "assess() on the paid path matches the Anisimoff tables; the gate offers free entry, never a paid game, where the state says no",
   "billing-emails.test.js",
   "billing-hosts.test.js",
+  "billing-resecure-hq.test.js",
   "bingo-after-the-win.test.js",
   "bingo-console.test.js",
   "bingo-server-draw.test.js",

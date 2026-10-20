@@ -383,12 +383,13 @@
     <p class="note" style="margin:0 0 10px">People who can run games on the night. Add a mobile and tick which venues they can host. They sign in at <b style="color:var(--text)">venueplay.com.au/app</b> with a text code, no app to install.</p>
     <div id="hosts"></div>
     <button class="addbtn" id="hostToggle">+ Add a host</button>
-    <!-- SOMEONE HAS LEFT. Removing a host above already does this. This is for the case where a
-         phone or a laptop that was signed in has gone missing, or you are not sure who has what:
-         one press and every screen at every venue on the account stops trusting the old key. -->
-    <div class="card toggle" id="resecureCard" style="margin-top:10px">
-      <div class="t">Re-secure my screens<small>Someone has left, or a signed-in device has gone missing. Your screens stop trusting the old key and pick up a new one on their own within a few minutes. Nobody is signed out.</small></div>
-      <button class="addbtn" id="resecureBtn" style="margin:0;flex:0 0 auto">Re-secure</button>
+    <!-- HQ ONLY (Dean, 20 Oct 2026). Throws away the TV screen key for every venue on the account,
+         so only devices signed in now can control the TVs. Venues do not need it: removing a host
+         above already does this, and a host is signed out by itself after 4 hours. Starts hidden;
+         loadHosts() shows it only while VenuePlay HQ is viewing the account (hqViewing()). -->
+    <div class="card toggle" id="resecureCard" style="margin-top:10px;display:none">
+      <div class="t">Lock old devices out of your TVs (HQ only)<small>After this, only phones and tablets signed in right now can control your TV screens. Use it if a staff member has left (remove them under Hosts too, so their login stops working) or a signed-in device has gone missing (it is signed out by itself within 4 hours). Your TVs reconnect by themselves within a few minutes. A game that is on keeps running, and nobody is signed out.</small></div>
+      <button class="addbtn" id="resecureBtn" style="margin:0;flex:0 0 auto">Lock out old devices</button>
     </div>
     <div class="addform" id="hostForm" style="flex-direction:column;align-items:stretch">
       <div style="display:flex;gap:10px;flex-wrap:wrap">
@@ -1285,6 +1286,8 @@
 
   // ---- Hosts ----
   var acctVenues = [];
+  /* Is VenuePlay HQ viewing this account ("View as")? The same flag api() sends as X-VP-Venue. */
+  function hqViewing(){ try { var imp = JSON.parse(localStorage.getItem("vpImpersonate") || "null"); return !!(imp && imp.id); } catch (e) { return false; } }
   function loadHosts(){
     return api("/account/hosts", {}).then(function(d){
       if (d.error){ showMsg("Hosts: " + d.error); return; }   // leave the panel quiet if the endpoint is unavailable
@@ -1294,7 +1297,8 @@
          owner as well: the Worker is still the lock either way. */
       hostsIsOwner = (d.is_owner === undefined) ? true : (d.is_owner === true);
       hostsCanManage = d.can_manage_hosts !== false;
-      var rs = $("resecureCard"); if (rs) rs.style.display = hostsCanManage ? "" : "none";   // same right as managing hosts
+      // HQ only (Dean, 20 Oct 2026): a venue never sees it. The Worker route still needs the hosts right.
+      var rs = $("resecureCard"); if (rs) rs.style.display = (hqViewing() && hostsCanManage) ? "" : "none";
       renderHosts(d.hosts || [], acctVenues);
       buildHostVenuePicker(acctVenues);
       loadMarketers();
@@ -1373,7 +1377,7 @@
           rm.disabled = true; rm.textContent = "Removing…";
           api("/account/host-remove", { auth_user_id: h.auth_user_id, all_venues: true }).then(function(r){
             if (r.error){ showMsg(r.error); rm.disabled = false; rm.textContent = "Remove"; return; }
-            showMsg((h.label || "That person") + " has been removed. Their login no longer works and your screens have been re-secured; they reconnect on their own within a few minutes.", true); loadHosts();
+            showMsg((h.label || "That person") + " has been removed. Their login no longer works, and devices they used can no longer control your TVs. Your screens reconnect by themselves within a few minutes.", true); loadHosts();
           });
           });
         });
@@ -1384,12 +1388,12 @@
   (function(){
     var b = $("resecureBtn"); if (!b) return;
     b.addEventListener("click", function(){
-      vpAsk("Re-secure every screen on this account?\n\nThe screens stop trusting the current key and pick up a new one within a few minutes. A game that is running keeps running. Nobody is signed out.").then(function(ok){ if (!ok) return;
+      vpAsk("Lock old devices out of your TVs?\n\nOnly devices signed in right now will be able to control your screens. Your TVs reconnect by themselves within a few minutes. A game that is on keeps running, and nobody is signed out.", { yes: "Lock out old devices" }).then(function(ok){ if (!ok) return;
       b.disabled = true; b.textContent = "Working…";
       api("/account/screens-resecure", {}).then(function(r){
-        b.disabled = false; b.textContent = "Re-secure";
+        b.disabled = false; b.textContent = "Lock out old devices";
         if (r.error){ showMsg(r.error); return; }
-        showMsg("Done. " + r.venues + " venue" + (r.venues === 1 ? "" : "s") + " re-secured. The screens pick up the new key on their own.", true);
+        showMsg("Done. Old devices can no longer control your TVs at " + r.venues + " venue" + (r.venues === 1 ? "" : "s") + ". Your screens reconnect by themselves within a few minutes.", true);
       });
       });
     });
