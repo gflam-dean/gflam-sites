@@ -2232,7 +2232,7 @@
     el.disabled=true;
     workerPost("/admin/venue-gaming", { venue_id:id, weekly_limit_off: !!on }).then(function(res){
       el.disabled=false;
-      if(res.error){ alert(res.error); renderVenues(); return; }
+      if(res.error){ vpTell(res.error); renderVenues(); return; }
       // The saved row when the Worker sends it back; otherwise what was asked for (it answered ok).
       S.weeklyOff[id] = (res.venue && res.venue.weekly_limit_off !== undefined) ? res.venue.weekly_limit_off === true : !!on;
       renderVenues(); loadAuditOnly();
