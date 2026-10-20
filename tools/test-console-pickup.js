@@ -6,6 +6,9 @@
 
    Runs the REAL game Worker on tools/rig-game-worker.js and the REAL shared console logic
    (venueplay/app/vp-pickup.js):
+     the router          through __worker.fetch: a signed-in user who is staff nowhere, and a staff
+                         member of a DIFFERENT venue, are refused by both routes (403) and are told
+                         nothing (no game, no session, no answer); staff of this venue are answered
      /host/running       finds this venue's running trivia (or musical) game in an open night, and
                          nobody else's; says who holds it; for an open question gives the host the
                          answer and which phones are in (by the phone's own id, as the console counts
@@ -140,6 +143,36 @@ function sess() { return DB.vp_sessions.filter(function (s) { return s.id === SE
   STAFF_AT = {};
   r = await take(GAME, 'cNOTSTAFF006');
   show('a caller who is not staff here is refused and nothing is written', r.status === 403 && !sess().console_holders, JSON.stringify(r.body));
+
+  print('\nnobody but staff at THIS venue, through the Worker\'s own router');
+  // Through __worker.fetch, as Cloudflare calls it: the route table, then the handler. The staff check
+  // is requireStaff (stubbed above to the real rule: staff rows only at the venues in STAFF_AT).
+  async function viaRouter(path, body) {
+    BODY = body;
+    var r = await __worker.fetch({ method: 'POST', url: 'https://game.test' + path,
+      headers: { get: function (k) { return /authorization/i.test(k) ? 'Bearer x' : null; } } }, ENV);
+    var b = null; try { b = JSON.parse(r._b); } catch (e) { b = r._b; }
+    return { status: r.status, body: b, raw: String(r._b || '') };
+  }
+  var cases = [['a signed-in user who is staff nowhere', {}], ['a staff member of a DIFFERENT venue', null]];
+  for (var ci = 0; ci < cases.length; ci++) {
+    world();
+    STAFF_AT = {};
+    if (cases[ci][1] === null) STAFF_AT[OTHERV] = true;
+    var rr = await viaRouter('/host/running', { venue_id: VENUE, format: 'trivia' });
+    show(cases[ci][0] + ': /host/running is refused (403)', rr.status === 403, rr.status + ' ' + rr.raw.slice(0, 160));
+    show('...and is told nothing: no game, no session, no answer', !/correct|"ci"|running"\s*:\s*\{|game_id|session_id|ABC234/.test(rr.raw), rr.raw.slice(0, 200));
+    var rt = await viaRouter('/host/running/take', { venue_id: VENUE, game_id: GAME, console_id: 'cINTRUDER001' });
+    show(cases[ci][0] + ': /host/running/take is refused (403) and nothing is recorded', rt.status === 403 && !sess().console_holders, rt.status + ' ' + rt.raw.slice(0, 160));
+  }
+  world();
+  STAFF_AT = {}; STAFF_AT[OTHERV] = true;
+  var ro = await viaRouter('/host/running/take', { venue_id: OTHERV, game_id: GAME, console_id: 'cINTRUDER002' });
+  show('a staff member of another venue naming THEIR venue cannot take this venue\'s game', ro.status === 403 && !sess().console_holders, ro.status + ' ' + ro.raw.slice(0, 160));
+  world();
+  var ok1 = await viaRouter('/host/running', { venue_id: VENUE, format: 'trivia' });
+  show('CONTROL: staff at this venue, through the same router, are answered with the game and its answer',
+    ok1.status === 200 && ok1.body.running && ok1.body.running.game_id === GAME && ok1.body.running.current && ok1.body.running.current.ci === 2, ok1.status + ' ' + ok1.raw.slice(0, 200));
 
   print('\nbefore migration 110 is run on the live database');
   world();
