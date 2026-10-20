@@ -15,6 +15,15 @@ rules twice over:
           the policy's sources and lengths, and no reading back (so a form that asks
           for return=representation is refused, as PostgREST would refuse it).
           Every form must store exactly one row and say thanks.
+  SLOW    the same rules, but the database holds the answer back (a visitor on a slow phone
+          connection). While it waits, a form must say NOTHING: not thanks, and not "didn't go
+          through", because the signup has not failed. When the answer comes it says thanks.
+
+Every page is served a little late on purpose (PAGE_LATE_S). On 20 and 21 Oct 2026 this suite
+failed in the release gate under load with "and it says the signup did not go through": the
+page had arrived late, the test asked Chrome's blank starting tab whether it had loaded, heard
+yes, and filled in a form that was not there yet. A late page is now the normal case here, so
+that mistake cannot come back unnoticed (tools/verify-live.py open_tab waits for the page).
 
     python3 tools/touring-signups.test.py
 """
@@ -31,6 +40,8 @@ _vl = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_vl)
 
 PASS, FAIL = [0], [0]
+PAGE_LATE_S = 0.5     # a late first byte; 0.3 s was enough to expose the blank tab (measured)
+SLOW_HOLD_S = 8       # how long the slow database sits on a signup while the form must stay quiet
 
 
 def ok(label, good, detail=''):
@@ -67,7 +78,8 @@ def policy_allows(row):
     return True
 
 
-STATE = {'mode': 'before', 'rows': [], 'refusals': []}
+STATE = {'mode': 'before', 'rows': [], 'refusals': [], 'posts': 0,
+         'arrived': threading.Event(), 'release': threading.Event()}
 
 
 class Fake(BaseHTTPRequestHandler):
@@ -85,6 +97,7 @@ class Fake(BaseHTTPRequestHandler):
     def do_GET(self):
         p = self.path.split('?')[0]
         if p in PAGES_SERVED:
+            time.sleep(PAGE_LATE_S)
             return self._send(200, PAGES_SERVED[p].encode('utf-8'), 'text/html; charset=utf-8')
         if p.startswith('/sb/rest/v1/'):
             return self._send(200, [])
@@ -96,6 +109,7 @@ class Fake(BaseHTTPRequestHandler):
         p = self.path.split('?')[0]
         if p != '/sb/rest/v1/signups':
             return self._send(201, b'', 'text/plain')
+        STATE['posts'] += 1
         denied = {'code': '42501', 'message': 'permission denied for table signups'}
         if STATE['mode'] == 'before':
             STATE['refusals'].append('no grant')
@@ -111,6 +125,9 @@ class Fake(BaseHTTPRequestHandler):
         if not policy_allows(row):
             STATE['refusals'].append('policy')
             return self._send(401, {'code': '42501', 'message': 'new row violates row-level security policy for table "signups"'})
+        if STATE['mode'] == 'slow':
+            STATE['arrived'].set()
+            STATE['release'].wait(180)
         STATE['rows'].append(row)
         return self._send(201, b'', 'text/plain')
 
@@ -168,11 +185,14 @@ ok('the tour lock does not touch signups, so the two cannot undo each other',
 
 br = _vl.Browser()
 try:
-    for mode in ('before', 'after'):
+    for mode in ('before', 'after', 'slow'):
         STATE['mode'] = mode
         for page, fill, success, source in FORMS:
             del STATE['rows'][:]
             del STATE['refusals'][:]
+            STATE['posts'] = 0
+            STATE['arrived'].clear()
+            STATE['release'].clear()
             tid, sid = br.open_tab(BASE + '/' + page)
             # Two minutes, and a page that never loads is said out loud rather than filled in half
             # loaded (this was 15 seconds and the answer was ignored; 20 Oct 2026, under load).
@@ -183,6 +203,18 @@ try:
                 raise RuntimeError('%s had not finished loading after two minutes' % page)
             br.eval(sid, "window._alerts=[];window.alert=function(m){window._alerts.push(String(m));};true")
             br.eval(sid, '(function(){' + fill + 'return true;})()')
+            if mode == 'slow':
+                arrived = STATE['arrived'].wait(120)
+                said = []
+                hold = time.time() + SLOW_HOLD_S
+                while arrived and time.time() < hold:
+                    if br.eval(sid, '(function(){try{return ' + success + ';}catch(e){return false;}})()'):
+                        said = ['thanks, before anything was stored']
+                    said = said or (br.eval(sid, 'window._alerts') or [])
+                    if said:
+                        break
+                    time.sleep(0.2)
+                STATE['release'].set()
             thanked, alerts = False, []
             end = time.time() + 30          # returns the moment the page answers; 8 s was too short on a busy machine
             while time.time() < end:
@@ -193,10 +225,16 @@ try:
                 time.sleep(0.2)
             time.sleep(0.3)
             thanked = bool(br.eval(sid, '(function(){try{return ' + success + ';}catch(e){return false;}})()'))
+            # If no request ever reached the database, say so: that is the test's fault, not the form's.
+            heard = '' if STATE['posts'] else 'no signup ever reached the database; on %s' % br.eval(sid, 'location.href')
             if mode == 'before':
                 ok('%s: while the database refuses, it never says thanks' % page, not thanked)
                 ok('%s: and it says the signup did not go through' % page,
-                   any("didn't go through" in a for a in alerts), alerts[:1])
+                   any("didn't go through" in a for a in alerts), alerts[:1] or heard)
+            elif mode == 'slow':
+                ok('%s: on a slow connection it says nothing while it waits, then thanks' % page,
+                   arrived and not said and thanked and len(STATE['rows']) == 1 and not alerts,
+                   heard or (said[:1] if said else (len(STATE['rows']), alerts[:1])))
             else:
                 ok('%s: with the new rules it stores the signup and says thanks' % page,
                    thanked and len(STATE['rows']) == 1 and not alerts, (len(STATE['rows']), STATE['refusals'][:1], alerts[:1]))
@@ -212,7 +250,7 @@ finally:
 
 print('')
 print('%d of %d checks passed' % (PASS[0], PASS[0] + FAIL[0]))
-EXPECTED = 4 + 2 * 5 * 2
+EXPECTED = 4 + 2 * 5 * 2 + 5
 if PASS[0] + FAIL[0] != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, PASS[0] + FAIL[0]))
     sys.exit(1)

@@ -575,6 +575,26 @@ MUTATIONS = [
     ('touring-signups.test.py', 'touring-backend/supabase/signups-forms-insert.sql',
      'revoke all on public.signups from anon;\n', '',
      'the public key keeps its leftover read grant on the signup list'),
+    # ---- 21 Oct 2026: the gate flake. open_tab handed back Chrome's blank starting tab, which
+    # says "complete", so the test filled in a form that had not arrived yet.
+    ('touring-signups.test.py', 'tools/verify-live.py',
+     "        if url != 'about:blank':\n            self._wait_for_page(sid)\n", '',
+     'a test fills in the blank tab Chrome shows before the page arrives'),
+    # ---- and a visitor on a slow connection must not be told it failed while it is only slow.
+    ('touring-signups.test.py', 'touring/index.html',
+     'const ok=await fetch(SBU+"/rest/v1/signups",{method:"POST",',
+     'const ok=await fetch(SBU+"/rest/v1/signups",{signal:AbortSignal.timeout(3000),method:"POST",',
+     'the homepage form gives up on a slow connection and says the signup failed'),
+    ('touring-signups.test.py', 'group/index.html',
+     "  fetch(_SBU+'/rest/v1/signups',{\n", "  fetch(_SBU+'/rest/v1/signups',{signal:AbortSignal.timeout(3000),\n",
+     'the group form gives up on a slow connection and says the signup failed'),
+    ('touring-signups.test.py', 'drag-bingo/drag-bingo-at-the-bowlo.html',
+     "  fetch(_SBU+'/rest/v1/signups',{method:'POST',", "  fetch(_SBU+'/rest/v1/signups',{signal:AbortSignal.timeout(3000),method:'POST',",
+     'the drag bingo form gives up on a slow connection and says the signup failed'),
+    ('touring-signups.test.py', 'touring/nextevent/index.html',
+     '      method: "POST", headers: { ...SB_HEADERS, "Prefer": "return=minimal" },',
+     '      signal: AbortSignal.timeout(3000), method: "POST", headers: { ...SB_HEADERS, "Prefer": "return=minimal" },',
+     'the discount form gives up on a slow connection and says the signup failed'),
 
     ('move-show-images.test.py', 'tools/move-show-images-to-storage.py',
      "    if SYDNEY_REF not in host and host != '127.0.0.1':", '    if False:',

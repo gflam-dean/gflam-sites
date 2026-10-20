@@ -644,7 +644,7 @@
   "counted_by": "lines"
  },
  "tools/touring-signups.test.py": {
-  "checks": 24,
+  "checks": 29,
   "counted_by": "lines"
  },
  "tools/tv-and-phone-in-chrome.test.py": {

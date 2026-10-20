@@ -235,7 +235,32 @@ class Browser(object):
         with its own screen on, so two windows is the faithful model and two tabs never was."""
         tid = self.call('Target.createTarget', {'url': url, 'newWindow': True})['targetId']
         sid = self.call('Target.attachToTarget', {'targetId': tid, 'flatten': True})['sessionId']
+        if url != 'about:blank':
+            self._wait_for_page(sid)
         return tid, sid
+
+    def _wait_for_page(self, sid, wait=120):
+        """Do not hand back a tab until it is showing the page asked for, not Chrome's blank one.
+
+        Target.createTarget answers as soon as the window exists, and the window starts on an
+        empty about:blank document whose readyState is already "complete". The real page replaces
+        it only when the server's first bytes arrive. Ask anything before then and the BLANK
+        document answers: touring-signups.test.py asked "complete?", heard yes from about:blank,
+        filled in a form that was not there, and then waited 30 s for an error message that could
+        never come ("and it says the signup did not go through", 20 and 21 Oct 2026, under load;
+        a reply 0.3 s late is enough, measured). Waiting here fixes every caller at once. The wait
+        ends when the tab has left about:blank (the page, an error page or a redirect); whether
+        that page then loads is still each caller's own question."""
+        end = time.time() + wait
+        while time.time() < end:
+            try:
+                href = self.eval(sid, 'location.href')
+            except IOError:
+                href = None          # the blank document was swapped out mid-question; ask again
+            if href and href != 'about:blank':
+                return True
+            time.sleep(0.1)
+        return False
 
     def eval(self, session, expr):
         r = self.call('Runtime.evaluate',
