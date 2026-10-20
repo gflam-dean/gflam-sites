@@ -192,6 +192,7 @@
   "owner/accounts admins grant and cancel with an audit row; staff admins, venue logins and strangers are refused; three formats only",
   "owner/accounts admins set it with an audit row; staff admins, venue logins and strangers are refused; only true/false",
   "owner/accounts only; venue, dates, kind and who narrow on the database; cursor pages lose and repeat nothing; declines fold to one named line; invite-back changes no venue and calls no Stripe",
+  "owner/accounts admins set show_logo_on_site with an audit row; staff, venue logins and strangers refused; the venue route answers 410",
   "paged reads in venueplay-api-FULL.js are ordered (38)",
   "paged reads in venueplay-game.js are ordered (36)",
   "paper cards and sheets bill once, stop at ten, and keep a paper round's answers off every screen",
