@@ -902,20 +902,36 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     var p=readMusicSave();
     if(!window.VP_PICKUP) return p ? restoreMusicFrom(p) : Promise.resolve(false);
     return VP_PICKUP.find(apiPost, G.venueId, "musical_bingo").then(function(run){
-      if(run===undefined) return p ? restoreMusicFrom(p) : false;
+      if(run===undefined){
+        /* NO ANSWER (slow wifi): this tablet's own game if it has one, and keep asking in the
+           background in case a game is running that this device has never seen (vp-pickup.js). */
+        musicKeepAsking();
+        return p ? restoreMusicFrom(p) : false;
+      }
       var d=VP_PICKUP.decide(p, run);
       if(d==="none"){ if(p) clearMusic(); return false; }
       if(p && p.sessionId!==run.session_id){ clearMusic(); p=null; }   // an older night's pointer
       if(d==="restore"){ if(p.cid) G.consoleId=p.cid; return restoreMusicFrom(p); }
-      return VP_PICKUP.ask("musical_bingo").then(function(yes){
-        if(!yes) return false;
-        var cid=VP_PICKUP.newId();
-        return VP_PICKUP.take(apiPost, G.venueId, run, cid).then(function(){
-          G.consoleId=cid;
-          return restoreMusicFrom({ sessionId:run.session_id, cid:cid });
-        }, function(e){ hostError((e && e.message) || "Could not pick the game up. Try again."); return false; });
-      });
+      return pickUpMusic(run);
     });
+  }
+  /* "A musical bingo game is running at this venue. Pick it up?" and, on yes, take it and restore it. */
+  function pickUpMusic(run){
+    return VP_PICKUP.ask("musical_bingo").then(function(yes){
+      if(!yes) return false;
+      var cid=VP_PICKUP.newId();
+      return VP_PICKUP.take(apiPost, G.venueId, run, cid).then(function(){
+        G.consoleId=cid;
+        return restoreMusicFrom({ sessionId:run.session_id, cid:cid });
+      }, function(e){ hostError((e && e.message) || "Could not pick the game up. Try again."); return false; });
+    });
+  }
+  /* Stops the moment the host moves on: a lobby open or a game on this console (any status but setup). */
+  function musicKeepAsking(){
+    if(!(window.VP_PICKUP && VP_PICKUP.keepAsking)) return;
+    VP_PICKUP.keepAsking({ post:apiPost, venueId:G.venueId, format:"musical_bingo",
+      stop:function(){ return G.status!=="setup" || !!G.gameId; },
+      onFound:function(run){ pickUpMusic(run); } });
   }
   function restoreMusicFrom(p){
     return fetch(VP_GAME_API+"/snapshot?session="+encodeURIComponent(p.sessionId))

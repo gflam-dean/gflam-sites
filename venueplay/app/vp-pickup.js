@@ -93,6 +93,40 @@
     });
   }
 
+  /* ---- KEEP ASKING WHEN THE FIRST LOOKUP GOT NO ANSWER (20 Oct 2026) ----
+     On slow pub wifi the first "is a game running?" can take longer than the console waits (15 s),
+     and find() then says "could not tell". The console falls back to this tablet's own save, which a
+     NEW device does not have, so the host was left on the setup screen with the room seated and was
+     never asked again. This keeps asking in the background and, if a running game turns up, asks the
+     host the same question.
+       opts: { post, venueId, format,
+               stop()      true once the host has moved on (a lobby open, a game on this console):
+                           checked before every try and again before the question goes up
+               onFound(run) a running game turned up while still on the setup screen
+               wait(ms)    returns a promise that resolves after ms (tests pass their own clock) }
+     Stops for good on the first real answer (a game, or "nothing running"), or after the last
+     try. Backoff: 5, 10, 20, 30 seconds, then every 60 seconds, for about ten minutes. */
+  var RETRY_MS = [5000, 10000, 20000, 30000, 60000, 60000, 60000, 60000, 60000, 60000, 60000, 60000, 60000];
+  function keepAsking(opts){
+    var o = opts || {}, i = 0, done = false;
+    var wait = o.wait || function(ms){ return new Promise(function(res){ root.setTimeout(res, ms); }); };
+    function stopped(){ try { return done || !!(o.stop && o.stop()); } catch (e) { return true; } }
+    function next(){
+      if (stopped() || i >= RETRY_MS.length) { done = true; return Promise.resolve(null); }
+      return wait(RETRY_MS[i++]).then(function(){
+        if (stopped()) { done = true; return null; }
+        return find(o.post, o.venueId, o.format).then(function(run){
+          if (run === undefined) return next();              // still no answer: try again later
+          var hostMovedOn = stopped();                       // read BEFORE done is set, or it is always true
+          done = true;                                       // an answer: never ask again
+          if (run && !hostMovedOn && o.onFound) { try { o.onFound(run); } catch (e) {} }
+          return run;
+        });
+      });
+    }
+    return { promise: next(), cancel: function(){ done = true; } };
+  }
+
   /* ---- standing down when replaced ---- */
   var W = null, down = false, lastHeard = 0, iv = null, listening = false;
 
@@ -158,7 +192,7 @@
   }
 
   root.VP_PICKUP = {
-    newId: newId, find: find, decide: decide, ask: ask, take: take, words: words,
+    newId: newId, find: find, decide: decide, ask: ask, take: take, words: words, keepAsking: keepAsking, RETRY_MS: RETRY_MS,
     arm: arm, check: check, heard: heard, standDownNotice: standDownNotice,
     isDown: function(){ return down; }
   };

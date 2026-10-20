@@ -578,21 +578,37 @@
     var p=readTriviaSave();
     if(!window.VP_PICKUP) return p ? restoreTriviaFrom(p) : Promise.resolve(false);
     return VP_PICKUP.find(apiPost, G.venueId, "trivia").then(function(run){
-      if(run===undefined) return p ? restoreTriviaFrom(p) : false;
+      if(run===undefined){
+        /* NO ANSWER (slow wifi): this tablet's own quiz if it has one, and keep asking in the
+           background in case a quiz is running that this device has never seen (vp-pickup.js). */
+        triviaKeepAsking();
+        return p ? restoreTriviaFrom(p) : false;
+      }
       var d=VP_PICKUP.decide(p, run);
       if(d==="none"){ if(p) clearTrivia(); return false; }
       if(p && p.sessionId!==run.session_id){ clearTrivia(); p=null; }   // an older night's pointer
       if(d==="restore"){ if(p.cid) G.consoleId=p.cid; return restoreTriviaFrom(p); }
-      return VP_PICKUP.ask("trivia").then(function(yes){
-        if(!yes) return false;
-        var cid=VP_PICKUP.newId();
-        return VP_PICKUP.take(apiPost, G.venueId, run, cid).then(function(){
-          G.consoleId=cid;
-          // The open question's answer and who is in come from the server, as this tablet would have known them.
-          return restoreTriviaFrom({ sessionId:run.session_id, cur:run.current||null, cid:cid });
-        }, function(e){ hostError((e && e.message) || "Could not pick the quiz up. Try again."); return false; });
-      });
+      return pickUpTrivia(run);
     });
+  }
+  /* "A quiz is running at this venue. Pick it up?" and, on yes, take it and restore it. */
+  function pickUpTrivia(run){
+    return VP_PICKUP.ask("trivia").then(function(yes){
+      if(!yes) return false;
+      var cid=VP_PICKUP.newId();
+      return VP_PICKUP.take(apiPost, G.venueId, run, cid).then(function(){
+        G.consoleId=cid;
+        // The open question's answer and who is in come from the server, as this tablet would have known them.
+        return restoreTriviaFrom({ sessionId:run.session_id, cur:run.current||null, cid:cid });
+      }, function(e){ hostError((e && e.message) || "Could not pick the quiz up. Try again."); return false; });
+    });
+  }
+  /* Stops the moment the host moves on: a lobby open or a quiz on this console (any status but setup). */
+  function triviaKeepAsking(){
+    if(!(window.VP_PICKUP && VP_PICKUP.keepAsking)) return;
+    VP_PICKUP.keepAsking({ post:apiPost, venueId:G.venueId, format:"trivia",
+      stop:function(){ return G.status!=="setup" || !!G.gameId; },
+      onFound:function(run){ pickUpTrivia(run); } });
   }
   function restoreTriviaFrom(p){
     return fetch(VP_GAME_API+"/snapshot?session="+encodeURIComponent(p.sessionId))
