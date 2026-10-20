@@ -34,6 +34,12 @@
  *                            or a registered number. Must be registered on your
  *                            Mobile Message account. Optional; defaults to
  *                            "VenuePlay".
+ *   CLICKSEND_USERNAME       Optional BACKUP provider (21 Oct 2026). With this and
+ *   CLICKSEND_API_KEY        CLICKSEND_API_KEY set, a Mobile Message error or
+ *                            timeout falls through to ClickSend. Unset, nothing
+ *                            changes. Setup: ~/venue-enrich/SMS-BACKUP-SETUP.md
+ *   CLICKSEND_FROM           Optional. A sender ID registered with ClickSend.
+ *                            Unset, ClickSend sends from its shared number.
  *
  * Setup steps
  * -----------
@@ -71,12 +77,20 @@
 /* The build stamp every other Worker carries. Without it deploy-worker.py refuses to ship
    this file, which is why the SMS hook had been pasted by hand and nothing could say which
    version was running. */
-const BUILD = '12 Sep 2026, 16:07 · 4351628a';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '21 Oct 2026, 00:54 · 024535ef';   // tools/stamp-workers.py, do not edit by hand
 
 const FIVE_MINUTES_SECONDS = 60 * 5;
 
 export default {
   async fetch(request, env) {
+    /* /health, like every other Worker, so deploy-worker.py can prove the build and Dean can
+       see whether the backup provider is switched on. Booleans only: never a secret. */
+    if (request.method === "GET" && new URL(request.url).pathname === "/health") {
+      return new Response(JSON.stringify({
+        ok: true, build: BUILD,
+        providers: { mobilemessage: hasMobileMessage(env), clicksend: hasClickSend(env) },
+      }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }
     // Only accept POST. Supabase always POSTs the hook payload.
     if (request.method !== "POST") {
       return new Response("Method Not Allowed", { status: 405 });
@@ -123,81 +137,21 @@ export default {
       // Build the message. We avoid logging the full code anywhere.
       const message =
         "Your VenuePlay code is " + otp + ". It expires in a few minutes.";
-      const sender = env.SMS_SENDER || "VenuePlay";
 
-      // Send via the Mobile Message REST API. It accepts local or international
-      // recipient formats, so pass the E.164 value through unchanged.
+      // Both providers accept E.164, so pass Supabase's value through unchanged.
       const to = String(phone).trim();
-
-      const username = env.MOBILEMESSAGE_USERNAME || "";
-      const password = env.MOBILEMESSAGE_PASSWORD || "";
-      const basicAuth = "Basic " + btoa(username + ":" + password);
 
       // custom_ref = the Supabase webhook id. It gives provider-side tracing and
       // a handle for de-duplicating retries later. Not sensitive.
       const customRef = String(request.headers.get("webhook-id") || "").slice(0, 64);
 
-      // Abort a hung provider fast so it fails deterministically instead of
-      // stalling until Cloudflare's wall-clock limit (which Supabase reads as a
-      // timeout and retries, risking a double-send).
-      const abort = new AbortController();
-      const abortTimer = setTimeout(() => abort.abort(), 10000);
-
-      let providerResponse;
-      let providerText;
-      try {
-        providerResponse = await fetch(
-          "https://api.mobilemessage.com.au/v1/messages",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: basicAuth,
-            },
-            body: JSON.stringify({
-              messages: [
-                {
-                  to: to,
-                  message: message,
-                  sender: sender,
-                  custom_ref: customRef,
-                },
-              ],
-            }),
-            signal: abort.signal,
-          }
-        );
-        providerText = (await providerResponse.text()).trim();
-      } finally {
-        clearTimeout(abortTimer);
-      }
-
-      // Mobile Message returns HTTP 200 with a results array; each result has
-      // its own "status" that is "success" on delivery acceptance. Treat a
-      // non-200, unparseable body, or a non-"success" first result as failure.
-      let firstResultStatus = "";
-      try {
-        const parsed = JSON.parse(providerText);
-        if (parsed && Array.isArray(parsed.results) && parsed.results[0]) {
-          firstResultStatus = String(parsed.results[0].status || "");
-        }
-      } catch (err) {
-        // Leave firstResultStatus empty; handled as a failure below.
-      }
-
-      if (!providerResponse.ok || firstResultStatus !== "success") {
-        // Log the provider response server-side for debugging, but do not leak
-        // provider internals in the HTTP response body.
-        console.error(
-          "Mobile Message send failed. status=" +
-            providerResponse.status +
-            " resultStatus=" +
-            firstResultStatus +
-            " response=" +
-            providerText
-        );
+      const sent = await deliverSms(env, to, message, customRef);
+      if (!sent.ok) {
+        /* Supabase's documented hook error shape, so the sign-in screen gets a real error
+           rather than a silent wait. The console reads any send failure as ours and offers
+           the email code instead. */
         return new Response(
-          JSON.stringify({ error: "Failed to send SMS" }),
+          JSON.stringify({ error: { http_code: 500, message: "Failed to send SMS" } }),
           { status: 500, headers: { "Content-Type": "application/json" } }
         );
       }
@@ -216,6 +170,124 @@ export default {
     }
   },
 };
+
+/* TWO PROVIDERS, BECAUSE ONE WENT DOWN.
+
+   On 21 Oct 2026 Mobile Message stopped sending and, with it the only provider, no host at
+   any venue could sign in: the phone code is the only way into a console. So the hook tries
+   Mobile Message first, exactly as before, and if that errors or times out it tries ClickSend,
+   but only when ClickSend's two secrets are set. Without them nothing changes, including the
+   ten second wait.
+
+   With a backup configured, Mobile Message gets a shorter wait. Supabase gives a hook about
+   five seconds before it calls it a timeout, so a ten second first try would leave the backup
+   no time at all. The cost: a Mobile Message that is slow but working can now lose the race,
+   and a host may get the code twice. Twice beats never.
+
+   The logs say WHICH provider sent or failed and its status, never the number or the code.
+   The provider's response body is not logged either, because it can echo the number back. */
+const PRIMARY_TIMEOUT_ALONE_MS = 10000;
+const PRIMARY_TIMEOUT_WITH_BACKUP_MS = 2500;
+const BACKUP_TIMEOUT_MS = 2200;
+
+function hasMobileMessage(env) {
+  return !!(env && env.MOBILEMESSAGE_USERNAME && env.MOBILEMESSAGE_PASSWORD);
+}
+function hasClickSend(env) {
+  return !!(env && env.CLICKSEND_USERNAME && env.CLICKSEND_API_KEY);
+}
+/* A provider status word, safe to log: letters, digits, spaces and _ only, kept short. */
+function safeWord(x) {
+  return String(x == null ? "" : x).replace(/[^A-Za-z0-9 _-]/g, "").slice(0, 40);
+}
+
+async function deliverSms(env, to, message, customRef) {
+  const backup = hasClickSend(env);
+  const first = await sendViaMobileMessage(env, to, message, customRef,
+    backup ? PRIMARY_TIMEOUT_WITH_BACKUP_MS : PRIMARY_TIMEOUT_ALONE_MS);
+  if (first.ok) {
+    console.log("SMS sent via mobilemessage");
+    return { ok: true, provider: "mobilemessage" };
+  }
+  console.error("SMS mobilemessage failed: " + first.detail);
+  if (!backup) {
+    return { ok: false, provider: null };
+  }
+  const second = await sendViaClickSend(env, to, message, customRef, BACKUP_TIMEOUT_MS);
+  if (second.ok) {
+    console.log("SMS sent via clicksend (mobilemessage failed first)");
+    return { ok: true, provider: "clicksend" };
+  }
+  console.error("SMS clicksend failed too: " + second.detail);
+  return { ok: false, provider: null };
+}
+
+/* One POST with a hard deadline. Resolves { res, text } or throws (network error, abort). */
+async function postWithDeadline(url, headers, body, timeoutMs) {
+  const abort = new AbortController();
+  const timer = setTimeout(() => abort.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { method: "POST", headers: headers, body: body, signal: abort.signal });
+    const text = (await res.text()).trim();
+    return { res: res, text: text };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/* Mobile Message: HTTP 200 with a results array whose first entry says "success". */
+async function sendViaMobileMessage(env, to, message, customRef, timeoutMs) {
+  const sender = env.SMS_SENDER || "VenuePlay";
+  const basicAuth = "Basic " + btoa((env.MOBILEMESSAGE_USERNAME || "") + ":" + (env.MOBILEMESSAGE_PASSWORD || ""));
+  let r;
+  try {
+    r = await postWithDeadline("https://api.mobilemessage.com.au/v1/messages",
+      { "Content-Type": "application/json", Authorization: basicAuth },
+      JSON.stringify({ messages: [{ to: to, message: message, sender: sender, custom_ref: customRef }] }),
+      timeoutMs);
+  } catch (e) {
+    return { ok: false, detail: (e && e.name === "AbortError") ? "timed out" : "network error" };
+  }
+  let status = "";
+  try {
+    const parsed = JSON.parse(r.text);
+    if (parsed && Array.isArray(parsed.results) && parsed.results[0]) status = String(parsed.results[0].status || "");
+  } catch (e) { /* unparseable: a failure below */ }
+  if (!r.res.ok || status !== "success") {
+    return { ok: false, detail: "status=" + r.res.status + " resultStatus=" + safeWord(status) };
+  }
+  return { ok: true };
+}
+
+/* ClickSend: POST /v3/sms/send, Basic auth with the account username and API key. Success is
+   HTTP 200, response_code "SUCCESS", and the first message's status "SUCCESS". The sender is
+   CLICKSEND_FROM when set (it must be registered with ClickSend); otherwise ClickSend uses its
+   own shared number, which always delivers. */
+async function sendViaClickSend(env, to, message, customRef, timeoutMs) {
+  const basicAuth = "Basic " + btoa(env.CLICKSEND_USERNAME + ":" + env.CLICKSEND_API_KEY);
+  const one = { source: "venueplay", body: message, to: to, custom_string: customRef };
+  if (env.CLICKSEND_FROM) one.from = env.CLICKSEND_FROM;
+  let r;
+  try {
+    r = await postWithDeadline("https://rest.clicksend.com/v3/sms/send",
+      { "Content-Type": "application/json", Authorization: basicAuth },
+      JSON.stringify({ messages: [one] }),
+      timeoutMs);
+  } catch (e) {
+    return { ok: false, detail: (e && e.name === "AbortError") ? "timed out" : "network error" };
+  }
+  let code = "", status = "";
+  try {
+    const parsed = JSON.parse(r.text);
+    code = String((parsed && parsed.response_code) || "");
+    const msgs = parsed && parsed.data && parsed.data.messages;
+    if (Array.isArray(msgs) && msgs[0]) status = String(msgs[0].status || "");
+  } catch (e) { /* unparseable: a failure below */ }
+  if (!r.res.ok || code !== "SUCCESS" || status !== "SUCCESS") {
+    return { ok: false, detail: "status=" + r.res.status + " code=" + safeWord(code) + " messageStatus=" + safeWord(status) };
+  }
+  return { ok: true };
+}
 
 /**
  * Verify the Standard Webhooks signature that Supabase attaches to hook

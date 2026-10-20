@@ -115,6 +115,10 @@
   "checks": 155,
   "counted_by": "total"
  },
+ "tools/add-login-email.test.py": {
+  "checks": 19,
+  "counted_by": "lines"
+ },
  "tools/console-in-chrome.test.py": {
   "checks": 63,
   "counted_by": "lines"
@@ -744,7 +748,11 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/signin-blame.test.js": {
-  "checks": 17,
+  "checks": 18,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/signin-email-fallback.test.js": {
+  "checks": 42,
   "counted_by": "lines"
  },
  "venueplay-backend/app/song-excluded-acts.test.js": {
@@ -885,6 +893,10 @@
  },
  "venueplay-backend/worker/slug-ladder.test.js": {
   "checks": 10,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/sms-hook-failover.test.js": {
+  "checks": 33,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/sms-hook-secrets.test.js": {

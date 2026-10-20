@@ -48,6 +48,11 @@ pass("the sign-in still decides who to blame in one place", !!body);
 var shown = "";
 function $(id) { return { set textContent(v) { shown = v; }, get textContent() { return shown; } }; }
 eval(body);
+/* The "ours" sentence lives in one variable beside the function, because the resend link says
+   it too (21 Oct 2026). Lift that, not a copy of it. */
+var tf = /\n\s*var TEXT_FAILED=[\s\S]*?;\n/.exec(APP);
+pass("the text-failed sentence is still defined beside it", !!tf);
+if (tf) (0, eval)(tf[0]);
 
 function say(err) { shown = ""; otpSendError(err); return shown; }
 /* CAREFUL. The "on us" message deliberately contains the words "not your number", so a naive

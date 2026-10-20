@@ -345,6 +345,18 @@
           <div class="vp-c" style="margin-top:8px"><span class="skiplink" id="resendBtn">Resend code</span></div>
         </div>
 
+        <!-- THE WAY IN WHEN TEXTS DO NOT ARRIVE (21 Oct 2026, the night Mobile Message went down).
+             The same login, sent its code by email: same staff check, same 4 hour shift. -->
+        <div id="emailAlt" class="hidden vp-c" style="margin-top:14px"><span class="skiplink" id="emailAltBtn">Code not arriving? Get it by email instead</span></div>
+        <div id="stepEmail" class="hidden vp-c">
+          <label class="flabel">Email address on your VenuePlay login</label>
+          <input class="vp-c" id="emailIn" type="email" placeholder="you@yourvenue.com.au" autocomplete="email">
+          <div class="cerr" id="emailErr"></div>
+          <button class="btn pink big" id="sendEmailBtn" style="margin-top:4px">Email me a code</button>
+          <p class="note vp-c" style="margin-top:10px">No email on your login yet? Email hello@venueplay.com.au and we will get you in.</p>
+          <div class="vp-c" style="margin-top:8px"><span class="skiplink" id="backToTextBtn">Use a text code instead</span></div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -877,12 +889,19 @@
          screen at every venue, for any host, at any hour. Dean: "WTF are we telling people
          to call me for?" Quite. That was not mine to decide and it is not what a support
          contact is for. */
-      $("mobileErr").textContent="That one is on us, not your number. The text did not go out. "+
-        "Try again in a moment, or email hello@venueplay.com.au and we will get you in.";
-    } else {
-      $("mobileErr").textContent="That number did not look right. Check it and try again.";
+      $("mobileErr").textContent=TEXT_FAILED;
+      return "ours";
     }
+    $("mobileErr").textContent="That number did not look right. Check it and try again.";
+    return "theirs";
   }
+  /* SAY THE TEXT FAILED, AND WHERE TO GO INSTEAD. Not the host's number, and not a silent wait. */
+  var TEXT_FAILED="We could not send a text right now. Use the email option below. "+
+    "Still stuck? Email hello@venueplay.com.au and we will get you in.";
+  /* The code goes by text (MODE "sms", to E164) or by email (MODE "email", to EMAIL). One code
+     box, one Verify, one shift start, so the two ways in cannot drift apart. */
+  var MODE="sms", EMAIL="";
+  function showEmailAlt(){ $("emailAlt").classList.remove("hidden"); }
 
   $("sendCodeBtn").addEventListener("click", function(){
     var raw=($("mobileIn").value||"").trim();
@@ -893,13 +912,67 @@
     var btn=this; btn.disabled=true; btn.textContent="Sending...";
     client.auth.signInWithOtp({ phone:e164 }).then(function(res){
       btn.disabled=false; btn.textContent="Send code";
-      if(res && res.error){ otpSendError(res.error); return; }
+      if(res && res.error){ if(otpSendError(res.error)==="ours") showEmailAlt(); return; }
+      MODE="sms";
       $("sentTo").textContent=e164;
       $("stepMobile").classList.add("hidden");
       $("stepCode").classList.remove("hidden");
+      showEmailAlt();   // a text can be accepted and still never arrive
       $("otpIn").focus();
-    }).catch(function(err){ btn.disabled=false; btn.textContent="Send code"; otpSendError(err); });
+    }).catch(function(err){ btn.disabled=false; btn.textContent="Send code"; if(otpSendError(err)==="ours") showEmailAlt(); });
   });
+  $("emailAltBtn").addEventListener("click", function(){
+    $("stepMobile").classList.add("hidden");
+    $("stepCode").classList.add("hidden");
+    $("emailAlt").classList.add("hidden");
+    $("stepEmail").classList.remove("hidden");
+    $("emailErr").textContent="";
+    $("emailIn").focus();
+  });
+  $("backToTextBtn").addEventListener("click", function(){
+    MODE="sms";
+    $("stepEmail").classList.add("hidden");
+    $("stepCode").classList.add("hidden");
+    $("stepMobile").classList.remove("hidden");
+    showEmailAlt();
+  });
+  /* EMAIL ONLY REACHES A LOGIN THAT ALREADY EXISTS. shouldCreateUser:false, because a brand new
+     login has no venue staff row: it would sign in to "no venue" and be a stray account. The
+     email has to be on the host's OWN login, which is what keeps the staff check identical. */
+  function emailSendError(err){
+    var msg=(err&&err.message)?String(err.message).toLowerCase():"";
+    var code=String((err&&(err.code||err.error_code))||"").toLowerCase();
+    if(code.indexOf("otp_disabled")>=0 || msg.indexOf("signups not allowed")>=0 || code.indexOf("user_not_found")>=0){
+      $("emailErr").textContent="That email is not on a VenuePlay login yet. Email hello@venueplay.com.au and we will get you in.";
+    } else if(code.indexOf("rate_limit")>=0 || msg.indexOf("rate limit")>=0){
+      $("emailErr").textContent="Too many codes asked for just now. Wait a minute and try again.";
+    } else if(code.indexOf("validation_failed")>=0 || (msg.indexOf("invalid")>=0 && msg.indexOf("email")>=0)){
+      $("emailErr").textContent="That email did not look right. Check it and try again.";
+    } else {
+      $("emailErr").textContent="We could not send the email right now. Email hello@venueplay.com.au and we will get you in.";
+    }
+  }
+  function emailOtp(addr){
+    return client.auth.signInWithOtp({ email:addr, options:{ shouldCreateUser:false,
+      emailRedirectTo: (location.origin||"")+"/app/" } });
+  }
+  $("sendEmailBtn").addEventListener("click", function(){
+    var addr=($("emailIn").value||"").trim().toLowerCase();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(addr)){ $("emailErr").textContent="Pop in the email address on your login."; return; }
+    $("emailErr").textContent="";
+    var btn=this; btn.disabled=true; btn.textContent="Sending...";
+    emailOtp(addr).then(function(res){
+      btn.disabled=false; btn.textContent="Email me a code";
+      if(res && res.error){ emailSendError(res.error); return; }
+      MODE="email"; EMAIL=addr;
+      $("sentTo").textContent=addr;
+      $("stepEmail").classList.add("hidden");
+      $("stepCode").classList.remove("hidden");
+      $("otpIn").value=""; $("otpErr").textContent="";
+      $("otpIn").focus();
+    }).catch(function(err){ btn.disabled=false; btn.textContent="Email me a code"; emailSendError(err); });
+  });
+  $("emailIn").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); $("sendEmailBtn").click(); } });
   $("otpIn").addEventListener("input", function(){ this.value=this.value.replace(/\D/g,"").slice(0,6); $("otpErr").textContent=""; });
   /* Enter submits. The TV pairing box below has done this since the start and these two never
      did, so on a laptop a host typed the code, pressed Enter, and nothing happened. On a phone the
@@ -908,9 +981,10 @@
   $("otpIn").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); $("verifyBtn").click(); } });
   $("verifyBtn").addEventListener("click", function(){
     var code=($("otpIn").value||"").replace(/\D/g,"");
-    if(code.length<6){ $("otpErr").textContent="Enter the 6-digit code from your phone."; return; }
+    if(code.length<6){ $("otpErr").textContent="Enter the 6-digit code from your "+(MODE==="email"?"email.":"phone."); return; }
     var btn=this; btn.disabled=true; btn.textContent="Verifying...";
-    client.auth.verifyOtp({ phone:E164, token:code, type:"sms" }).then(function(res){
+    var ask = MODE==="email" ? { email:EMAIL, token:code, type:"email" } : { phone:E164, token:code, type:"sms" };
+    client.auth.verifyOtp(ask).then(function(res){
       btn.disabled=false; btn.textContent="Verify";
       if(res && res.error){ $("otpErr").textContent="That code did not match"; return; }
       try{ localStorage.setItem("vpShiftStart", String(Date.now())); }catch(e){}   // fresh 4h shift starts now
@@ -918,14 +992,16 @@
     }).catch(function(){ btn.disabled=false; btn.textContent="Verify"; $("otpErr").textContent="That code did not match"; });
   });
   $("resendBtn").addEventListener("click", function(){
-    if(!E164){ return; }
+    if(MODE==="email" ? !EMAIL : !E164){ return; }
     var el=this; el.textContent="Sending..."; $("otpErr").textContent="";
-    client.auth.signInWithOtp({ phone:E164 }).then(function(res){
-      if(res && res.error){ el.textContent="Resend code"; $("otpErr").textContent="Could not resend, give it a moment and try again."; return; }
+    (MODE==="email" ? emailOtp(EMAIL) : client.auth.signInWithOtp({ phone:E164 })).then(function(res){
+      if(res && res.error){ el.textContent="Resend code";
+        $("otpErr").textContent = MODE==="email" ? "Could not resend, give it a moment and try again." : TEXT_FAILED;
+        if(MODE!=="email") showEmailAlt(); return; }
       el.textContent="Code sent"; setTimeout(function(){ el.textContent="Resend code"; }, 3000);
     }).catch(function(){ el.textContent="Resend code"; $("otpErr").textContent="Could not resend, give it a moment and try again."; });
   });
-  // demo bypass shortcuts removed 2026-07-29: sign-in is text-code only (no Skip for demo, no role shortcuts)
+  // demo bypass shortcuts removed 2026-07-29: no Skip for demo, no role shortcuts. A text code, or the same login's code by email
   $("adminBack").addEventListener("click", function(){ $("headerTag").textContent=""; $("statusText").textContent="Sign in to start"; go("vSignIn"); });
   $("noVenueOut").addEventListener("click", function(){ endShift(); if(window.VP){ VP.signOut(); } else { go("vSignIn"); } });
   // A night running in another console (trivia, musical bingo, raffle) leaves a fresh recovery
