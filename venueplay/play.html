@@ -843,6 +843,8 @@
          keep the card number on screen, because it is all they have to show the host. */
       wn.innerHTML = P.droppedClaim
         ? "The game ended before the host checked your BINGO"+(P.droppedClaim>0?" on card #"+esc(String(P.droppedClaim)):"")+". <b>See the host now</b> and show them this screen."
+        : (P.dealWait && P.active && !P.cards.length)
+        ? "Getting your ticket&hellip; It will appear here the moment it is ready. Hang tight."
         : (P.paidMode && P.active && !P.cards.length)
         ? "Tickets are on sale at the bar tonight. Grab one and the staff will put it straight on your phone."
         : (P.active && !P.cards.length)
@@ -1535,6 +1537,7 @@
       var _saved=loadDaubs();
       for(var _k in _saved){ if(!_prev[_k] || !Object.keys(_prev[_k]).length) _prev[_k]=_saved[_k]; }
       P.cards=(m.cards||[]).map(function(c){ return { cardNo:c.cardNo, cells:c.cells, daubs:_prev[c.cardNo]||{} }; });
+      if(P.cards.length) P.dealWait=false;   // the ticket we were waiting for is here
       P.dealSeq++;   // a fresh deal is always a fresh structure, whatever the card numbers say
       P.active=true; autoDaub(); route();
     }
@@ -1559,6 +1562,7 @@
          game's here so nobody marks or claims on a ticket that is no longer in play; the waiting screen
          says they are on the way. An older console sends no dealing flag and deals first, as before. */
       if(m.dealing){ P.cards=[]; P.dealSeq++; }
+      P.dealWait=false;   // a new game: any wait for last game's ticket is over
       P.shared=false; P.sharedWith=[]; clearStage(P.room); P.lostBy="";
       for(var i=0;i<P.cards.length;i++) P.cards[i].daubs={};
       clearDaubs();   // a new game starts on a clean ticket
@@ -1569,6 +1573,11 @@
       P.called=m.called?cleanCalled(m.called):P.called; P.active=true;
       autoDaub();
       if(P.joined && !P.won && !P.ended && P.cards.length){ renderCards(); show("vCard"); }
+    }
+    else if(m.t==="dealing"){
+      /* The host has asked the server for our ticket and it has not answered yet (a slow server). Say so,
+         rather than leave a waiting screen that reads as stuck. The ticket arrives as t:"cards". */
+      if(m.pid===P.pid && !P.cards.length){ P.dealWait=true; if(!P.won && !P.ended) route(); }
     }
     else if(m.t==="checkin"){
       // The console has not seated this phone in its session (14 Oct 2026): join it now. Only the

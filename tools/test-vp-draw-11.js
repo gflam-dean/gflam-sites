@@ -316,6 +316,115 @@ function ballAt(id, n) { return { draw_id: id, ordinal: n, number: 0 }; }
   await W('/session/close', { session_id: sid });
   check('and closing the session finishes its draws', !!drawRow(newer).finished_at, drawRow(newer));
 
+  /* 6 to 9 (20 Oct 2026): after the first ball the tablet NEVER deals. A phone whose server deal has not
+     answered waits for the server, asked again until it answers, says "Getting your ticket", and the host
+     sees it waiting. Before the first ball a slow server is given 15 seconds, not 8. A win checked on the
+     tablet that the server cannot confirm is not reported to the host as a wrong winner. */
+  function toastsFor(ms) { var seen = []; return (async function () { for (var t = 0; t < ms; t += 250) { var s = host.$('greetToast').textContent; if (s && seen.indexOf(s) < 0) seen.push(s); await advance(250); } return seen; })(); }
+  async function lateJoin(name) {
+    var ph = bootPhone3(name); await advance(50); ph.$('nameIn').value = name; ph.join();
+    for (var w = 0; w < 80 && !host.G.dealSince; w++) await advance(250);   // until the console has asked the server to deal it
+    return ph;
+  }
+  function tabletTickets(drawId) { return DB.vp_bingo_tickets.filter(function (t) { return t.draw_id === drawId && t.source === 'tablet'; }); }
+
+  print('\n6. a phone joining after the first ball, with the server slow: it waits for the server, never a tablet ticket');
+  host.$('cardsSel').value = '1'; host.$('paidSel').value = '';
+  host.openLobby(); await advance(9000);
+  host.startGame(); await advance(3000);
+  var G6 = lastDraw().id;
+  check('CONTROL: the opening hands came from the server', host.G.dealMode === 'server' && [ann, bob].every(function (ph) { return phoneMatchesRecord(ph, G6); }));
+  await callBalls(host, 2);
+  SLOW['/host/bingo/deal'] = 20000;   // slow, not lost: the Worker deals 20 s after each ask, long after the console stopped listening
+  var dee = await lateJoin('Dee');
+  check('CONTROL: the console asked the server to deal the late phone', !!host.G.dealSince && host.G.idx === 1, [host.G.dealSince, host.G.idx]);
+  await advance(6000);
+  host.nextBall(); await drain(); await advance(11000);   // 17 s in: past the 15 s budget, when a tablet would stand in before ball 1
+  check('17 seconds with no answer and a ball called meanwhile: the tablet dealt that phone NOTHING, and the game went on',
+        dee.P.cards.length === 0 && !(host.G.players[dee.P.pid].cards || []).length && host.G.dealMode === 'server' && tabletTickets(G6).length === 0 && host.G.draw.length === 3,
+        { phone: dee.P.cards.length, console: (host.G.players[dee.P.pid].cards || []).length, mode: host.G.dealMode, tablet: tabletTickets(G6).length, balls: host.G.draw.length });
+  check('the phone says it is getting its ticket, not a dead screen', /Getting your ticket/.test(dee.$('waitNote').innerHTML), dee.$('waitNote').innerHTML);
+  check('the host sees that phone waiting for its ticket, on its chip and in the coach line',
+        /Dee <span class="pget">getting ticket/.test(host.$('playerList').innerHTML) && /1 phone is still getting a ticket/.test(host.$('coach').innerHTML),
+        [host.$('playerList').innerHTML.slice(0, 300), host.$('coach').innerHTML]);
+  await advance(4000); SLOW = {};
+  await advance(12000);
+  var deeRec = ticketsOf(G6, dee.P.pid, true).filter(function (t) { return t.dealt_at; });
+  check('when the server answers, the phone gets the SERVER\'s ticket, exactly the one on the record (none voided), dealt after the first ball',
+        phoneMatchesRecord(dee, G6) && deeRec.length === 1 && deeRec[0].source === 'server' && !deeRec[0].voided_at && deeRec[0].balls_at_deal >= 2,
+        deeRec.map(function (t) { return [t.source, t.balls_at_deal, !!t.voided_at]; }));
+  check('and the waiting message and chip are gone', !/getting ticket/.test(host.$('playerList').innerHTML) && !/still getting a ticket/.test(host.$('coach').innerHTML) && dee.P.dealWait === false,
+        [host.$('playerList').innerHTML.slice(0, 200), host.$('coach').innerHTML]);
+  frontOfDraw(nums(dee.P.cards[0].cells[0]));
+  await callBalls(host, 5);
+  dee.pressBingo(); await drain(); await advance(1500);
+  var cl6 = lastClaim(dee.P.pid);
+  check('her win is judged by the server, on its own ticket', !!cl6 && cl6.verdict === 'win' && cl6.decided_on === 'server' && cl6.card_no === dee.P.cards[0].cardNo, cl6);
+  host.hostConfirm(0); await advance(1000);
+  check('and the host\'s Confirm is on the record (the failure this fixes: it was refused with 409)', lastClaim(dee.P.pid).status === 'confirmed', lastClaim(dee.P.pid));
+  host.finishGame(); await advance(300); host.endGame(); await advance(3000);
+
+  print('\n7. a game the tablet dealt before the first ball: after it, the server deals, never the tablet');
+  host.openLobby(); await advance(9000);
+  SLOW['/host/bingo/deal'] = DEAD;
+  host.startGame(); await advance(17000);
+  var G7 = lastDraw().id;
+  check('CONTROL: with no answer in 15 seconds the tablet dealt the opening hands, before ball 1',
+        host.G.dealMode === 'tablet' && [ann, bob, dee].every(function (ph) { return ph.P.cards.length === 1 && host.G.players[ph.P.pid].cards[0].src === 'tablet'; }),
+        { mode: host.G.dealMode, cards: [ann, bob, dee].map(function (ph) { return ph.P.cards.length; }) });
+  host.nextBall(); await drain(); await advance(6000);
+  var eve = await lateJoin('Eve');
+  await advance(17000);
+  check('a phone joining after ball 1 is dealt nothing by the tablet, though the tablet dealt this game, and is told its ticket is coming',
+        eve.P.cards.length === 0 && !(host.G.players[eve.P.pid].cards || []).length && /Getting your ticket/.test(eve.$('waitNote').innerHTML),
+        { phone: eve.P.cards.length, console: host.G.players[eve.P.pid].cards, note: eve.$('waitNote').innerHTML });
+  SLOW = {}; await advance(12000);   // the try in flight is given up on (at most 10 s), then the next is answered
+  var eveRec = ticketsOf(G7, eve.P.pid);
+  check('the server deals it when it answers, and the phone holds exactly the record', phoneMatchesRecord(eve, G7) && eveRec[0].source === 'server' && eveRec[0].balls_at_deal === 1,
+        eveRec.map(function (t) { return [t.source, t.balls_at_deal]; }));
+  await advance(16000);   // the tablet's opening tickets are offered to the record, and refused: a ball is out
+  var annTab = host.G.players[ann.P.pid].cards[0];
+  check('CONTROL: the tablet\'s opening tickets were refused by the record (a ball was out)', annTab.src === 'tablet' && annTab.rec === 'refused' && tabletTickets(G7).length === 0, [annTab.src, annTab.rec]);
+  // A second ticket each, mid-game (the free-night count is the lever here): it comes from the server.
+  host.G.defaultCards = 2; host.dealSoon(0); await advance(3000);
+  var annRec = ticketsOf(G7, ann.P.pid);
+  check('a top-up after ball 1 on a hand the tablet dealt: the server deals the one extra, and the tablet ticket she holds stays put',
+        ann.P.cards.length === 2 && ann.P.cards[0].cardNo === annTab.cardNo && annRec.length === 1 && annRec[0].source === 'server' && ann.P.cards[1].cardNo === annRec[0].card_no &&
+        tabletTickets(G7).length === 0 && Object.keys(host.G.players).every(function (pid) { return (host.G.players[pid].cards || []).slice(1).every(function (c) { return c.src === 'server'; }); }),
+        { phone: ann.P.cards.map(function (c) { return c.cardNo; }), rec: annRec.map(function (t) { return [t.source, t.card_no]; }), tablet: annTab.cardNo });
+
+  print('\n8. a win checked on the tablet that the server cannot confirm: the host is told plainly');
+  frontOfDraw(nums(annTab.card[0]));
+  await callBalls(host, 5);
+  ann.pressBingo(); await drain(); await advance(1500);
+  check('CONTROL: her BINGO on the tablet ticket is checked on this tablet (the record does not hold it)', host.G.claims.length === 1 && host.G.claims[0].by === 'tablet' && host.G.claims[0].valid === true,
+        host.G.claims.map(function (c) { return [c.by, c.valid]; }));
+  host.hostConfirm(0);
+  var said = await toastsFor(3000);
+  var cl8 = lastClaim(ann.P.pid);
+  check('the server will not confirm it, and the host is told it was checked on this tablet and noted, not that the winner was wrong',
+        said.some(function (t) { return t === 'That win was checked on this tablet and the server could not confirm it, so the claim is noted on the record as unconfirmed.'; }) &&
+        !said.some(function (t) { return /its own check says it is not one/.test(t); }), said);
+  check('and the claim stays on the record, unconfirmed, with the tablet\'s check', !!cl8 && cl8.status === 'pending' && cl8.decided_on === 'tablet' && cl8.tablet_verdict === 'win', cl8);
+  host.finishGame(); await advance(300); host.endGame(); await advance(3000);
+  host.G.defaultCards = 1;
+
+  print('\n9. before the first ball, a server slower than the old 8 seconds is waited for, not replaced');
+  host.$('cardsSel').value = '1';
+  host.openLobby(); await advance(9000);
+  SLOW['/host/bingo/deal'] = 9000;   // every answer takes 9 s
+  host.startGame(); await advance(6500);
+  check('Start calling waits, and the console says why and for how long', host.$('nextBtn').textContent === 'Dealing tickets...' && /waits up to 15 seconds/.test(host.$('coach').innerHTML) &&
+        host.G.dealMode === 'server' && [ann, bob, dee, eve].every(function (ph) { return ph.P.cards.length === 0; }),
+        { btn: host.$('nextBtn').textContent, coach: host.$('coach').innerHTML, mode: host.G.dealMode });
+  await advance(9500);
+  var G9 = lastDraw().id;
+  check('the slow server\'s tickets arrive inside the budget: every phone holds the record, and the tablet dealt nothing',
+        host.G.dealMode === 'server' && [ann, bob, dee, eve].every(function (ph) { return phoneMatchesRecord(ph, G9); }) && tabletTickets(G9).length === 0 && host.$('nextBtn').textContent === 'Start calling',
+        { mode: host.G.dealMode, ok: [ann, bob, dee, eve].map(function (ph) { return phoneMatchesRecord(ph, G9); }), btn: host.$('nextBtn').textContent });
+  SLOW = {};
+  host.endGame(); await advance(3000);
+
   print('\n' + PASS + ' of ' + (PASS + FAILN) + ' checks passed');
   if (FAILN) throw new Error(FAILN + ' VP-DRAW-1.1 checks failed');
 })().catch(function (e) { print('CRASH ' + (e && e.stack || e)); throw e; });

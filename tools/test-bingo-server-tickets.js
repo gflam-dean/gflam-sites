@@ -353,7 +353,7 @@ function frontOfDraw(numbers) {
   host.nextBall(); await advance(100);
   check('for a few seconds the server is asked again, and Start calling waits, saying why', host.G.draw.length === 0 && host.$('nextBtn').textContent === 'Dealing tickets...' && phones.every(function (ph) { return ph.P.cards.length === 0; }),
         { balls: host.G.draw.length, btn: host.$('nextBtn').textContent });
-  await advance(7000);
+  await advance(14000);   // DEAL_BUDGET_MS is 15 s since 20 Oct 2026 (a slow server is waited for)
   check('then the tablet deals every phone, and the console is usable again', phones.every(function (ph) { return ph.P.cards.length === 1; }) && host.G.dealMode === 'tablet' && host.$('nextBtn').textContent === 'Start calling',
         { cards: phones.map(function (ph) { return ph.P.cards.length; }), mode: host.G.dealMode, btn: host.$('nextBtn').textContent });
   var D3 = lastDraw().id;
@@ -398,7 +398,7 @@ function frontOfDraw(numbers) {
   print('GAME THREE C: the tablet\'s tickets reach the server only after a ball is out');
   host.openLobby(); await advance(9000);
   SLOW['/host/bingo/deal'] = DEAD;
-  host.startGame(); await advance(10500);
+  host.startGame(); await advance(17000);   // past DEAL_BUDGET_MS (15 s)
   var D3c = lastDraw().id;
   host.nextBall(); await drain(); await advance(6000);   // balls still reach the server; deals do not
   check('CONTROL: the tablet dealt every phone and a ball is on the record', phones.every(function (ph) { return ph.P.cards.length === 1; }) && host.G.dealMode === 'tablet' && DB.vp_bingo_draw_balls.filter(function (b) { return b.draw_id === D3c && !b.withdrawn_at; }).length === 1,

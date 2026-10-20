@@ -147,6 +147,7 @@
   .pchip.paid .pn{padding:0 8px}
   .pchip.paid .pq{padding:0 10px;color:var(--muted);font-variant-numeric:tabular-nums;border-left:1px solid var(--line-2)}
   .pchip.paid.has .pq{color:var(--gold)}
+  .pchip .pget{font-weight:500;font-style:italic;color:var(--muted)}
   .pchip.paid .pm{min-width:34px;height:34px;border:0;background:transparent;color:var(--text);font-size:17px;font-weight:800;cursor:pointer;line-height:1}
   .pchip.paid .pm:active{background:rgba(255,255,255,.08)}
   .pempty{color:var(--faint);font-size:12.5px;padding:12px 4px}
@@ -1652,15 +1653,29 @@
      record of the balls (/host/bingo/claim). The console's own checkPattern is a display aid.
 
      A ROOM STILL NEVER WAITS ON A SERVER FOR LONG. The same rule as the balls (openServerDraw):
-       Dealing: asked again while the server gives no answer, for up to DEAL_BUDGET_MS from the
-         first try. An ANSWERED refusal (an older Worker, the table not there yet, signed out) or
-         a budget spent with no answer, and this tablet deals the rest of THAT GAME itself, says so
-         once, and puts those tickets on the server's record (source 'tablet') when it can.
+       Dealing BEFORE THE FIRST BALL: asked again while the server gives no answer, for up to
+         DEAL_BUDGET_MS from the first try. An ANSWERED failure (5xx) or a budget spent with no
+         answer, and this tablet deals the rest of THAT GAME's opening hands itself, says so once,
+         and puts those tickets on the server's record (source 'tablet') when it can.
+       Dealing AFTER THE FIRST BALL (VP-DRAW-1.1, 20 Oct 2026): the tablet NEVER deals, in any
+         state. The server takes no tablet ticket once a ball is out, so a tablet ticket then lives
+         only on this tablet, and a genuine win on it can never be confirmed on the record. A late
+         joiner (or a top-up) whose deal has not answered waits for the server, asked again until it
+         answers or the game ends; the phone says "Getting your ticket", the host sees who is waiting.
        Claims: a claim the server cannot check inside CLAIM_CALL_MS is shown to the host as
          checked on THIS tablet (against the server-dealt ticket it holds a copy of), labelled,
          and asked again in the background; what the host decides goes on the record either way.
-     While a game's first deal is out, Start calling waits (it says so), at most the budget. */
-  var DEAL_CALL_MS=4000, DEAL_BUDGET_MS=8000, CLAIM_CALL_MS=4000, CLAIM_RETRY_MS=5000;
+     While a game's first deal is out, Start calling waits (it says so), at most the budget.
+
+     THE NUMBERS. A deal is one read, one insert and one read-back on the Worker, normally well under a
+     second. The first try gets DEAL_CALL_MS (4 s), so a request lost on the pub wifi is asked again
+     fast. Every later try gets up to DEAL_SLOW_CALL_MS (10 s): a server that is SLOW, not down (a
+     database under load, a cold start), answers in 5 to 10 s and must be heard, not cut off at 4 s
+     every time. DEAL_BUDGET_MS was 8 s, which a slow server could miss by a second and hand the game
+     to the tablet for nothing; 15 s waits out a slow server and is still about the longest a host
+     can stand at a greyed-out Start calling, with the console saying why, before the room notices.
+     Past 15 s it is an outage in practice, and before the first ball a tablet ticket costs nothing. */
+  var DEAL_CALL_MS=4000, DEAL_SLOW_CALL_MS=10000, DEAL_BUDGET_MS=15000, CLAIM_CALL_MS=4000, CLAIM_RETRY_MS=5000;
   /* The draw a ticket or a claim is recorded against. Normally the one openServerDraw opened at
      game start. If that open got NO answer (wifi), ask again: the tickets need a record even when
      the balls have gone to the tablet. If balls were already called here, they go on that record
@@ -1688,6 +1703,18 @@
     return p;
   }
   function dealPending(){ return G.status==="running" && !G.caller && !!G.dealSince; }
+  /* THE ONE RULE FOR WHEN THIS TABLET MAY DEAL A TICKET: before the first ball, and where the state
+     lets the tablet stand in. After ball 1 the server would refuse the ticket for good. */
+  function tabletMayDeal(){ return G.idx<0 && tabletMayStandIn(); }
+  // A tablet ticket the server has not taken: it is this tablet's alone, and the server cannot void or count it.
+  function offRecord(p){ return (p.cards||[]).filter(function(c){ return c.src==="tablet" && c.rec!==true; }); }
+  /* A seated phone still short of its tickets while a game runs, once the server's first try at the deal
+     has gone unanswered: it is waiting for the server, not stuck. Its chip and the coach line say so. */
+  function waitingOnDeal(p){
+    return !!p && G.status==="running" && !G.caller && !G.won && !G.halt && G.dealFails>0 && isSeated(p)
+      && (p.cards||[]).length<ticketsFor(p) && !(p.dealNo && p.dealNo>Date.now());
+  }
+  function waitingForTickets(){ var n=0; for(var i=0;i<G.order.length;i++){ if(waitingOnDeal(G.players[G.order[i]])) n++; } return n; }
   // Who is short of tickets (or holds too many after a paid count went down), right now.
   function handsToDeal(){
     var out=[], now=Date.now();
@@ -1697,7 +1724,12 @@
       var want=ticketsFor(p), have=(p.cards||[]).length;
       if(want===have) continue;
       if(p.dealNo && p.dealNo>now) continue;      // the server just said this phone is not in tonight's session
-      out.push({ pid:pid, did:p.did||null, want:want });
+      /* Tickets this tablet dealt that the server never took (an outage before ball 1, refused after it)
+         stay on the phone; the server is asked only for the rest. It cannot take back what it never
+         held, so a sale taken back on such a hand is left as it is. */
+      var off=offRecord(p).length;
+      if(off && want<have) continue;
+      out.push({ pid:pid, did:p.did||null, want:Math.max(0, want-off) });
       if(out.length>=100) break;                  // the Worker takes 120 a request; the rest go on the next one
     }
     return out;
@@ -1710,17 +1742,23 @@
   }
   function dealTick(){
     if(G.status!=="running" || standingDown() || G.halt || G.won) return;   // a finished game deals nobody; a real-balls night asks for nothing
-    if(G.dealMode==="tablet"){ dealOnTablet(); return; }
+    // The tablet deals only before the first ball. After it, a game the tablet dealt asks the server again.
+    if(G.dealMode==="tablet" && tabletMayDeal()){ dealOnTablet(); return; }
     var hands=handsToDeal();
-    if(!hands.length){ if(G.dealSince){ G.dealSince=0; syncNextBtn(); setCoach(); } return; }
+    if(!hands.length){ if(G.dealSince){ G.dealSince=0; syncNextBtn(); setCoach(); renderPlayers(); } return; }
     if(_dealBusy){ dealSoon(400); return; }
     if(!G.dealSince){ G.dealSince=Date.now(); syncNextBtn(); setCoach(); }
+    // The first try has not answered: tell each phone with nothing yet that its ticket is coming (once a game).
+    if(G.dealFails) hands.forEach(function(h){ var p=G.players[h.pid]; if(p && !(p.cards||[]).length && p.dealTold!==G.gen){ p.dealTold=G.gen; send({ t:"dealing", pid:h.pid }); } });
     _dealBusy=true;
     var gen=G.gen;
+    // Later tries wait longer for an answer (a slow server is heard); before ball 1 never past the budget.
+    var callMs = !G.dealFails ? DEAL_CALL_MS
+      : Math.max(1000, Math.min(DEAL_SLOW_CALL_MS, G.idx<0 ? DEAL_BUDGET_MS-(Date.now()-G.dealSince) : DEAL_SLOW_CALL_MS));
     ensureDraw().then(function(d){
       if(gen!==G.gen) return { skip:true };
       if(!d.id) return { refused:!!d.refused, hard:!!d.hard, fail:"no draw on the server" };
-      return VP.gameApiCall("/host/bingo/deal", { draw_id:d.id, hands:hands }, DEAL_CALL_MS).then(function(r){
+      return VP.gameApiCall("/host/bingo/deal", { draw_id:d.id, hands:hands }, callMs).then(function(r){
         if(r && r.status===200 && r.json && r.json.ok && r.json.hands) return { ok:r.json };
         if(isRefusal(r)){ serverRefused(r, "deal"); return { refused:true }; }
         // 429: busy, ask again. 5xx: the server failed (and wrote that down on the draw), so the tablet
@@ -1733,8 +1771,10 @@
       if(res.ok){ applyDeal(res.ok); return; }
       if(res.refused || G.halt){ G.dealSince=0; syncNextBtn(); setCoach(); return; }   // a refusal stops the game; it is not an outage
       G.dealFails=(G.dealFails||0)+1;
-      if((res.hard || Date.now()-G.dealSince>=DEAL_BUDGET_MS) && tabletMayStandIn()){ goTabletDeal(res.fail); return; }
+      // Under a second of budget left is no time to ask again: the tablet stands in now (before ball 1 only).
+      if((res.hard || Date.now()-G.dealSince>=DEAL_BUDGET_MS-1000) && tabletMayDeal()){ goTabletDeal(res.fail); return; }
       dealSoon(Math.min(2000, 500*G.dealFails));
+      setCoach(); renderPlayers();
     }, function(){ _dealBusy=false; dealSoon(1000); });
   }
   function sameHand(a, b){
@@ -1746,12 +1786,14 @@
     var now=Date.now();
     Object.keys(j.hands).forEach(function(pid){
       var p=G.players[pid], list=j.hands[pid]; if(!p || !Array.isArray(list)) return;
-      var next=list.map(function(t){ return { card:t.cells, cardNo:t.card_no, src:(t.source==="tablet"?"tablet":"server"), rec:true }; });
+      // A ticket the phone holds that the server never took stays in front of the server's (see handsToDeal).
+      var keep=offRecord(p).filter(function(c){ return !list.some(function(t){ return t.card_no===c.cardNo; }); });
+      var next=keep.concat(list.map(function(t){ return { card:t.cells, cardNo:t.card_no, src:(t.source==="tablet"?"tablet":"server"), rec:true }; }));
       if(!sameHand(p.cards, next)){ p.cards=next; p._books=[]; sendCards(pid); }
     });
     (j.refused||[]).forEach(function(pid){ var p=G.players[pid]; if(p){ p.dealNo=now+10000; p.seatSid=null; } });
     G.dealSince=0; G.dealFails=0;
-    saveGame(); syncNextBtn(); setCoach();
+    saveGame(); syncNextBtn(); setCoach(); renderPlayers();
     seatSoon(300);                                       // stamp the new holders as dealt: that is who this game bills
     if(handsToDeal().length) dealSoon(50);               // a top-up tapped while that was out
   }
@@ -1763,6 +1805,7 @@
   }
   // The outage path: the tablet's own strips, exactly as every night before 19 Oct 2026.
   function dealOnTablet(){
+    if(!tabletMayDeal()){ recordTabletTickets(); return; }   // after the first ball: never, in any state
     var any=false;
     for(var i=0;i<G.order.length;i++){
       var pid=G.order[i], p=G.players[pid];
@@ -1929,6 +1972,7 @@
       : { draw_id:G.drawId||null, ref:c.ref, pid:c.pid, card_no:(c.claimedNo||c.cardNo), pattern:c.pattern, balls:c.balls,
           called:calledArray().slice(0, c.balls), decided_on:"tablet", tablet_verdict:(c.valid?"win":"not_yet"), decision:decision };
     if(!e.claim_id && !e.draw_id) return;              // no record for this game exists to add it to
+    if(!c.claimId || c.by==="tablet") e._tab=true;     // checked on this tablet: kept here only, never sent
     (G.claimLog||(G.claimLog=[])).push(e);
     flushClaimLog();
   }
@@ -1937,9 +1981,16 @@
     if(_logBusy || !G.claimLog || !G.claimLog.length || !(window.VP && VP.gameApiCall)) return;
     var e=G.claimLog[0];
     _logBusy=true;
-    VP.gameApiCall(e.claim_id ? "/host/bingo/claim/resolve" : "/host/bingo/claim", e, CLAIM_CALL_MS).then(function(r){
+    var wire={}; Object.keys(e).forEach(function(k){ if(k.charAt(0)!=="_") wire[k]=e[k]; });
+    VP.gameApiCall(e.claim_id ? "/host/bingo/claim/resolve" : "/host/bingo/claim", wire, CLAIM_CALL_MS).then(function(r){
       _logBusy=false;
-      if(r && r.status===409 && e.decision==="confirmed") showToast("The server did not record that win: its own check says it is not one.");
+      /* The server would not record a Confirm. For a win the server checked itself, its check says no. For a
+         win checked on THIS tablet (the server could not check it at the time), that is not the winner being
+         wrong: the server cannot vouch for a check it did not make, so the claim stays on its record, unconfirmed,
+         with the tablet's check. Say that, plainly, and do not tell the host the winner was wrong (20 Oct 2026). */
+      if(r && r.status===409 && e.decision==="confirmed") showToast(e._tab
+        ? "That win was checked on this tablet and the server could not confirm it, so the claim is noted on the record as unconfirmed."
+        : "The server did not record that win: its own check says it is not one.");
       if(r && (r.status===200 || (r.status>=400 && r.status<500 && r.status!==429))){   // done, or never going to be
         if(G.claimLog[0]===e) G.claimLog.shift();
         saveGame(); flushClaimLog(); return;
@@ -2158,9 +2209,17 @@
     if(G.claims.length) txt="Check the ticket below against the called numbers, then <b>Confirm winner</b>, or <b>Play on</b> if it is not there yet.";
     else if(G.lastWins.length) txt="Announce it on the mic, then <b>Keep playing</b> for the next prize or <b>Finish game</b>.";
     else if(G.won) txt="That game is done. <b>New game</b> deals fresh tickets, <b>End game</b> puts the ads back on the TV.";
-    else if(G.status==="running" && called===0 && dealPending()) txt="Dealing tickets from the server. <b>Start calling</b> comes back the moment they are out.";
+    else if(G.status==="running" && called===0 && dealPending()) txt = !G.dealFails
+      ? "Dealing tickets from the server. <b>Start calling</b> comes back the moment they are out."
+      : (tabletMayStandIn()
+        ? "The server is slow to deal tonight. <b>Start calling</b> waits up to "+Math.round(DEAL_BUDGET_MS/1000)+" seconds for it, then this tablet deals the tickets."
+        : "The server is slow to deal tonight. <b>Start calling</b> waits for it, and comes back the moment the tickets are out.");
     else if(G.status==="running" && called===0) txt="Tickets are out. Tap <b>Start calling</b> and read each number to the room.";
-    else if(G.status==="running") txt="<b>"+called+" of 90</b> called. When someone calls bingo it lands here to check.";
+    else if(G.status==="running"){
+      var wt=waitingForTickets();
+      txt="<b>"+called+" of 90</b> called. When someone calls bingo it lands here to check."
+        + (wt ? " <b>"+wt+(wt===1?" phone is":" phones are")+" still getting a ticket</b> from the server. Keep calling: it lands on the phone the moment the server deals it." : "");
+    }
     else if(G.status==="lobby") txt = n
       ? ("<b>"+n+"</b> "+(n===1?"player is":"players are")+" in. Start calling when the room is ready.")
       : "The TV is showing the join code. Players scan it to get their tickets.";
@@ -2420,13 +2479,15 @@
          counted, dealt or billed until the server knows them, and a stranger signing joins by
          the hundred must not be able to fill the host's screen with names (14 Oct 2026). */
       if(!isSeated(p)){ waiting++; continue; }
-      if(!G.paidMode){ html+='<span class="pchip">'+esc(shownName(pid))+'</span>'; continue; }
+      // A phone whose deal has not answered yet says so on its chip: it is waiting for the server, not stuck.
+      var getting=waitingOnDeal(p) ? ' <span class="pget">getting ticket&hellip;</span>' : '';
+      if(!G.paidMode){ html+='<span class="pchip">'+esc(shownName(pid))+getting+'</span>'; continue; }
       // Paid night: the chip becomes the till receipt. Nothing here takes money; it records what
       // the bar already took, and it holds for the whole night.
       var n=parseInt(p.paid,10)||0;
       html+='<span class="pchip paid'+(n?" has":"")+'" data-pid="'+esc(pid)+'">'
           +   '<button type="button" class="pm" data-d="-1" aria-label="One less">&minus;</button>'
-          +   '<span class="pn">'+esc(shownName(pid))+'</span>'
+          +   '<span class="pn">'+esc(shownName(pid))+getting+'</span>'
           +   '<span class="pq">'+n+' '+unit+(n===1?"":"s")+'</span>'
           +   '<button type="button" class="pm" data-d="1" aria-label="One more">+</button>'
           + '</span>';

@@ -193,7 +193,7 @@ var ANN = 'k1_annphone', BOB = 'k1_bobphone';
     if (path === '/host/bingo/seat') return { status: 200, json: { ok: true, seated: [], fallback_off_states: [] } };
     return Promise.reject(new Error('timed out'));
   });
-  await advance(50); room(hDown); hDown.startGame(); await advance(10000);
+  await advance(50); room(hDown); hDown.startGame(); await advance(17000);   // DEAL_BUDGET_MS is 15 s since 20 Oct 2026
   hDown.nextBall(); await advance(6000);
   check('CONTROL: a server that does not answer at all: the tablet deals and calls, as Dean decided',
         !hDown.G.halt && hDown.G.dealMode === 'tablet' && hDown.G.draw.length === 1 && Object.keys(hDown.G.players).every(function (p) { return hDown.G.players[p].cards.length === 1; }), { halt: hDown.G.halt, mode: hDown.G.dealMode, draw: hDown.G.draw });

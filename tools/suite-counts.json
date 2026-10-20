@@ -588,7 +588,7 @@
   "counted_by": "lines"
  },
  "tools/test-vp-draw-11.js": {
-  "checks": 25,
+  "checks": 44,
   "counted_by": "lines"
  },
  "tools/test-webhook-retry-is-not-dropped.js": {

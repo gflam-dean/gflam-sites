@@ -252,7 +252,7 @@ function hostSays(t, pid) { return LOG.filter(function (l) { return l && l.from 
   await advance(3000);
   check('with the server silent, the first seconds are spent asking it, and Start calling says so', phones.every(function (ph) { return ph.P.cards.length === 0; }) && host.$('nextBtn').textContent === 'Dealing tickets...',
         { cards: phones.map(function (ph) { return ph.P.cards.length; }), btn: host.$('nextBtn').textContent });
-  await advance(7000);
+  await advance(14000);   // DEAL_BUDGET_MS is 15 s since 20 Oct 2026 (a slow server is waited for)
   check('bingo still deals with no answer from the server: every phone has a ticket', phones.every(function (ph) { return ph.P.cards.length === 1; }), phones.map(function (ph) { return ph.P.cards.length; }));
   DOWN = false; host.endGame(); await advance(3000);
 
