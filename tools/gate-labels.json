@@ -303,6 +303,7 @@
   "venueplay-room.test.js",
   "venueplay-sms-hook.js carries its own fingerprint",
   "venueplay/ holds nothing internal",
+  "vp-ask-once.test.js",
   "vp-follow.test.js",
   "webhook-ledger.test.js",
   "weekly-before-the-room.test.js"

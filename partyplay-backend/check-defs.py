@@ -35,7 +35,7 @@ BUILTIN = set("""if for while switch catch function return typeof new delete voi
  IntersectionObserver ResizeObserver MutationObserver
  fbq
  PPConfig PPLicence PPTicket PPQuiz PPPhoto PPVideo VPSign VPGaming VPFollow VPScreenRouter
- vpAsk vpTell vpAskText""".split())
+ vpAsk vpTell vpAskText vpTellOnce vpInfo""".split())
 
 def blank_quoted(js):
     """Blank the INSIDE of 'single' and "double" quoted strings, keep the quotes.

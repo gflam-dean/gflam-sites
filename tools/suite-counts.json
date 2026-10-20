@@ -743,6 +743,10 @@
   "checks": 21,
   "counted_by": "lines"
  },
+ "venueplay-backend/app/vp-ask-once.test.js": {
+  "checks": 77,
+  "counted_by": "lines"
+ },
  "venueplay-backend/app/vp-follow.test.js": {
   "checks": 20,
   "counted_by": "total"

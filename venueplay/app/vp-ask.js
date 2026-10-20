@@ -16,6 +16,20 @@
    shortcuts are held off while it is open, and focus goes back where it was afterwards. Questions
    asked while one is open wait their turn.
 
+   ONCE PER HOST (20 Oct 2026, Dean's split). A note that only informs, and changes nothing
+   about what happens next, is shown to a signed-in host the first time and not again:
+
+     vpTellOnce(key, message, opts)  resolves true when shown and OK'd, false when already seen
+     vpInfo(near, message, opts)     the small "i" beside a control that reopens the note
+
+   opts adds { user: the host's user id, near: the control the note is about }. It is remembered
+   per user id per key in localStorage; with no user id it is remembered for this browser. Once
+   OK'd, an "i" button sits straight after `near` and shows the note again whenever it is tapped.
+   A store that is blocked or throws just means the note shows again: it never stops the page.
+   vpTellOnce.seen(key, user) says whether it has been seen, so a page can put the "i" up front.
+   NOT for a question, a failure, or anything the host must accept each time: those stay vpAsk
+   and vpTell, every time. The Queensland rules acceptance is every night and never uses this.
+
    The SAME file is served as /app/vp-ask.js (VenuePlay) and /lib/vp-ask.js (PartyPlay). The gate
    fails if the two copies differ, and if any served page calls a native dialog again. */
 (function (root) {
@@ -126,6 +140,46 @@
   function vpAsk(message, opts) { return show("ask", message, null, opts); }
   function vpTell(message, opts) { return show("tell", message, null, opts); }
   function vpAskText(message, value, opts) { return show("text", message, value, opts); }
+
+  var ONCE = "vpTellOnce:";
+  function onceKey(key, user) { return ONCE + (user == null || user === "" ? "guest" : String(user)) + ":" + String(key); }
+  function seen(key, user) {
+    try { return !!root.localStorage && root.localStorage.getItem(onceKey(key, user)) === "1"; } catch (e) { return false; }
+  }
+  function remember(key, user) { try { if (root.localStorage) root.localStorage.setItem(onceKey(key, user), "1"); } catch (e) {} }
+
+  function vpInfo(near, message, opts) {
+    opts = opts || {};
+    var d = root.document;
+    if (!d || !near || !near.parentNode) return null;
+    var id = opts.infoId || ((near.id || "vpNote") + "Info");
+    var b = d.getElementById(id);
+    if (!b) {
+      b = d.createElement("button"); b.type = "button"; b.id = id; b.textContent = "i";
+      b.setAttribute("aria-label", opts.infoLabel || "About this");
+      b.title = opts.infoLabel || "About this";
+      b.style.cssText = "display:inline-flex;align-items:center;justify-content:center;flex:none;width:32px;height:32px;min-width:32px;" +
+        "margin:0 0 0 8px;padding:0;align-self:center;vertical-align:middle;border-radius:50%;border:1.5px solid rgba(255,255,255,.35);" +
+        "background:none;color:inherit;font:italic 800 16px/1 Manrope,system-ui,-apple-system,sans-serif;cursor:pointer";
+      b.addEventListener("click", function (e) { e.preventDefault(); vpTell(b.__vpNote, b.__vpOpts); });
+      near.parentNode.insertBefore(b, near.nextSibling);
+    }
+    b.__vpNote = message; b.__vpOpts = { id: opts.id };
+    return b;
+  }
+
+  function vpTellOnce(key, message, opts) {
+    opts = opts || {};
+    if (seen(key, opts.user)) { vpInfo(opts.near, message, opts); return Promise.resolve(false); }
+    return vpTell(message, opts).then(function () {
+      remember(key, opts.user);
+      vpInfo(opts.near, message, opts);
+      return true;
+    });
+  }
+  vpTellOnce.seen = seen;
+
   vpAsk.__vpAsk = true;
   root.vpAsk = vpAsk; root.vpTell = vpTell; root.vpAskText = vpAskText;
+  root.vpTellOnce = vpTellOnce; root.vpInfo = vpInfo;
 })(typeof window !== "undefined" ? window : this);

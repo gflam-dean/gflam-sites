@@ -27,6 +27,7 @@
   .bar{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
   .btn{background:var(--pink);color:#fff;text-decoration:none;border:0;border-radius:12px;padding:14px 22px;
     font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;cursor:pointer}
+  .btn:disabled{opacity:.6;cursor:default}
   .btn.ghost{background:none;border:1px solid var(--line);color:var(--paper)}
   .state{text-align:center;padding:60px 20px;color:var(--mute)}
   footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--line);color:var(--faint);font-size:14.5px}
@@ -116,10 +117,20 @@
       });
       h+='</div>';
       $("app").innerHTML=h;
+      /* TODO: hand off to the print partner once one is chosen. Deliberately not a dead
+         link in the meantime. The note only informs, so it is shown ONCE (vpTellOnce,
+         20 Oct 2026): after OK the button says what it means, "Prints coming soon", and
+         the "i" beside it shows the note again. Nobody signs in to an album, so it is
+         remembered for this browser. */
+      var PRINTS_NOTE = "Printing is coming very soon. Save the ones you want in the meantime, and they are yours to print anywhere.";
+      function printsSeen(){
+        var b=$("print"); if(!b) return;
+        b.disabled=true; b.textContent="Prints coming soon";
+        vpInfo(b, PRINTS_NOTE, { infoLabel:"About prints" });
+      }
+      if(vpTellOnce.seen("album-prints")) printsSeen();
       $("print").addEventListener("click", function(){
-        // TODO: hand off to the print partner once one is chosen. Deliberately not
-        // a dead link in the meantime.
-        vpTell("Printing is coming very soon. Save the ones you want in the meantime, and they are yours to print anywhere.");
+        vpTellOnce("album-prints", PRINTS_NOTE, { near:$("print"), infoLabel:"About prints" }).then(printsSeen);
       });
     })
     .catch(function(e){

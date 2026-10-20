@@ -2207,7 +2207,7 @@ def local_checks(which):
                     continue
                 full = os.path.join(d, f)
                 src = _dialog_free(io.open(full, encoding='utf-8', errors='replace').read())
-                if not re.search(r'(?<![\w$.])(vpAsk|vpTell|vpAskText)\s*\(|VP\.confirmTakeover\s*\(', src):
+                if not re.search(r'(?<![\w$.])(vpAsk|vpTell|vpAskText|vpTellOnce|vpInfo)\s*\(|VP\.confirmTakeover\s*\(', src):
                     continue
                 askers += 1
                 raw = re.sub(r'<!--[\s\S]*?-->', ' ', io.open(full, encoding='utf-8', errors='replace').read())
