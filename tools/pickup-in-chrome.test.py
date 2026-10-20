@@ -127,27 +127,41 @@ class Device(object):
     def __init__(self, name):
         self.name = name; self.B = VL.Browser(); self.tid = None; self.sid = None
     def ask(self, expr, wait=8):
-        self.B.ws.s.settimeout(wait)
-        try: return self.B.eval(self.sid, expr)
-        except (socket.timeout, OSError): return 'HUNG'
-        finally: self.B.ws.s.settimeout(60)
-    def until(self, expr, secs=15):
+        """The page's answer, None while there is no page to ask (a navigation is between documents),
+        or 'HUNG' when the PAGE has stopped. Browser.evaluate (tools/verify-live.py) tells a hung page
+        from a slow machine by the page's own CPU clock, the way console-in-chrome.test.py asks."""
+        try:
+            r = self.B.call('Runtime.evaluate', {'expression': expr, 'returnByValue': True}, session=self.sid)
+            return r.get('result', {}).get('value')
+        except IOError as e:
+            if 'context' in str(e).lower() or 'target' in str(e).lower():
+                return None          # mid-navigation: no document yet, ask again
+            r = self.B.evaluate(self.sid, expr, wait)
+            return 'HUNG' if r is None else r.get('result', {}).get('value')
+    def until(self, expr, secs=60):
+        """Wait for a CONDITION, never a fixed sleep. Generous on purpose: a starved machine is slow, and
+        a page that really stopped is still caught (ask returns HUNG at once)."""
         t = time.time() + secs
         while time.time() < t:
             v = self.ask(expr)
             if v == 'HUNG' or v: return v
             time.sleep(0.25)
         return False
+    def at(self, path):
+        """The document for this path has loaded and its scripts have run (not about:blank, which also
+        says readyState complete: the first page of a new window arrives after it, 20 Oct 2026)."""
+        return 'location.pathname===%s && document.readyState==="complete"' % json.dumps(path.split('?')[0])
     def open(self, path, storage=None):
         """Open a page; storage (a dict) is put in this device's localStorage first, as a tablet would have it."""
         if self.tid: self.B.close_tab(self.tid)
         self.tid, self.sid = self.B.open_tab(BASE + '/__blank')
-        self.until('document.readyState==="complete"', 10)
+        if self.until(self.at('/__blank')) is not True:
+            raise SystemExit('%s: the blank page of this origin never loaded' % self.name)
         if storage:
             self.ask(';'.join('localStorage.setItem(%s,%s)' % (json.dumps(k), json.dumps(json.dumps(v))) for k, v in storage.items()) + ';true')
-        self.ask('location.href=%s;true' % json.dumps(BASE + path))
-        time.sleep(0.5)
-        self.until('document.readyState==="complete"', 15)
+        self.B.call('Page.navigate', {'url': BASE + path}, session=self.sid)
+        # The console's own scripts have run: vp-pickup.js is loaded and the sign-in check has started.
+        self.until(self.at(path) + ' && !!window.VP_PICKUP')
     def text(self):
         return self.ask('document.body.innerText.replace(/\\s+/g," ")') or ''
     def save(self, key):
@@ -196,14 +210,14 @@ try:
     tablet = Device('tablet'); devs.append(tablet)
     tablet.open(TRIVIA_URL, {TKEY: {'v': 1, 'ts': int(time.time() * 1000), 'sessionId': SESSION,
                                     'cur': {'qseq': 2, 'ci': 2, 'pids': {'dev-ann': True}}, 'cid': 'cTABLET000001'}})
-    ok('the tablet is back on the live quiz', tablet.until(LIVE, 20) is True, tablet.text()[:300])
+    ok('the tablet is back on the live quiz', tablet.until(LIVE) is True, tablet.text()[:300])
     ok('...without being asked anything (its own quiz, nobody else has it)', tablet.ask(ASKED) is False)
     ok('...the open question is on its console', 'Which river runs through Brisbane?' in tablet.text(), tablet.text()[:300])
 
     print('\ntrivia: a phone (a new device, nothing saved) is asked, on the page')
     phone = Device('phone'); devs.append(phone)
     phone.open(TRIVIA_URL)
-    ok('the phone is asked on the page', phone.until(ASKED, 20) is True, phone.text()[:300])
+    ok('the phone is asked on the page', phone.until(ASKED) is True, phone.text()[:300])
     ok('...in Dean\'s words: "A quiz is running at this venue. Pick it up?"',
        phone.ask('document.getElementById("vpTakeoverT").textContent') == 'A quiz is running at this venue. Pick it up?',
        phone.ask('document.getElementById("vpTakeoverT").textContent'))
@@ -214,21 +228,21 @@ try:
     ok('...and no native browser dialog is holding the page', not native)
     ok('CONTROL: nobody holds the quiz on the server yet', not holders().get('trivia'), holders())
     phone.ask('document.getElementById("vpTakeoverGo").click();true')
-    ok('Pick it up here: the phone is on the live quiz', phone.until(LIVE, 20) is True, phone.text()[:300])
+    ok('Pick it up here: the phone is on the live quiz', phone.until(LIVE) is True, phone.text()[:300])
     ok('...the same question', 'Which river runs through Brisbane?' in phone.text(), phone.text()[:300])
-    ok('...and then goes on to pair with the venue screen as usual', phone.until('/Waiting for screen|Connected/.test(document.getElementById("statusText").textContent)', 10) is True,
+    ok('...and then goes on to pair with the venue screen as usual', phone.until('/Waiting for screen|Connected/.test(document.getElementById("statusText").textContent)') is True,
        phone.ask('document.getElementById("statusText").textContent'))
     ps = phone.save(TKEY)
     ok('...it knows the answer to the open question, as the tablet did (Brisbane River)', ps and ps.get('cur') and ps['cur'].get('ci') == 2, ps)
     ok('...and that the phone already in has answered', ps and ps.get('cur') and ps['cur'].get('pids', {}).get('dev-ann') is True, ps)
-    ok('...the scores so far are on its board', phone.until('/Quiz Kids/.test(document.getElementById("hostBoard").innerText)', 10) is True,
+    ok('...the scores so far are on its board', phone.until('/Quiz Kids/.test(document.getElementById("hostBoard").innerText)') is True,
        phone.ask('document.getElementById("hostBoard").innerText'))
     h = holders().get('trivia') or {}
     ok('the Worker records the phone as the console running it', h.get('id') and ps and h.get('id') == ps.get('cid') and h.get('game_id') == GAME, (h, ps and ps.get('cid')))
 
     print('\ntrivia: the tablet wakes and stands down')
     tablet.ask('document.dispatchEvent(new Event("visibilitychange"));true')
-    ok('the tablet covers itself with a notice', tablet.until(DOWN, 15) is True, tablet.text()[:300])
+    ok('the tablet covers itself with a notice', tablet.until(DOWN) is True, tablet.text()[:300])
     ok('...worded for a device: "This quiz was picked up on another device"',
        'This quiz was picked up on another device' in (tablet.ask('document.getElementById("vpOneTab").innerText') or ''),
        tablet.ask('document.getElementById("vpOneTab").innerText'))
@@ -236,25 +250,23 @@ try:
     ok('...and forgot its own save, so a reload asks first', tablet.save(TKEY) is None, tablet.save(TKEY))
 
     print('\ntrivia: the tablet picks it back up, and the phone stands down')
-    tablet.ask('document.getElementById("vpOneTabTake").click();true')
-    time.sleep(1.5)
-    tablet.until('document.readyState==="complete"', 15)
-    ok('after its reload the tablet is asked again (the phone holds it now)', tablet.until(ASKED, 20) is True, tablet.text()[:300])
+    tablet.ask('window.__beforeReload=1;document.getElementById("vpOneTabTake").click();true')
+    tablet.until('!window.__beforeReload && ' + tablet.at(TRIVIA_URL) + ' && !!window.VP_PICKUP')   # a NEW document, loaded
+    ok('after its reload the tablet is asked again (the phone holds it now)', tablet.until(ASKED) is True, tablet.text()[:300])
     tablet.ask('document.getElementById("vpTakeoverGo").click();true')
-    ok('...and is back on the live quiz', tablet.until(LIVE, 20) is True, tablet.text()[:300])
+    ok('...and is back on the live quiz', tablet.until(LIVE) is True, tablet.text()[:300])
     ts = tablet.save(TKEY)
     ok('the Worker now names the tablet', ts and (holders().get('trivia') or {}).get('id') == ts.get('cid'), (holders(), ts))
     phone.ask('document.dispatchEvent(new Event("visibilitychange"));true')
-    ok('the phone stands down in turn', phone.until(DOWN, 15) is True and phone.ask('window.VP_ONETAB.live()') is False, phone.text()[:300])
+    ok('the phone stands down in turn', phone.until(DOWN) is True and phone.ask('window.VP_ONETAB.live()') is False, phone.text()[:300])
 
     print('\ntrivia: a third device says Not now')
     spare = Device('spare'); devs.append(spare)
     before = json.dumps(holders(), sort_keys=True)
     spare.open(TRIVIA_URL)
-    ok('it is asked', spare.until(ASKED, 20) is True, spare.text()[:300])
+    ok('it is asked', spare.until(ASKED) is True, spare.text()[:300])
     spare.ask('document.getElementById("vpTakeoverCancel").click();true')
-    time.sleep(1.5)
-    ok('Not now leaves it on the setup screen', spare.ask('!document.getElementById("setupBlock").classList.contains("hidden")') is True, spare.text()[:300])
+    ok('Not now leaves it on the setup screen', spare.until('!document.getElementById("vpTakeover") && !document.getElementById("setupBlock").classList.contains("hidden")') is True, spare.text()[:300])
     ok('...and takes nothing: the tablet still holds the quiz', json.dumps(holders(), sort_keys=True) == before, holders())
     ok('...and the tablet is still running it', tablet.ask(DOWN) is False and tablet.ask('window.VP_ONETAB.live()') is True)
 
@@ -278,11 +290,11 @@ try:
     trivia_holder = json.dumps(holders().get('trivia'), sort_keys=True)
     laptop = Device('laptop'); devs.append(laptop)
     laptop.open(MUSIC_URL)
-    ok('a new device is asked about the musical game', laptop.until(ASKED, 25) is True, laptop.text()[:300])
+    ok('a new device is asked about the musical game', laptop.until(ASKED) is True, laptop.text()[:300])
     ok('...in its own words', laptop.ask('document.getElementById("vpTakeoverT").textContent') == 'A musical bingo game is running at this venue. Pick it up?',
        laptop.ask('document.getElementById("vpTakeoverT").textContent'))
     laptop.ask('document.getElementById("vpTakeoverGo").click();true')
-    ok('Pick it up here: the laptop is running the game (Play next is live)', laptop.until('document.getElementById("playNextBtn") && document.getElementById("playNextBtn").disabled===false && !!localStorage.getItem(%s)' % json.dumps(MKEY), 20) is True,
+    ok('Pick it up here: the laptop is running the game (Play next is live)', laptop.until('document.getElementById("playNextBtn") && document.getElementById("playNextBtn").disabled===false && !!localStorage.getItem(%s)' % json.dumps(MKEY)) is True,
        laptop.text()[:300])
     ms = laptop.save(MKEY)
     ok('...it is this device\'s game now (saved here, for a reload)', ms and ms.get('sessionId') == SESSION, ms)
