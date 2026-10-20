@@ -27,6 +27,7 @@
   "a room shares one leaderboard read, and nobody sees another question's numbers",
   "a screen finding itself is answered, the thirty-first ask a minute is refused",
   "a screen refetches the key on an unknown kid and every five minutes; a console mints after a rotation",
+  "a slow first answer is asked again on a backoff until one answer or the host moves on; a game found late gets the same question, on both consoles",
   "a stranger in the answers room reaches no other phone; a game room still relays",
   "a venue over the cap is told, not quietly trimmed",
   "a waiting pass for the format opens one night inside the week and is spent by it; the week does not move; expired or used does nothing; the console agrees",

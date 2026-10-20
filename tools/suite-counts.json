@@ -419,6 +419,10 @@
   "checks": 34,
   "counted_by": "lines"
  },
+ "tools/test-pickup-retry.js": {
+  "checks": 25,
+  "counted_by": "lines"
+ },
  "tools/test-platform-15-oct.js": {
   "checks": 62,
   "counted_by": "lines"
