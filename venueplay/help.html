@@ -93,6 +93,8 @@
   .card + .card{margin-top:14px}
   .note{display:flex;gap:12px;align-items:flex-start;background:rgba(255,31,142,.07);border:1px solid rgba(255,31,142,.28);border-radius:14px;padding:14px 16px;font-size:var(--fs-sm);color:#E8E8EC;line-height:1.5;margin-bottom:14px}
   .note a{color:#FF8AC4;font-weight:700;text-decoration:underline;text-underline-offset:3px}
+  .phone-line{background:rgba(255,31,142,.07);border:1px solid rgba(255,31,142,.28);border-radius:14px;padding:14px 16px;font-size:var(--fs-sm);color:#E8E8EC;margin-bottom:14px}
+  .phone-line a{color:#FF8AC4;font-weight:800}
   .reach{margin-top:14px;font-size:var(--fs-sm);color:var(--muted);line-height:1.8}
   .reach a{color:#FF8AC4}
   /* The widget, drawn into the page: full width of the card, on the page's own type. */
@@ -191,7 +193,7 @@
              (07 5228 3667, VP_SUPPORT_PHONE) was not on main when this page was built. When it lands,
              fill this paragraph, e.g. "A game on and going wrong? Call <a href="tel:+61752283667">07
              5228 3667</a> and press 2.", and remove the hidden attribute. Venues only, never players. -->
-        <p class="note" id="supportPhone" data-support-phone hidden></p>
+        <p class="phone-line" id="supportPhone" data-support-phone hidden></p>
         <div class="card" data-vph-audience="venue"></div>
         <p class="reach">Or email <a href="mailto:support@venueplay.com.au">support@venueplay.com.au</a>, or <a href="mailto:accounts@venueplay.com.au">accounts@venueplay.com.au</a> about a bill.</p>
       </div>

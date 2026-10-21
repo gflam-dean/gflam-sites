@@ -130,7 +130,7 @@ MUTATIONS = [
     ('help-desk-pages.test.py', 'venueplay/app/vp-help.js', '      on(kind, "change", function () { if (!urgentSet) urgent.checked = kind.value !== "accounts"; });\n', '', 'a billing question goes in marked urgent'),
     ('help-desk-pages.test.py', 'venueplay/app/vp-help.js', '      on(urgent, "change", function () { urgentSet = true; });\n', '', 'a venue unticks "happening right now", changes the kind, and it ticks itself again'),
     ('help-desk-pages.test.py', 'venueplay/app/vp-help.js', '      fine.appendChild(doc.createTextNode("We\'ll reply by email."));', '      fine.appendChild(doc.createTextNode("Reply by email. Privacy policy. Or email us."));', 'the small print under Send is three fragments again'),
-    ('help-desk-pages.test.py', 'venueplay/help.html', '  [hidden]{display:none!important}\n', '', 'the empty support-phone spot paints as a blank pink bar on /help'),
+    ('help-desk-pages.test.py', 'venueplay/help.html', '<p class="phone-line" id="supportPhone" data-support-phone hidden></p>', '<p class="phone-line" id="supportPhone" data-support-phone></p>', 'the empty support-phone spot paints as a blank pink bar on /help'),
     ('help-desk-pages.test.py', 'venueplay/help.html', '      if (p) p.hidden = !on;', '      if (p) p.hidden = false;', 'choosing "I\'m a venue" opens the player help as well'),
     ('help-desk-pages.test.py', 'venueplay/help.html', '<script src="/app/vp-help.js" data-mode="page"', '<script src="/app/vp-help.js" data-mode="patron"', '/help shows the two buttons and no help under either'),
     ('help-desk-pages.test.py', 'venueplay/_redirects', '/support      /help  301', '/support      /  301', '/support goes to the home page, not the help'),
