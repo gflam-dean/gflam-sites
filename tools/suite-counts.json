@@ -175,6 +175,10 @@
   "checks": 23,
   "counted_by": "lines"
  },
+ "tools/screen-history-sql.test.py": {
+  "checks": 37,
+  "counted_by": "lines"
+ },
  "tools/support-phone.test.py": {
   "checks": 28,
   "counted_by": "lines"
@@ -505,6 +509,10 @@
  },
  "tools/test-screen-check-probe.js": {
   "checks": 6,
+  "counted_by": "lines"
+ },
+ "tools/test-screen-history.js": {
+  "checks": 60,
   "counted_by": "lines"
  },
  "tools/test-screen-key-rotates.js": {
