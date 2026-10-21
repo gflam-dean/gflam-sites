@@ -19,9 +19,40 @@ var DB={}, sent=[], stripeCalls=[], FAIL={};  // FAIL[table+':'+method] = n time
 function tbl(n){return DB[n]||(DB[n]=[]);}
 var uid=0; function newId(){uid++;return '00000000-0000-0000-0000-'+('000000000000'+uid).slice(-12);}
 function parseQ(qs){var o={};(qs||'').split('&').filter(Boolean).forEach(function(kv){var i=kv.indexOf('=');o[decodeURIComponent(kv.slice(0,i))]=decodeURIComponent(kv.slice(i+1));});return o;}
+/* POSTGREST LOGIC, NESTED (21 Oct 2026, for HQ's audit search): and=(a,or(b,c),and(d,e)), with
+   col.like.x*, col.not.like.x*, col.in.("a","b"), col.is.null, col.not.is.null, eq/neq/gte/lte/gt/lt.
+   Quoted values may hold commas and brackets. like follows SQL LIKE: * or % any run, _ one char. */
+function logicSplit(s){ var out=[],d=0,q=false,cur=''; for(var i=0;i<s.length;i++){ var c=s[i];
+    if(q){ cur+=c; if(c==='\\'){ cur+=s[++i]; continue; } if(c==='"') q=false; continue; }
+    if(c==='"'){ q=true; cur+=c; continue; } if(c==='(') d++; if(c===')') d--;
+    if(c===','&&d===0){ out.push(cur); cur=''; continue; } cur+=c; } if(cur) out.push(cur); return out; }
+function logicUnq(v){ v=String(v); return /^".*"$/.test(v) ? v.slice(1,-1).replace(/\\(.)/g,'$1') : v; }
+function likeRx(p,ci){ var rx=''; for(var i=0;i<p.length;i++){ var c=p[i]; rx += (c==='*'||c==='%')?'.*':(c==='_'?'.':c.replace(/[.+?^${}()|[\]\\]/g,'\\$&')); } return new RegExp('^'+rx+'$',ci?'i':''); }
+function logicCmp(have,op,val){
+  if(op==='is') return val==='null' ? have==null : String(have)===val;
+  if(op==='in'){ var list=logicSplit(val.replace(/^\(|\)$/g,'')).map(logicUnq); return have!=null && list.indexOf(String(have))!==-1; }
+  if(op==='like'||op==='ilike') return have!=null && likeRx(logicUnq(val),op==='ilike').test(String(have));
+  var v=logicUnq(val);
+  if(op==='eq') return have!=null && String(have)===v;
+  if(op==='neq') return have==null || String(have)!==v;
+  if(have==null) return false;
+  var a=Date.parse(have), b=Date.parse(v), cmp=(isFinite(a)&&isFinite(b)&&/\d{4}-\d\d-\d\d/.test(String(have))&&/\d{4}-\d\d-\d\d/.test(v))?(a-b):(String(have)<v?-1:String(have)>v?1:0);
+  if(op==='gte') return cmp>=0; if(op==='lte') return cmp<=0; if(op==='gt') return cmp>0; if(op==='lt') return cmp<0;
+  throw new Error('the fake database cannot answer the operator '+op);
+}
+function logicEval(row,node){
+  node=String(node).trim(); var neg=false;
+  if(/^not\.(and|or)\(/.test(node)){ neg=true; node=node.slice(4); }
+  var g=/^(and|or)\((.*)\)$/.exec(node);
+  if(g){ var parts=logicSplit(g[2]); var r=g[1]==='and' ? parts.every(function(p){return logicEval(row,p);}) : parts.some(function(p){return logicEval(row,p);}); return neg?!r:r; }
+  var m=/^([a-z_]+)\.(not\.)?(eq|neq|gte|lte|gt|lt|like|ilike|in|is)\.([\s\S]*)$/.exec(node);
+  if(!m) throw new Error('the fake database cannot answer '+node);
+  var r2=logicCmp(row[m[1]],m[3],m[4]); return m[2]?!r2:r2;
+}
 function match(row,q){
   for(var k in q){ if(['select','order','limit','offset'].indexOf(k)!==-1) continue;
     var v=q[k];
+    if(k==='and'||k==='or'){ if(!logicEval(row,k+v)) return false; continue; }
     if(k==='or'){ var parts=v.replace(/^\(|\)$/g,'').split(','); var any=false;
       parts.forEach(function(p){
         /* or=(col.gte.x,...) as /admin/quiet-venues asks it (19 Oct 2026): compared through the same rules as a plain filter. */
