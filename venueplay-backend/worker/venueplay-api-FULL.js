@@ -9030,7 +9030,9 @@ async function vpaHandleBillingHealth(request, env, json) {
       venue_id: res.venue_id || ((res.account_id && (book.venuesOfAccount[res.account_id] || [])[0]) || {}).id || null,
       events: [], failures: 0 };
     const d = r.detail || {};
-    L.events.push({ at: r.created_at, what: VPA_MONEY_LABEL[r.action] || r.action, bad: vpaMoneyIsBad(r), paid: vpaMoneyIsPaid(r),
+    const bad = vpaMoneyIsBad(r);
+    L.events.push({ at: r.created_at, what: (r.action === 'invoice_receipt_email' && bad) ? 'Receipt NOT sent' : (VPA_MONEY_LABEL[r.action] || r.action), bad: bad, paid: vpaMoneyIsPaid(r),
+                    decline: r.action === 'payment_failed_email',
                     amount: vpaMoneyOf(d) || null, said: d.reason_line || null,
                     note: d.outcome && r.action !== 'payment_failed_email' && String(d.outcome) !== 'sent' ? String(d.outcome) : null,
                     for_what: d.what ? (/^your VenuePlay/i.test(String(d.what)) ? 'the subscription' : 'an extras invoice') : null });
@@ -9041,10 +9043,12 @@ async function vpaHandleBillingHealth(request, env, json) {
     const lastBad = e.filter(function (x) { return x.bad; })[0] || null;
     const paidAfter = lastBad ? e.filter(function (x) { return x.paid && Date.parse(x.at) > Date.parse(lastBad.at); })[0] : null;
     let state = 'ok', status = 'All paid';
-    if (lastBad && !paidAfter) { state = 'bad'; status = lastBad.what + (lastBad.said ? ': ' + lastBad.said : ''); }
+    if (lastBad && !paidAfter) { state = 'bad'; status = lastBad.what + (lastBad.said ? ': ' + lastBad.said : (lastBad.note ? ': ' + lastBad.note.replace(/^not sent: /, '') : '')); }
     else if (lastBad && paidAfter) { state = 'recovered'; status = 'Paid since (' + paidAfter.what.toLowerCase() + ')'; }
     return { key: L.key, venue: L.venue || 'Unknown customer', group: L.group, account: L.account, venue_id: L.venue_id,
-             state: state, status: status, failures: L.failures, last_attempt: (lastBad || e[0]).at,
+             state: state, status: status, failures: L.failures,
+             failures_are: e.filter(function (x) { return x.bad; }).every(function (x) { return x.decline; }) ? 'declines' : 'problems',
+             last_attempt: (lastBad || e[0]).at,
              last_amount: lastBad ? lastBad.amount : null, history: e.slice(0, 30), events: e.length };
   }).sort(function (a, b) {
     const rank = { bad: 0, recovered: 1, ok: 2 };
