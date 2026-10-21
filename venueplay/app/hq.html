@@ -2033,7 +2033,8 @@
         '</div>'+
         weeklyOffHtml(v)+
         nightPassHtml(v)+
-        complianceHtml(v, ent);
+        complianceHtml(v, ent)+
+        screenHistoryHtml(v);
       dt.innerHTML='<td colspan="5">'+
         '<b>Screen address</b> screen.venueplay.com.au/'+esc(v.slug||"")+' &middot; '+
         '<b>Timezone</b> '+esc(v.timezone||"")+' &middot; '+
@@ -2146,6 +2147,10 @@
     if(dt){ var id=dt.getAttribute("data-details"); S.openVenue=(S.openVenue===id?null:id); renderVenues(); return; }
     var dc=e.target.closest("button[data-compliance]");
     if(dc){ loadCompliance(dc.getAttribute("data-compliance"), dc); return; }
+    var sh=e.target.closest("button[data-scrhist]");
+    if(sh){ loadScreenHistory(sh.getAttribute("data-scrhist"), sh); return; }
+    var sr=e.target.closest("button[data-scrrestore]");
+    if(sr){ restoreScreenVersion(sr.getAttribute("data-vid"), sr.getAttribute("data-scrrestore"), sr); return; }
     var sp=e.target.closest("button[data-suspend]");
     if(sp){ suspendVenue(sp.getAttribute("data-suspend"), sp.getAttribute("data-to"), sp); return; }
     var ar=e.target.closest("button[data-archive]");
@@ -2370,6 +2375,86 @@
         : '<div>No declarations yet: this venue has not started a paid game, raffle or members draw.</div>';
       out.innerHTML='<b>Recorded</b> '+recTxt+'<div style="margin-top:4px"><b>Last declarations</b> (the venue saying it is the conductor, per game)</div>'+declTxt;
     }).catch(function(e){ btn.disabled=false; out.textContent="Could not read it: "+String((e&&e.message)||e); });
+  }
+
+  /* SCREEN HISTORY (migration 114, 21 Oct 2026). Tugun Bowls Club's logo and slides went, and
+     nothing anywhere said when or who. Every change to a venue's logo, slides and raffle is now
+     recorded by the database itself, whoever makes it and however, and this shows them newest
+     first: what changed, who (the venue's own login, HQ View as, an HQ restore, or a direct
+     database change that did not come through VenuePlay at all), and the version itself. Owner
+     and accounts admins can put any version back; that is recorded too. */
+  function screenHistoryHtml(v){
+    return '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line-2)">'+
+      '<b>Screen history</b> &middot; every version of their logo, slides and raffle, and who changed it '+
+      '<button class="mini" data-scrhist="'+esc(v.id)+'">Show</button>'+
+      '<div class="note" data-scrhistout="'+esc(v.id)+'" style="margin-top:6px"></div>'+
+    '</div>';
+  }
+  function scrSafeUrl(u){ return /^https:\/\//.test(String(u||"")) ? String(u) : ""; }
+  function scrThumbs(ver){
+    if(!ver) return '<span style="color:var(--faint)">nothing</span>';
+    var h='', logo=scrSafeUrl(ver.logo_url);
+    h += logo ? '<a href="'+esc(logo)+'" target="_blank" rel="noopener" title="The logo"><img src="'+esc(logo)+'" alt="logo" loading="lazy" style="height:34px;max-width:90px;object-fit:contain;background:#222;border-radius:4px;padding:2px;vertical-align:middle;margin-right:6px"></a>'
+              : '<span style="color:var(--faint);margin-right:6px">no logo</span>';
+    (ver.slides||[]).slice(0,8).forEach(function(s){
+      var u=scrSafeUrl(s && s.image_url); if(!u) return;
+      h += '<a href="'+esc(u)+'" target="_blank" rel="noopener" title="'+esc((s.seconds||"")+' seconds'+(s.starts?' from '+s.starts:'')+(s.ends?' to '+s.ends:''))+'"><img src="'+esc(u)+'" alt="slide" loading="lazy" style="height:34px;width:60px;object-fit:cover;border-radius:4px;vertical-align:middle;margin-right:4px"></a>';
+    });
+    var n=(ver.slides||[]).length;
+    h += ' <span class="mono">'+n+' slide'+(n===1?'':'s')+'</span>';
+    if(ver.raffle) h += ' &middot; raffle "'+esc(ver.raffle)+'"';
+    return h;
+  }
+  var SCR_OP_LABEL={ baseline:"Record began", insert:"Created", update:"Changed", "delete":"DELETED", drift:"Changed outside VenuePlay", vanished:"VANISHED" };
+  function renderScreenHistory(id, r){
+    var out=document.querySelector('[data-scrhistout="'+id+'"]'); if(!out) return;
+    if(!r || r.error){ out.innerHTML='<span style="color:var(--roll)">Could not read it: '+esc((r&&r.error)||"no answer")+'</span>'; return; }
+    if(r.known===false){ out.textContent=r.note||"Screen history starts when migration 114 is run."; return; }
+    var h='<div><b>On their screen now</b> '+(r.current ? scrThumbs(r.current) : '<span style="color:var(--roll)">no screen settings at all</span>')+'</div>';
+    var list=r.entries||[];
+    if(!list.length) h+='<div style="margin-top:6px">No changes recorded yet.</div>';
+    list.forEach(function(e){
+      var bad = e.op==="delete" || e.op==="vanished" || e.op==="drift" || e.via==="direct";
+      h+='<div class="scrver" data-hid="'+esc(e.id)+'" style="margin-top:8px;padding:8px;border:1px solid var(--line-2);border-radius:8px'+(bad?';border-color:var(--roll)':'')+'">'+
+        '<div><b'+(bad?' style="color:var(--roll)"':'')+'>'+esc(SCR_OP_LABEL[e.op]||e.op)+'</b> &middot; '+esc(bneWhen(e.at))+' &middot; '+esc(e.who||"")+'</div>'+
+        '<div>'+(e.changes||[]).map(esc).join(' ')+'</div>'+
+        '<div style="margin-top:4px">'+(e.op==="delete"||e.op==="vanished" ? 'What was lost: ' : 'This version: ')+scrThumbs(e.version)+'</div>'+
+        (r.can_restore && e.restorable ? '<div style="margin-top:6px"><button class="mini" data-scrrestore="'+esc(e.id)+'" data-vid="'+esc(id)+'">Restore this version</button></div>' : '')+
+      '</div>';
+    });
+    var ups=r.uploads||[];
+    if(ups.length){
+      h+='<div style="margin-top:10px"><b>Files uploaded</b> (from the audit log, whether or not they were saved onto the screen)</div>';
+      ups.slice(0,30).forEach(function(u){
+        var url=scrSafeUrl(u.url); if(!url) return;
+        h+='<div>'+esc(bneWhen(u.at))+' &middot; '+esc(u.what)+(u.by?' &middot; '+esc(u.by):'')+' &middot; <a href="'+esc(url)+'" target="_blank" rel="noopener">open</a></div>';
+      });
+    }
+    if(!r.can_restore) h+='<div style="margin-top:6px">Only owner and accounts admins can restore a version.</div>';
+    out.innerHTML=h;
+  }
+  function loadScreenHistory(id, btn){
+    var out=document.querySelector('[data-scrhistout="'+id+'"]'); if(!out) return;
+    btn.disabled=true; out.textContent="Reading…";
+    workerGet("/admin/screen-history?venue_id="+encodeURIComponent(id)).then(function(r){
+      btn.disabled=false; btn.textContent="Refresh";
+      renderScreenHistory(id, r);
+    }).catch(function(e){ btn.disabled=false; out.textContent="Could not read it: "+String((e&&e.message)||e); });
+  }
+  function restoreScreenVersion(id, hid, btn){
+    var v=venueById(id), name=(v&&v.name)||"this venue";
+    vpAsk("Put this version of "+name+"'s screen back?\n\nTheir logo, slides and raffle become exactly what this version shows. What is on their screen now is kept in the history, so this can be undone the same way. The change is recorded with your name.").then(function(ok){ if(!ok) return;
+      btn.disabled=true; btn.textContent="Restoring…";
+      workerPost("/admin/screen-restore", { venue_id:id, history_id:Number(hid) }).then(function(res){
+        if(!res || res.error){ btn.disabled=false; btn.textContent="Restore this version"; vpTell("That did not go back: "+((res&&res.error)||"no answer")); return; }
+        var msg="Done. "+name+"'s screen is back to that version. Their TVs pick it up on their next refresh; use Ads back on to make it show now.";
+        if(res.missing_files && res.missing_files.length) msg+="\n\n"+res.missing_files.length+" of its images are no longer in storage, so those will not show:\n"+res.missing_files.join("\n");
+        vpTell(msg);
+        var sbtn=document.querySelector('button[data-scrhist="'+id+'"]');
+        if(sbtn) loadScreenHistory(id, sbtn);
+        loadAuditOnly();
+      });
+    });
   }
 
   /* Club or pub, and whether paid entry is unlocked. HQ-only on purpose: a venue answering

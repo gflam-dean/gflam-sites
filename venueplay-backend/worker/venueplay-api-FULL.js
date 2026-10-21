@@ -192,6 +192,8 @@ export default {
       if (request.method === 'POST' && path === '/admin/venue-status'    && typeof vpaHandleVenueStatus === 'function')    return await vpaHandleVenueStatus(request, env, json);
       if (request.method === 'POST' && path === '/admin/venue-gaming'    && typeof vpaHandleVenueGaming === 'function')    return await vpaHandleVenueGaming(request, env, json);
       if (request.method === 'POST' && path === '/admin/night-pass'      && typeof vpaHandleNightPass === 'function')      return await vpaHandleNightPass(request, env, json);
+      if (request.method === 'GET'  && path === '/admin/screen-history'  && typeof vpaHandleScreenHistory === 'function')  return await vpaHandleScreenHistory(request, env, json);
+      if (request.method === 'POST' && path === '/admin/screen-restore'  && typeof vpaHandleScreenRestore === 'function')  return await vpaHandleScreenRestore(request, env, json);
       if (request.method === 'POST' && path === '/admin/gst'             && typeof vpaHandleGst === 'function')            return await vpaHandleGst(request, env, json);
       if (request.method === 'GET'  && path === '/admin/venue-detail'    && typeof vpaHandleVenueDetail === 'function')    return await vpaHandleVenueDetail(request, env, json);
       if (request.method === 'GET'  && path === '/admin/venue-compliance' && typeof vpaHandleVenueCompliance === 'function') return await vpaHandleVenueCompliance(request, env, json);
@@ -258,6 +260,9 @@ export default {
       try { await vpaAudit(env, actor, 'auto_archive_failed', null,
                            { error: String((e && e.message) || e).slice(0, 300) }); } catch (e2) {}
     }
+    /* The screen history check (migration 114) rides the same trigger, OUTSIDE the archive's try,
+       so a venue's screen is still checked on a night when either sweep above has thrown. */
+    try { await vpaScreenHistoryNightly(env); } catch (e3) { /* tomorrow night will look again */ }
   },
 };
 
@@ -7990,7 +7995,18 @@ async function vpbScreenUpload(request, env, json) {
     body: bytes,
   });
   if (!up.ok) { const t = await up.text(); return json({ error: 'Upload failed. ' + t.slice(0, 160) }, 500); }
-  return json({ ok: true, url: env.SUPABASE_URL + '/storage/v1/object/public/venue-ads/' + path });
+  const adUrl = env.SUPABASE_URL + '/storage/v1/object/public/venue-ads/' + path;
+  /* The file is stored, not yet on the screen (the page's save puts it there, and that save is
+     recorded with the row before and after). This row is the proof the file was uploaded, by
+     whom, and where it lives, even if the save never happens. */
+  try {
+    await vpaInsert(env, 'vp_admin_audit', {
+      ...vpbActorFields(o), action: 'slide_uploaded', target: 'venue:' + venueId,
+      detail: { via: o.actingAsAdmin ? 'hq_view_as' : 'venue', user: o.authUserId || null,
+                url: adUrl, bytes: bytes.length, type: contentType },
+    }, false);
+  } catch (e) { console.error('slide upload audit failed', venueId, String((e && e.message) || e).slice(0, 200)); }
+  return json({ ok: true, url: adUrl });
 }
 
 /* ---------------------------------------------------------------------------------------
@@ -8074,15 +8090,88 @@ async function vpbSha256Hex(bytes) {
   return s;
 }
 
-/* Write vp_venue_screen.logo_url for one venue, the same upsert /account/screen-save uses, so
-   saving the logo never touches the slides and saving the slides never touches the logo. */
-async function vpbWriteLogo(env, venue, url) {
-  const row = { venue_id: venue.id, slug: venue.slug, logo_url: url, updated_at: new Date().toISOString() };
-  const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_venue_screen', {
+/* ---------------------------------------------------------------------------------------
+   A VENUE'S SCREEN NEVER CHANGES WITHOUT A RECORD (migration 114, 21 Oct 2026).
+
+   Dean uploaded Tugun Bowls Club's logo and its ad slides; weeks later there was no screen row,
+   no stored file and no audit entry, and nobody could say what happened. So every write to
+   vp_venue_screen goes through vpbWriteScreen, which:
+     - names who is writing in an X-VP-Actor header. Migration 114's trigger reads it inside the
+       same transaction and writes it into vp_venue_screen_history with the row before and after,
+       so the record cannot be lost the way a separate audit insert can. A change made anywhere
+       else (the dashboard, the SQL editor, a cascade) is recorded by the same trigger as 'direct'.
+     - is preceded by a read of the row as it was, so the vp_admin_audit row carries a before and
+       after summary (addresses, counts and the raffle label: never image data).
+   The header is ASCII only: a fetch header cannot carry other characters, and a venue name with
+   an accent in it must not be what stops a logo saving.
+   --------------------------------------------------------------------------------------- */
+function vpbAsciiHeader(s, n) {
+  return String(s == null ? '' : s).replace(/[^\x20-\x7e]/g, '?').slice(0, n || 1800);
+}
+/* Who is writing, from a vpbRequireOwner result. via says which door: the venue's own login,
+   or a Gflam admin using View as from HQ. */
+function vpbScreenActor(o, route) {
+  return {
+    via: o.actingAsAdmin ? 'hq_view_as' : 'venue',
+    route: route,
+    user: o.authUserId || null,
+    admin: o.adminActor ? o.adminActor.id : null,
+    label: o.adminActor ? o.adminActor.label : (o.role || 'owner'),
+    role: o.role || null,
+  };
+}
+/* The row as it stands. ok:false when it could not be read (never "there is no row"). */
+async function vpbReadScreen(env, venueId) {
+  try {
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_venue_screen?venue_id=eq.' + encodeURIComponent(venueId)
+      + '&select=venue_id,slug,slides,draws,raffle,logo_url,updated_at&limit=1', { headers: vpaHeaders(env) });
+    if (!res.ok) return { ok: false, row: null };
+    const rows = await res.json();
+    return { ok: Array.isArray(rows), row: (Array.isArray(rows) && rows[0]) || null };
+  } catch (_) { return { ok: false, row: null }; }
+}
+/* What a person needs to know about a screen, small enough for an audit row. */
+function vpbScreenSummary(row) {
+  if (!row) return null;
+  const slides = Array.isArray(row.slides) ? row.slides : [];
+  return {
+    logo_url: row.logo_url || null,
+    slides: slides.length,
+    slide_urls: slides.slice(0, VPB_MAX_SLIDES).map(function (s) { return (s && s.image_url) || null; }),
+    raffle: row.raffle && row.raffle.label ? String(row.raffle.label).slice(0, 60) : (row.raffle ? '(set)' : null),
+    draws: Array.isArray(row.draws) ? row.draws.length : 0,
+  };
+}
+/* THE one write to vp_venue_screen. An upsert on venue_id: only the columns in row change. */
+async function vpbWriteScreen(env, row, actor) {
+  return await fetch(env.SUPABASE_URL + '/rest/v1/vp_venue_screen', {
     method: 'POST',
-    headers: { ...vpaHeaders(env), 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+    headers: { ...vpaHeaders(env), 'Prefer': 'resolution=merge-duplicates,return=minimal',
+               'X-VP-Actor': vpbAsciiHeader(JSON.stringify(actor || { via: 'unknown' })) },
     body: JSON.stringify(row),
   });
+}
+/* The audit row for a screen change, with before and after. Awaited, and a failure is logged:
+   it used to vanish inside .catch(function () {}), which is one way a change leaves no trace. */
+async function vpbScreenAudit(env, o, action, venueId, before, after, extra) {
+  try {
+    await vpaInsert(env, 'vp_admin_audit', {
+      ...vpbActorFields(o), action: action, target: 'venue:' + venueId,
+      detail: Object.assign({
+        via: o.actingAsAdmin ? 'hq_view_as' : 'venue', user: o.authUserId || null,
+        before: before === undefined ? 'unread' : vpbScreenSummary(before), after: vpbScreenSummary(after),
+      }, extra || {}),
+    }, false);
+  } catch (e) {
+    console.error('screen audit failed', action, venueId, String((e && e.message) || e).slice(0, 200));
+  }
+}
+
+/* Write vp_venue_screen.logo_url for one venue, the same upsert /account/screen-save uses, so
+   saving the logo never touches the slides and saving the slides never touches the logo. */
+async function vpbWriteLogo(env, venue, url, actor) {
+  const row = { venue_id: venue.id, slug: venue.slug, logo_url: url, updated_at: new Date().toISOString() };
+  const res = await vpbWriteScreen(env, row, actor);
   return res.ok;
 }
 
@@ -8137,11 +8226,11 @@ async function vpbLogoUpload(request, env, json) {
   });
   if (!up.ok) { const t = await up.text(); return json({ error: 'Upload failed. ' + t.slice(0, 160) }, 500); }
   const url = env.SUPABASE_URL + '/storage/v1/object/public/venue-logos/' + path;
-  if (!(await vpbWriteLogo(env, g.venue, url))) return json({ error: 'The logo uploaded but could not be saved. Try again.' }, 500);
-  await vpaInsert(env, 'vp_admin_audit', {
-    ...vpbActorFields(g.o), action: 'logo_set', target: 'venue:' + g.venue.id,
-    detail: { bytes: bytes.length, type: kind.type, w: kind.w, h: kind.h, alpha: kind.alpha },
-  }, false).catch(function () {});
+  const was = await vpbReadScreen(env, g.venue.id);
+  if (!(await vpbWriteLogo(env, g.venue, url, vpbScreenActor(g.o, 'logo-upload')))) return json({ error: 'The logo uploaded but could not be saved. Try again.' }, 500);
+  await vpbScreenAudit(env, g.o, 'logo_set', g.venue.id, was.ok ? was.row : undefined,
+    Object.assign({}, was.row || {}, { logo_url: url }),
+    { bytes: bytes.length, type: kind.type, w: kind.w, h: kind.h, alpha: kind.alpha });
   return json({ ok: true, url: url, width: kind.w, height: kind.h, transparent: kind.alpha });
 }
 
@@ -8149,10 +8238,10 @@ async function vpbLogoUpload(request, env, json) {
 async function vpbLogoRemove(request, env, json) {
   const g = await vpbLogoDoor(request, env, json);
   if (g.res) return g.res;
-  if (!(await vpbWriteLogo(env, g.venue, null))) return json({ error: 'Could not remove the logo. Try again.' }, 500);
-  await vpaInsert(env, 'vp_admin_audit', {
-    ...vpbActorFields(g.o), action: 'logo_removed', target: 'venue:' + g.venue.id, detail: {},
-  }, false).catch(function () {});
+  const was = await vpbReadScreen(env, g.venue.id);
+  if (!(await vpbWriteLogo(env, g.venue, null, vpbScreenActor(g.o, 'logo-remove')))) return json({ error: 'Could not remove the logo. Try again.' }, 500);
+  await vpbScreenAudit(env, g.o, 'logo_removed', g.venue.id, was.ok ? was.row : undefined,
+    Object.assign({}, was.row || {}, { logo_url: null }));
   return json({ ok: true });
 }
 
@@ -8309,20 +8398,231 @@ async function vpbScreenSave(request, env, json) {
     else if (vpbOurLogoUrl(env, b.logo_url, venueId)) row.logo_url = b.logo_url;
     else return json({ error: 'Upload the logo on this page rather than pasting an address.' }, 400);
   }
-  const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_venue_screen', {
-    method: 'POST',
-    headers: { ...vpaHeaders(env), 'Prefer': 'resolution=merge-duplicates,return=minimal' },
-    body: JSON.stringify(row),
-  });
+  const was = await vpbReadScreen(env, venueId);
+  const res = await vpbWriteScreen(env, row, vpbScreenActor(o, 'screen-save'));
   if (!res.ok) {
     const t = await res.text();
     return json({ error: 'Could not save your screen. ' + t.slice(0, 180) }, 500);
   }
-  await vpaInsert(env, 'vp_admin_audit', {
-    ...vpbActorFields(o), action: 'screen_updated', target: 'venue:' + venueId,
-    detail: { slides: (row.slides || []).length, draws: (row.draws || []).length, raffle: !!row.raffle },
-  }, false).catch(function () {});
+  /* "after" is the row as it now stands: the parts sent laid over the parts that were there. */
+  await vpbScreenAudit(env, o, 'screen_updated', venueId, was.ok ? was.row : undefined,
+    Object.assign({}, was.row || {}, row),
+    { changed: Object.keys(row).filter(function (k) { return k !== 'venue_id' && k !== 'slug' && k !== 'updated_at'; }) });
   return json({ ok: true, slug: venue.slug });
+}
+
+/* ---------------------------------------------------------------------------------------
+   HQ > Venues > Details > Screen history.   GET /admin/screen-history?venue_id=
+                                             POST /admin/screen-restore { venue_id, history_id }
+
+   Reads vp_venue_screen_history (migration 114): every version of a venue's logo, slides and
+   raffle, who changed it and through which door, newest first. Any Gflam admin may look; only
+   owner and accounts admins may put a version back, and the restore is itself a recorded change
+   (via 'hq_restore', naming the version it came from) plus an audit row. A venue login reaches
+   neither route (vpaRequireAdmin) and cannot read the table (no grant).
+
+   The history is still shown when the venue row has gone, because that is exactly when it is
+   needed; it just cannot be restored onto a venue that does not exist.
+   --------------------------------------------------------------------------------------- */
+const VPA_SCREEN_HISTORY_LIMIT = 100;
+
+function vpaScreenSlidesOf(row) { return row && Array.isArray(row.slides) ? row.slides : []; }
+function vpaScreenRaffleLabel(row) {
+  const r = row && row.raffle;
+  if (!r) return null;
+  return [r.label, r.day, r.time].filter(Boolean).join(', ') || '(set)';
+}
+/* What changed, in words. One answer, used by the HQ list and by the test. */
+function vpaScreenChanges(op, o, n) {
+  const slidesSaid = function (row) { const k = vpaScreenSlidesOf(row).length; return k + ' slide' + (k === 1 ? '' : 's'); };
+  const what = function (row) {
+    const bits = [slidesSaid(row)];
+    if (row && row.logo_url) bits.unshift('a logo');
+    if (vpaScreenRaffleLabel(row)) bits.push('raffle "' + vpaScreenRaffleLabel(row) + '"');
+    return bits.join(', ');
+  };
+  if (op === 'baseline') return ['How the screen stood when this record began: ' + what(n) + '.'];
+  if (op === 'insert') return ['Screen settings created: ' + what(n) + '.'];
+  if (op === 'delete') return ['The whole screen row was DELETED. It held ' + what(o) + '.'];
+  if (op === 'vanished') return ['The screen row DISAPPEARED with no record of a delete (found by the nightly check). It last held ' + what(o) + '.'];
+  const out = [];
+  if (op === 'drift') out.push('Changed outside VenuePlay with no record (found by the nightly check).');
+  const ol = (o && o.logo_url) || null, nl = (n && n.logo_url) || null;
+  if (!ol && nl) out.push('Logo added.');
+  else if (ol && !nl) out.push('Logo removed.');
+  else if (ol && nl && ol !== nl) out.push('Logo replaced.');
+  const os = vpaScreenSlidesOf(o).map(function (s) { return (s && s.image_url) || ''; });
+  const ns = vpaScreenSlidesOf(n).map(function (s) { return (s && s.image_url) || ''; });
+  const added = ns.filter(function (u) { return os.indexOf(u) === -1; }).length;
+  const removed = os.filter(function (u) { return ns.indexOf(u) === -1; }).length;
+  if (added || removed) {
+    out.push('Slides ' + os.length + ' to ' + ns.length + ' (' + [added ? added + ' added' : '', removed ? removed + ' removed' : '']
+      .filter(Boolean).join(', ') + ').');
+  } else if (JSON.stringify(vpaScreenSlidesOf(o)) !== JSON.stringify(vpaScreenSlidesOf(n))) {
+    out.push('Slide order, timing or dates changed.');
+  }
+  const or = vpaScreenRaffleLabel(o), nr = vpaScreenRaffleLabel(n);
+  if (or !== nr) out.push(nr ? 'Raffle set to "' + nr + '".' : 'Raffle cleared.');
+  if (JSON.stringify((o && o.draws) || []) !== JSON.stringify((n && n.draws) || [])) out.push('Draws changed.');
+  if (!out.length) out.push('Saved with no visible change.');
+  return out;
+}
+/* Who, in words, from what the trigger recorded. */
+function vpaScreenWho(h) {
+  const a = (h && h.actor && typeof h.actor === 'object') ? h.actor : {};
+  const label = String(a.label || '').slice(0, 80);
+  switch (h && h.via) {
+    case 'venue':         return (label || 'venue login') + ' (the venue\'s own login)';
+    case 'hq_view_as':    return (label || 'Gflam admin') + ' (HQ, View as)';
+    case 'hq_restore':    return (label || 'Gflam admin') + ' (HQ, Restore this version)';
+    case 'migration':     return 'Migration 114, when this record began';
+    case 'nightly-check': return 'The nightly check';
+    case 'direct':        return 'NOT through VenuePlay: a direct database change (' +
+                                 [h.db_session_user, h.jwt_role || h.db_role].filter(Boolean).join(', ') + ')';
+    default:              return label || String((h && h.via) || 'unknown');
+  }
+}
+/* The version an entry stands for: the row after the change, or for a delete, the row that was lost. */
+function vpaScreenVersionRow(h) { return (h && (h.new_row || h.old_row)) || null; }
+function vpaScreenVersion(row) {
+  if (!row) return null;
+  return {
+    logo_url: row.logo_url || null,
+    slides: vpaScreenSlidesOf(row).map(function (s) {
+      s = s || {};
+      const o = { image_url: s.image_url || null, seconds: s.seconds || null };
+      if (s.starts) o.starts = s.starts;
+      if (s.ends) o.ends = s.ends;
+      return o;
+    }),
+    raffle: vpaScreenRaffleLabel(row),
+    draws: Array.isArray(row.draws) ? row.draws.length : 0,
+  };
+}
+async function vpaReadScreenHistory(env, query) {
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_venue_screen_history?' + query, { headers: vpaHeaders(env) });
+  if (!res.ok) {
+    const t = (await res.text().catch(function () { return ''; })).slice(0, 200);
+    return { ok: false, missing: res.status === 404 || /vp_venue_screen_history|PGRST205|42P01/.test(t), error: t };
+  }
+  const rows = await res.json();
+  return { ok: Array.isArray(rows), rows: Array.isArray(rows) ? rows : [] };
+}
+
+async function vpaHandleScreenHistory(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, null);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const url = new URL(request.url);
+  const venueId = (url.searchParams.get('venue_id') || '').trim();
+  if (!/^[0-9a-fA-F-]{36}$/.test(venueId)) return json({ error: 'venue_id is required.' }, 400);
+  const vid = encodeURIComponent(venueId);
+  const vrows = await vpaSelect(env, 'vp_venues', 'id=eq.' + vid + '&select=id,name,slug&limit=1');
+  const venue = (vrows && vrows[0]) || null;
+  const h = await vpaReadScreenHistory(env, 'venue_id=eq.' + vid
+    + '&select=id,op,old_row,new_row,changed_at,actor,via,db_session_user,db_role,jwt_role'
+    + '&order=id.desc&limit=' + VPA_SCREEN_HISTORY_LIMIT);
+  if (!h.ok) {
+    if (h.missing) return json({ ok: true, known: false, venue: venue, entries: [],
+      note: 'Screen history starts when migration 114 is run. Nothing is recorded before that.' });
+    return json({ error: 'Could not read the screen history. ' + (h.error || '') }, 500);
+  }
+  const now = await vpbReadScreen(env, venueId);
+  /* Files uploaded through the Worker, from the audit, so a file that went up but was never
+     saved onto the screen (or whose row later vanished) can still be found. */
+  const ups = await vpaSelect(env, 'vp_admin_audit', 'target=eq.' + encodeURIComponent('venue:' + venueId)
+    + '&action=in.(slide_uploaded,logo_set)&select=created_at,action,actor_label,detail&order=created_at.desc&limit=60') || [];
+  const can = actor.role === 'owner' || actor.role === 'accounts';
+  return json({
+    ok: true, known: true, can_restore: can,
+    venue: venue,
+    current: now.ok ? vpaScreenVersion(now.row) : null,
+    entries: h.rows.map(function (e) {
+      const row = vpaScreenVersionRow(e);
+      return {
+        id: e.id, at: e.changed_at, op: e.op, via: e.via, who: vpaScreenWho(e),
+        changes: vpaScreenChanges(e.op, e.old_row, e.new_row),
+        version: vpaScreenVersion(row),
+        restorable: !!row && !!venue,
+      };
+    }),
+    uploads: ups.map(function (a) {
+      const d = a.detail || {};
+      return { at: a.created_at, what: a.action === 'logo_set' ? 'logo' : 'slide', by: a.actor_label || null,
+               url: d.url || (d.after && d.after.logo_url) || null };
+    }).filter(function (u) { return !!u.url; }),
+  });
+}
+
+async function vpaHandleScreenRestore(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
+  const venueId = String(b.venue_id || '').trim();
+  const hid = parseInt(b.history_id, 10);
+  if (!/^[0-9a-fA-F-]{36}$/.test(venueId) || !(hid > 0)) return json({ error: 'venue_id and history_id are required.' }, 400);
+  const h = await vpaReadScreenHistory(env, 'id=eq.' + hid + '&venue_id=eq.' + encodeURIComponent(venueId)
+    + '&select=id,op,old_row,new_row,changed_at&limit=1');
+  if (!h.ok) {
+    if (h.missing) return json({ error: 'Run migration 114 first: there is no screen history yet. Nothing was changed.' }, 409);
+    return json({ error: 'Could not read that version. Nothing was changed.' }, 500);
+  }
+  const entry = h.rows[0];
+  if (!entry) return json({ error: 'That version is not in this venue\'s history. Nothing was changed.' }, 404);
+  const src = vpaScreenVersionRow(entry);
+  if (!src) return json({ error: 'That entry holds no version to put back. Nothing was changed.' }, 409);
+  const vrows = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=id,name,slug&limit=1');
+  const venue = vrows && vrows[0];
+  if (!venue) return json({ error: 'That venue no longer exists, so there is no screen to put this back on. Nothing was changed.' }, 404);
+
+  const was = await vpbReadScreen(env, venueId);
+  /* EXACTLY the old row: logo, slides, draws and raffle as they were stored. The slug is the
+     venue's current one (the screen address follows the venue), and the clock is now. */
+  const row = {
+    venue_id: venueId, slug: venue.slug,
+    slides: Array.isArray(src.slides) ? src.slides : [],
+    draws: Array.isArray(src.draws) ? src.draws : [],
+    raffle: src.raffle === undefined ? null : src.raffle,
+    logo_url: src.logo_url === undefined ? null : src.logo_url,
+    updated_at: new Date().toISOString(),
+  };
+  const res = await vpbWriteScreen(env, row, { via: 'hq_restore', route: 'screen-restore', admin: actor.actorId || null,
+                                               label: actor.label || 'admin', role: actor.role || null, restored_from: hid });
+  if (!res.ok) {
+    const t = (await res.text().catch(function () { return ''; })).slice(0, 180);
+    return json({ error: 'Could not put that version back. Nothing was changed. ' + t }, 500);
+  }
+  /* Are the files it points at still there? A version is only as good as its images. */
+  const urls = [row.logo_url].concat(row.slides.map(function (s) { return s && s.image_url; }))
+    .filter(function (u) { return typeof u === 'string' && u.indexOf(env.SUPABASE_URL + '/storage/v1/object/public/') === 0; })
+    .slice(0, 25);
+  const missing = [];
+  for (const u of urls) {
+    try { const r = await fetch(u, { method: 'HEAD' }); if (!r.ok) missing.push(u); } catch (_) { /* unknown is not missing */ }
+  }
+  await vpaAudit(env, actor, 'screen_restored', 'venue:' + venueId, {
+    history_id: hid, from_op: entry.op, from_at: entry.changed_at, name: venue.name,
+    before: was.ok ? vpbScreenSummary(was.row) : 'unread', after: vpbScreenSummary(row), missing_files: missing.length,
+  });
+  return json({ ok: true, restored: vpaScreenVersion(row), missing_files: missing });
+}
+
+/* The nightly check (scheduled). Migration 114's function writes 'drift' and 'vanished' rows for
+   anything the trigger did not see; the counts go in the audit when they are not zero. Before
+   migration 114 the function does not exist and this is quiet. */
+async function vpaScreenHistoryNightly(env) {
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/vp_screen_history_check', {
+    method: 'POST', headers: vpaHeaders(env), body: '{}',
+  });
+  if (!res.ok) return { ran: false, status: res.status };
+  const out = await res.json().catch(function () { return null; });
+  const r = (out && typeof out === 'object') ? out : {};
+  if ((r.drift || 0) > 0 || (r.vanished || 0) > 0) {
+    await vpaAudit(env, { actorId: null, label: 'automatic (screen history check)' }, 'screen_history_drift', null,
+      { checked: r.checked || 0, drift: r.drift || 0, vanished: r.vanished || 0 });
+  }
+  return { ran: true, result: r };
 }
 
 /* --- POST /account/reminders : payment-reminder email opt-out. --- */

@@ -1933,6 +1933,10 @@
    "enabled": true,
    "forced": false
   },
+  "vp_venue_screen_history": {
+   "enabled": true,
+   "forced": false
+  },
   "vp_venue_settings": {
    "enabled": true,
    "forced": false
@@ -2051,6 +2055,10 @@
    "anon": false,
    "authenticated": false
   },
+  "vp_screen_history_check()": {
+   "anon": false,
+   "authenticated": false
+  },
   "vp_screen_poll(p_slug text, p_code text, p_version text)": {
    "anon": false,
    "authenticated": false
@@ -2062,6 +2070,10 @@
   "vp_staff_venue_ids()": {
    "anon": true,
    "authenticated": true
+  },
+  "vp_venue_screen_capture()": {
+   "anon": false,
+   "authenticated": false
   }
  },
  "views": [
