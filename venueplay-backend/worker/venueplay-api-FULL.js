@@ -10095,21 +10095,33 @@ async function helpVenueTicket(request, env, json) {
   if (!message) return json({ error: 'Tell us what is happening.' }, 400);
   if (subject.length > 200 || message.length > HELP_MESSAGE_MAX) return json({ error: 'That is too long. Keep it under 4,000 characters.' }, 400);
   if (replyEmail && !HELP_EMAIL_RE.test(replyEmail)) return json({ error: 'That email address does not look right.' }, 400);
-  let contactEmail = replyEmail, contactPhone = null;
-  if (!contactEmail && who.venue.founding_id) {
+  /* WHERE THE ANSWER GOES (Dean, 21 Oct 2026). HQ answers by email and only by email (helpAdminReply
+     has no text-message path), and hosts sign in by phone, so a host's login usually has no email at
+     all. The address they typed wins; then the login's own email; then, for the venue's OWNER only,
+     the account's contact email, which is theirs. Anyone else with none of those is asked for one:
+     before this, a host's request was answered to the owner's inbox. */
+  let contactEmail = replyEmail, contactPhone = null, loginEmail = '';
+  const u = await vpaAuthGetUser(env, who.authUserId);
+  if (u && u.email && HELP_EMAIL_RE.test(String(u.email))) loginEmail = String(u.email).toLowerCase();
+  if (!who.admin) contactPhone = (u && u.phone) ? ('+' + String(u.phone).replace(/^\+/, '')) : null;
+  if (!contactEmail) contactEmail = loginEmail || null;
+  if (!contactEmail && who.venue.founding_id && who.staff && who.staff.role === 'owner') {
     const acc = await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(who.venue.founding_id) + '&select=contact_email&limit=1');
     contactEmail = (acc && acc[0] && acc[0].contact_email) || null;
   }
-  if (!who.admin) {
-    const u = await vpaAuthGetUser(env, who.authUserId);
-    contactPhone = (u && u.phone) ? ('+' + String(u.phone).replace(/^\+/, '')) : null;
-  }
+  if (!contactEmail) return json({ error: 'Put in an email so we can reply. We answer help requests by email.', need_email: true }, 400);
+  /* URGENT IS WORKED OUT, NOT TICKED (Dean, 21 Oct 2026: "if they are contacting us during a game,
+     that is why they are contacting us"). A lobby or a game open at this venue right now makes the
+     ticket urgent; anything else is normal. The page has no say: b.urgent is ignored. */
+  const liveNow = await vpaSelect(env, 'vp_sessions', 'venue_id=eq.' + encodeURIComponent(who.venue.id) +
+    '&status=in.(lobby,running,paused)&select=id,status&limit=1');
+  const gameOn = !!(liveNow && liveNow.length);
   const issue = await helpIssueFor(env, b.issue_id, 'venueplay');
   let t;
   try {
     t = await helpInsertTicket(env, {
       brand: 'venueplay', category: issue ? issue.category : b.category === 'accounts' ? 'accounts' : 'venue_support', channel: 'venue_form',
-      priority: b.urgent ? 'urgent' : 'normal', title: subject, message: message,
+      priority: gameOn ? 'urgent' : 'normal', title: subject, message: message,
       contact_name: helpLine(b.name, 120) || (who.staff && who.staff.display_name) || (who.admin ? 'HQ: ' + (who.admin.label || 'admin') : null),
       contact_email: contactEmail, contact_phone: contactPhone, venue_id: who.venue.id, raised_by: who.authUserId,
     });
@@ -10117,6 +10129,10 @@ async function helpVenueTicket(request, env, json) {
     return json({ error: 'We could not send that just now. Please email support@venueplay.com.au.' }, 503);
   }
   await helpNoteTicketFromIssue(env, issue);
+  if (gameOn) {
+    try { await vpaInsert(env, 'vp_help_ticket_notes', { ticket_id: t.id, kind: 'change', author: 'Help desk',
+      body: 'Urgent because a ' + (liveNow[0].status === 'lobby' ? 'lobby' : 'game') + ' was open at ' + who.venue.name + ' when this was sent.' }, false); } catch (e) {}
+  }
   await helpAnnounce(env, t, who.venue.name);
   return json({ ok: true, ticket_no: t.ticket_no });
 }

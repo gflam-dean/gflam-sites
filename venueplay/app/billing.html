@@ -1925,6 +1925,14 @@
     try { var pk = JSON.parse(localStorage.getItem("vpVenuePick") || "null"); if (pk && pk.id) ids.push(pk.id); } catch (e) {}
     return ids;
   }
+  /* The Help form asks these which venue a request is about (vp-help.js). Same order as every
+     picker on this page, so Help is about the venue the page is showing; never a blank. */
+  window.VP_HELP_VENUE = function(){
+    var v = defaultVenue(screenVenues);
+    if (v && v.id) return v.id;
+    var ids = preferredVenueIds(); return ids[0] || null;
+  };
+  window.VP_HELP_VENUES = function(){ return screenVenues; };
   function defaultVenue(venues){
     venues = venues || [];
     var ids = preferredVenueIds();

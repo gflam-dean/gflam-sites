@@ -193,12 +193,30 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
 
   print('A VENUE LOGIN, FROM THE CONSOLE');
   world();
-  r = await call(helpVenueTicket, HOST_A, { venue_id: VA, subject: 'TV not showing', message: 'Blank since 7pm', urgent: true });
+  // Dean, 21 Oct 2026: hosts sign in by phone, so a host login has no email, and HQ answers only by email.
+  r = await call(helpVenueTicket, HOST_A, { venue_id: VA, subject: 'TV not showing', message: 'Blank since 7pm' });
+  check('a host whose login has no email, who leaves none, is asked for one (never answered at the owner\'s inbox)', r.status === 400 && r.body.need_email === true && DB.vp_help_tickets.length === 0, r);
+  r = await call(helpVenueTicket, HOST_A, { venue_id: VA, subject: 'TV not showing', message: 'Blank since 7pm', reply_email: 'hayley@example.com' });
   t = DB.vp_help_tickets[0];
   check('a host at the venue can raise one', r.status === 200 && t && t.venue_id === VA && t.channel === 'venue_form' && t.category === 'venue_support' && t.brand === 'venueplay', r);
   check('it answers with the number and nothing else (not even the account email it will reply to)', Object.keys(r.body).sort().join() === 'ok,ticket_no', r.body);
-  check('urgent is kept, and the alert subject says URGENT', t.priority === 'urgent' && sent.some(function (m) { return /^\[VenuePlay\] URGENT Venue support/.test(m.subject); }), sent.map(function (m) { return m.subject; }));
-  check('the reply goes to the account contact email; the host\'s mobile is attached', t.contact_email === 'owner@royalhotel.com.au' && t.contact_phone === '+61400000002' && t.contact_name === 'Hayley', t);
+  check('a game is open at the venue, so it is URGENT without anyone ticking anything, and the alert says so', t.priority === 'urgent' && sent.some(function (m) { return /^\[VenuePlay\] URGENT Venue support/.test(m.subject); }), sent.map(function (m) { return m.subject; }));
+  check('and HQ is told why: a note on the ticket says a game was open', notesOf(t).some(function (n) { return /Urgent because a game was open at The Royal Hotel/.test(n.body); }), notesOf(t));
+  check('the reply goes to the address the host gave; the host\'s mobile is attached', t.contact_email === 'hayley@example.com' && t.contact_phone === '+61400000002' && t.contact_name === 'Hayley', t);
+  DB.auth.push({ id: MKT_A, email: 'mkt@royalhotel.com.au' });
+  r = await call(helpVenueTicket, MKT_A, { venue_id: VA, subject: 'Promo', message: 'Where do ads go?' });
+  check('a login that HAS an email is answered there without being asked', r.status === 200 && T(r.body.ticket_no).contact_email === 'mkt@royalhotel.com.au', r.body.ticket_no && T(r.body.ticket_no));
+  DB.vp_sessions = [];
+  r = await call(helpVenueTicket, HOST_A, { venue_id: VA, subject: 'Quiet day', message: 'A question', reply_email: 'hayley@example.com', urgent: true });
+  check('no game open: normal, even when the page says urgent (the page has no say)', r.status === 200 && T(r.body.ticket_no).priority === 'normal' && !notesOf(T(r.body.ticket_no)).length, T(r.body.ticket_no));
+  DB.vp_sessions = [{ id: U(202), venue_id: VA, join_code: 'RYL234', status: 'lobby' }];
+  r = await call(helpVenueTicket, HOST_A, { venue_id: VA, subject: 'Lobby', message: 'Nobody can join', reply_email: 'hayley@example.com' });
+  check('a lobby open counts as a game on: urgent, and the note says lobby', r.status === 200 && T(r.body.ticket_no).priority === 'urgent' && notesOf(T(r.body.ticket_no)).some(function (n) { return /a lobby was open/.test(n.body); }));
+  DB.vp_sessions = [{ id: U(203), venue_id: VB, join_code: 'ANC567', status: 'running' }];
+  r = await call(helpVenueTicket, HOST_A, { venue_id: VA, subject: 'Other', message: 'x', reply_email: 'hayley@example.com' });
+  check('a game at ANOTHER venue does not make this one urgent', r.status === 200 && T(r.body.ticket_no).priority === 'normal');
+  r = await call(helpVenueTicket, OWNER_A, { venue_id: VA, subject: 'Bill', message: 'Question' });
+  check('the venue\'s OWNER with no login email is answered at the account\'s contact email, which is theirs', r.status === 200 && T(r.body.ticket_no).contact_email === 'owner@royalhotel.com.au', T(r.body.ticket_no));
   r = await call(helpVenueTicket, OWNER_A, { venue_id: VA, subject: 'Invoice', message: 'Wrong amount', category: 'accounts', reply_email: 'books@royalhotel.com.au' });
   check('an owner can raise an accounts one, to a reply address they choose', r.status === 200 && T(r.body.ticket_no).category === 'accounts' && T(r.body.ticket_no).contact_email === 'books@royalhotel.com.au');
   check('venue A\'s owner cannot raise one in venue B\'s name', (await call(helpVenueTicket, OWNER_A, { venue_id: VB, subject: 'x', message: 'y' })).status === 403);
@@ -237,6 +255,7 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
 
   print('HQ: THE DESK');
   world();
+  DB.vp_sessions = [];   // no game on, so the venue ticket below is normal (a game on makes it urgent; tested above)
   await call(helpPublicTicket, null, PATRON);                                                         // 1001 VP patron
   await call(helpVenueTicket, OWNER_A, { venue_id: VA, subject: 'Billing', message: 'Charged twice', category: 'accounts' });   // 1002
   await call(helpPublicTicket, null, { brand: 'partyplay', kind: 'patron', email: 'g@example.com', message: 'hi', code: 'KFP7QX', device: 'g' }); // 1003

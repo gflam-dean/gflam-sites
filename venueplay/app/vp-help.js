@@ -252,7 +252,7 @@
     var hp = input2("text", "vphWebsite", { name: "website", tabindex: "-1", autocomplete: "off", "aria-hidden": "true" });
     var hpw = el("div", "vph-hp"); hpw.appendChild(hp); f.appendChild(hpw);
 
-    var name, email, phone, subject, kind, urgent, where;
+    var name, email, phone, subject, kind, where, pick, replyNeed = false;
     function kinds(list) {
       kind = el("select"); kind.id = "vphKind" + sfx;
       list.forEach(function (o) { var op = el("option", "", o[1]); op.value = o[0]; kind.appendChild(op); });
@@ -264,6 +264,20 @@
       if (issue) subject.value = issue.title;
       f.appendChild(field("What is it about?", subject));
       kinds([["venue_support", "Help with VenuePlay"], ["accounts", "Billing or an invoice"]]);
+      /* WHICH VENUE. Normally the one this console or account page is on, never asked. Only when the
+         page genuinely has none (an HQ login on the account page, say) is the person asked, from a
+         list: The Mini Bar's group owner was told "pick your venue first" with nothing to pick from. */
+      if (!venueId()) {
+        pick = el("select"); pick.id = "vphPick" + sfx;
+        var wait = el("option", "", "Loading your venues..."); wait.value = ""; pick.appendChild(wait);
+        f.appendChild(field("Which venue is this about?", pick));
+        venueChoices().then(function (list) {
+          while (pick.firstChild) pick.removeChild(pick.firstChild);
+          var first = el("option", "", list.length ? "Choose a venue" : "No venues found"); first.value = ""; pick.appendChild(first);
+          list.forEach(function (v) { var o = el("option", "", v.name || "Unnamed venue"); o.value = v.id; pick.appendChild(o); });
+          if (list.length === 1) pick.value = list[0].id;
+        });
+      }
     } else {
       if (pubVenue) kinds([["venue_support", "Help with VenuePlay"], ["accounts", "Billing or an invoice"], ["sales", "Bringing VenuePlay to my venue"]]);
       var needName = sales || pubVenue;
@@ -278,18 +292,18 @@
     var msg = input2("textarea", "vphMsg", { maxlength: "4000", placeholder: venueMode || pubVenue ? "What is happening, and on which screen?" : "How can we help?" });
     f.appendChild(field("Message", msg));
     if (venueMode) {
-      var replyTo = input2("email", "vphReply", { maxlength: "200", placeholder: "Leave blank to use your account email" });
-      f.appendChild(field("Reply to (optional)", replyTo));
-      /* A venue asking for help from the console is, nearly always, a venue whose game is on: so
-         this starts TICKED (Dean, 21 Oct 2026). A bill is never urgent, so "Billing" unticks it,
-         until the person has set it themselves; after that it is theirs and stays as they left it. */
-      var c = el("label", "vph-chk"); urgent = input2("checkbox", "vphUrgent"); c.appendChild(urgent);
-      c.appendChild(doc.createTextNode("This is happening right now (a game is on)"));
-      f.appendChild(c);
-      var urgentSet = false;
-      urgent.checked = kind.value !== "accounts";
-      on(urgent, "change", function () { urgentSet = true; });
-      on(kind, "change", function () { if (!urgentSet) urgent.checked = kind.value !== "accounts"; });
+      /* WHERE WE REPLY. HQ answers by email only, and hosts sign in by phone, so a login with no
+         email is ASKED for one (Dean, 21 Oct 2026). A login with an email may leave it blank.
+         There is no "Happening now" tick any more: the Worker marks a request urgent itself when a
+         game or lobby is open at the venue, because that is why they are writing. */
+      var replyTo = input2("email", "vphReply", { maxlength: "200", autocomplete: "email", inputmode: "email", placeholder: "Leave blank to use the email you sign in with" });
+      var replyField = field("Reply to (optional)", replyTo); f.appendChild(replyField);
+      loginEmail().then(function (have) {
+        if (have) return;
+        replyNeed = true;
+        replyField.firstChild.textContent = "Your email, so we can reply";
+        replyTo.setAttribute("placeholder", "you@example.com");
+      });
     }
     // Turnstile sits just above Send, and only when it is switched on.
     var ts = { box: el("div", "vph-ts"), id: null, on: false };
@@ -333,10 +347,12 @@
       if (m.length > 4000) { err.textContent = "That is a bit long. Keep it under 4,000 characters."; return; }
       if (venueMode) {
         if (!String(subject.value || "").trim()) { err.textContent = "Give it a short subject."; subject.focus(); return; }
-        body = { venue_id: venueId(), subject: subject.value, message: m, category: kind.value, urgent: !!urgent.checked, reply_email: replyTo.value,
+        var re = String(replyTo.value || "").trim();
+        if ((replyNeed || re) && !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(re)) { err.textContent = "Put in your email so we can reply. We answer by email."; replyTo.focus(); return; }
+        body = { venue_id: venueId() || (pick ? pick.value : ""), subject: subject.value, message: m, category: kind.value, reply_email: re,
                  issue_id: issue ? issue.id : undefined };
         url = API + "/help/venue/ticket";
-        if (!body.venue_id) { err.textContent = "Pick your venue first, then try again."; return; }
+        if (!body.venue_id) { err.textContent = "Choose which venue this is about."; try { pick.focus(); } catch (e) {} return; }
       } else {
         var em = String(email.value || "").trim();
         if (!/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(em)) { err.textContent = "Put in your email so we can reply."; email.focus(); return; }
@@ -382,13 +398,61 @@
     return f;
   }
 
+  /* The venue this page is on. The account page says which one it is showing (VP_HELP_VENUE); a
+     console has it in its context; HQ "View as" keeps it in vpImpersonate. Never a guess beyond those. */
   function venueId() {
+    try { if (typeof root.VP_HELP_VENUE === "function") { var pv = root.VP_HELP_VENUE(); if (pv) return pv; } } catch (e) {}
     try {
       var c = root.VP && root.VP.__helpCtx;
       if (c && c.currentVenueId) return c.currentVenueId;
-      if (c && c.staff && c.staff.length) return c.staff[0].venue_id;
+      // One venue is an answer; several with none current is a question, asked with a picker.
+      if (c && c.staff && c.staff.length === 1) return c.staff[0].venue_id;
     } catch (e) {}
+    try { var imp = JSON.parse(root.localStorage.getItem("vpImpersonate") || "null"); if (imp && imp.id) return imp.id; } catch (e) {}
     return "";
+  }
+  /* Venues to choose from, when the page has none: the account page's own list, else this login's
+     venues, else (an HQ login) every venue, paged and ordered so none is missed past 1,000. */
+  function venueChoices() {
+    try { if (typeof root.VP_HELP_VENUES === "function") { var l = root.VP_HELP_VENUES(); if (l && l.length) return Promise.resolve(l); } } catch (e) {}
+    try {
+      var c = root.VP && root.VP.__helpCtx, cl = c && c.client;
+      if (!cl) return Promise.resolve([]);
+      var ids = (c.staff || []).map(function (x) { return x.venue_id; }).filter(Boolean);
+      if (ids.length) return cl.from("vp_venues").select("id,name,slug").in("id", ids).order("name").then(function (r) { return (r && r.data) || []; }).catch(function () { return []; });
+      if (!c.isAdmin) return Promise.resolve([]);
+      var all = [];
+      var page = function (from) {
+        return cl.from("vp_venues").select("id,name,slug").order("name").order("id").range(from, from + 999).then(function (r) {
+          var rows = (r && r.data) || []; all = all.concat(rows);
+          return rows.length ? page(from + rows.length) : all;   // stop on an EMPTY page, never a short one
+        });
+      };
+      return page(0).catch(function () { return all; });
+    } catch (e) { return Promise.resolve([]); }
+  }
+  /* The email this login signs in with, or "" (a host who signs in by phone has none). */
+  function loginEmail() {
+    if (!root.VP || !root.VP.getClient) return Promise.resolve("");
+    try {
+      return root.VP.getClient().auth.getSession().then(function (r) {
+        var u = r && r.data && r.data.session && r.data.session.user; return (u && u.email) || "";
+      }).catch(function () { return ""; });
+    } catch (e) { return Promise.resolve(""); }
+  }
+  /* "{tv_link}" in a step is the venue's own TV address when this page knows it, written the way the
+     account page writes it (venueplay.com.au/tv?<slug>); anywhere else, where to find it. */
+  function venueSlug2() {
+    var id = venueId();
+    try { var c = root.VP && root.VP.__helpCtx; if (c && c.venue && c.venue.slug && (!id || c.venue.id === id)) return c.venue.slug; } catch (e) {}
+    try { if (typeof root.VP_HELP_VENUES === "function") { var l = root.VP_HELP_VENUES() || []; for (var i = 0; i < l.length; i++) if (l[i] && l[i].id === id && l[i].slug) return l[i].slug; } } catch (e) {}
+    return "";
+  }
+  function fillStep(s, ctx) {
+    return String(s || "").replace(/\{tv_link\}/g, function () {
+      var slug = ctx.mode === "venue" ? venueSlug2() : "";
+      return slug ? "your venue's TV link, venueplay.com.au/tv?" + slug : "your venue's TV link (it is on your Account page)";
+    });
   }
   function authHeader(need) {
     if (!need || !root.VP || !root.VP.getClient) return Promise.resolve("");
@@ -473,7 +537,7 @@
       flow.appendChild(el("div", "vph-issuename", issue.title));
       var card = el("div", "vph-step"); card.setAttribute("data-step", step.id);
       card.appendChild(el("div", "vph-stepno", "Step " + (i + 1) + " of " + n));
-      card.appendChild(el("div", "vph-stepbody", step.body));
+      card.appendChild(el("div", "vph-stepbody", fillStep(step.body, ctx)));
       var row = el("div", "vph-steprow");
       var fixed = el("button", "vph-go vph-fixed", "Fixed it"); fixed.type = "button";
       var still = el("button", "vph-still", "Still not working"); still.type = "button";

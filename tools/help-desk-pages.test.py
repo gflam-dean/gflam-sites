@@ -55,10 +55,29 @@ FIXTURES = {
 .hactions{margin-left:auto;display:flex;gap:8px}.hact{padding:7px 14px;border-radius:999px;background:#17171A;color:#eee;border:1px solid #333}</style></head>
 <body><header><div class="bar"><b>VenuePlay</b><span class="hactions"><a class="hact" href="#">Account</a><button class="hact">Sign out</button></span></div></header>
 <div style="padding:16px">The console.</div>
-<script>window.VP={ready:function(){return Promise.resolve({currentVenueId:"11111111-2222-4333-8444-555555555555",staff:[{venue_id:"11111111-2222-4333-8444-555555555555"}]});},
+<script>window.VP={ready:function(){return Promise.resolve({currentVenueId:"11111111-2222-4333-8444-555555555555",venue:{id:"11111111-2222-4333-8444-555555555555",slug:"royal"},staff:[{venue_id:"11111111-2222-4333-8444-555555555555"}]});},
 getClient:function(){return{auth:{getSession:function(){return Promise.resolve({data:{session:{access_token:"venue-login-token"}}});}}};}};</script>
 <script src="/app/vp-help.js" data-mode="venue" data-brand="venueplay"></script></body></html>''',
     '/__fixture/blank.html': '<!doctype html><html><head><meta charset="utf-8"></head><body>blank</body></html>',
+    # A GROUP account (The Mini Bar, 21 Oct 2026: "pick your venue first" with nothing to pick). This login
+    # is staff at three venues and the page has no current venue: Help must offer the three by name.
+    '/__fixture/group.html': '''<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>body{background:#0A0A0B;color:#eee;margin:0;font-family:system-ui}header .bar{display:flex;align-items:center;gap:8px;padding:12px}
+.hactions{margin-left:auto;display:flex;gap:8px}.hact{padding:7px 14px;border-radius:999px;background:#17171A;color:#eee;border:1px solid #333}</style></head>
+<body><header><div class="bar"><b>VenuePlay</b><span class="hactions"><a class="hact" href="#">Account</a></span></div></header>
+<script>(function(){var V=[{id:"aaaaaaaa-0000-4000-8000-000000000001",name:"The Mini Bar Broadbeach",slug:"mini-bar-broadbeach"},{id:"aaaaaaaa-0000-4000-8000-000000000002",name:"The Mini Bar Burleigh",slug:"mini-bar-burleigh"},{id:"aaaaaaaa-0000-4000-8000-000000000003",name:"The Mini Bar Tugun",slug:"mini-bar-tugun"}];
+window.__asked=[];function q(){var o={select:function(c){__asked.push("select "+c);return o;},in:function(k,ids){__asked.push("in "+ids.length);return o;},order:function(){return o;},range:function(){return o;},then:function(a,b){return Promise.resolve({data:V}).then(a,b);}};return o;}
+window.VP={ready:function(){return Promise.resolve({currentVenueId:null,venue:null,isAdmin:false,client:{from:q},staff:V.map(function(v){return{venue_id:v.id,role:"owner"};})});},
+getClient:function(){return{auth:{getSession:function(){return Promise.resolve({data:{session:{access_token:"group-token",user:{email:"owner@theminibar.com.au"}}}});}}};}};})();</script>
+<script src="/app/vp-help.js" data-mode="venue" data-brand="venueplay"></script></body></html>''',
+    # The account page (billing.html) says which venue it shows. Help must use it, with that venue's TV link.
+    '/__fixture/account-hook.html': '''<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body><header><div class="bar"><span class="hactions"><a class="hact" href="#">Account</a></span></div></header>
+<script>window.VP_HELP_VENUES=function(){return[{id:"aaaaaaaa-0000-4000-8000-000000000001",name:"Broadbeach",slug:"mini-bar-broadbeach"},{id:"aaaaaaaa-0000-4000-8000-000000000002",name:"Burleigh",slug:"mini-bar-burleigh"}];};
+window.VP_HELP_VENUE=function(){return "aaaaaaaa-0000-4000-8000-000000000002";};
+window.VP={ready:function(){return Promise.resolve({currentVenueId:null,venue:null,isAdmin:true,staff:[]});},
+getClient:function(){return{auth:{getSession:function(){return Promise.resolve({data:{session:{access_token:"admin-token",user:{email:"dean@example.com"}}}});}}};}};</script>
+<script src="/app/vp-help.js" data-mode="venue" data-brand="venueplay"></script></body></html>''',
 }
 
 
@@ -121,6 +140,7 @@ ISSUES = {'venueplay:patron': [_iss(1, 'My game is not showing', 4), _iss(2, 'So
           'venueplay:venue': [_iss(3, 'The TV is not showing the game', 3), _iss(4, 'A question about my bill', 0)],
           'partyplay:guest': [_iss(5, 'I cannot join the party', 3)], 'partyplay:host': [_iss(6, 'The party screen is blank', 3)]}
 ISSUES['venueplay:patron'][0]['steps'][0]['body'] = 'Pull down to refresh the page.'
+ISSUES['venueplay:venue'][0]['steps'][1]['body'] = 'Check the TV is showing {tv_link}.'
 ISSUES['venueplay:patron'][0]['steps'][3]['body'] = 'Ask the host. They can see who has joined and can get you going.'
 DEFAULT_ROUTES = {'/help/triage': {'body': {'ok': True, 'proof': 'proof-from-start'}}}
 for key, data in (('venueplay:patron', _vp['patron']), ('venueplay:venue', _vp['venue']), ('partyplay:guest', _pp['guest']), ('partyplay:host', _pp['host'])):
@@ -249,6 +269,49 @@ def last_ticket(t):
     return ([x for x in posts(t) if x['path'] == '/help/ticket'][-1:] or [{}])[0]
 
 
+def group_checks(b, VP):
+    """A group account with several venues, and the account page's own venue (21 Oct 2026)."""
+    print('A GROUP ACCOUNT (The Mini Bar): HELP WITH NO CURRENT VENUE')
+    t = Tab(b, 390, 800)
+    t.go(VP + '/__fixture/group.html')
+    t.until('!!document.getElementById("vphLink")', 8)
+    t.js('document.getElementById("vphLink").click()')
+    t.until('!!document.querySelector(".vph-msg")', 5)
+    to_form(t)
+    opts = t.until('(function(){var p=document.getElementById("vphPick");return p&&p.options.length>1?Array.prototype.map.call(p.options,function(o){return o.textContent;}).join("|"):"";})()', 5)
+    check('group: with no current venue, the form asks which venue, listing this login\'s venues by name', opts == 'Choose a venue|The Mini Bar Broadbeach|The Mini Bar Burleigh|The Mini Bar Tugun', opts)
+    check('group: and they come from this login\'s own venues (one read, by id)', 'in 3' in (t.js('window.__asked') or []), t.js('window.__asked'))
+    lab = t.js('(function(){var r=document.getElementById("vphReply");return r.parentNode.querySelector("label").textContent;})()')
+    check('group: a login WITH an email may leave the reply address blank', lab == 'Reply to (optional)', lab)
+    t.shot('07d-group-venue-picker')
+    t.js('document.getElementById("vphSubject").value="TV";document.getElementById("vphMsg").value="Black screen";document.querySelector(".vph-go").click()')
+    time.sleep(0.3)
+    check('group: no venue chosen, no send, and it says to choose one', not [x for x in posts(t) if x['path'] == '/help/venue/ticket'] and 'Choose which venue' in (t.js('document.querySelector(".vph-err").textContent') or ''))
+    t.js('document.getElementById("vphPick").value="aaaaaaaa-0000-4000-8000-000000000002";document.querySelector(".vph-go").click()')
+    t.until('!!document.querySelector(".vph-done")', 8)
+    bb = ([x for x in posts(t) if x['path'] == '/help/venue/ticket'][-1:] or [{}])[0].get('body', {})
+    check('group: the ticket goes for the venue they chose, with no reply address (their sign-in email is used)', bb.get('venue_id') == 'aaaaaaaa-0000-4000-8000-000000000002' and bb.get('reply_email') == '', bb)
+    t.close()
+
+    print('THE ACCOUNT PAGE SAYS WHICH VENUE IT IS SHOWING')
+    t = Tab(b, 390, 800, routes={'/help/content?brand=venueplay&audience=venue': _content(_vp['venue']['items'], [{'id': ISSUES['venueplay:venue'][0]['id'], 'title': 'TV', 'steps': [{'id': 's-tv', 'body': 'Check the TV is showing {tv_link}.'}]}])})
+    t.go(VP + '/__fixture/account-hook.html')
+    t.until('!!document.getElementById("vphLink")', 8)
+    t.js('document.getElementById("vphLink").click()')
+    t.until('!!document.querySelector("[data-issue]")', 5)
+    t.js('document.querySelector("[data-issue]").click()')
+    tvs = t.until('(document.querySelector(".vph-stepbody")||{}).textContent', 5)
+    check("account page: the TV step names the link of the venue the page is showing", tvs == "Check the TV is showing your venue's TV link, venueplay.com.au/tv?mini-bar-burleigh.", tvs)
+    t.js('document.querySelector(".vph-still").click()')
+    t.until('!!document.getElementById("vphSubject")', 5)
+    check('account page: no picker, the page already said which venue', t.js('!document.getElementById("vphPick")') is True)
+    t.js('document.getElementById("vphMsg").value="Still black";document.querySelector(".vph-go").click()')
+    t.until('!!document.querySelector(".vph-done")', 8)
+    bb = ([x for x in posts(t) if x['path'] == '/help/venue/ticket'][-1:] or [{}])[0].get('body', {})
+    check('account page: the ticket is for that venue', bb.get('venue_id') == 'aaaaaaaa-0000-4000-8000-000000000002', bb)
+    t.close()
+
+
 def help_page_checks(b, VP):
     """THE PUBLIC HELP PAGE, /help (21 Oct 2026): the real page, the real widget in "page" mode,
     at desktop and phone width. Every ticket goes to the stand-in Worker, never the real one."""
@@ -287,6 +350,9 @@ def help_page_checks(b, VP):
         t.shot('21b-help-%s-venue-step' % tag)
         for k in range(3):
             t.until('!!document.querySelector("#vphFlow-venue .vph-still")', 3)
+            if k == 1:
+                tvs = t.js('document.querySelector("#vphFlow-venue .vph-stepbody").textContent')
+                check(tag + " venue: signed out, the TV step says where the venue's link is, never a raw {tv_link}", tvs == "Check the TV is showing your venue's TV link (it is on your Account page).", tvs)
             t.js('document.querySelector("#vphFlow-venue .vph-still").click()')
         t.until('!!document.getElementById("vphMsg-venue")', 5)
         about = t.js('(document.querySelector("#vphFlow-venue .vph-about")||{}).textContent')
@@ -492,47 +558,50 @@ def main():
             t.until('!!document.querySelector(".vph-still")', 3)
             if k == 0:
                 t.shot('07b-venue-step-1')
+            if k == 1:
+                tvs = t.js('document.querySelector(".vph-stepbody").textContent')
+                check("venue: the TV step names this venue's own TV link", tvs == "Check the TV is showing your venue's TV link, venueplay.com.au/tv?royal.", tvs)
             t.js('document.querySelector(".vph-still").click()')
         t.until('!!document.getElementById("vphSubject")', 5)
         check('venue: after the steps, the form opens with the issue as the subject', t.js('document.getElementById("vphSubject").value') == I3['title'], t.js('document.getElementById("vphSubject").value'))
         c = t.js(CALL_LINE)
         check('venue: the contact form has "Call us on 07 5228 3667" beside it, tappable', call_ok(c) and t.js('!!document.querySelector(".vph-form #vphCall")') is True, c)
         t.shot('07c-venue-form-call-line')
-        # Dean, 21 Oct 2026: a venue asking from the console is nearly always mid-game.
-        u = t.js('(function(){var u=document.getElementById("vphUrgent");return {on:u.checked,label:u.parentNode.textContent};})()') or {}
-        check('venue: "This is happening right now (a game is on)" starts ticked', u.get('on') is True and u.get('label') == 'This is happening right now (a game is on)', u)
-        t.shot('07c-venue-form-urgent-on')
-        t.js('var k=document.getElementById("vphKind");k.value="accounts";k.dispatchEvent(new Event("change"))')
-        check('venue: picking Billing unticks it (a bill is never urgent)', t.js('document.getElementById("vphUrgent").checked') is False)
-        t.js('var k=document.getElementById("vphKind");k.value="venue_support";k.dispatchEvent(new Event("change"))')
-        check('venue: and back to Help with VenuePlay ticks it again', t.js('document.getElementById("vphUrgent").checked') is True)
-        t.js('document.getElementById("vphUrgent").click()')
-        t.js('var k=document.getElementById("vphKind");k.value="accounts";k.dispatchEvent(new Event("change"));k.value="venue_support";k.dispatchEvent(new Event("change"))')
-        check('venue: it can be unticked, and once the person has set it, changing the kind leaves it alone', t.js('document.getElementById("vphUrgent").checked') is False)
+        # Dean, 21 Oct 2026: no "Happening now" tick (the Worker marks it urgent when a game is on), and a
+        # login with no email (hosts sign in by phone) is ASKED for one, because HQ replies by email only.
+        check('venue: there is no "Happening now" tick any more', t.js('!document.getElementById("vphUrgent") && !document.querySelector("#vphFlow input[type=checkbox]") && !/happening (right )?now/i.test(document.getElementById("vphFlow").textContent)') is True)
+        lab = t.until('(function(){var r=document.getElementById("vphReply");var l=r&&r.parentNode.querySelector("label");return l&&l.textContent!=="Reply to (optional)"?l.textContent:"";})()', 5)
+        check('venue: this login has no email, so the reply address is asked for, not optional', lab == 'Your email, so we can reply', lab)
+        check('venue: and no venue picker: the console knows its venue', t.js('!document.getElementById("vphPick")') is True)
+        t.shot('07c-venue-form')
         fine = t.js('(function(){var f=document.getElementById("vphFine"),p=document.querySelector(".vph-priv a");return {t:f&&f.textContent,priv:p&&p.getAttribute("href"),sep:!!(p&&f&&!f.contains(p))};})()') or {}
         check('venue: the small print is one clean sentence, with the privacy policy as its own small link',
               fine.get('t') == "We'll reply by email." and fine.get('priv') == '/privacy' and fine.get('sep') is True, fine)
         t.js('document.getElementById("vphSubject").value="";document.getElementById("vphMsg").value="TV blank";document.querySelector(".vph-go").click()')
         time.sleep(0.3)
         check('venue: no subject, no send', not [x for x in posts(t) if x['path'] == '/help/venue/ticket'])
-        t.js('document.getElementById("vphSubject").value="TV not showing";document.getElementById("vphKind").value="accounts";document.getElementById("vphUrgent").checked=true;document.querySelector(".vph-go").click()')
+        t.js('document.getElementById("vphSubject").value="TV not showing";document.getElementById("vphKind").value="accounts";document.querySelector(".vph-go").click()')
+        time.sleep(0.3)
+        check('venue: no reply email from a login that has none: no send, and it says why', not [x for x in posts(t) if x['path'] == '/help/venue/ticket'] and 'email' in (t.js('document.querySelector(".vph-err").textContent') or ''))
+        t.js('document.getElementById("vphReply").value="hayley@example.com";document.querySelector(".vph-go").click()')
         done = t.until('(document.querySelector(".vph-done")||{}).textContent', 8)
         post = (t.js('window.__posts') or [{}])[-1]
         body = post.get('body', {})
-        check('venue: posts to /help/venue/ticket with the venue, the kind and urgent',
-              post.get('path') == '/help/venue/ticket' and body.get('venue_id') == '11111111-2222-4333-8444-555555555555' and body.get('category') == 'accounts' and body.get('urgent') is True, post)
+        check('venue: posts to /help/venue/ticket with the venue, the kind and the reply address, and no say on urgency',
+              post.get('path') == '/help/venue/ticket' and body.get('venue_id') == '11111111-2222-4333-8444-555555555555' and body.get('category') == 'accounts' and body.get('reply_email') == 'hayley@example.com' and 'urgent' not in body, post)
         check('venue: with the signed-in login\'s token', (post.get('headers') or {}).get('Authorization') == 'Bearer venue-login-token', post.get('headers'))
         check('venue: shows the ticket number', bool(done) and '#1042' in done, done)
         check('venue: the ticket carries the issue the steps were for', body.get('issue_id') == I3['id'], body)
         t.js('window.__routes["/help/venue/ticket"]={status:429,body:{error:"That is a lot of requests in an hour."}};document.querySelector(".vph-x").click();document.getElementById("vphLink").click()')
         t.until('!!document.querySelector(".vph-msg")', 5)
         to_form(t)
-        t.js('document.getElementById("vphSubject").value="x";document.getElementById("vphMsg").value="y";document.querySelector(".vph-go").click()')
+        t.js('document.getElementById("vphSubject").value="x";document.getElementById("vphMsg").value="y";document.getElementById("vphReply").value="hayley@example.com";document.querySelector(".vph-go").click()')
         err = t.until('(document.querySelector(".vph-err")||{}).textContent', 5)
         check('venue: a refusal from the Worker is shown in its own words, and Send works again',
               err == 'That is a lot of requests in an hour.' and t.js('document.querySelector(".vph-go").disabled') is False, err)
         t.close()
 
+        group_checks(b, VP)
         help_page_checks(b, VP)
 
         print('PARTYPLAY GUEST PHONE')

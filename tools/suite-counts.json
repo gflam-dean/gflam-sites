@@ -132,11 +132,11 @@
   "counted_by": "lines"
  },
  "tools/help-desk-pages.test.py": {
-  "checks": 180,
+  "checks": 191,
   "counted_by": "lines"
  },
  "tools/help-seed-matches-faq.test.py": {
-  "checks": 11,
+  "checks": 13,
   "counted_by": "lines"
  },
  "tools/hq-lists-in-chrome.test.py": {
@@ -316,11 +316,11 @@
   "counted_by": "lines"
  },
  "tools/test-help-desk.js": {
-  "checks": 249,
+  "checks": 256,
   "counted_by": "lines"
  },
  "tools/test-help-triage-truth.js": {
-  "checks": 18,
+  "checks": 22,
   "counted_by": "lines"
  },
  "tools/test-jackpot-cap-15-oct.js": {

@@ -1,5 +1,5 @@
 -- =====================================================================
--- Migration 113: "Players cannot join" says what the product does
+-- Migration 113: the venue Help steps say what the product does
 -- ---------------------------------------------------------------------
 --   NOT RUN. Run AFTER migration 106 (it changes rows 106 put there).
 --   Safe to run any number of times, and in either order with the Workers
@@ -63,7 +63,47 @@ update public.vp_help_faq
  where id = 'd3a64ff4-0b24-5073-be9a-32f85519ec1b'
    and answer = 'Your plan sets how many players can join a night. If a night runs bigger, each extra player is $2 for that night, and your host confirms it on screen before the game starts. Your Account page shows your plan, your next payment and your invoices. For anything about a bill, email accounts@venueplay.com.au.';
 
+-- ---------------------------------------------------------------------
+-- 21 Oct 2026, Dean's second look. "The TV is not showing the game":
+--   step 2 names the venue's ACTUAL TV link. The words hold {tv_link}, and the Help panel fills it
+--          in for a signed-in venue as "your venue's TV link, venueplay.com.au/tv?<slug>" (the
+--          address the Account page shows); anywhere else, "your venue's TV link (it is on your
+--          Account page)". If HQ edits this step, keep {tv_link} in it.
+--   step 3 says what "online" means.
+-- And there is no "Happening now" tick any more: the Worker marks a console request urgent itself
+-- when a game or lobby is open at the venue. So "Contacting us" stops telling people to tick it.
+-- It has TWO guarded versions: 106's words (this branch), and migration 112's words, for when
+-- feature/support-phone has been run first. Whichever the row holds is the one that changes.
+-- ---------------------------------------------------------------------
+
+update public.vp_help_steps
+   set body = 'Check the TV is showing {tv_link}.', updated_at = now(), updated_by = 'migration 113'
+ where id = '15d9bd36-27a0-5ccd-849b-eb65b1a19f44'
+   and issue_id = '857c3542-d097-54c2-afba-9cdbd1f5a193'
+   and body = 'Check the TV is using your venue''s TV link from your Account page.';
+
+update public.vp_help_steps
+   set body = 'Check the TV is connected to the internet: try opening another website on it.', updated_at = now(), updated_by = 'migration 113'
+ where id = 'fc72fa44-ff4e-5ecd-ab95-3dc774cab025'
+   and issue_id = '857c3542-d097-54c2-afba-9cdbd1f5a193'
+   and body = 'Check the TV is online: open any other website on it.';
+
+update public.vp_help_faq
+   set answer = 'Use the form below and we will reply by email. Sent from your console while a game is on at your venue, it comes to us marked urgent. You can also email support@venueplay.com.au, or accounts@venueplay.com.au about billing.',
+       updated_at = now(),
+       updated_by = 'migration 113'
+ where id = 'df7d1acb-f519-5a1a-8889-518c0d69cb87'
+   and answer = 'Use the form below and we will reply by email. If a game night is going wrong right now, tick "Happening now" so it comes to us marked urgent. You can also email support@venueplay.com.au, or accounts@venueplay.com.au about billing.';
+
+update public.vp_help_faq
+   set answer = 'If a game is on right now and something is going wrong, call 07 5228 3667 and press 2. For anything else, use the form below and we will reply by email (sent from your console while a game is on, it comes to us marked urgent), or email support@venueplay.com.au. For billing, email accounts@venueplay.com.au, or call and press 4.',
+       updated_at = now(),
+       updated_by = 'migration 113'
+ where id = 'df7d1acb-f519-5a1a-8889-518c0d69cb87'
+   and answer = 'If a game is on right now and something is going wrong, call 07 5228 3667 and press 2. For anything else, use the form below and we will reply by email (tick "Happening now" if it cannot wait), or email support@venueplay.com.au. For billing, email accounts@venueplay.com.au, or call and press 4.';
+
 -- Read it back (read only):
 --   select position, pinned, body from public.vp_help_steps
 --    where issue_id = '927e1377-e4c3-5065-9b7b-03d937321928' order by position;
---   select answer, updated_by from public.vp_help_faq where id = 'd3a64ff4-0b24-5073-be9a-32f85519ec1b';
+--   select answer, updated_by from public.vp_help_faq where id in ('d3a64ff4-0b24-5073-be9a-32f85519ec1b', 'df7d1acb-f519-5a1a-8889-518c0d69cb87');
+--   select position, body from public.vp_help_steps where issue_id = '857c3542-d097-54c2-afba-9cdbd1f5a193' order by position;

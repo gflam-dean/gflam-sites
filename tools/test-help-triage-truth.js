@@ -21,15 +21,15 @@ load('tools/rig-game-worker.js');
 var fails = 0, ranT = 0;
 function check(name, ok, saw) { ranT++; if (ok) print('  ok   ' + name); else { fails++; print('  FAIL ' + name + (saw === undefined ? '' : '   saw: ' + JSON.stringify(saw).slice(0, 400))); } }
 
-var ISSUE = '927e1377-e4c3-5065-9b7b-03d937321928';
+var ISSUE = '927e1377-e4c3-5065-9b7b-03d937321928', TV = '857c3542-d097-54c2-afba-9cdbd1f5a193';
 var Q = "'((?:[^']|'')*)'";
 function unq(s) { return s.replace(/''/g, "'"); }
 
 /* ---- 1. the steps as the database ends up with them ---- */
-var steps = {};
+var steps = {}, tvSteps = {};
 var seed = readFile('venueplay-backend/supabase/venueplay-106-help-desk.sql');
 var ins = new RegExp("insert into public\\.vp_help_steps \\(id, issue_id, position, body, pinned\\) values \\(" + Q + ", " + Q + ", (\\d+), " + Q + ", (true|false)\\)", 'g'), m;
-while ((m = ins.exec(seed))) if (m[2] === ISSUE) steps[m[1]] = { id: m[1], position: +m[3], body: unq(m[4]), pinned: m[5] === 'true' };
+while ((m = ins.exec(seed))) { var row0 = { id: m[1], position: +m[3], body: unq(m[4]), pinned: m[5] === 'true' }; if (m[2] === ISSUE) steps[m[1]] = row0; else if (m[2] === TV) tvSteps[m[1]] = row0; }
 check('migration 106 seeds three steps for "Players cannot join"', Object.keys(steps).length === 3, Object.keys(steps));
 
 function apply(file) {
@@ -38,7 +38,7 @@ function apply(file) {
   while ((u = up.exec(src))) {
     var set = u[1], where = u[2];
     var id = new RegExp('id = ' + Q).exec(where); id = id && id[1];
-    var row = steps[id]; if (!row) continue;
+    var row = steps[id] || tvSteps[id]; if (!row) continue;
     var guards = [];
     var gin = /and body in \(([\s\S]*?)\)\s*$/.exec(where), geq = new RegExp('and body = ' + Q + '\\s*$').exec(where);
     if (gin) { var g, gr = new RegExp(Q, 'g'); while ((g = gr.exec(gin[1]))) guards.push(unq(g[1])); }
@@ -52,9 +52,12 @@ function apply(file) {
   return n;
 }
 var applied = apply('venueplay-backend/supabase/venueplay-113-help-join-steps-true.sql');
-check('migration 113 changes all three, each only where it still reads as seeded', applied === 3, applied);
+check('migration 113 changes all five (three join steps, two TV steps), each only where it still reads as seeded', applied === 5, applied);
 var before = JSON.stringify(steps);
 check('and running 113 a second time changes nothing (its guard also accepts its own words)', apply('venueplay-backend/supabase/venueplay-113-help-join-steps-true.sql') === 3 && JSON.stringify(steps) === before);
+var tv = Object.keys(tvSteps).map(function (k) { return tvSteps[k]; }).sort(function (a, b) { return a.position - b.position; }).map(function (x) { return x.body; });
+check('TV step 2 names the venue\'s own link: the {tv_link} the Help panel fills in', tv[1] === 'Check the TV is showing {tv_link}.', tv[1]);
+check('TV step 3 says what online means', tv[2] === 'Check the TV is connected to the internet: try opening another website on it.', tv[2]);
 var list = Object.keys(steps).map(function (k) { return steps[k]; }).sort(function (a, b) { return a.position - b.position; });
 var words = list.map(function (s) { return s.body; });
 check('step 1 is the way in: the QR code on the TV, or venueplay.com.au/play', /QR code on the TV/.test(words[0]) && /venueplay\.com\.au\/play/.test(words[0]), words[0]);
@@ -100,6 +103,10 @@ var hdrs = { get: function () { return ''; } };
   });
   var faq = JSON.parse(readFile('venueplay/data/help-faq.json'));
   var bill = faq.venue.items.filter(function (i) { return i.q === 'Billing and players'; })[0];
+  var contact = faq.venue.items.filter(function (i) { return i.q === 'Contacting us'; })[0];
+  check('the FAQ "Contacting us" no longer tells anyone to tick a box that is gone, and says a game on makes it urgent', contact && !/Happening now|tick/i.test(contact.a) && /game is on/.test(contact.a), contact && contact.a);
+  var mig = readFile('venueplay-backend/supabase/venueplay-113-help-join-steps-true.sql');
+  check('and 113 changes it in the database from either the seeded words or migration 112\'s', (mig.match(/where id = 'df7d1acb-f519-5a1a-8889-518c0d69cb87'/g) || []).length === 2 && mig.indexOf('(tick "Happening now" if it cannot wait)') > 0);
   check('the FAQ "Billing and players" no longer says the plan sets how many can join', bill && !/sets how many players can join/.test(bill.a) && /never stops anyone joining/.test(bill.a), bill && bill.a);
 
   print('');
