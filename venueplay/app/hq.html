@@ -52,11 +52,12 @@
   .hact:hover{border-color:var(--pink);color:#fff}
   .link:hover{color:var(--pink)}
 
-  input[type=text],input[type=email],input[type=number],select,textarea{
+  input[type=text],input[type=email],input[type=number],input[type=tel],input[type=date],input[type=month],select,textarea{
     width:100%;background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:10px;
     padding:10px 11px;font-family:'Manrope',sans-serif;font-size:13.5px;outline:none;transition:.15s}
   input:focus,select:focus,textarea:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.15)}
   input:disabled,select:disabled{opacity:.55;cursor:not-allowed}
+  input[type=date],input[type=month]{color-scheme:dark}
   select{cursor:pointer;-webkit-appearance:none;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 18px) 17px,calc(100% - 13px) 17px;background-size:5px 5px;background-repeat:no-repeat}
   .field{margin-bottom:12px}
   .field label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:5px;font-weight:600}
@@ -186,6 +187,88 @@
   .cxnoteform textarea:focus{outline:none;border-color:var(--pink)}
 
   .foot{max-width:1240px;margin:0 auto 44px;padding:0 22px;font-size:12px;color:var(--faint);line-height:1.6}
+
+  /* VENUES: one line each, and on a phone the row fits the screen (21 Oct 2026). */
+  .vtable td{padding-top:9px;padding-bottom:9px}
+  @media (max-width:700px){
+    .vtable{min-width:0}
+    .vtable th:nth-child(2),.vtable td:nth-child(2){display:none}
+    .vtable tr:not(.detail) td{padding:9px 8px}
+    .vtable .actcell{flex-direction:column;align-items:stretch}
+    .vtable .badge{display:inline-block;margin:2px 0}
+  }
+  @media (max-width:520px){
+    .vtable th:nth-child(3),.vtable tr:not(.detail) td:nth-child(3){display:none}
+  }
+
+  /* QUIET, READABLE (21 Oct 2026): status under the name, buttons in one tidy row. */
+  .qbar{margin:0 0 12px}
+  .qtable td{vertical-align:middle}
+  .qstate{margin-top:4px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .qcon{font-size:11.5px;color:var(--win)}
+  tr.qdone td .vn{color:var(--muted)}
+  .qtable .actcell{justify-content:flex-start}
+
+  /* A CONTACTED CANCELLATION, ONE LINE (21 Oct 2026). */
+  .cxline{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:linear-gradient(180deg,#131315,#0e0e10);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0 0 8px}
+  .cxlname{min-width:0;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+  .cxlname b{color:#fff;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15px}
+  .cxlbits{color:var(--muted);font-size:12.5px}
+  .cxlacts{display:flex;gap:6px}
+
+  /* BILLING HEALTH, ONE LINE PER VENUE (21 Oct 2026). */
+  .hhead{margin-bottom:10px}
+  .hall{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);margin-top:8px;cursor:pointer}
+  .hall input{width:auto;accent-color:var(--pink)}
+  .hline{background:linear-gradient(180deg,#131315,#0e0e10);border:1px solid var(--line);border-radius:12px;padding:11px 14px;margin-bottom:8px}
+  .hline.bad{border-color:rgba(255,107,107,.45)}
+  .hrow{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+  .hname{min-width:0}
+  .hwhere{color:var(--muted);font-size:12px;margin-left:4px}
+  .hstatus{margin-top:4px;color:var(--text);font-size:13.5px}
+  .hmeta{margin-top:2px;color:var(--faint);font-size:12px}
+  .hhist{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+  .hev{background:var(--ink-3);border:1px solid var(--line-2);border-radius:8px;padding:7px 10px;font-size:12.5px;color:var(--text)}
+  .hev.bad{border-color:rgba(255,107,107,.35)}
+  .hev .auwhen{font-family:'JetBrains Mono',ui-monospace,monospace;color:var(--faint);font-size:11.5px;margin-right:6px}
+
+  /* GROUPS, ONE ROW EACH (21 Oct 2026). */
+  .gpanel{margin-bottom:8px}
+  .grow{cursor:pointer;flex-wrap:nowrap;align-items:flex-start}
+  .grow:focus{outline:2px solid var(--pink);outline-offset:-2px}
+  .gchev{color:var(--muted);font-size:12px;width:14px;flex:none;margin-top:4px}
+  .gmain{flex:1;min-width:0}
+  .gmain .gm{overflow:hidden;text-overflow:ellipsis}
+  .gkind{font-family:'Hanken Grotesk',sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);margin-left:6px}
+  .gbadges{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+  .gbody{padding:12px 16px 16px}
+  .gvtable{min-width:520px}
+  tr.ghit td{background:rgba(255,31,142,.07)}
+  @media (max-width:640px){.grow{flex-wrap:wrap}.gbadges{width:100%;justify-content:flex-start;padding-left:26px}}
+
+  /* THE AUDIT SEARCH (21 Oct 2026). Filters wrap to one per line on a phone. */
+  .aufilters{display:grid;grid-template-columns:2fr 1fr 1.4fr 1.4fr;gap:10px}
+  .aufilters .aucustom{grid-column:span 1}
+  @media (max-width:760px){.aufilters{grid-template-columns:1fr 1fr}.aufilters .auven{grid-column:1 / -1}}
+  @media (max-width:420px){.aufilters{grid-template-columns:1fr}}
+  .aufield{margin:0;position:relative}
+  .aulist{position:absolute;left:0;right:0;top:100%;z-index:30;background:var(--ink-2);border:1px solid var(--line);border-radius:10px;margin-top:4px;max-height:260px;overflow:auto;box-shadow:0 12px 30px rgba(0,0,0,.5)}
+  .aulist button{display:block;width:100%;text-align:left;background:none;border:none;color:var(--text);font:inherit;font-size:13.5px;padding:9px 12px;cursor:pointer}
+  .aulist button:hover,.aulist button.on{background:var(--ink-3);color:#fff}
+  .aulist .vt{color:var(--faint);font-size:11.5px;margin-left:6px}
+  .auacts{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:12px}
+  .auent{background:linear-gradient(180deg,#131315,#0e0e10);border:1px solid var(--line);border-radius:12px;padding:11px 14px;margin-bottom:8px}
+  .auent.bad{border-color:rgba(255,107,107,.45)}
+  .auhead{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+  .auhead .auwhen{font-family:'JetBrains Mono',ui-monospace,monospace;color:var(--faint)}
+  .auhead .auwho{color:var(--text);font-weight:700}
+  .aubody{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;margin-top:4px}
+  .ausay{color:var(--text);font-size:14px;line-height:1.45;min-width:0}
+  .aumore{display:flex;gap:6px;flex-wrap:wrap;flex:none}
+  .hline .aumore{margin-top:7px}
+  @media (max-width:640px){.aubody{flex-direction:column;gap:7px}}
+  .auraw{margin-top:8px;background:var(--ink-3);border:1px solid var(--line-2);border-radius:8px;padding:9px 11px;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11.5px;color:var(--muted);white-space:pre-wrap;word-break:break-word;max-height:320px;overflow:auto}
+  .aupager{display:flex;gap:12px;align-items:center;justify-content:center;margin-top:12px}
 </style>
 <!-- On-brand dropdowns: one shared rule set, linked last so it is the answer (19 Oct 2026). -->
 <link rel="stylesheet" href="/app/vp-select.css">
@@ -323,7 +406,7 @@
       </div>
       <div class="note" id="reloadScreensOut" style="margin-top:8px"></div>
     </div>
-    <div class="panel"><div class="tscroll"><table>
+    <div class="panel"><div class="tscroll"><table class="vtable">
       <thead><tr><th>Venue</th><th>Location</th><th>Billing</th><th>Status</th><th></th></tr></thead>
       <tbody id="venueRows"></tbody>
     </table></div></div>
@@ -345,33 +428,34 @@
 
   <!-- ============ QUIET ============ -->
   <div id="paneQuiet" class="hidden">
-    <div class="rowbetween">
-      <div class="lblk" style="margin:0">Venues that have gone quiet <span id="quietCount" class="mono" style="color:var(--roll)"></span></div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <label class="note" for="quietDays" style="margin:0">Quiet for at least</label>
-        <select id="quietDays" style="width:auto">
-          <option value="7" selected>1 week</option>
-          <option value="14">2 weeks</option>
-          <option value="21">3 weeks</option>
-          <option value="30">1 month</option>
-          <option value="60">2 months</option>
-          <option value="90">3 months</option>
-        </select>
-        <button class="btn ghost sp" id="quietRefresh">Refresh</button>
-      </div>
+    <div class="lblk" style="margin-top:0">Venues that have gone quiet <span id="quietCount" class="mono" style="color:var(--roll)"></span></div>
+    <div class="filterbar qbar">
+      <label class="note" for="quietDays" style="margin:0">Quiet for at least</label>
+      <select id="quietDays" style="width:auto">
+        <option value="7" selected>1 week</option>
+        <option value="14">2 weeks</option>
+        <option value="21">3 weeks</option>
+        <option value="30">1 month</option>
+        <option value="60">2 months</option>
+        <option value="90">3 months</option>
+      </select>
+      <button class="btn ghost" id="quietRefresh">Refresh</button>
     </div>
-    <div class="panel" style="margin-bottom:14px">
-      <div class="lblk" style="margin:0 0 6px">Venues that have left</div>
-      <div class="note" style="margin:0 0 10px">A venue whose owner has cancelled is archived automatically 30 days after their paid period ends, so departed venues stop sitting on the active lists. It never touches a venue that is still paying, still inside its paid period, or that has run a night since cancelling. Check first, then run it.</div>
-      <button class="btn ghost sp" id="archiveCheck">Check who would be archived</button>
-      <button class="btn sp" id="archiveRun" hidden>Archive them now</button>
-      <div id="archiveOut" style="margin-top:10px"></div>
-    </div>
-    <div class="panel"><div class="tscroll"><table>
-      <thead><tr><th>Venue</th><th>Quiet for</th><th>Last game</th><th>State</th><th></th></tr></thead>
+    <div class="panel"><div class="tscroll"><table class="qtable">
+      <thead><tr><th>Venue</th><th>Quiet for</th><th>Last game</th><th></th></tr></thead>
       <tbody id="quietRows"></tbody>
     </table></div></div>
     <div class="note">Sorted <b>shortest quiet first</b>, because a venue that missed one week is the one you can still win back. Last game counts every format: sessions for trivia, musical bingo and raffles, and game reports for broadcast bingo, which opens no session. Bingo is recorded from the first ball, so a night the host never formally ended still counts. A venue that has never run a night is measured from the day it was set up. We only look back a year, so an older venue with nothing in that window reads <b>over a year</b> rather than never.</div>
+
+    <div class="lblk">Venues that have left</div>
+    <div class="panel pad">
+      <div class="note" style="margin:0 0 12px">A venue whose owner has cancelled is archived automatically 30 days after their paid period ends, so departed venues stop sitting on the active lists. It never touches a venue that is still paying, still inside its paid period, or that has run a night since cancelling. Check first, then run it.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn ghost" id="archiveCheck">Check who would be archived</button>
+        <button class="btn" id="archiveRun" hidden>Archive them now</button>
+      </div>
+      <div id="archiveOut" style="margin-top:10px"></div>
+    </div>
   </div>
 
   <!-- ============ CANCELLED ============ -->
@@ -385,10 +469,10 @@
     </div>
     <div class="filterbar" style="margin-bottom:12px">
       <select id="cxFilter" style="width:auto">
-        <option value="uncontacted" selected>Not contacted yet</option>
-        <option value="all">All</option>
+        <option value="all" selected>Everyone (not contacted first)</option>
+        <option value="uncontacted">Not contacted yet</option>
         <option value="open">Still inside their paid period</option>
-        <option value="gone">Archived</option>
+        <option value="gone">Left (ended or archived)</option>
       </select>
       <button class="btn ghost sp" id="cxRefresh">Refresh</button>
     </div>
@@ -469,7 +553,7 @@
       <div class="errflash" id="addGroupErr"></div>
     </div>
     <div class="filterbar" style="margin-bottom:12px">
-      <input type="text" id="gSearch" placeholder="Search group or account name">
+      <input type="text" id="gSearch" placeholder="Find a group, an account or a venue in one">
       <select id="gFilter">
         <option value="all">All</option>
         <option value="active">Active only</option>
@@ -478,7 +562,7 @@
       <span class="note" id="gCount" style="margin-left:auto"></span>
     </div>
     <div id="groupList"></div>
-    <div class="note">Click a row to expand its venues and settings. Grouped venues are billed on one consolidated invoice, never card-charged. Only grouped venues can be reassigned here; moving an independent (card) venue into a group is a billing-parent change handled at onboarding.</div>
+    <div class="note">Tap a row to open its venues and settings; tap again to close it. Grouped venues are billed on one consolidated invoice, never card-charged. Only grouped venues can be reassigned here; moving an independent (card) venue into a group is a billing-parent change handled at onboarding.</div>
   </div>
 
   <!-- ============ USAGE ============ -->
@@ -498,7 +582,7 @@
   <div id="paneTeam" class="hidden">
     <div class="lblk">VenuePlay staff logins</div>
     <div class="panel"><div class="tscroll"><table>
-      <thead><tr><th>Login</th><th>Role</th><th>Auth user</th><th></th></tr></thead>
+      <thead><tr><th>Login</th><th>Role</th><th></th></tr></thead>
       <tbody id="teamRows"></tbody>
     </table></div></div>
     <div class="lblk">Add a VenuePlay staff login</div>
@@ -518,13 +602,50 @@
   </div>
 
   <!-- ============ AUDIT ============ -->
+  <!-- A SEARCH, NOT A DUMP (Dean, 21 Oct 2026). One page at a time from the billing Worker
+       (/admin/audit-search), newest first, filtered on the database. Owner and accounts only. -->
   <div id="paneAudit" class="hidden">
-    <div class="lblk">Admin audit log</div>
-    <div class="panel"><div class="tscroll"><table>
-      <thead><tr><th>When</th><th>Who</th><th>Action</th></tr></thead>
-      <tbody id="auditRows"></tbody>
-    </table></div></div>
-    <div class="note">Every discount, suspension, new venue and staff change the Worker records lands here, newest first. <b id="auditCap" style="color:var(--roll)"></b></div>
+    <div class="lblk" style="margin-top:0">Everything that changed, and who did it</div>
+    <div class="panel pad" style="margin-bottom:12px">
+      <div class="aufilters">
+        <div class="field aufield auven">
+          <label for="auVenue">Venue</label>
+          <input type="text" id="auVenue" autocomplete="off" placeholder="Any venue: type a name">
+          <div id="auVenueList" class="aulist" hidden></div>
+        </div>
+        <div class="field aufield">
+          <label for="auWhen">When</label>
+          <select id="auWhen">
+            <option value="today">Today</option>
+            <option value="7" selected>Last 7 days</option>
+            <option value="30">Last 30 days</option>
+            <option value="all">Any time</option>
+            <option value="custom">Pick dates&hellip;</option>
+          </select>
+        </div>
+        <div class="field aufield">
+          <label for="auKind">What changed</label>
+          <select id="auKind"><option value="">Anything</option></select>
+        </div>
+        <div class="field aufield">
+          <label for="auWho">Who did it</label>
+          <select id="auWho"><option value="">Anyone</option></select>
+        </div>
+        <div class="field aufield aucustom" hidden>
+          <label for="auFrom">From</label><input type="date" id="auFrom">
+        </div>
+        <div class="field aufield aucustom" hidden>
+          <label for="auTo">To (inclusive)</label><input type="date" id="auTo">
+        </div>
+      </div>
+      <div class="auacts"><button class="btn ghost" id="auReset">Clear filters</button><span class="note" id="auSaid" style="margin:0"></span></div>
+    </div>
+    <div id="auRows"></div>
+    <div class="aupager">
+      <button class="btn ghost" id="auNewer" disabled>&larr; Newer</button>
+      <span class="note" id="auPage" style="margin:0"></span>
+      <button class="btn ghost" id="auOlder" disabled>Older &rarr;</button>
+    </div>
   </div>
 
   <!-- ============ FLAGGED SIGNUPS ============ -->
@@ -593,6 +714,24 @@
   "use strict";
   function $(id){ return document.getElementById(id); }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  /* NOTHING GROWS FOR EVER ON ONE SCREEN (21 Oct 2026). A long list shows its first page and a
+     "Show more" row; search and filters still reach everything. */
+  var MORE={};
+  function capList(key, list, page, keepId){
+    var n=MORE[key]||page; if(list.length<=n) return { list:list, hidden:0 };
+    var out=list.slice(0,n);
+    if(keepId){ var k=list.filter(function(x){ return (x.id||x.venue_id)===keepId; })[0]; if(k && out.indexOf(k)===-1) out.push(k); }
+    return { list:out, hidden:list.length-out.length };
+  }
+  function moreRowHtml(key, hidden, cols, page){
+    return hidden>0 ? '<tr class="morerow"><td colspan="'+cols+'"><button class="mini" data-more="'+esc(key)+'" data-page="'+page+'">Show '+Math.min(hidden,page)+' more</button> <span class="note" style="margin:0 0 0 8px">'+hidden+' not shown. Search or filter to find one directly.</span></td></tr>' : '';
+  }
+  document.addEventListener("click", function(e){
+    var b=e.target.closest && e.target.closest("button[data-more]"); if(!b) return;
+    var k=b.getAttribute("data-more"), pg=+b.getAttribute("data-page")||100;
+    MORE[k]=(MORE[k]||pg)+pg;
+    if(k==="venues") renderVenues(); else if(k==="billing") renderBilling(); else if(k==="usage") renderUsage(); else if(k==="optin") renderOptin();
+  });
   function aud(n){ return "$"+Number(n||0).toLocaleString("en-AU",{minimumFractionDigits:2,maximumFractionDigits:2}); }
   function show(el,on){ var n=(typeof el==="string")?$(el):el; if(n) n.classList.toggle("hidden", !on); }
   function slugify(s){ return (s||"").toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""); }
@@ -731,7 +870,7 @@
              filter to say not contacted yet when you open that page?" A retention screen is a
              to-do list, and a to-do list that opens on everything you have already done is a
              list you scroll past. */
-          cxFilter:"uncontacted",
+          cxFilter:"all",
           health:undefined, healthErr:null, healthAsked:false,
           meter:undefined, meterErr:null, meterAsked:false,
           vFilter:"all", vSearch:"", openVenue:null, openBilling:null, openGroup:null,
@@ -826,7 +965,10 @@
       c.from("vp_venues").select("id,weekly_limit_off"),
       /* ONE-NIGHT PASS (migration 110). Its own query, same reason: before 110 is run this one 400s
          and the venue card says the pass is not available yet; nothing else is touched. */
-      c.from("vp_venues").select(NIGHT_PASS_COLS)
+      c.from("vp_venues").select(NIGHT_PASS_COLS),
+      /* HOW EACH CARD ACCOUNT PAYS, for the Groups tab's one-line rows (21 Oct 2026). Its own
+         query: a refusal only loses the billing badge, never the venue list. */
+      c.from("venueplay_founding").select("id,status,stripe_subscription_id,bill_by_invoice")
     ]).then(function(settled){
       var r = settled.map(function(x){ return x.status==="fulfilled" ? x.value : null; });
       var venuesFailed = settled[0].status !== "fulfilled";
@@ -848,6 +990,7 @@
       S.nightPass={}; S.nightPassKnown = !!(r[15] && !r[15].error && r[15].data);
       ((r[15] && r[15].data) || []).forEach(function(v){ S.nightPass[v.id]=v; });
       S.accounts=(r[13] && r[13].data) || [];
+      S.acctStatus={}; ((r[16] && !r[16].error && r[16].data) || []).forEach(function(a){ S.acctStatus[a.id]=a; });
       S.accountsFailed = settled[13] && settled[13].status !== "fulfilled";
       S.groups=(r[1] && r[1].data) || [];
       S.groupById={}; S.groups.forEach(function(g){ S.groupById[g.id]=g; });
@@ -894,6 +1037,7 @@
       (function(){ var p=$("gstPanel"); if(p) p.style.display = canBilling() ? "" : "none"; })();
     if(canBilling()) renderGst(0);
     renderStats(); renderVenues(); renderLive(); renderBilling(); renderGroups(); renderUsage(); renderTeam(); renderFlagged(); renderOptin(); renderAudit(); populateGroupSelect();
+    if(canBilling() && !S.healthAsked){ S.healthAsked=true; loadHealth(); }   // the Groups rows show a failing payment too
     loadTabBadges();
     }).catch(function(e){
       $("venueRows").innerHTML='<tr><td colspan="5" class="empty" style="border:none;background:none">Could not load venues: '+esc(e&&e.message||e)+'</td></tr>';
@@ -1045,6 +1189,7 @@
     PANES.forEach(function(p){ show("pane"+p.charAt(0).toUpperCase()+p.slice(1), p===pane); });
     if(pane==="quiet") loadQuiet();
     if(pane==="cancelled") loadCancelled();
+    if(pane==="audit") runAuditSearch(!AU.loaded);
     /* THE METER IS ASKED FOR HERE, not inside renderBilling. It used to be kicked off by the
        billing tab alone, so opening Usage first sat on "Reading the meter..." for ever and
        there was no way to tell that from a slow request. Two screens need it; the pane switch
@@ -1230,7 +1375,7 @@
       $("quietCount").textContent = list.length
         ? (todo ? (todo+" to chase"+(todo<list.length?" of "+list.length:"")) : "all "+list.length+" contacted")
         : "none, all busy";
-      if(!list.length){ tb.innerHTML='<tr><td colspan="5" class="empty">Nobody has been quiet that long. Good sign.</td></tr>'; return; }
+      if(!list.length){ tb.innerHTML='<tr><td colspan="4" class="empty">Nobody has been quiet that long. Good sign.</td></tr>'; return; }
       drawQuiet();
     }).catch(function(){ tb.innerHTML='<tr><td colspan="5" class="empty">Could not load that just now.</td></tr>'; });
   }
@@ -1239,7 +1384,7 @@
   function drawQuiet(){
     var tb=$("quietRows"); if(!tb) return;
     var list=S.quietList||[];
-    if(!list.length){ tb.innerHTML='<tr><td colspan="5" class="empty">Nobody has been quiet that long. Good sign.</td></tr>'; return; }
+    if(!list.length){ tb.innerHTML='<tr><td colspan="4" class="empty">Nobody has been quiet that long. Good sign.</td></tr>'; return; }
       var html="";
       list.forEach(function(v){
         var wks=Math.floor(v.days_quiet/7);
@@ -1258,23 +1403,23 @@
             + (con.actor_label ? ' by '+esc(con.actor_label) : '')+'</span>'
             + ' <button class="mini" data-quncontact="'+esc(v.id)+'">Undo</button>'
           : '<button class="mini" data-qcontact="'+esc(v.id)+'">Contacted</button>';
-        html += '<tr'+(con?' style="opacity:.62"':'')+'><td><b>'+esc(v.name||"Venue")+'</b></td>'
+        html += '<tr'+(con?' class="qdone"':'')+'><td><b class="vn" style="display:block">'+esc(v.name||"Venue")+'</b><div class="qstate">'+state+(con?' <span class="qcon">Contacted '+esc(cxWhen(con.created_at))+(con.actor_label?' by '+esc(con.actor_label):'')+'</span>':'')+'</div></td>'
               + '<td class="mono">'+quiet+'</td>'
               + '<td class="mono">'+(v.never_played ? '<span style="color:var(--roll)">never played</span>'
                                     : v.long_gone ? '<span style="color:var(--roll)">over a year</span>'
                                     : esc(v.last_game||""))+'</td>'
-              + '<td>'+state+'</td>'
-              + '<td>'+conCell+' <button class="mini" data-qdetail="'+esc(v.id)+'">'
-              +   (S.openQuiet===v.id ? 'Hide' : 'Details') + '</button> '
-              + '<button class="mini" data-history="'+esc(v.id)+'">History</button> '
-              + '<button class="mini" data-viewas="'+esc(v.id)+'">View as</button></td>'
+              + '<td><div class="actcell">'
+              +   (con ? '<button class="mini" data-quncontact="'+esc(v.id)+'">Undo contacted</button>' : '<button class="mini win" data-qcontact="'+esc(v.id)+'">Contacted</button>')
+              +   '<button class="mini" data-qdetail="'+esc(v.id)+'">'+(S.openQuiet===v.id ? 'Hide' : 'Details')+'</button>'
+              +   '<button class="mini" data-history="'+esc(v.id)+'">History</button>'
+              +   '<button class="mini" data-viewas="'+esc(v.id)+'">View as</button></div></td>'
               + '</tr>'
               /* SAME PANEL AS THE CANCELLED SCREEN, same endpoint, same renderer. Ringing a
                  quiet venue and ringing a leaving one are different conversations, but the
                  thing you want in front of you is identical: what they actually did with us. */
               + (S.openQuiet===v.id
-                  ? '<tr><td colspan="5">'+detailHtml(v.id)+'</td></tr>' : '')
-              + '<tr class="histrow" id="hist-'+esc(v.id)+'" hidden><td colspan="5"></td></tr>';
+                  ? '<tr><td colspan="4">'+detailHtml(v.id)+'</td></tr>' : '')
+              + '<tr class="histrow" id="hist-'+esc(v.id)+'" hidden><td colspan="4"></td></tr>';
       });
       tb.innerHTML=html;
   }
@@ -1305,7 +1450,7 @@
       var id=(qc||qu).getAttribute(qc?"data-qcontact":"data-quncontact");
       b.disabled=true; b.textContent="Saving\u2026";
       setContacted(id, !!qc).then(function(res){
-        if(res && res.error){ b.disabled=false; b.textContent=qc?"Contacted":"Undo"; vpTell("That did not save: "+res.error); return; }
+        if(res && res.error){ b.disabled=false; b.textContent=qc?"Contacted":"Undo contacted"; vpTell("That did not save: "+res.error); return; }
         refreshContactScreens();
       });
     });
@@ -1513,7 +1658,7 @@
        the truth. */
     S.venues.forEach(function(v){
       if(hideAsTest(v)) return;
-      if((isArchived(v) || isCancelling(v)) && !by[v.id]){
+      if((hasLeft(v) || isCancelling(v)) && !by[v.id]){
         by[v.id]={ venue_id:v.id, scheduled:null, undone:null, archived:null, alert:null,
                    contactState:null, notes:[] };
       }
@@ -1523,7 +1668,10 @@
       var st=by[id], v=venueById(id);
       // A venue that undid its cancellation and is not archived has not left. Off the list.
       if(!v || hideAsTest(v)) return;
-      var gone=isArchived(v), leaving=isCancelling(v) && !gone;
+      /* GONE IS "HAS LEFT", NOT ONLY "ARCHIVED" (21 Oct 2026). A venue whose subscription ended is
+         switched off with reason 'ended' and is not archived for 30 days; it was missing from this
+         screen for that whole month, or shown as still inside its paid period. */
+      var gone=hasLeft(v), leaving=isCancelling(v) && !gone;
       if(!gone && !leaving) return;
       st.v=v; st.gone=gone; st.leaving=leaving;
       st.when = (st.scheduled && st.scheduled.created_at) || (st.archived && st.archived.created_at) || null;
@@ -1694,6 +1842,8 @@
        error) on screen; loadCancelled draws the list the moment the history lands. */
     if(!S.cancelAudit) return;
     var all=cxStories(), list=all.filter(cxPasses);
+    // Not yet contacted first, then the one-line contacted ones, each newest first as before.
+    list=list.map(function(st,i){ return {st:st,i:i}; }).sort(function(a,b){ return (a.st.contacted?1:0)-(b.st.contacted?1:0) || a.i-b.i; }).map(function(x){ return x.st; });
     setTabBadge("cancelled", all.filter(function(st){ return !st.contacted; }).length);
     if(!all.length){
       wrap.innerHTML='<div class="empty">Nobody has cancelled. Long may it last.</div>';
@@ -1705,9 +1855,21 @@
            ? 'Everyone who has cancelled has been contacted. '+all.length+' in total, switch to All to see them.'
            : 'No cancellation matches that filter ('+all.length+' in total).')
         + '</div>'; return; }
+    S.cxFull=S.cxFull||{};
     wrap.innerHTML=list.map(function(st){
       var d=(st.scheduled && st.scheduled.detail) || {};
-      var badge = st.gone ? '<span class="badge suspend">Archived</span>'
+      /* CONTACTED, SO ONE LINE (Dean, 21 Oct 2026). Once somebody has rung them the card has done
+         its job: name, last day, who rang and when, and a way back. Open shows the whole card. */
+      if(st.contacted && !S.cxFull[st.venue_id]){
+        return '<div class="cxline" data-cxvid="'+esc(st.venue_id)+'">'
+          + '<div class="cxlname"><b>'+esc(st.v.name||st.venue_id)+'</b>'
+          +   '<span class="cxlbits">'+(d.ends ? 'last day '+esc(d.ends) : (st.gone ? 'archived' : 'last day not recorded'))
+          +   ' &middot; contacted '+esc(cxWhen(st.contacted.created_at))+(st.contacted.actor_label?' by '+esc(st.contacted.actor_label):'')+'</span></div>'
+          + '<div class="cxlacts">'+(canBilling() ? '<button class="mini" data-cxinvite="'+esc(st.venue_id)+'">Reactivate</button>' : '')
+          +   '<button class="mini" data-cxfull="'+esc(st.venue_id)+'">Open</button></div>'
+          + '</div>';
+      }
+      var badge = st.gone ? '<span class="badge suspend">'+(isArchived(st.v)?'Archived':'Subscription ended')+'</span>'
                           : '<span class="badge grouped">Still inside their paid period</span>';
       var ends = d.ends ? '<div class="cxk">Their last paid day <b>'+esc(d.ends)+'</b></div>' : "";
       /* THE REASON, IN THEIR WORDS. reason_label is the exact sentence the dropdown showed,
@@ -1752,6 +1914,8 @@
         + '<div class="cxacts">'+contacted
         +   ' <button class="btn ghost sp" data-cxdetail="'+esc(st.venue_id)+'">'
         +     (S.openCx===st.venue_id ? 'Hide details' : 'Details') + '</button>'
+        +   (st.contacted && canBilling() ? ' <button class="btn ghost sp" data-cxinvite="'+esc(st.venue_id)+'">Reactivate</button>' : '')
+        +   (st.contacted ? ' <button class="btn ghost sp" data-cxfull="'+esc(st.venue_id)+'">Make it one line</button>' : '')
         + '</div>'
         + (S.openCx===st.venue_id ? detailHtml(st.venue_id) : '')
         + notes
@@ -1770,6 +1934,10 @@
     if(oc){ downloadOptins(oc, b); return; }
     var dg=b.getAttribute("data-dcgo");
     if(dg){ applyDiscount(dg, b); return; }
+    var full=b.getAttribute("data-cxfull");
+    if(full){ S.cxFull=S.cxFull||{}; S.cxFull[full]=!S.cxFull[full]; renderCancelled(); return; }
+    var inv=b.getAttribute("data-cxinvite");
+    if(inv){ inviteBack(inv, b); return; }
     var det=b.getAttribute("data-cxdetail");
     if(det){
       S.openCx = (S.openCx===det ? null : det);
@@ -1800,6 +1968,22 @@
       });
     }
   });
+  /* REACTIVATE, SAFELY (Dean, 21 Oct 2026). Switching a cancelled venue back on from here would
+     bill a card its owner asked us to stop charging. So this emails the account's contact a link
+     to their own account page, where "Keep this venue" is one tap by them. Nothing is charged or
+     switched on until they do it; the email is in the audit. */
+  function inviteBack(id, btn){
+    var v=venueById(id), name=(v&&v.name)||"this venue";
+    vpAsk("Reactivate "+name+"?\n\nWe email their account contact a link to their account page, where they tap Keep this venue. Nothing is charged and nothing is switched on until they do, because it is their card.\n\nIf they said yes on the phone and want it done now, use View as and press Keep this venue on their account page with them.").then(function(ok){ if(!ok) return;
+      btn.disabled=true; var was=btn.textContent; btn.textContent="Sending\u2026";
+      workerPost("/admin/invite-back", { venue_id:id }).then(function(r){
+        btn.disabled=false; btn.textContent=was;
+        if(!r || r.error){ vpTell("Not sent: "+((r&&r.error)||"no answer")); return; }
+        vpTell("Sent to "+r.to+". "+(r.note||""));
+        loadAuditOnly();
+      });
+    });
+  }
   $("cxFilter").addEventListener("change", function(){ S.cxFilter=this.value; renderCancelled(); });
   $("cxRefresh").addEventListener("click", function(){ loadCancelled(true); });
 
@@ -1947,6 +2131,7 @@
       var hrs = Math.floor(mins/60);
       return '<span class="badge suspend" title="Last heard from '+mins+' minutes ago. This screen is not receiving anything: the host cannot reach it and neither can Reload TV. It needs a power cycle at the venue.">Screen DOWN '+(hrs>=1? hrs+'h' : mins+'m')+'</span>';
     }
+    var capV=capList("venues", list, 100, S.openVenue); list=capV.list;
     list.forEach(function(v){
       var suspended=v.status==="suspended";
       var inAccount = !v.group_id && v.founding_id && acctCount[v.founding_id]>1;
@@ -1995,7 +2180,8 @@
       }
 
       var tr=document.createElement("tr"); if(suspended) tr.className="off";
-      tr.innerHTML='<td><div class="vn">'+esc(v.name)+'</div><div class="vt mono">'+esc(v.slug||"(no slug)")+'</div></td>'+
+      /* ONE LINE PER VENUE (Dean, 21 Oct 2026): the screen address is in Details, and search still finds it. */
+      tr.innerHTML='<td><div class="vn" title="'+esc(v.slug||"")+'">'+esc(v.name)+'</div></td>'+
         '<td>'+esc(tzShort(v.timezone))+'</td>'+
         '<td>'+billBadge+'</td>'+
         '<td>'+statusCell+'</td>'+
@@ -2051,6 +2237,7 @@
         '</td>';
       b.appendChild(dt);
     });
+    if(capV.hidden) b.insertAdjacentHTML("beforeend", moreRowHtml("venues", capV.hidden, 5, 100));
   }
   (function(){ var b=$("reloadScreens"); if(b) b.addEventListener("click", reloadAllScreens); })();
 
@@ -2772,106 +2959,66 @@
      ITS OWN QUERY, for the same reason the cancelled screen has one. S.audit is the last 250
      rows of every kind, and screen_updated alone is 60 of them. A money event that scrolls out
      of that window would disappear from this panel in silence. */
-  var HEALTH_ACTIONS = ["overage_invoice_unpaid","overage_charge_failed","payment_failed_email",
-                        "extras_moved_to_monthly","overage_charged","invoice_receipt_email",
-                        "plan_uplift_after_three_big_nights"];
-  var HEALTH_BAD = { overage_invoice_unpaid:1, overage_charge_failed:1, payment_failed_email:1 };
-  var HEALTH_LABEL = {
-    overage_invoice_unpaid: "Extras invoice not paid",
-    overage_charge_failed:  "Extra-player charge failed",
-    payment_failed_email:   "We emailed them that a payment failed",
-    extras_moved_to_monthly:"Extras moved onto their next monthly bill",
-    overage_charged:        "Extra players charged and paid",
-    invoice_receipt_email:  "Receipt",
-    plan_uplift_after_three_big_nights: "Plan moved up after three big nights",
-  };
+  /* ONE LINE PER VENUE, NAMED (Dean, 21 Oct 2026). The panel listed every money email on its own,
+     and a declined subscription read "your VenuePlay subscription" with no venue anywhere: its
+     target is a Stripe customer id, which this page cannot see behind. The billing Worker now does
+     the naming and the folding (/admin/billing-health): one line per account or venue, its latest
+     state, how many declines, the last attempt, and the history under a tap. Only the lines that
+     need a look are shown until "Show every payment" is ticked. */
   function loadHealth(){
-    VP.getClient().from("vp_admin_audit").select("*")
-      .in("action", HEALTH_ACTIONS)
-      .order("created_at",{ascending:false}).limit(500)
-      .then(function(r){
-        if(r && r.error){ S.health=null; S.healthErr=(r.error.message||String(r.error)); }
-        else { S.health=(r && r.data) || []; S.healthErr=null; }
-        renderHealth();
-      })
-      .catch(function(e){ S.health=null; S.healthErr=(e&&e.message)||String(e); renderHealth(); });
+    if(!canBilling()){ S.health=null; S.healthErr="Owner and accounts only."; renderHealth(); return; }
+    workerGet("/admin/billing-health").then(function(r){
+      if(!r || r.error){ S.health=null; S.healthErr=(r&&r.error)||"no answer"; }
+      else { S.health=r.lines||[]; S.healthEvents=r.events||0; S.healthErr=null;
+             S.healthBad={}; S.health.forEach(function(l){ if(l.state==="bad") S.healthBad[l.key]=true; }); }
+      renderHealth(); renderGroups();
+    });
   }
   function renderHealth(){
     var el=$("healthList"); if(!el) return;
-    /* THE SAME ANSWER AS THE CARD AT THE TOP. This counted every suspended row including
-       archived ones, so the panel said "Suspended venues: 5" two inches under a card saying
-       0. renderStats is right: an archived venue is not a suspended customer. */
     var susp=S.venues.filter(function(v){ return v.status==="suspended" && !isArchived(v); }).length;
     if(S.health===null && S.healthErr){
       el.innerHTML='<div class="empty">Could not read the billing record: '+esc(S.healthErr)+'. Nothing here is an all-clear.</div>';
       return;
     }
     if(S.health===undefined){ el.innerHTML='<div class="empty">Loading&hellip;</div>'; return; }
-    var rows=S.health||[];
-    /* A RECEIPT ROW IS ONLY INTERESTING WHEN IT DID NOT GO. "sent" is the normal case and
-       there is one for every payment; listing them would bury the four that failed. */
-    var shown=rows.filter(function(a){
-      if(a.action==="invoice_receipt_email") return ((a.detail||{}).outcome||"")!=="sent";
-      return true;
-    });
-    var bad=shown.filter(function(a){ return HEALTH_BAD[a.action] ||
-      (a.action==="invoice_receipt_email" && ((a.detail||{}).outcome||"")!=="sent"); });
-    if(!rows.length){
-      el.innerHTML='<div class="empty">No payment has failed and no extra has been charged. '
-        + 'This reads the money rows in vp_admin_audit, so an empty panel means there are none, '
-        + 'not that we cannot see. Suspended venues: '+susp+'.</div>';
-      return;
-    }
-    var head='<div class="panel pad" style="margin-bottom:10px"><div class="cxk">'
-      + '<b>'+bad.length+'</b> need'+(bad.length===1?'s':'')+' a look, out of '+rows.length
-      + ' money events on record. Suspended venues: <b>'+susp+'</b>.'
-      + '</div><div class="note" style="margin-top:7px">Every charge, decline and receipt writes a row here as it happens. '
-      + 'Stripe is still where the money is; this is where the evidence is.</div></div>';
-    var list=shown.slice(0,40).map(function(a){
-      var d=a.detail||{}, isBad=HEALTH_BAD[a.action] ||
-        (a.action==="invoice_receipt_email" && (d.outcome||"")!=="sent");
-      /* WHO IT WAS ABOUT. A target is a venue id on some rows, "account:<founding uuid>" on
-         others and "customer:cus_..." on the rest. Printing it raw put
-         cus_V3KN0IxvCU8zxX where a pub's name belongs. Every one of these is resolvable:
-         a founding id is on the venue row, and the Stripe rows carry the venue in their
-         own detail. Only fall back to an identifier when nothing else exists. */
-      var t=String(a.target||""), who=null;
-      if(/^account:/.test(t)){
-        var fid=t.slice(8);
-        var names=S.venues.filter(function(v){ return v.founding_id===fid; }).map(function(v){ return v.name; });
-        // One founding account can hold several venues. Name them rather than pick one.
-        if(names.length) who = names.length>2 ? (names[0]+" and "+(names.length-1)+" more") : names.join(", ");
-      } else if(/^customer:/.test(t)){
-        // "The Jolly Jess - Extra Player - 11/09/2026": the venue is the part before the dash.
-        if(d.what) who = String(d.what).split(" - ")[0];
-        if(!who && d.to) who = String(d.to);
-      } else {
-        var vn=venueById(cxVenueId(t)); who = vn ? vn.name : null;
-      }
-      if(!who) who = d.venue_name || d.venue || d.name || null;
-      var idNote = (!who && t) ? '<span class="hqid">'+esc(t.replace(/^(customer|account):/,""))+'</span>' : "";
-      var amt = (d.amount_cents!=null) ? "$"+(Number(d.amount_cents)/100).toFixed(2)
-              : (d.amount ? esc(String(d.amount)) : "");
-      var extra = d.outcome ? esc(String(d.outcome)) : (d.reason ? esc(String(d.reason)) : "");
-      var inv = d.invoice ? '<span class="hqid">'+esc(String(d.invoice))+'</span>' : "";
-      /* Joined, not concatenated with a leading separator on each part. Every one of these is
-         optional and the first version started half the lines with a bare middot. */
-      var bits=[ who ? '<b class="hqwho">'+esc(String(who))+'</b>' : idNote, amt, extra, inv ]
-        .filter(function(x){ return x; });
-      /* THE BANK'S OWN WORDS, on their own line. reason_line is why a card was refused, in a
-         sentence somebody can read out on the phone, and it was being dropped in favour of
-         "moved to next invoice", which says what WE did and not what went wrong. It is the
-         most useful sentence on this screen and it was not on it. */
-      var said = d.reason_line ? '<div class="hqsaid">'+esc(String(d.reason_line))+'</div>' : "";
-      return '<div class="cxnote'+(isBad?' bad':'')+'">'
-        + '<b>'+esc(cxWhen(a.created_at))+' &middot; '+esc(HEALTH_LABEL[a.action]||a.action)+'</b>'
-        + '<div>'+bits.join(' &middot; ')+'</div>'
-        + said + '</div>';
+    var lines=S.health||[], bad=lines.filter(function(l){ return l.state==="bad"; });
+    var showAll=!!S.healthAll, list=showAll ? lines : bad;
+    S.healthOpen=S.healthOpen||{};
+    var head='<div class="panel pad hhead"><div class="cxk"><b>'+bad.length+'</b> '+(bad.length===1?'venue needs':'venues need')+' a look'
+      + ' &middot; '+lines.length+' with any payment on record &middot; suspended venues: <b>'+susp+'</b></div>'
+      + '<label class="hall"><input type="checkbox" id="healthAll"'+(showAll?' checked':'')+'> Show every payment, not only the ones that need a look</label></div>';
+    var body=list.map(function(l){
+      var open=!!S.healthOpen[l.key];
+      var where=[l.group ? 'in '+esc(l.group) : '', l.account ? esc(l.account) : ''].filter(Boolean).join(' &middot; ');
+      var word=l.failures_are==="declines" ? "decline" : "problem";
+      var meta=[ l.failures ? (l.failures+' '+word+(l.failures===1?'':'s')) : '', 'last '+esc(cxWhen(l.last_attempt)), l.last_amount ? esc(l.last_amount) : '' ].filter(Boolean).join(' &middot; ');
+      var hist=open ? '<div class="hhist">'+(l.history||[]).map(function(e){
+          return '<div class="hev'+(e.bad?' bad':'')+'"><span class="auwhen">'+esc(cxWhen(e.at))+'</span> '+esc(e.what)
+            +(e.for_what?' for '+esc(e.for_what):'')+(e.amount?' &middot; '+esc(e.amount):'')
+            +(e.note?' &middot; '+esc(e.note):'')+(e.said?'<div class="hqsaid">'+esc(e.said)+'</div>':'')+'</div>';
+        }).join("")+(l.events>(l.history||[]).length?'<div class="note">The '+(l.history||[]).length+' most recent of '+l.events+'. The Audit tab has the rest (search this venue, Billing and payments).</div>':'')+'</div>' : '';
+      return '<div class="hline '+esc(l.state)+'" data-hkey="'+esc(l.key)+'">'
+        + '<div class="hrow"><div class="hname"><b class="hqwho">'+esc(l.venue)+'</b>'+(where?' <span class="hwhere">'+where+'</span>':'')+'</div>'
+        + '<span class="badge '+(l.state==="bad"?'suspend':(l.state==="recovered"?'gold':'live'))+'">'+(l.state==="bad"?'Needs a look':(l.state==="recovered"?'Paid since':'All paid'))+'</span></div>'
+        + '<div class="hstatus">'+esc(l.status)+'</div>'
+        + '<div class="hmeta">'+meta+'</div>'
+        + '<div class="aumore"><button class="mini" data-hopen="'+esc(l.key)+'">'+(open?'Hide history':'History')+'</button>'
+        +   (l.venue_id && venueById(l.venue_id) ? '<button class="mini" data-viewas="'+esc(l.venue_id)+'">View as</button>' : '')
+        + '</div>' + hist + '</div>';
     }).join("");
-    el.innerHTML = head + '<div class="cxnotes">' + (list ||
-      '<div class="cxnote">Every money event on record went through cleanly.</div>') + '</div>'
-      + (shown.length>40 ? '<div class="note">Showing the 40 most recent of '+shown.length+'. The Audit tab has the rest.</div>' : '');
+    el.innerHTML = head + (body || '<div class="empty">'+(showAll ? 'No payment on record yet.' : 'Every payment on record went through, or was paid since. Tick the box above to see them.')+'</div>');
   }
+  (function(){
+    var el=$("healthList"); if(!el) return;
+    el.addEventListener("change", function(e){ if(e.target && e.target.id==="healthAll"){ S.healthAll=e.target.checked; renderHealth(); } });
+    el.addEventListener("click", function(e){
+      var o=e.target.closest("button[data-hopen]");
+      if(o){ var k=o.getAttribute("data-hopen"); S.healthOpen=S.healthOpen||{}; S.healthOpen[k]=!S.healthOpen[k]; renderHealth(); return; }
+      var va=e.target.closest("button[data-viewas]");
+      if(va) viewAs(va.getAttribute("data-viewas"), va);
+    });
+  })();
 
   /* THE METERED FIGURES, COMPUTED LIVE. See handleMetering in venueplay-game.js for why there
      is no table behind this: vp_billing_usage has never had a row written to it by anything,
@@ -2945,6 +3092,7 @@
         : (S.meter===undefined ? "· reading the meter\u2026" : "· no nights metered in the last 12 months");
     }
     rows.sort(function(a,b){ return String(venueName(a.venue_id)).localeCompare(String(venueName(b.venue_id))); });
+    var capB=capList("billing", rows, 100, S.openBilling); rows=capB.list;
     rows.forEach(function(u){
       var v=null; for(var i=0;i<S.venues.length;i++){ if(S.venues[i].id===u.venue_id){ v=S.venues[i]; break; } }
       var over=u.overage_players||0;
@@ -2966,6 +3114,7 @@
       dt.innerHTML='<td colspan="7">'+billingDetailHtml(u,v,rate)+'</td>';
       b.appendChild(dt);
     });
+    if(capB.hidden) b.insertAdjacentHTML("beforeend", moreRowHtml("billing", capB.hidden, 7, 100));
     renderDiscounts();
   }
   function billingDetailHtml(u,v,rate){
@@ -3186,18 +3335,6 @@
     out.sort(function(a,b){ return String(a.members[0].name||"").localeCompare(String(b.members[0].name||"")); });
     return out;
   }
-  function accountClusterCard(c){
-    var members=c.members.slice().sort(function(a,b){ return String(a.name||"").localeCompare(String(b.name||"")); });
-    var panel=document.createElement("div"); panel.className="panel"; panel.style.marginBottom="16px";
-    var h='';
-    h+='<div class="grouphead"><div style="flex:1;min-width:200px"><div class="gn">Account &middot; '+members.length+' venues</div>'+
-       '<div class="gm">Self-serve multi-venue account &middot; billed together on one card &middot; '+members.length+' venue'+(members.length===1?"":"s")+'</div></div>'+
-       '<span class="badge grouped">Account</span></div>';
-    h+='<div style="padding:12px 16px"><div class="tscroll"><table style="min-width:420px"><thead><tr><th>Venue</th><th>Screen</th><th>Total players</th></tr></thead><tbody>';
-    members.forEach(function(v){ h+='<tr><td class="vn">'+esc(v.name)+'</td><td class="mono vt">'+esc(v.slug||"")+'</td><td class="num">'+(v.max_players!=null?v.max_players:(v.included_players!=null?v.included_players:"—"))+'</td></tr>'; });
-    h+='</tbody></table></div><div class="note" style="margin-top:8px">This is one owner\'s account that holds more than one venue (a second venue was added from their account page). It is billed as a single subscription, not a negotiated operator group, so there is no group rate to set here. Its venues and billing are managed from the owner\'s account page.</div></div>';
-    panel.innerHTML=h; return panel;
-  }
   function renameGroup(id){
     var g=S.groupById[id]; if(!g) return;
     vpAskText("Group name", (g.name&&g.name.trim())?g.name:"").then(function(name){
@@ -3210,53 +3347,98 @@
     });
     });
   }
+  /* ONE ROW PER GROUP (Dean, 21 Oct 2026: the Groups tab spread every venue and detail out).
+     Operator groups and multi-venue accounts alike are one line each: name, how many venues, and
+     how they are billed at a glance. A tap opens that one (any number can be open), everything is
+     closed on arrival, and the search finds a group OR a venue inside one, opening the group it
+     is in. Every action that was here before is inside the opened row. */
+  function acctStatusOf(fid){
+    var a=(S.acctStatus||{})[fid]; var bad=(S.healthBad||{})["account:"+fid];
+    if(bad) return { cls:"suspend", txt:"Payment failing" };
+    if(!a) return { cls:"indep", txt:"Card account" };
+    if(a.status==="comp") return { cls:"indep", txt:"Comp, no charge" };
+    if(a.status==="pending" || (!a.stripe_subscription_id && !a.bill_by_invoice)) return { cls:"suspend", txt:"No card yet" };
+    if(a.bill_by_invoice) return { cls:"grouped", txt:"Invoiced" };
+    return { cls:"live", txt:"Paying by card" };
+  }
+  function groupMatches(name, members, q){
+    if(!q) return { hit:true, byVenue:false, venues:{} };
+    var vs={}; members.forEach(function(v){ if(String(v.name||"").toLowerCase().indexOf(q)!==-1 || String(v.slug||"").toLowerCase().indexOf(q)!==-1) vs[v.id]=true; });
+    var byName = String(name||"").toLowerCase().indexOf(q)!==-1;
+    return { hit: byName || Object.keys(vs).length>0, byVenue: !byName && Object.keys(vs).length>0, venues:vs };
+  }
+  function grpVenueTable(members, hits, withViewAs, playersCol){
+    var h='<div class="tscroll"><table class="gvtable"><thead><tr><th>Venue</th><th>Screen address</th><th>'+playersCol+'</th><th>Status</th><th></th></tr></thead><tbody>';
+    members.forEach(function(v){
+      var va=v.status!=="suspended";
+      var pl = playersCol==="Included" ? (v.included_players!=null?v.included_players:"-") : (v.max_players!=null?v.max_players:(v.included_players!=null?v.included_players:"-"));
+      h+='<tr'+(hits[v.id]?' class="ghit"':'')+'><td class="vn">'+esc(v.name)+'</td><td class="mono vt">'+esc(v.slug||"")+'</td><td class="num">'+esc(pl)+'</td>'+
+         '<td>'+(va?'<span class="badge live">Active</span>':'<span class="badge suspend">'+esc(stateWordFor(v))+'</span>')+'</td>'+
+         '<td class="actcell"><button class="mini" data-viewas="'+esc(v.id)+'">View as</button><button class="mini" data-gdetails="'+esc(v.id)+'">Details</button></td></tr>';
+    });
+    return h+'</tbody></table></div>';
+  }
+  function stateWordFor(v){ return v.suspended_reason==="nonpayment" ? "Unpaid" : (isArchived(v) ? "Archived" : (hasLeft(v) ? "Left" : "Paused")); }
+  function grpRowHead(key, title, sub, badges, open, extra){
+    return '<div class="grouphead grow" data-gtoggle="'+esc(key)+'" role="button" tabindex="0" aria-expanded="'+(open?'true':'false')+'">'+
+      '<span class="gchev">'+(open?"&#9662;":"&#9656;")+'</span>'+
+      '<div class="gmain"><div class="gn">'+title+'</div><div class="gm">'+sub+'</div></div>'+
+      '<div class="gbadges">'+badges+(extra||"")+'</div></div>';
+  }
   function renderGroups(){
     var wrap=$("groupList"); wrap.innerHTML="";
     var clusters=foundingClusters();
+    S.openGroups=S.openGroups||{};
     if(!S.groups.length && !clusters.length){ wrap.innerHTML='<div class="empty">No groups or multi-venue accounts yet. Use Create group, or add a second venue to an account from the account page.</div>'; return; }
-    var q=(S.gSearch||"").toLowerCase(), shown=0;
+    var q=(S.gSearch||"").trim().toLowerCase(), shown=0, html=[];
     S.groups.forEach(function(g){
       var gname=(g.name&&g.name.trim())?g.name:"Unnamed group";
       var members=S.venues.filter(function(v){ return v.group_id===g.id; });
       var active=(g.status||"active")!=="suspended";
       if(S.gFilter==="active" && !active) return;
       if(S.gFilter==="inactive" && active) return;
-      if(q && gname.toLowerCase().indexOf(q)<0) return;
+      var m=groupMatches(gname, members, q); if(!m.hit) return;
       shown++;
-      var neg=g.negotiated_rate_cents!=null?aud(g.negotiated_rate_cents/100):"n/a";
+      var neg=g.negotiated_rate_cents!=null?aud(g.negotiated_rate_cents/100):"no rate set";
       var ds=S.discounts.filter(function(d){ return d.target_type==="group" && d.target_id===g.id; });
-      var open=(S.openGroup===g.id);
-      var panel=document.createElement("div"); panel.className="panel"; panel.style.marginBottom="10px";
-      var h='';
-      // compact clickable row: name, venue count, active/inactive. Expands on click.
-      h+='<div class="grouphead" data-gtoggle="'+esc(g.id)+'" style="cursor:pointer">'+
-        '<span style="color:var(--muted);font-size:11px;width:12px;flex:none">'+(open?"▼":"▶")+'</span>'+
-        '<div style="flex:1;min-width:180px"><div class="gn">'+esc(gname)+'</div>'+
-        '<div class="gm">'+members.length+' venue'+(members.length===1?"":"s")+' &middot; negotiated '+neg+'/player</div></div>'+
-        '<span class="badge '+(active?"grouped":"suspend")+'">'+(active?"Active":"Inactive")+'</span>'+
-        '<button class="mini" data-grename="'+esc(g.id)+'">Rename</button></div>';
+      var open=!!S.openGroups[g.id] || m.byVenue;
+      var paused=members.filter(function(v){ return v.status==="suspended"; }).length;
+      var badges='<span class="badge '+(active?"grouped":"suspend")+'">'+(active?"Active":"Inactive")+'</span>'+
+                 '<span class="badge indep">Invoiced by hand &middot; '+esc(neg)+'/player</span>'+
+                 (paused?'<span class="badge suspend">'+paused+' paused</span>':'')+
+                 (ds.length?'<span class="badge gold">Discount</span>':'');
+      var h='<div class="panel gpanel'+(open?' open':'')+'" data-gid="'+esc(g.id)+'">'+
+        grpRowHead(g.id, esc(gname)+' <span class="gkind">Group</span>', members.length+' venue'+(members.length===1?"":"s")+(g.billing_email?' &middot; bills to '+esc(g.billing_email):''), badges, open,
+                   '<button class="mini" data-grename="'+esc(g.id)+'">Rename</button>');
       if(open){
-        h+='<div style="padding:12px 16px">';
-        if(members.length){
-          h+='<div class="tscroll"><table style="min-width:520px"><thead><tr><th>Venue</th><th>Screen</th><th>Included</th><th>Status</th><th></th></tr></thead><tbody>';
-          // View as from here too: when someone rings up saying they are from a group, this is
-          // where you find them, so it is where you want to be able to go straight into them.
-          // The existing data-viewas handler picks these up, no new wiring needed.
-          members.forEach(function(v){ var va=v.status!=="suspended"; h+='<tr><td class="vn">'+esc(v.name)+'</td><td class="mono vt">'+esc(v.slug||"")+'</td><td class="num">'+(v.included_players!=null?v.included_players:"-")+'</td><td>'+(va?'<span class="badge grouped">Active</span>':'<span class="badge suspend">Suspended</span>')+'</td><td class="actcell"><button class="mini" data-viewas="'+esc(v.id)+'">View as</button></td></tr>'; });
-          h+='</tbody></table></div>';
-        } else { h+='<div style="color:var(--muted);font-size:12.5px">No venues assigned yet.</div>'; }
+        h+='<div class="gbody">';
+        h+= members.length ? grpVenueTable(members, m.venues, true, "Included") : '<div class="note" style="margin:0">No venues assigned yet.</div>';
         if(ds.length){ h+='<div style="margin-top:8px">'+ds.map(discLine).join("")+'</div>'; }
         h+='<div style="margin-top:14px"><div class="lblk" style="margin:0 0 8px">Assign grouped venues to '+esc(gname)+'</div><div class="checklist">'+venueCheckboxes(g)+'</div>'+
            (canBilling()?'<div class="dform" data-target="group" data-id="'+esc(g.id)+'" style="margin-top:12px"><div class="lblk" style="margin:0 0 8px">Whole-group discount</div>'+discountFormHtml()+'</div>':'')+'</div>';
         h+='</div>';
       }
-      panel.innerHTML=h; wrap.appendChild(panel);
+      html.push(h+'</div>');
     });
-    var gc=$("gCount"); if(gc) gc.textContent=shown+" group"+(shown===1?"":"s")+(S.gFilter!=="all"?" ("+S.gFilter+")":"");
-    if(clusters.length){
-      var lbl=document.createElement("div"); lbl.className="lblk"; lbl.textContent="Multi-venue accounts"; wrap.appendChild(lbl);
-      clusters.forEach(function(c){ wrap.appendChild(accountClusterCard(c)); });
-    }
+    clusters.forEach(function(c){
+      var members=c.members.slice().sort(function(a,b){ return String(a.name||"").localeCompare(String(b.name||"")); });
+      var acct=(S.accounts||[]).filter(function(a){ return a.id===c.founding_id; })[0];
+      var title=(acct && acct.venue_name) ? acct.venue_name : members[0].name;
+      if(S.gFilter==="inactive") return;
+      var m=groupMatches(title, members, q); if(!m.hit) return;
+      shown++;
+      var key="acct:"+c.founding_id, open=!!S.openGroups[key] || m.byVenue, st=acctStatusOf(c.founding_id);
+      var badges='<span class="badge '+st.cls+'">'+esc(st.txt)+'</span>';
+      var h='<div class="panel gpanel'+(open?' open':'')+'" data-acct="'+esc(c.founding_id)+'">'+
+        grpRowHead(key, esc(title)+' <span class="gkind">Account</span>', members.length+' venues on one card: '+esc(members.map(function(v){ return v.name; }).join(", ")), badges, open);
+      if(open){
+        h+='<div class="gbody">'+grpVenueTable(members, m.venues, true, "Players")+
+           '<div class="note" style="margin-top:8px">One owner\'s account holding more than one venue, billed as a single subscription on their card. There is no group rate here; their venues and billing are managed from the owner\'s account page (View as).</div></div>';
+      }
+      html.push(h+'</div>');
+    });
+    wrap.innerHTML = html.length ? html.join("") : '<div class="empty">No group, account or venue matches "'+esc(S.gSearch||"")+'".</div>';
+    var gc=$("gCount"); if(gc) gc.textContent=shown+" group"+(shown===1?"":"s")+" and account"+(shown===1?"":"s")+(S.gFilter!=="all"?" ("+S.gFilter+")":"");
   }
   function venueCheckboxes(g){
     // Only grouped venues are safe to reassign (independent venues carry a founding_id and the
@@ -3272,8 +3454,19 @@
   $("groupList").addEventListener("click", function(e){
     var rn=e.target.closest("button[data-grename]");
     if(rn){ renameGroup(rn.getAttribute("data-grename")); return; }   // rename wins over the row toggle
+    var gd=e.target.closest("button[data-gdetails]");
+    if(gd){ var did=gd.getAttribute("data-gdetails"); S.openVenue=did; S.vSearch=""; if($("venueSearch")) $("venueSearch").value=""; goPane("venues"); renderVenues();
+            setTimeout(function(){ var r=document.querySelector('button[data-details="'+did+'"]'); if(r) r.scrollIntoView({block:"center"}); }, 30); return; }
+    var va=e.target.closest("button[data-viewas]");
+    if(va){ viewAs(va.getAttribute("data-viewas"), va); return; }
+    if(e.target.closest("button, input, select, textarea, label, a")) return;   // controls inside an open group
     var tg=e.target.closest("[data-gtoggle]");
-    if(tg){ var id=tg.getAttribute("data-gtoggle"); S.openGroup=(S.openGroup===id?null:id); renderGroups(); }
+    if(tg){ var id=tg.getAttribute("data-gtoggle"); S.openGroups=S.openGroups||{}; S.openGroups[id]=!S.openGroups[id]; renderGroups(); }
+  });
+  $("groupList").addEventListener("keydown", function(e){
+    if(e.key!=="Enter" && e.key!==" ") return;
+    var tg=e.target.closest("[data-gtoggle]"); if(!tg || e.target!==tg) return;
+    e.preventDefault(); var id=tg.getAttribute("data-gtoggle"); S.openGroups=S.openGroups||{}; S.openGroups[id]=!S.openGroups[id]; renderGroups();
   });
   $("gFilter").addEventListener("change", function(){ S.gFilter=this.value; renderGroups(); });
   $("gSearch").addEventListener("input", function(){ S.gSearch=this.value; renderGroups(); });
@@ -3293,7 +3486,7 @@
       chk.disabled=false;
       if(r.error){ vpTell("Could not reassign: "+r.error.message); chk.checked=(function(){ for(var i=0;i<S.venues.length;i++){ if(S.venues[i].id===vid) return S.venues[i].group_id===gid; } return false; })(); return; }
       for(var i=0;i<S.venues.length;i++){ if(S.venues[i].id===vid) S.venues[i].group_id=gid; }
-      S.openGroup=gid; renderStats(); renderVenues(); renderGroups();
+      S.openGroups=S.openGroups||{}; S.openGroups[gid]=true; renderStats(); renderVenues(); renderGroups();
     });
   });
   $("addGroupToggle").addEventListener("click", function(){ show("addGroupPanel", $("addGroupPanel").classList.contains("hidden")); });
@@ -3328,6 +3521,7 @@
         + '</div></td></tr>'; return; }
     var rows=usageForMonth();
     rows.sort(function(a,b){ return String(venueName(a.venue_id)).localeCompare(String(venueName(b.venue_id))); });
+    var capU=capList("usage", rows, 100); rows=capU.list;
     rows.forEach(function(u){
       var v=null; for(var i=0;i<S.venues.length;i++){ if(S.venues[i].id===u.venue_id){ v=S.venues[i]; break; } }
       var over=u.overage_players||0, rate=v?groupRate(v):null;
@@ -3341,6 +3535,7 @@
         '<td class="money" style="text-align:right">'+est+'</td>';
       b.appendChild(tr);
     });
+    if(capU.hidden) b.insertAdjacentHTML("beforeend", moreRowHtml("usage", capU.hidden, 6, 100));
   }
   $("usageCsv").addEventListener("click", function(){
     var rows=[["Venue","Sessions","Peak billable players","Included cap","Overage players","Period month"]];
@@ -3351,14 +3546,13 @@
   /* ================= TEAM ================= */
   function renderTeam(){
     var b=$("teamRows"); b.innerHTML="";
-    if(!S.admins.length){ b.innerHTML='<tr><td colspan="4"><div class="empty" style="border:none;background:none">No staff logins found.</div></td></tr>'; }
+    if(!S.admins.length){ b.innerHTML='<tr><td colspan="3"><div class="empty" style="border:none;background:none">No staff logins found.</div></td></tr>'; }
     S.admins.forEach(function(a){
       var role=a.role||"staff";
       var isMe = S.ctx && S.ctx.user && a.auth_user_id===S.ctx.user.id;
       var tr=document.createElement("tr");
       tr.innerHTML='<td class="vn">'+esc(a.label||"(no label)")+(isMe?' <span class="vt">(you)</span>':'')+'</td>'+
         '<td><span class="srole '+esc(role)+'">'+esc(role)+'</span></td>'+
-        '<td class="mono vt">'+esc(String(a.auth_user_id||"").slice(0,8))+'…</td>'+
         '<td style="text-align:right">'+((canTeam()&&!isMe)?'<button class="mini roll" data-rmadmin="'+esc(a.auth_user_id)+'" data-label="'+esc(a.label||"")+'">Remove</button>':'')+'</td>';
       b.appendChild(tr);
     });
@@ -3403,21 +3597,159 @@
      the screen that decides whether a venue may collect a player's email, so a flagged signup
      could scroll out of sight and read as "nothing waiting for review".
      It cannot show everything without paging, but it can stop pretending. */
-  var AUDIT_LIMIT=250;
-  function renderAudit(){
-    var b=$("auditRows"); b.innerHTML="";
-    var cap=$("auditCap");
-    if(cap) cap.textContent = (S.audit.length>=AUDIT_LIMIT)
-      ? ("Showing the newest "+AUDIT_LIMIT+" only. Older entries are in the database and not on this screen.") : "";
-    if(!S.audit.length){ b.innerHTML='<tr><td colspan="3"><div class="empty" style="border:none;background:none">No admin actions recorded yet.</div></td></tr>'; return; }
-    S.audit.forEach(function(a){
-      var det=a.detail && Object.keys(a.detail).length ? (' &middot; <span style="color:var(--faint)">'+esc(JSON.stringify(a.detail))+'</span>') : '';
-      var tr=document.createElement("tr");
-      tr.innerHTML='<td style="white-space:nowrap">'+esc(fmtWhen(a.created_at))+'</td>'+
-        '<td><div class="vn">'+esc(a.actor_label||"admin")+'</div></td>'+
-        '<td><b style="color:var(--text)">'+esc(a.action)+'</b>'+(a.target?(' &middot; '+esc(a.target)):'')+det+'</td>';
-      b.appendChild(tr);
+  var AUDIT_LIMIT=250;   // S.audit's window: still what the flagged and cancelled screens read
+  /* THE AUDIT TAB IS A SEARCH (Dean, 21 Oct 2026: "the list will grow huge"). Each search asks the
+     billing Worker for ONE page (/admin/audit-search): newest first, filtered on the database by
+     venue, dates, what changed and who did it, paged by a cursor the Worker hands back. Nothing
+     here ever loads the whole table. Each entry arrives as a sentence; Details shows the raw row.
+     renderAudit keeps its name because every action on this page calls it after a change, and
+     that should refresh the search if it is on screen. */
+  var AU={ venueId:"", venueName:"", when:"7", kind:"", who:"", from:"", to:"", pages:[""], page:0, open:{}, rows:[], loaded:false, seq:0 };
+  var BNE_MS=10*3600*1000;
+  function bneDayStart(ms){ var b=new Date(ms+BNE_MS); return Date.UTC(b.getUTCFullYear(), b.getUTCMonth(), b.getUTCDate()) - BNE_MS; }
+  function bneDateStart(ymd){ var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd||""); return m ? Date.UTC(+m[1], +m[2]-1, +m[3]) - BNE_MS : null; }
+  function auditRange(){
+    var now=Date.now(), today=bneDayStart(now);
+    if(AU.when==="today") return { from:today, to:null };
+    if(AU.when==="7") return { from:today-6*86400000, to:null };
+    if(AU.when==="30") return { from:today-29*86400000, to:null };
+    if(AU.when==="custom"){
+      var f=bneDateStart(AU.from), t=bneDateStart(AU.to);
+      return { from:f, to:(t!=null ? t+86400000 : null) };
+    }
+    return { from:null, to:null };
+  }
+  function auditQuery(cursor){
+    var r=auditRange(), q=["size=50"];
+    if(AU.venueId) q.push("venue="+encodeURIComponent(AU.venueId));
+    if(AU.kind) q.push("kind="+encodeURIComponent(AU.kind));
+    if(AU.who) q.push("who="+encodeURIComponent(AU.who));
+    if(r.from!=null) q.push("from="+encodeURIComponent(new Date(r.from).toISOString()));
+    if(r.to!=null) q.push("to="+encodeURIComponent(new Date(r.to).toISOString()));
+    if(cursor) q.push("before="+encodeURIComponent(cursor));
+    return "/admin/audit-search?"+q.join("&");
+  }
+  function auditSaid(){
+    var bits=[];
+    bits.push(AU.venueId ? ("at "+AU.venueName) : "at every venue");
+    var w=$("auWhen"); bits.push(w ? w.options[w.selectedIndex].text.toLowerCase() : "");
+    if(AU.when==="custom") bits[1]=(AU.from||"the start")+" to "+(AU.to||"today");
+    var k=$("auKind"), h=$("auWho");
+    if(AU.kind && k) bits.push(k.options[k.selectedIndex].text.toLowerCase());
+    if(AU.who && h) bits.push("by "+h.options[h.selectedIndex].text.replace(/^A /,"a "));
+    return "Showing "+bits.filter(Boolean).join(", ")+".";
+  }
+  function auditFill(sel, list, keep){
+    if(!sel || sel.options.length>1) return;
+    list.forEach(function(x){ var o=document.createElement("option"); o.value=x.key; o.textContent=x.label; sel.appendChild(o); });
+    sel.value=keep||"";
+  }
+  function runAuditSearch(resetPages){
+    if(!canBilling()) return;
+    if(resetPages){ AU.pages=[""]; AU.page=0; AU.open={}; }
+    var out=$("auRows"); if(!out) return;
+    var my=++AU.seq;
+    out.innerHTML='<div class="empty">Searching&hellip;</div>';
+    $("auOlder").disabled=true; $("auNewer").disabled=true;
+    $("auSaid").textContent=auditSaid();
+    workerGet(auditQuery(AU.pages[AU.page])).then(function(r){
+      if(my!==AU.seq) return;          // a newer search has started; this answer is stale
+      if(!r || r.error){ out.innerHTML='<div class="empty" style="color:var(--roll)">The search did not answer: '+esc((r&&r.error)||"no answer")+'. This is not an empty record.</div>'; return; }
+      auditFill($("auKind"), r.kinds||[], AU.kind); auditFill($("auWho"), r.who||[], AU.who);
+      AU.rows=r.rows||[]; AU.loaded=true;
+      if(r.next){ AU.pages[AU.page+1]=r.next; } else { AU.pages.length=AU.page+1; }
+      drawAudit();
     });
+  }
+  var AU_BAD={ payment_failed_email:1, overage_invoice_unpaid:1, overage_charge_failed:1, venue_cancel_scheduled:1, email_bounced:1, screen_history_drift:1 };
+  function drawAudit(){
+    var out=$("auRows"); if(!out) return;
+    var rows=AU.rows||[];
+    $("auNewer").disabled = AU.page===0;
+    $("auOlder").disabled = !AU.pages[AU.page+1];
+    $("auPage").textContent = rows.length ? ("Page "+(AU.page+1)) : "";
+    if(!rows.length){
+      out.innerHTML='<div class="empty">Nothing matches '+(AU.page ? "on this page" : "these filters")+'. Try a longer time, or clear a filter.</div>'; return;
+    }
+    out.innerHTML=rows.map(function(x){
+      var raw=x.raw||{}, bad = AU_BAD[raw.action] || x.who_kind==="outside" || (x.screen_history && (raw.op==="delete"||raw.op==="vanished"));
+      var open=!!AU.open[x.key];
+      return '<div class="auent'+(bad?' bad':'')+'" data-aukey="'+esc(x.key)+'">'
+        + '<div class="auhead"><span class="auwhen">'+esc(bneWhen(x.at))+'</span>'
+        +   '<span class="auwho">'+esc(x.who||"")+'</span>'
+        +   '<span class="badge '+(bad?'suspend':'indep')+'">'+esc(x.kind_label||"")+'</span></div>'
+        + '<div class="aubody"><div class="ausay">'+esc(x.sentence||"")+'</div>'
+        + '<div class="aumore"><button class="mini" data-auraw="'+esc(x.key)+'">'+(open?'Hide details':'Details')+'</button>'
+        +   (x.venue_id && venueById(x.venue_id) && x.kind==="screen" ? '<button class="mini" data-auscreen="'+esc(x.venue_id)+'">Screen history</button>' : '')
+        +   (x.venue_id && venueById(x.venue_id) ? '<button class="mini" data-auvenue="'+esc(x.venue_id)+'">Only '+esc(venueById(x.venue_id).name)+'</button>' : '')
+        + '</div></div>'
+        + (open ? '<pre class="auraw">'+esc(JSON.stringify(raw, null, 2))+'</pre>' : '')
+        + '</div>';
+    }).join("");
+  }
+  function renderAudit(){
+    var p=$("paneAudit");
+    if(p && !p.classList.contains("hidden") && AU.loaded) runAuditSearch(false);
+  }
+  function auditSetVenue(id){
+    var v=id ? venueById(id) : null;
+    AU.venueId=v ? v.id : ""; AU.venueName=v ? v.name : "";
+    $("auVenue").value=AU.venueName; $("auVenueList").hidden=true;
+    runAuditSearch(true);
+  }
+  function auditSuggest(){
+    var box=$("auVenueList"), q=$("auVenue").value.trim().toLowerCase();
+    if(!q){ box.hidden=true; if(AU.venueId){ AU.venueId=""; AU.venueName=""; runAuditSearch(true); } return; }
+    var hits=(S.venues||[]).filter(function(v){ return String(v.name||"").toLowerCase().indexOf(q)!==-1 || String(v.slug||"").toLowerCase().indexOf(q)!==-1; }).slice(0,12);
+    box.innerHTML = hits.length ? hits.map(function(v,i){ return '<button type="button" data-auvpick="'+esc(v.id)+'"'+(i===0?' class="on"':'')+'>'+esc(v.name)+(isTest(v)?'<span class="vt">test</span>':'')+(hasLeft(v)?'<span class="vt">left</span>':'')+'</button>'; }).join("")
+                                : '<div class="note" style="padding:9px 12px;margin:0">No venue by that name.</div>';
+    box.hidden=false;
+  }
+  (function(){
+    var vi=$("auVenue"); if(!vi) return;
+    vi.addEventListener("input", auditSuggest);
+    vi.addEventListener("keydown", function(e){
+      if(e.key==="Enter"){ var b=$("auVenueList").querySelector("button[data-auvpick]"); if(b){ e.preventDefault(); auditSetVenue(b.getAttribute("data-auvpick")); } }
+      if(e.key==="Escape"){ $("auVenueList").hidden=true; }
+    });
+    $("auVenueList").addEventListener("mousedown", function(e){ var b=e.target.closest("button[data-auvpick]"); if(b){ e.preventDefault(); auditSetVenue(b.getAttribute("data-auvpick")); } });
+    document.addEventListener("click", function(e){ if(!e.target.closest(".auven")) $("auVenueList").hidden=true; });
+    $("auWhen").addEventListener("change", function(){
+      AU.when=this.value;
+      Array.prototype.forEach.call(document.querySelectorAll(".aucustom"), function(x){ x.hidden = AU.when!=="custom"; });
+      if(AU.when==="custom" && !$("auFrom").value){ var t=new Date(bneDayStart(Date.now())+BNE_MS); $("auTo").value=t.toISOString().slice(0,10); $("auFrom").value=new Date(t.getTime()-29*86400000).toISOString().slice(0,10); }
+      AU.from=$("auFrom").value; AU.to=$("auTo").value;
+      runAuditSearch(true);
+    });
+    ["auFrom","auTo"].forEach(function(id){ $(id).addEventListener("change", function(){ AU.from=$("auFrom").value; AU.to=$("auTo").value; runAuditSearch(true); }); });
+    $("auKind").addEventListener("change", function(){ AU.kind=this.value; runAuditSearch(true); });
+    $("auWho").addEventListener("change", function(){ AU.who=this.value; runAuditSearch(true); });
+    $("auReset").addEventListener("click", function(){
+      AU.venueId=""; AU.venueName=""; AU.kind=""; AU.who=""; AU.when="7";
+      $("auVenue").value=""; $("auKind").value=""; $("auWho").value=""; $("auWhen").value="7";
+      Array.prototype.forEach.call(document.querySelectorAll(".aucustom"), function(x){ x.hidden=true; });
+      runAuditSearch(true);
+    });
+    $("auOlder").addEventListener("click", function(){ if(AU.pages[AU.page+1]){ AU.page++; AU.open={}; runAuditSearch(false); window.scrollTo(0, $("paneAudit").offsetTop); } });
+    $("auNewer").addEventListener("click", function(){ if(AU.page>0){ AU.page--; AU.open={}; runAuditSearch(false); window.scrollTo(0, $("paneAudit").offsetTop); } });
+    $("auRows").addEventListener("click", function(e){
+      var r=e.target.closest("button[data-auraw]");
+      if(r){ var k=r.getAttribute("data-auraw"); AU.open[k]=!AU.open[k]; drawAudit(); return; }
+      var v=e.target.closest("button[data-auvenue]");
+      if(v){ auditSetVenue(v.getAttribute("data-auvenue")); return; }
+      var sh=e.target.closest("button[data-auscreen]");
+      if(sh){ openScreenHistoryFor(sh.getAttribute("data-auscreen")); }
+    });
+  })();
+  /* From an audit entry to that venue's screen versions, where Restore lives. */
+  function openScreenHistoryFor(id){
+    S.openVenue=id; S.vSearch=""; var vs=$("venueSearch"); if(vs) vs.value="";
+    var v=venueById(id); if(v && hasLeft(v)){ S.showLeft=true; var sl=$("showLeft"); if(sl) sl.checked=true; }
+    goPane("venues"); renderVenues();
+    setTimeout(function(){
+      var b=document.querySelector('button[data-scrhist="'+id+'"]');
+      if(b){ b.scrollIntoView({block:"center"}); loadScreenHistory(id, b); }
+    }, 30);
   }
 
   /* ---- Flagged signups (non-venue emails held from collecting opt-in data) ---- */
@@ -3467,7 +3799,9 @@
       var fid=String(a.target||"").replace(/^account:/,""), d=a.detail||{};
       var tr=document.createElement("tr");
       tr.innerHTML='<td style="white-space:nowrap">'+esc(fmtWhen(a.created_at))+'</td>'+
-        '<td><div class="vn">'+esc(d.venue||"(venue)")+'</div></td>'+
+        '<td><div class="vn">'+esc(d.venue || (function(){ var ac=(S.accounts||[]).filter(function(x){ return x.id===fid; })[0];
+                                                    var vs=S.venues.filter(function(v){ return v.founding_id===fid; }).map(function(v){ return v.name; });
+                                                    return vs.length ? vs.join(", ") : ((ac && ac.venue_name) || "Venue not set up yet"); })())+'</div></td>'+
         '<td>'+esc(d.email||"")+'</td>'+
         '<td style="white-space:nowrap">'+
           '<button data-appr="'+esc(fid)+'" style="border:none;background:#FF1F8E;color:#fff;border-radius:7px;padding:5px 11px;font-weight:700;cursor:pointer;font-size:12px">Approve opt-ins</button> '+
@@ -3491,8 +3825,13 @@
       return String(a.venue_name||"").localeCompare(String(b2.venue_name||""));
     });
     if(!rows.length){ b.innerHTML='<tr><td colspan="5"><div class="empty" style="border:none;background:none">No self-serve accounts yet.</div></td></tr>'; return; }
+    var capO=capList("optin", rows, 25); rows=capO.list;
     rows.forEach(function(a){
       var on=a.optin_release_approved===true;
+      /* "off" was never declared here, so the first account that was NOT approved threw a
+         ReferenceError, which stopped every render after this one (the audit, the group picker,
+         the tab badges) and put "Could not load venues" over the venue list. Found 21 Oct 2026. */
+      var off=a.optin_release_approved===false;
       var mine=S.venues.filter(function(v){ return v.founding_id===a.id; });
       var names=mine.map(function(v){ return v.name; }).join(", ");
       var tr=document.createElement("tr");
@@ -3501,7 +3840,7 @@
         + '<td style="color:var(--muted)">'+esc(names||"none")+'</td>'
         + '<td>'+(on
             ? '<span class="badge" style="background:rgba(34,197,94,.14);color:#4ade80">Approved</span>'
-            : '<span class="badge" style="background:rgba(255,31,142,.12);color:#FF1F8E">Name only</span>')+'</td>'
+            : (off ? '<span class="badge suspend">Never (you said no)</span>' : '<span class="badge" style="background:rgba(255,31,142,.12);color:#FF1F8E">Name only</span>'))+'</td>'
         + '<td style="white-space:nowrap">'
         +   (on
               ? '<button data-lock="'+esc(a.id)+'" style="border:1px solid #2a2a33;background:none;color:var(--muted);border-radius:7px;padding:5px 11px;font-weight:700;cursor:pointer;font-size:12px">Turn off</button>'
@@ -3513,6 +3852,7 @@
         + '</td>';
       b.appendChild(tr);
     });
+    if(capO.hidden) b.insertAdjacentHTML("beforeend", moreRowHtml("optin", capO.hidden, 5, 25));
   }
 
   /* One handler for both tables: same endpoint, same two buttons, and re-reading the accounts

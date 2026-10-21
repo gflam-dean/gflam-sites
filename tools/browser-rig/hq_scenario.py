@@ -93,8 +93,10 @@ def groups():
 
 
 def founding_rows():
+    # Connie waits for a decision (null) and Ended Bowls was told no (false): both shapes HQ must draw.
+    optin = {'f3': None, 'f5': False}
     return [{'id': a, 'venue_name': n, 'contact_email': e, 'contact_name': n + ' owner', 'status': st, 'stripe_customer_id': c,
-             'stripe_subscription_id': s, 'plan': 'monthly', 'optin_release_approved': True, 'created_at': ago(300)}
+             'stripe_subscription_id': s, 'plan': 'monthly', 'optin_release_approved': optin.get(a, True), 'created_at': ago(300)}
             for a, n, e, st, c, s in ACCOUNTS]
 
 
@@ -199,4 +201,4 @@ def seed(S):
 
 
 def extra_db():
-    return {'vp_venues': venue_rows(), 'vp_venue_groups': groups(), 'venueplay_founding': founding_rows()[1:]}
+    return {'vp_venues': venue_rows(), 'vp_venue_groups': groups(), 'venueplay_founding': founding_rows()}
