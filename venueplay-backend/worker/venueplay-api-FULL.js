@@ -194,6 +194,9 @@ export default {
       if (request.method === 'POST' && path === '/admin/night-pass'      && typeof vpaHandleNightPass === 'function')      return await vpaHandleNightPass(request, env, json);
       if (request.method === 'GET'  && path === '/admin/screen-history'  && typeof vpaHandleScreenHistory === 'function')  return await vpaHandleScreenHistory(request, env, json);
       if (request.method === 'POST' && path === '/admin/screen-restore'  && typeof vpaHandleScreenRestore === 'function')  return await vpaHandleScreenRestore(request, env, json);
+      if (request.method === 'GET'  && path === '/admin/audit-search'    && typeof vpaHandleAuditSearch === 'function')    return await vpaHandleAuditSearch(request, env, json);
+      if (request.method === 'GET'  && path === '/admin/billing-health'  && typeof vpaHandleBillingHealth === 'function')  return await vpaHandleBillingHealth(request, env, json);
+      if (request.method === 'POST' && path === '/admin/invite-back'     && typeof vpaHandleInviteBack === 'function')     return await vpaHandleInviteBack(request, env, json);
       if (request.method === 'POST' && path === '/admin/gst'             && typeof vpaHandleGst === 'function')            return await vpaHandleGst(request, env, json);
       if (request.method === 'GET'  && path === '/admin/venue-detail'    && typeof vpaHandleVenueDetail === 'function')    return await vpaHandleVenueDetail(request, env, json);
       if (request.method === 'GET'  && path === '/admin/venue-compliance' && typeof vpaHandleVenueCompliance === 'function') return await vpaHandleVenueCompliance(request, env, json);
@@ -8623,6 +8626,478 @@ async function vpaScreenHistoryNightly(env) {
       { checked: r.checked || 0, drift: r.drift || 0, vanished: r.vanished || 0 });
   }
   return { ran: true, result: r };
+}
+
+/* ---------------------------------------------------------------------------------------
+   HQ > AUDIT, AS A SEARCH.   GET /admin/audit-search   (Dean, 21 Oct 2026)
+
+   The Audit tab used to read the newest 250 rows of vp_admin_audit straight into the page, as
+   raw action names and JSON, with "older entries are not on this screen" underneath. It grows
+   by hundreds a week. Now the page asks this route for ONE PAGE at a time, newest first, and the
+   database does the filtering:
+     venue      target = venue:<id>
+     from, to   a date range (the page sends the edges of Brisbane days)
+     kind       what changed, as plain categories (VPA_AUDIT_KINDS), each a set of action prefixes
+     who        hq (Dean and the Gflam admins), venue (the venue's own logins), system (automatic:
+                Stripe, the nightly jobs, the game Worker), migration, outside (a change made
+                straight in the database, which only the screen history can see)
+   Screen settings changed OUTSIDE the Worker (migration 114's 'direct' and nightly-check rows in
+   vp_venue_screen_history) are merged in, because they have no audit row of their own; changes
+   made through the Worker are already audit rows (logo_set, screen_updated...), so they are not
+   repeated. Paging is by a cursor on time (keyset), never by offset over the whole table, so a
+   page costs the same on the ten-thousandth row as on the first. Each entry comes back as a
+   sentence, with the raw row alongside for the page's "details". Owner and accounts admins only.
+   --------------------------------------------------------------------------------------- */
+const VPA_AUDIT_KINDS = [
+  { key: 'screen',  label: 'Logo, slides and screens', prefixes: ['logo_', 'slide_', 'screen_', 'screens_'] },
+  { key: 'billing', label: 'Billing and payments', prefixes: ['payment_', 'overage_', 'invoice_', 'discount_', 'plan_uplift', 'credit_',
+                                                               'extras_', 'quantity_', 'add_card_', 'gst_'] },
+  { key: 'players', label: 'Players and player data', prefixes: ['players_', 'player_', 'optin_', 'venue_marketing_'] },
+  { key: 'gaming',  label: 'Games and gaming rules', prefixes: ['venue_gaming_', 'permits_', 'venue_night_pass_', 'venue_unlimited_nights_',
+                                                              'paper_', 'venue_code_'] },
+  { key: 'venues',  label: 'Venues joining, leaving and status', prefixes: ['venue_onboarded', 'venue_provision', 'venue_suspended',
+                     'venue_reactivated', 'venue_archived', 'venue_cancel_', 'venue_quiet_', 'venue_last_day', 'venue_leaving_',
+                     'venue_marked_test', 'venue_unmarked_test', 'venue_no_login', 'venue_subscription_', 'venue_added', 'venue_readded',
+                     'venue_invited_back', 'group_', 'auto_archive_', 'last_day_sweep_', 'welcome_'] },
+  { key: 'logins',  label: 'Logins and staff', prefixes: ['staff_', 'manager_', 'marketing_login_', 'view_as', 'host_'] },
+  { key: 'signups', label: 'Signups and flags', prefixes: ['signup_'] },
+  { key: 'emails',  label: 'Emails that bounced or were reported', prefixes: ['email_'] },
+  { key: 'help',    label: 'Help desk', prefixes: ['help_', 'ticket_'] },
+  { key: 'other',   label: 'Everything else', prefixes: [] },
+];
+function vpaAuditKinds() { return VPA_AUDIT_KINDS; }   // one list, for the tests and the route alike
+const VPA_AUDIT_WHO = [
+  { key: 'hq', label: 'Dean and the HQ team' },
+  { key: 'venue', label: 'A venue (owner, manager, host)' },
+  { key: 'system', label: 'Automatic (Stripe, nightly jobs)' },
+  { key: 'migration', label: 'A database migration' },
+  { key: 'outside', label: 'Outside VenuePlay (straight in the database)' },
+];
+const VPA_VENUE_LOGIN_LABELS = ['owner', 'manager', 'marketing', 'host'];
+const VPA_SYSTEM_LABELS = ['system', 'stripe', 'game Worker'];
+
+function vpaAuditKindOf(action) {
+  const a = String(action || '');
+  for (const k of VPA_AUDIT_KINDS) {
+    if (k.prefixes.some(function (p) { return a.indexOf(p) === 0; })) return k;
+  }
+  return VPA_AUDIT_KINDS[VPA_AUDIT_KINDS.length - 1];
+}
+/* A PostgREST logic value: quoted, so a label with a comma or a bracket in it cannot break the list. */
+function vpaPgq(s) { return '"' + String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'; }
+function vpaAuditKindCond(key) {
+  const k = VPA_AUDIT_KINDS.filter(function (x) { return x.key === key; })[0];
+  if (!k) return null;
+  if (k.key === 'other') {
+    const all = [];
+    VPA_AUDIT_KINDS.forEach(function (x) { x.prefixes.forEach(function (p) { all.push('action.not.like.' + p + '*'); }); });
+    return 'and(' + all.join(',') + ')';
+  }
+  return 'or(' + k.prefixes.map(function (p) { return 'action.like.' + p + '*'; }).join(',') + ')';
+}
+function vpaAuditWhoOf(row, adminIds, adminLabels) {
+  const l = row.actor_label == null ? null : String(row.actor_label);
+  if (row.actor_admin || (l && adminLabels.indexOf(l) !== -1)) return 'hq';
+  if (l && VPA_VENUE_LOGIN_LABELS.indexOf(l) !== -1) return 'venue';
+  if (l && /^migration/i.test(l)) return 'migration';
+  return 'system';
+}
+function vpaAuditWhoCond(key, adminLabels) {
+  const labels = adminLabels.length ? ',actor_label.in.(' + adminLabels.map(vpaPgq).join(',') + ')' : '';
+  if (key === 'hq') return 'or(actor_admin.not.is.null' + labels + ')';
+  if (key === 'venue') return 'and(actor_admin.is.null,actor_label.in.(' + VPA_VENUE_LOGIN_LABELS.map(vpaPgq).join(',') + '))';
+  if (key === 'migration') return 'and(actor_admin.is.null,actor_label.like.migration*)';
+  if (key === 'system') {
+    return 'and(actor_admin.is.null,or(actor_label.is.null,actor_label.in.(' + VPA_SYSTEM_LABELS.map(vpaPgq).join(',') + '),actor_label.like.automatic*))';
+  }
+  return null;
+}
+/* A read that THROWS on any non-2xx, for a page. vpaSelect answers [] on a refusal, and an empty
+   page reads as "nothing happened", which on an audit screen is a lie. */
+async function vpaReadPage(env, table, query) {
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/' + table + '?' + query, { headers: vpaHeaders(env) });
+  if (!res.ok) {
+    const t = (await res.text().catch(function () { return ''; })).slice(0, 200);
+    const e = new Error('read ' + table + ': ' + res.status + ' ' + t);
+    e.status = res.status; e.body = t;
+    throw e;
+  }
+  const rows = await res.json();
+  if (!Array.isArray(rows)) throw new Error('read ' + table + ': not a list');
+  return rows;
+}
+function vpaB64urlJson(o) { return btoa(JSON.stringify(o)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+function vpaUnB64urlJson(s) {
+  try { const p = String(s || '').replace(/-/g, '+').replace(/_/g, '/'); return JSON.parse(atob(p + '==='.slice((p.length + 3) % 4))); }
+  catch (_) { return null; }
+}
+
+/* WHO A TARGET IS, by name. venue:<id>, account:<founding id>, customer:<Stripe id> and group:<id>
+   all resolve; a raw id is only ever shown when nothing else exists. One answer, used by the audit
+   search and by billing health. */
+async function vpaNameBook(env) {
+  const venues = await vpaSelectAll(env, 'vp_venues', 'select=id,name,founding_id,group_id&order=id.asc');
+  const accts = await vpaSelectAll(env, 'venueplay_founding', 'select=id,venue_name,stripe_customer_id,contact_email&order=id.asc');
+  let groups = [];
+  try { groups = await vpaSelectAll(env, 'vp_venue_groups', 'select=id,name&order=id.asc'); } catch (_) { groups = []; }
+  const book = { venue: {}, account: {}, customer: {}, group: {}, venuesOfAccount: {}, accountOf: {} };
+  venues.forEach(function (v) {
+    book.venue[v.id] = v;
+    if (v.founding_id) (book.venuesOfAccount[v.founding_id] = book.venuesOfAccount[v.founding_id] || []).push(v);
+  });
+  accts.forEach(function (a) { book.account[a.id] = a; if (a.stripe_customer_id) book.customer[a.stripe_customer_id] = a; });
+  groups.forEach(function (g) { book.group[g.id] = g; });
+  return book;
+}
+function vpaListNames(names) {
+  names = names.filter(Boolean);
+  if (!names.length) return null;
+  if (names.length <= 2) return names.join(' and ');
+  return names[0] + ' and ' + (names.length - 1) + ' more';
+}
+/* { venue_id, venue, account_id, account, group } for one target, as far as it resolves. */
+function vpaResolveTarget(book, target, detail) {
+  const t = String(target || ''), d = detail || {};
+  const out = { venue_id: null, venue: null, account_id: null, account: null, group: null };
+  const acctNames = function (fid) {
+    const vs = (book.venuesOfAccount[fid] || []).map(function (v) { return v.name; });
+    const a = book.account[fid];
+    return vpaListNames(vs) || (a && a.venue_name) || null;
+  };
+  let m;
+  if ((m = /^venue:(.+)$/.exec(t))) {
+    const v = book.venue[m[1]];
+    out.venue_id = m[1];
+    out.venue = v ? v.name : (d.name || d.venue_name || null);
+    if (v && v.founding_id) { out.account_id = v.founding_id; }
+    if (v && v.group_id && book.group[v.group_id]) out.group = book.group[v.group_id].name;
+  } else if ((m = /^account:(.+)$/.exec(t))) {
+    out.account_id = m[1];
+    out.venue = acctNames(m[1]);
+  } else if ((m = /^customer:(.+)$/.exec(t))) {
+    const a = book.customer[m[1]];
+    if (a) { out.account_id = a.id; out.venue = acctNames(a.id); }
+    else if (d.what && !/^your VenuePlay/i.test(String(d.what))) out.venue = String(d.what).split(' - ')[0];
+    else if (d.to) out.venue = String(d.to);
+  } else if ((m = /^group:(.+)$/.exec(t))) {
+    out.group = book.group[m[1]] ? book.group[m[1]].name : null;
+  }
+  if (out.account_id && book.account[out.account_id]) {
+    const n = (book.venuesOfAccount[out.account_id] || []).length;
+    out.account = n > 1 ? 'account of ' + n + ' venues' : null;
+  }
+  if (!out.venue) out.venue = d.venue_name || d.venue || null;
+  return out;
+}
+
+/* WHAT HAPPENED, IN A SENTENCE. One template per action people actually look for; anything else
+   reads as its own name in words, never as JSON. who is the person, at is the venue (or account). */
+function vpaMoneyOf(d) {
+  if (!d) return '';
+  if (d.amount_cents != null && isFinite(Number(d.amount_cents))) return '$' + (Number(d.amount_cents) / 100).toFixed(2);
+  if (d.amount) return String(d.amount);
+  return '';
+}
+function vpaSummaryWords(s) {
+  if (!s || typeof s !== 'object') return '';
+  const bits = [];
+  bits.push(s.logo_url ? 'a logo' : 'no logo');
+  if (s.slides != null) bits.push(s.slides + ' slide' + (s.slides === 1 ? '' : 's'));
+  return bits.join(', ');
+}
+const VPA_AUDIT_SAY = {
+  logo_set: function (d, at) { return 'Put up a new logo for ' + at + '.'; },
+  logo_removed: function (d, at) { return 'Took the logo off ' + at + '\'s screens.'; },
+  logo_on_site: function (d, at) { return (d.show ? 'Agreed to show ' : 'Stopped showing ') + at + '\'s logo on the VenuePlay website.'; },
+  slide_uploaded: function (d, at) { return 'Uploaded an advertising slide for ' + at + '.'; },
+  screen_updated: function (d, at) {
+    const b = vpaSummaryWords(d.before), a = vpaSummaryWords(d.after);
+    return 'Changed ' + at + '\'s screen' + (b && a && b !== a ? ' (' + b + ' before, ' + a + ' after)' : '') + '.';
+  },
+  screen_restored: function (d, at) { return 'Put back an earlier version of ' + at + '\'s screen settings.'; },
+  screen_history_drift: function (d) { return 'The nightly check found screen settings changed outside VenuePlay (' + (d.drift || 0) + ' changed, ' + (d.vanished || 0) + ' gone).'; },
+  screen_command: function (d, at) { return 'Sent a command to ' + at + '\'s screens.'; },
+  screen_reload_requested: function (d, at) { return 'Asked ' + at + '\'s screens to reload.'; },
+  payment_failed_email: function (d, at) {
+    const what = d.what && !/^your VenuePlay/i.test(String(d.what)) ? 'an extras invoice' : 'the subscription';
+    return 'A card payment for ' + at + ' was declined (' + [vpaMoneyOf(d), what].filter(Boolean).join(', ') + '). '
+      + (d.reason_line ? 'The bank said: ' + d.reason_line + ' ' : '') + 'We emailed them.';
+  },
+  invoice_receipt_email: function (d, at) {
+    const o = String(d.outcome || '');
+    return o === 'sent' ? 'Emailed ' + at + ' a receipt.' : 'A receipt for ' + at + ' was NOT sent (' + o.replace(/^not sent: /, '') + ').';
+  },
+  overage_charged: function (d, at) { return 'Charged ' + at + ' ' + (vpaMoneyOf(d) || '') + ' for extra players, and it was paid.'; },
+  overage_charge_failed: function (d, at) { return 'An extra-player charge to ' + at + ' failed.'; },
+  overage_invoice_unpaid: function (d, at) { return 'An extras invoice for ' + at + ' is unpaid' + (vpaMoneyOf(d) ? ' (' + vpaMoneyOf(d) + ')' : '') + '.'; },
+  extras_moved_to_monthly: function (d, at) { return 'Moved ' + at + '\'s unpaid extras onto their next monthly bill.'; },
+  discount_applied: function (d, at) { return 'Gave ' + at + ' a discount' + (d.value != null ? ' (' + d.value + (d.kind === 'percent' ? '%' : '') + (d.months ? ' for ' + d.months + ' months' : '') + ')' : '') + '.'; },
+  discount_removed: function (d, at) { return 'Took a discount off ' + at + '.'; },
+  players_increased: function (d, at) { return 'Raised ' + at + '\'s players' + (d.from != null ? ' from ' + d.from + ' to ' + d.to : '') + '.'; },
+  players_reduction_scheduled: function (d, at) { return 'Lowered ' + at + '\'s players from their next bill' + (d.to != null ? ' (to ' + d.to + ')' : '') + '.'; },
+  players_reduction_cancelled: function (d, at) { return 'Cancelled a planned drop in ' + at + '\'s players.'; },
+  player_removed: function (d, at) { return 'Removed a player\'s details from ' + at + '\'s list, at their request.'; },
+  optin_exported: function (d, at) { return 'Downloaded ' + at + '\'s player list' + (d.rows != null ? ' (' + d.rows + ' people)' : '') + '.'; },
+  optin_approved: function (d, at) { return 'Approved ' + at + ' to collect player details.'; },
+  venue_onboarded: function (d, at) { return 'Set up ' + at + '.'; },
+  venue_provisioned: function (d, at) { return at + ' signed up and was set up.'; },
+  venue_suspended: function (d, at) { return 'Paused ' + at + '.'; },
+  venue_reactivated: function (d, at) { return 'Switched ' + at + ' back on.'; },
+  venue_reactivated_on_payment: function (d, at) { return at + ' paid and was switched back on.'; },
+  venue_archived: function (d, at) { return 'Archived ' + at + '.'; },
+  venue_cancel_scheduled: function (d, at) { return at + ' cancelled' + (d.reason_label ? ' ("' + d.reason_label + '")' : '') + (d.ends ? '. Last day ' + d.ends : '') + '.'; },
+  venue_cancel_undone: function (d, at) { return at + ' changed their mind and kept their venue.'; },
+  venue_cancel_contacted: function (d, at) { return 'Contacted ' + at + ' about their cancellation.'; },
+  venue_cancel_uncontacted: function (d, at) { return 'Took back "contacted" on ' + at + '.'; },
+  venue_cancel_note: function (d, at) { return 'Wrote a note on ' + at + ': "' + String(d.note || '').slice(0, 160) + '"'; },
+  venue_quiet_contacted: function (d, at) { return 'Contacted ' + at + ' because they had gone quiet.'; },
+  venue_subscription_ended: function (d, at) { return at + '\'s subscription ended.'; },
+  venue_invited_back: function (d, at) { return 'Emailed ' + at + ' an invitation to keep or come back to VenuePlay' + (d.to ? ' (' + d.to + ')' : '') + '.'; },
+  venue_marked_test: function (d, at) { return 'Marked ' + at + ' as a test venue.'; },
+  venue_unmarked_test: function (d, at) { return 'Marked ' + at + ' as a real venue again.'; },
+  auto_archive_run: function (d) { return 'The nightly job archived ' + (d.archived || 0) + ' venue' + (d.archived === 1 ? '' : 's') + ' that had left.'; },
+  venue_gaming_updated: function (d, at) { return 'Changed ' + at + '\'s gaming settings.'; },
+  venue_night_pass_granted: function (d, at) { return 'Let ' + at + ' run one more ' + (d.format === 'musical_bingo' ? 'musical bingo' : (d.format === 'either' ? 'trivia or musical bingo' : 'trivia')) + ' night.'; },
+  venue_night_pass_cancelled: function (d, at) { return 'Cancelled ' + at + '\'s extra-night pass.'; },
+  venue_night_pass_used: function (d, at) { return at + ' used their extra-night pass.'; },
+  venue_unlimited_nights_on: function (d, at) { return 'Gave ' + at + ' unlimited trivia and musical bingo nights.'; },
+  venue_unlimited_nights_off: function (d, at) { return 'Put ' + at + ' back on one trivia and one musical bingo night a week.'; },
+  permits_set: function (d, at) { return 'Recorded ' + at + '\'s gaming permits.'; },
+  paper_suspect_trivia: function (d, at) { return at + ' ran a trivia night with almost no phones answering' + (d.questions ? ' (' + d.questions + ' questions)' : '') + '.'; },
+  paper_declared: function (d, at) { return at + ' printed paper cards and said none were played.'; },
+  venue_code_refreshed: function (d, at) { return at + '\'s join code was changed.'; },
+  staff_added: function (d) { return 'Added ' + (d.name || 'a') + ' to the HQ team' + (d.role ? ' (' + d.role + ')' : '') + '.'; },
+  manager_added: function (d, at) { return 'Added a manager at ' + at + (d.name ? ' (' + d.name + ')' : '') + '.'; },
+  manager_perms_set: function (d, at) { return 'Changed what a manager at ' + at + ' may do.'; },
+  view_as: function (d, at) { return 'Opened ' + at + '\'s pages with View as.'; },
+  signup_flagged: function (d, at) { return 'A signup was held for review: ' + at + (d.email ? ' (' + d.email + ')' : '') + '.'; },
+  email_bounced: function (d, at) { return 'An email to ' + at + ' bounced' + (d.to ? ' (' + d.to + ')' : '') + '.'; },
+  email_marked_spam: function (d, at) { return at + ' marked one of our emails as spam.'; },
+  welcome_resent: function (d, at) { return 'Sent ' + at + ' their welcome email again.'; },
+};
+function vpaAuditSentence(row, at) {
+  const d = (row.detail && typeof row.detail === 'object') ? row.detail : {};
+  const name = at || 'a venue';
+  const f = VPA_AUDIT_SAY[row.action];
+  if (f) { try { return f(d, name); } catch (_) { /* fall through to the words */ } }
+  const words = String(row.action || 'something').replace(/_+/g, ' ').trim();
+  return words.charAt(0).toUpperCase() + words.slice(1) + (at ? ': ' + at : '') + '.';
+}
+function vpaWhoWords(kind, label) {
+  if (kind === 'hq') return String(label || 'HQ');
+  if (kind === 'venue') return 'The venue (' + String(label || 'login') + ')';
+  if (kind === 'migration') return 'A database migration';
+  if (kind === 'outside') return 'Outside VenuePlay';
+  const l = String(label || '');
+  if (l === 'stripe') return 'Automatic (Stripe)';
+  if (/^automatic/i.test(l)) return 'Automatic (' + l.replace(/^automatic\s*\(?|\)$/gi, '') + ')';
+  return 'Automatic';
+}
+
+const VPA_AUDIT_PAGE_MAX = 100;
+async function vpaHandleAuditSearch(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const u = new URL(request.url), q = function (k) { return String(u.searchParams.get(k) || '').trim(); };
+  const isoOk = function (s) { return !s || !isNaN(Date.parse(s)); };
+  const venueId = q('venue'), kind = q('kind'), who = q('who'), from = q('from'), to = q('to');
+  const size = Math.max(5, Math.min(VPA_AUDIT_PAGE_MAX, parseInt(q('size'), 10) || 50));
+  if (venueId && !/^[0-9a-fA-F-]{36}$/.test(venueId)) return json({ error: 'That venue is not one we know.' }, 400);
+  if (kind && !VPA_AUDIT_KINDS.some(function (k) { return k.key === kind; })) return json({ error: 'Unknown kind of change.' }, 400);
+  if (who && !VPA_AUDIT_WHO.some(function (k) { return k.key === who; })) return json({ error: 'Unknown kind of person.' }, 400);
+  if (!isoOk(from) || !isoOk(to)) return json({ error: 'Those dates are not dates.' }, 400);
+  const cur = q('before') ? vpaUnB64urlJson(q('before')) : null;
+  if (q('before') && (!cur || isNaN(Date.parse(cur.t)))) return json({ error: 'That page link has expired. Start the search again.' }, 400);
+
+  const admins = await vpaReadPage(env, 'vp_platform_admins', 'select=auth_user_id,label&limit=500');
+  const adminLabels = admins.map(function (a) { return a.label; }).filter(Boolean);
+  const adminIds = admins.map(function (a) { return a.auth_user_id; });
+
+  /* The audit table, unless the search can only be about the database-side screen history. */
+  const iso = function (s) { return new Date(s).toISOString(); };
+  const skipA = (cur && cur.a) || [], skipH = (cur && cur.h) || [];
+  let auditRows = [];
+  if (who !== 'outside') {
+    const c = [];
+    if (from) c.push('created_at.gte.' + iso(from));
+    if (to) c.push('created_at.lt.' + iso(to));
+    if (cur) c.push('created_at.lte.' + iso(cur.t));
+    if (venueId) c.push('target.eq.' + vpaPgq('venue:' + venueId));
+    if (kind) c.push(vpaAuditKindCond(kind));
+    if (who) c.push(vpaAuditWhoCond(who, adminLabels));
+    auditRows = await vpaReadPage(env, 'vp_admin_audit',
+      'select=id,created_at,actor_admin,actor_label,action,target,detail'
+      + (c.length ? '&and=' + encodeURIComponent('(' + c.join(',') + ')') : '')
+      + '&order=created_at.desc,id.desc&limit=' + (size + skipA.length + 1));
+    auditRows = auditRows.filter(function (r) { return skipA.indexOf(String(r.id)) === -1; });
+  }
+  /* The screen history's database-side rows (migration 114). Before 114 the table is not there,
+     and the search carries on without it. */
+  let histRows = [];
+  if ((!kind || kind === 'screen') && (!who || who === 'outside' || who === 'system')) {
+    const c = ['via.in.(' + (who === 'outside' ? '"direct"' : (who === 'system' ? '"nightly-check"' : '"direct","nightly-check"')) + ')'];
+    if (from) c.push('changed_at.gte.' + iso(from));
+    if (to) c.push('changed_at.lt.' + iso(to));
+    if (cur) c.push('changed_at.lte.' + iso(cur.t));
+    if (venueId) c.push('venue_id.eq.' + venueId);
+    try {
+      histRows = await vpaReadPage(env, 'vp_venue_screen_history',
+        'select=id,venue_id,slug,op,old_row,new_row,changed_at,actor,via,db_session_user,jwt_role,db_role'
+        + '&and=' + encodeURIComponent('(' + c.join(',') + ')')
+        + '&order=changed_at.desc,id.desc&limit=' + (size + skipH.length + 1));
+      histRows = histRows.filter(function (r) { return skipH.indexOf(String(r.id)) === -1; });
+    } catch (e) {
+      if (!(e.status === 404 || /vp_venue_screen_history|PGRST205|42P01/.test(String(e.body || '')))) throw e;
+      histRows = [];
+    }
+  }
+
+  const merged = auditRows.map(function (r) { return { t: r.created_at, src: 'a', r: r }; })
+    .concat(histRows.map(function (r) { return { t: r.changed_at, src: 'h', r: r }; }))
+    .sort(function (x, y) { const a = Date.parse(x.t), b = Date.parse(y.t); return b - a || (x.src < y.src ? -1 : 1); });
+  const page = merged.slice(0, size);
+  const more = merged.length > size;
+  const book = await vpaNameBook(env);
+
+  const rows = page.map(function (e) {
+    if (e.src === 'h') {
+      const h = e.r, v = book.venue[h.venue_id];
+      const name = v ? v.name : (h.slug || 'a venue');
+      const changes = vpaScreenChanges(h.op, h.old_row, h.new_row);
+      return { key: 'h' + h.id, at: h.changed_at, kind: 'screen', kind_label: VPA_AUDIT_KINDS[0].label,
+               who_kind: h.via === 'direct' ? 'outside' : 'system', who: vpaScreenWho(h),
+               venue_id: h.venue_id, venue: name, group: null,
+               sentence: name + ': ' + changes.join(' '), screen_history: true, raw: h };
+    }
+    const r = e.r, k = vpaAuditKindOf(r.action), w = vpaAuditWhoOf(r, adminIds, adminLabels);
+    const res = vpaResolveTarget(book, r.target, r.detail);
+    const at = [res.venue, res.group ? '(' + res.group + ')' : null].filter(Boolean).join(' ') || null;
+    return { key: 'a' + r.id, at: r.created_at, kind: k.key, kind_label: k.label, who_kind: w, who: vpaWhoWords(w, r.actor_label),
+             venue_id: res.venue_id, venue: res.venue, group: res.group, account: res.account,
+             sentence: vpaAuditSentence(r, at), raw: r };
+  });
+  let next = null;
+  if (more && page.length) {
+    const lastT = page[page.length - 1].t, same = page.filter(function (e) { return Date.parse(e.t) === Date.parse(lastT); });
+    const carryA = (cur && Date.parse(cur.t) === Date.parse(lastT)) ? skipA : [];
+    const carryH = (cur && Date.parse(cur.t) === Date.parse(lastT)) ? skipH : [];
+    next = vpaB64urlJson({ t: lastT,
+      a: carryA.concat(same.filter(function (e) { return e.src === 'a'; }).map(function (e) { return String(e.r.id); })),
+      h: carryH.concat(same.filter(function (e) { return e.src === 'h'; }).map(function (e) { return String(e.r.id); })) });
+  }
+  return json({ ok: true, rows: rows, next: next, size: size,
+                kinds: VPA_AUDIT_KINDS.map(function (k) { return { key: k.key, label: k.label }; }), who: VPA_AUDIT_WHO });
+}
+
+/* ---------------------------------------------------------------------------------------
+   HQ > BILLING > "Payments that need a look".   GET /admin/billing-health   (Dean, 21 Oct 2026)
+
+   The panel listed every money email on its own line, and a declined subscription read "your
+   VenuePlay subscription" with no venue anywhere, because the row's target is a Stripe customer
+   id. Now the Worker names every line (customer -> account -> its venues, and their group) and
+   folds repeats: one line per account, with the latest state, how many times, the last attempt,
+   and the history underneath. A line that has been paid since its last failure says so. Lines
+   with nothing wrong are sent too, marked ok, for the page's "show all". Owner and accounts only.
+   --------------------------------------------------------------------------------------- */
+const VPA_MONEY_ACTIONS = ['payment_failed_email', 'overage_invoice_unpaid', 'overage_charge_failed', 'overage_charged',
+                           'extras_moved_to_monthly', 'invoice_receipt_email', 'plan_uplift_after_three_big_nights'];
+const VPA_MONEY_LABEL = {
+  payment_failed_email: 'Card declined, we emailed them', overage_invoice_unpaid: 'Extras invoice not paid',
+  overage_charge_failed: 'Extra-player charge failed', overage_charged: 'Extra players charged and paid',
+  extras_moved_to_monthly: 'Extras moved onto their next monthly bill', invoice_receipt_email: 'Receipt',
+  plan_uplift_after_three_big_nights: 'Plan moved up after three big nights',
+};
+function vpaMoneyIsBad(r) {
+  const d = r.detail || {};
+  if (r.action === 'invoice_receipt_email') return String(d.outcome || '') !== 'sent';
+  return r.action === 'payment_failed_email' || r.action === 'overage_invoice_unpaid' || r.action === 'overage_charge_failed';
+}
+function vpaMoneyIsPaid(r) {
+  const d = r.detail || {};
+  return r.action === 'overage_charged' || (r.action === 'invoice_receipt_email' && String(d.outcome || '') === 'sent');
+}
+async function vpaHandleBillingHealth(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const rows = await vpaReadPage(env, 'vp_admin_audit',
+    'action=in.(' + VPA_MONEY_ACTIONS.join(',') + ')&select=id,created_at,action,target,detail&order=created_at.desc,id.desc&limit=1000');
+  const book = await vpaNameBook(env);
+  const lines = {};
+  rows.forEach(function (r) {
+    const res = vpaResolveTarget(book, r.target, r.detail);
+    const key = res.account_id ? 'account:' + res.account_id : (res.venue_id ? 'venue:' + res.venue_id : String(r.target || 'unknown'));
+    const L = lines[key] = lines[key] || { key: key, venue: res.venue, group: res.group, account: res.account,
+      venue_id: res.venue_id || ((res.account_id && (book.venuesOfAccount[res.account_id] || [])[0]) || {}).id || null,
+      events: [], failures: 0 };
+    const d = r.detail || {};
+    L.events.push({ at: r.created_at, what: VPA_MONEY_LABEL[r.action] || r.action, bad: vpaMoneyIsBad(r), paid: vpaMoneyIsPaid(r),
+                    amount: vpaMoneyOf(d) || null, said: d.reason_line || null,
+                    note: d.outcome && r.action !== 'payment_failed_email' && String(d.outcome) !== 'sent' ? String(d.outcome) : null,
+                    for_what: d.what ? (/^your VenuePlay/i.test(String(d.what)) ? 'the subscription' : 'an extras invoice') : null });
+    if (vpaMoneyIsBad(r)) L.failures++;
+  });
+  const out = Object.keys(lines).map(function (k) {
+    const L = lines[k], e = L.events;                     // newest first already
+    const lastBad = e.filter(function (x) { return x.bad; })[0] || null;
+    const paidAfter = lastBad ? e.filter(function (x) { return x.paid && Date.parse(x.at) > Date.parse(lastBad.at); })[0] : null;
+    let state = 'ok', status = 'All paid';
+    if (lastBad && !paidAfter) { state = 'bad'; status = lastBad.what + (lastBad.said ? ': ' + lastBad.said : ''); }
+    else if (lastBad && paidAfter) { state = 'recovered'; status = 'Paid since (' + paidAfter.what.toLowerCase() + ')'; }
+    return { key: L.key, venue: L.venue || 'Unknown customer', group: L.group, account: L.account, venue_id: L.venue_id,
+             state: state, status: status, failures: L.failures, last_attempt: (lastBad || e[0]).at,
+             last_amount: lastBad ? lastBad.amount : null, history: e.slice(0, 30), events: e.length };
+  }).sort(function (a, b) {
+    const rank = { bad: 0, recovered: 1, ok: 2 };
+    return (rank[a.state] - rank[b.state]) || (Date.parse(b.last_attempt) - Date.parse(a.last_attempt));
+  });
+  return json({ ok: true, lines: out, events: rows.length });
+}
+
+/* ---------------------------------------------------------------------------------------
+   HQ > CANCELLED > "Invite them back".   POST /admin/invite-back { venue_id }   (Dean, 21 Oct 2026)
+
+   Dean asked for a Reactivate button on a cancelled venue once it has been contacted. Turning a
+   cancelled venue back on from HQ would restart billing on a card the venue has asked us to stop
+   charging, and every HQ path that does that (un-archiving, Keep this venue through View as)
+   charges on the venue's card at renewal with nothing from the venue itself. So the button does
+   the one thing that is safe: it emails the account's contact a link to their own account page,
+   where "Keep this venue" is one tap by THEM, and that tap is the consent. Nothing is charged,
+   nothing is switched on, and the email and its outcome are audited. Owner and accounts admins.
+   --------------------------------------------------------------------------------------- */
+async function vpaHandleInviteBack(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const venueId = String(_b.body.venue_id || '').trim();
+  if (!/^[0-9a-fA-F-]{36}$/.test(venueId)) return json({ error: 'venue_id is required.' }, 400);
+  const vs = await vpaReadPage(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId)
+    + '&select=id,name,founding_id,group_id,status,suspended_reason,cancel_at_period_end&limit=1');
+  const v = vs[0];
+  if (!v) return json({ error: 'That venue no longer exists.' }, 404);
+  if (v.group_id && !v.founding_id) return json({ error: 'This venue is billed through its group. Talk to the group; there is no card of theirs to invite back.' }, 409);
+  if (v.status === 'active' && !v.cancel_at_period_end) return json({ error: v.name + ' is not cancelling, so there is nothing to invite them back to.' }, 409);
+  const as = await vpaReadPage(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(v.founding_id || '') + '&select=id,contact_email,contact_name&limit=1');
+  const acct = as[0];
+  const to = acct && acct.contact_email;
+  if (!to) return json({ error: 'There is no contact email on ' + v.name + '\'s account. Ring them instead.' }, 409);
+  const archived = v.suspended_reason === 'archived';
+  const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
+  const link = site + '/app/billing.html';
+  const html = '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#12101a">'
+    + '<img src="' + site + '/logos/venueplay_primary_dark.png" alt="VenuePlay" width="150" style="display:block;margin:0 0 24px">'
+    + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">Keep ' + vpaEsc(v.name) + ' on VenuePlay?</p>'
+    + '<p style="font-size:14px;color:#3a3a44;margin:0 0 20px">' + (acct.contact_name ? 'Hi ' + vpaEsc(String(acct.contact_name).split(' ')[0]) + ', thanks' : 'Thanks')
+    + ' for talking with us. If you would like to keep your games running, sign in to your account page and tap <b>Keep this venue</b>. '
+    + 'Nothing changes and nothing is charged unless you do.</p>'
+    + '<a href="' + link + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">Open my account page</a>'
+    + '<p style="font-size:12.5px;color:#9a9aa4;margin:22px 0 0">Questions? Reply to this email.</p></div>';
+  const sent = await vpaSendEmail(env, to, 'Keep ' + v.name + ' on VenuePlay?', html).catch(function () { return false; });
+  await vpaAudit(env, actor, 'venue_invited_back', 'venue:' + venueId, { name: v.name, to: to, accepted: !!sent, archived: archived });
+  if (!sent) return json({ error: 'The email did not go. Nothing else was changed.' }, 502);
+  return json({ ok: true, to: to, note: archived
+    ? 'Sent. This venue was archived by us, so their account page may not offer Keep this venue: if they want to come back, set them up again from Venues.'
+    : 'Sent. Nothing changes until they tap Keep this venue on their account page.' });
 }
 
 /* --- POST /account/reminders : payment-reminder email opt-out. --- */
