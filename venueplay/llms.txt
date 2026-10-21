@@ -45,6 +45,7 @@ contract and no setup fee.
 - Pricing: https://venueplay.com.au/#offer
 - Contact: https://venueplay.com.au/#contact
 - Phone: 07 5228 3667 (press 1 for sales, 2 if a venue is running a game, 4 for accounts)
+- Help for venues and players: https://venueplay.com.au/help
 - Terms: https://venueplay.com.au/terms.html
 - Privacy: https://venueplay.com.au/privacy.html
 

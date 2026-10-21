@@ -9981,7 +9981,9 @@ async function helpVenueFromRoom(env, code, slug) {
 }
 
 /* ------------------------------ POST /help/ticket (public) ------------------------------
-   brand venueplay: kind patron (a phone) or sales.
+   brand venueplay: kind patron (a phone), venue (the public /help page: someone at a venue who is
+   not signed in, so the venue is what they TYPED, never a venue id; category venue_support or
+   accounts) or sales.
    brand partyplay: kind patron (a guest), host (by party code) or sales.
    A VenuePlay HOST is refused here: they are signed in, and go through /help/venue/ticket so the
    venue is the one their login holds, not one they typed. */
@@ -9996,8 +9998,11 @@ async function helpPublicTicket(request, env, json) {
   // The honeypot: a field no person sees. Told it worked, and nothing is made.
   if (String(b.website || '').trim()) return json({ ok: true, ticket_no: null });
   const brand = b.brand === 'partyplay' ? 'partyplay' : 'venueplay';
-  const kind = ['patron', 'host', 'sales'].indexOf(b.kind) >= 0 ? b.kind : 'patron';
+  const kind = ['patron', 'host', 'sales', 'venue'].indexOf(b.kind) >= 0 ? b.kind : 'patron';
   if (brand === 'venueplay' && kind === 'host') return json({ error: 'Sign in to the console and use Help there.' }, 400);
+  if (brand === 'partyplay' && kind === 'venue') return json({ error: 'Which help is this?' }, 400);
+  // The venue as typed on the help page. Words for a person to read, never used to find a venue.
+  const typedVenue = brand === 'venueplay' ? helpLine(b.venue, 120) : '';
   const support = 'support@' + brand + '.com.au';
   const name = helpLine(b.name, 200);
   const email = helpLine(b.email, 300).toLowerCase();
@@ -10026,14 +10031,16 @@ async function helpPublicTicket(request, env, json) {
   const game = helpLine(b.game, 24).toLowerCase().replace(/[^a-z ]/g, '');
   // From the guided triage: the issue, as the database has it, names the ticket and picks its kind.
   const issue = kind === 'sales' ? null : await helpIssueFor(env, b.issue_id, brand);
-  const category = issue ? issue.category : kind === 'sales' ? 'sales' : kind === 'host' ? 'venue_support' : 'patron_support';
-  const who = kind === 'sales' ? 'Enquiry' : kind === 'host' ? 'Host help' : (brand === 'partyplay' ? 'Guest help' : 'Player help');
+  const category = issue ? issue.category : kind === 'sales' ? 'sales' : kind === 'host' ? 'venue_support'
+                 : kind === 'venue' ? helpPublicVenueCategory(b.category) : 'patron_support';
+  const who = kind === 'sales' ? 'Enquiry' : kind === 'host' ? 'Host help' : kind === 'venue' ? 'Venue help' : (brand === 'partyplay' ? 'Guest help' : 'Player help');
+  const at = typedVenue ? ' at ' + typedVenue : '';
   let t;
   try {
     t = await helpInsertTicket(env, {
-      brand: brand, category: category, channel: kind === 'sales' ? 'web_form' : 'patron_form',
-      title: issue ? issue.title + (game ? ' (' + game + ')' : '') : who + (game ? ' (' + game + ')' : '') + ': ' + helpLine(message, 80),
-      message: message, contact_name: name || null, contact_email: email, contact_phone: phone || null,
+      brand: brand, category: category, channel: kind === 'sales' || kind === 'venue' ? 'web_form' : 'patron_form',
+      title: issue ? issue.title + at + (game ? ' (' + game + ')' : '') : who + at + (game ? ' (' + game + ')' : '') + ': ' + helpLine(message, 80),
+      message: (typedVenue ? 'Venue (as typed): ' + typedVenue + '\n\n' : '') + message, contact_name: name || null, contact_email: email, contact_phone: phone || null,
       venue_id: where.venue_id, room_code: where.room_code, session_id: where.session_id,
     });
   } catch (e) {
@@ -10043,6 +10050,10 @@ async function helpPublicTicket(request, env, json) {
   await helpAnnounce(env, t, await helpVenueName(env, t.venue_id));
   return json({ ok: true, ticket_no: t.ticket_no });
 }
+
+/* The public venue form picks help or billing. Anything else, or nothing, is venue support: a bill
+   question filed as support still reaches a person, a support question filed as accounts may not. */
+function helpPublicVenueCategory(c) { return c === 'accounts' ? 'accounts' : 'venue_support'; }
 
 /* A signed-in VenuePlay login at THIS venue (any staff role), or an HQ admin viewing as it. */
 async function helpRequireVenueStaff(request, env, venueId) {

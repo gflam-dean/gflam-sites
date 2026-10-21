@@ -159,6 +159,28 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   t = T(r.body.ticket_no);
   check('the PartyPlay site form makes a PartyPlay sales ticket from the web form', t && t.brand === 'partyplay' && t.category === 'sales' && t.channel === 'web_form' && t.contact_phone === '0400 111 222', t);
 
+  print('THE PUBLIC HELP PAGE (/help): A VENUE THAT IS NOT SIGNED IN');
+  world();
+  var VENUE_PUB = { brand: 'venueplay', kind: 'venue', category: 'venue_support', name: 'Sam', email: 'sam@royalhotel.com.au', phone: '0400 222 333',
+                    venue: 'The Royal Hotel, Tugun', message: 'The TV shows a black screen', device: 'v1' };
+  r = await call(helpPublicTicket, null, VENUE_PUB);
+  t = r.body && T(r.body.ticket_no);
+  check('a venue on /help makes VENUE support from the web form, VenuePlay', r.status === 200 && t && t.brand === 'venueplay' && t.category === 'venue_support' && t.channel === 'web_form', t);
+  check('the venue it typed is on the ticket for a person to read, and is never matched to a real venue', t && /^Venue help at The Royal Hotel, Tugun: /.test(t.subject) && /^Venue \(as typed\): The Royal Hotel, Tugun\n\nThe TV/.test(t.message) && t.venue_id === null, t);
+  check('its alert says Venue support', sent.some(function (m) { return /^\[VenuePlay\] Venue support \[#/.test(m.subject); }), sent.map(function (m) { return m.subject; }));
+  r = await call(helpPublicTicket, null, Object.assign({}, VENUE_PUB, { category: 'accounts', device: 'v2', email: 'acc@royalhotel.com.au' }));
+  check('"Billing or an invoice" on /help makes an ACCOUNTS ticket', r.status === 200 && T(r.body.ticket_no).category === 'accounts', T(r.body.ticket_no));
+  r = await call(helpPublicTicket, null, Object.assign({}, VENUE_PUB, { category: 'sales', device: 'v3', email: 'v3@royalhotel.com.au' }));
+  check('anything else the page could send as a venue category is venue support, never sales or a made-up kind', r.status === 200 && T(r.body.ticket_no).category === 'venue_support', T(r.body.ticket_no));
+  r = await call(helpPublicTicket, null, Object.assign({}, VENUE_PUB, { kind: 'sales', category: 'sales', device: 'v4', email: 'v4@royalhotel.com.au' }));
+  check('"Bringing VenuePlay to my venue" is a SALES ticket from the web form, and keeps the venue it typed', r.status === 200 && T(r.body.ticket_no).category === 'sales' && T(r.body.ticket_no).channel === 'web_form' && / at The Royal Hotel, Tugun/.test(T(r.body.ticket_no).subject), T(r.body.ticket_no));
+  check('PartyPlay has no venues: kind venue is refused there', (await call(helpPublicTicket, null, Object.assign({}, VENUE_PUB, { brand: 'partyplay', device: 'v5', email: 'v5@example.com' }))).status === 400);
+  r = await call(helpPublicTicket, null, Object.assign({}, PATRON, { code: '', venue: 'The Anchor', game: '', device: 'p9', email: 'p9@example.com' }));
+  t = T(r.body.ticket_no);
+  check('a player on /help is player support from the patron form, with the venue they typed and no game guessed', r.status === 200 && t.category === 'patron_support' && t.channel === 'patron_form' && /^Player help at The Anchor: /.test(t.subject) && t.venue_id === null, t);
+  check('a venue ticket from /help is still a public form: the honeypot catches a bot on it',
+        (await call(helpPublicTicket, null, Object.assign({}, VENUE_PUB, { website: 'x', device: 'v6' }))).body.ticket_no === null);
+
   print('THE VENUEPLAY WEBSITE ENQUIRY FORM (/contact)');
   world();
   r = await call(handleContact, null, { name: 'Lee', email: 'lee@pub.com.au', phone: '0400000000', message: 'Pricing for 3 venues?' });

@@ -139,7 +139,7 @@ var ROUTES = ['/', '/tv', '/play', '/see-a-night', '/nsw', '/privacy', '/terms',
   '/app/musical/play', '/app/musical/screen', '/app/raffle/host', '/app/raffle/screen', '/app/members/host',
   '/app/members/screen', '/app/topanswers/screen', '/offer', '/offer-oct',
   '/offer-nov', '/qld', '/vic', '/last-call', '/email/signature', '/llms.txt', '/robots.txt', '/sitemap.xml',
-  '/data/musical-library.json', '/data/trivia-count.json', '/data/music-count.json'];
+  '/data/musical-library.json', '/data/trivia-count.json', '/data/music-count.json', '/help', '/support'];
 var dead = ROUTES.filter(function (r) { return !resolves(r); });
 ok('every route the product and the emails use resolves to a file or a redirect (' + ROUTES.length + ')', !dead.length, dead.join(', '));
 var redirectDead = Object.keys(redirects).filter(function (k) { return !resolves(redirects[k]); });
@@ -152,7 +152,7 @@ var links404 = (F404.match(/href="(\/[^"]*)"/g) || []).map(function (h) { return
 ok('and every link on it goes somewhere real, from any depth (absolute)', links404.length >= 4 && links404.every(function (h) { return resolves(h); }), links404.join(', '));
 
 print('\n== 4. search engines are pointed at the address that answers ==');
-['sitemap.xml', 'robots.txt', 'llms.txt', 'index.html', 'nsw.html', 'terms.html', 'privacy.html', 'see-a-night.html'].forEach(function (f) {
+['sitemap.xml', 'robots.txt', 'llms.txt', 'index.html', 'nsw.html', 'terms.html', 'privacy.html', 'see-a-night.html', 'help.html'].forEach(function (f) {
   ok(f + ' names no www address (www 301s to the bare domain)', read('venueplay/' + f).indexOf('https://www.venueplay.com.au') < 0);
 });
 var locs = (read('venueplay/sitemap.xml').match(/<loc>([^<]+)<\/loc>/g) || []).map(function (l) { return l.replace(/<\/?loc>/g, '').replace('https://venueplay.com.au', '') || '/'; });

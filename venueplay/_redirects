@@ -58,3 +58,7 @@
 /act.html     /offer-oct  301
 /last-call     /offer-oct  301
 /last-call.html  /offer-oct  301
+
+# THE HELP PAGE (21 Oct 2026). /help is help.html; /support is the other word people try.
+/support      /help  301
+/support.html /help  301

@@ -18,6 +18,14 @@
        <script src="/lib/vp-help.js" data-mode="host" data-brand="partyplay"></script>
      PartyPlay home page contact form, drawn into <div id="ppContact"></div>
        <script src="/lib/vp-help.js" data-mode="sales" data-brand="partyplay" data-mount="ppContact"></script>
+     VenuePlay public help page (/help), drawn into every [data-vph-audience] inside #helpDesk:
+       <script src="/app/vp-help.js" data-mode="page" data-brand="venueplay" data-mount="helpDesk"></script>
+       data-vph-audience="patron"  the player's issues, steps, FAQ and form (a patron ticket)
+       data-vph-audience="venue"   the venue's issues, steps, FAQ and a form for someone NOT signed
+                                   in (help, billing or sales; the console's own form needs a login)
+       data-vph-audience="sales"   the enquiry form (a sales ticket)
+     Same issues, same steps, same form code as the panel: the page is a second place to SHOW it,
+     never a second copy of it.
 
    THREE RULES IT FOLLOWS.
 
@@ -58,6 +66,8 @@
      VP_SUPPORT_TEL are the same two strings, and tools/test-support-phone.py fails if any copy
      anywhere differs. */
   var PHONE = BRAND === "venueplay" && MODE === "venue" ? { show: "07 5228 3667", tel: "+61752283667" } : null;
+  /* Who a form is for. The panel has one, from the script tag; the help page has one per audience. */
+  var CTX = { mode: MODE, faq: FAQ_KEY, page: false };
 
   function el(tag, cls, text) { var n = doc.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
   function on(n, ev, fn) { n.addEventListener(ev, function (e) { try { fn(e); } catch (x) {} }); }
@@ -87,7 +97,8 @@
     try { if (root.VPVenueURL && root.VPVenueURL.slug) return root.VPVenueURL.slug(root.location.search || "") || ""; } catch (e) {}
     return qs("venue");
   }
-  function gameName() {
+  function gameName(ctx) {
+    if (ctx && ctx.page) return "";   // the help page is not a game: never guess "bingo"
     var p = String(root.location.pathname || "");
     if (/musical/.test(p)) return "musical"; if (/trivia/.test(p)) return "trivia";
     return BRAND === "venueplay" ? "bingo" : "";
@@ -127,6 +138,7 @@
       ".vph .vph-err{color:#FF6B8B;font-size:14px;margin-top:10px;min-height:1px}" +
       ".vph .vph-fine{font-size:12.5px;color:#8A8A94;margin-top:12px}" +
       ".vph .vph-fine a,.vph details a{color:#FF8AC4}" +
+      ".vph .vph-priv{margin-top:6px;font-size:12px}" +
       ".vph .vph-done{background:#17171A;border:1px solid rgba(53,208,127,.4);border-radius:12px;padding:16px;margin-top:14px;color:#E7E7EC}" +
       ".vph .vph-done b{color:#35D07F}" +
       ".vph .vph-hp{position:absolute!important;left:-9999px!important;width:1px!important;height:1px!important;overflow:hidden!important}" +
@@ -156,10 +168,11 @@
   }
 
   /* ---- the words: from HQ's editor, through the Worker; the file on this site if that fails ---- */
-  var contentP = null;
-  function loadContent() {
-    if (contentP) return contentP;
-    contentP = root.fetch(API + "/help/content?brand=" + BRAND + "&audience=" + FAQ_KEY)
+  var contentPs = {};
+  function loadContent(key) {
+    var FAQ_KEY = key || CTX.faq;
+    if (contentPs[FAQ_KEY]) return contentPs[FAQ_KEY];
+    var contentP = contentPs[FAQ_KEY] = root.fetch(API + "/help/content?brand=" + BRAND + "&audience=" + FAQ_KEY)
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(function (j) { if (!j || !j.faq) throw new Error("empty"); return j; })
       .catch(function () {
@@ -192,13 +205,14 @@
      The Worker hands the page its site key (in /help/content, or /help/config for the sales form),
      so switching it on is a Worker setting and never a page edit. No key: nothing is loaded and the
      form is exactly as before. The widget is the managed kind: most people never see it. */
-  var tsKeyP = null, tsScriptP = null;
-  function turnstileKey() {
-    if (tsKeyP) return tsKeyP;
-    tsKeyP = MODE === "venue" ? Promise.resolve(null)
+  var tsKeyPs = {}, tsScriptP = null;
+  function turnstileKey(ctx) {
+    var MODE = ctx.mode, k = MODE + ":" + ctx.faq;
+    if (tsKeyPs[k]) return tsKeyPs[k];
+    tsKeyPs[k] = MODE === "venue" ? Promise.resolve(null)
       : MODE === "sales" ? root.fetch(API + "/help/config?brand=" + BRAND).then(function (r) { return r.json(); }).then(function (j) { return (j && j.turnstile) || null; }).catch(function () { return null; })
-      : loadContent().then(function (d) { return (d && d.turnstile) || null; });
-    return tsKeyP;
+      : loadContent(ctx.faq).then(function (d) { return (d && d.turnstile) || null; });
+    return tsKeyPs[k];
   }
   function turnstileScript() {
     if (root.turnstile) return Promise.resolve(root.turnstile);
@@ -225,57 +239,90 @@
   function field(label, input) { var w = el("div"); var l = el("label", "", label); if (input.id) l.setAttribute("for", input.id); w.appendChild(l); w.appendChild(input); return w; }
   function input(type, id, extra) { var i = el(type === "textarea" ? "textarea" : "input"); if (type !== "textarea") i.type = type; i.id = id; for (var k in (extra || {})) i.setAttribute(k, extra[k]); return i; }
 
-  function buildForm(box, issue) {
+  function buildForm(box, issue, ctx) {
+    ctx = ctx || CTX;
+    var MODE = ctx.mode, sfx = ctx.sfx || "";
     var venueMode = MODE === "venue", sales = MODE === "sales";
+    // A venue on the public help page: not signed in, so it says who it is, and picks the kind.
+    var pubVenue = MODE === "venue_public";
+    function input2(type, id, extra) { return input(type, id + sfx, extra); }
     var f = el("form"); f.setAttribute("novalidate", ""); f.className = "vph-form";
     if (PHONE) f.appendChild(callLine());
     if (issue && !venueMode) { var about = el("div", "vph-about"); about.appendChild(el("span", "", "About: ")); about.appendChild(el("b", "", issue.title)); f.appendChild(about); }
-    var hp = input("text", "vphWebsite", { name: "website", tabindex: "-1", autocomplete: "off", "aria-hidden": "true" });
+    var hp = input2("text", "vphWebsite", { name: "website", tabindex: "-1", autocomplete: "off", "aria-hidden": "true" });
     var hpw = el("div", "vph-hp"); hpw.appendChild(hp); f.appendChild(hpw);
 
-    var name, email, phone, subject, kind, urgent;
-    if (venueMode) {
-      subject = input("text", "vphSubject", { maxlength: "200", placeholder: "e.g. TV not showing the game" });
-      if (issue) subject.value = issue.title;
-      f.appendChild(field("What is it about?", subject));
-      kind = el("select"); kind.id = "vphKind";
-      [["venue_support", "Help with VenuePlay"], ["accounts", "Billing or an invoice"]].forEach(function (o) { var op = el("option", "", o[1]); op.value = o[0]; kind.appendChild(op); });
+    var name, email, phone, subject, kind, urgent, where;
+    function kinds(list) {
+      kind = el("select"); kind.id = "vphKind" + sfx;
+      list.forEach(function (o) { var op = el("option", "", o[1]); op.value = o[0]; kind.appendChild(op); });
       if (issue && /bill|invoice|payment|refund/i.test(issue.title)) kind.value = "accounts";
       f.appendChild(field("Kind of request", kind));
-    } else {
-      name = input("text", "vphName", { maxlength: "120", autocomplete: "name", placeholder: sales ? "Your name" : "Optional" });
-      f.appendChild(field(sales ? "Your name" : "Your name (optional)", name));
-      email = input("email", "vphEmail", { maxlength: "200", autocomplete: "email", inputmode: "email", placeholder: "you@example.com" });
-      f.appendChild(field("Your email, so we can reply", email));
-      if (sales) { phone = input("tel", "vphPhone", { maxlength: "30", autocomplete: "tel", placeholder: "Optional" }); f.appendChild(field("Phone (optional)", phone)); }
     }
-    var msg = input("textarea", "vphMsg", { maxlength: "4000", placeholder: venueMode ? "What is happening, and on which screen?" : "How can we help?" });
+    if (venueMode) {
+      subject = input2("text", "vphSubject", { maxlength: "200", placeholder: "e.g. TV not showing the game" });
+      if (issue) subject.value = issue.title;
+      f.appendChild(field("What is it about?", subject));
+      kinds([["venue_support", "Help with VenuePlay"], ["accounts", "Billing or an invoice"]]);
+    } else {
+      if (pubVenue) kinds([["venue_support", "Help with VenuePlay"], ["accounts", "Billing or an invoice"], ["sales", "Bringing VenuePlay to my venue"]]);
+      var needName = sales || pubVenue;
+      name = input2("text", "vphName", { maxlength: "120", autocomplete: "name", placeholder: needName ? "Your name" : "Optional" });
+      f.appendChild(field(needName ? "Your name" : "Your name (optional)", name));
+      if (pubVenue) { where = input2("text", "vphVenue", { maxlength: "120", autocomplete: "organization", placeholder: "e.g. The Royal Hotel, Tugun" }); f.appendChild(field("Your venue", where)); }
+      else if (ctx.page) { where = input2("text", "vphVenue", { maxlength: "120", placeholder: "Optional: the venue, or the code on the big screen" }); f.appendChild(field("Where were you playing?", where)); }
+      email = input2("email", "vphEmail", { maxlength: "200", autocomplete: "email", inputmode: "email", placeholder: "you@example.com" });
+      f.appendChild(field("Your email, so we can reply", email));
+      if (sales || pubVenue) { phone = input2("tel", "vphPhone", { maxlength: "30", autocomplete: "tel", placeholder: "Optional" }); f.appendChild(field("Phone (optional)", phone)); }
+    }
+    var msg = input2("textarea", "vphMsg", { maxlength: "4000", placeholder: venueMode || pubVenue ? "What is happening, and on which screen?" : "How can we help?" });
     f.appendChild(field("Message", msg));
     if (venueMode) {
-      var replyTo = input("email", "vphReply", { maxlength: "200", placeholder: "Leave blank to use your account email" });
+      var replyTo = input2("email", "vphReply", { maxlength: "200", placeholder: "Leave blank to use your account email" });
       f.appendChild(field("Reply to (optional)", replyTo));
-      var c = el("label", "vph-chk"); urgent = input("checkbox", "vphUrgent"); c.appendChild(urgent);
-      c.appendChild(doc.createTextNode("Happening now: a game night is going wrong"));
+      /* A venue asking for help from the console is, nearly always, a venue whose game is on: so
+         this starts TICKED (Dean, 21 Oct 2026). A bill is never urgent, so "Billing" unticks it,
+         until the person has set it themselves; after that it is theirs and stays as they left it. */
+      var c = el("label", "vph-chk"); urgent = input2("checkbox", "vphUrgent"); c.appendChild(urgent);
+      c.appendChild(doc.createTextNode("This is happening right now (a game is on)"));
       f.appendChild(c);
+      var urgentSet = false;
+      urgent.checked = kind.value !== "accounts";
+      on(urgent, "change", function () { urgentSet = true; });
+      on(kind, "change", function () { if (!urgentSet) urgent.checked = kind.value !== "accounts"; });
     }
     // Turnstile sits just above Send, and only when it is switched on.
     var ts = { box: el("div", "vph-ts"), id: null, on: false };
     f.appendChild(ts.box);
-    if (!venueMode) turnstileKey().then(function (key) {
+    if (!venueMode) turnstileKey(ctx).then(function (key) {
       if (!key) return;
       ts.on = true;
       return turnstileScript().then(function (T) {
         if (!T) return;
-        try { ts.id = T.render(ts.box, { sitekey: key, appearance: "interaction-only", theme: "dark", action: "help-" + MODE }); } catch (e) {}
+        try { ts.id = T.render(ts.box, { sitekey: key, appearance: "interaction-only", theme: "dark", action: "help-" + MODE.replace("_", "-") }); } catch (e) {}
       });
     });
     var go = el("button", "vph-go", "Send"); go.type = "submit"; f.appendChild(go);
     var err = el("div", "vph-err"); err.setAttribute("role", "alert"); f.appendChild(err);
-    var fine = el("div", "vph-fine");
-    fine.appendChild(doc.createTextNode(venueMode ? "We reply by email. " : "We only use your email to reply to this message. "));
-    var a = el("a", "", "Privacy policy"); a.href = "/privacy"; a.target = "_blank"; a.rel = "noopener"; fine.appendChild(a);
-    fine.appendChild(doc.createTextNode(". Or email " + SUPPORT + "."));
+    /* The small print: ONE plain sentence, then the privacy policy as its own small link
+       (Dean, 21 Oct 2026: "Reply by email. Privacy policy. Or email ..." read as three fragments). */
+    var fine = el("div", "vph-fine"); fine.id = "vphFine" + sfx;
+    if (venueMode || pubVenue) {
+      fine.appendChild(doc.createTextNode("We'll reply by email."));
+      if (PHONE) {
+        fine.appendChild(doc.createTextNode(" Urgent and a game is on? Call "));
+        var tl = el("a", "", PHONE.show); tl.href = "tel:" + PHONE.tel; fine.appendChild(tl);
+        fine.appendChild(doc.createTextNode(" and press 2."));
+      }
+    } else {
+      fine.appendChild(doc.createTextNode("We only use your email to reply to this message."));
+    }
     f.appendChild(fine);
+    var priv = el("div", "vph-fine vph-priv");
+    var a = el("a", "", "Privacy policy"); a.href = "/privacy"; a.target = "_blank"; a.rel = "noopener"; priv.appendChild(a);
+    priv.appendChild(doc.createTextNode(" \u00b7 "));
+    var ml = el("a", "", SUPPORT); ml.href = "mailto:" + SUPPORT; priv.appendChild(ml);
+    f.appendChild(priv);
 
     on(f, "submit", function (e) {
       e.preventDefault();
@@ -293,10 +340,17 @@
       } else {
         var em = String(email.value || "").trim();
         if (!/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(em)) { err.textContent = "Put in your email so we can reply."; email.focus(); return; }
-        if (sales && !String(name.value || "").trim()) { err.textContent = "Put in your name."; name.focus(); return; }
-        body = { brand: BRAND, kind: sales ? "sales" : (MODE === "host" ? "host" : "patron"), name: name.value, email: em,
+        if ((sales || pubVenue) && !String(name.value || "").trim()) { err.textContent = "Put in your name."; name.focus(); return; }
+        var w = where ? String(where.value || "").trim() : "";
+        if (pubVenue && !w) { err.textContent = "Tell us which venue, so we can look it up."; where.focus(); return; }
+        // A public venue form is "venue" (help or billing) or "sales"; the Worker files it by that.
+        var k = pubVenue ? (kind.value === "sales" ? "sales" : "venue") : sales ? "sales" : (MODE === "host" ? "host" : "patron");
+        body = { brand: BRAND, kind: k, name: name.value, email: em,
                  phone: phone ? phone.value : "", message: m, code: roomCode(), slug: BRAND === "venueplay" ? venueSlug() : "",
-                 game: sales ? "" : gameName(), device: deviceId(), website: hp.value, issue_id: issue ? issue.id : undefined };
+                 game: sales || pubVenue ? "" : gameName(ctx), device: deviceId(), website: hp.value, issue_id: issue ? issue.id : undefined };
+        if (pubVenue) { body.category = kind.value; body.venue = w; }
+        else if (/^[A-Za-z0-9]{6}$/.test(w)) body.code = w.toUpperCase();   // the code off the big screen
+        else if (w) body.venue = w;
         if (ts.on) {
           var tok = ""; try { tok = root.turnstile && ts.id !== null ? root.turnstile.getResponse(ts.id) : ""; } catch (e) {}
           if (!tok) { err.textContent = "One moment while we check you are a person, then press Send again. If it will not go, email " + SUPPORT + "."; return; }
@@ -324,7 +378,7 @@
       });
     });
     box.appendChild(f);
-    try { (venueMode ? (issue ? msg : subject) : email).focus(); } catch (e) {}
+    if (!ctx.noFocus) try { (venueMode ? (issue ? msg : subject) : pubVenue ? name : email).focus(); } catch (e) {}
     return f;
   }
 
@@ -368,7 +422,17 @@
     on(bg, "click", function (e) { if (e.target === bg) close(); });
     doc.addEventListener("keydown", esck);
     try { x.focus(); } catch (e) {}
-    function clear() { while (flow.firstChild) flow.removeChild(flow.firstChild); try { p.scrollTop = 0; } catch (e) {} }
+    runFlow(flow, CTX, close, p);
+  }
+
+  /* The flow itself: the issues, one step at a time, the FAQ, the form. The panel runs it in a
+     dialog; the help page runs it in the page, once per audience. ONE copy of it either way. */
+  function runFlow(flow, ctx, close, scroller) {
+    var sfx = ctx.sfx || "";
+    function clear() {
+      while (flow.firstChild) flow.removeChild(flow.firstChild);
+      try { if (scroller) scroller.scrollTop = 0; else if (flow.getBoundingClientRect().top < 0) flow.scrollIntoView({ block: "start" }); } catch (e) {}
+    }
     function backLink(label, fn) { var b = el("button", "vph-back", label); b.type = "button"; on(b, "click", fn); return b; }
     var data = null;
 
@@ -388,9 +452,10 @@
       }
       var faq = (data && data.faq) || [];
       if (faq.length) {
-        var det = el("details", "vph-faqwrap"); det.id = "vphFaq";
+        var det = el("details", "vph-faqwrap"); det.id = "vphFaq" + sfx;
         det.appendChild(el("summary", "", "Questions and answers"));
         if (!issues.length) det.open = true;
+        if (ctx.page) det.open = true;   // on the help page the answers ARE the page: open
         faq.forEach(function (it) {
           var d = el("details"); d.appendChild(el("summary", "", it.q)); d.appendChild(lines(el("p"), it.a)); det.appendChild(d);
         });
@@ -417,7 +482,7 @@
         clear();
         var done = el("div", "vph-done"); done.setAttribute("role", "status");
         done.appendChild(el("b", "", "Good, glad that sorted it.")); flow.appendChild(done);
-        var ok = el("button", "vph-go", "Done"); ok.type = "button"; on(ok, "click", close); flow.appendChild(ok);
+        var ok = el("button", "vph-go", "Done"); ok.type = "button"; on(ok, "click", close || showIssues); flow.appendChild(ok);
       });
       on(still, "click", function () {
         triage(issue, step, "not_fixed");
@@ -431,12 +496,12 @@
 
     function showForm(issue) {
       clear();
-      flow.appendChild(el("h3", "vph-q", issue && issue.steps && issue.steps.length ? "Sorry that did not fix it. Tell us what is happening." : "Contact support"));
-      buildForm(flow, issue);
+      flow.appendChild(el("h3", "vph-q", issue && issue.steps && issue.steps.length ? "Sorry that did not fix it. Tell us what is happening." : ctx.page ? "Send us a message" : "Contact support"));
+      buildForm(flow, issue, ctx);
       flow.appendChild(backLink("Back to the list", showIssues));
     }
 
-    loadContent().then(function (d) { data = d; showIssues(); });
+    loadContent(ctx.faq).then(function (d) { data = d; showIssues(); });
   }
   root.VPHelp = { open: openPanel, mode: MODE, brand: BRAND };
 
@@ -452,6 +517,22 @@
     if (MODE === "sales") {
       var m = doc.getElementById(MOUNT); if (!m) return;
       var wrap = el("div", "vph-inline"); var p = el("div", "vph"); wrap.appendChild(p); buildForm(p); m.appendChild(wrap);
+      return;
+    }
+    if (MODE === "page") {
+      // The public help page: each [data-vph-audience] gets that audience's flow, in the page.
+      var pm = doc.getElementById(MOUNT); if (!pm) return;
+      Array.prototype.forEach.call(pm.querySelectorAll("[data-vph-audience]"), function (box) {
+        var aud = box.getAttribute("data-vph-audience");
+        var ctx = aud === "venue" ? { mode: "venue_public", faq: "venue", page: true, sfx: "-venue" }
+                : aud === "patron" ? { mode: "patron", faq: "patron", page: true, sfx: "-patron" }
+                : aud === "sales" ? { mode: "sales", faq: "", page: true, sfx: "-sales", noFocus: true } : null;
+        if (!ctx) return;
+        var w = el("div", "vph-inline"), pv = el("div", "vph"); w.appendChild(pv); box.appendChild(w);
+        if (aud === "sales") { buildForm(pv, null, ctx); return; }
+        var fl = el("div", "vph-pageflow"); fl.id = "vphFlow" + ctx.sfx; pv.appendChild(fl);
+        runFlow(fl, ctx, null, null);
+      });
       return;
     }
     if (MODE === "venue") {

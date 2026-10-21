@@ -236,6 +236,125 @@ CALL_LINE = ('(function(){var c=document.getElementById("vphCall");if(!c)return 
 def call_ok(c):
     return bool(c) and c['href'] == 'tel:+61752283667' and c['link'] == '07 5228 3667' and c['shown'] and c['inside'] \
         and c['text'] == 'Call us on 07 5228 3667. If a game is on right now, press 2.' and c['scrollW'] <= c['innerW']
+# Errors a page throws or logs, and any of its own files that failed to load. Installed before the
+# page's first script, so nothing it does on load is missed.
+ERRWATCH = ('window.__errs=[];window.addEventListener("error",function(e){__errs.push("error: "+(e.message||(e.target&&(e.target.src||e.target.href))||"?"));},true);'
+            'window.addEventListener("unhandledrejection",function(e){__errs.push("rejection: "+String(e.reason));});'
+            '(function(){var ce=console.error;console.error=function(){__errs.push("console.error: "+Array.prototype.join.call(arguments," "));return ce.apply(console,arguments);};})();')
+OWN_FILES_BAD = ('(function(){return performance.getEntriesByType("resource").filter(function(e){return e.name.indexOf(location.origin)===0&&e.responseStatus>=400;})'
+                 '.map(function(e){return e.name+" "+e.responseStatus;});})()')
+
+
+def last_ticket(t):
+    return ([x for x in posts(t) if x['path'] == '/help/ticket'][-1:] or [{}])[0]
+
+
+def help_page_checks(b, VP):
+    """THE PUBLIC HELP PAGE, /help (21 Oct 2026): the real page, the real widget in "page" mode,
+    at desktop and phone width. Every ticket goes to the stand-in Worker, never the real one."""
+    vp_faq = json.load(open(os.path.join(ROOT, 'venueplay', 'data', 'help-faq.json')))
+    for w, h, mobile, tag in ((1280, 900, False, 'desktop'), (375, 740, True, 'phone')):
+        print('THE HELP PAGE, /help, ' + tag.upper())
+        t = Tab(b, w, h, mobile=mobile, pre=ERRWATCH)
+        t.go(VP + '/help')
+        loaded = t.until('document.readyState==="complete" && !!document.querySelector("[data-path=venue]")', 15)
+        check(tag + ': /help loads the help page (a clean URL, as Pages serves it)', bool(loaded) and 'Help' in (t.js('document.title') or ''), t.js('location.pathname'))
+        check(tag + ': in the site\'s look: the home page\'s header logo, its footer with Help in it, its black',
+              t.js('(function(){var w=document.querySelector("header .logo .word");return !!w && w.textContent==="VenuePlay" && !!document.querySelector("footer .foot-meta a[href=\'/help\']") && getComputedStyle(document.body).backgroundColor==="rgb(10, 10, 11)" && getComputedStyle(document.querySelector("h1")).fontFamily.indexOf("Anton")>=0;})()') is True)
+        check(tag + ': two clear ways in at the top, "I\'m a venue" and "I\'m a player", and the sales way',
+              t.js('Array.prototype.map.call(document.querySelectorAll("[data-path]"),function(x){return x.getAttribute("data-path")+":"+(x.querySelector(".t,b")||{}).textContent;}).join("|")') == "venue:I'm a venue|player:I'm a player|sales:Sales: bring VenuePlay to your venue",
+              t.js('Array.prototype.map.call(document.querySelectorAll("[data-path]"),function(x){return x.getAttribute("data-path")+":"+(x.querySelector(".t,b")||{}).textContent;}).join("|")'))
+        check(tag + ': nothing is open until they choose, and the page says so', t.js('document.getElementById("venue").hidden && document.getElementById("player").hidden && document.getElementById("sales").hidden && !document.getElementById("pickHint").hidden') is True)
+        check(tag + ': no sideways scrolling', t.js('document.documentElement.scrollWidth<=window.innerWidth') is True, [t.js('document.documentElement.scrollWidth'), t.js('window.innerWidth')])
+        time.sleep(0.6)
+        check(tag + ': the page stays at the top on load (the hidden forms never grab focus and scroll it)', t.js('window.scrollY') == 0, t.js('window.scrollY'))
+        t.shot('20-help-%s-top' % tag)
+
+        # ---- the venue way ----
+        t.js('document.querySelector("[data-path=venue]").click()')
+        got = t.until('document.querySelectorAll("#vphFaq-venue details").length || 0', 8)
+        check(tag + ' venue: the venue issues and the venue FAQ (%d), open on the page' % len(vp_faq['venue']['items']),
+              got == len(vp_faq['venue']['items']) and t.js('document.getElementById("vphFaq-venue").open') is True and
+              t.js('Array.prototype.map.call(document.querySelectorAll("#vphFlow-venue .vph-issue"),function(x){return x.textContent;}).join("|")') == '|'.join(i['title'] for i in ISSUES['venueplay:venue']), got)
+        check(tag + ' venue: the player panel stays shut, and the address says #venue', t.js('document.getElementById("player").hidden && location.hash==="#venue" && document.querySelector("[data-path=venue]").getAttribute("aria-selected")==="true"') is True)
+        check(tag + ' venue: the marked spot for the support phone is there, empty and hidden until feature/support-phone fills it',
+              t.js('(function(){var p=document.querySelector("[data-support-phone]");return !!p&&p.hidden&&p.offsetHeight===0&&!p.textContent.trim();})()') is True)
+        t.shot('21-help-%s-venue' % tag)
+        I3 = ISSUES['venueplay:venue'][0]
+        t.js('document.querySelector("#vphFlow-venue [data-issue=\'%s\']").click()' % I3['id'])
+        st = t.until('(document.querySelector("#vphFlow-venue .vph-stepno")||{}).textContent', 5)
+        check(tag + ' venue: the guided steps run in the page, one at a time ("Step 1 of 3")', st == 'Step 1 of 3', st)
+        t.shot('21b-help-%s-venue-step' % tag)
+        for k in range(3):
+            t.until('!!document.querySelector("#vphFlow-venue .vph-still")', 3)
+            t.js('document.querySelector("#vphFlow-venue .vph-still").click()')
+        t.until('!!document.getElementById("vphMsg-venue")', 5)
+        about = t.js('(document.querySelector("#vphFlow-venue .vph-about")||{}).textContent')
+        check(tag + ' venue: after the last step the public venue form opens, about that issue, with name, venue, email, kind',
+              about == 'About: ' + I3['title'] and all(t.js('!!document.getElementById("%s")' % i) for i in ('vphName-venue', 'vphVenue-venue', 'vphEmail-venue', 'vphKind-venue')), about)
+        check(tag + ' venue: its kinds are help, billing and sales', t.js('Array.prototype.map.call(document.getElementById("vphKind-venue").options,function(o){return o.value;}).join()') == 'venue_support,accounts,sales')
+        t.shot('21c-help-%s-venue-form' % tag)
+        t.js('document.getElementById("vphName-venue").value="Sam";document.getElementById("vphEmail-venue").value="sam@royal.com.au";document.getElementById("vphMsg-venue").value="TV black";document.querySelector("#vphFlow-venue .vph-go").click()')
+        time.sleep(0.3)
+        check(tag + ' venue: no venue named, no send, and it says why', not [x for x in posts(t) if x['path'] == '/help/ticket'] and 'venue' in (t.js('document.querySelector("#vphFlow-venue .vph-err").textContent') or ''))
+        t.js('document.getElementById("vphVenue-venue").value="The Royal Hotel, Tugun";document.querySelector("#vphFlow-venue .vph-go").click()')
+        done = t.until('(document.querySelector("#vphFlow-venue .vph-done")||{}).textContent', 8)
+        post = last_ticket(t)
+        body = post.get('body', {})
+        check(tag + ' venue: the ticket reaches the Worker as a VENUE ticket, venue support, with the venue typed and the issue',
+              body.get('brand') == 'venueplay' and body.get('kind') == 'venue' and body.get('category') == 'venue_support' and body.get('venue') == 'The Royal Hotel, Tugun' and body.get('issue_id') == I3['id'] and body.get('game') == '' and 'Authorization' not in (post.get('headers') or {}), body)
+        check(tag + ' venue: and the page shows the ticket number', bool(done) and '#1042' in done, done)
+        if tag == 'phone':
+            # The other two venue kinds, from "Or send us a message".
+            for kind, want_kind, want_cat in (('accounts', 'venue', 'accounts'), ('sales', 'sales', 'sales')):
+                t.go(VP + '/help?k=' + kind + '#venue')   # a fresh load: a bare #venue is the same page
+                t.until('!!document.querySelector("#vphFlow-venue .vph-msg")', 10)
+                t.js('document.querySelector("#vphFlow-venue .vph-msg").click()')
+                t.until('!!document.getElementById("vphKind-venue")', 5)
+                t.js('document.getElementById("vphKind-venue").value="%s";document.getElementById("vphName-venue").value="Sam";document.getElementById("vphVenue-venue").value="The Royal";document.getElementById("vphEmail-venue").value="sam@royal.com.au";document.getElementById("vphMsg-venue").value="Question";document.querySelector("#vphFlow-venue .vph-go").click()' % kind)
+                t.until('!!document.querySelector("#vphFlow-venue .vph-done")', 8)
+                bb = last_ticket(t).get('body', {})
+                check('phone venue: "%s" reaches the Worker as kind %s, category %s' % (kind, want_kind, want_cat), bb.get('kind') == want_kind and bb.get('category') == want_cat, bb)
+
+        # ---- the player way ----
+        t.go(VP + '/help')
+        t.until('!!document.querySelector("[data-path=player]") && !!document.querySelector("#vphFlow-patron .vph-msg")', 10)
+        t.js('document.querySelector("[data-path=player]").click()')
+        got = t.until('document.querySelectorAll("#vphFaq-patron details").length || 0', 8)
+        check(tag + ' player: the player issues and the player FAQ (%d), open on the page' % len(vp_faq['patron']['items']),
+              got == len(vp_faq['patron']['items']) and t.js('document.getElementById("vphFaq-patron").open') is True and
+              'My game is not showing' in (t.js('document.getElementById("vphFlow-patron").textContent') or ''), got)
+        check(tag + ' player: the venue panel is shut, and the player FAQ holds the claim-from-the-host rule', t.js('document.getElementById("venue").hidden') is True and 'claimed from the host, never the bar' in (t.js('document.getElementById("vphFaq-patron").textContent') or ''))
+        check(tag + ' player: no sideways scrolling with the FAQ open', t.js('document.documentElement.scrollWidth<=window.innerWidth') is True)
+        t.shot('22-help-%s-player' % tag)
+        t.js('document.querySelector("#vphFlow-patron .vph-msg").click()')
+        t.until('!!document.getElementById("vphMsg-patron")', 5)
+        t.js('document.getElementById("vphVenue-patron").value="ryl234";document.getElementById("vphEmail-patron").value="jo@example.com";document.getElementById("vphMsg-patron").value="My tickets vanished";document.querySelector("#vphFlow-patron .vph-go").click()')
+        done = t.until('(document.querySelector("#vphFlow-patron .vph-done")||{}).textContent', 8)
+        bb = last_ticket(t).get('body', {})
+        check(tag + ' player: the ticket reaches the Worker as a PATRON ticket, the room code from what they typed, no game guessed',
+              bb.get('kind') == 'patron' and bb.get('brand') == 'venueplay' and bb.get('code') == 'RYL234' and bb.get('game') == '' and not bb.get('category'), bb)
+        check(tag + ' player: and shows the ticket number', bool(done) and '#1042' in done, done)
+        t.shot('23-help-%s-player-sent' % tag)
+
+        # ---- the sales way ----
+        t.js('window.scrollTo(0,0)')
+        t.js('document.querySelector("[data-path=sales]").click()')
+        t.until('!document.getElementById("sales").hidden', 3)
+        check(tag + ' sales: the enquiry form is on the page', t.js('!!document.getElementById("vphMsg-sales")') is True)
+        t.shot('24-help-%s-sales' % tag)
+        t.js('document.getElementById("vphName-sales").value="Lee";document.getElementById("vphEmail-sales").value="lee@pub.com.au";document.getElementById("vphMsg-sales").value="Pricing for two venues?";document.querySelector("#sales .vph-go").click()')
+        t.until('!!document.querySelector("#sales .vph-done")', 8)
+        bb = last_ticket(t).get('body', {})
+        check(tag + ' sales: the ticket reaches the Worker as a SALES ticket', bb.get('kind') == 'sales' and bb.get('brand') == 'venueplay' and bb.get('name') == 'Lee', bb)
+        errs = t.js('window.__errs') or []
+        bad = t.js(OWN_FILES_BAD) or []
+        check(tag + ': no console errors and none of the site\'s own files failed to load', not errs and not bad, errs + bad)
+        t.close()
+    # /support is the other word people try. Pages serves _redirects; this little server does not,
+    # so the rule itself is read, the way test-platform-15-oct.js reads it.
+    rules = [l.split() for l in open(os.path.join(ROOT, 'venueplay', '_redirects')).read().splitlines() if l.strip() and not l.strip().startswith('#')]
+    check('/support sends people to /help (a 301 in _redirects)', ['/support', '/help', '301'] in rules, [r for r in rules if r and r[0].startswith('/support')])
 
 
 def main():
@@ -379,6 +498,20 @@ def main():
         c = t.js(CALL_LINE)
         check('venue: the contact form has "Call us on 07 5228 3667" beside it, tappable', call_ok(c) and t.js('!!document.querySelector(".vph-form #vphCall")') is True, c)
         t.shot('07c-venue-form-call-line')
+        # Dean, 21 Oct 2026: a venue asking from the console is nearly always mid-game.
+        u = t.js('(function(){var u=document.getElementById("vphUrgent");return {on:u.checked,label:u.parentNode.textContent};})()') or {}
+        check('venue: "This is happening right now (a game is on)" starts ticked', u.get('on') is True and u.get('label') == 'This is happening right now (a game is on)', u)
+        t.shot('07c-venue-form-urgent-on')
+        t.js('var k=document.getElementById("vphKind");k.value="accounts";k.dispatchEvent(new Event("change"))')
+        check('venue: picking Billing unticks it (a bill is never urgent)', t.js('document.getElementById("vphUrgent").checked') is False)
+        t.js('var k=document.getElementById("vphKind");k.value="venue_support";k.dispatchEvent(new Event("change"))')
+        check('venue: and back to Help with VenuePlay ticks it again', t.js('document.getElementById("vphUrgent").checked') is True)
+        t.js('document.getElementById("vphUrgent").click()')
+        t.js('var k=document.getElementById("vphKind");k.value="accounts";k.dispatchEvent(new Event("change"));k.value="venue_support";k.dispatchEvent(new Event("change"))')
+        check('venue: it can be unticked, and once the person has set it, changing the kind leaves it alone', t.js('document.getElementById("vphUrgent").checked') is False)
+        fine = t.js('(function(){var f=document.getElementById("vphFine"),p=document.querySelector(".vph-priv a");return {t:f&&f.textContent,priv:p&&p.getAttribute("href"),sep:!!(p&&f&&!f.contains(p))};})()') or {}
+        check('venue: the small print is one clean sentence, with the privacy policy as its own small link',
+              fine.get('t') == "We'll reply by email." and fine.get('priv') == '/privacy' and fine.get('sep') is True, fine)
         t.js('document.getElementById("vphSubject").value="";document.getElementById("vphMsg").value="TV blank";document.querySelector(".vph-go").click()')
         time.sleep(0.3)
         check('venue: no subject, no send', not [x for x in posts(t) if x['path'] == '/help/venue/ticket'])
@@ -399,6 +532,8 @@ def main():
         check('venue: a refusal from the Worker is shown in its own words, and Send works again',
               err == 'That is a lot of requests in an hour.' and t.js('document.querySelector(".vph-go").disabled') is False, err)
         t.close()
+
+        help_page_checks(b, VP)
 
         print('PARTYPLAY GUEST PHONE')
         t = Tab(b)
