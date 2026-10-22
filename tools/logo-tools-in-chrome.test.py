@@ -208,8 +208,12 @@ try:
     aud = [a for a in S.W.table('vp_admin_audit') if a.get('action') == 'logo_set']
     ok('it goes up as a PNG with its transparency', len(new) == 1 and new[0]['type'] == 'image/png' and (aud[-1].get('detail') or {}).get('alpha') is True,
        new and new[0]['type'])
-    ok('Cancel closes the editor and sends nothing', (choose(sid, CLEAR, 800, 400) is True) and
-       S.js(sid, 'document.getElementById("logoCancel").click(); document.getElementById("logoEdit").hidden') is True and len(stored()) == len(before) + 1)
+    # 21 Oct 2026: choosing a logo SAVES it (Tugun's was chosen and never saved), so Cancel only puts the
+    # editor away: the chosen logo has gone up once, and Cancel sends nothing more.
+    ok('choosing saves it at once; Cancel then closes the editor and sends nothing more', (choose(sid, CLEAR, 800, 400) is True) and
+       S.until(sid, 'true', 3) and len(stored()) == len(before) + 2 and
+       S.js(sid, 'document.getElementById("logoCancel").click(); document.getElementById("logoEdit").hidden') is True and len(stored()) == len(before) + 2,
+       len(stored()) - len(before))
 
     print('\na browser that cannot write WebP (older Safari) still gets under 1 MB')
     fallback = S.js(sid, '''(function(){

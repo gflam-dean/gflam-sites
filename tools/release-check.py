@@ -3363,6 +3363,13 @@ def local_checks(which):
              'every logo and slide write names who wrote it and is audited before and after; HQ reads the history, never a venue; owner/accounts restore exactly; nothing deletes a stored file', 60,
              'A logo or a set of slides changed or gone with nobody able to say when or who, a venue '
              'reading or rewriting its own history, or a restore that is not the version it says it is'),
+            # D63: HQ's Audit tab as a search, billing lines named and folded, and a Reactivate that
+            # charges nobody (Dean, 21 Oct 2026). The page itself is run by hq-tabs-in-chrome.test.py.
+            ('D63. HQ\'s audit search filters and pages on the server, billing lines name their venue, and Reactivate only invites',
+             'test-audit-search.js',
+             'owner/accounts only; venue, dates, kind and who narrow on the database; cursor pages lose and repeat nothing; declines fold to one named line; invite-back changes no venue and calls no Stripe', 50,
+             'An audit screen that loads the whole table, a filter that is ignored, a page that repeats or skips '
+             'entries, a declined card with no venue on it, or a Reactivate button that bills a card its owner stopped'),
             ('D52. The TV mark is painted only when the venue has a logo, small, top-left and kept clear',
              'test-tv-logo-mark.js',
              'tv.html and the four game screens paint one 120x56 mark, 14px in, untappable, a vp-fit keep-out, and nothing with no logo', 40,
