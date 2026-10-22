@@ -119,6 +119,10 @@
   "checks": 19,
   "counted_by": "lines"
  },
+ "tools/caller-winner-in-chrome.test.py": {
+  "checks": 52,
+  "counted_by": "lines"
+ },
  "tools/console-in-chrome.test.py": {
   "checks": 63,
   "counted_by": "lines"
@@ -240,7 +244,7 @@
   "counted_by": "lines"
  },
  "tools/test-caller-mode.js": {
-  "checks": 105,
+  "checks": 114,
   "counted_by": "lines"
  },
  "tools/test-cant-sign-warns.js": {

@@ -111,7 +111,7 @@ def tv_old_winner():
         ctid, host = console(r)
         ok('a real-balls night starts and the grid is up', caller_night(r, host, [5, 17, 42]) is True)
         r.ask(host, 'document.getElementById("callerWinBtn").click(); true'); time.sleep(0.8)
-        r.ask(host, 'var b=document.querySelector("#cwStages [data-pat]"); b && b.click(); !!b')
+        r.ask(host, 'document.getElementById("callerConfirmBtn").click(); true')
         ok('CONTROL: the TV celebrates the winner during the game', r.until(tv, vis('tvWin'), 10) is True,
            r.ask(tv, 'document.body.innerText.replace(/\\s+/g," ").slice(0,200)'))
         shot(r, tv, 'tv-1-winner-during-game')

@@ -72,6 +72,7 @@
   "bingo-console.test.js",
   "bingo-server-draw.test.js",
   "bingo-win.test.js",
+  "caller-winner-in-chrome.test.py",
   "cancel-emails.test.js",
   "check-tv-watchdog.py",
   "check-venue-scoping.py",

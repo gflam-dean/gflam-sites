@@ -223,6 +223,9 @@
   #callerBlock.winning .callerwinbar{display:block}
   #callerBlock.winning .callergrid{opacity:.45;pointer-events:none}
   #callerBlock.winning #callerWinBtn,#callerBlock.winning .callernote{display:none}
+  .callerwinbar .cwmain{display:block;width:100%;min-height:64px;font-size:20px}
+  .callerwinbar .cwprize{margin:4px 0 0}
+  .callerwinbar .cwprize label{font-size:12px}
   .callerwinbar .cwh{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
   .callerwinbar .cwt{font-family:'Anton',sans-serif;font-size:24px;line-height:1.15;color:#fff;margin:4px 0 6px;overflow-wrap:anywhere}
   .callerwinbar .cwn{font-size:13px;color:var(--muted);line-height:1.45;margin-bottom:10px}
@@ -542,12 +545,22 @@
               <div class="cs" id="callerSays">Tap each number as it is called.</div>
               <button type="button" class="btn ghost" id="callerUndoBtn" disabled>Undo last</button>
             </div>
+            <!-- A winner on a real-balls night, two steps (Dean, 21 Oct 2026): CHECK the book for the
+                 pattern the room is playing, then the host CHOOSES what happens next. Nothing moves
+                 the game on by itself. Filled by renderCallerWin. -->
             <div class="callerwinbar" id="callerWinBar" role="status">
-              <div class="cwh">On the TV now</div>
-              <div class="cwt" id="callerWinSays">BINGO!</div>
-              <div class="cwn">The TV says &ldquo;Show your book to the host&rdquo;. Check the book against the numbers below, then:</div>
-              <button type="button" class="btn pink big" id="callerBackBtn">Back to the game</button>
-              <button type="button" class="btn ghost cwnot" id="callerNotWinBtn">Not a win after all</button>
+              <div class="cwh" id="callerWinHead">Winner!</div>
+              <div class="cwt" id="callerWinSays">One line</div>
+              <div class="cwn" id="callerWinHow">Check their book against the numbers below, then tap Confirm win.</div>
+              <div id="cwCheck">
+                <button type="button" class="btn pink big cwmain" id="callerConfirmBtn">Confirm win</button>
+                <button type="button" class="btn ghost cwnot" id="callerNotWinBtn">Not a win, keep playing</button>
+              </div>
+              <div id="cwNext" class="hidden">
+                <div class="cwstages" id="cwNextBtns"></div>
+                <div class="field cwprize" id="cwNextPrizeField"><label for="cwNextPrize">Prize if they keep playing</label>
+                  <input type="text" class="hostinput" id="cwNextPrize" placeholder="e.g. $50 bar tab"></div>
+              </div>
             </div>
             <div class="callergrid" id="callerGrid" role="group" aria-label="Numbers 1 to 90"></div>
             <button type="button" class="btn win callerwin" id="callerWinBtn">Winner!</button>
@@ -587,17 +600,6 @@
       <button type="button" id="ovgGo" class="btn pink big vp-grow">Start game</button>
       <button type="button" id="ovgCancel" class="btn ghost big vp-auto">Cancel</button>
     </div>
-  </div>
-</div>
-<!-- Real balls: WHAT did they win. In the page, never a browser dialog, and one tap puts it on the TV. -->
-<div id="cwModal" class="hidden vp-modal" role="dialog" aria-modal="true" aria-labelledby="cwTitle">
-  <div class="vp-modal-box">
-    <div class="vp-h" id="cwTitle" style="margin-bottom:6px">What have they won?</div>
-    <div style="font-size:13.5px;color:var(--muted);line-height:1.5;margin-bottom:12px">Tap it and the TV shows BINGO with the prize straight away.</div>
-    <div class="field" style="margin-bottom:10px"><label for="cwPrize">Prize on the TV</label>
-      <input type="text" class="hostinput" id="cwPrize" placeholder="e.g. $50 bar tab"></div>
-    <div class="cwstages" id="cwStages"></div>
-    <button type="button" id="cwCancel" class="btn ghost big">Cancel</button>
   </div>
 </div>
 <!-- New game: pattern and prize for the next game, asked before the tickets go out -->
@@ -1437,7 +1439,7 @@
           sessionId:G.sessionId||null, joinCode:G.joinCode||null, planCapAtStart:(G.planCapAtStart!=null?G.planCapAtStart:null),
           peak:G.peak||0, allowEarly:!!G.allowEarly,
           caller:!!G.caller,   // real balls tonight: a reload must come back to the grid, not the draw
-          callerWin:G.callerWin||null,   // and to the win on the TV, with its Back to the game
+          callerWin:G.callerWin||null,   // and to the winner being checked, or the choice of what comes next
           night:NIGHT
         }));
       } else {
@@ -1516,6 +1518,7 @@
       G.lastWins=Array.isArray(s.lastWins)?s.lastWins:(s.lastWin?[s.lastWin]:[]);
       G.won=!!s.won;
       G.callerWin=(s.callerWin && typeof s.callerWin==="object" && s.callerWin.pattern) ? s.callerWin : null;
+      if(G.callerWin && G.callerWin.step!=="won") G.callerWin.step="check";   // saved before 21 Oct: never confirmed, so it is checked again
       // Carry the report row forward, so a host who reloads mid-game still finishes the SAME
       // row instead of leaving an open one behind and starting a second.
       G.reportId=s.reportId||null;
@@ -2279,11 +2282,14 @@
     var el=$("coach"); if(!el) return;
     var n=playerCount(), called=G.idx+1, txt;
     if(G.caller && G.status==="running" && G.callerWin){
-      el.innerHTML="The TV is showing the win. Check their paper book against the numbers, then tap <b>Back to the game</b>.";
+      var _wn=esc(PATTERN_NAMES[G.callerWin.pattern]||"Bingo");
+      el.innerHTML = G.callerWin.step==="won"
+        ? ("<b>"+_wn+"</b> confirmed and on the TV. Now your choice: <b>keep playing</b> for the next prize, or <b>finish this game</b>.")
+        : ("Somebody called BINGO for <b>"+_wn+"</b>. Check their book, then tap <b>Confirm win</b>, or <b>Not a win</b>.");
       return;
     }
     if(G.caller && G.status==="running" && G.won){
-      el.innerHTML="Full house won, so this game is done. Tap <b>New game</b> for the next one, or <b>End game</b> when the night is over.";
+      el.innerHTML="That game is done. Tap <b>New game</b> for the next one, or <b>End game</b> when the night is over.";
       return;
     }
     if(G.caller && G.status==="running" && !G.claims.length && !G.lastWins.length && !G.won){
@@ -2861,7 +2867,7 @@
   function newGame(){
     if(drawRulesMissing()) return;
     clearCallGuards();
-    if(G.callerWin) callerWinSettle();   // a real-balls win still on the TV counts: the room saw it
+    if(G.callerWin) callerWinSettle();   // a confirmed win is already on the record; an unchecked book never counted
     postReport();   // report the round just finished before a fresh one begins
     /* Consent does not carry into the next game, because the charge does not either. The room can
        grow between games and each one is billed on its own, so each one is asked on its own. */
@@ -2933,7 +2939,7 @@
     G._endAsked=0;
     finishDrawRecord();
     clearCallGuards();
-    if(G.callerWin) callerWinSettle();   // a real-balls win still on the TV counts: the room saw it
+    if(G.callerWin) callerWinSettle();   // a confirmed win is already on the record; an unchecked book never counted
     postReport();   // send this game's figures to the backend before returning to ads
     /* Closing the session is what meters and bills the night: chargeNightOverage counts the
        vp_players rows against the plan cap frozen at kick-off. Same path every other format
@@ -3133,7 +3139,7 @@
   function callerCall(n){
     n=parseInt(n,10);
     if(!G.caller || G.status!=="running" || !(n>=1 && n<=90)) return false;
-    if(G.callerWin){ showToast("The win is still on the TV. Tap Back to the game first."); return false; }
+    if(G.callerWin){ showToast(callerBusy()); return false; }
     if(G.won){ showToast("That game is done. Tap New game for another, or End game to put the ads back on."); return false; }
     if(G.claims.length){ showToast("Sort the bingo call first, then keep calling."); return false; }
     if(G.lastWins.length){ showToast("Announce the win first: keep playing, or finish the game."); return false; }
@@ -3149,7 +3155,7 @@
   }
   function callerUndo(){
     if(!G.caller || G.status!=="running" || G.idx<0 || !G.draw.length) return false;
-    if(G.callerWin){ showToast("The win is still on the TV. Tap Back to the game first."); return false; }
+    if(G.callerWin){ showToast(callerBusy()); return false; }
     if(G.won || G.lastWins.length || G.claims.length){ showToast("A win is being sorted. Undo is for a number tapped by mistake."); return false; }
     var n=G.draw.pop(), ordinal=G.idx+1;
     G.idx=G.draw.length-1; delete G.called[n];
@@ -3199,76 +3205,128 @@
     var ub=$("callerUndoBtn"); if(ub){ ub.disabled=!cur || !!G.callerWin; ub.textContent = cur ? ("Undo "+cur) : "Undo last"; }
     // The win on the TV: what the room is reading, and Back to the game. WINNER waits for a game that is still on.
     var blk=$("callerBlock"); if(blk) blk.classList.toggle("winning", !!G.callerWin);
-    var ws=$("callerWinSays"); if(ws && G.callerWin) ws.textContent=callerWinText(G.callerWin);
+    renderCallerWin();
     var wb=$("callerWinBtn"); if(wb) wb.disabled = !!G.won;
   }
-  /* ---- REAL BALLS: A WINNER (17 Oct 2026) ----
-     Somebody shouts BINGO off a paper book. There is no phone claim to confirm, so the operator
-     taps WINNER, picks what was won from the stages this pattern already has (one line, two lines,
-     full house: nextPattern), and every TV shows the win through the SAME winner message a normal
-     night sends, with caller:true so the wall says "Show your book to the host" instead of naming a
-     phone, and cont:false so it stays up until the host closes it. The prize is the one set up at
-     the start. Back to the game closes it on every TV (resume, the message a play-on already uses),
-     puts the win on the night's record and moves the room on to the next stage; a full house ends
-     the game. A book that does not check out is "Not a win after all": the TV goes back to the
-     board and nothing is recorded. */
-  function callerStages(){
-    var out=[], p=G.pattern||"one";
-    while(p && out.indexOf(p)<0 && out.length<4){ out.push(p); p=nextPattern(p); }
-    return out;
-  }
-  function callerWinText(w){ return "BINGO! "+(PATTERN_NAMES[w.pattern]||"Bingo")+": "+w.prize; }
+  /* ---- REAL BALLS: A WINNER (17 Oct 2026, reworked 21 Oct 2026) ----
+     Somebody shouts BINGO off a paper book. There is no phone claim, so the operator taps WINNER.
+     Dean played it on 21 Oct and found three faults. WINNER asked "What have they won?" with a list
+     of stages although he had chosen One line at the start, and said nothing about what to do. The
+     TV celebrated BINGO! before anyone had looked at the book. And Back to the game moved the room
+     on to Two lines by itself, which nobody had chosen. So it is two steps now:
+       1. WINNER names the pattern the room is playing for ("Winner! One line", and what to look for
+          in the book) with one big Confirm win and a smaller Not a win. Nothing to pick: one pattern
+          is in play at a time, so that is what they are claiming. Every TV shows the BINGO? card a
+          phone claim gets, with the pattern and "Checking the book".
+       2. Confirm win: the win goes on the night's record and every TV celebrates it (the winner
+          message a normal night sends, caller:true, cont:false so it stays up). A full house ends
+          the game. Anything else WAITS on the winner for the host to choose: keep playing for each
+          pattern that can follow (a button each, named), or finish this game. The pattern changes
+          only when the host taps one, and the TV goes back to the board with it and its prize.
+     Not a win puts the board back and records nothing. */
+  var CALLER_THEN={ one:["two","full"], two:["full"], full:[] };   // what a room can play on for after each pattern
+  function callerThen(pat){ return CALLER_THEN[pat] || ["full"]; }   // corners and the single lines go on to a full house
+  var CALLER_LOOK={ one:"one whole row", two:"two whole rows on one ticket", full:"every number on one ticket", corners:"all four corners of one ticket",
+                    top:"the whole top row", middle:"the whole middle row", bottom:"the whole bottom row" };
+  function callerWinText(w){ return PATTERN_NAMES[w.pattern]||"Bingo"; }
   function callerWinMsg(){
     var w=G.callerWin||{};
     return { t:"winner", caller:true, wid:w.wid, pattern:w.pattern, prize:w.prize, name:"", winners:[], shared:false, cont:false };
   }
+  // Step 1 on the TV: the claim card, named by the pattern. caller:true tells it to say "book", not "card".
+  function callerCheckMsg(){
+    var w=G.callerWin||{}, nm=PATTERN_NAMES[w.pattern]||"Bingo";
+    return { t:"claim_pending", caller:true, pattern:w.pattern, name:nm, names:[nm] };
+  }
+  function callerSendWin(){ if(G.callerWin) send(G.callerWin.step==="won" ? callerWinMsg() : callerCheckMsg()); }
+  function callerBusy(){
+    return (G.callerWin && G.callerWin.step==="won")
+      ? "Choose what happens next first: keep playing, or finish this game."
+      : "Check the winner first: tap Confirm win, or Not a win.";
+  }
   function callerWinOpen(){
     if(!G.caller || G.status!=="running" || G.callerWin) return false;
     if(G.won){ showToast("This game is done. Tap New game for the next one."); return false; }
-    var m=$("cwModal"), box=$("cwStages"); if(!m || !box) return false;
-    var pz=$("cwPrize"); if(pz) pz.value=(G.prize && G.prize!=="the prize") ? G.prize : "";
-    box.innerHTML="";
-    callerStages().forEach(function(pat, i){
-      var b=document.createElement("button");
-      b.setAttribute("type","button"); b.setAttribute("data-pat", pat);
-      b.className="btn big "+(i===0 ? "pink" : "ghost");
-      b.innerHTML=esc(PATTERN_NAMES[pat]||pat)+'<span class="cwp">'+(i===0 ? "Playing for this now" : "")+'</span>';
-      box.appendChild(b);
-    });
-    m.classList.remove("hidden");
-    return true;
-  }
-  function callerWinner(pat, prize){
-    if(!G.caller || G.status!=="running" || G.won || G.callerWin) return false;
-    if(callerStages().indexOf(pat)<0) return false;
-    prize=String(prize==null ? "" : prize).trim().slice(0,120) || G.prize || "the prize";
-    G.callerWin={ pattern:pat, prize:prize, wid:"w"+Date.now().toString(36)+"-"+(G.idx+1) };
-    var m=$("cwModal"); if(m) m.classList.add("hidden");
-    send(callerWinMsg());   // every TV: BINGO!, the stage, the prize, "Show your book to the host", confetti and the fanfare
+    G.callerWin={ pattern:G.pattern||"one", prize:G.prize||"the prize", wid:"w"+Date.now().toString(36)+"-"+(G.idx+1), step:"check" };
+    var gt=$("greetToast"); if(gt) gt.classList.remove("show");   // a toast left from the last call must not sit over this winner
+    callerSendWin();   // every TV: BINGO? One line, checking the book
     saveGame();
     renderCallerGrid(); setCoach();
     return true;
   }
-  // stands: true is Back to the game (the win counts), false is Not a win after all.
-  function callerWinClose(stands){
-    var w=G.callerWin; if(!w) return false;
-    G.callerWin=null;
-    if(stands) callerWinRecord(w);
-    send({ t:"resume" });   // every TV back to the board
-    sendState();            // with the stage the room now plays for
+  function callerConfirm(){
+    var w=G.callerWin; if(!w || w.step==="won" || G.won) return false;
+    w.step="won";
+    G.prizesWon.push({ pattern:w.pattern, prize:w.prize, winner_name:"Paper book", card_no:null, shared:false });
+    send(callerWinMsg());   // every TV: BINGO!, the pattern, the prize, confetti and the fanfare
+    if(!callerThen(w.pattern).length){ G.callerWin=null; G.won=true; finishDrawRecord(); }   // a full house: the game is done
     saveGame();
-    renderLive(); renderCallerGrid(); syncNextBtn();
-    showToast(!stands ? "Back to the game. Nothing was recorded." : G.won ? "Full house. Tap New game for the next one." : ("Back to the game. Now playing for "+(PATTERN_NAMES[G.pattern]||G.pattern)+"."));
+    renderLive(); renderCallerGrid(); syncNextBtn(); setCoach();
     return true;
   }
-  function callerWinRecord(w){
-    G.prizesWon.push({ pattern:w.pattern, prize:w.prize, winner_name:"Paper book", card_no:null, shared:false });
-    var nxt=nextPattern(w.pattern);
-    if(nxt){ G.pattern=nxt; var ps=$("patternSel"); if(ps) ps.value=nxt; }
-    else G.won=true;   // a full house: the game is done
+  function callerNotWin(){
+    var w=G.callerWin; if(!w || w.step==="won") return false;
+    G.callerWin=null;
+    send({ t:"resume" });   // every TV back to the board
+    sendState();
+    saveGame();
+    renderLive(); renderCallerGrid(); syncNextBtn(); setCoach();
+    showToast("Back to the game. Nothing was recorded.");
+    return true;
   }
-  // New game or End game with a win still on the TV: the room saw it, so it counts.
-  function callerWinSettle(){ var w=G.callerWin; if(!w) return; G.callerWin=null; callerWinRecord(w); }
+  // The host's choice after a confirmed win: nxt is the pattern to keep playing for, or "" to finish.
+  function callerNext(nxt){
+    var w=G.callerWin; if(!w || w.step!=="won") return false;
+    nxt=String(nxt||"");
+    if(nxt && callerThen(w.pattern).indexOf(nxt)<0) return false;
+    G.callerWin=null;
+    if(!nxt){
+      G.won=true; finishDrawRecord();   // the winner stays on the TV until New game or End game
+      saveGame(); renderLive(); renderCallerGrid(); syncNextBtn(); setCoach();
+      showToast("Game finished. Tap New game for the next one, or End game when the night is over.");
+      return true;
+    }
+    var pin=$("cwNextPrize"), np=String(pin ? pin.value : "").trim().slice(0,120);
+    G.pattern=nxt; if(np) G.prize=np;
+    var ps=$("patternSel"); if(ps) ps.value=nxt;
+    var pi=$("prizeInput"); if(pi) pi.value=G.prize;
+    sendState();            // every TV and phone: the new pattern and its prize
+    send({ t:"resume" });   // and every TV back to the board
+    saveGame();
+    renderLive(); renderCallerGrid(); syncNextBtn(); setCoach();
+    showToast("Now playing for "+(PATTERN_NAMES[nxt]||nxt)+". Keep tapping the numbers.");
+    return true;
+  }
+  function renderCallerWin(){
+    var w=G.callerWin; if(!w) return;
+    var won=w.step==="won", nm=PATTERN_NAMES[w.pattern]||"Bingo";
+    var h=$("callerWinHead"), t=$("callerWinSays"), how=$("callerWinHow"), ck=$("cwCheck"), nx=$("cwNext"), box=$("cwNextBtns");
+    if(h) h.textContent = won ? "Win confirmed" : "Winner!";
+    if(t) t.textContent = won ? (nm+": "+w.prize) : nm;
+    if(how) how.textContent = won
+      ? "The TV is showing the winner. What happens next? Your choice:"
+      : "Check their book against the numbers below. They need "+(CALLER_LOOK[w.pattern]||"the pattern")+" called. Then tap Confirm win.";
+    if(ck) ck.classList.toggle("hidden", won);
+    if(nx) nx.classList.toggle("hidden", !won);
+    if(!won || !box) return;
+    if(box._for!==w.wid){
+      box._for=w.wid; box.innerHTML="";
+      var opts=callerThen(w.pattern).concat([""]);
+      opts.forEach(function(p){
+        var b=document.createElement("button");
+        b.setAttribute("type","button"); b.setAttribute("data-next", p);
+        b.className="btn big "+(p ? "ghost" : "ghost cwfinish");
+        b.innerHTML = p
+          ? ("Keep playing for "+esc(PATTERN_NAMES[p]||p)+'<span class="cwp">The TV goes back to the numbers</span>')
+          : ('Finish this game<span class="cwp">The winner stays on the TV. Then New game, or End game</span>');
+        box.appendChild(b);
+      });
+      var pin=$("cwNextPrize"); if(pin) pin.value=(G.prize && G.prize!=="the prize") ? G.prize : "";
+    }
+  }
+  // New game or End game in the middle of a win: a confirmed win is already on the record, and a book
+  // nobody confirmed never counted.
+  function callerWinSettle(){ G.callerWin=null; }
   // Move one queued claim into the confirmed list. Nothing is broadcast yet: the host still has
   // to decide play on or finish, and with a tie they may confirm two or three people first.
   // Returns true if it actually confirmed. The caller MUST respect that: an early version looped
@@ -3376,7 +3434,7 @@
         send({ t:"mode", mode:"bingo", caller:!!G.caller });   // running OR an open lobby: replay so the TV shows the game/QR
         sendState();
         if(G.claims.length) sendClaimPending();
-        if(G.caller && G.callerWin) send(callerWinMsg());   // a TV that reloaded mid-win shows the win again
+        if(G.caller && G.callerWin) callerSendWin();   // a TV that reloaded mid-win shows the check or the win again
       }
     }
   }
@@ -3757,15 +3815,14 @@
     var grid=$("callerGrid"), cc=$("callerChk"), ub=$("callerUndoBtn");
     if(cc) cc.addEventListener("change", function(){ renderConsole(); });   // the form and the start button follow the tick
     if(ub) ub.addEventListener("click", function(){ callerUndo(); });
-    var wb=$("callerWinBtn"), back=$("callerBackBtn"), notw=$("callerNotWinBtn"), cw=$("cwModal"), cst=$("cwStages"), cx=$("cwCancel");
+    var wb=$("callerWinBtn"), yes=$("callerConfirmBtn"), notw=$("callerNotWinBtn"), nxb=$("cwNextBtns");
     if(wb) wb.addEventListener("click", function(){ callerWinOpen(); });
-    if(back) back.addEventListener("click", function(){ callerWinClose(true); });
-    if(notw) notw.addEventListener("click", function(){ callerWinClose(false); });
-    if(cx && cw) cx.addEventListener("click", function(){ cw.classList.add("hidden"); });
-    if(cst) cst.addEventListener("click", function(e){
-      var t=e && e.target; while(t && t!==cst && !(t.getAttribute && t.getAttribute("data-pat"))) t=t.parentNode;
-      if(!t || t===cst) return;
-      var pz=$("cwPrize"); callerWinner(t.getAttribute("data-pat"), pz ? pz.value : "");
+    if(yes) yes.addEventListener("click", function(){ callerConfirm(); });
+    if(notw) notw.addEventListener("click", function(){ callerNotWin(); });
+    if(nxb) nxb.addEventListener("click", function(e){
+      var t=e && e.target; while(t && t!==nxb && !(t.getAttribute && t.getAttribute("data-next")!==null)) t=t.parentNode;
+      if(!t || t===nxb) return;
+      callerNext(t.getAttribute("data-next"));
     });
     if(!grid) return;
     var timer=0, swallow=false;

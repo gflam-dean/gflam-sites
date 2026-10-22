@@ -22,15 +22,16 @@
    the REAL tv.html runs here too (its whole inline script, on a fake DOM), fed every message the
    console sends. On a real-balls night it must never show the join code, the QR or "scan to
    play", only the game's title and the board, while a normal night keeps all of them. And the
-   WINNER button: the console asks which stage was won (in the page, no browser dialog), every TV
-   shows BINGO with the stage and the prize the host set up and "Show your book to the host",
-   with the celebration, until one tap on Back to the game closes it.
+   WINNER button (reworked 21 Oct 2026, after Dean played it): no question, the pattern being played
+   is named and the TV shows BINGO? while the host checks the book; Confirm win celebrates it on every
+   TV with the prize; then the host CHOOSES keep playing for the next pattern or finish, and the
+   pattern never moves by itself. Not a win records nothing.
 
    Run from the repo root:  jsc tools/test-caller-mode.js */
 var CONSOLE_SRC = readFile('venueplay/app/index.html');
 load('tools/rig-game-worker.js');
 load('tools/rig-bingo-room.js');
-var PASS = 0, FAILN = 0, EXPECT = 105;
+var PASS = 0, FAILN = 0, EXPECT = 114;
 function check(name, cond, saw) {
   if (cond) { PASS++; print('  ok   ' + name); }
   else { FAILN++; print('  FAIL ' + name + (saw !== undefined ? '   saw: ' + JSON.stringify(saw) : '')); }
@@ -409,63 +410,87 @@ shuffle1to90 = function () { SHUFFLES++; return _shuffle(); };
   [5, 17, 42, 66, 89].forEach(function (n) { tap(hw, n); });
   await advance(3000); feedTV(tv);
   function click(id) { var b = hw.$(id); (b._on.click || []).forEach(function (f) { f.call(b, { target: b, preventDefault: function () {} }); }); }
-  function stageBtns() { return hw.$('cwStages').children; }
-  function pickStage(pat) { var box = hw.$('cwStages'), b = stageBtns().filter(function (x) { return x.getAttribute('data-pat') === pat; })[0]; (box._on.click || []).forEach(function (f) { f.call(box, { target: b || box }); }); }
-  var wins0 = hostSent('winner').length;
-  click('callerWinBtn');
-  check('WINNER asks, in the page, what was won: this pattern\'s stages in order', !hw.$('cwModal').classList.contains('hidden') && stageBtns().map(function (b) { return b.getAttribute('data-pat'); }).join() === 'one,two,full' && hostSent('winner').length === wins0,
-        stageBtns().map(function (b) { return b.getAttribute('data-pat'); }));
-  check('with the prize the host set up at the start already filled in', hw.$('cwPrize').value === '$50 bar tab', hw.$('cwPrize').value);
-  click('cwCancel');
-  check('Cancel puts nothing on the TV', hw.$('cwModal').classList.contains('hidden') && hostSent('winner').length === wins0 && !hw.G.callerWin);
-  click('callerWinBtn'); pickStage('one'); await advance(500);
-  var wmsg = hostSent('winner').slice(-1)[0];
-  check('one tap on One line sends the winner message every screen already knows, marked real balls, with the prize', !!wmsg && wmsg.caller === true && wmsg.pattern === 'one' && wmsg.prize === '$50 bar tab' && wmsg.cont === false && hw.$('cwModal').classList.contains('hidden'), wmsg);
-  check('and no browser dialog was used anywhere in it', confirms === 0, confirms);
-  var c0 = { burst: CELEB.burst, fanfare: CELEB.fanfare };
+  function nextBtns() { return hw.$('cwNextBtns').children; }
+  function nextList() { return nextBtns().map(function (b) { return b.getAttribute('data-next'); }).join(); }
+  function pickNext(h, pat) { var box = h.$('cwNextBtns'), b = box.children.filter(function (x) { return x.getAttribute('data-next') === pat; })[0]; (box._on.click || []).forEach(function (f) { f.call(box, { target: b || box }); }); return !!b; }
+  function hid(h, id) { return h.$(id).classList.contains('hidden'); }
+  var wins0 = hostSent('winner').length, cl0 = hostSent('claim_pending').length, c00 = CELEB.fanfare;
+  click('callerWinBtn'); await advance(300);
+  check('WINNER asks nothing: the pattern chosen at the start is named, "Winner! One line"', !!hw.G.callerWin && hw.G.callerWin.step === 'check' && hw.G.callerWin.pattern === 'one' &&
+        hw.$('callerWinHead').textContent === 'Winner!' && hw.$('callerWinSays').textContent === 'One line' && !/id="cwModal"|>What have they won/.test(CONSOLE_SRC),
+        [hw.$('callerWinHead').textContent, hw.$('callerWinSays').textContent, hw.G.callerWin]);
+  check('with one instruction: check the book for one whole row, then tap Confirm win', /Check their book/.test(hw.$('callerWinHow').textContent) && /one whole row/.test(hw.$('callerWinHow').textContent) && /Confirm win/.test(hw.$('callerWinHow').textContent) &&
+        !hid(hw, 'cwCheck') && hid(hw, 'cwNext') && />Confirm win<\/button>/.test(CONSOLE_SRC) && />Not a win, keep playing<\/button>/.test(CONSOLE_SRC), [hw.$('callerWinHow').textContent, hid(hw, 'cwCheck'), hid(hw, 'cwNext')]);
+  check('nothing is celebrated yet: no winner message and no fanfare before the book is checked', hostSent('winner').length === wins0 && CELEB.fanfare === c00 && hw.G.prizesWon.length === 0);
+  var cmsg = hostSent('claim_pending').slice(-1)[0];
   feedTV(tv);
-  check('the TV: a full-screen BINGO! with the stage and the prize', shown(tv, 'tvWin') && !shown(tv, 'tvRun') && tv.$('winName').textContent === 'One line' && tv.$('winPrizeVal').textContent === '$50 bar tab',
+  check('every TV: BINGO? One line, "The host is checking the book"', hostSent('claim_pending').length === cl0 + 1 && cmsg.caller === true && shown(tv, 'tvClaim') && !shown(tv, 'tvWin') &&
+        tv.$('claimName').textContent === 'One line' && /host is checking the book/.test(tv.$('claimSub').textContent),
+        { wall: onWall(tv), name: tv.$('claimName').textContent, sub: tv.$('claimSub').textContent });
+  check('and the console coach says the same', /BINGO for <b>One line<\/b>/.test(hw.$('coach').innerHTML) && /Confirm win/.test(hw.$('coach').innerHTML), hw.$('coach').innerHTML);
+  var d0 = hw.G.draw.length; tap(hw, 33);
+  check('a number tapped while the book is checked is refused', hw.G.draw.length === d0);
+  var c0 = { burst: CELEB.burst, fanfare: CELEB.fanfare };
+  click('callerConfirmBtn'); await advance(500);
+  var wmsg = hostSent('winner').slice(-1)[0];
+  check('Confirm win sends the winner message every screen already knows, marked real balls, with the prize', !!wmsg && wmsg.caller === true && wmsg.pattern === 'one' && wmsg.prize === '$50 bar tab' && wmsg.cont === false, wmsg);
+  check('and the line win goes on the night\'s record, once', hw.G.prizesWon.length === 1 && hw.G.prizesWon[0].pattern === 'one' && hw.G.prizesWon[0].prize === '$50 bar tab', hw.G.prizesWon);
+  check('and no browser dialog was used anywhere in it', confirms === 0, confirms);
+  feedTV(tv);
+  check('the TV: a full-screen BINGO! with the pattern and the prize', shown(tv, 'tvWin') && !shown(tv, 'tvRun') && tv.$('winName').textContent === 'One line' && tv.$('winPrizeVal').textContent === '$50 bar tab',
         { wall: onWall(tv), name: tv.$('winName').textContent, prize: tv.$('winPrizeVal').textContent });
-  check('telling the room "Show your book to the host", not to show a phone', tv.$('winSubPaper').style.display === '' && tv.$('winSubPhone').style.display === 'none' && /Show your book to the host/.test(readFile('venueplay/tv.html')),
+  check('telling the room "See the host to collect your prize", not to show a phone', tv.$('winSubPaper').style.display === '' && tv.$('winSubPhone').style.display === 'none' && /See the host to collect your prize/.test(readFile('venueplay/tv.html')),
         [tv.$('winSubPaper').style.display, tv.$('winSubPhone').style.display]);
   check('with the celebration (vp-celebrate.js: confetti and the fanfare)', CELEB.burst > c0.burst && CELEB.fanfare > c0.fanfare, [CELEB.burst - c0.burst, CELEB.fanfare - c0.fanfare]);
-  check('the console shows what the TV says, with Back to the game', hw.$('callerBlock').classList.contains('winning') && hw.$('callerWinSays').textContent === 'BINGO! One line: $50 bar tab', hw.$('callerWinSays').textContent);
-  var d0 = hw.G.draw.length; tap(hw, 33);
-  check('a number tapped while the win is up is refused, so nothing hides the splash by accident', hw.G.draw.length === d0);
+  check('THE PATTERN DOES NOT MOVE BY ITSELF: still One line on the console and the TV', hw.G.pattern === 'one' && hw.$('patternSel').value === 'one' && tv.$('tvPattern').textContent === 'One line' && hw.G.won === false,
+        { pattern: hw.G.pattern, tv: tv.$('tvPattern').textContent });
+  check('the console asks the host what next: keep playing for Two lines, for Full house, or finish this game', hw.$('callerWinHead').textContent === 'Win confirmed' && hid(hw, 'cwCheck') && !hid(hw, 'cwNext') && nextList() === 'two,full,' &&
+        /Keep playing for Two lines/.test(nextBtns()[0].innerHTML) && /Keep playing for Full house/.test(nextBtns()[1].innerHTML) && /Finish this game/.test(nextBtns()[2].innerHTML) && /What happens next/.test(hw.$('callerWinHow').textContent),
+        nextList());
+  check('with the prize already filled in for whatever comes next', hw.$('cwNextPrize').value === '$50 bar tab', hw.$('cwNextPrize').value);
+  tap(hw, 33);
+  check('a number tapped while the host is choosing is refused', hw.G.draw.length === d0);
   await advance(20000); feedTV(tv);
-  check('the splash stays up until the host closes it (it does not time out)', shown(tv, 'tvWin'), onWall(tv));
+  check('the winner stays on the TV until the host chooses (it does not time out)', shown(tv, 'tvWin') && hw.G.pattern === 'one', onWall(tv));
   var hello0 = hostSent('winner').length;
   hw.onMsg({ t: 'tv_here', hello: true }); await advance(500);
   var b0 = CELEB.fanfare; feedTV(tv);
   check('a TV that reloads mid-win is shown the win again, and the others do not fanfare twice', hostSent('winner').length === hello0 + 1 && shown(tv, 'tvWin') && CELEB.fanfare === b0, [hostSent('winner').length - hello0, CELEB.fanfare - b0]);
   var saved2 = JSON.parse(JSON.stringify(hw.dom.localStorage._s));
-  click('callerBackBtn'); await advance(500); feedTV(tv);
-  check('Back to the game: one tap, and every TV is back on the board', shown(tv, 'tvRun') && !shown(tv, 'tvWin') && !shown(tv, 'tvJoinCorner') && !hw.G.callerWin && !hw.$('callerBlock').classList.contains('winning'), onWall(tv));
-  check('the line win is on the night\'s record and the room plays on for Two lines, for the same prize', hw.G.prizesWon.length === 1 && hw.G.prizesWon[0].pattern === 'one' && hw.G.prizesWon[0].prize === '$50 bar tab' && hw.G.pattern === 'two' && tv.$('tvPattern').textContent === 'Two lines',
-        { won: hw.G.prizesWon, pattern: hw.G.pattern, tv: tv.$('tvPattern').textContent });
+  hw.$('cwNextPrize').value = 'Meat tray';
+  pickNext(hw, 'two'); await advance(500); feedTV(tv);
+  check('Keep playing for Two lines: one tap, and every TV is back on the board', shown(tv, 'tvRun') && !shown(tv, 'tvWin') && !shown(tv, 'tvJoinCorner') && !hw.G.callerWin && !hw.$('callerBlock').classList.contains('winning'), onWall(tv));
+  check('naming the next pattern and its prize, because the host chose them', hw.G.pattern === 'two' && hw.G.prize === 'Meat tray' && tv.$('tvPattern').textContent === 'Two lines' && tv.$('tvPrize').textContent === 'Meat tray' && hw.G.prizesWon.length === 1,
+        { pattern: hw.G.pattern, tv: tv.$('tvPattern').textContent, prize: tv.$('tvPrize').textContent });
   tap(hw, 33); await advance(300);
   check('and the grid calls numbers again', hw.G.draw.length === d0 + 1);
-  click('callerWinBtn');
-  check('the next WINNER starts from Two lines', stageBtns().map(function (b) { return b.getAttribute('data-pat'); }).join() === 'two,full');
-  pickStage('two'); await advance(500); feedTV(tv);
+  click('callerWinBtn'); await advance(300); feedTV(tv);
+  check('the next WINNER is checked for Two lines', hw.$('callerWinSays').textContent === 'Two lines' && /two whole rows/.test(hw.$('callerWinHow').textContent) && tv.$('claimName').textContent === 'Two lines', hw.$('callerWinSays').textContent);
   click('callerNotWinBtn'); await advance(500); feedTV(tv);
-  check('Not a win after all: the TV goes back to the board and nothing is recorded', shown(tv, 'tvRun') && hw.G.prizesWon.length === 1 && hw.G.pattern === 'two' && !hw.G.callerWin, { won: hw.G.prizesWon.length, pattern: hw.G.pattern });
-  click('callerWinBtn'); pickStage('full'); await advance(500); feedTV(tv);
-  check('a full house on the TV', shown(tv, 'tvWin') && tv.$('winName').textContent === 'Full house' && tv.$('winPrizeVal').textContent === '$50 bar tab', tv.$('winName').textContent);
-  click('callerBackBtn'); await advance(500); feedTV(tv);
+  check('Not a win: the TV goes back to the board, nothing is recorded, still Two lines', shown(tv, 'tvRun') && hw.G.prizesWon.length === 1 && hw.G.pattern === 'two' && !hw.G.callerWin && hostSent('winner').length === hello0 + 1, { won: hw.G.prizesWon.length, pattern: hw.G.pattern });
+  click('callerWinBtn'); click('callerConfirmBtn'); await advance(500); feedTV(tv);
+  check('two lines confirmed: the only way on is Full house, or finish', hw.G.prizesWon.length === 2 && nextList() === 'full,' && hw.G.pattern === 'two' && shown(tv, 'tvWin') && tv.$('winName').textContent === 'Two lines', nextList());
+  pickNext(hw, 'full'); await advance(500); feedTV(tv);
+  check('Keep playing for Full house', hw.G.pattern === 'full' && tv.$('tvPattern').textContent === 'Full house' && shown(tv, 'tvRun'), hw.G.pattern);
+  click('callerWinBtn'); click('callerConfirmBtn'); await advance(500); feedTV(tv);
+  check('a full house on the TV', shown(tv, 'tvWin') && tv.$('winName').textContent === 'Full house' && tv.$('winPrizeVal').textContent === 'Meat tray', tv.$('winName').textContent);
   var d1 = hw.G.draw.length; tap(hw, 34);
-  check('closed, the full house ends the game: the grid and WINNER wait for New game', hw.G.won === true && hw.G.prizesWon.length === 2 && hw.G.draw.length === d1 && hw.$('callerWinBtn').disabled === true && shown(tv, 'tvRun'),
+  check('a confirmed full house ends the game: nothing to choose, the grid and WINNER wait for New game', hw.G.won === true && hw.G.prizesWon.length === 3 && !hw.G.callerWin && hw.G.draw.length === d1 && hw.$('callerWinBtn').disabled === true && /That game is done/.test(hw.$('coach').innerHTML),
         { won: hw.G.won, prizes: hw.G.prizesWon.length });
   check('New game asks to start the next game, not to deal tickets', (function () { click('newGameBtn'); return !hw.$('ngModal').classList.contains('hidden') && hw.$('ngGo').textContent === 'Start next game' && !/tickets/i.test(hw.$('ngNote').textContent); })(),
         [hw.$('ngGo').textContent, hw.$('ngNote').textContent]);
   hw.$('ngModal').classList.add('hidden');
-  print('a reload of the console with the win on the TV');
+  print('a reload of the console while the host is choosing what next');
   retire(WHO);
   var hw2 = bootHostC(saved2, 'host-win'); await advance(3000);
-  check('comes back to the win, with Back to the game', !!hw2.G.callerWin && hw2.G.callerWin.pattern === 'one' && hw2.$('callerBlock').classList.contains('winning'), hw2.G.callerWin);
+  var nb2 = hw2.$('cwNextBtns').children.map(function (b) { return b.getAttribute('data-next'); }).join();
+  check('comes back to the confirmed win and the same choice', !!hw2.G.callerWin && hw2.G.callerWin.step === 'won' && hw2.G.callerWin.pattern === 'one' && hw2.$('callerBlock').classList.contains('winning') && nb2 === 'two,full,', [hw2.G.callerWin, nb2]);
+  var rs0 = hostSent('resume').length, st0 = hostSent('state').length;
+  var fin = pickNext(hw2, ''); await advance(500);
+  check('Finish this game: the game is done, still One line, and the winner stays on the TV', fin && hw2.G.won === true && !hw2.G.callerWin && hw2.G.pattern === 'one' && hostSent('resume').length === rs0 && hostSent('state').length === st0, { won: hw2.G.won, pattern: hw2.G.pattern });
   hw2.endGame(); await advance(3000);
   var lastRep = (DB.vp_game_reports || []).slice(-1)[0] || {};
-  check('End game with a win still up counts it on the night\'s report, and closes the night', hw2.G.status === 'setup' && !liveSession() && Array.isArray(lastRep.prizes) && lastRep.prizes.some(function (z) { return z.pattern === 'one' && z.prize === '$50 bar tab' && z.winner_name === 'Paper book'; }),
+  check('End game: the confirmed line is on the night\'s report, once, and the night closes', hw2.G.status === 'setup' && !liveSession() && Array.isArray(lastRep.prizes) && lastRep.prizes.filter(function (z) { return z.pattern === 'one' && z.prize === '$50 bar tab' && z.winner_name === 'Paper book'; }).length === 1,
         { status: hw2.G.status, open: !!liveSession(), prizes: lastRep.prizes });
   retire('host-win');
   print('the normal winner card is untouched');

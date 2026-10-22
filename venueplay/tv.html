@@ -490,7 +490,7 @@
     <div class="eyebrow">Bingo claimed</div>
     <div class="claimbig" id="claimBig">BINGO?</div>
     <div class="claimname" id="claimName">Player</div>
-    <div class="jsub">Checking the card against the called numbers&hellip;</div>
+    <div class="jsub" id="claimSub">Checking the card against the called numbers&hellip;</div>
   </div>
 
   <!-- BINGO: win -->
@@ -501,7 +501,7 @@
     <div class="winslabel" id="winsLabel">Wins</div>
     <div class="winprize" id="winPrizeVal">the prize</div>
     <div class="jsub" id="winSubPhone">Card <b id="winCard">#000</b> &middot; show your phone to the host</div>
-    <div class="jsub" id="winSubPaper" style="display:none;font-size:clamp(14px,2.6cqw,34px);color:#fff">Show your book to the host</div>
+    <div class="jsub" id="winSubPaper" style="display:none;font-size:clamp(14px,2.6cqw,34px);color:#fff">See the host to collect your prize</div>
   </div>
 
   <!-- BINGO: persistent join corner -->
@@ -1504,6 +1504,9 @@
   function renderClaim(){
     $("claimName").textContent=state.claimName||"Player";
     $("claimBig").textContent=(state.claimCount>1) ? "TIE?" : "BINGO?";
+    /* A real-balls night (caller mode) has no phone: the name line is the pattern being claimed
+       ("One line") and the host is looking at a paper book (21 Oct 2026). */
+    $("claimSub").textContent = state.claimPaper ? "The host is checking the book\u2026" : "Checking the card against the called numbers\u2026";
   }
   function renderWin(){
     var m=state.winner||{};
@@ -1533,6 +1536,7 @@
   // ---- confetti ----
   var celebrateTimer=null;
   function stopCelebrate(){ if(celebrateTimer){ clearInterval(celebrateTimer); celebrateTimer=null; } $("winBurst").classList.remove("show"); }
+  function clearConfetti(){ var c=$("tv").querySelectorAll(".confetti"); for(var i=0;i<c.length;i++){ if(c[i].parentNode) c[i].parentNode.removeChild(c[i]); } }
   function spawnBurst(count){
     /* One copy, in /app/vp-celebrate.js. This existed five times in two
        versions, and the entire difference was data: this screen's colours
@@ -2123,12 +2127,17 @@
       // names[] when more than one player called on the same ball; name is the first, for
       // hosts still running the pre-tie console.
       var cn=(m.names&&m.names.length) ? m.names : [m.name||"Player"];
-      state.phase="claim"; state.claimName=joinNames(cn); state.claimCount=cn.length; applyBingo();
+      state.phase="claim"; state.claimName=joinNames(cn); state.claimCount=cn.length; state.claimPaper=!!m.caller; applyBingo();
     }
     else if(m.t==="resume"){
       // A resume aimed at ONE player (a tie partner waved off) is not the room playing on:
       // someone else is still being checked, so the big screen must stay on the claim card.
       if(m.pid) return;
+      // Back to the board from a winner (a real-balls host chose Keep playing): the confetti goes with it,
+      // so the room is not reading the next numbers through the last win's celebration (21 Oct 2026).
+      // Pieces already falling go too: each lives 3.8s, long enough to cover the next ball (22 Oct 2026).
+      if(state.phase==="win") stopCelebrate();
+      if(state.phase==="win") clearConfetti();
       state.phase="running"; applyBingo();
     }
     else if(m.t==="winner"){
