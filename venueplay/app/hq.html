@@ -391,18 +391,18 @@
     </div>
 
     <div class="lblk" id="venuesLbl">All venues</div>
-    <div class="panel" style="margin-bottom:12px">
+    <div class="panel pad" style="margin-bottom:12px">
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <select id="screensAction" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);border-radius:6px;color:#fff;font-family:inherit;font-size:13px;padding:6px 10px">
+        <select id="screensAction" style="width:auto;min-width:190px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);border-radius:6px;color:#fff;font-family:inherit;font-size:13px;padding:6px 10px">
           <option value="ads" selected>Put the ads back on</option>
           <option value="reload">Restart the page</option>
         </select>
-        <select id="reloadScreensWhen" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);border-radius:6px;color:#fff;font-family:inherit;font-size:13px;padding:6px 10px">
+        <select id="reloadScreensWhen" style="width:auto;min-width:160px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);border-radius:6px;color:#fff;font-family:inherit;font-size:13px;padding:6px 10px">
           <option value="3am" selected>at 3am Brisbane</option>
           <option value="now">right now</option>
         </select>
         <button class="mini" id="reloadScreens">Apply to every screen</button>
-        <span class="note" style="flex:1;min-width:220px">Every screen reads this off the poll it already makes every thirty seconds, so it lands even on one whose connection has dropped. <b>Put the ads back on</b> takes a stuck game off the wall and holds the advertising for two minutes so nothing can reclaim it. <b>Restart the page</b> picks up a new version. <b>3am</b> is the safe default - it is stored as a time, so each screen acts when it gets there and no room is interrupted.</span>
+        <span class="note" style="flex:1;min-width:220px">Every screen reads this off the poll it already makes every thirty seconds, so it lands even on one whose connection has dropped. <b>Put the ads back on</b> takes a stuck game off the wall and holds the advertising for two minutes so nothing can reclaim it. <b>Restart the page</b> picks up a new version. <b>3am</b> is the safe default: it is stored as a time, so each screen acts when it gets there and no room is interrupted.</span>
       </div>
       <div class="note" id="reloadScreensOut" style="margin-top:8px"></div>
     </div>
@@ -495,7 +495,7 @@
         <button class="btn ghost" id="goRun">Show me</button>
         <button class="btn ghost" id="goCsv" style="display:none">Download CSV</button>
       </div>
-      <div class="note">A venue in a group has no billing account of its own, so nothing meters it: the host is never shown the overage screen and nothing is charged. That is deliberate - groups are invoiced by hand - but until now nothing told you WHAT to invoice. This is that list: every night a grouped venue went past its plan, priced at $2 a head, the same figure the metered path uses. <b>Nothing here has been charged or even asked for.</b></div>
+      <div class="note">A venue in a group has no billing account of its own, so nothing meters it: the host is never shown the overage screen and nothing is charged. That is deliberate (groups are invoiced by hand), but until now nothing told you WHAT to invoice. This is that list: every night a grouped venue went past its plan, priced at $2 a head, the same figure the metered path uses. <b>Nothing here has been charged or even asked for.</b></div>
       <div id="goOut" class="note" style="margin-top:8px"></div>
       <div id="goRows" style="margin-top:8px"></div>
     </div>
