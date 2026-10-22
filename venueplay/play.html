@@ -24,13 +24,18 @@
   .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
 
   .app{max-width:460px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
-  .ptop{padding:16px;text-align:center;border-bottom:1px solid var(--line-2);position:sticky;top:0;background:rgba(10,10,11,.82);backdrop-filter:blur(8px);z-index:10}
+  /* ROOM EITHER SIDE FOR THE CORNERS (Dean, 21 Oct 2026: the VenuePlay logo "looks crammed into the
+     corner"). The menu button sits top-right and the called-ball chip top-left, both pinned over the
+     header, and the header used to be padded 16px all round, so at 320 wide "VenuePlay Musical Bingo"
+     ran under the menu button. 72px each side keeps the middle clear of both and the brand centred. */
+  .ptop{padding:16px 72px;text-align:center;border-bottom:1px solid var(--line-2);position:sticky;top:0;background:rgba(10,10,11,.82);backdrop-filter:blur(8px);z-index:10}
   .brand{display:flex;align-items:center;justify-content:center;gap:8px}
   .brand svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9))}
-  .brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;color:#fff}
+  .brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;color:#fff;line-height:1.2;text-align:left}
+  .brand .nw{white-space:nowrap}   /* a long game name wraps after VenuePlay, never mid-name */
   .brand .div{width:1px;height:16px;background:var(--line)}
   .venue{font-size:11px;color:var(--muted);margin-top:5px;display:flex;align-items:center;justify-content:center;gap:6px}
-  .vlogo{display:block;margin:8px auto 0;height:30px;max-width:150px;object-fit:contain}
+  .vlogo{display:block;margin:10px auto 2px;height:30px;max-width:150px;object-fit:contain}   /* sized by its shape once it loads: /app/vp-venuelogo.js */
   .dot{width:7px;height:7px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
   .dot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
 
@@ -256,7 +261,7 @@
       <span class="div"></span><span class="word">VenuePlay</span>
     </div>
     <img id="venueLogo" class="vlogo hidden" alt="">
-    <div class="hdrball hidden" id="hdrBall"><b id="hdrBallNum">--</b><span id="hdrBallCount">0 of 90</span></div>
+    <div class="hdrball hidden" id="hdrBall"><b id="hdrBallNum"></b><span id="hdrBallCount">0 of 90</span></div>
     <div class="venue"><span class="dot" id="statusDot"></span> <span id="statusText">Connecting</span><span class="mono hidden" id="roomLabel">------</span></div>
     <button class="menubtn" id="menuBtn" aria-label="Menu">&#9776;</button>
     <div class="menupanel hidden" id="menuPanel">
@@ -360,6 +365,7 @@
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-feedback.js"></script>
 <script src="/app/vp-celebrate.js"></script>
+<script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-venueurl.js"></script>
 <script>
 (function(){
@@ -1235,7 +1241,7 @@
     ageAsk();                      // hold any ticket request until the Worker says whether to ask
     playerPost("/join/info",{ code:P.room }).then(function(r){
       // Venue logo in the header (same one as the TV), so the phone shows whose game this is.
-      var lg=$("venueLogo"); if(lg){ if(r&&r.logo_url){ lg.src=r.logo_url; lg.classList.remove("hidden"); } else { lg.classList.add("hidden"); } }
+      var lg=$("venueLogo"); if(lg){ if(r&&r.logo_url){ lg.src=r.logo_url; lg.classList.remove("hidden"); if(typeof VPVenueLogo==="object") VPVenueLogo.fit(lg,"phone"); } else { lg.classList.add("hidden"); } }
       /* PAPER-TICKET STATES. South Australia, Victoria and Tasmania expect a printed ticket in
          the player's hand for bingo (Anisimoff Legal, 8 Oct 2026, for VIC and TAS), so this
          phone must not show one. The Worker decides it from the venue's state and sends

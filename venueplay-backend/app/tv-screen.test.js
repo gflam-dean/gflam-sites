@@ -73,7 +73,7 @@ function grabBranch(marker){
 
 var NEED = ["adsSignature","buildAds","stopAds","startAds","loopEntries","entryClass","entryInner",
             "slideVisible","todayStr","hasRaffle","accentClass","accentHex","esc","escBr",
-            "landBall","revealBall","bingoCall","renderRun","calledSet","updateBoard","hideBingoLayers",
+            "landBall","revealBall","bingoCall","restBall","renderRun","calledSet","updateBoard","hideBingoLayers",
             "showBingoLayer","applyBingo","hideGameFrame","applyVenueLogo","stopCelebrate",
             "cancelHolding","cancelEmbedWatch","gameLabel","forgetLastGame","enterAds","enterBingo","enterEmbed",
             "enterHolding"];
@@ -215,7 +215,7 @@ Object.defineProperty($("gameFrame"), "src", {
    .curball is its parent, so the reveal lands on the same element renderRun writes to. */
 var curball = el("curball"); curball.className = "curball"; curball.parent = $("tvRun");
 curball.rect = { left: 140, top: 520, width: 260, height: 260 };
-$("cbNum").className = "cbnum"; $("cbNum").parent = curball; $("cbNum").textContent = "--";
+$("cbNum").className = "cbnum"; $("cbNum").parent = curball; $("cbNum").textContent = "Ready";
 $("brBall").parent = $("ballReveal");
 $("brBall").rect = { left: 660, top: 240, width: 600, height: 600 };
 
@@ -461,6 +461,12 @@ enterBingo();
 state.phase = "running";
 var bStart = mark();
 
+/* BEFORE THE FIRST CALL (Dean, 21 Oct 2026: the "--" looked ugly): the real renderRun, with nothing called. */
+state.called = []; renderRun();
+ok("before the first ball the resting ball says Ready, not two dashes",
+   String($("cbNum").textContent) === "Ready" && $("cbNum").classList.contains("ready"), "it shows '" + $("cbNum").textContent + "'");
+ok("tv.html has no '--' left in either ball", !/id="cbNum"[^>]*>--</.test(html) && !/id="brBall"[^>]*>--</.test(html) && !/: "--"/.test(html));
+
 /* one ball on its own */
 hostCallsBall(7, [7]);
 /* THE BIGGER REVEAL (28 Sep 2026): the room dims ("live") while the ball is up, the call a room
@@ -508,7 +514,7 @@ ok("the reveal layer is put away at the end", $("ballReveal").classList.contains
 
 /* Never backwards. This is the fault Dean saw: a resting ball still carrying an older
    number while a newer one glides down on top of it. */
-var order = { "--": -1, "7": 0, "23": 1, "41": 2, "52": 3, "66": 4 };
+var order = { "Ready": -1, "7": 0, "23": 1, "41": 2, "52": 3, "66": 4 };
 var seen = -1, backwards = null;
 bRace.forEach(function(f){
   if (backwards) return;

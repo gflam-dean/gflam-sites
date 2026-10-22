@@ -35,10 +35,14 @@
      21px tall, so on a wide TV the name floated some 60px below the wordmark and
      read as unrelated to it. As a wrapped second line inside this block the gap is
      one small margin instead of a number that has to be re-guessed per screen size. */
-  .tv-corner{position:absolute;top:2cqw;right:2.4cqw;display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:.8cqw;opacity:.92;z-index:6;max-width:40cqw}
+  .tv-corner{position:absolute;top:2cqw;right:2.4cqw;display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:.8cqw;z-index:16;max-width:40cqw}   /* above the ball reveal's dimmer (15), as the venue logo is: the dim put the mark "behind everything" on every call */
   .tv-corner .venuename{flex:0 0 100%;margin-top:.15cqw;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(10px,1.3cqw,17px);letter-spacing:.02em;color:rgba(255,255,255,.82);text-shadow:0 2px 8px rgba(0,0,0,.7)}
-  .tv-corner .vn{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(11px,1.5cqw,20px);color:var(--text)}
-  .tv-corner svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9))}
+  /* THE VENUEPLAY MARK, SECONDARY BUT CRISP (Dean, 21 Oct 2026: it looked "dull and behind everything").
+     It was 20px at most on any TV, at 92% opacity, with a fixed 18px arrow: tiny and soft on a 1920 wall
+     next to a venue logo now sized by its shape. Full opacity, a size that grows with the screen up to
+     26px, and a dark halo so it reads on any slide. Still well under the venue's logo. */
+  .tv-corner .vn{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(12px,1.35cqw,26px);letter-spacing:.01em;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.85),0 0 10px rgba(0,0,0,.6)}
+  .tv-corner svg{width:clamp(14px,1.2cqw,24px);height:auto;filter:drop-shadow(0 0 3px rgba(255,31,142,.9))}
   /* Top-CENTRE, not top-left. The venue's LOGO is pinned top-left at top:20px with
    z-index 60, and this sat under it at top:2cqw with z-index 6: on a 1920 screen
    2cqw is 38px, inside the logo's 20-84px band. So any venue with a logo had its
@@ -297,6 +301,7 @@
   @keyframes brgo{ 0%{transform:scale(1);opacity:1} 82%{opacity:1} 100%{transform:translate(-30cqw,1cqw) scale(.40);opacity:0} }
   .cbletter{font-family:'Anton',sans-serif;font-size:clamp(16px,5cqw,60px);color:var(--pink);letter-spacing:.05em;text-shadow:0 0 26px rgba(255,31,142,.5)}
   .cbnum{font-family:'Anton',sans-serif;font-size:min(15cqw,15vh);color:#0A0A0B;line-height:1}
+  .cbnum.ready{font-size:min(4.2cqw,4.4vh);letter-spacing:.14em;text-transform:uppercase;text-indent:.14em;color:rgba(10,10,11,.62)}
   /* The last five, newest first, as small grey balls under the big one. Sized to be read from
      the back of the room: the old 15px cap made them a caption. */
   .prevballs{display:flex;gap:1cqw;justify-content:center;flex-wrap:nowrap;margin-top:.8cqw}
@@ -446,7 +451,7 @@
 
   <!-- ball reveal: a big ball pops in the centre, then flies down to the board -->
   <div class="ballreveal hidden" id="ballReveal"><div class="brdim"></div>
-    <div class="brwrap"><div class="brrings"><i></i><i></i><i></i></div><div class="brball" id="brBall">--</div><div class="brcall" id="brCall"></div></div></div>
+    <div class="brwrap"><div class="brrings"><i></i><i></i><i></i></div><div class="brball" id="brBall"></div><div class="brcall" id="brCall"></div></div></div>
 
   <!-- BINGO: lobby -->
   <div class="layer hidden" id="tvLobby">
@@ -474,7 +479,7 @@
         <div class="lobbyat" id="tvRunAt" style="display:none;margin-top:.6cqw;max-width:36cqw">at <b id="tvRunAtName"></b></div>
       </div>
       <div class="balleye">Number called</div>
-      <div class="curball"><span class="cbnum" id="cbNum">--</span></div>
+      <div class="curball"><span class="cbnum ready" id="cbNum">Ready</span></div>
       <div class="prevballs" id="tvPrev"></div>
       <div class="ballcount" id="tvBallCount"><b>0</b> of 90 called</div>
       <div class="patline"><span class="patlbl">Pattern</span> <span class="patval" id="tvPattern">One line</span></div>
@@ -526,6 +531,7 @@
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-fit.js"></script>
+<script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-venueurl.js"></script>
 <script>
 (function(){
@@ -1475,16 +1481,24 @@
       }, 850);
     }, 1300);
   }
+  /* THE RESTING BALL BEFORE THE FIRST CALL (Dean, 21 Oct 2026: the two dashes "--" looked ugly). An
+     empty glowing ball that says READY, in the ball's own type at a smaller size, until a number lands.
+     One function for both paths (a ball in flight or not), so the dashes cannot come back on one. */
+  function restBall(n){
+    var el=$("cbNum"); if(!el) return;
+    if(n){ el.textContent=n; el.classList.remove("ready"); }
+    else { el.textContent="Ready"; el.classList.add("ready"); }
+  }
   function renderRun(){
     var n=state.called.length ? state.called[state.called.length-1] : 0;
     // While a ball is in flight the resting ball keeps showing the number it is about to
     // replace. Setting it to the new number here meant the destination already read 47 before
     // the 47 had finished travelling, so there was nothing to overtake, just a duplicate.
     if(!ballInFlight){
-      $("cbNum").textContent = n ? n : "--";
+      restBall(n);
     } else {
       var prevN = state.called.length>1 ? state.called[state.called.length-2] : 0;
-      $("cbNum").textContent = prevN ? prevN : "--";
+      restBall(prevN);
     }
     var prev=$("tvPrev"); prev.innerHTML="";
     // the five before the current one, newest first
@@ -2493,6 +2507,7 @@
           el.style.cssText="position:fixed;top:14px;left:14px;max-width:120px;max-height:56px;width:auto;height:auto;object-fit:contain;z-index:60;pointer-events:none;filter:drop-shadow(0 2px 8px rgba(0,0,0,.55))";
           document.body.appendChild(el); }
         el.src=venueLogoUrl;
+        if(typeof VPVenueLogo==="object") VPVenueLogo.fit(el,"tv");   /* sized by its shape: /app/vp-venuelogo.js */
       }
       /* A logo says which venue this is better than a caption does, so the small name under the
          VenuePlay mark comes off once a venue HAS a logo. Not once the logo is on screen: the

@@ -3355,11 +3355,13 @@ def local_checks(which):
              'staff at the venue find its running game and the open question; a pickup is recorded per format; a replaced console stands down only when the Worker says so', 53,
              'A dead tablet leaves the host on a fresh setup screen with the room seated, another venue\'s '
              'quiz is picked up, or two consoles run one quiz'),
-            ('D52. The TV mark is painted only when the venue has a logo, small, top-left and kept clear',
+            # 21 Oct 2026 (Dean: a square logo "seems to be a bit small"): one rule in /app/vp-venuelogo.js
+            # sizes every logo by its shape, equal area inside a height and width ceiling, on the TV and the phone.
+            ('D52. The venue logo is painted only when the venue has one, sized by its shape, top-left and kept clear',
              'test-tv-logo-mark.js',
-             'tv.html and the four game screens paint one 120x56 mark, 14px in, untappable, a vp-fit keep-out, and nothing with no logo', 40,
-             'A logo that covers a called number, the join code or the question, or a broken box on '
-             'the wall of a venue with no logo, reaches a room full of people otherwise'),
+             'tv.html, the four game screens and the three phones size the logo by its shape with one rule, untappable, a vp-fit keep-out, and nothing with no logo', 110,
+             'A square crest drawn at a third of a wordmark\'s size, a logo that covers a called number, the '
+             'join code or the question, or a broken box on the wall of a venue with no logo, reaches a room full of people otherwise'),
             # D47 and D46: the compliance build of 15 Oct 2026 (Anisimoff Legal 9380, letters of
             # 1 and 8 Oct 2026). Dean: build everything the lawyer called prudent.
             ('D47. The Terms put gaming compliance, permits, attendance, age, records and an indemnity on the venue',

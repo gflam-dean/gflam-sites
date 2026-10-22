@@ -25,10 +25,14 @@
   .layer{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4% 6%}
   .hidden{display:none!important}
 
-  .tv-corner{position:absolute;top:2cqw;right:2.4cqw;display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:.8cqw;opacity:.92;z-index:6;max-width:40cqw}
+  .tv-corner{position:absolute;top:2cqw;right:2.4cqw;display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:.8cqw;z-index:6;max-width:40cqw}
   .tv-corner .venuename{flex:0 0 100%;margin-top:.15cqw;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(10px,1.3cqw,17px);letter-spacing:.02em;color:rgba(255,255,255,.82);text-shadow:0 2px 8px rgba(0,0,0,.7)}
-  .tv-corner .vn{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(11px,1.5cqw,20px);color:var(--text)}
-  .tv-corner svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9))}
+  /* THE VENUEPLAY MARK, SECONDARY BUT CRISP (Dean, 21 Oct 2026: it looked "dull and behind everything").
+     It was 20px at most on any TV, at 92% opacity, with a fixed 18px arrow: tiny and soft on a 1920 wall
+     next to a venue logo now sized by its shape. Full opacity, a size that grows with the screen up to
+     26px, and a dark halo so it reads on any slide. Still well under the venue's logo. */
+  .tv-corner .vn{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(12px,1.35cqw,26px);letter-spacing:.01em;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.85),0 0 10px rgba(0,0,0,.6)}
+  .tv-corner svg{width:clamp(14px,1.2cqw,24px);height:auto;filter:drop-shadow(0 0 3px rgba(255,31,142,.9))}
   /* Top-CENTRE, not top-left. The venue's LOGO is pinned top-left at top:20px with
    z-index 60, and this sat under it at top:2cqw with z-index 6: on a 1920 screen
    2cqw is 38px, inside the logo's 20-84px band. So any venue with a logo had its
@@ -188,6 +192,7 @@
 <script src="/app/vp-screen-router.js"></script>
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-fit.js"></script>
+<script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-venueurl.js"></script>
 <script>
 (function(){
@@ -713,6 +718,7 @@
       el.style.cssText="position:fixed;top:14px;left:14px;max-width:120px;max-height:56px;width:auto;height:auto;object-fit:contain;z-index:60;pointer-events:none;filter:drop-shadow(0 2px 8px rgba(0,0,0,.55))";
       document.body.appendChild(el); }
     el.src=url; el.style.display="block";
+    if(typeof VPVenueLogo==="object") VPVenueLogo.fit(el,"tv");   /* sized by its shape: /app/vp-venuelogo.js */
   }
   (function venueLogo(){
     if(!VENUE_SLUG) return;
