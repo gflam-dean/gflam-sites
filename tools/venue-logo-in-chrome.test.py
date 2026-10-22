@@ -95,7 +95,11 @@ class Site(http.server.BaseHTTPRequestHandler):
         u = urllib.parse.urlparse(self.path)
         if u.path.startswith('/__worker'): return self.worker()
         if u.path.startswith('/__logos/'):
-            if u.path.startswith('/__logos/slow-'): time.sleep(1.5)     # a logo still on its way when Print is pressed
+            # A logo still on its way when Print is pressed: the picture takes 1.5 s, and the second, CORS
+            # read of it (the one that decides its plate: Chrome marks it Sec-Fetch-Mode: cors; a same-origin
+            # page sends no Origin header) 2.5 s, so a Print that waits for the picture but not for its
+            # reading opens the dialog with the plate undecided.
+            if u.path.startswith('/__logos/slow-'): time.sleep(2.5 if self.headers.get('Sec-Fetch-Mode') == 'cors' else 1.5)
             f = os.path.join(LOGOS, os.path.basename(u.path).replace('slow-', ''))
             return self.send(200, open(f, 'rb').read(), 'image/png') if os.path.isfile(f) else self.send(404, 'no', 'text/plain')
         if u.path == '/__fake/supabase.js':
