@@ -201,5 +201,5 @@ finally:
     R.close()
 
 print('')
-print(('FAIL %d of %d' % (bad, ran)) if bad else ('PASS %d checks' % ran))
+print('%d of %d checks passed' % (ran - bad, ran))   # the shape release-check.py reads
 sys.exit(1 if bad else 0)
