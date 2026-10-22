@@ -10,7 +10,7 @@ business that every tab has something on it, shaped like the live one:
                 and one with a long screen address
   money         declined cards for the same venue more than once (a subscription and an extras
                 invoice), receipts, a charged extra, a discount
-  audit         well over one page of entries across every kind of change and every kind of person,
+  audit         about 400 entries, over 60 of them in the last week, across every kind of change and every kind of person,
                 spread over 40 days, so search, filters and paging have something to do
   screens       a venue whose screen settings were deleted straight from the database
 
@@ -165,12 +165,12 @@ def audit_rows(uid):
     # Bulk: well over a page, across 40 days, so the default week is a subset and paging has work.
     kinds = [('screen_updated', 'owner', None), ('players_increased', 'owner', None), ('venue_code_refreshed', 'system', None),
              ('invoice_receipt_email', 'stripe', None), ('venue_gaming_updated', ADMIN_LABEL, uid)]
-    for i in range(120):
+    for i in range(360):
         act, who, adm = kinds[i % len(kinds)]
         n = 1 + (i % 9)
         tgt = ('customer:cus_F1' if act == 'invoice_receipt_email' else 'venue:' + vid(n))
         det = {'outcome': 'sent'} if act == 'invoice_receipt_email' else ({'from': 60, 'to': 70} if act == 'players_increased' else {})
-        rows.append(A(act, (i * 40.0) / 120.0, tgt, who, adm, det))
+        rows.append(A(act, (i * 40.0) / 360.0, tgt, who, adm, det))
     return rows
 
 
