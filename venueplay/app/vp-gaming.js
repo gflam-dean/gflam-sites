@@ -984,7 +984,7 @@
     if (!venue) return '';
     var st = String(venue.au_state || '').toUpperCase();
     if (venue.entity_type === 'non_profit') return '';
-    if (st === 'SA') return 'South Australia: publish the winner for 7 days (on your screen and at the bar is fine), and contact them if they were not here. The prize is theirs either way.';
+    if (st === 'SA') return 'South Australia: publish the winner for 7 days (on your screen and a noticeboard is fine), and contact them if they were not here. The prize is theirs either way.';
     if (st === 'NT') return 'Northern Territory: publish the winner\u2019s name in a newspaper that circulates in the Territory, and keep the record for 2 years.';
     return '';
   }

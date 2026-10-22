@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '20 Oct 2026, 16:32 · 17480d16';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '23 Oct 2026, 06:20 · 131eb9d7';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '9d1b390ad1e63d30fd8e7e358726c0ca0630d9114fcb808c25556fd4a4b366ae';
@@ -333,7 +333,7 @@ export default {
       if (method === 'POST' && path === '/host/trivia/questions/remove')   return await handleTriviaRemove(request, env, json);
       if (method === 'POST' && path === '/host/overage/ack')   return await handleOverageAck(request, env, json);
       if (method === 'POST' && path === '/host/game/end')      return await handleGameEnd(request, env, json);
-      if (method === 'POST' && path === '/host/bingo/draw')      return await handleBingoDrawStart(request, env, json);
+      if (method === 'POST' && path === '/host/bingo/draw')      return await handleBingoDrawStartForVenue(request, env, json);
       if (method === 'POST' && path === '/host/bingo/seat')      return await handleBingoSeat(request, env, json);
       if (method === 'POST' && path === '/host/bingo/ball')      return await handleBingoBall(request, env, json);
       if (method === 'POST' && path === '/host/bingo/fallback')  return await handleBingoFallback(request, env, json);
@@ -1017,6 +1017,26 @@ async function venueRulesRow(env, venueId) {
     const v = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=au_state,entity_type&limit=1');
     return v[0] || null;
   }
+}
+
+/* EVERY BINGO GAME OPENS A DRAW, real balls included, so this is where an SA or NT pub's number
+   bingo is refused. It sits IN FRONT of handleBingoDrawStart rather than inside it, because that
+   handler is part of the regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js, whose
+   version and hash are what was described to OLGR), and a rule about who may run bingo is not a
+   change to how bingo is drawn. The host is verified first, the body is read once and handed on as
+   it was, and the regulated handler then does everything it always did (staff check included). */
+async function handleBingoDrawStartForVenue(request, env, json) {
+  await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const venueId = String(b.venue_id || '').trim();
+  if (venueId) {
+    assertUuid(venueId, 'venue_id');
+    if (numberBingoHiddenFor(await venueRulesRow(env, venueId))) {
+      return json({ error: NO_PUB_BINGO_MSG, code: 'number_bingo_off' }, 403);
+    }
+  }
+  const again = { method: request.method, url: request.url, headers: request.headers, json: async function () { return b; } };
+  return await handleBingoDrawStart(again, env, json);
 }
 
 async function handleCreateSession(request, env, json) {
@@ -6599,10 +6619,6 @@ async function handleBingoDrawStart(request, env, json) {
   assertUuid(venueId, 'venue_id');
   await requireStaff(env, authUserId, venueId);            // staff at THIS venue, and the kill-switch
   await assertVenueActive(env, venueId);
-  // Every bingo game, real balls included, opens here: none for an SA or NT pub (migration 116).
-  if (numberBingoHiddenFor(await venueRulesRow(env, venueId))) {
-    return json({ error: NO_PUB_BINGO_MSG, code: 'number_bingo_off' }, 403);
-  }
   let sessionId = null;
   if (b.session_id) { try { assertUuid(String(b.session_id), 'session_id'); sessionId = String(b.session_id); } catch (e) { sessionId = null; } }
 

@@ -251,6 +251,26 @@ var PC = { SA: '5000', NT: '0800', QLD: '4000', NSW: '2000', VIC: '3000', WA: '6
   check('NT: a prize with something else in it is fine', fine.every(function (p) { return !G.liquorPrizeBlocked({ au_state: 'NT' }, p); }), fine.map(function (p) { return [p, G.liquorPrizeBlocked({ au_state: 'NT' }, p)]; }));
   check('...and the same alcohol prize anywhere but the NT is untouched', !G.liquorPrizeBlocked({ au_state: 'SA' }, 'Slab of XXXX') && !G.liquorPrizeBlocked({ au_state: 'QLD' }, 'Carton of beer') && !G.liquorPrizeBlocked(null, 'Carton of beer'));
 
+  /* The raffle console's own addPrize, lifted from raffle/host.html and run with the page's state
+     stubbed: the NT refusal is on the path every prize takes (typed, tapped from a saved preset, or the
+     single quick-draw prize), and the same prize goes straight in anywhere else. */
+  var RAFFLE = readFile('venueplay/app/raffle/host.html');
+  function raffleAdd(state, label) {
+    var errs = [], cleared = [];
+    var env = { G: { venue: { au_state: state }, jackOn: false, prizes: [] }, VPGaming: G,
+                hostError: function (m, k) { errs.push([m, k]); }, clearHostErrorIf: function (k) { cleared.push(k); },
+                savePrize: function () {}, renderPrizeList: function () {}, saveRaffle: function () {},
+                $: function () { return { value: label }; } };
+    var fn = (0, eval)('(function(G, VPGaming, hostError, clearHostErrorIf, savePrize, renderPrizeList, saveRaffle, $, window){ ' +
+      liftFrom(RAFFLE, 'liquorBlocked', 'raffle/host.html') + '\n' + liftFrom(RAFFLE, 'addPrize', 'raffle/host.html') + '\n return addPrize; })');
+    var add = fn(env.G, G, env.hostError, env.clearHostErrorIf, env.savePrize, env.renderPrizeList, env.saveRaffle, env.$, { VPGaming: G });
+    add(label);
+    return { prizes: env.G.prizes, errs: errs };
+  }
+  var nt = raffleAdd('NT', 'Slab of XXXX'), qld = raffleAdd('QLD', 'Slab of XXXX'), ntOk = raffleAdd('NT', 'Meat tray and a bottle of wine');
+  check('the raffle console, NT: "Slab of XXXX" is refused with the reason, and not added', nt.prizes.length === 0 && nt.errs.length === 1 && nt.errs[0][0] === G.LIQUOR_PRIZE_MSG, nt);
+  check('...a Queensland venue adds it as before; an NT meat tray and wine goes in', qld.prizes.length === 1 && qld.errs.length === 0 && ntOk.prizes.length === 1 && ntOk.errs.length === 0, [qld, ntOk]);
+
   print('musical bingo is not bingo');
   var mus = ['SA', 'NT'].map(function (st) { return G.assess({ state: st, entityType: 'for_profit', format: 'musical', paidEntry: false }); });
   check('SA and NT pubs: musical bingo gets no paper warning and no bingo-only note', mus.every(function (x) { return x.paper === false && !/not-for-profit organisations only|approved associations only/.test(x.points.concat(x.warnings).join(' ')); }), mus);
