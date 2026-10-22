@@ -132,11 +132,11 @@
   "counted_by": "lines"
  },
  "tools/help-desk-pages.test.py": {
-  "checks": 191,
+  "checks": 216,
   "counted_by": "lines"
  },
  "tools/help-seed-matches-faq.test.py": {
-  "checks": 13,
+  "checks": 14,
   "counted_by": "lines"
  },
  "tools/hq-lists-in-chrome.test.py": {
@@ -176,7 +176,7 @@
   "counted_by": "lines"
  },
  "tools/support-phone.test.py": {
-  "checks": 26,
+  "checks": 28,
   "counted_by": "lines"
  },
  "tools/test-a-player-bills-once-alive.js": {

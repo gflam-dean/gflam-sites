@@ -256,6 +256,22 @@ CALL_LINE = ('(function(){var c=document.getElementById("vphCall");if(!c)return 
 def call_ok(c):
     return bool(c) and c['href'] == 'tel:+61752283667' and c['link'] == '07 5228 3667' and c['shown'] and c['inside'] \
         and c['text'] == 'Call us on 07 5228 3667. If a game is on right now, press 2.' and c['scrollW'] <= c['innerW']
+
+
+# The same, on the public help page: the call line drawn into the VENUE card, measured against that card.
+def page_call(t):
+    return t.js('(function(){var c=document.getElementById("vphCall-venue");if(!c)return null;var a=c.querySelector("a"),r=c.getBoundingClientRect(),'
+                'p=document.querySelector("#venue .card").getBoundingClientRect();'
+                'return {text:c.textContent,href:a&&a.getAttribute("href"),link:a&&a.textContent,shown:r.width>0&&r.height>0,'
+                'inside:r.left>=p.left-1&&r.right<=p.right+1,scrollW:document.documentElement.scrollWidth,innerW:window.innerWidth};})()')
+
+
+# No phone number and no tel: link inside one part of a page (the /help player part, its footer).
+def no_phone_in(t, sel):
+    return t.js('(function(){var e=document.querySelector(%s);if(!e)return null;var x=e.textContent||"";'
+                'return !e.querySelector("a[href^=\'tel:\']") && x.indexOf("5228 3667")===-1 && x.indexOf("52283667")===-1;})()' % json.dumps(sel))
+
+
 # Errors a page throws or logs, and any of its own files that failed to load. Installed before the
 # page's first script, so nothing it does on load is missed.
 ERRWATCH = ('window.__errs=[];window.addEventListener("error",function(e){__errs.push("error: "+(e.message||(e.target&&(e.target.src||e.target.href))||"?"));},true);'
@@ -340,8 +356,11 @@ def help_page_checks(b, VP):
               got == len(vp_faq['venue']['items']) and t.js('document.getElementById("vphFaq-venue").open') is True and
               t.js('Array.prototype.map.call(document.querySelectorAll("#vphFlow-venue .vph-issue"),function(x){return x.textContent;}).join("|")') == '|'.join(i['title'] for i in ISSUES['venueplay:venue']), got)
         check(tag + ' venue: the player panel stays shut, and the address says #venue', t.js('document.getElementById("player").hidden && location.hash==="#venue" && document.querySelector("[data-path=venue]").getAttribute("aria-selected")==="true"') is True)
-        check(tag + ' venue: the marked spot for the support phone is there, empty and hidden until feature/support-phone fills it',
-              t.js('(function(){var p=document.querySelector("[data-support-phone]");return !!p&&p.hidden&&p.offsetHeight===0&&!p.textContent.trim();})()') is True)
+        # THE SUPPORT PHONE on /help: drawn by the widget into the venue part, as on the console.
+        c = page_call(t)
+        check(tag + ' venue: "Call us on 07 5228 3667", a tel:+61752283667 link, above the issues, inside the card, no sideways scroll', call_ok(c), c)
+        check(tag + ' venue: the call line is the first thing in the venue help, and there is one of it',
+              t.js('(function(){var f=document.getElementById("vphFlow-venue");return !!f.firstElementChild&&f.firstElementChild.id==="vphCall-venue"&&document.querySelectorAll("#venue .vph-call").length===1;})()') is True)
         t.shot('21-help-%s-venue' % tag)
         I3 = ISSUES['venueplay:venue'][0]
         t.js('document.querySelector("#vphFlow-venue [data-issue=\'%s\']").click()' % I3['id'])
@@ -358,6 +377,11 @@ def help_page_checks(b, VP):
         about = t.js('(document.querySelector("#vphFlow-venue .vph-about")||{}).textContent')
         check(tag + ' venue: after the last step the public venue form opens, about that issue, with name, venue, email, kind',
               about == 'About: ' + I3['title'] and all(t.js('!!document.getElementById("%s")' % i) for i in ('vphName-venue', 'vphVenue-venue', 'vphEmail-venue', 'vphKind-venue')), about)
+        c = page_call(t)
+        check(tag + ' venue: the public venue form has the call line too, inside the form, tappable',
+              call_ok(c) and t.js('!!document.querySelector("#vphFlow-venue .vph-form #vphCall-venue")') is True, c)
+        check(tag + ' venue: and the small print under Send does not say the number a second time',
+              t.js('document.getElementById("vphFine-venue").textContent') == "We'll reply by email.", t.js('document.getElementById("vphFine-venue").textContent'))
         check(tag + ' venue: its kinds are help, billing and sales', t.js('Array.prototype.map.call(document.getElementById("vphKind-venue").options,function(o){return o.value;}).join()') == 'venue_support,accounts,sales')
         t.shot('21c-help-%s-venue-form' % tag)
         t.js('document.getElementById("vphName-venue").value="Sam";document.getElementById("vphEmail-venue").value="sam@royal.com.au";document.getElementById("vphMsg-venue").value="TV black";document.querySelector("#vphFlow-venue .vph-go").click()')
@@ -393,6 +417,8 @@ def help_page_checks(b, VP):
         check(tag + ' player: the venue panel is shut, and the player FAQ holds the claim-from-the-host rule', t.js('document.getElementById("venue").hidden') is True and 'claimed from the host, never the bar' in (t.js('document.getElementById("vphFaq-patron").textContent') or ''))
         check(tag + ' player: no sideways scrolling with the FAQ open', t.js('document.documentElement.scrollWidth<=window.innerWidth') is True)
         t.shot('22-help-%s-player' % tag)
+        check(tag + ' player: no support phone number or tel: link anywhere in the player help (players use Help; the menu sends them to voicemail)', no_phone_in(t, '#player') is True)
+        check(tag + ': and none in this page\'s footer, which a player reads too', no_phone_in(t, 'footer') is True)
         t.js('document.querySelector("#vphFlow-patron .vph-msg").click()')
         t.until('!!document.getElementById("vphMsg-patron")', 5)
         t.js('document.getElementById("vphVenue-patron").value="ryl234";document.getElementById("vphEmail-patron").value="jo@example.com";document.getElementById("vphMsg-patron").value="My tickets vanished";document.querySelector("#vphFlow-patron .vph-go").click()')
@@ -401,6 +427,11 @@ def help_page_checks(b, VP):
         check(tag + ' player: the ticket reaches the Worker as a PATRON ticket, the room code from what they typed, no game guessed',
               bb.get('kind') == 'patron' and bb.get('brand') == 'venueplay' and bb.get('code') == 'RYL234' and bb.get('game') == '' and not bb.get('category'), bb)
         check(tag + ' player: and shows the ticket number', bool(done) and '#1042' in done, done)
+        t.js('document.querySelector("#vphFlow-patron .vph-back").click()')
+        t.until('!!document.querySelector("#vphFlow-patron .vph-msg")', 5)
+        t.js('document.querySelector("#vphFlow-patron .vph-msg").click()')
+        t.until('!!document.getElementById("vphMsg-patron")', 5)
+        check(tag + ' player: the player form has no phone line either', no_phone_in(t, '#player') is True and t.js('!document.getElementById("vphCall-patron")') is True)
         t.shot('23-help-%s-player-sent' % tag)
 
         # ---- the sales way ----
@@ -408,6 +439,11 @@ def help_page_checks(b, VP):
         t.js('document.querySelector("[data-path=sales]").click()')
         t.until('!document.getElementById("sales").hidden', 3)
         check(tag + ' sales: the enquiry form is on the page', t.js('!!document.getElementById("vphMsg-sales")') is True)
+        check(tag + ' sales: and it never asks the player question "Where were you playing?"',
+              t.js('!document.getElementById("vphVenue-sales") && !/Where were you playing/.test(document.getElementById("sales").textContent)') is True)
+        sr = t.js('(function(){var a=document.querySelector("#sales .reach a[href^=\'tel:\']");if(!a)return null;var r=a.getBoundingClientRect();return {href:a.getAttribute("href"),text:a.textContent,shown:r.width>0&&r.height>0,one:document.querySelectorAll("#sales a[href^=\'tel:\']").length===1,line:a.parentNode.textContent};})()')
+        check(tag + ' sales: under the form, "or call 07 5228 3667", tappable, once (as the home page contact form says it)',
+              bool(sr) and sr['href'] == 'tel:+61752283667' and sr['text'] == '07 5228 3667' and sr['shown'] and sr['one'] and sr['line'] == 'Or email hello@venueplay.com.au, or call 07 5228 3667.', sr)
         t.shot('24-help-%s-sales' % tag)
         t.js('document.getElementById("vphName-sales").value="Lee";document.getElementById("vphEmail-sales").value="lee@pub.com.au";document.getElementById("vphMsg-sales").value="Pricing for two venues?";document.querySelector("#sales .vph-go").click()')
         t.until('!!document.querySelector("#sales .vph-done")', 8)

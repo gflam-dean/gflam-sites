@@ -96,7 +96,7 @@ for rel in SERVED + OTHER:
             wrong.append('%s: %s' % (rel, h))
     if hits:
         where_found.append(rel)
-SEEN = ['venueplay/index.html', 'venueplay/nsw.html', 'venueplay/terms.html', 'venueplay/privacy.html', 'venueplay/llms.txt',
+SEEN = ['venueplay/index.html', 'venueplay/nsw.html', 'venueplay/help.html', 'venueplay/terms.html', 'venueplay/privacy.html', 'venueplay/llms.txt',
         'venueplay/data/help-faq.json', 'venueplay/app/vp-help.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
         'venueplay-backend/supabase/venueplay-112-help-faq-support-phone.sql']
 check('the sweep below is not blind: it found the number in each place it is meant to be', all(x in where_found for x in SEEN),
@@ -105,8 +105,10 @@ check('every phone number and tel: link we serve, send or store is exactly "%s" 
 
 # ---------------------------------------------------------------- the widget's own copy
 H = read('venueplay/app/vp-help.js')
-mw = re.search(r'var PHONE = BRAND === "venueplay" && MODE === "venue" \? \{ show: "([^"]+)", tel: "([^"]+)" \} : null;', H)
-check('the help widget holds the same two strings, and only for a VenuePlay venue', bool(mw) and mw.group(1) == SHOW and mw.group(2) == TEL, mw and mw.groups())
+mw = re.search(r'var SUPPORT_PHONE = BRAND === "venueplay" \? \{ show: "([^"]+)", tel: "([^"]+)" \} : null;', H)
+gate = re.search(r'function phoneFor\(ctx\) \{ return ctx && \(ctx\.mode === "venue" \|\| ctx\.mode === "venue_public"\) \? SUPPORT_PHONE : null; \}', H)
+check('the help widget holds the same two strings, for VenuePlay only, and hands them only to a venue form (the console\'s, or /help\'s venue part)',
+      bool(mw) and mw.group(1) == SHOW and mw.group(2) == TEL and bool(gate) and no_comments(H, 'js').count('SUPPORT_PHONE') == 2, mw and mw.groups())
 check('the PartyPlay copy of the widget is the same file, so it is gated the same way', read('partyplay/lib/vp-help.js') == H)
 
 # ---------------------------------------------------------------- where a venue looks
@@ -141,6 +143,18 @@ cp = pub.get('contactPoint') or {}
 check('the home page structured data still parses, and names VenuePlay\'s support line as a ContactPoint',
       pub.get('@type') == 'Organization' and cp.get('@type') == 'ContactPoint' and cp.get('telephone') == TEL
       and cp.get('contactType') == 'customer support' and pub.get('telephone') == TEL, data)
+
+# The public help page (21 Oct 2026). The venue part's call line is the widget's (help-desk-pages.test.py
+# runs it); the page's own copy is under the sales form. Its player part and its footer never carry it.
+s = no_comments(read('venueplay/help.html'), 'html')
+def part(pid):
+    m = re.search(r'<div class="panel" id="%s".*?(?=<div class="panel" id=|</section>)' % pid, s, re.S)
+    return m.group(0) if m else ''
+sales = part('sales')
+check('/help: under the sales form, "or call 07 5228 3667", tappable', has_link(sales) and 'or call <a' in sales, sales[-260:])
+pl, foot = part('player'), s[s.find('<footer'):s.find('</footer>')]
+check('/help: the player part and the footer have no phone number and no tel: link',
+      bool(pl) and bool(foot) and not any(x in y for x in (SHOW, DIGITS, 'tel:') for y in (pl, foot)), [pl[-200:], foot[-200:]])
 
 llms = read('venueplay/llms.txt')
 check('llms.txt (what an assistant reads about us) gives the number and the menu', ('Phone: ' + SHOW) in llms and 'press 1 for sales' in llms)

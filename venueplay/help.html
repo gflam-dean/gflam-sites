@@ -22,7 +22,10 @@
      desk at venueplay.com.au/help and it was a 404. The issues, the steps, the FAQ and the forms are
      NOT written here: /app/vp-help.js draws them into each [data-vph-audience] below (data-mode
      "page"), the same code as the Help panel on the phones and the console. This page is the
-     header, the footer and the three ways in. The look is index.html's: same tokens, same type. -->
+     header, the footer and the three ways in. The look is index.html's: same tokens, same type.
+     THE SUPPORT PHONE (07 5228 3667): the widget draws "Call us on" into the VENUE part only, as it
+     does on the console; the sales part names it under its form; the player part and this page's
+     footer never do (players use Help, and the phone menu sends players to voicemail). -->
 <style>
   :root{
     --ink:#0A0A0B;--ink-2:#121214;--ink-3:#17171B;
@@ -93,10 +96,9 @@
   .card + .card{margin-top:14px}
   .note{display:flex;gap:12px;align-items:flex-start;background:rgba(255,31,142,.07);border:1px solid rgba(255,31,142,.28);border-radius:14px;padding:14px 16px;font-size:var(--fs-sm);color:#E8E8EC;line-height:1.5;margin-bottom:14px}
   .note a{color:#FF8AC4;font-weight:700;text-decoration:underline;text-underline-offset:3px}
-  .phone-line{background:rgba(255,31,142,.07);border:1px solid rgba(255,31,142,.28);border-radius:14px;padding:14px 16px;font-size:var(--fs-sm);color:#E8E8EC;margin-bottom:14px}
-  .phone-line a{color:#FF8AC4;font-weight:800}
   .reach{margin-top:14px;font-size:var(--fs-sm);color:var(--muted);line-height:1.8}
   .reach a{color:#FF8AC4}
+  .reach a.tel{white-space:nowrap}
   /* The widget, drawn into the page: full width of the card, on the page's own type. */
   .panel .vph-inline{max-width:none}
   .panel .vph-pageflow{scroll-margin-top:84px}
@@ -189,11 +191,6 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF1F8E" stroke-width="2" aria-hidden="true" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
           <span>Signed in to your console? Use <b>Help</b> at the top of it instead: it already knows which venue you are. <a href="/app/index.html">Venue log in</a></span>
         </div>
-        <!-- SUPPORT-PHONE: the one spot on this page for the venue support line. feature/support-phone
-             (07 5228 3667, VP_SUPPORT_PHONE) was not on main when this page was built. When it lands,
-             fill this paragraph, e.g. "A game on and going wrong? Call <a href="tel:+61752283667">07
-             5228 3667</a> and press 2.", and remove the hidden attribute. Venues only, never players. -->
-        <p class="phone-line" id="supportPhone" data-support-phone hidden></p>
         <div class="card" data-vph-audience="venue"></div>
         <p class="reach">Or email <a href="mailto:support@venueplay.com.au">support@venueplay.com.au</a>, or <a href="mailto:accounts@venueplay.com.au">accounts@venueplay.com.au</a> about a bill.</p>
       </div>
@@ -213,7 +210,7 @@
           <p>Tell us about your venue and the nights you run, and we'll get back to you. Want to see it first? <a href="/see-a-night" style="color:#FF8AC4;text-decoration:underline;text-underline-offset:3px">See a night</a>.</p>
         </div>
         <div class="card" data-vph-audience="sales"></div>
-        <p class="reach">Or email <a href="mailto:hello@venueplay.com.au">hello@venueplay.com.au</a>.</p>
+        <p class="reach">Or email <a href="mailto:hello@venueplay.com.au">hello@venueplay.com.au</a>, or call <a class="tel" href="tel:+61752283667">07 5228 3667</a>.</p>
       </div>
 
     </div>

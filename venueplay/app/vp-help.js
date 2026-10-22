@@ -61,11 +61,13 @@
   var NAME = BRAND === "partyplay" ? "PartyPlay" : "VenuePlay";
   var FAQ_KEY = { patron: "patron", venue: "venue", guest: "guest", host: "host" }[MODE] || "";
   /* THE SUPPORT PHONE (Dean, 20 Oct 2026). VenuePlay VENUES only: the console, settings and the
-     account page. Never a player's phone (they use this Help, and the phone menu sends players to
-     voicemail) and never PartyPlay, which has no line. The billing Worker's VP_SUPPORT_PHONE and
-     VP_SUPPORT_TEL are the same two strings, and tools/test-support-phone.py fails if any copy
-     anywhere differs. */
-  var PHONE = BRAND === "venueplay" && MODE === "venue" ? { show: "07 5228 3667", tel: "+61752283667" } : null;
+     account page, and the venue part of the public help page. Never a player (they use this Help,
+     and the phone menu sends players to voicemail) and never PartyPlay, which has no line. The
+     billing Worker's VP_SUPPORT_PHONE and VP_SUPPORT_TEL are the same two strings, and
+     tools/support-phone.test.py fails if any copy anywhere differs. Who sees it is decided per
+     form by phoneFor(ctx), because the help page draws a venue form and a player form side by side. */
+  var SUPPORT_PHONE = BRAND === "venueplay" ? { show: "07 5228 3667", tel: "+61752283667" } : null;
+  function phoneFor(ctx) { return ctx && (ctx.mode === "venue" || ctx.mode === "venue_public") ? SUPPORT_PHONE : null; }
   /* Who a form is for. The panel has one, from the script tag; the help page has one per audience. */
   var CTX = { mode: MODE, faq: FAQ_KEY, page: false };
 
@@ -227,10 +229,10 @@
   }
 
   /* "Call us on 07 5228 3667", a real tel: link, for a venue. Built as nodes like everything else. */
-  function callLine() {
-    var p = el("p", "vph-call"); p.id = "vphCall";
+  function callLine(ph, sfx) {
+    var p = el("p", "vph-call"); p.id = "vphCall" + (sfx || "");
     p.appendChild(doc.createTextNode("Call us on "));
-    var a = el("a", "", PHONE.show); a.href = "tel:" + PHONE.tel; p.appendChild(a);
+    var a = el("a", "", ph.show); a.href = "tel:" + ph.tel; p.appendChild(a);
     p.appendChild(doc.createTextNode(". If a game is on right now, press 2."));
     return p;
   }
@@ -247,7 +249,8 @@
     var pubVenue = MODE === "venue_public";
     function input2(type, id, extra) { return input(type, id + sfx, extra); }
     var f = el("form"); f.setAttribute("novalidate", ""); f.className = "vph-form";
-    if (PHONE) f.appendChild(callLine());
+    var ph = phoneFor(ctx);
+    if (ph) f.appendChild(callLine(ph, sfx));
     if (issue && !venueMode) { var about = el("div", "vph-about"); about.appendChild(el("span", "", "About: ")); about.appendChild(el("b", "", issue.title)); f.appendChild(about); }
     var hp = input2("text", "vphWebsite", { name: "website", tabindex: "-1", autocomplete: "off", "aria-hidden": "true" });
     var hpw = el("div", "vph-hp"); hpw.appendChild(hp); f.appendChild(hpw);
@@ -284,7 +287,7 @@
       name = input2("text", "vphName", { maxlength: "120", autocomplete: "name", placeholder: needName ? "Your name" : "Optional" });
       f.appendChild(field(needName ? "Your name" : "Your name (optional)", name));
       if (pubVenue) { where = input2("text", "vphVenue", { maxlength: "120", autocomplete: "organization", placeholder: "e.g. The Royal Hotel, Tugun" }); f.appendChild(field("Your venue", where)); }
-      else if (ctx.page) { where = input2("text", "vphVenue", { maxlength: "120", placeholder: "Optional: the venue, or the code on the big screen" }); f.appendChild(field("Where were you playing?", where)); }
+      else if (ctx.page && !sales) { where = input2("text", "vphVenue", { maxlength: "120", placeholder: "Optional: the venue, or the code on the big screen" }); f.appendChild(field("Where were you playing?", where)); }
       email = input2("email", "vphEmail", { maxlength: "200", autocomplete: "email", inputmode: "email", placeholder: "you@example.com" });
       f.appendChild(field("Your email, so we can reply", email));
       if (sales || pubVenue) { phone = input2("tel", "vphPhone", { maxlength: "30", autocomplete: "tel", placeholder: "Optional" }); f.appendChild(field("Phone (optional)", phone)); }
@@ -322,12 +325,8 @@
        (Dean, 21 Oct 2026: "Reply by email. Privacy policy. Or email ..." read as three fragments). */
     var fine = el("div", "vph-fine"); fine.id = "vphFine" + sfx;
     if (venueMode || pubVenue) {
+      // The phone is the call line at the top of this form; it is not said twice.
       fine.appendChild(doc.createTextNode("We'll reply by email."));
-      if (PHONE) {
-        fine.appendChild(doc.createTextNode(" Urgent and a game is on? Call "));
-        var tl = el("a", "", PHONE.show); tl.href = "tel:" + PHONE.tel; fine.appendChild(tl);
-        fine.appendChild(doc.createTextNode(" and press 2."));
-      }
     } else {
       fine.appendChild(doc.createTextNode("We only use your email to reply to this message."));
     }
@@ -502,7 +501,8 @@
 
     function showIssues() {
       clear();
-      if (PHONE) flow.appendChild(callLine());
+      var ph = phoneFor(ctx);
+      if (ph) flow.appendChild(callLine(ph, sfx));
       var issues = (data && data.issues) || [];
       if (issues.length) {
         flow.appendChild(el("h3", "vph-q", "What's your issue?"));
