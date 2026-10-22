@@ -297,3 +297,16 @@ running game from another device: `vp_sessions.console_holders` (jsonb, per form
 written by the game Worker's `/host/running/take` (staff at the venue only). Not security definer, no new policy or grant, so
 RLS-BASELINE.json does not change. Either order with the Workers is safe (both read the new columns fail-safe). Branch
 `feature/trivia-recover-and-night-pass`. RUN by Dean 20 Oct 2026. Rollback: in the file.
+
+`venueplay-115-purchase-raffle.sql`: Deepwater Hotel (NSW), 22 Oct 2026: a months-long raffle where every PURCHASE earns one
+entry (never per drink or by the amount of alcohol). `vp_venues.purchase_raffle_on` (default false for every venue) with the
+`vp_venues_purchase_raffle_guard` trigger (a venue's own login cannot set it; same shape as 107), set only from HQ (Venues >
+Details > "Purchase raffle", billing Worker `/admin/venue-gaming`, audited as `venue_purchase_raffle_on` / `_off`). Four new
+tables, RLS on with no policies and anon/authenticated revoked (service role only): `vp_purchase_raffles` (one open per
+venue), `vp_purchase_raffle_entrants` (mobile as +614xxxxxxxx only, unique per raffle; names, email, their own marketing tick,
+18+ timestamp), `vp_purchase_raffle_entries` (one row per purchase, who added it, venue day, voids kept), and
+`vp_purchase_raffle_draws` (prize, winner, pool size and the index the server picked, redraws with their reason). Used by the
+game Worker `/host/praffle/*` and the billing Worker `/account/purchase-raffle-export`. Either order with the Workers is safe
+(both answer "not switched on" / "run 115 first" without it). After running, dump RLS-BASELINE.json (four new locked tables, one
+new trigger function). Parsed by pglast (the real Postgres parser) and run twice on a real Postgres 16 with stub
+auth/vp_venues before it was handed over. Branch `feature/purchase-raffle`. NOT RUN. Rollback: in the file.
