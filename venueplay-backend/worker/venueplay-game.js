@@ -9170,6 +9170,7 @@ function praffleParts(tz, ms) {
   return { y: +o.year, m: +o.month, d: +o.day, h: (+o.hour) % 24, mi: +o.minute, s: +o.second };
 }
 function praffleTz(tz) {
+  if (!tz) return 'Australia/Brisbane';   // the same fallback venueLocalHour uses
   try { new Intl.DateTimeFormat('en-AU', { timeZone: tz }).format(0); return tz; } catch (e) { return 'Australia/Sydney'; }
 }
 function praffleLocalDay(tz, ms) {

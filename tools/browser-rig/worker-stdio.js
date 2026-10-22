@@ -56,6 +56,8 @@ for (;;) {
      in before a scene, read a table back after one. Never a Worker route: the pages cannot reach it. */
   if (rq.seed) { DB[rq.seed] = (rq.replace ? [] : (DB[rq.seed] || [])).concat(rq.rows || []); print(JSON.stringify({ status: 200, body: { ok: true } })); continue; }
   if (rq.table) { print(JSON.stringify({ status: 200, body: DB[rq.table] || [] })); continue; }
+  /* The Worker's clock, for a scene that has to happen on a given day (the purchase raffle's dates). */
+  if (rq.now) { NOWMS = +rq.now; print(JSON.stringify({ status: 200, body: { ok: true } })); continue; }
   var h = rq.headers || {};
   var req = { method: rq.method || 'GET', url: 'https://game.test' + rq.path, _body: rq.body || {},
               headers: { get: function (k) { for (var x in h) { if (x.toLowerCase() === String(k).toLowerCase()) return h[x]; } return null; } } };

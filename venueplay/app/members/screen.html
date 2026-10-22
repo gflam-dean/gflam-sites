@@ -82,6 +82,10 @@
   .wname{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(24px,6cqw,96px);color:var(--pink);line-height:1;margin-top:1cqw;text-shadow:0 0 36px rgba(255,31,142,.55)}
   .present{font-family:'JetBrains Mono',monospace;font-size:clamp(13px,2.8cqw,38px);color:#fff;margin-top:2.4cqw}
   .present b{color:var(--gold)}
+  /* The purchase raffle's reveal (migration 115): a name, not a badge number, so it is set in the
+     display face at a size a long first name still fits, and the mobile only ever as its last three. */
+  .winnum.isname{font-family:'Anton',sans-serif;text-transform:uppercase;font-weight:400;font-size:clamp(44px,13cqw,230px);line-height:1;letter-spacing:.01em}
+  .spin.isphone{font-size:clamp(34px,9cqw,170px);letter-spacing:.04em}
 
   .winslabel{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.24em;color:var(--muted);font-size:clamp(11px,2.2cqw,28px);margin-top:1.4cqw}
   .wonamt{font-family:'Anton',sans-serif;font-size:clamp(56px,19cqw,340px);line-height:.85;
@@ -159,7 +163,7 @@
   <!-- winner reveal -->
   <div id="tvWin" class="layer hidden">
     <div class="drawname" id="winTitle" style="font-size:clamp(16px,3.2cqw,42px);margin:0 0 .6cqw">Members Draw</div>
-    <div class="eyebrow">Winning number</div>
+    <div class="eyebrow" id="winEye">Winning number</div>
     <div class="winnum" id="tvWinNum">00</div>
     <div class="wname hidden" id="tvWinName">&middot;</div>
     <div class="present hidden" id="tvPresent">Come to the host now to claim your <b>jackpot</b></div>
@@ -328,6 +332,20 @@
     $("drawJack").innerHTML=state.jackpotCents>0 ? "Playing for <b>"+money(state.jackpotCents)+"</b>" : "";
     var spin=$("tvSpin"), r=spinRange(), span=r.hi-r.lo+1;
     spin.style.minWidth=(String(r.hi).length+1)+"ch";
+    spin.classList.toggle("isphone", state.kind==="entries");
+    if(state.kind==="entries"){
+      /* THE PURCHASE RAFFLE: the wall flicks through mobile endings, never a whole number, and says
+         how many entries are in the draw. The winner is already picked on the server. */
+      spin.style.minWidth="";
+      $("drawJack").innerHTML=state.entriesTotal>0 ? "From <b>"+state.entriesTotal.toLocaleString("en-AU")+"</b> entries" : "";
+      var t1=Date.now(), tot=Math.max(2000,(state.spinSecs||4)*1000);
+      (function flick(){
+        spin.textContent="04xx xxx "+String(cryptoInt(1000)+1000).slice(1);
+        var fr=Math.min(1,(Date.now()-t1)/tot);
+        spinTimer=setTimeout(flick, 70+Math.round(260*fr*fr));
+      })();
+      return;
+    }
     var total=Math.max(2000,(state.spinSecs||4)*1000), t0=Date.now();
     function tick(){
       spin.textContent="#"+(r.lo+cryptoInt(span));
@@ -341,6 +359,8 @@
   function showWinner(number, name, claimSecs){
     stopAds(); stopSpin(); stopClaimCd(); clearHold(); $("hostLine").classList.add("hidden");
     hideAll(); $("winTitle").textContent=state.drawName; $("tvWin").classList.remove("hidden");
+    $("winEye").textContent="Winning number"; $("tvWinNum").classList.remove("isname");
+    $("tvPresent").innerHTML='Come to the host now to claim your <b>jackpot</b>';
     var wn=$("tvWinNum"); wn.textContent = (number==null?"--":("#"+number));
     wn.classList.remove("pop"); void wn.offsetWidth; wn.classList.add("pop");   // restart the reveal animation every draw
     var nm=$("tvWinName"), pr=$("tvPresent"), cd=$("tvClaimCd"), cdT=$("tvClaimT");
@@ -362,6 +382,26 @@
           }
         }, 1000);
       }
+    }, 1500);
+  }
+
+  /* THE PURCHASE RAFFLE WINNER (migration 115). First name and last initial, the last three digits
+     of the mobile and how many entries they had. Never the whole mobile: this is a public screen. */
+  function showEntriesWinner(m){
+    stopAds(); stopSpin(); stopClaimCd(); clearHold(); $("hostLine").classList.add("hidden");
+    hideAll(); $("winTitle").textContent=state.drawName; $("tvWin").classList.remove("hidden");
+    $("winEye").textContent=(m.prizeNo>1 ? "Prize "+(m.prizeNo|0)+" winner" : "Our winner");
+    var wn=$("tvWinNum"); wn.classList.add("isname"); wn.textContent=m.name||"Winner";
+    wn.classList.remove("pop"); void wn.offsetWidth; wn.classList.add("pop");
+    var nm=$("tvWinName"), pr=$("tvPresent");
+    nm.classList.add("hidden"); pr.classList.add("hidden"); $("tvClaimCd").classList.add("hidden");
+    var ent=(m.entries|0);
+    var last3=String(m.last3||"").replace(/\D/g,"").slice(-3);
+    nameTimer=setTimeout(function(){
+      nm.textContent=(last3 ? "Mobile ending "+last3 : "")+(last3 && ent ? " \u00b7 " : "")+(ent ? ent+(ent===1?" entry":" entries") : "");
+      nm.classList.toggle("hidden", !nm.textContent);
+      pr.innerHTML=m.prize ? "Wins <b>"+esc(m.prize)+"</b>. We will be in touch." : "We will be in touch.";
+      pr.classList.remove("hidden"); spawnBurst(36);
     }, 1500);
   }
 
@@ -604,10 +644,12 @@
     cancelBackToAds();
     if(m.t==="drawing"){
       if(typeof m.drawName==="string") state.drawName=m.drawName;
+      state.kind=(m.kind==="entries") ? "entries" : ""; state.entriesTotal=(m.entriesTotal|0);
       state.spinMin=(m.minNumber|0); state.spinMax=(m.maxNumber|0); state.spinSecs=(m.spinSecs|0)||4;
       state.phase="drawing"; showDrawing();
     }
-    else if(m.t==="winner"){ state.phase="winner"; showWinner(m.number, m.name, m.claimSecs); }
+    else if(m.t==="winner" && m.kind==="entries"){ state.phase="winner"; state.kind="entries"; showEntriesWinner(m); }
+    else if(m.t==="winner"){ state.phase="winner"; state.kind=""; showWinner(m.number, m.name, m.claimSecs); }
     else if(m.t==="claimed"){ state.phase="result"; showClaimed(m.name, m.amountCents, m.nextResetCents); }
     else if(m.t==="rollover"){ state.phase="result"; showRollover(m.nextJackpotCents, m.incrementCents, m.missedNumber, m.missedName, !!m.capped); }
   }

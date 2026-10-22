@@ -440,6 +440,7 @@
         <button type="button" class="pk" data-game="musical-bingo">Musical Bingo<span class="soon">Name that tune</span></button>
         <button type="button" class="pk" data-game="raffle">Raffle<span class="soon">Prize draw</span></button>
         <button type="button" class="pk" data-game="members-draw">Members Draw<span class="soon">Members jackpot</span></button>
+        <button type="button" class="pk hidden" id="praffleTile" data-game="purchase-raffle">Purchase Raffle<span class="soon">One entry per purchase</span></button>
       </div>
     </div>
 
@@ -796,8 +797,22 @@
   // VenuePlay admin -> VenuePlay HQ; venue staff -> their venue's host flow (TV pair
   // then console); signed in but unlinked -> a friendly "no venue" notice.
   // The demo shortcut buttons deliberately bypass this (no real role).
+  /* THE PURCHASE RAFFLE TILE (migration 115) shows only at a venue HQ has switched it on for. Its
+     own query, so before 115 is run (the column is not there) the tile simply stays hidden. */
+  function praffleTile(ctx){
+    var t=$("praffleTile"); if(!t) return;
+    t.classList.add("hidden");
+    var id=ctx && ctx.venue && ctx.venue.id; if(!id || !window.VP || !VP.getClient) return;
+    try{
+      VP.getClient().from("vp_venues").select("id,purchase_raffle_on").eq("id", id).then(function(r){
+        var on=!!(r && !r.error && r.data && r.data[0] && r.data[0].purchase_raffle_on===true);
+        if(__ctx && __ctx.venue && __ctx.venue.id===id) t.classList.toggle("hidden", !on);
+      }, function(){});
+    }catch(e){}
+  }
   function applyRoute(ctx){
     __ctx = ctx;
+    praffleTile(ctx);
     if(!ctx || !ctx.authed){ go("vSignIn"); return; }
     if(ctx.isAdmin){
       var imp=impFlag();
@@ -1115,7 +1130,7 @@
         var b=document.createElement("button"); b.className="btn pink big"; b.textContent=v.name;
         b.addEventListener("click", function(){
           markVenuePick(v.id);
-          VP.setCurrentVenue(v.id).then(function(ctx){ __ctx=ctx; updateAccountLink(); var slug=(ctx&&ctx.venue&&ctx.venue.slug)||v.slug; if(!pairToVenue(slug)){ go("vPair"); } });
+          VP.setCurrentVenue(v.id).then(function(ctx){ __ctx=ctx; praffleTile(ctx); updateAccountLink(); var slug=(ctx&&ctx.venue&&ctx.venue.slug)||v.slug; if(!pairToVenue(slug)){ go("vPair"); } });
         });
         box.appendChild(b);
       });
@@ -3660,7 +3675,7 @@
   // Each game runs in its own console. /app is the single front door: Bingo lives here,
   // the others launch their own page (carrying the current venue so a multi-venue host lands
   // on the right one). This is why there is no separate link to remember.
-  var GAME_PATHS={ "trivia":"/app/trivia/host.html", "musical-bingo":"/app/musical/host.html", "raffle":"/app/raffle/host.html", "members-draw":"/app/members/host.html" };
+  var GAME_PATHS={ "trivia":"/app/trivia/host.html", "musical-bingo":"/app/musical/host.html", "raffle":"/app/raffle/host.html", "members-draw":"/app/members/host.html", "purchase-raffle":"/app/purchase-raffle/" };
   function selectGame(game){
     if(game!=="bingo" && GAME_PATHS[game]){
       var q=""; try{ var v=(typeof __ctx!=="undefined"&&__ctx&&__ctx.venue&&__ctx.venue.slug)||""; if(v) q="?venue="+encodeURIComponent(v); }catch(e){}
