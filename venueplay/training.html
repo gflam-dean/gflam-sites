@@ -169,6 +169,7 @@
   .runleft{flex:0 0 40%;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0}
   .runright{flex:1;min-width:0}
   .curball{font-family:'Anton',sans-serif;font-size:clamp(48px,10vw,130px);color:#fff;line-height:.82;text-shadow:0 0 40px rgba(255,255,255,.22)}
+  .curball.ready{font-size:clamp(16px,3vw,40px);letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.6);line-height:1.6}
   .prevballs{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:8px}
   .prevball{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(9px,1.3vw,14px);color:var(--muted);background:rgba(255,255,255,.05);border:1px solid var(--line-2);border-radius:6px;padding:3px 9px}
   .ballcount{font-family:'JetBrains Mono',monospace;font-size:clamp(10px,1.3vw,14px);color:var(--muted);margin-top:9px}
@@ -749,7 +750,7 @@
     } else if(S.phase==="running"){
       h+='<div class="tv-eye" style="text-align:center;margin-bottom:4px">Number called</div>'+
          '<div class="tv-run"><div class="runleft">'+
-           '<div class="curball">'+(cur?cur:"--")+'</div>'+
+           (cur?'<div class="curball">'+cur+'</div>':'<div class="curball ready">Ready</div>')+   /* no "--" before the first ball, as on the real TV */
            '<div class="prevballs">'+prevBallsHTML()+'</div>'+
            '<div class="ballcount"><b>'+S.called.length+'</b> of 90 called</div>'+
            '<div class="patline"><span class="patlbl">Pattern</span> <span class="patval">'+PATTERN_NAMES[S.pattern]+'</span></div>'+
