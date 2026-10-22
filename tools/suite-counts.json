@@ -139,6 +139,10 @@
   "checks": 20,
   "counted_by": "lines"
  },
+ "tools/hq-tabs-in-chrome.test.py": {
+  "checks": 64,
+  "counted_by": "lines"
+ },
  "tools/livenorm.test.py": {
   "checks": 8,
   "counted_by": "lines"
@@ -175,6 +179,10 @@
   "checks": 37,
   "counted_by": "lines"
  },
+ "tools/screen-unsaved-in-chrome.test.py": {
+  "checks": 17,
+  "counted_by": "lines"
+ },
  "tools/support-phone.test.py": {
   "checks": 26,
   "counted_by": "lines"
@@ -209,6 +217,10 @@
  },
  "tools/test-archived-venue-restore.js": {
   "checks": 14,
+  "counted_by": "lines"
+ },
+ "tools/test-audit-search.js": {
+  "checks": 52,
   "counted_by": "lines"
  },
  "tools/test-billing-panels.js": {
