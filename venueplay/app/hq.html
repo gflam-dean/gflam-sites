@@ -782,7 +782,7 @@
       if(tok) headers["Authorization"]="Bearer "+tok;
       return fetch(VP_GAME_WORKER+path, { method:"POST", headers:headers, body:JSON.stringify(body||{}) })
         .then(function(res){
-          if(res.status===404) return { degraded:true, error:"The game service is out of date (it has no "+path.split("?")[0]+" yet). Deploy the game Worker, then try again" };
+          if(res.status===404) return { degraded:true, error:"The game Worker does not have "+path+" yet. Deploy venueplay-game.js, then try again." };
           return res.json().then(function(j){ return res.ok ? j : { error:(j && j.error) || humanHttp(res.status) }; })
                            .catch(function(){ return { error:"Unexpected response from the server." }; });
         });
@@ -798,7 +798,7 @@
       if(tok) headers["Authorization"]="Bearer "+tok;
       return fetch(VP_GAME_WORKER+path, { headers:headers })
         .then(function(res){
-          if(res.status===404) return { error:"The game service is out of date (it has no "+path.split("?")[0]+" yet). Deploy the game Worker, then try again" };
+          if(res.status===404) return { error:"The game Worker does not have "+path+" yet. Deploy venueplay-game.js, then try again." };
           return res.json().then(function(j){ return res.ok ? j : { error:(j && j.error) || humanHttp(res.status) }; })
                            .catch(function(){ return { error:"Unexpected response from the server." }; });
         });
