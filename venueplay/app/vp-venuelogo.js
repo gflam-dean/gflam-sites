@@ -141,6 +141,61 @@
     return n ? light / n : null;
   }
   var LIGHT = 0.5;
+
+  /* THE PRINTED SIGNS' ONE RULE FOR SHAPE (Dean, 23 Oct 2026: "as long as there's a system for when it
+     does that"). A logo whose TRIMMED width is at least BAND_RATIO times its height is a wordmark: on the
+     Column sign it moves from the right-hand column to a band across the top, and a venue that has not
+     chosen a design gets the Top band sign. Narrower than that it is a badge, crest or stacked logo and
+     stays in the column. One number, used by every sheet (poster, cards, tents) and by the default. */
+  var BAND_RATIO = 2.2;
+  function isWide(ratio) { return ratio >= BAND_RATIO; }
+
+  /* analyse(src, cb): everything a printed sign needs to know about a logo, from ONE CORS read.
+       ratio    width / height after see-through edges are trimmed (null if unreadable)
+       trimmed  a PNG data URL of the logo without its see-through margin, so its size on the sign is
+                the size of its ink, not of the canvas it was uploaded on (null if unreadable)
+       boxed    the logo brings its own solid background (all four corners opaque): it is shown as a
+                rounded card, never given a plate
+       light    over half its ink is near white: it would vanish on white paper
+       dark     its ink is dark (black, navy, charcoal): it would vanish on a black ground
+     A logo that cannot be read (no CORS) gives cb(null) and is printed exactly as uploaded. */
+  function analyse(src, cb) {
+    try {
+      var probe = new w.Image();
+      probe.crossOrigin = "anonymous";
+      probe.onload = function () {
+        var out = null;
+        try {
+          var W = probe.naturalWidth, H = probe.naturalHeight, k = Math.min(1, 1000 / Math.max(W, H));
+          var cw = Math.max(1, Math.round(W * k)), ch = Math.max(1, Math.round(H * k));
+          var c = d.createElement("canvas"); c.width = cw; c.height = ch;
+          var x = c.getContext("2d"); x.drawImage(probe, 0, 0, cw, ch);
+          var px = x.getImageData(0, 0, cw, ch).data;
+          var A = function (i, j) { return px[(j * cw + i) * 4 + 3]; };
+          var l = cw, t = ch, r = -1, b = -1, i, j;
+          for (j = 0; j < ch; j++) for (i = 0; i < cw; i++) {
+              if (px[(j * cw + i) * 4 + 3] > 25) { if (i < l) l = i; if (i > r) r = i; if (j < t) t = j; if (j > b) b = j; }
+          }
+          /* boxed: solid just inside all four corners of its ink (6% in, so a card with rounded corners
+             counts and a round crest, whose corners are see-through, does not) */
+          var ix = Math.round((r - l) * 0.06), iy = Math.round((b - t) * 0.06);
+          var boxed = r > l && b > t && A(l + ix, t + iy) > 200 && A(r - ix, t + iy) > 200 && A(l + ix, b - iy) > 200 && A(r - ix, b - iy) > 200;
+          if (r >= l && b >= t) {
+            var tw = r - l + 1, th = b - t + 1, tc = d.createElement("canvas"); tc.width = tw; tc.height = th;
+            tc.getContext("2d").drawImage(c, l, t, tw, th, 0, 0, tw, th);
+            var L = lightness(px), S = lightShare(px);
+            /* boxed: judge the INK, not the box it sits on, for light and dark */
+            out = { ratio: tw / th, trimmed: tc.toDataURL("image/png"), boxed: boxed, L: L, share: S,
+                    light: !boxed && S !== null && S > LIGHT,
+                    dark: !boxed && L !== null && L < 0.35 && S !== null && S < 0.3 };
+          }
+        } catch (e) { out = null; }
+        cb(out);
+      };
+      probe.onerror = function () { cb(null); };
+      probe.src = src;
+    } catch (e) { cb(null); }
+  }
   function backing(img, kind) {
     var src = img.currentSrc || img.src;
     if (!src || img.__vpToneFor === src) return;
@@ -179,5 +234,5 @@
     return size(img, kind);
   }
 
-  w.VPVenueLogo = { box: box, limits: limits, fit: fit, lightness: lightness, lightShare: lightShare, readTone: readTone, DARK: DARK, LIGHT: LIGHT, TV: TV, PHONE: PHONE };
+  w.VPVenueLogo = { box: box, limits: limits, fit: fit, lightness: lightness, lightShare: lightShare, readTone: readTone, analyse: analyse, isWide: isWide, BAND_RATIO: BAND_RATIO, DARK: DARK, LIGHT: LIGHT, TV: TV, PHONE: PHONE };
 })(window, document);

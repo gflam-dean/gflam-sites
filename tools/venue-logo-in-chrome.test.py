@@ -60,7 +60,11 @@ make('wide', 1200, 300, 'rect'); make('square', 800, 800, 'ellipse'); make('roun
 # vanish on the dark wall, gets a pale plate behind it.
 make('red', 800, 800, 'ellipse', (230, 20, 30, 255)); make('navy', 800, 800, 'ellipse', (12, 22, 80, 255))
 # Paper (22 Oct 2026): a white logo vanishes on a printed sign, so it gets a dark plate; a dark one does not.
-SIGN_LOGOS = {'sign-white': '/__logos/square.png', 'sign-navy': '/__logos/navy.png', 'sign-slow': '/__logos/slow-square.png',
+def ratio_logo(name, iw, ih):
+    im = Image.new('RGBA', (iw + 400, ih + 300), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
+    d.rectangle([200, 150, 200 + iw - 1, 150 + ih - 1], fill=(250, 200, 40, 255)); im.save(os.path.join(LOGOS, name + '.png'))
+ratio_logo('r21', 1050, 500); ratio_logo('r22', 1100, 500); ratio_logo('r23', 1150, 500)
+SIGN_LOGOS = {'sign-white': '/__logos/square.png', 'sign-navy': '/__logos/navy.png', 'sign-slow': '/__logos/slow-square.png', 'sign-r21': '/__logos/r21.png', 'sign-r22': '/__logos/r22.png', 'sign-r23': '/__logos/r23.png', 'sign-none': None,
               'sign-gold': '/__logos/wide.png'}
 
 
@@ -79,7 +83,8 @@ class Site(http.server.BaseHTTPRequestHandler):
         if p.startswith('/venue'):
             return self.send(200, json.dumps({'exists': True, 'name': 'Sign Test Club'}), 'application/json')
         if p.startswith('/screen') and q.get('venue', [''])[0] in SIGN_LOGOS:
-            return self.send(200, json.dumps({'exists': True, 'name': 'Sign Test Club', 'logo_url': SIGN_LOGOS[q['venue'][0]]}), 'application/json')
+            u = SIGN_LOGOS[q['venue'][0]]
+            return self.send(200, json.dumps({'exists': True, 'name': 'Sign Test Club', 'logo_url': u}), 'application/json')
         return self.send(404, '{}', 'application/json')
     def do_POST(self):
         if self.path.startswith('/__worker'):
@@ -303,66 +308,124 @@ def mark_check(label, path, w, h, has_dim):
         B.close_tab(tid)
 
 
-SIGN = r'''(function(){
-  var out=[], imgs=document.querySelectorAll(".sheet:not(.hidden) [data-logo]");
-  for(var i=0;i<imgs.length;i++){ var im=imgs[i], b=im.getBoundingClientRect(), cs=getComputedStyle(im);
-    var sg=im.closest("[data-sign]"), nm=sg&&sg.querySelector("[data-venue]"), nb=nm?nm.getBoundingClientRect():null, sb=sg.getBoundingClientRect();
-    out.push({tone:im.getAttribute("data-tone"), plate:im.classList.contains("onplate"), bg:cs.backgroundColor, hidden:im.hidden,
-      done:im.complete&&im.naturalWidth>0, l:b.left,t:b.top,r:b.right,b:b.bottom,w:b.width,h:b.height,
-      name:nb?{l:nb.left,t:nb.top,r:nb.right,b:nb.bottom}:null, sign:{l:sb.left,t:sb.top,r:sb.right,b:sb.bottom}}); }
+# The printed signs (23 Oct 2026): four designs, each dark or light, on three sheets. What every visible logo
+# looks like against its ground, and whether anything on a sign leaves its sign.
+SIGN = r"""(function(){
+  function vis(e){ var s=getComputedStyle(e), b=e.getBoundingClientRect(); return !e.hidden && s.display!=="none" && s.visibility!=="hidden" && b.width>0 && b.height>0; }
+  var arts=[].filter.call(document.querySelectorAll(".sheet:not(.hidden) [data-art]"), vis), out={arts:[], logos:[], spill:[], qr:[]};
+  arts.forEach(function(a){
+    var ab=a.getBoundingClientRect(); out.arts.push(a.className);
+    a.querySelectorAll("*").forEach(function(e){
+      if(!vis(e) || e.closest("svg") && e.tagName!=="svg") return;
+      var b=e.getBoundingClientRect();
+      if(b.left<ab.left-1.5||b.right>ab.right+1.5||b.top<ab.top-1.5||b.bottom>ab.bottom+1.5) out.spill.push((e.className&&e.className.baseVal===undefined?e.className:e.tagName)+" "+Math.round(b.left-ab.left)+","+Math.round(b.top-ab.top)+","+Math.round(b.right-ab.right)+","+Math.round(b.bottom-ab.bottom));
+      if(e.tagName==="CANVAS") out.qr.push(b.width/Math.min(ab.width,ab.height));
+    });
+    a.querySelectorAll("[data-logo]").forEach(function(im){
+      if(!vis(im)) return; var cs=getComputedStyle(im);
+      out.logos.push({tone:im.getAttribute("data-tone"), cls:im.className, bg:cs.backgroundColor, done:im.complete&&im.naturalWidth>0});
+    });
+  });
+  var h2=document.querySelector(".sheet:not(.hidden) h2[data-head]"); out.wrap=h2?h2.classList.contains("wrap"):null;
   return JSON.stringify(out);
-})()'''
+})()"""
 
-def sign(slug, sheet):
-    tid, sid = open_page('/signage?venue=%s&sheet=%s' % (slug, sheet), 1100, 1500, False)
-    try:
-        v = until(sid, '(function(){var m=JSON.parse(%s);return m.length && m.every(function(x){return x.tone;}) ? JSON.stringify(m) : "";})()' % SIGN, 20)
-        m = json.loads(v) if v else json.loads(ask(sid, SIGN) or '[]')
-        shot(sid, 'chrome-sign-%s-%s' % (slug, sheet))
-        return m, sid, tid
-    except Exception:
-        B.close_tab(tid); raise
+def sign_open(slug, sheet, design=None, keep=False):
+    q = '/signage?venue=%s&sheet=%s' % (slug, sheet) + (('&design=' + design) if design else '')
+    tid, sid = open_page(q, 1100, 1500, False)
+    v = until(sid, '(function(){var m=JSON.parse(%s);var st=document.getElementById("status").textContent;return m.arts.length && /Found|No venue|Could not/.test(st) && m.logos.every(function(x){return x.tone && x.done;}) ? JSON.stringify(m) : "";})()' % SIGN, 20)
+    time.sleep(0.4)
+    m = json.loads(ask(sid, SIGN) or '{}')
+    return m, sid, tid
 
+def set_text(sid, fields):
+    ask(sid, ';'.join('(function(){var e=document.getElementById(%s);e.value=%s;e.dispatchEvent(new Event("input"));})()' % (json.dumps(k), json.dumps(v)) for k, v in fields.items()) + ';true')
+    time.sleep(0.6)
+
+BLACK_PLATE, WHITE_PLATE, CLEAR = 'rgb(17, 17, 17)', 'rgb(255, 255, 255)', ('rgba(0, 0, 0, 0)', 'transparent')
 def sign_checks():
-    print('\nTHE PRINTED SIGNS: a white logo on white paper sits on a dark plate')
-    heights = {}
-    for slug, light in (('sign-white', True), ('sign-navy', False), ('sign-gold', False)):
-        for sheet in ('poster', 'cards', 'tents'):
-            m, sid, tid = sign(slug, sheet)
-            try:
-                tag = '%s %s' % (slug, sheet)
-                if not m:
-                    ok(tag + ': the logo is on the sign', False, m); continue
-                ok(tag + ': every logo on the sheet is judged (%d)' % len(m), all(x['tone'] for x in m), [x['tone'] for x in m])
-                if light:
-                    ok(tag + ': a white logo is read as light and put on the dark plate',
-                       all(x['tone'] == 'light' and x['plate'] and x['bg'] == 'rgb(17, 17, 17)' for x in m), m[0])
-                    x = m[0]
-                    c = colour_at(sid, x['l'] + 4, x['t'] + x['h'] / 2)
-                    ok(tag + ': and the plate is really painted dark beside the logo', c and max(c) < 60, c)
-                else:
-                    ok(tag + ': a %s logo prints as it is, no plate' % ('navy' if 'navy' in slug else 'gold'),
-                       all(x['tone'] == 'dark' and not x['plate'] and x['bg'] in ('rgba(0, 0, 0, 0)', 'transparent') for x in m), m[0])
-                ok(tag + ': the logo stays inside its sign and clear of the venue name',
-                   all(x['l'] >= x['sign']['l'] - 1 and x['r'] <= x['sign']['r'] + 1 and x['t'] >= x['sign']['t'] - 1 and
-                       x['b'] <= x['sign']['b'] + 1 and (not x['name'] or not hits(x, x['name'])) for x in m), m[0])   # a tent's back face is upside down
-                heights[(slug, sheet)] = round(m[0]['h'])
-            finally:
-                B.close_tab(tid)
-    for sheet in ('poster', 'cards', 'tents'):
-        a, b = heights.get(('sign-white', sheet)), heights.get(('sign-navy', sheet))
-        ok('%s: the plate keeps the logo\'s slot the height the sign was fitted around (%s vs %s)' % (sheet, a, b), a and b and abs(a - b) <= 1, (a, b))
-    # Print pressed while the logo is still downloading: the dialog waits for the picture AND the plate.
-    tid, sid = open_page('/signage?venue=sign-slow&sheet=poster', 1100, 1500, False)
+    print('\nTHE PRINTED SIGNS: four designs, a plate wherever the ground would swallow the logo')
+    # (slug, design-variant, what every visible logo's background must be)
+    cases = [('sign-white', 'column-light', [BLACK_PLATE]), ('sign-white', 'column-dark', list(CLEAR)), ('sign-white', 'spot-light', [BLACK_PLATE]),
+             ('sign-white', 'ticket-light', [BLACK_PLATE]), ('sign-white', 'band-dark', list(CLEAR)),
+             ('sign-navy', 'column-dark', [WHITE_PLATE]), ('sign-navy', 'band-dark', [WHITE_PLATE]), ('sign-navy', 'spot-light', list(CLEAR)),
+             ('sign-navy', 'ticket-dark', [WHITE_PLATE]), ('sign-gold', 'column-dark', list(CLEAR)), ('sign-gold', 'spot-light', list(CLEAR))]
+    for slug, dv, want in cases:
+        m, sid, tid = sign_open(slug, 'poster', dv)
+        try:
+            tag = '%s on %s' % (slug, dv)
+            ok(tag + ': the logo is read and painted (%d)' % len(m.get('logos', [])), bool(m.get('logos')) and all(x['tone'] for x in m['logos']), m.get('logos'))
+            ok(tag + ': ' + ('a %s plate' % ('black' if want[0] == BLACK_PLATE else 'white') if want[0] != CLEAR[0] else 'no plate'), all(x['bg'] in want for x in m.get('logos', [])), [x['bg'] for x in m.get('logos', [])])
+        finally:
+            B.close_tab(tid)
+
+    print('\nTHE SHAPE RULE: BAND_RATIO 2.2, measured on the logo with its see-through margin trimmed')
+    for slug, lw in (('sign-r21', False), ('sign-r22', True), ('sign-r23', True)):
+        m, sid, tid = sign_open(slug, 'poster', 'column-dark')
+        try:
+            a = (m.get('arts') or [''])[0]
+            ok('%s on Column: %s' % (slug, 'the band across the top' if lw else 'the right-hand column'), ((' lw' in a) == lw) and 'd-column' in a, a)
+            g = json.loads(ask(sid, '(function(){var a=document.querySelector(".sheet:not(.hidden) [data-art]"),c=a.querySelector(".chrome").getBoundingClientRect(),b=a.getBoundingClientRect();'
+                                    'return JSON.stringify({w:c.width/b.width,h:c.height/b.height,top:c.top-b.top,left:c.left-b.left});})()') or '{}')
+            if lw: ok('%s: the band is the full width of the sign, across the top, and short' % slug, g.get('w', 0) > 0.98 and abs(g.get('top', 9)) < 2 and 0.1 < g.get('h', 0) < 0.3, g)
+            else:  ok('%s: the column runs the full height down the right' % slug, g.get('h', 0) > 0.98 and 0.2 < g.get('w', 0) < 0.45 and g.get('left', 0) > 0, g)
+        finally:
+            B.close_tab(tid)
+    for slug, want in (('sign-r21', 'd-column'), ('sign-r23', 'd-band'), ('sign-white', 'd-column'), ('sign-none', 'd-spot')):
+        m, sid, tid = sign_open(slug, 'poster')
+        try:
+            a = (m.get('arts') or [''])[0]
+            ok('no design chosen yet: %s gets %s' % (slug, want[2:]), want in a, a)
+        finally:
+            B.close_tab(tid)
+
+    print('\nTHE PICKER: a venue\'s choice is remembered')
+    m, sid, tid = sign_open('sign-gold', 'poster')
     try:
-        until(sid, 'document.querySelector(".sheet:not(.hidden) [data-logo]") && !!document.querySelector(".sheet:not(.hidden) [data-logo]").getAttribute("src")', 15)
-        ask(sid, 'window.__atPrint=null; window.print=function(){ var i=document.querySelector(".sheet:not(.hidden) [data-logo]"); '
-                 'window.__atPrint=JSON.stringify({done:i.complete&&i.naturalWidth>0, tone:i.getAttribute("data-tone"), plate:i.classList.contains("onplate")}); }; '
+        ask(sid, 'document.querySelector(\'#designs [data-design="ticket"]\').click();document.querySelector(\'#tones [data-v="dark"]\').click();true'); time.sleep(0.5)
+        B.call('Page.navigate', {'url': BASE + '/signage?venue=sign-gold&sheet=poster'}, session=sid)
+        time.sleep(1.5); until(sid, '/Found/.test(document.getElementById("status").textContent)', 15); time.sleep(0.5)
+        a = ask(sid, 'document.querySelector(".sheet:not(.hidden) [data-art]").className') or ''
+        on = ask(sid, '(document.querySelector("#designs .dpick.on")||{}).textContent') or ''
+        ok('after a reload the sign is still Ticket, dark, and the picker says so', 'd-ticket' in a and 'v-dark' in a and 'Ticket' in on, (a, on))
+    finally:
+        B.close_tab(tid)
+
+    print('\nEVERY DESIGN, EVERY SHEET, THE WORST TEXT A VENUE CAN TYPE: nothing leaves its sign, the QR keeps its size')
+    TEXT = {'long': {'nameIn': 'The Kingscliff Beach Bowls and Golf Club Inc', 'headIn': 'SCAN THIS NOW FOR BINGO NIGHT',
+                     'lineIn': 'No app, no account, no sign-up and no fuss: just your phone!!',
+                     'whatsIn': 'Bingo Wednesdays, trivia Thursdays from 7pm, musical bingo Fridays and meat raffles Saturday arvo'},
+            'nospace': {'nameIn': 'Supercalifragilisticexpialidocioushotel', 'headIn': 'SCANTOPLAYBINGOTRIVIAMUSIC',
+                        'lineIn': 'Noappnoaccountjustyourphonenoappnoaccountjustyourphone', 'whatsIn': 'BingoWednesdaysTriviaThursdaysMusicalBingoFridaysMeatRafflesSaturday'}}
+    # The QR with the venue's worst text (four lines of it, at every field's maximum) must stay at least 70% of the size it is with the default words:
+    # long text wraps, it does not shrink the whole sign. (And never under a fifth of the sign.)
+    for d in ('column-dark', 'band-dark', 'ticket-light', 'spot-light'):
+        for sheet in ('poster', 'cards', 'tents'):
+            for name, fields in TEXT.items():
+                m, sid, tid = sign_open('sign-white', sheet, d)
+                try:
+                    q0 = min(m.get('qr') or [0])
+                    set_text(sid, fields); m = json.loads(ask(sid, SIGN) or '{}')
+                    tag = '%s %s, %s text' % (d, sheet, name)
+                    ok(tag + ': nothing on any sign leaves its sign', not m.get('spill'), (m.get('spill') or [])[:4])
+                    q = min(m.get('qr') or [0])
+                    ok(tag + ': the QR keeps its size (%.2f of the sign, %.2f with the usual words)' % (q, q0), q0 > 0 and q >= 0.7 * q0 and q >= 0.2, (q, q0))
+                    ok(tag + ': the long headline wraps instead of shrinking the sign', m.get('wrap') is True, m.get('wrap'))
+                    if name == 'long' and sheet == 'poster': shot(sid, 'chrome-sign-%s-long' % d)
+                finally:
+                    B.close_tab(tid)
+
+    # Print pressed while the logo is still downloading: the dialog waits for the picture AND its reading.
+    tid, sid = open_page('/signage?venue=sign-slow&sheet=poster&design=column-light', 1100, 1500, False)
+    try:
+        until(sid, 'document.querySelector(".sheet:not(.hidden) [data-chrome]") && !!document.querySelector(".sheet:not(.hidden) [data-chrome]").getAttribute("src")', 15)
+        ask(sid, 'window.__atPrint=null; window.print=function(){ var i=document.querySelector(".sheet:not(.hidden) [data-chrome]"); '
+                 'window.__atPrint=JSON.stringify({done:i.complete&&i.naturalWidth>0, tone:i.getAttribute("data-tone"), bg:getComputedStyle(i).backgroundColor}); }; '
                  'document.getElementById("printBtn").click(); true')
         v = until(sid, 'window.__atPrint', 10)
         at = json.loads(v) if v else {}
         ok('Print pressed while a white logo is still downloading: the dialog opens only once it has arrived and sits on its plate',
-           at.get('done') and at.get('tone') == 'light' and at.get('plate'), at or 'print never called')
+           at.get('done') and at.get('tone') == 'light' and at.get('bg') == BLACK_PLATE, at or 'print never called')
     finally:
         B.close_tab(tid)
 

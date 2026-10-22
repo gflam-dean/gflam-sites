@@ -134,6 +134,13 @@ check('on paper: a black wordmark with a little white in it prints as it is',
 check('on paper: see-through pixels are not ink', V.lightShare(px(255, 255, 255, 0)) === null &&
       V.lightShare(px(0, 0, 0, 255, 4).concat(px(255, 255, 255, 0, 60))) === 0);
 check('the pixel reading is one function the signs can call', typeof V.readTone === 'function');
+/* THE SIGNS' SHAPE RULE (Dean, 23 Oct 2026: "as long as there's a system for when it does that"): one named
+   constant, and both sides of it. */
+check('the band rule is one named number, 2.2', V.BAND_RATIO === 2.2, V.BAND_RATIO);
+check('a 2.1:1 logo is a badge: it stays in the column', V.isWide(2.1) === false);
+check('a logo exactly 2.2:1 is a wordmark: it moves to the band', V.isWide(2.2) === true);
+check('a 2.3:1 logo is a wordmark: it moves to the band', V.isWide(2.3) === true);
+check('the printed signs read a logo with one function', typeof V.analyse === 'function');
 check('nothing in the sizing rule filters, brightens, inverts or recolours a logo',
       !/filter\s*=|invert\(|brightness\(|grayscale\(|saturate\(|mix-blend/.test(LOGO_SRC.replace(/\/\*[\s\S]*?\*\//g, '')));
 
@@ -247,8 +254,8 @@ function stripComments(s) { return s.replace(/<!--[\s\S]*?-->/g, '').replace(/\/
 
 (function () {
   var S = stripComments(readFile('venueplay/signage.html'));
-  var tag = S.indexOf('<script src="/app/vp-venuelogo.js"></script>'), use = S.indexOf('VPVenueLogo.readTone(');
-  check('signage.html: loads /app/vp-venuelogo.js before it reads a logo\'s tone', tag !== -1 && use !== -1 && tag < use, [tag, use]);
+  var tag = S.indexOf('<script src="/app/vp-venuelogo.js"></script>'), use = S.indexOf('VPVenueLogo.analyse(');
+  check('signage.html: loads /app/vp-venuelogo.js before it reads a logo', tag !== -1 && use !== -1 && tag < use, [tag, use]);
 })();
 
 print('');

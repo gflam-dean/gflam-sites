@@ -107,6 +107,9 @@
     font-size:calc(var(--u)*4.2);line-height:.92;letter-spacing:.005em;color:var(--ink);
     margin-top:calc(var(--u)*.85);white-space:nowrap}
   .sign h2 em{font-style:normal;color:var(--pink-deep)}
+  .sign h2.wrap{white-space:normal;overflow-wrap:anywhere;text-wrap:balance}
+  .sign .no{overflow-wrap:anywhere}
+  .sign .venue,.sign .no,.sign .whats,.sign .fallback,.art .cname{text-wrap:balance}
   .sign .qrbox{background:#fff;border:calc(var(--u)*.16) solid var(--ink);
     border-radius:calc(var(--u)*.8);padding:calc(var(--u)*.7);line-height:0;flex:none}
   /* !important: QRCode.toCanvas writes its own inline width/height, which would otherwise
@@ -181,15 +184,155 @@
   /* The tent face reads left aligned and the QR already owns a column, so the logo is narrower
      there and sits over the words rather than over the middle of the paper. */
   .sign.wide .vlogo{max-width:30cqw;object-position:left bottom;margin:0 0 .6cqh}
-  /* A WHITE LOGO ON WHITE PAPER (22 Oct 2026). Deepwater's and Tugun's logos are white artwork on a
-     see-through background, made for the dark TV, so on a printed sign they were not there at all.
-     A light logo (VPVenueLogo.readTone, the same reading the TV uses for the opposite case) sits on a
-     dark rounded plate instead. border-box keeps the slot exactly the height the fit measured, so the
-     plate cannot push the name or the code; the picture shrinks inside the padding. Dark and
-     coloured logos are printed as they are. */
-  .sign .vlogo.onplate{background:#111;border-radius:1.6cqh;padding:1.2cqh 1.8cqh;box-sizing:border-box;
+  /* ============ THE FOUR SIGN DESIGNS (Dean, 23 Oct 2026) ============
+     The venue picks one of four looks: Column, Top band, Ticket and Spotlight, each dark or light.
+     Every sheet (poster, cards, tents) is the same markup: an .art wrapper holds the design's own
+     parts (.chrome: the logo panel, band or ticket stub; .colfill; .perf) and a .main box that holds
+     the ordinary sign. The sign is still fitted by the one --u unit (VP-SIGN-FIT below), only now
+     inside .main, so whatever room a design leaves is the room the words are fitted to.
+
+     THE SHAPE RULE is VPVenueLogo.BAND_RATIO in /app/vp-venuelogo.js (2.2): a logo at least 2.2
+     times as wide as it is tall, after its see-through edges are trimmed, is a wordmark. On Column it
+     moves into a band across the top (.lw), the same black and pink as the column, so it reads as
+     the same design. With no logo (.nl) nothing stands in for it: the venue name is on the sign.
+
+     LOGOS ON A GROUND. A logo is judged once (VPVenueLogo.analyse): .t-light (white ink, would vanish
+     on white), .t-dark (black ink, would vanish on black), .boxed (it brings its own background).
+     On a dark ground a .t-dark logo gets a white plate; on a light ground a .t-light logo gets a black
+     one; a boxed logo only gets rounded corners. The plate is padding inside the logo's own box, so it
+     never changes the room the sign was fitted around. */
+  .art{position:absolute;inset:0;display:flex;container-type:size;--pk:#C70F69;--pkb:#FF1F8E;--cg:#111}
+  .art.v-light{--cg:#EFECE6}
+  .art .tk{flex:1;display:grid;grid-template:"main" 1fr / 1fr;position:relative;min-width:0;min-height:0}
+  .art .main{grid-area:main;position:relative;container-type:size;min-width:0;min-height:0}
+  .art .main .sign{height:100%}
+  .art .chrome,.art .colfill,.art .perf{display:none}
+  .art .chrome{grid-area:chrome;position:relative;min-width:0;min-height:0;overflow:hidden;
+    flex-direction:column;align-items:center;justify-content:center;background:var(--cg);
     -webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .sign.wide .vlogo.onplate{object-position:center}
+  .art .accent{position:absolute;left:50%;top:5.5cqh;width:1.1cqw;height:11cqh;margin-left:-.55cqw;
+    background:var(--pk);border-radius:1cqw}
+  .art .clogo{display:block;object-fit:contain;box-sizing:border-box}
+  .art .clogo[hidden]{display:none}
+  .art .cname,.art .ckick,.art .cstub{display:none}
+  .art .t-dark.on-dark,.art .t-light.on-light{padding:var(--lp,1.2cqh);border-radius:calc(var(--lp,1.2cqh)*1.4)}
+  .sign .vlogo{--lp:1.1cqh}
+  .art .t-dark.on-dark{background:#fff}
+  .art .t-light.on-light{background:#111}
+  .art .boxed{border-radius:1.2cqw}
+  .art .clogo,.art .vlogo{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+
+  /* the VenuePlay mark, a size up on every design (Dean: "a tad bit bigger") */
+  .art .sign .mark{opacity:.85}
+  .art .sign .mark .word{font-size:calc(var(--u)*1.25)}
+  .art .sign .mark svg{height:calc(var(--u)*1.35)}
+
+  /* ---- 01 COLUMN: words on white, the logo in a column down the right ---- */
+  .art.d-column .tk{grid-template:"main chrome" 1fr / 1fr 33%}
+  .art.d-column .chrome{display:flex}
+  .art.d-column .sign{align-items:flex-start;text-align:left}
+  .art.d-column .sign .vlogo{display:none!important}
+  .art.d-column .sign .mark{left:calc(var(--u)*2.6);transform:none}
+  .art.d-column.lw .tk{grid-template:"chrome chrome" 18% "main fill" 1fr / 1fr 20%}
+  .art.d-column.lw .chrome .accent{display:none}
+  .art.d-column.lw .chrome{border-bottom:1.1cqh solid var(--pk)}
+  .art.d-column.lw .colfill{display:block;grid-area:fill;position:relative;background:var(--cg);
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .art.d-column.nl .clogo{display:none}
+  .art.wide.d-column .tk{grid-template:"main chrome" 1fr / 1fr 27%}
+  .art.wide.d-column.lw .tk{grid-template:"chrome chrome" 32% "main fill" 1fr / 1fr 12%}
+  .art.wide .accent{top:9cqh;height:16cqh;width:.9cqw}
+
+  /* ---- 02 TOP BAND: the logo in a band across the top, any shape fits ---- */
+  .art.d-band .tk{grid-template:"chrome" 28% "main" 1fr / 1fr}
+  .art.d-band .chrome{display:flex;border-bottom:1.1cqh solid var(--pk);gap:1.4cqh}
+  .art.d-band .chrome .accent{display:none}
+  .art.d-band .ckick{display:block;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.25cqh;
+    letter-spacing:.32em;text-transform:uppercase;color:#9A9AA4}
+  .art.v-light.d-band .ckick{color:#6A6A72}
+  .art.d-band .sign .vlogo,.art.d-band .sign .kick{display:none!important}
+  .art.d-band.nl .cname{display:block;font-family:'Anton',sans-serif;text-transform:uppercase;color:#fff;
+    line-height:1.02;text-align:center;max-width:88%;overflow-wrap:anywhere}
+  .art.v-light.d-band.nl .cname{color:var(--ink)}
+  .art.d-band.nl .sign .venue{display:none}
+  .art.wide.d-band .tk{grid-template:"chrome" 40% "main" 1fr / 1fr}
+  .art.wide.d-band .chrome{flex-direction:row;gap:4cqw}
+  .art.wide.d-band .ckick{font-size:3cqh}
+
+  /* ---- 05 TICKET: a raffle ticket on pink, the logo, name and code on the stub ---- */
+  .art.d-ticket{background:var(--pk);padding:4cqw;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .art.d-ticket .tk{grid-template:"main" 1fr "perf" 0 "chrome" 21% / 1fr;background:#fff;border-radius:3.2cqw}
+  .art.v-dark.d-ticket .tk{background:#111}
+  .art.d-ticket .chrome{display:grid;grid-template:"logo name" auto "logo stub" auto / auto minmax(0,1fr);
+    align-content:center;justify-content:start;column-gap:4cqw;row-gap:.6cqh;padding:0 6cqw;background:transparent;
+    text-align:left;justify-items:start}
+  .art.d-ticket .chrome .accent{display:none}
+  .art.d-ticket .clogo{grid-area:logo;align-self:center}
+  .art.d-ticket.nl .clogo{display:none}
+  .art.d-ticket .cname{display:block;grid-area:name;font-family:'Hanken Grotesk',sans-serif;font-weight:800;
+    font-size:2.3cqh;line-height:1.12;color:var(--ink);overflow-wrap:anywhere;align-self:end}
+  .art.d-ticket .cstub{display:block;grid-area:stub;align-self:start}
+  .art.d-ticket .clbl{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.05cqh;letter-spacing:.28em;
+    text-transform:uppercase;color:var(--muted)}
+  .art.d-ticket .ccode{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:4.2cqh;letter-spacing:.14em;
+    color:var(--pk);line-height:1.15}
+  .art.d-ticket .curl{font-family:'JetBrains Mono',monospace;font-size:1.15cqh;color:var(--muted)}
+  .art.v-dark.d-ticket .cname{color:#fff}
+  .art.v-dark.d-ticket .clbl,.art.v-dark.d-ticket .curl{color:#A8A8B0}
+  .art.v-dark.d-ticket .ccode{color:var(--pkb)}
+  .art.d-ticket .perf{display:block;grid-area:perf;position:relative;margin:0 4cqw;border-top:.45cqh dashed #C9C9D2}
+  .art.v-dark.d-ticket .perf{border-top-color:#444}
+  .art.d-ticket .perf:before,.art.d-ticket .perf:after{content:"";position:absolute;top:-3cqh;width:6cqh;height:6cqh;
+    border-radius:50%;background:var(--pk);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .art.d-ticket .perf:before{left:calc(-4cqw - 3cqh)}
+  .art.d-ticket .perf:after{right:calc(-4cqw - 3cqh)}
+  .art.d-ticket .sign .vlogo,.art.d-ticket .sign .venue,.art.d-ticket .sign .fallback{display:none!important}
+  .art.wide.d-ticket{padding:3cqh}
+  .art.wide.d-ticket .tk{grid-template:"main perf chrome" 1fr / 1fr 0 34%;border-radius:4cqh}
+  .art.wide.d-ticket .perf{margin:4cqh 0;border-top:0;border-left:.9cqw dashed #C9C9D2}
+  .art.wide.d-ticket .perf:before,.art.wide.d-ticket .perf:after{left:-3.6cqh;top:auto;width:6cqh;height:6cqh}
+  .art.wide.d-ticket .perf:before{top:calc(-4cqh - 3cqh)}
+  .art.wide.d-ticket .perf:after{bottom:calc(-4cqh - 3cqh);right:auto}
+  .art.wide.d-ticket .chrome{grid-template:"logo" auto "name" auto "stub" auto / 1fr;justify-items:center;text-align:center;padding:0 3cqw}
+  .art.wide.d-ticket .cname{font-size:5cqh}
+  .art.wide.d-ticket .clbl{font-size:2.4cqh}
+  .art.wide.d-ticket .ccode{font-size:8cqh}
+  .art.wide.d-ticket .curl{font-size:2.5cqh}
+
+  /* ---- 10 SPOTLIGHT: the ordinary sign, the QR in a pink ring ---- */
+  .art.d-spot .sign .qrbox{border-color:var(--pk);box-shadow:0 0 0 calc(var(--u)*.35) rgba(199,15,105,.18),0 0 calc(var(--u)*3) rgba(199,15,105,.35)}
+  .art.v-dark.d-spot .tk{background:#0D0D0E;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+
+  /* dark grounds: the words go white */
+  .art.v-dark.d-spot .sign .venue,.art.v-dark.d-spot .sign h2,.art.v-dark.d-spot .sign .no,
+  .art.v-dark.d-ticket .sign h2,.art.v-dark.d-ticket .sign .no,
+  .art.v-dark.d-spot .sign .mark .word,.art.v-dark.d-ticket .sign .mark .word{color:#fff}
+  .art.v-dark.d-spot .sign .whats,.art.v-dark.d-spot .sign .fallback,.art.v-dark.d-ticket .sign .whats{color:#B9B9C2}
+  .art.v-dark.d-spot .sign .fallback b{color:#fff}
+  .art.v-dark.d-spot .sign h2 em,.art.v-dark.d-ticket .sign h2 em{color:var(--pkb)}
+
+  /* the design picker (screen only) */
+  .designs{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+  .dpick{display:flex;flex-direction:column;align-items:center;gap:7px;background:#17171A;border:1px solid rgba(255,255,255,.14);
+    color:#D7D7DE;border-radius:12px;padding:10px 12px 9px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12.5px}
+  .dpick:hover{border-color:rgba(255,255,255,.32)}
+  .dpick.on{border-color:var(--pink);box-shadow:0 0 0 2px var(--pink) inset;color:#fff}
+  .th{width:46px;height:65px;background:#fff;border-radius:3px;position:relative;overflow:hidden;display:block}
+  .th i{position:absolute;display:block}
+  .th-column i:nth-child(1){right:0;top:0;bottom:0;width:15px;background:#111}
+  .th-column i:nth-child(2){left:5px;top:9px;width:20px;height:9px;background:#111}
+  .th-column i:nth-child(3){left:5px;top:24px;width:17px;height:17px;border:2px solid #111;box-sizing:border-box}
+  .th-band i:nth-child(1){left:0;right:0;top:0;height:17px;background:#111;border-bottom:2px solid #C70F69}
+  .th-band i:nth-child(2){left:9px;right:9px;top:23px;height:7px;background:#111}
+  .th-band i:nth-child(3){left:13px;top:35px;width:20px;height:20px;border:2px solid #111;box-sizing:border-box}
+  .th-ticket{background:#C70F69}
+  .th-ticket i:nth-child(1){left:4px;right:4px;top:4px;bottom:4px;background:#fff;border-radius:3px}
+  .th-ticket i:nth-child(2){left:13px;top:13px;width:20px;height:20px;border:2px solid #111;box-sizing:border-box}
+  .th-ticket i:nth-child(3){left:7px;right:7px;top:45px;border-top:1px dashed #999}
+  .th-spot i:nth-child(1){left:12px;top:8px;width:22px;height:6px;background:#111}
+  .th-spot i:nth-child(2){left:10px;top:20px;width:26px;height:26px;border:2px solid #C70F69;border-radius:4px;box-sizing:border-box;box-shadow:0 0 6px rgba(199,15,105,.5)}
+  .tones{display:flex;gap:8px;margin-top:10px}
+  .counter{font-family:'JetBrains Mono',monospace;font-size:10px;color:#7A7A84;margin-left:auto}
 
   /* ---- print ---- */
   /* The page margin was already zeroed, so the second sheet was NOT the margin. It was
@@ -268,6 +411,17 @@
     <button class="pick" data-kind="tents" type="button">Table tents, 2 a page</button>
   </div>
 
+  <div class="designs" id="designs" aria-label="Design">
+    <button class="dpick" data-design="column" type="button"><span class="th th-column"><i></i><i></i><i></i></span>Column</button>
+    <button class="dpick" data-design="band" type="button"><span class="th th-band"><i></i><i></i><i></i></span>Top band</button>
+    <button class="dpick" data-design="ticket" type="button"><span class="th th-ticket"><i></i><i></i><i></i></span>Ticket</button>
+    <button class="dpick" data-design="spot" type="button"><span class="th th-spot"><i></i><i></i></span>Spotlight</button>
+  </div>
+  <div class="tones" id="tones">
+    <button class="pick" data-v="dark" type="button">Dark</button>
+    <button class="pick" data-v="light" type="button">Light</button>
+  </div>
+
   <div class="acts">
     <button class="btn pink" id="printBtn" type="button">Print</button>
     <button class="btn ghost" id="checkBtn" type="button">Check my venue link</button>
@@ -288,24 +442,39 @@
 
   <!-- A4 poster -->
   <section class="sheet" id="sheetPoster">
-    <div class="sign" data-sign>
-      <div class="head">
-        <img class="vlogo" data-logo hidden alt="">
-        <div class="kick">Live games here</div>
-        <div class="venue" data-venue>Your venue</div>
-        <h2 data-head>Scan to <em>play</em></h2>
+   <div class="art d-column v-dark" data-art>
+    <div class="tk">
+     <div class="chrome">
+      <span class="accent"></span>
+      <img class="clogo" data-logo data-chrome hidden alt="">
+      <div class="cname" data-cname></div>
+      <div class="ckick">Live games here</div>
+      <div class="cstub"><div class="clbl">No scanner? Code</div><div class="ccode" data-ccode>------</div><div class="curl">at venueplay.com.au/play</div></div>
+     </div>
+     <div class="colfill"><span class="accent"></span></div>
+     <div class="perf"></div>
+     <div class="main">
+      <div class="sign" data-sign>
+        <div class="head">
+          <img class="vlogo" data-logo hidden alt="">
+          <div class="kick">Live games here</div>
+          <div class="venue" data-venue>Your venue</div>
+          <h2 data-head>Scan to <em>play</em></h2>
+        </div>
+        <div class="qrbox"><canvas data-qr></canvas></div>
+        <div class="tail">
+          <div class="no" data-no>No app. No account. Just your phone.</div>
+          <div class="whats" data-whats hidden></div>
+          <div class="fallback">No scanner? Go to <b>venueplay.com.au/play</b> and enter code <b data-code>------</b></div>
+        </div>
+        <div class="mark">
+          <svg viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="3" stroke-linejoin="round"/></svg>
+          <span class="word">VenuePlay</span>
+        </div>
       </div>
-      <div class="qrbox"><canvas data-qr></canvas></div>
-      <div class="tail">
-        <div class="no" data-no>No app. No account. Just your phone.</div>
-        <div class="whats" data-whats hidden></div>
-        <div class="fallback">No scanner? Go to <b>venueplay.com.au/play</b> and enter code <b data-code>------</b></div>
-      </div>
-      <div class="mark">
-        <svg viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="3" stroke-linejoin="round"/></svg>
-        <span class="word">VenuePlay</span>
-      </div>
+     </div>
     </div>
+   </div>
   </section>
 
   <!-- 4 table cards -->
@@ -341,12 +510,12 @@
 
   // ---- build the repeated sheets from the poster's markup so there is one source of truth ----
   var POSTER=$("sheetPoster");
-  function signHTML(){ return POSTER.querySelector("[data-sign]").outerHTML; }
+  function signHTML(){ return POSTER.querySelector("[data-art]").outerHTML; }
   (function buildSheets(){
     var cards="", i;
     for(i=0;i<4;i++) cards+='<div class="cell">'+signHTML()+'</div>';
     $("sheetCards").innerHTML=cards;
-    var wide=signHTML().replace('class="sign"','class="sign wide"');
+    var wide=signHTML().replace('class="sign"','class="sign wide"').replace('class="art ','class="art wide ');
     var tents="";
     for(i=0;i<2;i++){
       tents+='<div class="tent">'
@@ -359,7 +528,7 @@
   })();
 
   // ---- paint every sign on the page ----
-  var state={ slug:"", name:"", whats:"", head:"", line:"", logo:"" };
+  var state={ slug:"", name:"", whats:"", head:"", line:"", logo:"", logoChecked:false };
   // A printed table card gets a wider quiet zone: it still reads off a beer-splashed table.
   function drawQR(el, url, px){ VPQR.draw(el, url, px, { margin:2 }); }
   // ---- auto-fit ----
@@ -442,32 +611,112 @@
     img.setAttribute("data-fitwired","1");
     img.addEventListener("load", refitAll);
     img.addEventListener("error", function(){ img.hidden=true; img.removeAttribute("src"); refitAll(); });
-    img.addEventListener("load", function(){ toneLogo(img); });
-    img.addEventListener("error", function(){ img.removeAttribute("data-tone"); img.removeAttribute("data-tonefor"); img.classList.remove("onplate"); });
+    img.addEventListener("error", function(){ img.removeAttribute("data-tone"); img.removeAttribute("data-for"); });
   }
-  /* Is this logo light enough to vanish on white paper? Read once per picture (render() runs on every
-     keystroke). data-tone is "light", "dark" or "unknown" once decided, and logosReady() waits for it,
-     so the dialog never opens on a sign whose plate has not been decided yet. Unknown (no CORS, no
-     canvas) prints the logo as it is, exactly as before this existed. */
-  var TONES={};
-  function applyTone(img, src, t){
-    if(img.getAttribute("src")!==src) return;          // a newer logo has replaced it
-    img.setAttribute("data-tone", t);
-    img.classList.toggle("onplate", t==="light");
-    refitAll();
+  /* WHAT THE LOGO IS, read once per picture by VPVenueLogo.analyse (render() runs on every keystroke):
+     its trimmed shape (the BAND_RATIO rule), whether its ink is white or black, whether it brings its own
+     background. data-tone is "light", "dark", "mid" or "unknown" once decided, and logosReady() waits for
+     it, so the dialog never opens before the plate and the layout are settled. Unknown (no CORS, no
+     canvas) prints the logo exactly as uploaded. */
+  var LOGO={}, READING={};
+  function markLogo(img, info){
+    img.setAttribute("data-tone", info ? (info.light ? "light" : info.dark ? "dark" : "mid") : "unknown");
+    img.classList.toggle("t-light", !!(info && info.light));
+    img.classList.toggle("t-dark", !!(info && info.dark));
+    img.classList.toggle("boxed", !!(info && info.boxed));
   }
-  function toneLogo(img){
-    var src=img.getAttribute("src");
-    if(!src || img.getAttribute("data-tonefor")===src) return;
-    img.setAttribute("data-tonefor", src); img.removeAttribute("data-tone");
-    if(TONES[src]){ applyTone(img, src, TONES[src]); return; }
-    if(!(window.VPVenueLogo && VPVenueLogo.readTone)){ applyTone(img, src, "unknown"); return; }
-    VPVenueLogo.readTone(src, function(L, share){
-      var t = share===null ? "unknown" : (share > VPVenueLogo.LIGHT ? "light" : "dark");
-      TONES[src]=t;
+  function readLogo(url){
+    if(url in LOGO || READING[url]) return;
+    READING[url]=true;
+    var done=function(info){
+      LOGO[url]=info||null; delete READING[url];
       var all=document.querySelectorAll("[data-logo]");
-      for(var i=0;i<all.length;i++){ if(all[i].getAttribute("src")===src) applyTone(all[i], src, t); }
-    });
+      for(var i=0;i<all.length;i++){
+        if(all[i].getAttribute("data-for")!==url) continue;
+        if(info && info.trimmed) all[i].setAttribute("src", info.trimmed);
+        markLogo(all[i], info);
+      }
+      applyDesign();
+    };
+    if(!(window.VPVenueLogo && VPVenueLogo.analyse)) return done(null);
+    VPVenueLogo.analyse(url, done);
+  }
+  function paintLogo(img){
+    // Only touch src when the logo itself has changed: setting it again restarts the download and
+    // the load event, and render() runs on every keystroke in the venue name box.
+    if(state.logo){
+      watchLogo(img);
+      if(img.getAttribute("data-for")!==state.logo){
+        img.setAttribute("data-for", state.logo); img.removeAttribute("data-tone");
+        var known=LOGO[state.logo];
+        img.setAttribute("src", (known && known.trimmed) || state.logo);
+        if(state.logo in LOGO) markLogo(img, known); else readLogo(state.logo);
+      }
+      img.hidden=false;
+    } else {
+      img.removeAttribute("src"); img.removeAttribute("data-tone"); img.removeAttribute("data-for");
+      img.classList.remove("t-light","t-dark","boxed"); img.hidden=true;
+    }
+  }
+
+  /* ---- the design: which of the four, dark or light, remembered per venue on this browser ----
+     (Follow-up: save it to the venue's account so it follows them to another computer.) */
+  var DESIGNS={ column:"dark", band:"dark", ticket:"light", spot:"light" };   // each design's own default colours
+  var chosen=null;   // {d, v} the venue picked, or null: then autoDesign() decides
+  function storeKey(){ return "vp.signDesign."+(state.slug||"_"); }
+  function loadChoice(){ chosen=null; try{ var j=JSON.parse(localStorage.getItem(storeKey())||"null"); if(j && DESIGNS[j.d]) chosen={ d:j.d, v:(j.v==="light"||j.v==="dark")?j.v:DESIGNS[j.d] }; }catch(e){} }
+  function saveChoice(){ try{ localStorage.setItem(storeKey(), JSON.stringify(chosen)); }catch(e){} }
+  /* No choice yet: a wordmark (BAND_RATIO) gets the Top band, no logo gets Spotlight, anything else Column. */
+  function autoDesign(){
+    if(!state.logo) return state.logoChecked || !state.slug ? "spot" : "column";
+    var info=LOGO[state.logo];
+    return info && VPVenueLogo.isWide(info.ratio) ? "band" : "column";
+  }
+  function currentDesign(){ var d=chosen ? chosen.d : autoDesign(); return { d:d, v:chosen ? chosen.v : DESIGNS[d] }; }
+  function applyDesign(){
+    var cur=currentDesign(), info=state.logo ? LOGO[state.logo] : null;
+    var lw = !!(info && VPVenueLogo.isWide(info.ratio)), nl=!state.logo;
+    var arts=document.querySelectorAll("[data-art]");
+    for(var i=0;i<arts.length;i++){
+      var a=arts[i], wide=a.classList.contains("wide");
+      a.className="art"+(wide?" wide":"")+" d-"+cur.d+" v-"+cur.v+(lw?" lw":"")+(nl?" nl":"");
+      a.setAttribute("data-art","");
+    }
+    var b=document.querySelectorAll("#designs .dpick");
+    for(var j=0;j<b.length;j++) b[j].classList.toggle("on", b[j].getAttribute("data-design")===cur.d);
+    var t=document.querySelectorAll("#tones .pick");
+    for(var k=0;k<t.length;k++) t[k].classList.toggle("on", t[k].getAttribute("data-v")===cur.v);
+    render();
+  }
+  /* Where each logo sits against its ground, and how big. The chrome logo is sized from its trimmed
+     shape into a box that is a share of its panel, so a crest and a wordmark carry the same weight. */
+  function groundFor(a, img){
+    var dark=a.classList.contains("v-dark");
+    img.classList.toggle("on-dark", dark); img.classList.toggle("on-light", !dark);
+  }
+  var LOGO_BOX={ column:[.80,.40], "column-lw":[.70,.68], band:[.86,.70], ticket:[.30,.66], "ticket-lw":[.42,.5] };
+  var LOGO_BOX_WIDE={ column:[.84,.46], "column-lw":[.60,.70], band:[.50,.86], ticket:[.80,.40], "ticket-lw":[.86,.26] };
+  function sizeChrome(a){
+    var img=a.querySelector("[data-chrome]"), ch=a.querySelector(".chrome");
+    if(!img || img.hidden || !ch) return;
+    groundFor(a, img);
+    var d=(a.className.match(/\bd-(\w+)/)||[])[1], info=state.logo ? LOGO[state.logo] : null;
+    var r = info && info.ratio ? info.ratio : (img.naturalWidth && img.naturalHeight ? img.naturalWidth/img.naturalHeight : 1.5);
+    var key = d + (VPVenueLogo.isWide(r) && (d==="column"||d==="ticket") ? "-lw" : "");
+    var f=(a.classList.contains("wide") ? LOGO_BOX_WIDE : LOGO_BOX)[key];
+    if(!f){ img.style.width=""; img.style.height=""; return; }
+    var box=ch.getBoundingClientRect(); if(!box.width || !box.height) return;
+    var w=box.width*f[0], h=w/r; if(h>box.height*f[1]){ h=box.height*f[1]; w=h*r; }
+    img.style.width=w.toFixed(1)+"px"; img.style.height=h.toFixed(1)+"px";
+    img.style.setProperty("--lp", Math.max(2, Math.min(w, h)*0.09).toFixed(1)+"px");   // a plate is a margin of the logo's own size, never of the page
+  }
+  /* The venue's name in the Top band when there is no logo: as big as fits in two lines. */
+  function fitBandName(a){
+    var n=a.querySelector("[data-cname]"), ch=a.querySelector(".chrome");
+    if(!n || !a.classList.contains("d-band") || !a.classList.contains("nl")) return;
+    var box=ch.getBoundingClientRect(); if(!box.height) return;
+    var fs=box.height*0.36; n.style.fontSize=fs+"px";
+    while(fs>6 && (n.scrollWidth>box.width*0.88+1 || n.getBoundingClientRect().height>box.height*0.62)){ fs*=0.94; n.style.fontSize=fs.toFixed(1)+"px"; }
   }
   /* Do not open the print dialog while a logo is still on its way: whatever has not painted is not
      on the paper. Capped, because a logo that never answers must not hold the print button hostage. */
@@ -503,17 +752,25 @@
     var signs=document.querySelectorAll("[data-sign]");
     for(var i=0;i<signs.length;i++){
       var s=signs[i];
+      var art=s.closest ? s.closest("[data-art]") : null;
+      var twoLine = !!(art && art.classList.contains("d-column") && !art.classList.contains("wide"));
       s.querySelector("[data-venue]").textContent=name;
       var hd=s.querySelector("[data-head]");
-      if(hd) hd.innerHTML = state.head ? esc(state.head) : 'Scan to <em>play</em>';
+      if(hd){ hd.innerHTML = state.head ? esc(state.head) : (twoLine ? 'Scan<br>to <em>play</em>' : 'Scan to <em>play</em>');
+              /* A venue's own headline that is long, or has a long run with no spaces, wraps (balanced)
+                 instead of holding one line: one line would make the fit shrink the WHOLE sign, QR
+                 included, to the width of the words. "Scan to play" itself stays on its line. */
+              hd.classList.toggle("wrap", !!state.head && (twoLine || state.head.length > 14 || /\S{13,}/.test(state.head))); }
       var nl=s.querySelector("[data-no]");
-      if(nl) nl.textContent = state.line || "No app. No account. Just your phone.";
+      if(nl){ if(state.line) nl.textContent = state.line;
+              else if(twoLine) nl.innerHTML = "No app. No account.<br>Just your phone.";
+              else nl.textContent = "No app. No account. Just your phone."; }
       var lg=s.querySelector("[data-logo]");
-      // Only touch src when it has actually changed: setting it again restarts the download and
-      // the load event, and render() runs on every keystroke in the venue name box.
-      if(lg){
-        if(state.logo){ watchLogo(lg); if(lg.getAttribute("src")!==state.logo) lg.setAttribute("src", state.logo); lg.hidden=false; if(lg.complete && lg.naturalWidth) toneLogo(lg); }
-        else { lg.removeAttribute("src"); lg.removeAttribute("data-tone"); lg.removeAttribute("data-tonefor"); lg.classList.remove("onplate"); lg.hidden=true; }
+      if(lg){ paintLogo(lg); if(art) groundFor(art, lg); }
+      if(art){
+        var cl=art.querySelector("[data-chrome]"); if(cl) paintLogo(cl);
+        art.querySelector("[data-cname]").textContent=name;
+        art.querySelector("[data-ccode]").textContent=code;
       }
       s.querySelector("[data-code]").textContent=code;
       var w=s.querySelector("[data-whats]");
@@ -522,6 +779,8 @@
       drawQR(s.querySelector("[data-qr]"), url, 720);
     }
     markLastSheet();
+    var arts=document.querySelectorAll("[data-art]");
+    for(var a2=0;a2<arts.length;a2++){ sizeChrome(arts[a2]); fitBandName(arts[a2]); }
     for(var j=0;j<signs.length;j++) fitSign(signs[j]);   // fit AFTER the text is in
   }
 
@@ -533,7 +792,7 @@
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   var typed=false;   // once the venue types a name, a lookup must not overwrite it
   function onSlug(){
-    state.slug=cleanSlug(slugIn.value);
+    state.slug=cleanSlug(slugIn.value); state.logo=""; state.logoChecked=false; loadChoice();
     if(!typed) state.name="";
     render(); setStatus("", "");
   }
@@ -553,6 +812,15 @@
   document.getElementById("picks").addEventListener("click", function(e){
     var t=e.target.closest ? e.target.closest(".pick") : null;
     if(t) showKind(t.getAttribute("data-kind"));
+  });
+
+  document.getElementById("designs").addEventListener("click", function(e){
+    var t=e.target.closest ? e.target.closest(".dpick") : null; if(!t) return;
+    var d=t.getAttribute("data-design"); chosen={ d:d, v:DESIGNS[d] }; saveChoice(); applyDesign();
+  });
+  document.getElementById("tones").addEventListener("click", function(e){
+    var t=e.target.closest ? e.target.closest(".pick") : null; if(!t) return;
+    var cur=currentDesign(); chosen={ d:cur.d, v:t.getAttribute("data-v") }; saveChoice(); applyDesign();
   });
 
   // ---- check the link before they print fifty copies ----
@@ -576,8 +844,10 @@
         .then(function(r){ return r.ok?r.json():null; })
         .then(function(d){
           var u=d&&d.logo_url;   // one object now, not an array
-          if(u){ state.logo=u; render(); }
-        }).catch(function(){});   // no logo is fine, the sign works without one
+          state.logoChecked=true;
+          if(u){ state.logo=u; }
+          applyDesign();
+        }).catch(function(){ state.logoChecked=true; applyDesign(); });   // no logo is fine, the sign works without one
     }catch(e){}
   }
   function check(){
@@ -610,6 +880,10 @@
     var slug = raw ? cleanSlug(decodeURIComponent(raw)) : "";
     var sk=/[?&]sheet=(poster|cards|tents)/.exec(q);
     if(slug){ slugIn.value=slug; state.slug=slug; }
+    loadChoice();
+    var dq=/[?&]design=(column|band|ticket|spot)(?:-(dark|light))?/.exec(q);   // a link (or a test) can name a design
+    if(dq) chosen={ d:dq[1], v:dq[2]||DESIGNS[dq[1]] };
+    applyDesign();
     showKind(sk ? sk[1] : "poster");
     if(slug) check();
 
