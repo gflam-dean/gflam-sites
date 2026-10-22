@@ -198,7 +198,7 @@ if (typeof crypto === 'undefined') {
   var e = r.body.entries || [];
   check('Dean reads it, newest first', r.status === 200 && e.length === 3 && e[0].op === 'delete' && e[2].op === 'update' && e[0].id > e[1].id, e);
   check('the delete says DELETED, what it held, and that it did NOT come through VenuePlay',
-    /DELETED/.test(e[0].changes.join(' ')) && /a logo, 2 slides/.test(e[0].changes.join(' ')) && /NOT through VenuePlay/.test(e[0].who) && /postgres/.test(e[0].who), e[0]);
+    /DELETED/.test(e[0].changes.join(' ')) && /a logo, 2 slides/.test(e[0].changes.join(' ')) && /NOT through VenuePlay/.test(e[0].who) && /Supabase dashboard or SQL editor/.test(e[0].who) && !/postgres/.test(e[0].who), e[0]);
   check('...and the version it stands for is what was lost, restorable', e[0].version && e[0].version.logo_url === LOGO_OLD && e[0].version.slides.length === 2 && e[0].restorable === true, e[0].version);
   check('the logo change reads "Logo added." by the venue\'s own login', e[1].changes.join(' ') === 'Logo added.' && /venue's own login/.test(e[1].who), e[1]);
   check('the slide save reads "Slides 1 to 2 (1 added)."', e[2].changes.join(' ') === 'Slides 1 to 2 (1 added).', e[2].changes);
