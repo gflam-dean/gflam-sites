@@ -798,7 +798,7 @@
   // then console); signed in but unlinked -> a friendly "no venue" notice.
   // The demo shortcut buttons deliberately bypass this (no real role).
   /* THE PURCHASE RAFFLE TILE (migration 115) shows only at a venue HQ has switched it on for. Its
-     own query, so before 115 is run (the column is not there) the tile simply stays hidden. */
+     own query, so until migration 115 is in the database the tile simply stays hidden. */
   function praffleTile(ctx){
     var t=$("praffleTile"); if(!t) return;
     t.classList.add("hidden");

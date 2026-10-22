@@ -171,22 +171,29 @@ try:
     ok('the button names the first prize', 'Trip for two to Fiji' in (text(sid, '#drawBtn') or ''), text(sid, '#drawBtn'))
     time.sleep(1.5)
     click(sid, '#drawBtn'); R.until(sid, visible('#vpAsk'), 10); click(sid, '#vpAskGo')
-    ON_MEMBERS = 'location.pathname.indexOf("/app/members/screen")===0 && '
-    ok('the TV on /tv switches itself to the draw: masked mobile endings spinning, or the reveal already up',
-       R.until(tsid, ON_MEMBERS + '((' + visible('#tvDraw') + ' && /^04xx xxx \\d{3}$/.test(document.getElementById("tvSpin").textContent)) || document.getElementById("tvWinNum").classList.contains("isname"))', 40) is True,
-       js(tsid, 'location.pathname'))
-    if js(tsid, visible('#tvDraw')) is True: shot(tsid, '09-tv-drawing.jpg')
+    # /tv keeps itself on the wall and shows a game screen in its own frame (#gameFrame), so fullscreen
+    # holds. Everything the room sees during the draw is inside that frame.
+    FRAME = ('(function(){var f=document.getElementById("gameFrame"); if(!f||f.style.display==="none"||!/\\/app\\/members\\/screen/.test(f.src||"")) return null;'
+             ' var d=f.contentDocument; if(!d||!d.body) return null; var w=f.contentWindow;'
+             ' function vis(id){var e=d.getElementById(id); return !!e && e.getBoundingClientRect().width>0 && w.getComputedStyle(e).display!=="none";}'
+             ' function txt(id){var e=d.getElementById(id); return e?e.textContent.trim():"";}'
+             ' return (%s);})()')
+    def tv(expr): return FRAME % expr
+    ok('the TV on /tv brings the draw up by itself: masked mobile endings spinning, or the reveal already up',
+       R.until(tsid, tv('(vis("tvDraw") && /^04xx xxx \\d{3}$/.test(txt("tvSpin"))) || d.getElementById("tvWinNum").classList.contains("isname")'), 40) is True,
+       js(tsid, '(function(){var f=document.getElementById("gameFrame"); return f?[f.style.display,f.src].join(" "):"no frame";})()'))
+    if js(tsid, tv('vis("tvDraw")')) is True: shot(tsid, '09-tv-drawing.jpg')
     ok('the winner card comes up on the venue page', R.until(sid, visible('#winnerCard'), 25) is True, text(sid, '#drawMsg'))
     wname = text(sid, '#wName')
     draws = line({'table': 'vp_purchase_raffle_draws'})['body'] or [{}]
     ok('one draw recorded on the server, for prize 1', len(draws) == 1 and draws[0]['prize_index'] == 0 and draws[0]['entries_total'] == 20, draws)
     ok('the page names the recorded winner, with a phone number and email to ring', wname == draws[0]['winner_name'] and '@example.com' in (text(sid, '#wContact') or ''), [wname, text(sid, '#wContact')])
     shot(sid, '10-draw-winner-tablet.jpg')
-    ok('the TV shows the same winner', R.until(tsid, ON_MEMBERS + visible('#tvWin') + ' && document.getElementById("tvWinNum").textContent===%s' % json.dumps(wname), 30) is True, text(tsid, '#tvWin'))
-    R.until(tsid, visible('#tvWinName'), 6); time.sleep(0.8)
-    tv = text(tsid, '#tvWin') or ''
-    ok('the TV gives the last three digits and the entries, and the prize', ('Mobile ending ' + draws[0]['phone_last3']) in tv and 'entries' in tv or 'entry' in tv, tv)
-    ok('the TV never shows a whole mobile', not any(p[0][1:] in tv for p in people) and '412345678' not in tv, tv)
+    ok('the TV shows the same winner', R.until(tsid, tv('vis("tvWin") && txt("tvWinNum")===%s' % json.dumps(wname)), 30) is True, js(tsid, tv('txt("tvWin")')))
+    R.until(tsid, tv('vis("tvWinName")'), 8); time.sleep(0.8)
+    tvtext = js(tsid, tv('txt("tvWin")')) or ''
+    ok('the TV gives the last three digits, the entries and the prize', ('Mobile ending ' + str(draws[0].get('phone_last3'))) in tvtext and 'entr' in tvtext and 'Fiji' in tvtext, tvtext)
+    ok('the TV never shows a whole mobile', not any(p[0][1:] in tvtext.replace(' ', '') for p in people) and '412345678' not in tvtext.replace(' ', ''), tvtext)
     shot(tsid, '11-tv-winner.jpg')
     ok('no errors on the venue page', errs(sid) == '[]', errs(sid))
     ok('no errors on the TV', errs(tsid) == '[]', errs(tsid))

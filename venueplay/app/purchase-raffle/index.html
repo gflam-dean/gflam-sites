@@ -463,7 +463,7 @@
   });
   /* A touch screen gets the big keypad above, not the phone's own keyboard on top of it. A
      keyboard plugged into the till still types straight in. */
-  try{ if(window.matchMedia && matchMedia("(pointer:coarse)").matches) $("phoneIn").setAttribute("inputmode","none"); }catch(e){}
+  try{ if(window.matchMedia && window.matchMedia("(pointer:coarse)").matches) $("phoneIn").setAttribute("inputmode","none"); }catch(e){}
 
   function addEntry(again, person){
     if(G.busy || !G.raffle) return;
@@ -681,7 +681,7 @@
       G.busy=true; renderDraw(); $("drawMsg").textContent="Drawing…"; $("drawMsg").style.color="var(--muted)"; show("winnerCard",false);
       var spinSecs=6, t0=Date.now();
       G.tvRound={ phase:"drawing", entriesTotal:(G.totals||{}).entries|0 };
-      tvSend({ t:"mode", mode:"members" });
+      wallSend({ t:"mode", mode:"members" });
       tvDrawing();
       api("/host/praffle/draw", { venue_id:G.venueId, raffle_id:G.raffle.id }).then(function(res){
         var wait=Math.max(0, spinSecs*1000-(Date.now()-t0));
@@ -699,7 +699,7 @@
           load();
         }, wait);
       }).catch(function(e){
-        G.busy=false; G.tvRound=null; tvSend({ t:"idle" }); $("drawMsg").style.color=""; $("drawMsg").textContent=e.message; renderDraw();
+        G.busy=false; G.tvRound=null; wallSend({ t:"idle" }); $("drawMsg").style.color=""; $("drawMsg").textContent=e.message; renderDraw();
       });
     });
   });
@@ -726,13 +726,13 @@
      from whatever is on it. */
   var ch=null, subscribed=false, queue=[];
   function rawSend(p){ if(subscribed && ch){ try{ ch.send({ type:"broadcast", event:"msg", payload:p }); }catch(e){} } else { queue.push(p); } }
-  function tvSend(obj){ if(window.VPSign){ VPSign.signSend(obj, rawSend); } else { rawSend(obj); } }
-  function tvDrawing(){ tvSend({ t:"drawing", kind:"entries", drawName:G.raffle?G.raffle.name:"Purchase Raffle", entriesTotal:(G.tvRound&&G.tvRound.entriesTotal)|0, spinSecs:6 }); }
+  function wallSend(obj){ if(window.VPSign){ VPSign.signSend(obj, rawSend); } else { rawSend(obj); } }
+  function tvDrawing(){ wallSend({ t:"drawing", kind:"entries", drawName:G.raffle?G.raffle.name:"Purchase Raffle", entriesTotal:(G.tvRound&&G.tvRound.entriesTotal)|0, spinSecs:6 }); }
   function tvWinner(){
     var d=G.tvRound&&G.tvRound.draw; if(!d) return;
-    tvSend({ t:"winner", kind:"entries", name:d.winner_name, last3:d.phone_last3, entries:d.winner_entries, prize:d.prize||"", prizeNo:G.tvRound.prizeNo });
+    wallSend({ t:"winner", kind:"entries", name:d.winner_name, last3:d.phone_last3, entries:d.winner_entries, prize:d.prize||"", prizeNo:G.tvRound.prizeNo });
   }
-  function toAds(){ clearTimeout(G.adsTimer); G.tvRound=null; tvSend({ t:"idle" }); tvSend({ t:"to_ads" }); $("tvText").textContent="The ads are back on the TV."; }
+  function toAds(){ clearTimeout(G.adsTimer); G.tvRound=null; wallSend({ t:"idle" }); wallSend({ t:"to_ads" }); $("tvText").textContent="The ads are back on the TV."; }
   $("toAdsBtn").addEventListener("click", toAds);
   function openTv(){
     if(ch || !G.slug || !window.VP || !VP.venueCode) { if(!G.slug) $("tvText").textContent="No TV is linked to this venue yet."; return; }
