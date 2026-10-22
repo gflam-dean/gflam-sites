@@ -183,6 +183,13 @@ try:
        R.until(tsid, tv('(vis("tvDraw") && /^04xx xxx \\d{3}$/.test(txt("tvSpin"))) || d.getElementById("tvWinNum").classList.contains("isname")'), 40) is True,
        js(tsid, '(function(){var f=document.getElementById("gameFrame"); return f?[f.style.display,f.src].join(" "):"no frame";})()'))
     if js(tsid, tv('vis("tvDraw")')) is True: shot(tsid, '09-tv-drawing.jpg')
+    # And while it spins, every frame is a masked ending: sampled across the spin, never a whole number.
+    spins = []
+    for _ in range(8):
+        v = js(tsid, tv('vis("tvDraw") ? txt("tvSpin") : ""'))
+        if v: spins.append(v)
+        time.sleep(0.35)
+    ok('the spin on the wall only ever shows 04xx xxx and three digits', len(spins) >= 2 and all(__import__('re').match(r'^04xx xxx \d{3}$', x) for x in spins), spins)
     ok('the winner card comes up on the venue page', R.until(sid, visible('#winnerCard'), 25) is True, text(sid, '#drawMsg'))
     wname = text(sid, '#wName')
     draws = line({'table': 'vp_purchase_raffle_draws'})['body'] or [{}]
