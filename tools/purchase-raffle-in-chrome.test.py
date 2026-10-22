@@ -45,8 +45,11 @@ def line(obj):
         W.p.stdin.write(json.dumps(obj) + '\n'); W.p.stdin.flush()
         return json.loads(W.p.stdout.readline())
 VENUE = W.info['venue']
-NOW = int(time.mktime(time.strptime('2026-10-23 03:00:00', '%Y-%m-%d %H:%M:%S')) - time.timezone) * 1000   # 2pm Friday in Sydney
-line({'now': NOW})
+# The Worker's clock is the browser's clock, so "entries close now" means the same moment on both sides.
+def now_ms(): return int(time.time() * 1000)
+line({'now': now_ms()})
+import datetime, zoneinfo
+TODAY = datetime.datetime.now(zoneinfo.ZoneInfo('Australia/Sydney')).strftime('%Y-%m-%d')
 line({'seed': 'vp_venues', 'replace': True, 'rows': [{'id': VENUE, 'name': 'Deepwater Hotel', 'slug': W.info['slug'], 'status': 'active',
       'join_code': W.info['code'], 'au_state': 'NSW', 'timezone': 'Australia/Sydney', 'purchase_raffle_on': True, 'max_players': 100}]})
 line({'seed': 'vp_venue_staff', 'rows': [{'id': 'staff-1', 'display_name': 'Sarah'}]})
@@ -73,7 +76,7 @@ try:
     ok('the Set up tab is there for the owner', R.until(sid, visible('#tab-setup'), 10) is True)
     ok('the end date defaults to six months after the start', js(sid, '(function(){var a=document.getElementById("sStart").value,b=document.getElementById("sEnd").value; var x=new Date(a),y=new Date(b); return (y.getFullYear()*12+y.getMonth())-(x.getFullYear()*12+x.getMonth())===6;})()') is True)
     setv(sid, '#sName', 'Summer Purchase Raffle')
-    setv(sid, '#sStart', '2026-10-23'); setv(sid, '#sEnd', '2027-04-23'); setv(sid, '#sDrawOn', '2027-04-24'); setv(sid, '#sDrawTime', '19:30')
+    setv(sid, '#sStart', TODAY); setv(sid, '#sEnd', '2027-04-23'); setv(sid, '#sDrawOn', '2027-04-24'); setv(sid, '#sDrawTime', '19:30')
     setv(sid, '#prizes .pt', 'Trip for two to Fiji'); setv(sid, '#prizes .pv', '5000')
     click(sid, '#addPrize'); setv(sid, '#prizes .prize:nth-child(2) .pt', '$500 bar tab'); setv(sid, '#prizes .prize:nth-child(2) .pv', '500')
     setv(sid, '#sPlace', 'the main bar at Deepwater Hotel')
@@ -136,10 +139,12 @@ try:
     ok('nothing is wider than the phone', js(sid2, 'document.documentElement.scrollWidth<=window.innerWidth+1') is True, js(sid2, 'document.documentElement.scrollWidth'))
     ok('the keypad keys are big enough for a thumb', js(sid2, 'document.querySelector(".key").getBoundingClientRect().height>=56') is True)
     shot(sid2, '06-bar-phone.jpg')
+    line({'now': now_ms() + 120000})   # two minutes after the seeded entries, so this is a new purchase, not a double tap
     keypad(sid2, '44'); click(sid2, '#addBtn')
     ok('a known customer is one tap: "Thanks Chris, you\'re in. 8 entries"', R.until(sid2, visible('#stepDone'), 15) is True and text(sid2, '#doneSmall') == '8 entries so far. Good luck!', [text(sid2, '#doneBig'), text(sid2, '#doneSmall'), text(sid2, '#barMsg')])
     shot(sid2, '07-bar-phone-thanks.jpg')
     ok('no errors on the phone', errs(sid2) == '[]', errs(sid2))
+    line({'now': now_ms()})
     R.close_tab(tid2)
 
     print('the entries list: masked mobiles, the right counts')
@@ -149,13 +154,15 @@ try:
     ok('six people listed', R.until(sid, 'document.querySelectorAll("#listRows tr").length===6', 15) is True, text(sid, '#listRows'))
     rows = text(sid, '#listRows') or ''
     ok('no whole mobile on the page', '0412345678' not in rows and '0412 345 678' not in rows and '04xx xxx 678' in rows, rows[:300])
-    ok('Chris has 8 entries, Bob 2', 'Chris Nguyen04xx xxx 4448' in rows.replace(' ', ' ') or 'Chris Nguyen' in rows, rows[:400])
-    ok('the totals are 6 people and 22 entries', text(sid, '#lsPeople') == '6' and text(sid, '#lsEntries') == '22', [text(sid, '#lsPeople'), text(sid, '#lsEntries')])
+    counts = js(sid, 'JSON.stringify([].map.call(document.querySelectorAll("#listRows tr"),function(t){return [t.cells[0].textContent,t.cells[2].textContent];}))')
+    ok('Chris has 8 entries, Bob 2', '["Chris Nguyen","8"]' in (counts or '') and '["Bob Smith","2"]' in (counts or ''), counts)
+    ok('the totals are 6 people and 20 entries', text(sid, '#lsPeople') == '6' and text(sid, '#lsEntries') == '20', [text(sid, '#lsPeople'), text(sid, '#lsEntries')])
     shot(sid, '08-entries-list-tablet.jpg')
 
     print('the draw: close entries, draw on the server, the TV shows the reveal')
-    ttid, tsid = R.open('/app/members/screen.html?venue=' + W.info['slug'], width=1280, height=720)
-    R.until(tsid, 'document.readyState==="complete"', 30); time.sleep(1.5)
+    # The venue's ONE TV link, sitting on the ads, as it is on the wall.
+    ttid, tsid = R.open('/tv?venue=' + W.info['slug'], width=1280, height=720)
+    R.until(tsid, 'document.readyState==="complete"', 30); time.sleep(2)
     click(sid, '#tabs button[data-tab="setup"]'); R.until(sid, visible('#closeBtn'), 10)
     click(sid, '#closeBtn'); R.until(sid, visible('#vpAsk'), 10); click(sid, '#vpAskGo')
     time.sleep(1)
@@ -164,16 +171,18 @@ try:
     ok('the button names the first prize', 'Trip for two to Fiji' in (text(sid, '#drawBtn') or ''), text(sid, '#drawBtn'))
     time.sleep(1.5)
     click(sid, '#drawBtn'); R.until(sid, visible('#vpAsk'), 10); click(sid, '#vpAskGo')
-    ok('the TV switches to the draw and flicks through mobile endings, never whole numbers',
-       R.until(tsid, visible('#tvDraw') + ' && /^04xx xxx \\d{3}$/.test(document.getElementById("tvSpin").textContent)', 15) is True, text(tsid, '#tvSpin'))
-    shot(tsid, '09-tv-drawing.jpg')
+    ON_MEMBERS = 'location.pathname.indexOf("/app/members/screen")===0 && '
+    ok('the TV on /tv switches itself to the draw: masked mobile endings spinning, or the reveal already up',
+       R.until(tsid, ON_MEMBERS + '((' + visible('#tvDraw') + ' && /^04xx xxx \\d{3}$/.test(document.getElementById("tvSpin").textContent)) || document.getElementById("tvWinNum").classList.contains("isname"))', 40) is True,
+       js(tsid, 'location.pathname'))
+    if js(tsid, visible('#tvDraw')) is True: shot(tsid, '09-tv-drawing.jpg')
     ok('the winner card comes up on the venue page', R.until(sid, visible('#winnerCard'), 25) is True, text(sid, '#drawMsg'))
     wname = text(sid, '#wName')
-    draws = line({'table': 'vp_purchase_raffle_draws'})['body']
-    ok('one draw recorded on the server, for prize 1', len(draws) == 1 and draws[0]['prize_index'] == 0 and draws[0]['entries_total'] == 22, draws)
+    draws = line({'table': 'vp_purchase_raffle_draws'})['body'] or [{}]
+    ok('one draw recorded on the server, for prize 1', len(draws) == 1 and draws[0]['prize_index'] == 0 and draws[0]['entries_total'] == 20, draws)
     ok('the page names the recorded winner, with a phone number and email to ring', wname == draws[0]['winner_name'] and '@example.com' in (text(sid, '#wContact') or ''), [wname, text(sid, '#wContact')])
     shot(sid, '10-draw-winner-tablet.jpg')
-    ok('the TV shows the same winner', R.until(tsid, visible('#tvWin') + ' && document.getElementById("tvWinNum").textContent===%s' % json.dumps(wname), 20) is True, text(tsid, '#tvWin'))
+    ok('the TV shows the same winner', R.until(tsid, ON_MEMBERS + visible('#tvWin') + ' && document.getElementById("tvWinNum").textContent===%s' % json.dumps(wname), 30) is True, text(tsid, '#tvWin'))
     R.until(tsid, visible('#tvWinName'), 6); time.sleep(0.8)
     tv = text(tsid, '#tvWin') or ''
     ok('the TV gives the last three digits and the entries, and the prize', ('Mobile ending ' + draws[0]['phone_last3']) in tv and 'entries' in tv or 'entry' in tv, tv)

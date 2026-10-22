@@ -95,10 +95,11 @@ function liveEntries() { return DB.vp_purchase_raffle_entries.filter(function (e
   show('terms: one entry per purchase transaction', /Each purchase transaction .* earns one entry/.test(terms));
   show('terms: never per drink or by the amount of alcohol', /not earned per drink or by the amount of alcohol/.test(terms));
   show('terms: 18 or over', /aged 18 or over/.test(terms));
-  show('terms: the draw date, time and place', /the front bar at Saturday 24 April 2027 at 7:30\s?pm/i.test(terms), (terms.match(/7\. .*/) || [''])[0]);
+  show('terms: the draw date, time and place', /the front bar on Saturday 24 April 2027 at 7:30\s?pm/i.test(terms), (terms.match(/7\. .*/) || [''])[0]);
   show('terms: how winners are told', /contacted by phone and email/.test(terms));
   show('terms: the prize and its value', /A trip for two to Fiji \(valued at \$5,000\)/.test(terms));
   show('terms: no limit stated as no limit', /no limit on the number of entries/.test(terms));
+  show('terms: never "at" a date (closes on, draw on)', !/(closes|place) at (Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day/.test(terms.replace(/the front bar/, '')) && /closes on /.test(terms));
   show('terms: no em dash', terms.indexOf(String.fromCharCode(0x2014)) < 0);
   show('creation is audited with who did it', audits('purchase_raffle_created').length === 1 && audits('purchase_raffle_created')[0].actor_label === 'host:staff-1');
   s = await setup({ raffle_id: r0.id, daily_cap: 3 });

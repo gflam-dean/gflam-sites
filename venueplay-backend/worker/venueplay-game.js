@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '22 Oct 2026, 11:53 · 446787c3';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '22 Oct 2026, 19:01 · 5df71212';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '9d1b390ad1e63d30fd8e7e358726c0ca0630d9114fcb808c25556fd4a4b366ae';
@@ -9219,7 +9219,7 @@ function purchaseRaffleTerms(r, venue) {
   lines.push('');
   lines.push('1. The promoter is ' + promoter + '.');
   lines.push('2. Entry is open to people aged 18 or over. Employees of the promoter and their immediate families may not enter.');
-  lines.push('3. The promotion opens ' + praffleLocalWords(r.starts_at, tz, false) + ' and closes at ' +
+  lines.push('3. The promotion opens ' + praffleLocalWords(r.starts_at, tz, false) + ' and closes on ' +
     praffleLocalWords(r.closes_at, tz, true) + ' (venue time).');
   lines.push('4. Each purchase transaction at ' + ((venue && venue.name) || 'the venue') + ' during the promotion earns one entry, ' +
     'whatever is bought and however much is spent. Entries are not earned per drink or by the amount of alcohol bought, ' +
@@ -9233,7 +9233,7 @@ function purchaseRaffleTerms(r, venue) {
   } else {
     lines.push('6. The prizes, drawn in this order, are: ' + prizes.map(function (p, i) { return (i + 1) + ') ' + prizeWords(p); }).join('; ') + '.');
   }
-  lines.push('7. The draw takes place at ' + where + ' at ' + praffleLocalWords(r.draw_at, tz, true) +
+  lines.push('7. The draw takes place at ' + where + ' on ' + praffleLocalWords(r.draw_at, tz, true) +
     '. It is drawn by computer on the VenuePlay server: every entry has an equal chance, so each entrant\'s chance is in proportion to their entries. ' +
     (prizes.length > 1 ? 'Each entrant can win only one prize.' : 'There is one winner.'));
   lines.push('8. Winners will be contacted by phone and email within 2 business days of the draw, and the winner\'s first name and last initial may be shown in the venue.');
@@ -9477,7 +9477,7 @@ async function handlePraffleEnter(request, env, json) {
     if (last.length && b.again !== true && (Date.now() - new Date(last[0].created_at).getTime()) < PRAFFLE_DOUBLE_MS) {
       const secs = Math.max(1, Math.round((Date.now() - new Date(last[0].created_at).getTime()) / 1000));
       return json({ needs_confirm: true, first_name: person.first_name,
-        message: person.first_name + ' was given an entry ' + secs + ' seconds ago. Is this a new purchase?' }, 409);
+        message: person.first_name + ' was given an entry ' + secs + (secs === 1 ? ' second' : ' seconds') + ' ago. Is this a new purchase?' }, 409);
     }
   }
   const today = praffleLocalDay(tz);
