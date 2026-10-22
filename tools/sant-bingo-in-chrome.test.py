@@ -123,7 +123,7 @@ try:
     print('the signup page')
     CAPTURE = ('window.__posted=null;var _f=window.fetch;window.fetch=function(u,o){if(/checkout/.test(String(u))){window.__posted=JSON.parse(o.body);'
                'return Promise.resolve({ok:false,status:418,json:function(){return Promise.resolve({error:"captured by the test"});}});}return _f.apply(this,arguments);};')
-    tid, sid = r.open('/', width=1280, height=1000, before=CAPTURE)
+    tid, sid = r.open('/index.html', width=1280, height=1000, before=CAPTURE)
     r.until(sid, '!!document.querySelector("#vp-venue-list .v-postcode")', 20)
     time.sleep(0.8)
 
@@ -146,7 +146,7 @@ try:
     n = note(sid)
     ok('a pub with an SA postcode is told, in the page, before paying', 'Number bingo is not available for pubs in South Australia' in n and 'only a not-for-profit organisation may run bingo' in n and 'Musical bingo, trivia and members draws are all yours' in n, n)
     ok('...with the "our bingo is run by a not-for-profit" tick, unticked', r.ask(sid, '(function(c){return !!c && c.checked===false && c.offsetParent!==null;})(document.getElementById("vp-nobingo-ask"))') is True)
-    r.ask(sid, 'document.getElementById("vp-nobingo").scrollIntoView({block:"center"}); true')
+    r.ask(sid, 'document.getElementById("vp-nobingo").scrollIntoView({block:"center",behavior:"instant"}); true')
     time.sleep(0.4)
     shot1(sid, 'signup-sa-pub-note')
     fill(sid, 'non_profit', [['Glenelg Tavern', '5045', '80']])
@@ -181,7 +181,7 @@ try:
     time.sleep(0.4)
     n = note(sid)
     ok('the offer page: postcode first, then Pub from the dropdown, and the SA note shows', 'Number bingo is not available for pubs in South Australia' in n, n)
-    r.ask(sid, 'document.getElementById("vp-nobingo").scrollIntoView({block:"center"}); true')
+    r.ask(sid, 'document.getElementById("vp-nobingo").scrollIntoView({block:"center",behavior:"instant"}); true')
     time.sleep(0.3)
     shot1(sid, 'offer-page-sa-pub-note')
     r.ask(sid, '(function(){var $=function(i){return document.getElementById(i)};$("vp-name").value="Pat Publican";$("vp-email").value="pat@glenelgtavern.com.au";'
@@ -195,11 +195,11 @@ try:
     ok('...and the tick reaches /checkout from the offer page too', ((pv.get('venues') or [{}])[0]).get('bingo_review') is True, posted)
     r.close_tab(tid)
 
-    tid, sid = r.open('/', width=390, height=844, before=CAPTURE)
+    tid, sid = r.open('/index.html', width=390, height=844, before=CAPTURE)
     r.until(sid, '!!document.querySelector("#vp-venue-list .v-postcode")', 20)
     time.sleep(0.8)
     fill(sid, 'for_profit', [['Glenelg Tavern', '5045', '80']])
-    r.ask(sid, 'document.getElementById("vp-nobingo").scrollIntoView({block:"center"}); true')
+    r.ask(sid, 'document.getElementById("vp-nobingo").scrollIntoView({block:"center",behavior:"instant"}); true')
     time.sleep(0.4)
     w = r.ask(sid, 'document.documentElement.scrollWidth <= window.innerWidth + 1')
     ok('at phone width the note fits the page (no sideways scroll)', 'South Australia' in note(sid) and w is True, [note(sid)[:60], w])
@@ -264,7 +264,7 @@ try:
     ok('HQ, the SA pub\'s card: number bingo hidden, and why', details(sid, SAP) and 'hidden' in card(sid, SAP) and 'only a not-for-profit may run bingo there' in card(sid, SAP)
        and 'Musical bingo, trivia and members draws are unaffected' in card(sid, SAP), card(sid, SAP))
     ok('...with the switch, off', S.js(sid, '(function(c){return !!c && !c.checked && !c.disabled;})(document.querySelector(\'.numbingo[data-vid="%s"]\'))' % vid(SAP)) is True)
-    S.js(sid, 'document.querySelector(\'.numbingo[data-vid="%s"]\').scrollIntoView({block:"center"}); true' % vid(SAP))
+    S.js(sid, 'document.querySelector(\'.numbingo[data-vid="%s"]\').scrollIntoView({block:"center",behavior:"instant"}); true' % vid(SAP))
     time.sleep(0.3)
     shot2(sid, 'hq-sa-pub-card')
     ok('the NT venue not recorded as a club: hidden, and HQ is told setting Club brings it back', details(sid, NTU) and 'Not recorded as a club yet' in card(sid, NTU) and 'set Club above' in card(sid, NTU), card(sid, NTU))
@@ -297,7 +297,7 @@ try:
         return S.js(sid, '(function(e){return e && !e.classList.contains("hidden") ? e.textContent : "";})(document.getElementById("nvNoBingo"))') or ''
     n1 = add_note('5000', 'pub')
     ok('an SA postcode for a pub: the note, there and then', 'Number bingo will be hidden for this venue: in South Australia' in n1, n1)
-    S.js(sid, 'document.getElementById("nvNoBingo").scrollIntoView({block:"center"}); true')
+    S.js(sid, 'document.getElementById("nvNoBingo").scrollIntoView({block:"center",behavior:"instant"}); true')
     time.sleep(0.3)
     shot2(sid, 'hq-add-venue-sa-pub')
     ok('an NT postcode for a hotel names the Northern Territory', 'in the Northern Territory' in add_note('0820', 'hotel'))
@@ -354,7 +354,7 @@ finally:
     S.close()
 
 print('\n%d of %d checks passed' % (ran - bad, ran))
-EXPECTED = 35
+EXPECTED = 38
 if ran != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, ran))
     sys.exit(1)
