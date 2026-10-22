@@ -297,3 +297,11 @@ running game from another device: `vp_sessions.console_holders` (jsonb, per form
 written by the game Worker's `/host/running/take` (staff at the venue only). Not security definer, no new policy or grant, so
 RLS-BASELINE.json does not change. Either order with the Workers is safe (both read the new columns fail-safe). Branch
 `feature/trivia-recover-and-night-pass`. RUN by Dean 20 Oct 2026. Rollback: in the file.
+`venueplay-112-help-faq-support-phone.sql`: the venue Help FAQ "Contacting us" names the support phone, 07 5228 3667
+(Dean, 20 Oct 2026). One guarded update of a row 106 seeded; words only, no RLS change. RUN on the live database
+(verified 22 Oct 2026). Rollback: put 106's words back in HQ > Help desk > Help words.
+`venueplay-113-help-join-steps-true.sql`: the venue Help steps say what the product does (Dean, 21 Oct 2026): "Players
+cannot join" reordered, steps 1 and 2 pinned, the plan never stops anyone joining; the TV step names {tv_link}; "Billing
+and players" and "Contacting us" corrected (no "Happening now" tick). Every update is guarded by the words 106 or 112
+wrote, so an HQ edit is left alone. Words and order only, no RLS change. Branch `feature/help-page`. RUN on the live
+database (verified 22 Oct 2026). Rollback: edit the rows back in HQ > Help desk > Help words.

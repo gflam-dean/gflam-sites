@@ -1,7 +1,7 @@
 -- =====================================================================
 -- Migration 113: the venue Help steps say what the product does
 -- ---------------------------------------------------------------------
---   NOT RUN. Run AFTER migration 106 (it changes rows 106 put there).
+--   RUN on the live database (verified 22 Oct 2026). Run AFTER migration 106 (it changes rows 106 put there).
 --   Safe to run any number of times, and in either order with the Workers
 --   and the site: it changes words and order, not shape.
 --

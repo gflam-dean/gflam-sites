@@ -1,7 +1,7 @@
 -- =====================================================================
 -- Migration 112: the venue Help FAQ names the support phone
 -- ---------------------------------------------------------------------
---   NOT RUN. Run AFTER migration 106 (it changes a row 106 put there).
+--   RUN on the live database (verified 22 Oct 2026). Run AFTER migration 106 (it changes a row 106 put there).
 --   Safe to run any number of times, and in either order with the Workers
 --   and the site: it changes words, not shape.
 --
