@@ -106,6 +106,7 @@ create table if not exists public.vp_purchase_raffles (
   id            uuid primary key default gen_random_uuid(),
   venue_id      uuid not null references public.vp_venues(id) on delete cascade,
   name          text not null check (char_length(name) between 1 and 120),
+  promoter      text check (promoter is null or char_length(promoter) <= 200),
   description   text check (description is null or char_length(description) <= 2000),
   prizes        jsonb not null default '[]'::jsonb check (jsonb_typeof(prizes) = 'array'),
   starts_at     timestamptz not null,
@@ -149,6 +150,7 @@ create table if not exists public.vp_purchase_raffle_entries (
   venue_day     date not null,
   created_at    timestamptz not null default now(),
   created_by    text,
+  created_by_name text,
   voided_at     timestamptz,
   voided_by     text,
   void_reason   text check (void_reason is null or char_length(void_reason) <= 200)
@@ -175,7 +177,8 @@ create table if not exists public.vp_purchase_raffle_draws (
   redrawn_at      timestamptz,
   redrawn_by      text,
   drawn_at        timestamptz not null default now(),
-  drawn_by        text
+  drawn_by        text,
+  drawn_by_name   text
 );
 create index if not exists vp_purchase_raffle_draws_raffle on public.vp_purchase_raffle_draws (raffle_id, drawn_at);
 
