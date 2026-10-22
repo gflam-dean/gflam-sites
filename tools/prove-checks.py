@@ -4227,7 +4227,7 @@ MUTATIONS = [
      '      stop:function(){ return G.status!=="setup" || !!G.gameId; },\n      onFound:function(run){ pickUpTrivia(run); } });',
      '      stop:function(){ return false; },\n      onFound:function(run){ pickUpTrivia(run); } });',
      'the trivia console asks about another game while its own quiz is running'),
-    # D62 and screen-history-sql.test.py: a venue's screen never changes or vanishes without a record
+    # D70 and screen-history-sql.test.py: a venue's screen never changes or vanishes without a record
     # (Tugun Bowls Club, 21 Oct 2026; migration 114).
     ('every logo and slide write names who wrote it and is audited before and after; HQ reads the history, never a venue; owner/accounts restore exactly; nothing deletes a stored file', 'venueplay-backend/worker/venueplay-api-FULL.js',
      "'X-VP-Actor': vpbAsciiHeader(JSON.stringify(actor || { via: 'unknown' }))",
@@ -4366,7 +4366,7 @@ MUTATIONS = [
      '        if(!(logoDirty() || screenDirty)){ loadScreenFor(sel.value); return; }',
      '        loadScreenFor(sel.value); return;',
      'switching venue throws away unsaved changes without asking'),
-    # D63 and hq-tabs-in-chrome.test.py: HQ sorted out, tab by tab (Dean, 21 Oct 2026).
+    # D71 and hq-tabs-in-chrome.test.py: HQ sorted out, tab by tab (Dean, 21 Oct 2026).
     ('owner/accounts only; venue, dates, kind and who narrow on the database; cursor pages lose and repeat nothing; declines fold to one named line; invite-back changes no venue and calls no Stripe', 'venueplay-backend/worker/venueplay-api-FULL.js',
      "async function vpaHandleAuditSearch(request, env, json) {\n  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);",
      'async function vpaHandleAuditSearch(request, env, json) {\n  const actor = await vpaRequireAdmin(request, env, null);',

@@ -319,5 +319,6 @@ billing Worker's cron calls: 'drift' and 'vanished' rows for anything the trigge
 that deletes one real screen row and changes another directly, requires both recorded as 'direct', requires the history to
 refuse a delete, then rolls that back; any failure aborts the whole migration. Run BEFORE the billing Worker of that branch
 (its HQ Screen history view says "run migration 114" until then; screen saves work either way). RLS-BASELINE.json already
-carries the new table and two functions; dump it after running and commit if it differs. NOT RUN. Rollback: in the file.
+carries the new table and two functions; dump it after running and commit if it differs. RUN on live (verified 22 Oct 2026:
+the table exists with 20 baseline rows, one per screen row at the time). Rollback: in the file.
 (111 is feature/c4-c5-onboarding, 112 feature/support-phone, 113 feature/help-page.)

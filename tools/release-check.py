@@ -3355,17 +3355,17 @@ def local_checks(which):
              'staff at the venue find its running game and the open question; a pickup is recorded per format; a replaced console stands down only when the Worker says so', 53,
              'A dead tablet leaves the host on a fresh setup screen with the room seated, another venue\'s '
              'quiz is picked up, or two consoles run one quiz'),
-            # D62: Tugun Bowls Club's logo and slides went with no record of when or who (21 Oct 2026;
+            # D70: Tugun Bowls Club's logo and slides went with no record of when or who (21 Oct 2026;
             # migration 114). The database half is proven by the migration's own self-test and by
             # tools/screen-history-sql.test.py (section C).
-            ('D62. A venue\'s screen never changes or vanishes without a record, and HQ can put any version back',
+            ('D70. A venue\'s screen never changes or vanishes without a record, and HQ can put any version back',
              'test-screen-history.js',
              'every logo and slide write names who wrote it and is audited before and after; HQ reads the history, never a venue; owner/accounts restore exactly; nothing deletes a stored file', 60,
              'A logo or a set of slides changed or gone with nobody able to say when or who, a venue '
              'reading or rewriting its own history, or a restore that is not the version it says it is'),
-            # D63: HQ's Audit tab as a search, billing lines named and folded, and a Reactivate that
+            # D71: HQ's Audit tab as a search, billing lines named and folded, and a Reactivate that
             # charges nobody (Dean, 21 Oct 2026). The page itself is run by hq-tabs-in-chrome.test.py.
-            ('D63. HQ\'s audit search filters and pages on the server, billing lines name their venue, and Reactivate only invites',
+            ('D71. HQ\'s audit search filters and pages on the server, billing lines name their venue, and Reactivate only invites',
              'test-audit-search.js',
              'owner/accounts only; venue, dates, kind and who narrow on the database; cursor pages lose and repeat nothing; declines fold to one named line; invite-back changes no venue and calls no Stripe', 50,
              'An audit screen that loads the whole table, a filter that is ignored, a page that repeats or skips '

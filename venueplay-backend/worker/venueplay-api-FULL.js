@@ -8480,10 +8480,18 @@ function vpaScreenWho(h) {
     case 'hq_restore':    return (label || 'Gflam admin') + ' (HQ, Restore this version)';
     case 'migration':     return 'Migration 114, when this record began';
     case 'nightly-check': return 'The nightly check';
-    case 'direct':        return 'NOT through VenuePlay: a direct database change (' +
-                                 [h.db_session_user, h.jwt_role || h.db_role].filter(Boolean).join(', ') + ')';
+    case 'direct':        return 'NOT through VenuePlay: a direct database change (' + vpaDirectDoor(h) + ')';
     default:              return label || String((h && h.via) || 'unknown');
   }
+}
+/* Which door a direct change came through, in words (HQ shows this line; the raw database user is
+   still in the entry's Details). 'postgres' is the Supabase dashboard or SQL editor; the service key
+   is a script or another Worker; anything else is named as it is. */
+function vpaDirectDoor(h) {
+  var u = (h && h.db_session_user) || '', r = (h && (h.jwt_role || h.db_role)) || '';
+  if (r === 'service_role') return 'a script or tool using the service key';
+  if (u === 'postgres' || u === 'supabase_admin') return 'the Supabase dashboard or SQL editor';
+  return [u, r].filter(Boolean).join(', ') || 'unknown';
 }
 /* The version an entry stands for: the row after the change, or for a delete, the row that was lost. */
 function vpaScreenVersionRow(h) { return (h && (h.new_row || h.old_row)) || null; }
