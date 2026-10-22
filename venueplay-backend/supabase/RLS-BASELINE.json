@@ -1853,6 +1853,22 @@
    "enabled": true,
    "forced": false
   },
+  "vp_purchase_raffle_draws": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_purchase_raffle_entrants": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_purchase_raffle_entries": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_purchase_raffles": {
+   "enabled": true,
+   "forced": false
+  },
   "vp_question_flags": {
    "enabled": true,
    "forced": false
@@ -1930,6 +1946,10 @@
    "forced": false
   },
   "vp_venue_screen": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_venue_screen_history": {
    "enabled": true,
    "forced": false
   },
@@ -2051,6 +2071,10 @@
    "anon": false,
    "authenticated": false
   },
+  "vp_screen_history_check()": {
+   "anon": false,
+   "authenticated": false
+  },
   "vp_screen_poll(p_slug text, p_code text, p_version text)": {
    "anon": false,
    "authenticated": false
@@ -2062,6 +2086,10 @@
   "vp_staff_venue_ids()": {
    "anon": true,
    "authenticated": true
+  },
+  "vp_venue_screen_capture()": {
+   "anon": false,
+   "authenticated": false
   }
  },
  "views": [
