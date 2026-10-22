@@ -440,8 +440,10 @@
   function watchLogo(img){
     if(img.getAttribute("data-fitwired")) return;
     img.setAttribute("data-fitwired","1");
-    img.addEventListener("load", function(){ toneLogo(img); refitAll(); });
-    img.addEventListener("error", function(){ img.hidden=true; img.removeAttribute("src"); img.removeAttribute("data-tone"); img.classList.remove("onplate"); refitAll(); });
+    img.addEventListener("load", refitAll);
+    img.addEventListener("error", function(){ img.hidden=true; img.removeAttribute("src"); refitAll(); });
+    img.addEventListener("load", function(){ toneLogo(img); });
+    img.addEventListener("error", function(){ img.removeAttribute("data-tone"); img.removeAttribute("data-tonefor"); img.classList.remove("onplate"); });
   }
   /* Is this logo light enough to vanish on white paper? Read once per picture (render() runs on every
      keystroke). data-tone is "light", "dark" or "unknown" once decided, and logosReady() waits for it,

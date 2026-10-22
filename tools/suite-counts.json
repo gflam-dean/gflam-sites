@@ -572,7 +572,7 @@
   "counted_by": "lines"
  },
  "tools/test-tv-logo-mark.js": {
-  "checks": 128,
+  "checks": 137,
   "counted_by": "lines"
  },
  "tools/test-tv-reads-its-venue.js": {
@@ -668,7 +668,7 @@
   "counted_by": "lines"
  },
  "tools/venue-logo-in-chrome.test.py": {
-  "checks": 120,
+  "checks": 154,
   "counted_by": "lines"
  },
  "touring-backend/lib/touring-api.test.js": {
