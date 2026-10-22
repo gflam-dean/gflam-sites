@@ -297,3 +297,10 @@ running game from another device: `vp_sessions.console_holders` (jsonb, per form
 written by the game Worker's `/host/running/take` (staff at the venue only). Not security definer, no new policy or grant, so
 RLS-BASELINE.json does not change. Either order with the Workers is safe (both read the new columns fail-safe). Branch
 `feature/trivia-recover-and-night-pass`. RUN by Dean 20 Oct 2026. Rollback: in the file.
+
+`venueplay-116-number-bingo-switch.sql` (Dean, 22 Oct 2026, SA/NT rules): `vp_venues.number_bingo_on` (boolean, default false)
+and the `vp_venues_number_bingo_guard` trigger (a venue's own login cannot set it; same shape as 107). Number bingo (90-ball) is
+hidden for SA and NT venues not recorded as a club; this switch, set only from HQ (`/admin/venue-gaming`, audited as
+`venue_number_bingo_on` / `_off`), shows it again for a venue whose bingo is run by a not-for-profit. Musical bingo never reads
+it. Not security definer, no new policy or grant, so RLS-BASELINE.json does not change. Either order with the Workers is safe
+(both read the column fail-safe). Branch `feature/sant-bingo`. NOT RUN. Rollback: in the file.
