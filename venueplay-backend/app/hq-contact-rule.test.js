@@ -46,6 +46,8 @@ var S = { cancelling: {}, live: {}, venues: [] };
 function venueById(id) { for (var i = 0; i < S.venues.length; i++) if (S.venues[i].id === id) return S.venues[i]; return null; }
 eval(lift(HQ, "isArchived"));
 eval(lift(HQ, "isCancelling"));
+eval(HQ.match(/var LEFT_REASONS = [^\n]*/)[0]);   // hasLeft reads it
+eval(lift(HQ, "hasLeft"));
 eval(lift(HQ, "stateBadgeFor"));
 eval(lift(HQ, "contactActions"));
 

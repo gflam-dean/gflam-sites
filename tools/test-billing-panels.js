@@ -63,9 +63,17 @@ var NAMES = [
   'rfVenueName', 'paintRfVenue', 'rfNotReady', 'loadRafflePrizes', 'loadRaffleRoutine', 'loadPrizeTally',
   'loadRafflesFor', 'saveRaffleRoutine', 'clearRaffleRoutine', 'addRafflePrize', 'removeRafflePrize',
   'initRaffles', 'loadRafflePanel', 'loadDrawLog', 'renderDrawLog', 'dlWhen', 'downloadDrawLog',
-  'loadNightsFor', 'initNights'
+  'loadNightsFor', 'initNights',
+  // 21 Oct 2026: the screen panel now tracks unsaved changes (a chosen logo saves itself)
+  'logoDirty', 'renderUnsaved', 'markScreenDirty', 'logoEditShow'
 ];
 var SRC = '', MISSING = [];
+/* ...and the two page variables those read, lifted as they are written, never restated here. */
+['  var logoEd = {', '  var screenDirty = '].forEach(function (head) {
+  var at = SCRIPT.indexOf('\n' + head);
+  if (at < 0) throw new Error(head.trim() + ' is not in the page any more');
+  SRC += SCRIPT.slice(at + 1, SCRIPT.indexOf('\n', at + 1)) + '\n';
+});
 NAMES.forEach(function (n) { var s = lift(n); if (s) SRC += s + '\n'; else MISSING.push(n); });
 /* The entry points must exist in ANY version of the page, or this suite tests nothing. */
 ['initScreen', 'initRaffles', 'initMembersDraws', 'initNights', 'loadMembersDrawFor', 'saveMembersDraw', 'fillMembersDraw', 'loadRafflesFor']
