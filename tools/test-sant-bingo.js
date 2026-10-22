@@ -58,6 +58,10 @@ var gameMinClaim = (0, eval)('(' + liftFrom(GAME, 'minClaimSecondsFor', 'the gam
 /* ---- the signup page's copy, lifted from its own inline script ---- */
 var PAGE = readFile('venueplay/index.html');
 var pageRule = (0, eval)('(' + liftFrom(PAGE, 'vpNoBingoAt', 'index.html') + ')');
+/* nsw.html is the monthly offer page (/offer-nov and on), which is where the SA and NT cold emails
+   send a pub to sign up, so its copy is held to the same answer, character for character. */
+var OFFER = readFile('venueplay/nsw.html');
+var offerSrc = liftFrom(OFFER, 'vpNoBingoAt', 'nsw.html');
 
 var PC = { SA: '5000', NT: '0800', QLD: '4000', NSW: '2000', VIC: '3000', WA: '6000', TAS: '7000', ACT: '2600' };
 
@@ -95,6 +99,10 @@ var PC = { SA: '5000', NT: '0800', QLD: '4000', NSW: '2000', VIC: '3000', WA: '6
   }
   check('VPGaming.stateFromPostcode and the billing Worker\'s vpaStateFromPostcode agree on all 10,000 postcodes', mapDiff.length === 0, mapDiff.slice(0, 5));
   check('the signup page flags exactly the postcodes the billing Worker calls SA or NT', pageDiff.length === 0, pageDiff.slice(0, 5));
+  check('the offer page (nsw.html, /offer-nov) carries the same vpNoBingoAt, character for character, and the same note',
+    offerSrc === liftFrom(PAGE, 'vpNoBingoAt', 'index.html') && liftFrom(OFFER, 'renderNoBingo', 'nsw.html') === liftFrom(PAGE, 'renderNoBingo', 'index.html') &&
+    /id="vp-nobingo-ask"/.test(OFFER) && /bingo_review: !!\(askEl && askEl\.checked && vpNoBingoAt\(vpc, entityType\)\)/.test(OFFER) &&
+    /We are a pub in South Australia or the Northern Territory\. Can we run bingo\?/.test(OFFER));
   check('SA 58xx and 59xx are South Australia now (the PO box ranges)', vpaStateFromPostcode('5800') === 'SA' && vpaStateFromPostcode('5999') === 'SA');
 
   print('2. the HQ switch (vpaHandleVenueGaming)');

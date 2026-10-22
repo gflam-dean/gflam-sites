@@ -3359,7 +3359,7 @@ def local_checks(which):
             # welcome email variant (Dean, 22 Oct 2026; migration 116). Musical bingo is not bingo.
             ('D80. Number bingo is hidden for SA and NT pubs by one rule, and they are told so from signup on',
              'test-sant-bingo.js',
-             'the console, both Workers and the signup page agree on every venue; HQ switch audited; the signup tick makes one ticket; the welcome email says it; SA and NT members and raffle rules', 47,
+             'the console, both Workers and the signup page agree on every venue; HQ switch audited; the signup tick makes one ticket; the welcome email says it; SA and NT members and raffle rules', 48,
              'An SA or NT pub shown bingo it cannot lawfully run, a club or a QLD pub losing bingo, a welcome '
              'email promising bingo, or a switch nobody can trace back to who turned it on'),
             ('D81. The game Worker refuses a number bingo session and draw for an SA or NT pub, and nothing else',

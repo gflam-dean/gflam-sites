@@ -171,6 +171,30 @@ try:
     ok('no script error on the signup page', errs == '[]', errs)
     r.close_tab(tid)
 
+    print('the offer page (nsw.html: /offer-nov, where the SA and NT cold emails land)')
+    tid, sid = r.open('/nsw', width=1280, height=1000, before=CAPTURE)
+    r.until(sid, '!!document.querySelector("#vp-venue-list .v-postcode")', 20)
+    time.sleep(0.8)
+    r.ask(sid, '(function(){var r=document.querySelector("#vp-venue-list .venue-row");r.querySelector(".v-name").value="Glenelg Tavern";r.querySelector(".v-seats").value="80";'
+               'var p=r.querySelector(".v-postcode");p.value="5045";p.dispatchEvent(new Event("input",{bubbles:true}));'
+               'var e=document.getElementById("vp-entity");e.value="for_profit";e.dispatchEvent(new Event("change",{bubbles:true}));return true;})()')
+    time.sleep(0.4)
+    n = note(sid)
+    ok('the offer page: postcode first, then Pub from the dropdown, and the SA note shows', 'Number bingo is not available for pubs in South Australia' in n, n)
+    r.ask(sid, 'document.getElementById("vp-nobingo").scrollIntoView({block:"center"}); true')
+    time.sleep(0.3)
+    shot1(sid, 'offer-page-sa-pub-note')
+    r.ask(sid, '(function(){var $=function(i){return document.getElementById(i)};$("vp-name").value="Pat Publican";$("vp-email").value="pat@glenelgtavern.com.au";'
+               '$("vp-mobile").value="0412 345 678";$("vp-consent").checked=true;$("vp-nobingo-ask").checked=true;$("vp-submit").click();return true;})()')
+    r.until(sid, '!!window.__posted', 10)
+    posted = r.ask(sid, 'JSON.stringify(window.__posted)')
+    try:
+        pv = json.loads(posted or 'null') or {}
+    except Exception:
+        pv = {}
+    ok('...and the tick reaches /checkout from the offer page too', ((pv.get('venues') or [{}])[0]).get('bingo_review') is True, posted)
+    r.close_tab(tid)
+
     tid, sid = r.open('/', width=390, height=844, before=CAPTURE)
     r.until(sid, '!!document.querySelector("#vp-venue-list .v-postcode")', 20)
     time.sleep(0.8)
@@ -330,7 +354,7 @@ finally:
     S.close()
 
 print('\n%d of %d checks passed' % (ran - bad, ran))
-EXPECTED = 33
+EXPECTED = 35
 if ran != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, ran))
     sys.exit(1)
