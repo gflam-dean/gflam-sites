@@ -444,6 +444,9 @@
         <button type="button" class="pk" data-game="raffle">Raffle<span class="soon">Prize draw</span></button>
         <button type="button" class="pk" data-game="members-draw">Members Draw<span class="soon">Members jackpot</span></button>
       </div>
+      <!-- HQ only (View as): why the Bingo tile is not there for this venue. A venue's own staff
+           never see this or the tile (Dean, 22 Oct 2026: a dead tile reads as broken). -->
+      <div id="noBingoHq" class="hidden" style="margin-top:12px;padding:12px 14px;border:1px dashed var(--line);border-radius:12px;font-size:13px;line-height:1.5;color:var(--muted)"></div>
     </div>
 
     <!-- opening soon placeholder -->
@@ -1134,6 +1137,26 @@
     var vname=(__ctx&&__ctx.venue&&__ctx.venue.name)||"";
     var vn=$("venueBannerName"); if(vn) vn.textContent=vname;
     var vb=$("venueBanner"); if(vb) vb.style.display = (multi && vname) ? "" : "none";
+    applyNumberBingo();
+  }
+  /* NUMBER BINGO IS HIDDEN FOR SA AND NT PUBS (Dean, 22 Oct 2026; migration 116). Bingo there is
+     for not-for-profits only, so the tile is not shown at all, the page will not open it (see
+     selectGame), and the game Worker refuses the session and the draw. VPGaming.numberBingoHidden
+     is the one rule; HQ's switch (number_bingo_on) shows it again for one venue. Musical bingo is
+     not bingo: its tile is never touched. */
+  function numberBingoOff(){
+    try{ return !!(window.VPGaming && VPGaming.numberBingoHidden && __ctx && __ctx.venue && VPGaming.numberBingoHidden(__ctx.venue)); }catch(e){ return false; }
+  }
+  function applyNumberBingo(){
+    var off=numberBingoOff();
+    var t=document.querySelector('#gamePicker .pk[data-game="bingo"]'); if(t) t.classList.toggle("hidden", off);
+    var n=$("noBingoHq"); if(!n) return;
+    if(off && __ctx && __ctx.isAdmin){
+      var st=String((__ctx.venue && __ctx.venue.au_state)||"").toUpperCase();
+      var where=(VPGaming.NO_PUB_BINGO_STATES && VPGaming.NO_PUB_BINGO_STATES[st]) || st;
+      n.textContent="HQ only: number bingo is hidden for this venue. It is a pub in "+where+", where only a not-for-profit may run bingo, so its staff never see the Bingo tile. If a not-for-profit runs their bingo, switch it on in HQ, Venues, Details. Musical bingo and trivia are unaffected.";
+      n.classList.remove("hidden");
+    } else { n.classList.add("hidden"); n.textContent=""; }
   }
   // Forced shift timeout: a host is signed out 4 hours after signing in, so a bar device isn't
   // left logged in forever. Reset on a fresh sign-in; survives page reloads.
@@ -3725,6 +3748,7 @@
       window.location.href=GAME_PATHS[game]+q;
       return;
     }
+    if(game==="bingo" && numberBingoOff()){ showGameSelect(); return; }   // SA and NT pubs: no bingo, not even by a stale link
     currentGame=game;
     /* A tab behind the live one: ask again (the other tab may have been closed), and if it is
        still there, say so now rather than at Open lobby. The setup screen stays underneath. */

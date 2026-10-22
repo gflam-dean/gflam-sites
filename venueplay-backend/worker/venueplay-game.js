@@ -978,6 +978,47 @@ try {
   }, missing.length ? 503 : 200);
 }
 
+/* NUMBER BINGO FOR SA AND NT PUBS (Dean, 22 Oct 2026; migration 116). In South Australia bingo is
+   for not-for-profit organisations only, in the Northern Territory approved associations only, so a
+   pub there cannot run it. The console hides the tile; THIS is the route being gone: the bingo
+   session and the bingo draw are refused for such a venue, so a hand-typed request or an old tab
+   cannot start one. HQ's switch (vp_venues.number_bingo_on) turns it back on for one venue.
+   MUSICAL BINGO IS NOT BINGO: lobbyFormat maps it to musical_bingo, never bingo90, and nothing here
+   reads it. The same rule as numberBingoHidden() in app/vp-gaming.js, vpaNoNumberBingo() in the
+   billing Worker and vpNoBingoAt() on the signup page; tools/test-sant-bingo.js runs all four. */
+const NO_PUB_BINGO_STATES = new Set(['SA', 'NT']);
+const NO_PUB_BINGO_MSG = 'Number bingo is not available for pubs in South Australia or the Northern Territory: there, only a not-for-profit organisation may run bingo. Musical bingo and trivia are unaffected. If your bingo is run by a club or charity, ask us and we can switch it on.';
+function numberBingoHiddenFor(v) {
+  if (!v) return false;
+  if (!NO_PUB_BINGO_STATES.has(String(v.au_state || '').toUpperCase())) return false;
+  if (v.entity_type === 'non_profit') return false;
+  return v.number_bingo_on !== true;
+}
+/* The members draw at an SA pub is a minor trade promotion lottery: only the casino may require the
+   winner to be present (Lotteries Regulations 2021 reg 9(2)), so a pub's drawn member wins whether
+   or not they are in the room and a rollover is refused. An SA club's members-only participation
+   lottery may ask them to be present, with at least 15 minutes to claim (Sch 6 r 4(a)). Same rules
+   as noPresentToWin() and minClaimSeconds() in app/vp-gaming.js. */
+function noPresentToWinFor(v) {
+  return !!v && String(v.au_state || '').toUpperCase() === 'SA' && v.entity_type !== 'non_profit';
+}
+function minClaimSecondsFor(v) {
+  return (!!v && String(v.au_state || '').toUpperCase() === 'SA' && v.entity_type === 'non_profit') ? 900 : 30;
+}
+const NO_PRESENT_TO_WIN_MSG = 'In South Australia a pub members draw cannot require the winner to be present, so the jackpot cannot roll over because they are not here. Record the win and contact them.';
+/* The venue's state, type and the HQ bingo switch, in one read. number_bingo_on is asked for on its
+   own terms: before migration 116 PostgREST refuses the whole select over that one column, so the
+   read is made again without it, and an SA or NT pub then simply has number bingo off. */
+async function venueRulesRow(env, venueId) {
+  try {
+    const v = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=au_state,entity_type,number_bingo_on&limit=1');
+    return v[0] || null;
+  } catch (e) {
+    const v = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=au_state,entity_type&limit=1');
+    return v[0] || null;
+  }
+}
+
 async function handleCreateSession(request, env, json) {
   const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
   const b = await readJson(request);
@@ -986,6 +1027,11 @@ async function handleCreateSession(request, env, json) {
   assertUuid(venueId, 'venue_id');                                // reject anything that is not a UUID before it reaches PostgREST
 
   const staff = await requireStaff(env, authUserId, venueId);     // ENFORCED: staff at THIS venue (also enforces the kill-switch)
+
+  // No number bingo session for an SA or NT pub (migration 116). Musical bingo is never bingo90.
+  if (lobbyFormat(b.format) === 'bingo90' && numberBingoHiddenFor(await venueRulesRow(env, venueId))) {
+    return json({ error: NO_PUB_BINGO_MSG, code: 'number_bingo_off' }, 403);
+  }
 
   // Idempotent open: the schema allows only ONE live session per venue
   // (partial unique index vp_sessions_one_live_per_venue). If the host already
@@ -3957,6 +4003,10 @@ async function handleMembersResolve(request, env, json) {
   if (!draws.length) return json({ error: 'Draw not found' }, 404);
   const draw = draws[0];
   await requireStaff(env, authUserId, draw.venue_id);            // ENFORCED: staff at the draw's venue (also kill-switch)
+  // No "not here, roll it over" at an SA pub: the member drawn has won (see noPresentToWinFor).
+  if (outcome === 'jackpot_rolled' && noPresentToWinFor(await venueRulesRow(env, draw.venue_id))) {
+    return json({ error: NO_PRESENT_TO_WIN_MSG, code: 'no_present_to_win' }, 409);
+  }
 
   /* THE MAXIMUM JACKPOT AND THE RESERVE (migration 101). Read in a trip of their own and
      forgiven, exactly like last_drawn_at above handleMembersDrawManyTrips: PostgREST rejects a
@@ -4477,6 +4527,12 @@ async function handleMembersSettings(request, env, json) {
   intField('increment_cents', 0);
   intField('current_jackpot_cents', 0);
   intField('time_to_claim_seconds', 30, 3600);
+  /* An SA club that asks its winner to be present must give them 15 minutes (minClaimSecondsFor).
+     Raised, not refused, the same way the 30 second floor above is. 0 ("no window") stays 0. */
+  if (patch.time_to_claim_seconds > 0) {
+    const minClaim = minClaimSecondsFor(await venueRulesRow(env, venueId));
+    if (patch.time_to_claim_seconds < minClaim) patch.time_to_claim_seconds = minClaim;
+  }
   intField('draw_length_seconds');
   // The name is editable on an EXISTING draw too. It was only ever read on the create branch, so
   // a venue renaming its draw was told "saved" and the TV kept showing the old name forever.
@@ -6543,6 +6599,10 @@ async function handleBingoDrawStart(request, env, json) {
   assertUuid(venueId, 'venue_id');
   await requireStaff(env, authUserId, venueId);            // staff at THIS venue, and the kill-switch
   await assertVenueActive(env, venueId);
+  // Every bingo game, real balls included, opens here: none for an SA or NT pub (migration 116).
+  if (numberBingoHiddenFor(await venueRulesRow(env, venueId))) {
+    return json({ error: NO_PUB_BINGO_MSG, code: 'number_bingo_off' }, 403);
+  }
   let sessionId = null;
   if (b.session_id) { try { assertUuid(String(b.session_id), 'session_id'); sessionId = String(b.session_id); } catch (e) { sessionId = null; } }
 

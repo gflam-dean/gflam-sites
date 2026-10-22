@@ -107,7 +107,8 @@ check('TAS raffle: for a non-profit, $10,000 permit line, cash $5,000, no minors
 check('TAS bingo: two jackpot games, $300 first, $50 a session, paid out at $2,000, promo $1,000 and $2,000', /two jackpot games/i.test(text(tasB)) && /\$300/.test(text(tasB)) && /\$50 a session/.test(text(tasB)) && /\$2,000/.test(text(tasB)) && /\$1,000 a game/.test(text(tasB)), text(tasB));
 var wa = paid('WA', 'for_profit', 'raffle');
 check('WA: independent certification from a university or accounting firm, lodged with rgl@lgirs.wa.gov.au', /university/i.test(text(wa)) && /accounting firm/i.test(text(wa)) && /rgl@lgirs\.wa\.gov\.au/.test(text(wa)) && !/Queensland one/.test(text(wa)), text(wa));
-check('NT: the paid block is unchanged', !!paid('NT', 'non_profit', 'raffle').blocked);
+/* Dean, 22 Oct 2026: ignore the NT condition on payments to organisations, so the block is gone. */
+check('NT: no paid block any more (Dean, 22 Oct 2026)', !paid('NT', 'non_profit', 'raffle').blocked && paid('NT', 'non_profit', 'raffle').ok === true);
 check('the ads line reaches NSW, VIC and ACT and not QLD or TAS', /Anisimoff, 1 Oct 2026, point 15/.test(text(nswB)) && /point 10/.test(text(vicN)) && /under 25/.test(text(actB)) && !/\bad\b/i.test(text(qldN)) && !/\bad\b/i.test(text(tasB)));
 
 print('permitRecorded: the one shared rule');
@@ -135,7 +136,9 @@ check('no figure phrase reads "the ACT"', whereAct.length === 0, whereAct);
 check('VIC paid bingo: $20,000 notification', lim('VIC', 'non_profit', 'bingo90', true).cents === 2000000);
 check('ACT: $3,000 members, $2,500 raffle, $1,000 housie', lim('ACT', 'for_profit', 'members', false).cents === 300000 && lim('ACT', 'for_profit', 'raffle', true).cents === 250000 && lim('ACT', 'for_profit', 'bingo90', true).cents === 100000);
 check('TAS: $5,000 cash for draws, $2,000 jackpot bingo', lim('TAS', 'non_profit', 'raffle', true).cents === 500000 && lim('TAS', 'non_profit', 'members', false).cents === 500000 && lim('TAS', 'non_profit', 'bingo90', true).cents === 200000);
-check('NT: $2,000 members, $5,000 raffle; SA: $5,000', lim('NT', 'for_profit', 'members', false).cents === 200000 && lim('NT', 'non_profit', 'raffle', true).cents === 500000 && lim('SA', 'for_profit', 'members', false).cents === 500000);
+/* NT members, 22 Oct 2026 research: a pub's minor trade lottery is $5,000, a club's attendance or
+   membership lottery $10,000 (it was $2,000 before the legislation was read again). */
+check('NT: $5,000 pub members, $10,000 club members, $5,000 raffle; SA: $5,000', lim('NT', 'for_profit', 'members', false).cents === 500000 && lim('NT', 'non_profit', 'members', false).cents === 1000000 && lim('NT', 'non_profit', 'raffle', true).cents === 500000 && lim('SA', 'for_profit', 'members', false).cents === 500000);
 check('WA: null, and says no figure yet', lim('WA', 'non_profit', 'raffle', true).cents === null && /no prize figure/i.test(lim('WA', 'non_profit', 'raffle', true).why));
 check('an unknown state and trivia: null, with a reason, never a throw', lim('XX', 'non_profit', 'raffle', true).cents === null && lim('', 'non_profit', 'raffle', true).cents === null && lim('NSW', 'non_profit', 'trivia', true).cents === null && !!lim('XX', 'non_profit', 'raffle', true).why);
 var allWhy = [];
