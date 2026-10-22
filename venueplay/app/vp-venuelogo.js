@@ -104,28 +104,51 @@
   var DARK = 0.18;   /* black, navy and charcoal get a plate; pure red (0.21) and every mid colour do not */
 
   /* Read the logo's pixels from a SEPARATE copy of the picture, asked for with CORS. The one on screen
-     is never touched: a storage server that does not answer CORS just means no reading, and the logo
-     shows exactly as before. */
-  function backing(img, kind) {
-    var src = img.currentSrc || img.src;
-    if (!src || img.__vpToneFor === src) return;
-    img.__vpToneFor = src;
+     is never touched: a storage server that does not answer CORS just means no reading (cb gets null),
+     and the logo shows exactly as before. readTone is also what the printed signs use
+     (venueplay/signage.html), where the danger is the other way round: a WHITE logo on white paper. */
+  function readTone(src, cb) {
     try {
       var probe = new w.Image();
       probe.crossOrigin = "anonymous";
       probe.onload = function () {
-        if ((img.currentSrc || img.src) !== src) return;          /* a newer logo has replaced it */
-        var L = null;
+        var L = null, S = null;
         try {
           var c = d.createElement("canvas"); c.width = 48; c.height = 48;
           var x = c.getContext("2d"); x.drawImage(probe, 0, 0, 48, 48);
-          L = lightness(x.getImageData(0, 0, 48, 48).data);
-        } catch (e) { L = null; }
-        plate(img, L !== null && L < DARK, kind);
+          var px = x.getImageData(0, 0, 48, 48).data;
+          L = lightness(px); S = lightShare(px);
+        } catch (e) { L = null; S = null; }
+        cb(L, S);
       };
-      probe.onerror = function () {};
+      probe.onerror = function () { cb(null, null); };
       probe.src = src;
-    } catch (e) {}
+    } catch (e) { cb(null, null); }
+  }
+  /* ON WHITE PAPER the question is not the average but how much of the ink is (near) white: Tugun's
+     crest is white ribbons with black lettering, and the ribbons are what vanish. lightShare(rgba) is the
+     share of the painted pixels that are lighter than 0.85, or null when nothing is painted. Measured
+     22 Oct 2026: Deepwater's white recolour 1.0, Tugun's crest 0.83, a pure yellow 1.0; gold (0.78
+     lightness) 0, red, navy, grey and black 0. Over LIGHT, the printed sign puts the logo on a dark plate. */
+  function lightShare(rgba) {
+    var light = 0, n = 0;
+    for (var i = 0; i + 3 < rgba.length; i += 4) {
+      var a = rgba[i + 3] / 255;
+      if (a < 0.25) continue;
+      if ((0.2126 * rgba[i] + 0.7152 * rgba[i + 1] + 0.0722 * rgba[i + 2]) / 255 > 0.85) light += a;
+      n += a;
+    }
+    return n ? light / n : null;
+  }
+  var LIGHT = 0.5;
+  function backing(img, kind) {
+    var src = img.currentSrc || img.src;
+    if (!src || img.__vpToneFor === src) return;
+    img.__vpToneFor = src;
+    readTone(src, function (L) {
+      if ((img.currentSrc || img.src) !== src) return;          /* a newer logo has replaced it */
+      plate(img, L !== null && L < DARK, kind);
+    });
   }
   function plate(img, on, kind) {
     var s = img.style;
@@ -156,5 +179,5 @@
     return size(img, kind);
   }
 
-  w.VPVenueLogo = { box: box, limits: limits, fit: fit, lightness: lightness, DARK: DARK, TV: TV, PHONE: PHONE };
+  w.VPVenueLogo = { box: box, limits: limits, fit: fit, lightness: lightness, lightShare: lightShare, readTone: readTone, DARK: DARK, LIGHT: LIGHT, TV: TV, PHONE: PHONE };
 })(window, document);

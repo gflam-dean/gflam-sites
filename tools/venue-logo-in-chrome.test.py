@@ -59,6 +59,9 @@ make('wide', 1200, 300, 'rect'); make('square', 800, 800, 'ellipse'); make('roun
 # Colour: a red crest must be painted RED (no filter, no white version), and a navy one, which would
 # vanish on the dark wall, gets a pale plate behind it.
 make('red', 800, 800, 'ellipse', (230, 20, 30, 255)); make('navy', 800, 800, 'ellipse', (12, 22, 80, 255))
+# Paper (22 Oct 2026): a white logo vanishes on a printed sign, so it gets a dark plate; a dark one does not.
+SIGN_LOGOS = {'sign-white': '/__logos/square.png', 'sign-navy': '/__logos/navy.png', 'sign-slow': '/__logos/slow-square.png',
+              'sign-gold': '/__logos/wide.png'}
 
 
 class Site(http.server.BaseHTTPRequestHandler):
@@ -71,6 +74,12 @@ class Site(http.server.BaseHTTPRequestHandler):
         p = urllib.parse.urlparse(self.path).path[len('/__worker'):]
         if p.startswith('/join/info'):   # the phone asks which venue this is: it has a square logo
             return self.send(200, json.dumps({'ok': True, 'logo_url': '/__logos/square.png', 'fields': []}), 'application/json')
+        # The printed signs (signage.html) ask whether the venue exists, then for its logo.
+        q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+        if p.startswith('/venue'):
+            return self.send(200, json.dumps({'exists': True, 'name': 'Sign Test Club'}), 'application/json')
+        if p.startswith('/screen') and q.get('venue', [''])[0] in SIGN_LOGOS:
+            return self.send(200, json.dumps({'exists': True, 'name': 'Sign Test Club', 'logo_url': SIGN_LOGOS[q['venue'][0]]}), 'application/json')
         return self.send(404, '{}', 'application/json')
     def do_POST(self):
         if self.path.startswith('/__worker'):
@@ -81,7 +90,8 @@ class Site(http.server.BaseHTTPRequestHandler):
         u = urllib.parse.urlparse(self.path)
         if u.path.startswith('/__worker'): return self.worker()
         if u.path.startswith('/__logos/'):
-            f = os.path.join(LOGOS, os.path.basename(u.path))
+            if u.path.startswith('/__logos/slow-'): time.sleep(1.5)     # a logo still on its way when Print is pressed
+            f = os.path.join(LOGOS, os.path.basename(u.path).replace('slow-', ''))
             return self.send(200, open(f, 'rb').read(), 'image/png') if os.path.isfile(f) else self.send(404, 'no', 'text/plain')
         if u.path == '/__fake/supabase.js':
             pre = 'window.__FAKE_DB={};window.__FAKE_SIGNED_IN=false;window.__FAKE_UID="x";\n'
@@ -293,8 +303,73 @@ def mark_check(label, path, w, h, has_dim):
         B.close_tab(tid)
 
 
+SIGN = r'''(function(){
+  var out=[], imgs=document.querySelectorAll(".sheet:not(.hidden) [data-logo]");
+  for(var i=0;i<imgs.length;i++){ var im=imgs[i], b=im.getBoundingClientRect(), cs=getComputedStyle(im);
+    var sg=im.closest("[data-sign]"), nm=sg&&sg.querySelector("[data-venue]"), nb=nm?nm.getBoundingClientRect():null, sb=sg.getBoundingClientRect();
+    out.push({tone:im.getAttribute("data-tone"), plate:im.classList.contains("onplate"), bg:cs.backgroundColor, hidden:im.hidden,
+      done:im.complete&&im.naturalWidth>0, l:b.left,t:b.top,r:b.right,b:b.bottom,w:b.width,h:b.height,
+      name:nb?{l:nb.left,t:nb.top,r:nb.right,b:nb.bottom}:null, sign:{l:sb.left,t:sb.top,r:sb.right,b:sb.bottom}}); }
+  return JSON.stringify(out);
+})()'''
+
+def sign(slug, sheet):
+    tid, sid = open_page('/signage?venue=%s&sheet=%s' % (slug, sheet), 1100, 1500, False)
+    try:
+        v = until(sid, '(function(){var m=JSON.parse(%s);return m.length && m.every(function(x){return x.tone;}) ? JSON.stringify(m) : "";})()' % SIGN, 20)
+        m = json.loads(v) if v else json.loads(ask(sid, SIGN) or '[]')
+        shot(sid, 'chrome-sign-%s-%s' % (slug, sheet))
+        return m, sid, tid
+    except Exception:
+        B.close_tab(tid); raise
+
+def sign_checks():
+    print('\nTHE PRINTED SIGNS: a white logo on white paper sits on a dark plate')
+    heights = {}
+    for slug, light in (('sign-white', True), ('sign-navy', False), ('sign-gold', False)):
+        for sheet in ('poster', 'cards', 'tents'):
+            m, sid, tid = sign(slug, sheet)
+            try:
+                tag = '%s %s' % (slug, sheet)
+                if not m:
+                    ok(tag + ': the logo is on the sign', False, m); continue
+                ok(tag + ': every logo on the sheet is judged (%d)' % len(m), all(x['tone'] for x in m), [x['tone'] for x in m])
+                if light:
+                    ok(tag + ': a white logo is read as light and put on the dark plate',
+                       all(x['tone'] == 'light' and x['plate'] and x['bg'] == 'rgb(17, 17, 17)' for x in m), m[0])
+                    x = m[0]
+                    c = colour_at(sid, x['l'] + 4, x['t'] + x['h'] / 2)
+                    ok(tag + ': and the plate is really painted dark beside the logo', c and max(c) < 60, c)
+                else:
+                    ok(tag + ': a %s logo prints as it is, no plate' % ('navy' if 'navy' in slug else 'gold'),
+                       all(x['tone'] == 'dark' and not x['plate'] and x['bg'] in ('rgba(0, 0, 0, 0)', 'transparent') for x in m), m[0])
+                ok(tag + ': the logo stays inside its sign and clear of the venue name',
+                   all(x['l'] >= x['sign']['l'] - 1 and x['r'] <= x['sign']['r'] + 1 and x['t'] >= x['sign']['t'] - 1 and
+                       x['b'] <= x['sign']['b'] + 1 and (not x['name'] or not hits(x, x['name'])) for x in m), m[0])   # a tent's back face is upside down
+                heights[(slug, sheet)] = round(m[0]['h'])
+            finally:
+                B.close_tab(tid)
+    for sheet in ('poster', 'cards', 'tents'):
+        a, b = heights.get(('sign-white', sheet)), heights.get(('sign-navy', sheet))
+        ok('%s: the plate keeps the logo\'s slot the height the sign was fitted around (%s vs %s)' % (sheet, a, b), a and b and abs(a - b) <= 1, (a, b))
+    # Print pressed while the logo is still downloading: the dialog waits for the picture AND the plate.
+    tid, sid = open_page('/signage?venue=sign-slow&sheet=poster', 1100, 1500, False)
+    try:
+        until(sid, 'document.querySelector(".sheet:not(.hidden) [data-logo]") && !!document.querySelector(".sheet:not(.hidden) [data-logo]").getAttribute("src")', 15)
+        ask(sid, 'window.__atPrint=null; window.print=function(){ var i=document.querySelector(".sheet:not(.hidden) [data-logo]"); '
+                 'window.__atPrint=JSON.stringify({done:i.complete&&i.naturalWidth>0, tone:i.getAttribute("data-tone"), plate:i.classList.contains("onplate")}); }; '
+                 'document.getElementById("printBtn").click(); true')
+        v = until(sid, 'window.__atPrint', 10)
+        at = json.loads(v) if v else {}
+        ok('Print pressed while a white logo is still downloading: the dialog opens only once it has arrived and sits on its plate',
+           at.get('done') and at.get('tone') == 'light' and at.get('plate'), at or 'print never called')
+    finally:
+        B.close_tab(tid)
+
+
 try:
-    print('THE TV: every logo shape, swapped on the live mark')
+    sign_checks()
+    print('\nTHE TV: every logo shape, swapped on the live mark')
     tv('bingo', '/tv?demo=1', 1920, 1080, 8, ['square', 'wide', 'round', 'tall', 'red', 'navy'])
     mark_check('bingo', '/tv?demo=1', 1920, 1080, True)
     mark_check('trivia', '/app/trivia/screen.html?demo=1', 1920, 1080, False)

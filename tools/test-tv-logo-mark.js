@@ -118,6 +118,22 @@ check('a gold logo shows as it is (no plate)', !(Lg < V.DARK), Lg);
 check('see-through pixels do not count: black lines on a mostly empty canvas are still a dark logo',
       V.lightness(px(0, 0, 0, 255, 4).concat(px(255, 255, 255, 0, 60))) < V.DARK);
 check('a logo with nothing painted is not judged at all', V.lightness(px(255, 255, 255, 0)) === null);
+
+/* The printed signs read the same number the other way round (22 Oct 2026): a logo lighter than
+   LIGHT would vanish on white paper, so signage.html puts it on a dark plate. */
+function share(r, g, b, a) { return V.lightShare(px(r, g, b, a)); }
+var Stug = V.lightShare(px(240, 240, 240, 255, 83).concat(px(0, 0, 0, 255, 17)));   // Tugun: white ribbons, black lettering
+check('on paper: a white logo is light enough to need the dark plate', share(255, 255, 255, 255) > V.LIGHT, share(255, 255, 255, 255));
+check('on paper: a white crest with black lettering (Tugun) still needs it', Stug > V.LIGHT, [Stug, V.LIGHT]);
+check('on paper: a pale yellow logo needs it too', share(255, 255, 60, 255) > V.LIGHT, share(255, 255, 60, 255));
+check('on paper: a gold logo prints as it is', !(share(250, 200, 40, 255) > V.LIGHT), share(250, 200, 40, 255));
+check('on paper: red, navy and black logos print as they are',
+      !(share(255, 0, 0, 255) > V.LIGHT) && !(share(10, 20, 90, 255) > V.LIGHT) && !(share(0, 0, 0, 255) > V.LIGHT));
+check('on paper: a black wordmark with a little white in it prints as it is',
+      !(V.lightShare(px(0, 0, 0, 255, 70).concat(px(255, 255, 255, 255, 30))) > V.LIGHT));
+check('on paper: see-through pixels are not ink', V.lightShare(px(255, 255, 255, 0)) === null &&
+      V.lightShare(px(0, 0, 0, 255, 4).concat(px(255, 255, 255, 0, 60))) === 0);
+check('the pixel reading is one function the signs can call', typeof V.readTone === 'function');
 check('nothing in the sizing rule filters, brightens, inverts or recolours a logo',
       !/filter\s*=|invert\(|brightness\(|grayscale\(|saturate\(|mix-blend/.test(LOGO_SRC.replace(/\/\*[\s\S]*?\*\//g, '')));
 
@@ -228,6 +244,12 @@ function stripComments(s) { return s.replace(/<!--[\s\S]*?-->/g, '').replace(/\/
   var use = S.indexOf('VPVenueLogo.fit(');
   check(f.replace('venueplay/', '') + ': loads /app/vp-venuelogo.js before the code that uses it', tag !== -1 && use !== -1 && tag < use, [tag, use]);
 });
+
+(function () {
+  var S = stripComments(readFile('venueplay/signage.html'));
+  var tag = S.indexOf('<script src="/app/vp-venuelogo.js"></script>'), use = S.indexOf('VPVenueLogo.readTone(');
+  check('signage.html: loads /app/vp-venuelogo.js before it reads a logo\'s tone', tag !== -1 && use !== -1 && tag < use, [tag, use]);
+})();
 
 print('');
 print(fails ? (fails + ' FAILED, ' + ran + ' run') : ('ALL ' + ran + ' CHECKS PASSED'));
