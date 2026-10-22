@@ -99,7 +99,7 @@ function liveEntries() { return DB.vp_purchase_raffle_entries.filter(function (e
   show('terms: how winners are told', /contacted by phone and email/.test(terms));
   show('terms: the prize and its value', /A trip for two to Fiji \(valued at \$5,000\)/.test(terms));
   show('terms: no limit stated as no limit', /no limit on the number of entries/.test(terms));
-  show('terms: no em dash', terms.indexOf('—') < 0);
+  show('terms: no em dash', terms.indexOf(String.fromCharCode(0x2014)) < 0);
   show('creation is audited with who did it', audits('purchase_raffle_created').length === 1 && audits('purchase_raffle_created')[0].actor_label === 'host:staff-1');
   s = await setup({ raffle_id: r0.id, daily_cap: 3 });
   show('a change rewrites the terms', s.status === 200 && /no more than 3 entries a day/.test(raffle().terms_text));
@@ -179,7 +179,8 @@ function liveEntries() { return DB.vp_purchase_raffle_entries.filter(function (e
   ROLE = 'manager';
   li = await call(handlePraffleEntrants, { venue_id: VENUE, raffle_id: raffle().id });
   show('a manager sees both, newest first', li.status === 200 && li.body.total === 2 && li.body.entrants[0].name === 'Ann Lee');
-  show('no full mobile anywhere in the reply', JSON.stringify(li.body).indexOf('412345678') < 0 && JSON.stringify(li.body).indexOf('499000111') < 0);
+  var flat = JSON.stringify(li.body).replace(/\s/g, '');   // "0412 345 678" with its spaces is still the whole number
+  show('no full mobile anywhere in the reply, spaced or not', flat.indexOf('412345678') < 0 && flat.indexOf('499000111') < 0);
   var bobRow = li.body.entrants.filter(function (x) { return x.name === 'Bob Smith'; })[0];
   show('entries counted without the voided one', bobRow && bobRow.entries === 5 && li.body.entrants[0].entries === 0, JSON.stringify(li.body.entrants));
   li = await call(handlePraffleEntrants, { venue_id: VENUE, raffle_id: raffle().id, q: 'smi' });
