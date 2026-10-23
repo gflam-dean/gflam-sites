@@ -17,6 +17,9 @@ var VP_SUPPORT_PHONE=(/const VP_SUPPORT_PHONE = '([^']+)'/.exec(BILL)||[,""])[1]
 var VP_SUPPORT_TEL=(/const VP_SUPPORT_TEL = '([^']+)'/.exec(BILL)||[,""])[1];
 eval(lift(BILL,"vpaSupportPhoneHtml"));
 eval(lift(BILL,"vpaVenueEmailFoot"));
+/* The shell (23 Oct 2026): every venue email is now a full document in the shared card. */
+eval(lift(BILL,"vpaEmailDocument"));
+eval(lift(BILL,"vpaVenueEmailCard"));
 eval(lift(BILL,"vpaEsc"));
 eval(lift(BILL,"vpaInvoiceLinesHtml"));
 eval(lift(BILL,"vpaTaxSummaryHtml"));

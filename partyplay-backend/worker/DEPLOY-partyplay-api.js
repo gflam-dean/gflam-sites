@@ -1,5 +1,5 @@
 /* PASTE THIS ONE.
-   Built 15 Oct 2026, 09:23:34   fingerprint c688b57a8e3c
+   Built 23 Oct 2026, 14:09:26   fingerprint 4a654fec0c72
    If that time is not within the last few minutes, close this window and reopen. */
 /* ============================================================================
    PartyPlay Worker: checkout, licences, joining.
@@ -16,7 +16,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '15 Oct 2026, 09:23 · c7de881f';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '23 Oct 2026, 15:18 · 9c195089';   // tools/stamp-workers.py, do not edit by hand
 /* ---- lib/pp-licence.js, inlined at build time. Edit the file, not this. ---- */
 const PPLicence = (function () {
   const module = { exports: {} };
@@ -207,10 +207,13 @@ function emailGuide(site) {
     '</table>' +
     '<h2 style="margin:26px 0 10px;font-family:Helvetica,Arial,sans-serif;font-size:19px;color:' + INK + '">The ten games</h2>' +
     '<p style="margin:0 0 12px;font-family:Helvetica,Arial,sans-serif;font-size:15px;color:' + MUTE + '">The ones marked <b>ready</b> need nothing from you at all.</p>' +
+    /* TWO ROWS A GAME, NOT THREE COLUMNS. Email audit, 23 Oct 2026: on a phone the two nowrap
+       columns took the width and the description was left one or two words to a line, ten
+       games long. The name and what it needs share a line; the description gets the full width. */
     '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="font-family:Helvetica,Arial,sans-serif;font-size:15px;color:#3A3444">' +
-    GAMES.map(g => '<tr><td style="padding:7px 10px 7px 0;vertical-align:top;white-space:nowrap"><b>' + g[0] + '</b></td>' +
-      '<td style="padding:7px 10px 7px 0;vertical-align:top;font-size:13px;white-space:nowrap;color:' + (g[1] === 'ready' ? '#12786A' : MUTE) + '">' + g[1] + '</td>' +
-      '<td style="padding:7px 0;vertical-align:top;color:' + MUTE + '">' + g[2] + '</td></tr>').join('') +
+    GAMES.map(g => '<tr><td style="padding:10px 0 0;vertical-align:top"><b>' + g[0] + '</b>' +
+      '<span style="font-size:13px;color:' + (g[1] === 'ready' ? '#12786A' : MUTE) + ';padding-left:10px">' + g[1] + '</span></td></tr>' +
+      '<tr><td style="padding:2px 0 8px;vertical-align:top;color:' + MUTE + ';border-bottom:1px solid #EDE9E4">' + g[2] + '</td></tr>').join('') +
     '</table>';
 }
 
