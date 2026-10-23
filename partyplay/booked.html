@@ -33,6 +33,17 @@
     border-radius:12px;padding:15px;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:17px;margin-top:24px}
   .fine{color:var(--faint);font-size:14.5px;margin-top:22px}
   .fine a{color:var(--mute)}
+  /* Lost the email, and the code with it: the way back in with just the address they paid with. */
+  .lost{background:var(--ink2);border:1px solid var(--line);border-radius:16px;padding:22px 24px;margin:26px 0}
+  .lost h2{font-size:20px;margin-bottom:6px}
+  .lost p{margin:6px 0 14px}
+  .lost label{display:block;color:var(--faint);font-size:14px;margin-bottom:6px}
+  .lost input{width:100%;padding:14px;border-radius:11px;border:1px solid var(--line);background:rgba(255,255,255,.05);
+    color:inherit;font:inherit}
+  .lost button{display:block;width:100%;margin-top:12px;background:var(--pink);color:#fff;border:0;border-radius:12px;padding:15px;
+    font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:17px;cursor:pointer}
+  .lost button[disabled]{opacity:.5;cursor:default}
+  #lostMsg{display:block;margin-top:10px;font-size:14.5px;color:var(--faint)}
 </style>
 <!-- Google Analytics. Deliberately NOT on every page: see partyplay-backend/ANALYTICS.md -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-73XKQG9TBN"></script>
@@ -79,6 +90,19 @@
   <div class="codecard"><span class="lbl">Your party code</span>
     <div class="code" id="code">------</div></div>
 
+  <!-- LOST THE EMAIL, AND THE CODE WITH IT (Dean, 23 Oct 2026). With no code on the page this
+       used to say "email hello@ and we will sort it", which is a support ticket for a $50 product
+       sold with none. The address they paid with is the one thing a host still has, so that is
+       all this asks for. The Worker sends the welcome email to that address and nowhere else. -->
+  <div class="lost" id="lost" hidden>
+    <h2>Lost the email?</h2>
+    <p>Put in the email address you paid with and we will send it again, party code and host key included.</p>
+    <label for="lostEmail">The email you paid with</label>
+    <input id="lostEmail" type="email" inputmode="email" autocomplete="email" spellcheck="false" placeholder="you@example.com">
+    <button id="lostGo">Send it again</button>
+    <span id="lostMsg"></span>
+  </div>
+
   <div class="when"><p id="when">Checking...</p></div>
 
   <h2 style="font-size:20px;margin-top:30px">What now</h2>
@@ -109,10 +133,37 @@
   if(!PPConfig.valid(code)){
     say("We could not find your booking",
         "This page needs the link Stripe sent you back with. If you have paid, your code and host link are in " +
-        "the email from PartyPlay. Nothing there? Email hello@partyplay.com.au and we will sort it.");
+        "the email from PartyPlay. Lost it? Put in the email you paid with below and we will send it again.");
     $("when").textContent = "Nothing has been charged by this page.";
     var cc = document.querySelector(".codecard"); if(cc) cc.hidden = true;
     var ag = document.querySelector(".again"); if(ag) ag.hidden = true;
+    $("lost").hidden = false;
+    var lg = $("lostGo"), le = $("lostEmail"), lm = $("lostMsg");
+    function recover(){
+      var em = (le.value || "").trim();
+      if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){ lm.textContent = "That email does not look right. Check it and try again."; return; }
+      lg.disabled = true; lg.textContent = "Sending...";
+      fetch(PPConfig.API + "/licence/recover", {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: em })
+      })
+        .then(function(r){ return r.json().then(function(j){ return { status:r.status, body:j }; }); })
+        .then(function(x){
+          if(x.status === 400 && x.body && x.body.error){ lg.disabled = false; lg.textContent = "Send it again"; lm.textContent = x.body.error; return; }
+          if(x.status >= 500) throw new Error("down");
+          /* The Worker answers the same way whether or not it knows the address, on purpose, so
+             asking cannot be used to find out who has bought. Say something true in every case. */
+          lg.textContent = "Sent";
+          lm.textContent = "If that address bought a party, the email is on its way. Give it a minute, and check the junk folder.";
+        })
+        .catch(function(){
+          lg.disabled = false; lg.textContent = "Send it again";
+          lm.textContent = "Could not reach us just now. Try again in a moment, or email hello@partyplay.com.au.";
+        });
+    }
+    lg.addEventListener("click", recover);
+    le.addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); recover(); } });
+    le.focus();
     return;
   }
   /* Paid shows in /licence the moment Stripe's webhook lands, usually within seconds. Ask a few
@@ -141,7 +192,8 @@
 
   var rs = document.getElementById("resend"), rmsg = document.getElementById("resendMsg");
   if(rs) rs.addEventListener("click", function(){
-    if(!code){ rmsg.textContent = "We do not have your code on this page. Email hello@partyplay.com.au and we will sort it."; return; }
+    /* This page only gets here with a code in shape (the branch above handles none), so the
+       send is by code; the address-only way back in is the Lost the email card above. */
     rs.disabled = true; rs.textContent = "Sending...";
     fetch(PPConfig.API + "/licence/resend", {
       method: "POST", headers: { "content-type": "application/json" },

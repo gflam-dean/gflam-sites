@@ -474,8 +474,22 @@
           'background:rgba(255,255,255,.05);color:inherit;font:inherit;text-align:center">' +
         (err ? '<p style="color:var(--pink);margin-top:12px">' + esc(err) + '</p>' : '') +
         '<button class="callbtn" id="siGo" style="margin-top:18px;width:100%">Open my party</button>' +
-        '<p style="margin-top:16px;text-align:center">Lost the email? ' +
-          '<a href="#" id="siResend">Send it again</a></p>' +
+        /* LOST THE EMAIL, which means lost the code too (Dean, 23 Oct 2026). This said "Lost the
+           email? Send it again" and then asked for the party code, which is in the lost email: a
+           circle. The one thing a host still knows is the address they paid with, so that is what
+           is asked for; the Worker sends the welcome email to that address and nowhere else. A code
+           on its own still works for somebody who has it (the telly, say) and not the email. */
+        '<div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--line);text-align:center">' +
+          '<div style="font-weight:800;margin-bottom:6px">Lost the email?</div>' +
+          '<p style="margin:0 0 12px;color:var(--faint)">Put in the email address you paid with and we will send it again, ' +
+            'party code and host key included.</p>' +
+          '<label for="siEmail" style="display:block;margin:0 0 6px;color:var(--faint);font-size:14px">The email you paid with</label>' +
+          '<input id="siEmail" type="email" inputmode="email" autocomplete="email" spellcheck="false" ' +
+            'placeholder="you@example.com" style="width:100%;padding:14px;border-radius:11px;border:1px solid var(--line);' +
+            'background:rgba(255,255,255,.05);color:inherit;font:inherit;text-align:center">' +
+          '<button class="sec" id="siResend" style="margin-top:12px;width:100%">Send it again</button>' +
+          '<p id="siSent" style="margin:12px 0 0;color:var(--faint);font-size:14.5px"></p>' +
+        '</div>' +
         '<div style="margin-top:26px;padding-top:20px;border-top:1px solid var(--line)">' +
           '<div style="font-weight:800;margin-bottom:10px">Twenty minutes before people arrive</div>' +
           '<ul style="margin:0;padding-left:20px;color:var(--faint);line-height:1.75">' +
@@ -499,14 +513,34 @@
     }
     $("siGo").addEventListener("click", go);
     $("siKey").addEventListener("keydown", function(e){ if(e.key === "Enter") go(); });
-    $("siResend").addEventListener("click", function(e){
-      e.preventDefault();
+    function sendAgain(){
+      var btn = $("siResend"), out = $("siSent");
+      var em = ($("siEmail").value || "").trim();
       var c = PPConfig.code($("siCode").value);
-      if(c.length < 4) return signIn("Put your party code in first, then press send it again.", c);
-      api("/licence/resend", { method:"POST", body: JSON.stringify({ code:c }) })
-        .then(function(){ toast("If that code is one of ours, the email is on its way."); })
-        .catch(function(){ toast("If that code is one of ours, the email is on its way."); });
-    });
+      var byEmail = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em);
+      if(!byEmail && em){ out.textContent = "That email does not look right. Check it and try again."; return; }
+      if(!byEmail && c.length < 4){
+        out.textContent = "Put in the email address you paid with. If you still have your party code, that works too.";
+        return;
+      }
+      btn.disabled = true; btn.textContent = "Sending...";
+      /* The Worker answers the same way whatever happened, on purpose: asking cannot be used to
+         find out which addresses or codes are ours. So say something true in every case. */
+      var done = byEmail
+        ? "If that address bought a party, the email is on its way. Give it a minute, and check the junk folder."
+        : "If that code is one of ours, the email is on its way to the address you paid with. Give it a minute, and check the junk folder.";
+      var call = byEmail
+        ? api("/licence/recover", { method:"POST", body: JSON.stringify({ email:em }) })
+        : api("/licence/resend",  { method:"POST", body: JSON.stringify({ code:c }) });
+      call.then(function(){ btn.textContent = "Sent"; out.textContent = done; })
+        .catch(function(e){
+          if(e && e.status === 400){ btn.disabled = false; btn.textContent = "Send it again"; out.textContent = e.message; return; }
+          btn.disabled = false; btn.textContent = "Send it again";
+          out.textContent = "Could not reach us just now. Try again in a moment, or email hello@partyplay.com.au.";
+        });
+    }
+    $("siResend").addEventListener("click", function(e){ e.preventDefault(); sendAgain(); });
+    $("siEmail").addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); sendAgain(); } });
     ($("siCode").value ? $("siKey") : $("siCode")).focus();
   }
 

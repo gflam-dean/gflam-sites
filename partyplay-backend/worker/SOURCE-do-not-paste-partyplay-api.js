@@ -13,7 +13,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '15 Oct 2026, 09:23 · 46a85ed9';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '23 Oct 2026, 17:45 · 6a920aa9';   // tools/stamp-workers.py, do not edit by hand
 // The licence window rules live in one place and are shared with the browser.
 // Paste lib/pp-licence.js above this line when deploying, or inline it. It is
 // referenced here as PPLicence.
@@ -1942,6 +1942,64 @@ async function handleResendWelcome(request, env) {
   return same();
 }
 
+/* LOST THE EMAIL, AND THE CODE WITH IT (Dean, 23 Oct 2026).
+
+   /licence/resend above needs the party code, and the code is IN the lost email.
+   So the front door said "Lost the email? Send it again", and pressing it said
+   "Put your party code in first": a circle, on a product somebody has paid $50
+   for, and the only way out was to write to hello@. This route takes the one
+   thing a buyer still knows, the address they paid with, and sends the welcome
+   email (code and host key) to that address and nowhere else. Every party that
+   address has paid for and not yet run gets its own email, newest first, so a
+   buyer with two parties booked gets both back.
+
+   SAME SHAPE AS /licence/resend, for the same reasons: the reply never varies
+   (a known address and a stranger's guess both get {ok:true}, or an address list
+   could be checked against us one guess at a time), the email goes only to the
+   address on the licence, a send is stamped only after Resend accepted it, and
+   nobody is nagged: a party emailed in the last RESEND_GAP_MS is skipped. On top,
+   one place may ask RECOVER_PER_HOUR times an hour (the checkout's own IP tag, the
+   hashed address, never the address itself); past that the answer is the same and
+   nothing is sent. */
+const RECOVER_PER_HOUR = 5;
+const RECOVER_MAX_PARTIES = 3;
+const RECOVER_SEEN = new Map();
+
+async function handleRecoverByEmail(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const email = String(b.email || '').trim().toLowerCase().slice(0, 200);
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return json({ error: 'That email does not look right.' }, 400);
+  if (!env.RESEND_API_KEY) return json({ error: 'Email is not set up on this Worker.' }, 503);
+
+  const same = () => json({ ok: true });
+  const tag = await checkoutIpTag(env, request);
+  if (tag && recentInMemory(tag, RECOVER_SEEN).length >= RECOVER_PER_HOUR) return same();
+  noteCheckout(tag, RECOVER_SEEN);
+
+  /* Case does not matter (checkout and comp both store it lowercased, but a row typed
+     in by hand might not be), and the two characters that mean something to ILIKE are
+     escaped so the address is matched whole, never as a pattern. */
+  const pattern = email.replace(/[\\%_]/g, c => '\\' + c);
+  const rows = await sb(env, 'pp_licences?buyer_email=ilike.' + encodeURIComponent(pattern) +
+    '&status=eq.paid&order=created_at.desc&limit=' + RECOVER_MAX_PARTIES +
+    '&select=id,code,host_key,buyer_name,buyer_email,party_name,days,is_comp,welcome_sent_at,expires_at');
+
+  for (const l of rows || []) {
+    if (l.expires_at && Date.parse(l.expires_at) < Date.now()) continue;      // that party has run
+    if (l.welcome_sent_at && Date.now() - Date.parse(l.welcome_sent_at) < RESEND_GAP_MS) continue;
+    try {
+      await sendLicenceEmail(env, l);
+    } catch (e) {
+      console.log('recover by email failed for ' + l.code + ': ' + e.message);
+      continue;                                                              // no stamp: it shows as undelivered
+    }
+    await sb(env, 'pp_licences?id=eq.' + encodeURIComponent(l.id), {
+      method: 'PATCH', body: JSON.stringify({ welcome_sent_at: new Date().toISOString() })
+    });
+  }
+  return same();
+}
+
 async function handleWhoami(request, env) {
   const actor = await adminActor(request, env);
   if (!actor) return json({ error: 'no' }, 403);
@@ -2150,16 +2208,19 @@ async function checkoutIpTag(env, request) {
   const mac = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(ip));
   return [...new Uint8Array(mac)].map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 24);
 }
-function recentInMemory(tag) {
+/* `seen` is which memory to count in: checkouts by default, and /licence/recover keeps its
+   own (RECOVER_SEEN), so a buyer asking for their email again does not eat into the six
+   checkouts an hour their household is allowed. */
+function recentInMemory(tag, seen = CHECKOUT_SEEN) {
   const cut = Date.now() - 3600e3;
-  const list = (CHECKOUT_SEEN.get(tag) || []).filter(t => t > cut);
-  CHECKOUT_SEEN.set(tag, list);
+  const list = (seen.get(tag) || []).filter(t => t > cut);
+  seen.set(tag, list);
   return list;
 }
-function noteCheckout(tag) {
+function noteCheckout(tag, seen = CHECKOUT_SEEN) {
   if (!tag) return;
-  const list = recentInMemory(tag); list.push(Date.now());
-  if (CHECKOUT_SEEN.size > 5000) CHECKOUT_SEEN.clear();     // a memory guard, never a reason to refuse
+  const list = recentInMemory(tag, seen); list.push(Date.now());
+  if (seen.size > 5000) seen.clear();     // a memory guard, never a reason to refuse
 }
 async function checkoutsFrom(env, tag) {
   const mem = recentInMemory(tag).length;
@@ -2902,6 +2963,7 @@ export default {
       else if (method === 'POST' && path === '/games/delete') res = await handleGameDelete(request, env);
       else if (method === 'POST' && path === '/admin/comp')      res = await handleComp(request, env);
       else if (method === 'POST' && path === '/licence/resend') res = await handleResendWelcome(request, env);
+      else if (method === 'POST' && path === '/licence/recover') res = await handleRecoverByEmail(request, env);
       else if (method === 'GET'  && path === '/admin/stats')     res = await handleStats(request, env);
       else if (method === 'GET'  && path === '/admin/whoami')    res = await handleWhoami(request, env);
       else if (method === 'GET'  && path === '/admin/staff')     res = await handleStaffList(request, env);

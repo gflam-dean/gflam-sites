@@ -112,7 +112,7 @@
   "counted_by": "lines"
  },
  "partyplay-backend/worker/partyplay-api.test.js": {
-  "checks": 155,
+  "checks": 178,
   "counted_by": "total"
  },
  "tools/add-login-email.test.py": {
@@ -161,6 +161,10 @@
  },
  "tools/night-pass-hq-in-chrome.test.py": {
   "checks": 13,
+  "counted_by": "lines"
+ },
+ "tools/partyplay-resend-in-chrome.test.py": {
+  "checks": 20,
   "counted_by": "lines"
  },
  "tools/pickup-in-chrome.test.py": {

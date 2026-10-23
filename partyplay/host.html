@@ -197,8 +197,11 @@
 
   function load(){
     if(!CODE || !KEY){
+      /* NOT A DEAD END EITHER (23 Oct 2026). The sign-in has a box for each, and the way to get
+         the welcome email back with just the address they paid with. */
       $("app").innerHTML = '<div class="err">This link is missing something. Open the link from your confirmation email, ' +
-        'which has both your code and your host key in it.</div>';
+        'which has both your code and your host key in it, or <a href="/run' + (CODE ? '?code=' + encodeURIComponent(CODE) : '') +
+        '" style="color:inherit">put them in here, or have the email sent again</a>.</div>';
       return;
     }
     api("/games?code=" + encodeURIComponent(CODE) + "&key=" + encodeURIComponent(KEY))
