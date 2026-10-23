@@ -68,6 +68,11 @@ function rect(f) { return { getBoundingClientRect: f, scrollWidth: f().width, hi
 var getComputedStyle = function (el) { return el.css(); };
 var document = { createRange: function () { throw new Error('no ranges here, fall back to scrollWidth'); } };
 eval(block);
+/* The words rule (23 Oct 2026): read out of the same file, between its own markers. */
+var words = H.split('// VP-SIGN-WORDS-START')[1];
+words = words && words.split('// VP-SIGN-WORDS-END')[0];
+if (!words || words.length < 100) throw new Error('no VP-SIGN-WORDS block in signage.html');
+eval(words);
 
 // Run the real fitSign and give back the unit it settled on, in pixels.
 function fittedU(opts) {
@@ -83,7 +88,7 @@ function fitsWith(opts, u) {
   return fitsAt(el, u, { height: SIGN_H, width: SIGN_W });
 }
 
-var EXPECT = 14, ran = 0, bad = 0;
+var EXPECT = 18, ran = 0, bad = 0;
 function ok(n, c, extra) { ran++; if (c) print('  ok   ' + n); else { bad++; print('  FAIL ' + n + (extra ? '   ' + extra : '')); } }
 
 var NOLOGO = { logoH: 0, logoW: 0 };
@@ -129,6 +134,12 @@ ok('the logo has a fixed slot, not a max-height that collapses before it loads',
    /\.sign \.vlogo\{height:14cqh;/.test(H) && !/\.sign \.vlogo\{max-height/.test(H));
 ok('the print button waits for the logo before it opens the dialog',
    /logosReady\(\)\.then\(function\(\)\{ refitAll\(\); setTimeout\(function\(\)\{ window\.print\(\); \}, 60\); \}\)/.test(H));
+
+/* --- one word too long breaks mid-word on a card: the editor refuses it by name ----------------- */
+ok('a 15-letter word is refused, and named', longWord('Scan to play at Supercalifragilistic') === 'Supercalifragilistic');
+ok('a 14-letter word is allowed (the longest that holds on a card)', longWord('Supercalifragi Hotel') === '' && MAX_WORD === 14);
+ok('an address or a time is never refused: dots, digits and slashes are not letters', longWord('venueplay.com.au/play at 7.30pm') === '');
+ok('and every one of the five boxes goes through the same rule', (H.match(/takeText\((headIn|lineIn|kickIn|nameIn|whatsIn), /g) || []).length === 5);
 
 if (ran !== EXPECT) { print('ONLY ' + ran + ' OF ' + EXPECT + ' CHECKS RAN'); throw new Error('incomplete'); }
 if (bad) { print(bad + ' OF ' + EXPECT + ' FAILED'); throw new Error(bad + ' failed'); }
