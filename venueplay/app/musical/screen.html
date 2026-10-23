@@ -533,7 +533,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     throw new Error("VenuePlay: Realtime library not loaded yet");
   }
   try{ sessionStorage.removeItem("vpCdnTries"); }catch(e){}   // loaded: reset the retry count
-  var client=supabase.createClient(SUPA_URL, SUPA_ANON);
+  var client=supabase.createClient(SUPA_URL, SUPA_ANON, (window.VPChannel && VPChannel.clientOptions) ? VPChannel.clientOptions() : undefined);   // worker heartbeat: a covered window keeps its socket (vp-channel.js, rule 6)
   // Pairing channel (screen <-> host), same convention as the bingo/trivia TV: vp-<screen code>.
   // The host dual-broadcasts every game message here, so this one channel is enough.
   // Unified TV: hop to whatever OTHER game a host puts on air (and back to bingo) on the same

@@ -1993,7 +1993,7 @@
       /* ONE BINGO CHANNEL AT A TIME. This function runs again after a throw below; hang up the
          last one first, so its retries stop and its CLOSED is not news. */
       if(ch && ch.unsubscribe){ try{ ch.unsubscribe(); }catch(e){} ch=null; }
-      client=supabase.createClient(SUPA_URL, SUPA_ANON);
+      client=supabase.createClient(SUPA_URL, SUPA_ANON, (window.VPChannel && VPChannel.clientOptions) ? VPChannel.clientOptions() : undefined);   // worker heartbeat: a covered window keeps its socket (vp-channel.js, rule 6)
       /* AND IT COMES BACK. This said Reconnecting after a CLOSED and never tried again: a bingo
          wall deaf for the night, and not counted by the watchdog either (audit, 27 Sep 2026).
          /app/vp-channel.js rebuilds it with a backoff; without the script it is the plain

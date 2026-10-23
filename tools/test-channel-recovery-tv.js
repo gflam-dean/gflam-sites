@@ -132,4 +132,100 @@ w5.dropAll('CLOSED');
 RIG.advance(5 * 60 * 1000);
 check('a screen that hears nothing at all is reloaded, even mid game, as it always was', whys(t5).indexOf('channels-deaf') >= 0, whys(t5));
 
+
+/* THE MINI BAR, 23 Oct 2026: a TV in a Chrome window nobody can see. Measured live in a hidden
+   tab: the socket died at 4 min 20 s, supabase-js 2.118 would not reconnect a hidden page, and the
+   2 s rebuild ran 91 s later. Rules 6, 7 and 8 of vp-channel.js, each against the real helper. */
+print('\nrule 7: the window is seen again while a rebuild is waiting on its (throttled) timer');
+var ev = {};
+function fakeWin(vis) {
+  var w = { console: { log: function () {} }, document: { visibilityState: vis || 'visible', addEventListener: function (n, f) { ev['doc:' + n] = f; } },
+            addEventListener: function (n, f) { ev['win:' + n] = f; } };
+  return w;
+}
+var win7 = fakeWin('visible'), helper7 = RIG.loadHelper(win7), w7 = RIG.makeClient(), got7 = [];
+var k7 = helper7.keep(w7.client, 'vp-HIDDEN', {});
+k7.on('broadcast', { event: 'msg' }, function () {});
+k7.subscribe(function (s) { got7.push(s); });
+RIG.advance(100);
+check('CONTROL: joined, and the helper listens for the window coming back', got7.join() === 'SUBSCRIBED' && !!ev['doc:visibilitychange'] && !!ev['win:pageshow'] && !!ev['win:online'] && !!ev['win:focus'], Object.keys(ev));
+w7.up = false;
+w7.drop(w7.live('HIDDEN')[0], 'CHANNEL_ERROR');
+check('the socket dies: the page hears the drop and a 2 s rebuild is booked', got7[got7.length - 1] === 'CHANNEL_ERROR' && k7.retrying() === true);
+var joins0 = w7.joins;
+win7.document.visibilityState = 'hidden'; ev['doc:visibilitychange']();
+check('a change to HIDDEN pokes nothing (the library will not reconnect a hidden page, and neither should we hammer it)', w7.joins === joins0 && k7.retrying() === true);
+RIG.advance(100);
+w7.up = true;
+win7.document.visibilityState = 'visible'; ev['doc:visibilitychange']();
+check('THE WINDOW IS SEEN AGAIN: the rebuild runs NOW, not when the timer gets round to it', w7.joins === joins0 + 1 && k7.retrying() === false, [w7.joins - joins0, k7.retrying()]);
+RIG.advance(50);
+check('and the wall is subscribed again within one join (40 ms), with one live channel', got7[got7.length - 1] === 'SUBSCRIBED' && w7.live('HIDDEN').length === 1 && w7.joined('HIDDEN').length === 1, got7);
+RIG.advance(5000);
+check('the old 2 s timer did not fire a second rebuild on top (one channel, no flap)', w7.joins === joins0 + 1 && w7.live('HIDDEN').length === 1, w7.joins - joins0);
+var joins1 = w7.joins;
+ev['win:focus'](); ev['win:online'](); ev['win:pageshow']();
+check('a connected channel is left alone by focus, online and pageshow', w7.joins === joins1 && w7.live('HIDDEN').length === 1);
+k7.unsubscribe();
+w7.drop(w7.live('HIDDEN')[0], 'CHANNEL_ERROR');
+ev['win:focus']();
+check('a channel that was hung up is never poked back to life', w7.joins === joins1 && w7.live('HIDDEN').length === 0);
+
+print('\nrule 6: the heartbeat runs in a worker, only where a worker can be made');
+function winWith(worker) {
+  var w = fakeWin('visible'); w.Blob = function () {}; w.URL = { createObjectURL: function () { return 'blob:x'; }, revokeObjectURL: function () {} };
+  if (worker) w.Worker = worker;
+  return w;
+}
+var made = 0;
+var o6 = RIG.loadHelper(winWith(function () { made++; this.terminate = function () {}; })).clientOptions();
+check('a browser with Worker, Blob and URL.createObjectURL gets the worker heartbeat, every 15 s', JSON.stringify(o6) === JSON.stringify({ realtime: { worker: true, heartbeatIntervalMs: 15000 } }) && made === 1, o6);
+check('a browser with no Worker gets the plain client (createClient would THROW if asked for a worker it cannot make)', JSON.stringify(RIG.loadHelper(fakeWin()).clientOptions()) === '{}');
+check('a browser whose blob worker is refused (a CSP, a kiosk) gets the plain client too', JSON.stringify(RIG.loadHelper(winWith(function () { throw new Error('SecurityError'); })).clientOptions()) === '{}');
+['venueplay/tv.html', 'venueplay/app/trivia/screen.html', 'venueplay/app/musical/screen.html', 'venueplay/app/raffle/screen.html', 'venueplay/app/members/screen.html'].forEach(function (f) {
+  var src = readFile(f);
+  check(f + ' hands clientOptions() to createClient, guarded, and loads the script that makes it',
+        src.indexOf('supabase.createClient(SUPA_URL, SUPA_ANON, (window.VPChannel && VPChannel.clientOptions) ? VPChannel.clientOptions() : undefined)') > 0 && RIG.loadsScript(src, 'vp-channel.js'));
+});
+
+print('\nrule 8: supabase-js 2.11x hands back the channel it has not finished leaving');
+function stickyClient() {
+  var list = [], made = [];
+  var c = { made: made,
+    channel: function (name, opts) {
+      var ex = list.filter(function (x) { return x.name === name; })[0];
+      if (ex) return ex;                                   // the library's find-by-topic
+      var ch = { name: name, state: 'closed', cb: null, subs: 0, ons: 0,
+        on: function () { ch.ons++; return ch; },
+        subscribe: function (cb) {
+          if (ch.state !== 'closed') return ch;            // 2.118: a silent no-op, no status ever
+          ch.cb = cb; ch.subs++; ch.state = 'joining';
+          RIG.setTimeout(function () { if (ch.state === 'joining') { ch.state = 'joined'; cb('SUBSCRIBED'); } }, 40);
+          return ch;
+        },
+        send: function () {},
+        unsubscribe: function () {
+          ch.state = 'leaving';
+          RIG.setTimeout(function () { ch.state = 'closed'; list = list.filter(function (x) { return x !== ch; }); if (ch.cb) ch.cb('CLOSED'); }, 100);   // the server acks the leave
+          return Promise.resolve('ok');
+        } };
+      list.push(ch); made.push(ch); return ch;
+    },
+    removeChannel: function (ch) { return ch.unsubscribe(); },
+    getChannels: function () { return list; } };
+  return c;
+}
+var c8 = stickyClient(), got8 = [], k8 = RIG.loadHelper(fakeWin()).keep(c8, 'vp-STICKY', {});
+k8.on('broadcast', { event: 'msg' }, function () {});
+k8.subscribe(function (s) { got8.push(s); });
+RIG.advance(100);
+check('CONTROL: joined on the first channel', got8.join() === 'SUBSCRIBED' && c8.made.length === 1);
+c8.made[0].cb('CHANNEL_ERROR');                            // a transient error: the library still holds the channel
+check('the drop books the 2 s rebuild', k8.retrying() === true);
+RIG.advance(2000);
+check('the rebuild asked the library and got its OWN old channel back (still leaving): it did not take it', k8.current() === null && c8.made.length === 1 && c8.made[0].subs === 1 && k8.retrying() === true, [c8.made.length, c8.made[0].subs]);
+RIG.advance(300);
+check('the leave lands, the next ask gets a FRESH channel, and it joins', c8.made.length === 2 && c8.made[1].subs === 1 && k8.current() === c8.made[1] && got8[got8.length - 1] === 'SUBSCRIBED', got8);
+check('the old channel was never subscribed twice and its listeners were not doubled onto it', c8.made[0].subs === 1 && c8.made[0].ons === 1);
+
 RIG.done('channel recovery, tv');
