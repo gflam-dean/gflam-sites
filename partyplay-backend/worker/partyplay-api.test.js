@@ -973,6 +973,129 @@ test("a Worker with no email key cannot pretend it sent one", function(){
       ok(stamps().length === 0, "and stamped nothing"); });
 });
 
+/* ============================================================================
+   GETTING THE EMAIL BACK WITH JUST THE ADDRESS (Dean, 23 Oct 2026).
+
+   "Lost the email? Send it again" asked for the party code, and the code is in
+   the lost email. /licence/recover takes the address the buyer paid with, which
+   is the one thing they still know, and sends the same welcome email to that
+   address and nowhere else. It has to be as careful as /licence/resend: one
+   answer whatever happened, stamped only after a send, nobody nagged, and a
+   limit on how often one place may ask.
+   ========================================================================== */
+print("== getting the email back with just the address ==");
+function mails(){ return FETCH.calls.filter(function(c){ return /api\.resend\.com/.test(c.url); }); }
+function lookups(){ return FETCH.calls.filter(function(c){ return /pp_licences\?buyer_email=ilike\./.test(c.url); }); }
+function partiesFor(list){ return { status:200, body: JSON.stringify(list) }; }
+function party(over){
+  return Object.assign({ id:"L1", code:"ACDEFG", host_key:HK, buyer_name:"Dean", buyer_email:"dean@example.com",
+    party_name:"The party", days:1, is_comp:false, welcome_sent_at:null, expires_at:null }, over||{});
+}
+test("an address that is not an address is refused outright", function(){
+  return W.fetch(req("POST","/licence/recover",{ email:"not an email" }), ENV)
+    .then(function(r){ ok(r.status===400, "expected 400, got "+r.status); });
+});
+test("no address at all is refused", function(){
+  return W.fetch(req("POST","/licence/recover",{}), ENV)
+    .then(function(r){ ok(r.status===400, "expected 400, got "+r.status); });
+});
+test("an address nobody bought with answers exactly like one that did, and sends nothing", function(){
+  FETCH.calls = []; FETCH.plan = [ partiesFor([]) ];
+  return W.fetch(req("POST","/licence/recover",{ email:"stranger@example.com" }), ENV)
+    .then(function(r){ return r.json().then(function(j){
+      ok(r.status===200 && JSON.stringify(j) === '{"ok":true}', "the reply must not say whether the address is known, got "+r.status+" "+JSON.stringify(j));
+      ok(mails().length === 0, "no email went anywhere, saw "+mails().length);
+    }); });
+});
+test("the address the buyer paid with gets the welcome email, code and host key, and the stamp comes after the send", function(){
+  FETCH.calls = []; FETCH.plan = [ partiesFor([party()]), { status:200, body: JSON.stringify({ id:"em_r1" }) } ];
+  return W.fetch(req("POST","/licence/recover",{ email:" Dean@Example.com " }), ENV)
+    .then(function(r){ return r.json().then(function(j){
+      ok(r.status===200 && j.ok===true, "got "+r.status+" "+JSON.stringify(j));
+      var look = lookups()[0];
+      ok(look && look.url.indexOf("buyer_email=ilike." + encodeURIComponent("dean@example.com")) >= 0 && /status=eq\.paid/.test(look.url),
+         "looked up by the lowercased address, paid rows only, saw "+(look && look.url));
+      var m = mails()[0]; var body = m ? JSON.parse(m.init.body) : {};
+      ok(m && body.to && body.to[0] === "dean@example.com", "sent to the address on the licence, saw "+JSON.stringify(body.to));
+      ok(/Your party code is ACDEFG/.test(body.subject||""), "it is the welcome email itself, subject was "+body.subject);
+      ok((body.html||"").indexOf(HK) >= 0, "and the host key is in it");
+      ok(body.reply_to === "hello@partyplay.com.au", "replies go to a person, saw "+body.reply_to);
+      ok(stamps().length === 1 && FETCH.calls.indexOf(stamps()[0]) > FETCH.calls.indexOf(m), "stamped once, after Resend accepted it");
+    }); });
+});
+test("the address is matched whole: _ and % are escaped before they reach ILIKE", function(){
+  FETCH.calls = []; FETCH.plan = [ partiesFor([]) ];
+  return W.fetch(req("POST","/licence/recover",{ email:"a_b%c@example.com" }), ENV)
+    .then(function(){
+      var look = lookups()[0];
+      ok(look && look.url.indexOf("ilike." + encodeURIComponent("a\\_b\\%c@example.com")) >= 0, "escaped, saw "+(look && look.url));
+    });
+});
+test("two parties booked on one address come back as two emails", function(){
+  FETCH.calls = []; FETCH.plan = [ partiesFor([party({ id:"L2", code:"HJKMNP" }), party()]),
+    { status:200, body: JSON.stringify({ id:"em_a" }) }, { status:200, body: JSON.stringify({ id:"em_b" }) } ];
+  return W.fetch(req("POST","/licence/recover",{ email:"dean@example.com" }), ENV)
+    .then(function(){
+      var subs = mails().map(function(m){ return JSON.parse(m.init.body).subject; });
+      ok(subs.length === 2 && /HJKMNP/.test(subs[0]) && /ACDEFG/.test(subs[1]), "one each, newest first, saw "+JSON.stringify(subs));
+      ok(stamps().length === 2, "both stamped, saw "+stamps().length);
+    });
+});
+test("a party that has already run is not sent again", function(){
+  FETCH.calls = []; FETCH.plan = [ partiesFor([party({ expires_at: new Date(Date.now() - 86400e3).toISOString() })]) ];
+  return W.fetch(req("POST","/licence/recover",{ email:"dean@example.com" }), ENV)
+    .then(function(r){ ok(r.status===200 && mails().length === 0, "nothing sent for a finished party, saw "+mails().length); });
+});
+test("a party emailed two minutes ago is not emailed again", function(){
+  FETCH.calls = []; FETCH.plan = [ partiesFor([party({ welcome_sent_at: new Date(Date.now() - 120e3).toISOString() })]) ];
+  return W.fetch(req("POST","/licence/recover",{ email:"dean@example.com" }), ENV)
+    .then(function(r){ return r.json().then(function(j){
+      ok(r.status===200 && j.ok===true && mails().length === 0, "same answer, no second email, saw "+mails().length);
+    }); });
+});
+test("Resend refusing the message leaves the party unstamped and the answer unchanged", function(){
+  FETCH.calls = []; FETCH.plan = [ partiesFor([party()]), { status:422, body: JSON.stringify({ message:"domain is not verified" }) } ];
+  return W.fetch(req("POST","/licence/recover",{ email:"dean@example.com" }), ENV)
+    .then(function(r){ return r.json().then(function(j){
+      ok(r.status===200 && j.ok===true, "got "+r.status+" "+JSON.stringify(j));
+      ok(stamps().length === 0, "nothing stamped as sent, saw "+stamps().length);
+    }); });
+});
+test("a Worker with no email key says so instead of pretending", function(){
+  var noMail = Object.assign({}, ENV, { RESEND_API_KEY: "" });
+  FETCH.calls = []; FETCH.plan = [ partiesFor([party()]) ];
+  return W.fetch(req("POST","/licence/recover",{ email:"dean@example.com" }), noMail)
+    .then(function(r){ ok(r.status===503, "503, got "+r.status); ok(mails().length === 0 && stamps().length === 0, "and did nothing"); });
+});
+test("one place may ask five times an hour; the sixth is answered the same and looks nothing up", function(){
+  FETCH.calls = []; FETCH.plan = [];
+  var ip = { "CF-Connecting-IP": "203.0.113.9" };
+  var chain = Promise.resolve(), last = null;
+  for (var i = 0; i < 6; i++) {
+    chain = chain.then(function(){
+      return W.fetch(req("POST","/licence/recover",{ email:"dean@example.com" }, ip), ENV).then(function(r){ last = r; });
+    });
+  }
+  return chain.then(function(){ return last.json(); }).then(function(j){
+    ok(last.status===200 && j.ok===true, "the sixth answer is the same, got "+last.status+" "+JSON.stringify(j));
+    ok(lookups().length === 5, "five lookups, not six, saw "+lookups().length);
+  });
+});
+test("and asking for the email again does not use up the household's checkouts", function(){
+  FETCH.calls = []; FETCH.plan = [];
+  var ip = { "CF-Connecting-IP": "203.0.113.10" };
+  var chain = Promise.resolve();
+  for (var i = 0; i < 5; i++) {
+    chain = chain.then(function(){ return W.fetch(req("POST","/licence/recover",{ email:"dean@example.com" }, ip), ENV); });
+  }
+  return chain.then(function(){
+    FETCH.calls = []; FETCH.plan = [ { status:200, body:"[]" }, { status:200, body:"[]" }, { status:200, body:"[]" } ];
+    return W.fetch(req("POST","/checkout",{ name:"Dean", email:"dean@example.com", days:1 }, ip), ENV);
+  }).then(function(r){
+    ok(r.status !== 429, "a checkout from the same place still goes ahead, got "+r.status);
+  });
+});
+
 /* A comp and an admin Resend stamp welcome_sent_at like a paid party, only when the
    email went, and the admin is told when it did not (audit, 27 Sep 2026). */
 var AK = {"x-admin-key":"test-admin-key"};
