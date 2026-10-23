@@ -158,7 +158,7 @@
 
   function savePermit(o, card, btn) {
     var kind = card.getAttribute("data-kind"), msg = card.querySelector(".pmsg");
-    msg.className = "vpp-msg"; msg.textContent = "";
+    msg.className = "vpp-msg pmsg"; msg.textContent = "";
     btn.disabled = true;
     root.VP.getClient().auth.getSession().then(function (r) {
       var tok = (r && r.data && r.data.session && r.data.session.access_token) || null;
@@ -170,16 +170,16 @@
         .then(function (res) { if (res.status === 404) return { error: "The billing service cannot record permits yet. Try again later." }; return res.json(); });
     }).then(function (j) {
       btn.disabled = false;
-      if (!j || j.error) { msg.className = "vpp-msg err"; msg.textContent = (j && j.error) || "Could not save."; return; }
+      if (!j || j.error) { msg.className = "vpp-msg pmsg err"; msg.textContent = (j && j.error) || "Could not save."; return; }
       o.permits = (j.permits && typeof j.permits === "object") ? j.permits : o.permits;
       var rec = j.recorded || {};
       var st = card.querySelector(".pstatus");
       if (st) st.innerHTML = statusText(!!rec[kind]);
-      msg.className = "vpp-msg ok";
+      msg.className = "vpp-msg pmsg ok";
       msg.textContent = rec[kind] ? "Saved. This counts as recorded." : (o.permits[kind] ? "Saved, but it does not count as recorded yet: it needs a number, or a charity named with the date it authorised you." : "Cleared.");
       if (typeof o.onSaved === "function") { try { o.onSaved(kind, o.permits, rec); } catch (e) {} }
     }).catch(function () {
-      btn.disabled = false; msg.className = "vpp-msg err"; msg.textContent = "Could not reach the billing service. Check your connection and try again.";
+      btn.disabled = false; msg.className = "vpp-msg pmsg err"; msg.textContent = "Could not reach the billing service. Check your connection and try again.";
     });
   }
 
