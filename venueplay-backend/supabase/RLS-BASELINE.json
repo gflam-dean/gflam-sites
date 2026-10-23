@@ -1605,6 +1605,10 @@
    "enabled": true,
    "forced": false
   },
+  "gflam_customers": {
+   "enabled": true,
+   "forced": false
+  },
   "ops_approvals": {
    "enabled": true,
    "forced": false
