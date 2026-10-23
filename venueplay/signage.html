@@ -63,11 +63,38 @@
   .fld input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.16)}
   .fld .hint{font-size:11px;color:#7A7A84}
 
-  .picks{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
   .pick{background:#17171A;border:1px solid rgba(255,255,255,.14);color:#D7D7DE;border-radius:999px;
     padding:9px 16px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:.15s}
   .pick:hover{border-color:rgba(255,255,255,.32)}
   .pick.on{background:var(--pink);border-color:var(--pink);color:#fff}
+
+  /* THE VENUE, READ-ONLY (Dean, 24 Oct 2026: he wants to SEE the link, not edit it). The slug comes
+     from ?venue= (Your account > Marketing links here with it) and the name from the venue record the
+     page already fetches for the logo. Nothing here is typed. */
+  .venue-ro{margin-top:18px;padding:14px 16px;background:#17171A;border:1px solid rgba(255,255,255,.14);border-radius:12px;
+    display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px}
+  .venue-ro .vname{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:17px;color:#fff;flex:1 1 100%}
+  .venue-ro .vlbl{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:#9A9AA4;display:block;margin-bottom:3px}
+  .venue-ro .vlink{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;color:#fff;letter-spacing:.02em;overflow-wrap:anywhere}
+  .venue-ro .vgo{flex:0 0 auto}
+  .venue-ro .vgo .btn{display:inline-block;text-decoration:none;padding:10px 16px;font-size:13px}
+  .novenue{margin-top:18px;font-size:14.5px;color:#fff}
+  .novenue b{color:var(--pink)}
+  .plbl{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:#9A9AA4;margin:18px 0 0}
+  /* WHAT TO PRINT: one row of three equal tiles in the same style as the Design picker (Dean, 24 Oct
+     2026: the pills "do not look any good"). Each tile shows the sheet it prints. */
+  .picks{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+  .picks .dpick{flex:1 1 96px;min-width:0;max-width:220px;text-align:center}
+  .th-poster i:nth-child(1){left:9px;right:9px;top:10px;bottom:10px;border:2px solid #111;box-sizing:border-box;border-radius:2px}
+  .th-poster i:nth-child(2){left:16px;right:16px;top:26px;height:14px;background:#111}
+  .th-cards i:nth-child(1){left:3px;top:3px;width:18px;height:28px;border:1.5px solid #111;box-sizing:border-box}
+  .th-cards i:nth-child(2){right:3px;top:3px;width:18px;height:28px;border:1.5px solid #111;box-sizing:border-box}
+  .th-cards i:nth-child(3){left:3px;bottom:3px;width:18px;height:28px;border:1.5px solid #111;box-sizing:border-box}
+  .th-cards i:nth-child(4){right:3px;bottom:3px;width:18px;height:28px;border:1.5px solid #111;box-sizing:border-box}
+  .th-tents i:nth-child(1){left:4px;right:4px;top:4px;height:26px;border:1.5px solid #111;box-sizing:border-box}
+  .th-tents i:nth-child(2){left:4px;right:4px;bottom:4px;height:26px;border:1.5px solid #111;box-sizing:border-box}
+  .th-tents i:nth-child(3){left:4px;right:4px;top:17px;border-top:1px dashed #999}
+  .th-tents i:nth-child(4){left:4px;right:4px;bottom:17px;border-top:1px dashed #999}
 
   .acts{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px;align-items:center}
   .btn{border:none;border-radius:10px;padding:12px 22px;font-family:'Hanken Grotesk',sans-serif;
@@ -280,9 +307,15 @@
   .art.d-ticket{background:var(--pk);padding:4cqw;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .art.d-ticket .tk{grid-template:"main" 1fr "perf" 0 "chrome" 21% / 1fr;background:#fff;border-radius:3.2cqw}
   .art.v-dark.d-ticket .tk{background:#111}
-  .art.d-ticket .chrome{display:grid;grid-template:"logo name" auto "logo stub" auto / auto minmax(0,1fr);
-    align-content:center;justify-content:start;column-gap:4cqw;row-gap:.6cqh;padding:0 6cqw;background:transparent;
+  /* THE STUB IS ONE BLOCK (Dean, 24 Oct 2026: the logo sat on the left while the rest of the stub was
+     centred, "looks silly"). The logo, the name and the code are one group, the group is centred in the
+     stub as a whole, and the name and code are left-aligned beside the logo. With no logo the empty
+     logo column has no gap, so the words alone are centred too. The tent face stacks the same group in
+     a centred column. tools/venue-logo-in-chrome.test.py measures all three sheets. */
+  .art.d-ticket .chrome{display:grid;grid-template:"logo name" auto "logo stub" auto / auto minmax(0,auto);
+    align-content:center;justify-content:center;column-gap:4cqw;row-gap:.6cqh;padding:0 6cqw;background:transparent;
     text-align:left;justify-items:start}
+  .art.d-ticket.nl .chrome{column-gap:0}
   .art.d-ticket .chrome .accent{display:none}
   .art.d-ticket .clogo{grid-area:logo;align-self:center}
   .art.d-ticket.nl .clogo{display:none}
@@ -413,17 +446,16 @@
     same sign works every week and for every format you run. Print it once and leave it out.
   </div>
 
+  <p class="novenue hidden" id="noVenue">Open this from <b>Your account &gt; Marketing &gt; Print table signs</b>.</p>
+
+  <div id="setupForm">
+  <div class="venue-ro" id="venueRo">
+    <div class="vname" id="venueName">Your venue</div>
+    <div style="flex:1 1 260px;min-width:0"><span class="vlbl">Your venue link</span><span class="vlink" id="venueLink"></span></div>
+    <div class="vgo"><a class="btn ghost" id="openLink" href="#" target="_blank" rel="noopener">Open my venue link</a></div>
+  </div>
+
   <div class="row">
-    <div class="fld">
-      <label for="slugIn">Your venue link</label>
-      <input id="slugIn" type="text" placeholder="the-tugun-hotel" autocomplete="off" autocapitalize="none" spellcheck="false">
-      <span class="hint">The bit after the slash in your screen link, venueplay.com.au/tv?<b>your-venue</b></span>
-    </div>
-    <div class="fld">
-      <label for="nameIn">Venue name on the sign</label>
-      <input id="nameIn" type="text" placeholder="The Tugun Hotel" autocomplete="off" maxlength="42">
-      <span class="hint">Filled in for you once we find your venue.</span>
-    </div>
     <div class="fld">
       <label for="kickIn">Top line</label>
       <input id="kickIn" type="text" placeholder="Live games here" autocomplete="off" maxlength="30">
@@ -446,12 +478,14 @@
     </div>
   </div>
 
-  <div class="picks" id="picks">
-    <button class="pick on" data-kind="poster" type="button">A4 poster</button>
-    <button class="pick" data-kind="cards" type="button">Table cards, 4 a page</button>
-    <button class="pick" data-kind="tents" type="button">Table tents, 2 a page</button>
+  <div class="plbl">What to print</div>
+  <div class="picks" id="picks" aria-label="What to print">
+    <button class="dpick on" data-kind="poster" type="button"><span class="th th-poster"><i></i><i></i></span>A4 poster</button>
+    <button class="dpick" data-kind="cards" type="button"><span class="th th-cards"><i></i><i></i><i></i><i></i></span>Table cards, 4 a page</button>
+    <button class="dpick" data-kind="tents" type="button"><span class="th th-tents"><i></i><i></i><i></i><i></i></span>Table tents, 2 a page</button>
   </div>
 
+  <div class="plbl">Design</div>
   <div class="designs" id="designs" aria-label="Design">
     <button class="dpick" data-design="column" type="button"><span class="th th-column"><i></i><i></i><i></i></span>Column</button>
     <button class="dpick" data-design="band" type="button"><span class="th th-band"><i></i><i></i><i></i></span>Top band</button>
@@ -470,9 +504,9 @@
 
   <div class="acts">
     <button class="btn pink" id="printBtn" type="button">Print</button>
-    <button class="btn ghost" id="checkBtn" type="button">Check my venue link</button>
   </div>
   <div class="status" id="status"></div>
+  </div><!-- /setupForm -->
 
   <div class="tips">
     <div class="tip"><b>Print settings</b>Choose A4, portrait, and turn ON background graphics so the pink prints.</div>
@@ -815,7 +849,7 @@
   function render(){
     var slug=state.slug;
     var code=slug ? venueCode(slug) : "------";
-    var url = slug ? (SITE+"/play?venue="+encodeURIComponent(slug)) : "";
+    var url = venueUrl();
     var name=state.name || (slug ? slug.replace(/-/g," ").replace(/\b\w/g,function(c){ return c.toUpperCase(); }) : "Your venue");
     var signs=document.querySelectorAll("[data-sign]");
     for(var i=0;i<signs.length;i++){
@@ -855,7 +889,7 @@
   }
 
   // ---- inputs ----
-  var slugIn=$("slugIn"), nameIn=$("nameIn"), whatsIn=$("whatsIn");
+  var whatsIn=$("whatsIn");
   var headIn=$("headIn"), lineIn=$("lineIn"), kickIn=$("kickIn");
   /* A field is taken only when every word in it fits a card: a 15-letter word is refused with its name, the
      box is marked, and the sign keeps the last words that were fine. */
@@ -873,13 +907,12 @@
   /* THE WORDS ARE REMEMBERED per venue on this browser, like the design, so a venue that comes back to print
      more cards gets the same sign (the words are the venue's edits; the defaults above are never written). */
   function textKey(){ return "vp.signText."+(state.slug||"_"); }
-  function saveText(){ try{ localStorage.setItem(textKey(), JSON.stringify({ name:typed?state.name:"", head:state.head, line:state.line, whats:state.whats, kick:state.kick })); }catch(e){} }
+  function saveText(){ try{ localStorage.setItem(textKey(), JSON.stringify({ head:state.head, line:state.line, whats:state.whats, kick:state.kick })); }catch(e){} }
   function loadText(){
     var j=null; try{ j=JSON.parse(localStorage.getItem(textKey())||"null"); }catch(e){}
     if(!j || typeof j!=="object") return false;
     state.head=String(j.head||""); state.line=String(j.line||""); state.whats=String(j.whats||""); state.kick=String(j.kick||"");
     headIn.value=state.head; lineIn.value=state.line; whatsIn.value=state.whats; kickIn.value=state.kick;
-    if(j.name){ state.name=String(j.name); nameIn.value=state.name; typed=true; }
     return true;
   }
   /* Office printer (a 6mm white margin round every sign) or print shop (full bleed): remembered on this browser. */
@@ -898,28 +931,27 @@
     applyPrinter();
   });
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
-  var typed=false;   // once the venue types a name, a lookup must not overwrite it
-  function onSlug(){
-    state.slug=cleanSlug(slugIn.value); state.logo=""; state.logoChecked=false; loadChoice();
-    if(!typed) state.name="";
-    loadText();   // words saved for this venue win over what is in the boxes; none saved, the boxes stand
-    render(); setStatus("", "");
-  }
-  slugIn.addEventListener("input", onSlug);
-  slugIn.addEventListener("change", function(){ slugIn.value=state.slug; check(); });
-  nameIn.addEventListener("input", function(){ takeText(nameIn, function(v){ typed=!!v; state.name=v; }); });
   whatsIn.addEventListener("input", function(){ takeText(whatsIn, function(v){ state.whats=v; }); });
+  /* The venue, shown and never typed: its name (from the venue record, the slug tidied up until that
+     arrives) above the preview, and the exact address the QR encodes, with a link that opens it. */
+  function venueUrl(){ return state.slug ? (SITE+"/play?venue="+encodeURIComponent(state.slug)) : ""; }
+  function paintVenue(){
+    var name=state.name || (state.slug ? state.slug.replace(/-/g," ").replace(/\b\w/g,function(c){ return c.toUpperCase(); }) : "Your venue");
+    $("venueName").textContent=name;
+    $("venueLink").textContent=venueUrl();
+    var a=$("openLink"); a.href=venueUrl() || "#";
+  }
 
   // ---- which sheet ----
   var KINDS={ poster:"sheetPoster", cards:"sheetCards", tents:"sheetTents" };
   function showKind(kind){
     for(var k in KINDS){ $(KINDS[k]).classList.toggle("hidden", k!==kind); }
-    var b=document.querySelectorAll("#picks .pick");
+    var b=document.querySelectorAll("#picks .dpick");
     for(var i=0;i<b.length;i++) b[i].classList.toggle("on", b[i].getAttribute("data-kind")===kind);
     render();   // canvases in a hidden sheet may not have painted, so redraw on reveal
   }
   document.getElementById("picks").addEventListener("click", function(e){
-    var t=e.target.closest ? e.target.closest(".pick") : null;
+    var t=e.target.closest ? e.target.closest(".dpick") : null;
     if(t) showKind(t.getAttribute("data-kind"));
   });
 
@@ -955,12 +987,13 @@
           var u=d&&d.logo_url;   // one object now, not an array
           state.logoChecked=true;
           if(u){ state.logo=u; }
+          if(d && d.name && !state.name){ state.name=String(d.name); paintVenue(); }
           applyDesign();
         }).catch(function(){ state.logoChecked=true; applyDesign(); });   // no logo is fine, the sign works without one
     }catch(e){}
   }
   function check(){
-    if(!state.slug){ setStatus("Type your venue link first.", "warn"); return; }
+    if(!state.slug) return;
     var code=venueCode(state.slug);
     setStatus("Checking…", "");
     fetch(VP_GAME_API+"/venue?code="+encodeURIComponent(code))
@@ -968,13 +1001,12 @@
       .then(function(d){
         if(!d){ setStatus("Could not check right now. The sign is still correct if your venue link is spelt the way it is on your screen link.", "warn"); return; }
         if(d.exists===false){ setStatus("No venue found for “"+state.slug+"”. Check the spelling against your screen link before you print.", "warn"); return; }
-        if(d.name && !typed){ state.name=d.name; nameIn.value=d.name; render(); }
+        if(d.name){ state.name=d.name; paintVenue(); render(); }
         loadVenueLogo(state.slug);
         setFound(d.name||"your venue", code);
       })
       .catch(function(){ setStatus("Could not check right now. The sign is still correct if your venue link matches your screen link.", "warn"); });
   }
-  $("checkBtn").addEventListener("click", check);
   $("printBtn").addEventListener("click", function(){
     render();
     logosReady().then(function(){ refitAll(); setTimeout(function(){ window.print(); }, 60); });
@@ -988,7 +1020,14 @@
     if(!raw){ var bare=q.replace(/^\?/,"").split("&")[0]; if(bare && bare.indexOf("=")===-1) raw=bare; }
     var slug = raw ? cleanSlug(decodeURIComponent(raw)) : "";
     var sk=/[?&]sheet=(poster|cards|tents)/.exec(q);
-    if(slug){ slugIn.value=slug; state.slug=slug; }
+    /* No venue in the address: nothing to print for. One sentence saying where to open this from,
+       and no form, no sheets (a sign with no QR is not a sign). */
+    if(!slug){
+      $("noVenue").classList.remove("hidden"); $("setupForm").classList.add("hidden");
+      document.querySelector(".stage").classList.add("hidden");
+      return;
+    }
+    state.slug=slug; paintVenue();
     loadChoice(); loadText();
     loadPrinter();
     var pq=/[?&]printer=(office|shop)/.exec(q); if(pq) printer=pq[1];   // a link (or a test) can name the printer
@@ -997,7 +1036,7 @@
     if(dq) chosen={ d:dq[1], v:dq[2]||DESIGNS[dq[1]] };
     applyDesign();
     showKind(sk ? sk[1] : "poster");
-    if(slug) check();
+    check();
 
     // Re-fit once the webfonts land. Anton is very condensed, so a headline measured in the
     // fallback face comes out far wider than the real one and the first fit lands too small.

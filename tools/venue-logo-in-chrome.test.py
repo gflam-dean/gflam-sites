@@ -67,7 +67,18 @@ def ratio_logo(name, iw, ih):
     d.rectangle([200, 150, 200 + iw - 1, 150 + ih - 1], fill=(250, 200, 40, 255)); im.save(os.path.join(LOGOS, name + '.png'))
 ratio_logo('r21', 1050, 500); ratio_logo('r22', 1100, 500); ratio_logo('r23', 1150, 500)
 SIGN_LOGOS = {'sign-white': '/__logos/square.png', 'sign-navy': '/__logos/navy.png', 'sign-slow': '/__logos/slow-square.png', 'sign-r21': '/__logos/r21.png', 'sign-r22': '/__logos/r22.png', 'sign-r23': '/__logos/r23.png', 'sign-none': None,
-              'sign-gold': '/__logos/wide.png', 'sign-thin': '/__logos/thin.png', 'sign-round': '/__logos/round.png'}
+              'sign-gold': '/__logos/wide.png', 'sign-thin': '/__logos/thin.png', 'sign-round': '/__logos/round.png',
+              'sign-long': '/__logos/square.png', 'sign-longwords': '/__logos/square.png'}
+# THE NAME COMES FROM THE VENUE RECORD (24 Oct 2026), never typed on the page, so the worst names a venue can
+# have are venues of their own here. /venue is asked by CODE, so the code is worked out the way the page does.
+SIGN_NAMES = {'sign-long': 'The Kingscliff Beach Bowls and Golf Club Inc', 'sign-longwords': 'Supercalifragi Expialidocious Hotelandclubbb'}
+def venue_code(slug):
+    s = re.sub(r'[^a-z0-9]', '', slug.lower()); h = 2166136261
+    for ch in s: h ^= ord(ch); h = (h * 16777619) & 0xffffffff
+    A = 'ACDEFGHJKMNPQRSTUVWXYZ2345679'; out = ''; x = h or 1
+    for _ in range(6): x = (x * 1103515245 + 12345) & 0xffffffff; out += A[x % len(A)]
+    return out
+SLUG_BY_CODE = dict((venue_code(k), k) for k in SIGN_LOGOS)
 
 
 class Site(http.server.BaseHTTPRequestHandler):
@@ -83,10 +94,11 @@ class Site(http.server.BaseHTTPRequestHandler):
         # The printed signs (signage.html) ask whether the venue exists, then for its logo.
         q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
         if p.startswith('/venue'):
-            return self.send(200, json.dumps({'exists': True, 'name': 'Sign Test Club'}), 'application/json')
+            slug = SLUG_BY_CODE.get(q.get('code', [''])[0], '')
+            return self.send(200, json.dumps({'exists': True, 'name': SIGN_NAMES.get(slug, 'Sign Test Club')}), 'application/json')
         if p.startswith('/screen') and q.get('venue', [''])[0] in SIGN_LOGOS:
             u = SIGN_LOGOS[q['venue'][0]]
-            return self.send(200, json.dumps({'exists': True, 'name': 'Sign Test Club', 'logo_url': u}), 'application/json')
+            return self.send(200, json.dumps({'exists': True, 'name': SIGN_NAMES.get(q['venue'][0], 'Sign Test Club'), 'logo_url': u}), 'application/json')
         return self.send(404, '{}', 'application/json')
     def do_POST(self):
         if self.path.startswith('/__worker'):
@@ -398,20 +410,23 @@ def sign_checks():
         B.close_tab(tid)
 
     print('\nEVERY DESIGN, EVERY SHEET, THE WORST TEXT A VENUE CAN TYPE: nothing leaves its sign, the QR keeps its size')
-    TEXT = {'long': {'nameIn': 'The Kingscliff Beach Bowls and Golf Club Inc', 'headIn': 'SCAN THIS NOW FOR BINGO NIGHT',
+    # The venue NAME is the record's (SIGN_NAMES): 'long' opens the venue with the long name, 'longwords' the one made of 14-letter words.
+    TEXT = {'long': {'headIn': 'SCAN THIS NOW FOR BINGO NIGHT',
                      'lineIn': 'No app, no account, no sign-up and no fuss: just your phone!!',
                      'whatsIn': 'Bingo Wednesdays, trivia Thursdays from 7pm, musical bingo Fridays and meat raffles Saturday arvo'},
             # the longest words the editor takes (14 letters; a 15th is refused, see below), as many as fit each box
-            'longwords': {'nameIn': 'Supercalifragi Expialidocious Hotelandclubbb', 'headIn': 'SCANTOPLAYBING OTRIVIAMUSICA',
+            'longwords': {'headIn': 'SCANTOPLAYBING OTRIVIAMUSICA',
                           'lineIn': 'Noappnoaccount justyourphonea noappnoaccount justyourphonea', 'whatsIn': 'BingoWednesday TriviaThursday MusicalFridays MeatRaffleSats andmoreandmore'}}
     # The QR with the venue's worst text (four lines of it, at every field's maximum) must stay at least 70% of the size it is with the default words:
     # long text wraps, it does not shrink the whole sign. (And never under a fifth of the sign.)
     for d in ('column-dark', 'band-dark', 'ticket-light', 'spot-light'):
         for sheet in ('poster', 'cards', 'tents'):
             for name, fields in TEXT.items():
-                m, sid, tid = sign_open('sign-white', sheet, d)
+                m, sid, tid = sign_open('sign-' + name, sheet, d)
                 try:
                     q0 = min(m.get('qr') or [0])
+                    nm = ask(sid, '(document.querySelector(".sheet:not(.hidden) [data-venue]")||{}).textContent')
+                    ok('%s %s: the sign carries the venue record\'s name, "%s"' % (d, sheet, SIGN_NAMES['sign-' + name]), nm == SIGN_NAMES['sign-' + name], nm)
                     set_text(sid, fields); m = json.loads(ask(sid, SIGN) or '{}')
                     tag = '%s %s, %s text' % (d, sheet, name)
                     ok(tag + ': nothing on any sign leaves its sign', not m.get('spill'), (m.get('spill') or [])[:4])
@@ -419,7 +434,7 @@ def sign_checks():
                     ok(tag + ': the QR keeps its size (%.2f of the sign, %.2f with the usual words)' % (q, q0), q0 > 0 and q >= 0.7 * q0 and q >= 0.2, (q, q0))
                     ok(tag + ': the long headline wraps instead of shrinking the sign', m.get('wrap') is True, m.get('wrap'))
                     if name == 'long' and sheet == 'poster': shot(sid, 'chrome-sign-%s-long' % d)
-                    set_text(sid, {'nameIn': '', 'headIn': '', 'lineIn': '', 'whatsIn': ''})   # the words are remembered per venue now: leave none behind
+                    set_text(sid, {'headIn': '', 'lineIn': '', 'whatsIn': ''})   # the words are remembered per venue now: leave none behind
                 finally:
                     B.close_tab(tid)
 
@@ -560,7 +575,7 @@ def sign_checks():
         ask(sid, 'document.querySelector(\'#designs [data-design="band"]\').click();true'); time.sleep(0.5); g = json.loads(ask(sid, WORDS) or '{}')
         ok('and in the Top band it is the pink line in the band', g.get('ckick') == 'Trivia Thu 7pm. Bingo Sat 2pm', g.get('ckick'))
         ask(sid, 'document.querySelector(\'#designs [data-design="column"]\').click();true'); time.sleep(0.4)
-        for field in ('headIn', 'nameIn', 'lineIn', 'whatsIn', 'kickIn'):
+        for field in ('headIn', 'lineIn', 'whatsIn', 'kickIn'):
             set_text(sid, {field: 'Scan Supercalifragilistic now'}); g = json.loads(ask(sid, WORDS) or '{}')
             ok('%s: a 15-letter word is refused, the box is marked and the word is named' % field, g.get('bad') == [field] and 'Supercalifragilistic' in g.get('status', '') and g.get('h2', '').upper() == 'SCAN TO PLAY' and g.get('no') == 'Play along on the big screen. Nothing to download.', (g.get('bad'), g.get('status')[:80], g.get('h2'), g.get('no')))
             set_text(sid, {field: ''})
@@ -574,6 +589,78 @@ def sign_checks():
         set_text(sid, {'headIn': '', 'lineIn': '', 'kickIn': ''})   # leave the browser as it was found
     finally:
         B.close_tab(tid)
+
+    print('\nTHE VENUE IS SHOWN, NOT TYPED (Dean, 24 Oct 2026): the name from the record, the link the QR encodes, one sentence without a venue')
+    RO = r"""(function(){var q=function(s){return document.querySelector(s);};var sb=q("#setupForm"),st=q(".stage"),nv=q("#noVenue");
+      var picks=[].map.call(document.querySelectorAll("#picks .dpick"),function(b){var r=b.getBoundingClientRect();return {w:Math.round(r.width),h:Math.round(r.height),t:Math.round(r.top),on:b.classList.contains("on"),th:!!b.querySelector(".th"),kind:b.getAttribute("data-kind")};});
+      var dp=q("#designs .dpick"),dr=dp?dp.getBoundingClientRect():{height:0};
+      return JSON.stringify({noVenue:(nv&&!nv.classList.contains("hidden"))?nv.textContent.replace(/\s+/g," ").trim():"", form:!!(sb&&!sb.classList.contains("hidden")), stage:!!(st&&!st.classList.contains("hidden")),
+        inputs:!!(q("#slugIn")||q("#nameIn")||q("#checkBtn")), name:(q("#venueName")||{}).textContent, link:(q("#venueLink")||{}).textContent, open:(q("#openLink")||{}).href, openTag:(q("#openLink")||{}).tagName,
+        openNew:(q("#openLink")||{}).target, signName:(q(".sheet:not(.hidden) [data-venue]")||{}).textContent, picks:picks, dpickH:Math.round(dr.height), oldPicks:document.querySelectorAll("#picks .pick").length});})()"""
+    tid, sid = open_page('/signage', 1100, 900, False)
+    try:
+        time.sleep(1.2); g = json.loads(ask(sid, RO) or '{}')
+        ok('no ?venue=: one sentence, "Open this from Your account > Marketing > Print table signs", and no form, no sheets',
+           g.get('noVenue') == 'Open this from Your account > Marketing > Print table signs.' and g.get('form') is False and g.get('stage') is False, g)
+    finally:
+        B.close_tab(tid)
+    m, sid, tid = sign_open('sign-white', 'poster', 'ticket-light')
+    try:
+        g = json.loads(ask(sid, RO) or '{}')
+        ok('with a venue: the form and the sheet, and no box to type a venue link or a venue name into', g.get('form') is True and g.get('stage') is True and g.get('inputs') is False and g.get('noVenue') == '', g)
+        ok('the venue name is read from the record and shown as plain text, and it is the name on the sign', g.get('name') == 'Sign Test Club' and g.get('signName') == 'Sign Test Club', (g.get('name'), g.get('signName')))
+        ok('the venue link is shown read-only, exactly the address the QR encodes', g.get('link') == 'https://venueplay.com.au/play?venue=sign-white', g.get('link'))
+        qr = ask(sid, '(function(){var d=VPQR.draw;VPQR.draw=function(el,url){window.__qr=url;return d.apply(this,arguments);};document.querySelector("#picks [data-kind=poster]").click();return window.__qr;})()')
+        ok('CONTROL: that IS the address drawn into the QR', qr == g.get('link'), qr)
+        ok('"Open my venue link" is a link to that address, in a new tab (not a Check button)', g.get('openTag') == 'A' and g.get('open') == g.get('link') and g.get('openNew') == '_blank', (g.get('openTag'), g.get('open')))
+        pk = g.get('picks') or []
+        ok('What to print is one row of three tiles in the Design picker\'s style: a picture each, equal width and height, one on',
+           len(pk) == 3 and g.get('oldPicks') == 0 and all(p['th'] for p in pk) and max(p['w'] for p in pk) - min(p['w'] for p in pk) <= 1 and max(p['h'] for p in pk) - min(p['h'] for p in pk) <= 1
+           and max(p['t'] for p in pk) - min(p['t'] for p in pk) <= 1 and [p['on'] for p in pk].count(True) == 1 and [p['kind'] for p in pk] == ['poster', 'cards', 'tents'], pk)
+        ok('and the tiles are the height of a Design tile or more', bool(pk) and pk[0]['h'] >= g.get('dpickH', 999), (pk and pk[0]['h'], g.get('dpickH')))
+    finally:
+        B.close_tab(tid)
+    tid, sid = open_page('/signage?venue=sign-white&sheet=poster', 390, 844, True)
+    try:
+        time.sleep(1.5); until(sid, '/Found/.test(document.getElementById("status").textContent)', 15); time.sleep(0.4)
+        g = json.loads(ask(sid, RO) or '{}'); pk = g.get('picks') or []
+        ok('at 390 wide the three tiles still share one row', len(pk) == 3 and max(p['t'] for p in pk) - min(p['t'] for p in pk) <= 1 and max(p['w'] for p in pk) - min(p['w'] for p in pk) <= 1, pk)
+    finally:
+        B.close_tab(tid)
+
+    print('\nTHE TICKET STUB IS ONE BLOCK (Dean, 24 Oct 2026): logo, name and code centred as a group, on every sheet, with or without a logo')
+    STUB = r"""(function(){var out=[];document.querySelectorAll(".sheet:not(.hidden) [data-art]").forEach(function(a){
+      if(a.getBoundingClientRect().width===0) return;
+      var ch=a.querySelector(".chrome"),c=ch.getBoundingClientRect(),R=function(e){var b=e.getBoundingClientRect();return {l:b.left,t:b.top,r:b.right,b:b.bottom};};
+      var lg=a.querySelector("[data-chrome]"),logo=(lg&&!lg.hidden&&lg.getBoundingClientRect().width>0)?R(lg):null;
+      var name=R(a.querySelector(".cname")),stub=R(a.querySelector(".cstub")),parts=[name,stub].concat(logo?[logo]:[]);
+      var g={l:Math.min.apply(null,parts.map(function(p){return p.l;})),r:Math.max.apply(null,parts.map(function(p){return p.r;})),t:Math.min.apply(null,parts.map(function(p){return p.t;})),b:Math.max.apply(null,parts.map(function(p){return p.b;}))};
+      out.push({wide:a.classList.contains("wide"),c:{l:c.left,r:c.right,t:c.top,b:c.bottom,w:c.width,h:c.height},g:g,logo:logo,name:name,stub:stub});
+    });return JSON.stringify(out);})()"""
+    def cx(r): return (r['l'] + r['r']) / 2.0
+    def cy(r): return (r['t'] + r['b']) / 2.0
+    for slug, what in (('sign-white', 'a square logo'), ('sign-gold', 'a wide wordmark'), ('sign-none', 'no logo')):
+        for sheet in ('poster', 'cards', 'tents'):
+            m, sid, tid = sign_open(slug, sheet, 'ticket-light')
+            try:
+                arts = json.loads(ask(sid, STUB) or '[]')
+                tag = 'Ticket %s, %s' % (sheet, what)
+                if not arts:
+                    ok(tag + ': the stub is measured', False); continue
+                off = [abs(cx(a['g']) - cx(a['c'])) / a['c']['w'] for a in arts]
+                ok(tag + ': the group (logo, name, code) is centred in the stub on every sign (%d signs, worst %.1f%% off)' % (len(arts), max(off) * 100), max(off) <= 0.01, off)
+                if slug != 'sign-none':
+                    ok(tag + ': every sign shows the logo in the stub', all(a['logo'] for a in arts), [bool(a['logo']) for a in arts])
+                    if sheet == 'tents':
+                        d = [abs(cx(a['logo']) - cx({'l': min(a['name']['l'], a['stub']['l']), 'r': max(a['name']['r'], a['stub']['r'])})) / a['c']['w'] for a in arts if a['logo']]
+                        ok(tag + ': the logo and the words share one centre line (stacked)', d and max(d) <= 0.01, d)
+                    else:
+                        d = [abs(cy(a['logo']) - cy({'t': a['name']['t'], 'b': a['stub']['b']})) / a['c']['h'] for a in arts if a['logo']]
+                        ok(tag + ': the logo sits level with the words beside it, as one row', d and max(d) <= 0.06, d)
+                        e = [abs(a['name']['l'] - a['stub']['l']) for a in arts]
+                        ok(tag + ': the name and the code share one left edge', max(e) <= 1.5, e)
+            finally:
+                B.close_tab(tid)
 
     # Print pressed while the logo is still downloading: the dialog waits for the picture AND its reading.
     tid, sid = open_page('/signage?venue=sign-slow&sheet=poster&design=column-light', 1100, 1500, False)

@@ -317,27 +317,31 @@ try:
     S.close_tab(tid)
 
     print('the account page and the members draw console')
+    # Since 24 Oct 2026 the Game settings page holds only the BINGO permit (raffles and members draws are
+    # under Your account > Draws), so an SA pub with number bingo hidden has no permit card at all there.
+    SETTLED = 'document.readyState==="complete" && !document.getElementById("body").classList.contains("hidden")'
     tid, sid = S.open('/app/settings.html?as=admin&venue=' + vid(SAP), 1100, 1300)
     S.until(sid, '!!document.querySelector("#permitsWrap .permit")', 20)
     time.sleep(0.6)
     kinds = S.js(sid, '[].map.call(document.querySelectorAll("#permitsWrap .permit"),function(p){return p.getAttribute("data-kind");}).join(",")')
-    ok('settings, the SA pub HQ has switched ON: the bingo permit card is back', kinds == 'bingo,raffle,members', kinds)
+    ok('settings, the SA pub HQ has switched ON: the bingo permit card is back', kinds == 'bingo', kinds)
     S.close_tab(tid)
     S.W.seed('vp_venues', [])   # replace: the switch back off for the next look
     VENUES[0]['number_bingo_on'] = False
     S.W.seed('vp_venues', VENUES)
     tid, sid = S.open('/app/settings.html?as=admin&venue=' + vid(SAP), 1100, 1300)
-    S.until(sid, '!!document.querySelector("#permitsWrap .permit")', 20)
-    time.sleep(0.6)
+    S.until(sid, SETTLED, 20)
+    time.sleep(1.2)
     kinds = S.js(sid, '[].map.call(document.querySelectorAll("#permitsWrap .permit"),function(p){return p.getAttribute("data-kind");}).join(",")')
-    ok('settings, an SA pub: no bingo permit card (raffles and members draws only)', kinds == 'raffle,members', kinds)
+    intro = S.js(sid, '(function(e){return !!e && e.offsetParent!==null;})(document.getElementById("permitsIntro"))')
+    ok('settings, an SA pub: no bingo permit card, and no permits intro left hanging', kinds == '' and intro is False, (kinds, intro))
     shot2(sid, 'settings-sa-pub-permits', True)
     S.close_tab(tid)
     tid, sid = S.open('/app/settings.html?as=admin&venue=' + vid(SAC), 1100, 1300)
     S.until(sid, '!!document.querySelector("#permitsWrap .permit")', 20)
     time.sleep(0.6)
     kinds = S.js(sid, '[].map.call(document.querySelectorAll("#permitsWrap .permit"),function(p){return p.getAttribute("data-kind");}).join(",")')
-    ok('settings, an SA club: the bingo permit card is there', kinds == 'bingo,raffle,members', kinds)
+    ok('settings, an SA club: the bingo permit card is there', kinds == 'bingo', kinds)
     S.close_tab(tid)
 
     tid, sid = S.open('/app/members/host.html?as=admin&venue=glenelg-tavern', 1100, 1000)

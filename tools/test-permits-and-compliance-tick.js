@@ -252,13 +252,21 @@ function permit(over) { var p = { number: '', holder: 'venue', npo_name: '', aut
     var refusal = (page.match(/if \(consentEl && !consentEl\.checked\) \{ showErr\('([^']*)'\); return; \}/) || [])[1] || '';
     check(f + ': refusing an unticked box says what the tick confirms', refusal === 'Please tick the box to agree to the Terms and Privacy Policy and confirm your venue is responsible for its gaming compliance.', refusal);
   });
-  /* The permits card on the account page: the bingo heading says both halves at once, because the
-     rules popup on the same screen says musical keeps its phone cards (live audit, 16 Oct 2026). */
-  var SETTINGS = readFile('venueplay/app/settings.html');
-  var kinds = (SETTINGS.match(/var PERMIT_KINDS=(\[[^\n]*\]);/) || [])[1] || '[]';
-  var bingoLabel = ((0, eval)(kinds).filter(function (k) { return k[0] === 'bingo'; })[0] || [])[1] || '';
-  check('settings: the Bingo permits heading says musical counts for permits AND keeps its phone cards, in one line', bingoLabel === 'Bingo (musical bingo counts as bingo for permits; phone cards stay on for musical bingo)', bingoLabel);
-  check('settings: nothing on the card still says "including musical bingo"', SETTINGS.indexOf('including musical bingo') < 0);
+  /* The permits cards (24 Oct 2026): ONE copy, /app/vp-permits.js, painted by the Game settings page
+     (bingo) and Your account > Draws (raffles, members draws). MUSICAL BINGO IS NOT BINGO (Dean, many
+     times): the bingo kind is simply "Bingo" and nothing in the permits feature names musical bingo. */
+  var PERMITS = readFile('venueplay/app/vp-permits.js');
+  var kinds = (PERMITS.match(/var KINDS = (\{[^\n]*\});/) || [])[1] || '{}';
+  var bingoLabel = ((0, eval)('(' + kinds + ')') || {}).bingo || '';
+  check('vp-permits: the bingo permit kind is simply "Bingo"', bingoLabel === 'Bingo', bingoLabel);
+  var PERMITS_CODE = PERMITS.replace(/\/\*[\s\S]*?\*\//g, '');   // the code and its words, not the note at the top that states the rule
+  check('vp-permits: musical bingo is named nowhere in the permits feature (its words included)', !/musical/i.test(PERMITS_CODE), (PERMITS_CODE.match(/[^\n]*musical[^\n]*/gi) || []).join(' | '));
+  var SETTINGS = readFile('venueplay/app/settings.html'), BILLING = readFile('venueplay/app/billing.html');
+  check('settings: no copy of the permits code, and no musical bingo', SETTINGS.indexOf('PERMIT_KINDS') < 0 && SETTINGS.indexOf('function savePermit') < 0 && !/musical bingo counts/i.test(SETTINGS));
+  check('settings: loads vp-permits.js and paints the BINGO permit through it', /<script src="vp-permits\.js"><\/script>/.test(SETTINGS) && /VPPermits\.paint\(\{ wrap:wrap, venue:ctx\.venue\|\|\{\}, kinds:\["bingo"\]/.test(SETTINGS));
+  check('billing: loads vp-permits.js and paints the RAFFLE and MEMBERS DRAW permits through it, under Draws', /<script src="\/app\/vp-permits\.js"><\/script>/.test(BILLING) && /VPPermits\.paint\(\{ wrap: wrap, venue: rows\[0\], kinds: \["raffle", "members"\]/.test(BILLING) && BILLING.indexOf('function savePermit') < 0
+        && BILLING.indexOf('id="drawPermits"') > BILLING.indexOf('id="tp-draws"') && BILLING.indexOf('id="drawPermits"') < BILLING.indexOf('<!-- /tp-draws -->'));
+  check('the permits are saved by the shared code, to /account/permits, with the venue named', /fetch\(o\.worker \+ "\/account\/permits"/.test(PERMITS) && /"X-VP-Venue": o\.venueId/.test(PERMITS));
   finished = true;
 })().catch(function (e) { print('  FAIL the test itself threw: ' + e + '\n' + e.stack); fails++; });
 drainMicrotasks();
