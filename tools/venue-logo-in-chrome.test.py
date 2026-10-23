@@ -543,10 +543,16 @@ def sign_checks():
       return JSON.stringify({no:n(s.querySelector(".no")),fb:n(s.querySelector(".fallback")),h2:n(s.querySelector("h2")),kick:w(s.querySelector(".kick")),ckick:w(a.querySelector(".ckick")),
         ph:document.getElementById("lineIn").placeholder,status:document.getElementById("status").textContent,
         bad:[].map.call(document.querySelectorAll(".fld input.bad"),function(i){return i.id;}),head:document.getElementById("headIn").value,kmax:document.getElementById("kickIn").maxLength});})()"""
+    m, sid, tid = sign_open('sign-white', 'poster', 'spot-light')
+    try:
+        g = json.loads(ask(sid, WORDS) or '{}')
+        ok('Spotlight: the default small line is "Play along on the big screen. Nothing to download."', g.get('no') == 'Play along on the big screen. Nothing to download.', g.get('no'))
+    finally:
+        B.close_tab(tid)
     m, sid, tid = sign_open('sign-white', 'poster', 'column-dark')
     try:
         g = json.loads(ask(sid, WORDS) or '{}')
-        ok('the default small line is "Play along on the big screen. Nothing to download."', g.get('no') == 'Play along on the big screen. Nothing to download.' and g.get('ph') == 'Play along on the big screen. Nothing to download.', (g.get('no'), g.get('ph')))
+        ok('Column: the default small line is "Play along on the big screen. Nothing to download." (its own two-line form)', g.get('no') == 'Play along on the big screen. Nothing to download.' and g.get('ph') == 'Play along on the big screen. Nothing to download.', (g.get('no'), g.get('ph')))
         ok('the default bottom line is "Can’t scan? Go to venueplay.com.au/play and enter code ..."', bool(re.match(r'^Can’t scan\? Go to venueplay\.com\.au/play and enter code [A-Z2-9]{6}$', g.get('fb', ''))), g.get('fb'))
         ok('the headline is still SCAN TO PLAY', g.get('h2', '').upper() == 'SCAN TO PLAY' and g.get('kick') == 'Live games here', (g.get('h2'), g.get('kick')))
         set_text(sid, {'kickIn': 'Trivia Thu 7pm. Bingo Sat 2pm'}); g = json.loads(ask(sid, WORDS) or '{}')

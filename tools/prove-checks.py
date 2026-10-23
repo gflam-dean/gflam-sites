@@ -4740,12 +4740,19 @@ MUTATIONS = [
      'font-size:max(1.25cqh,10pt);\n    letter-spacing:.2em;text-transform:uppercase;color:var(--pkb);', 'font-size:1.25cqh;\n    letter-spacing:.2em;text-transform:uppercase;color:#9A9AA4;',
      'the eyebrow in the band is grey at 8pt again'),
     ('venue-logo-in-chrome.test.py', 'venueplay/signage.html',
-     '    font-size:max(calc(var(--u)*1.4),9pt);color:var(--ink);line-height:1.3}', '    font-size:calc(var(--u)*1.4);color:var(--ink);line-height:1.3}',
-     'the small line shrinks to 7pt on a Top band card again'),
+     # The 9pt floor itself is insurance: measured 23 Oct 2026, the fit lands the small line at 9.3pt on a card with
+     # every box at its maximum, so taking the floor away changes nothing today and would be a blind mutation. What is
+     # proven is the measurement: a smaller line is seen.
+     '    font-size:max(calc(var(--u)*1.4),9pt);color:var(--ink);line-height:1.3}', '    font-size:max(calc(var(--u)*0.9),5pt);color:var(--ink);line-height:1.3}',
+     'the small line is cut to two thirds of its size on every card'),
     ('venue-logo-in-chrome.test.py', 'venueplay/signage.html',
      '  var DEFAULT_LINE="Play along on the big screen. Nothing to download.", DEFAULT_KICK="Live games here";',
      '  var DEFAULT_LINE="No app. No account. Just your phone.", DEFAULT_KICK="Live games here";',
-     'the old small line is back as the default'),
+     'the old small line is back as the default on Spotlight, Top band and Ticket'),
+    ('venue-logo-in-chrome.test.py', 'venueplay/signage.html',
+     '              else if(twoLine) nl.innerHTML = "Play along on the big screen.<br>Nothing to download.";\n',
+     '              else if(twoLine) nl.innerHTML = "No app. No account.<br>Just your phone.";\n',
+     'the old small line is back as the default on the Column sign'),
     ('venue-logo-in-chrome.test.py', 'venueplay/signage.html',
      '<div class="fallback">Can\u2019t scan? Go to <b>venueplay.com.au/play</b>', '<div class="fallback">No scanner? Go to <b>venueplay.com.au/play</b>',
      'the bottom line is back to "No scanner?"'),
