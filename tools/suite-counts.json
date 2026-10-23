@@ -712,7 +712,7 @@
   "counted_by": "lines"
  },
  "tools/tv-and-phone-in-chrome.test.py": {
-  "checks": 86,
+  "checks": 100,
   "counted_by": "lines"
  },
  "tools/venue-logo-in-chrome.test.py": {
