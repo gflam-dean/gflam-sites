@@ -311,6 +311,14 @@
   .consent .ck{display:flex;gap:9px;align-items:flex-start;font-size:var(--fs-xs);color:var(--muted);line-height:1.45;cursor:pointer}
   .consent .ck input{margin-top:1px;accent-color:var(--pink);width:16px;height:16px;flex:0 0 auto;cursor:pointer}
   .consent .ck a{color:var(--pink)}
+  /* SA and NT pubs: number bingo is not available there. An in-page note, never a pop-up. */
+  .state-note{margin-top:12px;padding:14px 16px;border:1px solid rgba(255,176,32,.45);background:rgba(255,176,32,.08);border-radius:12px;text-align:left}
+  .state-note[hidden]{display:none}
+  .state-note h4{margin:0 0 6px;font-size:var(--fs-sm,15px);line-height:1.35;color:#fff;font-weight:700}
+  .state-note p{margin:0 0 10px;font-size:var(--fs-xs,13px);line-height:1.5;color:var(--muted)}
+  .state-note .ck{display:flex;gap:9px;align-items:flex-start;font-size:var(--fs-xs,13px);color:var(--muted);line-height:1.45;cursor:pointer;
+    text-transform:none;letter-spacing:normal;font-family:inherit;font-weight:500;margin:0}   /* not the form's uppercase field label */
+  .state-note .ck input{margin-top:1px;accent-color:var(--pink);width:16px;height:16px;flex:0 0 auto;cursor:pointer}
 
   .success{display:none;text-align:center;padding:16px 0}
   .success.show{display:block}
@@ -917,6 +925,13 @@
               <label>Your venues</label>
               <div id="vp-venue-list"></div>
               <button type="button" class="add-venue" id="vp-add-venue">+ Add another venue</button>
+              <!-- Dean, 22 Oct 2026: "better to be honest from the beginning". Shown the moment a pub
+                   gives a South Australian or Northern Territory postcode (migration 116). -->
+              <div class="state-note" id="vp-nobingo" hidden>
+                <h4 id="vp-nobingo-title">Number bingo is not available for pubs here</h4>
+                <p id="vp-nobingo-body"></p>
+                <label class="ck"><input type="checkbox" id="vp-nobingo-ask"> <span>Our bingo is run by a not-for-profit organisation, such as a club or charity. Please look at switching it on for us.</span></label>
+              </div>
               <span class="field-hint" style="text-align:center">For each venue, the most players it would have in one game on a busy night. That venue's own number, not the group total. One card, one bill for the lot.</span>
             </div>
             <div class="field full">
@@ -1018,6 +1033,8 @@
       <details class="q"><summary>Who's behind it?<span class="pm"></span></summary><div class="a">VenuePlay is built by Gflam Touring, who run bingo, live music and entertainment across Australia. It's the same show experience, built into a platform any venue can run.</div></details>
       <details class="q"><summary>Do the gaming rules change from state to state?<span class="pm"></span></summary><div class="a">They do, and it is worth knowing before you plan a night. Trivia is a game of skill, so it sits outside gaming rules everywhere in Australia and any venue can run it. Musical bingo is a music game, not bingo: players mark off songs, so the bingo rules do not apply to it. Bingo, raffles and members draws are gaming, and every state treats them a little differently, mostly around who can charge for entry and who keeps the proceeds. Broadly: clubs and not-for-profits have the most room to run a paid game, and pubs are usually limited to free entry. We will tell you what applies to your venue when you set up, and point you at your own state's regulator. You conduct the game and provide the prizes; we supply the software.</div></details>
       <details class="q"><summary>Can players use their phones for bingo tickets in my state?<span class="pm"></span></summary><div class="a">In most of the country, yes, ACT included, and it is the whole point of the product. Three states still expect a printed bingo ticket in the player's hand: <b>South Australia</b>, where the rules recognise only physical bingo sheets bought from a licensed supplier; <b>Victoria</b>, where the law does not allow bingo tickets on a player's phone; and <b>Tasmania</b>, where the bingo rules are written around a printed card that the supervisor collects to verify a win. In those three, your host still runs the night on VenuePlay: the calling, the board on the big screen, the pattern and the prizes all work exactly the same, and the called numbers stay up so a shout can be checked against the screen. Your players mark off paper tickets the way they always have. What you lose is the phone side: no digital tickets, and no automatic check of a winning ticket, so a claim is verified by eye against the board as it always was. Musical bingo is not bingo, so its phone cards work in every state.</div></details>
+      <details class="q"><summary>We are a pub in South Australia or the Northern Territory. Can we run bingo?<span class="pm"></span></summary><div class="a">Not number bingo, and that comes from the law rather than from us. In South Australia only a not-for-profit organisation may run bingo, and in the Northern Territory only an approved association, so pubs and hotels there will not see number bingo in VenuePlay. Musical bingo is a music game, not bingo, so it is yours, along with trivia and members draws, and the price is the same. If a club or charity runs the bingo at your venue, tick the box when you sign up or email hello@venueplay.com.au, and we will switch it on once we have seen who runs it.</div></details>
+      <details class="q"><summary>What else is different in South Australia and the Northern Territory?<span class="pm"></span></summary><div class="a">A few things around members draws and raffles, and your host is shown your state's rules before each night. In South Australia a pub's members draw is a trade promotion: up to $5,000 in prizes, jackpot included, and the member drawn wins whether or not they are in the room, so at a pub the jackpot never rolls over because the winner is not there. Only not-for-profits may sell raffle tickets there, so a pub's raffle is free entry. In the Northern Territory a prize cannot be only alcohol, nobody under 18 can win, staff and their families cannot enter a pub's members draw, and the winners are named in a newspaper. Trivia is a game of skill in both, and VenuePlay never breaks a trivia tie at random.</div></details>
       <details class="q"><summary>Do we need approval from the gaming regulator to use VenuePlay?<span class="pm"></span></summary><div class="a">For trivia, no, anywhere. Musical bingo is a music game, not bingo, so the bingo approvals do not apply to it. For bingo, raffles and members draws, it depends on your state. Queensland asks for the random number generator to be approved by OLGR before it draws bingo, members draws or raffles, and we are working through that submission. Most other states have no approval step at all and simply require the draw to be fair and random, which ours is: it uses the same cryptographic method banks and browsers use, and we have the statistical test results to show it. If your state needs anything from us, we will tell you rather than leave you to find out.</div></details>
     </div>
   </div>
@@ -1228,6 +1245,7 @@
       var on = b.getAttribute('data-entity') === val;
       b.classList.toggle('on', on); b.setAttribute('aria-checked', on ? 'true' : 'false');
     });
+    renderNoBingo();   // a pub in SA or NT: say so now (also when the name preselects it)
   }
   if (entitySeg) Array.prototype.forEach.call(entitySeg.children, function(b){
     b.addEventListener('click', function(){ setEntity(b.getAttribute('data-entity')); });
@@ -1267,6 +1285,36 @@
     if (p && !c) return 'for_profit';
     return '';
   }
+  /* NUMBER BINGO FOR SA AND NT PUBS (Dean, 22 Oct 2026; migration 116). In South Australia only a
+     not-for-profit may run bingo, in the Northern Territory only an approved association, so a pub
+     there never sees number bingo. Say so here, before they pay. The same rule as
+     VPGaming.numberBingoHidden (app/vp-gaming.js) and the two Workers; tools/test-sant-bingo.js runs
+     them all on one table, and this postcode map against the billing Worker's for 0000 to 9999.
+     Musical bingo is not bingo and is never mentioned as unavailable. */
+  var NO_PUB_BINGO = { SA: 'South Australia', NT: 'the Northern Territory' };
+  function vpNoBingoAt(postcode, entityType){
+    var t = String(postcode == null ? '' : postcode).replace(/\D/g, '');
+    if (t.length !== 4) return '';
+    var n = parseInt(t, 10);
+    var st = (n >= 5000 && n <= 5999) ? 'SA' : ((n >= 800 && n <= 999) ? 'NT' : '');
+    if (!st || entityType === 'non_profit') return '';
+    return st;
+  }
+  function renderNoBingo(){
+    var box = document.getElementById('vp-nobingo'); if (!box || !venueList) return;
+    var ent = entitySel ? entitySel.value : '';
+    var hit = [];
+    if (ent === 'for_profit') venueRows().forEach(function(r){
+      var st = vpNoBingoAt(r.querySelector('.v-postcode').value, ent);
+      if (st && hit.indexOf(st) === -1) hit.push(st);
+    });
+    if (!hit.length) { box.hidden = true; return; }
+    hit.sort().reverse();   // South Australia first
+    var places = hit.map(function(s){ return NO_PUB_BINGO[s]; }).join(' and ');
+    document.getElementById('vp-nobingo-title').textContent = 'Number bingo is not available for pubs in ' + places;
+    document.getElementById('vp-nobingo-body').textContent = 'In ' + places + ', only a not-for-profit organisation may run bingo, so pubs and hotels there will not see number bingo in VenuePlay. Musical bingo, trivia and members draws are all yours, and the price is the same.';
+    box.hidden = false;
+  }
   function addVenueRow(name, seats, postcode){
     var row = document.createElement('div');
     row.className = 'venue-row';
@@ -1277,12 +1325,13 @@
     var pc = document.createElement('input');
     pc.type = 'text'; pc.className = 'v-postcode'; pc.inputMode = 'numeric'; pc.maxLength = 4; pc.placeholder = 'Postcode'; pc.setAttribute('autocomplete', 'postal-code');
     if (postcode) pc.value = postcode;
+    pc.addEventListener('input', renderNoBingo);
     var st = document.createElement('input');
     st.type = 'number'; st.className = 'v-seats'; st.min = '1'; st.step = '1'; st.inputMode = 'numeric'; st.placeholder = 'Max players';
     if (seats) st.value = seats;
     var rm = document.createElement('button');
     rm.type = 'button'; rm.className = 'v-remove'; rm.setAttribute('aria-label', 'Remove venue'); rm.textContent = '×';
-    rm.addEventListener('click', function(){ row.remove(); refreshRemoveButtons(); renderEstimate(); });
+    rm.addEventListener('click', function(){ row.remove(); refreshRemoveButtons(); renderEstimate(); renderNoBingo(); });
     st.addEventListener('input', renderEstimate);
     row.appendChild(nm); row.appendChild(pc); row.appendChild(st); row.appendChild(rm);
     venueList.appendChild(row);
@@ -1359,7 +1408,11 @@
       if (vs > 5000) { showErr('That is a lot of players for ' + vn + '. Please email us for very large venues.'); return; }
       if (namesLower[vn.toLowerCase()]) { showErr('Two venues have the same name (' + vn + '). Please give each a different name.'); return; }
       namesLower[vn.toLowerCase()] = true;
-      venues.push({ name: vn, seats: vs, postcode: vpc, entity_type: entityType });
+      /* bingo_review: the SA or NT pub ticked "our bingo is run by a not-for-profit". It only asks
+         HQ to look (a help desk ticket); bingo stays hidden until HQ switches it on. */
+      var askEl = document.getElementById('vp-nobingo-ask');
+      venues.push({ name: vn, seats: vs, postcode: vpc, entity_type: entityType,
+                    bingo_review: !!(askEl && askEl.checked && vpNoBingoAt(vpc, entityType)) });
     }
     if (!venues.length) { showErr('Please add at least one venue.'); return; }
 

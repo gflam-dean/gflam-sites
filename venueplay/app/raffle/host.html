@@ -727,8 +727,16 @@
     if(G.prizeIdx < G.prizes.length) return G.prizes[G.prizeIdx];
     return ($("rfPrize").value||"").trim();   // fallback: whatever's typed (single-prize quick draw)
   }
+  /* NORTHERN TERRITORY: no prize may be only alcohol, or money and alcohol (Community Gaming
+     Regulations reg 20; 22 Oct 2026 research). VPGaming.liquorPrizeBlocked is the rule; every other
+     state is untouched. Refused here, in the console, with the reason, before it reaches the TV. */
+  function liquorBlocked(label){
+    try{ return !!(window.VPGaming && VPGaming.liquorPrizeBlocked && VPGaming.liquorPrizeBlocked(G.venue, label)); }catch(e){ return false; }
+  }
   function addPrize(label){
     label=(label||"").trim(); if(!label || G.jackOn) return;
+    if(liquorBlocked(label)){ hostError(VPGaming.LIQUOR_PRIZE_MSG, "liquor"); return; }
+    clearHostErrorIf("liquor");
     G.prizes.push(label); savePrize(label);   // also remember it as a saved preset for next time
     $("rfPrize").value="";
     renderPrizeList(); saveRaffle();
@@ -879,6 +887,7 @@
     clearHostErrorIf("timeup");
     if(!G.jackOn && G.prizeIdx>=G.prizes.length){ var typed=($("rfPrize").value||"").trim(); if(typed) addPrize(typed); }   // single-prize quick draw: add what's typed
     if(!G.jackOn && !drawingPrize()){ hostError("Add at least one prize to draw for."); return; }
+    if(!G.jackOn && liquorBlocked(drawingPrize())){ hostError(VPGaming.LIQUOR_PRIZE_MSG, "liquor"); return; }
     if(remainingCount()<1){ hostError("No undrawn tickets left. Tap New raffle to start again."); return; }
 
     G.busy=true; clearTimers();

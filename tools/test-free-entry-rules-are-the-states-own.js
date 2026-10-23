@@ -48,7 +48,7 @@ check('NSW free lottery: $30,000 and no cash prizes', /\$30,000/.test(nsw) && /n
 check('SA raffle: $5,000', /\$5,000/.test(text(free('SA', 'for_profit', 'raffle'))));
 check('ACT members draw: $3,000', /\$3,000/.test(text(free('ACT', 'for_profit', 'members'))));
 check('ACT free housie: exempt to $1,000 a session, winning ticket recorded', /\$1,000/.test(text(free('ACT', 'for_profit', 'bingo'))) && /winning ticket/i.test(text(free('ACT', 'for_profit', 'bingo'))));
-check('NT members draw: the $2,000 cap', /\$2,000/.test(text(free('NT', 'for_profit', 'members'))));
+check('NT members draw: a pub\'s $5,000 trade lottery, no staff or families, winners in a newspaper (22 Oct 2026)', /\$5,000/.test(text(free('NT', 'for_profit', 'members'))) && /staff and their families/i.test(text(free('NT', 'for_profit', 'members'))) && /newspaper/i.test(text(free('NT', 'for_profit', 'members'))));
 check('NT raffle is NOT shown the members-only cap', !/\$2,000/.test(text(free('NT', 'for_profit', 'raffle'))));
 var tas = text(free('TAS', 'for_profit', 'members'));
 check('Tasmania members draw: no minors, cash capped at $5,000, permit above $10,000 (table p.9)', /no minors/i.test(tas) && /\$5,000/.test(tas) && /\$10,000/.test(tas), tas);

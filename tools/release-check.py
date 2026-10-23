@@ -3370,6 +3370,18 @@ def local_checks(which):
              'owner/accounts only; venue, dates, kind and who narrow on the database; cursor pages lose and repeat nothing; declines fold to one named line; invite-back changes no venue and calls no Stripe', 50,
              'An audit screen that loads the whole table, a filter that is ignored, a page that repeats or skips '
              'entries, a declined card with no venue on it, or a Reactivate button that bills a card its owner stopped'),
+            # D80 and D81: number bingo hidden for SA and NT pubs, the HQ switch, the signup ask and the
+            # welcome email variant (Dean, 22 Oct 2026; migration 116). Musical bingo is not bingo.
+            ('D80. Number bingo is hidden for SA and NT pubs by one rule, and they are told so from signup on',
+             'test-sant-bingo.js',
+             'the console, both Workers and the signup page agree on every venue; HQ switch audited; the signup tick makes one ticket; the welcome email says it; SA and NT members and raffle rules', 48,
+             'An SA or NT pub shown bingo it cannot lawfully run, a club or a QLD pub losing bingo, a welcome '
+             'email promising bingo, or a switch nobody can trace back to who turned it on'),
+            ('D81. The game Worker refuses a number bingo session and draw for an SA or NT pub, and nothing else',
+             'test-sant-bingo-game.js',
+             'SA and NT pubs refused before anything is written; musical bingo, clubs, switched-on pubs and QLD play; no rollover at an SA pub; 15 minutes for an SA club', 26,
+             'A stale tab or a typed request starts number bingo at an SA pub, or musical bingo or a club '
+             'is refused in front of a full room'),
             # 21 Oct 2026 (Dean: a square logo "seems to be a bit small"): one rule in /app/vp-venuelogo.js
             # sizes every logo by its shape, equal area inside a height and width ceiling, on the TV and the phone.
             ('D52. The venue logo is painted only when the venue has one, sized by its shape, top-left and kept clear',

@@ -347,7 +347,11 @@ async function handleCheckout(request, env, json) {
        field the OLGR position rests on. */
     .map((v) => ({ name: String((v && v.name) || '').trim(), seats: parseInt(v && v.seats, 10),
                    postcode: String((v && v.postcode) || '').replace(/\D/g, '').slice(0, 4),
-                   entity_type: (v && (v.entity_type === 'non_profit' || v.entity_type === 'for_profit')) ? v.entity_type : null }))
+                   entity_type: (v && (v.entity_type === 'non_profit' || v.entity_type === 'for_profit')) ? v.entity_type : null,
+                   /* An SA or NT pub that ticked "our bingo is run by a not-for-profit" at signup
+                      (migration 116). Only ever a request for HQ to look: provisioning opens a help
+                      desk ticket, and number bingo stays hidden until HQ switches it on. */
+                   bingo_review: !!(v && v.bingo_review === true) }))
     .filter((v) => v.name && v.seats > 0);
 
   if (email.indexOf('@') === -1 || !venues.length) {
@@ -361,7 +365,7 @@ async function handleCheckout(request, env, json) {
     let nm = v.name, k = 2;
     while (seenNames[nm.toLowerCase()]) { nm = v.name + ' (' + k + ')'; k++; }
     seenNames[nm.toLowerCase()] = true;
-    return { name: nm, seats: v.seats, postcode: v.postcode, entity_type: v.entity_type };
+    return { name: nm, seats: v.seats, postcode: v.postcode, entity_type: v.entity_type, bingo_review: v.bingo_review };
   });
 
   const venueCount = venues.length;
@@ -2050,6 +2054,7 @@ async function vpaHandleVenue(request, env, json) {
       seats: foundingRow && foundingRow.max_seats,
       plan: foundingRow && foundingRow.plan,
       postcode: venuePostcode || (foundingRow && foundingRow.postcode) || '',
+      venueKind: venueKind,
       comp: isComp,
     });
   }
@@ -2149,9 +2154,12 @@ async function vpaResendWelcome(request, env, json) {
   if (!venueId) return json({ error: 'Which venue?' }, 400);
 
   const vs = await vpaSelect(env, 'vp_venues',
-    'id=eq.' + encodeURIComponent(venueId) + '&select=id,name,slug,postcode,founding_id,group_id&limit=1');
+    'id=eq.' + encodeURIComponent(venueId) + '&select=id,name,slug,postcode,founding_id,group_id,entity_type,venue_kind&limit=1');
   const venue = vs && vs[0];
   if (!venue) return json({ error: 'That venue no longer exists.' }, 404);
+  // The HQ number bingo switch, read on its own so a database before migration 116 still resends.
+  let resendBingoOn = false;
+  try { const nb = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=number_bingo_on&limit=1'); resendBingoOn = !!(nb && nb[0] && nb[0].number_bingo_on === true); } catch (e) {}
   if (!venue.founding_id) {
     return json({ error: 'This venue bills through an operator group, so there is no card for it to add. The group is invoiced by hand.' }, 400);
   }
@@ -2179,6 +2187,9 @@ async function vpaResendWelcome(request, env, json) {
     seats: f.max_seats,
     plan: f.plan,
     postcode: venue.postcode || '',
+    venueKind: venue.venue_kind || null,
+    entityType: venue.entity_type || null,
+    numberBingoOn: resendBingoOn,
     comp: comp,
   });
 
@@ -2835,7 +2846,7 @@ async function vpaHandleVenueGaming(request, env, json) {
     }
     if (on && !vpaPaidEntryDefault(entity, st)) {
       return json({ error: st
-        ? ('We do not unlock paid games in ' + st + ' yet. Queensland is waiting on OLGR approval of our generator, and the Northern Territory is unresolved.')
+        ? ('We do not unlock paid games in ' + st + ' yet. Queensland is waiting on OLGR approval of our generator.')
         : 'Set this venue\'s postcode first, so we know which state\'s rules apply.' }, 409);
     }
     patch.paid_entry_enabled = on;
@@ -2875,6 +2886,19 @@ async function vpaHandleVenueGaming(request, env, json) {
     const pr = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=id,purchase_raffle_on');
     praffleBefore = (pr && pr[0] && pr[0].purchase_raffle_on === true);
   }
+  /* NUMBER BINGO FOR AN SA OR NT PUB (migration 116, Dean 22 Oct 2026). Hidden for those venues
+     by law; this shows it again for ONE venue whose bingo is run by a not-for-profit, once HQ has
+     seen that. HQ only (owner and accounts admins: this route), a trigger in 116 keeps a venue
+     login off it, a real true or false only, and its own audit row. */
+  let bingoBefore;
+  if (b.number_bingo_on !== undefined) {
+    if (b.number_bingo_on !== true && b.number_bingo_on !== false) {
+      return json({ error: 'number_bingo_on must be true or false.' }, 400);
+    }
+    patch.number_bingo_on = b.number_bingo_on;
+    const nb = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=id,number_bingo_on');
+    bingoBefore = (nb && nb[0] && nb[0].number_bingo_on === true);
+  }
   if (!Object.keys(patch).length) return json({ error: 'Nothing to change.' }, 400);
 
   const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_venues?id=eq.' + encodeURIComponent(venueId), {
@@ -2890,11 +2914,14 @@ async function vpaHandleVenueGaming(request, env, json) {
     if (patch.purchase_raffle_on !== undefined && /purchase_raffle_on/.test(t)) {
       return json({ error: 'Run migration 115 first: the purchase raffle switch is not in the database yet. Nothing was changed.' }, 409);
     }
+    if (patch.number_bingo_on !== undefined && /number_bingo_on/.test(t)) {
+      return json({ error: 'Run migration 116 first: the number bingo switch is not in the database yet. Nothing was changed.' }, 409);
+    }
     return json({ error: 'Could not save. ' + t }, 500);
   }
   const saved = (await res.json())[0] || {};
 
-  const gamingKeys = Object.keys(patch).filter(function (k) { return k !== 'weekly_limit_off' && k !== 'purchase_raffle_on'; });
+  const gamingKeys = Object.keys(patch).filter(function (k) { return k !== 'weekly_limit_off' && k !== 'purchase_raffle_on' && k !== 'number_bingo_on'; });
   if (gamingKeys.length) {
     const gp = {};
     gamingKeys.forEach(function (k) { gp[k] = patch[k]; });
@@ -2918,6 +2945,16 @@ async function vpaHandleVenueGaming(request, env, json) {
       action: patch.purchase_raffle_on ? 'venue_purchase_raffle_on' : 'venue_purchase_raffle_off',
       target: 'venue:' + venueId,
       detail: { name: prior.name, from: praffleBefore, to: patch.purchase_raffle_on },
+    }, false).catch(function () {});
+  }
+
+  if (patch.number_bingo_on !== undefined) {
+    await vpaInsert(env, 'vp_admin_audit', {
+      actor_admin: actor.actorId || null, actor_label: actor.label || 'admin',
+      action: patch.number_bingo_on ? 'venue_number_bingo_on' : 'venue_number_bingo_off',
+      target: 'venue:' + venueId,
+      detail: { name: prior.name, state: prior.au_state || null, entity_type: prior.entity_type || null,
+                from: bingoBefore, to: patch.number_bingo_on },
     }, false).catch(function () {});
   }
 
@@ -3891,6 +3928,11 @@ async function vpaProvisionFromCheckout(env, session) {
       await vpaNotifyNewSignup(env, session, f, [{ name: venueName, seats: f.max_seats }], false);
       return r;   // the welcome's own outcome, so vpaWelcomeOnce records what really happened
     });
+    // An SA or NT pub that asked for its bingo to be reviewed (signup tick, migration 116).
+    try {
+      const vl = f.venues_json ? (typeof f.venues_json === 'string' ? JSON.parse(f.venues_json) : f.venues_json) : null;
+      await vpaBingoReviewTicket(env, f, Object.assign({ name: venueName }, venue), vl && vl[0]);
+    } catch (e) { /* best-effort */ }
   } catch (e) {
     // Log which step failed so a stuck venue is visible in HQ, then rethrow so
     // Stripe retries and the self-healing path above finishes it next time.
@@ -3925,7 +3967,7 @@ function vpaStateFromPostcode(pc) {
   if ((n >= 1000 && n <= 2599) || (n >= 2619 && n <= 2899) || (n >= 2921 && n <= 2999)) return 'NSW';
   if ((n >= 3000 && n <= 3999) || (n >= 8000 && n <= 8999)) return 'VIC';
   if ((n >= 4000 && n <= 4999) || (n >= 9000 && n <= 9999)) return 'QLD';
-  if (n >= 5000 && n <= 5799) return 'SA';
+  if (n >= 5000 && n <= 5999) return 'SA';   // 58xx and 59xx are SA's PO box ranges (22 Oct 2026)
   if (n >= 6000 && n <= 6797) return 'WA';
   if (n >= 7000 && n <= 7799) return 'TAS';
   if (n >= 800 && n <= 999) return 'NT';
@@ -4006,18 +4048,85 @@ const VPA_PUBWORDS  = /\b(hotel|tavern|pub|inn|arms|brewery|brewhouse|bar|motel|
  * A for-profit venue is never unlocked: in every state it can run a paid raffle only for a
  * nominated cause, which is a conversation, not a switch.
  *
- * Two states stay off even for a confirmed club:
+ * One state stays off even for a confirmed club:
  *   QLD  our number generator is still going through OLGR approval, so we cannot run the draw
  *        at all yet, whatever the venue is allowed to do
- *   NT   a published permit condition may bar an association paying us any fee, unresolved
+ * (NT used to be here too, over a permit condition that may bar an association paying anyone for
+ * conducting a game. Dean, 22 Oct 2026: ignore it; that part can be offered free.)
  * Everywhere else a club may charge, subject to caps and permits that vp-gaming.js shows them
  * before each night and that remain the venue's own responsibility.
  */
-const VPA_PAID_ENTRY_BLOCKED_STATES = new Set(['QLD', 'NT']);
+const VPA_PAID_ENTRY_BLOCKED_STATES = new Set(['QLD']);
 function vpaPaidEntryDefault(entityType, auState) {
   if (entityType !== 'non_profit') return false;
   if (!auState) return false;                       // no postcode, no state, no assumptions
   return !VPA_PAID_ENTRY_BLOCKED_STATES.has(String(auState).toUpperCase());
+}
+
+/* NUMBER BINGO FOR SA AND NT PUBS (Dean, 22 Oct 2026; migration 116). The billing side of
+   numberBingoHidden() in app/vp-gaming.js, numberBingoHiddenFor() in the game Worker and
+   vpNoBingoAt() on the signup page (tools/test-sant-bingo.js runs all four on one table). Here it
+   only picks words: which welcome email variant a venue gets. Musical bingo is not bingo. */
+const VPA_NO_PUB_BINGO = { SA: 'South Australia', NT: 'the Northern Territory' };
+function vpaNoNumberBingo(auState, entityType, switchedOn) {
+  const st = String(auState || '').toUpperCase();
+  if (!VPA_NO_PUB_BINGO[st]) return false;
+  if (entityType === 'non_profit') return false;
+  return switchedOn !== true;
+}
+/* "South Australia", "the Northern Territory", or both, for the states in a list where number
+   bingo is off. '' when none. */
+function vpaNoBingoPlaces(states) {
+  const seen = [];
+  (states || []).forEach(function (s) { s = String(s || '').toUpperCase(); if (VPA_NO_PUB_BINGO[s] && seen.indexOf(s) === -1) seen.push(s); });
+  seen.sort();   // NT before SA, then reversed below so it reads South Australia first
+  seen.reverse();
+  return seen.map(function (s) { return VPA_NO_PUB_BINGO[s]; }).join(' and ');
+}
+/* Fill the no-bingo section of a welcome template: kept with the place named when `places` is
+   not empty, stripped otherwise. Every other IF section in the file is left for its own caller. */
+function vpaNoBingoSection(html, places) {
+  return String(html).replace(/<!--IF:nobingo-->([\s\S]*?)<!--ENDIF:nobingo-->/g,
+    function (m, body) { return places ? body : ''; })
+    .replace(/{{nobingo_places}}/g, places || '');
+}
+/* For a self-serve signup: which of its venues are SA or NT pubs, from what the form sent. */
+function vpaSignupNoBingoStates(f, venues) {
+  let list = null;
+  try { list = f && f.venues_json ? (typeof f.venues_json === 'string' ? JSON.parse(f.venues_json) : f.venues_json) : null; } catch (e) { list = null; }
+  if (!Array.isArray(list) || !list.length) list = (venues || []).map(function (v) { return { postcode: (v && v.postcode) || (f && f.postcode), entity_type: v && v.entity_type }; });
+  const out = [];
+  list.forEach(function (v) {
+    const st = vpaStateFromPostcode((v && v.postcode) || (f && f.postcode));
+    if (vpaNoNumberBingo(st, v && v.entity_type, false)) out.push(st);
+  });
+  return out;
+}
+/* The signup tick: open ONE help desk ticket per venue that asked, so HQ sees the request where it
+   works. Best-effort: a failure here must never fail provisioning (Stripe would retry the whole
+   webhook over a note). Idempotent on a retry: the ticket subject names the venue id. */
+async function vpaBingoReviewTicket(env, f, venue, entry) {
+  try {
+    if (!entry || entry.bingo_review !== true || !venue || !venue.id) return;
+    if (typeof helpInsertTicket !== 'function') return;
+    // Only an SA or NT pub has anything to review: a club, or a pub anywhere else, already has bingo.
+    const st = vpaStateFromPostcode(entry.postcode || (f && f.postcode)) || '';
+    if (!vpaNoNumberBingo(st, entry.entity_type, false)) return;
+    const subject = 'Number bingo review: ' + (venue.name || 'a venue') + ' [' + venue.id + ']';
+    const have = await vpaSelect(env, 'vp_help_tickets', 'venue_id=eq.' + encodeURIComponent(venue.id) + '&subject=eq.' + encodeURIComponent(subject) + '&select=id&limit=1');
+    if (have && have.length) return;
+    await helpInsertTicket(env, {
+      brand: 'venueplay', category: 'venue_support', channel: 'web_form', status: 'new',
+      title: subject,
+      message: (venue.name || 'This venue') + ' signed up as a pub in ' + (VPA_NO_PUB_BINGO[st] || st || 'SA or NT') +
+        ' and ticked "Our bingo is run by a not-for-profit organisation". Number bingo is hidden for them until HQ switches it on ' +
+        '(HQ > Venues > Details > Number bingo). Ask who conducts the bingo and for their licence or approval, then switch it on if it checks out.',
+      contact_name: (f && f.contact_name) || null,
+      contact_email: (f && f.contact_email) || null,
+      contact_phone: (f && f.mobile) || null,
+      venue_id: venue.id,
+    });
+  } catch (e) { /* the venue is provisioned either way; HQ can still see the state on the venue card */ }
 }
 
 function vpaGuessEntity(name) {
@@ -4159,6 +4268,8 @@ async function vpaProvisionGroup(env, session, f) {
       // The welcome email needs each venue's OWN screen link, and the slug only exists
       // once the venue does. Without this every card in the email pointed at a bare /tv.
       if (r.venue && r.venue.slug && venues[i]) venues[i].slug = r.venue.slug;
+      // An SA or NT pub that asked for its bingo to be reviewed (signup tick, migration 116).
+      if (r.venue) await vpaBingoReviewTicket(env, f, Object.assign({ name: name }, r.venue), v);
     }
 
     step = 'audit';
@@ -4290,6 +4401,11 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
     const res = await fetch(site + '/emails/' + (isGroup ? 'welcome-group.html' : 'welcome.html'));
     if (!res.ok) return { sent: false, why: 'not sent: the email template did not load (' + res.status + ')', to: email };
     let html = await res.text();
+    /* THE SA AND NT PUB VARIANT (Dean, 22 Oct 2026: "better to be honest from the beginning").
+       Number bingo is hidden for a pub there, so the email says so kindly, says what they CAN run
+       and how to ask if their bingo is run by a not-for-profit. Every other venue gets the
+       template with that section stripped. */
+    html = vpaNoBingoSection(html, vpaNoBingoPlaces(vpaSignupNoBingoStates(f, venues)));
 
     if (isGroup) {
       const total = venues.reduce((n, v) => n + (parseInt(v.seats, 10) || 0), 0);
@@ -4650,6 +4766,12 @@ async function vpaFireHqWelcome(env, o) {
     if (!res.ok) return false;
     let html = await res.text();
     const comp = !!o.comp;
+    /* The SA and NT pub variant, as for a self-serve signup. HQ's Add venue form records what the
+       venue IS as venue_kind, not entity_type, so a pub or hotel there gets the no-bingo note
+       unless HQ has already recorded it as a club or switched number bingo on. */
+    const hqState = vpaStateFromPostcode(o.postcode);
+    const hqEntity = o.entityType || vpaEntitySuggestion(o.venueKind);
+    html = vpaNoBingoSection(html, vpaNoNumberBingo(hqState, hqEntity, o.numberBingoOn === true) ? vpaNoBingoPlaces([hqState]) : '');
     html = vpaTplSections(html, { card: !comp, comp: comp });
 
     const plan = o.plan === 'annual' ? 'annual' : 'monthly';

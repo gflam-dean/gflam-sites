@@ -284,7 +284,10 @@
     var v=ctx.venue||{};
     permitsNow=(v.permits && typeof v.permits==="object" && !Array.isArray(v.permits)) ? v.permits : {};
     var state=v.au_state||"";
-    wrap.innerHTML=PERMIT_KINDS.map(function(pk){
+    /* No bingo card for a venue that cannot run number bingo (an SA or NT pub, migration 116): the
+       console does not show it, so asking for a bingo permit here would only confuse them. */
+    var bingoOff=!!(window.VPGaming && VPGaming.numberBingoHidden && VPGaming.numberBingoHidden(v));
+    wrap.innerHTML=PERMIT_KINDS.filter(function(pk){ return !(bingoOff && pk[0]==="bingo"); }).map(function(pk){
       var kind=pk[0], p=permitsNow[kind]||{};
       var npo=p.holder==="npo";
       return '<div class="permit" data-kind="'+kind+'" style="padding:12px 0;border-top:1px solid var(--line-2)">'+

@@ -102,6 +102,7 @@
         <label>Postcode</label>
         <input type="text" id="vpostcode" class="mono" inputmode="numeric" maxlength="4" placeholder="4224">
         <div class="note">Four digits, required. It sets the venue's state, which decides which gaming rules they are shown and whether phones may hold a bingo ticket, and it keeps the slug unique.</div>
+        <div class="note hidden" id="vNoBingo" style="margin-top:6px;color:var(--roll,#F5A524)"></div>
       </div>
       <div class="field">
         <label>Timezone</label>
@@ -223,6 +224,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="vp-session.js"></script>
+<!-- The state rules, for the SA and NT number bingo note (one rule, VPGaming.numberBingoHidden). -->
+<script src="vp-gaming.js"></script>
 <script>if(window.VP && VP.guardShift) VP.guardShift();   /* the 4h forced sign-out reaches every page with player data */</script>
 <script>
 (function(){
@@ -262,6 +265,21 @@
   $("vslug").addEventListener("input", function(){ slugTouched=true; });
   $("vname").addEventListener("input", autoSlug);
   $("vpostcode").addEventListener("input", autoSlug);
+  /* SA AND NT PUBS (migration 116, Dean 22 Oct 2026): say it here, as HQ's Add venue form does, the
+     moment an SA or NT postcode goes in for anything that is not a club, RSL, charity or association. */
+  function noBingoNote(){
+    var el=$("vNoBingo"); if(!el) return;
+    var pc=(($("vpostcode").value||"").replace(/\D/g,"")).slice(0,4);
+    var st=(pc.length===4 && window.VPGaming && VPGaming.stateFromPostcode) ? VPGaming.stateFromPostcode(pc) : null;
+    var kind=$("vkind").value, club=(kind==="club"||kind==="rsl"||kind==="charity"||kind==="association");
+    var places=(window.VPGaming && VPGaming.NO_PUB_BINGO_STATES) || {};
+    if(st && places[st] && !club){
+      el.textContent="Number bingo will be hidden for this venue: in "+places[st]+" only a not-for-profit may run bingo, so a pub or hotel never sees the Bingo tile. Musical bingo, trivia and members draws are all there. If their bingo is run by a club or charity, switch it on from the venue card in HQ once you have seen it.";
+      el.classList.remove("hidden");
+    } else { el.textContent=""; el.classList.add("hidden"); }
+  }
+  $("vpostcode").addEventListener("input", noBingoNote);
+  $("vkind").addEventListener("change", noBingoNote);
 
   $("billSeg").addEventListener("click", function(e){
     var o=e.target.closest(".opt"); if(!o) return;

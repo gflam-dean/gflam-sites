@@ -288,7 +288,7 @@
           </div>
           <div class="two">
             <div class="field"><label>Current jackpot ($)</label><input type="number" id="setCur" class="mono" min="0" step="1"></div>
-            <div class="field"><label>Time to claim (seconds)</label><input type="number" id="setClaim" class="mono" min="30" step="1"><div class="note" style="margin-top:4px">At least 30 seconds. A shorter window runs out before the member can reach the host.</div></div>
+            <div class="field"><label>Time to claim (seconds)</label><input type="number" id="setClaim" class="mono" min="30" step="1"><div class="note" id="setClaimHint" style="margin-top:4px">At least 30 seconds. A shorter window runs out before the member can reach the host.</div></div>
           </div>
           <div class="two">
             <div class="field"><label>Draw day</label><input type="text" id="setDay" placeholder="Friday"></div>
@@ -422,6 +422,31 @@
       : base+" &middot; time is up, your call";
   }
 
+  /* SOUTH AUSTRALIA, A PUB (22 Oct 2026 research; Lotteries Regulations 2021 reg 9(2)): a pub's
+     members draw is a minor trade promotion lottery and only the casino may make a winner be
+     present. So the member drawn has won whether or not they are in the room: no claim clock, no
+     "not here, jackpot to next week" button (the game Worker refuses a rollover there too), and the
+     host is reminded to publish the winner for 7 days. An SA club may ask the winner to be present
+     with at least 15 minutes to claim; the NT asks a pub to name winners in a newspaper. The rules
+     are VPGaming's (noPresentToWin, minClaimSeconds, afterWinReminder); every other venue in the
+     country sees this console exactly as before. */
+  function noPresent(){ try{ return !!(window.VPGaming && VPGaming.noPresentToWin && VPGaming.noPresentToWin(G.venue)); }catch(e){ return false; } }
+  function minClaim(){ try{ return (window.VPGaming && VPGaming.minClaimSeconds) ? VPGaming.minClaimSeconds(G.venue) : 30; }catch(e){ return 30; } }
+  function winReminder(){ try{ return (window.VPGaming && VPGaming.afterWinReminder) ? VPGaming.afterWinReminder(G.venue) : ""; }catch(e){ return ""; } }
+  var NO_PRESENT_NOTE="In South Australia the member drawn wins whether or not they are here. Record the win, and contact them if they are not in the room.";
+  function applyPresentRule(){
+    var np=noPresent();
+    var rb=$("rollBtn"), cb=$("claimBtn");
+    if(rb) rb.classList.toggle("hidden", np);
+    if(cb) cb.textContent = np ? "Record the win" : "They are here: pay the jackpot";
+    var wrap=document.querySelector("#winnerCard .resolve"); if(wrap) wrap.style.gridTemplateColumns = np ? "1fr" : "";
+    var mc=minClaim(), sc=$("setClaim"), hint=$("setClaimHint");
+    if(sc) sc.min=String(mc);
+    if(hint) hint.textContent = np
+      ? "Not used here: a South Australian pub cannot make the winner be present, so there is no claim clock."
+      : (mc>=900 ? "At least 15 minutes (900 seconds) in South Australia when the winner must be present."
+                 : "At least 30 seconds. A shorter window runs out before the member can reach the host.");
+  }
   function curDraw(){ if(G.currentDrawId==="__new") return null; for(var i=0;i<G.draws.length;i++){ if(G.draws[i].id===G.currentDrawId) return G.draws[i]; } return G.draws[0]||null; }
   function drawMembers(d){ if(!d) return []; return G.members.filter(function(m){ return !d.roster_id || m.roster_id===d.roster_id; }); }
   function activeMembers(d){ return drawMembers(d).filter(function(m){ return m.status==="valid"; }); }
@@ -636,7 +661,7 @@
     $("claimBtn").classList.add("pulse");   // pulse the SAFE action. Rolling the jackpot over denies the member walking up to the host, and is not reversible: it should not be the button that attracts the thumb.
     $("claimBtn").disabled=false; $("rollBtn").disabled=false;
     $("drawBtn").disabled=true; $("drawBtn").textContent="Waiting on your call\u2026";
-    $("drawNote").textContent="Picked up where you left off. Confirm below: Claim if they are present, or roll the jackpot to next week.";
+    $("drawNote").textContent= noPresent() ? ("Picked up where you left off. "+NO_PRESENT_NOTE) : "Picked up where you left off. Confirm below: Claim if they are present, or roll the jackpot to next week.";
     send({ t:"winner", number:G.round.number, name:G.round.name, claimSecs:0 });
     return true;
   }
@@ -727,6 +752,7 @@
     var d=curDraw();
     if(d) d.last_drawn_date=new Date().toISOString().slice(0,10);   // mark drawn-today so the board drops its "tonight" badge when it returns to idle
     var claimSecs = (d && d.time_to_claim_seconds!=null) ? (d.time_to_claim_seconds|0) : 0;
+    if(noPresent()) claimSecs=0;   // SA pub: the drawn member has won; nothing to count down to
     G.round={ drawId:r.draw_id, memberId:r.member_id, number:r.member_number, name:r.winner_name, prizeCents:(r.jackpot_cents!=null?r.jackpot_cents:(d?d.current_jackpot_cents:0)), remaining:claimSecs };
     // broadcast the winner to the TV (claimSecs drives the TV countdown too)
     send({ t:"winner", number:r.member_number, name:r.winner_name, claimSecs:claimSecs });
@@ -738,7 +764,7 @@
     $("claimBtn").classList.add("pulse");   // pulse the SAFE action. Rolling the jackpot over denies the member walking up to the host, and is not reversible: it should not be the button that attracts the thumb.
     saveRound();   // so a locked tablet does not strand the jackpot
     $("drawBtn").disabled=true; $("drawBtn").textContent="Waiting on your call…";
-    $("drawNote").textContent="Confirm below: Claim if they are present, or roll the jackpot to next week.";
+    $("drawNote").textContent= noPresent() ? NO_PRESENT_NOTE : "Confirm below: Claim if they are present, or roll the jackpot to next week.";
     // if a claim time is set, count it down and auto-roll to next week when it runs out
     stopClaimTimer();
     if(claimSecs>0){
@@ -769,7 +795,7 @@
         send({ t:"claimed", name:round.name, amountCents:r.amount_cents, nextResetCents:r.new_jackpot_cents, capped:!!r.capped });
         G.round=null; clearRound(); hideWinnerCard(); renderStats(); renderSettings();
         clearHostErrorIf("timeup");   // claimed: "Time is up on #N" is no longer true
-        $("drawNote").textContent="Claimed. Jackpot reset to "+money(d?d.current_jackpot_cents:0)+" for next week."+(r.held_cents>0 ? " "+money(r.held_cents)+" of the reserve did not fit under the maximum and stays in reserve." : "");
+        $("drawNote").textContent="Claimed. Jackpot reset to "+money(d?d.current_jackpot_cents:0)+" for next week."+(r.held_cents>0 ? " "+money(r.held_cents)+" of the reserve did not fit under the maximum and stays in reserve." : "")+(winReminder() ? " "+winReminder() : "");
         scheduleIdle(CLAIM_HOLD_MS);
       })
       .catch(function(e){ cb.disabled=false; rb.disabled=false; hostError(e.message||"Could not record the claim. The jackpot has NOT been reset: try again."); });
@@ -1087,6 +1113,7 @@
       if(!ctx.authed){ $("statusText").textContent="Not signed in"; showSignIn("You need your venue host login to run a members draw."); return; }
       if(!ctx.currentVenueId){ $("statusText").textContent="No venue"; showSignIn("This login is not linked to a venue yet."); return; }
       G.venueId=ctx.currentVenueId; G.role=ctx.role; G.venue=ctx.venue||null;
+      applyPresentRule();
       G.canManage = ctx.isAdmin || ctx.role==="owner" || ctx.role==="manager";
       G.nameDisplay = (ctx.settings && ctx.settings.name_display) || "abbrev_last";
       // Tell vp-session when a draw is actually live, so the forced sign-out leaves it open

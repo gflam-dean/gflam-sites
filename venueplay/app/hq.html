@@ -359,7 +359,7 @@
         <div class="field nvGroupF hidden"><label>Operator group</label><select id="nvGroup"></select></div>
         <div class="field nvGroupF hidden"><label>Included players (cap)</label><input type="number" id="nvCap" placeholder="e.g. 150" class="mono"></div>
         <div class="field nvFoundF"><label>Contact email</label><input type="email" id="nvEmail" placeholder="owner@venue.com.au"></div>
-        <div class="field"><label>Venue postcode</label><input type="text" id="nvPostcode" placeholder="e.g. 4224" class="mono" maxlength="4" inputmode="numeric"><div class="note" style="margin-top:4px">The VENUE's postcode, not the account's. It sets the state, which decides which gaming rules apply and whether players can use phones for bingo.</div></div>
+        <div class="field"><label>Venue postcode</label><input type="text" id="nvPostcode" placeholder="e.g. 4224" class="mono" maxlength="4" inputmode="numeric"><div class="note" style="margin-top:4px">The VENUE's postcode, not the account's. It sets the state, which decides which gaming rules apply and whether players can use phones for bingo.</div><div class="note hidden" id="nvNoBingo" style="margin-top:6px;color:var(--roll)"></div></div>
         <div class="field"><label>First manager's mobile</label><input type="text" id="nvMobile" placeholder="e.g. 0412 345 678" class="mono"><div class="note" style="margin-top:4px">They are texted a login invite. Without this nobody at the venue can sign in.</div></div>
         <!-- What the venue says it is, and the compliance tick. Anisimoff Legal 9380, 1 Oct 2026, point 3:
              compliance is the venue's, and an active tick box confirming that is prudent. Read the line to
@@ -708,6 +708,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/app/vp-ask.js"></script>
 <script src="vp-session.js"></script>
+<!-- The state rules, for the SA and NT number bingo note (one rule, VPGaming.numberBingoHidden). -->
+<script src="vp-gaming.js"></script>
 <script>if(window.VP && VP.guardShift) VP.guardShift();   /* the 4h forced sign-out reaches every page with player data */</script>
 <script>
 (function(){
@@ -977,7 +979,10 @@
        .order("created_at",{ascending:false}).limit(1000),
       /* PURCHASE RAFFLE (migration 115). Its own query, same reason: before 115 is run this one 400s
          and the switch says it is not available yet; nothing else is touched. */
-      c.from("vp_venues").select("id,purchase_raffle_on")
+      c.from("vp_venues").select("id,purchase_raffle_on"),
+      /* NUMBER BINGO SWITCH (migration 116). Its own query, same reason: before 116 is run this one
+         400s and the card says the switch is not available yet; the venue list is untouched. */
+      c.from("vp_venues").select("id,number_bingo_on")
     ]).then(function(settled){
       var r = settled.map(function(x){ return x.status==="fulfilled" ? x.value : null; });
       var venuesFailed = settled[0].status !== "fulfilled";
@@ -1003,6 +1008,8 @@
       S.flagAudit = (r[17] && !r[17].error && r[17].data) ? r[17].data : null;
       S.praffle={}; S.praffleKnown = !!(r[18] && !r[18].error && r[18].data);
       ((r[18] && r[18].data) || []).forEach(function(v){ S.praffle[v.id]=v.purchase_raffle_on===true; });
+      S.bingoOn={}; S.bingoOnKnown = !!(r[19] && !r[19].error && r[19].data);
+      ((r[19] && r[19].data) || []).forEach(function(v){ S.bingoOn[v.id]=v.number_bingo_on===true; });
       S.accountsFailed = settled[13] && settled[13].status !== "fulfilled";
       S.groups=(r[1] && r[1].data) || [];
       S.groupById={}; S.groups.forEach(function(g){ S.groupById[g.id]=g; });
@@ -2232,6 +2239,7 @@
         weeklyOffHtml(v)+
         praffleHtml(v)+
         nightPassHtml(v)+
+        numberBingoHtml(v, ent)+
         complianceHtml(v, ent)+
         screenHistoryHtml(v);
       dt.innerHTML='<td colspan="5">'+
@@ -2420,6 +2428,8 @@
     if(wo) setWeeklyOff(wo.getAttribute("data-vid"), wo.checked, wo);
     var pr=e.target.closest("input.prafflesw");
     if(pr) setPraffle(pr.getAttribute("data-vid"), pr.checked, pr);
+    var nb=e.target.closest("input.numbingo");
+    if(nb) setNumberBingo(nb.getAttribute("data-vid"), nb.checked, nb);
   });
   $("venueRows").addEventListener("click", function(e){
     var g=e.target.closest("button[data-npgrant]");
@@ -2502,6 +2512,55 @@
         ' Every change is recorded in the audit log.</div>'+
     '</div>';
   }
+  /* NUMBER BINGO FOR SA AND NT PUBS (migration 116, Dean 22 Oct 2026). Bingo there is for
+     not-for-profits only, so a pub's Bingo tile and routes are hidden. This card says so on every
+     SA or NT venue not recorded as a club, and owner and accounts admins can switch it on for one
+     whose bingo is run by a not-for-profit (a club, a charity) once they have seen it. The Worker
+     writes the audit row (venue_number_bingo_on / _off). Musical bingo is not bingo: untouched. */
+  function numberBingoHtml(v, ent){
+    var st=String(v.au_state||"").toUpperCase();
+    var places=(window.VPGaming && VPGaming.NO_PUB_BINGO_STATES) || { SA:"South Australia", NT:"the Northern Territory" };
+    if(!places[st] || ent==="non_profit") return "";
+    var on = !!(S.bingoOn && S.bingoOn[v.id]);
+    var known = !!S.bingoOnKnown;
+    var box='<div class="nobingo" style="margin-top:10px;padding:10px 12px;border:1px solid rgba(245,165,36,.45);background:rgba(245,165,36,.08);border-radius:10px">'+
+      '<b>Number bingo</b> &middot; '+(on?'<span style="color:var(--win)">switched ON by HQ</span>':'<span style="color:var(--roll)">hidden</span>')+
+      '<div class="note" style="margin-top:4px">'+(ent?"A pub":"Not recorded as a club yet, so treated as a pub")+' in '+esc(places[st])+
+        ': only a not-for-profit may run bingo there, so this venue\u2019s staff never see the Bingo tile and the game server refuses a bingo game. Musical bingo, trivia and members draws are unaffected.'+
+        (ent?"":" If it is really a club, set Club above and bingo comes back on its own.")+'</div>';
+    if(canBilling()){
+      box+='<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:700;margin-top:8px">'+
+        '<input type="checkbox" class="numbingo" data-vid="'+esc(v.id)+'"'+(on?" checked":"")+(known?"":" disabled")+' style="accent-color:var(--pink);width:16px;height:16px;margin:0">'+
+        'Show number bingo: their bingo is run by a not-for-profit</label>'+
+        '<div class="note" style="margin-top:4px">'+(!known ? "Not available until migration 116 is run."
+          : "Only once you have seen who conducts it (the club or charity, and its licence or approval). Every change is recorded in the audit log.")+'</div>';
+    }
+    return box+'</div>';
+  }
+  function setNumberBingo(id, on, el){
+    el.disabled=true;
+    workerPost("/admin/venue-gaming", { venue_id:id, number_bingo_on: !!on }).then(function(res){
+      el.disabled=false;
+      if(res.error){ vpTell(res.error); renderVenues(); return; }
+      S.bingoOn[id] = (res.venue && res.venue.number_bingo_on !== undefined) ? res.venue.number_bingo_on === true : !!on;
+      renderVenues(); loadAuditOnly();
+    });
+  }
+  /* HQ's Add venue form: the same note the moment an SA or NT postcode goes in for anything that is
+     not a club, a charity or an association. */
+  function nvBingoNote(){
+    var el=$("nvNoBingo"); if(!el) return;
+    var pc=($("nvPostcode").value||"").replace(/[^0-9]/g,"");
+    var st=(pc.length===4 && window.VPGaming && VPGaming.stateFromPostcode) ? VPGaming.stateFromPostcode(pc) : null;
+    var kind=$("nvKind").value;
+    var club=(kind==="club"||kind==="rsl"||kind==="charity"||kind==="association");
+    var places=(window.VPGaming && VPGaming.NO_PUB_BINGO_STATES) || {};
+    if(st && places[st] && !club){
+      el.textContent="Number bingo will be hidden for this venue: in "+places[st]+" only a not-for-profit may run bingo, so a pub or hotel never sees the Bingo tile. Musical bingo, trivia and members draws are all there. If their bingo is run by a club or charity, switch it on from the venue card once you have seen it. Their welcome email says the same.";
+      el.classList.remove("hidden");
+    } else { el.textContent=""; el.classList.add("hidden"); }
+  }
+  (function(){ var a=$("nvPostcode"), k=$("nvKind"); if(a) a.addEventListener("input", nvBingoNote); if(k) k.addEventListener("change", nvBingoNote); })();
   function setWeeklyOff(id, on, el){
     el.disabled=true;
     workerPost("/admin/venue-gaming", { venue_id:id, weekly_limit_off: !!on }).then(function(res){
@@ -4111,7 +4170,7 @@
       if(res.warning){ errFlash("addVenueErr", res.warning); }
       flash("addVenueOk", msg);
       $("nvName").value=""; $("nvSlug").value=""; $("nvEmail").value=""; $("nvMobile").value=""; $("nvMax").value=""; $("nvCap").value=""; $("nvPostcode").value=""; $("nvComp").checked=false; $("nvWelcome").checked=true;
-      $("nvKind").value=""; $("nvCompliance").checked=false; $("nvComplianceBy").value="";
+      $("nvKind").value=""; $("nvCompliance").checked=false; $("nvComplianceBy").value=""; nvBingoNote();
       loadAll();
     });
   });

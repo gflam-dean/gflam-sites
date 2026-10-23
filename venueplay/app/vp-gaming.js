@@ -30,6 +30,17 @@
  *        of the 1 Oct letter on raffle certification
  *   SA   Lottery and Gaming Act 1936 / Lottery and Gaming Regulations (Consumer and Business Services)
  *   NT   Gaming Control Act 1993 (Licensing NT)
+ * SA and NT were read again from the legislation on 22 Oct 2026 (venue-enrich/state-rules/
+ * SA-NT-WA-FINDINGS-2026-10-22.md), and Dean decided what to do with it the same day:
+ *   SA   Lotteries Act 2019, Lotteries Regulations 2021: bingo and raffles are for not-for-profit
+ *        organisations only; a pub's members draw is a minor trade promotion lottery (prizes up to
+ *        $5,000 including the jackpot, no "present to win", winners published for 7 days).
+ *   NT   Gaming Control Act 1993, Community Gaming Regulations 2006: bingo and raffles are for
+ *        approved associations; a pub's members draw is a minor trade lottery (up to $5,000, staff
+ *        and their families cannot enter, winners named in a newspaper); no prize may be only
+ *        alcohol; no prize to anyone under 18.
+ *   Number bingo is HIDDEN for SA and NT pubs (numberBingoHidden below). MUSICAL BINGO IS NOT
+ *   BINGO and none of this touches it, in any state.
  * It moves. Victoria has changes landing through 2027. Treat this as a prompt to check, never
  * as advice: the footer of every popup says exactly that.
  */
@@ -202,14 +213,30 @@
     SA: {
       confirmed: true, name: 'South Australia', regulator: 'Consumer and Business Services',
       free: { all: ['In South Australia a trade promotion with prizes up to $5,000 needs no licence. Above $5,000, check with Consumer and Business Services first.'] },
+      /* By what the venue is (22 Oct 2026 research). A pub's members draw is a minor trade
+         promotion lottery: reg 9(2) lets only the casino make a winner be present, so a pub's
+         drawn member wins whether or not they are in the room (the members console enforces it,
+         noPresentToWin below). A club's members-only free draw is a participation lottery, which
+         may ask the winner to be present with at least 15 minutes to claim (Sch 6 r 4(a)). */
+      freeBy: {
+        for_profit: {
+          members: ['A pub members draw in South Australia is a minor trade promotion lottery: total prizes, jackpot included, up to $5,000, and it runs for 12 months at most.',
+                    'The winner cannot be required to be present: the member drawn wins whether or not they are in the room. Contact them, and publish the winners for 7 days.',
+                    'The terms must give the draw date, time and place. Keep the records for 3 months.'],
+          raffle:  ['Only a not-for-profit organisation may sell raffle tickets in South Australia. A free-entry draw is a trade promotion: prizes up to $5,000, no licence.']
+        },
+        non_profit: {
+          members: ['A club draw open only to members, with free entry, is a participation lottery. You may ask the winner to be present, but give them at least 15 minutes to claim.']
+        }
+      },
       phones: { bingo: false },
-      paperBingo: 'South Australia recognises only physical bingo sheets, bought from a licensed supplier. Players cannot use their phones as tickets here. Run the paper sheets and use our calling and our screen. Trivia on phones is unaffected.',
+      paperBingo: 'South Australia recognises only physical bingo sheets, bought from a licensed supplier. Players cannot use their phones as tickets here. Run the paper sheets and use our calling and our screen. Trivia and musical bingo are unaffected.',
       for_profit: {
-        bingo:  { paid: 'no', notes: ['Paper sheets only, and a for-profit venue cannot charge for entry in its own right.'] },
-        raffle: { paid: 'cause', notes: [
-          'Run it for a cause, or use the SA quirk: any person may run a lottery up to $2,000 gross if ALL proceeds go to the prizes and admin costs stay under 2%.',
+        bingo:  { paid: 'no', notes: ['Bingo in South Australia is for not-for-profit organisations only, so a pub or hotel cannot run it.'] },
+        raffle: { paid: 'no', notes: [
+          'Only a not-for-profit organisation may run a raffle in South Australia, so a pub cannot sell raffle tickets.',
           'Free entry as a trade promotion allows prizes up to $5,000 with no licence.'] },
-        members:{ paid: 'no', notes: ['Trade promotion: entry free, prizes up to $5,000, no licence.'] }
+        members:{ paid: 'no', notes: ['Minor trade promotion lottery: entry free, total prizes including the jackpot up to $5,000, no licence. The winner cannot be required to be present.'] }
       },
       non_profit: {
         bingo:  { paid: 'yes', notes: [
@@ -287,22 +314,37 @@
 
     NT: {
       confirmed: true, name: 'the Northern Territory', regulator: 'Licensing NT',
-      free: { all: ['In the Northern Territory this is a trade lottery: prizes up to $5,000 need no permit.'],
-              members: ['A members draw prize is capped at $2,000.'] },
+      /* The published permit condition on payments to organisations used to block every paid game
+         here. Dean, 22 Oct 2026: ignore it (that part can be offered free; they pay for something
+         else). So NT is no longer blocked, and a club is unlocked like anywhere else.
+         Prize rules (Community Gaming Regulations reg 20): no prize that is only alcohol, or money
+         with alcohol; no tobacco or weapons; no prize to anyone under 18 in a trade lottery. The
+         raffle console refuses an alcohol-only prize here (liquorOnlyPrize below). */
+      free: { all: ['In the Northern Territory this is a trade lottery: prizes up to $5,000 need no permit.',
+                    'A prize cannot be only alcohol, or money and alcohol, and cannot be tobacco or a weapon. Nobody under 18 can win.'] },
+      freeBy: {
+        for_profit: {
+          members: ['A pub members draw is a minor trade lottery: prizes up to $5,000, and everyone in it has an equal chance.',
+                    'Your staff and their families cannot enter.',
+                    'Publish the winners\u2019 names in a newspaper that circulates in the Territory, and keep the records for 2 years.']
+        },
+        non_profit: {
+          members: ['A club attendance or membership lottery: the prize is capped at $10,000.']
+        }
+      },
       phones: { bingo: true },
-      blocked: 'We are not selling paid games in the Northern Territory yet. A published permit condition says no payment, fee or commission whatsoever may be provided in relation to conducting a game, which may prevent an association paying us at all. We are checking it. Free entry games and trivia are fine.',
       for_profit: {
-        bingo:  { paid: 'no', notes: ['Trade lottery only: entry free. Prizes up to $5,000 need no permit.'] },
-        raffle: { paid: 'no', notes: ['Trade lottery only: entry free. Prizes up to $5,000 need no permit.'] },
-        members:{ paid: 'no', notes: ['Entry free, and the prize is capped at $2,000.'] }
+        bingo:  { paid: 'no', notes: ['Bingo in the Northern Territory is for approved associations only, so a pub or hotel cannot run it.'] },
+        raffle: { paid: 'no', notes: ['Raffles are for approved associations. A pub may run a free-entry trade lottery: prizes up to $5,000 need no permit.'] },
+        members:{ paid: 'no', notes: ['Minor trade lottery: entry free, prizes up to $5,000. Staff and their families cannot enter, and the winners are named in a newspaper.'] }
       },
       non_profit: {
-        bingo:  { paid: 'yes', notes: ['Approved non-profit associations only. Prizes must be worth at least a third of the ticket value.'] },
+        bingo:  { paid: 'yes', notes: ['Approved non-profit associations only. Prizes must be worth at least a third of the ticket value. Nobody under 18 can win.'] },
         raffle: { paid: 'yes', notes: [
           'Approved non-profit associations only.',
           'Up to $5,000 needs no permit. $5,001 to $20,000 needs a permit. Above that, a major lottery permit.',
-          'Prizes must be worth at least a third of the ticket value.'] },
-        members:{ paid: 'no', notes: ['Entry free, and the prize is capped at $2,000.'] }
+          'Prizes must be worth at least a third of the ticket value. No prize may be only alcohol.'] },
+        members:{ paid: 'no', notes: ['Entry free. A club attendance or membership lottery prize is capped at $10,000.'] }
       }
     }
   };
@@ -396,7 +438,8 @@
     if (!opts.paidEntry) {
       out.headline = 'Free entry. Nobody pays to play, so this is a promotional game, not a paid one.';
       out.points.push('Nobody may pay to enter, buy a ticket or buy a book, and entry cannot depend on a purchase.');
-      var free = ((st.free && st.free.all) || []).concat((st.free && st.free[kind]) || []);
+      var free = ((st.free && st.free.all) || []).concat((st.free && st.free[kind]) || [])
+                 .concat((st.freeBy && st.freeBy[entity] && st.freeBy[entity][kind]) || []);
       if (free.length) {
         for (var fi = 0; fi < free.length; fi++) out.points.push(free[fi]);
       } else {
@@ -570,12 +613,12 @@
         bingo: [200000, 'Tasmania jackpot bingo: the first jackpot is $300 or less, grows by no more than $50 a session, and is paid out at $2,000']
       },
       SA: {
-        members: [500000, 'South Australia trade promotion: $5,000 without a licence'],
+        members: np ? [500000, 'South Australia trade promotion: $5,000 without a licence'] : [500000, 'South Australia minor trade promotion lottery: $5,000 in total prizes, jackpot included'],
         raffle: paid ? [500000, 'South Australia minor lottery: $5,000 without a licence'] : [500000, 'South Australia trade promotion: $5,000 without a licence'],
         bingo: [null, 'South Australia: no prize figure confirmed for bingo (the licence turns on gross takings a session)']
       },
       NT: {
-        members: [200000, 'Northern Territory members draw: $2,000'],
+        members: np ? [1000000, 'Northern Territory club attendance or membership lottery: $10,000'] : [500000, 'Northern Territory minor trade lottery: $5,000'],
         raffle: [500000, 'Northern Territory: $5,000 without a permit'],
         bingo: [500000, 'Northern Territory: $5,000 without a permit']
       },
@@ -871,11 +914,111 @@
     } catch (e) { proceed(); }
   }
 
+  /* ===========================================================================
+     NUMBER BINGO FOR SA AND NT PUBS (Dean, 22 Oct 2026; migration 116).
+
+     In South Australia bingo is for not-for-profit organisations only (Lotteries Regulations 2021
+     reg 3 and 5); in the Northern Territory, approved associations only (Gaming Control Act s 47(b),
+     s 52; Community Gaming Regulations reg 4). A pub or hotel in either place cannot run it, so the
+     90-ball bingo tile and its routes are HIDDEN for them: not greyed out, gone (Dean: staff would
+     think a dead tile was broken). HQ can switch it back on for one venue that shows its bingo is
+     run by a not-for-profit (vp_venues.number_bingo_on, HQ only, audited).
+
+     A venue not recorded as a club (entity_type null or for_profit) counts as a pub here: a club
+     whose type is not recorded yet has it hidden until HQ records it, which is the safe way round.
+
+     MUSICAL BINGO IS NOT BINGO. Nothing here reads or touches musical bingo, trivia, raffles or
+     members draws, in any state.
+
+     THE SAME RULE LIVES IN THREE MORE PLACES, because a Worker cannot load this file:
+       venueplay-game.js       numberBingoHiddenFor()   refuses the draw and the bingo session
+       venueplay-api-FULL.js   vpaNoNumberBingo()       picks the welcome email variant
+       index.html (signup)     vpNoBingoAt()            shows the note under the postcode
+     tools/test-sant-bingo.js runs all four over the same table of venues and fails if any differs.
+     =========================================================================== */
+  var NO_PUB_BINGO_STATES = { SA: 'South Australia', NT: 'the Northern Territory' };
+  function numberBingoHidden(venue) {
+    if (!venue) return false;
+    var st = String(venue.au_state || '').toUpperCase();
+    if (!NO_PUB_BINGO_STATES[st]) return false;
+    if (venue.entity_type === 'non_profit') return false;
+    return venue.number_bingo_on !== true;
+  }
+
+  /* AU postcode to state. The same map as vpaStateFromPostcode in the billing Worker (the suite
+     compares the two over every postcode from 0000 to 9999), for pages that only hold a postcode:
+     HQ's Add venue form, before a venue row exists. */
+  function stateFromPostcode(pc) {
+    var t = String(pc == null ? '' : pc).replace(/\D/g, '');
+    if (!t) return null;
+    var n = parseInt(t, 10);
+    if (!(n >= 0)) return null;
+    if ((n >= 200 && n <= 299) || (n >= 2600 && n <= 2618) || (n >= 2900 && n <= 2920)) return 'ACT';
+    if ((n >= 1000 && n <= 2599) || (n >= 2619 && n <= 2899) || (n >= 2921 && n <= 2999)) return 'NSW';
+    if ((n >= 3000 && n <= 3999) || (n >= 8000 && n <= 8999)) return 'VIC';
+    if ((n >= 4000 && n <= 4999) || (n >= 9000 && n <= 9999)) return 'QLD';
+    if (n >= 5000 && n <= 5999) return 'SA';
+    if (n >= 6000 && n <= 6797) return 'WA';
+    if (n >= 7000 && n <= 7799) return 'TAS';
+    if (n >= 800 && n <= 999) return 'NT';
+    return null;
+  }
+
+  /* MEMBERS DRAW: may the winner be required to be present? Not at an SA pub: a members draw there
+     is a minor trade promotion lottery and reg 9(2) lets only the casino ask for "present to win".
+     The members console then has no "not here, jackpot to next week" button and the game Worker
+     refuses a rollover. A club, and every other state, is unchanged. */
+  function noPresentToWin(venue) {
+    if (!venue) return false;
+    return String(venue.au_state || '').toUpperCase() === 'SA' && venue.entity_type !== 'non_profit';
+  }
+  /* The shortest claim window, in seconds, a members draw may have: 15 minutes for an SA club's
+     participation lottery (Sch 6 r 4(a)); 30 seconds (the console's own floor) everywhere else. */
+  function minClaimSeconds(venue) {
+    if (venue && String(venue.au_state || '').toUpperCase() === 'SA' && venue.entity_type === 'non_profit') return 900;
+    return 30;
+  }
+  /* What the host is reminded to do after a members draw is won, where the state asks for it.
+     '' everywhere else. */
+  function afterWinReminder(venue) {
+    if (!venue) return '';
+    var st = String(venue.au_state || '').toUpperCase();
+    if (venue.entity_type === 'non_profit') return '';
+    if (st === 'SA') return 'South Australia: publish the winner for 7 days (on your screen and a noticeboard is fine), and contact them if they were not here. The prize is theirs either way.';
+    if (st === 'NT') return 'Northern Territory: publish the winner\u2019s name in a newspaper that circulates in the Territory, and keep the record for 2 years.';
+    return '';
+  }
+
+  /* NT: no prize may be only alcohol, or money and alcohol (Community Gaming Regulations reg 20).
+     True when, after taking out the alcohol words, the amounts and the joining words, nothing is
+     left but money. "Slab of XXXX", "$50 and a bottle of wine" -> true. "Meat tray and a bottle of
+     wine", "Dinner voucher" -> false. A prompt, not a parser: the host can reword the prize. */
+  var LIQUOR_WORDS = /\b(beers?|wines?|slabs?|cartons?|bottles?|spirits?|vodka|rum|bourbon|whiske?y|scotch|gin|tequila|champagne|prosecco|sparkling|ciders?|ales?|lagers?|schooners?|pints?|stubbies|tinnies|cans?|six ?packs?|4 ?packs?|6 ?packs?|alcohol|grog|booze|liquor|xxxx|vb|great northern|corona|carlton|coopers|hahn|tooheys|jim beam|bundy|bundaberg|cruisers?|seltzers?|rtds?|premix|cocktails?|jugs?)\b/gi;
+  var FILLER_WORDS = /\b(a|an|and|the|of|with|plus|x|or|bottle|case|box|pack|dozen|ml|l|litre|litres|ltr|cold|chilled|red|white|rose|ros\u00e9|cash|money|dollars?|bucks|aud|prize|winner|draw|jackpot|tonight|bonus|free|cases|boxes|packs|block|blocks|mixed|assorted|premium|local|imported|craft|full|strength|mid|light)\b/gi;
+  function liquorOnlyPrize(text) {
+    var t = String(text || '').toLowerCase();
+    if (!t.trim()) return false;
+    LIQUOR_WORDS.lastIndex = 0;
+    if (!LIQUOR_WORDS.test(t)) return false;
+    LIQUOR_WORDS.lastIndex = 0;
+    var rest = t.replace(LIQUOR_WORDS, ' ').replace(FILLER_WORDS, ' ')
+                .replace(/[$0-9.,&+\-x\/()'"!:;]/g, ' ').replace(/\s+/g, ' ').trim();
+    return rest === '';
+  }
+  function liquorPrizeBlocked(venue, text) {
+    return !!venue && String(venue.au_state || '').toUpperCase() === 'NT' && liquorOnlyPrize(text);
+  }
+  var LIQUOR_PRIZE_MSG = 'In the Northern Territory a prize cannot be only alcohol, or money and alcohol. Add something that is not alcohol (a meat tray, a voucher, a meal) or pick another prize.';
+
   root.VPGaming = {
     NOT_SHOWN: NOT_SHOWN,
     assess: assess, isGaming: isGaming, kindOf: kindOf, formatName: formatName,
     money: money, declaration: declaration, states: STATES,
     gate: gate, gateFor: gateFor, alreadyAcked: alreadyAcked,
-    permitRecorded: permitRecorded, jackpotLimit: jackpotLimit
+    permitRecorded: permitRecorded, jackpotLimit: jackpotLimit,
+    numberBingoHidden: numberBingoHidden, NO_PUB_BINGO_STATES: NO_PUB_BINGO_STATES,
+    stateFromPostcode: stateFromPostcode,
+    noPresentToWin: noPresentToWin, minClaimSeconds: minClaimSeconds, afterWinReminder: afterWinReminder,
+    liquorOnlyPrize: liquorOnlyPrize, liquorPrizeBlocked: liquorPrizeBlocked, LIQUOR_PRIZE_MSG: LIQUOR_PRIZE_MSG
   };
 })(window);
