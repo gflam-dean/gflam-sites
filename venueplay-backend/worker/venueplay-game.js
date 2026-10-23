@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '20 Oct 2026, 16:32 · 17480d16';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '22 Oct 2026, 19:01 · 5df71212';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '9d1b390ad1e63d30fd8e7e358726c0ca0630d9114fcb808c25556fd4a4b366ae';
@@ -352,6 +352,16 @@ export default {
       if (method === 'POST' && path === '/host/members/draw/resolve') return await handleMembersResolve(request, env, json);
       if (method === 'POST' && path === '/host/members/settings')     return await handleMembersSettings(request, env, json);
       if (method === 'GET'  && path === '/host/draws/export')         return await handleDrawsExport(request, env, json, cors);   // the venue's draw record, CSV
+      /* The purchase raffle (migration 115): one entry per purchase, drawn on this server. */
+      if (method === 'POST' && path === '/host/praffle/state')    return await handlePraffleState(request, env, json);
+      if (method === 'POST' && path === '/host/praffle/save')     return await handlePraffleSave(request, env, json);
+      if (method === 'POST' && path === '/host/praffle/lookup')   return await handlePraffleLookup(request, env, json);
+      if (method === 'POST' && path === '/host/praffle/enter')    return await handlePraffleEnter(request, env, json);
+      if (method === 'POST' && path === '/host/praffle/undo')     return await handlePraffleUndo(request, env, json);
+      if (method === 'POST' && path === '/host/praffle/entrants') return await handlePraffleEntrants(request, env, json);
+      if (method === 'POST' && path === '/host/praffle/close')    return await handlePraffleClose(request, env, json);
+      if (method === 'POST' && path === '/host/praffle/draw')     return await handlePraffleDraw(request, env, json);
+      if (method === 'POST' && path === '/host/praffle/redraw')   return await handlePraffleRedraw(request, env, json);
       if (method === 'POST' && path === '/host/gaming/declare')       return await handleGamingDeclare(request, env, json);
       if (method === 'POST' && path === '/admin/sweep-sessions')      return await handleAdminSweep(request, env, json);
       if (method === 'POST' && path === '/host/members/roster')       return await handleMembersRoster(request, env, json);
@@ -4235,6 +4245,7 @@ async function drawsRecordRows(env, venueId) {
     });
   }
   (await bingoRecordRows(env, venueId)).forEach(function (r) { rows.push(r); });
+  (await praffleRecordRows(env, venueId)).forEach(function (r) { rows.push(r); });
   rows.sort(function (a, b) { return a.when < b.when ? -1 : (a.when > b.when ? 1 : 0); });
   return rows;
 }
@@ -9100,6 +9111,548 @@ function nightPassWaiting(v, fmt, now) {
   const until = new Date(v.night_pass_until).getTime();
   if (!(until > now)) return false;
   return v.night_pass_format === 'either' || v.night_pass_format === fmt;
+}
+
+/* =====================================================================
+ * PURCHASE RAFFLE  (migration 115; Deepwater Hotel, NSW, 22 Oct 2026)
+ * ---------------------------------------------------------------------
+ * A promotion that runs for months: every PURCHASE at the bar earns ONE entry. Staff type the
+ * customer's mobile on the venue's tablet; a new mobile also gives first name, last name, email,
+ * their own marketing tick (false unless THEY ticked it) and a confirmation they are 18 or over.
+ * At the end the venue draws on THIS server, weighted by entries: every entry is one equally
+ * likely ticket, so somebody with twelve entries is twelve times as likely as somebody with one.
+ *
+ * ONE ENTRY PER PURCHASE, never per drink or per amount of alcohol (NSW liquor promotion rules).
+ * The tables hold nothing about what was bought, so the product cannot be set up any other way.
+ *
+ * OFF FOR EVERY VENUE until HQ switches it on (vp_venues.purchase_raffle_on, audited in the
+ * billing Worker). Every route checks staff at THIS venue first, then the switch.
+ *
+ * WHO MAY DO WHAT
+ *   add an entry, look up a mobile, undo their own entry inside 10 minutes   any staff (host up)
+ *   set up, close entries, list entrants, draw, redraw, void any entry      owner or manager with
+ *                                                                           draws_raffles, or HQ
+ *   export the opted-in entrants                                            the billing Worker,
+ *                                                                           same rule as the
+ *                                                                           player opt-in export
+ *
+ * MOBILES. Stored as +614xxxxxxxx only (the column refuses anything else). They leave this Worker
+ * masked (04xx xxx 678), except to an owner or manager looking at a drawn winner they must ring.
+ * ===================================================================== */
+const PRAFFLE_DOUBLE_MS = 60 * 1000;          // the same mobile again inside this asks "add another?"
+const PRAFFLE_UNDO_MS = 10 * 60 * 1000;       // the person who added an entry may take it back
+const PRAFFLE_DRAW_HOLD_MS = 10 * 1000;       // a double tap on Draw does not draw twice
+const PRAFFLE_COLS = 'id,venue_id,name,promoter,description,prizes,starts_at,closes_at,draw_at,draw_place,daily_cap,terms_text,status,created_at,updated_at';
+
+/* An Australian mobile in any of the ways people say it, as +614xxxxxxxx, or null. */
+function praffleNormPhone(raw) {
+  let d = String(raw == null ? '' : raw).replace(/[\s\-().]/g, '');
+  if (/^\+614\d{8}$/.test(d)) return d;
+  d = d.replace(/^\+/, '');
+  if (!/^\d+$/.test(d)) return null;
+  if (/^614\d{8}$/.test(d)) return '+' + d;
+  if (/^04\d{8}$/.test(d)) return '+61' + d.slice(1);
+  if (/^4\d{8}$/.test(d)) return '+61' + d;
+  return null;
+}
+function praffleLocalPhone(p) { return '0' + String(p || '').slice(3); }      // +61412345678 -> 0412345678
+function praffleShowPhone(p) { const l = praffleLocalPhone(p); return l.slice(0, 4) + ' ' + l.slice(4, 7) + ' ' + l.slice(7); }
+function praffleMaskPhone(p) { const l = praffleLocalPhone(p); return l.slice(0, 2) + 'xx xxx ' + l.slice(7); }
+function praffleLast3(p) { return String(p || '').slice(-3); }
+
+/* THE VENUE'S OWN CALENDAR. A daily cap counts the venue's day, not UTC's, and "ends 30 April"
+   means 11:59 pm on 30 April where the pub is. */
+function praffleParts(tz, ms) {
+  const f = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+  const o = {};
+  f.formatToParts(new Date(ms)).forEach(function (p) { o[p.type] = p.value; });
+  return { y: +o.year, m: +o.month, d: +o.day, h: (+o.hour) % 24, mi: +o.minute, s: +o.second };
+}
+function praffleTz(tz) {
+  if (!tz) return 'Australia/Brisbane';   // the same fallback venueLocalHour uses
+  try { new Intl.DateTimeFormat('en-AU', { timeZone: tz }).format(0); return tz; } catch (e) { return 'Australia/Sydney'; }
+}
+function praffleLocalDay(tz, ms) {
+  const p = praffleParts(praffleTz(tz), ms == null ? Date.now() : ms);
+  return p.y + '-' + String(p.m).padStart(2, '0') + '-' + String(p.d).padStart(2, '0');
+}
+/* "2026-04-30" at "23:59" in the venue's zone, as a UTC ISO string. Two passes settle a daylight
+   saving edge. Null for a date that is not a date. */
+function praffleLocalToIso(day, hhmm, tz) {
+  const dm = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(day || ''));
+  const tm = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(String(hhmm || '00:00'));
+  if (!dm || !tm) return null;
+  const want = Date.UTC(+dm[1], +dm[2] - 1, +dm[3], +tm[1], +tm[2], +(tm[3] || 0));
+  if (isNaN(want)) return null;
+  const zone = praffleTz(tz);
+  let guess = want;
+  for (let i = 0; i < 2; i++) {
+    const p = praffleParts(zone, guess);
+    const seen = Date.UTC(p.y, p.m - 1, p.d, p.h, p.mi, p.s);
+    guess += (want - seen);
+  }
+  return new Date(guess).toISOString();
+}
+function praffleLocalWords(iso, tz, withTime) {
+  const opts = { timeZone: praffleTz(tz), weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+  if (withTime) { opts.hour = 'numeric'; opts.minute = '2-digit'; opts.hour12 = true; }
+  try { return new Intl.DateTimeFormat('en-AU', opts).format(new Date(iso)).replace(/\s+/g, ' '); }
+  catch (e) { return String(iso || '').slice(0, 16).replace('T', ' '); }
+}
+function praffleCleanText(v, max) {
+  const s = String(v == null ? '' : v).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '').trim();
+  return s.slice(0, max);
+}
+
+/* THE TERMS, WRITTEN FROM THE SETTINGS, so they can never disagree with how the promotion is
+   actually set up. NSW trade promotion shape: promoter, who may enter, how entries are earned,
+   the period, the prizes, the draw (date, time, place), how winners are told, the unclaimed
+   prize redraw, privacy. The venue reads them before saving; Dean decides the final wording. */
+function purchaseRaffleTerms(r, venue) {
+  const tz = venue && venue.timezone;
+  const promoter = (r.promoter || (venue && venue.name) || 'The venue').trim();
+  const where = (r.draw_place || ((venue && venue.name) || 'the venue')).trim();
+  const prizes = Array.isArray(r.prizes) ? r.prizes : [];
+  const lines = [];
+  lines.push(r.name + ': terms and conditions');
+  lines.push('');
+  lines.push('1. The promoter is ' + promoter + '.');
+  lines.push('2. Entry is open to people aged 18 or over. Employees of the promoter and their immediate families may not enter.');
+  lines.push('3. The promotion opens ' + praffleLocalWords(r.starts_at, tz, false) + ' and closes on ' +
+    praffleLocalWords(r.closes_at, tz, true) + ' (venue time).');
+  lines.push('4. Each purchase transaction at ' + ((venue && venue.name) || 'the venue') + ' during the promotion earns one entry, ' +
+    'whatever is bought and however much is spent. Entries are not earned per drink or by the amount of alcohol bought, ' +
+    'and no purchase of alcohol is needed to enter. Staff add the entry at the time of purchase using the entrant\'s mobile number.');
+  lines.push('5. ' + (r.daily_cap ? ('An entrant may earn no more than ' + r.daily_cap + ' ' + (r.daily_cap === 1 ? 'entry' : 'entries') + ' a day.')
+                                  : 'There is no limit on the number of entries an entrant may earn.'));
+  if (!prizes.length) {
+    lines.push('6. The prize is as advertised in the venue.');
+  } else if (prizes.length === 1) {
+    lines.push('6. The prize is ' + prizeWords(prizes[0]) + '.');
+  } else {
+    lines.push('6. The prizes, drawn in this order, are: ' + prizes.map(function (p, i) { return (i + 1) + ') ' + prizeWords(p); }).join('; ') + '.');
+  }
+  lines.push('7. The draw takes place at ' + where + ' on ' + praffleLocalWords(r.draw_at, tz, true) +
+    '. It is drawn by computer on the VenuePlay server: every entry has an equal chance, so each entrant\'s chance is in proportion to their entries. ' +
+    (prizes.length > 1 ? 'Each entrant can win only one prize.' : 'There is one winner.'));
+  lines.push('8. Winners will be contacted by phone and email within 2 business days of the draw, and the winner\'s first name and last initial may be shown in the venue.');
+  lines.push('9. If a winner cannot be contacted within 14 days, or is not eligible, the prize is redrawn at the same place at the same time 14 days after the draw.');
+  lines.push('10. Prizes are not transferable and cannot be exchanged for cash. The promoter may substitute a prize of equal or greater value if a prize becomes unavailable.');
+  lines.push('11. Entrant details are collected by the promoter to run this promotion and contact winners. They are used for marketing only if the entrant ticks the box to agree, and can be removed on request.');
+  if (r.description) { lines.push(''); lines.push(String(r.description)); }
+  return lines.join('\n');
+}
+function prizeWords(p) {
+  const t = String((p && p.title) || 'a prize').trim();
+  const v = p && p.value_cents != null ? (' (valued at $' + (p.value_cents / 100).toLocaleString('en-AU', { maximumFractionDigits: 2 }) + ')') : '';
+  return t + v;
+}
+
+/* The venue, the switch, and the caller's rights, in one place. Throws the right status. */
+async function praffleGate(env, authUserId, venueId, manage) {
+  assertUuid(venueId, 'venue_id');
+  const staff = await requireStaff(env, authUserId, venueId, 'host');   // staff at THIS venue (also the kill-switch)
+  let rows;
+  try {
+    rows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=id,name,slug,timezone,purchase_raffle_on');
+  } catch (e) {
+    throw httpError(409, 'The purchase raffle is not switched on for this venue yet. VenuePlay turns it on for you.');
+  }
+  const venue = rows[0];
+  if (!venue) throw httpError(404, 'Venue not found');
+  if (venue.purchase_raffle_on !== true) {
+    throw httpError(409, 'The purchase raffle is not switched on for this venue yet. VenuePlay turns it on for you.');
+  }
+  const canManage = staff.role === 'owner' || (staff.role === 'manager' && staffCan(staff, 'draws_raffles'));
+  if (manage && !canManage) throw httpError(403, 'Only the owner or a manager can do that. Adding entries is open to every staff login.');
+  return { staff: staff, venue: venue, canManage: canManage };
+}
+async function praffleStaffName(env, staff) {
+  if (!staff) return 'unknown';
+  if (staff.is_admin) return 'VenuePlay HQ';
+  try {
+    const r = await sbGet(env, 'vp_venue_staff', 'id=eq.' + enc(staff.id) + '&select=display_name&limit=1');
+    const n = r[0] && r[0].display_name ? String(r[0].display_name).trim() : '';
+    return n || (staff.role === 'owner' ? 'Owner' : (staff.role === 'manager' ? 'Manager' : 'Staff'));
+  } catch (e) { return 'Staff'; }
+}
+async function praffleAudit(env, staff, action, venueId, detail) {
+  try {
+    await sbInsert(env, 'vp_admin_audit', {
+      actor_admin: null, actor_label: actorRef(staff), action: action, target: 'venue:' + venueId,
+      detail: Object.assign({ auth_user: staff && staff.auth_user_id }, detail || {}),
+    }, false);
+  } catch (e) { /* the audit row is best effort; the change itself stands */ }
+}
+async function praffleLoad(env, raffleId) {
+  assertUuid(raffleId, 'raffle_id');
+  const r = await sbGet(env, 'vp_purchase_raffles', 'id=eq.' + enc(raffleId) + '&select=' + PRAFFLE_COLS);
+  if (!r.length) throw httpError(404, 'That raffle was not found.');
+  return r[0];
+}
+function praffleOpenNow(r) {
+  const now = Date.now();
+  if (r.status !== 'open') return 'This raffle has been drawn. No more entries.';
+  if (now < new Date(r.starts_at).getTime()) return 'Entries open on ' + String(r.starts_at).slice(0, 10) + '. Nothing was added.';
+  if (now >= new Date(r.closes_at).getTime()) return 'Entries have closed for this raffle. Nothing was added.';
+  return '';
+}
+async function praffleTotals(env, r, tz) {
+  const base = 'raffle_id=eq.' + enc(r.id);
+  return {
+    entrants: await sbCount(env, 'vp_purchase_raffle_entrants', base + '&select=id'),
+    entries: await sbCount(env, 'vp_purchase_raffle_entries', base + '&voided_at=is.null&select=id'),
+    today: await sbCount(env, 'vp_purchase_raffle_entries', base + '&voided_at=is.null&venue_day=eq.' + praffleLocalDay(tz) + '&select=id'),
+  };
+}
+async function praffleEntrantCount(env, entrantId) {
+  return sbCount(env, 'vp_purchase_raffle_entries', 'entrant_id=eq.' + enc(entrantId) + '&voided_at=is.null&select=id');
+}
+function praffleDrawOut(d, withContact, entrant) {
+  const o = { id: d.id, prize_index: d.prize_index, prize: d.prize_text, winner_name: d.winner_name, phone_last3: d.phone_last3,
+    winner_entries: d.winner_entries, entries_total: d.entries_total, entrants_total: d.entrants_total, pick_index: d.pick_index,
+    outcome: d.outcome, redraw_reason: d.redraw_reason || null, drawn_at: d.drawn_at, drawn_by_name: d.drawn_by_name || null };
+  if (withContact && entrant) {
+    o.contact = { first_name: entrant.first_name, last_name: entrant.last_name, phone: praffleShowPhone(entrant.phone), email: entrant.email || '' };
+  }
+  return o;
+}
+
+/* POST /host/praffle/state { venue_id } : what the bar tablet and the manager page need. */
+async function handlePraffleState(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const g = await praffleGate(env, authUserId, String(b.venue_id || '').trim(), false);
+  const tz = g.venue.timezone;
+  const list = await sbGet(env, 'vp_purchase_raffles', 'venue_id=eq.' + enc(g.venue.id) + '&status=neq.archived&select=' + PRAFFLE_COLS + '&order=created_at.desc&limit=1');
+  const r = list[0] || null;
+  const out = { enabled: true, can_manage: g.canManage, venue: { id: g.venue.id, name: g.venue.name, slug: g.venue.slug, timezone: tz || null },
+    today: praffleLocalDay(tz), raffle: null };
+  if (!r) return json(out);
+  out.raffle = r;
+  out.open_message = praffleOpenNow(r);
+  out.totals = await praffleTotals(env, r, tz);
+  // The last few entries, so staff can see a double tap and undo it. Masked, first name and initial only.
+  const recent = await sbGet(env, 'vp_purchase_raffle_entries', 'raffle_id=eq.' + enc(r.id) + '&select=id,entrant_id,created_at,created_by,created_by_name,voided_at&order=created_at.desc,id.desc&limit=8');
+  const ids = recent.map(function (e) { return e.entrant_id; }).filter(function (v, i, a) { return a.indexOf(v) === i; });
+  const names = {};
+  if (ids.length) {
+    (await sbGet(env, 'vp_purchase_raffle_entrants', 'id=in.(' + ids.map(enc).join(',') + ')&select=id,first_name,last_name,phone'))
+      .forEach(function (p) { names[p.id] = p; });
+  }
+  const me = actorRef(g.staff);
+  out.recent = recent.map(function (e) {
+    const p = names[e.entrant_id] || {};
+    return { id: e.id, name: formatMemberName(p.first_name, p.last_name, 'abbrev_last'), phone: p.phone ? praffleMaskPhone(p.phone) : '',
+      at: e.created_at, by: e.created_by_name || '', voided: !!e.voided_at,
+      can_undo: !e.voided_at && (g.canManage || (e.created_by === me && (Date.now() - new Date(e.created_at).getTime()) < PRAFFLE_UNDO_MS)) };
+  });
+  if (g.canManage) {
+    const draws = await sbGet(env, 'vp_purchase_raffle_draws', 'raffle_id=eq.' + enc(r.id) + '&select=*&order=drawn_at.asc,id.asc');
+    const wids = draws.map(function (d) { return d.entrant_id; }).filter(Boolean);
+    const who = {};
+    if (wids.length) (await sbGet(env, 'vp_purchase_raffle_entrants', 'id=in.(' + wids.map(enc).join(',') + ')&select=id,first_name,last_name,phone,email')).forEach(function (p) { who[p.id] = p; });
+    out.draws = draws.map(function (d) { return praffleDrawOut(d, d.outcome === 'drawn', who[d.entrant_id]); });
+  }
+  return json(out);
+}
+
+/* POST /host/praffle/save : create or change the raffle. Owner or manager. Audited. */
+async function handlePraffleSave(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const g = await praffleGate(env, authUserId, String(b.venue_id || '').trim(), true);
+  const tz = g.venue.timezone;
+  let prior = null;
+  if (b.raffle_id) {
+    prior = JSON.parse(JSON.stringify(await praffleLoad(env, String(b.raffle_id))));   // a copy: the audit compares before with after
+    if (prior.venue_id !== g.venue.id) throw httpError(404, 'That raffle was not found.');
+    if (prior.status !== 'open') return json({ error: 'This raffle has been drawn, so its settings are part of the record and cannot change.' }, 409);
+  }
+  const name = praffleCleanText(b.name, 120);
+  if (!name) return json({ error: 'Give the raffle a name, for example "Summer Purchase Raffle".' }, 400);
+  const prizes = (Array.isArray(b.prizes) ? b.prizes : []).slice(0, 10).map(function (p) {
+    const title = praffleCleanText(p && p.title, 120);
+    let cents = null;
+    if (p && p.value_cents != null && p.value_cents !== '') { const n = parseInt(p.value_cents, 10); if (n >= 0 && n <= 100000000) cents = n; }
+    return title ? { title: title, value_cents: cents } : null;
+  }).filter(Boolean);
+  if (!prizes.length) return json({ error: 'Add at least one prize.' }, 400);
+  const startsAt = praffleLocalToIso(b.starts_on, '00:00', tz);
+  const closesAt = praffleLocalToIso(b.ends_on, '23:59:59', tz);
+  const drawAt = praffleLocalToIso(b.draw_on, b.draw_time || '19:00', tz);
+  if (!startsAt || !closesAt || !drawAt) return json({ error: 'Check the start, end and draw dates.' }, 400);
+  if (new Date(closesAt) <= new Date(startsAt)) return json({ error: 'The end date has to be after the start date.' }, 400);
+  if (new Date(drawAt) < new Date(closesAt)) return json({ error: 'The draw has to be after entries close. Set the draw on or after the day after the end date.' }, 400);
+  let cap = null;
+  if (b.daily_cap != null && b.daily_cap !== '' && b.daily_cap !== 0 && b.daily_cap !== '0') {
+    cap = parseInt(b.daily_cap, 10);
+    if (!(cap >= 1 && cap <= 100)) return json({ error: 'A daily limit is a number from 1 to 100, or leave it empty for no limit.' }, 400);
+  }
+  const row = { name: name, promoter: praffleCleanText(b.promoter, 200) || g.venue.name, description: praffleCleanText(b.description, 2000) || null,
+    prizes: prizes, starts_at: startsAt, closes_at: closesAt, draw_at: drawAt,
+    draw_place: praffleCleanText(b.draw_place, 200) || g.venue.name, daily_cap: cap, updated_at: new Date().toISOString() };
+  row.terms_text = purchaseRaffleTerms(row, g.venue);
+  let saved;
+  if (prior) {
+    saved = (await sbPatchReturning(env, 'vp_purchase_raffles', 'id=eq.' + enc(prior.id) + '&status=eq.open', row))[0];
+    if (!saved) return json({ error: 'This raffle was drawn while you were editing it. Nothing was changed.' }, 409);
+  } else {
+    row.venue_id = g.venue.id; row.status = 'open'; row.created_by = actorRef(g.staff);
+    try {
+      saved = (await sbInsert(env, 'vp_purchase_raffles', row, true))[0];
+    } catch (e) {
+      if (e && e.status === 409) return json({ error: 'This venue already has a raffle running. Change that one, or draw it first.' }, 409);
+      throw e;
+    }
+  }
+  const changed = {};
+  if (prior) Object.keys(row).forEach(function (k) { if (k !== 'updated_at' && k !== 'terms_text' && JSON.stringify(prior[k]) !== JSON.stringify(saved[k])) changed[k] = { from: prior[k], to: saved[k] }; });
+  await praffleAudit(env, g.staff, prior ? 'purchase_raffle_updated' : 'purchase_raffle_created', g.venue.id,
+    { raffle_id: saved.id, name: saved.name, changes: prior ? changed : row });
+  return json({ ok: true, raffle: saved });
+}
+
+/* POST /host/praffle/lookup { venue_id, raffle_id, phone } : is this mobile in already? */
+async function handlePraffleLookup(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const g = await praffleGate(env, authUserId, String(b.venue_id || '').trim(), false);
+  const r = await praffleLoad(env, String(b.raffle_id || ''));
+  if (r.venue_id !== g.venue.id) throw httpError(404, 'That raffle was not found.');
+  const phone = praffleNormPhone(b.phone);
+  if (!phone) return json({ error: 'That is not an Australian mobile number. It starts 04 and has 10 digits.' }, 400);
+  const p = await sbGet(env, 'vp_purchase_raffle_entrants', 'raffle_id=eq.' + enc(r.id) + '&phone=eq.' + enc(phone) + '&select=id,first_name,last_name&limit=1');
+  if (!p.length) return json({ known: false, phone_masked: praffleMaskPhone(phone) });
+  return json({ known: true, first_name: p[0].first_name, name: formatMemberName(p[0].first_name, p[0].last_name, 'abbrev_last'),
+    entries: await praffleEntrantCount(env, p[0].id), phone_masked: praffleMaskPhone(phone) });
+}
+
+/* POST /host/praffle/enter : ONE entry for ONE purchase.
+   { venue_id, raffle_id, phone, again?: true, person?: { first_name, last_name, email, marketing_opt_in, age_confirmed } } */
+async function handlePraffleEnter(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const g = await praffleGate(env, authUserId, String(b.venue_id || '').trim(), false);
+  const r = await praffleLoad(env, String(b.raffle_id || ''));
+  if (r.venue_id !== g.venue.id) throw httpError(404, 'That raffle was not found.');
+  const shut = praffleOpenNow(r);
+  if (shut) return json({ error: shut }, 409);
+  const phone = praffleNormPhone(b.phone);
+  if (!phone) return json({ error: 'That is not an Australian mobile number. It starts 04 and has 10 digits.' }, 400);
+  const tz = g.venue.timezone;
+  const by = actorRef(g.staff), byName = await praffleStaffName(env, g.staff);
+
+  let person = (await sbGet(env, 'vp_purchase_raffle_entrants', 'raffle_id=eq.' + enc(r.id) + '&phone=eq.' + enc(phone) + '&select=id,first_name,last_name&limit=1'))[0];
+  let isNew = false;
+  if (!person) {
+    const d = b.person || {};
+    const first = praffleCleanText(d.first_name, 60), last = praffleCleanText(d.last_name, 60);
+    const email = praffleCleanText(d.email, 200).toLowerCase();
+    if (!first || !last) return json({ error: 'New entrant: add their first and last name.', needs_details: true }, 400);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: 'New entrant: add their email, so the winner can be contacted.', needs_details: true }, 400);
+    /* 18+ is the customer's own confirmation, asked every time someone new is added. */
+    if (d.age_confirmed !== true) return json({ error: 'The customer has to confirm they are 18 or over before they can enter.', needs_details: true }, 400);
+    /* The marketing tick is THEIRS. Only a real true counts; anything else is no. */
+    const optIn = d.marketing_opt_in === true;
+    const now = new Date().toISOString();
+    try {
+      person = (await sbInsert(env, 'vp_purchase_raffle_entrants', {
+        raffle_id: r.id, venue_id: g.venue.id, phone: phone, first_name: first, last_name: last, email: email,
+        marketing_opt_in: optIn, opted_in_at: optIn ? now : null, age_confirmed_at: now, created_by: by,
+      }, true))[0];
+      isNew = true;
+    } catch (e) {
+      if (!(e && e.status === 409)) throw e;
+      // Two tablets added the same new mobile at once. The first one stands.
+      person = (await sbGet(env, 'vp_purchase_raffle_entrants', 'raffle_id=eq.' + enc(r.id) + '&phone=eq.' + enc(phone) + '&select=id,first_name,last_name&limit=1'))[0];
+      if (!person) throw e;
+    }
+  }
+
+  if (!isNew) {
+    /* FAT FINGERS. The same mobile again inside a minute is usually one purchase entered twice. */
+    const last = await sbGet(env, 'vp_purchase_raffle_entries', 'entrant_id=eq.' + enc(person.id) + '&voided_at=is.null&select=created_at&order=created_at.desc&limit=1');
+    if (last.length && b.again !== true && (Date.now() - new Date(last[0].created_at).getTime()) < PRAFFLE_DOUBLE_MS) {
+      const secs = Math.max(1, Math.round((Date.now() - new Date(last[0].created_at).getTime()) / 1000));
+      return json({ needs_confirm: true, first_name: person.first_name,
+        message: person.first_name + ' was given an entry ' + secs + (secs === 1 ? ' second' : ' seconds') + ' ago. Is this a new purchase?' }, 409);
+    }
+  }
+  const today = praffleLocalDay(tz);
+  if (r.daily_cap) {
+    const n = await sbCount(env, 'vp_purchase_raffle_entries', 'entrant_id=eq.' + enc(person.id) + '&voided_at=is.null&venue_day=eq.' + today + '&select=id');
+    if (n >= r.daily_cap) {
+      return json({ error: person.first_name + ' already has ' + n + ' ' + (n === 1 ? 'entry' : 'entries') + ' today, the most this raffle allows in a day. Nothing was added.', capped: true }, 409);
+    }
+  }
+  const entry = (await sbInsert(env, 'vp_purchase_raffle_entries', {
+    raffle_id: r.id, entrant_id: person.id, venue_id: g.venue.id, venue_day: today, created_by: by, created_by_name: byName,
+  }, true))[0];
+  const entries = await praffleEntrantCount(env, person.id);
+  return json({ ok: true, entry_id: entry.id, new_entrant: isNew, first_name: person.first_name, entries: entries,
+    message: 'Thanks ' + person.first_name + ', you\'re in. ' + entries + ' ' + (entries === 1 ? 'entry' : 'entries') + ' so far. Good luck!' });
+}
+
+/* POST /host/praffle/undo { venue_id, entry_id, reason? } : take back a mistaken entry. Never deleted. */
+async function handlePraffleUndo(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const g = await praffleGate(env, authUserId, String(b.venue_id || '').trim(), false);
+  const id = String(b.entry_id || '').trim();
+  assertUuid(id, 'entry_id');
+  const e = (await sbGet(env, 'vp_purchase_raffle_entries', 'id=eq.' + enc(id) + '&select=id,raffle_id,venue_id,created_at,created_by,voided_at&limit=1'))[0];
+  if (!e || e.venue_id !== g.venue.id) return json({ error: 'That entry was not found.' }, 404);
+  if (e.voided_at) return json({ ok: true, already: true });
+  const r = await praffleLoad(env, e.raffle_id);
+  if (r.status !== 'open') return json({ error: 'This raffle has been drawn, so its entries are part of the record.' }, 409);
+  const mine = e.created_by === actorRef(g.staff) && (Date.now() - new Date(e.created_at).getTime()) < PRAFFLE_UNDO_MS;
+  if (!mine && !g.canManage) return json({ error: 'You can take back your own entry for 10 minutes. After that, ask the owner or a manager.' }, 403);
+  await sbPatch(env, 'vp_purchase_raffle_entries', 'id=eq.' + enc(id) + '&voided_at=is.null',
+    { voided_at: new Date().toISOString(), voided_by: actorRef(g.staff), void_reason: praffleCleanText(b.reason, 200) || 'entered by mistake' });
+  if (!mine) await praffleAudit(env, g.staff, 'purchase_raffle_entry_voided', g.venue.id, { raffle_id: r.id, entry_id: id, reason: praffleCleanText(b.reason, 200) || null });
+  return json({ ok: true });
+}
+
+/* POST /host/praffle/entrants { venue_id, raffle_id, q?, offset? } : the venue's list. Masked mobiles. */
+async function handlePraffleEntrants(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const g = await praffleGate(env, authUserId, String(b.venue_id || '').trim(), true);
+  const r = await praffleLoad(env, String(b.raffle_id || ''));
+  if (r.venue_id !== g.venue.id) throw httpError(404, 'That raffle was not found.');
+  const q = praffleCleanText(b.q, 60).replace(/[,()*\\"'.:]/g, ' ').trim().replace(/\s+/g, '*');
+  let filter = 'raffle_id=eq.' + enc(r.id);
+  if (q) {
+    const digits = q.replace(/\D/g, '');
+    const parts = ['first_name.ilike.*' + q + '*', 'last_name.ilike.*' + q + '*'];
+    if (digits.length >= 3) parts.push('phone.like.*' + (digits.charAt(0) === '0' ? digits.slice(1) : digits) + '*');
+    filter += '&or=' + enc('(' + parts.join(',') + ')');
+  }
+  const offset = Math.max(0, parseInt(b.offset, 10) || 0);
+  const total = await sbCount(env, 'vp_purchase_raffle_entrants', filter + '&select=id');
+  const rows = await sbGet(env, 'vp_purchase_raffle_entrants', filter + '&select=id,first_name,last_name,phone,marketing_opt_in,created_at&order=created_at.desc,id.desc&limit=50&offset=' + offset);
+  const counts = {};
+  if (rows.length) {
+    const es = await sbGetAll(env, 'vp_purchase_raffle_entries', 'entrant_id=in.(' + rows.map(function (x) { return enc(x.id); }).join(',') + ')&voided_at=is.null&select=entrant_id&order=id.asc');
+    es.forEach(function (e) { counts[e.entrant_id] = (counts[e.entrant_id] || 0) + 1; });
+  }
+  return json({ total: total, offset: offset, entrants: rows.map(function (p) {
+    return { id: p.id, name: p.first_name + ' ' + p.last_name, phone: praffleMaskPhone(p.phone), opted_in: p.marketing_opt_in === true,
+      joined: p.created_at, entries: counts[p.id] || 0 };
+  }) });
+}
+
+/* POST /host/praffle/close { venue_id, raffle_id } : close entries now, before the end date. Audited. */
+async function handlePraffleClose(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const g = await praffleGate(env, authUserId, String(b.venue_id || '').trim(), true);
+  const r = await praffleLoad(env, String(b.raffle_id || ''));
+  if (r.venue_id !== g.venue.id) throw httpError(404, 'That raffle was not found.');
+  if (r.status !== 'open') return json({ error: 'This raffle has already been drawn.' }, 409);
+  const now = new Date().toISOString();
+  if (new Date(r.closes_at).getTime() <= Date.now()) return json({ ok: true, already: true });
+  const patch = { closes_at: now, updated_at: now };
+  if (new Date(r.starts_at).getTime() >= Date.now()) patch.starts_at = new Date(Date.now() - 1000).toISOString();
+  if (new Date(r.draw_at).getTime() < Date.now()) patch.draw_at = now;
+  await sbPatch(env, 'vp_purchase_raffles', 'id=eq.' + enc(r.id) + '&status=eq.open', patch);
+  await praffleAudit(env, g.staff, 'purchase_raffle_closed_early', g.venue.id, { raffle_id: r.id, name: r.name, was_closing: r.closes_at, closed_at: now });
+  return json({ ok: true });
+}
+
+/* POST /host/praffle/draw { venue_id, raffle_id } : THE DRAW. Server side, weighted by entries.
+
+   Every live (not voided) entry of everybody who has not already been drawn is one ticket. The
+   pool is COUNTED, the server picks an index with randInt (the rejection-sampled CSPRNG every
+   VenuePlay draw uses), and that one entry is read back by its place in id order. One count and
+   one read whatever the size, so there is no 1,000-row ceiling to fall through, and the record
+   keeps the pool size and the index, which is enough to show the pick was in range and uniform.
+   Each person can win once: a drawn or redrawn entrant's entries leave the pool. */
+async function handlePraffleDraw(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const g = await praffleGate(env, authUserId, String(b.venue_id || '').trim(), true);
+  const r = await praffleLoad(env, String(b.raffle_id || ''));
+  if (r.venue_id !== g.venue.id) throw httpError(404, 'That raffle was not found.');
+  if (Date.now() < new Date(r.closes_at).getTime()) {
+    return json({ error: 'Entries are still open until ' + praffleLocalWords(r.closes_at, g.venue.timezone, true) + '. Close entries first, then draw.' }, 409);
+  }
+  const prizes = Array.isArray(r.prizes) && r.prizes.length ? r.prizes : [{ title: 'Prize' }];
+  const draws = await sbGet(env, 'vp_purchase_raffle_draws', 'raffle_id=eq.' + enc(r.id) + '&select=id,prize_index,entrant_id,outcome,drawn_at,redrawn_at&order=drawn_at.desc,id.desc');
+  const latest = draws.reduce(function (m, d) { return Math.max(m, new Date(d.drawn_at).getTime() || 0, new Date(d.redrawn_at || 0).getTime() || 0); }, 0);
+  if (latest && Date.now() - latest < PRAFFLE_DRAW_HOLD_MS) return json({ error: 'A draw has just been made. Give it a few seconds.' }, 429);
+  const won = {};
+  draws.forEach(function (d) { if (d.outcome === 'drawn') won[d.prize_index] = true; });
+  let prizeIndex = -1;
+  for (let i = 0; i < prizes.length; i++) { if (!won[i]) { prizeIndex = i; break; } }
+  if (prizeIndex < 0) return json({ error: 'Every prize has been drawn.' }, 409);
+  const out = draws.map(function (d) { return d.entrant_id; }).filter(Boolean);
+  let pool = 'raffle_id=eq.' + enc(r.id) + '&voided_at=is.null';
+  if (out.length) pool += '&entrant_id=not.in.(' + out.map(enc).join(',') + ')';
+  const n = await sbCount(env, 'vp_purchase_raffle_entries', pool + '&select=id');
+  if (n < 1) return json({ error: 'There are no entries left to draw from.' }, 409);
+  const pick = randInt(n);
+  const hit = await sbGet(env, 'vp_purchase_raffle_entries', pool + '&select=id,entrant_id&order=id.asc&offset=' + pick + '&limit=1');
+  if (!hit.length) return json({ error: 'The entries changed during the draw. Nothing was recorded; draw again.' }, 409);
+  const person = (await sbGet(env, 'vp_purchase_raffle_entrants', 'id=eq.' + enc(hit[0].entrant_id) + '&select=id,first_name,last_name,phone,email&limit=1'))[0];
+  if (!person) return json({ error: 'The entries changed during the draw. Nothing was recorded; draw again.' }, 409);
+  const entrantsTotal = await sbCount(env, 'vp_purchase_raffle_entrants', 'raffle_id=eq.' + enc(r.id) + (out.length ? '&id=not.in.(' + out.map(enc).join(',') + ')' : '') + '&select=id');
+  const mine = await praffleEntrantCount(env, person.id);
+  const row = { raffle_id: r.id, venue_id: g.venue.id, prize_index: prizeIndex, prize_text: prizeWords(prizes[prizeIndex]),
+    entrant_id: person.id, entry_id: hit[0].id, winner_name: formatMemberName(person.first_name, person.last_name, 'abbrev_last'),
+    phone_last3: praffleLast3(person.phone), winner_entries: mine, entries_total: n, entrants_total: entrantsTotal,
+    pick_index: pick, outcome: 'drawn', drawn_by: actorRef(g.staff), drawn_by_name: await praffleStaffName(env, g.staff) };
+  const saved = (await sbInsert(env, 'vp_purchase_raffle_draws', row, true))[0];
+  const allDone = prizes.every(function (p, i) { return i === prizeIndex || won[i]; });
+  if (allDone) await sbPatch(env, 'vp_purchase_raffles', 'id=eq.' + enc(r.id), { status: 'drawn', updated_at: new Date().toISOString() });
+  await praffleAudit(env, g.staff, 'purchase_raffle_drawn', g.venue.id, { raffle_id: r.id, draw_id: saved.id, prize_index: prizeIndex,
+    prize: row.prize_text, winner: row.winner_name, entries_total: n, entrants_total: entrantsTotal, pick_index: pick });
+  return json({ ok: true, all_drawn: allDone, draw: praffleDrawOut(saved, true, person), prizes_left: prizes.length - Object.keys(won).length - 1 });
+}
+
+/* POST /host/praffle/redraw { venue_id, draw_id, reason } : the winner could not be contacted or
+   is not eligible. The draw stays on the record as redrawn, with the reason; the prize goes back
+   in and the next Draw picks again without them. */
+async function handlePraffleRedraw(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const g = await praffleGate(env, authUserId, String(b.venue_id || '').trim(), true);
+  const id = String(b.draw_id || '').trim();
+  assertUuid(id, 'draw_id');
+  const reason = praffleCleanText(b.reason, 300);
+  if (!reason) return json({ error: 'Say why the prize is being redrawn. It goes on the draw record.' }, 400);
+  const d = (await sbGet(env, 'vp_purchase_raffle_draws', 'id=eq.' + enc(id) + '&select=id,raffle_id,venue_id,outcome,winner_name,prize_index&limit=1'))[0];
+  if (!d || d.venue_id !== g.venue.id) return json({ error: 'That draw was not found.' }, 404);
+  if (d.outcome !== 'drawn') return json({ error: 'That draw has already been redrawn.' }, 409);
+  const now = new Date().toISOString();
+  const changed = await sbPatchReturning(env, 'vp_purchase_raffle_draws', 'id=eq.' + enc(id) + '&outcome=eq.drawn',
+    { outcome: 'redrawn', redraw_reason: reason, redrawn_at: now, redrawn_by: actorRef(g.staff) });
+  if (!changed.length) return json({ error: 'That draw has already been redrawn.' }, 409);
+  await sbPatch(env, 'vp_purchase_raffles', 'id=eq.' + enc(d.raffle_id) + '&status=eq.drawn', { status: 'open', updated_at: now });
+  await praffleAudit(env, g.staff, 'purchase_raffle_redraw', g.venue.id, { raffle_id: d.raffle_id, draw_id: id, prize_index: d.prize_index, was: d.winner_name, reason: reason });
+  return json({ ok: true });
+}
+
+/* The draw record (GET /host/draws/export) carries every purchase raffle draw too. Best effort
+   before migration 115: a database without the table adds nothing. */
+async function praffleRecordRows(env, venueId) {
+  let draws;
+  try {
+    draws = await sbGetAll(env, 'vp_purchase_raffle_draws', 'venue_id=eq.' + enc(venueId) + '&select=id,raffle_id,prize_index,prize_text,winner_name,phone_last3,winner_entries,entries_total,entrants_total,pick_index,outcome,redraw_reason,redrawn_at,drawn_at,drawn_by_name&order=drawn_at.asc,id.asc');
+  } catch (e) { return []; }
+  if (!draws.length) return [];
+  const names = {};
+  (await sbGet(env, 'vp_purchase_raffles', 'venue_id=eq.' + enc(venueId) + '&select=id,name')).forEach(function (r) { names[r.id] = r.name; });
+  return draws.map(function (d) {
+    return { when: d.drawn_at || '', game: 'purchase raffle', name: names[d.raffle_id] || 'Purchase raffle',
+      number: 'entry ' + (d.pick_index + 1) + ' of ' + d.entries_total, winner: (d.winner_name || '') + (d.phone_last3 ? ' (mobile ending ' + d.phone_last3 + ')' : ''),
+      prize: d.prize_text || '',
+      outcome: d.outcome === 'redrawn' ? ('redrawn at ' + (d.redrawn_at || '') + ': ' + (d.redraw_reason || '')) :
+        ('drawn by ' + (d.drawn_by_name || 'staff') + '; ' + d.winner_entries + ' of the winner\'s entries among ' + d.entries_total + ' from ' + d.entrants_total + ' entrants'),
+      drawId: d.raffle_id || '', order: (d.prize_index || 0) + 1, source: 'server draw' };
+  });
 }
 
 /* =====================================================================

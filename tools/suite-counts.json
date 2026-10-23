@@ -171,6 +171,10 @@
   "checks": 38,
   "counted_by": "lines"
  },
+ "tools/purchase-raffle-in-chrome.test.py": {
+  "checks": 37,
+  "counted_by": "lines"
+ },
  "tools/redirect-verdict.test.py": {
   "checks": 12,
   "counted_by": "lines"
@@ -485,6 +489,14 @@
  },
  "tools/test-print-problem.js": {
   "checks": 8,
+  "counted_by": "lines"
+ },
+ "tools/test-purchase-raffle-hq.js": {
+  "checks": 24,
+  "counted_by": "lines"
+ },
+ "tools/test-purchase-raffle.js": {
+  "checks": 91,
   "counted_by": "lines"
  },
  "tools/test-raffle-console.js": {

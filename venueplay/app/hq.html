@@ -974,7 +974,10 @@
          happened, and read as "nothing waiting for review". */
       c.from("vp_admin_audit").select("action,target,created_at,detail")
        .in("action",["signup_flagged","optin_approved","optin_revoked"])
-       .order("created_at",{ascending:false}).limit(1000)
+       .order("created_at",{ascending:false}).limit(1000),
+      /* PURCHASE RAFFLE (migration 115). Its own query, same reason: before 115 is run this one 400s
+         and the switch says it is not available yet; nothing else is touched. */
+      c.from("vp_venues").select("id,purchase_raffle_on")
     ]).then(function(settled){
       var r = settled.map(function(x){ return x.status==="fulfilled" ? x.value : null; });
       var venuesFailed = settled[0].status !== "fulfilled";
@@ -998,6 +1001,8 @@
       S.accounts=(r[13] && r[13].data) || [];
       S.acctStatus={}; ((r[16] && !r[16].error && r[16].data) || []).forEach(function(a){ S.acctStatus[a.id]=a; });
       S.flagAudit = (r[17] && !r[17].error && r[17].data) ? r[17].data : null;
+      S.praffle={}; S.praffleKnown = !!(r[18] && !r[18].error && r[18].data);
+      ((r[18] && r[18].data) || []).forEach(function(v){ S.praffle[v.id]=v.purchase_raffle_on===true; });
       S.accountsFailed = settled[13] && settled[13].status !== "fulfilled";
       S.groups=(r[1] && r[1].data) || [];
       S.groupById={}; S.groups.forEach(function(g){ S.groupById[g.id]=g; });
@@ -2225,6 +2230,7 @@
           '</div>'+
         '</div>'+
         weeklyOffHtml(v)+
+        praffleHtml(v)+
         nightPassHtml(v)+
         complianceHtml(v, ent)+
         screenHistoryHtml(v);
@@ -2412,6 +2418,8 @@
     if(sel) setVenueGaming(sel.getAttribute("data-vid"), { entity_type: sel.value || null }, sel);
     var wo=e.target.closest("input.weeklyoff");
     if(wo) setWeeklyOff(wo.getAttribute("data-vid"), wo.checked, wo);
+    var pr=e.target.closest("input.prafflesw");
+    if(pr) setPraffle(pr.getAttribute("data-vid"), pr.checked, pr);
   });
   $("venueRows").addEventListener("click", function(e){
     var g=e.target.closest("button[data-npgrant]");
@@ -2501,6 +2509,34 @@
       if(res.error){ vpTell(res.error); renderVenues(); return; }
       // The saved row when the Worker sends it back; otherwise what was asked for (it answered ok).
       S.weeklyOff[id] = (res.venue && res.venue.weekly_limit_off !== undefined) ? res.venue.weekly_limit_off === true : !!on;
+      renderVenues(); loadAuditOnly();
+    });
+  }
+
+  /* THE PURCHASE RAFFLE (migration 115, Dean 22 Oct 2026, for Deepwater Hotel). Off for every venue;
+     HQ turns it on for one venue at a time, after the live test. Owner and accounts admins only, and
+     the Worker writes the audit row (venue_purchase_raffle_on / _off). */
+  function praffleHtml(v){
+    if(!canBilling()) return "";
+    var on = !!(S.praffle && S.praffle[v.id]);
+    return '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line-2)">'+
+      '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:700">'+
+        '<input type="checkbox" class="prafflesw" data-vid="'+esc(v.id)+'"'+(on?" checked":"")+
+        (S.praffleKnown?"":" disabled")+' style="accent-color:var(--pink);width:16px;height:16px;margin:0">'+
+        'Purchase raffle</label>'+
+      '<div class="note" style="margin-top:4px">'+
+        (!S.praffleKnown ? "Not available until migration 115 is run."
+          : on ? "ON: staff add one entry per purchase at /app/purchase-raffle, and the owner or a manager sets it up and draws it there."
+               : "Off: the venue does not see the purchase raffle anywhere.")+
+        ' Every change is recorded in the audit log.</div>'+
+    '</div>';
+  }
+  function setPraffle(id, on, el){
+    el.disabled=true;
+    workerPost("/admin/venue-gaming", { venue_id:id, purchase_raffle_on: !!on }).then(function(res){
+      el.disabled=false;
+      if(res.error){ vpTell(res.error); renderVenues(); return; }
+      S.praffle[id] = (res.venue && res.venue.purchase_raffle_on !== undefined) ? res.venue.purchase_raffle_on === true : !!on;
       renderVenues(); loadAuditOnly();
     });
   }

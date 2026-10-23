@@ -322,3 +322,16 @@ refuse a delete, then rolls that back; any failure aborts the whole migration. R
 carries the new table and two functions; dump it after running and commit if it differs. RUN on live (verified 22 Oct 2026:
 the table exists with 20 baseline rows, one per screen row at the time). Rollback: in the file.
 (111 is feature/c4-c5-onboarding, 112 feature/support-phone, 113 feature/help-page.)
+
+`venueplay-115-purchase-raffle.sql`: Deepwater Hotel (NSW), 22 Oct 2026: a months-long raffle where every PURCHASE earns one
+entry (never per drink or by the amount of alcohol). `vp_venues.purchase_raffle_on` (default false for every venue) with the
+`vp_venues_purchase_raffle_guard` trigger (a venue's own login cannot set it; same shape as 107), set only from HQ (Venues >
+Details > "Purchase raffle", billing Worker `/admin/venue-gaming`, audited as `venue_purchase_raffle_on` / `_off`). Four new
+tables, RLS on with no policies and anon/authenticated revoked (service role only): `vp_purchase_raffles` (one open per
+venue), `vp_purchase_raffle_entrants` (mobile as +614xxxxxxxx only, unique per raffle; names, email, their own marketing tick,
+18+ timestamp), `vp_purchase_raffle_entries` (one row per purchase, who added it, venue day, voids kept), and
+`vp_purchase_raffle_draws` (prize, winner, pool size and the index the server picked, redraws with their reason). Used by the
+game Worker `/host/praffle/*` and the billing Worker `/account/purchase-raffle-export`. Either order with the Workers is safe
+(both answer "not switched on" / "run 115 first" without it). After running, dump RLS-BASELINE.json (four new locked tables, one
+new trigger function). Parsed by pglast (the real Postgres parser) and run twice on a real Postgres 16 with stub
+auth/vp_venues before it was handed over. Branch `feature/purchase-raffle`. NOT RUN. Rollback: in the file.

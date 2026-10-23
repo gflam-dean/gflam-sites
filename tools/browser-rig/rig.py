@@ -87,6 +87,7 @@ class Rig(object):
                     return self.send(200, '<!doctype html><html><head><meta charset="utf-8"></head><body style="margin:0;background:#000"></body></html>', 'text/html')
                 p = u.path
                 if p in ('/app', '/app/'): p = '/app/index.html'
+                elif p.endswith('/'): p = p + 'index.html'
                 elif p == '/play': p = '/play.html'
                 elif p == '/tv': p = '/tv.html'
                 elif not os.path.splitext(p)[1]: p = p + '.html'
@@ -96,7 +97,7 @@ class Rig(object):
                 ext = os.path.splitext(f)[1].lower()
                 if ext in ('.html', '.js', '.json', '.css', '.txt'):
                     text = io.open(f, encoding='utf-8').read()
-                    host_page = p == '/app/index.html'
+                    host_page = p in ('/app/index.html', '/app/purchase-raffle/index.html')   # pages that need a signed-in host
                     if '<head>' in text: text = text.replace('<head>', '<head>' + ERRS, 1)
                     text = text.replace('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', '/__fake/supabase.js?host=%d' % (1 if host_page else 0))
                     text = text.replace('https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js', '/__fake/qrcode.js')

@@ -3,7 +3,8 @@
 
    Shared harness: loads the REAL shipped venueplay-game.js into jsc and swaps only the
    network (fetch) for a fake PostgREST that honours eq/neq/in/is/gt/or-(eq|like|ilike)/order/limit/offset and
-   enforces max-rows 1000. RPC calls answer 404 so the Worker's own JS fallback paths run. */
+   enforces max-rows 1000. RPC calls answer 404 so the Worker's own JS fallback paths run. Also not.in.(...), and the
+   created_at / drawn_at defaults the purchase raffle tables (migration 115) get from Postgres. */
 var SRC = readFile('venueplay-backend/worker/venueplay-game.js');   // run from the repo root, like every other gate test
 SRC = SRC.replace(/export default \{/, 'var __worker = {').replace(/export class /g, 'class ');
 var MAX_ROWS = 1000;
@@ -31,6 +32,7 @@ function query(table, qs){
     if(k==='order'){ order=v; return; } if(k==='limit'){ limit=+v; return; } if(k==='offset'){ offset=+v; return; }
     if(v.indexOf('eq.')===0){ var val=decodeURIComponent(v.slice(3)); out=out.filter(function(r){ return String(r[k])===val; }); }
     else if(v.indexOf('in.(')===0){ var l=v.slice(4,-1).split(',').map(decodeURIComponent); out=out.filter(function(r){ return l.indexOf(String(r[k]))>=0; }); }
+    else if(v.indexOf('not.in.(')===0){ var nl=v.slice(8,-1).split(',').map(decodeURIComponent); out=out.filter(function(r){ return nl.indexOf(String(r[k]))<0; }); }
     else if(v.indexOf('neq.')===0){ var nv=decodeURIComponent(v.slice(4)); out=out.filter(function(r){ return String(r[k])!==nv; }); }
     else if(v==='not.is.null'){ out=out.filter(function(r){ return r[k]!=null; }); }
     else if(v==='is.null'){ out=out.filter(function(r){ return r[k]==null; }); }
@@ -55,12 +57,13 @@ async function fetch(url, opts){
   LOG.push(m+' '+table+(qs?'?'+qs:''));
   if(table.indexOf('rpc/')===0) return resp(404, {message:'no function'});
   if(m==='GET') return resp(200, query(table, qs));
-  if(m==='HEAD') return resp(200, null, {'content-range':'0-0/'+query(table, qs.replace(/&limit=\d+/,'')+'&limit=100000000').length});
+  // A count is the whole match, not the first page: PostgREST's count=exact is not capped at max-rows.
+  if(m==='HEAD'){ var saveH=MAX_ROWS; MAX_ROWS=1e9; var nH=query(table, qs.replace(/&limit=\d+/,'')).length; MAX_ROWS=saveH; return resp(200, null, {'content-range':'0-0/'+nH}); }
   if(m==='POST'){ var body=JSON.parse(opts.body); var rows=Array.isArray(body)?body:[body]; DB[table]=DB[table]||[];
     if(table==='vp_trivia_answers'){ var ign=/ignore-duplicates/.test((opts.headers&&opts.headers.Prefer)||''); var keep=[];
       for(var z=0;z<rows.length;z++){ var r0=rows[z]; var clash=DB[table].some(function(x){ return x.game_id===r0.game_id&&x.question_id===r0.question_id&&x.player_id===r0.player_id; });
         if(clash){ if(ign) continue; return resp(409,{message:'duplicate'}); } keep.push(r0); } rows=keep; }
-    rows.forEach(function(r){ if(table==='vp_trivia_answers'){ if(r.is_correct===undefined) r.is_correct=null; if(r.points_awarded===undefined) r.points_awarded=null; } if(!r.id) r.id='99999999-9999-4999-8999-'+('000000000000'+(++_id)).slice(-12); if(table==='vp_raffle_results'||table==='vp_member_draw_results'){ if(!r.drawn_at) r.drawn_at=new Date(NOWMS).toISOString(); } DB[table].push(r); });
+    rows.forEach(function(r){ if(table==='vp_trivia_answers'){ if(r.is_correct===undefined) r.is_correct=null; if(r.points_awarded===undefined) r.points_awarded=null; } if(!r.id) r.id='99999999-9999-4999-8999-'+('000000000000'+(++_id)).slice(-12); if(table==='vp_raffle_results'||table==='vp_member_draw_results'){ if(!r.drawn_at) r.drawn_at=new Date(NOWMS).toISOString(); } if(table.indexOf('vp_purchase_raffle')===0){ if(!r.created_at) r.created_at=new Date(NOWMS).toISOString(); if(table==='vp_purchase_raffle_draws'&&!r.drawn_at) r.drawn_at=new Date(NOWMS).toISOString(); } DB[table].push(r); });
     return resp(201, rows); }
   if(m==='PATCH'){ var obj=JSON.parse(opts.body); var hit=query(table, qs+'&limit=100000000'); var all=DB[table]||[];
     // query() caps at MAX_ROWS for reads; a PATCH is not capped, so match by identity over the whole table

@@ -173,6 +173,7 @@ export default {
       if (request.method === 'POST' && path === '/account/manager-add'  && typeof vpbAddManager === 'function')   return await vpbAddManager(request, env, json);
       if (request.method === 'POST' && path === '/account/managers'     && typeof vpbListManagers === 'function') return await vpbListManagers(request, env, json);
       if (request.method === 'POST' && path === '/account/optin-export'  && typeof vpbOptinExport === 'function')  return await vpbOptinExport(request, env, json);
+      if (request.method === 'POST' && path === '/account/purchase-raffle-export' && typeof vpbPurchaseRaffleExport === 'function') return await vpbPurchaseRaffleExport(request, env, json);
       if (request.method === 'POST' && path === '/account/host-remove' && typeof vpbRemoveHost === 'function')   return await vpbRemoveHost(request, env, json);
       if (request.method === 'POST' && path === '/account/screens-resecure' && typeof vpbResecureScreens === 'function') return await vpbResecureScreens(request, env, json);
       if (request.method === 'POST' && path === '/account/my-venues'   && typeof vpbMyVenues === 'function')     return await vpbMyVenues(request, env, json);
@@ -2861,6 +2862,19 @@ async function vpaHandleVenueGaming(request, env, json) {
     const wl = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=id,weekly_limit_off');
     weeklyBefore = (wl && wl[0] && wl[0].weekly_limit_off === true);
   }
+  /* THE PURCHASE RAFFLE SWITCH (migration 115, Dean 22 Oct 2026, for Deepwater Hotel). Off for
+     every venue until HQ turns it on here. Same shape as the unlimited nights switch: a real true
+     or false only, its own audit row, and a trigger in 115 that puts the old value back when a
+     venue's own login tries to write it. */
+  let praffleBefore;
+  if (b.purchase_raffle_on !== undefined) {
+    if (b.purchase_raffle_on !== true && b.purchase_raffle_on !== false) {
+      return json({ error: 'purchase_raffle_on must be true or false.' }, 400);
+    }
+    patch.purchase_raffle_on = b.purchase_raffle_on;
+    const pr = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=id,purchase_raffle_on');
+    praffleBefore = (pr && pr[0] && pr[0].purchase_raffle_on === true);
+  }
   if (!Object.keys(patch).length) return json({ error: 'Nothing to change.' }, 400);
 
   const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_venues?id=eq.' + encodeURIComponent(venueId), {
@@ -2873,11 +2887,14 @@ async function vpaHandleVenueGaming(request, env, json) {
     if (patch.weekly_limit_off !== undefined && /weekly_limit_off/.test(t)) {
       return json({ error: 'Run migration 107 first: the unlimited nights switch is not in the database yet. Nothing was changed.' }, 409);
     }
+    if (patch.purchase_raffle_on !== undefined && /purchase_raffle_on/.test(t)) {
+      return json({ error: 'Run migration 115 first: the purchase raffle switch is not in the database yet. Nothing was changed.' }, 409);
+    }
     return json({ error: 'Could not save. ' + t }, 500);
   }
   const saved = (await res.json())[0] || {};
 
-  const gamingKeys = Object.keys(patch).filter(function (k) { return k !== 'weekly_limit_off'; });
+  const gamingKeys = Object.keys(patch).filter(function (k) { return k !== 'weekly_limit_off' && k !== 'purchase_raffle_on'; });
   if (gamingKeys.length) {
     const gp = {};
     gamingKeys.forEach(function (k) { gp[k] = patch[k]; });
@@ -2893,6 +2910,14 @@ async function vpaHandleVenueGaming(request, env, json) {
       action: patch.weekly_limit_off ? 'venue_unlimited_nights_on' : 'venue_unlimited_nights_off',
       target: 'venue:' + venueId,
       detail: { name: prior.name, from: weeklyBefore, to: patch.weekly_limit_off },
+    }, false).catch(function () {});
+  }
+  if (patch.purchase_raffle_on !== undefined) {
+    await vpaInsert(env, 'vp_admin_audit', {
+      actor_admin: actor.actorId || null, actor_label: actor.label || 'admin',
+      action: patch.purchase_raffle_on ? 'venue_purchase_raffle_on' : 'venue_purchase_raffle_off',
+      target: 'venue:' + venueId,
+      detail: { name: prior.name, from: praffleBefore, to: patch.purchase_raffle_on },
     }, false).catch(function () {});
   }
 
@@ -9762,13 +9787,28 @@ function vpbCsvCell(v) {
   return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
 }
 async function vpbOptinExport(request, env, json) {
+  const g = await vpbOptinGate(request, env, json);
+  if (g.reply) return g.reply;
+  const o = g.o;
+  /* o.venues is resolved from THEIR OWN staff rows, never from client input, so this stays
+     scoped to their venues exactly as before. Same builder as the HQ route now. */
+  const res = await vpaOptinCsv(env, o.venues);
+  await vpaInsert(env, 'vp_admin_audit', { ...vpbActorFields(o), action: 'optin_exported', target: 'account:' + o.account.id,
+    detail: { rows: res.count, held_unverified: res.held_unverified } }, false).catch(() => {});
+  return json({ ok: true, csv: res.csv, count: res.count, held_unverified: res.held_unverified });
+}
+
+/* WHO MAY TAKE A VENUE'S CUSTOMER LIST AWAY, asked once for every list (22 Oct 2026). The player
+   opt-ins and the purchase raffle opt-ins are the same kind of thing, so they share this answer
+   rather than each keeping a copy that could drift. { o } when allowed, { reply } when not. */
+async function vpbOptinGate(request, env, json) {
   /* An owner, a manager, or a marketing login. The marketing login arrives with perms spelt
      out (vpmRequire), so the two rules below apply to it exactly as they do to a manager:
      players_optin must be TRUE, not merely absent, and the account must be approved. */
   let o = await vpbRequireOwner(request, env);
   if (o.error && o.status === 403) { const m = await vpmRequire(request, env); if (!m.error) o = m; }
-  if (o.error) return json({ error: o.error }, o.status);
-  if (!vpbCan(o, 'players_optin')) return json({ error: 'You do not have permission to export opt-in data.' }, 403);
+  if (o.error) return { reply: json({ error: o.error }, o.status) };
+  if (!vpbCan(o, 'players_optin')) return { reply: json({ error: 'You do not have permission to export opt-in data.' }, 403) };
   /* A MANAGER MAY, BUT ONLY IF THEY HAVE BEEN TICKED. Dean, 17 Sep 2026: "a manager can do
      the opt in data however they need to be ticked to be able to do that."
 
@@ -9787,8 +9827,8 @@ async function vpbOptinExport(request, env, json) {
   const mayExport = o.actingAsAdmin || o.role === 'owner'
                  || !!(o.perms && o.perms.players_optin === true);
   if (!mayExport) {
-    return json({ error: 'Your manager access does not include player details. The venue owner '
-      + 'can tick "Players and opt-in export" for you on the Account page, or export it themselves.' }, 403);
+    return { reply: json({ error: 'Your manager access does not include player details. The venue owner '
+      + 'can tick "Players and opt-in export" for you on the Account page, or export it themselves.' }, 403) };
   }
   /* NEVER COLLECT WHAT YOU WILL NOT HAND BACK. Customer data belongs to the venue, and this gate
      exists so a third party cannot quietly take one. But it was asking a DIFFERENT question to
@@ -9848,14 +9888,49 @@ async function vpbOptinExport(request, env, json) {
   const domainLooksLikeVenue = !!domain && !FREE_MAILBOX_RE.test(domain) && DOMAIN_RE.test(domain);
   const looksLikeVenue = o.venues.some((v) => VENUE_RE.test(v.name || '')) || domainLooksLikeVenue;
   if (!looksLikeVenue && !approved) {
-    return json({ error: 'Opt-in downloads for this account are pending a quick review, this protects venue customer data. We approve within a business day, or email hello@venueplay.com.au.', pending: true }, 403);
+    return { reply: json({ error: 'Opt-in downloads for this account are pending a quick review, this protects venue customer data. We approve within a business day, or email hello@venueplay.com.au.', pending: true }, 403) };
   }
-  /* o.venues is resolved from THEIR OWN staff rows, never from client input, so this stays
-     scoped to their venues exactly as before. Same builder as the HQ route now. */
-  const res = await vpaOptinCsv(env, o.venues);
-  await vpaInsert(env, 'vp_admin_audit', { ...vpbActorFields(o), action: 'optin_exported', target: 'account:' + o.account.id,
-    detail: { rows: res.count, held_unverified: res.held_unverified } }, false).catch(() => {});
-  return json({ ok: true, csv: res.csv, count: res.count, held_unverified: res.held_unverified });
+  return { o: o };
+}
+
+/* POST /account/purchase-raffle-export { venue_id }
+   The people in a venue's purchase raffle who ticked the marketing box THEMSELVES, as CSV.
+   Only them: an entrant who did not tick is never in this file, whatever else they gave. The
+   same gate as the player opt-in export (owner; a manager only with players_optin ticked; HQ
+   View as; an approved account), the venue must be one of the caller's own, paged past 1,000
+   rows, and audited. Customer details never leave by any other door. */
+async function vpbPurchaseRaffleExport(request, env, json) {
+  const g = await vpbOptinGate(request, env, json);
+  if (g.reply) return g.reply;
+  const o = g.o;
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const venueId = String(_b.body.venue_id || '').trim();
+  const venue = o.venues.find(function (v) { return v.id === venueId; });
+  if (!venue) return json({ error: 'That venue is not on your account.' }, 403);
+  let rows;
+  try {
+    rows = await vpaSelectAll(env, 'vp_purchase_raffle_entrants',
+      'venue_id=eq.' + encodeURIComponent(venueId) + '&marketing_opt_in=is.true'
+      + '&select=raffle_id,first_name,last_name,email,phone,opted_in_at&order=opted_in_at.asc,id.asc');
+  } catch (e) {
+    return json({ error: 'Could not read the raffle entrants just now, so nothing was exported. Please try again in a moment.' }, 503);
+  }
+  const names = {};
+  (await vpaSelect(env, 'vp_purchase_raffles', 'venue_id=eq.' + encodeURIComponent(venueId) + '&select=id,name') || [])
+    .forEach(function (r) { names[r.id] = r.name; });
+  const header = ['Venue', 'Raffle', 'First name', 'Last name', 'Email', 'Mobile', 'Opted in'];
+  const seen = {}, out = [];
+  for (const r of (rows || [])) {
+    const key = String(r.email || r.phone || '').toLowerCase();
+    if (key && seen[key]) continue; if (key) seen[key] = true;   // one person once, across raffles
+    const mobile = /^\+614\d{8}$/.test(r.phone || '') ? '0' + r.phone.slice(3) : (r.phone || '');
+    out.push([venue.name, names[r.raffle_id] || '', r.first_name, r.last_name, r.email, mobile, r.opted_in_at]);
+  }
+  const csv = [header].concat(out).map((c) => c.map(vpbCsvCell).join(',')).join('\n') + '\n';
+  await vpaInsert(env, 'vp_admin_audit', { ...vpbActorFields(o), action: 'purchase_raffle_optins_exported', target: 'venue:' + venueId,
+    detail: { rows: out.length } }, false).catch(() => {});
+  return json({ ok: true, csv: csv, count: out.length });
 }
 
 /* --- POST /account/managers : list the account's managers (role manager) with their toggles. --- */
