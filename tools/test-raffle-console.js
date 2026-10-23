@@ -94,6 +94,7 @@ var G = { min: 1, max: 150, drawn: {}, jackOn: false, jackAmt: 0, allowRedraw: t
 
 try { eval(liftVar(/var _errKey="";/, 'the error key')); } catch (e) { print('  (no error key in this page)'); }
 eval(lift('hostError')); eval(lift('clearHostError'));
+eval(lift('liquorBlocked'));   // SA/NT (22 Oct 2026): a liquor prize is refused where the state says so
 try { eval(lift('clearHostErrorIf')); } catch (e) { print('  (no clearHostErrorIf in this page: ' + e.message + ')'); }
 try { eval(liftVar(/var CLAIM_DEFAULT_S=\d+;/, 'CLAIM_DEFAULT_S')); } catch (e) {}
 try { eval(lift('skipsProblem')); } catch (e) {}

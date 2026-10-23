@@ -68,7 +68,7 @@ var REAL = { status: 422, code: "sms_send_failed",
 var t = say(REAL);
 pass("the real Sydney failure is owned, not blamed on the host", blamesUs(t) && !blamesThem(t), t);
 pass("and it does not tell them to check a number that was fine", !/check the number/i.test(t));
-pass("it gives them a way to reach us", /hello@venueplay\.com\.au/.test(t), t);
+pass("it gives them a way to reach us", /support@venueplay\.com\.au/.test(t), t);
 /* AND THAT WAY IS THE SUPPORT ADDRESS, NOT SOMEBODY'S MOBILE. This screen is in front of
    every host at every venue, at any hour. A personal number on it is a phone call at 9pm on
    a Saturday from somebody whose thumb slipped. It got there once, on 12 Sep 2026, because I

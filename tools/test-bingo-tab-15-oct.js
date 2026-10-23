@@ -196,7 +196,9 @@ print('\n== 2. the bingo console (lifted from venueplay/app/index.html) in two t
 var NAMES = ['oneTabOn', 'oneTabKey', 'standingDown', 'rawSend', 'send', 'flushQueue', 'onRoomMsg',
              'gameOpenHere', 'touchGame', 'clampCards', 'gameKey', 'saveGame', 'savedNightOpen', 'resumeAfterClaim',
              'oneTabNoticeOpts', 'restoreGame', 'restoreNightFields', 'freshPool', 'reassertToTv', 'openLobby', 'openLobbyClaimed',
-             'cancelLobby', 'endGame', 'connect', 'selectGame', 'landAfterConnect'];
+             'cancelLobby', 'endGame', 'connect', 'selectGame', 'landAfterConnect',
+             // SA/NT (22 Oct 2026): selectGame asks whether number bingo is hidden for this venue
+             'numberBingoOff'];
 var SRC = NAMES.map(function (n) { return lift(CONSOLE, n, 'index.html'); }).join('');
 var ROOM = [];   // every broadcast that left any tab: { tab, t }
 function makeConsole(name, win) {

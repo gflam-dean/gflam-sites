@@ -155,14 +155,14 @@ var SMS_DOWN = { error: { status: 422, code: "sms_send_failed", message: "Error 
   el("emailIn").value = "nobody@example.com";
   el("sendEmailBtn").click(); await settle();
   pass("an email that is on no login is told so, with a way to reach us",
-       /not on a VenuePlay login/.test(el("emailErr").textContent) && /hello@venueplay\.com\.au/.test(el("emailErr").textContent), el("emailErr").textContent);
+       /not on a VenuePlay login/.test(el("emailErr").textContent) && /support@venueplay\.com\.au/.test(el("emailErr").textContent), el("emailErr").textContent);
   pass("and stays on the email step", shown("stepEmail") && !shown("stepCode"));
   NEXT_OTP = { error: { status: 429, code: "over_email_send_rate_limit", message: "email rate limit exceeded" } };
   el("sendEmailBtn").click(); await settle();
   pass("too many emails says wait, not that the email is wrong", /Wait a minute/.test(el("emailErr").textContent), el("emailErr").textContent);
   NEXT_OTP = { error: { status: 500, message: "Error sending magic link email" } };
   el("sendEmailBtn").click(); await settle();
-  pass("an email send failure is owned, with the support address", /could not send the email/.test(el("emailErr").textContent) && /hello@venueplay/.test(el("emailErr").textContent), el("emailErr").textContent);
+  pass("an email send failure is owned, with the support address", /could not send the email/.test(el("emailErr").textContent) && /support@venueplay\.com\.au/.test(el("emailErr").textContent), el("emailErr").textContent);
 
   /* ---- 7. BACK TO TEXT, AND THE TEXT PATH IS UNCHANGED ---- */
   el("backToTextBtn").click(); await settle();

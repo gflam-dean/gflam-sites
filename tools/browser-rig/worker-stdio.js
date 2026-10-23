@@ -10,7 +10,14 @@
 load('tools/rig-game-worker.js');
 globalThis.crypto.getRandomValues = function (b) { for (var i = 0; i < b.length; i++) b[i] = (b instanceof Uint32Array) ? Math.floor(Math.random() * 4294967296) : Math.floor(Math.random() * 256); return b; };
 sha256Hex = async function (s) { return 'h-' + s; };
-readJson = async function (req) { return (req && req._body) || {}; };
+/* A handler may hand the regulated handler a request it has already read (handleBingoDrawStartForVenue,
+   the SA/NT rule in front of VP-DRAW, 22 Oct 2026): that one carries its body behind json(), as on
+   Cloudflare. Without this the rig read it as {} and the draw failed with "Missing venue_id". */
+readJson = async function (req) {
+  if (req && req._body) return req._body;
+  if (req && typeof req.json === 'function') { try { var j = await req.json(); if (j && typeof j === 'object') return j; } catch (e) {} }
+  return {};
+};
 verifyPlayerToken = async function (req) {
   var t = req.headers.get('X-Player-Token') || '';
   var p = DB.vp_players.filter(function (r) { return r.token === t || ('tok-' + r.id) === t; })[0];

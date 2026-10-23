@@ -122,7 +122,12 @@ var LIFTED = ['money', 'todayWeekday', 'mmss', 'stopClaimTimer', 'updateClaimCd'
  'capLineText', 'renderCapLine', 'stateLimit', 'capAdvice', 'numOrNull', 'renderCapAdvice',
  'renderStats', 'renderDrawSelect', 'renderMembers', 'renderSettings', 'applyRoleGates', 'alreadyDrawnTonight',
  'drawBtnIdle', 'loadAll', 'loadDraws', 'loadAllMembers', 'loadRoster', 'saveSettings', 'startDraw',
- 'revealWinner', 'onClaim', 'onRollover'];
+ 'revealWinner', 'onClaim', 'onRollover',
+ // SA/NT (22 Oct 2026): an SA pub's drawn member has won with no present-to-win countdown, and
+ // a claim adds the state's after-win reminder
+ 'noPresent', 'winReminder'];
+/* ...and the SA note those read, lifted as the page writes it. */
+eval(liftVar(/var NO_PRESENT_NOTE=[^\n]*/) || (function () { throw new Error('NO_PRESENT_NOTE is not in the page any more'); })());
 for (var li = 0; li < LIFTED.length; li++) eval(lift(LIFTED[li]));
 
 /* The page's own boot handler for a failed load, lifted from the page, not written here. */
