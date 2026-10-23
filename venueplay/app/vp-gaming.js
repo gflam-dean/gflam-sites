@@ -49,7 +49,10 @@
 
   /* ---------------------------------------------------------------------------
      Which of our formats is which kind of game.
-     Musical bingo is bingo. A members draw is a draw, which nearly everywhere is
+     The musical format maps to the bingo RULES only so a venue that is unlocked to charge sees
+     the paid-entry rules on a paid musical night; musical bingo itself is not bingo (a free game,
+     no permit, its phone cards stay on in every state: see the NOT FOR MUSICAL BINGO note below,
+     and gateFor's onlyIfPaid). A members draw is a draw, which nearly everywhere is
      a trade promotion when entry is free. Trivia is skill and never appears here.
      --------------------------------------------------------------------------- */
   function kindOf(format) {

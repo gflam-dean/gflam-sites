@@ -320,6 +320,7 @@
       <button data-tab="nights">Nights</button>
       <button data-tab="screen">Screen</button>
       <button data-tab="draws">Draws</button>
+      <button data-tab="marketing">Marketing</button>
       <button data-tab="settings">Game settings</button>
     </div>
 
@@ -494,13 +495,45 @@
 
     <div class="tabpanel" id="tp-settings">
     <div class="label">Player data &amp; name display</div>
-    <p class="note" style="margin:0 0 10px">What players are asked for when they join, and how their name shows on the TV (John S, J Smith or John Smith). Opens that venue's settings.</p>
+    <p class="note" style="margin:0 0 10px">What players are asked for when they join, whether the join screen asks them to opt in to your marketing, how their name shows on the TV (John S, J Smith or John Smith), and your bingo permit. Opens that venue's settings.</p>
     <div id="playerData"></div>
+    <p class="note" style="margin:12px 0 0">Your opt-in list is under the Marketing tab, with your venue link and your table signs. Permits for raffles and members draws are under Draws.</p>
+    </div><!-- /tp-settings -->
+
+    <!-- MARKETING (Dean, 24 Oct 2026): everything a venue uses to get people playing, in one tab.
+         The venue link is the address the printed QR encodes (signage.html, SITE + /play?venue=), shown
+         so it can be checked and pasted; the table signs and the opt-in list moved here from Screen and
+         Game settings. What is ASKED on the join screen (the opt-in tick, the fields) stays an owner-only
+         decision on Game settings, so the last line points there. -->
+    <div class="tabpanel" id="tp-marketing">
+    <div class="label">Your venue link</div>
+    <p class="note" style="margin:0 0 10px">The address your table-sign QR code points at. It goes to your venue, not to one night's game, so it never changes: put it in a post, a menu or an email and it works every week, for every game you run.</p>
+    <div id="mkPickWrap" class="screenpick" style="display:none">
+      <label class="flabel" for="mkVenue">You are looking at the link for</label>
+      <select id="mkVenue"></select>
+      <p class="pickfine">The link and the signs below are for <b id="mkPickName">this venue</b> only.</p>
+    </div>
+    <div class="scard">
+      <div class="scardhead">Your venue link<span class="forvenue" id="mkLinkForVenue"></span></div>
+      <div id="venueLinkVal" style="font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;font-weight:700;font-size:19px;letter-spacing:.04em;color:#fff;overflow-wrap:anywhere;margin:8px 0 12px">Loading your link&hellip;</div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <a id="venueLinkOpen" href="#" target="_blank" rel="noopener" class="go" style="text-decoration:none;display:inline-block">Open it</a>
+        <span class="snote" style="margin:0">Opens the join page a player sees when they scan.</span>
+      </div>
+    </div>
+    <div class="scard">
+      <div class="scardhead">Table signs</div>
+      <p class="snote">Print a "Scan to play" sign for your tables. The QR code goes to your venue link above, so the same sign works every week and for every game you run. Choose an A4 poster, table cards four to a page, or fold-over table tents.</p>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap">
+        <a id="signageLink" href="/signage.html" target="_blank" rel="noopener" class="go" style="text-decoration:none;display:inline-block">Print table signs</a>
+      </div>
+    </div>
 
     <div class="label">Marketing opt-ins</div>
     <p class="note" style="margin:0 0 10px">Players who ticked "keep me posted" when they joined. Download them as a CSV for your own marketing.</p>
     <button class="addbtn" id="optinExport">Download opt-in list (CSV)</button>
-    </div><!-- /tp-settings -->
+    <p class="note" id="optinSignpost" style="margin:12px 0 0">The opt-in tick on the join screen, and what players are asked for, are set under <a id="optinSettingsLink" href="settings.html" style="color:var(--pink)">Game settings</a>.</p>
+    </div><!-- /tp-marketing -->
 
     <div class="tabpanel" id="tp-draws">
     <div class="label">Raffles</div>
@@ -628,6 +661,14 @@
       </div>
       <button class="addbtn" id="md-csvbtn" style="margin-top:8px">Or upload a CSV file</button>
     </div>
+
+    <!-- PERMITS FOR DRAWS (Dean, 24 Oct 2026): the raffle and members-draw permits sit with the draws
+         they belong to. Painted and saved by /app/vp-permits.js, the one copy the Game settings page
+         (the bingo permit) also uses. Follows the raffle venue picker at the top of this tab. -->
+    <div class="label">Permits and authorities for draws</div>
+    <p class="note" style="margin:0 0 10px">Record any permit, licence or authority your venue holds for raffles and members draws, so it is on file. We do not check it, and recording it does not make a draw lawful: that stays with you. Your console reads this before a paid draw. These belong to <b id="pmPickName">the venue picked at the top of this tab</b>. Your bingo permit is under Game settings.</p>
+    <div id="drawPermitsErr" class="loadfail" hidden></div>
+    <div id="drawPermits"></div>
     </div><!-- /tp-draws -->
 
     <div class="tabpanel" id="tp-screen">
@@ -690,13 +731,7 @@
       </div>
     </div>
 
-    <div class="scard">
-      <div class="scardhead">Table signs</div>
-      <p class="snote">Print a "Scan to play" sign for your tables. The QR code goes to your venue, not to one night's game, so the same sign works every week and for every game you run. Choose an A4 poster, table cards four to a page, or fold-over table tents.</p>
-      <div style="display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap">
-        <a id="signageLink" href="/signage.html" target="_blank" rel="noopener" class="go" style="text-decoration:none;display:inline-block">Print table signs</a>
-      </div>
-    </div>
+    <!-- The Table signs card lives under Marketing now (24 Oct 2026). -->
     <!-- NOTHING CHOSEN IS LOST UNSEEN (21 Oct 2026). Tugun's logo was chosen, previewed and never
          saved: the Save button was a second step and leaving the page dropped it in silence. A logo
          now saves the moment it is chosen and a slide image the moment it is uploaded; anything
@@ -717,6 +752,8 @@
 <script src="/app/vp-ask.js"></script>
 <script src="vp-session.js"></script>
 <script src="/app/vp-logo.js"></script>
+<script src="/app/vp-gaming.js"></script>
+<script src="/app/vp-permits.js"></script>
 <script>if(window.VP && VP.guardShift) VP.guardShift();   /* the 4h forced sign-out reaches every page with player data */</script>
 <script>
 (function(){
@@ -1091,7 +1128,7 @@
       d.venues.forEach(function(v){
         var a = document.createElement("a"); a.className = "venue"; a.style.textDecoration = "none";
         a.href = "settings.html?venue=" + encodeURIComponent(v.id);
-        a.innerHTML = '<div class="nm"><b>' + esc(v.name) + '</b><small>What you collect, and how names show on the screen</small></div>' +
+        a.innerHTML = '<div class="nm"><b>' + esc(v.name) + '</b><small>What you collect, the opt-in tick, how names show on the screen, your bingo permit</small></div>' +
           '<span class="canxlink" style="color:var(--muted);pointer-events:none">Open &rsaquo;</span>';
         pd.appendChild(a);
       });
@@ -1151,7 +1188,9 @@
     setSec("Marketing opt-ins", p.players_optin===true);
     setSec("Raffles", p.draws_raffles!==false);
     setSec("Members draws", p.draws_raffles!==false);
+    setSec("Permits and authorities for draws", p.draws_raffles!==false);
     setSec("Advertising", p.advertising!==false);
+    setSec("Your venue link", p.advertising!==false);   // the link and the table signs: the same right as the TV
     // Owner-only sections, hidden last so any overlap ends hidden.
     var firstCard=$("content").querySelector(".card"); if(firstCard) firstCard.style.display="none"; // billing summary
     var _pd=$("pastDue"); if(_pd) _pd.style.display="none";   // a failed payment is the owner's to fix
@@ -1169,7 +1208,7 @@
     var openTab = p.advertising!==false ? "screen"
                 : p.draws_raffles!==false ? "draws"
                 : p.add_hosts!==false ? "billing"
-                : p.players_optin===true ? "settings" : "billing";
+                : p.players_optin===true ? "marketing" : "billing";
     // First render only: a refresh after a save must not yank them off the tab they are working on.
     if(!gateSections._tabbed){
       gateSections._tabbed = true;
@@ -1859,8 +1898,55 @@
   function setTvLinks(slug){
     $("tvLink").textContent = "venueplay.com.au/tv" + (slug ? ("?" + slug) : "");
     $("screenPreview").href = tvHref(slug);
+  }
+  /* The venue rows this page needs beyond the billing summary: the slug (the venue link), the state
+     and the permits (the draws permits). Read from vp_venues under the login's own RLS, the way
+     vp-session reads the venue list; the summary carries none of these. Throws on a failed read, so
+     a caller can never mistake a failure for a venue with nothing recorded. */
+  function venueRows(ids){
+    return VP.getClient().from("vp_venues").select("id,name,slug,au_state,entity_type,number_bingo_on,permits").in("id", ids).then(function(r){
+      if (readFailed(r)) throw (r && r.error) || new Error("read failed");
+      var by = {}; (r.data || []).forEach(function(v){ by[v.id] = v; });
+      return ids.map(function(id){ return by[id]; }).filter(Boolean);
+    });
+  }
+  // ---- Marketing: the venue link, the table signs and the opt-in list ----
+  var mkVenues = [], mkCurrent = null;
+  /* What the printed QR encodes: SITE + /play?venue= in signage.html. Always the real site, never this
+     page's origin, because the sign on the table has to work wherever this page was opened from. */
+  var VENUE_SITE = "https://venueplay.com.au";
+  function venueLink(slug){ return VENUE_SITE + "/play?venue=" + encodeURIComponent(slug || ""); }
+  function paintMarketing(v){
+    mkCurrent = v || null;
+    var slug = v && v.slug, n = (v && v.name) || "", many = mkVenues.length > 1;
+    $("venueLinkVal").textContent = slug ? venueLink(slug) : "This venue has no link yet. Email support@venueplay.com.au and we will sort it.";
+    $("venueLinkOpen").href = slug ? venueLink(slug) : "#";
+    $("venueLinkOpen").style.display = slug ? "" : "none";
     var sg=$("signageLink");
     if(sg) sg.href = (screenOrigin||"") + "/signage.html" + (slug ? ("?venue=" + encodeURIComponent(slug)) : "");
+    var sl=$("optinSettingsLink"); if(sl) sl.href = "settings.html" + (v && v.id ? ("?venue=" + encodeURIComponent(v.id)) : "");
+    $("mkPickName").textContent = n || "this venue";
+    $("mkLinkForVenue").textContent = many ? n : "";
+  }
+  function loadMarketingPanel(){
+    return api("/account/summary", {}).then(function(d){
+      var venues = (d && !d.error && d.venues) || [];
+      if (!venues.length){ paintMarketing(null); return; }
+      return venueRows(venues.map(function(v){ return v.id; })).then(function(rows){
+        mkVenues = rows;
+        var want = defaultVenue(rows) || rows[0];
+        var pick = $("mkPickWrap"), sel = $("mkVenue");
+        if (rows.length > 1){
+          fillVenuePicker(sel, rows, want.id);
+          pick.style.display = "";
+          sel.onchange = function(){ paintMarketing(rows.filter(function(v){ return v.id === sel.value; })[0] || null); };
+        } else { pick.style.display = "none"; }
+        paintMarketing(want);
+      });
+    }).catch(function(){
+      $("venueLinkVal").textContent = "Could not load your venue link just now. Refresh the page to try again.";
+      $("venueLinkOpen").style.display = "none";
+    });
   }
   /* Switching venue in the Screen picker. A read that fails must NOT leave the picker on the
      new venue while the slides, the logo and screenCurrent are still the old one's: the page
@@ -1923,8 +2009,8 @@
         try{ window.scrollTo(0,0); }catch(e){}
       });
     }
-    // billing.html#screen opens on that tab: Venue settings links straight to the logo card.
-    try{ var h=/^#(screen|nights|draws|settings|billing)$/.exec(location.hash||"");
+    // billing.html#screen opens on that tab (Venue settings links straight to the logo card); #marketing and #draws the same.
+    try{ var h=/^#(screen|nights|draws|marketing|settings|billing)$/.exec(location.hash||"");
          if(h){ var tb=document.querySelector('.tabs button[data-tab="'+h[1]+'"]'); if(tb) tb.click(); } }catch(e){}
   })();
   /* Tell the venue's TV that its screen content just changed.
@@ -2613,6 +2699,25 @@
     loadRafflePrizes(venueId);
     loadDrawLog(venueId);
     loadPrizeTally(venueId);
+    loadDrawPermits(venueId);
+  }
+  /* The raffle and members-draw permits for the venue the raffle picker is on (vp-permits.js paints
+     and saves them; the bingo permit is on Game settings). A read that fails says so, with a retry,
+     rather than painting two empty cards that read as "nothing recorded". */
+  var pmSeq = 0;
+  function loadDrawPermits(venueId){
+    var seq = ++pmSeq, wrap = $("drawPermits"); if (!wrap) return;
+    showLoadFailed("drawPermitsErr", null);
+    wrap.innerHTML = "";
+    var nm = $("pmPickName"); if (nm) nm.textContent = rfVenueName() || "the venue picked at the top of this tab";
+    return venueRows([venueId]).then(function(rows){
+      if (seq !== pmSeq || venueId !== rfCurrent) return;
+      if (!rows[0]) throw new Error("no row");
+      if (window.VPPermits) VPPermits.paint({ wrap: wrap, venue: rows[0], kinds: ["raffle", "members"], worker: VP_WORKER, venueId: venueId });
+    }).catch(function(){
+      if (seq !== pmSeq) return;
+      showLoadFailed("drawPermitsErr", "Could not load the permits for " + (rfVenueName() || "this venue") + ". Try again.", function(){ loadDrawPermits(venueId); });
+    });
   }
   function saveRaffleRoutine(){
     if (rfNotReady()) return;
@@ -2970,6 +3075,7 @@
     initScreen();
     initRaffles();
     initMembersDraws();
+    loadMarketingPanel();
     initManagers();
     initNights();
     $("optinExport").addEventListener("click", exportOptins);
