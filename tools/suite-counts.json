@@ -172,7 +172,7 @@
   "counted_by": "lines"
  },
  "tools/purchase-raffle-in-chrome.test.py": {
-  "checks": 37,
+  "checks": 38,
   "counted_by": "lines"
  },
  "tools/redirect-verdict.test.py": {
@@ -181,6 +181,10 @@
  },
  "tools/regulated.test.py": {
   "checks": 23,
+  "counted_by": "lines"
+ },
+ "tools/sant-bingo-in-chrome.test.py": {
+  "checks": 38,
   "counted_by": "lines"
  },
  "tools/screen-history-sql.test.py": {
@@ -525,6 +529,14 @@
  },
  "tools/test-router-heals-after-a-blip.js": {
   "checks": 23,
+  "counted_by": "lines"
+ },
+ "tools/test-sant-bingo-game.js": {
+  "checks": 26,
+  "counted_by": "lines"
+ },
+ "tools/test-sant-bingo.js": {
+  "checks": 48,
   "counted_by": "lines"
  },
  "tools/test-score-pull-is-shared.js": {
