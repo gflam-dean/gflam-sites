@@ -4121,7 +4121,7 @@ MUTATIONS = [
      'a sales page promises extras at the monthly rate and we charge $2 a head'),
 
     ('no heading or paragraph of the Terms starts with a lower-case word', 'venueplay/terms.html',
-     "<h2>2. State offer</h2>", "<h2>2. offer</h2>",
+     "<h2>2. Offer pricing</h2>", "<h2>2. pricing</h2>",
      'the contract loses the subject of a clause again'),
 
     ('the real templates render with every venue, its own TV link and no raw tags', 'venueplay-backend/worker/venueplay-api-FULL.js',
