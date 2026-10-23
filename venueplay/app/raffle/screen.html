@@ -470,7 +470,7 @@
     throw new Error("VenuePlay: Realtime library not loaded yet");
   }
   try{ sessionStorage.removeItem("vpCdnTries"); }catch(e){}   // loaded: reset the retry count
-  var client=supabase.createClient(SUPA_URL, SUPA_ANON);
+  var client=supabase.createClient(SUPA_URL, SUPA_ANON, (window.VPChannel && VPChannel.clientOptions) ? VPChannel.clientOptions() : undefined);   // worker heartbeat: a covered window keeps its socket (vp-channel.js, rule 6)
   // Unified TV: hop to whatever OTHER game a host puts on air (and back to bingo) on the same
   // /tv link. Listen only (no tv_here ping) so two games that are both live can't ping-pong.
   /* Follow the night. The shared router is in /app/vp-screen-router.js: it hops

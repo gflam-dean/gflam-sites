@@ -288,7 +288,7 @@
   "counted_by": "lines"
  },
  "tools/test-channel-recovery-tv.js": {
-  "checks": 16,
+  "checks": 37,
   "counted_by": "lines"
  },
  "tools/test-checkout-trial-and-duplicates.js": {

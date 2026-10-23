@@ -319,6 +319,64 @@ def musical_toast():
     finally:
         r.close()
 
+# The Mini Bar's wall (23 Oct 2026): a venue with a members draw, idle on the draws slide, then the members
+# screen embedded in the frame. Two documents, two realtime clients, the SAME bingo topic in both (the
+# embedded screen's router watches bingo). Records, in each frame: what createClient was handed, every
+# subscribe per topic, every status, and every "dropped, rebuilding" line vp-channel.js prints.
+CHANNEL_PROBE = r"""(function(){
+  window.__opts=null; window.__subs={}; window.__statuses=[]; window.__dropped=0;
+  var olog=console.log; console.log=function(){ try{ if(/dropped, rebuilding/.test(String(arguments[0]))) window.__dropped++; }catch(e){} return olog.apply(console, arguments); };
+  var _sb;
+  Object.defineProperty(window, "supabase", { configurable:true, enumerable:true, get:function(){ return _sb; }, set:function(v){
+    _sb=v; var cc=v.createClient;
+    v.createClient=function(){ window.__opts=arguments[2]===undefined?"undefined":arguments[2]; var client=cc.apply(this, arguments); var och=client.channel;
+      client.channel=function(topic){ var ch=och.apply(client, arguments); var osub=ch.subscribe;
+        ch.subscribe=function(cb,t){ window.__subs[topic]=(window.__subs[topic]||0)+1; return osub.call(ch, function(st,err){ window.__statuses.push(topic+":"+st); if(cb) return cb(st,err); }, t); };
+        return ch; };
+      return client; };
+  }});
+})();"""
+
+def tv_embed_members():
+    print('\nTHE MINI BAR\'S WALL: a draws slide, then the members screen embedded; two clients on one bingo topic, no channel ever dropped')
+    r = RIG.Rig()
+    try:
+        # the draws board the Worker's /screen serves this venue (v_vp_screen_draws, keyed by slug)
+        with r.W.lock:
+            r.W.p.stdin.write(json.dumps({'seed': 'v_vp_screen_draws', 'rows': [{'slug': r.W.info['slug'], 'name': 'Thursday Members Draw', 'current_jackpot_cents': 20000, 'draw_day': 'Thursday', 'draw_time': '7pm', 'timezone': 'Australia/Brisbane'}]}) + '\n'); r.W.p.stdin.flush(); r.W.p.stdout.readline()
+        ttid, tv = r.open('/tv?venue=' + r.W.info['slug'], before=CHANNEL_PROBE)
+        ok('the TV loads on the ads', r.until(tv, vis('adsRoot'), 60) is True)
+        # The ads floor paints before the scripts have run (that is the point of it), so wait for the
+        # channels before judging anything the scripts did: on a loaded Mac that took over 15 s (23 Oct 2026).
+        ok('CONTROL: the TV is on its bingo channel and the four game channels', r.until(tv, 'Object.keys(window.__subs).length===5', 90) is True, r.ask(tv, 'JSON.stringify(window.__subs)'))
+        ok('the TV handed supabase.createClient the worker heartbeat (vp-channel.js rule 6)',
+           r.until(tv, 'JSON.stringify(window.__opts)==="{\\"realtime\\":{\\"worker\\":true,\\"heartbeatIntervalMs\\":15000}}"', 30) is True, r.ask(tv, 'JSON.stringify(window.__opts)'))
+        ok('and the ads include this week\'s members draws (the slide The Mini Bar idles on)',
+           r.until(tv, '/members draws/i.test(document.getElementById("tvAds").textContent)', 60) is True, r.ask(tv, 'document.getElementById("tvAds").textContent.slice(0,120)'))
+        r.ask(tv, 'window.postMessage({vp:"show-game",game:"members"}, location.origin); true')
+        ok('the members screen is embedded in the frame', r.until(tv, '(function(){var f=document.getElementById("gameFrame");return !!f&&f.style.display==="block"&&/members\/screen/.test(f.getAttribute("src")||"");})()', 30) is True)
+        FR = 'document.getElementById("gameFrame").contentWindow'
+        ok('the embedded screen made its own client, with the worker heartbeat too',
+           r.until(tv, 'JSON.stringify(%s.__opts)==="{\\"realtime\\":{\\"worker\\":true,\\"heartbeatIntervalMs\\":15000}}"' % FR, 15) is True, r.ask(tv, 'JSON.stringify(%s.__opts)' % FR))
+        ok('and it joined the members channel and the four it watches, the bingo topic among them',
+           r.until(tv, '(function(w){var k=Object.keys(w.__subs||{});return k.length===5&&k.indexOf("vp-%s")>=0;})(%s)' % (r.W.info['code'], FR), 15) is True, r.ask(tv, 'JSON.stringify(%s.__subs)' % FR))
+        shot(r, tv, 'tv-4-members-embedded')
+        time.sleep(60)   # a minute of the two documents sharing the bingo topic, as the wall does all night
+        top = r.ask(tv, 'JSON.stringify({dropped:window.__dropped, subs:window.__subs, statuses:window.__statuses, errs:window.__errs})')
+        inner = r.ask(tv, 'JSON.stringify({dropped:%s.__dropped, subs:%s.__subs, statuses:%s.__statuses, errs:%s.__errs||[]})' % (FR, FR, FR, FR))
+        T = json.loads(top or '{}'); I = json.loads(inner or '{}')
+        def once(d): return bool(d.get('subs')) and all(v == 1 for v in d['subs'].values())
+        def clean(d): return bool(d.get('statuses')) and all(x.endswith(':SUBSCRIBED') for x in d['statuses']) and len(d['statuses']) == len(d['subs'])
+        ok('after a minute the TV has never logged a dropped channel', T.get('dropped') == 0, top)
+        ok('nor has the embedded members screen', I.get('dropped') == 0, inner)
+        ok('every channel on the TV was subscribed exactly once, and only ever said SUBSCRIBED', once(T) and clean(T), top)
+        ok('every channel on the members screen was subscribed exactly once, and only ever said SUBSCRIBED', once(I) and clean(I), inner)
+        ok('the bingo topic is held by BOTH documents at once, which is fine: two sockets, two joins', T['subs'].get('vp-' + r.W.info['code']) == 1 and I['subs'].get('vp-' + r.W.info['code']) == 1)
+        ok('the RECONNECTING pill is not showing on the TV', r.ask(tv, '(function(){var b=document.querySelector(".tv-status");return !b||b.hidden===true;})()') is True)
+        ok('no script errors on the TV or in the frame', (T.get('errs') or []) == [] and (I.get('errs') or []) == [], [T.get('errs'), I.get('errs')])
+    finally:
+        r.close()
+
 
 # ======================================================================================
 def fnv_code(slug):
@@ -404,6 +462,7 @@ try:
     phone_after_win()
     join_loading()
     musical_toast()
+    tv_embed_members()
 except Exception as e:
     import traceback; traceback.print_exc(); bad += 1
 
