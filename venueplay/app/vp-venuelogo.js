@@ -150,6 +150,20 @@
   var BAND_RATIO = 2.2;
   function isWide(ratio) { return ratio >= BAND_RATIO; }
 
+  /* THIN (skills review, 23 Oct 2026): a white script like Henley SLSC's nearly vanishes on the black column of
+     a printed sign. inkCover(rgba, w, l, t, r, b) is the share of the trimmed box that is inked (alpha summed over
+     the box, 0 to 1). Measured on the test set: Henley's script 0.16; Cascade 0.20, Deepwater 0.21, Chatswood
+     0.21, Civic 0.25 (all white, all read fine); Tugun's crest 0.48; a solid badge 1.0. A LIGHT logo under THIN
+     is thin: the sign gives it a charcoal card and the width of its panel. Never recoloured. */
+  var THIN = 0.18;
+  function inkCover(rgba, w, l, t, r, b) {
+    var ink = 0, i, j;
+    if (r < l || b < t) return 0;
+    for (j = t; j <= b; j++) for (i = l; i <= r; i++) ink += rgba[(j * w + i) * 4 + 3];
+    return ink / 255 / ((r - l + 1) * (b - t + 1));
+  }
+  function isThin(light, cover) { return !!light && cover < THIN; }
+
   /* analyse(src, cb): everything a printed sign needs to know about a logo, from ONE CORS read.
        ratio    width / height after see-through edges are trimmed (null if unreadable)
        trimmed  a PNG data URL of the logo without its see-through margin, so its size on the sign is
@@ -183,11 +197,12 @@
           if (r >= l && b >= t) {
             var tw = r - l + 1, th = b - t + 1, tc = d.createElement("canvas"); tc.width = tw; tc.height = th;
             tc.getContext("2d").drawImage(c, l, t, tw, th, 0, 0, tw, th);
-            var L = lightness(px), S = lightShare(px);
+            var L = lightness(px), S = lightShare(px), cover = inkCover(px, cw, l, t, r, b);
             /* boxed: judge the INK, not the box it sits on, for light and dark */
-            out = { ratio: tw / th, trimmed: tc.toDataURL("image/png"), boxed: boxed, L: L, share: S,
+            out = { ratio: tw / th, trimmed: tc.toDataURL("image/png"), boxed: boxed, L: L, share: S, cover: cover,
                     light: !boxed && S !== null && S > LIGHT,
                     dark: !boxed && L !== null && L < 0.35 && S !== null && S < 0.3 };
+            out.thin = isThin(out.light, cover);
           }
         } catch (e) { out = null; }
         cb(out);
@@ -234,5 +249,5 @@
     return size(img, kind);
   }
 
-  w.VPVenueLogo = { box: box, limits: limits, fit: fit, lightness: lightness, lightShare: lightShare, readTone: readTone, analyse: analyse, isWide: isWide, BAND_RATIO: BAND_RATIO, DARK: DARK, LIGHT: LIGHT, TV: TV, PHONE: PHONE };
+  w.VPVenueLogo = { box: box, limits: limits, fit: fit, lightness: lightness, lightShare: lightShare, readTone: readTone, analyse: analyse, isWide: isWide, inkCover: inkCover, isThin: isThin, BAND_RATIO: BAND_RATIO, THIN: THIN, DARK: DARK, LIGHT: LIGHT, TV: TV, PHONE: PHONE };
 })(window, document);

@@ -616,7 +616,7 @@
   "counted_by": "lines"
  },
  "tools/test-tv-logo-mark.js": {
-  "checks": 142,
+  "checks": 147,
   "counted_by": "lines"
  },
  "tools/test-tv-reads-its-venue.js": {
@@ -712,7 +712,7 @@
   "counted_by": "lines"
  },
  "tools/venue-logo-in-chrome.test.py": {
-  "checks": 226,
+  "checks": 291,
   "counted_by": "lines"
  },
  "touring-backend/lib/touring-api.test.js": {
@@ -804,7 +804,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/signage-logo.test.js": {
-  "checks": 14,
+  "checks": 18,
   "counted_by": "lines"
  },
  "venueplay-backend/app/signin-blame.test.js": {

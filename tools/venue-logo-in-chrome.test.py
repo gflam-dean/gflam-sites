@@ -31,7 +31,7 @@ here (a 4:1 wordmark, a square crest, a near-round badge, a 1:3 tall one):
 
     python3 tools/venue-logo-in-chrome.test.py          screenshots go to $VP_SHOTS if set
 """
-import base64, http.server, importlib.util, io, json, os, sys, tempfile, threading, time, urllib.parse
+import base64, http.server, importlib.util, io, json, os, re, sys, tempfile, threading, time, urllib.parse
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _spec = importlib.util.spec_from_file_location('verify_live', os.path.join(ROOT, 'tools', 'verify-live.py'))
@@ -59,13 +59,15 @@ make('wide', 1200, 300, 'rect'); make('square', 800, 800, 'ellipse'); make('roun
 # Colour: a red crest must be painted RED (no filter, no white version), and a navy one, which would
 # vanish on the dark wall, gets a pale plate behind it.
 make('red', 800, 800, 'ellipse', (230, 20, 30, 255)); make('navy', 800, 800, 'ellipse', (12, 22, 80, 255))
+# A THIN white logo (23 Oct 2026): a ring, so under a fifth of its box is inked, like Henley SLSC's script.
+im = Image.new('RGBA', (800, 800), (0, 0, 0, 0)); ImageDraw.Draw(im).ellipse([6, 6, 793, 793], outline=(255, 255, 255, 255), width=14); im.save(os.path.join(LOGOS, 'thin.png'))
 # Paper (22 Oct 2026): a white logo vanishes on a printed sign, so it gets a dark plate; a dark one does not.
 def ratio_logo(name, iw, ih):
     im = Image.new('RGBA', (iw + 400, ih + 300), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
     d.rectangle([200, 150, 200 + iw - 1, 150 + ih - 1], fill=(250, 200, 40, 255)); im.save(os.path.join(LOGOS, name + '.png'))
 ratio_logo('r21', 1050, 500); ratio_logo('r22', 1100, 500); ratio_logo('r23', 1150, 500)
 SIGN_LOGOS = {'sign-white': '/__logos/square.png', 'sign-navy': '/__logos/navy.png', 'sign-slow': '/__logos/slow-square.png', 'sign-r21': '/__logos/r21.png', 'sign-r22': '/__logos/r22.png', 'sign-r23': '/__logos/r23.png', 'sign-none': None,
-              'sign-gold': '/__logos/wide.png'}
+              'sign-gold': '/__logos/wide.png', 'sign-thin': '/__logos/thin.png', 'sign-round': '/__logos/round.png'}
 
 
 class Site(http.server.BaseHTTPRequestHandler):
@@ -399,8 +401,9 @@ def sign_checks():
     TEXT = {'long': {'nameIn': 'The Kingscliff Beach Bowls and Golf Club Inc', 'headIn': 'SCAN THIS NOW FOR BINGO NIGHT',
                      'lineIn': 'No app, no account, no sign-up and no fuss: just your phone!!',
                      'whatsIn': 'Bingo Wednesdays, trivia Thursdays from 7pm, musical bingo Fridays and meat raffles Saturday arvo'},
-            'nospace': {'nameIn': 'Supercalifragilisticexpialidocioushotel', 'headIn': 'SCANTOPLAYBINGOTRIVIAMUSIC',
-                        'lineIn': 'Noappnoaccountjustyourphonenoappnoaccountjustyourphone', 'whatsIn': 'BingoWednesdaysTriviaThursdaysMusicalBingoFridaysMeatRafflesSaturday'}}
+            # the longest words the editor takes (14 letters; a 15th is refused, see below), as many as fit each box
+            'longwords': {'nameIn': 'Supercalifragi Expialidocious Hotelandclubbb', 'headIn': 'SCANTOPLAYBING OTRIVIAMUSICA',
+                          'lineIn': 'Noappnoaccount justyourphonea noappnoaccount justyourphonea', 'whatsIn': 'BingoWednesday TriviaThursday MusicalFridays MeatRaffleSats andmoreandmore'}}
     # The QR with the venue's worst text (four lines of it, at every field's maximum) must stay at least 70% of the size it is with the default words:
     # long text wraps, it does not shrink the whole sign. (And never under a fifth of the sign.)
     for d in ('column-dark', 'band-dark', 'ticket-light', 'spot-light'):
@@ -416,8 +419,161 @@ def sign_checks():
                     ok(tag + ': the QR keeps its size (%.2f of the sign, %.2f with the usual words)' % (q, q0), q0 > 0 and q >= 0.7 * q0 and q >= 0.2, (q, q0))
                     ok(tag + ': the long headline wraps instead of shrinking the sign', m.get('wrap') is True, m.get('wrap'))
                     if name == 'long' and sheet == 'poster': shot(sid, 'chrome-sign-%s-long' % d)
+                    set_text(sid, {'nameIn': '', 'headIn': '', 'lineIn': '', 'whatsIn': ''})   # the words are remembered per venue now: leave none behind
                 finally:
                     B.close_tab(tid)
+
+
+    # ---- ROUND TWO (the skills review, 23 Oct 2026) ----
+    MMPX = 793.7 / 210.0   # the sheet is 210mm wide on screen as well as on paper, so mm are measured in px
+    print('\nPRINTER SAFE: office printer (the default) keeps every bleed inside a 6mm white margin; print shop is full bleed')
+    EDGE = r"""(function(){var sh=document.querySelector(".sheet:not(.hidden)"),s=sh.getBoundingClientRect(),m=1e9;
+      sh.querySelectorAll("[data-art]").forEach(function(a){var b=a.getBoundingClientRect();m=Math.min(m,b.left-s.left,b.top-s.top,s.right-b.right,s.bottom-b.bottom);});
+      var pm=document.body.classList.contains("pm-office")?"office":(document.body.classList.contains("pm-shop")?"shop":"");
+      return JSON.stringify({gap:m,pm:pm,on:(document.querySelector("#printer .pick.on")||{}).textContent||"",dark:(document.querySelector('#tones [data-v="dark"]')||{}).textContent||""});})()"""
+    def edge(sid): return json.loads(ask(sid, EDGE) or '{}')
+    for d in ('ticket-light', 'spot-dark', 'column-dark', 'band-dark'):
+        for sheet in ('poster', 'cards', 'tents'):
+            m, sid, tid = sign_open('sign-white', sheet, d)
+            try:
+                g = edge(sid); mm = g.get('gap', 0) / MMPX
+                ok('%s %s, office printer by default: every sign sits at least 6mm inside the paper (%.1fmm)' % (d, sheet, mm), g.get('pm') == 'office' and mm >= 5.9 and 'Office printer' in g.get('on', ''), g)
+                ok('%s %s: nothing leaves its sign with the margin on' % (d, sheet), not m.get('spill'), (m.get('spill') or [])[:4])
+            finally:
+                B.close_tab(tid)
+    for d, sheet in (('ticket-light', 'poster'), ('spot-dark', 'cards'), ('ticket-dark', 'tents')):
+        m, sid, tid = sign_open('sign-white', sheet, d + '&printer=shop')
+        try:
+            g = edge(sid)
+            ok('%s %s, print shop: full bleed, the sign reaches the paper edge' % (d, sheet), g.get('pm') == 'shop' and g.get('gap', 9) < 1, g)
+        finally:
+            B.close_tab(tid)
+    m, sid, tid = sign_open('sign-white', 'poster', 'column-dark')
+    try:
+        ok('the Column\'s dark tone is just "Dark"', (edge(sid).get('dark') or '').strip() == 'Dark', edge(sid).get('dark'))
+    finally:
+        B.close_tab(tid)
+    m, sid, tid = sign_open('sign-white', 'poster', 'ticket-dark')
+    try:
+        ok('the picker labels the dark Ticket "print shop"', 'print shop' in edge(sid).get('dark', ''), edge(sid).get('dark'))
+        ask(sid, 'document.querySelector(\'#printer [data-pm="shop"]\').click();true'); time.sleep(0.4)
+        B.call('Page.navigate', {'url': BASE + '/signage?venue=sign-white&sheet=poster&design=spot-dark'}, session=sid)
+        time.sleep(1.5); until(sid, '/Found/.test(document.getElementById("status").textContent)', 15); time.sleep(0.5)
+        g = edge(sid)
+        ok('print shop is remembered after a reload, and the dark Spotlight is labelled print shop too', g.get('pm') == 'shop' and g.get('gap', 9) < 1 and 'print shop' in g.get('dark', ''), g)
+        ask(sid, 'document.querySelector(\'#printer [data-pm="office"]\').click();true'); time.sleep(0.4)   # back to the default for the checks that follow
+        ok('and office printer can be chosen back', edge(sid).get('pm') == 'office' and edge(sid).get('gap', 0) / MMPX >= 5.9, edge(sid))
+    finally:
+        B.close_tab(tid)
+
+    print('\nTYPE ON PAPER: the stub never under 8pt, the band eyebrow pink and never under 10pt, the small line never under 9pt on a card')
+    PT = r"""(function(){function pt(sel){var m=1e9,c="",t="";document.querySelectorAll(".sheet:not(.hidden) "+sel).forEach(function(e){var cs=getComputedStyle(e);if(cs.display==="none"||e.hidden)return;var f=parseFloat(cs.fontSize);if(f<m){m=f;c=cs.color;t=e.textContent;}});return {pt:m===1e9?null:m*72/96,color:c,text:t};}
+      return JSON.stringify({clbl:pt(".clbl"),curl:pt(".curl"),ckick:pt(".ckick"),no:pt(".no"),kick:pt(".kick")});})()"""
+    for sheet in ('cards', 'tents'):
+        m, sid, tid = sign_open('sign-white', sheet, 'ticket-light')
+        try:
+            g = json.loads(ask(sid, PT) or '{}')
+            ok('Ticket %s: the stub\'s label and address are 8pt or more (%.1f, %.1f)' % (sheet, g['clbl']['pt'] or 0, g['curl']['pt'] or 0), (g['clbl']['pt'] or 0) >= 7.95 and (g['curl']['pt'] or 0) >= 7.95, g)
+            ok('Ticket %s: the stub says "Go to venueplay.com.au/play"' % sheet, g['curl']['text'].strip() == 'Go to venueplay.com.au/play', g['curl']['text'])
+        finally:
+            B.close_tab(tid)
+    for dv, sheet in (('band-dark', 'cards'), ('band-light', 'poster'), ('band-dark', 'tents')):
+        m, sid, tid = sign_open('sign-white', sheet, dv)
+        try:
+            g = json.loads(ask(sid, PT) or '{}')
+            ok('Top band %s %s: the eyebrow in the band is pink and 10pt or more (%.1f)' % (dv, sheet, g['ckick']['pt'] or 0), (g['ckick']['pt'] or 0) >= 9.95 and g['ckick']['color'] in ('rgb(255, 31, 142)', 'rgb(199, 15, 105)'), g['ckick'])
+        finally:
+            B.close_tab(tid)
+    for dv in ('column-dark', 'band-dark', 'ticket-light', 'spot-light'):
+        m, sid, tid = sign_open('sign-white', 'cards', dv)
+        try:
+            g = json.loads(ask(sid, PT) or '{}')
+            ok('%s cards: the small line is 9pt or more (%.1f)' % (dv, g['no']['pt'] or 0), (g['no']['pt'] or 0) >= 8.95, g['no'])
+        finally:
+            B.close_tab(tid)
+
+    print('\nTHE BAND, THE COLUMN, THE SPOTLIGHT: 20% band with the badge sized into it, no pink stick, a hard stroke and no halo')
+    m, sid, tid = sign_open('sign-round', 'poster', 'band-dark')
+    try:
+        g = json.loads(ask(sid, '(function(){var a=document.querySelector(".sheet:not(.hidden) [data-art]"),ch=a.querySelector(".chrome"),c=ch.getBoundingClientRect(),b=a.getBoundingClientRect(),'
+                                'l=a.querySelector("[data-chrome]").getBoundingClientRect(),k=a.querySelector(".ckick").getBoundingClientRect();'
+                                'return JSON.stringify({h:c.height/b.height,logoH:l.height,logoBottom:l.bottom,kickTop:k.top,kickBottom:k.bottom,bandBottom:c.bottom-parseFloat(getComputedStyle(ch).borderBottomWidth)});})()') or '{}')
+        ok('Top band: the band is 20%% of the page (%.3f)' % g.get('h', 0), abs(g.get('h', 0) - 0.20) < 0.01, g)
+        ok('Top band: a round badge is still at least 38mm tall inside the shorter band (%.0fmm)' % (g.get('logoH', 0) / MMPX), g.get('logoH', 0) / MMPX >= 38, g)
+        ok('Top band: the badge sits above the eyebrow and the eyebrow is wholly inside the band', g.get('logoBottom', 9e9) <= g.get('kickTop', 0) + 1 and g.get('kickBottom', 9e9) <= g.get('bandBottom', 0) + 1, g)
+    finally:
+        B.close_tab(tid)
+    m, sid, tid = sign_open('sign-white', 'poster', 'column-dark')
+    try:
+        g = json.loads(ask(sid, '(function(){var a=document.querySelector(".sheet:not(.hidden) [data-art]"),R=function(e){return e.getBoundingClientRect();},'
+                                'acc=R(a.querySelector(".chrome .accent")),lg=R(a.querySelector("[data-chrome]")),col=R(a.querySelector(".chrome")),mk=R(a.querySelector(".mark")),b=R(a),'
+                                'sg=a.querySelector(".sign"),u=parseFloat(getComputedStyle(sg).getPropertyValue("--u"))/100*R(sg.parentNode).height;'
+                                'return JSON.stringify({accTop:acc.top,accW:acc.width,accH:acc.height,logoBottom:lg.bottom,colW:col.width,markGap:b.bottom-mk.bottom,u:u});})()') or '{}')
+        ok('Column: no pink stick at the top; the accent is a short rule under the logo', g.get('accTop', 0) > g.get('logoBottom', 9e9) and g.get('accH', 9) < g.get('accW', 0) and g.get('accW', 9e9) < 0.5 * g.get('colW', 0), g)
+        ok('Column: the VenuePlay mark sits a clear step above the foot of the sign (1.7 units, up from 1)', g.get('u', 0) > 0 and g.get('markGap', 0) >= 1.6 * g['u'], g)
+    finally:
+        B.close_tab(tid)
+    for slug, has_logo in (('sign-white', True), ('sign-none', False)):
+        m, sid, tid = sign_open(slug, 'poster', 'spot-light')
+        try:
+            g = json.loads(ask(sid, '(function(){var s=document.querySelector(".sheet:not(.hidden) .sign"),q=getComputedStyle(s.querySelector(".qrbox")),k=s.querySelector(".kick"),kc=getComputedStyle(k);'
+                                    'return JSON.stringify({bw:parseFloat(q.borderTopWidth),shadow:q.boxShadow,color:q.borderTopColor,kick:kc.display!=="none"&&k.getBoundingClientRect().height>0});})()') or '{}')
+            if has_logo:
+                ok('Spotlight: a hard pink stroke about 2mm on the poster (%.1fmm) and no blur halo' % (g.get('bw', 0) / MMPX), 1.6 <= g.get('bw', 0) / MMPX <= 2.4 and g.get('shadow') == 'none' and g.get('color') in ('rgb(199, 15, 105)', 'rgb(255, 31, 142)'), g)
+                ok('Spotlight with a logo: the eyebrow goes, so three things sit above the code', g.get('kick') is False, g)
+            else:
+                ok('Spotlight with no logo: the eyebrow stays', g.get('kick') is True, g)
+        finally:
+            B.close_tab(tid)
+
+    print('\nTHIN WHITE SCRIPT on the black column: a charcoal card and the width of the column')
+    for slug, thin, label in (('sign-thin', True, 'a thin white ring'), ('sign-white', False, 'a solid white crest')):
+        m, sid, tid = sign_open(slug, 'poster', 'column-dark')
+        try:
+            g = json.loads(ask(sid, '(function(){var a=document.querySelector(".sheet:not(.hidden) [data-art]"),i=a.querySelector("[data-chrome]"),c=a.querySelector(".chrome").getBoundingClientRect(),b=i.getBoundingClientRect();'
+                                    'return JSON.stringify({thin:i.classList.contains("thin"),bg:getComputedStyle(i).backgroundColor,w:b.width/c.width});})()') or '{}')
+            if thin: ok('%s is read as thin, sits on a charcoal card and spans at least 90%% of the column' % label, g.get('thin') is True and g.get('bg') == 'rgb(38, 38, 43)' and g.get('w', 0) >= 0.9, g)
+            else:    ok('%s is not thin: no card, its usual width' % label, g.get('thin') is False and g.get('bg') in CLEAR and g.get('w', 1) <= 0.85, g)
+        finally:
+            B.close_tab(tid)
+
+    print('\nTHE WORDS: the new defaults, the venue\'s own eyebrow, a 15-letter word refused by name, the words remembered')
+    WORDS = r"""(function(){var s=document.querySelector(".sheet:not(.hidden) .sign"),n=function(e){return (e?e.innerText:"").replace(/\s+/g," ").trim();},w=function(e){return (e?e.textContent:"").replace(/\s+/g," ").trim();};
+      var a=document.querySelector(".sheet:not(.hidden) [data-art]");
+      return JSON.stringify({no:n(s.querySelector(".no")),fb:n(s.querySelector(".fallback")),h2:n(s.querySelector("h2")),kick:w(s.querySelector(".kick")),ckick:w(a.querySelector(".ckick")),
+        ph:document.getElementById("lineIn").placeholder,status:document.getElementById("status").textContent,
+        bad:[].map.call(document.querySelectorAll(".fld input.bad"),function(i){return i.id;}),head:document.getElementById("headIn").value,kmax:document.getElementById("kickIn").maxLength});})()"""
+    m, sid, tid = sign_open('sign-white', 'poster', 'spot-light')
+    try:
+        g = json.loads(ask(sid, WORDS) or '{}')
+        ok('Spotlight: the default small line is "Play along on the big screen. Nothing to download."', g.get('no') == 'Play along on the big screen. Nothing to download.', g.get('no'))
+    finally:
+        B.close_tab(tid)
+    m, sid, tid = sign_open('sign-white', 'poster', 'column-dark')
+    try:
+        g = json.loads(ask(sid, WORDS) or '{}')
+        ok('Column: the default small line is "Play along on the big screen. Nothing to download." (its own two-line form)', g.get('no') == 'Play along on the big screen. Nothing to download.' and g.get('ph') == 'Play along on the big screen. Nothing to download.', (g.get('no'), g.get('ph')))
+        ok('the default bottom line is "Can’t scan? Go to venueplay.com.au/play and enter code ..."', bool(re.match(r'^Can’t scan\? Go to venueplay\.com\.au/play and enter code [A-Z2-9]{6}$', g.get('fb', ''))), g.get('fb'))
+        ok('the headline is still SCAN TO PLAY', g.get('h2', '').upper() == 'SCAN TO PLAY' and g.get('kick') == 'Live games here', (g.get('h2'), g.get('kick')))
+        set_text(sid, {'kickIn': 'Trivia Thu 7pm. Bingo Sat 2pm'}); g = json.loads(ask(sid, WORDS) or '{}')
+        ok('the eyebrow is the venue\'s: "Trivia Thu 7pm. Bingo Sat 2pm" on the Column sign (the box takes it)', g.get('kick') == 'Trivia Thu 7pm. Bingo Sat 2pm' and g.get('kmax', 0) >= 29, (g.get('kick'), g.get('kmax')))
+        ask(sid, 'document.querySelector(\'#designs [data-design="band"]\').click();true'); time.sleep(0.5); g = json.loads(ask(sid, WORDS) or '{}')
+        ok('and in the Top band it is the pink line in the band', g.get('ckick') == 'Trivia Thu 7pm. Bingo Sat 2pm', g.get('ckick'))
+        ask(sid, 'document.querySelector(\'#designs [data-design="column"]\').click();true'); time.sleep(0.4)
+        for field in ('headIn', 'nameIn', 'lineIn', 'whatsIn', 'kickIn'):
+            set_text(sid, {field: 'Scan Supercalifragilistic now'}); g = json.loads(ask(sid, WORDS) or '{}')
+            ok('%s: a 15-letter word is refused, the box is marked and the word is named' % field, g.get('bad') == [field] and 'Supercalifragilistic' in g.get('status', '') and g.get('h2', '').upper() == 'SCAN TO PLAY' and g.get('no') == 'Play along on the big screen. Nothing to download.', (g.get('bad'), g.get('status')[:80], g.get('h2'), g.get('no')))
+            set_text(sid, {field: ''})
+        set_text(sid, {'headIn': 'Play Supercalifragi'}); g = json.loads(ask(sid, WORDS) or '{}')
+        ok('a 14-letter word is taken, and the warning goes', g.get('h2', '').upper() == 'PLAY SUPERCALIFRAGI' and g.get('bad') == [] and 'too long' not in g.get('status', ''), (g.get('h2'), g.get('bad'), g.get('status')[:60]))
+        set_text(sid, {'headIn': 'Join the quiz', 'lineIn': 'Grab a drink and play along', 'kickIn': 'Trivia Thu 7pm. Bingo Sat 2pm'})
+        B.call('Page.navigate', {'url': BASE + '/signage?venue=sign-white&sheet=poster'}, session=sid)
+        time.sleep(1.5); until(sid, '/Found/.test(document.getElementById("status").textContent)', 15); time.sleep(0.5)
+        g = json.loads(ask(sid, WORDS) or '{}')
+        ok('a venue\'s words are remembered after a reload: headline, small line and eyebrow', g.get('h2', '').upper() == 'JOIN THE QUIZ' and g.get('no') == 'Grab a drink and play along' and g.get('head') == 'Join the quiz' and g.get('kick') == 'Trivia Thu 7pm. Bingo Sat 2pm', (g.get('h2'), g.get('no'), g.get('head'), g.get('kick')))
+        set_text(sid, {'headIn': '', 'lineIn': '', 'kickIn': ''})   # leave the browser as it was found
+    finally:
+        B.close_tab(tid)
 
     # Print pressed while the logo is still downloading: the dialog waits for the picture AND its reading.
     tid, sid = open_page('/signage?venue=sign-slow&sheet=poster&design=column-light', 1100, 1500, False)
@@ -436,6 +592,7 @@ def sign_checks():
 
 try:
     sign_checks()
+    if os.environ.get('VP_SIGNS_ONLY'): raise SystemExit(print('\n' + (('%d FAILED, %d run' % (bad, ran)) if bad else ('ALL %d CHECKS PASSED (signs only)' % ran))) or (1 if bad else 0))
     print('\nTHE TV: every logo shape, swapped on the live mark')
     tv('bingo', '/tv?demo=1', 1920, 1080, 8, ['square', 'wide', 'round', 'tall', 'red', 'navy'])
     mark_check('bingo', '/tv?demo=1', 1920, 1080, True)

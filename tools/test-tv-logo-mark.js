@@ -141,6 +141,14 @@ check('a 2.1:1 logo is a badge: it stays in the column', V.isWide(2.1) === false
 check('a logo exactly 2.2:1 is a wordmark: it moves to the band', V.isWide(2.2) === true);
 check('a 2.3:1 logo is a wordmark: it moves to the band', V.isWide(2.3) === true);
 check('the printed signs read a logo with one function', typeof V.analyse === 'function');
+/* THIN (23 Oct 2026): a white script that nearly vanishes on the black column of a printed sign. */
+check('the thin rule is one named number, 0.18', V.THIN === 0.18, V.THIN);
+var ring = (function () { var o = []; for (var j = 0; j < 10; j++) for (var i = 0; i < 10; i++) { var edge = i === 0 || j === 0 || i === 9 || j === 9; o.push(255, 255, 255, edge ? 255 : 0); } return o; })();
+check('a 10x10 white ring inks 36% of its box', Math.abs(V.inkCover(ring, 10, 0, 0, 9, 9) - 0.36) < 1e-9, V.inkCover(ring, 10, 0, 0, 9, 9));
+check('the ink is counted inside the trimmed box, not over the whole canvas (the top row alone is solid)', Math.abs(V.inkCover(ring, 10, 0, 0, 9, 0) - 1) < 1e-9, V.inkCover(ring, 10, 0, 0, 9, 0));
+check('a solid white block inks all of its box', V.inkCover(px(255, 255, 255, 255), 4, 0, 0, 3, 3) === 1);
+check("a white logo inking 16% of its box (Henley's script) is thin; Tugun's crest at 48% is not; a dark one at 16% is not (it gets the white plate instead)",
+      V.isThin(true, 0.16) === true && V.isThin(true, 0.48) === false && V.isThin(false, 0.16) === false);
 check('nothing in the sizing rule filters, brightens, inverts or recolours a logo',
       !/filter\s*=|invert\(|brightness\(|grayscale\(|saturate\(|mix-blend/.test(LOGO_SRC.replace(/\/\*[\s\S]*?\*\//g, '')));
 
