@@ -146,8 +146,10 @@ try:
                  'b=document.querySelector(\'#hqNav button[data-pane="cancelled"] .tabcount\'); return a && b;})()', 15)
     ok('Quiet: 2 (a new quiet venue, and one rung about an EARLIER spell); the one rung this spell and the ended one do not count',
        badge(sid, 'quiet') == '2', badge(sid, 'quiet'))
-    ok('Cancelled: 2 (the archived one nobody rang, and one rung about an EARLIER cancellation)',
-       badge(sid, 'cancelled') == '2', badge(sid, 'cancelled'))
+    # 21 Oct 2026: a venue whose subscription ENDED (Ended Bowls) has left too, and was missing from the
+    # Cancelled screen for the 30 days before it is archived. It counts now: nobody has rung it.
+    ok('Cancelled: 3 (the archived one and the ended one nobody rang, and one rung about an EARLIER cancellation)',
+       badge(sid, 'cancelled') == '3', badge(sid, 'cancelled'))
     ok('in the help desk tab\'s red badge style', 'rgb(229, 72, 77)' in (S.js(sid, 'getComputedStyle(document.querySelector(\'#hqNav button[data-pane="quiet"] .tabcount\')).backgroundColor') or ''),
        S.js(sid, 'getComputedStyle(document.querySelector(\'#hqNav button[data-pane="quiet"] .tabcount\')).backgroundColor'))
     shot(sid, 'hq-tab-badges')
@@ -180,17 +182,17 @@ try:
                        'var f=document.getElementById("cxFilter"); f.value="all"; f.dispatchEvent(new Event("change"));'
                        'return {offered:!!document.querySelector(\'button[data-cxcontact="%s"]\'), badge:%s};})()' % (vid(8), BADGE_JS % 'cancelled'))
     ok('while the history is still loading, a venue already rung is not offered Mark contacted and the badge does not count it',
-       isinstance(in_gap, dict) and in_gap.get('offered') is False and in_gap.get('badge') == '2', in_gap)
+       isinstance(in_gap, dict) and in_gap.get('offered') is False and in_gap.get('badge') == '3', in_gap)
     S.until(sid, '!!document.querySelector(\'button[data-cxcontact="%s"]\')' % vid(9), 15)
     ok('the venue rung about an earlier cancellation is offered Mark contacted again',
        S.js(sid, '!!document.querySelector(\'button[data-cxcontact="%s"]\')' % vid(9)) is True)
     ok('the one rung about this cancellation is not', S.js(sid, '!document.querySelector(\'button[data-cxcontact="%s"]\')' % vid(8)) is True)
     S.js(sid, 'document.querySelector(\'button[data-cxcontact="%s"]\').click(); true' % vid(9))
     S.until(sid, '!document.querySelector(\'button[data-cxcontact="%s"]\')' % vid(9), 15)
-    S.until(sid, BADGE_JS % 'cancelled' + '==="1"', 30)
+    S.until(sid, BADGE_JS % 'cancelled' + '==="2"', 30)
     mark = [a for a in S.W.table('vp_admin_audit') if a.get('action') == 'venue_cancel_contacted' and a.get('target') == 'venue:' + vid(9)]
     ok('written to the audit log by Dean', len(mark) == 2 and any(m.get('actor_label') == 'Dean' for m in mark), mark)
-    ok('and the Cancelled badge drops to 1', badge(sid, 'cancelled') == '1', badge(sid, 'cancelled'))
+    ok('and the Cancelled badge drops to 2', badge(sid, 'cancelled') == '2', badge(sid, 'cancelled'))
     shot(sid, 'hq-cancelled-after-mark')
     errs = S.js(sid, 'JSON.stringify(window.__errs||[])')
     ok('no script error on the page', errs == '[]', errs)

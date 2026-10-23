@@ -305,3 +305,20 @@ cannot join" reordered, steps 1 and 2 pinned, the plan never stops anyone joinin
 and players" and "Contacting us" corrected (no "Happening now" tick). Every update is guarded by the words 106 or 112
 wrote, so an HQ edit is left alone. Words and order only, no RLS change. Branch `feature/help-page`. RUN on the live
 database (verified 22 Oct 2026). Rollback: edit the rows back in HQ > Help desk > Help words.
+
+`venueplay-114-screen-history.sql` (21 Oct 2026, branch `feature/screen-history`): Tugun Bowls Club's logo and slides went with
+no screen row, no stored file and no audit entry left to say when or who. `vp_venue_screen_history` gets one row for every
+insert, update and delete of `vp_venue_screen`, written by the `vp_venue_screen_capture` trigger (security definer) inside the
+same transaction: the whole row before and after (addresses, never image data), when, and who (`actor` from the billing
+Worker's `X-VP-Actor` header: venue login, HQ View as or HQ restore; `via` 'direct' for anything that did not come through
+the Worker, such as the dashboard, the SQL editor or a cascade from deleting the venue). Append-only for everyone (no write
+grant to anyone, the service key included; a guard trigger refuses UPDATE, DELETE and TRUNCATE); RLS on with no policy and
+no grant to anon or authenticated; SELECT for the service key only; no foreign key, so deleting a venue keeps its history.
+A baseline row per existing screen. `vp_screen_history_check()` (security definer, service key only) is the nightly check the
+billing Worker's cron calls: 'drift' and 'vanished' rows for anything the trigger did not see. The file ends with a self-test
+that deletes one real screen row and changes another directly, requires both recorded as 'direct', requires the history to
+refuse a delete, then rolls that back; any failure aborts the whole migration. Run BEFORE the billing Worker of that branch
+(its HQ Screen history view says "run migration 114" until then; screen saves work either way). RLS-BASELINE.json already
+carries the new table and two functions; dump it after running and commit if it differs. RUN on live (verified 22 Oct 2026:
+the table exists with 20 baseline rows, one per screen row at the time). Rollback: in the file.
+(111 is feature/c4-c5-onboarding, 112 feature/support-phone, 113 feature/help-page.)

@@ -143,6 +143,10 @@
   "checks": 20,
   "counted_by": "lines"
  },
+ "tools/hq-tabs-in-chrome.test.py": {
+  "checks": 64,
+  "counted_by": "lines"
+ },
  "tools/livenorm.test.py": {
   "checks": 8,
   "counted_by": "lines"
@@ -173,6 +177,14 @@
  },
  "tools/regulated.test.py": {
   "checks": 23,
+  "counted_by": "lines"
+ },
+ "tools/screen-history-sql.test.py": {
+  "checks": 37,
+  "counted_by": "lines"
+ },
+ "tools/screen-unsaved-in-chrome.test.py": {
+  "checks": 17,
   "counted_by": "lines"
  },
  "tools/support-phone.test.py": {
@@ -209,6 +221,10 @@
  },
  "tools/test-archived-venue-restore.js": {
   "checks": 14,
+  "counted_by": "lines"
+ },
+ "tools/test-audit-search.js": {
+  "checks": 52,
   "counted_by": "lines"
  },
  "tools/test-billing-panels.js": {
@@ -505,6 +521,10 @@
  },
  "tools/test-screen-check-probe.js": {
   "checks": 6,
+  "counted_by": "lines"
+ },
+ "tools/test-screen-history.js": {
+  "checks": 60,
   "counted_by": "lines"
  },
  "tools/test-screen-key-rotates.js": {
