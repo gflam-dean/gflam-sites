@@ -311,6 +311,7 @@
   "trivia-night.test.js",
   "trivia-reveal.test.js",
   "trivia-score.test.js",
+  "trivia-set-delete.test.js",
   "tv-ads-rebuild.test.js",
   "tv-and-phone-in-chrome.test.py",
   "tv-logo.test.js",

@@ -30,6 +30,16 @@ class Worker(object):
             line = self.p.stdout.readline()
         return json.loads(line) if line else {'status': 502, 'body': {'error': 'worker rig died'}}
 
+    def seed(self, table, rows, replace=False):
+        """The test's own hands on the Worker's fake database (worker-stdio.js answers {seed}): rows in
+        before a scene. Never a Worker route: the pages cannot reach it. Same shape as the seed in
+        tools/pickup-in-chrome.test.py, lifted here so the TV scenes can stand up venues of their own."""
+        with self.lock:
+            self.p.stdin.write(json.dumps({'seed': table, 'rows': rows, 'replace': replace}) + '\n')
+            self.p.stdin.flush()
+            line = self.p.stdout.readline()
+        return json.loads(line) if line else None
+
     def close(self):
         try: self.p.stdin.close(); self.p.terminate()
         except Exception: pass
