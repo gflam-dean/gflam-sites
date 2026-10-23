@@ -2365,7 +2365,7 @@
       // sets it up). Its access is not ours to switch off from here, so say so instead of showing
       // four ticks that would be refused.
       if (!m.permissions){
-        permBox.innerHTML = '<p class="note" style="margin:0">This login has full access to the account. Email hello@venueplay.com.au if it needs to be changed.</p>';
+        permBox.innerHTML = '<p class="note" style="margin:0">This login has full access to the account. Email support@venueplay.com.au if it needs to be changed.</p>';
         row.appendChild(permBox); box.appendChild(row); return;
       }
       var permLbl = document.createElement("div");
@@ -2454,7 +2454,7 @@
         showMsg((r.count ? (r.count + " opt-in" + (r.count===1?"":"s") + " downloaded. ") : "No opt-ins to download yet. ")
           + r.held_unverified + (r.held_unverified===1 ? " more is" : " more are")
           + " being held because we could not confirm the phone was in the room at the time."
-          + " Email hello@venueplay.com.au and we will check them for you.", true);
+          + " Email support@venueplay.com.au and we will check them for you.", true);
       } else if (!r.count){ showMsg("No opt-ins to download yet.", true); return; }
       var blob = new Blob([r.csv || ""], { type:"text/csv" });
       var url = URL.createObjectURL(blob);

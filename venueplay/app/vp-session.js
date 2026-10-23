@@ -933,8 +933,8 @@
       // and we will sort it out" reads as a fault and sends them chasing a problem that is not
       // one. Say what it is, and point at the way out.
       : isArchived(v)
-      ? 'This venue is archived, so its games are switched off. Nothing has been lost. Choose another venue to keep playing, or email hello@venueplay.com.au to bring this one back.'
-      : 'Your games are on hold for the moment. Nothing has been lost. Give us a shout at hello@venueplay.com.au and we will sort it out.';
+      ? 'This venue is archived, so its games are switched off. Nothing has been lost. Choose another venue to keep playing, or email support@venueplay.com.au to bring this one back.'
+      : 'Your games are on hold for the moment. Nothing has been lost. Email support@venueplay.com.au and we will sort it out.';
     if (document.body.firstChild) document.body.insertBefore(bar, document.body.firstChild);
     else document.body.appendChild(bar);
   }

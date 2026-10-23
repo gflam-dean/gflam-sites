@@ -44,7 +44,7 @@ contract and no setup fee.
 - How a night runs: https://venueplay.com.au/see-a-night
 - Pricing: https://venueplay.com.au/#offer
 - Contact: https://venueplay.com.au/#contact
-- Phone: 07 5228 3667 (press 1 for sales, 2 if a venue is running a game, 4 for accounts)
+- Support (venues): support@venueplay.com.au; billing: accounts@venueplay.com.au; sales: sales@venueplay.com.au. The support phone is on the help page.
 - Help for venues and players: https://venueplay.com.au/help
 - Help: https://venueplay.com.au/help
 - Terms: https://venueplay.com.au/terms

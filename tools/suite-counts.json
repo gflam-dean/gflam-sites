@@ -176,7 +176,7 @@
   "counted_by": "lines"
  },
  "tools/support-phone.test.py": {
-  "checks": 28,
+  "checks": 29,
   "counted_by": "lines"
  },
  "tools/test-a-player-bills-once-alive.js": {
@@ -316,7 +316,7 @@
   "counted_by": "lines"
  },
  "tools/test-help-desk.js": {
-  "checks": 256,
+  "checks": 267,
   "counted_by": "lines"
  },
  "tools/test-help-triage-truth.js": {

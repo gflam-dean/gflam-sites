@@ -46,7 +46,7 @@ function contact(body, ip) {
   drain(); return { out: out, sent: sentMail };
 }
 var c = contact({ name: 'Sam', email: 'sam@pub.com.au', message: 'Tell me more' });
-check('a real enquiry is sent', c.sent === 1 && c.out.status === 200, c);
+check('a real enquiry is sent: the alert to us and the acknowledgement to them (23 Oct 2026)', c.sent === 2 && c.out.status === 200, c);
 c = contact({ name: 'Sam', email: 'sam@pub.com.au', message: new Array(5002).join('x') });
 check('a 5,000 character message is refused and nothing is sent', c.sent === 0 && c.out.status === 400, c);
 c = contact({ name: new Array(300).join('n'), email: 'sam@pub.com.au', message: 'hi' });
@@ -62,13 +62,13 @@ check('a filled honeypot is told ok and NOTHING is sent', c.sent === 0 && c.out.
 var flood = 0, blocked429 = 0, i;
 for (i = 0; i < 8; i++) {
   var f = contact({ name: 'Sam', email: 'sam' + i + '@pub.com.au', message: 'msg ' + i }, '198.51.100.7');
-  if (f.sent === 1) flood++;
+  if (f.sent === 2) flood++;
   if (f.out && f.out.status === 429) blocked429++;
 }
 check('the sixth message from one network in the hour still sends', flood === 6, flood);
 check('the seventh and eighth are refused with 429, nothing sent for either', blocked429 === 2 && flood === 6, { flood: flood, blocked429: blocked429 });
 var other = contact({ name: 'Pat', email: 'pat@otherpub.com.au', message: 'hi from a different network' }, '192.0.2.44');
-check('a DIFFERENT network is not caught by somebody else\'s flood', other.sent === 1 && other.out.status === 200, other);
+check('a DIFFERENT network is not caught by somebody else\'s flood', other.sent === 2 && other.out.status === 200, other);
 
 print('');
 print('Unreadable permissions are not owner permissions');
