@@ -183,6 +183,7 @@
   "paper cards and sheets bill once, stop at ten, and keep a paper round's answers off every screen",
   "parked questions are not advertised, and a bad count writes nothing (9 checks)",
   "partyplay-api.test.js",
+  "partyplay-resend-in-chrome.test.py",
   "partyplay/ holds nothing internal",
   "permissions are read per account, most restrictive wins (12 checks)",
   "phone-reconnect.test.js",
