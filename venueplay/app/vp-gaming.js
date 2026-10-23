@@ -459,7 +459,7 @@
     if (opts.paidEntryEnabled === false) {
       out.ok = false; out.hardBlock = true;
       out.headline = 'Paid entry is switched off for this venue.';
-      out.warnings.push('We turn paid entry on once we have recorded whether you are a club or a pub, because that is what the rules turn on. Email hello@venueplay.com.au and we will sort it.');
+      out.warnings.push('We turn paid entry on once we have recorded whether you are a club or a pub, because that is what the rules turn on. Email support@venueplay.com.au and we will sort it.');
       out.points.push('A free-entry game is open to you right now: the button below starts tonight as free entry, and the rules for a free game are what is recorded.');
       return out;
     }

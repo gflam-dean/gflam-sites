@@ -1,13 +1,15 @@
 <!--
   VenuePlay transactional email: WELCOME / CONFIRMATION
   Sent once, right after a venue signs up (Stripe checkout.session.completed).
+  Trimmed 23 Oct 2026 (email audit): every setup step and every billing fact kept, the plan
+  stated once, below the steps; ends on "If you need any help, let us know" and the support line.
   Merge fields (replaced by the Worker before sending):
     {{host_console_url}}  link to the app host console sign-in
     {{tv_url}}            link to open the venue TV screen (shows the join code)
     {{player_count}}      seats they signed up for, e.g. "80"
     {{monthly_total}}     e.g. "$192.00"
     {{first_charge_date}} e.g. "24 September 2026"
-    {{support_email}}     e.g. "hello@venueplay.com.au"
+    {{support_email}}     e.g. "support@venueplay.com.au"
     {{support_phone}}     e.g. "07 5228 3667" (filled by the Worker, VP_SUPPORT_PHONE)
     {{support_tel}}       e.g. "+61752283667" (the tel: link)
     {{nobingo_places}}    "South Australia" or "the Northern Territory": only inside the nobingo
@@ -28,7 +30,7 @@
       <!-- hero -->
       <tr><td style="padding:36px 32px 8px">
         <h1 style="margin:0;font-size:26px;line-height:1.25;color:#12101a;font-weight:800">Welcome to VenuePlay.</h1>
-        <p style="margin:16px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your account is live. Here is everything you need to get your first game on the screen.</p>
+        <p style="margin:16px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your account is live. Here is how to get your first game on the screen.</p>
       </td></tr>
 
       <!-- login box -->
@@ -43,25 +45,9 @@
 
       <!-- free until -->
       <tr><td style="padding:22px 32px 0">
-        <p style="margin:0;font-size:16px;line-height:1.6;color:#3a3a44">{{free_intro}}{{launch_phrase}}. You are <strong>free until {{first_charge_date}}</strong>, your first payment: {{player_count}} players at {{player_rate}} each, {{payment_total}}. Nothing is charged before then, and you can cancel anytime before it.</p>
+        <p style="margin:0;font-size:16px;line-height:1.6;color:#3a3a44">{{free_intro}}, so you are <strong>free until {{first_charge_date}}</strong>. Your first payment then is {{player_count}} players at {{player_rate}} each, {{payment_total}}. Nothing is charged before then, and you can cancel any time before it.</p>
       </td></tr>
 
-
-      <!-- what you agreed to, in plain terms -->
-      <tr><td style="padding:20px 32px 0">
-        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #e6e6ec;border-radius:12px;background:#fbfbfd">
-          <tr><td style="padding:16px 18px">
-            <p style="margin:0 0 10px;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#8a8a95">Your plan, in plain terms</p>
-            <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44">You pay per player, on the maximum players per session you set. Prices include GST.</p>
-            <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44"><strong>If a night runs over your maximum</strong>, each extra player that night is $2. Your host sees what it costs and has to tap OK on the screen before the game starts, so nothing is ever charged without someone at your venue agreeing to it.</p>
-            <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44"><strong>If you run over three times in a row</strong>, that is your crowd rather than a big night. The third one is $1 per extra player and we lift your maximum to the smallest of those three crowds. On monthly that starts from your next invoice; on annual the extra players are charged pro rata to your renewal, since your year is already paid for. It costs less than paying per head every week.</p>
-            <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44"><strong>Changing your maximum</strong> is self-service in your account. Adding applies straight away and lands on your next bill. On monthly, dropping takes effect at your next renewal, so you keep what you have paid for. On annual, added players are pro rata to your renewal, and players you drop are released straight away with the rest of the year held as a credit rather than lost.</p>
-            <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44"><strong>On an annual plan</strong>, if you drop your maximum part way through the year the lower maximum starts that day and we do not refund it, but the value of the players you release for the rest of the year is held as a credit and comes off your next renewal on its own. There is nothing to claim and nothing to spend. Worth knowing: the credit is the part of the year you have not used, so the sooner you drop players you are not getting, the more of it there is. Your billing page shows what you are holding.</p>
-            <p style="margin:0;font-size:14.5px;line-height:1.6;color:#3a3a44">No lock-in. Cancel any time before your first payment and you are never charged.</p>
-            <p style="margin:12px 0 0;font-size:13px;line-height:1.6;color:#6a6a75">This is a summary for reading over a coffee. The full <a href="{{terms_url}}" style="color:#C70F69;font-weight:600">Terms of Service</a> and <a href="{{privacy_url}}" style="color:#C70F69;font-weight:600">Privacy Policy</a> are the agreement, and they are worth a look before your first payment.</p>
-          </td></tr>
-        </table>
-      </td></tr>
 <!--IF:nobingo-->
       <!-- SA and NT pubs: number bingo is off by law (Dean, 22 Oct 2026; migration 116) -->
       <tr><td style="padding:22px 32px 0">
@@ -98,36 +84,39 @@
       <tr><td align="center" style="padding:30px 32px 4px">
         <a href="{{host_console_url}}" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:15px 34px;border-radius:10px">Open your host console</a>
       </td></tr>
+
       <!-- Your screens & sign-in -->
       <tr><td style="padding:16px 32px 0">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf7fb;border:1px solid #eee;border-radius:12px">
           <tr><td style="padding:20px 22px">
             <p style="margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#FF1F8E">Your screens</p>
-            <p style="margin:10px 0 0;font-size:15px;line-height:1.6;color:#3a3a44"><strong>On the TV:</strong> open <a href="{{tv_url}}" style="color:#12101a;font-weight:700;text-decoration:none">{{tv_url}}</a> on your venue screen and save it as the TV's home page. Always use this full link: it is what tells the screen which venue it is.</p>
+            <p style="margin:10px 0 0;font-size:15px;line-height:1.6;color:#3a3a44"><strong>On the TV:</strong> open <a href="{{tv_url}}" style="color:#12101a;font-weight:700;text-decoration:none;word-break:break-all">{{tv_url}}</a> on your venue screen and save it as the TV's home page. Always use this full link: it is what tells the screen which venue it is.</p>
             <p style="margin:12px 0 0;font-size:15px;line-height:1.6;color:#3a3a44"><strong>To sign in:</strong> you, your managers and your hosts all sign in at <a href="{{host_console_url}}" style="color:#12101a;font-weight:700;text-decoration:none">venueplay.com.au/app</a> with a text code to your mobile, no app to install.</p>
           </td></tr>
         </table>
       </td></tr>
 
-      <!-- need a hand -->
+      <!-- what you agreed to, in plain terms: once, after the setup -->
       <tr><td style="padding:22px 32px 0">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#12101a;border-radius:14px">
-          <tr><td style="padding:26px 26px 28px">
-            <p style="margin:0;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#FF1F8E">We are on the other end of this</p>
-            <p style="margin:10px 0 0;font-size:22px;line-height:1.25;font-weight:800;color:#ffffff">Need a hand setting up?</p>
-            <p style="margin:12px 0 0;font-size:15.5px;line-height:1.65;color:#c9c7d4">Reach out. Reply to this email or write to <a href="mailto:{{support_email}}" style="color:#ffffff;font-weight:700;text-decoration:none">{{support_email}}</a> and a real person answers, usually the same day. A TV that will not cooperate, a host who wants a walk through, nerves about your first night: we would rather sort it with you in five minutes than have you wrestle it alone.</p>
-            <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:20px"><tr>
-              <td><a href="mailto:{{support_email}}?subject=Help%20setting%20up%20VenuePlay" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:13px 28px;border-radius:9px">Reach out to us</a></td>
-            </tr></table>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #e6e6ec;border-radius:12px;background:#fbfbfd">
+          <tr><td style="padding:16px 18px">
+            <p style="margin:0 0 10px;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#8a8a95">Your plan, in plain terms</p>
+            <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44">You pay per player, on the maximum players per session you set. Prices include GST.</p>
+            <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44"><strong>If a night runs over your maximum</strong>, each extra player that night is $2. Your host sees what it costs and has to tap OK on the screen before the game starts, so nothing is ever charged without someone at your venue agreeing to it.</p>
+            <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44"><strong>If you run over three times in a row</strong>, that is your crowd rather than a big night. The third one is $1 per extra player and we lift your maximum to the smallest of those three crowds. On monthly that starts from your next invoice; on annual the extra players are charged pro rata to your renewal, since your year is already paid for. It costs less than paying per head every week.</p>
+            <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44"><strong>Changing your maximum</strong> is self-service in your account. Adding applies straight away and lands on your next bill. On monthly, dropping takes effect at your next renewal, so you keep what you have paid for.</p>
+            <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44"><strong>On an annual plan</strong>, added players are pro rata to your renewal. If you drop your maximum part way through the year the lower maximum starts that day and we do not refund it, but the value of the players you release for the rest of the year is held as a credit and comes off your next renewal on its own. There is nothing to claim and nothing to spend. The credit is the part of the year you have not used, so the sooner you drop players you are not getting, the more of it there is. Your billing page shows what you are holding.</p>
+            <p style="margin:0;font-size:14.5px;line-height:1.6;color:#3a3a44">No lock-in. Cancel any time before your first payment and you are never charged.</p>
+            <p style="margin:12px 0 0;font-size:13px;line-height:1.6;color:#6a6a75">This is a summary. The full <a href="{{terms_url}}" style="color:#C70F69;font-weight:600">Terms of Service</a> and <a href="{{privacy_url}}" style="color:#C70F69;font-weight:600">Privacy Policy</a> are the agreement, and they are worth a look before your first payment.</p>
           </td></tr>
         </table>
       </td></tr>
 
-      <!-- footer -->
-      <tr><td style="padding:30px 32px 34px">
-        <p style="margin:0;font-size:14px;line-height:1.6;color:#8a8a95">Any questions, just reply to this email or reach us at <a href="mailto:{{support_email}}" style="color:#FF1F8E;text-decoration:none">{{support_email}}</a>. If a game is on and you need us right now, call <a href="tel:{{support_tel}}" style="color:#FF1F8E;text-decoration:none;font-weight:700">{{support_phone}}</a> and press 2. We are glad to have you on board.</p>
+      <!-- footer: the one ask, then the support line -->
+      <tr><td style="padding:28px 32px 34px">
+        <p style="margin:0;font-size:15px;line-height:1.6;color:#3a3a44">If you need any help, let us know. Reply to this email or write to <a href="mailto:{{support_email}}" style="color:#C70F69;font-weight:600;text-decoration:none">{{support_email}}</a> and a person answers, usually the same day. If a game is on and you need us right now, call <a href="tel:{{support_tel}}" style="color:#FF1F8E;text-decoration:none;font-weight:700">{{support_phone}}</a> and press 2.</p>
         <p style="margin:16px 0 0;font-size:12px;color:#b3b3bb"><a href="https://venueplay.com.au" style="color:#b3b3bb;text-decoration:none">venueplay.com.au</a></p>
-        <p style="margin:14px 0 0;font-size:11px;line-height:1.7;color:#b3b3bb">VenuePlay, ABN 35 679 383 049. <a href="https://venueplay.com.au/privacy.html" style="color:#b3b3bb;text-decoration:underline">Privacy</a> &middot; <a href="https://venueplay.com.au/terms.html" style="color:#b3b3bb;text-decoration:underline">Terms</a> &middot; <a href="{{unsubscribe_url}}" style="color:#b3b3bb;text-decoration:underline">Unsubscribe from product emails</a></p>
+        <p style="margin:14px 0 0;font-size:11px;line-height:1.7;color:#b3b3bb">VenuePlay, Gflam Group Pty Ltd, ABN 35 679 383 049. <a href="https://venueplay.com.au/privacy" style="color:#b3b3bb;text-decoration:underline">Privacy</a> &middot; <a href="https://venueplay.com.au/terms" style="color:#b3b3bb;text-decoration:underline">Terms</a> &middot; <a href="{{unsubscribe_url}}" style="color:#b3b3bb;text-decoration:underline">Unsubscribe from product emails</a></p>
       </td></tr>
     </table>
   </td></tr>

@@ -442,8 +442,10 @@ def help_page_checks(b, VP):
         check(tag + ' sales: and it never asks the player question "Where were you playing?"',
               t.js('!document.getElementById("vphVenue-sales") && !/Where were you playing/.test(document.getElementById("sales").textContent)') is True)
         sr = t.js('(function(){var a=document.querySelector("#sales .reach a[href^=\'tel:\']");if(!a)return null;var r=a.getBoundingClientRect();return {href:a.getAttribute("href"),text:a.textContent,shown:r.width>0&&r.height>0,one:document.querySelectorAll("#sales a[href^=\'tel:\']").length===1,line:a.parentNode.textContent};})()')
-        check(tag + ' sales: under the form, "or call 07 5228 3667", tappable, once (as the home page contact form says it)',
-              bool(sr) and sr['href'] == 'tel:+61752283667' and sr['text'] == '07 5228 3667' and sr['shown'] and sr['one'] and sr['line'] == 'Or email hello@venueplay.com.au, or call 07 5228 3667.', sr)
+        # 23 Oct 2026: the sales form names the sales mailbox, and the public pages no longer carry the number, so
+        # this is the one public place a prospective venue is given it.
+        check(tag + ' sales: under the form, "or call 07 5228 3667", tappable, once, beside sales@venueplay.com.au',
+              bool(sr) and sr['href'] == 'tel:+61752283667' and sr['text'] == '07 5228 3667' and sr['shown'] and sr['one'] and sr['line'] == 'Or email sales@venueplay.com.au, or call 07 5228 3667.', sr)
         t.shot('24-help-%s-sales' % tag)
         t.js('document.getElementById("vphName-sales").value="Lee";document.getElementById("vphEmail-sales").value="lee@pub.com.au";document.getElementById("vphMsg-sales").value="Pricing for two venues?";document.querySelector("#sales .vph-go").click()')
         t.until('!!document.querySelector("#sales .vph-done")', 8)

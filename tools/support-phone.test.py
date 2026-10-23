@@ -13,9 +13,10 @@ copies one answer: it reads the Worker's two strings and then
   - every phone number and every tel: link in every file we serve, every migration and the Worker
     must be THAT number (a typo, an old number or a second number anywhere is red)
   - the help widget's own copy is the same two strings
-  - the places a venue looks all have it: the sales pages (footer, contact, FAQ), terms, privacy,
-    llms.txt, the structured data, the venue FAQ, and the four email templates (as the tags the
-    Worker fills)
+  - the places a venue looks for HELP have it: the /help page (venue part and sales form), the
+    console's Help panel, the venue FAQ, and the four email templates (as the tags the Worker
+    fills). Since 23 Oct 2026 (Dean) the PUBLIC pages do not: the sales pages, terms, privacy,
+    llms.txt and the structured data point at the help page instead
   - the places a player looks never do: the bingo, musical bingo and trivia phones, the TV, the
     player FAQ, and all of PartyPlay bar the one shared widget file (where it is gated to
     VenuePlay venues, which help-desk-pages.test.py proves in a browser)
@@ -96,9 +97,8 @@ for rel in SERVED + OTHER:
             wrong.append('%s: %s' % (rel, h))
     if hits:
         where_found.append(rel)
-SEEN = ['venueplay/index.html', 'venueplay/nsw.html', 'venueplay/help.html', 'venueplay/terms.html', 'venueplay/privacy.html', 'venueplay/llms.txt',
-        'venueplay/data/help-faq.json', 'venueplay/app/vp-help.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
-        'venueplay-backend/supabase/venueplay-112-help-faq-support-phone.sql']
+SEEN = ['venueplay/help.html', 'venueplay/data/help-faq.json', 'venueplay/app/vp-help.js',
+        'venueplay-backend/worker/venueplay-api-FULL.js', 'venueplay-backend/supabase/venueplay-112-help-faq-support-phone.sql']
 check('the sweep below is not blind: it found the number in each place it is meant to be', all(x in where_found for x in SEEN),
       [x for x in SEEN if x not in where_found])
 check('every phone number and tel: link we serve, send or store is exactly "%s" / tel:%s' % (SHOW, TEL), not wrong, wrong[:6])
@@ -111,26 +111,34 @@ check('the help widget holds the same two strings, for VenuePlay only, and hands
       bool(mw) and mw.group(1) == SHOW and mw.group(2) == TEL and bool(gate) and no_comments(H, 'js').count('SUPPORT_PHONE') == 2, mw and mw.groups())
 check('the PartyPlay copy of the widget is the same file, so it is gated the same way', read('partyplay/lib/vp-help.js') == H)
 
-# ---------------------------------------------------------------- where a venue looks
+# ---------------------------------------------------------------- where a venue looks, and where the public does not
+# 23 Oct 2026, Dean: phone numbers come OFF every public page. The number lives in the help sections
+# (the /help page's venue part and sales form, the console's Help panel, the venue FAQ) and in the
+# emails a venue gets. The sales pages, terms, privacy, llms.txt and the structured data point at
+# the help page instead. Until this date the checks below asserted the opposite.
 def has_link(s):
     return ('<a href="tel:%s">%s</a>' % (TEL, SHOW)) in s or re.search(r'<a [^>]*href="tel:%s"[^>]*>%s</a>' % (re.escape(TEL), re.escape(SHOW)), s) is not None
+
+
+def no_phone(s):
+    return SHOW not in s and DIGITS not in s and 'tel:' not in s
 
 
 for page in ('venueplay/index.html', 'venueplay/nsw.html'):
     s = no_comments(read(page), 'html')
     foot = s[s.find('<footer'):s.find('</footer>')]
-    check(page + ': the footer has the number, tappable, under the email', has_link(foot) and foot.find('hello@venueplay.com.au') < foot.find('tel:' + TEL), foot[-300:])
-    form = re.search(r'<p class="form-fine">Or email us directly at hello@venueplay\.com\.au, or call (<a [^>]*>[^<]*</a>)</p>', s)
-    check(page + ': the contact form says "or call 07 5228 3667", tappable', bool(form) and has_link(form.group(1)), form and form.group(0))
+    check(page + ': the footer has the email and no phone number', bool(foot) and 'hello@venueplay.com.au' in foot and no_phone(foot), foot[-300:])
+    form = re.search(r'<p class="form-fine">Or email us directly at <a href="mailto:sales@venueplay\.com\.au">sales@venueplay\.com\.au</a></p>', s)
+    check(page + ': the contact form offers sales@venueplay.com.au and no phone number', bool(form), s[s.find('<p class="form-fine">'):s.find('<p class="form-fine">') + 200])
     faq = re.search(r'<summary>What support do I get\?.*?</details>', s, re.S)
-    check(page + ': the "What support do I get?" answer gives the number and says press 2 on a game night',
-          bool(faq) and has_link(faq.group(0)) and 'press 2' in faq.group(0), faq and faq.group(0)[-260:])
+    check(page + ': the "What support do I get?" answer sends venues to the Help page for the number, says press 2, and carries no number itself',
+          bool(faq) and 'href="/help"' in faq.group(0) and 'press 2' in faq.group(0) and no_phone(faq.group(0)), faq and faq.group(0)[-260:])
 for page in ('venueplay/terms.html', 'venueplay/privacy.html'):
     s = no_comments(read(page), 'html')
     block = re.search(r'Contact us</h2>\s*<p>(.*?)</p>', s, re.S)
-    check(page + ': "Contact us" lists Phone: 07 5228 3667, tappable, beside the email', bool(block) and 'Phone: ' in block.group(1) and has_link(block.group(1)), block and block.group(1))
+    check(page + ': "Contact us" lists the email and the ABN, and no phone', bool(block) and 'Email: ' in block.group(1) and 'ABN' in block.group(1) and 'Phone' not in block.group(1) and no_phone(block.group(1)), block and block.group(1))
     foot = s[s.find('<footer'):s.find('</footer>')]
-    check(page + ': and so does the footer', has_link(foot))
+    check(page + ': and nor does the footer', bool(foot) and no_phone(foot))
 
 s = read('venueplay/index.html')
 ld = re.search(r'<script type="application/ld\+json">(.*?)</script>', s, re.S)
@@ -140,9 +148,14 @@ except Exception as e:
     data = {'error': str(e)}
 pub = data.get('publisher') or {}
 cp = pub.get('contactPoint') or {}
-check('the home page structured data still parses, and names VenuePlay\'s support line as a ContactPoint',
-      pub.get('@type') == 'Organization' and cp.get('@type') == 'ContactPoint' and cp.get('telephone') == TEL
-      and cp.get('contactType') == 'customer support' and pub.get('telephone') == TEL, data)
+check('the home page structured data still parses, names a support ContactPoint by email, and carries no telephone',
+      pub.get('@type') == 'Organization' and cp.get('@type') == 'ContactPoint' and cp.get('contactType') == 'customer support'
+      and cp.get('email') == 'support@venueplay.com.au' and 'telephone' not in cp and 'telephone' not in pub, data)
+
+PUBLIC = ['venueplay/index.html', 'venueplay/nsw.html', 'venueplay/terms.html', 'venueplay/privacy.html', 'venueplay/see-a-night.html',
+          'venueplay/404.html', 'venueplay/llms.txt', 'venueplay/sitemap.xml', 'venueplay/add-card.html', 'venueplay/unsubscribe.html']
+bad = [p for p in PUBLIC if not no_phone(no_comments(read(p), 'html' if p.endswith('.html') else ''))]
+check('no public VenuePlay page carries the number or a tel: link (the sales pages, terms, privacy, llms.txt, 404, see-a-night, add-card, unsubscribe)', not bad, bad)
 
 # The public help page (21 Oct 2026). The venue part's call line is the widget's (help-desk-pages.test.py
 # runs it); the page's own copy is under the sales form. Its player part and its footer never carry it.
@@ -151,13 +164,14 @@ def part(pid):
     m = re.search(r'<div class="panel" id="%s".*?(?=<div class="panel" id=|</section>)' % pid, s, re.S)
     return m.group(0) if m else ''
 sales = part('sales')
-check('/help: under the sales form, "or call 07 5228 3667", tappable', has_link(sales) and 'or call <a' in sales, sales[-260:])
+check('/help: under the sales form, "or call 07 5228 3667", tappable, beside sales@venueplay.com.au', has_link(sales) and 'or call <a' in sales and 'mailto:sales@venueplay.com.au' in sales, sales[-260:])
 pl, foot = part('player'), s[s.find('<footer'):s.find('</footer>')]
 check('/help: the player part and the footer have no phone number and no tel: link',
-      bool(pl) and bool(foot) and not any(x in y for x in (SHOW, DIGITS, 'tel:') for y in (pl, foot)), [pl[-200:], foot[-200:]])
+      bool(pl) and bool(foot) and no_phone(pl) and no_phone(foot), [pl[-200:], foot[-200:]])
 
 llms = read('venueplay/llms.txt')
-check('llms.txt (what an assistant reads about us) gives the number and the menu', ('Phone: ' + SHOW) in llms and 'press 1 for sales' in llms)
+check('llms.txt (what an assistant reads about us) names the three mailboxes and sends the phone to the help page',
+      'support@venueplay.com.au' in llms and 'accounts@venueplay.com.au' in llms and 'sales@venueplay.com.au' in llms and 'help page' in llms and no_phone(llms))
 
 faq = json.load(open(os.path.join(ROOT, 'venueplay', 'data', 'help-faq.json'), encoding='utf-8'))
 contact = [it for it in faq['venue']['items'] if it['q'] == 'Contacting us']

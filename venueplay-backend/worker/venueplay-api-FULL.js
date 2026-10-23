@@ -977,14 +977,18 @@ async function handleContact(request, env, json) {
      report. Best effort: before the migration is run, or on any database blip, the enquiry still
      goes out by email exactly as it always did. The email below is the staff alert, so the help
      desk sends no second one; it only pushes to the staff phones that asked. */
-  let ticketNo = null;
+  let ticketNo = null, ticket = null;
   try {
     const t = await helpInsertTicket(env, { brand: 'venueplay', category: 'sales', channel: 'web_form',
       title: 'Website enquiry: ' + helpLine(message, 80), message: message, contact_name: name,
       contact_email: email, contact_phone: phone || null });
     ticketNo = t && t.ticket_no;
+    ticket = t || null;
     if (t) await helpPushNew(env, t).catch(() => null);
   } catch (e) { ticketNo = null; }
+  /* THE VISITOR HEARS BACK STRAIGHT AWAY (Dean, 23 Oct 2026), ticket or no ticket: with the number
+     when there is one, without it when the desk could not take the row. Never the message body. */
+  await helpAcknowledge(env, Object.assign({ brand: 'venueplay', category: 'sales', channel: 'web_form', contact_name: name, contact_email: email }, ticket || {}));
 
   // This email is the enquiry's staff alert, so it shares the help desk's daily cap. Once the
   // enquiry is safely a ticket, a capped day skips the email; without a ticket it always goes.
@@ -1003,7 +1007,7 @@ async function handleContact(request, env, json) {
     headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       from: 'VenuePlay <hello@send.venueplay.com.au>',   // sending domain must be verified in Resend
-      to: ['dean@venueplay.com.au', 'hello@venueplay.com.au'],
+      to: ['dean@venueplay.com.au', 'sales@venueplay.com.au'],   // a sales enquiry lands in the sales mailbox (23 Oct 2026)
       reply_to: email,
       subject: vpaAlertSubject('enquiry', name + (ticketNo ? ' ' + helpTag(ticketNo) : '')),
       html: html,
@@ -4397,7 +4401,10 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
        which is no worse than before. */
     const tvFor = (v) => site + '/tv' + (v && v.slug ? ('?' + encodeURIComponent(v.slug)) : '');
     const tvUrl = tvFor(venues && venues[0]);
-    const support = 'hello@venueplay.com.au';
+    /* HELP IS support@ (Dean, 23 Oct 2026: the support, accounts and sales mailboxes exist). The
+       welcome's one ask is "if you need any help, let us know", so its address and its reply-to are
+       the help desk's, not the general inbox. Money emails name accounts@; the enquiry form, sales@. */
+    const support = 'support@venueplay.com.au';
 
     const res = await fetch(site + '/emails/' + (isGroup ? 'welcome-group.html' : 'welcome.html'));
     if (!res.ok) return { sent: false, why: 'not sent: the email template did not load (' + res.status + ')', to: email };
@@ -4467,7 +4474,7 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
       headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from: 'VenuePlay <hello@send.venueplay.com.au>',
-        reply_to: 'hello@venueplay.com.au', // replies reach the real monitored inbox
+        reply_to: support, // a reply to the welcome is a setup question: the help desk's inbox
         to: [email],
         subject: isGroup ? 'Your venues are set up. Welcome to VenuePlay' : 'You are in. Welcome to VenuePlay',
         html: vpaEmailDocument(html, 'Welcome to VenuePlay'),
@@ -4730,14 +4737,16 @@ function vpaAlertSubject(kind, rest) {
 
 /* One place that actually posts to Resend, so the three emails below cannot
    drift on the from address or the reply-to. Returns true if it went. */
-async function vpaSendEmail(env, to, subject, html) {
+/* replyTo: where a reply lands. hello@ unless the sender says otherwise; the HQ welcome and the
+   onboarding guide say support@, because a reply to either is a setup question. */
+async function vpaSendEmail(env, to, subject, html, replyTo) {
   if (!env.RESEND_API_KEY || !to) return false;
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       from: 'VenuePlay <hello@send.venueplay.com.au>',
-      reply_to: 'hello@venueplay.com.au',
+      reply_to: replyTo || 'hello@venueplay.com.au',
       to: [to],
       subject: subject,
       html: html,
@@ -4801,13 +4810,13 @@ async function vpaFireHqWelcome(env, o) {
       .replace(/{{terms_url}}/g, site + '/terms')
       .replace(/{{privacy_url}}/g, site + '/privacy')
       .replace(/\{\{unsubscribe_url\}\}/g, site + '/unsubscribe?e=' + encodeURIComponent(email || ''))
-      .replace(/{{support_email}}/g, 'hello@venueplay.com.au');
+      .replace(/{{support_email}}/g, 'support@venueplay.com.au');
     html = vpaFillSupport(html);
 
     return await vpaSendEmail(env, email,
       comp ? 'Your VenuePlay account is ready, and it is on us'
            : 'Your VenuePlay account is ready. One thing left.',
-      vpaEmailDocument(html, 'Your VenuePlay account is ready'));
+      vpaEmailDocument(html, 'Your VenuePlay account is ready'), 'support@venueplay.com.au');
   } catch (_) { return false; }
 }
 
@@ -4830,12 +4839,12 @@ async function vpbFireVenueOnboarding(env, o) {
       .replace(/{{host_console_url}}/g, site + '/app')
       .replace(/{{tv_url}}/g, site + '/tv?' + encodeURIComponent(o.slug || ''))
       .replace(/\{\{unsubscribe_url\}\}/g, site + '/unsubscribe?e=' + encodeURIComponent(email || ''))
-      .replace(/{{support_email}}/g, 'hello@venueplay.com.au');
+      .replace(/{{support_email}}/g, 'support@venueplay.com.au');
     html = vpaFillSupport(html);
 
     return await vpaSendEmail(env, email,
       'Setup guide for ' + (o.venueName || 'your new venue') + ' (forward this on)',
-      vpaEmailDocument(html, 'Setup guide for ' + (o.venueName || 'your new venue')));
+      vpaEmailDocument(html, 'Setup guide for ' + (o.venueName || 'your new venue')), 'support@venueplay.com.au');
   } catch (_) { return false; }
 }
 
@@ -5031,15 +5040,19 @@ function vpaEmailDocument(html, title) {
     + '<title>' + vpaEsc(title || 'VenuePlay') + '</title></head>'
     + '<body style="margin:0;padding:0;background:#f4f4f7;-webkit-text-size-adjust:100%">' + s + '</body></html>';
 }
-function vpaVenueEmailCard(preheader, inner, title) {
-  const site = 'https://venueplay.com.au';
+/* brand: 'partyplay' puts the PartyPlay logo on the dark band (the help desk acknowledges both
+   brands from here); anything else is VenuePlay. */
+function vpaVenueEmailCard(preheader, inner, title, brand) {
+  const pp = brand === 'partyplay';
+  const site = pp ? 'https://partyplay.com.au' : 'https://venueplay.com.au';
+  const logo = pp ? site + '/logos/partyplay-email-logo.png' : site + '/logos/venueplay_primary_rebuilt.png';
   return vpaEmailDocument(
       '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;margin:0;padding:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">'
     + '<tr><td align="center" style="padding:24px 12px">'
     + (preheader ? '<div style="display:none;max-height:0;overflow:hidden;opacity:0">' + vpaEsc(preheader) + '</div>' : '')
     + '<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden">'
     + '<tr><td style="background:#12101a;padding:20px 32px">'
-    + '<img src="' + site + '/logos/venueplay_primary_rebuilt.png" width="168" alt="VenuePlay" style="display:block;border:0;height:auto"></td></tr>'
+    + '<img src="' + logo + '" width="168" alt="' + (pp ? 'PartyPlay' : 'VenuePlay') + '" style="display:block;border:0;height:auto"></td></tr>'
     + '<tr><td style="padding:28px 28px 30px">' + String(inner || '') + '</td></tr>'
     + '</table></td></tr></table>', title);
 }
@@ -11067,6 +11080,7 @@ async function helpPublicTicket(request, env, json) {
   }
   await helpNoteTicketFromIssue(env, issue);
   await helpAnnounce(env, t, await helpVenueName(env, t.venue_id));
+  await helpAcknowledge(env, t);
   return json({ ok: true, ticket_no: t.ticket_no });
 }
 
@@ -11153,6 +11167,7 @@ async function helpVenueTicket(request, env, json) {
       body: 'Urgent because a ' + (liveNow[0].status === 'lobby' ? 'lobby' : 'game') + ' was open at ' + who.venue.name + ' when this was sent.' }, false); } catch (e) {}
   }
   await helpAnnounce(env, t, who.venue.name);
+  await helpAcknowledge(env, t);
   return json({ ok: true, ticket_no: t.ticket_no });
 }
 
@@ -11305,6 +11320,81 @@ function helpReplyHtml(ticket, body, replyTo) {
     '</p>' +
     '<p style="margin-top:22px;font-size:12px;color:#666">Your request number is #' + ticket.ticket_no +
     '. Reply to this email to add to it.<br>' + brand + ' (' + site + ') is made by Gflam Group Pty Ltd on the Gold Coast. ABN 35 679 383 049.</p></div>';
+}
+/* THE ACKNOWLEDGEMENT (Dean, 23 Oct 2026: "auto-acknowledgement for every enquiry and ticket from
+   support@"). Until now nobody who wrote in heard anything until a person replied: the form said
+   "sent" and the inbox stayed empty. One short card, once per ticket, the moment the ticket exists,
+   from the brand's support address: thanks, we have it, here is the number, here is what happens
+   next, reply to this email to add anything.
+
+   What it never does:
+     - send twice. A note on the ticket records it, and the note is checked before sending.
+     - carry the message back. Anyone can type any address into a public form, so an email that
+       quoted the message would be a free way to send words of your choosing to anyone. The number,
+       the kind, the next step: nothing the sender wrote.
+     - go to a phone call or a ticket HQ typed in. The person is on the phone; and an address HQ
+       typed was never given to us in writing (helpAdminReply has the same rule).
+     - reply to an automatic sender. Email-in tickets have already been through helpIgnoreEmail,
+       and ours carries Auto-Submitted and X-VP-Help so neither side loops.
+     - come from support@venueplay.com.au itself. Resend sends only for the send. subdomains (see
+       helpFromFor), so the From is support@send.<brand>.com.au and the Reply-To is the real
+       support@ mailbox. The subject carries the ticket's secret, so the reply threads back on.
+     - become a flood. Its own daily cap, beside the staff alerts' one, on the same Resend account
+       as every invoice; past it the ticket still exists and HQ still sees it. */
+function helpAckHtml(t) {
+  const pp = t.brand === 'partyplay';
+  const brand = pp ? 'PartyPlay' : 'VenuePlay';
+  const site = pp ? 'partyplay.com.au' : 'venueplay.com.au';
+  const support = 'support@' + site;
+  const no = t.ticket_no ? '#' + t.ticket_no : '';
+  const first = helpLine(t.contact_name, 60).split(' ')[0];
+  const li = (s) => '<tr><td valign="top" style="width:18px;font-size:15px;line-height:1.6;color:#FF1F8E;font-weight:800">&middot;</td>'
+                  + '<td style="font-size:15px;line-height:1.6;color:#3a3a44;padding-bottom:6px">' + s + '</td></tr>';
+  const inner =
+      '<h1 style="margin:0;font-size:24px;line-height:1.25;color:#12101a;font-weight:800">Thanks' + (first ? ' ' + helpHtml(first) : '') + ', we have got it.</h1>'
+    + '<p style="margin:14px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44">Your message has reached the ' + brand + ' help desk'
+    + (no ? ' and its number is <strong>' + no + '</strong>' : '') + '.</p>'
+    + '<p style="margin:22px 0 8px;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#8a8a95">What happens next</p>'
+    + '<table role="presentation" cellpadding="0" cellspacing="0" width="100%">'
+    + li('A person reads it and replies by email, usually the same day.')
+    /* The phone line goes to a venue or a prospective venue only, never a player and never
+       PartyPlay: the same rule as helpReplyHtml. */
+    + (!pp && ['venue_support', 'accounts', 'sales'].indexOf(t.category) !== -1
+        ? li('If a game is on right now and something is going wrong, call <a href="tel:' + VP_SUPPORT_TEL + '" style="color:#C70F69;font-weight:700;text-decoration:none">' + VP_SUPPORT_PHONE + '</a> and press 2.') : '')
+    + li('Anything to add? Reply to this email and it goes straight onto your request.')
+    + '</table>'
+    + '<p style="margin:22px 0 0;font-size:15px;line-height:1.6;color:#3a3a44">' + brand + ' Support<br><a href="mailto:' + support + '" style="color:#C70F69;text-decoration:none">' + support + '</a></p>'
+    + '<p style="margin:22px 0 0;font-size:12px;line-height:1.6;color:#8a8a95">' + brand + ' (' + site + ') is made by Gflam Group Pty Ltd on the Gold Coast. ABN ' + VP_ABN + '.</p>';
+  return vpaVenueEmailCard('We have your message' + (no ? ', ' + no : '') + '. A person replies by email.', inner, 'Thanks, we have got it', t.brand);
+}
+/* The number, then the ticket's secret so a reply threads back onto it (helpTicketFromEmail). */
+function helpAckSubject(t) {
+  return (t.ticket_no ? 'We have your message, #' + t.ticket_no : 'We have your message') + (t.reply_token ? ' ' + helpReplyTag(t) : '');
+}
+async function helpAcknowledge(env, t) {
+  try {
+    if (!t || !env.RESEND_API_KEY) return false;
+    const to = String(t.contact_email || '').trim().toLowerCase();
+    if (!to || !HELP_EMAIL_RE.test(to)) return false;
+    if (t.channel === 'phone' || t.channel === 'manual' || t.contact_typed) return false;
+    if (t.id) {
+      const had = await vpaSelect(env, 'vp_help_ticket_notes', 'ticket_id=eq.' + encodeURIComponent(t.id) +
+        '&kind=eq.change&body=like.' + encodeURIComponent('Acknowledgement sent*') + '&select=id&limit=1');
+      if (had && had.length) return false;
+    }
+    const cap = Math.max(1, parseInt(env.HELP_ACK_DAILY_CAP || env.HELP_ALERT_DAILY_CAP || '150', 10) || 150);
+    if (!(await helpLimit(env, 'ack:' + helpDayKey(), cap, 86400))) return false;
+    const b = t.brand === 'partyplay' ? 'partyplay' : 'venueplay';
+    const ok = await helpSendEmail(env, {
+      to: to, from: HELP_BRAND_LABEL[b] + ' Support <support@send.' + b + '.com.au>', reply_to: 'support@' + b + '.com.au',
+      subject: helpAckSubject(t),
+      html: helpAckHtml(t),
+      headers: { 'X-VP-Help': 'ack', 'Auto-Submitted': 'auto-replied', 'X-Auto-Response-Suppress': 'All' } });
+    if (ok && t.id) {
+      await vpaInsert(env, 'vp_help_ticket_notes', { ticket_id: t.id, kind: 'change', body: 'Acknowledgement sent to ' + to, author: 'Help desk' }, false).catch(() => null);
+    }
+    return ok;
+  } catch (e) { return false; }
 }
 async function helpAdminReply(request, env, json) {
   const g = await helpAdmin(request, env, json); if (g.res) return g.res;
@@ -11742,6 +11832,7 @@ async function helpTicketFromEmail(env, to, mail) {
     throw e;
   }
   await helpAnnounce(env, t, await helpVenueName(env, venueId));
+  await helpAcknowledge(env, t);   // a new ticket by email is acknowledged too; a reply on one is not
   return { action: 'ticket', ticket_no: t.ticket_no };
 }
 async function helpInboundEmail(message, env) {

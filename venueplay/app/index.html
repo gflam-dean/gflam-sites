@@ -356,7 +356,7 @@
           <input class="vp-c" id="emailIn" type="email" placeholder="you@yourvenue.com.au" autocomplete="email">
           <div class="cerr" id="emailErr"></div>
           <button class="btn pink big" id="sendEmailBtn" style="margin-top:4px">Email me a code</button>
-          <p class="note vp-c" style="margin-top:10px">No email on your login yet? Email hello@venueplay.com.au and we will get you in.</p>
+          <p class="note vp-c" style="margin-top:10px">No email on your login yet? Email support@venueplay.com.au and we will get you in.</p>
           <div class="vp-c" style="margin-top:8px"><span class="skiplink" id="backToTextBtn">Use a text code instead</span></div>
         </div>
 
@@ -917,7 +917,7 @@
   }
   /* SAY THE TEXT FAILED, AND WHERE TO GO INSTEAD. Not the host's number, and not a silent wait. */
   var TEXT_FAILED="We could not send a text right now. Use the email option below. "+
-    "Still stuck? Email hello@venueplay.com.au and we will get you in.";
+    "Still stuck? Email support@venueplay.com.au and we will get you in.";
   /* The code goes by text (MODE "sms", to E164) or by email (MODE "email", to EMAIL). One code
      box, one Verify, one shift start, so the two ways in cannot drift apart. */
   var MODE="sms", EMAIL="";
@@ -963,13 +963,13 @@
     var msg=(err&&err.message)?String(err.message).toLowerCase():"";
     var code=String((err&&(err.code||err.error_code))||"").toLowerCase();
     if(code.indexOf("otp_disabled")>=0 || msg.indexOf("signups not allowed")>=0 || code.indexOf("user_not_found")>=0){
-      $("emailErr").textContent="That email is not on a VenuePlay login yet. Email hello@venueplay.com.au and we will get you in.";
+      $("emailErr").textContent="That email is not on a VenuePlay login yet. Email support@venueplay.com.au and we will get you in.";
     } else if(code.indexOf("rate_limit")>=0 || msg.indexOf("rate limit")>=0){
       $("emailErr").textContent="Too many codes asked for just now. Wait a minute and try again.";
     } else if(code.indexOf("validation_failed")>=0 || (msg.indexOf("invalid")>=0 && msg.indexOf("email")>=0)){
       $("emailErr").textContent="That email did not look right. Check it and try again.";
     } else {
-      $("emailErr").textContent="We could not send the email right now. Email hello@venueplay.com.au and we will get you in.";
+      $("emailErr").textContent="We could not send the email right now. Email support@venueplay.com.au and we will get you in.";
     }
   }
   function emailOtp(addr){

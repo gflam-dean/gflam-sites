@@ -8,7 +8,7 @@
     {{venue_name}}        the new venue, e.g. "The Grand Hotel"
     {{host_console_url}}  link to the app host console sign-in
     {{tv_url}}            that venue's TV screen link (/tv?slug)
-    {{support_email}}     e.g. "hello@venueplay.com.au"
+    {{support_email}}     e.g. "support@venueplay.com.au"
     {{support_phone}}     e.g. "07 5228 3667" (filled by the Worker, VP_SUPPORT_PHONE)
     {{support_tel}}       e.g. "+61752283667" (the tel: link)
 -->
@@ -73,30 +73,16 @@
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf7fb;border:1px solid #eee;border-radius:12px">
           <tr><td style="padding:20px 22px">
             <p style="margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#FF1F8E">This venue's screen link</p>
-            <p style="margin:10px 0 0;font-size:15px;line-height:1.6;color:#3a3a44">Open <a href="{{tv_url}}" style="color:#12101a;font-weight:700;text-decoration:none">{{tv_url}}</a> on the venue TV and save it as the TV's home page. Always use this full link: it is what tells the screen which venue it is.</p>
+            <p style="margin:10px 0 0;font-size:15px;line-height:1.6;color:#3a3a44">Open <a href="{{tv_url}}" style="color:#12101a;font-weight:700;text-decoration:none;word-break:break-all">{{tv_url}}</a> on the venue TV and save it as the TV's home page. Always use this full link: it is what tells the screen which venue it is.</p>
           </td></tr>
         </table>
       </td></tr>
 
-      <!-- need a hand -->
-      <tr><td style="padding:22px 32px 0">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#12101a;border-radius:14px">
-          <tr><td style="padding:26px 26px 28px">
-            <p style="margin:0;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#FF1F8E">We are on the other end of this</p>
-            <p style="margin:10px 0 0;font-size:22px;line-height:1.25;font-weight:800;color:#ffffff">Need a hand setting up?</p>
-            <p style="margin:12px 0 0;font-size:15.5px;line-height:1.65;color:#c9c7d4">Reach out. Reply to this email or write to <a href="mailto:{{support_email}}" style="color:#ffffff;font-weight:700;text-decoration:none">{{support_email}}</a> and a real person answers, usually the same day. A TV that will not cooperate, a host who wants a walk through, nerves about your first night: we would rather sort it with you in five minutes than have you wrestle it alone.</p>
-            <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:20px"><tr>
-              <td><a href="mailto:{{support_email}}?subject=Help%20setting%20up%20VenuePlay" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:13px 28px;border-radius:9px">Reach out to us</a></td>
-            </tr></table>
-          </td></tr>
-        </table>
-      </td></tr>
-
-      <!-- footer -->
-      <tr><td style="padding:30px 32px 34px">
-        <p style="margin:0;font-size:14px;line-height:1.6;color:#8a8a95">Any questions, just reply to this email or reach us at <a href="mailto:{{support_email}}" style="color:#FF1F8E;text-decoration:none">{{support_email}}</a>. If a game is on and you need us right now, call <a href="tel:{{support_tel}}" style="color:#FF1F8E;text-decoration:none;font-weight:700">{{support_phone}}</a> and press 2. Have a great first night.</p>
+      <!-- footer: the one ask, then the support line -->
+      <tr><td style="padding:28px 32px 34px">
+        <p style="margin:0;font-size:15px;line-height:1.6;color:#3a3a44">If you need any help, let us know. Reply to this email or write to <a href="mailto:{{support_email}}" style="color:#C70F69;font-weight:600;text-decoration:none">{{support_email}}</a> and a person answers, usually the same day. If a game is on and you need us right now, call <a href="tel:{{support_tel}}" style="color:#FF1F8E;text-decoration:none;font-weight:700">{{support_phone}}</a> and press 2. Have a great first night.</p>
         <p style="margin:16px 0 0;font-size:12px;color:#b3b3bb"><a href="https://venueplay.com.au" style="color:#b3b3bb;text-decoration:none">venueplay.com.au</a></p>
-        <p style="margin:14px 0 0;font-size:11px;line-height:1.7;color:#b3b3bb">VenuePlay, ABN 35 679 383 049. <a href="https://venueplay.com.au/privacy.html" style="color:#b3b3bb;text-decoration:underline">Privacy</a> &middot; <a href="https://venueplay.com.au/terms.html" style="color:#b3b3bb;text-decoration:underline">Terms</a> &middot; <a href="{{unsubscribe_url}}" style="color:#b3b3bb;text-decoration:underline">Unsubscribe from product emails</a></p>
+        <p style="margin:14px 0 0;font-size:11px;line-height:1.7;color:#b3b3bb">VenuePlay, Gflam Group Pty Ltd, ABN 35 679 383 049. <a href="https://venueplay.com.au/privacy" style="color:#b3b3bb;text-decoration:underline">Privacy</a> &middot; <a href="https://venueplay.com.au/terms" style="color:#b3b3bb;text-decoration:underline">Terms</a> &middot; <a href="{{unsubscribe_url}}" style="color:#b3b3bb;text-decoration:underline">Unsubscribe from product emails</a></p>
       </td></tr>
     </table>
   </td></tr>
