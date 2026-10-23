@@ -3274,8 +3274,8 @@ MUTATIONS = [
      'venueplay-backend/worker/venueplay-api-FULL.js',
      # Anchored on the RECEIPT's subject: since 25 Sep the upcoming-payment email records its outcome with
      # the identical say(...) line, and a bare match broke whichever came first in the file.
-     "subject: 'Your VenuePlay invoice' + (number ? ' ' + number : '') + ' - ' + amount,\n        html: html,\n      }),\n    });\n    let resendId = null;\n    try { const j = await res.json(); resendId = (j && j.id) || null; } catch (_) {}\n    await say(res && res.ok ? 'sent' : 'not sent: Resend refused it',",
-     "subject: 'Your VenuePlay invoice' + (number ? ' ' + number : '') + ' - ' + amount,\n        html: html,\n      }),\n    });\n    let resendId = null;\n    try { const j = await res.json(); resendId = (j && j.id) || null; } catch (_) {}\n    await Promise.resolve(res && res.ok ? 'sent' : 'not sent',",
+     "subject: 'Your VenuePlay invoice' + (number ? ' ' + number : '') + ' - ' + amount,\n        html: vpaVenueEmailCard('Paid ' + amount + '. Your tax invoice' + (number ? ' ' + number : '') + ' and what it covers are inside.', html, 'Your VenuePlay invoice'),\n      }),\n    });\n    let resendId = null;\n    try { const j = await res.json(); resendId = (j && j.id) || null; } catch (_) {}\n    await say(res && res.ok ? 'sent' : 'not sent: Resend refused it',",
+     "subject: 'Your VenuePlay invoice' + (number ? ' ' + number : '') + ' - ' + amount,\n        html: vpaVenueEmailCard('Paid ' + amount + '. Your tax invoice' + (number ? ' ' + number : '') + ' and what it covers are inside.', html, 'Your VenuePlay invoice'),\n      }),\n    });\n    let resendId = null;\n    try { const j = await res.json(); resendId = (j && j.id) || null; } catch (_) {}\n    await Promise.resolve(res && res.ok ? 'sent' : 'not sent',",
      'a receipt sends or fails and leaves no record either way'),
 
     # ---- 11 Sep: the plan upgrade, which nothing had ever run ----

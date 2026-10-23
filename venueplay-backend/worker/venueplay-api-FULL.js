@@ -3606,7 +3606,8 @@ async function vpaHandlePlayerRemove(request, env, json) {
           + '<p>VenuePlay<br>hello@venueplay.com.au</p>' + vpaSupportPhoneHtml() + '</div>';
         emailed = 'sent';
         for (const addr of recipients) {
-          try { if (!(await vpaSendEmail(env, addr, 'Please remove one person from your ' + v.venue_name + ' players list', html))) emailed = 'failed'; }
+          try { if (!(await vpaSendEmail(env, addr, 'Please remove one person from your ' + v.venue_name + ' players list',
+                        vpaVenueEmailCard('Somebody has asked to come off your ' + v.venue_name + ' players list. One thing to do.', html, 'Please remove one person from your players list')))) emailed = 'failed'; }
           catch (e) { emailed = 'failed'; }
         }
       } else { emailed = 'no address'; }
@@ -4469,7 +4470,7 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
         reply_to: 'hello@venueplay.com.au', // replies reach the real monitored inbox
         to: [email],
         subject: isGroup ? 'Your venues are set up. Welcome to VenuePlay' : 'You are in. Welcome to VenuePlay',
-        html: html,
+        html: vpaEmailDocument(html, 'Welcome to VenuePlay'),
       }),
     });
     let id = null;
@@ -4806,7 +4807,7 @@ async function vpaFireHqWelcome(env, o) {
     return await vpaSendEmail(env, email,
       comp ? 'Your VenuePlay account is ready, and it is on us'
            : 'Your VenuePlay account is ready. One thing left.',
-      html);
+      vpaEmailDocument(html, 'Your VenuePlay account is ready'));
   } catch (_) { return false; }
 }
 
@@ -4833,7 +4834,8 @@ async function vpbFireVenueOnboarding(env, o) {
     html = vpaFillSupport(html);
 
     return await vpaSendEmail(env, email,
-      'Setup guide for ' + (o.venueName || 'your new venue') + ' (forward this on)', html);
+      'Setup guide for ' + (o.venueName || 'your new venue') + ' (forward this on)',
+      vpaEmailDocument(html, 'Setup guide for ' + (o.venueName || 'your new venue')));
   } catch (_) { return false; }
 }
 
@@ -5006,6 +5008,40 @@ function vpaVenueEmailFoot(withAbn) {
   return vpaSupportPhoneHtml()
     + '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay.com.au'
     + (withAbn ? ' &middot; Gflam Group, ABN ' + VP_ABN : '') + '</p>';
+}
+
+/* EVERY EMAIL IS A DOCUMENT, NOT A FRAGMENT. Email audit, 23 Oct 2026: the receipt, the
+   reminder, the failed-payment notice, the plan-uplift notice and both leaving emails went out
+   as a bare <div>, with no <html>, no charset and no viewport, and with a dark logo on white
+   while the welcome emails carry the pink logo on a dark header. On a phone a client with no
+   viewport hint lays the email out at desktop width and shrinks it, and the two families of
+   email did not look like they came from the same company. The templates under /emails/ are
+   table fragments for the same reason.
+   Two helpers. vpaEmailDocument wraps anything that is not already a document, and changes
+   nothing a venue can read. vpaVenueEmailCard is for the emails built inline here: the same
+   600px white card and dark header the templates use, a hidden preheader for the inbox
+   preview, then the content untouched. Neither adds a footer, an ABN or an unsubscribe: the
+   leaving emails must carry none of those and the tests hold them to it. */
+function vpaEmailDocument(html, title) {
+  const s = String(html || '');
+  if (/^\s*(<!doctype|<html)/i.test(s)) return s;
+  return '<!doctype html><html lang="en-AU"><head><meta charset="utf-8">'
+    + '<meta name="viewport" content="width=device-width,initial-scale=1">'
+    + '<meta name="x-apple-disable-message-reformatting">'
+    + '<title>' + vpaEsc(title || 'VenuePlay') + '</title></head>'
+    + '<body style="margin:0;padding:0;background:#f4f4f7;-webkit-text-size-adjust:100%">' + s + '</body></html>';
+}
+function vpaVenueEmailCard(preheader, inner, title) {
+  const site = 'https://venueplay.com.au';
+  return vpaEmailDocument(
+      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;margin:0;padding:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">'
+    + '<tr><td align="center" style="padding:24px 12px">'
+    + (preheader ? '<div style="display:none;max-height:0;overflow:hidden;opacity:0">' + vpaEsc(preheader) + '</div>' : '')
+    + '<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden">'
+    + '<tr><td style="background:#12101a;padding:20px 32px">'
+    + '<img src="' + site + '/logos/venueplay_primary_rebuilt.png" width="168" alt="VenuePlay" style="display:block;border:0;height:auto"></td></tr>'
+    + '<tr><td style="padding:28px 28px 30px">' + String(inner || '') + '</td></tr>'
+    + '</table></td></tr></table>', title);
 }
 /* The site's email templates ask for the number with two tags; every template the Worker sends
    goes through here, so none of them can be filled one way and another a different way. */
@@ -5205,7 +5241,8 @@ async function vpaFirePlanUpliftEmail(env, customerId) {
       + 'See your plan</a></p>'
       + vpaVenueEmailFoot(true)
       + '</div>';
-    const ok = await vpaSendEmail(env, email, 'Your VenuePlay plan has moved up', html);
+    const ok = await vpaSendEmail(env, email, 'Your VenuePlay plan has moved up',
+      vpaVenueEmailCard((venue.name || 'Your venue') + ' moved from ' + d.from + ' to ' + d.to + ' players. Nothing extra is charged today.', html, 'Your VenuePlay plan has moved up'));
     await say(ok ? 'sent' : 'not sent: Resend refused it',
               { uplift_row: up.id, to: email, venue: venue.name || null,
                 from_players: d.from, to_players: d.to, nights: nights, sent: !!ok });
@@ -5248,7 +5285,6 @@ async function vpaFireInvoiceEmail(env, invoice) {
     const btn = view || pdf;
     const html =
       '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#12101a">'
-      + '<img src="' + logo + '" alt="VenuePlay" width="150" style="display:block;margin:0 0 24px">'
       + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">Thanks for running your nights with VenuePlay.</p>'
       + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">Your payment has gone through. Here is your invoice'
       + (number ? ' ' + vpaEsc(number) : '') + ', and exactly what it is for.</p>'
@@ -5292,7 +5328,7 @@ async function vpaFireInvoiceEmail(env, invoice) {
         reply_to: 'accounts@venueplay.com.au', // replies reach the real monitored inbox
         to: [email],
         subject: 'Your VenuePlay invoice' + (number ? ' ' + number : '') + ' - ' + amount,
-        html: html,
+        html: vpaVenueEmailCard('Paid ' + amount + '. Your tax invoice' + (number ? ' ' + number : '') + ' and what it covers are inside.', html, 'Your VenuePlay invoice'),
       }),
     });
     let resendId = null;
@@ -5348,7 +5384,6 @@ async function vpaFireUpcomingEmail(env, invoice) {
     const billing = site + '/app/billing.html';
     const html =
       '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#12101a">'
-      + '<img src="' + logo + '" alt="VenuePlay" width="150" style="display:block;margin:0 0 24px">'
       + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">A heads-up: your next payment is coming up.</p>'
       + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">' + (when ? 'On ' + vpaEsc(when) + ' we\'ll charge' : 'Shortly we\'ll charge') + ' the card on file for your VenuePlay subscription.</p>'
       + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eee;border-radius:12px;margin-bottom:22px"><tr><td style="padding:18px 20px">'
@@ -5359,7 +5394,7 @@ async function vpaFireUpcomingEmail(env, invoice) {
       + vpaInvoiceLinesHtml(invoice)
       + (ov.nights > 0
           ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff6fb;border:1px solid #ffd0e6;border-radius:12px;margin-bottom:22px"><tr><td style="padding:16px 18px">'
-            + '<p style="margin:0;font-size:14px;font-weight:700;color:#12101a">Busy month! This bill includes extra players.</p>'
+            + '<p style="margin:0;font-size:14px;font-weight:700;color:#12101a">A busy month: this bill includes extra players.</p>'
             + '<p style="margin:6px 0 0;font-size:13.5px;color:#3a3a44">You went over your plan on <b>' + ov.nights + ' night' + (ov.nights === 1 ? '' : 's') + '</b> this cycle (<b>' + ov.players + ' extra player' + (ov.players === 1 ? '' : 's') + '</b>), adding <b>$' + (ov.cents / 100).toFixed(2) + '</b> at $2/head. If that\'s your normal, a bigger plan usually works out cheaper - you can bump it on your billing page before this charge.</p>'
             + '</td></tr></table>'
           : '')
@@ -5384,7 +5419,7 @@ async function vpaFireUpcomingEmail(env, invoice) {
         reply_to: 'accounts@venueplay.com.au',
         to: [email],
         subject: 'Your VenuePlay payment is coming up' + (when ? ' - ' + when : '') + ' (' + amount + ')',
-        html: html,
+        html: vpaVenueEmailCard(amount + (when ? ' on ' + when : ' shortly') + '. Nothing to do unless you want to change your plan.', html, 'Your VenuePlay payment is coming up'),
       }),
     });
     let resendId = null;
@@ -5790,7 +5825,6 @@ async function vpaFirePaymentFailedEmail(env, invoice, moved, declineKnown) {
     const payNow = invoice.hosted_invoice_url || billing;
     const html =
       '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#12101a">'
-      + '<img src="' + site + '/logos/venueplay_primary_dark.png" alt="VenuePlay" width="150" style="display:block;margin:0 0 24px">'
       + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">' + (why.ours ? 'A payment did not go through.' : 'Your card did not go through.') + '</p>'
       + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">We tried to charge ' + amount + ' for ' + what + (why.ours ? '. ' : ' and it was declined. ') + why.line + '</p>'
       + vpaPaymentFailedNextStep(moved, payNow, billing)
@@ -5805,7 +5839,7 @@ async function vpaFirePaymentFailedEmail(env, invoice, moved, declineKnown) {
         reply_to: 'accounts@venueplay.com.au',
         to: [email],
         subject: 'Your VenuePlay payment did not go through',
-        html: html,
+        html: vpaVenueEmailCard('We could not charge ' + amount + '. Your games are running as normal. Here is what happens next.', html, 'Your VenuePlay payment did not go through'),
       }),
     });
     /* RECORD WHAT WAS SAID. Nobody here can read Resend's outbox, and on 11 Sep 2026 this email
@@ -7472,9 +7506,8 @@ function vpaLeavingHtml(env, opts) {
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
   const logo = site + '/logos/venueplay_primary_dark.png';
   const billing = site + '/app/billing.html';
-  return ''
+  return vpaVenueEmailCard(opts.preheader || opts.heading, ''
     + '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#12101a">'
-    + '<img src="' + logo + '" alt="VenuePlay" width="150" style="display:block;margin:0 0 24px">'
     + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">' + vpaEsc(opts.heading) + '</p>'
     + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">' + opts.lead + '</p>'
     + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eee;border-radius:12px;margin-bottom:22px"><tr><td style="padding:18px 20px">'
@@ -7535,7 +7568,7 @@ function vpaLeavingHtml(env, opts) {
        where it is actually required, on the receipt, which also carries "Prices include
        GST" and is a tax invoice. */
     + vpaVenueEmailFoot(false)
-    + '</div>';
+    + '</div>', opts.heading);
 }
 
 /* Sent the moment they click cancel. Confirms what they just did, in plain words, with the
@@ -7609,6 +7642,7 @@ function vpaGoodbyeHtml(env, o) {
   const when = day ? (day + ', ' + dated) : dated;
   return vpaLeavingHtml(env, {
     heading: day ? (day + ' is your last day on VenuePlay.') : 'Your last day on VenuePlay.',
+    preheader: 'Everything you ran with us, and one tap to keep ' + (o.name || 'the venue') + ' going.',
     /* SORRY TO SEE THEM GO, AND SAY HOW LONG IT HAS BEEN. A venue that has been with us a
        year should not get the same opening line as one that lasted a fortnight, and "the last
        14 months" is the sentence that makes somebody pause. Only said when we know it. */
@@ -7703,6 +7737,7 @@ async function vpaFireCancelConfirm(env, opts) {
     rows.push(['Until close that day', 'Every game runs as normal, and the TVs keep showing your advertising.']);
     const html = vpaLeavingHtml(env, {
       heading: 'Your cancellation is confirmed.',
+      preheader: (whenPhrase ? 'Last day ' + whenPhrase + '. ' : '') + 'Undo it any time up to close on your last day.',
       lead: whenPhrase
         ? 'You have cancelled ' + vpaEsc(opts.name || 'your venue') + '. You keep playing right '
           + 'through <b>' + vpaEsc(whenPhrase) + '</b>, to close, which is the end of the period '
