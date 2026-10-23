@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>VenuePlay: Run a packed Tuesday. Every Tuesday.</title>
+<title>VenuePlay | Bingo, trivia and musical bingo for pubs and clubs</title>
 <meta name="robots" content="noindex,nofollow">
 <meta name="description" content="Bingo, trivia, musical bingo and raffles for pubs, clubs and bowls clubs. One pub, one platform, every format on one screen. Players join from their phone, no app, no login. Founding venues lock in $2.50 per player, for life.">
 
@@ -11,20 +11,17 @@
 <meta property="og:title" content="VenuePlay: Run a packed Tuesday. Every Tuesday.">
 <meta property="og:description" content="One pub, one platform. Every format, one screen. Founding venues lock in $2.50 per player, for life.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://venueplay.com.au">
-<meta property="og:image" content="https://venueplay.com.au/logos/venueplay_appicon_rebuilt.png">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://venueplay.com.au/logos/venueplay_appicon_rebuilt.png">
+<meta property="og:image" content="https://venueplay.com.au/logos/venueplay-share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://venueplay.com.au/logos/venueplay-share.png">
 
 <!-- Favicon: neon play triangle on stage black -->
 <link rel="icon" type="image/png" href="/logos/venueplay_appicon_rebuilt.png">
 <link rel="apple-touch-icon" href="/logos/venueplay_appicon_rebuilt.png">
 
-<!-- ============================================================
-     TRACKING: VenuePlay has NO GA4 / Meta Pixel of its own yet.
-     Paste the VenuePlay snippets here once created.
-     Do NOT paste another Gflam brand's IDs (touring / vending) here.
-     ============================================================ -->
+<!-- Tracking lives in /app/vp-analytics.js (GA4) and /app/vp-pixel.js (Meta), loaded below: one copy of each id. -->
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -549,6 +546,7 @@
     <nav class="nav-links">
       <a href="/play">Play</a>
       <a href="#modes">Game modes</a>
+      <a href="#offer">Pricing</a>
       <a href="#faq">FAQs</a>
       <a href="/help">Help</a>
       <a href="#contact">Contact</a>
@@ -574,7 +572,7 @@
         <a class="btn btn-primary" href="#offer" data-cta="hero-pricing">See pricing</a>
         <a class="btn btn-ghost" href="#contact" data-cta="hero-contact">Talk to us</a>
       </div>
-      <p class="h2-price"><b>First month free.</b> Then a 60 seat pub pays about $150 a month. No lock-in, cancel anytime.</p>
+      <p class="h2-price"><b>First month free.</b> Then a pub with 60 players pays about $150 a month. No lock-in, cancel anytime.</p>
       <p class="hero-note">Built by Gflam Touring, who run live entertainment nights in venues across Australia.</p>
     </div>
     <div class="h2-show" aria-label="VenuePlay running a sample night">
@@ -1023,7 +1021,7 @@
       <p class="powered" style="margin-top:14px">Powered by <b>Gflam Touring</b></p>
     </div>
     <div class="foot-meta">
-      <a href="/play">Play</a> · <a href="#modes">Game modes</a> · <a href="#faq">FAQs</a> · <a href="/help">Help</a> · <a href="#contact">Contact</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a><br>
+      <a href="/play">Play</a> · <a href="#modes">Game modes</a> · <a href="#offer">Pricing</a> · <a href="#faq">FAQs</a> · <a href="/help">Help</a> · <a href="#contact">Contact</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a><br>
       <a href="mailto:hello@venueplay.com.au">hello@venueplay.com.au</a><br>
       <a href="tel:+61752283667">07 5228 3667</a><br>
       &copy; <span id="vp-year"></span> VenuePlay
@@ -1132,10 +1130,11 @@
       }
       requestAnimationFrame(step);
     }
-    // Live count: read the real song library and count it, so the number is always accurate and
-    // updates itself whenever songs are added. The library is small (~64KB) so this is cheap.
-    fetch('/data/musical-library.json').then(function(r){ return r.json(); }).then(function(d){
-      var n = (d && d.songs && d.songs.length) || 0;
+    // Live count: read the small backend count file (the same one the homepage reads), so this
+    // page never downloads the whole 760 KB song library just to show a number (23 Oct 2026 audit:
+    // it did, and the homepage showed a stale 5,146 while this page counted 6,661).
+    fetch('/data/music-count.json').then(function(r){ return r.json(); }).then(function(d){
+      var n = (d && d.count) || 0;
       if (!n) { if (fallback) el.textContent = fallback.toLocaleString('en-AU'); return; }
       el.textContent = n.toLocaleString('en-AU');
       if (sec && 'IntersectionObserver' in window){
@@ -1198,14 +1197,14 @@
     var row = document.createElement('div');
     row.className = 'venue-row';
     var nm = document.createElement('input');
-    nm.type = 'text'; nm.className = 'v-name'; nm.placeholder = 'Venue name'; nm.setAttribute('autocomplete', 'organization');
+    nm.type = 'text'; nm.className = 'v-name'; nm.placeholder = 'Venue name'; nm.setAttribute('aria-label', 'Venue name'); nm.setAttribute('autocomplete', 'organization');
     nm.addEventListener('blur', preselectEntity);
     if (name) nm.value = name;
     var pc = document.createElement('input');
-    pc.type = 'text'; pc.className = 'v-postcode'; pc.inputMode = 'numeric'; pc.maxLength = 4; pc.placeholder = 'Postcode'; pc.setAttribute('autocomplete', 'postal-code');
+    pc.type = 'text'; pc.className = 'v-postcode'; pc.inputMode = 'numeric'; pc.maxLength = 4; pc.placeholder = 'Postcode'; pc.setAttribute('aria-label', 'Postcode'); pc.setAttribute('autocomplete', 'postal-code');
     if (postcode) pc.value = postcode;
     var st = document.createElement('input');
-    st.type = 'number'; st.className = 'v-seats'; st.min = '1'; st.step = '1'; st.inputMode = 'numeric'; st.placeholder = 'Max players';
+    st.type = 'number'; st.className = 'v-seats'; st.min = '1'; st.step = '1'; st.inputMode = 'numeric'; st.placeholder = 'Max players'; st.setAttribute('aria-label', 'Max players on a busy night');
     if (seats) st.value = seats;
     var rm = document.createElement('button');
     rm.type = 'button'; rm.className = 'v-remove'; rm.setAttribute('aria-label', 'Remove venue'); rm.textContent = '×';
