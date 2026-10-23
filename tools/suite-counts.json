@@ -664,7 +664,7 @@
   "counted_by": "lines"
  },
  "tools/tv-and-phone-in-chrome.test.py": {
-  "checks": 67,
+  "checks": 86,
   "counted_by": "lines"
  },
  "tools/venue-logo-in-chrome.test.py": {
@@ -949,6 +949,10 @@
  },
  "venueplay-backend/worker/trivia-score.test.js": {
   "checks": 16,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/trivia-set-delete.test.js": {
+  "checks": 24,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/venue-channel.test.js": {

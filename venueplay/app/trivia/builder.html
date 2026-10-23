@@ -276,10 +276,12 @@
         <button type="button" class="btn ghost" id="anotherBtn">Build another night</button>
       </div>
 
-      <!-- /host/trivia/set/delete hard-deletes the set AND its questions, no soft delete, no undo. So it
+      <!-- /host/trivia/set/delete removes a never-played night AND its questions outright, no undo. A night
+           that has been run is archived instead (kept with its results, off every list): the game rows
+           point at it and the database refused the delete with a 502 until 23 Oct 2026. So it
            sits last, well away from the controls used every week. -->
       <div class="card" style="margin-top:28px;border-color:var(--line-2)">
-        <div class="hint" style="margin-bottom:8px">Finished with this night for good? Deleting removes it and every question in it. Library questions stay in the library.</div>
+        <div class="hint" style="margin-bottom:8px">Finished with this night for good? Deleting takes it off your lists. A night you have never run is removed with every question in it; a night you have run is kept with its results. Library questions stay in the library.</div>
         <button type="button" id="delSetBtn" class="btn" style="border:1px solid rgba(255,255,255,.18);background:transparent;color:var(--muted)">Delete this night</button>
         <div id="delStatus" class="status"></div>
       </div>
@@ -426,7 +428,9 @@
       .then(function(){ b.disabled=false; });
   }
   function loadMySets(){
-    client.from("vp_question_sets").select("id,title,question_count").eq("owner_venue_id",G.venueId).order("created_at",{ascending:false})
+    // status=active: a deleted night that had been played is archived, not removed (the game rows
+    // point at it), and an archived night must not come back into this list (23 Oct 2026).
+    client.from("vp_question_sets").select("id,title,question_count").eq("owner_venue_id",G.venueId).eq("status","active").order("created_at",{ascending:false})
       .then(function(r){
         var rows=(r&&r.data)||[]; var w=$("nightList"); w.innerHTML="";
         if(r && r.error){ builderError("Could not load your trivia nights. Check your connection and reload before building: what you see may be out of date."); return; }
@@ -711,9 +715,12 @@
   }
   function deleteSetNow(){
     var b=$("delSetBtn"); b.disabled=true; b.textContent="Deleting…";
-    req("POST","/host/trivia/set/delete",{ set_id:G.setId }).then(function(){
+    req("POST","/host/trivia/set/delete",{ set_id:G.setId }).then(function(r){
       clearDraft(); G.setId=""; G.title=""; G.questions=[]; setStatus("delStatus","");
       loadMySets(); goStep(1);
+      // A played night is archived, not removed: say so where the host lands, so "it is still in
+      // my results" is never a surprise. The Worker's own words, so the two cannot drift apart.
+      if(r && r.archived) setStatus("quickStatus", r.message || "That night has been played, so it is kept with its results and taken off your lists.", "ok");
     }).catch(function(e){ setStatus("delStatus",(e&&e.message)||"Could not delete the night","err"); })
       .then(function(){ b.disabled=false; b.textContent="Delete this night"; });
   }
@@ -763,7 +770,7 @@
       loadCategories(); loadMySets();
       // ?set=<id> reopens a night straight at its questions (the host console links here).
       var m=/[?&]set=([0-9a-f-]{36})/i.exec(window.location.search);
-      if(m){ client.from("vp_question_sets").select("id,title").eq("id",m[1]).eq("owner_venue_id",G.venueId).maybeSingle().then(function(r){ if(r&&r.data) openNight(r.data.id, r.data.title); }); }
+      if(m){ client.from("vp_question_sets").select("id,title").eq("id",m[1]).eq("owner_venue_id",G.venueId).eq("status","active").maybeSingle().then(function(r){ if(r&&r.data) openNight(r.data.id, r.data.title); }); }
     }).catch(function(){ showSignIn("Could not check your sign in. Try reloading."); });
   } else { showSignIn("Sign in helper failed to load. Try reloading."); }
 })();

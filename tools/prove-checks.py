@@ -2179,6 +2179,10 @@ MUTATIONS = [
     ('tv-and-phone-in-chrome.test.py', 'venueplay/play.html', '    function lookLater(){ clearTimeout(lookT); tries++;', '    function lookLater(){ tries++;', 'every mode message starts another chain of the lookup'),
     ('test-play-live-age-gate-15-oct.js', 'venueplay/play.html', '    function lookNow(){ if(Date.now()-lastPush<2000) return; lastPush=Date.now(); look(); }', '    function lookNow(){ look(); }', 'a burst of mode messages asks the Worker once per message'),
     ('tv-and-phone-in-chrome.test.py', 'venueplay/play.html', '    try{ d.innerHTML=paperNoticeHtml(reason); _paperBox=d; show("vPaper"); }catch(e){ _paperBox=null; }', '    try{ d=document.createElement("div"); d.setAttribute("style","position:fixed;top:0;left:0;right:0;bottom:0;inset:0;z-index:99997;background:#0B0A10"); d.innerHTML=paperNoticeHtml(reason); document.body.appendChild(d); _paperBox=d; }catch(e){ _paperBox=null; }', 'the paper notice covers the header and the Help link again'),
+    # 23 Oct 2026 audit: The Mini Bar's wall was rotating Tugun Bowls Club's menu (its own uploaded slides, a data
+    # fix), read at first as tv.html's built-in defaults being Tugun's promos. Those live only behind ?demo=1; this
+    # lets the demo block run for a real venue too, which is exactly that fault: every wall advertises Tugun.
+    ('tv-and-phone-in-chrome.test.py', 'venueplay/tv.html', '    if(DEMO){\n      setVenueName("Tugun Bowls Club");', '    if(DEMO||slug){\n      setVenueName("Tugun Bowls Club");', "the sales demo's Tugun Bowls Club slides go up on every venue's wall"),
     ('test-play-live-age-gate-15-oct.js', 'venueplay/play.html', '    P.active=false; P.cards=[]; P.called=[]; P.claimPending=false;\n    try{ setHeaderBall(0); }catch(e){}', '    try{ setHeaderBall(0); }catch(e){}', 'a paper phone stays "in a game" it can never hear the end of'),
     ('test-play-live-age-gate-15-oct.js', 'venueplay/play.html', '    try{ if(_ageHold && !_ageBox) requireAge18(); }catch(e){}\n', '', 'an age tick hidden behind the paper notice never comes back'),
     ('tv-and-phone-in-chrome.test.py', 'venueplay/play.html', '    if(_paper || state==="paper"){ d.classList.remove("on"); t.textContent="Paper tonight"; return; }', '    if(false){ }', "a paper phone's header says Reconnecting all night"),
@@ -2430,6 +2434,21 @@ MUTATIONS = [
      "draws = (d || []).filter((x) => x && x.draw_day);",
      "draws = d || [];",
      'a retired members draw goes back up on the wall with its old jackpot'),
+    # 23 Oct 2026 audit: deleting a played trivia night answered 502 (game rows point at the set). The
+    # suite's database stand-in refuses that delete the way Postgres does, so skipping the played check
+    # is the 502 again, and dropping the running-round refusal lets a live round lose its night.
+    ('trivia-set-delete.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     "  if (played.length) {\n    const ids = '(' + played.map((t) => enc(t.game_id)).join(',') + ')';",
+     "  if (false) {\n    const ids = '(' + played.map((t) => enc(t.game_id)).join(',') + ')';",
+     'a played night is hard-deleted again, which the database refuses with a 502'),
+    ('trivia-set-delete.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     "    if (running.length) return json({ error: 'A trivia round is running on this night. Finish the round, then delete it.' }, 409);",
+     "    if (false) return json({ error: 'A trivia round is running on this night. Finish the round, then delete it.' }, 409);",
+     'a night with a round running on it is archived out from under the room'),
+    ('trivia-set-delete.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     "  if (set.status === 'archived') return json({ error: 'That trivia night was deleted. Pick another night.' }, 404);",
+     "  if (false) return json({ error: 'That trivia night was deleted. Pick another night.' }, 404);",
+     'Start runs a round on a night the host deleted'),
     # A byte changes after stamping: /health would report a build that is not
     # the one running, which is the blindness the stamp exists to cure.
     ('venueplay-game.js carries its own fingerprint', 'venueplay-backend/worker/venueplay-game.js',

@@ -320,7 +320,82 @@ def musical_toast():
         r.close()
 
 
+# ======================================================================================
+def fnv_code(slug):
+    """The Worker's fnvVenueCode, in Python: the code tv.html derives from a slug and asks /venue?code=
+    about. Seeded venues need it as their join_code or the rig's Worker cannot find them."""
+    s = ''.join(c for c in str(slug).lower() if c.isalnum()); h = 2166136261
+    for c in s: h = ((h ^ ord(c)) * 16777619) & 0xffffffff
+    A = 'ACDEFGHJKMNPQRSTUVWXYZ2345679'; x = h or 1; out = ''
+    for _ in range(6): x = (x * 1103515245 + 12345) & 0xffffffff; out += A[x % len(A)]
+    return out
+
+def asked(r, path, secs=15):
+    t = time.time() + secs
+    while time.time() < t:
+        if any(c.startswith(path) for c in r.W.calls): return True
+        time.sleep(0.2)
+    return False
+
+def tv_only_its_own_slides():
+    """/tv?venue=the-mini-bar was rotating Tugun Bowls Club's menu slides (audit, 23 Oct 2026). Those four
+    were The Mini Bar's OWN uploaded slides (a data fix: supabase/RUN-ME-the-mini-bar-remove-tugun-slides.sql),
+    but the audit read it as tv.html's built-in defaults being Tugun's four promos, and that reading has to
+    stay untrue: the built-in slide list is empty and the Tugun promos live only behind ?demo=1, which has
+    no venue and fetches nothing. So, on the real page against the real Worker in headless Chrome: a venue
+    whose slide list is empty and a venue with no screen row at all both show VenuePlay's own holding slide
+    and nothing of Tugun's, and tugun-bowls still shows its own roast slide from its own row."""
+    print('\nA venue with no promos of its own shows VenuePlay\'s holding slide, never another venue\'s')
+    r = RIG.Rig()
+    try:
+        MB = '33333333-3333-4333-8333-333333333333'; TB = '44444444-4444-4444-8444-444444444444'; NB = '55555555-5555-4555-8555-555555555555'
+        def venue(vid, name, slug):
+            return {'id': vid, 'name': name, 'slug': slug, 'status': 'active', 'join_code': fnv_code(slug), 'au_state': 'QLD',
+                    'max_players': 100, 'created_at': '2026-01-01T00:00:00Z', 'suspended_reason': None}
+        r.W.seed('vp_venues', [venue(MB, 'The Mini Bar', 'the-mini-bar'), venue(TB, 'Tugun Bowls Club', 'tugun-bowls'), venue(NB, 'The Average Joe', 'the-average-joe')])
+        roast = r.base + '/logos/ad-slides/tugun-tuesday.jpg'     # the repo's own copy of Tugun's Tuesday slide
+        r.W.seed('vp_venue_screen', [
+            {'venue_id': MB, 'slug': 'the-mini-bar', 'slides': [], 'raffle': None, 'logo_url': None},
+            {'venue_id': TB, 'slug': 'tugun-bowls', 'slides': [{'tag': 'Tuesday', 'head': 'Roast night, $14.90', 'seconds': 7, 'image_url': roast}], 'raffle': None, 'logo_url': None},
+        ])
+        r.W.seed('v_vp_screen_draws', [{'slug': 'the-mini-bar', 'name': 'Thursday Members Draw', 'current_jackpot_cents': 20000, 'draw_day': 'Thursday', 'draw_time': '7pm', 'timezone': 'Australia/Brisbane'}])
+        ADS_HTML = '((document.getElementById("tvAds")||{}).innerHTML||"")'
+        TUGUN = '(function(){var h=' + ADS_HTML + ';var m=/tugun|14\\.90|roast|surf and turf|parmi|50% off/i.exec(h);return m?h.slice(Math.max(0,m.index-80),m.index+120):"";})()'
+        LIT = '(function(){var s=document.querySelector("#tvAds .ad.show");return s?s.textContent.replace(/\\s+/g," ").trim().slice(0,200):"";})()'
+        NAME = '((document.getElementById("venueNameTag")||{}).textContent||"")'
+        # The Mini Bar has a members draw of its own, so its wall rotates ITS draw board (the holding card
+        # only fills an otherwise empty loop); The Average Joe has nothing at all, so it gets the card.
+        for slug, name, what, own in (('the-mini-bar', 'The Mini Bar', 'an empty slide list (The Mini Bar after the data fix)', 'members draws'),
+                                      ('the-average-joe', 'The Average Joe', 'no screen row at all', 'Game on here')):
+            r.W.calls[:] = []
+            tid, tv = r.open('/tv?venue=' + slug, width=1280, height=720)
+            ok('%s: the TV loads on the ads' % what, r.until(tv, vis('adsRoot'), 15) is True)
+            ok('and asked the Worker for this venue\'s own screen', asked(r, '/screen', 40))   # a cold Chrome takes its time on the first window
+            lit = r.until(tv, '(function(){var t=' + LIT + ';return t.indexOf(' + json.dumps(own) + ')>=0?t:"";})()', 20)
+            ok('what is lit is this venue\'s own: "%s"' % own, isinstance(lit, str) and own in lit, r.ask(tv, LIT))
+            ok('NOTHING OF TUGUN BOWLS CLUB\'S anywhere in the rotation (no roast, no $14.90, no 50%% off, no parmi)', r.ask(tv, TUGUN) == '', r.ask(tv, TUGUN))
+            ok('the wall is captioned with this venue\'s own name', r.until(tv, NAME + '===' + json.dumps(name), 10) is True, r.ask(tv, NAME))
+            if slug == 'the-mini-bar':
+                ok('and its own members draw board carries its own numbers (Thursday, $200)', r.until(tv, ADS_HTML + '.indexOf("$200")>=0 && ' + ADS_HTML + '.indexOf("Thursday")>=0', 10) is True)
+                ok('with no holding card beside it (the loop is not empty)', r.ask(tv, ADS_HTML + '.indexOf("Game on here")') == -1)
+            ok('no script errors on the TV', r.ask(tv, 'window.__errs.length') == 0, r.ask(tv, 'JSON.stringify(window.__errs)'))
+            shot(r, tv, 'tv-4-own-slides-' + slug)
+            r.close_tab(tid)
+        r.W.calls[:] = []
+        tid, tv = r.open('/tv?venue=tugun-bowls', width=1280, height=720)
+        ok('tugun-bowls: the TV loads on the ads', r.until(tv, vis('adsRoot'), 15) is True)
+        ok('tugun-bowls STILL SHOWS ITS OWN ROAST SLIDE, from its own screen row', r.until(tv, ADS_HTML + '.indexOf("tugun-tuesday.jpg")>=0', 20) is True, r.ask(tv, ADS_HTML)[:300] if isinstance(r.ask(tv, ADS_HTML), str) else r.ask(tv, ADS_HTML))
+        ok('and it is the lit slide, a picture, not the holding card', r.until(tv, '(function(){var s=document.querySelector("#tvAds .ad.show");return !!s && s.innerHTML.indexOf("tugun-tuesday.jpg")>=0;})()', 10) is True, r.ask(tv, LIT))
+        ok('captioned Tugun Bowls Club', r.until(tv, NAME + '==="Tugun Bowls Club"', 10) is True, r.ask(tv, NAME))
+        ok('no script errors on the TV', r.ask(tv, 'window.__errs.length') == 0, r.ask(tv, 'JSON.stringify(window.__errs)'))
+        shot(r, tv, 'tv-4-own-slides-tugun-bowls')
+        r.close_tab(tid)
+    finally:
+        r.close()
+
+
 try:
+    tv_only_its_own_slides()
     tv_old_winner()
     tv_missed_idle()
     phone_paper('typed code')

@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '20 Oct 2026, 16:32 · 17480d16';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '23 Oct 2026, 14:49 · 570e6fbb';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '9d1b390ad1e63d30fd8e7e358726c0ca0630d9114fcb808c25556fd4a4b366ae';
@@ -3027,9 +3027,12 @@ async function hostStartTrivia(env, json, b, session, staff, seq) {
   assertUuid(setId, 'question_set_id');
 
   const sets = await sbGet(env, 'vp_question_sets',
-    'id=eq.' + enc(setId) + '&select=id,owner_venue_id,visibility,title,question_count');
+    'id=eq.' + enc(setId) + '&select=id,owner_venue_id,visibility,title,question_count,status');
   if (!sets.length) return json({ error: 'Question set not found' }, 404);
   const set = sets[0];
+  // A deleted night that had been played is kept as status=archived (handleTriviaSetDelete); the
+  // console's dropdown leaves it out, but a console opened before the delete could still send it.
+  if (set.status === 'archived') return json({ error: 'That trivia night was deleted. Pick another night.' }, 404);
   const ownedHere = set.owner_venue_id === session.venue_id;
   const isLibrary = set.owner_venue_id == null && set.visibility === 'library';
   if (!ownedHere && !isLibrary) return json({ error: 'That question set is not available to this venue' }, 403);
@@ -5078,9 +5081,26 @@ async function handleTriviaSetDelete(request, env, json) {
   const authUserId = await verifyHostJwt(request, env);
   const b = await readJson(request);
   const set = await triviaSetForVenue(env, b.set_id, authUserId);
+  /* A NIGHT THAT HAS BEEN PLAYED IS ARCHIVED, NOT DELETED (audit, 23 Oct 2026).
+     vp_trivia_games.question_set_id points at this row and vp_trivia_answers.question_id at
+     its questions, neither with a cascade, so the two deletes below answered 502 "A database
+     error occurred" for any night a host had ever run: the one night a host most wants rid of
+     was the one they could not touch. The game rows are the venue's own history (who played,
+     what was asked, who won), so they stay. The set is marked archived, which the builder's
+     list and the console's dropdown both leave out, and its questions stay with it so every
+     answer still points at a question. A night that was never played has nothing pointing
+     at it and is removed outright, as before. */
+  const played = await sbGet(env, 'vp_trivia_games', 'question_set_id=eq.' + enc(set.id) + '&select=game_id&limit=200');
+  if (played.length) {
+    const ids = '(' + played.map((t) => enc(t.game_id)).join(',') + ')';
+    const running = await sbGet(env, 'vp_games', 'id=in.' + ids + '&status=eq.running&select=id&limit=1');
+    if (running.length) return json({ error: 'A trivia round is running on this night. Finish the round, then delete it.' }, 409);
+    await sbPatch(env, 'vp_question_sets', 'id=eq.' + enc(set.id), { status: 'archived' });
+    return json({ ok: true, archived: true, message: 'This night has been played, so it is kept with its results and taken off your lists.' });
+  }
   await sbDelete(env, 'vp_questions', 'set_id=eq.' + enc(set.id));
   await sbDelete(env, 'vp_question_sets', 'id=eq.' + enc(set.id));
-  return json({ ok: true });
+  return json({ ok: true, archived: false });
 }
 async function handleTriviaSetQuestions(request, env, json) {     // list a venue set's questions for editing
   const authUserId = await verifyHostJwt(request, env);
