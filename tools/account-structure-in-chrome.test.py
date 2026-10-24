@@ -49,7 +49,10 @@ def shot(sid, name, full=True):
 # The members draws are written by the REAL game Worker (rig.py's Worker, in jsc) and read back live from
 # its database, so "Remove" and "Save" are judged by the real /host/members/* routes.
 GW = RIG.Worker()
-S = admin_site.Site(live_tables=['vp_venues', 'vp_member_draws'], game=GW, game_tables=['vp_member_draws'])
+S = admin_site.Site(live_tables=['vp_venues', 'vp_member_draws', 'vp_raffle_prizes'], game=GW, game_tables=['vp_member_draws', 'vp_raffle_prizes'])
+# Before migration 117 the database has no raffle list: every check down to the multi-raffle section runs
+# the page as it is today, with its one raffle routine.
+S.W.refuse(['raffles', 'raffle_id'])
 V1, V2 = S.W.info['venue'], S.W.info['venue2']
 SETTLED = 'document.readyState==="complete" && !document.getElementById("body").classList.contains("hidden")'
 BILLING_UP = 'document.getElementById("content").style.display!=="none"'
@@ -288,6 +291,56 @@ try:
        'prize list is kept' in askt and S.js(sid, '/No raffle routine saved/.test(document.getElementById("rfList").textContent) && document.getElementById("rf-label").value===""') is True, askt[:160])
     errs = S.js(sid, 'JSON.stringify(window.__errs||[])')
     ok('no script error working the draws lists', errs == '[]', errs)
+    S.close_tab(tid)
+
+    print('\nMORE THAN ONE RAFFLE (migration 117): a list like the members draws, each with its own prizes, and every one on the TV')
+    S.W.refuse([])                      # migration 117 has run
+    RL = '[].map.call(document.querySelectorAll("#rfList .drow"),function(r){return (r.classList.contains("editing")?"*":"")+r.querySelector(".dn b").textContent+" | "+r.querySelector(".dn small").textContent;}).join("\\n")'
+    tid, sid = S.open('/app/billing.html#draws', 1100, 1000)
+    S.until(sid, BILLING_UP, 25)
+    S.until(sid, '!document.getElementById("rfAddRaffle").hidden', 20); time.sleep(0.4)
+    ok('with the list there, "+ Add another raffle" shows', S.js(sid, '!document.getElementById("rfAddRaffle").hidden') is True)
+    def save_raffle(label, day, tm, rows):
+        S.js(sid, 'document.getElementById("rf-label").value=%s; document.getElementById("rf-day").value=%s; document.getElementById("rf-time").value=%s; document.getElementById("rfSave").click(); true'
+             % (json.dumps(label), json.dumps(day), json.dumps(tm)))
+        return S.until(sid, 'document.querySelectorAll("#rfList .drow").length===%d' % rows, 20)
+    save_raffle('Meat Raffle', 'Friday', '6:30pm', 1)
+    S.js(sid, 'document.getElementById("rfAddRaffle").click(); true'); time.sleep(0.3)
+    ok('Add another raffle empties the form for a new one', S.js(sid, 'document.getElementById("rf-label").value==="" && !document.querySelector("#rfList .drow.editing")') is True)
+    save_raffle('Chook Raffle', 'Sunday', '3pm', 2); time.sleep(0.6)
+    rl = (S.js(sid, RL) or '').split('\n')
+    ok('two raffles listed, each with its own night, the new one being edited',
+       rl == ['Meat Raffle | drawn Friday 6:30pm', '*Chook Raffle | drawn Sunday 3pm'], rl)
+    scr = [r for r in S.W.table('vp_venue_screen') if r.get('venue_id') == V1]
+    st = (scr[0].get('raffles') if scr else None) or []
+    ok('stored as the venue\'s raffle list, the single routine mirroring the first', [x.get('label') for x in st] == ['Meat Raffle', 'Chook Raffle'] and (scr[0].get('raffle') or {}).get('label') == 'Meat Raffle', scr)
+    S.js(sid, 'document.getElementById("rf-newprize").value="Two chooks"; document.getElementById("rfAddPrize").click(); true')
+    S.until(sid, '/Two chooks/.test(document.getElementById("rfPrizes").textContent)', 20)
+    pz = [p for p in S.game_table('vp_raffle_prizes') if p.get('label') == 'Two chooks']
+    ok('a prize added while editing Chook Raffle is filed under it (raffle_id)', len(pz) == 1 and pz[0].get('raffle_id') == (st[1].get('id') if len(st) > 1 else '?'), pz)
+    S.js(sid, 'document.querySelectorAll("#rfList .drow")[0].querySelector(".redit").click(); true')
+    S.until(sid, 'document.getElementById("rf-label").value==="Meat Raffle"', 10); time.sleep(1.0)
+    ok('Edit on Meat Raffle loads it, and its prize list does not show the chook prize',
+       S.js(sid, 'document.getElementById("rf-day").value==="Friday" && !/Two chooks/.test(document.getElementById("rfPrizes").textContent) && /Meat Raffle/.test(document.getElementById("rfPrizesFor").textContent)') is True,
+       S.js(sid, 'document.getElementById("rfPrizes").textContent'))
+    S.js(sid, 'document.querySelectorAll("#rfList .drow")[1].querySelector(".rremove").click(); true')
+    S.until(sid, '!!document.getElementById("vpAskGo")', 8); S.js(sid, 'document.getElementById("vpAskGo").click(); true')
+    S.until(sid, 'document.querySelectorAll("#rfList .drow").length===1', 20); time.sleep(0.3)
+    ok('Remove raffle on Chook Raffle leaves Meat Raffle alone', (S.js(sid, RL) or '').replace('*', '') == 'Meat Raffle | drawn Friday 6:30pm', S.js(sid, RL))
+    errs = S.js(sid, 'JSON.stringify(window.__errs||[])')
+    ok('no script error working the raffle list', errs == '[]', errs)
+    S.close_tab(tid)
+    # The TV, through the REAL game Worker's /screen: one card for each raffle with a night set.
+    GW.seed('vp_venue_screen', [{'venue_id': GW.info['venue'], 'slug': GW.info['slug'], 'slides': [], 'logo_url': None,
+                                 'raffle': {'label': 'Meat Raffle', 'day': 'Friday', 'time': '6:30pm'},
+                                 'raffles': [{'id': 'raf-aaaaaa', 'label': 'Meat Raffle', 'day': 'Friday', 'time': '6:30pm'},
+                                             {'id': 'raf-bbbbbb', 'label': 'Chook Raffle', 'day': 'Sunday', 'time': '3pm'},
+                                             {'id': 'raf-cccccc', 'label': 'Lucky Envelope', 'day': '', 'time': ''}]}], replace=True)
+    tid, sid = S.open('/tv.html?venue=' + GW.info['slug'], 1280, 720)
+    S.until(sid, '/Chook Raffle/.test((document.getElementById("tvAds")||{}).innerHTML||"")', 30)
+    ads = S.js(sid, '(document.getElementById("tvAds")||{}).innerHTML||""') or ''
+    ok('the TV has a card for Meat Raffle AND Chook Raffle, and none for the raffle with no night',
+       'Meat Raffle' in ads and 'Chook Raffle' in ads and 'Drawn Sunday 3pm' in ads and 'Lucky Envelope' not in ads, ads[:300])
     S.close_tab(tid)
 
     print('\nYOUR ACCOUNT > MARKETING: the venue link, the table signs, the opt-in list')
