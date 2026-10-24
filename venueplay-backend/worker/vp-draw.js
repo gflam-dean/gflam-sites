@@ -7,7 +7,8 @@
  *   randInt            the scaler: a uniform integer from crypto.getRandomValues by rejection sampling
  *   shuffle1to90       THE ball order (one Fisher-Yates over 1..90 at game start, kept on the server)
  *   generateStrip      THE ticket maker (a strip of six housie tickets holding 1..90 once)
- *   bingoTicketWins    THE claim rule (one/two/full house, top/middle/bottom line, four corners)
+ *   bingoTicketWins    THE claim rule (one/two/full house, top/middle/bottom line, four corners, and a
+ *                      venue's own CUSTOM pattern: any N numbers on the ticket, or a shape of squares)
  *   /host/bingo/draw, /ball, /fallback, /deal, /claim, /claim/resolve   the routes that use them
  *   TABLET_FALLBACK_OFF_STATES and the gates that let the tablet stand in only after an outage the
  *   server itself recorded
@@ -15,14 +16,18 @@
  * HOW IT SHIPS. This file is the source. tools/regulated.py copies it, byte for byte, into
  * venueplay-game.js between the VP-DRAW BEGIN and END markers (a Worker deploys as one file), and the
  * gate refuses the Worker if that copy differs from this file. Nothing in here reads a setting from a
- * venue, a host, HQ, an environment variable or a database row: its rules are constants in this file.
+ * venue, a host, HQ or an environment variable: its rules are constants in this file. ONE EXCEPTION, from
+ * VP-DRAW-1.2 (Dean, 24 Oct 2026): a venue may save its own named winning patterns (vp_bingo_patterns,
+ * migration 118). The rule that judges them is still a constant here (customTicketWins), and the venue's
+ * row only supplies its two inputs, "any N numbers" or "these squares", read by the SERVER from the
+ * venue's own row, never taken from the console or a phone.
  *
  * HOW IT CHANGES. Any change to this file must raise VP_DRAW_VERSION and regenerate
  * tools/regulated-manifest.json (python3 tools/regulated.py --update) in the same commit. The local gate
  * and release.py refuse anything else, and /health reports the version and the manifest hash, so what
  * is running can be checked against what was described to OLGR.
  */
-const VP_DRAW_VERSION = 'VP-DRAW-1.1';
+const VP_DRAW_VERSION = 'VP-DRAW-1.2';
 
 // Uniform random integer in [0, max) using rejection sampling over getRandomValues.
 function randInt(max) {
@@ -519,8 +524,10 @@ function freshCardNo(used) {
 /* THE CLAIM RULE, in the console's words (checkPattern in app/index.html, which stays there as the
    display aid and the outage check). A row is complete when every number on it has been called.
    one/two/full = at least that many complete rows; top/middle/bottom = that row; corners = the first
-   and last number of the top and bottom rows. Returns {win, cells:[row-major indices that won]}. */
-function bingoTicketWins(cells, called, pattern) {
+   and last number of the top and bottom rows; custom = the venue's saved rule (customTicketWins).
+   Returns {win, cells:[row-major indices that won]}. */
+function bingoTicketWins(cells, called, pattern, rule) {
+  if (pattern === 'custom') return customTicketWins(cells, called, rule);
   const rowIdx = [], rowDone = [];
   for (let r = 0; r < 3; r++) {
     const idx = []; let done = true;
@@ -547,6 +554,55 @@ function bingoTicketWins(cells, called, pattern) {
     }
   }
   return { win: false, cells: [] };
+}
+
+/* A VENUE'S OWN PATTERN (VP-DRAW-1.2, Dean, 24 Oct 2026, after a Drag Bingo show played "any 5 numbers").
+   A rule is one of two shapes, and nothing else is ever judged:
+     {type:'any', n}        at least n of the ticket's 15 numbers called (n 1 to 15)
+     {type:'shape', cells}  every NUMBER in the chosen squares called. cells are row-major places 0..26 on
+                            the 3x9 ticket. A chosen square that is blank on this ticket has nothing to call,
+                            so it counts as done; a ticket with no number in the shape at all never wins.
+   bingoRuleClean is the one reading of a rule: anything else is null and is never a win. */
+function bingoRuleClean(rule) {
+  if (!rule || typeof rule !== 'object') return null;
+  if (rule.type === 'any') {
+    const n = Number(rule.n);
+    return (Number.isInteger(n) && n >= 1 && n <= 15) ? { type: 'any', n } : null;
+  }
+  if (rule.type === 'shape') {
+    if (!Array.isArray(rule.cells) || !rule.cells.length || rule.cells.length > 27) return null;
+    const seen = {}, out = [];
+    for (const v of rule.cells) {
+      const i = Number(v);
+      if (!Number.isInteger(i) || i < 0 || i > 26) return null;
+      if (!seen[i]) { seen[i] = true; out.push(i); }
+    }
+    out.sort((a, b) => a - b);
+    return { type: 'shape', cells: out };
+  }
+  return null;
+}
+function customTicketWins(cells, called, rule) {
+  const r = bingoRuleClean(rule);
+  if (!r) return { win: false, cells: [] };
+  if (r.type === 'any') {
+    const hit = [];
+    for (let i = 0; i < 27; i++) { if (cells[i] && called.has(cells[i])) hit.push(i); }
+    return hit.length >= r.n ? { win: true, cells: hit.slice(0, r.n) } : { win: false, cells: [] };
+  }
+  const inShape = r.cells.filter((i) => !!cells[i]);
+  if (!inShape.length) return { win: false, cells: [] };
+  return inShape.every((i) => called.has(cells[i])) ? { win: true, cells: inShape } : { win: false, cells: [] };
+}
+/* The venue's saved pattern, read by the server from the draw's own venue: the console names WHICH one
+   (custom_id), never what it says. A pattern deleted while a game was playing it is still read here, so a
+   claim on that game is judged on the rule the room was playing. */
+async function bingoCustomPattern(env, venueId, id) {
+  if (!UUID_RE.test(String(id || ''))) return null;
+  const rows = await sbGet(env, 'vp_bingo_patterns', 'id=eq.' + enc(id) + '&venue_id=eq.' + enc(venueId) + '&select=id,name,rule&limit=1');
+  if (!rows.length) return null;
+  const rule = bingoRuleClean(rows[0].rule);
+  return rule ? { id: rows[0].id, name: String(rows[0].name || ''), rule } : null;
 }
 
 // The draw a host route is about, after proving the host works at its venue. Shared by the three
@@ -743,7 +799,7 @@ async function handleBingoClaim(request, env, json) {
   const pid = String(b.pid || ''), ref = String(b.ref || ''), pattern = String(b.pattern || '');
   if (!BINGO_PID_RE.test(pid)) return json({ error: 'Bad player' }, 400);
   if (!BINGO_REF_RE.test(ref)) return json({ error: 'Bad claim reference' }, 400);
-  if (BINGO_CLAIM_PATTERNS.indexOf(pattern) < 0) return json({ error: 'Bad pattern' }, 400);
+  if (BINGO_CLAIM_PATTERNS.indexOf(pattern) < 0 && pattern !== 'custom') return json({ error: 'Bad pattern' }, 400);
   const balls = parseInt(b.balls, 10);
   if (!(balls >= 0 && balls <= 90)) return json({ error: 'Bad ball count' }, 400);
   const cardNoCalled = parseInt(b.card_no, 10) || null;
@@ -755,9 +811,22 @@ async function handleBingoClaim(request, env, json) {
   const prior = await sbGet(env, 'vp_bingo_claims', 'draw_id=eq.' + enc(drawId) + '&ref=eq.' + enc(ref) + '&select=*&limit=1');
   if (prior.length) return await bingoClaimAnswer(env, json, draw, prior[0], authUserId, decision);
 
+  /* A CUSTOM PATTERN is judged on the rule saved for THIS draw's venue, read here. What the console says
+     the rule is (custom_rule) is only compared, so a stale console or a doctored request cannot play a
+     laxer rule than the one saved; a disagreement is noted on the claim. */
+  let custom = null;
+  if (pattern === 'custom') {
+    custom = await bingoCustomPattern(env, draw.venue_id, String(b.custom_id || ''));
+    if (!custom) return json({ error: 'That pattern is not saved for this venue.' }, 400);
+  }
+  const rule = custom ? custom.rule : null;
+  let note = null;
+  if (custom && b.custom_rule !== undefined && JSON.stringify(bingoRuleClean(b.custom_rule)) !== JSON.stringify(custom.rule)) {
+    note = 'The tablet showed a different rule for "' + custom.name.slice(0, 30) + '"; the rule saved for the venue was used.';
+  }
+
   // THE BALLS: this server's own record, in the order they were called.
   const standing = await sbGetStandingBalls(env, 'draw_id=eq.' + enc(drawId) + '&select=ordinal,number,source&order=ordinal.asc&limit=90');
-  let note = null;
   const called = Array.isArray(b.called) ? b.called.map((n) => parseInt(n, 10)) : null;
   if (called && called.length <= 90 && called.every((n) => n >= 1 && n <= 90) && new Set(called).size === called.length) {
     const agrees = standing.every((r, i) => called[i] === r.number);
@@ -802,10 +871,10 @@ async function handleBingoClaim(request, env, json) {
   if (!tk) {
     // They pressed on a number we do not hold for them (they slept through a re-deal): check the
     // ticket of theirs that does win, if any, and say it was swapped. The console's rule exactly.
-    tk = tickets.find((t) => bingoTicketWins(t.cells, set, pattern).win) || null;
+    tk = tickets.find((t) => bingoTicketWins(t.cells, set, pattern, rule).win) || null;
     if (tk) swapped = true;
   }
-  const won = tk ? bingoTicketWins(tk.cells, set, pattern) : { win: false, cells: [] };
+  const won = tk ? bingoTicketWins(tk.cells, set, pattern, rule) : { win: false, cells: [] };
   const verdict = !tickets.length ? 'no_ticket' : (won.win ? 'win' : 'not_yet');
   const row = {
     draw_id: drawId, ref, pid, device_id: (tk && tk.device_id) || (tickets[0] && tickets[0].device_id) || null,
@@ -814,6 +883,8 @@ async function handleBingoClaim(request, env, json) {
     verdict, winning_cells: won.cells, decided_on: decidedOnTablet ? 'tablet' : 'server',
     tablet_verdict: decidedOnTablet ? tabletVerdict : null, record_note: note,
   };
+  // Only on a custom claim, so a claim on the seven built-in patterns writes exactly the row it always did.
+  if (custom) { row.custom_pattern_id = custom.id; row.custom_pattern = { name: custom.name, rule: custom.rule }; }
   let saved;
   try {
     const rows = await sbInsert(env, 'vp_bingo_claims', row, true);

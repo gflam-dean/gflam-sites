@@ -9,7 +9,8 @@
  *                   copy in the site, which the gate keeps identical)
  *   drawFromPool    a ball from what is left of 1..90, one at a time, never ahead of the call
  *   makeStrip       a strip of six housie tickets holding 1..90 once
- *   cardWins        the claim rule, the same as the server's bingoTicketWins (a suite runs both)
+ *   cardWins        the claim rule, the same as the server's bingoTicketWins (a suite runs both),
+ *                   including a venue's own custom pattern (ruleClean reads one; VP-DRAW-1.2)
  *   isRefusal, standInAllowed   when the tablet may stand in: never on a refusal, never where the
  *                   state's switch is off
  *
@@ -19,7 +20,7 @@
  */
 (function (root) {
   "use strict";
-  var VERSION = "VP-DRAW-1.1";
+  var VERSION = "VP-DRAW-1.2";
   /* The states where the tablet may never stand in. MUST equal the Worker's TABLET_FALLBACK_OFF_STATES
      (tools/regulated.py refuses the release if they differ). Default none: Dean keeps the fallbacks. */
   var TABLET_FALLBACK_OFF_STATES = [];
@@ -144,9 +145,11 @@
 
   /* THE CLAIM RULE. card is 3 rows of 9 (blanks 0), called is { number: true } for every ball out.
      A row is complete when every number on it is called. one/two/full = at least that many complete
-     rows; top/middle/bottom = that row; corners = the first and last number of the top and bottom rows. */
-  function cardWins(card, called, pattern){
+     rows; top/middle/bottom = that row; corners = the first and last number of the top and bottom rows;
+     custom = the venue's saved rule, passed as `rule` (see ruleClean). */
+  function cardWins(card, called, pattern, rule){
     if(!card) return false;
+    if(pattern==="custom") return customWins(card, called, rule);
     function isCalled(n){ return !!called[n]; }
     function rowComplete(row){ for(var c=0;c<9;c++){ var v=card[row][c]; if(v && !isCalled(v)) return false; } return true; }
     function completeRows(){ var n=0; for(var r=0;r<3;r++){ if(rowComplete(r)) n++; } return n; }
@@ -168,6 +171,31 @@
     return false;
   }
 
+  /* A VENUE'S OWN PATTERN (VP-DRAW-1.2), the server's bingoRuleClean and customTicketWins in the tablet's
+     words. {type:"any", n}: at least n of the ticket's numbers called (n 1 to 15). {type:"shape", cells}:
+     every NUMBER in the chosen squares (row-major 0..26) called; a chosen square that is blank on this
+     ticket counts as done, and a ticket with no number in the shape never wins. Anything else: null. */
+  function ruleClean(rule){
+    if(!rule || typeof rule!=="object") return null;
+    if(rule.type==="any"){ var n=Number(rule.n); return (n===Math.floor(n) && n>=1 && n<=15) ? { type:"any", n:n } : null; }
+    if(rule.type==="shape"){
+      if(!Array.isArray(rule.cells) || !rule.cells.length || rule.cells.length>27) return null;
+      var seen={}, out=[];
+      for(var k=0;k<rule.cells.length;k++){ var i=Number(rule.cells[k]); if(i!==Math.floor(i) || i<0 || i>26) return null; if(!seen[i]){ seen[i]=true; out.push(i); } }
+      out.sort(function(a,b){ return a-b; });
+      return { type:"shape", cells:out };
+    }
+    return null;
+  }
+  function customWins(card, called, rule){
+    var r=ruleClean(rule); if(!r) return false;
+    function at(i){ return card[Math.floor(i/9)][i%9]; }
+    var i, n=0;
+    if(r.type==="any"){ for(i=0;i<27;i++){ if(at(i) && called[at(i)]) n++; } return n>=r.n; }
+    for(var k=0;k<r.cells.length;k++){ var v=at(r.cells[k]); if(!v) continue; n++; if(!called[v]) return false; }
+    return n>0;
+  }
+
   /* A REFUSAL IS NOT AN OUTAGE. A 4xx (signed out 401, paused 403, finished 409) is the server saying
      no; the tablet never stands in for that. 429 means wait. */
   function isRefusal(r){ return !!r && r.status>=400 && r.status<500 && r.status!==429; }
@@ -177,7 +205,7 @@
   root.VPDraw = Object.freeze({
     VERSION: VERSION,
     TABLET_FALLBACK_OFF_STATES: Object.freeze(TABLET_FALLBACK_OFF_STATES.slice()),
-    drawFromPool: drawFromPool, makeStrip: makeStrip, cardWins: cardWins,
+    drawFromPool: drawFromPool, makeStrip: makeStrip, cardWins: cardWins, ruleClean: ruleClean,
     isRefusal: isRefusal, standInAllowed: standInAllowed
   });
 })(typeof window !== "undefined" ? window : this);

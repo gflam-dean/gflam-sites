@@ -542,6 +542,14 @@
   function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
 
   var PATTERN_NAMES={one:"One line",two:"Two lines",full:"Full house",corners:"Four corners",top:"Top line",middle:"Middle line",bottom:"Bottom line"};
+  /* A venue's own pattern (24 Oct 2026) is the key "c:<id>", and every host message that names one carries
+     its name in pats. Kept here for the night; shown with textContent only, so a name is never markup. */
+  var PATS={};
+  function notePats(p){
+    if(!p || typeof p!=="object") return;
+    Object.keys(p).forEach(function(k){ if(/^c:[0-9a-fA-F-]{36}$/.test(k) && p[k] && typeof p[k].name==="string" && p[k].name) PATS[k]={ name:p[k].name.slice(0,30) }; });
+  }
+  function patName(k){ return PATTERN_NAMES[k] || (PATS[k] && PATS[k].name) || (/^c:/.test(String(k||"")) ? "Bingo" : (k||"")); }
 
   var CODE_ALPHABET="ACDEFGHJKMNPQRSTUVWXYZ2345679";
   var CODE_RE=/^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/;
@@ -1522,7 +1530,7 @@
     // the five before the current one, newest first
     for(var i=2;i<=6;i++){ var pi=state.called.length-i; if(pi>=0){ var d=document.createElement("div"); d.className="prevball"; d.textContent=state.called[pi]; prev.appendChild(d); } }
     $("tvBallCount").innerHTML="<b>"+state.called.length+"</b> of 90 called";
-    $("tvPattern").textContent=PATTERN_NAMES[state.pattern]||state.pattern;
+    $("tvPattern").textContent=patName(state.pattern);
     $("tvPrize").textContent=state.prize;
     updateBoard();
   }
@@ -1548,7 +1556,7 @@
     $("winSubPhone").style.display = paper ? "none" : "";
     $("winSubPaper").style.display = paper ? "" : "none";
     if(paper){
-      $("winName").textContent=PATTERN_NAMES[m.pattern]||"Bingo";
+      $("winName").textContent=patName(m.pattern)||"Bingo";
       $("winsLabel").textContent="Prize";
       $("winPrizeVal").textContent=(typeof m.prize==="string" && m.prize) ? m.prize : state.prize;
       return;
@@ -2109,6 +2117,7 @@
        dropped silently. It means the same thing as idle on this channel - the
        host has finished with the room - so it lands in the same place. */
     if(m.t==="idle" || m.t==="to_ads"){ state.caller=false; enterAds(); return; }   // the next bingo night says again whether it is real balls
+    if(m.pats) notePats(m.pats);   // the names of the venue's own patterns this message mentions
 
     if(m.t==="state"){
       if(tvMode==="bingo" && typeof m.caller==="boolean") state.caller=m.caller;   // a state heard on the ads (End game's last word) does not carry into the next night

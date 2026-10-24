@@ -229,6 +229,7 @@ function makeConsole(name, win) {
     'function go(){} function buildBoard(){} function renderConsole(){} function syncNextBtn(){} function clearCallGuards(){}' +
     'function sendState(){ send({ t:"state", active:(G.status==="running"), called:G.draw.slice() }); }' +
     'function sendClaimPending(){} function showToast(){} function renderClaimQueue(){} function announce(){}' +
+    'function attachPats(o){ return o; } function loadCustomPatterns(){}' +   // the venue's own patterns (24 Oct 2026): not this suite's subject
     'function postReport(){} function showNightCard(){ nights++; } function blockedByHold(){ return false; }' +
     'function showGameSelect(){ currentGame=""; menus++; }' +
     'function openLobbyNow(){ lobbiesOpened++; G.status="lobby"; send({ t:"mode", mode:"bingo" }); sendState(); saveGame(); }' +

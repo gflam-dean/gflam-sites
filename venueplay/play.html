@@ -516,6 +516,30 @@
   }
 
   var PATTERN_NAMES={one:"One line",two:"Two lines",full:"Full house",corners:"Four corners",top:"Top line",middle:"Middle line",bottom:"Bottom line"};
+  /* A venue's own pattern (24 Oct 2026) is the key "c:<id>"; the host's messages carry its name and rule in
+     pats. The rule here only lights BINGO and "one to go": the server judges every claim on the rule the
+     venue saved, whatever this phone holds. Names go on screen escaped or as text, never as markup. */
+  var PATS={};
+  function notePats(p){
+    if(!p || typeof p!=="object") return;
+    Object.keys(p).forEach(function(k){ var v=p[k]; if(/^c:[0-9a-fA-F-]{36}$/.test(k) && v && typeof v.name==="string" && v.name) PATS[k]={ name:v.name.slice(0,30), rule:v.rule||null }; });
+  }
+  function patName(k, dflt){ return PATTERN_NAMES[k] || (PATS[k] && PATS[k].name) || ((/^c:/.test(String(k||"")) && dflt===k) ? "Bingo" : (dflt || "")); }
+  // The cells of a custom rule this phone can use, or null. Same reading as VP-DRAW's ruleClean.
+  function customRule(k){
+    var r=PATS[k] && PATS[k].rule; if(!r) return null;
+    if(r.type==="any"){ var n=Number(r.n); return (n===Math.floor(n) && n>=1 && n<=15) ? { type:"any", n:n } : null; }
+    if(r.type==="shape" && Array.isArray(r.cells) && r.cells.length){ var c=r.cells.map(Number).filter(function(i){ return i===Math.floor(i) && i>=0 && i<=26; }); return c.length ? { type:"shape", cells:c } : null; }
+    return null;
+  }
+  // How many more numbers one ticket needs for a custom rule (0 = it is complete; 99 = it never can).
+  function customGap(cells,set,r){
+    var i,v,have=0,need=0;
+    if(r.type==="any"){ for(i=0;i<27;i++){ v=cells[Math.floor(i/9)][i%9]; if(v && set[v]) have++; } return Math.max(0, r.n-have); }
+    var miss=0;
+    for(i=0;i<r.cells.length;i++){ v=cells[Math.floor(r.cells[i]/9)][r.cells[i]%9]; if(!v) continue; need++; if(!set[v]) miss++; }
+    return need ? miss : 99;
+  }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
 
   var SUPA_URL='https://ijkzgmdtwtgfkedqspxm.supabase.co';
@@ -720,6 +744,7 @@
     return out;
   }
   function cardMeetsPattern(cells,set){
+    if(/^c:/.test(String(P.pattern||""))){ var cr=customRule(P.pattern); return !!cr && customGap(cells,set,cr)===0; }
     if(P.pattern==="top") return rowDone(set,cells,0);
     if(P.pattern==="middle") return rowDone(set,cells,1);
     if(P.pattern==="bottom") return rowDone(set,cells,2);
@@ -740,6 +765,7 @@
   // ---- near-win tension: how many more numbers until the pattern completes on the best ticket ----
   function rowMissing(set,cells,row){ var m=0; for(var c=0;c<9;c++){ var v=cells[row][c]; if(v && !set[v]) m++; } return m; }
   function cardShort(cells,set){
+    if(/^c:/.test(String(P.pattern||""))){ var cr=customRule(P.pattern); return cr ? customGap(cells,set,cr) : 99; }
     if(P.pattern==="top") return rowMissing(set,cells,0);
     if(P.pattern==="middle") return rowMissing(set,cells,1);
     if(P.pattern==="bottom") return rowMissing(set,cells,2);
@@ -845,7 +871,7 @@
         var sw2=(P.stageWins||[]).filter(function(w){ return w && w.pattern; });
         if(sw2.length){
           wa.innerHTML="You also won "+sw2.map(function(w){
-            return "<b>"+esc(PATTERN_NAMES[w.pattern]||"a line")+"</b>"+(w.prize?" ("+esc(w.prize)+")":"")+(w.cardNo?" on card #"+esc(String(w.cardNo)):"");
+            return "<b>"+esc(patName(w.pattern, "a line"))+"</b>"+(w.prize?" ("+esc(w.prize)+")":"")+(w.cardNo?" on card #"+esc(String(w.cardNo)):"");
           }).join(" and ")+" this game. Show the host all of them.";
           wa.classList.remove("hidden");
         } else { wa.classList.add("hidden"); wa.innerHTML=""; }
@@ -858,7 +884,7 @@
          punter walked away from a prize. Say both, the prize owed first. */
       var _owed=(P.stageWins||[]).filter(function(w){ return w && w.pattern; });
       var _owedHtml=_owed.length ? '<span class="owed" style="display:block;color:var(--win);font-weight:700;font-size:17px;margin-bottom:10px">You won '+
-        _owed.map(function(w){ return esc(PATTERN_NAMES[w.pattern]||"a line")+(w.cardNo?" on card #"+esc(String(w.cardNo)):""); }).join(" and ")+
+        _owed.map(function(w){ return esc(patName(w.pattern, "a line"))+(w.cardNo?" on card #"+esc(String(w.cardNo)):""); }).join(" and ")+
         ', see the host.</span>' : "";
       var ls=$("lostSub"); if(ls) ls.innerHTML = _owedHtml + (P.lostBy ? P.lostBy : "Good luck next round.");
       show("vLost"); askHowItWent("vLost"); return;
@@ -884,7 +910,7 @@
         : (P.active && !P.cards.length)
         ? "The game is on. Your tickets are on the way, hang on a moment."
         : (P.stageWins.length
-          ? "You won <b>"+esc(PATTERN_NAMES[P.stageWins[P.stageWins.length-1].pattern]||"a line")+"</b> last game (card #"+esc(String(P.stageWins[P.stageWins.length-1].cardNo||""))+"). See the host to collect. Your next ticket will appear here."
+          ? "You won <b>"+esc(patName(P.stageWins[P.stageWins.length-1].pattern, "a line"))+"</b> last game (card #"+esc(String(P.stageWins[P.stageWins.length-1].cardNo||""))+"). See the host to collect. Your next ticket will appear here."
           : "Waiting for the host to start the game. Your card will appear here.");
     }
     show("vWait");
@@ -944,7 +970,7 @@
   }
   function buildCards(){
     $("cardName").textContent=P.name;
-    $("cardPat").textContent=PATTERN_NAMES[P.pattern]||P.pattern;
+    $("cardPat").textContent=patName(P.pattern, P.pattern);
     var last=P.called.length ? P.called[P.called.length-1] : 0;
     $("lastCalled").innerHTML = lastCalledHtml();
     var set=calledSet();
@@ -1022,7 +1048,7 @@
     var set=calledSet(), lay=effectiveLayout();
     var curCol = (lay==="align" && last) ? colOfNum(last) : -1;
     $("cardName").textContent=P.name;
-    $("cardPat").textContent=PATTERN_NAMES[P.pattern]||P.pattern;
+    $("cardPat").textContent=patName(P.pattern, P.pattern);
     $("lastCalled").innerHTML = lastCalledHtml();
     setHeaderBall(last);
     var stack=$("cardStack");
@@ -1074,7 +1100,7 @@
      win now has its own pinned banner (renderStageWin); this line only says what is being
      played for. */
   function idleMsg(){
-    var pn=PATTERN_NAMES[P.pattern]||"the pattern";
+    var pn=patName(P.pattern, "the pattern");
     if(P.stageWins.length) return "Keep marking your numbers. You are now playing for <b>"+esc(pn)+"</b>.";
     return "Mark off your numbers as they are called. Hit BINGO when your ticket completes <b>"+esc(pn)+"</b>.";
   }
@@ -1082,14 +1108,14 @@
   function renderStageWin(){
     var box=$("stageWin"); if(!box) return;
     if(P.stageWins.length){
-      var w=P.stageWins[P.stageWins.length-1], pn=PATTERN_NAMES[w.pattern]||"a prize";
+      var w=P.stageWins[P.stageWins.length-1], pn=patName(w.pattern, "a prize");
       var h="<b>You won "+esc(pn)+"!</b>";
       h+="<span>See the host to collect"+(w.prize && w.prize!=="the prize" ? " <em>"+esc(w.prize)+"</em>" : "")+". Card #"+esc(String(w.cardNo||""))+"."+(w.shared && w.sharedWith && w.sharedWith.length ? " A tie, so it is shared with "+esc(nameList(w.sharedWith))+"." : "")+"</span>";
-      if(P.stageWins.length>1){ var earlier=P.stageWins.slice(0,-1).map(function(x){ return PATTERN_NAMES[x.pattern]||x.pattern; }); h+="<small>Also won tonight: "+esc(earlier.join(", "))+".</small>"; }
-      h+="<small>Keep playing for "+esc(PATTERN_NAMES[P.pattern]||"the next prize")+" on the same tickets.</small>";
+      if(P.stageWins.length>1){ var earlier=P.stageWins.slice(0,-1).map(function(x){ return patName(x.pattern, x.pattern); }); h+="<small>Also won tonight: "+esc(earlier.join(", "))+".</small>"; }
+      h+="<small>Keep playing for "+esc(patName(P.pattern, "the next prize"))+" on the same tickets.</small>";
       box.innerHTML=h; box.className="stagewin";
     } else if(P.stageNote){
-      box.innerHTML="<b>"+P.stageNote+"</b><span>Now playing for "+esc(PATTERN_NAMES[P.pattern]||"the next prize")+". Same tickets, keep marking.</span>";
+      box.innerHTML="<b>"+P.stageNote+"</b><span>Now playing for "+esc(patName(P.pattern, "the next prize"))+". Same tickets, keep marking.</span>";
       box.className="stagewin others";
     } else { box.className="stagewin hidden"; box.innerHTML=""; }
   }
@@ -1483,6 +1509,7 @@
     if(m && m.t==="started" && m.question_count!=null){ if(typeof VP_LOOK_NOW==="function") VP_LOOK_NOW(); return; }   // a console from before the tag
     if(m && m.t && PLAY_TYPES[m.t]) lastPlay = Date.now();
     if(!m||!m.t) return;
+    if(m.pats) notePats(m.pats);   // the venue's own patterns this message names
     /* A GAME HAS GONE ON AIR AND THIS PHONE IS ALREADY LISTENING.
 
        A punter who scans the permanent QR on the table sits on the VENUE channel. Every
@@ -1661,7 +1688,7 @@
       // The prize for THIS stage rides on the message (a host built after 9 Sep 2026 sends it).
       // An older host sends none, so the game prize stands in, exactly as before.
       var stagePrize = (typeof m.prize==="string" && m.prize) ? m.prize : P.prize;
-      var pn=PATTERN_NAMES[m.pattern]||"a prize";
+      var pn=patName(m.pattern, "a prize");
       if(m.cont){
         // a stage was won; the game plays on for the next prize with the same tickets
         if(m.next) P.pattern=m.next;

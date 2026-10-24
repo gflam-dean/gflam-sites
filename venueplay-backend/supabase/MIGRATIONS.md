@@ -342,3 +342,13 @@ hidden for SA and NT venues not recorded as a club; this switch, set only from H
 `venue_number_bingo_on` / `_off`), shows it again for a venue whose bingo is run by a not-for-profit. Musical bingo never reads
 it. Not security definer, no new policy or grant, so RLS-BASELINE.json does not change. Either order with the Workers is safe
 (both read the column fail-safe). Branch `feature/sant-bingo`. NOT RUN. Rollback: in the file.
+
+`venueplay-118-custom-bingo-patterns.sql` (Dean, 24 Oct 2026, after a Drag Bingo show played "any 5 numbers on the card"): a
+venue's own NAMED winning patterns for number bingo. New table `vp_bingo_patterns` (venue_id, name 1 to 30 characters, rule
+jsonb `{"type":"any","n":1..15}` or `{"type":"shape","cells":[0..26]}`, deleted_at kept so a game playing a deleted pattern is
+still judged on it); RLS on with no policy and anon/authenticated revoked (service role only). `vp_bingo_claims.pattern` may
+now be 'custom', with `custom_pattern_id` and `custom_pattern` (the name and rule the claim was judged on). Used by the game
+Worker `/host/bingo/patterns` (list, any staff), `/save` and `/delete` (owner, or a manager with games rights), and by
+VP-DRAW-1.2's claim rule. Either order with the Worker is safe: without the table the list answers available:false and the
+console shows no custom option. After running, dump RLS-BASELINE.json (one new locked table). Branch
+`feature/custom-bingo-patterns`. NOT RUN. Rollback: in the file.

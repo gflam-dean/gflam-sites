@@ -65,7 +65,7 @@ fetch = async function (url, opts) {
 CODE = fnvVenueCode('test-pub');
 DB = { vp_venues: [{ id: VENUE, name: 'Test Pub', slug: 'test-pub', status: 'active', join_code: CODE, au_state: 'QLD' }],
        vp_venue_groups: [], vp_venue_settings: [], vp_sessions: [], vp_players: [], vp_games: [], vp_cards: [], vp_claims: [],
-       vp_game_reports: [], vp_gaming_declarations: [], vp_bingo_draws: [], vp_bingo_draw_balls: [], vp_bingo_tickets: [], vp_bingo_claims: [] };
+       vp_game_reports: [], vp_gaming_declarations: [], vp_bingo_draws: [], vp_bingo_draw_balls: [], vp_bingo_tickets: [], vp_bingo_claims: [], vp_bingo_patterns: [] };
 var SESS = [];
 function openSession() {
   DB.vp_sessions.forEach(function (s) { if (s.status !== 'finished') s.status = 'finished'; });
@@ -97,6 +97,9 @@ async function worker(path, body, headers, who) {
     if (p === '/host/bingo/deal') return await handleBingoDeal(req, ENV, json);
     if (p === '/host/bingo/claim') return await handleBingoClaim(req, ENV, json);
     if (p === '/host/bingo/claim/resolve') return await handleBingoClaimResolve(req, ENV, json);
+    if (p === '/host/bingo/patterns') return await handleBingoPatternsList(req, ENV, json);
+    if (p === '/host/bingo/patterns/save') return await handleBingoPatternSave(req, ENV, json);
+    if (p === '/host/bingo/patterns/delete') return await handleBingoPatternDelete(req, ENV, json);
     return { status: 404, body: { error: 'not routed: ' + p } };
   } catch (e) { return { status: (e && e.status) || 500, body: { error: String(e && e.message) } }; }
 }
@@ -133,7 +136,7 @@ function bootHost3() {
   sb.fetch = pageFetch('host-page');
   var toasts = [];
   var ex = runPage(consoleScript(), sb, ["G", "startGame", "openLobby", "newGame", "endGame", "onMsg", "nextBall",
-    "hostConfirm", "hostReject", "keepPlaying", "finishGame", "dealSoon", "checkPattern", "renderClaimQueue", "showToast"]);
+    "hostConfirm", "hostReject", "keepPlaying", "finishGame", "dealSoon", "checkPattern", "renderClaimQueue", "showToast", "loadCustomPatterns", "CUSTOM"]);
   ex.dom = dom; ex.sb = sb; ex.$ = function (id) { return dom.document.getElementById(id); };
   return ex;
 }
@@ -420,6 +423,41 @@ function frontOfDraw(numbers) {
   host.endGame(); await advance(3000);
   host.$('callerChk').checked = false;
 
+  print('GAME FIVE: phones play the venue\'s own pattern, "Any 3 numbers"');
+  DB.vp_bingo_patterns.push({ id: 'cccccccc-0000-4000-8000-000000000003', venue_id: VENUE, name: 'Any 3 & up', rule: { type: 'any', n: 3 }, deleted_at: null, created_at: '2026-10-24T00:00:00Z' });
+  host.loadCustomPatterns(); await drain(); await advance(500);
+  check('the console loads the venue\'s patterns and may edit them', host.CUSTOM.available === true && host.CUSTOM.canEdit === true && host.CUSTOM.list.length === 1, host.CUSTOM);
+  var K3 = 'c:cccccccc-0000-4000-8000-000000000003';
+  host.$('prizeInput').value = 'Jug'; host.$('patternSel').value = K3; host.$('cardsSel').value = '1'; host.$('paidSel').value = '';
+  host.openLobby(); await advance(9000);
+  host.startGame(); await advance(3000);
+  var D6 = lastDraw().id;
+  check('every phone is told the pattern by its key, with its name, and shows the name', phones.every(function (ph) { return ph.P.pattern === K3; }) &&
+        ann.$('cardPat').textContent === 'Any 3 & up', [ann.P.pattern, ann.$('cardPat').textContent]);
+  var started = hostSaid('started').pop();
+  check('the start message carries the name and rule, so a phone or TV needs nothing else', !!(started && started.p.pats && started.p.pats[K3] && started.p.pats[K3].name === 'Any 3 & up' && started.p.pats[K3].rule.n === 3), started && started.p);
+  var annNums = nums(ann.P.cards[0].cells), bobNums = nums(bob.P.cards[0].cells);
+  var pick = annNums.filter(function (n) { return bobNums.indexOf(n) < 0; }).slice(0, 3);
+  frontOfDraw(pick);
+  await callBalls(host, 2);
+  bob.P.allowEarly = true;   // early calls on: his phone presses anyway, so the server is asked
+  bob.pressBingo(); await drain(); await advance(3000);
+  var bobClaim = lastClaim(bob.P.pid);
+  check('Bob presses BINGO with none of the three: the server says not yet, on the custom rule', bobClaim && bobClaim.draw_id === D6 && bobClaim.pattern === 'custom' && bobClaim.verdict === 'not_yet', bobClaim);
+  host.G.claims.slice().forEach(function () { host.hostReject(0); }); await advance(500); bob.P.allowEarly = false;
+  await callBalls(host, 1);
+  ann.pressBingo(); await drain(); await advance(3000);
+  var annClaim = lastClaim(ann.P.pid);
+  check('Ann has three called: the server judges it a win on "Any 3 & up" and the console offers Confirm',
+        annClaim && annClaim.draw_id === D6 && annClaim.pattern === 'custom' && annClaim.verdict === 'win' && annClaim.custom_pattern.name === 'Any 3 & up' && /Ann/.test(queueHtml(host)) && !confirmDisabled(host),
+        [annClaim, queueHtml(host).slice(0, 200)]);
+  check('the claim card names the pattern, escaped', /Any 3 &amp; up/.test(queueHtml(host)) && !/Any 3 & up/.test(queueHtml(host)), queueHtml(host).slice(0, 300));
+  host.hostConfirm(0); await advance(300);
+  host.finishGame(); await advance(500);
+  var win = hostSaid('winner').pop();
+  check('the winner message names the custom pattern and carries its name', win && win.p.pattern === K3 && win.p.pats && win.p.pats[K3].name === 'Any 3 & up', win && win.p);
+  host.endGame(); await advance(3000);
+
   print('the Worker\'s own rules, asked directly');
   var D5 = (await worker('/host/bingo/draw', { venue_id: VENUE, session_id: SESS[SESS.length - 1] }, {}, 'direct')).body.draw_id;
   var annDid = ann.dom.localStorage.getItem('vpDeviceId');
@@ -444,6 +482,116 @@ function frontOfDraw(numbers) {
         DB.vp_bingo_draws.filter(function (d) { return d.id === D5; })[0].mode === 'local', c3.body);
   var c4 = await worker('/host/bingo/claim', { draw_id: D5, ref: 'ref-direct-3', pid: ann.P.pid, card_no: 99999, pattern: 'top', balls: 5 }, {}, 'direct');
   check('a claim on a number they do not hold is checked on the ticket of theirs that wins, and says so', c4.body.verdict === 'win' && c4.body.swapped === true && c4.body.card_no === t0.card_no, c4.body);
+
+
+  print('A VENUE\'S OWN PATTERNS (24 Oct 2026): the rule, the same on the server and the tablet');
+  (function () {
+    var box = {}; (new Function('window', 'crypto', readFile('venueplay/app/vp-draw.js')))(box, globalThis.crypto);
+    var disagree = [], wins = 0, losses = 0;
+    for (var k = 0; k < 1500; k++) {
+      var t = generateStrip()[k % 6], set = new Set(), called = {}, rule;
+      if (k % 2) rule = { type: 'any', n: 1 + (k % 15) };
+      else { var cs = []; for (var i = 0; i < 27; i++) if (Math.random() < 0.25) cs.push(i); if (!cs.length) cs.push(k % 27); rule = { type: 'shape', cells: cs }; }
+      nums(t).forEach(function (v) { if (Math.random() < 0.7) { set.add(v); called[v] = true; } });
+      var s1 = bingoTicketWins(t, set, 'custom', rule).win, s2 = !!box.VPDraw.cardWins(rows3(t), called, 'custom', rule);
+      if (s1) wins++; else losses++;
+      if (s1 !== s2 && disagree.length < 3) disagree.push({ rule: rule, t: t, server: s1, console: s2 });
+    }
+    check('the server and the console agree on custom any-N and shape rules over 1,500 tickets (wins ' + wins + ', not yet ' + losses + ')', !disagree.length && wins > 200 && losses > 200, disagree);
+    var tk = generateStrip()[0], five = nums(tk).slice(0, 5), s5 = new Set(five);
+    check('any 5: exactly five of the ticket\'s numbers called is a win, four is not', bingoTicketWins(tk, s5, 'custom', { type: 'any', n: 5 }).win === true &&
+          bingoTicketWins(tk, new Set(five.slice(0, 4)), 'custom', { type: 'any', n: 5 }).win === false);
+    var top = []; for (var c = 0; c < 9; c++) if (tk[c]) top.push(c);
+    var topNums = top.map(function (i) { return tk[i]; });
+    check('a shape is every number in its squares; a blank square in the shape counts as done', bingoTicketWins(tk, new Set(topNums), 'custom', { type: 'shape', cells: [0, 1, 2, 3, 4, 5, 6, 7, 8] }).win === true &&
+          bingoTicketWins(tk, new Set(topNums.slice(1)), 'custom', { type: 'shape', cells: [0, 1, 2, 3, 4, 5, 6, 7, 8] }).win === false);
+    var blanks = []; for (var b = 0; b < 27; b++) if (!tk[b]) blanks.push(b);
+    check('a shape that falls only on blank squares of a ticket never wins on it', bingoTicketWins(tk, new Set(nums(tk)), 'custom', { type: 'shape', cells: blanks }).win === false &&
+          box.VPDraw.cardWins(rows3(tk), {}, 'custom', { type: 'shape', cells: blanks }) === false);
+    check('a rule outside the two shapes is never a win (any 0, any 16, an empty shape, a square off the ticket)',
+          [{ type: 'any', n: 0 }, { type: 'any', n: 16 }, { type: 'shape', cells: [] }, { type: 'shape', cells: [27] }, { type: 'line' }, null].every(function (r) {
+            return bingoTicketWins(tk, new Set(nums(tk)), 'custom', r).win === false && box.VPDraw.cardWins(rows3(tk), {}, 'custom', r) === false; }));
+    var calledAll = {}; nums(tk).forEach(function (v) { calledAll[v] = true; });
+    check('BUILT-INS UNCHANGED: a full ticket still wins all seven, and a custom rule passed beside a built-in is ignored',
+          ['one', 'two', 'full', 'top', 'middle', 'bottom', 'corners'].every(function (p) { return bingoTicketWins(tk, new Set(nums(tk)), p, { type: 'any', n: 1 }).win === true; }) &&
+          bingoTicketWins(tk, new Set([tk[top[0]]]), 'one', { type: 'any', n: 1 }).win === false);
+  })();
+
+  print('saving, listing and deleting a venue\'s patterns');
+  var sv = await worker('/host/bingo/patterns/save', { venue_id: VENUE, name: '  Any 5   numbers ', rule: { type: 'any', n: 5 } }, {}, 'direct');
+  var PAT5 = sv.body && sv.body.pattern;
+  check('an owner saves "Any 5 numbers": tidied name, the rule as saved, on the venue\'s own row', sv.status === 200 && PAT5 && PAT5.name === 'Any 5 numbers' && PAT5.rule.type === 'any' && PAT5.rule.n === 5 &&
+        DB.vp_bingo_patterns.filter(function (r) { return r.id === PAT5.id && r.venue_id === VENUE; }).length === 1, sv);
+  var lst = await worker('/host/bingo/patterns', { venue_id: VENUE }, {}, 'direct');
+  var NPAT = DB.vp_bingo_patterns.length;
+  check('the list gives it back, and says custom patterns are on and this login may edit them', lst.status === 200 && lst.body.available === true && lst.body.can_edit === true &&
+        lst.body.patterns.length === NPAT && lst.body.patterns.some(function (x) { return x.id === PAT5.id && x.name === 'Any 5 numbers'; }), lst.body);
+  var bads = [
+    [{ venue_id: VENUE, name: '', rule: { type: 'any', n: 5 } }, 400, 'no name'],
+    [{ venue_id: VENUE, name: 'x'.repeat(31), rule: { type: 'any', n: 5 } }, 400, 'a 31 character name'],
+    [{ venue_id: VENUE, name: 'one LINE', rule: { type: 'any', n: 5 } }, 400, 'a built-in name'],
+    [{ venue_id: VENUE, name: 'Sixteen', rule: { type: 'any', n: 16 } }, 400, 'any 16'],
+    [{ venue_id: VENUE, name: 'Empty', rule: { type: 'shape', cells: [] } }, 400, 'an empty shape'],
+    [{ venue_id: VENUE, name: 'any 5 NUMBERS', rule: { type: 'any', n: 3 } }, 409, 'a name already saved'] ];
+  var badOut = [];
+  for (var bi = 0; bi < bads.length; bi++) { var rb = await worker('/host/bingo/patterns/save', bads[bi][0], {}, 'direct'); if (rb.status !== bads[bi][1]) badOut.push([bads[bi][2], rb.status]); }
+  check('refused, each with its reason: no name, over 30 characters, a built-in name, any 16, an empty shape, a name already saved', !badOut.length && DB.vp_bingo_patterns.length === NPAT, badOut);
+  var _rs = requireStaff;
+  requireStaff = async function (env, uid, venueId) { return { id: 'staff-2', role: 'host', venue_id: venueId, auth_user_id: uid }; };
+  var hs = await worker('/host/bingo/patterns/save', { venue_id: VENUE, name: 'Host made', rule: { type: 'any', n: 2 } }, {}, 'direct');
+  var hl = await worker('/host/bingo/patterns', { venue_id: VENUE }, {}, 'direct');
+  var hd = await worker('/host/bingo/patterns/delete', { venue_id: VENUE, id: PAT5.id }, {}, 'direct');
+  requireStaff = async function (env, uid, venueId) { return { id: 'staff-3', role: 'manager', venue_id: venueId, auth_user_id: uid, permissions: { draws_raffles: false } }; };
+  var ms = await worker('/host/bingo/patterns/save', { venue_id: VENUE, name: 'Manager made', rule: { type: 'any', n: 2 } }, {}, 'direct');
+  requireStaff = _rs;
+  check('a host can pick a saved pattern but not save or delete one; nor can a manager whose owner switched games rights off',
+        hs.status === 403 && hd.status === 403 && hl.status === 200 && hl.body.can_edit === false && hl.body.patterns.length === NPAT && ms.status === 403 && DB.vp_bingo_patterns.length === NPAT && DB.vp_bingo_patterns.every(function (x) { return !x.deleted_at; }),
+        [hs.status, hd.status, hl.body && hl.body.can_edit, ms.status]);
+
+  print('custom claims, judged by the server on the venue\'s saved rule');
+  var CV = '55555555-5555-4555-8555-555555555555';
+  var shapeTop = [], shapeMid = [];
+  for (var q = 0; q < 9; q++) { if (t0.cells[0][q]) shapeTop.push(q); if (t0.cells[1][q]) shapeMid.push(9 + q); }
+  DB.vp_bingo_patterns.push({ id: 'cccccccc-0000-4000-8000-000000000006', venue_id: VENUE, name: 'Any 6 numbers', rule: { type: 'any', n: 6 }, deleted_at: null },
+                           { id: 'cccccccc-0000-4000-8000-000000000001', venue_id: VENUE, name: 'Top shape', rule: { type: 'shape', cells: shapeTop }, deleted_at: null },
+                           { id: 'cccccccc-0000-4000-8000-000000000002', venue_id: VENUE, name: 'Top and one more', rule: { type: 'shape', cells: shapeTop.concat([shapeMid[0]]) }, deleted_at: null },
+                           { id: 'cccccccc-0000-4000-8000-000000000009', venue_id: CV, name: 'Elsewhere', rule: { type: 'any', n: 1 }, deleted_at: null });
+  async function cclaim(ref, id, extra) {
+    return worker('/host/bingo/claim', Object.assign({ draw_id: D5, ref: ref, pid: ann.P.pid, card_no: t0.card_no, pattern: 'custom', custom_id: id, balls: 5 }, extra || {}), {}, 'direct');
+  }
+  var k1 = await cclaim('ref-cust-001', PAT5.id);
+  var k1row = DB.vp_bingo_claims.filter(function (c) { return c.ref === 'ref-cust-001'; })[0] || {};
+  check('any 5 numbers: the five called on the ticket win, and the claim keeps the name and rule it was judged on', k1.status === 200 && k1.body.verdict === 'win' && k1.body.winning_cells.length === 5 &&
+        k1row.pattern === 'custom' && k1row.custom_pattern_id === PAT5.id && k1row.custom_pattern && k1row.custom_pattern.name === 'Any 5 numbers' && k1row.custom_pattern.rule.n === 5, [k1.body, k1row]);
+  var k2 = await cclaim('ref-cust-002', 'cccccccc-0000-4000-8000-000000000006');
+  check('any 6 numbers on the same five balls: not yet', k2.status === 200 && k2.body.verdict === 'not_yet', k2.body);
+  var k3 = await cclaim('ref-cust-003', 'cccccccc-0000-4000-8000-000000000001');
+  check('a shape over the top row: every number in it called, a win', k3.status === 200 && k3.body.verdict === 'win' && k3.body.winning_cells.length === 5, k3.body);
+  var k4 = await cclaim('ref-cust-004', 'cccccccc-0000-4000-8000-000000000002');
+  check('the same shape plus one middle-row square not called: not yet', k4.status === 200 && k4.body.verdict === 'not_yet', k4.body);
+  var k5 = await cclaim('ref-cust-005', 'cccccccc-0000-4000-8000-000000000006', { custom_rule: { type: 'any', n: 1 } });
+  var k5row = DB.vp_bingo_claims.filter(function (c) { return c.ref === 'ref-cust-005'; })[0] || {};
+  check('A STALE OR DOCTORED CONSOLE: it says the rule is any 1; the server judges any 6 as saved, not yet, and notes the disagreement',
+        k5.status === 200 && k5.body.verdict === 'not_yet' && /different rule/.test(k5row.record_note || ''), [k5.body, k5row.record_note]);
+  var k6 = await cclaim('ref-cust-006', 'cccccccc-0000-4000-8000-000000000009');
+  var k7 = await cclaim('ref-cust-007', '');
+  check('another venue\'s pattern, or none named, is refused and nothing is recorded', k6.status === 400 && k7.status === 400 &&
+        DB.vp_bingo_claims.filter(function (c) { return c.ref === 'ref-cust-006' || c.ref === 'ref-cust-007'; }).length === 0, [k6, k7]);
+  var c1row = DB.vp_bingo_claims.filter(function (c) { return c.ref === 'ref-direct-1'; })[0] || {};
+  check('BUILT-INS UNCHANGED: a claim on a built-in pattern writes no custom fields at all', !('custom_pattern' in c1row) && !('custom_pattern_id' in c1row) && c1row.pattern === 'top', Object.keys(c1row));
+  var dl = await worker('/host/bingo/patterns/delete', { venue_id: VENUE, id: PAT5.id }, {}, 'direct');
+  var lst2 = await worker('/host/bingo/patterns', { venue_id: VENUE }, {}, 'direct');
+  var k8 = await cclaim('ref-cust-008', PAT5.id);
+  check('delete takes it off the list, and a game still playing it is judged on it', dl.status === 200 && dl.body.deleted === true &&
+        lst2.body.patterns.every(function (p) { return p.id !== PAT5.id; }) && k8.body.verdict === 'win', [dl.body, lst2.body.patterns.length, k8.body]);
+
+  print('before migration 118 is run');
+  var _f2 = fetch;
+  fetch = async function (url, opts) { if (/\/rest\/v1\/vp_bingo_patterns/.test(String(url))) return resp(404, { code: 'PGRST205', message: 'Could not find the table public.vp_bingo_patterns in the schema cache' }); return _f2(url, opts); };
+  var nl = await worker('/host/bingo/patterns', { venue_id: VENUE }, {}, 'direct');
+  var ns = await worker('/host/bingo/patterns/save', { venue_id: VENUE, name: 'Too soon', rule: { type: 'any', n: 2 } }, {}, 'direct');
+  fetch = _f2;
+  check('the list answers "not on yet" (not an error) and nothing can be saved', nl.status === 200 && nl.body.available === false && nl.body.can_edit === false && nl.body.patterns.length === 0 && ns.status === 409, [nl, ns.status]);
 
   print('where bingo is played on paper');
   var VIC = '44444444-4444-4444-8444-444444444444';

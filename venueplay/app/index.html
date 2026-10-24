@@ -267,6 +267,19 @@
                 color:#fff;font-weight:800}
   .hidden{display:none!important}
 
+  /* A venue's own winning patterns (24 Oct 2026): the editor, and Edit beside the pattern list. */
+  .patedit{display:none;margin-top:6px;gap:8px;flex-wrap:wrap}
+  .patedit.on{display:flex}
+  .patedit button{min-height:36px;padding:6px 12px;font-size:13px;width:auto}
+  .cprule{display:flex;align-items:flex-start;gap:10px;margin:10px 0 0;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--ink-3);cursor:pointer;color:var(--text);font-size:14px;line-height:1.4}
+  .cprule input[type=radio]{width:20px!important;height:20px;margin:1px 0 0!important;flex:none;accent-color:var(--pink)}
+  .cprule:has(input:checked){border-color:var(--pink);background:rgba(255,31,142,.08)}
+  .cprule select{width:auto;min-width:76px;margin-top:6px}
+  .cpgrid{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:4px;margin-top:8px}
+  .cpgrid button{aspect-ratio:1/1;min-height:28px;padding:0;border-radius:6px;border:1px solid var(--line);background:var(--ink-2);cursor:pointer;touch-action:manipulation}
+  .cpgrid button.on{background:var(--pink);border-color:var(--pink)}
+  .cpnote{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.45}
+  .cperr{font-size:13px;color:#FF8C8C;margin-top:10px;min-height:1em}
   /* ---- Shared console classes (design review, 1 Oct 2026; moved 16 Oct 2026) ----
      What used to be the same style="" attribute on every console, so a size is set once
      and cannot drift between pages. This block is identical on all five consoles.
@@ -485,6 +498,7 @@
               <option value="middle">Middle line</option>
               <option value="bottom">Bottom line</option>
             </select>
+            <div class="patedit" id="patEditRow"><button type="button" class="btn ghost" id="patEditBtn">Edit this pattern</button></div>
           </div>
           <div class="field">
             <label>Prize</label>
@@ -542,6 +556,12 @@
             <div class="prevballs" id="livePrev"></div>
           </div>
           <div class="prizeline2" id="prizeLine2">Playing for <b>the prize</b></div>
+          <!-- New game tapped by mistake (Dean, 24 Oct 2026): until the first number of the new game is
+               called, one tap puts the last game back exactly as it was. Real balls only; see undoNewGame. -->
+          <div id="undoNewGameBox" style="display:none;margin:0 0 12px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--ink-3)">
+            <button type="button" class="btn ghost big" id="undoNewGameBtn" style="width:100%">Back to the last game</button>
+            <div class="note" style="margin-top:6px;font-size:12.5px;color:var(--muted)">Started a new game by mistake? Nothing has been called yet, so the last game comes back with its numbers, pattern and prize.</div>
+          </div>
           <button class="btn pink big" id="nextBtn">Next number</button>
           <div id="callerBlock">
             <div class="callerhead">
@@ -620,13 +640,37 @@
         <option value="top">Top line</option>
         <option value="middle">Middle line</option>
         <option value="bottom">Bottom line</option>
-      </select></div>
+      </select>
+      <div class="patedit" id="ngEditRow"><button type="button" class="btn ghost" id="ngEditBtn">Edit this pattern</button></div></div>
     <div class="field"><label for="ngPrize">Prize</label>
       <input type="text" class="hostinput" id="ngPrize" placeholder="e.g. $50 bar tab"></div>
     <div class="vp-row" style="margin-top:6px">
       <button type="button" id="ngGo" class="btn pink big vp-grow">Deal tickets</button>
       <button type="button" id="ngCancel" class="btn ghost big vp-auto">Cancel</button>
     </div>
+  </div>
+</div>
+<!-- A venue's own winning pattern (Dean, 24 Oct 2026): a name the room sees, and a rule. Opened from
+     "Custom pattern..." in any pattern list, or Edit beside it. Saved for the venue by the game Worker. -->
+<div id="cpModal" class="hidden vp-modal">
+  <div class="vp-modal-box" style="max-height:92vh;overflow:auto">
+    <div class="vp-h" id="cpTitle" style="margin-bottom:6px">New pattern</div>
+    <div class="field"><label for="cpName">Name (shown on the TV and phones)</label>
+      <input type="text" class="hostinput" id="cpName" maxlength="30" placeholder="e.g. Any 5 numbers" autocomplete="off"></div>
+    <div style="font-size:13px;color:var(--muted);margin-top:4px">How do they win?</div>
+    <label class="cprule" for="cpAny"><input type="radio" name="cpRule" id="cpAny" value="any" checked>
+      <span><b>Any numbers on the ticket</b><br>
+        <select id="cpN" aria-label="How many numbers"></select>
+        <span class="cpnote" style="display:block">Any of their numbers, anywhere on one ticket.</span></span></label>
+    <label class="cprule" for="cpShape"><input type="radio" name="cpRule" id="cpShape" value="shape">
+      <span style="flex:1;min-width:0"><b>A shape</b><span class="cpnote" style="display:block;margin-top:2px">Tap the squares that make the shape. Every number in those squares on one ticket must be called. A square that is blank on someone's ticket counts as done.</span>
+        <span class="cpgrid" id="cpGrid" role="group" aria-label="The ticket, 3 rows of 9"></span></span></label>
+    <div class="cperr" id="cpErr" role="alert"></div>
+    <div class="vp-row" style="margin-top:8px">
+      <button type="button" id="cpSave" class="btn pink big vp-grow">Save pattern</button>
+      <button type="button" id="cpCancel" class="btn ghost big vp-auto">Cancel</button>
+    </div>
+    <button type="button" id="cpDelete" class="btn ghost" style="margin-top:10px;width:100%;display:none">Delete this pattern</button>
   </div>
 </div>
 <!-- End of night: one card with what happened, shown after End game -->
@@ -722,7 +766,7 @@
   }
   // Sign every host broadcast (migrations 38/49) so a screen in enforce mode drops any forged copy.
   // signSend is order-preserving and degrades to an unsigned send if the key is not loaded yet.
-  function send(obj){ if(window.VPSign){ VPSign.signSend(obj, rawSend); } else { rawSend(obj); } }
+  function send(obj){ attachPats(obj); if(window.VPSign){ VPSign.signSend(obj, rawSend); } else { rawSend(obj); } }
   function flushQueue(){
     while(sendQueue.length && (ch || _room)){
       var p=sendQueue.shift();
@@ -1346,6 +1390,7 @@
   // ================= GAME STATE (bingo) =================
   var G={
     code:"", status:"setup", pattern:"one", prize:"the prize", defaultCards:1, allowEarly:false,
+    pats:{},               // the venue's own patterns this night has played: "c:<id>" -> {name, rule}. See patInfo.
     caller:false,          // real balls (caller mode): the operator taps each ball, no phone tickets. See callerCall.
     callerWin:null,        // real balls: the win on the TV right now, {pattern, prize, wid}, until Back to the game. See callerWinner.
     paidMode:"",           // "" free | "card" | "sheet". Set once at setup, holds for the night.
@@ -1367,16 +1412,191 @@
      of dropping them back on the menu with nothing. Saved with the game, so a reload keeps it. */
   var NIGHT={ games:0, peak:0, prizes:[], startedAt:null };
   function nightReset(){ NIGHT={ games:0, peak:0, prizes:[], startedAt:new Date().toISOString() }; }
-  function nightNote(){
+  function nightNote(src){
     // Called when a game closes (New game or End game). A game counts once it has started.
-    if(!G.startedAt) return;
+    var g=src||G;
+    if(!g.startedAt) return;
     NIGHT.games+=1;
-    NIGHT.peak=Math.max(NIGHT.peak||0, G.peak||0, playerCount());
-    (G.prizesWon||[]).forEach(function(w){ NIGHT.prizes.push(w); });
+    NIGHT.peak=Math.max(NIGHT.peak||0, g.peak||0, playerCount());
+    (g.prizesWon||[]).forEach(function(w){ NIGHT.prizes.push(w); });
   }
   // the natural next prize in a progressive housie game (line -> two lines -> full house)
   function nextPattern(cur){ if(cur==="one") return "two"; if(cur==="two") return "full"; if(cur==="full") return ""; return "full"; }
   var ALL_PATTERNS=[["one","One line"],["two","Two lines"],["full","Full house"],["corners","Four corners"],["top","Top line"],["middle","Middle line"],["bottom","Bottom line"]];
+
+  /* ---- A VENUE'S OWN WINNING PATTERNS (Dean, 24 Oct 2026, after a Drag Bingo show played "any 5 numbers") ----
+     Saved per venue by the game Worker (/host/bingo/patterns, migration 118). A saved pattern is the key
+     "c:<id>" everywhere a built-in key ("one") goes: G.pattern, the claim, the win, the broadcast. Its
+     name and rule travel with the game in G.pats, which is saved with the game, so a reload or a pattern
+     deleted mid-game still names and checks what the room is playing. The SERVER judges a phone claim on
+     the rule saved for the venue (VP-DRAW customTicketWins), never on the one this console holds. Until
+     migration 118 is run the list answers available:false and none of this shows. */
+  var CUSTOM={ available:false, canEdit:false, list:[], loaded:false };
+  var NEW_PAT="__newpat";
+  function isCustomKey(k){ return /^c:[0-9a-fA-F-]{36}$/.test(String(k||"")); }
+  function customById(k){ for(var i=0;i<CUSTOM.list.length;i++){ if("c:"+CUSTOM.list[i].id===k) return CUSTOM.list[i]; } return null; }
+  function patInfo(k){ if(!isCustomKey(k)) return null; var c=customById(k); if(c) return { name:c.name, rule:c.rule }; return (G.pats && G.pats[k]) || null; }
+  // The name of any pattern, built-in or the venue's own, as the room reads it. Text: escape it into HTML.
+  function patName(k){ if(PATTERN_NAMES[k]) return PATTERN_NAMES[k]; var i=patInfo(k); return i ? i.name : (isCustomKey(k) ? "Custom pattern" : ""); }
+  // Remember a custom pattern with the game the moment it is chosen, so the name and rule stay with it.
+  function rememberPat(k){ var c=isCustomKey(k) && customById(k); if(c){ (G.pats||(G.pats={}))[k]={ name:c.name, rule:c.rule }; } }
+  // The pattern part of a claim as the server reads it: a built-in key, or "custom" with WHICH one.
+  function patWire(k){ if(!isCustomKey(k)) return { pattern:k }; var i=patInfo(k); return { pattern:"custom", custom_id:k.slice(2), custom_rule:(i ? i.rule : null) }; }
+  function patLook(k){
+    var i=patInfo(k); if(!i || !i.rule) return "";
+    return i.rule.type==="any" ? ("any "+i.rule.n+" number"+(i.rule.n===1?"":"s")+" on one ticket") : "every number in the shape on one ticket";
+  }
+  // Every broadcast that names a custom pattern carries its name and rule, so the TV and the phones never need to ask.
+  function attachPats(obj){
+    if(!obj || typeof obj!=="object") return obj;
+    var keys=[obj.pattern, obj.next].filter(isCustomKey);
+    if(!keys.length) return obj;
+    var pats={}; keys.forEach(function(k){ var i=patInfo(k); if(i) pats[k]={ name:String(i.name).slice(0,30), rule:i.rule }; });
+    obj.pats=pats; return obj;
+  }
+  /* The lists. The seven built-in options in the page are never touched: the venue's own go after them,
+     then "Custom pattern..." for an owner or manager. exclude leaves one out (the pattern just won). */
+  function customOptionsHtml(selected, exclude){
+    var h="", i, k;
+    for(i=0;i<CUSTOM.list.length;i++){ k="c:"+CUSTOM.list[i].id; if(k===exclude) continue; h+='<option value="'+esc(k)+'"'+(k===selected?" selected":"")+' data-custom="1">'+esc(CUSTOM.list[i].name)+'</option>'; }
+    if(CUSTOM.available && CUSTOM.canEdit) h+='<option value="'+NEW_PAT+'" data-custom="1">Custom pattern...</option>';
+    return h;
+  }
+  function fillPatternSelect(sel){
+    if(!sel) return;
+    var keep=sel.value;
+    [].slice.call(sel.querySelectorAll('option[data-custom]')).forEach(function(o){ o.parentNode.removeChild(o); });
+    // A pattern this game is playing that the list no longer holds (deleted mid-game) stays choosable under its own name.
+    var extra="";
+    if(isCustomKey(keep) && !customById(keep) && patInfo(keep)) extra='<option value="'+esc(keep)+'" data-custom="1">'+esc(patInfo(keep).name)+'</option>';
+    if(sel.insertAdjacentHTML) sel.insertAdjacentHTML("beforeend", extra+customOptionsHtml(keep, ""));
+    sel.value = (keep && sel.querySelector('option[value="'+keep.replace(/"/g,"")+'"]')) ? keep : (sel.value||"one");
+    sel._prev=sel.value;
+    syncPatEdit();
+  }
+  function syncPatEdit(){
+    [["patternSel","patEditRow"],["ngPattern","ngEditRow"]].forEach(function(x){
+      var sel=$(x[0]), row=$(x[1]); if(!sel || !row) return;
+      row.classList.toggle("on", !!(CUSTOM.canEdit && isCustomKey(sel.value) && customById(sel.value)));
+    });
+  }
+  function loadCustomPatterns(){
+    var v=__ctx && __ctx.venue;
+    if(!v || !v.id || !(window.VP && VP.gameApiCall)) return Promise.resolve(false);
+    return VP.gameApiCall("/host/bingo/patterns", { venue_id:v.id }, 6000).then(function(r){
+      var j=r && r.json;
+      if(!(r && r.status===200 && j)) return false;
+      CUSTOM.available=!!j.available; CUSTOM.canEdit=!!(j.available && j.can_edit); CUSTOM.loaded=true;
+      CUSTOM.list=Array.isArray(j.patterns) ? j.patterns.filter(function(x){ return x && x.id && x.name && x.rule; }) : [];
+      fillPatternSelect($("patternSel")); fillPatternSelect($("ngPattern"));
+      if(G.status==="running") renderClaimQueue();
+      return true;
+    }, function(){ return false; });
+  }
+  // The pattern list's own change: "Custom pattern..." opens the editor and the list keeps its last real choice.
+  function patternPicked(sel, after){
+    if(!sel) return;
+    if(sel.value===NEW_PAT){
+      var back=sel._prev||"one"; sel.value=back;
+      openPatternEditor(null, function(k){ fillPatternSelect(sel); sel.value=k; sel._prev=k; rememberPat(k); syncPatEdit(); if(after) after(); });
+      return;
+    }
+    sel._prev=sel.value; rememberPat(sel.value); syncPatEdit();
+    if(after) after();
+  }
+  /* THE EDITOR. Name (required, 30 characters), and a rule: any N numbers (1 to 15), or a shape on the
+     3x9 ticket. edit is a saved pattern, or null for a new one. done(key) runs after a save. */
+  var _cp={ edit:null, done:null, cells:{}, delArm:0 };
+  function cpGridBuild(){
+    var g=$("cpGrid"); if(!g || g._built) return;
+    var h=""; for(var i=0;i<27;i++) h+='<button type="button" data-cell="'+i+'" aria-pressed="false" aria-label="Row '+(Math.floor(i/9)+1)+', column '+(i%9+1)+'"></button>';
+    g.innerHTML=h; g._built=true;
+    g.addEventListener("click", function(e){
+      var b=e.target.closest && e.target.closest("button[data-cell]"); if(!b) return;
+      e.preventDefault();
+      var i=parseInt(b.getAttribute("data-cell"),10); _cp.cells[i]=!_cp.cells[i];
+      $("cpShape").checked=true; cpGridPaint();
+    });
+    var n=$("cpN"), o=""; for(var k=1;k<=15;k++) o+='<option value="'+k+'">'+k+' number'+(k===1?"":"s")+'</option>'; n.innerHTML=o;
+    n.addEventListener("change", function(){ $("cpAny").checked=true; });
+  }
+  function cpGridPaint(){ var bs=$("cpGrid").querySelectorAll("button[data-cell]"); for(var i=0;i<bs.length;i++){ var on=!!_cp.cells[i]; bs[i].classList.toggle("on", on); bs[i].setAttribute("aria-pressed", on?"true":"false"); } }
+  function openPatternEditor(edit, done){
+    if(!CUSTOM.canEdit){ showToast("Only the owner or a manager can save a pattern."); return; }
+    cpGridBuild();
+    _cp.edit=edit||null; _cp.done=done||null; _cp.cells={}; _cp.delArm=0;
+    $("cpTitle").textContent = edit ? "Edit pattern" : "New pattern";
+    $("cpName").value = edit ? edit.name : "";
+    var r=edit && edit.rule;
+    $("cpN").value = (r && r.type==="any") ? String(r.n) : "5";
+    if(r && r.type==="shape") r.cells.forEach(function(i){ _cp.cells[i]=true; });
+    $(r && r.type==="shape" ? "cpShape" : "cpAny").checked=true;
+    cpGridPaint();
+    $("cpErr").textContent="";
+    var del=$("cpDelete"); del.style.display = edit ? "" : "none"; del.textContent="Delete this pattern";
+    $("cpSave").disabled=false;
+    $("cpModal").classList.remove("hidden");
+    try{ $("cpName").focus(); }catch(e){}
+  }
+  function closePatternEditor(){ $("cpModal").classList.add("hidden"); _cp.done=null; }
+  function cpRule(){
+    if($("cpShape").checked){ var c=[]; for(var i=0;i<27;i++){ if(_cp.cells[i]) c.push(i); } return { type:"shape", cells:c }; }
+    return { type:"any", n:parseInt($("cpN").value,10)||5 };
+  }
+  function savePatternFromEditor(){
+    var v=__ctx && __ctx.venue, name=String($("cpName").value||"").replace(/\s+/g," ").trim(), rule=cpRule(), err=$("cpErr");
+    if(!name){ err.textContent="Give the pattern a name. It is what the TV and the phones show."; return; }
+    if(name.length>30){ err.textContent="Keep the name to 30 characters or fewer."; return; }
+    if(rule.type==="shape" && !rule.cells.length){ err.textContent="Tap at least one square for the shape."; return; }
+    if(!window.VPDraw || !window.VPDraw.ruleClean(rule)){ err.textContent="Choose how they win."; return; }
+    if(!v || !v.id || !(window.VP && VP.gameApiCall)){ err.textContent="Not connected. Try again in a moment."; return; }
+    err.textContent=""; $("cpSave").disabled=true;
+    var body={ venue_id:v.id, name:name, rule:rule }; if(_cp.edit) body.id=_cp.edit.id;
+    VP.gameApiCall("/host/bingo/patterns/save", body, 8000).then(function(r){
+      $("cpSave").disabled=false;
+      var j=r && r.json;
+      if(!(r && r.status===200 && j && j.pattern)){ err.textContent=(j && j.error) || "That did not save. Try again."; return; }
+      var k="c:"+j.pattern.id, done=_cp.done;
+      var at=-1; for(var i=0;i<CUSTOM.list.length;i++){ if(CUSTOM.list[i].id===j.pattern.id) at=i; }
+      if(at>=0) CUSTOM.list[at]=j.pattern; else CUSTOM.list.push(j.pattern);
+      // The game playing this pattern takes the new name and rule; the server judges on the saved rule anyway.
+      if(G.pats && G.pats[k]) G.pats[k]={ name:j.pattern.name, rule:j.pattern.rule };
+      closePatternEditor();
+      fillPatternSelect($("patternSel")); fillPatternSelect($("ngPattern"));
+      if(done) done(k);
+      if(G.pattern===k && (G.status==="lobby" || G.status==="running")){ sendState(); renderLive(); if(G.caller) renderCallerGrid(); }
+      if(G.status==="running") renderClaimQueue();
+      saveGame();
+      showToast('Saved "'+j.pattern.name+'". It is in your pattern list every night now.');
+    }, function(){ $("cpSave").disabled=false; err.textContent="Not connected. Try again in a moment."; });
+  }
+  function deletePatternFromEditor(){
+    var v=__ctx && __ctx.venue, e=_cp.edit; if(!e || !v) return;
+    if(!_cp.delArm || Date.now()-_cp.delArm>5000){ _cp.delArm=Date.now(); $("cpDelete").textContent='Tap again to delete "'+e.name+'"'; return; }
+    VP.gameApiCall("/host/bingo/patterns/delete", { venue_id:v.id, id:e.id }, 8000).then(function(r){
+      if(!(r && r.status===200)){ $("cpErr").textContent=(r && r.json && r.json.error) || "That did not delete. Try again."; return; }
+      CUSTOM.list=CUSTOM.list.filter(function(x){ return x.id!==e.id; });
+      closePatternEditor();
+      // A setup list on the deleted pattern goes back to One line; a game already playing it keeps it (G.pats).
+      ["patternSel","ngPattern"].forEach(function(id){ var s=$(id); if(s && s.value==="c:"+e.id && !(G.status==="running" && G.pattern===s.value)) s.value="one"; });
+      fillPatternSelect($("patternSel")); fillPatternSelect($("ngPattern"));
+      if(G.status==="lobby" && G.pattern==="c:"+e.id){ G.pattern=$("patternSel").value; rememberPat(G.pattern); sendState(); }
+      if(G.status==="running") renderClaimQueue();
+      saveGame();
+      showToast('Deleted "'+e.name+'".');
+    }, function(){ $("cpErr").textContent="Not connected. Try again in a moment."; });
+  }
+  (function(){
+    var save=$("cpSave"); if(!save) return;
+    save.addEventListener("click", savePatternFromEditor);
+    $("cpCancel").addEventListener("click", closePatternEditor);
+    $("cpDelete").addEventListener("click", deletePatternFromEditor);
+    $("cpName").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); savePatternFromEditor(); } });
+    function editFor(selId){ return function(){ var s=$(selId), c=s && customById(s.value); if(c) openPatternEditor(c, function(k){ s.value=k; }); }; }
+    $("patEditBtn").addEventListener("click", editFor("patternSel"));
+    $("ngEditBtn").addEventListener("click", editFor("ngPattern"));
+    $("ngPattern").addEventListener("change", function(){ patternPicked($("ngPattern")); });
+  })();
 
   // Broadcast bingo has no game server, so once a game finishes the host posts its figures
   // (players, tickets, prizes) to the backend for reporting. Keyed by the venue code = G.code.
@@ -1386,23 +1606,27 @@
   // night visible even if this iPad never gets as far as the second one, which is the normal way
   // a bar night ends. The finishing call carries the id from the first, so the row is updated in
   // place and each game is still one row.
-  function postReport(open){
+  /* src: the game being closed, when it is not G. After New game a real-balls night holds the last game's
+     close until the first number of the new one (the undo window, undoNewGame), and then closes THAT game
+     with its own figures. Left out, it is G, exactly as it always was. */
+  function postReport(open, src){
     try{
-      if(!G.code || !G.startedAt) return;
-      if(!open) nightNote();
-      var players=Math.max(G.peak||0, playerCount()), tickets=0;
+      var g=src||G, acked=src ? !!src.overageAcked : overageAcked, approved=src ? (src.overageApproved||0) : overageApproved;
+      if(!G.code || !g.startedAt) return;
+      if(!open) nightNote(g);
+      var players=Math.max(g.peak||0, playerCount()), tickets=0;
       for(var i=0;i<G.order.length;i++){ var p=G.players[G.order[i]]; if(p&&p.cards) tickets+=p.cards.length; }
       var body={ code:G.code, format:"bingo", players:players, tickets:tickets,
-                 prizes:G.prizesWon||[], started_at:G.startedAt,
+                 prizes:g.prizesWon||[], started_at:g.startedAt,
                  ended_at: open ? null : new Date().toISOString() };
       /* This is what makes a big bingo night billable at all. Only on the END report, and only
          carrying a figure the host actually tapped OK on. No tap, no charge, which is exactly
          what the consent screen promises them. */
-      if(!open && overageAcked && overageApproved>0){
+      if(!open && acked && approved>0){
         body.overage_ack=true;
-        body.approved_players=overageApproved;
+        body.approved_players=approved;
       }
-      if(!open && G.reportId) body.report_id=G.reportId;
+      if(!open && g.reportId) body.report_id=g.reportId;
       var mine=G.startedAt;   // so a slow reply can't stamp an id onto the NEXT game
       /* Signed now. /report used to authorise on the venue code alone, and that code is a hash of
          the venue's PUBLIC slug, so anyone could write invented player counts and prize figures
@@ -1420,7 +1644,7 @@
             .then(function(j){ if(open && j && j.id && G.startedAt===mine) G.reportId=j.id; });
         })
         .catch(function(){});
-      if(!open) G.reportId=null;
+      if(!open && !src) G.reportId=null;
     }catch(e){}
   }
   function clampCards(n){ n=parseInt(n,10); if(!n||n<1) return 1; if(n>6) return 6; return n; }
@@ -1459,7 +1683,7 @@
       if(G.status==="running" || G.status==="lobby" || G.paidMode){
         localStorage.setItem(gameKey(G.code), JSON.stringify({
           v:1, ts:Date.now(),
-          status:G.status, pattern:G.pattern, prize:G.prize, paidMode:G.paidMode,
+          status:G.status, pattern:G.pattern, pats:G.pats||{}, prize:G.prize, paidMode:G.paidMode,
           defaultCards:G.defaultCards, prizesWon:G.prizesWon, startedAt:G.startedAt,
           draw:G.draw, idx:G.idx, called:G.called,
           players:G.players, order:G.order,
@@ -1477,6 +1701,7 @@
           sessionId:G.sessionId||null, joinCode:G.joinCode||null, planCapAtStart:(G.planCapAtStart!=null?G.planCapAtStart:null),
           peak:G.peak||0, allowEarly:!!G.allowEarly,
           caller:!!G.caller,   // real balls tonight: a reload must come back to the grid, not the draw
+          undo:G.undo||null,   // New game tapped, nothing called yet: the last game, to go back to (undoNewGame)
           callerWin:G.callerWin||null,   // and to the winner being checked, or the choice of what comes next
           night:NIGHT
         }));
@@ -1529,6 +1754,7 @@
       G.code=code;
       G.status="running";
       G.pattern=s.pattern||"one";
+      G.pats=(s.pats && typeof s.pats==="object") ? s.pats : {};
       G.paidMode=s.paidMode||"";
       // Put it back on the control too. startGame re-reads the select, so leaving it at its
       // default silently turned the NEXT round free and stripped every count off the roster.
@@ -1577,6 +1803,7 @@
       }, 1500);
       restoreNightFields(s);
       if(G.caller) G.drawWhy="caller";   // the record keeps saying where the balls came from after a reload
+      G.undo=(s.undo && s.undo.snap && G.caller && G.idx<0) ? s.undo : null;
       return true;
     }catch(e){ return false; }
   }
@@ -1991,8 +2218,8 @@
     // A tablet ticket the server has no record of yet cannot be checked there. The tablet decides.
     if(!G.drawId || !(window.VP && VP.gameApiCall) || (tk && tk.src==="tablet" && tk.rec!==true)){ claimOnTablet(c, G.drawId ? "a tablet ticket the server has not recorded yet" : "no draw on the server"); return; }
     var gen=G.gen;
-    VP.gameApiCall("/host/bingo/claim", { draw_id:G.drawId, ref:c.ref, pid:c.pid, card_no:(c.claimedNo||c.cardNo), pattern:c.pattern, balls:c.balls,
-        called:calledArray().slice(0, c.balls), tablet_draw:(G.drawMode==="local"), tablet_why:(G.drawWhy||"") }, CLAIM_CALL_MS)
+    VP.gameApiCall("/host/bingo/claim", Object.assign({ draw_id:G.drawId, ref:c.ref, pid:c.pid, card_no:(c.claimedNo||c.cardNo), balls:c.balls,
+        called:calledArray().slice(0, c.balls), tablet_draw:(G.drawMode==="local"), tablet_why:(G.drawWhy||"") }, patWire(c.pattern)), CLAIM_CALL_MS)
       .then(function(r){
         if(gen!==G.gen) return;
         var j=r && r.json;
@@ -2096,8 +2323,8 @@
      in order whenever the server answers. */
   function recordDecision(c, decision){
     var e = c.claimId ? { claim_id:c.claimId, decision:decision }
-      : { draw_id:G.drawId||null, ref:c.ref, pid:c.pid, card_no:(c.claimedNo||c.cardNo), pattern:c.pattern, balls:c.balls,
-          called:calledArray().slice(0, c.balls), decided_on:"tablet", tablet_verdict:(c.valid?"win":"not_yet"), decision:decision };
+      : Object.assign({ draw_id:G.drawId||null, ref:c.ref, pid:c.pid, card_no:(c.claimedNo||c.cardNo), balls:c.balls,
+          called:calledArray().slice(0, c.balls), decided_on:"tablet", tablet_verdict:(c.valid?"win":"not_yet"), decision:decision }, patWire(c.pattern));
     if(!e.claim_id && !e.draw_id) return;              // no record for this game exists to add it to
     if(!c.claimId || c.by==="tablet") e._tab=true;     // checked on this tablet: kept here only, never sent
     (G.claimLog||(G.claimLog=[])).push(e);
@@ -2126,7 +2353,10 @@
     }, function(){ _logBusy=false; clearTimeout(_logT); _logT=setTimeout(flushClaimLog, 15000); });
   }
   // The claim rule is the regulated one in /app/vp-draw.js, the same rule the server applies.
-  function checkPattern(card){ return window.VPDraw.cardWins(card, G.called, G.pattern); }
+  function checkPattern(card){
+    if(isCustomKey(G.pattern)){ var i=patInfo(G.pattern); return window.VPDraw.cardWins(card, G.called, "custom", i && i.rule); }
+    return window.VPDraw.cardWins(card, G.called, G.pattern);
+  }
   function calledArray(){ var a=[]; for(var i=0;i<=G.idx;i++) a.push(G.draw[i]); return a; }
   /* ONE PERSON, ONE PLAYER, AND ONLY PEOPLE WHO ARE REALLY HERE (14 Oct 2026).
      The room used to be whoever signed a join on the channel, which anybody anywhere can do, while
@@ -2320,7 +2550,7 @@
     var el=$("coach"); if(!el) return;
     var n=playerCount(), called=G.idx+1, txt;
     if(G.caller && G.status==="running" && G.callerWin){
-      var _wn=esc(PATTERN_NAMES[G.callerWin.pattern]||"Bingo");
+      var _wn=esc(patName(G.callerWin.pattern)||"Bingo");
       el.innerHTML = G.callerWin.step==="won"
         ? ("<b>"+_wn+"</b> confirmed and on the TV. Now your choice: <b>keep playing</b> for the next prize, or <b>finish this game</b>.")
         : ("Somebody called BINGO for <b>"+_wn+"</b>. Check their book, then tap <b>Confirm win</b>, or <b>Not a win</b>.");
@@ -2499,7 +2729,7 @@
   function openLobbyNow(){
     if(blockedByHold() || drawRulesMissing()) return;
     clearCallGuards();
-    G.pattern=$("patternSel").value;
+    G.pattern=$("patternSel").value; rememberPat(G.pattern);
     var _p=requirePrize(); if(_p===null) return;
     G.prize=_p;
     G.defaultCards=clampCards($("cardsSel").value);
@@ -2518,12 +2748,24 @@
      prize rather than putting a blank up. */
   function lobbyEdited(){
     if(G.status!=="lobby") return;
-    G.pattern=$("patternSel").value;
+    G.pattern=$("patternSel").value; rememberPat(G.pattern);
     var pz=String($("prizeInput").value||"").trim(); if(pz) G.prize=pz;
     G.defaultCards=clampCards($("cardsSel").value);
     sendState(); saveGame();
   }
-  $("patternSel").addEventListener("change", lobbyEdited);
+  /* "Next pattern" after a win is drawn inside the claim queue; "Custom pattern..." there opens the editor
+     and the new pattern comes back selected. */
+  $("claimQueue").addEventListener("change", function(e){
+    var sel=e.target; if(!sel || sel.id!=="nextPatternSel") return;
+    if(sel.value===NEW_PAT){
+      var pin=$("nextPrizeIn"), keepPrize=pin ? pin.value : "";
+      sel.value=sel._prev||nextPattern(G.lastWins.length ? G.lastWins[0].pattern : "")||"full";
+      openPatternEditor(null, function(k){ G._nextPick=k; renderClaimQueue(); var p2=$("nextPrizeIn"); if(p2) p2.value=keepPrize; });
+      return;
+    }
+    sel._prev=sel.value; G._nextPick=sel.value;
+  });
+  $("patternSel").addEventListener("change", function(){ patternPicked($("patternSel"), lobbyEdited); });
   $("cardsSel").addEventListener("change", lobbyEdited);
   $("prizeInput").addEventListener("input", lobbyEdited);
 
@@ -2653,11 +2895,12 @@
     });
   })();
   function renderLive(){
+    syncUndoNewGame();
     /* The coach line follows the ball. It was only rewritten by renderConsole, which a ball does not
        run, so "Tickets are out. Tap Start calling" sat there for the whole game (audit, 14 Oct 2026). */
     setCoach();
     $("liveCount").textContent=(G.idx+1)+" of 90";
-    $("livePattern").textContent=PATTERN_NAMES[G.pattern];
+    $("livePattern").textContent=patName(G.pattern);
     $("livePlayers").textContent=playerCount();
     $("lastBallVal").textContent = G.idx>=0 ? G.draw[G.idx] : "–";
     /* THE STRIP HOLDS ITS FULL HEIGHT FROM BALL ONE.
@@ -2696,10 +2939,11 @@
     var q=$("claimQueue"), i, p;
     // Resolved: one or more confirmed winners, nothing left waiting on the host.
     if(G.lastWins.length && !G.claims.length && !G.won){
-      var pat=G.lastWins[0].pattern, nxt=nextPattern(pat), opts="";
+      var pat=G.lastWins[0].pattern, nxt=(G._nextPick && G._nextPick!==pat) ? G._nextPick : nextPattern(pat), opts="";
       for(i=0;i<ALL_PATTERNS.length;i++){ p=ALL_PATTERNS[i]; if(p[0]===pat) continue; opts+='<option value="'+p[0]+'"'+(p[0]===nxt?" selected":"")+'>'+p[1]+'</option>'; }
+      opts+=customOptionsHtml(nxt, pat);   // the venue's own patterns, and "Custom pattern..." for an owner or manager
       var many=G.lastWins.length>1;
-      q.innerHTML='<div class="claimcard"><div class="top"><span class="cn">'+winnerNames(G.lastWins)+' won '+PATTERN_NAMES[pat]+'</span></div>'+
+      q.innerHTML='<div class="claimcard"><div class="top"><span class="cn">'+winnerNames(G.lastWins)+' won '+esc(patName(pat))+'</span></div>'+
         '<div class="claimsub">'+(many?('A tie on the same number, so '+G.lastWins.length+' winners share the prize. '):'')+
         'Same tickets, same numbers. Play on for another prize, or finish the game.</div>'+
         '<div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
@@ -2741,8 +2985,8 @@
       var badge=checking ? '<span class="vbadge" style="background:var(--line-2);color:var(--muted)">Checking with the server</span>'
               : valid ? '<span class="vbadge valid">'+(onTablet?'Valid on this tablet':'Valid')+'</span>'
                       : '<span class="vbadge" style="background:#F5A524;color:#180d00">Not a win yet</span>';
-      var sub=valid ? (PATTERN_NAMES[G.pattern]+' &middot; '+(checking ? 'the server is checking it against ' : (onTablet ? 'checked on this tablet against ' : 'checked by the server against '))+nCalled+' called numbers &middot; card #'+c.cardNo)
-                    : ('Called early &middot; '+PATTERN_NAMES[G.pattern]+' is not complete on card #'+c.cardNo+'. Wave it off to keep the game moving.');
+      var sub=valid ? (esc(patName(G.pattern))+' &middot; '+(checking ? 'the server is checking it against ' : (onTablet ? 'checked on this tablet against ' : 'checked by the server against '))+nCalled+' called numbers &middot; card #'+c.cardNo)
+                    : ('Called early &middot; '+esc(patName(G.pattern))+' is not complete on card #'+c.cardNo+'. Wave it off to keep the game moving.');
       if(onTablet) sub+='<br><b style="color:var(--roll)">The server could not check this one, so this tablet checked the ticket.</b> It goes on the record when the server is back.';
       if(c.by==="waiting") sub+='<br><b style="color:var(--roll)">The server is not answering, and this venue does not let the tablet decide.</b> Waiting for the server.';
       if(c.by==="refused") sub+='<br><b style="color:var(--roll)">The server refused to check this claim.</b> See the message above.';
@@ -2852,7 +3096,7 @@
     var _cnt=playerCount(), _cap=playerCap();
     if(_cap>0 && _cnt>_cap && !inFirstMonth() && !overageAcked){ showOverage(_cnt, _cap, startGame); return; }
     clearCallGuards();
-    G.pattern=$("patternSel").value;
+    G.pattern=$("patternSel").value; rememberPat(G.pattern);
     var _p=requirePrize(); if(_p===null) return;
     G.prize=_p;
     G.paidMode=$("paidSel").value;
@@ -2881,7 +3125,10 @@
   function newGamePrompt(){
     if(blockedByHold()) return;
     var m=$("ngModal"); if(!m){ newGame(); return; }
+    fillPatternSelect($("ngPattern"));
     $("ngPattern").value=G.pattern||"one";
+    if($("ngPattern").value!==(G.pattern||"one")) $("ngPattern").value="one";
+    $("ngPattern")._prev=$("ngPattern").value; syncPatEdit();
     $("ngPrize").value=(G.prize && G.prize!=="the prize") ? G.prize : "";
     $("ngNote").textContent = G.caller
       ? ((G.idx>=0 && !G.won) ? "This game is still going. The "+(G.idx+1)+" numbers called so far are cleared off the TV for a fresh game." : "The TV board is cleared for the next game. Everyone turns to a fresh page of their book.")
@@ -2893,7 +3140,7 @@
     $("ngGo").onclick=function(){
       var pz=($("ngPrize").value||"").trim();
       if(!pz){ showToast("Put in what they are playing for first."); try{ $("ngPrize").focus(); }catch(e){} return; }
-      G.pattern=$("ngPattern").value||"one"; G.prize=pz;
+      G.pattern=$("ngPattern").value||"one"; if(G.pattern===NEW_PAT) G.pattern="one"; rememberPat(G.pattern); G.prize=pz;
       // keep the setup form in step, so the next Open lobby starts from the same choice
       var ps=$("patternSel"); if(ps) ps.value=G.pattern;
       var pi=$("prizeInput"); if(pi) pi.value=G.prize;
@@ -2905,17 +3152,22 @@
   function newGame(){
     if(drawRulesMissing()) return;
     clearCallGuards();
+    if(G.undo) undoNewGame(true);   // New game again before a number: the game being left is still the last real one
+    /* THE UNDO WINDOW (24 Oct 2026): real balls only, until the first number. See undoNewGame. */
+    var undoable=!!(G.caller && G.status==="running" && G.startedAt);
+    G.undo = undoable ? { at:Date.now(), snap:gameSnapshot() } : null;
     if(G.callerWin) callerWinSettle();   // a confirmed win is already on the record; an unchecked book never counted
-    postReport();   // report the round just finished before a fresh one begins
+    if(!undoable) postReport();   // report the round just finished before a fresh one begins
     /* Consent does not carry into the next game, because the charge does not either. The room can
        grow between games and each one is billed on its own, so each one is asked on its own. */
     overageAcked=false; overageApproved=0;
     G.peak=playerCount();   // this game's peak starts at whoever is already in the room
     G.draw=[]; G.pool=freshPool(); G.idx=-1; G.called={};
-    openServerDraw();   // a fresh order for the fresh game
+    if(undoable){ G.drawId=null; G.drawOpening=null; G.drawMode="server"; }   // opened at the first number (commitNewGame)
+    else openServerDraw();   // a fresh order for the fresh game
     G.won=false; G.claims=[]; G.claimIdx=-1; G.lastWins=[]; G.callerWin=null;
     G.prizesWon=[]; G.startedAt=new Date().toISOString();
-    G.reportId=null; postReport(true);   // the next round is on the record from ball one too
+    G.reportId=null; if(!undoable) postReport(true);   // the next round is on the record from ball one too
     dealCards();
     $("nextBtn").disabled=false; $("nextBtn").textContent="Start calling";
     send({ t:"mode", mode:"bingo", caller:!!G.caller });
@@ -2924,7 +3176,65 @@
     saveGame();
     renderConsole();
   }
+  // Everything a game is, for putting it back. JSON, so nothing the new game does can reach into it.
+  function gameSnapshot(){
+    return JSON.parse(JSON.stringify({
+      pattern:G.pattern, prize:G.prize, draw:G.draw, idx:G.idx, called:G.called, won:G.won,
+      claims:G.claims, claimIdx:G.claimIdx, lastWins:G.lastWins, prizesWon:G.prizesWon, startedAt:G.startedAt,
+      reportId:G.reportId||null, drawId:G.drawId||null, drawMode:G.drawMode||"local", drawWhy:G.drawWhy||"", gen:G.gen||0,
+      callerWin:G.callerWin||null, peak:G.peak||0, overageAcked:!!overageAcked, overageApproved:overageApproved||0,
+      halt:G.halt||null
+    }));
+  }
+  /* The first number of the new game is called: the mistake window is over. The last game is closed on the
+     record with its own figures, the new game's draw opens (which finishes the last one on the server), and
+     the new game goes on the record, in that order, exactly as New game always did, only later. */
+  function commitNewGame(){
+    var u=G.undo; if(!u) return;
+    G.undo=null;
+    postReport(false, u.snap);
+    openServerDraw();
+    G.reportId=null; postReport(true);
+    syncUndoNewGame();
+  }
+  /* THE UNDO WINDOW (Dean, 24 Oct 2026). On a real-balls night nothing about a new game is irreversible
+     until its first number: no ticket is dealt, nothing is called. So New game keeps the last game whole
+     (gameSnapshot), holds its close on the record and the new game's draw until that first number
+     (commitNewGame), and "Back to the last game" puts it back exactly. Phone bingo is not held: the server
+     deals every phone a fresh book and finishes the last draw the moment a new game opens, so there is
+     nothing to go back to without taking tickets off phones in a live room.
+     BACK TO THE LAST GAME. Only while nothing has been called in the new one. quiet: put it back without
+     telling the room (End game or another New game is about to say something of its own). */
+  function undoNewGame(quiet){
+    var u=G.undo;
+    if(!u || !u.snap || G.status!=="running" || G.idx>=0){ G.undo=null; syncUndoNewGame(); return false; }
+    var s=u.snap;
+    G.undo=null;
+    G.pattern=s.pattern; G.prize=s.prize; G.draw=s.draw||[]; G.idx=(typeof s.idx==="number")?s.idx:-1; G.called=s.called||{};
+    var seen={}; G.draw.forEach(function(n){ seen[n]=true; }); G.pool=freshPool().filter(function(n){ return !seen[n]; });
+    G.won=!!s.won; G.claims=s.claims||[]; G.claimIdx=(typeof s.claimIdx==="number")?s.claimIdx:-1; G.lastWins=s.lastWins||[];
+    G.prizesWon=s.prizesWon||[]; G.startedAt=s.startedAt; G.reportId=s.reportId||null;
+    G.drawId=s.drawId||null; G.drawMode=s.drawMode||"local"; G.drawWhy=s.drawWhy||(G.caller?"caller":""); G.drawOpening=null; G.gen=s.gen||G.gen;
+    G.callerWin=s.callerWin||null; G.peak=s.peak||0; G.halt=s.halt||null;
+    overageAcked=!!s.overageAcked; overageApproved=s.overageApproved||0;
+    var ps=$("patternSel"); if(ps){ ps.value=G.pattern; ps._prev=ps.value; }
+    var pi=$("prizeInput"); if(pi) pi.value=G.prize;
+    saveGame();
+    if(quiet) return true;
+    send({ t:"mode", mode:"bingo", caller:!!G.caller });
+    sendState();                    // every TV: the last game's board, pattern and prize again
+    if(G.callerWin) callerSendWin();   // and the win that was being checked, if there was one
+    renderConsole(); renderLive(); updateBoard(); if(G.caller) renderCallerGrid(); syncNextBtn(); setCoach();
+    showToast("Back to the last game: "+(G.idx+1)+" number"+(G.idx===0?"":"s")+" called, "+(patName(G.pattern)||"")+" for "+G.prize+".");
+    return true;
+  }
+  function syncUndoNewGame(){
+    var box=$("undoNewGameBox"); if(!box) return;
+    box.style.display = (G.undo && G.status==="running" && G.idx<0) ? "" : "none";
+  }
+  (function(){ var b=$("undoNewGameBtn"); if(b) b.addEventListener("click", function(){ undoNewGame(false); }); })();
   function endGame(){
+    if(G.undo) undoNewGame(true);   // a new game with nothing called never happened: end the last real one
     /* A CONFIRMED WINNER MUST NOT BE LOST BY ENDING THE NIGHT.
 
        nextBall() and finishGame() both refuse to move while a confirmed win is unannounced.
@@ -3039,7 +3349,7 @@
       h+='<div class="lbl" style="margin:4px 0 6px">Prizes</div>';
       prizes.forEach(function(w){
         h+='<div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--line-2)">'+
-           '<span>'+esc(PATTERN_NAMES[w.pattern]||w.pattern||"Prize")+(w.shared?' <span style="color:var(--faint)">(shared)</span>':'')+'</span>'+
+           '<span>'+esc(patName(w.pattern)||w.pattern||"Prize")+(w.shared?' <span style="color:var(--faint)">(shared)</span>':'')+'</span>'+
            '<span style="text-align:right"><b style="color:var(--gold)">'+esc(w.prize||"")+'</b> <span style="color:var(--muted)">'+esc(w.winner_name||"")+(w.card_no?' #'+esc(String(w.card_no)):'')+'</span></span></div>';
       });
     } else {
@@ -3118,6 +3428,7 @@
     }, function(){ G.calling=false; syncNextBtn(); });
   }
   function commitBall(n, fromServer){
+    if(G.undo) commitNewGame();   // the first number of a new game: no going back now
     G.draw.push(n); G.idx=G.draw.length-1; G.called[n]=true;
     if(!fromServer) reportLocalBall(n, G.idx+1);
     send({ t:"ball", number:n, called:calledArray(), index:G.idx });
@@ -3239,7 +3550,7 @@
     }
     var cl=$("callerLast"); if(cl) cl.textContent = cur ? cur : "\u2013";
     // The stat boxes are hidden on a real-balls night so the whole grid fits a Split View iPad, so the count and pattern live here.
-    var cs=$("callerSays"); if(cs) cs.innerHTML = (cur ? ("<b>"+(G.idx+1)+"</b> of 90 called") : "Nothing called yet")+"<br>"+esc(PATTERN_NAMES[G.pattern]||"");
+    var cs=$("callerSays"); if(cs) cs.innerHTML = (cur ? ("<b>"+(G.idx+1)+"</b> of 90 called") : "Nothing called yet")+"<br>"+esc(patName(G.pattern)||"");
     var ub=$("callerUndoBtn"); if(ub){ ub.disabled=!cur || !!G.callerWin; ub.textContent = cur ? ("Undo "+cur) : "Undo last"; }
     // The win on the TV: what the room is reading, and Back to the game. WINNER waits for a game that is still on.
     var blk=$("callerBlock"); if(blk) blk.classList.toggle("winning", !!G.callerWin);
@@ -3263,17 +3574,19 @@
           only when the host taps one, and the TV goes back to the board with it and its prize.
      Not a win puts the board back and records nothing. */
   var CALLER_THEN={ one:["two","full"], two:["full"], full:[] };   // what a room can play on for after each pattern
-  function callerThen(pat){ return CALLER_THEN[pat] || ["full"]; }   // corners and the single lines go on to a full house
+  function callerThen(pat){ return CALLER_THEN[pat] || ["full"]; }   // corners, the single lines and a venue's own pattern go on to a full house
+  // What the host may keep playing for after a win: the built-in stages above, then the venue's own patterns.
+  function callerChoices(pat){ var o=callerThen(pat).slice(); CUSTOM.list.forEach(function(c){ var k="c:"+c.id; if(k!==pat && o.indexOf(k)<0) o.push(k); }); return o; }
   var CALLER_LOOK={ one:"one whole row", two:"two whole rows on one ticket", full:"every number on one ticket", corners:"all four corners of one ticket",
                     top:"the whole top row", middle:"the whole middle row", bottom:"the whole bottom row" };
-  function callerWinText(w){ return PATTERN_NAMES[w.pattern]||"Bingo"; }
+  function callerWinText(w){ return patName(w.pattern)||"Bingo"; }
   function callerWinMsg(){
     var w=G.callerWin||{};
     return { t:"winner", caller:true, wid:w.wid, pattern:w.pattern, prize:w.prize, name:"", winners:[], shared:false, cont:false };
   }
   // Step 1 on the TV: the claim card, named by the pattern. caller:true tells it to say "book", not "card".
   function callerCheckMsg(){
-    var w=G.callerWin||{}, nm=PATTERN_NAMES[w.pattern]||"Bingo";
+    var w=G.callerWin||{}, nm=patName(w.pattern)||"Bingo";
     return { t:"claim_pending", caller:true, pattern:w.pattern, name:nm, names:[nm] };
   }
   function callerSendWin(){ if(G.callerWin) send(G.callerWin.step==="won" ? callerWinMsg() : callerCheckMsg()); }
@@ -3285,6 +3598,7 @@
   function callerWinOpen(){
     if(!G.caller || G.status!=="running" || G.callerWin) return false;
     if(G.won){ showToast("This game is done. Tap New game for the next one."); return false; }
+    if(G.undo && G.idx<0){ showToast("Nothing has been called in this game yet. Call a number first, or tap Back to the last game."); return false; }
     G.callerWin={ pattern:G.pattern||"one", prize:G.prize||"the prize", wid:"w"+Date.now().toString(36)+"-"+(G.idx+1), step:"check" };
     var gt=$("greetToast"); if(gt) gt.classList.remove("show");   // a toast left from the last call must not sit over this winner
     callerSendWin();   // every TV: BINGO? One line, checking the book
@@ -3316,7 +3630,8 @@
   function callerNext(nxt){
     var w=G.callerWin; if(!w || w.step!=="won") return false;
     nxt=String(nxt||"");
-    if(nxt && callerThen(w.pattern).indexOf(nxt)<0) return false;
+    if(nxt && callerChoices(w.pattern).indexOf(nxt)<0) return false;
+    rememberPat(nxt);
     G.callerWin=null;
     if(!nxt){
       G.won=true; finishDrawRecord();   // the winner stays on the TV until New game or End game
@@ -3332,30 +3647,30 @@
     send({ t:"resume" });   // and every TV back to the board
     saveGame();
     renderLive(); renderCallerGrid(); syncNextBtn(); setCoach();
-    showToast("Now playing for "+(PATTERN_NAMES[nxt]||nxt)+". Keep tapping the numbers.");
+    showToast("Now playing for "+(patName(nxt)||nxt)+". Keep tapping the numbers.");
     return true;
   }
   function renderCallerWin(){
     var w=G.callerWin; if(!w) return;
-    var won=w.step==="won", nm=PATTERN_NAMES[w.pattern]||"Bingo";
+    var won=w.step==="won", nm=patName(w.pattern)||"Bingo";
     var h=$("callerWinHead"), t=$("callerWinSays"), how=$("callerWinHow"), ck=$("cwCheck"), nx=$("cwNext"), box=$("cwNextBtns");
     if(h) h.textContent = won ? "Win confirmed" : "Winner!";
     if(t) t.textContent = won ? (nm+": "+w.prize) : nm;
     if(how) how.textContent = won
       ? "The TV is showing the winner. What happens next? Your choice:"
-      : "Check their book against the numbers below. They need "+(CALLER_LOOK[w.pattern]||"the pattern")+" called. Then tap Confirm win.";
+      : "Check their book against the numbers below. They need "+(CALLER_LOOK[w.pattern]||patLook(w.pattern)||"the pattern")+" called. Then tap Confirm win.";
     if(ck) ck.classList.toggle("hidden", won);
     if(nx) nx.classList.toggle("hidden", !won);
     if(!won || !box) return;
     if(box._for!==w.wid){
       box._for=w.wid; box.innerHTML="";
-      var opts=callerThen(w.pattern).concat([""]);
+      var opts=callerChoices(w.pattern).concat([""]);
       opts.forEach(function(p){
         var b=document.createElement("button");
         b.setAttribute("type","button"); b.setAttribute("data-next", p);
         b.className="btn big "+(p ? "ghost" : "ghost cwfinish");
         b.innerHTML = p
-          ? ("Keep playing for "+esc(PATTERN_NAMES[p]||p)+'<span class="cwp">The TV goes back to the numbers</span>')
+          ? ("Keep playing for "+esc(patName(p)||p)+'<span class="cwp">The TV goes back to the numbers</span>')
           : ('Finish this game<span class="cwp">The winner stays on the TV. Then New game, or End game</span>');
         box.appendChild(b);
       });
@@ -3441,6 +3756,8 @@
     if(!G.lastWins.length) return;
     var sel=$("nextPatternSel"), pat=G.lastWins[0].pattern;
     var nxt=(sel&&sel.value)||nextPattern(pat)||"full";
+    if(nxt===NEW_PAT) return;
+    rememberPat(nxt); G._nextPick=null;
     var pin=$("nextPrizeIn"), nextPrize=(pin && pin.value.trim()) || G.prize;
     announce(true, nxt, nextPrize);   // records the stage just won against ITS prize, before the swap
     G.pattern=nxt; G.prize=nextPrize; G.won=false;
@@ -3778,6 +4095,7 @@
     var sv=$("soonView"); if(sv) sv.classList.add("hidden");
     $("gamesBack").style.display="";
     $("headerTag").textContent="Bingo";
+    loadCustomPatterns();   // the venue's own patterns into every pattern list (nothing shows until migration 118 is live)
   }
 
   function landAfterConnect(){
