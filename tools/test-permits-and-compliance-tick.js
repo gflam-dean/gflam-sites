@@ -266,6 +266,22 @@ function permit(over) { var p = { number: '', holder: 'venue', npo_name: '', aut
   check('settings: loads vp-permits.js and paints the BINGO permit through it', /<script src="vp-permits\.js"><\/script>/.test(SETTINGS) && /VPPermits\.paint\(\{ wrap:wrap, venue:ctx\.venue\|\|\{\}, kinds:\["bingo"\]/.test(SETTINGS));
   check('billing: loads vp-permits.js and paints the RAFFLE and MEMBERS DRAW permits through it, under Draws', /<script src="\/app\/vp-permits\.js"><\/script>/.test(BILLING) && /VPPermits\.paint\(\{ wrap: wrap, venue: rows\[0\], kinds: \["raffle", "members"\]/.test(BILLING) && BILLING.indexOf('function savePermit') < 0
         && BILLING.indexOf('id="drawPermits"') > BILLING.indexOf('id="tp-draws"') && BILLING.indexOf('id="drawPermits"') < BILLING.indexOf('<!-- /tp-draws -->'));
+  /* ONLY THE KINDS THE STATE NEEDS (Dean, 24 Oct 2026): run the real kindsFor out of vp-permits.js. */
+  var W = {}; (new Function('window', PERMITS))(W);
+  var VPP = W.VPPermits;
+  function shown(state, permits) { return VPP.kindsFor({ au_state: state, permits: permits || {} }).join(','); }
+  check('permits table: an NSW venue is asked about raffles and members draws, not bingo', shown('NSW') === 'raffle,members', shown('NSW'));
+  check('permits table: a QLD venue is asked about bingo and raffles, not a members draw (category 4, no licence)', shown('QLD') === 'bingo,raffle', shown('QLD'));
+  check('permits table: a TAS venue is asked about all three (each needs a permit above its threshold)', shown('TAS') === 'bingo,raffle,members', shown('TAS'));
+  check('permits table: a VIC venue is asked about bingo and raffles, not a members draw (trade promotion)', shown('VIC') === 'bingo,raffle', shown('VIC'));
+  check('permits table: a venue with no state yet is asked about everything', shown('') === 'bingo,raffle,members', shown(''));
+  check('a saved permit for a kind the state does not need is still shown, marked not needed',
+        shown('QLD', { members: { number: 'X1', holder: 'venue' } }) === 'bingo,raffle,members' && VPP.notNeeded({ au_state: 'QLD' }, 'members') === 'state' && VPP.notNeeded({ au_state: 'QLD' }, 'raffle') === '',
+        shown('QLD', { members: { number: 'X1' } }));
+  check('the not-needed note is the words Dean asked for', /Your state does not need a permit for this\. You can clear it\./.test(PERMITS));
+  var HQ = readFile('venueplay/app/hq.html');
+  check('HQ loads vp-permits.js and lists only the kinds VPPermits says, with saved-but-not-needed marked',
+        /<script src="vp-permits\.js"><\/script>/.test(HQ) && /var kinds = window\.VPPermits \? VPPermits\.kindsFor\(v\)/.test(HQ) && /VPPermits\.notNeeded\(v, k\)/.test(HQ));
   check('the permits are saved by the shared code, to /account/permits, with the venue named', /fetch\(o\.worker \+ "\/account\/permits"/.test(PERMITS) && /"X-VP-Venue": o\.venueId/.test(PERMITS));
   finished = true;
 })().catch(function (e) { print('  FAIL the test itself threw: ' + e + '\n' + e.stack); fails++; });

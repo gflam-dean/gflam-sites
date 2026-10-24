@@ -59,6 +59,18 @@ def permits_in_db(venue_id):
     return None
 
 
+def set_venue(venue_id, **fields):
+    """Change one venue row in the Worker rig's database (the pages read vp_venues from it, live)."""
+    rows = S.W.table('vp_venues')
+    for r in rows:
+        if r.get('id') == venue_id: r.update(fields)
+    S.W.seed('vp_venues', rows)
+
+
+def card_kinds(sid, wrap):
+    return S.js(sid, '[].map.call(document.querySelectorAll(%s+" .permit"),function(p){return p.getAttribute("data-kind")+(p.getAttribute("data-notneeded")?"!":"");}).join(",")' % json.dumps(wrap))
+
+
 def fill_permit(sid, wrap, kind, number='', holder='venue', npo='', authorised=''):
     """Type a permit into the card the way a person would, and press its Save."""
     S.js(sid, '''(function(){var c=document.querySelector(%s+' .permit[data-kind="%s"]');
@@ -85,6 +97,10 @@ CARD = r'''(function(){
   return JSON.stringify(out);
 })()'''
 
+# Deepwater (V1) starts as a QUEENSLAND venue and The Royal Arms (V2) as a TASMANIAN one, so the one table
+# that says which states need a permit (VPPermits.NEEDS) is seen choosing different cards; NSW comes later.
+set_venue(V1, au_state='QLD', postcode='4000')
+set_venue(V2, au_state='TAS', postcode='7000')
 try:
     print('\nGAME SETTINGS at 390 wide: the bingo permit is a card like the others')
     tid, sid = S.open('/app/settings.html?venue=' + V1, 390, 844, True)
@@ -123,15 +139,15 @@ try:
     print('\nYOUR ACCOUNT > DRAWS: the raffle and members-draw permits, beside the draws')
     tid, sid = S.open('/app/billing.html#draws', 1100, 1000)
     S.until(sid, BILLING_UP, 25)
-    S.until(sid, 'document.querySelectorAll("#drawPermits .permit").length===2', 25)
+    S.until(sid, 'document.querySelectorAll("#drawPermits .permit").length>=1', 25)
     time.sleep(0.8)
-    kinds = S.js(sid, '[].map.call(document.querySelectorAll("#drawPermits .permit"),function(p){return p.getAttribute("data-kind");}).join(",")')
-    ok('the Draws tab holds the raffle and members-draw permit cards, and no bingo one', kinds == 'raffle,members', kinds)
+    kinds = card_kinds(sid, '#drawPermits')
+    ok('a QLD venue: the Draws tab has the raffle permit only (a free members draw is a category 4 game, no licence) and no bingo', kinds == 'raffle', kinds)
     ok('under a "Permits and authorities for draws" heading at the bottom of the tab', S.js(sid, '(function(){var ls=[].slice.call(document.querySelectorAll("#tp-draws .label"));var l=ls[ls.length-1];return l&&l.textContent.trim()==="Permits and authorities for draws"&&document.getElementById("drawPermits").compareDocumentPosition(l)===2;})()') is True)
     ok('Game settings on this page says nothing of "Permits" beyond pointing at its own bingo permit', S.js(sid, '!document.querySelector("#tp-settings .permit") && /bingo permit/.test(document.getElementById("tp-settings").innerText)') is True)
-    ok('the cards name the state the venue is in (New South Wales) and no musical bingo', S.js(sid, '/In New South Wales/.test(document.getElementById("drawPermits").innerText) && !/musical/i.test(document.getElementById("drawPermits").innerText)') is True)
+    ok('the card names the state the venue is in (Queensland) and no musical bingo', S.js(sid, '/In Queensland/.test(document.getElementById("drawPermits").innerText) && !/musical/i.test(document.getElementById("drawPermits").innerText)') is True)
     headings = S.js(sid, '[].map.call(document.querySelectorAll("#drawPermits .permit .lbl"),function(l){return l.firstChild.textContent.trim();}).join("|")')
-    ok('headed "Raffles" and "Members draws"', headings == 'Raffles|Members draws', headings)
+    ok('headed "Raffles"', headings == 'Raffles', headings)
     shot(sid, 'billing-draws-permits')
     r = fill_permit(sid, '#drawPermits', 'raffle', holder='npo', npo='Deepwater Lions Club', authorised='2026-10-01')
     time.sleep(0.4)
@@ -140,18 +156,73 @@ try:
     db = permits_in_db(V1)
     ok('the real Worker wrote the raffle permit beside the bingo one (two kinds, nothing blanked)',
        bool(db) and (db.get('raffle') or {}).get('npo_name') == 'Deepwater Lions Club' and (db.get('raffle') or {}).get('holder') == 'npo' and (db.get('bingo') or {}).get('number') == 'NSW-CH-1234', db)
-    r = fill_permit(sid, '#drawPermits', 'members', number='TP-0099')
-    db = permits_in_db(V1)
-    ok('and the members-draw permit too', r is True and bool(db) and (db.get('members') or {}).get('number') == 'TP-0099', db)
-    # Another venue on the picker: its own (empty) permits, never the first venue's.
+    # Another venue on the picker: its own (empty) permits, never the first venue's, and ITS state's kinds.
     S.js(sid, 'var s=document.getElementById("rfVenue"); s.value=%s; s.dispatchEvent(new Event("change")); true' % json.dumps(V2))
     S.until(sid, 'document.querySelectorAll("#drawPermits .permit").length===2 && document.querySelector(\'#drawPermits .permit[data-kind="raffle"] .pstatus\').textContent.trim()==="Not recorded"', 20)
     time.sleep(0.4)
     v2 = S.js(sid, 'document.querySelector(\'#drawPermits .permit[data-kind="raffle"] .pnpo_name\').value + "|" + document.getElementById("pmPickName").textContent')
     ok('switching the raffle picker to The Royal Arms repaints its own permits (empty), and says whose they are', v2 == '|The Royal Arms', v2)
+    ok('a TAS venue: raffle AND members-draw cards (each needs a permit above $10,000)', card_kinds(sid, '#drawPermits') == 'raffle,members', card_kinds(sid, '#drawPermits'))
+    r = fill_permit(sid, '#drawPermits', 'members', number='TP-0099')
+    db = permits_in_db(V2)
+    ok('and the TAS members-draw permit saves through the real Worker', r is True and bool(db) and (db.get('members') or {}).get('number') == 'TP-0099', db)
+    S.close_tab(tid)
+
+    print('\nA SAVED PERMIT THE STATE DOES NOT NEED is still shown, and can be cleared')
+    set_venue(V2, au_state='QLD', postcode='4000')   # The Royal Arms "moves" to Queensland, its TAS members permit still saved
+    tid, sid = S.open('/app/billing.html#draws', 1100, 1000)
+    S.until(sid, BILLING_UP, 25)
+    S.js(sid, 'var s=document.getElementById("rfVenue"); s.value=%s; s.dispatchEvent(new Event("change")); true' % json.dumps(V2))
+    S.until(sid, 'document.getElementById("pmPickName").textContent==="The Royal Arms" && document.querySelectorAll("#drawPermits .permit").length===2', 20)
+    time.sleep(0.4)
+    ok('QLD with a members permit saved: the members card stays, marked not needed', card_kinds(sid, '#drawPermits') == 'raffle,members!', card_kinds(sid, '#drawPermits'))
+    note = S.js(sid, '(document.querySelector(\'#drawPermits .permit[data-kind="members"] .pnotneeded\')||{}).textContent')
+    ok('with the note "Your state does not need a permit for this. You can clear it."', note == 'Your state does not need a permit for this. You can clear it.', note)
+    S.js(sid, 'document.querySelector(\'#drawPermits .permit[data-kind="members"] .pclear\').click(); true')
+    S.until(sid, '/Cleared|Could not/.test(document.querySelector(\'#drawPermits .permit[data-kind="members"] .pmsg\').textContent)', 20)
+    db = permits_in_db(V2)
+    ok('Clear it removes the saved permit through the real Worker', db is not None and 'members' not in db, db)
     errs = S.js(sid, 'JSON.stringify(window.__errs||[])')
     ok('no script error on the Draws tab', errs == '[]', errs)
     S.close_tab(tid)
+
+    print('\nNEW SOUTH WALES: no bingo permit card, unless one was saved')
+    set_venue(V2, au_state='NSW', postcode='2000')
+    tid, sid = S.open('/app/settings.html?venue=' + V2, 1100, 1000)
+    S.until(sid, SETTLED, 25); time.sleep(1.2)
+    ok('an NSW venue with nothing saved: no bingo permit card on Game settings (club bingo and charity housie need no authority)',
+       card_kinds(sid, '#permitsWrap') == '' and S.js(sid, 'document.getElementById("permitsIntro").offsetParent===null') is True, card_kinds(sid, '#permitsWrap'))
+    S.close_tab(tid)
+    set_venue(V1, au_state='NSW', postcode='2371')   # Deepwater back to NSW, with the bingo permit saved above
+    tid, sid = S.open('/app/settings.html?venue=' + V1, 1100, 1000)
+    S.until(sid, '!!document.querySelector("#permitsWrap .permit")', 25); time.sleep(0.6)
+    ok('an NSW venue that saved a bingo permit still sees it, marked not needed, with a Clear button',
+       card_kinds(sid, '#permitsWrap') == 'bingo!' and S.js(sid, '!!document.querySelector("#permitsWrap .pclear") && /Your state does not need a permit for this/.test(document.getElementById("permitsWrap").innerText)') is True, card_kinds(sid, '#permitsWrap'))
+    S.close_tab(tid)
+    tid, sid = S.open('/app/billing.html#draws', 1100, 1000)
+    S.until(sid, BILLING_UP, 25)
+    S.until(sid, 'document.querySelectorAll("#drawPermits .permit").length===2', 25)
+    ok('an NSW venue: raffle (charity authority) and members-draw (authority above $10,000) cards', card_kinds(sid, '#drawPermits') == 'raffle,members', card_kinds(sid, '#drawPermits'))
+    S.close_tab(tid)
+
+    print('\nHQ lists only the kinds the state needs')
+    S.W.seed('vp_platform_admins', [{'auth_user_id': S.W.info['uid'], 'role': 'owner', 'label': 'Dean'}])
+    tid, sid = S.open('/app/hq.html?as=admin', 1280, 1100)
+    S.until(sid, 'document.querySelectorAll("#venueRows .vn").length > 0', 25)
+    def hq_permits(vid):
+        S.js(sid, 'var b=document.querySelector(\'button[data-details="%s"]\'); if(b) b.click(); true' % vid)
+        S.until(sid, '!!document.querySelector(\'[data-compliance="%s"]\')' % vid, 15)
+        return S.js(sid, '(function(b){return b?b.parentNode.textContent.replace(/\\s+/g," ").trim():"";})(document.querySelector(\'[data-compliance="%s"]\'))' % vid) or ''
+    t1 = hq_permits(V1)
+    ok('HQ, Deepwater (NSW): the saved bingo permit is listed and marked not needed, the raffle listed, nothing else',
+       'bingo: number NSW-CH-1234' in t1 and 'not needed in their state' in t1 and 'raffle: under Deepwater Lions Club' in t1 and 'members draw' not in t1, t1)
+    t2 = hq_permits(V2)
+    ok('HQ, The Royal Arms (NSW, nothing saved): "none recorded" names only the kinds NSW can need',
+       'none recorded (their state can need one for raffles, members draws)' in t2, t2)
+    errs = S.js(sid, 'JSON.stringify(window.__errs||[])')
+    ok('no script error in HQ', errs == '[]', errs)
+    S.close_tab(tid)
+    S.W.seed('vp_platform_admins', [])
 
     print('\nYOUR ACCOUNT > MARKETING: the venue link, the table signs, the opt-in list')
     tid, sid = S.open('/app/billing.html#marketing', 1100, 1000)

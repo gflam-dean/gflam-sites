@@ -2713,7 +2713,9 @@
     return venueRows([venueId]).then(function(rows){
       if (seq !== pmSeq || venueId !== rfCurrent) return;
       if (!rows[0]) throw new Error("no row");
-      if (window.VPPermits) VPPermits.paint({ wrap: wrap, venue: rows[0], kinds: ["raffle", "members"], worker: VP_WORKER, venueId: venueId });
+      var shown = window.VPPermits ? VPPermits.paint({ wrap: wrap, venue: rows[0], kinds: ["raffle", "members"], worker: VP_WORKER, venueId: venueId }) : [];
+      /* Only kinds the venue's state needs a permit for get a card (VPPermits.NEEDS). None: say so. */
+      if (!shown.length) wrap.innerHTML = '<p class="note" id="drawPermitsNone">' + esc(rfVenueName() || "This venue") + "'s state does not need a permit for raffles or members draws.</p>";
     }).catch(function(){
       if (seq !== pmSeq) return;
       showLoadFailed("drawPermitsErr", "Could not load the permits for " + (rfVenueName() || "this venue") + ". Try again.", function(){ loadDrawPermits(venueId); });

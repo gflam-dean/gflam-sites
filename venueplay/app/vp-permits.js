@@ -84,11 +84,59 @@
     if (recorded === false) return '<span class="vpp-status">Not recorded</span>';
     return '';
   }
-  /* The kinds a venue can be asked about: no bingo card where number bingo is hidden. */
-  function kindsFor(venue, kinds) {
-    var bingoOff = !!(root.VPGaming && VPGaming.numberBingoHidden && VPGaming.numberBingoHidden(venue));
-    return (kinds || ORDER).filter(function (k) { return KINDS[k] && !(bingoOff && k === "bingo"); });
+  /* WHICH STATES NEED A PERMIT, LICENCE OR AUTHORITY FOR A VENUE TO RUN EACH KIND (Dean, 24 Oct 2026:
+     "only show a permit card where the state actually needs one"). ONE table, read by Game settings,
+     Your account > Draws and HQ's venue view. Sourced from the WHY lines above and the lawyers' letters
+     (Anisimoff Legal 9380: NSW 1 Oct 2026; QLD, VIC, ACT, TAS 8 Oct 2026):
+       true           a permit, licence or authority is needed to run it (charged for) at all
+       "conditional"  needed only above a threshold (a prize pool, a category, a kind of premises);
+                      the card stays, and its WHY line says where the threshold is
+       false          the state needs nothing for it: no card (unless one was saved, see notNeeded)
+       "unclear"      no letter covers this state yet: the card stays until Dean decides
+     NSW bingo: club bingo and charity housie need no authority (1 Oct letter), and a pub cannot run paid
+     bingo at all. NSW raffle: a pub runs a paid raffle only under a charity's written authority. NSW
+     members draw: a trade promotion needs an authority above $10,000 in prizes. QLD bingo: only a bingo
+     centre needs a licence. QLD raffle: category 3 (over $50,000) needs a licence. QLD members draw: a
+     category 4 promotional game, no licence. VIC bingo: a minor gaming permit, always. VIC raffle: a permit
+     above $23,060. VIC members draw: a trade promotion, no permit. ACT: housie above $1,000 a session, a
+     raffle above $2,500, a trade promotion above $3,000. TAS: bingo unless social, a raffle or members
+     draw above $10,000. WA, SA, NT: no letter yet. */
+  var NEEDS = {
+    NSW: { bingo: false,         raffle: true,          members: "conditional" },
+    QLD: { bingo: "conditional", raffle: "conditional", members: false },
+    VIC: { bingo: true,          raffle: "conditional", members: false },
+    ACT: { bingo: "conditional", raffle: "conditional", members: "conditional" },
+    TAS: { bingo: "conditional", raffle: "conditional", members: "conditional" },
+    WA:  { bingo: "unclear",     raffle: "unclear",     members: "unclear" },
+    SA:  { bingo: "unclear",     raffle: "unclear",     members: "unclear" },
+    NT:  { bingo: "unclear",     raffle: "unclear",     members: "unclear" }
+  };
+  /* A venue with no state recorded yet is asked about everything: "we do not know" is not "none needed". */
+  function needs(state, kind) {
+    var row = NEEDS[String(state || "").toUpperCase()];
+    if (!row || !(kind in row)) return "unclear";
+    return row[kind];
   }
+  function bingoHidden(venue) {
+    return !!(root.VPGaming && VPGaming.numberBingoHidden && VPGaming.numberBingoHidden(venue));
+  }
+  function hasSaved(venue, kind) {
+    var p = venue && venue.permits;
+    if (typeof p === "string") { try { p = JSON.parse(p); } catch (e) { p = null; } }
+    return !!(p && typeof p === "object" && p[kind] && typeof p[kind] === "object");
+  }
+  /* Why a kind needs no permit at this venue, or "" when it does (or might). */
+  function notNeeded(venue, kind) {
+    if (kind === "bingo" && bingoHidden(venue)) return "hidden";
+    return needs(venue && venue.au_state, kind) === false ? "state" : "";
+  }
+  /* The kinds to show a card for: those the venue's state needs (or might), and ANY kind with a permit
+     already saved, so saved data is never silently hidden: that card carries the clear note instead. */
+  function kindsFor(venue, kinds) {
+    return (kinds || ORDER).filter(function (k) { return KINDS[k] && (!notNeeded(venue, k) || hasSaved(venue, k)); });
+  }
+  var NOT_NEEDED = { state: "Your state does not need a permit for this. You can clear it.",
+                     hidden: "Number bingo is not run at this venue, so no permit is needed. You can clear it." };
 
   /* ONE LOOK ON EVERY PAGE. The sizes are the Game settings page's own (.card, .lbl, .sublbl,
      .seg .opt, its inputs), written here so Your account paints the same card without carrying a
@@ -108,6 +156,8 @@
     ".vpp-save{border:none;border-radius:12px;padding:11px 16px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:.15s;" +
     "background:var(--pink);color:#fff;box-shadow:0 8px 20px rgba(255,31,142,.3);text-transform:uppercase;letter-spacing:.04em}" +
     ".vpp-save:hover{background:var(--pink-deep)}.vpp-save:disabled{opacity:.5;cursor:not-allowed}" +
+    ".vpp-notneeded{font-size:12px;color:var(--gold);margin:0 0 12px;line-height:1.5}" +
+    ".vpp-clear{margin-left:10px;background:none;border:1px solid var(--line);color:var(--text);border-radius:12px;padding:10px 14px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;cursor:pointer}" +
     ".vpp-msg{min-height:20px;font-size:12.5px;margin:10px 0 0}.vpp-msg.ok{color:var(--win)}.vpp-msg.err{color:var(--roll)}" +
     "@media(max-width:640px){.vpp-seg .vpp-opt{min-height:44px}.vpp-save{min-height:44px}}";
   function style() {
@@ -123,11 +173,12 @@
       '<input type="' + type + '" class="' + cls + '"' + (extra && extra.max ? ' maxlength="' + extra.max + '"' : '') +
       ' value="' + esc(value || "") + '"' + (extra && extra.ph ? ' placeholder="' + esc(extra.ph) + '"' : '') + '></div>';
   }
-  function cardHTML(kind, p, state, recorded) {
+  function cardHTML(kind, p, state, recorded, why) {
     var npo = p.holder === "npo";
-    return '<div class="card vpp-card permit" data-kind="' + kind + '">' +
+    return '<div class="card vpp-card permit" data-kind="' + kind + '"' + (why ? ' data-notneeded="' + why + '"' : '') + '>' +
       '<div class="lbl vpp-lbl">' + esc(KINDS[kind]) + '<span class="pstatus">' + statusText(recorded) + '</span></div>' +
       '<div class="sublbl vpp-sub">' + esc(whyLine(state, kind)) + '</div>' +
+      (why ? '<div class="vpp-notneeded pnotneeded">' + esc(NOT_NEEDED[why]) + '</div>' : '') +
       '<div class="vpp-seg pholder">' +
         '<div class="vpp-opt opt' + (npo ? '' : ' on') + '" data-holder="venue">Our venue holds it</div>' +
         '<div class="vpp-opt opt' + (npo ? ' on' : '') + '" data-holder="npo">A charity holds it, we run it for them</div>' +
@@ -140,6 +191,7 @@
       '</div>' +
       field("pnote", "Note", "text", p.note, { max: 500, ph: "Anything worth knowing, e.g. conditions on the permit" }) +
       '<button type="button" class="vpp-save psave">Save ' + esc(SAVE_AS[kind]) + ' permit</button>' +
+      (why ? '<button type="button" class="vpp-clear pclear">Clear it</button>' : '') +
       '<div class="vpp-msg pmsg"></div>' +
     '</div>';
   }
@@ -191,7 +243,7 @@
     var state = v.au_state || "";
     var kinds = kindsFor(v, o.kinds);
     wrap.innerHTML = kinds.map(function (kind) {
-      return cardHTML(kind, o.permits[kind] || {}, state, isRecorded(o.permits, kind));
+      return cardHTML(kind, o.permits[kind] || {}, state, isRecorded(o.permits, kind), notNeeded(v, kind));
     }).join("");
     wrap.querySelectorAll(".pholder").forEach(function (seg) {
       seg.addEventListener("click", function (e) {
@@ -204,9 +256,18 @@
     wrap.querySelectorAll(".psave").forEach(function (btn) {
       btn.addEventListener("click", function () { savePermit(o, btn.closest(".permit"), btn); });
     });
+    /* Clear it: an all-empty permit is what the Worker treats as "clear this kind" (vpaCleanPermit). */
+    wrap.querySelectorAll(".pclear").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var card = btn.closest(".permit");
+        ["pnumber", "pnpo_name", "pauthorised", "pexpires", "pnote"].forEach(function (c) { card.querySelector("." + c).value = ""; });
+        var v0 = card.querySelector('.pholder [data-holder="venue"]'); if (v0) v0.click();
+        savePermit(o, card, btn);
+      });
+    });
     return kinds;
   }
 
-  root.VPPermits = { KINDS: KINDS, ORDER: ORDER, WHY: WHY, whyLine: whyLine, kindsFor: kindsFor,
+  root.VPPermits = { KINDS: KINDS, ORDER: ORDER, WHY: WHY, NEEDS: NEEDS, needs: needs, notNeeded: notNeeded, hasSaved: hasSaved, whyLine: whyLine, kindsFor: kindsFor,
                      statusText: statusText, permitFrom: permitFrom, paint: paint };
 })(window);
