@@ -1036,7 +1036,7 @@
     G.prizes=[]; G.prizeIdx=0; renderPrizeList();   // a brand new raffle starts with a fresh prize list
     var gid=G.gameId; G.gameId=""; G.gameSig=""; G.serverPad=null;
     $("winnerCard").classList.remove("show"); $("claimBtn").classList.remove("pulse"); drawBtnIdle(); renderRange(); sendIdle();
-    if(gid){ apiPost("/host/game/end",{ game_id:gid }).catch(function(){}); }
+    return gid ? apiPost("/host/game/end",{ game_id:gid }).catch(function(){}) : Promise.resolve();
   }
 
   // ---- audit log (mirrors the server-recorded results for the host's own view) ----
@@ -1297,13 +1297,30 @@
     try{ rawSend({ t:"to_ads" }); }catch(e){}   // sync on unload; an async signed send never lands before the page dies. NOT exempt: under enforce this is dropped, see vp-sign.js EXEMPT
   });
 
-  (function(){ var b=document.getElementById("toAdsBtn"); if(!b) return;
-    b.addEventListener("click", function(){
+  /* END GAME ENDS THE NIGHT (live play test, 24 Oct 2026). This only put the ads back: the session
+     stayed "running", HQ showed the venue live, and the next game on any tablet asked about a
+     takeover. It now does what trivia and musical do: the raffle game is ended on the server, then
+     the session is closed with VP.closeSession (retried on the next load if the wifi drops it).
+     A raffle with tickets already drawn asks first, because the next draw starts a fresh raffle. */
+  function closeNight(ended){
+    var sid=G.sessionId; if(!sid) return;
+    G.sessionId="";
+    (ended || Promise.resolve()).then(function(){ if(window.VP && VP.closeSession) VP.closeSession(sid); });
+  }
+  function endGameToAds(){
+    if(G.busy){ hostError("Let this draw finish, then tap End game."); return; }
+    var started=!!G.gameId || Object.keys(G.drawn||{}).length>0;
+    (started ? vpAsk("End this raffle?\n\nThe TV goes back to your ads. The drawn tickets and the prize list are cleared, so the next draw starts a fresh raffle.") : Promise.resolve(true)).then(function(ok){
+      if(!ok || G.busy) return;
+      var ended = started ? newRaffleNow() : null;
       try{ send({ t:"idle" }); }catch(e){}
       try{ send({ t:"to_ads" }); }catch(e){}
-      b.textContent="Ads are back on";
-      setTimeout(function(){ b.textContent="End game"; }, 2500);
+      closeNight(ended);
+      var b=$("toAdsBtn"); if(b){ b.textContent="Ads are back on"; setTimeout(function(){ b.textContent="End game"; }, 2500); }
     });
+  }
+  (function(){ var b=document.getElementById("toAdsBtn"); if(!b) return;
+    b.addEventListener("click", endGameToAds);
   })();
 })();
 </script>

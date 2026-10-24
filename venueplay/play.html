@@ -1701,7 +1701,10 @@
       if(!P.won){
         if(P.ended && P.lostBy){ route(); }
         else if(hadGame && !P.droppedClaim && !(P.stageWins && P.stageWins.length)){
-          P.ended=true; P.lostBy="That game is over. Nobody called a winning ticket this time."; route();
+          /* A LINE WON BY SOMEONE ELSE IS STILL A WINNER. This read "Nobody called a winning ticket"
+             on every other phone after Phone Sam had just won One line (live play test, 24 Oct 2026).
+             stageNote holds that winner's line (already escaped), so the game-over screen says it. */
+          P.ended=true; P.lostBy = P.stageNote ? "That game is over. "+P.stageNote : "That game is over. Nobody called a winning ticket this time."; route();
         }
         else { P.ended=false; route(); }
       }

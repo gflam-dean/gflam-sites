@@ -44,7 +44,7 @@ print("3. A DROPPED CHANNEL IS NOTICED, REBUILT, AND A BINGO IS SAID AGAIN");
                  removeChannel: function(c){ c.dead = true; if (c && c.cb) c.cb("CLOSED"); } };
   var P = { room: "ABC123", pid: "pid1", name: "Sam", joined: true, claimPending: false, claimId: "", claimMsg: null, won: false, ended: false };
   var $ = els();
-  var env = { client: client, P: P, $: $, window: {}, fetchCard: function(){ fetched++; }, onMsg: function(){},
+  var env = { client: client, P: P, $: $, window: {}, fetchCard: function(){ fetched++; }, onMsg: function(){}, deviceId: function(){ return "devsam000001"; },
               setTimeout: function(fn, ms){ var t = { fn: fn, ms: ms, id: ++tid }; timers.push(t); return t.id; },
               clearTimeout: function(id){ timers = timers.filter(function(t){ return t.id !== id; }); } };
   var names = Object.keys(env);
@@ -54,6 +54,9 @@ print("3. A DROPPED CHANNEL IS NOTICED, REBUILT, AND A BINGO IS SAID AGAIN");
 
   api.open("ABC123"); api.cur().cb("SUBSCRIBED");
   pass("connected: the dot is green and the seat is announced", $("statusDot").classList.on && sent.some(function(m){ return m.t === "join"; }));
+  /* Live play test, 24 Oct 2026: the console counted one phone twice (its bingo page and its musical
+     page), because the musical join carried no device id to tell them apart by. */
+  pass("the seat announcement carries this browser's device id, the one the bingo page sends", sent.some(function(m){ return m.t === "join" && m.did === "devsam000001"; }), JSON.stringify(sent));
   var first = api.cur(); sent.length = 0;
   first.dead = true; first.cb("CLOSED");
   pass("CLOSED is a drop: the phone stops sending into the dead socket", api.sub() === false);
@@ -87,6 +90,23 @@ print("3. A DROPPED CHANNEL IS NOTICED, REBUILT, AND A BINGO IS SAID AGAIN");
   for (var k = 0; k < 8; k++){ api.cur().cb("CHANNEL_ERROR"); var w = timers.length ? timers[0].ms : 0; fire(); }
   pass("the backoff tops out at 30 seconds", w === 30000, String(w));
   pass("pressBingo keeps the claim so a reconnect can say it", play.indexOf("P.claimMsg={ t:\"claim\", claim_id:r.claim_id") > 0 && play.indexOf("send(P.claimMsg);") > 0);
+})();
+
+print("");
+print("3b. SOMEONE ELSE'S WIN READS AS A SENTENCE (live play test, 24 Oct 2026)");
+(function(){
+  /* The other phone read "PHONE SAM WON / took this one." The real onMsg runs the winner message. */
+  var fn = grab("onMsg", play);
+  pass("onMsg is lifted from the page", !!fn);
+  var $ = els(), routed = 0, sent = [];
+  var P = { pid: "pid-jo", joined: true, won: false, ended: false, cells: [1] };
+  var api = (new Function("P", "$", "send", "deviceId", "fetchCard", "route", "celebrate", "closePlayedSheet",
+    fn + "; return onMsg;"))(P, $, function(m){ sent.push(m); }, function(){ return "devjo0000001"; }, function(){}, function(){ routed++; }, function(){}, function(){});
+  api({ t: "winner", pid: "pid-sam", name: "Phone Sam" });
+  pass("the losing phone names the winner, then the page says \"took this one.\" (no \"won\" in front of it)", P.ended === true && $("lostName").textContent === "Phone Sam", $("lostName").textContent);
+  pass("the line under it is the one that says what happened", /<div class="psub">took this one\. Nice game!<\/div>/.test(play));
+  api({ t: "rollcall" });
+  pass("a rollcall answer carries the device id too", sent.length === 1 && sent[0].t === "join" && sent[0].did === "devjo0000001", JSON.stringify(sent));
 })();
 
 print("");

@@ -207,5 +207,80 @@ print("6. TONIGHT: FREE ENTRY OR TICKETS SOLD, and what the rules gate is told (
 })();
 
 print("");
+print("7. A REFUSED START STAYS ON SCREEN (live play test, 24 Oct 2026)");
+(function(){
+  /* Start game came back 429 "Musical bingo runs once a week per venue..." and the host saw nothing:
+     apiPost cleared the bar on every reply that worked, and the /session re-say that openSession
+     fires (not awaited) answered 200 just after. The real beginRound, openSession, apiPost,
+     hostError, clearHostError and clearErrForAction run here against a fake Worker. */
+  var fns = ["hostError", "clearHostError", "clearErrForAction", "apiPost", "openSession", "beginRound"].map(function(n){ return grab(n, host); });
+  pass("the start path is where this test lifts it from", !!fns[0] && !!fns[1] && !!fns[3] && !!fns[4] && !!fns[5]);
+  var bar = { cls: {}, style: {}, parentNode: null, classList: { add: function(c){ bar.cls[c] = 1; }, remove: function(c){ delete bar.cls[c]; } } };
+  var txt = { textContent: "" }, btn = { disabled: false, textContent: "" };
+  var els = { hostErrBar: bar, hostErrText: txt, statusText: { textContent: "" }, startBtn: btn };
+  var later = [], calls = [];
+  var WEEKLY = "Musical bingo runs once a week per venue. Your next musical bingo night is available from Monday 26 October.";
+  function reply(status, body){ return { ok: status >= 200 && status < 300, status: status, json: function(){ return Promise.resolve(body); } }; }
+  var env = {
+    $: function(id){ return els[id] || null; }, document: { body: { appendChild: function(){} }, querySelector: function(){ return null; } },
+    window: { scrollTo: function(){} }, VP_ONETAB: undefined, VP_GAME_API: "https://w", AbortController: undefined,
+    setTimeout: function(){ return 1; }, clearTimeout: function(){},
+    getToken: function(){ return Promise.resolve("t"); }, confirmOverage: function(){ return Promise.resolve(true); },
+    fetch: function(url){ calls.push(url);
+      if (/\/session$/.test(url)) return new Promise(function(res){ later.push(function(){ res(reply(200, { session_id: "s1", join_code: "ABC123" })); }); });
+      if (/\/host\/game$/.test(url)) return Promise.resolve(reply(429, { error: WEEKLY }));
+      return Promise.resolve(reply(200, {})); },
+    G: { venueId: "v1", sessionId: "s1", joinCode: "ABC123", busy: false, pattern: "one", prize: "Meat tray", autoDaub: true },
+    gLostShown: false, VP: {}, paperPrinted: function(){ return 0; }, askPaperDeclared: function(){ return 0; },
+    bcast: function(){}, PAT_TO_WORKER: { one: "one_line" }, playlistPayload: function(){ return { name: "x", songs: [] }; },
+    renderConsole: function(){}
+  };
+  var names = Object.keys(env);
+  var api = (new Function(names.join(","), fns.join("\n") + "\n return { beginRound: beginRound, hostError: hostError, clear: (typeof clearErrForAction==='function') ? clearErrForAction : clearHostError, setLost: function(v){ gLostShown = v; } };"))
+    .apply(null, names.map(function(k){ return env[k]; }));
+  function shown(){ return bar.cls.show ? txt.textContent : ""; }
+  api.beginRound(btn, "Open lobby"); drainMicrotasks();
+  pass("CONTROL: Start re-says /session first, then asks for the game, which is refused", calls.length === 2 && /\/session$/.test(calls[0]) && /\/host\/game$/.test(calls[1]) && /once a week/.test(shown()), { calls: calls, shown: shown() });
+  later.forEach(function(f){ f(); }); drainMicrotasks();
+  pass("the weekly refusal is still on screen after /session answers 200 a moment later", /once a week/.test(shown()), shown());
+  api.beginRound(btn, "Open lobby");
+  pass("and it comes down when the host taps Start again", shown() === "", shown());
+  drainMicrotasks(); later.forEach(function(f){ f(); }); drainMicrotasks();
+  api.setLost(true); api.hostError("Lost the connection to the players' phones.");
+  api.clear();
+  pass("a host action never takes down 'Lost the connection' while the phones are still down", /Lost the connection/.test(shown()), shown());
+})();
+
+print("");
+print("8. ONE PHONE IS ONE PLAYER, WHICHEVER PAGE IT IS ON (live play test, 24 Oct 2026)");
+(function(){
+  /* Phones left on the bingo page from the game before answered the musical console's rollcall with
+     a bingo join (pid = the bingo page's key fingerprint), and the same phones' musical pages joined
+     under their own pids: PLAYERS 4, "Phone Sam, Phone Jo" twice. The real onMsg and renderPlayers run. */
+  var fns = ["rosterKey", "playerCount", "onMsg", "renderPlayers", "esc"].map(function(n){ return grab(n, host); });
+  pass("the join path is where this test lifts it from", !!fns[1] && !!fns[2] && !!fns[3]);
+  var list = { innerHTML: "" }, sent = [];
+  var G = { status: "lobby", players: {}, order: [], peak: 0 };
+  var env = { G: G, $: function(id){ return id === "playerList" ? list : { textContent: "" }; }, window: {},
+              sendPlayers: function(){ sent.push(G.order.length); }, sendState: function(){}, renderJoinCounts: function(){},
+              tvHere: function(){}, hostError: function(){} };
+  var names = Object.keys(env);
+  var api = (new Function(names.join(","), fns.join("\n") + "\n return { onMsg: onMsg, count: playerCount, render: renderPlayers };")).apply(null, names.map(function(k){ return env[k]; }));
+  api.onMsg({ t: "join", pid: "k1_samkeyfingerprint", name: "Phone Sam", cards: 1, did: "devsam000001" });   // bingo page, answering rollcall
+  api.onMsg({ t: "join", pid: "k1_jokeyfingerprint0", name: "Phone Jo", cards: 1, did: "devjo0000001" });
+  api.onMsg({ t: "join", pid: "msam1234abcd", name: "Phone Sam", did: "devsam000001" });                     // musical page, same phone
+  api.onMsg({ t: "join", pid: "mjo01234abcd", name: "Phone Jo", did: "devjo0000001" });
+  api.onMsg({ t: "join", pid: "msam1234abcd", name: "Phone Sam", did: "devsam000001" });                     // and again, on a reconnect
+  api.render();
+  pass("two phones on two pages each are TWO players, not four", api.count() === 2, api.count());
+  pass("and each name is listed once", (list.innerHTML.match(/Phone Sam/g) || []).length === 1 && (list.innerHTML.match(/Phone Jo/g) || []).length === 1, list.innerHTML);
+  api.onMsg({ t: "join", pid: "mann1234abcd", name: "Ann", did: "devann000001" });
+  api.onMsg({ t: "join", pid: "oldpage00001", name: "Bob" });                                                // an older page with no device id
+  pass("CONTROL: a different phone is a new player, and a join with no device id still counts by its pid", api.count() === 4, api.count());
+  api.onMsg({ t: "join", pid: "oldpage00001", name: "Bob", did: "devbob000001" });                          // the same pid, now with its device id
+  pass("a pid seen first without a device id is not counted twice once it sends one", api.count() === 4, api.count());
+})();
+
+print("");
 print(bad ? ("  " + bad + " FAILED") : ("ALL " + ran + " CHECKS PASSED"));
 if (bad) throw new Error(bad + " failed");

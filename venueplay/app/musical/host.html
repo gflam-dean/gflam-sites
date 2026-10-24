@@ -692,7 +692,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       if(_ac) _opts.signal=_ac.signal;
       return fetch(VP_GAME_API+path,_opts).then(function(r){ clearTimeout(_to); return r; },
         function(e){ clearTimeout(_to); var te=new Error("The game server did not answer. Check the venue wifi and try again."); te.status=0; throw te; });
-    }).then(function(res){ return res.json().catch(function(){ return {}; }).then(function(data){ if(res.status===402 && data && data.needs_overage_ack){ var extra=data.extra||0, cap=data.plan_cap||0; var ackAndGo=function(){ return apiPost("/host/overage/ack",{ session_id: body.session_id }).then(function(){ return apiPost(path, body); }); }; if(data.free_month) return ackAndGo();   /* the Worker decides the free month, not our own calendar maths */ return confirmOverage(cap, extra).then(function(ok){ if(!ok){ var ec=new Error("Over plan - game not started."); ec.status=402; throw ec; } return ackAndGo(); }); } if(!res.ok){ var e=new Error((data&&data.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } clearHostError(); return data; }); }); }
+    }).then(function(res){ return res.json().catch(function(){ return {}; }).then(function(data){ if(res.status===402 && data && data.needs_overage_ack){ var extra=data.extra||0, cap=data.plan_cap||0; var ackAndGo=function(){ return apiPost("/host/overage/ack",{ session_id: body.session_id }).then(function(){ return apiPost(path, body); }); }; if(data.free_month) return ackAndGo();   /* the Worker decides the free month, not our own calendar maths */ return confirmOverage(cap, extra).then(function(ok){ if(!ok){ var ec=new Error("Over plan - game not started."); ec.status=402; throw ec; } return ackAndGo(); }); } if(!res.ok){ var e=new Error((data&&data.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return data; }); }); }
 
   // TWO broadcast channels for instant UX (the DB is the source of truth), same as the
   // bingo/trivia host:
@@ -791,7 +791,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     // Young and Rise are each several different songs. Keying the played set by title meant
     // playing one of them marked every namesake on every card in the room.
     played:{}, playedOrder:[], hostNow:null, nowSong:null,
-    players:{}, order:[],  // cosmetic roster: pid -> {name}
+    players:{}, order:[],  // cosmetic roster: rosterKey (device id, else pid) -> {name}
     /* claims is the list, in the order the Worker stamped them (arrival order when the Worker
        gives no clock). claim is always the head of that list, kept for the replay paths that
        only need to know whether anything is waiting. A second BINGO on the same song used to
@@ -825,6 +825,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   function playedArray(){ return G.playedOrder.map(function(p){ return p.title; }); }
   function playedIdArray(){ return G.playedOrder.map(function(p){ return p.song_id||""; }); }
   function playerCount(){ return G.order.length; }
+  function rosterKey(m){ var d=m && m.did; return (typeof d==="string" && /^[A-Za-z0-9_-]{6,64}$/.test(d)) ? "d:"+d : "p:"+String(m.pid); }
   var _claimSeq=0;
   function clearClaims(){ G.claims=[]; G.claim=null; }
   function sortClaims(){
@@ -877,6 +878,12 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     try{ window.scrollTo({ top:0, behavior:"smooth" }); }catch(e){ window.scrollTo(0,0); }
   }
   function clearHostError(){ var b=$("hostErrBar"); if(b) b.classList.remove("show"); }
+  /* A REFUSAL STAYS UP UNTIL THE HOST DOES SOMETHING ELSE (live play test, 24 Oct 2026). apiPost
+     used to clear the bar on every reply that worked, so Start game's 429 ("Musical bingo runs once
+     a week per venue...") was wiped by the /session call answering 200 a moment later, and the host
+     saw a Start button that did nothing. The bar is now cleared when the host starts an action, and
+     never while "Lost the connection" is still true. */
+  function clearErrForAction(){ if(!gLostShown) clearHostError(); }
   (function(){ var x=$("hostErrX"); if(x) x.addEventListener("click", clearHostError); })();
 
   // ---- reload-recovery: a host refresh mid-game picks the live game back up (same pattern as trivia/host) ----
@@ -1222,17 +1229,30 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
      is a fraction of a second, so after SKIP_ASK_SECONDS the button wakes up and a tap asks first,
      the same question the song list already asks. Inside the window it is still refused. */
   var SKIP_ASK_SECONDS=2;
+  /* ONE SKIP QUESTION AT A TIME, ABOUT THE SONG THAT IS ON (live play test, 24 Oct 2026). Every tap
+     on "Next song in Ns (tap to skip)" queued another "Skip ...?" (vp-ask.js waits its turn), so 32
+     piled up and each OK skipped another song, under the name of a song long gone. While one is
+     open a tap does nothing, and an OK skips only if the song it named is still the one playing. */
+  var _skipAsking=false;
   function holdLabel(left){ return (SONG_HOLD_SECONDS-left>=SKIP_ASK_SECONDS) ? "Next song in "+left+"s (tap to skip)" : "Next song in "+left+"s"; }
   function playNext(skipAsked){
     var b=$("playNextBtn");
     if(VP_HOLD.busy(b)){
       if(!VP_HOLD.soft(b)) return;                       // a double tap: refused, as before
       if(G.nowSong && skipAsked!==true){                 // asked on the page (vp-ask.js), then back in here
-        vpAsk("Skip \""+G.nowSong.title+"\" and play the next song?").then(function(ok){ if(ok) playNext(true); });
+        if(_skipAsking) return;
+        _skipAsking=true;
+        var asked=G.nowSong;
+        clearErrForAction();
+        vpAsk("Skip \""+asked.title+"\" and play the next song?").then(function(ok){
+          _skipAsking=false;
+          if(ok && G.nowSong===asked && G.status==="running") playNext(true);
+        }, function(){ _skipAsking=false; });
         return;
       }
       VP_HOLD.release(b);
     }
+    clearErrForAction();
     cancelAuto();
     for(var i=G.qIdx+1;i<G.queue.length;i++){
       var s=G.songs[G.queue[i]];
@@ -1523,6 +1543,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   // scan in and see "you're in" before any card is dealt. Then "Start game" deals + begins.
   function openLobby(){
     if(!libLoaded || G.busy) return;
+    clearErrForAction();
     G.busy=true; var btn=$("startBtn"); btn.disabled=true; btn.textContent="Opening...";
     openSession().then(function(){
       bcast({ t:"mode", mode:"musical" });   // TV switches to the musical join screen
@@ -1534,6 +1555,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   }
   function cancelLobby(){
     if(G.busy) return;
+    clearErrForAction();
     G.status="setup";
     bcast({ t:"idle" });   // TV back to the idle join screen
     sendState();
@@ -1553,6 +1575,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   }
   function startGame(){
     if(!libLoaded || G.busy) return;
+    clearErrForAction();
     G.playlistId=$("playlistSel").value;
     G.playlistName=playlistNameOf(G.playlistId);
     G.pattern=$("patternSel").value;
@@ -1583,6 +1606,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   // then rebuild G.songs from the Worker response so each song carries its DB song_id for
   // /host/play. Phones fetch their own cards via /player/card off the "started" broadcast.
   function beginRound(btn, label){
+    clearErrForAction();
     G.busy=true; if(btn){ btn.disabled=true; btn.textContent="Starting..."; }
     openSession().then(function(){
       return paperPrinted()>0 ? askPaperDeclared() : 0;
@@ -1628,6 +1652,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     vpAsk("End this game?\n\nThe TV goes back to your ads and everyone's card is closed.").then(function(ok){ if(ok && !G.busy) endGameAsked(); });
   }
   function endGameAsked(){
+    clearErrForAction();
     clearMusic();
     var gid=G.gameId;
     postMusicReport(gid);
@@ -1716,6 +1741,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   }
   function hostConfirm(idx){
     if(!G.claims.length || G.busy) return;
+    clearErrForAction();
     var c=G.claims[idx]||G.claims[0]; G.busy=true;
     var others=G.claims.filter(function(x){ return x!==c; });
     var np=nextPat(G.pattern);
@@ -1734,6 +1760,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   // status where it is still running, so the second confirm changes nothing there).
   function hostConfirmAll(){
     if(G.claims.length<2 || G.busy) return;
+    clearErrForAction();
     var list=G.claims.slice(); G.busy=true;
     var np=nextPat(G.pattern);
     var chain=Promise.resolve();
@@ -1780,6 +1807,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   }
   function carryOn(){
     if(!G._nextPat || G.busy) return;
+    clearErrForAction();
     var np=G._nextPat, newPrize=($("carryPrize").value||"").trim()||G.prize; G.busy=true;
     apiPost("/host/game/pattern",{ game_id:G.gameId, pattern:np, prize:newPrize }).then(function(){
       G.pattern=np; G.prize=newPrize; G.status="running"; G.won=false; clearClaims();
@@ -1791,6 +1819,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   }
   function hostReject(idx){
     if(!G.claims.length || G.busy) return;
+    clearErrForAction();
     var c=G.claims[idx]||G.claims[0]; G.busy=true;
     apiPost("/host/claim/resolve",{ claim_id:c.claimId, decision:"reject" }).then(function(){
       G.claims=G.claims.filter(function(x){ return x!==c; });
@@ -1848,8 +1877,17 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       // Cosmetic roster only: the Worker meters vp_players and deals the card. The phone
       // fetches its own card via /player/card off the "started"/"state" broadcast.
       if(!m.pid) return;
-      if(!G.players[m.pid]){ G.players[m.pid]={ name:(m.name||"Player") }; G.order.push(m.pid); }
-      else { G.players[m.pid].name=(m.name||G.players[m.pid].name); }
+      /* ONE PERSON IS ONE CHIP (live play test, 24 Oct 2026). Phones still on the bingo page from
+         the game before answer this console's rollcall with a bingo join (its pid is the bingo
+         page's key fingerprint), and the same phone's musical page joins under its own pid, so
+         PLAYERS read 4 with "Phone Sam, Phone Jo" listed twice. Both pages carry the browser's one
+         device id (vpDeviceId), so the roster is keyed on that, and on the pid only without one. */
+      var rk=rosterKey(m);
+      if(rk.charAt(0)==="d" && G.players["p:"+m.pid]){             // this pid was seen before it sent its device id
+        delete G.players["p:"+m.pid]; G.order=G.order.filter(function(k){ return k!=="p:"+m.pid; });
+      }
+      if(!G.players[rk]){ G.players[rk]={ name:(m.name||"Player") }; G.order.push(rk); }
+      else { G.players[rk].name=(m.name||G.players[rk].name); }
       sendPlayers();
       if(playerCount()>G.peak) G.peak=playerCount();
       if(G.status==="running") sendState();   // nudge a late joiner's phone to fetch its card
