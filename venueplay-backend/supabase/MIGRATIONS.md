@@ -355,6 +355,14 @@ hidden for SA and NT venues not recorded as a club; this switch, set only from H
 it. Not security definer, no new policy or grant, so RLS-BASELINE.json does not change. Either order with the Workers is safe
 (both read the column fail-safe). Branch `feature/sant-bingo`. NOT RUN. Rollback: in the file.
 
+`venueplay-117-multi-raffle.sql` (Dean, 24 Oct 2026: "Absolutely" to more than one raffle a venue): `vp_venue_screen.raffles`
+(jsonb list of { id, label, day, time }, default '[]', backfilled from the single routine in `raffle`, which stays and is
+mirrored to the first raffle by the billing Worker) and `vp_raffle_prizes.raffle_id` (which raffle a usual prize is for; null
+is a prize from before, shown under the first raffle). No new table, policy, grant or function, so RLS-BASELINE.json does not
+change; the screen history trigger (114) records the new column with the rest of the row. Either order with the Workers is safe:
+both read `raffles` on a query of its own and fall back to the single routine; a raffles save before it is run is refused with
+"run migration 117 first". Branch `fix/multi-raffle`. NOT RUN. Rollback: in the file.
+
 `venueplay-118-custom-bingo-patterns.sql` (Dean, 24 Oct 2026, after a Drag Bingo show played "any 5 numbers on the card"): a
 venue's own NAMED winning patterns for number bingo. New table `vp_bingo_patterns` (venue_id, name 1 to 30 characters, rule
 jsonb `{"type":"any","n":1..15}` or `{"type":"shape","cells":[0..26]}`, deleted_at kept so a game playing a deleted pattern is
