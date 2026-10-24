@@ -23,6 +23,7 @@ import argparse, json, os, sys, time
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'tools', 'browser-rig'))
 import admin_site  # noqa: E402
+import rig as RIG  # noqa: E402
 
 ap = argparse.ArgumentParser()
 ap.add_argument('--shots')
@@ -45,7 +46,10 @@ def shot(sid, name, full=True):
 
 # The venue rows are read LIVE from the Worker rig's database (live_tables), so a permit the real Worker
 # wrote is what the page reads back after a reload, as it is in production.
-S = admin_site.Site(live_tables=['vp_venues'])
+# The members draws are written by the REAL game Worker (rig.py's Worker, in jsc) and read back live from
+# its database, so "Remove" and "Save" are judged by the real /host/members/* routes.
+GW = RIG.Worker()
+S = admin_site.Site(live_tables=['vp_venues', 'vp_member_draws'], game=GW, game_tables=['vp_member_draws'])
 V1, V2 = S.W.info['venue'], S.W.info['venue2']
 SETTLED = 'document.readyState==="complete" && !document.getElementById("body").classList.contains("hidden")'
 BILLING_UP = 'document.getElementById("content").style.display!=="none"'
@@ -224,6 +228,63 @@ try:
     S.close_tab(tid)
     S.W.seed('vp_platform_admins', [])
 
+    print('\nDRAWS: every members draw listed with Edit and Remove; the one raffle routine listed with Remove raffle')
+    D1, D2 = '44444444-4444-4444-8444-000000000001', '44444444-4444-4444-8444-000000000002'
+    GW.seed('vp_member_draws', [
+        {'id': D1, 'venue_id': V1, 'name': 'Friday Members Badge Draw', 'draw_day': 'Friday', 'draw_time': '7:00pm', 'date_started': '2026-10-02',
+         'starting_amount_cents': 50000, 'increment_cents': 10000, 'current_jackpot_cents': 90000, 'time_to_claim_seconds': 120,
+         'created_at': '2026-10-01T00:00:00Z', 'archived_at': None},
+        {'id': D2, 'venue_id': V1, 'name': 'Sunday Members Draw (TEST)', 'draw_day': 'Sunday', 'draw_time': '3:00pm', 'date_started': '2026-10-04',
+         'starting_amount_cents': 20000, 'increment_cents': 5000, 'current_jackpot_cents': 25000, 'time_to_claim_seconds': 90,
+         'created_at': '2026-10-24T00:43:00Z', 'archived_at': None}], replace=True)
+    def draws_db(): return dict((d['id'], d) for d in S.game_table('vp_member_draws'))
+    LIST = '[].map.call(document.querySelectorAll("#mdList .drow"),function(r){return (r.classList.contains("editing")?"*":"")+r.querySelector(".dn b").textContent+" | "+r.querySelector(".dn small").textContent+" | "+r.querySelector(".tvtag").textContent;}).join("\\n")'
+    tid, sid = S.open('/app/billing.html#draws', 1100, 1000)
+    S.until(sid, BILLING_UP, 25)
+    S.until(sid, 'document.querySelectorAll("#mdList .drow").length===2', 25); time.sleep(0.5)
+    lst = (S.js(sid, LIST) or '').split('\n')
+    ok('both members draws are listed under the form: name, night, jackpot and whether each is on the TV',
+       len(lst) == 2 and lst[0].startswith('*Friday Members Badge Draw | Friday 7:00pm') and '$900' in lst[0] and lst[0].endswith('On the TV')
+       and lst[1].startswith('Sunday Members Draw (TEST) | Sunday 3:00pm') and '$250' in lst[1], lst)
+    ok('no draw is hidden in a "Which draw" dropdown any more, and there is an "+ Add another draw" button',
+       S.js(sid, '!document.getElementById("mdPick") && !/Add another draw/.test([].map.call(document.querySelectorAll("#tp-draws option"),function(o){return o.textContent;}).join("|")) && document.getElementById("mdAddDraw").textContent.trim()==="+ Add another draw"') is True)
+    S.js(sid, 'document.querySelectorAll("#mdList .drow")[1].querySelector(".dedit").click(); true'); time.sleep(0.4)
+    ok('Edit on the second draw loads it into the form and marks it as the one being edited',
+       S.js(sid, 'document.getElementById("md-name").value') == 'Sunday Members Draw (TEST)' and (S.js(sid, LIST) or '').split('\n')[1].startswith('*')
+       and S.js(sid, 'document.getElementById("mdEditing").textContent') == 'Editing Sunday Members Draw (TEST).', S.js(sid, LIST))
+    S.js(sid, 'document.getElementById("md-time").value="8:00pm"; document.getElementById("mdSave").click(); true')
+    S.until(sid, '/Sunday 8:00pm/.test(document.getElementById("mdList").textContent)', 20)
+    ok('saving the edit changes THAT draw, in the Worker and in the list, and leaves the first alone',
+       draws_db().get(D2, {}).get('draw_time') == '8:00pm' and draws_db().get(D1, {}).get('draw_time') == '7:00pm' and 'Sunday 8:00pm' in (S.js(sid, LIST) or ''), (draws_db().get(D2), S.js(sid, LIST)))
+    S.js(sid, 'document.querySelectorAll("#mdList .drow")[1].querySelector(".dremove").click(); true')
+    S.until(sid, '!!document.getElementById("vpAskGo")', 8)
+    S.js(sid, 'document.getElementById("vpAskGo").click(); true')
+    S.until(sid, 'document.querySelectorAll("#mdList .drow").length===1', 20); time.sleep(0.4)
+    ok('Remove takes the second draw out of the list (the real draw-remove archives it) and keeps the first',
+       (S.js(sid, LIST) or '').count('\n') == 0 and 'Friday Members Badge Draw' in (S.js(sid, LIST) or '') and bool(draws_db().get(D2, {}).get('archived_at')) and not draws_db().get(D1, {}).get('archived_at'),
+       (S.js(sid, LIST), draws_db().get(D2)))
+    S.js(sid, 'document.getElementById("mdAddDraw").click(); true'); time.sleep(0.3)
+    ok('"+ Add another draw" empties the form for a new one', S.js(sid, 'document.getElementById("md-name").value==="" && !document.querySelector("#mdList .drow.editing")') is True)
+    S.js(sid, 'document.getElementById("md-name").value="Wednesday Lucky Draw"; document.getElementById("mdSave").click(); true')
+    S.until(sid, 'document.querySelectorAll("#mdList .drow").length===2', 20)
+    ok('and saving it adds it to the list (two draws again, the new one being edited)', (S.js(sid, LIST) or '').split('\n')[-1].startswith('*Wednesday Lucky Draw'), S.js(sid, LIST))
+    RLIST = '[].map.call(document.querySelectorAll("#rfList .drow"),function(r){return r.querySelector(".dn b").textContent+" | "+r.querySelector(".dn small").textContent+" | "+r.querySelector(".tvtag").textContent+" | "+r.querySelector(".rremove").textContent;}).join("\\n")'
+    S.js(sid, 'document.getElementById("rf-label").value="Meat Raffle"; document.getElementById("rf-day").value="Friday"; document.getElementById("rf-time").value="6:30pm"; document.getElementById("rfSave").click(); true')
+    S.until(sid, 'document.querySelectorAll("#rfList .drow").length===1', 20); time.sleep(0.3)
+    rl = S.js(sid, RLIST) or ''
+    ok('the raffle routine is listed as ONE row (one routine per venue), on the TV, with Edit and "Remove raffle"',
+       rl.startswith('Meat Raffle | drawn Friday 6:30pm') and rl.endswith('On the TV | Remove raffle') and S.js(sid, '!document.querySelector("#rfAddAnother")') is True, rl)
+    S.js(sid, 'document.querySelector("#rfList .rremove").click(); true')
+    S.until(sid, '!!document.getElementById("vpAsk")', 8)
+    askt = S.js(sid, 'document.getElementById("vpAsk").innerText') or ''
+    S.js(sid, 'document.getElementById("vpAskGo").click(); true')
+    S.until(sid, 'document.querySelectorAll("#rfList .drow").length===0', 20)
+    ok('Remove raffle says the prize list is kept, and takes the routine out of the list and off the TV',
+       'prize list is kept' in askt and S.js(sid, '/No raffle routine saved/.test(document.getElementById("rfList").textContent) && document.getElementById("rf-label").value===""') is True, askt[:160])
+    errs = S.js(sid, 'JSON.stringify(window.__errs||[])')
+    ok('no script error working the draws lists', errs == '[]', errs)
+    S.close_tab(tid)
+
     print('\nYOUR ACCOUNT > MARKETING: the venue link, the table signs, the opt-in list')
     tid, sid = S.open('/app/billing.html#marketing', 1100, 1000)
     S.until(sid, BILLING_UP, 25)
@@ -265,6 +326,7 @@ try:
     S.close_tab(tid)
 finally:
     S.close()
+    GW.close()
 
 print('')
 print(('%d FAILED, %d run' % (bad, ran)) if bad else ('ALL %d CHECKS PASSED' % ran))

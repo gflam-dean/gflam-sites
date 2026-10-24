@@ -186,6 +186,17 @@
   .go:disabled{opacity:.5;cursor:default;box-shadow:none}
   /* Quiet counterpart to .go, for "take this off the screen" style actions: it has to be
      findable without competing with Save. */
+  /* THE LIST UNDER EACH DRAWS FORM (Dean, 24 Oct 2026): every members draw a venue has, and its raffle
+     routine, visible with Edit and Remove, so nothing saved is out of sight. */
+  .drawlist{margin-top:14px;border-top:1px solid var(--line-2)}
+  .drow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:11px 0;border-bottom:1px solid var(--line-2)}
+  .drow .dn{flex:1 1 220px;min-width:0}
+  .drow .dn b{display:block;color:#fff;font-size:14.5px;overflow-wrap:anywhere}
+  .drow .dn small{display:block;color:var(--muted);font-size:12.5px}
+  .drow .tvtag{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .drow .tvtag.on{color:var(--win)}
+  .drow.editing{box-shadow:inset 3px 0 0 var(--pink);padding-left:10px}
+  .drow .drowbtns{display:flex;gap:8px}
   .offtv{background:transparent;color:var(--pink);border:1px solid rgba(255,31,142,.45);border-radius:11px;
     padding:11px 18px;font-size:13.5px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;cursor:pointer;transition:.15s}
   .offtv:hover{background:rgba(255,31,142,.08);border-color:var(--pink)}
@@ -558,6 +569,9 @@
         <button class="offtv" id="rfClear" type="button">Take off the TV</button>
       </div>
       <p class="snote" style="margin-top:8px">Taking it off the TV clears the routine above, so the raffle stops appearing between games. Your prize list below is kept.</p>
+      <!-- A venue has ONE raffle routine (vp_venue_screen.raffle is one routine per venue, the one the TV
+           shows), so this list has one row at most and no "Add another": change it above or take it off. -->
+      <div class="drawlist" id="rfList"></div>
     </div>
     <div class="scard">
       <div class="scardhead">Your usual prizes</div>
@@ -609,10 +623,7 @@
     <div id="mdLoadErr" class="loadfail" hidden></div>
     <div class="scard">
       <div class="scardhead" id="mdHead">Your members draws</div>
-      <div class="mdf" id="mdDrawWrap" style="margin-bottom:14px">
-        <label class="flabel" for="mdPick">Which draw</label>
-        <select id="mdPick"></select>
-      </div>
+      <p class="snote" id="mdEditing">A new draw. Fill it in and save it.</p>
       <div class="mdgrid">
         <div class="mdf"><label class="flabel" for="md-name">Draw name</label><input type="text" id="md-name" placeholder="e.g. Friday Members Draw"></div>
         <div class="mdf"><label class="flabel" for="md-start">Start date</label><input type="date" id="md-start"></div>
@@ -631,6 +642,8 @@
         <button class="offtv" id="mdRemoveDraw" type="button">Remove this draw</button>
       </div>
       <p class="snote" style="margin-top:8px">Taking it off the TV clears the draw day and time, so it stops appearing between games. The draw, its jackpot and your members list are all kept, so putting a night back on brings it straight back.</p>
+      <div class="drawlist" id="mdList"></div>
+      <button class="addbtn" id="mdAddDraw" type="button" style="margin-top:12px">+ Add another draw</button>
     </div>
     <div class="scard">
       <div class="scardhead">Your members list<span class="forvenue" id="mdListForVenue"></span></div>
@@ -2228,35 +2241,45 @@
     $("md-curjp").value = toDollars(d.current_jackpot_cents);
   }
   var mdDraws = [];
-  /* A club can run more than one draw: a Friday members draw and a Sunday one, different
-     jackpots, different nights. The admin only ever loaded the first and saved over it, so the
-     second could not exist. Pick one here, or start a new one. */
+  /* A club can run more than one draw: a Friday members draw and a Sunday one, different jackpots,
+     different nights. Every draw is LISTED under the form with Edit and Remove (Dean, 24 Oct 2026: a
+     second draw hidden behind a "Which draw" dropdown was a draw nobody could find or delete), and
+     "+ Add another draw" starts a new one. */
+  function mdOnTv(d){ return !!(d && String(d.draw_day||"").trim() && String(d.draw_time||"").trim()); }
+  function mdSelect(d){
+    mdDraw = d || null; fillMembersDraw(mdDraw); renderDrawPicker();
+  }
   function renderDrawPicker(){
-    /* mdDrawWrap, NOT mdPickWrap. Both boxes carried id="mdPickWrap" and this line grabbed the
-       first one in the page, which is the VENUE picker: so a single-venue owner with one draw saw
-       a venue dropdown appear with nothing to choose, a group owner whose first venue had no draw
-       lost the venue selector, and the "Which draw" box was never hidden. */
-    var sel=$("mdPick"), wrap=$("mdDrawWrap");
-    if(!sel) return;
-    sel.innerHTML="";
+    var box=$("mdList"), ed=$("mdEditing");
+    if(ed) ed.textContent = mdDraw ? ("Editing " + (mdDraw.name || "this draw") + ".") : (mdDraws.length ? "A new draw. Fill it in and save it to add it to your list." : "Your first draw. Fill it in and save it.");
+    var rm=$("mdRemoveDraw"); if(rm) rm.style.display = mdDraw ? "" : "none";
+    if(!box) return;
+    box.innerHTML="";
+    if(!mdDraws.length){ box.innerHTML='<p class="snote" style="margin:10px 0 0">No members draws saved yet.</p>'; return; }
     mdDraws.forEach(function(d){
-      var o=document.createElement("option"); o.value=d.id;
-      o.textContent=d.name||"Members draw";
-      if(mdDraw && d.id===mdDraw.id) o.selected=true;
-      sel.appendChild(o);
+      var row=document.createElement("div"); row.className="drow"+(mdDraw && d.id===mdDraw.id ? " editing" : ""); row.setAttribute("data-draw", d.id);
+      var when = mdOnTv(d) ? (d.draw_day + " " + d.draw_time) : "No draw night set";
+      var jp = d.current_jackpot_cents!=null ? ("jackpot $" + toDollars(d.current_jackpot_cents)) : "no jackpot set";
+      row.innerHTML='<div class="dn"><b>' + esc(d.name || "Members draw") + '</b><small>' + esc(when) + ' &middot; ' + esc(jp) + '</small>' +
+        '<span class="tvtag' + (mdOnTv(d) ? ' on' : '') + '">' + (mdOnTv(d) ? 'On the TV' : 'Not on the TV') + '</span></div>' +
+        '<div class="drowbtns"><button class="addbtn dedit" type="button">Edit</button><button class="offtv dremove" type="button">Remove</button></div>';
+      row.querySelector(".dedit").addEventListener("click", function(){ mdSelect(d); try{ $("md-name").focus(); $("mdHead").scrollIntoView({ block:"start", behavior:"smooth" }); }catch(e){} });
+      row.querySelector(".dremove").addEventListener("click", function(){ mdSelect(d); removeDraw(); });
+      box.appendChild(row);
     });
-    var add=document.createElement("option"); add.value="__new"; add.textContent="+ Add another draw";
-    sel.appendChild(add);
-    if(wrap) wrap.style.display = mdDraws.length ? "" : "none";
-    sel.onchange=function(){
-      if(sel.value==="__new"){
-        mdDraw=null; fillMembersDraw(null);
-        var n=$("md-name"); if(n){ n.value=""; try{ n.focus(); }catch(e){} }
-        showMsg("Fill this in and save to add a second draw.", true);
-        return;
-      }
-      for(var i=0;i<mdDraws.length;i++){ if(mdDraws[i].id===sel.value){ mdDraw=mdDraws[i]; fillMembersDraw(mdDraw); return; } }
-    };
+  }
+  function mdAddAnother(){
+    if (mdNotReady()) return;
+    mdSelect(null);
+    var n=$("md-name"); if(n){ try{ n.focus(); }catch(e){} }
+    showMsg("Fill this in and save to add another draw.", true);
+  }
+  /* What the Worker answered with, put back into the list, so a saved or retimed draw is listed as it is. */
+  function mdKeep(d){
+    if(!d || !d.id) return;
+    var i; for(i=0;i<mdDraws.length;i++){ if(mdDraws[i].id===d.id){ mdDraws[i]=d; break; } }
+    if(i===mdDraws.length) mdDraws.push(d);
+    mdDraw=d; renderDrawPicker();
   }
   /* mdReady is true only once THIS venue's draws have been read. Until then (or if that read
      failed) nothing in the panel may write: with no draw loaded, Save would CREATE a second
@@ -2336,7 +2359,7 @@
       btn.disabled=false; paintMdVenue();
       if (r.error){ showMsg(r.error); return; }
       if (mdCurrent !== savedFor){ showMsg("Members draw saved.", true); pushToScreen(savedFor); return; }
-      mdDraw = r.draw || mdDraw;
+      mdKeep(r.draw || mdDraw);
       // Show the jackpot the Worker now holds, and forget the edit: it has been sent.
       if (r.draw && r.draw.current_jackpot_cents != null) $("md-curjp").value = toDollars(r.draw.current_jackpot_cents);
       mdCurTouched = false;
@@ -2399,7 +2422,7 @@
       if (r.error){ showMsg(r.error); return; }
       pushToScreen(mdCurrent);
       showMsg(nm + " removed.", true);
-      loadMembersDrawFor(mdCurrent);   // reload the picker without it
+      loadMembersDrawFor(mdCurrent);   // reload the list without it
     });
     });
   }
@@ -2641,6 +2664,23 @@
     if (!rfReady){ showMsg("The raffle for " + (rfVenueName() || "this venue") + " has not loaded. Press Try again first."); return true; }
     return false;
   }
+  /* The venue's one raffle routine, as SAVED (not as typed), listed under the form like the members draws. */
+  var rfSaved = null, rfPrizeCount = null;
+  function renderRaffleList(){
+    var box=$("rfList"); if(!box) return;
+    box.innerHTML="";
+    var r=rfSaved||{};
+    if(!(r.label || r.day || r.time)){ box.innerHTML='<p class="snote" style="margin:10px 0 0">No raffle routine saved. A venue has one routine, the one your TV shows: fill it in above and save it.</p>'; return; }
+    var onTv = !!(r.day && r.time);
+    var row=document.createElement("div"); row.className="drow"; row.setAttribute("data-raffle","1");
+    row.innerHTML='<div class="dn"><b>' + esc(r.label || "Raffle") + '</b><small>' + esc(onTv ? ("drawn " + r.day + " " + r.time) : "No draw night set") +
+      (rfPrizeCount!=null ? (' &middot; ' + rfPrizeCount + ' usual prize' + (rfPrizeCount===1?'':'s')) : '') + '</small>' +
+      '<span class="tvtag' + (onTv ? ' on' : '') + '">' + (onTv ? 'On the TV' : 'Not on the TV') + '</span></div>' +
+      '<div class="drowbtns"><button class="addbtn redit" type="button">Edit</button><button class="offtv rremove" type="button">Remove raffle</button></div>';
+    row.querySelector(".redit").addEventListener("click", function(){ try{ $("rf-label").focus(); }catch(e){} });
+    row.querySelector(".rremove").addEventListener("click", clearRaffleRoutine);
+    box.appendChild(row);
+  }
   function loadRafflePrizes(venueId){
     VP.getClient().from("vp_raffle_prizes").select("id,label").eq("venue_id", venueId).order("created_at",{ascending:false}).then(function(r){
       if (venueId !== rfCurrent) return;      // the picker has moved on
@@ -2650,6 +2690,7 @@
         return;
       }
       var rows = r.data || [];
+      rfPrizeCount = rows.length; renderRaffleList();
       if (!rows.length){ box.innerHTML = '<p class="snote" style="margin:0">No prizes yet.</p>'; return; }
       rows.forEach(function(p){
         var chip = document.createElement("span"); chip.className = "rfchip";
@@ -2675,6 +2716,7 @@
       var r = d.raffle || {};
       $("rf-label").value = r.label || ""; $("rf-day").value = r.day || ""; $("rf-time").value = r.time || "";
       rfReady = true;
+      rfSaved = { label: r.label || "", day: r.day || "", time: r.time || "" }; renderRaffleList();
     });
   }
   function loadPrizeTally(venueId){
@@ -2694,6 +2736,7 @@
   }
   function loadRafflesFor(venueId){
     rfCurrent = venueId;
+    rfSaved = null; rfPrizeCount = null; renderRaffleList();
     paintRfVenue();
     loadRaffleRoutine(venueId);
     loadRafflePrizes(venueId);
@@ -2728,6 +2771,7 @@
     api("/account/screen-save", { venue_id:rfCurrent, raffle:raffle }).then(function(r){
       btn.disabled=false; paintRfVenue();
       if (r.error){ showMsg(r.error); return; }
+      rfSaved = raffle; renderRaffleList();
       pushToScreen(rfCurrent);
       showMsg("Raffle routine saved. Your TV updates in a few seconds.", true);
     });
@@ -2736,12 +2780,13 @@
      empty routine stores null, and the screen drops the card on its next refresh. */
   function clearRaffleRoutine(){
     if (!rfCurrent){ showMsg("Pick a venue first."); return; }
-    vpAsk("Take the raffle off the TV?\n\nIt stops showing between games. Your prize list is kept, and you can put it back any time.").then(function(ok){ if (!ok) return;
+    vpAsk("Remove the raffle routine?\n\nIt comes off the TV and stops showing between games. Your prize list is kept, and you can set the routine again any time.").then(function(ok){ if (!ok) return;
     var btn=$("rfClear"); btn.disabled=true; btn.textContent="Removing…";
     api("/account/screen-save", { venue_id:rfCurrent, raffle:{ label:"", day:"", time:"" } }).then(function(r){
       btn.disabled=false; btn.textContent="Take off the TV";
       if (r.error){ showMsg(r.error); return; }
       $("rf-label").value=""; $("rf-day").value=""; $("rf-time").value="";
+      rfSaved = { label:"", day:"", time:"" }; renderRaffleList();
       pushToScreen(rfCurrent);
       showMsg("Raffle taken off the TV. It stops showing in a few seconds.", true);
     });
@@ -2757,7 +2802,7 @@
     gameApi("/host/members/settings", { draw_id: mdDraw.id, name: (mdDraw.name || $("md-name").value.trim() || "Members draw"), draw_day:"", draw_time:"" }).then(function(r){
       btn.disabled=false; btn.textContent="Take off the TV";
       if (r.error){ showMsg(r.error); return; }
-      mdDraw = r.draw || mdDraw;
+      mdKeep(r.draw || mdDraw);
       $("md-day").value=""; $("md-time").value="";
       pushToScreen(mdCurrent);
       showMsg("Members draw taken off the TV. It stops showing in a few seconds.", true);
@@ -2905,6 +2950,7 @@
     $("mdRemove").addEventListener("click", removeMember);
   $("mdFix").addEventListener("click", fixMemberName);
     $("mdRemoveDraw").addEventListener("click", removeDraw);
+    $("mdAddDraw").addEventListener("click", mdAddAnother);
     $("mdImport").addEventListener("click", importMembers);
     ["md-start","md-startjp","md-inc"].forEach(function(id){ $(id).addEventListener("input", mdRecalc); $(id).addEventListener("change", mdRecalc); });
     ["input","change"].forEach(function(ev){ $("md-curjp").addEventListener(ev, function(){ mdCurTouched = true; }); });
