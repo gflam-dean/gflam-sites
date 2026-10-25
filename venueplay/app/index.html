@@ -661,11 +661,10 @@
       <input type="text" class="hostinput" id="cpName" maxlength="30" placeholder="e.g. Any 5 numbers" autocomplete="off"></div>
     <div style="font-size:13px;color:var(--muted);margin-top:4px">How do they win?</div>
     <label class="cprule" for="cpAny"><input type="radio" name="cpRule" id="cpAny" value="any" checked>
-      <span><b>Any numbers on the ticket</b><br>
-        <select id="cpN" aria-label="How many numbers"></select>
-        <span class="cpnote" style="display:block">Any of their numbers, anywhere on one ticket.</span></span></label>
+      <span><b>Any numbers on one ticket</b><br>
+        <select id="cpN" aria-label="How many numbers"></select></span></label>
     <label class="cprule" for="cpShape"><input type="radio" name="cpRule" id="cpShape" value="shape">
-      <span style="flex:1;min-width:0"><b>A shape</b><span class="cpnote" style="display:block;margin-top:2px">Tap the squares that make the shape. Every number in those squares on one ticket must be called. A square that is blank on someone's ticket counts as done.</span>
+      <span style="flex:1;min-width:0"><b>A shape</b><span class="cpnote" style="display:block;margin-top:2px">Tap the squares. A ticket wins once every number in them is called. Blank squares are skipped.</span>
         <span class="cpgrid" id="cpGrid" role="group" aria-label="The ticket, 3 rows of 9"></span></span></label>
     <div class="cperr" id="cpErr" role="alert"></div>
     <div class="vp-row" style="margin-top:8px">
