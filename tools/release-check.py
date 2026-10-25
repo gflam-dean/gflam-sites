@@ -2979,6 +2979,25 @@ def local_checks(which):
                why='run jsc tools/test-manager-permissions.js. An absent permission must not '
                    'grant a manager a venue customer list')
 
+    # EVERY WALL IN A VENUE ON THE SAME SLIDE (Dean, 25 Oct 2026: "the TVs were running on a different
+    # slide each"). Each TV used to count slides from the moment it was switched on, so two walls drifted
+    # apart. Now each one reads the slide off the clock (adSlotAt), so every screen agrees whenever it
+    # was turned on. The test runs the real function out of tv.html.
+    if which in ('both', 'venueplay'):
+        head('D. Every TV in a venue shows the same slide at the same time')
+        t = os.path.join(ROOT, 'tools', 'test-tv-slides-in-step.js')
+        if not os.path.isfile(t):
+            ok('the TV slides-in-step test exists', False, why='tools/test-tv-slides-in-step.js is missing')
+        else:
+            r = subprocess.run([JSC, t], capture_output=True, text=True, timeout=120, cwd=ROOT)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+            n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
+            ok('every TV in a venue shows the same slide at the same time (%d checks)' % n,
+               r.returncode == 0 and 'PASSED' in out and not bad,
+               detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
+               why='run jsc tools/test-tv-slides-in-step.js. Each wall must read its slide off the clock')
+
     # NEVER COLLECT WHAT YOU WILL NOT HAND BACK.
     #
     # Two gates asked the same question with two different word lists: collecting is gated on the

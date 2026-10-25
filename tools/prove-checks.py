@@ -70,6 +70,19 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 # wholeness check is reached. Zero bytes parses perfectly, which is the case
 # that check was actually written for.
 MUTATIONS = [
+    # TVs IN STEP, 25 Oct 2026: every wall reads the slide off the clock.
+    ('test-tv-slides-in-step.js', 'venueplay/tv.html',
+     '    var p=((nowMs % total) + total) % total;',
+     '    var p=0;',
+     'every TV in a venue shows the same slide at the same time'),
+    ('test-tv-slides-in-step.js', 'venueplay/tv.html',
+     '    var cur=at.i;',
+     '    var cur=0;',
+     'every TV in a venue shows the same slide at the same time'),
+    ('test-tv-slides-in-step.js', 'venueplay/tv.html',
+     '      adIdx = now.i;',
+     '      adIdx = (adIdx+1)%slides.length;',
+     'every TV in a venue shows the same slide at the same time'),
     # THE PURCHASE RAFFLE, 22 Oct 2026 (migration 115, Deepwater Hotel): one entry per purchase, drawn on the server.
     ('test-purchase-raffle.js', 'venueplay-backend/worker/venueplay-game.js',
      '  if (venue.purchase_raffle_on !== true) {',

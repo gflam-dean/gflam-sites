@@ -1276,18 +1276,26 @@
        slide everytime i switch to that tab."
        If the slide that is lit is still one of these slides, carry on from it. A genuinely
        different set has just been swapped in with nothing lit, so that starts at the top. */
-    var cur = adIdx;
-    if(!(cur>=0 && cur<slides.length && slides[cur] && slides[cur].classList.contains("show"))) cur=0;
-    adIdx=cur;
-    // The one on screen starts on top of the stack and stays there, so a rebuild or a
-    // resume cannot leave a later slide painting over the visible one. See advance().
-    slides.forEach(function(s,i){ s.classList.toggle("show", i===cur); s.style.zIndex = (i===cur ? "2" : "1"); });
-    if(slides.length<2) return;
     function secsFor(i){
       var e=entries[i];
       var sec=(e && e.type==="slide" && e.slide && e.slide.seconds) ? e.slide.seconds : ADS.rotationSecs;
       return Math.max(2, sec||7)*1000;
     }
+    /* EVERY SCREEN IN THE VENUE ON THE SAME SLIDE.
+       Each wall used to count its own loop from the moment it loaded, so two TVs switched on a
+       minute apart sat on different slides all night. Dean, Tugun, 24 Oct 2026: "the TVs were
+       running on a different slide each". The slide is now read off the clock: the loop is laid
+       end to end from midnight UTC, so every wall with the same slides and a set clock lands on
+       the same one, and a wall that is brought forward or rebuilt rejoins the others instead of
+       starting again at the top. */
+    var durs=[]; for(var di=0; di<slides.length; di++) durs.push(secsFor(di));
+    var at=adSlotAt(Date.now(), durs);
+    var cur=at.i;
+    adIdx=cur;
+    // The one on screen starts on top of the stack and stays there, so a rebuild or a
+    // resume cannot leave a later slide painting over the visible one. See advance().
+    slides.forEach(function(s,i){ s.classList.toggle("show", i===cur); s.style.zIndex = (i===cur ? "2" : "1"); });
+    if(slides.length<2) return;
     /* CROSS-FADE, not fade-out-then-in.
        Both slides used to transition at the same moment: the outgoing fell from
        1 to 0 while the incoming climbed from 0 to 1, so halfway through the swap
@@ -1298,8 +1306,10 @@
        underneath, and only take the old one away once the new one has arrived. */
     var FADE_MS = 800;   // matches the .8s transition on .ad
     function advance(){
+      var now = adSlotAt(Date.now(), durs);
+      if(now.i === adIdx){ adTimer = setTimeout(advance, Math.max(250, now.left)); return; }   // woke a little early: wait for the boundary
       var out = slides[adIdx];
-      adIdx = (adIdx+1)%slides.length;
+      adIdx = now.i;
       var into = slides[adIdx];
       /* THE STACK IS HELD, NOT BORROWED FOR THE SWAP.
          This used to give the incoming slide z-index 2 and then CLEAR it once the
@@ -1321,9 +1331,17 @@
         adFadeTimer = null;
         if(out !== into) out.classList.remove("show");
       }, FADE_MS + 60);
-      adTimer = setTimeout(advance, secsFor(adIdx));
+      adTimer = setTimeout(advance, Math.max(250, adSlotAt(Date.now(), durs).left));
     }
-    adTimer=setTimeout(advance, secsFor(cur));
+    adTimer=setTimeout(advance, Math.max(250, at.left));
+  }
+  /* Which slide the clock says, and how long until the next one. durs = each slide's ms. */
+  function adSlotAt(nowMs, durs){
+    var total=0, i; for(i=0;i<durs.length;i++) total+=durs[i];
+    if(!(total>0)) return { i:0, left:7000 };
+    var p=((nowMs % total) + total) % total;
+    for(i=0;i<durs.length;i++){ if(p < durs[i]) return { i:i, left:durs[i]-p }; p-=durs[i]; }
+    return { i:0, left:durs[0] };
   }
 
   // ================= BINGO SCREEN =================
