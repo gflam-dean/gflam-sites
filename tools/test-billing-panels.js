@@ -56,7 +56,7 @@ var NAMES = [
   'esc', 'preferredVenueIds', 'defaultVenue', 'venueNameIn', 'fillVenuePicker', 'showLoadFailed', 'readFailed',
   'loadScreenPanel', 'showScreenVenue', 'initScreen', 'loadScreenFor', 'fillScreen', 'renderLogo',
   'paintScreenVenue', 'screenNameNow', 'setTvLinks', 'tvHref', 'saveScreen', 'gatherScreen',
-  'mdVenueName', 'paintMdVenue', 'toCents', 'toDollars', 'fillMembersDraw', 'renderDrawPicker', 'mdNotReady', 'mdOnTv', 'mdSelect', 'mdKeep', 'mdAddAnother', 'renderRaffleList', 'loadDrawPermits', 'venueLink', 'venueRows',
+  'mdVenueName', 'paintMdVenue', 'toCents', 'toDollars', 'fillMembersDraw', 'renderDrawPicker', 'mdNotReady', 'mdOnTv', 'mdSelect', 'mdKeep', 'mdAddAnother', 'renderRaffleList', 'rfRowButtons', 'rfFind', 'rfFill', 'rfEdit', 'removeRaffle', 'addAnotherRaffle', 'saveRaffleList', 'loadDrawPermits', 'venueLink', 'venueRows',
   'mdCountFailed', 'loadMembersDrawFor', 'saveMembersDraw', 'fixMemberName', 'removeMember', 'importMembers',
   'unquoteCols', 'removeDraw', 'membersDrawOffTv', 'mdWeekday', 'mdWeeksSince', 'mdRecalc', 'mdWorkOutJackpot',
   'initMembersDraws', 'loadMembersPanel',
@@ -217,6 +217,7 @@ function makePage(opts) {
   var screenVenues = [], screenCurrent = null, screenOrigin = '', screenLogoUrl = '', screenSeq = 0;
   var mdCurrent = null, mdDraw = null, mdDraws = [], mdCurTouched = false, mdReady = false, mdSeq = 0;
   var rfCurrent = null, rfReady = false, rfSeq = 0;
+  var rfMulti = false, rfRaffles = [], rfEditId = null;
   var pmSeq = 0, rfSaved = null, rfPrizeCount = null, mkVenues = [], mkCurrent = null, VENUE_SITE = 'https://venueplay.com.au';
   var dlRows = [], dlVenueName = '';
   var ntVenues = [], ntCurrent = null;

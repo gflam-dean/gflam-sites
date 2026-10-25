@@ -2944,6 +2944,14 @@
   function rfEdit(id){
     rfEditId = id; rfFill(rfFind(id)); renderRaffleList(); loadRafflePrizes(rfCurrent);
   }
+  /* Edit and Remove raffle, made as elements (like the members draw rows) so they always exist to wire up. */
+  function rfRowButtons(row, onEdit, onRemove){
+    var btns=document.createElement("div"); btns.className="drowbtns";
+    var eb=document.createElement("button"); eb.type="button"; eb.className="addbtn redit"; eb.textContent="Edit";
+    var rb=document.createElement("button"); rb.type="button"; rb.className="offtv rremove"; rb.textContent="Remove raffle";
+    eb.addEventListener("click", onEdit); rb.addEventListener("click", onRemove);
+    btns.appendChild(eb); btns.appendChild(rb); row.appendChild(btns);
+  }
   function renderRaffleList(){
     var box=$("rfList"); if(!box) return;
     var add=$("rfAddRaffle"); if(add) add.hidden = !rfMulti;
@@ -2955,10 +2963,8 @@
         var onTv = !!(r.day && r.time);
         var row=document.createElement("div"); row.className="drow"+(r.id===rfEditId?" editing":""); row.setAttribute("data-raffle", r.id);
         row.innerHTML='<div class="dn"><b>' + esc(r.label || "Raffle") + '</b><small>' + esc(onTv ? ("drawn " + r.day + " " + r.time) : "No draw night set") + '</small>' +
-          '<span class="tvtag' + (onTv ? ' on' : '') + '">' + (onTv ? 'On the TV' : 'Not on the TV') + '</span></div>' +
-          '<div class="drowbtns"><button class="addbtn redit" type="button">Edit</button><button class="offtv rremove" type="button">Remove raffle</button></div>';
-        row.querySelector(".redit").addEventListener("click", function(){ rfEdit(r.id); try{ $("rf-label").focus(); }catch(e){} });
-        row.querySelector(".rremove").addEventListener("click", function(){ removeRaffle(r.id); });
+          '<span class="tvtag' + (onTv ? ' on' : '') + '">' + (onTv ? 'On the TV' : 'Not on the TV') + '</span></div>';
+        rfRowButtons(row, function(){ rfEdit(r.id); try{ $("rf-label").focus(); }catch(e){} }, function(){ removeRaffle(r.id); });
         box.appendChild(row);
       });
       return;
@@ -2970,10 +2976,8 @@
     var row=document.createElement("div"); row.className="drow"; row.setAttribute("data-raffle","1");
     row.innerHTML='<div class="dn"><b>' + esc(r.label || "Raffle") + '</b><small>' + esc(onTv ? ("drawn " + r.day + " " + r.time) : "No draw night set") +
       (rfPrizeCount!=null ? (' &middot; ' + rfPrizeCount + ' usual prize' + (rfPrizeCount===1?'':'s')) : '') + '</small>' +
-      '<span class="tvtag' + (onTv ? ' on' : '') + '">' + (onTv ? 'On the TV' : 'Not on the TV') + '</span></div>' +
-      '<div class="drowbtns"><button class="addbtn redit" type="button">Edit</button><button class="offtv rremove" type="button">Remove raffle</button></div>';
-    row.querySelector(".redit").addEventListener("click", function(){ try{ $("rf-label").focus(); }catch(e){} });
-    row.querySelector(".rremove").addEventListener("click", clearRaffleRoutine);
+      '<span class="tvtag' + (onTv ? ' on' : '') + '">' + (onTv ? 'On the TV' : 'Not on the TV') + '</span></div>';
+    rfRowButtons(row, function(){ try{ $("rf-label").focus(); }catch(e){} }, clearRaffleRoutine);
     box.appendChild(row);
   }
   function loadRafflePrizes(venueId){
