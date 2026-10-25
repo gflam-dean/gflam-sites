@@ -152,6 +152,14 @@ def one_prize_game():
         ok('the coach says what to do: New game or End game', 'That game is done' in text(r, host, 'coach') and 'New game' in text(r, host, 'coach'), text(r, host, 'coach'))
         ok('the winner stays on the TV', r.ask(tv, vis('tvWin')) is True, wall(r, tv))
         shot(r, host, '4-console-game-finished'); shot(r, tv, '4-tv-after-finish')
+        tap(r, host, 'newGameBtn')
+        ok('ARE YOU SURE: New game after finishing on One line warns it never reached a full house, and Cancel has the focus',
+           r.ask(host, vis('ngModal')) is True and r.ask(host, vis('ngWarn')) is True and text(r, host, 'ngWarn') == 'This game has not reached a full house yet. It finished on One line.' and
+           text(r, host, 'ngGo') == 'Yes, start a new game' and r.ask(host, 'document.activeElement && document.activeElement.id') == 'ngCancel',
+           [text(r, host, 'ngWarn'), text(r, host, 'ngGo'), r.ask(host, 'document.activeElement && document.activeElement.id')])
+        shot(r, host, '4b-console-new-game-are-you-sure')
+        tap(r, host, 'ngCancel')
+        ok('Cancel: the box goes and the finished game is still there', r.ask(host, vis('ngModal')) is False and g(r, host, '[G.won, G.pattern]') == '[true,"one"]', g(r, host, '[G.won, G.pattern]'))
         ok('no script errors on the console or the TV', r.ask(host, 'window.__errs.length') == 0 and r.ask(tv, 'window.__errs.length') == 0, [r.ask(host, 'JSON.stringify(window.__errs)'), r.ask(tv, 'JSON.stringify(window.__errs)')])
     finally:
         r.close()
@@ -194,6 +202,10 @@ def three_prize_game():
         ok('and the TV celebrates the full house', r.until(tv, vis('tvWin'), 8) is True and text(r, tv, 'winName').lower() == 'full house', text(r, tv, 'winName'))
         no_jargon(r, tv, 'on the full house')
         shot(r, host, '7-console-full-house-done'); shot(r, tv, '7-tv-winner-full-house')
+        tap(r, host, 'newGameBtn')
+        ok('after a full house, New game has no warning and asks exactly as before: Start next game', r.ask(host, vis('ngModal')) is True and r.ask(host, vis('ngWarn')) is False and text(r, host, 'ngGo') == 'Start next game',
+           [r.ask(host, vis('ngWarn')), text(r, host, 'ngGo')])
+        tap(r, host, 'ngCancel')
         ok('no script errors on the console or the TV', r.ask(host, 'window.__errs.length') == 0 and r.ask(tv, 'window.__errs.length') == 0, [r.ask(host, 'JSON.stringify(window.__errs)'), r.ask(tv, 'JSON.stringify(window.__errs)')])
     finally:
         r.close()
@@ -320,6 +332,7 @@ def new_game_by_mistake():
         ok('CONTROL: the TV board shows 3 called, One line, Meat tray', r.until(tv, vis('tvRun'), 8) is True and text(r, tv, 'tvBallCount') == '3 of 90 called' and text(r, tv, 'tvPattern') == 'One line',
            [text(r, tv, 'tvBallCount'), text(r, tv, 'tvPattern')])
         tap(r, host, 'newGameBtn')
+        ok('a game still being played warns first: "It is still on One line."', text(r, host, 'ngWarn') == 'This game has not reached a full house yet. It is still on One line.', text(r, host, 'ngWarn'))
         r.ask(host, 'document.getElementById("ngPattern").value="two"; document.getElementById("ngPrize").value="Jug of beer"; true')
         tap(r, host, 'ngGo'); time.sleep(1.2)
         ok('the new game is up: TV board cleared for Two lines, Jug of beer', r.until(tv, 'document.getElementById("tvPattern").textContent==="Two lines"', 8) is True and text(r, tv, 'tvPrize') == 'Jug of beer' and

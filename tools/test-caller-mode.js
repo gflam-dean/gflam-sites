@@ -31,7 +31,7 @@
 var CONSOLE_SRC = readFile('venueplay/app/index.html');
 load('tools/rig-game-worker.js');
 load('tools/rig-bingo-room.js');
-var PASS = 0, FAILN = 0, EXPECT = 114;
+var PASS = 0, FAILN = 0, EXPECT = 117;
 function check(name, cond, saw) {
   if (cond) { PASS++; print('  ok   ' + name); }
   else { FAILN++; print('  FAIL ' + name + (saw !== undefined ? '   saw: ' + JSON.stringify(saw) : '')); }
@@ -414,6 +414,14 @@ shuffle1to90 = function () { SHUFFLES++; return _shuffle(); };
   function nextList() { return nextBtns().map(function (b) { return b.getAttribute('data-next'); }).join(); }
   function pickNext(h, pat) { var box = h.$('cwNextBtns'), b = box.children.filter(function (x) { return x.getAttribute('data-next') === pat; })[0]; (box._on.click || []).forEach(function (f) { f.call(box, { target: b || box }); }); return !!b; }
   function hid(h, id) { return h.$(id).classList.contains('hidden'); }
+  /* ARE YOU SURE (Dean, 25 Oct 2026): New game on a game that has not reached a full house says so first. */
+  var _focus = []; hw.$('ngCancel').focus = function () { _focus.push('ngCancel'); };
+  click('newGameBtn');
+  check('New game before anyone has won: "not reached a full house yet. No one has won yet.", "Yes, start a new game", Cancel focused',
+        !hw.$('ngModal').classList.contains('hidden') && hw.$('ngWarn').style.display === '' && hw.$('ngWarn').textContent === 'This game has not reached a full house yet. No one has won yet.' &&
+        hw.$('ngGo').textContent === 'Yes, start a new game' && _focus.join() === 'ngCancel', [hw.$('ngWarn').style.display, hw.$('ngWarn').textContent, hw.$('ngGo').textContent, _focus]);
+  hw.$('ngCancel').onclick();   // the modal's buttons are wired with onclick
+  check('Cancel: nothing changed, the same game is still on', hw.$('ngModal').classList.contains('hidden') && hw.G.draw.length === 5 && hw.G.status === 'running', [hw.G.draw.length, hw.G.status]);
   var wins0 = hostSent('winner').length, cl0 = hostSent('claim_pending').length, c00 = CELEB.fanfare;
   click('callerWinBtn'); await advance(300);
   check('WINNER asks nothing: the pattern chosen at the start is named, "Winner! One line"', !!hw.G.callerWin && hw.G.callerWin.step === 'check' && hw.G.callerWin.pattern === 'one' &&
@@ -477,8 +485,8 @@ shuffle1to90 = function () { SHUFFLES++; return _shuffle(); };
   var d1 = hw.G.draw.length; tap(hw, 34);
   check('a confirmed full house ends the game: nothing to choose, the grid and WINNER wait for New game', hw.G.won === true && hw.G.prizesWon.length === 3 && !hw.G.callerWin && hw.G.draw.length === d1 && hw.$('callerWinBtn').disabled === true && /That game is done/.test(hw.$('coach').innerHTML),
         { won: hw.G.won, prizes: hw.G.prizesWon.length });
-  check('New game asks to start the next game, not to deal tickets', (function () { click('newGameBtn'); return !hw.$('ngModal').classList.contains('hidden') && hw.$('ngGo').textContent === 'Start next game' && !/tickets/i.test(hw.$('ngNote').textContent); })(),
-        [hw.$('ngGo').textContent, hw.$('ngNote').textContent]);
+  check('New game after a full house: no warning, it asks to start the next game, not to deal tickets', (function () { click('newGameBtn'); return !hw.$('ngModal').classList.contains('hidden') && hw.$('ngGo').textContent === 'Start next game' && !/tickets/i.test(hw.$('ngNote').textContent) && hw.$('ngWarn').style.display === 'none'; })(),
+        [hw.$('ngGo').textContent, hw.$('ngNote').textContent, hw.$('ngWarn').style.display]);
   hw.$('ngModal').classList.add('hidden');
   print('a reload of the console while the host is choosing what next');
   retire(WHO);
@@ -488,6 +496,11 @@ shuffle1to90 = function () { SHUFFLES++; return _shuffle(); };
   var rs0 = hostSent('resume').length, st0 = hostSent('state').length;
   var fin = pickNext(hw2, ''); await advance(500);
   check('Finish this game: the game is done, still One line, and the winner stays on the TV', fin && hw2.G.won === true && !hw2.G.callerWin && hw2.G.pattern === 'one' && hostSent('resume').length === rs0 && hostSent('state').length === st0, { won: hw2.G.won, pattern: hw2.G.pattern });
+  (hw2.$('newGameBtn')._on.click || []).forEach(function (f) { f.call(hw2.$('newGameBtn'), {}); });
+  check('New game after finishing on One line: "It finished on One line.", and the button asks "Yes, start a new game"',
+        hw2.$('ngWarn').style.display === '' && hw2.$('ngWarn').textContent === 'This game has not reached a full house yet. It finished on One line.' && hw2.$('ngGo').textContent === 'Yes, start a new game',
+        [hw2.$('ngWarn').textContent, hw2.$('ngGo').textContent]);
+  hw2.$('ngModal').classList.add('hidden');
   hw2.endGame(); await advance(3000);
   var lastRep = (DB.vp_game_reports || []).slice(-1)[0] || {};
   check('End game: the confirmed line is on the night\'s report, once, and the night closes', hw2.G.status === 'setup' && !liveSession() && Array.isArray(lastRep.prizes) && lastRep.prizes.filter(function (z) { return z.pattern === 'one' && z.prize === '$50 bar tab' && z.winner_name === 'Paper book'; }).length === 1,

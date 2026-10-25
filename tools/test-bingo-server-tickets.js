@@ -456,6 +456,11 @@ function frontOfDraw(numbers) {
   host.finishGame(); await advance(500);
   var win = hostSaid('winner').pop();
   check('the winner message names the custom pattern and carries its name', win && win.p.pattern === K3 && win.p.pats && win.p.pats[K3].name === 'Any 3 & up', win && win.p);
+  (host.$('newGameBtn')._on.click || []).forEach(function (f) { f.call(host.$('newGameBtn'), {}); });
+  check('PHONE BINGO, ARE YOU SURE: New game after a game that finished on a custom pattern warns it never reached a full house',
+        host.$('ngWarn').style.display === '' && host.$('ngWarn').textContent === 'This game has not reached a full house yet. It finished on Any 3 & up.' && host.$('ngGo').textContent === 'Yes, start a new game',
+        [host.$('ngWarn').textContent, host.$('ngGo').textContent]);
+  host.$('ngModal').classList.add('hidden');
   host.endGame(); await advance(3000);
 
   print('the Worker\'s own rules, asked directly');

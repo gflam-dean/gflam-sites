@@ -630,6 +630,8 @@
 <div id="ngModal" class="hidden vp-modal">
   <div class="vp-modal-box">
     <div class="vp-h" style="margin-bottom:6px">New game</div>
+    <!-- Are you sure (Dean, 25 Oct 2026): a game that has not reached a full house says so first. See ngWarning. -->
+    <div id="ngWarn" class="vp-warn" role="alert" style="display:none"></div>
     <div id="ngNote" style="font-size:13.5px;color:var(--muted);line-height:1.5;margin-bottom:14px">Everyone in the room gets fresh tickets.</div>
     <div class="field"><label for="ngPattern">Winning pattern</label>
       <select id="ngPattern">
@@ -3122,6 +3124,23 @@
      game's pattern and prize, so a host who wanted a different prize for game two had to End game
      (TV back to ads) and set it all up again. The modal doubles as the "are you sure" for a game
      still in progress. */
+  /* ARE YOU SURE (Dean, 25 Oct 2026). New game in the middle of a night is usually the next game after a
+     full house. When the game in hand has NOT reached a full house (it finished on a line, is still being
+     played, or nobody has won yet), the New game box says so first, the button says "Yes, start a new
+     game", and Cancel has the focus. After a full house the box is exactly as it was. Inside the undo
+     window (a new game with nothing called) the game in hand is the last one, so that is the one judged.
+     Returns the warning, or "" when there is nothing to warn about. */
+  function ngWarning(){
+    var g=(G.undo && G.undo.snap && G.idx<0) ? G.undo.snap : G, won=[];
+    (g.prizesWon||[]).forEach(function(w){ if(w && w.pattern) won.push(w.pattern); });
+    (g.lastWins||[]).forEach(function(w){ if(w && w.pattern) won.push(w.pattern); });
+    if(g.callerWin && g.callerWin.step==="won" && g.callerWin.pattern) won.push(g.callerWin.pattern);
+    if(won.indexOf("full")>=0) return "";
+    var head="This game has not reached a full house yet. ";
+    if(!won.length) return head+"No one has won yet.";
+    if(g.won) return head+"It finished on "+(patName(won[won.length-1])||"a line")+".";
+    return head+"It is still on "+(patName(g.pattern)||"its pattern")+".";
+  }
   function newGamePrompt(){
     if(blockedByHold()) return;
     var m=$("ngModal"); if(!m){ newGame(); return; }
@@ -3135,8 +3154,11 @@
       : (G.idx>=0 && !G.won)
       ? "This game is still going. Everyone gets fresh tickets and the "+(G.idx+1)+" balls called so far are cleared."
       : "Everyone in the room gets fresh tickets. Same players, same night.";
-    $("ngGo").textContent = G.caller ? "Start next game" : "Deal tickets";
+    var warn=ngWarning(), wb=$("ngWarn");
+    if(wb){ wb.textContent=warn; wb.style.display = warn ? "" : "none"; }
+    $("ngGo").textContent = warn ? "Yes, start a new game" : (G.caller ? "Start next game" : "Deal tickets");
     m.classList.remove("hidden");
+    if(warn){ try{ $("ngCancel").focus(); }catch(e){} }   // the safe answer is the one under the thumb
     $("ngGo").onclick=function(){
       var pz=($("ngPrize").value||"").trim();
       if(!pz){ showToast("Put in what they are playing for first."); try{ $("ngPrize").focus(); }catch(e){} return; }
