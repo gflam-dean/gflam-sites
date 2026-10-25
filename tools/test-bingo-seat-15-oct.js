@@ -241,7 +241,16 @@ function hostSays(t, pid) { return LOG.filter(function (l) { return l && l.from 
   check('across three games, each phone is exactly one row in each session',
         [S1, S2, S3].every(function (sid) { return phones.every(function (ph) { return rowsIn(sid).filter(function (r) { return r.device_id === didOf(ph); }).length === 1; }); }));
   check('and the stranger was never dealt a ticket all night', stranger.P.cards.length === 0, stranger.P.cards.length);
+  /* Live play test, 24 Oct 2026: Ann wins One line, the host plays on, then ends the game with no
+     further winner. Every other phone read "Nobody called a winning ticket this time." */
+  var card3 = ann.P.cards[0].cells;
+  callRow(host, card3[0]); await advance(6000); ann.pressBingo(); await advance(200);
+  host.hostConfirm(0); await advance(50); host.$('nextPatternSel').value = 'two'; host.$('nextPrizeIn').value = '$20'; host.keepPlaying(); await advance(200);
+  check('CONTROL: Bob was told Ann won the line and plays on', viewOf(bob) === 'vCard' && /Ann won One line/.test(bob.P.stageNote), { view: viewOf(bob), note: bob.P.stageNote });
   host.endGame(); await advance(3000);
+  check('a game ended after a line was won tells the other phones who won it, not "Nobody called a winning ticket"',
+        viewOf(bob) === 'vLost' && /That game is over\. Ann won One line/.test(bob.$('lostSub').innerHTML) && !/Nobody called/.test(bob.$('lostSub').innerHTML),
+        { view: viewOf(bob), sub: bob.$('lostSub').innerHTML });
   /* After End game there is no session. That used to mean "everyone is seated", so the stranger on the
      channel turned into a named chip on the console (live audit, 19 Oct 2026). Between games: nobody. */
   host.renderPlayers();

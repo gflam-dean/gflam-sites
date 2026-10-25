@@ -783,7 +783,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     var btn=$("joinBtn"); btn.disabled=true; btn.textContent="Joining...";
     ensureJoined().then(function(){
       P.joined=true; saveName(P.room, P.name);
-      send({ t:"join", pid:P.pid, name:P.name });   // cosmetic roster on the host + TV
+      send({ t:"join", pid:P.pid, name:P.name, did:deviceId() });   // cosmetic roster on the host + TV
       return fetchCard();
     }).catch(function(e){
       $("joinErr").textContent=(e && e.message) ? e.message : "Could not join, check the code and try again.";
@@ -841,7 +841,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   function onMsg(m){
     if(!m||!m.t) return;
     if(m.t==="rollcall" || m.t==="host_here"){
-      if(P.joined){ send({ t:"join", pid:P.pid, name:P.name }); if(!P.cells) fetchCard(); }
+      if(P.joined){ send({ t:"join", pid:P.pid, name:P.name, did:deviceId() }); if(!P.cells) fetchCard(); }
       return;
     }
     if(m.t==="session"){ return; }   // host<->TV handoff; players ignore it
@@ -890,7 +890,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       var mine=(m.pid===P.pid) || (m.pids && m.pids.indexOf && m.pids.indexOf(P.pid)>=0);
       closePlayedSheet();
       if(mine){ P.won=true; P.split=!!m.split; P.winNames=(m.names||[]).slice(); route(); celebrate(); }
-      else { P.ended=true; $("lostName").textContent=(m.name||"Someone")+" won"; route(); }
+      else { P.ended=true; $("lostName").textContent=(m.name||"Someone"); route(); }   // the line under it reads "took this one.", so no " won"
     }
     else if(m.t==="carryon"){   // progressive round: same card, new pattern + prize, everyone plays on
       if(m.pattern) P.pattern=m.pattern;
@@ -945,7 +945,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
         flushQueue();
         // re-announce on every (re)connect so the host rebuilds our seat, and pull our
         // card from the Worker in case a game is already running.
-        if(P.joined){ send({ t:"join", pid:P.pid, name:P.name }); fetchCard(); }
+        if(P.joined){ send({ t:"join", pid:P.pid, name:P.name, did:deviceId() }); fetchCard(); }
         if(P.claimPending && P.claimMsg && P.claimMsg.claim_id===P.claimId && !P.won && !P.ended) send(P.claimMsg);
         $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
       } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){

@@ -317,8 +317,8 @@ pass("the page marks itself as leaving before it goes", /addEventListener\("befo
   pass("a Run-it-now link to a night this venue cannot use says so", host.indexOf("That night is not one of this venue's") > 0);
   pass("waking the iPad (pageshow) clears the leaving flag and reopens the channel",
        /addEventListener\("pageshow", function\(e\)\{\s*_leaving=false;/.test(host));
-  pass("a successful Worker call no longer hides 'Lost the connection' while the phones are still down",
-       host.indexOf("if(!gLostShown && !_errSticky) clearHostError(); return data;") > 0);
+  pass("a host action no longer hides 'Lost the connection' while the phones are still down",
+       host.indexOf("function clearErrForAction(){ if(!gLostShown && !_errSticky) clearHostError(); }") > 0);
   pass("the game and the sheets read the same number (readSettings uses it)", host.indexOf("G.count=effectiveCount();") > 0);
   pass("typing in the round box repaints it", host.indexOf('$("cfgCount").addEventListener("input", function(){ renderPaperSetup(); paintRoundQs(); });') > 0);
 })();
@@ -339,18 +339,24 @@ print("15. A REFUSAL STAYS UP UNTIL THE HOST ACTS (live audit, 19 Oct 2026: 'Tri
   function confirmOverage(){ return Promise.resolve(true); }
   function fetch(){ return Promise.resolve({ ok: true, status: 200, json: function(){ return Promise.resolve({ ok: true }); } }); }
   function setTimeout(){ return 1; } function clearTimeout(){}
-  var src = "var _errSticky=false;" + grab("hostError", host) + grab("clearHostError", host) + grab("apiPost", host) +
-            " return { hostError: hostError, clearHostError: clearHostError, apiPost: apiPost };";
+  var src = "var _errSticky=false;" + grab("hostError", host) + grab("clearHostError", host) + (grab("clearErrForAction", host) || "") + grab("apiPost", host) +
+            " return { hostError: hostError, clearHostError: clearHostError, apiPost: apiPost, act: (typeof clearErrForAction==='function') ? clearErrForAction : function(){} };";
   var f = (new Function("$", "document", "window", "gLostShown", "VP_GAME_API", "VPWeekly", "friendlyMsg", "getToken", "confirmOverage", "fetch", "setTimeout", "clearTimeout", src))(
     $, document, window, gLostShown, VP_GAME_API, VPWeekly, friendlyMsg, getToken, confirmOverage, fetch, setTimeout, clearTimeout);
   f.hostError("Trivia runs once a week per venue. Your next trivia night is available from 2026-10-26.");
   f.apiPost("/host/heartbeat", {}); drainMicrotasks();
   pass("the weekly refusal is still showing after the next call that worked", !!bar.cls.show && /once a week/.test(txt.textContent));
+  f.act();
+  pass("...and after the host's next action: it waits for its X", !!bar.cls.show && /once a week/.test(txt.textContent));
   f.clearHostError();
   pass("and goes when the host closes it", !bar.cls.show);
-  f.hostError("Something else went wrong.");
+  /* Live play test, 24 Oct 2026 (musical bingo, same apiPost): ANY refusal was wiped by the next
+     call that answered 200, often the /session re-say a moment after Start. */
+  f.hostError("Over plan - game not started.");
   f.apiPost("/host/heartbeat", {}); drainMicrotasks();
-  pass("CONTROL: an ordinary error is still cleared by the next call that worked", !bar.cls.show);
+  pass("an ordinary refusal is NOT cleared by a background call that worked", !!bar.cls.show && /Over plan/.test(txt.textContent));
+  f.act();
+  pass("CONTROL: it comes down when the host does something", !bar.cls.show);
 })();
 
 print("");

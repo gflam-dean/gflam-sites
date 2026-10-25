@@ -325,14 +325,19 @@ print('\n== 4. Play next: a double tap is refused, a deliberate tap four seconds
   ok('vp-hold exposes soft()', typeof VP_HOLD.soft === 'function');
   var btn = { id: 'playNextBtn', disabled: false, textContent: 'Play song' }; doc.playNextBtn = btn;
   var played = [], asked = [], answer = true;
-  var G = { qIdx: -1, queue: [0, 1, 2], songs: [{ title: 'A', previewUrl: 'a.m4a' }, { title: 'B', previewUrl: 'b.m4a' }, { title: 'C', previewUrl: 'c.m4a' }], played: {}, nowSong: null };
+  var G = { status: 'running', qIdx: -1, queue: [0, 1, 2, 3, 4, 5], played: {}, nowSong: null,
+            songs: [{ title: 'A', previewUrl: 'a.m4a' }, { title: 'B', previewUrl: 'b.m4a' }, { title: 'C', previewUrl: 'c.m4a' },
+                    { title: 'D', previewUrl: 'd.m4a' }, { title: 'E', previewUrl: 'e.m4a' }, { title: 'F', previewUrl: 'f.m4a' }] };
+  var pending = null;   // set: vpAsk holds its answer until answerNow(), the way the real page waits for a tap
   var src = 'var SONG_HOLD_SECONDS=20, NO_CLIP_HOLD_SECONDS=1.2;' +
     MHOST.slice(MHOST.indexOf('var SKIP_ASK_SECONDS='), MHOST.indexOf('function holdLabel(')) +
     lift(MHOST, 'holdLabel', 'musical host') + lift(MHOST, 'playNext', 'musical host');
-  var playNext = (new Function('$', 'VP_HOLD', 'G', 'vpAsk', 'cancelAuto', 'songKey', 'playSong', 'syncPlayBtn', src + ' return playNext;'))(
+  var playNext = (new Function('$', 'VP_HOLD', 'G', 'vpAsk', 'cancelAuto', 'songKey', 'playSong', 'syncPlayBtn', 'clearErrForAction', src + ' return playNext;'))(
     function (id) { return doc[id]; }, VP_HOLD, G,
-    function (q) { asked.push(q); var a = answer; return { then: function (f) { f(a); } }; }, function () {}, function (s) { return s.title; },
-    function (s) { played.push(s.title); G.played[s.title] = true; G.nowSong = s; }, function () {});
+    function (q) { asked.push(q); var a = answer;
+      if (pending) { var held = { q: q, f: null }; pending.push(held); return { then: function (f) { held.f = f; } }; }
+      return { then: function (f) { f(a); } }; }, function () {}, function (s) { return s.title; },
+    function (s) { played.push(s.title); G.played[s.title] = true; G.nowSong = s; }, function () {}, function () {});
   function tick() { intervals.forEach(function (f) { f(); }); }
   playNext(); tick();
   ok('the first tap plays a song and holds', played.join() === 'A' && VP_HOLD.busy(btn) && btn.disabled === true);
@@ -346,6 +351,24 @@ print('\n== 4. Play next: a double tap is refused, a deliberate tap four seconds
   ok('and plays the next song when the host says yes', played.join() === 'A,B', played.join());
   ok('the new song is held again', VP_HOLD.busy(btn) === true);
   ok('both hold paths pass the skip window', (MHOST.match(/SKIP_ASK_SECONDS\);/g) || []).length === 2);
+  /* Live play test, 24 Oct 2026: 32 "Skip ...?" questions piled up from repeated taps, and each OK
+     skipped another song. One question at a time, naming the song that is on. */
+  clock += 4000; tick();
+  pending = []; asked.length = 0;
+  for (var t = 0; t < 6; t++) playNext();
+  ok('six taps on "tap to skip" open ONE question, not six', asked.length === 1 && pending.length === 1, asked.length);
+  ok('and it names the song that is on now', /Skip "B"/.test(asked[0]), asked[0]);
+  pending[0].f(true);
+  ok('one OK skips exactly one song', played.join() === 'A,B,C', played.join());
+  clock += 4000; tick();
+  pending = []; asked.length = 0;
+  playNext();
+  ok('CONTROL: once answered, the next deliberate tap asks again, about the new song', asked.length === 1 && /Skip "C"/.test(asked[0]), asked);
+  var stale = pending[0]; pending = null;
+  VP_HOLD.release(btn); playNext(); tick();   // the hold ran out and the host moved on with the question still up
+  clock += 4000; tick();                      // D is on and past its skip window, so an OK would be obeyed
+  stale.f(true);
+  ok('an OK to a question about a song that has already gone skips nothing more', played.join() === 'A,B,C,D', played.join());
   // Bingo passes no window: its 5 second hold is unchanged.
   var bb = { id: 'nextBtn', disabled: false, textContent: '' }; doc.nextBtn = bb;
   VP_HOLD.hold(bb, 5, null, null); clock += 3000; tick();

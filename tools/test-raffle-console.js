@@ -303,6 +303,41 @@ check('coming back opens a fresh channel, because a CLOSED one never rejoins by 
 chans[chans.length - 1].cb('CHANNEL_ERROR');
 check('a real drop on a live page still says Reconnecting', $('statusText').textContent === 'Reconnecting', $('statusText').textContent);
 
+/* ================= 7. End game closes the night ================= */
+section('7. End game ends the raffle AND closes the session (live play test, 24 Oct 2026)');
+/* "End game" only put the ads back: the session stayed running, HQ showed the venue live and the
+   next game asked about a takeover. The real endGameToAds, closeNight and newRaffleNow run here. */
+var closed = [], asks = [], askAnswer = true;
+var VP = { closeSession: function (id) { closed.push(id); return Promise.resolve(1); } };
+window.VP = VP;
+function vpAsk(q) { asks.push(q); return Promise.resolve(askAnswer); }
+function clearRaffle() {}
+apiPost = function (path, body) { apiCalls.push(path + (body && body.game_id ? ':' + body.game_id : '')); return Promise.resolve({}); };
+try { eval(lift('newRaffleNow')); eval(lift('closeNight')); eval(lift('endGameToAds')); }
+catch (e) { check('End game has a handler this test can run (endGameToAds)', false, e.message); }
+if (typeof endGameToAds === 'function') {
+  reset(); form(); sent = []; closed = []; asks = [];
+  G.sessionId = 'sess-1'; G.gameId = 'game-1'; G.drawn = { 12: 1 }; G.prizes = ['Meat Tray'];
+  endGameToAds(); drainMicrotasks();
+  check('a raffle with draws asks before it is ended', asks.length === 1 && /End this raffle\?/.test(asks[0]), asks);
+  check('the TV is sent back to the ads', sent.some(function (m) { return m.t === 'to_ads'; }), sent);
+  check('the raffle game is ended on the server', apiCalls.indexOf('/host/game/end:game-1') >= 0, apiCalls);
+  check('and the session is CLOSED, so HQ no longer shows the venue live', closed.length === 1 && closed[0] === 'sess-1', closed);
+  check('the console lets go of the session and the game, so the next draw starts fresh', G.sessionId === '' && G.gameId === '', { s: G.sessionId, g: G.gameId });
+  reset(); form(); sent = []; closed = []; asks = []; askAnswer = false; apiCalls = [];
+  G.sessionId = 'sess-2'; G.gameId = 'game-2'; G.drawn = { 5: 1 };
+  endGameToAds(); drainMicrotasks();
+  check('CONTROL: Cancel on that question changes nothing', closed.length === 0 && G.sessionId === 'sess-2' && G.gameId === 'game-2' && apiCalls.length === 0 && sent.length === 0, { closed: closed, calls: apiCalls });
+  askAnswer = true; reset(); form(); sent = []; closed = []; asks = [];
+  G.sessionId = 'sess-3'; G.gameId = ''; G.drawn = {};
+  endGameToAds(); drainMicrotasks();
+  check('a session opened with nothing drawn is closed without a question', asks.length === 0 && closed.length === 1 && closed[0] === 'sess-3', { asks: asks, closed: closed });
+  reset(); form(); closed = []; G.sessionId = 'sess-4'; G.gameId = 'game-4'; G.busy = true;
+  endGameToAds(); drainMicrotasks();
+  check('mid-draw, End game waits for the draw and says so', closed.length === 0 && G.sessionId === 'sess-4' && /Let this draw finish/.test(errorShown()), errorShown());
+  G.busy = false;
+}
+
 drainMicrotasks();
 print('');
 print(PASS + ' passed, ' + FAIL + ' failed');
