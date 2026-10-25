@@ -2261,10 +2261,14 @@
       var when = mdOnTv(d) ? (d.draw_day + " " + d.draw_time) : "No draw night set";
       var jp = d.current_jackpot_cents!=null ? ("jackpot $" + toDollars(d.current_jackpot_cents)) : "no jackpot set";
       row.innerHTML='<div class="dn"><b>' + esc(d.name || "Members draw") + '</b><small>' + esc(when) + ' &middot; ' + esc(jp) + '</small>' +
-        '<span class="tvtag' + (mdOnTv(d) ? ' on' : '') + '">' + (mdOnTv(d) ? 'On the TV' : 'Not on the TV') + '</span></div>' +
-        '<div class="drowbtns"><button class="addbtn dedit" type="button">Edit</button><button class="offtv dremove" type="button">Remove</button></div>';
-      row.querySelector(".dedit").addEventListener("click", function(){ mdSelect(d); try{ $("md-name").focus(); $("mdHead").scrollIntoView({ block:"start", behavior:"smooth" }); }catch(e){} });
-      row.querySelector(".dremove").addEventListener("click", function(){ mdSelect(d); removeDraw(); });
+        '<span class="tvtag' + (mdOnTv(d) ? ' on' : '') + '">' + (mdOnTv(d) ? 'On the TV' : 'Not on the TV') + '</span></div>';
+      /* The buttons are made as elements, not found again in innerHTML, so they always exist to wire up. */
+      var btns=document.createElement("div"); btns.className="drowbtns";
+      var eb=document.createElement("button"); eb.type="button"; eb.className="addbtn dedit"; eb.textContent="Edit";
+      var rb=document.createElement("button"); rb.type="button"; rb.className="offtv dremove"; rb.textContent="Remove";
+      eb.addEventListener("click", function(){ mdSelect(d); try{ $("md-name").focus(); $("mdHead").scrollIntoView({ block:"start", behavior:"smooth" }); }catch(e){} });
+      rb.addEventListener("click", function(){ mdSelect(d); removeDraw(); });
+      btns.appendChild(eb); btns.appendChild(rb); row.appendChild(btns);
       box.appendChild(row);
     });
   }
