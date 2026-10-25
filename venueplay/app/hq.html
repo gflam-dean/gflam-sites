@@ -710,6 +710,7 @@
 <script src="vp-session.js"></script>
 <!-- The state rules, for the SA and NT number bingo note (one rule, VPGaming.numberBingoHidden). -->
 <script src="vp-gaming.js"></script>
+<script src="vp-permits.js"></script>
 <script>if(window.VP && VP.guardShift) VP.guardShift();   /* the 4h forced sign-out reaches every page with player data */</script>
 <script>
 (function(){
@@ -2631,8 +2632,16 @@
       ? ('accepted '+esc(fmtWhen(v.compliance_accepted_at))+(v.compliance_accepted_by?' by '+esc(v.compliance_accepted_by):''))
       : '<span style="color:var(--roll)">NOT accepted. Onboarded before 15 Oct 2026, or by hand: have them accept it.</span>';
     var permits=(v.permits&&typeof v.permits==="object")?v.permits:{};
-    var lines=["bingo","raffle","members"].map(function(k){ return permitLine(permits[k], k); }).filter(Boolean);
-    var permitsTxt = lines.length ? lines.join(" &middot; ") : "none recorded (they record them on their settings page)";
+    /* Only the kinds this venue's state needs a permit for (VPPermits.NEEDS, the one table the settings
+       and Draws pages use), plus any kind they saved anyway, marked as not needed (Dean, 24 Oct 2026). */
+    var kinds = window.VPPermits ? VPPermits.kindsFor(v) : ["bingo","raffle","members"];
+    var lines=kinds.map(function(k){
+      var l=permitLine(permits[k], k);
+      if(l && window.VPPermits && VPPermits.notNeeded(v, k)) l+=' <span class="note">(not needed in their state)</span>';
+      return l;
+    }).filter(Boolean);
+    var needTxt = kinds.length ? (" (their state can need one for "+kinds.map(function(k){ return k==="members"?"members draws":k==="raffle"?"raffles":"bingo"; }).join(", ")+")") : " (their state needs none)";
+    var permitsTxt = lines.length ? lines.join(" &middot; ") : "none recorded"+needTxt;
     return '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line-2)">'+
       '<b>Compliance</b> &middot; they say they are '+kindTxt+
       (suggest && !ent ? ' <span class="note">(suggests '+(suggest==="non_profit"?"Club (non-profit)":"Pub (for-profit)")+' above; it is not set until you set it)</span>' : '')+

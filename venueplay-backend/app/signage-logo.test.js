@@ -139,7 +139,8 @@ ok('the print button waits for the logo before it opens the dialog',
 ok('a 15-letter word is refused, and named', longWord('Scan to play at Supercalifragilistic') === 'Supercalifragilistic');
 ok('a 14-letter word is allowed (the longest that holds on a card)', longWord('Supercalifragi Hotel') === '' && MAX_WORD === 14);
 ok('an address or a time is never refused: dots, digits and slashes are not letters', longWord('venueplay.com.au/play at 7.30pm') === '');
-ok('and every one of the five boxes goes through the same rule', (H.match(/takeText\((headIn|lineIn|kickIn|nameIn|whatsIn), /g) || []).length === 5);
+/* Four boxes since 24 Oct 2026: the venue name is read from the venue record, never typed. */
+ok('and every one of the four boxes goes through the same rule, and the name is no longer a box', (H.match(/takeText\((headIn|lineIn|kickIn|whatsIn), /g) || []).length === 4 && H.indexOf('id="nameIn"') < 0 && H.indexOf('id="slugIn"') < 0);
 
 if (ran !== EXPECT) { print('ONLY ' + ran + ' OF ' + EXPECT + ' CHECKS RAN'); throw new Error('incomplete'); }
 if (bad) { print(bad + ' OF ' + EXPECT + ' FAILED'); throw new Error(bad + ' failed'); }

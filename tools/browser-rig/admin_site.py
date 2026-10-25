@@ -107,7 +107,12 @@ TOURING = {
 
 
 class Site(object):
-    def __init__(self, root=REPO, fonts=False, extra_db=None, live_tables=None):
+    def __init__(self, root=REPO, fonts=False, extra_db=None, live_tables=None, game=None, game_tables=None):
+        """game: optionally the REAL game Worker on a pipe (tools/browser-rig/rig.py Worker), answering
+        /__game instead of a 404; game_tables: tables the page reads live from THAT Worker's database
+        (e.g. vp_member_draws, which the game Worker writes), named in live_tables as well."""
+        self.game = game
+        self.game_tables = game_tables or []
         self.root = os.path.abspath(root)
         self.extra_db = extra_db or {}          # more rows for the stand-in supabase-js, by table
         self.live_tables = live_tables or []    # tables the page reads from the Worker rig's database
@@ -138,9 +143,18 @@ class Site(object):
             def do_OPTIONS(self):
                 self.send(204, b'', 'text/plain')
 
+            def game(self, method):
+                n = int(self.headers.get('Content-Length') or 0)
+                body = json.loads(self.rfile.read(n) or b'{}') if n else {}
+                path = self.path[len('/__game'):] or '/'
+                r = site.game.ask(method, path, body, {k: v for k, v in self.headers.items()})
+                self.send(r.get('status', 500), json.dumps(r.get('body')), 'application/json')
+
             def do_POST(self):
                 if self.path.startswith('/__api'):
                     return self.api('POST')
+                if site.game and self.path.startswith('/__game'):
+                    return self.game('POST')
                 if self.path.startswith('/__touring/'):
                     n = int(self.headers.get('Content-Length') or 0)
                     if n:
@@ -156,8 +170,13 @@ class Site(object):
                     table = u.path[len('/__sb/rest/v1/'):]
                     return self.send(200, json.dumps(TOURING.get(table, [])), 'application/json')
                 if u.path.startswith('/__db/'):
-                    return self.send(200, json.dumps(site.W.table(u.path[len('/__db/'):])), 'application/json')
+                    t = u.path[len('/__db/'):]
+                    if site.game and t in site.game_tables:
+                        r = site.game_table(t)
+                        return self.send(200, json.dumps(r or []), 'application/json')
+                    return self.send(200, json.dumps(site.W.table(t)), 'application/json')
                 if u.path.startswith('/__game'):
+                    if site.game: return self.game('GET')
                     return self.send(404, '{"error":"not reachable in this test"}', 'application/json')
                 if u.path == '/__fake/supabase.js':
                     admin = urllib.parse.parse_qs(u.query).get('as', ['owner'])[0] == 'admin'
@@ -195,6 +214,13 @@ class Site(object):
         threading.Thread(target=self.srv.serve_forever, daemon=True).start()
         self.base = 'http://127.0.0.1:%d' % self.srv.server_address[1]
         self.B = VL.Browser()
+
+    def game_table(self, name):
+        """A table from the game Worker rig's database (worker-stdio.js answers {table})."""
+        with self.game.lock:
+            self.game.p.stdin.write(json.dumps({'table': name}) + '\n'); self.game.p.stdin.flush()
+            line = self.game.p.stdout.readline()
+        return (json.loads(line) or {}).get('body') if line else []
 
     ERRS = ('<script>window.__errs=[];window.addEventListener("error",function(e){__errs.push(String(e.message)+" @"+'
             '(e.filename||"").split("/").pop()+":"+e.lineno)});window.addEventListener("unhandledrejection",function(e)'
