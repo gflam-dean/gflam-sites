@@ -1,0 +1,2878 @@
+[
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which actor played Ron Weasley in the Harry Potter films?",
+  "options": [
+   "Rupert Grint",
+   "Matthew Lewis",
+   "Eddie Redmayne",
+   "Ronald McDonald"
+  ],
+  "correctIndex": 0,
+  "answer": "Rupert Grint",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "harry-potter",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which actor played Severus Snape in the Harry Potter films?",
+  "options": [
+   "Gary Oldman",
+   "Alan Rickman",
+   "Jeremy Irons",
+   "Mr Bean"
+  ],
+  "correctIndex": 1,
+  "answer": "Alan Rickman",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "harry-potter",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which actor took over the role of Dumbledore after Richard Harris died?",
+  "options": [
+   "Ian McKellen",
+   "Jim Broadbent",
+   "Michael Gambon",
+   "Santa Claus"
+  ],
+  "correctIndex": 2,
+  "answer": "Michael Gambon",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "harry-potter",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "In Harry Potter and the Chamber of Secrets, what do Harry and Ron fly to Hogwarts in?",
+  "options": [
+   "A broomstick",
+   "The Knight Bus",
+   "A giant teacup",
+   "A flying car"
+  ],
+  "correctIndex": 3,
+  "answer": "A flying car",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "harry-potter",
+   "props"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which actor played Neville Longbottom in the Harry Potter films?",
+  "options": [
+   "Tom Felton",
+   "Rupert Grint",
+   "Matthew Lewis",
+   "Humphrey B. Bear"
+  ],
+  "correctIndex": 2,
+  "answer": "Matthew Lewis",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "harry-potter",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "hard",
+  "question": "Who directed the film Harry Potter and the Philosopher's Stone?",
+  "options": [
+   "Alfonso Cuaron",
+   "Mike Newell",
+   "Steve Irwin",
+   "Chris Columbus"
+  ],
+  "correctIndex": 3,
+  "answer": "Chris Columbus",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "harry-potter",
+   "directors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "hard",
+  "question": "Which director made the final four Harry Potter films?",
+  "options": [
+   "David Yates",
+   "Mike Newell",
+   "Chris Columbus",
+   "Bob the Builder"
+  ],
+  "correctIndex": 0,
+  "answer": "David Yates",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "harry-potter",
+   "directors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "In Harry Potter, the Patronus Charm is mainly used to drive away which dark creatures?",
+  "options": [
+   "Inferi",
+   "Dementors",
+   "Death Eaters",
+   "Seagulls"
+  ],
+  "correctIndex": 1,
+  "answer": "Dementors",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "harry-potter",
+   "creatures"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "What is the name of Fred and George Weasley's joke shop?",
+  "options": [
+   "Zonko's Joke Shop",
+   "Weasleys' Wizard Wheezes",
+   "Honeydukes",
+   "Bunnings Warehouse"
+  ],
+  "correctIndex": 1,
+  "answer": "Weasleys' Wizard Wheezes",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "harry-potter",
+   "locations"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "hard",
+  "question": "Which actress played Bellatrix Lestrange in the Harry Potter films?",
+  "options": [
+   "Helena Bonham Carter",
+   "Emma Thompson",
+   "Maggie Smith",
+   "Dame Edna Everage"
+  ],
+  "correctIndex": 0,
+  "answer": "Helena Bonham Carter",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "harry-potter",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Where do the Dursleys make Harry Potter sleep at the start of the first story?",
+  "options": [
+   "The attic",
+   "The garden shed",
+   "The fridge",
+   "The cupboard under the stairs"
+  ],
+  "correctIndex": 3,
+  "answer": "The cupboard under the stairs",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "harry-potter",
+   "locations"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "What name does Hagrid give the baby dragon he hatches in Philosopher's Stone?",
+  "options": [
+   "Fluffy",
+   "Buckbeak",
+   "Norbert",
+   "Puff the Magic Dragon"
+  ],
+  "correctIndex": 2,
+  "answer": "Norbert",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "harry-potter",
+   "creatures"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which levitation spell does Ron famously mispronounce in his first Charms lesson?",
+  "options": [
+   "Expelliarmus",
+   "Alohomora",
+   "Abracadabra",
+   "Wingardium Leviosa"
+  ],
+  "correctIndex": 3,
+  "answer": "Wingardium Leviosa",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "harry-potter",
+   "quotes"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which character tells the boy wizard, \"You're a wizard, Harry\"?",
+  "options": [
+   "Dumbledore",
+   "Mr Weasley",
+   "Hagrid",
+   "Gandalf"
+  ],
+  "correctIndex": 2,
+  "answer": "Hagrid",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "harry-potter",
+   "quotes"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which actor played Luke Skywalker in the original Star Wars trilogy?",
+  "options": [
+   "Harrison Ford",
+   "Mark Hamill",
+   "Hayden Christensen",
+   "Shane Warne"
+  ],
+  "correctIndex": 1,
+  "answer": "Mark Hamill",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "star-wars",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which actress played Princess Leia in the original Star Wars trilogy?",
+  "options": [
+   "Carrie Fisher",
+   "Natalie Portman",
+   "Daisy Ridley",
+   "Kylie Minogue"
+  ],
+  "correctIndex": 0,
+  "answer": "Carrie Fisher",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "star-wars",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Whose hologram pleads, \"Help me, Obi-Wan Kenobi. You're my only hope\"?",
+  "options": [
+   "Princess Leia",
+   "Padme Amidala",
+   "Luke Skywalker",
+   "Chewbacca"
+  ],
+  "correctIndex": 0,
+  "answer": "Princess Leia",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "star-wars",
+   "quotes"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which actor provided the voice of Darth Vader in the original Star Wars trilogy?",
+  "options": [
+   "David Prowse",
+   "James Earl Jones",
+   "Morgan Freeman",
+   "Darth Vader's mum"
+  ],
+  "correctIndex": 1,
+  "answer": "James Earl Jones",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "star-wars",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which actor played the younger Obi-Wan Kenobi in the Star Wars prequel trilogy?",
+  "options": [
+   "Alec Guinness",
+   "Liam Neeson",
+   "Ewan McGregor",
+   "Bluey"
+  ],
+  "correctIndex": 2,
+  "answer": "Ewan McGregor",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "star-wars",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which small furry creatures help the Rebels defeat the Empire in Return of the Jedi?",
+  "options": [
+   "Wookiees",
+   "Jawas",
+   "Koalas",
+   "Ewoks"
+  ],
+  "correctIndex": 3,
+  "answer": "Ewoks",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "star-wars",
+   "creatures"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "On which forest moon do the Rebels attack the second Death Star's shield generator?",
+  "options": [
+   "Hoth",
+   "Naboo",
+   "Endor",
+   "Bondi"
+  ],
+  "correctIndex": 2,
+  "answer": "Endor",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "star-wars",
+   "locations"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which Star Wars film was released in 1980?",
+  "options": [
+   "Return of the Jedi",
+   "A New Hope",
+   "The Phantom Menace 2: Electric Boogaloo",
+   "The Empire Strikes Back"
+  ],
+  "correctIndex": 3,
+  "answer": "The Empire Strikes Back",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "star-wars",
+   "release-order"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "hard",
+  "question": "Who directed The Empire Strikes Back?",
+  "options": [
+   "Irvin Kershner",
+   "George Lucas",
+   "Richard Marquand",
+   "Yoda"
+  ],
+  "correctIndex": 0,
+  "answer": "Irvin Kershner",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "star-wars",
+   "directors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "hard",
+  "question": "Han Solo boasts the Millennium Falcon made the Kessel Run in less than how many parsecs?",
+  "options": [
+   "Eleven",
+   "Twelve",
+   "Twenty",
+   "A million"
+  ],
+  "correctIndex": 1,
+  "answer": "Twelve",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "star-wars",
+   "quotes",
+   "props"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which actor played Kylo Ren in the Star Wars sequel trilogy?",
+  "options": [
+   "John Boyega",
+   "Adam Driver",
+   "Oscar Isaac",
+   "Kermit the Frog"
+  ],
+  "correctIndex": 1,
+  "answer": "Adam Driver",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "star-wars",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "hard",
+  "question": "Which actor played Lando Calrissian in The Empire Strikes Back?",
+  "options": [
+   "Billy Dee Williams",
+   "Samuel L. Jackson",
+   "James Earl Jones",
+   "Lando Norris"
+  ],
+  "correctIndex": 0,
+  "answer": "Billy Dee Williams",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "star-wars",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which Rebel admiral shouts \"It's a trap!\" in Return of the Jedi?",
+  "options": [
+   "Admiral Piett",
+   "Grand Moff Tarkin",
+   "Captain Birdseye",
+   "Admiral Ackbar"
+  ],
+  "correctIndex": 3,
+  "answer": "Admiral Ackbar",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "star-wars",
+   "quotes",
+   "characters"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which giant slug-like gangster hangs a frozen Han Solo on his palace wall?",
+  "options": [
+   "Boba Fett",
+   "Watto",
+   "Jabba the Hutt",
+   "Slimy Steve"
+  ],
+  "correctIndex": 2,
+  "answer": "Jabba the Hutt",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "star-wars",
+   "characters"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which actor plays Steve Rogers, also known as Captain America, in the Marvel Cinematic Universe?",
+  "options": [
+   "Chris Hemsworth",
+   "Chris Pratt",
+   "Chris Lilley",
+   "Chris Evans"
+  ],
+  "correctIndex": 3,
+  "answer": "Chris Evans",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "marvel",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which actress plays Black Widow in the Marvel Cinematic Universe?",
+  "options": [
+   "Elizabeth Olsen",
+   "Brie Larson",
+   "Scarlett Johansson",
+   "Kath Day-Knight"
+  ],
+  "correctIndex": 2,
+  "answer": "Scarlett Johansson",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "marvel",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which actor plays Star-Lord in the Guardians of the Galaxy films?",
+  "options": [
+   "Chris Evans",
+   "Chris Pratt",
+   "Chris Pine",
+   "Christopher Robin"
+  ],
+  "correctIndex": 1,
+  "answer": "Chris Pratt",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "marvel",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which actor played Thanos in the Marvel Cinematic Universe?",
+  "options": [
+   "Josh Brolin",
+   "Dave Bautista",
+   "Idris Elba",
+   "Barney the Dinosaur"
+  ],
+  "correctIndex": 0,
+  "answer": "Josh Brolin",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "marvel",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which actor plays Loki in the Marvel Cinematic Universe?",
+  "options": [
+   "Tom Hiddleston",
+   "Tom Holland",
+   "Benedict Cumberbatch",
+   "Tom Gleeson"
+  ],
+  "correctIndex": 0,
+  "answer": "Tom Hiddleston",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "marvel",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which New Zealand director made Thor: Ragnarok?",
+  "options": [
+   "Peter Jackson",
+   "Taika Waititi",
+   "Jane Campion",
+   "Lorde"
+  ],
+  "correctIndex": 1,
+  "answer": "Taika Waititi",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "marvel",
+   "directors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Thor: Ragnarok was largely filmed at studios in which Queensland city?",
+  "options": [
+   "Brisbane",
+   "Cairns",
+   "Gold Coast",
+   "Gotham City"
+  ],
+  "correctIndex": 2,
+  "answer": "Gold Coast",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "marvel",
+   "locations",
+   "australia"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "hard",
+  "question": "Which actor played Bruce Banner in the 2008 film The Incredible Hulk?",
+  "options": [
+   "Eric Bana",
+   "Mark Ruffalo",
+   "Shrek",
+   "Edward Norton"
+  ],
+  "correctIndex": 3,
+  "answer": "Edward Norton",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "marvel",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which actor plays the eyepatch-wearing Nick Fury in the Marvel films?",
+  "options": [
+   "Don Cheadle",
+   "Laurence Fishburne",
+   "Samuel L. Jackson",
+   "Captain Hook"
+  ],
+  "correctIndex": 2,
+  "answer": "Samuel L. Jackson",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "marvel",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "hard",
+  "question": "In the Marvel films, which Infinity Stone is hidden inside the Tesseract?",
+  "options": [
+   "Mind Stone",
+   "Power Stone",
+   "Kidney stone",
+   "Space Stone"
+  ],
+  "correctIndex": 3,
+  "answer": "Space Stone",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "marvel",
+   "props"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which actor plays Peter Parker in Spider-Man: Homecoming?",
+  "options": [
+   "Tom Holland",
+   "Asa Butterfield",
+   "Taron Egerton",
+   "Peter Rabbit"
+  ],
+  "correctIndex": 0,
+  "answer": "Tom Holland",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "marvel",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which actor played James Bond in GoldenEye in 1995?",
+  "options": [
+   "Timothy Dalton",
+   "Pierce Brosnan",
+   "Roger Moore",
+   "Johnny English"
+  ],
+  "correctIndex": 1,
+  "answer": "Pierce Brosnan",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "james-bond",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "What was the first James Bond film, released in 1962?",
+  "options": [
+   "From Russia with Love",
+   "Dr. No",
+   "Goldfinger",
+   "Bond Goes to Bondi"
+  ],
+  "correctIndex": 1,
+  "answer": "Dr. No",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "james-bond",
+   "release-order"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "In Goldfinger, what does the henchman Oddjob throw as a deadly weapon?",
+  "options": [
+   "His steel-rimmed bowler hat",
+   "A metal boomerang",
+   "A throwing knife",
+   "A meat pie"
+  ],
+  "correctIndex": 0,
+  "answer": "His steel-rimmed bowler hat",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "james-bond",
+   "props",
+   "characters"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "hard",
+  "question": "Which actor played James Bond in The Living Daylights and Licence to Kill?",
+  "options": [
+   "Pierce Brosnan",
+   "Roger Moore",
+   "Daniel Radcliffe",
+   "Timothy Dalton"
+  ],
+  "correctIndex": 3,
+  "answer": "Timothy Dalton",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "james-bond",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "In Skyfall, Bond's childhood home is in which country?",
+  "options": [
+   "Ireland",
+   "Wales",
+   "Scotland",
+   "Antarctica"
+  ],
+  "correctIndex": 2,
+  "answer": "Scotland",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "james-bond",
+   "locations"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "In Casino Royale (2006), which card game does Bond play against Le Chiffre?",
+  "options": [
+   "Baccarat",
+   "Blackjack",
+   "Go Fish",
+   "Poker"
+  ],
+  "correctIndex": 3,
+  "answer": "Poker",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "james-bond",
+   "props"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "hard",
+  "question": "Which actor played the villain Le Chiffre in Casino Royale (2006)?",
+  "options": [
+   "Mathieu Amalric",
+   "Christoph Waltz",
+   "Mads Mikkelsen",
+   "Hans Christian Andersen"
+  ],
+  "correctIndex": 2,
+  "answer": "Mads Mikkelsen",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "james-bond",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "hard",
+  "question": "Which actor played the gadget master Q in Bond films from the 1960s until 1999?",
+  "options": [
+   "John Cleese",
+   "Desmond Llewelyn",
+   "Ben Whishaw",
+   "Q from Star Trek"
+  ],
+  "correctIndex": 1,
+  "answer": "Desmond Llewelyn",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "james-bond",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "What is the surname of M's secretary, who swaps flirty banter with James Bond?",
+  "options": [
+   "Moneypenny",
+   "Pennyworth",
+   "Goodnight",
+   "Moneybags"
+  ],
+  "correctIndex": 0,
+  "answer": "Moneypenny",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "james-bond",
+   "characters"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "In Goldfinger, which American gold store does the villain plan to attack?",
+  "options": [
+   "Fort Knox",
+   "The Federal Reserve",
+   "Area 51",
+   "The Perth Mint"
+  ],
+  "correctIndex": 0,
+  "answer": "Fort Knox",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "james-bond",
+   "locations"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which actor played Frodo Baggins in Peter Jackson's Lord of the Rings films?",
+  "options": [
+   "Sean Astin",
+   "Elijah Wood",
+   "Dominic Monaghan",
+   "Danny DeVito"
+  ],
+  "correctIndex": 1,
+  "answer": "Elijah Wood",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "lord-of-the-rings",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which actor played Aragorn in Peter Jackson's Lord of the Rings films?",
+  "options": [
+   "Orlando Bloom",
+   "Sean Bean",
+   "Viggo Mortensen",
+   "Russell Coight"
+  ],
+  "correctIndex": 2,
+  "answer": "Viggo Mortensen",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "lord-of-the-rings",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which actor played the elf archer Legolas in The Lord of the Rings films?",
+  "options": [
+   "Hugo Weaving",
+   "Viggo Mortensen",
+   "Santa's head elf",
+   "Orlando Bloom"
+  ],
+  "correctIndex": 3,
+  "answer": "Orlando Bloom",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "lord-of-the-rings",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "hard",
+  "question": "Which actor played the wizard Saruman in The Lord of the Rings films?",
+  "options": [
+   "Ian Holm",
+   "Hugo Weaving",
+   "Christopher Lee",
+   "Merlin"
+  ],
+  "correctIndex": 2,
+  "answer": "Christopher Lee",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "lord-of-the-rings",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "What is the first film in Peter Jackson's Lord of the Rings trilogy called?",
+  "options": [
+   "The Two Towers",
+   "The Return of the King",
+   "The Ring Strikes Back",
+   "The Fellowship of the Ring"
+  ],
+  "correctIndex": 3,
+  "answer": "The Fellowship of the Ring",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "lord-of-the-rings",
+   "release-order"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "In which elven refuge is the Fellowship of the Ring formed?",
+  "options": [
+   "Rivendell",
+   "Lothlorien",
+   "Mirkwood",
+   "Narnia"
+  ],
+  "correctIndex": 0,
+  "answer": "Rivendell",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "lord-of-the-rings",
+   "locations"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "What is the name of Gandalf's swift white horse in The Lord of the Rings?",
+  "options": [
+   "Bill",
+   "Shadowfax",
+   "Brego",
+   "Phar Lap"
+  ],
+  "correctIndex": 1,
+  "answer": "Shadowfax",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "lord-of-the-rings",
+   "creatures"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which actor played Samwise Gamgee in The Lord of the Rings films?",
+  "options": [
+   "Dominic Monaghan",
+   "Sean Astin",
+   "Billy Boyd",
+   "Wally from Where's Wally"
+  ],
+  "correctIndex": 1,
+  "answer": "Sean Astin",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "lord-of-the-rings",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "hard",
+  "question": "What is the name of Saruman's black tower at Isengard?",
+  "options": [
+   "Orthanc",
+   "Barad-dur",
+   "Minas Tirith",
+   "The Eiffel Tower"
+  ],
+  "correctIndex": 0,
+  "answer": "Orthanc",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "lord-of-the-rings",
+   "locations"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which character warns, \"One does not simply walk into Mordor\"?",
+  "options": [
+   "Faramir",
+   "Gimli",
+   "Your GPS",
+   "Boromir"
+  ],
+  "correctIndex": 3,
+  "answer": "Boromir",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "lord-of-the-rings",
+   "quotes"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which author wrote the novel Jurassic Park?",
+  "options": [
+   "Stephen King",
+   "Steven Spielberg",
+   "Michael Crichton",
+   "Dr Seuss"
+  ],
+  "correctIndex": 2,
+  "answer": "Michael Crichton",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "jurassic-park",
+   "authors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which actor played palaeontologist Dr Alan Grant in Jurassic Park?",
+  "options": [
+   "Harrison Ford",
+   "Kurt Russell",
+   "Fred Flintstone",
+   "Sam Neill"
+  ],
+  "correctIndex": 3,
+  "answer": "Sam Neill",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "jurassic-park",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which actress played Dr Ellie Sattler in Jurassic Park?",
+  "options": [
+   "Julianne Moore",
+   "Sigourney Weaver",
+   "Laura Dern",
+   "Wilma Flintstone"
+  ],
+  "correctIndex": 2,
+  "answer": "Laura Dern",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "jurassic-park",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "hard",
+  "question": "Which actor played park creator John Hammond in Jurassic Park?",
+  "options": [
+   "David Attenborough",
+   "Richard Attenborough",
+   "Michael Caine",
+   "Old MacDonald"
+  ],
+  "correctIndex": 1,
+  "answer": "Richard Attenborough",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "jurassic-park",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "hard",
+  "question": "On which fictional island is the original Jurassic Park built?",
+  "options": [
+   "Isla Nublar",
+   "Isla Sorna",
+   "Skull Island",
+   "Gilligan's Island"
+  ],
+  "correctIndex": 0,
+  "answer": "Isla Nublar",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "jurassic-park",
+   "locations"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "In Jurassic Park, dinosaur DNA comes from mosquitoes preserved in what?",
+  "options": [
+   "Amber",
+   "Ice",
+   "Tar",
+   "Vegemite"
+  ],
+  "correctIndex": 0,
+  "answer": "Amber",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "jurassic-park",
+   "props"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "In Jurassic Park, ripples in what warn that the T. rex is coming?",
+  "options": [
+   "A fish tank",
+   "A cup of water",
+   "A swimming pool",
+   "A bowl of custard"
+  ],
+  "correctIndex": 1,
+  "answer": "A cup of water",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "jurassic-park",
+   "props",
+   "creatures"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "hard",
+  "question": "In Jurassic Park, which character mutters \"Clever girl\" just before a raptor attacks him?",
+  "options": [
+   "Dennis Nedry",
+   "Ray Arnold",
+   "Robert Muldoon",
+   "Big Bird"
+  ],
+  "correctIndex": 2,
+  "answer": "Robert Muldoon",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "jurassic-park",
+   "quotes"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "In the 1993 film Jurassic Park, which sick dinosaur do the visitors find lying down?",
+  "options": [
+   "Stegosaurus",
+   "Brachiosaurus",
+   "Rex from Toy Story",
+   "Triceratops"
+  ],
+  "correctIndex": 3,
+  "answer": "Triceratops",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "jurassic-park",
+   "creatures"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which actor voices Buzz Lightyear in the Toy Story films?",
+  "options": [
+   "Tom Hanks",
+   "Billy Crystal",
+   "Tim Allen",
+   "Buzz Aldrin"
+  ],
+  "correctIndex": 2,
+  "answer": "Tim Allen",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "pixar",
+   "toy-story",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "In Toy Story, what kind of toy is Hamm?",
+  "options": [
+   "A teddy bear",
+   "A wind-up monkey",
+   "A real leg of ham",
+   "A piggy bank"
+  ],
+  "correctIndex": 3,
+  "answer": "A piggy bank",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "pixar",
+   "toy-story",
+   "characters"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which yodelling cowgirl joins the gang in Toy Story 2?",
+  "options": [
+   "Jessie",
+   "Bo Peep",
+   "Barbie",
+   "Dolly Parton"
+  ],
+  "correctIndex": 0,
+  "answer": "Jessie",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "pixar",
+   "toy-story",
+   "characters"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "hard",
+  "question": "In Toy Story 2, the greedy collector who steals Woody owns which store?",
+  "options": [
+   "Pizza Planet",
+   "Al's Toy Barn",
+   "Toy World",
+   "Al's Discount Spaceships"
+  ],
+  "correctIndex": 1,
+  "answer": "Al's Toy Barn",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "pixar",
+   "toy-story",
+   "locations"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "In Toy Story, what kind of toy is the nervous Rex?",
+  "options": [
+   "A dragon",
+   "A dinosaur",
+   "A crocodile",
+   "A garden gnome"
+  ],
+  "correctIndex": 1,
+  "answer": "A dinosaur",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "pixar",
+   "toy-story",
+   "characters"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "In Toy Story, the three-eyed aliens at Pizza Planet revere what as their master?",
+  "options": [
+   "The Claw",
+   "The Rocket",
+   "The Prize Ticket",
+   "The Vacuum Cleaner"
+  ],
+  "correctIndex": 0,
+  "answer": "The Claw",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "pixar",
+   "toy-story",
+   "props"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "hard",
+  "question": "Who directed the original Toy Story in 1995?",
+  "options": [
+   "Pete Docter",
+   "Brad Bird",
+   "Walt Disney",
+   "John Lasseter"
+  ],
+  "correctIndex": 3,
+  "answer": "John Lasseter",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "pixar",
+   "toy-story",
+   "directors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which comedian voices the one-eyed Mike Wazowski in Monsters, Inc.?",
+  "options": [
+   "John Goodman",
+   "Robin Williams",
+   "Billy Crystal",
+   "Cookie Monster"
+  ],
+  "correctIndex": 2,
+  "answer": "Billy Crystal",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "pixar",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "In The Incredibles, what is the name of the Parr family's baby?",
+  "options": [
+   "Dash",
+   "Violet",
+   "Syndrome",
+   "Jack-Jack"
+  ],
+  "correctIndex": 3,
+  "answer": "Jack-Jack",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "pixar",
+   "characters"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "hard",
+  "question": "What is the name of the hopping desk lamp in Pixar's logo?",
+  "options": [
+   "Lumiere",
+   "Pixie",
+   "Luxo Jr.",
+   "Lampy McLampface"
+  ],
+  "correctIndex": 2,
+  "answer": "Luxo Jr.",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "pixar",
+   "props"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "In Up, what is the name of the young Wilderness Explorer who stows away on Carl's house?",
+  "options": [
+   "Dug",
+   "Russell",
+   "Kevin",
+   "Dora the Explorer"
+  ],
+  "correctIndex": 1,
+  "answer": "Russell",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "pixar",
+   "characters"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which Pixar film stars the red-haired Scottish princess Merida?",
+  "options": [
+   "Brave",
+   "Tangled",
+   "Frozen",
+   "Braveheart"
+  ],
+  "correctIndex": 0,
+  "answer": "Brave",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "pixar",
+   "characters"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "In Ratatouille, which famous late chef's motto is \"Anyone can cook\"?",
+  "options": [
+   "Gusteau",
+   "Linguini",
+   "Anton Ego",
+   "Gordon Ramsay"
+  ],
+  "correctIndex": 0,
+  "answer": "Gusteau",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "pixar",
+   "quotes",
+   "characters"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "In Toy Story, what is the name of the toy dachshund with a coiled spring for a middle?",
+  "options": [
+   "Buster",
+   "Slinky Dog",
+   "Bullseye",
+   "Sausage Sizzle"
+  ],
+  "correctIndex": 1,
+  "answer": "Slinky Dog",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "pixar",
+   "toy-story",
+   "characters"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "In Toy Story, which line does Woody say when his pull string is tugged?",
+  "options": [
+   "To infinity and beyond!",
+   "I'll be back!",
+   "Reach for the sky!",
+   "Bazinga!"
+  ],
+  "correctIndex": 2,
+  "answer": "Reach for the sky!",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "pixar",
+   "toy-story",
+   "quotes"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which actor played undercover cop Brian O'Conner in the Fast and Furious films?",
+  "options": [
+   "Vin Diesel",
+   "Tyrese Gibson",
+   "Johnnie Walker",
+   "Paul Walker"
+  ],
+  "correctIndex": 3,
+  "answer": "Paul Walker",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "fast-and-furious",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which character does Dwayne Johnson play in the Fast and Furious films?",
+  "options": [
+   "Deckard Shaw",
+   "Roman Pearce",
+   "Luke Hobbs",
+   "The Tooth Fairy"
+  ],
+  "correctIndex": 2,
+  "answer": "Luke Hobbs",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "fast-and-furious",
+   "characters"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which Fast and Furious film is set in Japan's capital city?",
+  "options": [
+   "Fast Five",
+   "Furious 7",
+   "Slow and Steady",
+   "The Fast and the Furious: Tokyo Drift"
+  ],
+  "correctIndex": 3,
+  "answer": "The Fast and the Furious: Tokyo Drift",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "fast-and-furious",
+   "locations"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which character does Jason Statham play in the Fast and Furious films?",
+  "options": [
+   "Deckard Shaw",
+   "Owen Shaw",
+   "Luke Hobbs",
+   "Postman Pat"
+  ],
+  "correctIndex": 0,
+  "answer": "Deckard Shaw",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "fast-and-furious",
+   "characters"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "hard",
+  "question": "Which Fast and Furious film is set mainly in Rio de Janeiro?",
+  "options": [
+   "Fast and Furious 6",
+   "Fast Five",
+   "2 Fast 2 Furious",
+   "Samba Speedway"
+  ],
+  "correctIndex": 1,
+  "answer": "Fast Five",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "fast-and-furious",
+   "locations"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which beer brand does Dom Toretto famously favour in the Fast and Furious films?",
+  "options": [
+   "Heineken",
+   "Corona",
+   "Budweiser",
+   "Bundaberg Ginger Beer"
+  ],
+  "correctIndex": 1,
+  "answer": "Corona",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "fast-and-furious",
+   "props"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Along with his fedora, which weapon is Indiana Jones famous for carrying?",
+  "options": [
+   "A bullwhip",
+   "A crossbow",
+   "A sword",
+   "A pool noodle"
+  ],
+  "correctIndex": 0,
+  "answer": "A bullwhip",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "indiana-jones",
+   "props"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "What was the first Indiana Jones film, released in 1981?",
+  "options": [
+   "Indiana Jones and the Temple of Doom",
+   "Indiana Jones and the Last Crusade",
+   "Raiders of the Lost Thongs",
+   "Raiders of the Lost Ark"
+  ],
+  "correctIndex": 3,
+  "answer": "Raiders of the Lost Ark",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "indiana-jones",
+   "release-order"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "In Raiders of the Lost Ark, which sacred artefact does Indy race the Nazis to find?",
+  "options": [
+   "The Holy Grail",
+   "The Crystal Skull",
+   "The Ark of the Covenant",
+   "The Lost TV Remote"
+  ],
+  "correctIndex": 2,
+  "answer": "The Ark of the Covenant",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "indiana-jones",
+   "props"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which actor played Indiana Jones's father in Indiana Jones and the Last Crusade?",
+  "options": [
+   "Michael Caine",
+   "Roger Moore",
+   "Grandpa Simpson",
+   "Sean Connery"
+  ],
+  "correctIndex": 3,
+  "answer": "Sean Connery",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "indiana-jones",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "hard",
+  "question": "What is Indiana Jones's real first name?",
+  "options": [
+   "Harrison",
+   "Harold",
+   "Henry",
+   "Indigo"
+  ],
+  "correctIndex": 2,
+  "answer": "Henry",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "indiana-jones",
+   "characters"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which filmmaker created Indiana Jones, then teamed up with Steven Spielberg to make the films?",
+  "options": [
+   "James Cameron",
+   "George Lucas",
+   "Robert Zemeckis",
+   "Jamie Durie"
+  ],
+  "correctIndex": 1,
+  "answer": "George Lucas",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "indiana-jones",
+   "directors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "In the opening of Raiders of the Lost Ark, what giant object chases Indy out of a temple?",
+  "options": [
+   "A boulder",
+   "A rolling log",
+   "A tidal wave",
+   "A wheel of cheese"
+  ],
+  "correctIndex": 0,
+  "answer": "A boulder",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "indiana-jones",
+   "props"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "hard",
+  "question": "Which actress played Marion Ravenwood in Raiders of the Lost Ark?",
+  "options": [
+   "Karen Allen",
+   "Kate Capshaw",
+   "Carrie Fisher",
+   "Mrs Doubtfire"
+  ],
+  "correctIndex": 0,
+  "answer": "Karen Allen",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "indiana-jones",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which film hero insists, \"It belongs in a museum!\"?",
+  "options": [
+   "Lara Croft",
+   "Indiana Jones",
+   "Allan Quatermain",
+   "The Hamburglar"
+  ],
+  "correctIndex": 1,
+  "answer": "Indiana Jones",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "indiana-jones",
+   "quotes"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which actor played Marty McFly in Back to the Future?",
+  "options": [
+   "Christopher Lloyd",
+   "Matthew Broderick",
+   "Michael J. Fox",
+   "Bart Simpson"
+  ],
+  "correctIndex": 2,
+  "answer": "Michael J. Fox",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "back-to-the-future",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "To which year does Marty McFly travel back in the first Back to the Future film?",
+  "options": [
+   "1965",
+   "1885",
+   "3000 BC",
+   "1955"
+  ],
+  "correctIndex": 3,
+  "answer": "1955",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "back-to-the-future",
+   "locations"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which fuel powers the DeLorean's time travel when Marty first uses it?",
+  "options": [
+   "Uranium",
+   "Petrol",
+   "Plutonium",
+   "Fairy floss"
+  ],
+  "correctIndex": 2,
+  "answer": "Plutonium",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "back-to-the-future",
+   "props"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "In Back to the Future, how much power does the flux capacitor need to travel through time?",
+  "options": [
+   "12.1 gigawatts",
+   "1.21 kilowatts",
+   "A AA battery",
+   "1.21 gigawatts"
+  ],
+  "correctIndex": 3,
+  "answer": "1.21 gigawatts",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "back-to-the-future",
+   "props",
+   "quotes"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which bully torments George McFly in Back to the Future?",
+  "options": [
+   "Biff Tannen",
+   "Griff Tannen",
+   "Doc Brown",
+   "Darth Vader"
+  ],
+  "correctIndex": 0,
+  "answer": "Biff Tannen",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "back-to-the-future",
+   "characters"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "hard",
+  "question": "In which year is Back to the Future Part III mostly set?",
+  "options": [
+   "1855",
+   "1885",
+   "1955",
+   "The Jurassic period"
+  ],
+  "correctIndex": 1,
+  "answer": "1885",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "back-to-the-future",
+   "locations"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "In Back to the Future, what strikes the Hill Valley clock tower to send Marty home?",
+  "options": [
+   "A meteor",
+   "Lightning",
+   "A train",
+   "A rogue cricket ball"
+  ],
+  "correctIndex": 1,
+  "answer": "Lightning",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "back-to-the-future",
+   "locations"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which character says, \"Roads? Where we're going, we don't need roads\"?",
+  "options": [
+   "Doc Brown",
+   "Marty McFly",
+   "Biff Tannen",
+   "Lightning McQueen"
+  ],
+  "correctIndex": 0,
+  "answer": "Doc Brown",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "back-to-the-future",
+   "quotes"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "In Back to the Future Part II, what floating board does Marty ride?",
+  "options": [
+   "A jetpack",
+   "A flying scooter",
+   "A magic carpet",
+   "A hoverboard"
+  ],
+  "correctIndex": 3,
+  "answer": "A hoverboard",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "back-to-the-future",
+   "props"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "hard",
+  "question": "Who directed the first Mission: Impossible film in 1996?",
+  "options": [
+   "John Woo",
+   "J.J. Abrams",
+   "Brian De Palma",
+   "Ethan Hunt"
+  ],
+  "correctIndex": 2,
+  "answer": "Brian De Palma",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mission-impossible",
+   "directors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "In Mission: Impossible Ghost Protocol, Ethan Hunt scales which Dubai skyscraper?",
+  "options": [
+   "Burj Al Arab",
+   "Shanghai Tower",
+   "Q1 on the Gold Coast",
+   "Burj Khalifa"
+  ],
+  "correctIndex": 3,
+  "answer": "Burj Khalifa",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mission-impossible",
+   "locations"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which actor plays tech expert Benji Dunn in the Mission: Impossible films?",
+  "options": [
+   "Jeremy Renner",
+   "Ving Rhames",
+   "Simon Pegg",
+   "Shaun the Sheep"
+  ],
+  "correctIndex": 2,
+  "answer": "Simon Pegg",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mission-impossible",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "The Mission: Impossible films are based on a TV series that first aired in which decade?",
+  "options": [
+   "1970s",
+   "1960s",
+   "1980s",
+   "1860s"
+  ],
+  "correctIndex": 1,
+  "answer": "1960s",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mission-impossible",
+   "release-order"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "In the first Mission: Impossible, Ethan is lowered on wires into a vault at which agency's headquarters?",
+  "options": [
+   "The CIA",
+   "The FBI",
+   "MI6",
+   "Australia Post"
+  ],
+  "correctIndex": 0,
+  "answer": "The CIA",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mission-impossible",
+   "locations"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which actor played Max Rockatansky in Mad Max: Fury Road?",
+  "options": [
+   "Tom Hardy",
+   "Mel Gibson",
+   "Hugh Jackman",
+   "Maxibon"
+  ],
+  "correctIndex": 0,
+  "answer": "Tom Hardy",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mad-max",
+   "actors",
+   "australia"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "What is the name of the masked warlord villain in Mad Max: Fury Road?",
+  "options": [
+   "Lord Humungus",
+   "Immortan Joe",
+   "Toecutter",
+   "Average Joe"
+  ],
+  "correctIndex": 1,
+  "answer": "Immortan Joe",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mad-max",
+   "characters",
+   "australia"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Under what title was Mad Max 2 released in the United States?",
+  "options": [
+   "Fury Road",
+   "Beyond Thunderdome",
+   "The Road Warrior",
+   "The Road to Gundagai"
+  ],
+  "correctIndex": 2,
+  "answer": "The Road Warrior",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mad-max",
+   "release-order",
+   "australia"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which singer played Aunty Entity in Mad Max Beyond Thunderdome?",
+  "options": [
+   "Grace Jones",
+   "Cher",
+   "Mrs Mangel",
+   "Tina Turner"
+  ],
+  "correctIndex": 3,
+  "answer": "Tina Turner",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mad-max",
+   "actors",
+   "australia"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which actress plays the title role in Furiosa: A Mad Max Saga?",
+  "options": [
+   "Charlize Theron",
+   "Margot Robbie",
+   "Anya Taylor-Joy",
+   "Fiona from Shrek"
+  ],
+  "correctIndex": 2,
+  "answer": "Anya Taylor-Joy",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mad-max",
+   "actors",
+   "australia"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "In Mad Max: Fury Road, what do the War Boys cry out before a glorious death?",
+  "options": [
+   "Remember me!",
+   "Follow me!",
+   "Pass the sauce!",
+   "Witness me!"
+  ],
+  "correctIndex": 3,
+  "answer": "Witness me!",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mad-max",
+   "quotes",
+   "australia"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "hard",
+  "question": "Mad Max 2 was filmed largely around which outback New South Wales city?",
+  "options": [
+   "Broken Hill",
+   "Dubbo",
+   "Wagga Wagga",
+   "Hogsmeade"
+  ],
+  "correctIndex": 0,
+  "answer": "Broken Hill",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mad-max",
+   "locations",
+   "australia"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "hard",
+  "question": "Mad Max: Fury Road was mainly filmed in which African country?",
+  "options": [
+   "South Africa",
+   "Namibia",
+   "Morocco",
+   "Wakanda"
+  ],
+  "correctIndex": 1,
+  "answer": "Namibia",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mad-max",
+   "locations",
+   "australia"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "In Mad Max: Fury Road, which War Boy, played by Nicholas Hoult, switches sides?",
+  "options": [
+   "Slit",
+   "Nux",
+   "The Doof Warrior",
+   "Bazza"
+  ],
+  "correctIndex": 1,
+  "answer": "Nux",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mad-max",
+   "characters",
+   "australia"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which actress voices Princess Fiona in the Shrek films?",
+  "options": [
+   "Cameron Diaz",
+   "Drew Barrymore",
+   "Julia Roberts",
+   "Princess Peach"
+  ],
+  "correctIndex": 0,
+  "answer": "Cameron Diaz",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "shrek",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "In Shrek 2, what does Donkey keep asking on the long trip to Far Far Away?",
+  "options": [
+   "Can I drive?",
+   "Where's the toilet?",
+   "Is it lunch yet?",
+   "Are we there yet?"
+  ],
+  "correctIndex": 3,
+  "answer": "Are we there yet?",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "shrek",
+   "quotes"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "In Shrek, which fairy-tale biscuit does Lord Farquaad interrogate?",
+  "options": [
+   "Pinocchio",
+   "One of the Three Little Pigs",
+   "The Gingerbread Man",
+   "Cookie Monster"
+  ],
+  "correctIndex": 2,
+  "answer": "The Gingerbread Man",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "shrek",
+   "characters"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "In Shrek 2, what is the name of the kingdom ruled by Fiona's parents?",
+  "options": [
+   "Duloc",
+   "Neverland",
+   "Woop Woop",
+   "Far Far Away"
+  ],
+  "correctIndex": 3,
+  "answer": "Far Far Away",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "shrek",
+   "locations"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Shrek won the first ever Academy Award in which category?",
+  "options": [
+   "Best Visual Effects",
+   "Best Original Song",
+   "Best Animated Feature",
+   "Best Ogre"
+  ],
+  "correctIndex": 2,
+  "answer": "Best Animated Feature",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "shrek",
+   "awards"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "hard",
+  "question": "Which actor voices the tiny tyrant Lord Farquaad in Shrek?",
+  "options": [
+   "John Cleese",
+   "John Lithgow",
+   "Rupert Everett",
+   "Tiny Tim"
+  ],
+  "correctIndex": 1,
+  "answer": "John Lithgow",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "shrek",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "In Shrek 2, which character schemes to marry Fiona to her son, Prince Charming?",
+  "options": [
+   "The Fairy Godmother",
+   "The Wicked Witch",
+   "Tinker Bell",
+   "The Easter Bunny"
+  ],
+  "correctIndex": 0,
+  "answer": "The Fairy Godmother",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "shrek",
+   "characters"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "In the first Shrek film, which character does Donkey fall in love with?",
+  "options": [
+   "Dragon",
+   "Princess Fiona",
+   "A unicorn",
+   "A lawnmower"
+  ],
+  "correctIndex": 0,
+  "answer": "Dragon",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "shrek",
+   "creatures"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which actress plays Elizabeth Swann in the Pirates of the Caribbean films?",
+  "options": [
+   "Penelope Cruz",
+   "Keira Knightley",
+   "Natalie Portman",
+   "Ariel the mermaid"
+  ],
+  "correctIndex": 1,
+  "answer": "Keira Knightley",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "pirates-of-the-caribbean",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which actor plays blacksmith Will Turner in the Pirates of the Caribbean films?",
+  "options": [
+   "Heath Ledger",
+   "Jude Law",
+   "Orlando Bloom",
+   "Popeye"
+  ],
+  "correctIndex": 2,
+  "answer": "Orlando Bloom",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "pirates-of-the-caribbean",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which Australian actor plays Captain Hector Barbossa in the Pirates of the Caribbean films?",
+  "options": [
+   "Hugh Jackman",
+   "Guy Pearce",
+   "Captain Cook",
+   "Geoffrey Rush"
+  ],
+  "correctIndex": 3,
+  "answer": "Geoffrey Rush",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "pirates-of-the-caribbean",
+   "actors",
+   "australia"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which ship does Davy Jones captain in the Pirates of the Caribbean films?",
+  "options": [
+   "The Black Pearl",
+   "Queen Anne's Revenge",
+   "The Flying Dutchman",
+   "The Spirit of Tasmania"
+  ],
+  "correctIndex": 2,
+  "answer": "The Flying Dutchman",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "pirates-of-the-caribbean",
+   "props"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "What is the subtitle of the first Pirates of the Caribbean film from 2003?",
+  "options": [
+   "Dead Man's Chest",
+   "At World's End",
+   "The Curse of the Bin Chicken",
+   "The Curse of the Black Pearl"
+  ],
+  "correctIndex": 3,
+  "answer": "The Curse of the Black Pearl",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "pirates-of-the-caribbean",
+   "release-order"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "What does Jack Sparrow's magic compass point towards?",
+  "options": [
+   "Whatever its holder wants most",
+   "Buried treasure",
+   "The Fountain of Youth",
+   "The nearest pub"
+  ],
+  "correctIndex": 0,
+  "answer": "Whatever its holder wants most",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "pirates-of-the-caribbean",
+   "props"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which drink does Jack Sparrow complain has gone missing, asking why it is gone?",
+  "options": [
+   "Grog",
+   "Rum",
+   "Wine",
+   "Milo"
+  ],
+  "correctIndex": 1,
+  "answer": "Rum",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "pirates-of-the-caribbean",
+   "quotes"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which actor played Batman in Tim Burton's 1989 film?",
+  "options": [
+   "Val Kilmer",
+   "Michael Keaton",
+   "Adam West",
+   "Mr Squiggle"
+  ],
+  "correctIndex": 1,
+  "answer": "Michael Keaton",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "batman",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which actor played the Joker in Tim Burton's 1989 Batman?",
+  "options": [
+   "Jack Nicholson",
+   "Jared Leto",
+   "Mark Hamill",
+   "Krusty the Clown"
+  ],
+  "correctIndex": 0,
+  "answer": "Jack Nicholson",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "batman",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "Which actor played the title role in The Batman (2022)?",
+  "options": [
+   "Ben Affleck",
+   "Christian Bale",
+   "Edward Cullen",
+   "Robert Pattinson"
+  ],
+  "correctIndex": 3,
+  "answer": "Robert Pattinson",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "batman",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which actor played the masked villain Bane in The Dark Knight Rises?",
+  "options": [
+   "Liam Neeson",
+   "Cillian Murphy",
+   "Tom Hardy",
+   "Bananas in Pyjamas"
+  ],
+  "correctIndex": 2,
+  "answer": "Tom Hardy",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "batman",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "hard",
+  "question": "Which actor played Batman in Batman Forever in 1995?",
+  "options": [
+   "George Clooney",
+   "Michael Keaton",
+   "Danger Mouse",
+   "Val Kilmer"
+  ],
+  "correctIndex": 3,
+  "answer": "Val Kilmer",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "batman",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which actor played Batman in Batman and Robin in 1997?",
+  "options": [
+   "Val Kilmer",
+   "Ben Affleck",
+   "George Clooney",
+   "George of the Jungle"
+  ],
+  "correctIndex": 2,
+  "answer": "George Clooney",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "batman",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which actress played Catwoman in Batman Returns (1992)?",
+  "options": [
+   "Halle Berry",
+   "Michelle Pfeiffer",
+   "Anne Hathaway",
+   "Garfield"
+  ],
+  "correctIndex": 1,
+  "answer": "Michelle Pfeiffer",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "batman",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which actor played the Penguin in Batman Returns (1992)?",
+  "options": [
+   "Danny DeVito",
+   "Colin Farrell",
+   "Burgess Meredith",
+   "Pingu"
+  ],
+  "correctIndex": 0,
+  "answer": "Danny DeVito",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "batman",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "What is the real name of the Gotham district attorney who becomes Two-Face?",
+  "options": [
+   "Harvey Dent",
+   "Harvey Bullock",
+   "Edward Nygma",
+   "Harvey Norman"
+  ],
+  "correctIndex": 0,
+  "answer": "Harvey Dent",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "batman",
+   "characters"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "easy",
+  "question": "What was the first film in Christopher Nolan's Batman trilogy?",
+  "options": [
+   "The Dark Knight",
+   "Batman Begins",
+   "Batman Forever",
+   "Batman Goes to Bunnings"
+  ],
+  "correctIndex": 1,
+  "answer": "Batman Begins",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "batman",
+   "release-order"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which actor played the butler Alfred in Christopher Nolan's Batman trilogy?",
+  "options": [
+   "Jeremy Irons",
+   "Anthony Hopkins",
+   "Michael Caine",
+   "Alfred Hitchcock"
+  ],
+  "correctIndex": 2,
+  "answer": "Michael Caine",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "batman",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "hard",
+  "question": "Which actor played Commissioner Gordon in Christopher Nolan's Batman trilogy?",
+  "options": [
+   "J.K. Simmons",
+   "Morgan Freeman",
+   "Inspector Gadget",
+   "Gary Oldman"
+  ],
+  "correctIndex": 3,
+  "answer": "Gary Oldman",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "batman",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "hard",
+  "question": "Which actor is revealed as the true Ra's al Ghul in Batman Begins?",
+  "options": [
+   "Cillian Murphy",
+   "Ralph Fiennes",
+   "Liam Neeson",
+   "Gandalf"
+  ],
+  "correctIndex": 2,
+  "answer": "Liam Neeson",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "batman",
+   "actors"
+  ]
+ },
+ {
+  "category": "Film franchises",
+  "difficulty": "medium",
+  "question": "Which actor played gadget maker Lucius Fox in Christopher Nolan's Batman trilogy?",
+  "options": [
+   "Samuel L. Jackson",
+   "Denzel Washington",
+   "Fantastic Mr Fox",
+   "Morgan Freeman"
+  ],
+  "correctIndex": 3,
+  "answer": "Morgan Freeman",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "batman",
+   "actors"
+  ]
+ }
+]

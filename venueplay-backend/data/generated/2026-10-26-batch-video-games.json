@@ -1,0 +1,2955 @@
+[
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "In Super Mario Bros, what does a green mushroom give Mario?",
+  "options": [
+   "An extra life",
+   "Bigger size",
+   "Fire power",
+   "A free pizza"
+  ],
+  "correctIndex": 0,
+  "answer": "An extra life",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "mario"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "Which Nintendo hero greets players with the line 'It's-a me!'?",
+  "options": [
+   "Luigi",
+   "Mario",
+   "Link",
+   "Shrek"
+  ],
+  "correctIndex": 1,
+  "answer": "Mario",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "mario",
+   "catchphrases"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "Princess Peach rules over which kingdom in the Mario games?",
+  "options": [
+   "Flower Kingdom",
+   "Koopa Kingdom",
+   "Magic Kingdom",
+   "Mushroom Kingdom"
+  ],
+  "correctIndex": 3,
+  "answer": "Mushroom Kingdom",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "mario"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "Who voiced Bowser in the 2023 animated Super Mario Bros Movie?",
+  "options": [
+   "Jack Black",
+   "Seth Rogen",
+   "Charlie Day",
+   "Kylie Minogue"
+  ],
+  "correctIndex": 0,
+  "answer": "Jack Black",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "mario",
+   "film"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "What is the name of Mario's living hat in Super Mario Odyssey?",
+  "options": [
+   "Hatty",
+   "Cappy",
+   "Toppy",
+   "Beanie Baby"
+  ],
+  "correctIndex": 1,
+  "answer": "Cappy",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "mario"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "In Super Mario 64, what does Mario collect to open new areas of Peach's castle?",
+  "options": [
+   "Gold coins",
+   "Moons",
+   "Power Stars",
+   "Lamingtons"
+  ],
+  "correctIndex": 2,
+  "answer": "Power Stars",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "mario"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "In Super Mario Bros, Toad tells Mario that the princess is in another what?",
+  "options": [
+   "Kingdom",
+   "Tower",
+   "Shopping centre",
+   "Castle"
+  ],
+  "correctIndex": 3,
+  "answer": "Castle",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "mario",
+   "catchphrases"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "What was Mario's job in the original 1981 Donkey Kong arcade game?",
+  "options": [
+   "Carpenter",
+   "Plumber",
+   "Electrician",
+   "Astronaut"
+  ],
+  "correctIndex": 0,
+  "answer": "Carpenter",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "mario",
+   "donkey kong",
+   "arcade"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "In the 1981 Donkey Kong arcade game, what is the name of the woman Mario rescues?",
+  "options": [
+   "Peach",
+   "Pauline",
+   "Daisy",
+   "Delta Goodrem"
+  ],
+  "correctIndex": 1,
+  "answer": "Pauline",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "donkey kong",
+   "arcade"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "What is Donkey Kong's favourite food?",
+  "options": [
+   "Coconuts",
+   "Apples",
+   "Bananas",
+   "Meat pies"
+  ],
+  "correctIndex": 2,
+  "answer": "Bananas",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "donkey kong"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "hard",
+  "question": "In Donkey Kong Country, which grumpy old ape is said to be the original arcade Donkey Kong?",
+  "options": [
+   "Funky Kong",
+   "Diddy Kong",
+   "King Kong",
+   "Cranky Kong"
+  ],
+  "correctIndex": 3,
+  "answer": "Cranky Kong",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "donkey kong"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "What gems does Sonic collect to transform into Super Sonic?",
+  "options": [
+   "Chaos Emeralds",
+   "Master Rubies",
+   "Star Sapphires",
+   "Opal Lollies"
+  ],
+  "correctIndex": 0,
+  "answer": "Chaos Emeralds",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "sonic"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "What is the first zone in the original 1991 Sonic the Hedgehog game?",
+  "options": [
+   "Chemical Plant Zone",
+   "Green Hill Zone",
+   "Marble Zone",
+   "Twilight Zone"
+  ],
+  "correctIndex": 1,
+  "answer": "Green Hill Zone",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "sonic"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "hard",
+  "question": "Which actor voices Sonic in the live-action Sonic the Hedgehog films?",
+  "options": [
+   "Jim Carrey",
+   "Idris Elba",
+   "Ben Schwartz",
+   "Bert Newton"
+  ],
+  "correctIndex": 2,
+  "answer": "Ben Schwartz",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "sonic",
+   "film"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "On which Sega console did Sonic the Hedgehog make his debut in 1991?",
+  "options": [
+   "Saturn",
+   "Dreamcast",
+   "Nintendo 64",
+   "Mega Drive"
+  ],
+  "correctIndex": 3,
+  "answer": "Mega Drive",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "sonic",
+   "consoles"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "Which of the four Pac-Man ghosts is orange?",
+  "options": [
+   "Clyde",
+   "Inky",
+   "Blinky",
+   "Kevin"
+  ],
+  "correctIndex": 0,
+  "answer": "Clyde",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "pac-man",
+   "arcade"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "What was Pac-Man originally called when he launched in Japan in 1980?",
+  "options": [
+   "Pac-Kun",
+   "Puck Man",
+   "Munch Man",
+   "Pizza Boy"
+  ],
+  "correctIndex": 1,
+  "answer": "Puck Man",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "pac-man",
+   "arcade"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "hard",
+  "question": "Which Namco designer created Pac-Man?",
+  "options": [
+   "Shigeru Miyamoto",
+   "Tomohiro Nishikado",
+   "Toru Iwatani",
+   "Mr Miyagi"
+  ],
+  "correctIndex": 2,
+  "answer": "Toru Iwatani",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "pac-man",
+   "arcade"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "The famous Tetris theme tune is based on a traditional folk song from which country?",
+  "options": [
+   "Ukraine",
+   "Poland",
+   "Jamaica",
+   "Russia"
+  ],
+  "correctIndex": 3,
+  "answer": "Russia",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "tetris",
+   "music"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "How many different shapes of falling piece are there in classic Tetris?",
+  "options": [
+   "Seven",
+   "Five",
+   "Nine",
+   "Forty-two"
+  ],
+  "correctIndex": 0,
+  "answer": "Seven",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "tetris"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "The name Tetris blends the Greek word for four with which sport, a favourite of its creator?",
+  "options": [
+   "Tetherball",
+   "Tennis",
+   "Netball",
+   "Synchronised swimming"
+  ],
+  "correctIndex": 1,
+  "answer": "Tennis",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "tetris"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "What shape is the 'O' piece in Tetris?",
+  "options": [
+   "Rectangle",
+   "L-shape",
+   "Square",
+   "Circle"
+  ],
+  "correctIndex": 2,
+  "answer": "Square",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "tetris"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "hard",
+  "question": "Which Japanese designer created the 1978 arcade hit Space Invaders?",
+  "options": [
+   "Toru Iwatani",
+   "Shigeru Miyamoto",
+   "Godzilla",
+   "Tomohiro Nishikado"
+  ],
+  "correctIndex": 3,
+  "answer": "Tomohiro Nishikado",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "space invaders",
+   "arcade"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "In Space Invaders, what occasionally zips across the top of the screen for bonus points?",
+  "options": [
+   "A mystery UFO",
+   "A bonus asteroid",
+   "A space shuttle",
+   "A flying kangaroo"
+  ],
+  "correctIndex": 0,
+  "answer": "A mystery UFO",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "space invaders",
+   "arcade"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "In the original Space Invaders, how many shields protect the player's cannon at the start?",
+  "options": [
+   "Three",
+   "Four",
+   "Six",
+   "Ninety"
+  ],
+  "correctIndex": 1,
+  "answer": "Four",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "space invaders",
+   "arcade"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "Which baby Pokemon evolves into Pikachu?",
+  "options": [
+   "Raichu",
+   "Plusle",
+   "Pichu",
+   "Pikachoo"
+  ],
+  "correctIndex": 2,
+  "answer": "Pichu",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "pokemon"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "What is the name of Ash Ketchum's hometown in Pokemon?",
+  "options": [
+   "Viridian City",
+   "Cerulean City",
+   "Bikini Bottom",
+   "Pallet Town"
+  ],
+  "correctIndex": 3,
+  "answer": "Pallet Town",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "pokemon"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "Which yellow duck Pokemon is always clutching its head with a headache?",
+  "options": [
+   "Psyduck",
+   "Golduck",
+   "Farfetch'd",
+   "Donald Duck"
+  ],
+  "correctIndex": 0,
+  "answer": "Psyduck",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "pokemon"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "hard",
+  "question": "In Japan, the very first Pokemon games were released as Pokemon Red and which other colour?",
+  "options": [
+   "Blue",
+   "Green",
+   "Gold",
+   "Beige"
+  ],
+  "correctIndex": 1,
+  "answer": "Green",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "pokemon"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "In Pokemon Go, which colour is Team Valor?",
+  "options": [
+   "Blue",
+   "Yellow",
+   "Red",
+   "Polka dot"
+  ],
+  "correctIndex": 2,
+  "answer": "Red",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "pokemon"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "In which year were the first Pokemon games released in Japan?",
+  "options": [
+   "1998",
+   "1994",
+   "1066",
+   "1996"
+  ],
+  "correctIndex": 3,
+  "answer": "1996",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "pokemon"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "Which actor voiced the wisecracking Pikachu in the 2019 film Detective Pikachu?",
+  "options": [
+   "Ryan Reynolds",
+   "Hugh Jackman",
+   "Ryan Gosling",
+   "Kermit the Frog"
+  ],
+  "correctIndex": 0,
+  "answer": "Ryan Reynolds",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "pokemon",
+   "film"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "In the Pokemon cartoon, what is the name of the nurse found at every Pokemon Center?",
+  "options": [
+   "Nurse Jenny",
+   "Nurse Joy",
+   "Nurse Misty",
+   "Nurse Ratched"
+  ],
+  "correctIndex": 1,
+  "answer": "Nurse Joy",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "pokemon",
+   "tv"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "Which fairy companion in Ocarina of Time keeps calling out 'Hey! Listen!'?",
+  "options": [
+   "Tatl",
+   "Midna",
+   "Navi",
+   "Tinker Bell"
+  ],
+  "correctIndex": 2,
+  "answer": "Navi",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "zelda",
+   "catchphrases"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "What is the name of the kingdom where most Legend of Zelda games are set?",
+  "options": [
+   "Termina",
+   "Hyrulia",
+   "Narnia",
+   "Hyrule"
+  ],
+  "correctIndex": 3,
+  "answer": "Hyrule",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "zelda"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "What is the name of Link's legendary evil-banishing blade in the Zelda series?",
+  "options": [
+   "Master Sword",
+   "Biggoron Sword",
+   "Excalibur",
+   "Butter Knife"
+  ],
+  "correctIndex": 0,
+  "answer": "Master Sword",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "zelda"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "What is the 2023 sequel to The Legend of Zelda: Breath of the Wild called?",
+  "options": [
+   "Echoes of Wisdom",
+   "Skyward Sword",
+   "Tears of the Kingdom",
+   "Breath of Fresh Air"
+  ],
+  "correctIndex": 2,
+  "answer": "Tears of the Kingdom",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "zelda"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "What is the name of the default male character in Minecraft?",
+  "options": [
+   "Alex",
+   "Herobrine",
+   "Kevin from Accounts",
+   "Steve"
+  ],
+  "correctIndex": 3,
+  "answer": "Steve",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "minecraft"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "Who played Steve in the 2025 film A Minecraft Movie?",
+  "options": [
+   "Jack Black",
+   "Jason Momoa",
+   "Jack Whitehall",
+   "A Jack Russell"
+  ],
+  "correctIndex": 0,
+  "answer": "Jack Black",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "minecraft",
+   "film"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "In Minecraft, which block forms the frame of a Nether portal?",
+  "options": [
+   "Bedrock",
+   "Obsidian",
+   "Netherrack",
+   "Cheese"
+  ],
+  "correctIndex": 1,
+  "answer": "Obsidian",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "minecraft"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "Minecraft creator Markus 'Notch' Persson comes from which country?",
+  "options": [
+   "Norway",
+   "Denmark",
+   "Fiji",
+   "Sweden"
+  ],
+  "correctIndex": 3,
+  "answer": "Sweden",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "minecraft"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "In Minecraft, which farm animal do players milk with a bucket?",
+  "options": [
+   "Cow",
+   "Sheep",
+   "Chicken",
+   "Creeper"
+  ],
+  "correctIndex": 0,
+  "answer": "Cow",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "minecraft"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "In Fortnite, what do players jump out of at the start of each match?",
+  "options": [
+   "A helicopter",
+   "The Battle Bus",
+   "A hot air balloon",
+   "A shopping trolley"
+  ],
+  "correctIndex": 1,
+  "answer": "The Battle Bus",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "fortnite"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "In Fortnite, what is winning a match called?",
+  "options": [
+   "A Chicken Dinner",
+   "A Royal Flush",
+   "A Victory Royale",
+   "A Bingo"
+  ],
+  "correctIndex": 2,
+  "answer": "A Victory Royale",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "fortnite"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "What is the currency players buy skins and dances with in Fortnite?",
+  "options": [
+   "Robux",
+   "Epic Coins",
+   "Monopoly money",
+   "V-Bucks"
+  ],
+  "correctIndex": 3,
+  "answer": "V-Bucks",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "fortnite"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "In The Sims, what do players famously remove to trap Sims in a swimming pool?",
+  "options": [
+   "The ladder",
+   "The water",
+   "The diving board",
+   "The lifeguard"
+  ],
+  "correctIndex": 0,
+  "answer": "The ladder",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "the sims"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "In which year was the original The Sims released?",
+  "options": [
+   "1997",
+   "2000",
+   "2004",
+   "1975"
+  ],
+  "correctIndex": 1,
+  "answer": "2000",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "the sims"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "Which figure arrives to collect a Sim who has died in The Sims?",
+  "options": [
+   "A ghost",
+   "A llama",
+   "The Grim Reaper",
+   "Santa Claus"
+  ],
+  "correctIndex": 2,
+  "answer": "The Grim Reaper",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "the sims"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "In SimCity, what is the player in charge of building?",
+  "options": [
+   "A theme park",
+   "A zoo",
+   "A sandcastle",
+   "A city"
+  ],
+  "correctIndex": 3,
+  "answer": "A city",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "simulation"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "Which Grand Theft Auto V lead character is the volatile criminal living in Sandy Shores?",
+  "options": [
+   "Trevor",
+   "Michael",
+   "Franklin",
+   "Mr Bean"
+  ],
+  "correctIndex": 0,
+  "answer": "Trevor",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "grand theft auto"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "What is the full name of CJ, the hero of Grand Theft Auto: San Andreas?",
+  "options": [
+   "Claude Johnson",
+   "Carl Johnson",
+   "Chris Jackson",
+   "Captain Jack"
+  ],
+  "correctIndex": 1,
+  "answer": "Carl Johnson",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "grand theft auto"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "hard",
+  "question": "The Grand Theft Auto series began at DMA Design, a studio in which Scottish city?",
+  "options": [
+   "Glasgow",
+   "Edinburgh",
+   "Dundee",
+   "Wagga Wagga"
+  ],
+  "correctIndex": 2,
+  "answer": "Dundee",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "grand theft auto"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "In Grand Theft Auto, what word appears on screen when your character dies?",
+  "options": [
+   "Busted",
+   "Game Over",
+   "Toast",
+   "Wasted"
+  ],
+  "correctIndex": 3,
+  "answer": "Wasted",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "grand theft auto",
+   "catchphrases"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "The first Call of Duty game, in 2003, was set during which war?",
+  "options": [
+   "World War I",
+   "World War II",
+   "Vietnam War",
+   "The War of the Roses"
+  ],
+  "correctIndex": 1,
+  "answer": "World War II",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "call of duty"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "hard",
+  "question": "Which studio made the original 2003 Call of Duty?",
+  "options": [
+   "Treyarch",
+   "Sledgehammer Games",
+   "Infinity Ward",
+   "Mojang"
+  ],
+  "correctIndex": 2,
+  "answer": "Infinity Ward",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "call of duty"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "Which moustached British soldier appears in many Call of Duty games?",
+  "options": [
+   "Ghost",
+   "Soap MacTavish",
+   "Captain Haddock",
+   "Captain Price"
+  ],
+  "correctIndex": 3,
+  "answer": "Captain Price",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "call of duty"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "In 2023, EA's long-running FIFA football series was renamed what?",
+  "options": [
+   "EA Sports FC",
+   "EA Football",
+   "Ultimate Soccer",
+   "Kick to Kick"
+  ],
+  "correctIndex": 0,
+  "answer": "EA Sports FC",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "fifa"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "What is EA Sports' famous slogan?",
+  "options": [
+   "Game on",
+   "It's in the game",
+   "Play to win",
+   "Have a go, ya mug"
+  ],
+  "correctIndex": 1,
+  "answer": "It's in the game",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "fifa",
+   "catchphrases"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "hard",
+  "question": "In which year was the first EA FIFA game, FIFA International Soccer, released?",
+  "options": [
+   "1990",
+   "1996",
+   "1993",
+   "1888"
+  ],
+  "correctIndex": 2,
+  "answer": "1993",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "fifa"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "What is the name of Crash Bandicoot's clever younger sister?",
+  "options": [
+   "Tawna",
+   "Nina",
+   "Kylie",
+   "Coco"
+  ],
+  "correctIndex": 3,
+  "answer": "Coco",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "crash bandicoot"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "What does Crash Bandicoot spin into and smash open to collect items?",
+  "options": [
+   "Barrels",
+   "Crates",
+   "Pots",
+   "Wedding cakes"
+  ],
+  "correctIndex": 1,
+  "answer": "Crates",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "crash bandicoot"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "On which console did Crash Bandicoot first appear in 1996?",
+  "options": [
+   "Nintendo 64",
+   "Sega Saturn",
+   "PlayStation",
+   "A kettle"
+  ],
+  "correctIndex": 2,
+  "answer": "PlayStation",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "crash bandicoot",
+   "consoles"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "Which blond American fighter is Ryu's best friend and rival in Street Fighter?",
+  "options": [
+   "Guile",
+   "Dan",
+   "Ryu's mum",
+   "Ken"
+  ],
+  "correctIndex": 3,
+  "answer": "Ken",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "street fighter"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "Which Street Fighter character is a US Air Force major with a towering flat-top haircut?",
+  "options": [
+   "Guile",
+   "Ken",
+   "Vega",
+   "Bob the Builder"
+  ],
+  "correctIndex": 0,
+  "answer": "Guile",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "street fighter"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "Which stretchy-limbed Street Fighter character comes from India?",
+  "options": [
+   "Blanka",
+   "Dhalsim",
+   "Zangief",
+   "Mr Squiggle"
+  ],
+  "correctIndex": 1,
+  "answer": "Dhalsim",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "street fighter"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "Who leads the evil Shadaloo organisation in Street Fighter II?",
+  "options": [
+   "Sagat",
+   "Vega",
+   "M. Bison",
+   "Ronald McDonald"
+  ],
+  "correctIndex": 2,
+  "answer": "M. Bison",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "street fighter"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "Which Street Fighter character is a Soviet wrestler known for wrestling bears?",
+  "options": [
+   "E. Honda",
+   "Balrog",
+   "Paddington",
+   "Zangief"
+  ],
+  "correctIndex": 3,
+  "answer": "Zangief",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "street fighter"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "What was the Nintendo Entertainment System called in Japan?",
+  "options": [
+   "Super Famicom",
+   "Famicom",
+   "Nintendo Box",
+   "Sushi Station"
+  ],
+  "correctIndex": 1,
+  "answer": "Famicom",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "consoles",
+   "nintendo"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "In which year did the PlayStation 5 launch?",
+  "options": [
+   "2018",
+   "2022",
+   "2020",
+   "1999"
+  ],
+  "correctIndex": 2,
+  "answer": "2020",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "consoles",
+   "playstation"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "In which year did the Nintendo Switch 2 launch?",
+  "options": [
+   "2023",
+   "2024",
+   "1985",
+   "2025"
+  ],
+  "correctIndex": 3,
+  "answer": "2025",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "consoles",
+   "nintendo"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "What did Nintendo originally make when it was founded in 1889?",
+  "options": [
+   "Playing cards",
+   "Toy trains",
+   "Typewriters",
+   "Lawn mowers"
+  ],
+  "correctIndex": 0,
+  "answer": "Playing cards",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "nintendo",
+   "history"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "Sony's PlayStation grew out of a cancelled CD add-on project with which company?",
+  "options": [
+   "Sega",
+   "Nintendo",
+   "Philips",
+   "Fisher-Price"
+  ],
+  "correctIndex": 1,
+  "answer": "Nintendo",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "consoles",
+   "playstation",
+   "history"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "Which Nintendo console, released in 2012, came with a tablet-style GamePad controller?",
+  "options": [
+   "Switch",
+   "Wii Mini",
+   "Wii U",
+   "Etch A Sketch"
+  ],
+  "correctIndex": 2,
+  "answer": "Wii U",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "consoles",
+   "nintendo"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "Which Nintendo handheld could show 3D images without special glasses?",
+  "options": [
+   "Abacus",
+   "Nintendo DS",
+   "Virtual Boy",
+   "Nintendo 3DS"
+  ],
+  "correctIndex": 3,
+  "answer": "Nintendo 3DS",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "handhelds",
+   "nintendo"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "Which Game Boy model, released in 1998, added a colour screen?",
+  "options": [
+   "Game Boy Color",
+   "Game Boy Advance",
+   "Game Boy Pocket",
+   "Game Boy Rainbow"
+  ],
+  "correctIndex": 0,
+  "answer": "Game Boy Color",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "handhelds",
+   "game boy"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "hard",
+  "question": "Which Atari co-founder later started the Chuck E. Cheese pizza chain?",
+  "options": [
+   "Steve Jobs",
+   "Nolan Bushnell",
+   "Ralph Baer",
+   "Colonel Sanders"
+  ],
+  "correctIndex": 1,
+  "answer": "Nolan Bushnell",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "arcade",
+   "history"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "hard",
+  "question": "The name Xbox came from shortening the name of which Microsoft technology?",
+  "options": [
+   "Windows",
+   "Excel",
+   "Clippy",
+   "DirectX"
+  ],
+  "correctIndex": 3,
+  "answer": "DirectX",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "consoles",
+   "xbox"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "hard",
+  "question": "Which big-eared boy was Sega's mascot before Sonic arrived?",
+  "options": [
+   "Alex Kidd",
+   "Ristar",
+   "Ecco",
+   "Curious George"
+  ],
+  "correctIndex": 0,
+  "answer": "Alex Kidd",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "sega"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "Which red-screened Nintendo 3D console from 1995 was a famous flop?",
+  "options": [
+   "Game Boy Light",
+   "Virtual Boy",
+   "Power Glove",
+   "Red Rooster"
+  ],
+  "correctIndex": 1,
+  "answer": "Virtual Boy",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "consoles",
+   "nintendo"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "Which company makes the Quest virtual reality headsets?",
+  "options": [
+   "Sony",
+   "Apple",
+   "Meta",
+   "Bunnings"
+  ],
+  "correctIndex": 2,
+  "answer": "Meta",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "consoles",
+   "vr"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "hard",
+  "question": "The company name Sega comes from shortening which two words?",
+  "options": [
+   "Service Arcade",
+   "Super Gaming",
+   "Seriously Good",
+   "Service Games"
+  ],
+  "correctIndex": 3,
+  "answer": "Service Games",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "sega",
+   "history"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "How many letters could players traditionally enter for a high score on classic arcade machines?",
+  "options": [
+   "Two",
+   "Five",
+   "Three",
+   "Twenty"
+  ],
+  "correctIndex": 2,
+  "answer": "Three",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "arcade"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "Which 1989 Konami arcade game let four players team up as pizza-loving reptiles?",
+  "options": [
+   "Double Dragon",
+   "Battletoads",
+   "The Wiggles",
+   "Teenage Mutant Ninja Turtles"
+  ],
+  "correctIndex": 3,
+  "answer": "Teenage Mutant Ninja Turtles",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "arcade"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "Which arcade game has players bopping critters that pop out of holes with a mallet?",
+  "options": [
+   "Whac-A-Mole",
+   "Hungry Hungry Hippos",
+   "Skee-Ball",
+   "Croquet"
+  ],
+  "correctIndex": 0,
+  "answer": "Whac-A-Mole",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "arcade"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "Which arcade game has players rolling balls up a ramp into scoring rings?",
+  "options": [
+   "Pinball",
+   "Skee-Ball",
+   "Lawn bowls",
+   "Pong"
+  ],
+  "correctIndex": 1,
+  "answer": "Skee-Ball",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "arcade"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "Which arcade chain, found in shopping centres around Australia, started in Perth in 1978?",
+  "options": [
+   "Intencity",
+   "Zone Bowling",
+   "Timezone",
+   "Bunnings"
+  ],
+  "correctIndex": 2,
+  "answer": "Timezone",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "arcade",
+   "australia"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "How many AA batteries did the original 1989 Game Boy take?",
+  "options": [
+   "Two",
+   "Six",
+   "Twelve",
+   "Four"
+  ],
+  "correctIndex": 3,
+  "answer": "Four",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "handhelds",
+   "game boy"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "What lead connected two Game Boys so players could trade Pokemon?",
+  "options": [
+   "Link Cable",
+   "Trade Cord",
+   "Power Cable",
+   "Jumper leads"
+  ],
+  "correctIndex": 0,
+  "answer": "Link Cable",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "handhelds",
+   "game boy",
+   "pokemon"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "What was Sega's colour handheld console, released to take on the Game Boy?",
+  "options": [
+   "Lynx",
+   "Game Gear",
+   "Pocket Pal",
+   "Sega Walkman"
+  ],
+  "correctIndex": 1,
+  "answer": "Game Gear",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "handhelds",
+   "sega"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "hard",
+  "question": "What was Atari's colour handheld console launched in 1989?",
+  "options": [
+   "Jaguar",
+   "Panther",
+   "Lynx",
+   "Garfield"
+  ],
+  "correctIndex": 2,
+  "answer": "Lynx",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "handhelds"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "Which fighting game's announcer famously booms 'Finish him!'?",
+  "options": [
+   "Street Fighter",
+   "Tekken",
+   "Wii Sports",
+   "Mortal Kombat"
+  ],
+  "correctIndex": 3,
+  "answer": "Mortal Kombat",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "catchphrases"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "In Star Fox 64, which rabbit tells the player to 'Do a barrel roll!'?",
+  "options": [
+   "Peppy Hare",
+   "Slippy Toad",
+   "Falco Lombardi",
+   "Bugs Bunny"
+  ],
+  "correctIndex": 0,
+  "answer": "Peppy Hare",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "nintendo",
+   "catchphrases"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "Which post-apocalyptic game series opens with the line 'War. War never changes.'?",
+  "options": [
+   "Mad Max",
+   "Fallout",
+   "Metro",
+   "Bluey"
+  ],
+  "correctIndex": 1,
+  "answer": "Fallout",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "catchphrases"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "hard",
+  "question": "In which game does the phrase 'Would you kindly' turn out to be a sinister plot twist?",
+  "options": [
+   "Portal",
+   "Half-Life",
+   "BioShock",
+   "Animal Crossing"
+  ],
+  "correctIndex": 2,
+  "answer": "BioShock",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "catchphrases"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "hard",
+  "question": "The badly translated line 'All your base are belong to us' comes from which game?",
+  "options": [
+   "Street Fighter",
+   "Contra",
+   "Teletubbies",
+   "Zero Wing"
+  ],
+  "correctIndex": 3,
+  "answer": "Zero Wing",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "catchphrases",
+   "sega"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "Which online game made the battle cry 'Leeroy Jenkins!' famous?",
+  "options": [
+   "World of Warcraft",
+   "EverQuest",
+   "RuneScape",
+   "Pictionary"
+  ],
+  "correctIndex": 0,
+  "answer": "World of Warcraft",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "catchphrases"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "The meme 'Press F to pay respects' began as an on-screen prompt in which game series?",
+  "options": [
+   "Battlefield",
+   "Call of Duty",
+   "Halo",
+   "Mario Party"
+  ],
+  "correctIndex": 1,
+  "answer": "Call of Duty",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "call of duty",
+   "catchphrases"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "Which game made the dragon shout 'Fus Ro Dah' famous?",
+  "options": [
+   "Dark Souls",
+   "World of Warcraft",
+   "Skyrim",
+   "Peppa Pig"
+  ],
+  "correctIndex": 2,
+  "answer": "Skyrim",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "catchphrases"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "hard",
+  "question": "What kind of creature is Ratchet in the Ratchet and Clank games?",
+  "options": [
+   "A Lombax",
+   "A fox",
+   "A Wookiee",
+   "A wombat"
+  ],
+  "correctIndex": 0,
+  "answer": "A Lombax",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "playstation",
+   "characters"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "Which Hudson Soft character wins by blowing up opponents in a maze?",
+  "options": [
+   "Dig Dug",
+   "Bomberman",
+   "Q*bert",
+   "Thomas the Tank Engine"
+  ],
+  "correctIndex": 1,
+  "answer": "Bomberman",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "characters"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "Which cheerful yellow dog is your assistant in Animal Crossing: New Horizons?",
+  "options": [
+   "K.K. Slider",
+   "Digby",
+   "Isabelle",
+   "Scooby-Doo"
+  ],
+  "correctIndex": 2,
+  "answer": "Isabelle",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "nintendo",
+   "characters"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "Which Nintendo island game became a lockdown hit after launching in March 2020?",
+  "options": [
+   "Splatoon 2",
+   "Super Mario Odyssey",
+   "Gilligan's Island",
+   "Animal Crossing: New Horizons"
+  ],
+  "correctIndex": 3,
+  "answer": "Animal Crossing: New Horizons",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "nintendo"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "Which 2013 mobile game had players tapping to flap a bird between green pipes?",
+  "options": [
+   "Flappy Bird",
+   "Angry Birds",
+   "Tiny Wings",
+   "Chook Raffle"
+  ],
+  "correctIndex": 0,
+  "answer": "Flappy Bird",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "mobile"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "Flappy Bird's creator, Dong Nguyen, comes from which country?",
+  "options": [
+   "Thailand",
+   "Vietnam",
+   "South Korea",
+   "Iceland"
+  ],
+  "correctIndex": 1,
+  "answer": "Vietnam",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "mobile"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "Untitled Goose Game was made by which Melbourne studio?",
+  "options": [
+   "Halfbrick",
+   "Hipster Whale",
+   "House House",
+   "Goose Inc"
+  ],
+  "correctIndex": 2,
+  "answer": "House House",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "australia"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "In Untitled Goose Game, what noise does the goose make at the press of a button?",
+  "options": [
+   "Quack",
+   "Cluck",
+   "Moo",
+   "Honk"
+  ],
+  "correctIndex": 3,
+  "answer": "Honk",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "australia"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "hard",
+  "question": "In which year was Hipster Whale's hit Crossy Road released?",
+  "options": [
+   "2012",
+   "2014",
+   "2017",
+   "1901"
+  ],
+  "correctIndex": 1,
+  "answer": "2014",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "australia",
+   "mobile"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "In which year did Brisbane studio Halfbrick release Fruit Ninja?",
+  "options": [
+   "2008",
+   "2013",
+   "2010",
+   "1788"
+  ],
+  "correctIndex": 2,
+  "answer": "2010",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "australia",
+   "mobile"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "hard",
+  "question": "What is the name of the jetpack-wearing hero of Halfbrick's Jetpack Joyride?",
+  "options": [
+   "Gary Fryup",
+   "Larry Lasertag",
+   "Bluey Heeler",
+   "Barry Steakfries"
+  ],
+  "correctIndex": 3,
+  "answer": "Barry Steakfries",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "australia",
+   "mobile"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "Hollow Knight was made by Team Cherry, a small studio in which Australian city?",
+  "options": [
+   "Adelaide",
+   "Hobart",
+   "Perth",
+   "Atlantis"
+  ],
+  "correctIndex": 0,
+  "answer": "Adelaide",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "australia"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "Which 1940s detective game was made by Sydney studio Team Bondi?",
+  "options": [
+   "Mafia",
+   "L.A. Noire",
+   "Max Payne",
+   "Inspector Gadget"
+  ],
+  "correctIndex": 1,
+  "answer": "L.A. Noire",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "australia"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "Melbourne House made a famous 1982 computer game based on which Tolkien book?",
+  "options": [
+   "The Silmarillion",
+   "The Two Towers",
+   "The Very Hungry Caterpillar",
+   "The Hobbit"
+  ],
+  "correctIndex": 3,
+  "answer": "The Hobbit",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "australia",
+   "history"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "In Fruit Ninja, what must you avoid slicing?",
+  "options": [
+   "Bombs",
+   "Bananas",
+   "Watermelons",
+   "Your own thumb"
+  ],
+  "correctIndex": 0,
+  "answer": "Bombs",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "australia",
+   "mobile"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "What animal is the default hero of Crossy Road?",
+  "options": [
+   "A frog",
+   "A chicken",
+   "A duck",
+   "A dinosaur"
+  ],
+  "correctIndex": 1,
+  "answer": "A chicken",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "australia",
+   "mobile"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "What is the name of Riot Games' hugely popular online battle arena game?",
+  "options": [
+   "Dota 2",
+   "Overwatch",
+   "League of Legends",
+   "Battle of the Bands"
+  ],
+  "correctIndex": 2,
+  "answer": "League of Legends",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "pc"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "Who plays Joel in the TV series The Last of Us?",
+  "options": [
+   "Oscar Isaac",
+   "Pedro Pascal",
+   "Nick Offerman",
+   "Hamish Blake"
+  ],
+  "correctIndex": 1,
+  "answer": "Pedro Pascal",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "tv"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "What is the name of the treasure-hunting hero of the Uncharted games?",
+  "options": [
+   "Lara Croft",
+   "Nathan Fillion",
+   "Nathan Drake",
+   "Captain Cook"
+  ],
+  "correctIndex": 2,
+  "answer": "Nathan Drake",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "playstation",
+   "characters"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "Assassin's Creed maker Ubisoft is a company from which country?",
+  "options": [
+   "Canada",
+   "Belgium",
+   "Antarctica",
+   "France"
+  ],
+  "correctIndex": 3,
+  "answer": "France",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "publishers"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "hard",
+  "question": "Who made the farming game Stardew Valley almost entirely on his own?",
+  "options": [
+   "Eric Barone",
+   "Notch",
+   "Toby Fox",
+   "Old MacDonald"
+  ],
+  "correctIndex": 0,
+  "answer": "Eric Barone",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "pc"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "The 2021 Mortal Kombat film was shot in which Australian state?",
+  "options": [
+   "Queensland",
+   "South Australia",
+   "Western Australia",
+   "The state of confusion"
+  ],
+  "correctIndex": 1,
+  "answer": "South Australia",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "film",
+   "australia"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "Who played Mario in the 1993 live-action Super Mario Bros film?",
+  "options": [
+   "John Leguizamo",
+   "Chris Pratt",
+   "Bob Hoskins",
+   "Russell Coight"
+  ],
+  "correctIndex": 2,
+  "answer": "Bob Hoskins",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "mario",
+   "film"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "The animated series Arcane is based on which video game?",
+  "options": [
+   "Dota 2",
+   "World of Warcraft",
+   "Neighbours",
+   "League of Legends"
+  ],
+  "correctIndex": 3,
+  "answer": "League of Legends",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "tv"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "In the 2023 film Tetris, who plays games businessman Henk Rogers?",
+  "options": [
+   "Taron Egerton",
+   "Tom Holland",
+   "Toby Jones",
+   "Shrek"
+  ],
+  "correctIndex": 0,
+  "answer": "Taron Egerton",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "tetris",
+   "film"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "In gaming, what does XP usually stand for?",
+  "options": [
+   "Extra power",
+   "Expert play",
+   "Experience points",
+   "Extra pickles"
+  ],
+  "correctIndex": 2,
+  "answer": "Experience points",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "terms"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "In gaming slang, what is a 'noob'?",
+  "options": [
+   "A beginner",
+   "A champion",
+   "A cheater",
+   "A type of noodle"
+  ],
+  "correctIndex": 0,
+  "answer": "A beginner",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "terms"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "What do gamers call storming off mid-match out of frustration?",
+  "options": [
+   "Lagging out",
+   "Rage quitting",
+   "Spawn camping",
+   "Tantrum dancing"
+  ],
+  "correctIndex": 1,
+  "answer": "Rage quitting",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "terms"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "hard",
+  "question": "Which 1958 game, played on an oscilloscope, is often called one of the first video games?",
+  "options": [
+   "Spacewar!",
+   "Pong",
+   "Hopscotch",
+   "Tennis for Two"
+  ],
+  "correctIndex": 3,
+  "answer": "Tennis for Two",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "history"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "hard",
+  "question": "Which 1962 computer game, made at MIT, had two spaceships duelling around a star?",
+  "options": [
+   "Spacewar!",
+   "Asteroids",
+   "Galaxian",
+   "Star Trek: The Musical"
+  ],
+  "correctIndex": 0,
+  "answer": "Spacewar!",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "history"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "What was the Xbox 360's dreaded hardware fault nicknamed?",
+  "options": [
+   "Blue Screen of Death",
+   "Red Ring of Death",
+   "Green Light of Doom",
+   "Grumpy Toaster"
+  ],
+  "correctIndex": 1,
+  "answer": "Red Ring of Death",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "consoles",
+   "xbox"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "Which James Bond game on the Nintendo 64 was famous for four-player split-screen battles?",
+  "options": [
+   "Moonraker",
+   "Die Another Day",
+   "GoldenEye 007",
+   "Octopussy Party"
+  ],
+  "correctIndex": 2,
+  "answer": "GoldenEye 007",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "nintendo"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "Which Mortal Kombat ninja freezes opponents with ice?",
+  "options": [
+   "Sub-Zero",
+   "Scorpion",
+   "Raiden",
+   "Frosty the Snowman"
+  ],
+  "correctIndex": 0,
+  "answer": "Sub-Zero",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "characters"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "Team17's long-running artillery game stars armies of which cartoon creature?",
+  "options": [
+   "Ants",
+   "Worms",
+   "Snails",
+   "Unicorns"
+  ],
+  "correctIndex": 1,
+  "answer": "Worms",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "pc"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "Which educational game series has players chasing a thief in a red coat and hat?",
+  "options": [
+   "Where's Wally",
+   "Clue",
+   "Inspector Gadget",
+   "Carmen Sandiego"
+  ],
+  "correctIndex": 3,
+  "answer": "Carmen Sandiego",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "history",
+   "pc"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "hard",
+  "question": "What is Master Chief's military designation in Halo?",
+  "options": [
+   "John-117",
+   "Spartan-007",
+   "Chief-001",
+   "R2-D2"
+  ],
+  "correctIndex": 0,
+  "answer": "John-117",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "xbox",
+   "characters"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "In early Western releases, Princess Peach was known as Princess what?",
+  "options": [
+   "Daisy",
+   "Toadstool",
+   "Mushroom",
+   "Fiona"
+  ],
+  "correctIndex": 1,
+  "answer": "Toadstool",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "mario"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "Wario's name blends Mario with the Japanese word warui, which means what?",
+  "options": [
+   "Brother",
+   "Strong",
+   "Bad",
+   "Garlic"
+  ],
+  "correctIndex": 2,
+  "answer": "Bad",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "mario"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "On the original NES controller, which button made Mario jump in Super Mario Bros?",
+  "options": [
+   "B",
+   "Start",
+   "The power button",
+   "A"
+  ],
+  "correctIndex": 3,
+  "answer": "A",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "mario",
+   "nintendo"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "In the 1981 Donkey Kong arcade game, what does Mario climb to reach the top?",
+  "options": [
+   "Ladders",
+   "Vines",
+   "Ropes",
+   "Escalators"
+  ],
+  "correctIndex": 0,
+  "answer": "Ladders",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "donkey kong",
+   "arcade"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "Which web-slinging superhero stars in Insomniac's PlayStation games set in New York?",
+  "options": [
+   "Batman",
+   "Spider-Man",
+   "Iron Man",
+   "Bananaman"
+  ],
+  "correctIndex": 1,
+  "answer": "Spider-Man",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "playstation"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "In Rocket League, what do players drive while playing soccer?",
+  "options": [
+   "Motorbikes",
+   "Hovercraft",
+   "Rocket-powered cars",
+   "Ride-on mowers"
+  ],
+  "correctIndex": 2,
+  "answer": "Rocket-powered cars",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "sport"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "Which co-op game has players racing to run a chaotic restaurant kitchen together?",
+  "options": [
+   "Cooking Mama",
+   "Diner Dash",
+   "MasterChef",
+   "Overcooked"
+  ],
+  "correctIndex": 3,
+  "answer": "Overcooked",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "party games"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "In Minecraft, which tool chops down trees fastest?",
+  "options": [
+   "An axe",
+   "A shovel",
+   "A pickaxe",
+   "A spoon"
+  ],
+  "correctIndex": 0,
+  "answer": "An axe",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "minecraft"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "In Super Mario Bros, what symbol is on the flashing blocks that hold coins and power-ups?",
+  "options": [
+   "An exclamation mark",
+   "A star",
+   "A question mark",
+   "A smiley face"
+  ],
+  "correctIndex": 2,
+  "answer": "A question mark",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "mario"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "In Super Smash Bros, which glowing item lets a fighter unleash a Final Smash?",
+  "options": [
+   "Smash Ball",
+   "Power Orb",
+   "Star Rod",
+   "Disco ball"
+  ],
+  "correctIndex": 0,
+  "answer": "Smash Ball",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "nintendo"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "hard",
+  "question": "Which studio developed the car soccer game Rocket League?",
+  "options": [
+   "Epic Games",
+   "Psyonix",
+   "Rockstar",
+   "Rocket Raccoon Studios"
+  ],
+  "correctIndex": 1,
+  "answer": "Psyonix",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "sport"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "Which Japanese toy company makes the Tamagotchi virtual pet?",
+  "options": [
+   "Sega",
+   "Mattel",
+   "Bandai",
+   "Tupperware"
+  ],
+  "correctIndex": 2,
+  "answer": "Bandai",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "handhelds"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "Nintendo's 2003 clamshell Game Boy Advance with a lit screen was called the Game Boy Advance what?",
+  "options": [
+   "XL",
+   "Lite",
+   "Deluxe Supreme",
+   "SP"
+  ],
+  "correctIndex": 3,
+  "answer": "SP",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "handhelds",
+   "game boy"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "What unusual colour was the cartridge for the original Legend of Zelda on the NES?",
+  "options": [
+   "Gold",
+   "Silver",
+   "Green",
+   "Tartan"
+  ],
+  "correctIndex": 0,
+  "answer": "Gold",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "zelda",
+   "nintendo"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "In Pac-Man, what is left of a ghost after Pac-Man eats it?",
+  "options": [
+   "A puff of smoke",
+   "A cherry",
+   "Just its eyes",
+   "Its socks"
+  ],
+  "correctIndex": 2,
+  "answer": "Just its eyes",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "pac-man",
+   "arcade"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "In Tetris, what happens to the falling pieces as you reach higher levels?",
+  "options": [
+   "They fall faster",
+   "They get bigger",
+   "They turn invisible",
+   "They start singing"
+  ],
+  "correctIndex": 0,
+  "answer": "They fall faster",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "tetris"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "easy",
+  "question": "In Fortnite, what do players gather wood, brick and metal for?",
+  "options": [
+   "Trading",
+   "Cooking",
+   "Building",
+   "Knitting jumpers"
+  ],
+  "correctIndex": 2,
+  "answer": "Building",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "fortnite"
+  ]
+ },
+ {
+  "category": "Video games",
+  "difficulty": "medium",
+  "question": "In Crossy Road, what swoops in and grabs you if you wait too long without moving?",
+  "options": [
+   "A seagull",
+   "A drop bear",
+   "A helicopter",
+   "An eagle"
+  ],
+  "correctIndex": 3,
+  "answer": "An eagle",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "video games",
+   "australia",
+   "mobile"
+  ]
+ }
+]

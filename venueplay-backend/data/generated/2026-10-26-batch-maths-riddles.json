@@ -1,0 +1,2835 @@
+[
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "What is 25 times 12?",
+  "options": [
+   "300",
+   "275",
+   "350",
+   "12"
+  ],
+  "correctIndex": 0,
+  "answer": "300",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mental maths",
+   "multiplication"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "What is 15 per cent of 60?",
+  "options": [
+   "6",
+   "9",
+   "12",
+   "900"
+  ],
+  "correctIndex": 1,
+  "answer": "9",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mental maths",
+   "percentages"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "What is half of 3.5?",
+  "options": [
+   "1.5",
+   "2.25",
+   "1.75",
+   "7"
+  ],
+  "correctIndex": 2,
+  "answer": "1.75",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mental maths",
+   "decimals"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "What is 50 times 50?",
+  "options": [
+   "250",
+   "5000",
+   "5",
+   "2500"
+  ],
+  "correctIndex": 3,
+  "answer": "2500",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mental maths",
+   "multiplication"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "What is 8 times 125?",
+  "options": [
+   "1000",
+   "1250",
+   "800",
+   "8"
+  ],
+  "correctIndex": 0,
+  "answer": "1000",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mental maths",
+   "multiplication"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "What is 19 plus 19 plus 19?",
+  "options": [
+   "56",
+   "57",
+   "59",
+   "191,919"
+  ],
+  "correctIndex": 1,
+  "answer": "57",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mental maths",
+   "addition"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "What is three quarters of 60?",
+  "options": [
+   "40",
+   "50",
+   "45",
+   "6"
+  ],
+  "correctIndex": 2,
+  "answer": "45",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mental maths",
+   "fractions"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "hard",
+  "question": "What is 7 times 11 times 13?",
+  "options": [
+   "1011",
+   "991",
+   "7",
+   "1001"
+  ],
+  "correctIndex": 3,
+  "answer": "1001",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mental maths",
+   "multiplication"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "What is 37 times 3?",
+  "options": [
+   "111",
+   "101",
+   "121",
+   "3.7"
+  ],
+  "correctIndex": 0,
+  "answer": "111",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mental maths",
+   "multiplication"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "What is 2 to the power of 8?",
+  "options": [
+   "128",
+   "256",
+   "512",
+   "10"
+  ],
+  "correctIndex": 1,
+  "answer": "256",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mental maths",
+   "powers"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "hard",
+  "question": "What is 6 times 5 times 4 times 3 times 2 times 1?",
+  "options": [
+   "120",
+   "360",
+   "720",
+   "21"
+  ],
+  "correctIndex": 2,
+  "answer": "720",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mental maths",
+   "factorials"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "What is 12.5 per cent of 80?",
+  "options": [
+   "12.5",
+   "8",
+   "1000",
+   "10"
+  ],
+  "correctIndex": 3,
+  "answer": "10",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mental maths",
+   "percentages"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "What is 10 cubed?",
+  "options": [
+   "1000",
+   "100",
+   "10,000",
+   "13"
+  ],
+  "correctIndex": 0,
+  "answer": "1000",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mental maths",
+   "powers"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "What is 250 times 4?",
+  "options": [
+   "900",
+   "1000",
+   "1250",
+   "2504"
+  ],
+  "correctIndex": 1,
+  "answer": "1000",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mental maths",
+   "multiplication"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "What is one eighth of 1000?",
+  "options": [
+   "120",
+   "250",
+   "125",
+   "8"
+  ],
+  "correctIndex": 2,
+  "answer": "125",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mental maths",
+   "fractions"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "What is 13 times 4?",
+  "options": [
+   "48",
+   "54",
+   "134",
+   "52"
+  ],
+  "correctIndex": 3,
+  "answer": "52",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mental maths",
+   "multiplication"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "What is two fifths written as a percentage?",
+  "options": [
+   "40 per cent",
+   "25 per cent",
+   "20 per cent",
+   "250 per cent"
+  ],
+  "correctIndex": 0,
+  "answer": "40 per cent",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mental maths",
+   "percentages",
+   "fractions"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "What is 18 out of 24 written as a percentage?",
+  "options": [
+   "72 per cent",
+   "75 per cent",
+   "80 per cent",
+   "1824 per cent"
+  ],
+  "correctIndex": 1,
+  "answer": "75 per cent",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mental maths",
+   "percentages"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "What is one million divided by one thousand?",
+  "options": [
+   "100",
+   "10,000",
+   "1000",
+   "1"
+  ],
+  "correctIndex": 2,
+  "answer": "1000",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mental maths",
+   "division"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "What is 45 times 20?",
+  "options": [
+   "800",
+   "950",
+   "65",
+   "900"
+  ],
+  "correctIndex": 3,
+  "answer": "900",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mental maths",
+   "multiplication"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "What is 72 divided by 8?",
+  "options": [
+   "9",
+   "8",
+   "7",
+   "576"
+  ],
+  "correctIndex": 0,
+  "answer": "9",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mental maths",
+   "division"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "What is 1.5 times 1.5?",
+  "options": [
+   "2.5",
+   "2.25",
+   "1.25",
+   "15"
+  ],
+  "correctIndex": 1,
+  "answer": "2.25",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mental maths",
+   "decimals"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "What is 300 divided by 4?",
+  "options": [
+   "70",
+   "80",
+   "75",
+   "1200"
+  ],
+  "correctIndex": 2,
+  "answer": "75",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mental maths",
+   "division"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "What is 7 times 12?",
+  "options": [
+   "82",
+   "72",
+   "712",
+   "84"
+  ],
+  "correctIndex": 3,
+  "answer": "84",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mental maths",
+   "times tables"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "Four mates split a 100 dollar bar tab plus a 20 dollar tip evenly. What does each pay?",
+  "options": [
+   "30 dollars",
+   "25 dollars",
+   "35 dollars",
+   "120 dollars"
+  ],
+  "correctIndex": 0,
+  "answer": "30 dollars",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "pub maths",
+   "money"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "Schooners cost 9 dollars each. How many can you buy with a 50 dollar note?",
+  "options": [
+   "6",
+   "5",
+   "4",
+   "50"
+  ],
+  "correctIndex": 1,
+  "answer": "5",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "pub maths",
+   "money"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "Three jugs of beer cost 22 dollars each. How much change do you get from 100 dollars?",
+  "options": [
+   "36 dollars",
+   "44 dollars",
+   "34 dollars",
+   "100 dollars"
+  ],
+  "correctIndex": 2,
+  "answer": "34 dollars",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "pub maths",
+   "money"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "How many litres of beer are in 24 stubbies of 375 millilitres each?",
+  "options": [
+   "8 litres",
+   "12 litres",
+   "90 litres",
+   "9 litres"
+  ],
+  "correctIndex": 3,
+  "answer": "9 litres",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "pub maths",
+   "measurement"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "How many 30 millilitre nips can you pour from a 750 millilitre bottle of spirits?",
+  "options": [
+   "25",
+   "24",
+   "30",
+   "250"
+  ],
+  "correctIndex": 0,
+  "answer": "25",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "pub maths",
+   "measurement"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "How many 150 millilitre glasses of wine can you pour from a 750 millilitre bottle?",
+  "options": [
+   "6",
+   "5",
+   "4",
+   "75"
+  ],
+  "correctIndex": 1,
+  "answer": "5",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "pub maths",
+   "measurement"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "Meat tray raffle tickets are 3 for 5 dollars. How much do 30 tickets cost?",
+  "options": [
+   "45 dollars",
+   "60 dollars",
+   "50 dollars",
+   "3 dollars"
+  ],
+  "correctIndex": 2,
+  "answer": "50 dollars",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "pub maths",
+   "money"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "A bistro has 12 tables that each seat 6 people. How many seats is that?",
+  "options": [
+   "66",
+   "78",
+   "18",
+   "72"
+  ],
+  "correctIndex": 3,
+  "answer": "72",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "pub maths",
+   "multiplication"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "hard",
+  "question": "Petrol is 2 dollars a litre and your car uses 8 litres per 100 kilometres. What does a 250 kilometre trip cost?",
+  "options": [
+   "40 dollars",
+   "32 dollars",
+   "50 dollars",
+   "400 dollars"
+  ],
+  "correctIndex": 0,
+  "answer": "40 dollars",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mental maths",
+   "money",
+   "measurement"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "How many legs do four people and three dogs have altogether?",
+  "options": [
+   "19",
+   "20",
+   "24",
+   "7"
+  ],
+  "correctIndex": 1,
+  "answer": "20",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "mental maths",
+   "addition"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "How many sides does a heptagon have?",
+  "options": [
+   "6",
+   "8",
+   "7",
+   "70"
+  ],
+  "correctIndex": 2,
+  "answer": "7",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "shapes",
+   "number facts"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "How many faces does an octahedron have?",
+  "options": [
+   "6",
+   "10",
+   "80",
+   "8"
+  ],
+  "correctIndex": 3,
+  "answer": "8",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "shapes",
+   "3D shapes"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "How many edges does a square-based pyramid have?",
+  "options": [
+   "8",
+   "5",
+   "6",
+   "40"
+  ],
+  "correctIndex": 0,
+  "answer": "8",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "shapes",
+   "3D shapes"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "hard",
+  "question": "How many diagonals can be drawn inside a pentagon?",
+  "options": [
+   "10",
+   "5",
+   "4",
+   "50"
+  ],
+  "correctIndex": 1,
+  "answer": "5",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "shapes",
+   "geometry"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "hard",
+  "question": "How many degrees is each interior angle of a regular octagon?",
+  "options": [
+   "120",
+   "150",
+   "135",
+   "8"
+  ],
+  "correctIndex": 2,
+  "answer": "135",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "shapes",
+   "angles"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "What do the interior angles of a hexagon add up to?",
+  "options": [
+   "540 degrees",
+   "900 degrees",
+   "6 degrees",
+   "720 degrees"
+  ],
+  "correctIndex": 3,
+  "answer": "720 degrees",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "shapes",
+   "angles"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "How many sides do three triangles and two squares have altogether?",
+  "options": [
+   "17",
+   "16",
+   "18",
+   "5"
+  ],
+  "correctIndex": 0,
+  "answer": "17",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "shapes",
+   "mental maths"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "What is a flat shape with five straight sides called?",
+  "options": [
+   "Pentagram",
+   "Pentagon",
+   "Hexagon",
+   "Pentecost"
+  ],
+  "correctIndex": 1,
+  "answer": "Pentagon",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "shapes",
+   "number facts"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "What is the angle between the hands of a clock at exactly 4 o'clock?",
+  "options": [
+   "90 degrees",
+   "150 degrees",
+   "120 degrees",
+   "4 degrees"
+  ],
+  "correctIndex": 2,
+  "answer": "120 degrees",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "clocks",
+   "angles"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "How many degrees does the minute hand of a clock turn through in 20 minutes?",
+  "options": [
+   "100 degrees",
+   "90 degrees",
+   "20 degrees",
+   "120 degrees"
+  ],
+  "correctIndex": 3,
+  "answer": "120 degrees",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "clocks",
+   "angles"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "hard",
+  "question": "What is the angle between the hands of a clock at 2.30?",
+  "options": [
+   "105 degrees",
+   "90 degrees",
+   "120 degrees",
+   "230 degrees"
+  ],
+  "correctIndex": 0,
+  "answer": "105 degrees",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "clocks",
+   "angles"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "What is 1700 hours on a 12-hour clock?",
+  "options": [
+   "7 pm",
+   "5 pm",
+   "3 pm",
+   "17 pm"
+  ],
+  "correctIndex": 1,
+  "answer": "5 pm",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "clocks",
+   "time"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "How many minutes are in two and a half hours?",
+  "options": [
+   "130",
+   "120",
+   "150",
+   "250"
+  ],
+  "correctIndex": 2,
+  "answer": "150",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "clocks",
+   "time"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "hard",
+  "question": "What time is it exactly 1000 minutes after midnight?",
+  "options": [
+   "5.40 pm",
+   "4.00 pm",
+   "10.00 am",
+   "4.40 pm"
+  ],
+  "correctIndex": 3,
+  "answer": "4.40 pm",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "clocks",
+   "time"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "How long is it from 9.45 am to 2.15 pm on the same day?",
+  "options": [
+   "Four and a half hours",
+   "Five and a half hours",
+   "Four hours",
+   "45 hours"
+  ],
+  "correctIndex": 0,
+  "answer": "Four and a half hours",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "clocks",
+   "time"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "How many seconds are in a quarter of an hour?",
+  "options": [
+   "600",
+   "900",
+   "1500",
+   "15"
+  ],
+  "correctIndex": 1,
+  "answer": "900",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "clocks",
+   "time"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "hard",
+  "question": "How many minutes are in one week?",
+  "options": [
+   "10,800",
+   "1,440",
+   "10,080",
+   "7"
+  ],
+  "correctIndex": 2,
+  "answer": "10,080",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "calendars",
+   "time"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "easy",
+  "question": "If today is Monday, what day of the week will it be in 10 days?",
+  "options": [
+   "Wednesday",
+   "Friday",
+   "Funday",
+   "Thursday"
+  ],
+  "correctIndex": 3,
+  "answer": "Thursday",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "calendars",
+   "logic"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "hard",
+  "question": "In a year that is not a leap year, 1 January falls on a Monday. What day is 31 December?",
+  "options": [
+   "Monday",
+   "Tuesday",
+   "Sunday",
+   "Boxing Day"
+  ],
+  "correctIndex": 0,
+  "answer": "Monday",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "calendars",
+   "logic"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "What is the next leap year after 2028?",
+  "options": [
+   "2030",
+   "2032",
+   "2029",
+   "2128"
+  ],
+  "correctIndex": 1,
+  "answer": "2032",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "calendars",
+   "leap years"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "The year 1900 divides evenly by 4, so why was it not a leap year?",
+  "options": [
+   "Century years must divide by 300",
+   "It started on a Monday",
+   "Century years must divide by 400",
+   "Nobody remembered to add the day"
+  ],
+  "correctIndex": 2,
+  "answer": "Century years must divide by 400",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "calendars",
+   "leap years"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "How many fortnights are in a year?",
+  "options": [
+   "24",
+   "52",
+   "2",
+   "26"
+  ],
+  "correctIndex": 3,
+  "answer": "26",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "calendars",
+   "time"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "hard",
+  "question": "In a year that is not a leap year, which day of the year is 1 March?",
+  "options": [
+   "The 60th",
+   "The 61st",
+   "The 59th",
+   "The 3rd"
+  ],
+  "correctIndex": 0,
+  "answer": "The 60th",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "calendars",
+   "mental maths"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "What is the greatest number of Sundays a single calendar year can have?",
+  "options": [
+   "52",
+   "53",
+   "54",
+   "7"
+  ],
+  "correctIndex": 1,
+  "answer": "53",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "calendars",
+   "logic"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "What is the greatest number of Mondays a 31-day month can have?",
+  "options": [
+   "4",
+   "6",
+   "5",
+   "31"
+  ],
+  "correctIndex": 2,
+  "answer": "5",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "calendars",
+   "logic"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "What word describes someone aged in their seventies?",
+  "options": [
+   "Octogenarian",
+   "Sexagenarian",
+   "Vegetarian",
+   "Septuagenarian"
+  ],
+  "correctIndex": 3,
+  "answer": "Septuagenarian",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "number words",
+   "famous numbers"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "What year is written in Roman numerals as MMXXVI?",
+  "options": [
+   "2026",
+   "2016",
+   "2024",
+   "26"
+  ],
+  "correctIndex": 0,
+  "answer": "2026",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "roman numerals"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "What number is MCM in Roman numerals?",
+  "options": [
+   "2100",
+   "1900",
+   "1100",
+   "3"
+  ],
+  "correctIndex": 1,
+  "answer": "1900",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "roman numerals"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "What number is XC in Roman numerals?",
+  "options": [
+   "110",
+   "80",
+   "90",
+   "10"
+  ],
+  "correctIndex": 2,
+  "answer": "90",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "roman numerals"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "What number is CD in Roman numerals?",
+  "options": [
+   "600",
+   "450",
+   "A compact disc",
+   "400"
+  ],
+  "correctIndex": 3,
+  "answer": "400",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "roman numerals"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "What number is LXX in Roman numerals?",
+  "options": [
+   "70",
+   "30",
+   "75",
+   "7"
+  ],
+  "correctIndex": 0,
+  "answer": "70",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "roman numerals"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "hard",
+  "question": "How is the number 49 correctly written in Roman numerals?",
+  "options": [
+   "IL",
+   "XLIX",
+   "LIX",
+   "XOXO"
+  ],
+  "correctIndex": 1,
+  "answer": "XLIX",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "roman numerals"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "What is MMM minus CCC, written as an ordinary number?",
+  "options": [
+   "2970",
+   "3300",
+   "2700",
+   "0"
+  ],
+  "correctIndex": 2,
+  "answer": "2700",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "roman numerals",
+   "mental maths"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "What do the Roman numerals X and V add up to?",
+  "options": [
+   "5",
+   "10",
+   "105",
+   "15"
+  ],
+  "correctIndex": 3,
+  "answer": "15",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "roman numerals"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "hard",
+  "question": "How many items are in a great gross, which is a dozen gross?",
+  "options": [
+   "1728",
+   "1440",
+   "144",
+   "1,000,000"
+  ],
+  "correctIndex": 0,
+  "answer": "1728",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "dozens and grosses"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "How many eggs are in five dozen?",
+  "options": [
+   "50",
+   "60",
+   "65",
+   "5"
+  ],
+  "correctIndex": 1,
+  "answer": "60",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "dozens and grosses"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "How many items are in half a gross?",
+  "options": [
+   "60",
+   "144",
+   "72",
+   "6"
+  ],
+  "correctIndex": 2,
+  "answer": "72",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "dozens and grosses"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "How many bread rolls are in three baker's dozens?",
+  "options": [
+   "36",
+   "42",
+   "3",
+   "39"
+  ],
+  "correctIndex": 3,
+  "answer": "39",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "dozens and grosses"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "How many years is three score and ten?",
+  "options": [
+   "70",
+   "73",
+   "60",
+   "310"
+  ],
+  "correctIndex": 0,
+  "answer": "70",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "number words",
+   "famous numbers"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "How many birds are in a brace of pheasants?",
+  "options": [
+   "3",
+   "2",
+   "4",
+   "A dozen"
+  ],
+  "correctIndex": 1,
+  "answer": "2",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "number words"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "How many years are in a quarter of a century?",
+  "options": [
+   "20",
+   "50",
+   "25",
+   "4"
+  ],
+  "correctIndex": 2,
+  "answer": "25",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "number words",
+   "fractions"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "In darts, what is a treble 17 plus a double 18?",
+  "options": [
+   "85",
+   "69",
+   "1718",
+   "87"
+  ],
+  "correctIndex": 3,
+  "answer": "87",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "darts",
+   "mental maths"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "hard",
+  "question": "In darts slang, what score is called 'bed and breakfast'?",
+  "options": [
+   "26",
+   "25",
+   "45",
+   "Free toast"
+  ],
+  "correctIndex": 0,
+  "answer": "26",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "darts",
+   "pub games"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "hard",
+  "question": "In darts, what do a treble 20, a treble 18 and a double 16 add up to?",
+  "options": [
+   "144",
+   "146",
+   "136",
+   "3"
+  ],
+  "correctIndex": 1,
+  "answer": "146",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "darts",
+   "mental maths"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "A darts player starting on 501 throws two 180s. What score do they have left?",
+  "options": [
+   "151",
+   "121",
+   "141",
+   "501"
+  ],
+  "correctIndex": 2,
+  "answer": "141",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "darts",
+   "mental maths"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "hard",
+  "question": "Counting ace as 1 and jack, queen and king as 11, 12 and 13, what does one full suit of cards add up to?",
+  "options": [
+   "90",
+   "78",
+   "13",
+   "91"
+  ],
+  "correctIndex": 3,
+  "answer": "91",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "cards",
+   "mental maths"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "How many different royal flushes are possible in a standard deck of cards?",
+  "options": [
+   "4",
+   "1",
+   "13",
+   "52"
+  ],
+  "correctIndex": 0,
+  "answer": "4",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "cards",
+   "poker"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "How many cards make up a standard poker hand?",
+  "options": [
+   "6",
+   "5",
+   "3",
+   "52"
+  ],
+  "correctIndex": 1,
+  "answer": "5",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "cards",
+   "poker"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "How many aces, kings, queens and jacks are in a standard deck altogether?",
+  "options": [
+   "12",
+   "20",
+   "16",
+   "52"
+  ],
+  "correctIndex": 2,
+  "answer": "16",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "cards",
+   "number facts"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "What is the chance of drawing a heart from a full deck without jokers?",
+  "options": [
+   "1 in 13",
+   "1 in 2",
+   "1 in 1000",
+   "1 in 4"
+  ],
+  "correctIndex": 3,
+  "answer": "1 in 4",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "cards",
+   "probability"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "What is the highest total you can roll with three standard dice?",
+  "options": [
+   "18",
+   "16",
+   "21",
+   "666"
+  ],
+  "correctIndex": 0,
+  "answer": "18",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "dice",
+   "number facts"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "hard",
+  "question": "How many different totals are possible when you roll three standard dice?",
+  "options": [
+   "18",
+   "16",
+   "15",
+   "3"
+  ],
+  "correctIndex": 1,
+  "answer": "16",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "dice",
+   "logic"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "What is the chance of rolling an even number on one standard die?",
+  "options": [
+   "1 in 3",
+   "1 in 6",
+   "1 in 2",
+   "1 in 100"
+  ],
+  "correctIndex": 2,
+  "answer": "1 in 2",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "dice",
+   "probability"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "What is the chance of rolling a total of 7 with two standard dice?",
+  "options": [
+   "1 in 7",
+   "1 in 12",
+   "1 in 1000",
+   "1 in 6"
+  ],
+  "correctIndex": 3,
+  "answer": "1 in 6",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "dice",
+   "probability"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "How many metres are in 3.5 kilometres?",
+  "options": [
+   "3500",
+   "350",
+   "35,000",
+   "3.5"
+  ],
+  "correctIndex": 0,
+  "answer": "3500",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "measurement",
+   "metric"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "How many grams are in a quarter of a kilogram?",
+  "options": [
+   "25",
+   "250",
+   "400",
+   "4"
+  ],
+  "correctIndex": 1,
+  "answer": "250",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "measurement",
+   "metric"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "How many hectares are in one square kilometre?",
+  "options": [
+   "1000",
+   "10",
+   "100",
+   "1"
+  ],
+  "correctIndex": 2,
+  "answer": "100",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "measurement",
+   "metric"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "How many centimetres tall is a person who stands 1.8 metres?",
+  "options": [
+   "108",
+   "18",
+   "1.8 million",
+   "180"
+  ],
+  "correctIndex": 3,
+  "answer": "180",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "measurement",
+   "metric"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "Roughly how many kilometres are in 100 miles?",
+  "options": [
+   "161",
+   "150",
+   "62",
+   "1600"
+  ],
+  "correctIndex": 0,
+  "answer": "161",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "measurement",
+   "conversions"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "hard",
+  "question": "Normal body temperature of 37 degrees Celsius is how many degrees Fahrenheit?",
+  "options": [
+   "99.6",
+   "98.6",
+   "96.8",
+   "370"
+  ],
+  "correctIndex": 1,
+  "answer": "98.6",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "measurement",
+   "conversions"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "Driving at 90 kilometres an hour, how far do you travel in 20 minutes?",
+  "options": [
+   "45 kilometres",
+   "20 kilometres",
+   "30 kilometres",
+   "1800 kilometres"
+  ],
+  "correctIndex": 2,
+  "answer": "30 kilometres",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "measurement",
+   "speed"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "How many millilitres are in a 1.25 litre bottle of soft drink?",
+  "options": [
+   "125",
+   "1025",
+   "12",
+   "1250"
+  ],
+  "correctIndex": 3,
+  "answer": "1250",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "measurement",
+   "metric"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "How many square metres is the floor of a room 4 metres by 5 metres?",
+  "options": [
+   "20",
+   "18",
+   "9",
+   "45"
+  ],
+  "correctIndex": 0,
+  "answer": "20",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "measurement",
+   "area"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "hard",
+  "question": "How many cubic centimetres are in one cubic metre?",
+  "options": [
+   "100,000",
+   "1,000,000",
+   "1000",
+   "12"
+  ],
+  "correctIndex": 1,
+  "answer": "1,000,000",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "measurement",
+   "metric"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "How many kilograms are in 2.5 tonnes?",
+  "options": [
+   "250",
+   "25,000",
+   "2500",
+   "25"
+  ],
+  "correctIndex": 2,
+  "answer": "2500",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "measurement",
+   "metric"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "How many zeros are in one trillion, written out in full?",
+  "options": [
+   "9",
+   "15",
+   "1",
+   "12"
+  ],
+  "correctIndex": 3,
+  "answer": "12",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "famous numbers",
+   "big numbers"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "How many numbers are printed on a single ticket in 90-ball housie?",
+  "options": [
+   "15",
+   "27",
+   "25",
+   "90"
+  ],
+  "correctIndex": 0,
+  "answer": "15",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "famous numbers",
+   "bingo"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "medium",
+  "question": "In bingo calling, what number is 'clickety-click'?",
+  "options": [
+   "76",
+   "66",
+   "99",
+   "1000"
+  ],
+  "correctIndex": 1,
+  "answer": "66",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "famous numbers",
+   "bingo"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "hard",
+  "question": "What comes next in the sequence 2, 5, 10, 17, 26?",
+  "options": [
+   "35",
+   "36",
+   "37",
+   "100"
+  ],
+  "correctIndex": 2,
+  "answer": "37",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "sequences"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "What comes next in the sequence 1, 2, 4, 7, 11?",
+  "options": [
+   "15",
+   "17",
+   "111",
+   "16"
+  ],
+  "correctIndex": 3,
+  "answer": "16",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "sequences"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "What comes next in the sequence 3, 8, 13, 18?",
+  "options": [
+   "23",
+   "22",
+   "24",
+   "318"
+  ],
+  "correctIndex": 0,
+  "answer": "23",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "sequences"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "What comes next in the sequence 100, 81, 64, 49?",
+  "options": [
+   "34",
+   "36",
+   "40",
+   "1000"
+  ],
+  "correctIndex": 1,
+  "answer": "36",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "sequences",
+   "square numbers"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "hard",
+  "question": "What comes next in the sequence 1, 4, 13, 40?",
+  "options": [
+   "120",
+   "160",
+   "121",
+   "41"
+  ],
+  "correctIndex": 2,
+  "answer": "121",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "sequences"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "hard",
+  "question": "What comes next in the sequence 1, 3, 7, 15, 31?",
+  "options": [
+   "62",
+   "47",
+   "1",
+   "63"
+  ],
+  "correctIndex": 3,
+  "answer": "63",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "sequences"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "hard",
+  "question": "What comes next in the sequence 2, 4, 12, 48?",
+  "options": [
+   "240",
+   "192",
+   "96",
+   "50"
+  ],
+  "correctIndex": 0,
+  "answer": "240",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "sequences"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "What comes next in the sequence 9, 18, 27, 36?",
+  "options": [
+   "44",
+   "45",
+   "54",
+   "9"
+  ],
+  "correctIndex": 1,
+  "answer": "45",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "sequences",
+   "times tables"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "easy",
+  "question": "What letter comes next in the sequence A, C, E, G?",
+  "options": [
+   "H",
+   "J",
+   "I",
+   "Z"
+  ],
+  "correctIndex": 2,
+  "answer": "I",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "sequences",
+   "letters"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "easy",
+  "question": "Riddle: what goes up when the rain comes down?",
+  "options": [
+   "A raincoat",
+   "A gutter",
+   "A kangaroo",
+   "An umbrella"
+  ],
+  "correctIndex": 3,
+  "answer": "An umbrella",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "riddle"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "easy",
+  "question": "Riddle: what kind of room has no doors and no windows?",
+  "options": [
+   "A mushroom",
+   "A cellar",
+   "A spare room",
+   "A ballroom"
+  ],
+  "correctIndex": 0,
+  "answer": "A mushroom",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "riddle",
+   "wordplay"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "medium",
+  "question": "Riddle: I am an odd number, but take away one letter and I become even. What number am I?",
+  "options": [
+   "Eleven",
+   "Seven",
+   "Nine",
+   "A million"
+  ],
+  "correctIndex": 1,
+  "answer": "Seven",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "riddle",
+   "wordplay",
+   "numbers"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "medium",
+  "question": "Riddle: forwards I am heavy, but backwards I am not. What am I?",
+  "options": [
+   "Gram",
+   "Kilo",
+   "Ton",
+   "Feather"
+  ],
+  "correctIndex": 2,
+  "answer": "Ton",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "riddle",
+   "wordplay"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "medium",
+  "question": "What do you get if you multiply together every number on a phone keypad?",
+  "options": [
+   "362,880",
+   "45",
+   "A ringtone",
+   "0"
+  ],
+  "correctIndex": 3,
+  "answer": "0",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "riddle",
+   "mental maths"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "medium",
+  "question": "Riddle: how many times can you subtract 5 from 25?",
+  "options": [
+   "Once",
+   "Five times",
+   "Four times",
+   "A thousand times"
+  ],
+  "correctIndex": 0,
+  "answer": "Once",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "riddle",
+   "lateral thinking"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "medium",
+  "question": "A doctor gives you three pills and says take one every half hour. How long until they are all gone?",
+  "options": [
+   "An hour and a half",
+   "One hour",
+   "Half an hour",
+   "Three days"
+  ],
+  "correctIndex": 1,
+  "answer": "One hour",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "riddle",
+   "logic"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "easy",
+  "question": "There are three apples in a bowl and you take away two. How many apples do you have?",
+  "options": [
+   "One",
+   "Three",
+   "Two",
+   "Five"
+  ],
+  "correctIndex": 2,
+  "answer": "Two",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "riddle",
+   "lateral thinking"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "easy",
+  "question": "Riddle: how many animals of each kind did Moses take onto the ark?",
+  "options": [
+   "Two",
+   "Seven",
+   "A hundred",
+   "None"
+  ],
+  "correctIndex": 3,
+  "answer": "None",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "riddle",
+   "trick question"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "easy",
+  "question": "Mary's father has five daughters: Nana, Nene, Nini and Nono. What is the fifth daughter's name?",
+  "options": [
+   "Mary",
+   "Nunu",
+   "Nina",
+   "Kevin"
+  ],
+  "correctIndex": 0,
+  "answer": "Mary",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "riddle",
+   "trick question"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "medium",
+  "question": "Riddle: what has 13 hearts but no other organs?",
+  "options": [
+   "An artichoke",
+   "A deck of cards",
+   "A lettuce",
+   "A hospital"
+  ],
+  "correctIndex": 1,
+  "answer": "A deck of cards",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "riddle",
+   "cards"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "medium",
+  "question": "Riddle: what sits at the beginning of eternity and at the end of time and space?",
+  "options": [
+   "The letter T",
+   "A black hole",
+   "The letter E",
+   "A meat pie"
+  ],
+  "correctIndex": 2,
+  "answer": "The letter E",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "riddle",
+   "wordplay"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "easy",
+  "question": "You enter a cold, dark room holding one match. There is a candle, a lamp and a fireplace. What do you light first?",
+  "options": [
+   "The candle",
+   "The lamp",
+   "The barbecue",
+   "The match"
+  ],
+  "correctIndex": 3,
+  "answer": "The match",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "riddle",
+   "lateral thinking"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "medium",
+  "question": "An electric train is heading north at 100 kilometres an hour. Which way does its smoke blow?",
+  "options": [
+   "There is no smoke",
+   "South",
+   "North",
+   "Straight into the driver's eyes"
+  ],
+  "correctIndex": 0,
+  "answer": "There is no smoke",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "riddle",
+   "trick question"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "easy",
+  "question": "Riddle: if two's company and three's a crowd, what are four and five?",
+  "options": [
+   "A party",
+   "Nine",
+   "A crowd",
+   "A meat raffle"
+  ],
+  "correctIndex": 1,
+  "answer": "Nine",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "riddle",
+   "numbers"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "medium",
+  "question": "Which three positive whole numbers give the same answer whether you add them together or multiply them?",
+  "options": [
+   "2, 2 and 2",
+   "1, 1 and 2",
+   "1, 2 and 3",
+   "7, 8 and 9"
+  ],
+  "correctIndex": 2,
+  "answer": "1, 2 and 3",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "logic",
+   "number puzzle"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "medium",
+  "question": "Divide 30 by a half, then add 10. What do you get?",
+  "options": [
+   "25",
+   "60",
+   "3010",
+   "70"
+  ],
+  "correctIndex": 3,
+  "answer": "70",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "trick question",
+   "mental maths"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "hard",
+  "question": "A brick weighs 1 kilogram plus half a brick. How much does one whole brick weigh?",
+  "options": [
+   "2 kilograms",
+   "1.5 kilograms",
+   "1 kilogram",
+   "100 kilograms"
+  ],
+  "correctIndex": 0,
+  "answer": "2 kilograms",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "logic",
+   "number puzzle"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "hard",
+  "question": "A snail climbs 3 metres up a 10 metre well each day and slides back 2 metres each night. On which day does it reach the top?",
+  "options": [
+   "Day 10",
+   "Day 8",
+   "Day 7",
+   "Day 100"
+  ],
+  "correctIndex": 1,
+  "answer": "Day 8",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "logic",
+   "number puzzle"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "hard",
+  "question": "A clock takes 5 seconds to strike six o'clock. How long does it take to strike twelve?",
+  "options": [
+   "10 seconds",
+   "12 seconds",
+   "11 seconds",
+   "1 minute"
+  ],
+  "correctIndex": 2,
+  "answer": "11 seconds",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "logic",
+   "clocks"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "medium",
+  "question": "How many straight cuts does it take to saw a log into 8 pieces?",
+  "options": [
+   "8",
+   "6",
+   "80",
+   "7"
+  ],
+  "correctIndex": 3,
+  "answer": "7",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "logic",
+   "off by one"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "medium",
+  "question": "A straight 10 metre fence has a post every metre, including one at each end. How many posts are there?",
+  "options": [
+   "11",
+   "10",
+   "9",
+   "100"
+  ],
+  "correctIndex": 0,
+  "answer": "11",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "logic",
+   "off by one"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "hard",
+  "question": "If you write out every whole number from 1 to 100, how many times do you write the digit 9?",
+  "options": [
+   "19",
+   "20",
+   "11",
+   "100"
+  ],
+  "correctIndex": 1,
+  "answer": "20",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "logic",
+   "counting"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "easy",
+  "question": "A man has three daughters, and each daughter has exactly one brother. How many children does he have?",
+  "options": [
+   "6",
+   "3",
+   "4",
+   "A dozen"
+  ],
+  "correctIndex": 2,
+  "answer": "4",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "logic",
+   "trick question"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "hard",
+  "question": "A father and son have a combined age of 36, and the father is 30 years older. How old is the son?",
+  "options": [
+   "6",
+   "4",
+   "36",
+   "3"
+  ],
+  "correctIndex": 3,
+  "answer": "3",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "logic",
+   "number puzzle"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "hard",
+  "question": "The day before yesterday I was 25, and next year I will turn 28. What is the date today?",
+  "options": [
+   "1 January",
+   "31 December",
+   "29 February",
+   "25 December"
+  ],
+  "correctIndex": 0,
+  "answer": "1 January",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "logic",
+   "calendars"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "easy",
+  "question": "If a red house is made of red bricks, what is a greenhouse made of?",
+  "options": [
+   "Green bricks",
+   "Glass",
+   "Timber",
+   "Broccoli"
+  ],
+  "correctIndex": 1,
+  "answer": "Glass",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "riddle",
+   "trick question"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "medium",
+  "question": "Riddle: what is black when you buy it, red when you use it and grey when you throw it away?",
+  "options": [
+   "Toast",
+   "A tyre",
+   "Charcoal",
+   "A sausage"
+  ],
+  "correctIndex": 2,
+  "answer": "Charcoal",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "riddle"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "medium",
+  "question": "Before Mount Everest was discovered, what was the highest mountain on Earth?",
+  "options": [
+   "K2",
+   "Kilimanjaro",
+   "Mount Kosciuszko",
+   "Mount Everest"
+  ],
+  "correctIndex": 3,
+  "answer": "Mount Everest",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "riddle",
+   "trick question"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "medium",
+  "question": "Riddle: what is at the end of a rainbow?",
+  "options": [
+   "The letter W",
+   "A pot of gold",
+   "The letter R",
+   "A meat tray"
+  ],
+  "correctIndex": 0,
+  "answer": "The letter W",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "riddle",
+   "wordplay"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "medium",
+  "question": "Riddle: how many letters are in 'the alphabet'?",
+  "options": [
+   "26",
+   "11",
+   "12",
+   "A million"
+  ],
+  "correctIndex": 1,
+  "answer": "11",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "riddle",
+   "wordplay"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "medium",
+  "question": "A man pushes his car to a hotel and tells the owner he is bankrupt. What game is he playing?",
+  "options": [
+   "Cluedo",
+   "Poker",
+   "Monopoly",
+   "Hungry Hungry Hippos"
+  ],
+  "correctIndex": 2,
+  "answer": "Monopoly",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "lateral thinking",
+   "board games"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "hard",
+  "question": "Riddle: what is three sevenths chicken, two thirds cat and two quarters goat?",
+  "options": [
+   "Chicat",
+   "A farmyard",
+   "A kebab",
+   "Chicago"
+  ],
+  "correctIndex": 3,
+  "answer": "Chicago",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "riddle",
+   "wordplay",
+   "fractions"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "medium",
+  "question": "A cowboy rides into town on Friday, stays three days, then rides out on Friday. How?",
+  "options": [
+   "His horse is called Friday",
+   "He stayed for a week",
+   "He arrived just before midnight",
+   "He rode a time machine"
+  ],
+  "correctIndex": 0,
+  "answer": "His horse is called Friday",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "lateral thinking",
+   "riddle"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "easy",
+  "question": "Which is bigger, half of a quarter or a quarter of a half?",
+  "options": [
+   "Half of a quarter",
+   "They are the same",
+   "A quarter of a half",
+   "A whole pizza"
+  ],
+  "correctIndex": 1,
+  "answer": "They are the same",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "logic",
+   "fractions"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "medium",
+  "question": "Think of a number, double it, add 10, halve it, then take away the number you started with. What is left?",
+  "options": [
+   "10",
+   "0",
+   "5",
+   "Your starting number"
+  ],
+  "correctIndex": 2,
+  "answer": "5",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "number puzzle",
+   "mental maths"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "medium",
+  "question": "Riddle: how far can a dog run into the bush?",
+  "options": [
+   "All the way",
+   "Until it is called home",
+   "To the nearest Bunnings",
+   "Halfway"
+  ],
+  "correctIndex": 3,
+  "answer": "Halfway",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "riddle",
+   "lateral thinking"
+  ]
+ },
+ {
+  "category": "Riddles and logic",
+  "difficulty": "medium",
+  "question": "Riddle: if you have it, you want to share it, but once you share it, you no longer have it. What is it?",
+  "options": [
+   "A secret",
+   "A cold",
+   "A joke",
+   "A wombat"
+  ],
+  "correctIndex": 0,
+  "answer": "A secret",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "riddle"
+  ]
+ },
+ {
+  "category": "Maths and puzzles",
+  "difficulty": "easy",
+  "question": "What is the only three-digit number whose digits add up to 1?",
+  "options": [
+   "101",
+   "100",
+   "111",
+   "999"
+  ],
+  "correctIndex": 1,
+  "answer": "100",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "number puzzle",
+   "logic"
+  ]
+ }
+]

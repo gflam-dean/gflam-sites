@@ -1,0 +1,3087 @@
+[
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "In Australian slang, what is a 'punter'?",
+  "options": [
+   "Someone who places a bet",
+   "A bookmaker",
+   "A racecourse steward",
+   "A horse that kicks"
+  ],
+  "correctIndex": 0,
+  "answer": "Someone who places a bet",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "betting"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "What is the name for a horse withdrawn from a race before it starts?",
+  "options": [
+   "A maiden",
+   "A scratching",
+   "A false start",
+   "A runaway sausage"
+  ],
+  "correctIndex": 1,
+  "answer": "A scratching",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "terminology"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "What do Australians call the horse with the shortest odds in a race?",
+  "options": [
+   "The top weight",
+   "The pacemaker",
+   "The favourite",
+   "The teacher's pet"
+  ],
+  "correctIndex": 2,
+  "answer": "The favourite",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "betting"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "What is it called when two horses cross the finish line at exactly the same time?",
+  "options": [
+   "A photo finish",
+   "A short head",
+   "A double bubble",
+   "A dead heat"
+  ],
+  "correctIndex": 3,
+  "answer": "A dead heat",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "terminology"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "What does the betting acronym TAB stand for?",
+  "options": [
+   "Totalisator Agency Board",
+   "Totalisator Australian Bureau",
+   "Track and Betting",
+   "Take Another Beer"
+  ],
+  "correctIndex": 0,
+  "answer": "Totalisator Agency Board",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "betting"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "How many furlongs are there in a mile?",
+  "options": [
+   "10",
+   "8",
+   "6",
+   "100"
+  ],
+  "correctIndex": 1,
+  "answer": "8",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "terminology"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Roughly how many metres long is one furlong?",
+  "options": [
+   "About 400 metres",
+   "About 100 metres",
+   "About 200 metres",
+   "About 5 kilometres"
+  ],
+  "correctIndex": 2,
+  "answer": "About 200 metres",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "terminology"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "A horse's height is traditionally measured in which unit?",
+  "options": [
+   "Spans",
+   "Feet",
+   "Hooves",
+   "Hands"
+  ],
+  "correctIndex": 3,
+  "answer": "Hands",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "terminology"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "When measuring a horse, how many inches make up one 'hand'?",
+  "options": [
+   "4",
+   "6",
+   "3",
+   "36"
+  ],
+  "correctIndex": 0,
+  "answer": "4",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "terminology"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "What is a racehorse aged between one and two years called?",
+  "options": [
+   "A weanling",
+   "A yearling",
+   "A maiden",
+   "A fortnightly"
+  ],
+  "correctIndex": 1,
+  "answer": "A yearling",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "terminology"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "In breeding terms, what is a horse's mother called?",
+  "options": [
+   "Its sire",
+   "Its filly",
+   "Its dam",
+   "Its nan"
+  ],
+  "correctIndex": 2,
+  "answer": "Its dam",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "terminology"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "What is the job title of the person who looks after a racehorse day to day?",
+  "options": [
+   "Farrier",
+   "Clerk of the course",
+   "Horse whisperer-in-chief",
+   "Strapper"
+  ],
+  "correctIndex": 3,
+  "answer": "Strapper",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "terminology"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "What is Australian racing slang for a jockey?",
+  "options": [
+   "Hoop",
+   "Strapper",
+   "Steward",
+   "Saddle sausage"
+  ],
+  "correctIndex": 0,
+  "answer": "Hoop",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "terminology"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "In Australian racing, what are the starting gates usually called?",
+  "options": [
+   "The chutes",
+   "The barriers",
+   "The pens",
+   "The turnstiles"
+  ],
+  "correctIndex": 1,
+  "answer": "The barriers",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "terminology"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "Which track rating describes the wettest racing surface in Australia?",
+  "options": [
+   "Good",
+   "Soft",
+   "Heavy",
+   "Splashy"
+  ],
+  "correctIndex": 2,
+  "answer": "Heavy",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "terminology"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "What does a 'quaddie' bet ask you to pick?",
+  "options": [
+   "The first four in one race",
+   "Four horses each way",
+   "Which four punters shout the bar",
+   "The winners of four nominated races"
+  ],
+  "correctIndex": 3,
+  "answer": "The winners of four nominated races",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "betting"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "What does an 'exacta' bet ask you to pick?",
+  "options": [
+   "The first two finishers in exact order",
+   "The first two finishers in any order",
+   "The exact winning margin",
+   "The jockey's exact weight at breakfast"
+  ],
+  "correctIndex": 0,
+  "answer": "The first two finishers in exact order",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "betting"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "What does a 'First Four' bet ask you to pick?",
+  "options": [
+   "The winners of the first four races",
+   "The first four finishers in exact order",
+   "Four horses to all finish the race",
+   "Four pies from the canteen"
+  ],
+  "correctIndex": 1,
+  "answer": "The first four finishers in exact order",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "betting"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "In a full Australian field, a 'place' bet pays if your horse finishes where?",
+  "options": [
+   "First or second",
+   "Anywhere in the first five",
+   "Anywhere in the first three",
+   "Somewhere near the car park"
+  ],
+  "correctIndex": 2,
+  "answer": "Anywhere in the first three",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "betting"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "If you bet $10 on a horse at $5 odds and it wins, how much do you collect?",
+  "options": [
+   "$40",
+   "$15",
+   "A free sausage roll",
+   "$50"
+  ],
+  "correctIndex": 3,
+  "answer": "$50",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "betting"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "What does it mean when a horse is 'odds-on'?",
+  "options": [
+   "It would return less than double your stake",
+   "It would return exactly double your stake",
+   "It is the longest shot in the field",
+   "It has placed a bet on itself"
+  ],
+  "correctIndex": 0,
+  "answer": "It would return less than double your stake",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "betting"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "A horse quoted at 2/1 in British odds is paying what in Australian odds?",
+  "options": [
+   "$2.00",
+   "$3.00",
+   "$2.50",
+   "$200.00"
+  ],
+  "correctIndex": 1,
+  "answer": "$3.00",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "betting"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "When a horse's price 'firms' before a race, what is happening to its odds?",
+  "options": [
+   "They are getting longer",
+   "They are frozen until the jump",
+   "They are getting shorter",
+   "They are going to the gym"
+  ],
+  "correctIndex": 2,
+  "answer": "They are getting shorter",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "betting"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "What is a 'roughie' in Australian racing?",
+  "options": [
+   "A horse racing on a heavy track",
+   "An unruly punter",
+   "A horse that needs a shave",
+   "A long-shot outsider"
+  ],
+  "correctIndex": 3,
+  "answer": "A long-shot outsider",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "betting"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "What were bookmakers' assistants who sent prices across the course with hand signals called?",
+  "options": [
+   "Tic-tac men",
+   "Clerks",
+   "Runners",
+   "Mime artists"
+  ],
+  "correctIndex": 0,
+  "answer": "Tic-tac men",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "betting"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "In British betting slang, how much money is a 'monkey'?",
+  "options": [
+   "£25",
+   "£500",
+   "£100",
+   "One banana"
+  ],
+  "correctIndex": 1,
+  "answer": "£500",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "betting"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "What makes a 'Calcutta' sweep different from a normal office sweep?",
+  "options": [
+   "Horses are drawn from a hat",
+   "Only the last horse home pays",
+   "Horses are auctioned to the highest bidder",
+   "Everyone must eat a curry first"
+  ],
+  "correctIndex": 2,
+  "answer": "Horses are auctioned to the highest bidder",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "betting"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "In Aussie slang, what are 'the neddies'?",
+  "options": [
+   "Bookmakers",
+   "Race stewards",
+   "Garden gnomes",
+   "Racehorses"
+  ],
+  "correctIndex": 3,
+  "answer": "Racehorses",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "terminology"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "Betting on the 'gee-gees' means betting on what?",
+  "options": [
+   "Horse racing",
+   "Greyhound racing",
+   "Golf",
+   "Geese"
+  ],
+  "correctIndex": 0,
+  "answer": "Horse racing",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "terminology"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "Where are horses paraded before a race at an Australian track?",
+  "options": [
+   "The weighing room",
+   "The mounting yard",
+   "The betting ring",
+   "The car park"
+  ],
+  "correctIndex": 1,
+  "answer": "The mounting yard",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "terminology"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "At the track, what is the area where bookmakers set up their stands called?",
+  "options": [
+   "The mounting yard",
+   "The grandstand",
+   "The betting ring",
+   "The ball pit"
+  ],
+  "correctIndex": 2,
+  "answer": "The betting ring",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "betting"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "What is the collective term for all the horses running in one race?",
+  "options": [
+   "The card",
+   "The stable",
+   "The posse",
+   "The field"
+  ],
+  "correctIndex": 3,
+  "answer": "The field",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "terminology"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "What is a 'stayer' in horse racing?",
+  "options": [
+   "A horse suited to long distances",
+   "A horse suited to short sprints",
+   "A horse that refuses to leave the barrier",
+   "A horse that has moved in with its trainer"
+  ],
+  "correctIndex": 0,
+  "answer": "A horse suited to long distances",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "terminology"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "What is a racehorse that has never won a race called?",
+  "options": [
+   "A yearling",
+   "A maiden",
+   "A gelding",
+   "A beginner's bonus"
+  ],
+  "correctIndex": 1,
+  "answer": "A maiden",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "terminology"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "What is the official birthday of every Thoroughbred in Australia?",
+  "options": [
+   "1 January",
+   "1 November",
+   "1 August",
+   "Whenever it feels like it"
+  ],
+  "correctIndex": 2,
+  "answer": "1 August",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "terminology"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "From which side do jockeys traditionally mount a horse?",
+  "options": [
+   "The right side",
+   "From behind",
+   "From the stable roof",
+   "The left side"
+  ],
+  "correctIndex": 3,
+  "answer": "The left side",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "terminology"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "Which direction do horses race at Flemington?",
+  "options": [
+   "Anticlockwise",
+   "Clockwise",
+   "It alternates each race",
+   "Straight up"
+  ],
+  "correctIndex": 0,
+  "answer": "Anticlockwise",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "flemington"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "At which racecourse do horses race clockwise?",
+  "options": [
+   "Flemington",
+   "Royal Randwick",
+   "Caulfield",
+   "Bondi Beach"
+  ],
+  "correctIndex": 1,
+  "answer": "Royal Randwick",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "racecourses"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "In harness racing, what is the light two-wheeled cart pulled by the horse called?",
+  "options": [
+   "A buggy",
+   "A chariot",
+   "A sulky",
+   "A shopping trolley"
+  ],
+  "correctIndex": 2,
+  "answer": "A sulky",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "harness"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Most harness racing horses in Australia belong to which breed?",
+  "options": [
+   "Thoroughbred",
+   "Clydesdale",
+   "Shetland pony",
+   "Standardbred"
+  ],
+  "correctIndex": 3,
+  "answer": "Standardbred",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "harness"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "The Inter Dominion is Australasia's championship series for which racing code?",
+  "options": [
+   "Harness racing",
+   "Jumps racing",
+   "Greyhound racing",
+   "Lawn bowls"
+  ],
+  "correctIndex": 0,
+  "answer": "Harness racing",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "harness"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "In jumps racing, which type of race has the bigger obstacles?",
+  "options": [
+   "Hurdle",
+   "Steeplechase",
+   "Maiden",
+   "Egg and spoon"
+  ],
+  "correctIndex": 1,
+  "answer": "Steeplechase",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "jumps"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "In horse anatomy, the 'frog' is part of which body part?",
+  "options": [
+   "The knee",
+   "The mouth",
+   "The hoof",
+   "The tail feathers"
+  ],
+  "correctIndex": 2,
+  "answer": "The hoof",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "terminology"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "What colour is a 'bay' horse?",
+  "options": [
+   "Reddish with a matching mane",
+   "White with dark spots",
+   "Ocean blue",
+   "Brown with a black mane and tail"
+  ],
+  "correctIndex": 3,
+  "answer": "Brown with a black mane and tail",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "terminology"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "What are the light aluminium horseshoes worn by racehorses called?",
+  "options": [
+   "Racing plates",
+   "Racing irons",
+   "Racing boots",
+   "Racing thongs"
+  ],
+  "correctIndex": 0,
+  "answer": "Racing plates",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "terminology"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "After a race, what must the placegetting jockeys do before the result is official?",
+  "options": [
+   "Walk the track",
+   "Weigh in",
+   "Sign the race book",
+   "Shout the bar"
+  ],
+  "correctIndex": 1,
+  "answer": "Weigh in",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "terminology"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "Royal Ascot is famous for spectators wearing extravagant what?",
+  "options": [
+   "Shoes",
+   "Gloves",
+   "Hats",
+   "Snorkels"
+  ],
+  "correctIndex": 2,
+  "answer": "Hats",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "royal-ascot",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "In which month is Royal Ascot held?",
+  "options": [
+   "July",
+   "April",
+   "Decembuary",
+   "June"
+  ],
+  "correctIndex": 3,
+  "answer": "June",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "royal-ascot",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Ascot Racecourse is in which English county?",
+  "options": [
+   "Berkshire",
+   "Surrey",
+   "Kent",
+   "Kentucky"
+  ],
+  "correctIndex": 0,
+  "answer": "Berkshire",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "royal-ascot",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "Which monarch founded Ascot Racecourse in 1711?",
+  "options": [
+   "Queen Victoria",
+   "Queen Anne",
+   "King George III",
+   "King Kong"
+  ],
+  "correctIndex": 1,
+  "answer": "Queen Anne",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "royal-ascot",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "How do the royals traditionally arrive at Royal Ascot each day?",
+  "options": [
+   "On horseback",
+   "By helicopter",
+   "In horse-drawn carriages",
+   "On a tandem bike"
+  ],
+  "correctIndex": 2,
+  "answer": "In horse-drawn carriages",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "royal-ascot",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "What must men wear in Royal Ascot's Royal Enclosure?",
+  "options": [
+   "A dinner suit with a bow tie",
+   "A lounge suit with a flat cap",
+   "Board shorts and thongs",
+   "Morning dress with a top hat"
+  ],
+  "correctIndex": 3,
+  "answer": "Morning dress with a top hat",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "royal-ascot",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "In 2013, which horse made Queen Elizabeth II the first reigning monarch to win the Ascot Gold Cup?",
+  "options": [
+   "Estimate",
+   "Aureole",
+   "Dunfermline",
+   "Corgi Express"
+  ],
+  "correctIndex": 0,
+  "answer": "Estimate",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "royal-ascot",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "Ascot Racecourse sits just a few miles from which royal residence?",
+  "options": [
+   "Buckingham Palace",
+   "Windsor Castle",
+   "Balmoral",
+   "Graceland"
+  ],
+  "correctIndex": 1,
+  "answer": "Windsor Castle",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "royal-ascot",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "In which month is the Grand National usually run?",
+  "options": [
+   "March",
+   "June",
+   "April",
+   "Every second Tuesday"
+  ],
+  "correctIndex": 2,
+  "answer": "April",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "grand-national",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Becher's Brook is a famous fence on which racecourse?",
+  "options": [
+   "Cheltenham",
+   "Ascot",
+   "Wembley Stadium",
+   "Aintree"
+  ],
+  "correctIndex": 3,
+  "answer": "Aintree",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "grand-national",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "Why was the 1993 Grand National declared void?",
+  "options": [
+   "A false start",
+   "A dead heat",
+   "Heavy fog",
+   "The horses went on strike"
+  ],
+  "correctIndex": 0,
+  "answer": "A false start",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "grand-national",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "Which 100/1 outsider won the 1967 Grand National after a mass pile-up at one fence?",
+  "options": [
+   "Red Rum",
+   "Foinavon",
+   "Aldaniti",
+   "Lucky Lettuce"
+  ],
+  "correctIndex": 1,
+  "answer": "Foinavon",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "grand-national",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "Aldaniti won the 1981 Grand National ridden by which jockey, who had recovered from cancer?",
+  "options": [
+   "Tony McCoy",
+   "Dick Francis",
+   "Bob Champion",
+   "Bob the Builder"
+  ],
+  "correctIndex": 2,
+  "answer": "Bob Champion",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "grand-national",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "In 2021, who became the first woman to ride the winner of the Grand National?",
+  "options": [
+   "Michelle Payne",
+   "Katie Walsh",
+   "Mary Poppins",
+   "Rachael Blackmore"
+  ],
+  "correctIndex": 3,
+  "answer": "Rachael Blackmore",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "grand-national",
+   "international",
+   "jockeys"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "In the 1944 film National Velvet, a young Elizabeth Taylor rides in which race?",
+  "options": [
+   "The Grand National",
+   "The Epsom Derby",
+   "The Kentucky Derby",
+   "The Tour de France"
+  ],
+  "correctIndex": 0,
+  "answer": "The Grand National",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "grand-national",
+   "film"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Before becoming a best-selling crime novelist, Dick Francis was a champion what?",
+  "options": [
+   "Racehorse trainer",
+   "Jump jockey",
+   "Racing commentator",
+   "Lion tamer"
+  ],
+  "correctIndex": 1,
+  "answer": "Jump jockey",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "jockeys",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "Which horse, owned by the Queen Mother, collapsed metres from victory in the 1956 Grand National?",
+  "options": [
+   "Arkle",
+   "Desert Orchid",
+   "Devon Loch",
+   "Wobbly Bob"
+  ],
+  "correctIndex": 2,
+  "answer": "Devon Loch",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "grand-national",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "In which month is the Cheltenham Festival held?",
+  "options": [
+   "April",
+   "November",
+   "Never, it is a cheese festival",
+   "March"
+  ],
+  "correctIndex": 3,
+  "answer": "March",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "cheltenham",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "What is the biggest race of the Cheltenham Festival?",
+  "options": [
+   "The Cheltenham Gold Cup",
+   "The Champion Hurdle",
+   "The Grand National",
+   "The Cheltenham Egg Roll"
+  ],
+  "correctIndex": 0,
+  "answer": "The Cheltenham Gold Cup",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "cheltenham",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Cheltenham Racecourse is in which English county?",
+  "options": [
+   "Worcestershire",
+   "Gloucestershire",
+   "Yorkshire",
+   "New South Wales"
+  ],
+  "correctIndex": 1,
+  "answer": "Gloucestershire",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "cheltenham",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "In which month is the Epsom Derby run?",
+  "options": [
+   "May",
+   "August",
+   "June",
+   "Smarch"
+  ],
+  "correctIndex": 2,
+  "answer": "June",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "epsom-derby",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "The Epsom Derby takes its name from which aristocrat?",
+  "options": [
+   "The Duke of Derby",
+   "Lord Epsom",
+   "Derby the Dog",
+   "The Earl of Derby"
+  ],
+  "correctIndex": 3,
+  "answer": "The Earl of Derby",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "epsom-derby",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Suffragette Emily Davison was fatally injured at which race in 1913?",
+  "options": [
+   "The Epsom Derby",
+   "The Grand National",
+   "Royal Ascot",
+   "The Boat Race"
+  ],
+  "correctIndex": 0,
+  "answer": "The Epsom Derby",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "epsom-derby",
+   "international",
+   "history"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "The St Leger, Britain's oldest classic, is run at which racecourse?",
+  "options": [
+   "York",
+   "Doncaster",
+   "Newmarket",
+   "Disneyland"
+  ],
+  "correctIndex": 1,
+  "answer": "Doncaster",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Which English town is known as the headquarters of British racing?",
+  "options": [
+   "Epsom",
+   "Cheltenham",
+   "Newmarket",
+   "Narnia"
+  ],
+  "correctIndex": 2,
+  "answer": "Newmarket",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "The Kentucky Derby is run on the first Saturday of which month?",
+  "options": [
+   "June",
+   "April",
+   "Thanksgiving",
+   "May"
+  ],
+  "correctIndex": 3,
+  "answer": "May",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "kentucky-derby",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "The Kentucky Derby is billed as 'the most exciting two' what 'in sports'?",
+  "options": [
+   "Minutes",
+   "Furlongs",
+   "Hours",
+   "Hot dogs"
+  ],
+  "correctIndex": 0,
+  "answer": "Minutes",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "kentucky-derby",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "The grandstand at Churchill Downs, home of the Kentucky Derby, is famous for its twin what?",
+  "options": [
+   "Domes",
+   "Spires",
+   "Clocks",
+   "Water slides"
+  ],
+  "correctIndex": 1,
+  "answer": "Spires",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "kentucky-derby",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "The Prix de l'Arc de Triomphe is traditionally run at which racecourse?",
+  "options": [
+   "Deauville",
+   "Ascot",
+   "Longchamp",
+   "The Eiffel Tower lawn"
+  ],
+  "correctIndex": 2,
+  "answer": "Longchamp",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "The Prix de l'Arc de Triomphe is run in which month?",
+  "options": [
+   "September",
+   "June",
+   "Every leap year",
+   "October"
+  ],
+  "correctIndex": 3,
+  "answer": "October",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "Happy Valley racecourse is in which city?",
+  "options": [
+   "Hong Kong",
+   "Singapore",
+   "Tokyo",
+   "Wagga Wagga"
+  ],
+  "correctIndex": 0,
+  "answer": "Hong Kong",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "Godolphin, the global racing operation, was founded by the ruler of which emirate?",
+  "options": [
+   "Abu Dhabi",
+   "Dubai",
+   "Sharjah",
+   "Tasmania"
+  ],
+  "correctIndex": 1,
+  "answer": "Dubai",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "international",
+   "owners"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Godolphin's racing silks are famously which colour?",
+  "options": [
+   "Maroon",
+   "Emerald green",
+   "Royal blue",
+   "Fluoro pink polka dots"
+  ],
+  "correctIndex": 2,
+  "answer": "Royal blue",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "international",
+   "owners"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "Every Thoroughbred traces back to the Darley Arabian, the Godolphin Arabian and which other foundation stallion?",
+  "options": [
+   "The Arabian Prince",
+   "Eclipse",
+   "Mister Ed",
+   "The Byerley Turk"
+  ],
+  "correctIndex": 3,
+  "answer": "The Byerley Turk",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "history",
+   "breeding"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Which American jockey was nicknamed 'The Shoe'?",
+  "options": [
+   "Bill Shoemaker",
+   "Steve Cauthen",
+   "Eddie Arcaro",
+   "Imelda Marcos"
+  ],
+  "correctIndex": 0,
+  "answer": "Bill Shoemaker",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "jockeys",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "Jumps jockey Tony McCoy was British champion jockey how many seasons in a row?",
+  "options": [
+   "15",
+   "20",
+   "10",
+   "365"
+  ],
+  "correctIndex": 1,
+  "answer": "20",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "jockeys",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "In which month is the Caulfield Cup run?",
+  "options": [
+   "November",
+   "September",
+   "October",
+   "Januember"
+  ],
+  "correctIndex": 2,
+  "answer": "October",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "spring-carnival",
+   "caulfield-cup"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Over what distance is the Caulfield Cup run?",
+  "options": [
+   "3200 metres",
+   "2000 metres",
+   "50 metres",
+   "2400 metres"
+  ],
+  "correctIndex": 3,
+  "answer": "2400 metres",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "spring-carnival",
+   "caulfield-cup"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "Caulfield Racecourse is affectionately known by what nickname?",
+  "options": [
+   "The Heath",
+   "The Valley",
+   "The Flat",
+   "The Sandpit"
+  ],
+  "correctIndex": 0,
+  "answer": "The Heath",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "spring-carnival",
+   "caulfield-cup"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "The Cox Plate is named after William Cox, who founded which racecourse?",
+  "options": [
+   "Caulfield",
+   "Moonee Valley",
+   "Flemington",
+   "Luna Park"
+  ],
+  "correctIndex": 1,
+  "answer": "Moonee Valley",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "spring-carnival",
+   "cox-plate"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Based on how weights are set, what type of race is the Melbourne Cup?",
+  "options": [
+   "Weight-for-age",
+   "Set weights",
+   "A handicap",
+   "Featherweight division"
+  ],
+  "correctIndex": 2,
+  "answer": "A handicap",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "Before metric distances arrived in 1972, the Melbourne Cup was run over how many miles?",
+  "options": [
+   "One and a half",
+   "Three",
+   "Ten",
+   "Two"
+  ],
+  "correctIndex": 3,
+  "answer": "Two",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "history"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "Which American author attended the 1895 Melbourne Cup and wrote glowingly about the day?",
+  "options": [
+   "Mark Twain",
+   "Jack London",
+   "Ernest Hemingway",
+   "Dr Seuss"
+  ],
+  "correctIndex": 0,
+  "answer": "Mark Twain",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "history"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "How many handles does the modern Melbourne Cup trophy have?",
+  "options": [
+   "Two",
+   "Three",
+   "Four",
+   "Twelve"
+  ],
+  "correctIndex": 1,
+  "answer": "Three",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "Along with prize money, what did the connections of the first Melbourne Cup winner in 1861 receive?",
+  "options": [
+   "A gold cup",
+   "A silver saddle",
+   "A gold watch",
+   "A lifetime supply of pies"
+  ],
+  "correctIndex": 2,
+  "answer": "A gold watch",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "history"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Who trained the legendary Phar Lap?",
+  "options": [
+   "Tommy Woodcock",
+   "Bart Cummings",
+   "Ned Kelly",
+   "Harry Telford"
+  ],
+  "correctIndex": 3,
+  "answer": "Harry Telford",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "phar-lap",
+   "trainers"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "What was the name of Phar Lap's devoted strapper?",
+  "options": [
+   "Tommy Woodcock",
+   "Harry Telford",
+   "Jim Pike",
+   "Thomas the Tank Engine"
+  ],
+  "correctIndex": 0,
+  "answer": "Tommy Woodcock",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "phar-lap"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "The name Phar Lap is said to come from a Thai word meaning what?",
+  "options": [
+   "Thunder",
+   "Lightning",
+   "Big heart",
+   "Hot chips"
+  ],
+  "correctIndex": 1,
+  "answer": "Lightning",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "phar-lap"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "What colour was Phar Lap's coat?",
+  "options": [
+   "Bay",
+   "Grey",
+   "Chestnut",
+   "Tartan"
+  ],
+  "correctIndex": 2,
+  "answer": "Chestnut",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "phar-lap"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Phar Lap won his final race in 1932 in which country?",
+  "options": [
+   "United States",
+   "Canada",
+   "Iceland",
+   "Mexico"
+  ],
+  "correctIndex": 3,
+  "answer": "Mexico",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "phar-lap"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "What shocking thing happened to Phar Lap in the days before the 1930 Melbourne Cup?",
+  "options": [
+   "Someone fired a gun at him",
+   "He was kidnapped",
+   "He lost a shoe in the Yarra",
+   "He was elected to parliament"
+  ],
+  "correctIndex": 0,
+  "answer": "Someone fired a gun at him",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "phar-lap"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "The Australian film Phar Lap, about the champion racehorse, was released in which decade?",
+  "options": [
+   "1990s",
+   "1980s",
+   "1950s",
+   "1880s"
+  ],
+  "correctIndex": 1,
+  "answer": "1980s",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "phar-lap",
+   "film"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "Which jockey rode Kiwi to his famous last-to-first win in the 1983 Melbourne Cup?",
+  "options": [
+   "Glen Boss",
+   "Damien Oliver",
+   "Jim Cassidy",
+   "Ronald McDonald"
+  ],
+  "correctIndex": 2,
+  "answer": "Jim Cassidy",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "jockeys"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "Which horse won back-to-back Melbourne Cups in 1968 and 1969?",
+  "options": [
+   "Think Big",
+   "Peter Pan",
+   "Rainbow Unicorn",
+   "Rain Lover"
+  ],
+  "correctIndex": 3,
+  "answer": "Rain Lover",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "history"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Which grey racehorse of the early 1970s was nicknamed 'the Goondiwindi Grey'?",
+  "options": [
+   "Gunsynd",
+   "Subzero",
+   "Kingston Town",
+   "Grey Nomad"
+  ],
+  "correctIndex": 0,
+  "answer": "Gunsynd",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "australian-champions"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Who trained the champion Kingston Town?",
+  "options": [
+   "Bart Cummings",
+   "Tommy Smith",
+   "Colin Hayes",
+   "Tommy the Cat"
+  ],
+  "correctIndex": 1,
+  "answer": "Tommy Smith",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "trainers",
+   "australian-champions"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Legendary Sydney trainer Tommy Smith was the father of which famous trainer?",
+  "options": [
+   "Chris Waller",
+   "Lee Freedman",
+   "Gai Waterhouse",
+   "Kylie Minogue"
+  ],
+  "correctIndex": 2,
+  "answer": "Gai Waterhouse",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "trainers"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Gai Waterhouse won the 2013 Melbourne Cup with which horse?",
+  "options": [
+   "Dunaden",
+   "More Joyous",
+   "Gai Abandon",
+   "Fiorente"
+  ],
+  "correctIndex": 3,
+  "answer": "Fiorente",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "trainers"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "Gai Waterhouse's husband Robbie and son Tom are both best known as what?",
+  "options": [
+   "Bookmakers",
+   "Racehorse trainers",
+   "Jockeys",
+   "Circus clowns"
+  ],
+  "correctIndex": 0,
+  "answer": "Bookmakers",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "trainers",
+   "betting"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "In 2001, who became the first woman to train a Melbourne Cup winner, with Ethereal?",
+  "options": [
+   "Gai Waterhouse",
+   "Sheila Laxon",
+   "Michelle Payne",
+   "Mrs Doubtfire"
+  ],
+  "correctIndex": 1,
+  "answer": "Sheila Laxon",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "trainers"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "Trainer Bart Cummings was famous for which distinctive facial feature?",
+  "options": [
+   "A handlebar moustache",
+   "A long beard",
+   "Bushy eyebrows",
+   "A monocle tattoo"
+  ],
+  "correctIndex": 2,
+  "answer": "Bushy eyebrows",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "trainers",
+   "bart-cummings"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "The great trainer Bart Cummings's first name, Bart, was short for what?",
+  "options": [
+   "Bartley",
+   "Barton",
+   "Bartender",
+   "Bartholomew"
+  ],
+  "correctIndex": 3,
+  "answer": "Bartholomew",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "trainers",
+   "bart-cummings"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Bart Cummings was born in which Australian state?",
+  "options": [
+   "South Australia",
+   "Victoria",
+   "New South Wales",
+   "Alaska"
+  ],
+  "correctIndex": 0,
+  "answer": "South Australia",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "trainers",
+   "bart-cummings"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "Which mare gave Bart Cummings his first Melbourne Cup win in 1965?",
+  "options": [
+   "Galilee",
+   "Light Fingers",
+   "Think Big",
+   "Butter Fingers"
+  ],
+  "correctIndex": 1,
+  "answer": "Light Fingers",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "trainers",
+   "bart-cummings"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "Bart Cummings's twelfth and final Melbourne Cup winner, in 2008, was which horse?",
+  "options": [
+   "Saintly",
+   "Efficient",
+   "Viewed",
+   "Reviewed Again"
+  ],
+  "correctIndex": 2,
+  "answer": "Viewed",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "trainers",
+   "bart-cummings"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "Which Bart Cummings horse, dubbed 'the horse from heaven', won the 1996 Melbourne Cup?",
+  "options": [
+   "Kingston Rule",
+   "Let's Elope",
+   "Angel Delight",
+   "Saintly"
+  ],
+  "correctIndex": 3,
+  "answer": "Saintly",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "trainers",
+   "bart-cummings"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Bart Cummings's grandson James Cummings became Australian head trainer for which racing operation?",
+  "options": [
+   "Godolphin",
+   "Coolmore",
+   "Lindsay Park",
+   "Hungry Jack's"
+  ],
+  "correctIndex": 0,
+  "answer": "Godolphin",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "trainers",
+   "bart-cummings"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "Which trainer prepared Makybe Diva for her 2004 and 2005 Melbourne Cup wins?",
+  "options": [
+   "David Hall",
+   "Lee Freedman",
+   "Bart Cummings",
+   "Dr Dolittle"
+  ],
+  "correctIndex": 1,
+  "answer": "Lee Freedman",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "makybe-diva",
+   "trainers"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Makybe Diva's owner Tony Santic made his fortune in which industry?",
+  "options": [
+   "Wine making",
+   "Mining",
+   "Tuna fishing",
+   "Selling fidget spinners"
+  ],
+  "correctIndex": 2,
+  "answer": "Tuna fishing",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "makybe-diva"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "A bronze statue of Makybe Diva stands on the foreshore of which South Australian town?",
+  "options": [
+   "Port Augusta",
+   "Victor Harbor",
+   "Port Moresby",
+   "Port Lincoln"
+  ],
+  "correctIndex": 3,
+  "answer": "Port Lincoln",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "makybe-diva"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Makybe Diva's name was made from the first letters of what?",
+  "options": [
+   "The names of five women who worked for her owner",
+   "Her owner's five daughters",
+   "Five Melbourne suburbs",
+   "Five pizza toppings"
+  ],
+  "correctIndex": 0,
+  "answer": "The names of five women who worked for her owner",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "makybe-diva"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "Prince of Penzance won the 2015 Melbourne Cup at odds of about what?",
+  "options": [
+   "50 to 1",
+   "100 to 1",
+   "10 to 1",
+   "1 to 100"
+  ],
+  "correctIndex": 1,
+  "answer": "100 to 1",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "michelle-payne"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "Michelle Payne's brother Stevie, who drew her 2015 Cup barrier, worked as Prince of Penzance's what?",
+  "options": [
+   "Trainer",
+   "Farrier",
+   "Strapper",
+   "Personal chef"
+  ],
+  "correctIndex": 2,
+  "answer": "Strapper",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "michelle-payne"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Jockey Michelle Payne grew up as the youngest of how many children?",
+  "options": [
+   "Eight",
+   "Five",
+   "Ninety",
+   "Ten"
+  ],
+  "correctIndex": 3,
+  "answer": "Ten",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "michelle-payne"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "Which 2019 Australian film tells the story of jockey Michelle Payne?",
+  "options": [
+   "Ride Like a Girl",
+   "The Cup",
+   "Phar Lap",
+   "Horse Power Rangers"
+  ],
+  "correctIndex": 0,
+  "answer": "Ride Like a Girl",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "michelle-payne",
+   "film"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "In 1987, who became the first woman to ride in the Melbourne Cup?",
+  "options": [
+   "Michelle Payne",
+   "Maree Lyndon",
+   "Clare Lindop",
+   "Wonder Woman"
+  ],
+  "correctIndex": 1,
+  "answer": "Maree Lyndon",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "jockeys",
+   "history"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Which Irish trainer sent Vintage Crop to win the 1993 Melbourne Cup?",
+  "options": [
+   "Aidan O'Brien",
+   "Joseph O'Brien",
+   "Dermot Weld",
+   "Bono"
+  ],
+  "correctIndex": 2,
+  "answer": "Dermot Weld",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "trainers",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "Which jockey rode Vintage Crop to victory in the 1993 Melbourne Cup?",
+  "options": [
+   "Frankie Dettori",
+   "Lester Piggott",
+   "Mick Jagger",
+   "Mick Kinane"
+  ],
+  "correctIndex": 3,
+  "answer": "Mick Kinane",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "jockeys",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "In 2006, Delta Blues became the first Melbourne Cup winner trained in which country?",
+  "options": [
+   "Japan",
+   "France",
+   "England",
+   "Vatican City"
+  ],
+  "correctIndex": 0,
+  "answer": "Japan",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "Damien Oliver won the 2002 Melbourne Cup days after his brother's death, riding which horse?",
+  "options": [
+   "Makybe Diva",
+   "Media Puzzle",
+   "Ethereal",
+   "Crossword Champ"
+  ],
+  "correctIndex": 1,
+  "answer": "Media Puzzle",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "jockeys"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Americain won the 2010 Melbourne Cup for a trainer from which country?",
+  "options": [
+   "United States",
+   "Ireland",
+   "France",
+   "Fiji"
+  ],
+  "correctIndex": 2,
+  "answer": "France",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "Dunaden won the 2011 Melbourne Cup by a nose over which horse?",
+  "options": [
+   "Americain",
+   "Fiorente",
+   "Blue Moon Pie",
+   "Red Cadeaux"
+  ],
+  "correctIndex": 3,
+  "answer": "Red Cadeaux",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "international"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Cross Counter won the 2018 Melbourne Cup as the first Cup winner for which racing giant?",
+  "options": [
+   "Godolphin",
+   "Coolmore",
+   "Lindsay Park",
+   "Bunnings"
+  ],
+  "correctIndex": 0,
+  "answer": "Godolphin",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "owners"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Verry Elleegant won the 2021 Melbourne Cup for which trainer, also famous for Winx?",
+  "options": [
+   "Ciaron Maher",
+   "Chris Waller",
+   "Gai Waterhouse",
+   "Chris Hemsworth"
+  ],
+  "correctIndex": 1,
+  "answer": "Chris Waller",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "trainers"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "Which jockey won back-to-back Melbourne Cups on Gold Trip in 2022 and Without A Fight in 2023?",
+  "options": [
+   "James McDonald",
+   "Kerrin McEvoy",
+   "Mark Zahra",
+   "Mark Wahlberg"
+  ],
+  "correctIndex": 2,
+  "answer": "Mark Zahra",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "jockeys"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Which river runs alongside Flemington Racecourse?",
+  "options": [
+   "Yarra River",
+   "Murray River",
+   "The Nile",
+   "Maribyrnong River"
+  ],
+  "correctIndex": 3,
+  "answer": "Maribyrnong River",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "flemington"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "Flemington's famous 'straight six' course is how many metres long?",
+  "options": [
+   "1200 metres",
+   "1000 metres",
+   "1600 metres",
+   "6 metres"
+  ],
+  "correctIndex": 0,
+  "answer": "1200 metres",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "flemington"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "What is the exclusive marquee precinct at Flemington called?",
+  "options": [
+   "The Lawn",
+   "The Birdcage",
+   "The Paddock",
+   "The Henhouse"
+  ],
+  "correctIndex": 1,
+  "answer": "The Birdcage",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "flemington"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Which club runs Flemington Racecourse and the Melbourne Cup?",
+  "options": [
+   "Melbourne Racing Club",
+   "Moonee Valley Racing Club",
+   "Victoria Racing Club",
+   "Collingwood Football Club"
+  ],
+  "correctIndex": 2,
+  "answer": "Victoria Racing Club",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "flemington"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "Melbourne Cup week opens at Flemington on the Saturday before with which race day?",
+  "options": [
+   "Oaks Day",
+   "Stakes Day",
+   "Bin Day",
+   "Derby Day"
+  ],
+  "correctIndex": 3,
+  "answer": "Derby Day",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "spring-carnival"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "Which colours make up the traditional dress code for Victoria Derby Day?",
+  "options": [
+   "Black and white",
+   "Navy and white",
+   "Red and gold",
+   "Fluoro green and orange"
+  ],
+  "correctIndex": 0,
+  "answer": "Black and white",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "spring-carnival",
+   "fashion"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "Oaks Day at Flemington is popularly known as what?",
+  "options": [
+   "Fashion Day",
+   "Ladies' Day",
+   "Family Day",
+   "Mother-in-law Day"
+  ],
+  "correctIndex": 1,
+  "answer": "Ladies' Day",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "spring-carnival",
+   "fashion"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "On which day of Cup Week is the VRC Oaks run at Flemington?",
+  "options": [
+   "Wednesday",
+   "Friday",
+   "Thursday",
+   "The Tuesday after next February"
+  ],
+  "correctIndex": 2,
+  "answer": "Thursday",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "spring-carnival"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "What is the final Saturday of Flemington's Cup Week called?",
+  "options": [
+   "Finals Day",
+   "Farewell Day",
+   "Sleep-in Day",
+   "Stakes Day"
+  ],
+  "correctIndex": 3,
+  "answer": "Stakes Day",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "spring-carnival"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "The VRC Oaks at Flemington is restricted to which horses?",
+  "options": [
+   "Three-year-old fillies",
+   "Three-year-old colts",
+   "Two-year-olds of either sex",
+   "Retired police horses"
+  ],
+  "correctIndex": 0,
+  "answer": "Three-year-old fillies",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "spring-carnival"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Which British model caused a stir at Flemington on Derby Day 1965 with a short dress and no hat?",
+  "options": [
+   "Twiggy",
+   "Jean Shrimpton",
+   "Elle Macpherson",
+   "Big Bird"
+  ],
+  "correctIndex": 1,
+  "answer": "Jean Shrimpton",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "melbourne-cup",
+   "horse-racing",
+   "spring-carnival",
+   "fashion"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Which Sydney racecourse hosts the Golden Slipper?",
+  "options": [
+   "Royal Randwick",
+   "Warwick Farm",
+   "Rosehill Gardens",
+   "Luna Park"
+  ],
+  "correctIndex": 2,
+  "answer": "Rosehill Gardens",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "racecourses"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "The Everest sprint is run at which Sydney racecourse?",
+  "options": [
+   "Rosehill Gardens",
+   "Canterbury Park",
+   "Mount Everest",
+   "Royal Randwick"
+  ],
+  "correctIndex": 3,
+  "answer": "Royal Randwick",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "racecourses"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "Rather than nominating in the usual way, owners get a runner into The Everest by buying what?",
+  "options": [
+   "A slot",
+   "A ticket",
+   "A wildcard",
+   "A sherpa"
+  ],
+  "correctIndex": 0,
+  "answer": "A slot",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "racecourses"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Perth's major metropolitan racecourse shares its name with which famous English course?",
+  "options": [
+   "Epsom",
+   "Ascot",
+   "Aintree",
+   "Hogwarts"
+  ],
+  "correctIndex": 1,
+  "answer": "Ascot",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "racecourses"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "easy",
+  "question": "The Stradbroke Handicap is the highlight of which state's winter racing carnival?",
+  "options": [
+   "New South Wales",
+   "Western Australia",
+   "Queensland",
+   "Antarctica"
+  ],
+  "correctIndex": 2,
+  "answer": "Queensland",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "racecourses"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "The Sydney Cup is run at which racecourse?",
+  "options": [
+   "Rosehill Gardens",
+   "Flemington",
+   "The Opera House forecourt",
+   "Royal Randwick"
+  ],
+  "correctIndex": 3,
+  "answer": "Royal Randwick",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "racecourses"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "In 2019, the Warwick Stakes at Randwick was renamed in honour of which champion mare?",
+  "options": [
+   "Winx",
+   "Black Caviar",
+   "Sunline",
+   "Shrek's Donkey"
+  ],
+  "correctIndex": 0,
+  "answer": "Winx",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "australian-champions"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Who trained the unbeaten sprinter Black Caviar?",
+  "options": [
+   "Chris Waller",
+   "Peter Moody",
+   "Lee Freedman",
+   "Peter Rabbit"
+  ],
+  "correctIndex": 1,
+  "answer": "Peter Moody",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "australian-champions",
+   "trainers"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Black Caviar's only overseas start was a win at which famous meeting in 2012?",
+  "options": [
+   "Cheltenham Festival",
+   "The Kentucky Derby",
+   "Royal Ascot",
+   "The Easter Show"
+  ],
+  "correctIndex": 2,
+  "answer": "Royal Ascot",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "australian-champions",
+   "royal-ascot"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Which jockey rode Black Caviar to most of her wins?",
+  "options": [
+   "Hugh Bowman",
+   "Damien Oliver",
+   "Luke Skywalker",
+   "Luke Nolen"
+  ],
+  "correctIndex": 3,
+  "answer": "Luke Nolen",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "australian-champions",
+   "jockeys"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "medium",
+  "question": "Poet Banjo Paterson took his pen name 'The Banjo' from what?",
+  "options": [
+   "A family racehorse",
+   "His favourite instrument",
+   "His childhood dog",
+   "A sandwich"
+  ],
+  "correctIndex": 0,
+  "answer": "A family racehorse",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "history"
+  ]
+ },
+ {
+  "category": "Horse racing",
+  "difficulty": "hard",
+  "question": "Which Australian race caller was nicknamed 'The Accurate One'?",
+  "options": [
+   "Bruce McAvaney",
+   "Bill Collins",
+   "Ken Sutcliffe",
+   "Roy and HG"
+  ],
+  "correctIndex": 1,
+  "answer": "Bill Collins",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "horse-racing",
+   "history"
+  ]
+ }
+]
