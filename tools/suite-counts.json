@@ -115,6 +115,10 @@
   "checks": 178,
   "counted_by": "total"
  },
+ "tools/account-structure-in-chrome.test.py": {
+  "checks": 54,
+  "counted_by": "lines"
+ },
  "tools/add-login-email.test.py": {
   "checks": 19,
   "counted_by": "lines"
@@ -252,7 +256,7 @@
   "counted_by": "lines"
  },
  "tools/test-bingo-seat-15-oct.js": {
-  "checks": 39,
+  "checks": 41,
   "counted_by": "lines"
  },
  "tools/test-bingo-server-tickets.js": {
@@ -388,15 +392,15 @@
   "counted_by": "lines"
  },
  "tools/test-musical-15-oct.js": {
-  "checks": 65,
+  "checks": 70,
   "counted_by": "lines"
  },
  "tools/test-musical-host.js": {
-  "checks": 55,
+  "checks": 65,
   "counted_by": "lines"
  },
  "tools/test-musical-phone.js": {
-  "checks": 33,
+  "checks": 38,
   "counted_by": "lines"
  },
  "tools/test-musical-print.js": {
@@ -456,7 +460,7 @@
   "counted_by": "lines"
  },
  "tools/test-permits-and-compliance-tick.js": {
-  "checks": 72,
+  "checks": 84,
   "counted_by": "lines"
  },
  "tools/test-phones-cannot-be-impersonated.js": {
@@ -508,7 +512,7 @@
   "counted_by": "lines"
  },
  "tools/test-raffle-console.js": {
-  "checks": 45,
+  "checks": 53,
   "counted_by": "lines"
  },
  "tools/test-raffle-unsold-server.js": {
@@ -627,6 +631,10 @@
   "checks": 10,
   "counted_by": "lines"
  },
+ "tools/test-tv-slides-in-step.js": {
+  "checks": 10,
+  "counted_by": "lines"
+ },
  "tools/test-tv-watchdog-runs.js": {
   "checks": 12,
   "counted_by": "lines"
@@ -716,7 +724,7 @@
   "counted_by": "lines"
  },
  "tools/venue-logo-in-chrome.test.py": {
-  "checks": 291,
+  "checks": 348,
   "counted_by": "lines"
  },
  "touring-backend/lib/touring-api.test.js": {
@@ -824,11 +832,11 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/trivia/trivia-night.test.js": {
-  "checks": 114,
+  "checks": 116,
   "counted_by": "lines"
  },
  "venueplay-backend/app/tv-ads-rebuild.test.js": {
-  "checks": 28,
+  "checks": 29,
   "counted_by": "lines"
  },
  "venueplay-backend/app/tv-logo.test.js": {

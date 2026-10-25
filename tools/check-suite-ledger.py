@@ -56,7 +56,7 @@ def run(rel):
     # files relative to themselves, so a suite that cannot even start is tried from its own folder.
     for cwd, arg in ((ROOT, rel), (os.path.join(ROOT, os.path.dirname(rel)), os.path.basename(rel))):
         try:
-            r = subprocess.run(cmd[:-1] + [arg], cwd=cwd, capture_output=True, text=True, timeout=300)
+            r = subprocess.run(cmd[:-1] + [arg], cwd=cwd, capture_output=True, text=True, timeout=int(os.environ.get('VP_LEDGER_TIMEOUT', '300')))
         except Exception as e:
             best = best or (1, 0, ['could not run: %s' % e], 'lines'); continue
         out = (r.stdout or '') + (r.stderr or '')
