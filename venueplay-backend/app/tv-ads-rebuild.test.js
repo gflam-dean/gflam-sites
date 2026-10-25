@@ -42,11 +42,12 @@ function grab(name){
   }
   return null;
 }
-var fnBuild = grab("buildAds"), fnSig = grab("adsSignature"), fnStart = grab("startAds"), fnStop = grab("stopAds");
+var fnBuild = grab("buildAds"), fnSig = grab("adsSignature"), fnStart = grab("startAds"), fnStop = grab("stopAds"), fnSlot = grab("adSlotAt");
 ok("buildAds is still in tv.html", !!fnBuild);
 ok("adsSignature is still in tv.html", !!fnSig);
 ok("startAds is still in tv.html", !!fnStart);
-if (!fnBuild || !fnSig || !fnStart || !fnStop) throw new Error("missing functions");
+ok("adSlotAt is still in tv.html", !!fnSlot);
+if (!fnBuild || !fnSig || !fnStart || !fnStop || !fnSlot) throw new Error("missing functions");
 
 /* ---------------- a DOM small enough to run these and nothing more ---------------- */
 var emptyFrames = 0;   // every moment the live container held no slides at all
@@ -111,10 +112,12 @@ function entryInner(e){ return e.type === "holding" ? "<i>holding</i>" : "<b>" +
 
 var adIdx = 0, adTimer = null, adBuilt = false, adFadeTimer = null, adsSig = null;
 var timers = [];
+/* The wall reads its slide off the clock (adSlotAt, 25 Oct 2026), so the test owns the clock. */
+var NOW = 0; Date.now = function(){ return NOW; };
 function setTimeout(fn, ms){ timers.push({ fn:fn, ms:ms }); return timers.length; }
 function clearTimeout(){}
 function clearInterval(){}
-eval(fnSig); eval(fnBuild); eval(fnStop); eval(fnStart);
+eval(fnSig); eval(fnBuild); eval(fnStop); eval(fnSlot); eval(fnStart);
 
 function shownIndex(){
   for (var i = 0; i < host.childNodes.length; i++) if (host.childNodes[i].classList.contains("show")) return i;
@@ -136,6 +139,7 @@ ok("nothing was empty on the way", emptyFrames === 0);
    takes the old one away when the cross-fade timer fires, so both are lit in between.
    Run both, or the wall looks like it never moved. */
 function tickAdvance(){
+  NOW += timers[adTimer - 1].ms;   // the slide's time passes, then its timer fires
   timers[adTimer - 1].fn();
   if (adFadeTimer) timers[adFadeTimer - 1].fn();
 }
@@ -168,7 +172,7 @@ ok("the swap never emptied the wall", emptyFrames === 0,
    "build the new set detached and swap it in; never clear then refill");
 ok("the new slide is on the wall", host.childNodes[2].innerHTML.indexOf("NEW meal deal") >= 0);
 startAds();
-ok("a genuinely different set starts at the top", shownIndex() === 0);
+ok("a genuinely different set picks up on the clock's slide, so every wall still agrees", shownIndex() === 2, "on slide " + shownIndex());
 
 print("== the watchdog does not trust what it can see ==");
 emptyFrames = 0;

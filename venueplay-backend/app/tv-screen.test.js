@@ -71,7 +71,7 @@ function grabBranch(marker){
   return null;
 }
 
-var NEED = ["adsSignature","buildAds","stopAds","startAds","loopEntries","entryClass","entryInner",
+var NEED = ["adsSignature","buildAds","stopAds","startAds","adSlotAt","loopEntries","entryClass","entryInner",
             "slideVisible","todayStr","hasRaffle","accentClass","accentHex","esc","escBr",
             "landBall","revealBall","bingoCall","restBall","renderRun","calledSet","updateBoard","hideBingoLayers",
             "showBingoLayer","applyBingo","hideGameFrame","applyVenueLogo","stopCelebrate",
@@ -420,12 +420,13 @@ emptyFrames = 0;
 var dStart = mark();
 var didBuild = buildAds(); record();
 startAds(); record();
+var afterStartIdx = adIdx;   // read before the clock moves: the wall reads its slide off the clock now
 run(3000);
 var dFrames = since(dStart);
 
 ok("nothing is rebuilt when the venue's content has not changed", didBuild === false,
    "identical cards were thrown away and recreated, which is the flash");
-ok("the loop keeps its place across a rebuild", adIdx === beforeIdx,
+ok("the loop keeps its place across a rebuild", afterStartIdx === beforeIdx,
    "it jumped from card #" + beforeIdx + " to #" + adIdx + ": Dean's 'starts on the Saturday slide every time'");
 ok("the container is never empty through a rebuild", emptyFrames === 0,
    emptyFrames + " empty moments");
