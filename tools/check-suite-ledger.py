@@ -84,7 +84,8 @@ def run(rel):
 
 def main():
     suites = discover()
-    with ThreadPoolExecutor(max_workers=6) as ex:
+    # VP_LEDGER_JOBS: fewer at once on a loaded Mac. Six Chrome suites at once timed tv-and-phone out at 300 s (25 Oct 2026).
+    with ThreadPoolExecutor(max_workers=int(os.environ.get('VP_LEDGER_JOBS', '6'))) as ex:
         results = dict(zip(suites, ex.map(run, suites)))
     if '--update' in sys.argv:
         broken = {s: r for s, r in results.items() if r[0] != 0 or r[2]}
