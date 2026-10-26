@@ -364,3 +364,10 @@ Worker `/host/bingo/patterns` (list, any staff), `/save` and `/delete` (owner, o
 VP-DRAW-1.2's claim rule. Either order with the Worker is safe: without the table the list answers available:false and the
 console shows no custom option. After running, dump RLS-BASELINE.json (one new locked table). Branch
 `feature/custom-bingo-patterns`. RUN on the live database (vp_bingo_patterns exists, 26 Oct 2026). Rollback: in the file.
+`venueplay-119-gflam-customers-unsubscribe-source.sql` (Dean, 26 Oct 2026, one-click unsubscribe for Gflam Touring / Drag
+Bingo email): `gflam_customers.unsubscribe_source` (text) and a partial index on `unsubscribed_at`. `gflam_customers` itself
+was created by hand on 24 Oct 2026 from ~/venue-enrich/oztix/RUN-ME-gflam-customers.sql (not in this folder; RLS on, no
+policies, service role only, unchanged here). Run BEFORE the touring-api build carrying `/unsubscribe` (it writes the column).
+No grant or policy change, so RLS-BASELINE.json does not change. Branch `feature/gflam-one-click-unsub`. NOT RUN.
+Rollback: `alter table public.gflam_customers drop column unsubscribe_source; drop index gflam_customers_unsubscribed_idx;`
+(117 is feature/multi-raffle and 118 feature/custom-patterns, both unmerged.)

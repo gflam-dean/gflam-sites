@@ -63,7 +63,7 @@ const MAX_SAVE_BYTES = 256 * 1024;
 const MAX_IMAGE_REF = 2048;
 const IMAGE_COLUMN = { shows: 'img_src', tour_categories: 'image_url' };
 
-const BUILD = '19 Oct 2026, 08:59 · c3d4d398';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '26 Oct 2026, 22:11 · bf50f873';   // tools/stamp-workers.py, do not edit by hand
 
 function timingSafeEqual(a, b) {
   if (typeof a !== 'string' || typeof b !== 'string' || a.length !== b.length) return false;
@@ -226,6 +226,153 @@ async function sb(env, path, init = {}) {
   return { ok: r.ok, status: r.status, body };
 }
 
+// ---------------------------------------------------------------- unsubscribe ----
+// GET  /unsubscribe?e=<email>&t=<token>[&c=<campaign>]   the link in every Gflam email
+// POST /unsubscribe?e=<email>&t=<token>[&c=<campaign>]   RFC 8058 one-click, no page
+//
+// WHY. Dean, 26 Oct 2026: "why's it not a link that you click and it automates it".
+// The Drag Bingo mail-out's only unsubscribe was a mailto, and the list was a hand-kept
+// suppress.txt. Under the Spam Act the facility has to work; it now writes
+// gflam_customers.unsubscribed_at, and send-mailout.py skips anybody with it set.
+//
+// THE TOKEN is copied from PartyPlay's scheme: an HMAC-SHA256 of the trimmed, lower-cased
+// address, keyed with 'gflam-unsub:' + GFLAM_UNSUB_SECRET, hex, first 32 characters. The
+// mail-out computes the same thing in Python (touring-backend/lib/gflam_unsub.py), and
+// both suites check one fixed vector so the two can never drift apart. Unlike PartyPlay a
+// link with NO token is refused: no email ever went out with a link to this route
+// before it had tokens, so there is no old link to honour. The campaign tag c is not
+// signed and only labels where the opt-out came from.
+//
+// THE GET DOES NOT WRITE. Outlook SafeLinks, Gmail and corporate scanners fetch every
+// link in a message before a human sees it, so a GET that unsubscribes takes people off
+// the list who never asked. The page posts back to itself as soon as it loads, so a
+// person sees "You're off the list" from one click, while a scanner that only fetches
+// writes nothing. With scripts off, one button does the same.
+//
+// IDEMPOTENT. The first unsubscribe's time is kept (it is the proof we honoured it); a
+// repeat changes nothing and still answers done. Somebody not on the list at all gets
+// a row that records only the opt-out, so a later import can never mail them.
+const UNSUB_EMAIL_RE = /^[^@\s"<>,;()\\]+@[^@\s"<>,;()\\]+\.[^@\s"<>,;()\\]+$/;
+
+async function gflamUnsubToken(env, email) {
+  const key = await crypto.subtle.importKey('raw',
+    new TextEncoder().encode('gflam-unsub:' + String(env.GFLAM_UNSUB_SECRET || '')),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const mac = await crypto.subtle.sign('HMAC', key,
+    new TextEncoder().encode(String(email || '').trim().toLowerCase()));
+  return toHex(mac).slice(0, 32);
+}
+
+function unsubEsc(s) {
+  return String(s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
+function unsubPage(title, bodyHtml, status, extra) {
+  const html = '<!doctype html><html lang="en-AU"><head><meta charset="utf-8">' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<meta name="robots" content="noindex">' +
+    '<title>' + unsubEsc(title) + ' | Gflam Touring</title>' +
+    '<link rel="preconnect" href="https://fonts.googleapis.com">' +
+    '<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet">' +
+    '<style>' +
+    ':root{--bg:#0a0a0a;--card:#1a0a1a;--ink:#fff4fb;--soft:#cdb7c6;--pink:#fe65c3}' +
+    '*{box-sizing:border-box}html,body{margin:0}' +
+    'body{background:var(--bg);color:var(--ink);font:16px/1.6 "DM Sans",system-ui,sans-serif;' +
+    'min-height:100vh;display:grid;place-items:center;padding:24px 16px;' +
+    'background-image:radial-gradient(circle at 50% 0,#2a0a2a 0,transparent 60%)}' +
+    '.card{width:100%;max-width:440px;background:var(--card);border:1px solid #3a1838;border-radius:20px;' +
+    'padding:36px 28px;text-align:center;box-shadow:0 20px 60px rgba(254,101,195,.12)}' +
+    '.brand{font:600 12px/1 "DM Sans",sans-serif;letter-spacing:.18em;text-transform:uppercase;color:var(--pink);margin:0 0 18px}' +
+    'h1{font:400 34px/1.15 "DM Serif Display",Georgia,serif;margin:0 0 14px}' +
+    'p{color:var(--soft);margin:0 0 14px}a{color:var(--pink)}' +
+    'button{background:var(--pink);color:#1a0010;border:0;border-radius:999px;padding:14px 26px;' +
+    'font:600 16px "DM Sans",sans-serif;cursor:pointer;margin-top:8px}' +
+    '.foot{margin-top:22px;font-size:13px}' +
+    '</style></head><body><main class="card">' +
+    '<p class="brand">Gflam Touring &middot; Drag Bingo</p>' +
+    '<div id="msg"><h1>' + unsubEsc(title) + '</h1>' + bodyHtml + '</div>' +
+    (extra || '') +
+    '<p class="foot"><a href="https://www.gflamtouring.com.au">gflamtouring.com.au</a></p>' +
+    '</main></body></html>';
+  return new Response(html, { status: status || 200,
+    headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store',
+               'x-robots-tag': 'noindex', 'referrer-policy': 'no-referrer' } });
+}
+
+// Writes the opt-out. Returns true only when the database has it.
+async function recordGflamUnsub(env, email, source) {
+  const now = new Date().toISOString();
+  const e = encodeURIComponent(email);
+  // Only a row not already unsubscribed is touched, so the first time is kept.
+  const patched = await sb(env, 'gflam_customers?email=eq.' + e + '&unsubscribed_at=is.null', {
+    method: 'PATCH',
+    headers: { Prefer: 'return=representation' },
+    body: JSON.stringify({ unsubscribed_at: now, unsubscribe_source: source, updated_at: now }),
+  });
+  if (!patched.ok) return false;
+  if (Array.isArray(patched.body) && patched.body.length) return true;
+  // Nothing matched: either already off the list, or never on it. Insert the opt-out on
+  // its own; an existing row (already unsubscribed) is left exactly as it is.
+  const ins = await sb(env, 'gflam_customers?on_conflict=email', {
+    method: 'POST',
+    headers: { Prefer: 'resolution=ignore-duplicates,return=minimal' },
+    body: JSON.stringify([{ email: email, source: 'unsubscribe', lists: [],
+      consent: 'none: this row only records an unsubscribe and must never be mailed',
+      consent_at: now, unsubscribed_at: now, unsubscribe_source: source, updated_at: now }]),
+  });
+  return ins.ok;
+}
+
+async function handleGflamUnsubscribe(request, env, url) {
+  const email = String(url.searchParams.get('e') || '').trim().toLowerCase();
+  const tok = String(url.searchParams.get('t') || '').trim().toLowerCase();
+  const camp = String(url.searchParams.get('c') || '').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 40);
+  const isPost = request.method === 'POST';
+  const BY_HAND = 'Reply to the email with the word unsubscribe, or write to ' +
+    '<a href="mailto:hello@gflamtouring.com.au?subject=unsubscribe">hello@gflamtouring.com.au</a>, ' +
+    'and we will take you off by hand.';
+  const plain = (text, status) => new Response(text, { status: status,
+    headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' } });
+
+  if (!isPost && request.method !== 'GET') return plain('method not allowed', 405);
+  // An unset secret must never mean "any token will do".
+  if (!env.GFLAM_UNSUB_SECRET || !env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) {
+    return isPost ? plain('not configured', 503)
+                  : unsubPage('Something went wrong', '<p>Our unsubscribe is having a moment. ' + BY_HAND + '</p>', 503);
+  }
+  if (!UNSUB_EMAIL_RE.test(email) || email.length > 254 ||
+      !/^[0-9a-f]{32}$/.test(tok) || !timingSafeEqual(tok, await gflamUnsubToken(env, email))) {
+    return isPost ? plain('that link is not valid', 403)
+                  : unsubPage('That link looks wrong', '<p>It may have been cut short when it was copied. ' +
+                      'Use the unsubscribe link in the email itself. ' + BY_HAND + '</p>', 403);
+  }
+
+  if (isPost) {
+    // A mail client's one-click button sends List-Unsubscribe=One-Click (RFC 8058); our
+    // own page sends via=page. Either way this is the person asking.
+    let body = '';
+    try { body = await request.text(); } catch (_) {}
+    const via = /List-Unsubscribe=One-Click/i.test(body) ? 'one-click' : 'link';
+    const ok = await recordGflamUnsub(env, email, (via + (camp ? ':' + camp : '')).slice(0, 60));
+    return ok ? plain('unsubscribed', 200) : plain('could not save, try again', 502);
+  }
+
+  // GET: the page. Nothing is written until it posts back.
+  const action = '/unsubscribe?e=' + encodeURIComponent(email) + '&t=' + tok + (camp ? '&c=' + camp : '');
+  const DONE_H = "You're off the list";
+  const DONE_P = 'We will not send ' + unsubEsc(email) + ' any more marketing emails from Gflam Touring or Drag Bingo. ' +
+    'Tickets you have already bought are not affected.';
+  const form = '<form id="f" method="POST" action="' + unsubEsc(action) + '">' +
+    '<input type="hidden" name="via" value="page"><noscript><button type="submit">Yes, take me off the list</button></noscript></form>' +
+    '<script>(function(){var m=document.getElementById("msg");' +
+    'fetch(' + JSON.stringify(action) + ',{method:"POST",headers:{"content-type":"application/x-www-form-urlencoded"},body:"via=page"})' +
+    '.then(function(r){if(!r.ok)throw 0;m.innerHTML=' + JSON.stringify('<h1>' + DONE_H.replace(/'/g, '&#39;') + '</h1><p>' + DONE_P + '</p>') + ';})' +
+    '.catch(function(){m.innerHTML=' + JSON.stringify('<h1>That did not go through</h1><p>Please try the link again in a minute. ' + BY_HAND + '</p>') + ';});})();</script>';
+  return unsubPage('Taking you off the list', '<p>One moment&hellip;</p>', 200, form);
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -241,7 +388,8 @@ export default {
     // Health says whether the secrets are set, and NEVER what they are. Without
     // this a missing secret looks exactly like a wrong password.
     if (path === '/health') {
-      const missing = ['MANAGE_PASSWORD', 'SUPABASE_URL', 'SUPABASE_SERVICE_KEY']
+      // GFLAM_UNSUB_SECRET since 26 Oct 2026: without it every unsubscribe link is refused.
+      const missing = ['MANAGE_PASSWORD', 'SUPABASE_URL', 'SUPABASE_SERVICE_KEY', 'GFLAM_UNSUB_SECRET']
         .filter((k) => !env[k]);
       return json({ worker: 'touring-api', build: BUILD, ok: missing.length === 0, missing });
     }
@@ -263,6 +411,10 @@ export default {
         try: '/health for status. The manager UI is https://www.gflamtouring.com.au/manage.html',
       });
     }
+
+    // Linked from every Gflam marketing email. Not behind the manager password: the
+    // signed token in the link is the only thing that proves it is that person.
+    if (path === '/unsubscribe') return handleGflamUnsubscribe(request, env, url);
 
     if (path === '/upload') {
       if (request.method !== 'POST') return json({ error: 'method not allowed' }, 405);
