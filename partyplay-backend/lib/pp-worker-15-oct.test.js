@@ -240,6 +240,22 @@ ok("a link from an email sent before tokens still works after the click (Spam Ac
 r = call("GET", "/unsubscribe?e=host%40example.com&t=" + tok);
 ok("the Worker's own page asks first, and its button carries the token", r.status === 200 && /Yes, unsubscribe/.test(r.text) && r.text.indexOf('name="t" value="' + tok + '"') > 0, r.text.slice(0, 200));
 
+/* THE ONE-CLICK HEADERS (26 Oct 2026, Dean: "I need unsubscribe links on ALL marketing emails we
+   send"). Gmail's and Apple Mail's own Unsubscribe button POSTs to the https address in
+   List-Unsubscribe, so that address has to be the Worker, carry the same token, and work with the
+   RFC 8058 body and nothing else. */
+var hdrs = mail ? (JSON.parse(mail.init.body).headers || {}) : {};
+var lu = hdrs["List-Unsubscribe"] || "";
+ok("the follow-up carries List-Unsubscribe with the Worker's https address, the token, and the mailto",
+   lu === "<https://partyplay-api.dean-tindale.workers.dev/unsubscribe?e=host%40example.com&t=" + tok + ">, <mailto:hello@partyplay.com.au?subject=unsubscribe>", lu);
+ok("and List-Unsubscribe-Post: List-Unsubscribe=One-Click", hdrs["List-Unsubscribe-Post"] === "List-Unsubscribe=One-Click", JSON.stringify(hdrs));
+ok("so does the expiry reminder", !!nudge && /headers: await ppUnsubHeaders\(env, l\.buyer_email\)/.test(nudge[0]));
+DB.tables.pp_subscribers = [];
+var oneClick = lu.replace(/^<https:\/\/[^\/]+/, "").replace(/>.*$/, "");
+r = call("POST", oneClick, "List-Unsubscribe=One-Click", { "content-type": "application/x-www-form-urlencoded" });
+ok("the mail app's one-click POST to that address takes them off", r.status === 200 && DB.tables.pp_subscribers.length === 1 &&
+   DB.tables.pp_subscribers[0].email === "host@example.com" && DB.tables.pp_subscribers[0].unsubscribed_at, r.text.slice(0, 200));
+
 print("");
 if (bad) { print(bad + " OF " + ran + " CHECKS FAILED"); throw new Error(bad + " failed"); }
 print("ALL " + ran + " CHECKS PASSED");

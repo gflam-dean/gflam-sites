@@ -6180,6 +6180,24 @@ MUTATIONS = [
 
     # ---- 26 Oct 2026: one-click unsubscribe for Gflam Touring / Drag Bingo email (Dean: "why's it
     # ---- not a link that you click and it automates it"). Each proven red by running the suite on a copy.
+    # PartyPlay's marketing sends (follow-up promo, expiry reminder) get the one-click headers too
+    # (Dean, 26 Oct 2026: "I need unsubscribe links on ALL marketing emails we send").
+    ('pp-worker-15-oct.test.js', 'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     "    subject: 'How was ' + (l.party_name || 'the party') + '?',\n    headers: await ppUnsubHeaders(env, l.buyer_email),",
+     "    subject: 'How was ' + (l.party_name || 'the party') + '?',",
+     'the PartyPlay follow-up (a promo code) goes out with no List-Unsubscribe header, so no one-click button'),
+    ('pp-worker-15-oct.test.js', 'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     "    subject: 'Your party code runs out in ' + daysLeft + ' days',\n    headers: await ppUnsubHeaders(env, l.buyer_email),",
+     "    subject: 'Your party code runs out in ' + daysLeft + ' days',",
+     'the PartyPlay expiry reminder goes out with no List-Unsubscribe header'),
+    ('pp-worker-15-oct.test.js', 'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     "           'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' };",
+     '           };',
+     'the PartyPlay RFC 8058 header is lost, so Gmail and Yahoo show no one-click button'),
+    ('pp-worker-15-oct.test.js', 'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     "  const api = (env.API_ORIGIN || 'https://partyplay-api.dean-tindale.workers.dev').replace(/\\/$/, '');",
+     "  const api = (env.SITE_ORIGIN || '').replace(/\\/$/, '');",
+     'the one-click header points at the Pages site, which answers a POST with the homepage and records nothing'),
     ('touring-unsubscribe.test.js', 'touring-backend/worker/DEPLOY-touring-api.js',
      '      !/^[0-9a-f]{32}$/.test(tok) || !timingSafeEqual(tok, await gflamUnsubToken(env, email))) {',
      '      !/^[0-9a-f]{32}$/.test(tok)) {',

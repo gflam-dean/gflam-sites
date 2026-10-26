@@ -108,7 +108,7 @@
   "counted_by": "total"
  },
  "partyplay-backend/lib/pp-worker-15-oct.test.js": {
-  "checks": 35,
+  "checks": 39,
   "counted_by": "lines"
  },
  "partyplay-backend/worker/partyplay-api.test.js": {

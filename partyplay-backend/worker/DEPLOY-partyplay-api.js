@@ -1,5 +1,5 @@
 /* PASTE THIS ONE.
-   Built 24 Oct 2026, 01:08:58   fingerprint 978124f6fe13
+   Built 26 Oct 2026, 22:13:13   fingerprint e1f0d1d8f7d3
    If that time is not within the last few minutes, close this window and reopen. */
 /* ============================================================================
    PartyPlay Worker: checkout, licences, joining.
@@ -16,7 +16,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '24 Oct 2026, 01:08 · eb5cbf97';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '26 Oct 2026, 22:13 · 91947433';   // tools/stamp-workers.py, do not edit by hand
 /* ---- lib/pp-licence.js, inlined at build time. Edit the file, not this. ---- */
 const PPLicence = (function () {
   const module = { exports: {} };
@@ -1016,6 +1016,7 @@ async function sendFollowupEmail(env, l) {
     reply_to: 'hello@partyplay.com.au',
     to: [l.buyer_email],
     subject: 'How was ' + (l.party_name || 'the party') + '?',
+    headers: await ppUnsubHeaders(env, l.buyer_email),
     html: emailShell({
       site: site,
       preview: '10% off the next one, if you are planning it.',
@@ -1615,6 +1616,22 @@ async function runPhotoSweep(env) {
    days after it was sent. Turning tokenless links off later is Dean's call; until then the click
    is the protection they get, as before. The key is UNSUB_SECRET if it is set, and otherwise the
    service key, which is already a secret only this Worker holds. */
+/* THE ONE-CLICK HEADERS (26 Oct 2026, Dean: "I need unsubscribe links on ALL marketing emails
+   we send"). The footer link goes to the PAGE on partyplay.com.au, which asks first. Gmail, Yahoo
+   and Apple Mail also offer their own Unsubscribe button, and that button POSTs straight to the
+   https address in List-Unsubscribe (RFC 8058), so the address in the header must be this
+   WORKER, not the page: Pages answers a POST it has no route for with the homepage. The POST
+   below needs only e and t in the query, which this carries. The mailto stays as the fallback
+   for mail apps that only do mailto. api.partyplay.com.au has no DNS yet (lib/pp-config.js), so
+   the workers.dev address is the default until API_ORIGIN is set. */
+async function ppUnsubHeaders(env, email) {
+  const api = (env.API_ORIGIN || 'https://partyplay-api.dean-tindale.workers.dev').replace(/\/$/, '');
+  const url = api + '/unsubscribe?e=' + encodeURIComponent(String(email || '').trim().toLowerCase()) +
+              '&t=' + (await unsubToken(env, email));
+  return { 'List-Unsubscribe': '<' + url + '>, <mailto:hello@partyplay.com.au?subject=unsubscribe>',
+           'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' };
+}
+
 async function unsubToken(env, email) {
   const secret = env.UNSUB_SECRET || env.SUPABASE_SERVICE_KEY || '';
   const key = await crypto.subtle.importKey('raw', new TextEncoder().encode('pp-unsub:' + secret),
@@ -1973,6 +1990,7 @@ async function sendNudgeEmail(env, l, daysLeft) {
     reply_to: 'hello@partyplay.com.au',
     to: [l.buyer_email],
     subject: 'Your party code runs out in ' + daysLeft + ' days',
+    headers: await ppUnsubHeaders(env, l.buyer_email),
     html: emailShell({
       site: site,
       preview: 'Code ' + l.code + ' has not been used yet, and it expires soon.',
