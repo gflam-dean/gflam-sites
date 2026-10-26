@@ -351,4 +351,4 @@ now be 'custom', with `custom_pattern_id` and `custom_pattern` (the name and rul
 Worker `/host/bingo/patterns` (list, any staff), `/save` and `/delete` (owner, or a manager with games rights), and by
 VP-DRAW-1.2's claim rule. Either order with the Worker is safe: without the table the list answers available:false and the
 console shows no custom option. After running, dump RLS-BASELINE.json (one new locked table). Branch
-`feature/custom-bingo-patterns`. NOT RUN. Rollback: in the file.
+`feature/custom-bingo-patterns`. RUN on the live database (vp_bingo_patterns exists, 26 Oct 2026). Rollback: in the file.
