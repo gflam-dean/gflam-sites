@@ -78,7 +78,10 @@ export default {
         const can = {
           sms:   !!(env.MOBILEMESSAGE_USERNAME && env.MOBILEMESSAGE_PASSWORD),
           email: !!env.RESEND_API_KEY,
-          cardLinks: !!env.CARD_LINK_SECRET
+          cardLinks: !!env.CARD_LINK_SECRET,
+          /* 26 Oct 2026: without VP_UNSUB_SECRET every marketing email's unsubscribe link is
+             refused and the HQ win-back will not send at all (it checks before it sends). */
+          unsubscribe: !!env.VP_UNSUB_SECRET
         };
         const quiet = Object.keys(can).filter((k) => !can[k]);
         return json({
@@ -92,6 +95,12 @@ export default {
               '. No sms means staff never get their sign-in code.'
             : undefined
         }, missing.length ? 503 : 200);
+      }
+
+      /* Linked from every VenuePlay MARKETING email (the HQ win-back today). Public on purpose:
+         the signed token in the link is the only thing that proves it is that person. */
+      if (path === '/unsubscribe' && (request.method === 'GET' || request.method === 'POST')) {
+        return await vpHandleUnsubscribe(request, env, url);
       }
 
       /* IS THIS FOUNDING WINDOW STILL OPEN?
@@ -4798,19 +4807,23 @@ function vpaAlertSubject(kind, rest) {
 /* One place that actually posts to Resend, so the three emails below cannot
    drift on the from address or the reply-to. Returns true if it went. */
 /* replyTo: where a reply lands. hello@ unless the sender says otherwise; the HQ welcome and the
-   onboarding guide say support@, because a reply to either is a setup question. */
-async function vpaSendEmail(env, to, subject, html, replyTo) {
+   onboarding guide say support@, because a reply to either is a setup question.
+   headers: extra message headers, only ever vpUnsubHeaders() for a MARKETING email (26 Oct 2026).
+   A transactional email passes nothing and goes out exactly as before. */
+async function vpaSendEmail(env, to, subject, html, replyTo, headers) {
   if (!env.RESEND_API_KEY || !to) return false;
+  const msg = {
+    from: 'VenuePlay <hello@send.venueplay.com.au>',
+    reply_to: replyTo || 'hello@venueplay.com.au',
+    to: [to],
+    subject: subject,
+    html: html,
+  };
+  if (headers && typeof headers === 'object' && Object.keys(headers).length) msg.headers = headers;
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      from: 'VenuePlay <hello@send.venueplay.com.au>',
-      reply_to: replyTo || 'hello@venueplay.com.au',
-      to: [to],
-      subject: subject,
-      html: html,
-    }),
+    body: JSON.stringify(msg),
   });
   /* ACCEPTED, NOT DELIVERED, and the difference has already cost us. res.ok is Resend saying
      it has taken the message: the far end has not been near it yet. The audit rows written
@@ -9091,7 +9104,10 @@ const VPA_AUDIT_SAY = {
   venue_cancel_note: function (d, at) { return 'Wrote a note on ' + at + ': "' + String(d.note || '').slice(0, 160) + '"'; },
   venue_quiet_contacted: function (d, at) { return 'Contacted ' + at + ' because they had gone quiet.'; },
   venue_subscription_ended: function (d, at) { return at + '\'s subscription ended.'; },
-  venue_invited_back: function (d, at) { return 'Emailed ' + at + ' an invitation to keep or come back to VenuePlay' + (d.to ? ' (' + d.to + ')' : '') + '.'; },
+  venue_invited_back: function (d, at) {
+    if (d.held === 'unsubscribed') return 'Did not email ' + at + (d.to ? ' (' + d.to + ')' : '') + ': that address has unsubscribed from VenuePlay marketing email.';
+    return 'Emailed ' + at + ' an invitation to keep or come back to VenuePlay' + (d.to ? ' (' + d.to + ')' : '') + '.';
+  },
   venue_marked_test: function (d, at) { return 'Marked ' + at + ' as a test venue.'; },
   venue_unmarked_test: function (d, at) { return 'Marked ' + at + ' as a real venue again.'; },
   auto_archive_run: function (d) { return 'The nightly job archived ' + (d.archived || 0) + ' venue' + (d.archived === 1 ? '' : 's') + ' that had left.'; },
@@ -9296,6 +9312,187 @@ async function vpaHandleBillingHealth(request, env, json) {
   return json({ ok: true, lines: out, events: rows.length });
 }
 
+/* =======================================================================================
+   ONE-CLICK UNSUBSCRIBE FOR VENUEPLAY MARKETING EMAIL (Dean, 26 Oct 2026: "I need
+   unsubscribe links on ALL marketing emails we send").
+
+   GET  /unsubscribe?e=<email>&t=<token>[&c=<campaign>]   the link in the footer
+   POST /unsubscribe?e=<email>&t=<token>[&c=<campaign>]   RFC 8058 one-click, no page
+
+   WHICH EMAILS. Only MARKETING goes through vpUnsubHeaders / vpUnsubFooterHtml and only
+   marketing checks the list first. Today that is one email: the HQ win-back ("Keep <venue> on
+   VenuePlay?", vpaHandleInviteBack). Receipts, payment reminders, failed payments, plan moves,
+   the two leaving emails, welcome and setup, sign-in codes and help desk replies are about the
+   service someone pays for: not commercial electronic messages under the Spam Act, and opting
+   out of marketing must never silence them (vpaFireCancelConfirm says why).
+
+   THE TOKEN is the same scheme as touring-api and partyplay-api: an HMAC-SHA256 of the
+   trimmed, lower-cased address, keyed with 'vp-unsub:' + VP_UNSUB_SECRET, hex, first 32
+   characters. A link with NO token is refused: no VenuePlay email ever linked this route
+   before it had tokens. The campaign tag c is not signed and only labels the source.
+
+   THE GET DOES NOT WRITE. Outlook SafeLinks, Gmail and corporate scanners fetch every link in
+   a message before a human sees it (Microsoft's run the page's JavaScript too, which is why
+   venueplay.com.au/unsubscribe stopped writing on load, 14 Oct 2026). The page posts back to
+   itself as soon as it loads, so a person sees "You're off the list" from one click, while a
+   scanner that only fetches writes nothing. With scripts off, one button does the same.
+
+   THE WRITE goes to vp_unsubscribes (migration 81; email, source, note, created_at; a unique
+   index on lower(email)). The first row is the proof we honoured the first request, so a
+   repeat is a 409 from that index and is treated as done: nothing changes. The same table the
+   venueplay.com.au page writes to and the HQ marketing export reads, so there is one list.
+   ======================================================================================= */
+const VP_UNSUB_EMAIL_RE = /^[^@\s"<>,;()\\]+@[^@\s"<>,;()\\]+\.[^@\s"<>,;()\\]+$/;
+const VP_UNSUB_MAILTO = 'mailto:hello@venueplay.com.au?subject=unsubscribe';
+
+/* The https address in List-Unsubscribe must be THIS Worker, not the Pages site: a mail app's
+   Unsubscribe button POSTs straight to it, and Pages answers a POST with the homepage. */
+function vpUnsubApi(env) {
+  return (env.API_ORIGIN || 'https://venueplay-api.dean-tindale.workers.dev').replace(/\/+$/, '');
+}
+
+async function vpUnsubToken(env, email) {
+  const key = await crypto.subtle.importKey('raw',
+    new TextEncoder().encode('vp-unsub:' + String(env.VP_UNSUB_SECRET || '')),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const mac = await crypto.subtle.sign('HMAC', key,
+    new TextEncoder().encode(String(email || '').trim().toLowerCase()));
+  return [...new Uint8Array(mac)].map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
+}
+
+function vpUnsubSafeEqual(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string' || a.length !== b.length) return false;
+  let out = 0;
+  for (let i = 0; i < a.length; i++) out |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return out === 0;
+}
+
+function vpUnsubCampaign(c) {
+  return String(c || '').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 40);
+}
+
+async function vpUnsubLink(env, email, campaign) {
+  const e = String(email || '').trim().toLowerCase();
+  const c = vpUnsubCampaign(campaign);
+  return vpUnsubApi(env) + '/unsubscribe?e=' + encodeURIComponent(e) + '&t=' + (await vpUnsubToken(env, e))
+    + (c ? '&c=' + c : '');
+}
+
+/* Both headers, for Resend's `headers`. List-Unsubscribe carries the https one-click address
+   and the mailto fallback; List-Unsubscribe-Post is what makes Gmail, Yahoo and Apple Mail show
+   their own Unsubscribe button and POST to us when it is pressed. */
+async function vpUnsubHeaders(env, email, campaign) {
+  return {
+    'List-Unsubscribe': '<' + (await vpUnsubLink(env, email, campaign)) + '>, <' + VP_UNSUB_MAILTO + '>',
+    'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+  };
+}
+
+/* The footer of a marketing email: who is sending (name, ABN, site) and the link. */
+async function vpUnsubFooterHtml(env, email, campaign) {
+  const e = String(email || '').trim().toLowerCase();
+  const link = await vpUnsubLink(env, e, campaign);
+  return '<p style="font-size:12px;color:#9a9aa4;margin:22px 0 0">You are getting this because ' + vpaEsc(e)
+    + ' is the contact on a VenuePlay account. '
+    + '<a href="' + vpaEsc(link) + '" style="color:#9a9aa4;text-decoration:underline">Unsubscribe</a>'
+    + ' from emails like this one. Invoices and account notices are not marketing and still come.</p>'
+    + '<p style="font-size:12px;color:#c2c2cc;margin:8px 0 0">VenuePlay is Gflam Group, ABN ' + VP_ABN
+    + ' &middot; venueplay.com.au</p>';
+}
+
+/* Has this address asked us to stop? Reads the whole list through vpaUnsubscribedSet, which
+   pages and THROWS on any failure, so a caller that cannot get an answer must not send. */
+async function vpUnsubBlocks(env, email) {
+  const set = await vpaUnsubscribedSet(env);
+  return !!set[String(email || '').trim().toLowerCase()];
+}
+
+function vpUnsubPage(title, bodyHtml, status, extra) {
+  const html = '<!doctype html><html lang="en-AU"><head><meta charset="utf-8">'
+    + '<meta name="viewport" content="width=device-width,initial-scale=1">'
+    + '<meta name="robots" content="noindex,nofollow">'
+    + '<title>' + vpaEsc(title) + ' | VenuePlay</title>'
+    + '<style>'
+    + ':root{--bg:#0B0A0F;--card:#15131C;--line:rgba(255,255,255,.10);--text:#FFF1E6;--muted:#A79FB0;--pink:#FF1F8E}'
+    + '*{box-sizing:border-box}html,body{margin:0}'
+    + 'body{background:var(--bg);color:var(--text);font:16px/1.6 Manrope,system-ui,-apple-system,"Segoe UI",sans-serif;'
+    + 'min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px}'
+    + '.card{background:var(--card);border:1px solid var(--line);border-radius:16px;max-width:520px;width:100%;padding:32px 28px}'
+    + '.brand{display:flex;align-items:center;gap:9px;margin-bottom:22px;font-weight:700;font-size:15px}'
+    + 'h1{font-size:23px;line-height:1.25;margin:0 0 10px}p{margin:0 0 14px;color:var(--muted)}a{color:var(--pink)}'
+    + 'button{margin-top:8px;width:100%;padding:13px;border:0;border-radius:9px;background:var(--pink);color:#fff;font:inherit;font-weight:700;cursor:pointer}'
+    + '.foot{margin-top:24px;padding-top:16px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}'
+    + '</style></head><body><main class="card">'
+    + '<div class="brand"><svg width="18" height="21" viewBox="0 0 26 30" fill="none" aria-hidden="true">'
+    + '<path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>VenuePlay</div>'
+    + '<div id="msg"><h1>' + vpaEsc(title) + '</h1>' + bodyHtml + '</div>'
+    + (extra || '')
+    + '<p class="foot">Gflam Group Pty Ltd, ABN ' + VP_ABN + '. Gold Coast, Queensland.<br>'
+    + 'This only stops marketing email. It does not affect a VenuePlay account, if you have one.</p>'
+    + '</main></body></html>';
+  return new Response(html, { status: status || 200,
+    headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store',
+               'x-robots-tag': 'noindex', 'referrer-policy': 'no-referrer' } });
+}
+
+/* Writes the opt-out. Returns true only when the table has it. The unique index is on
+   lower(email), an expression, so PostgREST's on_conflict cannot name it: a repeat comes back
+   409 and that IS "already on the list", first row untouched. */
+async function vpRecordUnsub(env, email, source) {
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_unsubscribes', {
+    method: 'POST',
+    headers: { ...vpaHeaders(env), 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ email: email, source: source, note: 'venueplay-api /unsubscribe' }),
+  });
+  return res.ok || res.status === 409;
+}
+
+async function vpHandleUnsubscribe(request, env, url) {
+  const email = String(url.searchParams.get('e') || '').trim().toLowerCase();
+  const tok = String(url.searchParams.get('t') || '').trim().toLowerCase();
+  const camp = vpUnsubCampaign(url.searchParams.get('c'));
+  const isPost = request.method === 'POST';
+  const BY_HAND = 'Reply to the email with the word unsubscribe, or write to '
+    + '<a href="' + VP_UNSUB_MAILTO + '">hello@venueplay.com.au</a>, and we will take you off by hand.';
+  const plain = (text, status) => new Response(text, { status: status,
+    headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' } });
+
+  // An unset secret must never mean "any token will do".
+  if (!env.VP_UNSUB_SECRET || !env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) {
+    return isPost ? plain('not configured', 503)
+                  : vpUnsubPage('Something went wrong', '<p>Our unsubscribe is having a moment. ' + BY_HAND + '</p>', 503);
+  }
+  if (!VP_UNSUB_EMAIL_RE.test(email) || email.length > 254
+      || !/^[0-9a-f]{32}$/.test(tok) || !vpUnsubSafeEqual(tok, await vpUnsubToken(env, email))) {
+    return isPost ? plain('that link is not valid', 403)
+                  : vpUnsubPage('That link looks wrong', '<p>It may have been cut short when it was copied. '
+                      + 'Use the unsubscribe link in the email itself. ' + BY_HAND + '</p>', 403);
+  }
+
+  if (isPost) {
+    // A mail app's one-click button sends List-Unsubscribe=One-Click (RFC 8058); our own page
+    // sends via=page. Either way this is the person asking.
+    let body = '';
+    try { body = await request.text(); } catch (_) {}
+    const via = /List-Unsubscribe=One-Click/i.test(body) ? 'one-click' : 'link';
+    const ok = await vpRecordUnsub(env, email, (via + (camp ? ':' + camp : '')).slice(0, 60)).catch(() => false);
+    return ok ? plain('unsubscribed', 200) : plain('could not save, try again', 502);
+  }
+
+  // GET: the page. Nothing is written until it posts back.
+  const action = '/unsubscribe?e=' + encodeURIComponent(email) + '&t=' + tok + (camp ? '&c=' + camp : '');
+  const DONE_H = "You're off the list";
+  const DONE_P = 'We will not send ' + vpaEsc(email) + ' any more marketing email from VenuePlay. '
+    + 'If you have a VenuePlay account, its invoices and account notices still come.';
+  const form = '<form id="f" method="POST" action="' + vpaEsc(action) + '">'
+    + '<input type="hidden" name="via" value="page"><noscript><button type="submit">Yes, take me off the list</button></noscript></form>'
+    + '<script>(function(){var m=document.getElementById("msg");'
+    + 'fetch(' + JSON.stringify(action) + ',{method:"POST",headers:{"content-type":"application/x-www-form-urlencoded"},body:"via=page"})'
+    + '.then(function(r){if(!r.ok)throw 0;m.innerHTML=' + JSON.stringify('<h1>' + DONE_H.replace(/'/g, '&#39;') + '</h1><p>' + DONE_P + '</p>') + ';})'
+    + '.catch(function(){m.innerHTML=' + JSON.stringify('<h1>That did not go through</h1><p>Please try the link again in a minute. ' + BY_HAND + '</p>') + ';});})();</script>';
+  return vpUnsubPage('Taking you off the list', '<p>One moment&hellip;</p>', 200, form);
+}
+
 /* ---------------------------------------------------------------------------------------
    HQ > CANCELLED > "Invite them back".   POST /admin/invite-back { venue_id }   (Dean, 21 Oct 2026)
 
@@ -9322,11 +9519,35 @@ async function vpaHandleInviteBack(request, env, json) {
   if (v.status === 'active' && !v.cancel_at_period_end) return json({ error: v.name + ' is not cancelling, so there is nothing to invite them back to.' }, 409);
   const as = await vpaReadPage(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(v.founding_id || '') + '&select=id,contact_email,contact_name&limit=1');
   const acct = as[0];
-  const to = acct && acct.contact_email;
+  const to = String((acct && acct.contact_email) || '').trim().toLowerCase();
   if (!to) return json({ error: 'There is no contact email on ' + v.name + '\'s account. Ring them instead.' }, 409);
   const archived = v.suspended_reason === 'archived';
+
+  /* THIS ONE IS MARKETING (the 26 Oct 2026 unsubscribe audit found it was the only VenuePlay
+     email without an unsubscribe). It is a commercial message to a venue that has told us it
+     is leaving, so under the Spam Act it carries a working unsubscribe and it is never sent to
+     an address on vp_unsubscribes. Both are checked BEFORE anything goes out, and a check that
+     cannot be made is a reason not to send, not a reason to send anyway. */
+  if (!env.VP_UNSUB_SECRET) {
+    return json({ error: 'VP_UNSUB_SECRET is not set on this Worker, so the unsubscribe link this '
+      + 'email has to carry could not be made. Nothing was sent.' }, 503);
+  }
+  let optedOut;
+  try {
+    optedOut = await vpUnsubBlocks(env, to);
+  } catch (e) {
+    return json({ error: 'Could not check the unsubscribe list just now, so nothing was sent. '
+      + 'Sending without that check could email someone who has asked us to stop. Please try again in a moment.' }, 503);
+  }
+  if (optedOut) {
+    await vpaAudit(env, actor, 'venue_invited_back', 'venue:' + venueId,
+      { name: v.name, to: to, accepted: false, held: 'unsubscribed', archived: archived });
+    return json({ error: to + ' has unsubscribed from VenuePlay marketing email, so this cannot be sent. Ring them instead.' }, 409);
+  }
+
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
   const link = site + '/app/billing.html';
+  const subject = 'Keep ' + v.name + ' on VenuePlay?';
   const html = '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#12101a">'
     + '<img src="' + site + '/logos/venueplay_primary_dark.png" alt="VenuePlay" width="150" style="display:block;margin:0 0 24px">'
     + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">Keep ' + vpaEsc(v.name) + ' on VenuePlay?</p>'
@@ -9334,9 +9555,11 @@ async function vpaHandleInviteBack(request, env, json) {
     + ' for talking with us. If you would like to keep your games running, sign in to your account page and tap <b>Keep this venue</b>. '
     + 'Nothing changes and nothing is charged unless you do.</p>'
     + '<a href="' + link + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">Open my account page</a>'
-    + '<p style="font-size:12.5px;color:#9a9aa4;margin:22px 0 0">Questions? Reply to this email.</p></div>';
-  const sent = await vpaSendEmail(env, to, 'Keep ' + v.name + ' on VenuePlay?', html).catch(function () { return false; });
-  await vpaAudit(env, actor, 'venue_invited_back', 'venue:' + venueId, { name: v.name, to: to, accepted: !!sent, archived: archived });
+    + '<p style="font-size:12.5px;color:#9a9aa4;margin:22px 0 0">Questions? Reply to this email.</p>'
+    + (await vpUnsubFooterHtml(env, to, 'winback')) + '</div>';
+  const sent = await vpaSendEmail(env, to, subject, vpaEmailDocument(html, subject), undefined,
+    await vpUnsubHeaders(env, to, 'winback')).catch(function () { return false; });
+  await vpaAudit(env, actor, 'venue_invited_back', 'venue:' + venueId, { name: v.name, to: to, accepted: !!sent, archived: archived, unsubscribe_link: true });
   if (!sent) return json({ error: 'The email did not go. Nothing else was changed.' }, 502);
   return json({ ok: true, to: to, note: archived
     ? 'Sent. This venue was archived by us, so their account page may not offer Keep this venue: if they want to come back, set them up again from Venues.'

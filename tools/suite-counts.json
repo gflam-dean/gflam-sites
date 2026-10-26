@@ -1082,5 +1082,9 @@
  "tools/signup-tick-in-chrome.test.py": {
   "checks": 20,
   "counted_by": "lines"
+ },
+ "venueplay-backend/worker/winback-unsubscribe.test.js": {
+  "checks": 50,
+  "counted_by": "lines"
  }
 }
