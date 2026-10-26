@@ -2236,6 +2236,8 @@ MUTATIONS = [
     ('test-trivia-15-oct.js', 'venueplay/app/vp-fit.js', 'var avoids = layer.hasAttribute("data-fit-self") ? [] : avoidRects();', 'var avoids = avoidRects();', 'the Punters Reckon board is shrunk on top of stopping above the card'),
     ('test-trivia-15-oct.js', 'venueplay/app/trivia/screen.html', 'id="tvJoinCorner" data-fit-avoid>', 'id="tvJoinCorner">', 'the JOIN NOW card covers the 4th and 5th leaderboard rows'),
     ('test-trivia-15-oct.js', 'venueplay/app/trivia/screen.html', 'el.id="venueLogo"; el.setAttribute("data-fit-avoid","");', 'el.id="venueLogo";', 'a two-line question runs under the venue logo'),
+    # 27 Oct 2026 (live play, Test Charlie): End game from the podium left the console "ended", so the TV got the podium straight back.
+    ('test-trivia-15-oct.js', 'venueplay/app/trivia/host.html', '      G.status="setup"; G.board=[]; G.current=null; G.gameId=""; clearTrivia();\n', '      clearTrivia();\n', 'End game after the podium: the wall stays on WINNERS TONIGHT, because the console answers the TV\'s tv_here with the podium again'),
     ('test-trivia-15-oct.js', 'venueplay/app/trivia/host.html', 'apiPost("/host/trivia/board",{ game_id:gid })', 'apiPost("/host/reveal",{ game_id:gid })', 'a console reloaded mid-question reveals the open question to refill its board'),
     ('test-trivia-15-oct.js', 'venueplay/app/trivia/host.html', 'readBoard();   // the scores so far, WITHOUT', 'void 0;   // the scores so far, WITHOUT', 'a console reloaded mid-question has an empty Leaderboard panel until the next reveal'),
     ('test-trivia-15-oct.js', 'venueplay/app/trivia/play.html', 'if(e && e.status===401 && !healed){', 'if(false){', 'a healed phone shows CORRECT! 0 and its old total and place'),

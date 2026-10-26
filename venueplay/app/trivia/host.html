@@ -2049,16 +2049,33 @@
     try{ rawSend({ t:"to_ads" }); }catch(e){}   // sync on unload; an async signed send never lands before the page dies. NOT exempt: under enforce this is dropped, see vp-sign.js EXEMPT
   });
 
+  /* END GAME FROM THE PODIUM PUT THE WINNERS STRAIGHT BACK ON THE WALL (live play, Test Charlie,
+     27 Oct 2026). With the quiz over (status "ended") End game sent idle and to_ads but left the
+     console believing the podium was still on: the TV answers every host message with tv_here, and
+     reassertToTv() answered THAT by re-sending the podium 0.3 s after the idle, which the screen
+     took as a live game again (it cancels its return to the ads for any game message). The wall sat
+     on WINNERS TONIGHT for ever and the next Open lobby was the only way off it. So an End game with
+     no round in progress resets the console the way End round does, before it says idle. */
+  function endGameToAds(){
+    var live = G.status==="question" || G.status==="reveal" || G.status==="ready";
+    var _ended = live ? endRound() : null;   // actually end it, rather than only telling the room it ended
+    if(!live){
+      clearTick(); clearTimeout(G.podiumHoldT); G.podiumHeld=false;
+      G.status="setup"; G.board=[]; G.current=null; G.gameId=""; clearTrivia();
+      try{ bcast({ t:"idle" }); }catch(e){}
+      renderConsole();
+    }
+    closeNight(_ended);
+    try{ bcast({ t:"to_ads" }); }catch(e){}
+    return live;
+  }
   (function(){ var b=document.getElementById("toAdsBtn"); if(!b) return;
     b.addEventListener("click", function(){
       var live = G.status==="question" || G.status==="reveal" || G.status==="ready";
       function toAds(){
-      var _ended = live ? endRound() : null;   // actually end it, rather than only telling the room it ended
-      if(!live){ try{ bcast({ t:"idle" }); }catch(e){} }
-      closeNight(_ended);
-      try{ bcast({ t:"to_ads" }); }catch(e){}
-      b.textContent="Ads are back on";
-      setTimeout(function(){ b.textContent="End game"; }, 2500);
+        endGameToAds();
+        b.textContent="Ads are back on";
+        setTimeout(function(){ b.textContent="End game"; }, 2500);
       }
       if(!live){ toAds(); return; }
       vpAsk("End the quiz and put the venue ads back on the TV?\n\nThe round in progress will finish and every player will see \"thanks for playing\".").then(function(ok){ if(ok) toAds(); });

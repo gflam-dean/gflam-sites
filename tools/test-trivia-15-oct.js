@@ -409,6 +409,30 @@ r = await callR(handleTriviaSetQuestions, req('', 'https://w/host/trivia/set/que
 var own = r.body.questions ? r.body.questions.map(function (q) { return q.own; }) : null;
 show('c. the set\'s questions say which the host wrote: library, library, own', JSON.stringify(own) === '[false,false,true]', JSON.stringify(own));
 
+/* ---- END GAME FROM THE PODIUM (live play at Test Charlie, 27 Oct 2026) ----
+   The quiz was over (status "ended", winners on the wall). End game sent idle and to_ads, the TV said
+   tv_here back, and reassertToTv() answered with the podium again: the wall stayed on WINNERS TONIGHT
+   for ever. RUN the real endGameToAds() and then the real reassertToTv() against it. */
+print('\nEND GAME FROM THE PODIUM resets the console, so the TV is not handed the podium straight back');
+(function () {
+  var sent = [], b = [], closed = [];
+  var G = { status: 'ended', board: [{ name: 'Test team', score: 148 }], current: null, gameId: 'g1', podiumHeld: true, podiumHoldT: 7, tick: null, setTitle: 'Anime' };
+  var src = lift(HOSTP, 'endGameToAds', 'trivia/host.html') + '\n' + lift(HOSTP, 'reassertToTv', 'trivia/host.html') + '\n; return { end: endGameToAds, reassert: reassertToTv };';
+  var fx = new Function('G', 'bcast', 'send', 'closeNight', 'endRound', 'clearTick', 'clearTimeout', 'clearTrivia', 'renderConsole', 'playerCount', 'remainingSecs', 'isDouble', src)(
+    G, function (m) { b.push(m.t); }, function (m) { sent.push(m.t); }, function (e) { closed.push(e); }, function () { throw new Error('endRound must not run: no round in progress'); },
+    function () {}, function () {}, function () { G.cleared = true; }, function () { G.rendered = true; }, function () { return 1; }, function () { return 0; }, function () { return false; });
+  var live = fx.end();
+  show('a. End game with the quiz over: no round to end, idle then to_ads to the room, the night closed', live === false && JSON.stringify(b) === '["idle","to_ads"]' && closed.length === 1, [live, b, closed.length]);
+  show('b. the console is back at setup, the podium hold dropped, the board and the saved quiz cleared', G.status === 'setup' && G.board.length === 0 && G.podiumHeld === false && G.gameId === '' && G.cleared === true && G.rendered === true, G);
+  fx.reassert();
+  show('c. so when the TV says tv_here a moment later, the console does NOT put the podium back on the wall', sent.length === 0, sent);
+  /* and the same call mid-question ends the round the old way */
+  var G2 = { status: 'question', board: [], current: {}, gameId: 'g2' }, ended = 0;
+  var fx2 = new Function('G', 'bcast', 'send', 'closeNight', 'endRound', 'clearTick', 'clearTimeout', 'clearTrivia', 'renderConsole', 'playerCount', 'remainingSecs', 'isDouble', src)(
+    G2, function () {}, function () {}, function () {}, function () { ended++; G2.status = 'setup'; return 'p'; }, function () {}, function () {}, function () {}, function () {}, function () { return 0; }, function () { return 0; }, function () { return false; });
+  show('d. CONTROL: End game mid-question still ends the round through endRound()', fx2.end() === true && ended === 1, [ended, G2.status]);
+})();
+
 print('\n' + (bad ? 'FAIL ' + bad + ' of ' + ran : 'ALL ' + ran + ' CHECKS PASSED'));
 if (bad) throw new Error(bad + ' failed');
 })().catch(function (e) { print('FAIL the suite threw: ' + e + '\n' + (e && e.stack)); throw e; });
