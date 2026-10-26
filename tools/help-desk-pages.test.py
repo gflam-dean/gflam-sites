@@ -101,6 +101,7 @@ def serve(folder):
                 self.path = p + '.html' + self.path[len(p):]
             return super().do_GET()
     srv = socketserver.ThreadingTCPServer(('127.0.0.1', 0), functools.partial(H, directory=folder))
+    srv.socket.listen(128)   # Python's default queue of 5 drops scripts when a page asks for many at once (browser-rig/rig.py Server, 26 Oct 2026)
     srv.daemon_threads = True
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     return srv, 'http://127.0.0.1:%d' % srv.server_address[1]
