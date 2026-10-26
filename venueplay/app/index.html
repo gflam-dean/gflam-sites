@@ -71,6 +71,7 @@
   .hact:hover{border-color:var(--pink);color:#fff}
   .gtoast{position:fixed;top:4px;left:50%;transform:translateX(-50%) translateY(-18px);background:var(--ink-2);border:1px solid var(--line);color:var(--text);padding:11px 20px;border-radius:999px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;box-shadow:0 14px 34px -12px rgba(0,0,0,.7);opacity:0;pointer-events:none;transition:opacity .3s ease,transform .3s ease;z-index:60;max-width:92vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .gtoast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  @media (max-width:600px){ .gtoast{white-space:normal;text-align:center;border-radius:16px;width:max-content;line-height:1.35} }   /* on a phone a long toast wraps, it is not cut off with ... (26 Oct 2026) */
   .btn.win{background:var(--win);color:#04120a}
   .btn.win:hover{filter:brightness(1.08)}
   .btn.roll{background:var(--roll);color:#1a1000}
@@ -274,6 +275,7 @@
   .cprule{display:flex;align-items:flex-start;gap:10px;margin:10px 0 0;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--ink-3);cursor:pointer;color:var(--text);font-size:14px;line-height:1.4}
   .cprule input[type=radio]{width:20px!important;height:20px;margin:1px 0 0!important;flex:none;accent-color:var(--pink)}
   .cprule:has(input:checked){border-color:var(--pink);background:rgba(255,31,142,.08)}
+  .cprule:not(:has(input:checked)) > span{opacity:.5}   /* the rule not chosen reads as off: a shape left lit under "Any 5" looked like both */
   .cprule select{width:auto;min-width:76px;margin-top:6px}
   .cpgrid{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:4px;margin-top:8px}
   .cpgrid button{aspect-ratio:1/1;min-height:28px;padding:0;border-radius:6px;border:1px solid var(--line);background:var(--ink-2);cursor:pointer;touch-action:manipulation}
@@ -1568,7 +1570,7 @@
       if(G.pattern===k && (G.status==="lobby" || G.status==="running")){ sendState(); renderLive(); if(G.caller) renderCallerGrid(); }
       if(G.status==="running") renderClaimQueue();
       saveGame();
-      showToast('Saved "'+j.pattern.name+'". It is in your pattern list every night now.');
+      showToast('Saved "'+j.pattern.name+'" to your patterns.');   // short: the toast is one line on a phone
     }, function(){ $("cpSave").disabled=false; err.textContent="Not connected. Try again in a moment."; });
   }
   function deletePatternFromEditor(){
