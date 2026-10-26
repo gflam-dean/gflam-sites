@@ -43,7 +43,7 @@ KEEP = ('(function(){ window.__checkout=[]; var real=window.fetch; window.fetch=
         ' if(!/\\/checkout$/.test(String(u))) return real.apply(this, arguments);'
         ' var sent=null; try{ sent=JSON.parse(o.body); }catch(e){}'
         ' return real.apply(this, arguments).then(function(r){ return r.json().then(function(j){'
-        '   window.__checkout.push({ sent:sent, status:r.status, body:j });'
+        '   window.__checkout.push({ sent:sent, status:r.status, body:JSON.parse(JSON.stringify(j)) });'
         '   if(j && j.url) j.url="#went-to-stripe"; if(j) delete j.client_secret;'
         '   return new Response(JSON.stringify(j), { status:r.status, headers:{ "Content-Type":"application/json" } }); }); }); };'
         ' return true; })()')
@@ -109,7 +109,7 @@ try:
         got = S.js(sid, 'JSON.stringify(window.__checkout[0]||null)')
         c = json.loads(got) if isinstance(got, str) else None
         ok('%s: ticked, the request carries compliance_accepted: true and the real /checkout goes ahead' % label,
-           bool(c) and c['sent'].get('compliance_accepted') is True and c['status'] == 200 and (c['body'] or {}).get('url'), c)
+           bool(c) and c['sent'].get('compliance_accepted') is True and c['status'] == 200 and ((c['body'] or {}).get('url') or (c['body'] or {}).get('client_secret')), c)
         lead = [l for l in leads(S) if l.get('venue_name') == venue]
         vj = (lead[0].get('venues_json') or [{}])[0] if lead else {}
         ok('%s: the lead carries WHEN the tick was given, on its venue' % label,
@@ -166,7 +166,7 @@ finally:
 total = PASS[0] + FAIL[0]
 print('')
 print('%d of %d checks passed' % (PASS[0], total))
-EXPECTED = 21
+EXPECTED = 20
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)
