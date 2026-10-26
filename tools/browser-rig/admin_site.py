@@ -57,6 +57,10 @@ class BillingWorker(object):
     def stored(self):
         return self._send({'ask': 'stored'})['body']
 
+    def provision(self, session):
+        """Run the REAL vpaProvisionFromCheckout on a Stripe checkout session, as the webhook does."""
+        return self._send({'ask': 'provision', 'session': session})
+
     def table(self, name):
         return self._send({'ask': 'db', 'table': name})['body']
 

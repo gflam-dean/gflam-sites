@@ -8,8 +8,10 @@ Dean, 20 Oct 2026:
      no longer has the venue's own tick.
   2. Venue settings "arent spaced out good or look good", and The Jolly Jess (an NSW non-profit)
      was full of permit questions it does not need: "if we dont need them to do it we dont need it
-     to clog our system". The page now asks only what VPGaming.permitsToAsk returns for the
-     venue's state and kind of venue, in grouped sections that hold together at phone width.
+     to clog our system". The page is in grouped sections that hold together at phone width, and
+     since 24 Oct 2026 its one permit card (bingo) comes from VPPermits.NEEDS (/app/vp-permits.js),
+     shown only where the venue's state needs one; raffles and members draws are under Your
+     account > Draws (tools/account-structure-in-chrome.test.py runs those).
 
 This opens the REAL settings.html, hq.html and billing.html in headless Chrome
 (tools/browser-rig/admin_site.py) with the REAL billing Worker behind them, so a saved permit and
@@ -95,10 +97,9 @@ def shot(sid, name, width, mobile):
 PERMITS = '''JSON.stringify({card: (function(){var c=document.getElementById("permitsCard"); return !!c && c.offsetParent!==null;})(),
   kinds: Array.prototype.map.call(document.querySelectorAll("#permitsWrap .permit"), function(p){
     var vis=function(sel){ var e=p.querySelector(sel); return !!e && e.offsetParent!==null; };
-    return { kind:p.getAttribute("data-kind"), need:p.getAttribute("data-need"),
-             pill:(p.querySelector(".pstatus")||{}).textContent||"", who:vis("select.pholder"),
-             charity:vis(".pnpo_name"), authorised:vis(".pauthorised"), number:vis(".pnumber"), expires:vis(".pexpires"),
-             note:!!p.querySelector(".pnote") }; }),
+    return { kind:p.getAttribute("data-kind"), status:(p.querySelector(".pstatus")||{}).textContent||"",
+             number:vis(".pnumber"), expires:vis(".pexpires"), save:vis(".psave") }; }),
+  draws: (function(){var a=document.querySelector('#permitsIntro a[href="billing.html#draws"]'); return !!a && a.offsetParent!==null;})(),
   text: document.body.innerText, errs: window.__errs||[] })'''
 
 try:
@@ -111,46 +112,22 @@ try:
             shot(sid, 'after-%s-desktop' % key, 1280, False)
         S.close_tab(tid)
 
-    print('an NSW non-profit (The Jolly Jess) and a Queensland club are asked for no permit')
-    for key in ('nsw_club', 'qld_club'):
+    print('New South Wales needs no bingo permit, so the Jolly Jess and an NSW pub are asked for none')
+    for key in ('nsw_club', 'nsw_pub'):
         x = seen[key]
         ok('%s: no Gaming details section, no permit field anywhere' % VEN[key][1],
-           not x['card'] and not x['kinds'] and 'Permit or authority number' not in x['text'], x['kinds'])
+           not x['card'] and not x['kinds'] and 'Permit, licence or authority number' not in x['text'], x['kinds'])
     x = seen['nsw_club']
     ok('the Jolly Jess still has its venue code, name display and player questions, under headings',
        all(h in x['text'].upper() for h in ('VENUE DETAILS', 'ON THE BIG SCREEN', 'PLAYERS')) and (VEN['nsw_club'][2][:3].upper() + '123') in x['text'], x['text'][:400])
 
-    print('\na Victorian club running paid bingo')
-    x = seen['vic_club']
-    k = {p['kind']: p for p in x['kinds']}
-    ok('Gaming details shows bingo and raffles, and no members draw', x['card'] and sorted(k) == ['bingo', 'raffle'], sorted(k))
-    ok('the bingo permit says it is needed before charging (the lawyer\'s VIC warranty)',
-       k.get('bingo', {}).get('need') == 'required' and 'Needed before you charge' in k.get('bingo', {}).get('pill', ''), k.get('bingo'))
-    ok('the raffle permit says it is only needed above the limit', k.get('raffle', {}).get('need') == 'optional' and 'Only above the limit' in k.get('raffle', {}).get('pill', ''), k.get('raffle'))
-    ok('a club holding its own permit is asked for a number and an expiry only: no "who holds it", charity, date or note',
-       all(p['number'] and p['expires'] and not p['who'] and not p['charity'] and not p['authorised'] and not p['note'] for p in x['kinds']), x['kinds'])
-    ok('nothing on the page says musical bingo counts as bingo', 'musical bingo counts' not in x['text'].lower())
-
-    print('\npubs, venues not yet typed, and a club with a charity-held record')
-    for key in ('nsw_pub', 'vic_new'):
+    print('\nQueensland, Victoria and the ACT: the bingo card only (raffles and members draws are under Draws)')
+    for key in ('qld_club', 'vic_club', 'vic_new', 'act_club'):
         x = seen[key]
-        ok('%s is asked for no permit (a pub, or a venue whose type is not recorded, cannot charge)' % VEN[key][1],
-           not x['card'] and not x['kinds'], x['kinds'])
-    x = seen['act_club']
-    r = [p for p in x['kinds'] if p['kind'] == 'raffle']
-    ok('an ACT club sees bingo and raffle cards, only above the limit', [(p['kind'], p['need']) for p in x['kinds']] == [('bingo', 'optional'), ('raffle', 'optional')], x['kinds'])
-    ok('...and its charity-held raffle record shows "who holds it" with the charity\'s name and date',
-       r and r[0]['who'] and r[0]['charity'] and r[0]['authorised'], r)
-    tid, sid = settings('act_club')
-    S.js(sid, '(function(){var s=document.querySelector(\'.permit[data-kind="raffle"] select.pholder\'); s.value="venue"; s.dispatchEvent(new Event("change")); return true;})()')
-    vis = S.js(sid, '(function(){var p=document.querySelector(\'.permit[data-kind="raffle"]\'); return p.querySelector(".pnpo_name").offsetParent===null && p.querySelector(".pauthorised").offsetParent===null;})()')
-    ok('...choosing "our venue holds it" puts the charity fields away', vis is True, vis)
-    S.js(sid, '(function(){var s=document.querySelector(\'.permit[data-kind="raffle"] select.pholder\'); s.value="npo"; s.dispatchEvent(new Event("change")); document.querySelector(\'.permit[data-kind="raffle"] .psave\').click(); return true;})()')
-    S.until(sid, '/Saved/.test(document.querySelector(\'.permit[data-kind="raffle"] .pmsg\').textContent)', 10)
-    row = [v for v in S.W.table('vp_venues') if v['id'] == VEN['act_club'][0]]
-    pr = (row[0].get('permits') or {}).get('raffle', {}) if row else {}
-    ok('...and saving keeps the old note nobody is asked for any more, and the charity', pr.get('note') == 'kept from before' and pr.get('npo_name') == 'Lions Club of Weston', pr)
-    S.close_tab(tid)
+        ok('%s (%s): Gaming details shows the bingo card and nothing else, with the link to Draws' % (VEN[key][1], VEN[key][3]),
+           x['card'] and [p['kind'] for p in x['kinds']] == ['bingo'] and x['kinds'][0]['number'] and x['kinds'][0]['save'] and x['draws'], x['kinds'])
+    ok('nothing on any settings page says musical bingo counts as bingo, or names it at all in the permit card',
+       all('musical bingo counts' not in seen[k]['text'].lower() for k in seen) and 'musical' not in json.dumps(seen['vic_club']['kinds']).lower())
 
     print('\nsaving the VIC bingo permit goes through the real Worker')
     tid, sid = settings('vic_club')
@@ -165,10 +142,7 @@ try:
     print('\nat phone width')
     for key in ('vic_club', 'nsw_club', 'qld_club'):
         tid, sid = settings(key, width=390, mobile=True)
-        wide = S.js(sid, 'document.documentElement.scrollWidth <= window.innerWidth + 1')
-        if key == 'vic_club':
-            cols = S.js(sid, '(function(){var p=document.querySelector(".permit"); var a=p.querySelector(".pnumber").getBoundingClientRect(), b=p.querySelector(".pexpires").getBoundingClientRect(); return Math.abs(a.width-b.width) < 2 && b.top > a.bottom;})()')
-            ok('a VIC permit card stacks its fields in one column at 390px', cols is True, cols)
+        wide = S.js(sid, '(function(){ if (document.documentElement.scrollWidth > window.innerWidth + 1) return false; var bad=[]; document.querySelectorAll(".card, .permit input, .psave").forEach(function(e){ var r=e.getBoundingClientRect(); if (r.width && (r.left < 0 || r.right > window.innerWidth + 1)) bad.push(e.className); }); return bad.length ? bad : true; })()')
         ok('%s: nothing runs off the side of a 390px phone' % VEN[key][1], wide is True, wide)
         shot(sid, 'after-%s-phone' % key, 390, True)
         S.close_tab(tid)

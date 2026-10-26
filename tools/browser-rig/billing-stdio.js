@@ -67,6 +67,16 @@ for (;;) {
   if (rq.ask === 'stored') { print(JSON.stringify({ status: 200, body: STORED })); continue; }
   if (rq.ask === 'db') { print(JSON.stringify({ status: 200, body: DB[rq.table] || [] })); continue; }
   if (rq.ask === 'seed') { DB[rq.table] = rq.rows || []; print(JSON.stringify({ status: 200, body: DB[rq.table] })); continue; }
+  /* What Stripe's checkout.session.completed hands the Worker, run through the REAL provisioning
+     (tools/signup-tick-in-chrome.test.py: a signup made in Chrome, provisioned, then read in HQ). */
+  if (rq.ask === 'provision') {
+    var pdone = null;
+    Promise.resolve().then(function () { return vpaProvisionFromCheckout(ENV, rq.session); })
+      .then(function () { pdone = { status: 200, body: { ok: true } }; }, function (e) { pdone = { status: 500, body: { error: String(e && e.message || e) } }; });
+    for (var pi = 0; pi < 400 && !pdone; pi++) drainMicrotasks();
+    print(JSON.stringify(pdone || { status: 504, body: { error: 'provisioning did not finish' } }));
+    continue;
+  }
   var h = rq.headers || {}, txt = JSON.stringify(rq.body || {});
   var req = { method: rq.method || 'POST', url: 'https://api.test' + rq.path,
               headers: { get: function (k) { for (var x in h) { if (x.toLowerCase() === String(k).toLowerCase()) return h[x]; } return null; } },

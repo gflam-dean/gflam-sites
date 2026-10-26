@@ -235,10 +235,10 @@ claims from **the host**, never the bar. All four are enforced by the gate, in
 Ask a venue only what the law or the product actually needs, and only the venue it applies to
 (by state and by the games they run). Every page a customer sees must look finished: grouped
 sections, even spacing, the shared on-brand controls, working at phone width. A new field or
-page is not done until it meets both. (Dean, 20 Oct 2026. The Settings page's permit questions
-come from `VPGaming.permitsToAsk` in `venueplay/app/vp-gaming.js`, the same table the console's
-gate reads, and `tools/settings-and-logos-in-chrome.test.py` opens it as an NSW club, a VIC club
-and a Queensland club.)
+page is not done until it meets both. (Dean, 20 Oct 2026. The permit cards come from ONE table,
+`VPPermits.NEEDS` in `venueplay/app/vp-permits.js` (24 Oct 2026): Game settings asks for bingo,
+Your account > Draws for raffles and members draws, HQ reads the same.
+`tools/settings-and-logos-in-chrome.test.py` opens Game settings as NSW, QLD, VIC and ACT venues.)
 
 ## Where things are
 

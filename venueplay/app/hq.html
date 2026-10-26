@@ -2661,10 +2661,14 @@
   function complianceHtml(v, ent){
     var kind=v.venue_kind||"";
     var suggest=kindSuggests(kind);
-    var kindTxt = kind ? esc(KIND_LABEL[kind]||kind) : '<span style="color:var(--roll)">not asked</span>';
+    /* A self-serve signup answers club or pub (entity_type), never the HQ form's own-words kind, so
+       "not asked" in red was wrong for every one of them (26 Oct 2026). */
+    var kindTxt = kind ? esc(KIND_LABEL[kind]||kind)
+      : ent ? ('a '+(ent==="non_profit"?"club":"pub")+' <span class="note">(club or pub, above)</span>')
+      : '<span style="color:var(--roll)">not asked</span>';
     var tick = v.compliance_accepted_at
       ? ('accepted '+esc(fmtWhen(v.compliance_accepted_at))+(v.compliance_accepted_by?' by '+esc(v.compliance_accepted_by):''))
-      : '<span style="color:var(--roll)">NOT accepted. Onboarded before 15 Oct 2026, or by hand: have them accept it.</span>';
+      : '<span style="color:var(--roll)">NOT accepted: no record of the tick (a signup before it was recorded, a venue added from Your account, or one onboarded by hand). Have them accept it.</span>';
     var permits=(v.permits&&typeof v.permits==="object")?v.permits:{};
     /* Only the kinds this venue's state needs a permit for (VPPermits.NEEDS, the one table the settings
        and Draws pages use), plus any kind they saved anyway, marked as not needed (Dean, 24 Oct 2026). */

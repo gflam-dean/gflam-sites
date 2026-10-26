@@ -107,7 +107,7 @@ try:
     ok('no script error on any console', all(rules[k + ':errs'] in ('[]', None) for k in ('Deepwater Hotel', 'Fitzroy Social', 'Tugun Bowls Club')),
        {k: rules[k + ':errs'] for k in ('Deepwater Hotel', 'Fitzroy Social', 'Tugun Bowls Club')})
 
-    print('\nC12: Your account > Members draw asks the maximum jackpot')
+    print('\nC12: Your account > Draws asks the maximum jackpot when a draw is edited')
     tid, sid = S.open('/app/billing.html?venue=' + IDS['Deepwater Hotel'])
     S.until(sid, 'document.getElementById("content").style.display!=="none" && !!document.querySelector(\'[data-tab="draws"]\')', 20)
     S.js(sid, '''(function(){ window.__sent=[]; var real=window.fetch; window.fetch=function(u,o){
@@ -116,6 +116,9 @@ try:
           return Promise.resolve(new Response(JSON.stringify({ draw:d }), { status:200, headers:{ "Content-Type":"application/json" } })); }
         return real.apply(this, arguments); }; return true; })()''' % json.dumps(DRAW))
     S.js(sid, 'document.querySelector(\'[data-tab="draws"]\').click(); true')
+    # Since 24 Oct 2026 every draw is listed with Edit and Remove: open this one with its own Edit.
+    S.until(sid, '!!document.querySelector(\'#mdList .drow[data-draw="%s"] .dedit\')' % DRAW['id'], 15)
+    S.js(sid, 'document.querySelector(\'#mdList .drow[data-draw="%s"] .dedit\').click(); true' % DRAW['id'])
     S.until(sid, 'document.getElementById("md-name").value==="Friday Members Draw"', 15)
     shown = S.js(sid, 'JSON.stringify({ vis: document.getElementById("md-max").offsetParent!==null, v: document.getElementById("md-max").value, label: document.querySelector(\'label[for="md-max"]\').textContent })')
     shown = json.loads(shown)
