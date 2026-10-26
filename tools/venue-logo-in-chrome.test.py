@@ -299,23 +299,44 @@ def phone_header(label, path, w, h):
 
 # The VenuePlay mark: secondary, but crisp and never under the bingo call's dimmer (Dean, 21 Oct 2026:
 # "dull and behind everything").
-MARK = r'''(function(){
+# MEASURED ONLY ONCE THE WALL HAS SETTLED (27 Oct 2026). The mark's size is 1.35cqw of the wall, so
+# it is a function of the viewport: the first reading used to be taken the moment .vn existed, which
+# on a loaded Mac was before the 1920 device-metrics override, the web font or the container-query
+# layout had landed, and 1.35cqw of a narrower wall is under 24px. "A legible size for a TV, 24px or
+# more at 1920" then refused a live Worker deploy over a reading of a wall that was not 1920 wide yet.
+# So: no reading until the viewport is the width asked for and the fonts are in, and then two readings
+# 300 ms apart must agree before one is believed. The wall width travels with the reading.
+MARK = r'''(function(W){
+  if(innerWidth!==W || document.readyState!=="complete" || document.fonts.status!=="loaded") return null;
   var vn=document.querySelector(".tv-corner .vn"), cor=vn&&vn.parentNode; if(!vn) return null;
-  var s=getComputedStyle(vn), cs=getComputedStyle(cor), br=document.getElementById("ballReveal");
+  var s=getComputedStyle(vn), cs=getComputedStyle(cor), br=document.getElementById("ballReveal"), tv=document.querySelector(".tv");
   var op=1, e=vn; while(e && e.nodeType===1){ op*=parseFloat(getComputedStyle(e).opacity); e=e.parentElement; }
   return JSON.stringify({size:parseFloat(s.fontSize), color:s.color, weight:s.fontWeight, opacity:op, shadow:s.textShadow,
     z:parseInt(cs.zIndex,10)||0, dimZ: br ? (parseInt(getComputedStyle(br).zIndex,10)||0) : null,
-    svg:cor.querySelector("svg").getBoundingClientRect().width, logo:(document.getElementById("venueLogo")||{}).offsetHeight||0});
-})()'''
+    svg:cor.querySelector("svg").getBoundingClientRect().width, logo:(document.getElementById("venueLogo")||{}).offsetHeight||0,
+    wall: tv ? tv.clientWidth : innerWidth});
+})(%d)'''
+
+def settled(sid, expr, secs=60, gap=0.3):
+    """The value of expr once two readings `gap` apart agree, or the last reading, or False."""
+    t = time.time() + secs
+    last = None
+    while time.time() < t:
+        v = ask(sid, expr)
+        if v and v == last:
+            return v
+        last = v or None
+        time.sleep(gap)
+    return last or False
 
 def mark_check(label, path, w, h, has_dim):
     tid, sid = open_page(path, w, h, False)
     try:
-        v = until(sid, MARK, 30)
+        v = settled(sid, MARK % w, 60)
         m = json.loads(v) if v else {}
         tag = '%s VenuePlay mark at %d' % (label, w)
         if not m:
-            ok(tag + ': is on the wall', False); return
+            ok(tag + ': is on the wall', False, 'no settled reading at %d wide (viewport %s)' % (w, ask(sid, 'innerWidth'))); return
         ok(tag + ': full opacity, white, bold (not dull)', m['opacity'] >= 0.99 and m['color'] in ('rgb(255, 255, 255)',) and int(m['weight']) >= 700, m)
         ok(tag + ': a legible size for a TV, 24px or more at 1920', m['size'] >= 24 and m['svg'] >= 20, m)
         ok(tag + ': with a dark halo so it reads on any slide', 'rgba(0, 0, 0' in (m['shadow'] or ''), m['shadow'])

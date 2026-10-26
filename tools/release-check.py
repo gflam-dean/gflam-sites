@@ -3067,6 +3067,25 @@ def local_checks(which):
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/test-tv-slides-in-step.js. Each wall must read its slide off the clock')
 
+        # A WOKEN WALL REJOINS THE CLOCK, AND /screen-check CAN TELL THAT FROM A RESTART (27 Oct 2026).
+        # Live at 09:08 on wellshot-hotel the screen check called a legitimate clock-synced advance a
+        # restart and refused a deploy. The suite runs the real startAds across a boundary and the
+        # real wakeVerdict over what is lit.
+        head('D. Waking a TV rejoins the clock; the screen check knows a restart from an advance')
+        t = os.path.join(ROOT, 'tools', 'test-screen-check-wake.js')
+        if not os.path.isfile(t):
+            ok('the screen-check wake test exists', False, why='tools/test-screen-check-wake.js is missing')
+        else:
+            r = subprocess.run([JSC, t], capture_output=True, text=True, timeout=120, cwd=ROOT)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+            n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
+            ok('a woken wall rejoins the clock, and the screen check knows a restart from an advance (%d checks)' % n,
+               r.returncode == 0 and 'PASSED' in out and not bad,
+               detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
+               why='run jsc tools/test-screen-check-wake.js. startAds must land on the clock\'s slot after a wake, and '
+                   'screen-check.html\'s wakeVerdict must pass that slot or the one before it and fail slide one')
+
     # NEVER COLLECT WHAT YOU WILL NOT HAND BACK.
     #
     # Two gates asked the same question with two different word lists: collecting is gated on the

@@ -64,6 +64,27 @@
   function slideSig(d) {
     return painted(d).map(function (a) { return (a.style.backgroundImage || '').slice(-40); }).join('|');
   }
+  /* WHICH SLIDES ARE LIT, by their place in the loop (tv.html's #tvAds .ad order is its durs order). */
+  function litSlots(d) {
+    var all = Array.prototype.slice.call(d.querySelectorAll('#tvAds .ad'));
+    return painted(d).map(function (a) { return all.indexOf(a); }).filter(function (i) { return i >= 0; });
+  }
+  /* THE WAKE VERDICT (27 Oct 2026). `lit` is what is on the wall after the wake, `want` is the slot
+     the wall's own clock says (tv.html's __vpAdClock, adSlotAt over the LIVE slides with expired
+     ones dropped), `n` the number of slides. Before this the check compared the lit slide with
+     the one lit before the wake, and on Wellshot (7 x 10 s + 1 x 15 s) a legitimate clock-synced
+     advance inside the 1.5 s window read as "the loop restarted" and refused a deploy at 09:08.
+     The slot the clock says is right. So is the one before it: the boundary may have fallen inside
+     the window and the cross-fade still be holding both. Anything else is wrong, and the first
+     slide while the clock says otherwise is the restart this check exists to catch. */
+  function wakeVerdict(lit, want, n) {
+    if (!(n > 1)) return { ok: true, why: 'one slide, nothing to rejoin' };
+    var prev = (want - 1 + n) % n;
+    var fine = lit.some(function (i) { return i === want || i === prev; });
+    if (fine) return { ok: true, why: 'lit ' + lit.join(',') + ', the clock says ' + want + (lit.indexOf(want) < 0 ? ' (boundary inside the window)' : '') };
+    var restarted = lit.length && lit.every(function (i) { return i === 0; });
+    return { ok: false, why: (restarted ? 'the loop RESTARTED at slide one' : 'lit ' + lit.join(',')) + ' while the clock says slot ' + want + ' of ' + n };
+  }
   function visibleText(d) {
     return Array.prototype.slice.call(d.querySelectorAll('*')).filter(function (e) {
       if (e.children.length) return false;
@@ -214,8 +235,15 @@
     obs.disconnect();
     pass(emptied === 0, 'waking the screen does not flash the wall',
          'the slide container was emptied ' + emptied + ' time(s), which is the flash');
-    pass(slideSig(d) === before, 'waking does not jump back to the first slide',
-         'the lit slide changed when the screen woke, so the loop restarted');
+    var clock = d.defaultView.__vpAdClock;
+    if (clock && clock.durs && clock.durs.length > 1) {
+      var v = wakeVerdict(litSlots(d), clock.slot().i, clock.durs.length);
+      pass(v.ok, 'waking does not jump back to the first slide', v.why);
+      note('after the wake', v.why + ' (' + clock.durs.map(function (ms) { return Math.round(ms / 1000); }).join('/') + ' s slides)');
+    } else {
+      pass(slideSig(d) === before, 'waking does not jump back to the first slide',
+           'the lit slide changed when the screen woke, so the loop restarted (an old tv.html with no __vpAdClock: judged by the slide signature)');
+    }
 
     /* WATCH FOR LONG ENOUGH THAT THE SCREEN HAS ADMITTED IT.
 

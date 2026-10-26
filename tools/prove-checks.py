@@ -79,6 +79,16 @@ MUTATIONS = [
      '                kill_tree(self.proc.pid)',
      '                pass   # kill_tree(self.proc.pid)',
      'a closed Browser leaves its Chrome running, and the leak piles up until the next suite times out'),
+    ('test-screen-check-wake.js', 'venueplay/tv.html',
+     '    var cur=at.i;',
+     '    var cur=0;',
+     # (the wall restarts at slide one on every wake)
+     'a woken wall rejoins the clock, and the screen check knows a restart from an advance'),
+    ('test-screen-check-wake.js', 'venueplay/screen-check.html',
+     '    if (fine) return { ok: true,',
+     '    if (true) return { ok: true,',
+     # (the screen check passes a wall that restarted at slide one)
+     'a woken wall rejoins the clock, and the screen check knows a restart from an advance'),
     # TVs IN STEP, 25 Oct 2026: every wall reads the slide off the clock.
     ('test-tv-slides-in-step.js', 'venueplay/tv.html',
      '    var p=((nowMs % total) + total) % total;',

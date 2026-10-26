@@ -192,20 +192,37 @@ try:
             br.call('Emulation.setDeviceMetricsOverride', {'width': width, 'height': 900, 'deviceScaleFactor': 1, 'mobile': mobile}, session=sid)
             br.call('Page.enable', {}, session=sid)
             br.call('Page.navigate', {'url': 'http://127.0.0.1:%d/index.html' % PORT}, session=sid)
+            # THE PAGE SAYS WHEN IT HAS RENDERED; the clock does not. This was a flat 20 s wall-clock
+            # wait, and on 27 Oct 2026 with the Mac at a load of 15 (another agent's gate beside this
+            # one) the phone/3-shows page had not finished its two fetches and the poster decode inside
+            # 20 s, so "the tour card is on the page" went red and refused a live Worker deploy. The
+            # shows are this test's own fake rows, so nothing about "3" drifts with live data; what
+            # drifted was how long a starved Chrome takes. So: wait until the document is complete, the
+            # fonts are in, the cards container has been written and the poster has decoded, and only
+            # then measure. The 120 s cap is for a page that is actually stuck, and on that path the
+            # failure names what the page was showing and the load at the time.
+            RENDERED = ("document.readyState==='complete' && document.fonts.status==='loaded' && "
+                        "(function(w){return !!w && w.children.length>0;})(document.getElementById('tourCards'))")
             m = None
-            end = time.time() + 20
+            end = time.time() + 120
             while time.time() < end:
                 try:
-                    raw = br.eval(sid, MEASURE)
-                    m = json.loads(raw) if raw else None
-                    if m and m.get('card') and m['img'] and m['natural'][0] > 0:
-                        break
+                    if br.eval(sid, RENDERED):
+                        raw = br.eval(sid, MEASURE)
+                        m = json.loads(raw) if raw else None
+                        if m and m.get('card') and m['img'] and m['natural'][0] > 0:
+                            break
                 except Exception:
                     pass
                 time.sleep(0.3)
             tag = '%s, %d show%s' % (label, n, '' if n == 1 else 's')
             if not (m and m.get('card')):
-                ok('%s: the tour card is on the page' % tag, False, m)
+                try:
+                    load = os.getloadavg()[0]
+                except Exception:
+                    load = 0
+                ok('%s: the tour card is on the page' % tag, False,
+                   'after 120 s the page showed: %s (load %.1f)' % ((m or {}).get('text', m), load))
                 br.close_tab(tid)
                 continue
             # screenshot of the card, for a person to look at

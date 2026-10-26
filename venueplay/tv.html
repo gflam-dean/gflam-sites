@@ -1297,6 +1297,11 @@
        the same one, and a wall that is brought forward or rebuilt rejoins the others instead of
        starting again at the top. */
     var durs=[]; for(var di=0; di<slides.length; di++) durs.push(secsFor(di));
+    /* THE CLOCK, READABLE FROM OUTSIDE (27 Oct 2026). /screen-check asks this after it wakes the
+       wall, so it can tell a legitimate clock-synced advance (Wellshot, 10 s slides: the boundary
+       fell inside its 1.5 s window) from the restart to slide one it exists to catch. The same
+       durs and the same adSlotAt the wall itself uses: one answer, not a second copy of it. */
+    if(typeof window!=="undefined") window.__vpAdClock = { durs: durs.slice(), slot: function(){ return adSlotAt(Date.now(), durs); } };   // the guard is for the jsc suites that lift startAds
     var at=adSlotAt(Date.now(), durs);
     var cur=at.i;
     adIdx=cur;

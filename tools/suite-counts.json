@@ -559,6 +559,10 @@
   "checks": 6,
   "counted_by": "lines"
  },
+ "tools/test-screen-check-wake.js": {
+  "checks": 19,
+  "counted_by": "lines"
+ },
  "tools/test-screen-history.js": {
   "checks": 60,
   "counted_by": "lines"
