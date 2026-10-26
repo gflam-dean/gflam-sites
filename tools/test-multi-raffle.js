@@ -97,6 +97,21 @@ function screen() { var o = {}; DB.vp_venue_screen.filter(function (r) { return 
   check('nine raffles are refused, saying how many a venue can have', r.status === 400 && /up to 8 raffles/.test(r.body.error) && screen().raffles.length === 1, r.body);
   r = await vpbScreenSave(as(OWNER, { venue_id: ROYAL, raffles: [] }), {}, J);
   check('removing the last raffle empties the list and the routine', r.status === 200 && screen().raffles.length === 0 && screen().raffle === null, screen());
+  print('after migration 117: an account page opened before this release still sends only the routine');
+  world(); PRE = false;
+  DB.vp_venue_screen[0].raffles = [{ id: 'rkeepme01', label: 'Meat Raffle', day: 'Friday', time: '6:30pm' }, { id: 'rchook002', label: 'Chook Raffle', day: 'Sunday', time: '3pm' }];
+  r = await vpbScreenSave(as(OWNER, { venue_id: ROYAL, raffle: { label: 'Meat Tray Raffle', day: 'Saturday', time: '5pm' } }), {}, J);
+  var st3 = screen().raffles || [];
+  check('a routine-only save rewrites the FIRST raffle (same id) and leaves the second alone',
+        r.status === 200 && st3.length === 2 && st3[0].id === 'rkeepme01' && st3[0].label === 'Meat Tray Raffle' && st3[0].day === 'Saturday' && st3[1].label === 'Chook Raffle', [r.body, st3]);
+  r = await vpbScreenSave(as(OWNER, { venue_id: ROYAL, raffle: { label: '', day: '', time: '' } }), {}, J);
+  st3 = screen().raffles || [];
+  check('a routine-only clear takes the first raffle off the list too, so the TV does not keep it',
+        r.status === 200 && st3.length === 1 && st3[0].label === 'Chook Raffle' && screen().raffle === null, [r.body, st3]);
+  world(); PRE = false; DB.vp_venue_screen[0].raffles = [];
+  r = await vpbScreenSave(as(OWNER, { venue_id: ROYAL, raffle: { label: 'Chook Raffle', day: 'Sunday', time: '3pm' } }), {}, J);
+  st3 = screen().raffles || [];
+  check('a routine-only save to an empty list makes it the first raffle, with an id', st3.length === 1 && st3[0].label === 'Chook Raffle' && /^r[0-9a-f]{16}$/.test(st3[0].id), st3);
   check('HQ screen history names every raffle', vpaScreenRaffleLabel({ raffles: [{ label: 'Meat Raffle', day: 'Friday', time: '6:30pm' }, { label: 'Chook Raffle', day: 'Sunday', time: '3pm' }] })
         === 'Meat Raffle, Friday, 6:30pm / Chook Raffle, Sunday, 3pm');
 
@@ -122,7 +137,13 @@ function screen() { var o = {}; DB.vp_venue_screen.filter(function (r) { return 
   check('a list: one card per raffle with a night set, each its own words; none for the raffle with no night',
         c.length === 2 && /Meat Raffle/.test(c[0]) && /Chook Raffle/.test(c[1]) && /Drawn Sunday 3pm/.test(c[1]) && !/Not yet/.test(c.join('')), c);
   ADS.raffles = [];
-  check('an empty list: no raffle card, even with the old routine still set', raffleCards().length === 0);
+  c = raffleCards();
+  check('an empty list with the routine still set: that routine, as Your account shows it (screen-get does the same)', c.length === 1 && /Meat Raffle/.test(c[0]), c);
+  ADS.raffle = null;
+  check('an empty list and no routine: no raffle card', raffleCards().length === 0);
+  ADS.raffles = [{ id: 'a1b2c3', label: 'Lucky Envelope', day: '', time: '' }];
+  c = raffleCards();
+  check('ONE raffle on the list is the single routine as before: shown with no night set, as the routine always was', c.length === 1 && /Lucky Envelope/.test(c[0]), c);
   finished = true;
 })().catch(function (e) { print('  FAIL the test itself threw: ' + e + '\n' + (e && e.stack)); fails++; });
 drainMicrotasks();

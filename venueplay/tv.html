@@ -1460,7 +1460,10 @@
      every raffle with a night set gets its own card, in the order the venue keeps them; before the list
      exists (migration 117 not run) the single routine is shown exactly as it always was. */
   function rafflesOnWall(){
-    if(Array.isArray(ADS.raffles)) return ADS.raffles.filter(function(r){ return hasRaffle(r) && String(r.day||"").trim(); });
+    /* One raffle on the list is the single routine as it always was: shown when anything is set, the
+       same test as before. Two or more: each needs its night, or the wall cannot say which is which. */
+    if(Array.isArray(ADS.raffles) && ADS.raffles.length>1) return ADS.raffles.filter(function(r){ return hasRaffle(r) && String(r.day||"").trim(); });
+    if(Array.isArray(ADS.raffles) && ADS.raffles.length===1) return hasRaffle(ADS.raffles[0]) ? [ADS.raffles[0]] : [];
     return ADS.raffle ? [ADS.raffle] : [];
   }
   function todayStr(){ var d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }

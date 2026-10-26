@@ -12059,6 +12059,21 @@ async function vpbScreenSave(request, env, json) {
     if (!rl.ready) return json({ error: 'More than one raffle is not switched on yet (run migration 117 first). Nothing was changed.' }, 409);
     row.raffles = vpbCleanRaffles(b.raffles);
     row.raffle = row.raffles[0] ? { label: row.raffles[0].label, day: row.raffles[0].day, time: row.raffles[0].time } : null;
+  } else if (b.raffle !== undefined) {
+    /* THE SINGLE ROUTINE ALONE, once the list is there: an account page loaded before this release
+       (open in a tab) still sends only `raffle`. It is the venue's FIRST raffle, so it is written
+       there too; otherwise the list (which the TV and the page now read) would keep the old words
+       while `raffle` had the new ones. Cleared routine: the first raffle goes. Before migration 117
+       the read says not ready and only `raffle` is written, as it always was. */
+    const rl = await vpbReadRaffles(env, venueId);
+    if (rl.ready) {
+      const list = vpbCleanRaffles(rl.raffles);
+      if (row.raffle) {
+        if (list.length) list[0] = { id: list[0].id, label: row.raffle.label, day: row.raffle.day, time: row.raffle.time };
+        else list.push({ id: vpbRaffleId(), label: row.raffle.label, day: row.raffle.day, time: row.raffle.time });
+      } else if (list.length) list.shift();
+      row.raffles = list;
+    }
   }
   /* THE LOGO IS NOT A FREE-TEXT ADDRESS. This stored any string starting "http", and the logo is
      painted on every TV the venue has and on the public homepage strip. A logo now goes up
