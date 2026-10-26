@@ -70,6 +70,15 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 # wholeness check is reached. Zero bytes parses perfectly, which is the case
 # that check was actually written for.
 MUTATIONS = [
+    # THE GATE'S OWN RELIABILITY, 27 Oct 2026 (tools/gatelib.py, verify-live's Browser, the wake check).
+    ('gate-reliability.test.py', 'tools/gatelib.py',
+     '    if passed(first) or not chrome:',
+     '    if passed(first) or True:',
+     'a Chrome suite that fails once under load is red at once, never retried on a quiet machine'),
+    ('no suite left a headless Chrome behind', 'tools/verify-live.py',
+     '                kill_tree(self.proc.pid)',
+     '                pass   # kill_tree(self.proc.pid)',
+     'a closed Browser leaves its Chrome running, and the leak piles up until the next suite times out'),
     # TVs IN STEP, 25 Oct 2026: every wall reads the slide off the clock.
     ('test-tv-slides-in-step.js', 'venueplay/tv.html',
      '    var p=((nowMs % total) + total) % total;',

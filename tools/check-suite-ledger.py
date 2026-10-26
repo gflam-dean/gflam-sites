@@ -28,6 +28,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 JSC = '/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc'
+sys.path.insert(0, os.path.join(ROOT, 'tools'))
+import gatelib       # run_suite (own process group, kills the Chrome on timeout) and uses_chrome
 LEDGER = os.path.join(ROOT, 'tools', 'suite-counts.json')
 # Live integration tests that create real venues. Run by hand, never on a gate. Same list, same
 # reason, as RUN_BY_HAND in release-check.py.
@@ -49,41 +51,73 @@ def discover():
     return sorted(found)
 
 
+def judge(rc, out):
+    """(exit code, checks counted, what was wrong, counted_by) from a suite's output."""
+    lines = out.splitlines()
+    n = len([l for l in lines if OK_LINE.match(l) and not SUMMARY.match(l)])
+    by = 'lines'
+    if n == 0:
+        by = 'total'
+        # Fifteen suites print only their failures and a total. For those the total is all
+        # there is, so it is what gets pinned. Weaker, because it is the suite's own word, but
+        # "ALL 0 CHECKS PASSED" still fails and a total that DROPS still fails.
+        n = 0
+        for l in lines:
+            m = re.match(r'^\s*(?:ALL (\d+) CHECKS PASSED|(\d+) of \d+ checks? passed)', l)
+            if m:
+                n += int(m.group(1) or m.group(2))
+    bad = [l.strip()[:110] for l in lines if BAD_LINE.match(l)]
+    return (rc, n, bad or ([lines[-1].strip()[:110]] if rc and lines else []), by)
+
+
+# --reuse <dir>: the gate (release-check.py) keeps every suite's output as it runs it, so a suite
+# it has already run is COUNTED from that output here rather than run a second time. Before 27 Oct
+# 2026 this ran all fifteen Chrome suites again, six at once, inside every gate: the load spike
+# that made the next suite time out and the reason a gate took ten minutes of Chrome per deploy.
+REUSE = None
+if '--reuse' in sys.argv:
+    REUSE = sys.argv[sys.argv.index('--reuse') + 1]
+REUSED = []
+
+
 def run(rel):
+    if REUSE:
+        name = rel.replace(os.sep, '__')
+        o, c = os.path.join(REUSE, name + '.out'), os.path.join(REUSE, name + '.rc')
+        if os.path.isfile(o) and os.path.isfile(c):
+            try:
+                rc = int(io.open(c, encoding='utf-8').read().strip() or '1')
+                REUSED.append(rel)
+                return judge(rc, io.open(o, encoding='utf-8', errors='replace').read())
+            except Exception:
+                pass
     cmd = [sys.executable, rel] if rel.endswith('.py') else [JSC, rel]
     best = None
     # From the repo root first, which is how the gate runs them. A few older suites find their
     # files relative to themselves, so a suite that cannot even start is tried from its own folder.
     for cwd, arg in ((ROOT, rel), (os.path.join(ROOT, os.path.dirname(rel)), os.path.basename(rel))):
         try:
-            r = subprocess.run(cmd[:-1] + [arg], cwd=cwd, capture_output=True, text=True, timeout=int(os.environ.get('VP_LEDGER_TIMEOUT', '300')))
+            # Its own process group, and the whole group is killed on timeout (the Chrome too).
+            r = gatelib.run_suite(cmd[:-1] + [arg], cwd=cwd, timeout=int(os.environ.get('VP_LEDGER_TIMEOUT', '300')))
         except Exception as e:
             best = best or (1, 0, ['could not run: %s' % e], 'lines'); continue
-        out = (r.stdout or '') + (r.stderr or '')
-        lines = out.splitlines()
-        n = len([l for l in lines if OK_LINE.match(l) and not SUMMARY.match(l)])
-        by = 'lines'
-        if n == 0:
-            by = 'total'
-            # Fifteen suites print only their failures and a total. For those the total is all
-            # there is, so it is what gets pinned. Weaker, because it is the suite's own word, but
-            # "ALL 0 CHECKS PASSED" still fails and a total that DROPS still fails.
-            n = 0
-            for l in lines:
-                m = re.match(r'^\s*(?:ALL (\d+) CHECKS PASSED|(\d+) of \d+ checks? passed)', l)
-                if m:
-                    n += int(m.group(1) or m.group(2))
-        bad = [l.strip()[:110] for l in lines if BAD_LINE.match(l)]
-        res = (r.returncode, n, bad or ([lines[-1].strip()[:110]] if r.returncode and lines else []), by)
-        if r.returncode == 0 and not bad:
+        res = judge(r.rc, r.out)
+        if r.rc == 0 and not res[2]:
             return res
-        if best is None or n > best[1]:
+        if best is None or res[1] > best[1]:
             best = res
     return best
 
 
 def main():
     suites = discover()
+    skipped = []
+    if '--skip-chrome' in sys.argv:
+        # A targeted prove run: the gate did not run its Chrome suites, so they are not judged
+        # here either, and they are named so nobody reads "ok" as covering them.
+        skipped = [s for s in suites if gatelib.uses_chrome(os.path.join(ROOT, s))]
+        suites = [s for s in suites if s not in skipped]
+        print('note %d Chrome suite(s) SKIPPED by --skip-chrome, not judged: %s' % (len(skipped), ', '.join(os.path.basename(s) for s in skipped)))
     # VP_LEDGER_JOBS: fewer at once on a loaded Mac. Six Chrome suites at once timed tv-and-phone out at 300 s (25 Oct 2026).
     with ThreadPoolExecutor(max_workers=int(os.environ.get('VP_LEDGER_JOBS', '6'))) as ex:
         results = dict(zip(suites, ex.map(run, suites)))
@@ -118,10 +152,11 @@ def main():
             print('FAIL %s ran %d checks and the ledger says %d: checks have been removed' % (s, n, want.get('checks', 0))); bad += 1
         elif n == 0:
             print('FAIL %s ran no checks at all' % s); bad += 1
-    for s in sorted(set(ledger) - set(suites)):
+    for s in sorted(set(ledger) - set(suites) - set(skipped)):
         print('FAIL %s is in the ledger and gone from disk: a suite was deleted' % s); bad += 1
     total = sum(r[1] for r in results.values())
-    print(('FAILED: %d problem(s)' % bad) if bad else ('ok   %d suites ran %d checks, none fewer than the ledger' % (len(suites), total)))
+    print(('FAILED: %d problem(s)' % bad) if bad else ('ok   %d suites ran %d checks, none fewer than the ledger%s'
+          % (len(suites), total, (' (%d counted from the gate\'s own run)' % len(REUSED)) if REUSED else '')))
     return 1 if bad else 0
 
 

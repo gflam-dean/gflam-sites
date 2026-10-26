@@ -119,6 +119,50 @@ checked_things = 0
 failures = []
 labels_seen = []        # every label ok() judged, for the label ledger (see labels_ledger)
 
+# THE SHARED-MAC RULES, in tools/gatelib.py so this gate, deploy-worker, prove-checks and the
+# suite ledger cannot drift from each other (27 Oct 2026). Every suite runs in its own process
+# group with a timeout that kills the Chrome too; a CHROME suite that fails is run once more on a
+# quiet machine before it is red; nothing starts Chrome while another live process holds
+# /tmp/vp-heavy.lock.
+sys.path.insert(0, os.path.join(ROOT, 'tools'))
+import gatelib
+
+# --skip-chrome: run the gate WITHOUT its Chrome suites. For prove-checks' targeted proofs only
+# (a proof of a non-browser check used to re-run ten minutes of Chrome to see one line go red).
+# Never a release gate: the summary says so in red, every skipped suite is a "note", and the
+# ledgers below are told which suites were skipped so they do not read them as deleted.
+SKIP_CHROME = '--skip-chrome' in sys.argv
+_CHROME_SKIPPED = set()      # absolute paths of suites not run because of --skip-chrome
+_LEAKED = []                 # (suite, how many headless Chromes it left behind), killed by gatelib
+_CHROME_WATCHED = [0]        # how many Chrome suites were run under a process-group watch
+_SUITE_OUT_DIR = tempfile.mkdtemp(prefix='gate-suite-out-')   # every suite's output, for the ledger
+atexit.register(lambda: shutil.rmtree(_SUITE_OUT_DIR, ignore_errors=True))
+
+
+def _save_suite_output(rel, r):
+    """The ledger (D30) used to run every suite AGAIN to count its checks, which ran all fifteen
+    Chrome suites twice per gate, six at a time. It now reads the output this gate already has."""
+    name = rel.replace(os.sep, '__')
+    try:
+        with io.open(os.path.join(_SUITE_OUT_DIR, name + '.out'), 'w', encoding='utf-8') as fh:
+            fh.write(r.out)
+        with io.open(os.path.join(_SUITE_OUT_DIR, name + '.rc'), 'w', encoding='utf-8') as fh:
+            fh.write(str(r.rc))
+    except Exception:
+        pass
+
+
+def _suite_timeout(chrome):
+    return int(os.environ.get('VP_SUITE_TIMEOUT', '900' if chrome else '300'))
+
+
+def _run_jsc_suite(t):
+    """A .test.js suite under jsc: deterministic, so never retried; still in its own process group
+    with a timeout, and its output kept for the ledger."""
+    r = gatelib.run_suite([JSC, t], cwd=ROOT, timeout=_suite_timeout(False))
+    _save_suite_output(os.path.relpath(t, ROOT), r)
+    return r
+
 
 def ok(label, good, detail='', why=''):
     """detail is shown either way. why explains a FAILURE and is shown only then,
@@ -513,25 +557,52 @@ def local_checks(which):
             for f in sorted(os.listdir(d)):
                 if not f.endswith('.test.js'):
                     continue
-                r = subprocess.run([JSC, os.path.join(d, f)], capture_output=True, text=True)
-                last = (r.stdout.strip().splitlines() or [''])[-1]
+                r = _run_jsc_suite(os.path.join(d, f))
                 _SUITES_RUN.add(os.path.abspath(os.path.join(d, f)))
-                ok(f, suite_passed(last), last)
+                ok(f, suite_passed(r.last), r.last)
     """A .test.py under tools/ runs the same way a .test.js does. redirect-verdict.test.py is
     the first: it drives redirect_verdict with the answers a broken edge rule would give, which
-    a live probe can never produce while the rule is working."""
+    a live probe can never produce while the rule is working.
+
+    A CHROME suite (judged by what it imports, see gatelib.uses_chrome) that fails is run ONCE
+    MORE after the machine has gone quiet, and only then called red (27 Oct 2026: two deploys in
+    a row were refused by one Chrome layout reading each, both green minutes earlier, both taken
+    with other agents' suites on the same Mac). Every retry is written to tools/flake-log.jsonl
+    with the load at the time, and the summary prints a one-line FLAKES tally. A suite that fails
+    twice is red, exactly as before. Nothing under jsc is ever retried."""
     for f in sorted(os.listdir(os.path.join(ROOT, 'tools'))):
         if not f.endswith('.test.py'):
             continue
-        r = subprocess.run([sys.executable, os.path.join(ROOT, 'tools', f)],
-                           capture_output=True, text=True, cwd=ROOT)
-        last = (r.stdout.strip().splitlines() or [''])[-1]
-        _SUITES_RUN.add(os.path.abspath(os.path.join(ROOT, 'tools', f)))
+        p = os.path.join(ROOT, 'tools', f)
+        chrome = gatelib.uses_chrome(p)
+        if chrome and SKIP_CHROME:
+            _CHROME_SKIPPED.add(os.path.abspath(p))
+            note(f, 'SKIPPED by --skip-chrome: a targeted prove run, never a release gate')
+            continue
+        if chrome:
+            _CHROME_WATCHED[0] += 1
+
+        def _passed(r):
+            return r.rc == 0 and suite_passed(r.last)
+        r, flake = gatelib.run_suite_with_retry(
+            [sys.executable, p], f, _passed, cwd=ROOT, timeout=_suite_timeout(chrome), chrome=chrome,
+            say=lambda s: print('  %s%s%s' % (DIM, s, OFF)))
+        _save_suite_output(os.path.join('tools', f), r)
+        if r.leaked:
+            _LEAKED.append((f, len(r.leaked)))
+        _SUITES_RUN.add(os.path.abspath(p))
         # Say WHICH check failed, whole. "24 of 26 checks passed" with the reason cut off at
         # "FAIL the phone is i" was all three blocked releases on 20 Oct 2026 had to go on.
-        fails = [l.strip() for l in r.stdout.splitlines() if l.strip().startswith('FAIL')]
-        ok(f, r.returncode == 0 and suite_passed(last), last,
-           why=('| ' + ' | '.join(fails[:3])) if fails else '')
+        ok(f, _passed(r),
+           '%s  (%.0fs%s)' % (r.last, r.seconds, ', passed on retry' if flake and flake['outcome'] == 'passed on retry' else ''),
+           why=('| ' + ' | '.join(r.fails[:3])) if r.fails else '')
+
+    # COUNTED, NOT TRUSTED: every Chrome suite ran in a process group of its own, and any headless
+    # Chrome still in that group when the suite had ended was a leak. gatelib killed it; this
+    # says so, red, because a suite that leaks is the suite that made the next one time out.
+    ok('no suite left a headless Chrome behind', not _LEAKED,
+       '%d Chrome suite(s) watched by process group' % _CHROME_WATCHED[0],
+       why='killed after: ' + ', '.join('%s (%d)' % x for x in _LEAKED[:4]))
 
     for f in ['check-tv-watchdog.py', 'check-venue-scoping.py']:
         p = os.path.join(ROOT, 'venueplay-backend', 'tools', f)
@@ -597,11 +668,9 @@ def local_checks(which):
                     vp_suites.append(os.path.join(d, f))
     vp_suites = sorted(set(vp_suites))
     for t in vp_suites:
-        r = subprocess.run([JSC, t], capture_output=True, text=True, cwd=ROOT)
-        out = (r.stdout + r.stderr).strip().splitlines()
-        line = out[-1] if out else ''
+        r = _run_jsc_suite(t)
         _SUITES_RUN.add(os.path.abspath(t))
-        ok(os.path.basename(t), suite_passed(line), line)
+        ok(os.path.basename(t), suite_passed(r.last), r.last)
 
     every_suite_is_run()
     every_page_loads_what_it_calls()
@@ -3254,7 +3323,11 @@ def local_checks(which):
         if not os.path.isfile(t) or not os.path.isfile(os.path.join(ROOT, 'tools', 'suite-counts.json')):
             ok('the suite ledger and its checker exist', False, why='tools/check-suite-ledger.py or tools/suite-counts.json is missing')
         else:
-            r = subprocess.run([sys.executable, t], capture_output=True, text=True, timeout=900, cwd=ROOT)
+            # --reuse: the suites this gate has ALREADY run are counted from the output it kept
+            # (gatelib, 27 Oct 2026), so the fifteen Chrome suites no longer run a second time,
+            # six at once, inside every gate. Only what the gate did not run itself is run here.
+            r = subprocess.run([sys.executable, t, '--reuse', _SUITE_OUT_DIR] + (['--skip-chrome'] if SKIP_CHROME else []),
+                               capture_output=True, text=True, timeout=900, cwd=ROOT)
             out = ((r.stdout or '') + (r.stderr or '')).strip()
             bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
             m = re.search(r'(\d+) suites ran (\d+) checks', out)
@@ -4445,10 +4518,11 @@ def every_suite_is_run():
             if f.endswith('.test.js') or f.endswith('.test.py'):
                 found.append(os.path.abspath(os.path.join(d, f)))
     orphans = sorted(p for p in set(found)
-                     if p not in _SUITES_RUN and os.path.basename(p) not in RUN_BY_HAND)
+                     if p not in _SUITES_RUN and p not in _CHROME_SKIPPED and os.path.basename(p) not in RUN_BY_HAND)
     ok('no suite in this repo is left unrun',
        not orphans,
-       '%d suite(s) run, %d run by hand on purpose' % (len(_SUITES_RUN), len(RUN_BY_HAND)),
+       '%d suite(s) run, %d run by hand on purpose%s' % (len(_SUITES_RUN), len(RUN_BY_HAND),
+           (', %d Chrome suite(s) SKIPPED by --skip-chrome' % len(_CHROME_SKIPPED)) if _CHROME_SKIPPED else ''),
        why=('nothing runs these, so they prove nothing: '
             + ', '.join(short(p) for p in orphans[:4])))
     # AND THE EXCUSES MUST STILL POINT AT SOMETHING. A name left here after the file is
@@ -5387,7 +5461,8 @@ def labels_ledger(update):
         pinned = set(json.load(io.open(ledger_path, encoding='utf-8')).get('labels', []))
     except Exception:
         pinned = set()
-    gone = sorted(pinned - set(seen))
+    # A suite skipped by --skip-chrome is not a check that disappeared; its label is its file name.
+    gone = sorted(pinned - set(seen) - {os.path.basename(p) for p in _CHROME_SKIPPED})
     new = sorted(set(seen) - pinned)
     unproven = [l for l in seen if not covered(l)]
     ok('no gate check has disappeared', not gone,
@@ -5413,6 +5488,12 @@ def summary(which, ran_live):
         print('not finished. It has been taking 15 to 25 minutes. Re-run before panicking.')
     else:
         print('%sAll %d checks passed.%s' % (GRN, checked_things, OFF))
+    # ONE LINE ON FLAKES, EVERY RUN. A Chrome suite that passed only on its retry is a pass, and
+    # it is also a fact about this Mac that someone should see without opening the log.
+    print(gatelib.flake_summary_line())
+    if SKIP_CHROME:
+        print('%sTHIS RUN SKIPPED %d CHROME SUITE(S) (--skip-chrome). It is a targeted prove run, NOT a release gate.%s'
+              % (RED, len(_CHROME_SKIPPED), OFF))
 
     print('\n%sWHAT THIS DOES NOT CHECK%s' % (YEL, OFF))
     print("""  Four of the five faults found in live testing on 27 Aug only appear when a
@@ -5590,6 +5671,14 @@ def main():
     if _SCANNER_ERROR:
         head('The tools this gate is built from')
         ok('the comment scanner loads', False, why=_SCANNER_ERROR)
+
+    if not live_only and not SKIP_CHROME:
+        # ONE HEAVY CHROME RUN AT A TIME ON THIS MAC. Held by a live process that is not ours (or
+        # our parent): refuse, and say who. Held by a dead one: clear it, and say so.
+        head('The heavy lock (/tmp/vp-heavy.lock)')
+        if not gatelib.hold_lock_or_refuse('release-check', wait_s=int(os.environ.get('VP_WAIT_LOCK', '0'))):
+            print('%sREFUSED: not starting Chrome on a Mac where another live run holds the heavy lock.%s' % (RED, OFF))
+            sys.exit(3)
 
     if not live_only:
         local_checks(which)

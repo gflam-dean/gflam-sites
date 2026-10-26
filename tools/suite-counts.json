@@ -135,6 +135,10 @@
   "checks": 43,
   "counted_by": "lines"
  },
+ "tools/gate-reliability.test.py": {
+  "checks": 50,
+  "counted_by": "lines"
+ },
  "tools/help-desk-pages.test.py": {
   "checks": 216,
   "counted_by": "lines"
