@@ -1,0 +1,2368 @@
+[
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "At what time of day is the minute's silence held on Remembrance Day?",
+  "options": [
+   "11am",
+   "Midday",
+   "9am",
+   "3pm"
+  ],
+  "correctIndex": 0,
+  "answer": "11am",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "armistice"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "Remembrance Day marks the anniversary of the armistice that ended fighting in which war?",
+  "options": [
+   "Second World War",
+   "First World War",
+   "Boer War",
+   "Korean War"
+  ],
+  "correctIndex": 1,
+  "answer": "First World War",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "armistice",
+   "ww1"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "In which year did the Armistice end the fighting on the Western Front?",
+  "options": [
+   "1919",
+   "1916",
+   "1918",
+   "1914"
+  ],
+  "correctIndex": 2,
+  "answer": "1918",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "armistice",
+   "ww1"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "The 1918 Armistice was signed in a railway carriage in a forest near which French town?",
+  "options": [
+   "Versailles",
+   "Verdun",
+   "Amiens",
+   "Compiegne"
+  ],
+  "correctIndex": 3,
+  "answer": "Compiegne",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "armistice",
+   "ww1"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "Before it became Remembrance Day, what was 11 November commonly called in Australia?",
+  "options": [
+   "Armistice Day",
+   "Victory Day",
+   "Empire Day",
+   "Peace Day"
+  ],
+  "correctIndex": 0,
+  "answer": "Armistice Day",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "armistice"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "hard",
+  "question": "Which Melbourne journalist's 1919 letter to a London newspaper proposed a silence on Armistice Day?",
+  "options": [
+   "Keith Murdoch",
+   "Edward Honey",
+   "Charles Bean",
+   "Banjo Paterson"
+  ],
+  "correctIndex": 1,
+  "answer": "Edward Honey",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "armistice",
+   "minute-silence"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "In Flanders Fields was written by a doctor serving in which country's army?",
+  "options": [
+   "Britain",
+   "Australia",
+   "Canada",
+   "New Zealand"
+  ],
+  "correctIndex": 2,
+  "answer": "Canada",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "poppy",
+   "poetry"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "Which army doctor wrote the 1915 poem In Flanders Fields?",
+  "options": [
+   "Wilfred Owen",
+   "Rupert Brooke",
+   "Siegfried Sassoon",
+   "John McCrae"
+  ],
+  "correctIndex": 3,
+  "answer": "John McCrae",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "poppy",
+   "poetry"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "Flanders, the region named in In Flanders Fields, lies mainly in which present-day country?",
+  "options": [
+   "Belgium",
+   "France",
+   "Netherlands",
+   "Luxembourg"
+  ],
+  "correctIndex": 0,
+  "answer": "Belgium",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "poppy",
+   "western-front"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "The Poppy Appeal held around Remembrance Day raises money for which veterans' organisation?",
+  "options": [
+   "Red Cross",
+   "RSL",
+   "Salvation Army",
+   "Lions Club"
+  ],
+  "correctIndex": 1,
+  "answer": "RSL",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "poppy",
+   "rsl"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "Which herb is worn on Anzac Day because it grows wild on the Gallipoli peninsula?",
+  "options": [
+   "Lavender",
+   "Thyme",
+   "Rosemary",
+   "Sage"
+  ],
+  "correctIndex": 2,
+  "answer": "Rosemary",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "gallipoli",
+   "anzac"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "Which bugle call is played at remembrance services just before the minute's silence?",
+  "options": [
+   "Reveille",
+   "The Charge",
+   "Assembly",
+   "The Last Post"
+  ],
+  "correctIndex": 3,
+  "answer": "The Last Post",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "last-post",
+   "ceremony"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "In British army camps, the Last Post originally signalled what?",
+  "options": [
+   "The end of the day",
+   "Time to wake",
+   "Meal time",
+   "A cavalry charge"
+  ],
+  "correctIndex": 0,
+  "answer": "The end of the day",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "last-post",
+   "ceremony"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "The Ode of Remembrance comes from a poem by which English poet?",
+  "options": [
+   "Rupert Brooke",
+   "Laurence Binyon",
+   "Wilfred Owen",
+   "Rudyard Kipling"
+  ],
+  "correctIndex": 1,
+  "answer": "Laurence Binyon",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "ode",
+   "poetry"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "Complete the Ode of Remembrance: 'Age shall not weary them, nor the years...' what?",
+  "options": [
+   "forget",
+   "defeat",
+   "condemn",
+   "diminish"
+  ],
+  "correctIndex": 2,
+  "answer": "condemn",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "ode",
+   "poetry"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "The Ode of Remembrance is a verse from which Laurence Binyon poem?",
+  "options": [
+   "Lest We Forget",
+   "The Soldier",
+   "Anthem for Doomed Youth",
+   "For the Fallen"
+  ],
+  "correctIndex": 3,
+  "answer": "For the Fallen",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "ode",
+   "poetry"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "The Tomb of the Unknown Australian Soldier is in which Canberra institution?",
+  "options": [
+   "Australian War Memorial",
+   "Parliament House",
+   "National Museum of Australia",
+   "National Gallery of Australia"
+  ],
+  "correctIndex": 0,
+  "answer": "Australian War Memorial",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "unknown-soldier",
+   "awm"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "In which year was the Unknown Australian Soldier laid to rest in Canberra?",
+  "options": [
+   "1988",
+   "1993",
+   "1975",
+   "2001"
+  ],
+  "correctIndex": 1,
+  "answer": "1993",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "unknown-soldier",
+   "awm"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "hard",
+  "question": "The Unknown Australian Soldier was brought home from which First World War cemetery in France?",
+  "options": [
+   "Pheasant Wood Cemetery",
+   "Tyne Cot Cemetery",
+   "Adelaide Cemetery",
+   "Lone Pine Cemetery"
+  ],
+  "correctIndex": 2,
+  "answer": "Adelaide Cemetery",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "unknown-soldier",
+   "western-front"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "Which Prime Minister delivered the eulogy for the Unknown Australian Soldier in 1993?",
+  "options": [
+   "Bob Hawke",
+   "John Howard",
+   "Malcolm Fraser",
+   "Paul Keating"
+  ],
+  "correctIndex": 3,
+  "answer": "Paul Keating",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "unknown-soldier",
+   "prime-ministers"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "In which part of the Australian War Memorial does the Unknown Australian Soldier lie?",
+  "options": [
+   "Hall of Memory",
+   "Hall of Valour",
+   "Pool of Reflection",
+   "Commemorative Courtyard"
+  ],
+  "correctIndex": 0,
+  "answer": "Hall of Memory",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "unknown-soldier",
+   "awm"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "At the Australian War Memorial, visitors tuck red poppies beside names on which bronze panels?",
+  "options": [
+   "Hall of Valour",
+   "Roll of Honour",
+   "Book of Remembrance",
+   "Wall of Heroes"
+  ],
+  "correctIndex": 1,
+  "answer": "Roll of Honour",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "awm",
+   "poppy"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "Which ceremonial avenue in Canberra leads up to the Australian War Memorial?",
+  "options": [
+   "Commonwealth Avenue",
+   "Northbourne Avenue",
+   "Anzac Parade",
+   "Constitution Avenue"
+  ],
+  "correctIndex": 2,
+  "answer": "Anzac Parade",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "awm",
+   "memorials"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "Which official war historian was the driving force behind creating the Australian War Memorial?",
+  "options": [
+   "John Monash",
+   "Keith Murdoch",
+   "Banjo Paterson",
+   "Charles Bean"
+  ],
+  "correctIndex": 3,
+  "answer": "Charles Bean",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "awm",
+   "ww1"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "Which daily closing-time ceremony at the Australian War Memorial tells the story of one person who died in service?",
+  "options": [
+   "Last Post Ceremony",
+   "Changing of the Guard",
+   "Sunset Parade",
+   "Dawn Service"
+  ],
+  "correctIndex": 0,
+  "answer": "Last Post Ceremony",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "awm",
+   "last-post"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "hard",
+  "question": "In which year was the Australian War Memorial officially opened?",
+  "options": [
+   "1938",
+   "1941",
+   "1927",
+   "1950"
+  ],
+  "correctIndex": 1,
+  "answer": "1941",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "awm"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "Which organisation, founded by returned servicemen in 1923, supports the families of deceased veterans?",
+  "options": [
+   "RSL",
+   "Red Cross",
+   "Legacy",
+   "The Smith Family"
+  ],
+  "correctIndex": 2,
+  "answer": "Legacy",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "legacy"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "hard",
+  "question": "Which First World War veteran, later a general, founded Legacy in Melbourne?",
+  "options": [
+   "Thomas Blamey",
+   "John Monash",
+   "Harry Chauvel",
+   "Stan Savige"
+  ],
+  "correctIndex": 3,
+  "answer": "Stan Savige",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "legacy"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "Legacy's annual fundraising day is named after selling what?",
+  "options": [
+   "Badges",
+   "Poppies",
+   "Lamingtons",
+   "Raffle tickets"
+  ],
+  "correctIndex": 0,
+  "answer": "Badges",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "legacy"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "In which year was the organisation now called the RSL founded?",
+  "options": [
+   "1919",
+   "1916",
+   "1901",
+   "1945"
+  ],
+  "correctIndex": 1,
+  "answer": "1916",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "rsl"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "On 25 April 1915, the Anzacs landed at a small bay later given what name?",
+  "options": [
+   "Suvla Bay",
+   "Cape Helles",
+   "Anzac Cove",
+   "Morto Bay"
+  ],
+  "correctIndex": 2,
+  "answer": "Anzac Cove",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "gallipoli"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "The Battle of Lone Pine at Gallipoli was fought in which month of 1915?",
+  "options": [
+   "April",
+   "May",
+   "December",
+   "August"
+  ],
+  "correctIndex": 3,
+  "answer": "August",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "gallipoli"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "hard",
+  "question": "How many Victoria Crosses were awarded to Australians for the Battle of Lone Pine?",
+  "options": [
+   "Seven",
+   "Five",
+   "Three",
+   "Nine"
+  ],
+  "correctIndex": 0,
+  "answer": "Seven",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "gallipoli",
+   "victoria-cross"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "Australian and New Zealand troops were evacuated from Anzac in which month?",
+  "options": [
+   "January 1916",
+   "December 1915",
+   "August 1915",
+   "April 1916"
+  ],
+  "correctIndex": 1,
+  "answer": "December 1915",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "gallipoli"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "hard",
+  "question": "Which device, invented by Lance Corporal William Scurry, fired rifles unattended to cover the Gallipoli evacuation?",
+  "options": [
+   "Periscope rifle",
+   "Jam tin bomb",
+   "Drip rifle",
+   "Mills bomb"
+  ],
+  "correctIndex": 2,
+  "answer": "Drip rifle",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "gallipoli"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "John Simpson Kirkpatrick carried wounded men at Gallipoli with the help of which animal?",
+  "options": [
+   "Mule",
+   "Horse",
+   "Camel",
+   "Donkey"
+  ],
+  "correctIndex": 3,
+  "answer": "Donkey",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "gallipoli",
+   "simpson"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "John Simpson Kirkpatrick, the man with the donkey, was born in which country?",
+  "options": [
+   "England",
+   "Scotland",
+   "Ireland",
+   "Australia"
+  ],
+  "correctIndex": 0,
+  "answer": "England",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "gallipoli",
+   "simpson"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "The 1916 Battle of Pozieres was part of which larger offensive?",
+  "options": [
+   "Verdun",
+   "The Somme",
+   "Passchendaele",
+   "Amiens"
+  ],
+  "correctIndex": 1,
+  "answer": "The Somme",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "western-front",
+   "pozieres"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "The Battle of Fromelles in July 1916 was the AIF's first major battle on which front?",
+  "options": [
+   "Eastern Front",
+   "Italian Front",
+   "Western Front",
+   "Macedonian Front"
+  ],
+  "correctIndex": 2,
+  "answer": "Western Front",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "western-front",
+   "fromelles"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "hard",
+  "question": "Remains of Fromelles soldiers were recovered in 2009 from mass graves beside which wood?",
+  "options": [
+   "Polygon Wood",
+   "Delville Wood",
+   "Mametz Wood",
+   "Pheasant Wood"
+  ],
+  "correctIndex": 3,
+  "answer": "Pheasant Wood",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "western-front",
+   "fromelles"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "Australians recaptured Villers-Bretonneux in April 1918 on the third anniversary of which event?",
+  "options": [
+   "The Gallipoli landing",
+   "The start of the war",
+   "The Battle of the Somme",
+   "Federation"
+  ],
+  "correctIndex": 0,
+  "answer": "The Gallipoli landing",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "western-front",
+   "villers-bretonneux"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "The school in Villers-Bretonneux was rebuilt after the war with donations from schoolchildren in which state?",
+  "options": [
+   "New South Wales",
+   "Victoria",
+   "Queensland",
+   "South Australia"
+  ],
+  "correctIndex": 1,
+  "answer": "Victoria",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "western-front",
+   "villers-bretonneux"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "hard",
+  "question": "Monash's carefully planned Battle of Hamel in 1918 was won in about how many minutes?",
+  "options": [
+   "45",
+   "150",
+   "93",
+   "240"
+  ],
+  "correctIndex": 2,
+  "answer": "93",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "western-front",
+   "monash"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "At Hamel on 4 July 1918, Australians attacked alongside troops from which country?",
+  "options": [
+   "Canada",
+   "New Zealand",
+   "India",
+   "United States"
+  ],
+  "correctIndex": 3,
+  "answer": "United States",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "western-front",
+   "monash"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "Which Melbourne university is named after Australia's First World War corps commander?",
+  "options": [
+   "Monash",
+   "Deakin",
+   "La Trobe",
+   "Swinburne"
+  ],
+  "correctIndex": 0,
+  "answer": "Monash",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "monash"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "Which king knighted John Monash on the battlefield in France in 1918?",
+  "options": [
+   "Edward VII",
+   "George V",
+   "George VI",
+   "Edward VIII"
+  ],
+  "correctIndex": 1,
+  "answer": "George V",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "monash",
+   "ww1"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "hard",
+  "question": "The 1917 Battle of Polygon Wood was part of which larger campaign in Belgium?",
+  "options": [
+   "First Battle of Ypres",
+   "Battle of the Somme",
+   "Third Battle of Ypres",
+   "Battle of Verdun"
+  ],
+  "correctIndex": 2,
+  "answer": "Third Battle of Ypres",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "western-front"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "In which Belgian town is the Last Post played every evening at the Menin Gate?",
+  "options": [
+   "Bruges",
+   "Ghent",
+   "Antwerp",
+   "Ypres"
+  ],
+  "correctIndex": 3,
+  "answer": "Ypres",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "western-front",
+   "last-post",
+   "memorials"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "The 1917 Battles of Bullecourt, fought by Australians, took place in which country?",
+  "options": [
+   "France",
+   "Belgium",
+   "Germany",
+   "Turkey"
+  ],
+  "correctIndex": 0,
+  "answer": "France",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "western-front"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "The famous charge at Beersheba on 31 October 1917 was made by which troops?",
+  "options": [
+   "New Zealand Mounted Rifles",
+   "Australian Light Horse",
+   "Imperial Camel Corps",
+   "British Yeomanry"
+  ],
+  "correctIndex": 1,
+  "answer": "Australian Light Horse",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "beersheba",
+   "light-horse"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "The town of Beersheba, scene of the 1917 Light Horse charge, is in which present-day country?",
+  "options": [
+   "Egypt",
+   "Jordan",
+   "Israel",
+   "Syria"
+  ],
+  "correctIndex": 2,
+  "answer": "Israel",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "beersheba",
+   "light-horse"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "hard",
+  "question": "Which two Light Horse regiments made the charge at Beersheba?",
+  "options": [
+   "8th and 10th",
+   "1st and 2nd",
+   "3rd and 5th",
+   "4th and 12th"
+  ],
+  "correctIndex": 3,
+  "answer": "4th and 12th",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "beersheba",
+   "light-horse"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "What vital resource did the Light Horse need to capture at Beersheba?",
+  "options": [
+   "Water wells",
+   "A railway line",
+   "An airfield",
+   "An ammunition store"
+  ],
+  "correctIndex": 0,
+  "answer": "Water wells",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "beersheba",
+   "light-horse"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "What name was given to the hardy Australian horses ridden by the Light Horse?",
+  "options": [
+   "Brumbies",
+   "Walers",
+   "Clydesdales",
+   "Arabs"
+  ],
+  "correctIndex": 1,
+  "answer": "Walers",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "light-horse"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "Light Horsemen famously wore the feathers of which bird in their slouch hats?",
+  "options": [
+   "Ostrich",
+   "Lyrebird",
+   "Emu",
+   "Cockatoo"
+  ],
+  "correctIndex": 2,
+  "answer": "Emu",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "light-horse"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "Which Australian general commanded the Desert Mounted Corps, including the Light Horse, in Palestine?",
+  "options": [
+   "John Monash",
+   "Thomas Blamey",
+   "William Birdwood",
+   "Harry Chauvel"
+  ],
+  "correctIndex": 3,
+  "answer": "Harry Chauvel",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "light-horse"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "The tragic 1915 attack at The Nek, Gallipoli, was made on foot by which troops?",
+  "options": [
+   "Light Horse",
+   "Field Ambulance",
+   "Royal Australian Navy",
+   "Flying Corps"
+  ],
+  "correctIndex": 0,
+  "answer": "Light Horse",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "gallipoli",
+   "light-horse"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "The Kokoda Track crosses which mountain range in Papua New Guinea?",
+  "options": [
+   "Bismarck Range",
+   "Owen Stanley Range",
+   "Finisterre Range",
+   "Star Mountains"
+  ],
+  "correctIndex": 1,
+  "answer": "Owen Stanley Range",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "kokoda",
+   "ww2"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "Australians fought the Kokoda campaign of 1942 against forces from which country?",
+  "options": [
+   "Germany",
+   "Italy",
+   "Japan",
+   "Thailand"
+  ],
+  "correctIndex": 2,
+  "answer": "Japan",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "kokoda",
+   "ww2"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "Papuan carriers who helped wounded Australians along the Kokoda Track became known by what name?",
+  "options": [
+   "Kokoda Angels",
+   "Mountain Guardians",
+   "Track Bearers",
+   "Fuzzy Wuzzy Angels"
+  ],
+  "correctIndex": 3,
+  "answer": "Fuzzy Wuzzy Angels",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "kokoda",
+   "ww2"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "hard",
+  "question": "Which militia battalion, later called 'ragged bloody heroes', held the line on the Kokoda Track?",
+  "options": [
+   "39th Battalion",
+   "2/14th Battalion",
+   "7th Battalion",
+   "1st Battalion"
+  ],
+  "correctIndex": 0,
+  "answer": "39th Battalion",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "kokoda",
+   "ww2"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "Australians besieged at Tobruk in 1941 proudly adopted what nickname?",
+  "options": [
+   "Desert Rats",
+   "Rats of Tobruk",
+   "Desert Foxes",
+   "Sand Diggers"
+  ],
+  "correctIndex": 1,
+  "answer": "Rats of Tobruk",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "tobruk",
+   "ww2"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "Tobruk, held by Australians during a long siege in 1941, is a port in which country?",
+  "options": [
+   "Egypt",
+   "Tunisia",
+   "Libya",
+   "Algeria"
+  ],
+  "correctIndex": 2,
+  "answer": "Libya",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "tobruk",
+   "ww2"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "Which German general's Afrika Korps besieged Tobruk in 1941?",
+  "options": [
+   "Heinz Guderian",
+   "Albert Kesselring",
+   "Gerd von Rundstedt",
+   "Erwin Rommel"
+  ],
+  "correctIndex": 3,
+  "answer": "Erwin Rommel",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "tobruk",
+   "ww2"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "The Japanese carrier force that first bombed Darwin had earlier attacked which US base?",
+  "options": [
+   "Pearl Harbor",
+   "Midway",
+   "Guam",
+   "Manila"
+  ],
+  "correctIndex": 0,
+  "answer": "Pearl Harbor",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "darwin",
+   "ww2"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "Which Western Australian town was attacked in March 1942, with many flying boats destroyed in its bay?",
+  "options": [
+   "Port Hedland",
+   "Broome",
+   "Geraldton",
+   "Carnarvon"
+  ],
+  "correctIndex": 1,
+  "answer": "Broome",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "home-front",
+   "ww2"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "Japanese midget submarines attacked which Australian harbour in 1942?",
+  "options": [
+   "Newcastle Harbour",
+   "Fremantle Harbour",
+   "Sydney Harbour",
+   "Port Phillip Bay"
+  ],
+  "correctIndex": 2,
+  "answer": "Sydney Harbour",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "home-front",
+   "ww2"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "hard",
+  "question": "Which converted ferry, serving as a naval depot ship, was sunk in the 1942 Sydney Harbour attack?",
+  "options": [
+   "HMAS Canberra",
+   "HMAS Perth",
+   "HMAS Adelaide",
+   "HMAS Kuttabul"
+  ],
+  "correctIndex": 3,
+  "answer": "HMAS Kuttabul",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "home-front",
+   "ww2",
+   "navy"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "Which Australian hospital ship was sunk by a Japanese submarine off Queensland in May 1943?",
+  "options": [
+   "Centaur",
+   "Manunda",
+   "Wanganella",
+   "Kanimbla"
+  ],
+  "correctIndex": 0,
+  "answer": "Centaur",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "home-front",
+   "ww2",
+   "nurses"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "hard",
+  "question": "Which nurse was the only nursing sister to survive the sinking of the hospital ship Centaur?",
+  "options": [
+   "Vivian Bullwinkel",
+   "Ellen Savage",
+   "Elizabeth Kenny",
+   "Nancy Wake"
+  ],
+  "correctIndex": 1,
+  "answer": "Ellen Savage",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "ww2",
+   "nurses"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "hard",
+  "question": "Vivian Bullwinkel survived the 1942 massacre of Australian nurses on which island?",
+  "options": [
+   "Borneo",
+   "Timor",
+   "Bangka Island",
+   "Java"
+  ],
+  "correctIndex": 2,
+  "answer": "Bangka Island",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "ww2",
+   "nurses"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "Which nickname did the Gestapo give Australian resistance heroine Nancy Wake?",
+  "options": [
+   "The White Rabbit",
+   "The Grey Fox",
+   "The Black Cat",
+   "The White Mouse"
+  ],
+  "correctIndex": 3,
+  "answer": "The White Mouse",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "nancy-wake",
+   "ww2"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "Nancy Wake worked with the French Resistance as an agent of which British secret organisation?",
+  "options": [
+   "Special Operations Executive",
+   "MI5",
+   "Scotland Yard",
+   "Royal Navy Intelligence"
+  ],
+  "correctIndex": 0,
+  "answer": "Special Operations Executive",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "nancy-wake",
+   "ww2"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "Nancy Wake, raised in Sydney, was born in which country?",
+  "options": [
+   "Australia",
+   "New Zealand",
+   "England",
+   "France"
+  ],
+  "correctIndex": 1,
+  "answer": "New Zealand",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "nancy-wake",
+   "ww2"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "What is the highest Australian award for gallantry in the face of the enemy?",
+  "options": [
+   "George Cross",
+   "Medal for Gallantry",
+   "Victoria Cross",
+   "Star of Courage"
+  ],
+  "correctIndex": 2,
+  "answer": "Victoria Cross",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "victoria-cross"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "Who was the first Australian awarded the Victoria Cross in the First World War, at Gallipoli in 1915?",
+  "options": [
+   "Hugo Throssell",
+   "Harry Murray",
+   "John Simpson Kirkpatrick",
+   "Albert Jacka"
+  ],
+  "correctIndex": 3,
+  "answer": "Albert Jacka",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "victoria-cross",
+   "gallipoli"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "In 2009, who became the first recipient of the Victoria Cross for Australia?",
+  "options": [
+   "Mark Donaldson",
+   "Cameron Baird",
+   "Keith Payne",
+   "Daniel Keighran"
+  ],
+  "correctIndex": 0,
+  "answer": "Mark Donaldson",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "victoria-cross"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "Keith Payne was awarded the Victoria Cross for bravery in which war?",
+  "options": [
+   "Korean War",
+   "Vietnam War",
+   "Second World War",
+   "Malayan Emergency"
+  ],
+  "correctIndex": 1,
+  "answer": "Vietnam War",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "victoria-cross",
+   "vietnam"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "hard",
+  "question": "Reg Saunders is honoured as the first Aboriginal Australian commissioned as an officer in which service?",
+  "options": [
+   "Royal Australian Navy",
+   "Royal Australian Air Force",
+   "Australian Army",
+   "Merchant Navy"
+  ],
+  "correctIndex": 2,
+  "answer": "Australian Army",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "indigenous-service",
+   "ww2"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "Teddy Sheean, awarded the Victoria Cross in 2020, served in which branch?",
+  "options": [
+   "Royal Australian Air Force",
+   "Australian Army",
+   "Merchant Navy",
+   "Royal Australian Navy"
+  ],
+  "correctIndex": 3,
+  "answer": "Royal Australian Navy",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "victoria-cross",
+   "navy",
+   "ww2"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "hard",
+  "question": "Teddy Sheean kept firing his gun as which Australian corvette sank in 1942?",
+  "options": [
+   "HMAS Armidale",
+   "HMAS Parramatta",
+   "HMAS Arunta",
+   "HMAS Voyager"
+  ],
+  "correctIndex": 0,
+  "answer": "HMAS Armidale",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "victoria-cross",
+   "navy",
+   "ww2"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "The anniversary of the Battle of Long Tan, 18 August, is now commemorated as what?",
+  "options": [
+   "Remembrance Day",
+   "Vietnam Veterans Day",
+   "Victory in the Pacific Day",
+   "National Peacekeepers Day"
+  ],
+  "correctIndex": 1,
+  "answer": "Vietnam Veterans Day",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "vietnam",
+   "long-tan"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "hard",
+  "question": "Which company of 6RAR fought the Battle of Long Tan in 1966?",
+  "options": [
+   "A Company",
+   "B Company",
+   "D Company",
+   "C Company"
+  ],
+  "correctIndex": 2,
+  "answer": "D Company",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "vietnam",
+   "long-tan"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "What was the name of the main Australian Task Force base in Vietnam?",
+  "options": [
+   "Vung Tau",
+   "Long Binh",
+   "Da Nang",
+   "Nui Dat"
+  ],
+  "correctIndex": 3,
+  "answer": "Nui Dat",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "vietnam"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "Australia's military involvement in Vietnam began with army advisers sent in which year?",
+  "options": [
+   "1962",
+   "1965",
+   "1959",
+   "1968"
+  ],
+  "correctIndex": 0,
+  "answer": "1962",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "vietnam"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "In which year was the Welcome Home parade for Vietnam veterans held in Sydney?",
+  "options": [
+   "1975",
+   "1987",
+   "1972",
+   "1995"
+  ],
+  "correctIndex": 1,
+  "answer": "1987",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "vietnam"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "Which Prime Minister announced in 1965 that Australian combat troops would go to Vietnam?",
+  "options": [
+   "Harold Holt",
+   "John Gorton",
+   "Robert Menzies",
+   "Gough Whitlam"
+  ],
+  "correctIndex": 2,
+  "answer": "Robert Menzies",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "vietnam",
+   "prime-ministers"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "Vietnam-era national service chose 20-year-old men by what method?",
+  "options": [
+   "Surname lottery",
+   "School results",
+   "Fitness test",
+   "Birthday ballot"
+  ],
+  "correctIndex": 3,
+  "answer": "Birthday ballot",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "vietnam"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "hard",
+  "question": "Which 1951 Korean War battle earned 3RAR a United States Presidential Unit Citation?",
+  "options": [
+   "Kapyong",
+   "Maryang San",
+   "Inchon",
+   "Pusan"
+  ],
+  "correctIndex": 0,
+  "answer": "Kapyong",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "korea"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "In 1999, Australia led the INTERFET peacekeeping force in which country?",
+  "options": [
+   "Solomon Islands",
+   "East Timor",
+   "Bougainville",
+   "Fiji"
+  ],
+  "correctIndex": 1,
+  "answer": "East Timor",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "peacekeeping"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "Which Australian general commanded the INTERFET force in East Timor?",
+  "options": [
+   "Angus Houston",
+   "Peter Leahy",
+   "Peter Cosgrove",
+   "David Hurley"
+  ],
+  "correctIndex": 2,
+  "answer": "Peter Cosgrove",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "peacekeeping"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "The Australian-led RAMSI mission, beginning in 2003, helped restore order in which country?",
+  "options": [
+   "Vanuatu",
+   "East Timor",
+   "Tonga",
+   "Solomon Islands"
+  ],
+  "correctIndex": 3,
+  "answer": "Solomon Islands",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "peacekeeping"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "Brisbane's Shrine of Remembrance and its eternal flame stand in which square?",
+  "options": [
+   "Anzac Square",
+   "King George Square",
+   "Post Office Square",
+   "Reddacliff Place"
+  ],
+  "correctIndex": 0,
+  "answer": "Anzac Square",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "memorials"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "What is the name of Sydney's Art Deco war memorial in Hyde Park?",
+  "options": [
+   "The Cenotaph",
+   "Anzac Memorial",
+   "Shrine of Remembrance",
+   "Pool of Reflection"
+  ],
+  "correctIndex": 1,
+  "answer": "Anzac Memorial",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "memorials"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "Sydney's Cenotaph, home of the city's Anzac Day dawn service, stands in which location?",
+  "options": [
+   "Hyde Park",
+   "The Domain",
+   "Martin Place",
+   "Circular Quay"
+  ],
+  "correctIndex": 2,
+  "answer": "Martin Place",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "memorials"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "Perth's State War Memorial stands in which park?",
+  "options": [
+   "Hyde Park",
+   "Queens Gardens",
+   "Stirling Gardens",
+   "Kings Park"
+  ],
+  "correctIndex": 3,
+  "answer": "Kings Park",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "memorials"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "hard",
+  "question": "Who lit the eternal flame at Melbourne's Shrine of Remembrance in 1954?",
+  "options": [
+   "Queen Elizabeth II",
+   "King George VI",
+   "Prince Philip",
+   "Robert Menzies"
+  ],
+  "correctIndex": 0,
+  "answer": "Queen Elizabeth II",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "memorials"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "The first AIF convoy sailed from King George Sound, Albany, in which year?",
+  "options": [
+   "1915",
+   "1914",
+   "1913",
+   "1916"
+  ],
+  "correctIndex": 1,
+  "answer": "1914",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "ww1"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "Which Australian cruiser destroyed the German raider Emden in November 1914?",
+  "options": [
+   "HMAS Melbourne",
+   "HMAS Australia",
+   "HMAS Sydney",
+   "HMAS Brisbane"
+  ],
+  "correctIndex": 2,
+  "answer": "HMAS Sydney",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "ww1",
+   "navy"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "What nickname has long been given to Australian soldiers?",
+  "options": [
+   "Tommies",
+   "Doughboys",
+   "Poilus",
+   "Diggers"
+  ],
+  "correctIndex": 3,
+  "answer": "Diggers",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "traditions"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "Which badge is pinned to the turned-up side of the Australian Army slouch hat?",
+  "options": [
+   "Rising Sun",
+   "Southern Cross",
+   "Kangaroo",
+   "Crown"
+  ],
+  "correctIndex": 0,
+  "answer": "Rising Sun",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "traditions"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "Changi, the notorious Second World War prison camp, was in which place?",
+  "options": [
+   "Malaya",
+   "Singapore",
+   "Thailand",
+   "Borneo"
+  ],
+  "correctIndex": 1,
+  "answer": "Singapore",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "pow",
+   "ww2"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "Which Australian surgeon is revered for caring for prisoners on the Burma-Thailand Railway?",
+  "options": [
+   "Howard Florey",
+   "Fred Hollows",
+   "Edward 'Weary' Dunlop",
+   "Victor Chang"
+  ],
+  "correctIndex": 2,
+  "answer": "Edward 'Weary' Dunlop",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "pow",
+   "ww2"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "Which cutting on the Burma-Thailand Railway is now the site of an Australian memorial museum?",
+  "options": [
+   "Three Pagodas Pass",
+   "Khyber Pass",
+   "Death Valley Pass",
+   "Hellfire Pass"
+  ],
+  "correctIndex": 3,
+  "answer": "Hellfire Pass",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "pow",
+   "ww2",
+   "memorials"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "The Sandakan death marches of 1945 took place on which island?",
+  "options": [
+   "Borneo",
+   "Sumatra",
+   "New Guinea",
+   "Java"
+  ],
+  "correctIndex": 0,
+  "answer": "Borneo",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "pow",
+   "ww2"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "Remembrance Day 2018 marked which anniversary of the 1918 Armistice?",
+  "options": [
+   "75th",
+   "100th",
+   "50th",
+   "90th"
+  ],
+  "correctIndex": 1,
+  "answer": "100th",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "armistice"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "The Australian Flying Corps of the First World War was the forerunner of which service, formed in 1921?",
+  "options": [
+   "Qantas",
+   "Fleet Air Arm",
+   "Royal Australian Air Force",
+   "Army Aviation Corps"
+  ],
+  "correctIndex": 2,
+  "answer": "Royal Australian Air Force",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "ww1",
+   "air-force"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "An Anzac Day gunfire breakfast traditionally includes coffee or tea with a splash of what?",
+  "options": [
+   "Whisky",
+   "Brandy",
+   "Port",
+   "Rum"
+  ],
+  "correctIndex": 3,
+  "answer": "Rum",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "traditions",
+   "anzac"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "Which country signed the 11 November 1918 Armistice with the Allies?",
+  "options": [
+   "Germany",
+   "Austria-Hungary",
+   "Ottoman Empire",
+   "Bulgaria"
+  ],
+  "correctIndex": 0,
+  "answer": "Germany",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "armistice",
+   "ww1"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "hard",
+  "question": "The Ottoman Empire's 1918 armistice was signed aboard a British warship in which harbour?",
+  "options": [
+   "Salonika",
+   "Mudros",
+   "Alexandria",
+   "Constantinople"
+  ],
+  "correctIndex": 1,
+  "answer": "Mudros",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "armistice",
+   "ww1"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "Which Ottoman commander at Gallipoli later became the founding president of Turkey?",
+  "options": [
+   "Enver Pasha",
+   "Liman von Sanders",
+   "Mustafa Kemal Ataturk",
+   "Ismet Inonu"
+  ],
+  "correctIndex": 2,
+  "answer": "Mustafa Kemal Ataturk",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "gallipoli"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "hard",
+  "question": "Which writer chose the words 'Their name liveth for evermore' for war cemetery memorial stones?",
+  "options": [
+   "Laurence Binyon",
+   "Arthur Conan Doyle",
+   "Thomas Hardy",
+   "Rudyard Kipling"
+  ],
+  "correctIndex": 3,
+  "answer": "Rudyard Kipling",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "memorials",
+   "ww1"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "hard",
+  "question": "In which year were poppies first sold in Australia for Armistice Day?",
+  "options": [
+   "1921",
+   "1919",
+   "1918",
+   "1931"
+  ],
+  "correctIndex": 0,
+  "answer": "1921",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "poppy",
+   "rsl"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "Australia's 9th Division fought in which decisive 1942 battle in Egypt?",
+  "options": [
+   "Tobruk",
+   "El Alamein",
+   "Bardia",
+   "Crete"
+  ],
+  "correctIndex": 1,
+  "answer": "El Alamein",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "ww2"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "What name is given to 15 August, marking the end of the Second World War in the Pacific?",
+  "options": [
+   "Victory in Europe Day",
+   "Armistice Day",
+   "Victory in the Pacific Day",
+   "Remembrance Day"
+  ],
+  "correctIndex": 2,
+  "answer": "Victory in the Pacific Day",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "ww2"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "Commercial use of the word 'Anzac' needs approval from which office holder?",
+  "options": [
+   "Prime Minister",
+   "Governor-General",
+   "RSL National President",
+   "Minister for Veterans' Affairs"
+  ],
+  "correctIndex": 3,
+  "answer": "Minister for Veterans' Affairs",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "anzac",
+   "traditions"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "medium",
+  "question": "Which leader pledged in 1914 that Australia would defend Britain 'to our last man and our last shilling'?",
+  "options": [
+   "Andrew Fisher",
+   "Billy Hughes",
+   "Joseph Cook",
+   "Alfred Deakin"
+  ],
+  "correctIndex": 0,
+  "answer": "Andrew Fisher",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "ww1",
+   "prime-ministers"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "hard",
+  "question": "Australia's 1914 battle at Bita Paka was fought to capture which German colony?",
+  "options": [
+   "Samoa",
+   "German New Guinea",
+   "German East Africa",
+   "Togoland"
+  ],
+  "correctIndex": 1,
+  "answer": "German New Guinea",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "ww1"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "easy",
+  "question": "Before Gallipoli, the AIF trained in camps near the pyramids in which country?",
+  "options": [
+   "Palestine",
+   "Greece",
+   "Egypt",
+   "Cyprus"
+  ],
+  "correctIndex": 2,
+  "answer": "Egypt",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "gallipoli",
+   "ww1"
+  ]
+ },
+ {
+  "category": "Australian military history",
+  "difficulty": "hard",
+  "question": "Which Australian submarine forced its way through the Dardanelles on the day of the Gallipoli landing?",
+  "options": [
+   "AE1",
+   "HMAS Oxley",
+   "HMAS Otway",
+   "AE2"
+  ],
+  "correctIndex": 3,
+  "answer": "AE2",
+  "source": "VenuePlay Original",
+  "license": "VenuePlay-owned (original)",
+  "tags": [
+   "remembrance-day",
+   "gallipoli",
+   "navy"
+  ]
+ }
+]
