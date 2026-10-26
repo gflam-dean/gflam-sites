@@ -1,5 +1,5 @@
 -- venueplay-118-custom-bingo-patterns.sql
--- NOT RUN. Written 24 Oct 2026 on branch feature/custom-bingo-patterns.
+-- RUN on live by Dean 26 Oct 2026 (vp_bingo_patterns exists, RLS-BASELINE.json matches). Written 24 Oct 2026.
 --
 -- WHAT IT IS FOR. Dean, 24 Oct 2026, after a Drag Bingo show where "any 5 numbers on the card" was a
 -- winning combo: a venue can save its own NAMED winning patterns for number bingo (phone bingo and

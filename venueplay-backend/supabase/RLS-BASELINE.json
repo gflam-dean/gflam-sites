@@ -1713,6 +1713,10 @@
    "enabled": true,
    "forced": false
   },
+  "vp_bingo_patterns": {
+   "enabled": true,
+   "forced": false
+  },
   "vp_bingo_tickets": {
    "enabled": true,
    "forced": false
