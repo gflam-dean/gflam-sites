@@ -35,6 +35,8 @@
   .brand svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9)) drop-shadow(0 0 8px rgba(255,31,142,.4))}
   .brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;letter-spacing:-.01em}
   .brand .div{width:1px;height:20px;background:var(--line)}
+  .vlogo{display:block;height:30px;max-width:150px;object-fit:contain}   /* sized by its shape once it loads: /app/vp-venuelogo.js */
+  .vlogo.hidden{display:none}
   .tag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:11px;color:var(--pink)}
   .who{margin-left:auto;font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
   .dot{width:7px;height:7px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
@@ -320,6 +322,9 @@
       <svg width="20" height="23" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
       <span class="div"></span><span class="word">VenuePlay</span>
     </div>
+    <!-- The venue's own logo, the same as the player phones show (Dean, 24 Oct 2026: "Logo doesn't
+         appear on caller mode"). Filled by venueLogoFor() once the console is paired to a venue. -->
+    <img id="venueLogo" class="vlogo hidden" alt="">
     <span class="tag" id="headerTag"></span>
     <span class="who" id="who" style="display:none"><span class="dot" id="statusDot"></span> <span id="statusText">Sign in to start</span></span>
     <span class="hactions" id="hactions" style="display:none">
@@ -702,6 +707,8 @@
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-hold.js"></script>
 <script src="/app/vp-onetab.js"></script>
+<!-- The venue's logo in the console header, sized by its shape like the player phones (27 Oct 2026). -->
+<script src="/app/vp-venuelogo.js"></script>
 <!-- The shared celebration helpers. This console only needs buzz(), which is the one place in
      the product that vibrates a phone and the one place that asks whether the page is a demo
      first. It was calling navigator.vibrate itself, which is how a sales page ended up buzzing
@@ -1129,6 +1136,7 @@
   function pairToVenue(slug){
     if(VP && VP.venueCode && slug){
       if(window.VPSign){ VPSign.initHost(VP_GAME_API, slug, vpHostToken); }   // fetch this venue's signing key
+      venueLogoFor(slug);   // the venue's logo in the header, off the same feed the TV reads
       connect(VP.venueCode(slug)); return true;
     }
     return false;
@@ -4372,6 +4380,27 @@
   }
   else if(window.VP){ VP.ready().then(function(ctx){ __ctx=ctx; VP.suspensionBanner(ctx); applyRoute(ctx); }).catch(function(){ go("vSignIn"); }); }
   else { go("vSignIn"); }
+
+  /* THE VENUE'S LOGO ON THE CONSOLE (Dean, 24 Oct 2026: "Logo doesn't appear on caller mode").
+     Every player phone shows the venue's logo in its header; the host's own console never did, so a
+     host running a real-balls night off their phone saw only the VenuePlay mark. The logo lives on
+     the venue's screen row, not on vp_venues (which is why ctx.venue.logo_url is empty for a venue
+     whose TV shows one), so it is read off the same public /screen feed the TV reads. Sized by its
+     shape with VPVenueLogo.fit(img,"phone"), as the player phones are. A venue with no logo, or a
+     feed that does not answer, leaves the header exactly as it was. A switch of venue swaps it. */
+  function venueLogoFor(slug){
+    var img=$("venueLogo"); if(!img) return;
+    img.classList.add("hidden"); img.removeAttribute("src");
+    if(!slug) return;
+    var asked=slug; img.__vpLogoSlug=slug;
+    fetch(VP_GAME_API+"/screen?venue="+encodeURIComponent(slug)).then(function(r){ return r.ok ? r.json() : null; }).then(function(j){
+      if(img.__vpLogoSlug!==asked) return;   // the host switched venue while this was in flight
+      var url=(j && j.logo_url) ? String(j.logo_url).trim() : "";
+      if(!url) return;
+      img.src=url; img.classList.remove("hidden");
+      if(typeof VPVenueLogo==="object") VPVenueLogo.fit(img,"phone");
+    }).catch(function(){});
+  }
 })();
 </script>
 <!-- Help: a short FAQ and a contact form that makes a help desk ticket (vp-help.js, 19 Oct 2026). -->

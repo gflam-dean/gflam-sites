@@ -249,11 +249,80 @@ print('\n== 3. the phone header asks the same rule ==');
   check(short + ': no logo: the header hides it', lg2.classList.hidden === true);
 });
 
+/* ======================================================================== 3b. the host console */
+/* Dean, 24 Oct 2026: "Logo doesn't appear on caller mode". The player phones carry the venue's logo in
+   their header; the host console (app/index.html) never did, so a host calling real balls off their
+   phone saw only the VenuePlay mark. venueLogoFor() reads the logo off the public /screen feed (the
+   logo lives on the venue's screen row, never on vp_venues) once the console pairs to a venue. RUN here
+   with a fake feed, a fake <img> and the real sizing rule. */
+print('\n== 3b. the host console asks the same rule, off the TV feed ==');
+(function () {
+  var S = readFile('venueplay/app/index.html'), short = 'app/index.html';
+  check(short + ': the header carries an <img id="venueLogo"> for the venue, hidden until one is known', /<img id="venueLogo" class="vlogo hidden"/.test(S));
+  var fn;
+  try { fn = lift(S, 'venueLogoFor', short); } catch (e) { fn = null; }
+  check(short + ': venueLogoFor() is there to run', !!fn);
+  if (!fn) return;
+  var pair; try { pair = lift(S, 'pairToVenue', short); } catch (e) { pair = null; }
+  check(short + ': pairToVenue() is there to run', !!pair);
+  function drain() { if (typeof drainMicrotasks === 'function') drainMicrotasks(); }
+  function img() { var i = DOM().el(); i.cls = { hidden: true };
+    i.classList = { add: function (c) { i.cls[c] = true; }, remove: function (c) { i.cls[c] = false; }, contains: function (c) { return !!i.cls[c]; } };
+    i.removeAttribute = function (k) { if (k === 'src') i.src = ''; };
+    return i; }
+  var win = loadSizer(390, 844);
+  function run(feed, lg, asked) {
+    /* feed(slug) answers like fetch(); asked collects every URL the console asked for */
+    var fetch = function (url) { asked.push(url); return feed(url); };
+    var f = new Function('$', 'fetch', 'VP_GAME_API', 'VPVenueLogo', fn + '; return venueLogoFor;')(function () { return lg; }, fetch, 'https://game', win.VPVenueLogo);
+    return f;
+  }
+  function answer(body, ok) { return Promise.resolve({ ok: ok !== false, json: function () { return Promise.resolve(body); } }); }
+
+  /* a venue with a square crest */
+  var lg = img(), asked = [];
+  run(function () { return answer({ logo_url: ' https://db/mini-bar.png ' }); }, lg, asked)('the-mini-bar'); drain();
+  check(short + ': asks the same public /screen feed the TV reads, for this venue', asked.length === 1 && asked[0] === 'https://game/screen?venue=the-mini-bar', asked);
+  check(short + ': a venue with a logo: the header shows it, trimmed', lg.cls.hidden === false && lg.src === 'https://db/mini-bar.png', { hidden: lg.cls.hidden, src: lg.src });
+  lg.arrive(2000, 2000);
+  var want = V.box(2000, 2000, V.limits('phone', 390, 844));
+  check(short + ': a square logo is drawn ' + want.w + 'x' + want.h + ' in the header, the phone rule', lg.style.width === want.w + 'px' && lg.style.height === want.h + 'px', lg.style);
+  check(short + ': the console logo is not moved into the TV corner', !lg.style.top && !lg.style.left, lg.style);
+
+  /* a venue with no logo, and a feed that does not answer: the header is left as it was */
+  var lg2 = img(); lg2.cls.hidden = false; lg2.src = 'https://db/old.png';
+  run(function () { return answer({ logo_url: '' }); }, lg2, [])('test-alpha'); drain();
+  check(short + ': no logo: the header hides the mark and drops the old picture', lg2.cls.hidden === true && !lg2.src, { hidden: lg2.cls.hidden, src: lg2.src });
+  var lg3 = img(); var threw = false;
+  try { run(function () { return Promise.reject(new Error('offline')); }, lg3, [])('test-alpha'); drain(); } catch (e) { threw = true; }
+  check(short + ': a feed that fails leaves the header as it was and throws nothing at the console', !threw && lg3.cls.hidden === true && !lg3.src);
+  var lg4 = img();
+  run(function () { return answer({ error: 'no' }, false); }, lg4, [])('test-alpha'); drain();
+  check(short + ': a feed answering an error leaves the header hidden', lg4.cls.hidden === true && !lg4.src);
+
+  /* the host switches venue while the first answer is still in flight: the first answer is ignored */
+  var lg5 = img(), late = null;
+  var f5 = run(function (url) { if (/venue-a$/.test(url)) return new Promise(function (res) { late = res; }); return answer({ logo_url: 'https://db/b.png' }); }, lg5, []);
+  f5('venue-a'); f5('venue-b'); drain();
+  late({ ok: true, json: function () { return Promise.resolve({ logo_url: 'https://db/a.png' }); } }); drain();
+  check(short + ': a switch of venue mid-flight: the header shows the venue the host is on now, never the old one', lg5.src === 'https://db/b.png' && lg5.cls.hidden === false, lg5.src);
+
+  /* and the console ASKS, the moment it pairs to a venue */
+  if (pair) {
+    var calls = [], connected = [];
+    var p = new Function('VP', 'VPSign', 'VP_GAME_API', 'vpHostToken', 'connect', 'venueLogoFor', 'window', pair + '; return pairToVenue;')(
+      { venueCode: function (s) { return 'CODE' + s; } }, { initHost: function () {} }, 'https://game', function () {}, function (c) { connected.push(c); }, function (s) { calls.push(s); }, { VPSign: { initHost: function () {} } });
+    var r = p('the-mini-bar');
+    check(short + ': pairing the console to a venue asks for that venue\'s logo, and still connects', r === true && calls.length === 1 && calls[0] === 'the-mini-bar' && connected[0] === 'CODEthe-mini-bar', [calls, connected]);
+  }
+})();
+
 /* ======================================================================== 4. loaded */
 print('\n== 4. every page that paints a logo loads the rule ==');
 function stripComments(s) { return s.replace(/<!--[\s\S]*?-->/g, '').replace(/\/\*[\s\S]*?\*\//g, ''); }
 ['venueplay/tv.html', 'venueplay/app/trivia/screen.html', 'venueplay/app/musical/screen.html', 'venueplay/app/raffle/screen.html',
- 'venueplay/app/members/screen.html', 'venueplay/play.html', 'venueplay/app/trivia/play.html', 'venueplay/app/musical/play.html'].forEach(function (f) {
+ 'venueplay/app/members/screen.html', 'venueplay/play.html', 'venueplay/app/trivia/play.html', 'venueplay/app/musical/play.html',
+ 'venueplay/app/index.html'].forEach(function (f) {
   var S = stripComments(readFile(f));
   var tag = S.indexOf('<script src="/app/vp-venuelogo.js"></script>');
   var use = S.indexOf('VPVenueLogo.fit(');
