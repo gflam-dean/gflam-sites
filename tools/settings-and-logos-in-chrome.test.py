@@ -87,6 +87,7 @@ def settings(key, width=1280, mobile=False):
 def shot(sid, name, width, mobile):
     if not A.shots:
         return
+    os.makedirs(A.shots, exist_ok=True)
     h = S.js(sid, 'Math.ceil(document.documentElement.scrollHeight)')
     S.B.call('Emulation.setDeviceMetricsOverride', {'width': width, 'height': int(h or 900),
              'deviceScaleFactor': 2 if mobile else 1, 'mobile': mobile}, session=sid)

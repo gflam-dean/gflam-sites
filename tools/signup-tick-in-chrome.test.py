@@ -73,7 +73,7 @@ def leads(S):
 
 S = admin_site.Site(root=A.root, fonts=bool(A.shots), live_tables=['vp_venues'])
 try:
-    for page, offer in (('/index.html', False), ('/nsw', True)):
+    for page, offer in (('/index.html', False), ('/nsw.html', True)):
         label = 'the offer page' if offer else 'the signup page'
         print('%s (%s)' % (label, page))
         tid, sid = S.open(page, width=1280, height=1000)
@@ -87,6 +87,7 @@ try:
         S.js(sid, 'document.getElementById("vp-submit").click(); true')
         S.until(sid, 'document.getElementById("vp-err").classList.contains("show")', 5)
         err = S.js(sid, 'document.getElementById("vp-err").offsetParent!==null ? document.getElementById("vp-err").textContent : ""') or ''
+        ok('%s (%s): the page loaded its signup form' % (label, page), S.js(sid, '!!document.getElementById("vp-err") && !!document.getElementById("vp-submit")') is True)
         ok('%s: unticked, the page says what the tick confirms, in sight' % label,
            'Terms and Privacy Policy' in err and 'gaming compliance' in err, err)
         time.sleep(0.5)
@@ -103,7 +104,7 @@ try:
         d = json.loads(direct) if isinstance(direct, str) else {}
         ok('%s: a request without the tick is refused by the Worker itself (400), and saves nothing' % label,
            d.get('s') == 400 and 'gaming compliance' in d.get('e', '') and len(leads(S)) == before, (d, len(leads(S))))
-        S.js(sid, 'document.getElementById("vp-consent").checked=true; document.getElementById("vp-submit").click(); true')
+        S.js(sid, 'window.__checkout=[]; document.getElementById("vp-consent").checked=true; document.getElementById("vp-submit").click(); true')
         S.until(sid, 'window.__checkout.length===1', 15)
         got = S.js(sid, 'JSON.stringify(window.__checkout[0]||null)')
         c = json.loads(got) if isinstance(got, str) else None
@@ -165,7 +166,7 @@ finally:
 total = PASS[0] + FAIL[0]
 print('')
 print('%d of %d checks passed' % (PASS[0], total))
-EXPECTED = 19
+EXPECTED = 21
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)
