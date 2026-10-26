@@ -5,7 +5,7 @@ builds inline, lifted out so more than one suite can stand it up. Never shipped:
 
     import rig;  r = rig.Rig();  tid, sid = r.open('/tv?venue=test-alpha');  ...;  r.close()
 """
-import base64, http.server, importlib.util, io, json, os, subprocess, threading, time, urllib.parse
+import atexit, base64, http.server, importlib.util, io, json, os, subprocess, threading, time, urllib.parse
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 JSC = '/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc'
@@ -41,7 +41,13 @@ class Worker(object):
         return json.loads(line) if line else None
 
     def close(self):
-        try: self.p.stdin.close(); self.p.terminate()
+        try: self.p.stdin.close()
+        except Exception: pass
+        try:
+            if self.p.poll() is None:
+                self.p.terminate()
+                try: self.p.wait(timeout=5)
+                except Exception: self.p.kill()
         except Exception: pass
 
 
@@ -131,7 +137,10 @@ class Rig(object):
         self.srv = Server(('127.0.0.1', 0), Site)
         threading.Thread(target=self.srv.serve_forever, daemon=True).start()
         self.base = 'http://127.0.0.1:%d' % self.srv.server_address[1]
+        # The Browser registers itself with verify-live's atexit and SIGTERM handlers, so the Chrome
+        # goes whatever ends this process (27 Oct 2026). The jsc Worker behind the pipe is ours to end.
         self.B = VL.Browser()
+        atexit.register(self.close)
 
     # ---- tabs ----
     def open(self, path, before=None, width=None, height=None):
@@ -196,6 +205,10 @@ class Rig(object):
         self.B.close_tab(tid)
 
     def close(self):
+        """Idempotent: the suite's finally and atexit both call it."""
+        if getattr(self, '_closed', False):
+            return
+        self._closed = True
         try: self.B.close()
         except Exception: pass
         self.W.close()

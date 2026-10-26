@@ -37,12 +37,14 @@ so this drives Chrome over the debug protocol and waits in real seconds.
 """
 
 import argparse
+import atexit
 import base64
 import io
 import json
 import os
 import re
 import shutil
+import signal
 import socket
 import struct
 import subprocess
@@ -168,11 +170,98 @@ class WS(object):
             pass
 
 
+# EVERY CHROME THIS PROCESS STARTED, so that whatever ends the process ends them too.
+#
+# 24 to 26 Oct 2026: 50 to 70 headless Chromes piled up on Dean's Mac, pushed the load past 10,
+# made the next suites time out, and kept process groups alive so "wait until the group is gone"
+# watchers never fired. Every suite closed its Browser in a finally, and that is not enough:
+# a SIGTERM (a timeout from the gate, a kill from a person) ends Python at once without running
+# any finally, and a suite that threw before it reached its finally left Chrome up as well. So
+# the Browser registers itself here, atexit closes whatever is still open, and SIGTERM/SIGINT
+# close them and then exit the way the signal would have.
+_LIVE = []
+_HANDLERS_ON = False
+
+
+def close_all_browsers():
+    for b in list(_LIVE):
+        try:
+            b.close()
+        except Exception:
+            pass
+
+
+def _on_signal(signum, frame):
+    close_all_browsers()
+    # Raise, so a finally on the way out still runs; the default action would have been to die here.
+    raise SystemExit(128 + signum)
+
+
+def _install_handlers():
+    global _HANDLERS_ON
+    if _HANDLERS_ON:
+        return
+    _HANDLERS_ON = True
+    atexit.register(close_all_browsers)
+    import threading
+    if threading.current_thread() is not threading.main_thread():
+        return                      # signal handlers can only be set from the main thread; atexit still covers us
+    for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
+        try:
+            prev = signal.getsignal(sig)
+            if prev in (signal.SIG_DFL, None):
+                signal.signal(sig, _on_signal)
+        except Exception:
+            pass
+
+
+def kill_tree(pid, grace=10):
+    """SIGTERM the process, wait up to `grace` seconds, then SIGKILL it and every descendant
+    still standing. Chrome normally takes its renderers down with it on SIGTERM; when it does
+    not (a Chrome already wedged, or killed with -9), the renderers are what piles up."""
+    def descendants(root):
+        try:
+            out = subprocess.run(['ps', '-axo', 'pid=,ppid='], capture_output=True, text=True).stdout
+        except Exception:
+            return []
+        kids = {}
+        for line in out.splitlines():
+            parts = line.split()
+            if len(parts) == 2:
+                kids.setdefault(int(parts[1]), []).append(int(parts[0]))
+        found, todo = [], [root]
+        while todo:
+            p = todo.pop()
+            for k in kids.get(p, []):
+                found.append(k)
+                todo.append(k)
+        return found
+    try:
+        os.kill(pid, signal.SIGTERM)
+    except Exception:
+        pass
+    end = time.time() + grace
+    while time.time() < end:
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            break
+        except Exception:
+            break
+        time.sleep(0.2)
+    for p in [pid] + descendants(pid):
+        try:
+            os.kill(p, signal.SIGKILL)
+        except Exception:
+            pass
+
+
 class Browser(object):
     def __init__(self):
         if not os.path.exists(CHROME):
             raise SystemExit('Google Chrome is not at %s. This tool needs a real browser;\n'
                              'there is no way to check what a screen PAINTS without one.' % CHROME)
+        _install_handlers()
         self.profile = tempfile.mkdtemp(prefix='verify-live-')
         self.port = self._free_port()
         self.proc = subprocess.Popen(
@@ -181,6 +270,7 @@ class Browser(object):
              '--user-data-dir=' + self.profile,
              '--remote-debugging-port=%d' % self.port, 'about:blank'],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        _LIVE.append(self)
         # Two minutes, not forty seconds, and stop early if Chrome has died. On 20 Oct 2026, with the
         # machine at a load average of 700 to 900 (other agents' suites), a plain Chrome took 25
         # seconds to open its port and sometimes more than 40, and every suite then said "Nothing
@@ -332,18 +422,22 @@ class Browser(object):
             pass
 
     def close(self):
+        """Idempotent: atexit, a signal handler and the suite's own finally may all call it."""
+        if self in _LIVE:
+            _LIVE.remove(self)
         try:
             self.ws.close()
         except Exception:
             pass
         try:
-            self.proc.terminate()
-            self.proc.wait(timeout=10)
-        except Exception:
+            if self.proc.poll() is None:
+                kill_tree(self.proc.pid)
             try:
-                self.proc.kill()
+                self.proc.wait(timeout=5)
             except Exception:
                 pass
+        except Exception:
+            pass
         shutil.rmtree(self.profile, ignore_errors=True)
 
 
