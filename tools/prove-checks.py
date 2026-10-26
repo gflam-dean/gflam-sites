@@ -4944,6 +4944,10 @@ MUTATIONS = [
      'before insert or update of show_logo_on_site on public.vp_venues',
      'before update of show_logo_on_site on public.vp_venues',
      'a venue login inserting a row could set the website switch itself'),
+    ('migrations-parse.test.py', 'venueplay-backend/supabase/venueplay-111-hq-chooses-trusted-logos.sql',
+     '  if not exists (select 1 from pg_trigger',
+     '  if true or exists (select 1 from pg_trigger',
+     're-running 111 puts every venue back to the two it chose on 20 Oct, undoing HQ\'s switches since'),
 
     # D56, D57 and the three in-browser suites: unlimited nights (migration 107), the logo editor,
     # on-brand dropdowns and the account wording. Dean, 19 Oct 2026.

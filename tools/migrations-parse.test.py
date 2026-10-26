@@ -180,14 +180,20 @@ for x in st:
                 dflt = RawStream()(c.def_).lower()
 ok('111 makes show_logo_on_site default false (a new venue is not on the website until HQ chooses it)',
    dflt == 'false', dflt)
+# The data step sits in a DO block that runs only while the guard trigger does not exist yet (the
+# first run), so re-running 111 can never undo a venue HQ switched on or off since (26 Oct 2026).
 upd = ''
 for x in st:
-    if kind(x) == 'InsertStmt' and x.stmt.withClause is not None:
-        upd = ' '.join(RawStream()(x.stmt).lower().split())
-ok('111 sets the switch to (slug is deepwater-hotel or the-mini-bar) for EVERY venue, with an audit row each',
-   "set show_logo_on_site = slug in ('deepwater-hotel', 'the-mini-bar')" in upd and ' where ' in upd
-   and 'insert into public.vp_admin_audit' in upd and 'venue_logo_on_site_on' in upd and 'venue_logo_on_site_off' in upd,
-   upd[:260])
+    if kind(x) == 'DoStmt':
+        for o in x.stmt.args or ():
+            if o.defname == 'as':
+                upd = ' '.join(o.arg.sval.lower().split())
+ok('111 sets the switch to (slug is deepwater-hotel or the-mini-bar) for EVERY venue, with an audit row each, on the FIRST run only',
+   "set show_logo_on_site = (slug in ('deepwater-hotel', 'the-mini-bar'))" in upd and ' where show_logo_on_site is distinct from ' in upd
+   and 'insert into public.vp_admin_audit' in upd and 'venue_logo_on_site_on' in upd and 'venue_logo_on_site_off' in upd
+   and "if not exists (select 1 from pg_trigger where tgrelid = 'public.vp_venues'::regclass and tgname = 'vp_venues_logo_on_site_guard') then" in upd
+   and not [x for x in st if kind(x) in ('UpdateStmt', 'InsertStmt')],
+   upd[:300])
 trig = [x.stmt for x in st if kind(x) == 'CreateTrigStmt' and x.stmt.trigname == 'vp_venues_logo_on_site_guard']
 t = trig[0] if trig else None
 cols = [c.sval for c in (t.columns or ())] if t else []

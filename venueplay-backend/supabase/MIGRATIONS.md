@@ -351,7 +351,9 @@ only from HQ (Venues > Details > "Show logo on our website", billing Worker `/ad
 audited as `venue_logo_on_site_on` / `_off`). `hide_from_trusted` (54) is left in place and no longer read. Not security
 definer, no new policy or grant. RUN IT BEFORE the billing Worker that comes with it: the new Worker drops the old "paying" and
 "not a 1-player plan" rules, so on today's data (every venue true) it would show venues HQ never chose. Branch
-`feature/hq-picks-logos-settings-tidy`. NOT RUN. Rollback: in the file.
+`feature/hq-picks-logos-settings-tidy`, rebuilt as `feature/settings-tidy-26-oct`. RUN on the live database 20 Oct 2026
+(verified 26 Oct 2026: its audit rows, and only those two venues on). Re-runnable: the data step runs only on the first run
+(before the guard trigger exists), so HQ's later choices are never undone. Rollback: in the file.
 
 `venueplay-118-custom-bingo-patterns.sql` (Dean, 24 Oct 2026, after a Drag Bingo show played "any 5 numbers on the card"): a
 venue's own NAMED winning patterns for number bingo. New table `vp_bingo_patterns` (venue_id, name 1 to 30 characters, rule

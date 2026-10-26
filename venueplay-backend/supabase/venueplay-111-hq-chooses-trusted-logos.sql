@@ -1,8 +1,11 @@
 -- =====================================================================
 -- Migration 111: HQ, not the venue, chooses whose logo is on our website
 -- ---------------------------------------------------------------------
---   NOT RUN. Safe to run more than once (the data step sets the same two
---   venues every time).
+--   RUN on the live database 20 Oct 2026 23:45 (verified 26 Oct 2026, read
+--   only: 'Migration 111' audit rows at that time, and only deepwater-hotel and
+--   the-mini-bar have show_logo_on_site true). Safe to run again: the data step
+--   runs only while the guard trigger does not exist yet (the first run), so a
+--   re-run never undoes a venue HQ has switched on or off since.
 --
 --   RUN THIS BEFORE DEPLOYING THE BILLING WORKER. Today every venue has
 --   show_logo_on_site = true (102's default). The new Worker drops the old
@@ -72,21 +75,32 @@ comment on column public.vp_venues.show_logo_on_site is
   'Set only from HQ (billing Worker /admin/venue-gaming, audited as venue_logo_on_site_on/off); '
   'vp_venues_logo_on_site_guard keeps a venue login off it. Default false.';
 
--- The data: two venues on, everyone else off. Written as one statement so it
--- can never leave a venue half-way. Audit rows say who did it and why.
-with changed as (
-  update public.vp_venues
-     set show_logo_on_site = (slug in ('deepwater-hotel', 'the-mini-bar'))
-   where show_logo_on_site is distinct from (slug in ('deepwater-hotel', 'the-mini-bar'))
-  returning id, name, show_logo_on_site
-)
-insert into public.vp_admin_audit (actor_label, action, target, detail)
-select 'Migration 111',
-       case when show_logo_on_site then 'venue_logo_on_site_on' else 'venue_logo_on_site_off' end,
-       'venue:' || id,
-       jsonb_build_object('name', name, 'from', not show_logo_on_site, 'to', show_logo_on_site,
-                          'why', 'HQ chooses the website logos (Dean, 20 Oct 2026)')
-  from changed;
+-- The data: two venues on, everyone else off, FIRST RUN ONLY. The guard trigger
+-- below is created in the same transaction, so "no trigger yet" means this file
+-- has never been run; once it has, HQ's choices are left exactly as they are.
+-- One statement, so it can never leave a venue half-way. Audit rows say who
+-- did it and why.
+do $do$
+begin
+  if not exists (select 1 from pg_trigger
+                  where tgrelid = 'public.vp_venues'::regclass
+                    and tgname = 'vp_venues_logo_on_site_guard') then
+    with changed as (
+      update public.vp_venues
+         set show_logo_on_site = (slug in ('deepwater-hotel', 'the-mini-bar'))
+       where show_logo_on_site is distinct from (slug in ('deepwater-hotel', 'the-mini-bar'))
+      returning id, name, show_logo_on_site
+    )
+    insert into public.vp_admin_audit (actor_label, action, target, detail)
+    select 'Migration 111',
+           case when show_logo_on_site then 'venue_logo_on_site_on' else 'venue_logo_on_site_off' end,
+           'venue:' || id,
+           jsonb_build_object('name', name, 'from', not show_logo_on_site, 'to', show_logo_on_site,
+                              'why', 'HQ chooses the website logos (Dean, 20 Oct 2026)')
+      from changed;
+  end if;
+end
+$do$;
 
 create or replace function public.vp_venues_logo_on_site_guard()
 returns trigger
