@@ -321,6 +321,7 @@ try:
     ok('each raffle row says how many usual prizes it has, as the one routine row did',
        S.until(sid, PC + '==="0 usual prizes|1 usual prize"', 10) is True, S.js(sid, PC))
     ok('a prize added while editing Chook Raffle is filed under it (raffle_id)', len(pz) == 1 and pz[0].get('raffle_id') == (st[1].get('id') if len(st) > 1 else '?'), pz)
+    shot(sid, 'billing-two-raffles')
     S.js(sid, 'document.querySelectorAll("#rfList .drow")[0].querySelector(".redit").click(); true')
     S.until(sid, 'document.getElementById("rf-label").value==="Meat Raffle"', 10); time.sleep(1.0)
     ok('Edit on Meat Raffle loads it, and its prize list does not show the chook prize',
@@ -344,6 +345,7 @@ try:
     ads = S.js(sid, '(document.getElementById("tvAds")||{}).innerHTML||""') or ''
     ok('the TV has a card for Meat Raffle AND Chook Raffle, and none for the raffle with no night',
        'Meat Raffle' in ads and 'Chook Raffle' in ads and 'Drawn Sunday 3pm' in ads and 'Lucky Envelope' not in ads, ads[:300])
+    shot(sid, 'tv-raffle-card', False)
     S.close_tab(tid)
 
     print('\nYOUR ACCOUNT > MARKETING: the venue link, the table signs, the opt-in list')
