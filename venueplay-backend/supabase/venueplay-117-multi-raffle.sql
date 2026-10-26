@@ -1,7 +1,7 @@
 -- =====================================================================
 -- Migration 117: more than one raffle per venue
 -- ---------------------------------------------------------------------
---   NOT RUN. Safe to run any number of times. Either order with the Workers
+--   RUN by Dean 26 Oct 2026. Safe to run any number of times. Either order with the Workers
 --   and the site is safe:
 --     billing Worker  reads vp_venue_screen.raffles in a query of its own; if
 --                     PostgREST refuses the column (not run yet) the account

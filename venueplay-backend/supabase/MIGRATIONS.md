@@ -361,7 +361,7 @@ mirrored to the first raffle by the billing Worker) and `vp_raffle_prizes.raffle
 is a prize from before, shown under the first raffle). No new table, policy, grant or function, so RLS-BASELINE.json does not
 change; the screen history trigger (114) records the new column with the rest of the row. Either order with the Workers is safe:
 both read `raffles` on a query of its own and fall back to the single routine; a raffles save before it is run is refused with
-"run migration 117 first". Branch `fix/multi-raffle`. NOT RUN. Rollback: in the file.
+"run migration 117 first". Branch `fix/multi-raffle`. RUN by Dean 26 Oct 2026. Rollback: in the file.
 
 `venueplay-118-custom-bingo-patterns.sql` (Dean, 24 Oct 2026, after a Drag Bingo show played "any 5 numbers on the card"): a
 venue's own NAMED winning patterns for number bingo. New table `vp_bingo_patterns` (venue_id, name 1 to 30 characters, rule
