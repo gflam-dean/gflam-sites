@@ -28,6 +28,12 @@ itself.
 
   prove-checks.py            prove them all
   prove-checks.py esc        just the ones whose label matches
+  prove-checks.py --full     the whole local gate for every mutation (the old, slow way)
+
+HOW FAST (27 Oct 2026). A proof runs only what judges its label: the one suite the label
+names (jsc or Chrome), or the gate WITHOUT its Chrome suites for a gate check. Each line
+says which and how long it took. A one-label run no longer ends with a full gate for the
+coverage report; the whole-table run still does. Chrome proofs take /tmp/vp-heavy.lock.
 """
 import io
 import os
@@ -36,6 +42,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0m'
@@ -6055,14 +6062,82 @@ MUTATIONS_LIVE = [
 ]
 
 
-def gate(only_label, root, live=False):
+sys.path.insert(0, os.path.join(ROOT, 'tools'))
+import gatelib       # the shared-Mac rules: heavy lock, process-group suite runs, uses_chrome
+
+FULL = '--full' in sys.argv      # the old behaviour: the whole local gate for every mutation
+JSC = gatelib.JSC
+SUITE_LABEL = re.compile(r'(\.test\.(js|py)$|^test-[\w.-]+\.js$)')
+_SUITE_INDEX = {}
+
+
+def suite_index(root):
+    """basename -> path of every suite under a repo root, built once per root."""
+    if root in _SUITE_INDEX:
+        return _SUITE_INDEX[root]
+    idx = {}
+    for d, dirs, fs in os.walk(root):
+        dirs[:] = [x for x in dirs if x not in ('.git', 'node_modules', 'worktrees', '__pycache__', '.claude')]
+        for f in fs:
+            if SUITE_LABEL.search(f):
+                idx.setdefault(f, os.path.join(d, f))
+    _SUITE_INDEX[root] = idx
+    return idx
+
+
+def route(label, rel, root):
+    """HOW A MUTATION IS PROVEN (27 Oct 2026). Returns ('suite', path) or ('gate', [extra flags]).
+
+    Until today every proof ran the WHOLE local gate in the scratch copy: 348 checks and ten minutes
+    of Chrome, to watch one line go red. The patterns agent measured 25 to 50 minutes per label
+    under load. Of the 1,658 mutations, 1,199 are labelled with a suite's file name, and the gate
+    judges such a label by running that one file: so that one file is what is run here, under the
+    gate's own pass rule. A label that is a gate check (not a suite) still needs the gate, but a
+    gate check never comes out of a Chrome suite, so the gate runs with --skip-chrome, unless the
+    file being broken IS a Chrome suite (the ledger check counts its lines), when the full gate runs.
+    --full is the old behaviour for every mutation."""
+    if FULL:
+        return 'gate', []
+    if SUITE_LABEL.search(label):
+        p = suite_index(root).get(label)
+        if p:
+            return 'suite', p
+    # A broken Chrome suite, or a broken Chrome DRIVER (verify-live's Browser, the rig), can only
+    # be seen by a gate that runs its Chrome suites: the leak line, the ledger's line counts.
+    if (gatelib.uses_chrome(os.path.join(root, rel)) or os.path.basename(rel) == 'verify-live.py'
+            or '/browser-rig/' in rel.replace(os.sep, '/')):
+        return 'gate', []
+    return 'gate', ['--skip-chrome']
+
+
+def suite_went_red(path, root):
+    """Run one suite the way the gate runs it and say whether the gate would have called it red:
+    a non-zero exit, a FAIL line, or a last line that is not a pass (release-check.suite_passed)."""
+    cmd = [sys.executable, path] if path.endswith('.py') else [JSC, path]
+    r = gatelib.run_suite(cmd, cwd=root, timeout=900)
+    last = r.last.strip()
+    m = re.match(r'^(\d+) of (\d+) checks? passed', last)
+    passed_line = ('ALL' in last and 'PASSED' in last) or (bool(m) and m.group(1) == m.group(2) and int(m.group(1)) > 0) \
+        or (os.path.basename(path).startswith('test-') and 'PASS' in r.out and not r.fails)
+    return r.rc != 0 or bool(r.fails) or not passed_line
+
+
+def gate(only_label, root, live=False, rel=''):
     # --local by default: no network. The checks proven that way are all about the
     # files, and a dozen full runs with live fetches would take longer than anyone
     # will wait. --live is for the handful whose subject is a repo file measured
     # against production; see MUTATIONS_LIVE.
+    t0 = time.time()
+    how, what = ('gate', []) if live else route(only_label, rel, root)
+    gate.how = how if how == 'suite' else ('gate' + (' --skip-chrome' if what else ''))
+    if how == 'suite':
+        caught = suite_went_red(what, root)
+        gate.seconds = time.time() - t0
+        return caught
     r = subprocess.run([sys.executable, os.path.join(root, 'tools', 'release-check.py'),
-                        '--live' if live else '--local'],
+                        '--live' if live else '--local'] + what,
                        capture_output=True, text=True, cwd=root)
+    gate.seconds = time.time() - t0
     out = re.sub(r'\033\[[0-9;]*m', '', r.stdout + r.stderr)
     for line in out.splitlines():
         s = line.strip()
@@ -6077,6 +6152,8 @@ def gate(only_label, root, live=False):
 
 
 gate.crashed = ''
+gate.seconds = 0.0
+gate.how = ''
 
 
 def scratch():
@@ -6096,17 +6173,27 @@ def main():
     want = args[0] if args else ''
     TABLE = MUTATIONS_LIVE if LIVE else MUTATIONS
     proven = broken = skipped = 0
+    chosen = [m for m in TABLE if not want or want.lower() in m[0].lower()]
+    # ONE HEAVY CHROME RUN AT A TIME ON THIS MAC. Taken only when this run will open Chrome: a
+    # full run, a live run, a Chrome suite's proof, or a gate run over a broken Chrome suite.
+    needs_chrome = FULL or LIVE or any(
+        ('in-chrome' in m[0] or gatelib.uses_chrome(os.path.join(ROOT, m[1]))
+         or (SUITE_LABEL.search(m[0]) and gatelib.uses_chrome(suite_index(ROOT).get(m[0], '') or '/dev/null')))
+        for m in chosen)
+    if needs_chrome and not gatelib.hold_lock_or_refuse('prove-checks', wait_s=int(os.environ.get('VP_WAIT_LOCK', '0'))):
+        print('%sREFUSED: this prove run needs Chrome and another live run holds /tmp/vp-heavy.lock.%s' % (RED, OFF))
+        return 3
     tmp, repo = scratch()
     print('\n%sPROVING THE %s CHECKS CAN FAIL%s' % (YEL, 'LIVE' if LIVE else 'LOCAL', OFF))
     print('%s  each one is broken on purpose, in a copy at %s%s' % (DIM, repo, OFF))
+    print('%s  %s%s' % (DIM, 'the whole gate for every mutation (--full)' if FULL else
+          'each proof runs only the suite its label names, or the gate without Chrome for a gate check; --full for the whole gate', OFF))
     if LIVE:
         print('%s  the break is in the copy, never in production: only the reading end moves%s'
               % (DIM, OFF))
     print('')
 
-    for label, rel, find, repl, why in TABLE:
-        if want and want.lower() not in label.lower():
-            continue
+    for label, rel, find, repl, why in chosen:
         path = os.path.join(repo, rel)
         if find is None or not os.path.exists(path):
             print('  %s----%s %s %s(no mutation written yet)%s' % (YEL, OFF, label.ljust(52), DIM, OFF))
@@ -6117,12 +6204,13 @@ def main():
             # Duplicating a migration NUMBER needs a second file, not an edit.
             dest = os.path.join(repo, find[len('<<COPYTO:'):].rstrip('>'))
             io.open(dest, 'w', encoding='utf-8').write(before)
-            caught = gate(label, repo, LIVE)
+            caught = gate(label, repo, LIVE, rel)
             os.remove(dest)
             (proven, broken) = (proven + 1, broken) if caught else (proven, broken + 1)
-            print(('  %sok%s   %s %s%s%s' % (GRN, OFF, label.ljust(52), DIM, why, OFF)) if caught
-                  else ('  %sBLIND%s %s %s' % (RED, OFF, label.ljust(52),
-                        ('the GATE CRASHED under this mutation, fix the mutation: ' + gate.crashed) if gate.crashed else ('stayed green while ' + why))))
+            print(('  %sok%s   %s %s%s  [%s, %.0fs]%s' % (GRN, OFF, label.ljust(52), DIM, why, gate.how, gate.seconds, OFF)) if caught
+                  else ('  %sBLIND%s %s %s  [%s, %.0fs]' % (RED, OFF, label.ljust(52),
+                        ('the GATE CRASHED under this mutation, fix the mutation: ' + gate.crashed) if gate.crashed else ('stayed green while ' + why),
+                        gate.how, gate.seconds)))
             gate.crashed = ''
             continue
         if find == '<<EMPTY>>':
@@ -6159,44 +6247,53 @@ def main():
             skipped += 1
             continue
         io.open(path, 'w', encoding='utf-8').write(after)
-        caught = gate(label, repo, LIVE)
+        caught = gate(label, repo, LIVE, rel)
         io.open(path, 'w', encoding='utf-8').write(before)
         if caught:
             proven += 1
-            print('  %sok%s   %s %s%s%s' % (GRN, OFF, label.ljust(52), DIM, why, OFF))
+            print('  %sok%s   %s %s%s  [%s, %.0fs]%s' % (GRN, OFF, label.ljust(52), DIM, why, gate.how, gate.seconds, OFF))
         else:
             broken += 1
-            print('  %sBLIND%s %s %s' % (RED, OFF, label.ljust(52),
-                  ('the GATE CRASHED under this mutation, fix the mutation: ' + gate.crashed) if gate.crashed else ('stayed green while ' + why)))
+            print('  %sBLIND%s %s %s  [%s, %.0fs]' % (RED, OFF, label.ljust(52),
+                  ('the GATE CRASHED under this mutation, fix the mutation: ' + gate.crashed) if gate.crashed else ('stayed green while ' + why),
+                  gate.how, gate.seconds))
         gate.crashed = ''
 
     # WHAT THE GATE RUNS THAT NOBODY HAS BROKEN YET. Asked of the gate rather
     # than counted from the list above, because a list of the checks is a second
     # copy of the checks and goes stale the moment somebody adds one.
-    r = subprocess.run([sys.executable, os.path.join(repo, 'tools', 'release-check.py'),
-                        '--live' if LIVE else '--local'],
-                       capture_output=True, text=True, cwd=repo)
-    clean = re.sub(r'\033\[[0-9;]*m', '', r.stdout + r.stderr)
-    labels = []
-    for line in clean.splitlines():
-        m = re.match(r'\s+(?:ok|FAIL)\s+(.+?)(?:\s{2,}.*)?$', line)
-        if m:
-            labels.append(m.group(1).strip())
-    covered = [m[0] for m in TABLE]
-    naked = [l for l in labels if not any(c in l for c in covered)]
+    #
+    # NOT for a one-label run (27 Oct 2026): this full gate, Chrome and all, ran at the end of
+    # EVERY "prove one check" call, so a one-minute proof took 25 to 50 minutes under load.
+    # The coverage report belongs to the full table; a single proof prints its own line and stops.
+    labels, naked = [], []
+    if not want:
+        r = subprocess.run([sys.executable, os.path.join(repo, 'tools', 'release-check.py'),
+                            '--live' if LIVE else '--local'],
+                           capture_output=True, text=True, cwd=repo)
+        clean = re.sub(r'\033\[[0-9;]*m', '', r.stdout + r.stderr)
+        for line in clean.splitlines():
+            m = re.match(r'\s+(?:ok|FAIL)\s+(.+?)(?:\s{2,}.*)?$', line)
+            if m:
+                labels.append(m.group(1).strip())
+        covered = [m[0] for m in TABLE]
+        naked = [l for l in labels if not any(c in l for c in covered)]
 
     shutil.rmtree(tmp, ignore_errors=True)
     print('\n  %d proven, %d BLIND, %d mutation(s) that no longer apply' % (proven, broken, skipped))
-    print('  %d of the %d checks the gate runs have a mutation (%d%%)'
-          % (len(labels) - len(naked), len(labels),
-             100 * (len(labels) - len(naked)) // max(1, len(labels))))
+    if want:
+        print('  (one-label run: the coverage report needs the whole table; run with no label for it)')
+    else:
+        print('  %d of the %d checks the gate runs have a mutation (%d%%)'
+              % (len(labels) - len(naked), len(labels),
+                 100 * (len(labels) - len(naked)) // max(1, len(labels))))
     # PRINTED UNCONDITIONALLY, not filtered out of `naked`. The first version of this
     # derived the list from naked, which could never fire: the one check in it does not
     # run in a scratch copy at all, so its label is not in the gate's output, so it was
     # never in naked to be taken out of. A report that can only ever print nothing is the
     # same fault as a check that can only ever pass.
     naked = [l for l in naked if not any(k in l for k in UNPROVABLE)]
-    if UNPROVABLE:
+    if UNPROVABLE and not want:
         print('\n  %sCANNOT BE PROVEN HERE, and why:%s' % (DIM, OFF))
         for k, why_not in sorted(UNPROVABLE.items()):
             print('     %s' % k[:70])
@@ -6268,7 +6365,7 @@ def check_mutations_still_apply():
     return 0
 
 
-if '--list' in sys.argv:
-    sys.exit(check_mutations_still_apply())
-
-sys.exit(main())
+if __name__ == '__main__':
+    if '--list' in sys.argv:
+        sys.exit(check_mutations_still_apply())
+    sys.exit(main())
