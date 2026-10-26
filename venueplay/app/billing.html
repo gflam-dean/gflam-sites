@@ -648,8 +648,8 @@
         <button class="offtv" id="rfClear" type="button">Take off the TV</button>
       </div>
       <p class="snote" style="margin-top:8px">Taking it off the TV clears the routine above, so the raffle stops appearing between games. Your prize list below is kept.</p>
-      <!-- A venue has ONE raffle routine (vp_venue_screen.raffle is one routine per venue, the one the TV
-           shows), so this list has one row at most and no "Add another": change it above or take it off. -->
+      <!-- Before migration 117 a venue had ONE raffle routine (vp_venue_screen.raffle), so this list had one
+           row at most. With the list (vp_venue_screen.raffles) it has a row per raffle, each with Edit. -->
       <div class="drawlist" id="rfList"></div>
       <!-- More than one raffle (Dean, 24 Oct 2026; migration 117). Shown only once the venue's raffle list
            exists; before that the venue has its one routine, as it always has. -->
@@ -2938,7 +2938,7 @@
   /* MORE THAN ONE RAFFLE (migration 117). rfMulti is true once screen-get says the venue's raffle list
      exists (raffles_ready); rfRaffles is that list as saved, rfEditId the one in the form (null: a new
      one). Until then the page is exactly the one-routine page it always was. */
-  var rfMulti = false, rfRaffles = [], rfEditId = null;
+  var rfMulti = false, rfRaffles = [], rfEditId = null, rfPrizeCounts = null;
   function rfFind(id){ for (var i = 0; i < rfRaffles.length; i++) if (rfRaffles[i].id === id) return rfRaffles[i]; return null; }
   function rfFill(r){ r = r || {}; $("rf-label").value = r.label || ""; $("rf-day").value = r.day || ""; $("rf-time").value = r.time || ""; }
   function rfEdit(id){
@@ -2962,7 +2962,9 @@
       rfRaffles.forEach(function(r){
         var onTv = !!(r.day && r.time);
         var row=document.createElement("div"); row.className="drow"+(r.id===rfEditId?" editing":""); row.setAttribute("data-raffle", r.id);
-        row.innerHTML='<div class="dn"><b>' + esc(r.label || "Raffle") + '</b><small>' + esc(onTv ? ("drawn " + r.day + " " + r.time) : "No draw night set") + '</small>' +
+        var pc = rfPrizeCounts && rfPrizeCounts[r.id];
+        row.innerHTML='<div class="dn"><b>' + esc(r.label || "Raffle") + '</b><small>' + esc(onTv ? ("drawn " + r.day + " " + r.time) : "No draw night set") +
+          (pc!=null ? (' &middot; ' + pc + ' usual prize' + (pc===1?'':'s')) : '') + '</small>' +
           '<span class="tvtag' + (onTv ? ' on' : '') + '">' + (onTv ? 'On the TV' : 'Not on the TV') + '</span></div>';
         rfRowButtons(row, function(){ rfEdit(r.id); try{ $("rf-label").focus(); }catch(e){} }, function(){ removeRaffle(r.id); });
         box.appendChild(row);
@@ -2987,6 +2989,9 @@
          venue's FIRST raffle) the prizes saved before raffles had their own list. */
       if (rfMulti && r && r.data){
         var first = rfRaffles[0] && rfRaffles[0].id;
+        /* Each raffle's count, for its row in the list (the one-routine row always said how many). */
+        rfPrizeCounts = {};
+        rfRaffles.forEach(function(x){ rfPrizeCounts[x.id] = r.data.filter(function(p){ return p.raffle_id === x.id || (!p.raffle_id && x.id === first); }).length; });
         r = { data: r.data.filter(function(p){ return rfEditId && (p.raffle_id === rfEditId || (!p.raffle_id && rfEditId === first)); }), error: r.error };
       }
       var box = $("rfPrizes"); box.innerHTML = "";
@@ -3080,7 +3085,7 @@
   }
   function loadRafflesFor(venueId){
     rfCurrent = venueId;
-    rfSaved = null; rfPrizeCount = null; rfRaffles = []; rfEditId = null; rfMulti = false; renderRaffleList();
+    rfSaved = null; rfPrizeCount = null; rfRaffles = []; rfEditId = null; rfMulti = false; rfPrizeCounts = null; renderRaffleList();
     paintRfVenue();
     loadRaffleRoutine(venueId);
     loadRafflePrizes(venueId);

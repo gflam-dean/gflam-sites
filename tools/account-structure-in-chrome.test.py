@@ -295,7 +295,7 @@ try:
 
     print('\nMORE THAN ONE RAFFLE (migration 117): a list like the members draws, each with its own prizes, and every one on the TV')
     S.W.refuse([])                      # migration 117 has run
-    RL = '[].map.call(document.querySelectorAll("#rfList .drow"),function(r){return (r.classList.contains("editing")?"*":"")+r.querySelector(".dn b").textContent+" | "+r.querySelector(".dn small").textContent;}).join("\\n")'
+    RL = '[].map.call(document.querySelectorAll("#rfList .drow"),function(r){return (r.classList.contains("editing")?"*":"")+r.querySelector(".dn b").textContent+" | "+r.querySelector(".dn small").textContent.split(" \\u00b7 ")[0];}).join("\\n")'
     tid, sid = S.open('/app/billing.html#draws', 1100, 1000)
     S.until(sid, BILLING_UP, 25)
     S.until(sid, '!document.getElementById("rfAddRaffle").hidden', 20); time.sleep(0.4)
@@ -317,6 +317,9 @@ try:
     S.js(sid, 'document.getElementById("rf-newprize").value="Two chooks"; document.getElementById("rfAddPrize").click(); true')
     S.until(sid, '/Two chooks/.test(document.getElementById("rfPrizes").textContent)', 20)
     pz = [p for p in S.game_table('vp_raffle_prizes') if p.get('label') == 'Two chooks']
+    PC = '[].map.call(document.querySelectorAll("#rfList .drow .dn small"),function(x){return x.textContent.split(" \\u00b7 ")[1]||"";}).join("|")'
+    ok('each raffle row says how many usual prizes it has, as the one routine row did',
+       S.until(sid, PC + '==="0 usual prizes|1 usual prize"', 10) is True, S.js(sid, PC))
     ok('a prize added while editing Chook Raffle is filed under it (raffle_id)', len(pz) == 1 and pz[0].get('raffle_id') == (st[1].get('id') if len(st) > 1 else '?'), pz)
     S.js(sid, 'document.querySelectorAll("#rfList .drow")[0].querySelector(".redit").click(); true')
     S.until(sid, 'document.getElementById("rf-label").value==="Meat Raffle"', 10); time.sleep(1.0)
