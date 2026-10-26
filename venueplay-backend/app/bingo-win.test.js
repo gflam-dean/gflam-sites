@@ -112,7 +112,7 @@ ok("an unrecognised pattern is never a win", !cardMeetsPattern(CARD, called(join
    the host. The win now has its own pinned box, renderStageWin, which the ball path repaints
    rather than clears. These run the real functions out of play.html against a stub box. */
 print("== a line win stays on screen when the next ball lands ==");
-var stageSrc = ["idleMsg", "nameList", "renderStageWin"].map(grab);
+var stageSrc = ["idleMsg", "nameList", "renderStageWin", "patName"].map(grab);   // patName: a venue's own pattern by name (24 Oct 2026)
 ok("the stage win banner is still in play.html", stageSrc.every(function (s) { return !!s; }),
    "renderStageWin / idleMsg / nameList");
 if (stageSrc.every(function (s) { return !!s; })) {
@@ -122,6 +122,7 @@ if (stageSrc.every(function (s) { return !!s; })) {
     return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   var PATTERN_NAMES = { one:"One line", two:"Two lines", full:"Full house", corners:"Four corners",
                         top:"Top line", middle:"Middle line", bottom:"Bottom line" };
+  var PATS = {};   // the venue's own patterns this phone has heard of, as play.html declares it
   eval(stageSrc.join("\n"));
 
   P.stageWins = []; P.stageNote = ""; P.pattern = "one";

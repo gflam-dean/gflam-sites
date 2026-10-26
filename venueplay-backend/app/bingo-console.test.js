@@ -84,6 +84,12 @@ var released = [];
 var window = { VP_HOLD: { release: function(b){ released.push(b); } } };
 var VP_HOLD = window.VP_HOLD;
 
+/* What renderLive calls since 24 Oct 2026: the name of any pattern (a venue's own included) and the
+   Back to the last game button. Lifted, never restated. */
+var CUSTOM = { available:false, canEdit:false, list:[], loaded:false };
+var PAT_LIFT = ["isCustomKey", "customById", "patInfo", "patName", "rememberPat", "syncUndoNewGame"].map(grab);
+ok("the pattern-name helpers and syncUndoNewGame are still in the console", PAT_LIFT.every(function(x){ return !!x; }));
+eval(PAT_LIFT.join("\n"));
 eval(fnLive); eval(fnBanner); eval(fnGuards);
 
 /* ---------------- 1. the strip holds its height from ball one ---------------- */

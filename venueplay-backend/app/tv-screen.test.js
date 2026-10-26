@@ -76,7 +76,7 @@ var NEED = ["adsSignature","buildAds","stopAds","startAds","adSlotAt","loopEntri
             "landBall","revealBall","bingoCall","restBall","renderRun","calledSet","updateBoard","hideBingoLayers",
             "showBingoLayer","applyBingo","hideGameFrame","applyVenueLogo","stopCelebrate",
             "cancelHolding","cancelEmbedWatch","gameLabel","forgetLastGame","enterAds","enterBingo","enterEmbed",
-            "enterHolding"];
+            "enterHolding","notePats","patName"];   // patName: the board names a venue's own pattern (24 Oct 2026)
 var SRC = {}, missing = [];
 for (var ni = 0; ni < NEED.length; ni++) {
   SRC[NEED[ni]] = grab(NEED[ni]);
@@ -299,6 +299,7 @@ var VENUE_TZ = "Australia/Brisbane";
    so it is fixed here rather than depending on the machine's timezone data. */
 function todayAU(){ return "friday"; }
 var PATTERN_NAMES = { one: "One line", two: "Two lines", full: "Full house" };
+var PATS = {};   // the venue's own patterns the page has heard of, as tv.html declares it
 
 var adIdx = 0, adTimer = null, adBuilt = false, adFadeTimer = null, adsSig = null;
 var tvMode = "ads", venueLogoUrl = "", VENUE_SLUG = "the-mini-bar";

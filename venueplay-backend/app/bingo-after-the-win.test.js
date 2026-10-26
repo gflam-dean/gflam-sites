@@ -61,7 +61,7 @@ function grabLine(prefix){
    parentheses of the addEventListener call itself. */
 function grabCall(prefix){
   var i = html.indexOf(prefix); if (i < 0) return null;
-  var k = html.indexOf("(", i + prefix.length - 1);
+  var k = html.indexOf("(", html.indexOf(".addEventListener", i));   // the call's own parenthesis, whatever the prefix carries after it
   if (k < 0) return null;
   var d = 0;
   for (var j = k; j < html.length; j++) {
@@ -72,7 +72,12 @@ function grabCall(prefix){
 }
 
 print("== the end of a game is still written in the console ==");
-var NEED = ["isCalled", "checkPattern",
+/* A venue's own patterns (24 Oct 2026) run through the same paths: the name of any pattern, what a claim
+   tells the server, the names every broadcast carries, and Back to the last game. */
+var CUSTOM = { available:false, canEdit:false, list:[], loaded:false };
+var NEW_PAT = "__newpat";
+var NEED = ["isCustomKey", "customById", "patInfo", "patName", "rememberPat", "patWire", "patLook", "attachPats", "customOptionsHtml", "syncUndoNewGame",
+            "isCalled", "checkPattern",
             "calledArray", "seatOpen", "isSeated", "playerCount", "shownName", "sendState", "sendClaimPending",
             "winnerNames", "renderClaimCard", "renderClaimQueue", "syncNextBtn",
             "nextPattern", "hostConfirm", "hostConfirmAll", "hostReject",
@@ -99,7 +104,7 @@ var SRC = {}, missing = [];
 NEED.forEach(function(n){ SRC[n] = grab(n); if (!SRC[n]) missing.push(n); });
 ok("every function the end of a game runs through is still there", missing.length === 0, missing.join(", "));
 
-var LISTENER = grabCall('$("claimQueue").addEventListener');
+var LISTENER = grabCall('$("claimQueue").addEventListener("click"');   // the click one: a change listener for the next-pattern list sits above it (24 Oct 2026)
 ok("the claim queue still has a listener on it", !!LISTENER);
 
 var PAT_NAMES_SRC = grabLine("var PATTERN_NAMES={");

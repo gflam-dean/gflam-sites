@@ -252,7 +252,8 @@ var DRAW;
 
   print('\n== the console asks the server first, and does not wait for it forever ==');
   ok('a game start opens a server draw', /function startGame\(\)[\s\S]{0,1500}openServerDraw\(\);/.test(CONSOLE) &&
-     /function newGame\(\)[\s\S]{0,1500}openServerDraw\(\);/.test(CONSOLE));
+     /function newGame\([^)]*\)[\s\S]{0,1500}openServerDraw\(\);/.test(CONSOLE) &&
+     /function commitNewGame\(\)\{[^}]*openServerDraw\(\);/.test(CONSOLE));   // a real-balls New game opens it at its first number (Back to the last game, 24 Oct 2026)
   ok('nextBall asks serverBall() before it touches the pool', /serverBall\(\)\.then\(function\(res\)\{/.test(CONSOLE));
   var DRAW_MS = /var DRAW_CALL_MS=(\d+);/.exec(CONSOLE);
   ok('each request gives up inside a few seconds', !!DRAW_MS && +DRAW_MS[1] <= 5000 && +DRAW_MS[1] >= 2000,
