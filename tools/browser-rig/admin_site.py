@@ -211,6 +211,7 @@ class Site(object):
                 return self.send(200, io.open(f, 'rb').read(), ctype)
 
         self.srv = http.server.ThreadingHTTPServer(('127.0.0.1', 0), H)
+        self.srv.socket.listen(128)   # Python's default queue of 5 drops scripts when a page asks for many at once (rig.py Server, 26 Oct 2026)
         threading.Thread(target=self.srv.serve_forever, daemon=True).start()
         self.base = 'http://127.0.0.1:%d' % self.srv.server_address[1]
         self.B = VL.Browser()

@@ -49,6 +49,17 @@ ERRS = ('<script>window.__errs=[];window.addEventListener("error",function(e){__
         'window.addEventListener("unhandledrejection",function(e){__errs.push("rejected: "+String(e.reason&&e.reason.message||e.reason))});</script>')
 
 
+class Server(http.server.ThreadingHTTPServer):
+    """A LISTEN QUEUE BIG ENOUGH FOR TWO SCREENS (26 Oct 2026). Python's default is 5. A TV and a
+    console opening together ask for ~25 scripts at once, and past five waiting connections the
+    kernel drops the rest: Chrome reports the script as a network error (status 0, no error event
+    on the page), so a global like VPDraw or VP_HOLD is simply never defined. The caller-winner
+    suite went red on games 1 to 5 that way, at random, with the TV sitting on the ads because the
+    console never got as far as sending it the game. A harness fault that looks like a product one."""
+    request_queue_size = 128
+    daemon_threads = True
+
+
 class Rig(object):
     def __init__(self, hold=None):
         """`hold` is {path: seconds}: the local site sits on that file for that long before serving it,
@@ -117,7 +128,7 @@ class Rig(object):
                 ctype = {'.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.mp3': 'audio/mpeg', '.woff2': 'font/woff2'}.get(ext, 'application/octet-stream')
                 return self.send(200, io.open(f, 'rb').read(), ctype)
 
-        self.srv = http.server.ThreadingHTTPServer(('127.0.0.1', 0), Site)
+        self.srv = Server(('127.0.0.1', 0), Site)
         threading.Thread(target=self.srv.serve_forever, daemon=True).start()
         self.base = 'http://127.0.0.1:%d' % self.srv.server_address[1]
         self.B = VL.Browser()
