@@ -332,7 +332,7 @@ def new_game_by_mistake():
         ok('CONTROL: the TV board shows 3 called, One line, Meat tray', r.until(tv, vis('tvRun'), 8) is True and text(r, tv, 'tvBallCount') == '3 of 90 called' and text(r, tv, 'tvPattern') == 'One line',
            [text(r, tv, 'tvBallCount'), text(r, tv, 'tvPattern')])
         tap(r, host, 'newGameBtn')
-        ok('a game still being played warns first: "It is still on One line."', text(r, host, 'ngWarn') == 'This game has not reached a full house yet. It is still on One line.', text(r, host, 'ngWarn'))
+        ok('a game nobody has won yet warns first: "No one has won yet."', text(r, host, 'ngWarn') == 'This game has not reached a full house yet. No one has won yet.', text(r, host, 'ngWarn'))
         r.ask(host, 'document.getElementById("ngPattern").value="two"; document.getElementById("ngPrize").value="Jug of beer"; true')
         tap(r, host, 'ngGo'); time.sleep(1.2)
         ok('the new game is up: TV board cleared for Two lines, Jug of beer', r.until(tv, 'document.getElementById("tvPattern").textContent==="Two lines"', 8) is True and text(r, tv, 'tvPrize') == 'Jug of beer' and

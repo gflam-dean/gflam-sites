@@ -3161,22 +3161,29 @@
     $("ngGo").onclick=function(){
       var pz=($("ngPrize").value||"").trim();
       if(!pz){ showToast("Put in what they are playing for first."); try{ $("ngPrize").focus(); }catch(e){} return; }
-      G.pattern=$("ngPattern").value||"one"; if(G.pattern===NEW_PAT) G.pattern="one"; rememberPat(G.pattern); G.prize=pz;
-      // keep the setup form in step, so the next Open lobby starts from the same choice
-      var ps=$("patternSel"); if(ps) ps.value=G.pattern;
-      var pi=$("prizeInput"); if(pi) pi.value=G.prize;
+      var np=$("ngPattern").value||"one"; if(np===NEW_PAT) np="one";
       m.classList.add("hidden");
-      newGame();
+      newGame({ pattern:np, prize:pz });
     };
     $("ngCancel").onclick=function(){ m.classList.add("hidden"); };
   }
-  function newGame(){
+  /* next: the pattern and prize chosen in the New game box. They go on only AFTER the last game is kept for
+     Back to the last game (25 Oct 2026: set before it, the snapshot held the NEW pattern and prize, so Back
+     put the board back under the wrong pattern; and a second New game inside the window was undone onto the
+     old pattern). */
+  function newGame(next){
     if(drawRulesMissing()) return;
     clearCallGuards();
     if(G.undo) undoNewGame(true);   // New game again before a number: the game being left is still the last real one
     /* THE UNDO WINDOW (24 Oct 2026): real balls only, until the first number. See undoNewGame. */
     var undoable=!!(G.caller && G.status==="running" && G.startedAt);
     G.undo = undoable ? { at:Date.now(), snap:gameSnapshot() } : null;
+    if(next){
+      G.pattern=next.pattern; rememberPat(G.pattern); G.prize=next.prize;
+      // keep the setup form in step, so the next Open lobby starts from the same choice
+      var ps=$("patternSel"); if(ps) ps.value=G.pattern;
+      var pi=$("prizeInput"); if(pi) pi.value=G.prize;
+    }
     if(G.callerWin) callerWinSettle();   // a confirmed win is already on the record; an unchecked book never counted
     if(!undoable) postReport();   // report the round just finished before a fresh one begins
     /* Consent does not carry into the next game, because the charge does not either. The room can
