@@ -1,0 +1,53 @@
+[
+ {
+  "question": "Royal Ascot is famous for racegoers wearing extravagant what?",
+  "verdict": "near-duplicate",
+  "why": "Same question as the Melbourne Cup pack's Ascot hats question.",
+  "fix": null
+ },
+ {
+  "question": "The UK version of I'm a Celebrity Get Me Out of Here is filmed in which country?",
+  "verdict": "wording",
+  "why": "Present tense can date; 2020 and 2021 were filmed in Wales.",
+  "fix": {
+   "question": "Where has the UK version of I'm a Celebrity Get Me Out of Here usually been filmed?",
+   "keep_options": true
+  }
+ },
+ {
+  "question": "Rama, hero of the Diwali story, is regarded in Hinduism as an avatar of which god?",
+  "verdict": "tone",
+  "why": "Joke option next to a Hindu deity.",
+  "swap": [
+   "Zeus",
+   "Indra"
+  ]
+ },
+ {
+  "question": "Which elephant-headed god is often worshipped alongside Lakshmi at Diwali?",
+  "verdict": "tone",
+  "why": "Joke option next to a Hindu deity.",
+  "swap": [
+   "Thor",
+   "Shiva"
+  ]
+ },
+ {
+  "question": "Jains celebrate Diwali as the day which great spiritual teacher attained liberation?",
+  "verdict": "tone",
+  "why": "Joke option next to a Jain teacher.",
+  "swap": [
+   "Merlin",
+   "Confucius"
+  ]
+ },
+ {
+  "question": "Naraka Chaturdashi, the day before the main Diwali night, celebrates which god defeating the demon Narakasura?",
+  "verdict": "tone",
+  "why": "Joke option next to a Hindu deity.",
+  "swap": [
+   "Hercules",
+   "Ganesha"
+  ]
+ }
+]

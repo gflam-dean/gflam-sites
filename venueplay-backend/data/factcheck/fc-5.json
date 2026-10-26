@@ -1,0 +1,13 @@
+[
+  {
+    "file": "2026-10-26-nextweek-batch-movember.json",
+    "question": "In which year was the very first Movember held?",
+    "verdict": "wording",
+    "why": "2003 is the official Movember Foundation answer, but an Adelaide group publicly claims a 'Movember' in 1999, so having 1999 as an option invites a bar argument.",
+    "fix": {
+      "question": "In which year was the very first Movember held in Melbourne?",
+      "options": ["2009", "1995", "1066", "2003"],
+      "correctIndex": 3
+    }
+  }
+]

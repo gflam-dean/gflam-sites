@@ -1,0 +1,24 @@
+[
+  {
+    "file": "2026-10-26-batch-royals.json",
+    "question": "What are the tall black fur hats worn by the guards at Buckingham Palace called?",
+    "verdict": "second-answer",
+    "why": "Bearskins are often called busbies in everyday speech, so a team answering Busbies has a real argument at the bar.",
+    "fix": {
+      "question": "What are the tall black fur hats worn by the guards at Buckingham Palace called?",
+      "options": ["Beanies", "Shakos", "Bearskins", "Tricorns"],
+      "correctIndex": 2
+    }
+  },
+  {
+    "file": "2026-10-26-batch-melbourne-cup.json",
+    "question": "Godolphin, the global racing operation, was founded by the ruler of which emirate?",
+    "verdict": "wording",
+    "why": "Sheikh Mohammed founded Godolphin in 1992 but did not become ruler of Dubai until 2006, so 'founded by the ruler' is not accurate (Dubai is still the right answer).",
+    "fix": {
+      "question": "Godolphin, the global racing operation, was founded by Sheikh Mohammed of which emirate?",
+      "options": ["Abu Dhabi", "Dubai", "Sharjah", "Tasmania"],
+      "correctIndex": 1
+    }
+  }
+]
