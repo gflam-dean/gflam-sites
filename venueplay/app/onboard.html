@@ -266,7 +266,7 @@
     var el=$("vNoBingo"); if(!el) return;
     var pc=(($("vpostcode").value||"").replace(/\D/g,"")).slice(0,4);
     var st=(pc.length===4 && window.VPGaming && VPGaming.stateFromPostcode) ? VPGaming.stateFromPostcode(pc) : null;
-    var kind=$("vkind").value, club=(kind==="club"||kind==="rsl"||kind==="charity"||kind==="association");
+    var kind=$("vkind").value, club=(kind==="non_profit");   // club or pub, the signup question (C4)
     var places=(window.VPGaming && VPGaming.NO_PUB_BINGO_STATES) || {};
     if(st && places[st] && !club){
       el.textContent="Number bingo will be hidden for this venue: in "+places[st]+" only a not-for-profit may run bingo, so a pub or hotel never sees the Bingo tile. Musical bingo, trivia and members draws are all there. If their bingo is run by a club or charity, switch it on from the venue card in HQ once you have seen it.";

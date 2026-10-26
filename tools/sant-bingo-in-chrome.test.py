@@ -295,13 +295,13 @@ try:
                   'var k=document.getElementById("nvKind");k.value=%s;k.dispatchEvent(new Event("change",{bubbles:true}));return true;})()' % (json.dumps(pc), json.dumps(kind)))
         time.sleep(0.3)
         return S.js(sid, '(function(e){return e && !e.classList.contains("hidden") ? e.textContent : "";})(document.getElementById("nvNoBingo"))') or ''
-    n1 = add_note('5000', 'pub')
+    n1 = add_note('5000', 'for_profit')   # club or pub, the signup question (C4, 20 Oct 2026)
     ok('an SA postcode for a pub: the note, there and then', 'Number bingo will be hidden for this venue: in South Australia' in n1, n1)
     S.js(sid, 'document.getElementById("nvNoBingo").scrollIntoView({block:"center",behavior:"instant"}); true')
     time.sleep(0.3)
     shot2(sid, 'hq-add-venue-sa-pub')
-    ok('an NT postcode for a hotel names the Northern Territory', 'in the Northern Territory' in add_note('0820', 'hotel'))
-    ok('an RSL in SA, and a pub in Queensland: no note', add_note('5000', 'rsl') == '' and add_note('4000', 'pub') == '')
+    ok('an NT postcode for a pub names the Northern Territory', 'in the Northern Territory' in add_note('0820', 'for_profit'))
+    ok('a club in SA, and a pub in Queensland: no note', add_note('5000', 'non_profit') == '' and add_note('4000', 'for_profit') == '')
     errs = S.js(sid, 'JSON.stringify(window.__errs||[])')
     ok('no script error in HQ', errs == '[]', errs)
     S.close_tab(tid)
@@ -310,7 +310,7 @@ try:
     S.until(sid, '!!document.getElementById("vpostcode")', 15)
     time.sleep(0.8)
     S.js(sid, '(function(){var p=document.getElementById("vpostcode");p.value="0810";p.dispatchEvent(new Event("input",{bubbles:true}));'
-              'var k=document.getElementById("vkind");k.value="pub";k.dispatchEvent(new Event("change",{bubbles:true}));return true;})()')
+              'var k=document.getElementById("vkind");k.value="for_profit";k.dispatchEvent(new Event("change",{bubbles:true}));return true;})()')
     time.sleep(0.3)
     on1 = S.js(sid, '(function(e){return e && !e.classList.contains("hidden") ? e.textContent : "";})(document.getElementById("vNoBingo"))') or ''
     ok('the full onboarding page says the same for an NT pub', 'in the Northern Territory only a not-for-profit may run bingo' in on1, on1)
