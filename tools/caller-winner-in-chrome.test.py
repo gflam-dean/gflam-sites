@@ -18,6 +18,9 @@ rig in tools/browser-rig/rig.py (the repo's pages, the real game Worker in jsc, 
      saved, comes back after a reload, is played and won with its name on the TV, and is deleted.
   5. New game tapped by mistake (24 Oct 2026): Back to the last game puts the board, pattern and prize
      back on the TV, on the same draw, and the next number carries on the old game.
+  6. The venue's logo on a real-balls night (Dean, 24 Oct 2026: "Logo doesn't appear on caller mode"):
+     painted in the phone console's header and top-left on the TV board, sized by its shape, and
+     NOT on the venue's own advertising.
 
     python3 tools/caller-winner-in-chrome.test.py       screenshots go to $VP_SHOTS if set
 """
@@ -366,12 +369,52 @@ def new_game_by_mistake():
         r.close()
 
 
+def venue_logo_game():
+    """Dean, 24 Oct 2026: "Logo doesn't appear on caller mode". The TV showed it (every mode but the ads);
+    the host's own console never had a venue logo at all, so a host calling real balls off their phone
+    saw only the VenuePlay mark. The console header now reads the logo off the same /screen feed the
+    TV does and sizes it by its shape (/app/vp-venuelogo.js, the phone rule). Measured where it is
+    PAINTED, on a phone-width console and on the TV, with the crest the sales page uses."""
+    print('\nGAME 4: the venue\'s logo on a real-balls night: the phone console and the TV')
+    r = RIG.Rig()
+    try:
+        logo = r.base + '/logos/venue-tugun-bowls.png'   # a square crest (480x480) that is in the repo
+        r.W.seed('vp_venue_screen', [{'venue_id': r.W.info['venue'], 'slug': r.W.info['slug'], 'logo_url': logo, 'slides': [], 'raffle': None}])
+        tv = tv_screen(r)
+        r.until(tv, '!!document.getElementById("venueLogo")', 15)
+        ok('CONTROL: on the venue\'s own advertising the TV paints NO venue logo', r.ask(tv, vis('venueLogo')) is False, r.ask(tv, '(document.getElementById("venueLogo")||{}).style && document.getElementById("venueLogo").style.display'))
+        host = console(r, width=390, height=844)
+        ok('the phone console header carries the venue\'s logo, read off the TV feed, before any game is picked',
+           r.until(host, vis('venueLogo') + ' && document.getElementById("venueLogo").naturalWidth>0 && document.getElementById("venueLogo").style.width!==""', 20) is True,
+           r.ask(host, '(function(){var i=document.getElementById("venueLogo"); return i ? [i.src, i.className, i.style.cssText] : "no img";})()'))
+        box = r.ask(host, '(function(){var i=document.getElementById("venueLogo"),b=i.getBoundingClientRect(),want=VPVenueLogo.box(i.naturalWidth,i.naturalHeight,VPVenueLogo.limits("phone",innerWidth,innerHeight)),br=document.querySelector("header .brand").getBoundingClientRect();'
+                            'return {w:Math.round(b.width),h:Math.round(b.height),ww:want.w,wh:want.h,right:Math.round(b.right),vw:innerWidth,brandRight:Math.round(br.right),left:Math.round(b.left),top:Math.round(b.top),nat:[i.naturalWidth,i.naturalHeight]};})()') or {}
+        ok('sized by its shape at the phone box (%sx%s for this square crest, not 30 tall), inside the screen and clear of the VenuePlay brand' % (box.get('ww'), box.get('wh')),
+           box.get('w') == box.get('ww') and box.get('h') == box.get('wh') and box.get('right', 999) <= box.get('vw', 0) and box.get('left', 0) >= box.get('brandRight', 999) and box.get('h', 0) >= 40, box)
+        ok('a real-balls night for One line starts on the phone', start_caller_night(r, host, 'one', 'Meat tray', [9, 21, 33]) is True)
+        after = r.ask(host, '(function(){var i=document.getElementById("venueLogo"),b=i.getBoundingClientRect();return {vis:b.width>0&&b.height>0&&getComputedStyle(i).display!=="none",w:Math.round(b.width),h:Math.round(b.height),scrollW:document.documentElement.scrollWidth,vw:innerWidth};})()') or {}
+        ok('with the caller grid up the logo is still in the header, the same size, and the page has no sideways scroll', after.get('vis') is True and after.get('w') == box.get('w') and after.get('h') == box.get('h') and after.get('scrollW', 999) <= after.get('vw', 0), after)
+        shot(r, host, '11-phone-console-real-balls-with-venue-logo')
+        ok('the TV is on the real-balls board', r.until(tv, vis('tvRun'), 10) is True, wall(r, tv))
+        tvl = r.ask(tv, '(function(){var i=document.getElementById("venueLogo"); if(!i) return {no:true}; var b=i.getBoundingClientRect(),want=VPVenueLogo.box(i.naturalWidth,i.naturalHeight,VPVenueLogo.limits("tv",innerWidth,innerHeight));'
+                        'var run=document.getElementById("tvRun"),hits=[];[].forEach.call(run.querySelectorAll("*"),function(e){var q=e.getBoundingClientRect(); if(q.width&&q.height&&e.children.length===0&&(e.textContent||"").trim()&&q.left<b.right&&q.right>b.left&&q.top<b.bottom&&q.bottom>b.top) hits.push((e.id||e.className||e.tagName)+":"+(e.textContent||"").trim().slice(0,20));});'
+                        'return {vis:b.width>0&&getComputedStyle(i).display==="block",w:Math.round(b.width),h:Math.round(b.height),ww:want.w,wh:want.h,left:Math.round(b.left),top:Math.round(b.top),hits:hits};})()') or {}
+        ok('and paints the venue logo top-left on the board, sized by the TV rule (%sx%s on this screen)' % (tvl.get('ww'), tvl.get('wh')),
+           tvl.get('vis') is True and tvl.get('w') == tvl.get('ww') and tvl.get('h') == tvl.get('wh') and tvl.get('left', 999) < 40 and tvl.get('top', 999) < 40, tvl)
+        ok('with nothing the board paints written under it (vp-fit keeps the wall out of the corner)', tvl.get('hits') == [], tvl.get('hits'))
+        shot(r, tv, '11-tv-real-balls-board-with-venue-logo')
+        ok('no script errors on the console or the TV', r.ask(host, 'window.__errs.length') == 0 and r.ask(tv, 'window.__errs.length') == 0, [r.ask(host, 'JSON.stringify(window.__errs)'), r.ask(tv, 'JSON.stringify(window.__errs)')])
+    finally:
+        r.close()
+
+
 try:
     one_prize_game()
     three_prize_game()
     not_a_win()
     custom_pattern_game()
     new_game_by_mistake()
+    venue_logo_game()
 except Exception as e:
     import traceback; traceback.print_exc(); bad += 1
 
