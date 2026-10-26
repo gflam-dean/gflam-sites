@@ -3456,17 +3456,17 @@ def local_checks(which):
              'only venues HQ switched on, active, with our stored logo; test venues never; fewer than six paints nothing', 40,
              'Dean, 20 Oct 2026: "we should choose" (migration 111). A test venue, a venue HQ did not '
              'pick, a foreign logo address or one lonely logo on the homepage is this check going red'),
-            # D61 and D62: HQ chooses the website logos, and Venue settings asks only what applies
+            # D66 and D67: HQ chooses the website logos, and Venue settings asks only what applies
             # (Dean, 20 Oct 2026; migration 111).
-            ('D61. Only HQ owner and accounts admins choose whose logo is on our website, and every flip is audited',
+            ('D66. Only HQ owner and accounts admins choose whose logo is on our website, and every flip is audited',
              'test-logo-on-site-hq.js',
              'owner/accounts admins set show_logo_on_site with an audit row; staff, venue logins and strangers refused; the venue route answers 410', 18,
              'A venue putting itself on venueplay.com.au, or a website logo nobody can trace back to who chose it'),
-            ('D62. Venue settings asks a venue only the permit questions its state and kind of venue need',
+            ('D67. Venue settings asks a venue only what its state needs, and musical bingo meets no bingo rule',
              'test-settings-asks-only-what-applies.js',
-             'an NSW club and every Queensland venue are asked nothing; every permit the gate requires is asked; no members draw permit; musical bingo never blocked', 20,
-             'A venue clogged with legal questions that do not apply to it, or a permit the console demands '
-             'before a paid night that the settings page no longer offers'),
+             'Game settings asks for a bingo permit only where the state needs one; musical bingo is its own kind; paid-off words by case; WA warning on raffles only', 19,
+             'A venue clogged with legal questions that do not apply to it, or musical bingo stopped by a '
+             'bingo rule (Dean: musical bingo is not bingo, in every state)'),
             # D56 and D57: the per-venue unlimited trivia and musical bingo switch (Dean, 19 Oct 2026,
             # for Deepwater Hotel; migration 107).
             ('D56. A venue HQ has given unlimited nights starts trivia and musical bingo any night; nobody else does',
