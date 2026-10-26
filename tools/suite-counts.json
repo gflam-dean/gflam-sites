@@ -124,7 +124,7 @@
   "counted_by": "lines"
  },
  "tools/caller-winner-in-chrome.test.py": {
-  "checks": 52,
+  "checks": 96,
   "counted_by": "lines"
  },
  "tools/console-in-chrome.test.py": {
@@ -260,7 +260,7 @@
   "counted_by": "lines"
  },
  "tools/test-bingo-server-tickets.js": {
-  "checks": 53,
+  "checks": 80,
   "counted_by": "lines"
  },
  "tools/test-bingo-tab-15-oct.js": {
@@ -276,7 +276,7 @@
   "counted_by": "lines"
  },
  "tools/test-caller-mode.js": {
-  "checks": 114,
+  "checks": 117,
   "counted_by": "lines"
  },
  "tools/test-cant-sign-warns.js": {
@@ -744,7 +744,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/bingo-console.test.js": {
-  "checks": 58,
+  "checks": 59,
   "counted_by": "lines"
  },
  "venueplay-backend/app/bingo-win.test.js": {
