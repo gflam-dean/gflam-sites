@@ -1,5 +1,5 @@
 {
-  "count": 37678,
-  "updated": "2026-08-22",
+  "count": 39392,
+  "updated": "2026-10-26",
   "note": "Live VenuePlay trivia question count, all original. Regenerate whenever the bank changes (tools/check-data.py flags a drift over 2%)."
 }
