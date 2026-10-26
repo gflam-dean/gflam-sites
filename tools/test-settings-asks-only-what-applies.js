@@ -1,20 +1,18 @@
-/* Venue settings asks a venue only the permit questions its state and kind of venue need: RUN, not read.
+/* Venue settings asks a venue only what applies to it: RUN, not read.
 
    Dean, 20 Oct 2026, after seeing The Jolly Jess (an NSW non-profit) full of permit questions:
-   "if we dont need them to do it we dont need it to clog our system". The page now asks what
-   VPGaming.permitsToAsk(venue) returns, which reads the SAME state table as the console's gate.
-   Musical bingo is not bingo (Dean, 19 Oct 2026, every state, Queensland included).
-
-   Runs the REAL /app/vp-gaming.js:
-     permitsToAsk   an NSW club is asked nothing; an NSW pub only the charity's raffle authority;
-                    VIC paid bingo for a non-profit is required; Queensland and the Northern
-                    Territory nothing while paid games are blocked, and Queensland's own rules come
-                    back by themselves (non-profits only) if the block is lifted; no state asks for
-                    a members draw permit; every permit the gate REQUIRES anywhere is asked for, so
-                    nothing the lawyer made required can drop off the page; a permit already on
-                    record is still shown
-     assess         the Queensland block never stops musical bingo, still stops paid bingo, and
-                    its words no longer name musical bingo
+   "if we dont need them to do it we dont need it to clog our system". Since 24 Oct 2026 the
+   permit cards come from ONE table, VPPermits.NEEDS in /app/vp-permits.js (Game settings asks
+   for the bingo permit, Your account > Draws for raffles and members draws); its own rows are
+   run in tools/test-permits-and-compliance-tick.js. This suite runs what the settings page does
+   with it (its section is gone when the venue's state needs no bingo permit), and the rest of
+   the 20 Oct state audit in the REAL /app/vp-gaming.js:
+     C1   musical bingo is its own kind with no state bingo rules (Dean, 19 Oct 2026, every
+          state, Queensland included)
+     C7   why paid entry is off, in words true for this venue
+     C10  the WA number generator warning on raffles only
+     the Queensland block never stops musical bingo, still stops paid bingo, and its words no
+     longer name musical bingo
 
    Run from the repo root:  jsc tools/test-settings-asks-only-what-applies.js
 */
@@ -22,63 +20,22 @@ var fails = 0, ran = 0;
 function check(name, ok, saw) { ran++; if (ok) print('  ok   ' + name); else { print('  FAIL ' + name + (saw === undefined ? '' : '   saw: ' + JSON.stringify(saw).slice(0, 400))); fails++; } }
 var window = {};
 (new Function('window', readFile('venueplay/app/vp-gaming.js')))(window);
-var G = window.VPGaming, S = G.states;
-function ask(state, entity, permits) { return G.permitsToAsk({ au_state: state, entity_type: entity, permits: permits }); }
-function kinds(list) { return list.map(function (x) { return x.kind + ':' + x.need + ':' + x.holder; }).join(' '); }
+var VPGaming = window.VPGaming;   // vp-permits.js names it as a page global
+(new Function('window', readFile('venueplay/app/vp-permits.js')))(window);
+var G = window.VPGaming, S = G.states, P = window.VPPermits;
 
-print('by state and by kind of venue');
-check('an NSW non-profit (The Jolly Jess) is asked for no permit at all', kinds(ask('NSW', 'non_profit')) === '', ask('NSW', 'non_profit'));
-check('an NSW pub is asked for nothing: a pub cannot charge in the product, so nothing reads its permits',
-      kinds(ask('NSW', 'for_profit')) === '', ask('NSW', 'for_profit'));
-check('a VIC non-profit: bingo permit required (the lawyer\'s warranty), raffle only above the limit',
-      kinds(ask('VIC', 'non_profit')) === 'bingo:required:venue raffle:optional:venue', ask('VIC', 'non_profit'));
-check('a VIC pub, an ACT pub and a TAS pub are asked for nothing (no bingo card for a VIC pub either)',
-      kinds(ask('VIC', 'for_profit')) === '' && kinds(ask('ACT', 'for_profit')) === '' && kinds(ask('TAS', 'for_profit')) === '',
-      [ask('VIC', 'for_profit'), ask('ACT', 'for_profit'), ask('TAS', 'for_profit')]);
-check('a venue whose type HQ has not recorded is asked nothing (it cannot charge until it has)', kinds(ask('VIC', null)) === '', ask('VIC', null));
-check('an ACT club: bingo and raffle, only above the exemption', kinds(ask('ACT', 'non_profit')) === 'bingo:optional:venue raffle:optional:venue', ask('ACT', 'non_profit'));
-check('a TAS club: bingo and raffle, only above the exemption', kinds(ask('TAS', 'non_profit')) === 'bingo:optional:venue raffle:optional:venue', ask('TAS', 'non_profit'));
-check('SA and WA clubs are asked nothing (no rule reads a permit there)', kinds(ask('SA', 'non_profit')) === '' && kinds(ask('WA', 'non_profit')) === '');
-var asked = {};
-Object.keys(S).forEach(function (st) { ['for_profit', 'non_profit', null].forEach(function (e) { ask(st, e).forEach(function (x) { asked[st + '/' + (e || '?')] = 1; }); }); });
-check('after the audit only VIC, ACT and TAS clubs see a permit card at all', JSON.stringify(Object.keys(asked).sort()) === '["ACT/non_profit","TAS/non_profit","VIC/non_profit"]', Object.keys(asked));
-check('a venue with no state is asked nothing', kinds(ask('', null)) === '');
-
-print('Queensland and the Northern Territory, while paid games are blocked');
-['for_profit', 'non_profit', null].forEach(function (e) {
-  check('QLD ' + (e || 'type unknown') + ': nothing', kinds(ask('QLD', e)) === '', ask('QLD', e));
-});
-check('NT: nothing', kinds(ask('NT', null)) === '');
-var was = S.QLD.blocked, wasRule = S.QLD.non_profit.bingo.permit;
-S.QLD.non_profit.bingo.permit = 'required';
-check('a permit rule added to Queensland stays off the page while the OLGR block is on', kinds(ask('QLD', 'non_profit')) === '');
-delete S.QLD.blocked;
-check('...and comes back by itself the day the block is lifted, for a non-profit', kinds(ask('QLD', 'non_profit')) === 'bingo:required:venue', ask('QLD', 'non_profit'));
-check('...never for a for-profit, which cannot charge for bingo in Queensland', kinds(ask('QLD', 'for_profit')) === '', ask('QLD', 'for_profit'));
-S.QLD.blocked = was; if (wasRule === undefined) delete S.QLD.non_profit.bingo.permit; else S.QLD.non_profit.bingo.permit = wasRule;
-
-print('members draws, and nothing required ever dropped');
-var memberAsked = [], missing = [];
-Object.keys(S).forEach(function (st) {
-  ['for_profit', 'non_profit', null].forEach(function (e) {
-    ask(st, e).forEach(function (x) { if (x.kind === 'members') memberAsked.push(st + '/' + e); });
-  });
-  if (S[st].blocked) return;
-  ['non_profit'].forEach(function (e) {   // a club is the only venue the Worker lets charge
-    ['bingo', 'raffle', 'members'].forEach(function (k) {
-      var r = (S[st][e] || {})[k];
-      if (r && r.permit === 'required' && r.paid !== 'no') {
-        if (!ask(st, e).some(function (x) { return x.kind === k && x.need === 'required'; })) missing.push(st + '/' + e + '/' + k);
-      }
-    });
-  });
-});
-check('no state asks any venue for a members draw permit (they are free entry everywhere)', memberAsked.length === 0, memberAsked);
-check('every permit the console\'s gate requires of a club, in every state, is asked for on the page (VIC bingo included)', missing.length === 0 && kinds(ask('VIC', 'non_profit')).indexOf('bingo:required') === 0, missing);
-var mixed = ask('VIC', 'non_profit', { raffle: { holder: 'npo', npo_name: 'Lions', authorised_on: '2026-10-01' } });
-check('a club with a raffle record held by a charity is asked who holds it', kinds(mixed).indexOf('raffle:optional:either') !== -1, mixed);
-var rec = ask('NSW', 'non_profit', { members: { number: 'TP-123', holder: 'venue' } });
-check('a permit already on record is still shown so it can be changed or cleared', kinds(rec) === 'members:recorded:venue', rec);
+print('the Game settings page: a bingo permit card only where the state needs one');
+var SETTINGS = readFile('venueplay/app/settings.html');
+check('settings paints the bingo kind only, through VPPermits, and hides its Gaming details section when there is none',
+      /kinds:\["bingo"\]/.test(SETTINGS) && /var sec=\$\("permitsCard"\); if\(sec\) sec\.classList\.toggle\("hidden", !kinds\.length\);/.test(SETTINGS));
+check('settings carries no permit table of its own (no permitsToAsk, no PERMIT_KINDS)', SETTINGS.indexOf('permitsToAsk') < 0 && SETTINGS.indexOf('PERMIT_KINDS') < 0);
+function bingoCard(state, entity, extra) { var v = { au_state: state, entity_type: entity, permits: {} }; for (var k in (extra || {})) v[k] = extra[k]; return P.kindsFor(v, ['bingo']).join(','); }
+check('an NSW club (The Jolly Jess) gets no bingo card, so the section is gone', bingoCard('NSW', 'non_profit') === '', bingoCard('NSW', 'non_profit'));
+check('an NSW pub gets no bingo card either', bingoCard('NSW', 'for_profit') === '');
+check('a VIC venue gets the bingo card (the lawyer\'s permit warranty)', bingoCard('VIC', 'non_profit') === 'bingo');
+check('an SA pub, where number bingo is hidden, gets no bingo card', bingoCard('SA', 'for_profit') === '', bingoCard('SA', 'for_profit'));
+check('a saved bingo permit is still shown where the state does not need one, so it can be cleared',
+      P.kindsFor({ au_state: 'NSW', permits: { bingo: { number: 'B1' } } }, ['bingo']).join(',') === 'bingo');
 
 print('musical bingo is its own kind, with no state bingo rules (C1)');
 check('kindOf: musical is "musical", never "bingo"', G.kindOf('musical') === 'musical' && G.kindOf('bingo90') === 'bingo', [G.kindOf('musical'), G.kindOf('bingo90')]);

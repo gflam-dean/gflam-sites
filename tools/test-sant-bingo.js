@@ -158,7 +158,7 @@ var PC = { SA: '5000', NT: '0800', QLD: '4000', NSW: '2000', VIC: '3000', WA: '6
   function reset() { DB = {}; sent.length = 0; stripeCalls.length = 0; FAIL = {}; }
   async function signup(email, venues) {
     await handleCheckout(REQ({ name: 'Pat', email: email, mobile: '0412 345 678', postcode: (venues[0] && venues[0].postcode) || '2000', plan: 'monthly',
-      founding_code: 'NSW-OCT-2026', venues: venues }), ENV, J);
+      founding_code: 'NSW-OCT-2026', venues: venues, compliance_accepted: true }), ENV, J);
     var rowId = DB.venueplay_founding[DB.venueplay_founding.length - 1].id;
     return { client_reference_id: rowId, metadata: { tier: 'founding', row_id: rowId }, customer: 'cus_1', subscription: 'sub_1', created: Math.floor(Date.now() / 1000) };
   }
