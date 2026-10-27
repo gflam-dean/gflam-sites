@@ -6,7 +6,8 @@
 -- each one game's shape; a column per setting per game would be a migration per setting.
 --
 -- 1. vp_venue_settings.game_prefs jsonb, one object keyed by game:
---      { "musical": { "playlist": "80s", "pattern": "corners", ... }, "bingo": {...}, "trivia": {...} }
+--      { "musical": { "playlist": "80s", "pattern": "corners", ... }, "bingo": {...}, "trivia": {...},
+--        "raffle": {...}, "members": {...} }   (all five consoles since 28 Oct 2026, Basic and Advanced settings)
 --    Never paid-or-free for the night, unsold tickets or permits: those are decided each night or
 --    live on vp_venues.permits. The game Worker only writes the keys it allows for each game.
 -- 2. vp_set_game_prefs(venue, game, prefs): MERGES one game's keys into that game's object and
@@ -35,7 +36,7 @@ BEGIN
 END $$;
 
 COMMENT ON COLUMN public.vp_venue_settings.game_prefs IS
-  'Each game''s last setup for this venue, keyed by game ("musical", later "bingo", "trivia"). Written only through vp_set_game_prefs by the game Worker (/host/game-prefs), which allows a short list of keys per game. Never paid-or-free, unsold tickets or permits.';
+  'Each game''s last setup for this venue, keyed by game ("bingo", "trivia", "musical", "raffle", "members"). Written only through vp_set_game_prefs by the game Worker (/host/game-prefs), which allows a short list of keys per game. Never paid-or-free, unsold tickets or permits.';
 
 CREATE OR REPLACE FUNCTION public.vp_set_game_prefs(p_venue_id uuid, p_game text, p_prefs jsonb)
  RETURNS jsonb

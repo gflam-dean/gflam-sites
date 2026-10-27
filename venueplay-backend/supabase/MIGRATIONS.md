@@ -367,10 +367,11 @@ console shows no custom option. After running, dump RLS-BASELINE.json (one new l
 
 `venueplay-121-game-prefs.sql` (Dean, 28 Oct 2026): every game's setup saved for the VENUE in one place.
 `vp_venue_settings.game_prefs` (jsonb, not null, default `{}`, an object of at most 20,000 characters) keyed by game
-(`musical` first; bingo and trivia to follow), and `vp_set_game_prefs(venue, game, prefs)`, security definer, which MERGES one
+(`bingo`, `trivia`, `musical`, `raffle`, `members`: every console's Basic and Advanced settings since 28 Oct 2026), and `vp_set_game_prefs(venue, game, prefs)`, security definer, which MERGES one
 game's keys and leaves the other games alone. Revoked from PUBLIC, anon and authenticated; service role only. Written and
 read by the game Worker's `GET` / `POST /host/game-prefs` (verifyHostJwt + requireStaff, any staff role at that venue, a
 short list of allowed keys per game, a size cap). Never paid-or-free for the night, unsold tickets or permits. Either order
-with the Worker is safe: without it the route answers an error and the musical console keeps this browser's own choices.
-After running, dump RLS-BASELINE.json (one new security definer function). Branch `fix/console-banners-28-oct`. NOT RUN.
+with the Worker is safe: without it the route answers an error and every console keeps this browser's own choices (trivia and
+raffle still read their older trivia_* columns and raffle_template). After running, dump RLS-BASELINE.json (one new security
+definer function). Branches `fix/console-banners-28-oct`, `feature/advanced-settings-28-oct`. NOT RUN.
 Rollback: in the file.

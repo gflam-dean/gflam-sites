@@ -1134,6 +1134,136 @@
             function (err) { clearTimeout(timer); throw err; });
   }
 
+  /* ONE "ADVANCED SETTINGS" FOR EVERY GAME (Dean, 28 Oct 2026: "We need to make all the games easier.
+     Maybe we have an advanced settings tab for each game?"). The choices a host makes every night stay
+     on the setup; the ones a venue sets once go behind one disclosure, the same component in all five
+     consoles: a <details class="vp-adv"> in the page's own markup, closed until somebody opens it, and
+     this browser remembers whether it was left open (vpAdvOpen:<game>). Nothing the law needs before a
+     paid game ever goes in here: paid entry, the state rules screen and the free-entry note stay in
+     plain sight. The look lives here once, so the five consoles cannot drift apart. */
+  var ADV_CSS =
+    '.vp-adv{margin:14px 0;border:1px solid var(--line-2,rgba(255,255,255,.12));border-radius:12px;background:var(--ink-3,rgba(255,255,255,.03))}' +
+    '.vp-adv>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:10px 14px;border-radius:12px;' +
+      "font:700 14px/1.3 'Hanken Grotesk',Manrope,system-ui,sans-serif;color:var(--text,#E7E7EC)}" +
+    '.vp-adv>summary::-webkit-details-marker{display:none}' +
+    '.vp-adv>summary::after{content:"";flex:none;width:8px;height:8px;margin:-4px 4px 0 0;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);opacity:.7;transition:transform .15s}' +
+    '.vp-adv[open]>summary::after{transform:rotate(-135deg);margin-top:4px}' +
+    '.vp-adv>summary:focus-visible{outline:2px solid var(--pink,#FF1F8E);outline-offset:2px}' +
+    '.vp-adv-sub{display:block;margin-top:2px;font:500 12px/1.4 Manrope,system-ui,sans-serif;color:var(--faint,#8A8A94)}' +
+    '.vp-adv-body{padding:4px 14px 14px}' +
+    '.vp-adv-body>.field:last-child,.vp-adv-body>:last-child{margin-bottom:0}' +
+    '.vp-foot-link{display:block;width:100%;min-height:44px;margin:12px 0 0;padding:10px 0;background:none;border:none;cursor:pointer;text-align:center;' +
+      'font:600 13px/1.4 Manrope,system-ui,sans-serif;color:var(--muted,#B4B4BE);text-decoration:underline;text-underline-offset:3px}' +
+    '.vp-foot-link:hover{color:var(--text,#E7E7EC)}' +
+    '.vp-foot-link:focus-visible{outline:2px solid var(--pink,#FF1F8E);outline-offset:2px;border-radius:8px}';
+  function advancedCss() {
+    if (typeof document === 'undefined' || !document.createElement) return;
+    if (!document.head || (document.getElementById && document.getElementById('vpAdvCss'))) return;
+    var s = document.createElement('style');
+    s.id = 'vpAdvCss';
+    s.textContent = ADV_CSS;
+    if (document.head && document.head.appendChild) document.head.appendChild(s);   // never into the page body
+  }
+  advancedCss();   // at load, so the disclosure never paints as the browser's own triangle first
+  function advanced(el, game) {
+    if (!el) return null;
+    advancedCss();
+    var key = 'vpAdvOpen:' + String(game || 'game');
+    var open = false;
+    try { open = localStorage.getItem(key) === '1'; } catch (e) {}
+    el.open = open;   // closed unless this browser left it open
+    if (!el._vpAdv && el.addEventListener) {
+      el._vpAdv = true;
+      el.addEventListener('toggle', function () {
+        try { localStorage.setItem(key, el.open ? '1' : '0'); } catch (e) {}
+      });
+    }
+    return el;
+  }
+
+  /* EVERY GAME'S SETUP SAVED FOR THE VENUE (Dean, 28 Oct 2026: "all of those settings that they change
+     should be saved to the venue"). One mechanism for all five consoles, built on the musical console's
+     first version: vp_venue_settings.game_prefs (migration 121), one object per game, read and MERGED
+     through the game Worker's /host/game-prefs by ANY staff login (a Host included, which a direct
+     vp_venue_settings write never allowed).
+
+       var prefs = VP.gamePrefs('bingo', { venueId, collect, apply, local, fallback, token, api });
+       prefs.start()   once the page can show the choices: read, apply, and from then on save changes
+       prefs.queue()   a choice changed: saved a moment later, once, however many taps
+
+     Loading, in order: the venue's saved setup; else the venue's older saved columns (fallback:
+     trivia_* and raffle_template, so no venue loses what it had); else this browser's old values
+     (local), which are sent up ONCE so they become the venue's; else the page's own defaults. If the
+     route is not there (404, the column not added yet, offline) the page carries on with this
+     browser's values and says nothing. Nothing is saved before the venue's setup has been read, so
+     a fresh page's defaults never overwrite it. Never paid-or-free for the night, unsold tickets or
+     permits: the Worker drops them, and no console sends them. */
+  function gamePrefs(game, o) {
+    o = o || {};
+    var ready = false, applying = false, timer = null;
+    var delay = (o.delay == null) ? 800 : o.delay;
+    function api() { var a = (typeof o.api === 'function') ? o.api() : o.api; return String(a || GAME_API); }
+    function venue() { return String((typeof o.venueId === 'function' ? o.venueId() : o.venueId) || ''); }
+    function obj(p) { return (p && typeof p === 'object' && !Array.isArray(p)) ? p : null; }
+    function token() {
+      if (typeof o.token === 'function') return Promise.resolve(o.token());
+      var c; try { c = getClient(); } catch (e) { return Promise.reject(e); }
+      return c.auth.getSession().then(function (r) { return (r && r.data && r.data.session && r.data.session.access_token) || ''; });
+    }
+    function load() {
+      var v = venue();
+      if (!v) return Promise.resolve(null);
+      return token().then(function (t) {
+        return fetch(api() + '/host/game-prefs?venue_id=' + encodeURIComponent(v) + '&game=' + encodeURIComponent(game),
+          { headers: { 'Authorization': 'Bearer ' + t } });
+      }).then(function (r) { return (r && r.ok) ? r.json() : null; })
+        .then(function (d) { return d ? (obj(d.prefs) || {}) : null; })   // {} = the route answered, nothing saved yet
+        .catch(function () { return null; });                             // null = no route: this browser's values stay
+    }
+    function saveNow() {
+      var v = venue();
+      if (!v) return Promise.resolve(false);
+      var p = null; try { p = obj(o.collect && o.collect()); } catch (e) { p = null; }
+      if (!p || !Object.keys(p).length) return Promise.resolve(false);
+      return token().then(function (t) {
+        return fetch(api() + '/host/game-prefs', { method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t },
+          body: JSON.stringify({ venue_id: v, game: game, prefs: p }) });
+      }).then(function (r) { return !!(r && r.ok); }).catch(function () { return false; });   // the page keeps it either way
+    }
+    function queue() {
+      if (!ready || applying) return;   // never save the page's defaults over the venue's choices
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(function () { timer = null; saveNow(); }, delay);
+    }
+    function apply(p) {
+      if (typeof o.apply !== 'function') return;
+      applying = true;
+      try { o.apply(p); } catch (e) {} finally { applying = false; }
+    }
+    function start() {
+      return load().then(function (saved) {
+        if (saved && Object.keys(saved).length) { apply(saved); ready = true; return 'venue'; }
+        var fb = null;
+        try { fb = (typeof o.fallback === 'function') ? o.fallback() : null; } catch (e) { fb = null; }
+        return Promise.resolve(fb).catch(function () { return null; }).then(function (older) {
+          var loc = null; try { loc = (typeof o.local === 'function') ? o.local() : null; } catch (e) { loc = null; }
+          var merged = {}, any = false, k;
+          older = obj(older); loc = obj(loc);
+          if (older) for (k in older) if (Object.prototype.hasOwnProperty.call(older, k) && older[k] != null) { merged[k] = older[k]; any = true; }
+          if (loc) for (k in loc) if (Object.prototype.hasOwnProperty.call(loc, k) && loc[k] != null && !(k in merged)) { merged[k] = loc[k]; any = true; }
+          if (any) apply(merged);
+          ready = true;
+          // The route answered and the venue has nothing yet: what this page now shows becomes the venue's, once.
+          if (saved && any) return saveNow().then(function () { return 'sent'; });
+          return any ? 'local' : 'default';
+        });
+      });
+    }
+    return { start: start, queue: queue, saveNow: saveNow, load: load,
+             ready: function () { return ready; }, applying: function () { return applying; } };
+  }
+
   root.VP = {
     getClient: getClient,
     useClient: useClient,
@@ -1166,6 +1296,8 @@
     confirmTakeover: confirmTakeover,
     askOnPage: askOnPage,   // the same on-page question, for the "pick it up?" prompt (vp-pickup.js)
     endShift: endShift,
-    setGameActive: setGameActive
+    setGameActive: setGameActive,
+    advanced: advanced,     // the one "Advanced settings" disclosure (28 Oct 2026)
+    gamePrefs: gamePrefs    // every game's setup saved for the venue (migration 121)
   };
 })(window);

@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '28 Oct 2026, 08:43 · 6149f8b6';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '28 Oct 2026, 09:09 · 10952448';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '889556b56c9dc21830f3edb36aa90fd4ba12cfab7a7487187d05471dc0495d6d';
@@ -1098,7 +1098,9 @@ async function handleCreateSession(request, env, json) {
   if (!venueId) return json({ error: 'Missing venue_id' }, 400);
   assertUuid(venueId, 'venue_id');                                // reject anything that is not a UUID before it reaches PostgREST
 
-  const staff = await requireStaff(env, authUserId, venueId);     // ENFORCED: staff at THIS venue (also enforces the kill-switch)
+  /* 'host': the reader is the venue's own host, so a switched-off venue answers in the host's words, never the
+     room's "have a word with the staff" (28 Oct 2026). requireStaff has already found the staff row by then. */
+  const staff = await requireStaff(env, authUserId, venueId, 'host');   // ENFORCED: staff at THIS venue (also enforces the kill-switch)
 
   // No number bingo session for an SA or NT pub (migration 116). Musical bingo is never bingo90.
   if (lobbyFormat(b.format) === 'bingo90' && numberBingoHiddenFor(await venueRulesRow(env, venueId))) {
@@ -3366,7 +3368,51 @@ async function hostStartTrivia(env, json, b, session, staff, seq) {
    dropped. NEVER here: paid or free for the night (a compliance choice made each night), unsold
    tickets, or permits (vp_venues.permits). Another game joins by adding its own row to the table. */
 const GAME_PREFS_MAX_CHARS = 2000;
+const GP_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const gpBool = (v) => (typeof v === 'boolean') ? v : undefined;
+const gpText = (n) => (v) => (typeof v === 'string' && v.trim()) ? v.trim().slice(0, n) : undefined;
+const gpInt = (lo, hi) => (v) => (typeof v === 'number' && Number.isInteger(v) && v >= lo && v <= hi) ? v : undefined;
+const gpUuid = (v) => (typeof v === 'string' && GP_UUID.test(v)) ? v.toLowerCase() : undefined;
+/* Every game's keys (28 Oct 2026). A key not listed here is dropped, whatever a console sends. */
 const GAME_PREFS_KEYS = {
+  bingo: {
+    caller:        gpBool,
+    // a built-in pattern, or the venue's own (c:<uuid>, migration 118); the console checks it still exists
+    pattern:       (v) => ({ one: 1, two: 1, full: 1, corners: 1, top: 1, middle: 1, bottom: 1 }[v] ||
+                           (typeof v === 'string' && /^c:/.test(v) && GP_UUID.test(v.slice(2)))) ? v : undefined,
+    prize:         gpText(120),
+    cards:         gpInt(1, 6),
+    allow_early:   gpBool,
+  },
+  trivia: {
+    set_id:        gpUuid,
+    count:         gpInt(1, 100),
+    time_s:        gpInt(5, 60),
+    base_points:   gpInt(0, 100000),
+    speed_bonus:   gpBool,
+    double_points: gpBool,
+    double_last:   gpInt(1, 100),
+  },
+  raffle: {
+    // the venue's saved prize buttons: any staff login adds to them (a Host's /host/raffle/prize-add is refused)
+    prizes:        (v) => {
+      if (!Array.isArray(v)) return undefined;
+      const out = [];
+      for (const x of v) { if (typeof x === 'string' && x.trim() && out.indexOf(x.trim().slice(0, 80)) < 0) out.push(x.trim().slice(0, 80)); if (out.length >= 12) break; }
+      return out;
+    },
+    range_min:     gpInt(0, 999999),
+    range_max:     gpInt(0, 999999),
+    time_to_present: gpInt(0, 3600),
+    jackpot_on:    gpBool,
+    jackpot_amount_cents: gpInt(0, 100000000),
+    allow_redraw:  gpBool,
+    spin_seconds:  (v) => ({ 3: 1, 4: 1, 5: 1, 6: 1, 8: 1 }[v] && typeof v === 'number') ? v : undefined,
+    // NEVER unsold tickets: one night's facts (28 Oct 2026 audit).
+  },
+  members: {
+    draw_id:       gpUuid,   // which draw the console opens on; the draw's own settings live in vp_member_draws
+  },
   musical: {
     playlist:      (v) => (typeof v === 'string' && /^[A-Za-z0-9_-]{1,80}$/.test(v)) ? v : undefined,
     playlist_name: (v) => (typeof v === 'string' && v.trim()) ? v.trim().slice(0, 120) : undefined,
