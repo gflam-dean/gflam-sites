@@ -2960,6 +2960,11 @@ MUTATIONS = [
      '$("lostName").textContent=(m.name||"Someone"); route(); }',
      '$("lostName").textContent=(m.name||"Someone")+" won"; route(); }',
      'the other phone reads "PHONE SAM WON / took this one."'),
+    # 28 Oct 2026: last raffle's unsold tickets are never carried into this raffle's box.
+    ('test-raffle-console.js', 'venueplay/app/raffle/host.html',
+     '          // be drawn unless the host noticed and cleared it. The box starts empty every raffle.',
+     '          // be drawn unless the host noticed and cleared it. The box starts empty every raffle.\n          if(Array.isArray(t.excluded_ranges) && t.excluded_ranges.length){ var sk=$("rfSkip"); if(sk) sk.value=t.excluded_ranges.map(function(r){ return r[0]===r[1]?(""+r[0]):(r[0]+"-"+r[1]); }).join(", "); }',
+     'last week\'s unsold gaps pre-fill this week\'s box, so a ticket sold this week inside them can never be drawn'),
     ('test-raffle-console.js', 'venueplay/app/raffle/host.html',
      '      closeNight(ended);\n',
      '',

@@ -1240,7 +1240,9 @@
           if([3,4,5,6,8].indexOf(t.spin_seconds)>=0){ G.drawLength=t.spin_seconds; var dl=$("drawLenLbl"); if(dl) dl.textContent=t.spin_seconds; }
           if(t.jackpot_on){ var jo=$("rfJackOn"); if(jo){ jo.checked=true; var jw=$("rfJackWrap"); if(jw) jw.classList.remove("hidden"); if(t.jackpot_amount_cents) setv("rfJackAmt", dollarsText(t.jackpot_amount_cents)); } }
           var ar=$("rfAllowRedraw"); if(ar && typeof t.allow_redraw==="boolean") ar.checked=t.allow_redraw;
-          if(Array.isArray(t.excluded_ranges) && t.excluded_ranges.length){ var sk=$("rfSkip"); if(sk) sk.value=t.excluded_ranges.map(function(r){ return r[0]===r[1]?(""+r[0]):(r[0]+"-"+r[1]); }).join(", "); }
+          // NEVER pre-fill "Tickets that did not sell" from the last raffle (28 Oct 2026). Unsold tickets are one
+          // night's facts: carried into this week's box, a ticket SOLD this week inside last week's gap could never
+          // be drawn unless the host noticed and cleared it. The box starts empty every raffle.
           if(typeof renderRange==="function") renderRange();
         }).catch(function(){});
       }

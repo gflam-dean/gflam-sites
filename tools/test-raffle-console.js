@@ -338,6 +338,23 @@ if (typeof endGameToAds === 'function') {
   G.busy = false;
 }
 
+/* ================= 8. Last week's unsold tickets are not carried over ================= */
+section('8. A new raffle starts with an EMPTY unsold box, whatever the last raffle saved (28 Oct 2026)');
+/* The saved raffle template carries last raffle's excluded_ranges. Pre-filled into this week's box, a
+   ticket sold this week inside last week's gap could never be drawn. The real prefillRaffleTemplate runs. */
+try { eval(lift('prefillRaffleTemplate')); } catch (e) { check('the pre-fill has a function this test can run', false, e.message); }
+if (typeof prefillRaffleTemplate === 'function') {
+  reset(); form(); $('rfSkip').value = '';
+  var renderRange = function () {};
+  VP = { loadSettings: function () { return Promise.resolve({ raffle_template: { range_min: 1, range_max: 400, time_to_present: 120,
+         excluded_ranges: [[150, 200], [312, 312]] } }); } };
+  window.VP = VP;
+  prefillRaffleTemplate(); drainMicrotasks();
+  check('last raffle\'s unsold tickets are NOT put into this raffle\'s box', $('rfSkip').value === '', $('rfSkip').value);
+  check('CONTROL: the rest of the template still fills in (range and time to claim)', String($('rfEnd').value) === '400' && String($('rfTime').value) === '120',
+        { end: $('rfEnd').value, time: $('rfTime').value });
+}
+
 drainMicrotasks();
 print('');
 print(PASS + ' passed, ' + FAIL + ' failed');
