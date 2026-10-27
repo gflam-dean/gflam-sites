@@ -131,6 +131,10 @@
   "checks": 63,
   "counted_by": "lines"
  },
+ "tools/console-paid-and-draw-max-in-chrome.test.py": {
+  "checks": 13,
+  "counted_by": "lines"
+ },
  "tools/dropdowns-in-chrome.test.py": {
   "checks": 43,
   "counted_by": "lines"
@@ -140,7 +144,7 @@
   "counted_by": "lines"
  },
  "tools/gate-reliability.test.py": {
-  "checks": 50,
+  "checks": 53,
   "counted_by": "lines"
  },
  "tools/git-shim.test.py": {
@@ -221,6 +225,14 @@
  },
  "tools/set-worker-secret.test.py": {
   "checks": 32,
+  "counted_by": "lines"
+ },
+ "tools/settings-and-logos-in-chrome.test.py": {
+  "checks": 23,
+  "counted_by": "lines"
+ },
+ "tools/signup-tick-in-chrome.test.py": {
+  "checks": 20,
   "counted_by": "lines"
  },
  "tools/support-phone.test.py": {
@@ -331,6 +343,10 @@
   "checks": 53,
   "counted_by": "lines"
  },
+ "tools/test-console-status-area.js": {
+  "checks": 62,
+  "counted_by": "lines"
+ },
  "tools/test-console-venue-from-link.js": {
   "checks": 12,
   "counted_by": "lines"
@@ -387,6 +403,10 @@
   "checks": 9,
   "counted_by": "lines"
  },
+ "tools/test-logo-on-site-hq.js": {
+  "checks": 18,
+  "counted_by": "lines"
+ },
  "tools/test-manager-permissions.js": {
   "checks": 14,
   "counted_by": "lines"
@@ -425,6 +445,10 @@
  },
  "tools/test-musical-print.js": {
   "checks": 13,
+  "counted_by": "lines"
+ },
+ "tools/test-musical-setup-saved.js": {
+  "checks": 35,
   "counted_by": "lines"
  },
  "tools/test-night-pass-hq.js": {
@@ -593,6 +617,10 @@
  },
  "tools/test-set-count.js": {
   "checks": 9,
+  "counted_by": "lines"
+ },
+ "tools/test-settings-asks-only-what-applies.js": {
+  "checks": 19,
   "counted_by": "lines"
  },
  "tools/test-shared-links-absolute.js": {
@@ -1061,26 +1089,6 @@
  },
  "venueplay-backend/worker/webhook-ledger.test.js": {
   "checks": 17,
-  "counted_by": "lines"
- },
- "tools/console-paid-and-draw-max-in-chrome.test.py": {
-  "checks": 13,
-  "counted_by": "lines"
- },
- "tools/test-logo-on-site-hq.js": {
-  "checks": 18,
-  "counted_by": "lines"
- },
- "tools/test-settings-asks-only-what-applies.js": {
-  "checks": 19,
-  "counted_by": "lines"
- },
- "tools/settings-and-logos-in-chrome.test.py": {
-  "checks": 23,
-  "counted_by": "lines"
- },
- "tools/signup-tick-in-chrome.test.py": {
-  "checks": 20,
   "counted_by": "lines"
  }
 }

@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '27 Oct 2026, 08:48 · a3955f04';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '28 Oct 2026, 08:43 · 6149f8b6';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '889556b56c9dc21830f3edb36aa90fd4ba12cfab7a7487187d05471dc0495d6d';
@@ -349,6 +349,8 @@ export default {
       if (method === 'GET'  && path === '/play/live')          return await handlePlayLive(request, env, json);
       if (method === 'GET'  && path === '/screen')             return await handleScreen(request, env, json);
       if (method === 'POST' && path === '/host/game')          return await handleHostGame(request, env, json);
+      /* Each game's setup saved for the VENUE (migration 121, Dean 28 Oct 2026). Any staff role. */
+      if ((method === 'GET' || method === 'POST') && path === '/host/game-prefs') return await handleGamePrefs(request, env, json);
       /* Pick up a running quiz or musical game from ANY device (Dean, 20 Oct 2026). Staff only. */
       if (method === 'POST' && path === '/host/running')       return await handleHostRunning(request, env, json);
       if (method === 'POST' && path === '/host/running/take')  return await handleHostRunningTake(request, env, json);
@@ -3349,6 +3351,65 @@ async function hostStartTrivia(env, json, b, session, staff, seq) {
  * AUDIO IS A CLIENT CONCERN: the host device plays the ~30s previewUrl clip through the
  * PA. The Worker never stores or streams audio; it only tracks WHICH song was played.
  */
+/* GAME SETUP SAVED FOR THE VENUE (migration 121, Dean 28 Oct 2026).
+
+   A console's setup (musical bingo's theme, pattern, prize, reveal, well-known songs only) lived in
+   one browser, so a second tablet or next week started again from scratch. It now lives in
+   vp_venue_settings.game_prefs, one object per game, written through vp_set_game_prefs, which MERGES
+   that game's keys so two tablets saving two games never wipe each other.
+
+     GET  /host/game-prefs?venue_id=&game=musical        -> { game, prefs }
+     POST /host/game-prefs { venue_id, game, prefs }      -> { ok, game, prefs }   (merge)
+
+   Any staff role at that venue (requireStaff: owner, manager or host; HQ View as), so a Host login
+   saves its own setup. Only the keys listed below are kept, each one checked; anything else is
+   dropped. NEVER here: paid or free for the night (a compliance choice made each night), unsold
+   tickets, or permits (vp_venues.permits). Another game joins by adding its own row to the table. */
+const GAME_PREFS_MAX_CHARS = 2000;
+const GAME_PREFS_KEYS = {
+  musical: {
+    playlist:      (v) => (typeof v === 'string' && /^[A-Za-z0-9_-]{1,80}$/.test(v)) ? v : undefined,
+    playlist_name: (v) => (typeof v === 'string' && v.trim()) ? v.trim().slice(0, 120) : undefined,
+    hits_only:     (v) => (typeof v === 'boolean') ? v : undefined,
+    pattern:       (v) => ({ one: 1, two: 1, corners: 1, full: 1 }[v] ? v : undefined),
+    prize:         (v) => (typeof v === 'string' && v.trim()) ? v.trim().slice(0, 120) : undefined,
+    reveal:        (v) => ({ instant: 1, '15': 1, end: 1, never: 1 }[v] ? v : undefined),
+  },
+};
+function cleanGamePrefs(game, raw) {
+  const rules = GAME_PREFS_KEYS[game];
+  const out = {};
+  if (!rules || !raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
+  for (const k of Object.keys(rules)) {
+    if (!Object.prototype.hasOwnProperty.call(raw, k)) continue;
+    const v = rules[k](raw[k]);
+    if (v !== undefined) out[k] = v;
+  }
+  return out;
+}
+async function handleGamePrefs(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const isGet = request.method === 'GET';
+  const b = isGet ? Object.fromEntries(new URL(request.url).searchParams) : await readJson(request);
+  const venueId = String((b && b.venue_id) || '').trim();
+  const game = String((b && b.game) || '');
+  if (!venueId) return json({ error: 'Missing venue_id' }, 400);
+  if (!Object.prototype.hasOwnProperty.call(GAME_PREFS_KEYS, game)) return json({ error: 'Unknown game' }, 400);
+  await requireStaff(env, authUserId, venueId, 'host');   // staff at THIS venue, and the kill-switch
+  if (isGet) {
+    const rows = await sbGet(env, 'vp_venue_settings', 'venue_id=eq.' + enc(venueId) + '&select=game_prefs&limit=1');
+    const all = (rows.length && rows[0].game_prefs && typeof rows[0].game_prefs === 'object') ? rows[0].game_prefs : {};
+    return json({ game, prefs: cleanGamePrefs(game, all[game]) });
+  }
+  const raw = b && b.prefs;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return json({ error: 'Missing prefs' }, 400);
+  if (JSON.stringify(raw).length > GAME_PREFS_MAX_CHARS) return json({ error: 'That is too much to save' }, 413);
+  const clean = cleanGamePrefs(game, raw);
+  if (!Object.keys(clean).length) return json({ error: 'Nothing to save' }, 400);
+  const all = await sbRpc(env, 'vp_set_game_prefs', { p_venue_id: venueId, p_game: game, p_prefs: clean });
+  return json({ ok: true, game, prefs: cleanGamePrefs(game, (all && all[game]) || clean) });
+}
+
 async function hostStartMusical(env, json, b, session, staff, seq) {
   // Pattern: accept the host UI values (one/two/corners/full) and the DB values, map to
   // the four vp_music_games patterns. Musical bingo DOES have four_corners (5x5 grid).
