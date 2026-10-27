@@ -105,11 +105,16 @@ def push_exactly(sha, expected_remote, what):
 def main():
     plan = '--plan' in sys.argv
     head = sh(['git', 'rev-parse', 'HEAD']).stdout.strip()
-    upstream = sh(['git', 'rev-parse', '@{u}']).stdout.strip()
     if not head:
         stop('not a git checkout')
-    changed = sh(['git', 'diff', '--name-only', upstream + '..HEAD']).stdout.split() if upstream else \
-              sh(['git', 'diff', '--name-only', 'HEAD~1..HEAD']).stdout.split()
+    # WHAT THIS RELEASE CHANGES IS MEASURED AGAINST ORIGIN'S MAIN, AS THE REMOTE REPORTS IT. Not @{u}: a
+    # worktree branch with no upstream fell through to HEAD~1..HEAD on 27 Oct 2026, so a 35-file release
+    # (two Workers, two screen scripts) was read as "one ledger commit, nothing to deploy", the push went
+    # out, and the pages ran against the old Workers until someone deployed them by hand.
+    upstream = remote_main()
+    if not upstream:
+        stop('could not read origin/main from GitHub (git ls-remote). No network, or no access; nothing was pushed.')
+    changed = sh(['git', 'diff', '--name-only', upstream + '..HEAD']).stdout.split()
     workers = [f for f in changed if f in LIVE_WORKERS]
     served = [f for f in changed if f.startswith(('venueplay/', 'partyplay/')) and f.endswith(('.html', '.js'))
               and '/emails/' not in f and not f.endswith('.test.js')]
