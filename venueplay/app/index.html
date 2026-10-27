@@ -1136,8 +1136,9 @@
   function pairToVenue(slug){
     if(VP && VP.venueCode && slug){
       if(window.VPSign){ VPSign.initHost(VP_GAME_API, slug, vpHostToken); }   // fetch this venue's signing key
-      venueLogoFor(slug);   // the venue's logo in the header, off the same feed the TV reads
-      connect(VP.venueCode(slug)); return true;
+      connect(VP.venueCode(slug));
+      try{ venueLogoFor(slug); }catch(e){}   // the venue's logo in the header, off the same feed the TV reads. AFTER connect, and never thrown: a logo can never stop the console pairing
+      return true;
     }
     return false;
   }
@@ -4390,7 +4391,10 @@
      feed that does not answer, leaves the header exactly as it was. A switch of venue swaps it. */
   function venueLogoFor(slug){
     var img=$("venueLogo"); if(!img) return;
-    img.classList.add("hidden"); img.removeAttribute("src");
+    /* Cosmetic, so it may fail but never throw: on the train of 27 Oct 2026 this ran BEFORE connect()
+       in pairToVenue and threw in the bingo rig (whose element had no removeAttribute), so the console
+       never joined its channel and test-caller-mode and test-bingo-server-tickets went red. */
+    try{ img.classList.add("hidden"); img.removeAttribute("src"); }catch(e){}
     if(!slug) return;
     var asked=slug; img.__vpLogoSlug=slug;
     fetch(VP_GAME_API+"/screen?venue="+encodeURIComponent(slug)).then(function(r){ return r.ok ? r.json() : null; }).then(function(j){

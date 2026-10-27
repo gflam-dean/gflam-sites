@@ -2668,6 +2668,8 @@ MUTATIONS = [
     ('test-caller-mode.js', 'venueplay/app/index.html', '    var warn=ngWarning(), wb=$("ngWarn");', '    var warn="", wb=$("ngWarn");', 'New game never warns that the game has not reached a full house'),
     ('test-caller-mode.js', 'venueplay/app/index.html', '    if(won.indexOf("full")>=0) return "";', '    if(false) return "";', 'New game warns even after a full house'),
     ('test-caller-mode.js', 'venueplay/app/index.html', '    if(warn){ try{ $("ngCancel").focus(); }catch(e){} }   // the safe answer is the one under the thumb', '', 'the are-you-sure box leaves the focus off Cancel'),
+    # train of 27 Oct 2026: the console logo ran before connect() in pairToVenue and threw in the bingo rig, so the console never joined its channel.
+    ('test-caller-mode.js', 'venueplay/app/index.html', '      connect(VP.venueCode(slug));\n      try{ venueLogoFor(slug); }catch(e){}', '      venueLogoFor(slug);\n      connect(VP.venueCode(slug));', 'the venue logo is asked for before the console connects, so a logo that throws stops the console pairing'),
     ('test-bingo-server-tickets.js', 'venueplay/app/index.html', '    if(g.won) return head+"It finished on "+(patName(won[won.length-1])||"a line")+".";', '    if(g.won) return head+"It finished on a line.";', 'phone bingo: the are-you-sure box does not name the custom pattern the game finished on'),
     ('caller-winner-in-chrome.test.py', 'venueplay/app/index.html', '    if(wb){ wb.textContent=warn; wb.style.display = warn ? "" : "none"; }', '    if(wb){ wb.textContent=warn; }', 'in Chrome: the New game box never shows its full-house warning'),
     # 14 Oct fix round: PartyPlay.
@@ -6051,7 +6053,7 @@ MUTATIONS = [
     # 27 Oct 2026 (Dean, 24 Oct: "Logo doesn't appear on caller mode"): the host console's header
     # carries the venue logo, read off the /screen feed once the console pairs to a venue.
     ('tv.html, the four game screens and the three phones size the logo by its shape', 'venueplay/app/index.html',
-     '      venueLogoFor(slug);   // the venue\'s logo in the header, off the same feed the TV reads\n', '',
+     '      try{ venueLogoFor(slug); }catch(e){}   // the venue\'s logo in the header, off the same feed the TV reads. AFTER connect, and never thrown: a logo can never stop the console pairing\n', '',
      'the console never asks for its venue\'s logo, so a host calling real balls off their phone sees only the VenuePlay mark'),
     ('tv.html, the four game screens and the three phones size the logo by its shape', 'venueplay/app/index.html',
      '      img.src=url; img.classList.remove("hidden");', '      img.src=url;',
