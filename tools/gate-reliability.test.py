@@ -256,6 +256,11 @@ try:
     r = subprocess.run([sys.executable, os.path.join(scratch, 'tools', 'deploy-worker.py'), '--gate-only', 'venueplay-sms',
                         'venueplay-backend/worker/venueplay-sms-hook.js'], capture_output=True, text=True, env=env, cwd=scratch, timeout=300)
     ok('... and "PASS" after a FAIL line is still red', r.returncode != 0, r.returncode)
+    io.open(broken, 'w', encoding='utf-8').write('// reads venueplay-sms-hook.js\nprint("PASS: the hook");\nprint("  ok   the hook fails over");\n')
+    r = subprocess.run([sys.executable, os.path.join(scratch, 'tools', 'deploy-worker.py'), '--gate-only', 'venueplay-sms',
+                        'venueplay-backend/worker/venueplay-sms-hook.js'], capture_output=True, text=True, env=env, cwd=scratch, timeout=300)
+    ok('a suite that prints PASS first and ends on an "ok" line is green too (test-add-venue-free-month.js, 28 Oct 2026)', r.returncode == 0,
+       '' if r.returncode == 0 else (r.stdout + r.stderr)[-300:])
     io.open(broken, 'w', encoding='utf-8').write('// reads venueplay-sms-hook.js\nprint("ok the hook fails over");\nprint("ALL 1 CHECKS PASSED");\n')   # section 7 reuses it, green
     dw_src = io.open(os.path.join(TOOLS, 'deploy-worker.py'), encoding='utf-8').read()
     ok('a refused or red deploy never exits 0: die() and the red path both print EXIT 1', dw_src.count("EXIT 1") >= 3 and '--full-gate' in dw_src)

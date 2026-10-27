@@ -129,8 +129,8 @@ MUTATIONS = [
      'a full gate started inside step 5 inherits the parent release\'s "Chrome skipped" reason and prints it as its own'),
     # THE GATE'S OWN RELIABILITY, 27 Oct 2026 (tools/gatelib.py, verify-live's Browser, the wake check).
     ('gate-reliability.test.py', 'tools/deploy-worker.py',
-     "            return (rr.last or '').strip().startswith('PASS') and not any(",
-     "            return False and not any(",
+     "            return 'PASS' in text and not any(l.strip().startswith('FAIL') for l in text.splitlines())",
+     "            return False",
      'the deploy gate calls a tools/test-*.js suite ending "PASS 27 checks" red and refuses a deploy the full gate passed'),
     ('gate-reliability.test.py', 'tools/gatelib.py',
      '    if passed(first) or not chrome:',

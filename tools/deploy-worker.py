@@ -310,8 +310,9 @@ def fast_gate(name, path, skip_live=False):
             if _suite_passed(rr.last):
                 return True
             text = re.sub(r'\x1b\[[0-9;]*m', '', rr.out or '')
-            return (rr.last or '').strip().startswith('PASS') and not any(
-                l.strip().startswith('FAIL') for l in text.splitlines())
+            # Exactly release-check.py's section D rule: "PASS" anywhere in the output (some suites print it
+            # first and end on an "ok" line), and no line that starts with FAIL.
+            return 'PASS' in text and not any(l.strip().startswith('FAIL') for l in text.splitlines())
         rr, flake = gatelib.run_suite_with_retry(cmd, os.path.basename(s), _passed, cwd=str(REPO),
                                                  timeout=900 if is_chrome else 300, chrome=is_chrome,
                                                  say=lambda x: print('  ' + x))
