@@ -724,7 +724,7 @@
   "counted_by": "lines"
  },
  "tools/test-venue-logo-upload.js": {
-  "checks": 45,
+  "checks": 50,
   "counted_by": "lines"
  },
  "tools/test-venue-picker-scopes.js": {
