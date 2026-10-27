@@ -488,7 +488,7 @@
   "counted_by": "lines"
  },
  "tools/test-permits-and-compliance-tick.js": {
-  "checks": 84,
+  "checks": 100,
   "counted_by": "lines"
  },
  "tools/test-phones-cannot-be-impersonated.js": {
@@ -508,7 +508,7 @@
   "counted_by": "lines"
  },
  "tools/test-play-live-age-gate-15-oct.js": {
-  "checks": 74,
+  "checks": 84,
   "counted_by": "lines"
  },
  "tools/test-pr-boards-15-oct.js": {
@@ -1073,6 +1073,14 @@
  },
  "venueplay-backend/worker/webhook-ledger.test.js": {
   "checks": 17,
+  "counted_by": "lines"
+ },
+ "tools/settings-and-logos-in-chrome.test.py": {
+  "checks": 23,
+  "counted_by": "lines"
+ },
+ "tools/signup-tick-in-chrome.test.py": {
+  "checks": 20,
   "counted_by": "lines"
  }
 }

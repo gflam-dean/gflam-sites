@@ -319,9 +319,14 @@ try:
     S.until(sid, BILLING_UP, 25)
     S.until(sid, '/^https:/.test(document.getElementById("venueLinkVal").textContent)', 20)
     time.sleep(0.6)
-    fit = S.js(sid, '(function(){var e=document.getElementById("venueLinkVal"),b=e.getBoundingClientRect();return JSON.stringify({r:Math.round(b.right),w:innerWidth,sw:document.documentElement.scrollWidth});})()')
+    # Measure the PAINTED TEXT (a Range), not the div: a block's box stays inside the card while an
+    # unwrapped line runs out of it, and a phone widens its layout viewport to fit overflow, so
+    # "div right <= innerWidth" stayed green with white-space:nowrap (27 Oct 2026, prove run).
+    fit = S.js(sid, '(function(){var e=document.getElementById("venueLinkVal"),c=e.closest(".scard"),rg=document.createRange();rg.selectNodeContents(e);var t=rg.getBoundingClientRect(),cb=c.getBoundingClientRect();'
+                    'return JSON.stringify({textR:Math.round(t.right),cardR:Math.round(cb.right),lines:Math.round(t.height/parseFloat(getComputedStyle(e).lineHeight)||0),w:innerWidth,sw:document.documentElement.scrollWidth,esw:e.scrollWidth,ecw:e.clientWidth});})()')
     f = json.loads(fit or '{}')
-    ok('at 390 wide the link wraps inside the card and nothing scrolls sideways', f.get('r', 9999) <= f.get('w', 0) and f.get('sw', 9999) <= f.get('w', 0), f)
+    ok('at 390 wide the link wraps inside the card and nothing scrolls sideways',
+       f.get('textR', 9999) <= f.get('cardR', 0) and f.get('esw', 9999) <= f.get('ecw', 0) + 1 and f.get('w', 9999) <= 390 and f.get('sw', 9999) <= 390, f)
     shot(sid, 'billing-marketing-390')
     S.close_tab(tid)
 finally:
