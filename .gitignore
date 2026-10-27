@@ -35,3 +35,6 @@ partyplay/**/*.md
 # untracked where they were and they stay untracked here: out of the public
 # directory is the point, putting eighteen superseded migrations into the repo is not.
 venueplay-backend/tools/moved-out-of-site-dir-2026-09-11/
+
+# gate flake log, written by every gate run (tools/gatelib.py); never committed
+tools/flake-log.jsonl
