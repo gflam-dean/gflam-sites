@@ -2087,6 +2087,10 @@
    "anon": false,
    "authenticated": false
   },
+  "vp_set_game_prefs(p_venue_id uuid, p_game text, p_prefs jsonb)": {
+   "anon": false,
+   "authenticated": false
+  },
   "vp_settings_owner_only_guard()": {
    "anon": true,
    "authenticated": true

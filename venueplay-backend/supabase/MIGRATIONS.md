@@ -373,5 +373,5 @@ read by the game Worker's `GET` / `POST /host/game-prefs` (verifyHostJwt + requi
 short list of allowed keys per game, a size cap). Never paid-or-free for the night, unsold tickets or permits. Either order
 with the Worker is safe: without it the route answers an error and every console keeps this browser's own choices (trivia and
 raffle still read their older trivia_* columns and raffle_template). After running, dump RLS-BASELINE.json (one new security
-definer function). Branches `fix/console-banners-28-oct`, `feature/advanced-settings-28-oct`. NOT RUN.
+definer function). Branches `fix/console-banners-28-oct`, `feature/advanced-settings-28-oct`. RUN on the live database by Dean, 28 Oct 2026 (vp_set_game_prefs present; RLS-BASELINE.json dumped).
 Rollback: in the file.
