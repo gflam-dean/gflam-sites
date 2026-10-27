@@ -20,7 +20,7 @@
  */
 (function (root) {
   "use strict";
-  var VERSION = "VP-DRAW-1.2";
+  var VERSION = "VP-DRAW-1.3";
   /* The states where the tablet may never stand in. MUST equal the Worker's TABLET_FALLBACK_OFF_STATES
      (tools/regulated.py refuses the release if they differ). Default none: Dean keeps the fallbacks. */
   var TABLET_FALLBACK_OFF_STATES = [];

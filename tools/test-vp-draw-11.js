@@ -245,6 +245,21 @@ function ballAt(id, n) { return { draw_id: id, ordinal: n, number: 0 }; }
   var tk = ticketsOf(T, 'k1_slowann'), allT = ticketsOf(T, 'k1_slowann', true);
   check('server deal first, the tablet\'s later: the tablet ticket stands, the unseen server ticket is VOID with its reason',
         tk.length === 1 && tk[0].source === 'tablet' && allT.some(function (t) { return t.source === 'server' && t.voided_at && /never reached the phone/.test(t.void_reason || ''); }), allT);
+  /* VP-DRAW-1.3 (28 Oct 2026): the voided server ticket and the tablet ticket can carry the SAME number
+     (both random, 100 to 999). The record used to treat the tablet ticket as "already recorded" and drop
+     it, so a BINGO on the ticket the player holds found nothing. Forced here on every run, not 1 in 900. */
+  var TC = (await W('/host/bingo/draw', { venue_id: VENUE, session_id: null })).body.draw_id;
+  await W('/host/bingo/deal', { draw_id: TC, hands: [{ pid: 'k1_samenum', did: 'device-same-1', want: 1 }] });
+  var srvNo = ticketsOf(TC, 'k1_samenum')[0].card_no;
+  var tabSame = [{ cells: generateStrip()[0], card_no: srvNo, dealt_at: new Date(Date.now() - 2000).toISOString() }];
+  await W('/host/bingo/deal', { draw_id: TC, hands: [{ pid: 'k1_samenum', did: 'device-same-1', tablet: tabSame }] });
+  var tkc = ticketsOf(TC, 'k1_samenum'), allc = ticketsOf(TC, 'k1_samenum', true);
+  check('SAME NUMBER: a tablet ticket that shares its number with the voided server ticket is still recorded, and stands',
+        tkc.length === 1 && tkc[0].source === 'tablet' && tkc[0].card_no === srvNo &&
+        allc.some(function (t) { return t.source === 'server' && t.voided_at && t.card_no === srvNo; }), allc);
+  await W('/host/bingo/deal', { draw_id: TC, hands: [{ pid: 'k1_samenum', did: 'device-same-1', tablet: tabSame }] });
+  check('... and sending the same hand again records it once, not twice', ticketsOf(TC, 'k1_samenum', true).filter(function (t) { return t.source === 'tablet'; }).length === 1,
+        ticketsOf(TC, 'k1_samenum', true));
   var T2 = (await W('/host/bingo/draw', { venue_id: VENUE })).body.draw_id;
   await W('/host/bingo/deal', { draw_id: T2, hands: [{ pid: 'k1_slowbob', did: 'device-slow-2', tablet: tab }] });
   await W('/host/bingo/deal', { draw_id: T2, hands: [{ pid: 'k1_slowbob', did: 'device-slow-2', want: 1 }] });

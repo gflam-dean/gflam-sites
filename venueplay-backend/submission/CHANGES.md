@@ -33,6 +33,11 @@ Why a v1.2 pack: custom bingo patterns (VP-DRAW-1.2) went live on 27 October 202
 - `vp-draw-1.1-to-1.2-change-summary-v1.2.md`, `vp-draw-1.2-lodgement-checklist-v1.2.md`, `vp-draw-1.2-cover-email-v1.2.md`: as above.
 - `CHANGES.md`: this file.
 
+## VP-DRAW-1.3 (29 October 2026)
+
+- `vp-draw-1.2-to-1.3-change-summary.md`: the one-page summary of 1.3 (a tablet ticket recorded after an outage is no longer dropped when a voided server ticket shares its random number). New manifest hash `5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244`. The generator, the draw, the tickets, the claim rule and the fallback switch are unchanged; the one component whose text changed is `bingoDealHands` (VP-DEAL-1).
+- The v1.2 files above still name VP-DRAW-1.2 and manifest `889556b5...`. Where a v1.2 file quotes the live version or manifest (the cover email, EVIDENCE-v1.2.md, VERSION-NAMES-v1.2.md line 5 and the VP-DEAL-1 row), restate it as 1.3 once 1.3 is live, and attach the 1.2 to 1.3 summary beside the 1.1 to 1.2 one.
+
 ## What is still owed before lodgement
 
 The lodgement checklist's section A, in short: Dean's confirmations (version described, prize figure, fallback for Queensland, the two 20 October findings, opt-in capture, the scope sentence in the email), the signed forms and letter, the security statement, the test venue login, the PDF, the regenerated samples and bingo flow charts, the live SQL dump, and the phone call to the Technical Unit.

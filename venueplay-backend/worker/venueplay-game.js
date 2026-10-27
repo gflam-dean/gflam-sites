@@ -145,10 +145,10 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '28 Oct 2026, 15:54 · 945fa577';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '29 Oct 2026, 06:10 · 5351db0b';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
-const VP_DRAW_MANIFEST = '889556b56c9dc21830f3edb36aa90fd4ba12cfab7a7487187d05471dc0495d6d';
+const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -6719,12 +6719,16 @@ async function hostDrawRpc(request, env, json, fn, extra, gate) {
  * row only supplies its two inputs, "any N numbers" or "these squares", read by the SERVER from the
  * venue's own row, never taken from the console or a phone.
  *
+ * VP-DRAW-1.3 (Dean, 28 Oct 2026): recording a tablet-dealt ticket after an outage no longer skips it when a
+ * voided server ticket happens to share its random number (bingoDealHands). No change to the draw, the
+ * tickets, the claim rule or the switch.
+ *
  * HOW IT CHANGES. Any change to this file must raise VP_DRAW_VERSION and regenerate
  * tools/regulated-manifest.json (python3 tools/regulated.py --update) in the same commit. The local gate
  * and release.py refuse anything else, and /health reports the version and the manifest hash, so what
  * is running can be checked against what was described to OLGR.
  */
-const VP_DRAW_VERSION = 'VP-DRAW-1.2';
+const VP_DRAW_VERSION = 'VP-DRAW-1.3';
 
 // Uniform random integer in [0, max) using rejection sampling over getRandomValues.
 function randInt(max) {
@@ -7428,8 +7432,11 @@ async function bingoDealHands(env, json, draw, hands, refused, paperNight, stand
     let book = mine.reduce((m, t) => Math.max(m, t.book + 1), 0);
     if (h.tablet) {
       // Recording what the tablet dealt in an outage. A number already on the record for this
-      // player is already recorded (the console sends the whole hand each time it tries).
-      const have = new Set(mine.filter((t) => t.card_no != null).map((t) => t.card_no));
+      // player AS A TABLET TICKET is already recorded (the console sends the whole hand each time it
+      // tries). Only tablet tickets count: a voided server ticket can carry the same random number, and
+      // before VP-DRAW-1.3 (28 Oct 2026) that dropped the ticket the player was holding, so a BINGO on it
+      // found nothing.
+      const have = new Set(mine.filter((t) => t.source === 'tablet' && t.card_no != null).map((t) => t.card_no));
       let k = 0;
       h.tablet.forEach(function (t) {
         if (have.has(t.card_no)) return;

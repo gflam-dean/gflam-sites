@@ -2366,6 +2366,11 @@ MUTATIONS = [
     ('the regulated bingo code matches its manifest and its version', 'venueplay-backend/worker/vp-draw.js', '  return x % max;', '  return x % max;   // edited', 'a regulated file changes and the gate does not notice'),
     ('the regulated bingo code matches its manifest and its version', 'venueplay-backend/worker/venueplay-game.js', 'function generateStrip() {', 'function generateStrip() {\n  // edited in the copy', 'the copy inside the Worker is edited and the gate does not notice'),
     # 19 Oct 2026, VP-DRAW-1.1 (review of 1.0): failed-ball record only on a real failure, slow server reconciled, draws finished.
+    # VP-DRAW-1.3 (28 Oct 2026): a voided server ticket with the same number does not hide the tablet's.
+    ('test-vp-draw-11.js', 'venueplay-backend/worker/venueplay-game.js',
+     "      const have = new Set(mine.filter((t) => t.source === 'tablet' && t.card_no != null).map((t) => t.card_no));",
+     "      const have = new Set(mine.filter((t) => t.card_no != null).map((t) => t.card_no));",
+     'a tablet ticket sharing its random number with a voided server ticket is dropped, and a BINGO on it finds nothing'),
     ('test-vp-draw-11.js', 'venueplay-backend/worker/venueplay-game.js', '    if (o !== (await standingBallCount(env, drawId)) + 1) return;', '', 'a failing ball asked for at any place records that place, so place 90 unlocks the tablet'),
     ('test-vp-draw-11.js', 'venueplay-backend/worker/venueplay-game.js', '    await requireStaff(env, authUserId, d[0].venue_id);\n    if (o !== (await standingBallCount(env, drawId)) + 1) return;', '    if (o !== (await standingBallCount(env, drawId)) + 1) return;', 'a host who is not staff at the venue can record an outage'),
     ('test-vp-draw-11.js', 'venueplay-backend/worker/venueplay-game.js', '  const keep = async function (env2, json2, authUserId, drawId, b) { seen.uid = authUserId; seen.drawId = drawId; seen.b = b; return null; };', '  const keep = async function (env2, json2, authUserId, drawId, b) { seen.uid = authUserId; seen.drawId = drawId; seen.b = b; await bingoRecordFailedAsk(env2, authUserId, drawId, b); return null; };', 'every ball asked for, the hold included, is recorded as an outage'),

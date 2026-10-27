@@ -11,14 +11,18 @@
   {
    "reason": "24 Oct 2026 (Dean, after a Drag Bingo show played any 5 numbers): a venue may save its own named winning patterns. The claim rule gains one case, custom: any N numbers on the ticket (1 to 15), or every number in a chosen shape of squares. The rule that judges it is a constant here; the server reads the venue's saved rule from vp_bingo_patterns (migration 118) by id, scoped to the draw's venue, and never takes it from the console or a phone. The seven built-in patterns are unchanged.",
    "version": "VP-DRAW-1.2"
+  },
+  {
+   "reason": "Recording tablet-dealt tickets after an outage: a tablet ticket is only treated as already recorded when a TABLET ticket with the same number exists. A voided server ticket with the same random number no longer causes the player's tablet ticket to be dropped (found 27 Oct 2026; about 1 in 900 per ticket during an outage). Draw, ticket generation, claim rule and fallback switch unchanged.",
+   "version": "VP-DRAW-1.3"
   }
  ],
  "files": {
-  "venueplay-backend/worker/vp-draw.js": "8bf72207c6c6c9bdde86fefee031bac2f1b0638c55b45ef6f1650b46d5c64243",
-  "venueplay/app/vp-draw.js": "ea48ee30ce9289d85952cf61d8cf7fd95acadff9537868326cb4381a8ecd892b"
+  "venueplay-backend/worker/vp-draw.js": "66cbd0473fd42db3e535338fef94835dcb53eb78dbdcc47e5762d2317f76ec6c",
+  "venueplay/app/vp-draw.js": "ccfd7b9335636d16dc80591bc7efa287a4d03744b4fdc4dd0968e12e7c85ae0d"
  },
- "manifest_hash": "889556b56c9dc21830f3edb36aa90fd4ba12cfab7a7487187d05471dc0495d6d",
+ "manifest_hash": "5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244",
  "name": "VP-DRAW",
  "note": "Written by tools/regulated.py --update. Never edit by hand: the gate recomputes every hash.",
- "version": "VP-DRAW-1.2"
+ "version": "VP-DRAW-1.3"
 }
