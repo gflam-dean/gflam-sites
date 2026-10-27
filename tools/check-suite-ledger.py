@@ -98,7 +98,11 @@ def run(rel):
     for cwd, arg in ((ROOT, rel), (os.path.join(ROOT, os.path.dirname(rel)), os.path.basename(rel))):
         try:
             # Its own process group, and the whole group is killed on timeout (the Chrome too).
-            r = gatelib.run_suite(cmd[:-1] + [arg], cwd=cwd, timeout=int(os.environ.get('VP_LEDGER_TIMEOUT', '300')))
+            # A Chrome suite gets the gate's own allowance (900 s, release-check._suite_timeout): tv-and-phone
+            # takes about 400 s on its own and was being killed at 300 s here on every --update (27 Oct 2026).
+            _chrome = gatelib.uses_chrome(os.path.join(ROOT, rel))
+            r = gatelib.run_suite(cmd[:-1] + [arg], cwd=cwd,
+                                  timeout=int(os.environ.get('VP_LEDGER_TIMEOUT', '900' if _chrome else '300')))
         except Exception as e:
             best = best or (1, 0, ['could not run: %s' % e], 'lines'); continue
         res = judge(r.rc, r.out)

@@ -448,6 +448,19 @@ def local_checks(which):
         ok('every file checked is one git tracks', not untracked,
            '%d file(s) scanned' % len(files),
            why='not tracked, so not shipped: ' + ', '.join(short(f) for f in untracked[:4]))
+    # THE TREE ITSELF IS STILL THERE. 27 Oct 2026: a test inside the gate replaced this checkout with
+    # five files; the next gate printed "1 file(s) scanned" on the line above and then ran 350 more
+    # checks for 26 minutes, every one of them about a repo that no longer existed. A gate that
+    # cannot find the product has nothing left to judge, so it stops here, red, at once.
+    floor = 60 if which == 'both' else 20
+    ok('the checkout still holds the product (served files found on disk)', len(files) >= floor,
+       '%d file(s), floor %d' % (len(files), floor),
+       why='only %d served file(s) under venueplay/ and partyplay/; the checkout has collapsed or the gate '
+           'is pointed at the wrong folder' % len(files))
+    if len(files) < floor:
+        print('\n%sSTOP. The checkout has %d served file(s); nothing below could be about the product. '
+              'git status and git log first.%s' % (RED, len(files), OFF))
+        sys.exit(summary(which, False))
 
     bad = 0
     for f in files:
@@ -5715,9 +5728,30 @@ def main():
             print('%sREFUSED: not starting Chrome on a Mac where another live run holds the heavy lock.%s' % (RED, OFF))
             sys.exit(3)
 
+    # THE LIVE HALF RUNS FIRST. It is about 225 checks in under two minutes; the local half is 26
+    # minutes of Chrome. On 27 Oct 2026 the full gate after a release spent those 26 minutes
+    # re-running Chrome while every page on venueplay.com.au was serving "three", and only then
+    # said "the homepage is not a page". Live first, and if live is red the gate stops there:
+    # a venue that is down is not improved by 26 minutes of local checks on the way to the
+    # same red summary.
+    if not local_only:
+        live_half(which, wait)
+        if failed and not live_only:
+            print('\n%sSTOP. The live site is red; the local half is not run until live is right. '
+                  'Fix live, or run --local on its own.%s' % (RED, OFF))
+            sys.exit(summary(which, True))
     if not live_only:
         local_checks(which)
-    if not local_only:
+
+    if local_only:
+        mutations_still_apply()
+        labels_ledger('--update-labels' in args)
+    sys.exit(summary(which, not local_only))
+
+
+def live_half(which, wait):
+    """Every check that asks production a question. A SEPARATE set from --local: no label in both."""
+    if True:
         if wait:
             wait_for_deploy()
         if which in ('both', 'venueplay'):
@@ -5867,11 +5901,6 @@ def main():
                detail=(out.splitlines()[0][6:120] if out.startswith('PASS') else ''),
                why=('; '.join(b[:110] for b in bad[:3]) if bad else out[-160:]) +
                    '. If the live change was deliberate, rerun the tool without --check and commit the baseline')
-
-    if local_only:
-        mutations_still_apply()
-        labels_ledger('--update-labels' in args)
-    sys.exit(summary(which, not local_only))
 
 
 if __name__ == '__main__':

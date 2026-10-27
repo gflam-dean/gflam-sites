@@ -10,7 +10,9 @@ before green, stamp before landed, check before deployed, push before commit. Th
 the steps and stops at the first one that is not true:
 
     0. the tree is clean and every Worker is stamped
-    1. push HEAD:main (the pre-push hook runs the local gate; a red gate refuses the push)
+    1. push the planned commit to main BY SHA (the pre-push hook runs the local gate; a red gate
+       refuses the push; the release refuses if origin/main moved, if HEAD moved during the hook,
+       or if what landed is not the SHA planned: 27 Oct 2026, the "three" incident)
     2. deploy every LIVE Worker whose file is in the push, and wait for /health
        (Workers first: the site lands minutes later, and a page asking an old Worker for
        something new reaches a customer)
@@ -60,6 +62,46 @@ def stop(why):
     sys.exit(1)
 
 
+def remote_main():
+    """What origin's main points at RIGHT NOW, asked of the remote, not of the local origin/main copy."""
+    r = sh(['git', 'ls-remote', 'origin', 'refs/heads/main'])
+    return r.stdout.split()[0] if r.returncode == 0 and r.stdout.split() else ''
+
+
+def push_exactly(sha, expected_remote, what):
+    """PUSH ONE NAMED COMMIT, AND PROVE IT IS WHAT ARRIVED (27 Oct 2026, the "three" incident).
+
+    `git push origin HEAD:main` resolves HEAD AFTER the pre-push hook has run. On 27 Oct the hook's gate
+    ran a test whose throwaway `git init` re-initialised this checkout and committed "one", "two",
+    "three" onto the real branch; the gate printed green for the tree on disk, git printed
+    18e2c58d..a62b6e87, and send-pack pushed "three". Every page served <html>three</html> for 29
+    minutes. So:
+      1. refuse if origin's main is not where it was when this release started (someone else pushed)
+      2. push the SHA by name, never HEAD
+      3. refuse if HEAD or its tree moved while the hook ran (the gate touched the repo)
+      4. refuse unless origin's main now equals the SHA that was planned
+    Returns nothing; every failure stops the release."""
+    now = remote_main()
+    if expected_remote and now != expected_remote:
+        stop('origin/main moved while this release was being prepared (%s, expected %s). '
+             'git fetch, look at what landed, rebase, and release again.' % (now[:8], expected_remote[:8]))
+    tree_before = sh(['git', 'rev-parse', sha + '^{tree}']).stdout.strip()
+    r = subprocess.run(['git', 'push', 'origin', sha + ':refs/heads/main'], cwd=ROOT)
+    head_after = sh(['git', 'rev-parse', 'HEAD']).stdout.strip()
+    tree_after = sh(['git', 'rev-parse', 'HEAD^{tree}']).stdout.strip()
+    if head_after != sha or tree_after != tree_before:
+        stop('HEAD moved while the %s was being pushed (planned %s, now %s). Something the hook ran touched '
+             'this checkout. Nothing after this is safe; find what moved it before releasing again.'
+             % (what, sha[:8], head_after[:8]))
+    if r.returncode != 0:
+        stop('the %s was refused. Read the gate output above; do not bypass it.' % what)
+    landed = remote_main()
+    if landed != sha:
+        stop('origin/main is %s after the %s, not the %s that was planned. Do not continue: look at '
+             'what is on GitHub before anything deploys.' % (landed[:8] or 'unreadable', what, sha[:8]))
+    print('  %sorigin/main is %s, as planned%s' % (DIM, sha[:8], OFF))
+
+
 def main():
     plan = '--plan' in sys.argv
     head = sh(['git', 'rev-parse', 'HEAD']).stdout.strip()
@@ -99,10 +141,13 @@ def main():
              '\nRaise the version in both halves of vp-draw.js, run python3 tools/regulated.py --update, then stamp, commit and release again.')
     print('  ok')
 
-    step(1, 'push HEAD:main (the hook runs the local gate)')
-    r = subprocess.run(['git', 'push', 'origin', 'HEAD:main'], cwd=ROOT)
-    if r.returncode != 0:
-        stop('the push was refused. Read the gate output above; do not bypass it.')
+    # SNAPSHOT BEFORE THE PUSH: origin's main as the remote reports it, so the push can refuse if it
+    # moves, and so what lands can be compared with what was planned (push_exactly).
+    remote_before = remote_main()
+    if not remote_before:
+        stop('could not read origin/main from GitHub (git ls-remote). No network, or no access; nothing was pushed.')
+    step(1, 'push %s to main by name (the hook runs the local gate)' % head[:8])
+    push_exactly(head, remote_before, 'push')
 
     step(2, 'deploy the Workers in this push, and prove each by /health')
     if not workers:
@@ -146,9 +191,8 @@ def main():
                'Claude-Session: https://claude.ai/code/session_015i3GErAW38ivKHruEW6N8q') % head[:8]
         r = sh(['git', 'commit', '-q', '-m', msg])
         if r.returncode == 0:
-            r2 = subprocess.run(['git', 'push', 'origin', 'HEAD:main'], cwd=ROOT)
-            if r2.returncode != 0:
-                stop('the stamp commit did not push; push it by hand: git push origin HEAD:main')
+            stamp = sh(['git', 'rev-parse', 'HEAD']).stdout.strip()
+            push_exactly(stamp, head, 'stamp push')
     else:
         print('  no screen file in this push; nothing to look at')
 
