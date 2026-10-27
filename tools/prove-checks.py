@@ -952,6 +952,40 @@ MUTATIONS = [
      '  .tc-card{grid-template-columns:1fr}', '  .tc-card{grid-template-columns:1fr 1fr}',
      'on a phone the card stays two squashed columns'),
 
+    # ---- 27 Oct 2026: the tour cards said "Coming Soon" while shows were on sale whenever a read
+    # stalled or failed (the flake log's "after 120 s the page showed: COMING SOON"). The loader now
+    # says loading, times each read out, tries once more, and tells the truth.
+    ('test-touring-cards-loader.js', 'touring/index.html',
+     '    for(let go=0; go<2 && !data; go++){', '    for(let go=0; go<1 && !data; go++){',
+     'a stalled or failed read is never tried again on the homepage'),
+    ('test-touring-cards-loader.js', 'touring/index.html',
+     '    const t=setTimeout(function(){ ac.abort(); }, TC_FETCH_MS);',
+     '    const t=setTimeout(function(){ }, TC_FETCH_MS);',
+     'a read that never answers leaves the homepage loading for ever'),
+    ('test-touring-cards-loader.js', 'touring/index.html',
+     '      wrap.innerHTML=failedHTML; wrap.dataset.state="failed";',
+     '      wrap.innerHTML=comingSoonHTML; wrap.dataset.state="none";',
+     # (two failed reads show Coming Soon on the homepage while shows are on sale: the 27 Oct lie.
+     #  This row's reason is the gate label, which is how section Z knows the check is proven.)
+     'the tour cards say loading, retry once and tell the truth; Coming Soon only when nothing is on'),
+    ('test-touring-cards-loader.js', 'touring/index.html',
+     '    if(!showsR.ok) throw new Error("shows answered "+showsR.status);\n', '',
+     'a failed shows read counts as no shows and hides the tour behind Coming Soon'),
+    ('test-touring-cards-loader.js', 'touring/index.html',
+     '<div class="eyebrow" style="margin-bottom:14px">One Moment</div>',
+     '<div class="eyebrow" style="margin-bottom:14px">Coming Soon</div>',
+     'the homepage says Coming Soon while it is still loading'),
+    ('test-touring-cards-loader.js', 'touring/current-tours.html',
+     '    for(let go=0; go<2 && !data; go++){', '    for(let go=0; go<1 && !data; go++){',
+     'a stalled or failed read is never tried again on the current tours page'),
+    ('test-touring-cards-loader.js', 'touring/current-tours.html',
+     '      wrap.innerHTML=failedHTML; wrap.dataset.state="failed";',
+     '      wrap.innerHTML=comingSoonHTML; wrap.dataset.state="none";',
+     'two failed reads show Coming Soon on the current tours page while shows are on sale'),
+    ('test-touring-cards-loader.js', 'touring/current-tours.html',
+     '      console.warn("tour cards: could not load what\'s on after two tries: "+(err&&err.message));\n', '',
+     'the current tours page swallows the failure again'),
+
     # ---- 19 Oct 2026: every signup form was refused (42501) and three said thanks anyway.
     ('touring-signups.test.py', 'group/index.html',
      "    if(r.ok){document.getElementById('gsf')", "    if(true){document.getElementById('gsf')",

@@ -659,6 +659,10 @@
   "checks": 44,
   "counted_by": "lines"
  },
+ "tools/test-touring-cards-loader.js": {
+  "checks": 80,
+  "counted_by": "lines"
+ },
  "tools/test-trivia-15-oct.js": {
   "checks": 70,
   "counted_by": "lines"

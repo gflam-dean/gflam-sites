@@ -160,7 +160,8 @@ br = _vl.Browser()
 MEASURE = r"""
 (function () {
   var card = document.querySelector('#tourCards .tc-card');
-  if (!card) return JSON.stringify({ card: false, text: document.getElementById('tourCards').innerText.slice(0, 200) });
+  if (!card) return JSON.stringify({ card: false, state: document.getElementById('tourCards').dataset.state,
+                                     text: document.getElementById('tourCards').innerText.slice(0, 200) });
   var img = card.querySelector('.tc-img img'), box = card.querySelector('.tc-img'), left = card.querySelector('.tc-left');
   var kids = [].slice.call(left.children).filter(function (k) { return k.getBoundingClientRect().height > 0; });
   var r = function (e) { var b = e.getBoundingClientRect(); return { t: b.top, b: b.bottom, l: b.left, r: b.right, w: b.width, h: b.height }; };
@@ -198,11 +199,16 @@ try:
             # 20 s, so "the tour card is on the page" went red and refused a live Worker deploy. The
             # shows are this test's own fake rows, so nothing about "3" drifts with live data; what
             # drifted was how long a starved Chrome takes. So: wait until the document is complete, the
-            # fonts are in, the cards container has been written and the poster has decoded, and only
-            # then measure. The 120 s cap is for a page that is actually stuck, and on that path the
-            # failure names what the page was showing and the load at the time.
+            # fonts are in, the page's own loader has finished (data-state leaves "loading": the page
+            # now times out and retries its reads itself, so a stall ends inside 16 s either way) and
+            # the poster has decoded, and only then measure. The 120 s cap is for a page that is
+            # actually stuck, and on that path the failure names the page's own state, what it was
+            # showing and the load at the time. 27 Oct 2026, 11:46: "after 120 s the page showed:
+            # COMING SOON" at load 3.7 was the OLD page sitting on its Coming Soon fallback while one
+            # read never answered; it had no timeout, no retry and swallowed the error, so the same
+            # stall would have read "Coming Soon" to a visitor for ever. The page was fixed, not this.
             RENDERED = ("document.readyState==='complete' && document.fonts.status==='loaded' && "
-                        "(function(w){return !!w && w.children.length>0;})(document.getElementById('tourCards'))")
+                        "(function(w){return !!w && w.children.length>0 && w.dataset.state!=='loading';})(document.getElementById('tourCards'))")
             m = None
             end = time.time() + 120
             while time.time() < end:
@@ -212,6 +218,8 @@ try:
                         m = json.loads(raw) if raw else None
                         if m and m.get('card') and m['img'] and m['natural'][0] > 0:
                             break
+                        if m and not m.get('card') and m.get('state') == 'failed':
+                            break      # the page has given up and said so; no point waiting out the cap
                 except Exception:
                     pass
                 time.sleep(0.3)
@@ -222,7 +230,9 @@ try:
                 except Exception:
                     load = 0
                 ok('%s: the tour card is on the page' % tag, False,
-                   'after 120 s the page showed: %s (load %.1f)' % ((m or {}).get('text', m), load))
+                   'after %d s the page (data-state %s) showed: %s (load %.1f)'
+                   % (120 if m is None or m.get('state') != 'failed' else int(120 - (end - time.time())),
+                      (m or {}).get('state'), (m or {}).get('text', m), load))
                 br.close_tab(tid)
                 continue
             # screenshot of the card, for a person to look at

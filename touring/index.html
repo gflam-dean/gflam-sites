@@ -206,19 +206,22 @@ html,body{background:var(--dark);color:#fff;font-family:"DM Sans",sans-serif;fon
 <div style="background:var(--dark2)"><div class="section">
   <div class="eyebrow">What's On Now</div>
   <h2 class="h2" style="margin-bottom:32px">Current tours<span class="dot">.</span></h2>
-  <div id="tourCards">
-    <!-- Fallback: shown if Supabase is unavailable or no cards added yet; replaced by managed cards on load -->
+  <div id="tourCards" data-state="loading">
+    <!-- While the page reads what's on, it says so. This used to be the "Coming Soon" card, which a
+         visitor on a slow connection read while shows were on sale (27 Oct 2026). "Coming Soon" is now
+         only ever written by the loader below, once the database has answered and nothing is on. -->
     <div style="background:var(--dark);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;margin-bottom:20px">
     <div style="padding:40px">
-      <div class="eyebrow" style="margin-bottom:14px">Coming Soon</div>
-      <div style="font-family:'DM Serif Display',serif;font-size:clamp(24px,3.5vw,36px);letter-spacing:-1px;color:#fff;margin-bottom:14px;line-height:1.1">Fabulous things in the works<span class="dot">.</span></div>
-      <p class="muted" style="font-size:15px;margin-bottom:24px">New tours are being announced soon. Join the mailing list to be the first to know - and to grab early-bird tickets.</p>
+      <div class="eyebrow" style="margin-bottom:14px">One Moment</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:clamp(24px,3.5vw,36px);letter-spacing:-1px;color:#fff;margin-bottom:14px;line-height:1.1">Loading what's on<span class="dot">.</span></div>
+      <p class="muted" style="font-size:15px;margin-bottom:24px">Fetching the latest tours and tickets. Join the mailing list and the next shows come straight to you.</p>
       <a href="#signup" class="btn btn-pink">Join the Mailing List</a>
     </div>
     <div style="background:var(--dark3);display:flex;align-items:center;justify-content:center;border-left:1px solid var(--border);aspect-ratio:6/5;padding:40px;text-align:center">
       <div><div style="font-size:48px;margin-bottom:12px">&#10024;</div><div style="font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase">Stay Tuned</div></div>
     </div>
     </div>
+    <noscript><p class="muted" style="font-size:15px;margin-bottom:24px">Turn on JavaScript to see what's on, or <a href="/current-tours" style="color:var(--pink)">open the Current Tours page</a>.</p></noscript>
   </div>
   <div style="background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:36px">
     <div style="text-align:center;margin-bottom:28px">
@@ -429,31 +432,79 @@ function numToWords(n){
       ${right}
     </div>`;
   }
-  try{
+  /* LOADING, ONE RETRY, THEN THE TRUTH (27 Oct 2026). Until today the card above said "Coming
+     Soon" from the first paint until both reads came back, and for ever if either one stalled or
+     failed: no timeout on the fetch, nothing retried, the error swallowed, and a failed shows read
+     counted as "no shows", which auto-hid the tour. A visitor on a slow connection, or during a
+     database blip, read "new tours are being announced soon" while shows were on sale; the gate's
+     touring-cards suite watched exactly that for 120 s. Now the page says it is loading, each read
+     gets TC_FETCH_MS and the pair is tried twice, "Coming Soon" is only written once the database
+     has answered and there is nothing on, and two failures say so and offer another go.
+     tools/test-touring-cards-loader.js RUNS this loader under jsc with slow and failing fetches.
+     #tourCards carries data-state: loading, shows, none or failed. */
+  const TC_FETCH_MS = 8000;
+  const loadingHTML = wrap.innerHTML;
+  const failedHTML = `<div style="background:var(--dark);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;margin-bottom:20px">
+      <div style="padding:40px">
+        <div class="eyebrow" style="margin-bottom:14px">What's On Now</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:clamp(24px,3.5vw,36px);letter-spacing:-1px;color:#fff;margin-bottom:14px;line-height:1.1">We couldn't load what's on<span class="dot">.</span></div>
+        <p class="muted" style="font-size:15px;margin-bottom:24px">Our show listing didn't answer just now. Try again in a moment, or join the mailing list and the next shows come straight to you.</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap"><a href="#tourCards" class="btn btn-pink" onclick="window.loadTourCards();return false;">Try Again</a><a href="#signup" class="btn btn-pink">Join the Mailing List</a></div>
+      </div>
+      <div style="background:var(--dark3);display:flex;align-items:center;justify-content:center;border-left:1px solid var(--border);aspect-ratio:6/5;padding:40px;text-align:center">
+        <div><div style="font-size:48px;margin-bottom:12px">&#10024;</div><div style="font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase">Try Again</div></div>
+      </div>
+    </div>`;
+  function tcFetch(url){
+    const ac=new AbortController();
+    const t=setTimeout(function(){ ac.abort(); }, TC_FETCH_MS);
+    return fetch(url,{headers:SBH,signal:ac.signal}).then(function(r){ clearTimeout(t); return r; }, function(e){ clearTimeout(t); throw e; });
+  }
+  async function tcRead(){
     const now=new Date();
     // Yesterday in UTC is never later than today in Queensland; tcVisible does the exact cut.
     const since=new Date(now.getTime()-36*3600*1000).toISOString().slice(0,10);
     const [catsR, showsR] = await Promise.all([
-      fetch(SBU+"/rest/v1/tour_categories?order=priority.asc",{headers:SBH}),
-      fetch(SBU+"/rest/v1/shows?select=show_type,show_date,venue,suburb,time,ticket_url,go_live_date,go_live_time&show_date=gte."+since+"&order=show_date.asc",{headers:SBH})
+      tcFetch(SBU+"/rest/v1/tour_categories?order=priority.asc"),
+      tcFetch(SBU+"/rest/v1/shows?select=show_type,show_date,venue,suburb,time,ticket_url,go_live_date,go_live_time&show_date=gte."+since+"&order=show_date.asc")
     ]);
-    if(!catsR.ok) throw new Error("cats");
-    const cats=await catsR.json();
-    if(!Array.isArray(cats)||!cats.length){ wrap.innerHTML=comingSoonHTML; return; }
+    if(!catsR.ok) throw new Error("tour_categories answered "+catsR.status);
+    if(!showsR.ok) throw new Error("shows answered "+showsR.status);
+    const cats=await catsR.json(), shows=await showsR.json();
+    return {now:now, cats:Array.isArray(cats)?cats:[], shows:Array.isArray(shows)?shows:[]};
+  }
+  function tcPaint(d){
+    const now=d.now;
+    if(!d.cats.length){ wrap.innerHTML=comingSoonHTML; wrap.dataset.state="none"; return; }
     const today=now.toISOString().slice(0,10);      // the date auto-hide has always used
     let counts={}, upcoming={};
-    if(showsR.ok){(await showsR.json()).forEach(function(x){
+    d.shows.forEach(function(x){
       // auto-hide counts exactly as it always has: any show dated today or later
       if(x.show_date >= today) counts[x.show_type]=(counts[x.show_type]||0)+1;
       if(tcVisible(x, now)) (upcoming[x.show_type]=upcoming[x.show_type]||[]).push(x);
-    });}
-    const visible=cats.filter(function(c){
+    });
+    const visible=d.cats.filter(function(c){
       if(c.auto_hide && c.tour_key){ return (counts[c.tour_key]||0) > 0; }
       return true;
     });
-    if(!visible.length){ wrap.innerHTML=comingSoonHTML; return; }
+    if(!visible.length){ wrap.innerHTML=comingSoonHTML; wrap.dataset.state="none"; return; }
     wrap.innerHTML=visible.map(function(c){ return cardHTML(c, c.tour_key ? upcoming[c.tour_key] : []); }).join("");
-  }catch(e){ /* leave fallback card in place */ }
+    wrap.dataset.state="shows";
+  }
+  window.loadTourCards=async function(){
+    wrap.innerHTML=loadingHTML; wrap.dataset.state="loading";
+    let data=null, err=null;
+    for(let go=0; go<2 && !data; go++){
+      try{ data=await tcRead(); }catch(e){ err=e; }
+    }
+    if(!data){
+      wrap.innerHTML=failedHTML; wrap.dataset.state="failed";
+      console.warn("tour cards: could not load what's on after two tries: "+(err&&err.message));
+      return;
+    }
+    tcPaint(data);
+  };
+  window.loadTourCards();
 })();
 
 </script></body></html>

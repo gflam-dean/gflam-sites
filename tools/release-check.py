@@ -3109,6 +3109,30 @@ def local_checks(which):
                why='run jsc tools/test-screen-check-wake.js. startAds must land on the clock\'s slot after a wake, and '
                    'screen-check.html\'s wakeVerdict must pass that slot or the one before it and fail slide one')
 
+    # THE TOUR CARDS NEVER SAY "COMING SOON" WHILE SHOWS ARE ON SALE (27 Oct 2026).
+    # The flake log caught touring-cards.test.py red once with "after 120 s the page showed: COMING
+    # SOON" at load 3.7, green on retry. That was the page, not the rig: gflamtouring.com.au's
+    # homepage and current-tours page started as the Coming Soon card and replaced it only when BOTH
+    # database reads came back, with no timeout, no retry, the error swallowed, and a failed shows
+    # read counted as "no shows" (which auto-hid the tour). A slow phone or a database blip read
+    # "new tours are being announced soon" to a real visitor while tickets were on sale. The suite
+    # RUNS the real loader out of both pages under jsc with stalled, failing and 500 reads.
+    head('D. The tour cards say loading, retry once, and tell the truth')
+    t = os.path.join(ROOT, 'tools', 'test-touring-cards-loader.js')
+    if not os.path.isfile(t):
+        ok('the tour cards loader test exists', False, why='tools/test-touring-cards-loader.js is missing')
+    else:
+        r = subprocess.run([JSC, t], capture_output=True, text=True, timeout=120, cwd=ROOT)
+        out = ((r.stdout or '') + (r.stderr or '')).strip()
+        bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+        n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
+        ok('the tour cards say loading, retry once and tell the truth; Coming Soon only when nothing is on (%d checks)' % n,
+           r.returncode == 0 and 'PASSED' in out and not bad,
+           detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
+           why='run jsc tools/test-touring-cards-loader.js. touring/index.html and current-tours.html must say loading '
+               'until the database answers, give a read TC_FETCH_MS and try once more, write Coming Soon only when '
+               'the database answered with nothing on, and say "we couldn\'t load what\'s on" after two failures')
+
     # NEVER COLLECT WHAT YOU WILL NOT HAND BACK.
     #
     # Two gates asked the same question with two different word lists: collecting is gated on the
