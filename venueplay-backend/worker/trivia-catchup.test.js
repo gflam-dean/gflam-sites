@@ -94,6 +94,10 @@ var rendered = [];
 var P = { joined: true, pid: 'pid-me', ended: true, q: null };
 function renderQuestion(m) { rendered.push(m); }
 function rejoinNow() { /* the phone joining tonight's night when its saved one has ended (25 Sep 2026); a no-op here */ }
+/* The phone's real nightChanged (27 Oct 2026: the handler asks it first whether a question belongs to
+   another night). Lifted whole, at global scope so it reads this P; these messages name no night, so it
+   answers false and leaves the token alone, exactly as on a console that says no night. */
+(0, eval)(lift(phone, 'nightChanged'));
 var body = phone.match(/else if\(m\.t==="question"\)\{([\s\S]*?)\n    \}/);
 if (!body) throw new Error('cannot find the question handler on the phone');
 var handle = new Function('m', 'P', 'renderQuestion', 'sayAlive',
