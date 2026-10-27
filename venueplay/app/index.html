@@ -807,13 +807,14 @@
     if(document.getElementById("vpImpBar")) return;
     var bar=document.createElement("div");
     bar.id="vpImpBar";
-    bar.style.cssText="position:sticky;top:0;z-index:60;background:rgba(255,194,75,.12);border-bottom:1px solid rgba(255,194,75,.35);color:#FFC24B;font-size:12.5px;font-weight:600;padding:9px 16px;display:flex;align-items:center;gap:10px;font-family:'Manrope',system-ui,sans-serif";
+    bar.style.cssText="background:rgba(255,194,75,.12);border-bottom:1px solid rgba(255,194,75,.35);color:#FFC24B;font-size:12.5px;font-weight:600;padding:9px 16px;display:flex;align-items:center;gap:10px;font-family:'Manrope',system-ui,sans-serif";
     // esc(), not a second sanitiser of its own. Stripping [<>&] is injection-safe but
     // it eats the ampersand, and pubs are full of them: "Bar & Grill" was displayed
     // as "Bar  Grill" in this banner. There is one esc() in this file for a reason.
     bar.innerHTML='<span>Viewing <b>'+esc(name||"this venue")+'</b> from VenuePlay Admin</span>'+
       '<a id="vpImpBack" style="margin-left:auto;color:#FFC24B;text-decoration:underline;cursor:pointer;font-weight:700">Back to VenuePlay Admin</a>';
-    document.body.insertBefore(bar, document.body.firstChild);
+    // In the one status area (VP.statusBar), under the unpaid and signing bars, never over them.
+    if(window.VP && VP.statusBar) VP.statusBar("viewas", bar); else document.body.insertBefore(bar, document.body.firstChild);
     document.getElementById("vpImpBack").addEventListener("click", function(){ clearImp(); window.location.href="hq.html"; });
   }
 
@@ -1372,6 +1373,9 @@
     updateAccountLink();
     var venue=__ctx&&__ctx.venue, staff=(__ctx&&__ctx.staff)||[];
     if(staff.length>1 && !venuePickFresh()){ showVenuePick(); return; }   // ask which venue this shift
+    /* SWITCHED OFF: one card in place of the game picker, and no TV pairing (28 Oct 2026). A host
+       with more than one venue can still choose another one from the card. */
+    if(window.VP && VP.holdGate && VP.holdGate(__ctx, staff.length>1 ? { other:{ label:"Choose another venue", onClick:showVenuePick } } : null)){ go("vBoot"); return; }
     if(venue && venue.slug && pairToVenue(venue.slug)){ return; }          // single venue: straight in
     // Fallback (no venue slug / helper missing): the old type-the-code screen.
     go("vPair"); $("pairIn").value=pairedCode(); $("pairErr").textContent=""; $("pairIn").focus();

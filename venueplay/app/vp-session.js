@@ -361,16 +361,16 @@
       if (document.getElementById("vpUrlVenue")) return;
       var d = document.createElement("div");
       d.id = "vpUrlVenue";
-      d.style.cssText = "position:fixed;left:0;right:0;top:0;z-index:99998;background:#2A0B14;color:#fff;" +
+      d.style.cssText = "background:#2A0B14;color:#fff;" +
         "border-bottom:2px solid #FF4D5E;padding:12px 16px;font:600 14px/1.4 -apple-system,Segoe UI,sans-serif;text-align:center";
       d.textContent = "This link is for " + asked + ", which this login cannot run. You are working at " +
         (workingName || "your own venue") + ". Anything you start here happens at " + (workingName || "your venue") + ".";
       var x = document.createElement("button");
       x.textContent = "OK";
       x.style.cssText = "margin-left:12px;font:inherit;background:#FF1F8E;color:#fff;border:0;border-radius:8px;padding:6px 14px;cursor:pointer";
-      x.addEventListener("click", function () { d.parentNode && d.parentNode.removeChild(d); });
+      x.addEventListener("click", function () { statusBar("link", null); });
       d.appendChild(x);
-      (document.body || document.documentElement).appendChild(d);
+      statusBar("link", d);   // in the one status area, under the others, never over the header (28 Oct 2026)
     } catch (e) {}
   }
 
@@ -911,32 +911,183 @@
   }
 
 
+  /* ONE STATUS AREA (Dean, 28 Oct 2026). Every bar a page can show about the venue or the login
+     (unpaid, the signing key, HQ View as, a link for another venue) used to be its own full-width
+     element, each inserted at the top of the page on its own, most of them position:sticky;top:0
+     with a huge z-index. Two or three at once were painted over each other and over the page
+     header: at The Jolly Jess (suspended, viewed from HQ) the red signing bar, the gold View-as bar
+     and the orange unpaid bar sat on top of each other and Dean could not read past them.
+     Now every bar goes through here: one column in normal flow at the top of the page, in this
+     fixed order, nothing sticky, so every bar is readable and none covers another or the header.
+     Pass null to take a slot's bar away. */
+  var STATUS_ORDER = ['hold', 'sign', 'viewas', 'link'];
+  var _statusBars = {};
+  function statusBar(slot, el) {
+    if (STATUS_ORDER.indexOf(slot) < 0) throw new Error('statusBar: unknown slot ' + slot);
+    if (typeof document === 'undefined' || !document.body) return null;
+    var old = _statusBars[slot];
+    if (old && old !== el && old.parentNode) old.parentNode.removeChild(old);
+    if (el) _statusBars[slot] = el; else delete _statusBars[slot];
+    var box = document.getElementById('vpStatus');
+    var any = false, k;
+    for (k in _statusBars) if (Object.prototype.hasOwnProperty.call(_statusBars, k)) any = true;
+    if (!any) { if (box && box.parentNode) box.parentNode.removeChild(box); return null; }
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'vpStatus';
+      box.style.cssText = 'position:relative;display:flex;flex-direction:column;width:100%';
+      if (document.body.firstChild) document.body.insertBefore(box, document.body.firstChild);
+      else document.body.appendChild(box);
+    }
+    for (var i = 0; i < STATUS_ORDER.length; i++) {
+      var b = _statusBars[STATUS_ORDER[i]];
+      if (!b) continue;
+      // A bar built elsewhere may still ask to be sticky or fixed. In here it is neither.
+      if (b.style) { b.style.position = 'static'; b.style.top = 'auto'; b.style.zIndex = 'auto'; }
+      if (b.setAttribute) b.setAttribute('data-vp-slot', STATUS_ORDER[i]);
+      box.appendChild(b);   // appendChild moves a node already in the box, so this re-sorts it
+    }
+    return el || null;
+  }
+
+  /* WHAT A SWITCHED-OFF VENUE IS TOLD, by reason, in one place (28 Oct 2026). The game Worker
+     refuses every host route at a venue whose status is not 'active' (assertVenueActive, called by
+     requireStaff on both its paths), so the page says the same thing up front. Never the word
+     "suspended": a venue reads that as an accusation, and most of these are an expired card. */
+  function holdWords(v, role) {
+    if (!v || v.status !== 'suspended') return null;
+    var r = typeof v.suspended_reason === 'string' ? v.suspended_reason : '';
+    var owner = role === 'owner' || role === 'admin';   // HQ View as reaches billing as the owner would
+    if (r === 'nonpayment') {
+      return { reason: 'nonpayment',
+        title: 'This venue is switched off until the card is updated',
+        text: owner
+          ? 'Nothing has been lost. Update your card and everything comes straight back on, exactly as you left it.'
+          : 'Nothing has been lost. Ask the venue owner to update the card on the account page, and everything comes straight back on, exactly as you left it.',
+        link: owner ? { href: '/app/billing.html#pastDue', label: 'Update your card' } : null };
+    }
+    if (r === 'ended' || r === 'cancelled' || isArchived(v)) {
+      return { reason: 'ended',
+        title: "This venue's subscription has ended",
+        text: 'Its games are switched off and nothing has been lost. Email support@venueplay.com.au to start it again.',
+        link: null };
+    }
+    return { reason: 'hold',
+      title: "This venue's games are on hold",
+      text: 'Nothing has been lost. Email support@venueplay.com.au and we will sort it out.',
+      link: null };
+  }
+
+  /* A SWITCHED-OFF VENUE CANNOT RUN A GAME, SO THE CONSOLE DOES NOT OFFER ONE (Dean, 28 Oct 2026).
+     The consoles used to paint a bar about it and then the whole setup underneath (question set,
+     timer, Start), so a host could set up a night the Worker was always going to refuse. Now the
+     page's .wrap shows ONE card in place of everything else, and the caller stops its boot when this
+     answers true. opts.other = { label, onClick } adds a second way out (pick another venue).
+     A venue that is not switched off clears any card left from an earlier venue and answers false. */
+  function holdGate(ctx, opts) {
+    if (typeof document === 'undefined' || !document.body) return false;
+    var w = holdWords(ctx && ctx.venue, ctx && ctx.role);
+    var wrap = document.querySelector ? document.querySelector('.wrap') : null;
+    var card = document.getElementById('vpHoldCard');
+    var kids = wrap ? Array.prototype.slice.call(wrap.children || []) : [];
+    if (!w) {
+      if (card && card.parentNode) card.parentNode.removeChild(card);
+      kids.forEach(function (k) {
+        if (k.getAttribute && k.getAttribute('data-vp-held') === '1') {
+          k.style.display = k.getAttribute('data-vp-held-display') || '';
+          k.removeAttribute('data-vp-held'); k.removeAttribute('data-vp-held-display');
+        }
+      });
+      return false;
+    }
+    statusBar('hold', null);   // the card says it; a bar above saying it again is the stacking Dean saw
+    if (!card) { card = document.createElement('div'); card.id = 'vpHoldCard'; }
+    card.setAttribute('role', 'status');
+    card.setAttribute('data-reason', w.reason);
+    card.setAttribute('style', 'max-width:480px;margin:6vh auto 0;padding:28px 24px;text-align:center;' +
+      'background:rgba(245,165,36,.08);border:1px solid rgba(245,165,36,.45);border-radius:16px;' +
+      "font-family:Manrope,system-ui,sans-serif;color:#E7E7EC");
+    var btn = 'display:inline-block;margin:6px;min-height:44px;padding:11px 18px;border-radius:10px;border:none;' +
+      "font:700 14px/1.4 'Hanken Grotesk',Manrope,sans-serif;cursor:pointer;text-decoration:none";
+    card.innerHTML =
+      '<div style="font-size:22px;font-weight:800;line-height:1.3;color:#FFFFFF;margin-bottom:10px">' + w.title + '</div>' +
+      '<p style="margin:0 0 16px;font-size:15px;line-height:1.55;color:#C9C9D1">' + w.text + '</p>' +
+      (w.link ? '<a id="vpHoldPay" href="' + w.link.href + '" style="' + btn + ';background:#FF1F8E;color:#FFFFFF">' + w.link.label + '</a>' : '') +
+      (opts && opts.other ? '<button type="button" id="vpHoldOther" style="' + btn + ';background:rgba(255,255,255,.08);color:#E7E7EC">' +
+        String(opts.other.label || 'Choose another venue') + '</button>' : '');
+    if (wrap) {
+      kids.forEach(function (k) {
+        if (k === card || !k.style) return;
+        if (k.getAttribute && k.getAttribute('data-vp-held') !== '1') {
+          k.setAttribute('data-vp-held', '1');
+          k.setAttribute('data-vp-held-display', k.style.display || '');
+        }
+        k.style.display = 'none';
+      });
+      if (card.parentNode !== wrap) {
+        if (wrap.firstChild) wrap.insertBefore(card, wrap.firstChild); else wrap.appendChild(card);
+      }
+    } else if (card.parentNode !== document.body) {
+      document.body.appendChild(card);
+    }
+    var other = document.getElementById('vpHoldOther');
+    if (other && opts && opts.other && typeof opts.other.onClick === 'function') {
+      other.addEventListener('click', function () { holdGate(null); opts.other.onClick(); });
+    }
+    return true;
+  }
+
+  /* A HOST IS THE STAFF (Dean, 28 Oct 2026). The game Worker's kill-switch answers 403 in one of two
+     sets of words: the host's ("Your tab has run a bit long...") or the room's ("Games are paused
+     here tonight. Have a word with the staff."), and a few host routes (opening a session among
+     them) still answer in the room's. A host pressing Start at a switched-off venue was told to
+     have a word with the staff. Every console runs a Worker error through here: a switched-off
+     answer becomes the host's own words, and the page swaps to the switched-off card (holdGate),
+     re-reading the venue first so the card gives the real reason. Anything else passes through. */
+  var SWITCHED_OFF = /Have a word with the staff|Your tab has run a bit long\. Settle up on your account page/;
+  function hostRefusal(status, msg) {
+    if (status !== 403 || !SWITCHED_OFF.test(String(msg || ''))) return msg;
+    var ctx = _ctx;
+    function show(c) {
+      var v = c && c.venue;
+      if (v && v.status === 'suspended') return holdGate(c);
+      // The venue reads active but the Worker says no: its group is switched off. Same card, no reason.
+      return holdGate({ venue: { status: 'suspended', suspended_reason: '' }, role: c && c.role });
+    }
+    try { refresh().then(show, function () { show(ctx); }); } catch (e) { show(ctx); }
+    var w = holdWords(ctx && ctx.venue && ctx.venue.status === 'suspended' ? ctx.venue : { status: 'suspended' }, ctx && ctx.role);
+    return w.title + '.';
+  }
+
   /* A suspended venue used to look completely healthy until the host tapped Start in front of a
      room and got "This venue is suspended". Nothing in the venue-facing app checked the status at
-     all. Any page can call this after ready() to say so on sign-in instead. */
+     all. Any page can call this after ready() to say so on sign-in instead. A game console calls
+     holdGate() instead, which replaces the setup with one card. */
   function suspensionBanner(ctx) {
     var v = ctx && ctx.venue;
     if (!v || v.status !== 'suspended') return;
-    if (document.getElementById('vpSuspendBar')) return;
+    if (document.getElementById('vpSuspendBar') || document.getElementById('vpHoldCard')) return;
     var nonpay = v.suspended_reason === 'nonpayment';
     var bar = document.createElement('div');
     bar.id = 'vpSuspendBar';
-    bar.style.cssText = 'position:sticky;top:0;z-index:9999;padding:12px 18px;background:#F5A524;' +
+    if (bar.setAttribute) bar.setAttribute('role', 'status');
+    bar.style.cssText = 'padding:12px 18px;background:#F5A524;' +
       'color:#180d00;font-family:Manrope,system-ui,sans-serif;font-size:14px;font-weight:600;' +
       'line-height:1.45;text-align:center';
     // Never the word "suspended". A venue reads that as an accusation, and most of these are an
-    // expired card. Dean's line, in the voice the rest of the product uses.
+    // expired card. Dean's line, in the voice the rest of the product uses. It names no game: this
+    // bar shows on trivia, musical, raffle and members pages too (28 Oct 2026). The link is
+    // absolute because the consoles live one folder down.
     bar.innerHTML = nonpay
-      ? 'Your tab has run a bit long. Settle up and we will pour you another round of bingo. ' +
-        '<a href="billing.html#pastDue" style="color:#180d00;text-decoration:underline">Update your card</a> and everything comes straight back on, exactly as you left it.'
+      ? 'Your tab has run a bit long. Settle up and we will pour you another round. ' +
+        '<a href="/app/billing.html#pastDue" style="color:#180d00;text-decoration:underline">Update your card</a> and everything comes straight back on, exactly as you left it.'
       // An archived venue was switched off on purpose. Telling its owner to "give us a shout
       // and we will sort it out" reads as a fault and sends them chasing a problem that is not
       // one. Say what it is, and point at the way out.
       : isArchived(v)
       ? 'This venue is archived, so its games are switched off. Nothing has been lost. Choose another venue to keep playing, or email support@venueplay.com.au to bring this one back.'
       : 'Your games are on hold for the moment. Nothing has been lost. Email support@venueplay.com.au and we will sort it out.';
-    if (document.body.firstChild) document.body.insertBefore(bar, document.body.firstChild);
-    else document.body.appendChild(bar);
+    statusBar('hold', bar);
   }
   /* Fire-and-forget POST to the game Worker, signed with the caller's token.
      For side records that must never hold up or break the thing they describe:
@@ -1002,6 +1153,10 @@
     venueCode: venueCode,
     venueJoinCode: venueJoinCode,
     suspensionBanner: suspensionBanner,
+    statusBar: statusBar,
+    holdGate: holdGate,
+    holdWords: holdWords,
+    hostRefusal: hostRefusal,
     noteOpenSession: noteOpenSession,
     closeOpenSessions: closeOpenSessions,
     closeSession: closeSession,

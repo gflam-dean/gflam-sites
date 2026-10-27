@@ -385,7 +385,7 @@
     var c=(window.VP&&VP.getClient)?VP.getClient():client;
     return c.auth.getSession().then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; });
   }
-  function readApi(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((d&&d.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }
+  function readApi(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((window.VP&&VP.hostRefusal?VP.hostRefusal(res.status,d&&d.error):(d&&d.error))||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }
   function apiPost(path, body){ return getToken().then(function(t){
       /* No timeout meant a request that never settled on pub wifi left G.busy true for good, and
          every later tap on Next, Reveal, Start and Open lobby returned silently at if(G.busy).
@@ -1112,6 +1112,9 @@
     VP.ready().then(function(ctx){
       if(!ctx.authed){ $("statusText").textContent="Not signed in"; showSignIn("You need your venue host login to run a members draw."); return; }
       if(!ctx.currentVenueId){ $("statusText").textContent="No venue"; showSignIn("This login is not linked to a venue yet."); return; }
+      /* SWITCHED OFF: one card in place of the setup, and nothing below it runs (no key, no TV, no
+         restore). The Worker refuses a game here anyway; the page says so first (28 Oct 2026). */
+      if(VP.holdGate && VP.holdGate(ctx)){ VP.enforceShift(); $("statusText").textContent="Switched off"; return; }
       G.venueId=ctx.currentVenueId; G.role=ctx.role; G.venue=ctx.venue||null;
       applyPresentRule();
       G.canManage = ctx.isAdmin || ctx.role==="owner" || ctx.role==="manager";
@@ -1120,7 +1123,6 @@
       // instead of finishing it with a winner still unclaimed. The host is still signed out.
       if(VP.setGameActive) VP.setGameActive(function(){ return !!G.round; });
       VP.enforceShift();   // the 4h forced sign-out is a compliance control: it has to apply here too, not only on /app
-      if(VP.suspensionBanner) VP.suspensionBanner(ctx);
       $("statusText").textContent="Signed in";
       loadAll().catch(function(e){
         // Never let a render fault silently stop the console from connecting. Before this, one
