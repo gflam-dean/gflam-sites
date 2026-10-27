@@ -656,7 +656,7 @@
   "counted_by": "lines"
  },
  "tools/test-terms-put-compliance-on-the-venue.js": {
-  "checks": 44,
+  "checks": 70,
   "counted_by": "lines"
  },
  "tools/test-trivia-15-oct.js": {

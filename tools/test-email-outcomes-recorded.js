@@ -1,3 +1,7 @@
+/* RUNS the product, it does not word-search it. The testing audit of 27 Oct 2026 filed this suite
+   as "reads-file" because its scanner looked for load() and this file executes the shipped code
+   through (0, eval)(src) instead. Its prove-checks rows break product logic, not strings, and go
+   red. Read and checked by hand, 27 Oct 2026 (fix/text-match-suites-27-oct). */
 /* EVERY BILLING EMAIL LEAVES A RECORD OF WHAT HAPPENED TO IT.
 
    Audit, 25 Sep 2026: the payment reminder sent and swallowed everything (six invoice.upcoming
