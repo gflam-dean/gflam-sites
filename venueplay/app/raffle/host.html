@@ -238,22 +238,36 @@
         <div class="field"><label>First ticket number</label><input type="number" id="rfStart" class="mono" value="1" min="0"></div>
         <div class="field"><label>Last ticket number</label><input type="number" id="rfEnd" class="mono" value="150" min="0" max="999999"></div>
       </div>
-      <div class="field"><label>Time to claim (seconds)</label><input type="number" id="rfTime" class="mono" value="180" placeholder="180" min="0" step="1"><div class="note" style="margin-top:5px">30 seconds or more. Put 0 for no time limit. Left empty, it is 180.</div></div>
-      <p class="note" style="margin-top:10px">Draws <b>one winner at a time</b>. For another prize, change the prize above and tap <b>Draw the next prize</b>.</p>
-      <label class="check"><input type="checkbox" id="rfJackOn"> This raffle has a cash jackpot</label>
-      <div class="field hidden" id="rfJackWrap"><label>Jackpot amount ($)</label><input type="number" id="rfJackAmt" class="mono" value="500" min="0" step="0.01">
-        <!-- A warning, never a block (Anisimoff Legal, 1 Oct 2026, point 10: the limits are the venue's to
-             keep; the software should not display a figure the venue's own rules do not allow). The
-             figure comes from VPGaming.jackpotLimit, the letters' threshold tables. -->
-        <div class="note hidden" id="rfJackWarn" style="margin-top:5px;color:var(--roll,#F5A524)"></div>
-      </div>
-      <label class="check"><input type="checkbox" id="rfAllowRedraw" checked> Allow a redraw if the winner isn't here</label>
       <div class="field">
         <label>Tickets that did not sell (optional)</label>
         <input type="text" id="rfSkip" placeholder="e.g. 240-320, 512">
         <div class="note" style="margin-top:5px">Two sellers working one book leaves a gap. Anything you put here is never drawn, so you are not re-drawing in front of the room. Use a dash for a block and commas between them, like 240-320, 512. Anything it cannot read is shown before you draw.</div>
       </div>
+      <!-- ADVANCED SETTINGS (Dean, 28 Oct 2026): set once by the venue, saved for the venue, closed until opened.
+           The shared disclosure, VP.advanced in /app/vp-session.js. A cash jackpot keeps its state warning beside
+           the amount, and the line above Draw says "Cash jackpot $..." whenever one is on, open or closed. The
+           state rules screen on Draw and the free-entry note never go in here. -->
+      <details class="vp-adv" id="raffleAdv">
+        <summary><span>Advanced settings<small class="vp-adv-sub">Saved for your venue. Set once, rarely changed.</small></span></summary>
+        <div class="vp-adv-body">
+          <div class="field"><label>Time to claim (seconds)</label><input type="number" id="rfTime" class="mono" value="180" placeholder="180" min="0" step="1"><div class="note" style="margin-top:5px">30 seconds or more. Put 0 for no time limit. Left empty, it is 180.</div></div>
+          <label class="check"><input type="checkbox" id="rfJackOn"> This raffle has a cash jackpot</label>
+          <div class="field hidden" id="rfJackWrap"><label>Jackpot amount ($)</label><input type="number" id="rfJackAmt" class="mono" value="500" min="0" step="0.01">
+            <!-- A warning, never a block (Anisimoff Legal, 1 Oct 2026, point 10: the limits are the venue's to
+                 keep; the software should not display a figure the venue's own rules do not allow). The
+                 figure comes from VPGaming.jackpotLimit, the letters' threshold tables. -->
+            <div class="note hidden" id="rfJackWarn" style="margin-top:5px;color:var(--roll,#F5A524)"></div>
+          </div>
+          <label class="check"><input type="checkbox" id="rfAllowRedraw" checked> Allow a redraw if the winner isn't here</label>
+          <div class="field">
+            <button type="button" class="btn ghost" id="drawLenWrap" style="text-align:left;width:100%">
+              <span class="note">Draw spin length: <span id="drawLenLbl">4</span>s &middot; tap to change</span>
+            </button>
+          </div>
+        </div>
+      </details>
       <div class="rangeline" id="rangeLine"></div>
+      <p class="note" style="margin:0 0 10px">Draws <b>one winner at a time</b>. For another prize, change the prize above and tap <b>Draw the next prize</b>.</p>
       <button class="btn pink big" id="drawBtn">Draw the winner</button>
       <p class="note hidden" id="freeEntryNote">Free-entry raffle tonight: nobody pays for a ticket. That is what you chose on the rules screen, because your state does not let this venue sell tickets for it (or no permit is on record). Give the tickets away and draw as normal.</p>
 
@@ -269,14 +283,11 @@
       </div>
 
       <div class="resolve" style="margin-top:16px">
-        <button type="button" class="btn ghost" id="drawLenWrap" style="text-align:left">
-          <span class="note">Draw spin length: <span id="drawLenLbl">4</span>s &middot; tap to change</span>
-        </button>
         <button class="btn ghost" id="newRaffleBtn">New raffle &middot; clear drawn</button>
       </div>
       <!-- The venue keeps its own winner and draw records (Anisimoff Legal, 1 Oct 2026, points 8 and 14).
            This hands them the file: every raffle and members draw result at the venue, as CSV. -->
-      <button type="button" class="btn ghost" id="downloadRecordBtn" style="margin-top:12px;width:100%">Download draw record</button>
+      <button type="button" class="vp-foot-link" id="downloadRecordBtn">Download draw record</button>
       <div class="note" id="downloadRecordMsg" style="margin-top:4px"></div>
     </div>
 
@@ -640,17 +651,21 @@
   }
   function renderRange(){
     readInputs();
-    renderJackWarn();
+    var jw=renderJackWarn();
     var line=$("rangeLine");
     if(!validRange()){ line.innerHTML='<span class="warn">Enter a valid ticket range.</span>'; return; }
     clearHostErrorIf("range");   // the range is valid now, so "Enter a valid ticket range" is no longer true
     if(G.jackOn ? (G.jackAmt>0) : true) clearHostErrorIf("jackpot");
     if(G.time>=0) clearHostErrorIf("time");
     var drew=drawnCount(), skipped=skippedCount(), left=remainingCount();
-    line.textContent=(G.max-G.min+1)+" tickets ("+G.min+" to "+G.max+")"
+    /* A CASH JACKPOT IS NEVER OUT OF SIGHT. Its switch and amount live in Advanced settings, closed most nights,
+       so the line above Draw says it whenever one is on, with the state warning when there is one (28 Oct 2026). */
+    var jackLine=(G.jackOn && G.jackAmt>0) ? "Cash jackpot $"+dollarsText(Math.round(G.jackAmt*100))+" \u00b7 " : "";
+    line.textContent=jackLine+(G.max-G.min+1)+" tickets ("+G.min+" to "+G.max+")"
       +(skipped?" \u00b7 "+skipped+" unsold":"")
       +(drew?" \u00b7 "+drew+" already drawn":"")
       +((skipped||drew)?" \u00b7 "+left+" left to draw":"");
+    if(jackLine && jw){ var jwl=document.createElement("span"); jwl.className="warn"; jwl.textContent=" "+jw; line.appendChild(jwl); }
     /* Say it where the host is looking while they type, not only when they tap Draw. */
     var skProblem=skipsProblem(parseSkips());
     if(skProblem){ var w=document.createElement("span"); w.className="warn"; w.textContent=" "+skProblem.replace(/ Nothing has been drawn\./,""); line.appendChild(w); }
@@ -706,19 +721,29 @@
     }, 700);
   }
 
-  // ---- saved prizes (READ from vp_raffle_prizes for this venue; new prizes stay local) ----
+  /* ---- saved prizes: the venue's own buttons. Read from vp_raffle_prizes (an owner or manager adds there through
+     /host/raffle/prize-add) and from game_prefs.raffle.prizes, which ANY staff login writes through /host/game-prefs.
+     A Host-role login used to have every new prize refused with 403 and swallowed, under a note that said it
+     was kept for the night only (28 Oct 2026 audit). Both go to the venue. ---- */
   function loadSavedPrizes(){
     if(!G.venueId) return;
     client.from("vp_raffle_prizes").select("label").eq("venue_id",G.venueId).order("created_at",{ascending:false})
-      .then(function(r){ var rows=(r&&r.data)||[]; if(rows.length){ G.savedPrizes=rows.map(function(x){ return x.label; }).slice(0,12); } renderPresets(); }, function(){});
+      .then(function(r){ var rows=(r&&r.data)||[]; if(rows.length){ var keep=G.savedPrizes.slice(); G.savedPrizes=rows.map(function(x){ return x.label; }).slice(0,12); mergeSavedPrizes(keep); } renderPresets(); }, function(){});
   }
   function renderPresets(){
     var w=$("prizePresets"); w.innerHTML="";
-    if(!G.savedPrizes.length){ w.innerHTML='<span class="empty">None yet. Type a prize and it saves for this session.</span>'; return; }
+    if(!G.savedPrizes.length){ w.innerHTML='<span class="empty">None yet. Type a prize and it is saved for your venue.</span>'; return; }
     for(var i=0;i<G.savedPrizes.length;i++){ var p=G.savedPrizes[i]; var b=document.createElement("button"); b.type="button"; b.setAttribute("data-p",p); b.textContent=p; w.appendChild(b); }
   }
   function savePrize(p){ if(!p) return; var i=G.savedPrizes.indexOf(p); var isNew=(i<0); if(i>-1) G.savedPrizes.splice(i,1); G.savedPrizes.unshift(p); if(G.savedPrizes.length>12) G.savedPrizes.length=12; renderPresets();
-    if(isNew && G.venueId){ apiPost("/host/raffle/prize-add",{ venue_id:G.venueId, label:p }).catch(function(){}); }   // persist so it's there next week, not just this session
+    if(isNew && G.venueId){ apiPost("/host/raffle/prize-add",{ venue_id:G.venueId, label:p }).catch(function(){}); }   // an owner or manager: the venue's prize table too
+    queueRafflePrefs();   // any staff login: the venue's saved setup (game_prefs.raffle.prizes)
+  }
+  function mergeSavedPrizes(list){
+    if(!Array.isArray(list)) return;
+    list.forEach(function(x){ x=String(x||"").trim(); if(x && G.savedPrizes.indexOf(x)<0) G.savedPrizes.push(x); });
+    if(G.savedPrizes.length>12) G.savedPrizes.length=12;
+    renderPresets();
   }
 
   // ---- tonight's prize list (build it up front, then draw one winner per prize in order) ----
@@ -1175,9 +1200,11 @@
   $("drawLenWrap").addEventListener("click", function(){   // now a real control: tap to cycle the spin length
     var opts=[3,4,5,6,8]; var i=opts.indexOf(G.drawLength); G.drawLength=opts[(i+1)%opts.length];
     $("drawLenLbl").textContent=G.drawLength;
+    queueRafflePrefs();
   });
   $("rfJackOn").addEventListener("change", function(){
     show("rfJackWrap", this.checked); show("prizeField", !this.checked); renderRange();   // cash jackpot: hide the prize list
+    queueRafflePrefs();
   });
   $("prizePresets").addEventListener("click", function(e){
     var b=e.target.closest("button[data-p]"); if(!b) return;
@@ -1199,7 +1226,59 @@
     var v=parseInt($("rfTime").value,10);
     if(!isNaN(v) && v>0 && v<30){ $("rfTime").value=30; renderRange(); }
   });
-  $("rfAllowRedraw").addEventListener("change", readInputs);
+  $("rfAllowRedraw").addEventListener("change", function(){ readInputs(); queueRafflePrefs(); });
+  ["rfStart","rfEnd","rfTime","rfJackAmt"].forEach(function(id){ $(id).addEventListener("input", queueRafflePrefs); });   // never rfSkip
+
+  /* THE SETUP IS SAVED FOR THE VENUE (Dean, 28 Oct 2026). Saved prizes and the ticket range (Basic), time to
+     claim, cash jackpot, redraw and spin length (Advanced) live in vp_venue_settings.game_prefs.raffle
+     (migration 121) through /host/game-prefs, saved as they change. The template a draw used to save
+     (raffle_template, migration 51) is still read while game_prefs is empty, so no venue loses it. NEVER
+     "Tickets that did not sell": unsold tickets are one night's facts. VP.gamePrefs in /app/vp-session.js
+     is the one mechanism for all five games. */
+  function rafflePrefs(){
+    var p={ prizes:G.savedPrizes.slice(0,12), jackpot_on:!!$("rfJackOn").checked, allow_redraw:!!$("rfAllowRedraw").checked };
+    var a=parseInt($("rfStart").value,10), b=parseInt($("rfEnd").value,10);
+    if(a>=0 && a<=999999) p.range_min=a;
+    if(b>=0 && b<=999999) p.range_max=b;
+    var tv=String($("rfTime").value==null?"":$("rfTime").value).trim();
+    if(/^\d+$/.test(tv) && +tv<=3600) p.time_to_present=Math.max(+tv, +tv>0 && +tv<30 ? 30 : 0);
+    var ja=String($("rfJackAmt").value==null?"":$("rfJackAmt").value).trim();
+    if(/^\d+(\.\d{1,2})?$/.test(ja)) p.jackpot_amount_cents=Math.round(parseFloat(ja)*100);
+    if([3,4,5,6,8].indexOf(G.drawLength)>=0) p.spin_seconds=G.drawLength;
+    return p;
+  }
+  function applyRafflePrefs(p){
+    if(!p) return;
+    mergeSavedPrizes(p.prizes);   // the venue's prize buttons, whatever is on
+    if(G.recovered) return;       // a raffle brought back keeps its own range, jackpot and claim time
+    function setv(id,v){ var el=$(id); if(el && v!=null && v!=="") el.value=v; }
+    setv("rfStart", p.range_min); setv("rfEnd", p.range_max);
+    if(p.time_to_present!=null) setv("rfTime", p.time_to_present);
+    if([3,4,5,6,8].indexOf(p.spin_seconds)>=0){ G.drawLength=p.spin_seconds; var dl=$("drawLenLbl"); if(dl) dl.textContent=p.spin_seconds; }
+    if(typeof p.jackpot_on==="boolean"){ var jo=$("rfJackOn"); if(jo){ jo.checked=p.jackpot_on; show("rfJackWrap", p.jackpot_on); show("prizeField", !p.jackpot_on); } }
+    if(p.jackpot_amount_cents!=null) setv("rfJackAmt", dollarsText(p.jackpot_amount_cents));
+    var ar=$("rfAllowRedraw"); if(ar && typeof p.allow_redraw==="boolean") ar.checked=p.allow_redraw;
+    if(typeof renderRange==="function") renderRange();
+  }
+  // Migration 51's template, read only while game_prefs is empty.
+  function raffleOldPrefs(){
+    if(!(window.VP && VP.loadSettings)) return null;
+    return VP.loadSettings(G.venueId).then(function(s){
+      var t=s&&s.raffle_template; if(!t) return null;
+      var p={ range_min:t.range_min, range_max:t.range_max, time_to_present:t.time_to_present, spin_seconds:t.spin_seconds };
+      if(typeof t.allow_redraw==="boolean") p.allow_redraw=t.allow_redraw;
+      if(t.jackpot_on){ p.jackpot_on=true; if(t.jackpot_amount_cents) p.jackpot_amount_cents=t.jackpot_amount_cents; }
+      // NEVER pre-fill "Tickets that did not sell" from the last raffle (28 Oct 2026). Unsold tickets are one
+      // night's facts: carried into this week's box, a ticket SOLD this week inside last week's gap could never
+      // be drawn unless the host noticed and cleared it. The box starts empty every raffle.
+      return p;
+    }, function(){ return null; });
+  }
+  var _rafflePrefs=(window.VP && VP.gamePrefs) ? VP.gamePrefs("raffle", { venueId:function(){ return G.venueId; },
+    api:function(){ return VP_GAME_API; }, token:getToken, collect:rafflePrefs, apply:applyRafflePrefs, fallback:raffleOldPrefs }) : null;
+  function queueRafflePrefs(){ if(_rafflePrefs) _rafflePrefs.queue(); }
+  function startRafflePrefs(){ return _rafflePrefs ? _rafflePrefs.start() : Promise.resolve(null); }
+  if(window.VP && VP.advanced) VP.advanced($("raffleAdv"), "raffle");   // closed unless this browser left it open
 
   // ---- boot: resolve the host login, load saved prizes, then pair with the screen ----
   function showSignIn(msg){ if(msg) $("signinSub").textContent=msg; $("signinView").classList.remove("hidden"); $("connectView").classList.add("hidden"); if($("runHelp")) $("runHelp").classList.add("hidden"); }
@@ -1229,29 +1308,11 @@
       VP.enforceShift();   // the 4h forced sign-out is a compliance control: it has to apply here too, not only on /app
       $("statusText").textContent="Signed in";
       loadSavedPrizes();
-      // Pre-fill the raffle setup from this venue's saved template (migration 51), so a weekly raffle
-      // loads what they last ran. ONLY when there is no live round to recover, or the two async chains
-      // race and the template overwrites a recovered round's inputs -> a spurious "start fresh?" prompt.
-      function prefillRaffleTemplate(){
-        if(!VP.loadSettings) return;
-        VP.loadSettings(G.venueId).then(function(s){
-          var t=s&&s.raffle_template; if(!t) return;
-          function setv(id,v){ var el=$(id); if(el&&v!=null&&v!=="") el.value=v; }
-          setv("rfStart", t.range_min); setv("rfEnd", t.range_max);
-          if(t.time_to_present!=null) setv("rfTime", t.time_to_present);
-          if([3,4,5,6,8].indexOf(t.spin_seconds)>=0){ G.drawLength=t.spin_seconds; var dl=$("drawLenLbl"); if(dl) dl.textContent=t.spin_seconds; }
-          if(t.jackpot_on){ var jo=$("rfJackOn"); if(jo){ jo.checked=true; var jw=$("rfJackWrap"); if(jw) jw.classList.remove("hidden"); if(t.jackpot_amount_cents) setv("rfJackAmt", dollarsText(t.jackpot_amount_cents)); } }
-          var ar=$("rfAllowRedraw"); if(ar && typeof t.allow_redraw==="boolean") ar.checked=t.allow_redraw;
-          // NEVER pre-fill "Tickets that did not sell" from the last raffle (28 Oct 2026). Unsold tickets are one
-          // night's facts: carried into this week's box, a ticket SOLD this week inside last week's gap could never
-          // be drawn unless the host noticed and cleared it. The box starts empty every raffle.
-          if(typeof renderRange==="function") renderRange();
-        }).catch(function(){});
-      }
       var slug=(ctx.venue && ctx.venue.slug) || "";
       if(slug && window.VPSign){ VPSign.initHost(VP_GAME_API, slug, vpHostToken); }   // this venue's signing key
       restoreRaffle().then(function(recovered){   // recover a live raffle first; only pre-fill if there was none
-        if(!recovered) prefillRaffleTemplate();
+        G.recovered=!!recovered;
+        startRafflePrefs().catch(function(){});   // the venue's setup; a recovered raffle takes only its prize buttons
         var tv=tvFromUrl();
         if(tv){ connect(tv); }
         else if(slug && window.VP && VP.venueCode){ connect(VP.venueCode("raffle-"+slug)); }

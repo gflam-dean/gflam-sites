@@ -500,7 +500,6 @@
               <option value="middle">Middle line</option>
               <option value="bottom">Bottom line</option>
             </select>
-            <div class="patedit" id="patEditRow"><button type="button" class="btn ghost" id="patEditBtn">Edit this pattern</button></div>
           </div>
           <div class="field">
             <label>Prize</label>
@@ -515,32 +514,37 @@
             </select>
             <div class="note" id="paidNote" style="margin-top:6px;display:none">Players join and wait. Take the money at the bar as usual, then tap a name below to give them what they paid for. It lasts all night, so you only do it once.</div>
           </div>
-          <div class="field" id="cardsField">
-            <label>Tickets each player</label>
-            <select id="cardsSel">
-              <option value="1">1 ticket</option>
-              <option value="2">2 tickets</option>
-              <option value="3">3 tickets</option>
-              <option value="4">4 tickets</option>
-              <option value="5">5 tickets</option>
-              <option value="6">6 tickets (a full book)</option>
-            </select>
-            <div class="fieldnote vp-fine" style="margin-top:5px">Everyone gets this many tickets this game.</div>
-          </div>
-          <div class="field" id="allowEarlyField">
-            <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" id="allowEarlyChk" style="width:auto;margin:0"><span>Allow early BINGO calls</span></label>
-            <div class="fieldnote vp-fine" style="margin-top:5px">Lets players call BINGO even when it is not a win yet. A bit of fun for the room. A wrong call still lands with you, so you just tap Play on.</div>
-          </div>
-          <div class="stat" id="setupStats">
-            <div class="box"><div class="k">Players joined</div><div class="v" id="setupPlayers">0</div></div>
-            <div class="box" style="display:none"><div class="k">Join code</div><div class="v g" id="setupCode">------</div></div>
-          </div>
+          <!-- ADVANCED SETTINGS (Dean, 28 Oct 2026): set once by the venue, saved for the venue, closed until
+               opened. The shared disclosure, VP.advanced in /app/vp-session.js. Paid entry (Tickets above) and
+               the state rules screen on Open lobby NEVER go in here: a host sees them before every paid game. -->
+          <details class="vp-adv" id="bingoAdv">
+            <summary><span>Advanced settings<small class="vp-adv-sub">Saved for your venue. Set once, rarely changed.</small></span></summary>
+            <div class="vp-adv-body">
+              <div class="field" id="cardsField">
+                <label>Tickets each player</label>
+                <select id="cardsSel">
+                  <option value="1">1 ticket</option>
+                  <option value="2">2 tickets</option>
+                  <option value="3">3 tickets</option>
+                  <option value="4">4 tickets</option>
+                  <option value="5">5 tickets</option>
+                  <option value="6">6 tickets (a full book)</option>
+                </select>
+                <div class="fieldnote vp-fine" style="margin-top:5px">Everyone gets this many tickets this game.</div>
+              </div>
+              <div class="field" id="allowEarlyField">
+                <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" id="allowEarlyChk" style="width:auto;margin:0"><span>Allow early BINGO calls</span></label>
+                <div class="fieldnote vp-fine" style="margin-top:5px">Lets players call BINGO even when it is not a win yet. A bit of fun for the room. A wrong call still lands with you, so you just tap Play on.</div>
+              </div>
+              <div class="patedit" id="patEditRow"><button type="button" class="btn ghost" id="patEditBtn">Edit this pattern</button></div>
+            </div>
+          </details>
           <button class="btn pink big" id="startBtn">Open lobby</button>
           <button class="btn ghost big" id="cancelLobbyBtn" style="display:none;margin-top:8px">Close lobby</button>
           <p class="note vp-c" id="startNote" style="margin-top:10px">Puts the join screen on the TV so players can scan in. You start calling numbers when you are ready.</p>
           <!-- Every ball of every bingo game here, as a file the venue keeps (the same record the
                members and raffle consoles download). Between games, never in the middle of one. -->
-          <button type="button" class="btn ghost" id="downloadRecordBtn" style="margin-top:12px;width:100%">Download draw record</button>
+          <button type="button" class="vp-foot-link" id="downloadRecordBtn">Download draw record</button>
           <div class="note" id="downloadRecordMsg" style="margin-top:4px"></div>
         </div>
 
@@ -2624,7 +2628,6 @@
     el.style.display = over ? "" : "none";
   }
   function renderJoinCounts(){
-    var _sp=$("setupPlayers"); if(_sp) _sp.textContent=playerCount();
     var _pc=$("playerCount");  if(_pc) _pc.textContent=playerCount();
     var _lp=$("livePlayers");  if(_lp) _lp.textContent=playerCount();
     renderOverBanner();
@@ -2644,9 +2647,7 @@
       : lobby
       ? "Players are scanning in on their phones. Start calling numbers when you are ready."
       : "Puts the join screen on the TV so players can scan in. You start calling numbers when you are ready.";
-    $("setupPlayers").textContent=playerCount();
     renderOverBanner();
-    $("setupCode").textContent=G.code;
     $("playerCount").textContent=playerCount();
     renderPlayers();
     syncCallerUI();
@@ -2775,6 +2776,45 @@
   $("patternSel").addEventListener("change", function(){ patternPicked($("patternSel"), lobbyEdited); });
   $("cardsSel").addEventListener("change", lobbyEdited);
   $("prizeInput").addEventListener("input", lobbyEdited);
+
+  /* THE SETUP IS SAVED FOR THE VENUE (Dean, 28 Oct 2026). Real balls, the winning pattern and the prize
+     (Basic), tickets each player and early calls (Advanced) live in vp_venue_settings.game_prefs.bingo
+     (migration 121) through the game Worker's /host/game-prefs, so every tablet and next week start on
+     the venue's own choices. VP.gamePrefs in /app/vp-session.js is the one mechanism for all five games.
+     NEVER paid or free: Tickets is the night's compliance choice and starts on Free every night. */
+  function bingoPrefs(){
+    var p={}, cc=$("callerChk"), ps=$("patternSel"), pi=$("prizeInput"), cs=$("cardsSel");
+    if(cc) p.caller=!!cc.checked;
+    if(ps && ps.value && ps.value!==NEW_PAT) p.pattern=String(ps.value);
+    var pz=String((pi && pi.value)||"").trim(); if(pz) p.prize=pz.slice(0,120);
+    if(cs) p.cards=clampCards(cs.value);
+    p.allow_early=!!G.allowEarly;
+    return p;
+  }
+  function applyBingoPrefs(p){
+    if(!p || G.status!=="setup") return;   // a lobby or game brought back keeps its own choices
+    if(typeof p.caller==="boolean"){ var cc=$("callerChk"); if(cc && !cc.disabled) cc.checked=p.caller; }
+    if(p.pattern){ var ps=$("patternSel"), k=String(p.pattern).replace(/"/g,"");
+      if(ps && ps.querySelector('option[value="'+k+'"]')){ ps.value=k; ps._prev=k; rememberPat(k); } }   // a deleted pattern of their own: One line
+    if(p.prize){ var pi=$("prizeInput"); if(pi && !String(pi.value||"").trim()) pi.value=p.prize; }
+    if(p.cards!=null){ var cs=$("cardsSel"); if(cs) cs.value=String(clampCards(p.cards)); }
+    if(typeof p.allow_early==="boolean"){ G.allowEarly=p.allow_early; var a=$("allowEarlyChk"), b=$("allowEarlyLive"); if(a) a.checked=p.allow_early; if(b) b.checked=p.allow_early; }
+    syncPatEdit(); renderConsole();
+  }
+  var _bingoPrefs=(window.VP && VP.gamePrefs) ? VP.gamePrefs("bingo", { venueId:function(){ return (__ctx && __ctx.venue && __ctx.venue.id) || ""; },
+    api:function(){ return VP_GAME_API; }, token:vpHostToken, collect:bingoPrefs, apply:applyBingoPrefs }) : null;
+  var _bingoPrefsFor="";
+  function queueBingoPrefs(){ if(_bingoPrefs) _bingoPrefs.queue(); }
+  // Once the venue's own patterns are in the list, so a saved one of theirs can be chosen. Once per venue.
+  function startBingoPrefs(){
+    var v=__ctx && __ctx.venue;
+    if(!_bingoPrefs || !v || !v.id || _bingoPrefsFor===v.id) return Promise.resolve(null);
+    _bingoPrefsFor=v.id;
+    return _bingoPrefs.start();
+  }
+  ["callerChk","patternSel","cardsSel","allowEarlyChk","allowEarlyLive"].forEach(function(id){ var el=$(id); if(el) el.addEventListener("change", queueBingoPrefs); });
+  $("prizeInput").addEventListener("input", queueBingoPrefs);
+  if(window.VP && VP.advanced) VP.advanced($("bingoAdv"), "bingo");   // closed unless this browser left it open
 
   /* THE SERVER SESSION. Broadcast bingo ran without one for a long time and paid for it twice
      over: the room could never be counted by anything but this browser, and /capture had nothing
@@ -3520,7 +3560,6 @@
     var bv=$("bingoView"); if(bv) bv.classList.toggle("callermode", !!on);
     // Nobody joins on a phone tonight, so no player count and no "they join by scanning the QR".
     var pp=$("playersPanel"); if(pp) pp.style.display = on ? "none" : "";
-    var ss=$("setupStats"); if(ss) ss.style.display = on ? "none" : "";
     var cc=$("callerChk"); if(cc) cc.disabled = (G.status!=="setup");   // a night is real balls or not, from Open lobby to End game
   }
   /* Every record write in ORDER, after the draw has opened. A tap can land before the draw id
@@ -4103,7 +4142,6 @@
        is filled from the venue record instead and only falls back to the channel
        value while that is still loading. */
     $("roomCode").textContent = (window.__vpJoinCode || code);
-    $("setupCode").textContent=code;
     if(VP && VP.venueJoinCode){
       VP.venueJoinCode().then(function(jc){
         if(jc){ window.__vpJoinCode = jc; $("roomCode").textContent = jc; }
@@ -4146,7 +4184,8 @@
     var sv=$("soonView"); if(sv) sv.classList.add("hidden");
     $("gamesBack").style.display="";
     $("headerTag").textContent="Bingo";
-    loadCustomPatterns();   // the venue's own patterns into every pattern list (nothing shows until migration 118 is live)
+    // the venue's own patterns into every pattern list (nothing shows until migration 118 is live), then its saved setup
+    Promise.resolve(loadCustomPatterns()).then(startBingoPrefs, startBingoPrefs).catch(function(){});
     syncBingoPaidChoice();
   }
 

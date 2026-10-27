@@ -301,10 +301,6 @@
             <input type="text" id="plSearch" placeholder="Search a theme&hellip; e.g. 80s, rock, aussie" autocomplete="off" style="margin-bottom:10px">
             <div id="plGrid" class="plgrid"><div class="plnone">Loading songs&hellip;</div></div>
             <select id="playlistSel" style="display:none"></select>
-            <label class="optin" for="hitsChk" style="display:flex;align-items:center;gap:9px;margin-top:10px;font-size:13px;cursor:pointer">
-              <input class="vp-check" type="checkbox" id="hitsChk" checked>
-              <span>Well-known songs only<small class="vp-fine" style="display:block">On, the night leans hard on the songs everyone knows. Off, every song in the playlist is equally likely, deep cuts and all.</small></span>
-            </label>
           </div>
           <!-- Pattern and reveal side by side at desktop, stacked on a phone (Dean, 28 Oct 2026). -->
           <div class="fieldrow" id="patternRevealRow">
@@ -338,24 +334,34 @@
               <option value="">Free entry &middot; nobody pays to play</option>
               <option value="paid">Tickets sold &middot; players pay to play</option>
             </select>
-            <small class="fieldnote">Picked once for the night. Free entry is a promotional game and lawful everywhere; selling tickets brings up your state's bingo rules before you start.</small>
+            <small class="fieldnote">Picked once for the night. Free entry is a promotional game and lawful everywhere; selling tickets shows a short note that your venue runs the game.</small>
           </div>
           <div class="field" id="paperField">
             <label>Paper cards <small style="color:var(--faint);font-weight:400">for regulars without a phone</small></label>
             <button type="button" class="btn ghost" id="paperPrintBtn" style="width:100%">Print paper cards</button>
             <small class="fieldnote" id="paperNote">Up to 10 a night, printed from the playlist above. A paper card counts as a player once it is played or checked, the same as a phone.</small>
           </div>
-          <div class="stat">
-            <div class="box" style="display:none"><div class="k">Join code</div><div class="v g" id="setupCode">------</div></div>
-          </div>
+          <!-- ADVANCED SETTINGS (Dean, 28 Oct 2026): set once by the venue, saved for the venue, closed
+               until opened. The shared disclosure, VP.advanced in /app/vp-session.js. Never "Tonight". -->
+          <details class="vp-adv" id="musicalAdv">
+            <summary><span>Advanced settings<small class="vp-adv-sub">Saved for your venue. Set once, rarely changed.</small></span></summary>
+            <div class="vp-adv-body">
+              <div class="field">
+                <label class="optin" for="hitsChk" style="display:flex;align-items:center;gap:9px;font-size:13px;cursor:pointer">
+                  <input class="vp-check" type="checkbox" id="hitsChk" checked>
+                  <span>Well-known songs only<small class="vp-fine" style="display:block">On, the night leans hard on the songs everyone knows. Off, every song in the playlist is equally likely, deep cuts and all.</small></span>
+                </label>
+              </div>
+              <div class="compliance">
+                <div class="ct">How the music plays</div>
+                <p>The song clips play from the TV screen, so route that screen's sound into your venue's system (HDMI to your soundbar or amp, or through your AV rack) and it plays across the room. To hear it on this device too, tap the sound button once a game is running.</p>
+              </div>
+            </div>
+          </details>
           <div class="vp-week" id="weekBanner" style="display:none"></div>
           <button class="btn pink big" id="startBtn">Open lobby</button>
           <button class="btn ghost big" id="cancelLobbyBtn" style="display:none;margin-top:8px">Close lobby</button>
           <p class="note vp-c" style="margin-top:10px" id="startNote">Opens the join screen on the TV so players can scan in. Deal the cards and start when everyone is on.</p>
-          <div class="compliance">
-            <div class="ct">How the music plays</div>
-            <p>The song clips play from the TV screen, so route that screen's sound into your venue's system (HDMI to your soundbar or amp, or through your AV rack) and it plays across the room. To hear it on this device too, tap the sound button once a game is running.</p>
-          </div>
         </div>
 
         <div id="liveBlock" class="hidden">
@@ -1327,7 +1333,6 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       if(_oc>0 && _op>_oc){ _ob.style.display=""; _ob.innerHTML="Heads up: <b>"+_op+"</b> players in, <b>"+(_op-_oc)+"</b> over the <b>"+_oc+"</b> your plan includes. "+(inFirstMonth()?"Your first month is free, so no charge this time.":"The extra will be charged to your card for this billing period."); }
       else _ob.style.display="none";
     }
-    $("setupCode").textContent=roomCode();
     syncRoomCode();
     $("playerCount").textContent=playerCount();
     if(!live){
@@ -1482,7 +1487,6 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       G.joinCode=r.join_code;
       openGameChannel(G.joinCode);                                          // players' channel
       send({ t:"session", session_id:G.sessionId, join_code:G.joinCode });  // hand the real code to the screen
-      $("setupCode").textContent=roomCode();
       return r;
     });
   }
@@ -1953,11 +1957,11 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
      songs only, winning pattern, prize and reveal live in vp_venue_settings.game_prefs.musical
      (migration 121), read and merged through the game Worker's /host/game-prefs by any staff login,
      so a second tablet or next week opens on the same choices. Each change is saved a moment later.
-     Loading: the venue's saved values win. If the route is not there yet (404, or the column has not
-     been added) this browser's own choices stay, exactly as before. If the venue has saved nothing
-     yet, this browser's remembered choices (vpMusicHitsOnly, vpMusicReveal) are sent up ONCE, so
-     nobody loses what they had. Never paid-or-free for the night: that is decided each night. */
-  var PREFS_GAME="musical", _prefsReady=false, _prefsApplying=false, _prefsTimer=null;
+     Loading (VP.gamePrefs): the venue's saved values win. If the route is not there yet (404, or the
+     column has not been added) this browser's own choices stay, exactly as before. If the venue has
+     saved nothing yet, this browser's remembered choices (vpMusicHitsOnly, vpMusicReveal) are sent up
+     ONCE, so nobody loses what they had. Never paid-or-free for the night: that is decided each night. */
+  var PREFS_GAME="musical";
   function musicalPrefs(){
     var p={ hits_only:!!G.hitsOnly, reveal:String(G.revealMode||"") };
     if(G.playlistId){ p.playlist=String(G.playlistId); p.playlist_name=String(playlistNameOf(G.playlistId)||""); }
@@ -1967,54 +1971,33 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   }
   function applyMusicalPrefs(p){
     if(!p || G.status!=="setup") return false;
-    var used=false; _prefsApplying=true;
-    try{
-      if(p.playlist){
-        for(var i=0;i<PL_OPTS.length;i++){ if(PL_OPTS[i].id===p.playlist){ selectPlaylist(p.playlist); used=true; break; } }
-      }
-      if(typeof p.hits_only==="boolean"){ var hc=$("hitsChk"); G.hitsOnly=p.hits_only; if(hc) hc.checked=p.hits_only; used=true; }
-      if(p.pattern){ var ps=$("patternSel"); if(ps && ps.querySelector('option[value="'+p.pattern+'"]')){ ps.value=p.pattern; G.pattern=p.pattern; used=true; } }
-      if(p.prize){ var pi=$("prizeInput"); if(pi && !String(pi.value||"").trim()){ pi.value=p.prize; used=true; } }
-      if(p.reveal && REVEAL_MODES[p.reveal]){ setRevealMode(p.reveal); used=true; }
-    } finally { _prefsApplying=false; }
+    var used=false;   // VP.gamePrefs holds every save while this runs
+    if(p.playlist){
+      for(var i=0;i<PL_OPTS.length;i++){ if(PL_OPTS[i].id===p.playlist){ selectPlaylist(p.playlist); used=true; break; } }
+    }
+    if(typeof p.hits_only==="boolean"){ var hc=$("hitsChk"); G.hitsOnly=p.hits_only; if(hc) hc.checked=p.hits_only; used=true; }
+    if(p.pattern){ var ps=$("patternSel"); if(ps && ps.querySelector('option[value="'+p.pattern+'"]')){ ps.value=p.pattern; G.pattern=p.pattern; used=true; } }
+    if(p.prize){ var pi=$("prizeInput"); if(pi && !String(pi.value||"").trim()){ pi.value=p.prize; used=true; } }
+    if(p.reveal && REVEAL_MODES[p.reveal]){ setRevealMode(p.reveal); used=true; }
     return used;
   }
-  function prefsUrl(){ return VP_GAME_API+"/host/game-prefs?venue_id="+encodeURIComponent(G.venueId||"")+"&game="+PREFS_GAME; }
-  // The venue's saved setup, or null when it cannot be had (no route yet, no column, offline).
-  function loadVenuePrefs(){
-    if(!G.venueId) return Promise.resolve(null);
-    return getToken().then(function(t){
-      return fetch(prefsUrl(), { headers:{ "Authorization":"Bearer "+t } });
-    }).then(function(r){ return r.ok ? r.json() : null; })
-      .then(function(d){ return (d && d.prefs && typeof d.prefs==="object") ? d.prefs : null; })
-      .catch(function(){ return null; });
+  function musicalLocalPrefs(){   // this browser's old choices, sent up once to a venue that has none yet
+    var p={};
+    try{
+      var h=localStorage.getItem("vpMusicHitsOnly"); if(h!==null) p.hits_only=(h==="1");
+      var r=localStorage.getItem("vpMusicReveal"); if(r && REVEAL_MODES[r]) p.reveal=r;
+    }catch(e){}
+    return p;
   }
-  function saveVenuePrefsNow(){
-    if(!G.venueId) return Promise.resolve(null);
-    return getToken().then(function(t){
-      return fetch(VP_GAME_API+"/host/game-prefs", { method:"POST",
-        headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+t },
-        body:JSON.stringify({ venue_id:G.venueId, game:PREFS_GAME, prefs:musicalPrefs() }) });
-    }).then(function(r){ return r.ok; }).catch(function(){ return false; });   // this browser keeps it either way
-  }
-  function queuePrefsSave(){
-    if(!_prefsReady || _prefsApplying) return;   // never save the page's defaults over the venue's choices
-    if(_prefsTimer) clearTimeout(_prefsTimer);
-    _prefsTimer=setTimeout(function(){ _prefsTimer=null; saveVenuePrefsNow(); }, 800);
-  }
-  function hadLocalPrefs(){
-    try{ return localStorage.getItem("vpMusicHitsOnly")!==null || localStorage.getItem("vpMusicReveal")!==null; }catch(e){ return false; }
-  }
+  // The one shared mechanism (VP.gamePrefs in /app/vp-session.js): read, apply, then save each change.
+  var _prefs=(window.VP && VP.gamePrefs) ? VP.gamePrefs(PREFS_GAME, { venueId:function(){ return G.venueId; },
+    api:function(){ return VP_GAME_API; }, token:getToken, collect:musicalPrefs, apply:applyMusicalPrefs, local:musicalLocalPrefs }) : null;
+  function queuePrefsSave(){ if(_prefs) _prefs.queue(); }
   // Once the themes are on the page: the venue's choices, or this browser's sent up once.
-  function startVenuePrefs(){
-    return loadVenuePrefs().then(function(p){
-      if(p && Object.keys(p).length) applyMusicalPrefs(p);
-      _prefsReady=true;
-      if(p && !Object.keys(p).length && hadLocalPrefs()) return saveVenuePrefsNow();
-    });
-  }
+  function startVenuePrefs(){ return _prefs ? _prefs.start() : Promise.resolve(null); }
 
   // ---- events ----
+  if(window.VP && VP.advanced) VP.advanced($("musicalAdv"), "musical");   // closed unless this browser left it open
   var codeIn=$("codeIn");
   codeIn.addEventListener("input", function(){
     var v=codeIn.value.toUpperCase().replace(/[^ACDEFGHJKMNPQRSTUVWXYZ2345679]/g,"");
