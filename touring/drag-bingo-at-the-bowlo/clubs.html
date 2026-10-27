@@ -1,0 +1,488 @@
+<!DOCTYPE html><html lang="en"><head>
+<!-- Google tag (gtag.js) - Touring + Drag Bingo -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-V36EX4RX85"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-V36EX4RX85');
+  gtag('config', 'G-F70HEE34EK');
+</script>
+<!-- Meta Pixel Code (Touring) -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '1597842404816132');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=1597842404816132&ev=PageView&noscript=1"/></noscript>
+<!-- End Meta Pixel Code -->
+
+<!-- THE CLUB OFFER PAGE (DRAFT, 27 Oct 2026). One page, one action: a club manager or secretary who
+     scanned the QR on the letter or postcard, or typed the address, lands here and asks for a date.
+     Brief: ~/venue-enrich/drag-bingo-b2b-2026-10-27/post.md and offer.md. Anything in [square
+     brackets] is Dean's call and is styled as a deliberate "to confirm" mark (.tbc) so the page reads
+     as finished while he decides: the deal split, the months, the ticket price, show times, the
+     guarantee, the age rule and his mobile.
+     NUMBERS. 223 tickets (6 June 2026) and 113 (24 Oct 2026) at Tugun Bowls Club, 336 across the two
+     nights, $9,566 in paid ticket sales: from the full Moshtix export, never rounded up. No "sold out"
+     (neither night is recorded as one), no bar figure (Tugun has not given one), no cash-prize promise.
+     THE FORM posts to Web3Forms the way the other Gflam Touring enquiry forms do (contact.html,
+     work-with-us.html), with the Touring key (both keys route to Dean; the Drag Bingo key is not in
+     this repo in full). It is an enquiry, not a mailing-list signup: public.signups only admits
+     signup_type 'signup' with seven columns and has nowhere for club, role, room size or month, so it
+     is not used here. The payload carries kind: "drag_bingo_club_enquiry" so the emails sort.
+     The hidden ref field reads ?ref= off the address (post-letter, post-card, email-clubs, the same
+     convention as the show pages' tugunposter / tbcweb) and sends it with the form and as a GA4 event.
+     QR / SHORT URL. The QR codes on the letter and postcard encode
+     https://www.gflamtouring.com.au/drag-bingo-at-the-bowlo/clubs?ref=post-letter (and ?ref=post-card).
+     The typed address is gflamtouring.com.au/drag-bingo-at-the-bowlo/clubs. A shorter alias (for
+     example /clubs) would be one line in a touring/_redirects file; not added, as that file does not
+     exist yet and would touch the whole site's routing. The codes are not generated until this page
+     is live, so no printed piece ever carries a dead link.
+     tools/drag-bingo-clubs-page.test.py loads this file, runs the form logic below under jsc and
+     checks the form, the money lines, the proof numbers, the tracking and the house rules. -->
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Drag Bingo at the Bowlo for Clubs | Gflam Touring</title><meta name="description" content="A ticketed drag bingo show in your club's room on a quiet Saturday. It costs the club nothing: Gflam Touring brings the performers, the tickets, the marketing and the TV slides.">
+<meta name="robots" content="index,follow"><link rel="canonical" href="https://www.gflamtouring.com.au/drag-bingo-at-the-bowlo/clubs">
+<meta name="geo.region" content="AU">
+<meta name="author" content="Gflam Touring">
+<meta property="og:locale" content="en_AU">
+<meta property="og:site_name" content="Gflam Touring">
+<meta property="og:type" content="website"><meta property="og:title" content="Drag Bingo at the Bowlo, in your club's room"><meta property="og:description" content="It costs the club nothing. We bring the performers, the tickets, the marketing and the TV slides. You bring the room, a Saturday and the bar."><meta property="og:url" content="https://www.gflamtouring.com.au/drag-bingo-at-the-bowlo/clubs"><meta property="og:image" content="https://www.gflamtouring.com.au/drag-bingo-at-the-bowlo/tugun-room.jpg"><meta property="og:image:width" content="1400"><meta property="og:image:height" content="1050">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Drag Bingo at the Bowlo, in your club's room">
+<meta name="twitter:description" content="It costs the club nothing. We bring the performers, the tickets, the marketing and the TV slides. You bring the room, a Saturday and the bar.">
+<meta name="twitter:image" content="https://www.gflamtouring.com.au/drag-bingo-at-the-bowlo/tugun-room.jpg">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://www.gflamtouring.com.au"},{"@type":"ListItem","position":2,"name":"Drag Bingo at the Bowlo","item":"https://www.gflamtouring.com.au/drag-bingo-at-the-bowlo"},{"@type":"ListItem","position":3,"name":"For clubs","item":"https://www.gflamtouring.com.au/drag-bingo-at-the-bowlo/clubs"}]}</script>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="/favicon-48.png" type="image/png" sizes="48x48">
+<link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>*{margin:0;padding:0;box-sizing:border-box}
+:root{--pink:#fe65c3;--dark:#111;--dark2:#1a1a1a;--dark3:#222;--white:#fff;--muted:rgba(255,255,255,0.55);--border:rgba(255,255,255,0.1)}
+html,body{background:var(--dark);color:#fff;font-family:"DM Sans",sans-serif;font-size:15px;line-height:1.6;overflow-x:hidden}
+html{scroll-behavior:smooth}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:16px 48px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;background:rgba(17,17,17,0.97);backdrop-filter:blur(8px)}
+.nav-logo img{height:42px;width:auto;display:block}
+.nav-links{display:flex;gap:28px;align-items:center}
+.nav-links a{color:var(--muted);font-size:13px;font-weight:500;text-decoration:none;letter-spacing:0.5px;text-transform:uppercase;transition:color .2s}
+.nav-links a:hover,.nav-links a.active{color:#fff}
+.nav-cta{background:var(--pink)!important;color:#fff!important;padding:9px 22px!important;border-radius:4px!important;font-weight:600!important}
+.hamburger{display:none;background:none;border:none;cursor:pointer;flex-direction:column;gap:5px;padding:4px}
+.hamburger span{width:22px;height:2px;background:#fff;border-radius:2px;display:block}
+.mob-menu{display:none;position:fixed;inset:0;background:rgba(17,17,17,0.98);z-index:200;flex-direction:column;align-items:center;justify-content:center;gap:28px}
+.mob-menu.open{display:flex}
+.mob-menu a{font-size:20px;font-weight:600;color:#fff;text-decoration:none;text-transform:uppercase;transition:color .2s}
+.mob-menu a:hover{color:var(--pink)}
+.mob-close{position:absolute;top:20px;right:24px;background:none;border:none;color:#fff;font-size:28px;cursor:pointer}
+.dot{color:var(--pink)}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--pink);margin-bottom:12px}
+.h2{font-family:"DM Serif Display",serif;font-size:clamp(28px,4vw,48px);letter-spacing:-1.5px;line-height:1.05;margin-bottom:20px;color:#fff}
+.muted{color:var(--muted);font-size:16px;line-height:1.8}
+.section{padding:96px 48px;max-width:1200px;margin:0 auto}
+.divider{border:none;border-top:1px solid var(--border)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:center}
+.btn{display:inline-block;padding:12px 28px;border-radius:4px;font-size:14px;font-weight:600;text-decoration:none;border:none;cursor:pointer;font-family:"DM Sans",sans-serif;transition:opacity .2s}
+.btn-pink{background:var(--pink);color:#fff}.btn-pink:hover{opacity:.85}
+.btn-outline{background:transparent;color:#fff;border:1px solid var(--border)}.btn-outline:hover{border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.04)}
+.card{background:var(--dark2);border:1px solid var(--border);border-radius:10px;padding:32px;transition:border-color .2s,transform .2s}
+.card:hover{border-color:rgba(254,101,195,.4);transform:translateY(-2px)}
+.card-title{font-family:"DM Serif Display",serif;font-size:20px;color:#fff;margin-bottom:8px;letter-spacing:-0.5px}
+.card-desc{font-size:14px;color:var(--muted);line-height:1.7}
+.ff{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.ff label{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+.ff input,.ff select,.ff textarea{background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:5px;color:#fff;font-family:"DM Sans",sans-serif;font-size:14px;padding:12px 16px;outline:none;transition:border-color .2s;-webkit-appearance:none}
+.ff input:focus,.ff select:focus,.ff textarea:focus{border-color:var(--pink)}
+.ff input::placeholder,.ff textarea::placeholder{color:rgba(255,255,255,.2)}
+.ff select option{background:#222}.ff textarea{resize:vertical;min-height:120px}
+.ff select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23fe65c3' stroke-width='1.8'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.fsub{background:var(--pink);color:#fff;border:none;font-family:"DM Sans",sans-serif;font-size:15px;font-weight:600;padding:13px;border-radius:4px;cursor:pointer;width:100%;margin-top:8px;transition:opacity .2s}.fsub:hover{opacity:.85}.fsub[disabled]{opacity:.6;cursor:default}
+.fsuccess{display:none;text-align:center;padding:40px;background:rgba(254,101,195,.06);border:1px solid rgba(254,101,195,.2);border-radius:8px}
+.fsuccess.show{display:block}
+.fsuccess h3{font-family:"DM Serif Display",serif;font-size:28px;color:#fff;margin-bottom:8px}
+.fsuccess p{color:var(--muted);font-size:15px}
+.ferr{display:none;margin-top:14px;padding:12px 16px;border-radius:5px;background:rgba(254,101,195,.08);border:1px solid rgba(254,101,195,.35);color:#fff;font-size:14px}
+.ferr.show{display:block}
+
+/* page-specific */
+.tbc{color:#ffd1ec;background:rgba(254,101,195,.12);border:1px dashed rgba(254,101,195,.5);border-radius:4px;padding:0 6px;white-space:nowrap}
+.hero{position:relative;min-height:78vh;display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center;padding:88px 48px 72px;max-width:1200px;margin:0 auto}
+.hero-bg{position:absolute;inset:0;z-index:-1;background:linear-gradient(135deg,#0a0a0a 0%,#1a0020 50%,#0a0a0a 100%)}
+.hero-glow{position:absolute;inset:0;z-index:-1;background:radial-gradient(ellipse 80% 60% at 30% 0%,rgba(254,101,195,0.16) 0%,transparent 65%)}
+.hero h1{font-family:"DM Serif Display",serif;font-size:clamp(40px,5.6vw,68px);letter-spacing:-2.5px;line-height:1;color:#fff;margin-bottom:18px}
+.hero .lede{font-family:"DM Serif Display",serif;font-style:italic;font-size:clamp(20px,2.6vw,28px);color:var(--pink);margin-bottom:22px;line-height:1.25}
+.hero-photo{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--border);box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.hero-photo img{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover}
+.hero-photo figcaption{position:absolute;left:0;right:0;bottom:0;padding:14px 18px;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:#fff;background:linear-gradient(180deg,transparent,rgba(0,0,0,.75))}
+.proof{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--dark2)}
+.proof>div{padding:32px 24px;text-align:center;border-right:1px solid var(--border)}
+.proof>div:last-child{border-right:none}
+.proof .n{font-family:"DM Serif Display",serif;font-size:clamp(36px,4.6vw,56px);line-height:1;color:var(--pink);letter-spacing:-1.5px}
+.proof .l{font-size:13px;color:var(--muted);margin-top:10px;line-height:1.5}
+.source{font-size:12px;color:rgba(255,255,255,.35);margin-top:16px;text-align:center}
+.steps{display:grid;grid-template-columns:repeat(5,1fr);gap:32px;max-width:1100px;margin:0 auto}
+.step .num{width:48px;height:48px;border-radius:50%;border:1px solid var(--pink);color:var(--pink);display:flex;align-items:center;justify-content:center;font-family:"DM Serif Display",serif;font-size:22px;margin:0 auto 14px}
+.step .when{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--pink);margin-bottom:6px}
+.step .t{font-weight:600;color:#fff;margin-bottom:6px;font-size:15px}
+.step p{font-size:13px;color:var(--muted);line-height:1.6}
+.sizes{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.size{background:var(--dark);border:1px solid var(--border);border-radius:10px;padding:36px}
+.size.full{border-color:rgba(254,101,195,.45)}
+.size .room{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--pink);margin-bottom:10px}
+.size h3{font-family:"DM Serif Display",serif;font-size:28px;letter-spacing:-1px;line-height:1.1;margin-bottom:18px}
+.size ul{list-style:none;margin-bottom:22px}
+.size li{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:rgba(255,255,255,.8);line-height:1.6;margin-bottom:8px}
+.size li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--pink);flex-shrink:0;margin-top:9px}
+.size .price{font-family:"DM Serif Display",serif;font-size:22px;color:#fff;border-top:1px solid var(--border);padding-top:18px}
+.size .price small{display:block;font-family:"DM Sans",sans-serif;font-size:13px;color:var(--muted);margin-top:4px}
+.gives{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.gives .card ul{list-style:none}
+.gives .card li{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:rgba(255,255,255,.8);line-height:1.6;margin-bottom:8px}
+.gives .card li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--pink);flex-shrink:0;margin-top:9px}
+.queens{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:900px;margin:0 auto}
+.faq details{border-top:1px solid var(--border);padding:22px 0}
+.faq details:last-child{border-bottom:1px solid var(--border)}
+.faq summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:16px;font-family:"DM Serif Display",serif;font-size:21px;color:#fff;letter-spacing:-0.5px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";color:var(--pink);font-size:26px;line-height:1;flex-shrink:0}
+.faq details[open] summary::after{content:"\2212"}
+.faq details p{color:var(--muted);font-size:15px;line-height:1.8;margin-top:12px;max-width:720px}
+.ask-wrap{max-width:720px;margin:0 auto}
+.fine{font-size:12px;color:rgba(255,255,255,.35);margin-top:14px;line-height:1.7;text-align:center}
+.fine a{color:rgba(255,255,255,.55)}
+.talk{text-align:center;margin-top:36px;color:var(--muted);font-size:15px}
+.talk a{color:#fff;text-decoration:none;font-weight:600}
+.talk a:hover{color:var(--pink)}
+@media(max-width:900px){
+  .nav{padding:14px 20px}.nav-links,.nav-cta{display:none!important}.hamburger{display:flex}
+  .two-col{grid-template-columns:1fr;gap:40px}
+  .section{padding:60px 20px}
+  .fr{grid-template-columns:1fr}
+  .hero{grid-template-columns:1fr;gap:32px;padding:56px 20px 44px;min-height:0}
+  .proof{grid-template-columns:1fr 1fr}
+  .proof>div{border-bottom:1px solid var(--border)}
+  .proof>div:nth-child(2n){border-right:none}
+  .proof>div:nth-last-child(-n+2){border-bottom:none}
+  .steps{grid-template-columns:1fr;gap:28px;text-align:left}
+  .step{display:grid;grid-template-columns:48px 1fr;gap:16px;align-items:start}
+  .step .num{margin:0}
+  .sizes,.gives{grid-template-columns:1fr}
+  .queens{grid-template-columns:1fr}
+  .footer-cols-inner{grid-template-columns:1fr!important}
+}
+@media(max-width:540px){
+  .proof{grid-template-columns:1fr}
+  .proof>div{border-right:none}
+  .proof>div:nth-last-child(-n+2){border-bottom:1px solid var(--border)}
+  .proof>div:last-child{border-bottom:none}
+  h1,h2{word-break:break-word}
+  .tbc{white-space:normal}
+}
+</style></head><body><nav class="nav"><div class="nav-logo"><a href="/"><img src="/logo.png" alt="Gflam Touring" style="height:44px;width:auto;display:block"></a></div><div class="nav-links"><a href="/who-we-are">Who We Are</a><a href="/what-we-do">What We Do</a><a href="/current-tours" class="active">Current Tours</a><a href="/work-with-us">Work With Us</a><a href="#ask" class="nav-links nav-cta">Ask for a Date</a></div><button class="hamburger" aria-label="Open menu" onclick="document.getElementById('tm').classList.add('open')"><span></span><span></span><span></span></button></nav><div class="mob-menu" id="tm"><button class="mob-close" onclick="document.getElementById('tm').classList.remove('open')">&#10005;</button><a href="/" onclick="document.getElementById('tm').classList.remove('open')">Home</a><a href="/who-we-are" onclick="document.getElementById('tm').classList.remove('open')">Who We Are</a><a href="/what-we-do" onclick="document.getElementById('tm').classList.remove('open')">What We Do</a><a href="/current-tours" onclick="document.getElementById('tm').classList.remove('open')">Current Tours</a><a href="/work-with-us" onclick="document.getElementById('tm').classList.remove('open')">Work With Us</a><a href="#ask" onclick="document.getElementById('tm').classList.remove('open')">Ask for a Date</a></div>
+
+<div style="position:relative;overflow:hidden">
+<div class="hero-bg"></div><div class="hero-glow"></div>
+<section class="hero">
+  <div>
+    <div class="eyebrow">For bowls clubs, RSLs and leagues clubs</div>
+    <h1>Drag Bingo at the Bowlo, in your club's room<span class="dot">.</span></h1>
+    <p class="lede">It costs the club nothing.</p>
+    <p class="muted" style="max-width:520px;margin-bottom:32px">We bring the performers, the tickets, the marketing and the TV slides. You bring the room, a Saturday and the bar.</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <a href="#ask" class="btn btn-pink">Ask for a date</a>
+      <a href="#how" class="btn btn-outline">How a night runs</a>
+    </div>
+  </div>
+  <figure class="hero-photo">
+    <img src="/drag-bingo-at-the-bowlo/tugun-room.jpg" alt="A full function room at Tugun Bowls Club on a Drag Bingo night, every table taken" width="1400" height="1050">
+    <figcaption>Tugun Bowls Club, June 2026</figcaption>
+  </figure>
+</section>
+</div>
+
+<section style="background:var(--dark);padding:72px 48px" id="proof">
+<div style="max-width:1100px;margin:0 auto">
+  <div class="proof">
+    <div><div class="n">223</div><div class="l">tickets on the first night</div></div>
+    <div><div class="n">113</div><div class="l">tickets on the second</div></div>
+    <div><div class="n">336</div><div class="l">tickets across two nights</div></div>
+    <div><div class="n">$9,566</div><div class="l">in ticket sales</div></div>
+  </div>
+  <p class="source">Tugun Bowls Club, 6 June and 24 October 2026. Figures from the ticketing export, not an estimate. Each show pulled a largely new crowd: mostly women booking a table of three, three quarters of them local.</p>
+</div>
+</section>
+<hr class="divider">
+
+<div style="background:var(--dark2)" id="how"><div class="section" style="text-align:center">
+  <div class="eyebrow">How a night runs</div>
+  <h2 class="h2" style="margin-bottom:48px">Book the date. We do the rest<span class="dot">.</span></h2>
+  <div class="steps">
+    <div class="step"><div class="num">1</div><div><div class="when">8 to 10 weeks out</div><div class="t">Book the date</div><p>We agree a Saturday <span class="tbc">[or Friday]</span> and the room, and hold it for your club alone.</p></div></div>
+    <div class="step"><div class="num">2</div><div><div class="when">Same week</div><div class="t">Tickets on sale</div><p>The ticket page and the Facebook event go up, co-hosted with the club. We sell every ticket.</p></div></div>
+    <div class="step"><div class="num">3</div><div><div class="when">Weeks 2 to 8</div><div class="t">Posters and slides</div><p>You get posters, a listing for your website and members newsletter, and a TV slide set sized for your screens.</p></div></div>
+    <div class="step"><div class="num">4</div><div><div class="when">Show night</div><div class="t">Doors open</div><p>Bump-in <span class="tbc">[4pm]</span>, doors <span class="tbc">[6:30pm]</span>, show <span class="tbc">[7:30pm to 10pm]</span>. Your bar and kitchen open all night.</p></div></div>
+    <div class="step"><div class="num">5</div><div><div class="when">The week after</div><div class="t">Your report</div><p>One page: tickets sold, where buyers came from, ages and postcodes. Yours to keep.</p></div></div>
+  </div>
+</div></div>
+<hr class="divider">
+
+<div style="background:var(--dark)" id="sizes"><div class="section">
+  <div style="text-align:center;margin-bottom:40px">
+    <div class="eyebrow">Two sizes</div>
+    <h2 class="h2" style="margin-bottom:12px">The same night, sized to your room<span class="dot">.</span></h2>
+    <p class="muted" style="max-width:560px;margin:0 auto">Same deal, same tickets, same marketing. The only thing that changes is how many performers and how much lighting the room can take.</p>
+  </div>
+  <div class="sizes">
+    <div class="size full">
+      <div class="room">Rooms of 250 or more</div>
+      <h3>The full show<span class="dot">.</span></h3>
+      <ul>
+        <li>Three professional drag performers and a host, a <span class="tbc">[2.5 hour]</span> show</li>
+        <li>Full lighting rig, sound, bingo balls, cards and prizes, all ours</li>
+        <li>All ticketing, the event page and the money handling for tickets</li>
+        <li>Facebook event, group posts, email to past buyers, posters and TV slides</li>
+        <li>Public liability insurance, certificate on request</li>
+      </ul>
+      <div class="price">Tickets <span class="tbc">[$30]</span> plus booking fee<small>To the public. The club pays nothing.</small></div>
+    </div>
+    <div class="size">
+      <div class="room">Rooms of 100 to 250</div>
+      <h3>The club-room show<span class="dot">.</span></h3>
+      <ul>
+        <li><span class="tbc">[Two]</span> professional drag performers and a host, a <span class="tbc">[2 hour]</span> show</li>
+        <li>A smaller rig that fits the room, sound, bingo balls, cards and prizes</li>
+        <li>Same ticketing, same marketing, same posters and TV slides</li>
+        <li>Same report the week after</li>
+        <li>Minimum room: 100 seats. Under that we say so, and keep you on the list for a bigger room nearby</li>
+      </ul>
+      <div class="price">Tickets <span class="tbc">[$30]</span> plus booking fee<small>To the public. The club pays nothing.</small></div>
+    </div>
+  </div>
+</div></div>
+<hr class="divider">
+
+<div style="background:var(--dark2)" id="deal"><div class="section">
+  <div style="text-align:center;margin-bottom:40px">
+    <div class="eyebrow">Who does what</div>
+    <h2 class="h2" style="margin-bottom:12px">You give the room. We give the night<span class="dot">.</span></h2>
+  </div>
+  <div class="gives">
+    <div class="card">
+      <div class="card-title">The club gives<span class="dot">.</span></div>
+      <ul style="margin-top:14px">
+        <li>The function room or auditorium with a stage area, tables and chairs, and a working PA input, from bump-in to bump-out</li>
+        <li>One Saturday night, agreed 8 to 10 weeks out so there is time to sell</li>
+        <li>The bar and kitchen open all night. Tell us the meal deal and we put it on the slides</li>
+        <li>The show listed on your website, in the members newsletter and on your Facebook page, with the artwork we send</li>
+        <li>A club contact for the night</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-title">Gflam Touring gives<span class="dot">.</span></div>
+      <ul style="margin-top:14px">
+        <li>The performers, the host, the lights, the sound and the lights operator</li>
+        <li>All ticketing and all marketing, with no paid ads needed</li>
+        <li>Posters, a TV slide set sized for your screens, and a local media blurb with a double-pass giveaway a week out</li>
+        <li>Bingo balls, cards and prizes</li>
+        <li>Public liability insurance and a one-page report the week after</li>
+      </ul>
+    </div>
+  </div>
+  <div style="max-width:760px;margin:40px auto 0;text-align:center">
+    <p class="muted" style="font-size:17px;color:#fff;line-height:1.7">The club keeps everything over the bar, the kitchen and gaming, all night. Gflam Touring sells the tickets and <span class="tbc">[keeps the ticket money]</span>.</p>
+    <p class="muted" style="margin-top:14px;font-size:14px">Members: <span class="tbc">[$5 off with your club's member code]</span>, so the club has something of its own to offer.</p>
+  </div>
+</div></div>
+<hr class="divider">
+
+<div style="background:var(--dark)" id="stage"><div class="section" style="text-align:center">
+  <div class="eyebrow">Who's on stage</div>
+  <h2 class="h2" style="margin-bottom:12px">Three professional drag performers<span class="dot">.</span></h2>
+  <p class="muted" style="max-width:600px;margin:0 auto 40px">Real bingo balls, 1 to 90, pulled by the queens on stage, with the called numbers up on your club's TVs. Lights and sound are ours. The queens fill every gap between rounds.</p>
+  <div class="queens">
+    <div class="card"><div class="card-title">Vollie LaVont<span class="dot">.</span></div><p class="card-desc">The host. Fabulous, hilarious and completely in control. She keeps the room electric all night.</p></div>
+    <div class="card"><div class="card-title">ShuShu Funtanna<span class="dot">.</span></div><p class="card-desc">Performer. Big numbers, bigger hair, and a crowd on its feet between rounds.</p></div>
+    <div class="card"><div class="card-title">Scarlett Fever<span class="dot">.</span></div><p class="card-desc">Performer. Glamour, comedy and a bingo call you will not forget.</p></div>
+  </div>
+  <p class="source" style="margin-top:22px"><span class="tbc">[Line-up confirmed when a date is booked]</span></p>
+</div></div>
+<hr class="divider">
+
+<div style="background:var(--dark2)" id="questions"><div class="section" style="max-width:860px">
+  <div style="text-align:center;margin-bottom:36px">
+    <div class="eyebrow">Questions clubs ask</div>
+    <h2 class="h2" style="margin-bottom:0">Straight answers<span class="dot">.</span></h2>
+  </div>
+  <div class="faq">
+    <details><summary>Do we pay anything?</summary><p>No. The room, a date, the bar open and the show listed on your website and in your members newsletter: that is the club's whole side of it. We sell the tickets and <span class="tbc">[keep the ticket money]</span>; you keep the bar, the kitchen and gaming.</p></details>
+    <details><summary>How many people will come?</summary><p>We quote Tugun Bowls Club's figures as Tugun's: 223 tickets on the first night and 113 on the second. Nobody can promise a crowd, which is why we do all the marketing and send you the report afterwards. Each show pulled a largely new crowd, mostly women booking a table together, and three quarters of them local.</p></details>
+    <details><summary>Is it family friendly?</summary><p><span class="tbc">[18 and over, or all ages: Dean to confirm.]</span> The humour is cheeky, the bingo is real, and the room is welcoming. Hens groups, birthday tables and bowls club regulars sit side by side.</p></details>
+    <details><summary>Do we need a permit?</summary><p>That depends on your state. The show has run in Queensland under Tugun's arrangement. For a club in New South Wales or Victoria we check the state's bingo rules before any cash prize is promised, and we do it before the date is announced, not after. Until it is confirmed for your club, prizes are prizes. <span class="tbc">[Per-state answer to be filled from the October 2026 legal note.]</span></p></details>
+    <details><summary>What if it does not sell?</summary><p><span class="tbc">[If fewer than 100 tickets are sold two weeks out, we tell you and you can cancel with no cost.]</span> It is your Saturday night and your room, so the risk should sit with us, not you.</p></details>
+  </div>
+  <p class="muted" style="text-align:center;margin-top:36px;font-size:14px">Dates for <span class="tbc">[March to June 2027]</span> are being set in November and December. One show per area per date, so the first club in each town gets its suburb to itself.</p>
+</div></div>
+<hr class="divider">
+
+<div style="background:var(--dark)" id="ask"><div class="section">
+  <div class="ask-wrap">
+  <div style="text-align:center;margin-bottom:36px">
+    <div class="eyebrow">Ask for a date</div>
+    <h2 class="h2" style="margin-bottom:12px">Tell us about your room<span class="dot">.</span></h2>
+    <p class="muted">Dean will call you within one business day.</p>
+  </div>
+  <form id="dbcf" novalidate>
+    <div class="fr">
+      <div class="ff"><label for="dbc-club">Club name</label><input type="text" id="dbc-club" name="club" placeholder="Tugun Bowls Club" autocomplete="organization"></div>
+      <div class="ff"><label for="dbc-name">Your name</label><input type="text" id="dbc-name" name="name" placeholder="Your name" autocomplete="name"></div>
+    </div>
+    <div class="fr">
+      <div class="ff"><label for="dbc-role">Your role</label><input type="text" id="dbc-role" name="role" placeholder="Secretary, manager, events" autocomplete="organization-title"></div>
+      <div class="ff"><label for="dbc-phone">Phone</label><input type="tel" id="dbc-phone" name="phone" placeholder="0400 000 000" autocomplete="tel"></div>
+    </div>
+    <div class="fr">
+      <div class="ff"><label for="dbc-email">Email</label><input type="email" id="dbc-email" name="email" placeholder="you@yourclub.com.au" autocomplete="email"></div>
+      <div class="ff"><label for="dbc-state">State</label><select id="dbc-state" name="state"><option value="">Choose</option><option>QLD</option><option>NSW</option><option>VIC</option><option>SA</option><option>WA</option><option>TAS</option><option>NT</option><option>ACT</option></select></div>
+    </div>
+    <div class="fr">
+      <div class="ff"><label for="dbc-room">Room size</label><select id="dbc-room" name="room"><option value="">Choose</option><option value="under 100">Under 100 seats</option><option value="100 to 250">100 to 250 seats</option><option value="250 or more">250 seats or more</option></select></div>
+      <div class="ff"><label for="dbc-month">Preferred month</label><select id="dbc-month" name="month"><option value="">Not sure yet</option><option>March 2027</option><option>April 2027</option><option>May 2027</option><option>June 2027</option><option>Later in 2027</option></select></div>
+    </div>
+    <input type="hidden" id="dbc-ref" name="ref" value="">
+    <button class="fsub" type="submit" id="dbc-send">Ask for a date</button>
+    <div class="ferr" id="dbc-err" role="alert"></div>
+    <p class="fine">Your details go to Dean at Gflam Touring and nobody else. We use them to answer this enquiry and to arrange a show, and we never sell or share them. <a href="/privacy-policy">Privacy policy</a>.</p>
+  </form>
+  <div class="fsuccess" id="dbcz"><h3>Thanks, we have it<span class="dot">.</span></h3><p>Dean will call you within one business day to talk about your room and a date.</p></div>
+  <p class="talk">Prefer to talk? Call Dean on <span class="tbc" id="dbc-tel">[Dean's mobile]</span> or email <a href="mailto:hello@gflamtouring.com.au">hello@gflamtouring.com.au</a>.</p>
+  </div>
+</div></div>
+<hr class="divider">
+
+<div style="background:var(--dark2)" id="db-signup"><div class="section" style="text-align:center">
+  <div class="eyebrow">Not ready to book?</div>
+  <h2 class="h2" style="margin-bottom:12px">Stay in the loop<span class="dot">.</span></h2>
+  <p class="muted" style="margin-bottom:40px">Be first to hear about upcoming Drag Bingo shows, new club dates and what sold where.</p>
+  <div style="max-width:560px;margin:0 auto">
+  <div id="dbsf">
+    <div class="fr" style="margin-bottom:16px">
+      <div class="ff"><label for="dbsfa">First Name</label><input type="text" id="dbsfa" placeholder="First name"></div>
+      <div class="ff"><label for="dbsfb">Mobile</label><input type="tel" id="dbsfb" placeholder="0400 000 000"></div>
+    </div>
+    <div class="fr" style="margin-bottom:16px">
+      <div class="ff"><label for="dbsfc">Email</label><input type="email" id="dbsfc" placeholder="your@email.com"></div>
+      <div class="ff"><label for="dbsfd">Postcode</label><input type="text" id="dbsfd" placeholder="4000" maxlength="4"></div>
+    </div>
+    <button class="fsub" onclick="doDBSU()">Sign Me Up</button>
+    <p style="font-size:12px;color:rgba(255,255,255,.2);margin-top:12px;text-align:center">We never share your info.</p>
+  </div>
+  <div class="fsuccess" id="dbsfz"><h3>You're in<span class="dot">.</span></h3><p>Thanks! We'll keep you posted on upcoming shows.</p></div>
+  </div>
+</div></div>
+
+<hr class="divider"><div style="background:var(--dark);text-align:center;padding:96px 48px">
+  <div class="eyebrow">A full room on a quiet Saturday</div>
+  <h2 class="h2" style="margin-bottom:16px">Ask for a date<span class="dot">.</span></h2>
+  <p class="muted" style="margin-bottom:32px;max-width:440px;margin-left:auto;margin-right:auto">Tell us your room size and a month, and Dean will call you.</p>
+  <a href="#ask" class="btn btn-pink" style="font-size:16px;padding:16px 40px">Ask for a date</a>
+  <p style="font-size:13px;color:rgba(255,255,255,.3);margin-top:16px">Want to see the public show page first? <a href="/drag-bingo-at-the-bowlo" style="color:rgba(255,255,255,.55)">Drag Bingo at the Bowlo</a></p>
+</div>
+<div style="background:#0c0c0c;border-top:1px solid var(--border);padding:64px 48px 32px"><div style="max-width:1200px;margin:0 auto"><div style="text-align:center;margin-bottom:48px"><img src="/logo.png" alt="Gflam Touring" style="height:44px;width:auto;display:block;margin:0 auto"><div style="display:flex;justify-content:center;gap:22px;margin-top:20px"><a href="https://www.facebook.com/gflamtouring" target="_blank" rel="noopener" aria-label="Gflam Touring on Facebook" title="Facebook" style="color:#fff;display:inline-flex;width:26px;height:26px" onmouseover="this.style.color='var(--pink)'" onmouseout="this.style.color='#fff'"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M13.5 22v-8h2.7l.4-3.2h-3.1V8.8c0-.9.3-1.5 1.6-1.5h1.7V4.4c-.3 0-1.3-.1-2.4-.1-2.4 0-4 1.5-4 4.1v2.4H7.6V14h2.8v8h3.1z"/></svg></a><a href="https://www.instagram.com/gflamtouring" target="_blank" rel="noopener" aria-label="Gflam Touring on Instagram" title="Instagram" style="color:#fff;display:inline-flex;width:26px;height:26px" onmouseover="this.style.color='var(--pink)'" onmouseout="this.style.color='#fff'"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 7.4a4.6 4.6 0 1 0 0 9.2 4.6 4.6 0 0 0 0-9.2zm0 7.6a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm5.9-7.8a1.1 1.1 0 1 1-2.2 0 1.1 1.1 0 0 1 2.2 0zM12 3.8c2.7 0 3 0 4 .1 1 0 1.5.2 1.9.3.5.2.8.4 1.2.8.4.4.6.7.8 1.2.1.4.3.9.3 1.9.1 1 .1 1.4.1 4s0 3-.1 4c0 1-.2 1.5-.3 1.9-.2.5-.4.8-.8 1.2-.4.4-.7.6-1.2.8-.4.1-.9.3-1.9.3-1 .1-1.4.1-4 .1s-3 0-4-.1c-1 0-1.5-.2-1.9-.3a3.2 3.2 0 0 1-1.2-.8 3.2 3.2 0 0 1-.8-1.2c-.1-.4-.3-.9-.3-1.9-.1-1-.1-1.4-.1-4s0-3 .1-4c0-1 .2-1.5.3-1.9.2-.5.4-.8.8-1.2.4-.4.7-.6 1.2-.8.4-.1.9-.3 1.9-.3 1-.1 1.4-.1 4-.1zM12 2c-2.7 0-3.1 0-4.1.1-1.1 0-1.8.2-2.4.5-.7.2-1.2.6-1.8 1.1-.5.6-.9 1.1-1.1 1.8-.3.6-.5 1.3-.5 2.4C2 8.9 2 9.3 2 12s0 3.1.1 4.1c0 1.1.2 1.8.5 2.4.2.7.6 1.2 1.1 1.8.6.5 1.1.9 1.8 1.1.6.3 1.3.5 2.4.5 1 .1 1.4.1 4.1.1s3.1 0 4.1-.1c1.1 0 1.8-.2 2.4-.5.7-.2 1.2-.6 1.8-1.1.5-.6.9-1.1 1.1-1.8.3-.6.5-1.3.5-2.4.1-1 .1-1.4.1-4.1s0-3.1-.1-4.1c0-1.1-.2-1.8-.5-2.4a4.9 4.9 0 0 0-1.1-1.8 4.9 4.9 0 0 0-1.8-1.1c-.6-.3-1.3-.5-2.4-.5C15.1 2 14.7 2 12 2z"/></svg></a></div></div><div class="footer-cols-inner" style="display:grid;grid-template-columns:repeat(3,1fr);gap:40px;margin-bottom:48px;text-align:center"><div><div style="font-family:'DM Serif Display',serif;font-size:22px;color:#fff;margin-bottom:16px;text-decoration:underline;text-underline-offset:3px">Follow Us<span class="dot">.</span></div><ul style="list-style:none"><li style="margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px"><span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.3);display:inline-block;flex-shrink:0"></span><a href="https://www.facebook.com/gflamtouring" style="font-size:13px;font-weight:700;letter-spacing:1px;color:#fff;text-decoration:none;text-transform:uppercase" onmouseover="this.style.color='var(--pink)'" onmouseout="this.style.color='#fff'">Facebook</a></li><li style="margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px"><span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.3);display:inline-block;flex-shrink:0"></span><a href="https://www.instagram.com/gflamtouring" style="font-size:13px;font-weight:700;letter-spacing:1px;color:#fff;text-decoration:none;text-transform:uppercase" onmouseover="this.style.color='var(--pink)'" onmouseout="this.style.color='#fff'">Instagram</a></li><li style="margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px"><span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.3);display:inline-block;flex-shrink:0"></span><a href="https://www.tiktok.com/@gflamtouring" style="font-size:13px;font-weight:700;letter-spacing:1px;color:#fff;text-decoration:none;text-transform:uppercase" onmouseover="this.style.color='var(--pink)'" onmouseout="this.style.color='#fff'">TikTok</a></li></ul></div><div><div style="font-family:'DM Serif Display',serif;font-size:22px;color:#fff;margin-bottom:16px;text-decoration:underline;text-underline-offset:3px">About<span class="dot">.</span></div><ul style="list-style:none"><li style="margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px"><span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.3);display:inline-block;flex-shrink:0"></span><a href="/who-we-are" style="font-size:13px;font-weight:700;letter-spacing:1px;color:#fff;text-decoration:none;text-transform:uppercase" onmouseover="this.style.color='var(--pink)'" onmouseout="this.style.color='#fff'">Who We Are</a></li><li style="margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px"><span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.3);display:inline-block;flex-shrink:0"></span><a href="/what-we-do" style="font-size:13px;font-weight:700;letter-spacing:1px;color:#fff;text-decoration:none;text-transform:uppercase" onmouseover="this.style.color='var(--pink)'" onmouseout="this.style.color='#fff'">What We Do</a></li><li style="margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px"><span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.3);display:inline-block;flex-shrink:0"></span><a href="/current-tours" style="font-size:13px;font-weight:700;letter-spacing:1px;color:#fff;text-decoration:none;text-transform:uppercase" onmouseover="this.style.color='var(--pink)'" onmouseout="this.style.color='#fff'">Current Tours</a></li><li style="margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px"><span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.3);display:inline-block;flex-shrink:0"></span><a href="/drag-bingo-at-the-bowlo" style="font-size:13px;font-weight:700;letter-spacing:1px;color:#fff;text-decoration:none;text-transform:uppercase" onmouseover="this.style.color='var(--pink)'" onmouseout="this.style.color='#fff'">Drag Bingo at the Bowlo</a></li><li style="margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px"><span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.3);display:inline-block;flex-shrink:0"></span><a href="/work-with-us" style="font-size:13px;font-weight:700;letter-spacing:1px;color:#fff;text-decoration:none;text-transform:uppercase" onmouseover="this.style.color='var(--pink)'" onmouseout="this.style.color='#fff'">Work With Us</a></li></ul></div><div><div style="font-family:'DM Serif Display',serif;font-size:22px;color:#fff;margin-bottom:16px;text-decoration:underline;text-underline-offset:3px">Help<span class="dot">.</span></div><ul style="list-style:none"><li style="margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px"><span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.3);display:inline-block;flex-shrink:0"></span><a href="/contact" style="font-size:13px;font-weight:700;letter-spacing:1px;color:#fff;text-decoration:none;text-transform:uppercase" onmouseover="this.style.color='var(--pink)'" onmouseout="this.style.color='#fff'">Contact</a></li><li style="margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px"><span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.3);display:inline-block;flex-shrink:0"></span><a href="/privacy-policy" style="font-size:13px;font-weight:700;letter-spacing:1px;color:#fff;text-decoration:none;text-transform:uppercase" onmouseover="this.style.color='var(--pink)'" onmouseout="this.style.color='#fff'">Privacy Policy</a></li><li style="margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px"><span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.3);display:inline-block;flex-shrink:0"></span><a href="/cookies" style="font-size:13px;font-weight:700;letter-spacing:1px;color:#fff;text-decoration:none;text-transform:uppercase" onmouseover="this.style.color='var(--pink)'" onmouseout="this.style.color='#fff'">Cookies</a></li></ul></div></div><div style="border-top:1px solid var(--border);padding-top:24px;text-align:center"><p style="font-size:13px;color:rgba(255,255,255,.35);line-height:1.7;margin-bottom:10px">Gflam Touring acknowledges the Traditional Custodians of the land on which we work and create.<br>We pay our respects to Elders past, present and emerging.</p><p style="font-size:12px;color:rgba(255,255,255,.25);letter-spacing:1px;text-transform:uppercase">&copy; <span id="yr"></span> Gflam Group Pty Ltd. All rights reserved</p></div></div></div>
+
+<script>
+/* CLUB FORM LOGIC. Pure functions: no DOM, no fetch. tools/drag-bingo-clubs-page.test.py lifts
+   everything between these two markers and RUNS it under jsc with real inputs. */
+/* BEGIN CLUB FORM LOGIC */
+var DBC_ACCESS_KEY = '37c805da-5dee-4732-8441-7c3ebb532a66';   /* Web3Forms, Gflam Touring: routes to Dean */
+var DBC_REFS = ['post-letter', 'post-card', 'email-clubs'];     /* the printed and emailed ways in */
+function clubFormCheck(v) {
+  /* The fields a date actually needs: who, how to ring them, which state (the permit answer
+     differs by state) and how big the room is (it picks the show). Role and month are optional. */
+  if (!v.club || !v.club.trim()) return 'Tell us the name of your club.';
+  if (!v.name || !v.name.trim()) return 'Tell us your name.';
+  if (!v.phone || v.phone.replace(/\D/g, '').length < 8) return 'A phone number we can call you on, please.';
+  if (!v.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email.trim())) return 'An email address that looks right, please.';
+  if (!v.state) return 'Which state is the club in?';
+  if (!v.room) return 'Roughly how many seats in the room?';
+  return '';
+}
+function clubFormRef(search) {
+  /* ?ref=post-letter off the address, kept only if it is one of ours. */
+  var m = /[?&]ref=([^&#]+)/.exec(search || '');
+  var r = m ? decodeURIComponent(m[1]).toLowerCase() : '';
+  return DBC_REFS.indexOf(r) !== -1 ? r : (r ? 'other' : '');
+}
+function clubFormPayload(v, ref) {
+  return {
+    access_key: DBC_ACCESS_KEY,
+    subject: 'Drag Bingo club enquiry: ' + v.club.trim(),
+    from_name: 'Gflam Touring website',
+    kind: 'drag_bingo_club_enquiry',
+    club: v.club.trim(), name: v.name.trim(), role: (v.role || '').trim(),
+    phone: v.phone.trim(), email: v.email.trim(), state: v.state,
+    room_size: v.room, preferred_month: v.month || 'Not sure yet',
+    ref: ref || 'direct',
+    page: 'https://www.gflamtouring.com.au/drag-bingo-at-the-bowlo/clubs'
+  };
+}
+/* END CLUB FORM LOGIC */
+
+document.getElementById('yr').textContent = new Date().getFullYear();
+(function () {
+  var ref = clubFormRef(location.search);
+  document.getElementById('dbc-ref').value = ref;
+  if (ref && typeof gtag === 'function') gtag('event', 'club_page_ref', { ref: ref });
+  var form = document.getElementById('dbcf'), err = document.getElementById('dbc-err'), btn = document.getElementById('dbc-send');
+  function val(id) { return document.getElementById(id).value; }
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var v = { club: val('dbc-club'), name: val('dbc-name'), role: val('dbc-role'), phone: val('dbc-phone'),
+              email: val('dbc-email'), state: val('dbc-state'), room: val('dbc-room'), month: val('dbc-month') };
+    var problem = clubFormCheck(v);
+    err.textContent = problem; err.classList.toggle('show', !!problem);
+    if (problem) return;
+    btn.disabled = true; btn.textContent = 'Sending...';
+    fetch('https://api.web3forms.com/submit', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(clubFormPayload(v, ref)) })
+    .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+    .then(function (j) {
+      if (!j || j.success === false) throw new Error('refused');
+      form.style.display = 'none'; document.getElementById('dbcz').classList.add('show');
+      if (typeof gtag === 'function') gtag('event', 'club_enquiry', { ref: ref || 'direct', room_size: v.room });
+      if (typeof fbq === 'function') fbq('track', 'Lead');
+    })
+    .catch(function () {
+      btn.disabled = false; btn.textContent = 'Ask for a date';
+      err.textContent = "Sorry, that didn't go through. Please try again, or email hello@gflamtouring.com.au."; err.classList.add('show');
+    });
+  });
+})();
+
+/* The mailing list block, the same as the public Drag Bingo page: public.signups, source drag_bingo. */
+var _SBU = 'https://ijkzgmdtwtgfkedqspxm.supabase.co';
+var _SBK = 'sb_publishable_9v83FWCSt7Di-jkgTvsMJQ_f6lJPovb';
+var _SBH = {'apikey':_SBK,'Authorization':'Bearer '+_SBK,'Content-Type':'application/json'};
+function doDBSU() {
+  var first=document.getElementById('dbsfa').value.trim();
+  var email=document.getElementById('dbsfc').value.trim();
+  if(!first||!email.includes('@')){alert('Please enter your first name and email.');return;}
+  fetch(_SBU+'/rest/v1/signups',{method:'POST',headers:_SBH,body:JSON.stringify({
+    first_name:first,mobile:document.getElementById('dbsfb').value.trim(),
+    email:email,postcode:document.getElementById('dbsfd').value.trim(),
+    source:'drag_bingo',signup_type:'signup'
+  })}).then(function(r){if(r.ok){document.getElementById('dbsf').style.display='none';document.getElementById('dbsfz').classList.add('show');}else{alert("Sorry, that didn't go through. Please try again.");}}).catch(function(){alert("Sorry, that didn't go through. Please check your connection and try again.");});
+}
+</script>
+</body></html>
