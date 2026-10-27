@@ -244,6 +244,19 @@ try:
     green_said = r.returncode == 0 and 'GATE ONLY: green' in out and 'EXIT 0' in out
     ok('with the suite green: exit 0, nothing uploaded on purpose', green_said, '' if green_said else out[-300:])
     ok('and the fast gate parsed the file and checked its definitions', 'venueplay-sms-hook.js parses' in out and 'calls a function that does not exist' in out)
+    # 28 Oct 2026: the tools/test-*.js suites end "PASS 27 checks". The full gate passes them (exit 0, PASS,
+    # no FAIL line); this fast gate called 13 of them red and refused a deploy. Same rule both places now.
+    io.open(broken, 'w', encoding='utf-8').write('// reads venueplay-sms-hook.js\nprint("  ok the hook fails over");\nprint("PASS 27 checks");\n')
+    r = subprocess.run([sys.executable, os.path.join(scratch, 'tools', 'deploy-worker.py'), '--gate-only', 'venueplay-sms',
+                        'venueplay-backend/worker/venueplay-sms-hook.js'], capture_output=True, text=True, env=env, cwd=scratch, timeout=300)
+    out = r.stdout + r.stderr
+    ok('a suite ending "PASS 27 checks" with no FAIL line is green, as the full gate judges it', r.returncode == 0 and 'GATE ONLY: green' in out,
+       '' if r.returncode == 0 else out[-300:])
+    io.open(broken, 'w', encoding='utf-8').write('// reads venueplay-sms-hook.js\nprint("  FAIL the hook does not fail over");\nprint("PASS 26 checks");\n')
+    r = subprocess.run([sys.executable, os.path.join(scratch, 'tools', 'deploy-worker.py'), '--gate-only', 'venueplay-sms',
+                        'venueplay-backend/worker/venueplay-sms-hook.js'], capture_output=True, text=True, env=env, cwd=scratch, timeout=300)
+    ok('... and "PASS" after a FAIL line is still red', r.returncode != 0, r.returncode)
+    io.open(broken, 'w', encoding='utf-8').write('// reads venueplay-sms-hook.js\nprint("ok the hook fails over");\nprint("ALL 1 CHECKS PASSED");\n')   # section 7 reuses it, green
     dw_src = io.open(os.path.join(TOOLS, 'deploy-worker.py'), encoding='utf-8').read()
     ok('a refused or red deploy never exits 0: die() and the red path both print EXIT 1', dw_src.count("EXIT 1") >= 3 and '--full-gate' in dw_src)
 
