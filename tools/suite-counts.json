@@ -135,6 +135,10 @@
   "checks": 43,
   "counted_by": "lines"
  },
+ "tools/gate-record.test.py": {
+  "checks": 45,
+  "counted_by": "lines"
+ },
  "tools/gate-reliability.test.py": {
   "checks": 50,
   "counted_by": "lines"
@@ -205,6 +209,10 @@
  },
  "tools/screen-unsaved-in-chrome.test.py": {
   "checks": 17,
+  "counted_by": "lines"
+ },
+ "tools/set-worker-secret.test.py": {
+  "checks": 32,
   "counted_by": "lines"
  },
  "tools/support-phone.test.py": {

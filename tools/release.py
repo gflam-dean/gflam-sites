@@ -17,7 +17,11 @@ the steps and stops at the first one that is not true:
     3. wait until Cloudflare Pages is serving every served file the push changed
     4. if a screen file changed, run verify-live --stamp and commit the stamp (the full
        gate's "a browser has looked" line is red until this has happened)
-    5. run the full gate (release-check.py, live half included)
+    5. run the full gate (release-check.py, live half included). Since 27 Oct 2026: when the
+       pre-push hook gated THIS exact tree green under two hours ago (tools/gate-record.json,
+       written by the hook, read by tools/gate-record.py) the Chrome suites are left out
+       (--skip-chrome) and every other local check plus the whole live half still runs, with
+       the reason printed. Any other state is the full gate, as before.
     6. one plain line
 
 It calls the existing tools; it adds no judgement of its own. Secrets stay in
@@ -149,12 +153,40 @@ def main():
         print('  no screen file in this push; nothing to look at')
 
     step(5, 'the full gate, after')
-    r = subprocess.run([PY, 'tools/release-check.py'], cwd=ROOT)
+    r = gate_after(ROOT)
     if r.returncode != 0:
         stop('the full gate is red on the live release. Read it; a "this release is live" line means Pages has not finished, run python3 tools/release-check.py again.')
 
     print('\n%sLIVE and checked: %s%s' % (GRN, head[:8], OFF))
     return 0
+
+
+def gate_argv(root):
+    """The release-check.py command step 5 runs, and the one-line reason, from the pre-push gate's
+    record (tools/gate-record.py). ONLY when the hook gated this exact tree green under two hours ago
+    are the Chrome suites left out (--skip-chrome: every other local check and the whole live half
+    still run). Otherwise the full gate, as before. The reason is printed either way."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location('gate_record', os.path.join(root, 'tools', 'gate-record.py'))
+    gr = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gr)
+    skip, why = gr.decide(root)
+    argv = [PY, 'tools/release-check.py'] + (['--skip-chrome'] if skip else [])
+    return argv, why
+
+
+def gate_after(root, run=subprocess.run):
+    """Step 5. Prints why it is running what it runs, then runs it. Returns the CompletedProcess."""
+    argv, why = gate_argv(root)
+    print('  %s%s%s' % (DIM, why, OFF))
+    print('  running: ' + ' '.join(os.path.basename(a) if i == 0 else a for i, a in enumerate(argv)))
+    # The gate's summary says in red that a --skip-chrome run is "NOT a release gate", which is right
+    # for a prove run and wrong here: the Chrome half WAS gated, by the hook, on this tree. So the
+    # gate is told the reason and prints that instead (release-check.py, summary).
+    env = dict(os.environ)
+    if '--skip-chrome' in argv:
+        env['VP_CHROME_GATED'] = why
+    return run(argv, cwd=root, env=env)
 
 
 if __name__ == '__main__':

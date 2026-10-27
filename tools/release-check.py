@@ -5510,7 +5510,13 @@ def summary(which, ran_live):
     # ONE LINE ON FLAKES, EVERY RUN. A Chrome suite that passed only on its retry is a pass, and
     # it is also a fact about this Mac that someone should see without opening the log.
     print(gatelib.flake_summary_line())
-    if SKIP_CHROME:
+    if SKIP_CHROME and os.environ.get('VP_CHROME_GATED'):
+        # release.py step 5 (27 Oct 2026): the pre-push hook ran the Chrome suites green on this
+        # exact tree minutes ago (tools/gate-record.py), so this run is the release gate minus a
+        # repeat of them, and the reason release.py printed is repeated here.
+        print('%sTHIS RUN SKIPPED %d CHROME SUITE(S) on purpose: %s%s'
+              % (YEL, len(_CHROME_SKIPPED), os.environ['VP_CHROME_GATED'][:300], OFF))
+    elif SKIP_CHROME:
         print('%sTHIS RUN SKIPPED %d CHROME SUITE(S) (--skip-chrome). It is a targeted prove run, NOT a release gate.%s'
               % (RED, len(_CHROME_SKIPPED), OFF))
 

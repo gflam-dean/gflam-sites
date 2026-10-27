@@ -38,3 +38,7 @@ venueplay-backend/tools/moved-out-of-site-dir-2026-09-11/
 
 # gate flake log, written by every gate run (tools/gatelib.py); never committed
 tools/flake-log.jsonl
+
+# the pre-push gate's record of the tree it gated and when (tools/gate-record.py); per checkout, never committed
+tools/gate-record.json
+tools/gate-record.json.tmp

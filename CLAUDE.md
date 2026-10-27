@@ -120,6 +120,16 @@ was still here on 16 September, by which point it had cost a round trip of offer
 Dean a paste he did not need. Deploy `venueplay-api-FULL.js`, never a stub. Deploy
 `DEPLOY-partyplay-api.js`, never the SOURCE.
 
+A Worker SECRET is set with `python3 tools/set-worker-secret.py --live <worker> <SECRET_NAME>`
+(27 Oct 2026). Same token, env file and LIVE allowlist as the deploy tool; the value is read from
+`~/.gflam-migrate.env` by name and never printed. It sets one secret_text binding and confirms it
+by name in the Worker's settings. The deploy tool only ships code; it cannot add a secret.
+
+Step 5 of `release.py` skips ONLY the Chrome suites when the pre-push hook has just gated the
+identical tree green (under two hours, `tools/gate-record.json`, written by the hook, read by
+`tools/gate-record.py`), and prints why. After changing `tools/hooks/pre-push`, re-run
+`bash tools/hooks/install.sh`: the installed copy is what git runs.
+
 **Do not `open -t` a Worker for someone to copy out of.** On 16 September a stray
 `Y` was typed into the first line of venueplay-game.js while it sat open in
 TextEdit, and Cloudflare rejected the upload with "ReferenceError: Y is not defined

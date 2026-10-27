@@ -34,11 +34,19 @@ if ! python3 "$ROOT/tools/stamp-workers.py" --check; then
 fi
 
 if ! python3 "$ROOT/tools/release-check.py" --local; then
+  # A red gate leaves no record: a tree that failed can never ride an older one.
+  [ -f "$ROOT/tools/gate-record.py" ] && python3 "$ROOT/tools/gate-record.py" --clear
   echo
   echo "PUSH REFUSED. Fix the above. Do not fix it by deleting the check, and do not"
   echo "reach for --no-verify: a red gate is cheaper than a red venue."
   exit 1
 fi
+
+# GREEN: write down the tree this gate judged and when (tools/gate-record.json, ignored by git).
+# release.py step 5 reads it and skips ONLY the Chrome suites, only when the tree it is about to
+# gate is this exact tree and this record is under two hours old. The same 15 Chrome suites ran
+# twice per release on the identical tree before 27 Oct 2026, 27 minutes each time.
+[ -f "$ROOT/tools/gate-record.py" ] && python3 "$ROOT/tools/gate-record.py" --write
 
 # Anything a machine cannot judge, put in front of the person pushing.
 CHANGED=$(git diff --name-only @{u}..HEAD 2>/dev/null || git diff --name-only HEAD~1..HEAD)
