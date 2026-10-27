@@ -8,6 +8,12 @@
 # Install:  bash tools/hooks/install.sh
 
 ROOT="$(git rev-parse --show-toplevel)"
+# git exports GIT_DIR (and GIT_WORK_TREE, GIT_INDEX_FILE when set) to this hook, and everything the
+# gate runs would inherit them. On 27 Oct 2026 a test's "throwaway" git init re-initialised THIS
+# checkout's gitdir through exactly that, and its commit "three" went out in the push. ROOT is known;
+# from here every git command finds the checkout from its working directory and nothing else.
+cd "$ROOT" || exit 1
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_COMMON_DIR
 echo
 echo "── pre-push: checking before this goes to a live venue ──"
 

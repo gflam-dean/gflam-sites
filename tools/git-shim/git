@@ -1,0 +1,103 @@
+#!/bin/bash
+# THE git EVERY SUITE THE GATE RUNS GETS (tools/gatelib.py puts this folder first on PATH).
+#
+# WHY (27 Oct 2026, the "three" incident). git push exports GIT_DIR to the pre-push hook. The hook
+# ran the gate, the gate ran tools/gate-record.test.py, and the test's "throwaway" git repo was
+# built with that GIT_DIR still in its environment: git init re-initialised the REAL worktree's
+# gitdir, and the test's commits "one, reworded", "two", "three" (a tree of five files) landed on
+# the real branch. The push then delivered "three" to GitHub, Cloudflare Pages deployed it, and
+# venueplay.com.au served <html>three</html> on every path for twenty-nine minutes.
+#
+# A suite is a test. It may read and commit in a repo it made for itself. It may never move
+# anything over a network. So this shim lets every git command through unchanged EXCEPT push,
+# fetch, pull, clone and ls-remote aimed at anything that is not a path on this disk: those are
+# refused (exit 128), written to $VP_GIT_SHIM_LOG with the command and the target, and the gate
+# turns red on the record (release-check.py, "no suite tried to push, fetch or clone anywhere").
+#
+# The real git is $VP_GIT_REAL (set by gatelib) or the next git on PATH that is not this file.
+
+me="$(cd "$(dirname "$0")" && pwd -P)/git"
+real="${VP_GIT_REAL:-}"
+if [ -z "$real" ] || [ ! -x "$real" ]; then
+  real=""
+  IFS=: read -ra parts <<< "$PATH"
+  for d in "${parts[@]}"; do
+    [ -n "$d" ] && [ -x "$d/git" ] && [ "$(cd "$d" 2>/dev/null && pwd -P)/git" != "$me" ] && { real="$d/git"; break; }
+  done
+fi
+if [ -z "$real" ]; then
+  echo "git shim (tools/git-shim/git): no real git found on PATH" >&2
+  exit 127
+fi
+
+# Find the subcommand: skip git's own options and the values they take.
+args=("$@")
+i=0
+verb=""
+while [ $i -lt ${#args[@]} ]; do
+  a="${args[$i]}"
+  case "$a" in
+    -C|-c|--git-dir|--work-tree|--namespace|--exec-path|--super-prefix|--config-env|--attr-source) i=$((i + 2)); continue ;;
+    -*) i=$((i + 1)); continue ;;
+    *) verb="$a"; break ;;
+  esac
+done
+globals=("${args[@]:0:$i}")
+rest=("${args[@]:$((i + 1))}")
+
+case "$verb" in
+  push|fetch|pull|clone|ls-remote) ;;
+  *) exec "$real" "$@" ;;
+esac
+
+# The target: the first word after the verb that is not an option (options that take a separate
+# value are skipped). No target named means git's default remote, which is resolved like a name.
+target=""
+j=0
+while [ $j -lt ${#rest[@]} ]; do
+  b="${rest[$j]}"
+  case "$b" in
+    --) j=$((j + 1)); [ $j -lt ${#rest[@]} ] && target="${rest[$j]}"; break ;;
+    -o|--push-option|--receive-pack|--exec|--upload-pack|--depth|--shallow-since|--shallow-exclude|--negotiation-tip|--refmap|-j|--jobs|--server-option|--template|--reference|--reference-if-able|--origin|--branch|--separate-git-dir|--filter|--bundle-uri|-S|--gpg-sign|--strategy|-s|--strategy-option|-X|--cleanup|--signoff-sign|--log) j=$((j + 2)); continue ;;
+    -*) j=$((j + 1)); continue ;;
+    *) target="$b"; break ;;
+  esac
+done
+
+is_local_path() {
+  case "$1" in
+    /*|./*|../*|file://*|~/*) return 0 ;;
+    *::*) return 1 ;;
+    *) [ -d "$1" ] && return 0; return 1 ;;
+  esac
+}
+
+url="$target"
+if [ -z "$target" ]; then
+  if [ "$verb" = "clone" ]; then url="(no repository named)"
+  else
+    head_branch="$("$real" "${globals[@]}" symbolic-ref -q --short HEAD 2>/dev/null)"
+    name="$("$real" "${globals[@]}" config --get "branch.${head_branch}.remote" 2>/dev/null)"
+    [ -z "$name" ] && name="$("$real" "${globals[@]}" config --get remote.pushDefault 2>/dev/null)"
+    [ -z "$name" ] && name="origin"
+    url="$("$real" "${globals[@]}" remote get-url "$name" 2>/dev/null)"
+    [ -z "$url" ] && url="$name (default remote, unresolved)"
+  fi
+elif ! is_local_path "$target"; then
+  # a remote name resolves to its URL; a URL stays what it is
+  if [ "$verb" = "push" ]; then resolved="$("$real" "${globals[@]}" remote get-url --push "$target" 2>/dev/null)"
+  else resolved="$("$real" "${globals[@]}" remote get-url "$target" 2>/dev/null)"; fi
+  [ -n "$resolved" ] && url="$resolved"
+fi
+
+if is_local_path "$url"; then
+  exec "$real" "$@"
+fi
+
+line="$(date '+%Y-%m-%d %H:%M:%S') pid=$$ ppid=$PPID cwd=$PWD REFUSED: git $* -> ${url}"
+if [ -n "${VP_GIT_SHIM_LOG:-}" ]; then
+  printf '%s\n' "$line" >> "$VP_GIT_SHIM_LOG" 2>/dev/null
+fi
+echo "git shim: REFUSED. A suite run by the gate may not '$verb' to '$url': it is not a path on this disk." >&2
+echo "          Recorded in ${VP_GIT_SHIM_LOG:-(no VP_GIT_SHIM_LOG set)}; the gate goes red on it. tools/git-shim/git, 27 Oct 2026." >&2
+exit 128

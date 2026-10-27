@@ -136,11 +136,15 @@
   "counted_by": "lines"
  },
  "tools/gate-record.test.py": {
-  "checks": 45,
+  "checks": 60,
   "counted_by": "lines"
  },
  "tools/gate-reliability.test.py": {
   "checks": 50,
+  "counted_by": "lines"
+ },
+ "tools/git-shim.test.py": {
+  "checks": 47,
   "counted_by": "lines"
  },
  "tools/help-desk-pages.test.py": {

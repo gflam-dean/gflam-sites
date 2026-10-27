@@ -604,6 +604,16 @@ def local_checks(which):
        '%d Chrome suite(s) watched by process group' % _CHROME_WATCHED[0],
        why='killed after: ' + ', '.join('%s (%d)' % x for x in _LEAKED[:4]))
 
+    # A SUITE MAY NOT PUSH (27 Oct 2026). Every suite above ran with tools/git-shim/git first on its
+    # PATH and GIT_DIR scrubbed (gatelib.suite_env). A push, fetch, pull, clone or ls-remote aimed at
+    # anything that is not a path on this disk was refused and written down; this reads the record.
+    # gate-record.test.py, run by the pre-push hook inside git push, inherited GIT_DIR, re-initialised
+    # this checkout's gitdir as its "throwaway" repo, and its commit "three" went out in the push.
+    attempts = gatelib.git_shim_attempts()
+    ok('no suite tried to push, fetch, pull or clone anywhere but a local path', not attempts,
+       'every suite ran behind tools/git-shim/git with GIT_DIR scrubbed',
+       why='; '.join(a[:160] for a in attempts[:3]))
+
     for f in ['check-tv-watchdog.py', 'check-venue-scoping.py']:
         p = os.path.join(ROOT, 'venueplay-backend', 'tools', f)
         if which in ('both', 'venueplay') and os.path.isfile(p):

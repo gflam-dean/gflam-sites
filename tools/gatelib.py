@@ -21,10 +21,16 @@ So, in one place:
                 called red; both runs are written to tools/flake-log.jsonl with the load at
                 the time; a suite that fails twice is red, as before. jsc and Worker suites
                 are deterministic and are never retried.
+  suite env     (27 Oct 2026, the "three" incident) every suite runs with GIT_DIR, GIT_WORK_TREE
+                and GIT_INDEX_FILE removed from its environment (git push exports them to the
+                pre-push hook, the hook runs the gate, and a test's git init re-initialised the
+                real checkout through them) and with tools/git-shim/git first on its PATH: a
+                push, fetch, pull, clone or ls-remote to anything but a path on this disk is
+                refused and written to GIT_SHIM_LOG, which release-check.py reads and goes red on.
 
 Everything here is plain Python 3.9, no third party modules, like the rest of tools/.
 """
-import io, json, os, re, signal, subprocess, sys, time, atexit
+import io, json, os, re, shutil, signal, subprocess, sys, tempfile, time, atexit
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HEAVY_LOCK = '/tmp/vp-heavy.lock'
@@ -242,6 +248,49 @@ def kill_group(pgid, sig=signal.SIGKILL):
         return False
 
 
+# ---------------------------------------------------------------- the suite's git
+GIT_SHIM_DIR = os.path.join(ROOT, 'tools', 'git-shim')
+# What git exports to a hook, and what a suite must never inherit: with any of these set, a "git init"
+# in a temp folder is a re-init of the REAL gitdir, and every commit after it lands on the real branch.
+GIT_LEAK_VARS = ('GIT_DIR', 'GIT_WORK_TREE', 'GIT_INDEX_FILE', 'GIT_COMMON_DIR', 'GIT_PREFIX',
+                 'GIT_OBJECT_DIRECTORY', 'GIT_ALTERNATE_OBJECT_DIRECTORIES', 'GIT_NAMESPACE',
+                 'GIT_IMPLICIT_WORK_TREE', 'GIT_CONFIG_PARAMETERS')
+# One log per gate. A gate started by another gate (deploy-worker runs release-check runs a suite)
+# writes to the outer one's log, so an attempt anywhere underneath turns the outer gate red too.
+GIT_SHIM_LOG = os.environ.get('VP_GIT_SHIM_LOG') or os.path.join(tempfile.gettempdir(), 'gate-git-shim-%d.log' % os.getpid())
+
+
+def _path_without_shim(path):
+    shim = os.path.realpath(GIT_SHIM_DIR)
+    return [d for d in (path or os.defpath).split(os.pathsep) if d and os.path.realpath(d) != shim]
+
+
+def real_git(path=None):
+    """The git the shim hands over to: the first git on PATH that is not the shim."""
+    return shutil.which('git', path=os.pathsep.join(_path_without_shim(path if path is not None else os.environ.get('PATH')))) or 'git'
+
+
+def suite_env(base=None):
+    """The environment every suite gets: the caller's (or base), minus what git exports to a hook,
+    plus tools/git-shim/git first on PATH, the real git named for it, and the log it writes to."""
+    env = dict(os.environ if base is None else base)
+    for k in GIT_LEAK_VARS:
+        env.pop(k, None)
+    env['PATH'] = os.pathsep.join([GIT_SHIM_DIR] + _path_without_shim(env.get('PATH')))
+    env['VP_GIT_REAL'] = real_git(env['PATH'])
+    env['VP_GIT_SHIM_LOG'] = GIT_SHIM_LOG
+    return env
+
+
+def git_shim_attempts(path=None):
+    """Every push/fetch/pull/clone/ls-remote the shim refused this gate, one line each."""
+    try:
+        with io.open(path or GIT_SHIM_LOG, encoding='utf-8', errors='replace') as fh:
+            return [l.rstrip() for l in fh if l.strip()]
+    except (IOError, OSError):
+        return []
+
+
 class SuiteRun(object):
     def __init__(self, rc, out, timed_out, leaked, seconds):
         self.rc, self.out, self.timed_out, self.leaked, self.seconds = rc, out, timed_out, leaked, seconds
@@ -267,7 +316,7 @@ def run_suite(cmd, cwd=ROOT, timeout=None, env=None):
     import threading
     t0 = time.time()
     p = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
-                         start_new_session=True, env=env)
+                         start_new_session=True, env=suite_env(env))
     # The output is read on a thread and the SUITE is what is waited for. communicate() waits for
     # the pipe to close instead, and a child the suite left behind holds the pipe open: a leaked
     # Chrome would have made the gate sit out the whole timeout after the suite had ended.
