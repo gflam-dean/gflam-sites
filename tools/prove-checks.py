@@ -764,8 +764,8 @@ MUTATIONS = [
      '    if(!live){ signOutNow(); return; }', '    if(!live || confirm("Sign out anyway?")){ signOutNow(); return; }',
      'Sign out with a game running puts up a native dialog and the console stops answering'),
     ('console-in-chrome.test.py', 'venueplay/app/musical/host.html',
-     '    vpAsk("End this game?\\n\\nThe TV goes back to your ads and everyone\'s card is closed.").then(function(ok){ if(ok && !G.busy) endGameAsked(); });',
-     '    if(confirm("End this game?")) endGameAsked();',
+     '    vpAsk("End this game?\\n\\nThe TV goes back to your ads and everyone\'s card is closed.").then(function(ok){\n      G.endAsking=false;\n      if(ok && !G.busy && G.status==="running") endGameAsked();\n    }, function(){ G.endAsking=false; });',
+     '    G.endAsking=false; if(confirm("End this game?")) endGameAsked();',
      'musical End game goes back to a native confirm() and the console freezes'),
     ('console-in-chrome.test.py', 'venueplay/app/raffle/host.html',
      '      ? vpAsk("You\'ve changed the raffle settings.', '      ? (window.confirm("Start a fresh raffle?"), vpAsk)("You\'ve changed the raffle settings.',
@@ -2266,6 +2266,10 @@ MUTATIONS = [
     ('test-trivia-15-oct.js', 'venueplay-backend/supabase/venueplay-99-answer-membership-first.sql', "  if v_game.session_id <> v_player.session_id then status := 'wrong_game'; return next; return; end if;\n  if v_game.format <> 'trivia' then status := 'not_trivia'; return next; return; end if;", "  if v_game.format <> 'trivia' then status := 'not_trivia'; return next; return; end if;\n  if v_game.session_id <> v_player.session_id then status := 'wrong_game'; return next; return; end if;", 'migration 99 still checks the format before membership'),
     ('test-trivia-15-oct.js', 'venueplay-backend/worker/venueplay-game.js', "if (method === 'POST' && path === '/host/trivia/board')  return await handleHostTriviaBoard", "if (false)  return await handleHostTriviaBoard", 'the board route is never reached'),
     ('test-trivia-15-oct.js', 'venueplay-backend/worker/venueplay-game.js', 'own: !libTexts.has(r.question)', 'own: true', "every question in a night is counted as the host's own"),
+    # 27 Oct 2026 (live play, Test Charlie): a phone left on the final screen of a closed quiz answered the next session's quiz with the closed night's token.
+    ('test-trivia-15-oct.js', 'venueplay/app/trivia/play.html', '    dropStaleJoin();\n    rejoinNow();\n    return true;\n  }', '    return false;\n  }', 'a phone that stayed connected through End game answers the next night\'s quiz with the closed night\'s token: "Correct!" with no points, "Scores could not be loaded", "No scores yet"'),
+    ('test-trivia-15-oct.js', 'venueplay/app/trivia/host.html', 'bcast({ t:"started", game_id:G.gameId, session_id:G.sessionId, question_count:r.question_count', 'bcast({ t:"started", game_id:G.gameId, question_count:r.question_count', 'the console\'s "started" no longer says which night it is, so no phone can tell a new session from a new round'),
+    ('test-trivia-15-oct.js', 'venueplay/app/trivia/play.html', 'ready=_rejoinP||Promise.resolve();', 'ready=Promise.resolve();', 'an answer tapped while the re-join is in flight goes out with no token and cannot heal'),
     # 14 Oct fix round: signing.
     ('test-signing-15-oct.js', 'venueplay/app/vp-sign.js', '      if (senderBehind(payload)) return Promise.resolve("replay");', '', 'a signed winner or to_ads recorded earlier in the night is accepted again by a game frame that never heard it'),
     ('test-signing-15-oct.js', 'venueplay/app/vp-sign.js', '      loadSeen();                                                           // what this tab already heard, once per page\n', '', 'a fresh game frame after a hop forgets what the tab heard and takes last game\'s winner again'),
@@ -3023,6 +3027,11 @@ MUTATIONS = [
      '      var rk=rosterKey(m);',
      '      var rk="p:"+m.pid;',
      'a phone on the bingo page and the musical page is counted as two players'),
+    # 27 Oct 2026 (live play, Test Charlie): a double tap on End game queued a second "End this game?" after the game had ended.
+    ('test-musical-host.js', 'venueplay/app/musical/host.html',
+     '    if(G.busy || G.endAsking || G.status!=="running") return;',
+     '    if(G.busy) return;',
+     'a double tap on End game puts a second "End this game?" up after the game has ended'),
     ('test-musical-phone.js', 'venueplay/app/musical/play.html',
      '<<ALL:name:P.name, did:deviceId() })>>',
      'name:P.name })',

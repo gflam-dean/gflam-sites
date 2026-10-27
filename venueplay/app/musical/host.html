@@ -1605,10 +1605,18 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     });
   }
   function endGame(){
-    if(G.busy) return;
+    if(G.busy || G.endAsking || G.status!=="running") return;
     /* Same guard as New game. One stray tap here used to clear the songs, close every card and
-       send the TV back to the ads mid-round, in front of the room. */
-    vpAsk("End this game?\n\nThe TV goes back to your ads and everyone's card is closed.").then(function(ok){ if(ok && !G.busy) endGameAsked(); });
+       send the TV back to the ads mid-round, in front of the room.
+       ONE PROMPT, HOWEVER MANY TAPS. vpAsk queues a question asked while one is open, so a double
+       tap put a second "End this game?" up after the first OK had already ended the game (live
+       play, Test Charlie, 27 Oct 2026). endAsking holds the button while the question is open, and
+       a stale OK does nothing once the game is no longer running. */
+    G.endAsking=true;
+    vpAsk("End this game?\n\nThe TV goes back to your ads and everyone's card is closed.").then(function(ok){
+      G.endAsking=false;
+      if(ok && !G.busy && G.status==="running") endGameAsked();
+    }, function(){ G.endAsking=false; });
   }
   function endGameAsked(){
     clearErrForAction();

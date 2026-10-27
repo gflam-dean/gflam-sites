@@ -560,7 +560,10 @@
     // No choice in it: the channel is public, so the pick told anyone listening each team's answer
     // before the clock ran out, paper rounds included (break test, 14 Oct 2026). Only "answered" is used.
     if(!P.gameId){ send({ t:"answer", pid:P.pid, qseq:qseq }); sayIn(); return; }
-    sendAnswer(P.gameId, i, qseq, P.q.endsAt).then(function(r){
+    /* A re-join in flight (a new night, see nightChanged) finishes first, so the answer goes out
+       with tonight's token rather than none: "Missing X-Player-Token" is a 401 that cannot heal. */
+    var endsAt=P.q.endsAt, ready=_rejoinP||Promise.resolve();
+    ready.then(function(){ return sendAnswer(P.gameId, i, qseq, endsAt); }).then(function(r){
       if(!P.q || P.q.qseq!==qseq) return;
       // Cosmetic broadcast for the TV "answered" ticker, sent only once the real answer landed.
       send({ t:"answer", pid:P.pid, qseq:qseq });
@@ -793,7 +796,7 @@
       if(m.phase==="lobby"){ P.q=null; P.ended=false; if(P.joined){ showWait("Watch the big screen. Your questions will pop up here."); } }
     }
     else if(m.t==="started"){
-      if(P.joined && !P.token) rejoinNow();   // the night began after this phone arrived: join it now
+      if(!nightChanged(m) && P.joined && !P.token) rejoinNow();   // the night began after this phone arrived: join it now
       useGame(m.game_id);
       if(typeof m.colour==="boolean") P.colour=m.colour;
       P.q=null; P.ended=false; P.total=0; P.rank=0; P.playersCount=0;
@@ -801,6 +804,7 @@
     }
     else if(m.t==="question"){ sayAlive();
       if(!P.joined) return;
+      nightChanged(m);                       // a phone that missed "started" learns here that it is a new night
       if(!P.token) rejoinNow();              // an answer with no token for tonight would go nowhere
       /* A CATCH-UP AIMED AT SOMEBODY ELSE. The host replays whatever is on to any phone
          that announces itself, because a backgrounded tab comes back to nothing. That
@@ -914,6 +918,22 @@
   function dropStaleJoin(){
     P.token=""; P.sessionId=""; AR.hash="";   // the answers room knows a phone by its token's hash
     try{ localStorage.removeItem("vp-ttoken-"+P.room); localStorage.removeItem("vp-tsess-"+P.room); }catch(e){}
+  }
+  /* A NEW NIGHT ON THE SAME CODE, WHILE THIS PHONE STAYED CONNECTED. The rule above only ran when the
+     channel came back (a reload, a sleep): a phone left on the final screen of a closed quiz heard the
+     next quiz's "started" on the same channel, took it for another round of its own night, and
+     answered with the closed night's token. The room acked the tap and the Worker threw it away at
+     Reveal (a token of another session), so the phone said "Correct!" with no points, the console
+     "Scores could not be loaded" and the wall "No scores yet" (live play, Test Charlie, 27 Oct 2026).
+     The console now says which night a "started" and a "question" belong to; when it is not the night
+     this phone joined, the stale token goes and the phone re-joins the new one, same pid, same name,
+     before it answers (answer() waits for the re-join). An older console that says no night, and a
+     phone that has not joined, are left exactly as before. */
+  function nightChanged(m){
+    if(!P.joined || !m || !m.session_id || !P.sessionId || m.session_id===P.sessionId) return false;
+    dropStaleJoin();
+    rejoinNow();
+    return true;
   }
   /* The one in flight, handed to everyone who asks while it runs, so a caller can WAIT for the
      heal (showResult does, to read its score with the new token) instead of being told "done"

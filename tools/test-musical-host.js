@@ -281,6 +281,44 @@ print("8. ONE PHONE IS ONE PLAYER, WHICHEVER PAGE IT IS ON (live play test, 24 O
   pass("a pid seen first without a device id is not counted twice once it sends one", api.count() === 4, api.count());
 })();
 
+/* 7. END GAME, TAPPED TWICE (live play at Test Charlie, 27 Oct 2026). vpAsk queues a question asked while
+   one is open, so a double tap on End game put a second "End this game?" up AFTER the first OK had
+   already ended the game. The real endGame runs against a vpAsk that behaves like the shipped one:
+   each call is a prompt, answered by the test in order. */
+(function(){
+  var fn = grab("endGame", host);
+  pass("End game is where this test lifts it from", !!fn);
+  var prompts = [], ended = 0;
+  function vpAsk(msg){ var t = { msg: msg, then: function(ok, no){ t.ok = ok; t.no = no; return t; } }; prompts.push(t); return t; }
+  function answer(v){ var t = prompts.shift(); if (!t) throw new Error("no prompt open to answer"); t.ok(v); }
+  var G = { busy: false, status: "running", gameId: "g1" };
+  var env = { G: G, vpAsk: vpAsk, endGameAsked: function(){ ended++; G.status = "setup"; G.gameId = ""; } };
+  var names = Object.keys(env);
+  var endGame = (new Function(names.join(","), fn + "\n return endGame;")).apply(null, names.map(function(k){ return env[k]; }));
+  endGame(); endGame(); endGame();
+  pass("three taps on End game open ONE prompt", prompts.length === 1 && prompts[0].msg.indexOf("End this game?") === 0, prompts.length);
+  answer(true);
+  pass("OK ends the game once", ended === 1 && G.status === "setup", ended);
+  endGame();
+  pass("a tap after the game has ended does nothing: no second prompt", prompts.length === 0 && ended === 1, prompts.length);
+  /* and it must not make End game dead: Cancel, then a second thought */
+  G.status = "running"; G.gameId = "g2";
+  endGame();
+  pass("CONTROL: with a game running the prompt comes up", prompts.length === 1, prompts.length);
+  answer(false);
+  pass("CONTROL: Cancel leaves the game running", ended === 1 && G.status === "running", G.status);
+  endGame();
+  pass("CONTROL: and End game can be asked again after a Cancel", prompts.length === 1, prompts.length);
+  answer(true);
+  pass("CONTROL: the second time it is confirmed, the game ends", ended === 2 && G.status === "setup", ended);
+  /* a prompt that the game outlives (a full house ended it from the carry-on modal while the question was open) */
+  G.status = "running"; G.gameId = "g3";
+  endGame();
+  G.status = "setup"; G.gameId = "";   // endGameNow() ran meanwhile
+  answer(true);
+  pass("an OK on a prompt the game outlived ends nothing twice", ended === 2, ended);
+})();
+
 print("");
 print(bad ? ("  " + bad + " FAILED") : ("ALL " + ran + " CHECKS PASSED"));
 if (bad) throw new Error(bad + " failed");

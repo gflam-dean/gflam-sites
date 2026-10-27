@@ -1054,7 +1054,15 @@
       if(G.defer){ try{ var _pi=paperPrintedInfo(); _pi.usedBy=G.gameId; localStorage.setItem(paperKey(), JSON.stringify(_pi)); }catch(e){} }   // these sheets have now been played
       G.status="ready"; G.board=[]; G.current=null;
       saveTrivia();
-      bcast({ t:"started", game_id:G.gameId, question_count:r.question_count, colour:G.colour, title:G.setTitle });
+      /* session_id: WHICH NIGHT THIS IS. A phone left on the final screen of a closed quiz still
+         holds the token of that night, and the next quiz on the same code looked to it like a new
+         round of the same one: it answered with a token the new session does not know, the room
+         acked the answer and the Worker threw it away at Reveal, so the phone said "Correct!" with
+         no points, the console "Scores could not be loaded" and the wall "No scores yet" (live
+         play, Test Charlie, 27 Oct 2026). The phone compares this with the night it joined and
+         re-joins when it differs (trivia/play.html nightChanged). The question carries it too, for
+         a phone that missed this. */
+      bcast({ t:"started", game_id:G.gameId, session_id:G.sessionId, question_count:r.question_count, colour:G.colour, title:G.setTitle });
       bcast({ t:"players", count:playerCount() });
       renderConsole();
     }).catch(function(e){ hostError(e.message); }).then(function(){
@@ -1072,7 +1080,7 @@
       G.status="question"; G.answeredPids={}; G.answeredQseq=r.qseq; G.split=[];
       saveTrivia();
       // PUBLIC broadcast: text + options + optional picture, NEVER correct_index.
-      bcast({ t:"question", game_id:G.gameId, qseq:r.qseq, qi:r.qi, qtotal:r.qtotal,
+      bcast({ t:"question", game_id:G.gameId, session_id:G.sessionId, qseq:r.qseq, qi:r.qi, qtotal:r.qtotal,
         text:r.text, options:r.options||[], endsAt:G.current.endsAt, secs:r.secs, colour:G.colour, imageUrl:r.image_url||"", double:isDouble(r.qseq) });
       renderRun();
       G.tick=setInterval(function(){ updateLive(); if(remainingSecs()<=0){ clearTick(); bcast({ t:"lock" }); } }, 500);
@@ -1404,7 +1412,7 @@
       return;
     }
     if(G.status==="question" && G.current){
-      to({ t:"question", game_id:G.gameId, qseq:G.current.qseq, qi:G.current.qi, qtotal:G.qtotal,
+      to({ t:"question", game_id:G.gameId, session_id:G.sessionId, qseq:G.current.qseq, qi:G.current.qi, qtotal:G.qtotal,
            text:G.current.text, options:G.current.options, endsAt:G.current.endsAt,
            secs:remainingSecs(), colour:G.colour,
            imageUrl:(G.current.imageUrl||""), double:isDouble(G.current.qseq) });   // without this a replayed picture round loses its picture
