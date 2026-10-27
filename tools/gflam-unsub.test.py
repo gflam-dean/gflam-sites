@@ -14,6 +14,10 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'touring-backend', 'lib'))
 os.environ['GFLAM_UNSUB_SECRET'] = ''          # never the real one, whatever the shell has
 import gflam_unsub as U
+# AND NEVER THE FILE. _env() falls back to ~/.gflam-migrate.env, and once the real secret was in there
+# (27 Oct 2026) 'no secret' quietly became the real secret and six checks went red. The suite reads
+# no secret but its own.
+U.ENV_FILE = os.path.join(tempfile.mkdtemp(), 'no-such-env')
 
 spec = importlib.util.spec_from_file_location('mailout', os.path.join(ROOT, 'touring-backend', 'mailout', 'send-mailout.py'))
 M = importlib.util.module_from_spec(spec); spec.loader.exec_module(M)
@@ -95,6 +99,7 @@ M.resend_key = lambda: 'resend-fake'
 M.time.sleep = lambda s: None
 def run(argv, unsub=frozenset({'bea@example.com'}), secret='', preflight=(True, 'ok')):
     os.environ['GFLAM_UNSUB_SECRET'] = secret
+    del SENT[:]                                 # each run counts only its own sends
     U.unsubscribed_emails = (lambda **k: set(unsub)) if not isinstance(unsub, Exception) else (lambda **k: (_ for _ in ()).throw(unsub))
     U.preflight = lambda *a, **k: preflight
     out = io.StringIO(); code = 0
