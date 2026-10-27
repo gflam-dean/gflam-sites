@@ -20,6 +20,14 @@ What it runs:
   5. git            tools/gate-record.json is ignored, so the hook's own dirty-tree check and release.py
                     step 0 cannot be tripped by the record they just wrote
 """
+import os as _os, sys as _sys
+if _os.environ.get('VP_GATE_RECORD_TEST_UNSAFE') != '1':
+    # DISABLED 27 Oct 2026 16:10 by the main session: a run of this suite inside the post-push gate pushed its
+    # throwaway commits "one", "two", "three" to origin/main and took venueplay.com.au down (every path served
+    # <html>three</html>). It must never touch a repository that has a remote. Re-enable only after it is
+    # rebuilt to run against a bare local remote and proven unable to reach GitHub.
+    print('DISABLED: gate-record.test.py is quarantined (see comment); 0 of 45 checks ran')
+    _sys.exit(0)
 import contextlib, importlib.util, io, json, os, re, shutil, stat, subprocess, sys, tempfile, time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
