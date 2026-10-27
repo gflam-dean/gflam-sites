@@ -254,6 +254,10 @@ try:
         ran.append((list(argv), cwd, dict(env if env is not None else os.environ)))
         return Done(int(os.environ.get('FAKE_GATE_RC', '0')))
 
+    # This very suite runs INSIDE release.py step 5, where VP_CHROME_GATED is already set for the
+    # whole gate. gate_after must not hand that stale reason to a full-gate child (27 Oct 2026: the
+    # first release of the push guard went red here for exactly that). Set for both calls below.
+    os.environ['VP_CHROME_GATED'] = 'stale reason inherited from a parent release'
     o = io.StringIO()
     with contextlib.redirect_stdout(o):
         r = rel.gate_after(repo, run=fake_run)
@@ -263,6 +267,7 @@ try:
     o = io.StringIO()
     with contextlib.redirect_stdout(o):
         r = rel.gate_after(repo, run=fake_run)
+    os.environ.pop('VP_CHROME_GATED', None)
     ok('fresh matching record: release-check.py --skip-chrome (the live half still runs: no --local)',
        ran[-1][0][1:] == ['tools/release-check.py', '--skip-chrome'], ran[-1])
     ok('... and the printed reason says exactly why', 'Chrome suites skipped: the pre-push gate ran all of them green on this same tree' in o.getvalue(), o.getvalue())

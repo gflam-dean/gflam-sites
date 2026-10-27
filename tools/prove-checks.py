@@ -123,6 +123,10 @@ MUTATIONS = [
      '  [ -f "$ROOT/tools/gate-record.py" ] && python3 "$ROOT/tools/gate-record.py" --clear',
      '  true',
      'a red pre-push gate leaves an older record standing, so a failed tree can ride it'),
+    ('gate-record.test.py', 'tools/release.py',
+     "    env.pop('VP_CHROME_GATED', None)\n    if '--skip-chrome' in argv:",
+     "    pass\n    if '--skip-chrome' in argv:",
+     'a full gate started inside step 5 inherits the parent release\'s "Chrome skipped" reason and prints it as its own'),
     # THE GATE'S OWN RELIABILITY, 27 Oct 2026 (tools/gatelib.py, verify-live's Browser, the wake check).
     ('gate-reliability.test.py', 'tools/gatelib.py',
      '    if passed(first) or not chrome:',

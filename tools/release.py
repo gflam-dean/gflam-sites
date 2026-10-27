@@ -228,6 +228,9 @@ def gate_after(root, run=subprocess.run):
     # for a prove run and wrong here: the Chrome half WAS gated, by the hook, on this tree. So the
     # gate is told the reason and prints that instead (release-check.py, summary).
     env = dict(os.environ)
+    # Never inherited: a gate run INSIDE step 5 (gate-record.test.py is one) would otherwise carry this
+    # release's reason into a full-gate child and call a plain run "skipped on purpose" (27 Oct 2026).
+    env.pop('VP_CHROME_GATED', None)
     if '--skip-chrome' in argv:
         env['VP_CHROME_GATED'] = why
     return run(argv, cwd=root, env=env)
