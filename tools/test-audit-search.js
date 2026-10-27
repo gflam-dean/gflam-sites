@@ -23,6 +23,16 @@ load('tools/rig-billing-worker.js');
 var fails = 0, ran = 0, finished = false;
 function check(name, ok, saw) { ran++; if (ok) print('  ok   ' + name); else { print('  FAIL ' + name + (saw === undefined ? '' : '   saw: ' + JSON.stringify(saw).slice(0, 500))); fails++; } }
 vpaVerifyJWT = async function (t) { return t ? { sub: t } : null; };
+/* 27 Oct 2026: the invite-back email is marketing and must carry a one-click unsubscribe, so the
+   Worker refuses to send it (503) when VP_UNSUB_SECRET is unset. The live Worker has the secret;
+   this suite's Worker must too, or it is testing a misconfigured Worker, not the route. */
+ENV.VP_UNSUB_SECRET = 'audit-search-test-secret';
+load('partyplay-backend/worker/_test-sha256.js');   // a real HMAC for the unsubscribe token, as winback-unsubscribe.test.js uses
+if (typeof TextEncoder === 'undefined') globalThis.TextEncoder = function () { this.encode = function (s) { return { _s: String(s) }; }; };
+if (typeof crypto === 'undefined' || !crypto.subtle) globalThis.crypto = { subtle: {
+  importKey: function (fmt, k) { return Promise.resolve({ _k: k._s }); },
+  sign: function (alg, key, msg) { return Promise.resolve(new Uint8Array(SHA.hmac(key._k, msg._s)).buffer); },
+} };
 var URL = function (u) { var m = /^(https?:\/\/[^\/?#]+)([^?#]*)(\?[^#]*)?/.exec(String(u)); this.origin = m[1]; this.pathname = m[2] || '/'; var q = (m[3] || '').slice(1);
   this.searchParams = { get: function (k) { var hit = q.split('&').map(function (kv) { var i = kv.indexOf('='); return [kv.slice(0, i), kv.slice(i + 1)]; }).filter(function (kv) { return decodeURIComponent(kv[0]) === k; })[0]; return hit ? decodeURIComponent(hit[1] || '') : null; } }; };
 if (typeof btoa === 'undefined') { btoa = function (s) { var A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/', o = ''; for (var i = 0; i < s.length; i += 3) { var a = s.charCodeAt(i), b = s.charCodeAt(i + 1), c = s.charCodeAt(i + 2), n = (a << 16) | ((b || 0) << 8) | (c || 0); o += A[(n >> 18) & 63] + A[(n >> 12) & 63] + (isNaN(b) ? '=' : A[(n >> 6) & 63]) + (isNaN(c) ? '=' : A[n & 63]); } return o; }; }
@@ -202,7 +212,8 @@ function enc(s) { return encodeURIComponent(s); }
   var iv = await vpaHandleInviteBack(req(STAFF, '/admin/invite-back', { venue_id: LEAVE }), ENV, J);
   check('a staff admin is refused', iv.status === 403 && sent.length === 0, iv);
   iv = await vpaHandleInviteBack(req(DEAN, '/admin/invite-back', { venue_id: LEAVE }), ENV, J);
-  check('Dean invites Leaving Lounge back: one email, to the account contact', iv.status === 200 && sent.length === 1 && sent[0].to[0] === 'leave@example.com', [iv, sent]);
+  check('Dean invites Leaving Lounge back: one email, to the account contact, with its unsubscribe link and one-click headers', iv.status === 200 && sent.length === 1 && sent[0].to[0] === 'leave@example.com' &&
+    /\/unsubscribe\?/.test(sent[0].html) && sent[0].headers && /\/unsubscribe\?/.test(sent[0].headers['List-Unsubscribe']) && sent[0].headers['List-Unsubscribe-Post'] === 'List-Unsubscribe=One-Click', [iv, sent]);
   check('...which links to their own account page and says nothing is charged unless they tap Keep this venue',
     /\/app\/billing\.html/.test(sent[0].html) && /Keep this venue/.test(sent[0].html) && /nothing is charged unless you do/.test(sent[0].html), sent[0] && sent[0].html);
   check('...and changes no venue and never calls Stripe', JSON.stringify(DB.vp_venues) === before && STRIPE_CALLS === 0, STRIPE_CALLS);
