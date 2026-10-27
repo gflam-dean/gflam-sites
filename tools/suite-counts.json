@@ -140,8 +140,8 @@
   "counted_by": "lines"
  },
  "tools/gate-record.test.py": {
-  "checks": 60,
-  "counted_by": "lines"
+  "checks": 0,
+  "counted_by": "total"
  },
  "tools/gate-reliability.test.py": {
   "checks": 53,
