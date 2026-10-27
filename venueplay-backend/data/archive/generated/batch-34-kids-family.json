@@ -1,0 +1,1430 @@
+[
+ {
+  "question": "In the nursery rhyme, who went up the hill with Jack?",
+  "options": [
+   "Jill",
+   "Jenny",
+   "Jess",
+   "Jane"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What did Little Miss Muffet eat?",
+  "options": [
+   "Bread and jam",
+   "Pie",
+   "Curds and whey",
+   "Porridge"
+  ],
+  "correctIndex": 2,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What frightened Little Miss Muffet away?",
+  "options": [
+   "A mouse",
+   "A spider",
+   "A crow",
+   "A dog"
+  ],
+  "correctIndex": 1,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In the rhyme, how many blind mice are there?",
+  "options": [
+   "Three",
+   "Four",
+   "Five",
+   "Two"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour was Mary's little lamb?",
+  "options": [
+   "White as snow",
+   "Brown",
+   "Black",
+   "Grey"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 'Baa Baa Black Sheep', how many bags of wool are there?",
+  "options": [
+   "Four",
+   "Two",
+   "One",
+   "Three"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What did the cow do in 'Hey Diddle Diddle'?",
+  "options": [
+   "Played the fiddle",
+   "Ran away with the spoon",
+   "Ate the pie",
+   "Jumped over the moon"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who ran away with the spoon in 'Hey Diddle Diddle'?",
+  "options": [
+   "The cow",
+   "The dog",
+   "The dish",
+   "The cat"
+  ],
+  "correctIndex": 2,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What went up the water spout in the nursery rhyme?",
+  "options": [
+   "A yellow duck",
+   "A little mouse",
+   "The incy wincy spider",
+   "A green frog"
+  ],
+  "correctIndex": 2,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 'Old MacDonald', what does the farmer have?",
+  "options": [
+   "A shop",
+   "A farm",
+   "A boat",
+   "A truck"
+  ],
+  "correctIndex": 1,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many little pigs are in the classic fairy tale?",
+  "options": [
+   "Three",
+   "Four",
+   "Five",
+   "Two"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What was the third little pig's house made of?",
+  "options": [
+   "Sticks",
+   "Mud",
+   "Bricks",
+   "Straw"
+  ],
+  "correctIndex": 2,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who tried to blow the pigs' houses down?",
+  "options": [
+   "A troll",
+   "The big bad wolf",
+   "A giant",
+   "A witch"
+  ],
+  "correctIndex": 1,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Whose porridge did Goldilocks find just right?",
+  "options": [
+   "Mummy Bear's",
+   "Daddy Bear's",
+   "Baby Bear's",
+   "The wolf's"
+  ],
+  "correctIndex": 2,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many bears live in the house Goldilocks enters?",
+  "options": [
+   "Four",
+   "Three",
+   "One",
+   "Two"
+  ],
+  "correctIndex": 1,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What did Jack trade the cow for in 'Jack and the Beanstalk'?",
+  "options": [
+   "A sack of flour",
+   "A golden coin",
+   "A harp",
+   "Magic beans"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What lives at the top of the beanstalk?",
+  "options": [
+   "A wizard",
+   "A witch",
+   "A dragon",
+   "A giant"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What did Cinderella leave behind at the ball?",
+  "options": [
+   "A necklace",
+   "A fan",
+   "A glove",
+   "A glass slipper"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What did Cinderella's coach turn back into at midnight?",
+  "options": [
+   "A rock",
+   "A carriage of straw",
+   "A pumpkin",
+   "A cart"
+  ],
+  "correctIndex": 2,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many stepsisters does Cinderella have in the classic tale?",
+  "options": [
+   "Four",
+   "One",
+   "Three",
+   "Two"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which fairy tale princess pricked her finger on a spindle?",
+  "options": [
+   "Sleeping Beauty",
+   "Cinderella",
+   "Snow White",
+   "Rapunzel"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many dwarfs live with Snow White?",
+  "options": [
+   "Seven",
+   "Eight",
+   "Five",
+   "Six"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What did the wicked queen use to poison Snow White?",
+  "options": [
+   "A potion in a cup",
+   "An apple",
+   "A cake",
+   "A pear"
+  ],
+  "correctIndex": 1,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which fairy tale character had extremely long hair?",
+  "options": [
+   "Cinderella",
+   "Gretel",
+   "Rapunzel",
+   "Thumbelina"
+  ],
+  "correctIndex": 2,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which two children left a trail of breadcrumbs in the forest?",
+  "options": [
+   "Tom and Tilly",
+   "Hansel and Gretel",
+   "Peter and Jane",
+   "Jack and Jill"
+  ],
+  "correctIndex": 1,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What was the witch's house made of in 'Hansel and Gretel'?",
+  "options": [
+   "Gingerbread and sweets",
+   "Stone",
+   "Ice",
+   "Straw"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which character's nose grew when he told a lie?",
+  "options": [
+   "Gepetto",
+   "Aladdin",
+   "Pinocchio",
+   "Peter Pan"
+  ],
+  "correctIndex": 2,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What kind of creature guided Pinocchio as his conscience?",
+  "options": [
+   "A cricket",
+   "A fox",
+   "A cat",
+   "A fairy"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which fairy tale features a girl in a red hooded cloak?",
+  "options": [
+   "Snow Queen",
+   "Goldilocks",
+   "Little Red Riding Hood",
+   "Thumbelina"
+  ],
+  "correctIndex": 2,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who was Little Red Riding Hood visiting?",
+  "options": [
+   "Her teacher",
+   "Her aunt",
+   "Her sister",
+   "Her grandmother"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which creature lived under the bridge in 'The Three Billy Goats Gruff'?",
+  "options": [
+   "A dragon",
+   "A troll",
+   "An ogre",
+   "A giant"
+  ],
+  "correctIndex": 1,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What did the ugly duckling grow into?",
+  "options": [
+   "A swan",
+   "A pelican",
+   "A goose",
+   "An eagle"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 'The Emperor's New Clothes', who points out the emperor is naked?",
+  "options": [
+   "A child",
+   "The queen",
+   "A tailor",
+   "A servant"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who wrote 'The Ugly Duckling' and 'The Little Mermaid'?",
+  "options": [
+   "Aesop",
+   "The Brothers Grimm",
+   "Charles Perrault",
+   "Hans Christian Andersen"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which storyteller is credited with fables featuring a tortoise and a hare?",
+  "options": [
+   "Hans Christian Andersen",
+   "Rudyard Kipling",
+   "The Brothers Grimm",
+   "Aesop"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who won the race in the fable of the tortoise and the hare?",
+  "options": [
+   "It was a tie",
+   "The hare",
+   "The tortoise",
+   "Neither finished"
+  ],
+  "correctIndex": 2,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the moral of the boy who cried wolf?",
+  "options": [
+   "Liars are not believed even when telling the truth",
+   "Sheep need watching",
+   "Always run for help",
+   "Wolves are dangerous"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which board game involves climbing ladders and sliding down snakes?",
+  "options": [
+   "Ludo",
+   "Trouble",
+   "Sorry",
+   "Snakes and Ladders"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which children's game involves freezing when the music stops?",
+  "options": [
+   "Musical chairs",
+   "Duck duck goose",
+   "Musical statues",
+   "Simon says"
+  ],
+  "correctIndex": 2,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In musical chairs, how many chairs are there compared to players?",
+  "options": [
+   "One fewer than the players",
+   "Half the players",
+   "The same as the players",
+   "One more than the players"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which playground game involves one person being 'it' and chasing others?",
+  "options": [
+   "Hopscotch",
+   "Tag or tiggy",
+   "Elastics",
+   "Marbles"
+  ],
+  "correctIndex": 1,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which game involves throwing a stone and hopping through numbered squares?",
+  "options": [
+   "Hopscotch",
+   "Jacks",
+   "Skipping",
+   "Four square"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which game is played by only following instructions that start with a name?",
+  "options": [
+   "Follow the Leader",
+   "Simon Says",
+   "Red Light Green Light",
+   "Marco Polo"
+  ],
+  "correctIndex": 1,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which pool game involves one player calling out with eyes closed?",
+  "options": [
+   "Bombs",
+   "Chicken",
+   "Marco Polo",
+   "Sharks and minnows"
+  ],
+  "correctIndex": 2,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian children's group wears coloured skivvies and sings 'Hot Potato'?",
+  "options": [
+   "Hi-5",
+   "The Fairies",
+   "Bananas in Pyjamas",
+   "The Wiggles"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the Wiggles' big red car song subject?",
+  "options": [
+   "The Big Red Car",
+   "The Big Blue Bus",
+   "The Wiggly Wagon",
+   "The Red Rocket"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Wiggles character is a friendly dinosaur?",
+  "options": [
+   "Captain Feathersword",
+   "Henry",
+   "Dorothy",
+   "Wags"
+  ],
+  "correctIndex": 2,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Wiggles character is a pirate?",
+  "options": [
+   "Dorothy the Dinosaur",
+   "Henry the Octopus",
+   "Wags the Dog",
+   "Captain Feathersword"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is Dorothy the Dinosaur's favourite food in the Wiggles songs?",
+  "options": [
+   "Roses",
+   "Apples",
+   "Carrots",
+   "Bananas"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which children's TV show features two bananas in pyjamas?",
+  "options": [
+   "Hi-5",
+   "The Wiggles",
+   "Play School",
+   "Bananas in Pyjamas"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who do the Bananas chase in 'Bananas in Pyjamas'?",
+  "options": [
+   "The Cats",
+   "The Rats",
+   "The Ducks",
+   "The Teddies"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which shape does Play School look through in each episode?",
+  "options": [
+   "The doors",
+   "The mirrors",
+   "The clocks",
+   "The windows"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Play School toy is a rag doll with woollen hair?",
+  "options": [
+   "Jemima",
+   "Big Ted",
+   "Humpty",
+   "Little Ted"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Play School character is an egg-shaped toy?",
+  "options": [
+   "Diddle",
+   "Jemima",
+   "Humpty",
+   "Big Ted"
+  ],
+  "correctIndex": 2,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian cartoon family are blue heeler dogs?",
+  "options": [
+   "The Barks",
+   "The Kelpies",
+   "The Heelers in Bluey",
+   "The Woofs"
+  ],
+  "correctIndex": 2,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Bluey's mum?",
+  "options": [
+   "Muffin",
+   "Bingo",
+   "Chilli",
+   "Bandit"
+  ],
+  "correctIndex": 2,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What breed is Bluey's friend Snickers?",
+  "options": [
+   "A terrier",
+   "A labrador",
+   "A dachshund",
+   "A poodle"
+  ],
+  "correctIndex": 2,
+  "category": "Kids & Family",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which children's character is a small blue engine that could?",
+  "options": [
+   "Ivor the Engine",
+   "The Little Engine That Could",
+   "Thomas the Tank Engine",
+   "Chuggington's Wilson"
+  ],
+  "correctIndex": 1,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What number is Thomas the Tank Engine?",
+  "options": [
+   "2",
+   "1",
+   "3",
+   "5"
+  ],
+  "correctIndex": 1,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "On which fictional island is Thomas the Tank Engine set?",
+  "options": [
+   "Sudrey",
+   "Thomasland",
+   "Rail Isle",
+   "Sodor"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who is the man in charge of the railway in Thomas the Tank Engine?",
+  "options": [
+   "The Station Master",
+   "The Chief Engineer",
+   "The Signalman",
+   "The Fat Controller"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which children's character is a bear from darkest Peru?",
+  "options": [
+   "Rupert",
+   "Paddington",
+   "Winnie-the-Pooh",
+   "Baloo"
+  ],
+  "correctIndex": 1,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is Paddington Bear's favourite food?",
+  "options": [
+   "Honey",
+   "Fish",
+   "Marmalade sandwiches",
+   "Porridge"
+  ],
+  "correctIndex": 2,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Where was Paddington Bear found?",
+  "options": [
+   "Paddington Station",
+   "Victoria Station",
+   "Kings Cross Station",
+   "Waterloo Station"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is Winnie-the-Pooh's favourite food?",
+  "options": [
+   "Berries",
+   "Cake",
+   "Nuts",
+   "Honey"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Winnie-the-Pooh character bounces on his tail?",
+  "options": [
+   "Owl",
+   "Eeyore",
+   "Piglet",
+   "Tigger"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the wood where Winnie-the-Pooh lives?",
+  "options": [
+   "The Hundred Acre Wood",
+   "Sherwood Forest",
+   "The Wild Wood",
+   "The Deep Dark Wood"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which children's book character is a very hungry insect larva?",
+  "options": [
+   "The Bad Tempered Ladybird",
+   "The Grouchy Beetle",
+   "The Busy Spider",
+   "The Very Hungry Caterpillar"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the Gruffalo have on the end of his nose?",
+  "options": [
+   "A poisonous wart",
+   "A blue spot",
+   "A curl of hair",
+   "A silver ring"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which small animal outsmarts the Gruffalo?",
+  "options": [
+   "A hedgehog",
+   "A rabbit",
+   "A squirrel",
+   "A mouse"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian picture book features a possum that turns invisible?",
+  "options": [
+   "Edward the Emu",
+   "Wombat Stew",
+   "Diary of a Wombat",
+   "Possum Magic"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian food does Grandma Poss use to make Hush visible again?",
+  "options": [
+   "Fairy bread and cordial",
+   "Vegemite sandwich, pavlova and lamington",
+   "Meat pie and sauce",
+   "Anzac biscuits"
+  ],
+  "correctIndex": 1,
+  "category": "Kids & Family",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which animal is the star of 'Wombat Stew'?",
+  "options": [
+   "A koala",
+   "A dingo tries to cook the wombat",
+   "A kangaroo",
+   "An emu"
+  ],
+  "correctIndex": 1,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which classic Australian children's book features a magic pudding that never runs out?",
+  "options": [
+   "Snugglepot and Cuddlepie",
+   "The Magic Pudding",
+   "Seven Little Australians",
+   "Blinky Bill"
+  ],
+  "correctIndex": 1,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What Australian party food is bread with butter and hundreds and thousands?",
+  "options": [
+   "Chocolate crackles",
+   "Honey joys",
+   "Jelly slice",
+   "Fairy bread"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian party treat is made with rice bubbles and copha?",
+  "options": [
+   "Honey joys",
+   "Chocolate crackles",
+   "Rocky road",
+   "Fairy bread"
+  ],
+  "correctIndex": 1,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian party treat is made with cornflakes and honey?",
+  "options": [
+   "Chocolate crackles",
+   "Fairy bread",
+   "Anzac biscuits",
+   "Honey joys"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Disney film features a wooden puppet who wants to be a real boy?",
+  "options": [
+   "Dumbo",
+   "Bambi",
+   "Peter Pan",
+   "Pinocchio"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Disney elephant could fly using his ears?",
+  "options": [
+   "Dumbo",
+   "Timon",
+   "Bambi",
+   "Baloo"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Disney film features a young deer and his friend Thumper?",
+  "options": [
+   "Bambi",
+   "Chicken Little",
+   "Robin Hood",
+   "The Fox and the Hound"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Disney character is a genie in a lamp?",
+  "options": [
+   "Abu",
+   "Jafar",
+   "Iago",
+   "The Genie in Aladdin"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Disney film features a girl who joins the Chinese army?",
+  "options": [
+   "Moana",
+   "Pocahontas",
+   "Mulan",
+   "Brave"
+  ],
+  "correctIndex": 2,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Disney film is set in Polynesia with a wayfinding heroine?",
+  "options": [
+   "Encanto",
+   "Moana",
+   "Brave",
+   "Mulan"
+  ],
+  "correctIndex": 1,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Disney film features a Colombian family with magical gifts?",
+  "options": [
+   "Turning Red",
+   "Encanto",
+   "Coco",
+   "Luca"
+  ],
+  "correctIndex": 1,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Pixar film is set largely in the Land of the Dead in Mexico?",
+  "options": [
+   "Coco",
+   "Encanto",
+   "The Book of Life",
+   "Onward"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Pixar film features emotions living inside a girl's head?",
+  "options": [
+   "Brave",
+   "Soul",
+   "Inside Out",
+   "Up"
+  ],
+  "correctIndex": 2,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Pixar film features a house lifted by balloons?",
+  "options": [
+   "Up",
+   "Wall-E",
+   "Onward",
+   "Brave"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Pixar film features a rat who wants to be a chef?",
+  "options": [
+   "Cars",
+   "Toy Story",
+   "A Bug's Life",
+   "Ratatouille"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Pixar film features monsters who collect children's screams?",
+  "options": [
+   "Inside Out",
+   "Brave",
+   "Coco",
+   "Monsters, Inc."
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which animated ogre lives in a swamp with a talking donkey?",
+  "options": [
+   "Shrek",
+   "Gru",
+   "Fiona",
+   "Hiccup"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which animated film features small yellow creatures who serve a villain?",
+  "options": [
+   "Despicable Me",
+   "Shrek",
+   "Rio",
+   "Madagascar"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are the small yellow creatures in Despicable Me called?",
+  "options": [
+   "Yellows",
+   "Helpers",
+   "Munchkins",
+   "Minions"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which animated film features penguins escaping a zoo with a lion and zebra?",
+  "options": [
+   "Rio",
+   "Ice Age",
+   "Happy Feet",
+   "Madagascar"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian-made animated film features a tap-dancing penguin?",
+  "options": [
+   "Madagascar",
+   "Surf's Up",
+   "March of the Penguins",
+   "Happy Feet"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which animated film features a woolly mammoth, sloth and sabre-toothed tiger?",
+  "options": [
+   "Ice Age",
+   "Early Man",
+   "The Croods",
+   "Madagascar"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which children's book series features a boy wizard at a school of magic?",
+  "options": [
+   "Artemis Fowl",
+   "Harry Potter",
+   "Percy Jackson",
+   "The Worst Witch"
+  ],
+  "correctIndex": 1,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which sport do children play on broomsticks in Harry Potter?",
+  "options": [
+   "Snitch tag",
+   "Quidditch",
+   "Broomball",
+   "Wizard polo"
+  ],
+  "correctIndex": 1,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which children's series features Greg Heffley and his journal?",
+  "options": [
+   "Dork Diaries",
+   "Big Nate",
+   "Diary of a Wimpy Kid",
+   "Captain Underpants"
+  ],
+  "correctIndex": 2,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which children's book series features a superhero principal in his underwear?",
+  "options": [
+   "Bad Guys",
+   "Diary of a Wimpy Kid",
+   "Dog Man",
+   "Captain Underpants"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian author wrote 'The 13-Storey Treehouse'?",
+  "options": [
+   "Paul Jennings",
+   "John Marsden",
+   "Andy Griffiths",
+   "Morris Gleitzman"
+  ],
+  "correctIndex": 2,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian author wrote the 'Just' series of short stories for kids?",
+  "options": [
+   "Mem Fox",
+   "Paul Jennings",
+   "Andy Griffiths",
+   "Emily Rodda"
+  ],
+  "correctIndex": 2,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian children's series features Deltora and gems?",
+  "options": [
+   "The Ranger's Apprentice",
+   "Rowan of Rin",
+   "Tomorrow When the War Began",
+   "Deltora Quest"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which toy brand makes coloured interlocking bricks?",
+  "options": [
+   "Play-Doh",
+   "LEGO",
+   "Hot Wheels",
+   "Nerf"
+  ],
+  "correctIndex": 1,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which toy brand makes foam dart blasters?",
+  "options": [
+   "Beyblade",
+   "LEGO",
+   "Hot Wheels",
+   "Nerf"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which modelling compound comes in small tubs and is very colourful?",
+  "options": [
+   "Plaster",
+   "Blu Tack",
+   "Papier mache",
+   "Play-Doh"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which doll was launched by Mattel in 1959?",
+  "options": [
+   "Cabbage Patch Kid",
+   "Barbie",
+   "Bratz",
+   "Polly Pocket"
+  ],
+  "correctIndex": 1,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who is Barbie's long-time boyfriend?",
+  "options": [
+   "Ken",
+   "Steven",
+   "Alan",
+   "Blaine"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which toy involves spinning tops battling in an arena?",
+  "options": [
+   "Beyblade",
+   "Pogs",
+   "Marbles",
+   "Yo-yo"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which children's TV show features a builder who asks 'Can we fix it?'",
+  "options": [
+   "Postman Pat",
+   "Thomas",
+   "Bob the Builder",
+   "Fireman Sam"
+  ],
+  "correctIndex": 2,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Postman Pat's cat?",
+  "options": [
+   "Bess",
+   "Nell",
+   "Jess",
+   "Tess"
+  ],
+  "correctIndex": 2,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which children's character is a firefighter in Pontypandy?",
+  "options": [
+   "Fireman Sam",
+   "PC Plum",
+   "Bob the Builder",
+   "Postman Pat"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cartoon pig loves jumping in muddy puddles?",
+  "options": [
+   "Olivia",
+   "Wilbur",
+   "Piglet",
+   "Peppa Pig"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is Peppa Pig's little brother called?",
+  "options": [
+   "George",
+   "Danny",
+   "Edmond",
+   "Richard"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is George Pig's favourite toy?",
+  "options": [
+   "A teddy bear",
+   "A dinosaur",
+   "A truck",
+   "A ball"
+  ],
+  "correctIndex": 1,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which children's show features four colourful characters with aerials on their heads?",
+  "options": [
+   "Tweenies",
+   "In the Night Garden",
+   "Boohbah",
+   "Teletubbies"
+  ],
+  "correctIndex": 3,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of the Teletubbies is the largest and purple?",
+  "options": [
+   "Po",
+   "Tinky Winky",
+   "Laa-Laa",
+   "Dipsy"
+  ],
+  "correctIndex": 1,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which show features a purple dinosaur who sings about love?",
+  "options": [
+   "Dinosaur Train",
+   "The Land Before Time",
+   "Barney",
+   "Dino Dan"
+  ],
+  "correctIndex": 2,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which children's show features a girl explorer and her monkey Boots?",
+  "options": [
+   "Dora the Explorer",
+   "Team Umizoomi",
+   "Bubble Guppies",
+   "Go Diego Go"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which sneaky fox tries to take things in Dora the Explorer?",
+  "options": [
+   "Swiper",
+   "Sly",
+   "Slippy",
+   "Snatch"
+  ],
+  "correctIndex": 0,
+  "category": "Kids & Family",
+  "difficulty": "medium"
+ }
+]

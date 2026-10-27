@@ -1,0 +1,1787 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Run the night | PartyPlay</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="/favicon-48.png" type="image/png" sizes="48x48">
+<link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@700;800&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#12101A;--ink2:#1B1826;--ink3:#262234;--paper:#FFF1E6;--mute:#B6ADC2;--faint:#847A98;
+    --pink:#FF1F8E;--teal:#17C4B4;--yellow:#FFD23F;--line:rgba(255,241,230,.14)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);color:var(--paper);font-family:Manrope,system-ui,sans-serif;
+    font-size:16.5px;line-height:1.5;-webkit-font-smoothing:antialiased;
+    padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+  .wrap{max-width:620px;margin:0 auto;padding:22px 18px 40px}
+  h1,h2,h3,.num{font-family:'Hanken Grotesk',system-ui,sans-serif;font-weight:800;letter-spacing:-.02em;margin:0}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+  .top .l{display:flex;align-items:center;gap:10px}
+  .top img{width:38px;height:33px}
+  .top b{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:18px}
+  .tvbtn{background:none;border:1px solid var(--line);color:var(--mute);border-radius:10px;
+    padding:9px 13px;font:inherit;font-size:14px;cursor:pointer;text-decoration:none}
+
+  .strip{display:flex;gap:10px;align-items:center;background:var(--ink2);border:1px solid var(--line);
+    border-radius:13px;padding:13px 16px;margin-bottom:14px;flex-wrap:wrap}
+  .strip .code{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:23px;letter-spacing:.09em;color:var(--pink)}
+  .strip .n{margin-left:auto;color:var(--mute);font-size:15px}
+
+  .card{background:var(--ink2);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:10px}
+  .card h3{font-size:17px;margin-bottom:3px}
+  .card p{color:var(--faint);font-size:14.5px;margin:0}
+  .card .row{display:flex;align-items:center;gap:12px}
+  .card .row .meta{flex:1 1 auto;min-width:0}
+  button.play{background:var(--pink);border:0;color:#fff;border-radius:10px;padding:11px 18px;
+    font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15px;cursor:pointer}
+  button.sec{background:none;border:1px solid var(--line);color:var(--mute);border-radius:10px;
+    padding:11px 15px;font:inherit;font-size:15px;cursor:pointer}
+  button:disabled{opacity:.45;cursor:not-allowed}
+
+  .gate{text-align:center;padding:46px 18px;color:var(--mute)}
+  .gate .big{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:23px;color:var(--paper);margin-bottom:8px}
+
+  /* ---- bingo ---- */
+  .caller{text-align:center;padding:10px 0 4px}
+  .caller .num{font-size:clamp(74px,26vw,150px);line-height:1;color:var(--pink)}
+  .caller .said{color:var(--mute);font-size:16px;min-height:24px}
+  .callbtn{width:100%;padding:20px;border:0;border-radius:15px;background:var(--pink);color:#fff;
+    font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:21px;cursor:pointer;margin:12px 0}
+  .board{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-top:10px}
+  .board i{font-style:normal;text-align:center;padding:6px 0;border-radius:6px;background:var(--ink3);
+    color:var(--faint);font-size:13px;font-variant-numeric:tabular-nums}
+  .board i.hit{background:var(--pink);color:#fff;font-weight:700}
+  .bar2{display:flex;gap:9px;margin-top:12px}
+  .bar2 button{flex:1 1 0}
+
+  /* ---- trivia ---- */
+  .q{background:var(--ink3);border-radius:13px;padding:16px 18px;margin-bottom:10px}
+  .q .qn{color:var(--faint);font-size:12.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px}
+  .q .qt{font-size:18px;font-weight:700}
+  .q .qa{color:var(--teal);font-size:16px;margin-top:8px}
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;background:var(--ink3);
+    border:1px solid var(--line);border-radius:22px;padding:10px 18px;font-size:14.5px;opacity:0;
+    transition:opacity .18s;pointer-events:none}
+  .toast.show{opacity:1}
+
+  /* "Before you start" for charades and who am I. warnScreens() built .ask and .askbox and this
+     page never styled either (they were play.html's), so the warning rendered as loose text at
+     the bottom of the page, under the Start button the host had already pressed (14 Oct audit).
+     A sheet over the whole console now, so it is read before anything can be started. */
+  .ask{position:fixed;inset:0;background:rgba(6,4,10,.8);display:grid;place-items:center;z-index:60;padding:16px}
+  .askbox{background:var(--ink2);border:1px solid var(--line);border-radius:18px;padding:24px 22px;
+    width:100%;max-width:460px}
+  .askbox h3{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:22px;margin:0 0 8px}
+  .askbox p{color:var(--mute);margin:0 0 16px;font-size:15.5px}
+  .askbox .row2{display:flex;gap:9px;margin-top:6px}
+  .askbox button{flex:1 1 0;padding:14px;border-radius:11px;border:0;background:var(--pink);color:#fff;
+    font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="l"><img src="/logos/partyplay-mark.svg" alt=""><b>PartyPlay</b></div>
+    <div style="display:flex;gap:8px">
+      <a class="tvbtn" id="buildlink">Games</a>
+      <a class="tvbtn" id="tvlink" target="_blank" rel="noopener">Open the screen</a>
+    </div>
+  </div>
+  <div id="app"><div class="gate">Loading...</div></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="/lib/vp-ask.js"></script>
+<script src="/lib/pp-config.js"></script>
+<script src="/lib/pp-games.js"></script>
+<script src="/lib/pp-licence.js"></script>
+<script src="/lib/pp-quiz.js"></script>
+<script src="/lib/ta-match.js"></script>
+<!-- Great Minds' boards are NOT a script: this page asks the Worker for them with the host key (gmBoards). -->
+<script src="/lib/pr-game.js"></script>
+<script src="/lib/pp-ticket.js"></script>
+<script src="/lib/pp-sign.js"></script>
+<script src="/lib/pp-phonekey.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+  "use strict";
+  var API = PPConfig.API;
+  var SUPA_URL=PPConfig.SUPA_URL, SUPA_ANON=PPConfig.SUPA_ANON;
+  var $=function(i){return document.getElementById(i);};
+  var q=new URLSearchParams(location.search);
+  var CODE=PPConfig.code(q.get("code")), KEY=q.get("key")||"";
+  var PARTY=null, GAMES=[], players=[], ch=null, G=null;
+  /* The night's running total, kept outside G so it survives one game ending and
+     the next starting. Stored too, because the host's tablet WILL get locked,
+     backgrounded or reloaded halfway through the night. */
+  var NIGHT = {};
+  function nightKey(){ return "ppNight:" + CODE; }
+  function nightLoad(){ try{ NIGHT = JSON.parse(localStorage.getItem(nightKey())||"{}") || {}; }catch(e){ NIGHT={}; } }
+  function nightSave(){ try{ localStorage.setItem(nightKey(), JSON.stringify(NIGHT)); }catch(e){} }
+  function nightAdd(rows){
+    (rows||[]).forEach(function(r){ NIGHT[r.name] = (NIGHT[r.name]||0) + (r.score||0); });
+    nightSave();
+  }
+  function nightBoard(){
+    return Object.keys(NIGHT).map(function(n){ return {name:n, score:NIGHT[n]}; })
+      .sort(function(a,b){ return b.score-a.score || a.name.localeCompare(b.name); });
+  }
+
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function toast(m){ var t=$("toast"); t.textContent=m; t.classList.add("show");
+    clearTimeout(toast._t); toast._t=setTimeout(function(){t.classList.remove("show");},1700); }
+  function api(p,o){ return fetch(API+p,Object.assign({headers:{"content-type":"application/json"}},o||{}))
+    .then(function(r){ return r.json().then(function(j){ if(!r.ok){ var e=new Error(j.error||"Something went wrong"); e.status=r.status; throw e; } return j; }); }); }
+  /* THE BROADCAST IS THE GAME, so a message that goes nowhere is a round that did not
+     happen. This used to check only that `ch` EXISTED, never that it was connected, and
+     it swallowed the error: if the host's channel dropped, every ball, every word and
+     every question after that vanished in silence, with the host still tapping.
+
+     VenuePlay's bingo console had exactly this and the note left there says what it
+     cost: "the one format that could lose a whole house with nothing to replay from."
+     PartyPlay is the same shape. Held instead, and posted the moment it reconnects.
+
+     Newest kept when the queue is full: a party that has been offline for fifty
+     messages does not need the first one, it needs the one on screen now. */
+  var subscribed=false, sendQueue=[], SEND_QUEUE_MAX=50;
+  function wireOut(o){
+    if(subscribed && ch){ try{ ch.send({type:"broadcast",event:"msg",payload:o}); return true; }catch(e){} }
+    return false;
+  }
+  /* EVERYTHING THE HOST SAYS IS SIGNED (15 Oct 2026, lib/pp-sign.js). Anybody who could read the
+     code off the telly could join this channel and speak as the host. The telly and the phones now
+     drop a host message without this party's signature, once the party has a key. In order, through
+     one chain; with no key (or no pp-sign.js) it goes out exactly as before.
+
+     AND THE TELLY'S LAST PICTURE IS KEPT. A telly that woke up or reloaded mid-game showed "Join the
+     party" until the host happened to press something, and resending the game did not help: that
+     is a PHONE message the telly ignores, and replaying it reset every phone (14 Oct audit). So
+     whatever last went up on the wall is remembered here and only that goes back, marked tvOnly so
+     no phone acts on it a second time. */
+  var PPS = window.PPSign || null;
+  var lastWall = null, WALL_T = { big:1, board:1, photoscreen:1, queue:1, lobby:1 };
+  /* Every send passes through here first; signed is true on the way back out of the signer.
+     `typeof`, so send() still runs on its own where a suite lifts it without this. */
+  function sendHook(o){
+    if(o && WALL_T[o.t] && !o.tvOnly) lastWall = o;
+    if(!PPS) return false;
+    PPS.signSend(o, function(m){ send(m, true); });
+    return true;
+  }
+  function send(o, signed){
+    if(!signed && typeof sendHook === "function" && sendHook(o)) return;
+    if(wireOut(o)) return;
+    if(sendQueue.length >= SEND_QUEUE_MAX) sendQueue.shift();
+    sendQueue.push(o);
+  }
+  function wallAgain(){
+    if(G && G.mode==="gm" && G.pub){   // a Great Minds board in play: the board and what has been found
+      (G.game.replay() || []).forEach(function(m){ var c=JSON.parse(JSON.stringify(m)); c.tvOnly=true; send(c); });
+      return;
+    }
+    if(lastWall){ var w=JSON.parse(JSON.stringify(lastWall)); w.tvOnly=true; send(w); }
+  }
+  function flushQueue(){ while(sendQueue.length){ if(!wireOut(sendQueue[0])) break; sendQueue.shift(); } }
+
+  /* NAMED, so it can be run by a test. It was ch.subscribe() with NO CALLBACK AT ALL:
+     the host had no idea whether it was connected, and nothing could ever tell it. */
+  /* THE HOST HAS TO KNOW WHEN THE PHONES CANNOT HEAR THEM.
+
+     Found 15 Sep 2026 by running a party. The console opened, the game list drew, bingo
+     started, numbers called, the board filled in. On the guest's phone: nothing, for the
+     whole game. The channel had never subscribed, so every send went into sendQueue,
+     which drops its oldest at 50 and never complains.
+
+     Nothing on this page said so. onChannelStatus set subscribed=false on CHANNEL_ERROR,
+     TIMED_OUT and CLOSED and then returned, and there was no connection indicator in the
+     console at all. Everything the host can see is drawn locally, so a dead channel and a
+     healthy one look identical from behind the tablet.
+
+     play.html got this fixed on 12 Sep: a guest is told when their phone goes deaf. The
+     host, who is the one person who could actually do something about it, was not.
+
+     A TIMER AS WELL AS THE STATUS CALLBACK. The failure I hit produced no error event at
+     all: it simply never reached SUBSCRIBED. Waiting for an error would have waited
+     forever, so anything still unsubscribed after eight seconds says so. */
+  var wireBarTimer=null;
+  function wireBar(on){
+    var bar=document.getElementById("ppWire");
+    if(!on){ if(bar) bar.remove(); return; }
+    if(bar) return;
+    bar=document.createElement("div");
+    bar.id="ppWire";
+    bar.setAttribute("style",
+      "position:sticky;top:0;z-index:99;background:#5A1020;color:#FFE4E9;padding:11px 16px;"+
+      "font:600 14px/1.45 Manrope,system-ui,sans-serif;display:flex;gap:12px;align-items:center;"+
+      "border-bottom:2px solid #FF1F8E");
+    bar.innerHTML='<span>Not connected. <b>Guests\u2019 phones are not receiving anything.</b> '+
+      'The screen here will still move, but nothing is reaching the room.</span>'+
+      '<button id="ppWireGo" style="margin-left:auto;flex:0 0 auto;border:0;border-radius:7px;'+
+      'padding:8px 13px;background:#FF1F8E;color:#fff;font:inherit;cursor:pointer">Try again</button>';
+    document.body.insertBefore(bar, document.body.firstChild);
+    document.getElementById("ppWireGo").addEventListener("click", function(){
+      wireBar(false);
+      /* Forget it BEFORE unsubscribing: the CLOSED that unsubscribing reports at once
+         used to put this bar straight back up. Audit, 27 Sep 2026. */
+      var old=ch; ch=null; subscribed=false;
+      try{ if(old && old.unsubscribe) old.unsubscribe(); }catch(e){}
+      connect();
+      armWireWatch();
+    });
+  }
+  function armWireWatch(){
+    if(wireBarTimer) clearTimeout(wireBarTimer);
+    wireBarTimer=setTimeout(function(){ if(!subscribed) wireBar(true); }, 8000);
+  }
+
+  function onChannelStatus(status){
+    if(status==="SUBSCRIBED"){
+      subscribed=true; wireBar(false); if(wireBarTimer) clearTimeout(wireBarTimer); flushQueue();
+      /* WHO IS ALREADY HERE.
+
+         `players` was built ONLY from hello broadcasts arriving while this console was
+         open, and nothing ever asked. So a host who opened the console after people had
+         started joining, or who simply RELOADED it part way through, saw "0 playing" with
+         a room full of guests.
+
+         Not cosmetic. paintCharades disables its own start button when players.length is
+         0 and reads "Waiting for someone to join", so a host who reloaded could not start
+         charades at all, and nextActor picks from the same empty list.
+
+         So ask. Every phone answers a rollcall with its hello, which is the message this
+         console already understands, so nothing else changes. VenuePlay does the same
+         thing under the same name. Added 12 Sep 2026. */
+      send({t:"rollcall"});
+      return;
+    }
+    if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ subscribed=false; wireBar(true); }
+  }
+
+  /* PartyPlay draws in the browser, unlike VenuePlay which had to move its draw
+     to a server for OLGR. A private party is not regulated gaming, there is no
+     stake and no regulator to satisfy, so the tablet is a perfectly good barrel.
+     Still rejection sampled, because a biased draw is just a worse game. */
+  function pick(n){
+    var a=new Uint32Array(1), lim=Math.floor(4294967296/n)*n, x;
+    do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim);
+    return x%n;
+  }
+
+  function connect(){
+    if(!SUPA_ANON) return;
+    try{
+      var c=supabase.createClient(SUPA_URL,SUPA_ANON);
+      var mine=c.channel(PPConfig.channel(CODE),{config:{broadcast:{self:false}}});
+      ch=mine;
+      ch.on("broadcast",{event:"msg"},function(e){
+        if(ch!==mine) return;      // a channel we have hung up on
+        fromRoom(e.payload||{});
+      });
+      ch.subscribe(function(st){ if(ch===mine) onChannelStatus(st); });
+      armWireWatch();   // a subscribe that never lands fires no error; catch it on the clock
+    }catch(e){}
+  }
+
+  /* ------------------------------------------------ who is actually speaking --
+     EVERY MESSAGE FROM A PHONE IS CHECKED BEFORE IT COUNTS (15 Oct 2026). The channel is open to
+     anybody holding the code on the telly, and a message's name field was the only identity there
+     was, so a stranger could answer in Alice's name, raise her hand or shout FULL HOUSE for her,
+     and a made-up name went onto the telly past the fifty cap (14 Oct audit).
+
+     Now a phone signs what it sends with its own key (lib/pp-phonekey.js) and gave that key's
+     fingerprint, its pid, to the Worker when it joined. ROOM is the Worker's own guest list,
+     fetched with the host key, and the NAME comes from there, never from the message. A phone on
+     the page from before this shipped sends unsigned, and is still heard, but only under a name
+     the Worker let in that no key has claimed. If the Worker cannot be asked at all (an old Worker,
+     no signal) the console falls back to holding each name to the first key that used it this
+     session, so it still never takes a second phone's word for a name a key already holds. */
+  var ROOM = null, roomAt = 0, roomP = null, BOUND = {}, SEEN_N = {}, recvChain = Promise.resolve();
+  var GUEST_T = { hello:1, claim:1, answer:1, hand:1, truths:1, truthpick:1, truthvote:1, pick:1,
+                  photoguess:1, song:1, text:1, pr_guess:1 };
+  function roomList(force){
+    if(roomP) return roomP;
+    if(ROOM && !force) return Promise.resolve(ROOM);
+    /* A Worker that cannot answer (not deployed yet, no signal) is asked again every thirty
+       seconds, not on every message. */
+    if(!ROOM && roomAt && Date.now()-roomAt < 30000) return Promise.resolve(null);
+    roomAt = Date.now();
+    roomP = api("/party/players?code="+encodeURIComponent(CODE)+"&key="+encodeURIComponent(KEY))
+      .then(function(d){
+        var L = { byPid:{}, byName:{} };
+        (d.players||[]).forEach(function(r){
+          var row = { name:String(r.name||""), pid:r.pid||null, tseed:(r.tseed>>>0) };
+          if(!row.name) return;
+          L.byName[row.name.toLowerCase()] = row;
+          if(row.pid) L.byPid[row.pid] = row;
+        });
+        ROOM = L; return L;
+      })
+      .catch(function(){ return ROOM; })          // keep what we had; null means "cannot ask"
+      .then(function(L){ roomP = null; return L; });
+    return roomP;
+  }
+  /* Pure, so a suite can drive it: m is the message, v what lib/pp-phonekey.js made of it, L the
+     Worker's list (null when it cannot be asked), bound this session's name to pid map. Returns
+     {name}, {refuse}, or {unknown} when a fresher list might know them (final is that second go). */
+  function admitName(m, v, L, bound, final){
+    if(!v || !v.ok) return { refuse: (v && v.why) || "not signed properly" };
+    var nm = String(m.name||"").trim(), k = nm.toLowerCase();
+    if(v.legacy){
+      if(bound[k]) return { refuse:"a phone with a key holds that name" };
+      if(!L) return nm ? { name:nm } : { refuse:"no name" };
+      var r = L.byName[k];
+      if(!r) return final ? { refuse:"not on the party's guest list" } : { unknown:true };
+      if(r.pid) return { refuse:"that guest's phone has a key" };
+      return { name:r.name };
+    }
+    var pid = m.pid;
+    function bind(name){ var kk=name.toLowerCase(); if(bound[kk] && bound[kk]!==pid) return { refuse:"another phone holds that name" }; bound[kk]=pid; return { name:name }; }
+    if(!L) return nm ? bind(nm) : { refuse:"no name" };
+    if(L.byPid[pid]){ bound[L.byPid[pid].name.toLowerCase()] = pid; return { name:L.byPid[pid].name }; }   // the Worker's word wins
+    if(!final) return { unknown:true };
+    var rn = L.byName[k];
+    if(!rn) return { refuse:"not on the party's guest list" };
+    if(rn.pid && rn.pid !== pid) return { refuse:"another phone holds that name" };
+    return bind(rn.name);    // joined before keys existed: the first key to speak for the name holds it
+  }
+  function who(m){
+    var PK = window.PPPhoneKey;
+    var vp = PK ? PK.verify(m) : Promise.resolve(m.pk||m.sig ? { ok:false, why:"cannot check" } : { ok:true, legacy:true });
+    return vp.then(function(v){
+      if(v && v.ok && !v.legacy && PK && !PK.fresh(SEEN_N, m)) return { refuse:"a replay" };   // something already heard, sent again
+      return (roomP || Promise.resolve(ROOM)).then(function(L){ var r = admitName(m, v, L, BOUND, false); r.v = v; return r; });
+    });
+  }
+  /* SOMEBODY THE LIST DOES NOT KNOW YET is usually a guest who joined a second ago. Their messages
+     wait to one side while the list is fetched again, at most once every two seconds, and are then
+     judged on it. They do not hold up anybody else's: a stranger sending a thousand made-up keys
+     costs one fetch every two seconds and delays nobody's answer. */
+  var parked = [], parkT = null;
+  function park(m, v){
+    parked.push({ m:m, v:v }); if(parked.length > 100) parked.shift();
+    if(parkT) return;
+    parkT = setTimeout(function(){
+      parkT = null;
+      roomList(true).then(function(L){
+        var list = parked; parked = [];
+        list.forEach(function(p){
+          recvChain = recvChain.then(function(){
+            var r = admitName(p.m, p.v, L, BOUND, true);
+            if(r.name){ p.m.name = r.name; onRoom(p.m); }
+          }).catch(function(){});
+        });
+      });
+    }, Math.max(0, roomAt + 2000 - Date.now()));
+  }
+  function fromRoom(m){
+    if(m.t==="tv-here"){ send({t:"players",names:players}); wallAgain(); if(G) G.repaint&&G.repaint(); return; }
+    if(!GUEST_T[m.t]) return;     // the console acts on guests' messages only; anything else here is not for it
+    recvChain = recvChain.then(function(){ return who(m); }).then(function(r){
+      if(r && r.unknown){ park(m, r.v); return; }
+      if(!r || !r.name) return;
+      m.name = r.name;
+      onRoom(m);
+    }).catch(function(){});
+  }
+
+  function onRoom(m){
+        if(m.t==="hello" && m.name){
+          if(players.indexOf(m.name)<0){ players.push(m.name); paintStrip(); send({t:"players",names:players}); }
+          /* Somebody has just walked in and picked up their phone. Tell them what
+             is happening, or they stare at a waiting screen until the next round
+             wondering whether it is broken. Not every game can do this, so it is
+             opt in per game. Given the name, so a game that should only ask the
+             newcomer (two truths) does not ask the whole room again. */
+          if(G && G.resend){ try{ G.resend(m.name); }catch(e){} }
+        }
+        /* A phone answering the roll call below. Same shape as a hello, handled above. */
+        /* An answer from a phone. First one per person per question counts: a
+           guest who taps twice has changed their mind after seeing a face, and
+           letting that through makes the whole board meaningless. */
+        if(m.t==="claim" && m.name){ onClaim(m.name, m.kind, m.nums); }
+        if(m.t==="photoguess" && G && G.mode==="photos" && m.name){
+          if(!G.answers.some(function(a){ return a.name===m.name && a.i===m.i; })){
+            G.answers.push({name:m.name,i:m.i,answer:m.answer}); paintPhotos();
+          }
+        }
+        if(m.t==="song" && G && G.mode==="playlist" && m.name && m.text){
+          G.songs.push({ title:String(m.text).slice(0,80), by:m.name, played:false });
+          send({t:"queue", songs:G.songs.slice(-12).map(function(s){ return {t:s.title,by:s.by}; })});
+          paintPlaylist();
+        }
+        if(m.t==="hand" && G && G.mode==="whohere" && m.name && m.i===G.i){
+          if(!G.hands.some(function(x){ return x.i===m.i && x.name===m.name; })){
+            G.hands.push({i:m.i,name:m.name});
+            send({t:"big",text:G.items[G.i].q,
+                  sub:G.hands.filter(function(x){return x.i===G.i;}).map(function(x){return x.name;}).join(", ")});
+            paintWhoHere();
+          }
+        }
+        if(m.t==="truths" && G && G.mode==="truths" && m.name && m.lines && m.lines.length===3){
+          if(!G.subs.some(function(x){ return x.name===m.name; })){
+            G.subs.push({ name:m.name, lines:m.lines.map(function(x){return String(x).slice(0,120);}),
+                          lie: Math.max(0, Math.min(2, parseInt(m.lie,10)||0)) });
+            paintTruths();
+          }
+        }
+        // A guest's pick. "truthvote" with no lines is a phone still on the page from before 14 Oct.
+        if((m.t==="truthpick" || (m.t==="truthvote" && !m.lines)) && G && G.mode==="truths" && m.name && G.phase==="play"){
+          var t=G.subs[G.turn];
+          if(t && m.name!==t.name && !G.votes.some(function(x){ return x.turn===G.turn && x.name===m.name; })){
+            G.votes.push({ turn:G.turn, name:m.name, right: (parseInt(m.pick,10)===t.lie) });
+            paintTruths();
+          }
+        }
+        if(m.t==="pick" && G && G.mode==="heads" && m.name && G.inPlay.indexOf(m.name)>=0){
+          G.picks[m.name]=m.side;
+          /* Staying in without picking is deliberate (see flip()). WINNING without ever
+             picking is not, so remember who actually played at least once. */
+          G.everPicked[m.name]=true;
+          paintHeads();
+        }
+        if(m.t==="pr_guess"){ onGreatMindsGuess(m); }
+        if(m.t==="answer" && G && G.items && G.answers && m.name){   // G.answers: who here and charades have items and no answers
+          var dup = G.answers.some(function(a){ return a.name===m.name && a.i===m.i; });
+          if(!dup){ G.answers.push({name:m.name,i:m.i,answer:m.answer}); if(G.tkey) triviaSave(); paintTrivia(); }
+        }
+        runSave();   // a raised hand is part of where the game is up to
+  }
+
+  /* SIGNING IN, which did not exist.
+
+     A host arrives here from a link in their welcome email that carries the
+     code and the host key. Lose that email and this page said "open this from
+     the link in your email" and stopped: no way in, no way to get the email
+     again, on a product somebody has already paid for. The Worker has had a
+     resend endpoint the whole time and nothing on the site reached it.
+
+     The tips are here rather than only in the setup guide because this is the
+     screen a host is looking at when they are getting ready, which is exactly
+     when the advice is worth having. */
+  function signIn(err, prefill){
+    $("app").innerHTML =
+      '<div class="gate" style="text-align:left">' +
+        '<div class="big" style="text-align:center">Open your party</div>' +
+        '<p style="text-align:center">Both of these are in your welcome email.</p>' +
+        '<label for="siCode" style="display:block;margin:18px 0 6px;color:var(--faint);font-size:14px">Party code</label>' +
+        '<input id="siCode" maxlength="10" autocapitalize="characters" autocomplete="off" ' +
+          'spellcheck="false" placeholder="ABC123" value="' + esc(prefill || CODE || '') + '" style="width:100%;padding:14px;border-radius:11px;' +
+          'border:1px solid var(--line);background:rgba(255,255,255,.05);color:inherit;font:inherit;text-align:center">' +
+        '<label for="siKey" style="display:block;margin:14px 0 6px;color:var(--faint);font-size:14px">Host key</label>' +
+        '<input id="siKey" autocomplete="off" spellcheck="false" placeholder="the long one" ' +
+          'style="width:100%;padding:14px;border-radius:11px;border:1px solid var(--line);' +
+          'background:rgba(255,255,255,.05);color:inherit;font:inherit;text-align:center">' +
+        (err ? '<p style="color:var(--pink);margin-top:12px">' + esc(err) + '</p>' : '') +
+        '<button class="callbtn" id="siGo" style="margin-top:18px;width:100%">Open my party</button>' +
+        /* LOST THE EMAIL, which means lost the code too (Dean, 23 Oct 2026). This said "Lost the
+           email? Send it again" and then asked for the party code, which is in the lost email: a
+           circle. The one thing a host still knows is the address they paid with, so that is what
+           is asked for; the Worker sends the welcome email to that address and nowhere else. A code
+           on its own still works for somebody who has it (the telly, say) and not the email. */
+        '<div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--line);text-align:center">' +
+          '<div style="font-weight:800;margin-bottom:6px">Lost the email?</div>' +
+          '<p style="margin:0 0 12px;color:var(--faint)">Put in the email address you paid with and we will send it again, ' +
+            'party code and host key included.</p>' +
+          '<label for="siEmail" style="display:block;margin:0 0 6px;color:var(--faint);font-size:14px">The email you paid with</label>' +
+          '<input id="siEmail" type="email" inputmode="email" autocomplete="email" spellcheck="false" ' +
+            'placeholder="you@example.com" style="width:100%;padding:14px;border-radius:11px;border:1px solid var(--line);' +
+            'background:rgba(255,255,255,.05);color:inherit;font:inherit;text-align:center">' +
+          '<button class="sec" id="siResend" style="margin-top:12px;width:100%">Send it again</button>' +
+          '<p id="siSent" style="margin:12px 0 0;color:var(--faint);font-size:14.5px"></p>' +
+        '</div>' +
+        '<div style="margin-top:26px;padding-top:20px;border-top:1px solid var(--line)">' +
+          '<div style="font-weight:800;margin-bottom:10px">Twenty minutes before people arrive</div>' +
+          '<ul style="margin:0;padding-left:20px;color:var(--faint);line-height:1.75">' +
+            '<li><b>Get the screen working</b> with nobody watching. It is the only part worth doing early.</li>' +
+            '<li><b>Have a practice run</b> so the first game in front of people is not your first ever. ' +
+              '<a href="/practice">Try one now</a>, it does not use any of your time.</li>' +
+            '<li><b>Plug the laptop in.</b> A flat battery halfway through the bingo is a sad way to end a game.</li>' +
+            '<li><b>Turn off the screen saver</b> on the telly or the laptop.</li>' +
+            '<li><b>Decide what they are playing for</b> and put it where everyone can see it.</li>' +
+          '</ul>' +
+        '</div>' +
+      '</div>';
+
+    function go(){
+      var c = PPConfig.code($("siCode").value);
+      var k = ($("siKey").value || "").trim();
+      if(c.length < 4 || !k) return signIn("Put in both the code and the host key.", c);
+      // Straight into the address the rest of the page already reads, so there
+      // is one way in and nothing new to keep in step.
+      location.search = "?code=" + encodeURIComponent(c) + "&key=" + encodeURIComponent(k);
+    }
+    $("siGo").addEventListener("click", go);
+    $("siKey").addEventListener("keydown", function(e){ if(e.key === "Enter") go(); });
+    function sendAgain(){
+      var btn = $("siResend"), out = $("siSent");
+      var em = ($("siEmail").value || "").trim();
+      var c = PPConfig.code($("siCode").value);
+      var byEmail = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em);
+      if(!byEmail && em){ out.textContent = "That email does not look right. Check it and try again."; return; }
+      if(!byEmail && c.length < 4){
+        out.textContent = "Put in the email address you paid with. If you still have your party code, that works too.";
+        return;
+      }
+      btn.disabled = true; btn.textContent = "Sending...";
+      /* The Worker answers the same way whatever happened, on purpose: asking cannot be used to
+         find out which addresses or codes are ours. So say something true in every case. */
+      var done = byEmail
+        ? "If that address bought a party, the email is on its way. Give it a minute, and check the junk folder."
+        : "If that code is one of ours, the email is on its way to the address you paid with. Give it a minute, and check the junk folder.";
+      var call = byEmail
+        ? api("/licence/recover", { method:"POST", body: JSON.stringify({ email:em }) })
+        : api("/licence/resend",  { method:"POST", body: JSON.stringify({ code:c }) });
+      call.then(function(){ btn.textContent = "Sent"; out.textContent = done; })
+        .catch(function(e){
+          if(e && e.status === 400){ btn.disabled = false; btn.textContent = "Send it again"; out.textContent = e.message; return; }
+          btn.disabled = false; btn.textContent = "Send it again";
+          out.textContent = "Could not reach us just now. Try again in a moment, or email hello@partyplay.com.au.";
+        });
+    }
+    $("siResend").addEventListener("click", function(e){ e.preventDefault(); sendAgain(); });
+    $("siEmail").addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); sendAgain(); } });
+    ($("siCode").value ? $("siKey") : $("siCode")).focus();
+  }
+
+  function load(){
+    if(!CODE||!KEY){ signIn(); return; }
+    $("tvlink").href="/tv?code="+encodeURIComponent(CODE);
+    $("buildlink").href="/host?code="+encodeURIComponent(CODE)+"&key="+encodeURIComponent(KEY);
+    nightLoad();
+    api("/games?code="+encodeURIComponent(CODE)+"&key="+encodeURIComponent(KEY))
+      .then(function(d){
+        PARTY=d.party; GAMES=d.games||[];
+        /* The key before the channel, so the opening burst can be signed; pp-sign.js holds the first
+           send a few seconds at most for it. The guest list too, so the roll call's answers are
+           matched against it rather than each one asking. */
+        if(PPS) PPS.initHost(API, CODE, KEY, signBar);
+        roomList(false);
+        connect();
+        if(!resumeOpenGame()) render();
+      })
+      .catch(function(e){
+        /* A WRONG OR MISTYPED HOST KEY WAS A DEAD END: "Not your party to change." and nothing to
+           press (14 Oct audit). The sign-in screen has the code filled in and the "send it again"
+           link, so a host with a bad link can get the right one without writing to anybody. */
+        if(e && (e.status===403 || e.status===404)){
+          signIn(e.status===404
+            ? "We could not find a party with the code "+CODE+". Check it against your welcome email."
+            : "That host key does not match party "+CODE+". Copy it again from your welcome email, or have the email sent again below.", CODE);
+          return;
+        }
+        $("app").innerHTML='<div class="gate">'+esc(e.message)+
+          '<p style="margin-top:14px"><a href="'+esc(location.pathname+location.search)+'">Try again</a></p></div>';
+      });
+  }
+
+  /* THE CONSOLE SAYS WHEN THE ROOM IS IGNORING IT. Once a party has a key, the telly and the phones
+     drop anything unsigned, so a console that could not get the key (the Worker blipped as it
+     opened) would be playing to a wall that ignores it. pp-sign.js keeps trying every thirty
+     seconds; until it gets there, this says so, with the one thing that fixes it. */
+  function signBar(st){
+    var bar=$("ppSignBar");
+    if(!st || !st.ignored){ if(bar) bar.remove(); return; }
+    if(bar) return;
+    bar=document.createElement("div"); bar.id="ppSignBar"; bar.setAttribute("role","alert");
+    bar.setAttribute("style","position:sticky;top:0;z-index:98;background:#5A1020;color:#FFE4E9;padding:11px 16px;"+
+      "font:600 14px/1.45 Manrope,system-ui,sans-serif;border-bottom:2px solid #FF1F8E");
+    bar.innerHTML='The screen and the phones will ignore this console until it gets your party’s security key. '+
+      'It is trying again by itself. If this stays up, <a href="'+esc(location.pathname+location.search)+'" style="color:#fff">reload this page</a>.';
+    document.body.insertBefore(bar, document.body.firstChild);
+  }
+
+  function paintStrip(){
+    var s=$("strip"); if(s) s.querySelector(".n").textContent=players.length+" playing";
+  }
+
+  function startClock(){
+    vpAsk(PARTY.startWarning).then(function(ok){ if(ok) startClockNow(); });
+  }
+  function startClockNow(){
+    var btn = $("startnow");
+    if(btn){ btn.disabled = true; btn.textContent = "Starting..."; }
+    api("/licence/start", { method:"POST", body: JSON.stringify({ code:CODE, key:KEY }) })
+      .then(function(j){
+        PARTY.status = "live"; PARTY.startsAt = j.startsAt; PARTY.endsAt = j.endsAt;
+        PARTY.timeLeft = j.timeLeft;
+        render(); toast("You are running");
+      })
+      .catch(function(e){
+        if(btn){ btn.disabled = false; btn.textContent = "Start the party"; }
+        toast(e.message);
+      });
+  }
+
+  /* A RELOADED CONSOLE GOES BACK INTO THE GAME IT WAS RUNNING (17 Oct 2026). It used to land on the
+     games list, and drawing the list sends {t:"lobby"}: so reloading the tablet half way through
+     Who am I? put the join code back on the telly and sent every phone back to "Watch the big
+     screen". The host tapped Start again, the console and the phones picked the round back up from
+     what this tablet had saved, and the telly stayed on the join code until the next answer.
+     Found 17 Oct 2026 driving a pretend party in a browser.
+
+     So the open game is remembered, and a reload reopens it with nothing sent to the room first.
+     Only the games that save where they are up to (OPEN_RESUME): reopening heads or tails, the
+     draw, the playlist, two truths or guess the photo STARTS them again, and doing that to a room
+     unasked would wipe it. Those still come back to the list, as before, and the telly matches it.
+     The list itself forgets the open game, because a console on the list has no game open. */
+  var OPEN_RESUME = { bingo90:1, trivia:1, howwell:1, whohere:1, charades:1, guesswho:1, topanswers:1 };
+  function openKey(){ return "ppOpen:" + CODE; }
+  function openSave(g){ try{ if(g && g.id) localStorage.setItem(openKey(), JSON.stringify({ id:String(g.id), at:Date.now() })); }catch(e){} }
+  function openClear(){ try{ localStorage.removeItem(openKey()); }catch(e){} }
+  /* Pure, so a suite can run it: which of `games` to reopen from what was saved, or null. */
+  function openPick(saved, games, status, now){
+    if(status !== "live" || !saved || !saved.id) return null;
+    if(!(now - (saved.at || 0) < 12*3600*1000)) return null;
+    for(var i = 0; i < (games||[]).length; i++){
+      var g = games[i];
+      if(g && String(g.id) === String(saved.id)) return OPEN_RESUME[g.format] ? g : null;
+    }
+    return null;
+  }
+  function resumeOpenGame(){
+    var saved = null; try{ saved = JSON.parse(localStorage.getItem(openKey()) || "null"); }catch(e){}
+    var g = openPick(saved, GAMES, PARTY && PARTY.status, Date.now());
+    if(!g){ openClear(); return false; }
+    runGame(g);
+    return true;
+  }
+  function runGame(g){
+    openSave(g);
+    if(g.format==="bingo90") runBingo(g);
+    else if(g.format==="trivia"||g.format==="howwell") runTrivia(g);
+    else if(g.format==="headstails") runHeads(g);
+    else if(g.format==="draw") runDraw(g);
+    else if(g.format==="playlist") runPlaylist(g);
+    else if(g.format==="whohere") runWhoHere(g);
+    else if(g.format==="truths") runTruths(g);
+    else if(g.format==="photos") runPhotos(g);
+    else if(g.format==="charades") runCharades(g);
+    else if(g.format==="guesswho") runGuessWho(g);
+    else if(g.format==="topanswers") runGreatMinds(g);
+    /* AND THE SAME ON THE TELEVISION. This is the worse half: the slug went up on the big
+       screen in front of the whole room when the game started. */
+    else { var _n=PPGames.name(g.format,g.title);
+           send({t:"big",text:_n,sub:"Off we go"}); toast("Running "+_n); }
+  }
+
+  function render(){
+    openClear();
+    /* Three states. "ready" is where a licence spends most of its life: bought,
+       built, and waiting for somebody to say go. */
+    if(PARTY.status === "ready"){
+      $("app").innerHTML =
+        '<div class="gate"><div class="big">Ready when you are</div>'+
+        '<p>Nothing is ticking yet. Your <b>'+(PARTY.days===3?"3 days":"24 hours")+
+        '</b> begins the moment you press this, so leave it alone until the party is actually happening.</p>'+
+        '<p style="margin-top:6px">You can keep building games without starting it.</p>'+
+        '<button class="callbtn" id="startnow" style="margin-top:22px">Start the party</button>'+
+        '<p style="margin-top:14px"><a href="/host?code='+encodeURIComponent(CODE)+'&key='+encodeURIComponent(KEY)+'">Build your games first</a></p></div>';
+      return;
+    }
+    if(PARTY.status === "finished"){
+      $("app").innerHTML='<div class="gate"><div class="big">That is a wrap</div>'+
+        '<p>Your time is up. Hope it was a good one.</p></div>';
+      return;
+    }
+
+    var h='<div class="strip" id="strip"><span style="color:var(--faint);font-size:14px">Code</span>'+
+      '<span class="code">'+esc(PARTY.code)+'</span><span class="n">'+players.length+' playing</span></div>'+
+      '<div class="strip" style="padding:9px 16px"><span style="color:var(--faint);font-size:14px">Time</span>'+
+      '<span id="clock" style="font-weight:700">'+esc(PARTY.timeLeft||"")+'</span></div>';
+    if(!GAMES.length){
+      h+='<div class="gate"><div class="big">No games yet</div><p>Add one and come back.</p>'+
+         '<p style="margin-top:14px"><a href="/host?code='+encodeURIComponent(CODE)+'&key='+encodeURIComponent(KEY)+'">Build your games</a></p></div>';
+    }
+    GAMES.forEach(function(g,i){
+      var n=(g.config&&g.config.items&&g.config.items.length)||0;
+      /* PPGames.name, not g.format. The fallback here used to be the stored slug, so a host
+         running a party read "headstails" and "truths" off their own console. */
+      /* THE SECOND LINE PRINTED THE SLUG TOO. Fixing only the heading left "headstails"
+         sitting directly under "Heads or tails", which is worse than before because now it
+         looks deliberate.
+
+         What this line is actually for is telling a host WHICH GAME their own title is, so
+         it earns its place only when they have named it something: "Nan's Round" over
+         "Trivia, 12 ready". With no title it would just repeat the heading, so it drops to
+         the count on its own. */
+      var kind = PPGames.name(g.format);
+      var titled = String(g.title || "").trim() !== "";
+      var sub = (titled ? kind + (n ? " &middot; " : "") : "") + (n ? n + " ready" : "");
+      h+='<div class="card"><div class="row"><div class="meta"><h3>'+esc(PPGames.name(g.format,g.title))+'</h3>'+
+         (sub ? '<p>'+sub+'</p>' : '')+'</div>'+
+         '<button class="play" data-run="'+i+'">Start</button></div></div>';
+    });
+    var nb = nightBoard();
+    if(nb.length){
+      h+='<div class="card"><div class="row"><div class="meta"><h3>Tonight so far</h3>'+
+         '<p>'+nb.length+(nb.length===1?" player":" players")+'</p></div>'+
+         '<button class="sec" id="shownight">Put it up</button></div>'+
+         nb.slice(0,8).map(function(r,i){ return '<div style="display:flex;justify-content:space-between;'+
+           'padding:4px 0;color:var(--mute);font-size:15px"><span>'+(i+1)+'. '+esc(r.name)+'</span><b>'+r.score+'</b></div>'; }).join("")+
+         '<button class="sec" id="resetnight" style="width:100%;margin-top:10px">Clear the scores</button></div>';
+    }
+    if(PARTY.status === "live"){
+      h+='<div class="card"><div class="row"><div class="meta"><h3>The photos</h3>'+
+         '<p>Ask everyone if they want tonight\'s album sent to them</p></div>'+
+         '<button class="sec" id="askphotos">Ask the room</button></div></div>';
+    }
+    $("app").innerHTML=h;
+    send({t:"lobby"});
+  }
+
+  /* Keep the clock honest without hammering the Worker: recompute locally from
+     the end time we already hold, and only every half minute. */
+  var warned30 = false, warned10 = false;
+  /* A named function, not an anonymous one inside setInterval, because an interval
+     callback is unreachable from the test harness and this is the part that was
+     wrong. */
+  function licenceTick(){
+    if(!PARTY || PARTY.status !== "live" || !PARTY.endsAt) return;
+    var lic = { startsAt: Date.parse(PARTY.startsAt), endsAt: Date.parse(PARTY.endsAt) };
+    var el = $("clock");
+    if(el) el.textContent = PPLicence.timeLeft(lic);
+
+    /* THE HOST GETS A HEADS UP, THE ROOM DOES NOT. Twenty four hours runs out at
+       whatever time it was started, and the console said nothing until it was gone.
+       A host who wants to wind the night up, or buy more time, needs to know before
+       the screen changes rather than after. Telling thirty guests their party has
+       ten minutes left is the host's call to make out loud, not ours to put on the
+       wall, so this is a toast on the tablet and nothing else. */
+    var left = lic.endsAt - Date.now();
+    if(left > 0){
+      if(left <= 600000 && !warned10){ warned10 = true; toast("Ten minutes left on your party"); }
+      else if(left <= 1800000 && !warned30){ warned30 = true; toast("Half an hour left on your party"); }
+    }
+
+    if(!PPLicence.isLive(lic)){
+      /* THE CONSOLE KNEW AND THE ROOM DID NOT. This flipped the host's own screen to
+         "That is a wrap" and told nobody else, so the television held its last caption
+         and every phone held its last screen, for ever, while the person holding the
+         tablet was the only one who could see that it had ended. Same shape as every
+         other fault found on 15 Sep 2026: one surface handled, the other two left.
+         lobby first so a phone holding a finished game lets go of it, then the wall. */
+      try { send({t:"lobby"});
+            send({t:"big", text:"That is a wrap", sub:"Thanks for coming"}); } catch(e){}
+      PARTY.status = "finished"; G = null; render();
+    }
+  }
+  setInterval(licenceTick, 30000);
+
+  /* ------------------------------------------------------------------ bingo -- */
+  /* SOMEBODY WHO WALKS IN MID GAME GETS A TICKET.
+
+     Only charades and guess-who had a resend, so at a party where people drift in all
+     night every other game left the late arrival on "You are in. Watch the big screen."
+     for its whole length. Proved 15 Sep 2026 by joining a running party: the guest saw
+     the waiting screen and nothing else.
+
+     The phone builds its own ticket when it hears {t:"bingo"}, so this is just saying it
+     again. They start from the next ball rather than the first, which is a worse ticket
+     than everyone else's and still enormously better than watching. */
+  /* The game as it stands, for a phone that has just walked in or come back: what has been called,
+     the ball that is up now and who has already won. A reloaded console used to resend only the
+     calls, so every phone showed "--" until the next ball, and a guest who had already been
+     announced for a line was offered "Line! Shout out" again (14 Oct audit). */
+  function bingoState(){
+    var last = G.called.length ? G.called[G.called.length-1] : null;
+    return {t:"bingo", gid:G.gid, called:G.called.slice(), last:last, said: last==null ? "" : callName(last),
+            won:{ line:G.won.line.slice(), full:G.won.full.slice() }};
+  }
+  function resendBingo(){ send(bingoState()); }
+  var bingoSeq=0;   // two games in one millisecond still get different ids
+  function bingoSave(){
+    if(!G || !G.bkey) return;
+    try{ localStorage.setItem(G.bkey, JSON.stringify({ gid:G.gid, called:G.called, won:G.won, at:Date.now() })); }catch(e){}
+  }
+  function runBingo(g, fresh){
+    /* gid tells a phone THIS game from the last bingo game tonight, so it does not
+       carry the old card's marks into a new one. `called` goes to a late phone so it
+       knows what has already gone. */
+    /* won: who has been announced, and on which ball (lineAt is how many had been called). The
+       line goes to whoever had it on THAT ball, so two people on the same call share it and
+       anyone who gets there a ball later is told it has gone. */
+    G={ pool:[], called:[], gid:String(Date.now())+"-"+(++bingoSeq), repaint:paintBingo, resend:resendBingo,
+        gref:g||null, bkey: g && g.id ? "ppBingo:"+CODE+":"+g.id : null,
+        won:{ line:[], lineAt:null, full:[], fullAt:null } };
+    /* A RELOAD IS NOT A NEW GAME. A fresh gid tells every phone to throw its ticket away, so a
+       tablet that slept mid-game dealt the whole room new tickets and lost every number called
+       (audit, 30 Sep 2026). The same game, reopened within twelve hours and not finished, keeps
+       its gid and its calls; "Start over" is still a new game. */
+    var was=null; if(G.bkey && !fresh){ try{ was=JSON.parse(localStorage.getItem(G.bkey)||"null"); }catch(e){} }
+    var wasOver = was && was.won && Array.isArray(was.won.full) && was.won.full.length;   // a full house is the end of that game
+    if(was && was.gid && Array.isArray(was.called) && was.called.length < 90 && !wasOver && (Date.now()-(was.at||0)) < 12*3600*1000){
+      G.gid=String(was.gid); G.called=was.called.map(Number);
+      if(was.won && Array.isArray(was.won.line)) G.won={ line:was.won.line.slice(), lineAt:was.won.lineAt==null?null:+was.won.lineAt, full:[], fullAt:null };
+    }
+    for(var i=1;i<=90;i++) if(G.called.indexOf(i)<0) G.pool.push(i);
+    // Tell the phones to build their tickets BEFORE the first ball, so nobody is
+    // still staring at a lobby when a number goes up.
+    if(G.called.length){
+      send(bingoState());   // the same game: phones keep their tickets, and get the ball and the winners back
+      /* and the telly gets the ball that is up, which it last heard from the console before the reload */
+      var up = G.called[G.called.length-1];
+      send({t:"big", text:String(up), sub:callName(up), called:G.called.slice()});
+    } else {
+      send({t:"bingo", gid:G.gid});
+      send({t:"big",text:"Bingo",sub:"Grab your ticket"});
+    }
+    bingoSave();
+    paintBingo();
+  }
+  /* A claim from a phone. Without this the shout goes nowhere and the host never
+     knows anybody has won. */
+  /* CHECKED AGAINST THAT GUEST'S OWN TICKET (14 Oct audit). A claim used to be checked only
+     against what had been CALLED, so a guest could shout a line made of any five called numbers,
+     on nobody's ticket, and be announced. Their ticket is built here from the seed the Worker
+     keeps for them (lib/pp-ticket.js, the same build their phone does), and the claim stands
+     only if that ticket really has the line or the full house. With no seed (an old Worker, or
+     the guest list could not be fetched) it falls back to the check it had before. Returns why
+     it said no, for the suite. */
+  function bingoTicket(name){
+    var r = typeof ROOM !== "undefined" && ROOM && ROOM.byName[String(name||"").toLowerCase()];
+    if(!r || r.tseed==null || !window.PPTicket || !PPTicket.buildFromSeed) return null;
+    return PPTicket.buildFromSeed(r.tseed);
+  }
+  function onClaim(name, kind, nums){
+    if(!G || !G.called) return "no game";
+    if(!G.won) G.won = { line:[], lineAt:null, full:[], fullAt:null };
+    var who = name || "Someone", full = kind === "full", what = full ? "full house" : "line";
+    if(G.won.full.length){ toast(who + " shouted " + what + ", but the full house has gone. That game is over."); return "over"; }
+    if((full ? G.won.full : G.won.line).indexOf(name) >= 0) return "already";      // announced once is enough
+    var t = bingoTicket(name);
+    if(t){
+      var p = PPTicket.progress(t, G.called);
+      if(full ? !p.fullHouse : !p.hasLine){
+        toast(who + " shouted " + what + ", but their ticket does not have one yet. Check their phone.");
+        return "not on their ticket";
+      }
+    } else if(Array.isArray(nums)){
+      /* The fallback, the 27 Sep check: the numbers they won with must all have been called. */
+      var notCalled = nums.map(Number).filter(function(n){ return G.called.indexOf(n) < 0; });
+      if(!nums.length || notCalled.length){
+        toast(who + " shouted " + what +
+              (notCalled.length ? ", but " + notCalled.slice(0,4).join(", ") + (notCalled.length===1 ? " has" : " have") +
+               " not been called" : ", but sent no numbers") + ". Check their phone.");
+        return "not called";
+      }
+    } else { toast(who + " shouted " + what + ". Check their phone."); return "unchecked"; }
+    if(!full && G.won.line.length && G.won.lineAt !== G.called.length){
+      toast(who + " has a line, but " + G.won.line.join(" and ") + " got there first. Playing for the full house.");
+      return "line gone";
+    }
+    if(full){ G.won.full.push(name); G.won.fullAt = G.called.length; }
+    else { G.won.line.push(name); G.won.lineAt = G.called.length; }
+    if(G.bkey) bingoSave();
+    toast(who + (full ? " has a full house!" : " has a line!"));
+    /* The winners ride on the caption, so every phone learns at once that the line has gone (or
+       the game is over) and stops offering a claim that can no longer win. */
+    send({t:"big", text:(name||"Winner"), sub: full ? "Full house" : "Line",
+          gid:G.gid, won:{ line:G.won.line.slice(), full:G.won.full.slice() }});
+    if(G.repaint) G.repaint();
+    return "ok";
+  }
+
+  function callName(n){
+    /* The bit that makes it feel like bingo rather than a number generator. */
+    var names={1:"Kelly's eye",2:"One little duck",7:"Lucky seven",8:"Garden gate",
+      10:"Uncle Ben",11:"Legs eleven",22:"Two little ducks",25:"Duck and dive",
+      44:"Droopy drawers",55:"All the fives",66:"Clickety click",77:"Sunset strip",
+      88:"Two fat ladies",90:"Top of the shop"};
+    return names[n] || (n<10 ? "Number "+n : String(n).split("").join(" and ")+", "+n);
+  }
+
+  function paintBingo(){
+    var last=G.called.length?G.called[G.called.length-1]:null;
+    var h='<div class="caller"><div class="num">'+(last==null?"--":last)+'</div>'+
+      '<div class="said">'+(last==null?"Tap to call the first number":esc(callName(last)))+'</div></div>'+
+      '<button class="callbtn" id="call">'+(G.called.length?"Next number":"Start calling")+'</button>'+
+      '<div class="board">';
+    for(var i=1;i<=90;i++) h+='<i class="'+(G.called.indexOf(i)>=0?"hit":"")+'">'+i+'</i>';
+    h+='</div>';
+    var won = G.won || { line:[], full:[] };
+    if(won.line.length || won.full.length){
+      h+='<div class="q" style="margin-top:12px">'+
+         (won.line.length ? '<div class="qa">Line: '+esc(won.line.join(", "))+'</div>' : '')+
+         (won.full.length ? '<div class="qa">Full house: '+esc(won.full.join(", "))+'. That is the game.</div>' : '')+'</div>';
+    }
+    h+='<div class="bar2"><button class="sec" id="back">Back to games</button>'+
+       '<button class="sec" id="again">Start over</button></div>';
+    $("app").innerHTML=h;
+    if(won.full.length){ $("call").disabled=true; $("call").textContent="Full house, game over"; }
+    else if(!G.pool.length){ $("call").disabled=true; $("call").textContent="All 90 called"; }
+  }
+  function nextBall(){
+    if(!G.pool.length || G.won.full.length) return;     // nothing is called after a full house
+    var n=G.pool.splice(pick(G.pool.length),1)[0];
+    G.called.push(n);
+    // The whole list rides with every ball, so a phone that missed one catches up.
+    send({t:"big",text:String(n),sub:callName(n),called:G.called.slice()});
+    bingoSave();
+    paintBingo();
+  }
+
+  /* -------------------------------------------------- guess the photo ------- */
+  /* Rounds are built from the album, which is the point: the host prepares
+     nothing, and the photos are ones the room took tonight. Guesses are player
+     names, so the options build themselves out of who is actually here. */
+  function runPhotos(g){
+    G={ mode:"photos", items:(g.config&&g.config.items)||[], i:-1, shown:false,
+        answers:[], seed:Math.floor(Math.random()*1e6), repaint:paintPhotos };
+    if(!G.items.length){
+      $("app").innerHTML='<div class="gate"><div class="big">Nothing set up</div>'+
+        '<p>Build this one from your album first: pick a few photos and say who each is.</p>'+
+        '<p style="margin-top:14px"><a href="/host?code='+encodeURIComponent(CODE)+'&key='+encodeURIComponent(KEY)+'">Build it</a></p>'+
+        '</div><div class="bar2"><button class="sec" id="back">Back to games</button></div>';
+      return;
+    }
+    paintPhotos();
+  }
+  function photoOptions(i){
+    var it=G.items[i]||{};
+    var correct=String(it.a||"").trim();
+    /* Decoys are other people at the party. If the answer is not somebody here,
+       fall back to the other answers in the round. */
+    var pool=players.filter(function(n){ return n!==correct; });
+    if(pool.length<3){
+      G.items.forEach(function(o,j){ if(j!==i && o.a && o.a!==correct && pool.indexOf(o.a)<0) pool.push(o.a); });
+    }
+    var r=(G.seed+i)>>>0;
+    function rnd(){ r=(r*1103515245+12345)>>>0; return r/4294967296; }
+    var picked=pool.slice().sort(function(){ return rnd()-0.5; }).slice(0,3);
+    return { correct:correct,
+             options:[correct].concat(picked).sort(function(){ return rnd()-0.5; }) };
+  }
+  function paintPhotos(){
+    var it=G.items[G.i];
+    var h='';
+    if(G.i<0) h='<div class="gate"><div class="big">'+G.items.length+' photos</div><p>Ready when you are.</p></div>';
+    else if(!it) h='<div class="gate"><div class="big">That is the lot</div></div>';
+    else {
+      var n=G.answers.filter(function(a){ return a.i===G.i; }).length;
+      h='<div class="q"><div class="qn">'+(G.i+1)+' of '+G.items.length+
+        '<span style="float:right;text-transform:none;letter-spacing:0">'+n+' of '+players.length+' guessed</span></div>'+
+        '<div class="qt">'+esc(it.q||"Who is this?")+'</div>'+
+        (G.shown?'<div class="qa">'+esc(it.a||"")+'</div>':'')+'</div>';
+    }
+    h+='<div class="bar2">'+
+       (G.i>=0 && it && !G.shown ? '<button class="play" id="photoreveal" style="flex:1">Show who it is</button>' : '')+
+       (G.i<0 || G.shown || !it ? '<button class="play" id="photonext" style="flex:1">'+
+          (G.i<0?"First photo":(it?"Next photo":"Done"))+'</button>' : '')+
+       '</div><div class="bar2"><button class="sec" id="back">Back to games</button></div>';
+    $("app").innerHTML=h;
+  }
+
+  /* ------------------------------------------------------- prize draw ------- */
+  /* Deliberately draws from people who are actually IN the room, not a list typed
+     up earlier. The commonest way a party draw goes wrong is the winner having
+     gone home an hour ago. */
+  function runDraw(g){
+    G={ mode:"draw", won:[], last:null, repaint:paintDraw };
+    send({t:"big",text:"Prize draw",sub:"Everyone in the room is in it"});
+    paintDraw();
+  }
+  function paintDraw(){
+    var pool=players.filter(function(n){ return G.won.indexOf(n)<0; });
+    var h='<div class="caller"><div class="num" style="font-size:clamp(34px,11vw,74px)">'+
+      (G.last?esc(G.last):"--")+'</div><div class="said">'+
+      (G.last?"That is the winner":pool.length+" in the hat")+'</div></div>';
+    h+= pool.length
+      ? '<button class="callbtn" id="drawnow">'+(G.won.length?"Draw another":"Draw a winner")+'</button>'
+      : '<div class="q"><div class="qt">Everybody has won something. Good party.</div></div>';
+    if(G.won.length){
+      h+='<div class="q"><div class="qn">Winners so far</div>'+
+         G.won.map(function(n,i){ return '<div style="padding:3px 0">'+(i+1)+'. '+esc(n)+'</div>'; }).join("")+'</div>';
+    }
+    h+='<div class="bar2"><button class="sec" id="back">Back to games</button>'+
+       '<button class="sec" id="drawreset">Start over</button></div>';
+    $("app").innerHTML=h;
+  }
+  function drawWinner(){
+    var pool=players.filter(function(n){ return G.won.indexOf(n)<0; });
+    if(!pool.length) return;
+    var w=pool[pick(pool.length)];
+    G.won.push(w); G.last=w;
+    /* {t:"big"} is the TELLY's caption, and every phone with no game of its own renders
+       it too. So the draw told EVERY guest "Jordan. Come and get it", and a room of
+       thirty all stood up. Seen 15 Sep 2026 with two phones side by side; with one phone
+       it looks perfect, which is why it survived this long.
+
+       The winner gets a message meant for them, everyone else gets the news. Same shape
+       charades already uses to put the word on exactly one phone. */
+    send({t:"draw", winner:w});
+    send({t:"big",text:w,sub:"Come and get it"});
+    paintDraw();
+  }
+
+  /* --------------------------------------------------------- playlist ------- */
+  /* We show the queue. We do NOT play anything: PartyPlay supplies no music and
+     no lyrics, which is what keeps a private party out of licensing entirely. */
+  function runPlaylist(g){
+    G={ mode:"playlist", songs:[], repaint:paintPlaylist };
+    send({t:"ask-text", kind:"song", title:"Add a song",
+          hint:"Whatever you want to hear. Add as many as you like."});
+    send({t:"big",text:"The playlist",sub:"Add songs on your phone"});
+    paintPlaylist();
+  }
+  function paintPlaylist(){
+    var h='<div class="q"><div class="qn">The queue<span style="float:right;text-transform:none;'+
+      'letter-spacing:0">'+G.songs.length+'</span></div>'+
+      (G.songs.length? G.songs.map(function(s,i){
+        return '<div style="display:flex;justify-content:space-between;gap:10px;padding:5px 0;'+
+          (s.played?"opacity:.4;text-decoration:line-through":"")+'">'+
+          '<span>'+esc(s.title)+'</span><span style="color:var(--faint);font-size:13px">'+esc(s.by)+'</span></div>';
+      }).join("") : '<div class="qt" style="font-size:16px;font-weight:400;color:var(--mute)">Nothing yet. It appears here as people add it.</div>')+
+      '</div><div class="bar2"><button class="sec" id="back">Back to games</button>'+
+      '<button class="sec" id="showqueue">Put it up</button></div>';
+    $("app").innerHTML=h;
+  }
+
+  /* -------------------------------------------------- who here has ever ----- */
+  /* A RELOAD PICKS THESE UP WHERE THEY WERE (audit, 30 Sep 2026). Who here has ever, charades and
+     who am I lived only in this page, so a tablet that slept put the host back at the start with
+     the room half way through. What each needs to carry on is saved on this tablet after every tap
+     and every guest message, and reopening the same game within twelve hours puts it back. A game
+     that has run off its end starts fresh. Guess the photo is left out on purpose: its options are
+     built from who was in the room when each photo went up. */
+  var RUN_KEEP = { whohere:["i","hands"], charades:["i","actor","got"], guesswho:["i","guesser","done"] };
+  function runSave(){
+    if(!G || !G.gameId || !RUN_KEEP[G.mode]) return;
+    var o = { at:Date.now(), n:G.items.length };
+    RUN_KEEP[G.mode].forEach(function(k){ o[k] = G[k]; });
+    try{ localStorage.setItem("ppRun:"+CODE+":"+G.gameId, JSON.stringify(o)); }catch(e){}
+  }
+  function runRestore(g){
+    G.gameId = g && g.id ? String(g.id) : null;
+    if(!G.gameId) return;
+    var was=null; try{ was=JSON.parse(localStorage.getItem("ppRun:"+CODE+":"+G.gameId)||"null"); }catch(e){}
+    if(!was || was.n!==G.items.length || (Date.now()-(was.at||0)) > 12*3600*1000) return;
+    if(typeof was.i!=="number" || was.i < 0 || was.i >= G.items.length) return;
+    RUN_KEEP[G.mode].forEach(function(k){ if(was[k]!==undefined) G[k]=was[k]; });
+    if(G.resend) try{ G.resend(); }catch(e){}
+    /* AND THE TELLY GETS ITS PICTURE BACK. resend() is the PHONES' message, which the telly
+       ignores, so a picked-up round left the wall on whatever it last had (17 Oct 2026). */
+    if(G.wall) try{ var w=G.wall(); if(w) send(w); }catch(e){}
+  }
+
+  function runWhoHere(g){
+    G={ mode:"whohere", items:(g.config&&g.config.items)||[], i:-1, hands:[], repaint:paintWhoHere,
+        resend:resendWhoHere, wall:wallWhoHere };
+    runRestore(g);
+    paintWhoHere();
+  }
+  /* There is no reveal in this one, so a latecomer can always be given the prompt that is
+     on the wall. Heads or tails and guess the photo deliberately have no resend: a coin
+     flip somebody joined halfway through is not a round they played, and a photo round
+     builds its options from who was in the room when it started. */
+  /* What the telly shows for the prompt that is up: the question, and whoever has put a hand up. */
+  function wallWhoHere(){
+    var it = G && G.i >= 0 ? G.items[G.i] : null;
+    if(!it) return null;
+    var names = G.hands.filter(function(x){ return x.i===G.i; }).map(function(x){ return x.name; });
+    return {t:"big", text:it.q, sub: names.length ? names.join(", ") : "Tap if it is you"};
+  }
+  function resendWhoHere(){
+    if(!G || G.i < 0) return;
+    var it = G.items[G.i];
+    if(!it) return;
+    send({t:"hands", i:G.i, q:it.q});
+  }
+  function paintWhoHere(){
+    var it=G.items[G.i];
+    var h='';
+    if(G.i<0) h='<div class="gate"><div class="big">'+G.items.length+' to get through</div><p>Ready when you are.</p></div>';
+    else if(!it) h='<div class="gate"><div class="big">That is the lot</div></div>';
+    else {
+      var hands=G.hands.filter(function(x){ return x.i===G.i; });
+      h='<div class="q"><div class="qn">'+(G.i+1)+' of '+G.items.length+'</div>'+
+        '<div class="qt">'+esc(it.q)+'</div>'+
+        '<div class="qa">'+(hands.length? hands.map(function(x){return esc(x.name);}).join(", ")
+          : "Nobody yet")+'</div></div>';
+    }
+    h+='<div class="bar2">'+
+       (G.i<0 || !it ? '' : '<button class="sec" id="whonext" style="flex:1">Next one</button>')+
+       (G.i<0 ? '<button class="play" id="whonext" style="flex:1">Start</button>' : '')+
+       '</div><div class="bar2"><button class="sec" id="back">Back to games</button></div>';
+    $("app").innerHTML=h;
+  }
+
+  /* ---------------------------------------------------------- charades ------
+     The word must reach exactly one phone and no screen at all. It is broadcast
+     with the actor's name attached and every other phone throws it away, which
+     is honest enough for a lounge room: nobody is going to read the network
+     traffic at their mate's fortieth. The television is told who is acting and
+     nothing else. */
+  function runCharades(g){
+    G={ mode:"charades", items:(g.config&&g.config.items)||[], i:-1, actor:null, got:[],
+        repaint:paintCharades, resend:resendCharades, wall:wallCharades };
+    runRestore(g);
+    if(G.i < 0) warnScreens("charades");   // before the first actor; a console picking a round back up has had it
+    paintCharades();
+  }
+  function nextActor(){
+    /* Straight around the room in join order, so nobody is picked twice before
+       everybody has had a go, and nobody has to volunteer. */
+    if(!players.length) return null;
+    var used=G.got.length;
+    return players[used % players.length];
+  }
+  function paintCharades(){
+    var it=G.items[G.i], h='';
+    if(G.i<0){
+      h='<div class="gate"><div class="big">'+G.items.length+' to act out</div>'+
+        '<p>One phone gets the word. Nothing goes on the telly, so turn any screen '+
+        'the actor can see away from them.</p></div>'+
+        '<button class="callbtn" id="charstart"'+(players.length?'':' disabled')+'>'+
+        (players.length? 'Start' : 'Waiting for someone to join')+'</button>';
+    } else if(!it){
+      h='<div class="gate"><div class="big">That is the lot</div></div>';
+    } else {
+      h='<div class="q"><div class="qn">'+(G.i+1)+' of '+G.items.length+'</div>'+
+        '<div class="qt">'+esc(it.q)+'</div>'+
+        '<div class="qa">'+esc(G.actor||"nobody")+' is acting it out</div></div>'+
+        '<div class="bar2">'+
+        '<button class="play" id="charnext" style="flex:1">Got it</button>'+
+        '<button class="sec" id="charskip" style="flex:1">Skip</button></div>';
+    }
+    h+='<div class="bar2"><button class="sec" id="back">Back to games</button></div>';
+    $("app").innerHTML=h;
+  }
+  /* Say the current round again, for a phone that has only just joined. Safe to
+     repeat: every phone works out what to show from the same message, so the
+     actor sees the word again and everybody else sees who to watch again. */
+  function wallCharades(){
+    if(!G || !G.items[G.i] || !G.actor) return null;
+    return {t:"big", text:G.actor+" is acting", sub:"Shout your guesses"};
+  }
+  function resendCharades(){
+    var it = G.items[G.i];
+    if(!it || !G.actor) return;
+    send({t:"charades", i:G.i, of:G.items.length, word:it.q, actor:G.actor});
+  }
+  function charadesGo(){
+    G.i++;
+    var it=G.items[G.i];
+    // lobby FIRST, or the phones are still holding the last round and drop this caption.
+    if(!it){ send({t:"lobby"}); send({t:"big",text:"Charades done",sub:""}); paintCharades(); return; }
+    G.actor=nextActor();
+    G.got.push(G.actor);
+    // The word goes to the phones, tagged with whose it is. The TV gets the name only.
+    send({t:"charades", i:G.i, of:G.items.length, word:it.q, actor:G.actor});
+    send(wallCharades() || {t:"big", text:"Someone is acting", sub:"Shout your guesses"});
+    paintCharades();
+  }
+
+  /* ----------------------------------------------------------- who am I? ----
+     The mirror image of charades. The answer goes on the big screen so the whole
+     room can see it, and on every phone EXCEPT the person guessing. They ask yes
+     or no questions out loud. The only way this fails is the guesser looking at
+     the telly, so say so, twice. */
+  function runGuessWho(g){
+    G={ mode:"guesswho", items:(g.config&&g.config.items)||[], i:-1, guesser:null, done:[],
+        repaint:paintGuessWho, resend:resendGuessWho, wall:wallGuessWho };
+    runRestore(g);
+    if(G.i < 0) warnScreens("guesswho");
+    paintGuessWho();
+  }
+  function paintGuessWho(){
+    var it=G.items[G.i], h='';
+    if(G.i<0){
+      h='<div class="gate"><div class="big">'+G.items.length+' to guess</div>'+
+        '<p>The answer goes on the big screen and on every phone but theirs. '+
+        'Sit them with their back to it.</p></div>'+
+        '<button class="callbtn" id="gwstart"'+(players.length?'':' disabled')+'>'+
+        (players.length? 'Start' : 'Waiting for someone to join')+'</button>';
+    } else if(!it){
+      h='<div class="gate"><div class="big">That is the lot</div></div>';
+    } else {
+      h='<div class="q"><div class="qn">'+(G.i+1)+' of '+G.items.length+'</div>'+
+        '<div class="qt">'+esc(it.q)+'</div>'+
+        '<div class="qa">'+esc(G.guesser||"nobody")+' is guessing</div></div>'+
+        '<div class="bar2">'+
+        '<button class="play" id="gwnext" style="flex:1">Got it</button>'+
+        '<button class="sec" id="gwpass" style="flex:1">Pass</button></div>';
+    }
+    h+='<div class="bar2"><button class="sec" id="back">Back to games</button></div>';
+    $("app").innerHTML=h;
+  }
+  /* The answer on the wall, and the guesser told to look away: the picture a reload has to put back. */
+  function wallGuessWho(){
+    var it = G && G.i >= 0 ? G.items[G.i] : null;
+    if(!it || !G.guesser) return null;
+    return {t:"big", text:it.q, sub:G.guesser+", eyes off the screen"};
+  }
+  function resendGuessWho(){
+    var it = G.items[G.i];
+    if(!it || !G.guesser) return;
+    send({t:"guesswho", i:G.i, of:G.items.length, answer:it.q, guesser:G.guesser});
+  }
+  function guessWhoGo(){
+    G.i++;
+    var it=G.items[G.i];
+    // lobby FIRST, same reason as charades: the last answer is still on every phone.
+    if(!it){ send({t:"lobby"}); send({t:"big",text:"That is the lot",sub:""}); paintGuessWho(); return; }
+    if(!players.length){ toast("Nobody has joined yet"); G.i--; return; }
+    G.guesser=players[G.done.length % players.length];
+    G.done.push(G.guesser);
+    send({t:"guesswho", i:G.i, of:G.items.length, answer:it.q, guesser:G.guesser});
+    send(wallGuessWho());
+    paintGuessWho();
+  }
+
+  /* Both games are ruined by a screen the player can see, and a host reading a
+     line of small print on a busy night will miss it. So it is a thing you have
+     to tap past, once, before the first round. */
+  function warnScreens(kind){
+    var who = kind==="charades" ? "the person acting" : "the person guessing";
+    var why = kind==="charades"
+      ? "The word goes to their phone only. Nothing appears on the television."
+      : "The answer goes on the television and on everyone else's phone.";
+    send({t:"big", text:"Screens off", sub:"for "+who});
+    var old=document.getElementById("ppWarn"); if(old) try{ old.remove(); }catch(e){}
+    var w=document.createElement("div");
+    w.className="ask"; w.id="ppWarn";
+    w.innerHTML='<div class="askbox"><h3>Before you start</h3>'+
+      '<p>'+why+' Make sure '+who+' cannot see any screen: turn their phone face '+
+      'down, or sit them with their back to the telly.</p>'+
+      '<div class="row2"><button id="warnok">Got it</button></div></div>';
+    document.body.appendChild(w);
+    w.querySelector("#warnok").addEventListener("click", function(){ try{ w.remove(); }catch(e){} });
+  }
+
+  /* What each person earned across the whole of two truths and a lie.
+
+     This was written inline and threw its own answer away: it added the points up
+     per player, then Object.keys() kept only the NAMES and the map handed
+     everybody a flat hundred. Somebody who spotted five lies finished the night
+     level with somebody who spotted one. Out here as a named function so it can
+     be tested, which is the other half of why it went unnoticed. */
+  function truthsTally(votes){
+    var by = (votes||[]).reduce(function(a, v){
+      if(v && v.right && v.name) a[v.name] = (a[v.name] || 0) + PPQuiz.CORRECT_POINTS;
+      return a;
+    }, {});
+    return Object.keys(by).map(function(n){ return { name:n, score:by[n] }; });
+  }
+
+  /* The end of the round. A function rather than four lines inside a click handler,
+     because a click handler is the one thing the test harness cannot reach, and this
+     is the part that was wrong. */
+  function truthsEnd(){
+    var tb = truthsTally(G.votes).sort(function(a,b){ return b.score - a.score; });
+    nightAdd(tb);
+    send({t:"board", title:"Who spotted the lies", rows:tb.slice(0,10)});
+    var w = PPQuiz.winners(tb);   // a tie is a tie (14 Oct audit)
+    send({t:"big", text: w.names.length ? w.text : "That is the lot",
+          sub:  w.names.length ? w.sub : "Nobody caught a lie" });
+  }
+
+  /* ------------------------------------------------------ great minds ------
+     VenuePlay's Punters Reckon, one engine (lib/pr-game.js, a byte-for-byte copy), played with
+     family boards. A board goes up with only its question and how many answers are hidden; each
+     phone gets three typed guesses; an answer's text goes out only when somebody finds it, and
+     the rest turn over at the end. Guests are known by name here, so the name is the player id.
+     Every phone hears every message on a party channel, which is why the board with its answers
+     never leaves this tablet. */
+  /* THE BOARDS COME FROM THE WORKER, WITH THE HOST KEY (15 Oct 2026). They were a public script,
+     /lib/pp-great-minds-boards.js, that anybody could open and read every answer from before the
+     party. Asked for once, the first time Great Minds is tapped, and held on this tablet only. */
+  var _gmBoards=null;
+  function gmBoards(){
+    if(!_gmBoards){
+      _gmBoards=api("/party/gm/boards?code="+encodeURIComponent(CODE)+"&key="+encodeURIComponent(KEY)).then(function(j){
+        if(!j || !j.boards || !j.boards.length) throw new Error("There are no boards to play.");
+        return j.boards;
+      });
+      _gmBoards.catch(function(){ _gmBoards=null; });   // a failed ask is asked again on the next tap
+    }
+    return _gmBoards;
+  }
+  function runGreatMinds(g){
+    if(!window.PRGame){ toast("That game did not load. Reload this page."); return; }
+    var was=G;
+    gmBoards().then(function(boards){
+      if(G!==was) return;   // the host tapped another game while the boards were on their way
+      startGreatMinds(g, boards);
+    }, function(){
+      toast("The Great Minds boards did not load. Check the wifi and tap it again.");
+      if(G===was && !G) render();   // a reload reopening it would otherwise sit on "Loading..."
+    });
+  }
+  function startGreatMinds(g, boards){
+    G={ mode:"gm", game:new PRGame.Game({ name:PPGames.name(g.format, g.title), boards:boards }), pub:null, feed:[], added:false,
+        endT:null, boardT:null, repaint:paintGreatMinds, resend:resendGreatMinds, key:"ppGM:"+CODE+":"+(g.id||"") };
+    /* A RELOAD PICKS UP WHERE IT WAS, board in play included: the scores, what was found and each
+       guest's guesses left are saved on this tablet after every change (never sent anywhere). */
+    var was=null; try{ was=JSON.parse(localStorage.getItem(G.key)||"null"); }catch(e){}
+    if(was && was.game && !was.added){           // a finished game starts fresh if it is run again
+      G.game.load(was.game);
+      var back=G.game.replay();
+      if(back){
+        G.pub=back[0]; back.forEach(function(m){ send(m); });
+        var mine=G; G.endT=setTimeout(function(){ if(G===mine) gmEnd(); }, Math.max(0, G.game.endsAt-Date.now())+1500);
+      }
+    } else {
+      send({t:"big", text:G.game.name, sub:"Get your phones out"});
+    }
+    paintGreatMinds();
+  }
+  function gmSave(){ try{ localStorage.setItem(G.key, JSON.stringify({ game:G.game.save(), added:G.added })); }catch(e){} }
+  /* Somebody walked in mid-board: the board and what has been FOUND, never the rest. A phone
+     already on this board keeps what it typed (lib/pr-phone.js matches the round and question). */
+  function resendGreatMinds(){
+    if(!G || G.mode!=="gm" || !G.pub) return;
+    (G.game.replay() || []).forEach(function(m){ send(m); });
+  }
+  function gmPutUp(){
+    if(G.game.board) return;   // a double-tap on "Next board" must not skip the board the room is on
+    clearTimeout(G.endT); clearTimeout(G.boardT);
+    G.pub=G.game.nextBoard(45); G.feed=[];
+    if(!G.pub){ toast("There are no boards to play."); return; }
+    send(G.pub); gmSave();
+    var mine=G;
+    G.endT=setTimeout(function(){ if(G===mine) gmEnd(); }, 45*1000+1500);   // the room gets the whole clock
+    paintGreatMinds();
+  }
+  function gmEnd(){
+    if(!G || G.mode!=="gm" || !G.game.board) return;
+    clearTimeout(G.endT);
+    var e=G.game.endBoard(); G.pub=null; gmSave();
+    send(e.showall);
+    var mine=G, rows=gmRows();
+    G.boardT=setTimeout(function(){ if(G===mine) send({t:"board", title:e.leaderboard.title, rows:rows}); }, 7000);   // read the board first
+    paintGreatMinds();
+  }
+  function gmRows(){ return G.game.rows().map(function(r){ return { name:r.name, score:r.points }; }); }
+  function gmFinish(){
+    if(G.game.board) gmEnd();
+    clearTimeout(G.boardT);
+    var rows=gmRows();
+    if(!G.added){ nightAdd(rows); G.added=true; gmSave(); }   // once, however many times Finish is pressed, reloads included
+    send({t:"board", title:G.game.name+": final scores", rows:rows.slice(0,10)});
+    paintGreatMinds();
+  }
+  function onGreatMindsGuess(m){
+    if(!G || G.mode!=="gm" || !m.name || (m.round|0)!==G.game.round) return;
+    var r=G.game.guess(m.name, m.name, m.text);
+    send(r.result);                    // addressed (pr_result.to): every other phone drops it
+    if(r.reveal) send(r.reveal);       // an answer's text travels only now, when it has been found
+    gmSave();
+    G.feed.unshift({ name:m.name, text:r.result.text, hit:!!r.result.hit, a:r.result.a });
+    G.feed=G.feed.slice(0,30);
+    if(!G.paintT) G.paintT=setTimeout(function(){ if(G && G.mode==="gm"){ G.paintT=null; paintGreatMinds(); } }, 400);   // a room typing at once repaints once
+  }
+  function paintGreatMinds(){
+    var b=G.game.board, h='';
+    if(b){
+      var left=Math.max(0, Math.ceil((G.game.endsAt-Date.now())/1000));
+      h='<div class="q"><div class="qn">Board '+G.game.round+' &middot; about '+left+'s left</div>'+
+        '<div class="qt">'+esc(b.q)+'</div>'+
+        b.answers.map(function(a,i){ var f=G.game.found[i];
+          return '<div class="qa"'+(f!==undefined?' style="color:var(--teal,#17C4B4)"':'')+'>'+(i+1)+'. '+esc(a.a)+' <b>'+a.pts+'</b>'+
+                 (f!==undefined?' &middot; '+esc(f):'')+'</div>'; }).join("")+
+        '<p style="color:var(--mute,#B6ADC2);font-size:13px">Only you can see these. The telly shows each one when somebody finds it.</p>'+
+        (G.feed.length? '<div class="qa">'+G.feed.slice(0,8).map(function(x){ return esc(x.name)+': '+esc(x.text)+(x.hit?' ('+esc(x.a)+')':''); }).join('<br>')+'</div>' : '')+
+        '</div>'+
+        '<div class="bar2"><button class="sec" id="gmend" style="flex:1">End this board now</button></div>';
+    } else {
+      var rows=gmRows();
+      h='<div class="gate"><div class="big">'+(G.game.round? 'Board '+G.game.round+' done' : esc(G.game.name))+'</div>'+
+        '<p>'+(G.game.round? rows.slice(0,5).map(function(r,i){ return (i+1)+'. '+esc(r.name)+' '+r.score; }).join('<br>')
+                            : 'A question goes up and everyone has three guesses at the top answers.')+'</p></div>'+
+        '<div class="bar2"><button class="play" id="gmnext" style="flex:1">'+(G.game.round?"Next board":"First board")+'</button></div>'+
+        (G.game.round? '<div class="bar2"><button class="sec" id="gmfinish" style="flex:1">Finish and show final scores</button></div>' : '');
+    }
+    h+='<div class="bar2"><button class="sec" id="back">Back to games</button></div>';
+    $("app").innerHTML=h;
+    if(b){ clearTimeout(G.tickT); var mine=G; G.tickT=setTimeout(function(){ if(G===mine && G.game.board) paintGreatMinds(); }, 1000); }
+  }
+
+  /* ------------------------------------------- two truths and a lie --------- */
+  /* Two phases. Everyone writes their three first, because doing it person by
+     person leaves twenty people watching one person type. */
+  function runTruths(g){
+    /* Only while still collecting. Once the room is voting, dropping a form on a new
+       phone would be asking them to write for a round that has already closed. */
+    /* THE NEWCOMER ONLY. This sent {t:"ask-truths"} to the whole room every time anybody said
+       hello, and every phone redrew its empty form, wiping three statements a guest was half way
+       through typing (14 Oct audit). Now it is addressed to the guest who walked in, and only if
+       they have not already sent theirs; phones also ignore a repeat while they are on the form. */
+    G={ mode:"truths", phase:"collect", subs:[], turn:-1, votes:[], repaint:paintTruths,
+        resend:function(name){
+          if(!G || G.phase!=="collect" || !name) return;
+          if(G.subs.some(function(x){ return x.name===name; })) return;
+          send({t:"ask-truths", to:name});
+        } };
+    send({t:"ask-truths"});
+    send({t:"big",text:"Two truths and a lie",sub:"Write yours on your phone"});
+    paintTruths();
+  }
+  function paintTruths(){
+    var h='';
+    if(G.phase==="collect"){
+      h='<div class="gate"><div class="big">'+G.subs.length+' of '+players.length+' ready</div>'+
+        '<p>Everyone writes two true things and one lie. Start when enough of them have.</p></div>'+
+        '<button class="callbtn" id="truthsgo"'+(G.subs.length<2?' disabled':'')+'>'+
+        (G.subs.length<2?"Waiting for two people":"Start reading them out")+'</button>';
+    } else {
+      var t=G.subs[G.turn];
+      if(!t){
+        var tally={};
+        G.votes.forEach(function(v){ if(v.right) tally[v.name]=(tally[v.name]||0)+PPQuiz.CORRECT_POINTS; });
+        var board=Object.keys(tally).map(function(n){return {name:n,score:tally[n]};})
+          .sort(function(a,b){return b.score-a.score;});
+        h='<div class="gate"><div class="big">Done</div></div>';
+        if(!board.length) h+='<div class="q"><div class="qn">Best liar spotters</div>'+
+          '<div class="qa">Nobody caught one. Everybody kept a straight face.</div></div>';
+        if(board.length) h+='<div class="q"><div class="qn">Best liar spotters</div>'+
+          board.slice(0,8).map(function(r,i){ return '<div style="display:flex;justify-content:space-between;padding:3px 0">'+
+            '<span>'+(i+1)+'. '+esc(r.name)+'</span><b>'+r.score+'</b></div>'; }).join("")+'</div>';
+      } else {
+        var v=G.votes.filter(function(x){ return x.turn===G.turn; });
+        h='<div class="q"><div class="qn">'+(G.turn+1)+' of '+G.subs.length+
+          '<span style="float:right;text-transform:none;letter-spacing:0">'+v.length+' voted</span></div>'+
+          '<div class="qt">'+esc(t.name)+'</div>'+
+          t.lines.map(function(line,i){
+            return '<div class="qa" style="color:'+(G.shown && i===t.lie ? "var(--pink)":"var(--mute)")+'">'+
+              (i+1)+'. '+esc(line)+(G.shown && i===t.lie ? "  &larr; the lie" : "")+'</div>'; }).join("");
+        h+='</div>';
+      }
+      h+='<div class="bar2">'+
+         (t && !G.shown ? '<button class="play" id="truthreveal" style="flex:1">Show the lie</button>' : '')+
+         (!t || G.shown ? '<button class="play" id="truthnext" style="flex:1">'+(t?"Next person":"Done")+'</button>' : '')+
+         '</div>';
+    }
+    h+='<div class="bar2"><button class="sec" id="back">Back to games</button></div>';
+    $("app").innerHTML=h;
+  }
+
+  /* --------------------------------------------------- heads or tails -------- */
+  /* The pub version makes you stand up and touch your head, which quietly rules
+     out anyone who cannot easily do either. On a phone everybody plays. */
+  function runHeads(g){
+    G={ mode:"heads", round:0, inPlay:players.slice(), picks:{}, everPicked:{}, last:null,
+        over:false, winner:null, overWhy:null, repaint:paintHeads };
+    /* ONE PERSON IN THE ROOM USED TO WIN IT ON SIGHT. paintHeads draws the winner panel
+       whenever one player is left standing, and with a single guest joined that is true
+       before a coin has been flipped. The console opened straight on "Winner: Sam", there
+       was no Flip it button at all, and the everPicked rule below never got a chance to
+       run because flip() never ran. Found 15 Sep 2026 by opening the game with one phone
+       in the party. Two truths already refuses to start under two people; this now does
+       the same, and says why. */
+    if(players.length < 2){ paintHeads(); return; }
+    send({t:"heads", round:0});
+    send({t:"big", text:"Heads or tails", sub:"Pick one on your phone"});
+    paintHeads();
+  }
+  function paintHeads(){
+    var picked=Object.keys(G.picks).length;
+    var h='<div class="caller"><div class="num" style="font-size:clamp(40px,14vw,90px)">'+
+      (G.last? (G.last==="heads"?"HEADS":"TAILS") : "--")+'</div>'+
+      '<div class="said">'+(G.last? G.last+" wins the round" : "Waiting on picks")+'</div></div>'+
+      '<div class="q"><div class="qn">Still in</div><div class="qt">'+G.inPlay.length+
+      '<span style="float:right;font-size:15px;font-weight:400;color:var(--faint)">'+
+      picked+' of '+G.inPlay.length+' picked</span></div></div>';
+    /* The winner is whatever flip() decided, not whoever happens to be standing. Those
+       are not the same thing before the first flip, and they are not the same thing when
+       the last one in never picked. */
+    if(G.over){
+      h+='<div class="q"><div class="qn">Winner</div><div class="qt">'+
+         (G.winner ? esc(G.winner)
+                   : (G.overWhy==="never picked" ? "Nobody, the last one in never picked"
+                                                 : "Nobody, everyone went out together"))+'</div></div>';
+    } else if(G.inPlay.length<2){
+      h+='<div class="q"><div class="qn">Not enough people</div>'+
+         '<div class="qt" style="font-size:19px;line-height:1.35">Heads or tails needs two. '+
+         'Get another phone into the party, then tap Start again.</div></div>';
+    } else {
+      h+='<button class="callbtn" id="flip">Flip it</button>';
+    }
+    h+='<div class="bar2"><button class="sec" id="back">Back to games</button>'+
+       '<button class="sec" id="hstart">Start again</button></div>';
+    $("app").innerHTML=h;
+  }
+  function flip(){
+    var side = pick(2) ? "tails" : "heads";
+    G.last = side;
+    /* Anyone who did not pick stays in. Knocking out the guest who was at the bar
+       is the fastest way to have someone stop playing for the night. */
+    var out = G.inPlay.filter(function(n){ return G.picks[n] && G.picks[n] !== side; });
+    G.inPlay = G.inPlay.filter(function(n){ return out.indexOf(n) < 0; });
+    G.picks = {}; G.round++;
+    var headsMsg = {t:"heads", round:G.round, result:side, out:out, inPlay:G.inPlay.slice()};
+    if(G.inPlay.length<=1){
+      var w = G.inPlay[0];
+      /* YOU CANNOT WIN A GAME YOU NEVER PLAYED. Not picking keeps you in, on purpose,
+         because knocking out the guest who went to the bar is how you lose a player for
+         the night. But the last person standing having never touched their phone is a
+         different thing: they take the prize and the points off everybody who did play.
+         Seen 15 Sep 2026 running a party, where a guest who never picked once won it. */
+      if(w && !G.everPicked[w]) w = null;
+      G.over = true; G.winner = w || null;
+      G.overWhy = w ? null : (G.inPlay.length ? "never picked" : "all out");
+      if(w){ nightAdd([{name:w, score:PPQuiz.CORRECT_POINTS}]); }
+      /* The phones are told the game is over and who won, in the same message. The "big"
+         below is the telly's, and a phone holding the coin ignores it, so the winner's own
+         phone still said "Pick one" after the telly had named them (break test, 14 Oct). */
+      headsMsg.over = true; headsMsg.winner = w || null;
+      send(headsMsg);
+      send({t:"big", text: w?w:"All out", sub: w?"Heads or tails winner":"Nobody was still playing"});
+    } else {
+      send(headsMsg);
+      send({t:"big", text:side.toUpperCase(), sub:G.inPlay.length+" still in"});
+    }
+    paintHeads();
+  }
+
+  /* ----------------------------------------------------------------- trivia -- */
+  function runTrivia(g){
+    // One seed for the night, so the host, the television and every phone build
+    // the same four options in the same order without sending them three times.
+    G={ items:(g.config&&g.config.items)||[], i:-1, shown:false, answers:[],
+        seed: Math.floor(Math.random()*1e6), title:(g.title||"Trivia"), repaint:paintTrivia,
+        resend:resendTrivia, tkey:"ppTrivia:"+CODE+":"+(g.id||"") };
+    /* A RELOAD PICKS THE ROUND BACK UP. The round lived only in this page, so a tablet that slept,
+       a dropped wifi or a stray swipe put the host back on "Ready when you are" with the room on
+       question six and every answer so far gone (audit, 30 Sep 2026). Saved on this tablet after
+       every change, never sent anywhere; a round already banked into the night starts fresh. */
+    var was=null; try{ was=JSON.parse(localStorage.getItem(G.tkey)||"null"); }catch(e){}
+    if(was && !was.banked && was.n===G.items.length && typeof was.i==="number"){
+      G.i=was.i; G.shown=!!was.shown; G.answers=was.answers||[]; G.seed=was.seed;
+      if(G.i>=0 && !G.shown) resendTrivia();   // the phones get the question on the wall back
+      /* and the wall gets it back too: a console that reloaded had nothing to show a telly that woke */
+      var wit = G.items[G.i];
+      if(wit && G.i>=0) send(G.shown ? {t:"big", text:(wit.a||""), sub:wit.q} : {t:"big", text:wit.q, sub:"Question "+(G.i+1)+" of "+G.items.length});
+    }
+    /* NO QUESTIONS, SAY SO. A game added and never filled used to open on "That is the lot, all 0
+       done", which reads as broken. Same gate Guess the photo has (audit, 30 Sep 2026). */
+    if(!G.items.length){
+      $("app").innerHTML='<div class="gate"><div class="big">No questions yet</div>'+
+        '<p>Add some questions to this one first, or pick a ready-made pack.</p>'+
+        '<p style="margin-top:14px"><a href="/host?code='+encodeURIComponent(CODE)+'&key='+encodeURIComponent(KEY)+'">Add questions</a></p>'+
+        '</div><div class="bar2"><button class="sec" id="back">Back to games</button></div>';
+      return;
+    }
+    paintTrivia();
+  }
+  /* A LATECOMER GETS THE QUESTION THAT IS ON THE WALL RIGHT NOW.
+     Not once the answer is up: G.shown means the answer is already on the television, and
+     handing somebody the question at that point is handing them the answer with it. They
+     score from this question on, which is a worse deal than everyone else got and a much
+     better one than watching a waiting screen until the round ends.
+     Safe to broadcast to the whole room because play.html now ignores a repeat of the
+     question a phone is already holding. It did not, and this used to wipe the answer off
+     every screen in the room. */
+  function resendTrivia(){
+    if(!G || G.i < 0 || G.shown) return;
+    var it = G.items[G.i];
+    if(!it) return;
+    var o = PPQuiz.options(G.items, G.i, G.seed);
+    send({t:"ask", i:G.i, q:it.q, options:o.options, n:G.i+1, of:G.items.length});
+  }
+  function triviaSave(){
+    if(!G || !G.tkey) return;
+    try{ localStorage.setItem(G.tkey, JSON.stringify({ i:G.i, shown:G.shown, answers:G.answers, seed:G.seed, banked:!!G.banked, n:G.items.length })); }catch(e){}
+  }
+  function answeredCount(){
+    return G.answers.filter(function(a){ return a.i===G.i; }).length;
+  }
+  function board(){ return PPQuiz.score(G.answers, G.items, G.seed); }
+  function paintTrivia(){
+    var it=G.items[G.i];
+    var h='';
+    if(G.i<0){
+      h='<div class="gate"><div class="big">'+esc(G.items.length)+' questions</div><p>Ready when you are.</p></div>';
+    } else if(!it){
+      h='<div class="gate"><div class="big">That is the lot</div><p>All '+G.items.length+' done.</p></div>';
+    } else {
+      h='<div class="q"><div class="qn">Question '+(G.i+1)+' of '+G.items.length+
+        '<span style="float:right;text-transform:none;letter-spacing:0">'+
+        answeredCount()+' of '+players.length+' answered</span></div>'+
+        '<div class="qt">'+esc(it.q)+'</div>'+
+        (G.shown?'<div class="qa">'+esc(it.a||"")+'</div>':'')+'</div>';
+      if(G.shown){
+        var b=board().slice(0,6);
+        if(b.length){
+          h+='<div class="q"><div class="qn">Scores</div>'+
+             b.map(function(r,i){ return '<div style="display:flex;justify-content:space-between;padding:3px 0">'+
+               '<span>'+(i+1)+'. '+esc(r.name)+'</span><b>'+r.score+'</b></div>'; }).join("")+'</div>';
+        }
+      }
+    }
+    h+='<div class="bar2">'+
+       (G.i>=0 && it && !G.shown ? '<button class="play" id="reveal" style="flex:1">Show the answer</button>' : '')+
+       (G.i<0 || G.shown || !it ? '<button class="play" id="next" style="flex:1">'+(G.i<0?"First question":(it?"Next question":"Done"))+'</button>' : '')+
+       '</div><div class="bar2"><button class="sec" id="back">Back to games</button></div>';
+    $("app").innerHTML=h;
+  }
+
+  document.addEventListener("click",function(ev){
+    /* THE SAME LIST, KEPT TWICE, AND THE TWO COPIES DRIFTED.
+       This filter named nine buttons. The body below acts on twenty six, so SEVENTEEN
+       buttons rendered, looked right, and did nothing at all when pressed. #startnow was
+       one of them: "Start the party" never called startClock(), never sent
+       POST /licence/start, so the clock never started and no guest could ever join.
+       Prize draw, Guess the photo, Two truths and a lie, Who here has ever, Charades and
+       Who am I were all dead for the same reason. Live on partyplay.com.au.
+
+       Adding seventeen names would rebuild the same trap for whoever adds the eighteenth.
+       So the list lives in ONE place now: the body. Any button with an id reaches the
+       handler and the branches below decide. Every branch returns, and an id none of them
+       recognises falls through and does nothing, which is what it did before.
+
+       Found 12 Sep 2026 while asking why PartyPlay had not launched. Nothing had ever
+       pressed a PartyPlay button: the suites call the game functions directly, and
+       tools/play-a-game.py only covers VenuePlay. */
+    var el=ev.target.closest?ev.target.closest("[data-run],button[id]"):null;
+    if(!el) return;
+    if(el.hasAttribute("data-run")){
+      runGame(GAMES[+el.getAttribute("data-run")]);
+      return;
+    }
+    if(el.id==="charstart" || el.id==="charnext"){ charadesGo(); return; }
+    if(el.id==="charskip"){ G.got.pop(); charadesGo(); return; }   // a skip should not use up their turn
+    if(el.id==="gwstart" || el.id==="gwnext"){ guessWhoGo(); return; }
+    if(el.id==="gmnext"){ gmPutUp(); return; }
+    if(el.id==="gmend"){ gmEnd(); return; }
+    if(el.id==="gmfinish"){ gmFinish(); return; }
+    if(el.id==="gwpass"){ G.done.pop(); guessWhoGo(); return; }
+    if(el.id==="startnow"){ startClock(); return; }
+    if(el.id==="photoreveal"){
+      G.shown=true;
+      var pit=G.items[G.i], po=photoOptions(G.i);
+      var right=G.answers.filter(function(a){ return a.i===G.i && a.answer===po.correct; });
+      send({t:"photoresult", i:G.i, correct:po.correct,
+            board:right.map(function(a){ return {name:a.name, score:PPQuiz.CORRECT_POINTS}; })});
+      /* Both arms of that ternary were " got it", so it decided nothing and nobody
+         noticed, and with no correct guesses the wall read "0 got it". Say it in
+         words. Found 15 Sep 2026 by playing the round and getting it wrong. */
+      send({t:"big", text:po.correct,
+            sub: right.length ? right.length + " got it" : "Nobody got that one"});
+      paintPhotos(); return;
+    }
+    if(el.id==="photonext"){
+      G.i++; G.shown=false;
+      var nit=G.items[G.i];
+      if(nit){
+        var no=photoOptions(G.i);
+        send({t:"photo", i:G.i, q:nit.q||"Who is this?", url:nit.url||"",
+              options:no.options, n:G.i+1, of:G.items.length});
+        send({t:"photoscreen", url:nit.url||"", q:nit.q||"Who is this?", n:G.i+1, of:G.items.length});
+      } else {
+        var tally={};
+        G.answers.forEach(function(a){
+          if(a.answer===photoOptions(a.i).correct) tally[a.name]=(tally[a.name]||0)+PPQuiz.CORRECT_POINTS; });
+        var fin=Object.keys(tally).map(function(n){return {name:n,score:tally[n]};})
+          .sort(function(a,b){return b.score-a.score;});
+        if(!G.banked){ nightAdd(fin); G.banked=true; }
+        send({t:"final", board:fin.slice(0,10), night:nightBoard().slice(0,10)});
+        var pw = PPQuiz.winners(fin);
+        send({t:"big", text: pw.names.length ? pw.text : "That is the lot",
+              sub:  pw.names.length ? pw.sub : "Nobody got one"});
+      }
+      paintPhotos(); return;
+    }
+    if(el.id==="drawnow"){ drawWinner(); return; }
+    if(el.id==="drawreset"){ runDraw(); return; }
+    if(el.id==="showqueue"){
+      send({t:"queue", songs:G.songs.map(function(s){ return {t:s.title,by:s.by}; }), big:true});
+      toast("On the screen"); return;
+    }
+    if(el.id==="whonext"){
+      G.i++;
+      var it=G.items[G.i];
+      if(it) send({t:"hands", i:G.i, q:it.q});
+      else send({t:"lobby"});
+      send({t:"big", text: it?it.q:"That is the lot", sub: it?"Tap if it is you":""});
+      paintWhoHere(); return;
+    }
+    if(el.id==="truthsgo"){
+      G.phase="play"; G.turn=0; G.shown=false;
+      var t0=G.subs[0];
+      send({t:"truthvote", turn:0, name:t0.name, lines:t0.lines});
+      send({t:"big", text:t0.name, sub:"Which one is the lie?"});
+      paintTruths(); return;
+    }
+    if(el.id==="truthreveal"){
+      G.shown=true;
+      var tt=G.subs[G.turn];
+      send({t:"truthresult", turn:G.turn, lie:tt.lie, line:tt.lines[tt.lie]});
+      send({t:"big", text:tt.lines[tt.lie], sub:"was the lie"});
+      paintTruths(); return;
+    }
+    if(el.id==="truthnext"){
+      G.turn++; G.shown=false;
+      var tn=G.subs[G.turn];
+      if(tn){ send({t:"truthvote", turn:G.turn, name:tn.name, lines:tn.lines});
+              send({t:"big", text:tn.name, sub:"Which one is the lie?"}); }
+      /* THE ROOM NEVER FOUND OUT WHO WON. The tally was worked out, banked into the
+         night total and then thrown away: this sent lobby and nothing else, so the
+         television went straight back to the join code in the middle of the party and
+         no phone was told anything at all. Spotting five lies looked exactly like
+         spotting none. Trivia already ends by putting the board on the phones and the
+         winner on the wall, so do that. No lobby: the phones are still holding the last
+         vote, which is what stops the wall's caption wiping the board, and the ending
+         then survives until the host goes back to the games list. Found 15 Sep 2026 by
+         playing a round with two phones and watching the telly at the end. */
+      else { truthsEnd(); }
+      paintTruths(); return;
+    }
+    if(el.id==="askphotos"){ send({t:"askphotos"}); toast("Asked everyone"); return; }
+    if(el.id==="shownight"){ send({t:"board", title:"Tonight", rows:nightBoard().slice(0,12)}); toast("On the screen"); return; }
+    if(el.id==="resetnight"){
+      vpAsk("Clear tonight's scores? The games stay, only the running total goes.").then(function(ok){
+        if(ok){ NIGHT={}; nightSave(); render(); toast("Scores cleared"); }
+      });
+      return;
+    }
+    if(el.id==="call"){ nextBall(); return; }
+    if(el.id==="again"){ runBingo(G && G.gref, true); return; }   // Start over IS a new game
+    if(el.id==="flip"){ flip(); return; }
+    if(el.id==="hstart"){ runHeads(); return; }
+    if(el.id==="back"){ G=null; render(); return; }
+    if(el.id==="reveal"){
+      G.shown=true;
+      var it=G.items[G.i];
+      var o=PPQuiz.options(G.items,G.i,G.seed);
+      // Tell the phones what was right, so each guest sees their own result
+      // rather than having to find themselves on a list on the television.
+      send({t:"result", i:G.i, correct:o.correct, board:board().slice(0,10)});
+      send({t:"big", text:(it.a||""), sub:it.q});
+      triviaSave(); paintTrivia(); return; }
+    if(el.id==="next"){
+      G.i++; G.shown=false;
+      var it2=G.items[G.i];
+      if(it2){
+        var o2=PPQuiz.options(G.items,G.i,G.seed);
+        send({t:"ask", i:G.i, q:it2.q, options:o2.options, n:G.i+1, of:G.items.length});
+        send({t:"big", text:it2.q, sub:"Question "+(G.i+1)+" of "+G.items.length});
+      } else {
+        var fin=board();
+        // Bank it once. G.banked stops a host who taps Next again at the end from
+        // adding the same round to the night twice.
+        if(!G.banked){ nightAdd(fin); G.banked=true; }
+        send({t:"final", board:fin.slice(0,10), night:nightBoard().slice(0,10)});
+        /* THE TOP ROW IS NOT ALWAYS A WINNER. Nobody scoring put the first name up as if they had
+           won, and two on the same score crowned whichever sorted first (14 Oct audit). */
+        var tw = PPQuiz.winners(fin);
+        send({t:"big", text: tw.names.length ? tw.text : "That is the lot",
+              sub: tw.names.length ? tw.sub : (fin.length ? "Nobody scored" : "")});
+      }
+      triviaSave(); paintTrivia(); return;
+    }
+  });
+
+  /* AFTER the game handler above, so it saves where the game got to, not where it was. */
+  document.addEventListener("click", function(){ runSave(); });
+  if(navigator.wakeLock) navigator.wakeLock.request("screen").catch(function(){});
+  load();
+})();
+</script>
+</body>
+</html>

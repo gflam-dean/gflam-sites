@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VenuePlay Musical Bingo: Play</title>
+<link rel="icon" type="image/png" href="/logos/venueplay_appicon_rebuilt.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
+    --pink:#FF1F8E; --pink-deep:#C70F69;
+    --gold:#FFC24B; --win:#35D07F; --roll:#F5A524;
+    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#8A8A94;
+    --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow-x:clip}
+  body{background:radial-gradient(700px 420px at 80% -10%, rgba(255,31,142,.12), transparent 60%), var(--ink);
+    color:var(--text);font-family:'Manrope',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;
+    overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+  .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
+
+  .app{max-width:460px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+  /* ROOM EITHER SIDE FOR THE CORNERS (Dean, 21 Oct 2026: the VenuePlay logo "looks crammed into the
+     corner"). The menu button sits top-right and the called-ball chip top-left, both pinned over the
+     header, and the header used to be padded 16px all round, so at 320 wide "VenuePlay Musical Bingo"
+     ran under the menu button. 72px each side keeps the middle clear of both and the brand centred. */
+  .ptop{padding:16px 72px;text-align:center;border-bottom:1px solid var(--line-2);position:sticky;top:0;background:rgba(10,10,11,.82);backdrop-filter:blur(8px);z-index:10}
+  .brand{display:flex;align-items:center;justify-content:center;gap:8px}
+  .brand svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9))}
+  .brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;color:#fff;line-height:1.2;text-align:left}
+  .brand .nw{white-space:nowrap}   /* a long game name wraps after VenuePlay, never mid-name */
+  .brand .div{width:1px;height:16px;background:var(--line)}
+  .venue{font-size:11px;color:var(--muted);margin-top:5px;display:flex;align-items:center;justify-content:center;gap:6px}
+  .vlogo{display:block;margin:10px auto 2px;height:30px;max-width:150px;object-fit:contain}   /* sized by its shape once it loads: /app/vp-venuelogo.js */
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
+  .dot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
+
+  .view{flex:1;display:flex;flex-direction:column;padding:22px 18px}
+  .center{justify-content:center;text-align:center}
+  .hidden{display:none!important}
+
+  .pbig{font-family:'Anton',sans-serif;font-size:34px;color:#fff;text-transform:uppercase;line-height:1.02;margin-bottom:8px}
+  .psub{color:var(--muted);font-size:14px}
+  .pnote{font-size:12px;color:var(--faint);margin-top:16px}
+  .field{margin-top:14px}
+  input[type=text],input[type=email],input[type=tel]{width:100%;background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:12px;
+    padding:15px;font-family:'Manrope',sans-serif;font-size:16px;outline:none;transition:.15s;text-align:center}
+  input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.15)}
+  .optin{display:flex;align-items:center;gap:9px;margin-top:14px;color:var(--muted);font-size:14px;text-align:left;cursor:pointer}
+  .optin input{width:18px;height:18px;flex:none;accent-color:var(--pink)}
+  input.code{font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:.2em;text-transform:uppercase;font-size:24px}
+
+  .btn{border:none;border-radius:12px;padding:16px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:16px;cursor:pointer;transition:.15s;letter-spacing:.02em;width:100%}
+  .btn.pink{background:var(--pink);color:#0A0A0B;box-shadow:0 8px 20px rgba(255,31,142,.3)}
+  .btn.pink:active{background:var(--pink-deep)}
+  .btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+  .cerr{color:var(--roll);font-size:13px;min-height:18px;margin-top:10px}
+
+  /* card view */
+  .cardhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+  .cardhead .pn{font-weight:800;color:#fff;font-size:16px;font-family:'Hanken Grotesk',sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:55%}
+  .cardpat{font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--pink);background:rgba(255,31,142,.12);padding:7px 13px;border-radius:20px;white-space:nowrap}
+  .card5{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;width:calc(100% * var(--cz,1));min-width:0}
+  #cardWrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .cardctl{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+  /* 44px minimum. These are hit one-handed, in the dark, by people whose eyes are on the card. */
+  .czbtn{background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:12px 13px;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;line-height:1;cursor:pointer;min-width:46px;min-height:44px}
+  .czbtn:active{background:var(--pink);color:#fff;border-color:transparent}
+  .czbtn.fs{font-size:13px;min-width:0}
+  .czlbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+  /* TALLER THAN WIDE, ON PURPOSE.
+
+     These cells were square, and a square cell on a 390px phone is about 68px
+     across. A song title is words, not a number, so the fitter shrank the text
+     until it fitted and bottomed out at its 6px floor: unreadable at arm's
+     length in a lit room, let alone a dark pub, on the one surface that IS the
+     game. The numeric bingo card gets away with squares because it only ever
+     holds two digits.
+
+     Height is the cheapest fix available. Going to 1:1.3 buys two more lines of
+     text at the same width, so nothing has to scroll sideways - the zoom
+     control already existed and costs a second hand to pan, which a punter
+     holding a beer does not have. */
+  .cc{aspect-ratio:1/1.3;display:flex;align-items:center;justify-content:center;text-align:center;
+    font-family:'Manrope',sans-serif;font-weight:600;font-size:11px;line-height:1.12;color:var(--text);
+    background:var(--ink-3);border:1px solid var(--line);border-radius:9px;cursor:pointer;user-select:none;
+    transition:.12s;overflow:hidden;padding:3px 2px;word-break:break-word;hyphens:auto}
+  .cc:active{transform:scale(.94)}
+  .cc.free{cursor:default;background:linear-gradient(135deg,var(--pink),var(--pink-deep));color:#fff;border-color:transparent;
+    font-family:'Anton',sans-serif;font-size:13px;letter-spacing:.04em;cursor:default}
+  .cc.daub{background:var(--pink);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(255,31,142,.3)}
+  /* played songs show via the green daub only - no outline (per Dean) */
+  .cc.free.daub{background:linear-gradient(135deg,var(--pink),var(--pink-deep));box-shadow:none}
+  /* MARKED BUT NOT PLAYED. The BINGO button is judged against the songs the HOST has played,
+     so a player who tapped a square by mistake saw a full line and was told "not yet", which
+     reads as broken. These are the squares that are in the way, outlined only while the
+     message is up so the card is not decorated the rest of the night. */
+  .cc.early{border-color:var(--roll);border-width:2px;box-shadow:0 0 0 2px rgba(245,165,36,.22)}
+  /* Easy mode only: the square we just marked for you gives a short pulse, so a player who is
+     letting the phone do the work can still see their card moving. */
+  .cc.justdone{animation:justdone 1.1s ease-in-out 3}
+  @keyframes justdone{0%,100%{box-shadow:0 4px 12px rgba(255,31,142,.3)}50%{box-shadow:0 0 0 4px rgba(255,255,255,.55)}}
+  .pmsg{font-size:13px;color:var(--muted);text-align:center;margin:16px 0;min-height:38px;line-height:1.4}
+  .pmsg.no{color:var(--roll)}
+  .pmsg.wait{color:var(--gold)}
+  .bingoBtn{background:var(--gold);color:#1a1000;box-shadow:0 8px 24px rgba(255,194,75,.4);font-size:22px;text-transform:uppercase;letter-spacing:.06em;padding:20px}
+  .bingoBtn:active{filter:brightness(.95)}
+
+  /* THE PRIZE STRIP. What you are playing for, above the card, big enough to read at arm's
+     length in a dim room. It used to appear only on the win screen, so a player found out
+     what they had won after they had won it, and on a progressive night the pattern changed
+     mid-game with nothing but an 11px pill to say so. */
+  .prizestrip{display:block;width:100%;text-align:center;margin:0 0 12px;padding:11px 14px;border-radius:12px;
+    background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);color:var(--gold);
+    font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;line-height:1.3}
+  .prizestrip b{color:#fff;font-weight:800}
+  .prizestrip.flash{animation:prizeflash 1.2s ease-in-out 3}
+  @keyframes prizeflash{0%,100%{box-shadow:none}50%{box-shadow:0 0 0 4px rgba(255,194,75,.3)}}
+  body.light .prizestrip{color:#8a6100}
+  body.light .prizestrip b{color:#191420}
+  /* 44px minimum: this is a button now, it opens the list of songs played so far. */
+  .lastcalled{display:block;width:100%;min-height:44px;text-align:center;margin-bottom:14px;padding:11px 12px;
+    background:none;border:1px solid var(--line-2);border-radius:12px;cursor:pointer;
+    font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)}
+  .lastcalled b{color:#fff;font-size:15px}
+  .lastcalled .tap{display:block;font-family:'Manrope',sans-serif;font-size:11.5px;color:var(--faint);margin-top:3px}
+  /* The catch-up list. Someone back from the bar cannot see which songs went by, so they miss
+     squares or ask the table. Newest first, and one button marks every one that is on the card. */
+  .sheetbg{position:fixed;inset:0;background:rgba(0,0,0,.66);z-index:40;display:flex;align-items:flex-end;justify-content:center}
+  .sheet{width:100%;max-width:460px;max-height:82vh;display:flex;flex-direction:column;background:var(--ink-2);
+    border:1px solid var(--line);border-bottom:none;border-radius:16px 16px 0 0;padding:16px 16px 22px}
+  .sheet h3{margin:0;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:18px;color:#fff}
+  .sheet .sh{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px}
+  .sheet .shsub{font-size:12.5px;color:var(--muted);margin:0 0 12px;line-height:1.45}
+  .sheetlist{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;margin:0 -4px}
+  .srow{display:flex;align-items:center;gap:10px;min-height:44px;padding:9px 4px;border-bottom:1px solid var(--line-2);font-size:14.5px;color:var(--text)}
+  .srow:last-child{border-bottom:none}
+  .srow .sn{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--faint);flex:none;min-width:26px}
+  .srow .st{flex:1;line-height:1.3}
+  .srow .sy{flex:none;font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--win)}
+  .srow.mine .st{color:#fff;font-weight:700}
+  .sheetempty{padding:22px 4px;text-align:center;color:var(--faint);font-size:13.5px;line-height:1.5}
+  .sheet .btn{margin-top:12px}
+  .sheet .btn.ghost{background:var(--ink-3);color:var(--text);border:1px solid var(--line);box-shadow:none}
+  .closex{width:44px;height:44px;flex:none;border:1px solid var(--line);background:var(--ink-3);color:var(--text);border-radius:12px;font-size:19px;line-height:1;cursor:pointer}
+  body.light .sheet h3, body.light .srow.mine .st{color:#191420}
+
+  /* menu (top-right of the bar): Easy mode + Light mode + Leave game */
+  .menubtn{position:absolute;top:12px;right:14px;width:44px;height:44px;border:1px solid var(--line);background:var(--ink-3);color:var(--text);border-radius:10px;font-size:17px;line-height:1;cursor:pointer}
+  .menupanel{position:absolute;top:56px;right:12px;background:var(--ink-2);border:1px solid var(--line);border-radius:12px;padding:6px;min-width:216px;z-index:30;box-shadow:0 14px 34px -12px rgba(0,0,0,.75)}
+  .menuitem{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:48px;padding:12px 14px;background:none;border:none;color:var(--text);font-family:'Manrope',sans-serif;font-size:14.5px;text-align:left;cursor:pointer;border-radius:8px}
+  .menuitem:hover{background:var(--ink-3)}
+  .menuitem span{display:flex;flex-direction:column;gap:2px}
+  .menuitem small{color:var(--faint);font-size:11.5px}
+  .menuitem input{width:22px;height:22px;flex:none;accent-color:var(--pink)}
+  .menuleave{color:var(--roll);font-weight:700;justify-content:flex-start}
+
+  /* light mode (menu toggle) */
+  body.light{ --ink:#F3EFF5; --ink-2:#FFFFFF; --ink-3:#EFEAF2; --text:#191420; --muted:#5c5666; --faint:#8b8594; --line:rgba(0,0,0,.12); --line-2:rgba(0,0,0,.06);
+    background:radial-gradient(700px 420px at 80% -10%, rgba(255,31,142,.10), transparent 60%), #F3EFF5; }
+  body.light .ptop{ background:rgba(255,255,255,.9) }
+  body.light .brand .word, body.light .pbig, body.light .cardhead .pn, body.light .lastcalled b{ color:#191420 }
+  body.light .cc{ box-shadow:0 1px 2px rgba(0,0,0,.06) }
+
+  .prizebox{margin-top:16px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:22px;color:var(--gold);background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);border-radius:12px;padding:16px}
+  .wonwrap{background:radial-gradient(600px 400px at 50% 20%, rgba(53,208,127,.18), transparent 65%)}
+  @keyframes winPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+  .wonwrap .pbig{font-size:56px;line-height:1.02;text-shadow:0 0 28px rgba(53,208,127,.6);animation:winPulse 1s ease-in-out infinite}
+  .wonwrap .wonemoji{font-size:78px;animation:winPulse 1.3s ease-in-out infinite}
+  @media (prefers-reduced-motion: reduce){ .wonwrap .pbig,.wonwrap .wonemoji{animation:none} }
+  .biglose .pbig{color:var(--gold)}
+  /* win celebration */
+  .cfetti{position:fixed;top:-14px;width:9px;height:14px;z-index:9999;pointer-events:none;border-radius:2px;will-change:transform,opacity;animation:cfall linear forwards}
+  @keyframes cfall{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(106vh) rotate(560deg);opacity:.85}}
+  @media (prefers-reduced-motion: reduce){ .cfetti{display:none} }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="ptop">
+    <div class="brand">
+      <svg width="17" height="19" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
+      <span class="div"></span><span class="word">VenuePlay <span class="nw">Musical Bingo</span></span>
+    </div>
+    <img id="venueLogo" class="vlogo hidden" alt="">
+    <div class="venue"><span class="dot" id="statusDot"></span> <span id="statusText">Connecting</span><span class="mono hidden" id="roomLabel">------</span></div>
+    <button class="menubtn" id="menuBtn" aria-label="Menu">&#9776;</button>
+    <div class="menupanel hidden" id="menuPanel">
+      <label class="menuitem"><span>Easy mode<small>Mark songs for me as they play</small></span><input type="checkbox" id="assistChk"></label>
+      <label class="menuitem"><span>Light mode</span><input type="checkbox" id="lightChk"></label>
+      <button class="menuitem menuleave" id="leaveBtn">Leave game</button>
+    </div>
+  </div>
+
+  <!-- NO ROOM -->
+  <div class="view center hidden" id="vNoRoom">
+    <div class="pbig">Enter the<br>game code</div>
+    <div class="psub">Scan the QR on the big screen, or type the 6-character code shown there.</div>
+    <div class="field"><input id="roomIn" class="code" maxlength="6" placeholder="ACD234" autocomplete="off" autocapitalize="characters" spellcheck="false"></div>
+    <div class="cerr" id="roomErr"></div>
+    <div class="field"><button class="btn pink" id="roomBtn">Continue</button></div>
+  </div>
+
+  <!-- JOIN -->
+  <div class="view center hidden" id="vJoin">
+    <div class="pbig">Join the<br>game</div>
+    <div class="psub">You are joining room <b class="mono" id="joinCode" style="color:var(--gold)">------</b></div>
+    <div class="field"><input type="text" id="nameIn" placeholder="Your name" maxlength="20" autocomplete="given-name"></div>
+    <div id="joinExtra"></div>
+    <div class="cerr" id="joinErr"></div>
+    <div class="field"><button class="btn pink" id="joinBtn">Join</button></div>
+    <div class="pnote">No app and no account. Your card of song titles appears here when the host starts.</div>
+  </div>
+
+  <!-- WAIT -->
+  <div class="view center hidden" id="vWait">
+    <div style="font-size:44px">&#127925;</div>
+    <div class="pbig" style="color:var(--gold)">You&#39;re in</div>
+    <div class="psub">Good luck, <b id="waitName" style="color:var(--text)">Player</b></div>
+    <div class="pnote">Waiting for the host to start the game. Your card will appear here.</div>
+  </div>
+
+  <!-- CARD -->
+  <div class="view hidden" id="vCard">
+    <div class="cardhead"><span class="pn" id="cardName">Player</span><span class="cardpat" id="cardPat">One line across</span></div>
+    <div class="prizestrip" id="prizeStrip">Playing for <b>the prize</b></div>
+    <button type="button" class="lastcalled" id="lastCalled">No songs played yet</button>
+    <div class="cardctl">
+      <span class="czlbl">Size</span>
+      <button type="button" id="zoomOut" class="czbtn" aria-label="Smaller">&#8722;</button>
+      <button type="button" id="zoomIn" class="czbtn" aria-label="Bigger">&#43;</button>
+      <button type="button" id="fsBtn" class="czbtn fs">Full screen</button>
+    </div>
+    <div id="cardWrap"><div class="card5" id="cardGrid"></div></div>
+    <div class="pmsg" id="pMsg">Tap a title when you hear it play.</div>
+    <button class="btn bingoBtn" id="bingoBtn">BINGO!</button>
+  </div>
+
+  <!-- WON -->
+  <div class="view center hidden wonwrap" id="vWon">
+    <div class="wonemoji" style="font-size:52px">&#127881;</div>
+    <div class="pbig" style="color:var(--win)">YOU WON!</div>
+    <div class="psub" id="wonSub">Show your card to the host to claim</div>
+    <div class="prizebox" id="wonPrize">the prize</div>
+    <div class="pnote">Card <b id="wonCard" style="color:var(--muted)">#000</b></div>
+  </div>
+
+  <!-- LOST (someone else won) -->
+  <div class="view center hidden biglose" id="vLost">
+    <div style="font-size:44px">&#127882;</div>
+    <div class="pbig" id="lostName">Someone</div>
+    <div class="psub">took this one. Nice game!</div>
+    <div class="pnote">Sit tight, the host may start another round.</div>
+  </div>
+</div>
+
+<!-- CATCH UP: every song played so far, newest first -->
+<div class="sheetbg hidden" id="playedSheet">
+  <div class="sheet">
+    <div class="sh"><h3 id="sheetTitle">Songs played</h3><button type="button" class="closex" id="sheetClose" aria-label="Close">&times;</button></div>
+    <p class="shsub">Newest first. The ones on your card are in white.</p>
+    <div class="sheetlist" id="sheetList"></div>
+    <button type="button" class="btn pink" id="markMissed">Mark every one on my card</button>
+    <button type="button" class="btn ghost" id="sheetDone">Close</button>
+  </div>
+</div>
+
+<!-- A DEMO DOES NOT WAIT FOR THE REALTIME LIBRARY. It is 219KB from a CDN and this page cannot
+     start until it has arrived, which on the sales page hero meant a black phone for seconds
+     (Dean, 22 Sep 2026: "The Mobile took ages to load"). ?demo=1 never connects to anything,
+     so it gets a stand-in with the one call the page makes at startup, and the real library is
+     not loaded at all. A real phone is untouched: the tag below still runs for it. -->
+<script>
+  if(/[?&]demo=1\b/.test(location.search)){
+    window.supabase={ createClient:function(){ return { channel:function(){ return { on:function(){ return this; }, subscribe:function(){ return this; }, send:function(){}, unsubscribe:function(){} }; }, removeChannel:function(){}, auth:{ getSession:function(){ return Promise.resolve({ data:{ session:null } }); } } }; } };
+  }
+</script>
+<script>if(!/[?&]demo=1\b/.test(location.search)){ document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>'); }</script>
+<script src="/app/vp-sign.js"></script>
+<script src="/app/vp-follow.js"></script>
+<script src="/app/vp-feedback.js"></script>
+<script src="/app/vp-celebrate.js"></script>
+<script src="/app/vp-venuelogo.js"></script>
+<script>
+(function(){
+  "use strict";
+  function $(id){ return document.getElementById(id); }
+  function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
+  function randId(){ var s=""; for(var i=0;i<12;i++) s+="abcdefghijklmnopqrstuvwxyz0123456789".charAt(cryptoInt(36)); return s; }
+  /* One stable id per browser, shared by EVERY format and surviving a tab close.
+     Billing counts vp_players rows, so the per-tab, per-format sessionStorage id meant one
+     patron was counted again on every reload and again when the night moved from trivia to
+     musical bingo. Sent as pid on /join, where the Worker reuses that patron's existing row. */
+  function deviceId(){
+    var K="vpDeviceId", v="";
+    try{ v=localStorage.getItem(K)||""; }catch(e){}
+    if(!/^[A-Za-z0-9_-]{6,64}$/.test(v)){
+      v=randId()+randId();
+      try{ localStorage.setItem(K, v); }catch(e){}
+    }
+    return v;
+  }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+
+  /* "One line" on a 5x5 card with a FREE centre reads as any row, column or diagonal to anyone
+   who has played bingo anywhere else, and the free square makes it look even more like a
+   diagonal counts. It does not: checkMusicPattern is rows only, which is what the host is
+   told in their own dropdown ("any full row"). The player and the TV were the two screens
+   that never said so, which is a dispute at the bar waiting to happen. */
+var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four corners",full:"Full house"};
+  // The Worker sends vp_music_games pattern values; map to the UI labels/keys.
+  var PAT_FROM_WORKER={one_line:"one",two_lines:"two",four_corners:"corners",full_house:"full"};
+
+  var SUPA_URL='https://ijkzgmdtwtgfkedqspxm.supabase.co';
+  var SUPA_ANON='sb_publishable_9v83FWCSt7Di-jkgTvsMJQ_f6lJPovb';
+  var CODE_RE=/^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/;
+
+  // ---- the game Worker (server-authoritative) --------------------------
+  // The phone joins, is dealt its card, and claims BINGO through this Worker; the broadcasts
+  // below are only for instant visual updates (played songs to daub, winner banner). The
+  // Worker judges every claim against its own copy of the card and the songs actually played.
+  var VP_GAME_API='https://venueplay-game.dean-tindale.workers.dev';
+  function readApi(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((d&&d.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }
+  /* A token the Worker no longer knows (another page re-minted it, or the night moved on) is
+     dropped and the phone re-joins quietly, instead of answering into nothing all night. */
+  function deadToken(e, path){
+    if(e && e.status===401 && P.token && path!=="/join"){ try{ dropStaleJoin(); setTimeout(function(){ rejoinNow(); }, 0); }catch(x){} }
+    throw e;
+  }
+  function playerPost(path, body){ var h={ "Content-Type":"application/json" }; if(P.token) h["X-Player-Token"]=P.token; return fetch(VP_GAME_API+path,{ method:"POST", headers:h, body:JSON.stringify(body||{}) }).then(readApi).catch(function(e){ return deadToken(e, path); }); }
+  function playerGet(path){ var h={}; if(P.token) h["X-Player-Token"]=P.token; return fetch(VP_GAME_API+path,{ headers:h }).then(readApi).catch(function(e){ return deadToken(e, path); }); }
+
+  /* On patchy pub wifi the Realtime library from the CDN is sometimes not there yet when this
+     runs. Everything below depends on it, so the script threw here and the punter was left with a
+     header and an empty screen forever: every view starts hidden, and there was no retry and no
+     message. Say something and try again rather than dying silently. */
+  if(typeof supabase==="undefined" || !supabase.createClient){
+    var _rc=document.createElement("div");
+    _rc.setAttribute("style","position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;"+
+      "align-items:center;justify-content:center;gap:14px;background:#0A0A0B;color:#E7E7EC;"+
+      "text-align:center;padding:28px;font:600 17px/1.5 system-ui,-apple-system,sans-serif");
+    _rc.innerHTML='<div>Connecting\u2026</div>'+
+      '<div style="font-size:14px;color:#9A9AA4;max-width:22em">The venue wifi is being slow. This will keep trying.</div>';
+    (document.body||document.documentElement).appendChild(_rc);
+    setTimeout(function(){ location.reload(); }, 4000);
+    throw new Error("VenuePlay: Realtime library not loaded yet");
+  }
+  var client=supabase.createClient(SUPA_URL, SUPA_ANON);
+  var ch=null, subscribed=false, sendQueue=[];
+  function send(obj){ if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); } else { sendQueue.push(obj); } }
+  function flushQueue(){ while(sendQueue.length && ch){ ch.send({ type:"broadcast", event:"msg", payload:sendQueue.shift() }); } }
+
+  // ---- player state ----
+  // pid/name are cosmetic (host roster + TV). token is the real metered server identity;
+  // cells (each { song_id, title }) + gameId come from the Worker.
+  var P={
+    room:"", pid:"", name:"", joined:false,
+    token:"", sessionId:"", gameId:"", claimId:"", claimMsg:null,
+    cells:null, cardNo:0,
+    pattern:"one", prize:"the prize", played:[], playedIds:[], active:false, autoDaub:true, assist:false,
+    daubs:{}, claimPending:false, won:false, ended:false
+  };
+
+  // ---- identity persistence (keep seat + metered identity across reloads) ----
+    /* localStorage, not sessionStorage. iOS discards a backgrounded tab routinely over a three
+     hour night, and sessionStorage dies with it, so the punter came back as a BRAND NEW
+     player: the host roster seated them twice and they were dealt fresh tickets mid-round.
+     Falls back to any sessionStorage value so a game already in progress is not disturbed. */
+  function loadPid(room){ try{ return localStorage.getItem("vp-mpid-"+room) || sessionStorage.getItem("vp-mpid-"+room) || ""; }catch(e){ return ""; } }
+  function savePid(room,pid){ try{ localStorage.setItem("vp-mpid-"+room, pid); }catch(e){} }
+  function loadName(room){ try{ return localStorage.getItem("vp-mname-"+room) || sessionStorage.getItem("vp-mname-"+room) || ""; }catch(e){ return ""; } }
+  function saveName(room,nm){ try{ localStorage.setItem("vp-mname-"+room, nm); }catch(e){} }   // localStorage, like pid and token: in sessionStorage the name died with the discarded tab, and connect() only restores a player holding BOTH, so they were asked for their name mid-song
+  // the player token IS the metered identity: persist it so a reload reuses the same
+  // vp_players row instead of minting a new metered one.
+  function loadToken(room){ try{ return localStorage.getItem("vp-mtoken-"+room)||""; }catch(e){ return ""; } }
+  var OWN_TOKEN_KEY="vp-mtoken-";
+  /* ONE IDENTITY PER PHONE PER ROOM, WHICHEVER PAGE MINTED IT. A /join re-mints the token on the
+     same player row, so the bingo, trivia and musical pages each holding their own copy meant a
+     phone bounced through another page came back with a dead token: trivia answers were acked
+     by the room and thrown away at Reveal, "CORRECT! 0" all night while still billed (break test,
+     14 Oct 2026). Whoever mints writes every copy this phone already holds. Identical on all
+     three phone pages. */
+  function shareToken(room, tok){
+    if(!room || !tok) return;
+    try{ ["vp-token-","vp-ttoken-","vp-mtoken-"].forEach(function(k){ if(k===OWN_TOKEN_KEY || localStorage.getItem(k+room)!==null) localStorage.setItem(k+room, tok); }); }catch(e){}
+  }
+  function saveToken(room,tok){ shareToken(room, tok); }
+  function loadSess(room){ try{ return localStorage.getItem("vp-msess-"+room)||""; }catch(e){ return ""; } }
+  function saveSess(room,sid){ try{ if(sid) localStorage.setItem("vp-msess-"+room, sid); }catch(e){} }
+  /* THE MARKS SURVIVE A RELOAD. Marking by ear is the whole game (Easy mode is off by default),
+     and the marks lived only in memory, so a phone that reloaded, or that iOS threw out of the
+     background mid-game, came back with nothing on the card but FREE (live audit, 14 Oct 2026).
+     Bingo's play page has kept its daubs in localStorage for months. Saved per room, tagged with
+     the game and the card they belong to, so a new deal or next week's night never inherits them. */
+  function markKey(){ return "vp-mdaubs-"+(P.room||""); }
+  function saveMarks(){
+    if(!P.gameId || P.cardNo==null || /[?&]demo=1/.test(location.search)) return;
+    try{
+      var out=[]; for(var k in P.daubs){ if(P.daubs[k] && +k!==12) out.push(+k); }
+      localStorage.setItem(markKey(), JSON.stringify({ game:P.gameId, card:String(P.cardNo), marks:out }));
+    }catch(e){}
+  }
+  function loadMarks(){
+    try{
+      var s=JSON.parse(localStorage.getItem(markKey())||"null");
+      if(!s || s.game!==P.gameId || s.card!==String(P.cardNo) || !Array.isArray(s.marks)) return;
+      for(var i=0;i<s.marks.length;i++){ var n=s.marks[i]; if(n>=0 && n<25 && n!==12) P.daubs[n]=true; }
+    }catch(e){}
+  }
+
+  // ---- cover check (cosmetic UI; the Worker is authoritative on the claim) ----
+  function cellTitle(i){ var c=P.cells?P.cells[i]:null; return (c&&typeof c==="object")?(c.title||""):(c||""); }
+  function cellId(i){ var c=P.cells?P.cells[i]:null; return (c&&typeof c==="object")?(c.song_id||""):""; }
+  /* Match on song_id, not title. Titles are not unique (Crazy is Patsy Cline, Gnarls Barkley and
+     Seal; Hurt and Forever Young are each several songs), so a title match marked every namesake
+     on the card the moment one of them played, and could hand somebody a line they had not won.
+     The title set stays as the fallback for a song the Worker gave no id for, and for a host
+     still on the previous build who broadcasts titles alone. */
+  function playedSet(){
+    var s={ id:{}, title:{}, hasIds:false };
+    for(var i=0;i<P.played.length;i++) s.title[P.played[i]]=true;
+    var ids=P.playedIds||[];
+    for(var j=0;j<ids.length;j++){ if(ids[j]){ s.id[ids[j]]=true; s.hasIds=true; } }
+    return s;
+  }
+  function isCovered(set,i){
+    if(i===12) return true;
+    var id=cellId(i);
+    // Only trust ids when ids are actually being sent. A host whose page loaded before this
+    // shipped broadcasts titles alone, and refusing to fall back would leave every card in the
+    // room blank for the rest of that night.
+    if(set.hasIds && id) return !!set.id[id];
+    var t=cellTitle(i); return !!t && !!set.title[t];
+  }
+  function checkPattern(){
+    if(!P.cells) return false;
+    var set=playedSet(), c, r;
+    function rowDone(row){ for(c=0;c<5;c++){ if(!isCovered(set,row*5+c)) return false; } return true; }
+    var rows=0; for(r=0;r<5;r++){ if(rowDone(r)) rows++; }
+    switch(P.pattern){
+      case "one": return rows>=1;
+      case "two": return rows>=2;
+      case "corners": return isCovered(set,0)&&isCovered(set,4)&&isCovered(set,20)&&isCovered(set,24);
+      case "full":
+        for(var i=0;i<25;i++){ if(!isCovered(set,i)) return false; }
+        return true;
+    }
+    return false;
+  }
+
+  // ---- views ----
+  var VIEWS=["vNoRoom","vJoin","vWait","vCard","vWon","vLost"];
+  function show(which){ for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==which); } }
+  function route(){
+    /* The end screens are where a punter will actually answer something: the game
+       is over and there is nothing to do until the host starts another. One tap,
+       asked once per game, and it never blocks the screen if the Worker is away. */
+    if(P.won){
+      $("wonPrize").textContent=P.prize; $("wonCard").textContent="#"+P.cardNo;
+      // Two people got there on the same song: say so, so nobody is surprised at the host.
+      $("wonSub").textContent = P.split ? "You share this one. Show your card to the host to claim." : "Show your card to the host to claim";
+      show("vWon"); askHowItWent("vWon"); return;
+    }
+    if(P.ended){ show("vLost"); askHowItWent("vLost"); return; }
+    if(!P.room){ show("vNoRoom"); return; }
+    if(!P.joined){ show("vJoin"); return; }
+    if(P.active && P.cells){ renderCard(); show("vCard"); return; }
+    $("waitName").textContent=P.name; show("vWait");
+  }
+
+  // ---- card render ----
+  function autoDaub(){
+    if(!P.cells || !P.assist) return; var set=playedSet();   // Easy mode only: off by default, player marks by ear
+    // The squares we mark FOR them get a short pulse, so a player letting the phone do the
+    // work can still see their card move when their song comes up.
+    for(var i=0;i<25;i++){ if(i!==12 && isCovered(set,i)){ if(!P.daubs[i]) _justDone.push(i); P.daubs[i]=true; } }
+  }
+  var cz=1;   // card zoom (older players): scales the card width AND the fit-to-cell font cap together
+  function fitCells(){
+    var cells=document.querySelectorAll("#cardGrid .cc");
+    for(var i=0;i<cells.length;i++){
+      var el=cells[i]; if(el.classList.contains("free")) continue;
+      /* The floor was 6px, which is not a size anybody can read across a table.
+         With the taller cells there is room to hold 11px for all but the very
+         longest titles, and a title that still will not fit is better slightly
+         clipped than rendered at a size nobody can use. */
+      var size=12*cz;
+      el.style.fontSize=size+"px";
+      while(size>11 && (el.scrollHeight>el.clientHeight || el.scrollWidth>el.clientWidth)){
+        size-=0.5; el.style.fontSize=size+"px";
+      }
+    }
+  }
+  var _cardSig="";   // the 25 titles as dealt, so a re-render can tell a new card from a repaint
+  function askHowItWent(where){
+    try{
+      if(!window.VPFeedback) return;
+      VPFeedback.ask({ api:VP_GAME_API, code:P.room, mount:where,
+                       gameId:P.gameId, format:"musical" });
+    }catch(e){}
+  }
+
+  /* THE PRIZE, ABOVE THE CARD. A player used to find out what they were playing for on the
+     screen that told them they had won it. On a progressive night the pattern changes mid-game
+     as well, so both live here and the strip flashes when the host carries the game on. */
+  function prizeText(){
+    var pat=PATTERN_NAMES[P.pattern]||P.pattern||"One line across";
+    var pz=(P.prize||"").trim();
+    if(!pz || pz.toLowerCase()==="the prize") return esc(pat)+" wins this round";
+    return esc(pat)+" for <b>"+esc(pz)+"</b>";
+  }
+  function renderPrizeStrip(){ var el=$("prizeStrip"); if(el) el.innerHTML=prizeText(); }
+  function flashPrizeStrip(){
+    var el=$("prizeStrip"); if(!el) return;
+    renderPrizeStrip();
+    el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
+  }
+
+  /* THE CATCH-UP LIST. Someone back from the bar cannot see which songs went by. Newest first,
+     the ones on their own card picked out, and one button to mark them. Marking is cosmetic
+     either way: the Worker judges a claim against the songs the HOST played, so this can only
+     save a player from missing a square they had already earned. */
+  var _showEarly=false, _justDone=[];
+  function myCardTitles(){
+    var m={}; if(!P.cells) return m;
+    for(var i=0;i<25;i++){ if(i===12) continue; var t=cellTitle(i); if(t) m[t]=i; }
+    return m;
+  }
+  function renderPlayedSheet(){
+    var list=$("sheetList"); if(!list) return;
+    var mine=myCardTitles(), n=P.played.length, html="";
+    $("sheetTitle").textContent = n ? (n===1 ? "1 song played" : n+" songs played") : "Songs played";
+    for(var i=n-1;i>=0;i--){
+      var t=P.played[i], on=Object.prototype.hasOwnProperty.call(mine,t);
+      html+='<div class="srow'+(on?' mine':'')+'"><span class="sn">'+(i+1)+'.</span><span class="st">'+esc(t)+'</span>'+
+            (on?'<span class="sy">On your card</span>':'')+'</div>';
+    }
+    list.innerHTML = html || '<div class="sheetempty">Nothing has played yet. The songs appear here as the host plays them, newest first.</div>';
+    var mm=$("markMissed"); if(mm) mm.disabled = !n || !P.cells;
+  }
+  function openPlayedSheet(){ renderPlayedSheet(); $("playedSheet").classList.remove("hidden"); }
+  function closePlayedSheet(){ $("playedSheet").classList.add("hidden"); }
+  function markMissed(){
+    if(!P.cells) return;
+    var set=playedSet();
+    for(var i=0;i<25;i++){ if(i!==12 && isCovered(set,i)) P.daubs[i]=true; }
+    closePlayedSheet();
+    renderCard();
+    setMsg("Caught up. Every song that has played is marked on your card.","");
+  }
+
+  var _alive=false;
+  function sayAlive(){ if(_alive || !P.token || /[?&]demo=1/.test(location.search)) return; _alive=true; try{ playerPost("/player/alive",{}).catch(function(){}); }catch(e){} }   // in the game with a card: billable (migration 87)
+  function renderCard(){
+    sayAlive();
+    $("cardName").textContent=P.name;
+    $("cardPat").textContent=PATTERN_NAMES[P.pattern]||P.pattern;
+    renderPrizeStrip();
+    // we never name the song - the player recognises it by ear and taps it on their card (or turns on Easy mode)
+    $("lastCalled").innerHTML = P.played.length
+      ? ("<b>"+P.played.length+"</b> played &middot; listen and tap it on your card<span class=\"tap\">Tap to see every song played</span>")
+      : "No songs played yet<span class=\"tap\">The first song is coming up</span>";
+    var set=playedSet();
+    var wrap=$("cardGrid");
+
+    /* THE CARD IS PATCHED, NOT REBUILT.
+
+       This used to empty the grid and make 25 fresh elements every time a song was
+       played, and the host plays a song every thirty seconds or so. Throwing away
+       the DOM under someone's thumb is what the flash was: the whole card blanked
+       and re-laid-out mid-song, and any tap landing in that window hit an element
+       that was already gone.
+
+       The card only actually CHANGES when a new one is dealt. Everything else is a
+       class going on or off, so build once and then patch. fitCells() only has to
+       run when the cells are new, which is the other half of the flicker: it
+       measures and rewrites font sizes across all 25. */
+    var titles=[]; for(var n=0;n<25;n++) titles.push(n===12?"FREE":cellTitle(n));
+    var sig=titles.join("\u0001");
+    var fresh = (_cardSig!==sig) || wrap.children.length!==25;
+    if(fresh){
+      wrap.innerHTML="";
+      for(var i=0;i<25;i++){
+        var cell=document.createElement("div");
+        if(i===12){ cell.className="cc free daub"; cell.textContent="FREE";
+          cell.setAttribute("aria-label","Free square, already marked for you"); cell.title="This one is free, it is already marked";
+          wrap.appendChild(cell); continue; }
+        cell.className="cc";
+        cell.setAttribute("data-i",i);
+        cell.textContent=titles[i];
+        wrap.appendChild(cell);
+      }
+      _cardSig=sig;
+    }
+    for(var j=0;j<25;j++){
+      if(j===12) continue;
+      var el=wrap.children[j]; if(!el) continue;
+      var wantDaub=!!P.daubs[j];
+      /* Marked, but the host has not played it. Only drawn while _showEarly is on, which is
+         the few seconds after a BINGO that could not be a BINGO. The old line here read
+         set[t] on the wrong level of the played set, so it was always false and there was no
+         CSS behind it either: it drew nothing, ever. */
+      var wantEarly=!!(_showEarly && wantDaub && !isCovered(set,j));
+      if(el.classList.contains("daub")!==wantDaub) el.classList.toggle("daub", wantDaub);
+      if(el.classList.contains("early")!==wantEarly) el.classList.toggle("early", wantEarly);
+    }
+    if(fresh) fitCells();
+    saveMarks();   // Easy mode and "mark what I missed" change marks too, and both end up here
+    while(_justDone.length){
+      var jd=wrap.children[_justDone.pop()];
+      if(jd && !jd.classList.contains("free")){ jd.classList.remove("justdone"); void jd.offsetWidth; jd.classList.add("justdone"); }
+    }
+    if(P.claimPending){ $("bingoBtn").disabled=true; setMsg("BINGO sent. The host is checking your card&hellip;","wait"); }
+    else { $("bingoBtn").disabled=false; setMsg("Tap a title when you hear it. Hit BINGO when you have the pattern.",""); }
+  }
+  function setMsg(html,cls){ var m=$("pMsg"); m.innerHTML=html; m.className="pmsg"+(cls?" "+cls:""); }
+
+  // ---- win celebration (synthesised fanfare + buzz + confetti; no audio file to host) ----
+  var _ac=null;
+  function unlockAudio(){ try{ var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; if(!_ac) _ac=new AC(); if(_ac.state==="suspended") _ac.resume(); }catch(e){} }
+  document.addEventListener("pointerdown", unlockAudio, { once:true });
+  function playFanfare(){
+    /* One copy, in /app/vp-celebrate.js. This was written out eight times
+       across the phones and the screens and had already drifted into three
+       versions. The page keeps its own name and its own audio context, so
+       every call site and the kiosk unlock are untouched. If the shared file
+       does not load we stay silent rather than throw: a missing celebration
+       is cosmetic, an exception during a win is not. */
+    try{ if(window.VPCelebrate) VPCelebrate.fanfare({ profile:"phone", ctx:_ac }); }catch(e){}
+  }
+  function confettiBurst(){
+    try{
+      var colors=["#FF1F8E","#FFC24B","#35D07F","#48C9FF","#C70F69","#FFFFFF"];
+      for(var i=0;i<44;i++){
+        var c=document.createElement("div"); c.className="cfetti";
+        c.style.left=Math.random()*100+"vw";
+        c.style.background=colors[i%colors.length];
+        c.style.animationDuration=(2+Math.random()*1.6)+"s";
+        c.style.animationDelay=(Math.random()*0.25)+"s";
+        c.style.transform="translateY(0) rotate("+(Math.random()*360)+"deg)";
+        document.body.appendChild(c);
+        (function(el){ setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 4200); })(c);
+      }
+    }catch(e){}
+  }
+  var _celebrated=false;
+  // The buzz goes through the shared VPCelebrate, which asks the demo flag first. See
+  // /app/vp-celebrate.js: five copies of this line across four pages was five chances to miss one.
+  function buzz(pattern){ try{ if(window.VPCelebrate) VPCelebrate.buzz(pattern); }catch(e){} }
+  function celebrate(){ if(_celebrated) return; _celebrated=true; buzz([0,90,60,90,60,150]); playFanfare(); confettiBurst(); }
+
+  // ---- join + card (via the Worker) ----
+  function applySnap(s){
+    if(!s) return;
+    P.sessionId=s.session_id||P.sessionId;
+    if(P.sessionId) saveSess(P.room, P.sessionId);
+    var g=s.game;
+    if(g && g.format==="musical_bingo"){
+      if(g.game_id) P.gameId=g.game_id;
+      if(g.pattern) P.pattern=PAT_FROM_WORKER[g.pattern]||P.pattern;
+      if(typeof g.prize==="string" && g.prize) P.prize=g.prize;
+      if(typeof g.auto_daub==="boolean") P.autoDaub=g.auto_daub;
+      if(g.played_songs){
+        P.played=g.played_songs.map(function(x){ return x.title; });
+        P.playedIds=g.played_songs.map(function(x){ return x.song_id||""; });
+      }
+      P.active=true;
+    }
+  }
+  // Register with the Worker (mints/reuses a vp_players row + a device token).
+  function ensureJoined(){
+    if(P.token){ return Promise.resolve(); }
+    var body={ code:P.room, name:P.name, pid:deviceId() };   // pid = billing/rejoin device key, see deviceId()
+    if(P.capture){ for(var k in P.capture){ body[k]=P.capture[k]; } }
+    return playerPost("/join", body).then(function(r){
+      P.token=r.token; saveToken(P.room, P.token);
+      applySnap(r.snapshot);
+    });
+  }
+  /* A NIGHT THAT HAS ENDED IS NOT THE NIGHT YOU ARE IN. The room code is the venue's permanent code
+     (migration 91) and the name moved to localStorage on 27 Sep, so the token and session this phone
+     saved at last week's musical bingo are still here this week. connect() called that "joined", the
+     started event fetched a card with the OLD token, the Worker looked in the finished session, found
+     no game, and the phone sat on "waiting" for the whole night. The trivia phone got this rule on
+     25 Sep (dropStaleJoin/rejoinNow); this one never did. Review, 28 Sep 2026. Same pid, so the Worker
+     keeps one player and nobody is billed twice. */
+  function dropStaleJoin(){
+    P.token=""; P.sessionId="";
+    try{ localStorage.removeItem("vp-mtoken-"+P.room); localStorage.removeItem("vp-msess-"+P.room); }catch(e){}
+  }
+  var _rejoining=false;
+  function rejoinNow(){
+    if(!P.joined || P.token || _rejoining) return Promise.resolve();
+    _rejoining=true;
+    return ensureJoined().catch(function(){}).then(function(){ _rejoining=false; });
+  }
+  function checkStaleJoin(){
+    if(!P.joined || !P.token) return Promise.resolve();
+    if(!P.sessionId){ dropStaleJoin(); return rejoinNow(); }
+    return fetch(VP_GAME_API+"/snapshot?session="+encodeURIComponent(P.sessionId))
+      .then(function(res){ return res.ok ? res.json() : null; })
+      .then(function(s){
+        var live = s && !s.error && (s.status==="lobby" || s.status==="running" || s.status==="paused");
+        if(!live){ dropStaleJoin(); return rejoinNow(); }
+      }).catch(function(){});
+  }
+  function loadJoinInfo(){
+    if(!P.room) return;
+    playerPost("/join/info",{ code:P.room }).then(function(r){
+      // Venue logo in the header (same one as the TV), so the phone shows whose game this is.
+      var lg=$("venueLogo"); if(lg){ if(r&&r.logo_url){ lg.src=r.logo_url; lg.classList.remove("hidden"); if(typeof VPVenueLogo==="object") VPVenueLogo.fit(lg,"phone"); } else { lg.classList.add("hidden"); } }
+      var c=r&&r.collect; var box=$("joinExtra"); if(!c||!box) return;
+      P.venueName=(r&&r.venue_name)||"";   // named in the collection notice below
+      function f(id,type,ph,ac,ml){ return '<div class="field"><input type="'+type+'" id="'+id+'" placeholder="'+ph+'" autocomplete="'+ac+'" maxlength="'+ml+'"></div>'; }
+      var h="";
+      if(c.last_name) h+=f("xLast","text","Last name","family-name",40);
+      if(c.postcode)  h+=f("xPost","text","Postcode","postal-code",4);
+      if(c.email)     h+=f("xEmail","email","Email","email",120);
+      if(c.mobile)    h+=f("xMobile","tel","Mobile","tel",20);
+      box.innerHTML=h;
+      if(c.marketing_optin){
+        var l=document.createElement("label"); l.className="optin";
+        l.innerHTML='<input type="checkbox" id="xOptin"> <span>I am 18 or over. Keep me posted on what is on at the venue</span>';
+        box.appendChild(l);
+      }
+      /* Collection notice. Australian privacy law wants people told what is being collected and
+         who gets it AT THE POINT they are asked, not only in a policy page they never open. This
+         screen asked for last name, postcode, email and mobile with no notice and no link to the
+         policy at all, while the policy itself said capturing more than a name was a future
+         feature. */
+      if(h){
+        var vn=(P.venueName||"").trim();
+        var n=document.createElement("p");
+        n.setAttribute("style","font-size:12px;line-height:1.5;color:#8A8A94;margin-top:10px");
+        n.textContent="These details are optional and go to "+(vn||"the venue you are playing at")+
+          ", not to anyone else. You can play with just your name. ";
+        var a=document.createElement("a");
+        a.href="/privacy"; a.target="_blank"; a.rel="noopener";
+        a.setAttribute("style","color:#FF1F8E;text-decoration:underline");
+        a.textContent="How your details are handled";
+        n.appendChild(a);
+        box.appendChild(n);
+      }
+    }).catch(function(){});
+  }
+  function gatherCapture(nm){
+    var cap={ first_name:nm.slice(0,80) }, v;
+    if((v=$("xLast"))&&v.value.trim())  cap.last_name=v.value.trim();
+    if((v=$("xPost"))&&v.value.trim())  cap.postcode=v.value.trim();
+    if((v=$("xEmail"))&&v.value.trim()) cap.email=v.value.trim();
+    if((v=$("xMobile"))&&v.value.trim())cap.mobile=v.value.trim();
+    var o=$("xOptin"); if(o&&o.checked) cap.marketing_optin=true;
+    return cap;
+  }
+  // Fetch (or lazily be dealt) this player's 5x5 card for the running game.
+  function fetchCard(){
+    if(!P.token) return Promise.resolve();
+    return playerGet("/player/card").then(function(r){
+      if(!r || r.game===null || !r.game_id){ P.active=false; P.cells=null; route(); return; }
+      P.gameId=r.game_id;
+      P.cells=r.cells||[];
+      P.cardNo=r.card_no;
+      loadMarks();   // this card's marks from before a reload, if this is the same game and card
+      P.pattern=PAT_FROM_WORKER[r.pattern]||P.pattern;
+      if(r.played_songs){
+        P.played=r.played_songs.map(function(x){ return x.title; });
+        P.playedIds=r.played_songs.map(function(x){ return x.song_id||""; });
+      }
+      P.active=true;
+      if(!P.won && !P.ended){ P.claimPending=false; }
+      autoDaub(); route();
+    }).catch(function(){ /* transient; a started/played event re-triggers the fetch */ });
+  }
+  function join(){
+    var nm=($("nameIn").value||"").trim();
+    if(!nm){ $("joinErr").textContent="Pop your name in first."; return; }
+    P.name=nm.slice(0,20);
+    P.capture=gatherCapture(nm);
+    var btn=$("joinBtn"); btn.disabled=true; btn.textContent="Joining...";
+    ensureJoined().then(function(){
+      P.joined=true; saveName(P.room, P.name);
+      send({ t:"join", pid:P.pid, name:P.name, did:deviceId() });   // cosmetic roster on the host + TV
+      return fetchCard();
+    }).catch(function(e){
+      $("joinErr").textContent=(e && e.message) ? e.message : "Could not join, check the code and try again.";
+    }).then(function(){ btn.disabled=false; btn.textContent="Join"; route(); });
+  }
+  /* WHY "NOT YET" IS NOT A BUG. The pattern is checked against the songs the HOST has played,
+     not the squares the player has tapped, so a stray tap gives them a full line on the card
+     and a refusal on the button. That reads as broken and they call the host over. Say which
+     squares are in the way and outline them for ten seconds. */
+  var _earlyTimer=null;
+  function earlyMarked(){
+    if(!P.cells) return [];
+    var set=playedSet(), out=[];
+    for(var i=0;i<25;i++){ if(i!==12 && P.daubs[i] && !isCovered(set,i)) out.push(i); }
+    return out;
+  }
+  function sayNotYet(){
+    var early=earlyMarked();
+    _showEarly=early.length>0;
+    // renderCard FIRST: it writes its own message at the end, so a message set before it is wiped.
+    if(P.cells) renderCard();
+    if(early.length){
+      setMsg("You have marked "+early.length+" song"+(early.length===1?"":"s")+" that "+(early.length===1?"has":"have")+" not played yet. They are outlined in orange, tap one to unmark it. Keep listening!","no");
+      if(_earlyTimer) clearTimeout(_earlyTimer);
+      _earlyTimer=setTimeout(function(){
+        _showEarly=false;
+        if(P.active && P.cells && !P.won && !P.ended) renderCard();
+      }, 10000);
+    } else {
+      setMsg("Not yet, keep listening. The songs for that pattern have not all been played.","no");
+    }
+  }
+  function pressBingo(){
+    if(!P.active || !P.cells || P.claimPending || P.won || !P.gameId) return;
+    // Quick local gate to avoid a needless server call; the Worker is the authority.
+    if(!checkPattern()){ sayNotYet(); return; }
+    P.claimPending=true; $("bingoBtn").disabled=true; setMsg("BINGO sent. The host is checking your card&hellip;","wait");
+    playerPost("/player/claim",{ game_id:P.gameId }).then(function(r){
+      if(r && r.auto_verdict==="valid"){
+        P.claimId=r.claim_id;
+        // Only a Worker-verified claim is broadcast, so the host can hand over the prize.
+        P.claimMsg={ t:"claim", claim_id:r.claim_id, pid:P.pid, name:P.name, cardNo:(r.card_no||P.cardNo), cells:P.cells };   // kept, so a reconnect can say it again
+        send(P.claimMsg);
+      } else {
+        P.claimPending=false; $("bingoBtn").disabled=false;
+        sayNotYet();
+      }
+    }).catch(function(e){
+      P.claimPending=false; $("bingoBtn").disabled=false;
+      setMsg((e && e.status===429) ? "One moment, try that again in a few seconds." : "Could not send that, try again.","no");
+    });
+  }
+
+  // ---- incoming (broadcasts are cosmetic; the Worker is the source of truth) ----
+  function onMsg(m){
+    if(!m||!m.t) return;
+    if(m.t==="rollcall" || m.t==="host_here"){
+      if(P.joined){ send({ t:"join", pid:P.pid, name:P.name, did:deviceId() }); if(!P.cells) fetchCard(); }
+      return;
+    }
+    if(m.t==="session"){ return; }   // host<->TV handoff; players ignore it
+    if(m.t==="mode"){ return; }
+    if(m.t==="state"){
+      if(m.pattern) P.pattern=m.pattern;
+      if(typeof m.prize==="string") P.prize=m.prize;
+      if(typeof m.autoDaub==="boolean") P.autoDaub=m.autoDaub;
+      if(m.game_id) P.gameId=m.game_id;
+      P.played=m.played||[]; P.playedIds=m.played_ids||[]; P.active=!!m.active;
+      if(P.active){ autoDaub(); if(P.joined && !P.cells){ fetchCard(); return; } }
+      if(!P.won && !P.ended) route();
+    }
+    else if(m.t==="started"){
+      if(m.pattern) P.pattern=m.pattern;
+      if(typeof m.prize==="string") P.prize=m.prize;
+      if(typeof m.autoDaub==="boolean") P.autoDaub=m.autoDaub;
+      if(m.game_id) P.gameId=m.game_id;
+      // a fresh round: clear the old card and pull the new one from the Worker
+      P.played=[]; P.playedIds=[]; P.active=true; P.won=false; P.ended=false; P.claimPending=false; P.daubs={}; P.daubs[12]=true; P.cells=null; _celebrated=false;
+      // A stale token (last week's night) would fetch no card at all: check the night first.
+      if(P.joined){ checkStaleJoin().then(fetchCard); } else { route(); }
+    }
+    else if(m.t==="played"){
+      if(typeof m.autoDaub==="boolean") P.autoDaub=m.autoDaub;
+      P.played=m.played||P.played; if(m.played_ids) P.playedIds=m.played_ids; P.active=true;
+      autoDaub();
+      if(P.joined && !P.won && !P.ended){ if(P.cells){ renderCard(); show("vCard"); } else { fetchCard(); } }
+      // keep the catch-up list current if it happens to be open when a song lands
+      if(!$("playedSheet").classList.contains("hidden")) renderPlayedSheet();
+    }
+    else if(m.t==="claim_pending"){
+      // another player (or me) claimed; nothing to change locally unless it is my pending
+    }
+    else if(m.t==="resume"){
+      /* ONLY THE PHONE THE HOST ACTUALLY WAVED OFF. This used to fire on every phone with a
+         claim waiting, so a second player who hit BINGO on the same song was told "not yet" by
+         a host who had never seen their card. A host still on the old build sends no pid, and
+         then the old behaviour is the safe one. */
+      if(m.pid && m.pid!==P.pid) return;
+      if(P.claimPending){ P.claimPending=false; $("bingoBtn").disabled=false; setMsg("The host checked your card and it is not a winner yet. Keep playing!","no"); }
+    }
+    else if(m.t==="winner"){
+      P.claimPending=false;
+      // pids carries a split (two people on the same song); pid alone is an older host.
+      var mine=(m.pid===P.pid) || (m.pids && m.pids.indexOf && m.pids.indexOf(P.pid)>=0);
+      closePlayedSheet();
+      if(mine){ P.won=true; P.split=!!m.split; P.winNames=(m.names||[]).slice(); route(); celebrate(); }
+      else { P.ended=true; $("lostName").textContent=(m.name||"Someone"); route(); }   // the line under it reads "took this one.", so no " won"
+    }
+    else if(m.t==="carryon"){   // progressive round: same card, new pattern + prize, everyone plays on
+      if(m.pattern) P.pattern=m.pattern;
+      if(typeof m.prize==="string") P.prize=m.prize;
+      if(m.played) P.played=m.played;
+      if(m.played_ids) P.playedIds=m.played_ids;
+      P.won=false; P.ended=false; P.claimPending=false; P.active=true; P.split=false;
+      autoDaub();
+      closePlayedSheet();
+      if(P.joined && P.cells){ renderCard(); show("vCard"); flashPrizeStrip(); }
+      else if(P.joined){ fetchCard(); }
+      else { route(); }
+    }
+    else if(m.t==="idle"){
+      if(P.joined){ P.active=false; P.cells=null; route(); }   // host sent the TV back to ads; wait for the next round
+    }
+  }
+
+  // ---- connect ----
+  function connect(room){
+    P.room=room;
+    $("roomLabel").textContent=room;
+    $("joinCode").textContent=room;
+    P.pid=loadPid(room); if(!P.pid){ P.pid=randId(); savePid(room, P.pid); }
+    P.token=loadToken(room);
+    P.sessionId=loadSess(room);
+    var savedName=loadName(room);
+    if(savedName && P.token){ P.name=savedName; P.joined=true; checkStaleJoin(); }
+    // Verify host broadcasts (migrations 38/49): fetch the venue PUBLIC key via the join code, drop
+    // forged songs/winners in enforce mode. No key / enforce off / script absent -> as before.
+    if(window.VPSign){ VPSign.initReceiver(VP_GAME_API, { code: room }); }
+    openChannel(room);
+    if(!P.joined) loadJoinInfo();   // show any extra fields this venue collects
+    route();
+  }
+  /* THE PHONE'S CHANNEL, AND GETTING IT BACK. CLOSED was ignored and subscribed was never set back
+     to false, so after a drop the dot stayed green and join and BINGO went into a dead socket: the
+     Worker had the claim and the host never heard about it. Now any drop queues sends, shows
+     Reconnecting, and rebuilds the channel with a backoff; when it is back, a BINGO still waiting
+     on the host is said again (the host ignores a claim it already has). */
+  var chRetryT=null, chTries=0;
+  function openChannel(room){
+    if(ch){ var old=ch; ch=null; subscribed=false; try{ client.removeChannel(old); }catch(e){} }   // let go first: removing reports CLOSED to the old one
+    ch=client.channel("vp-"+room, { config:{ broadcast:{ self:false } } });
+    var mine=ch;
+    ch.on("broadcast", { event:"msg" }, function(e){ if(window.VPSign){ VPSign.gate(e.payload, onMsg); } else { onMsg(e.payload); } });
+    ch.subscribe(function(status){
+      if(mine!==ch) return;   // a channel we replaced, not a drop
+      if(status==="SUBSCRIBED"){
+        subscribed=true; chTries=0;
+        if(chRetryT){ clearTimeout(chRetryT); chRetryT=null; }   // healed by itself: keep the working channel
+        flushQueue();
+        // re-announce on every (re)connect so the host rebuilds our seat, and pull our
+        // card from the Worker in case a game is already running.
+        if(P.joined){ send({ t:"join", pid:P.pid, name:P.name, did:deviceId() }); fetchCard(); }
+        if(P.claimPending && P.claimMsg && P.claimMsg.claim_id===P.claimId && !P.won && !P.ended) send(P.claimMsg);
+        $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
+      } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){
+        subscribed=false;
+        $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting";
+        if(!chRetryT){
+          var wait=Math.min(30000, 2000*Math.pow(2, Math.min(chTries,4))); chTries++;
+          chRetryT=setTimeout(function(){ chRetryT=null; if(P.room===room) openChannel(room); }, wait);
+        }
+      }
+    });
+  }
+
+  // ---- events ----
+  var roomIn=$("roomIn");
+  roomIn.addEventListener("input", function(){ roomIn.value=roomIn.value.toUpperCase().replace(/[^ACDEFGHJKMNPQRSTUVWXYZ2345679]/g,""); $("roomErr").textContent=""; });
+  roomIn.addEventListener("keydown", function(e){ if(e.key==="Enter") roomGo(); });
+  function roomGo(){
+    var v=roomIn.value.toUpperCase().trim();
+    if(!CODE_RE.test(v)){ $("roomErr").textContent="Enter all 6 characters from the TV."; return; }
+    connect(v);
+  }
+  $("roomBtn").addEventListener("click", roomGo);
+  $("nameIn").addEventListener("keydown", function(e){ if(e.key==="Enter") join(); });
+  /* A name typed on /play before it moved this phone here (see hopToApp there): fill it in, once,
+     so nobody types it twice. Filled, never submitted: they still tap Join. */
+  function takeHopName(){
+    try{ var hn=sessionStorage.getItem("vpHopName"); sessionStorage.removeItem("vpHopName");
+      var ni=$("nameIn"); if(hn && ni && !ni.value) ni.value=String(hn).slice(0,20); }catch(e){}
+  }
+  takeHopName();
+  $("joinBtn").addEventListener("click", join);
+  $("bingoBtn").addEventListener("click", pressBingo);
+  // Card zoom + full screen (older players squinting at a dim phone). Scales the card and the
+  // title text together, with horizontal scroll; full screen hides the browser bars.
+  function applyZoom(){ cz=Math.max(1, Math.min(2.4, Math.round(cz*10)/10)); $("cardGrid").style.setProperty("--cz", cz); try{ localStorage.setItem("vp-mzoom", String(cz)); }catch(e){} if(P.cells) fitCells(); }
+  $("zoomIn").addEventListener("click", function(){ cz+=0.2; applyZoom(); });
+  $("zoomOut").addEventListener("click", function(){ cz-=0.2; applyZoom(); });
+  (function(){
+    var b=$("fsBtn"); if(!b) return;
+    var el=document.documentElement;
+    if(!(el.requestFullscreen||el.webkitRequestFullscreen)) b.style.display="none";   // iPhone has no fullscreen API
+  })();
+  $("fsBtn").addEventListener("click", function(){
+    var d=document, el=d.documentElement, fsel=d.fullscreenElement||d.webkitFullscreenElement;
+    if(!fsel){ var rq=el.requestFullscreen||el.webkitRequestFullscreen; if(rq){ try{ rq.call(el); }catch(e){} } }
+    else { var ex=d.exitFullscreen||d.webkitExitFullscreen; if(ex){ try{ ex.call(d); }catch(e){} } }
+  });
+  try{ var _mz=parseFloat(localStorage.getItem("vp-mzoom")); if(_mz) cz=_mz; }catch(e){}
+  applyZoom();
+  $("cardGrid").addEventListener("click", function(e){
+    var cell=e.target.closest(".cc"); if(!cell || cell.classList.contains("free")) return;
+    var i=cell.getAttribute("data-i"); if(i===null) return; i=parseInt(i,10);
+    if(P.daubs[i]){ delete P.daubs[i]; cell.classList.remove("daub"); cell.classList.remove("early"); }
+    else { P.daubs[i]=true; cell.classList.add("daub"); }
+    saveMarks();
+  });
+  // ---- the catch-up list (tap the "N played" line) ----
+  var _lc=$("lastCalled"); if(_lc) _lc.addEventListener("click", openPlayedSheet);
+  var _sc=$("sheetClose"); if(_sc) _sc.addEventListener("click", closePlayedSheet);
+  var _sd=$("sheetDone"); if(_sd) _sd.addEventListener("click", closePlayedSheet);
+  var _mm=$("markMissed"); if(_mm) _mm.addEventListener("click", markMissed);
+  var _sb=$("playedSheet"); if(_sb) _sb.addEventListener("click", function(e){ if(e.target===_sb) closePlayedSheet(); });
+  // ---- easy mode (auto-mark played songs): off by default, so normally the player marks by ear ----
+  function loadAssist(){ try{ return localStorage.getItem("vp-assist")==="1"; }catch(e){ return false; } }
+  function setAssist(on){ P.assist=!!on; try{ localStorage.setItem("vp-assist", on?"1":"0"); }catch(e){} if(on) autoDaub(); if(P.cells) renderCard(); }
+  var assistChk=$("assistChk"); if(assistChk){ assistChk.addEventListener("change", function(){ setAssist(assistChk.checked); }); }
+  // ---- menu (Easy mode / Light mode / Leave game) ----
+  var menuBtn=$("menuBtn"), menuPanel=$("menuPanel");
+  if(menuBtn){ menuBtn.addEventListener("click", function(e){ e.stopPropagation(); menuPanel.classList.toggle("hidden"); }); }
+  document.addEventListener("click", function(e){ if(menuPanel && !menuPanel.classList.contains("hidden") && !menuPanel.contains(e.target) && e.target!==menuBtn){ menuPanel.classList.add("hidden"); } });
+  function loadLight(){ try{ return localStorage.getItem("vp-light")==="1"; }catch(e){ return false; } }
+  function setLight(on){ document.body.classList.toggle("light", !!on); try{ localStorage.setItem("vp-light", on?"1":"0"); }catch(e){} }
+  var lightChk=$("lightChk"); if(lightChk){ lightChk.addEventListener("change", function(){ setLight(lightChk.checked); }); }
+  var leaveBtn=$("leaveBtn"); if(leaveBtn){ leaveBtn.addEventListener("click", leaveGame); }
+  function leaveGame(){
+    if(menuPanel) menuPanel.classList.add("hidden");
+    try{ if(ch) ch.unsubscribe(); }catch(e){}   // drop the realtime channel
+    window.location.href = window.location.pathname;   // reload without ?room
+  }
+
+  /* ?demo=1 : THE REAL MUSICAL BINGO PHONE, PLAYING A SCRIPTED NIGHT, JOINED TO NOTHING.
+
+     The trial hero on the state pages and /see-a-night show the real wall for musical bingo
+     beside a phone, and until 22 Sep 2026 there was no musical phone to show, so the phone
+     stepped aside. Dean: "musical bingo doesnt have a phone screen". Same shape as the trivia
+     and bingo phones: every pixel here is driven by onMsg(), so the demo is a SCRIPT OF
+     MESSAGES, in step with the wall's own demo (app/musical/screen.html: first song at 1.2s,
+     one every 5.2s, revealed 2.6s in), and the card is the shape /player/card returns. The
+     player marks each song by ear a moment after it is revealed, gets one wrong and fixes it,
+     and calls bingo on the fifth. Never connects, never follows a host, never touches a venue. */
+  var VP_DEMO = /[?&]demo=1/.test(window.location.search||"");
+  if(VP_DEMO){
+    document.documentElement.setAttribute("data-vp-demo","1");
+    P.joined=true; P.name="Sam"; P.pid="demo"; P.room="DEMO24"; P.cardNo=17; P.pattern="one";
+    $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
+    var CELLS=[{"title": "Wonderwall", "song_id": "wonderwall-oasis"}, {"title": "Sweet Caroline", "song_id": "sweet-caroline-neil-diamond"}, {"title": "Never Gonna Give You Up", "song_id": "never-gonna-give-you-up-rick-astley"}, {"title": "Don't Stop Believin'", "song_id": "don-t-stop-believin-journey"}, {"title": "Beds Are Burning", "song_id": "beds-are-burning-midnight-oil"}, {"title": "You're the Voice", "song_id": "you-re-the-voice-john-farnham"}, {"title": "Never Tear Us Apart", "song_id": "never-tear-us-apart-inxs"}, {"title": "Livin' on a Prayer", "song_id": "livin-on-a-prayer-bon-jovi"}, {"title": "Dancing Queen", "song_id": "dancing-queen-abba"}, {"title": "Bohemian Rhapsody", "song_id": "bohemian-rhapsody-queen"}, {"title": "Khe Sanh", "song_id": "khe-sanh-cold-chisel"}, {"title": "Hey Ya!", "song_id": "hey-ya-outkast"}, "FREE", {"title": "Take On Me", "song_id": "take-on-me-a-ha"}, {"title": "Hotel California", "song_id": "hotel-california-remastered-eagles"}, {"title": "Africa", "song_id": "africa-toto"}, {"title": "Mr. Brightside", "song_id": "mr-brightside-the-killers"}, {"title": "Mr. Blue Sky", "song_id": "mr-blue-sky-electric-light-orchestra"}, {"title": "Come On Eileen", "song_id": "come-on-eileen-dexys-midnight-runners"}, {"title": "Don't Dream It's Over", "song_id": "don-t-dream-it-s-over-crowded-house"}, {"title": "Blinding Lights", "song_id": "blinding-lights-the-weeknd"}, {"title": "Uptown Funk", "song_id": "uptown-funk-mark-ronson"}, {"title": "The Horses", "song_id": "the-horses-daryl-braithwaite"}, {"title": "September", "song_id": "september-earth-wind-fire"}, {"title": "Eagle Rock", "song_id": "eagle-rock-daddy-cool"}];
+    var IDS={"Never Gonna Give You Up": "never-gonna-give-you-up-rick-astley", "Dancing Queen": "dancing-queen-abba", "Khe Sanh": "khe-sanh-cold-chisel", "Mr. Brightside": "mr-brightside-the-killers", "The Horses": "the-horses-daryl-braithwaite"};
+    var ORDER=["Never Gonna Give You Up","Dancing Queen","Khe Sanh","Mr. Brightside","The Horses"];
+    var _dt=[];
+    function d(ms, fn){ _dt.push(setTimeout(function(){ try{ fn(); }catch(e){} }, ms)); }
+    function fire(o){ try{ onMsg(o); }catch(e){} }
+    function tapSong(title){ for(var i=0;i<25;i++){ if(cellTitle(i)===title){ P.daubs[i]=true; renderCard(); return; } } }
+    function round(){
+      for(var i=0;i<_dt.length;i++) clearTimeout(_dt[i]);
+      _dt=[]; P.won=false; P.ended=false; P.claimPending=false;
+      fire({ t:"started", pattern:"one", prize:"$50 bar tab", played:[] });
+      P.cells=CELLS.slice(); P.active=true; P.daubs={}; P.daubs[12]=true; route();
+      var t=1200, played=[], ids=[];
+      ORDER.forEach(function(title, i){
+        d(t, function(){ played.push(title); ids.push(IDS[title]); fire({ t:"played", title:title, played:played.slice(), played_ids:ids.slice(), reveal:false }); });
+        d(t+3600, function(){ tapSong(title); });
+        if(i===2){ d(t+4300, function(){ tapSong("Wonderwall"); }); d(t+4900, function(){ for(var j=0;j<25;j++){ if(cellTitle(j)==="Wonderwall") delete P.daubs[j]; } renderCard(); }); }
+        t+=5200;
+      });
+      /* The real button asks the Worker to verify the card. A demo has no Worker, so it shows the
+         same two screens the real thing does: sent and checking, then the win. */
+      d(t, function(){ P.claimPending=true; $("bingoBtn").disabled=true; setMsg("BINGO sent. The host is checking your card&hellip;","wait"); });
+      d(t+2600, function(){ fire({ t:"winner", name:"Sam", names:["Sam"], pids:["demo"], cardNos:[17] }); });
+      d(t+14000, round);   // = the wall's lap in screen.html: run() reschedules at t + 14000. Change both.
+    }
+    P.assist=false;
+    d(900, round);
+    return;
+  }
+
+  // ---- init: read ?room ----
+  (function(){
+    P.assist=loadAssist(); var ac=$("assistChk"); if(ac) ac.checked=P.assist;
+    if(loadLight()) setLight(true); var lc=$("lightChk"); if(lc) lc.checked=loadLight();
+    var m=/[?&]room=([^&]+)/.exec(window.location.search);
+    var room = ""; // a stray "%" threw here and stopped the phone starting (audit, 27 Sep 2026)
+    if(m){ try{ room=decodeURIComponent(m[1]); }catch(e){ room=m[1]; } room=room.toUpperCase().trim(); }
+    if(room && CODE_RE.test(room)){
+      connect(room);
+      // Follow the host to whatever they start next. See vp-follow.js.
+      if(window.VPFollow) VPFollow.start({ api: VP_GAME_API, room: room, format: "musical" });
+    }
+    else { $("statusText").textContent="No room"; show("vNoRoom"); }
+  })();
+})();
+</script>
+<!-- Help: a short FAQ and a contact form that makes a help desk ticket (vp-help.js, 19 Oct 2026). -->
+<script src="/app/vp-help.js" data-mode="patron" data-brand="venueplay"></script>
+</body>
+</html>

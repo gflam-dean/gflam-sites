@@ -1,0 +1,64 @@
+# Cloudflare Pages redirects.
+#
+# WHAT DOES NOT WORK HERE, AND WHY THIS FILE IS NEARLY EMPTY
+#
+# This file used to carry rules like:
+#
+#     /data/trivia-library.json    /404  404
+#
+# meaning "serve a 404 for the question bank". It never worked. Cloudflare Pages
+# supports 200 (rewrite) and the redirect statuses (301/302/303/307/308) in
+# _redirects; a bare 404 status is not honoured, so the rule was silently
+# ignored and the whole 41,000-question bank was downloadable by anyone who
+# guessed the URL, for as long as that rule had been sitting here looking like
+# protection. Verified against production on 18 Aug 2026: the URL returned 200.
+#
+# A file that IS in the deployed directory will be served. So the only reliable
+# way to keep something off the public site is to keep it out of the directory
+# Pages deploys.
+#
+# That is why the schema, both Workers, the seed and maintenance scripts and the
+# bulk data files now live in ../venueplay-backend/, a sibling of this folder and
+# therefore outside this Pages project. The layout there mirrors this one, so the
+# scripts' data paths still resolve.
+#
+# venueplay/data/ keeps only the three files the site actually fetches at
+# runtime: musical-library.json, trivia-count.json and music-count.json.
+#
+# If you add anything private in future: put it in venueplay-backend/, not here,
+# and do not rely on a rule in this file to hide it.
+
+# ONE OFFER PAGE, A MONTH AT A TIME (Dean, 25 Sep 2026). /offer-<month> is served from the /nsw
+# page, which reads the month from the address and shows that month's closing date and code.
+# 200 = a rewrite: the visitor keeps the address. A new month is a new line here and a new row
+# in nsw.html OFFERS. Plain /offer is NOT an offer: it goes to the homepage and the $3 rate.
+/offer-oct  /nsw  200
+/offer-nov  /nsw  200
+/offer-dec  /nsw  200
+/offer-jan  /nsw  200
+/offer-feb  /nsw  200
+/offer-mar  /nsw  200
+/offer      /     302
+
+# STATE PAGES RETIRED (Dean, 25 Sep 2026: "all the state links are gone except for nsw"). Nobody
+# was sent these, and /nsw is the one already in inboxes, so it keeps serving the October page.
+/qld          /offer-oct  301
+/qld.html     /offer-oct  301
+/vic          /offer-oct  301
+/vic.html     /offer-oct  301
+/sa          /offer-oct  301
+/sa.html     /offer-oct  301
+/wa          /offer-oct  301
+/wa.html     /offer-oct  301
+/nt          /offer-oct  301
+/nt.html     /offer-oct  301
+/tas          /offer-oct  301
+/tas.html     /offer-oct  301
+/act          /offer-oct  301
+/act.html     /offer-oct  301
+/last-call     /offer-oct  301
+/last-call.html  /offer-oct  301
+
+# THE HELP PAGE (21 Oct 2026). /help is help.html; /support is the other word people try.
+/support      /help  301
+/support.html /help  301

@@ -1,0 +1,1 @@
+{"secret": "whsec_test_abc123", "ts": "1756000000", "payload": "{\"id\":\"evt_1\",\"type\":\"checkout.session.completed\"}", "sig": "5311a613814465c7f42edc5e24a4bc985c1f43c0ccea9cbe9b30d8888233f839"}

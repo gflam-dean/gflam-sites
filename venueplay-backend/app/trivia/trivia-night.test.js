@@ -1,0 +1,364 @@
+/* WHAT A TRIVIA NIGHT MUST STILL DO, TESTED AGAINST THE PAGES THAT SHIP.
+
+   Every check here comes from the 7 Sep trivia review or from the picture round
+   Dean asked for on 9 Sep. Where the behaviour is a function, the function is
+   lifted out of the page and run, so this cannot pass against a page that has
+   quietly lost it. Where the behaviour needs a host, a TV and forty phones in a
+   room, the check is structural and says which fault it is guarding.
+
+   Run: jsc venueplay-backend/app/trivia/trivia-night.test.js   (from the repo root)
+*/
+var bad = 0;
+function pass(n, c, why){ print((c ? "  ok   " : "  FAIL ") + n + (c || !why ? "" : "   " + why)); if(!c) bad++; }
+
+function firstReadable(paths, min){
+  for (var i = 0; i < paths.length; i++){
+    try { var t = readFile(paths[i]); if (t && t.length > min) return t; } catch(e){}
+  }
+  return null;
+}
+function page(name){
+  return firstReadable([ "venueplay/app/trivia/" + name,
+                         "../" + name,
+                         name ], 2000);
+}
+var builder = page("builder.html");
+var host    = page("host.html");
+var play    = page("play.html");
+var screen  = page("screen.html");
+pass("all four trivia pages are readable", !!(builder && host && play && screen));
+if (!(builder && host && play && screen)) { print("  0 FAILED"); throw new Error("missing pages"); }
+
+/* Lift a function body straight out of the page. */
+function grab(name, src){
+  var i = src.indexOf("function " + name + "(");
+  if (i < 0) return null;
+  var depth = 0, started = false;
+  for (var j = i; j < src.length; j++){
+    if (src[j] === "{"){ depth++; started = true; }
+    else if (src[j] === "}"){ depth--; if (started && depth === 0) return src.slice(i, j + 1); }
+  }
+  return null;
+}
+function same(a, b){ return JSON.stringify(a) === JSON.stringify(b); }
+
+print("");
+print("1. TIES SHARE THE STEP (review finding 7: two teams on 850 were split by database order)");
+
+var fnRankHost = grab("sharedRanks", host);
+var fnRankTv   = grab("sharedRanks", screen);
+pass("host.html still ranks the board itself", !!fnRankHost);
+pass("screen.html still ranks the board itself", !!fnRankTv);
+if (!fnRankHost || !fnRankTv) throw new Error("sharedRanks missing");
+
+(function(){
+  eval(fnRankHost);
+  var rows = [{points:900},{points:850},{points:850},{points:700}];
+  pass("host: two teams on 850 both read =2", same(sharedRanks(rows), ["1","=2","=2","4"]), JSON.stringify(sharedRanks(rows)));
+  pass("host: no tie, no equals sign", same(sharedRanks([{points:9},{points:8},{points:7}]), ["1","2","3"]));
+  pass("host: an empty board does not throw", same(sharedRanks([]), []));
+  pass("host: everyone on zero shares first", same(sharedRanks([{points:0},{points:0}]), ["=1","=1"]));
+})();
+(function(){
+  eval(fnRankTv);
+  var rows = [{points:900},{points:850},{points:850},{points:700}];
+  pass("TV: the same rows give the same ranks as the host console", same(sharedRanks(rows), ["1","=2","=2","4"]), JSON.stringify(sharedRanks(rows)));
+  // The TV reads points off a public broadcast, so it must survive strings and rubbish.
+  pass("TV: points arriving as text still rank", same(sharedRanks([{points:"9"},{points:"9"},{points:"1"}]), ["=1","=1","3"]));
+})();
+
+print("");
+print("2. THE PODIUM SHOWS EVERYONE ON THE STEP (finding 7: one of the tied pair was not shown at all)");
+var fnPodium = grab("podiumEntries", screen);
+pass("screen.html still works out who stands on the podium", !!fnPodium);
+if (fnPodium){
+  eval(fnPodium);
+  var tie = [{name:"A",points:900},{name:"B",points:850},{name:"C",points:850},{name:"D",points:700}];
+  var e = podiumEntries(tie.slice(0,3), tie);
+  pass("both teams on 850 stand on the podium", e.length === 3 && e[1].rank === 2 && e[2].rank === 2, JSON.stringify(e.map(function(x){ return x.p.name + ":" + x.rank; })));
+  pass("nobody past third gets a column", e.filter(function(x){ return x.rank > 3; }).length === 0);
+  var clean = [{name:"A",points:9},{name:"B",points:8},{name:"C",points:7},{name:"D",points:6}];
+  pass("a clean 1-2-3 is still three columns", podiumEntries(clean.slice(0,3), clean).length === 3);
+  pass("a two team game does not throw", podiumEntries([{name:"A",points:5}], [{name:"A",points:5}]).length === 1);
+  pass("no scores at all does not throw", podiumEntries([], []).length === 0);
+  var four = [{name:"A",points:9},{name:"B",points:9},{name:"C",points:9},{name:"D",points:9},{name:"E",points:9}];
+  pass("a five way tie is capped at four columns so the wall never overflows", podiumEntries(four.slice(0,3), four).length <= 4);
+}
+
+print("");
+print("3. THE PHONE NEVER SAYS RANK 0 (finding 8)");
+var fnRankText = grab("rankText", play), fnOrdinal = grab("ordinal", play);
+pass("play.html still has rankText", !!fnRankText);
+pass("play.html still has ordinal", !!fnOrdinal);
+if (fnRankText && fnOrdinal){
+  eval(fnOrdinal); eval(fnRankText);
+  var P = { rank:0, playersCount:0 };
+  pass("no rank yet prints nothing at all", rankText() === "", "got '" + rankText() + "'");
+  P.rank = 3; P.playersCount = 11;
+  pass("third of eleven reads '3rd of 11'", rankText() === "3rd of 11", rankText());
+  P.playersCount = 0;
+  pass("an unknown field size still names the place", rankText() === "3rd", rankText());
+  P.rank = 1; P.playersCount = 2;
+  pass("first reads '1st of 2'", rankText() === "1st of 2", rankText());
+}
+
+print("");
+print("4. THE ONCE A WEEK MESSAGE IS IN ENGLISH (finding 2: the host was shown 2026-09-14)");
+var fnDay = grab("friendlyDay", host), fnMsg = grab("friendlyMsg", host);
+pass("host.html still translates the date", !!(fnDay && fnMsg));
+if (fnDay && fnMsg){
+  /* These two now DELEGATE to /app/vp-weekly.js, where the once-a-week rule lives, so the
+     shared file has to be loaded for them to run at all. That is an improvement on the old
+     shape: this used to eval the page's copy against its OWN DAYS and MONTHS arrays, which
+     meant it could pass while the page's real arrays were wrong. Now it exercises the actual
+     chain the host gets. Rewired 12 Sep 2026 when the rule moved out to be shared with the
+     musical console, which never had this warning at all. */
+  var LIB = firstReadable(["venueplay/app/vp-weekly.js", "../../../venueplay/app/vp-weekly.js",
+                           "../../vp-weekly.js"], 200);
+  pass("the shared once-a-week rule is readable", !!LIB);
+  if (LIB) (new Function(LIB))();
+  eval(fnDay); eval(fnMsg);
+  pass("2026-09-14 becomes Monday 14 September", friendlyDay("2026-09-14") === "Monday 14 September", friendlyDay("2026-09-14"));
+  pass("the Worker's whole sentence is rewritten in place",
+       friendlyMsg("Your next trivia night is available from 2026-09-14.") === "Your next trivia night is available from Monday 14 September.",
+       friendlyMsg("Your next trivia night is available from 2026-09-14."));
+  pass("a message with no date is left alone", friendlyMsg("Pick a question set first") === "Pick a question set first");
+  pass("rubbish in does not throw", friendlyDay("") === "" && friendlyMsg(null) === "");
+}
+
+print("");
+print("5. THE PICTURE ROUND, END TO END (Dean, 9 Sep: 'I dont think opus ever did do it')");
+pass("builder: a host can choose a photo", builder.indexOf('id="ownImgFile"') > 0);
+pass("builder: the photo is shrunk on the device before it goes anywhere", builder.indexOf("function shrinkImage(") > 0);
+pass("builder: it is uploaded to the game Worker", builder.indexOf("/host/trivia/image-upload") > 0);
+pass("builder: a missing upload route falls back to pasting a link, in plain English",
+     builder.indexOf("Paste a picture link (https://...) in the box below instead.") > 0);
+pass("builder: pasting a link is still possible", builder.indexOf('id="ownImg"') > 0);
+pass("builder: the question list shows which questions have a picture", builder.indexOf("qthumb") > 0);
+pass("host: the picture is on the question card, so the host can describe it (finding 10)",
+     host.indexOf('(q.imageUrl?\'<img class="qimg-h" alt="" src="\'+esc(q.imageUrl)') > 0);
+pass("host: and on the reveal card too", host.indexOf('(q2.imageUrl?\'<img class="qimg-h" alt="" src="\'+esc(q2.imageUrl)') > 0);
+pass("host: a picture that will not load hides itself rather than leaving a broken box",
+     host.split("onerror=\\\"this.style.display=\\'none\\'\\\"").length >= 3 || host.split("this.style.display=").length >= 3);
+pass("host: the picture rides along on a reload recovery too", host.indexOf("imageUrl:q.image_url") > 0);
+pass("TV: the picture is drawn with the question", screen.indexOf('id="tvQImg"') > 0);
+pass("TV: a picture question gets the picture round layout", screen.indexOf('lay.classList.toggle("pic", hasPic)') > 0);
+pass("TV: a picture that fails to load drops back to the text layout instead of a blank wall",
+     screen.indexOf("l.classList.remove('pic')") > 0);
+pass("TV: only a real http link is treated as a picture", screen.indexOf("/^https?:\\/\\//i.test(String(m.imageUrl))") > 0);
+pass("phone: the picture sits above the answers", play.indexOf('id="pqImg"') > 0 && play.indexOf('id="pqImg"') < play.indexOf('id="pAnswers"'));
+pass("phone: a broken picture hides itself and the question carries on", play.indexOf("onerror=\"this.classList.add('hidden')\"") > 0);
+
+print("");
+print("6. FOUR COLOURED ANSWER BUTTONS, ALWAYS (Dean, 27 Sep 2026: get rid of the setting)");
+pass("there is no colour setting on the host panel any more", host.indexOf('id="cfgColour"') < 0 && host.indexOf('#cfgColour button') < 0);
+pass("and the console always sends the four colours, even to a venue that once saved Plain",
+     /colour:true/.test(host) && host.indexOf("G.colour=true;") > 0);
+(function(){
+  // The whole fault was a handler listening for an element nobody had written.
+  var ids = host.match(/document\.querySelectorAll\("#(\w+) button"\)/g) || [];
+  var missing = [];
+  for (var i = 0; i < ids.length; i++){
+    var id = /#(\w+) button/.exec(ids[i])[1];
+    if (host.indexOf('id="' + id + '"') < 0) missing.push(id);
+  }
+  pass("every settings toggle the console listens to exists in the markup", missing.length === 0, missing.join(", "));
+})();
+pass("colour is on by default", host.indexOf("speedBonus:true, colour:true") > 0);
+
+print("");
+print("7. NOBODY ENDS THE NIGHT BY ACCIDENT (finding 3)");
+(function(){
+  var fn = grab("endBtn", host);
+  pass("host.html still builds its End round buttons in one place", !!fn);
+  pass("and every one of them asks first", !!fn && fn.indexOf("vpAsk(") > 0);
+})();
+
+print("");
+print("8. A PHONE THAT SLEPT COMES BACK INTO THE GAME (findings 4, 5, 8)");
+pass("the team name is kept where a backgrounded tab cannot eat it", play.indexOf('localStorage.setItem("vp-tname-"') > 0);
+pass("a returning phone rebuilds from the snapshot", play.indexOf("rebuildFromSnapshot()") > 0 && play.indexOf("function applyPending(") > 0);
+pass("a phone that woke mid question lands on that question, not the waiting screen",
+     play.indexOf('g.phase==="asking" || g.phase==="locked"') > 0);
+pass("'Answer in!' waits for the server to say so", play.indexOf("function sayIn(){") > 0 && play.indexOf("playerPost(\"/player/answer\"").valueOf() > 0);
+pass("an answer that did not get through can be tapped again", play.indexOf("Didn't get through. Tap your answer again.") > 0);
+pass("a missed deadline says so plainly", play.indexOf("Too late, next one!") > 0);
+pass("the result screen names the correct answer", play.indexOf('id="pResCa"') > 0);
+pass("the result stays up until the next question starts", play.indexOf("Leave the result screen up") > 0);
+
+print("");
+print("9. THE WALL NEVER SHOWS THE PLAYER COUNT (locked design rule)");
+pass("screen.html has no player count element", screen.indexOf('id="lobbyPlaying"') < 0);
+pass("screen.html does not track a player count at all", screen.indexOf("state.playerCount") < 0);
+pass("a players message is accepted and ignored, so an old host cannot break the wall", screen.indexOf('if(m.t==="players"){ return; }') > 0);
+
+print("");
+print("10. EVERY TEAM CAN SEE ITSELF (finding 13)");
+pass("the TV pages through the whole board", screen.indexOf("function renderBoardPaged(") > 0);
+pass("paging stops the moment another layer shows, so it cannot paint over a question",
+     screen.indexOf('if(which!=="tvBoard") stopBoardPaging();') > 0);
+pass("the host board scrolls the full list rather than stopping at eight", host.indexOf("All \"+B.length+\" teams") > 0 && host.indexOf("for(var i=0;i<B.length;i++)") > 0);   // B is the board being shown (trivia, or a Punters Reckon night)
+
+print("");
+print("11. THE NIGHT IS NAMED ON THE WALL (finding 15)");
+pass("the TV lobby has a name element it can repaint", screen.indexOf('id="lobbyName"') > 0);
+pass("the host sends the night's name with the mode", host.indexOf('t:"mode", mode:"trivia", title:G.setTitle') > 0);
+pass("a name that never arrives still reads Trivia Night", screen.indexOf('|| "Trivia Night"') > 0);
+pass("the builder no longer claims a 37,000 question bank", builder.indexOf("37,000") < 0);
+
+print("");
+print("12. MORE TIME IS ASKED OF THE SERVER, NEVER FAKED (finding 9)");
+pass("the host has a +10 seconds button", host.indexOf('"+10 seconds"') > 0);
+pass("it moves the real deadline through the Worker", host.indexOf('/host/question/add-time') > 0);
+pass("a Worker without the route tells the host plainly instead of lying to the room",
+     host.indexOf("Extra time is not switched on at the server yet") > 0);
+pass("the phone follows the new deadline", play.indexOf('m.t==="time"') > 0);
+pass("the TV ring follows it too", screen.indexOf('m.t==="time"') > 0);
+
+print("");
+print("13. THE BUILDER IS THREE STEPS AND ENDS AT RUN IT NOW (Dean, 9 Sep: 'easier on the host')");
+pass("there are three numbered steps", builder.indexOf('data-step="1"') > 0 && builder.indexOf('data-step="2"') > 0 && builder.indexOf('data-step="3"') > 0);
+pass("one tap on a theme builds a whole night", builder.indexOf("function quickNight(") > 0 && builder.indexOf("count:20") > 0);
+pass("the last step hands the host straight to the console with the night already picked",
+     builder.indexOf('run.href="/app/trivia/host.html?set="') > 0);
+pass("and the console picks that night up", host.indexOf("function setFromUrl(") > 0);
+pass("a signed out host is given a way in (finding 14)", builder.indexOf("Go to sign in") > 0);
+pass("a typo can be fixed instead of retyped (finding 14)", builder.indexOf("function startEdit(") > 0);
+pass("a removed question can be put back", builder.indexOf("function showUndo(") > 0);
+pass("a half written question survives a mis-tap", builder.indexOf("function saveDraft(") > 0 && builder.indexOf("function restoreDraft(") > 0);
+pass("the builder says the questions run in a random order (finding 12)", builder.indexOf("random order") > 0);
+pass("an empty night cannot be run", builder.indexOf("it cannot run") > 0);
+
+print("");
+print("14. NOTHING IN THESE PAGES USES AN EM DASH (the gate rejects them)");
+(function(){
+  var files = { "builder.html":builder, "host.html":host, "play.html":play, "screen.html":screen };
+  var hits = [];
+  var EM = String.fromCharCode(8212);   // built, not typed, so this file never carries one itself
+  for (var k in files){ if (files[k].indexOf(EM) >= 0) hits.push(k); }
+  pass("no em dash in any trivia page", hits.length === 0, hits.join(", "));
+})();
+
+print("");
+print("7. DEAN'S 27 SEP FIXES: the round count, the print sheets, and a false 'lost connection'");
+pass("a library bank (over 50) starts at 10; your own night, or a library night up to 50, plays in full",
+     host.indexOf('$("cfgCount").value = (own || G.questionCount<=50) ? Math.min(100, G.questionCount) : 10;') > 0);
+pass("there is no separate 'Questions per round' box; the sheet is the round", host.indexOf('id="cfgRound"') < 0 && host.indexOf("G.roundSize=G.count;") > 0);
+pass("changing the count after printing tells the host to print again", host.indexOf("Tap Print again for sheets that match.") > 0);
+(function(){
+  /* RUNS the real openGameChannel against a fake realtime client that behaves like supabase-js:
+     removeChannel() reports CLOSED to the old channel INSIDE the call. */
+  var a = host.indexOf('  var LOST_MSG='), b = host.indexOf('  // ---- host game state ----');
+  var SRC = (a > 0 && b > a) ? host.slice(a, b) : "";
+  pass("the players' channel code is where the test expects it", !!SRC);
+  var timers = [], shown = [], cleared = 0, chans = [], tid = 0;
+  var client = { channel: function(name){ var c = { name: name, on: function(){ return c; }, subscribe: function(cb){ c.cb = cb; return c; } }; chans.push(c); return c; },
+                 removeChannel: function(c){ if (c && c.cb) c.cb("CLOSED"); } };
+  var bar = { textContent: "" };
+  var env = { client: client, G: { status: "setup", joinCode: "ABC123" }, _leaving: false,
+              $: function(id){ return id === "hostErrText" ? bar : null; },
+              hostError: function(m){ shown.push(m); bar.textContent = m; }, clearHostError: function(){ cleared++; bar.textContent = ""; },
+              gflush: function(){}, gsend: function(){}, onMsg: function(){},
+              setTimeout: function(fn, ms){ var t = { fn: fn, ms: ms, id: ++tid }; timers.push(t); return t.id; },
+              clearTimeout: function(id){ timers = timers.filter(function(t){ return t.id !== id; }); } };
+  var names = Object.keys(env);
+  var api = (new Function(names.join(","), "var gch=null, gsub=false;" + SRC +
+    "; return { open: openGameChannel, cur: function(){ return gch; }, sub: function(){ return gsub; } };")).apply(null, names.map(function(k){ return env[k]; }));
+  function fire(){ var t = timers.slice(); timers = []; t.forEach(function(x){ x.fn(); }); }
+  api.open("ABC123"); api.cur().cb("SUBSCRIBED");
+  api.open("ABC123");                       // printing, then opening the lobby, reopens it
+  pass("replacing the channel is not mistaken for a drop: no reconnect, no warning booked", timers.length === 0, JSON.stringify(timers.map(function(t){ return t.ms; })));
+  env.G.status = "question"; api.open("ABC123"); env.G.status = "setup";
+  pass("...even mid-game (a reload restores a live quiz and reopens it)", timers.length === 0);
+  fire();
+  pass("replacing the channel before any lobby shows no 'lost connection' (Dean, 27 Sep, twice)", shown.length === 0, JSON.stringify(shown));
+  env.G.status = "question"; shown.length = 0; timers = [];
+  api.cur().cb("TIMED_OUT"); api.cur().cb("SUBSCRIBED"); fire();
+  pass("a blip that heals inside 8 seconds says nothing", shown.length === 0, JSON.stringify(shown));
+  timers = []; api.cur().cb("CHANNEL_ERROR");
+  var waits = timers.map(function(t){ return t.ms; });
+  pass("a real drop books a retry and an 8 second warning", waits.indexOf(8000) >= 0 && waits.some(function(ms){ return ms >= 2000 && ms !== 8000; }), JSON.stringify(waits));
+  var before = chans.length; fire();
+  pass("still down after 8 seconds in a live game: the host is told", shown.length === 1);
+  pass("and the retry really opens a fresh channel", chans.length === before + 1);
+  api.cur().cb("SUBSCRIBED");
+  pass("when it comes back the warning is taken down", cleared === 1);
+  env.G.status = "setup"; shown.length = 0; timers = [];
+  api.cur().cb("TIMED_OUT"); fire();
+  pass("before the game starts, a drop retries quietly and warns nobody", shown.length === 0);
+})();
+pass("the page marks itself as leaving before it goes", /addEventListener\("beforeunload", function\(\)\{ _leaving=true; \}\)/.test(host) && /addEventListener\("pagehide", function\(\)\{ _leaving=true; \}\)/.test(host));
+
+(function(){
+  var a = host.indexOf("function effectiveCount(){"), d = 0, j = a, st = false;
+  for (; j < host.length; j++){ if (host[j] === "{"){ d++; st = true; } else if (host[j] === "}"){ d--; if (st && d === 0) break; } }
+  var fnE = a > 0 ? host.slice(a, j + 1) : "";
+  a = host.indexOf("function paintRoundQs(){"); d = 0; j = a; st = false;
+  for (; j < host.length; j++){ if (host[j] === "{"){ d++; st = true; } else if (host[j] === "}"){ d--; if (st && d === 0) break; } }
+  var fn = a > 0 ? fnE + host.slice(a, j + 1) : "";
+  pass("the Questions box has its own painter", !!fn && !!fnE);
+  function run(total, typed){
+    var els = { setupQs: { innerHTML: "" }, cfgCount: { value: String(typed) } };
+    (new Function("$", "G", fn + "; paintRoundQs();"))(function(id){ return els[id]; }, { questionCount: total });
+    return els.setupQs.innerHTML.replace(/<[^>]+>/g, "");
+  }
+  pass("a bank of 2,720 set to 10 shows 10 of 2,720 (Dean, 27 Sep: it showed 2720)", run(2720, 10) === "10 of 2,720", run(2720, 10));
+  pass("a built night of 20 played in full shows just 20", run(20, 20) === "20", run(20, 20));
+  pass("asking for more than the set holds shows what will actually play", run(20, 50) === "20", run(20, 50));
+  pass("no set yet shows 0", run(0, 10) === "0");
+  function eff(total, typed){
+    var els = { cfgCount: { value: String(typed) } };
+    return (new Function("$", "G", fnE + "; return effectiveCount();"))(function(id){ return els[id]; }, { questionCount: total });
+  }
+  pass("typing 250 on a bank plays and prints 100, not 250 (audit 27 Sep)", eff(2720, 250) === 100 && run(2720, 250) === "100 of 2,720", run(2720, 250));
+  pass("typing 30 on a 12-question night plays and prints 12, not 30", eff(12, 30) === 12);
+  pass("another venue's private night is never listed (only your own and the ownerless library)",
+       host.indexOf("if(s.owner_venue_id===G.venueId) mine.push(s); else if(!s.owner_venue_id) lib.push(s);") > 0);
+  pass("a Run-it-now link to a night this venue cannot use says so", host.indexOf("That night is not one of this venue's") > 0);
+  pass("waking the iPad (pageshow) clears the leaving flag and reopens the channel",
+       /addEventListener\("pageshow", function\(e\)\{\s*_leaving=false;/.test(host));
+  pass("a host action no longer hides 'Lost the connection' while the phones are still down",
+       host.indexOf("function clearErrForAction(){ if(!gLostShown && !_errSticky) clearHostError(); }") > 0);
+  pass("the game and the sheets read the same number (readSettings uses it)", host.indexOf("G.count=effectiveCount();") > 0);
+  pass("typing in the round box repaints it", host.indexOf('$("cfgCount").addEventListener("input", function(){ renderPaperSetup(); paintRoundQs(); });') > 0);
+})();
+
+print("");
+print("15. A REFUSAL STAYS UP UNTIL THE HOST ACTS (live audit, 19 Oct 2026: 'Trivia runs once a week' vanished in 3 s)");
+(function(){
+  /* The real hostError, clearHostError and apiPost, run, with the page's bar as a fake element. */
+  var bar = { cls: {}, parentNode: null, style: {}, classList: { add: function(c){ bar.cls[c] = true; }, remove: function(c){ delete bar.cls[c]; } } };
+  var txt = { textContent: "" };
+  var els = { hostErrBar: bar, hostErrText: txt, statusText: { textContent: "" } };
+  var $ = function(id){ return els[id] || null; };
+  var document = { body: { appendChild: function(){} }, querySelector: function(){ return null; } };
+  var window = { scrollTo: function(){} };
+  var gLostShown = false, VP_GAME_API = "https://w", VPWeekly = null;
+  function friendlyMsg(m){ return String(m == null ? "" : m); }
+  function getToken(){ return Promise.resolve("t"); }
+  function confirmOverage(){ return Promise.resolve(true); }
+  function fetch(){ return Promise.resolve({ ok: true, status: 200, json: function(){ return Promise.resolve({ ok: true }); } }); }
+  function setTimeout(){ return 1; } function clearTimeout(){}
+  var src = "var _errSticky=false;" + grab("hostError", host) + grab("clearHostError", host) + (grab("clearErrForAction", host) || "") + grab("apiPost", host) +
+            " return { hostError: hostError, clearHostError: clearHostError, apiPost: apiPost, act: (typeof clearErrForAction==='function') ? clearErrForAction : function(){} };";
+  var f = (new Function("$", "document", "window", "gLostShown", "VP_GAME_API", "VPWeekly", "friendlyMsg", "getToken", "confirmOverage", "fetch", "setTimeout", "clearTimeout", src))(
+    $, document, window, gLostShown, VP_GAME_API, VPWeekly, friendlyMsg, getToken, confirmOverage, fetch, setTimeout, clearTimeout);
+  f.hostError("Trivia runs once a week per venue. Your next trivia night is available from 2026-10-26.");
+  f.apiPost("/host/heartbeat", {}); drainMicrotasks();
+  pass("the weekly refusal is still showing after the next call that worked", !!bar.cls.show && /once a week/.test(txt.textContent));
+  f.act();
+  pass("...and after the host's next action: it waits for its X", !!bar.cls.show && /once a week/.test(txt.textContent));
+  f.clearHostError();
+  pass("and goes when the host closes it", !bar.cls.show);
+  /* Live play test, 24 Oct 2026 (musical bingo, same apiPost): ANY refusal was wiped by the next
+     call that answered 200, often the /session re-say a moment after Start. */
+  f.hostError("Over plan - game not started.");
+  f.apiPost("/host/heartbeat", {}); drainMicrotasks();
+  pass("an ordinary refusal is NOT cleared by a background call that worked", !!bar.cls.show && /Over plan/.test(txt.textContent));
+  f.act();
+  pass("CONTROL: it comes down when the host does something", !bar.cls.show);
+})();
+
+print("");
+print(bad ? ("  " + bad + " FAILED") : "ALL " + "CHECKS PASSED");
+if (bad) throw new Error(bad + " failed");

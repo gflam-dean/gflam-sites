@@ -1,0 +1,1322 @@
+[
+ {
+  "question": "What is a 570 millilitre beer glass called in most of Australia?",
+  "options": [
+   "A middy",
+   "A schooner",
+   "A pint",
+   "A pot"
+  ],
+  "correctIndex": 2,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 285 millilitre beer called in New South Wales?",
+  "options": [
+   "A middy",
+   "A pot",
+   "A schooner",
+   "A butcher"
+  ],
+  "correctIndex": 0,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the froth on top of a poured beer called?",
+  "options": [
+   "The cap",
+   "The foam line",
+   "The head",
+   "The crown"
+  ],
+  "correctIndex": 2,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the tap system that pushes beer from the keg usually powered by?",
+  "options": [
+   "A hand pump only",
+   "Carbon dioxide gas",
+   "Water pressure",
+   "Compressed air only"
+  ],
+  "correctIndex": 1,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the pub term 'shout' mean in Australia?",
+  "options": [
+   "Calling last drinks",
+   "Yelling an order",
+   "Buying a round of drinks",
+   "Cheering a goal"
+  ],
+  "correctIndex": 2,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'schooey' short for in Australian pub slang?",
+  "options": [
+   "A shot",
+   "A schnapps",
+   "A shandy",
+   "A schooner"
+  ],
+  "correctIndex": 3,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a shandy?",
+  "options": [
+   "Beer mixed with lemonade",
+   "Wine with soda",
+   "Beer with a shot of spirits",
+   "Cider with lime"
+  ],
+  "correctIndex": 0,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'BYO' stand for at a restaurant?",
+  "options": [
+   "Book your outing",
+   "Buy your own",
+   "Bring your order",
+   "Bring your own"
+  ],
+  "correctIndex": 3,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'corkage' fee?",
+  "options": [
+   "A charge for opening your own wine",
+   "A cleaning fee",
+   "A booking deposit",
+   "A charge for bar snacks"
+  ],
+  "correctIndex": 0,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does RSA stand for in Australian hospitality?",
+  "options": [
+   "Restaurant Serving Authority",
+   "Responsible Service of Alcohol",
+   "Retail Sales Accreditation",
+   "Registered Serving Award"
+  ],
+  "correctIndex": 1,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does a bar's 'last drinks' call signal?",
+  "options": [
+   "A round is free",
+   "The bar is about to close",
+   "A new keg is on",
+   "Happy hour is starting"
+  ],
+  "correctIndex": 1,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'happy hour' at a pub?",
+  "options": [
+   "A live music slot",
+   "A meal deal only",
+   "A period of discounted drinks",
+   "A staff break"
+  ],
+  "correctIndex": 2,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'bar tab'?",
+  "options": [
+   "A drinks menu",
+   "A tip jar",
+   "A stool at the bar",
+   "A running account paid at the end"
+  ],
+  "correctIndex": 3,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'meat tray' raffle in an Australian pub?",
+  "options": [
+   "A steak eating contest",
+   "A raffle where you win a tray of meat",
+   "A cooking class",
+   "A butcher's demonstration"
+  ],
+  "correctIndex": 1,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On which day are pub meat raffles most traditionally drawn in Australia?",
+  "options": [
+   "Wednesday",
+   "Monday",
+   "Friday",
+   "Tuesday"
+  ],
+  "correctIndex": 2,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'members draw' at an Australian club?",
+  "options": [
+   "A membership sign-up offer",
+   "A card game",
+   "A prize drawn for a member who must be present",
+   "A raffle for staff"
+  ],
+  "correctIndex": 2,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'jackpot' in a members draw?",
+  "options": [
+   "A bonus for new members",
+   "A prize that rolls over when unclaimed",
+   "A double prize on Fridays",
+   "A staff bonus"
+  ],
+  "correctIndex": 1,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 'housie' better known as internationally?",
+  "options": [
+   "Keno",
+   "Lotto",
+   "Raffle",
+   "Bingo"
+  ],
+  "correctIndex": 3,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In bingo, what is the traditional call for the number 88?",
+  "options": [
+   "Two fat ladies",
+   "Top of the shop",
+   "Legs eleven",
+   "Doctor's orders"
+  ],
+  "correctIndex": 0,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In bingo, what is the traditional call for number 11?",
+  "options": [
+   "Kelly's eye",
+   "Legs eleven",
+   "Two little ducks",
+   "Dancing queen"
+  ],
+  "correctIndex": 1,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In bingo, what does the call 'two little ducks' mean?",
+  "options": [
+   "44",
+   "33",
+   "11",
+   "22"
+  ],
+  "correctIndex": 3,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In bingo, what number is 'Kelly's eye'?",
+  "options": [
+   "10",
+   "7",
+   "1",
+   "9"
+  ],
+  "correctIndex": 2,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In bingo, what is 'dancing queen' a call for?",
+  "options": [
+   "66",
+   "17",
+   "44",
+   "22"
+  ],
+  "correctIndex": 1,
+  "category": "Pub Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the highest number in a traditional 90-ball bingo game?",
+  "options": [
+   "100",
+   "75",
+   "80",
+   "90"
+  ],
+  "correctIndex": 3,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many numbers are in a standard 75-ball bingo card grid?",
+  "options": [
+   "24 numbers plus a free space",
+   "30 numbers",
+   "25 numbers",
+   "20 numbers"
+  ],
+  "correctIndex": 0,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What letter appears above the first column on a 75-ball bingo card?",
+  "options": [
+   "O",
+   "B",
+   "N",
+   "G"
+  ],
+  "correctIndex": 1,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a full house in bingo?",
+  "options": [
+   "The four corners",
+   "Two lines marked",
+   "Every number on the ticket marked",
+   "One line marked"
+  ],
+  "correctIndex": 2,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a common pub quiz round where you name songs from short clips?",
+  "options": [
+   "The music round",
+   "The connection round",
+   "The wipeout round",
+   "The picture round"
+  ],
+  "correctIndex": 0,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'wipeout' round in pub trivia?",
+  "options": [
+   "A bonus round",
+   "A round where a wrong answer loses your points",
+   "A tiebreaker",
+   "A speed round"
+  ],
+  "correctIndex": 1,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the person who runs a pub quiz usually called?",
+  "options": [
+   "The steward",
+   "The bookie",
+   "The quiz master or host",
+   "The compere only"
+  ],
+  "correctIndex": 2,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a common tiebreaker format in pub trivia?",
+  "options": [
+   "Highest team number",
+   "Closest guess to a number",
+   "A coin toss",
+   "Rock paper scissors"
+  ],
+  "correctIndex": 1,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the traditional Australian pub game played with two coins on Anzac Day?",
+  "options": [
+   "Skittles",
+   "Two-up",
+   "Pitch and toss",
+   "Crown and anchor"
+  ],
+  "correctIndex": 1,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In two-up, what is the person who tosses the coins called?",
+  "options": [
+   "The caller",
+   "The tosser",
+   "The dealer",
+   "The spinner"
+  ],
+  "correctIndex": 3,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In two-up, what is the flat piece of wood the coins sit on called?",
+  "options": [
+   "The bat",
+   "The kip",
+   "The paddle",
+   "The tray"
+  ],
+  "correctIndex": 1,
+  "category": "Pub Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In two-up, what does 'heads' mean for the spinner?",
+  "options": [
+   "One coin lands heads",
+   "Both coins land heads up",
+   "The spinner calls it",
+   "Three coins land heads"
+  ],
+  "correctIndex": 1,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In two-up, what is it called when the coins land one head and one tail?",
+  "options": [
+   "A dud",
+   "A split",
+   "A wash",
+   "One them"
+  ],
+  "correctIndex": 3,
+  "category": "Pub Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a poker machine commonly called in Australia?",
+  "options": [
+   "A one-armed jack",
+   "A slot only",
+   "A pokie",
+   "A fruity"
+  ],
+  "correctIndex": 2,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian state has historically had the most poker machines?",
+  "options": [
+   "Queensland",
+   "New South Wales",
+   "Western Australia",
+   "Victoria"
+  ],
+  "correctIndex": 1,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian state restricts poker machines to its casino only?",
+  "options": [
+   "The Northern Territory",
+   "Tasmania",
+   "Western Australia",
+   "South Australia"
+  ],
+  "correctIndex": 2,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is keno?",
+  "options": [
+   "A game where numbers are drawn from a pool",
+   "A card game",
+   "A dice game",
+   "A horse racing bet"
+  ],
+  "correctIndex": 0,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many numbers are drawn in a standard keno game?",
+  "options": [
+   "15",
+   "25",
+   "10",
+   "20"
+  ],
+  "correctIndex": 3,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'trifecta' in horse racing betting?",
+  "options": [
+   "Betting on three races",
+   "Picking any three horses",
+   "Picking the winner three times",
+   "Picking first, second and third in order"
+  ],
+  "correctIndex": 3,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'quinella' bet?",
+  "options": [
+   "Picking five horses",
+   "Picking first and second in any order",
+   "Picking the winner only",
+   "Picking the last place"
+  ],
+  "correctIndex": 1,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'each way' mean in racing betting?",
+  "options": [
+   "A bet on the horse to win and to place",
+   "A bet both ways on the market",
+   "A double stake on the win",
+   "A bet on two horses"
+  ],
+  "correctIndex": 0,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a sweep in the context of the Melbourne Cup?",
+  "options": [
+   "A betting agency promotion",
+   "A trophy presentation",
+   "A cleaning of the track",
+   "A draw where each person gets a random horse"
+  ],
+  "correctIndex": 3,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the traditional Australian pub counter meal?",
+  "options": [
+   "A breakfast special",
+   "A hearty meal served at the bar",
+   "A snack platter",
+   "A dessert"
+  ],
+  "correctIndex": 1,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which pub meal is a crumbed cutlet without toppings?",
+  "options": [
+   "A parmigiana",
+   "A rissole",
+   "A schnitzel",
+   "A pattie"
+  ],
+  "correctIndex": 2,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'chicken salt' most associated with in Australia?",
+  "options": [
+   "Salads",
+   "Hot chips",
+   "Pies",
+   "Roast dinners"
+  ],
+  "correctIndex": 1,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Australian term for a bar staff member who pours drinks?",
+  "options": [
+   "A steward",
+   "A bartender",
+   "A publican only",
+   "A cellarman"
+  ],
+  "correctIndex": 1,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'publican'?",
+  "options": [
+   "The licensee who runs a pub",
+   "A regular customer",
+   "A brewery rep",
+   "A pub inspector"
+  ],
+  "correctIndex": 0,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the room in a pub where beer kegs are stored called?",
+  "options": [
+   "The cellar",
+   "The vault",
+   "The store",
+   "The pantry"
+  ],
+  "correctIndex": 0,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'lock-in' at a British pub?",
+  "options": [
+   "A security drill",
+   "A private function",
+   "A staff meeting",
+   "Staying to drink after official closing"
+  ],
+  "correctIndex": 3,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the traditional British pub call at closing time?",
+  "options": [
+   "Last orders only",
+   "Closing bell",
+   "Time gentlemen please",
+   "Doors closing"
+  ],
+  "correctIndex": 2,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'snug' in a traditional pub?",
+  "options": [
+   "The kitchen",
+   "The cellar",
+   "The beer garden",
+   "A small private room"
+  ],
+  "correctIndex": 3,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'beer garden'?",
+  "options": [
+   "A hop farm",
+   "An outdoor drinking area",
+   "A brewery tour",
+   "A garden bar snack menu"
+  ],
+  "correctIndex": 1,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'session beer'?",
+  "options": [
+   "A limited release beer",
+   "A lower alcohol beer for drinking over time",
+   "A beer brewed on site",
+   "A beer served only at night"
+  ],
+  "correctIndex": 1,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does ABV stand for on a beer label?",
+  "options": [
+   "Alcohol by volume",
+   "Alcohol base value",
+   "Average beer volume",
+   "Approved beverage value"
+  ],
+  "correctIndex": 0,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'standard drink' in Australia measured by?",
+  "options": [
+   "10 grams of pure alcohol",
+   "One bottle",
+   "One glass regardless of size",
+   "5 per cent alcohol"
+  ],
+  "correctIndex": 0,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the legal blood alcohol limit for a full licence driver in Australia?",
+  "options": [
+   "0.00",
+   "0.02",
+   "0.05",
+   "0.08"
+  ],
+  "correctIndex": 2,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'growler' in craft beer?",
+  "options": [
+   "A refillable takeaway container",
+   "A small tasting glass",
+   "A tap handle",
+   "A beer style"
+  ],
+  "correctIndex": 0,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'paddle' in a craft beer venue?",
+  "options": [
+   "A menu holder",
+   "A board of small tasting glasses",
+   "A serving tray for food",
+   "A stirring tool"
+  ],
+  "correctIndex": 1,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'nitro' pour known for?",
+  "options": [
+   "Extra fizz",
+   "A creamy cascading head",
+   "Higher alcohol",
+   "A sour taste"
+  ],
+  "correctIndex": 1,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which beer is famous for a two-part pour and a settling cascade?",
+  "options": [
+   "Guinness",
+   "Corona",
+   "Heineken",
+   "Peroni"
+  ],
+  "correctIndex": 0,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What garnish is traditionally served with a Corona?",
+  "options": [
+   "A lemon slice",
+   "A cherry",
+   "A lime wedge",
+   "An orange peel"
+  ],
+  "correctIndex": 2,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'jug' of beer in an Australian pub?",
+  "options": [
+   "A single tall glass",
+   "A takeaway bottle",
+   "A keg",
+   "A large shared pitcher"
+  ],
+  "correctIndex": 3,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'slab' of beer in Australia?",
+  "options": [
+   "A dozen bottles",
+   "A six pack",
+   "A keg",
+   "A carton of 24 cans or bottles"
+  ],
+  "correctIndex": 3,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'longneck' in Australia?",
+  "options": [
+   "A 750 millilitre beer bottle",
+   "A tap handle",
+   "A tall cocktail",
+   "A bar stool"
+  ],
+  "correctIndex": 0,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian invention is the wine cask also known as?",
+  "options": [
+   "The bag-in-box wine",
+   "The wine bladder pump",
+   "The screw cap",
+   "The cork press"
+  ],
+  "correctIndex": 0,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which wine closure did Australia and New Zealand lead the world in adopting?",
+  "options": [
+   "The crown seal",
+   "The screw cap",
+   "The synthetic cork",
+   "The glass stopper"
+  ],
+  "correctIndex": 1,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'sommelier'?",
+  "options": [
+   "A bar manager",
+   "A cellar cleaner",
+   "A wine expert in a restaurant",
+   "A head chef"
+  ],
+  "correctIndex": 2,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does it mean if a wine is 'corked'?",
+  "options": [
+   "It is spoiled by a tainted cork",
+   "It has cork pieces floating",
+   "It is sealed with cork",
+   "It is aged in cork barrels"
+  ],
+  "correctIndex": 0,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'neat' pour of spirits?",
+  "options": [
+   "Chilled and strained",
+   "With ice only",
+   "No ice and nothing added",
+   "With soda"
+  ],
+  "correctIndex": 2,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'on the rocks' mean?",
+  "options": [
+   "Served in a shot glass",
+   "Served with soda",
+   "Served warm",
+   "Served over ice"
+  ],
+  "correctIndex": 3,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'chaser'?",
+  "options": [
+   "A cocktail garnish",
+   "A bar tab",
+   "A drink taken straight after a shot",
+   "A double measure"
+  ],
+  "correctIndex": 2,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'nip' of spirits in Australia?",
+  "options": [
+   "A double shot",
+   "A standard 30 millilitre measure",
+   "A full glass",
+   "A half pint"
+  ],
+  "correctIndex": 1,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'jigger' used for behind a bar?",
+  "options": [
+   "Measuring spirits",
+   "Straining cocktails",
+   "Opening bottles",
+   "Crushing ice"
+  ],
+  "correctIndex": 0,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'muddler' used for?",
+  "options": [
+   "Crushing fruit and herbs in a glass",
+   "Shaking cocktails",
+   "Stirring long drinks",
+   "Filtering ice"
+  ],
+  "correctIndex": 0,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the term for a cocktail served without ice in a stemmed glass?",
+  "options": [
+   "Tall",
+   "Long",
+   "On the rocks",
+   "Straight up"
+  ],
+  "correctIndex": 3,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What sport is most commonly played on a pub table with cues?",
+  "options": [
+   "Snooker",
+   "Shuffleboard",
+   "Table tennis",
+   "Pool"
+  ],
+  "correctIndex": 3,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'break' in pool?",
+  "options": [
+   "The opening shot that scatters the rack",
+   "A pause in play",
+   "A rest between games",
+   "A foul"
+  ],
+  "correctIndex": 0,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In pub pool rules, what usually happens if you pot the white ball?",
+  "options": [
+   "You lose the game",
+   "Your opponent gets two shots or ball in hand",
+   "You re-rack",
+   "Nothing"
+  ],
+  "correctIndex": 1,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the triangle used to set up pool balls called?",
+  "options": [
+   "The setter",
+   "The frame",
+   "The cradle",
+   "The rack"
+  ],
+  "correctIndex": 3,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is chalked before a pool shot?",
+  "options": [
+   "The table",
+   "The rack",
+   "The cue tip",
+   "The cue ball"
+  ],
+  "correctIndex": 2,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How far is the oche from the dartboard in a standard setup?",
+  "options": [
+   "3 metres",
+   "1.8 metres",
+   "2 metres",
+   "2.37 metres"
+  ],
+  "correctIndex": 3,
+  "category": "Pub Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the line you throw darts from called?",
+  "options": [
+   "The rail",
+   "The mark",
+   "The oche",
+   "The toe line only"
+  ],
+  "correctIndex": 2,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How must a leg of darts traditionally be finished?",
+  "options": [
+   "On a treble",
+   "On the bullseye only",
+   "On a single",
+   "On a double"
+  ],
+  "correctIndex": 3,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a nine-dart finish in darts?",
+  "options": [
+   "A warm-up routine",
+   "A losing streak",
+   "A perfect leg from 501",
+   "Nine bullseyes"
+  ],
+  "correctIndex": 2,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the score for hitting the outer bullseye ring?",
+  "options": [
+   "25",
+   "50",
+   "5",
+   "10"
+  ],
+  "correctIndex": 0,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'karaoke' session in a venue?",
+  "options": [
+   "A comedy show",
+   "Singing along to backing tracks",
+   "A live band night",
+   "A DJ set"
+  ],
+  "correctIndex": 1,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which country invented karaoke?",
+  "options": [
+   "The Philippines",
+   "South Korea",
+   "Japan",
+   "China"
+  ],
+  "correctIndex": 2,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the word karaoke roughly mean?",
+  "options": [
+   "Happy voice",
+   "Empty orchestra",
+   "Singing box",
+   "Music room"
+  ],
+  "correctIndex": 1,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'covers band'?",
+  "options": [
+   "A tribute act to one artist only",
+   "A band with no singer",
+   "A backup band",
+   "A band that plays other artists' songs"
+  ],
+  "correctIndex": 3,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'tribute act'?",
+  "options": [
+   "A support act",
+   "A charity performance",
+   "A band dedicated to one original artist",
+   "A DJ set of one genre"
+  ],
+  "correctIndex": 2,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'rider' for a performing band?",
+  "options": [
+   "A list of requirements for the venue to supply",
+   "A ticket levy",
+   "A support act",
+   "A contract penalty"
+  ],
+  "correctIndex": 0,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What Australian body licenses music played publicly in venues?",
+  "options": [
+   "AUSTRAC",
+   "The ACCC",
+   "OneMusic Australia",
+   "The ACMA"
+  ],
+  "correctIndex": 2,
+  "category": "Pub Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a 'meat and greet' style pub promotion better known as?",
+  "options": [
+   "A barbecue competition",
+   "A meat raffle",
+   "A steak night",
+   "A butcher's draw"
+  ],
+  "correctIndex": 1,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 'Steak Night' at an Australian pub?",
+  "options": [
+   "A chef's tasting menu",
+   "A weekly discounted steak special",
+   "A steak eating contest",
+   "A butcher's market"
+  ],
+  "correctIndex": 1,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'schnitty night'?",
+  "options": [
+   "A discounted schnitzel special night",
+   "A schnapps promotion",
+   "A cooking class",
+   "A German themed night"
+  ],
+  "correctIndex": 0,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'happy hour' called when it lasts longer than sixty minutes?",
+  "options": [
+   "A power hour",
+   "A session special",
+   "It is still called happy hour",
+   "A tab hour"
+  ],
+  "correctIndex": 2,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'sports bar'?",
+  "options": [
+   "A betting shop",
+   "A bar for athletes only",
+   "A gym with a bar",
+   "A bar with screens showing live sport"
+  ],
+  "correctIndex": 3,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'TAB' in an Australian pub?",
+  "options": [
+   "A takeaway counter",
+   "A bar tab system",
+   "A betting facility",
+   "A tap system"
+  ],
+  "correctIndex": 2,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the traditional Friday night pub finish called in Australian work culture?",
+  "options": [
+   "The long lunch",
+   "Sunday session",
+   "The wind up",
+   "Knock-off drinks"
+  ],
+  "correctIndex": 3,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'Sunday session' in Australian pubs?",
+  "options": [
+   "A church service",
+   "A cleaning shift",
+   "A staff meeting",
+   "Extended Sunday afternoon drinking with music"
+  ],
+  "correctIndex": 3,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'bistro' in an Australian pub?",
+  "options": [
+   "The dining area",
+   "The beer garden",
+   "The gaming room",
+   "The bottle shop"
+  ],
+  "correctIndex": 0,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'bottle shop' attached to a pub commonly called?",
+  "options": [
+   "The drive in",
+   "The off licence",
+   "The cellar door",
+   "The bottle-o"
+  ],
+  "correctIndex": 3,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'drive through bottle shop' known as in Australia?",
+  "options": [
+   "A road cellar",
+   "A kerb bar",
+   "A pit stop",
+   "A drive-through bottle-o"
+  ],
+  "correctIndex": 3,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'cellar door' in Australian wine tourism?",
+  "options": [
+   "A pub cellar hatch",
+   "A wine cave",
+   "A bottle shop chain",
+   "A winery's tasting room"
+  ],
+  "correctIndex": 3,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 'trivia night' also commonly called?",
+  "options": [
+   "Bingo night",
+   "Karaoke night",
+   "Games night",
+   "Quiz night"
+  ],
+  "correctIndex": 3,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the usual team size limit at a pub trivia night?",
+  "options": [
+   "Two people",
+   "Twelve people",
+   "No limit at all",
+   "Around six people"
+  ],
+  "correctIndex": 3,
+  "category": "Pub Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a common prize at an Australian pub trivia night?",
+  "options": [
+   "A bar voucher",
+   "A cash jackpot of thousands",
+   "An overseas trip",
+   "A car"
+  ],
+  "correctIndex": 0,
+  "category": "Pub Culture",
+  "difficulty": "easy"
+ }
+]

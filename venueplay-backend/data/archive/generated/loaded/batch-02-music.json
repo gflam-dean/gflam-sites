@@ -1,0 +1,2402 @@
+[
+{
+"question": "Which band recorded the 1968 single \"Hey Jude\"?",
+"options": [
+"The Rolling Stones",
+"The Kinks",
+"The Who",
+"The Beatles"
+],
+"correctIndex": 3,
+"category": "1960s rock",
+"difficulty": "easy"
+},
+{
+"question": "Michael Jackson is widely known as the King of what?",
+"options": [
+"Rock",
+"Soul",
+"Pop",
+"Reggae"
+],
+"correctIndex": 2,
+"category": "pop",
+"difficulty": "easy"
+},
+{
+"question": "\"Bohemian Rhapsody\" is a hit by which band?",
+"options": [
+"Kiss",
+"Queen",
+"Boston",
+"Journey"
+],
+"correctIndex": 1,
+"category": "1970s rock",
+"difficulty": "easy"
+},
+{
+"question": "Which Swedish group sang \"Dancing Queen\"?",
+"options": [
+"ABBA",
+"Roxette",
+"Ace of Base",
+"a-ha"
+],
+"correctIndex": 0,
+"category": "1970s pop",
+"difficulty": "easy"
+},
+{
+"question": "Who released the 2014 hit \"Shake It Off\"?",
+"options": [
+"Katy Perry",
+"Selena Gomez",
+"Ariana Grande",
+"Taylor Swift"
+],
+"correctIndex": 3,
+"category": "2010s pop",
+"difficulty": "easy"
+},
+{
+"question": "\"Down Under\" was a worldwide hit for which Australian band?",
+"options": [
+"INXS",
+"Cold Chisel",
+"Men at Work",
+"The Angels"
+],
+"correctIndex": 2,
+"category": "Australian rock",
+"difficulty": "easy"
+},
+{
+"question": "\"Thriller\" is the best-selling studio album by which artist?",
+"options": [
+"Prince",
+"Michael Jackson",
+"Lionel Richie",
+"Stevie Wonder"
+],
+"correctIndex": 1,
+"category": "pop",
+"difficulty": "easy"
+},
+{
+"question": "Bono is the lead singer of which Irish band?",
+"options": [
+"U2",
+"The Cranberries",
+"Thin Lizzy",
+"Snow Patrol"
+],
+"correctIndex": 0,
+"category": "rock",
+"difficulty": "easy"
+},
+{
+"question": "Adele's single \"Rolling in the Deep\" came from which of her albums?",
+"options": [
+"19",
+"25",
+"30",
+"21"
+],
+"correctIndex": 3,
+"category": "2010s pop",
+"difficulty": "medium"
+},
+{
+"question": "\"Smells Like Teen Spirit\" is a grunge anthem by which band?",
+"options": [
+"Pearl Jam",
+"Soundgarden",
+"Nirvana",
+"Alice in Chains"
+],
+"correctIndex": 2,
+"category": "1990s rock",
+"difficulty": "easy"
+},
+{
+"question": "AC/DC was formed in 1973 in which Australian city?",
+"options": [
+"Melbourne",
+"Sydney",
+"Adelaide",
+"Perth"
+],
+"correctIndex": 1,
+"category": "Australian rock",
+"difficulty": "medium"
+},
+{
+"question": "Who was the lead singer of INXS until 1997?",
+"options": [
+"Michael Hutchence",
+"Jimmy Barnes",
+"Peter Garrett",
+"Daryl Braithwaite"
+],
+"correctIndex": 0,
+"category": "Australian rock",
+"difficulty": "medium"
+},
+{
+"question": "\"Khe Sanh\" is a signature song by which Australian band?",
+"options": [
+"Midnight Oil",
+"The Angels",
+"Hunters & Collectors",
+"Cold Chisel"
+],
+"correctIndex": 3,
+"category": "Australian rock",
+"difficulty": "medium"
+},
+{
+"question": "Peter Garrett, later a federal MP, was the frontman of which band?",
+"options": [
+"Men at Work",
+"Icehouse",
+"Midnight Oil",
+"Skyhooks"
+],
+"correctIndex": 2,
+"category": "Australian rock",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian soap did Kylie Minogue star in before her pop career?",
+"options": [
+"Home and Away",
+"Neighbours",
+"Prisoner",
+"A Country Practice"
+],
+"correctIndex": 1,
+"category": "Australian pop",
+"difficulty": "easy"
+},
+{
+"question": "Who was the lead singer of Savage Garden?",
+"options": [
+"Darren Hayes",
+"Guy Sebastian",
+"Shannon Noll",
+"Anthony Callea"
+],
+"correctIndex": 0,
+"category": "Australian pop",
+"difficulty": "medium"
+},
+{
+"question": "\"You're the Voice\" (1986) was a huge hit for which Australian singer?",
+"options": [
+"Jimmy Barnes",
+"Daryl Braithwaite",
+"Iva Davies",
+"John Farnham"
+],
+"correctIndex": 3,
+"category": "Australian pop",
+"difficulty": "medium"
+},
+{
+"question": "Newcastle band Silverchair broke through with which 1994 single?",
+"options": [
+"Freak",
+"Anthem for the Year 2000",
+"Tomorrow",
+"Ana's Song"
+],
+"correctIndex": 2,
+"category": "Australian rock",
+"difficulty": "medium"
+},
+{
+"question": "Bernard Fanning was the frontman of which Brisbane band?",
+"options": [
+"Grinspoon",
+"Powderfinger",
+"The Living End",
+"Spiderbait"
+],
+"correctIndex": 1,
+"category": "Australian rock",
+"difficulty": "medium"
+},
+{
+"question": "Gotye's \"Somebody That I Used to Know\" features which New Zealand singer?",
+"options": [
+"Kimbra",
+"Lorde",
+"Ladyhawke",
+"Brooke Fraser"
+],
+"correctIndex": 0,
+"category": "2010s pop",
+"difficulty": "medium"
+},
+{
+"question": "\"Stairway to Heaven\" is by which band?",
+"options": [
+"Deep Purple",
+"Black Sabbath",
+"Rainbow",
+"Led Zeppelin"
+],
+"correctIndex": 3,
+"category": "1970s rock",
+"difficulty": "easy"
+},
+{
+"question": "Which band released the album \"The Dark Side of the Moon\"?",
+"options": [
+"Genesis",
+"Yes",
+"Pink Floyd",
+"The Moody Blues"
+],
+"correctIndex": 2,
+"category": "1970s rock",
+"difficulty": "medium"
+},
+{
+"question": "Mick Jagger and Keith Richards are the songwriting core of which band?",
+"options": [
+"The Kinks",
+"The Rolling Stones",
+"The Faces",
+"Cream"
+],
+"correctIndex": 1,
+"category": "1960s rock",
+"difficulty": "easy"
+},
+{
+"question": "\"Hotel California\" is the title track of a 1976 album by which band?",
+"options": [
+"Eagles",
+"Fleetwood Mac",
+"America",
+"Chicago"
+],
+"correctIndex": 0,
+"category": "1970s rock",
+"difficulty": "medium"
+},
+{
+"question": "Which 1977 Fleetwood Mac album became one of the best-selling of all time?",
+"options": [
+"Tusk",
+"Mirage",
+"Tango in the Night",
+"Rumours"
+],
+"correctIndex": 3,
+"category": "1970s rock",
+"difficulty": "medium"
+},
+{
+"question": "Robert Plant was the lead vocalist of which band?",
+"options": [
+"The Who",
+"Free",
+"Led Zeppelin",
+"Bad Company"
+],
+"correctIndex": 2,
+"category": "1970s rock",
+"difficulty": "medium"
+},
+{
+"question": "Freddie Mercury was the frontman of which band?",
+"options": [
+"T. Rex",
+"Queen",
+"Slade",
+"Sweet"
+],
+"correctIndex": 1,
+"category": "rock",
+"difficulty": "easy"
+},
+{
+"question": "Which guitarist, famous for a schoolboy uniform, plays lead for AC/DC?",
+"options": [
+"Angus Young",
+"Malcolm Young",
+"Brian Johnson",
+"Phil Rudd"
+],
+"correctIndex": 0,
+"category": "Australian rock",
+"difficulty": "medium"
+},
+{
+"question": "David Bowie's most famous alter ego, introduced in 1972, was named what?",
+"options": [
+"Sgt. Pepper",
+"Johnny B. Goode",
+"Captain Fantastic",
+"Ziggy Stardust"
+],
+"correctIndex": 3,
+"category": "rock",
+"difficulty": "hard"
+},
+{
+"question": "\"Purple Haze\" is a classic by which guitarist?",
+"options": [
+"Eric Clapton",
+"Jimmy Page",
+"Jimi Hendrix",
+"Jeff Beck"
+],
+"correctIndex": 2,
+"category": "1960s rock",
+"difficulty": "medium"
+},
+{
+"question": "Madonna is widely known by which nickname?",
+"options": [
+"Queen of Soul",
+"Queen of Pop",
+"Queen of Disco",
+"Queen of Rock"
+],
+"correctIndex": 1,
+"category": "1980s pop",
+"difficulty": "easy"
+},
+{
+"question": "\"Like a Prayer\" is a hit by which artist?",
+"options": [
+"Madonna",
+"Cyndi Lauper",
+"Whitney Houston",
+"Pat Benatar"
+],
+"correctIndex": 0,
+"category": "1980s pop",
+"difficulty": "easy"
+},
+{
+"question": "Prince starred in and released the soundtrack to which 1984 film?",
+"options": [
+"Sign o' the Times",
+"Graffiti Bridge",
+"Under the Cherry Moon",
+"Purple Rain"
+],
+"correctIndex": 3,
+"category": "1980s pop",
+"difficulty": "medium"
+},
+{
+"question": "\"Take On Me\" (1985) was a hit for which Norwegian band?",
+"options": [
+"Roxette",
+"Europe",
+"a-ha",
+"Aqua"
+],
+"correctIndex": 2,
+"category": "1980s pop",
+"difficulty": "easy"
+},
+{
+"question": "Which Michael Jackson single hit number one in 1983 and showcased the moonwalk on stage?",
+"options": [
+"Bad",
+"Billie Jean",
+"Smooth Criminal",
+"Dirty Diana"
+],
+"correctIndex": 1,
+"category": "1980s pop",
+"difficulty": "easy"
+},
+{
+"question": "George Michael was one half of which 1980s duo?",
+"options": [
+"Wham!",
+"Tears for Fears",
+"Pet Shop Boys",
+"Erasure"
+],
+"correctIndex": 0,
+"category": "1980s pop",
+"difficulty": "easy"
+},
+{
+"question": "\"Every Breath You Take\" (1983) was a hit for which band led by Sting?",
+"options": [
+"The Cars",
+"The Cure",
+"The Jam",
+"The Police"
+],
+"correctIndex": 3,
+"category": "1980s rock",
+"difficulty": "easy"
+},
+{
+"question": "\"Livin' on a Prayer\" is an anthem by which band?",
+"options": [
+"Def Leppard",
+"Whitesnake",
+"Bon Jovi",
+"Poison"
+],
+"correctIndex": 2,
+"category": "1980s rock",
+"difficulty": "easy"
+},
+{
+"question": "Which band recorded the 1982 hit \"Africa\"?",
+"options": [
+"Foreigner",
+"Toto",
+"Kansas",
+"Styx"
+],
+"correctIndex": 1,
+"category": "1980s rock",
+"difficulty": "easy"
+},
+{
+"question": "\"Sweet Child o' Mine\" is a hit by which band?",
+"options": [
+"Guns N' Roses",
+"Mötley Crüe",
+"Aerosmith",
+"Van Halen"
+],
+"correctIndex": 0,
+"category": "1980s rock",
+"difficulty": "easy"
+},
+{
+"question": "Oasis, led by the Gallagher brothers, came from which English city?",
+"options": [
+"London",
+"Liverpool",
+"Leeds",
+"Manchester"
+],
+"correctIndex": 3,
+"category": "1990s rock",
+"difficulty": "medium"
+},
+{
+"question": "\"Wonderwall\" is a 1995 single by which band?",
+"options": [
+"Blur",
+"Pulp",
+"Oasis",
+"The Verve"
+],
+"correctIndex": 2,
+"category": "1990s rock",
+"difficulty": "easy"
+},
+{
+"question": "How many members were in the Spice Girls?",
+"options": [
+"Four",
+"Five",
+"Three",
+"Six"
+],
+"correctIndex": 1,
+"category": "1990s pop",
+"difficulty": "easy"
+},
+{
+"question": "What was the title of Britney Spears' 1998 debut single?",
+"options": [
+"...Baby One More Time",
+"Toxic",
+"Oops!... I Did It Again",
+"Womanizer"
+],
+"correctIndex": 0,
+"category": "1990s pop",
+"difficulty": "easy"
+},
+{
+"question": "\"My Heart Will Go On\", the theme from Titanic, was sung by whom?",
+"options": [
+"Whitney Houston",
+"Mariah Carey",
+"Shania Twain",
+"Celine Dion"
+],
+"correctIndex": 3,
+"category": "1990s pop",
+"difficulty": "easy"
+},
+{
+"question": "Which frontman of Nirvana died in 1994?",
+"options": [
+"Eddie Vedder",
+"Chris Cornell",
+"Kurt Cobain",
+"Layne Staley"
+],
+"correctIndex": 2,
+"category": "1990s rock",
+"difficulty": "easy"
+},
+{
+"question": "\"Enter Sandman\" (1991) is a hit by which band?",
+"options": [
+"Megadeth",
+"Metallica",
+"Slayer",
+"Anthrax"
+],
+"correctIndex": 1,
+"category": "1990s rock",
+"difficulty": "easy"
+},
+{
+"question": "What was the title of Alanis Morissette's 1995 breakthrough album?",
+"options": [
+"Jagged Little Pill",
+"Supposed Former Infatuation Junkie",
+"Under Rug Swept",
+"MTV Unplugged"
+],
+"correctIndex": 0,
+"category": "1990s rock",
+"difficulty": "hard"
+},
+{
+"question": "Which R&B group recorded \"No Scrubs\" and \"Waterfalls\"?",
+"options": [
+"Destiny's Child",
+"En Vogue",
+"SWV",
+"TLC"
+],
+"correctIndex": 3,
+"category": "1990s pop",
+"difficulty": "medium"
+},
+{
+"question": "What was the title of Radiohead's 1992 breakthrough single?",
+"options": [
+"Karma Police",
+"No Surprises",
+"Creep",
+"Paranoid Android"
+],
+"correctIndex": 2,
+"category": "1990s rock",
+"difficulty": "medium"
+},
+{
+"question": "Eminem won an Academy Award for which song from the film 8 Mile?",
+"options": [
+"The Real Slim Shady",
+"Lose Yourself",
+"Stan",
+"Without Me"
+],
+"correctIndex": 1,
+"category": "2000s hip hop",
+"difficulty": "easy"
+},
+{
+"question": "Who is the frontman of Coldplay?",
+"options": [
+"Chris Martin",
+"Thom Yorke",
+"Damon Albarn",
+"Matt Bellamy"
+],
+"correctIndex": 0,
+"category": "2000s rock",
+"difficulty": "easy"
+},
+{
+"question": "\"Crazy in Love\" (2003) launched the solo career of which singer?",
+"options": [
+"Rihanna",
+"Alicia Keys",
+"Ciara",
+"Beyoncé"
+],
+"correctIndex": 3,
+"category": "2000s pop",
+"difficulty": "easy"
+},
+{
+"question": "\"Mr. Brightside\" is a hit by which Las Vegas band?",
+"options": [
+"The Strokes",
+"Interpol",
+"The Killers",
+"Kings of Leon"
+],
+"correctIndex": 2,
+"category": "2000s rock",
+"difficulty": "medium"
+},
+{
+"question": "What was the title of 50 Cent's 2003 breakout single?",
+"options": [
+"The Game",
+"In Da Club",
+"Ja Rule",
+"P.I.M.P."
+],
+"correctIndex": 1,
+"category": "2000s hip hop",
+"difficulty": "medium"
+},
+{
+"question": "\"Hey Ya!\" (2003) is by which hip hop duo?",
+"options": [
+"OutKast",
+"Gnarls Barkley",
+"Black Star",
+"The Roots"
+],
+"correctIndex": 0,
+"category": "2000s hip hop",
+"difficulty": "medium"
+},
+{
+"question": "What was the title of Amy Winehouse's acclaimed 2006 album?",
+"options": [
+"Frank",
+"Lioness",
+"Valerie",
+"Back to Black"
+],
+"correctIndex": 3,
+"category": "2000s pop",
+"difficulty": "medium"
+},
+{
+"question": "Which singer released \"Umbrella\" featuring Jay-Z in 2007?",
+"options": [
+"Beyoncé",
+"Ciara",
+"Rihanna",
+"Ashanti"
+],
+"correctIndex": 2,
+"category": "2000s pop",
+"difficulty": "easy"
+},
+{
+"question": "\"Seven Nation Army\" is a hit by which duo?",
+"options": [
+"The Black Keys",
+"The White Stripes",
+"The Kills",
+"Royal Blood"
+],
+"correctIndex": 1,
+"category": "2000s rock",
+"difficulty": "medium"
+},
+{
+"question": "Lady Gaga's real first name is what?",
+"options": [
+"Stefani",
+"Katheryn",
+"Robyn",
+"Alecia"
+],
+"correctIndex": 0,
+"category": "2000s pop",
+"difficulty": "hard"
+},
+{
+"question": "Which duo released \"Uptown Funk\" in 2014?",
+"options": [
+"Daft Punk and Pharrell Williams",
+"Calvin Harris and Rihanna",
+"Justin Timberlake and Timbaland",
+"Mark Ronson and Bruno Mars"
+],
+"correctIndex": 3,
+"category": "2010s pop",
+"difficulty": "medium"
+},
+{
+"question": "Ed Sheeran's biggest global single, from the 2017 album \"÷\", was titled what?",
+"options": [
+"Thinking Out Loud",
+"Photograph",
+"Shape of You",
+"The A Team"
+],
+"correctIndex": 2,
+"category": "2010s pop",
+"difficulty": "easy"
+},
+{
+"question": "\"Blinding Lights\" is a hit by which Canadian artist?",
+"options": [
+"Drake",
+"The Weeknd",
+"Justin Bieber",
+"Shawn Mendes"
+],
+"correctIndex": 1,
+"category": "2010s pop",
+"difficulty": "easy"
+},
+{
+"question": "Billie Eilish's producer and co-writer is her brother, named what?",
+"options": [
+"Finneas",
+"Fletcher",
+"Forrest",
+"Franklin"
+],
+"correctIndex": 0,
+"category": "2010s pop",
+"difficulty": "hard"
+},
+{
+"question": "\"Old Town Road\" (2019) by Lil Nas X features which country star?",
+"options": [
+"Blake Shelton",
+"Tim McGraw",
+"Keith Urban",
+"Billy Ray Cyrus"
+],
+"correctIndex": 3,
+"category": "2010s hip hop",
+"difficulty": "easy"
+},
+{
+"question": "\"Royals\" (2013) was the breakthrough hit of which New Zealand artist?",
+"options": [
+"Kimbra",
+"Broods",
+"Lorde",
+"Benee"
+],
+"correctIndex": 2,
+"category": "2010s pop",
+"difficulty": "easy"
+},
+{
+"question": "Which artist released the album \"1989\" in 2014?",
+"options": [
+"Katy Perry",
+"Taylor Swift",
+"Lorde",
+"Ariana Grande"
+],
+"correctIndex": 1,
+"category": "2010s pop",
+"difficulty": "easy"
+},
+{
+"question": "\"Somebody That I Used to Know\" won which Grammy in 2013?",
+"options": [
+"Record of the Year",
+"Album of the Year",
+"Song of the Year",
+"Best New Artist"
+],
+"correctIndex": 0,
+"category": "2010s pop",
+"difficulty": "hard"
+},
+{
+"question": "Dua Lipa's 2017 hit about staying away from an ex was titled what?",
+"options": [
+"IDGAF",
+"One Kiss",
+"Physical",
+"New Rules"
+],
+"correctIndex": 3,
+"category": "2010s pop",
+"difficulty": "medium"
+},
+{
+"question": "\"Get Lucky\" (2013) paired Pharrell Williams with which duo?",
+"options": [
+"The Chemical Brothers",
+"Justice",
+"Daft Punk",
+"Disclosure"
+],
+"correctIndex": 2,
+"category": "2010s pop",
+"difficulty": "medium"
+},
+{
+"question": "Olivia Rodrigo's 2021 debut single was titled what?",
+"options": [
+"good 4 u",
+"drivers license",
+"deja vu",
+"vampire"
+],
+"correctIndex": 1,
+"category": "2020s pop",
+"difficulty": "easy"
+},
+{
+"question": "Harry Styles rose to fame in which boy band?",
+"options": [
+"One Direction",
+"The Wanted",
+"JLS",
+"Big Time Rush"
+],
+"correctIndex": 0,
+"category": "2020s pop",
+"difficulty": "easy"
+},
+{
+"question": "\"Flowers\" (2023) was a comeback hit for which singer?",
+"options": [
+"Selena Gomez",
+"Demi Lovato",
+"Kesha",
+"Miley Cyrus"
+],
+"correctIndex": 3,
+"category": "2020s pop",
+"difficulty": "easy"
+},
+{
+"question": "\"Stay\" (2021), a number one with Justin Bieber, features which Australian artist?",
+"options": [
+"Troye Sivan",
+"Cody Simpson",
+"The Kid Laroi",
+"Ruel"
+],
+"correctIndex": 2,
+"category": "Australian pop",
+"difficulty": "easy"
+},
+{
+"question": "\"Espresso\" was a breakout 2024 hit for which artist?",
+"options": [
+"Chappell Roan",
+"Sabrina Carpenter",
+"Tate McRae",
+"Gracie Abrams"
+],
+"correctIndex": 1,
+"category": "2020s pop",
+"difficulty": "easy"
+},
+{
+"question": "\"Heat Waves\" was a slow-burning global hit by which British band?",
+"options": [
+"Glass Animals",
+"Foals",
+"alt-J",
+"Bombay Bicycle Club"
+],
+"correctIndex": 0,
+"category": "2020s pop",
+"difficulty": "easy"
+},
+{
+"question": "\"Dynamite\" (2020) was the first all-English single by which South Korean group?",
+"options": [
+"Blackpink",
+"Stray Kids",
+"Seventeen",
+"BTS"
+],
+"correctIndex": 3,
+"category": "2020s pop",
+"difficulty": "easy"
+},
+{
+"question": "Taylor Swift's record-breaking 2023-2024 concert tour was called what?",
+"options": [
+"The Reputation Tour",
+"The 1989 World Tour",
+"The Eras Tour",
+"The Red Tour"
+],
+"correctIndex": 2,
+"category": "2020s pop",
+"difficulty": "easy"
+},
+{
+"question": "\"As It Was\" (2022) topped charts for which artist?",
+"options": [
+"Ed Sheeran",
+"Harry Styles",
+"Sam Smith",
+"Lewis Capaldi"
+],
+"correctIndex": 1,
+"category": "2020s pop",
+"difficulty": "easy"
+},
+{
+"question": "Beyoncé's 2024 country-influenced album was titled what?",
+"options": [
+"Cowboy Carter",
+"Renaissance",
+"Lemonade",
+"4"
+],
+"correctIndex": 0,
+"category": "2020s pop",
+"difficulty": "easy"
+},
+{
+"question": "\"Macarena\" was a global dance hit by which Spanish duo?",
+"options": [
+"Las Ketchup",
+"Baccara",
+"Righeira",
+"Los del Río"
+],
+"correctIndex": 3,
+"category": "one-hit wonders",
+"difficulty": "medium"
+},
+{
+"question": "\"Who Let the Dogs Out\" was a novelty hit by which group?",
+"options": [
+"Aqua",
+"Vengaboys",
+"Baha Men",
+"Eiffel 65"
+],
+"correctIndex": 2,
+"category": "one-hit wonders",
+"difficulty": "medium"
+},
+{
+"question": "\"Torn\" (1997) was a breakout hit for which Australian singer?",
+"options": [
+"Tina Arena",
+"Natalie Imbruglia",
+"Wendy Matthews",
+"Toni Pearen"
+],
+"correctIndex": 1,
+"category": "one-hit wonders",
+"difficulty": "easy"
+},
+{
+"question": "\"Tubthumping\", with the line \"I get knocked down\", was by which band?",
+"options": [
+"Chumbawamba",
+"The Wannadies",
+"Republica",
+"Space"
+],
+"correctIndex": 0,
+"category": "one-hit wonders",
+"difficulty": "hard"
+},
+{
+"question": "\"Barbie Girl\" (1997) was a hit for which Danish-Norwegian group?",
+"options": [
+"Ace of Base",
+"Alcazar",
+"Cascada",
+"Aqua"
+],
+"correctIndex": 3,
+"category": "one-hit wonders",
+"difficulty": "medium"
+},
+{
+"question": "\"Come On Eileen\" was a 1982 number one for which band?",
+"options": [
+"Madness",
+"The Specials",
+"Dexys Midnight Runners",
+"Bad Manners"
+],
+"correctIndex": 2,
+"category": "one-hit wonders",
+"difficulty": "hard"
+},
+{
+"question": "\"Mambo No. 5\" (1999) was a hit for which singer?",
+"options": [
+"Ricky Martin",
+"Lou Bega",
+"Enrique Iglesias",
+"Marc Anthony"
+],
+"correctIndex": 1,
+"category": "one-hit wonders",
+"difficulty": "medium"
+},
+{
+"question": "\"How Bizarre\" (1996) was a hit for which New Zealand act?",
+"options": [
+"OMC",
+"Crowded House",
+"The Mutton Birds",
+"Shihad"
+],
+"correctIndex": 0,
+"category": "one-hit wonders",
+"difficulty": "hard"
+},
+{
+"question": "\"99 Luftballons\" was a 1980s hit for which German singer?",
+"options": [
+"Falco",
+"Sandra",
+"C.C. Catch",
+"Nena"
+],
+"correctIndex": 3,
+"category": "one-hit wonders",
+"difficulty": "hard"
+},
+{
+"question": "\"What Is Love\" (1993) was a dance hit by which act?",
+"options": [
+"Corona",
+"Snap!",
+"Haddaway",
+"2 Unlimited"
+],
+"correctIndex": 2,
+"category": "one-hit wonders",
+"difficulty": "hard"
+},
+{
+"question": "\"Great Southern Land\" (1982) is a classic by which band?",
+"options": [
+"Australian Crawl",
+"Icehouse",
+"Mondo Rock",
+"The Church"
+],
+"correctIndex": 1,
+"category": "Australian rock",
+"difficulty": "medium"
+},
+{
+"question": "\"The Horses\" (1990) is a well-loved song by which Australian singer?",
+"options": [
+"Daryl Braithwaite",
+"John Paul Young",
+"Ross Wilson",
+"Glenn Shorrock"
+],
+"correctIndex": 0,
+"category": "Australian pop",
+"difficulty": "medium"
+},
+{
+"question": "\"I Touch Myself\" was a hit for which band fronted by Chrissy Amphlett?",
+"options": [
+"The Sports",
+"Do-Ré-Mi",
+"The Reels",
+"Divinyls"
+],
+"correctIndex": 3,
+"category": "Australian rock",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian children's group is known for the song \"Hot Potato\"?",
+"options": [
+"Hi-5",
+"Play School",
+"The Wiggles",
+"The Fairies"
+],
+"correctIndex": 2,
+"category": "Australian pop",
+"difficulty": "easy"
+},
+{
+"question": "\"Treaty\" (1991) was a landmark song by which Indigenous Australian band?",
+"options": [
+"Warumpi Band",
+"Yothu Yindi",
+"No Fixed Address",
+"Coloured Stone"
+],
+"correctIndex": 1,
+"category": "Australian rock",
+"difficulty": "hard"
+},
+{
+"question": "Sia, known for \"Chandelier\", grew up in which Australian city?",
+"options": [
+"Adelaide",
+"Melbourne",
+"Sydney",
+"Brisbane"
+],
+"correctIndex": 0,
+"category": "Australian pop",
+"difficulty": "hard"
+},
+{
+"question": "\"Riptide\" (2013) was a breakout hit for which Melbourne artist?",
+"options": [
+"Dean Lewis",
+"Matt Corby",
+"Ziggy Alberts",
+"Vance Joy"
+],
+"correctIndex": 3,
+"category": "Australian pop",
+"difficulty": "medium"
+},
+{
+"question": "Tame Impala is essentially the studio project of which Perth musician?",
+"options": [
+"Julian Casablancas",
+"Nick Allbrook",
+"Kevin Parker",
+"Kevin Mitchell"
+],
+"correctIndex": 2,
+"category": "Australian rock",
+"difficulty": "hard"
+},
+{
+"question": "Which Sydney band had a 2014 global hit with \"She Looks So Perfect\"?",
+"options": [
+"Short Stack",
+"5 Seconds of Summer",
+"The Rubens",
+"DMA'S"
+],
+"correctIndex": 1,
+"category": "Australian pop",
+"difficulty": "medium"
+},
+{
+"question": "Guy Sebastian won the first season of which TV talent show in 2003?",
+"options": [
+"Australian Idol",
+"The X Factor Australia",
+"The Voice Australia",
+"Australia's Got Talent"
+],
+"correctIndex": 0,
+"category": "Australian pop",
+"difficulty": "easy"
+},
+{
+"question": "\"Ring of Fire\" is a classic by which country legend?",
+"options": [
+"Willie Nelson",
+"Merle Haggard",
+"Waylon Jennings",
+"Johnny Cash"
+],
+"correctIndex": 3,
+"category": "country",
+"difficulty": "easy"
+},
+{
+"question": "\"Jolene\" and \"9 to 5\" are hits by which country star?",
+"options": [
+"Loretta Lynn",
+"Tammy Wynette",
+"Dolly Parton",
+"Reba McEntire"
+],
+"correctIndex": 2,
+"category": "country",
+"difficulty": "easy"
+},
+{
+"question": "\"On the Road Again\" is a signature song of which country singer?",
+"options": [
+"Kenny Rogers",
+"Willie Nelson",
+"Glen Campbell",
+"Charlie Rich"
+],
+"correctIndex": 1,
+"category": "country",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian-raised country star is married to actress Nicole Kidman?",
+"options": [
+"Keith Urban",
+"Lee Kernaghan",
+"Troy Cassar-Daley",
+"Adam Brand"
+],
+"correctIndex": 0,
+"category": "country",
+"difficulty": "easy"
+},
+{
+"question": "\"The Gambler\" is a signature hit for which country singer?",
+"options": [
+"Johnny Cash",
+"Randy Travis",
+"George Strait",
+"Kenny Rogers"
+],
+"correctIndex": 3,
+"category": "country",
+"difficulty": "medium"
+},
+{
+"question": "\"Man! I Feel Like a Woman!\" is a hit by which Canadian country-pop star?",
+"options": [
+"Faith Hill",
+"Martina McBride",
+"Shania Twain",
+"LeAnn Rimes"
+],
+"correctIndex": 2,
+"category": "country",
+"difficulty": "medium"
+},
+{
+"question": "\"A Pub with No Beer\" is a classic by which Australian country singer?",
+"options": [
+"Chad Morgan",
+"Slim Dusty",
+"Smoky Dawson",
+"Tex Morton"
+],
+"correctIndex": 1,
+"category": "country",
+"difficulty": "hard"
+},
+{
+"question": "\"Not Pretty Enough\" (2001) was a hit for which Australian country artist?",
+"options": [
+"Kasey Chambers",
+"Gina Jeffreys",
+"Sara Storer",
+"Beccy Cole"
+],
+"correctIndex": 0,
+"category": "country",
+"difficulty": "hard"
+},
+{
+"question": "Which country singer won the fourth season of American Idol in 2005?",
+"options": [
+"Kelly Clarkson",
+"Miranda Lambert",
+"Kellie Pickler",
+"Carrie Underwood"
+],
+"correctIndex": 3,
+"category": "country",
+"difficulty": "hard"
+},
+{
+"question": "Before her pop fame, Taylor Swift first found success in which genre?",
+"options": [
+"R&B",
+"Rock",
+"Country",
+"Dance"
+],
+"correctIndex": 2,
+"category": "country",
+"difficulty": "easy"
+},
+{
+"question": "Which rapper's real name is Marshall Mathers?",
+"options": [
+"Nas",
+"Eminem",
+"Jay-Z",
+"Ice Cube"
+],
+"correctIndex": 1,
+"category": "hip hop",
+"difficulty": "easy"
+},
+{
+"question": "\"In Da Club\" and \"Candy Shop\" are hits by which rapper?",
+"options": [
+"50 Cent",
+"The Game",
+"Ja Rule",
+"DMX"
+],
+"correctIndex": 0,
+"category": "hip hop",
+"difficulty": "easy"
+},
+{
+"question": "Which rapper won a Pulitzer Prize for Music for the album \"DAMN.\"?",
+"options": [
+"J. Cole",
+"Chance the Rapper",
+"Tyler, the Creator",
+"Kendrick Lamar"
+],
+"correctIndex": 3,
+"category": "hip hop",
+"difficulty": "hard"
+},
+{
+"question": "Rapper Drake hails from which Canadian city?",
+"options": [
+"Vancouver",
+"Montreal",
+"Toronto",
+"Ottawa"
+],
+"correctIndex": 2,
+"category": "hip hop",
+"difficulty": "medium"
+},
+{
+"question": "\"Rapper's Delight\" (1979), an early hip hop hit, was by which group?",
+"options": [
+"Grandmaster Flash and the Furious Five",
+"The Sugarhill Gang",
+"Run-DMC",
+"Kurtis Blow"
+],
+"correctIndex": 1,
+"category": "hip hop",
+"difficulty": "hard"
+},
+{
+"question": "Which rapper, real name Shawn Carter, is married to Beyoncé?",
+"options": [
+"Jay-Z",
+"Nas",
+"Kanye West",
+"Diddy"
+],
+"correctIndex": 0,
+"category": "hip hop",
+"difficulty": "easy"
+},
+{
+"question": "\"Thrift Shop\" (2012) was a hit for Ryan Lewis and which artist?",
+"options": [
+"Flo Rida",
+"Wiz Khalifa",
+"Pitbull",
+"Macklemore"
+],
+"correctIndex": 3,
+"category": "hip hop",
+"difficulty": "medium"
+},
+{
+"question": "The rap group N.W.A launched the careers of Dr. Dre and which other member turned actor?",
+"options": [
+"Snoop Dogg",
+"Nas",
+"Ice Cube",
+"Common"
+],
+"correctIndex": 2,
+"category": "hip hop",
+"difficulty": "medium"
+},
+{
+"question": "Which rapper was fatally shot in Las Vegas in 1996?",
+"options": [
+"The Notorious B.I.G.",
+"Tupac Shakur",
+"Eazy-E",
+"Big L"
+],
+"correctIndex": 1,
+"category": "hip hop",
+"difficulty": "hard"
+},
+{
+"question": "\"God's Plan\" (2018) was a number one hit for which artist?",
+"options": [
+"Drake",
+"Post Malone",
+"Travis Scott",
+"Future"
+],
+"correctIndex": 0,
+"category": "hip hop",
+"difficulty": "medium"
+},
+{
+"question": "Dave Grohl was the drummer of Nirvana before forming which band?",
+"options": [
+"Queens of the Stone Age",
+"Them Crooked Vultures",
+"Audioslave",
+"Foo Fighters"
+],
+"correctIndex": 3,
+"category": "rock",
+"difficulty": "medium"
+},
+{
+"question": "Phil Collins was the drummer and later lead singer of which band?",
+"options": [
+"Yes",
+"King Crimson",
+"Genesis",
+"Emerson, Lake & Palmer"
+],
+"correctIndex": 2,
+"category": "rock",
+"difficulty": "medium"
+},
+{
+"question": "Angus Young's older brother, a co-founder of AC/DC, was named what?",
+"options": [
+"George",
+"Malcolm",
+"Stevie",
+"Simon"
+],
+"correctIndex": 1,
+"category": "Australian rock",
+"difficulty": "hard"
+},
+{
+"question": "Ozzy Osbourne was the original frontman of which band?",
+"options": [
+"Black Sabbath",
+"Deep Purple",
+"Judas Priest",
+"Iron Maiden"
+],
+"correctIndex": 0,
+"category": "rock",
+"difficulty": "easy"
+},
+{
+"question": "Which two brothers led the band Oasis?",
+"options": [
+"Chris and Dave Robinson",
+"Ray and Dave Davies",
+"Tom and Ed Chamberlain",
+"Liam and Noel Gallagher"
+],
+"correctIndex": 3,
+"category": "1990s rock",
+"difficulty": "easy"
+},
+{
+"question": "Anthony Kiedis is the frontman of which band?",
+"options": [
+"Jane's Addiction",
+"Faith No More",
+"Red Hot Chili Peppers",
+"Rage Against the Machine"
+],
+"correctIndex": 2,
+"category": "rock",
+"difficulty": "medium"
+},
+{
+"question": "Michael Stipe was the lead singer of which band?",
+"options": [
+"Pixies",
+"R.E.M.",
+"Sonic Youth",
+"Dinosaur Jr."
+],
+"correctIndex": 1,
+"category": "1990s rock",
+"difficulty": "hard"
+},
+{
+"question": "Steven Tyler is the frontman of which American band?",
+"options": [
+"Aerosmith",
+"Kiss",
+"Boston",
+"Journey"
+],
+"correctIndex": 0,
+"category": "rock",
+"difficulty": "medium"
+},
+{
+"question": "Which guitarist, known by a single name, is the lead guitarist of Guns N' Roses?",
+"options": [
+"Buckethead",
+"Dimebag",
+"The Edge",
+"Slash"
+],
+"correctIndex": 3,
+"category": "rock",
+"difficulty": "medium"
+},
+{
+"question": "Neil Finn was the frontman of which band?",
+"options": [
+"INXS",
+"Australian Crawl",
+"Crowded House",
+"The Church"
+],
+"correctIndex": 2,
+"category": "Australian rock",
+"difficulty": "hard"
+},
+{
+"question": "Which album is the best-selling studio album of all time?",
+"options": [
+"Back in Black",
+"Thriller",
+"Rumours",
+"The Dark Side of the Moon"
+],
+"correctIndex": 1,
+"category": "pop",
+"difficulty": "medium"
+},
+{
+"question": "\"Back in Black\" (1980) was the first AC/DC album to feature which singer?",
+"options": [
+"Brian Johnson",
+"Bon Scott",
+"Axl Rose",
+"Dave Evans"
+],
+"correctIndex": 0,
+"category": "Australian rock",
+"difficulty": "hard"
+},
+{
+"question": "Which single was the lead track from Adele's album \"25\"?",
+"options": [
+"Someone Like You",
+"Rolling in the Deep",
+"Skyfall",
+"Hello"
+],
+"correctIndex": 3,
+"category": "2010s pop",
+"difficulty": "medium"
+},
+{
+"question": "\"Rumours\" was recorded by which band?",
+"options": [
+"The Eagles",
+"Steely Dan",
+"Fleetwood Mac",
+"America"
+],
+"correctIndex": 2,
+"category": "1970s rock",
+"difficulty": "easy"
+},
+{
+"question": "The Beatles' final studio album, released in 1970, was titled what?",
+"options": [
+"Abbey Road",
+"Let It Be",
+"The White Album",
+"Revolver"
+],
+"correctIndex": 1,
+"category": "1960s rock",
+"difficulty": "hard"
+},
+{
+"question": "\"The Wall\" (1979), featuring \"Another Brick in the Wall\", is by which band?",
+"options": [
+"Pink Floyd",
+"The Who",
+"Led Zeppelin",
+"Genesis"
+],
+"correctIndex": 0,
+"category": "1970s rock",
+"difficulty": "medium"
+},
+{
+"question": "Michael Jackson's 1987 follow-up album to Thriller was titled what?",
+"options": [
+"Off the Wall",
+"Dangerous",
+"Invincible",
+"Bad"
+],
+"correctIndex": 3,
+"category": "1980s pop",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian album, \"Whispering Jack\", topped the charts in 1986?",
+"options": [
+"Jimmy Barnes'",
+"Icehouse's",
+"John Farnham's",
+"Cold Chisel's"
+],
+"correctIndex": 2,
+"category": "Australian pop",
+"difficulty": "hard"
+},
+{
+"question": "Amy Winehouse died in 2011 at what age, joining the so-called \"27 Club\"?",
+"options": [
+"24",
+"27",
+"30",
+"33"
+],
+"correctIndex": 1,
+"category": "2000s pop",
+"difficulty": "medium"
+},
+{
+"question": "\"OK Computer\" (1997) is a landmark album by which band?",
+"options": [
+"Radiohead",
+"Blur",
+"Muse",
+"Coldplay"
+],
+"correctIndex": 0,
+"category": "1990s rock",
+"difficulty": "hard"
+},
+{
+"question": "Aretha Franklin was known as the Queen of what?",
+"options": [
+"Pop",
+"Disco",
+"Blues",
+"Soul"
+],
+"correctIndex": 3,
+"category": "soul",
+"difficulty": "easy"
+},
+{
+"question": "\"Respect\" (1967) is a signature song of which singer?",
+"options": [
+"Diana Ross",
+"Gladys Knight",
+"Aretha Franklin",
+"Etta James"
+],
+"correctIndex": 2,
+"category": "soul",
+"difficulty": "easy"
+},
+{
+"question": "Marvin Gaye recorded which socially conscious 1971 album?",
+"options": [
+"Let's Get It On",
+"What's Going On",
+"Midnight Love",
+"I Want You"
+],
+"correctIndex": 1,
+"category": "soul",
+"difficulty": "hard"
+},
+{
+"question": "Stevie Wonder's funk classic about bad luck is titled what?",
+"options": [
+"Superstition",
+"Sir Duke",
+"Higher Ground",
+"I Wish"
+],
+"correctIndex": 0,
+"category": "soul",
+"difficulty": "medium"
+},
+{
+"question": "The Jackson 5's lead singer as a child was which future superstar?",
+"options": [
+"Jermaine Jackson",
+"Marlon Jackson",
+"Tito Jackson",
+"Michael Jackson"
+],
+"correctIndex": 3,
+"category": "soul",
+"difficulty": "easy"
+},
+{
+"question": "James Brown was known by which nickname?",
+"options": [
+"The King of Pop",
+"The Boss",
+"The Godfather of Soul",
+"The Genius"
+],
+"correctIndex": 2,
+"category": "soul",
+"difficulty": "medium"
+},
+{
+"question": "Which Motown group featured Diana Ross as lead singer?",
+"options": [
+"The Temptations",
+"The Supremes",
+"The Four Tops",
+"Martha and the Vandellas"
+],
+"correctIndex": 1,
+"category": "soul",
+"difficulty": "medium"
+},
+{
+"question": "\"Sweet Caroline\" is a sing-along classic by which artist?",
+"options": [
+"Neil Diamond",
+"Barry Manilow",
+"Tom Jones",
+"Engelbert Humperdinck"
+],
+"correctIndex": 0,
+"category": "1960s pop",
+"difficulty": "easy"
+},
+{
+"question": "Tina Turner was often called the Queen of what?",
+"options": [
+"Soul",
+"Pop",
+"Disco",
+"Rock and Roll"
+],
+"correctIndex": 3,
+"category": "rock",
+"difficulty": "medium"
+},
+{
+"question": "\"What's Love Got to Do with It\" (1984) was a comeback hit for which singer?",
+"options": [
+"Diana Ross",
+"Donna Summer",
+"Tina Turner",
+"Chaka Khan"
+],
+"correctIndex": 2,
+"category": "1980s pop",
+"difficulty": "medium"
+},
+{
+"question": "Which boy band recorded \"I Want It That Way\" (1999)?",
+"options": [
+"NSYNC",
+"Backstreet Boys",
+"Westlife",
+"Boyzone"
+],
+"correctIndex": 1,
+"category": "pop",
+"difficulty": "easy"
+},
+{
+"question": "Beyoncé was the lead singer of which girl group?",
+"options": [
+"Destiny's Child",
+"TLC",
+"En Vogue",
+"3LW"
+],
+"correctIndex": 0,
+"category": "2000s pop",
+"difficulty": "easy"
+},
+{
+"question": "Which 2018 film soundtrack featured Lady Gaga and Bradley Cooper's \"Shallow\"?",
+"options": [
+"La La Land",
+"The Greatest Showman",
+"Bohemian Rhapsody",
+"A Star Is Born"
+],
+"correctIndex": 3,
+"category": "2010s pop",
+"difficulty": "easy"
+},
+{
+"question": "Katy Perry's empowerment anthem with pyrotechnics in the title is called what?",
+"options": [
+"Roar",
+"Rise",
+"Firework",
+"Part of Me"
+],
+"correctIndex": 2,
+"category": "2010s pop",
+"difficulty": "easy"
+},
+{
+"question": "\"Happy\" (2013), from the Despicable Me 2 soundtrack, was by which artist?",
+"options": [
+"Bruno Mars",
+"Pharrell Williams",
+"will.i.am",
+"John Legend"
+],
+"correctIndex": 1,
+"category": "2010s pop",
+"difficulty": "easy"
+},
+{
+"question": "Justin Bieber's 2015 single \"Sorry\" appeared on which album?",
+"options": [
+"Purpose",
+"Believe",
+"Journals",
+"Changes"
+],
+"correctIndex": 0,
+"category": "2010s pop",
+"difficulty": "hard"
+},
+{
+"question": "\"Uptown Girl\" (1983) is a hit by which American singer-songwriter?",
+"options": [
+"Elton John",
+"Bruce Springsteen",
+"Rod Stewart",
+"Billy Joel"
+],
+"correctIndex": 3,
+"category": "1980s pop",
+"difficulty": "medium"
+},
+{
+"question": "\"Rocket Man\" and \"Your Song\" are hits by which knighted musician?",
+"options": [
+"Rod Stewart",
+"Cliff Richard",
+"Elton John",
+"Tom Jones"
+],
+"correctIndex": 2,
+"category": "1970s pop",
+"difficulty": "easy"
+},
+{
+"question": "Which artist released the album \"Purpose\" and the single \"Love Yourself\"?",
+"options": [
+"Shawn Mendes",
+"Justin Bieber",
+"Charlie Puth",
+"Nick Jonas"
+],
+"correctIndex": 1,
+"category": "2010s pop",
+"difficulty": "medium"
+},
+{
+"question": "Ariana Grande's 2018 hit reflecting on past relationships was titled what?",
+"options": [
+"thank u, next",
+"7 rings",
+"no tears left to cry",
+"positions"
+],
+"correctIndex": 0,
+"category": "2010s pop",
+"difficulty": "medium"
+},
+{
+"question": "\"Don't Stop Believin'\" (1981) is an enduring anthem by which band?",
+"options": [
+"Foreigner",
+"Journey",
+"REO Speedwagon",
+"Boston"
+],
+"correctIndex": 1,
+"category": "1980s rock",
+"difficulty": "medium"
+},
+{
+"question": "\"Every Rose Has Its Thorn\" is a power ballad by which band?",
+"options": [
+"Poison",
+"Cinderella",
+"Warrant",
+"Ratt"
+],
+"correctIndex": 0,
+"category": "1980s rock",
+"difficulty": "hard"
+},
+{
+"question": "\"Basket Case\" (1994) is a hit by which punk band?",
+"options": [
+"The Offspring",
+"Blink-182",
+"Bad Religion",
+"Green Day"
+],
+"correctIndex": 3,
+"category": "1990s rock",
+"difficulty": "medium"
+},
+{
+"question": "\"Under the Bridge\" is a hit by which band?",
+"options": [
+"Stone Temple Pilots",
+"Bush",
+"Red Hot Chili Peppers",
+"Live"
+],
+"correctIndex": 2,
+"category": "1990s rock",
+"difficulty": "medium"
+},
+{
+"question": "Which band, led by Eddie Vedder, released \"Alive\" and the album \"Ten\"?",
+"options": [
+"Soundgarden",
+"Pearl Jam",
+"Mudhoney",
+"Screaming Trees"
+],
+"correctIndex": 1,
+"category": "1990s rock",
+"difficulty": "hard"
+},
+{
+"question": "\"Everlong\" and \"Learn to Fly\" are hits by which band?",
+"options": [
+"Foo Fighters",
+"Weezer",
+"Green Day",
+"The Offspring"
+],
+"correctIndex": 0,
+"category": "rock",
+"difficulty": "medium"
+},
+{
+"question": "\"Boulevard of Broken Dreams\" comes from which Green Day album?",
+"options": [
+"Dookie",
+"Nimrod",
+"Insomniac",
+"American Idiot"
+],
+"correctIndex": 3,
+"category": "2000s rock",
+"difficulty": "hard"
+},
+{
+"question": "\"Take Me Out\" (2004) was a breakthrough for which Scottish band?",
+"options": [
+"Travis",
+"Snow Patrol",
+"Franz Ferdinand",
+"Biffy Clyro"
+],
+"correctIndex": 2,
+"category": "2000s rock",
+"difficulty": "hard"
+},
+{
+"question": "\"Chop Suey!\" is a hit by which band?",
+"options": [
+"Linkin Park",
+"System of a Down",
+"Korn",
+"Slipknot"
+],
+"correctIndex": 1,
+"category": "2000s rock",
+"difficulty": "medium"
+},
+{
+"question": "Chester Bennington was the lead singer of which band?",
+"options": [
+"Linkin Park",
+"Papa Roach",
+"Staind",
+"Disturbed"
+],
+"correctIndex": 0,
+"category": "2000s rock",
+"difficulty": "medium"
+},
+{
+"question": "Which band opens a hit with the line \"Is this the real life? Is this just fantasy?\"",
+"options": [
+"The Beatles",
+"Pink Floyd",
+"David Bowie",
+"Queen"
+],
+"correctIndex": 3,
+"category": "lyrics",
+"difficulty": "easy"
+},
+{
+"question": "\"'Cause baby you're a firework\" is a lyric from a song by which artist?",
+"options": [
+"Kesha",
+"Pink",
+"Katy Perry",
+"Rihanna"
+],
+"correctIndex": 2,
+"category": "lyrics",
+"difficulty": "easy"
+},
+{
+"question": "\"I came in like a wrecking ball\" is a lyric by which singer?",
+"options": [
+"Selena Gomez",
+"Miley Cyrus",
+"Demi Lovato",
+"Ariana Grande"
+],
+"correctIndex": 1,
+"category": "lyrics",
+"difficulty": "easy"
+},
+{
+"question": "\"We found love in a hopeless place\" is a lyric from a hit by which singer?",
+"options": [
+"Rihanna",
+"Beyoncé",
+"Sia",
+"Ellie Goulding"
+],
+"correctIndex": 0,
+"category": "lyrics",
+"difficulty": "medium"
+},
+{
+"question": "\"Hello, is it me you're looking for?\" is a line by which artist?",
+"options": [
+"Marvin Gaye",
+"Barry White",
+"Luther Vandross",
+"Lionel Richie"
+],
+"correctIndex": 3,
+"category": "lyrics",
+"difficulty": "medium"
+},
+{
+"question": "\"So call me maybe\" comes from a 2012 hit by which Canadian singer?",
+"options": [
+"Avril Lavigne",
+"Nelly Furtado",
+"Carly Rae Jepsen",
+"Alessia Cara"
+],
+"correctIndex": 2,
+"category": "lyrics",
+"difficulty": "medium"
+},
+{
+"question": "The chant \"You shook me all night long\" belongs to which band?",
+"options": [
+"Kiss",
+"AC/DC",
+"Aerosmith",
+"Whitesnake"
+],
+"correctIndex": 1,
+"category": "lyrics",
+"difficulty": "easy"
+},
+{
+"question": "\"We will, we will rock you\" is a famous chant by which band?",
+"options": [
+"Queen",
+"Kiss",
+"Slade",
+"The Who"
+],
+"correctIndex": 0,
+"category": "lyrics",
+"difficulty": "easy"
+},
+{
+"question": "\"Just a small town girl, livin' in a lonely world\" opens which band's hit?",
+"options": [
+"Foreigner",
+"Toto",
+"Survivor",
+"Journey"
+],
+"correctIndex": 3,
+"category": "lyrics",
+"difficulty": "medium"
+},
+{
+"question": "\"I gotta feeling that tonight's gonna be a good night\" is a lyric by which group?",
+"options": [
+"LMFAO",
+"Far East Movement",
+"The Black Eyed Peas",
+"Flo Rida"
+],
+"correctIndex": 2,
+"category": "lyrics",
+"difficulty": "medium"
+},
+{
+"question": "\"Beds Are Burning\" (1987) is a protest song by which Australian band?",
+"options": [
+"Cold Chisel",
+"Midnight Oil",
+"Goanna",
+"Redgum"
+],
+"correctIndex": 1,
+"category": "Australian rock",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian act had a global hit with \"We Are the People\" (2008)?",
+"options": [
+"Empire of the Sun",
+"The Presets",
+"Pnau",
+"Cut Copy"
+],
+"correctIndex": 0,
+"category": "Australian pop",
+"difficulty": "hard"
+},
+{
+"question": "Wolfmother won a 2007 Grammy for hard rock performance with which song?",
+"options": [
+"Joker & the Thief",
+"Mind's Eye",
+"New Moon Rising",
+"Woman"
+],
+"correctIndex": 3,
+"category": "Australian rock",
+"difficulty": "hard"
+},
+{
+"question": "\"Are You Gonna Be My Girl\" (2003) is a hit by which Australian band?",
+"options": [
+"The Vines",
+"Grinspoon",
+"Jet",
+"Eskimo Joe"
+],
+"correctIndex": 2,
+"category": "Australian rock",
+"difficulty": "medium"
+},
+{
+"question": "\"How to Make Gravy\" and \"To Her Door\" are songs by which Australian singer-songwriter?",
+"options": [
+"Nick Cave",
+"Paul Kelly",
+"Archie Roach",
+"Kev Carmody"
+],
+"correctIndex": 1,
+"category": "Australian rock",
+"difficulty": "hard"
+},
+{
+"question": "\"Adore\" (2016) was a breakout hit for which Gold Coast artist?",
+"options": [
+"Amy Shark",
+"Meg Mac",
+"Montaigne",
+"Vera Blue"
+],
+"correctIndex": 0,
+"category": "Australian pop",
+"difficulty": "hard"
+},
+{
+"question": "\"Scar\" (2004) was the debut hit of which Australian singer?",
+"options": [
+"Kate Miller-Heidke",
+"Clare Bowditch",
+"Sarah Blasko",
+"Missy Higgins"
+],
+"correctIndex": 3,
+"category": "Australian pop",
+"difficulty": "medium"
+},
+{
+"question": "Flume, the Grammy-winning Australian electronic producer, is from which city?",
+"options": [
+"Melbourne",
+"Perth",
+"Sydney",
+"Brisbane"
+],
+"correctIndex": 2,
+"category": "Australian pop",
+"difficulty": "hard"
+},
+{
+"question": "\"Electric Blue\" (1987) was a hit for which band led by Iva Davies?",
+"options": [
+"Mental As Anything",
+"Icehouse",
+"Models",
+"Pseudo Echo"
+],
+"correctIndex": 1,
+"category": "Australian pop",
+"difficulty": "hard"
+},
+{
+"question": "Which Australian rock band recorded \"Am I Ever Gonna See Your Face Again\"?",
+"options": [
+"The Angels",
+"Rose Tattoo",
+"The Screaming Jets",
+"Baby Animals"
+],
+"correctIndex": 0,
+"category": "Australian rock",
+"difficulty": "hard"
+},
+{
+"question": "ABBA won the 1974 Eurovision Song Contest with which song?",
+"options": [
+"Mamma Mia",
+"SOS",
+"Fernando",
+"Waterloo"
+],
+"correctIndex": 3,
+"category": "1970s pop",
+"difficulty": "medium"
+},
+{
+"question": "Which \"King\" is associated with Graceland and hits like \"Jailhouse Rock\"?",
+"options": [
+"Chuck Berry",
+"Little Richard",
+"Elvis Presley",
+"Jerry Lee Lewis"
+],
+"correctIndex": 2,
+"category": "1950s rock",
+"difficulty": "easy"
+},
+{
+"question": "\"Bridge Over Troubled Water\" is a classic by which duo?",
+"options": [
+"The Everly Brothers",
+"Simon & Garfunkel",
+"Hall & Oates",
+"The Righteous Brothers"
+],
+"correctIndex": 1,
+"category": "1970s pop",
+"difficulty": "medium"
+},
+{
+"question": "\"Stayin' Alive\", from Saturday Night Fever, is by which group?",
+"options": [
+"Bee Gees",
+"The Trammps",
+"KC and the Sunshine Band",
+"Chic"
+],
+"correctIndex": 0,
+"category": "1970s pop",
+"difficulty": "easy"
+},
+{
+"question": "Which band recorded \"Don't Look Back in Anger\"?",
+"options": [
+"Blur",
+"The Verve",
+"Ocean Colour Scene",
+"Oasis"
+],
+"correctIndex": 3,
+"category": "1990s rock",
+"difficulty": "medium"
+},
+{
+"question": "\"Wake Me Up\" (2013) was a hit for which late Swedish DJ?",
+"options": [
+"Alesso",
+"Swedish House Mafia",
+"Avicii",
+"Basshunter"
+],
+"correctIndex": 2,
+"category": "2010s pop",
+"difficulty": "medium"
+},
+{
+"question": "\"Bad Guy\" (2019) won Record of the Year for which artist?",
+"options": [
+"Lizzo",
+"Billie Eilish",
+"Ariana Grande",
+"Lana Del Rey"
+],
+"correctIndex": 1,
+"category": "2010s pop",
+"difficulty": "easy"
+},
+{
+"question": "\"Titanium\" (2011) features which singer over a David Guetta production?",
+"options": [
+"Sia",
+"Rihanna",
+"Ellie Goulding",
+"Nicki Minaj"
+],
+"correctIndex": 0,
+"category": "2010s pop",
+"difficulty": "medium"
+},
+{
+"question": "\"Somebody to Love\" and \"We Are the Champions\" are hits by which band?",
+"options": [
+"The Who",
+"Boston",
+"Foreigner",
+"Queen"
+],
+"correctIndex": 3,
+"category": "rock",
+"difficulty": "easy"
+},
+{
+"question": "\"Zombie\" (1994) is a hit by which Irish band?",
+"options": [
+"The Corrs",
+"Ash",
+"The Cranberries",
+"Thin Lizzy"
+],
+"correctIndex": 2,
+"category": "1990s rock",
+"difficulty": "medium"
+}
+]

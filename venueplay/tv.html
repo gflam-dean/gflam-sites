@@ -1,0 +1,2937 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VenuePlay: Venue Screen</title>
+<link rel="icon" type="image/png" href="/logos/venueplay_appicon_rebuilt.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Caveat:wght@700&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=Oswald:wght@500;700&family=Playfair+Display:wght@700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
+    --pink:#FF1F8E; --pink-deep:#C70F69;
+    --gold:#FFC24B; --win:#35D07F; --roll:#F5A524;
+    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#8A8A94;
+    --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow-x:clip}
+  body{background:#050506;color:var(--text);font-family:'Manrope',system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
+  .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
+
+  .tv{position:fixed;inset:0;container-type:inline-size;background:radial-gradient(1200px 700px at 80% -10%, rgba(255,31,142,.12), transparent 60%), #050506;overflow:hidden}
+  .layer{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4% 6%}
+  /* A game layer paints its own ground. These sit over the ad rotation, and while the rotation is
+     display:none during a game, anything that leaves even one frame of it showing put a ghost of
+     the venue's advertising behind the board. A game screen is never see-through now. */
+  #tvLobby,#tvRun,#tvClaim,#tvWin,#tvHold{
+    background:radial-gradient(1200px 700px at 80% -10%, rgba(255,31,142,.12), transparent 60%), #050506}
+  .hidden{display:none!important}
+
+  /* Two lines, not two absolutely positioned things. The venue name used to be its
+     own element at top:6.2cqw while this block sits at top:2cqw and is only about
+     21px tall, so on a wide TV the name floated some 60px below the wordmark and
+     read as unrelated to it. As a wrapped second line inside this block the gap is
+     one small margin instead of a number that has to be re-guessed per screen size. */
+  .tv-corner{position:absolute;top:2cqw;right:2.4cqw;display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:.8cqw;z-index:16;max-width:40cqw}   /* above the ball reveal's dimmer (15), as the venue logo is: the dim put the mark "behind everything" on every call */
+  .tv-corner .venuename{flex:0 0 100%;margin-top:.15cqw;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(10px,1.3cqw,17px);letter-spacing:.02em;color:rgba(255,255,255,.82);text-shadow:0 2px 8px rgba(0,0,0,.7)}
+  /* THE VENUEPLAY MARK, SECONDARY BUT CRISP (Dean, 21 Oct 2026: it looked "dull and behind everything").
+     It was 20px at most on any TV, at 92% opacity, with a fixed 18px arrow: tiny and soft on a 1920 wall
+     next to a venue logo now sized by its shape. Full opacity, a size that grows with the screen up to
+     26px, and a dark halo so it reads on any slide. Still well under the venue's logo. */
+  .tv-corner .vn{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(12px,1.35cqw,26px);letter-spacing:.01em;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.85),0 0 10px rgba(0,0,0,.6)}
+  .tv-corner svg{width:clamp(14px,1.2cqw,24px);height:auto;filter:drop-shadow(0 0 3px rgba(255,31,142,.9))}
+  /* Top-CENTRE, not top-left. The venue's LOGO is pinned top-left at top:20px with
+   z-index 60, and this sat under it at top:2cqw with z-index 6: on a 1920 screen
+   2cqw is 38px, inside the logo's 20-84px band. So any venue with a logo had its
+   Reconnecting indicator hidden behind it, at the one moment it matters. Same fault
+   that put a venue's name across the join panel on 5 Sep: two elements in one corner,
+   one in cqw and one in px, only ever correct at a single screen width. */
+  .tv-status{position:absolute;top:2cqw;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.45);border-radius:1cqw;padding:.4cqw 1cqw;display:flex;align-items:center;gap:.7cqw;z-index:6;font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:clamp(8px,1.1cqw,22px);color:var(--muted)}
+  /* display:flex BEATS THE hidden ATTRIBUTE. The badge is markup-hidden and this rule
+     made it visible from the first frame on every screen, reading "Connecting", until
+     tvStatus(true) ran. On ?demo=1 connectRealtime() is deliberately never called, so
+     tvStatus never ran at all and the sales page showed a permanent CONNECTING badge
+     over a game that was playing perfectly. Seen on see-a-night, 16 Sep 2026.
+     The comment above tvStatus records the same class of fault the other way round:
+     an element that could never be SEEN because of a conflicting style. */
+  .tv-status[hidden]{display:none}
+  .sdot{width:.8cqw;height:.8cqw;min-width:8px;min-height:8px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
+  .sdot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
+
+  /* ---- fullscreen control (setup affordance, ads/pairing states only) ---- */
+  .tv-fs{position:absolute;left:2cqw;bottom:2.4cqw;z-index:9;display:flex;align-items:center;gap:.7cqw;
+    background:rgba(10,10,11,.72);border:1px solid rgba(255,31,142,.5);border-radius:1.2cqw;
+    padding:.85cqw 1.4cqw;color:var(--text);cursor:pointer;backdrop-filter:blur(6px);
+    font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.12em;
+    font-size:clamp(9px,1.3cqw,14px);line-height:1;transition:background .2s ease,border-color .2s ease}
+  .tv-fs:hover{background:rgba(255,31,142,.16);border-color:var(--pink)}
+  .tv-fs svg{display:block;filter:drop-shadow(0 0 4px rgba(255,31,142,.7))}
+  .tv-fs .fshint{color:var(--muted);font-weight:600;text-transform:none;letter-spacing:.02em;font-size:.82em}
+
+  /* ---- advertising loop (default state) ---- */
+  #adsRoot{position:absolute;inset:0;z-index:1}
+  /* The branded floor sits under the ad rotation. Nothing ever clears #adsRoot, so if the
+     rotation renders nothing, the room sees this rather than a black screen. */
+  #tvFloor{z-index:0}
+  #tvAds{z-index:1}
+  .ad{opacity:0;transition:opacity .8s ease}
+  .ad.show{opacity:1}
+  .ad .adimg{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat}
+  .ad .adtag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.24em;font-size:clamp(12px,2.4cqw,22px);color:var(--pink)}
+  .ad .adbig{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(34px,9cqw,96px);color:#fff;line-height:.98;margin:1.6cqw 0}
+  .ad .adsub{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(14px,3cqw,32px);color:var(--text);max-width:82cqw}
+  .ad .adhelp{position:absolute;bottom:3.5cqw;font-family:'Manrope',sans-serif;font-weight:500;font-size:clamp(11px,1.5cqw,17px);color:var(--faint)}
+  .ad-a{background:radial-gradient(760px 420px at 50% 18%, rgba(255,194,75,.20), transparent 60%), linear-gradient(160deg,#151007,#050506)}
+  .ad-b{background:radial-gradient(760px 420px at 30% 30%, rgba(255,31,142,.18), transparent 60%), linear-gradient(160deg,#12060d,#050506)}
+  .ad-c{background:radial-gradient(760px 420px at 70% 25%, rgba(53,208,127,.16), transparent 60%), linear-gradient(160deg,#06120c,#050506)}
+  .ad-d{background:radial-gradient(760px 420px at 50% 30%, rgba(120,140,255,.16), transparent 60%), linear-gradient(160deg,#080a16,#050506)}
+  .ad-e{background:radial-gradient(760px 420px at 50% 22%, rgba(255,31,142,.14), transparent 60%), linear-gradient(160deg,#0d0910,#050506)}
+  .adweek{display:flex;flex-direction:column;gap:1.6cqw;margin-top:2.6cqw;width:100%;max-width:900px}
+  .wkrow{display:grid;grid-template-columns:1fr auto auto;align-items:baseline;gap:14px;padding:1.7cqw clamp(14px,2.4cqw,26px);border:1px solid var(--line);border-radius:1.2cqw;background:rgba(255,255,255,.02)}
+  .wkrow.tonight{border-color:var(--gold);background:rgba(255,194,75,.08)}
+  .wkday{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(15px,3.4cqw,30px);color:#fff;text-align:left}
+  .wkday .tn{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(9px,1.6cqw,14px);color:var(--gold);text-transform:uppercase;letter-spacing:.12em;margin-left:10px}
+  .wkjack{font-family:'Anton',sans-serif;font-size:clamp(20px,4.4cqw,40px);color:var(--gold);line-height:1}
+  .wktime{font-family:'JetBrains Mono',monospace;font-size:clamp(11px,2.2cqw,20px);color:var(--muted);min-width:70px;text-align:right}
+
+  /* ---- pair panel (ads mode only) ---- */
+  .pairpanel{position:absolute;right:2.4cqw;bottom:2.4cqw;z-index:7;display:flex;align-items:center;gap:1.4cqw;background:rgba(0,0,0,.5);border:1px solid var(--line-2);border-radius:1.4cqw;padding:1.2cqw 1.8cqw 1.2cqw 1.2cqw;backdrop-filter:blur(6px)}
+  .pairpanel .qrp{width:clamp(74px,11cqw,150px);height:clamp(74px,11cqw,150px);background:#fff;border-radius:.8cqw;padding:.5cqw;flex:none}
+  .pairpanel .qrp canvas{display:block;width:100%!important;height:100%!important;image-rendering:pixelated}
+  .pairtxt{text-align:left}
+  .pt-head{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.1em;font-size:clamp(10px,1.5cqw,15px);color:#fff}
+  .pt-lbl{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(9px,1.4cqw,14px);color:var(--muted);margin-top:.4cqw;max-width:24cqw}
+  .pt-code{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(11px,1.9cqw,18px);color:var(--gold);letter-spacing:.1em;margin-top:.6cqw}
+
+  /* ---- wrong-link prompt (full overlay) ---- */
+  .badvenue{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(5,5,6,.93);backdrop-filter:blur(4px);padding:6cqw}
+  .bvcard{max-width:76cqw;text-align:center;background:var(--ink-2);border:1px solid var(--line);border-radius:2cqw;padding:2.6cqw 3cqw}
+  .bvtitle{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(22px,3.6cqw,44px);color:var(--pink);line-height:1.05;margin-bottom:1.2cqw}
+  .bvtext{font-family:'Manrope',sans-serif;font-size:clamp(13px,2.1cqw,26px);color:var(--text);line-height:1.5}
+  /* The address, big enough to read from across a bar and in the mono face so a hyphen or a
+     missing postcode is unmistakable against a printed setup sheet. */
+  /* The wordmark on both "something is wrong" screens, sized in cqw like everything else on
+     this page so it scales with the wall instead of racing it. */
+  /* The mark sits ABOVE the card, not tucked against the heading. Dean: "venueplay logo could
+     go up a bit on the error screen". It is a wordmark introducing the screen, not a bullet
+     point on it, so it gets room to breathe. */
+  /* THE MARK STACKS: triangle ABOVE the word, not beside it. Dean, 19 Sep 2026.
+     Beside the word the triangle had to stay tiny to match the cap height, so it read as
+     a bullet point rather than a logo. Stacked, it can be five times the size and the
+     wordmark sits under it as a caption: a lockup rather than a line of text. This is a
+     television across a room, and the first thing a venue sees of the product they just
+     bought, so it is worth the space. */
+  .bvmark,.admark{display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:.5em;margin:0 0 1.15em}
+  .bvmark svg,.admark svg{width:clamp(34px,5.4cqw,80px);height:auto;display:block;
+    /* Two shadows: a tight one to make the stroke glow, a wide soft one so it lifts off
+       the black the way the neon logo does on the site. */
+    filter:drop-shadow(0 0 .28cqw rgba(255,31,142,.95))
+           drop-shadow(0 0 1.5cqw rgba(255,31,142,.45))}
+  .bvmark span,.admark span{font-family:'Hanken Grotesk',sans-serif;font-weight:800;
+    font-size:clamp(11px,1.5cqw,20px);letter-spacing:.22em;text-transform:uppercase;
+    color:rgba(255,255,255,.92)}
+  /* A SLOW BREATH WHILE IT IS CHECKING, on the setting-up screen only. This is the one
+     state where the screen genuinely is waiting on something, and a still image on a
+     television is indistinguishable from a frozen one. The error and picker cards do NOT
+     get this: they are finished, not working.
+     It never hides anything. The triangle stays fully visible throughout; only the glow
+     moves, so a screen that stops animating still reads correctly. */
+  @keyframes vpMarkBreath{
+    0%,100%{filter:drop-shadow(0 0 .28cqw rgba(255,31,142,.95)) drop-shadow(0 0 1.5cqw rgba(255,31,142,.40))}
+    50%    {filter:drop-shadow(0 0 .38cqw rgba(255,31,142,1))   drop-shadow(0 0 2.4cqw rgba(255,31,142,.72))}
+  }
+  .admark svg{animation:vpMarkBreath 2.6s ease-in-out infinite}
+  @media (prefers-reduced-motion:reduce){ .admark svg{animation:none} }
+  /* The address, on its own line between the problem and what to do about it, boxed so the eye
+     lands on it. Mono so a hyphen or a missing postcode is unmistakable against a printed
+     setup sheet, and break-all so a long slug cannot push the card off a narrow screen. */
+  .bvissue{margin:0 0 1.1em;padding:.7em 1em;border-radius:.6em;
+    background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10)}
+  .bvissue[hidden]{display:none}
+  .bvissuelbl{font-family:'JetBrains Mono',ui-monospace,monospace;
+    font-size:clamp(9px,1.2cqw,15px);letter-spacing:.12em;text-transform:uppercase;
+    color:var(--muted,#9A9AA4);margin:0 0 .35em}
+  .bvaddr{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:clamp(13px,2.4cqw,30px);
+    color:var(--gold,#FFC24B);word-break:break-all;line-height:1.25}
+  .bvtext b{color:#fff}
+  /* A GRID, NOT A LIST, AND NOTHING THAT HAS TO BE SCROLLED.
+     This is a television. Plenty of them are driven by a Fire Stick remote,
+     which cannot scroll a box, so a list that runs off the bottom of the card is
+     a list of venues you cannot reach. Twenty-two is the realistic worst case
+     (Grand Hotel, Royal Hotel), so the tiles are laid out in as many columns as
+     fit and sized to get that many on the wall at once.
+     The NAME is the same on every tile - that is the whole problem - so the
+     postcode and state are what the eye needs, and they are set brighter and
+     bigger than the name rather than as a footnote under it. */
+  .bvpick.plain{display:block}
+  .bvpick{margin-top:1.4cqw;display:grid;gap:.7cqw;
+          grid-template-columns:repeat(auto-fit,minmax(11cqw,1fr));align-content:start}
+  .bvpick a{display:block;text-decoration:none;background:var(--ink);border:1px solid var(--line);
+            border-radius:.8cqw;padding:.75cqw 1cqw;color:var(--muted);text-align:center;
+            font-family:'Manrope',sans-serif;font-size:clamp(10px,1.25cqw,16px);line-height:1.2}
+  .bvpick a strong{display:block;color:#fff;font-weight:800;
+                   font-size:clamp(13px,1.9cqw,26px);letter-spacing:.01em}
+  /* The card must never grow past the wall it is on: a tile below the bottom
+     edge of a television cannot be reached at all, and a Fire Stick remote
+     cannot scroll a box. */
+  .bvcard{max-height:94cqh;overflow:auto}
+  /* Postcode entry. A television is driven by a remote, so there is no keyboard:
+     the digits are tiles like everything else here. Four presses beats spelling
+     out a slug on an on-screen keyboard, and everyone knows their own postcode. */
+  .pcode{font-family:'Anton',sans-serif;font-size:clamp(24px,5.2cqw,64px);letter-spacing:.16em;
+         color:#fff;margin:.4cqw 0 1cqw;line-height:1.15;min-height:1.15em}
+  .keys{display:grid;gap:.8cqw;margin:0 auto}
+  /* An empty slot is a box to be filled, not an underscore hanging below the
+     line with a hole above it. On a television across a room the boxes are what
+     make it obvious how many characters are still wanted. */
+  .pcode span{display:inline-block;width:.62em;border-bottom:.09em solid var(--line);
+              vertical-align:baseline;color:transparent}
+  /* 29 letters plus two labels is 31 keys. At the digit keypad's size that runs
+     off the bottom of the card, and a key below the edge of a television cannot
+     be pressed. Ten across, smaller, and it fits in three rows. */
+  /* Delete / Go back / Start now are NOT keys and must not sit in the key grid.
+     As grid items they took the first cells of a row and hung off to the left,
+     which looked broken on every one of these screens. */
+  .keyacts{display:flex;justify-content:center;flex-wrap:wrap;gap:.8cqw;margin-top:1cqw}
+  .keyacts a{display:block;text-decoration:none;background:var(--ink);border:1px solid var(--line);
+             border-radius:.8cqw;padding:.9cqw 2.2cqw;color:var(--muted);text-align:center;
+             font-family:'Manrope',sans-serif;font-weight:800;font-size:clamp(11px,1.5cqw,19px)}
+  .keys.keys-wide{grid-template-columns:repeat(10,1fr);max-width:66cqw;gap:.55cqw}
+  .keys.keys-wide a{padding:.7cqw 0;font-size:clamp(12px,1.9cqw,24px);border-radius:.6cqw}
+  .keys.keys-wide a.wide{font-size:clamp(10px,1.3cqw,16px)}
+  .keys a{display:block;text-decoration:none;background:var(--ink);border:1px solid var(--line);
+          border-radius:.8cqw;padding:1.1cqw 0;color:#fff;text-align:center;
+          font-family:'Anton',sans-serif;font-size:clamp(16px,2.6cqw,34px)}
+  .keys a.wide{grid-column:span 2;font-family:'Manrope',sans-serif;font-weight:800;
+               font-size:clamp(12px,1.7cqw,22px);color:var(--muted)}
+  /* The confirmation. The whole point is that the venue WRITES THIS DOWN, so the
+     link is the biggest thing on the wall and it sits there long enough to copy. */
+  .gotlink{font-family:'Anton',sans-serif;font-size:clamp(18px,3.4cqw,46px);color:var(--pink);
+           word-break:break-all;line-height:1.15;margin:1.2cqw 0}
+  .gotnote{font-family:'Manrope',sans-serif;font-size:clamp(12px,1.7cqw,22px);color:var(--muted)}
+  /* A countdown you can watch. The sentence alone did not read as a timer, and
+     this screen is the one thing the venue has to act on before it disappears. */
+  .cdown{margin:1.4cqw auto 0;max-width:44cqw}
+  .cdown .bar{height:.7cqw;min-height:5px;background:var(--ink);border:1px solid var(--line);
+              border-radius:99px;overflow:hidden}
+  .cdown .bar i{display:block;height:100%;width:100%;background:var(--pink);
+                transition:width 1s linear}
+  .cdown .num{font-family:'Anton',sans-serif;font-size:clamp(16px,2.6cqw,34px);color:#fff;
+              margin-bottom:.6cqw}
+
+  /* ---- holding card ---- */
+  #tvHold .heye{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.22em;font-size:clamp(10px,1.9cqw,15px);color:var(--muted)}
+  #tvHold .hbig{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(30px,8cqw,84px);color:#fff;line-height:1;margin:1.4cqw 0}
+  #tvHold .hbig b{color:var(--pink)}
+  #tvHold .hsub{font-family:'JetBrains Mono',monospace;font-size:clamp(11px,2cqw,18px);color:var(--muted)}
+
+  /* ---- bingo lobby ---- */
+  .eyebrow{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.22em;font-size:clamp(10px,1.9cqw,15px);color:var(--muted)}
+  .jsub{font-family:'JetBrains Mono',monospace;font-size:clamp(11px,2cqw,16px);color:var(--muted);margin-top:2cqw;letter-spacing:.02em}
+  .jsub b{color:var(--gold)}
+  .lobbyrow{display:flex;align-items:center;gap:4cqw;margin-top:1.6cqw}
+  .qrbig{width:min(46cqw,64vh);max-width:none;aspect-ratio:1;background:#fff;border-radius:2cqw;padding:1.6cqw;flex:none;box-shadow:0 0 44px rgba(255,255,255,.16)}
+  .qrbig canvas{display:block;width:100%!important;height:100%!important;image-rendering:pixelated}
+  .lobbytxt{text-align:left}
+  .lobbyname{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(20px,5cqw,64px);color:#fff;line-height:1}
+  .joinurl{font-family:'JetBrains Mono',monospace;font-size:clamp(12px,2.6cqw,28px);color:var(--pink);margin-top:1cqw}
+  .codebox{display:flex;align-items:center;gap:1.6cqw;margin-top:2cqw}
+  .codelbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:clamp(9px,1.6cqw,15px);color:var(--muted)}
+  .codeval{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(20px,5cqw,56px);color:var(--gold);letter-spacing:.08em;background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);border-radius:1.4cqw;padding:.6cqw 2cqw}
+  /* Where you are, under the code. The player count used to sit here; the TV must not show it. */
+  .lobbyat{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(12px,2.2cqw,26px);color:var(--muted);margin-top:1.8cqw;max-width:40cqw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lobbyat b{color:#fff}
+
+  /* ---- bingo running ---- */
+  .runlayer{flex-direction:row;gap:3cqw;align-items:center;justify-content:center;padding:3.5% 5%}
+  /* THE JOIN BADGE SITS IN THIS COLUMN'S CORNER. .tv-join is pinned bottom-left
+     with z-index 6 and nothing reserved room for it, so on a running bingo game
+     the last line of this column - "Playing for <prize>" - ran underneath the QR
+     and the prize was unreadable. Reserving the badge's own height means the
+     column can never reach into that corner, and it is written as the same clamp
+     the badge uses so the two cannot drift apart: 2cqw of offset, .8cqw of
+     padding top and bottom, the QR itself, then a little air. */
+  .runleft{flex:0 0 41%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-bottom:calc(5.1cqw + clamp(44px,8cqw,110px))}
+  .runright{flex:1;min-width:0}
+  .balleye{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.2em;font-size:clamp(9px,1.7cqw,14px);color:var(--muted)}
+  /* the resting "number called" is itself a bingo ball, so the big reveal settles into an
+     identical ball with no visible handoff */
+  /* HEIGHT-AWARE, because this column is a stack of things sized by WIDTH. Once the row of recent
+     balls appeared the stack was taller than the column, so "Number called" sat 8px from the top
+     of a 1280x720 wall, off the screen on an overscanning telly (audit, 14 Oct 2026). Every 16:9
+     size had it, since cqw and vh scale together. The ball, its margins, the recent balls and the
+     pattern line now also answer to the height, which puts the label about 50px down on a
+     1280x720 wall, clear of a 5% overscan. */
+  .curball{width:min(26cqw,27vh);aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:min(1.4cqw,1.6vh) 0;
+    background:radial-gradient(circle at 38% 30%, #ffffff, #ffe0ef 42%, #FF1F8E 100%);
+    box-shadow:0 0 60px rgba(255,31,142,.45), inset 0 -1cqw 2.4cqw rgba(0,0,0,.16)}
+
+  /* big-ball reveal */
+  .ballreveal{position:absolute;inset:0;z-index:15;display:flex;align-items:center;justify-content:center;pointer-events:none}
+  /* THE BIGGER REVEAL (Dean, 28 Sep 2026: "do the bigger reveal ball"). The room dims, light
+     rings pulse out, the ball rolls in with a spin at nearly two thirds of the wall, and the
+     traditional call sits under it. Same 1.3s hold and the same glide onto the resting ball,
+     so a host calling fast is not slowed down and the in-flight rules below are untouched. */
+  .brdim{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%, rgba(40,6,24,.55), rgba(5,5,6,.86) 70%);
+    opacity:0;transition:opacity .25s ease}
+  .ballreveal.live .brdim{opacity:1}
+  .brrings{position:absolute;left:50%;top:0;width:min(56cqw,68vh);height:min(56cqw,68vh);transform:translateX(-50%);pointer-events:none}
+  .brrings i{position:absolute;inset:0;border-radius:50%;border:.5cqw solid rgba(255,31,142,.55);opacity:0}
+  .ballreveal.live .brrings i{animation:brring 1.1s ease-out forwards}
+  .ballreveal.live .brrings i:nth-child(2){animation-delay:.18s}
+  .ballreveal.live .brrings i:nth-child(3){animation-delay:.36s}
+  @keyframes brring{ 0%{transform:scale(.7);opacity:.9} 100%{transform:scale(1.55);opacity:0} }
+  .brwrap{position:relative;display:flex;flex-direction:column;align-items:center}
+  .brball{width:min(56cqw,68vh);height:min(56cqw,68vh);border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(circle at 38% 30%, #ffffff, #ffe0ef 42%, #FF1F8E 100%);
+    color:#0A0A0B;font-family:'Anton',sans-serif;font-size:min(31cqw,44vh);line-height:1;
+    box-shadow:0 0 140px rgba(255,31,142,.7), inset 0 -1.6cqw 4cqw rgba(0,0,0,.18)}
+  .brcall{margin-top:2.2vh;min-height:1em;white-space:nowrap;font-family:'Anton',sans-serif;text-transform:uppercase;
+    letter-spacing:.04em;font-size:min(4.4cqw,7.5vh);line-height:1;color:#fff;text-shadow:0 0 30px rgba(255,31,142,.8);opacity:0;transition:opacity .25s ease}
+  .ballreveal.live .brcall{opacity:1;transition-delay:.7s}
+  @keyframes brpop{ 0%{transform:translateX(55cqw) rotate(220deg) scale(.45);opacity:0}
+                    55%{transform:translateX(-2cqw) rotate(-10deg) scale(1.08);opacity:1}
+                    78%{transform:translateX(.6cqw) rotate(3deg) scale(.98)}
+                    100%{transform:none;opacity:1} }
+  /* the reveal ball glides left into the resting ball (roughly its spot) and fades as it arrives */
+  @keyframes brgo{ 0%{transform:scale(1);opacity:1} 82%{opacity:1} 100%{transform:translate(-30cqw,1cqw) scale(.40);opacity:0} }
+  .cbletter{font-family:'Anton',sans-serif;font-size:clamp(16px,5cqw,60px);color:var(--pink);letter-spacing:.05em;text-shadow:0 0 26px rgba(255,31,142,.5)}
+  .cbnum{font-family:'Anton',sans-serif;font-size:min(15cqw,15vh);color:#0A0A0B;line-height:1}
+  .cbnum.ready{font-size:min(4.2cqw,4.4vh);letter-spacing:.14em;text-transform:uppercase;text-indent:.14em;color:rgba(10,10,11,.62)}
+  /* The last five, newest first, as small grey balls under the big one. Sized to be read from
+     the back of the room: the old 15px cap made them a caption. */
+  .prevballs{display:flex;gap:1cqw;justify-content:center;flex-wrap:nowrap;margin-top:.8cqw}
+  .prevball{width:clamp(30px,min(4.8cqw,6.5vh),92px);aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;
+    font-family:'Anton',sans-serif;font-size:clamp(14px,2.6cqw,48px);line-height:1;color:#fff;
+    background:radial-gradient(circle at 38% 30%, rgba(255,255,255,.22), rgba(255,255,255,.06) 60%);border:1px solid var(--line-2)}
+  .prevball:first-child{color:#fff;background:radial-gradient(circle at 38% 30%, rgba(255,31,142,.55), rgba(255,31,142,.18) 65%);border-color:rgba(255,31,142,.45)}
+  .prevball:nth-child(n+3){color:var(--muted)}
+  .ballcount{font-family:'JetBrains Mono',monospace;font-size:clamp(12px,1.9cqw,24px);color:var(--muted);margin-top:.8cqw}
+  .ballcount b{color:#fff}
+  /* Pattern and prize are the two things people ask each other about. Twice their old size. */
+  .patline{margin-top:.8cqw;font-family:'Hanken Grotesk',sans-serif;font-size:clamp(16px,min(3.4cqw,5.2vh),46px);line-height:1.1;text-align:center}
+  .patlbl{color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-weight:700;font-size:.5em;display:block;margin-bottom:.2cqw}
+  .patval{color:var(--pink);font-weight:800}
+  .prizeline{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(14px,2.4cqw,34px);color:var(--muted);margin-top:.6cqw;text-align:center;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .prizeline b{color:var(--gold)}
+  .tvboard{display:flex;gap:.6cqw;width:100%}
+  .bcol{display:flex;flex-direction:column;gap:.4cqw;flex:1;min-width:0}
+  /* The board fills the height it has. Digits were capped at 17px whatever the screen. */
+  .bhead{font-family:'Anton',sans-serif;font-size:clamp(14px,3cqw,48px);color:var(--pink);text-align:center;line-height:1;margin-bottom:.3cqw}
+  .bnum{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(10px,2.2cqw,60px);line-height:1.15;color:#5A5A64;text-align:center;padding:.45cqw 0;border-radius:.4cqw;background:rgba(255,255,255,.02);border:1px solid transparent}
+  /* CALLED HAS TO READ FROM THE BACK OF THE ROOM. Pink at 18% behind white text was barely different from
+     an uncalled number on a real TV (design review, 1 Oct 2026). Solid pink, dark text; uncalled sits back. */
+  .bnum.lit{background:var(--pink);color:#0A0A0B;border-color:transparent}
+  .bnum.cur{background:var(--gold);color:#1a1000;border-color:transparent;box-shadow:0 0 14px rgba(255,194,75,.6)}
+
+  .tv-join{position:absolute;left:2cqw;bottom:2cqw;display:flex;align-items:center;gap:1cqw;z-index:6;background:rgba(0,0,0,.42);border:1px solid var(--line-2);border-radius:1.2cqw;padding:.8cqw 1.4cqw .8cqw .8cqw;backdrop-filter:blur(4px)}
+  .qrmini{width:clamp(44px,8cqw,110px);height:clamp(44px,8cqw,110px);background:#fff;border-radius:.6cqw;padding:.4cqw;flex:none}
+  .qrmini canvas{display:block;width:100%!important;height:100%!important;image-rendering:pixelated}
+  .tv-join .tjl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:clamp(8px,1.3cqw,22px);color:var(--muted)}
+  /* The join code a latecomer reads from across the bar. The 26px ceiling won on every 1080p TV. */
+  .tv-join .tjc{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(13px,2.4cqw,52px);color:var(--gold);letter-spacing:.08em}
+
+  /* ---- claim / win ---- */
+  .claimbig{font-family:'Anton',sans-serif;font-size:clamp(40px,12cqw,150px);color:var(--pink);line-height:.9;text-shadow:0 0 40px rgba(255,31,142,.5);margin:1cqw 0}
+  .claimname{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(18px,4cqw,44px);color:#fff}
+  /* line-height .85 on a 180px Anton cap clipped the top of the B and the tail of the G, and a
+     background-clipped gradient cannot spill outside its own box. Give it room. */
+  .winbingo{font-family:'Anton',sans-serif;font-size:clamp(44px,14cqw,180px);line-height:1.06;padding:.06em 0 .1em;margin-top:2.4cqw;
+    background:linear-gradient(100deg,#E9A93A 0%,#FFC24B 28%,#FFF3D0 46%,#FFC24B 64%,#E9A93A 100%);background-size:220% auto;
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
+    filter:drop-shadow(0 0 38px rgba(255,194,75,.42));animation:shimmer 3.2s linear infinite, winpop .6s ease-out}
+  .wname{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(24px,6cqw,80px);color:var(--pink);line-height:1;margin-top:1cqw;text-shadow:0 0 36px rgba(255,31,142,.55)}
+  .winslabel{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.24em;color:var(--muted);font-size:clamp(10px,2cqw,18px);margin-top:1.6cqw}
+  .winprize{font-family:'Anton',sans-serif;font-size:clamp(28px,8cqw,110px);color:var(--gold);line-height:1;margin-top:.4cqw;filter:drop-shadow(0 0 24px rgba(255,194,75,.4))}
+  @keyframes shimmer{to{background-position:220% center}}
+  @keyframes winpop{0%{transform:scale(.82);opacity:0}60%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
+  .winburst{position:absolute;inset:0;background:radial-gradient(closest-side, rgba(255,194,75,.13), transparent 68%);opacity:0;z-index:1;transition:opacity .7s ease}
+  .winburst.show{opacity:1}
+  .confetti{position:absolute;top:-2cqw;width:.7cqw;height:1.1cqw;min-width:7px;min-height:11px;border-radius:2px;opacity:.95;z-index:8;pointer-events:none;animation:confettiFall linear forwards}
+  @keyframes confettiFall{0%{transform:translateY(-3vh) rotate(0);opacity:1}100%{transform:translateY(105vh) rotate(680deg);opacity:.85}}
+</style>
+</head>
+<body>
+<div class="tv" id="tv">
+  <div class="winburst" id="winBurst"></div>
+
+  <div class="tv-status" id="tvStatus" hidden><span class="sdot" id="statusDot"></span><span id="statusText">Connecting</span></div>
+  <div class="tv-corner" id="tvCorner">
+    <svg width="18" height="21" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
+    <span class="vn">VenuePlay</span>
+  </div>
+
+  <!-- ADVERTISING LOOP (default) -->
+  <div id="adsRoot">
+    <!-- ======================================================================
+         DO NOT DELETE THIS DIV. It looks like an unused placeholder. It is not.
+
+         This is the LAST thing standing between a venue and a black screen. The
+         ad rotation is built into #tvAds below and is wiped and rebuilt often. If
+         that rebuild ever renders nothing, this is what the room sees instead: your
+         branding, rather than a dead black rectangle in a pub full of customers.
+
+         It is deliberately behind the ads (#tvFloor z-index 0, #tvAds z-index 1)
+         so it never covers anything. It costs nothing and it has already been the
+         difference twice. Checked by tools/check-tv-watchdog.py
+         ====================================================================== -->
+    <div id="tvFloor" class="layer ad-a" aria-hidden="true">
+      <div class="adtag" style="color:var(--pink)">VenuePlay</div>
+      <div class="adbig">Game on here</div>
+      <div class="adsub">Grab your phone, the fun starts soon</div>
+    </div>
+    <div id="tvAds" style="position:absolute;inset:0"></div>
+    <!-- Fullscreen setup control: lives inside adsRoot so it only shows on the
+         idle/advertising and pairing states (adsRoot is hidden during a game). -->
+    <button type="button" class="tv-fs" id="tvFsBtn" aria-label="Go fullscreen">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FF1F8E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9 V4 H9 M15 4 H20 V9 M20 15 V20 H15 M9 20 H4 V15"/></svg>
+      <span class="fslabel">Go fullscreen</span>
+    </button>
+  </div>
+
+  <!-- LIVE GAME SURFACE: trivia / musical / raffle / members render HERE, in place, instead of the
+       TV navigating to their page. A page navigation always drops browser fullscreen (and can't
+       silently re-enter), so venues running the TV in a browser lost fullscreen every game. Loading
+       the game into this iframe keeps the top page put, so fullscreen holds. Bingo still renders
+       natively above this. -->
+  <iframe id="gameFrame" title="Live game" allow="fullscreen; autoplay" style="display:none;position:fixed;inset:0;width:100%;height:100%;border:0;z-index:40;background:#000"></iframe>
+
+  <!-- NO-VENUE PROMPT (only shows when this screen has no venue linked) -->
+  <div class="pairpanel hidden" id="pairPanel">
+    <canvas id="qrPair" style="display:none"></canvas>
+    <div class="pairtxt">
+      <div class="pt-head">Link this screen</div>
+      <div class="pt-lbl">Open <b style="color:#fff">venueplay.com.au/tv?venue=your-venue</b> on this screen once. It remembers after that.</div>
+      <div class="pt-code" style="display:none"><span id="pairCode">------</span></div>
+    </div>
+  </div>
+
+  <!-- WRONG-LINK PROMPT (screen link doesn't match a venue) -->
+  <div class="badvenue hidden" id="badVenue">
+    <div class="bvcard">
+      <!-- THE MARK. Dean, 12 Sep 2026: "it loads the errorscreen no logo or anything". A bare
+           card on black does not read as VenuePlay, and this is a screen somebody stares at
+           while deciding whether they have been sold something that works. -->
+      <div class="bvmark"><svg viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg><span>VenuePlay</span></div>
+      <div class="bvtitle">Not linked to an account</div>
+      <!-- THREE THINGS, IN THE ORDER A PERSON NEEDS THEM. Dean, 12 Sep 2026: "maybe we say its
+           not linked to an account and then a new line so it shows the issue then trouble
+           shooting". So: what is wrong, then WHICH address is wrong, then what to do about it.
+           The address is the middle one because almost every screen that lands here got here
+           by a typo on a TV remote, and until it was shown there was nothing to compare
+           against the setup email. Filled in by script; if it is empty the whole block stays
+           hidden rather than showing a bare slash. -->
+      <div class="bvissue" id="bvIssue" hidden>
+        <div class="bvissuelbl">This screen is set to</div>
+        <div class="bvaddr" id="bvAddr"></div>
+      </div>
+      <div class="bvtext">Check that against the address in your setup email. If it is wrong, change it on the screen and it will connect itself. If it looks right, email <b>hello@venueplay.com.au</b> and we will sort it out.</div>
+    </div>
+  </div>
+
+  <!-- WHICH ONE OF THESE IS YOU? Shown when a slug names a family of venues
+       rather than a single one: /tv?venue=the-grand-hotel with 22 Grand Hotels
+       on the books. This is not an error state and must not look like one. -->
+  <div class="badvenue hidden" id="venuePick">
+    <div class="bvcard">
+      <!-- THE MARK BELONGS HERE TOO. This screen had none. It is not an error state, it is
+           a SETUP state: a new venue whose name is shared with others picking itself off a
+           list, on a television, in front of whoever is setting it up. The one card in this
+           flow that did not say VenuePlay was the one somebody stares at longest. -->
+      <div class="bvmark"><svg viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg><span>VenuePlay</span></div>
+      <div class="bvtitle" id="vpTitle">Which one is this?</div>
+      <div class="bvtext" id="vpText"></div>
+      <div class="bvpick" id="vpList"></div>
+    </div>
+  </div>
+
+  <!-- ball reveal: a big ball pops in the centre, then flies down to the board -->
+  <div class="ballreveal hidden" id="ballReveal"><div class="brdim"></div>
+    <div class="brwrap"><div class="brrings"><i></i><i></i><i></i></div><div class="brball" id="brBall"></div><div class="brcall" id="brCall"></div></div></div>
+
+  <!-- BINGO: lobby -->
+  <div class="layer hidden" id="tvLobby">
+    <div class="eyebrow">Join the game</div>
+    <div class="lobbyrow">
+      <div class="qrbig"><canvas id="qrBig"></canvas></div>
+      <div class="lobbytxt">
+        <div class="lobbyname">Bingo</div>
+        <div class="joinurl">venueplay.com.au/play</div>
+        <div class="codebox"><span class="codelbl">Code</span><span class="codeval" id="lobbyCode">------</span></div>
+        <div class="lobbyat" id="lobbyAt" style="display:none">at <b id="lobbyAtName"></b></div>
+      </div>
+    </div>
+    <div class="jsub" id="lobbySub">Grab your phone and scan to play&hellip;</div>
+  </div>
+
+  <!-- BINGO: running -->
+  <div class="layer runlayer hidden" id="tvRun">
+    <div class="runleft">
+      <!-- A REAL-BALLS NIGHT (caller mode) has no join code anywhere: the room plays paper books.
+           The game's name and the venue's take the code's place. Styled inline so a normal
+           night's look (and the sales mockups' fingerprint of it) is untouched. -->
+      <div id="tvRunTitle" style="display:none;text-align:center;margin:0 0 min(1.6cqw,2vh)">
+        <div class="lobbyname" style="font-size:clamp(20px,4.2cqw,60px)">Bingo</div>
+        <div class="lobbyat" id="tvRunAt" style="display:none;margin-top:.6cqw;max-width:36cqw">at <b id="tvRunAtName"></b></div>
+      </div>
+      <div class="balleye">Number called</div>
+      <div class="curball"><span class="cbnum ready" id="cbNum">Ready</span></div>
+      <div class="prevballs" id="tvPrev"></div>
+      <div class="ballcount" id="tvBallCount"><b>0</b> of 90 called</div>
+      <div class="patline"><span class="patlbl">Pattern</span> <span class="patval" id="tvPattern">One line</span></div>
+      <div class="prizeline">Playing for <b id="tvPrize">the prize</b></div>
+    </div>
+    <div class="runright">
+      <div class="tvboard" id="tvBoard"></div>
+    </div>
+  </div>
+
+  <!-- BINGO: claim suspense -->
+  <div class="layer hidden" id="tvClaim">
+    <div class="eyebrow">Bingo claimed</div>
+    <div class="claimbig" id="claimBig">BINGO?</div>
+    <div class="claimname" id="claimName">Player</div>
+    <div class="jsub" id="claimSub">Checking the card against the called numbers&hellip;</div>
+  </div>
+
+  <!-- BINGO: win -->
+  <div class="layer hidden" id="tvWin">
+    <div class="eyebrow">&#127881; We have a winner</div>
+    <div class="winbingo">BINGO!</div>
+    <div class="wname" id="winName">Player</div>
+    <div class="winslabel" id="winsLabel">Wins</div>
+    <div class="winprize" id="winPrizeVal">the prize</div>
+    <div class="jsub" id="winSubPhone">Card <b id="winCard">#000</b> &middot; show your phone to the host</div>
+    <div class="jsub" id="winSubPaper" style="display:none;font-size:clamp(14px,2.6cqw,34px);color:#fff">See the host to collect your prize</div>
+  </div>
+
+  <!-- BINGO: persistent join corner -->
+  <div class="tv-join hidden" id="tvJoinCorner">
+    <div class="qrmini"><canvas id="qrMini"></canvas></div>
+    <div><div class="tjl">Join now</div><div class="tjc" id="tvJoinCode">------</div></div>
+  </div>
+
+  <!-- HOLDING (other games) -->
+  <div class="layer hidden" id="tvHold">
+    <div class="heye">Get ready</div>
+    <div class="hbig">Starting <b id="holdGame">the game</b>&hellip;</div>
+    <div class="hsub">Your host is setting things up</div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
+<script src="/app/vp-qr.js"></script>
+<script src="/app/vp-sign.js"></script>
+<script src="/app/vp-channel.js"></script>
+<script src="/app/vp-room.js"></script>
+<script src="/app/vp-celebrate.js"></script>
+<script src="/app/vp-fit.js"></script>
+<script src="/app/vp-venuelogo.js"></script>
+<script src="/app/vp-venueurl.js"></script>
+<script>
+(function(){
+  "use strict";
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function escBr(s){ return esc(s).replace(/\r?\n/g,"<br>"); }
+  function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
+
+  var PATTERN_NAMES={one:"One line",two:"Two lines",full:"Full house",corners:"Four corners",top:"Top line",middle:"Middle line",bottom:"Bottom line"};
+  /* A venue's own pattern (24 Oct 2026) is the key "c:<id>", and every host message that names one carries
+     its name in pats. Kept here for the night; shown with textContent only, so a name is never markup. */
+  var PATS={};
+  function notePats(p){
+    if(!p || typeof p!=="object") return;
+    Object.keys(p).forEach(function(k){ if(/^c:[0-9a-fA-F-]{36}$/.test(k) && p[k] && typeof p[k].name==="string" && p[k].name) PATS[k]={ name:p[k].name.slice(0,30) }; });
+  }
+  function patName(k){ return PATTERN_NAMES[k] || (PATS[k] && PATS[k].name) || (/^c:/.test(String(k||"")) ? "Bingo" : (k||"")); }
+
+  var CODE_ALPHABET="ACDEFGHJKMNPQRSTUVWXYZ2345679";
+  var CODE_RE=/^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/;
+  function makeCode(){ var s=""; for(var i=0;i<6;i++) s+=CODE_ALPHABET.charAt(cryptoInt(CODE_ALPHABET.length)); return s; }
+
+  var SUPA_URL='https://ijkzgmdtwtgfkedqspxm.supabase.co';
+  var SUPA_ANON='sb_publishable_9v83FWCSt7Di-jkgTvsMJQ_f6lJPovb';
+
+  /* The venue in the address: ONE reader for every screen and the bingo phone, in
+     /app/vp-venueurl.js (venue=, slug=, any capitals, ?=slug, a bare ?slug after a setting like
+     ?unified=1, spaces and underscores as hyphens, a stray % no longer kills this script).
+     27 Sep 2026: Dean typed ?=hello-hotel and this screen quietly showed the last venue the
+     browser remembered. If the script failed to load, read no venue: memory takes over and
+     the console says why. */
+  function tvVenueSlug(){
+    if(!window.VPVenueURL){ try{ console.warn("VenuePlay: /app/vp-venueurl.js did not load; reading no venue from the address"); }catch(e){} return ""; }
+    return VPVenueURL.slug(window.location.search||"");
+  }
+  // Venue-derived code: identical to VP.venueCode() in vp-session.js (keep in lockstep). When
+  // the TV is opened as /tv?venue=<slug>, the host derives the SAME code from the same venue, so
+  // they share a channel with no pairing step; it also shows as the players' join code.
+  function venueCode(slug){
+    var s=String(slug||"").toLowerCase().replace(/[^a-z0-9]/g,""), h=2166136261>>>0;
+    for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619)>>>0; }
+    var A="ACDEFGHJKMNPQRSTUVWXYZ2345679", out="", x=h||1;
+    for(var j=0;j<6;j++){ x=(Math.imul(x,1103515245)+12345)>>>0; out+=A[x%A.length]; }
+    return out;
+  }
+  // Remember the venue on this screen so the slug only ever gets typed once. After that, plain
+  // venueplay.com.au/tv works (nobody has to peck a slug into a TV remote). ?venue= in the URL
+  // always wins and updates what's remembered.
+  /* A SLUG THAT TURNS OUT TO BE WRONG MUST NOT BE REMEMBERED FOR EVER.
+     The slug is still written the moment it appears in the URL, because a screen
+     has to survive booting with no network: a Fire Stick that comes up before the
+     wifi does, or a Worker mid-deploy, must still know which venue it is. Waiting
+     for confirmation before writing was tried and is worse, because an unreachable
+     Worker then means the screen forgets the venue entirely and drops to the
+     pairing panel in front of a room full of people.
+     What was missing is the other half. Type the-grand-hotel when the venue is
+     the-grand-hotel-4210 and the wrong slug used to stay saved for good: the "not
+     linked to an account" card came up, and reloading plain /tv read the bad slug
+     straight back, so the screen was dead for ever and looked like our fault.
+     CODE is derived from the slug too, so the six characters on the wall belonged
+     to a venue that does not exist and every punter who typed them got nothing.
+     So it is now forgotten as soon as the Worker has CONFIRMED there is no such
+     venue, which takes two strikes thirty seconds apart, the same protection that
+     stops one bad read throwing a card over a working screen. */
+  /* ?demo=1 IS DECIDED HERE, before anything reads a venue.
+
+     The demo block further down says in its own comment that no real venue is involved:
+     "no advertising or logo is ever fetched", "no join code a stranger could use". Both
+     were untrue on any browser that had ever opened a venue screen, because VENUE_SLUG
+     falls back to localStorage. Dean's own laptop ran the demo and put TEST ALPHA on the
+     wall, with that venue's real derived join code beside it.
+
+     On a sales page that is the wrong kind of wrong: a prospect would be shown either
+     nothing, or another pub's name, and a scannable code belonging to a real room. So a
+     demo forgets the browser entirely. Found 12 Sep 2026 by opening it. */
+  var VP_DEMO = /[?&]demo=1/.test(window.location.search || "");
+  var VENUE_SLUG=(function(){
+    if(VP_DEMO) return "";                       // hermetic: never inherit a real venue
+    var fromUrl=tvVenueSlug();
+    if(fromUrl){ rememberVenue(fromUrl); return fromUrl; }
+    // memory: fellBack says so in the console if the address held something it could not read.
+    // Its own try, so a warning that cannot run never costs the screen its remembered venue.
+    try{ var s=localStorage.getItem("vpTvVenue"); if(s){ try{ VPVenueURL.fellBack(window.location.search||"", s); }catch(e){} return s; } }catch(e){}
+    return "";
+  })();
+  function rememberVenue(slug){
+    try{ if(slug) localStorage.setItem("vpTvVenue", slug); }catch(e){}
+  }
+  function forgetVenue(){
+    /* Only ever called after validateVenue has said exists:false TWICE, thirty
+       seconds apart. A single bad read during a Worker deploy must not wipe a
+       working screen's memory. */
+    try{ localStorage.removeItem("vpTvVenue"); localStorage.removeItem("vpTvConfirmed"); }catch(e){}
+  }
+  // ---- stable code, persists across refreshes so the link works forever ----
+  var CODE=(function(){
+    if(VENUE_SLUG) return venueCode(VENUE_SLUG);   // venue link: derive the shared code, no pairing
+    try{ var c=localStorage.getItem("vpTvCode"); if(c && CODE_RE.test(c)) return c; }catch(e){}
+    var nc=makeCode(); try{ localStorage.setItem("vpTvCode", nc); }catch(e){} return nc;
+  })();
+
+  function siteOrigin(){
+    var o=window.location.origin;
+    if(o && o!=="null") return o;
+    return window.location.href.replace(/\/[^\/?#]*([?#].*)?$/,"");
+  }
+  var ORIGIN=siteOrigin();
+  var pairURL=ORIGIN+"/app?tv="+CODE;        // pairing link for the host iPad: stays the venue's own screen code
+  // The code PLAYERS use is the DB join_code, handed over by the host once it opens
+  // a session through the game Worker. Until then it defaults to this screen's code.
+  var joinCode=CODE;
+  var sessionId="";
+  function playURLFor(code){ return ORIGIN+"/play?room="+code; }
+  var playURL=playURLFor(joinCode);
+
+  // If this screen has a venue link, check it maps to a real venue. If not, the venue almost
+  // certainly mistyped the address, so we say so rather than sit forever on a dead channel.
+  var VP_GAME_API='https://venueplay-game.dean-tindale.workers.dev';
+  // Broadcast-message signing (migrations 38/49): fetch this venue's PUBLIC key and verify every
+  // host message. vpGate drops forged messages once the venue is in enforce mode; with the script
+  // absent or enforce off it simply delivers, so the TV behaves exactly as before.
+  if(window.VPSign && VENUE_SLUG){ VPSign.initReceiver(VP_GAME_API, VENUE_SLUG); }
+  function vpGate(payload, cb){ if(window.VPSign){ VPSign.gate(payload, cb); } else { cb(payload); } }
+  function pickerIsUp(){ var p=$("venuePick"); return !!(p && !p.classList.contains("hidden")); }
+  function showBadVenue(){
+    /* If we have already offered the list, the screen is not lost, it is waiting
+       to be told which venue it is. Throwing "not linked to an account" over the
+       top of that would be wrong and would hide the answer. */
+    if(pickerIsUp()) return;
+    var a=$("bvAddr"), box=$("bvIssue");
+    if(a && box){
+      if(VENUE_SLUG){ a.textContent=String(ORIGIN).replace(/^https?:\/\//,"")+"/tv?"+VENUE_SLUG; box.hidden=false; }
+      else box.hidden=true;   // nothing to show beats an empty box with a label on it
+    }
+    var el=$("badVenue"); if(el) el.classList.remove("hidden");
+  }
+
+  /* THE BARE NAME IS A FAMILY, NOT A TYPO.
+     Seven per cent of Australian venue names are shared, so new slugs carry the
+     postcode: the-grand-hotel-4210. Somebody setting a screen up types what is
+     over the door, the-grand-hotel, and that is a perfectly reasonable thing to
+     type. Until now it was treated as a dead link: "not linked to an account",
+     sixty seconds later, with nothing to do about it but guess a postcode on a
+     TV remote.
+     We already hold every Grand Hotel. So the bare name becomes a page that asks
+     which one this screen is in, and one press sets it - and because the chosen
+     slug is real, the screen then remembers it for good. */
+  var _pickAsked = false;
+  window.__T=function(m){ showMatches(m,""); };
+  /* HOW MANY TILES ACTUALLY FIT ON A WALL. Measured against the real worst case:
+     22 sits comfortably in four columns with nothing clipped and nothing to
+     scroll. Past that the card would have to scroll, and a Fire Stick remote
+     cannot scroll a box, so a tile below the fold is a venue that cannot be
+     chosen at all. */
+  var PICK_FITS = 24;
+
+  function pickCard(title, text, html, plain){
+    var box=$("venuePick"), list=$("vpList"), t=$("vpText"), h=$("vpTitle");
+    if(!box || !list) return;
+    /* The tile grid must be switched off for anything that is not tiles, or the
+       keypad digits and the postcode underscores get dealt out into its cells
+       one per column, which is exactly what happened the first time. */
+    list.classList.toggle("plain", !!plain);
+    if(h) h.textContent = title;
+    if(t) t.textContent = text;
+    list.innerHTML = html;
+    var bad=$("badVenue"); if(bad) bad.classList.add("hidden");   // it was never a dead link
+    box.classList.remove("hidden");
+  }
+
+  function renderVenues(m, state){
+    /* If every match has the same name - which is the whole reason this screen
+       is up - printing it on all of them is noise costing the space the tiles
+       need. Show it only when it distinguishes. */
+    var sameName = m.length > 1 && m.every(function(v){ return (v.name||"") === (m[0].name||""); });
+    return m.map(function(v){
+      /* Once a state has been chosen, printing it on all 31 tiles says nothing:
+         the postcode is the only thing left that tells them apart. */
+      var where=[v.postcode, state ? "" : v.state].filter(Boolean).join(" ");
+      return '<a href="/tv?venue=' + encodeURIComponent(v.slug) + '" data-slug="' + esc(v.slug) + '">' +
+             '<strong>' + esc(where || v.name) + '</strong>' +
+             (where && !sameName ? esc(v.name) : '') + '</a>';
+    }).join("");
+  }
+
+  /* ONCE THEY HAVE PICKED, TELL THEM WHAT THEIR LINK ACTUALLY IS.
+     Pressing a tile sets this screen and nothing else. The venue still does not
+     know their own slug, so the next screen they set up, or this one after the
+     browser data is cleared, lands them right back on this page. So the link goes
+     on the wall, as the biggest thing on it, and stays there long enough to be
+     copied down before the screen goes on with its night. */
+  var GO_AFTER = 45;
+  function showChosen(v){
+    var link = "venueplay.com.au/tv?venue=" + v.slug;
+    var where = [v.postcode, v.state].filter(Boolean).join(" ");
+    pickCard("This screen is set",
+      esc(v.name) + (where ? " \u00b7 " + where : ""),
+      '<div class="gotlink">' + esc(link) + '</div>' +
+      '<div class="gotnote">Write this down. It is the link for this screen, and for any ' +
+      'other screen in the venue.</div>' +
+      '<div class="keyacts"><a href="/tv?venue=' + encodeURIComponent(v.slug) + '">Start now</a></div>' +
+      '<div class="cdown"><div class="num" id="vpCount">' + GO_AFTER + '</div>' +
+      '<div class="bar"><i id="vpBar"></i></div></div>', true);
+    var left = GO_AFTER;
+    var t = setInterval(function(){
+      left--;
+      var c = $("vpCount"), b = $("vpBar");
+      if(c) c.textContent = left > 0 ? String(left) : "\u2026";
+      if(b) b.style.width = Math.max(0, (100 * left / GO_AFTER)) + "%";
+      if(left <= 0){ clearInterval(t); location.href = "/tv?venue=" + encodeURIComponent(v.slug); }
+    }, 1000);
+  }
+
+  /* ASK FOR THE POSTCODE WHEN THE LIST IS TOO BIG FOR A WALL.
+     There are 99 Royal Hotels, 75 Commercials and 45 Railways on the books, so a
+     common pub name is the normal case, not an edge one. Ninety-nine tiles cannot
+     be shown on a television and cannot be reached on a remote. Four digits
+     narrows it to one almost every time. */
+  /* OR JUST KEY IN THE CODE THE CONSOLE IS ALREADY SHOWING.
+     The host console shows this venue's six-character code. Somebody standing at
+     the television with the console in their hand can key that in and be done:
+     no name matching, no postcode, and it cannot land on the wrong pub, because
+     the code is a hash of one venue's slug. It is the shortest path we have when
+     the address typed was wrong, and it is the only one that works when the
+     venue's name is not what is written over the door.
+     Offered NEXT TO the postcode rather than instead of it: a screen being set up
+     before anyone has signed in to a console has no code to read. */
+  var CODE_ALPHA = "ACDEFGHJKMNPQRSTUVWXYZ2345679";
+  function askCode(back){
+    var typed = "", err = "";
+    function draw(){
+      var shown = (typed + "______").slice(0,6).split("").map(function(c){
+        return c === "_" ? '<span>\u00a0</span>' : c; }).join(" ");
+      var keys = CODE_ALPHA.split("").map(function(c){
+        return '<a href="#" data-ck="' + c + '">' + c + '</a>'; }).join("");
+      pickCard("Put in the screen code",
+        "It is the six characters on your host console, under the venue name.",
+        '<div class="pcode">' + shown + '</div>' +
+        '<div class="keys keys-wide">' + keys + '</div>' +
+        '<div class="keyacts">' +
+          '<a href="#" data-ck="del">Delete</a>' +
+          '<a href="#" data-ck="back">Go back</a>' +
+        '</div>' +
+        (err ? '<div class="gotnote" style="margin-top:1.2cqw;color:var(--pink)">' + esc(err) + '</div>' : ''),
+        true);
+      $("vpList").onclick = function(ev){
+        var a = ev.target && ev.target.closest ? ev.target.closest("a[data-ck]") : null;
+        if(!a) return;
+        ev.preventDefault();
+        var k = a.getAttribute("data-ck");
+        if(k === "back"){ back(); return; }
+        if(k === "del"){ typed = typed.slice(0,-1); err=""; draw(); return; }
+        if(typed.length < 6) typed += k;
+        err = "";
+        draw();
+        if(typed.length === 6){
+          var code = typed;
+          fetch(VP_GAME_API + "/venue?code=" + encodeURIComponent(code))
+            .then(function(r){ return r.ok ? r.json() : null; })
+            .then(function(d){
+              if(d && d.exists && d.slug){ showChosen({ slug: d.slug, name: d.name || d.slug, postcode: "", state: "" }); }
+              else { typed = ""; err = "No screen with that code. Check the console and try again."; draw(); }
+            })
+            .catch(function(){ typed=""; err="Could not check that code just now."; draw(); });
+        }
+      };
+    }
+    draw();
+  }
+
+  function showMatches(m, state){
+    if(!m.length) return false;
+    if(m.length === 1){ showChosen(m[0]); return true; }
+    /* TOO MANY TO PUT ON A WALL: ASK FOR THE CODE.
+       There were two ways out of this and only one of them was needed. The
+       postcode keypad narrowed a family of 99 Royal Hotels down to one, but the
+       six characters on the host console do the same job in one step, cannot
+       land on the wrong pub, and work even when the venue's registered name is
+       not what is written over the door. Dean's call, and the right one: two
+       ways to do the same thing is one more than anybody needs on a television. */
+    if(!state && m.length > PICK_FITS){ askCode(function(){ showMatches(m, state); }); return true; }
+    pickCard("Which one is this?",
+      "There " + (m.length === 1 ? "is 1 venue" : "are " + m.length + " venues") +
+      " by that name. Press the one this screen is in.",
+      renderVenues(m, state) +
+      '<a href="#" data-usecode="1" style="grid-column:1/-1;color:var(--muted)">' +
+      '<strong style="font-size:clamp(11px,1.5cqw,18px)">Not sure? Put in the screen code from your console</strong></a>');
+    var list = $("vpList");
+    list.onclick = function(ev){
+      if(ev.target && ev.target.closest && ev.target.closest("a[data-usecode]")){
+        ev.preventDefault(); askCode(function(){ showMatches(m, state); }); return;
+      }
+      var a = ev.target && ev.target.closest ? ev.target.closest("a[data-slug]") : null;
+      if(!a) return;
+      ev.preventDefault();
+      var v = m.filter(function(x){ return x.slug === a.getAttribute("data-slug"); })[0];
+      if(v) showChosen(v);
+    };
+    return true;
+  }
+
+  /* THE BARE NAME IS A FAMILY, NOT A TYPO.
+     Twenty-seven per cent of Australian venues share their name with another, so
+     new slugs carry the postcode: the-grand-hotel-4210. Somebody setting a screen
+     up types what is written over the door, the-grand-hotel, which is an entirely
+     reasonable thing to type. Until now that was treated as a dead link: "not
+     linked to an account", sixty seconds later, with nothing to do about it but
+     guess a postcode on a TV remote.
+     We already hold every one of those pubs, so the bare name becomes a page that
+     asks which one this screen is in. The chosen slug is real, so the screen then
+     remembers it for good. */
+  function askWhichVenue(){
+    if(_pickAsked) return; _pickAsked = true;      // one lookup, not one per poll
+    if(!VENUE_SLUG) return;
+    fetch(VP_GAME_API + "/venues/like?slug=" + encodeURIComponent(VENUE_SLUG))
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){ showMatches((d && d.matches) || [], ""); })
+      .catch(function(){ /* the error card on its own is still correct */ });
+  }
+  /* Recorded once, at parse time. Compared against the reload timestamp HQ sets, so
+     a reload asked for BEFORE this page loaded is not obeyed again on every poll -
+     which would be a screen that reloads for ever. */
+  var PAGE_LOADED_AT = Date.now();
+  /* WHICH PAGE IS THIS SCREEN ACTUALLY RUNNING?
+     On 5 Sep a screen reported healthy - it was polling us every thirty seconds -
+     and still would not obey a reload, because it was running a page from before the
+     reload code existed. From HQ those two look identical, and there was no way to
+     tell them apart without walking into the pub. The screen now says which build it
+     is, on the request it already makes, so "Screen ok" can mean "and it is current".
+     A screen that sends no version at all is, by that silence, an old one. */
+  var TV_BUILD = "2026-09-08a";
+  /* THE SLUG GOES WITH THE CODE. CODE is a hash of the slug, and since migration
+     68 the code a venue is issued can be changed by its owner; once it is, the
+     hash on its own no longer names this venue, and two exists:false answers in a
+     row are what puts "not linked to an account" over the advertising and forgets
+     the venue. The slug is what this screen actually knows. The Worker prefers
+     it and falls back to the code for screens that have not reloaded yet. */
+  /* The newest HQ command this page has already carried out, so one press is one
+     action even though the poll repeats every thirty seconds. */
+  var lastCommandAt = 0;
+  /* While this is in the future, the wall belongs to the venue's advertising and a
+     game announcement does not take it. Two minutes: long enough to be useful when
+     a console is stuck announcing a finished game, short enough that a real night
+     starting is not held up. */
+  var ADS_HOLD_MS = 2 * 60 * 1000;
+  var adsHoldUntil = 0;
+  function validateVenue(){
+    if(!VENUE_SLUG) return;   // no venue linked: the pair panel already prompts them
+    /* ASK TWICE, AND KEEP CHECKING. This ran once and, on a single exists:false, put a
+       full-screen "not linked to an account" card over the venue's advertising with no retry and
+       no way out but a physical reload. One bad read during a Worker deploy or a database blip
+       cost a venue their screen for the night. Now it has to say so twice, thirty seconds apart,
+       and it re-checks afterwards so the card clears itself the moment the venue really is
+       findable again. */
+    /* A TOOL IS NOT A SCREEN. /screen-check (and verify-live.py through it) loads this page with
+       ?probe=1 to prove a real venue's wall paints, and every poll it made wrote that venue's
+       heartbeat: on 25 Sep 2026 HQ showed Tugun's "TV" alive at 14:30 and 18:05 when the only
+       thing looking was our own release check. probe=1 reaches the Worker, which then answers
+       without writing (handleVenueLookup, isProbe). A real screen never has it in its address. */
+    var strikes=0, lastContentAt=null;
+    function ask(){
+      try{
+        fetch(VP_GAME_API+"/venue?code="+encodeURIComponent(CODE)+"&venue="+encodeURIComponent(VENUE_SLUG)+"&v="+encodeURIComponent(TV_BUILD)+(/[?&]probe=1(&|$)/.test(location.search)?"&probe=1":""))
+          .then(function(r){ return r.ok?r.json():null; }).then(function(d){
+          if(!d){ return; }                       // unreachable or old Worker: never false-alarm
+          if(d.exists===false){
+            strikes++;
+            if(strikes>=2){ showBadVenue(); forgetVenue(); }
+            return;
+          }
+          strikes=0;
+          /* CONFIRMED. Anything but exists:false means this address is a real venue, so the
+             "Setting up" wording has done its job. Rebuild is forced: the holding entry's
+             signature does not change when only its words do, so buildAds() would compare
+             equal and leave the old text on the wall. */
+          try{ localStorage.setItem("vpTvConfirmed", VENUE_SLUG); }catch(e){}
+          if(!VENUE_CONFIRMED){ VENUE_CONFIRMED=true; if(tvMode==="ads"){ buildAds(true); startAds(); } }
+          var el=$("badVenue"); if(el) el.classList.add("hidden");   // it resolved: take the card down
+          /* A SCREEN THAT WAS NOT LISTENING STILL CATCHES UP.
+             When an owner saves their slides, billing.html broadcasts screen_refresh and every
+             screen that is listening calls loadScreen() a second later. The screen that was OFF,
+             or asleep, or on a channel that had quietly dropped, hears nothing, and nothing
+             afterwards ever told it: this poll carries a reload instruction and an HQ command,
+             never a word about the content. So a venue that pulled a promo down would swear it
+             worked, because the screen they were standing in front of updated. Dean, 10 Sep
+             2026: "if someone adds a slide all the tvs get it?"
+             content_at is a stamp of when this venue's screen content last changed. The poll
+             already happens every thirty seconds, so noticing costs nothing at all. The Worker
+             does not send it YET (the exact addition is in the report), and a Worker that sends
+             nothing simply never triggers this, which is why the slow catch-up in
+             loadVenueScreen is there as well. First sight only remembers; a CHANGE acts.
+             loadScreen(), never a reload: a reload is a black frame on a wall. */
+          if(d.content_at){
+            if(lastContentAt !== null && d.content_at !== lastContentAt){
+              if(reloadVenueScreen) reloadVenueScreen();
+            }
+            lastContentAt = d.content_at;
+          }
+          /* A RELOAD THE SCREEN PULLS, RATHER THAN ONE IT HAS TO HEAR.
+             Every remote reload before this rode a realtime broadcast, and a screen
+             whose socket has dropped is exactly the screen that needs reloading and
+             cannot be told over the socket it lost. It looks completely healthy from
+             the room, because the advertising is built and timed locally and keeps
+             rotating. Dean has reset screens by hand more than once because of it.
+             This request already happens every thirty seconds over ordinary HTTPS,
+             so the answer carries a timestamp: newer than this page's own load and
+             the screen reloads itself. Works with a dead socket, a channel that
+             errored out, and signing enforced. Thirty seconds instead of instant is
+             the whole cost, and the broadcast still fires first when it can. */
+          /* A STATE PUSHED FROM HQ, not just a restart.
+             A reload puts the ads up and then a console still announcing an
+             abandoned game takes the wall straight back, which is why restarting a
+             screen stuck on a finished board never fixed it. "ads" puts the venue's
+             advertising up and HOLDS it, so the wall is the venue's again
+             immediately. The hold expires on its own, because a real game starting
+             two minutes later must not be blocked. */
+          if(d.command && d.command_at){
+            var cAt = Date.parse(d.command_at);
+            /* THREE CONDITIONS, AND THE FIRST IS THE ONE THAT MAKES 3AM WORK.
+               cAt <= now : a time in the FUTURE is a schedule, not an instruction.
+                            Without this a reload set for 3am fires the instant it
+                            is saved, which is the opposite of the point.
+               cAt > PAGE_LOADED_AT : the request must be newer than this page, or a
+                            reloaded screen carries out the same instruction again,
+                            for ever.
+               cAt > lastCommandAt : the poll repeats every thirty seconds, so one
+                            press has to be one action. */
+            if(isFinite(cAt) && cAt <= Date.now() && cAt > PAGE_LOADED_AT && cAt > lastCommandAt){
+              lastCommandAt = cAt;
+              if(d.command === "ads"){
+                adsHoldUntil = Date.now() + ADS_HOLD_MS;
+                try{ sessionStorage.setItem("vpTvReloadWhy","hq-ads"); }catch(e){}
+                enterAds();
+                return;
+              }
+              if(d.command === "reload"){
+                try{ sessionStorage.setItem("vpTvReloadWhy","hq-command"); }catch(e){}
+                if(window.__vpTvReload) window.__vpTvReload("hq-command"); else location.reload();
+                return;
+              }
+            }
+          }
+          if(d.reload_at){
+            var asked = Date.parse(d.reload_at);
+            if(isFinite(asked) && asked > PAGE_LOADED_AT){
+              try{ sessionStorage.setItem("vpTvReloadWhy","hq-asked"); }catch(e){}
+              if(window.__vpTvReload) window.__vpTvReload("hq-asked"); else location.reload();
+              return;
+            }
+          }
+        }).catch(function(){});
+      }catch(e){}
+    }
+    ask();
+    setInterval(ask, 30000);
+    /* AND WHEN THE WINDOW CLOSES, repaint. Without this the deadline is only consulted the
+       next time something happens to rebuild the ads, so a screen whose Worker never answered
+       would sit on "Setting up" indefinitely: the exact stuck state the deadline exists to
+       prevent. One timer, once. */
+    setTimeout(function(){
+      if(!VENUE_CONFIRMED && tvMode==="ads"){ buildAds(true); startAds(); }
+    }, VENUE_PENDING_MS + 500);
+  }
+
+  // show the pair QR whenever this screen is in ads mode and no host has connected
+  // THIS session. no permanent "paired forever" flag: a reload shows it again until
+  // a host reconnects this session.
+  var hostConnected=false;
+  // The venue's own timezone (from its postcode), loaded from the members-draw view below. Defaults to
+  // QLD until it loads. Used so "Tonight" is decided in the VENUE's time, not the TV device's timezone.
+  var VENUE_TZ="Australia/Brisbane";
+  // Today's weekday in the venue's time. Computed fresh each render so an always-on TV updates at midnight.
+  function todayAU(){ try{ return new Date().toLocaleDateString("en-AU",{weekday:"long",timeZone:VENUE_TZ}).toLowerCase(); }catch(e){ return new Date().toLocaleDateString("en-AU",{weekday:"long",timeZone:"Australia/Brisbane"}).toLowerCase(); } }
+  function drawPairQR(){ drawQR($("qrPair"), pairURL, 320); }
+  /* A venue-linked screen does not need pairing: its code comes from the slug and the console
+     connects on its own. But the console's pairing screen still says the code is on the TV, and
+     a venue that lands there (or is setting up a second screen) has to be able to read it. So:
+     no big panel, but always the small chip. */
+  /* A venue-linked screen shows NO code, ever. Hosts sign in with their phone number, so nothing
+     pairs by reading a code off the wall, and the venue's advertising keeps the whole screen.
+     The panel below is only for a screen with no venue link at all, which has no other way in. */
+  function showPairPanel(){
+    if(VENUE_SLUG){ hidePairPanel(); return; }
+    var p=$("pairPanel"); p.classList.remove("hidden"); $("pairCode").textContent=CODE; drawPairQR();
+  }
+  function hidePairPanel(){ $("pairPanel").classList.add("hidden"); }
+  function markHostConnected(){ hostConnected=true; hidePairPanel(); }
+
+  // ================= ADVERTISING LOOP =================
+  // No fake sample adverts: a venue only ever shows what it has actually set up (its uploaded
+  // slides, real members-draw jackpots and its own raffle). Everything below is populated from
+  // the venue's own screen config; it starts empty so nothing false is ever on the screen.
+  var ADS={
+    rotationSecs:7,
+    slides:[],
+    draws:[],
+    raffle:null
+  };
+  /* HAS THIS SCREEN'S ADDRESS BEEN CONFIRMED YET?
+
+     Dean, 12 Sep 2026: "so a tv screen where they enter the wrong address comes up with the
+     default trouble shooting for maybe 1 minute before it says not linked to an account".
+     Measured: twenty four seconds of "GAME ON HERE" before the card appears. To somebody
+     standing at a Fire Stick who has just mistyped their address, "Game on here" reads as
+     success, and plenty of them would walk away.
+
+     The twenty four seconds are on purpose and stay: validateVenue has to hear exists:false
+     TWICE, thirty seconds apart, so that one bad read during a Worker deploy cannot take a
+     live venue's wall down for the night. What changes is only what is on the screen while
+     nobody knows yet: not a claim that a game is on, but the address it is trying, which is
+     the one thing a person debugging a typo needs to see.
+
+     TIME BOXED, so it can never become a new way to be stuck. If the Worker is unreachable
+     the answer never arrives and the strike count never advances, so without a deadline a
+     venue with no slides yet would sit on "checking" for ever. After this many seconds the
+     screen goes back to the ordinary holding slide, which is the behaviour it has today. */
+  /* REMEMBERED ACROSS RELOADS. This was a plain `false`, so every page load started
+     unconfirmed, and an idle screen reloads itself every four hours by design. A venue with
+     no advertising therefore flashed "Setting up / Checking this screen's address" about
+     six times a day, on a screen that had been set up for weeks. Dean, 19 Sep 2026: "the
+     screen keeps reverting when the venue hasnt set up advertising".
+     Keyed to the SLUG, so typing a different venue's address still gets the honest
+     "Setting up" wording, and forgetVenue() clears it along with the venue. */
+  var VENUE_CONFIRMED = (function(){
+    try{ return !!VENUE_SLUG && localStorage.getItem("vpTvConfirmed") === VENUE_SLUG; }
+    catch(e){ return false; }
+  })();
+  var VENUE_PENDING_MS = 45000;
+  var VENUE_PENDING_UNTIL = Date.now() + VENUE_PENDING_MS;
+  function venuePending(){
+    return !!VENUE_SLUG && !VENUE_CONFIRMED && Date.now() < VENUE_PENDING_UNTIL;
+  }
+  /* THE VENUEPLAY MARK, once. It was drawn inline in #tvCorner and nowhere else, so the two
+     screens a venue sees when something is wrong had no logo on them at all and did not read
+     as our product. Same path, same pink, one place to change it. */
+  var VP_MARK_SVG = '<svg viewBox="0 0 26 30" fill="none" aria-hidden="true">'+
+    '<path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>';
+  var ACCENT={pink:"ad-b",gold:"ad-a",green:"ad-c",blue:"ad-d"};
+  var ACCENT_COLOR={pink:"#FF1F8E",gold:"#FFC24B",green:"#35D07F",blue:"#4C8DFF"};
+  function accentClass(a){ return ACCENT[a]||"ad-b"; }
+  function accentHex(a){ return ACCENT_COLOR[a]||"#FF1F8E"; }
+
+  /* Does this raffle routine have anything worth putting on the wall? Covers the current
+     {label,day,time} shape and the older {tag,head,sub} one. */
+  function hasRaffle(r){
+    if(!r || typeof r!=="object") return false;
+    var k=["label","day","time","tag","head","sub"];
+    for(var i=0;i<k.length;i++){ if(String(r[k[i]]||"").trim()) return true; }
+    return false;
+  }
+  function todayStr(){ var d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+  function slideVisible(s){
+    var t=todayStr();
+    if(s.starts && t < s.starts) return false;   // not started yet
+    if(s.ends && t > s.ends) return false;         // finished
+    return true;
+  }
+  function loopEntries(){
+    var arr=[];
+    // Guard PER SLIDE. A single null or malformed row in the venue's JSON must cost that one
+    // slide, not the whole rotation: throwing here took every good slide down with it.
+    var slides=Array.isArray(ADS.slides)?ADS.slides:[];
+    slides.forEach(function(s){
+      try{ if(s && typeof s==="object" && slideVisible(s) && !(s.image_url && BAD_IMG[String(s.image_url)])) arr.push({type:"slide",slide:s}); }catch(e){}
+    });
+    if(Array.isArray(ADS.draws) && ADS.draws.length) arr.push({type:"auto-draws"});
+    if(ADS.raffle) arr.push({type:"auto-raffle"});
+    if(!arr.length) arr.push({type:"holding"});   // never leave the screen blank/black
+    return arr;
+  }
+  function entryClass(e){
+    if(e.type==="auto-draws") return "ad-e";
+    if(e.type==="auto-raffle") return "ad-b";
+    /* The ordinary holding slide ("Game on here") keeps the gold card: it is a cheerful
+       message and gold is ours. The "Setting up" one does not, because it sits under a pink
+       mark and the two together looked like two different products. Dean: "very off brand". */
+    if(e.type==="holding") return venuePending() ? "ad-b" : "ad-a";
+    return accentClass(e.slide.accent);
+  }
+  function entryInner(e){
+    if(e.type==="auto-draws"){
+      var rows="", wd=todayAU();   // recompute the day at render so it flips correctly at midnight
+      ADS.draws.forEach(function(d){
+        var tn=(d.day||"").toLowerCase()===wd;
+        rows+='<div class="wkrow'+(tn?" tonight":"")+'">'+
+              '<span class="wkday">'+esc(d.day)+(tn?'<span class="tn">Tonight</span>':'')+'</span>'+
+              '<span class="wkjack">'+esc(d.jackpot)+'</span>'+
+              '<span class="wktime">'+esc(d.time)+'</span></div>';
+      });
+      return '<div class="adtag">This week’s members draws</div><div class="adweek">'+rows+'</div>';
+    }
+    if(e.type==="auto-raffle"){
+      var r=ADS.raffle||{};
+      // Raffle "routine" set on the Account page: {label, day, time}. (Older screens used
+      // {tag, head, sub}; fall back to those so an un-migrated venue still renders.)
+      if(r.label || r.day || r.time){
+        var when=[r.day, r.time].filter(Boolean).join(" ");
+        return '<div class="adtag" style="color:'+accentHex("pink")+'">'+(when?("Drawn "+esc(when)):"Tonight")+'</div>'+
+               '<div class="adbig">'+escBr(r.label||"Meat Raffle")+'</div>'+
+               '<div class="adsub">Tickets at the bar</div>';
+      }
+      return '<div class="adtag">'+esc(r.tag||"")+'</div><div class="adbig">'+escBr(r.head||"")+'</div><div class="adsub">'+esc(r.sub||"")+'</div>';
+    }
+    if(e.type==="holding"){   // shown when a venue has no ads/draws/raffle yet, so the screen is never blank
+      /* Nobody has confirmed this address yet, so do not tell the room a game is on. Show
+         what it is trying instead: a person who has just typed it in can read their own typo
+         off the wall, which is the whole difficulty of setting one of these up on a remote. */
+      if(venuePending()){
+        /* THE MARK, NOT A GOLD WORD. Dean, 12 Sep 2026: "it comes up with a yellow venueplay
+           wording. very off brand". It was: accentHex("gold") on a page whose brand colour is
+           pink, and a word where every other VenuePlay surface shows the play triangle. This
+           is the first thing a venue sees while setting a screen up, so it should look like
+           the product they bought. Same mark and same pink as #tvCorner. */
+        return '<div class="admark">' + VP_MARK_SVG + '<span>VenuePlay</span></div>'+
+               '<div class="adbig">Setting up</div>'+
+               '<div class="adsub">Checking this screen&rsquo;s address&hellip;</div>'+
+               '<div class="adhelp">'+esc(String(ORIGIN).replace(/^https?:\/\//,""))+'/tv?'+esc(VENUE_SLUG)+'</div>';
+      }
+      // The help line covers the "our issue" case: if a set-up venue's screen is sitting here,
+      // their promos/game did not load, so point them to support rather than only cheering.
+      return '<div class="adtag" style="color:'+accentHex("pink")+'">VenuePlay</div>'+
+             '<div class="adbig">Game on here</div>'+
+             '<div class="adsub">Grab your phone, the fun starts soon</div>'+
+             '<div class="adhelp">Screen not showing your promos or game? Email hello@venueplay.com.au</div>';
+    }
+    var s=e.slide;
+    // Venue-uploaded image slide fills the screen; built-in sample slides are still text.
+    // Whitelist, not a blacklist. Stripping ( ) ' ; after encodeURI looked sufficient and was not:
+    // the value lands in an HTML ATTRIBUTE, so the parser decodes entities afterwards, and numeric
+    // references like &#41;&#59; do not even need their semicolons. That rebuilt the stripped
+    // characters and let a venue slide inject arbitrary CSS, including a full-screen black overlay
+    // that the watchdog would happily call healthy. Only a plain http(s) URL gets through now.
+    if(s.image_url){
+      var u=String(s.image_url);
+      if(/^https?:\/\/[A-Za-z0-9._~:\/?#@!$&*+,;=%-]+$/.test(u) && u.indexOf("&#")===-1){
+        probeImg(u);
+        return '<div class="adimg" style="background-image:url('+encodeURI(u).replace(/[()';]/g,"")+')"></div>';
+      }
+      return '';   // unusable URL: show nothing rather than trust it
+    }
+    // Every field is venue-authored text, so every field gets escaped. head was already escaped and
+    // tag/sub were not, which is the kind of gap that only shows up once someone types an apostrophe
+    // or a "<" into a drink special and the slide renders as garbage (or worse) on the wall.
+    return (s.tag?'<div class="adtag" style="color:'+accentHex(s.accent)+'">'+esc(s.tag)+'</div>':"")+
+           '<div class="adbig">'+escBr(s.head)+'</div>'+
+           (s.sub?'<div class="adsub">'+escBr(s.sub)+'</div>':"");
+  }
+  /* A SLIDE WHOSE PICTURE WILL NOT LOAD IS DROPPED FROM THE ROTATION. A CSS background has no error
+     event, so a deleted or mistyped image painted a near-black wall for its whole turn, every
+     other slide, and the watchdog called it healthy (break test, 14 Oct 2026). Each picture is
+     loaded once on the side; one that fails is left out and the slides are rebuilt without it. */
+  var BAD_IMG={}, _probed={};
+  function probeImg(u){
+    if(_probed[u]) return; _probed[u]=1;
+    try{
+      var im=new Image();
+      im.onerror=function(){
+        BAD_IMG[u]=1;
+        try{ buildAds(true); }catch(e){}
+        setTimeout(function(){ delete BAD_IMG[u]; delete _probed[u]; }, 600000);   // a wifi blip is retried in 10 minutes
+      };
+      im.src=u;
+    }catch(e){}
+  }
+  var adIdx=0, adTimer=null, adBuilt=false, adFadeTimer=null, adsSig=null;
+  /* WHAT THE ROTATION WOULD LOOK LIKE, AS ONE STRING.
+     Built from the same two functions that render the slides, so if this matches, the DOM
+     buildAds would produce is identical to the DOM already on the wall and there is nothing
+     to do. It picks up a changed slide list, a changed raffle, changed draw jackpots and the
+     day rolling over, because entryInner() recomputes the weekday every time it runs. */
+  function adsSignature(entries){
+    var parts=[];
+    for(var i=0;i<entries.length;i++){
+      var c="?", h="?";
+      try{ c=entryClass(entries[i]); }catch(e){}
+      try{ h=entryInner(entries[i]); }catch(e){}
+      // Length prefixed, so two different slide lists can never join up into the same string.
+      parts.push(c.length+":"+c+" "+h.length+":"+h);
+    }
+    return entries.length+"/"+parts.join(" ");
+  }
+  /* Per-slide try/catch, and never finish with an empty container. One null row in the venue's
+     slides JSON used to throw out of here AFTER innerHTML="" had already run, so the rotation was
+     wiped, the watchdog saw no slides, its repair called this same failing code, and the screen
+     reloaded every three minutes forever on identical data. One bad row must cost one slide.
+
+     A REBUILD MUST NEVER EMPTY WHAT IS ON THE WALL, AND MOSTLY MUST NOT HAPPEN AT ALL.
+     This used to clear #tvAds and then re-append every slide, so the container passed through
+     a state with nothing in it. That is the flash Dean saw watching the wall on 10 Sep, and it
+     is worse than a flash: an empty #tvAds is exactly what screenIsAlive() reads as a dead
+     screen, so every rebuild was a moment when the watchdog could decide a perfectly healthy
+     wall was broken. Now the new slides are built in a DETACHED container and swapped in
+     complete, so there is never a frame with nothing in it.
+     And most of the callers are not changes at all: waking the tab, the venue-screen poll and
+     the watchdog's cheap repair all landed here with byte-identical content. If the signature
+     matches what is already up, the wall is left alone entirely.
+     force: rebuild even on a match. Only the watchdog uses it, because its whole reason for
+     calling is that it does not trust the DOM it can see.
+     Returns true if the slides were actually replaced. */
+  function buildAds(force){
+    var host=$("tvAds"); if(!host) return false;
+    var entries=[];
+    try{ entries=loopEntries(); }catch(e){ entries=[{type:"holding"}]; }
+    var sig=adsSignature(entries);
+    if(!force && adsSig!==null && sig===adsSig && host.querySelector(".ad")){
+      adBuilt=true;       // what is on screen is already right: do not touch it
+      return false;
+    }
+    var pending=document.createElement("div"), built=0;
+    entries.forEach(function(e){
+      try{
+        var div=document.createElement("div"); div.className="layer ad "+entryClass(e);
+        div.innerHTML=entryInner(e); pending.appendChild(div); built++;
+      }catch(err){}
+    });
+    if(!built){
+      var d=document.createElement("div"); d.className="layer ad ad-a";
+      d.innerHTML=entryInner({type:"holding"}); pending.appendChild(d);
+      sig=null;   // whatever went wrong, do not remember the fallback as the venue's real slides
+    }
+    /* The swap. New slides in first, old ones out after, so the container is never empty even
+       for an instant. replaceChildren() is not on every Fire Stick browser, so it is done by
+       hand. The list of old nodes is taken BEFORE appending, or it would include the new ones. */
+    var old=[], i;
+    for(i=0;i<host.childNodes.length;i++) old.push(host.childNodes[i]);
+    while(pending.firstChild) host.appendChild(pending.firstChild);
+    for(i=0;i<old.length;i++){ try{ host.removeChild(old[i]); }catch(e){} }
+    adBuilt=true; adsSig=sig;
+    return true;
+  }
+  function stopAds(){
+    if(adTimer){ clearTimeout(adTimer); clearInterval(adTimer); adTimer=null; }
+    /* The handover timer too. Without this, a rebuild or a game starting could
+       leave a pending callback that strips "show" off a slide belonging to a
+       rotation that no longer exists, and the wall goes to the floor colour. */
+    if(adFadeTimer){ clearTimeout(adFadeTimer); adFadeTimer=null; }
+  }
+  function startAds(){
+    if(!adBuilt) buildAds();
+    stopAds();
+    var slides=$("tvAds").querySelectorAll(".ad");
+    if(!slides.length) return;
+    var entries=loopEntries(); // same order buildAds used, so seconds line up per slide
+    /* KEEP THE HOST'S PLACE IN THE ROTATION.
+       This used to set adIdx=0 every single time it ran, and it runs on plenty of things that
+       are not the start of anything: bringing the tab forward, the venue-screen poll, the day
+       rolling over, the watchdog's repair. So a wall three slides into its loop jumped back to
+       slide one, over and over. Dean, 10 Sep 2026: "the tv also seems to start on the Saturday
+       slide everytime i switch to that tab."
+       If the slide that is lit is still one of these slides, carry on from it. A genuinely
+       different set has just been swapped in with nothing lit, so that starts at the top. */
+    function secsFor(i){
+      var e=entries[i];
+      var sec=(e && e.type==="slide" && e.slide && e.slide.seconds) ? e.slide.seconds : ADS.rotationSecs;
+      return Math.max(2, sec||7)*1000;
+    }
+    /* EVERY SCREEN IN THE VENUE ON THE SAME SLIDE.
+       Each wall used to count its own loop from the moment it loaded, so two TVs switched on a
+       minute apart sat on different slides all night. Dean, Tugun, 24 Oct 2026: "the TVs were
+       running on a different slide each". The slide is now read off the clock: the loop is laid
+       end to end from midnight UTC, so every wall with the same slides and a set clock lands on
+       the same one, and a wall that is brought forward or rebuilt rejoins the others instead of
+       starting again at the top. */
+    var durs=[]; for(var di=0; di<slides.length; di++) durs.push(secsFor(di));
+    /* THE CLOCK, READABLE FROM OUTSIDE (27 Oct 2026). /screen-check asks this after it wakes the
+       wall, so it can tell a legitimate clock-synced advance (Wellshot, 10 s slides: the boundary
+       fell inside its 1.5 s window) from the restart to slide one it exists to catch. The same
+       durs and the same adSlotAt the wall itself uses: one answer, not a second copy of it. */
+    if(typeof window!=="undefined") window.__vpAdClock = { durs: durs.slice(), slot: function(){ return adSlotAt(Date.now(), durs); } };   // the guard is for the jsc suites that lift startAds
+    var at=adSlotAt(Date.now(), durs);
+    var cur=at.i;
+    adIdx=cur;
+    // The one on screen starts on top of the stack and stays there, so a rebuild or a
+    // resume cannot leave a later slide painting over the visible one. See advance().
+    slides.forEach(function(s,i){ s.classList.toggle("show", i===cur); s.style.zIndex = (i===cur ? "2" : "1"); });
+    if(slides.length<2) return;
+    /* CROSS-FADE, not fade-out-then-in.
+       Both slides used to transition at the same moment: the outgoing fell from
+       1 to 0 while the incoming climbed from 0 to 1, so halfway through the swap
+       BOTH sat at about half opacity and the whole wall dipped towards the floor
+       colour. Every seven seconds. All night, on a screen in a pub.
+
+       So bring the new one up OVER the old one, which stays fully opaque
+       underneath, and only take the old one away once the new one has arrived. */
+    var FADE_MS = 800;   // matches the .8s transition on .ad
+    function advance(){
+      var now = adSlotAt(Date.now(), durs);
+      if(now.i === adIdx){ adTimer = setTimeout(advance, Math.max(250, now.left)); return; }   // woke a little early: wait for the boundary
+      var out = slides[adIdx];
+      adIdx = now.i;
+      var into = slides[adIdx];
+      /* THE STACK IS HELD, NOT BORROWED FOR THE SWAP.
+         This used to give the incoming slide z-index 2 and then CLEAR it once the
+         handover was done. Clearing it hands the stacking order back to DOM order,
+         and DOM order is wrong for exactly one transition in the loop: the wrap from
+         the last slide to the first. The last slide is later in the document, so with
+         both back on auto it paints ON TOP of the first, and it is still fading out
+         for its full 0.8s. So every lap, and only on the lap, the members draw card
+         reappeared over the top of the Saturday slide and faded away again. Dean, on
+         the wall: "it flashes on every loop and its just as it goes onto saturday
+         looks like flashing into members draw".
+         So the slide that is showing KEEPS the top of the stack and the one leaving is
+         put underneath it. Nothing is ever handed back to DOM order. */
+      out.style.zIndex = "1";
+      into.style.zIndex = "2";
+      into.classList.add("show");
+      if(adFadeTimer) clearTimeout(adFadeTimer);
+      adFadeTimer = setTimeout(function(){
+        adFadeTimer = null;
+        if(out !== into) out.classList.remove("show");
+      }, FADE_MS + 60);
+      adTimer = setTimeout(advance, Math.max(250, adSlotAt(Date.now(), durs).left));
+    }
+    adTimer=setTimeout(advance, Math.max(250, at.left));
+  }
+  /* Which slide the clock says, and how long until the next one. durs = each slide's ms. */
+  function adSlotAt(nowMs, durs){
+    var total=0, i; for(i=0;i<durs.length;i++) total+=durs[i];
+    if(!(total>0)) return { i:0, left:7000 };
+    var p=((nowMs % total) + total) % total;
+    for(i=0;i<durs.length;i++){ if(p < durs[i]) return { i:i, left:durs[i]-p }; p-=durs[i]; }
+    return { i:0, left:durs[0] };
+  }
+
+  // ================= BINGO SCREEN =================
+  var state={ phase:"lobby", pattern:"one", prize:"the prize", called:[], winner:null, claimName:"Player", claimCount:1, celebrated:false,
+              caller:false };   // a real-balls night (caller mode): paper books, so no join code, QR or "scan" on this wall
+  /* THE CONSOLE SAYS WHETHER TONIGHT IS REAL BALLS, on its mode, started and state messages (17 Oct
+     2026). Only a yes or no is believed, so a console from before this sends nothing and changes
+     nothing; going back to the ads forgets it, and the console says it again with the next game. */
+  /* Written inline where each message lands (no helper), because the screen suites lift those
+     functions out of this page one by one. */
+
+  function buildBoard(){
+    var wrap=$("tvBoard"); wrap.innerHTML="";
+    for(var col=0;col<9;col++){
+      var bc=document.createElement("div"); bc.className="bcol";
+      for(var k=0;k<10;k++){ var n=col*10+k+1; var cell=document.createElement("div"); cell.className="bnum"; cell.id="tvb-"+n; cell.textContent=n; bc.appendChild(cell); }
+      wrap.appendChild(bc);
+    }
+  }
+  function calledSet(){ var s={}; for(var i=0;i<state.called.length;i++) s[state.called[i]]=true; return s; }
+  function updateBoard(){
+    var cur=state.called.length ? state.called[state.called.length-1] : 0;
+    var set=calledSet();
+    for(var n=1;n<=90;n++){ var el=$("tvb-"+n); if(el) el.className="bnum"+(set[n]?" lit":"")+(n===cur?" cur":""); }
+  }
+
+  var BLAYERS=["tvLobby","tvRun","tvClaim","tvWin","tvHold"];
+  function hideBingoLayers(){
+    for(var i=0;i<BLAYERS.length;i++){ $(BLAYERS[i]).classList.add("hidden"); }
+    $("tvJoinCorner").classList.add("hidden");
+  }
+  function showBingoLayer(which){
+    for(var i=0;i<BLAYERS.length;i++){ $(BLAYERS[i]).classList.toggle("hidden", BLAYERS[i]!==which); }
+    $("tvJoinCorner").classList.toggle("hidden", which!=="tvRun");
+  }
+
+  // Apply the real DB join code the host handed us: update the on-screen code and
+  // redraw the player QR/codes to point at /play?room=<join_code>.
+  function setJoinCode(code){
+    if(code && CODE_RE.test(code)){ joinCode=code; playURL=playURLFor(code); }
+    $("lobbyCode").textContent=joinCode;
+    $("tvJoinCode").textContent=joinCode;
+    drawQR($("qrBig"), playURL, 720);
+    drawQR($("qrMini"), playURL, 240);
+  }
+  function renderLobby(){
+    if(state.caller) return;   // never drawn on a real-balls night: the lobby there is the board (applyBingo)
+    $("lobbyCode").textContent=joinCode;
+    $("tvJoinCode").textContent=joinCode;
+    drawQR($("qrBig"), playURL, 720);   // draw now the lobby is actually visible (not blank)
+    drawQR($("qrMini"), playURL, 240);
+  }
+  // Big-ball reveal: pop the new number up large in the centre, hold, then shrink it away
+  // toward the board (which updates behind it). Only during a live bingo game.
+  var revealT1=null, revealT2=null, ballInFlight=false, inFlightNum=0;
+  /* The handover. The number that was resting fades out just as the travelling one lands on top
+     of it, so the new ball visibly takes the old one's place instead of the old one vanishing
+     the instant it was called. */
+  function landBall(n){
+    ballInFlight=false; inFlightNum=0;
+    var el=document.querySelector("#tvRun .cbnum");
+    if(!el){ return; }
+    el.style.transition="opacity .18s ease";
+    el.style.opacity="0";
+    setTimeout(function(){
+      el.textContent=n;
+      el.style.opacity="1";
+      renderRun();                    // the two previous balls on the left move along now, not before
+    }, 180);
+  }
+  /* STOP A REVEAL DEAD, wherever the screen is going next.
+     #ballReveal sits at z-index 15, above the ads at 1, and none of the mode switches
+     cleared its timers or hid it. So a game that ended, or a screen sent to the ads, in
+     the two seconds a ball spends in the air left a bingo ball painted over the venue's
+     advertising, and the timer then fired into a screen that had moved on. */
+  function stopReveal(){
+    if(revealT1) clearTimeout(revealT1);
+    if(revealT2) clearTimeout(revealT2);
+    revealT1=revealT2=null;
+    ballInFlight=false; inFlightNum=0;
+    var el=document.getElementById("ballReveal"), b=document.getElementById("brBall");
+    if(el){ el.classList.add("hidden"); el.classList.remove("live"); }
+    if(b){ b.style.transition="none"; b.style.transform=""; b.style.opacity=""; b.style.animation="none"; }
+  }
+  /* The calls a room knows. Only these: a made-up call for every number is noise. */
+  function bingoCall(n){
+    return ({1:"Kelly's eye",2:"One little duck",7:"Lucky seven",8:"Garden gate",10:"Uncle Ben",11:"Legs eleven",
+      13:"Unlucky for some",22:"Two little ducks",25:"Duck and dive",44:"Droopy drawers",55:"All the fives",
+      66:"Clickety click",77:"Sunset strip",88:"Two fat ladies",90:"Top of the shop"})[n] || "";
+  }
+  function revealBall(n){
+    n=parseInt(n,10); if(!n || tvMode!=="bingo") return;
+    var el=$("ballReveal"), b=$("brBall"); if(!el||!b) return;
+    /* A BALL THAT ARRIVES WHILE ONE IS STILL FLYING.
+       The whole reveal takes 2.1 seconds: 1.3 to pop and hold, then 0.8 to glide onto the
+       resting ball. That was comfortably shorter than a ball took to arrive, so two never
+       overlapped. Migration 76 cut calling a ball from six database round trips to one and
+       Dean's next tap now lands inside the animation, which abandoned the first reveal
+       mid-flight: its landBall() never ran, so the resting ball kept an OLDER number and the
+       new ball glided down on top of it. Dean, watching it: "the old number kinda flashes
+       over the new".
+       So finish the one in flight INSTANTLY before starting the next. No animation, because
+       there is no time for one and the room is looking at the new number, not the old. */
+    if(ballInFlight && inFlightNum && inFlightNum !== n){
+      if(revealT1) clearTimeout(revealT1);
+      if(revealT2) clearTimeout(revealT2);
+      var restNum=document.querySelector("#tvRun .cbnum");
+      if(restNum){ restNum.style.transition="none"; restNum.textContent=inFlightNum; restNum.style.opacity="1"; }
+      el.classList.add("hidden"); b.style.transition="none"; b.style.transform=""; b.style.opacity="";
+      /* NO renderRun() HERE, and this is subtle enough to be worth the words.
+         renderRun() with ballInFlight false writes the LAST CALLED number into the resting
+         ball, and by now that is the ball still in the air, so it undid the line above and
+         showed the room the number before it had flown. The screen-level suite caught it;
+         the regex suite I wrote for this an hour earlier did not, because the fault is in
+         what the two lines do TOGETHER. The strip and the count catch up when this ball
+         lands. */
+    }
+    ballInFlight=true; inFlightNum=n;
+    b.textContent=n; el.classList.remove("hidden");
+    var callEl=$("brCall"); if(callEl) callEl.textContent=bingoCall(n);
+    el.classList.remove("live"); void el.offsetWidth; el.classList.add("live");   // restart the dim, rings and call
+    b.style.transition="none"; b.style.transform=""; b.style.opacity="";
+    b.style.animation="none"; void b.offsetWidth;   // restart the animation
+    b.style.animation="brpop .8s cubic-bezier(.2,.9,.3,1.1) forwards";
+    if(revealT1) clearTimeout(revealT1); if(revealT2) clearTimeout(revealT2);
+    revealT1=setTimeout(function(){
+      // Settle the big ball EXACTLY onto the resting called-number ball. We measure both live so
+      // it lands right at any TV size/aspect, instead of a fixed guess that drifts off into space.
+      var rest=document.querySelector("#tvRun .curball");
+      el.classList.remove("live");                     // the room comes back up as the ball glides home
+      b.style.animation="none"; void b.offsetWidth;   // freeze at full size, then transition onto the resting ball
+      if(rest){
+        var rb=rest.getBoundingClientRect(), bb=b.getBoundingClientRect();
+        if(bb.width && rb.width){
+          var dx=(rb.left+rb.width/2)-(bb.left+bb.width/2);
+          var dy=(rb.top+rb.height/2)-(bb.top+bb.height/2);
+          var sc=rb.width/bb.width;
+          b.style.transition="transform .8s cubic-bezier(.4,0,.2,1)";   // travels FULLY OPAQUE, no fade
+          void b.offsetWidth;
+          b.style.transform="translate("+dx+"px,"+dy+"px) scale("+sc+")";
+          // When it lands it sits exactly on the identical resting ball; we hide it then, so the big
+          // ball simply "becomes" the called-number ball - no see-through mid-flight.
+          revealT2=setTimeout(function(){
+            landBall(n);                                   // the resting ball becomes the new number
+            el.classList.add("hidden"); b.style.transition="none"; b.style.transform=""; b.style.opacity="";
+          }, 820);
+          return;
+        }
+      } else {
+        b.style.transition="opacity .6s ease"; void b.offsetWidth; b.style.opacity="0";
+      }
+      revealT2=setTimeout(function(){
+        landBall(n);
+        el.classList.add("hidden"); b.style.transition="none"; b.style.transform=""; b.style.opacity="";
+      }, 850);
+    }, 1300);
+  }
+  /* THE RESTING BALL BEFORE THE FIRST CALL (Dean, 21 Oct 2026: the two dashes "--" looked ugly). An
+     empty glowing ball that says READY, in the ball's own type at a smaller size, until a number lands.
+     One function for both paths (a ball in flight or not), so the dashes cannot come back on one. */
+  function restBall(n){
+    var el=$("cbNum"); if(!el) return;
+    if(n){ el.textContent=n; el.classList.remove("ready"); }
+    else { el.textContent="Ready"; el.classList.add("ready"); }
+  }
+  function renderRun(){
+    var n=state.called.length ? state.called[state.called.length-1] : 0;
+    // While a ball is in flight the resting ball keeps showing the number it is about to
+    // replace. Setting it to the new number here meant the destination already read 47 before
+    // the 47 had finished travelling, so there was nothing to overtake, just a duplicate.
+    if(!ballInFlight){
+      restBall(n);
+    } else {
+      var prevN = state.called.length>1 ? state.called[state.called.length-2] : 0;
+      restBall(prevN);
+    }
+    var prev=$("tvPrev"); prev.innerHTML="";
+    // the five before the current one, newest first
+    for(var i=2;i<=6;i++){ var pi=state.called.length-i; if(pi>=0){ var d=document.createElement("div"); d.className="prevball"; d.textContent=state.called[pi]; prev.appendChild(d); } }
+    $("tvBallCount").innerHTML="<b>"+state.called.length+"</b> of 90 called";
+    $("tvPattern").textContent=patName(state.pattern);
+    $("tvPrize").textContent=state.prize;
+    updateBoard();
+  }
+  // "Ann", "Ann and Bob", "Ann, Bob and Cath"
+  function joinNames(list){
+    var n=(list||[]).filter(Boolean);
+    if(!n.length) return "Player";
+    if(n.length===1) return n[0];
+    return n.slice(0,-1).join(", ")+" and "+n[n.length-1];
+  }
+  function renderClaim(){
+    $("claimName").textContent=state.claimName||"Player";
+    $("claimBig").textContent=(state.claimCount>1) ? "TIE?" : "BINGO?";
+    /* A real-balls night (caller mode) has no phone: the name line is the pattern being claimed
+       ("One line") and the host is looking at a paper book (21 Oct 2026). */
+    $("claimSub").textContent = state.claimPaper ? "The host is checking the book\u2026" : "Checking the card against the called numbers\u2026";
+  }
+  function renderWin(){
+    var m=state.winner||{};
+    /* A REAL-BALLS WIN (caller mode). Nobody's phone holds the ticket, so there is no name and no
+       card number: the stage and its prize, and the paper book goes to the host to be checked. */
+    var paper=!!m.caller;
+    $("winSubPhone").style.display = paper ? "none" : "";
+    $("winSubPaper").style.display = paper ? "" : "none";
+    if(paper){
+      $("winName").textContent=patName(m.pattern)||"Bingo";
+      $("winsLabel").textContent="Prize";
+      $("winPrizeVal").textContent=(typeof m.prize==="string" && m.prize) ? m.prize : state.prize;
+      return;
+    }
+    var ws=(m.winners&&m.winners.length) ? m.winners : [{ name:m.name, cardNo:m.cardNo }];
+    $("winName").textContent=joinNames(ws.map(function(w){ return w.name; }));
+    $("winsLabel").textContent = ws.length>1 ? "Share" : "Wins";
+    // The stage prize rides on the winner message (hosts built after 9 Sep 2026). An older host
+    // sends none, so the game prize stands in, exactly as before.
+    $("winPrizeVal").textContent=(typeof m.prize==="string" && m.prize) ? m.prize : state.prize;
+    // One card number reads as one winner. With a tie, list them all.
+    $("winCard").textContent = ws.length>1
+      ? ws.map(function(w){ return "#"+(w.cardNo||"000"); }).join(" &middot; ").replace(/&middot;/g,"·")
+      : ("#"+(ws[0].cardNo||"000"));
+  }
+
+  // ---- confetti ----
+  var celebrateTimer=null;
+  function stopCelebrate(){ if(celebrateTimer){ clearInterval(celebrateTimer); celebrateTimer=null; } $("winBurst").classList.remove("show"); }
+  function clearConfetti(){ var c=$("tv").querySelectorAll(".confetti"); for(var i=0;i<c.length;i++){ if(c[i].parentNode) c[i].parentNode.removeChild(c[i]); } }
+  function spawnBurst(count){
+    /* One copy, in /app/vp-celebrate.js. This existed five times in two
+       versions, and the entire difference was data: this screen's colours
+       and how long a piece of confetti lives. Both are passed, so nothing
+       about how this screen looks has changed. cryptoInt goes with them
+       because these pages draw from a CSPRNG, and a shared helper has no
+       business quietly downgrading that. */
+    try{ if(window.VPCelebrate) VPCelebrate.burst($("tv"), count, {
+      colours: ["#FF1F8E","#FFC24B","#35D07F","#FFFFFF","#C70F69"], lifeMs: 3800, rand: cryptoInt }); }catch(e){}
+  }
+  // ---- win fanfare through the venue PA (synthesised, no audio file; Fully Kiosk must allow autoplay to sound) ----
+  var _ac=null;
+  function unlockAudio(){ try{ var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; if(!_ac) _ac=new AC(); if(_ac.state==="suspended") _ac.resume(); }catch(e){} }
+  document.addEventListener("pointerdown", unlockAudio, { once:true });
+  document.addEventListener("keydown", unlockAudio, { once:true });   // a remote sends keys, never pointers
+
+  /* HAND THE GESTURE TO THE GAME SCREEN.
+     Musical bingo plays its clips inside the embedded screen, in an iframe. A tap
+     on THIS page satisfies the browser's autoplay rule for this document only: the
+     frame is a separate document and has had no gesture of its own, so its first
+     play() is refused and the room hears nothing. The frame cannot see our events
+     either. So tell it, and let it unlock itself. */
+  function nudgeFrameAudio(){
+    var f=document.getElementById("gameFrame");
+    if(!f || !f.contentWindow) return;
+    try{ f.contentWindow.postMessage({ vp:"unlock-audio" }, window.location.origin); }catch(e){}
+  }
+  ["pointerdown","keydown","click"].forEach(function(ev){
+    document.addEventListener(ev, nudgeFrameAudio);      // not once: the frame is replaced per game
+  });
+
+  /* The embedded game screen has seen another game go on air. It cannot act on
+     that itself without putting a television inside this one, so it asks us. */
+  window.addEventListener("message", function(e){
+    if(e.origin !== window.location.origin) return;
+    var d = e.data;
+    if(!d || d.vp !== "show-game" || !d.game) return;
+    if(d.game === "bingo"){ enterAds(); return; }   // bingo is drawn by this page, not in the frame
+    enterEmbed(d.game);
+  });
+  function playFanfare(){
+    /* One copy, in /app/vp-celebrate.js. This was written out eight times
+       across the phones and the screens and had already drifted into three
+       versions. The page keeps its own name and its own audio context, so
+       every call site and the kiosk unlock are untouched. If the shared file
+       does not load we stay silent rather than throw: a missing celebration
+       is cosmetic, an exception during a win is not. */
+    try{ if(window.VPCelebrate) VPCelebrate.fanfare({ profile:"pa", ctx:_ac }); }catch(e){}
+  }
+  function celebrate(ms){
+    playFanfare();
+    stopCelebrate(); $("winBurst").classList.add("show"); spawnBurst(90);
+    var elapsed=0; celebrateTimer=setInterval(function(){ elapsed+=1300; spawnBurst(46); if(elapsed>=ms) stopCelebrate(); },1300);
+  }
+
+  function applyBingo(){
+    if(tvMode!=="bingo") return;
+    if(state.phase==="lobby" && state.caller){ showBingoLayer("tvRun"); renderRun(); }   // real balls: the title and the board, never the join screen
+    else if(state.phase==="lobby"){ showBingoLayer("tvLobby"); renderLobby(); }
+    else if(state.phase==="running"){ showBingoLayer("tvRun"); renderRun(); }
+    else if(state.phase==="claim"){ showBingoLayer("tvClaim"); renderClaim(); }
+    else if(state.phase==="win"){ showBingoLayer("tvWin"); renderWin(); if(!state.celebrated){ state.celebrated=true; celebrate(9000); } }
+    /* A REAL-BALLS NIGHT: the join furniture is off the wall entirely, and the game's name and the
+       venue's stand where the code was. Nothing here changes on a normal night. */
+    var _real=!!state.caller, _t=$("tvRunTitle"), _rl=document.querySelector ? document.querySelector("#tvRun .runleft") : null;
+    if(_real) $("tvJoinCorner").classList.add("hidden");   // no join badge
+    if(_t) _t.style.display = _real ? "" : "none";
+    if(_rl) _rl.style.paddingBottom = _real ? "0" : "";   // the corner badge it makes room for is not there
+  }
+
+  // ================= MODE SWITCH =================
+  var tvMode="ads";
+  /* THE VENUE LOGO NEVER SITS ON AN ADVERTISING SLIDE.
+     An ad is the venue's own paid artwork and our corner mark does not belong on top of it.
+     The VenuePlay mark already comes off for the ads (enterAds hides #tvCorner), but the venue
+     logo is a fixed element on the body, so it stayed on the wall over every slide. It comes
+     off in the ads state and goes back for every other one. Dean, 10 Sep 2026.
+     Kept as a URL rather than read off the element, because the mode changes many times a night
+     and the logo does not. Wrapped, because this is called from the mode switches and NOTHING
+     is allowed to stop enterAds() reaching startAds(): that is how the wall goes black. */
+  var venueLogoUrl="";
+  function applyVenueLogo(){
+    try{
+      var el=document.getElementById("venueLogo");
+      if(el) el.style.display=(venueLogoUrl && tvMode!=="ads") ? "block" : "none";
+      /* The small venue-name caption does NOT come back when the logo goes. A venue that
+         uploaded a logo has already chosen how it is named on the wall, and a caption that
+         appears only on the ad slides is worse than none. It lives inside #tvCorner, which
+         enterAds hides anyway, so this is belt and braces. */
+      if(venueLogoUrl){ var nt=document.getElementById("venueNameTag"); if(nt) nt.style.display="none"; }
+    }catch(e){}
+  }
+  var GAME_LABELS={bingo:"Bingo","members-draw":"Members Draw",members_draw:"Members Draw",raffle:"Raffle",trivia:"Trivia","musical-bingo":"Musical Bingo",musical_bingo:"Musical Bingo"};
+  function gameLabel(k){
+    if(GAME_LABELS[k]) return GAME_LABELS[k];
+    k=String(k||"the game").replace(/[-_]+/g," ");
+    return k.replace(/\b\w/g,function(c){ return c.toUpperCase(); });
+  }
+  // ---- live-game surface (iframe): games render in place so browser fullscreen survives a game start ----
+  function hideGameFrame(){
+    var f=document.getElementById("gameFrame"); if(!f) return;
+    f.style.display="none";
+    var cur=f.getAttribute("src"); if(cur && cur!=="about:blank"){ try{ f.src="about:blank"; }catch(e){} }
+  }
+  function enterEmbed(game){
+    stopReveal();   // a ball in the air must not paint over wherever the screen goes next
+    tvMode="embed"; stopAds(); stopCelebrate(); cancelHolding();
+    hideBingoLayers();
+    $("tvCorner").style.display="";
+    $("adsRoot").classList.add("hidden");
+    $("pairPanel").classList.add("hidden");
+    applyVenueLogo();
+    try{ sessionStorage.setItem("vpTvHop", VENUE_SLUG); }catch(e){}   // shared with the iframe, so the game screen never bounces to /tv
+    var f=document.getElementById("gameFrame");
+    // No .html: Pages 308s it, and the iframe was paying a redirect before the
+    // game screen even started loading, with the wall holding on a card.
+    var url="/app/"+game+"/screen?venue="+encodeURIComponent(VENUE_SLUG);
+    var fresh = f.getAttribute("src")!==url;
+    if(fresh){ embedLoaded=false; try{ f.src=url; }catch(e){} }
+    /* HOLD THE ROOM, DO NOT GO BLACK. hideBingoLayers() above has just taken the "Starting the
+       game" card away, and an iframe that has not loaded paints nothing, so the wall went black
+       for as long as the screen took to come up. On a pub TV over a pub connection that read as
+       broken, in front of everybody, right at the moment the host announced the game.
+       So: keep the card up until the frame actually fires load, and only then reveal it. The
+       25s watchdog below is unchanged and still drops back to the ads if it never loads, and a
+       frame that is ALREADY on the right URL is shown immediately, because there is nothing to
+       wait for. */
+    if(fresh && !embedLoaded){
+      $("holdGame").textContent=gameLabel(game);
+      showBingoLayer("tvHold");
+      f.style.display="none";
+    } else {
+      f.style.display="block";
+    }
+    cancelEmbedWatch();
+    embedT=setTimeout(function(){
+      if(tvMode==="embed" && !embedLoaded){ try{ sessionStorage.setItem("vpTvReloadWhy","embed-never-loaded"); }catch(e){} enterAds(); }
+    }, EMBED_LOAD_MS);
+  }
+  // When the embedded game screen drops back to /tv (host went to bingo, or it idled out), the iframe
+  // navigates ITSELF to /tv. Catch that here and hand back to the native ads/bingo screen rather than
+  // nesting a whole /tv inside the frame. (If the host chose bingo, the main channel's mode:bingo then
+  // overrides ads a beat later.)
+  (function bindGameFrame(){
+    var f=document.getElementById("gameFrame"); if(!f) return;
+    f.addEventListener("load", function(){
+      /* Do NOT bail on a hidden frame any more: it is deliberately hidden while it loads (see
+         enterEmbed), and this handler is what reveals it. Only a genuinely blank src is ignored. */
+      var src=f.getAttribute("src")||"";
+      if(!src || src==="about:blank") return;
+      embedLoaded=true; cancelEmbedWatch(); noteHostAlive();
+      // Loaded: swap the "Starting..." card for the real screen, in that order, so there is no
+      // frame in between where neither is showing.
+      if(tvMode==="embed"){ f.style.display="block"; hideBingoLayers(); }
+      var path=""; try{ path=f.contentWindow.location.pathname||""; }catch(e){ return; }
+      if(/(^|\/)tv(\.html)?$/i.test(path) && tvMode==="embed") enterAds();
+    });
+  })();
+  /* Set when a reload arrived mid-game. Honoured the moment the ads come back up, so an update
+     always lands, just never over the top of a room that is playing. */
+  var reloadWhenIdle=false, reloadIdleTimer=null;
+  function armStuckReload(){
+    if(reloadIdleTimer) clearTimeout(reloadIdleTimer);
+    reloadIdleTimer=setTimeout(function(){
+      reloadIdleTimer=null;
+      if(!reloadWhenIdle) return;                       // it already went, or was cancelled
+      if(tvMode==="ads") return;                        // enterAds handles this case itself
+      var quiet=Date.now() - Math.max(lastBingoAt||0, lastHostAt||0);
+      if(quiet < STUCK_MS){ armStuckReload(); return; }  // genuinely busy: look again later
+      reloadWhenIdle=false;
+      if(window.__vpTvReload) window.__vpTvReload("deferred-stuck"); else location.reload();
+    }, STUCK_MS);
+  }
+  /* How long a screen may claim to be busy while receiving nothing before a pending
+     reload stops waiting for it. Longer than BINGO_LIVE_MS so a real round is never
+     interrupted, far shorter than the 90 minute host-silence timeout. */
+  var STUCK_MS=3*60*1000;
+  /* THE GAME IS OVER WHEN THE ADS GO UP (live play audit, 20 Oct 2026). The ads never touched the
+     bingo state, so the last winner rode along underneath them: End game, then Open lobby, and the
+     console's mode:"bingo" repainted "BINGO! Sam WINS the meat tray" over the new lobby, and the
+     state guard below (which protects a win from a routine refresh) swallowed the lobby itself. The
+     room saw last game's winner where the QR should be, for as long as the lobby stayed open. Only
+     a claim or a winner is cleared: the pattern and prize are re-sent by every lobby anyway. */
+  function forgetLastGame(){
+    if(state.phase==="claim" || state.phase==="win") state.phase="lobby";
+    state.winner=null; state.celebrated=false; ballInFlight=false;
+  }
+  function enterAds(){
+    stopReveal();   // a ball in the air must not paint over wherever the screen goes next
+    tvMode="ads"; stopCelebrate(); cancelHolding(); cancelEmbedWatch(); hideGameFrame();
+    forgetLastGame();
+    hideBingoLayers();
+    $("tvCorner").style.display="none";   // venue's own advertising: no VenuePlay logo over it
+    $("adsRoot").classList.remove("hidden");
+    if(hostConnected) hidePairPanel(); else showPairPanel();
+    adBuilt=false;   // rebuild from the latest loaded slides so the ads always come back (never black)
+    startAds();
+    applyVenueLogo();   // the venue's logo comes off its own advertising
+    if(reloadWhenIdle){
+      /* Re-check when it FIRES, not when it was scheduled. A round starting inside these four
+         seconds (bingo New game, the next raffle prize) would otherwise be reloaded through,
+         which is the exact thing deferring it exists to prevent. And the flag is only cleared
+         once the reload is actually attempted, so a refusal keeps it pending instead of
+         silently losing the update. */
+      setTimeout(function(){
+        if(tvMode!=="ads") return;                  // a game started: stay pending
+        reloadWhenIdle=false;
+        if(window.__vpTvReload) window.__vpTvReload("deferred");
+      }, 4000);
+    }
+  }
+  function enterBingo(){
+    stopReveal();   // a ball in the air must not paint over wherever the screen goes next
+    tvMode="bingo"; lastBingoAt=Date.now(); stopAds(); cancelHolding(); hideGameFrame();
+    $("tvCorner").style.display="";
+    $("adsRoot").classList.add("hidden");
+    $("pairPanel").classList.add("hidden");
+    applyVenueLogo();
+    applyBingo();
+  }
+  // "Starting <game>..." is a HANDOVER card, never a resting state. It used to have no way out:
+  // the watchdog treats any non-ads mode as proof of life and the max-age reload is idle-only, so a
+  // host whose tablet died right after picking a game left the room staring at "Starting Trivia..."
+  // for days, with the remote tv_reload refused as well. Ads are always safe to show, so if the game
+  // never arrives we fall back to them and the whole self-healing path switches back on.
+  var HOLD_MAX_MS=5*60*1000, holdT=null;
+  function cancelHolding(){ if(holdT){ clearTimeout(holdT); holdT=null; } }
+
+  // ---- the dead-host fallback ----------------------------------------------------------------
+  // The watchdog treats ANY non-ads mode as proof of life, and the 4 hour reload is idle-only. So
+  // every state except ads was a place a screen could be parked forever: a bingo lobby whose host
+  // got signed out by the 4 hour shift timeout, or an embedded game screen that never loaded (a
+  // full-bleed black iframe at z-index 40). Nothing sends t:"idle" when a tablet simply dies.
+  // A live game always produces host traffic, so silence for this long means nobody is running
+  // anything. Ads are always safe to show, and going there re-arms every other protection.
+  var HOST_SILENCE_MS=90*60*1000, lastHostAt=Date.now();
+  /* AN EMPTY LOBBY DOES NOT DESERVE NINETY MINUTES.
+
+     The ordinary end of a night is a host closing the tab, not pressing End. Every console
+     sends t:"to_ads" on pagehide, but it has to go unsigned (an async signature never completes
+     before the page dies) and vp-sign.js drops unsigned to_ads on purpose, because a forged one
+     would let any patron in the room kill a live game. So at an enforcing venue, which is all of
+     them, that message never arrives and the wall sits on a bingo join code for a game nobody is
+     running until the ninety minute timeout above. tv.html's own comment at the NOT_ON_AIR list
+     describes exactly this.
+
+     Ninety minutes is the right number for a GAME. A quiz can sit between rounds, a members
+     draw waits for the room to settle, and pulling a live game off the wall would be far worse
+     than leaving a dead code up. It is the wrong number for a LOBBY, where nothing is being
+     played and the only thing on screen is a code.
+
+     WHY A SHORT WINDOW IS SAFE NOW AND WAS NOT THIS MORNING. Every console beats t:"host_here"
+     at the TV every thirty seconds while a game or a lobby is open, and HOST_TYPES counts that
+     as proof of life. The bingo console was the one that never did, which is why a quiet lobby
+     used to mean nothing at all; it beats now, same interval as the other four. So twelve
+     missed beats really does mean the host has gone, rather than that the host is busy.
+
+     Deliberately NOT applied to embed. While another format is embedded, the TV's proof of life
+     comes through the game-channel subscriptions, and those are exactly what I gave a retry loop
+     today. If they ever fail, a short window here would yank the wall off a running quiz. The
+     backstop for that case stays at ninety minutes, where being wrong is merely untidy. */
+  var LOBBY_SILENCE_MS=6*60*1000;
+  /* When the five game channels went deaf, or 0 while they are healthy. A screen with
+     no channel hears nothing at all: no host, no HQ reload. The ads keep rotating
+     locally, so nothing on the wall says anything is wrong. */
+  /* EVERY CHANNEL KEEPS ITS OWN CLOCK. Audit, 27 Sep 2026: the four game channels shared this
+     one timer, and any one of them coming back set it to 0. So a channel that stayed dead
+     all night, beside another that blipped now and then, never reached four minutes and the
+     watchdog never reloaded. The bingo channel (the one this page draws the game from) was
+     not counted at all. Now each channel, bingo's included as "main", has its own time, and
+     noteDeaf() derives the two numbers the watchdog reads:
+       gameChannelsDeafSince  every channel is deaf, since the last one went. The screen hears
+                              nothing at all, so the watchdog may reload even mid game, as it
+                              always has: a screen that hears nothing has nothing to protect.
+       anyChannelDeafSince    the oldest single deaf channel. That screen can still hear part
+                              of the night, so this reloads ONLY while the ads are up, never
+                              over a game. */
+  var gameChannelsDeafSince=0, anyChannelDeafSince=0, channelDeafSince={};
+  function noteDeaf(name, deaf){
+    if(deaf){ if(!channelDeafSince[name]) channelDeafSince[name]=Date.now(); }
+    else channelDeafSince[name]=0;
+    var n=0, allDeaf=true, latest=0, oldest=0, k, t;
+    for(k in channelDeafSince){
+      if(!Object.prototype.hasOwnProperty.call(channelDeafSince, k)) continue;
+      n++; t=channelDeafSince[k];
+      if(!t){ allDeaf=false; continue; }
+      if(t>latest) latest=t;
+      if(!oldest || t<oldest) oldest=t;
+    }
+    gameChannelsDeafSince = (n && allDeaf) ? latest : 0;
+    anyChannelDeafSince = oldest;
+  }
+  /* Set only by traffic on the BINGO channel, so "is bingo actually on air" can be answered
+     without another format's chatter answering it for us. */
+  var BINGO_LIVE_MS=2*60*1000, lastBingoAt=0;
+  function noteHostAlive(){ lastHostAt=Date.now(); }
+  setInterval(function(){
+    if(tvMode==="ads") { lastHostAt=Date.now(); return; }
+    // A bingo screen sitting in the lobby is not a game. Everything else keeps the long window.
+    var idleLobby = (tvMode==="bingo" && state && state.phase==="lobby");
+    var window_ms = idleLobby ? LOBBY_SILENCE_MS : HOST_SILENCE_MS;
+    if(Date.now()-lastHostAt < window_ms) return;
+    try{ sessionStorage.setItem("vpTvReloadWhy", idleLobby ? "lobby-silent" : "host-silent"); }catch(e){}
+    enterAds();
+  }, 60000);
+
+  // An embedded game screen that never loads leaves a black rectangle over everything, with the
+  // watchdog satisfied because tvMode is not "ads". Give the load a deadline and fall back.
+  var EMBED_LOAD_MS=25000, embedT=null, embedLoaded=false;
+  function cancelEmbedWatch(){ if(embedT){ clearTimeout(embedT); embedT=null; } }
+  function enterHolding(mode){
+    stopReveal();   // a ball in the air must not paint over wherever the screen goes next
+    tvMode="holding"; stopAds(); stopCelebrate(); hideGameFrame();
+    hideBingoLayers();
+    $("adsRoot").classList.add("hidden");
+    $("pairPanel").classList.add("hidden");
+    $("holdGame").textContent=gameLabel(mode);
+    showBingoLayer("tvHold");
+    cancelHolding();
+    applyVenueLogo();
+    holdT=setTimeout(function(){ if(tvMode==="holding") enterAds(); }, HOLD_MAX_MS);
+  }
+
+  // ================= REALTIME =================
+  // Guarded: if the Supabase library fails to load (flaky venue wifi, Fire Stick), the whole
+  // script must NOT die here - the ads have to keep showing. Realtime just reconnects later.
+  var client=null, ch=null, tvSubscribed=false;
+  function tvSend(obj){ if(tvSubscribed && ch){ try{ ch.send({ type:"broadcast", event:"msg", payload:obj }); }catch(e){} } }
+  /* Retries here were unbounded. If the CDN stays blocked, /tv keeps showing ads (which is the
+     right floor) and the watchdog calls it healthy, so no game can EVER appear and the only
+     recovery is the 4 hour idle reload. A venue would spend a whole night with a TV that looks
+     fine and answers nothing. After a couple of minutes of trying, reload the page: that
+     re-requests the library from scratch, which is what actually fixes a bad fetch. */
+  var _rtTries=0;
+  /* THE TWO ROADS MUST READ THE SAME. A wall that says "Connected \u00b7 room server" is a
+   venue being able to tell, which is the one thing this feature promised it would never
+   be. The road is still recorded, where WE can see it and a punter cannot: a data
+   attribute on <html> and one console line. That is what tells a deaf screen from a
+   working one, which is why it was put in the status line in the first place. */
+  /* ?roomserver=1 turns the room server on for THIS screen only. NOT ?room=1:
+     ?room= already means the game room code on the player page, so ?room=1 reads as a
+     game code of "1" and the phone shows "No room" and connects to nothing. Off by default until it
+     has run a real night at The Mini Bar. See venueplay-backend/worker/ROOM-SERVER.md. */
+  /* THE SWITCH IS STICKY, ON PURPOSE.
+     ?roomserver=1 turns it on for this browser and it STAYS on until ?roomserver=0.
+     It cannot live in the address bar alone: opening the console as an HQ admin bounces
+     through hq.html, which drops the query string, so the page came back on the OLD
+     transport while looking exactly the same. Every fault in this feature so far has
+     been one half of a venue on one road and the other half on the other, which is why
+     the switch now survives a redirect and why the page says out loud which road it is
+     on (see the status line). */
+  /* ONE ANSWER, IN ONE PLACE. This decision used to be copied into all three pages, and a
+     road the console takes but the TV does not is a host talking into an empty room. It
+     lives in vp-room.js now, so all three pages cannot disagree and the whole product
+     changes road by one constant there. */
+  var _useRoom=false, _roomTried=false, _room=null;
+  try{ _useRoom = !!(window.VPRoom && window.VPRoom.wanted()); }catch(e){ _useRoom=false; }
+  /* DECLARED OUT HERE, NOT INSIDE connectRealtime's first if.
+
+     That is where it was first written, and on 16 Sep 2026 it put Tugun Bowls Club's
+     television on the air with no connection status at all. A function declaration
+     inside a BLOCK is only bound when the block actually runs (Annex B): that block is
+     the "supabase library has not loaded yet" branch, so on any screen where the CDN
+     was quick it never ran, and the very next call threw "tvStatus is not a function"
+     out of the SUBSCRIBED handler. The throw landed before data-vp-transport was set,
+     so the screen recorded no road, never said Connected, and, worse, could no longer
+     set tvSubscribed=false on CHANNEL_ERROR or CLOSED: a deaf screen would have gone
+     on claiming it was fine, which is the exact fault the watchdog exists to catch.
+     Caught by screen-check.html going red against the live venue, not by reading this. */
+  /* THE WARNING COULD NEVER APPEAR. Six places in this file wrote "Reconnecting" into
+     .tv-status and not one of them could ever be seen: the element carried an inline
+     style="display:none", which beats the display:flex in the stylesheet twenty lines
+     above it. The comment up there explains at length that the pill was moved to top
+     centre so a venue's logo could not cover it "at the one moment it matters". It was
+     covered by its own markup the whole time.
+
+     This is the screen that runs unattended for weeks and the one both black-screen
+     incidents happened to, so it is the worst possible place for a warning that cannot
+     warn.
+
+     The four game screens had the opposite fault and the same cause: no inline hide, so
+     once connected they showed a grey CONNECTED badge on a pub wall all night, to
+     customers. A screen that is working should say nothing at all.
+
+     One function, both rules: silent while connected, loud while not. Found 16 Sep 2026.
+     Do not write to statusText directly again; call this. */
+  function tvStatus(connected){
+    var box=document.querySelector(".tv-status"), dot=$("statusDot"), txt=$("statusText");
+    if(dot) dot.classList.toggle("on", !!connected);
+    if(txt) txt.textContent = connected ? "Connected" : "Reconnecting";
+    if(box) box.hidden = !!connected;
+  }
+
+  function connectRealtime(){
+    if(typeof supabase==="undefined" || !supabase.createClient){
+      tvStatus(false);
+      if(++_rtTries>=40){
+        /* reload() belongs to the watchdog closure further down and is not in scope here, so the
+           same two safeguards are repeated: never reload while the network is down (that swaps a
+           branded screen for a browser error page in a public room), and record why. */
+        try{ if(navigator.onLine === false){ setTimeout(connectRealtime, 3000); return; } }catch(e){}
+        _rtTries=0;
+        /* Go through the watchdog's own reload, which carries the MIN_GAP anti-thrash floor and
+           records vpTvReloadAt. A bare location.reload() here fired every 120s, inside the 180s
+           floor, and left the watchdog's limiter uninformed: a blocked CDN would have restarted
+           the venue's ad loop every couple of minutes all night. */
+        if(window.__vpTvReload){ window.__vpTvReload("no-realtime"); setTimeout(connectRealtime, 3000); return; }
+        try{ sessionStorage.setItem("vpTvReloadWhy","no-realtime"); }catch(e){}
+        location.reload(); return;
+      }
+      setTimeout(connectRealtime, 3000); return;   // library not here yet, keep trying
+    }
+    _rtTries=0;
+    /* THE ROOM SERVER, opt in only (?roomserver=1). One WebSocket to the venue's room on
+       Cloudflare instead of a Supabase Realtime channel, so a message from the host
+       lands in about 20 milliseconds and the TV stops polling every 30 seconds.
+       Everything below stays exactly as it is: if the Worker says the room is not
+       enabled, or the socket will not open, onUnavailable runs this same function
+       again with the flag off and the TV connects to Supabase as it always has.
+       The messages are identical objects and vpGate still checks every signature,
+       so a screen cannot tell which road a message came down. */
+    if(_useRoom && window.VPRoom && !_roomTried){
+      _roomTried=true;
+      try{
+        _room=VPRoom.connect(VP_GAME_API, "vp-"+CODE, "tv", function(payload){ vpGate(payload, onMsg); }, {
+          onUnavailable: function(){ _useRoom=false; _room=null; setTimeout(connectRealtime, 0); },
+          onState: function(st){
+            noteDeaf("main", st!=="open");   // the room is this screen's bingo road: it counts
+            if(st==="open"){ tvSubscribed=true; tvStatus(true);
+              try{document.documentElement.setAttribute("data-vp-transport","room");console.log("[VenuePlay] transport: "+"room");}catch(e){};
+              try{ _room.send({ t:"tv_here", hello:true }); }catch(e){}   // tvSend() only speaks down the Supabase channel, and it is one of the three kept byte-identical
+            }
+            else { tvSubscribed=false; tvStatus(false); }
+          }
+        });
+        return;
+      }catch(err){ _useRoom=false; _room=null; }
+    }
+    try{
+      /* ONE BINGO CHANNEL AT A TIME. This function runs again after a throw below; hang up the
+         last one first, so its retries stop and its CLOSED is not news. */
+      if(ch && ch.unsubscribe){ try{ ch.unsubscribe(); }catch(e){} ch=null; }
+      client=supabase.createClient(SUPA_URL, SUPA_ANON, (window.VPChannel && VPChannel.clientOptions) ? VPChannel.clientOptions() : undefined);   // worker heartbeat: a covered window keeps its socket (vp-channel.js, rule 6)
+      /* AND IT COMES BACK. This said Reconnecting after a CLOSED and never tried again: a bingo
+         wall deaf for the night, and not counted by the watchdog either (audit, 27 Sep 2026).
+         /app/vp-channel.js rebuilds it with a backoff; without the script it is the plain
+         channel, as before. */
+      ch=window.VPChannel ? VPChannel.keep(client, "vp-"+CODE, { config:{ broadcast:{ self:false } } })
+                          : client.channel("vp-"+CODE, { config:{ broadcast:{ self:false } } });
+      noteDeaf("main", false);        // counted from here; healthy until it says otherwise
+      ch.on("broadcast", { event:"msg" }, function(e){ vpGate(e.payload, onMsg); });
+      ch.subscribe(function(status){
+        if(status==="SUBSCRIBED"){ noteDeaf("main", false); tvSubscribed=true; tvSend({ t:"tv_here", hello:true }); tvStatus(true); try{document.documentElement.setAttribute("data-vp-transport","supabase");console.log("[VenuePlay] transport: "+"supabase");}catch(e){} }
+        /* CLOSED TOO. Supabase reports three failure states and this listed two, so a
+           channel that simply CLOSED left tvSubscribed true: the screen kept announcing
+           itself into a dead channel and kept the green dot up while hearing nothing. A
+           deaf screen that says Connected is the hardest fault on this page to see, and
+           it is the one the watchdog exists to catch minutes later. Found by widening the
+           gate check that had only ever looked at host consoles, never at this page. */
+        else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ tvSubscribed=false; tvStatus(false); noteDeaf("main", true); }
+      });
+    }catch(err){ tvStatus(false); setTimeout(connectRealtime, 3000); }
+  }
+
+  var lastTvHereAt=0;
+  var HOST_TYPES={host_here:1,session:1,mode:1,idle:1,to_ads:1,state:1,started:1,ball:1,players:1,claim_pending:1,resume:1,winner:1};
+  function onMsg(m){
+    if(!m||!m.t) return;
+    if(m.t==="tv_here") return; // ignore our own presence pings
+    // Remote recovery: lets us push a reload to every screen at once rather than ask 400 venues
+    // to find the remote. Rate limited by the watchdog, and refused while a game is on air.
+    if(m.t==="screen_refresh"){
+      if(reloadVenueScreen) reloadVenueScreen();
+      return;
+    }
+    if(m.t==="tv_reload"){
+      /* WAIT FOR THE GAME TO FINISH.
+         An ordinary reload command is a deployment, not an emergency, so it must never interrupt
+         a room mid-game: a musical night would lose the song it is playing. But it must not be
+         refused and forgotten either, or a screen that is busy every time we push never updates.
+         So: reload now if the ads are up, otherwise remember it and go the moment the game ends.
+         HQ's master button relies on this, which is why it no longer has to guess which venues
+         are busy, and why it can no longer get bingo or a members draw wrong: those open no
+         session, so they were invisible to HQ but are perfectly visible from here.
+         force:true still reloads instantly. That is the per-venue button in HQ, which is a
+         deliberate act on one screen and warns before it sends. */
+      /* FORCE IS HONOURED WHETHER OR NOT IT IS SIGNED, AND THAT IS DELIBERATE.
+         I briefly required a signature here. HQ cannot produce one - the venue key is
+         minted in the host console and never leaves it - so at an enforcing venue that
+         removed the ONLY remote way to rescue a stuck screen, which is the situation
+         the button exists for. The worst an unsigned force can do is reload a screen;
+         the worst refusing it can do is leave a pub looking at a frozen board all
+         night. Enforcement already stops the thing that actually matters, which is
+         faking gameplay. */
+      if(m.force){ if(window.__vpTvReload) window.__vpTvReload("remote-forced"); else location.reload(); return; }
+      if(tvMode==="ads"){ if(window.__vpTvReload) window.__vpTvReload("remote"); else location.reload(); return; }
+      /* A DEFERRED RELOAD MUST NOT WAIT FOR A GAME THAT IS NOT HAPPENING.
+         "Reload when the game ends" assumed a game always ends. A host that closes
+         its tab, sleeps, or loses the network never sends idle, so the screen sat on a
+         finished board and quietly held the reload for the full 90 minute
+         host-silence timeout. Bingo already knows what a live round looks like - a
+         ball every few seconds - so if nothing has arrived for a couple of minutes,
+         there is no room to protect and the reload goes ahead. */
+      reloadWhenIdle=true;
+      armStuckReload();
+      return;
+    }
+    // any host broadcast means a host is connected this session: hide the pair QR
+    // and reply so the host can flip to "connected"
+    /* One "I am here" per ten seconds, not one per host message: it went to every phone in the
+       room as well, 22 a minute on an idle game (break test, 14 Oct 2026). The console only uses
+       it to light its "connected" dot. */
+    if(HOST_TYPES[m.t]){ markHostConnected(); if(m.t==="host_here" || Date.now()-lastTvHereAt>10000){   /* a console arriving hears back at once (host_here is signed, and at most one per 3s answers a hello) */ lastTvHereAt=Date.now(); tvSend({ t:"tv_here" }); } noteHostAlive(); }
+    if(m.t==="host_here"){ return; }
+    if(m.t==="session"){ sessionId=m.session_id||sessionId; if(m.join_code) setJoinCode(m.join_code); return; }
+    if(m.t==="mode"){
+      /* HQ has just put the venue's advertising back on. Ignore a game announcement
+         for the length of the hold, or a console still shouting about an abandoned
+         game would undo the press within seconds - which is exactly what made this
+         impossible to fix from HQ before. */
+      if(Date.now() < adsHoldUntil){
+        console.info("[tv] ignoring mode:" + m.mode + " - HQ asked for the ads, holding for " +
+                     Math.ceil((adsHoldUntil - Date.now())/1000) + "s");
+        return;
+      }
+      /* THE SAME mode ARRIVES TWICE. A musical or trivia console sends it on its own game channel
+         (the router below embeds the game) AND on its session channel, which for any venue that never
+         changed its code IS this main channel. When this copy landed second it put the "Starting
+         Musical..." card over the game that had just embedded, and nothing re-embedded it: the wall
+         sat on the card for five minutes, then went to the ads (played at Test Charlie, 30 Sep 2026).
+         The router owns every non-bingo embed, so an embed already on screen is left alone. */
+      if(m.mode==="bingo"){ if(typeof m.caller==="boolean") state.caller=m.caller; enterBingo(); }
+      else if(tvMode!=="embed") enterHolding(m.mode);
+      return;
+    }
+    /* to_ads had no branch here at all, so even a console that sent it was
+       talking to nobody: it is not in HOST_TYPES and matched nothing, and was
+       dropped silently. It means the same thing as idle on this channel - the
+       host has finished with the room - so it lands in the same place. */
+    if(m.t==="idle" || m.t==="to_ads"){ state.caller=false; enterAds(); return; }   // the next bingo night says again whether it is real balls
+    if(m.pats) notePats(m.pats);   // the names of the venue's own patterns this message mentions
+
+    if(m.t==="state"){
+      if(tvMode==="bingo" && typeof m.caller==="boolean") state.caller=m.caller;   // a state heard on the ads (End game's last word) does not carry into the next night
+      /* THE CODE ON THE WALL DOES NOT CHANGE. It is deliberately the venue's permanent one: it is
+         on the table talkers and the printed signs, and one sign has to work every week. A session
+         code was briefly shown here instead, to give phones a server identity, and that was the
+         wrong place to solve it: the phone can ask /play/live what session is on and join THAT,
+         without anything punter-facing ever changing. See claimIdentity() in play.html. */
+      if(m.pattern) state.pattern=m.pattern;
+      if(typeof m.prize==="string") state.prize=m.prize;
+      state.called=m.called||[];
+      /* A routine state refresh must NOT wipe a claim or a winner off the wall. The host resends
+         state whenever any phone re-announces, and phones re-announce whenever they wake or the TV
+         reconnects. So one punter's phone coming out of sleep used to erase "BINGO! Ann wins $50"
+         mid-announcement and put the board back. The phone page already guards this; the TV did
+         not. A new round arrives as t:"started", which sets the phase properly. */
+      /* EXCEPT A NEW LOBBY, which is not a refresh: nothing running and no ball called is a game
+         that has not started, so there is no claim or winner on it to protect (20 Oct 2026). */
+      var freshLobby=!m.active && state.called.length===0;
+      if((state.phase==="claim" || state.phase==="win") && !freshLobby){ applyBingo(); return; }
+      if(freshLobby){ state.winner=null; ballInFlight=false; }
+      if(m.active && state.called.length>0){ state.phase="running"; }
+      else { state.phase="lobby"; stopCelebrate(); state.celebrated=false; }
+      applyBingo();
+    }
+    else if(m.t==="started"){
+      if(typeof m.caller==="boolean") state.caller=m.caller;
+      if(m.pattern) state.pattern=m.pattern;
+      if(typeof m.prize==="string") state.prize=m.prize;
+      state.called=[]; state.winner=null; ballInFlight=false; stopCelebrate(); state.celebrated=false;
+      state.phase="lobby"; applyBingo();
+    }
+    else if(m.t==="ball"){
+      lastBingoAt=Date.now();
+      state.called=m.called||state.called;
+      state.phase="running";
+      // Mark the ball in flight BEFORE the repaint, not after. applyBingo runs renderRun, and
+      // renderRun is the thing that has to keep showing the PREVIOUS number while one travels.
+      // Setting the flag afterwards meant the guard never fired on the paint it exists for.
+      if(m.number) ballInFlight=true;
+      applyBingo();
+      revealBall(m.number);   // big-ball reveal for the freshly called number
+    }
+    else if(m.t==="players"){
+      // Host presence only. The count itself is never shown on the wall (locked rule, July 2026).
+    }
+    else if(m.t==="claim_pending"){
+      // names[] when more than one player called on the same ball; name is the first, for
+      // hosts still running the pre-tie console.
+      var cn=(m.names&&m.names.length) ? m.names : [m.name||"Player"];
+      state.phase="claim"; state.claimName=joinNames(cn); state.claimCount=cn.length; state.claimPaper=!!m.caller; applyBingo();
+    }
+    else if(m.t==="resume"){
+      // A resume aimed at ONE player (a tie partner waved off) is not the room playing on:
+      // someone else is still being checked, so the big screen must stay on the claim card.
+      if(m.pid) return;
+      // Back to the board from a winner (a real-balls host chose Keep playing): the confetti goes with it,
+      // so the room is not reading the next numbers through the last win's celebration (21 Oct 2026).
+      // Pieces already falling go too: each lives 3.8s, long enough to cover the next ball (22 Oct 2026).
+      if(state.phase==="win") stopCelebrate();
+      if(state.phase==="win") clearConfetti();
+      state.phase="running"; applyBingo();
+    }
+    else if(m.t==="winner"){
+      /* The same real-balls win said again (a screen that reloaded asked the console to catch it
+         up): every other wall is already showing it, so it is not a second fanfare. */
+      var again=!!(m.caller && m.wid && state.phase==="win" && state.winner && state.winner.wid===m.wid);
+      state.winner=m;
+      if(again){ applyBingo(); return; }
+      if(m.cont && m.next) state.pattern=m.next;   // game plays on for the next prize
+      if(m.cont && typeof m.nextPrize==="string" && m.nextPrize) state.prize=m.nextPrize;
+      state.phase="win"; state.celebrated=false; applyBingo();
+      // on a play-on win, celebrate then return to the board so the round continues
+      // (the next called ball also brings the board back, whichever comes first)
+      if(m.cont){ setTimeout(function(){ if(tvMode==="bingo" && state.phase==="win"){ state.phase="running"; applyBingo(); } }, 7000); }
+    }
+  }
+
+  // ================= INIT =================
+  function drawQR(el, url, size){ VPQR.draw(el, url, size); }
+
+  buildAds();
+  enterAds(); // ads up FIRST, before anything external can fail - the screen is never black
+  buildBoard();
+  $("pairCode").textContent=CODE;
+  $("lobbyCode").textContent=joinCode;
+  $("tvJoinCode").textContent=joinCode;
+  drawQR($("qrBig"), playURL, 720);
+  drawQR($("qrMini"), playURL, 240);
+  /* ?demo=1 : THE REAL SCREEN, PLAYING A SCRIPTED NIGHT, CONNECTED TO NOTHING.
+
+     Dean, 12 Sep 2026, on the sales pages: "Can we just use a screenshot model? Or
+     somehow auto update them".
+
+     see-a-night.html and index.html each hold a hand-built CSS replica of this screen,
+     2,852 lines and 156 class names between them, under .vps-* names that appear nowhere
+     in this file. Nothing links them to the real thing, so this page could be redesigned
+     completely and both sales pages would keep showing last month's product for ever.
+
+     A screenshot only moves the problem: somebody still has to remember to retake it.
+     This removes it. The sales page embeds THIS file, so what a prospect sees IS the
+     screen, and there is nothing left to keep in step.
+
+     It works because every pixel on this page is already driven by onMsg(). A demo is
+     therefore a SCRIPT OF MESSAGES and not one line of duplicated rendering.
+
+     It connects to nothing, on purpose:
+       - no realtime channel, so no venue's game can appear on a marketing page
+       - no /venue poll, so it cannot write a screen heartbeat and make a dead TV look
+         alive in HQ (that fault is one day old, see screen-probe.test.js)
+       - no venue slug, so loadVenueScreen() returns at its first line and no venue's
+         advertising or logo is ever fetched
+       - no join code a stranger could use, which is the whole reason this is not simply
+         pointed at a live demo venue */
+  var DEMO = VP_DEMO;      // decided up at VENUE_SLUG, because that read has to know too
+  /* ?demo=1&ads=1: the advertising loop and nothing else. The trial hero's "Advertising" chip
+     shows the wall earning its keep between games; the bingo script would take it over. */
+  var DEMO_ADS_ONLY = DEMO && /[?&]ads=1\b/.test(window.location.search||"");
+  if(DEMO){
+    document.documentElement.setAttribute("data-vp-demo","1");   // both demo flavours: no sound, no venue, no analytics
+    /* NO SETUP FURNITURE ON A SALES PAGE. "Link this screen" and "Go fullscreen" are for the
+       person standing at a venue's TV; on a page a prospect is reading they are noise, and the
+       pairing panel carries a code nobody can pair with. Kept hidden however the modes flip. */
+    (function hideSetup(){
+      function off(){ ["pairPanel","tvFsBtn"].forEach(function(id){ var n=document.getElementById(id); if(n && n.style.display!=="none") n.style.display="none"; }); }
+      off(); new MutationObserver(off).observe(document.body, { childList:true, subtree:true });
+    })();
+  }
+  if(DEMO && !DEMO_ADS_ONLY){
+    document.documentElement.setAttribute("data-vp-demo","1");
+    (function demoNight(){
+      var BALLS=[7,42,13,88,31,64,5,77,26,90,19,53];
+      var called=[];
+      function m(o){ try{ onMsg(o); }catch(e){ console.warn("[demo]", e && e.message); } }
+      var steps=[];
+      function at(ms, fn){ steps.push([ms, fn]); }
+
+      // A bingo round: lobby, a dozen balls, a claim, a winner, then back to the ads.
+      /* AT ZERO, not 300ms. Until the first message arrives tv.html shows its ordinary
+         full-screen JOIN THE GAME lobby, with a QR built from the code this browser invented.
+         Embedded on the sales page that was the FIRST thing a visitor saw when they tapped the
+         big screen, and it is a scannable code leading to a room that does not exist: the one
+         thing this demo promises it will never show. Three hundred milliseconds is not long,
+         but it is the first frame, which is the one people photograph. A zero timeout still
+         runs after this script finishes parsing, so the page is ready either way. */
+      at(0,    function(){ m({t:"session", session_id:"demo", join_code:"DEMO24"}); m({t:"mode", mode:"bingo"}); });
+      // "one", a PATTERN_NAMES key, so the wall reads "One line" rather than a raw slug.
+      at(1200, function(){ m({t:"started", pattern:"one", prize:"$50 bar tab"}); });
+      BALLS.forEach(function(n,i){
+        at(2600 + i*2100, function(){ called.push(n); m({t:"ball", number:n, called:called.slice()}); });
+      });
+      at(2600 + BALLS.length*2100 + 900,  function(){ m({t:"claim_pending", name:"Table 4"}); });
+      at(2600 + BALLS.length*2100 + 3200, function(){ m({t:"winner", name:"Table 4", prize:"$50 bar tab"}); });
+      at(2600 + BALLS.length*2100 + 9000, function(){ m({t:"idle"}); });
+
+      /* NO JOIN CORNER IN A DEMO. The code on a demo wall cannot be joined: there is no
+         venue and no session behind it, so a prospect who scans the QR would be told
+         "no room" by the very product being sold to them. The rest of the screen is the
+         real thing; this one corner is the only part that would lie. */
+      (function hideJoin(){
+        var j=document.getElementById("tvJoinCorner");
+        if(j) j.classList.add("hidden");
+        var o=new MutationObserver(function(){ if(j && !j.classList.contains("hidden")) j.classList.add("hidden"); });
+        if(j) o.observe(j, { attributes:true, attributeFilter:["class"] });
+      })();
+
+      var timers=[];
+      function run(){
+        called=[];
+        timers.forEach(clearTimeout); timers=[];
+        steps.forEach(function(s){ timers.push(setTimeout(s[1], s[0])); });
+        // Loop for as long as the page is open. A sales page is left sitting on a desk.
+        timers.push(setTimeout(run, 2600 + BALLS.length*2100 + 14000));
+      }
+      run();
+    })();
+  }
+
+  /* Guarded rather than returned. A `return` here is a return at the TOP LEVEL of a
+     script, which is a SyntaxError that kills the whole page, and it slipped through a
+     syntax check that wrapped the source in new Function() -- where a top level return
+     is perfectly legal. The browser is the one that said no. */
+  if(!DEMO){
+    connectRealtime(); // realtime is best-effort and retries; the ads are already showing
+    validateVenue(); // warn if this screen link isn't tied to a real venue
+  }
+
+  // Unified TV: ONE /tv?venue link follows whatever game is on air. /tv (the bingo + ads screen)
+  // also watches the venue's other games and, the moment a host puts one ON AIR (t:"mode", or a
+  // reply to our tv_here ping if a game is already running when this screen loads), switches to
+  // that game's screen. The game screens run the same watcher so you can hop between games and
+  // back to bingo without ever touching the link.
+  (function unifiedRouter(){
+    if(!VENUE_SLUG) return;
+    // connectRealtime() retries every 3s until the Supabase library is there, so on flaky venue wifi
+    // `client` is still null when this first runs. It used to just return, permanently: bingo came
+    // back when realtime did, but the screen silently never followed trivia/musical/raffle/members
+    // again for the life of the page. Wait for the client instead of giving up on it.
+    if(!client){ setTimeout(unifiedRouter, 3000); return; }
+    var GAMES=["trivia","musical","raffle","members"];
+    function onGameMode(game, overIdleLobby){
+      if(tvMode==="embed") return;   // a game is already on screen; the embedded screen handles hops between games itself
+      /* BINGO IS A GAME TOO. This only ever refused while another game was EMBEDDED, so a live
+         bingo round (tvMode==="bingo", drawn by this page rather than in an iframe) was fair game:
+         a manager opening the raffle or members console mid-round wiped the board off the wall,
+         because both of those consoles announce their mode the moment their channel subscribes.
+         Nothing running on screen should be displaced by a console merely being opened. */
+      /* Judged on BINGO's own traffic, not lastHostAt. lastHostAt is refreshed by the handler
+         that calls this, microseconds earlier and on traffic from ANY game channel, so the old
+         test was always true and the TV could never leave bingo for another format. A venue that
+         ran bingo then trivia had the bingo board frozen on the wall for the whole quiz.
+         BINGO_LIVE_MS is short on purpose: a bingo round has constant traffic (a ball every few
+         seconds), so two minutes of silence means it is over, not paused. */
+      if(tvMode==="bingo" && !overIdleLobby && (Date.now() - lastBingoAt) < BINGO_LIVE_MS) return;
+      enterEmbed(game);              // load it IN PLACE (iframe) instead of navigating, so browser fullscreen is kept
+    }
+    /* Messages that mean "somebody is present" or "housekeeping", never "a game is on air".
+       t:"idle" is the clearest case of all: it is the host explicitly saying go back to ads. */
+    /* to_ads is the single most important entry here. Every host sends it on pagehide, which is
+       the ordinary end of a night, and this page has no handler for it: returning to the ads is
+       done by the embedded screen navigating itself. So without this line, a host closing the tab
+       BETWEEN games pulled the wall off the venue's advertising and onto a dead join screen with
+       a code for a game nobody was running, and left it there for the full 90 minute host-silence
+       timeout. resume is deliberately NOT here: musical broadcasts it mid-game when a claim is
+       waved off and the room plays on, so it is real gameplay. */
+    /* A PUNTER IS NOT THE AUTHORITY ON WHETHER A GAME IS ON.
+       join, claim and leave are the only three things a phone sends, and none of them
+       were on this list. So a single punter who left the play page open on their
+       phone - it wakes, re-announces join - put the venue's wall back into a bingo
+       game that had finished hours earlier, over and over, with no host involved at
+       all. That is what kept The Mini Bar's screen on a dead board through every
+       reset on 5 Sep: nothing was restarting it, something was re-starting it.
+       A live game always produces HOST traffic (bingo calls a ball every few
+       seconds), so requiring that loses nothing and settles who decides. */
+    var NOT_ON_AIR = { tv_here:1, host_here:1, session:1, players:1, idle:1, rollcall:1,
+                       tv_audio_blocked:1, screen_refresh:1, tv_reload:1, to_ads:1,
+                       join:1, claim:1, leave:1,
+                       volume:1 };   // a setting, not a game: musical sends it to every TV hello, and after End game it pulled a dead lobby back up (14 Oct 2026)
+    /* t:"state" is the awkward one: every format sends it, and it means "here is where things
+       stand", which is just as often "nothing is on" as "a game is running". Musical ends a game
+       with idle THEN state, and members does the same, so treating state as proof of life put the
+       TV straight back into a game that had just finished, over and over. Both formats already
+       say which it is, so read it: musical sends active, members sends playing. Raffle's state
+       carries neither because it only ever describes the next prize while idle. */
+    function onAir(m){
+      if(NOT_ON_AIR[m.t]) return false;
+      if(m.t==="state") return m.active===true || m.playing===true;
+      return true;
+    }
+    GAMES.forEach(function(game){
+      var c=client.channel("vp-"+venueCode(game+"-"+VENUE_SLUG), { config:{ broadcast:{ self:false } } });
+      // Named, because re-subscribing after a dropped socket has to reattach it.
+      function onGameMsg(e){ vpGate(e.payload, function(m){
+        if(!m) return;
+        noteHostAlive();
+        /* A bingo LOBBY with no ball called is not a game to protect. A TV that reloaded while a
+           second tablet held a bingo lobby open sat on "BINGO, JOIN THE GAME" through a live trivia
+           round: only a mode could move it, and the console's heartbeat kept bingo looking live
+           (break test, 14 Oct 2026). Real play on another game's channel now takes the wall. */
+        var idleBingo = tvMode==="bingo" && state && state.phase==="lobby" && !(state.called && state.called.length);
+        if(m.t==="mode" || (tvMode==="ads" && onAir(m))) onGameMode(game);
+        else if(idleBingo && onAir(m) && m.t!=="state") onGameMode(game, true);
+      }); }
+      /* ANY traffic on a game channel is proof a host is running something. noteHostAlive() was
+         only ever called from the bingo channel, so a trivia or musical night past 90 minutes,
+         or a members-draw board put up at 5pm for a 7:30 draw, hit the host-silence timer and
+         was torn down to the ad loop mid-service. It could not come back on its own either:
+         re-embedding needs a fresh t:"mode", which the destroyed iframe never asks for. */
+      c.on("broadcast",{ event:"msg" }, onGameMsg);
+      /* A DEAF SCREEN LOOKS EXACTLY LIKE A HEALTHY ONE.
+         This callback used to handle SUBSCRIBED and nothing else. These five channels
+         are the only way anything reaches this screen - the host's mode and state, and
+         HQ's reload - and when the socket drops they go dead silently. The ads keep
+         rotating because they are built and timed locally, so a venue screen on a
+         Fire Stick that lost wifi for ten seconds carries on looking perfectly fine
+         and never hears another word. That is why resetting a venue appeared to work
+         and then stopped: each reset re-subscribed, and the next blip deafened it
+         again. The pairing channel above has handled this since August; these never
+         did.
+         Re-subscribe with a backoff, and count how long we have been deaf so the
+         watchdog can reload as a last resort. */
+      var tries = 0, retryT = null;
+      noteDeaf(game, false);                     // counted from the start, healthy until it says otherwise
+      function join(){
+        /* WHICH CHANNEL IS TALKING. Replacing a channel makes supabase-js tell the OLD one it
+           is CLOSED, and that arrives here, in a callback that could not tell old from new. So
+           the healthy replacement's own teardown notice read as a fresh failure: another retry
+           two seconds later tore down the good channel, whose CLOSED scheduled the next, for
+           ever. One wifi blip and the screen re-joined four channels about twice a second for
+           the rest of the night (3,588 joins in half an hour on the audit's clock), a short gap
+           of deafness each time. SUBSCRIBED reset the backoff every lap, so it never slowed.
+           Found by audit, 20 Sep 2026. The router got this same guard the same day. A status
+           from a channel this screen has already replaced is history, not news. */
+        var mine = c;
+        c.subscribe(function(st){
+          if(mine !== c) return;
+          if(st === "SUBSCRIBED"){
+            tries = 0;
+            noteDeaf(game, false);                 // THIS channel hears; the others keep their own clocks
+            try{ c.send({ type:"broadcast", event:"msg", payload:{ t:"tv_here", hello:true } }); }catch(e){}
+            return;
+          }
+          if(st === "CHANNEL_ERROR" || st === "TIMED_OUT" || st === "CLOSED"){
+            noteDeaf(game, true);
+            if(retryT) return;                     // one retry in flight is enough
+            var wait = Math.min(30000, 2000 * Math.pow(2, Math.min(tries, 4)));
+            tries++;
+            retryT = setTimeout(function(){
+              retryT = null;
+              /* LET GO OF IT BEFORE REMOVING IT. removeChannel makes the old channel report
+                 CLOSED straight away, inside this call. If c still pointed at it, the guard in
+                 join() saw its own current channel failing and booked another retry, which is
+                 the flap. The first attempt at this fix had the guard and not this line, and
+                 the test reproduced all 3,600 re-joins regardless. */
+              var old = c; c = null;
+              try{ client.removeChannel(old); }catch(e){}
+              c = client.channel("vp-" + venueCode(game + "-" + VENUE_SLUG),
+                                 { config:{ broadcast:{ self:false } } });
+              c.on("broadcast", { event:"msg" }, onGameMsg);
+              join();
+            }, wait);
+          }
+        });
+      }
+      join();
+    });
+  })();
+
+  // ---- per-venue screen content ----
+  // /tv?venue=<slug> loads that venue's own promo slides, draw schedule and raffle
+  // (set from the Account page). Plain /tv keeps the built-in sample loop. Best-effort:
+  // any failure just leaves the samples showing.
+  var reloadVenueScreen=null;
+  (function loadVenueScreen(){
+    var slug=VENUE_SLUG;
+    /* A DEMO GETS AN INVENTED PUB. The corner reads better with a name in it than empty,
+       and an invented one is the only safe name to put there: anything real is either
+       somebody else's pub or, on a venue's own laptop, their own.
+       It lives HERE and not in the demo block because setVenueName is scoped to this
+       function. Called from out there it is a ReferenceError, swallowed by a try/catch,
+       which is a line of code that looks like it works and does nothing. */
+    if(DEMO){
+      setVenueName("Tugun Bowls Club");
+      /* AND THE PUB'S ADVERTISING, which is half of what the screen is FOR.
+
+         Dean, 12 Sep 2026: "that invented pub has all the advertising etc needed for all
+         those nights?" It did not. The demo fetched nothing, so loopEntries() fell through
+         to its single holding slide, whose own words are "Screen not showing your promos or
+         game? Email hello@venueplay.com.au". That slide exists to tell a VENUE their screen
+         is broken. Showing it to a prospect is worse than showing nothing: the one thing a
+         buyer took away from the demo was a troubleshooting line.
+
+         The screen earns its keep between games, and a demo that only ever shows a game
+         leaves that out entirely. So the invented pub gets what a real one runs: a few
+         promos, the weekly draws board and a raffle, which is also the only way the
+         auto-draws and auto-raffle slides get in front of anybody on a sales page.
+
+         Invented, like the name. No dates on the slides, so slideVisible() keeps them all
+         and the loop cannot empty itself on a particular day. */
+      ADS.rotationSecs = 6;
+      ADS.slides = [
+        { tag:"Tonight",   accent:"pink",  head:"Bingo from 7pm",          sub:"Free to play. $50 bar tab on the line." },
+        { tag:"Kitchen",   accent:"gold",  head:"Parma and a pot, $22",    sub:"Every night until close" },
+        { tag:"Members",   accent:"green", head:"Join the club, $5",       sub:"Members prices at the bar and the bistro" },
+        { tag:"Saturday",  accent:"blue",  head:"Live music, 8pm",         sub:"No cover charge" }
+      ];
+      ADS.draws = [
+        { day:"Thursday", jackpot:"$1,400", time:"7:30pm" },
+        { day:"Friday",   jackpot:"$3,200", time:"6:00pm" },
+        { day:"Sunday",   jackpot:"$900",   time:"5:00pm" }
+      ];
+      ADS.raffle = { label:"Meat raffle", day:"Friday", time:"6:30pm" };
+      /* AND WHAT A REAL VENUE'S SLIDES LOOK LIKE. (Absolute addresses: the image whitelist in
+         slideHtml takes only a full http(s) URL, and drops a relative path without a word.) The four Tugun Bowls Club slides already on
+         the site (logos/ad-slides) are what an uploaded promo looks like on the wall, and a
+         venue's own artwork sells the advertising better than our text slides can. Dean,
+         22 Sep 2026: "also advertising", "so they have a logo". First in the loop, so the
+         ads-only demo opens on them. */
+      ADS.slides = [
+        { tag:"Tuesday",  accent:"pink", head:"Roast night, $14.90", sub:"", image_url:location.origin+"/logos/ad-slides/tugun-tuesday.jpg" },
+        { tag:"Thursday", accent:"gold", head:"Half price menu",     sub:"", image_url:location.origin+"/logos/ad-slides/tugun-thursday.jpg" },
+        { tag:"Friday",   accent:"blue", head:"Surf and turf, $24.90", sub:"", image_url:location.origin+"/logos/ad-slides/tugun-friday.jpg" },
+        { tag:"Saturday", accent:"green", head:"Parmi and pints, $19.90", sub:"", image_url:location.origin+"/logos/ad-slides/tugun-saturday.jpg" }
+      ].concat(ADS.slides);
+      /* ?demo=1&logo=<url>: a venue logo in the corner, so a prospect sees their own name up
+         there. Same-site paths only: this is a sales page, not a place to load strangers' images. */
+      /* The demo venue is Tugun Bowls Club, a real customer, with its real logo (Dean, 22 Sep
+         2026, "Shall we do Tugun bowls as the demo so they have a logo?"). ?logo=/path swaps in
+         another same-site file for a prospect's own. */
+      var demoLogo="/logos/venue-tugun-bowls.png";
+      try{ var lg=/[?&]logo=([^&]+)/.exec(window.location.search||""); if(lg){ var u=decodeURIComponent(lg[1]); if(/^\/[^\/]/.test(u)) demoLogo=u; } }catch(e){}
+      setVenueLogo(demoLogo);
+      buildAds(true); startAds();
+      return;   // and nothing else on this path runs: no fetch, no poll
+    }
+    if(!slug) return;
+    var hdr={ apikey:SUPA_ANON, Authorization:"Bearer "+SUPA_ANON };
+    // When buildAds() DOES replace the slides it hands back a set with no "show" class on any
+    // of them, so whatever rebuilds MUST call startAds() or the screen is left black. The old
+    // guard was !hostConnected, but hostConnected is never reset once a host has paired, so
+    // after one game night this went black and stayed black. tvMode is the real question: if
+    // ads are what is on screen, show them.
+    /* The venue-screen poll lands here every time it answers, almost always with exactly the
+       same slides. buildAds() compares before it touches anything, so an unchanged answer now
+       costs nothing on the wall; a real change swaps the new set in and starts it at the top. */
+    function refreshAds(){ if(tvMode!=="ads") { adBuilt=false; return; } buildAds(); startAds(); }
+    /* Venue logo: top-left corner, over the games. Injected once so no HTML anchor is needed.
+       NOT over the ads: applyVenueLogo() decides whether it is on screen, from the mode. */
+    function setVenueLogo(url){
+      venueLogoUrl=String(url||"").trim();
+      var el=document.getElementById("venueLogo");
+      if(venueLogoUrl){
+        if(!el){ el=document.createElement("img"); el.id="venueLogo"; el.setAttribute("data-fit-avoid","");   /* vp-fit keeps the wall out from under it */
+          el.style.cssText="position:fixed;top:14px;left:14px;max-width:120px;max-height:56px;width:auto;height:auto;object-fit:contain;z-index:60;pointer-events:none;filter:drop-shadow(0 2px 8px rgba(0,0,0,.55))";
+          document.body.appendChild(el); }
+        el.src=venueLogoUrl;
+        if(typeof VPVenueLogo==="object") VPVenueLogo.fit(el,"tv");   /* sized by its shape: /app/vp-venuelogo.js */
+      }
+      /* A logo says which venue this is better than a caption does, so the small name under the
+         VenuePlay mark comes off once a venue HAS a logo. Not once the logo is on screen: the
+         logo is off for the ads, and a caption that turns up only on the ad slides is worse
+         than none. Without a logo at all the name stays, because a TV pointed at the wrong
+         venue is otherwise only noticeable by its sound. One or the other, never both. */
+      applyVenueLogo();
+    }
+    /* The venue's NAME in plain text, so anyone glancing at a screen can see WHICH venue it is
+       showing (a TV pointed at the wrong venue is otherwise only noticeable by its sound).
+
+       IT USED TO SIT BOTTOM-LEFT AND THAT CORNER IS TAKEN. Three things were pinned there: the
+       fullscreen button (left:2cqw, bottom:2.4cqw), the join panel with the QR and the code
+       (left:2cqw, bottom:2cqw) and this, at left:22px, bottom:16px. Two unit systems in one
+       corner. cqw is 1% of the stage width, so on a 1920 TV 2cqw is 38px and the name sits
+       clear underneath, but at 800px wide 2cqw IS 16px and the join panel lands exactly on the
+       name. This has z-index 60 against the panel's 6, so the name drew straight across the QR
+       with its tail hanging past the panel's right edge: Dean's screen read "Join now UZRHJU bar"
+       for a venue called The Mini Bar. Reported live 5 Sep 2026.
+
+       Now top-right, under the VenuePlay mark, inside the stage and in cqw like everything else
+       around it, so it scales with the screen instead of racing it. Nothing else lives there. */
+    function setVenueName(name){
+      var el=document.getElementById("venueNameTag");
+      var nm=String(name||"").trim();
+      if(!nm){ if(el) el.style.display="none"; return; }
+      if(!el){
+        el=document.createElement("div"); el.id="venueNameTag";
+        el.className="venuename"; el.style.pointerEvents="none";
+        /* INSIDE the corner, not floating near it. All the styling lives in the
+           .tv-corner .venuename rule so there is one place to change it and no
+           inline top: to drift away from the wordmark on a different screen. */
+        var corner=document.getElementById("tvCorner");
+        (corner||document.getElementById("tv")||document.body).appendChild(el);
+      }
+      // The venue HAS a logo, not "the logo is on screen right now": it is off for the ads,
+      // and the caption must not reappear on an ad slide. See applyVenueLogo().
+      el.textContent=nm; el.style.display = venueLogoUrl ? "none" : "block";   // the logo wins
+      var la=document.getElementById("lobbyAt"), lan=document.getElementById("lobbyAtName");
+      if(la && lan){ lan.textContent=nm; la.style.display=""; }
+      var ra=document.getElementById("tvRunAt"), ran=document.getElementById("tvRunAtName");   // the real-balls title
+      if(ra && ran){ ran.textContent=nm; ra.style.display=""; }
+    }
+    /* THE WHOLE SCREEN, IN ONE CALL, THROUGH THE WORKER.
+       This used to read vp_venue_screen and v_vp_screen_draws straight from Supabase with the
+       public key. That worked for one venue by slug, but the same grant answered a request with
+       NO slug filter, handing over every venue's slug, id and advertising URLs: the platform's
+       customer list, and the first step to deriving live join codes. Confirmed live 20 Aug 2026.
+       The public grant is gone (migration 48) and the Worker serves one venue instead.
+       Nothing changes for the venue: same /tv?venue=slug link, still public, still no login.
+       Two calls became one, and the retry-without-a-column dance is gone with them: the Worker
+       decides its own shape, so a column we have not migrated can no longer take the ads down. */
+    function loadScreen(){
+      fetch(VP_GAME_API+"/screen?venue="+encodeURIComponent(slug))
+        .then(function(r){ return r.ok ? r.json() : null; })
+        .then(function(d){
+          if(!d || !d.exists){ askWhichVenue(); return; }
+          rememberVenue(slug);   // confirmed real: safe to keep on this screen
+          /* THE VENUE'S OWN CODE, NOT ONE DERIVED HERE.
+             CODE stays the broadcast channel, which is derived from the slug on
+             purpose so a TV and a console meet with no round trip and a night
+             survives a Worker outage. The code a PERSON sees is different: it is
+             issued once per venue, unique by constraint, and printable. If the
+             Worker has not handed one over (migration 68 not run, or offline)
+             joinCode keeps the derived value, which is what every existing venue
+             already has, so nothing goes blank. */
+          if(d.join_code && CODE_RE.test(d.join_code)) setJoinCode(d.join_code);
+          if(Array.isArray(d.slides)) ADS.slides=d.slides;
+          /* An empty routine is no routine. A saved-but-blank raffle object is still truthy, so
+             without this the screen rotated a card with no words on it and the venue had no way
+             to get rid of it. */
+          ADS.raffle = hasRaffle(d.raffle) ? d.raffle : null;
+          setVenueLogo(d.logo_url || "");
+          setVenueName(d.name || "");
+          var draws = Array.isArray(d.draws) ? d.draws : [];
+          if(draws[0] && draws[0].timezone) VENUE_TZ=draws[0].timezone;   // "Tonight" in the VENUE's time
+          // "Tonight" is decided at render time (entryInner), so the board stays right past midnight.
+          ADS.draws = draws.map(function(x){
+            return { day:x.draw_day,
+                     jackpot:"$"+Math.round((x.current_jackpot_cents||0)/100).toLocaleString("en-AU"),
+                     time:x.draw_time||"" };
+          });
+          refreshAds();
+        }).catch(function(){});
+    }
+    // A venue that uploads a slide or a logo should see it on the wall now, not after the next
+    // four hourly reload. billing.html broadcasts t:"screen_refresh" the moment it saves.
+    reloadVenueScreen=function(){ try{ loadScreen(); }catch(e){} };
+    loadScreen();
+    /* THE BACKSTOP FOR A SCREEN THAT MISSED THE BROADCAST.
+       The thirty second poll will do this for free the moment the Worker carries content_at
+       (see validateVenue above). Until then, and afterwards as a belt-and-braces for anything
+       the stamp does not cover, ask again on a slow timer.
+       Ten minutes, and ONLY while the ads are up, so it never runs during a game and never
+       competes with a live room for the gateway. That is one extra request per screen per ten
+       minutes, against a poll that already runs twenty times in the same window.
+       It goes through loadScreen -> refreshAds -> buildAds, which now leaves the wall alone
+       when nothing has changed and swaps in place when it has, so a screen catching up neither
+       flashes nor restarts the loop at slide one. */
+    var SCREEN_REFRESH_MS = 10*60*1000;
+    setInterval(function(){ try{ if(tvMode==="ads") loadScreen(); }catch(e){} }, SCREEN_REFRESH_MS);
+  })();
+
+  // An always-on venue TV must flip "Tonight" when the day rolls over. buildAds() bakes the board once,
+  // so re-run it the moment the Australian weekday actually changes (checked once a minute, idle only).
+  (function(){
+    var day=todayAU();
+    setInterval(function(){
+      var d=todayAU();
+      if(d!==day){ day=d; if(tvMode==="ads"){ buildAds(); startAds(); } }   // the draws board bakes "Tonight", so the signature really has changed
+    }, 60000);
+  })();
+
+  /* ==========================================================================
+     STOP. READ THIS BEFORE YOU DELETE ANYTHING BELOW.
+
+     This block does NOTHING visible when the product is working. That is exactly
+     why it keeps looking deletable, and exactly why it must not be deleted.
+
+     This screen hangs on a wall in a pub. Nobody is sitting in front of it. When
+     it breaks it does not throw an error that anyone sees. It just goes black,
+     and it STAYS black, for days, in front of paying customers, until somebody
+     physically drives to the venue.
+
+     That has already happened TWICE (10 and 11 August 2026). Both times every
+     internal flag reported the screen was perfectly healthy while the room stared
+     at a black rectangle. That is why the watchdog below checks the DOM and never
+     our own state.
+
+     If you remove this, nothing breaks in your browser. Nothing fails in review.
+     You find out months later, from a publican, on a Friday night, at scale.
+
+     Changing it is fine. Deleting it is not. Either way, run this first:
+         python3 tools/check-tv-watchdog.py
+     ========================================================================== */
+  // ================= WATCHDOG: DO NOT REMOVE =================
+  // A venue TV runs unattended for weeks, in a room where nobody is going to notice it has gone
+  // black and nobody is going to walk over and refresh it. At any real number of venues, "reload
+  // the page" is not a fix that exists. So the screen has to notice, repair itself, and pull down
+  // new code on its own.
+  //
+  // It deliberately judges the DOM, not our own state flags. Whatever the cause, the only question
+  // worth asking is "is anything actually on the screen right now". That is what caught the last
+  // one: every slide was built and none was visible, and every internal flag said fine.
+  //
+  // Nothing here fires while a game is on air: tvMode is checked first, every time.
+  (function watchdog(){
+    var CHECK_MS = 20000;                   // how often we look
+    var MAX_AGE  = 4 * 60 * 60 * 1000;      // reload at least this often, idle only
+    var MIN_GAP  = 3 * 60 * 1000;           // a broken page must never thrash reloads
+    var loadedAt = Date.now();
+    var strikes  = 0;
+
+    function idle(){ try { return tvMode === "ads"; } catch(e){ return true; } }
+
+    /* DEAF FOR TOO LONG IS A REASON TO RELOAD, WHATEVER IS ON SCREEN.
+       The four-hourly reload is idle-only, which is right for a screen that is
+       working: never interrupt a room. But a screen whose game channels have
+       dropped is not working, and it cannot be told to reload either, because the
+       reload command travels on the very channels that are down. That is the state
+       a venue screen can sit in all night looking perfectly healthy. So once the
+       channels have been deaf for this long, reload regardless of mode: it is the
+       only move left, and a screen that hears nothing has nothing to protect. */
+    var DEAF_MS = 4 * 60 * 1000;
+    function deafTooLong(){
+      try { return gameChannelsDeafSince && (Date.now() - gameChannelsDeafSince) > DEAF_MS; }
+      catch(e){ return false; }
+    }
+    /* ONE CHANNEL DEAF FOR TOO LONG, WHILE THE ADS ARE UP. A screen that still hears some of
+       its channels is not deaf, so this never reloads over a game: idle() is asked first. But
+       with the ads up, the dead channel is the road some host's game will arrive by, and the
+       watchdog is the only thing that can open it again. Not more than once in half an hour
+       for this reason, so a channel that is dead however often we reload cannot restart the
+       venue's ad loop every four minutes all night. Audit, 27 Sep 2026. */
+    var ONE_DEAF_GAP = 30 * 60 * 1000;
+    function oneChannelDeafTooLong(){
+      try {
+        if(!idle() || !anyChannelDeafSince || (Date.now() - anyChannelDeafSince) <= DEAF_MS) return false;
+        var why = sessionStorage.getItem("vpTvReloadWhy") || "";
+        var at = parseInt(sessionStorage.getItem("vpTvReloadAt") || "0", 10) || 0;
+        return !(why === "channel-deaf" && (Date.now() - at) < ONE_DEAF_GAP);
+      } catch(e){ return false; }
+    }
+
+    // Anyone who opens devtools on a real venue screen should be able to see this is armed,
+    // and see why it last reloaded. Costs nothing and answers the first question every time.
+    try{
+      console.info("[VenuePlay] TV watchdog armed. Last reload:",
+        sessionStorage.getItem("vpTvReloadWhy") || "none this session");
+    }catch(e){}
+
+    function reload(why){
+      // Offline, a reload swaps a stale but branded screen for a browser error page, which is
+      // strictly worse in a public room. Wait for the network to come back instead.
+      try{ if(navigator.onLine === false) return; }catch(e){}
+      try{
+        var last = parseInt(sessionStorage.getItem("vpTvReloadAt") || "0", 10);
+        if(Date.now() - last < MIN_GAP) return;
+        sessionStorage.setItem("vpTvReloadAt", String(Date.now()));
+        sessionStorage.setItem("vpTvReloadWhy", why || "");   // survives the reload, for diagnosis
+      }catch(e){}
+      location.reload();
+    }
+    window.__vpTvReload = reload;   // a remote command reuses this, rate limit included
+
+    // A game on screen is its own proof of life. Otherwise there must be a slide that is
+    // genuinely visible, not merely built.
+    /* HOW A SCREEN GETS STRANDED, AND WHY THIS LINE WAS THE CAUSE.
+       This used to read `if(!idle()) return true;` - a game on the wall was proof of
+       life, full stop. That one line disabled every escape a screen has at once: the
+       four-hourly reload is idle-only, this watchdog declared the screen healthy, and
+       so a board frozen since last night sat there for ever. On 5 Sep The Mini Bar's
+       screen was in exactly that state, polling us happily, and there was no remote
+       lever of any kind that could reach it. It had to be reloaded by hand.
+       A game is proof of life only while something is still ARRIVING. A real night
+       produces host traffic constantly - bingo calls a ball every few seconds - so ten
+       minutes of complete silence behind a game on screen means the game is over and
+       nobody told us. */
+    var FROZEN_GAME_MS = 10 * 60 * 1000;
+    function gameLooksFrozen(){
+      if(idle()) return false;
+      var quiet = Date.now() - Math.max(lastHostAt || 0, lastBingoAt || 0);
+      return quiet > FROZEN_GAME_MS;
+    }
+    function screenIsAlive(){
+      if(!idle()) return !gameLooksFrozen();
+      var host = document.getElementById("tvAds");
+      if(!host) return false;
+      if(!host.querySelector(".ad")) return false;         // nothing was built
+      if(!host.querySelector(".ad.show")) return false;    // built, but nothing is showing
+      return true;
+    }
+
+    setInterval(function(){
+      try{
+        // Pick up new code by itself. This is the part that means a fix reaches a venue we are
+        // never going to physically visit.
+        if(idle() && (Date.now() - loadedAt) > MAX_AGE){ reload("max-age"); return; }
+        // Not idle-only: a deaf screen cannot be reached any other way. See deafTooLong.
+        if(deafTooLong()){ reload("channels-deaf"); return; }
+        if(oneChannelDeafTooLong()){ reload("channel-deaf"); return; }   // idle only; see above
+
+        if(screenIsAlive()){ strikes = 0; return; }
+
+        strikes++;
+        if(strikes < 2) return;                 // one bad sample can just be a slide swapping over
+        /* A FROZEN GAME IS NOT A BROKEN AD LOOP. Rebuilding the slides cannot help a
+           board that has been sitting there since last night - they are behind it -
+           so skip the repair and start clean. */
+        if(gameLooksFrozen()){ reload("frozen-game"); return; }
+        if(strikes === 2){                      // cheap repair first: rebuild in place
+          // FORCED. Everything else that rebuilds skips the work when the content has not
+          // changed, which is right for them and wrong here: this one is called precisely
+          // because the slides on screen cannot be trusted, changed or not.
+          try{ adBuilt = false; buildAds(true); startAds(); }catch(e){}
+          return;
+        }
+        reload("black-screen");                 // the repair did not take, so start clean
+      }catch(e){
+        reload("watchdog-error");
+      }
+    }, CHECK_MS);
+
+    /* Waking from sleep can leave a stale frame on screen, so the rotation is nudged. It is
+       NOT a reason to throw the slides away and start again at the top: this fired on every
+       tab switch, rebuilt byte-identical slides, flashed the wall through an empty container
+       and dropped the loop back to slide one. buildAds() now leaves the wall alone when
+       nothing has changed, and startAds() carries on from the slide that is lit. */
+    document.addEventListener("visibilitychange", function(){
+      if(document.visibilityState !== "visible" || !idle()) return;
+      try{ buildAds(); startAds(); }catch(e){ reload("wake"); }
+    });
+
+    // An uncaught error can stop the rotation with the last slide still lit, which looks alive to
+    // the check above. Move the watchdog along rather than wait for a slide to fail to advance.
+    window.addEventListener("error", function(){ if(strikes < 2) strikes = 2; });
+
+    /* ---- pick up a deploy in minutes, not hours ----
+       These screens are switched on and never touched again. Nobody reloads a Fire Stick behind
+       a bar, so until now a fix reached a venue only when the 4 hour idle reload came round.
+
+       Cloudflare gives this page no ETag, no Last-Modified and no Content-Length (checked against
+       the live site, 19 Aug 2026), so there is no cheap header to compare. The page itself is the
+       only honest signal: fetch it and hash it. That is deliberately chosen over a version string
+       someone has to remember to bump, because a stamp nobody updates is worse than no stamp.
+
+       78KB every ten minutes, idle only, never mid-game. If anything fails it does nothing at all
+       and the 4 hour reload still catches it. This can make updates faster; it cannot make the
+       screen worse. */
+    (function watchForDeploy(){
+      var VERSION_CHECK_MS = 10 * 60 * 1000;
+      var mine = null;
+
+      /* Cloudflare's Email Address Obfuscation rewrites the support address on this page into
+         <a class="__cf_email__" data-cfemail="..."> with a FRESH RANDOM KEY on every request. So
+         the bytes differ every single time and "has this page changed" was always true: every
+         venue TV reloaded itself every ten minutes, all day, restarting the ad loop from slide
+         one. Strip the rewritten parts before hashing, and hash a normalised copy. */
+      function stable(str){
+        return String(str)
+          .replace(/data-cfemail="[^"]*"/g, '')
+          .replace(/\/cdn-cgi\/[^"']*/g, '')
+          .replace(/<span class="__cf_email__"[^>]*>[\s\S]*?<\/span>/g, '')
+          .replace(/\s+/g, ' ');
+      }
+      function hash(str){
+        // djb2. Not cryptographic, and does not need to be: it only has to change when the file does.
+        var t = stable(str), h = 5381;
+        for (var i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0;
+        return h + ":" + t.length;
+      }
+      function probe(){
+        var url = location.origin + location.pathname + "?v=" + Date.now();
+        return fetch(url, { cache:"no-store" })
+          .then(function(r){ return r.ok ? r.text() : null; })
+          .then(function(t){ return t ? hash(t) : null; })
+          .catch(function(){ return null; });
+      }
+
+      /* Keep trying to get a first reading. A Fire Stick that boots before its wifi associates
+         used to fail this one probe and then never check again for the life of the page. */
+      (function first(tries){
+        probe().then(function(h){
+          if(!h){ if(tries < 10) setTimeout(function(){ first(tries+1); }, 60000); return; }
+          arm(h);
+        });
+      })(0);
+      function arm(h){
+        mine = h;
+        setInterval(function(){
+          if(!idle()) return;                       // a game is never interrupted for a code update
+          try{ if(navigator.onLine === false) return; }catch(e){}
+          probe().then(function(now){
+            if(now && mine && now !== mine) reload("new-version");
+          });
+        }, VERSION_CHECK_MS);
+      }
+    })();
+  })();
+
+  // ================= FULLSCREEN (additive setup control) =================
+  // Purely additive: lets a staff member tap once to fill the TV. Does not touch
+  // the game, realtime, pairing or ad logic above.
+  (function setupFullscreen(){
+    var btn=$("tvFsBtn");
+    if(!btn) return;
+    var root=document.documentElement;
+    var el=$("tv")||root;
+    function fsElement(){
+      return document.fullscreenElement||document.webkitFullscreenElement||document.msFullscreenElement||null;
+    }
+    function canFs(node){
+      return !!(node && (node.requestFullscreen||node.webkitRequestFullscreen||node.msRequestFullscreen));
+    }
+    // If the Fullscreen API is unavailable (some smart TV browsers block it),
+    // hide the button so it is a harmless no-op. F11 still works on laptops.
+    if(!canFs(el) && !canFs(root)){ btn.style.display="none"; return; }
+    function requestOn(node){
+      if(!node) return false;
+      var fn=node.requestFullscreen||node.webkitRequestFullscreen||node.msRequestFullscreen;
+      if(!fn) return false;
+      try{ var r=fn.call(node); if(r&&typeof r.catch==="function") r.catch(function(){}); return true; }
+      catch(e){ return false; }
+    }
+    /* A SETUP CONTROL, NOT FURNITURE (live play audit, 20 Oct 2026). The chip sat on the venue's
+       own advertising all night. It now goes after its first use, or after thirty seconds untouched,
+       and comes back for thirty seconds whenever somebody moves the mouse, touches the screen or
+       presses a key (Dean, 20 Oct 2026: a mouse or a key brings it back, so it need not wait long):
+       the person setting the TV up still finds it, the room never sees it for long. */
+    var FS_HOLD_MS=30*1000;
+    var used=!!DEMO, shownUntil=Date.now()+FS_HOLD_MS, fsHideT=null;   // a demo never shows it (hideSetup above)
+    btn.addEventListener("click", function(){
+      used=true; sync();
+      if(fsElement()) return;
+      if(!requestOn(el)) requestOn(root);
+    });
+    function sync(){
+      var on=!fsElement() && !used && Date.now()<shownUntil;
+      btn.style.display = on ? "" : "none";
+      if(fsHideT){ clearTimeout(fsHideT); fsHideT=null; }
+      if(on) fsHideT=setTimeout(sync, Math.max(50, shownUntil-Date.now()));
+    }
+    function wake(){ if(used) return; shownUntil=Date.now()+FS_HOLD_MS; sync(); }
+    ["pointermove","pointerdown","keydown","touchstart"].forEach(function(ev){
+      document.addEventListener(ev, wake, { passive:true });
+    });
+    document.addEventListener("fullscreenchange", sync);
+    document.addEventListener("webkitfullscreenchange", sync);
+    document.addEventListener("msfullscreenchange", sync);
+    sync();
+  })();
+})();
+</script>
+</body>
+</html>

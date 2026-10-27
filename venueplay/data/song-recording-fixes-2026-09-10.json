@@ -1,0 +1,145 @@
+{
+ "generated": "2026-09-10",
+ "why": "The 9 September chart run flagged 87 library titles that are held only as a version by an act that never charted in Australia. All 87 were checked one at a time against the library. Most are not faults: some are a different song that happens to share a title (John Lee Hooker's Boom Boom is not Paul Lekakis's Boom Boom), some are the same recording under a different spelling of the act's name (Florence + the Machine and Florence and the Machine), and most of the rest are the famous original where the chart caught a later cover (Please Mr. Postman is The Marvelettes, Lady Marmalade is LaBelle). These are the ones where the library really does hold a recording the room would not know. Each keeps its song id and its place in every pack: only the artist, the preview clip, the cover art and the year change.",
+ "fixes": [
+  {
+   "id": "sorrow-bad-religion",
+   "title": "Sorrow",
+   "correct_artist": "David Bowie",
+   "why": "Bowie's Pin Ups reading is the one Australia heard. Bad Religion cut it for a 2002 punk album."
+  },
+  {
+   "id": "rock-me-great-white",
+   "title": "Rock Me",
+   "correct_artist": "ABBA",
+   "why": "ABBA's Rock Me was an Australian number one in 1976. Great White's is a different band's 1987 album track.",
+   "correct_year": 1975
+  },
+  {
+   "id": "hurts-so-good-astrid-s",
+   "title": "Hurts So Good",
+   "correct_artist": "John Cougar",
+   "why": "John Cougar's 1982 single is the record. Astrid S released a same titled song in 2016 that never charted here."
+  },
+  {
+   "id": "i-finally-found-someone-lorrie-morgan-sammy-kershaw",
+   "title": "I Finally Found Someone",
+   "correct_artist": "Barbra Streisand",
+   "correct_title_hint": "I Finally Found Someone",
+   "why": "The hit is Barbra Streisand with Bryan Adams from The Mirror Has Two Faces. The Lorrie Morgan and Sammy Kershaw cover did nothing here.",
+   "correct_year": 1996
+  },
+  {
+   "id": "angel-of-the-morning-melinda-schneider-and-beccy-cole",
+   "title": "Angel of the Morning",
+   "correct_artist": "Juice Newton",
+   "why": "The version Australia sings is Juice Newton's. Melinda Schneider and Beccy Cole cut a 2014 duet of it."
+  },
+  {
+   "id": "harper-valley-p-t-a-loretta-lynn",
+   "title": "Harper Valley P.T.A.",
+   "correct_artist": "Jeannie C. Riley",
+   "why": "Jeannie C. Riley's is the record that went to number one. Loretta Lynn's is an album cover."
+  },
+  {
+   "id": "the-real-thing-client-liaison",
+   "title": "The Real Thing",
+   "correct_artist": "Russell Morris",
+   "why": "Russell Morris's 1969 single is one of the biggest Australian records ever made. Client Liaison is a 2016 synth pop act."
+  },
+  {
+   "id": "little-lion-man-twinkle-twinkle-little-rock-star",
+   "title": "Little Lion Man",
+   "correct_artist": "Mumford & Sons",
+   "why": "Twinkle Twinkle Little Rock Star is a lullaby covers project. This is a music box version of a triple j number one.",
+   "note": "NOT SWAPPED: the AU store has no preview clip for Mumford & Sons' own recording, only lullaby and bluegrass covers. Left exactly as it was."
+  },
+  {
+   "id": "the-less-i-know-the-better-tame-impala-cover-memphis-lk",
+   "title": "The Less I Know the Better",
+   "correct_artist": "Tame Impala",
+   "retitle": true,
+   "why": "The library title literally says Tame Impala Cover. Tame Impala's own recording topped the Hottest 100.",
+   "note": "NOT SWAPPED: the AU store has no preview clip for Tame Impala's own recording. Left exactly as it was."
+  }
+ ],
+ "checked_and_left_alone": {
+  "same_act_different_spelling": [
+   "Dog Days Are Over, Florence + the Machine and Florence and the Machine",
+   "All The Stars, Kendrick Lamar, SZA",
+   "One Kiss, Calvin Harris, Dua Lipa",
+   "Prada, cassö & RAYE",
+   "Bring It All Back and Don't Stop Movin', S Club and S Club 7",
+   "Dream A Little Dream Of Me, The Mamas & The Papas",
+   "Shaddap You Face, Joe Dolce and Joe Dolce Music Theatre"
+  ],
+  "famous_original_the_chart_caught_a_later_cover": [
+   "Please Mr. Postman, The Marvelettes",
+   "Lady Marmalade, LaBelle",
+   "You Can't Hurry Love, The Supremes",
+   "Dancing In the Street, Martha Reeves & The Vandellas",
+   "La Bamba, Ritchie Valens",
+   "Let's Groove, Earth, Wind & Fire",
+   "Sexual Healing, Marvin Gaye",
+   "The Logical Song, Supertramp",
+   "Just Can't Get Enough, Depeche Mode",
+   "Cat's In the Cradle, Harry Chapin",
+   "If You Don't Know Me by Now, Harold Melvin & The Blue Notes",
+   "Breaking Up Is Hard to Do, Neil Sedaka",
+   "Chirpy Chirpy Cheep Cheep, Middle of the Road",
+   "I Don't Know How To Love Him, Yvonne Elliman",
+   "I Don't Wanna Play House, Tammy Wynette",
+   "I Just Don't Know What To Do With Myself, Dusty Springfield",
+   "I Can't Stand the Rain, Ann Peebles",
+   "Ooh La La, Faces",
+   "Cruisin', Smokey Robinson",
+   "Put Your Records On, Corinne Bailey Rae",
+   "Me and Bobby McGee, Kris Kristofferson, who wrote it. Janis Joplin's is added separately instead",
+   "I Swear, John Michael Montgomery, which suits the Country pack. All-4-One is added separately instead",
+   "Somethin' Stupid, Tammi Terrell & Marvin Gaye, which suits Soul & Motown. The Sinatras are added separately instead"
+  ],
+  "different_song_that_shares_a_title": [
+   "Boom Boom, John Lee Hooker, not Paul Lekakis or Justice Crew",
+   "Rush, Troye Sivan, PinkPantheress & Hyunjin, not Big Audio Dynamite",
+   "Always, Atlantic Starr, not Bon Jovi",
+   "Candy, Cameo, not Mandy Moore",
+   "Most Girls, Hailee Steinfeld, not Pink",
+   "Hey Baby (feat. Mos Def), Stephen Marley, not DJ Ötzi",
+   "Superman, Goldfinger, not Five for Fighting",
+   "Leave (Good Ending), Shannon Purser, not JoJo",
+   "Over And Over, Little Big Town, not Nelly and Tim McGraw",
+   "Brother, Kodaline, not Matt Corby",
+   "Paradise, Golden Features & The Presets, not Coldplay",
+   "Earthquake, Graham Central Station, not Labrinth",
+   "Fancy, Reba McEntire, not Iggy Azalea",
+   "I'm the One, Descendents, not DJ Khaled",
+   "The Middle, Jimmy Eat World, not Zedd",
+   "River, Bishop Briggs, not Eminem",
+   "This Is Me, Climie Fisher, not Keala Settle",
+   "Godzilla, Blue Öyster Cult, not Eminem",
+   "Holy (Til You Let Me Go), Rina Sawayama, not Justin Bieber",
+   "Afterglow, In Hearts Wake, not Ed Sheeran",
+   "Hurricane, Thirty Seconds to Mars, not Kanye West",
+   "Karma, Summer Walker, not Taylor Swift",
+   "Popular, Nada Surf, not The Weeknd",
+   "Carnival, Natalie Merchant, not Kanye West",
+   "Mexico, Firefall, not Bob Moore",
+   "Think Twice, Eve 6, not Celine Dion",
+   "When the Lights Go Out, Naked Eyes, not Five",
+   "Hair, Graham Central Station, not The Cowsills",
+   "9 to 5, Dolly Parton, not Sheena Easton's 9 to 5 (Morning Train)",
+   "Get Back, Ludacris, not The Beatles",
+   "One In A Million, Bodyjar, not Euphoria",
+   "Follow Me, Amanda Lear, not Uncle Kracker",
+   "White Flag, Bishop Briggs, not Dido",
+   "Rise Up, Andra Day, not the Australian Idol Final 12",
+   "Signs, Luke Bryan, not Snoop Dogg",
+   "When I'm Gone, Brenda Holloway, not Eminem",
+   "Rise, Boston, not Katy Perry",
+   "One, Three Dog Night, not Metallica or U2",
+   "Today, Dave Koz & Cory Wong, not The Smashing Pumpkins",
+   "Black, Dierks Bentley, not Pearl Jam",
+   "Back Door Man, Howlin' Wolf, not Pauline Pantsdown"
+  ]
+ }
+}

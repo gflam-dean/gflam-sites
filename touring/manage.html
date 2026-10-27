@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Show Manager &middot; Gflam Touring</title>
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="/favicon-48.png" type="image/png" sizes="48x48">
+<link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--pink:#fe65c3;--dark:#111;--dark2:#1a1a1a;--dark3:#222;--white:#fff;--muted:rgba(255,255,255,0.55);--border:rgba(255,255,255,0.1)}
+html,body{background:var(--dark);color:#fff;font-family:"DM Sans",sans-serif;font-size:15px;line-height:1.6;min-height:100vh}
+.dot{color:var(--pink)}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--pink);margin-bottom:12px}
+
+/* TOP BAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 32px;border-bottom:1px solid var(--border);background:rgba(17,17,17,0.97);position:sticky;top:0;z-index:50}
+.topbar-title{font-family:"DM Serif Display",serif;font-size:22px;letter-spacing:-0.5px;color:#fff}
+.topbar-right{display:flex;gap:10px;align-items:center}
+.tb-btn{background:transparent;border:1px solid var(--border);color:var(--muted);font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:8px 16px;border-radius:5px;cursor:pointer;font-family:"DM Sans",sans-serif;transition:all .2s;text-decoration:none}
+.tb-btn:hover{color:#fff;border-color:rgba(255,255,255,0.3)}
+
+/* PIN GATE */
+.gate{display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 64px);padding:24px}
+.gate-box{background:var(--dark2);border:1px solid var(--border);border-radius:12px;padding:48px 40px;width:100%;max-width:400px;text-align:center}
+.gate-icon{font-size:42px;margin-bottom:16px}
+.gate-title{font-family:"DM Serif Display",serif;font-size:32px;letter-spacing:-1px;margin-bottom:8px;color:#fff}
+.gate-sub{font-size:14px;color:var(--muted);margin-bottom:32px}
+.pin-input{background:var(--dark3);border:1px solid var(--border);border-radius:6px;color:#fff;font-family:"DM Sans",sans-serif;font-size:28px;font-weight:700;letter-spacing:14px;text-align:center;padding:16px;width:100%;outline:none;transition:border-color .2s}
+.pin-input:focus{border-color:var(--pink)}
+.pin-error{color:var(--pink);font-size:13px;margin-top:14px;min-height:20px}
+
+/* APP */
+.app{display:none;padding:48px 32px 80px;max-width:1200px;margin:0 auto}
+.app.show{display:block}
+.app-title{font-family:"DM Serif Display",serif;font-size:42px;letter-spacing:-1.5px;margin-bottom:8px;color:#fff}
+.app-sub{font-size:15px;color:var(--muted);margin-bottom:40px}
+.status-bar{display:flex;align-items:center;gap:14px;font-size:13px;color:var(--muted);margin-bottom:24px;padding:12px 16px;background:var(--dark2);border:1px solid var(--border);border-radius:6px}
+.status-bar strong{color:#fff;font-weight:600}
+.status-bar.error{border-color:rgba(254,101,195,0.3);background:rgba(254,101,195,0.04);color:var(--pink)}
+
+/* SHOW ITEMS */
+.show-items{display:flex;flex-direction:column;gap:16px;margin-bottom:24px}
+.show-item{background:var(--dark2);border:1px solid var(--border);border-radius:10px;padding:24px}
+.arow{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:14px}
+.afield{display:flex;flex-direction:column;gap:5px;flex:1;min-width:140px}
+.afield label{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+.afield input,.afield select,.afield textarea{background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:5px;color:#fff;font-family:"DM Sans",sans-serif;font-size:14px;padding:10px 12px;outline:none;transition:border-color .2s;width:100%}
+/* ON-BRAND DROPDOWNS (Dean, 19 Oct 2026). The tour picker was the browser's own grey control. Same box as the
+   inputs beside it, the browser's arrow replaced by a pink chevron, a dark open list (color-scheme), a pink focus
+   ring, and 16px text on a phone so iOS Safari does not zoom the page when it is tapped. */
+.afield select{-webkit-appearance:none;-moz-appearance:none;appearance:none;color-scheme:dark;cursor:pointer;
+  background-color:rgba(255,255,255,0.05);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23fe65c3' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;background-size:12px 8px;padding-right:36px}
+.afield select:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(254,101,195,0.2)}
+.afield select option{background-color:#1a1a1a;color:#fff}
+@media(max-width:640px){.afield select{font-size:16px}}
+.afield input:focus,.afield select:focus,.afield textarea:focus{border-color:rgba(254,101,195,0.5)}
+.afield input::placeholder{color:rgba(255,255,255,0.2)}
+.afield select option{background:var(--dark3);color:#fff}
+.afield small{color:rgba(255,255,255,0.35);font-size:11px;margin-top:4px;display:block}
+.preview-pink{color:var(--pink);font-size:13px;font-weight:600;margin-top:6px;display:block}
+
+/* IMAGE UPLOAD */
+.img-upload{border:1px dashed rgba(254,101,195,0.35);border-radius:6px;padding:14px;text-align:center;cursor:pointer;position:relative;overflow:hidden;transition:border-color .2s}
+.img-upload:hover{border-color:var(--pink)}
+.img-upload input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.img-upload-label{font-size:13px;color:var(--muted)}
+.img-preview{width:100%;height:80px;object-fit:cover;border-radius:5px;margin-top:8px}
+
+/* QUEENS */
+.q-chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px}
+.q-chip{display:flex;align-items:center;gap:6px;border:1px solid rgba(254,101,195,0.35);color:var(--pink);font-size:13px;padding:4px 10px 4px 12px;border-radius:20px}
+.q-chip button{background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.3);font-size:13px;padding:0;transition:color .15s}
+.q-chip button:hover{color:var(--pink)}
+.q-add-row{display:flex;gap:8px}
+.q-add-row input{background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:5px;color:#fff;font-family:"DM Sans",sans-serif;font-size:13px;padding:7px 12px;flex:1;outline:none}
+.q-add-btn{background:rgba(255,255,255,0.08);border:1px solid var(--border);color:#fff;font-size:13px;font-weight:600;padding:7px 16px;border-radius:5px;cursor:pointer;font-family:"DM Sans",sans-serif}
+.remove-btn{margin-top:14px;background:transparent;border:1px solid rgba(254,101,195,0.25);color:rgba(254,101,195,0.7);font-size:12px;font-weight:600;padding:7px 16px;border-radius:5px;cursor:pointer;font-family:"DM Sans",sans-serif;transition:all .2s}
+.remove-btn:hover{border-color:var(--pink);color:var(--pink)}
+
+/* ACTIONS */
+.actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px}
+.btn{font-family:"DM Sans",sans-serif;font-size:14px;font-weight:600;padding:11px 24px;border-radius:5px;cursor:pointer;border:none;transition:all .2s;text-decoration:none;display:inline-block}
+.btn-pink{background:var(--pink);color:#fff}
+.btn-pink:hover{opacity:0.85}
+.btn-pink:disabled{opacity:0.5;cursor:not-allowed}
+.btn-outline{background:transparent;border:1px solid var(--border);color:#fff}
+.btn-outline:hover{background:rgba(255,255,255,0.05)}
+.toast{display:none;margin-left:auto;background:rgba(85,200,120,0.08);border:1px solid rgba(85,200,120,0.25);color:#7adc91;font-size:13px;padding:9px 16px;border-radius:5px}
+.toast.show{display:inline-block}
+
+@media(max-width:700px){
+  .topbar{padding:14px 20px}
+  .app{padding:32px 20px 60px}
+  .app-title{font-size:32px}
+  .gate-box{padding:36px 24px}
+  .actions .toast{margin-left:0;width:100%}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-title">Gflam<span class="dot">.</span> Manager</div>
+  <div class="topbar-right">
+    <a href="/" class="tb-btn">View Site</a>
+    <button class="tb-btn" id="lockBtn" onclick="lockOut()" style="display:none">Lock</button>
+  </div>
+</div>
+
+<!-- MANAGER GATE -->
+<div class="gate" id="gate">
+  <div class="gate-box">
+    <div class="gate-icon">&#128274;</div>
+    <div class="gate-title">Show Manager<span class="dot">.</span></div>
+    <div class="gate-sub">Enter the manager password to edit tours.</div>
+    <input type="password" class="pin-input" id="pinInput" maxlength="120" autocomplete="current-password" placeholder="Password" autofocus onkeydown="if(event.key==='Enter')submitPin()">
+    <button id="pinGo" onclick="submitPin()" style="margin-top:14px;width:100%;padding:12px 16px;border-radius:8px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#fff;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer">Unlock</button>
+    <div class="pin-error" id="pinError"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+  <div class="eyebrow">Tour Database</div>
+  <h1 class="app-title">Manage all shows<span class="dot">.</span></h1>
+  <p class="app-sub">Edit any field below. Changes save to Supabase and sync to gflamtouring.com.au and dragbingoatthebowlo.com.au within seconds of clicking Save.</p>
+
+  <div class="status-bar" id="status">
+    <span id="statusText">Loading shows&hellip;</span>
+  </div>
+
+  <div class="show-items" id="showItems"></div>
+  <datalist id="artistList"></datalist>
+  <datalist id="venueList"></datalist>
+
+  <div class="actions">
+    <button class="btn btn-outline" onclick="addShow()">+ Add Show</button>
+    <button class="btn btn-pink" onclick="saveShows()" id="saveBtn">Save All Shows</button>
+    <span class="toast" id="toast">&#10003; Saved successfully</span>
+  </div>
+  <div class="eyebrow" style="margin-top:56px">Ticket Milestones</div>
+  <h1 class="app-title" style="font-size:26px">Tickets sold counter<span class="dot">.</span></h1>
+  <p class="app-sub">For your reference only - add each show and its ticket count. The homepage shows the running total as a live ticking number.</p>
+
+  <div class="status-bar" id="tktStatus"><span id="tktStatusText">Loading milestones&hellip;</span></div>
+  <div id="tktItems"></div>
+  <div style="margin:10px 0 6px;font-size:14px;color:rgba(255,255,255,.7)">Total: <strong id="tktTotal" style="color:#fff">0</strong> tickets</div>
+  <div class="actions">
+    <button class="btn btn-outline" onclick="addTkt()">+ Add Milestone</button>
+    <button class="btn btn-pink" onclick="saveTkts()" id="tktSaveBtn">Save Milestones</button>
+    <span class="toast" id="tktToast">&#10003; Saved</span>
+  </div>
+  <div class="eyebrow" style="margin-top:56px">Team Experience</div>
+  <h1 class="app-title" style="font-size:26px">Years experience counter<span class="dot">.</span></h1>
+  <p class="app-sub">Add each team member and their years of experience. Tap <strong>Lock</strong> once a person's number is right - from then on it auto-increments every 1 January. The homepage shows the combined total as a ticking number. Unlock to edit; the elapsed years are kept.</p>
+
+  <div class="status-bar" id="expStatus"><span id="expStatusText">Loading team&hellip;</span></div>
+  <div id="expItems"></div>
+  <div style="margin:10px 0 6px;font-size:14px;color:rgba(255,255,255,.7)">Combined: <strong id="expTotal" style="color:#fff">0</strong> years</div>
+  <div class="actions">
+    <button class="btn btn-outline" onclick="addExp()">+ Add Team Member</button>
+    <button class="btn btn-pink" onclick="saveExps()" id="expSaveBtn">Save Team</button>
+    <span class="toast" id="expToast">&#10003; Saved</span>
+  </div>
+  <div class="eyebrow" style="margin-top:56px">Tour Categories</div>
+  <h1 class="app-title" style="font-size:26px">Homepage tour cards<span class="dot">.</span></h1>
+  <p class="app-sub">These are the cards in the "Current tours" section of the homepage. Lower priority number = higher up the page. Turn <strong>Auto-hide</strong> on to make a card vanish when its linked show type has no upcoming shows; leave it off to always show (use that for "coming soon" tours like Drag Brunch). <strong style="color:#fff">Card images: upload at 1200×1000px (6:5 ratio), under 500KB, JPG.</strong> Keep faces and key detail centred - edges may be cropped to fit.</p>
+
+  <div class="status-bar" id="tcStatus"><span id="tcStatusText">Loading tour cards&hellip;</span></div>
+  <div id="tcItems"></div>
+  <div class="actions">
+    <button class="btn btn-outline" onclick="addTC()">+ Add Tour Card</button>
+    <button class="btn btn-pink" onclick="saveTCs()" id="tcSaveBtn">Save Tour Cards</button>
+    <span class="toast" id="tcToast">&#10003; Saved</span>
+  </div>
+
+
+
+</div>
+
+<script>
+// ─── CONFIG ────────────────────────────────────────────────────────────────
+const SUPABASE_URL = "https://ijkzgmdtwtgfkedqspxm.supabase.co";
+
+/* WRITES GO THROUGH A WORKER NOW, NOT STRAIGHT TO THE DATABASE.
+   This page used to insert, update and delete shows, experiences, milestones and
+   categories with the PUBLIC Supabase key, behind a four digit PIN whose SHA-256
+   was in the source of this very file. Ten thousand guesses, and beside the point
+   anyway: the key went out with every request whether the PIN was entered or not,
+   so anyone who opened dev tools could rewrite the tour listings. Those tables
+   are now locked (writes answer 42501) and only touring-api may write them, with
+   the service key held as a Cloudflare secret.
+   READS still go direct: the public tour pages already read these tables, so
+   there is nothing to protect and no reason to add a hop. */
+const TOURING_API = "https://touring-api.dean-tindale.workers.dev";
+let MANAGE_KEY = "";        // held for this tab only; never written to storage
+
+function newId() {
+  try { if (crypto && crypto.randomUUID) return crypto.randomUUID(); } catch (e) {}
+  // Same shape, from the same CSPRNG, for anything without randomUUID.
+  const b = new Uint8Array(16);
+  crypto.getRandomValues(b);
+  b[6] = (b[6] & 0x0f) | 0x40;
+  b[8] = (b[8] & 0x3f) | 0x80;
+  const h = Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
+  return h.slice(0, 8) + "-" + h.slice(8, 12) + "-" + h.slice(12, 16) + "-" +
+         h.slice(16, 20) + "-" + h.slice(20);
+}
+
+async function apiSave(table, body) {
+  if (!MANAGE_KEY) throw new Error("Session expired. Reload and sign in again.");
+  const r = await fetch(`${TOURING_API}/${table}`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "X-Manage-Key": MANAGE_KEY },
+    body: JSON.stringify(body)
+  });
+  let d = null;
+  try { d = await r.json(); } catch (e) {}
+  if (!r.ok) {
+    if (r.status === 401) throw new Error("Wrong password. Reload and try again.");
+    if (r.status === 503) throw new Error("The touring worker is not configured yet (check its secrets).");
+    /* SAY WHAT WENT WRONG. "failed to save" sent us looking in the wrong place:
+       the real answer was PostgREST refusing a bulk insert whose rows did not all
+       carry the same keys, and it was sitting in detail.message all along. */
+    let why = (d && d.error) || `save failed (${r.status})`;
+    const inner = d && d.detail;
+    if (inner) {
+      const msg = inner.message || inner.hint || (typeof inner === "string" ? inner : "");
+      const code = inner.code ? ` [${inner.code}]` : "";
+      if (msg) why += `: ${msg}${code}`;
+    }
+    throw new Error(why);
+  }
+  return d;
+}
+/* PICTURES GO TO STORAGE, NOT INTO THE ROW (19 Oct 2026).
+   Dean: "Error saving: save failed: canceling statement due to statement timeout".
+   handleImg used to keep the whole picture, base64, in shows.img_src: the Tugun row
+   was two million characters, and every Save re-sent every row with its picture, so
+   one more big PNG ran the upsert past the database's eight second limit. Now the
+   picture is shrunk here (1600px wide at most, JPEG), uploaded on its own through
+   touring-api, and the row keeps only the address it gives back. */
+const IMG_MAX_W = 1600;
+const IMG_MAX_H = 1600;
+const IMG_QUALITY = [0.82, 0.72, 0.6, 0.5];
+const IMG_TARGET_BYTES = 600 * 1024;
+let uploadsInFlight = 0;
+
+function loadImageFile(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("That file is not a picture this browser can open.")); };
+    img.src = url;
+  });
+}
+
+async function shrinkImage(file) {
+  const img = await loadImageFile(file);
+  const w0 = img.naturalWidth || img.width, h0 = img.naturalHeight || img.height;
+  if (!w0 || !h0) throw new Error("That picture has no size.");
+  const scale = Math.min(1, IMG_MAX_W / w0, IMG_MAX_H / h0);
+  const w = Math.max(1, Math.round(w0 * scale)), h = Math.max(1, Math.round(h0 * scale));
+  const c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = "#111";                 // a see-through PNG lands on the site's own dark
+  ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(img, 0, 0, w, h);
+  let blob = null;
+  for (const q of IMG_QUALITY) {
+    blob = await new Promise((res) => c.toBlob(res, "image/jpeg", q));
+    if (blob && blob.size <= IMG_TARGET_BYTES) break;
+  }
+  if (!blob) throw new Error("This browser could not shrink the picture.");
+  return { blob, width: w, height: h };
+}
+
+async function uploadImage(file, kind) {
+  if (!MANAGE_KEY) throw new Error("Session expired. Reload and sign in again.");
+  const small = await shrinkImage(file);
+  const r = await fetch(`${TOURING_API}/upload?kind=${kind === "card" ? "card" : "show"}`, {
+    method: "POST",
+    headers: { "content-type": "image/jpeg", "X-Manage-Key": MANAGE_KEY },
+    body: small.blob
+  });
+  let d = null;
+  try { d = await r.json(); } catch (e) {}
+  if (!r.ok || !d || !d.url) {
+    if (r.status === 401) throw new Error("Wrong password. Reload and try again.");
+    throw new Error((d && d.error) || `upload failed (${r.status})`);
+  }
+  return d.url;
+}
+
+/* PICK LISTS (19 Oct 2026). Dean: "should it not save the artists for next time?"
+   The queen, host and venue boxes offer every name used before: the artists and
+   venues tables plus whatever is already on a show. A new name is remembered by
+   touring-api when the show is saved, so it is offered next time. */
+let knownArtists = [];
+let knownVenues = [];        // [{name, suburb}]
+
+function addKnown(list, name) {
+  const n = String(name || "").replace(/\s+/g, " ").trim();
+  if (!n || /^(tba|tbc|tbd)$/i.test(n)) return;
+  if (!list.some((x) => (typeof x === "string" ? x : x.name).toLowerCase() === n.toLowerCase())) list.push(n);
+}
+
+function rebuildPickLists() {
+  const people = [];
+  knownArtists.forEach((n) => addKnown(people, n));
+  shows.forEach((s) => { (s.queens || []).forEach((q) => addKnown(people, q)); addKnown(people, s.host); });
+  people.sort((a, b) => a.localeCompare(b));
+  const places = [];
+  const seen = {};
+  const addPlace = (name, suburb) => {
+    const n = String(name || "").replace(/\s+/g, " ").trim();
+    if (!n || seen[n.toLowerCase()]) return;
+    seen[n.toLowerCase()] = 1;
+    places.push({ name: n, suburb: String(suburb || "").trim() });
+  };
+  knownVenues.forEach((v) => addPlace(v.name, v.suburb));
+  shows.forEach((s) => addPlace(s.venue, s.suburb));
+  places.sort((a, b) => a.name.localeCompare(b.name));
+  window._places = places;
+  const opt = (v, label) => `<option value="${escapeHtml(v)}">${label ? escapeHtml(label) : ""}</option>`;
+  document.getElementById("artistList").innerHTML = people.map((n) => opt(n)).join("");
+  document.getElementById("venueList").innerHTML = places.map((p) => opt(p.name, p.suburb)).join("");
+}
+
+async function loadPickLists() {
+  try {
+    const [a, v] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/artists?select=name&order=name.asc`, { headers: SB_HEADERS }),
+      fetch(`${SUPABASE_URL}/rest/v1/venues?select=name,suburb&order=name.asc`, { headers: SB_HEADERS })
+    ]);
+    knownArtists = a.ok ? (await a.json()).map((x) => x.name).filter(Boolean) : [];
+    knownVenues = v.ok ? (await v.json()).filter((x) => x && x.name) : [];
+  } catch (e) { /* the lists are a convenience; typing still works without them */ }
+  rebuildPickLists();
+}
+
+// Picking a saved venue fills its suburb too.
+function pickVenue(i, el) {
+  shows[i].venue = el.value;
+  const p = (window._places || []).find((x) => x.name.toLowerCase() === el.value.trim().toLowerCase());
+  if (p && p.suburb) {
+    shows[i].suburb = p.suburb;
+    const sub = el.closest(".show-item").querySelector(".suburb-input");
+    if (sub) sub.value = p.suburb;
+  }
+}
+
+const SUPABASE_KEY = "sb_publishable_9v83FWCSt7Di-jkgTvsMJQ_f6lJPovb";
+const SB_HEADERS = {
+  "apikey": SUPABASE_KEY,
+  "Authorization": `Bearer ${SUPABASE_KEY}`,
+  "Content-Type": "application/json",
+  "Prefer": "return=representation"
+};
+// SHA-256 hash of the access PIN - the actual PIN is never in this file.
+// To rotate: compute new SHA-256 of your chosen PIN and replace this string.
+
+// ─── STATE ─────────────────────────────────────────────────────────────────
+let shows = [];
+
+// ─── PIN GATE ──────────────────────────────────────────────────────────────
+/* THE GATE IS THE WORKER'S NOW. The old version hashed four digits in the browser
+   and compared against a hash sitting in this file, which is ten thousand guesses
+   offline. This sends the password to touring-api, which compares it in constant
+   time against a Cloudflare secret. Nothing here can tell you whether a password
+   is right, which is the point. */
+async function submitPin() {
+  const el = document.getElementById("pinInput");
+  const err = document.getElementById("pinError");
+  const v = el.value;
+  if (!v) { err.textContent = "Enter the password."; return; }
+  err.textContent = "Checking\u2026";
+  try {
+    const r = await fetch(`${TOURING_API}/check`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "X-Manage-Key": v }
+    });
+    if (r.ok) { MANAGE_KEY = v; el.value = ""; err.textContent = ""; unlock(); return; }
+    if (r.status === 503) { err.textContent = "The touring worker has no password set yet."; return; }
+    err.textContent = "Incorrect password.";
+    el.value = "";
+  } catch (e) {
+    err.textContent = "Could not reach the touring worker. Check your connection.";
+  }
+}
+
+function unlock() {
+  // Set short-lived session so refresh doesn't re-prompt
+  document.getElementById("gate").style.display = "none";
+  document.getElementById("app").classList.add("show");
+  document.getElementById("lockBtn").style.display = "inline-block";
+  loadShows().then(loadPickLists);
+  loadTkts();
+  loadExps();
+  loadTCs();
+}
+
+function lockOut() {
+  location.reload();
+}
+
+/* NO SESSION RESTORE ANY MORE, ON PURPOSE. The password authorises every save and
+   is deliberately never written to sessionStorage, because anything kept there is
+   readable by any script that gets into this page. The old code restored a session
+   flag and opened the editor, which under the new arrangement would show the whole
+   app and then fail on every Save with no clue why. Asking again after a refresh
+   is the honest behaviour. */
+
+// ─── DATE HELPERS ──────────────────────────────────────────────────────────
+function formatShowDate(dateStr) {
+  if (!dateStr) return "Pick a date above";
+  const d = new Date(dateStr + "T12:00:00+10:00");
+  const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  return `${days[d.getDay()]} ${months[d.getMonth()]} ${d.getDate()}`;
+}
+
+// ─── SUPABASE LOAD ─────────────────────────────────────────────────────────
+function mapShow(s) {
+  return {
+    id: s.id,
+    showDate: s.show_date || "",
+    time: s.time || "7:00 PM",
+    doors: s.doors || "",
+    venue: s.venue || "",
+    suburb: s.suburb || "",
+    host: s.host || "",
+    queens: Array.isArray(s.queens) ? s.queens : [],
+    price: s.price || "",
+    ticketUrl: s.ticket_url || "",
+    discountUrl: s.discount_url || "",
+    imgSrc: s.img_src || "",
+    displayDate: s.go_live_date || "",
+    displayTime: s.go_live_time || "00:00",
+    showType: s.show_type || "other"
+  };
+}
+
+/* WHAT THE DATABASE HOLDS, row by row, as the save would write it. Save sends only
+   the rows that differ from this, and leaves img_src out of any row whose picture
+   did not change, so a save can never again carry a picture it is not changing. */
+let savedShows = {};
+function showRow(show) {
+  return {
+    show_date: show.showDate || null,
+    time: show.time || "",
+    doors: show.doors || "",
+    venue: show.venue || "",
+    suburb: show.suburb || "",
+    host: show.host || "",
+    queens: show.queens || [],
+    price: show.price || "",
+    ticket_url: show.ticketUrl || "",
+    discount_url: show.discountUrl || "",
+    img_src: show.imgSrc || "",
+    go_live_date: show.displayDate || null,
+    go_live_time: show.displayTime || "00:00",
+    show_type: show.showType || "other"
+  };
+}
+function snapshotShows() {
+  savedShows = {};
+  shows.forEach((s) => { if (typeof s.id === "string" && s.id.length === 36) savedShows[s.id] = showRow(s); });
+}
+
+async function loadShows() {
+  setStatus("Loading shows from Supabase&hellip;", false);
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/shows?order=show_date.asc`, { headers: SB_HEADERS });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    shows = Array.isArray(data) ? data.map(mapShow) : [];
+    snapshotShows();
+    setStatus(`<strong>${shows.length}</strong> show${shows.length === 1 ? "" : "s"} loaded. Edit fields below, then Save All Shows.`, false);
+  } catch (e) {
+    shows = [];
+    setStatus(`Couldn&rsquo;t connect to Supabase: ${e.message}. Check the connection and reload.`, true);
+  }
+  renderShows();
+}
+
+function setStatus(html, isError) {
+  const bar = document.getElementById("status");
+  bar.innerHTML = `<span id="statusText">${html}</span>`;
+  bar.classList.toggle("error", !!isError);
+}
+
+// ─── RENDER ────────────────────────────────────────────────────────────────
+function renderShows() {
+  const root = document.getElementById("showItems");
+  if (shows.length === 0) {
+    root.innerHTML = `<div class="show-item" style="text-align:center;color:var(--muted)">No shows yet. Click <strong style="color:#fff">+ Add Show</strong> below to create the first one.</div>`;
+    return;
+  }
+  root.innerHTML = shows.map((s, i) => `
+    <div class="show-item">
+      <div class="arow">
+        <div class="afield" style="flex:2">
+          <label>Show Date</label>
+          <input type="date" value="${s.showDate || ""}" onchange="shows[${i}].showDate=this.value;this.closest('.show-item').querySelector('.preview-pink').textContent=formatShowDate(this.value)" style="color-scheme:dark">
+          <small class="preview-pink">${formatShowDate(s.showDate)}</small>
+        </div>
+        <div class="afield">
+          <label>Tour</label>
+          <select onchange="shows[${i}].showType=this.value">
+            <option value="" ${!s.showType?"selected":""}>- Select a tour -</option>
+            ${tcs.map(t=>`<option value="${t.tour_key||''}" ${s.showType===(t.tour_key||'')?"selected":""}>${escapeHtml(t.name||'(unnamed)')}</option>`).join('')}
+            ${(s.showType && !tcs.some(t=>(t.tour_key||'')===s.showType))?`<option value="${escapeHtml(s.showType)}" selected>${escapeHtml(s.showType)} (unlinked - re-pick)</option>`:''}
+          </select>
+          <small>"Drag Bingo" also appears on dragbingoatthebowlo.com.au</small>
+        </div>
+        <div class="afield">
+          <label>Price</label>
+          <input value="${s.price || ""}" onchange="shows[${i}].price=this.value" placeholder="$30+BF">
+        </div>
+      </div>
+      <div class="arow">
+        <div class="afield"><label>Show Time</label><input value="${s.time || ""}" onchange="shows[${i}].time=this.value" placeholder="7:00 PM"></div>
+        <div class="afield"><label>Doors Open</label><input value="${s.doors || ""}" onchange="shows[${i}].doors=this.value" placeholder="6:30 PM"></div>
+        <div class="afield"><label>Venue</label><input list="venueList" autocomplete="off" value="${escapeHtml(s.venue || "")}" onchange="pickVenue(${i},this)" placeholder="Pick or type a venue"></div>
+        <div class="afield"><label>Suburb / City</label><input class="suburb-input" value="${escapeHtml(s.suburb || "")}" onchange="shows[${i}].suburb=this.value" placeholder="Suburb"></div>
+      </div>
+      <div class="arow">
+        <div class="afield"><label>Host / Headliner</label><input list="artistList" autocomplete="off" value="${escapeHtml(s.host || "")}" onchange="shows[${i}].host=this.value" placeholder="Pick or type a name"></div>
+        <div class="afield" style="flex:2">
+          <label>Ticket URL</label>
+          <input value="${s.ticketUrl || ""}" onchange="shows[${i}].ticketUrl=this.value" placeholder="https://...">
+          <small>Moshtix, Humanitix, Ticketek, etc.</small>
+        </div>
+      </div>
+      <div class="arow">
+        <div class="afield" style="flex:2">
+          <label>&#127915; Discount URL</label>
+          <input value="${s.discountUrl || ""}" onchange="shows[${i}].discountUrl=this.value" placeholder="https://...?offercode=...">
+          <small>Optional. Used by Drag Bingo /nextevent page.</small>
+        </div>
+      </div>
+      <div class="arow">
+        <div class="afield">
+          <label>Go Live Date</label>
+          <input type="date" value="${s.displayDate || ""}" onchange="shows[${i}].displayDate=this.value" style="color-scheme:dark">
+          <small>Leave blank to show immediately.</small>
+        </div>
+        <div class="afield">
+          <label>Go Live Time (QLD)</label>
+          <input type="time" value="${s.displayTime || "00:00"}" onchange="shows[${i}].displayTime=this.value" style="color-scheme:dark">
+        </div>
+        <div class="afield" style="flex:2">
+          <label>Banner Image (1200&times;525px ideal)</label>
+          <div class="img-upload">
+            <input type="file" accept="image/*" onchange="handleImg(${i},this)">
+            <div class="img-upload-label">${s._uploading ? "Uploading&hellip;" : (s._imgError ? escapeHtml(s._imgError) : "Click to upload")}</div>
+            ${s.imgSrc ? `<img src="${escapeHtml(s.imgSrc)}" class="img-preview">` : ""}
+          </div>
+        </div>
+      </div>
+      <div class="afield">
+        <label>Special Guests / Support Acts</label>
+        <div class="q-chips">${(s.queens || []).map((q, qi) => `<div class="q-chip"><span>${escapeHtml(q)}</span><button onclick="removeQueen(${i},${qi})" title="Remove">&#10005;</button></div>`).join("")}</div>
+        <div class="q-add-row">
+          <input id="qi-${s.id}" list="artistList" autocomplete="off" placeholder="Pick or type a name..." onkeydown="if(event.key==='Enter')addQueen(${i},'${s.id}')">
+          <button class="q-add-btn" onclick="addQueen(${i},'${s.id}')">+ Add</button>
+        </div>
+      </div>
+      <button class="remove-btn" onclick="removeShow(${i})">Remove this show</button>
+    </div>
+  `).join("");
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+}
+
+// ─── EDIT ACTIONS ──────────────────────────────────────────────────────────
+async function handleImg(i, input) {
+  const f = input.files[0]; if (!f) return;
+  const show = shows[i];
+  show._uploading = true; show._imgError = "";
+  uploadsInFlight++;
+  renderShows();
+  try {
+    show.imgSrc = await uploadImage(f, "show");
+  } catch (e) {
+    show._imgError = "Upload failed: " + e.message;
+    alert("The picture did not upload: " + e.message);
+  } finally {
+    uploadsInFlight--;
+    show._uploading = false;
+    renderShows();
+  }
+}
+
+function addQueen(si, sid) {
+  const inp = document.getElementById("qi-" + sid);
+  if (!inp) return;
+  const v = inp.value.trim();
+  if (!v) return;
+  if (!shows[si].queens) shows[si].queens = [];
+  shows[si].queens.push(v);
+  inp.value = "";
+  renderShows();
+  rebuildPickLists();
+}
+
+function removeQueen(si, qi) {
+  shows[si].queens.splice(qi, 1);
+  renderShows();
+}
+
+function removeShow(i) {
+  if (!confirm("Remove this show? You'll need to click Save All Shows to apply.")) return;
+  const s = shows[i];
+  // If it has a real DB id, mark for deletion. Otherwise just drop it.
+  if (typeof s.id === "string" && s.id.length === 36) {
+    s._delete = true;
+    shows.splice(i, 1);
+    pendingDeletes.push(s.id);
+  } else {
+    shows.splice(i, 1);
+  }
+  renderShows();
+}
+
+const pendingDeletes = [];
+
+function addShow() {
+  shows.push({
+    id: "new-" + Date.now(),
+    showDate: "", time: "7:00 PM", doors: "6:30 PM",
+    venue: "", suburb: "", host: "",
+    queens: [], price: "$30+BF",
+    ticketUrl: "", discountUrl: "", imgSrc: "",
+    displayDate: "", displayTime: "00:00",
+    showType: "other"
+  });
+  renderShows();
+  const last = document.getElementById("showItems").lastElementChild;
+  if (last) last.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+// ─── SAVE ──────────────────────────────────────────────────────────────────
+async function saveShows() {
+  const btn = document.getElementById("saveBtn");
+  btn.disabled = true;
+  btn.textContent = "Saving...";
+  try {
+    if (uploadsInFlight > 0) throw new Error("a picture is still uploading. Wait for it to finish, then Save again.");
+    /* ONLY WHAT CHANGED. Every row used to go up on every Save, pictures and all,
+       which is how one save grew past the database's time limit. A row goes up only
+       if it is new or differs from what was loaded, and its img_src only if the
+       picture itself changed. touring-api groups rows by the keys they carry, so a
+       row without img_src keeps the picture it has. */
+    const rows = [];
+    shows.forEach((show) => {
+      const row = showRow(show);
+      /* EVERY ROW GETS AN id, INCLUDING A BRAND NEW ONE, minted here so pressing
+         Save twice upserts the same row instead of inserting a second copy. */
+      row.id = (typeof show.id === "string" && show.id.length === 36)
+        ? show.id
+        : (show.id = newId());
+      const before = savedShows[row.id];
+      if (before && JSON.stringify(before) === JSON.stringify(showRow(show))) return;
+      if (before && before.img_src === row.img_src) delete row.img_src;
+      if (typeof row.img_src === "string" && /^data:/i.test(row.img_src)) {
+        throw new Error("a picture is still inside the show at " + (show.venue || "a venue") + ". Choose the picture again so it uploads.");
+      }
+      rows.push(row);
+    });
+    if (!rows.length && !pendingDeletes.length) {
+      setStatus("Nothing has changed since the last save.", false);
+      return;
+    }
+    const res = await apiSave("shows", { rows: rows, delete: pendingDeletes.slice() });
+    pendingDeletes.length = 0;
+    // What was sent is now what the database holds.
+    rows.forEach((r) => {
+      const sh = shows.find((x) => x.id === r.id);
+      if (sh) savedShows[r.id] = showRow(sh);
+    });
+    Object.keys(savedShows).forEach((id) => { if (!shows.some((x) => x.id === id)) delete savedShows[id]; });
+    rebuildPickLists();
+
+    const t = document.getElementById("toast");
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 2800);
+    setStatus(`<strong>${rows.length}</strong> change${rows.length === 1 ? "" : "s"} saved. Live on the public sites now.`, false);
+  } catch (e) {
+    alert("Error saving: " + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Save All Shows";
+  }
+}
+
+// ─── TICKET MILESTONES ───
+let tkts = [];
+const TKT_IN = 'background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:#fff;font-family:inherit;font-size:14px;padding:10px 12px';
+async function loadTkts(){
+  try{
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/ticket_milestones?select=id,show_name,tickets&order=created_at.asc`, {headers: SB_HEADERS});
+    if(!r.ok) throw new Error(r.status);
+    tkts = await r.json();
+    document.getElementById('tktStatusText').textContent = `${tkts.length} milestone${tkts.length===1?'':'s'} loaded`;
+  }catch(e){
+    tkts = [];
+    document.getElementById('tktStatusText').textContent = 'Could not load milestones - has the ticket_milestones table been created in Supabase?';
+  }
+  renderTkts();
+}
+function renderTkts(){
+  const box = document.getElementById('tktItems');
+  box.innerHTML = '';
+  tkts.forEach((t, i) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap';
+    row.innerHTML = `
+      <input style="${TKT_IN};flex:2;min-width:180px" placeholder="Show name (e.g. Drag Bingo - Tugun, Oct 2025)" value="${escapeHtml(t.show_name||'')}" oninput="tkts[${i}].show_name=this.value">
+      <input style="${TKT_IN};flex:0 0 130px" type="number" min="0" step="1" placeholder="Tickets" value="${t.tickets??''}" oninput="tkts[${i}].tickets=parseInt(this.value)||0;updateTktTotal()">
+      <button class="btn btn-outline" style="padding:8px 14px" onclick="removeTkt(${i})">&#10005;</button>`;
+    box.appendChild(row);
+  });
+  updateTktTotal();
+}
+function updateTktTotal(){
+  const total = tkts.reduce((a,b)=>a+(parseInt(b.tickets)||0),0);
+  document.getElementById('tktTotal').textContent = total.toLocaleString();
+}
+function addTkt(){ tkts.push({show_name:'', tickets:0}); renderTkts(); }
+function removeTkt(i){ tkts.splice(i,1); renderTkts(); }
+async function saveTkts(){
+  const btn = document.getElementById('tktSaveBtn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try{
+    const clean = tkts.filter(t => (t.show_name||'').trim() && (parseInt(t.tickets)||0) > 0)
+                      .map(t => ({show_name: t.show_name.trim(), tickets: parseInt(t.tickets)||0}));
+    await apiSave('ticket_milestones', { replace: true, rows: clean, allow_empty: true });
+    document.getElementById('tktStatusText').textContent = `${clean.length} milestone${clean.length===1?'':'s'} saved`;
+    const toast = document.getElementById('tktToast');
+    toast.style.opacity = '1'; setTimeout(()=>{toast.style.opacity='0'}, 2500);
+    await loadTkts();
+  }catch(e){
+    alert('Save failed - check the ticket_milestones table exists and try again. ('+e.message+')');
+  }
+  btn.disabled = false; btn.textContent = 'Save Milestones';
+}
+
+// ─── TEAM EXPERIENCE ───
+let exps = [];
+const EXP_IN = 'background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:#fff;font-family:inherit;font-size:14px;padding:10px 12px';
+function expEffective(e){
+  const base = parseInt(e.base_years)||0;
+  const Y = new Date().getFullYear();
+  return (e.locked && e.lock_year) ? base + (Y - e.lock_year) : base;
+}
+async function loadExps(){
+  try{
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/experience?select=id,name,base_years,locked,lock_year&order=created_at.asc`, {headers: SB_HEADERS});
+    if(!r.ok) throw new Error(r.status);
+    exps = await r.json();
+    document.getElementById('expStatusText').textContent = `${exps.length} team member${exps.length===1?'':'s'} loaded`;
+  }catch(e){
+    exps = [];
+    document.getElementById('expStatusText').textContent = 'Could not load team - has the experience table been created in Supabase?';
+  }
+  renderExps();
+}
+function renderExps(){
+  const box = document.getElementById('expItems'); box.innerHTML='';
+  exps.forEach((e,i)=>{
+    const locked = !!e.locked;
+    const eff = expEffective(e);
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap';
+    row.innerHTML=`
+      <input style="${EXP_IN};flex:2;min-width:160px" placeholder="Team member name" value="${escapeHtml(e.name||'')}" ${locked?'disabled':''} oninput="exps[${i}].name=this.value">
+      <input style="${EXP_IN};flex:0 0 110px" type="number" min="0" step="1" placeholder="Years" value="${e.base_years??''}" ${locked?'disabled':''} oninput="exps[${i}].base_years=parseInt(this.value)||0;updateExpTotal()">
+      <span style="font-size:12px;color:rgba(255,255,255,.4);flex:0 0 auto">${locked?('now '+eff+' yrs'):''}</span>
+      <button class="btn btn-outline" style="padding:8px 14px" onclick="toggleLock(${i})">${locked?'&#128274; Unlock':'&#128275; Lock'}</button>
+      <button class="btn btn-outline" style="padding:8px 14px" onclick="removeExp(${i})">&#10005;</button>`;
+    box.appendChild(row);
+  });
+  updateExpTotal();
+}
+function updateExpTotal(){
+  const total = exps.reduce((a,b)=>a+expEffective(b),0);
+  document.getElementById('expTotal').textContent = total.toLocaleString();
+}
+function addExp(){ exps.push({name:'',base_years:0,locked:false,lock_year:null}); renderExps(); }
+function removeExp(i){ exps.splice(i,1); renderExps(); }
+function toggleLock(i){
+  const e = exps[i];
+  const Y = new Date().getFullYear();
+  if(e.locked){
+    // unlock: bake elapsed years into base, clear lock
+    e.base_years = expEffective(e);
+    e.locked = false; e.lock_year = null;
+  } else {
+    if(!(e.name||'').trim()){ alert('Add a name before locking.'); return; }
+    e.locked = true; e.lock_year = Y;
+  }
+  renderExps();
+}
+async function saveExps(){
+  const btn=document.getElementById('expSaveBtn'); btn.disabled=true; btn.textContent='Saving…';
+  try{
+    const clean=exps.filter(e=>(e.name||'').trim())
+                    .map(e=>({name:e.name.trim(),base_years:parseInt(e.base_years)||0,locked:!!e.locked,lock_year:e.locked?(e.lock_year||new Date().getFullYear()):null}));
+    await apiSave('experience', { replace: true, rows: clean, allow_empty: true });
+    document.getElementById('expStatusText').textContent=`${clean.length} team member${clean.length===1?'':'s'} saved`;
+    const t=document.getElementById('expToast'); t.style.opacity='1'; setTimeout(()=>{t.style.opacity='0'},2500);
+    await loadExps();
+  }catch(e){ alert('Save failed - check the experience table exists and try again. ('+e.message+')'); }
+  btn.disabled=false; btn.textContent='Save Team';
+}
+
+
+function slugify(str){
+  return (str||"").toLowerCase().trim()
+    .replace(/&/g,"and")
+    .replace(/[^a-z0-9]+/g,"-")
+    .replace(/^-+|-+$/g,"")
+    .slice(0,60) || "tour";
+}
+// ─── TOUR CATEGORIES (homepage cards) ───
+let tcs = [];
+const TC_IN='background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:#fff;font-family:inherit;font-size:14px;padding:9px 11px';
+async function loadTCs(){
+  try{
+    const r=await fetch(`${SUPABASE_URL}/rest/v1/tour_categories?select=id,name,eyebrow,description,button_label,button_link,image_url,show_type,auto_hide,categories,priority,tour_key&order=priority.asc`,{headers:SB_HEADERS});
+    if(!r.ok)throw new Error(r.status);
+    tcs=await r.json();
+    document.getElementById('tcStatusText').textContent=`${tcs.length} tour card${tcs.length===1?'':'s'} loaded`;
+  }catch(e){tcs=[];document.getElementById('tcStatusText').textContent='Could not load tour cards - has the tour_categories table been created in Supabase?';}
+  renderTCs();
+  if(typeof renderShows==="function" && Array.isArray(shows)) renderShows();
+}
+function renderTCs(){
+  const box=document.getElementById('tcItems');box.innerHTML='';
+  tcs.forEach((c,i)=>{
+    const card=document.createElement('div');
+    card.style.cssText='border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:16px;margin-bottom:14px;background:rgba(255,255,255,.02)';
+    card.innerHTML=`
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+        <input style="${TC_IN};flex:2;min-width:180px" placeholder="Tour name (card title)" value="${escapeHtml(c.name||'')}" oninput="tcs[${i}].name=this.value">
+        <input style="${TC_IN};flex:1;min-width:120px" placeholder="Eyebrow (e.g. Touring Now)" value="${escapeHtml(c.eyebrow||'')}" oninput="tcs[${i}].eyebrow=this.value">
+        <label style="font-size:12px;color:rgba(255,255,255,.6)">Priority <input type="number" style="${TC_IN};width:64px" value="${c.priority??100}" oninput="tcs[${i}].priority=parseInt(this.value)||0"></label>
+      </div>
+      <textarea style="${TC_IN};width:100%;box-sizing:border-box;min-height:54px;margin-bottom:10px;resize:vertical" placeholder="Description" oninput="tcs[${i}].description=this.value">${escapeHtml(c.description||'')}</textarea>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+        <input style="${TC_IN};flex:1;min-width:140px" placeholder="Button label (e.g. View Shows & Tickets)" value="${escapeHtml(c.button_label||'')}" oninput="tcs[${i}].button_label=this.value">
+        <input style="${TC_IN};flex:1;min-width:140px" placeholder="Button link (e.g. /drag-bingo-at-the-bowlo)" value="${escapeHtml(c.button_link||'')}" oninput="tcs[${i}].button_link=this.value">
+      </div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+        <label style="font-size:13px;color:#fff;display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" ${c.auto_hide?'checked':''} onchange="tcs[${i}].auto_hide=this.checked"> Auto-hide when this tour has no upcoming shows</label>
+        <label style="font-size:12px;color:rgba(255,255,255,.6);flex:1 1 100%;margin-top:4px">Categories (comma-separated, e.g. drag, cabaret) <input style="${TC_IN};width:100%;box-sizing:border-box;margin-top:4px" placeholder="drag, cabaret, comedy" value="${escapeHtml((c.categories||[]).join(', '))}" oninput="tcs[${i}].categories=this.value.split(',').map(x=>x.trim().toLowerCase()).filter(Boolean)"></label>
+        <label style="font-size:12px;color:rgba(255,255,255,.6);display:flex;align-items:center;gap:6px">Image: <input type="file" accept="image/*" style="font-size:12px" onchange="uploadTCImage(${i},this)"></label><span style="font-size:11px;color:rgba(255,255,255,.35)">1200×1000px · 6:5 · &lt;500KB</span>
+        ${c.image_url?`<a href="${c.image_url}" target="_blank" style="color:var(--pink);font-size:12px">view image</a>`:'<span style="font-size:12px;color:rgba(255,255,255,.35)">no image</span>'}
+        <button class="btn btn-outline" style="padding:7px 12px;margin-left:auto" onclick="genTourPage(${i})">&#11015; Generate page</button>
+        <button class="btn btn-outline" style="padding:7px 12px" onclick="removeTC(${i})">&#10005; Remove</button>
+      </div>`;
+    box.appendChild(card);
+  });
+}
+function addTC(){ tcs.push({name:'',eyebrow:'Touring Now',description:'',button_label:'View Shows & Tickets',button_link:'',image_url:'',auto_hide:false,categories:[],priority:(tcs.length+1)*10,tour_key:''}); renderTCs(); }
+function removeTC(i){ tcs.splice(i,1); renderTCs(); }
+/* THROUGH touring-api, NOT STRAIGHT INTO THE BUCKET. This uploaded with the public
+   key, which only worked because anybody at all could write to tour-images. The
+   Worker holds the only key that may write there now. */
+async function uploadTCImage(i,el){
+  const file=el.files&&el.files[0]; if(!file)return;
+  uploadsInFlight++;
+  try{
+    tcs[i].image_url=await uploadImage(file,'card');
+    renderTCs();
+  }catch(e){alert('Image upload failed: '+e.message);}
+  finally{uploadsInFlight--;}
+}
+// ─── GENERATE SEO-READY TOUR PAGE ───
+function genTourPage(i){
+  const c = tcs[i];
+  if(!c || !(c.name||'').trim()){ alert('Give the tour a name first.'); return; }
+  const key = (c.tour_key && c.tour_key.trim()) ? c.tour_key.trim() : slugify(c.name);
+  const name = c.name.trim();
+  const desc = (c.description||'').trim() || (name + ' - live entertainment touring Australia with Gflam Touring.');
+  const img = (c.image_url||'').trim() || 'https://www.gflamtouring.com.au/og-image.png';
+  const e = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const url = 'https://www.gflamtouring.com.au/' + key;
+  const SBKJS = SUPABASE_KEY;
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${e(name)} | Gflam Touring</title>
+<meta name="description" content="${e(desc)}">
+<link rel="canonical" href="${e(url)}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="${e(name)} | Gflam Touring">
+<meta property="og:description" content="${e(desc)}">
+<meta property="og:url" content="${e(url)}">
+<meta property="og:image" content="${e(img)}">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${e(name)} | Gflam Touring">
+<meta name="twitter:description" content="${e(desc)}">
+<meta name="twitter:image" content="${e(img)}">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23fe65c3'/%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Event","name":${JSON.stringify(name)},"description":${JSON.stringify(desc)},"image":${JSON.stringify(img)},"url":${JSON.stringify(url)},"organizer":{"@type":"Organization","name":"Gflam Touring","url":"https://www.gflamtouring.com.au"}}<\/script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--pink:#fe65c3;--dark:#111;--dark2:#1a1a1a;--dark3:#222;--white:#fff;--muted:rgba(255,255,255,0.55);--border:rgba(255,255,255,0.1)}
+body{background:#0a0a0b;color:#fff;font-family:'DM Sans',sans-serif;line-height:1.6}
+a{color:inherit}
+.dot{color:var(--pink)}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:20px 48px;border-bottom:1px solid var(--border)}
+.nav img{height:40px;width:auto;display:block}
+.nav a.cta{background:var(--pink);color:#fff;padding:10px 22px;border-radius:4px;font-size:14px;font-weight:600;text-decoration:none}
+.hero{max-width:1100px;margin:0 auto;padding:80px 48px 50px;text-align:center}
+.eyebrow{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--pink);font-weight:600;margin-bottom:16px}
+.hero h1{font-family:'DM Serif Display',serif;font-size:clamp(36px,6vw,64px);letter-spacing:-1px;line-height:1.05;margin-bottom:20px}
+.hero p{font-size:18px;color:var(--muted);max-width:640px;margin:0 auto 32px}
+.hero-img{max-width:900px;margin:0 auto;border-radius:14px;overflow:hidden;border:1px solid var(--border);aspect-ratio:6/5;background:#000}
+.hero-img img{width:100%;height:100%;object-fit:cover;display:block}
+.section{max-width:1100px;margin:0 auto;padding:50px 48px}
+.section h2{font-family:'DM Serif Display',serif;font-size:32px;margin-bottom:24px}
+.shows{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.show{background:var(--dark2);border:1px solid var(--border);border-radius:10px;padding:24px}
+.show .d{font-family:'DM Serif Display',serif;font-size:20px;color:#fff;margin-bottom:6px}
+.show .v{font-size:14px;color:var(--muted);margin-bottom:14px}
+.show a{display:inline-block;background:var(--pink);color:#fff;padding:9px 18px;border-radius:4px;font-size:13px;font-weight:600;text-decoration:none}
+.empty{text-align:center;color:var(--muted);padding:40px}
+footer{background:#0c0c0c;border-top:1px solid var(--border);padding:56px 48px;text-align:center;margin-top:40px}
+footer img{height:40px;margin-bottom:20px}
+footer .ack{font-size:12px;color:rgba(255,255,255,.3);max-width:680px;margin:20px auto 0;line-height:1.7}
+@media(max-width:600px){.nav,.hero,.section{padding-left:20px;padding-right:20px}}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a href="/"><img src="/logo.png" alt="Gflam Touring"></a>
+  <a href="/contact" class="cta">Get in Touch</a>
+</nav>
+
+<header class="hero">
+  <div class="eyebrow">${e(c.eyebrow||'Touring Now')}</div>
+  <h1>${e(name)}<span class="dot">.</span></h1>
+  <p>${e(desc)}</p>
+  ${(c.button_link&&c.button_label)?`<a href="${e(c.button_link)}" style="display:inline-block;background:var(--pink);color:#fff;padding:13px 30px;border-radius:4px;font-weight:600;text-decoration:none">${e(c.button_label)}</a>`:''}
+  <div class="hero-img" style="margin-top:40px">
+    ${(c.image_url||'').trim()?`<img src="${e(c.image_url)}" alt="${e(name)}">`:''}
+  </div>
+</header>
+
+<section class="section">
+  <h2>Upcoming shows<span class="dot">.</span></h2>
+  <div class="shows" id="shows"><p class="empty">Loading shows&hellip;</p></div>
+</section>
+
+<footer>
+  <a href="/"><img src="/logo.png" alt="Gflam Touring"></a>
+  <p class="ack">Gflam Touring acknowledges the Traditional Custodians of the land on which we work and create. We pay our respects to Elders past, present and emerging.</p>
+  <p style="font-size:12px;color:rgba(255,255,255,.25);letter-spacing:1px;text-transform:uppercase;margin-top:14px">&copy; <span id="yr"></span> Gflam Group Pty Ltd. All rights reserved</p>
+</footer>
+
+<script>
+var SBU="${SUPABASE_URL}";
+var SBK="${SBKJS}";
+var SBH={"apikey":SBK,"Authorization":"Bearer "+SBK,"Content-Type":"application/json"};
+var TOUR_KEY=${JSON.stringify(key)};
+document.getElementById("yr").textContent=new Date().getFullYear();
+(function(){
+  var today=new Date().toISOString().slice(0,10);
+  fetch(SBU+"/rest/v1/shows?show_type=eq."+encodeURIComponent(TOUR_KEY)+"&show_date=gte."+today+"&order=show_date.asc",{headers:SBH})
+    .then(function(r){return r.ok?r.json():[]})
+    .then(function(rows){
+      var box=document.getElementById("shows");
+      if(!rows||!rows.length){box.innerHTML='<p class="empty">No shows on sale right now - <a href="/#signup" style="color:var(--pink)">join the mailing list</a> to hear when tickets drop.</p>';return;}
+      box.innerHTML=rows.map(function(s){
+        var d=s.show_date?new Date(s.show_date+"T00:00:00").toLocaleDateString("en-AU",{weekday:"short",day:"numeric",month:"long"}):"";
+        var venue=[s.venue,s.suburb].filter(Boolean).join(", ");
+        var link=s.ticket_url?'<a href="'+s.ticket_url+'" target="_blank" rel="noopener">Get Tickets</a>':'';
+        return '<div class="show"><div class="d">'+d+'</div><div class="v">'+(venue||"")+(s.time?" · "+s.time:"")+'</div>'+link+'</div>';
+      }).join("");
+    })
+    .catch(function(){document.getElementById("shows").innerHTML='<p class="empty">Unable to load shows right now.</p>';});
+})();
+<\/script>
+</body>
+</html>`;
+
+  // download
+  const blob=new Blob([html],{type:"text/html"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=key+".html";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(a.href);},1000);
+  alert('Generated "'+key+'.html".\n\nUpload it to the touring folder on GitHub, then it will be live at:\nwww.gflamtouring.com.au/'+key);
+}
+async function saveTCs(){
+  const btn=document.getElementById('tcSaveBtn');btn.disabled=true;btn.textContent='Saving…';
+  try{
+    if(uploadsInFlight>0) throw new Error('a picture is still uploading, wait for it then Save again');
+    const clean=tcs.filter(c=>(c.name||'').trim()).map(c=>({
+      name:c.name.trim(),eyebrow:(c.eyebrow||'').trim(),description:(c.description||'').trim(),
+      button_label:(c.button_label||'').trim(),button_link:(c.button_link||'').trim(),
+      image_url:(c.image_url||'').trim()||null,
+      auto_hide:!!c.auto_hide,categories:Array.isArray(c.categories)?c.categories:[],priority:parseInt(c.priority)||100,
+      tour_key:(c.tour_key&&c.tour_key.trim())?c.tour_key.trim():slugify(c.name)
+    }));
+    await apiSave('tour_categories', { replace: true, rows: clean, allow_empty: true });
+    document.getElementById('tcStatusText').textContent=`${clean.length} tour card${clean.length===1?'':'s'} saved`;
+    const t=document.getElementById('tcToast');t.style.opacity='1';setTimeout(()=>{t.style.opacity='0'},2500);
+    await loadTCs();
+  }catch(e){alert('Save failed - check the tour_categories table exists and try again. ('+e.message+')');}
+  btn.disabled=false;btn.textContent='Save Tour Cards';
+}
+</script>
+
+</body>
+</html>

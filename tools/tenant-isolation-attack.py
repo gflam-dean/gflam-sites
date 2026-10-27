@@ -1,0 +1,254 @@
+#!/usr/bin/env python3
+"""VENUE A TRIES TO REACH VENUE B'S DATA, AS A REAL SIGNED-IN USER. Every attempt must fail.
+
+    python3 tools/tenant-isolation-attack.py
+
+WHY THIS EXISTS, and why the thing it replaces was not enough. check-venue-scoping.py is
+a regular expression over three HTML files. It never signs in, never asks the database
+anything, and never sends a request. It proves the code has not been deleted. It has been
+cited as evidence of venue isolation all week, including by me.
+
+This signs in as a real host, at real venues, and then behaves badly on purpose: it takes
+its own valid token and asks for somebody else's venue, somebody else's members, somebody
+else's players, somebody else's settings, somebody else's billing. Every single attempt
+has to be refused. One that succeeds is the worst class of fault this product can have,
+because a venue seeing another venue's member list is a privacy breach, not a bug.
+
+WHAT IT WILL AND WILL NOT TOUCH. The attacker is test-alpha and the victim is test-bravo,
+both ours, so a WRITE that is wrongly allowed damages only a test venue. It also attempts
+READS against a real venue, because a read that succeeds is the finding and a read that
+fails costs nothing. It never attempts a write against a real venue, ever.
+
+Credentials: the test host's password from ~/.gflam-migrate/test-host.pass, read and never
+printed. The account is staff at the three test venues and nothing else.
+"""
+import json, os, sys, urllib.parse, urllib.request, urllib.error
+from pathlib import Path
+
+ENV = Path.home() / '.gflam-migrate.env'
+PASS_FILE = Path.home() / '.gflam-migrate' / 'test-host.pass'
+LIVE = 'https://ijkzgmdtwtgfkedqspxm.supabase.co'
+UA = 'VenuePlay-tenant-attack/1.0 (contact: dean.tindale@outlook.com)'
+# WITHOUT A USER AGENT CLOUDFLARE ANSWERS 1010 AND EVERY ATTACK 'FAILS' FOR THE WRONG
+# REASON. The first run of this file reported the Worker refusing a made-up venue; it
+# was Cloudflare refusing Python. A test that passes because it never arrived is worse
+# than no test.
+GAME = 'https://venueplay-game.dean-tindale.workers.dev'
+EMAIL = 'test-host@venueplay.invalid'
+
+bad = 0
+def ok(what, refused, detail=''):
+    global bad
+    print(('  ok   ' if refused else '  LEAK ') + what + (('   ' + str(detail)[:150]) if not refused else ''))
+    if not refused: bad += 1
+
+def env():
+    e = {}
+    for line in ENV.read_text().splitlines():
+        if '=' in line and not line.startswith('#'):
+            k, v = line.split('=', 1); e[k.strip()] = v.strip()
+    return e
+
+def anon_key():
+    """The key a real phone uses, read out of the page a real phone loads.
+
+    THIS TOOL COULD NOT RUN AT ALL, and had not been able to for some time. It looked only for
+    a JWT-shaped key (eyJ...), and Supabase moved to the sb_publishable_ format. So it died on
+    an AttributeError before making a single request: an isolation ATTACK that never attacked,
+    which is the worst kind of check to own, because its silence reads as safety. Found
+    17 Sep 2026 while testing everything. It takes both shapes now, and says which it found.
+
+    It still reads the key out of play.html rather than the env file on purpose: the point is
+    to attack with exactly what a punter's browser is handed, not with something we chose."""
+    import re, io
+    src = io.open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                               'venueplay', 'play.html'), encoding='utf-8').read()
+    m = (re.search(r'sb_publishable_[A-Za-z0-9_-]{20,}', src)
+         or re.search(r'eyJ[A-Za-z0-9_.-]{80,}', src))
+    if not m:
+        print('STOP: no anon key found in venueplay/play.html. If the key format has changed '
+              'again, add it here: this tool is useless the moment it cannot find one.')
+        sys.exit(1)
+    return m.group(0)
+
+def sign_in(anon):
+    if not PASS_FILE.exists():
+        print('STOP: %s is missing. Run venueplay-backend/tools/make-test-host.py' % PASS_FILE); sys.exit(1)
+    body = json.dumps({'email': EMAIL, 'password': PASS_FILE.read_text().strip()}).encode()
+    req = urllib.request.Request(LIVE + '/auth/v1/token?grant_type=password', data=body, method='POST',
+                                 headers={'apikey': anon, 'Content-Type': 'application/json', 'User-Agent': UA})
+    try:
+        d = json.load(urllib.request.urlopen(req, timeout=30))
+    except urllib.error.HTTPError as x:
+        print('STOP: the test host could not sign in (%s): %s' % (x.code, x.read().decode()[:200])); sys.exit(1)
+    return d['access_token']
+
+def rest(anon, jwt, path, method='GET', body=None):
+    req = urllib.request.Request(LIVE + '/rest/v1/' + path,
+                                 data=json.dumps(body).encode() if body is not None else None,
+                                 method=method,
+                                 headers={'apikey': anon, 'Authorization': 'Bearer ' + jwt,
+                                          'Content-Type': 'application/json', 'User-Agent': UA})
+    try:
+        r = urllib.request.urlopen(req, timeout=25)
+        raw = r.read()
+        return r.status, (json.loads(raw) if raw else [])
+    except urllib.error.HTTPError as x:
+        return x.code, x.read().decode()[:120]
+
+def worker(jwt, path, body):
+    req = urllib.request.Request(GAME + path, data=json.dumps(body).encode(), method='POST',
+                                 headers={'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json',
+                                          'User-Agent': UA})
+    try:
+        r = urllib.request.urlopen(req, timeout=25); return r.status, json.loads(r.read() or b'{}')
+    except urllib.error.HTTPError as x:
+        try: return x.code, json.loads(x.read() or b'{}')
+        except Exception: return x.code, {}
+
+def main():
+    e = env(); anon = anon_key(); jwt = sign_in(anon)
+    print('signed in as the test host (staff at the three test venues only)\n')
+
+    st, mine = rest(anon, jwt, 'vp_venues?select=id,slug,name&order=slug')
+    slugs = [v['slug'] for v in mine] if isinstance(mine, list) else []
+    print('== 1. what can this host see at all? ==')
+    ok('it sees ONLY its own venues', all(s.startswith('test-') for s in slugs) and len(slugs) > 0,
+       'it can see: %s' % slugs)
+    print('     (%d venues, all of them test: %s)\n' % (len(slugs), ', '.join(slugs)))
+
+    st, real = rest(anon, jwt, "vp_venues?slug=eq.the-average-joe&select=id,name,join_code")
+    ok('it cannot read a REAL venue by slug', not (isinstance(real, list) and real), real)
+
+    mine_ids = {v['id'] for v in mine} if isinstance(mine, list) else set()
+    print('\n== 2. other venues\' people ==')
+    # THE RIGHT QUESTION IS NOT "does it see nothing", IT IS "does everything it sees
+    # #    belong to it". The first version of this asserted a host sees NO staff rows at all
+    # and reported a leak: the three rows were its own permissions at its own venues,
+    # which the account page has to read to know what it may do. Suspect the test first. */
+    # A NOTE ON WHAT THIS SECTION CAN AND CANNOT CATCH. Proved on 10 Sep by blinding the
+    # venue filter: 17 checks still said ok. So these rows only bite when the database
+    # actually hands over a foreign row. If PostgREST refuses the table outright, this
+    # section is measuring the refusal, not the filter. The Worker section below is the
+    # one with a control in it, and a control is what makes a green line mean something.
+    # THREE OF THESE SIX COULD NOT FAIL. Found by audit, 20 Sep 2026. The test for "somebody
+    # else's row" was r.get('venue_id') not in mine, and vp_members, vp_players and
+    # vp_member_draw_results HAVE NO venue_id: a member belongs to a venue through its members
+    # list, a player through a session, a draw result through its draw. A row with no venue_id was
+    # never foreign, so this printed "all its own" over whatever the database handed back, up to
+    # and including every club's whole members list.
+    #
+    # So ownership is now resolved the way the data is: through the parent. WHAT IS MINE is read
+    # with the service key, because asking the attacker which lists are its own lets one leak hide
+    # another. Then the attack is the precise one: as the host, ask for rows whose parent is NOT
+    # mine. And a control per table: if the truth says I own rows, I must be able to see one,
+    # so that a refusal, an empty table and a working filter are three different answers.
+    # GIVE THE MEMBERS CHECK SOMETHING TO OWN. The test venues had no members list, so the
+    # members line could only ever measure an empty table. One test member at test-alpha, written
+    # through the same Worker route a real host uses, to a venue that is ours. Importing the same
+    # number again is an update, so this does not grow.
+    alpha = [v['id'] for v in mine if v.get('slug') == 'test-alpha'] if isinstance(mine, list) else []
+    if alpha:
+        worker(jwt, '/host/members/import', {'venue_id': alpha[0], 'members': [{'number': 9001, 'name': 'Isolation Control'}]})
+
+    def truth(path):
+        req = urllib.request.Request(LIVE + '/rest/v1/' + path, headers={
+            'apikey': e['NEW_SERVICE_KEY'], 'Authorization': 'Bearer ' + e['NEW_SERVICE_KEY'], 'User-Agent': UA})
+        return json.load(urllib.request.urlopen(req, timeout=30))
+    def inlist(ids): return '(' + ','.join(sorted(ids)) + ')'
+    venues_in = 'venue_id=in.' + inlist(mine_ids)
+
+    for table, what, parent_col, parent_table in [
+            ('vp_members', 'members', 'roster_id', 'vp_member_rosters'),
+            ('vp_players', 'players', 'session_id', 'vp_sessions'),
+            ('vp_member_draw_results', 'draw results', 'draw_id', 'vp_member_draws'),
+            ('vp_venue_staff', 'staff rows', 'venue_id', None),
+            ('vp_captures', 'opt-in captures', 'venue_id', None),
+            ('vp_game_reports', 'night reports', 'venue_id', None)]:
+        if parent_table:
+            own = {r['id'] for r in truth('%s?%s&select=id&order=id&limit=1000' % (parent_table, venues_in))}
+        else:
+            own = set(mine_ids)
+        # --prove: CAN THIS LINE FAIL AT ALL? Pretend the test venue's own members list belongs to
+        # somebody else. The host can see those members, so a working detector MUST shout LEAK.
+        # The old version of this section stayed green with its filter blinded, 17 times.
+        if '--prove' in sys.argv and table == 'vp_members':
+            own = set()
+        if not own:
+            print('  --   %s: the test venues have no %s to own, so only the refusal can be measured' % (what, parent_table))
+            own = {'00000000-0000-0000-0000-000000000000'}
+        # THE ATTACK: anything whose parent is not mine. One row is a breach.
+        st, rows = rest(anon, jwt, '%s?%s=not.in.%s&select=%s&limit=5' % (table, parent_col, inlist(own), parent_col))
+        if not isinstance(rows, list):
+            print('  ok   the database refuses %s outright (%s)' % (what, st)); continue
+        ok('it cannot read a single one of another venue\'s %s' % what, not rows,
+           '%d foreign row(s) came back, e.g. %s=%s' % (len(rows), parent_col, rows[0].get(parent_col) if rows else ''))
+        # THE CONTROL: does the truth say I own any? Then I must see one, or "no foreign rows"
+        # only means "no rows", which is what a broken filter and a locked table both look like.
+        mine_truth = truth('%s?%s=in.%s&select=%s&limit=1' % (table, parent_col, inlist(own), parent_col))
+        if mine_truth:
+            st2, seen = rest(anon, jwt, '%s?%s=in.%s&select=%s&limit=1' % (table, parent_col, inlist(own), parent_col))
+            if isinstance(seen, list) and seen:
+                print('       CONTROL: it CAN see its own %s, so the empty answer above is the filter working' % what)
+            else:
+                print('       control: it cannot see its own %s either (%s), so that line measures a locked table, not a filter' % (what, st2))
+        else:
+            print('       control: the test venues hold no %s, so that line cannot tell a filter from an empty table' % what)
+
+    print('\n== 3. billing ==')
+    for table, what in [('venueplay_founding', 'billing accounts'), ('vp_venue_groups', 'venue groups')]:
+        st, rows = rest(anon, jwt, '%s?select=*&limit=5' % table)
+        ok('cannot list %s' % what, not (isinstance(rows, list) and rows), '%d rows' % (len(rows) if isinstance(rows, list) else 0))
+
+    print('\n== 4. writing to a venue it does not work at (attacker test-alpha, victim REAL) ==')
+    st, rows = rest(anon, jwt, "vp_venues?slug=eq.the-mini-bar&select=id")
+    victim = rows[0]['id'] if isinstance(rows, list) and rows else None
+    if victim:
+        ok('a real venue id was NOT readable, so no write is attempted', False, 'it could read the id')
+    else:
+        print('  ok   it cannot even find a real venue to attack (no id to write to)')
+
+    print('\n== 5. through the Worker, with a valid token and somebody else\'s venue ==')
+    st, mineids = rest(anon, jwt, 'vp_venues?slug=eq.test-alpha&select=id')
+    mine_one = mineids[0]['id'] if isinstance(mineids, list) and mineids else None
+
+    # The control. If this does NOT work, every refusal below is meaningless, because a
+    # test where everything fails proves nothing at all.
+    # No format: with one, a session already open at Test Alpha (a tester's trivia lobby) was
+    # REUSED and relabelled bingo90, and every phone off the QR then stayed on bingo (14 Oct
+    # 2026). And close what this opened, or every gate run leaves a session behind. A reused
+    # session is someone else's and is left alone.
+    st, d = worker(jwt, '/session', {'venue_id': mine_one})
+    ok('CONTROL: it CAN start a game at its own venue', st == 200, '%s %s' % (st, d))
+    if st == 200 and isinstance(d, dict) and d.get('session_id') and not d.get('reused'):
+        worker(jwt, '/session/close', {'session_id': d['session_id']})
+
+    st, d = worker(jwt, '/session', {'venue_id': '00000000-0000-0000-0000-000000000000', 'format': 'bingo90'})
+    ok('refused a session at a venue it does not work at', st == 403, '%s %s' % (st, d))
+
+    # every host route that names a venue, with a venue it does not work at
+    for path, body, what in [
+        ('/host/members/import', {'venue_id': '00000000-0000-0000-0000-000000000000',
+                                  'members': [{'number': 1, 'name': 'Nobody'}]}, 'add to a members list'),
+        ('/host/members/remove', {'venue_id': '00000000-0000-0000-0000-000000000000', 'number': 1}, 'remove a member'),
+        ('/host/members/update', {'venue_id': '00000000-0000-0000-0000-000000000000', 'number': 1,
+                                  'first_name': 'Nobody'}, 'rename a member'),
+        ('/report', {'code': 'ZZZZZZ', 'format': 'bingo', 'players': 1}, 'file a night report'),
+    ]:
+        st, d = worker(jwt, path, body)
+        # REFUSED MEANS "IT DID NOT HAPPEN", NOT "IT RETURNED AN ERROR CODE". /report answers
+        # 200 with {ok:false} for a venue code it cannot resolve, having done nothing at all.
+        # An earlier version of this asserted st >= 400 and reported a leak that was not one.
+        # It is still worth noting that every other host route says 403 with words a person can
+        # act on, and this one says nothing: a console posting a stale code is told the night
+        # was fine when it was never recorded.
+        refused = st >= 400 or (isinstance(d, dict) and d.get('ok') is False)
+        ok('refused: %s at another venue' % what, refused, '%s %s' % (st, d))
+
+    print()
+    if bad:
+        print('%d LEAK(S). Stop and fix before another venue pays for this.' % bad); sys.exit(1)
+    print('No leak found. Every cross-venue attempt was refused.')
+
+if __name__ == '__main__':
+    main()

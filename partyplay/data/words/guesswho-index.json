@@ -1,0 +1,41 @@
+{
+ "note": "Written so the person guessing can get there with yes-or-no questions, and so everyone else can see the answer and enjoy watching them flounder.",
+ "categories": [
+  {
+   "category": "Famous Australians",
+   "slug": "famous-australians",
+   "count": 20,
+   "file": "data/words/guesswho-famous-australians.json"
+  },
+  {
+   "category": "Famous people",
+   "slug": "famous-people",
+   "count": 20,
+   "file": "data/words/guesswho-famous-people.json"
+  },
+  {
+   "category": "Characters",
+   "slug": "characters",
+   "count": 20,
+   "file": "data/words/guesswho-characters.json"
+  },
+  {
+   "category": "Animals",
+   "slug": "animals",
+   "count": 20,
+   "file": "data/words/guesswho-animals.json"
+  },
+  {
+   "category": "Things in the house",
+   "slug": "things-in-the-house",
+   "count": 20,
+   "file": "data/words/guesswho-things-in-the-house.json"
+  },
+  {
+   "category": "Places",
+   "slug": "places",
+   "count": 20,
+   "file": "data/words/guesswho-places.json"
+  }
+ ]
+}

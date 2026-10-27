@@ -1,0 +1,206 @@
+[
+  {
+    "index": 10,
+    "question": "A massive explosion flattened forest in Siberia in 1908 in what is called what?",
+    "problem": "ambiguous",
+    "detail": "The sentence is broken: 'in 1908 in what is called what?' A host cannot read this aloud without stumbling, and it is not clear what is being asked.",
+    "fix": {
+      "question": "A massive explosion flattened forest in Siberia in 1908. What is that event called?",
+      "options": [
+        "The Tunguska event",
+        "The Ural impact",
+        "The Siberian flare",
+        "The Baikal blast"
+      ],
+      "correctIndex": 0,
+      "category": "Space & Astronomy",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 118,
+    "question": "What do we call a rock from space that reaches the ground?",
+    "problem": "unsuitable",
+    "detail": "Straight duplicate of index 65 in the same file ('What is a space rock called once it has landed on the ground?'), with the same answer. If the two land in one night the room will notice.",
+    "fix": "DELETE"
+  },
+  {
+    "index": 160,
+    "question": "The Magellanic Clouds are named after which explorer?",
+    "problem": "self-answering",
+    "detail": "'Magellanic' and 'Magellan' are the same word; there is nothing to work out.",
+    "fix": {
+      "question": "The Large and Small Magellanic Clouds are what kind of object?",
+      "options": [
+        "Small satellite galaxies of the Milky Way",
+        "Clouds of comets",
+        "Dust lanes in the Milky Way",
+        "Nebulae inside our galaxy"
+      ],
+      "correctIndex": 0,
+      "category": "Space & Astronomy",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 179,
+    "question": "Which temperature scale starts at absolute zero?",
+    "problem": "two-answers",
+    "detail": "The Rankine scale also starts at absolute zero. It is an absolute scale using Fahrenheit-sized degrees, so the listed distractor is genuinely correct and anyone with an engineering or trade background will say so.",
+    "fix": {
+      "question": "Which temperature scale, used in science, starts at absolute zero and uses degrees the same size as Celsius?",
+      "options": [
+        "Kelvin",
+        "Rankine",
+        "Reaumur",
+        "Fahrenheit"
+      ],
+      "correctIndex": 0,
+      "category": "Space & Astronomy",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 191,
+    "question": "The Geminid meteor shower appears to come from which constellation?",
+    "problem": "self-answering",
+    "detail": "'Geminid' gives away 'Gemini'. The same fault appears at index 225 with the Perseids and Perseus.",
+    "fix": {
+      "question": "Which meteor shower peaks in mid December and comes from an asteroid rather than a comet?",
+      "options": [
+        "The Geminids",
+        "The Perseids",
+        "The Lyrids",
+        "The Leonids"
+      ],
+      "correctIndex": 0,
+      "category": "Space & Astronomy",
+      "difficulty": "hard"
+    }
+  },
+  {
+    "index": 207,
+    "question": "Which spacecraft made the first successful landing on Mars in 1976?",
+    "problem": "precision",
+    "detail": "'First successful landing on Mars' is contested. The Soviet Mars 3 achieved the first soft landing on Mars in December 1971 and transmitted for about 15 seconds. Viking 1 was the first fully successful lander, which is not the same claim.",
+    "fix": {
+      "question": "Which spacecraft became the first American lander to operate on the surface of Mars, in 1976?",
+      "options": [
+        "Viking 1",
+        "Phoenix",
+        "Pathfinder",
+        "Mariner 9"
+      ],
+      "correctIndex": 0,
+      "category": "Space & Astronomy",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 237,
+    "question": "Which of these is the smallest?",
+    "problem": "ambiguous",
+    "detail": "Not reliably true, and this file contradicts itself. Index 200 in the same file correctly states that Ganymede and Titan are wider than the planet Mercury, so 'a moon' is not always smaller than 'a planet'. This is also the third near-identical size-ordering question in the file, after index 5 and index 162.",
+    "fix": "DELETE"
+  },
+  {
+    "index": 238,
+    "question": "The Apollo programme was named after a god from which mythology?",
+    "problem": "two-answers",
+    "detail": "Apollo is one of the very few gods who kept the same name in Roman mythology, so 'Roman' is genuinely defensible. NASA did name the programme for the Greek god, but the question gives the room a fair argument.",
+    "fix": {
+      "question": "The Apollo programme was named after a god associated with which of these?",
+      "options": [
+        "The Sun and archery",
+        "The sea and earthquakes",
+        "War and iron",
+        "The forge and fire"
+      ],
+      "correctIndex": 0,
+      "category": "Space & Astronomy",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 286,
+    "question": "Which planet has the largest known volcano in the solar system?",
+    "problem": "unsuitable",
+    "detail": "Duplicate of index 18 in the same file, which already asks which planet is home to Olympus Mons, the largest volcano in the solar system. Same answer, same fact.",
+    "fix": "DELETE"
+  },
+  {
+    "index": 292,
+    "question": "Which planet is famous for its rings?",
+    "problem": "unsuitable",
+    "detail": "Duplicate of index 265 ('Which planet has the most spectacular ring system?'). Same answer, and Saturn's rings are also the subject of index 218 and index 481.",
+    "fix": "DELETE"
+  },
+  {
+    "index": 407,
+    "question": "What is an extremely dense star made almost entirely of neutrons called?",
+    "problem": "self-answering",
+    "detail": "'Made almost entirely of neutrons' answers 'a neutron star' word for word.",
+    "fix": {
+      "question": "Roughly how much would a teaspoon of neutron star material weigh?",
+      "options": [
+        "About a billion tonnes",
+        "About a kilogram",
+        "About a tonne",
+        "About a thousand tonnes"
+      ],
+      "correctIndex": 0,
+      "category": "Space & Astronomy",
+      "difficulty": "hard"
+    }
+  },
+  {
+    "index": 465,
+    "question": "What is Earth's only natural satellite?",
+    "problem": "unsuitable",
+    "detail": "Duplicate of index 437 ('What is the name of Earth's natural satellite?'), same answer, and index 478 already asks how many moons Earth has.",
+    "fix": "DELETE"
+  },
+  {
+    "index": 486,
+    "question": "Most stars, including the Sun, sit on which band of that diagram?",
+    "problem": "ambiguous",
+    "detail": "The stem says 'that diagram' but no diagram has been mentioned. Read aloud on its own the question is meaningless; it only works if it immediately follows the Hertzsprung Russell question at index 81, which cannot be guaranteed.",
+    "fix": {
+      "question": "On a Hertzsprung Russell diagram, most stars including the Sun sit on which band?",
+      "options": [
+        "The main sequence",
+        "The giant branch",
+        "The nova track",
+        "The dwarf line"
+      ],
+      "correctIndex": 0,
+      "category": "Space & Astronomy",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 517,
+    "question": "Which planet is famous for the Great Red Spot?",
+    "problem": "unsuitable",
+    "detail": "Third question in the file about the same fact. Index 288 asks what the Great Red Spot is and index 455 asks which planet has the most famous storm in the solar system. All three answer Jupiter.",
+    "fix": "DELETE"
+  },
+  {
+    "index": 570,
+    "question": "Which planet comes between Earth and the Sun?",
+    "problem": "two-answers",
+    "detail": "Mercury is also between Earth and the Sun, and it is sitting there as a distractor. As written the question has two correct answers and it will start an argument in the room.",
+    "fix": {
+      "question": "Which planet passes between Earth and the Sun and is closest to Earth at its nearest approach?",
+      "options": [
+        "Venus",
+        "Jupiter",
+        "Mercury",
+        "Mars"
+      ],
+      "correctIndex": 0,
+      "category": "Space & Astronomy",
+      "difficulty": "medium"
+    }
+  }
+]

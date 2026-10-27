@@ -1,0 +1,1310 @@
+[
+ {
+  "question": "In the cartoon 'The Flintstones', what is the name of Fred and Wilma's pet dinosaur?",
+  "options": [
+   "Dino",
+   "Rex",
+   "Barney Jr",
+   "Spike"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the Flintstones' next-door neighbours?",
+  "options": [
+   "The Boulders",
+   "The Cobbles",
+   "The Rubbles",
+   "The Slates"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which cartoon dog is known for saying 'Ruh-roh'?",
+  "options": [
+   "Scooby-Doo",
+   "Pluto",
+   "Snoopy",
+   "Astro"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the van driven by the Scooby-Doo gang?",
+  "options": [
+   "The Mystery Machine",
+   "The Ghost Buster",
+   "The Clue Cruiser",
+   "The Spook Wagon"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which member of the Scooby-Doo gang wears an orange jumper and is always hungry?",
+  "options": [
+   "Daphne",
+   "Velma",
+   "Shaggy",
+   "Fred"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 'Peanuts', what instrument does Schroeder famously play?",
+  "options": [
+   "Drums",
+   "Trumpet",
+   "Banjo",
+   "Toy piano"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Peanuts character carries a security blanket?",
+  "options": [
+   "Schroeder",
+   "Pigpen",
+   "Charlie Brown",
+   "Linus"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What breed of dog is Snoopy?",
+  "options": [
+   "Dalmatian",
+   "Basset hound",
+   "Terrier",
+   "Beagle"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In 'Tom and Jerry', what kind of animal is Jerry?",
+  "options": [
+   "A rat",
+   "A hamster",
+   "A mouse",
+   "A ferret"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Looney Tunes character says 'What's up, doc?'",
+  "options": [
+   "Porky Pig",
+   "Bugs Bunny",
+   "Daffy Duck",
+   "Elmer Fudd"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Looney Tunes character ends cartoons with 'That's all, folks!'",
+  "options": [
+   "Bugs Bunny",
+   "Yosemite Sam",
+   "Porky Pig",
+   "Sylvester"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is Wile E. Coyote endlessly chasing?",
+  "options": [
+   "Speedy Gonzales",
+   "Tweety",
+   "The Road Runner",
+   "Bugs Bunny"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which fictional company supplies Wile E. Coyote's gadgets?",
+  "options": [
+   "ZENITH",
+   "OMNI",
+   "APEX",
+   "ACME"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which cartoon cat is forever trying to catch Tweety Bird?",
+  "options": [
+   "Tom",
+   "Sylvester",
+   "Top Cat",
+   "Felix"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the sailor cartoon character who eats spinach for strength?",
+  "options": [
+   "Sinbad",
+   "Salty Sam",
+   "Barnacle Bill",
+   "Popeye"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is Popeye's long-suffering sweetheart?",
+  "options": [
+   "Wimpy",
+   "Sweet Pea",
+   "Betty Boop",
+   "Olive Oyl"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 'The Simpsons', what is the name of the local pub?",
+  "options": [
+   "Moe's Tavern",
+   "The Krusty Bar",
+   "Barney's",
+   "Duff Hall"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Homer Simpson's employer?",
+  "options": [
+   "Springfield Nuclear Power Plant",
+   "Duff Brewery",
+   "Burns Chemical",
+   "Springfield Steelworks"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the Simpsons' next-door neighbour?",
+  "options": [
+   "Apu",
+   "Moe Szyslak",
+   "Barney Gumble",
+   "Ned Flanders"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What instrument does Lisa Simpson play?",
+  "options": [
+   "Clarinet",
+   "Trumpet",
+   "Saxophone",
+   "Flute"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the Simpsons' baby?",
+  "options": [
+   "Minnie",
+   "Maggie",
+   "Molly",
+   "Mandy"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which brand of beer does Homer Simpson drink?",
+  "options": [
+   "Duff",
+   "Skittlebrau",
+   "Fudd",
+   "Buzz"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 'Futurama', what is the name of the alcohol-powered robot?",
+  "options": [
+   "Flexo",
+   "Calculon",
+   "Robo-Rick",
+   "Bender"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which 'Family Guy' character is the football-headed baby with a British accent?",
+  "options": [
+   "Meg",
+   "Stewie",
+   "Chris",
+   "Brian"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which US state is 'South Park' set?",
+  "options": [
+   "Montana",
+   "Utah",
+   "Wyoming",
+   "Colorado"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which 'South Park' character wears an orange parka and is hard to understand?",
+  "options": [
+   "Cartman",
+   "Kyle",
+   "Kenny",
+   "Stan"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the underwater town where SpongeBob lives?",
+  "options": [
+   "Atlantis Bay",
+   "Bikini Bottom",
+   "Sponge Harbour",
+   "Coral Cove"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What kind of sea creature is Patrick Star?",
+  "options": [
+   "A crab",
+   "A starfish",
+   "An octopus",
+   "A jellyfish"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the restaurant where SpongeBob works?",
+  "options": [
+   "The Barnacle",
+   "The Krusty Krab",
+   "The Chum Bucket",
+   "The Salty Spoon"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 'Rugrats', what is the name of Tommy Pickles' bully cousin?",
+  "options": [
+   "Phil",
+   "Susie",
+   "Angelica",
+   "Chuckie"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cartoon features characters named Arnold with a football-shaped head?",
+  "options": [
+   "Hey Arnold!",
+   "Recess",
+   "Rocket Power",
+   "Doug"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In 'The Powerpuff Girls', which girl wears green?",
+  "options": [
+   "Bubbles",
+   "Buttercup",
+   "Blossom",
+   "Bunny"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What ingredient did Professor Utonium accidentally add to create the Powerpuff Girls?",
+  "options": [
+   "Element Z",
+   "Sugar syrup",
+   "Chemical X",
+   "Formula 7"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cartoon features a boy genius and his sister DeeDee?",
+  "options": [
+   "Dexter's Laboratory",
+   "Jimmy Neutron",
+   "Phineas and Ferb",
+   "Johnny Test"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In 'Phineas and Ferb', what kind of animal is Perry?",
+  "options": [
+   "An echidna",
+   "A platypus",
+   "An otter",
+   "A beaver"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cartoon character lives in a pineapple under the sea?",
+  "options": [
+   "Sandy Cheeks",
+   "Squidward",
+   "SpongeBob SquarePants",
+   "Mr Krabs"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Batman's butler?",
+  "options": [
+   "Alfred",
+   "Wayne",
+   "Jarvis",
+   "Reginald"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Superman is originally from which destroyed planet?",
+  "options": [
+   "Krypton",
+   "Tamaran",
+   "Mars",
+   "Oa"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is Superman's name on Earth?",
+  "options": [
+   "Peter Parker",
+   "Barry Allen",
+   "Bruce Wayne",
+   "Clark Kent"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which newspaper does Clark Kent work for?",
+  "options": [
+   "The Gotham Gazette",
+   "The Metropolis Times",
+   "The Daily Planet",
+   "The Daily Bugle"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which newspaper does Peter Parker sell photos to?",
+  "options": [
+   "The New York Ledger",
+   "The Daily Bugle",
+   "The Queens Chronicle",
+   "The Daily Planet"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What creature bit Peter Parker and gave him his powers?",
+  "options": [
+   "A radioactive spider",
+   "A mutated scorpion",
+   "A cosmic beetle",
+   "A gamma-charged ant"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Marvel hero turns green when angry?",
+  "options": [
+   "Thor",
+   "The Hulk",
+   "Iron Man",
+   "Vision"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Hulk's name when he is not transformed?",
+  "options": [
+   "Hank Pym",
+   "Tony Stark",
+   "Bruce Banner",
+   "Steve Rogers"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What metal is Captain America's shield famously made from in the comics?",
+  "options": [
+   "Titanium",
+   "Vibranium",
+   "Adamantium",
+   "Uru"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which comic book publisher created the X-Men?",
+  "options": [
+   "Dark Horse",
+   "DC",
+   "Image",
+   "Marvel"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is the wheelchair-using founder of the X-Men?",
+  "options": [
+   "Nick Fury",
+   "Professor X",
+   "Doctor Strange",
+   "Magneto"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which X-Men character has retractable claws and a healing factor?",
+  "options": [
+   "Nightcrawler",
+   "Wolverine",
+   "Beast",
+   "Cyclops"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who co-created many Marvel heroes and made cameo appearances in the films?",
+  "options": [
+   "Bob Kane",
+   "Stan Lee",
+   "Alan Moore",
+   "Frank Miller"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which superhero team includes Mr Fantastic, the Invisible Woman, the Human Torch and the Thing?",
+  "options": [
+   "The Fantastic Four",
+   "The Avengers",
+   "The Defenders",
+   "The Justice League"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the catchphrase of the Thing in the Fantastic Four?",
+  "options": [
+   "Hulk smash",
+   "Avengers assemble",
+   "Flame on",
+   "It's clobberin' time"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Human Torch catchphrase precedes him bursting into flame?",
+  "options": [
+   "Burn bright",
+   "Flame on",
+   "Light me up",
+   "Fire away"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Wonder Woman comes from which island of Amazons?",
+  "options": [
+   "Atlantis",
+   "Themyscira",
+   "Lemuria",
+   "Olympus"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which superhero is known as the Fastest Man Alive?",
+  "options": [
+   "The Flash",
+   "Nightwing",
+   "Quicksilver",
+   "Green Lantern"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour is the Green Lantern's power ring energy?",
+  "options": [
+   "Blue",
+   "Yellow",
+   "Green",
+   "Red"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which comic strip features a boy and his stuffed tiger?",
+  "options": [
+   "Dennis the Menace",
+   "Garfield",
+   "Peanuts",
+   "Calvin and Hobbes"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of Garfield's owner?",
+  "options": [
+   "Jon Arbuckle",
+   "Odie",
+   "Liz",
+   "Nermal"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which day of the week does Garfield famously hate?",
+  "options": [
+   "Friday",
+   "Sunday",
+   "Monday",
+   "Wednesday"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Belgian comic features a young reporter and his white dog Snowy?",
+  "options": [
+   "The Adventures of Tintin",
+   "Asterix",
+   "Spirou",
+   "Lucky Luke"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the Asterix comics, what gives the villagers superhuman strength?",
+  "options": [
+   "A druid's chant",
+   "A magic potion",
+   "Roasted boar",
+   "A sacred stone"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which country do Asterix and Obelix come from?",
+  "options": [
+   "Spain",
+   "Gaul, now France",
+   "Britain",
+   "Italy"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Japanese animation studio made 'Spirited Away'?",
+  "options": [
+   "Toei Animation",
+   "Sunrise",
+   "Studio Ghibli",
+   "Madhouse"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who directed the Studio Ghibli films 'My Neighbour Totoro' and 'Princess Mononoke'?",
+  "options": [
+   "Satoshi Kon",
+   "Makoto Shinkai",
+   "Hayao Miyazaki",
+   "Isao Takahata"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In 'My Neighbour Totoro', what is the large bus-shaped creature called?",
+  "options": [
+   "Sootbus",
+   "Totoro Express",
+   "Nekomata",
+   "Catbus"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Studio Ghibli film features a girl named Chihiro working in a bathhouse?",
+  "options": [
+   "Howl's Moving Castle",
+   "Ponyo",
+   "Spirited Away",
+   "Kiki's Delivery Service"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which anime features a boy named Ash and a yellow electric creature?",
+  "options": [
+   "Digimon",
+   "Beyblade",
+   "Pokemon",
+   "Yu-Gi-Oh!"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the yellow electric Pokemon carried by Ash?",
+  "options": [
+   "Pikachu",
+   "Jolteon",
+   "Charmander",
+   "Raichu"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Pokemon series slogan?",
+  "options": [
+   "Duel to win",
+   "Gotta catch 'em all",
+   "Ready, set, go",
+   "Believe it"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which anime follows a ninja boy called Naruto Uzumaki?",
+  "options": [
+   "Naruto",
+   "One Piece",
+   "Bleach",
+   "Fairy Tail"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 'One Piece', what is the main character Luffy searching for?",
+  "options": [
+   "The Death Note",
+   "The Philosopher's Stone",
+   "The Dragon Balls",
+   "The One Piece treasure"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In 'Dragon Ball Z', how many Dragon Balls must be gathered to summon the dragon?",
+  "options": [
+   "Nine",
+   "Seven",
+   "Five",
+   "Three"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the main character of 'Dragon Ball'?",
+  "options": [
+   "Gohan",
+   "Goku",
+   "Piccolo",
+   "Vegeta"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 'Death Note', what does writing a name in the notebook do?",
+  "options": [
+   "Grants a wish",
+   "Transports them",
+   "Erases their memory",
+   "Kills that person"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which anime features Titans and the Survey Corps?",
+  "options": [
+   "Jujutsu Kaisen",
+   "Demon Slayer",
+   "Attack on Titan",
+   "Tokyo Ghoul"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "'Demon Slayer' follows a boy trying to cure which family member?",
+  "options": [
+   "His mother",
+   "His brother",
+   "His sister",
+   "His father"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which giant robot anime features Amuro Ray and mobile suits?",
+  "options": [
+   "Voltron",
+   "Neon Genesis Evangelion",
+   "Mobile Suit Gundam",
+   "Macross"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the Japanese word for comics, used worldwide?",
+  "options": [
+   "Otaku",
+   "Anime",
+   "Kanji",
+   "Manga"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which anime series features a boy called Edward Elric and alchemy?",
+  "options": [
+   "Blue Exorcist",
+   "Black Clover",
+   "Fullmetal Alchemist",
+   "Soul Eater"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cartoon cat from Japan is a global merchandise icon with no mouth drawn?",
+  "options": [
+   "Doraemon",
+   "Pusheen",
+   "Hello Kitty",
+   "Chi"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Doraemon is what kind of character?",
+  "options": [
+   "A robot cat from the future",
+   "A space alien",
+   "A time-travelling dog",
+   "A talking bear"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cartoon series features four turtles named after Renaissance artists?",
+  "options": [
+   "Biker Mice from Mars",
+   "Teenage Mutant Ninja Turtles",
+   "Battletoads",
+   "Street Sharks"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which colour mask does Ninja Turtle Leonardo wear?",
+  "options": [
+   "Blue",
+   "Purple",
+   "Red",
+   "Orange"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the Ninja Turtles' rat sensei?",
+  "options": [
+   "Master Roshi",
+   "Splinter",
+   "Krang",
+   "Shredder"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cartoon featured the catchphrase 'I have the power!'",
+  "options": [
+   "Voltron",
+   "He-Man and the Masters of the Universe",
+   "Thundercats",
+   "Transformers"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In 'Transformers', who leads the Autobots?",
+  "options": [
+   "Starscream",
+   "Bumblebee",
+   "Optimus Prime",
+   "Megatron"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who leads the Decepticons in 'Transformers'?",
+  "options": [
+   "Megatron",
+   "Galvatron only",
+   "Soundwave",
+   "Shockwave"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cartoon featured a boy who could summon a magic sword and Lion-O?",
+  "options": [
+   "ThunderCats",
+   "SilverHawks",
+   "Bravestarr",
+   "He-Man"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian animated series follows a family of blue heeler dogs?",
+  "options": [
+   "Dot and the Kangaroo",
+   "Bluey",
+   "The Wiggles",
+   "Blinky Bill"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 'Bluey', what is the name of Bluey's little sister?",
+  "options": [
+   "Bingo",
+   "Socks",
+   "Chilli",
+   "Muffin"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Bluey's dad?",
+  "options": [
+   "Lucky",
+   "Bandit",
+   "Stripe",
+   "Rusty"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which classic Australian cartoon character is a koala created by Dorothy Wall?",
+  "options": [
+   "Bluey",
+   "Blinky Bill",
+   "Snugglepot",
+   "Bertie the Bunyip"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cartoon mouse is Disney's mascot?",
+  "options": [
+   "Danger Mouse",
+   "Jerry",
+   "Speedy Gonzales",
+   "Mickey Mouse"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What was Mickey Mouse's first cartoon with synchronised sound?",
+  "options": [
+   "Steamboat Willie",
+   "Plane Crazy",
+   "Fantasia",
+   "The Band Concert"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of Mickey Mouse's dog?",
+  "options": [
+   "Pluto",
+   "Buster",
+   "Goofy",
+   "Bolt"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Disney duck is famously bad-tempered and hard to understand?",
+  "options": [
+   "Daffy Duck",
+   "Donald Duck",
+   "Scrooge McDuck",
+   "Launchpad"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are the names of Donald Duck's three nephews?",
+  "options": [
+   "Larry, Curly and Moe",
+   "Huey, Dewey and Louie",
+   "Chip, Dale and Clarice",
+   "Tick, Trick and Track"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cartoon features the mice Pinky and the Brain trying to take over the world?",
+  "options": [
+   "Tiny Toon Adventures",
+   "Animaniacs",
+   "Freakazoid",
+   "Histeria"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In 'Wacky Races', what is the villain's name who drives the Mean Machine?",
+  "options": [
+   "Dick Dastardly",
+   "Penelope Pitstop",
+   "Peter Perfect",
+   "Rufus Ruffcut"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the name of Dick Dastardly's snickering dog?",
+  "options": [
+   "Precious",
+   "Rowf",
+   "Muttley",
+   "Scrappy"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cartoon bear steals picnic baskets in Jellystone Park?",
+  "options": [
+   "Paddington",
+   "Baloo",
+   "Yogi Bear",
+   "Fozzie"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Yogi Bear's small sidekick?",
+  "options": [
+   "Cindy",
+   "Boo-Boo",
+   "Snagglepuss",
+   "Ranger Smith"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which comic book character is known as the Man Without Fear and is blind?",
+  "options": [
+   "Ghost Rider",
+   "Punisher",
+   "Moon Knight",
+   "Daredevil"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which graphic novel by Alan Moore features the character Rorschach?",
+  "options": [
+   "The Sandman",
+   "Watchmen",
+   "V for Vendetta",
+   "From Hell"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which comics character debuted in 'Action Comics' number 1 in 1938?",
+  "options": [
+   "Superman",
+   "Batman",
+   "Wonder Woman",
+   "Captain Marvel"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which villain is Batman's arch-enemy and wears purple with green hair?",
+  "options": [
+   "The Joker",
+   "The Riddler",
+   "The Penguin",
+   "Two-Face"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which cartoon series is set in the Land of Ooo with Finn and Jake?",
+  "options": [
+   "Steven Universe",
+   "Adventure Time",
+   "Regular Show",
+   "Gravity Falls"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which animated series features twins Dipper and Mabel in a mysterious town?",
+  "options": [
+   "Rick and Morty",
+   "Amphibia",
+   "Adventure Time",
+   "Gravity Falls"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In 'Rick and Morty', what is Rick's catchphrase burp-laden nonsense phrase?",
+  "options": [
+   "Cowabunga",
+   "Shazam",
+   "Bazinga",
+   "Wubba lubba dub dub"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cartoon features Eric Cartman and the phrase 'Respect my authoritah'?",
+  "options": [
+   "Family Guy",
+   "South Park",
+   "American Dad",
+   "Beavis and Butt-Head"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ }
+]

@@ -1,0 +1,2402 @@
+[
+ {
+  "question": "What colour do you get when you mix blue and yellow paint?",
+  "options": [
+   "Purple",
+   "Green",
+   "Orange",
+   "Brown"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many legs does a spider have?",
+  "options": [
+   "Six",
+   "Eight",
+   "Ten",
+   "Twelve"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the capital city of Australia?",
+  "options": [
+   "Sydney",
+   "Melbourne",
+   "Canberra",
+   "Brisbane"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which animal is known as the 'King of the Jungle'?",
+  "options": [
+   "Tiger",
+   "Elephant",
+   "Lion",
+   "Gorilla"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many days are there in a week?",
+  "options": [
+   "Five",
+   "Six",
+   "Seven",
+   "Eight"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the largest planet in our solar system?",
+  "options": [
+   "Saturn",
+   "Jupiter",
+   "Neptune",
+   "Earth"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do bees collect from flowers to make honey?",
+  "options": [
+   "Pollen and nectar",
+   "Sap",
+   "Water",
+   "Seeds"
+  ],
+  "correctIndex": 0,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many sides does a triangle have?",
+  "options": [
+   "Two",
+   "Three",
+   "Four",
+   "Five"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the opposite of 'hot'?",
+  "options": [
+   "Warm",
+   "Cold",
+   "Wet",
+   "Dry"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which ocean is the largest on Earth?",
+  "options": [
+   "Atlantic",
+   "Indian",
+   "Arctic",
+   "Pacific"
+  ],
+  "correctIndex": 3,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What gas do humans need to breathe to survive?",
+  "options": [
+   "Carbon dioxide",
+   "Nitrogen",
+   "Oxygen",
+   "Helium"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many colours are in a rainbow?",
+  "options": [
+   "Five",
+   "Six",
+   "Seven",
+   "Eight"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is frozen water called?",
+  "options": [
+   "Steam",
+   "Ice",
+   "Snowflake",
+   "Mist"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian animal carries its baby in a pouch and is known for boxing?",
+  "options": [
+   "Wombat",
+   "Koala",
+   "Kangaroo",
+   "Platypus"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the fairy tale character who left a glass slipper behind?",
+  "options": [
+   "Snow White",
+   "Cinderella",
+   "Rapunzel",
+   "Sleeping Beauty"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many wheels does a standard car have?",
+  "options": [
+   "Two",
+   "Three",
+   "Four",
+   "Six"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do you call a baby dog?",
+  "options": [
+   "Kitten",
+   "Cub",
+   "Puppy",
+   "Foal"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which fruit is traditionally associated with keeping the doctor away?",
+  "options": [
+   "Banana",
+   "Orange",
+   "Apple",
+   "Grape"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the tallest animal in the world?",
+  "options": [
+   "Elephant",
+   "Giraffe",
+   "Horse",
+   "Ostrich"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many minutes are there in one hour?",
+  "options": [
+   "Thirty",
+   "Forty-five",
+   "Sixty",
+   "One hundred"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour is a banana when it is ripe?",
+  "options": [
+   "Green",
+   "Red",
+   "Yellow",
+   "Blue"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which season comes after winter?",
+  "options": [
+   "Summer",
+   "Autumn",
+   "Spring",
+   "None"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the big red rock in central Australia?",
+  "options": [
+   "Uluru",
+   "Kata Tjuta",
+   "Mount Kosciuszko",
+   "The Pinnacles"
+  ],
+  "correctIndex": 0,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do caterpillars turn into?",
+  "options": [
+   "Beetles",
+   "Butterflies",
+   "Bees",
+   "Spiders"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many players are on a soccer team on the field at one time?",
+  "options": [
+   "Nine",
+   "Ten",
+   "Eleven",
+   "Twelve"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the currency used in Australia?",
+  "options": [
+   "Dollar",
+   "Pound",
+   "Euro",
+   "Yen"
+  ],
+  "correctIndex": 0,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which bird is famous for being unable to fly and is native to Australia?",
+  "options": [
+   "Eagle",
+   "Emu",
+   "Magpie",
+   "Kookaburra"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What shape is a stop sign?",
+  "options": [
+   "Circle",
+   "Square",
+   "Triangle",
+   "Octagon"
+  ],
+  "correctIndex": 3,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do cows produce that we drink?",
+  "options": [
+   "Juice",
+   "Milk",
+   "Water",
+   "Oil"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many cents are in one Australian dollar?",
+  "options": [
+   "Fifty",
+   "One hundred",
+   "Ten",
+   "One thousand"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which planet do we live on?",
+  "options": [
+   "Mars",
+   "Venus",
+   "Earth",
+   "Mercury"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the first meal of the day usually called?",
+  "options": [
+   "Lunch",
+   "Dinner",
+   "Breakfast",
+   "Supper"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour is the sky on a clear sunny day?",
+  "options": [
+   "Green",
+   "Blue",
+   "Purple",
+   "Grey"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which animal says 'moo'?",
+  "options": [
+   "Sheep",
+   "Cow",
+   "Pig",
+   "Duck"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many months are there in a year?",
+  "options": [
+   "Ten",
+   "Eleven",
+   "Twelve",
+   "Thirteen"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do you use to see in the dark?",
+  "options": [
+   "A torch",
+   "A spoon",
+   "A pillow",
+   "A hat"
+  ],
+  "correctIndex": 0,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the closest star to Earth?",
+  "options": [
+   "The Moon",
+   "The Sun",
+   "Mars",
+   "Venus"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian city is known for its Opera House?",
+  "options": [
+   "Perth",
+   "Sydney",
+   "Adelaide",
+   "Darwin"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do you call the person who delivers your mail?",
+  "options": [
+   "A postie",
+   "A barista",
+   "A tradie",
+   "A chippy"
+  ],
+  "correctIndex": 0,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many eyes does a typical human have?",
+  "options": [
+   "One",
+   "Two",
+   "Three",
+   "Four"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the largest land animal in the world?",
+  "options": [
+   "Hippopotamus",
+   "African elephant",
+   "Rhinoceros",
+   "Giraffe"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which meal do Australians typically eat in the evening?",
+  "options": [
+   "Breakfast",
+   "Brunch",
+   "Dinner",
+   "Morning tea"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour are most postboxes in Australia?",
+  "options": [
+   "Blue",
+   "Green",
+   "Red",
+   "Yellow"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do you call frozen rain that falls in soft white flakes?",
+  "options": [
+   "Hail",
+   "Snow",
+   "Sleet",
+   "Fog"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these is a citrus fruit?",
+  "options": [
+   "Strawberry",
+   "Lemon",
+   "Banana",
+   "Grape"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many hours are in a full day?",
+  "options": [
+   "Twelve",
+   "Twenty",
+   "Twenty-four",
+   "Thirty"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a young sheep called?",
+  "options": [
+   "Calf",
+   "Foal",
+   "Lamb",
+   "Kid"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which sport uses a bat, stumps and bails?",
+  "options": [
+   "Tennis",
+   "Cricket",
+   "Golf",
+   "Netball"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the toy that goes up and down on a string?",
+  "options": [
+   "Frisbee",
+   "Yo-yo",
+   "Marble",
+   "Kite"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do you call a group of wolves?",
+  "options": [
+   "A herd",
+   "A pack",
+   "A flock",
+   "A school"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian bird is known for its laughing call?",
+  "options": [
+   "Kookaburra",
+   "Galah",
+   "Rosella",
+   "Lyrebird"
+  ],
+  "correctIndex": 0,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the main ingredient in bread?",
+  "options": [
+   "Rice",
+   "Flour",
+   "Sugar",
+   "Salt"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do you call water falling from clouds?",
+  "options": [
+   "Rain",
+   "Wind",
+   "Sun",
+   "Cloud"
+  ],
+  "correctIndex": 0,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many legs does an insect have?",
+  "options": [
+   "Four",
+   "Six",
+   "Eight",
+   "Ten"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these animals lives in water?",
+  "options": [
+   "Fish",
+   "Cat",
+   "Dog",
+   "Horse"
+  ],
+  "correctIndex": 0,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the yellow spread often put on toast in Australia, known for its strong taste?",
+  "options": [
+   "Nutella",
+   "Vegemite",
+   "Jam",
+   "Honey"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour is grass usually?",
+  "options": [
+   "Blue",
+   "Green",
+   "Red",
+   "Purple"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these is used to tell the time?",
+  "options": [
+   "A clock",
+   "A fork",
+   "A shoe",
+   "A cup"
+  ],
+  "correctIndex": 0,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the tallest mountain in Australia?",
+  "options": [
+   "Mount Kosciuszko",
+   "Mount Bogong",
+   "Mount Feathertop",
+   "Cradle Mountain"
+  ],
+  "correctIndex": 0,
+  "category": "General knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the chemical symbol for gold?",
+  "options": [
+   "Go",
+   "Gd",
+   "Au",
+   "Ag"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many states make up Australia (not counting territories)?",
+  "options": [
+   "Five",
+   "Six",
+   "Seven",
+   "Eight"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which planet is known as the Red Planet?",
+  "options": [
+   "Venus",
+   "Mars",
+   "Jupiter",
+   "Mercury"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the largest coral reef system in the world, found off Queensland?",
+  "options": [
+   "Ningaloo Reef",
+   "Great Barrier Reef",
+   "Coral Sea Reef",
+   "Whitsunday Reef"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which body organ pumps blood around the body?",
+  "options": [
+   "Liver",
+   "Lungs",
+   "Heart",
+   "Kidney"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the hardest natural substance on Earth?",
+  "options": [
+   "Gold",
+   "Diamond",
+   "Iron",
+   "Granite"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian state is home to the city of Perth?",
+  "options": [
+   "Victoria",
+   "Western Australia",
+   "South Australia",
+   "Tasmania"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the smallest state in Australia by area?",
+  "options": [
+   "Victoria",
+   "Tasmania",
+   "South Australia",
+   "New South Wales"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many wings does a butterfly have?",
+  "options": [
+   "Two",
+   "Four",
+   "Six",
+   "Eight"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the largest desert in Australia?",
+  "options": [
+   "Simpson Desert",
+   "Great Victoria Desert",
+   "Tanami Desert",
+   "Gibson Desert"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which gas makes up the majority of Earth's atmosphere?",
+  "options": [
+   "Oxygen",
+   "Nitrogen",
+   "Carbon dioxide",
+   "Argon"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the longest river in Australia?",
+  "options": [
+   "Darling River",
+   "Murray River",
+   "Murrumbidgee River",
+   "Cooper Creek"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the study of living things called?",
+  "options": [
+   "Chemistry",
+   "Physics",
+   "Biology",
+   "Geology"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which metal is liquid at room temperature?",
+  "options": [
+   "Iron",
+   "Mercury",
+   "Copper",
+   "Zinc"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital city of the Australian state of Queensland?",
+  "options": [
+   "Cairns",
+   "Gold Coast",
+   "Brisbane",
+   "Townsville"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many bones does an adult human body have?",
+  "options": [
+   "156",
+   "206",
+   "256",
+   "306"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the process by which plants make their food using sunlight?",
+  "options": [
+   "Respiration",
+   "Photosynthesis",
+   "Digestion",
+   "Evaporation"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian coin is the largest in physical size?",
+  "options": [
+   "Five cent",
+   "Twenty cent",
+   "Fifty cent",
+   "Two dollar"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the boiling point of water at sea level in degrees Celsius?",
+  "options": [
+   "50",
+   "90",
+   "100",
+   "120"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian state is separated from the mainland by the Bass Strait?",
+  "options": [
+   "Victoria",
+   "Tasmania",
+   "South Australia",
+   "Western Australia"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the layer of gas that protects Earth from the sun's harmful rays?",
+  "options": [
+   "Ozone layer",
+   "Crust",
+   "Mantle",
+   "Stratus"
+  ],
+  "correctIndex": 0,
+  "category": "General knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many strings does a standard guitar have?",
+  "options": [
+   "Four",
+   "Five",
+   "Six",
+   "Eight"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the term for animals that eat only plants?",
+  "options": [
+   "Carnivores",
+   "Herbivores",
+   "Omnivores",
+   "Insectivores"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which is the only Australian state or territory that does not observe daylight saving time along with Queensland, the NT and WA?",
+  "options": [
+   "Victoria",
+   "New South Wales",
+   "Queensland",
+   "Tasmania"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the largest island in the world?",
+  "options": [
+   "Australia",
+   "Greenland",
+   "New Guinea",
+   "Borneo"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What natural feature is measured on the Richter scale?",
+  "options": [
+   "Wind speed",
+   "Rainfall",
+   "Earthquakes",
+   "Temperature"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the sea creature with eight arms?",
+  "options": [
+   "Squid",
+   "Octopus",
+   "Jellyfish",
+   "Starfish"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which vitamin does the human body produce when exposed to sunlight?",
+  "options": [
+   "Vitamin A",
+   "Vitamin C",
+   "Vitamin D",
+   "Vitamin K"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the fastest land animal in the world?",
+  "options": [
+   "Lion",
+   "Cheetah",
+   "Horse",
+   "Greyhound"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do you call molten rock that has erupted from a volcano?",
+  "options": [
+   "Magma",
+   "Lava",
+   "Ash",
+   "Sediment"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many teeth does a typical adult human have, including wisdom teeth?",
+  "options": [
+   "28",
+   "30",
+   "32",
+   "34"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which planet is closest to the Sun?",
+  "options": [
+   "Venus",
+   "Earth",
+   "Mercury",
+   "Mars"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the common name for sodium chloride?",
+  "options": [
+   "Sugar",
+   "Salt",
+   "Baking soda",
+   "Vinegar"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which large Australian rock formation is also known as The Olgas?",
+  "options": [
+   "Uluru",
+   "Kata Tjuta",
+   "Wave Rock",
+   "Devils Marbles"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the galaxy that contains our solar system?",
+  "options": [
+   "Andromeda",
+   "The Milky Way",
+   "The Whirlpool",
+   "Triangulum"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the term for a word that means the same as another word?",
+  "options": [
+   "Antonym",
+   "Synonym",
+   "Homonym",
+   "Acronym"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which continent is Australia part of?",
+  "options": [
+   "Asia",
+   "Oceania",
+   "Africa",
+   "Antarctica"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the deepest part of the world's oceans?",
+  "options": [
+   "Puerto Rico Trench",
+   "Java Trench",
+   "Mariana Trench",
+   "Tonga Trench"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many degrees are there in a full circle?",
+  "options": [
+   "180",
+   "270",
+   "360",
+   "400"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the largest organ of the human body?",
+  "options": [
+   "Liver",
+   "Skin",
+   "Lungs",
+   "Brain"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian city is nicknamed the 'City of Churches'?",
+  "options": [
+   "Hobart",
+   "Adelaide",
+   "Ballarat",
+   "Bendigo"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the term for the imaginary line around the middle of the Earth?",
+  "options": [
+   "Tropic of Cancer",
+   "The Equator",
+   "The Meridian",
+   "The Axis"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the plural of the word 'mouse' (the animal)?",
+  "options": [
+   "Mouses",
+   "Mice",
+   "Mouse",
+   "Meese"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which is the largest species of shark, and is harmless to humans as it feeds on plankton?",
+  "options": [
+   "Great white shark",
+   "Whale shark",
+   "Tiger shark",
+   "Hammerhead shark"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the SI unit of electrical resistance?",
+  "options": [
+   "Volt",
+   "Ampere",
+   "Ohm",
+   "Watt"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the name of Australia's national floral emblem?",
+  "options": [
+   "Waratah",
+   "Golden wattle",
+   "Kangaroo paw",
+   "Banksia"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the term for a shape with five sides?",
+  "options": [
+   "Hexagon",
+   "Pentagon",
+   "Octagon",
+   "Heptagon"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian territory contains the nation's capital?",
+  "options": [
+   "Northern Territory",
+   "Australian Capital Territory",
+   "Jervis Bay Territory",
+   "Norfolk Island"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the common name for the aurora seen in the Southern Hemisphere?",
+  "options": [
+   "Southern Lights",
+   "Northern Lights",
+   "Polar Glow",
+   "Sky Fire"
+  ],
+  "correctIndex": 0,
+  "category": "General knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many players are on the field for one team in an Australian Rules football match?",
+  "options": [
+   "Thirteen",
+   "Fifteen",
+   "Eighteen",
+   "Twenty"
+  ],
+  "correctIndex": 2,
+  "category": "General knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the largest moon of Earth?",
+  "options": [
+   "Titan",
+   "The Moon",
+   "Europa",
+   "Phobos"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which country is directly across the Tasman Sea from Australia?",
+  "options": [
+   "Fiji",
+   "New Zealand",
+   "Indonesia",
+   "Papua New Guinea"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the term for an animal that is active at night?",
+  "options": [
+   "Diurnal",
+   "Nocturnal",
+   "Aquatic",
+   "Migratory"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the primary language spoken in Brazil?",
+  "options": [
+   "Spanish",
+   "Portuguese",
+   "French",
+   "English"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the strait that separates Australia from Papua New Guinea?",
+  "options": [
+   "Bass Strait",
+   "Torres Strait",
+   "Cook Strait",
+   "Bering Strait"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the largest species of penguin?",
+  "options": [
+   "King penguin",
+   "Emperor penguin",
+   "Gentoo penguin",
+   "Little penguin"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the smallest country in the world by land area?",
+  "options": [
+   "Monaco",
+   "Vatican City",
+   "San Marino",
+   "Nauru"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the small marsupial that builds cube-shaped droppings?",
+  "options": [
+   "Bilby",
+   "Wombat",
+   "Quokka",
+   "Bandicoot"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which is the only mammal capable of true sustained flight?",
+  "options": [
+   "Flying fox",
+   "Bat",
+   "Sugar glider",
+   "Flying squirrel"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the Australian marsupial famous for looking like it is always smiling, found mainly on Rottnest Island?",
+  "options": [
+   "Quoll",
+   "Quokka",
+   "Numbat",
+   "Potoroo"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who is the current King of the United Kingdom and head of state of Australia as of 2026?",
+  "options": [
+   "King William",
+   "King Charles III",
+   "King George VII",
+   "King Harry"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which late Australian entertainer was famously known as the 'Crocodile Hunter'?",
+  "options": [
+   "Steve Irwin",
+   "David Attenborough",
+   "Harry Butler",
+   "Malcolm Douglas"
+  ],
+  "correctIndex": 0,
+  "category": "Famous people",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian pop star is known for the songs 'Can't Get You Out of My Head' and 'Locomotion'?",
+  "options": [
+   "Delta Goodrem",
+   "Kylie Minogue",
+   "Olivia Newton-John",
+   "Sia"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which famous physicist developed the theory of relativity and the equation E=mc squared?",
+  "options": [
+   "Isaac Newton",
+   "Albert Einstein",
+   "Stephen Hawking",
+   "Galileo Galilei"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian actor played Wolverine in the X-Men film series?",
+  "options": [
+   "Chris Hemsworth",
+   "Hugh Jackman",
+   "Russell Crowe",
+   "Eric Bana"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who painted the Mona Lisa?",
+  "options": [
+   "Michelangelo",
+   "Vincent van Gogh",
+   "Leonardo da Vinci",
+   "Pablo Picasso"
+  ],
+  "correctIndex": 2,
+  "category": "Famous people",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian actor is known for playing Thor in the Marvel films?",
+  "options": [
+   "Chris Hemsworth",
+   "Liam Hemsworth",
+   "Sam Worthington",
+   "Joel Edgerton"
+  ],
+  "correctIndex": 0,
+  "category": "Famous people",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who was the first woman to be Prime Minister of Australia?",
+  "options": [
+   "Julie Bishop",
+   "Julia Gillard",
+   "Penny Wong",
+   "Tanya Plibersek"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which English scientist is famous for the theory of evolution by natural selection?",
+  "options": [
+   "Isaac Newton",
+   "Charles Darwin",
+   "Gregor Mendel",
+   "Louis Pasteur"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which US President was in office during the September 11 attacks in 2001?",
+  "options": [
+   "Bill Clinton",
+   "George W. Bush",
+   "Barack Obama",
+   "Ronald Reagan"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian actress won an Academy Award for her role in the film 'The Hours'?",
+  "options": [
+   "Cate Blanchett",
+   "Nicole Kidman",
+   "Naomi Watts",
+   "Toni Collette"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who is the lead singer of the band Coldplay?",
+  "options": [
+   "Chris Martin",
+   "Thom Yorke",
+   "Bono",
+   "Liam Gallagher"
+  ],
+  "correctIndex": 0,
+  "category": "Famous people",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which former Australian cricket captain was known as 'Punter'?",
+  "options": [
+   "Steve Waugh",
+   "Ricky Ponting",
+   "Michael Clarke",
+   "Allan Border"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who wrote the play 'Romeo and Juliet'?",
+  "options": [
+   "Charles Dickens",
+   "William Shakespeare",
+   "Jane Austen",
+   "Oscar Wilde"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian media mogul founded a cricket competition known as World Series Cricket in the 1970s?",
+  "options": [
+   "Rupert Murdoch",
+   "Kerry Packer",
+   "James Packer",
+   "Alan Bond"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which world leader was the President of South Africa after being released from prison in 1990?",
+  "options": [
+   "Desmond Tutu",
+   "Nelson Mandela",
+   "Jacob Zuma",
+   "Kofi Annan"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian singer-songwriter is known for the hits 'Chandelier' and 'Cheap Thrills'?",
+  "options": [
+   "Sia",
+   "Missy Higgins",
+   "Vanessa Amorosi",
+   "Tina Arena"
+  ],
+  "correctIndex": 0,
+  "category": "Famous people",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which royal is the eldest son of King Charles III and heir to the British throne?",
+  "options": [
+   "Prince Harry",
+   "Prince William",
+   "Prince Andrew",
+   "Prince Edward"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who was the artist behind the painting known as 'The Starry Night'?",
+  "options": [
+   "Claude Monet",
+   "Vincent van Gogh",
+   "Salvador Dali",
+   "Edvard Munch"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian actor won an Oscar for the film 'Gladiator'?",
+  "options": [
+   "Hugh Jackman",
+   "Russell Crowe",
+   "Geoffrey Rush",
+   "Guy Pearce"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which musician was known as the 'King of Pop'?",
+  "options": [
+   "Elvis Presley",
+   "Michael Jackson",
+   "Prince",
+   "Freddie Mercury"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who was the founder of Microsoft, alongside Paul Allen?",
+  "options": [
+   "Steve Jobs",
+   "Bill Gates",
+   "Mark Zuckerberg",
+   "Jeff Bezos"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian country music legend is honoured with a golden guitar award ceremony held in Tamworth?",
+  "options": [
+   "Slim Dusty",
+   "Keith Urban",
+   "Lee Kernaghan",
+   "John Williamson"
+  ],
+  "correctIndex": 0,
+  "category": "Famous people",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which nurse became famous for her work during the Crimean War and is called the founder of modern nursing?",
+  "options": [
+   "Marie Curie",
+   "Florence Nightingale",
+   "Mother Teresa",
+   "Clara Barton"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian actress is known for roles in 'Muriel's Wedding' and 'The Sixth Sense'?",
+  "options": [
+   "Rachel Griffiths",
+   "Toni Collette",
+   "Rose Byrne",
+   "Isla Fisher"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Who is the founder of the electric car company Tesla and the space company SpaceX?",
+  "options": [
+   "Jeff Bezos",
+   "Elon Musk",
+   "Richard Branson",
+   "Larry Page"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which scientist was the first woman to win a Nobel Prize?",
+  "options": [
+   "Rosalind Franklin",
+   "Marie Curie",
+   "Ada Lovelace",
+   "Dorothy Hodgkin"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian golfer famously lost a six-shot lead in the final round of the 1996 US Masters?",
+  "options": [
+   "Adam Scott",
+   "Greg Norman",
+   "Jason Day",
+   "Steve Elkington"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which member of the British royal family married Meghan Markle in 2018?",
+  "options": [
+   "Prince William",
+   "Prince Harry",
+   "Prince Andrew",
+   "Prince Edward"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which artist is famous for co-founding the Cubism art movement?",
+  "options": [
+   "Henri Matisse",
+   "Pablo Picasso",
+   "Andy Warhol",
+   "Jackson Pollock"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian tennis player won multiple Grand Slam singles titles and has an arena at Melbourne Park named after her?",
+  "options": [
+   "Evonne Goolagong Cawley",
+   "Margaret Court",
+   "Ash Barty",
+   "Sam Stosur"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who was the British Prime Minister during most of World War II?",
+  "options": [
+   "Neville Chamberlain",
+   "Winston Churchill",
+   "Clement Attlee",
+   "Anthony Eden"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian actor starred as the title character in the film 'Crocodile Dundee'?",
+  "options": [
+   "Bryan Brown",
+   "Paul Hogan",
+   "Jack Thompson",
+   "John Jarratt"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which pop superstar released the album 'Thriller', one of the best-selling albums of all time?",
+  "options": [
+   "Prince",
+   "Michael Jackson",
+   "Lionel Richie",
+   "Stevie Wonder"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian Indigenous athlete lit the Olympic cauldron at the 2000 Sydney Olympics and won gold in the 400 metres?",
+  "options": [
+   "Nova Peris",
+   "Cathy Freeman",
+   "Patrick Johnson",
+   "Kyle Vander-Kuyp"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who was the lead vocalist of the rock band Queen?",
+  "options": [
+   "Mick Jagger",
+   "Freddie Mercury",
+   "Robert Plant",
+   "David Bowie"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian was the Prime Minister who famously disappeared while swimming in 1967?",
+  "options": [
+   "Robert Menzies",
+   "Harold Holt",
+   "John Gorton",
+   "Gough Whitlam"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which businesswoman and media personality hosted a hugely popular US daytime talk show for 25 years ending in 2011?",
+  "options": [
+   "Ellen DeGeneres",
+   "Oprah Winfrey",
+   "Barbara Walters",
+   "Martha Stewart"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian singer rose to fame as a child star and later starred in the TV series 'Neighbours' before a global music career, known for the song 'Torn'?",
+  "options": [
+   "Delta Goodrem",
+   "Natalie Imbruglia",
+   "Holly Valance",
+   "Dannii Minogue"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which US civil rights leader delivered the famous 'I Have a Dream' speech in 1963?",
+  "options": [
+   "Malcolm X",
+   "Martin Luther King Jr.",
+   "Rosa Parks",
+   "Jesse Jackson"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian actor and comedian created and starred in characters such as Dame Edna Everage?",
+  "options": [
+   "Paul Hogan",
+   "Barry Humphries",
+   "Shaun Micallef",
+   "Roy Billing"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cyclist won the Tour de France seven times before being stripped of the titles for doping?",
+  "options": [
+   "Chris Froome",
+   "Lance Armstrong",
+   "Cadel Evans",
+   "Miguel Indurain"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian cyclist became the first from his country to win the Tour de France, in 2011?",
+  "options": [
+   "Robbie McEwen",
+   "Cadel Evans",
+   "Stuart O'Grady",
+   "Michael Rogers"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Who was the Italian astronomer often called the 'father of modern observational astronomy'?",
+  "options": [
+   "Nicolaus Copernicus",
+   "Galileo Galilei",
+   "Johannes Kepler",
+   "Tycho Brahe"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian actress won an Oscar for 'Blue Jasmine' and is known for playing Queen Elizabeth I on film?",
+  "options": [
+   "Nicole Kidman",
+   "Cate Blanchett",
+   "Naomi Watts",
+   "Rachel Griffiths"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which member of the Beatles was known for writing and singing 'Yesterday' and 'Let It Be'?",
+  "options": [
+   "John Lennon",
+   "Paul McCartney",
+   "George Harrison",
+   "Ringo Starr"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian swimmer won five gold medals at a single Olympic Games and was nicknamed the 'Thorpedo'?",
+  "options": [
+   "Grant Hackett",
+   "Ian Thorpe",
+   "Kieren Perkins",
+   "Michael Klim"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who is the author of the 'Harry Potter' series of novels?",
+  "options": [
+   "J.R.R. Tolkien",
+   "J.K. Rowling",
+   "Roald Dahl",
+   "Enid Blyton"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian businessman and entrepreneur founded the airline Virgin Blue in partnership with the Virgin Group?",
+  "options": [
+   "Gerry Harvey",
+   "Brett Godfrey",
+   "Lindsay Fox",
+   "Dick Smith"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which famous naturalist and broadcaster is known for documentaries such as 'Planet Earth' and 'Blue Planet'?",
+  "options": [
+   "Steve Backshall",
+   "David Attenborough",
+   "Bear Grylls",
+   "Chris Packham"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian rock band is famous for the songs 'Never Tear Us Apart' and 'Need You Tonight', fronted by Michael Hutchence?",
+  "options": [
+   "Cold Chisel",
+   "INXS",
+   "Midnight Oil",
+   "Men at Work"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian actor played the Joker in the 2008 film 'The Dark Knight', winning a posthumous Oscar?",
+  "options": [
+   "Guy Pearce",
+   "Heath Ledger",
+   "Sam Worthington",
+   "Joel Edgerton"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which former US President was previously a Hollywood actor?",
+  "options": [
+   "Jimmy Carter",
+   "Ronald Reagan",
+   "Richard Nixon",
+   "Gerald Ford"
+  ],
+  "correctIndex": 1,
+  "category": "Famous people",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian entrepreneur co-founded the software company Atlassian?",
+  "options": [
+   "Mike Cannon-Brookes",
+   "Andrew Forrest",
+   "Clive Palmer",
+   "Kerr Neilson"
+  ],
+  "correctIndex": 0,
+  "category": "Famous people",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the name of the traditional Australian dessert made of meringue, cream and fruit, often topped with kiwifruit and passionfruit?",
+  "options": [
+   "Lamington",
+   "Pavlova",
+   "Trifle",
+   "Sponge cake"
+  ],
+  "correctIndex": 1,
+  "category": "Pub classics",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a small square sponge cake coated in chocolate and coconut, popular in Australia, called?",
+  "options": [
+   "Pavlova",
+   "Lamington",
+   "Anzac biscuit",
+   "Fairy bread"
+  ],
+  "correctIndex": 1,
+  "category": "Pub classics",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What Australian party food is made from white bread, butter and hundreds and thousands (sprinkles)?",
+  "options": [
+   "Fairy bread",
+   "Damper",
+   "Vegemite toast",
+   "Cheese toastie"
+  ],
+  "correctIndex": 0,
+  "category": "Pub classics",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the traditional bush bread made by early settlers and swagmen from flour and water, cooked over a campfire?",
+  "options": [
+   "Damper",
+   "Scone",
+   "Johnnycake",
+   "Bannock"
+  ],
+  "correctIndex": 0,
+  "category": "Pub classics",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which biscuit, associated with soldiers, is made from rolled oats, coconut and golden syrup?",
+  "options": [
+   "Monte Carlo",
+   "Anzac biscuit",
+   "Tim Tam",
+   "Iced VoVo"
+  ],
+  "correctIndex": 1,
+  "category": "Pub classics",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the classic Australian chocolate biscuit that you can use to 'slam' and suck up a hot drink?",
+  "options": [
+   "Tim Tam",
+   "Scotch Finger",
+   "Wagon Wheel",
+   "Kingston"
+  ],
+  "correctIndex": 0,
+  "category": "Pub classics",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'snag' commonly known as in Australian slang?",
+  "options": [
+   "A sandwich",
+   "A sausage",
+   "A steak",
+   "A pie"
+  ],
+  "correctIndex": 1,
+  "category": "Pub classics",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Australian slang, what is a 'servo'?",
+  "options": [
+   "A service station",
+   "A servant",
+   "A waiter",
+   "A delivery"
+  ],
+  "correctIndex": 0,
+  "category": "Pub classics",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the Australian slang term 'arvo' mean?",
+  "options": [
+   "Morning",
+   "Afternoon",
+   "Evening",
+   "Midnight"
+  ],
+  "correctIndex": 1,
+  "category": "Pub classics",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Australia, what is a 'thong' most commonly understood to be?",
+  "options": [
+   "A type of hat",
+   "A rubber sandal",
+   "A raincoat",
+   "A swimsuit"
+  ],
+  "correctIndex": 1,
+  "category": "Pub classics",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Australian slang term for a barbecue?",
+  "options": [
+   "Barbie",
+   "Cookie",
+   "Grilly",
+   "Snagfest"
+  ],
+  "correctIndex": 0,
+  "category": "Pub classics",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'brekkie' short for in Australian slang?",
+  "options": [
+   "Bracket",
+   "Breakfast",
+   "Break",
+   "Broccoli"
+  ],
+  "correctIndex": 1,
+  "category": "Pub classics",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What sweet drink is made by mixing lemonade with a scoop of ice cream?",
+  "options": [
+   "Spider",
+   "Lemon squash",
+   "Sarsaparilla",
+   "Fizzy"
+  ],
+  "correctIndex": 0,
+  "category": "Pub classics",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the Australian slang word for a person who is a coward?",
+  "options": [
+   "Bloke",
+   "Chook",
+   "Chicken",
+   "Drongo"
+  ],
+  "correctIndex": 3,
+  "category": "Pub classics",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Australia, what do people commonly call a swimming costume in Queensland and New South Wales slang?",
+  "options": [
+   "Bathers",
+   "Togs",
+   "Cossie",
+   "All of these are used"
+  ],
+  "correctIndex": 3,
+  "category": "Pub classics",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the Australian slang term for a genuine or trustworthy person, often 'fair ___'?",
+  "options": [
+   "Dinkum",
+   "Bonza",
+   "Ripper",
+   "Corker"
+  ],
+  "correctIndex": 0,
+  "category": "Pub classics",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 'a snag on a barbie with dead horse' referring to, using rhyming slang for the sauce?",
+  "options": [
+   "Tomato sauce",
+   "Mustard",
+   "Gravy",
+   "Chutney"
+  ],
+  "correctIndex": 0,
+  "category": "Pub classics",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the maximum break score possible in a standard frame of snooker?",
+  "options": [
+   "100",
+   "147",
+   "155",
+   "180"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the nickname of the Australian men's national basketball team?",
+  "options": [
+   "The Opals",
+   "The Boomers",
+   "The Kookaburras",
+   "The Hockeyroos"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian city hosted the Summer Olympic Games in 1956?",
+  "options": [
+   "Sydney",
+   "Melbourne",
+   "Adelaide",
+   "Brisbane"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the name of the famous clock tower at the Houses of Parliament in London, commonly called Big Ben?",
+  "options": [
+   "The Elizabeth Tower",
+   "The Victoria Tower",
+   "The Clock Tower",
+   "St Stephen's Tower"
+  ],
+  "correctIndex": 0,
+  "category": "General knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the name of the spicy paste made from chilli that is a staple in many Asian dishes?",
+  "options": [
+   "Pesto",
+   "Sambal",
+   "Hummus",
+   "Aioli"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What spice, derived from a crocus flower, is one of the most expensive in the world by weight?",
+  "options": [
+   "Turmeric",
+   "Saffron",
+   "Paprika",
+   "Cumin"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In which language does the word 'kangaroo' most likely originate, coming from an Aboriginal Australian language?",
+  "options": [
+   "Latin",
+   "Guugu Yimithirr",
+   "Greek",
+   "French"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the fastest bird in the world when in a diving stoop?",
+  "options": [
+   "Golden eagle",
+   "Peregrine falcon",
+   "Swift",
+   "Albatross"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What colour is a giraffe's tongue?",
+  "options": [
+   "Pink",
+   "Purple/blue",
+   "Green",
+   "Yellow"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the largest species of parrot native to Australia, black with a red tail panel?",
+  "options": [
+   "Galah",
+   "Black cockatoo",
+   "Corella",
+   "Rainbow lorikeet"
+  ],
+  "correctIndex": 1,
+  "category": "General knowledge",
+  "difficulty": "hard"
+ }
+]

@@ -1,0 +1,357 @@
+[
+  {
+    "index": 90,
+    "question": "Which two sea hazards give us the phrase 'between a rock and a hard place' in Greek myth?",
+    "problem": "wrong-answer",
+    "detail": "'Between a rock and a hard place' is a twentieth century American phrase, not Greek. The myth gives us 'between Scylla and Charybdis'. The question states a false etymology as fact.",
+    "fix": {
+      "question": "Which two sea hazards did Odysseus have to steer between in a narrow strait?",
+      "options": [
+        "Scylla and Charybdis",
+        "Triton and Nereus",
+        "Argo and Ithaca",
+        "Sirens and Harpies"
+      ],
+      "correctIndex": 0,
+      "category": "Mythology & Religion",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 136,
+    "question": "What is the Roman name for the Greek god Hades?",
+    "problem": "two-answers",
+    "detail": "Dis, offered as an option, is a genuine Roman name for the god of the underworld (Dis Pater). Both Pluto and Dis are correct answers as the question is written.",
+    "fix": {
+      "question": "What is the Roman name for the Greek god Hades?",
+      "options": [
+        "Neptune",
+        "Janus",
+        "Saturn",
+        "Pluto"
+      ],
+      "correctIndex": 3,
+      "category": "Mythology & Religion",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 139,
+    "question": "What is the Roman name for the Greek god Dionysus?",
+    "problem": "two-answers",
+    "detail": "Liber Pater, offered as an option, is a genuine Roman name for the god identified with Dionysus. Both Bacchus and Liber are defensible.",
+    "fix": {
+      "question": "What is the Roman name for the Greek god Dionysus?",
+      "options": [
+        "Silvanus",
+        "Bacchus",
+        "Neptune",
+        "Faunus"
+      ],
+      "correctIndex": 1,
+      "category": "Mythology & Religion",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 177,
+    "question": "What is the name of the great battle at the end of the world in Norse myth?",
+    "problem": "two-answers",
+    "detail": "Gotterdammerung, offered as an option, is the Germanic name for the same end-of-the-world battle and means 'twilight of the gods'. A well-read player can argue for it.",
+    "fix": {
+      "question": "What is the name of the great battle at the end of the world in Norse myth?",
+      "options": [
+        "Fimbulwinter",
+        "Valhalla",
+        "Armageddon",
+        "Ragnarok"
+      ],
+      "correctIndex": 3,
+      "category": "Mythology & Religion",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 216,
+    "question": "Which Egyptian protective symbol is named after the falcon-headed sky god?",
+    "problem": "self-answering",
+    "detail": "Index 204 in the same pack states that Horus is the falcon-headed sky god, so this question hands over its own answer once that one has been asked.",
+    "fix": {
+      "question": "Which Egyptian protective symbol was painted on boats and worn as an amulet against harm?",
+      "options": [
+        "The Eye of Thoth",
+        "The Eye of Osiris",
+        "The Eye of Horus",
+        "The Eye of Anubis"
+      ],
+      "correctIndex": 2,
+      "category": "Mythology & Religion",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 305,
+    "question": "How many books make up the Torah?",
+    "problem": "self-answering",
+    "detail": "Index 304 in the same pack describes the Torah as 'the five books of Moses', which is exactly this answer.",
+    "fix": {
+      "question": "Which of these is one of the five books of the Torah?",
+      "options": [
+        "Psalms",
+        "Genesis",
+        "Joshua",
+        "Isaiah"
+      ],
+      "correctIndex": 1,
+      "category": "Mythology & Religion",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 306,
+    "question": "On which day does the Jewish Sabbath fall?",
+    "problem": "two-answers",
+    "detail": "Shabbat runs from sunset on Friday to nightfall on Saturday, and Friday is offered as an option. Observant players will say it begins on Friday, which makes this an argument rather than a question.",
+    "fix": {
+      "question": "The Jewish Sabbath begins at sunset on which day?",
+      "options": [
+        "Sunday",
+        "Monday",
+        "Friday",
+        "Saturday"
+      ],
+      "correctIndex": 2,
+      "category": "Mythology & Religion",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 388,
+    "question": "Which religion has the largest number of followers worldwide?",
+    "problem": "dates",
+    "detail": "This is a live population ranking rather than a fixed fact, and index 666 in the same pack depends on the same ranking. Projections have Islam drawing level with Christianity within this century.",
+    "fix": {
+      "question": "Which religion is currently the largest in the world by number of followers?",
+      "options": [
+        "Buddhism",
+        "Christianity",
+        "Islam",
+        "Hinduism"
+      ],
+      "correctIndex": 1,
+      "category": "Mythology & Religion",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 475,
+    "question": "What is the widely used English term for the Aboriginal Australian body of creation stories and law?",
+    "problem": "sensitivity",
+    "detail": "The three wrong options are invented Aboriginal-sounding terms ('The Songline Code' mangles a real concept). Making up fake names for Aboriginal law and story to use as decoys is the part a listener would object to, not the question itself.",
+    "fix": {
+      "question": "What is the widely used English term for the Aboriginal Australian body of creation stories and law?",
+      "options": [
+        "Ragnarok",
+        "The Dreaming",
+        "Samsara",
+        "The Eddas"
+      ],
+      "correctIndex": 1,
+      "category": "Mythology & Religion",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 476,
+    "question": "Which creator figure appears in the traditions of many Aboriginal Australian nations and is linked with water and rivers?",
+    "problem": "sensitivity",
+    "detail": "Same problem: 'The Fire Lizard', 'The Sky Eagle' and 'The Stone Woman' are invented decoys dressed up as Aboriginal creator figures. Use figures from other traditions as the wrong answers instead.",
+    "fix": {
+      "question": "Which creator figure appears in the traditions of many Aboriginal Australian nations and is linked with water and rivers?",
+      "options": [
+        "Quetzalcoatl",
+        "Amaterasu",
+        "The Rainbow Serpent",
+        "Ahura Mazda"
+      ],
+      "correctIndex": 2,
+      "category": "Mythology & Religion",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 480,
+    "question": "What is the general word for a story that explains the origins of the world in a tradition?",
+    "problem": "self-answering",
+    "detail": "The stem is the dictionary definition of the answer: 'a story that explains the origins of the world' gives 'a creation myth'.",
+    "fix": "DELETE"
+  },
+  {
+    "index": 483,
+    "question": "What is the study of myths and their meanings called?",
+    "problem": "self-answering",
+    "detail": "'The study of myths' gives 'mythology'. The word is inside the question.",
+    "fix": "DELETE"
+  },
+  {
+    "index": 500,
+    "question": "Which faith teaches its followers to observe the Sabbath on Saturday and follow kosher food laws?",
+    "problem": "self-answering",
+    "detail": "'Kosher' is a Jewish term and index 325 in the same pack defines it as Jewish dietary law. The question names its own answer.",
+    "fix": {
+      "question": "Which faith observes its holy day from Friday sunset to Saturday nightfall?",
+      "options": [
+        "Hinduism",
+        "Islam",
+        "Catholicism",
+        "Judaism"
+      ],
+      "correctIndex": 3,
+      "category": "Mythology & Religion",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 505,
+    "question": "Which Greek Titan's name gives us the word 'atlas' for a book of maps?",
+    "problem": "self-answering",
+    "detail": "The Titan is called Atlas and the word is 'atlas'. They are the same word.",
+    "fix": {
+      "question": "Which Greek Titan was condemned to hold up the sky, and lends his name to a book of maps?",
+      "options": [
+        "Hyperion",
+        "Cronus",
+        "Oceanus",
+        "Atlas"
+      ],
+      "correctIndex": 3,
+      "category": "Mythology & Religion",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 507,
+    "question": "Which Greek god of sleep gives us the word 'hypnosis'?",
+    "problem": "self-answering",
+    "detail": "'Hypnosis' and 'Hypnos' are the same word, and this repeats index 25, which already asks for the Greek god of sleep.",
+    "fix": "DELETE"
+  },
+  {
+    "index": 510,
+    "question": "Which Greek goddess of love gives us the word 'aphrodisiac'?",
+    "problem": "self-answering",
+    "detail": "'Aphrodisiac' and 'Aphrodite' are the same word, and index 3 already asks for the Greek goddess of love.",
+    "fix": "DELETE"
+  },
+  {
+    "index": 527,
+    "question": "Which Greek Titans give their name to the largest moon of Saturn?",
+    "problem": "self-answering",
+    "detail": "The moon is called Titan and the answer is 'The Titans'. Nothing is being tested.",
+    "fix": {
+      "question": "Which Greek Titan gives his name to the largest moon of Saturn?",
+      "options": [
+        "Prometheus",
+        "Atlas",
+        "Titan",
+        "Cronus"
+      ],
+      "correctIndex": 2,
+      "category": "Mythology & Religion",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 529,
+    "question": "Which Greek hero's name is used for a strong but overlooked weakness?",
+    "problem": "ambiguous",
+    "detail": "'A strong but overlooked weakness' is muddled: an Achilles heel is a weak point in something otherwise strong. It is also the third Achilles question in the pack, after index 75 and index 76.",
+    "fix": "DELETE"
+  },
+  {
+    "index": 590,
+    "question": "Which Greek goddess of the harvest searched the world for her missing daughter?",
+    "problem": "ambiguous",
+    "detail": "Near duplicate of index 18, which already asks for the Greek goddess of the harvest, and index 52 also has Demeter as its answer. Three questions in one pack land on Demeter.",
+    "fix": "DELETE"
+  },
+  {
+    "index": 594,
+    "question": "Which mortal woman married Eros and gives us the word 'psyche'?",
+    "problem": "self-answering",
+    "detail": "The woman is called Psyche and the word is 'psyche'.",
+    "fix": {
+      "question": "Which mortal woman was made to perform impossible tasks by Aphrodite before marrying Eros?",
+      "options": [
+        "Penelope",
+        "Psyche",
+        "Pandora",
+        "Persephone"
+      ],
+      "correctIndex": 1,
+      "category": "Mythology & Religion",
+      "difficulty": "hard"
+    }
+  },
+  {
+    "index": 596,
+    "question": "Which Greek god of the forge made the weapons and armour of the gods?",
+    "problem": "ambiguous",
+    "detail": "Near duplicate of index 19, which asks for the blacksmith of the gods in almost the same words and has the same answer.",
+    "fix": "DELETE"
+  },
+  {
+    "index": 659,
+    "question": "Which religion of Haitian origin is often spelled Vodou?",
+    "problem": "self-answering",
+    "detail": "The question spells out the answer: 'often spelled Vodou' with 'Vodou' as the correct option.",
+    "fix": {
+      "question": "The religion Vodou developed in which Caribbean country?",
+      "options": [
+        "Cuba",
+        "Jamaica",
+        "Haiti",
+        "Trinidad"
+      ],
+      "correctIndex": 2,
+      "category": "Mythology & Religion",
+      "difficulty": "hard"
+    }
+  },
+  {
+    "index": 697,
+    "question": "What is the word for the set of rules and customs a faith asks its followers to live by?",
+    "problem": "ambiguous",
+    "detail": "Doctrine means the body of belief a religion teaches, not 'the set of rules and customs a faith asks its followers to live by', which better describes a code or precepts. The stem does not point cleanly at the marked answer.",
+    "fix": {
+      "question": "What is the word for the body of belief officially taught by a religion?",
+      "options": [
+        "Vestment",
+        "Doctrine",
+        "Liturgy",
+        "Sacrament"
+      ],
+      "correctIndex": 1,
+      "category": "Mythology & Religion",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 698,
+    "question": "What is the word for a formal religious meal or offering made to a god?",
+    "problem": "ambiguous",
+    "detail": "A sacrifice is an offering, not 'a formal religious meal'. The stem describes two different things and the meal half points away from the answer.",
+    "fix": {
+      "question": "What is the word for an offering made to a god, often of an animal?",
+      "options": [
+        "A vigil",
+        "A sacrifice",
+        "A psalm",
+        "A sermon"
+      ],
+      "correctIndex": 1,
+      "category": "Mythology & Religion",
+      "difficulty": "medium"
+    }
+  }
+]

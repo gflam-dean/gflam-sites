@@ -1,0 +1,614 @@
+{
+ "license": "CC BY-SA 4.0 for imported questions (share-alike applies to the compiled bank); VenuePlay original content for VenuePlay-authored questions.",
+ "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+ "sources": [
+  {
+   "name": "Open Trivia Database",
+   "url": "https://opentdb.com",
+   "license": "CC BY-SA 4.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "commercialUse": "permitted with attribution and share-alike",
+   "attribution": "Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+   "questionCount": 4320
+  },
+  {
+   "name": "OpenTriviaQA",
+   "url": "https://github.com/uberspot/OpenTriviaQA",
+   "license": "CC BY-SA 4.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "commercialUse": "permitted with attribution and share-alike",
+   "attribution": "Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+   "questionCount": 6310
+  },
+  {
+   "name": "VenuePlay original",
+   "url": "",
+   "license": "VenuePlay original content",
+   "licenseUrl": "",
+   "commercialUse": "owned by VenuePlay; no third-party attribution required",
+   "attribution": "Australian pub-culture questions authored by VenuePlay.",
+   "questionCount": 76
+  }
+ ],
+ "attributions": [
+  "Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+  "Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0)."
+ ],
+ "shareAlikeNote": "Because this bank mixes CC BY-SA 4.0 material, the compiled question collection is distributed under CC BY-SA 4.0. Display the attribution strings above wherever the trivia library is used.",
+ "category": "Cars",
+ "count": 52,
+ "questions": [
+  {
+   "q": "On which side of the road do Australians drive?",
+   "options": [
+    "Either side",
+    "The left",
+    "The right",
+    "It varies by state"
+   ],
+   "answer": "The left",
+   "d": "easy"
+  },
+  {
+   "q": "Which American brand makes the Wrangler?",
+   "options": [
+    "Jeep",
+    "Chevrolet",
+    "Dodge",
+    "Ford"
+   ],
+   "answer": "Jeep",
+   "d": "easy"
+  },
+  {
+   "q": "Which brand uses a three-pointed star?",
+   "options": [
+    "Mercedes-Benz",
+    "Audi",
+    "BMW",
+    "Volvo"
+   ],
+   "answer": "Mercedes-Benz",
+   "d": "easy"
+  },
+  {
+   "q": "Which endurance race is held in France each June?",
+   "options": [
+    "The Monaco Grand Prix",
+    "The 24 Hours of Le Mans",
+    "The Rallye Monte-Carlo",
+    "The Paris-Dakar"
+   ],
+   "answer": "The 24 Hours of Le Mans",
+   "d": "easy"
+  },
+  {
+   "q": "What fluid is used in a car's cooling system?",
+   "options": [
+    "Coolant",
+    "Transmission fluid",
+    "Engine oil",
+    "Brake fluid"
+   ],
+   "answer": "Coolant",
+   "d": "easy"
+  },
+  {
+   "q": "Which highway links Sydney and Melbourne?",
+   "options": [
+    "The Pacific Highway",
+    "The Newell Highway",
+    "The Hume Highway",
+    "The Princes Highway"
+   ],
+   "answer": "The Hume Highway",
+   "d": "easy"
+  },
+  {
+   "q": "Which film franchise features street racing and a family of drivers?",
+   "options": [
+    "Rush",
+    "Days of Thunder",
+    "The Fast and the Furious",
+    "Gone in 60 Seconds"
+   ],
+   "answer": "The Fast and the Furious",
+   "d": "easy"
+  },
+  {
+   "q": "Which American muscle car is named after a horse?",
+   "options": [
+    "The Chevrolet Camaro",
+    "The Pontiac Firebird",
+    "The Ford Mustang",
+    "The Dodge Charger"
+   ],
+   "answer": "The Ford Mustang",
+   "d": "easy"
+  },
+  {
+   "q": "Which country is the Volvo brand originally from?",
+   "options": [
+    "Denmark",
+    "Germany",
+    "Norway",
+    "Sweden"
+   ],
+   "answer": "Sweden",
+   "d": "easy"
+  },
+  {
+   "q": "Which American sports car is nicknamed the Vette?",
+   "options": [
+    "The Dodge Viper",
+    "The Ford Thunderbird",
+    "The Chevrolet Corvette",
+    "The Pontiac GTO"
+   ],
+   "answer": "The Chevrolet Corvette",
+   "d": "easy"
+  },
+  {
+   "q": "What does the acronym SUV stand for?",
+   "options": [
+    "Sport utility vehicle",
+    "Super utility van",
+    "Standard urban vehicle",
+    "Safe universal vehicle"
+   ],
+   "answer": "Sport utility vehicle",
+   "d": "easy"
+  },
+  {
+   "q": "What does a solid white line in the middle of a road mean?",
+   "options": [
+    "Bus lane",
+    "Overtaking allowed",
+    "Do not cross to overtake",
+    "Bicycle lane"
+   ],
+   "answer": "Do not cross to overtake",
+   "d": "easy"
+  },
+  {
+   "q": "Which motoring show featured three British presenters and a tame racing driver?",
+   "options": [
+    "Fifth Gear",
+    "Top Gear",
+    "Car SOS",
+    "Wheeler Dealers"
+   ],
+   "answer": "Top Gear",
+   "d": "easy"
+  },
+  {
+   "q": "Which pedal is on the far right in a manual car?",
+   "options": [
+    "The accelerator",
+    "The brake",
+    "The handbrake",
+    "The clutch"
+   ],
+   "answer": "The accelerator",
+   "d": "easy"
+  },
+  {
+   "q": "What does EV stand for?",
+   "options": [
+    "Electric vehicle",
+    "Economy version",
+    "Extended vehicle",
+    "Engine variant"
+   ],
+   "answer": "Electric vehicle",
+   "d": "easy"
+  },
+  {
+   "q": "What does a red P plate mean in most Australian states?",
+   "options": [
+    "A first-year provisional driver",
+    "A learner driver",
+    "A professional driver",
+    "A parking permit"
+   ],
+   "answer": "A first-year provisional driver",
+   "d": "easy"
+  },
+  {
+   "q": "Which luxury brand uses a winged badge and is associated with James Bond?",
+   "options": [
+    "Aston Martin",
+    "Rolls-Royce",
+    "Jaguar",
+    "Bentley"
+   ],
+   "answer": "Aston Martin",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of Top Gear's anonymous test driver?",
+   "options": [
+    "The Ghost",
+    "The Stig",
+    "The Shadow",
+    "The Driver"
+   ],
+   "answer": "The Stig",
+   "d": "easy"
+  },
+  {
+   "q": "Which brand makes the 911?",
+   "options": [
+    "Ferrari",
+    "Lotus",
+    "Jaguar",
+    "Porsche"
+   ],
+   "answer": "Porsche",
+   "d": "easy"
+  },
+  {
+   "q": "Which Italian brand uses a prancing horse logo?",
+   "options": [
+    "Maserati",
+    "Alfa Romeo",
+    "Ferrari",
+    "Lamborghini"
+   ],
+   "answer": "Ferrari",
+   "d": "easy"
+  },
+  {
+   "q": "What is 'range anxiety' for electric car drivers?",
+   "options": [
+    "Concern about resale value",
+    "Fear of fast acceleration",
+    "Worry about running out of charge",
+    "Worry about noise"
+   ],
+   "answer": "Worry about running out of charge",
+   "d": "easy"
+  },
+  {
+   "q": "Which car company was founded by Henry Ford?",
+   "options": [
+    "Studebaker",
+    "Ford",
+    "Chrysler",
+    "General Motors"
+   ],
+   "answer": "Ford",
+   "d": "easy"
+  },
+  {
+   "q": "Which motorcycle brand is known as the Hog?",
+   "options": [
+    "Triumph",
+    "Harley-Davidson",
+    "Honda",
+    "Ducati"
+   ],
+   "answer": "Harley-Davidson",
+   "d": "easy"
+  },
+  {
+   "q": "Which British four wheel drive brand made the Defender?",
+   "options": [
+    "Jaguar",
+    "MG",
+    "Land Rover",
+    "Rover Cars"
+   ],
+   "answer": "Land Rover",
+   "d": "easy"
+  },
+  {
+   "q": "Which car brand makes the Corolla?",
+   "options": [
+    "Mazda",
+    "Toyota",
+    "Nissan",
+    "Honda"
+   ],
+   "answer": "Toyota",
+   "d": "easy"
+  },
+  {
+   "q": "In Australia, who gives way at a roundabout?",
+   "options": [
+    "The vehicle on the left always",
+    "Whoever arrives first",
+    "Vehicles entering give way to those already on it",
+    "The larger vehicle"
+   ],
+   "answer": "Vehicles entering give way to those already on it",
+   "d": "easy"
+  },
+  {
+   "q": "Which Italian brand uses a raging bull logo?",
+   "options": [
+    "Maserati",
+    "Lamborghini",
+    "Ferrari",
+    "Pagani"
+   ],
+   "answer": "Lamborghini",
+   "d": "easy"
+  },
+  {
+   "q": "What is the fuel type most Australian diesel utes use?",
+   "options": [
+    "Unleaded petrol",
+    "Hydrogen",
+    "Diesel",
+    "LPG"
+   ],
+   "answer": "Diesel",
+   "d": "easy"
+  },
+  {
+   "q": "What do Americans call a car's bonnet?",
+   "options": [
+    "The lid",
+    "The hood",
+    "The trunk",
+    "The cowl"
+   ],
+   "answer": "The hood",
+   "d": "easy"
+  },
+  {
+   "q": "Which car brand makes the Hilux?",
+   "options": [
+    "Isuzu",
+    "Nissan",
+    "Toyota",
+    "Mitsubishi"
+   ],
+   "answer": "Toyota",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian circuit hosts the Formula 1 Australian Grand Prix?",
+   "options": [
+    "Mount Panorama",
+    "Phillip Island",
+    "Adelaide street circuit",
+    "Albert Park"
+   ],
+   "answer": "Albert Park",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian state issues number plates with the slogan 'The Sunshine State'?",
+   "options": [
+    "Victoria",
+    "New South Wales",
+    "South Australia",
+    "Queensland"
+   ],
+   "answer": "Queensland",
+   "d": "easy"
+  },
+  {
+   "q": "Which country drives on the right and gave the world the autobahn?",
+   "options": [
+    "Japan",
+    "Britain",
+    "Australia",
+    "Germany"
+   ],
+   "answer": "Germany",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'road train' in Australia?",
+   "options": [
+    "A convoy of caravans",
+    "A tourist bus",
+    "A passenger rail service",
+    "A truck pulling multiple trailers"
+   ],
+   "answer": "A truck pulling multiple trailers",
+   "d": "easy"
+  },
+  {
+   "q": "How many cylinders does a V8 engine have?",
+   "options": [
+    "Six",
+    "Twelve",
+    "Eight",
+    "Four"
+   ],
+   "answer": "Eight",
+   "d": "easy"
+  },
+  {
+   "q": "Which German brand makes the Golf?",
+   "options": [
+    "Opel",
+    "Volkswagen",
+    "BMW",
+    "Audi"
+   ],
+   "answer": "Volkswagen",
+   "d": "easy"
+  },
+  {
+   "q": "How many pedals does a standard manual car have?",
+   "options": [
+    "One",
+    "Four",
+    "Two",
+    "Three"
+   ],
+   "answer": "Three",
+   "d": "easy"
+  },
+  {
+   "q": "What is the default speed limit in most Australian built-up areas?",
+   "options": [
+    "40 kilometres per hour",
+    "50 kilometres per hour",
+    "70 kilometres per hour",
+    "60 kilometres per hour"
+   ],
+   "answer": "50 kilometres per hour",
+   "d": "easy"
+  },
+  {
+   "q": "What is the front row starting position called in motorsport?",
+   "options": [
+    "The lead lane",
+    "The inside line",
+    "Grid one",
+    "Pole position"
+   ],
+   "answer": "Pole position",
+   "d": "easy"
+  },
+  {
+   "q": "What is the Australian term for a car's boot in American English?",
+   "options": [
+    "The hood",
+    "The fender",
+    "The trunk",
+    "The cabin"
+   ],
+   "answer": "The trunk",
+   "d": "easy"
+  },
+  {
+   "q": "What is a roundabout designed to do?",
+   "options": [
+    "Separate trucks from cars",
+    "Keep traffic flowing through an intersection",
+    "Slow all traffic to a stop",
+    "Mark a town boundary"
+   ],
+   "answer": "Keep traffic flowing through an intersection",
+   "d": "easy"
+  },
+  {
+   "q": "How long is the Bathurst 1000 in kilometres?",
+   "options": [
+    "1000",
+    "600",
+    "800",
+    "500"
+   ],
+   "answer": "1000",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'bull bar' fitted to the front of an Australian vehicle for?",
+   "options": [
+    "Holding a spare tyre",
+    "Protecting against animal strikes",
+    "Mounting a caravan",
+    "Improving aerodynamics"
+   ],
+   "answer": "Protecting against animal strikes",
+   "d": "easy"
+  },
+  {
+   "q": "Which car is nicknamed the Beetle?",
+   "options": [
+    "The Citroen 2CV",
+    "The Fiat 500",
+    "The Mini",
+    "The Volkswagen Type 1"
+   ],
+   "answer": "The Volkswagen Type 1",
+   "d": "easy"
+  },
+  {
+   "q": "Which Toyota model popularised hybrid cars worldwide?",
+   "options": [
+    "The Prius",
+    "The RAV4",
+    "The Camry",
+    "The Yaris"
+   ],
+   "answer": "The Prius",
+   "d": "easy"
+  },
+  {
+   "q": "What is the pit stop crew change of all four tyres called in motorsport?",
+   "options": [
+    "A shakedown",
+    "A tyre change or pit stop",
+    "A formation lap",
+    "A parc ferme"
+   ],
+   "answer": "A tyre change or pit stop",
+   "d": "easy"
+  },
+  {
+   "q": "What does a hybrid car combine?",
+   "options": [
+    "Solar and wind",
+    "Diesel and hydrogen",
+    "A petrol engine and an electric motor",
+    "Two petrol engines"
+   ],
+   "answer": "A petrol engine and an electric motor",
+   "d": "easy"
+  },
+  {
+   "q": "What does 4WD stand for?",
+   "options": [
+    "Four wheel drive",
+    "Fourth wheel dynamic",
+    "Four wheel disc",
+    "Front wheel drive"
+   ],
+   "answer": "Four wheel drive",
+   "d": "easy"
+  },
+  {
+   "q": "Which Formula 1 circuit runs through city streets in a principality?",
+   "options": [
+    "Spa",
+    "Monaco",
+    "Monza",
+    "Silverstone"
+   ],
+   "answer": "Monaco",
+   "d": "easy"
+  },
+  {
+   "q": "Which car is the DeLorean best known from?",
+   "options": [
+    "Back to the Future",
+    "Bullitt",
+    "Knight Rider",
+    "The Italian Job"
+   ],
+   "answer": "Back to the Future",
+   "d": "easy"
+  },
+  {
+   "q": "Which Toyota four wheel drive is an outback icon?",
+   "options": [
+    "The Yaris",
+    "The Corolla",
+    "The Camry",
+    "The LandCruiser"
+   ],
+   "answer": "The LandCruiser",
+   "d": "easy"
+  },
+  {
+   "q": "Which Ford model was Holden's traditional Australian rival?",
+   "options": [
+    "The Falcon",
+    "The Focus",
+    "The Escort",
+    "The Mondeo"
+   ],
+   "answer": "The Falcon",
+   "d": "easy"
+  }
+ ]
+}

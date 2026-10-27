@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VenuePlay Trivia: Big Screen</title>
+<link rel="icon" type="image/png" href="/logos/venueplay_appicon_rebuilt.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
+    --pink:#FF1F8E; --pink-deep:#C70F69;
+    --gold:#FFC24B; --win:#35D07F; --roll:#F5A524;
+    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#8A8A94;
+    --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow-x:clip}
+  body{background:#050506;color:var(--text);font-family:'Manrope',system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
+  .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
+
+  .tv{position:fixed;inset:0;container-type:inline-size;background:radial-gradient(1200px 700px at 80% -10%, rgba(255,31,142,.12), transparent 60%), #050506;overflow:hidden}
+  .layer{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4% 6%}
+  .hidden{display:none!important}
+
+  .tv-corner{position:absolute;top:2cqw;right:2.4cqw;display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:.8cqw;z-index:6;max-width:40cqw}
+  .tv-corner .venuename{flex:0 0 100%;margin-top:.15cqw;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(10px,1.3cqw,17px);letter-spacing:.02em;color:rgba(255,255,255,.82);text-shadow:0 2px 8px rgba(0,0,0,.7)}
+  /* THE VENUEPLAY MARK, SECONDARY BUT CRISP (Dean, 21 Oct 2026: it looked "dull and behind everything").
+     It was 20px at most on any TV, at 92% opacity, with a fixed 18px arrow: tiny and soft on a 1920 wall
+     next to a venue logo now sized by its shape. Full opacity, a size that grows with the screen up to
+     26px, and a dark halo so it reads on any slide. Still well under the venue's logo. */
+  .tv-corner .vn{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(12px,1.35cqw,26px);letter-spacing:.01em;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.85),0 0 10px rgba(0,0,0,.6)}
+  .tv-corner svg{width:clamp(14px,1.2cqw,24px);height:auto;filter:drop-shadow(0 0 3px rgba(255,31,142,.9))}
+  /* Top-CENTRE, not top-left. The venue's LOGO is pinned top-left at top:20px with
+   z-index 60, and this sat under it at top:2cqw with z-index 6: on a 1920 screen
+   2cqw is 38px, inside the logo's 20-84px band. So any venue with a logo had its
+   Reconnecting indicator hidden behind it, at the one moment it matters. Same fault
+   that put a venue's name across the join panel on 5 Sep: two elements in one corner,
+   one in cqw and one in px, only ever correct at a single screen width. */
+  .tv-status{position:absolute;top:2cqw;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.45);border-radius:1cqw;padding:.4cqw 1cqw;display:flex;align-items:center;gap:.7cqw;z-index:6;font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:clamp(8px,1.1cqw,13px);color:var(--muted)}
+  /* display:flex BEATS THE hidden ATTRIBUTE. The badge is markup-hidden and this rule
+     made it visible from the first frame on every screen, reading "Connecting", until
+     tvStatus(true) ran. On ?demo=1 connectRealtime() is deliberately never called, so
+     tvStatus never ran at all and the sales page showed a permanent CONNECTING badge
+     over a game that was playing perfectly. Seen on see-a-night, 16 Sep 2026.
+     The comment above tvStatus records the same class of fault the other way round:
+     an element that could never be SEEN because of a conflicting style. */
+  .tv-status[hidden]{display:none}
+  .sdot{width:.8cqw;height:.8cqw;min-width:8px;min-height:8px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
+  .sdot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
+
+  .eyebrow{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.22em;font-size:clamp(10px,1.9cqw,15px);color:var(--muted)}
+  .jsub{font-family:'JetBrains Mono',monospace;font-size:clamp(11px,2cqw,16px);color:var(--muted);margin-top:2cqw;letter-spacing:.02em}
+  .jsub b{color:var(--gold)}
+  .hostline{font-family:'JetBrains Mono',monospace;font-size:clamp(10px,1.7cqw,14px);color:var(--faint);margin-top:1.2cqw}
+  .hostline b{color:var(--pink)}
+
+  /* lobby */
+  .lobbyrow{display:flex;align-items:center;gap:4cqw;margin-top:2.4cqw}
+  .qrbig{width:min(46cqw,64vh);max-width:none;aspect-ratio:1;background:#fff;border-radius:2cqw;padding:1.4cqw;flex:none;box-shadow:0 0 30px rgba(255,255,255,.12)}
+  .qrbig canvas{display:block;width:100%!important;height:100%!important;image-rendering:pixelated}
+  .lobbytxt{text-align:left}
+  .lobbyname{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(20px,6cqw,64px);color:#fff;line-height:1;max-width:44cqw;overflow-wrap:anywhere}
+  .lobbyname.long{font-size:clamp(18px,4.2cqw,46px);line-height:1.04}
+  .joinurl{font-family:'JetBrains Mono',monospace;font-size:clamp(12px,2.6cqw,26px);color:var(--pink);margin-top:1cqw}
+  .codebox{display:flex;align-items:center;gap:1.6cqw;margin-top:2cqw}
+  .codelbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:clamp(9px,1.6cqw,15px);color:var(--muted)}
+  .codeval{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(20px,5cqw,52px);color:var(--gold);letter-spacing:.08em;background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);border-radius:1.4cqw;padding:.6cqw 2cqw}
+
+  /* question layer */
+  .qcount{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.22em;font-size:clamp(10px,1.9cqw,15px);color:var(--muted)}
+  /* One fixed size for every question meant a long one was set at the same
+     54px as "WHO WROTE HAMLET" and ran off the bottom of the screen. Anton is a
+     condensed face so the steps can be big without looking odd. */
+  .qtext{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(20px,5.4cqw,54px);color:#fff;line-height:1.03;margin:1.6cqw 0 2.4cqw;max-width:92cqw}
+  .qtext.q-med  {font-size:clamp(19px,4.4cqw,44px);line-height:1.06}
+  .qtext.q-long {font-size:clamp(18px,3.6cqw,36px);line-height:1.1}
+  .qtext.q-epic {font-size:clamp(16px,2.9cqw,29px);line-height:1.14}
+  .qimg{max-width:min(54cqw,52vh);max-height:34cqw;object-fit:contain;border-radius:2cqw;margin:1cqw auto 0;display:block;box-shadow:0 0 42px rgba(0,0,0,.55);background:#000}
+  /* PICTURE ROUND. The image is the question, so it gets the height: about 36% of the screen,
+     with the four answers in one compact row underneath and a smaller ring, so on a 1080p wall
+     everything still fits inside the layer (checked: roughly 880px of the 994px available). */
+  .layer.pic .qimg{max-width:min(80cqw,64vh);max-height:36vh;margin:.4cqw auto 0}
+  .layer.pic .qtext{margin:1cqw 0 1.4cqw}
+  .layer.pic .answers{grid-template-columns:repeat(4,1fr);max-width:94cqw;gap:1.4cqw}
+  .layer.pic .ans{min-height:8cqw;padding:1cqw .8cqw;gap:.5cqw}
+  .layer.pic .ans .al{font-size:3cqw}
+  .layer.pic .ans .at{font-size:2cqw}
+  .layer.pic .qfoot{margin-top:1.4cqw;gap:4cqw}
+  .layer.pic .ringwrap{width:8cqw;height:8cqw}
+  .layer.pic .ringwrap .rnum{font-size:3cqw}
+  .layer.pic .answered{font-size:2.6cqw}
+  .answers{display:grid;grid-template-columns:1fr 1fr;gap:2.2cqw;width:100%;max-width:82cqw}
+  .answers.rev4{grid-template-columns:repeat(4,1fr);max-width:94cqw;gap:1.6cqw}
+  .ans{--ac:154,154,164;background:rgba(var(--ac),.12);border:0.32cqw solid rgba(var(--ac),.55);border-radius:2cqw;padding:2cqw;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1cqw;min-height:14cqw;overflow:hidden;transition:opacity .3s,box-shadow .3s}
+  .answers.rev4 .ans{min-height:11cqw;padding:1.4cqw 1cqw;gap:.7cqw}
+  .ans.c0{--ac:255,77,77}
+  .ans.c1{--ac:77,141,255}
+  .ans.c2{--ac:255,194,75}
+  .ans.c3{--ac:53,208,127}
+  .answers.neutral .ans{--ac:154,154,164;background:var(--ink-3);border-color:var(--line)}
+  .ans .al{font-family:'Anton',sans-serif;font-size:5cqw;line-height:.9;color:rgb(var(--ac))}
+  .answers.rev4 .ans .al{font-size:3.4cqw}
+  .answers.neutral .ans .al{color:#fff}
+  .ans .at{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:2.9cqw;color:#fff;text-align:center;line-height:1.08;word-break:break-word;overflow-wrap:anywhere}
+  .answers.rev4 .ans .at{font-size:2.1cqw}
+  .ans.correct{--ac:53,208,127;background:rgba(53,208,127,.22);border-color:var(--win);box-shadow:0 0 5cqw rgba(53,208,127,.4)}
+  .ans.correct .al,.answers.neutral .ans.correct .al{color:var(--win)}
+  .answers.neutral .ans.correct{background:rgba(53,208,127,.22);border-color:var(--win)}
+  .ans.dim{opacity:.38}
+  .split{width:100%;margin-top:.8cqw}
+  .split .sbar{height:1.2cqw;border-radius:1cqw;background:rgba(255,255,255,.12);overflow:hidden}
+  .split .sfill{height:100%;background:rgb(var(--ac));border-radius:1cqw;transition:width .6s ease}
+  .split .sc{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.7cqw;color:var(--text);margin-top:.5cqw}
+
+  .qfoot{display:flex;align-items:center;justify-content:center;gap:6cqw;margin-top:3cqw}
+  .ringwrap{position:relative;width:12cqw;height:12cqw}
+  .ringwrap svg{width:100%;height:100%;transform:rotate(-90deg)}
+  .ringwrap .rbg{fill:none;stroke:rgba(255,255,255,.12);stroke-width:8}
+  .ringwrap .rfg{fill:none;stroke:var(--pink);stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset .3s linear,stroke .3s}
+  .ringwrap .rnum{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:4.4cqw;color:#fff}
+  .answered{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:3.4cqw;color:var(--text)}
+  .answered b{color:var(--gold)}
+  .answered .sub{display:block;font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:1.4cqw;color:var(--faint);margin-top:.4cqw}
+
+  /* reveal / board */
+  .revhead{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.16em;font-size:clamp(12px,2.6cqw,30px);color:var(--win);margin-bottom:2cqw;max-width:92cqw;line-height:1.1}
+  .revboard{width:100%;max-width:70cqw;margin-top:2.6cqw;display:flex;flex-direction:column;gap:.8cqw}
+  /* PAPER NIGHT (Dean, 25 Sep 2026): answers held to the end of the round, then listed. */
+  .papersub{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(14px,3.2cqw,34px);color:var(--muted,#bbb);max-width:80cqw;line-height:1.25}
+  .paperlist{width:100%;max-width:84cqw;display:flex;flex-direction:column;gap:.6cqw;margin-top:1cqw;text-align:left}
+  .prow{display:grid;grid-template-columns:6cqw 4.4cqw 1fr;gap:1.4cqw;align-items:center;padding:.55cqw 1.6cqw;border:0.18cqw solid var(--line);border-radius:1cqw;background:rgba(255,255,255,.03)}
+  .prow .pq{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(11px,1.9cqw,22px);color:var(--muted,#bbb)}
+  .prow .pl{font-family:'Anton',sans-serif;font-size:clamp(14px,2.6cqw,30px);color:var(--win);text-align:center}
+  .prow .pa{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(12px,2.1cqw,24px);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .prow .pa small{display:block;font-weight:500;font-size:.72em;color:var(--muted,#bbb);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .boardtitle{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(22px,6cqw,58px);color:#fff;line-height:1;margin-bottom:2.4cqw}
+  .boardpage{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:clamp(10px,1.5cqw,15px);color:var(--muted);margin-top:1.6cqw}
+  .podium.four .pcol{width:19cqw}
+  .board{width:100%;max-width:70cqw;display:flex;flex-direction:column;gap:1cqw}
+  .brow{display:grid;grid-template-columns:7cqw 1fr auto;gap:2cqw;align-items:center;padding:1.3cqw 2.6cqw;border:0.2cqw solid var(--line);border-radius:1.6cqw;background:rgba(255,255,255,.02)}
+  .revboard .brow{padding:.9cqw 2cqw;border-radius:1.2cqw}
+  .brow.top1{border-color:var(--gold);background:rgba(255,194,75,.08)}
+  .brow .r{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:2.8cqw;color:var(--muted)}
+  .brow.top1 .r{color:var(--gold)}
+  .brow .n{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:3cqw;color:#fff;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .brow .s{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:3cqw;color:var(--gold)}
+  .revboard .brow .r,.revboard .brow .n,.revboard .brow .s{font-size:2.3cqw}
+
+  /* THE WINNERS SCREEN. This was three thin columns with medal emoji and near-black bars, and it
+     is the screen a room photographs. Dean, 22 Sep 2026, with a competitor's board that a table
+     had posted to Facebook: bright bands, big place numbers, the winner unmistakable. So: a stack
+     of bands, the place in Anton on the left, the team name as the loudest text on the wall, the
+     score in mono on the right. First is a pink band with the neon glow; second and third are
+     stage-black with a hairline. No emoji. Bands enter one after another, third first, so the
+     winner is the last thing revealed. */
+  .podium{display:flex;flex-direction:column;align-items:stretch;gap:1.6cqw;margin-top:1cqw;width:100%;max-width:78cqw}
+  .podium.four{max-width:82cqw}
+  .pcol{display:grid;grid-template-columns:9cqw 1fr auto;align-items:center;gap:2.4cqw;padding:1.6cqw 3cqw 1.6cqw 2cqw;border-radius:1.6cqw;
+    border:0.2cqw solid var(--line);background:linear-gradient(90deg,rgba(255,255,255,.05),rgba(255,255,255,.015));
+    opacity:0;transform:translateX(-3cqw);animation:bandin .55s cubic-bezier(.22,1,.36,1) forwards}
+  .pcol.first{border-color:var(--pink);background:linear-gradient(90deg,rgba(255,31,142,.55),rgba(255,31,142,.18));box-shadow:0 0 3cqw rgba(255,31,142,.45),inset 0 0 0 0.1cqw rgba(255,255,255,.12);animation-delay:.9s;padding:2.2cqw 3cqw 2.2cqw 2cqw}
+  .pcol.second{animation-delay:.45s} .pcol.third{animation-delay:0s}
+  .pcol .medal{font-family:'Anton',sans-serif;font-size:6cqw;line-height:1;color:var(--muted);text-align:center}
+  .pcol.first .medal{color:#fff;font-size:7.5cqw;text-shadow:0 0 2cqw rgba(255,255,255,.5)}
+  .pcol .pn{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:3.6cqw;color:#fff;text-align:left;line-height:1.05;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pcol.first .pn{font-size:4.6cqw}
+  .pcol .ps{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:3.4cqw;color:var(--gold);text-align:right}
+  .pcol.first .ps{color:#fff;font-size:4.2cqw}
+  .pcol .bar{display:none}
+  @keyframes bandin{to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.pcol{animation:none;opacity:1;transform:none}}
+
+  /* join corner */
+  .tv-join{position:absolute;left:2cqw;bottom:2cqw;display:flex;align-items:center;gap:1cqw;z-index:6;background:rgba(0,0,0,.42);border:1px solid var(--line-2);border-radius:1.2cqw;padding:.8cqw 1.4cqw .8cqw .8cqw;backdrop-filter:blur(4px)}
+  .qrmini{width:clamp(44px,8cqw,110px);height:clamp(44px,8cqw,110px);background:#fff;border-radius:.6cqw;padding:.4cqw;flex:none}
+  .qrmini canvas{display:block;width:100%!important;height:100%!important;image-rendering:pixelated}
+  .tv-join .tjl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:clamp(8px,1.3cqw,13px);color:var(--muted)}
+  .tv-join .tjc{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(13px,2.4cqw,26px);color:var(--gold);letter-spacing:.08em}
+  /* NOTHING UNDER THE CARD (14 Oct 2026). The card above, the VenuePlay corner and the venue's
+     logo are marked data-fit-avoid, and /app/vp-fit.js moves and scales each wall the least it
+     takes to keep clear of them. Punters Reckon is the exception: its board fills the whole wall
+     (/app/topanswers/pr-board.js), so there is nothing to move, and its last row and its "4 of 7"
+     counter sat under the card. Its layer stops above the card instead (bottom 2cqw, the card's
+     QR, its .8cqw padding top and bottom, a hairline border, and 1cqw of air) and the board lays
+     itself out in what is left; data-fit-self tells vp-fit not to shrink it on top of that. */
+  #tvPR{bottom:calc(4.6cqw + clamp(44px,8cqw,110px) + 2px)}
+
+  .confetti{position:absolute;top:-2cqw;width:.7cqw;height:1.1cqw;min-width:7px;min-height:11px;border-radius:2px;opacity:.95;z-index:8;pointer-events:none;animation:confettiFall linear forwards}
+  @keyframes confettiFall{0%{transform:translateY(-3vh) rotate(0);opacity:1}100%{transform:translateY(105vh) rotate(680deg);opacity:.85}}
+  .pulse{animation:pulse 1.4s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+  .dblpts{display:inline-block;vertical-align:middle;margin-left:1.4cqw;padding:.45cqw 1.6cqw;border-radius:99px;background:#FFC24B;color:#1a1200;font-size:clamp(12px,1.9cqw,34px);line-height:1;
+    font-weight:800;letter-spacing:.12em;text-transform:uppercase;animation:dblpulse 1.6s ease-in-out infinite}
+  @keyframes dblpulse{ 0%,100%{box-shadow:0 0 0 0 rgba(255,194,75,.6)} 50%{box-shadow:0 0 2cqw .4cqw rgba(255,194,75,.35)} }
+</style>
+</head>
+<body>
+<div class="tv" id="tv">
+
+  <div class="tv-status" hidden><span class="sdot" id="statusDot"></span><span id="statusText">Connecting</span></div>
+  <div class="tv-corner" data-fit-avoid="kids">
+    <svg width="18" height="21" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
+    <span class="vn">VenuePlay</span>
+    <div class="venuename" id="venueNameTag" hidden></div>
+  </div>
+
+  <!-- lobby -->
+  <div class="layer" id="tvLobby">
+    <div class="eyebrow">Join the trivia</div>
+    <div class="lobbyrow">
+      <div class="qrbig"><canvas id="qrBig"></canvas></div>
+      <div class="lobbytxt">
+        <div class="lobbyname" id="lobbyName">Trivia Night</div>
+        <div class="joinurl" id="lobbyJoinUrl">venueplay.com.au/play</div>
+        <div class="codebox"><span class="codelbl">Code</span><span class="codeval" id="lobbyCode">------</span></div>
+      </div>
+    </div>
+    <div class="jsub" id="lobbySub">Waiting for the host to connect&hellip;</div>
+    <div class="hostline" id="hostLine">Host, open venueplay.com.au/app/trivia/host and enter code <b id="hostLineCode">------</b></div>
+  </div>
+
+  <!-- question -->
+  <div class="layer hidden" id="tvQ">
+    <div class="qcount" id="tvQCount">Question 1</div>
+    <img class="qimg hidden" id="tvQImg" alt="" onerror="this.classList.add('hidden');var l=this.parentNode;if(l&&l.classList)l.classList.remove('pic')">
+    <div class="qtext" id="tvQText">Question</div>
+    <div class="answers" id="tvAnswers"></div>
+    <div class="qfoot">
+      <div class="ringwrap">
+        <svg viewBox="0 0 100 100"><circle class="rbg" cx="50" cy="50" r="44"/><circle class="rfg" id="tvRing" cx="50" cy="50" r="44"/></svg>
+        <div class="rnum" id="tvCdNum">20</div>
+      </div>
+      <div class="answered"><b id="tvAnsCount">0</b><span class="sub">answered</span></div>
+    </div>
+  </div>
+
+  <!-- reveal -->
+  <div class="layer hidden" id="tvReveal">
+    <div class="revhead" id="tvRevHead">Correct answer</div>
+    <div class="answers rev4" id="tvRevAnswers"></div>
+    <div class="revboard" id="tvRevBoard"></div>
+  </div>
+
+  <!-- paper night: locked in / hand in your sheets / the round's answers -->
+  <div class="layer hidden" id="tvPaper">
+    <div class="boardtitle" id="tvPaperTitle">Answer locked in</div>
+    <div class="papersub" id="tvPaperSub"></div>
+    <div class="paperlist" id="tvPaperList"></div>
+  </div>
+
+  <!-- leaderboard -->
+  <!-- Punters Reckon (feature/top-answers, switched off): the board is drawn by /app/topanswers/pr-board.js -->
+  <div class="layer hidden" id="tvPR" data-fit-self style="padding:0;container-type:inline-size"></div>
+  <div class="layer hidden" id="tvBoard">
+    <div class="boardtitle" id="tvBoardTitle">Leaderboard</div>
+    <div class="board" id="tvBoardRows"></div>
+    <div class="boardpage hidden" id="tvBoardPage"></div>
+  </div>
+
+  <!-- podium -->
+  <div class="layer hidden" id="tvPodium">
+    <div class="boardtitle">Winners tonight</div>
+    <div class="podium" id="tvPodiumCols"></div>
+  </div>
+
+  <!-- persistent join corner -->
+  <div class="tv-join hidden" id="tvJoinCorner" data-fit-avoid>
+    <div class="qrmini"><canvas id="qrMini"></canvas></div>
+    <div><div class="tjl">Join now</div><div class="tjc" id="tvJoinCode">------</div></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
+<script src="/app/vp-qr.js"></script>
+<script src="/app/vp-sign.js"></script>
+<script src="/app/vp-channel.js"></script>
+<script src="/app/topanswers/pr-board.js"></script>
+<script src="/app/vp-screen-router.js"></script>
+<script src="/app/vp-celebrate.js"></script>
+<script src="/app/vp-fit.js"></script>
+<script src="/app/vp-venuelogo.js"></script>
+<script src="/app/vp-venueurl.js"></script>
+<script>
+(function(){
+  "use strict";
+  var VP_SCREEN_API='https://venueplay-game.dean-tindale.workers.dev';
+  function $(id){ return document.getElementById(id); }
+  function el(tag,cls,html){ var e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
+
+  var LETTERS=["A","B","C","D"];
+  var RING_C=2*Math.PI*44;
+
+  var CODE_ALPHABET="ACDEFGHJKMNPQRSTUVWXYZ2345679";
+  function makeCode(){ var s=""; for(var i=0;i<6;i++) s+=CODE_ALPHABET.charAt(cryptoInt(CODE_ALPHABET.length)); return s; }
+
+  var SUPA_URL='https://ijkzgmdtwtgfkedqspxm.supabase.co';
+  var SUPA_ANON='sb_publishable_9v83FWCSt7Di-jkgTvsMJQ_f6lJPovb';
+
+  // Opened with ?venue=<slug> (the normal case), the pairing code is DERIVED from the venue,
+  // so the host auto-pairs with no code to type - exactly like bingo. A screen with no venue
+  // link falls back to a random persisted code + the manual pairing shown on screen.
+  var CODE_RE=/^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/;
+  function venueCode(slug){
+    var s=String(slug||"").toLowerCase().replace(/[^a-z0-9]/g,""), h=2166136261>>>0;
+    for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619)>>>0; }
+    var A="ACDEFGHJKMNPQRSTUVWXYZ2345679", out="", x=h||1;
+    for(var j=0;j<6;j++){ x=(Math.imul(x,1103515245)+12345)>>>0; out+=A[x%A.length]; }
+    return out;
+  }
+  /* ?demo=1 IS DECIDED HERE, before anything reads a venue.
+
+     Same order, and for the same reason, as tv.html: VENUE_SLUG is what the divert guard,
+     VPSign.initReceiver and VPScreenRouter all hang off, so a demo that resolves no venue is
+     hermetic almost by construction. Deciding it after any of them would have bounced the
+     sales page straight to /tv, which is exactly what a direct open is meant to do. */
+  var VP_DEMO = /[?&]demo=1/.test(window.location.search || "");
+  var VENUE_UNREAD=false;                        // set when the address held something we could not read
+  var VENUE_SLUG=(function(){
+    if(VP_DEMO) return "";                       // hermetic: never inherit a real venue
+    /* The venue in the address comes from ONE reader, /app/vp-venueurl.js, the same one tv.html
+       and the bingo phone use (venue=, slug=, any capitals, ?=slug, spaces as hyphens, a stray %
+       no longer throws). No script, no venue from the address: memory takes over, and says so. */
+    var v=window.VPVenueURL ? VPVenueURL.slug(window.location.search||"") : "";
+    if(v){ try{ localStorage.setItem("vpTvVenue", v); }catch(e){} return v; }
+    try{ var s=localStorage.getItem("vpTvVenue"); if(s){ try{ VENUE_UNREAD=!!VPVenueURL.fellBack(window.location.search||"", s); }catch(e){} return s; } }catch(e){}
+    return "";
+  })();
+  var VP_GAME_API='https://venueplay-game.dean-tindale.workers.dev';
+  // Verify host broadcasts (migrations 38/49): fetch this venue's PUBLIC key; vpGate drops forged
+  // messages in enforce mode, and delivers as before when enforce is off or the script is absent.
+  if(window.VPSign && VENUE_SLUG){ VPSign.initReceiver(VP_GAME_API, VENUE_SLUG); }
+  function vpGate(payload, cb){ if(window.VPSign){ VPSign.gate(payload, cb); } else { cb(payload); } }
+  // ---- divert guard: a venue screen is NEVER a landing page. The only entry is the unified /tv link,
+  //      which hops here (sessionStorage vpTvHop) the moment a game goes on air. A direct or bookmarked
+  //      open is bounced straight to /tv so a screen is only ever the live link. ----
+  if(VENUE_SLUG){
+    var _hop=""; try{ _hop=sessionStorage.getItem("vpTvHop")||""; }catch(e){}
+    /* An address we could not read must not come back from the bounce as ?venue=<whatever this
+       browser remembered>, written in as if somebody had typed it. Hand /tv the address as typed;
+       it reads the same memory and warns the same way. */
+    if(!_hop){ window.location.replace(VENUE_UNREAD ? "/tv"+window.location.search : "/tv?venue="+encodeURIComponent(VENUE_SLUG)); return; }   // bounce only a genuine cold/bookmarked open; any live /tv hop leaves a marker so it never flickers
+  }
+  var CODE=(function(){
+    if(VENUE_SLUG) return venueCode("trivia-"+VENUE_SLUG);   // game-namespaced so trivia can't share bingo's channel
+    try{ var c=localStorage.getItem("vpTvCodeTrivia"); if(c && CODE_RE.test(c)) return c; }catch(e){}
+    var nc=makeCode(); try{ localStorage.setItem("vpTvCodeTrivia", nc); }catch(e){} return nc;
+  })();
+  function absUrl(rel){ try{ return new URL(rel, window.location.href).href; }catch(e){ return rel; } }
+  var hostURL=absUrl("host.html?tv="+CODE);      // the host opens this to run the quiz on this screen
+  var joinCode="";                                // the real DB join code, handed over once the host opens a session
+  function playURLFor(code){ return absUrl("play.html?room="+code); }
+  // The address on every printed sign and table talker.
+  function ORIGIN_PLAY(){ try{ return window.location.origin + "/play"; }catch(e){ return "https://venueplay.com.au/play"; } }
+
+  /* How many leaderboard rows fit a 1080p TV. Each row is about 127px at 1920px wide, so ten
+
+     plus the title overflowed roughly 1550px into about 927px of usable height, and the layer is
+
+     a centred flex column inside overflow:hidden, so it clipped at BOTH ends: the title and the
+
+     top two ranks off the top, ninth and tenth off the bottom. The winner was what got cut. */
+
+  var TV_BOARD_ROWS = 6;
+
+
+  /* The TV never shows the player count (locked design rule): a room of six should not read
+     "6 playing" on the wall. The host console has the number. */
+  var state={ phase:"lobby", hostSeen:false, colour:true, title:"" };
+  var _prBoard=null;   // Punters Reckon board, mounted on first use
+  var curQ=null, answeredPids={}, ringTimer=null, boardRollTimer=null;
+
+  // ---- layers ----
+  var LAYERS=["tvLobby","tvQ","tvReveal","tvPaper","tvBoard","tvPodium","tvPR"];
+  function show(which){
+    if(which!=="tvBoard") stopBoardPaging();
+    for(var i=0;i<LAYERS.length;i++){ $(LAYERS[i]).classList.toggle("hidden", LAYERS[i]!==which); }
+    $("tvJoinCorner").classList.toggle("hidden", which==="tvLobby");
+  }
+  function renderPaper(m){
+    var title=$("tvPaperTitle"), sub=$("tvPaperSub"), list=$("tvPaperList");
+    list.innerHTML="";
+    if(m.t==="closed"){
+      title.textContent="Answer locked in";
+      sub.textContent="The answers go up at the end of round "+(m.round||1)+", once the paper teams have handed in their sheets.";
+    } else if(m.t==="handin"){
+      title.textContent="Paper teams";
+      sub.textContent="Hand your round "+(m.round||1)+" sheet to the host now. The answers are next.";
+    } else {
+      title.textContent="Round "+(m.round||1)+" answers";
+      sub.textContent="";
+      var items=Array.isArray(m.items)?m.items:[];
+      for(var i=0;i<items.length;i++){
+        var it=items[i]||{}, r=document.createElement("div");
+        r.className="prow";
+        r.innerHTML='<span class="pq">Q'+esc(it.qi)+'</span><span class="pl">'+esc(it.letter||"")+'</span>'+
+          '<span class="pa">'+esc(it.answer||"")+'<small>'+esc(it.text||"")+'</small></span>';
+        list.appendChild(r);
+      }
+    }
+    show("tvPaper");
+  }
+  function applyColour(container){ container.classList.toggle("neutral", !state.colour); }
+
+  // The QR shows the HOST pairing link until a session opens (so the host can scan to
+  // set up), then flips to the player join link built from the real DB join code.
+  /* ONE CODE, ALWAYS THE SAME.
+     A venue-linked screen shows the VENUE code, not the session's random join code. It is a
+     hash of the slug, so it is identical for bingo, trivia and musical, it is the same tonight
+     as next month, and it can be printed on a table talker. The Worker resolves it to whatever
+     session is live, so a phone typing it still lands in the right room. Only an unlinked screen
+     (paired by code, no venue) falls back to the session code, because it has nothing stabler. */
+  function shownCode(){ return VENUE_SLUG ? venueCode(VENUE_SLUG) : (joinCode || "------"); }
+  function shownJoinURL(){ return VENUE_SLUG ? (ORIGIN_PLAY() + "?venue=" + encodeURIComponent(VENUE_SLUG)) : (joinCode ? playURLFor(joinCode) : hostURL); }
+  function drawLobbyQR(){
+    // A linked screen must never put a host setup QR on the big screen: the room would scan it.
+    // A linked screen with no code yet shows the PLAYER link, never a host setup QR and never a
+    // blank white square: .qrbig paints a lit white panel, so drawing nothing left a glowing slab
+    // on the pub wall for the whole lobby.
+    var url = shownJoinURL();
+    drawQR($("qrBig"), url, 720);
+    drawQR($("qrMini"), url, 240);
+    /* The code shown is now the venue's permanent one, which is valid whether or not a host has
+       opened a session, so the address beside it has to be there too. It used to say "Waiting for
+       the host", leaving the room looking at a code with nowhere to type it. */
+    $("lobbyJoinUrl").textContent = (joinCode || VENUE_SLUG)
+      ? "venueplay.com.au/play"
+      : "Host, scan to set up this screen";
+  }
+  function renderLobby(){
+    $("lobbyCode").textContent = shownCode();
+    /* The host line is SETUP INSTRUCTION, and it was being shown to the pub. A screen that is
+       linked to a venue never needs pairing, and once a join code exists the host is plainly
+       already connected, so from either point on the only thing this screen should offer the
+       room is the player join link. */
+    /* Once a host is talking to us they do not need telling how to pair, and until
+       the session opens this line was putting a SECOND six-character code on the
+       wall next to the player one. A punter who reads the pairing code out lands on
+       a channel with no game on it. Same fix as the musical screen; raffle and
+       members already had it. */
+    var setupDone = !!VENUE_SLUG || !!joinCode || !!state.hostSeen;
+    $("hostLine").classList.toggle("hidden", setupDone);
+    if(!setupDone) $("hostLineCode").textContent=CODE;
+    $("tvJoinCode").textContent = shownCode();
+    paintLobbyName();
+    if(!state.hostSeen) $("lobbySub").innerHTML="Waiting for the host to connect&hellip;";
+    else if(!joinCode) $("lobbySub").innerHTML="Host is connected, setting up the quiz&hellip;";
+    else $("lobbySub").innerHTML="Grab your phone and join, the quiz is about to start&hellip;";
+    drawLobbyQR();
+  }
+
+  // The night's name from the host ("90s Music Night"), never a fixed "Trivia Night" once known.
+  function paintLobbyName(){
+    var n=$("lobbyName"); if(!n) return;
+    var t=String(state.title||"").trim().slice(0,60) || "Trivia Night";
+    n.textContent=t;
+    n.classList.toggle("long", t.length>16);
+  }
+  // [10,10,8] -> ["=1","=1","3"]. Rows arrive sorted by points from the host.
+  function sharedRanks(rows){
+    var out=[], rank=1;
+    for(var i=0;i<rows.length;i++){
+      var pts=Number(rows[i].points)||0, prev=i>0?(Number(rows[i-1].points)||0):null, next=i+1<rows.length?(Number(rows[i+1].points)||0):null;
+      if(i>0 && pts!==prev) rank=i+1;
+      var tied=(i>0 && pts===prev) || (next!==null && next===pts);
+      out.push((tied?"=":"")+rank);
+    }
+    return out;
+  }
+
+  // ---- ring / countdown ----
+  function setRing(frac){ var r=$("tvRing"); r.setAttribute("stroke-dasharray", RING_C); r.setAttribute("stroke-dashoffset", RING_C*(1-frac)); }
+  function stopRing(){ if(ringTimer){ clearInterval(ringTimer); ringTimer=null; } }
+  function tickRing(){
+    if(!curQ) return;
+    var remMs=curQ.endsAt-Date.now();
+    var rem=Math.max(0, Math.ceil(remMs/1000));
+    var frac=Math.max(0, Math.min(1, remMs/(curQ.dur*1000)));
+    setRing(frac);
+    $("tvCdNum").textContent=rem;
+    $("tvRing").style.stroke = rem<=5 ? "var(--roll)" : "var(--pink)";
+    if(remMs<=0){ stopRing(); }
+  }
+
+  function renderQuestion(m){
+    stopRing(); if(boardRollTimer){ clearTimeout(boardRollTimer); boardRollTimer=null; }
+    var dur=m.secs || Math.max(1, Math.round((m.endsAt-Date.now())/1000));
+    curQ={ qseq:m.qseq, options:m.options||[], endsAt:m.endsAt, dur:dur, correct:null };
+    answeredPids={};
+    show("tvQ");
+    $("tvQCount").textContent = (m.qi && m.qtotal) ? ("Question "+m.qi+" of "+m.qtotal) : "Question";
+    /* DOUBLE POINTS FINAL ROUND (28 Sep 2026): the console flags the question; the Worker scores it. */
+    if(m.double===true){ var dp=document.createElement("span"); dp.className="dblpts"; dp.textContent="Double points"; $("tvQCount").appendChild(dp); }
+    var qi=$("tvQImg"), lay=$("tvQ"), hasPic=!!(m.imageUrl && /^https?:\/\//i.test(String(m.imageUrl)));
+    if(hasPic){ qi.src=m.imageUrl; qi.classList.remove("hidden"); } else { qi.classList.add("hidden"); qi.removeAttribute("src"); }
+    lay.classList.toggle("pic", hasPic);   // picture round layout; a picture that fails to load drops back to this text layout (see onerror)
+    /* Size to the question, so it fits the wall instead of running off it. The
+       thresholds are character counts because Anton is fixed-width enough at
+       this scale for that to hold, and they are checked against the longest
+       question in the bank. */
+    var _qt = $("tvQText"), _q = m.text||"";
+    _qt.textContent = _q;
+    _qt.className = "qtext" + (_q.length > 150 ? " q-epic"
+                             : _q.length > 95  ? " q-long"
+                             : _q.length > 55  ? " q-med" : "");
+    var wrap=$("tvAnswers"); wrap.className="answers"; wrap.innerHTML="";
+    for(var i=0;i<curQ.options.length;i++){
+      var box=el("div","ans c"+i);
+      box.appendChild(el("span","al",LETTERS[i]));
+      box.appendChild(el("span","at",esc(curQ.options[i])));
+      wrap.appendChild(box);
+    }
+    applyColour(wrap);
+    $("tvAnsCount").textContent="0";
+    setRing(1); $("tvRing").style.stroke="var(--pink)"; $("tvCdNum").textContent=dur;
+    ringTimer=setInterval(tickRing, 300); tickRing();
+  }
+
+  function renderReveal(m){
+    stopRing();
+    if(!curQ) curQ={ options:m.options||[] };
+    curQ.correct=m.correctIndex;
+    show("tvReveal");
+    var opts=curQ.options||m.options||[];
+    var ci=m.correctIndex;
+    $("tvRevHead").textContent="Correct answer: "+LETTERS[ci]+" · "+(opts[ci]||"");
+    var split=m.split||[0,0,0,0], total=0;
+    for(var t=0;t<split.length;t++) total+=split[t]; if(total===0) total=1;
+    var wrap=$("tvRevAnswers"); wrap.className="answers rev4"; wrap.innerHTML="";
+    for(var i=0;i<opts.length;i++){
+      var box=el("div","ans c"+i+(i===ci?" correct":" dim"));
+      box.appendChild(el("span","al",LETTERS[i]));
+      box.appendChild(el("span","at",esc(opts[i])));
+      var sp=el("div","split");
+      var bar=el("div","sbar"); var fill=el("div","sfill"); fill.style.width=Math.round((split[i]||0)/total*100)+"%"; bar.appendChild(fill);
+      sp.appendChild(bar); var _sc=Number(split[i])||0; sp.appendChild(el("div","sc",_sc+(_sc===1?" player":" players")));   // numeric: a forged string cannot reach innerHTML
+      box.appendChild(sp);
+      wrap.appendChild(box);
+    }
+    applyColour(wrap);
+    renderRows($("tvRevBoard"), m.leaderboard||[], 5);
+    // roll to full leaderboard shortly after (host will also drive this authoritatively)
+    if(boardRollTimer) clearTimeout(boardRollTimer);
+    boardRollTimer=setTimeout(function(){
+      if(state.phase==="reveal"){ show("tvBoard"); renderBoardPaged("Leaderboard", m.leaderboard||[]); }
+    }, 5200);
+  }
+
+  function renderRows(container, rows, limit){
+    container.innerHTML="";
+    var n=Math.min(limit, rows.length), ranks=sharedRanks(rows);
+    for(var i=0;i<n;i++){
+      var row=el("div","brow"+(i===0?" top1":""));
+      row.appendChild(el("span","r",(ranks[i].charAt(0)==="="?"":"#")+ranks[i]));
+      row.appendChild(el("span","n",esc(rows[i].name)));
+      row.appendChild(el("span","s",Number(rows[i].points)||0));   // numeric: arrives over a public channel
+      container.appendChild(row);
+    }
+    if(!n){ container.appendChild(el("div","jsub","No scores yet")); }
+  }
+
+  /* FULL STANDINGS, A PAGE AT A TIME. Six rows fit a 1080p wall, so with 15 teams the ones in
+     7th to 15th never saw their name. Pages turn every few seconds while the board is up and stop
+     the moment another layer shows (show() calls stopBoardPaging). Page one is always painted
+     synchronously, so a screen that never turns a page still shows the leaders. */
+  var BOARD_PAGE_MS=4500, boardPageTimer=null;
+  function stopBoardPaging(){ if(boardPageTimer){ clearInterval(boardPageTimer); boardPageTimer=null; } var ph=$("tvBoardPage"); if(ph) ph.classList.add("hidden"); }
+  function renderBoardPaged(title, rows){
+    stopBoardPaging();
+    rows=Array.isArray(rows)?rows:[];
+    $("tvBoardTitle").textContent=title||"Leaderboard";
+    var pages=Math.max(1, Math.ceil(rows.length/TV_BOARD_ROWS)), page=0, ranks=sharedRanks(rows);
+    function paint(){
+      var box=$("tvBoardRows"); box.innerHTML="";
+      var start=page*TV_BOARD_ROWS, end=Math.min(rows.length, start+TV_BOARD_ROWS);
+      for(var i=start;i<end;i++){
+        var row=el("div","brow"+(i===0?" top1":""));
+        row.appendChild(el("span","r",(ranks[i].charAt(0)==="="?"":"#")+ranks[i]));
+        row.appendChild(el("span","n",esc(rows[i].name)));
+        row.appendChild(el("span","s",Number(rows[i].points)||0));   // numeric: arrives over a public channel
+        box.appendChild(row);
+      }
+      if(!rows.length){ box.appendChild(el("div","jsub","No scores yet")); }
+      var ph=$("tvBoardPage");
+      if(ph){ if(pages>1){ ph.textContent="Teams "+(start+1)+" to "+end+" of "+rows.length; ph.classList.remove("hidden"); } else ph.classList.add("hidden"); }
+    }
+    paint();
+    if(pages>1){ boardPageTimer=setInterval(function(){ page=(page+1)%pages; paint(); }, BOARD_PAGE_MS); }
+  }
+
+  /* Ties share the step. Two teams on 850 used to be split by database order, one on the podium
+     and one not shown at all. Anyone tied for a medal now stands on it (up to four columns so
+     the wall never overflows); the host reads the rest from the full board that follows. */
+  function podiumEntries(top, rows){
+    var src=(Array.isArray(rows) && rows.length>=(top||[]).length) ? rows : (top||[]);
+    var out=[], rank=1;
+    for(var i=0;i<src.length && out.length<4;i++){
+      if(i>0 && (Number(src[i].points)||0)!==(Number(src[i-1].points)||0)) rank=i+1;
+      if(rank>3) break;
+      out.push({ p:src[i], rank:rank });
+    }
+    return out;
+  }
+  function renderPodium(top, rows){
+    show("tvPodium");
+    var cols=$("tvPodiumCols"); cols.innerHTML="";
+    var ents=podiumEntries(top, rows);
+    var CLS={1:"first",2:"second",3:"third"}, MEDAL={1:"1",2:"2",3:"3"};
+    // Top to bottom, first at the top: it is a leaderboard now, not three columns.
+    var order=ents.slice().sort(function(a,b){ return a.rank-b.rank; });
+    cols.classList.toggle("four", order.length>3);
+    var tiedRank={}; ents.forEach(function(e){ tiedRank[e.rank]=(tiedRank[e.rank]||0)+1; });
+    order.forEach(function(o){ if(!o.p) return;
+      var col=el("div","pcol "+CLS[o.rank]);
+      col.appendChild(el("div","medal",MEDAL[o.rank]));
+      col.appendChild(el("div","pn",esc(o.p.name)+(tiedRank[o.rank]>1?' <span style="color:var(--muted);font-size:.7em">(tied)</span>':'')));
+      col.appendChild(el("div","ps",Number(o.p.points)||0));   // numeric: arrives over a public channel
+      col.appendChild(el("div","bar"));
+      cols.appendChild(col);
+    });
+    celebrate(9000);
+  }
+
+  // ---- confetti ----
+  function spawnBurst(count){
+    /* One copy, in /app/vp-celebrate.js. This existed five times in two
+       versions, and the entire difference was data: this screen's colours
+       and how long a piece of confetti lives. Both are passed, so nothing
+       about how this screen looks has changed. cryptoInt goes with them
+       because these pages draw from a CSPRNG, and a shared helper has no
+       business quietly downgrading that. */
+    try{ if(window.VPCelebrate) VPCelebrate.burst($("tv"), count, {
+      colours: ["#FF1F8E","#FFC24B","#35D07F","#FFFFFF","#4D8DFF","#FF4D4D"], lifeMs: 3900, rand: cryptoInt }); }catch(e){}
+  }
+  var celebrateTimer=null;
+  // ---- win fanfare through the venue PA (synthesised, no audio file; Fully Kiosk must allow autoplay to sound) ----
+  var _ac=null;
+  function unlockAudio(){ try{ var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; if(!_ac) _ac=new AC(); if(_ac.state==="suspended") _ac.resume(); }catch(e){} }
+  document.addEventListener("pointerdown", unlockAudio, { once:true });
+  function playFanfare(){
+    /* One copy, in /app/vp-celebrate.js. This was written out eight times
+       across the phones and the screens and had already drifted into three
+       versions. The page keeps its own name and its own audio context, so
+       every call site and the kiosk unlock are untouched. If the shared file
+       does not load we stay silent rather than throw: a missing celebration
+       is cosmetic, an exception during a win is not. */
+    try{ if(window.VPCelebrate) VPCelebrate.fanfare({ profile:"pa", ctx:_ac }); }catch(e){}
+  }
+  function celebrate(ms){
+    playFanfare();
+    if(celebrateTimer) clearInterval(celebrateTimer);
+    spawnBurst(100);
+    var elapsed=0; celebrateTimer=setInterval(function(){ elapsed+=1300; spawnBurst(46); if(elapsed>=ms){ clearInterval(celebrateTimer); celebrateTimer=null; } },1300);
+  }
+
+  // ---- realtime ----
+  // Pairing channel (screen <-> host), same convention as the bingo TV: vp-<screen code>.
+  // The host dual-broadcasts every game message here, so this one channel is enough.
+  /* The Realtime library comes from a CDN. On slow venue wifi it is not here yet when this runs,
+     and every line below depends on it, so the page used to die silently right here. On the
+     members screen that is a literally black pub TV, because the ad loop starts further down and
+     .ad is opacity:0 until it does. The parent /tv watchdog cannot see it either: an embedded
+     screen always counts as alive, and the iframe load event fires normally even when the inner
+     script throws. Nobody is going to find the Fire Stick remote mid-service, so say something
+     and get the kiosk back on its own. */
+  if(typeof supabase==="undefined" || !supabase.createClient){
+    var _rc=document.createElement("div");
+    _rc.setAttribute("style","position:fixed;inset:0;z-index:99999;display:flex;align-items:center;"+
+      "justify-content:center;background:#0A0A0B;color:#9A9AA4;text-align:center;padding:24px;"+
+      "font:600 24px/1.4 system-ui,-apple-system,sans-serif");
+    _rc.textContent="Reconnecting to VenuePlay\u2026";
+    (document.body||document.documentElement).appendChild(_rc);
+    /* Cap the retries. This reloaded every 4 seconds indefinitely, and the parent /tv marks the
+       embed as loaded on each one, so its own 25 second deadline never fired: a blocked CDN meant
+       a grey card flashing all night with no fallback. After three attempts go to /tv, which has
+       the venue's ad loop and the real watchdog. */
+    var _tries=0; try{ _tries=parseInt(sessionStorage.getItem("vpCdnTries")||"0",10)||0; }catch(e){}
+    if(_tries>=3){
+      try{ sessionStorage.removeItem("vpCdnTries"); }catch(e){}
+      if(typeof VENUE_SLUG!=="undefined" && VENUE_SLUG){ location.replace("/tv?venue="+encodeURIComponent(VENUE_SLUG)); }
+    } else {
+      try{ sessionStorage.setItem("vpCdnTries", String(_tries+1)); }catch(e){}
+      setTimeout(function(){ location.reload(); }, 4000);
+    }
+    throw new Error("VenuePlay: Realtime library not loaded yet");
+  }
+  try{ sessionStorage.removeItem("vpCdnTries"); }catch(e){}   // loaded: reset the retry count
+  var client=supabase.createClient(SUPA_URL, SUPA_ANON, (window.VPChannel && VPChannel.clientOptions) ? VPChannel.clientOptions() : undefined);   // worker heartbeat: a covered window keeps its socket (vp-channel.js, rule 6)
+  // Unified TV: hop to whatever OTHER game a host puts on air (and back to bingo) on the same
+  // /tv link. Listen only (no tv_here ping) so two games that are both live can't ping-pong.
+  /* Follow the night. The shared router is in /app/vp-screen-router.js: it hops
+     on any traffic that means a game is genuinely on air, not only on t:"mode",
+     which a host sends once and only once. Four copies of this had drifted apart,
+     which is how a raffle came to draw its numbers with the finished quiz still
+     on the wall. */
+  var _router = { seen: function(){} };
+  if(window.VPScreenRouter && VENUE_SLUG){
+    _router = VPScreenRouter.start({
+      client: client, self: "trivia", slug: VENUE_SLUG, venueCode: venueCode, gate: vpGate,
+      busy: function(){ return state.phase && state.phase !== "lobby"; }
+    });
+  }
+  /* A CHANNEL THAT COMES BACK BY ITSELF. client.channel() on its own said Reconnecting after a
+     CLOSED and never tried again, so one blip left this wall deaf for the night (audit, 27 Sep
+     2026). /app/vp-channel.js rebuilds it with a backoff and is shaped like a channel, so
+     nothing below changed. Without the script it is the plain channel, as before. */
+  var ch=window.VPChannel ? VPChannel.keep(client, "vp-"+CODE, { config:{ broadcast:{ self:false } } })
+                          : client.channel("vp-"+CODE, { config:{ broadcast:{ self:false } } });
+  var tvSubscribed=false;
+  /* The try/catch is not decoration: ch.send throws once the socket is gone, and
+     this is called from repaint paths. Unguarded it takes the whole render with it
+     and the wall goes black. tv.html had it; these three did not. */
+  function tvSend(obj){ if(tvSubscribed && ch){ try{ ch.send({ type:"broadcast", event:"msg", payload:obj }); }catch(e){} } }
+  ch.on("broadcast", { event:"msg" }, function(e){ vpGate(e.payload, function(_m){
+    // The venue saved a logo or a slide on the Account page. Re-read it now rather than
+    // leaving the screen showing whatever it happened to load with.
+    if(_m && _m.t==="screen_refresh"){ try{ reloadVenueLogo(); }catch(_){} return; }
+    onMsg(_m);
+  }); });
+  /* DECLARED OUT HERE, NOT INSIDE THE SUBSCRIBE CALLBACK.
+
+     On members/screen.html it sat inside `if(status==="SUBSCRIBED"){`, a real block, and
+     the only other caller is the channel-error branch OUTSIDE that block. So the one
+     message this function exists to deliver, Reconnecting, could never be delivered: a
+     members draw screen that lost its channel threw "tvStatus is not a function" and kept
+     its green dot up. tv.html had the same fault by the same route the same day and put a
+     live venue's television on the air with no status at all.
+
+     A function declaration inside a BLOCK is bound when the block RUNS. Out here it is
+     bound before anything can call it, in all five screens, which is what the comment
+     below has been claiming all along. tools/release-check.py now watches for the shape. */
+  /* SILENT WHILE CONNECTED, LOUD WHILE NOT. This screen used to hide the pill outright
+     the moment it had a venue slug, with the note "no connected pill on a live venue
+     screen". That half was right: a grey CONNECTED badge on a pub wall is for us, not
+     for customers. But it also meant the one message that matters, Reconnecting, could
+     never reach a live venue screen either. tv.html had the same fault by a different
+     route, an inline display:none that beat its own stylesheet.
+     Identical in all five screens on purpose; the gate checks they stay identical. */
+  function tvStatus(connected){
+    var box=document.querySelector(".tv-status"), dot=$("statusDot"), txt=$("statusText");
+    if(dot) dot.classList.toggle("on", !!connected);
+    if(txt) txt.textContent = connected ? "Connected" : "Reconnecting";
+    if(box) box.hidden = !!connected;
+  }
+
+  /* A DEMO OPENS NO CHANNEL. Not for tidiness: this screen is embedded in a public sales
+     page, and a subscribed screen would sit on a venue channel where a real game could appear
+     on a marketing page, and would answer tv_here, which is what HQ reads to decide a screen
+     is alive. A demo must never make a dead TV look healthy. */
+  if(!VP_DEMO) ch.subscribe(function(status){
+    if(status==="SUBSCRIBED"){ tvSubscribed=true; tvSend({ t:"tv_here", hello:true }); tvStatus(true); }
+    else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ tvSubscribed=false; tvStatus(false); }
+  });
+
+  var HOST_TYPES={host_here:1,session:1,mode:1,started:1,state:1,question:1,lock:1,reveal:1,leaderboard:1,podium:1,idle:1,players:1,closed:1,handin:1,roundanswers:1,ta_board:1,ta_reveal:1,ta_showall:1};
+  // Unified TV: after a game ends (idle) and stays ended, drop back to /tv (the venue ads). Any
+  // real game activity cancels it, so a quick next round or restart never bounces.
+  var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, players:1 };
+  function cancelBackToAds(){ if(_backToAdsT){ clearTimeout(_backToAdsT); _backToAdsT=null; } }
+
+  /* A LOBBY LEFT OPEN, AND A LOBBY LEFT BEHIND, told apart by asking the Worker.
+     Same as the musical screen: a host who opens the lobby an hour before the quiz
+     and locks the iPad stops sending anything at all, so silence cannot mean they
+     have gone. The session can say. See that file for the full reasoning. */
+
+  /* AN HOUR IS THE LONGEST A LOBBY SITS ON A WALL.
+
+     Dean, asked how long a host might leave one open before the quiz: "lets just
+     make it 60 mins max. I dont think people will want longer than that."
+
+     So the session check above answers "is this night still real", and this
+     answers "has this been on the wall long enough". Both have to pass. A lobby
+     that has been up for an hour goes back to the venue's advertising even if the
+     session is still open, because at that point the room is looking at a join
+     screen for something that is not about to happen.
+
+     Nothing here touches the session. Ending a night is the host's to do, or the
+     sweep's, and both of those are billing decisions that a television must not
+     make on its own. */
+  var LOBBY_MAX_MS=60*60*1000, _lobbySince=null;
+  var LOBBY_SILENCE_MS=5*60*1000, _lastHostAt=Date.now(), _asking=false;
+  function noteHost(){ _lastHostAt=Date.now(); }
+  setInterval(function(){
+    if(!VENUE_SLUG) return;
+    if(state.phase!=="lobby"){ _lobbySince=null; return; }   // a game being played is its own proof of life
+    if(_lobbySince===null) _lobbySince=Date.now();
+    if(Date.now()-_lobbySince >= LOBBY_MAX_MS){
+      window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG);
+      return;
+    }
+    if(Date.now()-_lastHostAt < LOBBY_SILENCE_MS) return;
+    if(_asking) return;
+    _asking=true;
+    fetch(VP_GAME_API+"/play/live?code="+encodeURIComponent(venueCode(VENUE_SLUG)))
+      .then(function(r){ return r.ok?r.json():null; })
+      .then(function(d){
+        _asking=false;
+        if(!d) return;
+        if(d.live){ noteHost(); return; }
+        window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG);
+      })
+      .catch(function(){ _asking=false; });
+  }, 30000);
+  function scheduleBackToAds(){ if(!VENUE_SLUG) return; cancelBackToAds(); _backToAdsT=setTimeout(function(){ window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); }, 18000); }
+  function onMsg(m){
+    _router.seen(m);   // only traffic that means a game is ON AIR counts as ours
+    if(!m||!m.t) return;
+    if(!_adsKeep[m.t]) cancelBackToAds();
+    if(m.t==="tv_here") return;                       // ignore our own presence pings
+    if(HOST_TYPES[m.t]){ state.hostSeen=true; noteHost(); tvSend({ t:"tv_here" }); }
+    if(m.t==="host_here"){ if(state.phase==="lobby") renderLobby(); return; }
+    /* PUNTERS RECKON rounds. The board is its own layer, painted by the shared pr-board.js; the
+       leaderboard after a board is the ordinary "leaderboard" message, handled below as for trivia. */
+    if(m.t==="ta_board" || m.t==="ta_reveal" || m.t==="ta_showall"){
+      if(!_prBoard && window.PRBoard){ _prBoard = window.PRBoard.mount($("tvPR")); }
+      if(_prBoard){ if(m.t==="ta_board"){ state.phase="pr"; show("tvPR"); } _prBoard.onMsg(m); }
+      return;
+    }
+    if(m.t==="session"){ if(m.join_code && CODE_RE.test(m.join_code)){ joinCode=m.join_code; } if(state.phase==="lobby") renderLobby(); else drawLobbyQR(); return; }
+    if(m.t==="mode"){ if(typeof m.title==="string") state.title=m.title; if(state.phase==="lobby") paintLobbyName(); return; }
+    if(m.t==="started"){ if(typeof m.title==="string") state.title=m.title; state.phase="lobby"; stopRing(); show("tvLobby"); renderLobby(); return; }
+    // The host tapped "Back to ads". Go now rather than sit through the 18 second
+    // wind-down: they have finished and the room should be looking at the venue again.
+    if(m.t==="to_ads"){ if(VENUE_SLUG) window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); return; }
+    if(m.t==="idle"){ state.phase="lobby"; stopRing(); show("tvLobby"); renderLobby(); scheduleBackToAds(); return; }
+    if(m.t==="players"){ return; }   // the wall does not show the player count
+    if(m.t==="state"){
+      state.hostSeen=true;
+      if(typeof m.colour==="boolean") state.colour=m.colour;
+      if(m.phase==="lobby"){ state.phase="lobby"; stopRing(); show("tvLobby"); renderLobby(); }
+      else if(state.phase==="lobby"){ renderLobby(); }
+    }
+    else if(m.t==="question"){
+      state.phase="question";
+      if(typeof m.colour==="boolean") state.colour=m.colour;
+      renderQuestion(m);
+    }
+    else if(m.t==="answer"){
+      if(curQ && m.qseq===curQ.qseq && m.pid){ answeredPids[m.pid]=true; $("tvAnsCount").textContent=countKeys(answeredPids); }
+    }
+    else if(m.t==="answered"){   // the host pushes the tally here (players answer on the game channel we're not on)
+      if(typeof m.count==="number") $("tvAnsCount").textContent=m.count;
+    }
+    else if(m.t==="time"){
+      // The host added time. Stretch the ring to the new deadline rather than leaving it at zero.
+      if(!curQ || m.qseq!==curQ.qseq) return;
+      var ends=Number(m.endsAt)||0; if(!ends || ends<=curQ.endsAt) return;
+      curQ.dur=Math.max(1, Math.round((ends-Date.now())/1000));
+      curQ.endsAt=ends;
+      if(!ringTimer) ringTimer=setInterval(tickRing, 200);
+      tickRing();
+    }
+    else if(m.t==="lock"){
+      stopRing(); setRing(0); $("tvCdNum").textContent="0";
+    }
+    else if(m.t==="reveal"){
+      state.phase="reveal";
+      renderReveal(m);
+    }
+    /* A PAPER NIGHT holds every answer to the end of its round, so a team on paper cannot change a
+       box after seeing it here. The console sends these three instead of "reveal". */
+    else if(m.t==="closed" || m.t==="handin" || m.t==="roundanswers"){
+      state.phase="paper";
+      stopRing();
+      renderPaper(m);
+    }
+    else if(m.t==="leaderboard"){
+      /* finish() broadcasts podium and then leaderboard back to back, synchronously, so the medals
+         were painted and replaced by the score list in the same frame: the podium was never
+         actually seen. Hold the leaderboard back while the podium is up and show it after. */
+      if(state.phase==="podium"){
+        var _rows=m.rows||[], _title=m.title||"Final scores";
+        setTimeout(function(){
+          if(state.phase!=="podium") return;
+          state.phase="leaderboard";
+          if(boardRollTimer){ clearTimeout(boardRollTimer); boardRollTimer=null; }
+          show("tvBoard");
+          renderBoardPaged(_title, _rows);
+        }, 9000);
+        return;
+      }
+      state.phase="leaderboard";
+      if(boardRollTimer){ clearTimeout(boardRollTimer); boardRollTimer=null; }
+      show("tvBoard");
+      renderBoardPaged(m.title||"Leaderboard", m.rows||[]);
+    }
+    else if(m.t==="podium"){
+      state.phase="podium";
+      renderPodium(m.top||[], m.rows);
+    }
+  }
+  function countKeys(o){ var n=0,k; for(k in o){ if(o.hasOwnProperty(k)) n++; } return n; }
+
+  // ---- init ----
+  function drawQR(el, url, size){ VPQR.draw(el, url, size); }
+  show("tvLobby");
+  renderLobby();   // draws the pairing QR (flips to the player QR once a session opens)
+
+  /* ?demo=1 : THE REAL TRIVIA WALL, PLAYING A SCRIPTED ROUND, CONNECTED TO NOTHING.
+
+     see-a-night.html held a hand-built CSS replica of this screen under .vps-trivia-* class
+     names that appear nowhere in this file, so this page could be redesigned completely and the
+     sales page would keep showing last month's product for ever. The bingo wall stopped being a
+     drawing on 12 Sep; this is the same job for trivia.
+
+     It works for the same reason: every pixel here is already driven by onMsg(), so a demo is a
+     SCRIPT OF MESSAGES and not one line of duplicated rendering.
+
+     Hermetic, and each of these is a specific thing it must not do:
+       - VENUE_SLUG is "" so the divert guard, VPSign and VPScreenRouter never start
+       - no channel is subscribed, so no venue's game can surface on a sales page and no
+         tv_here is ever sent, which is what HQ reads to decide a screen is alive
+       - the pairing QR is hidden. It encodes host.html?tv=CODE, and a prospect who scanned it
+         would be handed the console pairing screen for a room that does not exist */
+  if(VP_DEMO){
+    document.documentElement.setAttribute("data-vp-demo","1");
+    (function demoQuiz(){
+      function m(o){ try{ onMsg(o); }catch(e){ console.warn("[demo]", e && e.message); } }
+      var Q = [
+        { text:"Which Australian city hosted the 2000 Summer Olympics?",
+          options:["Melbourne","Sydney","Brisbane","Perth"], correct:1, split:[4,31,6,2] },
+        { text:"What is the only food that never spoils?",
+          options:["Rice","Honey","Salt","Tinned fish"], correct:1, split:[7,26,9,1] },
+        { text:"Which band released the album Back in Black?",
+          options:["AC/DC","Cold Chisel","INXS","Midnight Oil"], correct:0, split:[33,5,4,1] }
+      ];
+      var BOARD = [
+        { name:"The Quiztopher Nolans", points:840 },
+        { name:"Table 6",               points:790 },
+        { name:"Nan's Army",            points:735 },
+        { name:"Last Place Again",      points:690 },
+        { name:"Two Beers or Not",      points:615 },
+        { name:"The Ring Ins",          points:540 }
+      ];
+      var SECS = 15, steps = [], t = 0;
+      function at(ms, fn){ steps.push([ms, fn]); }
+
+      /* AT ZERO, not after a pause. Until the first message lands this page shows its ordinary
+         pairing lobby, and on a sales page that is the first frame a visitor sees, which is the
+         one they photograph. tv.html learned this the same way. */
+      at(0, function(){
+        m({ t:"session", session_id:"demo", join_code:"DEMO24", title:"Trivia Night" });
+        m({ t:"mode", mode:"trivia", title:"Trivia Night" });
+        m({ t:"started", title:"Trivia Night", colour:true });
+      });
+      t = 900;
+      Q.forEach(function(q, i){
+        at(t, function(){
+          m({ t:"question", qseq:i+1, qi:i+1, qtotal:Q.length, text:q.text,
+              options:q.options, secs:SECS, endsAt:Date.now()+SECS*1000 });
+        });
+        // The count climbing is what makes a still screen look like a room full of people.
+        [1,2,3].forEach(function(n, k){
+          at(t + 1200 + k*1100, function(){ m({ t:"answered", count: 14 + n*9 }); });
+        });
+        at(t + 5200, function(){ m({ t:"lock", title:"Pens down" }); });
+        at(t + 6200, function(){
+          m({ t:"reveal", correctIndex:q.correct, options:q.options, split:q.split });
+        });
+        at(t + 9400, function(){
+          m({ t:"leaderboard", title:"After question "+(i+1), rows:BOARD.slice(0, 5) });
+        });
+        t += 13200;
+      });
+      at(t,        function(){ m({ t:"podium", top:BOARD.slice(0,3), rows:BOARD }); });
+      at(t + 6500, function(){ m({ t:"leaderboard", title:"Final scores", rows:BOARD }); });
+      at(t + 12000, function(){ m({ t:"idle" }); });
+
+      /* NO JOIN CORNER ON A SALES PAGE, and the id is tvJoinCorner, the same one tv.html
+         hides, which I only found by opening the page and reading the DOM rather than guessing
+         at names. The first attempt aimed at four ids that do not exist here and the QR stayed
+         up, which is the one thing this demo promises it will never show: a scannable code
+         leading to a room that does not exist.
+
+         Watched, not hidden once, because renderLobby and the layer switches redraw it. */
+      (function hideJoin(){
+        var j=document.getElementById("tvJoinCorner");
+        if(j) j.classList.add("hidden");
+        try{
+          var o=new MutationObserver(function(){
+            if(j && !j.classList.contains("hidden")) j.classList.add("hidden");
+          });
+          if(j) o.observe(j, { attributes:true, attributeFilter:["class"] });
+        }catch(e){}
+      })();
+
+      /* AND NO CONNECTION CHIP. It reports the realtime socket, which a demo does not open, so
+         it sat on "Connecting" for ever and read as a product that cannot reach its own server.
+         It is an operational indicator for a venue running a night, not part of the show. */
+      (function hideStatus(){
+        var d=document.getElementById("statusDot"), t=document.getElementById("statusText");
+        if(d && d.parentNode) d.parentNode.style.visibility="hidden";
+        else { if(d) d.style.visibility="hidden"; if(t) t.style.visibility="hidden"; }
+      })();
+
+      var timers=[];
+      function run(){
+        timers.forEach(clearTimeout); timers=[];
+        steps.forEach(function(s){ timers.push(setTimeout(s[1], s[0])); });
+        // A sales page is left sitting open on a desk, so it loops for as long as it is up.
+        timers.push(setTimeout(run, t + 17000));
+      }
+      run();
+    })();
+  }
+
+  /* ---- the venue's own logo, top left ----------------------------------------------------
+     The main TV has carried this since the logo upload shipped; these four game screens never
+     did, so the moment a host put trivia or musical bingo on air the venue's branding vanished
+     from its own screen. Same source and same corner as tv.html, injected so no markup anchor
+     is needed. Best effort: any failure just leaves the screen as it was. */
+
+  /* Re-runnable on purpose. This used to fetch once at load and never again, so a venue that
+     uploaded its logo while a game was on air saw it appear on the advertising loop (tv.html
+     re-fetches on screen_refresh) and NOT on the game screen, which had already loaded without
+     one. That reads as "the logo doesn't work in games". */
+  var reloadVenueLogo=function(){};
+  /* BEFORE the logo loader, not inside it. venueLogo() returns immediately when there is
+     no slug, and a demo has no slug on purpose, so anything inside it is dead code on the
+     one page the sales site actually shows. */
+  if(VP_DEMO){
+    /* The demo venue is Tugun Bowls Club (Dean, 22 Sep 2026) and it has a logo, so the wall
+       shows the logo the way tv.html does, in the same corner a real venue's lands in. The
+       name tag stays hidden: the logo wins, the same rule as a real venue. ?logo=/path swaps
+       in another file from this site; never a URL, so no page can point it at someone else's
+       server. */
+    var demoLogo="/logos/venue-tugun-bowls.png";
+    try{ var lg=/[?&]logo=([^&]+)/.exec(window.location.search||""); if(lg){ var u=decodeURIComponent(lg[1]); if(/^\/[^\/]/.test(u)) demoLogo=u; } }catch(e){}
+    var dnt0=document.getElementById("venueNameTag");
+    if(dnt0){ dnt0.textContent="Tugun Bowls Club"; dnt0.hidden=true; }
+    paintVenueLogo(demoLogo);
+  }
+  function paintVenueLogo(url){
+    var el=document.getElementById("venueLogo");
+    if(!url){ if(el) el.style.display="none"; return; }   // logo removed: take it off the wall
+    if(!el){ el=document.createElement("img"); el.id="venueLogo"; el.setAttribute("data-fit-avoid","");   /* vp-fit keeps the wall out from under it */
+      el.style.cssText="position:fixed;top:14px;left:14px;max-width:120px;max-height:56px;width:auto;height:auto;object-fit:contain;z-index:60;pointer-events:none;filter:drop-shadow(0 2px 8px rgba(0,0,0,.55))";
+      document.body.appendChild(el); }
+    el.src=url; el.style.display="block";
+    if(typeof VPVenueLogo==="object") VPVenueLogo.fit(el,"tv");   /* sized by its shape: /app/vp-venuelogo.js */
+  }
+  (function venueLogo(){
+    if(!VENUE_SLUG) return;
+    var paint=paintVenueLogo;
+    function load(){
+    try{
+      /* Through the Worker, not straight at Supabase. The public grant on vp_venue_screen
+         answered an unfiltered request with EVERY venue, which is the customer list. */
+      fetch(VP_SCREEN_API+"/screen?venue="+encodeURIComponent(VENUE_SLUG))
+        .then(function(r){ return r.ok?r.json():null; })
+        .then(function(d){ if(!d) return; paint(d.logo_url||"");
+          /* THE LOGO WINS. A venue with a logo shows the logo and not the
+             caption, the same rule tv.html applies, so the two never stack. */
+          /* NOT IN A DEMO. ?demo=1 resolves no venue on purpose, so d.name is empty and
+             this would blank the name the demo block just set. */
+          var nt=VP_DEMO ? null : document.getElementById("venueNameTag");
+          if(nt){ var nm=String(d.name||"").trim();
+            nt.textContent=nm; nt.hidden = !nm || !!(d.logo_url||""); } })   // one object now, not an array
+        .catch(function(){});
+    }catch(e){}
+    }
+    reloadVenueLogo=load;
+    load();
+  })();
+})();
+</script>
+</body>
+</html>

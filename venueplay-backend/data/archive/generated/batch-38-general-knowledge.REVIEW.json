@@ -1,0 +1,236 @@
+[
+  {
+    "index": 6,
+    "question": "How many vertebrae are in a typical adult human spine?",
+    "problem": "two-answers",
+    "detail": "Both 33 and the listed distractor 24 are standard textbook figures: 33 counts the fused sacral and coccygeal segments, 24 is the number of separate movable vertebrae an adult actually has. Anyone with nursing, physio or chiro training will argue for 24.",
+    "fix": {
+      "question": "How many separate movable vertebrae are there in the adult human spine, above the sacrum?",
+      "options": [
+        "24",
+        "18",
+        "41",
+        "33"
+      ],
+      "correctIndex": 0,
+      "category": "General Knowledge",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 39,
+    "question": "Which is the longest common English word that can be typed on the top row of a keyboard?",
+    "problem": "two-answers",
+    "detail": "The distractor 'repertoire' is also ten letters and is also typed entirely on the top row (R E P E R T O I R E are all in QWERTYUIOP). It ties with 'typewriter', so there is no single longest word among the options.",
+    "fix": {
+      "question": "Which word is the best known example of a long English word typed entirely on the top row of a keyboard?",
+      "options": [
+        "Typewriter",
+        "Keyboard",
+        "Portrait",
+        "Notebook"
+      ],
+      "correctIndex": 0,
+      "category": "General Knowledge",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 47,
+    "question": "How many eyelids does a human have in total?",
+    "problem": "wrong-answer",
+    "detail": "A human has four eyelids, not two: an upper and a lower lid on each eye. The question says 'in total', and 'Four' is sitting right there as a distractor, so the room will correct the host.",
+    "fix": {
+      "question": "How many eyelids does a human have in total, counting both eyes?",
+      "options": [
+        "Four",
+        "One",
+        "None",
+        "Two"
+      ],
+      "correctIndex": 0,
+      "category": "General Knowledge",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 166,
+    "question": "How many pins are set up at the end of a ten pin bowling lane?",
+    "problem": "self-answering",
+    "detail": "'Ten pin bowling' contains the answer.",
+    "fix": {
+      "question": "In ten pin bowling, how many pins are in the back row?",
+      "options": [
+        "Four",
+        "Three",
+        "Five",
+        "Two"
+      ],
+      "correctIndex": 0,
+      "category": "General Knowledge",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 255,
+    "question": "Which day of the week is named after the planet Saturn?",
+    "problem": "self-answering",
+    "detail": "Saturn is in the stem and Saturday is the answer. The same fault repeats at index 362 (Sun/Sunday) and index 459 (Moon/Monday).",
+    "fix": {
+      "question": "Which day of the week is named after the Norse god Thor?",
+      "options": [
+        "Thursday",
+        "Tuesday",
+        "Wednesday",
+        "Friday"
+      ],
+      "correctIndex": 0,
+      "category": "General Knowledge",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 305,
+    "question": "Which brand's logo is an apple with a bite taken out of it?",
+    "problem": "self-answering",
+    "detail": "The word 'apple' is in the question and 'Apple' is the answer.",
+    "fix": {
+      "question": "Which brand's logo is a bitten piece of fruit?",
+      "options": [
+        "Apple",
+        "Blackberry",
+        "Orange",
+        "Mango"
+      ],
+      "correctIndex": 0,
+      "category": "General Knowledge",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 340,
+    "question": "Which insect makes honey?",
+    "problem": "self-answering",
+    "detail": "'Honey' is in the stem and the answer is 'the honey bee'. There is also a quibble available: bumblebees do produce small amounts of honey, and the distractor has been hedged with 'only' rather than made properly wrong.",
+    "fix": {
+      "question": "Roughly how many flowers must bees visit to make one kilogram of honey?",
+      "options": [
+        "About two million",
+        "About two thousand",
+        "About twenty thousand",
+        "About two hundred"
+      ],
+      "correctIndex": 0,
+      "category": "General Knowledge",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 342,
+    "question": "What is the smallest bone in the human body?",
+    "problem": "ambiguous",
+    "detail": "The options are broken. Option two, 'The stapes is in the nose', is a statement rather than an answer to 'what is the smallest bone', so read aloud the question makes no sense and it also half-repeats the correct answer.",
+    "fix": {
+      "question": "What is the smallest bone in the human body?",
+      "options": [
+        "The stapes",
+        "The hyoid",
+        "The distal phalanx of the little toe",
+        "The pisiform in the wrist"
+      ],
+      "correctIndex": 0,
+      "category": "General Knowledge",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 362,
+    "question": "Which day of the week is named after the Sun?",
+    "problem": "self-answering",
+    "detail": "'The Sun' is in the stem and 'Sunday' is the answer. Also near-duplicates index 255 and index 459 in the same file.",
+    "fix": {
+      "question": "Which day of the week is named after the Norse god Odin, or Woden?",
+      "options": [
+        "Wednesday",
+        "Tuesday",
+        "Thursday",
+        "Friday"
+      ],
+      "correctIndex": 0,
+      "category": "General Knowledge",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 440,
+    "question": "Adrenaline is produced by which glands?",
+    "problem": "self-answering",
+    "detail": "'Adrenaline' and 'the adrenal glands' are the same word; the answer is contained in the question.",
+    "fix": {
+      "question": "Adrenaline is produced by glands that sit on top of which organs?",
+      "options": [
+        "The kidneys",
+        "The lungs",
+        "The liver",
+        "The heart"
+      ],
+      "correctIndex": 0,
+      "category": "General Knowledge",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 459,
+    "question": "Which day of the week is named after the Moon?",
+    "problem": "self-answering",
+    "detail": "'The Moon' is in the stem and 'Monday' is the answer. Same fault as index 255 and index 362.",
+    "fix": {
+      "question": "Which day of the week is named after the Roman god of war, by way of the Norse god Tiw?",
+      "options": [
+        "Tuesday",
+        "Monday",
+        "Thursday",
+        "Saturday"
+      ],
+      "correctIndex": 0,
+      "category": "General Knowledge",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 652,
+    "question": "The Latin word cardio refers to which organ?",
+    "problem": "precision",
+    "detail": "'Cardio' is Greek, from kardia, not Latin. The stem states the wrong language as fact, and this is exactly the kind of detail a regular will pick up on.",
+    "fix": {
+      "question": "The word root 'cardio', from the Greek, refers to which organ?",
+      "options": [
+        "The heart",
+        "The brain",
+        "The kidneys",
+        "The lungs"
+      ],
+      "correctIndex": 0,
+      "category": "General Knowledge",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 678,
+    "question": "In a game of dominoes, what is the highest tile in a double six set?",
+    "problem": "self-answering",
+    "detail": "'Double six set' is in the question and 'double six' is the answer.",
+    "fix": {
+      "question": "How many tiles are in a standard double six set of dominoes?",
+      "options": [
+        "28",
+        "32",
+        "24",
+        "36"
+      ],
+      "correctIndex": 0,
+      "category": "General Knowledge",
+      "difficulty": "medium"
+    }
+  }
+]

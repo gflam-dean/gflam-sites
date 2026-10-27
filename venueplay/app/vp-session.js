@@ -1,0 +1,1016 @@
+/* =====================================================================
+   VenuePlay shared session + venue-context helper  (vp-session.js)
+   ---------------------------------------------------------------------
+   ONE small vanilla-JS module every management page loads AFTER the
+   Supabase CDN script. It answers the three questions every page asks:
+     - who is signed in?  (Supabase auth user)
+     - what can they do?  (Gflam admin, or venue owner/manager/host)
+     - which venue are they working on, and what are its settings?
+
+   It does NOT touch gameplay. The live game (host console, TV, phones)
+   keeps running over the anon Supabase client + Realtime broadcast on
+   channel "vp-"+CODE, exactly as today. This helper is only for the
+   management layer (sign-in routing, Gflam HQ, onboarding, settings).
+
+   HOW TO LOAD (match existing pages, no build step):
+     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+     <script src="../vp-session.js"></script>   // path relative to the page
+   then use the global  VP  object below.
+
+   =====================================================================
+   THE CONTRACT  (other agents wire the 5 game formats against THIS)
+   ---------------------------------------------------------------------
+   Everything hangs off the global  window.VP.
+
+   VP.getClient()            -> the singleton Supabase client (sync).
+                                Creates it on first call. A page that
+                                already made its own client (index.html
+                                does, for broadcast) should call
+                                VP.useClient(existing) FIRST so there is
+                                one client and one auth session.
+
+   VP.useClient(client)      -> adopt an already-created client. Call
+                                before VP.ready(). Returns the client.
+
+   VP.ready()                -> Promise<Context>. Idempotent: resolves
+                                auth + role, picks the current venue, and
+                                loads that venue + its settings. Cached
+                                after the first call.
+
+   VP.refresh()              -> Promise<Context>. Force a full re-resolve
+                                (call after sign-in / sign-out).
+
+   VP.getContext()           -> the last resolved Context (sync, or null
+                                before ready() has resolved once).
+
+   VP.setCurrentVenue(id)    -> Promise<Context>. Switch the working
+                                venue (a venue-switcher for multi-venue
+                                staff, or an admin "view as"). Persists to
+                                localStorage and reloads venue + settings.
+
+   VP.listVenues()           -> Promise<Array<VenueRow>>. Venues the
+                                caller may see: an admin gets ALL venues
+                                (HQ list); a staff member gets only their
+                                own. RLS does the scoping.
+
+   VP.loadSettings(id)       -> Promise<SettingsRow|null>.
+   VP.saveSettings(id, patch)-> Promise<SettingsRow>. Upsert on venue_id,
+                                stamps updated_at. Manager/owner (or admin)
+                                only; RLS enforces it (see migration 08).
+
+   VP.requireAuth(opts)      -> Promise<Context>. Page guard. opts:
+                                { venue:true } needs a current venue,
+                                { roles:['owner','manager'] } needs one of
+                                those roles at the current venue (admins
+                                always pass). On failure it REDIRECTS to
+                                the sign-in shell and never resolves.
+
+   VP.signOut()              -> Promise. Clears state + redirects to /app.
+
+   VP.homeHref(ctx)          -> string. Where a freshly signed-in person
+                                should land: 'hq.html' for admins,
+                                the venue console ('index.html') for staff.
+
+   ---------------------------------------------------------------------
+   Context shape (what ready()/refresh()/getContext() resolve to):
+   {
+     client,                 // the Supabase client
+     user,                   // Supabase auth user object, or null
+     authed:      Boolean,   // is anyone signed in
+     scope:       'admin' | 'staff' | 'none',
+     isAdmin:     Boolean,
+     adminRole:   'owner' | 'accounts' | 'staff' | null,  // vp_platform_admins.role
+     staff:       [ { venue_id, role, display_name } ],   // this user's vp_venue_staff rows
+     currentVenueId: uuid | null,
+     role:        'owner' | 'manager' | 'host' | 'admin' | null, // role AT currentVenueId ('admin' = admin view-as)
+     venue:       VenueRow | null,       // full vp_venues row for currentVenueId
+     settings:    SettingsRow | null     // full vp_venue_settings row for currentVenueId
+   }
+
+   VenueRow    = a row of public.vp_venues (id, name, slug, timezone,
+                 status, founding_id, group_id, included_players,
+                 logo_url, privacy_terms_accepted_at, created_at).
+   SettingsRow = a row of public.vp_venue_settings (venue_id,
+                 name_display, default_draw_length_seconds,
+                 raffle_time_limit_seconds, screen_rotation_seconds,
+                 auto_game_promos, updated_at, and — once migration 09 is
+                 applied — collect_first_name, collect_last_name,
+                 collect_postcode, collect_email, collect_mobile,
+                 marketing_optin_default).
+   ===================================================================== */
+(function (root) {
+  "use strict";
+
+  // Same project + anon key every VenuePlay page already uses.
+  var SUPA_URL  = "https://ijkzgmdtwtgfkedqspxm.supabase.co";
+  var SUPA_ANON = "sb_publishable_9v83FWCSt7Di-jkgTvsMJQ_f6lJPovb";
+
+  var VENUE_KEY = "vpCurrentVenue";   // localStorage: last chosen venue id
+  /* An EXPLICIT choice, kept for the tab only. hq.html "View as" stores a venue id and
+     then NAVIGATES to index.html, so by the time build() runs, a deliberate choice looks
+     exactly like a remembered one. Without this marker the archived guard below threw the
+     admin's own choice away and bounced them back to HQ with no message. sessionStorage,
+     not local: the choice should last as long as the tab and no longer. */
+  var EXPLICIT_KEY = "vpVenueExplicit";
+  /* ABSOLUTE, NOT "index.html". This file is loaded by the game consoles too, and they live one
+     folder down (/app/musical/, /app/trivia/, ...). From there "index.html" is /app/musical/index.html,
+     which does not exist, and a missing page on this site answers with the MARKETING HOMEPAGE. So a
+     host whose login ran out mid-night was dropped on the sales site (found 30 Sep 2026). */
+  var SIGNIN    = "/app/";            // the sign-in shell
+
+  var _client  = null;   // the Supabase client singleton
+  var _ctx     = null;   // last resolved Context
+  var _ready   = null;   // in-flight ready() promise (dedupe)
+
+  function emptyCtx(client) {
+    return {
+      client: client, user: null, authed: false, scope: "none",
+      isAdmin: false, adminRole: null, staff: [],
+      currentVenueId: null, role: null, venue: null, settings: null
+    };
+  }
+
+  function getClient() {
+    if (!_client) {
+      if (!root.supabase || !root.supabase.createClient) {
+        throw new Error("Supabase CDN script must load before vp-session.js");
+      }
+      _client = root.supabase.createClient(SUPA_URL, SUPA_ANON);
+    }
+    return _client;
+  }
+
+  // Adopt a client the page already created (so there is ONE auth session).
+  function useClient(client) { if (client) _client = client; return _client; }
+
+  function storedVenue() {
+    try { return localStorage.getItem(VENUE_KEY) || null; } catch (e) { return null; }
+  }
+  function rememberVenue(id) {
+    try { if (id) localStorage.setItem(VENUE_KEY, id); else localStorage.removeItem(VENUE_KEY); } catch (e) {}
+  }
+  function explicitVenue() {
+    try { return sessionStorage.getItem(EXPLICIT_KEY) || null; } catch (e) { return null; }
+  }
+  function markExplicit(id) {
+    try { if (id) sessionStorage.setItem(EXPLICIT_KEY, id); else sessionStorage.removeItem(EXPLICIT_KEY); } catch (e) {}
+  }
+
+  // ---- role resolution ------------------------------------------------
+  // Reads are RLS-safe: a non-admin reading vp_platform_admins simply gets
+  // zero rows (not an error); a staff member reading vp_venue_staff gets
+  // only their own venue's rows, which includes their own membership.
+  function resolveRole(client, user) {
+    var uid = user.id;
+    /* The THIRD read is why this function changed on 18 Sep. pickVenue() used to have
+       nothing but venue ids, so it could not tell a live venue from one somebody had
+       switched off, and it returned staff[0] with no status test at all. vp_venue_staff
+       comes back UNORDERED, so a host whose archived venue happened to sit first landed
+       straight back on it: same user, same data, different outcome depending on Postgres
+       row order, which is why it read as intermittent. One extra read buys the status of
+       every venue they belong to, and removes the second round trip the old guard needed. */
+    return Promise.all([
+      client.from("vp_platform_admins").select("role,label").eq("auth_user_id", uid).maybeSingle(),
+      client.from("vp_venue_staff").select("venue_id,role,display_name").eq("auth_user_id", uid)
+    ]).then(function (res) {
+      var rows = (res[1] && res[1].data) || [];
+      var ids = rows.map(function (r) { return r.venue_id; }).filter(Boolean);
+      if (!ids.length) return [res[0], res[1], {}];
+      return client.from("vp_venues").select("id,status,suspended_reason").in("id", ids)
+        .then(function (vr) {
+          var map = {};
+          ((vr && vr.data) || []).forEach(function (v) { map[v.id] = v; });
+          return [res[0], res[1], map];
+        })
+        // A venue-status read that fails must not cost the host their session. Fall back
+        // to knowing nothing, which behaves exactly as this did before the third read.
+        .catch(function () { return [res[0], res[1], {}]; });
+    }).then(function (res) {
+      var adminRow = (res[0] && res[0].data) || null;
+      var staff    = (res[1] && res[1].data) || [];
+      var isAdmin  = !!adminRow;
+      return {
+        isAdmin: isAdmin,
+        adminRole: adminRow ? adminRow.role : null,
+        staff: staff,
+        venueState: res[2] || {},
+        scope: isAdmin ? "admin" : (staff.length ? "staff" : "none")
+      };
+    });
+  }
+
+  /* THE CODE A PERSON USES, from the venue record.
+     venueCode(slug) below is the BROADCAST CHANNEL: derived on purpose so a
+     console and a TV meet with no round trip, never shown to anybody, and not
+     secret either since the algorithm sits in public page JavaScript. The code a
+     host reads off the iPad and a player types is issued once per venue and
+     stored, so it is unique by constraint and stays put on a table talker.
+     Falls back to the derived value when migration 68 has not run, which is what
+     every venue trading today already has. */
+  function venueJoinCode(id) {
+    var ctx = getContext();
+    var vid = id || (ctx && ctx.currentVenueId);
+    if (!vid) return Promise.resolve(null);
+    return getClient().from("vp_venues").select("join_code,slug").eq("id", vid).maybeSingle()
+      .then(function (r) {
+        var v = (r && r.data) || null;
+        if (!v) return null;
+        return v.join_code || (v.slug ? venueCode(v.slug) : null);
+      })
+      .catch(function () { return null; });
+  }
+
+  function loadVenue(client, id) {
+    if (!id) return Promise.resolve(null);
+    return client.from("vp_venues").select("*").eq("id", id).maybeSingle()
+      .then(function (r) { return (r && r.data) || null; });
+  }
+  function loadSettings(id) {
+    if (!id) return Promise.resolve(null);
+    return getClient().from("vp_venue_settings").select("*").eq("venue_id", id).maybeSingle()
+      .then(function (r) { return (r && r.data) || null; });
+  }
+
+  // Which role does this person hold at a given venue?
+  function roleAtVenue(role, venueId) {
+    if (role.isAdmin) {
+      // admin who is ALSO staff there keeps the staff role; otherwise "admin" (view-as)
+      for (var i = 0; i < role.staff.length; i++) {
+        if (role.staff[i].venue_id === venueId) return role.staff[i].role;
+      }
+      return "admin";
+    }
+    for (var j = 0; j < role.staff.length; j++) {
+      if (role.staff[j].venue_id === venueId) return role.staff[j].role;
+    }
+    return null;
+  }
+
+  /* An ARCHIVED venue is not a fault, it is a venue somebody switched off on purpose.
+     It still reads status === 'suspended', so every check that only looks at status treats
+     it as a problem and says so to the host. Reason is what separates the two. */
+  function isArchived(v) {
+    return !!(v && v.status === 'suspended' &&
+              typeof v.suspended_reason === 'string' &&
+              v.suspended_reason.indexOf('archived') === 0);
+  }
+
+  // Is THIS id one we know to be archived? Unknown is never treated as archived: an
+  // admin viewing a venue they are not staff at has no row in the map, and guessing
+  // would throw away their choice.
+  function archivedId(role, id) {
+    var v = id && role && role.venueState ? role.venueState[id] : null;
+    return !!(v && isArchived(v));
+  }
+
+  /* Choose the working venue.
+     Order of preference: the stored choice if the caller may use it AND it is not a
+     venue somebody switched off, then the first of their venues that is not archived,
+     then the stored one anyway, then their first venue, then null.
+
+     Keeping a LONE archived venue is deliberate. Swapping a host's only venue for
+     nothing is worse than showing them the banner, which now says "archived" and tells
+     them how to bring it back. */
+  function pickVenue(role, allowArchived) {
+    var stored = storedVenue();
+    var mine = role.staff.map(function (s) { return s.venue_id; });
+    var mayUseStored = !!(stored && (role.isAdmin || mine.indexOf(stored) >= 0));
+
+    if (mayUseStored && (allowArchived || !archivedId(role, stored))) return stored;
+
+    for (var i = 0; i < mine.length; i++) {
+      if (!archivedId(role, mine[i])) return mine[i];
+    }
+    if (mayUseStored) return stored;
+    if (mine.length) return mine[0];
+    return null;   // admin picks a venue explicitly via setCurrentVenue()
+  }
+
+  /* THE CDN CAN FAIL, AND IT MUST NOT KILL THE CONSOLE SILENTLY.
+     getClient() throws synchronously when cdn.jsdelivr.net has not delivered supabase-js, and
+     build() used to call it at the top, OUTSIDE any promise. So the throw escaped before a promise
+     existed and every .catch() on every console never ran: the host sat on the boot splash
+     forever with no error, no retry and nothing to tell them why, then reloaded into the same
+     thing and rang Dean mid-service. tv.html has retried this for a while; the consoles never got
+     the same treatment.
+     Two parts: a rejected promise instead of a throw, so the existing .catch() handlers finally
+     do their job, and a visible message with a retry, because a blocked CDN on pub wifi does not
+     fix itself and a host needs to be told what is happening. */
+  function cdnDown() {
+    try {
+      if (document.getElementById('vpCdnDown')) return;
+      var d = document.createElement('div');
+      d.id = 'vpCdnDown';
+      d.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#0A0A0B;color:#E7E7EC;' +
+        'display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;' +
+        'font-family:-apple-system,Segoe UI,sans-serif';
+      d.innerHTML = '<div style="max-width:420px">' +
+        '<p style="margin:0 0 10px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#FF1F8E;font-weight:800">Cannot start</p>' +
+        '<h1 style="margin:0 0 12px;font-size:22px;line-height:1.25">VenuePlay could not finish loading</h1>' +
+        '<p style="margin:0 0 16px;font-size:14.5px;line-height:1.5;color:#9A9AA4">Part of the app is served from the internet and it did not arrive. This is almost always the venue wifi, or a network that blocks it. Your game and your players are fine.</p>' +
+        '<button id="vpCdnRetry" style="font:inherit;font-size:15px;font-weight:700;background:#FF1F8E;color:#fff;border:0;border-radius:10px;padding:12px 24px;cursor:pointer">Try again</button>' +
+        '<p style="margin:14px 0 0;font-size:12.5px;color:#8A8A94">Still stuck? Use your phone hotspot, or call us on the number in your welcome email.</p>' +
+        '</div>';
+      document.body.appendChild(d);
+      var b = document.getElementById('vpCdnRetry');
+      if (b) b.addEventListener('click', function () { location.reload(); });
+    } catch (e) {}
+  }
+
+  /* THE ADDRESS NAMES THE VENUE; THE CONSOLE MUST NOT QUIETLY RUN SOMEWHERE ELSE.
+     Every console link carries ?venue= (the bingo console builds /app/<game>/host.html?venue=<slug>,
+     HQ and billing link settings.html?venue=<id>), and nothing read it: the venue came only from the
+     choice this browser last saved, which every tab shares. On 27 Sep 2026 a trivia console at
+     ?venue=test-alpha opened a live lobby at Karina Bay Surf Club, a real venue, because another tab
+     had switched to it. Console pages only: a TV or phone page on the same laptop must not move the
+     host's console. A uuid or a slug is accepted; a venue this login may not use is REPORTED, never
+     silently swapped for another one. */
+  var CONSOLE_PATH = /\/app\/(?:(?:index|settings|billing|account)|(?:trivia|musical|raffle|members)\/host|trivia\/builder)?(?:\.html)?$/;
+  var UUID_RX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  function urlVenueParam() {
+    try {
+      if (!CONSOLE_PATH.test(root.location.pathname || "")) return "";
+      var m = /[?&]venue=([^&#]+)/i.exec(root.location.search || "");
+      /* The short form, /app/musical/host?test-charlie, is what the TV and the phones accept
+         (vp-venueurl.js), and the consoles read only venue=: the musical console quietly ran at
+         ANOTHER venue on the short link, no banner (break test, 14 Oct 2026). The first bare part
+         that is not a setting, same rule as vp-venueurl.js. */
+      if (!m) {
+        var SETTINGS = { demo: 1, unified: 1, roomserver: 1, probe: 1, v: 1, t: 1, ads: 1, logo: 1,
+                         tv: 1, room: 1, code: 1, from: 1, mode: 1, pr: 1, gm: 1 };
+        var parts = String(root.location.search || "").replace(/^\?/, "").split("&");
+        for (var i = 0; i < parts.length && !m; i++) {
+          var p = parts[i]; if (p.charAt(0) === "=") p = p.slice(1);
+          if (p && p.indexOf("=") < 0 && !SETTINGS[p.toLowerCase()]) m = [p, p];
+        }
+      }
+      if (!m) return "";
+      var raw = m[1]; try { raw = decodeURIComponent(raw); } catch (e) {}
+      raw = String(raw).trim();
+      return UUID_RX.test(raw) ? raw.toLowerCase() : raw.toLowerCase().replace(/[\s_]+/g, "-").replace(/[^a-z0-9-]/g, "");
+    } catch (e) { return ""; }
+  }
+  function resolveUrlVenue(client, want) {
+    if (!want) return Promise.resolve(null);
+    var q = client.from("vp_venues").select("id,name,slug");
+    q = UUID_RX.test(want) ? q.eq("id", want) : q.eq("slug", want);
+    return q.maybeSingle().then(function (r) { return (r && r.data) || null; }, function () { return null; });
+  }
+  function urlVenueBanner(asked, workingName) {
+    try {
+      if (document.getElementById("vpUrlVenue")) return;
+      var d = document.createElement("div");
+      d.id = "vpUrlVenue";
+      d.style.cssText = "position:fixed;left:0;right:0;top:0;z-index:99998;background:#2A0B14;color:#fff;" +
+        "border-bottom:2px solid #FF4D5E;padding:12px 16px;font:600 14px/1.4 -apple-system,Segoe UI,sans-serif;text-align:center";
+      d.textContent = "This link is for " + asked + ", which this login cannot run. You are working at " +
+        (workingName || "your own venue") + ". Anything you start here happens at " + (workingName || "your venue") + ".";
+      var x = document.createElement("button");
+      x.textContent = "OK";
+      x.style.cssText = "margin-left:12px;font:inherit;background:#FF1F8E;color:#fff;border:0;border-radius:8px;padding:6px 14px;cursor:pointer";
+      x.addEventListener("click", function () { d.parentNode && d.parentNode.removeChild(d); });
+      d.appendChild(x);
+      (document.body || document.documentElement).appendChild(d);
+    } catch (e) {}
+  }
+
+  function build() {
+    var client;
+    try {
+      client = getClient();
+    } catch (e) {
+      cdnDown();
+      return Promise.reject(e);   // a REJECTION, so the caller's .catch() can run
+    }
+    // getSession() reads the persisted session (instant, refreshes only if expired) instead of
+    // getUser() which always hits the network. Routing/role only needs identity; every real
+    // action still re-verifies the token at the Worker, so this is safe and much faster.
+    return client.auth.getSession().then(function (r) {
+      var user = (r && r.data && r.data.session && r.data.session.user) || null;
+      if (!user) { _ctx = emptyCtx(client); return _ctx; }
+
+      return resolveRole(client, user).then(function (role) {
+        /* An explicit choice wins, even when it is archived. Anything else prefers a
+           venue that is not switched off. This replaced a guard that assembled the
+           archived venue, cleared storage and re-picked: that cost two extra round
+           trips, could only ever re-pick staff[0] (unordered, often the same archived
+           venue), and turned HQ "View as" into a bounce back to HQ because a stored-then-
+           navigated choice is indistinguishable from a restore. */
+        var chosen = explicitVenue();
+        var venueId = pickVenue(role, !!(chosen && chosen === storedVenue()));
+        var asked = urlVenueParam();
+
+        function assemble(id) {
+          return Promise.all([loadVenue(client, id), loadSettings(id)])
+            .then(function (vs) {
+              _ctx = {
+                client: client, user: user, authed: true, scope: role.scope,
+                isAdmin: role.isAdmin, adminRole: role.adminRole, staff: role.staff,
+                currentVenueId: id, role: id ? roleAtVenue(role, id) : null,
+                venue: vs[0], settings: vs[1]
+              };
+              if (id) rememberVenue(id);
+              return _ctx;
+            });
+        }
+
+        if (!asked) return assemble(venueId);
+        return resolveUrlVenue(client, asked).then(function (v) {
+          var mine = role.staff.map(function (st) { return st.venue_id; });
+          var may = !!(v && (role.isAdmin || mine.indexOf(v.id) >= 0));
+          if (may) {
+            if (v.id !== venueId) { markExplicit(v.id); }   // the link's venue, exactly as if picked
+            return assemble(v.id);
+          }
+          return assemble(venueId).then(function (ctx) {
+            ctx.urlVenueRefused = asked;
+            urlVenueBanner(asked, ctx.venue && ctx.venue.name);
+            return ctx;
+          });
+        });
+      });
+    }).catch(function (err) {
+      // Never leave the page wedged: fall back to a signed-out context.
+      _ctx = emptyCtx(getClient());
+      _ctx._error = err;
+      return _ctx;
+    });
+  }
+
+  function ready() { if (!_ready) _ready = build(); return _ready; }
+  function refresh() { _ready = build(); return _ready; }
+  function getContext() { return _ctx; }
+
+  /* HOW MANY PHONES HAVE ACTUALLY SCANNED IN, ASKED OF THE SERVER.
+
+     A console only knows the players it personally heard announce themselves on its own
+     broadcast channel. For trivia that is nobody until the round starts, because a phone
+     that types the code sits on /play holding "YOU'RE IN" and does not reach the trivia
+     page, or the trivia channel, until the host taps Start. On 11 Sep 2026 a phone joined
+     a trivia lobby, the phone said it was in, and the host console said PLAYERS (0) for as
+     long as anyone cared to watch. A host with a full room reads that as nobody turned up.
+
+     GET /snapshot is public, already used by four consoles to recover themselves, and
+     returns player_count: vp_players for the session, deduped by device id, which is the
+     same figure the night is billed on.
+
+     Resolves to null on anything going wrong, never rejects, so a caller can only ever
+     end up showing nothing extra. app/index.html keeps its own serverPlayerCount: that one
+     is the number printed on the end-of-night card as the billed figure, and it should not
+     share a fate with a lobby hint.  */
+  function sessionPlayerCount(apiBase, sessionId) {
+    if (!apiBase || !sessionId) return Promise.resolve(null);
+    var ctrl = (typeof AbortController === "function") ? new AbortController() : null;
+    var timer = root.setTimeout(function () { if (ctrl) ctrl.abort(); }, 6000);
+    return root.fetch(apiBase + "/snapshot?session=" + encodeURIComponent(sessionId),
+                      { signal: ctrl ? ctrl.signal : undefined })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        root.clearTimeout(timer);
+        var n = j && j.player_count;
+        return (typeof n === "number" && isFinite(n) && n >= 0) ? n : null;
+      })
+      .catch(function () { root.clearTimeout(timer); return null; });
+  }
+
+  function setCurrentVenue(id) {
+    return ready().then(function (ctx) {
+      if (!ctx.authed) return ctx;
+      var allowed = ctx.isAdmin || ctx.staff.some(function (s) { return s.venue_id === id; });
+      if (!allowed) return ctx;
+      rememberVenue(id);
+      markExplicit(id);   // survives the navigation hq.html does straight after this
+      return Promise.all([loadVenue(getClient(), id), loadSettings(id)]).then(function (vs) {
+        _ctx = Object.assign({}, ctx, {
+          currentVenueId: id,
+          role: (function () {
+            for (var i = 0; i < ctx.staff.length; i++) { if (ctx.staff[i].venue_id === id) return ctx.staff[i].role; }
+            return ctx.isAdmin ? "admin" : null;
+          })(),
+          venue: vs[0], settings: vs[1]
+        });
+        _ready = Promise.resolve(_ctx);
+        return _ctx;
+      });
+    });
+  }
+
+  function listVenues() {
+    // RLS scopes this: admins see all, staff see only their own venues.
+    //
+    // NEVER name a column here that has not been migrated into the live database. PostgREST
+    // rejects the WHOLE select with a 400 if one column is missing, so a single un-migrated
+    // name empties the HQ venue list and the console's venue picker at the same time. That is
+    // exactly what entity_type/paid_entry_enabled did: the code shipped ahead of migration 44,
+    // and both were pulled back off this line until the migration was actually run. It has been
+    // (19 Aug 2026), and tools/check-schema.py now verifies every name here against the live
+    // database, so run that before adding to this list.
+    /* PostgREST stops at 1000 rows on this project, SILENTLY. This is the venue list
+       behind HQ and behind the venue picker on every console, so at a thousand venues
+       HQ would simply stop showing the ones past it, with no error. That is not a new
+       fault, it is the one sbGetAll's header already describes: the venue-code map read
+       the first page, every venue after it resolved to nothing, and their screens said
+       "not linked to an account" while the join codes silently failed.
+
+       It does NOT page unconditionally. This runs on every console boot, and a loop that
+       only stops on an empty page would cost a second round trip every time, for every
+       host, for ever, to guard something a thousand venues away. This project's wall is
+       about fifty REST calls a second and what counts is CALLS, not rows.
+
+       IT ALSO DOES NOT GUESS THE CEILING. The first version asked for one row MORE than
+       1000 and treated a short answer as the end. That cannot work, and the first run of
+       tools/test-venue-list-paged.js said so: PostgREST's own max-rows caps the response
+       at 1000, so the 1001st row can never arrive and "short" is indistinguishable from
+       "finished". It is the same short-page trap written on sbGetAll, arriving through
+       the door marked clever.
+
+       So ASK THE DATABASE. count:'exact' returns the true total in the SAME request, so
+       one call answers both "here are the rows" and "is that all of them". No guessing,
+       and no cost to the common case. */
+    var COLS = "id,name,slug,timezone,status,suspended_reason,founding_id,group_id," +
+               "included_players,max_players,logo_url,created_at,postcode,au_state," +
+               "entity_type,paid_entry_enabled";
+    /* Migration 100 (15 Oct 2026): what the venue said it is, when it accepted the compliance
+       line, and the permits it has recorded. Anisimoff Legal 9380, 1 Oct 2026, points 3 and 5.
+       HQ reads them off this list; the console reads them off the full venue row (loadVenue
+       selects *). Named SEPARATELY so that if this select is ever served by a database the
+       migration has not reached, the page below retries without them rather than emptying
+       the venue list, which is exactly what entity_type did on 19 Aug 2026. */
+    var COLS_100 = "permits,venue_kind,compliance_accepted_at";
+    var PAGE = 1000;
+    var cols100 = true;
+
+    function page(from, to, withCount) {
+      var q = getClient().from("vp_venues")
+        .select(cols100 ? (COLS + "," + COLS_100) : COLS, withCount ? { count: "exact" } : undefined)
+        /* created_at alone is not a stable order: two venues created in the same
+           millisecond can swap between pages, repeating one and skipping the other.
+           id breaks the tie. */
+        .order("created_at", { ascending: false }).order("id", { ascending: false })
+        .range(from, to);
+      return q.then(function (r) {
+        // Do not swallow the failure. Returning [] on an error is indistinguishable from
+        // "this venue has no venues", so a broken query looked like an empty account for
+        // however long it took someone to notice. Let the caller show the real reason.
+        if (r && r.error) {
+          /* One retry, without the migration-100 columns, when PostgREST names one of them
+             as unknown. Anything else is still thrown: this is a narrow bridge for the
+             minutes between a site deploy and the migration, not a way to hide a fault. */
+          var msg = String((r.error && r.error.message) || "");
+          if (cols100 && /column/i.test(msg) && /permits|venue_kind|compliance_accepted_at/.test(msg)) {
+            cols100 = false;
+            try { console.warn("vp-session: migration 100 has not reached this database yet; venue list read without " + COLS_100); } catch (e) {}
+            return page(from, to, withCount);
+          }
+          throw r.error;
+        }
+        return { rows: (r && r.data) || [], total: r ? r.count : null };
+      });
+    }
+
+    return page(0, PAGE - 1, true).then(function (first) {
+      var out = first.rows, total = first.total;
+      // No count came back, or we already hold all of them: one call and done.
+      if (total == null || out.length >= total) return out;
+      function more() {
+        return page(out.length, out.length + PAGE - 1, false).then(function (r) {
+          if (!r.rows.length) return out;            // empty page, never a short one
+          out = out.concat(r.rows);
+          if (out.length >= total) return out;
+          if (out.length > 200000) throw new Error("venue list did not end at " + out.length);
+          return more();
+        });
+      }
+      return more();
+    });
+  }
+
+  function saveSettings(id, patch) {
+    var row = Object.assign({ venue_id: id }, patch, { updated_at: new Date().toISOString() });
+    return getClient().from("vp_venue_settings").upsert(row, { onConflict: "venue_id" })
+      .select().maybeSingle()
+      .then(function (r) {
+        if (r && r.error) throw r.error;
+        return (r && r.data) || null;
+      });
+  }
+
+  function homeHref(ctx) {
+    ctx = ctx || _ctx || {};
+    if (ctx.isAdmin) return "/app/hq.html";
+    /* Marketing ONLY. Somebody who is a host at one venue and the marketing login at another
+       still has games to run, so they keep the console and reach their numbers from a link. */
+    var st = ctx.staff || [];
+    if (ctx.scope === "staff" && st.length && st.every(function (x) { return x.role === "marketing"; })) return "/app/marketing.html";
+    if (ctx.scope === "staff") return "/app/";
+    return "/app/";
+  }
+
+  function signOut() {
+    rememberVenue(null);
+    // Must ALWAYS end up at the sign-in screen. Without the catch, a sign-out that rejected left
+    // the host sitting on the page still authenticated while the shift clock had already been
+    // cleared, so the next page load handed them a fresh 4 hours: the control reset itself.
+    // getClient() can also throw outright if the Supabase script never loaded.
+    function bail() { _ctx = null; _ready = null; root.location.href = SIGNIN; }
+    try {
+      return getClient().auth.signOut().then(bail, bail);
+    } catch (e) { bail(); return Promise.resolve(); }
+  }
+
+  function requireAuth(opts) {
+    opts = opts || {};
+    return ready().then(function (ctx) {
+      if (!ctx.authed) { root.location.href = SIGNIN; return new Promise(function () {}); }
+      if (opts.venue && !ctx.currentVenueId) { root.location.href = homeHref(ctx); return new Promise(function () {}); }
+      if (opts.roles && opts.roles.length) {
+        var ok = ctx.isAdmin || (ctx.role && opts.roles.indexOf(ctx.role) >= 0);
+        if (!ok) { root.location.href = homeHref(ctx); return new Promise(function () {}); }
+      }
+      return ctx;
+    });
+  }
+
+  // Deterministic 6-char code from a venue slug. The host and the TV both compute this from
+  // the same venue, so they land on the same channel with NO pairing step. It doubles as the
+  // players' join code (shown on the TV). Alphabet excludes ambiguous characters and matches
+  // the host pair-input filter. NOTE: tv.html inlines an identical copy (it does not load VP);
+  // keep the two in lockstep.
+  function venueCode(slug) {
+    // Strip to [a-z0-9] so the host and the TV always feed venueCode the SAME string, no matter
+    // how the slug is punctuated (the TV pre-sanitises differently). Then hash to 6 chars.
+    var s = String(slug || "").toLowerCase().replace(/[^a-z0-9]/g, ""), h = 2166136261 >>> 0;
+    for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    var A = "ACDEFGHJKMNPQRSTUVWXYZ2345679", out = "", x = h || 1;
+    for (var j = 0; j < 6; j++) { x = (Math.imul(x, 1103515245) + 12345) >>> 0; out += A[x % A.length]; }
+    return out;
+  }
+
+  /* ---- the night, and the shift ------------------------------------------
+     Two things used to live ONLY in app/index.html, and so only ever happened
+     if the host walked back to /app and signed out there:
+
+       1. POST /session/close. That is what marks the night finished AND bills
+          any overage the host approved. Trivia, musical bingo and raffle all
+          OPEN a session; none of them could close one. A host who ran the quiz
+          and shut the tablet left the night open forever: the approved overage
+          was never charged and the venue read "live" in HQ indefinitely.
+
+       2. The 4 hour forced sign-out. That timeout is a COMPLIANCE control -- the
+          venue's opt-in player details sit behind this login -- so a tablet
+          parked on the trivia console must not stay signed in for days.
+
+     They live here now so every console gets both. Note the plural: a venue that
+     runs trivia AND musical on the same night has TWO open sessions, and the old
+     single "vpOpenSession" key silently overwrote the first, leaving it unclosable.
+     ------------------------------------------------------------------------ */
+  var GAME_API   = "https://venueplay-game.dean-tindale.workers.dev";
+  var OPEN_KEY   = "vpOpenSessions";   // JSON array of {id, venue}
+  var LEGACY_KEY = "vpOpenSession";    // the old single-object key; still drained so nothing is orphaned
+  var SHIFT_KEY  = "vpShiftStart";
+  var SHIFT_MAX  = 4 * 3600 * 1000;
+
+  function readOpenSessions() {
+    var out = [], seen = {};
+    function add(r) { if (r && r.id && !seen[r.id]) { seen[r.id] = true; out.push(r); } }
+    try { var a = JSON.parse(localStorage.getItem(OPEN_KEY) || "[]"); if (Array.isArray(a)) a.forEach(add); } catch (e) {}
+    try { add(JSON.parse(localStorage.getItem(LEGACY_KEY) || "null")); } catch (e) {}
+    return out;
+  }
+  function writeOpenSessions(list) {
+    // Keep the OLDEST on overflow: an old id is the one most likely to still be open and unbilled.
+    try {
+      if (list.length) localStorage.setItem(OPEN_KEY, JSON.stringify(list.slice(0, 10)));
+      else localStorage.removeItem(OPEN_KEY);
+      localStorage.removeItem(LEGACY_KEY);
+    } catch (e) {}
+  }
+  function currentUid() {
+    var c = _ctx && _ctx.user && _ctx.user.id;
+    return c || null;
+  }
+  // Called when a console opens a night. Idempotent per session id.
+  function noteOpenSession(id, venueId) {
+    if (!id) return;
+    var list = readOpenSessions();
+    for (var i = 0; i < list.length; i++) { if (list[i].id === id) { list[i].closing = false; writeOpenSessions(list); return; } }
+    // uid so a shared bar tablet does not try to close the previous host's night with the
+    // current host's token (the Worker correctly refuses, and the id would be lost doing it).
+    list.push({ id: id, venue: venueId || null, uid: currentUid(), closing: false });
+    writeOpenSessions(list);
+  }
+
+  // Close the nights THIS user opened on this device.
+  //
+  // The ordering here is the whole point. The first version cleared the stored ids and then fired
+  // the requests, so one flaky moment of pub wifi at sign-out meant a night stayed open forever
+  // and its host-approved overage was never charged, with nobody told. Nothing else in the product
+  // calls /session/close and there is no server-side sweeper, so a lost id is lost permanently.
+  // Now: POST first, and only drop an id when the server has actually answered. A network failure
+  // leaves it stored and flagged, and retryPendingCloses() picks it up on the next page load.
+  //
+  // Safe to call more than once: the Worker no-ops on an already-closed session and Stripe gets an
+  // idempotency key per session, so a night can never be billed twice.
+  function closeOpenSessions(onlyPending) {
+    var all = readOpenSessions();
+    if (!all.length) return Promise.resolve(0);
+    // getClient() THROWS if the Supabase CDN script has not loaded. This runs on the way out of
+    // the app, so it must never throw back into the caller and stop the sign-out happening.
+    var c; try { c = getClient(); } catch (e) { return Promise.resolve(0); }
+    return c.auth.getSession().then(function (r) {
+      var sess = r && r.data && r.data.session;
+      var tok = (sess && sess.access_token) || "";
+      var uid = (sess && sess.user && sess.user.id) || null;
+      if (!tok) return 0;   // no token: keep everything stored and try again later
+      var mine = [], keep = [];
+      all.forEach(function (rec) {
+        var ours = !rec.uid || !uid || rec.uid === uid;
+        if (ours && (!onlyPending || rec.closing)) mine.push(rec); else keep.push(rec);
+      });
+      if (!mine.length) return 0;
+      return Promise.all(mine.map(function (rec) {
+        // keepalive so the request still goes out if the page is closing behind it
+        return fetch(GAME_API + "/session/close", {
+          method: "POST", keepalive: true,
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + tok },
+          body: JSON.stringify({ session_id: rec.id })
+        }).then(function (res) {
+          // Any answer below 500 is final: closed, already closed, or refused. Only a network
+          // failure or a server error is worth keeping, because only those can succeed later.
+          if (res && res.status >= 500) { rec.closing = true; return rec; }
+          return null;
+        }).catch(function () { rec.closing = true; return rec; });
+      })).then(function (results) {
+        var failed = results.filter(Boolean);
+        writeOpenSessions(keep.concat(failed));
+        return mine.length - failed.length;
+      });
+    }).catch(function () { return 0; });
+  }
+  /* CLOSE THIS NIGHT NOW, WHEN THE HOST SAYS THEY ARE DONE (live audit, 19 Oct 2026).
+     Close lobby, End game and End game / back to ads left the session open: only bingo's End game
+     closed it. HQ read the venue as live, phones saw a live game, and the next format opened on
+     the SAME tablet was asked about "a game already open at this venue on another device".
+     The id is flagged `closing` first, so a close lost to the wifi is retried by
+     retryPendingCloses() on the next load, exactly as a sign-out's would be. Resolves the number
+     closed. "New game" and the next round never call this: they reuse the session. */
+  function closeSession(id) {
+    if (!id) return Promise.resolve(0);
+    var list = readOpenSessions(), found = false;
+    for (var i = 0; i < list.length; i++) { if (list[i].id === id) { list[i].closing = true; found = true; } }
+    if (!found) list.push({ id: id, venue: null, uid: currentUid(), closing: true });
+    writeOpenSessions(list);
+    return closeOpenSessions(true);
+  }
+  // Drain closes that failed earlier. Only touches records already flagged `closing`, so a night
+  // the host is still running is never closed out from under them.
+  function retryPendingCloses() {
+    var list = readOpenSessions();
+    for (var i = 0; i < list.length; i++) { if (list[i].closing) return closeOpenSessions(true); }
+    return Promise.resolve(0);
+  }
+
+  // A console tells us when it has a game actually running, via VP.setGameActive(fn). Closing a
+  // session is what ENDS a night: it marks every running game finished and burns the once-a-week
+  // slot for trivia and musical bingo. Doing that on the way out of a shift killed live nights.
+  // The sign-out itself still happens on time (it is the compliance control protecting opt-in
+  // player data); only the session close is held back, so the host can sign straight back in and
+  // pick the same night up where it was.
+  var _gameActive = null;
+  function setGameActive(fn) { _gameActive = (typeof fn === 'function') ? fn : null; }
+  function gameIsLive() { try { return !!(_gameActive && _gameActive()); } catch (e) { return false; } }
+
+  var _shiftIv = null;
+  function endShift() {
+    if (_shiftIv) { clearInterval(_shiftIv); _shiftIv = null; }
+    // Leave a live night open. The record stays in localStorage, so the night is still closed and
+    // any approved overage still billed, either when the game ends or at the next sign-out.
+    var p = gameIsLive() ? Promise.resolve(0) : closeOpenSessions();
+    try { localStorage.removeItem(SHIFT_KEY); } catch (e) {}
+    return p;
+  }
+  // The forced 4 hour sign-out. The deadline lives in localStorage so it is ONE shift across every
+  // console: hopping /app -> trivia -> raffle does not hand anyone a fresh 4 hours.
+  //
+  // Deliberately an interval that re-reads the deadline every tick, not a single long setTimeout.
+  // A 4 hour timeout is frozen at page load, so a console left open in a background tab would
+  // still fire against the OLD deadline: it signed out whoever happened to be using the app at
+  // that moment, which after a handover is the NEXT host, mid-game. Re-reading also means tab
+  // sleep just delays the check instead of skipping it.
+  function enforceShift() {
+    var start = 0;
+    try { start = parseInt(localStorage.getItem(SHIFT_KEY), 10) || 0; } catch (e) {}
+    if (!start) { start = Date.now(); try { localStorage.setItem(SHIFT_KEY, String(start)); } catch (e) {} }
+    if (_shiftIv) clearInterval(_shiftIv);
+    _shiftIv = setInterval(checkShift, 30000);
+    checkShift();
+    /* Drain any close that failed earlier. retryPendingCloses() was written for exactly this and
+       its own comment says it "picks it up on the next page load", but nothing ever called it:
+       it was exported and left unused, so a night whose close was lost to a wifi blip sat unbilled
+       until somebody happened to sign out on that same device. Calling it here covers all five
+       consoles, since every one of them calls enforceShift() after sign-in. It only touches
+       records already flagged `closing`, so a night in progress is never closed out from under
+       the host. */
+    try { retryPendingCloses(); } catch (e) {}
+  }
+  function checkShift() {
+    var start = 0;
+    try { start = parseInt(localStorage.getItem(SHIFT_KEY), 10) || 0; } catch (e) {}
+    if (!start) return;                                   // signed out elsewhere; nothing to enforce
+    if (start > Date.now()) {                             // clock skew or a tampered value
+      try { localStorage.setItem(SHIFT_KEY, String(Date.now())); } catch (e) {}
+      return;
+    }
+    if ((Date.now() - start) <= SHIFT_MAX) return;
+    if (_shiftIv) { clearInterval(_shiftIv); _shiftIv = null; }
+    // Close the night BEFORE signing out. signOut() clears the local session, and after a 4 hour
+    // shift the access token has expired, so getSession() has to hit the network to refresh it:
+    // the old fire-and-forget pair lost that race almost every time, which is precisely when a
+    // night most needed billing. Capped, so a dead network can never leave a host signed in.
+    var done = false;
+    function finish() {
+      if (done) return; done = true;
+      try { localStorage.removeItem(SHIFT_KEY); } catch (e) {}
+      signOut();
+    }
+    // Mid-game: sign out on time, but do NOT close the session. Closing it finished every running
+    // game and burned the once-a-week slot, so the host signed back in to "your next trivia night
+    // is available in 7 days" with the room still seated and no way to clear it. Left open, the
+    // session is still live, so signing back in restores the same night and the same slot.
+    if (gameIsLive()) { finish(); return; }
+    // A page with no game on it (billing, settings, HQ...) only signs out. It cannot know whether
+    // a console in another tab of this same tablet is mid-night, and closing from here would end
+    // that night under the room. The console's own clock closes it, or the 3am sweep does.
+    if (_shiftSignOutOnly) { finish(); return; }
+    setTimeout(finish, 2500);
+    closeOpenSessions().then(finish, finish);
+  }
+
+  /* THE SHIFT CLOCK ON EVERY PAGE THAT HOLDS PLAYER DATA, not only the consoles. Found 14 Oct
+     2026: billing (which downloads the opt-in list), marketing, settings, HQ, onboarding and the
+     trivia builder never called enforceShift(), so a host left signed in there stayed signed in
+     for ever, and a marketing login (which goes straight to marketing.html) never had a clock at
+     all. The 4h sign-out is a compliance control. One line per page: VP.guardShift(). It does
+     nothing for a visitor who is not signed in (the TV and signage load this file too, and never
+     call it). */
+  var _shiftSignOutOnly = false;
+  function guardShift() {
+    _shiftSignOutOnly = true;
+    try {
+      getClient().auth.getSession().then(function (r) {
+        if (r && r.data && r.data.session) enforceShift();
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
+  /* ONE ROOM, ONE CONSOLE. Each console keeps its night in its own tablet's storage, so a second
+     tablet at the same venue showed a plain setup screen and its Open lobby took the TV and every
+     phone off the live game, and Start round ended it outright (break test, 14 Oct 2026). Every
+     console asks this before opening a lobby it does not already own. Resolves true to go ahead.
+     An unreachable server, or no answer in three seconds, never stops a lobby opening. */
+  /* ONE QUESTION AT A TIME (19 Oct 2026 review). A second tap while the takeover question is up gets the
+     SAME answer as the first, rather than a second dialog that replaced the first unanswered and left the
+     first tap waiting for ever (trivia and musical had no double-tap guard of their own). */
+  var _takeoverAsk = null;
+  function confirmTakeover(slug) {
+    if (_takeoverAsk) return _takeoverAsk;
+    _takeoverAsk = confirmTakeoverOnce(slug).then(function (v) { _takeoverAsk = null; return v; });
+    return _takeoverAsk;
+  }
+  function confirmTakeoverOnce(slug) {
+    return new Promise(function (resolve) {
+      if (!slug) { resolve(true); return; }
+      var done = false;
+      function finish(v) { if (!done) { done = true; resolve(v); } }
+      setTimeout(function () { finish(true); }, 3000);
+      fetch(GAME_API + "/play/live?code=" + encodeURIComponent(venueCode(slug)))
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+          if (done) return;
+          if (!d || !d.live) { finish(true); return; }
+          var f = String(d.format || "");
+          var what = f.indexOf("trivia") === 0 ? "trivia night" : f.indexOf("musical") === 0 ? "musical bingo game"
+                   : f.indexOf("bingo") === 0 ? "bingo game" : "game";
+          done = true;
+          askOnPage("A " + what + " is already open at this venue on another device.",
+            "Opening a lobby here takes the TV and every phone away from it, and starting a round here ends it.",
+            "Open the lobby here", "Cancel").then(resolve);
+        }, function () { finish(true); });
+    });
+  }
+  /* ASKED ON THE PAGE, NEVER WITH window.confirm() (19 Oct 2026). A native dialog stops the whole page
+     until somebody answers it: a kiosk browser that blocks dialogs answers "no" for the host without a
+     word, and under the browser's own automation (the live tests) the console simply froze the moment
+     Open lobby was pressed at a venue with an earlier game still open. The members draw learnt this on
+     the live audit; the raffle too. Same question, same two answers, on the page. Resolves true or false. */
+  function askOnPage(title, text, yes, no) {
+    /* The one on-page dialog, /app/vp-ask.js (Enter, Escape, a focus trap, phones). Every page that
+       can open a lobby loads it; the gate checks that. */
+    if (!root.vpAsk) return Promise.resolve(true);
+    return root.vpAsk(title + "\n\n" + text, { yes: yes, no: no, id: "vpTakeover" });
+  }
+
+
+  /* A suspended venue used to look completely healthy until the host tapped Start in front of a
+     room and got "This venue is suspended". Nothing in the venue-facing app checked the status at
+     all. Any page can call this after ready() to say so on sign-in instead. */
+  function suspensionBanner(ctx) {
+    var v = ctx && ctx.venue;
+    if (!v || v.status !== 'suspended') return;
+    if (document.getElementById('vpSuspendBar')) return;
+    var nonpay = v.suspended_reason === 'nonpayment';
+    var bar = document.createElement('div');
+    bar.id = 'vpSuspendBar';
+    bar.style.cssText = 'position:sticky;top:0;z-index:9999;padding:12px 18px;background:#F5A524;' +
+      'color:#180d00;font-family:Manrope,system-ui,sans-serif;font-size:14px;font-weight:600;' +
+      'line-height:1.45;text-align:center';
+    // Never the word "suspended". A venue reads that as an accusation, and most of these are an
+    // expired card. Dean's line, in the voice the rest of the product uses.
+    bar.innerHTML = nonpay
+      ? 'Your tab has run a bit long. Settle up and we will pour you another round of bingo. ' +
+        '<a href="billing.html#pastDue" style="color:#180d00;text-decoration:underline">Update your card</a> and everything comes straight back on, exactly as you left it.'
+      // An archived venue was switched off on purpose. Telling its owner to "give us a shout
+      // and we will sort it out" reads as a fault and sends them chasing a problem that is not
+      // one. Say what it is, and point at the way out.
+      : isArchived(v)
+      ? 'This venue is archived, so its games are switched off. Nothing has been lost. Choose another venue to keep playing, or email support@venueplay.com.au to bring this one back.'
+      : 'Your games are on hold for the moment. Nothing has been lost. Email support@venueplay.com.au and we will sort it out.';
+    if (document.body.firstChild) document.body.insertBefore(bar, document.body.firstChild);
+    else document.body.appendChild(bar);
+  }
+  /* Fire-and-forget POST to the game Worker, signed with the caller's token.
+     For side records that must never hold up or break the thing they describe:
+     the gaming declaration written when a host acknowledges their state's rules.
+     Resolves to null on any failure rather than rejecting, on purpose. */
+  function gameApiPost(path, body) {
+    var c; try { c = getClient(); } catch (e) { return Promise.resolve(null); }
+    return c.auth.getSession().then(function (r) {
+      var tok = (r && r.data && r.data.session && r.data.session.access_token) || "";
+      if (!tok) return null;
+      return fetch(GAME_API + path, {
+        method: "POST", keepalive: true,
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + tok },
+        body: JSON.stringify(body || {})
+      }).then(function (res) { return res.json().catch(function () { return null; }); });
+    }).catch(function () { return null; });
+  }
+  /* The same POST, for a caller that needs to know WHAT happened. Resolves with
+     {status, json} for any HTTP answer, including 4xx and 5xx; REJECTS on no
+     answer at all (no token, network down, or nothing back inside timeoutMs).
+     The bingo console uses the difference: a 429 means "wait", a rejection means
+     "the server is gone, call the rest of the night from this tablet". gameApiPost
+     above flattens both into null, which is right for a side record and wrong
+     for a draw. */
+  function gameApiCall(path, body, timeoutMs) {
+    var c; try { c = getClient(); } catch (e) { return Promise.reject(new Error("no client")); }
+    var ms = timeoutMs || 4000;
+    var ctrl = (typeof AbortController === "function") ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, ms);
+    return c.auth.getSession().then(function (r) {
+      var tok = (r && r.data && r.data.session && r.data.session.access_token) || "";
+      if (!tok) throw new Error("not signed in");
+      return fetch(GAME_API + path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + tok },
+        body: JSON.stringify(body || {}),
+        signal: ctrl ? ctrl.signal : undefined
+      });
+    }).then(function (res) {
+      return res.json().catch(function () { return null; }).then(function (j) {
+        return { status: res.status, json: j };
+      });
+    }).then(function (out) { clearTimeout(timer); return out; },
+            function (err) { clearTimeout(timer); throw err; });
+  }
+
+  root.VP = {
+    getClient: getClient,
+    useClient: useClient,
+    ready: ready,
+    refresh: refresh,
+    getContext: getContext,
+    setCurrentVenue: setCurrentVenue,
+    sessionPlayerCount: sessionPlayerCount,
+    listVenues: listVenues,
+    gameApiPost: gameApiPost,
+    gameApiCall: gameApiCall,
+    loadSettings: loadSettings,
+    saveSettings: saveSettings,
+    requireAuth: requireAuth,
+    signOut: signOut,
+    homeHref: homeHref,
+    venueCode: venueCode,
+    venueJoinCode: venueJoinCode,
+    suspensionBanner: suspensionBanner,
+    noteOpenSession: noteOpenSession,
+    closeOpenSessions: closeOpenSessions,
+    closeSession: closeSession,
+    retryPendingCloses: retryPendingCloses,
+    enforceShift: enforceShift,
+    guardShift: guardShift,
+    confirmTakeover: confirmTakeover,
+    askOnPage: askOnPage,   // the same on-page question, for the "pick it up?" prompt (vp-pickup.js)
+    endShift: endShift,
+    setGameActive: setGameActive
+  };
+})(window);

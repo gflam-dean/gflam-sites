@@ -1,0 +1,188 @@
+<title>Practice run</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/logos/partyplay-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  /* Deliberately the party palette, not a separate "admin" look. The whole
+     point is that a host sees what the night will look like, so a practice
+     screen dressed as a settings page would teach them nothing. */
+  :root{ --ink:#12101A; --card:#1B1826; --line:rgba(255,255,255,.11);
+         --paper:#F6F3FF; --mute:#A79FBE; --faint:#6F6885;
+         --pink:#FF3D8B; --lime:#C8FF4D; --sky:#5AC8FF; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);color:var(--paper);
+       font-family:'Hanken Grotesk',system-ui,sans-serif;line-height:1.5}
+  .wrap{max-width:1100px;margin:0 auto;padding:26px 18px 90px}
+  h1,h2,h3{margin:0;font-weight:800;letter-spacing:-.02em}
+  h1{font-size:clamp(26px,5vw,42px)}
+  .sub{color:var(--mute);margin:8px 0 0;max-width:60ch}
+  .banner{background:linear-gradient(90deg,rgba(255,61,139,.18),rgba(90,200,255,.14));
+          border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:18px 0 26px}
+  .banner b{color:var(--lime)}
+  .grid{display:grid;gap:16px;grid-template-columns:1fr}
+  @media(min-width:860px){ .grid{grid-template-columns:1.25fr .9fr} }
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+  .panel h3{font-size:15px;color:var(--faint);text-transform:uppercase;letter-spacing:.09em;margin-bottom:12px}
+  .tv{aspect-ratio:16/9;display:grid;place-items:center;background:#0C0A12;border-radius:12px;padding:14px;text-align:center}
+  .ball{font-size:clamp(44px,11vw,96px);font-weight:800;line-height:1}
+  .said{color:var(--mute);margin-top:6px;font-size:clamp(13px,2.4vw,18px)}
+  .called{display:flex;flex-wrap:wrap;gap:5px;margin-top:14px;justify-content:center}
+  .called span{font-size:12px;background:rgba(255,255,255,.08);border-radius:6px;padding:2px 6px}
+  .btn{background:var(--pink);color:#fff;border:0;border-radius:12px;padding:14px 20px;
+       font:inherit;font-weight:800;cursor:pointer;width:100%}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--paper)}
+  .btn[disabled]{opacity:.45;cursor:default}
+  .row{display:flex;gap:10px;margin-top:10px}
+  .who{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+  .p{display:flex;justify-content:space-between;align-items:center;gap:10px;
+     background:rgba(255,255,255,.04);border-radius:10px;padding:9px 12px;font-size:15px}
+  .p .n{color:var(--mute);font-size:13px}
+  .p.win{background:rgba(200,255,77,.16);border:1px solid var(--lime)}
+  .tik{display:grid;grid-template-columns:repeat(9,1fr);gap:3px;margin-top:10px}
+  .tik div{aspect-ratio:1;display:grid;place-items:center;border-radius:5px;font-size:12px;
+           background:rgba(255,255,255,.05);color:var(--mute)}
+  .tik div.on{background:var(--sky);color:#06121B;font-weight:800}
+  .tik div.x{background:transparent}
+  .note{color:var(--faint);font-size:13.5px;margin-top:16px}
+  a{color:var(--sky)}
+</style>
+
+<div class="wrap">
+  <h1>Practice run</h1>
+  <p class="sub">A rehearsal, with three guests we made up. Press the buttons, see what lands on
+     the telly and what a guest sees on their phone. Then do the real one in front of people.</p>
+
+  <div class="banner">
+    <b>Your clock is not running.</b> Nothing here touches your party, nothing is saved, and
+    none of your time is used. Practise as often as you like.
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <h3>What the telly shows</h3>
+      <div class="tv" id="tv">
+        <div>
+          <div class="ball" id="ball">--</div>
+          <div class="said" id="said">Press Call a number to start</div>
+          <div class="called" id="called"></div>
+        </div>
+      </div>
+      <div class="row">
+        <button class="btn" id="call">Call a number</button>
+        <button class="btn ghost" id="reset" style="flex:0 0 auto;width:auto">Start again</button>
+      </div>
+      <p class="note">On the night this is a separate screen: you open
+         <b>partyplay.com.au/tv</b> on the television and it follows along by itself. Your phone
+         stays in your hand as the remote, exactly like the buttons above.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What your guests see</h3>
+      <div class="who" id="who"></div>
+      <p class="note">Three pretend guests, with real tickets built the same way the game builds
+         them. Watch a line fill up. When somebody is one number away you will see it here, and
+         on the night they will be shouting about it.</p>
+      <p class="note" id="verdict"></p>
+    </div>
+  </div>
+
+  <p class="note" style="margin-top:22px">Happy with it?
+     <a href="/run">Back to your party</a>. The clock starts when you press
+     <b>Start the party</b> there, and not before.</p>
+</div>
+
+<script src="/lib/pp-ticket.js"></script>
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  /* Real tickets, built by the real library from a fixed seed, so a host sees
+     genuine 90-ball tickets rather than a mock-up that behaves differently on
+     the night. Fixed seeds on purpose: the same practice every time is easier
+     to learn from than a new one each press. */
+  var GUESTS = [
+    { name: "Sam",   seed: "practice-sam"   },
+    { name: "Priya", seed: "practice-priya" },
+    { name: "Nan",   seed: "practice-nan"   }
+  ];
+  var CALLS = {
+    1:"Kelly's eye", 2:"One little duck", 7:"Lucky seven", 8:"Garden gate", 10:"Boris's den",
+    11:"Legs eleven", 21:"Key of the door", 22:"Two little ducks", 30:"Dirty Gertie",
+    33:"All the threes", 44:"Droopy drawers", 45:"Halfway there", 55:"Snakes alive",
+    59:"The Brighton line", 66:"Clickety click", 76:"Trombones", 77:"Sunset strip",
+    80:"Gandhi's breakfast", 88:"Two fat ladies", 90:"Top of the shop"
+  };
+  var pool, called, done;
+
+  function reset(){
+    pool = []; for(var n=1;n<=90;n++) pool.push(n);
+    // Shuffled from a fixed seed so the practice plays out the same way each time.
+    var r = 42;
+    for(var i=pool.length-1;i>0;i--){
+      r = (r*1103515245+12345) >>> 0;
+      var j = r % (i+1); var t = pool[i]; pool[i]=pool[j]; pool[j]=t;
+    }
+    called = []; done = false;
+    GUESTS.forEach(function(g){ g.grid = PPTicket.build(g.seed); });
+    $("ball").textContent = "--";
+    $("said").textContent = "Press Call a number to start";
+    $("called").innerHTML = "";
+    $("verdict").textContent = "";
+    $("call").disabled = false;
+    $("call").textContent = "Call a number";
+    paint();
+  }
+
+  function paint(){
+    $("called").innerHTML = called.map(function(n){ return "<span>"+n+"</span>"; }).join("");
+    var h = "";
+    GUESTS.forEach(function(g){
+      var p = PPTicket.progress(g.grid, called);
+      var state = p.fullHouse ? "Full house!"
+                : p.hasLine ? "Has a line"
+                : (p.bestLineNeeds === 1 ? "One number away" : p.bestLineNeeds + " off a line");
+      h += '<div class="p'+(p.fullHouse||p.hasLine?" win":"")+'"><span>'+g.name+'</span>'+
+           '<span class="n">'+state+'</span></div>';
+    });
+    $("who").innerHTML = h;
+    // One ticket shown in full, so the host can see what a guest is actually looking at.
+    var g0 = GUESTS[0], cells = "";
+    g0.grid.forEach(function(row){
+      row.forEach(function(n){
+        if(!n) cells += '<div class="x"></div>';
+        else cells += '<div class="'+(called.indexOf(n)>=0?"on":"")+'">'+n+'</div>';
+      });
+    });
+    $("who").insertAdjacentHTML("beforeend",
+      '<p class="note" style="margin:12px 0 0">'+g0.name+'&rsquo;s ticket</p><div class="tik">'+cells+'</div>');
+  }
+
+  function call(){
+    if(done) return;
+    var n = pool.shift();
+    if(n == null){ done = true; $("call").disabled = true; return; }
+    called.push(n);
+    $("ball").textContent = n;
+    $("said").textContent = CALLS[n] || ("Number " + n);
+    paint();
+    var won = GUESTS.filter(function(g){ return PPTicket.progress(g.grid, called).fullHouse; });
+    var line = GUESTS.filter(function(g){ return PPTicket.progress(g.grid, called).hasLine; });
+    if(won.length){
+      done = true;
+      $("call").disabled = true;
+      $("call").textContent = "That is a full house";
+      $("verdict").textContent = won[0].name + " has a full house. On the night you would stop, "+
+        "check their ticket against the called numbers on the telly, and hand over the prize.";
+    } else if(line.length && !$("verdict").textContent){
+      $("verdict").textContent = line[0].name + " has a line. Most hosts pay a small prize for "+
+        "the first line and keep calling for the full house.";
+    }
+  }
+
+  $("call").addEventListener("click", call);
+  $("reset").addEventListener("click", reset);
+  reset();
+})();
+</script>

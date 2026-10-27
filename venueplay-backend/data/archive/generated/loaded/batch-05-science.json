@@ -1,0 +1,2402 @@
+[
+  {
+    "question": "What is the largest land animal on Earth?",
+    "options": [
+      "African elephant",
+      "White rhino",
+      "Hippopotamus",
+      "Giraffe"
+    ],
+    "correctIndex": 0,
+    "category": "Animals",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which gas do humans need to breathe in to survive?",
+    "options": [
+      "Nitrogen",
+      "Oxygen",
+      "Carbon dioxide",
+      "Helium"
+    ],
+    "correctIndex": 1,
+    "category": "Human body",
+    "difficulty": "easy"
+  },
+  {
+    "question": "How many legs does a spider have?",
+    "options": [
+      "Six",
+      "Eight",
+      "Ten",
+      "Twelve"
+    ],
+    "correctIndex": 1,
+    "category": "Animals",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the closest planet to the Sun?",
+    "options": [
+      "Venus",
+      "Earth",
+      "Mercury",
+      "Mars"
+    ],
+    "correctIndex": 2,
+    "category": "Physics and space",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which Australian animal is known for carrying its young in a pouch and hopping?",
+    "options": [
+      "Wombat",
+      "Kangaroo",
+      "Echidna",
+      "Platypus"
+    ],
+    "correctIndex": 1,
+    "category": "Australian wildlife",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the chemical symbol for water?",
+    "options": [
+      "CO2",
+      "H2O",
+      "O2",
+      "NaCl"
+    ],
+    "correctIndex": 1,
+    "category": "Chemistry",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which organ pumps blood around the human body?",
+    "options": [
+      "Liver",
+      "Lungs",
+      "Heart",
+      "Kidney"
+    ],
+    "correctIndex": 2,
+    "category": "Human body",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What do bees collect from flowers to make honey?",
+    "options": [
+      "Pollen",
+      "Nectar",
+      "Sap",
+      "Dew"
+    ],
+    "correctIndex": 1,
+    "category": "Animals",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the largest animal ever known to have lived?",
+    "options": [
+      "Blue whale",
+      "African elephant",
+      "Argentinosaurus",
+      "Great white shark"
+    ],
+    "correctIndex": 0,
+    "category": "Oceans",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which planet is known as the Red Planet?",
+    "options": [
+      "Jupiter",
+      "Mars",
+      "Saturn",
+      "Neptune"
+    ],
+    "correctIndex": 1,
+    "category": "Physics and space",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the hardest known natural substance?",
+    "options": [
+      "Gold",
+      "Iron",
+      "Diamond",
+      "Quartz"
+    ],
+    "correctIndex": 2,
+    "category": "Chemistry",
+    "difficulty": "easy"
+  },
+  {
+    "question": "How many bones does an adult human have?",
+    "options": [
+      "106",
+      "206",
+      "306",
+      "406"
+    ],
+    "correctIndex": 1,
+    "category": "Human body",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What do you call a baby kangaroo?",
+    "options": [
+      "Cub",
+      "Joey",
+      "Kit",
+      "Calf"
+    ],
+    "correctIndex": 1,
+    "category": "Australian wildlife",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which of these is a mammal?",
+    "options": [
+      "Crocodile",
+      "Dolphin",
+      "Frog",
+      "Eagle"
+    ],
+    "correctIndex": 1,
+    "category": "Animals",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the process by which plants make their own food using sunlight?",
+    "options": [
+      "Respiration",
+      "Photosynthesis",
+      "Digestion",
+      "Fermentation"
+    ],
+    "correctIndex": 1,
+    "category": "Plants",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is frozen water called?",
+    "options": [
+      "Steam",
+      "Ice",
+      "Vapour",
+      "Frost"
+    ],
+    "correctIndex": 1,
+    "category": "Weather",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which part of a plant absorbs water from the soil?",
+    "options": [
+      "Leaves",
+      "Flowers",
+      "Roots",
+      "Stem"
+    ],
+    "correctIndex": 2,
+    "category": "Plants",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the fastest land animal in the world?",
+    "options": [
+      "Lion",
+      "Cheetah",
+      "Greyhound",
+      "Horse"
+    ],
+    "correctIndex": 1,
+    "category": "Animals",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which gas do plants take in from the air for photosynthesis?",
+    "options": [
+      "Oxygen",
+      "Nitrogen",
+      "Carbon dioxide",
+      "Hydrogen"
+    ],
+    "correctIndex": 2,
+    "category": "Plants",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What colour is chlorophyll, the pigment in most plants?",
+    "options": [
+      "Red",
+      "Green",
+      "Blue",
+      "Yellow"
+    ],
+    "correctIndex": 1,
+    "category": "Plants",
+    "difficulty": "easy"
+  },
+  {
+    "question": "How many colours are there in a rainbow, traditionally?",
+    "options": [
+      "Five",
+      "Six",
+      "Seven",
+      "Eight"
+    ],
+    "correctIndex": 2,
+    "category": "Weather",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which sea creature has eight arms?",
+    "options": [
+      "Squid",
+      "Octopus",
+      "Starfish",
+      "Jellyfish"
+    ],
+    "correctIndex": 1,
+    "category": "Oceans",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the name of the force that pulls objects toward the Earth?",
+    "options": [
+      "Magnetism",
+      "Friction",
+      "Gravity",
+      "Pressure"
+    ],
+    "correctIndex": 2,
+    "category": "Physics and space",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which large reef off Australia's coast is the world's biggest coral reef system?",
+    "options": [
+      "Ningaloo Reef",
+      "Great Barrier Reef",
+      "Coral Sea Reef",
+      "Whitsunday Reef"
+    ],
+    "correctIndex": 1,
+    "category": "Oceans",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the tallest type of animal in the world?",
+    "options": [
+      "Elephant",
+      "Giraffe",
+      "Ostrich",
+      "Camel"
+    ],
+    "correctIndex": 1,
+    "category": "Animals",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which Australian mammal lays eggs and has a duck-like bill?",
+    "options": [
+      "Wombat",
+      "Platypus",
+      "Koala",
+      "Possum"
+    ],
+    "correctIndex": 1,
+    "category": "Australian wildlife",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What do caterpillars turn into?",
+    "options": [
+      "Beetles",
+      "Butterflies",
+      "Spiders",
+      "Bees"
+    ],
+    "correctIndex": 1,
+    "category": "Animals",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which planet is the largest in our solar system?",
+    "options": [
+      "Saturn",
+      "Jupiter",
+      "Neptune",
+      "Uranus"
+    ],
+    "correctIndex": 1,
+    "category": "Physics and space",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the main gas that makes up most of Earth's atmosphere?",
+    "options": [
+      "Oxygen",
+      "Carbon dioxide",
+      "Nitrogen",
+      "Argon"
+    ],
+    "correctIndex": 2,
+    "category": "Weather",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the largest organ of the human body?",
+    "options": [
+      "Liver",
+      "Skin",
+      "Lungs",
+      "Brain"
+    ],
+    "correctIndex": 1,
+    "category": "Human body",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which bird is famous for being unable to fly and is native to Australia?",
+    "options": [
+      "Kookaburra",
+      "Emu",
+      "Magpie",
+      "Galah"
+    ],
+    "correctIndex": 1,
+    "category": "Australian wildlife",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What do we call animals that eat only plants?",
+    "options": [
+      "Carnivores",
+      "Herbivores",
+      "Omnivores",
+      "Insectivores"
+    ],
+    "correctIndex": 1,
+    "category": "Biology",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the boiling point of water at sea level in degrees Celsius?",
+    "options": [
+      "50",
+      "90",
+      "100",
+      "120"
+    ],
+    "correctIndex": 2,
+    "category": "Chemistry",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which of these animals is a marsupial?",
+    "options": [
+      "Rabbit",
+      "Koala",
+      "Ferret",
+      "Otter"
+    ],
+    "correctIndex": 1,
+    "category": "Australian wildlife",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is a group of lions called?",
+    "options": [
+      "Pack",
+      "Pride",
+      "Herd",
+      "Flock"
+    ],
+    "correctIndex": 1,
+    "category": "Animals",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which of these is NOT a state of matter?",
+    "options": [
+      "Solid",
+      "Liquid",
+      "Gas",
+      "Energy"
+    ],
+    "correctIndex": 3,
+    "category": "Physics and space",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the freezing point of water in degrees Celsius?",
+    "options": [
+      "0",
+      "10",
+      "32",
+      "-10"
+    ],
+    "correctIndex": 0,
+    "category": "Chemistry",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which animal is known as the 'king of the jungle'?",
+    "options": [
+      "Tiger",
+      "Lion",
+      "Gorilla",
+      "Elephant"
+    ],
+    "correctIndex": 1,
+    "category": "Animals",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What do you call a scientist who studies weather?",
+    "options": [
+      "Geologist",
+      "Meteorologist",
+      "Biologist",
+      "Astronomer"
+    ],
+    "correctIndex": 1,
+    "category": "Weather",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which body part do humans use to smell?",
+    "options": [
+      "Ears",
+      "Nose",
+      "Tongue",
+      "Eyes"
+    ],
+    "correctIndex": 1,
+    "category": "Human body",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the largest species of shark?",
+    "options": [
+      "Great white shark",
+      "Whale shark",
+      "Tiger shark",
+      "Hammerhead shark"
+    ],
+    "correctIndex": 1,
+    "category": "Oceans",
+    "difficulty": "medium"
+  },
+  {
+    "question": "How many chambers does a human heart have?",
+    "options": [
+      "Two",
+      "Three",
+      "Four",
+      "Five"
+    ],
+    "correctIndex": 2,
+    "category": "Human body",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which vitamin does the human body produce when exposed to sunlight?",
+    "options": [
+      "Vitamin A",
+      "Vitamin C",
+      "Vitamin D",
+      "Vitamin K"
+    ],
+    "correctIndex": 2,
+    "category": "Human body",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the chemical symbol for gold?",
+    "options": [
+      "Go",
+      "Gd",
+      "Au",
+      "Ag"
+    ],
+    "correctIndex": 2,
+    "category": "Chemistry",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which dinosaur's name means 'tyrant lizard king'?",
+    "options": [
+      "Velociraptor",
+      "Tyrannosaurus rex",
+      "Stegosaurus",
+      "Triceratops"
+    ],
+    "correctIndex": 1,
+    "category": "Dinosaurs",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the powerhouse of the cell?",
+    "options": [
+      "Nucleus",
+      "Ribosome",
+      "Mitochondria",
+      "Cytoplasm"
+    ],
+    "correctIndex": 2,
+    "category": "Biology",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which Australian bird is famous for its laughing call?",
+    "options": [
+      "Kookaburra",
+      "Lyrebird",
+      "Currawong",
+      "Cockatoo"
+    ],
+    "correctIndex": 0,
+    "category": "Australian wildlife",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the most abundant gas in the air we breathe?",
+    "options": [
+      "Oxygen",
+      "Nitrogen",
+      "Carbon dioxide",
+      "Hydrogen"
+    ],
+    "correctIndex": 1,
+    "category": "Chemistry",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which planet has the most prominent ring system?",
+    "options": [
+      "Jupiter",
+      "Saturn",
+      "Uranus",
+      "Neptune"
+    ],
+    "correctIndex": 1,
+    "category": "Physics and space",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What type of animal is a Komodo dragon?",
+    "options": [
+      "Snake",
+      "Lizard",
+      "Crocodile",
+      "Amphibian"
+    ],
+    "correctIndex": 1,
+    "category": "Animals",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the study of living organisms called?",
+    "options": [
+      "Geology",
+      "Biology",
+      "Chemistry",
+      "Physics"
+    ],
+    "correctIndex": 1,
+    "category": "Biology",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which blood cells help the body fight infection?",
+    "options": [
+      "Red blood cells",
+      "White blood cells",
+      "Platelets",
+      "Plasma cells"
+    ],
+    "correctIndex": 1,
+    "category": "Human body",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the largest planet's famous storm called?",
+    "options": [
+      "The Great Red Spot",
+      "The Big Eye",
+      "The Red Cyclone",
+      "The Storm King"
+    ],
+    "correctIndex": 0,
+    "category": "Physics and space",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which Australian animal is known for its distinctive cube-shaped droppings?",
+    "options": [
+      "Koala",
+      "Wombat",
+      "Echidna",
+      "Bandicoot"
+    ],
+    "correctIndex": 1,
+    "category": "Australian wildlife",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the smallest unit of matter that retains an element's properties?",
+    "options": [
+      "Molecule",
+      "Atom",
+      "Cell",
+      "Proton"
+    ],
+    "correctIndex": 1,
+    "category": "Chemistry",
+    "difficulty": "medium"
+  },
+  {
+    "question": "How many hearts does an octopus have?",
+    "options": [
+      "One",
+      "Two",
+      "Three",
+      "Four"
+    ],
+    "correctIndex": 2,
+    "category": "Oceans",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the largest bone in the human body?",
+    "options": [
+      "Femur",
+      "Tibia",
+      "Humerus",
+      "Spine"
+    ],
+    "correctIndex": 0,
+    "category": "Human body",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which Australian venomous creature is one of the most dangerous jellyfish in the world?",
+    "options": [
+      "Blue-ringed octopus",
+      "Box jellyfish",
+      "Stonefish",
+      "Cone snail"
+    ],
+    "correctIndex": 1,
+    "category": "Australian wildlife",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What gas do plants release during photosynthesis?",
+    "options": [
+      "Carbon dioxide",
+      "Oxygen",
+      "Nitrogen",
+      "Methane"
+    ],
+    "correctIndex": 1,
+    "category": "Plants",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which metal is liquid at room temperature?",
+    "options": [
+      "Iron",
+      "Mercury",
+      "Aluminium",
+      "Copper"
+    ],
+    "correctIndex": 1,
+    "category": "Chemistry",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is a young frog called before it develops legs?",
+    "options": [
+      "Larva",
+      "Tadpole",
+      "Nymph",
+      "Fry"
+    ],
+    "correctIndex": 1,
+    "category": "Biology",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which part of the human eye controls how much light enters?",
+    "options": [
+      "Retina",
+      "Cornea",
+      "Pupil",
+      "Lens"
+    ],
+    "correctIndex": 2,
+    "category": "Human body",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the largest desert in the world?",
+    "options": [
+      "Sahara Desert",
+      "Antarctic Desert",
+      "Gobi Desert",
+      "Arabian Desert"
+    ],
+    "correctIndex": 1,
+    "category": "Nature",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which Australian marsupial is known for eating eucalyptus leaves?",
+    "options": [
+      "Wombat",
+      "Koala",
+      "Quokka",
+      "Bilby"
+    ],
+    "correctIndex": 1,
+    "category": "Australian wildlife",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the chemical symbol for sodium?",
+    "options": [
+      "So",
+      "Sd",
+      "Na",
+      "Ne"
+    ],
+    "correctIndex": 2,
+    "category": "Chemistry",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What do we call the layer of gases surrounding the Earth?",
+    "options": [
+      "Stratosphere",
+      "Atmosphere",
+      "Biosphere",
+      "Hydrosphere"
+    ],
+    "correctIndex": 1,
+    "category": "Weather",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which dinosaur had three horns on its face?",
+    "options": [
+      "Stegosaurus",
+      "Triceratops",
+      "Ankylosaurus",
+      "Brachiosaurus"
+    ],
+    "correctIndex": 1,
+    "category": "Dinosaurs",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the speed of light approximately in a vacuum?",
+    "options": [
+      "300,000 km per second",
+      "30,000 km per second",
+      "3,000 km per second",
+      "3 million km per second"
+    ],
+    "correctIndex": 0,
+    "category": "Physics and space",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which organ is responsible for filtering waste from the blood?",
+    "options": [
+      "Liver",
+      "Kidneys",
+      "Stomach",
+      "Pancreas"
+    ],
+    "correctIndex": 1,
+    "category": "Human body",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the tiny Australian marsupial with a long snout, sometimes called the 'Easter' alternative to a rabbit?",
+    "options": [
+      "Bilby",
+      "Numbat",
+      "Potoroo",
+      "Antechinus"
+    ],
+    "correctIndex": 0,
+    "category": "Australian wildlife",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which of these animals is a cephalopod?",
+    "options": [
+      "Crab",
+      "Squid",
+      "Lobster",
+      "Clam"
+    ],
+    "correctIndex": 1,
+    "category": "Oceans",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the process of water turning into vapour called?",
+    "options": [
+      "Condensation",
+      "Evaporation",
+      "Precipitation",
+      "Sublimation"
+    ],
+    "correctIndex": 1,
+    "category": "Weather",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which planet spins on its side, unlike the others?",
+    "options": [
+      "Neptune",
+      "Uranus",
+      "Saturn",
+      "Venus"
+    ],
+    "correctIndex": 1,
+    "category": "Physics and space",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What is the most common blood type in humans worldwide?",
+    "options": [
+      "O positive",
+      "AB negative",
+      "B positive",
+      "A negative"
+    ],
+    "correctIndex": 0,
+    "category": "Human body",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which mammal is the only one capable of true, sustained flight?",
+    "options": [
+      "Flying squirrel",
+      "Bat",
+      "Sugar glider",
+      "Colugo"
+    ],
+    "correctIndex": 1,
+    "category": "Animals",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the pH value of a neutral substance like pure water?",
+    "options": [
+      "1",
+      "7",
+      "10",
+      "14"
+    ],
+    "correctIndex": 1,
+    "category": "Chemistry",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which large flightless Australian bird can be dangerous and lives in tropical rainforests?",
+    "options": [
+      "Emu",
+      "Cassowary",
+      "Brolga",
+      "Bustard"
+    ],
+    "correctIndex": 1,
+    "category": "Australian wildlife",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What do we call the process where a caterpillar transforms into a butterfly?",
+    "options": [
+      "Migration",
+      "Metamorphosis",
+      "Hibernation",
+      "Regeneration"
+    ],
+    "correctIndex": 1,
+    "category": "Biology",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the hardest substance found in the human body?",
+    "options": [
+      "Bone",
+      "Tooth enamel",
+      "Cartilage",
+      "Fingernail"
+    ],
+    "correctIndex": 1,
+    "category": "Human body",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which gas gives soft drinks their fizz?",
+    "options": [
+      "Oxygen",
+      "Nitrogen",
+      "Carbon dioxide",
+      "Hydrogen"
+    ],
+    "correctIndex": 2,
+    "category": "Chemistry",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the world's largest living structure, visible from space?",
+    "options": [
+      "Amazon rainforest",
+      "Great Barrier Reef",
+      "Sahara Desert",
+      "Grand Canyon"
+    ],
+    "correctIndex": 1,
+    "category": "Oceans",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which animal has the longest lifespan on Earth among known vertebrates?",
+    "options": [
+      "Giant tortoise",
+      "Greenland shark",
+      "Bowhead whale",
+      "Koi fish"
+    ],
+    "correctIndex": 1,
+    "category": "Oceans",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What is a group of crows called?",
+    "options": [
+      "A pack",
+      "A murder",
+      "A flock",
+      "A gaggle"
+    ],
+    "correctIndex": 1,
+    "category": "Animals",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the name of the pigment that gives human skin its colour?",
+    "options": [
+      "Chlorophyll",
+      "Melanin",
+      "Keratin",
+      "Haemoglobin"
+    ],
+    "correctIndex": 1,
+    "category": "Human body",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which planet is closest in size to Earth?",
+    "options": [
+      "Mars",
+      "Venus",
+      "Mercury",
+      "Neptune"
+    ],
+    "correctIndex": 1,
+    "category": "Physics and space",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the term for animals that are active mainly at night?",
+    "options": [
+      "Diurnal",
+      "Nocturnal",
+      "Crepuscular",
+      "Migratory"
+    ],
+    "correctIndex": 1,
+    "category": "Biology",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which Australian snake is considered the most venomous land snake in the world?",
+    "options": [
+      "Eastern brown snake",
+      "Inland taipan",
+      "Tiger snake",
+      "Death adder"
+    ],
+    "correctIndex": 1,
+    "category": "Australian wildlife",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the chemical symbol for iron?",
+    "options": [
+      "Ir",
+      "In",
+      "Fe",
+      "Fr"
+    ],
+    "correctIndex": 2,
+    "category": "Chemistry",
+    "difficulty": "medium"
+  },
+  {
+    "question": "How long does it take light from the Sun to reach Earth?",
+    "options": [
+      "About 8 minutes",
+      "About 8 seconds",
+      "About 8 hours",
+      "About 8 days"
+    ],
+    "correctIndex": 0,
+    "category": "Physics and space",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which part of the human brain is responsible for balance and coordination?",
+    "options": [
+      "Cerebrum",
+      "Cerebellum",
+      "Brain stem",
+      "Hippocampus"
+    ],
+    "correctIndex": 1,
+    "category": "Human body",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What is the largest type of penguin?",
+    "options": [
+      "King penguin",
+      "Emperor penguin",
+      "Gentoo penguin",
+      "Adelie penguin"
+    ],
+    "correctIndex": 1,
+    "category": "Animals",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which cloud type is tall, dark, and associated with thunderstorms?",
+    "options": [
+      "Cirrus",
+      "Cumulonimbus",
+      "Stratus",
+      "Cirrocumulus"
+    ],
+    "correctIndex": 1,
+    "category": "Weather",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the smallest bone in the human body?",
+    "options": [
+      "Stapes in the ear",
+      "Bone in the little toe",
+      "Nasal bone",
+      "Coccyx"
+    ],
+    "correctIndex": 0,
+    "category": "Human body",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which element has the chemical symbol 'O'?",
+    "options": [
+      "Osmium",
+      "Oxygen",
+      "Gold",
+      "Oganesson"
+    ],
+    "correctIndex": 1,
+    "category": "Chemistry",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the term for the variety of life in a particular habitat or ecosystem?",
+    "options": [
+      "Biomass",
+      "Biodiversity",
+      "Biology",
+      "Bioluminescence"
+    ],
+    "correctIndex": 1,
+    "category": "Biology",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which Australian marine animal has venom that can be deadly and displays bright blue rings when threatened?",
+    "options": [
+      "Box jellyfish",
+      "Blue-ringed octopus",
+      "Cone snail",
+      "Lionfish"
+    ],
+    "correctIndex": 1,
+    "category": "Australian wildlife",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the process by which liquid water becomes a gas without boiling, called at the surface?",
+    "options": [
+      "Condensation",
+      "Evaporation",
+      "Freezing",
+      "Melting"
+    ],
+    "correctIndex": 1,
+    "category": "Weather",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which dinosaur is known for the bony plates along its back and spikes on its tail?",
+    "options": [
+      "Triceratops",
+      "Stegosaurus",
+      "Velociraptor",
+      "Diplodocus"
+    ],
+    "correctIndex": 1,
+    "category": "Dinosaurs",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the name for the sac-like structures in the lungs where gas exchange happens?",
+    "options": [
+      "Bronchi",
+      "Alveoli",
+      "Villi",
+      "Nephrons"
+    ],
+    "correctIndex": 1,
+    "category": "Human body",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which animal is the largest living reptile?",
+    "options": [
+      "Komodo dragon",
+      "Saltwater crocodile",
+      "Green anaconda",
+      "Galapagos tortoise"
+    ],
+    "correctIndex": 1,
+    "category": "Animals",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What natural phenomenon is measured using the Richter or moment magnitude scale?",
+    "options": [
+      "Wind speed",
+      "Rainfall",
+      "Earthquakes",
+      "Temperature"
+    ],
+    "correctIndex": 2,
+    "category": "Nature",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which vitamin is essential for helping blood to clot?",
+    "options": [
+      "Vitamin A",
+      "Vitamin C",
+      "Vitamin K",
+      "Vitamin B12"
+    ],
+    "correctIndex": 2,
+    "category": "Human body",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What is the common name for solid carbon dioxide?",
+    "options": [
+      "Dry ice",
+      "Rock salt",
+      "Quartz",
+      "Chalk"
+    ],
+    "correctIndex": 0,
+    "category": "Chemistry",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which sea creature is famous for changing colour to blend into its surroundings?",
+    "options": [
+      "Jellyfish",
+      "Cuttlefish",
+      "Sea urchin",
+      "Barnacle"
+    ],
+    "correctIndex": 1,
+    "category": "Oceans",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the term for a rock that has fallen to Earth from space?",
+    "options": [
+      "Asteroid",
+      "Comet",
+      "Meteorite",
+      "Meteoroid"
+    ],
+    "correctIndex": 2,
+    "category": "Physics and space",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which Australian animal is a small, round-faced macropod found mainly on Rottnest Island and known for looking like it's smiling?",
+    "options": [
+      "Bilby",
+      "Quokka",
+      "Potoroo",
+      "Bettong"
+    ],
+    "correctIndex": 1,
+    "category": "Australian wildlife",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the largest muscle in the human body?",
+    "options": [
+      "Biceps",
+      "Gluteus maximus",
+      "Quadriceps",
+      "Heart"
+    ],
+    "correctIndex": 1,
+    "category": "Human body",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which force opposes motion between two surfaces in contact?",
+    "options": [
+      "Gravity",
+      "Friction",
+      "Magnetism",
+      "Tension"
+    ],
+    "correctIndex": 1,
+    "category": "Physics and space",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the name of the galaxy that contains our solar system?",
+    "options": [
+      "Andromeda",
+      "Milky Way",
+      "Whirlpool",
+      "Sombrero"
+    ],
+    "correctIndex": 1,
+    "category": "Physics and space",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which type of animal is a coral?",
+    "options": [
+      "Plant",
+      "Animal",
+      "Fungus",
+      "Mineral"
+    ],
+    "correctIndex": 1,
+    "category": "Oceans",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the term for animals with a backbone?",
+    "options": [
+      "Invertebrates",
+      "Vertebrates",
+      "Arthropods",
+      "Molluscs"
+    ],
+    "correctIndex": 1,
+    "category": "Biology",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which planet is the hottest in our solar system?",
+    "options": [
+      "Mercury",
+      "Venus",
+      "Mars",
+      "Jupiter"
+    ],
+    "correctIndex": 1,
+    "category": "Physics and space",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What is the name for a scientist who studies fossils?",
+    "options": [
+      "Archaeologist",
+      "Palaeontologist",
+      "Geologist",
+      "Anthropologist"
+    ],
+    "correctIndex": 1,
+    "category": "Dinosaurs",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which body system includes the brain, spinal cord and nerves?",
+    "options": [
+      "Circulatory system",
+      "Nervous system",
+      "Digestive system",
+      "Respiratory system"
+    ],
+    "correctIndex": 1,
+    "category": "Human body",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the primary source of energy for Earth's climate and weather?",
+    "options": [
+      "The Moon",
+      "The Sun",
+      "Earth's core",
+      "Ocean currents"
+    ],
+    "correctIndex": 1,
+    "category": "Weather",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which gas makes up about 21 percent of Earth's atmosphere?",
+    "options": [
+      "Nitrogen",
+      "Oxygen",
+      "Carbon dioxide",
+      "Argon"
+    ],
+    "correctIndex": 1,
+    "category": "Chemistry",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is a group of fish called?",
+    "options": [
+      "A herd",
+      "A school",
+      "A flock",
+      "A pack"
+    ],
+    "correctIndex": 1,
+    "category": "Oceans",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which animal produces silk to make webs?",
+    "options": [
+      "Ant",
+      "Spider",
+      "Beetle",
+      "Wasp"
+    ],
+    "correctIndex": 1,
+    "category": "Animals",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the term for the bending of light as it passes through water or glass?",
+    "options": [
+      "Reflection",
+      "Refraction",
+      "Diffraction",
+      "Absorption"
+    ],
+    "correctIndex": 1,
+    "category": "Physics and space",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which Australian animal is a spiny egg-laying mammal, one of only two monotremes?",
+    "options": [
+      "Wombat",
+      "Echidna",
+      "Bandicoot",
+      "Numbat"
+    ],
+    "correctIndex": 1,
+    "category": "Australian wildlife",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the main mineral that makes bones and teeth strong?",
+    "options": [
+      "Iron",
+      "Calcium",
+      "Potassium",
+      "Zinc"
+    ],
+    "correctIndex": 1,
+    "category": "Human body",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which of these is a noble gas?",
+    "options": [
+      "Oxygen",
+      "Helium",
+      "Chlorine",
+      "Hydrogen"
+    ],
+    "correctIndex": 1,
+    "category": "Chemistry",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the name of the process by which plants lose water through their leaves?",
+    "options": [
+      "Respiration",
+      "Transpiration",
+      "Germination",
+      "Pollination"
+    ],
+    "correctIndex": 1,
+    "category": "Plants",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which dinosaur was one of the largest carnivores and had a sail-like structure on its back?",
+    "options": [
+      "Spinosaurus",
+      "Allosaurus",
+      "Carnotaurus",
+      "Giganotosaurus"
+    ],
+    "correctIndex": 0,
+    "category": "Dinosaurs",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What is the term for the point in an orbit where a planet is closest to the Sun?",
+    "options": [
+      "Aphelion",
+      "Perihelion",
+      "Equinox",
+      "Solstice"
+    ],
+    "correctIndex": 1,
+    "category": "Physics and space",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which animal is known to be able to regenerate lost limbs?",
+    "options": [
+      "Dog",
+      "Starfish",
+      "Rabbit",
+      "Sparrow"
+    ],
+    "correctIndex": 1,
+    "category": "Oceans",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the largest part of the human brain?",
+    "options": [
+      "Cerebellum",
+      "Cerebrum",
+      "Brain stem",
+      "Thalamus"
+    ],
+    "correctIndex": 1,
+    "category": "Human body",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which weather instrument measures air pressure?",
+    "options": [
+      "Thermometer",
+      "Barometer",
+      "Anemometer",
+      "Hygrometer"
+    ],
+    "correctIndex": 1,
+    "category": "Weather",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What do we call an animal that eats both plants and meat?",
+    "options": [
+      "Herbivore",
+      "Carnivore",
+      "Omnivore",
+      "Detritivore"
+    ],
+    "correctIndex": 2,
+    "category": "Biology",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which Australian bird can mimic the sounds of other birds and even chainsaws and cameras?",
+    "options": [
+      "Lyrebird",
+      "Bowerbird",
+      "Kookaburra",
+      "Magpie"
+    ],
+    "correctIndex": 0,
+    "category": "Australian wildlife",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the chemical symbol for potassium?",
+    "options": [
+      "P",
+      "Po",
+      "K",
+      "Pt"
+    ],
+    "correctIndex": 2,
+    "category": "Chemistry",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which type of blood vessel carries blood away from the heart?",
+    "options": [
+      "Veins",
+      "Arteries",
+      "Capillaries",
+      "Venules"
+    ],
+    "correctIndex": 1,
+    "category": "Human body",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the deepest known point in the world's oceans?",
+    "options": [
+      "Puerto Rico Trench",
+      "Mariana Trench",
+      "Java Trench",
+      "Tonga Trench"
+    ],
+    "correctIndex": 1,
+    "category": "Oceans",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which planet is known for having the most moons in our solar system?",
+    "options": [
+      "Jupiter",
+      "Saturn",
+      "Neptune",
+      "Uranus"
+    ],
+    "correctIndex": 1,
+    "category": "Physics and space",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What is the name for a baby swan?",
+    "options": [
+      "Chick",
+      "Cygnet",
+      "Gosling",
+      "Duckling"
+    ],
+    "correctIndex": 1,
+    "category": "Animals",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which mineral is the softest on the Mohs hardness scale?",
+    "options": [
+      "Talc",
+      "Gypsum",
+      "Diamond",
+      "Quartz"
+    ],
+    "correctIndex": 0,
+    "category": "Chemistry",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What is the visible surface of the Sun called?",
+    "options": [
+      "Corona",
+      "Photosphere",
+      "Chromosphere",
+      "Core"
+    ],
+    "correctIndex": 1,
+    "category": "Physics and space",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which animal has the largest eyes of any creature on Earth?",
+    "options": [
+      "Blue whale",
+      "Giant squid",
+      "Ostrich",
+      "Elephant"
+    ],
+    "correctIndex": 1,
+    "category": "Oceans",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What is the natural process of animals sleeping through the winter called?",
+    "options": [
+      "Migration",
+      "Hibernation",
+      "Aestivation",
+      "Molting"
+    ],
+    "correctIndex": 1,
+    "category": "Biology",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which part of the flower produces pollen?",
+    "options": [
+      "Stigma",
+      "Anther",
+      "Ovary",
+      "Petal"
+    ],
+    "correctIndex": 1,
+    "category": "Plants",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the name of the Australian marsupial predator that went extinct in the 20th century, also called the Tasmanian tiger?",
+    "options": [
+      "Thylacine",
+      "Quoll",
+      "Tasmanian devil",
+      "Dingo"
+    ],
+    "correctIndex": 0,
+    "category": "Australian wildlife",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which unit is used to measure electric current?",
+    "options": [
+      "Volt",
+      "Watt",
+      "Ampere",
+      "Ohm"
+    ],
+    "correctIndex": 2,
+    "category": "Physics and space",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the study of the weather and atmosphere called?",
+    "options": [
+      "Geology",
+      "Meteorology",
+      "Astronomy",
+      "Ecology"
+    ],
+    "correctIndex": 1,
+    "category": "Weather",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which human organ can regenerate itself after part is removed?",
+    "options": [
+      "Heart",
+      "Liver",
+      "Brain",
+      "Kidney"
+    ],
+    "correctIndex": 1,
+    "category": "Human body",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the term for a group of stars forming a recognisable pattern?",
+    "options": [
+      "Galaxy",
+      "Constellation",
+      "Nebula",
+      "Cluster"
+    ],
+    "correctIndex": 1,
+    "category": "Physics and space",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which large marine mammal is known for its distinctive spiral tusk?",
+    "options": [
+      "Walrus",
+      "Narwhal",
+      "Beluga",
+      "Manatee"
+    ],
+    "correctIndex": 1,
+    "category": "Oceans",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the chemical symbol for carbon?",
+    "options": [
+      "Ca",
+      "C",
+      "Co",
+      "Cr"
+    ],
+    "correctIndex": 1,
+    "category": "Chemistry",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which animal is known as man's best friend?",
+    "options": [
+      "Cat",
+      "Dog",
+      "Horse",
+      "Rabbit"
+    ],
+    "correctIndex": 1,
+    "category": "Animals",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the name for the coloured part of the human eye?",
+    "options": [
+      "Pupil",
+      "Iris",
+      "Cornea",
+      "Retina"
+    ],
+    "correctIndex": 1,
+    "category": "Human body",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which dinosaur was a long-necked plant eater that could reach very tall trees?",
+    "options": [
+      "Tyrannosaurus",
+      "Brachiosaurus",
+      "Velociraptor",
+      "Deinonychus"
+    ],
+    "correctIndex": 1,
+    "category": "Dinosaurs",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What percentage of the human body is roughly made up of water?",
+    "options": [
+      "About 20 percent",
+      "About 40 percent",
+      "About 60 percent",
+      "About 90 percent"
+    ],
+    "correctIndex": 2,
+    "category": "Human body",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which gas is most responsible for the greenhouse effect from human activity?",
+    "options": [
+      "Oxygen",
+      "Carbon dioxide",
+      "Nitrogen",
+      "Helium"
+    ],
+    "correctIndex": 1,
+    "category": "Weather",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the term for a young horse?",
+    "options": [
+      "Calf",
+      "Foal",
+      "Kid",
+      "Lamb"
+    ],
+    "correctIndex": 1,
+    "category": "Animals",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which Australian animal is the largest marsupial in the world?",
+    "options": [
+      "Red kangaroo",
+      "Grey kangaroo",
+      "Wombat",
+      "Wallaroo"
+    ],
+    "correctIndex": 0,
+    "category": "Australian wildlife",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the name of the tube that carries food from the mouth to the stomach?",
+    "options": [
+      "Trachea",
+      "Oesophagus",
+      "Larynx",
+      "Duodenum"
+    ],
+    "correctIndex": 1,
+    "category": "Human body",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which of these animals is cold-blooded?",
+    "options": [
+      "Dolphin",
+      "Lizard",
+      "Bat",
+      "Eagle"
+    ],
+    "correctIndex": 1,
+    "category": "Biology",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the largest moon of Saturn?",
+    "options": [
+      "Europa",
+      "Titan",
+      "Ganymede",
+      "Io"
+    ],
+    "correctIndex": 1,
+    "category": "Physics and space",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which type of rock is formed from cooled lava or magma?",
+    "options": [
+      "Sedimentary",
+      "Metamorphic",
+      "Igneous",
+      "Fossil"
+    ],
+    "correctIndex": 2,
+    "category": "Nature",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the common name for the medical condition where bones become brittle and weak?",
+    "options": [
+      "Arthritis",
+      "Osteoporosis",
+      "Scoliosis",
+      "Rickets"
+    ],
+    "correctIndex": 1,
+    "category": "Human body",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which animal is famous for having a prehensile trunk?",
+    "options": [
+      "Rhino",
+      "Elephant",
+      "Hippo",
+      "Tapir"
+    ],
+    "correctIndex": 1,
+    "category": "Animals",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the largest species of big cat in the world?",
+    "options": [
+      "Lion",
+      "Tiger",
+      "Jaguar",
+      "Leopard"
+    ],
+    "correctIndex": 1,
+    "category": "Animals",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which layer of Earth's atmosphere contains the ozone layer?",
+    "options": [
+      "Troposphere",
+      "Stratosphere",
+      "Mesosphere",
+      "Thermosphere"
+    ],
+    "correctIndex": 1,
+    "category": "Weather",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What is the term for the female reproductive part of a flower?",
+    "options": [
+      "Stamen",
+      "Pistil",
+      "Anther",
+      "Filament"
+    ],
+    "correctIndex": 1,
+    "category": "Plants",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which Australian reptile can spread a large frill around its neck when threatened?",
+    "options": [
+      "Blue-tongue lizard",
+      "Frilled-neck lizard",
+      "Thorny devil",
+      "Goanna"
+    ],
+    "correctIndex": 1,
+    "category": "Australian wildlife",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the name for the imaginary line around the middle of the Earth?",
+    "options": [
+      "Prime meridian",
+      "Equator",
+      "Tropic of Cancer",
+      "Axis"
+    ],
+    "correctIndex": 1,
+    "category": "Nature",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which element is the most abundant in the universe?",
+    "options": [
+      "Oxygen",
+      "Hydrogen",
+      "Helium",
+      "Carbon"
+    ],
+    "correctIndex": 1,
+    "category": "Chemistry",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What do we call an animal that has no backbone?",
+    "options": [
+      "Vertebrate",
+      "Invertebrate",
+      "Mammal",
+      "Amphibian"
+    ],
+    "correctIndex": 1,
+    "category": "Biology",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which planet takes about 365 days to orbit the Sun?",
+    "options": [
+      "Mars",
+      "Venus",
+      "Earth",
+      "Mercury"
+    ],
+    "correctIndex": 2,
+    "category": "Physics and space",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the fastest animal in the world, including in the air?",
+    "options": [
+      "Cheetah",
+      "Peregrine falcon",
+      "Golden eagle",
+      "Swift"
+    ],
+    "correctIndex": 1,
+    "category": "Animals",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which part of the human digestive system absorbs most nutrients?",
+    "options": [
+      "Stomach",
+      "Small intestine",
+      "Large intestine",
+      "Liver"
+    ],
+    "correctIndex": 1,
+    "category": "Human body",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the name for water falling from clouds as rain, snow or hail?",
+    "options": [
+      "Evaporation",
+      "Condensation",
+      "Precipitation",
+      "Transpiration"
+    ],
+    "correctIndex": 2,
+    "category": "Weather",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which Australian animal is known for rolling into a spiky ball, and is also called a spiny anteater?",
+    "options": [
+      "Echidna",
+      "Bandicoot",
+      "Bilby",
+      "Numbat"
+    ],
+    "correctIndex": 0,
+    "category": "Australian wildlife",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the chemical formula for table salt?",
+    "options": [
+      "NaCl",
+      "KCl",
+      "CaCO3",
+      "H2O2"
+    ],
+    "correctIndex": 0,
+    "category": "Chemistry",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which dinosaur was small, fast, and made famous by the Jurassic Park films?",
+    "options": [
+      "Velociraptor",
+      "Stegosaurus",
+      "Ankylosaurus",
+      "Iguanodon"
+    ],
+    "correctIndex": 0,
+    "category": "Dinosaurs",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the outermost layer of the human skin called?",
+    "options": [
+      "Dermis",
+      "Epidermis",
+      "Hypodermis",
+      "Cuticle"
+    ],
+    "correctIndex": 1,
+    "category": "Human body",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which marine animal is known for its ability to produce light in the deep sea?",
+    "options": [
+      "Anglerfish",
+      "Clownfish",
+      "Swordfish",
+      "Tuna"
+    ],
+    "correctIndex": 0,
+    "category": "Oceans",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the name of the sticky substance that traps insects in a Venus flytrap's cousin, the sundew plant?",
+    "options": [
+      "Nectar",
+      "Mucilage",
+      "Resin",
+      "Latex"
+    ],
+    "correctIndex": 1,
+    "category": "Plants",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What is the term for the study of insects?",
+    "options": [
+      "Ornithology",
+      "Entomology",
+      "Herpetology",
+      "Ichthyology"
+    ],
+    "correctIndex": 1,
+    "category": "Biology",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which Australian animal has a pouch that faces backwards to keep dirt out while digging?",
+    "options": [
+      "Koala",
+      "Wombat",
+      "Kangaroo",
+      "Possum"
+    ],
+    "correctIndex": 1,
+    "category": "Australian wildlife",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which human sense is most closely linked to memory and emotion?",
+    "options": [
+      "Sight",
+      "Hearing",
+      "Smell",
+      "Touch"
+    ],
+    "correctIndex": 2,
+    "category": "Human body",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which type of tree is the tallest in the world?",
+    "options": [
+      "Giant sequoia",
+      "Coast redwood",
+      "Mountain ash",
+      "Douglas fir"
+    ],
+    "correctIndex": 1,
+    "category": "Plants",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What is the process of a solid turning directly into a gas called?",
+    "options": [
+      "Evaporation",
+      "Sublimation",
+      "Condensation",
+      "Melting"
+    ],
+    "correctIndex": 1,
+    "category": "Chemistry",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What is the term for the process of cell division that produces two identical cells?",
+    "options": [
+      "Meiosis",
+      "Mitosis",
+      "Osmosis",
+      "Photosynthesis"
+    ],
+    "correctIndex": 1,
+    "category": "Biology",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What is the name for the fear and study of the way animals behave?",
+    "options": [
+      "Ecology",
+      "Ethology",
+      "Zoology",
+      "Biology"
+    ],
+    "correctIndex": 1,
+    "category": "Biology",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which sea creature can have up to 2,000 suckers on its arms?",
+    "options": [
+      "Jellyfish",
+      "Octopus",
+      "Sea star",
+      "Sea cucumber"
+    ],
+    "correctIndex": 1,
+    "category": "Oceans",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What is the term for a substance that speeds up a chemical reaction without being used up?",
+    "options": [
+      "Solvent",
+      "Catalyst",
+      "Reactant",
+      "Solute"
+    ],
+    "correctIndex": 1,
+    "category": "Chemistry",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which Australian desert lizard drinks water through channels in its skin?",
+    "options": [
+      "Thorny devil",
+      "Bearded dragon",
+      "Goanna",
+      "Gecko"
+    ],
+    "correctIndex": 0,
+    "category": "Australian wildlife",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which animal has a heart that can weigh as much as a small car?",
+    "options": [
+      "Elephant",
+      "Blue whale",
+      "Giraffe",
+      "Hippopotamus"
+    ],
+    "correctIndex": 1,
+    "category": "Oceans",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which dinosaur name means 'roofed lizard' because of the plates on its back?",
+    "options": [
+      "Triceratops",
+      "Stegosaurus",
+      "Diplodocus",
+      "Allosaurus"
+    ],
+    "correctIndex": 1,
+    "category": "Dinosaurs",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What is the name of the reflex that makes you blink to protect your eyes?",
+    "options": [
+      "Knee-jerk reflex",
+      "Corneal reflex",
+      "Startle reflex",
+      "Gag reflex"
+    ],
+    "correctIndex": 1,
+    "category": "Human body",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which planet has a day longer than its year?",
+    "options": [
+      "Mercury",
+      "Venus",
+      "Mars",
+      "Jupiter"
+    ],
+    "correctIndex": 1,
+    "category": "Physics and space",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What is the name of the tube in the human body that carries urine from the bladder out of the body?",
+    "options": [
+      "Ureter",
+      "Urethra",
+      "Oviduct",
+      "Vas deferens"
+    ],
+    "correctIndex": 1,
+    "category": "Human body",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which Australian frog is known for brooding its young in its stomach, now believed extinct?",
+    "options": [
+      "Corroboree frog",
+      "Gastric-brooding frog",
+      "Green tree frog",
+      "Cane toad"
+    ],
+    "correctIndex": 1,
+    "category": "Australian wildlife",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which type of animal is a jellyfish classified as?",
+    "options": [
+      "Fish",
+      "Mollusc",
+      "Cnidarian",
+      "Crustacean"
+    ],
+    "correctIndex": 2,
+    "category": "Oceans",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What is the term for the boundary in space around a black hole beyond which nothing can escape?",
+    "options": [
+      "Singularity",
+      "Event horizon",
+      "Accretion disk",
+      "Photon sphere"
+    ],
+    "correctIndex": 1,
+    "category": "Physics and space",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What is the name of the largest moon of Jupiter, and the largest moon in the solar system?",
+    "options": [
+      "Europa",
+      "Ganymede",
+      "Callisto",
+      "Io"
+    ],
+    "correctIndex": 1,
+    "category": "Physics and space",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which part of the body produces red and white blood cells?",
+    "options": [
+      "Liver",
+      "Bone marrow",
+      "Spleen",
+      "Kidney"
+    ],
+    "correctIndex": 1,
+    "category": "Human body",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which Australian mammal has a striking striped back and eats mostly termites?",
+    "options": [
+      "Bandicoot",
+      "Numbat",
+      "Quoll",
+      "Bettong"
+    ],
+    "correctIndex": 1,
+    "category": "Australian wildlife",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What is the term for a habitat where an organism naturally lives?",
+    "options": [
+      "Ecosystem",
+      "Niche",
+      "Environment",
+      "Biome"
+    ],
+    "correctIndex": 3,
+    "category": "Biology",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which gas is produced when an acid reacts with a metal like zinc?",
+    "options": [
+      "Oxygen",
+      "Hydrogen",
+      "Carbon dioxide",
+      "Nitrogen"
+    ],
+    "correctIndex": 1,
+    "category": "Chemistry",
+    "difficulty": "hard"
+  }
+]

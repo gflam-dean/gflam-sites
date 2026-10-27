@@ -1,0 +1,2017 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VenuePlay Trivia: Host Console</title>
+<link rel="icon" type="image/png" href="/logos/venueplay_appicon_rebuilt.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
+    --pink:#FF1F8E; --pink-deep:#C70F69;
+    --gold:#FFC24B; --win:#35D07F; --roll:#F5A524;
+    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#8A8A94;
+    --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{overflow-x:clip}
+  body{background:radial-gradient(1200px 600px at 80% -10%, rgba(255,31,142,.10), transparent 60%), var(--ink);
+    color:var(--text);font-family:'Manrope',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden}
+  .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
+
+  header{border-bottom:1px solid var(--line);background:rgba(10,10,11,.7);backdrop-filter:blur(8px);position:sticky;top:0;z-index:20}
+  .bar{max-width:1100px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9)) drop-shadow(0 0 8px rgba(255,31,142,.4))}
+  .brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;letter-spacing:-.01em}
+  .brand .div{width:1px;height:20px;background:var(--line)}
+  .tag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:11px;color:var(--pink)}
+  .who{margin-left:auto;font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
+  .dot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
+
+  .wrap{max-width:1100px;margin:0 auto;padding:22px}
+  .lbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:10.5px;color:var(--faint);margin-bottom:9px;display:flex;align-items:center;gap:10px}
+  .note{font-size:12px;color:var(--faint);line-height:1.5}
+
+  .connect{max-width:420px;margin:6vh auto 0;text-align:center}
+  .connect .big{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:34px;color:#fff;line-height:1.02;margin-bottom:8px}
+  .connect .sub{color:var(--muted);font-size:14px;margin-bottom:22px}
+  .codein{width:100%;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:12px;padding:16px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:30px;text-align:center;letter-spacing:.22em;text-transform:uppercase;outline:none;transition:.15s}
+  .codein:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.15)}
+  .cerr{color:var(--roll);font-size:12.5px;min-height:18px;margin-top:8px}
+
+  select,input[type=text],input[type=number]{width:100%;background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:10px;
+    padding:10px 12px;font-family:'Manrope',sans-serif;font-size:14px;outline:none;transition:.15s}
+  select:focus,input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.15)}
+  select{cursor:pointer;-webkit-appearance:none;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 18px) 17px,calc(100% - 13px) 17px;background-size:5px 5px;background-repeat:no-repeat}
+
+  .btn{border:none;border-radius:10px;min-height:44px;padding:11px 15px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13.5px;cursor:pointer;transition:.15s;letter-spacing:.01em}
+  .btn.pink{background:var(--pink);color:#0A0A0B;box-shadow:0 8px 20px rgba(255,31,142,.3)}
+  .btn.pink:hover{background:var(--pink-deep)}
+  .btn.ghost{background:var(--ink-3);color:var(--text);border:1px solid var(--line)}
+  .btn.ghost:hover{border-color:var(--pink);color:#fff}
+  .btn.win{background:var(--win);color:#04120a}
+  .btn.win:hover{filter:brightness(1.08)}
+  .btn.big{width:100%;padding:16px;font-size:16px;text-transform:uppercase;letter-spacing:.04em}
+  .btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+
+  .console>*{min-width:0}
+  .console{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:20px;align-items:start}
+  @media (max-width:900px){ .console{grid-template-columns:1fr} }
+  .panel{background:var(--ink-2);border:1px solid var(--line-2);border-radius:14px;padding:18px}
+
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:600}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .seg{display:flex;gap:5px;background:var(--ink-3);padding:4px;border-radius:11px;border:1px solid var(--line-2)}
+  .seg button{flex:1;min-height:44px;padding:8px 4px;border:none;background:transparent;color:var(--muted);border-radius:8px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:.15s}
+  .seg button.on{background:var(--pink);color:#0A0A0B}
+
+  .stat{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+  .stat .box{flex:1;background:var(--ink-3);border:1px solid var(--line-2);border-radius:11px;padding:11px 12px;min-width:80px}
+  .stat .box .k{font-size:12px;color:var(--faint);text-transform:uppercase;letter-spacing:.1em;font-weight:700;font-family:'Hanken Grotesk',sans-serif}
+  .stat .box .v{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:19px;color:#fff;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .stat .box .v.g{color:var(--gold)}
+
+  .nextup{margin-top:12px;padding:11px 13px;border:1px dashed rgba(255,194,75,.45);border-radius:11px;background:rgba(255,194,75,.06)}
+  .nuh{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:12px;color:var(--gold)}
+  .nut{font-size:14.5px;color:var(--text);margin-top:5px;line-height:1.4}
+  .nuopts{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+  .nuo{font-size:11.5px;color:var(--muted);background:var(--ink-3);border:1px solid var(--line-2);border-radius:14px;padding:3px 9px}
+  .nuo.ok{color:var(--win);border-color:rgba(53,208,127,.4)}
+  .qwrap{background:var(--ink-3);border:1px solid var(--line-2);border-radius:13px;padding:14px;margin-bottom:14px}
+  .qmeta{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .qmeta .qn{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.1em;font-size:12px;color:var(--faint)}
+  .qmeta .live{margin-left:auto;display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)}
+  .qmeta .live b{color:#fff}
+  .qmeta .live .cd{color:var(--gold)}
+  .qtext-h{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:20px;color:#fff;line-height:1.25;margin-bottom:11px}
+  /* Picture round: the host reads the picture out to the room, so it has to be on the card. */
+  .qimg-h{display:block;max-width:100%;max-height:240px;border-radius:10px;border:1px solid var(--line-2);background:#000;margin:0 auto 12px;object-fit:contain}
+  .qimg-h.thumb{max-height:110px;margin:8px 0 0;border-color:rgba(255,194,75,.35)}
+  .opt .cnt{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;color:var(--muted);min-width:34px;text-align:right}
+  .opt.correct .cnt{color:var(--win)}
+  .opt .bar{position:absolute;left:0;top:0;bottom:0;background:rgba(255,255,255,.05);border-radius:10px;pointer-events:none}
+  .opt.correct .bar{background:rgba(53,208,127,.10)}
+  .opt.split{position:relative;overflow:hidden}
+  .opt.split>*:not(.bar){position:relative}
+  .opt{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--line-2);border-radius:10px;margin-bottom:7px;font-size:15px;background:var(--ink-2)}
+  .opt .ol{font-family:'Anton',sans-serif;font-size:17px;width:22px;text-align:center;color:var(--muted)}
+  .opt .otx{flex:1;color:var(--text)}
+  .opt.correct{border-color:rgba(53,208,127,.5);background:rgba(53,208,127,.10)}
+  .opt.correct .otx{color:var(--win);font-weight:700}
+  .opt.correct .ol{color:var(--win)}
+  .opt .ck{color:var(--win);font-weight:700;font-size:12px}
+
+  .since{font-size:12px;color:var(--faint);margin:0 0 14px}
+  .since b{color:var(--muted)}
+
+  .board-h{margin:6px 0 0;max-height:min(60vh,520px);overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .board-h .allof{font-size:11.5px;color:var(--faint);padding:8px 10px 2px}
+  .brow-h{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;padding:9px 10px;border-top:1px solid var(--line-2);font-size:14px}
+  .brow-h .rk{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--muted)}
+  .brow-h .nm{color:#fff;font-weight:600}
+  .brow-h .sc{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--gold)}
+  .brow-h.top1 .rk{color:var(--gold)}
+
+  .players{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px}
+  .pchip{font-size:12.5px;font-weight:600;color:var(--text);background:var(--ink-3);border:1px solid var(--line-2);border-radius:20px;padding:5px 12px}
+  .pempty{color:var(--faint);font-size:12.5px;padding:12px 4px}
+
+  .btnrow{display:flex;gap:10px;margin-top:12px}
+  .btnrow .btn{flex:1}
+
+  /* Host-visible error bar. Sits inside the sticky header so it is on screen in every view
+     and while the host is scrolled down mid-round. hostError() is the ONLY error surface:
+     the small status pill is for connection state only. */
+  .errbar{display:none;background:rgba(255,45,85,.16);border-top:1px solid rgba(255,77,109,.55)}
+  .errbar.show{display:block}
+  .einner{max-width:1100px;margin:0 auto;padding:12px 22px;display:flex;gap:12px;align-items:flex-start}
+  .errbar .etxt{flex:1;min-width:0;font-size:14px;font-weight:700;line-height:1.45;color:#FFD0DA}
+  .errbar .ex{flex:none;font-family:inherit;background:none;border:1px solid rgba(255,255,255,.25);border-radius:7px;color:#FFD0DA;font-size:11.5px;font-weight:700;padding:5px 10px;cursor:pointer}
+  .errbar .ex:hover{border-color:rgba(255,255,255,.5)}
+  .errbar .ex:focus-visible{outline:2px solid #FF4D6D;outline-offset:2px}
+
+  .hidden{display:none!important}
+
+  /* ---- Shared console classes (design review, 1 Oct 2026; moved 16 Oct 2026) ----
+     What used to be the same style="" attribute on every console, so a size is set once
+     and cannot drift between pages. This block is identical on all five consoles.
+     display:none stays inline on the elements that carry it, because the scripts toggle it.
+     Doubled selectors beat .btn.big and friends the way an inline style used to. */
+  .vp-modal{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);padding:20px}
+  .vp-modal-box{max-width:440px;width:100%;background:var(--ink-2);border:1px solid var(--line);border-radius:16px;padding:24px}
+  .vp-modal-box.wide{max-width:460px}
+  .vp-h{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;margin-bottom:10px}
+  .vp-copy{font-size:14.5px;color:var(--text);line-height:1.55}
+  .vp-row{display:flex;gap:10px}
+  .vp-grow.vp-grow{flex:1}
+  .vp-auto.vp-auto{flex:0 0 auto;width:auto}
+  .vp-c.vp-c{text-align:center}
+  .vp-gold{color:var(--gold)}
+  .vp-warn{margin:0 0 14px;padding:12px 16px;background:rgba(245,165,36,.14);border:1px solid rgba(245,165,36,.5);border-radius:12px;color:#F5A524;font-weight:600;font-size:14px}
+  .vp-week{margin:0 0 12px;padding:12px 14px;background:rgba(245,165,36,.12);border:1px solid rgba(245,165,36,.45);border-radius:11px;color:#F5A524;font-size:13.5px;line-height:1.5}
+  .vp-navlink.vp-navlink{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12.5px;color:var(--muted);text-decoration:none;margin-right:10px;white-space:nowrap}
+  .vp-hdrbtn.vp-hdrbtn{background:none;border:1px solid var(--line-2,var(--line));border-radius:10px;padding:10px 14px;min-height:42px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;margin-right:18px;white-space:nowrap}
+  .vp-inl.vp-inl{display:inline-block;text-decoration:none;margin-top:6px}
+  .vp-bigin.vp-bigin{width:100%;min-height:48px;font-size:20px;text-align:center}
+  .vp-err{color:var(--roll);font-size:13px;min-height:18px;margin-top:6px}
+  .vp-fine{color:var(--faint);font-size:12px}   /* was 11.5px inline: 12px is the label floor */
+  .vp-rate.vp-rate{flex:1;min-width:88px;font-size:13px}
+  .vp-wbtn.vp-wbtn{width:100%;margin-top:8px;font-size:13px}
+  .vp-check.vp-check{width:18px;height:18px;flex:none;accent-color:var(--pink)}
+</style>
+<!-- On-brand dropdowns: one shared rule set, linked last so it is the answer (19 Oct 2026). -->
+<link rel="stylesheet" href="/app/vp-select.css">
+</head>
+<body>
+<header>
+  <div class="bar">
+    <button class="vp-hdrbtn" type="button" id="toAdsBtn" title="Finish and put the venue ads back on the TV">End game</button>
+    <a class="vp-navlink" href="/app" title="Back to games">&#8592; Games</a>
+    <div class="brand">
+      <svg width="20" height="23" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
+      <span class="div"></span><span class="word">VenuePlay</span>
+    </div>
+    <span class="tag">Trivia</span>
+    <span class="who"><span class="dot" id="statusDot"></span> <span id="statusText">Not connected</span></span>
+  </div>
+  <div class="errbar" id="hostErrBar" role="alert" aria-live="assertive">
+    <div class="einner">
+      <span class="etxt" id="hostErrText"></span>
+      <button type="button" class="ex" id="hostErrX">Dismiss</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- SIGN IN NEEDED -->
+  <div id="signinView" class="hidden">
+    <div class="connect">
+      <div class="big">Sign in to run trivia</div>
+      <div class="sub" id="signinSub">You need your venue host login to start a live quiz.</div>
+      <a class="btn pink big vp-inl" id="signinLink" href="../index.html">Go to sign in</a>
+      <p class="note" style="margin-top:14px">Trivia reads your venue's own question sets and the VenuePlay Trivia Library. The answers are held on the server and never reach a phone before you reveal.</p>
+    </div>
+  </div>
+
+  <!-- CONNECT (pair with the venue screen) -->
+  <div id="connectView" class="hidden">
+    <div class="connect">
+      <div class="big">Connect to the screen</div>
+      <div class="sub">Enter the 6-character code shown on the venue TV, or scan its setup QR.</div>
+      <input id="codeIn" class="codein" maxlength="6" placeholder="ABC123" autocomplete="off" autocapitalize="characters" spellcheck="false">
+      <div class="cerr" id="codeErr"></div>
+      <button class="btn pink big" id="connectBtn" style="margin-top:6px">Connect</button>
+      <p class="note" style="margin-top:14px">The TV shows the room. This console runs the quiz and holds the answers, which never reach a phone before the reveal. Players join by scanning the QR on the screen.</p>
+    </div>
+  </div>
+
+  <!-- CONSOLE -->
+  <div id="consoleView" class="hidden">
+    <div class="lbl">Host console<span id="roomCode" style="display:none"></span></div>
+    <div class="vp-warn" id="overBanner" style="display:none"></div>
+    <div class="console">
+
+      <!-- left: run -->
+      <div class="panel">
+        <div id="setupBlock">
+          <div class="field">
+            <label style="display:flex;justify-content:space-between;align-items:center">Question set
+              <a href="/app/trivia/builder.html" style="font-size:12px;font-weight:700;color:var(--pink);text-decoration:none">Build a night &rarr;</a>
+            </label>
+            <select id="setSel"><option value="">Loading your question sets&hellip;</option></select>
+          </div>
+          <div class="field">
+            <label>Questions this round</label>
+            <input type="number" id="cfgCount" class="mono" min="1" max="100" value="10">
+            <div class="note" style="margin-top:4px">A night you built plays in full. A big question bank starts at 10. Change it to play more or fewer.</div>
+          </div>
+          <div class="stat">
+            <div class="box"><div class="k">Questions</div><div class="v" id="setupQs">0</div></div>
+            <div class="box"><div class="k">Players</div><div class="v" id="setupPlayers">0</div></div>
+            <div class="box" style="display:none"><div class="k">Join code</div><div class="v g" id="setupCode">------</div></div>
+          </div>
+          <div class="note" id="lobbyWait" style="display:none;margin:2px 0 12px"></div>
+          <div class="two">
+            <div class="field"><label>Time per question (seconds)</label><input type="number" id="cfgTime" class="mono" min="5" max="60" value="30"></div>
+            <div class="field"><label>Correct answer points</label><input type="number" id="cfgBase" class="mono" min="0" value="100"></div>
+          </div>
+          <div class="field hidden" id="prField">
+            <label>Round type</label>
+            <div class="seg" id="cfgRoundType"><button data-v="trivia" class="on">Trivia</button><button data-v="pr">Punters Reckon</button></div>
+            <div class="note" style="margin-top:4px">Punters Reckon: a question goes up, everyone types what they reckon the room would say, and the board flips as answers are found. It does not use the question set or the settings below.</div>
+          </div>
+          <div class="field">
+            <label>Speed bonus (faster answers score more, up to +50%)</label>
+            <div class="seg" id="cfgSpeed"><button data-v="on" class="on">On</button><button data-v="off">Off</button></div>
+          </div>
+          <div class="field">
+            <label>Double points final round <small style="color:var(--faint);font-weight:400">saved for your venue, so it is set for next week too</small></label>
+            <div class="two" style="align-items:center">
+              <div class="seg" id="cfgDouble"><button data-v="on">On</button><button data-v="off" class="on">Off</button></div>
+              <div class="field" style="margin:0"><input type="number" id="cfgDoubleLast" class="mono" min="1" max="100" value="10" aria-label="Questions in the double points round"></div>
+            </div>
+            <div class="note" id="doubleNote" style="margin-top:4px">The last 10 questions of the night score double, speed bonus included.</div>
+          </div>
+          <div class="field" id="paperField">
+            <label>Paper teams <small style="color:var(--faint);font-weight:400">for regulars without a phone</small></label>
+            <button type="button" class="btn ghost" id="paperPrintBtn" style="width:100%">Print answer sheets</button>
+            <div class="note" id="paperNote" style="margin-top:4px">Up to 10 teams a night. With paper teams playing, the answers go up at the end of each round, after the host has their sheets. A paper team counts as a player once its score goes on the leaderboard.</div>
+            <label id="paperRoundRow" style="display:none;margin-top:8px;color:var(--text);align-items:center;gap:8px;font-size:13.5px;font-weight:600;cursor:pointer"><input type="checkbox" id="paperRound" style="width:auto;margin:0"> Play this round on paper</label>
+          </div>
+          <div class="vp-week" id="weekBanner" style="display:none"></div>
+          <button class="btn pink big" id="startBtn">Open lobby</button>
+          <button class="btn ghost big" id="cancelLobbyBtn" style="display:none;margin-top:8px">Close lobby</button>
+          <p class="note vp-c" style="margin-top:10px">Shows the join screen on the TV and gets the room ready. Then call the first question.</p>
+          <div style="margin-top:14px;padding:12px 14px;background:var(--ink-3);border:1px solid var(--line-2);border-radius:11px">
+            <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.1em;font-size:10px;color:var(--faint);margin-bottom:6px">How scoring works</div>
+            <div style="font-size:12.5px;color:var(--muted);line-height:1.5">A correct answer scores <b style="color:#fff" id="scBase">100</b> points. With the speed bonus on, answering fast adds up to <b class="vp-gold">+50%</b> (a lightning-fast correct answer = <b style="color:#fff" id="scMax">150</b>). A wrong answer scores 0.</div>
+          </div>
+        </div>
+
+        <div id="liveBlock" class="hidden">
+          <div id="runBody"></div>
+        </div>
+      </div>
+
+      <!-- right: players + leaderboard -->
+      <div>
+        <div class="panel" style="margin-bottom:20px">
+          <div class="lbl" style="margin-bottom:0">Players <span class="mono vp-gold">(<span id="playerCount">0</span>)</span></div>
+          <div class="players" id="playerList"></div>
+        </div>
+        <div class="panel">
+          <div class="lbl">Leaderboard</div>
+          <div class="board-h" id="hostBoard"><div class="pempty">Scores appear once the round is under way.</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Over-plan players popup (branded, same as bingo): shown at Start when over the plan -->
+<div id="ovgModal" class="hidden vp-modal">
+  <div class="vp-modal-box">
+    <div class="vp-h">More players than your plan</div>
+    <div class="vp-copy" id="ovgBody"></div>
+    <div class="vp-row" style="margin-top:20px">
+      <button type="button" id="ovgGo" class="btn pink big vp-grow">Start game</button>
+      <button type="button" id="ovgCancel" class="btn ghost big vp-auto">Cancel</button>
+    </div>
+  </div>
+</div>
+<!-- Paper teams: how many answer sheets to print (Dean, 25 Sep 2026) -->
+<div id="paperModal" class="hidden vp-modal">
+  <div class="vp-modal-box">
+    <div class="vp-h">Print answer sheets</div>
+    <div class="vp-copy" id="paperBody" style="margin-bottom:12px"></div>
+    <input class="vp-bigin" type="number" id="paperCount" min="1" inputmode="numeric">
+    <div class="vp-err" id="paperErr"></div>
+    <div class="vp-row" style="margin-top:10px">
+      <button type="button" id="paperGo" class="btn pink big vp-grow">Print</button>
+      <button type="button" id="paperCancel" class="btn ghost big vp-auto">Cancel</button>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/app/vp-ask.js"></script>
+<script src="../vp-session.js"></script>
+<script src="/app/vp-weekly.js"></script>
+<script src="/app/vp-sign.js"></script>
+<script src="/app/vp-print.js"></script>
+<script src="/app/vp-onetab.js"></script>
+<script src="/app/vp-pickup.js"></script>
+<script src="/app/topanswers/ta-match.js"></script>
+<!-- Punters Reckon's boards are NOT a script: the console asks the game Worker for them (prLoadBoards). -->
+<script src="/app/topanswers/pr-game.js"></script>
+<script src="/app/vp-phonekey.js"></script>
+<script>
+(function(){
+  "use strict";
+  function $(id){ return document.getElementById(id); }
+  function el(tag,cls,html){ var e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+
+  var LETTERS=["A","B","C","D"];
+
+  var SUPA_URL='https://ijkzgmdtwtgfkedqspxm.supabase.co';
+  var SUPA_ANON='sb_publishable_9v83FWCSt7Di-jkgTvsMJQ_f6lJPovb';
+  var CODE_RE=/^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/;
+
+  var client=supabase.createClient(SUPA_URL, SUPA_ANON);
+  // Share this one client (and its auth session) with the session helper, so role
+  // resolution, the question-set reads and the game broadcast all run on one client.
+  if(window.VP){ VP.useClient(client); }
+
+  // ---- the game Worker (server-authoritative referee) ------------------
+  // EVERY real write (open session, start the game, next question, reveal) goes through
+  // this Worker with the host's Supabase access token. The broadcasts below are only for
+  // instant UX and are re-derivable from /snapshot. The Worker is the ONLY holder of the
+  // correct answers before a reveal: correct_index is never broadcast, and the anon key
+  // cannot read vp_questions. Confirm this matches the deployed venueplay-game Worker URL.
+  var VP_GAME_API='https://venueplay-game.dean-tindale.workers.dev';
+  function getToken(){
+    var c=(window.VP&&VP.getClient)?VP.getClient():client;
+    return c.auth.getSession().then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; });
+  }
+  function readApi(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((d&&d.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }
+  function apiPost(path, body){ if(window.VP_ONETAB && !VP_ONETAB.live()) return Promise.reject(new Error("This quiz is open in another tab on this device.")); return getToken().then(function(t){
+      /* No timeout meant a request that never settled on pub wifi left G.busy true for good, and
+         every later tap on Next, Reveal, Start and Open lobby returned silently at if(G.busy).
+         The only way out was a reload, which used to land in the blank-podium bug. */
+      var _ac = (typeof AbortController!=="undefined") ? new AbortController() : null;
+      var _to = setTimeout(function(){ try{ if(_ac) _ac.abort(); }catch(e){} }, 15000);
+      var _opts = { method:"POST", headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+t }, body:JSON.stringify(body||{}) };
+      if(_ac) _opts.signal=_ac.signal;
+      return fetch(VP_GAME_API+path,_opts).then(function(r){ clearTimeout(_to); return r; },
+        function(e){ clearTimeout(_to); var te=new Error("The game server did not answer. Check the venue wifi and try again."); te.status=0; throw te; });
+    }).then(function(res){ return res.json().catch(function(){ return {}; }).then(function(data){ if(res.status===402 && data && data.needs_overage_ack){ var extra=data.extra||0, cap=data.plan_cap||0; var ackAndGo=function(){ return apiPost("/host/overage/ack",{ session_id: body.session_id }).then(function(){ return apiPost(path, body); }); }; if(data.free_month) return ackAndGo();   /* the Worker decides the free month, not our own calendar maths */ return confirmOverage(cap, extra).then(function(ok){ if(!ok){ var ec=new Error("Over plan - game not started."); ec.status=402; throw ec; } return ackAndGo(); }); } if(!res.ok){ var e=new Error((data&&data.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return data; }); }); }
+
+  // TWO broadcast channels for instant UX (the DB is the source of truth):
+  //   ch  = PAIRING channel "vp-"+pairCode: host <-> venue screen (handoff + presence).
+  //   gch = GAME channel "vp-"+join_code: host <-> players (their phones).
+  // Game messages go to BOTH via bcast() so the screen never has to switch channels.
+  // Sign every host broadcast (migrations 38/49). vpHostToken() is the Supabase access token for the
+  // staff-gated private-key fetch; signSend is order-preserving and degrades to unsigned if no key.
+  function vpHostToken(){ return (window.VP && VP.getClient ? VP.getClient().auth.getSession() : Promise.resolve(null)).then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; }).catch(function(){ return ""; }); }
+  var ch=null, subscribed=false, sendQueue=[];
+  /* A tab that has stood down for another tab on this tablet says nothing: its view of the quiz
+     is stale (14 Oct 2026, see /app/vp-onetab.js). */
+  function standingDown(){ return !!(window.VP_ONETAB && !VP_ONETAB.live()); }
+  function rawSend(p){ if(standingDown()) return; if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:p }); } else { sendQueue.push(p); } }
+  function send(obj){ if(window.VPSign){ VPSign.signSend(obj, rawSend); } else { rawSend(obj); } }
+  function flushQueue(){ while(sendQueue.length && ch){ ch.send({ type:"broadcast", event:"msg", payload:sendQueue.shift() }); } }
+  var gch=null, gsub=false, gQueue=[];
+  function rawGsend(p){ if(standingDown()) return; if(gsub && gch){ gch.send({ type:"broadcast", event:"msg", payload:p }); } else { gQueue.push(p); } }
+  /* Tagged with the game it belongs to. The players' channel is the venue's own code at most venues,
+     the same channel bingo and the TV's router listen on, and an untagged "started" or "winner"
+     from here read as BINGO there: the TV dropped to the ads as a musical game started and phones
+     on the bingo page took trivia for bingo (break test, 14 Oct 2026). */
+  function gsend(obj){ if(obj && typeof obj==="object" && !obj.fmt){ var o={}; for(var k in obj) o[k]=obj[k]; o.fmt="trivia"; obj=o; } if(window.VPSign){ VPSign.signSend(obj, rawGsend); } else { rawGsend(obj); } }
+  function gflush(){ while(gQueue.length && gch){ gch.send({ type:"broadcast", event:"msg", payload:gQueue.shift() }); } }
+  function bcast(obj){ send(obj); gsend(obj); }
+
+  /* THE CONSOLE SAYS IT IS STILL HERE, every thirty seconds, while a lobby is open
+     or a quiz is on. The big screen uses it to tell an open lobby from a console
+     that has been closed. It is not the only signal, and deliberately so: an iPad
+     that locks stops sending this, so the screen also asks the Worker whether the
+     session is still open before it clears anything. See trivia/screen.html.
+
+     host_here is on the screen's presence list and on the router's do-not-hop
+     list, so this keeps the wall alive without ever looking like a game starting. */
+  var HEARTBEAT_MS = 30000;
+  var _leaving=false;   // set as the page is left, so closing its channel is not reported as a drop
+  setInterval(function(){
+    if(G.status && G.status !== "setup") bcast({ t:"host_here", cid:G.consoleId });
+  }, HEARTBEAT_MS);
+  var LOST_MSG="Lost the connection to the players' phones. Reconnecting: hold off on the next question for a moment.";
+  var gRetryT=null, gTries=0, gLostT=null, gLostShown=false;
+  /* WHICH PRINT PROBLEM. "Your browser blocked the print window" was said for any failure, including a
+     host who simply closed the "Getting ready" tab before the sheets arrived (audit, 27 Sep 2026). */
+  function printProblem(w){
+    return (w && w.closed)
+      ? "The print window was closed before the sheets were ready. Tap Print again."
+      : "Your browser blocked the print window. Allow pop-ups for venueplay.com.au, then tap Print again.";
+  }
+  function openGameChannel(joinCode){
+    /* LET GO OF THE OLD CHANNEL BEFORE REMOVING IT. removeChannel makes the old channel report
+       CLOSED inside the call, and gch still pointed at it, so the guard below read its own channel
+       failing: "Lost the connection" with no lobby even open (Dean, 27 Sep 2026, twice). */
+    if(gch){ var old=gch; gch=null; gsub=false; try{ client.removeChannel(old); }catch(e){} }
+    gch=client.channel("vp-"+joinCode, { config:{ broadcast:{ self:false } } });
+    var mine=gch;
+    gch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
+    gch.subscribe(function(status){
+      /* NOT A DROP: this channel was replaced, or the page is being left (Build a night, Games,
+         a reload closes it). */
+      if(mine!==gch || _leaving) return;
+      if(status==="SUBSCRIBED"){
+        gsub=true; gTries=0; gflush(); gsend({ t:"rollcall" });   // ask connected players to re-announce so the roster rebuilds
+        if(gLostT){ clearTimeout(gLostT); gLostT=null; }
+        if(gRetryT){ clearTimeout(gRetryT); gRetryT=null; }      // healed by itself: do not tear down a working channel
+        /* it came back: take OUR warning down, and only ours. A later, unrelated error (a blocked
+           print window, scores that would not load) stays up (audit, 27 Sep 2026). */
+        if(gLostShown){ gLostShown=false; var _t=$("hostErrText"); if(!_t || /Lost the connection/.test(_t.textContent||"")) clearHostError(); }
+        return;
+      }
+      if(status==="CHANNEL_ERROR" || status==="TIMED_OUT" || status==="CLOSED"){
+        gsub=false;   // queue sends until it is back, so nothing the room should see is lost
+        /* ACTUALLY RECONNECT. This said "Reconnecting" and did nothing: no retry, and the warning
+           stayed up after the socket healed by itself. Retry with a backoff, the way the TV does. */
+        if(!gRetryT){
+          var wait=Math.min(30000, 2000*Math.pow(2, Math.min(gTries,4))); gTries++;
+          gRetryT=setTimeout(function(){ gRetryT=null; if(!_leaving && G.joinCode===joinCode) openGameChannel(joinCode); }, wait);
+        }
+        /* SAY SO ONLY IF IT MATTERS. A blip that heals inside 8 seconds is not news, and before the
+           first question there is nothing to "hold off" on: the retry carries on quietly. */
+        if(!gLostT){
+          gLostT=setTimeout(function(){
+            gLostT=null;
+            var live = G.status && G.status!=="setup" && G.status!=="lobby";
+            if(!gsub && live && !_leaving){ gLostShown=true; hostError(LOST_MSG); }
+          }, 8000);
+        }
+      }
+    });
+  }
+
+  // ---- host game state ----
+  // The Worker is authoritative; this is the console's view of it. correct_index arrives
+  // ONLY in the /host/question response (host-only) and is used solely to highlight the
+  // answer on THIS console. It is never placed on any channel before the host reveals.
+  var G={ roundType:"trivia", pr:null, prFeed:[], prPub:null,   // Punters Reckon (?pr=1 only)
+    venueId:null, pairCode:"", sessionId:"", joinCode:"", gameId:"",
+    status:"setup",                 // setup | ready | question | reveal | ended
+    setId:"", questionCount:0, qtotal:0,
+    timePerQ:30, base:100, count:10, speedBonus:true, colour:true, doublePoints:false, doubleLast:10, doubleSeqs:[],
+    setTitle:"",                    // the night's name, shown on the TV lobby instead of a fixed "Trivia Night"
+    current:null,                   // {qseq, qi, qtotal, text, options, correctIndex, endsAt, secs}
+    board:[],                       // latest leaderboard rows [{name,points}] from /host/reveal
+    players:{}, order:[],           // cosmetic roster (pid -> {name}) from phone broadcasts
+    answeredPids:{}, answeredQseq:0,
+    consoleId:(window.VP_PICKUP ? VP_PICKUP.newId() : ""),   // this console, so a pickup elsewhere can stand it down (vp-pickup.js)
+    busy:false, tick:null
+  };
+
+  function playerCount(){ return G.order.length; }
+  function playerCap(){ return (G.planCap!=null ? G.planCap : ((G.venue && G.venue.included_players) || 0)); }
+  function inFirstMonth(){ var c=G.venue && G.venue.created_at; if(!c) return false; var e=new Date(c); if(isNaN(e.getTime())) return false; e.setMonth(e.getMonth()+1); return new Date()<e; }
+  function confirmOverage(cap, extra){   // branded popup, resolves true=start / false=cancel
+    return new Promise(function(resolve){
+      var total=cap+extra;
+      $("ovgBody").innerHTML="You have <b>"+total+"</b> players and your plan includes <b>"+cap+"</b>. The extra <b>"+extra+"</b> player licence"+(extra===1?"":"s")+" will be charged to your nominated card. They stay valid for the rest of your billing period.";
+      var m=$("ovgModal"); m.classList.remove("hidden");
+      $("ovgGo").onclick=function(){ m.classList.add("hidden"); resolve(true); };
+      $("ovgCancel").onclick=function(){ m.classList.add("hidden"); resolve(false); };
+    });
+  }
+  function answeredCount(){ var n=0,k; for(k in G.answeredPids){ if(G.answeredPids.hasOwnProperty(k)) n++; } return n; }
+  function remainingSecs(){ return G.current ? Math.max(0, Math.ceil((G.current.endsAt-Date.now())/1000)) : 0; }
+  // Errors go to the banner under the header, NOT to the 11.5px status pill. A host mid-service
+  // never sees that pill, so a failed Start used to look like a button that simply did nothing.
+  // The pill keeps showing connection state so the two are not fighting over one element.
+  /* The Worker's once-a-week message carries an ISO date (2026-09-14). Nobody in a pub reads
+     that; say "Monday 14 September" instead. Any other message passes through untouched. */
+  /* Both live in /app/vp-weekly.js now, with the once-a-week rule they belong to. Musical
+     bingo needed the same three things and had none of them. */
+  /* hostError() runs friendlyMsg over EVERY server error, so if the shared script were
+     missing this would swallow the error the host needs to read. Fall back to the raw text:
+     an ISO date is ugly, and silence is worse. */
+  function friendlyDay(iso){
+    return (typeof VPWeekly !== "undefined" && VPWeekly) ? VPWeekly.friendlyDay(iso) : iso;
+  }
+  function friendlyMsg(msg){
+    return (typeof VPWeekly !== "undefined" && VPWeekly) ? VPWeekly.friendlyMsg(msg)
+                                                         : String(msg == null ? "" : msg);
+  }
+  /* A REFUSAL STAYS UP UNTIL THE HOST ACTS ON IT (live audit, 19 Oct 2026). "Trivia runs once a
+     week..." came back on Start, and the next background call that worked cleared the bar, so
+     within three seconds the host was looking at a Start button that did nothing, with no reason.
+     A refusal (the weekly rule, or any 4xx the server meant for the host) now waits for the X. */
+  var _errSticky=false;
+  function hostError(msg, sticky){
+    msg=friendlyMsg(msg);
+    _errSticky = !!sticky || /once a week|available from/i.test(String(msg||""));
+    var t=$("hostErrText"), b=$("hostErrBar");
+    if(!t||!b){ $("statusText").textContent=msg||"Something went wrong"; return; }
+    t.textContent=msg||"Something went wrong";
+    /* Lift it out of the header. The header is position:sticky with z-index 20, which creates a
+       stacking context, so nothing inside it can ever paint above the carry-on or overage modal
+       at z-index 60: a failure raised while a modal was open was hidden under the scrim and the
+       host saw a button that simply did nothing. Moved to <body>, it is above everything. */
+    if(b.parentNode !== document.body){
+      document.body.appendChild(b);
+      b.style.position="fixed"; b.style.left="0"; b.style.right="0"; b.style.zIndex="90";
+      /* Sit BELOW the header, not on top of it. This bar's only background is a 16% pink tint: it
+         looked solid purely because the header behind it is opaque. At top:0 over <body> it drew
+         over the "Games" link and the status pill, and being fixed it swallowed the clicks too. */
+      var _hd=document.querySelector("header");
+      b.style.top=((_hd&&_hd.offsetHeight)||52)+"px";
+      b.style.background="#2A0B14";
+      b.style.backdropFilter="blur(8px)";
+    }
+    b.classList.add("show");
+    try{ window.scrollTo({ top:0, behavior:"smooth" }); }catch(e){ window.scrollTo(0,0); }
+  }
+  function clearHostError(){ _errSticky=false; var b=$("hostErrBar"); if(b) b.classList.remove("show"); }
+  /* AN ERROR COMES DOWN WHEN THE HOST DOES SOMETHING, NOT WHEN A BACKGROUND CALL WORKS (live play
+     test, 24 Oct 2026, musical bingo; the same apiPost lived here). Any refusal other than the
+     weekly rule was still wiped by the next call that answered 200, often the /session re-say a
+     moment after Start. apiPost no longer clears the bar; each host action does, and never while
+     "Lost the connection" is still true or a weekly refusal is waiting for its X. */
+  function clearErrForAction(){ if(!gLostShown && !_errSticky) clearHostError(); }
+  (function(){ var x=$("hostErrX"); if(x) x.addEventListener("click", clearHostError); })();
+
+  // ---- reload-recovery: a host refresh (battery, accidental reload) picks the live quiz back up ----
+  // The Worker's /snapshot is the source of truth, so we only stash a pointer (the session id)
+  // plus a timestamp. A stale pointer from an earlier night, or a game that has since ended, is ignored.
+  var TRIVIA_SAVE_MAX_AGE=6*60*60*1000;   // 6 hours
+  function triviaKey(){ return "vpTriviaGame-"+(G.venueId||""); }
+  function saveTrivia(){
+    try{
+      if(G.gameId && G.sessionId && G.status!=="setup" && G.status!=="lobby"){
+        /* The current question's answer and who is in, so a reload mid-question still shows the
+           host the right answer and "4/7 in", not "0/7" and no tick (break test, 14 Oct 2026). This
+           tablet only; it never goes on a channel. */
+        var cur = (G.current && G.status==="question") ? { qseq:G.current.qseq, ci:G.current.correctIndex, pids:G.answeredPids||{} } : null;
+        localStorage.setItem(triviaKey(), JSON.stringify({ v:1, ts:Date.now(), sessionId:G.sessionId, cur:cur, cid:G.consoleId }));
+      }
+    }catch(e){}
+  }
+  function clearTrivia(){ try{ localStorage.removeItem(triviaKey()); }catch(e){} }
+  /* This tablet's own saved quiz, or null. Clears a stale or broken one. */
+  function readTriviaSave(){
+    var raw; try{ raw=localStorage.getItem(triviaKey()); }catch(e){ return null; }
+    if(!raw) return null;
+    var p; try{ p=JSON.parse(raw); }catch(e){ clearTrivia(); return null; }
+    if(!p || !p.sessionId || !p.ts || (Date.now()-p.ts)>TRIVIA_SAVE_MAX_AGE){ clearTrivia(); return null; }
+    return p;
+  }
+  /* PICK UP A RUNNING QUIZ FROM ANY DEVICE (Dean, 20 Oct 2026). The server is asked first
+     (/app/vp-pickup.js, /host/running, staff only): this tablet's own quiz, not picked up anywhere
+     else since, comes back silently as it always has; a quiz started or picked up on another device
+     is offered ("A quiz is running at this venue. Pick it up?") and, on yes, recorded as this
+     console's and restored exactly the same way. If the server cannot say (an old Worker, no
+     network), this tablet's own save is all there is, as before. */
+  function restoreTrivia(){
+    var p=readTriviaSave();
+    if(!window.VP_PICKUP) return p ? restoreTriviaFrom(p) : Promise.resolve(false);
+    return VP_PICKUP.find(apiPost, G.venueId, "trivia").then(function(run){
+      if(run===undefined){
+        /* NO ANSWER (slow wifi): this tablet's own quiz if it has one, and keep asking in the
+           background in case a quiz is running that this device has never seen (vp-pickup.js). */
+        triviaKeepAsking();
+        return p ? restoreTriviaFrom(p) : false;
+      }
+      var d=VP_PICKUP.decide(p, run);
+      if(d==="none"){ if(p) clearTrivia(); return false; }
+      if(p && p.sessionId!==run.session_id){ clearTrivia(); p=null; }   // an older night's pointer
+      if(d==="restore"){ if(p.cid) G.consoleId=p.cid; return restoreTriviaFrom(p); }
+      return pickUpTrivia(run);
+    });
+  }
+  /* "A quiz is running at this venue. Pick it up?" and, on yes, take it and restore it. */
+  function pickUpTrivia(run){
+    return VP_PICKUP.ask("trivia").then(function(yes){
+      if(!yes) return false;
+      var cid=VP_PICKUP.newId();
+      return VP_PICKUP.take(apiPost, G.venueId, run, cid).then(function(){
+        G.consoleId=cid;
+        // The open question's answer and who is in come from the server, as this tablet would have known them.
+        return restoreTriviaFrom({ sessionId:run.session_id, cur:run.current||null, cid:cid });
+      }, function(e){ hostError((e && e.message) || "Could not pick the quiz up. Try again."); return false; });
+    });
+  }
+  /* Stops the moment the host moves on: a lobby open or a quiz on this console (any status but setup). */
+  function triviaKeepAsking(){
+    if(!(window.VP_PICKUP && VP_PICKUP.keepAsking)) return;
+    VP_PICKUP.keepAsking({ post:apiPost, venueId:G.venueId, format:"trivia",
+      stop:function(){ return G.status!=="setup" || !!G.gameId; },
+      onFound:function(run){ pickUpTrivia(run); } });
+  }
+  function restoreTriviaFrom(p){
+    return fetch(VP_GAME_API+"/snapshot?session="+encodeURIComponent(p.sessionId))
+      .then(function(res){ return res.ok ? res.json() : null; })
+      .then(function(snap){
+        if(!snap || snap.status!=="running" || !snap.game || snap.game.format!=="trivia"){ clearTrivia(); return false; }
+        var g=snap.game, q=g.question||null, phase=g.phase||"idle";
+        G.sessionId=snap.session_id; G.joinCode=snap.join_code||""; G.gameId=g.game_id;
+        if(g.question_count!=null){ G.questionCount=g.question_count; G.qtotal=g.question_count; }
+        if(typeof g.colour==="boolean") G.colour=g.colour;
+        G.defer = g.paper===true; G.rs = g.round_size || 10; loadPaperRound();
+        G.doubleSeqs = Array.isArray(g.double_seqs) ? g.double_seqs : [];
+        if(G.joinCode) openGameChannel(G.joinCode);   // re-subscribe the players' channel so answers still land
+        // Re-sync the TV only (the pairing channel). Connected phones are left alone; a phone that
+        // also reloaded recovers itself from /snapshot, so we must not replay "started" to the game channel.
+        send({ t:"mode", mode:"trivia" });
+        /* "started" puts the TV back on the join QR. That is right when a question follows it
+           (the asking branch below sends one), and wrong otherwise: after a reveal, or between
+           questions, nothing followed, so the TV sat on the lobby showing a join code for a quiz
+           already in progress until the host tapped Next. */
+        if(q && (phase==="asking"||phase==="locked")){
+          send({ t:"started", game_id:G.gameId, question_count:G.questionCount, colour:G.colour });
+        }
+        if(q && (phase==="asking"||phase==="locked")){
+          var endsAt=Date.parse(q.ends_at)||0;
+          G.current={ qseq:q.qseq, qi:q.qi||q.qseq, qtotal:G.qtotal, text:q.text||"", options:Array.isArray(q.options)?q.options:[], correctIndex:-1, endsAt:endsAt, secs:0, imageUrl:q.image_url||"" };
+          G.status="question"; G.answeredQseq=q.qseq; G.answeredPids={};
+          if(p.cur && p.cur.qseq===q.qseq){   // what this tablet knew before the reload
+            if(typeof p.cur.ci==="number") G.current.correctIndex=p.cur.ci;
+            if(p.cur.pids && typeof p.cur.pids==="object") G.answeredPids=p.cur.pids;
+          }
+          send({ t:"question", game_id:G.gameId, qseq:G.current.qseq, qi:G.current.qi, qtotal:G.qtotal, text:G.current.text, options:G.current.options, endsAt:endsAt, secs:remainingSecs(), colour:G.colour, imageUrl:G.current.imageUrl, double:isDouble(G.current.qseq) });
+          readBoard();   // the scores so far, WITHOUT revealing the open question (see readBoard)
+          if(remainingSecs()>0){ G.tick=setInterval(function(){ updateLive(); if(remainingSecs()<=0){ clearTick(); send({ t:"lock" }); } }, 500); }
+          else { send({ t:"lock" }); }
+        } else if(q && phase==="revealed"){
+          G.current={ qseq:q.qseq, qi:q.qi||q.qseq, qtotal:G.qtotal, text:q.text||"", options:Array.isArray(q.options)?q.options:[], correctIndex:(q.correct_index!=null?q.correct_index:-1), endsAt:0, secs:0, imageUrl:q.image_url||"" };
+          G.status="reveal"; G.board=[];
+          rebuildBoard();
+        } else {
+          G.status="ready"; G.current=null; G.board=[];   // game running, between questions
+          rebuildBoard();
+        }
+        $("statusText").textContent="Recovered your live quiz";
+        renderConsole();
+        saveTrivia();   // this device's own save now, so a reload here picks it straight back up
+        return true;
+      })
+      .catch(function(){ return false; });
+  }
+
+  // ---- render console ----
+  // A JOIN MUST NOT REBUILD THE CONSOLE. renderConsole reaches renderRun, which
+  // empties runBody and rebuilds the "Next question" button with a fresh listener.
+  // A punter scanning in at the moment the host taps it therefore had the button
+  // swapped out from under their finger and the round stalled. A join changes the
+  // player count and the chip list and nothing else, so that is all it may touch.
+  function renderJoinCounts(){
+    var _sp=$("setupPlayers"); if(_sp) _sp.textContent=playerCount();
+    var _pc=$("playerCount");  if(_pc) _pc.textContent=playerCount();
+    var _lp=$("livePlayers");  if(_lp) _lp.textContent=playerCount();
+    var _ob=$("overBanner"), _oc=playerCap(), _op=playerCount();
+    if(_ob){
+      if(_oc>0 && _op>_oc){ _ob.style.display=""; _ob.innerHTML="Heads up: <b>"+_op+"</b> players in, <b>"+(_op-_oc)+"</b> over the <b>"+_oc+"</b> your plan includes. "+(inFirstMonth()?"Your first month is free, so no charge this time.":"The extra will be charged to your card for this billing period."); }
+      else _ob.style.display="none";
+    }
+    renderPlayers();
+  }
+  function renderConsole(){
+    try{ renderPaperSetup(); }catch(e){}
+    var live=(G.status!=="setup" && G.status!=="lobby");   // lobby keeps the setup panel visible
+    $("setupBlock").classList.toggle("hidden", live);
+    $("liveBlock").classList.toggle("hidden", !live);
+    paintRoundQs();
+    $("setupPlayers").textContent=playerCount();
+    var _ob=$("overBanner"), _oc=playerCap(), _op=playerCount();
+    if(_ob){
+      if(_oc>0 && _op>_oc){ _ob.style.display=""; _ob.innerHTML="Heads up: <b>"+_op+"</b> players in, <b>"+(_op-_oc)+"</b> over the <b>"+_oc+"</b> your plan includes. "+(inFirstMonth()?"Your first month is free, so no charge this time.":"The extra will be charged to your card for this billing period."); }
+      else _ob.style.display="none";
+    }
+    $("setupCode").textContent=G.joinCode||"------";
+    $("playerCount").textContent=playerCount();
+    if(!live){
+      var lobby=G.status==="lobby";
+      var noQs=!(G.questionCount>0);
+      /* An empty question set was only caught AFTER the lobby went public: the TV was already
+         showing the join QR and the room had scanned in before the Worker's 409 came back. Stop it
+         at the button instead, and say why. */
+      $("startBtn").textContent = noQs ? "No questions in this night" : (G.weekHold ? "Trivia ran this week" : (lobby ? "Start round" : "Open lobby"));
+      if(G.roundType==="pr"){ $("startBtn").textContent = lobby ? "Start Punters Reckon" : "Open lobby"; $("startBtn").disabled=false; }
+      else $("startBtn").disabled = noQs || !!G.weekHold;
+      var cl=$("cancelLobbyBtn"); if(cl) cl.style.display = lobby ? "" : "none";
+    }
+    renderPlayers();
+    renderBoard();
+    if(live) renderRun();
+  }
+  /* The name a phone plays under tonight: its own, unless a phone already in has it (in any
+     capitals), and then "<name> 2", "<name> 3". The first one in keeps the plain name, and a phone
+     re-announcing its own name is never renamed against itself. Kept to the 20 characters a phone
+     can type. */
+  function uniqueTeamName(pid, name){
+    var base=String(name||"").trim()||"Player";
+    function taken(n){
+      var k=n.toLowerCase();
+      for(var i=0;i<G.order.length;i++){
+        var id=G.order[i]; if(id===pid) continue;
+        var p=G.players[id]; if(p && String(p.name||"").trim().toLowerCase()===k) return true;
+      }
+      return false;
+    }
+    if(!taken(base)) return base;
+    for(var n=2;n<100;n++){ var c=base.slice(0,17).trim()+" "+n; if(!taken(c)) return c; }
+    return base;
+  }
+  function renderPlayers(){
+    var elx=$("playerList");
+    if(!G.order.length){ elx.innerHTML='<div class="pempty">No players yet. They join by scanning the QR on the TV.</div>'; return; }
+    var html="";
+    for(var i=0;i<G.order.length;i++){ var p=G.players[G.order[i]]; if(p) html+='<span class="pchip">'+esc(p.name)+'</span>'; }
+    elx.innerHTML=html;
+  }
+  function renderBoard(){
+    var box=$("hostBoard");
+    var B=(G.roundType==="pr" && G.pr) ? G.pr.rows() : G.board;   // a Punters Reckon night scores in its own referee
+    if(!B.length){ box.innerHTML='<div class="pempty">Scores appear once the round is under way.</div>'; return; }
+    box.innerHTML="";
+    /* Every team, not the top 8: with 15 tables the ones in 9th to 15th only ever saw their own
+       phone. The panel scrolls (see .board-h). Equal points share a rank ("=3") so two teams on
+       850 are not split by database order. */
+    var ranks=sharedRanks(B);
+    for(var i=0;i<B.length;i++){
+      var row=el("div","brow-h"+(i===0?" top1":""));
+      row.innerHTML='<span class="rk">'+ranks[i]+'</span><span class="nm">'+esc(B[i].name)+'</span><span class="sc">'+B[i].points+'</span>';
+      box.appendChild(row);
+    }
+    if(B.length>8) box.appendChild(el("div","allof","All "+B.length+" teams. Scroll for the rest."));
+  }
+  // [10,10,8] -> ["=1","=1","3"]. Rows arrive sorted by points from the Worker.
+  function sharedRanks(rows){
+    var out=[], rank=1;
+    for(var i=0;i<rows.length;i++){
+      if(i>0 && rows[i].points!==rows[i-1].points) rank=i+1;
+      var tied=(i>0 && rows[i].points===rows[i-1].points) || (i+1<rows.length && rows[i+1].points===rows[i].points);
+      out.push((tied?"=":"")+rank);
+    }
+    return out;
+  }
+
+  /* What is coming, for the host's eyes only. They read the question aloud, and until now they
+     first saw it at the same moment the room did, so every question started with a silent pause
+     while the host read it. Seeing it early also means the round trip on Next stops mattering:
+     they are already talking. Never broadcast. */
+  function nextUpPanel(){
+    if(!G.nextUp || !G.nextUp.text) return null;
+    var d=el("div","nextup");
+    var opts="";
+    var o=G.nextUp.options||[];
+    for(var i=0;i<o.length;i++){
+      opts+='<span class="nuo'+(i===G.nextUp.correct_index?" ok":"")+'">'+LETTERS[i]+" "+esc(o[i])+'</span>';
+    }
+    d.innerHTML='<div class="nuh">Coming up, for you to start reading</div>'+
+      '<div class="nut">'+esc(G.nextUp.text)+'</div>'+
+      (opts?'<div class="nuopts">'+opts+'</div>':'')+
+      (G.nextUp.image_url?'<div class="nuh" style="margin-top:6px">Picture question</div><img class="qimg-h thumb" alt="" src="'+esc(G.nextUp.image_url)+'" onerror="this.style.display=\'none\'">':'');
+    return d;
+  }
+  function renderRun(){
+    var body=$("runBody"); body.innerHTML="";
+    if(G.roundType==="pr" && G.pr) return renderPRRun(body);
+    if(G.defer && renderPaperRun(body)) return;
+
+    if(G.status==="ready"){
+      var rd=el("div","qwrap");
+      rd.innerHTML='<div class="qmeta"><span class="qn">Round armed</span></div>'+
+        '<div class="qtext-h">'+(G.setTitle?esc(G.setTitle)+': ':'')+G.questionCount+' questions loaded</div>'+
+        '<div class="since" style="margin:0">Players are joining on their phones. Show the first question when the room is ready.</div>';
+      body.appendChild(rd);
+      var nb=el("button","btn pink big","First question"); nb.addEventListener("click", nextQuestion); body.appendChild(nb);
+      body.appendChild(endBtn("End round"));
+      return;
+    }
+
+    if(G.status==="question"){
+      var q=G.current;
+      var w=el("div","qwrap");
+      w.innerHTML='<div class="qmeta"><span class="qn">Question '+(q.qi||q.qseq)+' of '+(G.qtotal||"?")+(isDouble(q.qseq)?' &middot; <b style="color:var(--gold)">DOUBLE POINTS</b>':'')+'</span>'+
+        '<span class="live"><span id="hAnsWrap" style="font-weight:700"><b id="hAns">'+answeredCount()+'</b>/<span id="hTot">'+playerCount()+'</span> in</span><span class="cd" id="hCd">'+remainingSecs()+'s</span></span></div>'+
+        /* Picture round: the same image the TV shows, so the host can describe it. A broken
+           link hides itself and the question carries on as a plain text one. */
+        (q.imageUrl?'<img class="qimg-h" alt="" src="'+esc(q.imageUrl)+'" onerror="this.style.display=\'none\'">':'')+
+        '<div class="qtext-h">'+esc(q.text)+'</div>';
+      for(var i=0;i<q.options.length;i++){
+        var correct=(i===q.correctIndex);
+        var o=el("div","opt"+(correct?" correct":""));
+        o.innerHTML='<span class="ol">'+LETTERS[i]+'</span><span class="otx">'+esc(q.options[i])+'</span>'+(correct?'<span class="ck">&#10003; correct</span>':'');
+        w.appendChild(o);
+      }
+      body.appendChild(w);
+      var rv=el("button","btn win big", G.defer ? "Close the question" : "Reveal answer"); rv.addEventListener("click", reveal); body.appendChild(rv);
+      var at=el("button","btn ghost","+10 seconds"); at.id="addTimeBtn"; at.style.width="100%"; at.style.marginTop="8px";
+      at.addEventListener("click", function(){ addTime(10); }); body.appendChild(at);
+      var nu=nextUpPanel(); if(nu) body.appendChild(nu);
+      body.appendChild(endBtn("End round"));
+      return;
+    }
+
+    if(G.status==="reveal"){
+      var q2=G.current;
+      var rw=el("div","qwrap");
+      rw.innerHTML='<div class="qmeta"><span class="qn">Question '+(q2.qi||q2.qseq)+' of '+(G.qtotal||"?")+(isDouble(q2.qseq)?' &middot; <b style="color:var(--gold)">DOUBLE POINTS</b>':'')+' &middot; revealed</span></div>'+
+        (q2.imageUrl?'<img class="qimg-h" alt="" src="'+esc(q2.imageUrl)+'" onerror="this.style.display=\'none\'">':'')+
+        '<div class="qtext-h">'+esc(q2.text)+'</div>';
+      /* How the room split. The TV draws these bars; until now the host had to look over their
+         shoulder to banter about it. */
+      var sp=Array.isArray(G.split)?G.split:[], spTot=0;
+      for(var si=0;si<sp.length;si++) spTot+=(+sp[si]||0);
+      for(var oi=0;oi<q2.options.length;oi++){
+        var isC=(oi===q2.correctIndex), n=(+sp[oi]||0), pct=spTot?Math.round(n*100/spTot):0;
+        var od=el("div","opt split"+(isC?" correct":""));
+        od.innerHTML='<span class="bar" style="width:'+pct+'%"></span><span class="ol">'+LETTERS[oi]+'</span><span class="otx">'+esc(q2.options[oi])+'</span>'+(isC?'<span class="ck">&#10003; correct</span>':'')+'<span class="cnt" title="How many picked this">'+n+'</span>';
+        rw.appendChild(od);
+      }
+      rw.appendChild(el("div","since",'<b>'+spTot+'</b> answered'+(spTot?' &middot; '+(sp[q2.correctIndex]||0)+' got it right':'')));
+      body.appendChild(rw);
+      // On the last question turn the button into "Reveal leaderboard" (which shows the podium);
+      // the podium never appears mid-round now.
+      var isLast = G.qtotal && (q2.qi||q2.qseq) >= G.qtotal;
+      var brow=el("div","btnrow");
+      var main=el("button","btn pink big", isLast ? "Reveal leaderboard" : "Next question");
+      main.addEventListener("click", isLast ? finish : nextQuestion); brow.appendChild(main);
+      var endb=el("button","btn ghost big","End round");
+      /* Same width and size as "Next question", 10px away, and rebuilt after every reveal, so it
+         sits beside the control the host taps about nineteen times a night. endRound() clears the
+         timer, wipes the recovery pointer, sends the TV and every phone to idle and ends the game
+         on the server, with no undo. */
+      endb.addEventListener("click", function(){
+        vpAsk("End the whole quiz now?\n\nThis finishes the round for the room. It cannot be undone.").then(function(ok){ if(ok) endRound(); });
+      }); brow.appendChild(endb);
+      body.appendChild(brow);
+      if(!isLast){ var nu2=nextUpPanel(); if(nu2) body.appendChild(nu2); }
+      return;
+    }
+
+    if(G.status==="ended"){
+      var done=el("div","qwrap");
+      done.innerHTML='<div class="qmeta"><span class="qn">Round finished</span></div>'+
+        '<div class="qtext-h">The winners are on the big screen.</div>';
+      body.appendChild(done);
+      var again=el("button","btn pink big","Start a new round"); again.addEventListener("click", function(){ endRound(); }); body.appendChild(again);
+    }
+  }
+  /* Confirm on EVERY End round. Two of the three sat directly under Reveal answer with no
+     confirm, so one fat finger in a dark pub ended the night for the room mid-question. */
+  function endBtn(label){ var b=el("button","btn ghost",label||"End round"); b.style.width="100%"; b.style.marginTop="10px"; b.addEventListener("click", function(){
+    vpAsk("End the whole quiz now?\n\nThis finishes the round for the room. It cannot be undone.").then(function(ok){ if(ok) endRound(); });
+  }); return b; }
+
+  /* MORE TIME, ASKED OF THE SERVER. The Worker owns the deadline and throws away a late
+     answer, so a clock the console stretched on its own would promise the room ten more
+     seconds and then bin what they tapped. This moves the real deadline first and only then
+     tells the phones and the TV. If the route is not deployed yet the host is told plainly
+     and the question carries on with the time it had. */
+  function addTime(secs){
+    if(G.status!=="question" || !G.gameId || !G.current) return;
+    clearErrForAction();
+    var b=$("addTimeBtn");
+    if(remainingSecs()<=0){ hostError("That question is out of time. Reveal the answer and carry on."); return; }
+    if(b){ b.disabled=true; b.textContent="Adding\u2026"; }
+    function done(){ if(b){ b.disabled=false; b.textContent="+10 seconds"; } }
+    apiPost("/host/question/add-time",{ game_id:G.gameId, seconds:secs }).then(function(r){
+      var ends=Date.parse(r&&r.ends_at)||0;
+      if(!ends) throw new Error("The server did not send back a new finish time.");
+      G.current.endsAt=ends;
+      bcast({ t:"time", qseq:G.current.qseq, endsAt:ends, secs:remainingSecs() });
+      updateLive(); done();
+    }).catch(function(e){
+      done();
+      if(e && e.status===404) hostError("Extra time is not switched on at the server yet. This question keeps the time it started with.");
+      else hostError((e&&e.message)||"Could not add time.");
+    });
+  }
+
+  function updateLive(){
+    var e=$("hAns"), c=$("hCd"), t=$("hTot"), w=$("hAnsWrap");
+    var a=answeredCount(), p=playerCount();
+    if(e) e.textContent=a;
+    if(t) t.textContent=p;
+    if(w) w.style.color=(p>0 && a>=p) ? "var(--win)" : "";   // all teams in -> light up green
+    if(c) c.textContent=remainingSecs()+"s";
+  }
+  function clearTick(){ if(G.tick){ clearInterval(G.tick); G.tick=null; } }
+
+  // ---- game flow (every write goes through the Worker) ----
+  function readSettings(){
+    G.timePerQ=Math.max(5, Math.min(60, parseInt($("cfgTime").value,10)||30));
+    G.base=Math.max(0, parseInt($("cfgBase").value,10)||0);
+    G.count=effectiveCount();
+    G.doubleLast=Math.max(1, Math.min(100, parseInt(($("cfgDoubleLast")||{}).value,10)||10));
+    /* ONE STRIP PER ROUND, THE WHOLE ROUND ON IT. There was a separate "Questions per round" box
+       under the print button; Dean, 27 Sep 2026: "dunno why that's there". A paper team now gets one
+       strip with every question in this round and hands it in at the end, so the sheets follow
+       "Questions this round" and there is one number to set, not two. */
+    G.roundSize=G.count;
+    G.setId=$("setSel").value||"";
+    var so=$("setSel").options[$("setSel").selectedIndex];
+    G.setTitle=(so && so.getAttribute("data-title"))||"";
+  }
+  function openSession(){
+    if(!G.venueId){ return Promise.reject(new Error("no venue linked to this login")); }
+    if(G.sessionId && G.joinCode){
+      /* This night is already ours, but the server may have been told it is something else since
+         (a bingo lobby on another tablet). Say "trivia" again, or /join/info answers bingo and phones
+         off the QR sit on the bingo page through this whole lobby (break test, 14 Oct 2026). The
+         server reuses this same session; nothing waits on it. */
+      apiPost("/session",{ venue_id:G.venueId, format:"trivia" }).catch(function(){});
+      return Promise.resolve({ session_id:G.sessionId, join_code:G.joinCode });
+    }
+    var _slug=(G.venue && G.venue.slug) || "";
+    var _ask=(window.VP && VP.confirmTakeover) ? VP.confirmTakeover(_slug) : Promise.resolve(true);
+    return _ask.then(function(ok){
+      if(!ok){ var e=new Error("Left as it is. The game on the other device is still running."); e.takeoverDeclined=true; throw e; }
+      return apiPost("/session",{ venue_id:G.venueId, format:"trivia" });
+    }).then(function(r){
+      G.sessionId=r.session_id;
+      // Remember the night so it can be CLOSED on sign-out. Closing is what marks the
+      // session finished and bills any approved busy-night overage; nothing else does it.
+      VP.noteOpenSession(r.session_id, G.venueId);   // so the night is closed (and any approved overage billed) on sign-out
+      G.joinCode=r.join_code;
+      if(typeof r.plan_cap==="number") G.planCap=r.plan_cap;   // authoritative cap from the worker (covers group + founding), so the banner can't disagree
+      renderConsole();
+      openGameChannel(G.joinCode);                                        // players' channel
+      send({ t:"session", session_id:G.sessionId, join_code:G.joinCode }); // hand the real code to the screen
+      $("setupCode").textContent=G.joinCode;
+      return r;
+    });
+  }
+  // Open the join lobby first (same flow as bingo): the TV shows the QR + code and players
+  // scan in and see "you're in" before the first question. Then "Start round" builds the game.
+  /* WHAT THE HOST COULD NOT SEE. A phone that types the code on the wall lands on /play and
+     waits there. It does not reach this page, or this page's broadcast channel, until the
+     host taps Start round, so G.players stays empty and the Players box says 0 for the whole
+     lobby however many people have scanned in. Watched live on 11 Sep 2026: the phone said
+     "YOU'RE IN", the console said PLAYERS (0), and both were telling the truth.
+
+     A host reading 0 with a full room in front of them concludes the thing is broken. So ask
+     the server, which does know: /snapshot counts vp_players for the session, deduped by
+     device, the same figure the night is billed on.
+
+     It is a HINT, never a gate. VP.sessionPlayerCount resolves to null on any failure, and a
+     null simply hides the line: nothing here can stop a round starting. */
+  var lobbyWatch=null;
+  function paintLobbyWait(n){
+    var el=$("lobbyWait"); if(!el) return;
+    if(G.status!=="lobby" || typeof n!=="number" || n<1){ el.style.display="none"; el.textContent=""; return; }
+    el.style.display="";
+    /* Phones now reach this console in the lobby, team names and all, so "they pick a team name
+       when you start the round" was wrong while the names sat in the Players box right under it
+       (audit, 14 Oct 2026). Say what is true: how many, and whether every one has come through. */
+    var named=playerCount(), ph=(n===1 ? "1 phone has" : n+" phones have");
+    el.textContent = named>=n ? (ph+" scanned in. "+(n===1 ? "Its team name is" : "Their team names are")+" under Players.")
+                              : (ph+" scanned in. Team names show under Players as each one comes through.");
+  }
+  function pollLobbyWait(){
+    if(G.status!=="lobby") return;
+    if(!VP.sessionPlayerCount){ return; }   // older shared script: show nothing rather than guess
+    VP.sessionPlayerCount(VP_GAME_API, G.sessionId).then(paintLobbyWait);
+  }
+  function startLobbyWatch(){
+    stopLobbyWatch();
+    pollLobbyWait();
+    lobbyWatch=setInterval(pollLobbyWait, 5000);
+  }
+  function stopLobbyWatch(){
+    if(lobbyWatch){ clearInterval(lobbyWatch); lobbyWatch=null; }
+    paintLobbyWait(null);
+  }
+
+  function openLobby(){
+    if(G.busy) return;
+    clearErrForAction();
+    G.busy=true; var btn=$("startBtn"); if(btn){ btn.disabled=true; btn.textContent="Opening..."; }
+    readSettings();
+    openSession().then(function(){
+      bcast({ t:"mode", mode:"trivia", title:G.setTitle });   // TV shows the trivia join screen, named after the night
+      releasePodium();                                         // the last round's winners give way to this lobby
+      G.status="lobby";
+      startLobbyWatch();
+      gsend({ t:"rollcall" });               // new round: pull the still-connected players back onto the roster
+      bcast({ t:"players", count:playerCount() });
+    }).catch(function(e){ hostError(e.message); }).then(function(){
+      G.busy=false; if(btn){ btn.disabled=false; } renderConsole();
+    });
+  }
+  function cancelLobby(){
+    if(G.busy) return;
+    clearErrForAction();
+    stopLobbyWatch();
+    G.status="setup";
+    bcast({ t:"idle" });   // TV back to the idle join screen
+    closeNight(null);
+    renderConsole();
+  }
+  /* "I'M DONE" CLOSES THE SESSION (live audit, 19 Oct 2026). Close lobby and End game / back to
+     ads left it live: HQ read the venue as live, phones saw a live game and the next format on this
+     tablet was asked about a game "on another device". The next round still reuses the session. */
+  function closeNight(ended){
+    var sid=G.sessionId; if(!sid) return;
+    G.sessionId=""; G.joinCode="";
+    (ended || Promise.resolve()).then(function(){ if(window.VP && VP.closeSession) VP.closeSession(sid); });
+  }
+  function startRound(){
+    if(G.busy) return;
+    clearErrForAction();
+    stopLobbyWatch();
+    if(G.roundType==="pr") return startPR();
+    readSettings();
+    if(!G.setId){ hostError("Pick a question set first"); return; }
+    G.busy=true;
+    var btn=$("startBtn"); if(btn){ btn.disabled=true; btn.textContent="Starting..."; }
+    openSession().then(function(){
+      bcast({ t:"mode", mode:"trivia", title:G.setTitle });
+      return apiPost("/host/game",{
+        session_id:G.sessionId, format:"trivia", question_set_id:G.setId,
+        time_limit_s:G.timePerQ, base_points:G.base, speed_bonus:G.speedBonus, colour:G.colour,
+        question_count:G.count, round_size:G.roundSize, double_points:G.doublePoints, double_last:G.doubleLast,
+        paper:paperThisRound()   // said for THIS round: printing once no longer makes every later round paper
+      });
+    }).then(function(r){
+      G.gameId=r.game_id; G.questionCount=r.question_count; G.qtotal=r.question_count;
+      G.doubleSeqs=Array.isArray(r.double_seqs)?r.double_seqs:[];
+      // The Worker makes it a paper round from what was printed; the console mirrors that rule.
+      G.defer = (r.paper===true); G.rs = r.round_size || G.roundSize; G.round = 1; G.roundItems = []; savePaperRound();
+      G.paperRound = null;   // the next round decides again
+      if(G.defer){ try{ var _pi=paperPrintedInfo(); _pi.usedBy=G.gameId; localStorage.setItem(paperKey(), JSON.stringify(_pi)); }catch(e){} }   // these sheets have now been played
+      G.status="ready"; G.board=[]; G.current=null;
+      saveTrivia();
+      bcast({ t:"started", game_id:G.gameId, question_count:r.question_count, colour:G.colour, title:G.setTitle });
+      bcast({ t:"players", count:playerCount() });
+      renderConsole();
+    }).catch(function(e){ hostError(e.message); }).then(function(){
+      G.busy=false; if(btn){ btn.disabled=false; btn.textContent=(G.status==="lobby"?"Start round":"Open lobby"); }
+    });
+  }
+  function nextQuestion(){
+    if(G.busy || !G.gameId) return; clearErrForAction(); G.busy=true; clearTick();
+    apiPost("/host/question",{ game_id:G.gameId }).then(function(r){
+      if(r && r.done){ finish(); return; }
+      G.current={ qseq:r.qseq, qi:r.qi, qtotal:r.qtotal, text:r.text, options:r.options||[],
+        correctIndex:r.correct_index, endsAt:Date.parse(r.ends_at), secs:r.secs, imageUrl:r.image_url||"" };
+      G.nextUp = r.next_preview || null;   // host-only: what to start reading before tapping Next
+      G.qtotal=r.qtotal||G.qtotal;
+      G.status="question"; G.answeredPids={}; G.answeredQseq=r.qseq; G.split=[];
+      saveTrivia();
+      // PUBLIC broadcast: text + options + optional picture, NEVER correct_index.
+      bcast({ t:"question", game_id:G.gameId, qseq:r.qseq, qi:r.qi, qtotal:r.qtotal,
+        text:r.text, options:r.options||[], endsAt:G.current.endsAt, secs:r.secs, colour:G.colour, imageUrl:r.image_url||"", double:isDouble(r.qseq) });
+      renderRun();
+      G.tick=setInterval(function(){ updateLive(); if(remainingSecs()<=0){ clearTick(); bcast({ t:"lock" }); } }, 500);
+    }).catch(function(e){ hostError(e.message); }).then(function(){ G.busy=false; });
+  }
+  /* Refill the leaderboard after a reload. G.board is ONLY ever set from a /host/reveal response,
+     so a host who reloaded their tablet had an empty board for the rest of the night. Tapping Next
+     after the last question then broadcast a podium built from an empty array: the TV showed the
+     podium layer with nothing on it and nine seconds of confetti, at the climax of the quiz.
+     The comment here used to say the TV recovers the leaderboard from its own snapshot. It cannot:
+     trivia/screen.html never calls the game Worker at all. /host/reveal is idempotent (it will not
+     re-stamp an already revealed question), so asking again is safe. */
+  /* THE SCORES SO FAR, MID-QUESTION. rebuildBoard cannot be used while a question is open: asking
+     /host/reveal then would REVEAL it. So a host who reloaded mid-question had an empty Leaderboard
+     panel until the next reveal (audit, 14 Oct 2026). /host/trivia/board reads the same board the
+     reveal returns and changes nothing. An older Worker without the route answers 404, and the
+     panel stays as it was. */
+  function readBoard(){
+    if(!G.gameId) return;
+    var gid=G.gameId;
+    apiPost("/host/trivia/board",{ game_id:gid })
+      .then(function(r){ if(r && Array.isArray(r.leaderboard) && G.gameId===gid && !G.board.length){ G.board=r.leaderboard; renderBoard(); } })
+      .catch(function(){});
+  }
+  function rebuildBoard(){
+    if(!G.gameId) return;
+    apiPost("/host/reveal",{ game_id:G.gameId })
+      .then(function(r){ if(r && r.leaderboard){ G.board=r.leaderboard; renderConsole(); } })
+      .catch(function(){ /* leave the board empty; finish() below refuses to show an empty podium */ });
+  }
+  function reveal(){
+    if(G.busy || G.status!=="question" || !G.gameId) return; clearErrForAction(); G.busy=true; clearTick();
+    apiPost("/host/reveal",{ game_id:G.gameId }).then(function(r){
+      G.status="reveal"; G.board=r.leaderboard||[]; G.split=r.split||[];
+      saveTrivia();
+      if(G.current) G.current.correctIndex=r.correct_index;
+      if(G.defer){
+        /* PAPER ROUND: scored on the server, kept off the TV and the phones until the sheets are in. */
+        var qn=(G.current && (G.current.qi||G.current.qseq))||0;
+        G.round=roundOf(qn);
+        if(G.current && !G.roundItems.some(function(it){ return it.qi===qn; })){
+          G.roundItems.push({ qi:qn, text:G.current.text, letter:LETTERS[r.correct_index]||"", answer:(G.current.options||[])[r.correct_index]||"", dbl:isDouble(G.current.qseq) });
+        }
+        savePaperRound();
+        bcast({ t:"closed", round:G.round, qi:qn });
+        renderConsole();
+        return;
+      }
+      // Safe to send correct_index now, the reveal has happened.
+      bcast({ t:"reveal", qseq:r.qseq, correctIndex:r.correct_index,
+        options:(G.current?G.current.options:[]), split:r.split||[], leaderboard:G.board });
+      renderConsole();
+      // Between-question leaderboard, but NOT after the last question - there the host reveals
+      // the leaderboard/podium manually with the button.
+      var isLast = G.qtotal && G.current && (G.current.qi||G.current.qseq) >= G.qtotal;
+      if(!isLast){ setTimeout(function(){ if(G.status==="reveal"){ bcast({ t:"leaderboard", title:"Leaderboard", rows:G.board }); } }, 5200); }
+    }).catch(function(e){ hostError(e.message); }).then(function(){ G.busy=false; });
+  }
+  function finish(){
+    clearTick();
+    /* Never put an empty podium on the wall. If the board is missing (a reload, or a failed
+       rebuild), fetch it once more before announcing rather than firing confetti over nothing. */
+    if(!G.board.length && G.gameId){
+      apiPost("/host/reveal",{ game_id:G.gameId })
+        .then(function(r){ if(r && r.leaderboard) G.board=r.leaderboard; })
+        .catch(function(){})
+        .then(function(){ finishNow(); });
+      return;
+    }
+    finishNow();
+  }
+  function finishNow(){
+    if(!G.board.length){
+      /* Do NOT set status to "ended" here. Doing so re-rendered the console into its finished
+         state, whose only control is "Start a new round", which calls endRound() and destroys the
+         game: after a transient failure at the climax the host's single option wiped the scores
+         they were trying to show. Staying in "reveal" keeps the Reveal leaderboard button on
+         screen so they can simply try again. */
+      hostError("Scores could not be loaded, so the podium was not put on the screen. Check your connection and tap Reveal leaderboard again.");
+      renderConsole();
+      return;
+    }
+    G.status="ended";
+    bcast({ t:"podium", top:G.board.slice(0,3), rows:G.board });
+    bcast({ t:"leaderboard", title:"Final scores", rows:G.board });
+    renderConsole();
+  }
+  /* ---- PUNTERS RECKON (feature/top-answers; hidden unless the console is opened with ?pr=1) ----
+     The referee is /app/topanswers/pr-game.js. Its board object, with the answers, never leaves this
+     console: the TV and phones get the question and a count (ta_board), each found answer as it is found
+     (ta_reveal), and the rest at the end (ta_showall). Phones mark themselves played with /player/alive
+     like any game, and a night of this does NOT count as the weekly trivia night (Dean, 29 Sep 2026). */
+  /* A GUESS MUST COME FROM THE PHONE WHOSE PID IT NAMES (audit, 14 Oct 2026). This scored any
+     {t:"pr_guess", pid, name, text} that arrived on the players' channel, whose name is a public hash
+     of the venue and which anybody with the anon key can shout into. So a stranger could score guesses
+     to a real team under its pid, burn that team's three guesses, put the results on its phone, and
+     add teams of their own making to the leaderboard. Now the trivia phone signs every guess with a
+     key it made for this room, and its pid IS that key's fingerprint (vp-phonekey.js, the same scheme
+     the bingo phones use). Here: the signature must be by the key the pid names, and the guess must be
+     newer than anything heard from that phone, so a recorded real guess cannot be played back to burn
+     the rest. What is signed is the pid, the name, the board and the text, so none of them can be
+     changed in flight; the name scored is the SIGNED one, never the unsigned join's. A guess with no
+     signature, or from an old random pid, is dropped. What this does not stop is somebody who has the
+     room code playing as a team of their own, which is true of every game played off a channel. */
+  var _prChain=Promise.resolve();
+  function onPRGuess(m){
+    if(G.roundType!=="pr" || !G.pr || !m || !m.pid || (m.round|0)!==G.pr.round) return;
+    if(!window.VPPhoneKey || !VPPhoneKey.isKeyed(m.pid)) return;   // unsigned, or an old random pid: nobody vouches for it
+    _prChain=_prChain.then(function(){ return VPPhoneKey.verify(m); }).then(function(v){
+      if(!v || !v.ok || v.legacy) return;
+      if(!VPPhoneKey.fresh(prSeen(), m, Date.now())) return;     // a real guess, played back
+      savePRSeen();
+      prGuess(m);
+    }).catch(function(){});
+  }
+  function prGuess(m){
+    if(G.roundType!=="pr" || !G.pr || (m.round|0)!==G.pr.round) return;   // the board moved on while it was checked
+    var name=String(m.name||"Player");
+    var pr=G.pr.guess(m.pid, name, m.text);
+    gsend(pr.result);                    // addressed to that phone (pr_result.to); nobody else learns anything
+    if(pr.reveal){ bcast(pr.reveal); }   // an answer's text travels only now, when it has been found
+    G.prFeed.unshift({ name:name, text:pr.result.text, hit:!!pr.result.hit, a:pr.result.a });
+    G.prFeed=G.prFeed.slice(0,30); savePR();
+    if(!G.prPaint){ G.prPaint=setTimeout(function(){ G.prPaint=null; renderConsole(); }, 400); }   // a room typing at once repaints once
+  }
+  /* The newest guess number heard from each phone, kept with the night, so a console reload does not
+     let a guess recorded earlier in the night be played back. */
+  function prSeenKey(){ return "vpPRSeen:"+(G.sessionId||""); }
+  function prSeen(){
+    if(!G.prSeenN){ try{ G.prSeenN=JSON.parse(localStorage.getItem(prSeenKey())||"{}")||{}; }catch(e){ G.prSeenN={}; } }
+    return G.prSeenN;
+  }
+  function savePRSeen(){ try{ localStorage.setItem(prSeenKey(), JSON.stringify(G.prSeenN||{})); }catch(e){} }
+  function prKey(){ return "vpPR:"+(G.sessionId||""); }
+  function savePR(){ try{ if(G.pr) localStorage.setItem(prKey(), G.pr.save()); }catch(e){} }
+  /* A PUNTERS RECKON NIGHT HAS NO GAME ROW, so restoreTrivia (which asks the Worker for the running
+     trivia game) never found it, and a console reload dropped the host back on setup with the room
+     mid-board and the session still open. Seen live at Test Alpha, 30 Sep 2026. This pointer is the
+     night; vpPR:<session> holds the scores and the board in play. */
+  function prNightKey(){ return "vpPRNight-"+(G.venueId||""); }
+  function savePRNight(){ try{ localStorage.setItem(prNightKey(), JSON.stringify({ v:1, ts:Date.now(), sessionId:G.sessionId })); }catch(e){} }
+  function clearPRNight(){ try{ localStorage.removeItem(prNightKey()); }catch(e){} }
+  /* THE BOARDS COME FROM THE GAME WORKER, STAFF ONLY (15 Oct 2026). They were a public script,
+     /app/topanswers/ta-boards.js, that anybody could open and read every answer from before a night.
+     Now the console asks GET /host/pr/boards with the host's login, once a night (and once after a
+     reload), and they are held in this tab only. A failure is said out loud: a night with no boards
+     cannot be played, so no session is opened for it. */
+  function prLoadBoards(){
+    if(G.prBoards) return Promise.resolve(G.prBoards);
+    return getToken().then(function(t){
+      var _ac=(typeof AbortController!=="undefined") ? new AbortController() : null;
+      var _to=setTimeout(function(){ try{ if(_ac) _ac.abort(); }catch(e){} }, 15000);
+      var o={ headers:{ "Authorization":"Bearer "+t } }; if(_ac) o.signal=_ac.signal;
+      return fetch(VP_GAME_API+"/host/pr/boards?venue_id="+encodeURIComponent(G.venueId||""), o)
+        .then(function(r){ clearTimeout(_to); return r; }, function(){ clearTimeout(_to); throw new Error("The game server did not answer. Check the venue wifi and try again."); });
+    }).then(readApi).then(function(d){
+      if(!d || !Array.isArray(d.boards) || !d.boards.length) throw new Error("There are no boards to play.");
+      G.prBoards=d.boards; return d.boards;
+    });
+  }
+  function restorePR(){
+    if(!window.PRGame) return Promise.resolve(false);
+    var raw; try{ raw=localStorage.getItem(prNightKey()); }catch(e){ return Promise.resolve(false); }
+    if(!raw) return Promise.resolve(false);
+    var p; try{ p=JSON.parse(raw); }catch(e){ clearPRNight(); return Promise.resolve(false); }
+    if(!p || !p.sessionId || !p.ts || (Date.now()-p.ts)>TRIVIA_SAVE_MAX_AGE){ clearPRNight(); return Promise.resolve(false); }
+    var boards=null;
+    return fetch(VP_GAME_API+"/snapshot?session="+encodeURIComponent(p.sessionId))
+      .then(function(res){ return res.ok ? res.json() : null; })
+      .then(function(snap){
+        if(!snap || !snap.join_code || ["lobby","running","paused"].indexOf(snap.status)<0){ clearPRNight(); return null; }
+        /* The night is still open, so its boards are needed to put the board in play back. If they
+           cannot be had, the night pointer is KEPT so the next reload tries again. */
+        return prLoadBoards().then(function(b){ boards=b; return snap; }, function(e){ hostError("Your "+window.PRGame.NAME+" night is still open but its boards did not load ("+e.message+"). Reload the console."); return null; });
+      })
+      .then(function(snap){
+        if(!snap) return false;
+        G.sessionId=snap.session_id; G.joinCode=snap.join_code;
+        G.roundType="pr";
+        document.querySelectorAll("#cfgRoundType button").forEach(function(x){ x.classList.toggle("on", x.getAttribute("data-v")==="pr"); });
+        var pf=$("prField"); if(pf) pf.classList.remove("hidden");
+        G.pr=new window.PRGame.Game({ boards:boards }); G.prFeed=[]; G.prPub=null; G.prSeenN=null;
+        try{ G.pr.load(localStorage.getItem(prKey())); }catch(e){}
+        openGameChannel(G.joinCode);
+        send({ t:"session", session_id:G.sessionId, join_code:G.joinCode });
+        send({ t:"mode", mode:"trivia", title:window.PRGame.NAME });
+        var back=G.pr.replay();
+        if(back){
+          G.prPub=back[0]; G.status="question";
+          back.forEach(function(m){ bcast(m); });
+          var ms=G.pr.endsAt-Date.now();
+          clearTimeout(G.prEndT); G.prEndT=setTimeout(prEnd, Math.max(0, ms)+1500);
+        } else { G.status="ready"; }
+        $("statusText").textContent="Recovered your "+window.PRGame.NAME+" night";
+        renderConsole();
+        return true;
+      })
+      .catch(function(){ return false; });
+  }
+  function startPR(){
+    if(!window.PRGame){ hostError("Punters Reckon did not load. Reload the console."); return; }
+    G.busy=true;
+    var btn=$("startBtn"); if(btn){ btn.disabled=true; btn.textContent="Starting..."; }
+    prLoadBoards().then(function(boards){ return openSession().then(function(){ return boards; }); }).then(function(boards){
+      G.pr=new window.PRGame.Game({ boards:boards }); G.prFeed=[]; G.prPub=null; G.prSeenN=null;
+      try{ G.pr.load(localStorage.getItem(prKey())); }catch(e){}
+      clearTimeout(G.prIdleT); clearTimeout(G.prBoardT); savePRNight();
+      G.status="ready";
+      bcast({ t:"mode", mode:"trivia", title:window.PRGame.NAME });
+      renderConsole();
+    }).catch(function(e){ hostError(e.message); }).then(function(){ G.busy=false; if(btn){ btn.disabled=false; } });
+  }
+  function prPutUp(){
+    if(!G.pr) return;
+    if(G.pr.board) return;   // a double-tap on "Next board" must not skip the board the room is on (audit, 30 Sep 2026)
+    var secs=Math.max(15, Math.min(180, parseInt(($("prSecs")||{}).value,10)||45));
+    G.prPub=G.pr.nextBoard(secs); G.prFeed=[];
+    if(!G.prPub){ hostError("There are no boards to play."); return; }
+    G.status="question";
+    bcast(G.prPub);
+    clearTimeout(G.prEndT);
+    G.prEndT=setTimeout(prEnd, secs*1000+1500);     // the room gets the whole clock, then the board ends itself
+    savePR(); renderConsole();
+  }
+  function prEnd(){
+    if(!G.pr || !G.pr.board) return;
+    clearTimeout(G.prEndT);
+    var e=G.pr.endBoard(); G.prPub=null; G.status="ready";
+    bcast(e.showall);
+    clearTimeout(G.prBoardT);
+    G.prBoardT=setTimeout(function(){ bcast(e.leaderboard); }, 7000);   // let the room read the board first
+    savePR(); renderConsole();
+  }
+  function renderPRRun(body){
+    var w=el("div","qwrap");
+    if(G.pr.board){
+      var b=G.pr.board, left=Math.max(0, Math.ceil((G.pr.endsAt-Date.now())/1000));
+      var rows=b.answers.map(function(a,i){ var f=G.pr.found[i];
+        return '<div class="opt'+(f!==undefined?' correct':'')+'"><span class="ol">'+(i+1)+'</span><span class="otx">'+esc(a.a)+' <b>'+a.pts+'</b>'+(f!==undefined?' <small>found by '+esc(f)+'</small>':'')+'</span></div>'; }).join("");
+      w.innerHTML='<div class="qmeta"><span class="qn">'+esc(window.PRGame.NAME)+' &middot; round '+G.pr.round+' &middot; about '+left+'s left</span></div>'+
+        '<div class="qtext-h">'+esc(b.q)+'</div>'+rows+
+        '<div class="since" style="margin:10px 0 6px">Only you can see the answers. The TV shows each one when somebody finds it.</div>'+
+        G.prFeed.slice(0,8).map(function(f){ return '<div class="since" style="margin:2px 0">'+esc(f.name)+': '+esc(f.text)+(f.hit?' <b style="color:var(--win)">'+esc(f.a)+'</b>':'')+'</div>'; }).join("");
+      body.appendChild(w);
+      var eb=el("button","btn pink big","End this board now"); eb.addEventListener("click", prEnd); body.appendChild(eb);
+    } else {
+      w.innerHTML='<div class="qmeta"><span class="qn">'+esc(window.PRGame.NAME)+(G.pr.round?' &middot; '+G.pr.round+' played':'')+'</span></div>'+
+        '<div class="field" style="margin:8px 0 0"><label>Seconds for the room to answer</label><input type="number" id="prSecs" class="mono" min="15" max="180" value="45"></div>';
+      body.appendChild(w);
+      var nb=el("button","btn pink big", G.pr.round?"Next board":"First board"); nb.addEventListener("click", prPutUp); body.appendChild(nb);
+    }
+    body.appendChild(endBtn("Finish Punters Reckon"));
+  }
+
+  var PODIUM_HOLD_MS=10*60*1000;
+  function holdPodium(){
+    clearTimeout(G.podiumHoldT); G.podiumHeld=true;
+    G.podiumHoldT=setTimeout(function(){ if(G.podiumHeld && G.status==="setup"){ G.podiumHeld=false; bcast({ t:"idle" }); } }, PODIUM_HOLD_MS);
+  }
+  /* The new lobby takes the wall from the held winners: the trivia screen only, on its own pairing
+     channel (send, not bcast), because the venue channel hears "state" as bingo's. Sent with every
+     lobby, held or not: a console reloaded while the winners were up has forgotten it was holding
+     them, and a lobby is what the wall should show either way. */
+  function releasePodium(){
+    clearTimeout(G.podiumHoldT); G.podiumHeld=false;
+    send({ t:"state", phase:"lobby", colour:G.colour });
+  }
+  function endRound(){
+    clearTick();
+    clearTrivia();
+    var gid=G.gameId, afterPodium=(G.status==="ended" && !G.pr);
+    G.status="setup"; G.current=null; G.answeredPids={};
+    /* FINAL SCORES MUST STAY UP LONG ENOUGH TO READ. This used to send the leaderboard and then
+       "idle" in the same breath, so the TV went straight back to the lobby and nobody saw who won
+       (and a board ended mid-play flipped its answers for no time at all). */
+    if(G.pr){
+      clearTimeout(G.prEndT); clearTimeout(G.prBoardT); clearTimeout(G.prIdleT);
+      var _mid=!!G.pr.board, _rows;
+      if(_mid){ var _e=G.pr.endBoard(); bcast(_e.showall); }
+      _rows=G.pr.rows(); clearPRNight();
+      G.prBoardT=setTimeout(function(){ bcast({ t:"leaderboard", title:"Final scores", rows:_rows }); }, _mid ? 7000 : 0);
+      G.prIdleT=setTimeout(function(){ if(G.status==="setup") bcast({ t:"idle" }); }, (_mid ? 7000 : 0) + 15000);
+      G.pr=null; G.prPub=null;
+    } else if(afterPodium){
+      /* THE WINNERS STAY UP UNTIL THE NEXT LOBBY. "Start a new round" after the podium sent idle, and
+         idle on the venue's channel is /tv's "back to the ads", so the winners vanished the moment the
+         host went to set up the next round (audit, 14 Oct 2026). Nothing is sent now; openLobby puts
+         the wall on the new lobby. If no lobby follows, the ads come back after PODIUM_HOLD_MS. */
+      holdPodium();
+    } else {
+      bcast({ t:"idle" });   // screen returns to the join/lobby state
+    }
+    renderConsole();
+    if(gid){ return apiPost("/host/game/end",{ game_id:gid }).catch(function(e){ hostError(e.message); }); }
+    return Promise.resolve();
+  }
+
+  // ---- incoming (screen presence on the pairing channel; player join + answer on the
+  //      game channel; both flow through onMsg) ----
+  function onMsg(m){
+    if(!m||!m.t) return;
+    /* Another console's heartbeat. Never acted on by itself (anybody can send one): it only makes
+       this console ask the Worker whether its quiz was picked up elsewhere (/app/vp-pickup.js). */
+    if(m.t==="host_here"){ if(window.VP_PICKUP) VP_PICKUP.heard(m.cid); return; }
+
+  /* WHAT IS ON RIGHT NOW, SENT TO SOMEBODY WHO MISSED IT.
+     The big screen has had this since the day it sat on a join QR through a live question.
+     A PHONE never did, and a phone misses far more often: iOS throws away a backgrounded
+     tab as a matter of routine, which venueplay/play.html already says out loud about
+     bingo. So a punter who put their phone in their pocket came back to "Watch the big
+     screen, your questions will pop up here" while the telly counted down, and lost 100
+     points plus up to 50 for speed without being told. Anyone joining a minute late got
+     the same. Found 16 Sep 2026.
+
+     pid null replays to the TV on the pair channel. A pid replays to that one phone on
+     the game channel, tagged so every other phone ignores it: re-broadcasting a live
+     question to the room would wipe the answer somebody had already given. */
+  function replayState(pid){
+    var to = pid ? function(o){ o.to = pid; gsend(o); } : send;
+    if(G.roundType==="pr" && G.pr && G.prPub){
+      /* A phone or screen that arrives mid-board gets the board and what has been FOUND, never the rest.
+         Phones filter on `to`, so a replay aimed at one phone is sent to that phone's pid. */
+      var one=JSON.parse(JSON.stringify(G.prPub));
+      // A phone's guesses are kept under its SIGNING pid, which its join names as prk (14 Oct 2026).
+      var gk=(pid && G.prAlias && G.prAlias[pid]) || pid;
+      if(gk && G.pr.guesses[gk]) one.left=G.pr.guesses[gk].left;   // a phone that reloaded keeps its real guesses left
+      to(one);   // aimed at the one phone that asked (`to`), or the TV: never re-sets everyone else's board
+      Object.keys(G.pr.found).forEach(function(i){ var a=G.pr.board && G.pr.board.answers[i]; if(a){ to({ t:"ta_reveal", i:+i, a:a.a, pts:a.pts, by:G.pr.found[i] }); } });
+      return;
+    }
+    if(G.status==="question" && G.current){
+      to({ t:"question", game_id:G.gameId, qseq:G.current.qseq, qi:G.current.qi, qtotal:G.qtotal,
+           text:G.current.text, options:G.current.options, endsAt:G.current.endsAt,
+           secs:remainingSecs(), colour:G.colour,
+           imageUrl:(G.current.imageUrl||""), double:isDouble(G.current.qseq) });   // without this a replayed picture round loses its picture
+      if(remainingSecs()<=0) to({ t:"lock" });
+    } else if(G.defer && G.status==="reveal" && G.current){
+      to({ t:"closed", round:G.round, qi:(G.current.qi||G.current.qseq) });
+    } else if(G.defer && G.status==="handin"){
+      to({ t:"handin", round:G.round });
+    } else if(G.defer && (G.status==="paperscore" || G.status==="roundboard")){
+      to({ t:"roundanswers", round:G.round, items:G.roundItems });
+      if(G.status==="roundboard" && G.board.length) to({ t:"leaderboard", title:"Leaderboard after round "+G.round, rows:G.board });
+    } else if(G.status==="reveal" && G.current){
+      to({ t:"reveal", qseq:G.current.qseq, correctIndex:G.current.correctIndex,
+           options:G.current.options, split:(G.split||[]), leaderboard:G.board, imageUrl:(G.current.imageUrl||"") });
+      if(G.board.length) to({ t:"leaderboard", title:"Leaderboard", rows:G.board });
+    } else if(G.status==="ended" && G.board.length){
+      to({ t:"podium", top:G.board.slice(0,3), rows:G.board });
+    }
+  }
+    if(m.t==="tv_here"){
+      $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
+      if(m.hello){
+        // A freshly (re)loaded screen: re-hand the session + replay the running state.
+        send({ t:"host_here", cid:G.consoleId });
+        if(G.sessionId && G.joinCode) send({ t:"session", session_id:G.sessionId, join_code:G.joinCode });
+        if(G.status!=="setup"){ send({ t:"mode", mode:"trivia", title:G.setTitle }); send({ t:"players", count:playerCount() }); }
+        /* REPLAY WHAT IS ACTUALLY ON. trivia/screen.html never calls the game Worker, so a
+           freshly loaded screen has no way to learn the state on its own: it sat on the join QR
+           through a live question until the host tapped Next. The screen reloads more often than
+           you would think (the CDN retry, /tv re-embedding after ads), so this is the difference
+           between the big screen catching up on its own and the room staring at a join code. */
+        replayState(null);
+      }
+      return;
+    }
+    if(m.t==="join"){
+      if(!m.pid) return;                       // cosmetic roster only; the Worker meters vp_players
+      /* ONLY A TRIVIA PHONE IS A TRIVIA PLAYER. This channel is the venue's own code, the one the
+         bingo and musical phones are on too, and a bingo page left open in somebody's pocket answers
+         this console's rollcall with its own saved name: "Bingo Betty" sat in the Players box as a
+         sixth team, the count was one more than the room, and "All in" could never go green (break
+         test, 14 Oct 2026). Trivia phones tag their join with fmt, the same tag this console puts on
+         everything it sends; anything else is somebody else's game. */
+      if(m.fmt!=="trivia") return;
+      var nm=uniqueTeamName(m.pid, String(m.name||"Player"));
+      if(!G.players[m.pid]){ G.players[m.pid]={ name:nm }; G.order.push(m.pid); }
+      else { G.players[m.pid].name=nm; }
+      /* TWO TEAMS, ONE NAME. Two phones that both typed "Quiz Kids" were two identical chips and two
+         identical rows on the wall, so neither table knew which score was theirs. The later one is
+         told its name on the board ("Quiz Kids 2") and its phone re-registers under it, so the
+         leaderboard (which reads the name the Worker holds) tells them apart too. */
+      if(nm!==String(m.name||"Player")) gsend({ t:"rename", to:m.pid, name:nm });
+      // Only ever used to look up how many Punters Reckon guesses this phone has left (replayState).
+      if(typeof m.prk==="string" && /^k1_[A-Za-z0-9_-]{8,64}$/.test(m.prk)){ (G.prAlias||(G.prAlias={}))[m.pid]=m.prk; }
+      bcast({ t:"players", count:playerCount() });
+      renderJoinCounts();     // NOT renderConsole: see above
+      replayState(m.pid);     // they may have missed a live question; catch them up
+    }
+    else if(m.t==="pr_guess"){
+      onPRGuess(m);
+    }
+    else if(m.t==="answer"){
+      if(G.status!=="question" || m.qseq!==G.answeredQseq || !m.pid) return;   // cosmetic "answered" ticker
+      G.answeredPids[m.pid]=true; updateLive(); saveTrivia();
+      send({ t:"answered", count:answeredCount() });   // the TV is on the pair channel, so push the tally to it
+    }
+  }
+
+  // ---- pair with the venue screen ----
+  function connect(code){
+    G.pairCode=code;
+    ch=client.channel("vp-"+code, { config:{ broadcast:{ self:false } } });
+    ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
+    ch.subscribe(function(status){
+      if(status==="SUBSCRIBED"){
+        subscribed=true; send({ t:"host_here", cid:G.consoleId }); flushQueue();
+        $("statusDot").classList.remove("on"); $("statusText").textContent="Waiting for screen";
+      } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){
+        /* Reset the flag. Without this, send() kept thinking the channel was up and posted into a
+           dead socket, so the TV silently stopped updating with nothing on the console to say so.
+           Setting it false makes send() queue instead, and flushQueue() delivers everything the
+           screen missed the moment it reconnects. */
+        subscribed=false;
+        $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting";
+      }
+    });
+    $("signinView").classList.add("hidden");
+    $("connectView").classList.add("hidden");
+    $("consoleView").classList.remove("hidden");
+    if($("runHelp")) $("runHelp").classList.remove("hidden");   // walkthrough shows only on the console, never sign-in
+    $("roomCode").textContent=code;
+    renderConsole();
+  }
+
+  // ---- question sets (venue's own + the VenuePlay library, via RLS on the authed client) ----
+  function loadQuestionSets(){
+    var sel=$("setSel");
+    client.from("vp_question_sets")
+      .select("id,title,question_count,visibility,owner_venue_id,status")
+      .eq("status","active")
+      .then(function(r){
+        var rows=(r&&r.data)||[];
+        var mine=[], lib=[];
+        /* Your nights and the VenuePlay library, NOT another venue's private night: staff of
+           several venues (and HQ) can read those, so one was listed as "Library", picked, the
+           room scanned in, and Start was refused (audit, 27 Sep 2026). Library sets have no owner. */
+        rows.forEach(function(s){ if(s.owner_venue_id===G.venueId) mine.push(s); else if(!s.owner_venue_id) lib.push(s); });
+        function opt(s){ var o=document.createElement("option"); o.value=s.id;
+          o.textContent=(s.title||"Untitled set")+(s.question_count!=null?(" ("+s.question_count+")"):"");
+          o.setAttribute("data-count", s.question_count!=null?s.question_count:0);
+          o.setAttribute("data-title", s.title||"Trivia Night");
+          o.setAttribute("data-own", s.owner_venue_id===G.venueId ? "1" : "0"); return o; }
+        sel.innerHTML="";
+        if(!rows.length){ var o0=document.createElement("option"); o0.value=""; o0.textContent="No question sets found"; sel.appendChild(o0); G.questionCount=0; $("setupQs").textContent="0"; return; }
+        if(mine.length){ var g1=document.createElement("optgroup"); g1.label="Your sets"; mine.forEach(function(s){ g1.appendChild(opt(s)); }); sel.appendChild(g1); }
+        if(lib.length){ var g2=document.createElement("optgroup"); g2.label="VenuePlay Trivia Library"; lib.forEach(function(s){ g2.appendChild(opt(s)); }); sel.appendChild(g2); }
+        // "Run it now" in the builder lands here with ?set=<id>: pick that night without a hunt.
+        var want=setFromUrl(), found=false; if(want){ for(var k=0;k<sel.options.length;k++){ if(sel.options[k].value===want){ sel.selectedIndex=k; found=true; break; } } }
+        if(want && !found) hostError("That night is not one of this venue's, so it is not in the list. Check which venue you are running.");
+        syncSetCount();
+      }, function(){ sel.innerHTML='<option value="">Could not load question sets</option>'; });
+  }
+  function syncSetCount(){
+    var sel=$("setSel"), opt=sel.options[sel.selectedIndex];
+    var c=opt?parseInt(opt.getAttribute("data-count"),10):0;
+    G.setId=sel.value||""; G.questionCount=(c>=0?c:0);
+    G.setTitle=(opt && opt.getAttribute("data-title"))||"";
+    /* A NIGHT YOU BUILT PLAYS IN FULL; A QUESTION BANK STARTS AT 10. This filled the whole set
+       every time, so picking a bank like Geography (2,720 questions) set the round to 100 (Dean,
+       27 Sep 2026: "for some reason it defaulted to 100 questions"). Up to 50 is a night somebody
+       built, so all of it; more than that is a bank to draw from, so a normal round of 10. */
+    /* Your OWN night plays in full (the builder allows 100); a library set plays in full up to 50,
+       and a bigger bank starts at 10. Deciding by size alone cut a 60-question night the venue built
+       to 10 (audit, 27 Sep 2026). */
+    var own = opt && opt.getAttribute("data-own")==="1";
+    if($("cfgCount") && G.questionCount>0){ $("cfgCount").value = (own || G.questionCount<=50) ? Math.min(100, G.questionCount) : 10; }
+    if(typeof renderPaperSetup==="function"){ try{ renderPaperSetup(); }catch(e){} }
+    paintRoundQs();
+    /* RE-RENDER. renderConsole() decides whether "Open lobby" is enabled, and it reads
+       G.questionCount. On a cold load renderConsole() runs before the question sets have come
+       back from the network, so the count is 0 and the button is disabled and captioned "No
+       questions in this night". This function is what learns the real count, and it did not
+       re-render, so the button stayed dead: the stat box read "Questions: 20" with a greyed-out
+       button underneath, and there was no way to start a quiz at all. A disabled button fires no
+       click, and nothing else re-renders during setup, so the host could not recover. */
+    renderConsole();
+  }
+
+  // ---- events ----
+  var codeIn=$("codeIn");
+  codeIn.addEventListener("input", function(){
+    var v=codeIn.value.toUpperCase().replace(/[^ACDEFGHJKMNPQRSTUVWXYZ2345679]/g,"");
+    codeIn.value=v; $("codeErr").textContent="";
+  });
+  codeIn.addEventListener("keydown", function(e){ if(e.key==="Enter") tryConnect(); });
+  function tryConnect(){
+    var code=codeIn.value.toUpperCase().trim();
+    if(!CODE_RE.test(code)){ $("codeErr").textContent="Enter all 6 characters from the TV."; return; }
+    connect(code);
+  }
+  $("connectBtn").addEventListener("click", tryConnect);
+  $("startBtn").addEventListener("click", function(){ if(G.status==="lobby") startRound(); else openLobby(); });
+  $("cancelLobbyBtn").addEventListener("click", cancelLobby);
+
+  /* ---- PAPER TEAMS (Dean, 25 Sep 2026) ----
+     Printed A/B/C/D sheets for the regulars without a phone. With any printed, the round is a PAPER
+     round: every answer is held back to the end of its block of questions, the TV asks the paper
+     teams for their sheets, the host taps "Sheets collected", THEN the answers go up and the host
+     types each paper team's score. A paper team is a player once it is scored: that is when it
+     bills, once. Ten a night; the Worker allows a sheet per player on the plan in the free month. */
+  function paperKey(){ return "vpPaperT-"+(G.sessionId||""); }
+  function paperTeams(){ return paperPrintedInfo().teams|0; }
+  function paperPrintedInfo(){ try{ return JSON.parse(localStorage.getItem(paperKey())||"{}")||{}; }catch(e){ return {}; } }
+  function roundOf(qi){ return Math.max(1, Math.ceil((qi||1)/(G.rs||10))); }
+  function roundEnds(qi){ return (qi%(G.rs||10))===0 || (G.qtotal && qi>=G.qtotal); }
+  function roundKey(){ return "vpPaperR-"+(G.gameId||""); }
+  function savePaperRound(){ try{ localStorage.setItem(roundKey(), JSON.stringify({ round:G.round, items:G.roundItems, names:G.paperNames||{}, status:G.status })); }catch(e){} }
+  function loadPaperRound(){ try{ var o=JSON.parse(localStorage.getItem(roundKey())||"{}"); G.round=o.round||1; G.roundItems=o.items||[]; G.paperNames=o.names||{}; }catch(e){ G.round=1; G.roundItems=[]; G.paperNames={}; } }
+  function renderPaperSetup(){
+    var n=G.sessionId ? paperTeams() : 0;
+    $("paperPrintBtn").textContent = n ? ("Print again ("+n+" team sheet"+(n===1?"":"s")+" tonight)") : "Print answer sheets";
+    /* The sheets are printed in rounds of this size, so once they are on the tables it cannot
+       change: a different size would ask for sheets at the wrong moment. */
+    var info=paperPrintedInfo();
+    readSettings();
+    /* Printed for a different number of questions than the round is now set to: say so, plainly,
+       before the lobby opens. A reprint before the game starts replaces the sheets. */
+    var stale = n && info.questions && info.questions !== G.count && !G.gameId;
+    $("paperNote").textContent = n
+      ? (stale
+          ? ("Printed for "+info.questions+" questions, but this round is now "+G.count+". Tap Print again for sheets that match.")
+          : (n+" paper team"+(n===1?"":"s")+" tonight, each with one sheet of "+(info.questions||G.count)+" questions. The answers go up at the end of the round, after you have their sheets. A paper team counts as a player once its score goes on the leaderboard."))
+      : "Up to 10 teams a night. With paper teams playing, the answers go up at the end of the round, after the host has their sheets. A paper team counts as a player once its score goes on the leaderboard.";
+    $("paperNote").style.color = stale ? "var(--gold)" : "";
+    var row=$("paperRoundRow"), box=$("paperRound");
+    if(row && box){
+      row.style.display = (n && (G.status==="setup" || G.status==="lobby")) ? "flex" : "none";   // before a round, including the second one of the night
+      box.checked = paperThisRound();
+    }
+  }
+  /* PAPER IS DECIDED PER ROUND, BY THE HOST (14 Oct 2026). Printing sheets used to make EVERY later
+     round that night a paper round, answers held back to the end of the round, even a round with a
+     different number of questions that no sheet on a table matched (audit, 14 Oct 2026). Now the
+     console says paper:true or paper:false for each round it starts. Ticked by default only for the
+     first round after a print whose sheets match the round; a sheet already played is not reused
+     unless the host ticks the box. */
+  function paperThisRound(){
+    var info=paperPrintedInfo(), n=info.teams|0;
+    if(!n) return false;
+    if(typeof G.paperRound==="boolean") return G.paperRound;
+    return !info.usedBy && !(info.questions && info.questions!==effectiveCount());
+  }
+  (function(){ var b=$("paperRound"); if(b) b.addEventListener("change", function(){ G.paperRound=!!b.checked; }); })();
+  var _paperDone=null;
+  $("paperGo").addEventListener("click", function(){
+    var v=parseInt($("paperCount").value,10);
+    if(!(v>=1)){ $("paperErr").textContent="How many teams are playing on paper?"; return; }
+    $("paperModal").classList.add("hidden"); var f=_paperDone; _paperDone=null; if(f) f(v);
+  });
+  $("paperCancel").addEventListener("click", function(){ $("paperModal").classList.add("hidden"); var f=_paperDone; _paperDone=null; if(f) f(null); });
+  $("paperPrintBtn").addEventListener("click", function(){
+    if(G.busy) return;
+    readSettings();
+    var had=G.sessionId ? paperTeams() : 0;
+    $("paperBody").innerHTML="How many teams are playing on paper? Up to 10 a night (more in your free month)."+
+      (had ? " You have printed "+had+" already; the same team numbers carry on." : "")+
+      "<br><small style=\"color:var(--muted)\">"+sheetShape()+" A paper team counts as a player once it is scored.</small>";
+    $("paperCount").value=String(had||2); $("paperErr").textContent="";
+    $("paperModal").classList.remove("hidden");
+    setTimeout(function(){ try{ $("paperCount").focus(); $("paperCount").select(); }catch(e){} }, 30);
+    new Promise(function(res){ _paperDone=res; }).then(function(n){
+      if(n==null) return;
+      var w=window.VPPrint ? VPPrint.open("Trivia answer sheets") : null;   // opened inside the tap, so no pop-up blocker
+      openSession().then(function(){
+        return apiPost("/host/paper/print",{ session_id:G.sessionId, kind:"trivia", count:n, round_size:G.roundSize, questions:G.count });
+      }).then(function(r){
+        // Before the game the latest print wins; once it is running a reprint keeps the sheets on the tables.
+        var rs=r.round_size||G.roundSize, qn=r.questions||G.count;
+        try{ localStorage.setItem(paperKey(), JSON.stringify({ teams:r.teams, roundSize:rs, questions:qn })); }catch(e){}
+        G.paperRound = null;   // fresh sheets: the next round is on paper unless the host unticks it
+        renderPaperSetup();
+        if(!window.VPPrint || !VPPrint.trivia(w, { teams:r.teams, questions:qn, roundSize:rs, venue:(G.venue && G.venue.name)||"" })){
+          hostError(printProblem(w));
+        }
+      }).catch(function(e){ if(window.VPPrint) VPPrint.fail(w, e.message); hostError(e.message); });
+    });
+  });
+  $("cfgCount").addEventListener("input", function(){ renderPaperSetup(); paintRoundQs(); });
+  /* THE QUESTIONS BOX SHOWS THIS ROUND, not the whole set. Dean, 27 Sep 2026: "the questions down
+     the bottom don't reflect what the number is in the top". It showed the set size (2,720 for a
+     bank) while the round was 10. Now it shows the round, with the set beside it when they differ. */
+  /* ONE NUMBER for the box, the game and the printed sheets: what was typed, kept to 1..100 and
+     to what the set holds. Typing 250 showed "250 of 2,720" while 100 played and printed; typing 30
+     on a 12-question night printed 30 rows and played 12 (audit, 27 Sep 2026). */
+  function effectiveCount(){
+    var want=parseInt(($("cfgCount")||{}).value,10); if(!(want>0)) want=10;
+    want=Math.max(1, Math.min(100, want));
+    var total=G.questionCount||0;
+    return total>0 ? Math.min(want, total) : want;
+  }
+  function paintRoundQs(){
+    var el=$("setupQs"); if(!el) return;
+    var total=G.questionCount||0;
+    var n = total ? effectiveCount() : 0;
+    el.innerHTML = String(n) + (total>n ? ' <small style="font-size:12px;color:var(--muted);font-weight:600">of '+total.toLocaleString("en-AU")+'</small>' : '');
+  }
+
+  function sheetShape(){
+    var rounds=Math.ceil(G.count/G.roundSize);
+    return rounds===1 ? ("Each team gets one strip with all "+G.count+" questions to hand in at the end.")
+      : ("Each team gets "+rounds+" strips to tear off, one per round of "+G.roundSize+" questions ("+G.count+" questions in all).");
+  }
+  function paperHandIn(){
+    G.status="handin"; savePaperRound();
+    bcast({ t:"handin", round:G.round });
+    renderConsole();
+  }
+  function paperShowAnswers(){
+    G.status="paperscore"; savePaperRound();
+    bcast({ t:"roundanswers", round:G.round, items:G.roundItems });
+    renderConsole();
+  }
+  function paperRoundDone(){
+    G.status="roundboard"; savePaperRound();
+    bcast({ t:"leaderboard", title:"Leaderboard after round "+G.round, rows:G.board });
+    renderConsole();
+  }
+  /* What is wrong with the typed paper scores, in words for the host, or "" when nothing is. */
+  function paperScoreProblem(teams, outOf, dblOutOf){
+    for(var i=0;i<teams.length;i++){
+      var t=teams[i], who=t.name || ("Team "+t.no);
+      if(t.correct==="") continue;                              // no sheet handed in: fine
+      if(!(t.correct>=0)) return who+": type how many they got right, as a number.";
+      if(t.correct>outOf) return who+": "+t.correct+" right, but this round had "+outOf+" question"+(outOf===1?"":"s")+". Check the sheet and fix the number.";
+      if(t.double>0 && t.double>dblOutOf) return who+": "+t.double+" right in the double points questions, but there "+(dblOutOf===1?"was 1":"were "+dblOutOf)+". Fix that box.";
+      if(t.double>t.correct) return who+": more right in the double points questions ("+t.double+") than right in total ("+t.correct+"). Fix one of the boxes.";
+    }
+    return "";
+  }
+  function paperSaveScores(btn){
+    clearErrForAction();
+    var teams=[], n=paperTeams();
+    G.paperNames=G.paperNames||{};
+    for(var i=1;i<=n;i++){
+      var nm=($("ppName"+i)||{}).value||"", c=($("ppCorrect"+i)||{}).value, d=($("ppDouble"+i)||{}).value;
+      G.paperNames[i]=nm.trim();
+      teams.push({ no:i, name:nm.trim(), correct:(c===""||c==null)?"":parseInt(c,10), double:(d===""||d==null)?0:parseInt(d,10) });
+    }
+    /* A SCORE THE ROUND CANNOT HOLD IS A TYPO, AND THE HOST HEARS ABOUT IT. "9 right out of 5" was
+       quietly cut to 5 by the server and went on the wall as if that is what the sheet said (audit,
+       14 Oct 2026). Nothing is sent until every box is a number the round allows. */
+    var _rs=G.rs||10, _len=G.qtotal ? Math.min(_rs, Math.max(0, G.qtotal-(G.round-1)*_rs)) : 0;
+    var _its=G.roundItems||[], _out=Math.max(_its.length, _len);
+    // The doubled count is only known when this tablet saw the whole round; otherwise the server checks it.
+    var bad=paperScoreProblem(teams, _out, _its.length===_out ? _its.filter(function(it){ return it.dbl; }).length : Infinity);
+    if(bad){ hostError(bad); return; }
+    if(btn){ btn.disabled=true; btn.textContent="Saving..."; }
+    apiPost("/host/paper/score",{ game_id:G.gameId, round:G.round, teams:teams }).then(function(r){
+      if(r && r.leaderboard) G.board=r.leaderboard;
+      paperRoundDone();
+    }).catch(function(e){ hostError(e.message); if(btn){ btn.disabled=false; btn.textContent="Put scores on the leaderboard"; } });
+  }
+  function nextRoundQuestion(){ G.round=G.round+1; G.roundItems=[]; savePaperRound(); nextQuestion(); }
+  /* The run panel on a paper round. Returns true when it drew the panel. */
+  function renderPaperRun(body){
+    var q=G.current, qn=q ? (q.qi||q.qseq) : 0, total=G.qtotal||0, last=total && qn>=total;
+    if(G.status==="reveal" && q){
+      var w=el("div","qwrap");
+      w.innerHTML='<div class="qmeta"><span class="qn">Question '+qn+' of '+(total||"?")+(q && isDouble(q.qseq)?' &middot; <b style="color:var(--gold)">DOUBLE POINTS</b>':'')+' &middot; round '+G.round+' &middot; answer held back</span></div>'+
+        '<div class="qtext-h">'+esc(q.text)+'</div>'+
+        '<div class="since" style="margin:0 0 8px">Paper teams are playing, so this answer stays off the TV and the phones until the end of round '+G.round+'.</div>';
+      for(var i=0;i<q.options.length;i++){
+        var ok=(i===q.correctIndex), o=el("div","opt"+(ok?" correct":""));
+        o.innerHTML='<span class="ol">'+LETTERS[i]+'</span><span class="otx">'+esc(q.options[i])+'</span>'+(ok?'<span class="ck">&#10003; correct</span>':'');
+        w.appendChild(o);
+      }
+      body.appendChild(w);
+      if(roundEnds(qn)){
+        var hb=el("button","btn pink big","End of round "+G.round+": ask for the paper sheets"); hb.addEventListener("click", paperHandIn); body.appendChild(hb);
+      } else {
+        var nb=el("button","btn pink big","Next question"); nb.addEventListener("click", nextQuestion); body.appendChild(nb);
+        var nu=nextUpPanel(); if(nu) body.appendChild(nu);
+      }
+      body.appendChild(endBtn("End round"));
+      return true;
+    }
+    if(G.status==="handin"){
+      var h=el("div","qwrap");
+      h.innerHTML='<div class="qmeta"><span class="qn">Round '+G.round+' &middot; collecting sheets</span></div>'+
+        '<div class="qtext-h">Collect the round '+G.round+' sheets from the paper teams.</div>'+
+        '<div class="since" style="margin:0">The TV is asking them for their sheets now. Once you have every one, show the answers.</div>';
+      body.appendChild(h);
+      var sb=el("button","btn win big","Sheets collected, show the answers"); sb.addEventListener("click", paperShowAnswers); body.appendChild(sb);
+      body.appendChild(endBtn("End round"));
+      return true;
+    }
+    if(G.status==="paperscore"){
+      var n=paperTeams(), items=G.roundItems||[], k=el("div","qwrap");
+      var dblInRound=items.filter(function(it){ return it.dbl; }).length;
+      var keyHtml='<div class="qmeta"><span class="qn">Round '+G.round+' answers, on the TV now</span></div>';
+      for(var a=0;a<items.length;a++) keyHtml+='<div class="opt correct"><span class="ol">'+esc(items[a].letter)+'</span><span class="otx"><b>Q'+esc(items[a].qi)+'</b> '+esc(items[a].answer)+'</span></div>';
+      keyHtml+='<div class="since" style="margin:10px 0 6px">Mark the sheets, then type how many each paper team got right out of '+items.length+'. Leave a box empty if that team did not hand in a sheet.</div>';
+      k.innerHTML=keyHtml;
+      for(var t=1;t<=n;t++){
+        var row=el("div","two");
+        row.style.marginBottom="8px";
+        row.innerHTML='<input type="text" id="ppName'+t+'" placeholder="Team '+t+' name" value="'+esc((G.paperNames||{})[t]||"")+'">'+
+          '<input type="number" id="ppCorrect'+t+'" class="mono" min="0" max="'+items.length+'" inputmode="numeric" placeholder="Right, out of '+items.length+'">';
+        k.appendChild(row);
+        if(dblInRound){
+          var drow=el("div","");
+          drow.style.margin="-2px 0 10px";
+          drow.innerHTML='<input type="number" id="ppDouble'+t+'" class="mono" min="0" max="'+dblInRound+'" inputmode="numeric" placeholder="Of those, right in the double points questions (out of '+dblInRound+')">';
+          k.appendChild(drow);
+        }
+      }
+      body.appendChild(k);
+      var pb=el("button","btn pink big","Put scores on the leaderboard"); pb.addEventListener("click", function(){ paperSaveScores(pb); }); body.appendChild(pb);
+      var skip=el("button","btn ghost","No paper sheets this round"); skip.style.width="100%"; skip.style.marginTop="8px";
+      skip.addEventListener("click", paperRoundDone); body.appendChild(skip);
+      return true;
+    }
+    if(G.status==="roundboard"){
+      var d=el("div","qwrap");
+      d.innerHTML='<div class="qmeta"><span class="qn">Round '+G.round+' done</span></div>'+
+        '<div class="qtext-h">The leaderboard is on the TV.</div>';
+      body.appendChild(d);
+      if(last){ var fb=el("button","btn pink big","Reveal the winners"); fb.addEventListener("click", finish); body.appendChild(fb); }
+      else { var rb=el("button","btn pink big","Start round "+(G.round+1)); rb.addEventListener("click", nextRoundQuestion); body.appendChild(rb); }
+      body.appendChild(endBtn("End round"));
+      return true;
+    }
+    return false;
+  }
+  $("setSel").addEventListener("change", syncSetCount);
+  var cfgBaseEl=$("cfgBase"); if(cfgBaseEl){ cfgBaseEl.addEventListener("input", function(){ var b=Math.max(0,parseInt(cfgBaseEl.value,10)||0); if($("scBase")) $("scBase").textContent=b; if($("scMax")) $("scMax").textContent=Math.round(b*1.5); }); }
+
+  /* DOUBLE POINTS FINAL ROUND. Which questions it covers is decided by the Worker when the night
+     starts (config.double_seqs) and handed back; the console only ever asks isDouble(). */
+  function isDouble(qseq){ return !!(G.doubleSeqs && G.doubleSeqs.indexOf(qseq) >= 0); }
+  function paintDouble(){
+    var seg=$("cfgDouble"); if(seg){ Array.prototype.forEach.call(seg.children, function(bt){ bt.classList.toggle("on", (bt.getAttribute("data-v")==="on")===G.doublePoints); }); }
+    var inp=$("cfgDoubleLast"); if(inp){ inp.value=G.doubleLast; inp.disabled=!G.doublePoints; }
+    var nt=$("doubleNote"); if(nt) nt.textContent = G.doublePoints
+      ? ("The last "+G.doubleLast+" question"+(G.doubleLast===1?"":"s")+" of the night score double, speed bonus included.")
+      : "Off. Turn it on to make the last questions of the night count double.";
+  }
+  document.querySelectorAll("#cfgDouble button").forEach(function(b){ b.addEventListener("click", function(){
+    G.doublePoints=b.getAttribute("data-v")==="on"; paintDouble();
+  }); });
+  (function(){ var inp=$("cfgDoubleLast"); if(inp) inp.addEventListener("input", function(){
+    G.doubleLast=Math.max(1, Math.min(100, parseInt(inp.value,10)||10)); var nt=$("doubleNote");
+    if(nt && G.doublePoints) nt.textContent="The last "+G.doubleLast+" question"+(G.doubleLast===1?"":"s")+" of the night score double, speed bonus included."; }); })();
+  paintDouble();
+  if(/[?&]pr=1/.test(location.search)){ var _pf=$("prField"); if(_pf) _pf.classList.remove("hidden"); }   // switched off unless asked for
+  document.querySelectorAll("#cfgRoundType button").forEach(function(b){ b.addEventListener("click", function(){
+    G.roundType=b.getAttribute("data-v")==="pr" ? "pr" : "trivia";
+    document.querySelectorAll("#cfgRoundType button").forEach(function(x){ x.classList.toggle("on", x===b); });
+    renderConsole();
+  }); });
+  document.querySelectorAll("#cfgSpeed button").forEach(function(b){ b.addEventListener("click", function(){
+    G.speedBonus=b.getAttribute("data-v")==="on";
+    document.querySelectorAll("#cfgSpeed button").forEach(function(x){x.classList.remove("on");}); b.classList.add("on");
+  }); });
+  /* No "Plain" answer buttons any more (Dean, 27 Sep 2026: "get rid of the setting to change the
+     coloured buttons"). Phones always get the four colours, which match the TV. */
+
+  /* ONCE-A-WEEK, SAID UP FRONT. The Worker refuses a second trivia night inside 7 days, but it
+     only said so at Start, after the QR was on the TV and the room had scanned in. The venue row
+     already carries last_trivia_at (migration 13), so mirror the Worker's rule here and say it
+     before the lobby opens. The Worker stays the referee: this only warns and parks the button,
+     and "Open anyway" hands the decision back to it (an 8 hour resume grace lives there too). */
+  function weeklyPreCheck(v){
+    /* A MISSING SHARED SCRIPT MUST NOT TAKE THE CONSOLE DOWN.
+
+       This runs mid-boot, and VP.setGameActive runs AFTER it. That is the call that keeps a
+       night alive through the forced sign-out, so a throw here would cost a host their game
+       to save them a warning banner. /app/vp-celebrate.js went missing from eight screens for
+       half a day once; assume this one can too.
+
+       Degrading to silence is safe: the Worker is the referee either way, so the worst case
+       is the behaviour we had before this warning existed. */
+    if (typeof VPWeekly === "undefined" || !VPWeekly || !VPWeekly.check) return;
+    var bn=$("weekBanner"); if(!bn || !v) return;
+    if(G.status!=="setup") return;                     // a recovered live quiz is never blocked
+    var w=VPWeekly.check(v,"trivia"); if(!w) return;
+    var nextIso=w.nextIso;
+    bn.innerHTML=w.text+'<b>'+w.nextDay+'</b>. '+
+      '<button type="button" id="weekAnyway" style="background:none;border:1px solid rgba(245,165,36,.5);border-radius:7px;color:#F5A524;font-weight:700;font-size:12px;padding:4px 10px;margin-left:6px;cursor:pointer;min-height:32px">Try anyway</button>';
+    bn.style.display="";
+    var sb=$("startBtn"); if(sb){ sb.disabled=true; sb.textContent="Trivia ran this week"; }
+    G.weekHold=true;
+    /* THE BANNER STAYS UP, AND THE BUTTON NO LONGER PROMISES.
+
+       This pre-check exists because the Worker used to refuse only at Start, after the QR was
+       on the TV and the room had scanned in. The escape hatch put that fault straight back:
+       "Open anyway" hid the warning and re-enabled the button, the host opened the lobby, the
+       room seated itself, and the Worker returned 429 on Start because the once-a-week rule
+       lives there and takes no override.
+
+       The hatch is still worth having. This warning is only a MIRROR of vp_venues.last_trivia_at
+       as the console last read it, so it can be wrong, and the Worker is the referee. What was
+       wrong was hiding the warning, which reads as permission.
+
+       So: the banner stays, reworded to say exactly where the real decision happens and that it
+       happens AFTER the room is in. A host who reads it can choose knowingly. Found 12 Sep 2026. */
+    $("weekAnyway").addEventListener("click", function(){
+      G.weekHold=false;
+      bn.innerHTML='Going ahead anyway. The once-a-week rule is enforced by the server, not here, '+
+        'and it is checked again when you <b>start the round</b>, which is after the room has '+
+        'scanned in. If the server still says no, you will be refused with everyone seated. '+
+        'Your next trivia night is available from <b>'+friendlyDay(nextIso)+'</b>.';
+      renderConsole();
+    });
+  }
+
+  // ---- boot: resolve the host login, then let them pair + run ----
+  function showSignIn(msg){ if(msg) $("signinSub").textContent=msg; $("signinView").classList.remove("hidden"); $("connectView").classList.add("hidden"); if($("runHelp")) $("runHelp").classList.add("hidden"); }
+  function setFromUrl(){ var m=/[?&]set=([^&]+)/.exec(window.location.search); if(!m) return ""; var v=decodeURIComponent(m[1]); return /^[0-9a-f-]{36}$/i.test(v)?v:""; }
+  function tvFromUrl(){ var m=/[?&]tv=([^&]+)/.exec(window.location.search); if(!m) return ""; var c=decodeURIComponent(m[1]).toUpperCase().replace(/[^ACDEFGHJKMNPQRSTUVWXYZ2345679]/g,"").slice(0,6); return CODE_RE.test(c)?c:""; }
+
+  $("statusText").textContent="Checking sign in";
+  if(window.VP){
+    VP.ready().then(function(ctx){
+      if(!ctx.authed){ $("statusText").textContent="Not signed in"; showSignIn("You need your venue host login to start a live quiz."); return; }
+      if(!ctx.currentVenueId){ $("statusText").textContent="No venue"; showSignIn("This login is not linked to a venue yet."); return; }
+      G.venueId=ctx.currentVenueId; G.venue=ctx.venue||null;
+      // Pre-fill the round settings from what this venue last used (migration 50), so a host does not
+      // re-enter their preferred time/points/speed every night. A NULL column leaves the built-in default.
+      if(VP.loadSettings){ VP.loadSettings(G.venueId).then(function(s){
+        if(!s) return;
+        if(s.trivia_time_limit_s!=null){ G.timePerQ=s.trivia_time_limit_s; var t=$("cfgTime"); if(t) t.value=s.trivia_time_limit_s; }
+        if(s.trivia_base_points!=null){ G.base=s.trivia_base_points; var bp=$("cfgBase"); if(bp) bp.value=s.trivia_base_points; }
+        if(s.trivia_speed_bonus!=null){ G.speedBonus=!!s.trivia_speed_bonus;
+          var seg=$("cfgSpeed"); if(seg){ Array.prototype.forEach.call(seg.children, function(bt){ bt.classList.toggle("on", (bt.getAttribute("data-v")==="on")===G.speedBonus); }); } }
+        if(s.trivia_double_points!=null) G.doublePoints=!!s.trivia_double_points;
+        if(s.trivia_double_last!=null) G.doubleLast=Math.max(1, Math.min(100, s.trivia_double_last));
+        paintDouble();
+        G.colour=true;   // a venue that once saved "Plain" is not stuck with it: the setting is gone
+      }).catch(function(){}); }
+      weeklyPreCheck(ctx.venue);
+      // Tell vp-session when a quiz is actually on, so the forced sign-out stops closing the
+      // session out from under it. It still signs the host out; it just leaves the night open
+      // so signing back in restores it instead of burning the once-a-week trivia slot.
+      if(VP.setGameActive) VP.setGameActive(function(){ return !!(G.sessionId && G.status!=="setup" && G.status!=="ended"); });
+      VP.enforceShift();   // the 4h forced sign-out is a compliance control: it has to apply here too, not only on /app
+      if(VP.suspensionBanner) VP.suspensionBanner(ctx);
+      $("statusText").textContent="Signed in";
+      loadQuestionSets();
+      /* ONE CONSOLE PER TABLET: a second tab used to restore this same quiz as a second live
+         console. Ask the other tabs first (/app/vp-onetab.js, 14 Oct 2026). */
+      (window.VP_ONETAB ? VP_ONETAB.claim("trivia:"+G.venueId) : Promise.resolve(true)).then(function(){ return restoreTrivia().then(function(ok){ return ok || restorePR(); }); }).then(function(){   // recover a live quiz first (if this was an accidental reload), then pair the TV as normal
+        /* Picked up on another device: stand down (/app/vp-pickup.js). Asks only while a quiz is on. */
+        if(window.VP_PICKUP) VP_PICKUP.arm({ post:apiPost, venueId:G.venueId, format:"trivia",
+          sessionId:function(){ return (G.gameId && G.status!=="setup" && G.status!=="ended") ? G.sessionId : ""; },
+          cid:function(){ return G.consoleId; },
+          onMoved:function(){ clearTick(); clearTrivia(); VP_PICKUP.standDownNotice("trivia"); } });
+        var tv=tvFromUrl();
+        var slug=(ctx.venue && ctx.venue.slug) || "";
+        if(slug && window.VPSign){ VPSign.initHost(VP_GAME_API, slug, vpHostToken); }   // this venue's signing key
+        if(tv){ connect(tv); }
+        else if(slug && window.VP && VP.venueCode){ connect(VP.venueCode("trivia-"+slug)); }   // auto-pair by venue (game-namespaced so it can't collide with bingo)
+        else { $("connectView").classList.remove("hidden"); }                          // fallback: manual code entry
+      });
+    }).catch(function(){ showSignIn("Could not check your sign in. Try reloading."); });
+  } else {
+    showSignIn("Sign in helper failed to load. Try reloading.");
+  }
+
+  // Every game needs an obvious way out. Without this the only route back to the venue's
+  // own advertising was to end the round and wait for the screen to time out.
+  /* This is the FIRST control in the header, on every view, and it is what a confused bartender
+     reaches for when they mean "next". One tap used to drop the venue TV to advertising and show
+     "thanks for playing" on every phone, mid question, while the console carried on as if nothing
+     had happened: G.status stayed "question", the countdown kept running, /host/game/end was
+     never called. So it wrecked the room's night without actually ending the game.
+     Now it confirms while a quiz is live, and genuinely ends the round when it is used. */
+  /* Last format without one. Closing the tab, tapping Games or being signed out by the 4 hour
+     timer left the wall on the trivia join screen until /tv gave up 90 minutes later. A live
+     quiz is left alone: closing the tab mid-question must not wipe it off the screen. */
+  function reassertToTv(){
+    if(G.status==="setup") return;
+    send({ t:"mode", mode:"trivia", title:G.setTitle });
+    send({ t:"players", count:playerCount() });
+    if(G.status==="question" && G.current){
+      send({ t:"question", game_id:G.gameId, qseq:G.current.qseq, qi:G.current.qi, qtotal:G.qtotal,
+             text:G.current.text, options:G.current.options, endsAt:G.current.endsAt,
+             secs:remainingSecs(), colour:G.colour, imageUrl:(G.current.imageUrl||""), double:isDouble(G.current.qseq) });
+      if(remainingSecs()<=0) send({ t:"lock" });
+    } else if(G.status==="reveal" && G.current){
+      send({ t:"reveal", qseq:G.current.qseq, correctIndex:G.current.correctIndex,
+             options:G.current.options, split:(G.split||[]), leaderboard:G.board, imageUrl:(G.current.imageUrl||"") });
+    } else if(G.status==="ended" && G.board.length){
+      send({ t:"podium", top:G.board.slice(0,3), rows:G.board });
+    }
+  }
+  /* PUT THE GAME BACK ON THE WALL WHEN WE RETURN.
+     Every console tells the TV t:"to_ads" on pagehide and not one of them had a
+     pageshow or visibilitychange handler, so nothing ever said "I am back". Tab
+     away, switch apps, or let the tablet sleep and the wall dropped to the venue's
+     ads and stayed there until the TV's 90 minute host-silence timer gave up.
+     Both events, because they do not fire in the same situations: pageshow covers a
+     restore from the back/forward cache, visibilitychange covers tabbing away and
+     back without a navigation. Guarded so a burst of both only speaks once. */
+  var _lastReassert = 0;
+  function reassertOnReturn(){
+    var now = Date.now();
+    if(now - _lastReassert < 1200) return;
+    _lastReassert = now;
+    /* Ask first whether this quiz was picked up on another device while this one slept, so a
+       replaced console never puts its stale question back on the wall (/app/vp-pickup.js). */
+    if(window.VP_PICKUP) VP_PICKUP.check().then(function(still){ if(still) reassertToTv(); });
+    else reassertToTv();
+  }
+  window.addEventListener("pageshow", reassertOnReturn);
+  document.addEventListener("visibilitychange", function(){
+    if(document.visibilityState === "visible") reassertOnReturn();
+  });
+
+  window.addEventListener("beforeunload", function(){ _leaving=true; });
+  window.addEventListener("pagehide", function(){ _leaving=true; });
+  /* COMING BACK UNDOES LEAVING. An iPad that sleeps, or a Back that restores this page from the
+     cache, fired pagehide and left _leaving set for good, so every later real drop was ignored:
+     no warning, no retry, questions into a dead socket (audit, 27 Sep 2026). */
+  window.addEventListener("pageshow", function(e){
+    _leaving=false;
+    if(e && e.persisted && G.joinCode){ try{ openGameChannel(G.joinCode); }catch(err){} }
+  });
+  window.addEventListener("pagehide", function(){
+    if(G.status==="question" || G.status==="reveal" || G.status==="ready") return;
+    try{ rawSend({ t:"to_ads" }); }catch(e){}   // sync on unload; an async signed send never lands before the page dies. NOT exempt: under enforce this is dropped, see vp-sign.js EXEMPT
+  });
+
+  (function(){ var b=document.getElementById("toAdsBtn"); if(!b) return;
+    b.addEventListener("click", function(){
+      var live = G.status==="question" || G.status==="reveal" || G.status==="ready";
+      function toAds(){
+      var _ended = live ? endRound() : null;   // actually end it, rather than only telling the room it ended
+      if(!live){ try{ bcast({ t:"idle" }); }catch(e){} }
+      closeNight(_ended);
+      try{ bcast({ t:"to_ads" }); }catch(e){}
+      b.textContent="Ads are back on";
+      setTimeout(function(){ b.textContent="End game"; }, 2500);
+      }
+      if(!live){ toAds(); return; }
+      vpAsk("End the quiz and put the venue ads back on the TV?\n\nThe round in progress will finish and every player will see \"thanks for playing\".").then(function(ok){ if(ok) toAds(); });
+    });
+  })();
+})();
+</script>
+</body>
+</html>

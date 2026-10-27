@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 650 128" width="650" height="128" role="img" aria-label="VenuePlay">
+  <defs>
+    <filter id="vgpl" x="-70%" y="-70%" width="240%" height="240%">
+      <feGaussianBlur stdDeviation="4.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <g filter="url(#vgpl)">
+    <path d="M30 20 L30 108 L104 64 Z" fill="none" stroke="#FF1F8E" stroke-width="10" stroke-linejoin="round" opacity=".5"/>
+    <path d="M30 20 L30 108 L104 64 Z" fill="none" stroke="#FF1F8E" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M30 20 L30 108 L104 64 Z" fill="none" stroke="#FFD9EC" stroke-width="1.7" stroke-linejoin="round"/>
+  </g>
+  <text x="116" y="88" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="74" letter-spacing="-0.5" fill="#12101A">VenuePlay</text>
+</svg>

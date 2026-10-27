@@ -1,0 +1,362 @@
+{
+ "generated": "2026-09-10",
+ "why": "Not everything a pub sings has a chart row. Two of the sources on the brief, the ARIA Hall of Fame and the Spicks and Specks style pub singalong, are not lists of songs at all, so they were tested by hand: 85 songs a Gold Coast room would sing without being asked were checked against the library one at a time. 77 of the 85 were already there, which is the real finding. These are the ones that were not. Advance Australia Fair was checked and deliberately left out: the anthem is not a bingo square. A second group was added the same day: 50 songs that were kept out of the 9 September run only because the library already held that title by another act. The card shows the title and nothing else, so both versions can sit in the library without confusing anybody.",
+ "how_they_were_checked": "Every ARIA Hall of Fame inductee linked on the Wikipedia page was matched against the library. Only three performing acts had no song at all: The Masters Apprentices, The Loved Ones and The Dingoes. The rest of this list is the Countdown era and pub singalong test.",
+ "songs": [
+  {
+   "title": "The Loved One",
+   "artist": "The Loved Ones",
+   "why": "ARIA Hall of Fame, and INXS covered it in 1987. Nothing by the act was in the library.",
+   "year": 1966
+  },
+  {
+   "title": "Turn Up Your Radio",
+   "artist": "The Masters Apprentices",
+   "why": "ARIA Hall of Fame. Nothing by the act was in the library."
+  },
+  {
+   "title": "Because I Love You",
+   "artist": "The Masters Apprentices",
+   "why": "ARIA Hall of Fame, and still played on Australian rock radio."
+  },
+  {
+   "title": "Way Out West",
+   "artist": "The Dingoes",
+   "why": "ARIA Hall of Fame. Nothing by the act was in the library."
+  },
+  {
+   "title": "Saturday Night",
+   "artist": "Cold Chisel",
+   "why": "The library holds seven Cold Chisel songs and not this one."
+  },
+  {
+   "title": "Forever Now",
+   "artist": "Cold Chisel",
+   "why": "The library holds seven Cold Chisel songs and not this one."
+  },
+  {
+   "title": "Beautiful Girl",
+   "artist": "INXS",
+   "why": "The library holds the loud INXS singles and not the one the whole room sings quietly."
+  },
+  {
+   "title": "Me and Bobby McGee",
+   "artist": "Janis Joplin",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "I Swear",
+   "artist": "All-4-One",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "Lady Marmalade",
+   "artist": "Christina Aguilera",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "Please Mr. Postman",
+   "artist": "Carpenters",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows.",
+   "year": 1974
+  },
+  {
+   "title": "You Can't Hurry Love",
+   "artist": "Phil Collins",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "Cats in the Cradle",
+   "artist": "Ugly Kid Joe",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows.",
+   "year": 1992
+  },
+  {
+   "title": "If You Don't Know Me by Now",
+   "artist": "Simply Red",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows.",
+   "year": 1989
+  },
+  {
+   "title": "Just Can't Get Enough",
+   "artist": "The Black Eyed Peas",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows.",
+   "year": 2010
+  },
+  {
+   "title": "Dancing in the Street",
+   "artist": "David Bowie & Mick Jagger",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "Always",
+   "artist": "Bon Jovi",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "Think Twice",
+   "artist": "Celine Dion",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "Most Girls",
+   "artist": "P!nk",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "White Flag",
+   "artist": "Dido",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "Hey Baby (Uhh, Ahh)",
+   "artist": "DJ Otzi",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "When the Lights Go Out",
+   "artist": "Five",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "Follow Me",
+   "artist": "Uncle Kracker",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "Superman (It's Not Easy)",
+   "artist": "Five for Fighting",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "This Is Me",
+   "artist": "Keala Settle",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "Paradise",
+   "artist": "Coldplay",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "One",
+   "artist": "U2",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows.",
+   "year": 1991
+  },
+  {
+   "title": "One",
+   "artist": "Metallica",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "Black",
+   "artist": "Pearl Jam",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "Today",
+   "artist": "The Smashing Pumpkins",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows.",
+   "year": 1993
+  },
+  {
+   "title": "Get Back",
+   "artist": "The Beatles",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "The Middle",
+   "artist": "Zedd",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "Fancy",
+   "artist": "Iggy Azalea",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "Rise",
+   "artist": "Katy Perry",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "When I'm Gone",
+   "artist": "Eminem",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "River",
+   "artist": "Eminem",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "Karma",
+   "artist": "Taylor Swift",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "Popular",
+   "artist": "The Weeknd",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "Holy",
+   "artist": "Justin Bieber",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "Afterglow",
+   "artist": "Ed Sheeran",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "Leave (Get Out)",
+   "artist": "JoJo",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "Over and Over",
+   "artist": "Nelly",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "Brother",
+   "artist": "Matt Corby",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "Earthquake",
+   "artist": "Labrinth",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "I'm the One",
+   "artist": "DJ Khaled",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "Signs",
+   "artist": "Snoop Dogg",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "Candy",
+   "artist": "Mandy Moore",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "The Logical Song",
+   "artist": "Scooter",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "Let's Groove",
+   "artist": "CDB",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "La Bamba",
+   "artist": "Los Lobos",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "Put Your Records On",
+   "artist": "Ritt Momney",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "9 to 5 (Morning Train)",
+   "artist": "Sheena Easton",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "Hair",
+   "artist": "The Cowsills",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "Cruisin'",
+   "artist": "Gwyneth Paltrow",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "Breaking Up Is Hard to Do",
+   "artist": "The Partridge Family",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "I Don't Know How to Love Him",
+   "artist": "Helen Reddy",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  },
+  {
+   "title": "I Just Don't Know What to Do with Myself",
+   "artist": "Marcia Hines",
+   "score": 70,
+   "why": "A big Australian hit that never reached the library because the library already held that TITLE by somebody else. The player's card shows the title and nothing else, so holding both versions costs nothing and the room gets a fair chance at the recording it actually knows."
+  }
+ ],
+ "excluded": {
+  "why": "These cleared the chart bar and were still kept out. Each one is a judgement call, written down so it can be argued with.",
+  "acts": [
+   "Rolf Harris. Convicted of child sex offences. No Australian venue wants his face on the TV, whatever the 1960 chart says.",
+   "Gary Glitter. The same, and his records are effectively unplayable on Australian radio."
+  ],
+  "songs": [
+   "A Scottish Soldier, Andy Stewart. The 9 September run named this one as the example of a chart topper that is not a musical bingo square, and nothing has changed.",
+   "My Boomerang Won't Come Back, Charlie Drake. A year-end number five in 1961 built on a racial caricature.",
+   "Advance Australia Fair. The anthem is not a bingo square."
+  ]
+ },
+ "note_on_years": "The store's release date is the date of the album it served up, which for an old single is often a much later compilation: it dates The Loved One to 1985 and U2's One to 1988. Where that would put a song in the wrong decade pack the right year is pinned here and it wins."
+}

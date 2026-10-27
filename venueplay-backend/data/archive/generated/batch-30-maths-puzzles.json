@@ -1,0 +1,8126 @@
+[
+ {
+  "question": "What is 7 times 8?",
+  "options": [
+   "58",
+   "64",
+   "56",
+   "54"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 9 times 6?",
+  "options": [
+   "48",
+   "52",
+   "54",
+   "56"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 12 times 12?",
+  "options": [
+   "156",
+   "144",
+   "132",
+   "124"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 11 times 11?",
+  "options": [
+   "131",
+   "141",
+   "121",
+   "111"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 13 times 3?",
+  "options": [
+   "36",
+   "39",
+   "43",
+   "46"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 25 times 4?",
+  "options": [
+   "90",
+   "125",
+   "100",
+   "75"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 15 times 6?",
+  "options": [
+   "80",
+   "85",
+   "96",
+   "90"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 20 times 15?",
+  "options": [
+   "300",
+   "250",
+   "280",
+   "320"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 50 times 8?",
+  "options": [
+   "450",
+   "420",
+   "380",
+   "400"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 7 times 7?",
+  "options": [
+   "42",
+   "56",
+   "49",
+   "47"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 6 times 6?",
+  "options": [
+   "32",
+   "30",
+   "36",
+   "42"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 8 times 9?",
+  "options": [
+   "63",
+   "81",
+   "72",
+   "74"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 4 times 16?",
+  "options": [
+   "72",
+   "64",
+   "48",
+   "56"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 30 times 3?",
+  "options": [
+   "80",
+   "120",
+   "60",
+   "90"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 12 times 5?",
+  "options": [
+   "65",
+   "50",
+   "55",
+   "60"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 9 times 9?",
+  "options": [
+   "81",
+   "79",
+   "72",
+   "91"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 40 times 6?",
+  "options": [
+   "200",
+   "280",
+   "180",
+   "240"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 100 times 7?",
+  "options": [
+   "700",
+   "70",
+   "1000",
+   "7000"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 11 times 12?",
+  "options": [
+   "122",
+   "121",
+   "132",
+   "144"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 14 times 3?",
+  "options": [
+   "44",
+   "42",
+   "41",
+   "38"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 17 plus 25?",
+  "options": [
+   "40",
+   "46",
+   "42",
+   "44"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 48 plus 36?",
+  "options": [
+   "82",
+   "84",
+   "94",
+   "72"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 99 plus 99?",
+  "options": [
+   "200",
+   "188",
+   "190",
+   "198"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 250 plus 250?",
+  "options": [
+   "400",
+   "500",
+   "450",
+   "550"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 65 plus 27?",
+  "options": [
+   "92",
+   "88",
+   "97",
+   "82"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 120 plus 85?",
+  "options": [
+   "215",
+   "205",
+   "195",
+   "200"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 1000 minus 250?",
+  "options": [
+   "800",
+   "700",
+   "750",
+   "650"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 100 minus 37?",
+  "options": [
+   "63",
+   "53",
+   "57",
+   "67"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 84 minus 29?",
+  "options": [
+   "51",
+   "45",
+   "55",
+   "59"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 500 minus 175?",
+  "options": [
+   "325",
+   "225",
+   "375",
+   "315"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 60 minus 24?",
+  "options": [
+   "26",
+   "36",
+   "34",
+   "46"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 1000 minus 999?",
+  "options": [
+   "9",
+   "1",
+   "0",
+   "10"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 144 divided by 12?",
+  "options": [
+   "11",
+   "14",
+   "16",
+   "12"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 81 divided by 9?",
+  "options": [
+   "11",
+   "8",
+   "7",
+   "9"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 100 divided by 8?",
+  "options": [
+   "13",
+   "12.5",
+   "12",
+   "11.5"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 96 divided by 4?",
+  "options": [
+   "24",
+   "22",
+   "26",
+   "28"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 63 divided by 7?",
+  "options": [
+   "8",
+   "7",
+   "11",
+   "9"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 250 divided by 5?",
+  "options": [
+   "40",
+   "50",
+   "55",
+   "45"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 360 divided by 6?",
+  "options": [
+   "60",
+   "80",
+   "50",
+   "70"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 1000 divided by 40?",
+  "options": [
+   "20",
+   "30",
+   "40",
+   "25"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is half of 96?",
+  "options": [
+   "42",
+   "48",
+   "52",
+   "46"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is half of 250?",
+  "options": [
+   "125",
+   "115",
+   "105",
+   "135"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is half of 1000?",
+  "options": [
+   "450",
+   "500",
+   "550",
+   "400"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is half of 37?",
+  "options": [
+   "17.5",
+   "18.5",
+   "19",
+   "18"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is double 45?",
+  "options": [
+   "95",
+   "90",
+   "80",
+   "85"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is double 125?",
+  "options": [
+   "225",
+   "250",
+   "240",
+   "275"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is double 66?",
+  "options": [
+   "130",
+   "132",
+   "136",
+   "122"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 10% of 350?",
+  "options": [
+   "350",
+   "3.5",
+   "35",
+   "3500"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 20% of 60?",
+  "options": [
+   "10",
+   "12",
+   "15",
+   "6"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 25% of 120?",
+  "options": [
+   "30",
+   "24",
+   "35",
+   "28"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 50% of 84?",
+  "options": [
+   "44",
+   "42",
+   "38",
+   "40"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 75% of 80?",
+  "options": [
+   "55",
+   "60",
+   "65",
+   "70"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 5% of 200?",
+  "options": [
+   "5",
+   "20",
+   "10",
+   "15"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 30% of 90?",
+  "options": [
+   "33",
+   "24",
+   "30",
+   "27"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 15% of 40?",
+  "options": [
+   "5",
+   "7",
+   "6",
+   "4"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 40% of 150?",
+  "options": [
+   "55",
+   "60",
+   "65",
+   "50"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 12% of 50?",
+  "options": [
+   "5",
+   "8",
+   "6",
+   "7"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 90% of 300?",
+  "options": [
+   "270",
+   "280",
+   "260",
+   "240"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 200% of 45?",
+  "options": [
+   "45",
+   "90",
+   "60",
+   "100"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is one quarter of 88?",
+  "options": [
+   "20",
+   "22",
+   "24",
+   "18"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is three quarters of 40?",
+  "options": [
+   "30",
+   "32",
+   "28",
+   "25"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is one third of 99?",
+  "options": [
+   "33",
+   "29",
+   "36",
+   "31"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is two thirds of 90?",
+  "options": [
+   "55",
+   "65",
+   "45",
+   "60"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is one fifth of 45?",
+  "options": [
+   "5",
+   "11",
+   "9",
+   "7"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is three fifths of 100?",
+  "options": [
+   "55",
+   "50",
+   "60",
+   "65"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is one eighth of 64?",
+  "options": [
+   "9",
+   "7",
+   "6",
+   "8"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is seven tenths of 200?",
+  "options": [
+   "120",
+   "140",
+   "150",
+   "130"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which fraction is equal to 0.2?",
+  "options": [
+   "One eighth",
+   "One quarter",
+   "One fifth",
+   "One half"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 0.5 written as a fraction?",
+  "options": [
+   "One third",
+   "One quarter",
+   "One half",
+   "Two thirds"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 1.5 plus 2.75?",
+  "options": [
+   "4.75",
+   "4.15",
+   "4.25",
+   "4.5"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 0.1 times 0.1?",
+  "options": [
+   "0.001",
+   "0.01",
+   "0.1",
+   "1"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 2.5 times 4?",
+  "options": [
+   "9",
+   "12",
+   "10",
+   "8"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 7.5 plus 7.5?",
+  "options": [
+   "16",
+   "15",
+   "17.5",
+   "14"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the square of 13?",
+  "options": [
+   "196",
+   "169",
+   "179",
+   "156"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the square of 15?",
+  "options": [
+   "225",
+   "235",
+   "215",
+   "205"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the square of 20?",
+  "options": [
+   "400",
+   "800",
+   "200",
+   "420"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the square root of 144?",
+  "options": [
+   "13",
+   "11",
+   "14",
+   "12"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the square root of 225?",
+  "options": [
+   "15",
+   "17",
+   "25",
+   "13"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the square root of 400?",
+  "options": [
+   "200",
+   "20",
+   "40",
+   "25"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the square root of 64?",
+  "options": [
+   "8",
+   "7",
+   "9",
+   "6"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 2 to the power of 5?",
+  "options": [
+   "24",
+   "64",
+   "32",
+   "16"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 3 to the power of 3?",
+  "options": [
+   "9",
+   "27",
+   "33",
+   "18"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 5 to the power of 3?",
+  "options": [
+   "125",
+   "150",
+   "100",
+   "75"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 10 to the power of 4?",
+  "options": [
+   "100000",
+   "1000",
+   "100",
+   "10000"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A round of four schooners costs 32 dollars. What does one schooner cost?",
+  "options": [
+   "9 dollars",
+   "8 dollars",
+   "6 dollars",
+   "7 dollars"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "A meal costs 26 dollars and you pay with a 50 dollar note. What is your change?",
+  "options": [
+   "14 dollars",
+   "24 dollars",
+   "26 dollars",
+   "22 dollars"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Six people split a 90 dollar bill evenly. What does each pay?",
+  "options": [
+   "18 dollars",
+   "16 dollars",
+   "15 dollars",
+   "12 dollars"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "A jug holds 1140 millilitres and you pour three equal glasses. How much is in each glass?",
+  "options": [
+   "380 millilitres",
+   "420 millilitres",
+   "400 millilitres",
+   "360 millilitres"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Tickets cost 12 dollars each and 25 are sold. What is the total taken?",
+  "options": [
+   "280 dollars",
+   "300 dollars",
+   "320 dollars",
+   "240 dollars"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A raffle sells 400 tickets at 2 dollars each. What is the total raised?",
+  "options": [
+   "600 dollars",
+   "800 dollars",
+   "1000 dollars",
+   "400 dollars"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "You buy three items at 19 dollars each. What is the total?",
+  "options": [
+   "54 dollars",
+   "57 dollars",
+   "63 dollars",
+   "59 dollars"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "A 60 dollar bill is reduced by 25 per cent. What do you pay?",
+  "options": [
+   "50 dollars",
+   "48 dollars",
+   "40 dollars",
+   "45 dollars"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A 200 dollar bar tab has 10 per cent added. What is the new total?",
+  "options": [
+   "220 dollars",
+   "215 dollars",
+   "225 dollars",
+   "210 dollars"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "An item costs 80 dollars and is discounted by 15 per cent. What is the sale price?",
+  "options": [
+   "68 dollars",
+   "66 dollars",
+   "64 dollars",
+   "72 dollars"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the sum of the numbers on a standard dartboard, one to twenty?",
+  "options": [
+   "200",
+   "190",
+   "220",
+   "210"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the total of 5, 15, 25 and 35?",
+  "options": [
+   "80",
+   "70",
+   "85",
+   "75"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 1 plus 2 plus 3 plus 4 plus 5 plus 6?",
+  "options": [
+   "18",
+   "24",
+   "21",
+   "20"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 20 per cent of 20 per cent of 100?",
+  "options": [
+   "2",
+   "8",
+   "4",
+   "10"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is 999 times 2?",
+  "options": [
+   "1898",
+   "1988",
+   "2098",
+   "1998"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these numbers is prime?",
+  "options": [
+   "29",
+   "21",
+   "27",
+   "33"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these two digit numbers is prime?",
+  "options": [
+   "63",
+   "57",
+   "51",
+   "61"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the only even prime number?",
+  "options": [
+   "1",
+   "2",
+   "0",
+   "4"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the smallest prime number?",
+  "options": [
+   "1",
+   "0",
+   "2",
+   "3"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many prime numbers are there between 10 and 20?",
+  "options": [
+   "5",
+   "4",
+   "2",
+   "3"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which of these is not a prime number?",
+  "options": [
+   "13",
+   "15",
+   "17",
+   "11"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do we call a whole number greater than one that is not prime?",
+  "options": [
+   "Complex",
+   "Compound",
+   "Cardinal",
+   "Composite"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many prime numbers are there between 20 and 30?",
+  "options": [
+   "Three",
+   "One",
+   "Two",
+   "Four"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which number is a factor of every whole number?",
+  "options": [
+   "1",
+   "10",
+   "0",
+   "2"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many factors does the number 12 have?",
+  "options": [
+   "Six",
+   "Four",
+   "Five",
+   "Eight"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the highest common factor of 12 and 18?",
+  "options": [
+   "Two",
+   "Six",
+   "Nine",
+   "Three"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the lowest common multiple of 4 and 6?",
+  "options": [
+   "Eight",
+   "Ten",
+   "Twenty four",
+   "Twelve"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which of these numbers is a multiple of 9?",
+  "options": [
+   "122",
+   "110",
+   "115",
+   "108"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A number is divisible by 3 if what is true of its digits?",
+  "options": [
+   "The last digit is divisible by three",
+   "They add up to a multiple of three",
+   "They include a three",
+   "They are all odd"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A whole number is divisible by 5 if it ends in which digits?",
+  "options": [
+   "0 or 5",
+   "3 or 8",
+   "1 or 6",
+   "2 or 7"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these is a square number?",
+  "options": [
+   "72",
+   "48",
+   "64",
+   "56"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these is a cube number?",
+  "options": [
+   "18",
+   "27",
+   "36",
+   "32"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 4 cubed?",
+  "options": [
+   "16",
+   "48",
+   "64",
+   "12"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which number is both a square number and a cube number?",
+  "options": [
+   "100",
+   "36",
+   "64",
+   "16"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What are numbers like 1, 3, 6, 10 and 15 called?",
+  "options": [
+   "Triangular numbers",
+   "Square numbers",
+   "Cube numbers",
+   "Prime numbers"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the next triangular number after 10?",
+  "options": [
+   "16",
+   "15",
+   "13",
+   "12"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A number that equals the sum of its own proper divisors is called what?",
+  "options": [
+   "A natural number",
+   "A rational number",
+   "A perfect number",
+   "A prime number"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which is the second perfect number after 6?",
+  "options": [
+   "28",
+   "36",
+   "12",
+   "24"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What do we call whole numbers including their negatives and zero?",
+  "options": [
+   "Integers",
+   "Surds",
+   "Fractions",
+   "Decimals"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What do we call numbers that can be written as a simple fraction?",
+  "options": [
+   "Imaginary",
+   "Rational",
+   "Irrational",
+   "Prime"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which of these is an irrational number?",
+  "options": [
+   "0.5",
+   "The square root of two",
+   "Seven",
+   "Three quarters"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Is zero an even number or an odd number?",
+  "options": [
+   "Even",
+   "Both",
+   "Neither",
+   "Odd"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do you get when you divide any number except zero by itself?",
+  "options": [
+   "Zero",
+   "One",
+   "The number",
+   "Infinity"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What happens when you divide a number by zero?",
+  "options": [
+   "It is undefined",
+   "The answer is one",
+   "The answer is zero",
+   "The answer is infinity"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the sum of any number and its negative?",
+  "options": [
+   "The number",
+   "Zero",
+   "One",
+   "Double the number"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which culture is credited with developing the digits we call Arabic numerals?",
+  "options": [
+   "Roman",
+   "Indian",
+   "Egyptian",
+   "Greek"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In the number 3547, which digit is in the hundreds column?",
+  "options": [
+   "4",
+   "3",
+   "7",
+   "5"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 4.6 rounded to the nearest whole number?",
+  "options": [
+   "6",
+   "5",
+   "4.5",
+   "4"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 2749 rounded to the nearest hundred?",
+  "options": [
+   "2700",
+   "2740",
+   "2800",
+   "2750"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 0.375 as a fraction?",
+  "options": [
+   "Three eighths",
+   "Three quarters",
+   "Two fifths",
+   "One third"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is one eighth as a decimal?",
+  "options": [
+   "0.18",
+   "0.125",
+   "0.08",
+   "0.25"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is one sixth as a recurring decimal?",
+  "options": [
+   "0.66 recurring",
+   "0.16 with the 6 recurring",
+   "0.1 recurring",
+   "0.6 recurring"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In Roman numerals, what does the letter D stand for?",
+  "options": [
+   "500",
+   "100",
+   "50",
+   "1000"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Roman numerals, what does the letter L stand for?",
+  "options": [
+   "5",
+   "500",
+   "50",
+   "100"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What number is written as XIV in Roman numerals?",
+  "options": [
+   "24",
+   "14",
+   "16",
+   "46"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How is the number 40 written in Roman numerals?",
+  "options": [
+   "LX",
+   "CD",
+   "XXXX",
+   "XL"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Roman numeral system rule makes IV mean four?",
+  "options": [
+   "Addition",
+   "Repetition",
+   "Subtraction",
+   "Multiplication"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which of these numbers cannot be written in Roman numerals with a single symbol?",
+  "options": [
+   "One hundred",
+   "Two hundred",
+   "Fifty",
+   "One thousand"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many zeros follow the one in a million?",
+  "options": [
+   "Five",
+   "Six",
+   "Seven",
+   "Nine"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many millions are there in a billion, using the short scale?",
+  "options": [
+   "One hundred",
+   "Ten thousand",
+   "One million",
+   "One thousand"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name for a one followed by one hundred zeros?",
+  "options": [
+   "Zillion",
+   "Myriad",
+   "Googol",
+   "Googolplex"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many is a 'dozen'?",
+  "options": [
+   "Twenty",
+   "Ten",
+   "Fourteen",
+   "Twelve"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many sheets of paper are in a 'ream'?",
+  "options": [
+   "One hundred",
+   "Five hundred",
+   "One thousand",
+   "Two hundred and fifty"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many is a 'myriad' in its original Greek meaning?",
+  "options": [
+   "One hundred",
+   "Ten thousand",
+   "One million",
+   "One thousand"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the numerical value of the prefix 'kilo'?",
+  "options": [
+   "One thousand",
+   "Ten thousand",
+   "One hundred",
+   "One million"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the prefix 'mega' mean as a number?",
+  "options": [
+   "One thousand",
+   "One trillion",
+   "One million",
+   "One billion"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the prefix 'micro' mean as a fraction?",
+  "options": [
+   "One millionth",
+   "One thousandth",
+   "One billionth",
+   "One hundredth"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the prefix 'centi' mean?",
+  "options": [
+   "One thousandth",
+   "One hundredth",
+   "One tenth",
+   "One millionth"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the term for a number that reads the same in reverse, like 1331?",
+  "options": [
+   "Reciprocal",
+   "Symmetrical",
+   "Palindromic",
+   "Reflective"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the symbol for infinity look like?",
+  "options": [
+   "An open triangle",
+   "A sideways figure eight",
+   "A double S",
+   "A circle with a line"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which number is described as neither positive nor negative?",
+  "options": [
+   "One",
+   "Pi",
+   "Zero",
+   "Minus one"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the result of multiplying two negative numbers?",
+  "options": [
+   "A negative number",
+   "It depends on the size",
+   "Zero",
+   "A positive number"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is minus 5 plus 8?",
+  "options": [
+   "13",
+   "Minus 13",
+   "3",
+   "Minus 3"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is minus 6 minus 4?",
+  "options": [
+   "2",
+   "Minus 2",
+   "Minus 10",
+   "10"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the absolute value of minus 7?",
+  "options": [
+   "Seven",
+   "Minus 7",
+   "Zero",
+   "Forty nine"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In binary, what is the decimal number 5 written as?",
+  "options": [
+   "110",
+   "101",
+   "011",
+   "111"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In binary, what is the decimal number 8 written as?",
+  "options": [
+   "1010",
+   "1100",
+   "10000",
+   "1000"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many digits does the binary system use?",
+  "options": [
+   "Ten",
+   "Two",
+   "Eight",
+   "Sixteen"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which base does the hexadecimal system use?",
+  "options": [
+   "Base sixteen",
+   "Base eight",
+   "Base twelve",
+   "Base ten"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In hexadecimal, which number does the letter A represent?",
+  "options": [
+   "Zero",
+   "Fifteen",
+   "One",
+   "Ten"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the mathematical name for the answer to an addition?",
+  "options": [
+   "Sum",
+   "Product",
+   "Quotient",
+   "Difference"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the answer to a multiplication called?",
+  "options": [
+   "Product",
+   "Quotient",
+   "Remainder",
+   "Sum"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the answer to a division called?",
+  "options": [
+   "Product",
+   "Difference",
+   "Quotient",
+   "Sum"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the answer to a subtraction called?",
+  "options": [
+   "Product",
+   "Difference",
+   "Quotient",
+   "Sum"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In a fraction, what is the bottom number called?",
+  "options": [
+   "Numerator",
+   "Denominator",
+   "Coefficient",
+   "Divisor"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In a fraction, what is the top number called?",
+  "options": [
+   "Denominator",
+   "Index",
+   "Numerator",
+   "Multiplier"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do we call a fraction whose top number is bigger than its bottom number?",
+  "options": [
+   "Mixed",
+   "Complex",
+   "Compound",
+   "Improper"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 3 and a half written as an improper fraction?",
+  "options": [
+   "Five over two",
+   "Nine over two",
+   "Six over two",
+   "Seven over two"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What do we call the small raised number that shows a power, as in the 3 in two cubed?",
+  "options": [
+   "Index",
+   "Root",
+   "Radical",
+   "Ratio"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the mathematical term for the leftover after a division that does not divide evenly?",
+  "options": [
+   "Residue",
+   "Fragment",
+   "Surplus",
+   "Remainder"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "When you divide 17 by 5, what is the remainder?",
+  "options": [
+   "Three",
+   "Four",
+   "Two",
+   "One"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do we call numbers that follow one another in order, such as 7, 8 and 9?",
+  "options": [
+   "Consecutive",
+   "Complementary",
+   "Concurrent",
+   "Congruent"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which two numbers give the same answer when added together as when multiplied?",
+  "options": [
+   "Four and four",
+   "One and one",
+   "Three and three",
+   "Two and two"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the sum of the first five odd numbers?",
+  "options": [
+   "25",
+   "20",
+   "24",
+   "30"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which of these is a Fibonacci number?",
+  "options": [
+   "22",
+   "24",
+   "20",
+   "21"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'prime factor'?",
+  "options": [
+   "A factor that is also a prime number",
+   "The largest factor",
+   "A factor of one",
+   "The first factor found"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the prime factors of 30?",
+  "options": [
+   "2, 5 and 6",
+   "2, 3 and 5",
+   "3, 5 and 10",
+   "1, 2 and 15"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 100 expressed as a product of prime factors?",
+  "options": [
+   "2 squared times 5 squared",
+   "10 squared",
+   "4 times 25",
+   "2 times 50"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which pair of numbers are called 'twin primes'?",
+  "options": [
+   "11 and 15",
+   "12 and 14",
+   "13 and 17",
+   "11 and 13"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the smallest three digit prime number?",
+  "options": [
+   "113",
+   "107",
+   "103",
+   "101"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is one per cent expressed as a decimal?",
+  "options": [
+   "0.01",
+   "0.001",
+   "0.1",
+   "1.0"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 1 divided by 3, written as a decimal?",
+  "options": [
+   "0.33 exactly",
+   "0.333 exactly",
+   "0.34",
+   "0.3 recurring"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which number, when multiplied by any other, leaves it unchanged?",
+  "options": [
+   "Ten",
+   "One",
+   "Two",
+   "Zero"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the value of 9 in the number 4.09?",
+  "options": [
+   "Nine units",
+   "Nine hundredths",
+   "Nine thousandths",
+   "Nine tenths"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'digit' in mathematics?",
+  "options": [
+   "A negative number",
+   "A single number symbol from 0 to 9",
+   "A decimal point",
+   "Any number under ten"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many digits are there in the decimal system?",
+  "options": [
+   "Twelve",
+   "Eleven",
+   "Ten",
+   "Nine"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which number is described as 'unity' in mathematics?",
+  "options": [
+   "Ten",
+   "Infinity",
+   "Zero",
+   "One"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the sum of the digits of the number 999?",
+  "options": [
+   "27",
+   "30",
+   "18",
+   "24"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What number is halfway between 17 and 29?",
+  "options": [
+   "21",
+   "23",
+   "24",
+   "22"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which of these numbers is divisible by 11?",
+  "options": [
+   "134",
+   "132",
+   "138",
+   "136"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many sides does a hexagon have?",
+  "options": [
+   "Six",
+   "Five",
+   "Eight",
+   "Seven"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many sides does a pentagon have?",
+  "options": [
+   "Five",
+   "Four",
+   "Seven",
+   "Six"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many sides does a heptagon have?",
+  "options": [
+   "Eight",
+   "Seven",
+   "Six",
+   "Nine"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many sides does a nonagon have?",
+  "options": [
+   "Seven",
+   "Nine",
+   "Eight",
+   "Ten"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "A twelve sided shape is called what?",
+  "options": [
+   "Undecagon",
+   "Decagon",
+   "Dodecagon",
+   "Icosagon"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many sides does a quadrilateral have?",
+  "options": [
+   "Five",
+   "Four",
+   "Six",
+   "Three"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name for a flat shape with many straight sides?",
+  "options": [
+   "Prism",
+   "Polyhedron",
+   "Parabola",
+   "Polygon"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a regular polygon?",
+  "options": [
+   "All sides curved",
+   "All sides and angles equal",
+   "All angles right angles",
+   "It has an even number of sides"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many degrees are in a full circle?",
+  "options": [
+   "360",
+   "270",
+   "180",
+   "90"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many degrees are in a straight line?",
+  "options": [
+   "90",
+   "270",
+   "180",
+   "360"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "An angle of exactly 90 degrees is called what?",
+  "options": [
+   "Obtuse",
+   "Reflex",
+   "Acute",
+   "Right"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "An angle greater than 180 degrees is called what?",
+  "options": [
+   "Straight",
+   "Obtuse",
+   "Reflex",
+   "Acute"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What do the angles inside a quadrilateral add up to?",
+  "options": [
+   "360 degrees",
+   "180 degrees",
+   "540 degrees",
+   "270 degrees"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do the interior angles of a pentagon add up to?",
+  "options": [
+   "720 degrees",
+   "360 degrees",
+   "540 degrees",
+   "450 degrees"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Each interior angle of a regular hexagon measures how many degrees?",
+  "options": [
+   "108",
+   "120",
+   "100",
+   "135"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Each angle in an equilateral triangle measures what?",
+  "options": [
+   "45 degrees",
+   "72 degrees",
+   "60 degrees",
+   "90 degrees"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a triangle with no equal sides called?",
+  "options": [
+   "Obtuse",
+   "Scalene",
+   "Isosceles",
+   "Equilateral"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name for two angles that add up to 90 degrees?",
+  "options": [
+   "Complementary",
+   "Supplementary",
+   "Corresponding",
+   "Congruent"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name for two angles that add up to 180 degrees?",
+  "options": [
+   "Alternate",
+   "Complementary",
+   "Supplementary",
+   "Vertical"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are lines that never meet called?",
+  "options": [
+   "Diagonal",
+   "Tangential",
+   "Perpendicular",
+   "Parallel"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do we call two lines meeting at a right angle?",
+  "options": [
+   "Perpendicular",
+   "Parallel",
+   "Concentric",
+   "Bisecting"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the distance from the centre of a circle to its edge called?",
+  "options": [
+   "Radius",
+   "Chord",
+   "Arc",
+   "Diameter"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "A straight line from one side of a circle to the other through the centre is called what?",
+  "options": [
+   "Diameter",
+   "Chord",
+   "Radius",
+   "Tangent"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "A straight line joining two points on a circle, not through the centre, is called what?",
+  "options": [
+   "Chord",
+   "Tangent",
+   "Arc",
+   "Sector"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A line that touches a circle at exactly one point is called what?",
+  "options": [
+   "Chord",
+   "Radius",
+   "Tangent",
+   "Secant"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a slice of a circle between two radii called?",
+  "options": [
+   "Quadrant",
+   "Sector",
+   "Arc",
+   "Segment"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a part of the circumference of a circle called?",
+  "options": [
+   "Sector",
+   "Chord",
+   "Arc",
+   "Vertex"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Greek letter is used for the ratio of a circle's circumference to its diameter?",
+  "options": [
+   "Phi",
+   "Pi",
+   "Sigma",
+   "Theta"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The circumference of a circle equals pi times which measurement?",
+  "options": [
+   "The area",
+   "The diameter",
+   "The chord",
+   "The radius"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the formula for the circumference of a circle using the radius?",
+  "options": [
+   "2 pi r",
+   "Pi r squared",
+   "Pi r",
+   "4 pi r"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the surface described by pi r squared?",
+  "options": [
+   "The area of a circle",
+   "The volume of a sphere",
+   "The area of a triangle",
+   "The circumference"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How do you find the area of a parallelogram?",
+  "options": [
+   "Base times height",
+   "Half base times height",
+   "Base squared",
+   "Base plus height"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How do you find the volume of a cube?",
+  "options": [
+   "Side squared",
+   "Three times the side",
+   "Six times the side",
+   "Side cubed"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the formula for the volume of a rectangular box?",
+  "options": [
+   "Length times width times height",
+   "Length plus width plus height",
+   "Length times width",
+   "Two times length times width"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many faces does a triangular prism have?",
+  "options": [
+   "Six",
+   "Three",
+   "Five",
+   "Four"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many edges does a triangular pyramid, or tetrahedron, have?",
+  "options": [
+   "Eight",
+   "Five",
+   "Four",
+   "Six"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many faces does a dodecahedron have?",
+  "options": [
+   "Twenty",
+   "Sixteen",
+   "Twelve",
+   "Ten"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many faces does an icosahedron have?",
+  "options": [
+   "Sixteen",
+   "Twelve",
+   "Twenty",
+   "Twenty four"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many Platonic solids are there?",
+  "options": [
+   "Four",
+   "Three",
+   "Six",
+   "Five"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Platonic solid has square faces?",
+  "options": [
+   "Tetrahedron",
+   "Cube",
+   "Icosahedron",
+   "Octahedron"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many sides does a stop sign have?",
+  "options": [
+   "Seven",
+   "Eight",
+   "Six",
+   "Ten"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What three dimensional shape is a tin of beans?",
+  "options": [
+   "Cone",
+   "Prism",
+   "Cylinder",
+   "Sphere"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the shape of a ball called in geometry?",
+  "options": [
+   "Circle",
+   "Orb",
+   "Sphere",
+   "Globe"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many flat faces does a cylinder have?",
+  "options": [
+   "Two",
+   "One",
+   "None",
+   "Three"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many faces does a cone have, counting the curved surface?",
+  "options": [
+   "Three",
+   "Four",
+   "One",
+   "Two"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name for a solid shape with a square base and four triangular sides?",
+  "options": [
+   "Prism",
+   "Cuboid",
+   "Square pyramid",
+   "Tetrahedron"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do we call a three dimensional shape with flat faces?",
+  "options": [
+   "Polyhedron",
+   "Polynomial",
+   "Polygon",
+   "Polytope"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a shape called if it can be folded so both halves match exactly?",
+  "options": [
+   "Regular",
+   "Similar",
+   "Symmetrical",
+   "Congruent"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many lines of symmetry does a square have?",
+  "options": [
+   "Four",
+   "Eight",
+   "Three",
+   "Two"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many lines of symmetry does an equilateral triangle have?",
+  "options": [
+   "Three",
+   "Two",
+   "Six",
+   "One"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many lines of symmetry does a circle have?",
+  "options": [
+   "None",
+   "One",
+   "Infinite",
+   "Four"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the order of rotational symmetry of a rectangle that is not a square?",
+  "options": [
+   "Four",
+   "Two",
+   "One",
+   "Three"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What do we call shapes that are the same shape but different sizes?",
+  "options": [
+   "Similar",
+   "Congruent",
+   "Parallel",
+   "Identical"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What do we call shapes that are exactly the same size and shape?",
+  "options": [
+   "Congruent",
+   "Symmetrical",
+   "Equivalent",
+   "Similar"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which quadrilateral has exactly one pair of parallel sides?",
+  "options": [
+   "Trapezium",
+   "Rhombus",
+   "Kite",
+   "Parallelogram"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which shape has four equal sides but angles that are not right angles?",
+  "options": [
+   "Rectangle",
+   "Trapezium",
+   "Kite",
+   "Rhombus"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Is a square also a rectangle?",
+  "options": [
+   "No, never",
+   "Only if it is tilted",
+   "Only if it is drawn to scale",
+   "Yes, always"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name for the corner point where edges of a solid meet?",
+  "options": [
+   "Vertex",
+   "Node",
+   "Junction",
+   "Apex"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the flat surface of a solid called?",
+  "options": [
+   "Panel",
+   "Face",
+   "Plane",
+   "Side wall"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What instrument is used for drawing circles?",
+  "options": [
+   "Callipers",
+   "Compass",
+   "Protractor",
+   "Set square"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What instrument is used to measure angles on paper?",
+  "options": [
+   "Ruler",
+   "Abacus",
+   "Compass",
+   "Protractor"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name for a shape with all points the same distance from a centre?",
+  "options": [
+   "Ellipse",
+   "Circle",
+   "Oval",
+   "Parabola"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a squashed circle with two focus points called?",
+  "options": [
+   "Rhombus",
+   "Spiral",
+   "Ellipse",
+   "Helix"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What curve is traced by a thrown ball ignoring air resistance?",
+  "options": [
+   "Ellipse",
+   "Sine wave",
+   "Hyperbola",
+   "Parabola"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the shape of a spiral staircase's handrail path?",
+  "options": [
+   "Sine curve",
+   "Helix",
+   "Ellipse",
+   "Parabola"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which shape tiles a flat surface with no gaps: regular pentagons or regular hexagons?",
+  "options": [
+   "Both",
+   "Neither",
+   "Regular pentagons",
+   "Regular hexagons"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the covering of a surface with repeated shapes and no gaps called?",
+  "options": [
+   "Translation",
+   "Dilation",
+   "Tessellation",
+   "Rotation"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Dutch artist is famous for artworks based on tessellation and impossible shapes?",
+  "options": [
+   "Escher",
+   "Rembrandt",
+   "Mondrian",
+   "Vermeer"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Möbius strip is famous for having how many sides?",
+  "options": [
+   "None",
+   "One",
+   "Three",
+   "Two"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the shape that looks like a doughnut in geometry?",
+  "options": [
+   "Cone",
+   "Cylinder",
+   "Sphere",
+   "Torus"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In three dimensions, how many axes are usually labelled?",
+  "options": [
+   "Three",
+   "Six",
+   "Four",
+   "Two"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are the horizontal and vertical lines on a graph called?",
+  "options": [
+   "Vectors",
+   "Planes",
+   "Radii",
+   "Axes"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On a graph, which axis is the horizontal one?",
+  "options": [
+   "The z axis",
+   "The y axis",
+   "The x axis",
+   "The r axis"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the point where the x and y axes cross called?",
+  "options": [
+   "Origin",
+   "Vertex",
+   "Centre",
+   "Node"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the gradient of a straight line describe?",
+  "options": [
+   "Its position",
+   "Its thickness",
+   "Its length",
+   "Its steepness"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A gradient of zero describes what kind of line?",
+  "options": [
+   "Horizontal",
+   "Diagonal",
+   "Curved",
+   "Vertical"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the branch of maths dealing with shapes and space?",
+  "options": [
+   "Arithmetic",
+   "Algebra",
+   "Geometry",
+   "Calculus"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the word 'geometry' literally mean from Greek?",
+  "options": [
+   "Earth measurement",
+   "Line drawing",
+   "Shape making",
+   "Number study"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In a right-angled triangle, the side opposite the right angle is called what?",
+  "options": [
+   "Opposite",
+   "Hypotenuse",
+   "Base",
+   "Adjacent"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In a 3, 4, 5 triangle, which side is the hypotenuse?",
+  "options": [
+   "They are all equal",
+   "The side of length 3",
+   "The side of length 5",
+   "The side of length 4"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the perimeter of a square with sides of 7 metres?",
+  "options": [
+   "35 metres",
+   "28 metres",
+   "21 metres",
+   "49 metres"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the area of a square with sides of 9 centimetres?",
+  "options": [
+   "72 square centimetres",
+   "36 square centimetres",
+   "18 square centimetres",
+   "81 square centimetres"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the area of a rectangle 12 metres by 5 metres?",
+  "options": [
+   "17 square metres",
+   "34 square metres",
+   "60 square metres",
+   "120 square metres"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the volume of a cube with edges of 3 metres?",
+  "options": [
+   "18 cubic metres",
+   "27 cubic metres",
+   "36 cubic metres",
+   "9 cubic metres"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the perimeter of a rectangle 8 metres by 3 metres?",
+  "options": [
+   "22 metres",
+   "11 metres",
+   "48 metres",
+   "24 metres"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A triangle has a base of 10 metres and a height of 6 metres. What is its area?",
+  "options": [
+   "60 square metres",
+   "120 square metres",
+   "15 square metres",
+   "30 square metres"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What do we call an angle of exactly 180 degrees?",
+  "options": [
+   "A right angle",
+   "A reflex angle",
+   "A full angle",
+   "A straight angle"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many right angles are there in a full turn?",
+  "options": [
+   "Two",
+   "Six",
+   "Three",
+   "Four"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name for a line that cuts an angle exactly in half?",
+  "options": [
+   "Median",
+   "Tangent",
+   "Normal",
+   "Bisector"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "On a compass, how many degrees separate north from east?",
+  "options": [
+   "90",
+   "180",
+   "60",
+   "45"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What bearing in degrees corresponds to due south?",
+  "options": [
+   "180",
+   "360",
+   "270",
+   "90"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name for a solid with two identical parallel ends joined by flat faces?",
+  "options": [
+   "Cone",
+   "Prism",
+   "Frustum",
+   "Pyramid"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which shape has the largest area for a given perimeter?",
+  "options": [
+   "Hexagon",
+   "Triangle",
+   "Square",
+   "Circle"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the name of the pattern where each shape is a smaller copy of the whole?",
+  "options": [
+   "Spiral",
+   "Lattice",
+   "Matrix",
+   "Fractal"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which famous fractal is named after a French-American mathematician and looks like a bug shaped blob?",
+  "options": [
+   "The Cantor set",
+   "The Mandelbrot set",
+   "The Koch curve",
+   "The Sierpinski gasket"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a 'net' in geometry?",
+  "options": [
+   "A flat shape folded into a solid",
+   "A grid on a graph",
+   "The outline of a curve",
+   "A set of parallel lines"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many pairs of parallel faces does a cuboid have?",
+  "options": [
+   "Three",
+   "Four",
+   "One",
+   "Two"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many metres are in a kilometre?",
+  "options": [
+   "Ten thousand",
+   "One hundred",
+   "One thousand",
+   "Five hundred"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many millimetres are in a centimetre?",
+  "options": [
+   "Five",
+   "Ten",
+   "One thousand",
+   "One hundred"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many centimetres are there in half a metre?",
+  "options": [
+   "Twenty five",
+   "Seventy five",
+   "Fifty",
+   "Five hundred"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many milligrams are in a gram?",
+  "options": [
+   "Ten",
+   "One hundred",
+   "One million",
+   "One thousand"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many kilograms are in a metric tonne?",
+  "options": [
+   "One hundred",
+   "One thousand",
+   "Five hundred",
+   "Ten thousand"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many litres are in a kilolitre?",
+  "options": [
+   "One hundred",
+   "One thousand",
+   "Five hundred",
+   "Ten thousand"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A cubic metre of fresh water weighs roughly how much?",
+  "options": [
+   "One hundred kilograms",
+   "One kilogram",
+   "One tonne",
+   "Ten kilograms"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many square metres are in a hectare?",
+  "options": [
+   "One thousand",
+   "One million",
+   "Ten thousand",
+   "One hundred thousand"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many metres are in a nautical mile, to the nearest metre?",
+  "options": [
+   "1852",
+   "1609",
+   "2000",
+   "1760"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does a 'knot' measure?",
+  "options": [
+   "Speed",
+   "Distance",
+   "Wind direction",
+   "Depth"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "One knot equals one nautical mile per what?",
+  "options": [
+   "Minute",
+   "Second",
+   "Day",
+   "Hour"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many inches are in a foot?",
+  "options": [
+   "Fourteen",
+   "Ten",
+   "Sixteen",
+   "Twelve"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many feet are in a yard?",
+  "options": [
+   "Six",
+   "Two",
+   "Three",
+   "Four"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many feet are in a mile?",
+  "options": [
+   "3280",
+   "6000",
+   "4400",
+   "5280"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "One inch equals how many centimetres?",
+  "options": [
+   "3.54",
+   "4.54",
+   "2.54",
+   "1.54"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "One mile is roughly how many kilometres?",
+  "options": [
+   "1.6",
+   "1.2",
+   "2.4",
+   "1.9"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many pounds are in a stone?",
+  "options": [
+   "Twelve",
+   "Fourteen",
+   "Ten",
+   "Sixteen"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many ounces are in a pound?",
+  "options": [
+   "Twenty",
+   "Fourteen",
+   "Twelve",
+   "Sixteen"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "One kilogram is roughly how many pounds?",
+  "options": [
+   "4.4",
+   "2.2",
+   "1.2",
+   "3.2"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many millilitres are in an imperial pint, to the nearest ten?",
+  "options": [
+   "500",
+   "570",
+   "600",
+   "470"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many millilitres are in a standard Australian schooner?",
+  "options": [
+   "425",
+   "285",
+   "570",
+   "375"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many millilitres are in a pot of beer in Queensland and Victoria?",
+  "options": [
+   "200",
+   "375",
+   "285",
+   "425"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many millilitres are in a standard can of soft drink in Australia?",
+  "options": [
+   "400",
+   "330",
+   "355",
+   "375"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many standard drinks are in a bottle of wine, roughly?",
+  "options": [
+   "Seven",
+   "Four",
+   "Two",
+   "Twelve"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "An Australian standard drink contains how many grams of pure alcohol?",
+  "options": [
+   "Five",
+   "Fifteen",
+   "Twenty",
+   "Ten"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "At what temperature in Celsius does fresh water freeze at sea level?",
+  "options": [
+   "Minus 10",
+   "Ten",
+   "Four",
+   "Zero"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "At what temperature in Celsius does water boil at sea level?",
+  "options": [
+   "90",
+   "110",
+   "100",
+   "95"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is zero degrees Celsius in Fahrenheit?",
+  "options": [
+   "Twelve",
+   "Zero",
+   "Forty",
+   "Thirty two"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 100 degrees Celsius in Fahrenheit?",
+  "options": [
+   "212",
+   "180",
+   "240",
+   "200"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "At what temperature do the Celsius and Fahrenheit scales read the same?",
+  "options": [
+   "Minus 40",
+   "Zero",
+   "32",
+   "100"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is absolute zero in degrees Celsius, to the nearest degree?",
+  "options": [
+   "Minus 273",
+   "Minus 100",
+   "Minus 173",
+   "Minus 373"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which temperature unit is the SI base unit and starts at absolute zero?",
+  "options": [
+   "Reaumur",
+   "Kelvin",
+   "Fahrenheit",
+   "Celsius"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which unit measures electrical resistance?",
+  "options": [
+   "Volt",
+   "Ohm",
+   "Watt",
+   "Amp"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which unit measures electrical power?",
+  "options": [
+   "Coulomb",
+   "Watt",
+   "Ohm",
+   "Volt"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which unit measures force in the metric system?",
+  "options": [
+   "Joule",
+   "Watt",
+   "Newton",
+   "Pascal"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which unit measures energy in the metric system?",
+  "options": [
+   "Joule",
+   "Pascal",
+   "Hertz",
+   "Newton"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which unit measures pressure?",
+  "options": [
+   "Joule",
+   "Tesla",
+   "Pascal",
+   "Newton"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which unit measures frequency, or cycles per second?",
+  "options": [
+   "Watt",
+   "Decibel",
+   "Hertz",
+   "Volt"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which unit measures the loudness of sound?",
+  "options": [
+   "Decibel",
+   "Hertz",
+   "Candela",
+   "Lumen"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which unit measures the brightness of a light source's output?",
+  "options": [
+   "Ohm",
+   "Decibel",
+   "Hertz",
+   "Lumen"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which unit is used to measure the size of computer files, roughly a thousand million bytes?",
+  "options": [
+   "Terabyte",
+   "Megabyte",
+   "Gigabyte",
+   "Kilobyte"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many megabytes are usually said to make a gigabyte?",
+  "options": [
+   "One thousand",
+   "One hundred",
+   "Ten thousand",
+   "Five hundred"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many bits are in a byte?",
+  "options": [
+   "Six",
+   "Sixteen",
+   "Four",
+   "Eight"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does a barometer measure?",
+  "options": [
+   "Temperature",
+   "Humidity",
+   "Wind speed",
+   "Air pressure"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does an anemometer measure?",
+  "options": [
+   "Wind speed",
+   "Sunlight",
+   "Air pressure",
+   "Rainfall"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does a hygrometer measure?",
+  "options": [
+   "Heat",
+   "Height",
+   "Sound",
+   "Humidity"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does an odometer measure in a car?",
+  "options": [
+   "Speed",
+   "Fuel used",
+   "Distance travelled",
+   "Engine heat"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does a seismometer measure?",
+  "options": [
+   "Sea depth",
+   "Sound waves",
+   "Air quality",
+   "Ground movement"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many seconds are in a minute?",
+  "options": [
+   "Fifty",
+   "One hundred",
+   "Sixty",
+   "One hundred and twenty"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many minutes are in three hours?",
+  "options": [
+   "150",
+   "240",
+   "180",
+   "120"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many days are in a fortnight?",
+  "options": [
+   "Fourteen",
+   "Twenty one",
+   "Ten",
+   "Seven"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many months have exactly 30 days?",
+  "options": [
+   "Four",
+   "Six",
+   "Three",
+   "Five"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many days are in a leap year?",
+  "options": [
+   "367",
+   "365",
+   "364",
+   "366"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which month gains a day in a leap year?",
+  "options": [
+   "January",
+   "June",
+   "February",
+   "December"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many weeks are in a standard year, to the nearest whole week?",
+  "options": [
+   "50",
+   "52",
+   "54",
+   "48"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many hours are in three days?",
+  "options": [
+   "96",
+   "60",
+   "72",
+   "48"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many days are in a decade of ordinary years, ignoring leap days?",
+  "options": [
+   "4000",
+   "3000",
+   "3650",
+   "4380"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many years are in a millennium?",
+  "options": [
+   "One hundred",
+   "Five hundred",
+   "One thousand",
+   "Ten thousand"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many years are in half a century?",
+  "options": [
+   "Twenty five",
+   "Seventy five",
+   "Twenty",
+   "Fifty"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the abbreviation 'km/h' stand for?",
+  "options": [
+   "Kilograms per hour",
+   "Kilometres per hour",
+   "Kilometres per half hour",
+   "Knots per hour"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "If you drive at 60 kilometres an hour for 30 minutes, how far do you travel?",
+  "options": [
+   "45 kilometres",
+   "60 kilometres",
+   "20 kilometres",
+   "30 kilometres"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "If you drive 180 kilometres in two hours, what is your average speed?",
+  "options": [
+   "80 km/h",
+   "120 km/h",
+   "60 km/h",
+   "90 km/h"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Travelling at 100 kilometres an hour, how long does 250 kilometres take?",
+  "options": [
+   "Two hours",
+   "Two and a half hours",
+   "Three and a half hours",
+   "Three hours"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the formula linking speed, distance and time?",
+  "options": [
+   "Speed equals distance plus time",
+   "Speed equals time divided by distance",
+   "Speed equals distance times time",
+   "Speed equals distance divided by time"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the modern metric system officially called?",
+  "options": [
+   "The International System of Units",
+   "The British Imperial System",
+   "The Continental System",
+   "The United States Customary System"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the base unit of mass in the metric system?",
+  "options": [
+   "Tonne",
+   "Gram",
+   "Newton",
+   "Kilogram"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the base unit of length in the metric system?",
+  "options": [
+   "Centimetre",
+   "Metre",
+   "Kilometre",
+   "Millimetre"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the base unit of time in the metric system?",
+  "options": [
+   "Day",
+   "Second",
+   "Hour",
+   "Minute"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which decade did Australia begin changing over to decimal currency?",
+  "options": [
+   "1940s",
+   "1950s",
+   "1970s",
+   "1960s"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What replaced pounds, shillings and pence in Australia in 1966?",
+  "options": [
+   "Crowns and pence",
+   "Marks and pfennigs",
+   "Dollars and cents",
+   "Euros and cents"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many shillings were in an old Australian pound?",
+  "options": [
+   "One hundred",
+   "Sixteen",
+   "Twelve",
+   "Twenty"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many pence were in an old shilling?",
+  "options": [
+   "Fourteen",
+   "Ten",
+   "Twenty",
+   "Twelve"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the abbreviation 'kg' stand for?",
+  "options": [
+   "Kilogram",
+   "Kilogauge",
+   "Kilogallon",
+   "Kilogrid"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'ml' stand for on a bottle?",
+  "options": [
+   "Multi litre",
+   "Micro litre",
+   "Metric litre",
+   "Millilitre"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which is heavier, a kilogram of feathers or a kilogram of lead?",
+  "options": [
+   "It depends on the air",
+   "The lead",
+   "The feathers",
+   "They weigh the same"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many grams are in half a kilogram?",
+  "options": [
+   "Five thousand",
+   "One hundred",
+   "Fifty",
+   "Five hundred"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many 250 millilitre glasses can you pour from two litres?",
+  "options": [
+   "Eight",
+   "Twelve",
+   "Ten",
+   "Six"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "A recipe needs 750 millilitres. How many litres is that?",
+  "options": [
+   "7.5",
+   "75",
+   "0.075",
+   "0.75"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many millimetres are there in 2.5 metres?",
+  "options": [
+   "1250",
+   "250",
+   "2500",
+   "25000"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many square centimetres are in a square metre?",
+  "options": [
+   "One million",
+   "One thousand",
+   "Ten thousand",
+   "One hundred"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many cubic centimetres are in a litre?",
+  "options": [
+   "Ten thousand",
+   "One hundred",
+   "One thousand",
+   "Five hundred"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is another name for one cubic centimetre of liquid?",
+  "options": [
+   "One litre",
+   "One centilitre",
+   "One decilitre",
+   "One millilitre"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "An acre is a measure of what?",
+  "options": [
+   "Area",
+   "Volume",
+   "Length",
+   "Weight"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "A hectare is roughly how many acres?",
+  "options": [
+   "One",
+   "Two and a half",
+   "Five",
+   "Ten"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does a 'carat' measure in gemstones?",
+  "options": [
+   "Weight",
+   "Cut quality",
+   "Clarity",
+   "Colour"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'karat' describe in gold?",
+  "options": [
+   "Weight",
+   "Purity",
+   "Age",
+   "Colour"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Pure gold is described as how many karats?",
+  "options": [
+   "Eighteen",
+   "Nine",
+   "Fourteen",
+   "Twenty four"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does a Richter-style magnitude scale describe?",
+  "options": [
+   "Wave height",
+   "Wind speed",
+   "Earthquake strength",
+   "Rainfall"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Beaufort scale measures what?",
+  "options": [
+   "Humidity",
+   "Wind force",
+   "Rainfall",
+   "Temperature"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the pH scale measure?",
+  "options": [
+   "Purity",
+   "Acidity and alkalinity",
+   "Pressure",
+   "Density"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the pH value of a neutral solution?",
+  "options": [
+   "Five",
+   "Fourteen",
+   "Seven",
+   "Zero"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does a stopwatch measure?",
+  "options": [
+   "Distance",
+   "Elapsed time",
+   "Acceleration",
+   "Speed"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many degrees of longitude does the Earth turn through in one hour?",
+  "options": [
+   "Ten",
+   "Fifteen",
+   "Thirty",
+   "Twenty"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What number comes next in the sequence 3, 6, 9, 12?",
+  "options": [
+   "13",
+   "18",
+   "15",
+   "14"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What comes next in the sequence 5, 10, 20, 40?",
+  "options": [
+   "60",
+   "70",
+   "80",
+   "100"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What comes next in the sequence 100, 90, 80, 70?",
+  "options": [
+   "50",
+   "65",
+   "60",
+   "75"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What comes next in the sequence 1, 3, 5, 7?",
+  "options": [
+   "9",
+   "8",
+   "11",
+   "10"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What comes next in the sequence 2, 6, 18, 54?",
+  "options": [
+   "142",
+   "216",
+   "162",
+   "108"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What comes next in the sequence 1, 8, 27, 64?",
+  "options": [
+   "144",
+   "125",
+   "81",
+   "100"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What comes next in the sequence 1, 3, 6, 10, 15?",
+  "options": [
+   "21",
+   "20",
+   "25",
+   "18"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What comes next in the sequence 3, 6, 12, 24?",
+  "options": [
+   "36",
+   "60",
+   "48",
+   "30"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What comes next in the sequence 1000, 500, 250?",
+  "options": [
+   "125",
+   "150",
+   "200",
+   "100"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What comes next in the sequence 2, 3, 5, 7, 11?",
+  "options": [
+   "13",
+   "15",
+   "12",
+   "14"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What comes next in the sequence 1, 4, 9, 16, 25, 36?",
+  "options": [
+   "42",
+   "45",
+   "49",
+   "56"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What comes next in the sequence 10, 20, 40, 80?",
+  "options": [
+   "200",
+   "100",
+   "160",
+   "120"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What comes next in the sequence 81, 27, 9?",
+  "options": [
+   "9",
+   "3",
+   "1",
+   "6"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What comes next in the sequence 1, 2, 6, 24?",
+  "options": [
+   "48",
+   "120",
+   "60",
+   "96"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the rule of the sequence 5, 9, 13, 17?",
+  "options": [
+   "Multiply by two",
+   "Add the two before",
+   "Double then subtract one",
+   "Add four each time"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In a geometric sequence, what stays the same between terms?",
+  "options": [
+   "The ratio",
+   "The sum",
+   "The difference",
+   "The average"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What comes next in the sequence 1, 1, 2, 3, 5, 8, 13?",
+  "options": [
+   "20",
+   "24",
+   "18",
+   "21"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is the Italian mathematician the famous 1, 1, 2, 3, 5, 8 sequence is named after?",
+  "options": [
+   "Fibonacci",
+   "Fermat",
+   "Galileo",
+   "Cardano"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Fibonacci sequence gets its name from a mathematician also known by what name?",
+  "options": [
+   "Marco of Venice",
+   "Leonardo of Pisa",
+   "Giovanni of Florence",
+   "Leonardo of Rome"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What comes next in the letter sequence O, T, T, F, F, S, S?",
+  "options": [
+   "R",
+   "E",
+   "N",
+   "T"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What comes next in the sequence M, T, W, T, F?",
+  "options": [
+   "W",
+   "S",
+   "T",
+   "M"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What comes next in the sequence J, F, M, A, M, J?",
+  "options": [
+   "A",
+   "S",
+   "J",
+   "D"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What comes next in the sequence 31, 28, 31, 30 for a common year?",
+  "options": [
+   "31",
+   "28",
+   "30",
+   "29"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the missing number in the sequence 2, 4, blank, 16, 32?",
+  "options": [
+   "10",
+   "8",
+   "6",
+   "12"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the missing number in the sequence 7, 14, 21, blank, 35?",
+  "options": [
+   "32",
+   "30",
+   "28",
+   "26"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What comes next in the sequence 1, 11, 21, 1211, 111221?",
+  "options": [
+   "111222",
+   "122111",
+   "312211",
+   "121321"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a sequence where every term is the sum of the two before called?",
+  "options": [
+   "A square sequence",
+   "A Fibonacci-style sequence",
+   "A prime sequence",
+   "A harmonic sequence"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "If you toss a fair coin twice, what is the chance of two heads?",
+  "options": [
+   "One in three",
+   "One in eight",
+   "One in two",
+   "One in four"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "If you toss a fair coin three times, what is the chance of three heads?",
+  "options": [
+   "One in four",
+   "One in eight",
+   "One in six",
+   "One in twelve"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "A fair coin has landed heads five times in a row. What is the chance of heads next?",
+  "options": [
+   "One in two",
+   "Less than one in two",
+   "It cannot be worked out",
+   "More than one in two"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the false belief that a run of heads makes tails more likely?",
+  "options": [
+   "The law of averages",
+   "The Monty Hall problem",
+   "The gambler's fallacy",
+   "The birthday problem"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many cards are in a standard deck without jokers?",
+  "options": [
+   "48",
+   "50",
+   "54",
+   "52"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many cards of each suit are in a standard deck?",
+  "options": [
+   "Thirteen",
+   "Ten",
+   "Twelve",
+   "Fourteen"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many red cards are in a standard deck without jokers?",
+  "options": [
+   "Twenty six",
+   "Thirty two",
+   "Thirteen",
+   "Twenty"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the chance of drawing an ace from a full deck?",
+  "options": [
+   "One in twenty six",
+   "One in fifty two",
+   "One in four",
+   "One in thirteen"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the chance of drawing the ace of spades from a full deck?",
+  "options": [
+   "One in thirteen",
+   "One in fifty two",
+   "One in one hundred",
+   "One in four"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many face cards, counting jacks, queens and kings, are in a standard deck?",
+  "options": [
+   "Twenty",
+   "Twelve",
+   "Nine",
+   "Sixteen"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "On two fair dice, what is the chance of rolling double six?",
+  "options": [
+   "One in thirty six",
+   "One in eighteen",
+   "One in twelve",
+   "One in six"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many different totals are possible when you roll two standard dice?",
+  "options": [
+   "Six",
+   "Eleven",
+   "Thirty six",
+   "Twelve"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the lowest total you can roll with two standard dice?",
+  "options": [
+   "Zero",
+   "Three",
+   "One",
+   "Two"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many possible outcomes are there when rolling two dice, counting order?",
+  "options": [
+   "Twenty four",
+   "Twelve",
+   "Thirty six",
+   "Thirty"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "On a standard die, what number is opposite the two?",
+  "options": [
+   "Three",
+   "Five",
+   "Six",
+   "Four"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many numbered pockets, including the zero, are on a European roulette wheel?",
+  "options": [
+   "36",
+   "37",
+   "40",
+   "38"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What extra pocket does an American roulette wheel have that a European one does not?",
+  "options": [
+   "A joker",
+   "A double zero",
+   "A star",
+   "A triple zero"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What do all the numbers on a roulette wheel from 1 to 36 add up to?",
+  "options": [
+   "720",
+   "666",
+   "555",
+   "616"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In roulette, what is the chance of the ball landing on red on a European wheel?",
+  "options": [
+   "Exactly one half",
+   "Slightly less than one half",
+   "Exactly one third",
+   "Slightly more than one half"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which is more likely with two dice: a total of seven or a total of six?",
+  "options": [
+   "It depends on the dice",
+   "They are equally likely",
+   "Six",
+   "Seven"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the probability of an event that is certain to happen?",
+  "options": [
+   "One hundred",
+   "One",
+   "One half",
+   "Zero"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the probability of an impossible event?",
+  "options": [
+   "One",
+   "Undefined",
+   "Zero",
+   "Minus one"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Probabilities are always numbers between which two values?",
+  "options": [
+   "Minus one and one",
+   "Zero and one hundred",
+   "Zero and one",
+   "One and ten"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In the birthday problem, how many people are needed for a better than even chance that two share a birthday?",
+  "options": [
+   "One hundred and eighty three",
+   "Fifty",
+   "Twenty three",
+   "Twelve"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In the Monty Hall problem, what should the contestant do after a losing door is opened?",
+  "options": [
+   "It makes no difference",
+   "Ask for a fourth door",
+   "Switch doors",
+   "Stick with the first door"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In the Monty Hall problem, what is the chance of winning if you switch?",
+  "options": [
+   "Three in four",
+   "One in three",
+   "One in two",
+   "Two in three"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many doors are there in the classic Monty Hall problem?",
+  "options": [
+   "Three",
+   "Four",
+   "Two",
+   "Five"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the everyday word for the arithmetic mean?",
+  "options": [
+   "Median",
+   "Mode",
+   "Average",
+   "Spread"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the average of 4, 8 and 12?",
+  "options": [
+   "Ten",
+   "Eight",
+   "Six",
+   "Twelve"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the average of 10, 20, 30 and 40?",
+  "options": [
+   "30",
+   "35",
+   "25",
+   "20"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the median of 3, 7 and 11?",
+  "options": [
+   "Eleven",
+   "Seven",
+   "Three",
+   "Nine"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In statistics, what is an 'outlier'?",
+  "options": [
+   "The most common value",
+   "The middle value",
+   "A value far from the others",
+   "The smallest value"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does a 'sample' mean in statistics?",
+  "options": [
+   "The whole population",
+   "A smaller group taken from a bigger one",
+   "The largest value",
+   "An error in the data"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What kind of chart divides a circle into slices to show proportions?",
+  "options": [
+   "Bar chart",
+   "Scatter plot",
+   "Line graph",
+   "Pie chart"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What kind of graph is best for showing a trend over time?",
+  "options": [
+   "Line graph",
+   "Pie chart",
+   "Flow chart",
+   "Venn diagram"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is the Venn diagram named after?",
+  "options": [
+   "John Venn",
+   "Thomas Venn",
+   "Robert Venn",
+   "Alan Venn"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does a 'percentile' describe?",
+  "options": [
+   "An exact percentage",
+   "A type of average",
+   "A rounding rule",
+   "Position in a ranked list"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "If a survey says 3 in 4 people agree, what percentage is that?",
+  "options": [
+   "Sixty",
+   "Fifty",
+   "Seventy five",
+   "Twenty five"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "If 1 in 5 tickets wins, what percentage of tickets win?",
+  "options": [
+   "Fifteen",
+   "Five",
+   "Ten",
+   "Twenty"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "A ratio of 2 to 3 shares 50 items. How many are in the smaller share?",
+  "options": [
+   "Twenty five",
+   "Twenty",
+   "Thirty",
+   "Fifteen"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "If a recipe for four people is scaled to six, what do you multiply the amounts by?",
+  "options": [
+   "One and a quarter",
+   "Two",
+   "One and a half",
+   "Two and a half"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Two quantities in the ratio 1 to 4 mean the second is how many times the first?",
+  "options": [
+   "Five",
+   "Two",
+   "Three",
+   "Four"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are the odds called when a chance is described as 'evens'?",
+  "options": [
+   "Two to one",
+   "Ten to one",
+   "Three to one",
+   "One to one"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "If odds are quoted as 3 to 1 against, how many wins would you expect in four attempts?",
+  "options": [
+   "None",
+   "Three",
+   "One",
+   "Two"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In a raffle with 500 tickets, what is your chance of winning if you hold 5 tickets?",
+  "options": [
+   "One in five hundred",
+   "One in fifty",
+   "One in one hundred",
+   "One in ten"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many ways can three people be arranged in a line?",
+  "options": [
+   "Twelve",
+   "Six",
+   "Nine",
+   "Three"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many ways can four different books be arranged on a shelf?",
+  "options": [
+   "Twelve",
+   "Sixteen",
+   "Sixty four",
+   "Twenty four"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many handshakes happen if four people all shake hands once with each other?",
+  "options": [
+   "Six",
+   "Five",
+   "Eight",
+   "Four"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many handshakes happen among five people who each shake hands once?",
+  "options": [
+   "Eight",
+   "Six",
+   "Ten",
+   "Twelve"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the name for a diagram that branches to show all possible outcomes?",
+  "options": [
+   "Number line",
+   "Bar chart",
+   "Venn diagram",
+   "Tree diagram"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In maths, what does 'combination' mean compared with 'permutation'?",
+  "options": [
+   "Everything is repeated",
+   "Order matters",
+   "Nothing is repeated",
+   "Order does not matter"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the probability of picking a vowel at random from the 26 letters of the alphabet, counting only A, E, I, O and U?",
+  "options": [
+   "One in six",
+   "One in five",
+   "Five in twenty six",
+   "Five in twenty"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "If you flip a coin, roll a die and both are independent, what does 'independent' mean?",
+  "options": [
+   "One result does not affect the other",
+   "The odds are equal",
+   "One causes the other",
+   "The results are always the same"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 'expected value' in probability?",
+  "options": [
+   "The largest possible outcome",
+   "The chance of winning",
+   "The most likely single outcome",
+   "The long run average outcome"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Two events that cannot both happen are described as what?",
+  "options": [
+   "Complementary",
+   "Conditional",
+   "Mutually exclusive",
+   "Independent"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In a bag of 10 balls, 3 are red. What is the chance of drawing a red ball?",
+  "options": [
+   "Three in seven",
+   "One in ten",
+   "Three in ten",
+   "One in three"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "If the chance of rain is 30 per cent, what is the chance of no rain?",
+  "options": [
+   "Seventy per cent",
+   "Fifty per cent",
+   "Sixty per cent",
+   "Thirty per cent"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What term describes data collected by counting whole items like goals scored?",
+  "options": [
+   "Nominal",
+   "Continuous",
+   "Discrete",
+   "Random"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What term describes data that can take any value in a range, such as height?",
+  "options": [
+   "Continuous",
+   "Binary",
+   "Ordinal",
+   "Discrete"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the total of the numbers on a standard die?",
+  "options": [
+   "21",
+   "24",
+   "18",
+   "20"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the average of the numbers on a standard six-sided die?",
+  "options": [
+   "4.5",
+   "4",
+   "3",
+   "3.5"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What do we call the difference between the highest and lowest values in a data set?",
+  "options": [
+   "The range",
+   "The mode",
+   "The mean",
+   "The median"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "If 200 people are surveyed and 40 say yes, what percentage said yes?",
+  "options": [
+   "Twenty",
+   "Twenty five",
+   "Fifteen",
+   "Ten"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which sequence type keeps halving, as in 64, 32, 16, 8?",
+  "options": [
+   "Harmonic",
+   "Geometric",
+   "Triangular",
+   "Arithmetic"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the sum of the first ten even numbers?",
+  "options": [
+   "100",
+   "120",
+   "90",
+   "110"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Riddle: what has a bark but never bites?",
+  "options": [
+   "A seal",
+   "A boat",
+   "A dog",
+   "A tree"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Riddle: what can you break without ever touching it?",
+  "options": [
+   "A rope",
+   "A window",
+   "A promise",
+   "A stick"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Riddle: what has teeth but cannot bite?",
+  "options": [
+   "A comb",
+   "A crocodile",
+   "A shark",
+   "A trap"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Riddle: what runs all day but never walks, and has a mouth but never talks?",
+  "options": [
+   "A road",
+   "A clock",
+   "A horse",
+   "A river"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Riddle: what has a face and two hands but no arms or legs?",
+  "options": [
+   "A statue",
+   "A mirror",
+   "A coin",
+   "A clock"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Riddle: what can you catch but never throw?",
+  "options": [
+   "A ball",
+   "A cold",
+   "A fish",
+   "A frisbee"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Riddle: what is full of holes but still holds water?",
+  "options": [
+   "A sponge",
+   "A net",
+   "A bucket",
+   "A sieve"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Riddle: what runs all the way around a garden without ever moving?",
+  "options": [
+   "A path",
+   "A hose",
+   "A dog",
+   "A fence"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Riddle: what belongs to you but is used more by other people?",
+  "options": [
+   "Your phone",
+   "Your name",
+   "Your money",
+   "Your car"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Riddle: what has a thumb and four fingers but is not alive?",
+  "options": [
+   "A statue",
+   "A rake",
+   "A glove",
+   "A puppet"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Riddle: what has legs but cannot walk?",
+  "options": [
+   "A snake",
+   "A table",
+   "A fish",
+   "A river"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Riddle: what has a head and a tail but no body?",
+  "options": [
+   "A queue",
+   "A kite",
+   "A coin",
+   "A snake"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Riddle: what building has the most stories to tell?",
+  "options": [
+   "A museum",
+   "A bus shelter",
+   "A hotel",
+   "A library"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Riddle: what gets bigger the more you take away from it?",
+  "options": [
+   "A hole",
+   "A cake",
+   "A shadow",
+   "A pile"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Riddle: what has cities and roads but no houses or people?",
+  "options": [
+   "A painting",
+   "A map",
+   "A dream",
+   "A model"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Riddle: what has a heart that never beats?",
+  "options": [
+   "An artichoke",
+   "A drum",
+   "A stone",
+   "A clock"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Riddle: what has many words but never speaks?",
+  "options": [
+   "A book",
+   "A radio",
+   "A parrot",
+   "A sign"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Riddle: what has a spine but no bones?",
+  "options": [
+   "A book",
+   "A ladder",
+   "A cactus",
+   "A jellyfish"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Riddle: what type of coat is best put on wet?",
+  "options": [
+   "A fur coat",
+   "An overcoat",
+   "A raincoat",
+   "A coat of paint"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Riddle: what has four legs in the morning, two at midday and three in the evening?",
+  "options": [
+   "A horse",
+   "A beetle",
+   "A table",
+   "A person"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Riddle: what kind of band never plays a note of music?",
+  "options": [
+   "A brass band",
+   "A rubber band",
+   "A jazz band",
+   "A marching band"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Riddle: what breaks when you say its name?",
+  "options": [
+   "A promise",
+   "Glass",
+   "Silence",
+   "A record"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Riddle: what has a tongue but no mouth, and is worn on your foot?",
+  "options": [
+   "A slipper",
+   "A shoe",
+   "A sock",
+   "A sandal"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Riddle: what goes through towns and over hills but never moves?",
+  "options": [
+   "A cloud",
+   "A river",
+   "A train",
+   "A road"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Riddle: what has banks but no money?",
+  "options": [
+   "A wallet",
+   "A shop",
+   "A museum",
+   "A river"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Riddle: what has a bed but never sleeps?",
+  "options": [
+   "A river",
+   "A truck",
+   "A hospital",
+   "A garden"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Riddle: what has a ring but no finger, and you answer it when it rings?",
+  "options": [
+   "A telephone",
+   "A doorbell",
+   "A boxing match",
+   "A tree"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Riddle: what kind of tree can you carry in your hand?",
+  "options": [
+   "A gum",
+   "A palm",
+   "A pine",
+   "An ash"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Riddle: which vegetable has ears but cannot hear?",
+  "options": [
+   "A pumpkin",
+   "Corn",
+   "A potato",
+   "A carrot"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Riddle: what is always coming but never arrives?",
+  "options": [
+   "Tomorrow",
+   "The post",
+   "A train",
+   "The rain"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many days are in the shortest month of the year outside a leap year?",
+  "options": [
+   "27",
+   "29",
+   "30",
+   "28"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Two trains start 300 kilometres apart and head towards each other at 80 and 70 kilometres an hour. How long until they meet?",
+  "options": [
+   "Two hours",
+   "Three hours",
+   "Four hours",
+   "One hour"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A quiz night has eight rounds of ten questions. How many questions is that in total?",
+  "options": [
+   "70",
+   "100",
+   "80",
+   "60"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "If a rooster lays an egg on the peak of a roof, which way does the egg roll?",
+  "options": [
+   "Left",
+   "Roosters do not lay eggs",
+   "Straight down",
+   "Right"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Riddle: what can fill a room but takes up no space?",
+  "options": [
+   "Water",
+   "Light",
+   "Sand",
+   "Smoke"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A man builds a house with all four walls facing south. What colour is the bear outside?",
+  "options": [
+   "Brown",
+   "Grey",
+   "White",
+   "Black"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Two people play five games of chess and each wins the same number, with no draws. How is that possible?",
+  "options": [
+   "They cheated",
+   "The games were never finished",
+   "A game was replayed",
+   "They were not playing each other"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Riddle: what is placed on a table and cut, but never eaten?",
+  "options": [
+   "A candle",
+   "A cloth",
+   "A deck of cards",
+   "A bill"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "If a plane crashes exactly on the border of two countries, where are the survivors buried?",
+  "options": [
+   "Survivors are not buried",
+   "Split between both",
+   "In the second country",
+   "In the first country"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What weighs more, a tonne of bricks or a tonne of sand?",
+  "options": [
+   "The sand",
+   "The bricks",
+   "It depends on the moisture",
+   "They weigh the same"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "If five painters take four hours to paint a fence, how long would ten painters take at the same rate?",
+  "options": [
+   "Two hours",
+   "Four hours",
+   "Eight hours",
+   "One hour"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "A shirt and a tie cost 22 dollars together, and the shirt costs 20 dollars more than the tie. What does the tie cost?",
+  "options": [
+   "Two dollars",
+   "One dollar",
+   "Twenty dollars",
+   "Eleven dollars"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "A lily pad patch doubles every day and covers the lake on day 48. When was it half covered?",
+  "options": [
+   "Day 24",
+   "Day 44",
+   "Day 47",
+   "Day 46"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the minimum number of moves to solve the Towers of Hanoi with three discs?",
+  "options": [
+   "Seven",
+   "Three",
+   "Five",
+   "Nine"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the object of the Towers of Hanoi puzzle?",
+  "options": [
+   "Move a stack of discs, never putting a bigger one on a smaller one",
+   "Remove all discs in one move",
+   "Balance discs on a pole",
+   "Sort discs by colour"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Seven Bridges of Königsberg puzzle asked whether you could do what?",
+  "options": [
+   "Build an eighth bridge",
+   "Measure the river",
+   "Cross every bridge exactly once",
+   "Cross all bridges twice"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which mathematician solved the Seven Bridges of Königsberg problem?",
+  "options": [
+   "Euler",
+   "Gauss",
+   "Pascal",
+   "Newton"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The Königsberg bridges problem helped launch which branch of maths?",
+  "options": [
+   "Trigonometry",
+   "Statistics",
+   "Calculus",
+   "Graph theory"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The famous map colouring theorem proved in 1976 says how many colours are enough to colour any flat map so no two neighbours match?",
+  "options": [
+   "Three",
+   "Four",
+   "Six",
+   "Five"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Zeno's paradox describes a race between Achilles and which animal?",
+  "options": [
+   "A tortoise",
+   "A hare",
+   "A horse",
+   "A deer"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does Zeno's arrow paradox question?",
+  "options": [
+   "Motion",
+   "Time zones",
+   "Gravity",
+   "Distance measurement"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The Ship of Theseus asks what about an object whose parts are all replaced?",
+  "options": [
+   "How heavy it is",
+   "How long it lasts",
+   "Who owns it",
+   "Whether it is still the same object"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The 'liar paradox' comes from a sentence that says what?",
+  "options": [
+   "All rules have exceptions",
+   "This sentence is false",
+   "I know nothing",
+   "Nothing is certain"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The sorites paradox asks at what point removing grains stops something being what?",
+  "options": [
+   "A heap",
+   "A shape",
+   "A measurement",
+   "A number"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which paradox involves a barber who shaves everyone who does not shave themselves?",
+  "options": [
+   "Russell's paradox",
+   "Zeno's paradox",
+   "Simpson's paradox",
+   "Banach's paradox"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The pigeonhole principle says what happens if you put ten items into nine boxes?",
+  "options": [
+   "The items must be counted again",
+   "At least one box holds two",
+   "Every box holds one",
+   "One box stays empty"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "'Occam's razor' advises you to prefer which explanation?",
+  "options": [
+   "The longest",
+   "The most popular",
+   "The simplest that fits",
+   "The newest"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The prisoner's dilemma is a famous example from which field?",
+  "options": [
+   "Statistics",
+   "Number theory",
+   "Geometry",
+   "Game theory"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the classic puzzle where a farmer must ferry a fox, a chicken and a bag of grain across a river?",
+  "options": [
+   "The knapsack puzzle",
+   "The river crossing puzzle",
+   "The bridge puzzle",
+   "The tower puzzle"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the fox, chicken and grain puzzle, which pair can safely be left alone together?",
+  "options": [
+   "The fox and the chicken",
+   "No pair at all",
+   "The fox and the grain",
+   "The chicken and the grain"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the classic wolf, goat and cabbage puzzle, how many items can the boat carry at once besides the farmer?",
+  "options": [
+   "One",
+   "Three",
+   "Two",
+   "None"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'magic square'?",
+  "options": [
+   "A square of repeating digits",
+   "A square with equal sides",
+   "A grid of prime numbers",
+   "A grid where every row, column and diagonal add to the same total"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In a three by three magic square using 1 to 9, what does every line add up to?",
+  "options": [
+   "15",
+   "18",
+   "21",
+   "12"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which number sits in the centre of a three by three magic square using 1 to 9?",
+  "options": [
+   "Five",
+   "Four",
+   "Three",
+   "Nine"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the name for a puzzle where clues lead to words filled into a grid of squares?",
+  "options": [
+   "A cryptogram",
+   "An acrostic",
+   "A crossword",
+   "A word search"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In cryptic crosswords, what does the instruction to make an 'anagram' usually involve?",
+  "options": [
+   "Removing letters",
+   "Reading backwards",
+   "Rearranging letters",
+   "Adding a prefix"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'cryptogram'?",
+  "options": [
+   "A message written in a simple substitution code",
+   "A picture puzzle",
+   "A number grid",
+   "A logic grid"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the number placement puzzle with a nine by nine grid and three by three boxes?",
+  "options": [
+   "Hashi",
+   "Sudoku",
+   "Nonogram",
+   "Kakuro"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many individual small squares make up a standard chessboard grid?",
+  "options": [
+   "36",
+   "81",
+   "64",
+   "49"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the classic chess puzzle of placing queens so none attack each other called?",
+  "options": [
+   "The rook's rule",
+   "The eight queens puzzle",
+   "The knight's tour",
+   "The king's gambit"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the 'knight's tour' puzzle about?",
+  "options": [
+   "Protecting the king",
+   "Capturing every piece",
+   "Reaching the last rank",
+   "Visiting every square once with a knight"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "On a chessboard, how many squares does a knight's move cover in an L shape?",
+  "options": [
+   "One then one",
+   "Two then two",
+   "Three then one",
+   "Two then one"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the classic 15 puzzle?",
+  "options": [
+   "Sliding numbered tiles into order in a frame",
+   "A rope puzzle",
+   "Arranging 15 cards",
+   "A dice game"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In logic, what is a statement that must be either true or false called?",
+  "options": [
+   "A paradox",
+   "A premise set",
+   "A theory",
+   "A proposition"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In logic, what follows the word 'therefore' in an argument?",
+  "options": [
+   "The premise",
+   "The evidence",
+   "The assumption",
+   "The conclusion"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "If all cats are mammals and all mammals are animals, what follows?",
+  "options": [
+   "Some cats are not animals",
+   "All cats are animals",
+   "Nothing follows",
+   "All animals are cats"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "If no birds are fish and all sparrows are birds, what follows?",
+  "options": [
+   "No sparrows are fish",
+   "All fish are sparrows",
+   "Some sparrows are fish",
+   "Nothing follows"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'syllogism'?",
+  "options": [
+   "A type of riddle",
+   "An argument with two premises and a conclusion",
+   "A branch of geometry",
+   "A false statement"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the logic term for an argument that looks valid but contains a hidden error?",
+  "options": [
+   "An axiom",
+   "A corollary",
+   "A theorem",
+   "A fallacy"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is an 'axiom' in mathematics?",
+  "options": [
+   "A guess",
+   "A statement accepted without proof",
+   "A calculation",
+   "A proven result"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a mathematical statement proved true from other results called?",
+  "options": [
+   "A conjecture",
+   "A hypothesis",
+   "A theorem",
+   "An axiom"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a mathematical idea believed true but not yet proved called?",
+  "options": [
+   "A conjecture",
+   "A corollary",
+   "A lemma",
+   "A theorem"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What do the letters QED at the end of a proof signal?",
+  "options": [
+   "The proof is complete",
+   "An example follows",
+   "The proof failed",
+   "A new question begins"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In logic puzzles about an island, what do 'knights' always do?",
+  "options": [
+   "Lie",
+   "Change answers",
+   "Stay silent",
+   "Tell the truth"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In those same island puzzles, what do 'knaves' always do?",
+  "options": [
+   "Guess",
+   "Refuse to answer",
+   "Lie",
+   "Tell the truth"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name for reasoning from general rules to a specific case?",
+  "options": [
+   "Reduction",
+   "Abduction",
+   "Induction",
+   "Deduction"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name for reasoning from specific examples to a general rule?",
+  "options": [
+   "Substitution",
+   "Induction",
+   "Deduction",
+   "Contradiction"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 'proof by contradiction'?",
+  "options": [
+   "Assuming the opposite and showing it fails",
+   "Testing every case",
+   "Drawing a diagram",
+   "Using a calculator"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a 'Venn' style logic grid puzzle usually used to work out?",
+  "options": [
+   "Which options match which people",
+   "A hidden word",
+   "The order of numbers",
+   "The shape of a graph"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A word puzzle where a picture stands for a word or phrase is called what?",
+  "options": [
+   "A cipher",
+   "A charade",
+   "A rebound",
+   "A rebus"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name for a puzzle where you find hidden words in a grid of letters?",
+  "options": [
+   "A word search",
+   "A crossword",
+   "A palindrome",
+   "A cryptic"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What kind of puzzle is a 'nonogram'?",
+  "options": [
+   "A picture revealed by number clues on a grid",
+   "A jigsaw",
+   "A word ladder",
+   "A number ordering puzzle"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a 'word ladder' puzzle?",
+  "options": [
+   "Removing vowels",
+   "Stacking words by length",
+   "Finding rhymes",
+   "Changing one letter at a time to reach a new word"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who invented the word ladder puzzle, also famous for writing about Alice?",
+  "options": [
+   "Jules Verne",
+   "Lewis Carroll",
+   "Charles Dickens",
+   "Edward Lear"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the object of the puzzle game where you slide blocks to free a car from a jam?",
+  "options": [
+   "Sorting by size",
+   "Clearing a path to the exit",
+   "Filling every square",
+   "Matching colours"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the goal of a 'mastermind' style code puzzle?",
+  "options": [
+   "Guessing a hidden sequence of colours",
+   "Drawing a shape",
+   "Sorting numbers",
+   "Building a tower"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "If a clock shows quarter past three, what is the angle between the hands?",
+  "options": [
+   "90 degrees",
+   "7.5 degrees",
+   "15 degrees",
+   "Zero degrees"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many times a day do the hands of a standard clock overlap exactly?",
+  "options": [
+   "Twelve",
+   "Twenty two",
+   "Twenty four",
+   "Forty eight"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which ancient Greek mathematician gives his name to the theorem about right-angled triangles?",
+  "options": [
+   "Pythagoras",
+   "Ptolemy",
+   "Plato",
+   "Pericles"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Greek mathematician wrote the geometry textbook known as 'Elements'?",
+  "options": [
+   "Homer",
+   "Thales",
+   "Euclid",
+   "Socrates"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which mathematician is credited with a method for finding prime numbers known as a 'sieve'?",
+  "options": [
+   "Euler",
+   "Euclid",
+   "Fermat",
+   "Eratosthenes"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which ancient scholar is said to have calculated the circumference of the Earth using shadows?",
+  "options": [
+   "Pythagoras",
+   "Aristotle",
+   "Archimedes",
+   "Eratosthenes"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which two men are separately credited with developing calculus?",
+  "options": [
+   "Euler and Gauss",
+   "Newton and Halley",
+   "Descartes and Pascal",
+   "Newton and Leibniz"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which German mathematician was nicknamed the 'Prince of Mathematicians'?",
+  "options": [
+   "Leibniz",
+   "Gauss",
+   "Hilbert",
+   "Riemann"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which mathematician's 'Last Theorem' went unproved for more than three centuries?",
+  "options": [
+   "Fourier",
+   "Fibonacci",
+   "Fermat",
+   "Faraday"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which British mathematician finally proved Fermat's Last Theorem in the 1990s?",
+  "options": [
+   "Andrew Wiles",
+   "Stephen Hawking",
+   "Michael Atiyah",
+   "Roger Penrose"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Persian scholar's work gives us the word 'algebra'?",
+  "options": [
+   "Avicenna",
+   "Al-Khwarizmi",
+   "Omar Khayyam",
+   "Al-Biruni"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The word 'algorithm' comes from the name of which scholar?",
+  "options": [
+   "Archimedes",
+   "Al-Khwarizmi",
+   "Aristotle",
+   "Alhazen"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "From which language does the word 'algebra' come?",
+  "options": [
+   "Arabic",
+   "Greek",
+   "Sanskrit",
+   "Latin"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which culture is credited with first treating zero as a number in its own right?",
+  "options": [
+   "Greek",
+   "Egyptian",
+   "Roman",
+   "Indian"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which French thinker gave his name to the coordinate system with x and y axes?",
+  "options": [
+   "Pascal",
+   "Fermat",
+   "Descartes",
+   "Laplace"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Frenchman has a famous triangle of numbers named after him?",
+  "options": [
+   "Pascal",
+   "Poincaré",
+   "Poisson",
+   "Picard"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Pascal's triangle, how is each number formed?",
+  "options": [
+   "By adding the two numbers above it",
+   "By doubling the number above",
+   "By multiplying the row number",
+   "By subtracting the ends"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the first number at the top of Pascal's triangle?",
+  "options": [
+   "One",
+   "Zero",
+   "Two",
+   "Three"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Scottish mathematician invented logarithms?",
+  "options": [
+   "James Watt",
+   "Colin Maclaurin",
+   "John Playfair",
+   "John Napier"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which mathematician introduced much of our modern notation and has a famous identity linking e, pi and i?",
+  "options": [
+   "Hilbert",
+   "Dirichlet",
+   "Euler",
+   "Cantor"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Ada Lovelace was the daughter of which famous poet?",
+  "options": [
+   "Percy Shelley",
+   "John Keats",
+   "William Blake",
+   "Lord Byron"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Englishman designed the Difference Engine and the Analytical Engine?",
+  "options": [
+   "Michael Faraday",
+   "Isaac Newton",
+   "Alan Turing",
+   "Charles Babbage"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which British mathematician's work at Bletchley Park helped break German codes?",
+  "options": [
+   "John Conway",
+   "G H Hardy",
+   "Alan Turing",
+   "Bertrand Russell"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the test proposed by Turing to judge machine intelligence?",
+  "options": [
+   "The Turing test",
+   "The Enigma test",
+   "The logic test",
+   "The Babbage test"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which German mathematician is famous for her work in abstract algebra, with a theorem in physics named after her?",
+  "options": [
+   "Emmy Noether",
+   "Sofia Kovalevskaya",
+   "Maria Agnesi",
+   "Hypatia"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which mathematician of ancient Alexandria was one of the earliest known women in the field?",
+  "options": [
+   "Sappho",
+   "Aspasia",
+   "Hypatia",
+   "Cleopatra"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which English mathematician gave his name to a system of algebra using true and false?",
+  "options": [
+   "Charles Dodgson",
+   "Augustus De Morgan",
+   "George Boole",
+   "Arthur Cayley"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the upper age limit for winning the Fields Medal?",
+  "options": [
+   "Fifty",
+   "There is none",
+   "Forty",
+   "Thirty"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which subject famously has no Nobel Prize category?",
+  "options": [
+   "Chemistry",
+   "Medicine",
+   "Physics",
+   "Mathematics"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many Millennium Prize Problems were announced in 2000?",
+  "options": [
+   "Seven",
+   "Ten",
+   "Three",
+   "Five"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Millennium Prize Problem was solved, by Grigori Perelman?",
+  "options": [
+   "The Riemann hypothesis",
+   "The mass gap problem",
+   "The Hodge conjecture",
+   "The Poincaré conjecture"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Goldbach's conjecture says every even number above two is the sum of how many primes?",
+  "options": [
+   "Three",
+   "Four",
+   "Two",
+   "Five"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which mathematician proved that some infinities are bigger than others?",
+  "options": [
+   "Georg Cantor",
+   "David Hilbert",
+   "Henri Poincaré",
+   "Karl Weierstrass"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which British mathematician created the 'Game of Life' cellular automaton?",
+  "options": [
+   "Roger Penrose",
+   "Andrew Wiles",
+   "Alan Baker",
+   "John Conway"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which mathematician set out a famous list of 23 unsolved problems in 1900?",
+  "options": [
+   "Henri Poincaré",
+   "Felix Klein",
+   "David Hilbert",
+   "Bertrand Russell"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Who wrote 'Principia Mathematica' with Bertrand Russell?",
+  "options": [
+   "Alfred North Whitehead",
+   "G E Moore",
+   "John Maynard Keynes",
+   "Ludwig Wittgenstein"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Indian mathematician, largely self-taught, worked with G H Hardy at Cambridge?",
+  "options": [
+   "Brahmagupta",
+   "Bhaskara",
+   "Srinivasa Ramanujan",
+   "Aryabhata"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which number is famous as Ramanujan's taxicab number?",
+  "options": [
+   "1331",
+   "1024",
+   "2187",
+   "1729"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which counting frame with beads on rods is one of the oldest calculating tools?",
+  "options": [
+   "The slide rule",
+   "The quipu",
+   "The abacus",
+   "The tally stick"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What did a slide rule do before electronic calculators?",
+  "options": [
+   "Multiply and divide quickly",
+   "Count money",
+   "Measure angles",
+   "Draw straight lines"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What ancient device used knotted cords for record keeping in South America?",
+  "options": [
+   "The abacus",
+   "The quipu",
+   "The sextant",
+   "The tally board"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which day of the year is celebrated as Pi Day?",
+  "options": [
+   "31 December",
+   "14 March",
+   "3 January",
+   "22 July"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Why is 22 over 7 often used in classrooms?",
+  "options": [
+   "It is the golden ratio",
+   "It is close to pi",
+   "It is the value of e",
+   "It equals pi exactly"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which of these is true of pi?",
+  "options": [
+   "It never ends and never repeats",
+   "It repeats after 100 digits",
+   "It is a fraction of whole numbers",
+   "It ends after ten digits"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who first used the Greek letter pi for the circle ratio in a way that caught on?",
+  "options": [
+   "Pythagoras",
+   "Archimedes",
+   "William Jones, popularised by Euler",
+   "Newton"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Why did Robert Recorde choose two parallel lines for the equals sign?",
+  "options": [
+   "Because it matched Roman numerals",
+   "Because it was quick to write",
+   "Because it looked like a bridge",
+   "Because no two things can be more equal"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which symbol is used to show a square root?",
+  "options": [
+   "The caret",
+   "The obelus",
+   "The radical sign",
+   "The tilde"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the division symbol with a line and two dots properly called?",
+  "options": [
+   "Solidus",
+   "Obelus",
+   "Caret",
+   "Vinculum"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Greek capital letter is used to mean 'the sum of'?",
+  "options": [
+   "Sigma",
+   "Omega",
+   "Delta",
+   "Lambda"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Greek letter is used in maths and science to mean 'change in'?",
+  "options": [
+   "Theta",
+   "Delta",
+   "Kappa",
+   "Beta"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Greek letter usually stands for an unknown angle in geometry?",
+  "options": [
+   "Mu",
+   "Sigma",
+   "Theta",
+   "Rho"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Greek letter is used for the golden ratio?",
+  "options": [
+   "Chi",
+   "Xi",
+   "Phi",
+   "Psi"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Who introduced the sideways figure eight as the symbol for infinity?",
+  "options": [
+   "Leonhard Euler",
+   "Isaac Newton",
+   "Blaise Pascal",
+   "John Wallis"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does the symbol 'per cent' literally mean?",
+  "options": [
+   "Per whole",
+   "Per thousand",
+   "Per part",
+   "Per hundred"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the term 'ratio' describe?",
+  "options": [
+   "An average",
+   "A comparison of two quantities",
+   "A total",
+   "A remainder"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the word 'mathematics' come from in Greek?",
+  "options": [
+   "Counting",
+   "Shape",
+   "Measurement",
+   "Learning or study"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 'arithmetic' the study of?",
+  "options": [
+   "Chance",
+   "Shapes",
+   "Numbers and basic operations",
+   "Change"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'algebra' use in place of unknown numbers?",
+  "options": [
+   "Shapes",
+   "Colours",
+   "Letters",
+   "Symbols for shapes"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In the equation y equals 2x plus 3, what is the number 2 called?",
+  "options": [
+   "The coefficient",
+   "The variable",
+   "The exponent",
+   "The constant"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the equation y equals 2x plus 3, what is the 3 called?",
+  "options": [
+   "The index",
+   "The constant",
+   "The coefficient",
+   "The root"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the highest power in a quadratic equation?",
+  "options": [
+   "Four",
+   "Three",
+   "Two",
+   "One"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What shape does a quadratic equation trace when graphed?",
+  "options": [
+   "A parabola",
+   "A spiral",
+   "A circle",
+   "A straight line"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What kind of equation graphs as a straight line?",
+  "options": [
+   "Linear",
+   "Quadratic",
+   "Cubic",
+   "Exponential"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does it mean to 'solve' an equation?",
+  "options": [
+   "Simplify the writing",
+   "Find the value that makes it true",
+   "Draw its graph",
+   "Estimate the answer"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name for two equations solved together?",
+  "options": [
+   "Parallel equations",
+   "Double equations",
+   "Simultaneous equations",
+   "Twin equations"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does an equals sign with a line struck through it mean?",
+  "options": [
+   "Greater than",
+   "Less than",
+   "Not equal to",
+   "Approximately equal to"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the mathematical term for the total distance around the outside of a shape?",
+  "options": [
+   "Radius",
+   "Volume",
+   "Perimeter",
+   "Area"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the symbol 'approximately equal to' look like?",
+  "options": [
+   "Two wavy lines",
+   "Two straight lines",
+   "A crossed line",
+   "A dotted line"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'variable' in maths?",
+  "options": [
+   "A fixed number",
+   "A rounding rule",
+   "A type of graph",
+   "A symbol standing for a value that can change"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'formula'?",
+  "options": [
+   "A graph",
+   "A rounding",
+   "A rule written with symbols",
+   "A guess"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the word 'sum' properly refer to?",
+  "options": [
+   "Any calculation",
+   "The result of dividing",
+   "The result of adding",
+   "A subtraction"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'vector' quantity?",
+  "options": [
+   "One with direction only",
+   "One with neither",
+   "One with size and direction",
+   "One with size only"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'scalar' quantity?",
+  "options": [
+   "One that cannot be measured",
+   "One with size only",
+   "One that is always negative",
+   "One with direction only"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'matrix' in mathematics?",
+  "options": [
+   "A rectangular array of numbers",
+   "A prime sequence",
+   "A type of angle",
+   "A curved graph"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In trigonometry, what does 'sine' relate to in a right-angled triangle?",
+  "options": [
+   "Hypotenuse over base",
+   "Opposite over hypotenuse",
+   "Adjacent over hypotenuse",
+   "Opposite over adjacent"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In trigonometry, what does 'cosine' relate to in a right-angled triangle?",
+  "options": [
+   "Adjacent over opposite",
+   "Adjacent over hypotenuse",
+   "Opposite over hypotenuse",
+   "Opposite over adjacent"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the value of sine of 90 degrees?",
+  "options": [
+   "One half",
+   "One",
+   "Two",
+   "Zero"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the value of the tangent of 45 degrees?",
+  "options": [
+   "One",
+   "Zero",
+   "One half",
+   "Two"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which branch of maths studies continuous change, with differentiation and integration?",
+  "options": [
+   "Algebra",
+   "Calculus",
+   "Statistics",
+   "Topology"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which branch of maths studies shapes that can be stretched and bent without tearing?",
+  "options": [
+   "Trigonometry",
+   "Topology",
+   "Arithmetic",
+   "Geometry"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which branch of maths deals with collections of objects, using unions and intersections?",
+  "options": [
+   "Number theory",
+   "Chaos theory",
+   "Set theory",
+   "Game theory"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the 'union' of two sets contain?",
+  "options": [
+   "Only the first set",
+   "Only what is in neither",
+   "Only what is in both",
+   "Everything in either set"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the 'intersection' of two sets contain?",
+  "options": [
+   "Everything in either",
+   "Only what is in both",
+   "Nothing",
+   "Everything outside both"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is an 'empty set'?",
+  "options": [
+   "A set with no members",
+   "A set with one member",
+   "A set of zeros",
+   "A set of negatives"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which branch of maths studies whole numbers and primes?",
+  "options": [
+   "Topology",
+   "Calculus",
+   "Mechanics",
+   "Number theory"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which theory is famous for the idea that a butterfly's wings might change the weather?",
+  "options": [
+   "Set theory",
+   "Game theory",
+   "String theory",
+   "Chaos theory"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the mathematical term for a number raised to the power of three, as in 3 times 3 times 3?",
+  "options": [
+   "Cubed",
+   "Doubled",
+   "Rooted",
+   "Squared"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the word 'per annum' mean in interest calculations?",
+  "options": [
+   "Each year",
+   "Each month",
+   "In total",
+   "Each week"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'compound interest'?",
+  "options": [
+   "A flat fee",
+   "A one-off charge",
+   "Interest paid on interest already earned",
+   "Interest on the original amount only"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 'simple interest' calculated on?",
+  "options": [
+   "The original amount only",
+   "The interest only",
+   "The final amount",
+   "The growing balance"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the rule of 72, you divide 72 by what to estimate how long money takes to double?",
+  "options": [
+   "The final balance",
+   "The yearly percentage rate",
+   "The starting amount",
+   "The number of years"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does the abbreviation 'GST' add to a price in Australia?",
+  "options": [
+   "Fifteen per cent",
+   "Ten per cent",
+   "Five per cent",
+   "Twenty per cent"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "If a price of 110 dollars already includes 10 per cent GST, how much is the GST?",
+  "options": [
+   "Ten dollars",
+   "Twenty dollars",
+   "Twelve dollars",
+   "Eleven dollars"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does 'break even' mean in business maths?",
+  "options": [
+   "Costs are zero",
+   "Income is double costs",
+   "Costs equal income",
+   "Profit is at its highest"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the phrase 'per capita' mean in statistics?",
+  "options": [
+   "Per person",
+   "Per household",
+   "Per year",
+   "Per hundred"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the mathematical name for a whole number, positive or negative, with no fractional part?",
+  "options": [
+   "A decimal",
+   "An integer",
+   "A surd",
+   "A ratio"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 6 times 7?",
+  "options": [
+   "48",
+   "36",
+   "42",
+   "40"
+  ],
+  "correctIndex": 2,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 90 divided by 9?",
+  "options": [
+   "Nine",
+   "Eight",
+   "Eleven",
+   "Ten"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 200 plus 350?",
+  "options": [
+   "450",
+   "550",
+   "600",
+   "500"
+  ],
+  "correctIndex": 1,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 10% of 90?",
+  "options": [
+   "Ten",
+   "Nineteen",
+   "Eleven",
+   "Nine"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many sides does a triangle have?",
+  "options": [
+   "Three",
+   "Four",
+   "Five",
+   "Two"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many corners does a square have?",
+  "options": [
+   "Four",
+   "Five",
+   "Six",
+   "Three"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many numbers are on a standard clock face?",
+  "options": [
+   "Twelve",
+   "Twenty four",
+   "Ten",
+   "Twenty"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the next even number after 18?",
+  "options": [
+   "22",
+   "19",
+   "21",
+   "20"
+  ],
+  "correctIndex": 3,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many wheels are there on three bicycles?",
+  "options": [
+   "Six",
+   "Nine",
+   "Three",
+   "Five"
+  ],
+  "correctIndex": 0,
+  "category": "Maths & Puzzles",
+  "difficulty": "easy"
+ }
+]

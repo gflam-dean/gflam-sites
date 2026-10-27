@@ -1,0 +1,866 @@
+[
+ {
+  "question": "Which Australian city is known as the City of Churches?",
+  "options": [
+   "Adelaide",
+   "Hobart",
+   "Ballarat",
+   "Bendigo"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In what year did the Australian colonies federate?",
+  "options": [
+   "1901",
+   "1888",
+   "1915",
+   "1927"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is Australia's national floral emblem?",
+  "options": [
+   "Golden wattle",
+   "Waratah",
+   "Sturt's desert pea",
+   "Kangaroo paw"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a group of kangaroos called?",
+  "options": [
+   "A mob",
+   "A herd",
+   "A pack",
+   "A troop"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Uluru was formerly known by what name?",
+  "options": [
+   "Ayers Rock",
+   "Kata Tjuta",
+   "Mount Olga",
+   "The Olgas"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the highest mountain on the Australian mainland?",
+  "options": [
+   "Mount Kosciuszko",
+   "Mount Bogong",
+   "Mount Feathertop",
+   "Mount Ossa"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which strait separates Tasmania from the mainland?",
+  "options": [
+   "Bass Strait",
+   "Torres Strait",
+   "Cook Strait",
+   "Investigator Strait"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the Australian slang word 'arvo' mean?",
+  "options": [
+   "Afternoon",
+   "Argument",
+   "Barbecue",
+   "Holiday"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian state or territory is the largest by area?",
+  "options": [
+   "Western Australia",
+   "Queensland",
+   "Northern Territory",
+   "New South Wales"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Sydney Harbour Bridge is nicknamed what?",
+  "options": [
+   "The Coathanger",
+   "The Iron Lady",
+   "The Big Arch",
+   "The Spanner"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which sea lies between Australia and New Zealand?",
+  "options": [
+   "The Tasman Sea",
+   "The Coral Sea",
+   "The Arafura Sea",
+   "The Timor Sea"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is Australia's longest river?",
+  "options": [
+   "The Murray",
+   "The Darling",
+   "The Murrumbidgee",
+   "The Fitzroy"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian city sits on the Swan River?",
+  "options": [
+   "Perth",
+   "Adelaide",
+   "Brisbane",
+   "Darwin"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Kangaroo Island belongs to which state?",
+  "options": [
+   "South Australia",
+   "Victoria",
+   "Western Australia",
+   "Tasmania"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is Australia's largest desert?",
+  "options": [
+   "The Great Victoria Desert",
+   "The Simpson Desert",
+   "The Great Sandy Desert",
+   "The Tanami Desert"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which capital city is the closest to the equator?",
+  "options": [
+   "Darwin",
+   "Brisbane",
+   "Perth",
+   "Cairns"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the two colours of Australia's national sporting uniforms?",
+  "options": [
+   "Green and gold",
+   "Blue and white",
+   "Red and black",
+   "Navy and silver"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian territory contains the national capital?",
+  "options": [
+   "The Australian Capital Territory",
+   "The Northern Territory",
+   "Jervis Bay Territory",
+   "The Riverina"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Australia's largest island, apart from the mainland, is which?",
+  "options": [
+   "Tasmania",
+   "Kangaroo Island",
+   "Fraser Island",
+   "Melville Island"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Nullarbor Plain stretches across the border of which two states?",
+  "options": [
+   "South Australia and Western Australia",
+   "Victoria and South Australia",
+   "Queensland and the Northern Territory",
+   "New South Wales and Queensland"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who was Australia's first Prime Minister?",
+  "options": [
+   "Edmund Barton",
+   "Alfred Deakin",
+   "Henry Parkes",
+   "Robert Menzies"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In what year did the First Fleet arrive at Botany Bay?",
+  "options": [
+   "1788",
+   "1770",
+   "1801",
+   "1750"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which navigator charted Australia's east coast in 1770?",
+  "options": [
+   "James Cook",
+   "Matthew Flinders",
+   "Abel Tasman",
+   "William Dampier"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian Prime Minister disappeared while swimming in 1967?",
+  "options": [
+   "Harold Holt",
+   "John Gorton",
+   "Ben Chifley",
+   "Arthur Fadden"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Eureka Stockade of 1854 was a rebellion over what?",
+  "options": [
+   "Gold mining licences",
+   "Wool prices",
+   "Convict transportation",
+   "Land taxes"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Ned Kelly's famous armour was fashioned mainly from what?",
+  "options": [
+   "Plough mouldboards",
+   "Railway track",
+   "Ship's plating",
+   "Boiler doors"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which explorer's expedition with Wills ended in tragedy at Cooper Creek in 1861?",
+  "options": [
+   "Robert O'Hara Burke",
+   "Charles Sturt",
+   "Ludwig Leichhardt",
+   "John McDouall Stuart"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Australia's Parliament House opened in its current building in which year?",
+  "options": [
+   "1988",
+   "1901",
+   "1927",
+   "1975"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which city was Australia's first seat of federal parliament?",
+  "options": [
+   "Melbourne",
+   "Sydney",
+   "Canberra",
+   "Adelaide"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What was the name of the ship Matthew Flinders used to circumnavigate Australia?",
+  "options": [
+   "The Investigator",
+   "The Endeavour",
+   "The Beagle",
+   "The Supply"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many players from each team are on the field in Australian rules football?",
+  "options": [
+   "18",
+   "15",
+   "13",
+   "11"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Ashes are contested between Australia and which country?",
+  "options": [
+   "England",
+   "South Africa",
+   "India",
+   "New Zealand"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "At which racecourse is the Melbourne Cup run?",
+  "options": [
+   "Flemington",
+   "Caulfield",
+   "Randwick",
+   "Moonee Valley"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which champion racehorse of the early 1930s remains an Australian icon?",
+  "options": [
+   "Phar Lap",
+   "Makybe Diva",
+   "Winx",
+   "Black Caviar"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In cricket, a batter dismissed without scoring is said to have made what?",
+  "options": [
+   "A duck",
+   "A blob",
+   "A nought",
+   "A pair"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian tennis player won 24 grand slam singles titles?",
+  "options": [
+   "Margaret Court",
+   "Evonne Goolagong Cawley",
+   "Ashleigh Barty",
+   "Samantha Stosur"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many players are on the field per side in rugby league?",
+  "options": [
+   "13",
+   "15",
+   "11",
+   "18"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian won three Formula One world championships?",
+  "options": [
+   "Jack Brabham",
+   "Alan Jones",
+   "Mark Webber",
+   "Daniel Ricciardo"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which mare won three consecutive Melbourne Cups from 2003 to 2005?",
+  "options": [
+   "Makybe Diva",
+   "Winx",
+   "Sunline",
+   "Black Caviar"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Sheffield Shield is contested in which sport?",
+  "options": [
+   "Cricket",
+   "Rugby league",
+   "Netball",
+   "Rowing"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian swimmer won gold in the 400m freestyle at the 2000 Sydney Olympics?",
+  "options": [
+   "Ian Thorpe",
+   "Grant Hackett",
+   "Kieren Perkins",
+   "Michael Klim"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In AFL, how many points is a goal worth?",
+  "options": [
+   "6",
+   "5",
+   "4",
+   "3"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Vegemite is made from a by-product of which industry?",
+  "options": [
+   "Brewing",
+   "Dairy",
+   "Sugar refining",
+   "Flour milling"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A 'parmi' or 'parma' in an Australian pub is which dish?",
+  "options": [
+   "Chicken parmigiana",
+   "Pork belly",
+   "Beef parmesan pie",
+   "Lamb roast"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which dessert, named after a Russian ballerina, is claimed by both Australia and New Zealand?",
+  "options": [
+   "Pavlova",
+   "Lamington",
+   "Trifle",
+   "Eton mess"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "A lamington is coated in chocolate and what else?",
+  "options": [
+   "Desiccated coconut",
+   "Crushed nuts",
+   "Icing sugar",
+   "Sprinkles"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "ANZAC biscuits are traditionally made with rolled oats and what syrup?",
+  "options": [
+   "Golden syrup",
+   "Maple syrup",
+   "Treacle",
+   "Honey"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Australia, what is a 'stubby'?",
+  "options": [
+   "A small beer bottle",
+   "A short glass of wine",
+   "A meat pie",
+   "A bar stool"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'dagwood dog' at an Australian show?",
+  "options": [
+   "A battered sausage on a stick",
+   "A hot dog with the lot",
+   "A pastry roll",
+   "A fairy floss cone"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A 'schooner' of beer is roughly what volume in most of Australia?",
+  "options": [
+   "425 ml",
+   "285 ml",
+   "570 ml",
+   "350 ml"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian wine region is most famous for shiraz?",
+  "options": [
+   "The Barossa Valley",
+   "The Yarra Valley",
+   "The Hunter Valley",
+   "Margaret River"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the main filling of a traditional Australian meat pie?",
+  "options": [
+   "Minced beef and gravy",
+   "Lamb and rosemary",
+   "Chicken and leek",
+   "Pork and apple"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian band recorded 'Highway to Hell'?",
+  "options": [
+   "AC/DC",
+   "Cold Chisel",
+   "Midnight Oil",
+   "INXS"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which band had a worldwide hit with 'Down Under'?",
+  "options": [
+   "Men at Work",
+   "Icehouse",
+   "Crowded House",
+   "Australian Crawl"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian singer had a 1987 hit with 'The Loco-Motion'?",
+  "options": [
+   "Kylie Minogue",
+   "Tina Arena",
+   "Dannii Minogue",
+   "Olivia Newton-John"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who was the lead singer of INXS?",
+  "options": [
+   "Michael Hutchence",
+   "Jimmy Barnes",
+   "Peter Garrett",
+   "Daryl Braithwaite"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "'Khe Sanh' is a signature song of which Australian band?",
+  "options": [
+   "Cold Chisel",
+   "Hunters & Collectors",
+   "The Angels",
+   "Skyhooks"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian country music legend sang 'A Pub With No Beer'?",
+  "options": [
+   "Slim Dusty",
+   "Lee Kernaghan",
+   "John Williamson",
+   "Chad Morgan"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Peter Garrett fronted which Australian rock band?",
+  "options": [
+   "Midnight Oil",
+   "The Church",
+   "Hoodoo Gurus",
+   "Mental As Anything"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian singer had a hit with 'The Horses' in 1991?",
+  "options": [
+   "Daryl Braithwaite",
+   "John Farnham",
+   "Jimmy Barnes",
+   "Richard Clapton"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Tamworth Country Music Festival is held in which state?",
+  "options": [
+   "New South Wales",
+   "Queensland",
+   "Victoria",
+   "South Australia"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which John Farnham album became one of Australia's best selling records?",
+  "options": [
+   "Whispering Jack",
+   "Age of Reason",
+   "Chain Reaction",
+   "Romeo's Heart"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Besides the platypus, which Australian mammal lays eggs?",
+  "options": [
+   "The echidna",
+   "The wombat",
+   "The quokka",
+   "The bilby"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Wombat droppings are unusual for being what shape?",
+  "options": [
+   "Cube shaped",
+   "Perfectly round",
+   "Star shaped",
+   "Flat discs"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which is Australia's largest native bird?",
+  "options": [
+   "The emu",
+   "The cassowary",
+   "The pelican",
+   "The wedge-tailed eagle"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Koalas feed almost entirely on the leaves of which tree?",
+  "options": [
+   "Eucalyptus",
+   "Wattle",
+   "Melaleuca",
+   "Banksia"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which small marsupial on Rottnest Island is famous for looking like it is smiling?",
+  "options": [
+   "The quokka",
+   "The bilby",
+   "The potoroo",
+   "The bandicoot"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the largest species of kangaroo?",
+  "options": [
+   "The red kangaroo",
+   "The eastern grey",
+   "The western grey",
+   "The antilopine"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which highly venomous jellyfish is found in northern Australian waters?",
+  "options": [
+   "The box jellyfish",
+   "The Portuguese man o' war",
+   "The lion's mane",
+   "The moon jellyfish"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Great Barrier Reef lies off the coast of which state?",
+  "options": [
+   "Queensland",
+   "New South Wales",
+   "Western Australia",
+   "the Northern Territory"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian bird is known for its laughing call?",
+  "options": [
+   "The kookaburra",
+   "The currawong",
+   "The magpie",
+   "The lorikeet"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a young kangaroo called?",
+  "options": [
+   "A joey",
+   "A cub",
+   "A kit",
+   "A pup"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ }
+]

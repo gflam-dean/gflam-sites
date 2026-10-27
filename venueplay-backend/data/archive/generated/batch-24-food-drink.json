@@ -1,0 +1,1382 @@
+[
+ {
+  "question": "Which country is the origin of the pizza margherita?",
+  "options": [
+   "France",
+   "Greece",
+   "Spain",
+   "Italy"
+  ],
+  "correctIndex": 3,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What three colours of the Italian flag are represented in a margherita pizza?",
+  "options": [
+   "Red, white and green",
+   "Red, yellow and green",
+   "Blue, white and red",
+   "Green, gold and red"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Italian city is credited as the birthplace of pizza?",
+  "options": [
+   "Milan",
+   "Rome",
+   "Naples",
+   "Palermo"
+  ],
+  "correctIndex": 2,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the main ingredient of hummus besides chickpeas?",
+  "options": [
+   "Cream cheese",
+   "Peanut butter",
+   "Yoghurt",
+   "Tahini"
+  ],
+  "correctIndex": 3,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which seed paste is tahini made from?",
+  "options": [
+   "Sesame",
+   "Sunflower",
+   "Poppy",
+   "Pumpkin"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which country does sushi come from?",
+  "options": [
+   "Japan",
+   "China",
+   "Korea",
+   "Thailand"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the green paste traditionally served with sushi?",
+  "options": [
+   "Wasabi",
+   "Matcha",
+   "Pesto",
+   "Guacamole"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the seaweed sheet used to wrap sushi called?",
+  "options": [
+   "Nori",
+   "Hijiki",
+   "Wakame",
+   "Kombu"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Japanese dish is battered and deep-fried seafood or vegetables?",
+  "options": [
+   "Yakitori",
+   "Katsu",
+   "Teriyaki",
+   "Tempura"
+  ],
+  "correctIndex": 3,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which spice is the most expensive by weight?",
+  "options": [
+   "Vanilla",
+   "Cinnamon",
+   "Saffron",
+   "Cardamom"
+  ],
+  "correctIndex": 2,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which flower does saffron come from?",
+  "options": [
+   "Lily",
+   "Rose",
+   "Marigold",
+   "Crocus"
+  ],
+  "correctIndex": 3,
+  "category": "Food & Drink",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which spice comes from the bark of a tree?",
+  "options": [
+   "Nutmeg",
+   "Cinnamon",
+   "Turmeric",
+   "Ginger"
+  ],
+  "correctIndex": 1,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which root gives curry powder its yellow colour?",
+  "options": [
+   "Ginger",
+   "Galangal",
+   "Turmeric",
+   "Horseradish"
+  ],
+  "correctIndex": 2,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What measures the heat of chilli peppers?",
+  "options": [
+   "The Mohs scale",
+   "The Brix scale",
+   "The Richter scale",
+   "The Scoville scale"
+  ],
+  "correctIndex": 3,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which part of the chilli holds most of the heat?",
+  "options": [
+   "The skin",
+   "The tip",
+   "The white pith and seeds area",
+   "The stalk"
+  ],
+  "correctIndex": 2,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the main ingredient of traditional Spanish paella alongside rice?",
+  "options": [
+   "Cream",
+   "Saffron",
+   "Tomato paste only",
+   "Coconut milk"
+  ],
+  "correctIndex": 1,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Spanish cold soup is made from tomatoes and served chilled?",
+  "options": [
+   "Paella",
+   "Gazpacho",
+   "Tortilla",
+   "Pisto"
+  ],
+  "correctIndex": 1,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are small Spanish savoury dishes served with drinks called?",
+  "options": [
+   "Bento",
+   "Meze",
+   "Antipasti",
+   "Tapas"
+  ],
+  "correctIndex": 3,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the French dish of slow-cooked vegetables including eggplant and zucchini called?",
+  "options": [
+   "Ratatouille",
+   "Bouillabaisse",
+   "Cassoulet",
+   "Coq au vin"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which French dish is chicken braised in red wine?",
+  "options": [
+   "Beef bourguignon",
+   "Coq au vin",
+   "Steak frites",
+   "Confit de canard"
+  ],
+  "correctIndex": 1,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a croissant traditionally made with a lot of?",
+  "options": [
+   "Cream",
+   "Lard",
+   "Olive oil",
+   "Butter"
+  ],
+  "correctIndex": 3,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which French dessert is a custard with a hard caramelised sugar top?",
+  "options": [
+   "Creme brulee",
+   "Tarte tatin",
+   "Mousse au chocolat",
+   "Profiteroles"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which French pastry is a ring of choux filled with cream?",
+  "options": [
+   "Madeleine",
+   "Canele",
+   "Eclair",
+   "Paris-Brest"
+  ],
+  "correctIndex": 3,
+  "category": "Food & Drink",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the main ingredient of a traditional Greek moussaka layer?",
+  "options": [
+   "Zucchini",
+   "Potato only",
+   "Eggplant",
+   "Cabbage"
+  ],
+  "correctIndex": 2,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Greek dip is made from yoghurt, cucumber and garlic?",
+  "options": [
+   "Skordalia",
+   "Melitzanosalata",
+   "Tzatziki",
+   "Taramasalata"
+  ],
+  "correctIndex": 2,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which cheese squeaks and is often grilled, originating in Cyprus?",
+  "options": [
+   "Provolone",
+   "Paneer",
+   "Halloumi",
+   "Feta"
+  ],
+  "correctIndex": 2,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cheese is traditionally used on pizza?",
+  "options": [
+   "Brie",
+   "Mozzarella",
+   "Roquefort",
+   "Cheddar"
+  ],
+  "correctIndex": 1,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which blue cheese comes from a village in France and is made from sheep's milk?",
+  "options": [
+   "Stilton",
+   "Danish Blue",
+   "Roquefort",
+   "Gorgonzola"
+  ],
+  "correctIndex": 2,
+  "category": "Food & Drink",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Italian hard cheese is traditionally grated over pasta?",
+  "options": [
+   "Burrata",
+   "Mascarpone",
+   "Parmesan",
+   "Fontina"
+  ],
+  "correctIndex": 2,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which pasta shape means 'little worms' in Italian?",
+  "options": [
+   "Penne",
+   "Farfalle",
+   "Rigatoni",
+   "Vermicelli"
+  ],
+  "correctIndex": 3,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which pasta shape is named after butterflies or bow ties?",
+  "options": [
+   "Orecchiette",
+   "Fusilli",
+   "Farfalle",
+   "Conchiglie"
+  ],
+  "correctIndex": 2,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'al dente' mean when cooking pasta?",
+  "options": [
+   "Served cold",
+   "Boiled twice",
+   "Very soft",
+   "Firm to the bite"
+  ],
+  "correctIndex": 3,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which sauce is traditionally made with basil, pine nuts, garlic and parmesan?",
+  "options": [
+   "Pesto",
+   "Arrabbiata",
+   "Puttanesca",
+   "Carbonara"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Italian region is pesto genovese from?",
+  "options": [
+   "Sicily",
+   "Tuscany",
+   "Piedmont",
+   "Liguria"
+  ],
+  "correctIndex": 3,
+  "category": "Food & Drink",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which ingredient is traditionally NOT in a real carbonara?",
+  "options": [
+   "Cream",
+   "Pecorino",
+   "Egg",
+   "Guanciale"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the Italian dessert made with coffee-soaked biscuits and mascarpone?",
+  "options": [
+   "Cannoli",
+   "Zabaglione",
+   "Tiramisu",
+   "Panna cotta"
+  ],
+  "correctIndex": 2,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'tiramisu' roughly translate as?",
+  "options": [
+   "Coffee cake",
+   "Little heaven",
+   "Pick me up",
+   "Sweet cloud"
+  ],
+  "correctIndex": 2,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Indian bread is baked in a tandoor oven?",
+  "options": [
+   "Dosa",
+   "Poori",
+   "Chapati",
+   "Naan"
+  ],
+  "correctIndex": 3,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Indian dish is made with spinach and often paneer?",
+  "options": [
+   "Saag paneer",
+   "Rogan josh",
+   "Butter chicken",
+   "Vindaloo"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which curry is traditionally the hottest on a British-Indian restaurant menu?",
+  "options": [
+   "Pasanda",
+   "Tikka masala",
+   "Korma",
+   "Phaal"
+  ],
+  "correctIndex": 3,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which mild Indian curry is made with cream, coconut and almonds?",
+  "options": [
+   "Korma",
+   "Dhansak",
+   "Madras",
+   "Jalfrezi"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which rice dish is layered with spiced meat and cooked slowly?",
+  "options": [
+   "Risotto",
+   "Biryani",
+   "Pilaf",
+   "Congee"
+  ],
+  "correctIndex": 1,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Thai soup features lemongrass, lime and chilli?",
+  "options": [
+   "Laksa",
+   "Pho",
+   "Miso",
+   "Tom yum"
+  ],
+  "correctIndex": 3,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Vietnamese noodle soup is served with herbs and beef or chicken?",
+  "options": [
+   "Ramen",
+   "Pho",
+   "Laksa",
+   "Udon"
+  ],
+  "correctIndex": 1,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Malaysian and Singaporean noodle soup is made with coconut curry?",
+  "options": [
+   "Ramen",
+   "Pho",
+   "Laksa",
+   "Tom yum"
+  ],
+  "correctIndex": 2,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Korean dish is fermented cabbage with chilli?",
+  "options": [
+   "Kimchi",
+   "Japchae",
+   "Bulgogi",
+   "Bibimbap"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Mexican dish is a folded tortilla filled with cheese and grilled?",
+  "options": [
+   "Enchilada",
+   "Quesadilla",
+   "Tostada",
+   "Burrito"
+  ],
+  "correctIndex": 1,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Mexican sauce contains chocolate and chillies?",
+  "options": [
+   "Mole",
+   "Pico de gallo",
+   "Salsa verde",
+   "Chimichurri"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which spirit is tequila made from?",
+  "options": [
+   "Blue agave",
+   "Potatoes",
+   "Grapes",
+   "Sugarcane"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which spirit is the base of a mojito?",
+  "options": [
+   "Gin",
+   "Vodka",
+   "Rum",
+   "Tequila"
+  ],
+  "correctIndex": 2,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which herb is essential in a mojito?",
+  "options": [
+   "Thyme",
+   "Mint",
+   "Coriander",
+   "Basil"
+  ],
+  "correctIndex": 1,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which spirit is the base of a negroni along with vermouth and Campari?",
+  "options": [
+   "Rum",
+   "Gin",
+   "Whisky",
+   "Vodka"
+  ],
+  "correctIndex": 1,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the three ingredients of a classic negroni in equal parts?",
+  "options": [
+   "Rum, lime and sugar",
+   "Vodka, coffee liqueur and cream",
+   "Gin, Campari and sweet vermouth",
+   "Gin, lime and soda"
+  ],
+  "correctIndex": 2,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cocktail combines vodka, coffee liqueur and cream?",
+  "options": [
+   "Mudslide",
+   "White Russian",
+   "Espresso Martini",
+   "Black Russian"
+  ],
+  "correctIndex": 1,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cocktail is made with vodka, tomato juice and Worcestershire sauce?",
+  "options": [
+   "Bloody Mary",
+   "Screwdriver",
+   "Salty Dog",
+   "Sea Breeze"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which cocktail is made with rum, lime and mint over crushed ice and soda?",
+  "options": [
+   "Caipirinha",
+   "Mojito",
+   "Daiquiri",
+   "Mai Tai"
+  ],
+  "correctIndex": 1,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Brazilian spirit is used in a caipirinha?",
+  "options": [
+   "Aguardiente",
+   "Pisco",
+   "Rum",
+   "Cachaca"
+  ],
+  "correctIndex": 3,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cocktail is served in a salt-rimmed glass with tequila and lime?",
+  "options": [
+   "Daiquiri",
+   "Margarita",
+   "Paloma",
+   "Sidecar"
+  ],
+  "correctIndex": 1,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which grape variety is used to make Champagne alongside Pinot Noir and Pinot Meunier?",
+  "options": [
+   "Chardonnay",
+   "Semillon",
+   "Sauvignon Blanc",
+   "Riesling"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Sparkling wine can only be called Champagne if made where?",
+  "options": [
+   "The Champagne region of France",
+   "Any traditional-method winery",
+   "Northern Italy",
+   "Anywhere in France"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Italian sparkling wine is made mainly from the Glera grape?",
+  "options": [
+   "Barolo",
+   "Soave",
+   "Chianti",
+   "Prosecco"
+  ],
+  "correctIndex": 3,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Spanish sparkling wine is made in the traditional method?",
+  "options": [
+   "Cava",
+   "Sherry",
+   "Rioja",
+   "Albarino"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which wine term means the wine has no residual sweetness?",
+  "options": [
+   "Crisp",
+   "Oaked",
+   "Still",
+   "Dry"
+  ],
+  "correctIndex": 3,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which grape is Australia's most planted red variety?",
+  "options": [
+   "Pinot Noir",
+   "Shiraz",
+   "Merlot",
+   "Cabernet Sauvignon"
+  ],
+  "correctIndex": 1,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is Shiraz called in France?",
+  "options": [
+   "Grenache",
+   "Carignan",
+   "Syrah",
+   "Mourvedre"
+  ],
+  "correctIndex": 2,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which country produces port wine?",
+  "options": [
+   "France",
+   "Portugal",
+   "Spain",
+   "Italy"
+  ],
+  "correctIndex": 1,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which fortified wine comes from Jerez in Spain?",
+  "options": [
+   "Madeira",
+   "Marsala",
+   "Sherry",
+   "Port"
+  ],
+  "correctIndex": 2,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the two main ingredients in beer besides water and yeast?",
+  "options": [
+   "Malted barley and hops",
+   "Rye and honey",
+   "Corn and rice",
+   "Wheat and sugar"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What do hops mainly contribute to beer?",
+  "options": [
+   "Carbonation",
+   "Alcohol",
+   "Colour",
+   "Bitterness and aroma"
+  ],
+  "correctIndex": 3,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which beer style is dark, roasted and associated with Ireland?",
+  "options": [
+   "Pilsner",
+   "Witbier",
+   "Stout",
+   "Saison"
+  ],
+  "correctIndex": 2,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Czech city gave its name to the pilsner style?",
+  "options": [
+   "Prague",
+   "Plzen",
+   "Brno",
+   "Ostrava"
+  ],
+  "correctIndex": 1,
+  "category": "Food & Drink",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does IPA stand for in beer?",
+  "options": [
+   "Imperial Pilsner Ale",
+   "Irish Pale Ale",
+   "International Premium Ale",
+   "India Pale Ale"
+  ],
+  "correctIndex": 3,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the main difference between an ale and a lager?",
+  "options": [
+   "The yeast and fermentation temperature",
+   "The alcohol strength",
+   "The bottle shape",
+   "The colour"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which grain is Scotch whisky's single malt made from?",
+  "options": [
+   "Corn",
+   "Barley",
+   "Rye",
+   "Wheat"
+  ],
+  "correctIndex": 1,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which American whiskey must be made from at least 51 per cent corn?",
+  "options": [
+   "Rye",
+   "Scotch",
+   "Bourbon",
+   "Irish whiskey"
+  ],
+  "correctIndex": 2,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which US state is most bourbon produced?",
+  "options": [
+   "Texas",
+   "Virginia",
+   "Tennessee",
+   "Kentucky"
+  ],
+  "correctIndex": 3,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How is Scotch whisky's smoky flavour traditionally created?",
+  "options": [
+   "Smoking the finished spirit",
+   "Charring the grain",
+   "Drying the malt over peat smoke",
+   "Adding smoked wood chips"
+  ],
+  "correctIndex": 2,
+  "category": "Food & Drink",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which botanical must be present for a spirit to be called gin?",
+  "options": [
+   "Angelica",
+   "Citrus peel",
+   "Coriander",
+   "Juniper"
+  ],
+  "correctIndex": 3,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the 'proof' of a spirit measure?",
+  "options": [
+   "Purity of water",
+   "Age",
+   "Sugar level",
+   "Alcohol content"
+  ],
+  "correctIndex": 3,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the standard serving temperature style for red wine?",
+  "options": [
+   "Boiling",
+   "Ice cold",
+   "Slightly below room temperature",
+   "Warm"
+  ],
+  "correctIndex": 2,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which coffee drink is espresso with a small amount of steamed milk foam?",
+  "options": [
+   "Macchiato",
+   "Americano",
+   "Latte",
+   "Flat white"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which coffee is espresso topped up with hot water?",
+  "options": [
+   "Flat white",
+   "Long black or Americano",
+   "Cappuccino",
+   "Piccolo"
+  ],
+  "correctIndex": 1,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which coffee drink is believed to have been popularised in Australia and New Zealand?",
+  "options": [
+   "The macchiato",
+   "The cappuccino",
+   "The flat white",
+   "The cortado"
+  ],
+  "correctIndex": 2,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which coffee has equal parts espresso, steamed milk and foam?",
+  "options": [
+   "Latte",
+   "Ristretto",
+   "Mocha",
+   "Cappuccino"
+  ],
+  "correctIndex": 3,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a mocha coffee flavoured with?",
+  "options": [
+   "Chocolate",
+   "Caramel",
+   "Vanilla",
+   "Hazelnut"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which country consumes the most coffee per person?",
+  "options": [
+   "Finland",
+   "Italy",
+   "The United States",
+   "Brazil"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which country produces the most coffee?",
+  "options": [
+   "Brazil",
+   "Ethiopia",
+   "Colombia",
+   "Vietnam"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which country is the largest producer of tea?",
+  "options": [
+   "China",
+   "Sri Lanka",
+   "India",
+   "Kenya"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which tea is fermented and named after a Chinese region?",
+  "options": [
+   "Pu-erh",
+   "Rooibos",
+   "Earl Grey",
+   "Assam"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What flavours Earl Grey tea?",
+  "options": [
+   "Bergamot",
+   "Lemon",
+   "Lavender",
+   "Vanilla"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which vitamin is famously found in citrus fruit?",
+  "options": [
+   "Vitamin K",
+   "Vitamin B12",
+   "Vitamin D",
+   "Vitamin C"
+  ],
+  "correctIndex": 3,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which fruit is the main ingredient in a traditional Waldorf salad along with celery and walnuts?",
+  "options": [
+   "Orange",
+   "Grape only",
+   "Apple",
+   "Pear"
+  ],
+  "correctIndex": 2,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which nut is used in traditional marzipan?",
+  "options": [
+   "Hazelnut",
+   "Cashew",
+   "Walnut",
+   "Almond"
+  ],
+  "correctIndex": 3,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which nut is actually a legume?",
+  "options": [
+   "Macadamia",
+   "Almond",
+   "Pecan",
+   "Peanut"
+  ],
+  "correctIndex": 3,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which nut is native to Australia?",
+  "options": [
+   "Brazil nut",
+   "Pistachio",
+   "Macadamia",
+   "Cashew"
+  ],
+  "correctIndex": 2,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian native fruit is also called a Kakadu plum and is very high in vitamin C?",
+  "options": [
+   "The gubinge",
+   "The riberry",
+   "The finger lime",
+   "The quandong"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which native Australian citrus contains caviar-like pearls?",
+  "options": [
+   "The bush tomato",
+   "The muntries",
+   "The finger lime",
+   "The desert lime"
+  ],
+  "correctIndex": 2,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian snack is a chocolate-coated biscuit bar often used to drink coffee through?",
+  "options": [
+   "Tim Tam",
+   "Iced VoVo",
+   "Kingston",
+   "Wagon Wheel"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'Tim Tam Slam'?",
+  "options": [
+   "Freezing the biscuit",
+   "Eating two at once",
+   "Dunking twice",
+   "Sucking a drink through a bitten biscuit"
+  ],
+  "correctIndex": 3,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian bakery item combines meat, gravy and pastry?",
+  "options": [
+   "The pasty",
+   "The sausage roll",
+   "The meat pie",
+   "The vol-au-vent"
+  ],
+  "correctIndex": 2,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'pie floater', a South Australian dish?",
+  "options": [
+   "A pie with gravy on the side",
+   "A floating dessert",
+   "A meat pie in pea soup",
+   "A pie with ice cream"
+  ],
+  "correctIndex": 2,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian chicken shop dish is a whole seasoned bird?",
+  "options": [
+   "Schnitzel",
+   "Parmigiana",
+   "Kiev",
+   "Charcoal chicken"
+  ],
+  "correctIndex": 3,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a chicken parmigiana topped with?",
+  "options": [
+   "Sour cream",
+   "Tomato sauce, ham and cheese",
+   "Gravy and peas",
+   "Mushroom sauce"
+  ],
+  "correctIndex": 1,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the common Australian pub abbreviation for chicken parmigiana?",
+  "options": [
+   "Parmi or parma",
+   "Cluck",
+   "Schnitty only",
+   "Chook"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which cut of steak is named for its T-shaped bone?",
+  "options": [
+   "Scotch fillet",
+   "T-bone",
+   "Sirloin",
+   "Rump"
+  ],
+  "correctIndex": 1,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does a steak cooked 'rare' mean?",
+  "options": [
+   "Served raw",
+   "Cooked through",
+   "Charred outside only",
+   "Still red in the middle"
+  ],
+  "correctIndex": 3,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which sauce is traditionally served with roast lamb in Britain?",
+  "options": [
+   "Horseradish",
+   "Apple sauce",
+   "Cranberry sauce",
+   "Mint sauce"
+  ],
+  "correctIndex": 3,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which sauce is traditionally served with roast pork?",
+  "options": [
+   "Apple sauce",
+   "Cranberry sauce",
+   "Tartare",
+   "Mint sauce"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the process of cooking food slowly in fat called?",
+  "options": [
+   "Poaching",
+   "Confit",
+   "Braising",
+   "Blanching"
+  ],
+  "correctIndex": 1,
+  "category": "Food & Drink",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does 'blanching' vegetables mean?",
+  "options": [
+   "Brief boiling then plunging into cold water",
+   "Frying quickly",
+   "Salting overnight",
+   "Baking uncovered"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the French term for having all ingredients prepped before cooking?",
+  "options": [
+   "Sous vide",
+   "Mise en place",
+   "Bain-marie",
+   "A la carte"
+  ],
+  "correctIndex": 1,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 'sous vide' cooking?",
+  "options": [
+   "Cooking in a clay pot",
+   "Vacuum sealed and cooked in a water bath",
+   "Cooking over coals",
+   "Cooking under a grill"
+  ],
+  "correctIndex": 1,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which kitchen tool is a 'bain-marie'?",
+  "options": [
+   "A water bath for gentle heating",
+   "A pastry cutter",
+   "A meat mallet",
+   "A sieve"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many stars is the maximum a restaurant can hold in the Michelin Guide?",
+  "options": [
+   "Three",
+   "Two",
+   "Five",
+   "Four"
+  ],
+  "correctIndex": 0,
+  "category": "Food & Drink",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which British chef is known for shouting in kitchen reality shows?",
+  "options": [
+   "Rick Stein",
+   "Heston Blumenthal",
+   "Gordon Ramsay",
+   "Jamie Oliver"
+  ],
+  "correctIndex": 2,
+  "category": "Food & Drink",
+  "difficulty": "easy"
+ }
+]

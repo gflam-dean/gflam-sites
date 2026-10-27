@@ -1,0 +1,7586 @@
+[
+ {
+  "question": "What is the name of Harry Potter's pet owl?",
+  "options": [
+   "Pigwidgeon",
+   "Fawkes",
+   "Errol",
+   "Hedwig"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which platform at King's Cross do students use to catch the Hogwarts Express?",
+  "options": [
+   "Platform 8 3/4",
+   "Platform 7 1/2",
+   "Platform 9 3/4",
+   "Platform 10 1/4"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Hogwarts house does Harry Potter belong to?",
+  "options": [
+   "Gryffindor",
+   "Slytherin",
+   "Hufflepuff",
+   "Ravenclaw"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is the headmaster of Hogwarts for most of the Harry Potter series?",
+  "options": [
+   "Albus Dumbledore",
+   "Cornelius Fudge",
+   "Remus Lupin",
+   "Severus Snape"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What shape is the scar on Harry Potter's forehead?",
+  "options": [
+   "A cross",
+   "A lightning bolt",
+   "A crescent moon",
+   "A star"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many books are there in the original Harry Potter series?",
+  "options": [
+   "Five",
+   "Seven",
+   "Eight",
+   "Six"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the sport played on broomsticks at Hogwarts?",
+  "options": [
+   "Quaffleball",
+   "Snitchball",
+   "Broomball",
+   "Quidditch"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which position does Harry Potter play in Quidditch?",
+  "options": [
+   "Keeper",
+   "Chaser",
+   "Seeker",
+   "Beater"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the tiny golden ball a Quidditch Seeker must catch?",
+  "options": [
+   "The Quaffle",
+   "The Golden Snitch",
+   "The Golden Egg",
+   "The Bludger"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the title of the first Harry Potter book in its original British edition?",
+  "options": [
+   "Harry Potter and the Sorcerer's Stone",
+   "Harry Potter and the Magic Stone",
+   "Harry Potter and the Chamber of Secrets",
+   "Harry Potter and the Philosopher's Stone"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is Lord Voldemort's birth name?",
+  "options": [
+   "Tom Marvolo Riddle",
+   "Thomas Slytherin",
+   "Tom Rowle Riddle",
+   "Tom Marvolo Gaunt"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the wizarding bank in Diagon Alley?",
+  "options": [
+   "Ollivanders",
+   "Borgin and Burkes",
+   "Gringotts",
+   "Flourish and Blotts"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which creatures run Gringotts bank in the Harry Potter books?",
+  "options": [
+   "House-elves",
+   "Goblins",
+   "Centaurs",
+   "Trolls"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which shop in Diagon Alley sells wands?",
+  "options": [
+   "Ollivanders",
+   "Zonko's",
+   "Gringotts",
+   "Madam Malkin's"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many houses are there at Hogwarts?",
+  "options": [
+   "Three",
+   "Six",
+   "Four",
+   "Five"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which animal represents Hufflepuff house?",
+  "options": [
+   "An eagle",
+   "A lion",
+   "A badger",
+   "A serpent"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which animal represents Ravenclaw house?",
+  "options": [
+   "A raven",
+   "A serpent",
+   "A badger",
+   "An eagle"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which animal represents Slytherin house?",
+  "options": [
+   "A lion",
+   "A badger",
+   "A serpent",
+   "A dragon"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What magic word is used to unlock a door in the Harry Potter books?",
+  "options": [
+   "Accio",
+   "Alohomora",
+   "Reparo",
+   "Lumos"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which spell produces light from the tip of a wand?",
+  "options": [
+   "Nox",
+   "Sonorus",
+   "Incendio",
+   "Lumos"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which spell is used to make an object fly, famously practised on a feather?",
+  "options": [
+   "Petrificus Totalus",
+   "Expelliarmus",
+   "Locomotor Mortis",
+   "Wingardium Leviosa"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which spell disarms an opponent in the Harry Potter books?",
+  "options": [
+   "Stupefy",
+   "Protego",
+   "Expelliarmus",
+   "Expecto Patronum"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What form does Harry Potter's Patronus take?",
+  "options": [
+   "A doe",
+   "An otter",
+   "A stag",
+   "A wolf"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the wizarding prison in the Harry Potter books?",
+  "options": [
+   "Nurmengard",
+   "Durmstrang",
+   "Azkaban",
+   "Gringotts"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which creatures guard the wizard prison Azkaban?",
+  "options": [
+   "Boggarts",
+   "Goblins",
+   "Trolls",
+   "Dementors"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the village near Hogwarts that students are allowed to visit?",
+  "options": [
+   "Godric's Hollow",
+   "Little Whinging",
+   "Ottery St Catchpole",
+   "Hogsmeade"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who is Harry Potter's godfather?",
+  "options": [
+   "Rubeus Hagrid",
+   "Sirius Black",
+   "Remus Lupin",
+   "Arthur Weasley"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the Weasley family home?",
+  "options": [
+   "Spinner's End",
+   "The Warren",
+   "Shell Cottage",
+   "The Burrow"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is Ron Weasley's pet rat called?",
+  "options": [
+   "Trevor",
+   "Scabbers",
+   "Crookshanks",
+   "Nagini"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Hermione Granger's cat?",
+  "options": [
+   "Scabbers",
+   "Crookshanks",
+   "Hedwig",
+   "Mrs Norris"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What kind of bird is Dumbledore's pet Fawkes?",
+  "options": [
+   "An owl",
+   "A raven",
+   "A phoenix",
+   "An eagle"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the Hogwarts caretaker's cat?",
+  "options": [
+   "Miss Kitty",
+   "Mrs Norris",
+   "Crookshanks",
+   "Tibbles"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who is the caretaker at Hogwarts?",
+  "options": [
+   "Filius Flitwick",
+   "Rubeus Hagrid",
+   "Argus Filch",
+   "Horace Slughorn"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the three-headed dog guarding the trapdoor in the first Harry Potter book?",
+  "options": [
+   "Norbert",
+   "Aragog",
+   "Fang",
+   "Fluffy"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Hagrid's giant boarhound dog?",
+  "options": [
+   "Fluffy",
+   "Fang",
+   "Buckbeak",
+   "Bane"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What kind of creature is Buckbeak in the Harry Potter books?",
+  "options": [
+   "A dragon",
+   "A thestral",
+   "A hippogriff",
+   "A centaur"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the giant spider Hagrid raised?",
+  "options": [
+   "Aragog",
+   "Mosag",
+   "Nagini",
+   "Norbert"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the house-elf freed by Harry Potter with a sock?",
+  "options": [
+   "Dobby",
+   "Winky",
+   "Kreacher",
+   "Hokey"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the wizarding newspaper in the Harry Potter books?",
+  "options": [
+   "Witch Weekly",
+   "The Daily Prophet",
+   "The Quibbler",
+   "The Evening Standard"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the street address of the Dursley family home?",
+  "options": [
+   "4 Wisteria Walk",
+   "9 Privet Drive",
+   "12 Grimmauld Place",
+   "4 Privet Drive"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are Harry Potter's parents called?",
+  "options": [
+   "James and Lily",
+   "John and Lily",
+   "James and Petunia",
+   "Jack and Lily"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Harry's cousin who lives at Privet Drive?",
+  "options": [
+   "Piers",
+   "Dudley",
+   "Vernon",
+   "Gordon"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What word do wizards use for a person born without magic in the Harry Potter books?",
+  "options": [
+   "Ministry",
+   "Squib",
+   "Muggle",
+   "Mudblood"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the enchanted map that shows everyone inside Hogwarts?",
+  "options": [
+   "The Wizard's Atlas",
+   "The Marauder's Map",
+   "The Founder's Map",
+   "The Hogwarts Chart"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which mirror shows the viewer their deepest desire in the first Harry Potter book?",
+  "options": [
+   "The Mirror of Souls",
+   "The Mirror of Galadriel",
+   "The Mirror of Erised",
+   "The Mirror of Truth"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the violent tree on the Hogwarts grounds?",
+  "options": [
+   "The Whomping Willow",
+   "The Weeping Willow",
+   "The Thrashing Elm",
+   "The Wailing Oak"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which teacher takes Transfiguration at Hogwarts?",
+  "options": [
+   "Professor McGonagall",
+   "Professor Flitwick",
+   "Professor Sprout",
+   "Professor Trelawney"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which subject does Professor Sprout teach at Hogwarts?",
+  "options": [
+   "Herbology",
+   "Potions",
+   "Charms",
+   "Divination"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Hogwarts teacher takes Divination?",
+  "options": [
+   "Minerva McGonagall",
+   "Pomona Sprout",
+   "Charity Burbage",
+   "Sybill Trelawney"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who teaches Potions at Hogwarts when Harry first arrives?",
+  "options": [
+   "Horace Slughorn",
+   "Severus Snape",
+   "Quirinus Quirrell",
+   "Filius Flitwick"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which monster lurks in the Chamber of Secrets?",
+  "options": [
+   "A troll",
+   "A werewolf",
+   "A dragon",
+   "A basilisk"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which ghost haunts a bathroom at Hogwarts?",
+  "options": [
+   "Moaning Myrtle",
+   "The Grey Lady",
+   "Nearly Headless Nick",
+   "The Bloody Baron"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the Gryffindor house ghost?",
+  "options": [
+   "Nearly Headless Nick",
+   "The Bloody Baron",
+   "The Fat Friar",
+   "Peeves"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the sweet drink most often ordered at the Three Broomsticks?",
+  "options": [
+   "Pumpkin juice",
+   "Firewhisky",
+   "Butterbeer",
+   "Gillywater"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Harry Potter's first broomstick, a gift in his first year?",
+  "options": [
+   "Comet 260",
+   "Nimbus 2000",
+   "Firebolt",
+   "Cleansweep Seven"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which two visiting schools compete in the Triwizard Tournament?",
+  "options": [
+   "Beauxbatons and Ilvermorny",
+   "Ilvermorny and Mahoutokoro",
+   "Castelobruxo and Uagadou",
+   "Beauxbatons and Durmstrang"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of Voldemort's snake?",
+  "options": [
+   "Slytherin",
+   "Basilisk",
+   "Nagini",
+   "Salazar"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the ability to talk to snakes called in the Harry Potter books?",
+  "options": [
+   "Occlumency",
+   "Parseltongue",
+   "Legilimency",
+   "Serpentspeak"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are the three Deathly Hallows?",
+  "options": [
+   "The Elder Wand, the Philosopher's Stone and the Cloak",
+   "The Sword, the Stone and the Wand",
+   "The Wand, the Cup and the Locket",
+   "The Elder Wand, the Resurrection Stone and the Cloak of Invisibility"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the objects Voldemort uses to split and hide his soul?",
+  "options": [
+   "Pensieves",
+   "Hallows",
+   "Horcruxes",
+   "Portkeys"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which actor played Harry Potter in the film series?",
+  "options": [
+   "Rupert Grint",
+   "Tom Felton",
+   "Daniel Radcliffe",
+   "Eddie Redmayne"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which actress played Hermione Granger in the Harry Potter films?",
+  "options": [
+   "Bonnie Wright",
+   "Evanna Lynch",
+   "Emma Watson",
+   "Emma Stone"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Draco Malfoy's two bulky sidekicks?",
+  "options": [
+   "Goyle and Zabini",
+   "Crabbe and Nott",
+   "Crabbe and Goyle",
+   "Flint and Goyle"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On what date is Harry Potter's birthday?",
+  "options": [
+   "24 December",
+   "31 July",
+   "1 September",
+   "31 October"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the Hogwarts hat that sorts students into houses?",
+  "options": [
+   "The House Hat",
+   "The Sorting Hat",
+   "The Founder's Cap",
+   "The Choosing Hat"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Harry Potter book is the last in the series?",
+  "options": [
+   "Harry Potter and the Goblet of Fire",
+   "Harry Potter and the Order of the Phoenix",
+   "Harry Potter and the Half-Blood Prince",
+   "Harry Potter and the Deathly Hallows"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Harry Potter book comes directly after Harry Potter and the Chamber of Secrets?",
+  "options": [
+   "Harry Potter and the Prisoner of Azkaban",
+   "Harry Potter and the Order of the Phoenix",
+   "Harry Potter and the Goblet of Fire",
+   "Harry Potter and the Philosopher's Stone"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What kind of creature is Professor Remus Lupin?",
+  "options": [
+   "A vampire",
+   "A werewolf",
+   "A centaur",
+   "A giant"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which government body oversees wizarding Britain in the Harry Potter books?",
+  "options": [
+   "The Ministry of Magic",
+   "The Wizarding Assembly",
+   "The Wizengamot",
+   "The Council of Wizards"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the pink-loving teacher who takes over Hogwarts in Order of the Phoenix?",
+  "options": [
+   "Sybill Trelawney",
+   "Charity Burbage",
+   "Dolores Umbridge",
+   "Rita Skeeter"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many players are on a Quidditch team?",
+  "options": [
+   "Seven",
+   "Five",
+   "Six",
+   "Eleven"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What kind of owl is Hedwig?",
+  "options": [
+   "A barn owl",
+   "A tawny owl",
+   "A great horned owl",
+   "A snowy owl"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the small workers in Willy Wonka's factory called?",
+  "options": [
+   "Oompa-Loompas",
+   "Snozzwangers",
+   "Vermicious Knids",
+   "Whangdoodles"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which child in Charlie and the Chocolate Factory swells up into a giant blueberry?",
+  "options": [
+   "Violet Beauregarde",
+   "Veruca Salt",
+   "Augustus Gloop",
+   "Mike Teavee"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which child in Charlie and the Chocolate Factory falls into the chocolate river?",
+  "options": [
+   "Mike Teavee",
+   "Violet Beauregarde",
+   "Charlie Bucket",
+   "Augustus Gloop"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which spoilt child in Charlie and the Chocolate Factory demands a squirrel?",
+  "options": [
+   "Veruca Salt",
+   "Violet Beauregarde",
+   "Mike Teavee",
+   "Augustus Gloop"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which grandparent goes with Charlie Bucket to the chocolate factory?",
+  "options": [
+   "Grandma Georgina",
+   "Grandpa Joe",
+   "Grandma Josephine",
+   "Grandpa George"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What must a child find to win a tour of Willy Wonka's factory?",
+  "options": [
+   "A magic key",
+   "A red wrapper",
+   "A silver coin",
+   "A golden ticket"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Roald Dahl's James and the Giant Peach, what fruit does James travel inside?",
+  "options": [
+   "A pear",
+   "An apple",
+   "A peach",
+   "A pumpkin"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are the names of the cruel aunts in James and the Giant Peach?",
+  "options": [
+   "Sponge and Spiker",
+   "Spiker and Prune",
+   "Sponge and Snide",
+   "Sponge and Spider"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who is the kind teacher in Roald Dahl's Matilda?",
+  "options": [
+   "Mrs Phelps",
+   "Miss Sugar",
+   "Miss Trunchbull",
+   "Miss Honey"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is the terrifying headmistress in Roald Dahl's Matilda?",
+  "options": [
+   "Miss Hardbroom",
+   "Miss Trunchbull",
+   "Mrs Wormwood",
+   "Miss Honey"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is Matilda's surname in the Roald Dahl book?",
+  "options": [
+   "Wormwood",
+   "Trotter",
+   "Honey",
+   "Bucket"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What special power does Matilda develop in Roald Dahl's novel?",
+  "options": [
+   "Talking to animals",
+   "Moving objects with her mind",
+   "Flying",
+   "Invisibility"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does BFG stand for in the Roald Dahl book?",
+  "options": [
+   "Big Funny Giant",
+   "Bold Fearless Giant",
+   "Brave Friendly Giant",
+   "Big Friendly Giant"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the little girl in Roald Dahl's The BFG?",
+  "options": [
+   "Sarah",
+   "Sophie",
+   "Matilda",
+   "Lucy"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the fizzy green drink the BFG serves, with bubbles that go downwards?",
+  "options": [
+   "Whizzpop",
+   "Gobblefunk",
+   "Frobscottle",
+   "Snozzcumber juice"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the only vegetable the BFG can find to eat in Giant Country?",
+  "options": [
+   "The snozzcumber",
+   "The gobblefunk",
+   "The whangdoodle",
+   "The frobscottle"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What are the names of the three farmers in Fantastic Mr Fox?",
+  "options": [
+   "Biggis, Bunce and Bean",
+   "Boggis, Bunce and Bunt",
+   "Boggis, Bunce and Bean",
+   "Boggis, Blunt and Bean"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Roald Dahl book features a horrible married couple who play tricks on each other?",
+  "options": [
+   "The Magic Finger",
+   "The Twits",
+   "The Witches",
+   "George's Marvellous Medicine"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which Roald Dahl book does a boy mix a potion to shrink his grandmother's meanness?",
+  "options": [
+   "The Magic Finger",
+   "Danny the Champion of the World",
+   "George's Marvellous Medicine",
+   "The Twits"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who leads the witches in Roald Dahl's The Witches?",
+  "options": [
+   "The Grand High Witch",
+   "The Elder Witch",
+   "The Head Witch",
+   "The Witch Queen"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which illustrator is most closely associated with Roald Dahl's books?",
+  "options": [
+   "Quentin Blake",
+   "Raymond Briggs",
+   "Axel Scheffler",
+   "Shirley Hughes"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which city was Roald Dahl born?",
+  "options": [
+   "Oslo",
+   "London",
+   "Cardiff",
+   "Bristol"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which animal is the pet in Roald Dahl's Esio Trot?",
+  "options": [
+   "A parrot",
+   "A rabbit",
+   "A goldfish",
+   "A tortoise"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the sequel to Charlie and the Chocolate Factory called?",
+  "options": [
+   "Charlie and the Golden Ticket",
+   "Charlie and the Great Glass Elevator",
+   "Willy Wonka's Factory",
+   "Charlie Returns"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Danny the Champion of the World, what does Danny's father secretly do?",
+  "options": [
+   "Rob banks",
+   "Race cars",
+   "Poach pheasants",
+   "Smuggle sweets"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which two cities give A Tale of Two Cities its title?",
+  "options": [
+   "Paris and Vienna",
+   "London and Paris",
+   "London and Dublin",
+   "London and Rome"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who leads the gang of young pickpockets in Oliver Twist?",
+  "options": [
+   "Mr Brownlow",
+   "Mr Bumble",
+   "Fagin",
+   "Bill Sikes"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the nickname of the pickpocket Jack Dawkins in Oliver Twist?",
+  "options": [
+   "The Artful Dodger",
+   "The Nimble Nipper",
+   "The Sly Fox",
+   "Charley Bates"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is the miserly main character of A Christmas Carol?",
+  "options": [
+   "Bob Cratchit",
+   "Mr Fezziwig",
+   "Jacob Marley",
+   "Ebenezer Scrooge"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many ghosts visit Scrooge in A Christmas Carol, not counting Marley?",
+  "options": [
+   "Two",
+   "Four",
+   "Three",
+   "Five"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is Scrooge's overworked clerk in A Christmas Carol?",
+  "options": [
+   "Tiny Tim",
+   "Fred",
+   "Bob Cratchit",
+   "Jacob Marley"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which line does Tiny Tim speak at the end of A Christmas Carol?",
+  "options": [
+   "Peace on earth",
+   "Merry Christmas to all",
+   "God bless us, every one",
+   "Bah, humbug"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Scrooge's dead business partner in A Christmas Carol?",
+  "options": [
+   "Bob Cratchit",
+   "Jacob Marley",
+   "Ebenezer Fred",
+   "Mr Fezziwig"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which two words does Scrooge use to dismiss Christmas?",
+  "options": [
+   "Bah, humbug",
+   "Stuff and nonsense",
+   "Utter rubbish",
+   "Pure nonsense"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is the jilted bride who stops all the clocks in Great Expectations?",
+  "options": [
+   "Mrs Joe",
+   "Miss Havisham",
+   "Estella",
+   "Miss Skiffins"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the young hero of Great Expectations?",
+  "options": [
+   "Pip",
+   "Oliver",
+   "David",
+   "Nicholas"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which escaped convict secretly funds Pip in Great Expectations?",
+  "options": [
+   "Orlick",
+   "Bentley Drummle",
+   "Abel Magwitch",
+   "Compeyson"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which grovelling character in David Copperfield calls himself 'very 'umble'?",
+  "options": [
+   "Uriah Heep",
+   "Barkis",
+   "Mr Murdstone",
+   "Wilkins Micawber"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Dickens novel is centred on the endless legal case Jarndyce and Jarndyce?",
+  "options": [
+   "Hard Times",
+   "Our Mutual Friend",
+   "Little Dorrit",
+   "Bleak House"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Dickens novel features the brutal Yorkshire school Dotheboys Hall?",
+  "options": [
+   "Hard Times",
+   "Oliver Twist",
+   "Nicholas Nickleby",
+   "David Copperfield"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which novel was left unfinished when Charles Dickens died?",
+  "options": [
+   "Bleak House",
+   "Our Mutual Friend",
+   "Little Dorrit",
+   "The Mystery of Edwin Drood"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who is the heroine of Pride and Prejudice?",
+  "options": [
+   "Elizabeth Bennet",
+   "Emma Woodhouse",
+   "Anne Elliot",
+   "Fanny Price"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is the wealthy, proud love interest in Pride and Prejudice?",
+  "options": [
+   "Mr Bingley",
+   "Mr Darcy",
+   "Mr Wickham",
+   "Mr Collins"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Mr Darcy's grand estate in Pride and Prejudice?",
+  "options": [
+   "Netherfield",
+   "Rosings",
+   "Pemberley",
+   "Longbourn"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many Bennet sisters are there in Pride and Prejudice?",
+  "options": [
+   "Five",
+   "Three",
+   "Six",
+   "Four"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Jane Austen novel follows the Dashwood sisters Elinor and Marianne?",
+  "options": [
+   "Pride and Prejudice",
+   "Sense and Sensibility",
+   "Northanger Abbey",
+   "Mansfield Park"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Jane Austen novel has a heroine who fancies herself a matchmaker?",
+  "options": [
+   "Mansfield Park",
+   "Persuasion",
+   "Sense and Sensibility",
+   "Emma"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which 1990s teen film is a modern retelling of Jane Austen's Emma?",
+  "options": [
+   "Mean Girls",
+   "She's All That",
+   "Clueless",
+   "10 Things I Hate About You"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Jane Austen novel features Fanny Price?",
+  "options": [
+   "Emma",
+   "Northanger Abbey",
+   "Persuasion",
+   "Mansfield Park"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Jane Austen novel gently mocks gothic novels through its heroine Catherine Morland?",
+  "options": [
+   "Northanger Abbey",
+   "Emma",
+   "Mansfield Park",
+   "Persuasion"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Jane Austen novel features Anne Elliot and Captain Wentworth?",
+  "options": [
+   "Persuasion",
+   "Mansfield Park",
+   "Emma",
+   "Sense and Sensibility"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which century were Jane Austen's novels first published?",
+  "options": [
+   "The nineteenth century",
+   "The seventeenth century",
+   "The twentieth century",
+   "The eighteenth century"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Bronte sister wrote Jane Eyre?",
+  "options": [
+   "Emily",
+   "Anne",
+   "Charlotte",
+   "Maria"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Mr Rochester's house in Jane Eyre?",
+  "options": [
+   "Manderley",
+   "Thrushcross Grange",
+   "Wuthering Heights",
+   "Thornfield Hall"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who is the tormented main character of Wuthering Heights?",
+  "options": [
+   "Hindley",
+   "Heathcliff",
+   "Rochester",
+   "Linton"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Heathcliff's great love in Wuthering Heights?",
+  "options": [
+   "Isabella",
+   "Nelly",
+   "Catherine",
+   "Jane"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Yorkshire village was home to the Bronte sisters?",
+  "options": [
+   "Whitby",
+   "Harrogate",
+   "Haworth",
+   "Hebden Bridge"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Bronte sister wrote The Tenant of Wildfell Hall?",
+  "options": [
+   "Charlotte",
+   "Elizabeth",
+   "Anne",
+   "Emily"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Under what surname did the Bronte sisters first publish?",
+  "options": [
+   "Bell",
+   "Grey",
+   "Bronte",
+   "Currer"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Mary Shelley's novel, what is Frankenstein the name of?",
+  "options": [
+   "The creature itself",
+   "The village",
+   "The castle",
+   "The scientist who makes the creature"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the first name of the scientist in Frankenstein?",
+  "options": [
+   "Ernest",
+   "Robert",
+   "Henry",
+   "Victor"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which region of Europe is Count Dracula's homeland in the novel?",
+  "options": [
+   "Bavaria",
+   "Wallonia",
+   "Transylvania",
+   "Bohemia"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which vampire hunter opposes Count Dracula in Bram Stoker's novel?",
+  "options": [
+   "Quincey Holmwood",
+   "Jonathan Harker",
+   "Renfield",
+   "Van Helsing"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which English seaside town does Dracula come ashore at in the novel?",
+  "options": [
+   "Dover",
+   "Whitby",
+   "Scarborough",
+   "Brighton"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the boy who narrates Treasure Island?",
+  "options": [
+   "Jim Hawkins",
+   "Ben Gunn",
+   "David Balfour",
+   "Tom Redruth"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Long John Silver's parrot?",
+  "options": [
+   "Blackbeard",
+   "Polly",
+   "Captain Flint",
+   "Silver"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Robert Louis Stevenson story features a man with a monstrous second self?",
+  "options": [
+   "The Black Arrow",
+   "Treasure Island",
+   "Kidnapped",
+   "Strange Case of Dr Jekyll and Mr Hyde"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Stevenson's story, which name belongs to the evil side of the character?",
+  "options": [
+   "Dr Lanyon",
+   "Dr Jekyll",
+   "Mr Utterson",
+   "Mr Hyde"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What was the real name of Lewis Carroll?",
+  "options": [
+   "Eric Blair",
+   "Samuel Clemens",
+   "Charles Lamb",
+   "Charles Dodgson"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which animal does Alice follow down the rabbit hole?",
+  "options": [
+   "A white rabbit",
+   "A brown hare",
+   "A dormouse",
+   "A march hare"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Wonderland character is famous for its wide grin and for vanishing?",
+  "options": [
+   "The Dormouse",
+   "The Mock Turtle",
+   "The March Hare",
+   "The Cheshire Cat"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Wonderland ruler keeps shouting 'Off with their heads'?",
+  "options": [
+   "The Queen of Hearts",
+   "The Duchess",
+   "The White Queen",
+   "The Red Queen"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which nonsense poem appears in Through the Looking-Glass?",
+  "options": [
+   "Jabberwocky",
+   "The Hunting of the Snark",
+   "The Owl and the Pussycat",
+   "The Jumblies"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which two rotund brothers appear in Through the Looking-Glass?",
+  "options": [
+   "Bill and Ben",
+   "Humpty and Dumpty",
+   "Gog and Magog",
+   "Tweedledum and Tweedledee"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who wrote Gulliver's Travels?",
+  "options": [
+   "Laurence Sterne",
+   "Jonathan Swift",
+   "Henry Fielding",
+   "Daniel Defoe"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the land of tiny people in Gulliver's Travels called?",
+  "options": [
+   "Laputa",
+   "Brobdingnag",
+   "Houyhnhnm",
+   "Lilliput"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the land of giants in Gulliver's Travels called?",
+  "options": [
+   "Brobdingnag",
+   "Laputa",
+   "Balnibarbi",
+   "Lilliput"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who wrote Robinson Crusoe?",
+  "options": [
+   "Jonathan Swift",
+   "Captain Marryat",
+   "Robert Louis Stevenson",
+   "Daniel Defoe"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What name does Robinson Crusoe give the man he meets on the island?",
+  "options": [
+   "Saturday",
+   "Sunday",
+   "Monday",
+   "Friday"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which novel begins with the words 'Call me Ishmael'?",
+  "options": [
+   "Treasure Island",
+   "Moby-Dick",
+   "Billy Budd",
+   "The Old Man and the Sea"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What kind of creature is Moby-Dick?",
+  "options": [
+   "A giant squid",
+   "A white whale",
+   "A great white shark",
+   "A sea serpent"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which obsessed captain hunts Moby-Dick?",
+  "options": [
+   "Captain Flint",
+   "Captain Starbuck",
+   "Captain Ahab",
+   "Captain Nemo"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the whaling ship in Moby-Dick?",
+  "options": [
+   "The Rachel",
+   "The Hispaniola",
+   "The Pequod",
+   "The Nautilus"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What was the real name of the writer Mark Twain?",
+  "options": [
+   "Samuel Johnson",
+   "Samuel Clemens",
+   "Stephen Crane",
+   "Sinclair Lewis"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which river runs through the adventures of Huckleberry Finn?",
+  "options": [
+   "The Missouri",
+   "The Mississippi",
+   "The Ohio",
+   "The Hudson"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Mark Twain character famously tricks other boys into whitewashing a fence?",
+  "options": [
+   "Huckleberry Finn",
+   "Becky Thatcher",
+   "Tom Sawyer",
+   "Injun Joe"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which captain commands the Nautilus in Jules Verne's novel?",
+  "options": [
+   "Captain Nemo",
+   "Captain Grant",
+   "Captain Hook",
+   "Captain Ahab"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Phileas Fogg's French valet?",
+  "options": [
+   "Aouda",
+   "Passepartout",
+   "Jean Valjean",
+   "Fix"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which planet do the invaders come from in The War of the Worlds?",
+  "options": [
+   "Mars",
+   "Saturn",
+   "Venus",
+   "Jupiter"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which H.G. Wells novel features a machine that travels through time?",
+  "options": [
+   "The Invisible Man",
+   "The Time Machine",
+   "The First Men in the Moon",
+   "The Island of Doctor Moreau"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the motto of the Three Musketeers?",
+  "options": [
+   "Strength and courage",
+   "Honour above all",
+   "One sword, one king",
+   "All for one and one for all"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which young man joins the Three Musketeers in the Dumas novel?",
+  "options": [
+   "Athos",
+   "Aramis",
+   "Porthos",
+   "D'Artagnan"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Alexandre Dumas novel features Edmond Dantes and his revenge?",
+  "options": [
+   "Twenty Years After",
+   "The Three Musketeers",
+   "The Count of Monte Cristo",
+   "The Man in the Iron Mask"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which policeman pursues Jean Valjean in Les Miserables?",
+  "options": [
+   "Javert",
+   "Enjolras",
+   "Marius",
+   "Fantine"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Victor Hugo novel features the bell-ringer Quasimodo?",
+  "options": [
+   "The Man Who Laughs",
+   "Les Miserables",
+   "The Hunchback of Notre-Dame",
+   "Toilers of the Sea"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Leo Tolstoy novel is named after its tragic heroine who loves Count Vronsky?",
+  "options": [
+   "The Cossacks",
+   "Resurrection",
+   "War and Peace",
+   "Anna Karenina"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who wrote Crime and Punishment?",
+  "options": [
+   "Fyodor Dostoevsky",
+   "Maxim Gorky",
+   "Nikolai Gogol",
+   "Leo Tolstoy"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which George Eliot novel is subtitled 'A Study of Provincial Life'?",
+  "options": [
+   "The Mill on the Floss",
+   "Adam Bede",
+   "Middlemarch",
+   "Silas Marner"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What was the real name of the novelist George Eliot?",
+  "options": [
+   "Emily Davies",
+   "Margaret Oliphant",
+   "Elizabeth Gaskell",
+   "Mary Ann Evans"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the fictional English county in Thomas Hardy's novels?",
+  "options": [
+   "Wessex",
+   "Mercia",
+   "Barsetshire",
+   "Loamshire"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Thomas Hardy novel features Bathsheba Everdene?",
+  "options": [
+   "The Return of the Native",
+   "Far from the Madding Crowd",
+   "Jude the Obscure",
+   "The Mayor of Casterbridge"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which novel features the character Hester Prynne and a scarlet letter A?",
+  "options": [
+   "Little Women",
+   "The Scarlet Letter",
+   "Ethan Frome",
+   "The House of the Seven Gables"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who wrote Little Women?",
+  "options": [
+   "Harriet Beecher Stowe",
+   "Edith Wharton",
+   "Louisa May Alcott",
+   "Frances Hodgson Burnett"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many March sisters are there in Little Women?",
+  "options": [
+   "Five",
+   "Two",
+   "Four",
+   "Three"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which March sister is the tomboyish writer in Little Women?",
+  "options": [
+   "Beth",
+   "Jo",
+   "Amy",
+   "Meg"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which novel by Frances Hodgson Burnett features a hidden walled garden at Misselthwaite Manor?",
+  "options": [
+   "The Secret Garden",
+   "A Little Princess",
+   "Little Lord Fauntleroy",
+   "The Railway Children"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who wrote The Wind in the Willows?",
+  "options": [
+   "Beatrix Potter",
+   "E. Nesbit",
+   "Kenneth Grahame",
+   "A.A. Milne"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which character in The Wind in the Willows is obsessed with motor cars?",
+  "options": [
+   "Ratty",
+   "Badger",
+   "Toad",
+   "Mole"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Toad's grand house in The Wind in the Willows?",
+  "options": [
+   "Toad Manor",
+   "Willow Hall",
+   "Toad Hall",
+   "River House"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which Australian city is Tim Winton's novel Cloudstreet set?",
+  "options": [
+   "Perth",
+   "Adelaide",
+   "Sydney",
+   "Melbourne"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which two families share the house in Tim Winton's Cloudstreet?",
+  "options": [
+   "The Pickles and the Lambs",
+   "The Lambs and the Kellys",
+   "The Pickles and the Doyles",
+   "The Bakers and the Lambs"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Tim Winton novel about surfing and risk was made into a film directed by Simon Baker?",
+  "options": [
+   "Shallows",
+   "Dirt Music",
+   "The Riders",
+   "Breath"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Tim Winton's children's book Blueback centres on which sea creature?",
+  "options": [
+   "A shark",
+   "A groper",
+   "A turtle",
+   "A dolphin"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian author wrote The Thorn Birds?",
+  "options": [
+   "Ruth Park",
+   "Colleen McCullough",
+   "Kate Grenville",
+   "Nevil Shute"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the sheep station in The Thorn Birds?",
+  "options": [
+   "Coonardoo",
+   "Drogheda",
+   "Cloudstreet",
+   "Jindabyne"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which priest is at the centre of The Thorn Birds?",
+  "options": [
+   "Father Damien",
+   "Father Sean Cleary",
+   "Father Ralph de Bricassart",
+   "Father Brown"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What was Banjo Paterson's real first name?",
+  "options": [
+   "Alfred",
+   "Andrew",
+   "Albert",
+   "Arthur"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Banjo Paterson's poem, what does Mulga Bill buy and fail to ride?",
+  "options": [
+   "A motorbike",
+   "A camel",
+   "A bicycle",
+   "A racehorse"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Waltzing Matilda, what animal does the swagman put in his tucker bag?",
+  "options": [
+   "A dingo",
+   "A jumbuck",
+   "A brumby",
+   "A kangaroo"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Waltzing Matilda, under which tree does the swagman camp?",
+  "options": [
+   "A wattle tree",
+   "A coolibah tree",
+   "A gum tree",
+   "A boab tree"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Henry Lawson collection of bush stories is titled after boiling a billy?",
+  "options": [
+   "Joe Wilson's Mates",
+   "The Loaded Dog",
+   "On the Track",
+   "While the Billy Boils"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Henry Lawson's story The Loaded Dog, what is the dog carrying?",
+  "options": [
+   "A stick of firewood",
+   "A lit explosive cartridge",
+   "A rabbit",
+   "A stolen leg of mutton"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian magazine published much of the work of Henry Lawson and Banjo Paterson?",
+  "options": [
+   "The Argus",
+   "Smith's Weekly",
+   "The Australian Woman's Weekly",
+   "The Bulletin"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian author and illustrator drew the Banksia Men?",
+  "options": [
+   "Ethel Turner",
+   "Norman Lindsay",
+   "May Gibbs",
+   "Dorothy Wall"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are the villains called in May Gibbs' Snugglepot and Cuddlepie?",
+  "options": [
+   "The Bunyips",
+   "The Gumnut Gang",
+   "The Wattle Men",
+   "The Banksia Men"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "May Gibbs' Snugglepot and Cuddlepie are known as which kind of babies?",
+  "options": [
+   "Bottlebrush babies",
+   "Gumnut babies",
+   "Bush babies",
+   "Wattle babies"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian artist, better known for his paintings and etchings, wrote a famous 1918 children's book?",
+  "options": [
+   "Norman Lindsay",
+   "Ethel Pedley",
+   "May Gibbs",
+   "Dorothy Wall"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the pudding in Norman Lindsay's The Magic Pudding?",
+  "options": [
+   "Percival",
+   "Reginald",
+   "Albert",
+   "Herbert"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What kind of animal is Bunyip Bluegum in The Magic Pudding?",
+  "options": [
+   "A koala",
+   "A platypus",
+   "A possum",
+   "A wombat"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What kind of animal is Sam Sawnoff in The Magic Pudding?",
+  "options": [
+   "A pelican",
+   "A seal",
+   "A penguin",
+   "A kookaburra"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who wrote the classic Australian picture book Possum Magic?",
+  "options": [
+   "Pamela Allen",
+   "Mem Fox",
+   "Jackie French",
+   "Alison Lester"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are the two possums called in Possum Magic?",
+  "options": [
+   "Grandma Poss and Hush",
+   "Nanna Poss and Hush",
+   "Grandma Possum and Hush",
+   "Grandma Poss and Sush"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Possum Magic, what happens to Hush?",
+  "options": [
+   "She shrinks",
+   "She learns to fly",
+   "She becomes invisible",
+   "She turns blue"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Possum Magic, what kind of food makes Hush visible again?",
+  "options": [
+   "Bush tomatoes and damper",
+   "Fruit and honey",
+   "Australian foods like Vegemite sandwiches and lamingtons",
+   "Gum leaves and nectar"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Mem Fox picture book asks a question about a sheep of a particular colour?",
+  "options": [
+   "Ten Little Sheep",
+   "Where Is the Green Sheep?",
+   "Sheep in a Jeep",
+   "The Blue Sheep"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which South Australian author wrote Blue Fin and February Dragon?",
+  "options": [
+   "Ivan Southall",
+   "Colin Thiele",
+   "Nan Chauncy",
+   "Patricia Wrightson"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the pelican in Storm Boy?",
+  "options": [
+   "Mr Proud",
+   "Mr Percival",
+   "Mr Pelican",
+   "Mr Ponder"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which South Australian coastal region is Storm Boy set?",
+  "options": [
+   "The Coorong",
+   "Kangaroo Island",
+   "The Eyre Peninsula",
+   "The Fleurieu Peninsula"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Colin Thiele novel is named after a tuna boat?",
+  "options": [
+   "Blue Fin",
+   "Sun on the Stubble",
+   "February Dragon",
+   "Storm Boy"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who wrote the poem My Country?",
+  "options": [
+   "Mary Gilmore",
+   "Judith Wright",
+   "Henry Kendall",
+   "Dorothea Mackellar"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who wrote Seven Little Australians?",
+  "options": [
+   "Mary Grant Bruce",
+   "Miles Franklin",
+   "May Gibbs",
+   "Ethel Turner"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian author wrote The Harp in the South?",
+  "options": [
+   "Kylie Tennant",
+   "Ruth Park",
+   "Eleanor Dark",
+   "Christina Stead"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Ruth Park novel sends a girl back in time to old Sydney?",
+  "options": [
+   "Playing Beatie Bow",
+   "Swords and Crowns",
+   "Poor Man's Orange",
+   "The Harp in the South"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Ruth Park created which famously scatterbrained Australian storybook animal?",
+  "options": [
+   "Blinky Bill the koala",
+   "The Muddle-Headed Wombat",
+   "Bunyip Bluegum the koala",
+   "Mothball the wombat"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which novel by Nevil Shute follows Jean Paget and is set partly in outback Australia?",
+  "options": [
+   "A Town Like Alice",
+   "No Highway",
+   "On the Beach",
+   "Round the Bend"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Nevil Shute novel about nuclear fallout is set largely in Melbourne?",
+  "options": [
+   "A Town Like Alice",
+   "Pied Piper",
+   "On the Beach",
+   "Trustee from the Toolroom"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Patrick White novel follows an explorer crossing the Australian interior?",
+  "options": [
+   "The Vivisector",
+   "Riders in the Chariot",
+   "Voss",
+   "The Tree of Man"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian author wrote Schindler's Ark, the book behind the film Schindler's List?",
+  "options": [
+   "Morris West",
+   "Thomas Keneally",
+   "Peter Carey",
+   "Bryce Courtenay"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Peter Carey novel is written as the outlaw's own account of his life?",
+  "options": [
+   "Illywhacker",
+   "Jack Maggs",
+   "True History of the Kelly Gang",
+   "Bliss"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian author wrote The Book Thief?",
+  "options": [
+   "Sonya Hartnett",
+   "John Marsden",
+   "Markus Zusak",
+   "Craig Silvey"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who narrates the novel The Book Thief?",
+  "options": [
+   "A librarian",
+   "A German soldier",
+   "The girl's mother",
+   "Death"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which country is The Book Thief set?",
+  "options": [
+   "Austria",
+   "Germany",
+   "Poland",
+   "Australia"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who narrates John Marsden's Tomorrow, When the War Began?",
+  "options": [
+   "Corrie",
+   "Robyn",
+   "Ellie",
+   "Fiona"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many storeys does the treehouse have in the first Andy Griffiths treehouse book?",
+  "options": [
+   "26",
+   "13",
+   "10",
+   "52"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian author's short stories became the TV series Round the Twist?",
+  "options": [
+   "Andy Griffiths",
+   "Emily Rodda",
+   "Paul Jennings",
+   "John Marsden"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian author and illustrator created the alphabet book Animalia?",
+  "options": [
+   "Shaun Tan",
+   "Alison Lester",
+   "Bob Graham",
+   "Graeme Base"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Pamela Allen picture book has animals climbing into a rowing boat one by one?",
+  "options": [
+   "Mr Archimedes' Bath",
+   "Who Sank the Boat?",
+   "The Waterhole",
+   "Wombat Stew"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the wombat in Jackie French's Diary of a Wombat?",
+  "options": [
+   "Milly",
+   "Marigold",
+   "Mothball",
+   "Muddles"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian artist and author won an Academy Award for the animated short The Lost Thing?",
+  "options": [
+   "Shaun Tan",
+   "Graeme Base",
+   "Leigh Hobbs",
+   "Bob Graham"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Kate Grenville novel follows a convict who settles on the Hawkesbury River?",
+  "options": [
+   "The Secret River",
+   "Sarah Thornhill",
+   "The Idea of Perfection",
+   "Lilian's Story"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian author wrote Big Little Lies?",
+  "options": [
+   "Liane Moriarty",
+   "Di Morrissey",
+   "Jane Harper",
+   "Kate Morton"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Craig Silvey novel is set in the fictional West Australian town of Corrigan?",
+  "options": [
+   "The Amber Amulet",
+   "Honeybee",
+   "Jasper Jones",
+   "Rhubarb"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Who wrote the convict novel For the Term of His Natural Life?",
+  "options": [
+   "Adam Lindsay Gordon",
+   "Henry Kingsley",
+   "Rolf Boldrewood",
+   "Marcus Clarke"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian author wrote My Brilliant Career?",
+  "options": [
+   "Miles Franklin",
+   "Christina Stead",
+   "Katharine Susannah Prichard",
+   "Henry Handel Richardson"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Australia's most prestigious literary prize for a novel is named after which writer?",
+  "options": [
+   "Patrick White",
+   "Miles Franklin",
+   "Banjo Paterson",
+   "Henry Lawson"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who wrote Picnic at Hanging Rock?",
+  "options": [
+   "Joan Lindsay",
+   "Norman Lindsay",
+   "Thea Astley",
+   "Elizabeth Jolley"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "On which date does the picnic take place in Picnic at Hanging Rock?",
+  "options": [
+   "Australia Day",
+   "New Year's Day",
+   "Valentine's Day",
+   "Boxing Day"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian bush characters live at Snake Gully in the stories of Steele Rudd?",
+  "options": [
+   "Ned and Dan",
+   "Jack and Jim",
+   "Bill and Ben",
+   "Dad and Dave"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian koala character was created by Dorothy Wall?",
+  "options": [
+   "Bunyip Bluegum",
+   "Bobby Bear",
+   "Koko the Koala",
+   "Blinky Bill"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who wrote the Australian memoir A Fortunate Life?",
+  "options": [
+   "Weary Dunlop",
+   "C.E.W. Bean",
+   "A.B. Facey",
+   "Albert Jacka"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian author wrote the memoir My Place, about tracing her Aboriginal family history?",
+  "options": [
+   "Anita Heiss",
+   "Sally Morgan",
+   "Doris Pilkington",
+   "Ruby Langford"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which book by Doris Pilkington became the film Rabbit-Proof Fence?",
+  "options": [
+   "Under the Wintamarra Tree",
+   "Caprice",
+   "Follow the Rabbit-Proof Fence",
+   "Home to Mother"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian novel follows a teenage girl named Josephine Alibrandi?",
+  "options": [
+   "Tomorrow, When the War Began",
+   "Jasper Jones",
+   "Looking for Alibrandi",
+   "Puberty Blues"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian author wrote the Deltora Quest series?",
+  "options": [
+   "Isobelle Carmody",
+   "John Flanagan",
+   "Emily Rodda",
+   "Garth Nix"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian author wrote the Ranger's Apprentice series?",
+  "options": [
+   "Matthew Reilly",
+   "Garth Nix",
+   "Emily Rodda",
+   "John Flanagan"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the name of the stallion in Elyne Mitchell's The Silver Brumby?",
+  "options": [
+   "Thowra",
+   "Bree",
+   "Storm",
+   "Warrigal"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian poet wrote The Songs of a Sentimental Bloke?",
+  "options": [
+   "C.J. Dennis",
+   "John Shaw Neilson",
+   "Banjo Paterson",
+   "Henry Lawson"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian author wrote the young adult novel Two Weeks with the Queen?",
+  "options": [
+   "Andy Griffiths",
+   "John Marsden",
+   "Paul Jennings",
+   "Morris Gleitzman"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian author and illustrator wrote Magic Beach and Are We There Yet?",
+  "options": [
+   "Mem Fox",
+   "Pamela Allen",
+   "Alison Lester",
+   "Jeannie Baker"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Richard Flanagan novel about the Burma Railway won the Booker Prize?",
+  "options": [
+   "The Narrow Road to the Deep North",
+   "Gould's Book of Fish",
+   "The Sound of One Hand Clapping",
+   "Death of a River Guide"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the Australian children's classic Wombat Stew, which animal is trying to cook the wombat?",
+  "options": [
+   "A dingo",
+   "A goanna",
+   "A koala",
+   "An emu"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Bryce Courtenay novel follows a girl fighting for justice in rural Australia?",
+  "options": [
+   "Jessica",
+   "Solomon's Song",
+   "The Potato Factory",
+   "Tommo and Hawk"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian author wrote the Old Kingdom series beginning with Sabriel?",
+  "options": [
+   "Emily Rodda",
+   "Juliet Marillier",
+   "Garth Nix",
+   "Isobelle Carmody"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Kenneth Cook novel follows a schoolteacher trapped in the outback town of Bundanyabba?",
+  "options": [
+   "The Chant of Jimmie Blacksmith",
+   "The Shiralee",
+   "Wake in Fright",
+   "Walkabout"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian novel follows a swagman travelling with his young daughter?",
+  "options": [
+   "The Sundowners",
+   "The Overlanders",
+   "The Shiralee",
+   "Kings in Grass Castles"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian author wrote The Getting of Wisdom?",
+  "options": [
+   "Miles Franklin",
+   "Ethel Turner",
+   "Henry Handel Richardson",
+   "Christina Stead"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian novel by Jane Harper is set in a drought-stricken town called Kiewarra?",
+  "options": [
+   "The Dry",
+   "Force of Nature",
+   "The Lost Man",
+   "Exiles"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian classic children's story follows a lost girl helped by a kangaroo?",
+  "options": [
+   "Blinky Bill",
+   "Storm Boy",
+   "Dot and the Kangaroo",
+   "The Magic Pudding"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Christos Tsiolkas novel begins with a man hitting a child at a barbecue?",
+  "options": [
+   "The Slap",
+   "Barracuda",
+   "Loaded",
+   "Damascus"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian author wrote the historical novel Burial Rites, set in Iceland?",
+  "options": [
+   "Kate Morton",
+   "Geraldine Brooks",
+   "Charlotte Wood",
+   "Hannah Kent"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian-born author won the Pulitzer Prize for the novel March?",
+  "options": [
+   "Kate Grenville",
+   "Helen Garner",
+   "Geraldine Brooks",
+   "Gail Jones"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Tim Winton novel about a fisherman and a poacher on the West Australian coast was filmed in 2019?",
+  "options": [
+   "Shallows",
+   "Eyrie",
+   "Breath",
+   "Dirt Music"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In which English town was William Shakespeare born?",
+  "options": [
+   "Warwick",
+   "Canterbury",
+   "Stratford-upon-Avon",
+   "Oxford"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What was the name of the London theatre most associated with Shakespeare's company?",
+  "options": [
+   "The Old Vic",
+   "Drury Lane",
+   "The Rose",
+   "The Globe"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What was the name of William Shakespeare's wife?",
+  "options": [
+   "Mary Arden",
+   "Susanna Hall",
+   "Judith Quiney",
+   "Anne Hathaway"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "By what nickname is Shakespeare commonly known?",
+  "options": [
+   "The Poet Laureate",
+   "The Bard",
+   "The Playwright King",
+   "The Swan of London"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which Italian city is Romeo and Juliet set?",
+  "options": [
+   "Milan",
+   "Venice",
+   "Verona",
+   "Florence"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are the two feuding families in Romeo and Juliet?",
+  "options": [
+   "Montague and Capulet",
+   "Sforza and Este",
+   "Medici and Borgia",
+   "Montague and Escalus"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which line does Juliet speak from the balcony?",
+  "options": [
+   "Sweet Romeo, my love",
+   "O Romeo, come to me",
+   "O Romeo, Romeo, wherefore art thou Romeo",
+   "Romeo, where are you now"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which friend of Romeo is killed by Tybalt?",
+  "options": [
+   "Mercutio",
+   "Balthasar",
+   "Paris",
+   "Benvolio"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which friar helps Romeo and Juliet marry in secret?",
+  "options": [
+   "Friar Tuck",
+   "Friar Laurence",
+   "Friar Peter",
+   "Friar John"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which musical is a modern retelling of Romeo and Juliet set in New York?",
+  "options": [
+   "On the Town",
+   "West Side Story",
+   "Guys and Dolls",
+   "Grease"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which country is Shakespeare's Hamlet set?",
+  "options": [
+   "Norway",
+   "Denmark",
+   "Scotland",
+   "Sweden"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Shakespeare character says 'To be, or not to be'?",
+  "options": [
+   "Hamlet",
+   "Macbeth",
+   "King Lear",
+   "Othello"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Whose skull does Hamlet hold when he says 'Alas, poor Yorick'?",
+  "options": [
+   "His father's",
+   "Polonius's",
+   "The court jester's",
+   "A gravedigger's"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is Hamlet's mother?",
+  "options": [
+   "Ophelia",
+   "Cordelia",
+   "Gertrude",
+   "Desdemona"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which castle is the setting for Hamlet?",
+  "options": [
+   "Elsinore",
+   "Inverness",
+   "Kronborg Hall",
+   "Dunsinane"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which play contains the line 'Something is rotten in the state of Denmark'?",
+  "options": [
+   "King Lear",
+   "Macbeth",
+   "Othello",
+   "Hamlet"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many witches appear at the start of Macbeth?",
+  "options": [
+   "Three",
+   "Five",
+   "Four",
+   "Two"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which country is Macbeth set?",
+  "options": [
+   "England",
+   "Ireland",
+   "Scotland",
+   "Denmark"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which line do the witches chant in Macbeth?",
+  "options": [
+   "Round about the cauldron sing",
+   "Bubble, bubble, toil and trouble",
+   "Fire burn and water boil",
+   "Double, double toil and trouble"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who says 'Out, damned spot' in Macbeth?",
+  "options": [
+   "The first witch",
+   "Macbeth",
+   "Lady Macduff",
+   "Lady Macbeth"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which king does Macbeth murder to take the throne?",
+  "options": [
+   "Duncan",
+   "Edward",
+   "Banquo",
+   "Malcolm"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which wood must come to Dunsinane before Macbeth can be defeated?",
+  "options": [
+   "Sherwood",
+   "Glamis Wood",
+   "Arden",
+   "Birnam Wood"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Shakespeare play do theatre people superstitiously call 'the Scottish play'?",
+  "options": [
+   "Macbeth",
+   "Richard III",
+   "Hamlet",
+   "King Lear"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Whose ghost appears at the banquet in Macbeth?",
+  "options": [
+   "Macduff",
+   "Banquo",
+   "Duncan",
+   "Siward"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Shakespeare play contains the words 'Et tu, Brute'?",
+  "options": [
+   "Titus Andronicus",
+   "Julius Caesar",
+   "Coriolanus",
+   "Antony and Cleopatra"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which date is meant by 'Beware the Ides of March'?",
+  "options": [
+   "13 March",
+   "1 March",
+   "31 March",
+   "15 March"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who begins a speech 'Friends, Romans, countrymen, lend me your ears'?",
+  "options": [
+   "Mark Antony",
+   "Julius Caesar",
+   "Brutus",
+   "Cassius"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is the scheming villain in Shakespeare's Othello?",
+  "options": [
+   "Iago",
+   "Brabantio",
+   "Cassio",
+   "Roderigo"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is Othello's wife?",
+  "options": [
+   "Ophelia",
+   "Desdemona",
+   "Emilia",
+   "Bianca"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which play gave us the phrase 'the green-eyed monster' for jealousy?",
+  "options": [
+   "Othello",
+   "Macbeth",
+   "Hamlet",
+   "The Tempest"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many daughters does King Lear have?",
+  "options": [
+   "Four",
+   "One",
+   "Three",
+   "Two"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of King Lear's daughters stays loyal to him?",
+  "options": [
+   "Cordelia",
+   "Regan",
+   "Goneril",
+   "Miranda"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which moneylender demands a pound of flesh in The Merchant of Venice?",
+  "options": [
+   "Antonio",
+   "Gratiano",
+   "Shylock",
+   "Bassanio"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Merchant of Venice speech begins 'The quality of mercy is not strained'?",
+  "options": [
+   "Bassanio's",
+   "Portia's",
+   "Shylock's",
+   "Antonio's"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Who is the mischievous sprite in A Midsummer Night's Dream?",
+  "options": [
+   "Puck",
+   "Caliban",
+   "Ariel",
+   "Oberon"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which character in A Midsummer Night's Dream is given the head of a donkey?",
+  "options": [
+   "Bottom",
+   "Quince",
+   "Snug",
+   "Flute"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who are the king and queen of the fairies in A Midsummer Night's Dream?",
+  "options": [
+   "Puck and Titania",
+   "Oberon and Hippolyta",
+   "Oberon and Titania",
+   "Theseus and Titania"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is Prospero's daughter in The Tempest?",
+  "options": [
+   "Ophelia",
+   "Miranda",
+   "Ariel",
+   "Sycorax"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Shakespeare play opens with the line 'If music be the food of love, play on'?",
+  "options": [
+   "Twelfth Night",
+   "Much Ado About Nothing",
+   "The Tempest",
+   "As You Like It"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which pair trade insults before falling in love in Much Ado About Nothing?",
+  "options": [
+   "Beatrice and Benedick",
+   "Rosalind and Orlando",
+   "Hero and Claudio",
+   "Viola and Orsino"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Shakespeare speech begins 'All the world's a stage'?",
+  "options": [
+   "Hamlet in Hamlet",
+   "Prospero in The Tempest",
+   "Puck in A Midsummer Night's Dream",
+   "Jaques in As You Like It"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Shakespeare play is the basis of the film 10 Things I Hate About You?",
+  "options": [
+   "As You Like It",
+   "Much Ado About Nothing",
+   "Twelfth Night",
+   "The Taming of the Shrew"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which king cries 'A horse! a horse! my kingdom for a horse!'?",
+  "options": [
+   "Macbeth",
+   "King Lear",
+   "Henry V",
+   "Richard III"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Shakespeare play opens 'Now is the winter of our discontent'?",
+  "options": [
+   "King John",
+   "Henry IV Part 1",
+   "Henry V",
+   "Richard III"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which battle is at the heart of Shakespeare's Henry V?",
+  "options": [
+   "Bosworth",
+   "Crecy",
+   "Hastings",
+   "Agincourt"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many sonnets did Shakespeare write?",
+  "options": [
+   "100",
+   "154",
+   "120",
+   "200"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Shakespeare sonnet begins 'Shall I compare thee to a summer's day?'",
+  "options": [
+   "Sonnet 116",
+   "Sonnet 1",
+   "Sonnet 18",
+   "Sonnet 29"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Shakespeare play gives us 'The lady doth protest too much, methinks'?",
+  "options": [
+   "Macbeth",
+   "Hamlet",
+   "King Lear",
+   "Othello"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which character in Hamlet advises 'Neither a borrower nor a lender be'?",
+  "options": [
+   "Laertes",
+   "Horatio",
+   "Claudius",
+   "Polonius"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Shakespeare tragedy features the Egyptian queen Cleopatra?",
+  "options": [
+   "Coriolanus",
+   "Timon of Athens",
+   "Antony and Cleopatra",
+   "Julius Caesar"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these is a Shakespeare comedy?",
+  "options": [
+   "Coriolanus",
+   "Twelfth Night",
+   "Othello",
+   "King Lear"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which novel begins 'All children, except one, grow up'?",
+  "options": [
+   "The Secret Garden",
+   "Alice's Adventures in Wonderland",
+   "Peter Pan",
+   "The Wind in the Willows"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which novel begins 'Last night I dreamt I went to Manderley again'?",
+  "options": [
+   "Jamaica Inn",
+   "Jane Eyre",
+   "Wuthering Heights",
+   "Rebecca"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which novel begins 'Happy families are all alike; every unhappy family is unhappy in its own way'?",
+  "options": [
+   "Anna Karenina",
+   "War and Peace",
+   "Crime and Punishment",
+   "Doctor Zhivago"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which novel famously opens 'It was a dark and stormy night'?",
+  "options": [
+   "Dracula",
+   "The Woman in White",
+   "Frankenstein",
+   "Paul Clifford"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What kind of animal is Napoleon in Animal Farm?",
+  "options": [
+   "A pig",
+   "A goat",
+   "A dog",
+   "A horse"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the hard-working horse in Animal Farm?",
+  "options": [
+   "Benjamin",
+   "Mollie",
+   "Boxer",
+   "Clover"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What was George Orwell's real name?",
+  "options": [
+   "Edward Bell",
+   "Eric Blair",
+   "Eric Bloom",
+   "Ernest Blake"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In Nineteen Eighty-Four, what is the name of the room where prisoners face their worst fear?",
+  "options": [
+   "Room 101",
+   "Room 13",
+   "Room 42",
+   "Room 7"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Nineteen Eighty-Four, what is the simplified official language called?",
+  "options": [
+   "Newspeak",
+   "Ingsoc",
+   "Doublespeak",
+   "Prolespeak"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which government department in Nineteen Eighty-Four is responsible for propaganda?",
+  "options": [
+   "The Ministry of Plenty",
+   "The Ministry of Peace",
+   "The Ministry of Truth",
+   "The Ministry of Love"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Who wrote Brave New World?",
+  "options": [
+   "H.G. Wells",
+   "George Orwell",
+   "Aldous Huxley",
+   "Anthony Burgess"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Fahrenheit 451, what is the job of the firemen?",
+  "options": [
+   "Burning books",
+   "Putting out fires",
+   "Guarding libraries",
+   "Rescuing survivors"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who wrote Fahrenheit 451?",
+  "options": [
+   "Philip K. Dick",
+   "Isaac Asimov",
+   "Ray Bradbury",
+   "Kurt Vonnegut"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who wrote The Handmaid's Tale?",
+  "options": [
+   "Ursula K. Le Guin",
+   "Margaret Atwood",
+   "Alice Munro",
+   "Doris Lessing"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the fictional republic called in The Handmaid's Tale?",
+  "options": [
+   "Oceania",
+   "Airstrip One",
+   "Gilead",
+   "Panem"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is the heroine of The Hunger Games?",
+  "options": [
+   "Tris Prior",
+   "Hermione Granger",
+   "Bella Swan",
+   "Katniss Everdeen"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who wrote The Hunger Games?",
+  "options": [
+   "Veronica Roth",
+   "James Dashner",
+   "Stephenie Meyer",
+   "Suzanne Collins"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which district does Katniss come from in The Hunger Games?",
+  "options": [
+   "District 1",
+   "District 4",
+   "District 7",
+   "District 12"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which bird becomes the symbol of rebellion in The Hunger Games?",
+  "options": [
+   "The raven",
+   "The hawk",
+   "The mockingjay",
+   "The phoenix"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who wrote the Twilight series of vampire novels?",
+  "options": [
+   "Suzanne Collins",
+   "Cassandra Clare",
+   "Stephenie Meyer",
+   "Anne Rice"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the vampire love interest in Twilight?",
+  "options": [
+   "Damon Salvatore",
+   "Edward Cullen",
+   "Jacob Black",
+   "Lestat"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which small American town is Twilight set?",
+  "options": [
+   "Bon Temps",
+   "Forks",
+   "Mystic Falls",
+   "Sunnydale"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which novelist wrote The Da Vinci Code?",
+  "options": [
+   "Dan Brown",
+   "John Grisham",
+   "Michael Crichton",
+   "James Patterson"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which recurring hero appears in The Da Vinci Code and Angels and Demons?",
+  "options": [
+   "Jack Ryan",
+   "Alex Cross",
+   "Robert Langdon",
+   "Jason Bourne"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Paris museum features heavily at the start of The Da Vinci Code?",
+  "options": [
+   "The Rodin Museum",
+   "The Musee d'Orsay",
+   "The Louvre",
+   "The Pompidou Centre"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the haunted hotel in The Shining?",
+  "options": [
+   "The Stanley",
+   "The Outlook",
+   "The Bates Motel",
+   "The Overlook"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Stephen King novel features a killer clown named Pennywise?",
+  "options": [
+   "Carrie",
+   "Salem's Lot",
+   "Christine",
+   "It"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Stephen King novel is about a car with a mind of its own?",
+  "options": [
+   "Christine",
+   "Firestarter",
+   "The Dead Zone",
+   "Cujo"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Stephen King novel features a dog driven mad by rabies?",
+  "options": [
+   "Cujo",
+   "Pet Sematary",
+   "Christine",
+   "The Green Mile"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which Stephen King collection was the novella behind The Shawshank Redemption published?",
+  "options": [
+   "Night Shift",
+   "Different Seasons",
+   "Skeleton Crew",
+   "Four Past Midnight"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Stephen King novella was filmed as Stand By Me?",
+  "options": [
+   "The Mist",
+   "The Body",
+   "The Long Walk",
+   "1922"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Stephen King novel features a bullied girl with telekinetic powers?",
+  "options": [
+   "Rose Madder",
+   "Carrie",
+   "The Dead Zone",
+   "Firestarter"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who wrote The Boy in the Striped Pyjamas?",
+  "options": [
+   "John Boyne",
+   "Morris Gleitzman",
+   "Markus Zusak",
+   "Michael Morpurgo"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Michael Morpurgo novel follows a horse through the First World War?",
+  "options": [
+   "Private Peaceful",
+   "Kensuke's Kingdom",
+   "War Horse",
+   "The Butterfly Lion"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who wrote The Lord of the Rings?",
+  "options": [
+   "C.S. Lewis",
+   "J.R.R. Tolkien",
+   "George R.R. Martin",
+   "Terry Pratchett"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the hobbit who sets out in The Hobbit?",
+  "options": [
+   "Bilbo Baggins",
+   "Frodo Baggins",
+   "Samwise Gamgee",
+   "Peregrin Took"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the dragon in The Hobbit?",
+  "options": [
+   "Glaurung",
+   "Ancalagon",
+   "Smaug",
+   "Scatha"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which creature plays a riddle game with Bilbo in a dark cave?",
+  "options": [
+   "The Great Goblin",
+   "Smaug",
+   "Beorn",
+   "Gollum"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which wizard sends Bilbo on his adventure in The Hobbit?",
+  "options": [
+   "Saruman",
+   "Radagast",
+   "Elrond",
+   "Gandalf"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many dwarves travel with Bilbo in The Hobbit?",
+  "options": [
+   "Seven",
+   "Thirteen",
+   "Twelve",
+   "Fifteen"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who leads the company of dwarves in The Hobbit?",
+  "options": [
+   "Thorin Oakenshield",
+   "Bombur",
+   "Dwalin",
+   "Balin"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who inherits the One Ring from Bilbo in The Lord of the Rings?",
+  "options": [
+   "Sam",
+   "Pippin",
+   "Merry",
+   "Frodo"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Frodo's loyal gardener and companion?",
+  "options": [
+   "Meriadoc Brandybuck",
+   "Samwise Gamgee",
+   "Fatty Bolger",
+   "Peregrin Took"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Where must the One Ring be destroyed?",
+  "options": [
+   "The Lonely Mountain",
+   "Mount Doom",
+   "The Misty Mountains",
+   "Weathertop"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the dark land ruled by Sauron called?",
+  "options": [
+   "Isengard",
+   "Gondor",
+   "Rohan",
+   "Mordor"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the homeland of the hobbits called?",
+  "options": [
+   "Rivendell",
+   "The Westfold",
+   "The Shire",
+   "Bree"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is Bilbo's home in Hobbiton called?",
+  "options": [
+   "Crickhollow",
+   "Brandy Hall",
+   "Bag End",
+   "The Great Smials"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which elf is a member of the Fellowship of the Ring?",
+  "options": [
+   "Glorfindel",
+   "Haldir",
+   "Elrond",
+   "Legolas"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which dwarf is a member of the Fellowship of the Ring?",
+  "options": [
+   "Thorin",
+   "Gimli",
+   "Balin",
+   "Gloin"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "By what nickname is Aragorn first known to the hobbits?",
+  "options": [
+   "Strider",
+   "Wanderer",
+   "Ranger",
+   "Longshanks"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many members are there in the Fellowship of the Ring?",
+  "options": [
+   "Seven",
+   "Nine",
+   "Ten",
+   "Eight"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the wizard who betrays the Fellowship and takes Isengard?",
+  "options": [
+   "Saruman",
+   "Radagast",
+   "Denethor",
+   "Sauron"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which name did Gollum go by before the Ring corrupted him?",
+  "options": [
+   "Bilbo",
+   "Deagol",
+   "Grima",
+   "Smeagol"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does Gollum call the Ring?",
+  "options": [
+   "My darling",
+   "My beauty",
+   "My treasure",
+   "My precious"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are the tree-like beings in The Lord of the Rings called?",
+  "options": [
+   "Huorns",
+   "Woses",
+   "Dryads",
+   "Ents"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the oldest Ent, who meets Merry and Pippin?",
+  "options": [
+   "Leaflock",
+   "Treebeard",
+   "Skinbark",
+   "Quickbeam"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the giant spider that attacks Frodo?",
+  "options": [
+   "Aragog",
+   "Ungoliant",
+   "Shelob",
+   "Arachne"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are Sauron's nine mounted servants known as?",
+  "options": [
+   "Ringwraiths",
+   "Orc lords",
+   "Uruk-hai",
+   "Wargs"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which fiery creature does Gandalf fight on the bridge in Moria?",
+  "options": [
+   "A dragon",
+   "A Balrog",
+   "A wraith",
+   "A troll"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Bilbo's sword, which glows blue near orcs?",
+  "options": [
+   "Sting",
+   "Anduril",
+   "Glamdring",
+   "Orcrist"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Who is the Lady of Lothlorien in The Lord of the Rings?",
+  "options": [
+   "Arwen",
+   "Galadriel",
+   "Eowyn",
+   "Goldberry"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which fortress is defended in the famous battle in The Two Towers?",
+  "options": [
+   "Isengard",
+   "Minas Tirith",
+   "Helm's Deep",
+   "Osgiliath"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital city of Gondor?",
+  "options": [
+   "Dol Amroth",
+   "Minas Tirith",
+   "Edoras",
+   "Osgiliath"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which woman of Rohan strikes down the Witch-king?",
+  "options": [
+   "Arwen",
+   "Rosie",
+   "Eowyn",
+   "Galadriel"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the third volume of The Lord of the Rings called?",
+  "options": [
+   "The Two Towers",
+   "The Fellowship of the Ring",
+   "The Return of the King",
+   "The Silmarillion"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Tolkien book was published after his death by his son Christopher?",
+  "options": [
+   "The Silmarillion",
+   "Farmer Giles of Ham",
+   "The Two Towers",
+   "The Hobbit"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In which country were Peter Jackson's Lord of the Rings films made?",
+  "options": [
+   "Australia",
+   "Ireland",
+   "New Zealand",
+   "Canada"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which inn do the hobbits stay at in Bree?",
+  "options": [
+   "The Prancing Pony",
+   "The Golden Perch",
+   "The Ivy Bush",
+   "The Green Dragon"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Who wrote The Lion, the Witch and the Wardrobe?",
+  "options": [
+   "C.S. Lewis",
+   "J.R.R. Tolkien",
+   "Philip Pullman",
+   "Roald Dahl"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the magical land reached through the wardrobe?",
+  "options": [
+   "Oz",
+   "Middle-earth",
+   "Neverland",
+   "Narnia"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What kind of animal is Aslan in the Narnia books?",
+  "options": [
+   "A tiger",
+   "A wolf",
+   "A bear",
+   "A lion"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What sweet does the White Witch use to tempt Edmund?",
+  "options": [
+   "Toffee",
+   "Turkish delight",
+   "Chocolate",
+   "Marzipan"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the surname of the four children in The Lion, the Witch and the Wardrobe?",
+  "options": [
+   "Pemberton",
+   "Pevensie",
+   "Pennington",
+   "Peabody"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which child finds Narnia first?",
+  "options": [
+   "Edmund",
+   "Peter",
+   "Susan",
+   "Lucy"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What kind of creature is Mr Tumnus in Narnia?",
+  "options": [
+   "A satyr",
+   "A centaur",
+   "A dwarf",
+   "A faun"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Under the White Witch's rule, what is always happening in Narnia?",
+  "options": [
+   "It is always raining",
+   "It is always summer",
+   "It is always winter and never Christmas",
+   "It is always night"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many books are in the Chronicles of Narnia?",
+  "options": [
+   "Five",
+   "Six",
+   "Seven",
+   "Eight"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the brave talking mouse in the Narnia books?",
+  "options": [
+   "Puddleglum",
+   "Reepicheep",
+   "Trumpkin",
+   "Nikabrik"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Narnia book follows a voyage on a ship?",
+  "options": [
+   "The Last Battle",
+   "Prince Caspian",
+   "The Voyage of the Dawn Treader",
+   "The Silver Chair"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What nationality is Hercule Poirot?",
+  "options": [
+   "French",
+   "Swiss",
+   "Belgian",
+   "Dutch"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does Poirot call his powers of deduction?",
+  "options": [
+   "The mind's mirror",
+   "The little grey cells",
+   "The inner eye",
+   "The reasoning engine"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Agatha Christie detective is an elderly woman living in St Mary Mead?",
+  "options": [
+   "Miss Marple",
+   "Ariadne Oliver",
+   "Miss Lemon",
+   "Tuppence Beresford"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which Agatha Christie novel is a passenger stabbed on a train stranded in a snowdrift?",
+  "options": [
+   "Murder on the Orient Express",
+   "The 4.50 from Paddington",
+   "The Mystery of the Blue Train",
+   "Death on the Nile"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Agatha Christie novel is set on a cruise along an African river?",
+  "options": [
+   "Death on the Nile",
+   "Murder in Mesopotamia",
+   "Evil Under the Sun",
+   "Appointment with Death"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Agatha Christie novel about ten strangers on an island is her best seller?",
+  "options": [
+   "The Body in the Library",
+   "Crooked House",
+   "And Then There Were None",
+   "The Murder of Roger Ackroyd"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Agatha Christie play has run in London's West End since the 1950s?",
+  "options": [
+   "The Mousetrap",
+   "Witness for the Prosecution",
+   "Spider's Web",
+   "Black Coffee"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who is Poirot's frequent companion and narrator in the early books?",
+  "options": [
+   "Captain Hastings",
+   "Inspector Japp",
+   "Miss Lemon",
+   "Ariadne Oliver"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Agatha Christie novel was the first to feature Hercule Poirot?",
+  "options": [
+   "The Mysterious Affair at Styles",
+   "Peril at End House",
+   "The Murder on the Links",
+   "The Big Four"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which author created Sherlock Holmes?",
+  "options": [
+   "Edgar Allan Poe",
+   "Arthur Conan Doyle",
+   "G.K. Chesterton",
+   "Wilkie Collins"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "At which London address does Sherlock Holmes lodge?",
+  "options": [
+   "4 Privet Drive",
+   "12 Grimmauld Place",
+   "221B Baker Street",
+   "10 Downing Street"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is Sherlock Holmes' closest friend and chronicler?",
+  "options": [
+   "Dr Watson",
+   "Mycroft Holmes",
+   "Inspector Lestrade",
+   "Mrs Hudson"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is Sherlock Holmes' arch enemy?",
+  "options": [
+   "Colonel Moran",
+   "Charles Augustus Milverton",
+   "Professor Moriarty",
+   "Irene Adler"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Sherlock Holmes' landlady?",
+  "options": [
+   "Mrs Norris",
+   "Mrs Hudson",
+   "Mrs Bennet",
+   "Mrs Danvers"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Sherlock Holmes story involves a spectral dog on Dartmoor?",
+  "options": [
+   "A Study in Scarlet",
+   "The Hound of the Baskervilles",
+   "The Sign of Four",
+   "The Valley of Fear"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Sherlock Holmes' clever older brother?",
+  "options": [
+   "Marcus",
+   "Sherrinford",
+   "Mycroft",
+   "Siger"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "At which waterfall does Holmes appear to die with Moriarty?",
+  "options": [
+   "The Rhine Falls",
+   "The Staubbach Falls",
+   "The Trummelbach Falls",
+   "The Reichenbach Falls"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the title of the first Sherlock Holmes novel?",
+  "options": [
+   "The Valley of Fear",
+   "The Sign of Four",
+   "A Study in Scarlet",
+   "The Hound of the Baskervilles"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the title of the first James Bond novel?",
+  "options": [
+   "Live and Let Die",
+   "Goldfinger",
+   "Dr No",
+   "Casino Royale"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which children's book about a flying car was written by Ian Fleming?",
+  "options": [
+   "Chitty Chitty Bang Bang",
+   "The Phantom Tollbooth",
+   "Doctor Dolittle",
+   "The Magic Roundabout"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which spy novelist created the character George Smiley?",
+  "options": [
+   "Ian Fleming",
+   "John le Carre",
+   "Robert Ludlum",
+   "Graham Greene"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which le Carre novel has George Smiley hunting a Soviet mole inside the Circus?",
+  "options": [
+   "The Honourable Schoolboy",
+   "The Spy Who Came in from the Cold",
+   "Tinker Tailor Soldier Spy",
+   "Smiley's People"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which detective was created by Raymond Chandler?",
+  "options": [
+   "Mike Hammer",
+   "Philip Marlowe",
+   "Lew Archer",
+   "Sam Spade"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Dashiell Hammett novel features a jewelled bird statuette?",
+  "options": [
+   "Red Harvest",
+   "The Thin Man",
+   "The Glass Key",
+   "The Maltese Falcon"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which English city is Inspector Morse set?",
+  "options": [
+   "York",
+   "Cambridge",
+   "Oxford",
+   "Bath"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which author created Inspector Morse?",
+  "options": [
+   "Ruth Rendell",
+   "P.D. James",
+   "Ian Rankin",
+   "Colin Dexter"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which author created the Edinburgh detective John Rebus?",
+  "options": [
+   "Ian Rankin",
+   "Denise Mina",
+   "Val McDermid",
+   "Peter May"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Swedish novel introduced the hacker Lisbeth Salander?",
+  "options": [
+   "The Girl Who Played with Fire",
+   "The Girl with the Dragon Tattoo",
+   "Faceless Killers",
+   "The Snowman"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which novelist created the cannibal psychiatrist Hannibal Lecter?",
+  "options": [
+   "Thomas Harris",
+   "James Patterson",
+   "Stephen King",
+   "Patricia Cornwell"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which FBI trainee interviews Hannibal Lecter in The Silence of the Lambs?",
+  "options": [
+   "Jill Stevens",
+   "Kay Scarpetta",
+   "Clarice Starling",
+   "Dana Scully"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Gillian Flynn novel centres on a wife who disappears on her wedding anniversary?",
+  "options": [
+   "The Grownup",
+   "Sharp Objects",
+   "Dark Places",
+   "Gone Girl"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which drifter ex-military policeman was created by Lee Child?",
+  "options": [
+   "Alex Cross",
+   "Mitch Rapp",
+   "Jack Reacher",
+   "Jack Ryan"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which pen name did J.K. Rowling use for her crime novels?",
+  "options": [
+   "Richard Bachman",
+   "Robert Galbraith",
+   "Mary Westmacott",
+   "Barbara Vine"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which pen name did Stephen King publish under early in his career?",
+  "options": [
+   "Robert Galbraith",
+   "Barbara Vine",
+   "Richard Bachman",
+   "Lemony Snicket"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which priest detective was created by G.K. Chesterton?",
+  "options": [
+   "Brother Cadfael",
+   "Father Brown",
+   "Father Ralph",
+   "Father Ted"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which French police detective was created by Georges Simenon?",
+  "options": [
+   "Clouseau",
+   "Dupin",
+   "Maigret",
+   "Poirot"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which lawyer detective was created by Erle Stanley Gardner?",
+  "options": [
+   "Matlock",
+   "Perry Mason",
+   "Atticus Finch",
+   "Rumpole"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Patricia Highsmith novel introduced the con man Tom Ripley?",
+  "options": [
+   "The Talented Mr Ripley",
+   "Deep Water",
+   "The Cry of the Owl",
+   "Strangers on a Train"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Umberto Eco novel is a murder mystery set in a medieval monastery?",
+  "options": [
+   "Foucault's Pendulum",
+   "The Prague Cemetery",
+   "The Name of the Rose",
+   "Baudolino"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which John Grisham novel about a young lawyer and a mob law firm became a Tom Cruise film?",
+  "options": [
+   "The Firm",
+   "The Pelican Brief",
+   "A Time to Kill",
+   "The Client"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Michael Crichton novel about cloned dinosaurs became a Steven Spielberg film?",
+  "options": [
+   "Congo",
+   "Timeline",
+   "Sphere",
+   "Jurassic Park"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Terry Pratchett fantasy series is set on a flat world carried by a giant turtle?",
+  "options": [
+   "Discworld",
+   "Xanth",
+   "Earthsea",
+   "The Dark Tower"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the giant turtle that carries Terry Pratchett's Discworld?",
+  "options": [
+   "Atlas",
+   "Terrapin",
+   "Great A'Tuin",
+   "Chelonia"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In The Hitchhiker's Guide to the Galaxy, what is the answer to life, the universe and everything?",
+  "options": [
+   "1",
+   "42",
+   "7",
+   "101"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What advice is printed on the cover of the Hitchhiker's Guide to the Galaxy?",
+  "options": [
+   "Mostly Harmless",
+   "Keep Calm",
+   "So Long",
+   "Don't Panic"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who is the depressed robot in The Hitchhiker's Guide to the Galaxy?",
+  "options": [
+   "Eddie",
+   "Slartibartfast",
+   "Marvin",
+   "Zaphod"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which fantasy series by George R.R. Martin begins with A Game of Thrones?",
+  "options": [
+   "A Song of Ice and Fire",
+   "The Wheel of Time",
+   "The Sword of Truth",
+   "The First Law"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which house motto in A Game of Thrones is 'Winter is coming'?",
+  "options": [
+   "Targaryen",
+   "Baratheon",
+   "Lannister",
+   "Stark"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the first book of Philip Pullman's His Dark Materials called in Britain?",
+  "options": [
+   "The Amber Spyglass",
+   "The Subtle Knife",
+   "Northern Lights",
+   "The Golden Compass"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which author wrote Coraline and The Graveyard Book?",
+  "options": [
+   "Lemony Snicket",
+   "Eoin Colfer",
+   "Neil Gaiman",
+   "Philip Pullman"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Irish author created the teenage criminal mastermind Artemis Fowl?",
+  "options": [
+   "John Connolly",
+   "Darren Shan",
+   "Eoin Colfer",
+   "Derek Landy"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What are the two troublemakers called in The Cat in the Hat?",
+  "options": [
+   "Thing One and Thing Two",
+   "Nip and Tuck",
+   "Whiz and Wham",
+   "Bing and Bong"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Dr Seuss character keeps offering green eggs and ham?",
+  "options": [
+   "The Cat in the Hat",
+   "The Lorax",
+   "Sam-I-Am",
+   "Horton"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Dr Seuss character says 'I speak for the trees'?",
+  "options": [
+   "The Lorax",
+   "Horton",
+   "Yertle",
+   "The Grinch"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What kind of trees does the Lorax try to protect?",
+  "options": [
+   "Snuvv trees",
+   "Grickle trees",
+   "Whoville trees",
+   "Truffula trees"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What was Dr Seuss's real name?",
+  "options": [
+   "Theodore Silas",
+   "Thomas Seuss",
+   "Daniel Handler",
+   "Theodor Geisel"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In How the Grinch Stole Christmas, what town does the Grinch look down on?",
+  "options": [
+   "Munchkinland",
+   "Sodor",
+   "Bikini Bottom",
+   "Whoville"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is wrong with the Grinch's heart at the start of the story?",
+  "options": [
+   "It is missing",
+   "It is frozen",
+   "It is two sizes too small",
+   "It is made of stone"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the Grinch's dog?",
+  "options": [
+   "Rex",
+   "Max",
+   "Fang",
+   "Buster"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What kind of animal is Horton in the Dr Seuss books?",
+  "options": [
+   "A turtle",
+   "A moose",
+   "An elephant",
+   "A bear"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Dr Seuss book is often given to school leavers and graduates?",
+  "options": [
+   "Oh, the Places You'll Go!",
+   "The Cat in the Hat",
+   "Fox in Socks",
+   "Hop on Pop"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who wrote the Winnie-the-Pooh stories?",
+  "options": [
+   "A.A. Milne",
+   "Kenneth Grahame",
+   "Michael Bond",
+   "Beatrix Potter"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is Winnie-the-Pooh's favourite food?",
+  "options": [
+   "Porridge",
+   "Acorns",
+   "Honey",
+   "Marmalade"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What kind of animal is Eeyore in Winnie-the-Pooh?",
+  "options": [
+   "A tiger",
+   "A rabbit",
+   "A pig",
+   "A donkey"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the wood where Winnie-the-Pooh lives?",
+  "options": [
+   "The Wild Wood",
+   "Sherwood Forest",
+   "The Hundred Acre Wood",
+   "The Deep Dark Wood"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which boy is Winnie-the-Pooh's human friend?",
+  "options": [
+   "Peter",
+   "Bruno",
+   "Christopher Robin",
+   "Michael"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which bouncy Winnie-the-Pooh character is a tiger?",
+  "options": [
+   "Roo",
+   "Piglet",
+   "Tigger",
+   "Owl"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the game invented in the Winnie-the-Pooh stories that involves dropping sticks off a bridge?",
+  "options": [
+   "Poohsticks",
+   "Stickball",
+   "Bridgesticks",
+   "Woodhunt"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Whose vegetable garden does Peter Rabbit raid?",
+  "options": [
+   "Mr Tod's",
+   "Mr Bunce's",
+   "Mr McGregor's",
+   "Farmer Brown's"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What kind of animal is Beatrix Potter's Mrs Tiggy-Winkle?",
+  "options": [
+   "A duck",
+   "A mouse",
+   "A hedgehog",
+   "A squirrel"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Beatrix Potter's tale, which animal tricks Jemima Puddle-Duck into leaving the farm?",
+  "options": [
+   "A badger",
+   "A fox",
+   "A stoat",
+   "A rat"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who wrote and illustrated The Very Hungry Caterpillar?",
+  "options": [
+   "Maurice Sendak",
+   "Julia Donaldson",
+   "Judith Kerr",
+   "Eric Carle"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the caterpillar become at the end of The Very Hungry Caterpillar?",
+  "options": [
+   "A moth",
+   "A butterfly",
+   "A cocoon",
+   "A beetle"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which small animal invents the Gruffalo to scare off predators?",
+  "options": [
+   "A hedgehog",
+   "A mouse",
+   "A rabbit",
+   "A squirrel"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which illustrator draws Julia Donaldson's picture books including The Gruffalo?",
+  "options": [
+   "Axel Scheffler",
+   "Quentin Blake",
+   "Nick Sharratt",
+   "Helen Oxenbury"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Julia Donaldson book is about a witch making room for animals on her broomstick?",
+  "options": [
+   "Room on the Broom",
+   "The Snail and the Whale",
+   "Zog",
+   "Stick Man"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who wrote Where the Wild Things Are?",
+  "options": [
+   "Maurice Sendak",
+   "Shel Silverstein",
+   "Dr Seuss",
+   "Eric Carle"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who wrote Peter Pan?",
+  "options": [
+   "J.M. Barrie",
+   "Kenneth Grahame",
+   "E. Nesbit",
+   "Lewis Carroll"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the magical land in Peter Pan called?",
+  "options": [
+   "Neverland",
+   "Narnia",
+   "Wonderland",
+   "Oz"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the fairy in Peter Pan?",
+  "options": [
+   "Bluebell",
+   "Thumbelina",
+   "Tinker Bell",
+   "Silvermist"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is inside the crocodile that chases Captain Hook?",
+  "options": [
+   "A bell",
+   "A treasure map",
+   "A silver hook",
+   "A ticking clock"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the girl who flies to Neverland with Peter Pan?",
+  "options": [
+   "Alice",
+   "Lucy",
+   "Wendy",
+   "Mary"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What kind of animal is Nana, the Darling children's nurse in Peter Pan?",
+  "options": [
+   "A dog",
+   "A parrot",
+   "A goat",
+   "A cat"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Who wrote The Wonderful Wizard of Oz?",
+  "options": [
+   "Roald Dahl",
+   "L. Frank Baum",
+   "Lewis Carroll",
+   "Frank Herbert"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of Dorothy's dog in The Wizard of Oz?",
+  "options": [
+   "Pip",
+   "Boots",
+   "Rex",
+   "Toto"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which American state is Dorothy from in The Wizard of Oz?",
+  "options": [
+   "Nebraska",
+   "Oklahoma",
+   "Iowa",
+   "Kansas"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour is the road Dorothy follows in The Wizard of Oz?",
+  "options": [
+   "Green",
+   "Yellow",
+   "Red",
+   "Silver"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour are Dorothy's magic slippers in the original book?",
+  "options": [
+   "Silver",
+   "Emerald green",
+   "Ruby red",
+   "Gold"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which three companions travel with Dorothy to the Emerald City?",
+  "options": [
+   "The Lion, the Witch and the Tin Man",
+   "The Scarecrow, the Tin Man and the Wizard",
+   "The Munchkin, the Scarecrow and the Lion",
+   "The Scarecrow, the Tin Woodman and the Cowardly Lion"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the Scarecrow want from the Wizard of Oz?",
+  "options": [
+   "A brain",
+   "Courage",
+   "A heart",
+   "A home"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Whose nose grows longer when he tells a lie?",
+  "options": [
+   "Rumpelstiltskin",
+   "The Gingerbread Man",
+   "Pinocchio",
+   "Peter Pan"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the woodcarver who makes Pinocchio?",
+  "options": [
+   "Gustavo",
+   "Giuseppe",
+   "Geppetto",
+   "Giovanni"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who wrote Black Beauty?",
+  "options": [
+   "Louisa May Alcott",
+   "Enid Blyton",
+   "Beatrix Potter",
+   "Anna Sewell"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "On which Canadian island is Anne of Green Gables set?",
+  "options": [
+   "Newfoundland",
+   "Prince Edward Island",
+   "Vancouver Island",
+   "Cape Breton Island"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is Anne's surname in Anne of Green Gables?",
+  "options": [
+   "Barry",
+   "Blythe",
+   "Shirley",
+   "Cuthbert"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which pig is saved by a clever spider in a famous children's novel?",
+  "options": [
+   "Babe",
+   "Wilbur",
+   "Napoleon",
+   "Piglet"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the spider in Charlotte's Web?",
+  "options": [
+   "Arabella",
+   "Charlotte",
+   "Anansi",
+   "Shelob"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What words does the spider first spin in her web in Charlotte's Web?",
+  "options": [
+   "Some Pig",
+   "Fine Swine",
+   "Save Wilbur",
+   "Good Pig"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which bear from Darkest Peru loves marmalade sandwiches?",
+  "options": [
+   "Baloo",
+   "Rupert",
+   "Paddington",
+   "Winnie-the-Pooh"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who created Paddington Bear?",
+  "options": [
+   "Michael Bond",
+   "A.A. Milne",
+   "Mary Tourtel",
+   "Michael Morpurgo"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "At which London station is Paddington Bear found by the Brown family?",
+  "options": [
+   "Victoria",
+   "Euston",
+   "Paddington",
+   "Waterloo"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the dog in the Famous Five books?",
+  "options": [
+   "Scamp",
+   "Bobby",
+   "Timmy",
+   "Rusty"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Enid Blyton series features children climbing a tree into different lands?",
+  "options": [
+   "Malory Towers",
+   "The Magic Faraway Tree",
+   "The Wishing Chair",
+   "The Secret Seven"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Enid Blyton character drives a little yellow and red car in Toyland?",
+  "options": [
+   "Bumpy Dog",
+   "Noddy",
+   "Mr Plod",
+   "Big Ears"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which clergyman created Thomas the Tank Engine?",
+  "options": [
+   "Rev Sydney Smith",
+   "Rev Charles Dodgson",
+   "Rev Richard Barham",
+   "Rev W. Awdry"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "On which fictional island are the Thomas the Tank Engine stories set?",
+  "options": [
+   "Ffarquhar",
+   "Sudrey",
+   "Mainland",
+   "Sodor"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What kind of animal is Baloo in The Jungle Book?",
+  "options": [
+   "A panther",
+   "A wolf",
+   "A bear",
+   "A tiger"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What kind of animal is Bagheera in The Jungle Book?",
+  "options": [
+   "A jackal",
+   "A panther",
+   "A python",
+   "A bear"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which tiger is Mowgli's enemy in The Jungle Book?",
+  "options": [
+   "Tabaqui",
+   "Shere Khan",
+   "Rakcha",
+   "Kaa"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What kind of animal is Kaa in The Jungle Book?",
+  "options": [
+   "A mongoose",
+   "A crocodile",
+   "A python",
+   "A monkey"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which pen name is used by the author of A Series of Unfortunate Events?",
+  "options": [
+   "Lemony Snicket",
+   "Pseudonymous Bosch",
+   "Daniel Handler",
+   "Dr Seuss"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which series by Rick Riordan follows a boy who is the son of Poseidon?",
+  "options": [
+   "Fablehaven",
+   "Artemis Fowl",
+   "The Kane Chronicles",
+   "Percy Jackson and the Olympians"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who is the main character of the Diary of a Wimpy Kid books?",
+  "options": [
+   "Tom Gates",
+   "Rowley Jefferson",
+   "Greg Heffley",
+   "Henry Hunter"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which author created Captain Underpants and Dog Man?",
+  "options": [
+   "Andy Griffiths",
+   "Liz Pichon",
+   "Dav Pilkey",
+   "Jeff Kinney"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which horror series for children was written by R.L. Stine?",
+  "options": [
+   "Point Horror",
+   "Goosebumps",
+   "Cirque du Freak",
+   "The Demonata"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which book series asks readers to find a man in a red and white striped jumper?",
+  "options": [
+   "Look and Find",
+   "Where's Wally?",
+   "Hidden Folks",
+   "I Spy"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who wrote The Little Prince?",
+  "options": [
+   "Marcel Pagnol",
+   "Antoine de Saint-Exupery",
+   "Jules Renard",
+   "Albert Camus"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Edward Lear poem features a boat that is pea-green?",
+  "options": [
+   "The Jumblies",
+   "The Owl and the Pussycat",
+   "The Quangle Wangle's Hat",
+   "The Pobble Who Has No Toes"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which classic novel features stranded schoolboys who hunt a beast and worship a pig's head on a stick?",
+  "options": [
+   "Lord of the Flies",
+   "Treasure Island",
+   "Robinson Crusoe",
+   "Coral Island"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who wrote Lord of the Flies?",
+  "options": [
+   "William Golding",
+   "Graham Greene",
+   "George Orwell",
+   "Anthony Burgess"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What object is used to call meetings in Lord of the Flies?",
+  "options": [
+   "A horn",
+   "A bell",
+   "A conch shell",
+   "A drum"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which bespectacled boy is bullied in Lord of the Flies?",
+  "options": [
+   "Piggy",
+   "Roger",
+   "Simon",
+   "Ralph"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who wrote To Kill a Mockingbird?",
+  "options": [
+   "Truman Capote",
+   "Flannery O'Connor",
+   "Harper Lee",
+   "Carson McCullers"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is the lawyer father in To Kill a Mockingbird?",
+  "options": [
+   "Atticus Finch",
+   "Jem Finch",
+   "Tom Robinson",
+   "Boo Radley"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the nickname of the young narrator of To Kill a Mockingbird?",
+  "options": [
+   "Boo",
+   "Jem",
+   "Dill",
+   "Scout"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which mysterious neighbour saves the children in To Kill a Mockingbird?",
+  "options": [
+   "Dill Harris",
+   "Bob Ewell",
+   "Boo Radley",
+   "Tom Robinson"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which American state is To Kill a Mockingbird set?",
+  "options": [
+   "Georgia",
+   "Mississippi",
+   "Louisiana",
+   "Alabama"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which John Steinbeck novel follows the friends George and Lennie?",
+  "options": [
+   "East of Eden",
+   "The Grapes of Wrath",
+   "Cannery Row",
+   "Of Mice and Men"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Steinbeck novel follows the Joad family fleeing the Dust Bowl?",
+  "options": [
+   "Of Mice and Men",
+   "Tortilla Flat",
+   "The Grapes of Wrath",
+   "The Pearl"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who is the teenage narrator of The Catcher in the Rye?",
+  "options": [
+   "Charlie Kelmeckis",
+   "Jay Gatsby",
+   "Nick Carraway",
+   "Holden Caulfield"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who wrote The Great Gatsby?",
+  "options": [
+   "F. Scott Fitzgerald",
+   "William Faulkner",
+   "Ernest Hemingway",
+   "John Steinbeck"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour is the light at the end of Daisy's dock in The Great Gatsby?",
+  "options": [
+   "Blue",
+   "White",
+   "Red",
+   "Green"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who narrates The Great Gatsby?",
+  "options": [
+   "Tom Buchanan",
+   "Nick Carraway",
+   "Jay Gatsby",
+   "Jordan Baker"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Ernest Hemingway novel follows an old fisherman battling a giant marlin?",
+  "options": [
+   "A Farewell to Arms",
+   "The Sun Also Rises",
+   "The Old Man and the Sea",
+   "For Whom the Bell Tolls"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which novel about rabbits searching for a new home was written by Richard Adams?",
+  "options": [
+   "Duncton Wood",
+   "Watership Down",
+   "The Plague Dogs",
+   "Animal Farm"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who is Don Quixote's squire?",
+  "options": [
+   "Sancho Panza",
+   "Rocinante",
+   "Cervantes",
+   "Dulcinea"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the tiger in Life of Pi?",
+  "options": [
+   "Rajah",
+   "Shere Khan",
+   "Richard Parker",
+   "Bengal"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which novel by Mark Haddon is narrated by a boy investigating the death of a dog?",
+  "options": [
+   "Room",
+   "The Rosie Project",
+   "Wonder",
+   "The Curious Incident of the Dog in the Night-Time"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Paulo Coelho novel follows a shepherd named Santiago on a journey to the pyramids?",
+  "options": [
+   "The Alchemist",
+   "Veronika Decides to Die",
+   "Brida",
+   "Eleven Minutes"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Khaled Hosseini novel about two boys in Afghanistan features kite fighting?",
+  "options": [
+   "A Thousand Splendid Suns",
+   "Sea Prayer",
+   "And the Mountains Echoed",
+   "The Kite Runner"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Robert Frost poem ends 'I took the one less travelled by, and that has made all the difference'?",
+  "options": [
+   "The Road Not Taken",
+   "Mending Wall",
+   "Birches",
+   "Stopping by Woods on a Snowy Evening"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which poet wrote 'Do not go gentle into that good night'?",
+  "options": [
+   "Philip Larkin",
+   "W.B. Yeats",
+   "Seamus Heaney",
+   "Dylan Thomas"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which bird speaks the word 'Nevermore' in an Edgar Allan Poe poem?",
+  "options": [
+   "An owl",
+   "A raven",
+   "A crow",
+   "A magpie"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which flower is the subject of Wordsworth's poem beginning 'I wandered lonely as a cloud'?",
+  "options": [
+   "Poppies",
+   "Bluebells",
+   "Roses",
+   "Daffodils"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which bird is shot in The Rime of the Ancient Mariner, bringing a curse?",
+  "options": [
+   "A petrel",
+   "A raven",
+   "An albatross",
+   "A seagull"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which poem by Percy Bysshe Shelley describes a ruined statue in the desert?",
+  "options": [
+   "Ozymandias",
+   "To a Skylark",
+   "The Cloud",
+   "Adonais"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Tennyson poem contains 'Into the valley of Death rode the six hundred'?",
+  "options": [
+   "The Lady of Shalott",
+   "Ulysses",
+   "In Memoriam",
+   "The Charge of the Light Brigade"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Rudyard Kipling poem ends 'you'll be a Man, my son'?",
+  "options": [
+   "Mandalay",
+   "If",
+   "Gunga Din",
+   "Recessional"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Scottish poet wrote Auld Lang Syne?",
+  "options": [
+   "Robert Burns",
+   "Hugh MacDiarmid",
+   "Robert Louis Stevenson",
+   "Walter Scott"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "On what date is Burns Night celebrated?",
+  "options": [
+   "1 January",
+   "17 March",
+   "25 January",
+   "30 November"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which epic poem by John Milton tells of the fall of man?",
+  "options": [
+   "Beowulf",
+   "The Faerie Queene",
+   "Paradise Lost",
+   "The Divine Comedy"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who wrote The Canterbury Tales?",
+  "options": [
+   "Thomas Malory",
+   "Geoffrey Chaucer",
+   "William Langland",
+   "John Gower"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Old English epic poem features a hero who fights the monster Grendel?",
+  "options": [
+   "Beowulf",
+   "The Song of Roland",
+   "The Nibelungenlied",
+   "Sir Gawain and the Green Knight"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which T.S. Eliot poetry book inspired the musical Cats?",
+  "options": [
+   "Old Possum's Book of Practical Cats",
+   "Four Quartets",
+   "The Waste Land",
+   "Prufrock and Other Observations"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which flower is the emblem in the war poem In Flanders Fields?",
+  "options": [
+   "The lily",
+   "The poppy",
+   "The rose",
+   "The cornflower"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which First World War poet wrote Dulce et Decorum Est?",
+  "options": [
+   "Isaac Rosenberg",
+   "Rupert Brooke",
+   "Siegfried Sassoon",
+   "Wilfred Owen"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which American poet wrote the collection Leaves of Grass?",
+  "options": [
+   "Henry Wadsworth Longfellow",
+   "Robert Frost",
+   "Walt Whitman",
+   "Emily Dickinson"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Italian poet wrote The Divine Comedy?",
+  "options": [
+   "Dante Alighieri",
+   "Petrarch",
+   "Ariosto",
+   "Boccaccio"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the first part of Dante's Divine Comedy called?",
+  "options": [
+   "Inferno",
+   "Limbo",
+   "Paradiso",
+   "Purgatorio"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many lines does a sonnet have?",
+  "options": [
+   "16",
+   "12",
+   "10",
+   "14"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many lines does a limerick have?",
+  "options": [
+   "Six",
+   "Five",
+   "Three",
+   "Four"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A traditional haiku has how many syllables in total?",
+  "options": [
+   "12",
+   "14",
+   "17",
+   "20"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "From which country does the haiku form of poetry come?",
+  "options": [
+   "Vietnam",
+   "China",
+   "Korea",
+   "Japan"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which poem begins 'How do I love thee? Let me count the ways'?",
+  "options": [
+   "Sonnet 43 by Elizabeth Barrett Browning",
+   "She Walks in Beauty by Byron",
+   "Bright Star by Keats",
+   "Sonnet 18 by Shakespeare"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which official title is given to Britain's national poet?",
+  "options": [
+   "Poet Royal",
+   "Court Poet",
+   "Poet Laureate",
+   "Bard of Britain"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which novel by Mario Puzo became a famous Francis Ford Coppola film about a Mafia family?",
+  "options": [
+   "Goodfellas",
+   "The Godfather",
+   "Casino",
+   "The Sicilian"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which novel by Peter Benchley became a Steven Spielberg film about a shark?",
+  "options": [
+   "Beast",
+   "Open Water",
+   "Jaws",
+   "The Deep"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Ken Kesey novel is set in a psychiatric hospital and features Nurse Ratched?",
+  "options": [
+   "One Flew Over the Cuckoo's Nest",
+   "Girl, Interrupted",
+   "The Bell Jar",
+   "Sometimes a Great Notion"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Anthony Burgess novel features a violent youth named Alex and the slang Nadsat?",
+  "options": [
+   "A Clockwork Orange",
+   "Nothing Like the Sun",
+   "The Wanting Seed",
+   "Earthly Powers"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Helen Fielding novel is loosely based on Pride and Prejudice?",
+  "options": [
+   "Confessions of a Shopaholic",
+   "Cause Celeb",
+   "Bridget Jones's Diary",
+   "Olivia Joules"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Chuck Palahniuk novel begins with an underground club where men fight?",
+  "options": [
+   "Survivor",
+   "Fight Club",
+   "Invisible Monsters",
+   "Choke"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Irvine Welsh novel about Edinburgh heroin users became a 1996 film?",
+  "options": [
+   "Filth",
+   "Marabou Stork Nightmares",
+   "Glue",
+   "Trainspotting"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which William Goldman novel features Westley, Buttercup and the Dread Pirate Roberts?",
+  "options": [
+   "Boys and Girls Together",
+   "The Princess Bride",
+   "Marathon Man",
+   "Magic"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Michael Ende novel features the land of Fantastica and a boy called Bastian?",
+  "options": [
+   "The Night of Wishes",
+   "Momo",
+   "The Neverending Story",
+   "Jim Button"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Andy Weir novel follows an astronaut stranded on Mars?",
+  "options": [
+   "The Martian",
+   "Artemis",
+   "Project Hail Mary",
+   "Red Mars"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Frank Herbert science fiction novel is set on the desert planet Arrakis?",
+  "options": [
+   "Foundation",
+   "Ringworld",
+   "Hyperion",
+   "Dune"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which valuable substance is mined on Arrakis in Dune?",
+  "options": [
+   "Water",
+   "Unobtainium",
+   "Spice",
+   "Gold"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which author set out the Three Laws of Robotics?",
+  "options": [
+   "Philip K. Dick",
+   "Isaac Asimov",
+   "Robert Heinlein",
+   "Arthur C. Clarke"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which computer turns against the crew in 2001: A Space Odyssey?",
+  "options": [
+   "Skynet",
+   "Deep Thought",
+   "HAL 9000",
+   "Mother"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Philip K. Dick novel became the film Blade Runner?",
+  "options": [
+   "Do Androids Dream of Electric Sheep?",
+   "The Man in the High Castle",
+   "A Scanner Darkly",
+   "Ubik"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which John Wyndham novel features walking, stinging plants?",
+  "options": [
+   "The Midwich Cuckoos",
+   "The Day of the Triffids",
+   "The Chrysalids",
+   "The Kraken Wakes"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who is the heroine of Gone with the Wind?",
+  "options": [
+   "Belle Watling",
+   "Ellen Robillard",
+   "Scarlett O'Hara",
+   "Melanie Hamilton"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Harriet Beecher Stowe novel helped fuel the anti-slavery movement in America?",
+  "options": [
+   "Roots",
+   "Beloved",
+   "The Scarlet Letter",
+   "Uncle Tom's Cabin"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Alice Walker novel about Celie won the Pulitzer Prize and became a Spielberg film?",
+  "options": [
+   "The Bluest Eye",
+   "The Color Purple",
+   "Their Eyes Were Watching God",
+   "Beloved"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Kazuo Ishiguro novel follows an English butler named Stevens?",
+  "options": [
+   "An Artist of the Floating World",
+   "The Remains of the Day",
+   "Never Let Me Go",
+   "The Buried Giant"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Ian McEwan novel begins with a girl's false accusation in 1935?",
+  "options": [
+   "On Chesil Beach",
+   "Atonement",
+   "Saturday",
+   "Enduring Love"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Nicholas Sparks novel about a lasting romance became a film starring Ryan Gosling?",
+  "options": [
+   "Dear John",
+   "Message in a Bottle",
+   "The Notebook",
+   "A Walk to Remember"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which novel by Arthur Golden follows a young woman trained in Kyoto?",
+  "options": [
+   "The Makioka Sisters",
+   "Shogun",
+   "Memoirs of a Geisha",
+   "Snow Country"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which John Green novel follows two teenagers who meet at a cancer support group?",
+  "options": [
+   "Turtles All the Way Down",
+   "Paper Towns",
+   "The Fault in Our Stars",
+   "Looking for Alaska"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which R.J. Palacio novel follows a boy named Auggie starting school with a facial difference?",
+  "options": [
+   "Out of My Mind",
+   "Fish in a Tree",
+   "Wonder",
+   "Ugly"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which William Peter Blatty novel about a possessed girl became a famous horror film?",
+  "options": [
+   "The Amityville Horror",
+   "The Exorcist",
+   "Rosemary's Baby",
+   "The Omen"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which real-life murderer partly inspired Robert Bloch's novel Psycho?",
+  "options": [
+   "Ed Gein",
+   "Albert Fish",
+   "Charles Starkweather",
+   "Richard Speck"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Ira Levin novel is about wives in a Connecticut town who seem too perfect?",
+  "options": [
+   "Sliver",
+   "The Stepford Wives",
+   "The Boys from Brazil",
+   "Rosemary's Baby"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which book does Guinness World Records list as the most widely printed in history?",
+  "options": [
+   "Don Quixote",
+   "The Quran",
+   "The Bible",
+   "A Tale of Two Cities"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which reference book of records was first published by a brewery?",
+  "options": [
+   "Guinness World Records",
+   "The Almanac",
+   "Whitaker's",
+   "The Book of Lists"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which diary written in hiding in Amsterdam became one of the most read books of the war?",
+  "options": [
+   "The Diary of a Young Girl by Anne Frank",
+   "Night by Elie Wiesel",
+   "If This Is a Man by Primo Levi",
+   "The Hiding Place"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which building did Anne Frank's family hide, now a museum?",
+  "options": [
+   "The Rijksmuseum",
+   "The Secret Annexe",
+   "The Beguinage",
+   "The Westerkerk"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Charles Darwin book set out the theory of evolution by natural selection?",
+  "options": [
+   "The Descent of Man",
+   "The Voyage of the Beagle",
+   "On the Origin of Species",
+   "Natural History"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Stephen Hawking book about cosmology became a surprise bestseller?",
+  "options": [
+   "Black Holes and Baby Universes",
+   "The Universe in a Nutshell",
+   "A Brief History of Time",
+   "The Grand Design"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which ancient Chinese book of military strategy is attributed to Sun Tzu?",
+  "options": [
+   "The Book of Changes",
+   "The Analects",
+   "Tao Te Ching",
+   "The Art of War"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which political treatise by Niccolo Machiavelli advises rulers on holding power?",
+  "options": [
+   "Leviathan",
+   "The Prince",
+   "Utopia",
+   "The Republic"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Whose autobiography is called Long Walk to Freedom?",
+  "options": [
+   "Martin Luther King Jr",
+   "Desmond Tutu",
+   "Nelson Mandela",
+   "Mahatma Gandhi"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which travel writer wrote Down Under, a comic account of travelling in Australia?",
+  "options": [
+   "Michael Palin",
+   "Paul Theroux",
+   "Bill Bryson",
+   "Eric Newby"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which annual prize is awarded to the best novel published in the United Kingdom?",
+  "options": [
+   "The Costa Prize",
+   "The Pulitzer Prize",
+   "The Nobel Prize",
+   "The Booker Prize"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which award is science fiction's best known prize, voted on by fans?",
+  "options": [
+   "The Bram Stoker Award",
+   "The Booker Prize",
+   "The Newbery Medal",
+   "The Hugo Award"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which dictionary of the English language was famously compiled by Samuel Johnson?",
+  "options": [
+   "Webster's Dictionary",
+   "Chambers Dictionary",
+   "A Dictionary of the English Language",
+   "The Oxford English Dictionary"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which reference book lists words grouped by meaning rather than alphabetically?",
+  "options": [
+   "A thesaurus",
+   "A dictionary",
+   "An atlas",
+   "An encyclopaedia"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the term for a book written about a person's life by someone else?",
+  "options": [
+   "A memoir",
+   "An autobiography",
+   "A novella",
+   "A biography"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a book written by a person about their own life called?",
+  "options": [
+   "A chronicle",
+   "An autobiography",
+   "An anthology",
+   "A biography"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the word for a made-up name an author writes under?",
+  "options": [
+   "A pseudonym",
+   "A synonym",
+   "An anagram",
+   "An acronym"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a short story collection by several writers usually called?",
+  "options": [
+   "A periodical",
+   "A trilogy",
+   "An anthology",
+   "A folio"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name for a book of maps?",
+  "options": [
+   "A compendium",
+   "A gazette",
+   "An atlas",
+   "An almanac"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many books make up a trilogy?",
+  "options": [
+   "Three",
+   "Four",
+   "Five",
+   "Two"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name for the list of chapters at the front of a book?",
+  "options": [
+   "The appendix",
+   "The contents",
+   "The index",
+   "The glossary"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the alphabetical list of topics at the back of a book called?",
+  "options": [
+   "The contents",
+   "The bibliography",
+   "The index",
+   "The preface"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a hardback book's paper jacket usually called?",
+  "options": [
+   "The colophon",
+   "The flyleaf",
+   "The spine",
+   "The dust jacket"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What word describes a book that continues the story of an earlier one?",
+  "options": [
+   "A prequel",
+   "A sequel",
+   "A spin-off",
+   "An epilogue"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What word describes a story set before the events of an earlier book?",
+  "options": [
+   "A serial",
+   "A postscript",
+   "A prequel",
+   "A sequel"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Emma Donoghue novel is narrated by a five-year-old boy held captive with his mother?",
+  "options": [
+   "Room",
+   "Slammerkin",
+   "Frog Music",
+   "The Wonder"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Paula Hawkins thriller is narrated partly by a commuter who witnesses something from a carriage?",
+  "options": [
+   "Into the Water",
+   "A Slow Fire Burning",
+   "The Girl on the Train",
+   "The Woman in the Window"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which novel by Winston Groom features a slow-witted man who keeps meeting famous people?",
+  "options": [
+   "Big Fish",
+   "Forrest Gump",
+   "The Curious Case of Benjamin Button",
+   "Being There"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Colombian author wrote One Hundred Years of Solitude?",
+  "options": [
+   "Gabriel Garcia Marquez",
+   "Jorge Luis Borges",
+   "Isabel Allende",
+   "Mario Vargas Llosa"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Chinua Achebe novel is regarded as a landmark of African literature?",
+  "options": [
+   "The Famished Road",
+   "Half of a Yellow Sun",
+   "Things Fall Apart",
+   "Petals of Blood"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Toni Morrison novel won the Pulitzer Prize and is titled with a single word about a lost daughter?",
+  "options": [
+   "Sula",
+   "Home",
+   "Beloved",
+   "Jazz"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Russian novel by Boris Pasternak follows a doctor and poet through the revolution?",
+  "options": [
+   "Cancer Ward",
+   "The Master and Margarita",
+   "And Quiet Flows the Don",
+   "Doctor Zhivago"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Gustave Flaubert novel follows a doctor's discontented wife in provincial France?",
+  "options": [
+   "Nana",
+   "Germinal",
+   "The Red and the Black",
+   "Madame Bovary"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Oscar Wilde novel features a portrait that ages while its subject does not?",
+  "options": [
+   "De Profundis",
+   "The Picture of Dorian Gray",
+   "Lord Arthur Savile's Crime",
+   "The Canterville Ghost"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Oscar Wilde play features the line 'A handbag?' and a character called Lady Bracknell?",
+  "options": [
+   "A Woman of No Importance",
+   "An Ideal Husband",
+   "The Importance of Being Earnest",
+   "Lady Windermere's Fan"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Arthur Miller play follows the Salem witch trials?",
+  "options": [
+   "Death of a Salesman",
+   "A View from the Bridge",
+   "All My Sons",
+   "The Crucible"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Arthur Miller play features the salesman Willy Loman?",
+  "options": [
+   "The Crucible",
+   "Death of a Salesman",
+   "The Price",
+   "After the Fall"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Samuel Beckett play features two men waiting by a tree?",
+  "options": [
+   "Waiting for Godot",
+   "Krapp's Last Tape",
+   "Happy Days",
+   "Endgame"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Tennessee Williams play features Blanche DuBois?",
+  "options": [
+   "Sweet Bird of Youth",
+   "A Streetcar Named Desire",
+   "Cat on a Hot Tin Roof",
+   "The Glass Menagerie"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which George Bernard Shaw play was the basis for the musical My Fair Lady?",
+  "options": [
+   "Major Barbara",
+   "Pygmalion",
+   "Saint Joan",
+   "Man and Superman"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Gaston Leroux novel inspired a famous Andrew Lloyd Webber musical?",
+  "options": [
+   "Balaoo",
+   "The Perfume of the Lady in Black",
+   "The Mystery of the Yellow Room",
+   "The Phantom of the Opera"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which archdeacon is Quasimodo's master in The Hunchback of Notre-Dame?",
+  "options": [
+   "Quasimodo",
+   "Gringoire",
+   "Phoebus",
+   "Frollo"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which children's novel features a boy who befriends a caveman living in a chalk pit?",
+  "options": [
+   "Stig of the Dump",
+   "Danny the Champion of the World",
+   "The Machine Gunners",
+   "The Iron Man"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Mary Norton novel is about tiny people who live under the floorboards?",
+  "options": [
+   "The Borrowers",
+   "The Minpins",
+   "The Littles",
+   "Gulliver's Travels"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How old is Adrian Mole at the start of his secret diary by Sue Townsend?",
+  "options": [
+   "13 and three quarters",
+   "12 and a quarter",
+   "14 and three quarters",
+   "15 and a half"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ }
+]

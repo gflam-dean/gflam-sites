@@ -1,0 +1,1358 @@
+[
+ {
+  "question": "Which country has the most people?",
+  "options": [
+   "India",
+   "China",
+   "The United States",
+   "Indonesia"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which is the largest country by land area?",
+  "options": [
+   "Russia",
+   "Canada",
+   "China",
+   "The United States"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which is the smallest country in the world?",
+  "options": [
+   "Vatican City",
+   "Monaco",
+   "San Marino",
+   "Nauru"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which continent is the largest by area?",
+  "options": [
+   "Asia",
+   "Africa",
+   "North America",
+   "Antarctica"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which continent is the driest?",
+  "options": [
+   "Antarctica",
+   "Australia",
+   "Africa",
+   "Asia"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which is the longest river in the world by most measures?",
+  "options": [
+   "The Nile",
+   "The Amazon",
+   "The Yangtze",
+   "The Mississippi"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which river carries the greatest volume of water?",
+  "options": [
+   "The Amazon",
+   "The Nile",
+   "The Congo",
+   "The Yangtze"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which is the largest ocean?",
+  "options": [
+   "The Pacific",
+   "The Atlantic",
+   "The Indian",
+   "The Southern"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which is the deepest point in the ocean?",
+  "options": [
+   "The Mariana Trench",
+   "The Puerto Rico Trench",
+   "The Java Trench",
+   "The Tonga Trench"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which is the largest desert in the world?",
+  "options": [
+   "The Antarctic desert",
+   "The Sahara",
+   "The Arabian",
+   "The Gobi"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which is the largest hot desert?",
+  "options": [
+   "The Sahara",
+   "The Kalahari",
+   "The Gobi",
+   "The Simpson"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which mountain is the highest above sea level?",
+  "options": [
+   "Mount Everest",
+   "K2",
+   "Kangchenjunga",
+   "Denali"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which two countries share the border where Mount Everest sits?",
+  "options": [
+   "Nepal and China",
+   "India and Nepal",
+   "China and Bhutan",
+   "Nepal and Bhutan"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which is the largest island in the world?",
+  "options": [
+   "Greenland",
+   "New Guinea",
+   "Borneo",
+   "Madagascar"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which is the largest lake by surface area?",
+  "options": [
+   "The Caspian Sea",
+   "Lake Superior",
+   "Lake Victoria",
+   "Lake Baikal"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which is the deepest lake in the world?",
+  "options": [
+   "Lake Baikal",
+   "Lake Tanganyika",
+   "The Caspian Sea",
+   "Crater Lake"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which country is home to the Great Barrier Reef?",
+  "options": [
+   "Australia",
+   "Indonesia",
+   "The Philippines",
+   "Fiji"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the capital of Canada?",
+  "options": [
+   "Ottawa",
+   "Toronto",
+   "Vancouver",
+   "Montreal"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of Brazil?",
+  "options": [
+   "Brasilia",
+   "Rio de Janeiro",
+   "Sao Paulo",
+   "Salvador"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of Turkey?",
+  "options": [
+   "Ankara",
+   "Istanbul",
+   "Izmir",
+   "Antalya"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of Switzerland?",
+  "options": [
+   "Bern",
+   "Zurich",
+   "Geneva",
+   "Basel"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of New Zealand?",
+  "options": [
+   "Wellington",
+   "Auckland",
+   "Christchurch",
+   "Dunedin"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the capital of South Africa's legislature?",
+  "options": [
+   "Cape Town",
+   "Pretoria",
+   "Johannesburg",
+   "Durban"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the capital of Morocco?",
+  "options": [
+   "Rabat",
+   "Casablanca",
+   "Marrakesh",
+   "Fez"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the capital of Vietnam?",
+  "options": [
+   "Hanoi",
+   "Ho Chi Minh City",
+   "Da Nang",
+   "Hue"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of the Philippines?",
+  "options": [
+   "Manila",
+   "Cebu",
+   "Davao",
+   "Quezon City"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of Norway?",
+  "options": [
+   "Oslo",
+   "Bergen",
+   "Stavanger",
+   "Trondheim"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of Finland?",
+  "options": [
+   "Helsinki",
+   "Turku",
+   "Tampere",
+   "Espoo"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of Portugal?",
+  "options": [
+   "Lisbon",
+   "Porto",
+   "Faro",
+   "Coimbra"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the capital of Argentina?",
+  "options": [
+   "Buenos Aires",
+   "Cordoba",
+   "Rosario",
+   "Mendoza"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the capital of Peru?",
+  "options": [
+   "Lima",
+   "Cusco",
+   "Arequipa",
+   "Trujillo"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of Egypt?",
+  "options": [
+   "Cairo",
+   "Alexandria",
+   "Giza",
+   "Luxor"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the capital of Kenya?",
+  "options": [
+   "Nairobi",
+   "Mombasa",
+   "Kisumu",
+   "Nakuru"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which country is known as the Land of the Rising Sun?",
+  "options": [
+   "Japan",
+   "China",
+   "Thailand",
+   "South Korea"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which country is known as the Land of Fire and Ice?",
+  "options": [
+   "Iceland",
+   "Norway",
+   "Greenland",
+   "Finland"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which country has a maple leaf on its flag?",
+  "options": [
+   "Canada",
+   "Lebanon",
+   "Norway",
+   "Switzerland"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which country's flag is a red circle on white?",
+  "options": [
+   "Japan",
+   "Bangladesh",
+   "South Korea",
+   "Laos"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which country's flag features a cedar tree?",
+  "options": [
+   "Lebanon",
+   "Cyprus",
+   "Israel",
+   "Jordan"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which is the only national flag that is not rectangular or square?",
+  "options": [
+   "Nepal",
+   "Switzerland",
+   "Vatican City",
+   "Qatar"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which two countries have square flags?",
+  "options": [
+   "Switzerland and Vatican City",
+   "Nepal and Bhutan",
+   "Monaco and Poland",
+   "Chad and Romania"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which strait separates Europe from Africa at its narrowest?",
+  "options": [
+   "The Strait of Gibraltar",
+   "The Bosphorus",
+   "The Dardanelles",
+   "The Strait of Hormuz"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which canal connects the Mediterranean and the Red Sea?",
+  "options": [
+   "The Suez Canal",
+   "The Panama Canal",
+   "The Kiel Canal",
+   "The Corinth Canal"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which canal connects the Atlantic and Pacific oceans?",
+  "options": [
+   "The Panama Canal",
+   "The Suez Canal",
+   "The Erie Canal",
+   "The Grand Canal"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which imaginary line divides the Earth into northern and southern hemispheres?",
+  "options": [
+   "The equator",
+   "The prime meridian",
+   "The Tropic of Cancer",
+   "The International Date Line"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which line of longitude is zero degrees?",
+  "options": [
+   "The prime meridian",
+   "The equator",
+   "The date line",
+   "The tropic line"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which London borough gives its name to the prime meridian?",
+  "options": [
+   "Greenwich",
+   "Westminster",
+   "Camden",
+   "Croydon"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which country has the longest coastline?",
+  "options": [
+   "Canada",
+   "Russia",
+   "Australia",
+   "Indonesia"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many countries does Brazil share a border with?",
+  "options": [
+   "Ten",
+   "Five",
+   "Seven",
+   "Twelve"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which South American country has no land border with Brazil?",
+  "options": [
+   "Chile",
+   "Peru",
+   "Colombia",
+   "Bolivia"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which two countries share the longest international border?",
+  "options": [
+   "Canada and the United States",
+   "Russia and China",
+   "Argentina and Chile",
+   "India and Bangladesh"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which country is completely surrounded by South Africa?",
+  "options": [
+   "Lesotho",
+   "Eswatini",
+   "Botswana",
+   "Namibia"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which country is completely surrounded by Italy in two places?",
+  "options": [
+   "San Marino",
+   "Monaco",
+   "Andorra",
+   "Liechtenstein"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which mountain range separates France and Spain?",
+  "options": [
+   "The Pyrenees",
+   "The Alps",
+   "The Apennines",
+   "The Carpathians"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which mountain range runs down the western side of South America?",
+  "options": [
+   "The Andes",
+   "The Rockies",
+   "The Sierra Madre",
+   "The Atlas"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which mountain range separates Europe and Asia in Russia?",
+  "options": [
+   "The Urals",
+   "The Caucasus only",
+   "The Altai",
+   "The Carpathians"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which African country was formerly called Abyssinia?",
+  "options": [
+   "Ethiopia",
+   "Somalia",
+   "Sudan",
+   "Eritrea"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which country was formerly known as Ceylon?",
+  "options": [
+   "Sri Lanka",
+   "Myanmar",
+   "Bangladesh",
+   "Thailand"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which country was formerly known as Siam?",
+  "options": [
+   "Thailand",
+   "Cambodia",
+   "Vietnam",
+   "Laos"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which country was formerly known as Rhodesia?",
+  "options": [
+   "Zimbabwe",
+   "Zambia",
+   "Malawi",
+   "Botswana"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which country was formerly known as Burma?",
+  "options": [
+   "Myanmar",
+   "Cambodia",
+   "Laos",
+   "Bhutan"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which sea is the saltiest large body of water and lies between Israel and Jordan?",
+  "options": [
+   "The Dead Sea",
+   "The Red Sea",
+   "The Caspian Sea",
+   "The Black Sea"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which sea has no coastline, being bounded by ocean currents?",
+  "options": [
+   "The Sargasso Sea",
+   "The Coral Sea",
+   "The Tasman Sea",
+   "The Timor Sea"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which sea lies between Australia and New Zealand?",
+  "options": [
+   "The Tasman Sea",
+   "The Coral Sea",
+   "The Arafura Sea",
+   "The Timor Sea"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which sea lies between Queensland and Vanuatu?",
+  "options": [
+   "The Coral Sea",
+   "The Tasman Sea",
+   "The Solomon Sea",
+   "The Banda Sea"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which strait separates Tasmania from mainland Australia?",
+  "options": [
+   "Bass Strait",
+   "Torres Strait",
+   "Cook Strait",
+   "Investigator Strait"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which strait separates Australia from Papua New Guinea?",
+  "options": [
+   "Torres Strait",
+   "Bass Strait",
+   "Malacca Strait",
+   "Cook Strait"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which strait separates New Zealand's two main islands?",
+  "options": [
+   "Cook Strait",
+   "Bass Strait",
+   "Foveaux Strait",
+   "Tasman Strait"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which US state is the largest by area?",
+  "options": [
+   "Alaska",
+   "Texas",
+   "California",
+   "Montana"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which US state is made up entirely of islands?",
+  "options": [
+   "Hawaii",
+   "Alaska",
+   "Rhode Island",
+   "Florida"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many US states are there?",
+  "options": [
+   "50",
+   "48",
+   "52",
+   "51"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which US city is known as the Windy City?",
+  "options": [
+   "Chicago",
+   "New York",
+   "Boston",
+   "Detroit"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which US city is known as the Big Easy?",
+  "options": [
+   "New Orleans",
+   "Miami",
+   "Nashville",
+   "Atlanta"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which river runs through London?",
+  "options": [
+   "The Thames",
+   "The Severn",
+   "The Mersey",
+   "The Tyne"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which river runs through Paris?",
+  "options": [
+   "The Seine",
+   "The Loire",
+   "The Rhone",
+   "The Marne"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which river runs through Rome?",
+  "options": [
+   "The Tiber",
+   "The Po",
+   "The Arno",
+   "The Adige"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which river flows through Brisbane?",
+  "options": [
+   "The Brisbane River",
+   "The Yarra",
+   "The Torrens",
+   "The Derwent"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which river flows through Melbourne?",
+  "options": [
+   "The Yarra",
+   "The Maribyrnong",
+   "The Murray",
+   "The Goulburn"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which river flows through Hobart?",
+  "options": [
+   "The Derwent",
+   "The Tamar",
+   "The Huon",
+   "The Mersey"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which river flows through Adelaide?",
+  "options": [
+   "The Torrens",
+   "The Murray",
+   "The Onkaparinga",
+   "The Light"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Western Australian river flows through Perth?",
+  "options": [
+   "The Swan",
+   "The Canning",
+   "The Murchison",
+   "The Blackwood"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian state capital is furthest west?",
+  "options": [
+   "Perth",
+   "Adelaide",
+   "Darwin",
+   "Melbourne"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian capital city is closest to the equator?",
+  "options": [
+   "Darwin",
+   "Brisbane",
+   "Perth",
+   "Cairns"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian city is the most populous?",
+  "options": [
+   "Sydney",
+   "Melbourne",
+   "Brisbane",
+   "Perth"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many time zones does mainland Australia use in winter?",
+  "options": [
+   "Three",
+   "Two",
+   "Four",
+   "One"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian state or territory does not observe daylight saving?",
+  "options": [
+   "Queensland",
+   "Victoria",
+   "South Australia",
+   "Tasmania"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian region is famous for its wine and is northeast of Adelaide?",
+  "options": [
+   "The Barossa Valley",
+   "The Yarra Valley",
+   "The Hunter Valley",
+   "Margaret River"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Queensland region is known as the Sunshine Coast's northern neighbour and famous for pineapples?",
+  "options": [
+   "The Wide Bay region",
+   "The Darling Downs",
+   "The Whitsundays",
+   "The Gold Coast hinterland"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian island lies off the coast of South Australia and is known for wildlife?",
+  "options": [
+   "Kangaroo Island",
+   "Rottnest Island",
+   "Phillip Island",
+   "Bruny Island"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Victorian island is famous for its penguin parade?",
+  "options": [
+   "Phillip Island",
+   "French Island",
+   "Churchill Island",
+   "Wilsons Prom"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which group of Queensland islands lies within the Great Barrier Reef and is a sailing destination?",
+  "options": [
+   "The Whitsundays",
+   "The Torres Strait Islands",
+   "The Keppels",
+   "The Capricorns"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which famous white sand beach is on Whitsunday Island?",
+  "options": [
+   "Whitehaven Beach",
+   "Bondi Beach",
+   "Cable Beach",
+   "Wineglass Bay"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Western Australian beach is famous for camel rides at sunset?",
+  "options": [
+   "Cable Beach",
+   "Scarborough",
+   "Cottesloe",
+   "Bunker Bay"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Tasmanian bay is famous for its curved shape and is in Freycinet National Park?",
+  "options": [
+   "Wineglass Bay",
+   "Bathurst Harbour",
+   "Frederick Henry Bay",
+   "Great Oyster Bay"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Northern Territory national park is famous for rock art and wetlands?",
+  "options": [
+   "Kakadu",
+   "Litchfield",
+   "Nitmiluk",
+   "Watarrka"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which desert lies mostly in the Northern Territory and South Australia with red parallel dunes?",
+  "options": [
+   "The Simpson Desert",
+   "The Great Sandy Desert",
+   "The Gibson Desert",
+   "The Tanami"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian salt lake is the country's largest when full?",
+  "options": [
+   "Lake Eyre",
+   "Lake Torrens",
+   "Lake Gairdner",
+   "Lake Frome"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which country has the most islands?",
+  "options": [
+   "Sweden",
+   "Indonesia",
+   "The Philippines",
+   "Canada"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which European country is made up of more than 6,000 islands, of which about 227 are inhabited?",
+  "options": [
+   "Greece",
+   "Italy",
+   "Croatia",
+   "Norway"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which country is known for fjords along its western coast?",
+  "options": [
+   "Norway",
+   "Denmark",
+   "Portugal",
+   "Ireland"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which African country is the most populous?",
+  "options": [
+   "Nigeria",
+   "Egypt",
+   "Ethiopia",
+   "South Africa"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which is the highest mountain in Africa?",
+  "options": [
+   "Kilimanjaro",
+   "Mount Kenya",
+   "Mount Stanley",
+   "The Atlas peaks"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which country is Kilimanjaro?",
+  "options": [
+   "Tanzania",
+   "Kenya",
+   "Uganda",
+   "Rwanda"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which waterfall on the Zambia-Zimbabwe border is one of the world's largest?",
+  "options": [
+   "Victoria Falls",
+   "Niagara Falls",
+   "Iguazu Falls",
+   "Angel Falls"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which is the world's tallest uninterrupted waterfall?",
+  "options": [
+   "Angel Falls",
+   "Victoria Falls",
+   "Niagara Falls",
+   "Yosemite Falls"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which country is Angel Falls?",
+  "options": [
+   "Venezuela",
+   "Brazil",
+   "Colombia",
+   "Guyana"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which country contains most of the Amazon rainforest?",
+  "options": [
+   "Brazil",
+   "Peru",
+   "Colombia",
+   "Bolivia"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which city is the highest capital city in the world?",
+  "options": [
+   "La Paz",
+   "Quito",
+   "Bogota",
+   "Kathmandu"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which country is the only one to span an entire continent?",
+  "options": [
+   "Australia",
+   "Russia",
+   "Brazil",
+   "Canada"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which is the only continent with no permanent human population?",
+  "options": [
+   "Antarctica",
+   "Australia",
+   "South America",
+   "Africa"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which country lies immediately south of the United States?",
+  "options": [
+   "Mexico",
+   "Guatemala",
+   "Cuba",
+   "Belize"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which is the smallest continent by area?",
+  "options": [
+   "Australia",
+   "Europe",
+   "Antarctica",
+   "South America"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which country uses the euro and is bordered by Spain to the east?",
+  "options": [
+   "Portugal",
+   "France",
+   "Andorra",
+   "Morocco"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Middle Eastern city contains the Old City with sites holy to three religions?",
+  "options": [
+   "Jerusalem",
+   "Amman",
+   "Damascus",
+   "Beirut"
+  ],
+  "correctIndex": 0,
+  "category": "Geography",
+  "difficulty": "easy"
+ }
+]

@@ -1,0 +1,8354 @@
+[
+ {
+  "question": "In Australian slang, what is a 'servo'?",
+  "options": [
+   "A serviette",
+   "A second serve",
+   "A service station",
+   "A waiter"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'bottle-o' in Australia?",
+  "options": [
+   "A bottle shop",
+   "A wine glass",
+   "A milkman",
+   "A recycling bin"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the Australian slang word 'arvo' mean?",
+  "options": [
+   "Afternoon",
+   "Weekend",
+   "Morning",
+   "Evening"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is an 'ambo' in Australian slang?",
+  "options": [
+   "An ambulance officer",
+   "A politician",
+   "A referee",
+   "A bartender"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'garbo' in Australian slang?",
+  "options": [
+   "A gardener",
+   "A guard",
+   "A mechanic",
+   "A rubbish collector"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'tradie'?",
+  "options": [
+   "A tradesperson",
+   "A traffic warden",
+   "A trainee",
+   "A trader"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'brekkie'?",
+  "options": [
+   "A small brick",
+   "Breakfast",
+   "A biscuit",
+   "A break in play"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'bikkie' in Australian slang?",
+  "options": [
+   "A bicycle",
+   "A biscuit",
+   "A bag",
+   "A small bird"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'chockers' mean?",
+  "options": [
+   "Completely full",
+   "Delicious",
+   "Broken",
+   "Very cold"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'chook'?",
+  "options": [
+   "A chicken",
+   "A book",
+   "A cook",
+   "A hook"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'cozzie' or 'cossie'?",
+  "options": [
+   "A cassette",
+   "A cosy blanket",
+   "A cousin",
+   "A swimming costume"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'dunny'?",
+  "options": [
+   "A toilet",
+   "A shed",
+   "A donkey",
+   "A dune"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is an 'esky' used for?",
+  "options": [
+   "Keeping drinks and food cold",
+   "Cooking meat",
+   "Sleeping outdoors",
+   "Carrying tools"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'fair dinkum' mean?",
+  "options": [
+   "Genuine or true",
+   "Very tired",
+   "Badly done",
+   "Fairly close"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "If someone is 'flat out like a lizard drinking', what are they?",
+  "options": [
+   "Lying down",
+   "Very busy",
+   "Fast asleep",
+   "Very thirsty"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'mozzie'?",
+  "options": [
+   "A mosquito",
+   "A moth",
+   "A mosaic",
+   "A motorbike"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'pav' at an Australian party?",
+  "options": [
+   "A pavement",
+   "A pancake",
+   "A pavlova",
+   "A pavilion"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'rego' short for in Australia?",
+  "options": [
+   "Vehicle registration",
+   "A regular order",
+   "Regional",
+   "Regatta"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does calling something a 'ripper' mean?",
+  "options": [
+   "It is excellent",
+   "It is expensive",
+   "It is fast",
+   "It is torn"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'sanga' or 'sanger'?",
+  "options": [
+   "A saucepan",
+   "A sandwich",
+   "A singer",
+   "A sausage"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'chucking a sickie'?",
+  "options": [
+   "Taking a day off work claiming illness",
+   "Vomiting",
+   "Quitting a job",
+   "Throwing something away"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'smoko'?",
+  "options": [
+   "A work break",
+   "A barbecue",
+   "A cigarette lighter",
+   "A bushfire"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does it mean to 'spit the dummy'?",
+  "options": [
+   "Tell the truth",
+   "Throw a tantrum",
+   "Give up smoking",
+   "Spit out food"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'stubby' in an Australian pub?",
+  "options": [
+   "A small bottle of beer",
+   "A short glass",
+   "A bar stool",
+   "A cigarette"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'stubby holder'?",
+  "options": [
+   "A shelf behind the bar",
+   "A cardboard carton",
+   "An insulated sleeve for a bottle",
+   "A bottle opener"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are 'sunnies'?",
+  "options": [
+   "Sunburn creams",
+   "Sunglasses",
+   "Sunny days",
+   "Sun hats"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'swag' in the Australian bush?",
+  "options": [
+   "A water bottle",
+   "A rolled up bed for sleeping outdoors",
+   "A hat with corks",
+   "A bag of tools"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Australia, what are 'thongs'?",
+  "options": [
+   "Braces",
+   "Socks",
+   "Flip flop sandals",
+   "Shoelaces"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'tinnie' most often in Australian slang?",
+  "options": [
+   "A can of beer",
+   "A tin of paint",
+   "A small hat",
+   "A tinsel decoration"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are 'togs' in Queensland?",
+  "options": [
+   "Tools",
+   "Boots",
+   "Work clothes",
+   "Swimwear"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'ute'?",
+  "options": [
+   "A small unit",
+   "A university",
+   "A utility vehicle with an open tray",
+   "A tow truck"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'hard yakka' mean?",
+  "options": [
+   "Bad luck",
+   "Rough weather",
+   "Loud noise",
+   "Hard work"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'bludger' in Australian slang?",
+  "options": [
+   "A blunt tool",
+   "Someone who avoids work",
+   "A bouncer",
+   "A gambler"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does it mean to 'dob' on someone?",
+  "options": [
+   "Copy their work",
+   "Push them",
+   "Buy them a drink",
+   "Report or tell on them"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'furphy'?",
+  "options": [
+   "A small dog",
+   "A false rumour",
+   "A water bottle",
+   "A type of hat"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'furphy' comes from the name on what during the First World War?",
+  "options": [
+   "Boots",
+   "Rifles",
+   "Water carts",
+   "Tents"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a 'larrikin'?",
+  "options": [
+   "A farmer",
+   "A thief",
+   "A mischievous but likeable person",
+   "A city worker"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'shonky' mean?",
+  "options": [
+   "Dishonest or poor quality",
+   "Shiny",
+   "Steep",
+   "Sleepy"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'rort'?",
+  "options": [
+   "A loud argument",
+   "A rough road",
+   "A dishonest scheme",
+   "A short rest"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'spruiker'?",
+  "options": [
+   "A cleaner",
+   "A driver",
+   "A bookkeeper",
+   "Someone who talks up a business to passers by"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "If an Australian asks for a 'squiz', what do they want?",
+  "options": [
+   "A lift home",
+   "A quick look",
+   "A cigarette",
+   "A drink"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'strewth' express?",
+  "options": [
+   "Hunger",
+   "Agreement",
+   "Surprise",
+   "Boredom"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Where is 'Woop Woop'?",
+  "options": [
+   "A remote place far from anywhere",
+   "A shopping strip",
+   "A beach suburb",
+   "A city centre"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'yonks' mean?",
+  "options": [
+   "A short walk",
+   "A group of friends",
+   "A very long time",
+   "A loud noise"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does it mean if someone is 'crook'?",
+  "options": [
+   "They are lying",
+   "They are unwell",
+   "They are angry",
+   "They are lost"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "If a car is 'cactus', what is it?",
+  "options": [
+   "Brand new",
+   "Painted green",
+   "Broken beyond use",
+   "Very fast"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Australian rhyming slang, what is a 'dog's eye'?",
+  "options": [
+   "A dollar",
+   "A cold beer",
+   "A car",
+   "A meat pie"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In rhyming slang, 'dead horse' means what?",
+  "options": [
+   "Tomato sauce",
+   "A bad debt",
+   "A racecourse",
+   "A long day"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In rhyming slang, having a 'Captain Cook' means having a what?",
+  "options": [
+   "Book",
+   "Look",
+   "Hook",
+   "Cook"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Australian rhyming slang, 'frog and toad' means what?",
+  "options": [
+   "Load",
+   "Home",
+   "Cold",
+   "Road"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In rhyming slang, a 'china plate' is a what?",
+  "options": [
+   "Crate",
+   "Gate",
+   "Date",
+   "Mate"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Australian rhyming slang, a 'Joe Blake' is what?",
+  "options": [
+   "A lake",
+   "A rake",
+   "A snake",
+   "A cake"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'billabong'?",
+  "options": [
+   "A campfire",
+   "A waterhole or backwater",
+   "A boomerang",
+   "A bush track"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 'Waltzing Matilda', what is a 'jumbuck'?",
+  "options": [
+   "A billy can",
+   "A swagman",
+   "A sheep",
+   "A kangaroo"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the bush, what is a 'billy'?",
+  "options": [
+   "A tin for boiling water over a fire",
+   "A stock whip",
+   "A wooden bench",
+   "A saddle bag"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'tucker' mean?",
+  "options": [
+   "Money",
+   "Work",
+   "Food",
+   "Sleep"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 'Waltzing Matilda', what is the 'Matilda' being waltzed?",
+  "options": [
+   "A dance partner",
+   "A swag",
+   "A horse",
+   "A rifle"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'swagman'?",
+  "options": [
+   "A shopkeeper",
+   "A shearer",
+   "A traveller carrying his belongings in a swag",
+   "A bushranger"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'jackaroo'?",
+  "options": [
+   "A young trainee on a sheep or cattle station",
+   "A kangaroo hunter",
+   "A truck driver",
+   "A rodeo rider"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the word for a female trainee on an Australian station?",
+  "options": [
+   "Jillaroo",
+   "Jillaby",
+   "Jackaroo",
+   "Jennyroo"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'cocky' in rural Australian slang?",
+  "options": [
+   "A small farmer",
+   "A cockatoo keeper",
+   "A bore driller",
+   "A shearer"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'paddock' in Australia?",
+  "options": [
+   "A fenced field",
+   "A small pond",
+   "A horse stall",
+   "A tool shed"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In an Australian shearing shed, who is 'the ringer'?",
+  "options": [
+   "The fastest shearer in the shed",
+   "The man who sweeps the board",
+   "The wool classer",
+   "The shed cook"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the 'back of Bourke' a way of saying?",
+  "options": [
+   "A long way from anywhere",
+   "Behind a pub",
+   "The back seat of a car",
+   "The end of a queue"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'beyond the black stump' mean?",
+  "options": [
+   "Past the finish line",
+   "Far out in the country",
+   "After midnight",
+   "Behind the fireplace"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 'the Big Smoke'?",
+  "options": [
+   "The city",
+   "A bushfire",
+   "A factory",
+   "A barbecue"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'bogan' understood to be?",
+  "options": [
+   "A boat",
+   "A person seen as unsophisticated",
+   "A bog",
+   "A type of hat"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is an 'ocker'?",
+  "options": [
+   "A dockworker",
+   "A cricket umpire",
+   "A stereotypical rough Australian",
+   "A card game"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'yobbo'?",
+  "options": [
+   "A jockey",
+   "A bus driver",
+   "A young sheep",
+   "A loud, uncouth person"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'dinky-di' mean?",
+  "options": [
+   "Very small",
+   "Old fashioned",
+   "Poor quality",
+   "Genuinely Australian"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'ridgy-didge' mean?",
+  "options": [
+   "Genuine",
+   "Ridged or bumpy",
+   "Ridiculous",
+   "Ready to go"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'she's apples' mean?",
+  "options": [
+   "It is expensive",
+   "The fruit is ripe",
+   "Everything is fine",
+   "She is angry"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'dog's breakfast'?",
+  "options": [
+   "A cheap pub feed",
+   "An early meal",
+   "A dog show",
+   "A complete mess"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "If someone is 'carrying on like a pork chop', what are they doing?",
+  "options": [
+   "Cooking dinner",
+   "Sleeping in",
+   "Working hard",
+   "Making a fuss"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'mad as a cut snake' describe?",
+  "options": [
+   "Someone very clever",
+   "Someone very angry or wild",
+   "Someone very funny",
+   "Someone very tired"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the Australian phrase 'happy as Larry' mean?",
+  "options": [
+   "Fast asleep",
+   "Very happy",
+   "Quietly annoyed",
+   "Slightly amused"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'shout' in an Australian pub?",
+  "options": [
+   "A bar tab",
+   "Buying a round of drinks",
+   "A last call",
+   "Yelling an order"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'slab' of beer?",
+  "options": [
+   "A beer garden bench",
+   "A stack of coasters",
+   "A carton, usually of 24",
+   "A single bottle"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'coldie'?",
+  "options": [
+   "A cool room",
+   "A head cold",
+   "A cold snap",
+   "A cold beer"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'middy' in New South Wales?",
+  "options": [
+   "A midweek special",
+   "A middle shelf spirit",
+   "A 285 millilitre glass of beer",
+   "A half pint of cider"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are 'pokies' in an Australian club?",
+  "options": [
+   "Poker machines",
+   "Snack packs",
+   "Pockets on a table",
+   "Pool cues"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'meat tray' in a pub?",
+  "options": [
+   "A carvery platter",
+   "A butcher's apron",
+   "A chopping board",
+   "A common raffle prize"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'snag' at an Australian barbecue?",
+  "options": [
+   "A skewer",
+   "A sausage",
+   "A drink cooler",
+   "A napkin"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'goon' in Australian slang?",
+  "options": [
+   "Cask wine",
+   "A large sandwich",
+   "A bouncer's cap",
+   "Strong coffee"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'bring a plate' mean on an Australian invitation?",
+  "options": [
+   "Bring your own crockery",
+   "Bring cash for the meal",
+   "Bring a gift",
+   "Bring food to share"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is an 'op shop'?",
+  "options": [
+   "A hardware store",
+   "An open air market",
+   "An optician",
+   "A second-hand charity shop"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'milk bar' in Australia?",
+  "options": [
+   "A cafe for children",
+   "A dairy farm",
+   "A cocktail lounge",
+   "A small corner shop"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are 'budgie smugglers'?",
+  "options": [
+   "Cargo shorts",
+   "Bird cages",
+   "Small suitcases",
+   "Men's swimming briefs"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are 'trackie daks'?",
+  "options": [
+   "Train tickets",
+   "Tracksuit pants",
+   "Running shoes",
+   "Overalls"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are 'daks' in Australian slang?",
+  "options": [
+   "Socks",
+   "Trousers",
+   "Sunglasses",
+   "Shoes"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'doona'?",
+  "options": [
+   "A door mat",
+   "A wooden spoon",
+   "A quilt for a bed",
+   "A beach towel"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'lolly' in Australia?",
+  "options": [
+   "A soft drink",
+   "A wooden spoon",
+   "A bread roll",
+   "A sweet or piece of confectionery"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'chunder' a slang word for?",
+  "options": [
+   "Snoring",
+   "Complaining",
+   "Vomiting",
+   "Thunder"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does it mean to 'chuck a U-ey'?",
+  "options": [
+   "Give up",
+   "Make a U-turn",
+   "Change clothes",
+   "Throw a ball"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does a 'hoon' do?",
+  "options": [
+   "Sells cars",
+   "Runs a pub",
+   "Cleans pools",
+   "Drives dangerously and noisily"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the slang 'drongo' mean?",
+  "options": [
+   "A tall person",
+   "A fool",
+   "A bird watcher",
+   "A truck"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'drongo' as an insult is said to come from what?",
+  "options": [
+   "A bird that cannot fly",
+   "A brand of boot",
+   "A failed politician",
+   "A racehorse that never won"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a 'galah' when used about a person?",
+  "options": [
+   "A silly person",
+   "A leader",
+   "A generous person",
+   "A newcomer"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'seppo' mean in Australian slang?",
+  "options": [
+   "An American",
+   "A seven day roster",
+   "A septic system",
+   "A separatist"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which nickname is used for Queenslanders in State of Origin?",
+  "options": [
+   "Croweaters",
+   "Cane toads",
+   "Cockroaches",
+   "Sandgropers"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which nickname is used for people from Western Australia?",
+  "options": [
+   "Sandgropers",
+   "Banana benders",
+   "Croweaters",
+   "Taswegians"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'croweater'?",
+  "options": [
+   "A Tasmanian",
+   "A South Australian",
+   "A Victorian",
+   "A Territorian"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "If you 'bite the bullet', what are you doing?",
+  "options": [
+   "Facing something painful with courage",
+   "Taking a risky bet",
+   "Eating too quickly",
+   "Refusing to speak"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does it mean to 'break the ice'?",
+  "options": [
+   "Start an argument",
+   "Cool a drink",
+   "Ease the awkwardness at a first meeting",
+   "Cancel a plan"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "If you are 'burning the midnight oil', what are you doing?",
+  "options": [
+   "Working late into the night",
+   "Cooking a late supper",
+   "Sleeping badly",
+   "Wasting money"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'cost an arm and a leg' mean?",
+  "options": [
+   "It is dangerous",
+   "It takes a long time",
+   "It is very expensive",
+   "It is hard work"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does it mean to 'cut corners'?",
+  "options": [
+   "Trim the edges",
+   "Take a shortcut on a map",
+   "Turn quickly",
+   "Do something cheaply or carelessly"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'hit the sack' mean?",
+  "options": [
+   "Give up",
+   "Start training",
+   "Go to bed",
+   "Lose your temper"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "If you 'let the cat out of the bag', what have you done?",
+  "options": [
+   "Freed an animal",
+   "Started a fight",
+   "Given away a secret",
+   "Made a mess"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'once in a blue moon' mean?",
+  "options": [
+   "Every month",
+   "Twice a year",
+   "Every night",
+   "Very rarely"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "If a task is 'a piece of cake', what is it?",
+  "options": [
+   "Shared out",
+   "Very easy",
+   "Very sweet",
+   "Left over"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does it mean to 'spill the beans'?",
+  "options": [
+   "Waste food",
+   "Make a mistake",
+   "Change your mind",
+   "Reveal a secret"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "If someone is 'under the weather', how are they?",
+  "options": [
+   "Overdressed",
+   "Unlucky",
+   "Unwell",
+   "Outdoors"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'the ball is in your court' mean?",
+  "options": [
+   "You have won",
+   "You are losing",
+   "It is your turn to act",
+   "The game is over"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'beat around the bush' mean?",
+  "options": [
+   "Search carefully",
+   "Take a long walk",
+   "Work in the garden",
+   "Avoid saying something directly"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "If you are 'barking up the wrong tree', what are you doing?",
+  "options": [
+   "Following a mistaken idea",
+   "Shouting too loudly",
+   "Blaming the weather",
+   "Climbing badly"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does it mean to 'bury the hatchet'?",
+  "options": [
+   "Stop working",
+   "Make peace",
+   "Hide evidence",
+   "Save money"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'call it a day' mean?",
+  "options": [
+   "Stop work for now",
+   "Celebrate",
+   "Start early",
+   "Name a date"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "If someone is 'caught red-handed', what has happened?",
+  "options": [
+   "They were injured",
+   "They were praised",
+   "They were embarrassed",
+   "They were caught in the act"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does having 'a chip on your shoulder' mean?",
+  "options": [
+   "Being hungry",
+   "Being untidy",
+   "Holding a grudge or feeling wronged",
+   "Being lucky"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'give someone the cold shoulder' mean?",
+  "options": [
+   "Introduce them",
+   "Deliberately ignore them",
+   "Help them out",
+   "Warn them"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'no use crying over spilt milk' advise?",
+  "options": [
+   "Do not fret about what cannot be undone",
+   "Do not waste food",
+   "Do not blame others",
+   "Do not drink too fast"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'cut to the chase' mean?",
+  "options": [
+   "Leave early",
+   "Run faster",
+   "Get to the point",
+   "Change the subject"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is someone doing when they 'play devil's advocate'?",
+  "options": [
+   "Arguing the opposite side to test an idea",
+   "Refusing to take part",
+   "Telling lies",
+   "Making a joke"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "If a contest goes 'down to the wire', what happens?",
+  "options": [
+   "It ends early",
+   "It is decided at the very last moment",
+   "It is one sided",
+   "It is cancelled"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does it mean to 'draw the line'?",
+  "options": [
+   "Start a queue",
+   "Split a bill",
+   "Make a plan",
+   "Set a limit"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'the elephant in the room'?",
+  "options": [
+   "A heavy piece of furniture",
+   "A very large person",
+   "An obvious problem nobody mentions",
+   "A rare visitor"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'face the music' mean?",
+  "options": [
+   "Choose a song",
+   "Perform on stage",
+   "Turn up the volume",
+   "Accept the consequences"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'a feather in your cap'?",
+  "options": [
+   "An achievement to be proud of",
+   "A small payment",
+   "A light burden",
+   "A silly hat"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'flogging a dead horse' mean?",
+  "options": [
+   "Working very hard",
+   "Selling something cheap",
+   "Wasting effort on a lost cause",
+   "Being cruel"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "If you 'get cold feet', what happens?",
+  "options": [
+   "You go outside",
+   "You fall ill",
+   "You walk away slowly",
+   "You lose your nerve"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'go the extra mile' mean?",
+  "options": [
+   "Take a longer route",
+   "Arrive late",
+   "Make more effort than expected",
+   "Charge more"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'hit the nail on the head' mean?",
+  "options": [
+   "Cause damage",
+   "Make a loud noise",
+   "Describe something exactly right",
+   "Finish a job"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "If two people are 'in the same boat', what does that mean?",
+  "options": [
+   "They are related",
+   "They are travelling together",
+   "They disagree",
+   "They share the same difficulty"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'jump on the bandwagon' mean?",
+  "options": [
+   "Cause a delay",
+   "Join something once it becomes popular",
+   "Leave early",
+   "Start a band"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'kill two birds with one stone' mean?",
+  "options": [
+   "Waste effort",
+   "Be very unlucky",
+   "Solve two problems with one action",
+   "Take a big risk"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'leave no stone unturned' mean?",
+  "options": [
+   "Search or try everything possible",
+   "Keep things tidy",
+   "Give up quickly",
+   "Build carefully"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'let sleeping dogs lie' advise?",
+  "options": [
+   "Do not tell jokes",
+   "Do not wake early",
+   "Do not keep pets",
+   "Do not stir up old trouble"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "If you 'miss the boat', what has happened?",
+  "options": [
+   "You have got lost",
+   "You have forgotten something",
+   "You are late for work",
+   "You have missed your chance"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'off the hook' mean?",
+  "options": [
+   "Out of order",
+   "Free from blame or trouble",
+   "Hung up",
+   "Very popular"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'sitting on the fence' mean?",
+  "options": [
+   "Resting during work",
+   "Refusing to take sides",
+   "Watching a game",
+   "Waiting outside"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'out of the blue' mean?",
+  "options": [
+   "From the sky",
+   "Completely unexpectedly",
+   "Feeling sad",
+   "In the distance"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "If someone is 'over the moon', how do they feel?",
+  "options": [
+   "Delighted",
+   "Exhausted",
+   "Confused",
+   "Frightened"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'pulling your leg' mean?",
+  "options": [
+   "Helping you up",
+   "Teasing you as a joke",
+   "Asking a favour",
+   "Slowing you down"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does it mean to 'take a rain check'?",
+  "options": [
+   "Decline for now but accept another time",
+   "Cancel completely",
+   "Ask for a refund",
+   "Look at the forecast"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'read between the lines' mean?",
+  "options": [
+   "Check the spelling",
+   "Skip a paragraph",
+   "Read very slowly",
+   "Work out the hidden meaning"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "If something 'rings a bell', what does that mean?",
+  "options": [
+   "It is finished",
+   "It is a warning",
+   "It is very loud",
+   "It sounds familiar"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'rock the boat' mean?",
+  "options": [
+   "Take a risk at sea",
+   "Cause trouble by upsetting a settled situation",
+   "Travel by sea",
+   "Dance badly"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'a rule of thumb'?",
+  "options": [
+   "A rough practical guideline",
+   "A card game rule",
+   "A measuring tool",
+   "A strict law"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'steal someone's thunder' mean?",
+  "options": [
+   "Copy their clothes",
+   "Borrow money",
+   "Interrupt loudly",
+   "Take the attention or credit they expected"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'take it with a grain of salt' mean?",
+  "options": [
+   "Keep it secret",
+   "Do not believe it completely",
+   "Add seasoning",
+   "Take it seriously"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 'the last straw'?",
+  "options": [
+   "A lucky break",
+   "The final small thing that makes a situation unbearable",
+   "The end of a drink",
+   "The winning move"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'throw in the towel' mean?",
+  "options": [
+   "Change teams",
+   "Start cleaning",
+   "Give up",
+   "Have a wash"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'the tip of the iceberg'?",
+  "options": [
+   "The top of a mountain",
+   "A small visible part of a much bigger problem",
+   "A cold place",
+   "A minor success"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'turn a blind eye' mean?",
+  "options": [
+   "Lose your sight",
+   "Look away in fear",
+   "Refuse to help",
+   "Pretend not to notice"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'up in arms' mean?",
+  "options": [
+   "Ready to leave",
+   "Lifting weights",
+   "Very angry and protesting",
+   "Fully armed"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'a wild goose chase'?",
+  "options": [
+   "A country hunt",
+   "A hopeless search",
+   "A fast race",
+   "A busy morning"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'a blessing in disguise'?",
+  "options": [
+   "A secret gift",
+   "A kind stranger",
+   "Something bad that turns out well",
+   "An honest mistake"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'back to the drawing board' mean?",
+  "options": [
+   "Return to school",
+   "Go back to work",
+   "Draw a picture",
+   "Start again from the beginning"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'bend over backwards' mean?",
+  "options": [
+   "Change your mind",
+   "Refuse to move",
+   "Fall over",
+   "Try extremely hard to help"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'bite off more than you can chew' mean?",
+  "options": [
+   "Speak too soon",
+   "Eat too fast",
+   "Spend too much",
+   "Take on too much"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'blow off steam' mean?",
+  "options": [
+   "Release pent up feelings",
+   "Complain to a boss",
+   "Waste time",
+   "Boil a kettle"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'by the skin of your teeth' mean?",
+  "options": [
+   "Only just, by the narrowest margin",
+   "Very painfully",
+   "With great skill",
+   "By pure luck alone"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "If something does not 'cut the mustard', what is wrong with it?",
+  "options": [
+   "It is too spicy",
+   "It is too expensive",
+   "It is too slow",
+   "It is not good enough"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'every cloud has a silver lining' mean?",
+  "options": [
+   "Money follows hard times",
+   "Rain always passes",
+   "Storms are beautiful",
+   "There is something good in every bad situation"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'a taste of your own medicine' mean?",
+  "options": [
+   "Getting better slowly",
+   "Learning a new skill",
+   "Paying twice",
+   "Being treated the way you treat others"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'heard it through the grapevine' mean?",
+  "options": [
+   "Read it in the paper",
+   "Heard it on the radio",
+   "Learnt it at work",
+   "Heard it as gossip passed along"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'in the nick of time' mean?",
+  "options": [
+   "Ahead of schedule",
+   "At midnight",
+   "Just in time",
+   "Far too late"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'know the ropes' mean?",
+  "options": [
+   "Be new to a job",
+   "Understand how things are done",
+   "Be good at sailing",
+   "Be very strong"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "If you are 'on thin ice', what are you?",
+  "options": [
+   "Being careful",
+   "Moving slowly",
+   "Feeling cold",
+   "In a risky position"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'pull out all the stops' mean?",
+  "options": [
+   "Make every possible effort",
+   "Slow down",
+   "Cancel a plan",
+   "Stop everything"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'do not put all your eggs in one basket' advise?",
+  "options": [
+   "Do not carry too much",
+   "Do not risk everything on one thing",
+   "Cook slowly",
+   "Shop carefully"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "If something 'sells like hot cakes', what is happening?",
+  "options": [
+   "It is too expensive",
+   "It is being given away",
+   "It is selling very quickly",
+   "It is going stale"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'a sitting duck'?",
+  "options": [
+   "A patient waiter",
+   "A quiet guest",
+   "A lazy person",
+   "An easy target"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'a skeleton in the cupboard'?",
+  "options": [
+   "A forgotten bill",
+   "An embarrassing secret from the past",
+   "An old friend",
+   "A hidden treasure"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'throw caution to the wind' mean?",
+  "options": [
+   "Act boldly without worrying about risk",
+   "Warn others",
+   "Give up",
+   "Check the weather"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'till the cows come home' mean?",
+  "options": [
+   "Until sunset",
+   "Until the work is done",
+   "Until payday",
+   "For a very long time"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'like two peas in a pod' describe?",
+  "options": [
+   "A small meal",
+   "Two people who argue",
+   "Two people who are very alike",
+   "A cramped space"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'when pigs fly' mean?",
+  "options": [
+   "It is a joke",
+   "It is a surprise",
+   "It will never happen",
+   "It will happen soon"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'a storm in a teacup'?",
+  "options": [
+   "A sudden downpour",
+   "A spilled drink",
+   "A big fuss over something small",
+   "A hot argument at breakfast"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "If something is 'the bee's knees', what is it?",
+  "options": [
+   "Very sticky",
+   "Painful",
+   "Very small",
+   "Excellent"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'a bolt from the blue'?",
+  "options": [
+   "A fast runner",
+   "A loose screw",
+   "A complete surprise",
+   "A flash of lightning"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'burning the candle at both ends' mean?",
+  "options": [
+   "Working in the dark",
+   "Cooking too long",
+   "Exhausting yourself with too much activity",
+   "Wasting money"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "If two things are 'like chalk and cheese', what are they?",
+  "options": [
+   "Both unpleasant",
+   "Completely different",
+   "Almost identical",
+   "Both cheap"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'clutching at straws' mean?",
+  "options": [
+   "Drinking quickly",
+   "Being greedy",
+   "Building poorly",
+   "Grasping desperately at any faint hope"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'the eleventh hour' mean?",
+  "options": [
+   "An hour before dawn",
+   "A long delay",
+   "Eleven o'clock sharp",
+   "The last possible moment"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'head over heels' usually describe?",
+  "options": [
+   "Being completely in love",
+   "Doing gymnastics",
+   "Falling down stairs",
+   "Being confused"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "If you are 'in the doghouse', what does that mean?",
+  "options": [
+   "You are asleep",
+   "You are working outside",
+   "You are in trouble with someone",
+   "You are hiding"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'jump the gun' mean?",
+  "options": [
+   "Run a race",
+   "Avoid trouble",
+   "Act too soon",
+   "Fire a warning"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "If someone is 'on the ball', what are they?",
+  "options": [
+   "Very lucky",
+   "In charge",
+   "Alert and quick to react",
+   "Playing sport"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'paint the town red' mean?",
+  "options": [
+   "Advertise widely",
+   "Redecorate",
+   "Go out and celebrate energetically",
+   "Cause damage"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'the penny drops' mean?",
+  "options": [
+   "You suddenly understand",
+   "A machine starts",
+   "You lose money",
+   "A coin is flipped"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 'a pipe dream'?",
+  "options": [
+   "A smoking habit",
+   "A plumbing plan",
+   "A restful sleep",
+   "An unrealistic hope"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 'a red herring'?",
+  "options": [
+   "A rare fish",
+   "An angry person",
+   "A warning sign",
+   "A misleading clue"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'a sixth sense'?",
+  "options": [
+   "A sharp memory",
+   "A strong smell",
+   "An unexplained feeling of knowing something",
+   "A very good ear"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'a square meal'?",
+  "options": [
+   "A small snack",
+   "A meal eaten at a table",
+   "A meal shared four ways",
+   "A proper, satisfying meal"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'through thick and thin' mean?",
+  "options": [
+   "Through good times and bad",
+   "Over long distances",
+   "Through crowds",
+   "In all weather"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'walking on eggshells' mean?",
+  "options": [
+   "Cooking breakfast",
+   "Being clumsy",
+   "Being very careful not to upset someone",
+   "Moving very slowly"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'wear your heart on your sleeve' mean?",
+  "options": [
+   "Show your feelings openly",
+   "Fall in love easily",
+   "Keep a secret",
+   "Dress carefully"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'the whole nine yards' mean?",
+  "options": [
+   "Everything, the lot",
+   "A tidy garden",
+   "A long walk",
+   "A football play"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'lock, stock and barrel' mean?",
+  "options": [
+   "In a warehouse",
+   "Firmly closed",
+   "Bit by bit",
+   "Completely, including everything"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The phrase 'lock, stock and barrel' comes from the parts of what?",
+  "options": [
+   "A door",
+   "A ship",
+   "A gun",
+   "A barrel organ"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The word 'sandwich' comes from the title of which English nobleman?",
+  "options": [
+   "Baron Sandwich",
+   "The Earl of Sandwich",
+   "The Duke of Sandwich",
+   "The Marquess of Sandwich"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'boycott' comes from the surname of a land agent in which country?",
+  "options": [
+   "Canada",
+   "Scotland",
+   "Ireland",
+   "Wales"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which knitted garment is named after a British earl who fought in the Crimean War?",
+  "options": [
+   "The cardigan",
+   "The jumper",
+   "The poncho",
+   "The gilet"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Wellington boots are named after a duke famous for which battle?",
+  "options": [
+   "Agincourt",
+   "Hastings",
+   "Trafalgar",
+   "Waterloo"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'silhouette' comes from the surname of a finance minister in which country?",
+  "options": [
+   "France",
+   "Portugal",
+   "Spain",
+   "Italy"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which musical instrument is named after its Belgian inventor, Adolphe?",
+  "options": [
+   "The saxophone",
+   "The tuba",
+   "The clarinet",
+   "The trombone"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which German engineer patented the compression-ignition engine that now bears his name?",
+  "options": [
+   "Nikolaus Otto",
+   "Karl Benz",
+   "Gottlieb Daimler",
+   "Rudolf Diesel"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "To 'pasteurise' milk is named after which scientist?",
+  "options": [
+   "Robert Koch",
+   "Alexander Fleming",
+   "Marie Curie",
+   "Louis Pasteur"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The guillotine takes its name from a doctor who proposed what?",
+  "options": [
+   "A hospital design",
+   "A new type of surgery",
+   "A quicker method of execution",
+   "A prison reform"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The 'leotard' is named after a French performer in which line of work?",
+  "options": [
+   "A trapeze artist",
+   "A ballet dancer",
+   "A circus clown",
+   "An opera singer"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The word 'nicotine' comes from the surname of a French diplomat who did what?",
+  "options": [
+   "Ran a tobacco farm",
+   "Invented the cigarette",
+   "Introduced tobacco to France",
+   "Discovered a plant"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "To 'mesmerise' someone comes from the name of a physician who practised what?",
+  "options": [
+   "Surgery without pain",
+   "Herbal medicine",
+   "An early form of hypnotism",
+   "Blood testing"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Granny Smith apple is named after a woman who grew it in which country?",
+  "options": [
+   "Canada",
+   "New Zealand",
+   "England",
+   "Australia"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The pavlova dessert is named after a performer in which art form?",
+  "options": [
+   "Ballet",
+   "Theatre",
+   "Film",
+   "Opera"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The lamington is generally said to be named after a governor of which Australian state?",
+  "options": [
+   "Victoria",
+   "Queensland",
+   "New South Wales",
+   "Tasmania"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'quarantine' comes from an Italian word for which number?",
+  "options": [
+   "Four hundred",
+   "Fourteen",
+   "Four",
+   "Forty"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'salary' is linked to a Latin word for which everyday substance?",
+  "options": [
+   "Bread",
+   "Wine",
+   "Silver",
+   "Salt"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'companion' comes from Latin words meaning 'with' what?",
+  "options": [
+   "Work",
+   "Wine",
+   "Friends",
+   "Bread"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'muscle' comes from a Latin word meaning what small animal?",
+  "options": [
+   "A little mouse",
+   "A little bird",
+   "A small fish",
+   "A small snake"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The word 'sarcophagus' comes from Greek words meaning what?",
+  "options": [
+   "Sacred house",
+   "Flesh eating",
+   "Sleeping place",
+   "Stone box"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The word 'hippopotamus' means what in Greek?",
+  "options": [
+   "Mud walker",
+   "Water ox",
+   "Big mouth",
+   "River horse"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the name 'rhinoceros' mean in Greek?",
+  "options": [
+   "Grey giant",
+   "Field beast",
+   "Thick skin",
+   "Nose horn"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'dinosaur' means what?",
+  "options": [
+   "Terrible lizard",
+   "Ancient beast",
+   "Bone monster",
+   "Giant lizard"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'octopus' comes from Greek meaning what?",
+  "options": [
+   "Sea spider",
+   "Eight foot",
+   "Ink maker",
+   "Eight arms"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'helicopter' comes from Greek words meaning what?",
+  "options": [
+   "Round blade",
+   "Sky machine",
+   "Spiral wing",
+   "Rising bird"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'photograph' comes from Greek words meaning what?",
+  "options": [
+   "True image",
+   "Still picture",
+   "Sun print",
+   "Light writing"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'democracy' comes from Greek meaning rule by whom?",
+  "options": [
+   "The wealthy",
+   "The people",
+   "The elders",
+   "One person"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'monarchy' comes from Greek meaning rule by how many?",
+  "options": [
+   "One",
+   "Many",
+   "Two",
+   "A few"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'utopia' was coined from Greek meaning what?",
+  "options": [
+   "Good land",
+   "No place",
+   "Happy home",
+   "New world"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The word 'panic' comes from the name of which Greek god?",
+  "options": [
+   "Zeus",
+   "Ares",
+   "Pan",
+   "Hermes"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'cereal' comes from the name of which Roman goddess?",
+  "options": [
+   "Ceres",
+   "Diana",
+   "Juno",
+   "Venus"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which month is named after the Roman god of doorways and beginnings?",
+  "options": [
+   "June",
+   "March",
+   "October",
+   "January"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which month is named after the Roman god of war?",
+  "options": [
+   "March",
+   "May",
+   "August",
+   "June"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which month is named after Julius Caesar?",
+  "options": [
+   "January",
+   "July",
+   "August",
+   "June"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which month is named after the emperor Augustus?",
+  "options": [
+   "April",
+   "September",
+   "October",
+   "August"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which day of the week is named after the Norse god Thor?",
+  "options": [
+   "Friday",
+   "Wednesday",
+   "Thursday",
+   "Tuesday"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which day of the week is named after the Norse god Odin, also called Woden?",
+  "options": [
+   "Monday",
+   "Thursday",
+   "Wednesday",
+   "Saturday"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which day of the week is named after a Roman god and planet?",
+  "options": [
+   "Saturday",
+   "Monday",
+   "Friday",
+   "Sunday"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A book of maps is called an 'atlas' after a figure from which mythology?",
+  "options": [
+   "Egyptian",
+   "Greek",
+   "Norse",
+   "Celtic"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'volcano' comes from the Roman god of what?",
+  "options": [
+   "Thunder",
+   "The sea",
+   "The underworld",
+   "Fire and metalworking"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'museum' comes from a Greek word for a place dedicated to whom?",
+  "options": [
+   "The philosophers",
+   "The Muses",
+   "The gods of war",
+   "The kings"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "To 'tantalise' someone comes from the name of a figure punished with what?",
+  "options": [
+   "A heavy burden",
+   "Food and water always out of reach",
+   "Eternal darkness",
+   "Endless work"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The word 'narcissism' comes from a figure who fell in love with what?",
+  "options": [
+   "His own voice",
+   "His own reflection",
+   "A goddess",
+   "A statue"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'chocolate' entered English from a language of which region?",
+  "options": [
+   "Indonesia",
+   "Mexico",
+   "India",
+   "West Africa"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which language gave English the word 'tomato'?",
+  "options": [
+   "Portuguese",
+   "Greek",
+   "Nahuatl, from Mexico",
+   "Italian"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'avocado' came into English from a language spoken in which country?",
+  "options": [
+   "Peru",
+   "Brazil",
+   "Mexico",
+   "Spain"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which language gave English the word 'siesta'?",
+  "options": [
+   "French",
+   "Italian",
+   "Portuguese",
+   "Spanish"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which language gave English the word 'ballet'?",
+  "options": [
+   "German",
+   "French",
+   "Italian",
+   "Russian"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which language gave English the word 'chauffeur'?",
+  "options": [
+   "French",
+   "German",
+   "Swedish",
+   "Dutch"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which language gave English the word 'spaghetti'?",
+  "options": [
+   "French",
+   "Greek",
+   "Italian",
+   "Spanish"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which language gave English the word 'graffiti'?",
+  "options": [
+   "Greek",
+   "French",
+   "Italian",
+   "Latin"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which language gave English the word 'umbrella'?",
+  "options": [
+   "Italian",
+   "Arabic",
+   "Dutch",
+   "Spanish"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which language gave English the word 'rucksack'?",
+  "options": [
+   "Danish",
+   "German",
+   "Polish",
+   "Dutch"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which language gave English the word 'poltergeist'?",
+  "options": [
+   "German",
+   "Czech",
+   "Dutch",
+   "Swedish"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which language gave English the word 'wanderlust'?",
+  "options": [
+   "German",
+   "Norwegian",
+   "Dutch",
+   "Finnish"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which language gave English the word 'doppelganger'?",
+  "options": [
+   "Dutch",
+   "German",
+   "Danish",
+   "Yiddish"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which language gave English the word 'karaoke'?",
+  "options": [
+   "Thai",
+   "Korean",
+   "Chinese",
+   "Japanese"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Japanese word 'karaoke' literally means what?",
+  "options": [
+   "Empty orchestra",
+   "Happy song",
+   "Singing room",
+   "Loud voice"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which language gave English the word 'tycoon'?",
+  "options": [
+   "Vietnamese",
+   "Korean",
+   "Japanese",
+   "Chinese"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'emoji' comes from Japanese words meaning what?",
+  "options": [
+   "Quick note",
+   "Small symbol",
+   "Picture and character",
+   "Happy face"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which language gave English the word 'origami'?",
+  "options": [
+   "Indonesian",
+   "Chinese",
+   "Japanese",
+   "Korean"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which language gave English the word 'sauna'?",
+  "options": [
+   "Swedish",
+   "Russian",
+   "Finnish",
+   "Norwegian"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'vodka' comes from a Slavic word meaning what?",
+  "options": [
+   "Clear fire",
+   "Winter drink",
+   "Little water",
+   "Strong grain"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which language gave English the word 'kiosk'?",
+  "options": [
+   "Hungarian",
+   "Arabic",
+   "Turkish",
+   "Greek"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which language gave English the word 'safari', meaning journey?",
+  "options": [
+   "Amharic",
+   "Swahili",
+   "Arabic",
+   "Zulu"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which language gave English the words 'trek' and 'meerkat'?",
+  "options": [
+   "German",
+   "Afrikaans",
+   "Zulu",
+   "Dutch"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which language gave English the word 'kayak'?",
+  "options": [
+   "Finnish",
+   "Inuit",
+   "Norwegian",
+   "Russian"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which language gave English the word 'anorak'?",
+  "options": [
+   "Inuit",
+   "Danish",
+   "Swedish",
+   "Icelandic"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The words 'raccoon' and 'moose' came into English from languages of which people?",
+  "options": [
+   "Celts",
+   "Dutch settlers",
+   "Vikings",
+   "Native North Americans"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which language family gave English the words 'hurricane' and 'canoe'?",
+  "options": [
+   "Caribbean Taino",
+   "West African",
+   "Polynesian",
+   "Filipino"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The word 'barbecue' came to English through Spanish from a Caribbean word for what?",
+  "options": [
+   "A wooden frame for cooking",
+   "A meat skewer",
+   "A fire pit",
+   "A feast"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which language gave English the word 'orangutan', meaning 'person of the forest'?",
+  "options": [
+   "Malay",
+   "Thai",
+   "Hindi",
+   "Tamil"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which language gave English the words 'amok' and 'gong'?",
+  "options": [
+   "Malay",
+   "Japanese",
+   "Chinese",
+   "Burmese"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which language gave English the words 'jungle' and 'bungalow'?",
+  "options": [
+   "Arabic",
+   "Hindi",
+   "Persian",
+   "Tamil"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which language gave English the word 'pyjamas'?",
+  "options": [
+   "Hindi and Persian",
+   "Turkish",
+   "Greek",
+   "Japanese"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'juggernaut' came into English from which language?",
+  "options": [
+   "Latin",
+   "Sanskrit",
+   "Greek",
+   "Arabic"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which language gave English the word 'curry'?",
+  "options": [
+   "Japanese",
+   "Portuguese",
+   "Tamil",
+   "Arabic"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which language gave English the words 'alcohol' and 'cotton'?",
+  "options": [
+   "Greek",
+   "Persian",
+   "Arabic",
+   "Latin"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which language gave English the word 'magazine', from a word for a storehouse?",
+  "options": [
+   "German",
+   "Arabic",
+   "Norse",
+   "Italian"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which language gave English the word 'admiral'?",
+  "options": [
+   "Dutch",
+   "Arabic",
+   "Latin",
+   "Norse"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which language gave English the word 'tea'?",
+  "options": [
+   "Hindi",
+   "Japanese",
+   "Chinese",
+   "Malay"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which language gave English the word 'kowtow'?",
+  "options": [
+   "Japanese",
+   "Chinese",
+   "Mongolian",
+   "Korean"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which language gave English the word 'robot', from a play written in the 1920s?",
+  "options": [
+   "Russian",
+   "Polish",
+   "Czech",
+   "German"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'robot' comes from a word meaning what?",
+  "options": [
+   "Helper",
+   "Metal man",
+   "Forced labour",
+   "Machine"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The word 'malaria' comes from Italian words meaning what?",
+  "options": [
+   "Swamp fever",
+   "Bad air",
+   "Night sickness",
+   "Hot blood"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'influenza' comes from an Italian word meaning what?",
+  "options": [
+   "Crowd",
+   "Influence",
+   "Weakness",
+   "Fever"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The word 'vaccine' comes from a Latin word for which animal?",
+  "options": [
+   "Cow",
+   "Horse",
+   "Goat",
+   "Sheep"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'candidate' comes from a Latin word meaning what?",
+  "options": [
+   "Speaker",
+   "White, from the white togas worn",
+   "Hopeful",
+   "Chosen"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The word 'sinister' comes from the Latin word for what?",
+  "options": [
+   "Left",
+   "Behind",
+   "Dark",
+   "Evil"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'alphabet' comes from the first two letters of which alphabet?",
+  "options": [
+   "Latin",
+   "Phoenician",
+   "Hebrew",
+   "Greek"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'denim' comes from the name of a city in which country?",
+  "options": [
+   "Belgium",
+   "France",
+   "Spain",
+   "Italy"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The word 'jeans' is linked to the name of which Italian city?",
+  "options": [
+   "Milan",
+   "Turin",
+   "Genoa",
+   "Venice"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The word 'bikini' comes from the name of what?",
+  "options": [
+   "A French beach",
+   "A Pacific atoll",
+   "An Italian island",
+   "A Greek goddess"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'marathon' comes from the name of a place in which country?",
+  "options": [
+   "Italy",
+   "Greece",
+   "Turkey",
+   "Egypt"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Something described as 'laconic' takes its name from which region of ancient Greece?",
+  "options": [
+   "Attica",
+   "Boeotia",
+   "Laconia",
+   "Arcadia"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'bedlam' comes from the nickname of what kind of institution?",
+  "options": [
+   "A hospital",
+   "A prison",
+   "A school",
+   "A market"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The word 'curfew' comes from French words meaning what?",
+  "options": [
+   "Night watch",
+   "Close the gate",
+   "Cover the fire",
+   "Quiet street"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The word 'nightmare' originally referred to what?",
+  "options": [
+   "A bad omen",
+   "An evil spirit that sat on sleepers",
+   "A dark night",
+   "A black horse"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'breakfast' literally describes doing what?",
+  "options": [
+   "Breaking bread",
+   "Baking bread",
+   "Starting fast",
+   "Breaking a fast"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'goodbye' is a shortened form of which old phrase?",
+  "options": [
+   "Go with good",
+   "God bless you",
+   "God be with ye",
+   "Good be your day"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the traditional collective noun for a group of crows?",
+  "options": [
+   "A murder",
+   "A pride",
+   "A gaggle",
+   "A parliament"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the traditional collective noun for a group of owls?",
+  "options": [
+   "A parliament",
+   "A murder",
+   "A congress",
+   "A senate"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "On the ground, a group of geese is traditionally called what?",
+  "options": [
+   "A gaggle",
+   "A pod",
+   "A pride",
+   "A clowder"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a group of lions called?",
+  "options": [
+   "A pride",
+   "A pack",
+   "A troop",
+   "A colony"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a group of whales or dolphins called?",
+  "options": [
+   "A shoal",
+   "A drove",
+   "A pride",
+   "A pod"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a large group of fish swimming together called?",
+  "options": [
+   "A brace",
+   "A litter",
+   "A school",
+   "A pack"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a group of bees in flight called?",
+  "options": [
+   "A skulk",
+   "A swarm",
+   "A shoal",
+   "A crash"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a group of ants living together called?",
+  "options": [
+   "A congress",
+   "A cast",
+   "A cluster",
+   "A colony"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a group of wolves called?",
+  "options": [
+   "A pride",
+   "A pack",
+   "A pod",
+   "A parliament"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a group of monkeys called?",
+  "options": [
+   "A pod",
+   "A troop",
+   "A prickle",
+   "A pride"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the collective noun for kangaroos, also used for a crowd in Australia?",
+  "options": [
+   "A bounce",
+   "A pride",
+   "A drove",
+   "A mob"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the traditional collective noun for a group of ravens?",
+  "options": [
+   "A malice",
+   "A murder",
+   "An unkindness",
+   "A shadow"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the traditional collective noun for starlings flying together?",
+  "options": [
+   "A murmuration",
+   "A whisper",
+   "A mutter",
+   "A flutter"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a group of larks traditionally called?",
+  "options": [
+   "A trill",
+   "A flight",
+   "A chorus",
+   "An exaltation"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a group of peacocks traditionally called?",
+  "options": [
+   "A splendour",
+   "A vanity",
+   "An ostentation",
+   "A display"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the collective noun for a group of flamingos?",
+  "options": [
+   "A parade",
+   "A flourish",
+   "A blush",
+   "A flamboyance"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a group of crocodiles basking together called?",
+  "options": [
+   "A bask",
+   "A snap",
+   "A bath",
+   "A lurk"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a group of jellyfish called?",
+  "options": [
+   "A drift",
+   "A blob",
+   "A sting",
+   "A smack"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a group of hippopotamuses in water called?",
+  "options": [
+   "A wallow",
+   "A rumble",
+   "A crash",
+   "A bloat"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a group of rhinoceroses called?",
+  "options": [
+   "A charge",
+   "A thunder",
+   "A stampede",
+   "A crash"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a group of zebras called?",
+  "options": [
+   "A blur",
+   "A flicker",
+   "A dazzle",
+   "A stripe"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a group of giraffes called?",
+  "options": [
+   "A stretch",
+   "A tower",
+   "A canopy",
+   "A crane"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a group of leopards called?",
+  "options": [
+   "A pounce",
+   "A leap",
+   "A spot",
+   "A prowl"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a group of foxes called?",
+  "options": [
+   "A cunning",
+   "A den",
+   "A slink",
+   "A skulk"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a group of otters playing on land called?",
+  "options": [
+   "A romp",
+   "A cackle",
+   "A skulk",
+   "A prickle"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a group of porcupines called?",
+  "options": [
+   "A prickle",
+   "A point",
+   "A bristle",
+   "A spike"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a group of hyenas called?",
+  "options": [
+   "A snicker",
+   "A cackle",
+   "A chuckle",
+   "A giggle"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a group of cheetahs called?",
+  "options": [
+   "A sprint",
+   "A blur",
+   "A dash",
+   "A coalition"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a group of mice called?",
+  "options": [
+   "A nibble",
+   "A muddle",
+   "A mischief",
+   "A scurry"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a group of ferrets called?",
+  "options": [
+   "A bustle",
+   "A fidget",
+   "A scamper",
+   "A business"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a group of cats living together called?",
+  "options": [
+   "A cuddle",
+   "A purr",
+   "A clowder",
+   "A prowl"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a group of moles called?",
+  "options": [
+   "A burrow",
+   "A tunnel",
+   "A labour",
+   "A dig"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a group of toads called?",
+  "options": [
+   "A croak",
+   "A tangle",
+   "A hop",
+   "A knot"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a group of frogs traditionally called?",
+  "options": [
+   "A knot",
+   "A parade",
+   "An army",
+   "A hop"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a group of penguins nesting on land called?",
+  "options": [
+   "A rookery",
+   "A raft",
+   "A parade",
+   "A tuxedo"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a group of parrots called?",
+  "options": [
+   "A palette",
+   "A pandemonium",
+   "A racket",
+   "A chorus"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a group of woodpeckers called?",
+  "options": [
+   "A rap",
+   "A descent",
+   "A drumming",
+   "A knock"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a group of finches called?",
+  "options": [
+   "A chime",
+   "A charm",
+   "A trill",
+   "A cheer"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a group of oysters growing together called?",
+  "options": [
+   "A patch",
+   "A reef",
+   "A bed",
+   "A nest"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a group of camels crossing the desert traditionally called?",
+  "options": [
+   "A file",
+   "A convoy",
+   "A caravan",
+   "A drift"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a pair of oxen harnessed together called?",
+  "options": [
+   "A tether",
+   "A hitch",
+   "A brace",
+   "A yoke"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the collective term for all the ships of one country's navy?",
+  "options": [
+   "A muster",
+   "A harbour",
+   "A fleet",
+   "A parade"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a group of puppies born at the same time called?",
+  "options": [
+   "A litter",
+   "A clutch",
+   "A pod",
+   "A brood"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a group of singers performing together called?",
+  "options": [
+   "A quartet",
+   "A choir",
+   "A chorus line",
+   "A troupe"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a group of actors or dancers who perform together called?",
+  "options": [
+   "A choir",
+   "A troupe",
+   "A troop",
+   "A crew"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which of these army groups is the smallest?",
+  "options": [
+   "A division",
+   "A regiment",
+   "A platoon",
+   "A company"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a group of twelve people deciding a verdict called?",
+  "options": [
+   "A jury",
+   "A tribunal",
+   "A bench",
+   "A panel"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a set of stairs between two floors called?",
+  "options": [
+   "A series",
+   "A ladder",
+   "A flight",
+   "A run"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a group of drawers in one piece of furniture called?",
+  "options": [
+   "A set",
+   "A chest",
+   "A bank",
+   "A stack"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a group of loaves baked at the same time called?",
+  "options": [
+   "A brace",
+   "A batch",
+   "A bunch",
+   "A bundle"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a group of eggs laid at one time called?",
+  "options": [
+   "A batch",
+   "A clutch",
+   "A brood",
+   "A litter"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the French-derived word for a bunch of flowers given as a gift?",
+  "options": [
+   "A bouquet",
+   "A corsage",
+   "A garland",
+   "A wreath"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a group of stars forming a recognised pattern called?",
+  "options": [
+   "A constellation",
+   "A cloud",
+   "A nebula",
+   "A galaxy"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a long connected line of mountains called?",
+  "options": [
+   "A range",
+   "A plateau",
+   "A gorge",
+   "A ridge"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a group of islands called?",
+  "options": [
+   "A cay",
+   "A lagoon",
+   "A peninsula",
+   "An archipelago"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the plastic or metal tip on the end of a shoelace called?",
+  "options": [
+   "A ferrule",
+   "A tittle",
+   "An aglet",
+   "A grommet"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the metal band that holds the rubber on the end of a pencil called?",
+  "options": [
+   "A ferrule",
+   "An aglet",
+   "A shank",
+   "A collar"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the dot above a lower case i or j called?",
+  "options": [
+   "A speck",
+   "A pip",
+   "A tittle",
+   "A jot"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the groove between your nose and your top lip called?",
+  "options": [
+   "The philtrum",
+   "The septum",
+   "The frenulum",
+   "The columella"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the white half moon at the base of a fingernail called?",
+  "options": [
+   "The cuticle",
+   "The crescent",
+   "The lunula",
+   "The matrix"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the dip in the bottom of a wine bottle called?",
+  "options": [
+   "The dimple",
+   "The keel",
+   "The punt",
+   "The well"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the wire cage over a champagne cork called?",
+  "options": [
+   "A cradle",
+   "A collar",
+   "A muselet",
+   "A cage clip"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the cardboard sleeve around a hot takeaway coffee cup called?",
+  "options": [
+   "A zarf",
+   "A cozy",
+   "A wrap",
+   "A sleeve ring"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What are the prongs of a fork called?",
+  "options": [
+   "Teeth",
+   "Tines",
+   "Picks",
+   "Spikes"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the crossbar you step on in a ladder called?",
+  "options": [
+   "A stave",
+   "A tread",
+   "A rung",
+   "A step plate"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the handle of a sword called?",
+  "options": [
+   "The scabbard",
+   "The hilt",
+   "The tang",
+   "The blade"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the ridges around the edge of a coin called?",
+  "options": [
+   "Fluting",
+   "Knurls",
+   "Notching",
+   "Reeding"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the small piece of skin at the base of a fingernail called?",
+  "options": [
+   "The cuticle",
+   "The quick",
+   "The bed",
+   "The lunula"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the earthy smell of rain falling on dry ground called?",
+  "options": [
+   "Petrichor",
+   "Ozone",
+   "Humus",
+   "Loam"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the punctuation mark made of three full stops called?",
+  "options": [
+   "A colon",
+   "A pause point",
+   "A caesura",
+   "An ellipsis"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the star shaped punctuation mark called?",
+  "options": [
+   "An asterisk",
+   "A dagger",
+   "A caret",
+   "An asterism"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the mark used to show where something should be inserted, shaped like a small roof?",
+  "options": [
+   "A chevron",
+   "A caret",
+   "An accent",
+   "A wedge"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the small hook written under the letter c in French words like 'façade' called?",
+  "options": [
+   "A curl",
+   "A tail mark",
+   "A cedilla",
+   "A cedille loop"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the accent mark shaped like a small pointed hat called?",
+  "options": [
+   "A breve",
+   "A grave",
+   "An acute",
+   "A circumflex"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the general name for accent marks added to letters?",
+  "options": [
+   "Diacritics",
+   "Serifs",
+   "Ligatures",
+   "Kerns"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What are the small strokes at the ends of letters in some typefaces called?",
+  "options": [
+   "Stems",
+   "Terminals",
+   "Serifs",
+   "Kerns"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is it called when two letters are joined into one character, as in 'æ'?",
+  "options": [
+   "A blend",
+   "A diphthong",
+   "A ligature",
+   "A digraph"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the adjusting of space between letters in typesetting called?",
+  "options": [
+   "Setting",
+   "Leading",
+   "Kerning",
+   "Justifying"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the tip of a fountain pen called?",
+  "options": [
+   "The quill",
+   "The stylus",
+   "The point",
+   "The nib"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the combined question mark and exclamation mark called?",
+  "options": [
+   "A doubling mark",
+   "A queryclaim",
+   "An interrobang",
+   "An exclamation query"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the punctuation mark that joins words like 'well-known' called?",
+  "options": [
+   "A hyphen",
+   "A dash",
+   "A bridge",
+   "A slash"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are round brackets also known as?",
+  "options": [
+   "Braces",
+   "Parentheses",
+   "Chevrons",
+   "Angles"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are curly brackets also called?",
+  "options": [
+   "Brackets proper",
+   "Carets",
+   "Braces",
+   "Parentheses"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the small raised number used for a footnote reference called?",
+  "options": [
+   "A subscript",
+   "An index mark",
+   "A superscript",
+   "A caret"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the study of place names called?",
+  "options": [
+   "Toponymy",
+   "Cartography",
+   "Etymology",
+   "Onomastics"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the study of handwriting called?",
+  "options": [
+   "Graphology",
+   "Orthography",
+   "Calligraphy",
+   "Palaeography"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the art of beautiful handwriting called?",
+  "options": [
+   "Typography",
+   "Calligraphy",
+   "Graphology",
+   "Lettering script"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a word that can mean its own opposite, like 'sanction', called?",
+  "options": [
+   "A homonym",
+   "A contronym",
+   "An antonym",
+   "A synonym"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the grammatical name for the words 'a', 'an' and 'the'?",
+  "options": [
+   "Prepositions",
+   "Articles",
+   "Adverbs",
+   "Pronouns"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name for a word that stands for a whole group, like 'flock'?",
+  "options": [
+   "An abstract noun",
+   "A proper noun",
+   "A collective noun",
+   "A common noun"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a shortened word such as 'fridge' from 'refrigerator' called?",
+  "options": [
+   "A contraction",
+   "A clipping",
+   "An abbreviation of sound",
+   "An acronym"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the small dangling piece of flesh at the back of the throat called?",
+  "options": [
+   "The palate",
+   "The epiglottis",
+   "The tonsil",
+   "The uvula"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the small metal ring that reinforces a hole in fabric called?",
+  "options": [
+   "A grommet",
+   "A rivet",
+   "A stud",
+   "A clasp"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "On a hammer, what is the name of the rounded end opposite the flat striking face?",
+  "options": [
+   "The claw",
+   "The peen",
+   "The cheek",
+   "The poll"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the flat base that a wine glass stands on called?",
+  "options": [
+   "The foot",
+   "The rim",
+   "The stem",
+   "The bowl"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name for the little bumps that appear on skin in the cold?",
+  "options": [
+   "Goose bumps",
+   "Skin pips",
+   "Cold pores",
+   "Chill spots"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name for a group of words that includes a subject and a verb?",
+  "options": [
+   "A clue",
+   "A sentence fragment",
+   "A phrase",
+   "A clause"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the space between your eyebrows called?",
+  "options": [
+   "The brow ridge",
+   "The temple",
+   "The philtrum",
+   "The glabella"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which type of word describes a noun, such as 'tall' or 'blue'?",
+  "options": [
+   "An adverb",
+   "An adjective",
+   "A pronoun",
+   "A conjunction"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which type of word stands in place of a noun, such as 'she' or 'it'?",
+  "options": [
+   "An adjective",
+   "A preposition",
+   "An article",
+   "A pronoun"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which type of word joins two parts of a sentence, such as 'and' or 'but'?",
+  "options": [
+   "An interjection",
+   "A conjunction",
+   "A preposition",
+   "A pronoun"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which type of word shows position or relationship, such as 'under' or 'between'?",
+  "options": [
+   "An adjective",
+   "A preposition",
+   "A conjunction",
+   "An adverb"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which type of word is a sudden exclamation like 'ouch' or 'wow'?",
+  "options": [
+   "A determiner",
+   "An adverb",
+   "An interjection",
+   "A modal"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many parts of speech are traditionally taught in English grammar?",
+  "options": [
+   "Six",
+   "Eight",
+   "Twelve",
+   "Ten"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the sentence 'the dog chased the cat', what is 'the dog'?",
+  "options": [
+   "The predicate",
+   "The subject",
+   "The object",
+   "The verb"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a group of words without a subject and verb, such as 'in the morning', called?",
+  "options": [
+   "A clause",
+   "A predicate",
+   "A phrase",
+   "A sentence"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name for the form of a verb that begins with 'to', as in 'to run'?",
+  "options": [
+   "The participle",
+   "The infinitive",
+   "The imperative",
+   "The gerund"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is it called when a word is placed between 'to' and the verb, as in 'to boldly go'?",
+  "options": [
+   "A dangling modifier",
+   "A split infinitive",
+   "A double negative",
+   "A misplaced clause"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name for a verb form ending in 'ing' used as a noun, as in 'swimming is fun'?",
+  "options": [
+   "A gerund",
+   "An adverb",
+   "An infinitive",
+   "A participle"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In 'the ball was kicked by the boy', which voice is being used?",
+  "options": [
+   "Subjunctive",
+   "Active",
+   "Imperative",
+   "Passive"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In 'the boy kicked the ball', which voice is being used?",
+  "options": [
+   "Reflexive",
+   "Active",
+   "Conditional",
+   "Passive"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which tense does 'she will walk' use?",
+  "options": [
+   "Past",
+   "Perfect",
+   "Present",
+   "Future"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which tense does 'they had finished' use?",
+  "options": [
+   "Past perfect",
+   "Present perfect",
+   "Future perfect",
+   "Simple past"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the past tense of the verb 'to go'?",
+  "options": [
+   "Going",
+   "Went",
+   "Gone",
+   "Goed"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the past tense of 'to bring'?",
+  "options": [
+   "Bringed",
+   "Brought",
+   "Brung",
+   "Brang"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the past tense of 'to swim'?",
+  "options": [
+   "Swam",
+   "Swimmed",
+   "Swom",
+   "Swum"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which word is the superlative of 'good'?",
+  "options": [
+   "Goodest",
+   "More good",
+   "Better",
+   "Best"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which word is the comparative of 'bad'?",
+  "options": [
+   "Worse",
+   "Badder",
+   "Worst",
+   "More bad"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these is a modal verb?",
+  "options": [
+   "Must",
+   "Runs",
+   "Table",
+   "Quickly"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'helping verb' also called?",
+  "options": [
+   "An auxiliary verb",
+   "A linking verb",
+   "A phrasal verb",
+   "A main verb"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What kind of verb takes a direct object?",
+  "options": [
+   "Transitive",
+   "Intransitive",
+   "Auxiliary",
+   "Reflexive"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What kind of sentence gives a command, such as 'shut the door'?",
+  "options": [
+   "Declarative",
+   "Interrogative",
+   "Exclamatory",
+   "Imperative"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What kind of sentence asks a question?",
+  "options": [
+   "Declarative",
+   "Imperative",
+   "Conditional",
+   "Interrogative"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What kind of sentence simply makes a statement?",
+  "options": [
+   "Subjunctive",
+   "Declarative",
+   "Interrogative",
+   "Imperative"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is wrong with the sentence 'I did not do nothing'?",
+  "options": [
+   "It uses the wrong tense",
+   "It contains a double negative",
+   "It has no subject",
+   "It has no verb"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'dangling modifier'?",
+  "options": [
+   "A describing phrase attached to the wrong thing",
+   "An extra adjective",
+   "A repeated word",
+   "A missing full stop"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the comma before 'and' in a list of three or more items often called?",
+  "options": [
+   "The final stop",
+   "The joining comma",
+   "The Cambridge comma",
+   "The Oxford comma"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which punctuation mark introduces a list or an explanation?",
+  "options": [
+   "A full stop",
+   "A comma",
+   "A dash",
+   "A colon"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the full stop called in American English?",
+  "options": [
+   "A stop mark",
+   "A dot",
+   "A period",
+   "A point"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are quotation marks also called in Australian English?",
+  "options": [
+   "Inverted commas",
+   "Talking marks",
+   "Quote hooks",
+   "Speech dots"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which punctuation mark ends a sentence showing strong feeling?",
+  "options": [
+   "An exclamation mark",
+   "A question mark",
+   "A colon",
+   "A semicolon"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which punctuation mark is used to separate items in a simple list?",
+  "options": [
+   "A comma",
+   "A hyphen",
+   "A colon",
+   "A full stop"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The terms 'upper case' and 'lower case' come from what?",
+  "options": [
+   "Legal documents",
+   "Trays of type used by printers",
+   "Church records",
+   "Typewriter keys"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a 'syllable'?",
+  "options": [
+   "A short word",
+   "A rhyming sound",
+   "A group of letters",
+   "A single unit of pronunciation in a word"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many syllables are in the word 'Australia'?",
+  "options": [
+   "Three",
+   "Five",
+   "Four",
+   "Two"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many letters of the English alphabet are usually counted as vowels?",
+  "options": [
+   "Seven",
+   "Five",
+   "Four",
+   "Six"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a consonant?",
+  "options": [
+   "Any silent letter",
+   "Any doubled letter",
+   "Any letter that is not a vowel",
+   "Any capital letter"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'diphthong'?",
+  "options": [
+   "A repeated word",
+   "Two consonants together",
+   "Two vowel sounds run together in one syllable",
+   "A silent letter"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the 'schwa'?",
+  "options": [
+   "The neutral vowel sound in unstressed syllables",
+   "A silent consonant",
+   "A rolled r",
+   "A long vowel"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the name for the beat or pattern of stresses in poetry?",
+  "options": [
+   "Verse",
+   "Rhyme",
+   "Stanza",
+   "Metre"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the general name for a group of lines in a poem?",
+  "options": [
+   "A couplet",
+   "A stanza",
+   "A refrain",
+   "A canto"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a pair of rhyming lines called?",
+  "options": [
+   "A quatrain",
+   "A stanza",
+   "A couplet",
+   "A sonnet"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many lines does a sonnet traditionally have?",
+  "options": [
+   "Fourteen",
+   "Sixteen",
+   "Twelve",
+   "Ten"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is poetry with no rhyme and no regular metre called?",
+  "options": [
+   "Doggerel",
+   "Blank verse",
+   "Balladry",
+   "Free verse"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a 'prefix'?",
+  "options": [
+   "A group of letters added to the start of a word",
+   "A joining word",
+   "The root of a word",
+   "A group added to the end"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'suffix'?",
+  "options": [
+   "A group of letters added to the end of a word",
+   "A short form",
+   "A group added to the start",
+   "A silent letter"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the prefix 'anti' mean?",
+  "options": [
+   "Before",
+   "After",
+   "Against",
+   "Around"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the prefix 'pre' mean?",
+  "options": [
+   "Under",
+   "Against",
+   "Before",
+   "After"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the prefix 'post' mean?",
+  "options": [
+   "Below",
+   "Beside",
+   "After",
+   "Before"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the prefix 'sub' mean?",
+  "options": [
+   "Between",
+   "Under",
+   "Around",
+   "Over"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the prefix 'trans' mean?",
+  "options": [
+   "Under",
+   "Against",
+   "Together",
+   "Across"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the prefix 'circum' mean, as in circumference?",
+  "options": [
+   "Around",
+   "Beyond",
+   "Through",
+   "Under"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the prefix 'omni' mean, as in omnivore?",
+  "options": [
+   "Half",
+   "All",
+   "Many but not all",
+   "None"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the suffix 'ology' indicate?",
+  "options": [
+   "The love of something",
+   "The study of something",
+   "The fear of something",
+   "The making of something"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the suffix 'phile' indicate?",
+  "options": [
+   "A lover of something",
+   "A hater of something",
+   "A maker of something",
+   "A fear of something"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the base word that prefixes and suffixes attach to called?",
+  "options": [
+   "The core letter",
+   "The trunk",
+   "The root",
+   "The stem cell"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a word made by joining two whole words, like 'football', called?",
+  "options": [
+   "An acronym",
+   "A contraction",
+   "A compound word",
+   "A portmanteau"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the plural of 'child'?",
+  "options": [
+   "Childes",
+   "Childs",
+   "Children",
+   "Childrens"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the plural of 'tooth'?",
+  "options": [
+   "Tooths",
+   "Toothes",
+   "Teeths",
+   "Teeth"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the plural of 'foot' when talking about body parts?",
+  "options": [
+   "Feets",
+   "Footes",
+   "Foots",
+   "Feet"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the plural of 'person' in everyday use?",
+  "options": [
+   "People",
+   "Peoples",
+   "Personnes",
+   "Personen"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the plural of 'sheep'?",
+  "options": [
+   "Sheepen",
+   "Sheep",
+   "Shoop",
+   "Sheeps"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the plural of 'ox'?",
+  "options": [
+   "Oxes",
+   "Ox",
+   "Oxen",
+   "Oxi"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the plural of 'crisis'?",
+  "options": [
+   "Crises",
+   "Crisi",
+   "Crisiss",
+   "Crisises"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the plural of 'criterion'?",
+  "options": [
+   "Criterium",
+   "Criteria",
+   "Criterias",
+   "Criterions"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the plural of 'phenomenon'?",
+  "options": [
+   "Phenomena",
+   "Phenomeni",
+   "Phenomenons",
+   "Phenomenae"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the singular of 'bacteria'?",
+  "options": [
+   "Bacteri",
+   "Bacteria",
+   "Bacterion",
+   "Bacterium"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the plural of 'knife'?",
+  "options": [
+   "Knives",
+   "Knifen",
+   "Knifes",
+   "Knive"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the plural of 'leaf'?",
+  "options": [
+   "Leafes",
+   "Leafs",
+   "Leafen",
+   "Leaves"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the plural of 'potato'?",
+  "options": [
+   "Potatos",
+   "Potatoes",
+   "Potatoe",
+   "Potatoi"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the plural of 'piano'?",
+  "options": [
+   "Pianon",
+   "Piani",
+   "Pianos",
+   "Pianoes"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the plural of 'brother-in-law'?",
+  "options": [
+   "Brothers-in-law",
+   "Brother-in-laws",
+   "Brothers-in-laws",
+   "Brother-in-law"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the plural of 'passer-by'?",
+  "options": [
+   "Passer-bys",
+   "Passers-bys",
+   "Passers-by",
+   "Passer-by"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which word is the plural of 'die', the small cube used in games?",
+  "options": [
+   "Died",
+   "Dyes",
+   "Dice",
+   "Dies"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Australian English, the verb meaning to rehearse is spelt how?",
+  "options": [
+   "Practis, with one S",
+   "Practice, with a C",
+   "Practise, with an S",
+   "Practize, with a Z"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Australian English, the noun for the card that lets you drive is spelt how?",
+  "options": [
+   "Lisence",
+   "License, with an S",
+   "Licens, with no E",
+   "Licence, with a C"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Australian English, what does 'kerb' spelt with a K mean?",
+  "options": [
+   "A curved line",
+   "A type of stone",
+   "The edge of a footpath",
+   "To hold back"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the word 'stationery' ending in E-R-Y mean?",
+  "options": [
+   "A railway building",
+   "A fixed price",
+   "Writing materials",
+   "Not moving"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which word means to influence something, spelt with an A at the start?",
+  "options": [
+   "Efect",
+   "Affect",
+   "Affekt",
+   "Effect"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which word means praise, spelt with an I in the middle?",
+  "options": [
+   "Complement",
+   "Compliement",
+   "Compliment",
+   "Complament"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'principle', ending in P-L-E, means what?",
+  "options": [
+   "The head of a school",
+   "The first in rank",
+   "A sum of money",
+   "A rule or belief"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which word is correct before a countable noun such as 'people'?",
+  "options": [
+   "Lesser",
+   "Less",
+   "Fewer",
+   "Least"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In formal grammar, which word is the object form?",
+  "options": [
+   "Whoever",
+   "Who",
+   "Whose",
+   "Whom"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'its' without an apostrophe is used to show what?",
+  "options": [
+   "A plural",
+   "A shortening of 'it is'",
+   "A question",
+   "Possession"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the contraction 'they're' stand for?",
+  "options": [
+   "They are",
+   "There is",
+   "Their own",
+   "They were"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Australian spelling of the word for a soft metal used in drink cans?",
+  "options": [
+   "Aluminion",
+   "Alumium",
+   "Aluminum",
+   "Aluminium"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Australian English, how is a written order to a bank for money spelt?",
+  "options": [
+   "Cheque",
+   "Check",
+   "Chequ",
+   "Checque"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Australian English, which spelling means a floor of a building?",
+  "options": [
+   "Story",
+   "Storrey",
+   "Storie",
+   "Storey"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Australian English, what is beer served straight from the keg called?",
+  "options": [
+   "Drought",
+   "Draghte",
+   "Draft",
+   "Draught"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian spelling is used for the colour between black and white?",
+  "options": [
+   "Grey",
+   "Greigh",
+   "Gray",
+   "Graye"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which is the Australian spelling for rings and necklaces?",
+  "options": [
+   "Jewlery",
+   "Jewelry",
+   "Jewellery",
+   "Jewelery"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Australian spelling for the rubber part of a car wheel?",
+  "options": [
+   "Tyre",
+   "Tire",
+   "Tyer",
+   "Tier"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is specialised vocabulary used within a trade or profession called?",
+  "options": [
+   "Slang",
+   "Idiom",
+   "Jargon",
+   "Accent"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the term for the way a group of people pronounce their language?",
+  "options": [
+   "An accent",
+   "A dialect",
+   "A grammar",
+   "A register"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the term for a whole variety of a language with its own words and grammar?",
+  "options": [
+   "A dialect",
+   "An accent",
+   "A slang",
+   "A jargon"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'bough', spelt B-O-U-G-H, means what?",
+  "options": [
+   "A branch of a tree",
+   "The front of a ship",
+   "A ribbon tie",
+   "A polite bend forward"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'ewe', spelt E-W-E, means what?",
+  "options": [
+   "A greeting",
+   "A female sheep",
+   "A type of tree",
+   "A river bend"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'yew', spelt Y-E-W, is what?",
+  "options": [
+   "A tree",
+   "A young bird",
+   "A female sheep",
+   "A small boat"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'wry', spelt W-R-Y, describes what?",
+  "options": [
+   "Dry, ironic humour",
+   "A type of grain",
+   "A twisted rope",
+   "A loud laugh"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'hoarse', spelt H-O-A-R-S-E, describes what?",
+  "options": [
+   "A rough or croaky voice",
+   "A loud shout",
+   "A large animal",
+   "A frozen surface"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'mane', spelt M-A-N-E, means what?",
+  "options": [
+   "The long hair on a horse's neck",
+   "A water pipe",
+   "The most important thing",
+   "A road"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'reign', spelt R-E-I-G-N, means what?",
+  "options": [
+   "A strap for a horse",
+   "Falling water",
+   "The rule of a monarch",
+   "A leash"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'rein', spelt R-E-I-N, means what?",
+  "options": [
+   "A royal robe",
+   "Falling water",
+   "The rule of a king",
+   "A strap used to control a horse"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'pique', spelt P-I-Q-U-E, means what?",
+  "options": [
+   "A sharp point",
+   "A feeling of irritation",
+   "A quick look",
+   "A mountain top"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The word 'pare', spelt P-A-R-E, means what?",
+  "options": [
+   "A parent",
+   "A set of two",
+   "To trim or peel",
+   "A fruit"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'sole', spelt S-O-L-E, can mean what?",
+  "options": [
+   "A type of bread",
+   "A small bowl",
+   "A person's spirit",
+   "The bottom of a foot"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'currant', spelt C-U-R-R-A-N-T, is what?",
+  "options": [
+   "A small dried fruit",
+   "An electrical flow",
+   "A flow of water",
+   "A recent event"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'coarse', spelt C-O-A-R-S-E, means what?",
+  "options": [
+   "A route or path",
+   "Rough in texture",
+   "A racetrack",
+   "A meal at dinner"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'knead', spelt K-N-E-A-D, means what?",
+  "options": [
+   "To kneel down",
+   "To work dough with your hands",
+   "To join together",
+   "To require something"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'grate', spelt G-R-A-T-E, can mean what?",
+  "options": [
+   "Very good",
+   "A large amount",
+   "A metal frame in a fireplace",
+   "A heavy weight"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'hare', spelt H-A-R-E, is what?",
+  "options": [
+   "An animal like a large rabbit",
+   "A listening organ",
+   "A rented vehicle",
+   "Strands growing on the head"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'heel', spelt H-E-E-L, means what?",
+  "options": [
+   "A steep slope",
+   "A wheel rim",
+   "To make well",
+   "The back part of the foot"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'seam', spelt S-E-A-M, means what?",
+  "options": [
+   "To appear to be",
+   "A line where two pieces are joined",
+   "A team of horses",
+   "A cloud of vapour"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'vane', spelt V-A-N-E, is what?",
+  "options": [
+   "A small van",
+   "A blood vessel",
+   "Excessive pride",
+   "A blade that turns in the wind"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'vein', spelt V-E-I-N, is what?",
+  "options": [
+   "A small path",
+   "Excessive pride",
+   "A blood vessel",
+   "A weather blade"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'suite', spelt S-U-I-T-E, means what?",
+  "options": [
+   "A set of rooms or furniture",
+   "A formal outfit",
+   "A short cut",
+   "Pleasant to taste"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'rite', spelt R-I-T-E, means what?",
+  "options": [
+   "Correct",
+   "A ceremony or ritual",
+   "To put words on paper",
+   "A legal claim"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'site', spelt S-I-T-E, means what?",
+  "options": [
+   "To quote a source",
+   "The ability to see",
+   "A view",
+   "A place or location"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'cite', spelt C-I-T-E, means what?",
+  "options": [
+   "To sit down",
+   "To quote a source",
+   "A place or location",
+   "The ability to see"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'tide', spelt T-I-D-E, means what?",
+  "options": [
+   "Fastened with rope",
+   "The rise and fall of the sea",
+   "A neat arrangement",
+   "A small stream"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'principal', spelt P-A-L at the end, can mean what?",
+  "options": [
+   "The head of a school",
+   "A moral standard",
+   "A first draft",
+   "A rule or belief"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'discreet', spelt with a double E in the middle, means what?",
+  "options": [
+   "Careful not to attract attention",
+   "Rude",
+   "Broken into parts",
+   "Separate and distinct"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The word 'bow' has two pronunciations. Which meaning rhymes with 'go'?",
+  "options": [
+   "A branch of a tree",
+   "The front of a ship",
+   "Bending at the waist",
+   "A knot tied in ribbon"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'tear' can mean a drop from the eye or what else?",
+  "options": [
+   "To hurry",
+   "To rip something",
+   "To shout",
+   "To repair something"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'wind' can mean moving air or what else?",
+  "options": [
+   "To open widely",
+   "To lose a game",
+   "To turn or coil something",
+   "To hurry along"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'live' can mean 'to be alive' or what else?",
+  "options": [
+   "To leave",
+   "Very old",
+   "Happening right now, as in broadcasting",
+   "Very quickly"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'close' can mean 'to shut' or what else?",
+  "options": [
+   "Heavy",
+   "Near",
+   "Loud",
+   "Empty"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'desert' can mean a dry region or what else?",
+  "options": [
+   "To deserve",
+   "To dry out",
+   "To abandon",
+   "A sweet course"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'refuse' can mean 'to say no' or what else?",
+  "options": [
+   "To melt again",
+   "To return",
+   "To repeat",
+   "Rubbish"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'row' can mean a line of things or what else?",
+  "options": [
+   "A round shape",
+   "A noisy argument",
+   "A small road",
+   "A rope"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'bass' can mean a low sound or what else?",
+  "options": [
+   "A fish",
+   "A base of a statue",
+   "A basket",
+   "A drum"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name for words spelt the same but with different meanings and often different sounds?",
+  "options": [
+   "Synonyms",
+   "Homographs",
+   "Homophones",
+   "Acronyms"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which of these everyday words is a palindrome?",
+  "options": [
+   "Garden",
+   "Window",
+   "Table",
+   "Level"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these small boats is a palindrome?",
+  "options": [
+   "Canoe",
+   "Paddle",
+   "Raft",
+   "Kayak"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these detection systems is a palindrome?",
+  "options": [
+   "Beacon",
+   "Sonar",
+   "Laser",
+   "Radar"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these machine parts is a palindrome?",
+  "options": [
+   "Rotor",
+   "Turbine",
+   "Engine",
+   "Piston"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these council words is a palindrome?",
+  "options": [
+   "Council",
+   "Mayor",
+   "Region",
+   "Civic"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which of these polite forms of address is a palindrome?",
+  "options": [
+   "Miss",
+   "Lady",
+   "Madam",
+   "Sir"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these times of day is a palindrome?",
+  "options": [
+   "Noon",
+   "Dusk",
+   "Night",
+   "Dawn"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these words beginning with R is a palindrome?",
+  "options": [
+   "Refer",
+   "Return",
+   "Repeat",
+   "Reject"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which of these women's names is a palindrome?",
+  "options": [
+   "Hannah",
+   "Hayley",
+   "Harriet",
+   "Helen"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these men's names is a palindrome?",
+  "options": [
+   "Oliver",
+   "Oscar",
+   "Otto",
+   "Owen"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which South Australian seaside suburb is a well known palindrome?",
+  "options": [
+   "Glenelg",
+   "Semaphore",
+   "Brighton",
+   "Henley"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which famous palindrome sentence begins 'A man, a plan, a canal'?",
+  "options": [
+   "Havana",
+   "Suez",
+   "Sahara",
+   "Panama"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which palindrome is traditionally said to be Adam's first words to Eve?",
+  "options": [
+   "Eve, I am Adam",
+   "Hello Eve",
+   "Adam am I",
+   "Madam, I'm Adam"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The palindrome 'Never odd or' finishes with which word?",
+  "options": [
+   "Even",
+   "Ever",
+   "Over",
+   "Under"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Rearranged, the letters of 'DUSTY' spell which word?",
+  "options": [
+   "STAND",
+   "STUDY",
+   "STURDY",
+   "DUSTED"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Rearranged, the letters of 'ELBOW' spell which word?",
+  "options": [
+   "ABOVE",
+   "BLOOM",
+   "BELOW",
+   "BOWLS"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Rearranged, the letters of 'TEACH' spell which word?",
+  "options": [
+   "CHASE",
+   "CHART",
+   "CHEAT",
+   "CHEST"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Rearranged, the letters of 'ANGEL' spell which word?",
+  "options": [
+   "LEGAL",
+   "GLEAN",
+   "GLOBE",
+   "GRAIN"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Rearranged, the letters of 'SILENT' spell which word?",
+  "options": [
+   "LISTEN",
+   "LINENS",
+   "SILVER",
+   "LOOSEN"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Rearranged, the letters of 'HEART' spell which word?",
+  "options": [
+   "HEARD",
+   "HATRED",
+   "THREAD",
+   "EARTH"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Rearranged, the letters of 'STONE' spell which word?",
+  "options": [
+   "STOVE",
+   "NOTES",
+   "SNORE",
+   "NOTED"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Rearranged, the letters of 'MELON' spell which word?",
+  "options": [
+   "SALMON",
+   "MOLTEN",
+   "MELODY",
+   "LEMON"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Rearranged, the letters of 'NIGHT' spell which word?",
+  "options": [
+   "THING",
+   "SIGHT",
+   "TIGHT",
+   "THIGH"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Rearranged, the letters of 'RESCUE' spell which word?",
+  "options": [
+   "CURSED",
+   "SECURE",
+   "SECRET",
+   "RESCUED"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The word 'DORMITORY' is a famous anagram of which two words?",
+  "options": [
+   "Merry riot",
+   "Tidy room",
+   "Dirty room",
+   "Moody trim"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'ASTRONOMER' is a famous anagram of which two words?",
+  "options": [
+   "Star roamer",
+   "Moon starer",
+   "Roman store",
+   "No mare rots"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The phrase 'THE EYES' is a famous anagram of which two words?",
+  "options": [
+   "They see",
+   "These ye",
+   "The yes",
+   "Yet see"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "'ELEVEN PLUS TWO' is a famous anagram of which other sum?",
+  "options": [
+   "Ten plus three",
+   "Twelve plus one",
+   "Thirteen plus zero",
+   "Nine plus four"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'smog' is a blend of which two words?",
+  "options": [
+   "Smother and log",
+   "Smoke and grog",
+   "Small and fog",
+   "Smoke and fog"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'motel' is a blend of which two words?",
+  "options": [
+   "Modern and hotel",
+   "Mobile and hotel",
+   "Motor and hostel",
+   "Motor and hotel"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'camcorder' blends camera with which word?",
+  "options": [
+   "Corder",
+   "Coder",
+   "Cordless",
+   "Recorder"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'podcast' blends 'broadcast' with the name of which device?",
+  "options": [
+   "The iPod",
+   "The radio",
+   "The tape deck",
+   "The pager"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'emoticon' is a blend of which two words?",
+  "options": [
+   "Emotion and icon",
+   "Emoji and icon",
+   "Emotion and cartoon",
+   "Email and icon"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'modem' is a blend of which two words?",
+  "options": [
+   "Model and demo",
+   "Modulator and demodulator",
+   "Modern and medium",
+   "Mode and message"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The word 'pixel' is a blend of which two words?",
+  "options": [
+   "Picture and element",
+   "Picture and cell",
+   "Pixie and cell",
+   "Point and element"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In computing, the word 'bit' is short for which two words?",
+  "options": [
+   "Byte unit",
+   "Basic item",
+   "Binary digit",
+   "Bit of information"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'sitcom' is short for which two words?",
+  "options": [
+   "Situation comedy",
+   "Silly comedy",
+   "Site comedy",
+   "Sitting comedy"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'moped' is a blend of which two words?",
+  "options": [
+   "Mobile and pedal",
+   "Moped along",
+   "Motor and pedal",
+   "Motor and speed"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'Bollywood' blends Hollywood with the old name of which city?",
+  "options": [
+   "Kolkata",
+   "Bangalore",
+   "Delhi",
+   "Bombay"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'brunch' blends breakfast with which meal?",
+  "options": [
+   "Dinner",
+   "Supper",
+   "Tea",
+   "Lunch"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'spork' is a blend of which two utensils?",
+  "options": [
+   "Spoon and fork",
+   "Spoon and knife",
+   "Spatula and fork",
+   "Spike and fork"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'glamping' is a blend of which two words?",
+  "options": [
+   "Glamour and clamping",
+   "Gleaming and camping",
+   "Glad and camping",
+   "Glamorous and camping"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'telethon' blends television with which word?",
+  "options": [
+   "Method",
+   "Thousand",
+   "Telephone",
+   "Marathon"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'guesstimate' is a blend of which two words?",
+  "options": [
+   "Guess and estimate",
+   "Guess and intimate",
+   "Guessing and ultimate",
+   "Guest and estimate"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'workaholic' was formed by copying which earlier word?",
+  "options": [
+   "Catholic",
+   "Alcoholic",
+   "Frolic",
+   "Symbolic"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'breathalyser' is a blend of which two words?",
+  "options": [
+   "Breathing and laser",
+   "Breath and paralyser",
+   "Breathe and adviser",
+   "Breath and analyser"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'cyborg' is short for which two words?",
+  "options": [
+   "Cybernetic organism",
+   "Cyber organiser",
+   "Cyber borg",
+   "Cycle organism"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'mockumentary' blends documentary with which word?",
+  "options": [
+   "Modern",
+   "Monkey",
+   "Mocha",
+   "Mock"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The brand name 'Velcro' comes from French words for velvet and what?",
+  "options": [
+   "Hook",
+   "Rough",
+   "Cloth",
+   "Sticky"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The word 'radar' is an acronym for radio detection and what?",
+  "options": [
+   "Ranging",
+   "Recording",
+   "Reading",
+   "Returning"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word 'laser' is an acronym whose L stands for what?",
+  "options": [
+   "Light",
+   "Long",
+   "Low",
+   "Linear"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many letters are in the English alphabet?",
+  "options": [
+   "Twenty six",
+   "Twenty eight",
+   "Twenty four",
+   "Thirty"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many letters are in the Greek alphabet?",
+  "options": [
+   "Twenty eight",
+   "Twenty two",
+   "Twenty six",
+   "Twenty four"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the last letter of the Greek alphabet?",
+  "options": [
+   "Sigma",
+   "Zeta",
+   "Alpha",
+   "Omega"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the first letter of the Greek alphabet?",
+  "options": [
+   "Beta",
+   "Delta",
+   "Omega",
+   "Alpha"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which letter appears least often in ordinary written English?",
+  "options": [
+   "Z",
+   "Q",
+   "J",
+   "X"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many letter tiles are in a standard English Scrabble set?",
+  "options": [
+   "Eighty",
+   "One hundred and twenty",
+   "One hundred",
+   "Ninety"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In the NATO phonetic alphabet, which word stands for the letter Q?",
+  "options": [
+   "Quito",
+   "Quick",
+   "Queen",
+   "Quebec"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the NATO phonetic alphabet, which word stands for the letter Z?",
+  "options": [
+   "Zenith",
+   "Zebra",
+   "Zero",
+   "Zulu"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In the NATO phonetic alphabet, which word stands for the letter X?",
+  "options": [
+   "Xerxes",
+   "Extra",
+   "Xylophone",
+   "X-ray"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Morse code, which letter is a single dot?",
+  "options": [
+   "T",
+   "A",
+   "I",
+   "E"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Morse code, which letter is a single dash?",
+  "options": [
+   "T",
+   "O",
+   "E",
+   "M"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In the word 'knee', which letter is silent?",
+  "options": [
+   "The second E",
+   "N",
+   "K",
+   "The first E"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the abbreviation 'e.g.' mean?",
+  "options": [
+   "That is",
+   "In other words",
+   "For example",
+   "And so on"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the abbreviation 'i.e.' mean?",
+  "options": [
+   "For example",
+   "And others",
+   "In part",
+   "That is"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'a.m.' stand for in Latin?",
+  "options": [
+   "After midday",
+   "At morning",
+   "Around midnight",
+   "Before midday"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'p.m.' stand for in Latin?",
+  "options": [
+   "Post month",
+   "Past morning",
+   "Public meridian",
+   "After midday"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'AD' stand for in dates?",
+  "options": [
+   "Anno Decimus",
+   "Ancient Days",
+   "Anno Domini",
+   "After Death"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'NB' mean when written in a note?",
+  "options": [
+   "Next below",
+   "New beginning",
+   "No bother",
+   "Note well"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'PS' at the end of a letter stand for?",
+  "options": [
+   "Personal statement",
+   "Post scriptum",
+   "Post sending",
+   "Please see"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'CV' stand for, in Latin, on a job application?",
+  "options": [
+   "Current version",
+   "Certified verification",
+   "Curriculum vitae",
+   "Career values"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Latin phrase 'carpe diem' means what?",
+  "options": [
+   "Seize the day",
+   "Live simply",
+   "Fear the night",
+   "Work hard"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Latin phrase 'veni, vidi, vici' means what?",
+  "options": [
+   "I rise, I rule, I fall",
+   "I speak, I hear, I know",
+   "I live, I love, I leave",
+   "I came, I saw, I conquered"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The phrase 'cogito, ergo sum' means what?",
+  "options": [
+   "I think, therefore I am",
+   "I work, therefore I rest",
+   "I live, therefore I hope",
+   "I know, therefore I speak"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Latin saying 'in vino veritas' means what?",
+  "options": [
+   "Wine before beer",
+   "In wine there is joy",
+   "In wine there is truth",
+   "Drink to good health"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'caveat emptor' mean?",
+  "options": [
+   "Let the buyer beware",
+   "Let the seller decide",
+   "Buy in bulk",
+   "Pay before you go"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'alma mater' refer to?",
+  "options": [
+   "A university degree",
+   "The school or university you attended",
+   "Your mother tongue",
+   "Your birthplace"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'magnum opus' mean?",
+  "options": [
+   "A famous quote",
+   "A final effort",
+   "A large volume",
+   "A great work"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'modus operandi' mean?",
+  "options": [
+   "A way of working",
+   "A legal argument",
+   "A change of plan",
+   "A modern method"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'pro bono' work mean?",
+  "options": [
+   "Work done overtime",
+   "Work done free of charge",
+   "Work done for a bonus",
+   "Work done abroad"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'persona non grata' mean?",
+  "options": [
+   "A false identity",
+   "An unknown person",
+   "A public figure",
+   "Someone who is not welcome"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'terra firma' mean?",
+  "options": [
+   "Firm decision",
+   "Farm land",
+   "Dry weather",
+   "Solid ground"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'in absentia' mean?",
+  "options": [
+   "While absent",
+   "Without payment",
+   "Without notice",
+   "In secret"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'ad nauseam' mean?",
+  "options": [
+   "In great detail",
+   "Very quickly",
+   "To a tiresome extent",
+   "Without warning"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does it mean to 'ad lib'?",
+  "options": [
+   "To repeat something",
+   "To speak formally",
+   "To read from a script",
+   "To make it up as you go"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'de facto' mean?",
+  "options": [
+   "In writing",
+   "By law",
+   "In name only",
+   "In fact, whether by right or not"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the word 'alibi' mean in Latin?",
+  "options": [
+   "Not guilty",
+   "Excuse",
+   "Elsewhere",
+   "Witness"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'circa' mean before a date?",
+  "options": [
+   "After",
+   "Exactly",
+   "Before",
+   "About or approximately"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the Latin word 'agenda' originally mean?",
+  "options": [
+   "A written list",
+   "A meeting",
+   "A plan of attack",
+   "Things to be done"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does the legal term 'habeas corpus' protect against?",
+  "options": [
+   "Unfair dismissal",
+   "Unlawful imprisonment",
+   "False advertising",
+   "Double taxation"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "When '[sic]' appears in a quotation, what does it show?",
+  "options": [
+   "The speaker is unknown",
+   "The error was in the original",
+   "The quote is shortened",
+   "The quote is translated"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does 'tempus fugit' mean?",
+  "options": [
+   "Time will tell",
+   "Time flies",
+   "Time heals",
+   "Time is money"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'rigor mortis' describe?",
+  "options": [
+   "A severe fever",
+   "A strict rule",
+   "A legal ruling",
+   "The stiffening of the body after death"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'post mortem' literally mean?",
+  "options": [
+   "After death",
+   "After the fact",
+   "Cause of death",
+   "Final report"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'verbatim' mean?",
+  "options": [
+   "Out loud",
+   "Word for word",
+   "In summary",
+   "In writing"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'ad infinitum' mean?",
+  "options": [
+   "Without end",
+   "In brief",
+   "At the finish",
+   "Beyond doubt"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The French phrase 'cul-de-sac' describes what?",
+  "options": [
+   "A dead end street",
+   "A busy roundabout",
+   "A cobbled alley",
+   "A narrow lane"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'faux pas'?",
+  "options": [
+   "An embarrassing social blunder",
+   "A fake signature",
+   "A wrong turn",
+   "A false start"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'je ne sais quoi' describe?",
+  "options": [
+   "An indefinable quality",
+   "A refusal to answer",
+   "A polite apology",
+   "A lack of knowledge"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'coup d'état'?",
+  "options": [
+   "A state banquet",
+   "A brilliant idea",
+   "A royal decree",
+   "A sudden seizure of government"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'avant-garde' describe?",
+  "options": [
+   "A military rank",
+   "A front garden",
+   "New and experimental art",
+   "Old fashioned taste"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'cliché'?",
+  "options": [
+   "A clever pun",
+   "An overused phrase or idea",
+   "A sharp criticism",
+   "A short poem"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are 'hors d'oeuvres'?",
+  "options": [
+   "Desserts",
+   "Table decorations",
+   "Wine glasses",
+   "Small dishes served before a meal"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does ordering 'à la carte' mean?",
+  "options": [
+   "Taking the set menu",
+   "Eating outside",
+   "Choosing individual dishes from the menu",
+   "Ordering for the table"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "If you are given 'carte blanche', what do you have?",
+  "options": [
+   "Complete freedom to act",
+   "A free meal",
+   "A blank invitation",
+   "A written warning"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'raison d'être'?",
+  "options": [
+   "A rational argument",
+   "A French holiday",
+   "A season ticket",
+   "A reason for existing"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'tête-à-tête'?",
+  "options": [
+   "A private conversation between two people",
+   "A head injury",
+   "A tea ceremony",
+   "A formal debate"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'nom de plume'?",
+  "options": [
+   "A signature",
+   "A pen name",
+   "A feather pen",
+   "A famous quotation"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'en route' mean?",
+  "options": [
+   "In reverse",
+   "By road",
+   "At the end",
+   "On the way"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'c'est la vie' mean?",
+  "options": [
+   "Here is life",
+   "That's life",
+   "This is the way",
+   "Such a shame"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'coup de grâce'?",
+  "options": [
+   "A final blow that ends things",
+   "A lucky escape",
+   "An opening move",
+   "A graceful gesture"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does 'esprit de corps' describe?",
+  "options": [
+   "A strong drink",
+   "Team spirit",
+   "A body of law",
+   "A ghostly figure"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does 'laissez-faire' describe?",
+  "options": [
+   "A lazy worker",
+   "A relaxed dress code",
+   "A hands off approach",
+   "A strict policy"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'double entendre'?",
+  "options": [
+   "A phrase with two meanings, one usually cheeky",
+   "A two part play",
+   "A repeated word",
+   "A double booking"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the audience call for when they shout 'encore'?",
+  "options": [
+   "The curtain",
+   "Quiet",
+   "A refund",
+   "More performance"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'matinee'?",
+  "options": [
+   "A morning rehearsal",
+   "An afternoon performance",
+   "A late night film",
+   "An evening show"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word 'souvenir' comes from a French word meaning what?",
+  "options": [
+   "To keep",
+   "To remember",
+   "To buy",
+   "To travel"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the Italian phrase 'al dente' describe about pasta?",
+  "options": [
+   "Served cold",
+   "Freshly made",
+   "Soft and sticky",
+   "Firm to the bite"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the Italian word 'paparazzi' refer to?",
+  "options": [
+   "Pasta shapes",
+   "Street musicians",
+   "Press photographers",
+   "Waiters"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'prima donna' in its original opera sense?",
+  "options": [
+   "The leading female singer",
+   "The first act",
+   "A demanding fan",
+   "The conductor"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the Italian word 'fiasco' mean in English?",
+  "options": [
+   "A grand party",
+   "A quick escape",
+   "A loud argument",
+   "A complete failure"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'al fresco' dining mean?",
+  "options": [
+   "Eating a set menu",
+   "Eating outdoors",
+   "Eating early",
+   "Eating standing up"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the German word 'zeitgeist' mean?",
+  "options": [
+   "A time zone",
+   "A German newspaper",
+   "The spirit of the times",
+   "A ghost story"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the German word 'kitsch' describe?",
+  "options": [
+   "Something expensive",
+   "Something tacky or overly sentimental",
+   "A kitchen tool",
+   "A folk dance"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the German word 'angst' mean?",
+  "options": [
+   "Anger",
+   "Deep anxiety",
+   "Ambition",
+   "Boredom"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the Spanish word 'guerrilla' literally mean?",
+  "options": [
+   "Wild fighter",
+   "Hidden path",
+   "Small army",
+   "Little war"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does the Japanese word 'sensei' mean?",
+  "options": [
+   "Student",
+   "Master craftsman",
+   "Warrior",
+   "Teacher"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the Japanese word 'honcho' mean, as in 'head honcho'?",
+  "options": [
+   "Honest one",
+   "Big boss's chair",
+   "Chief cook",
+   "Squad leader"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does the Yiddish word 'chutzpah' mean?",
+  "options": [
+   "Bold nerve",
+   "Bad luck",
+   "Idle chatter",
+   "Sadness"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the Sanskrit word 'guru' originally mean?",
+  "options": [
+   "Holy place",
+   "Teacher",
+   "Leader of prayer",
+   "Wise old man"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the Sanskrit word 'yoga' literally mean?",
+  "options": [
+   "Union",
+   "Peace",
+   "Stretching",
+   "Breathing"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does the Greek phrase 'hoi polloi' refer to?",
+  "options": [
+   "The ordinary people",
+   "A gathering of scholars",
+   "A public square",
+   "The ruling class"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does the Greek word 'kudos' mean?",
+  "options": [
+   "Praise or credit",
+   "Strength",
+   "A gift",
+   "Good luck"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the study of birds called?",
+  "options": [
+   "Ornithology",
+   "Ichthyology",
+   "Entomology",
+   "Herpetology"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the study of insects called?",
+  "options": [
+   "Enology",
+   "Ecology",
+   "Entomology",
+   "Etymology"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the study of fish called?",
+  "options": [
+   "Ichthyology",
+   "Mycology",
+   "Ornithology",
+   "Zoology"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the study of reptiles and amphibians called?",
+  "options": [
+   "Entomology",
+   "Ornithology",
+   "Palaeontology",
+   "Herpetology"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the study of fungi called?",
+  "options": [
+   "Bacteriology",
+   "Mycology",
+   "Botany",
+   "Microbiology"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the study of fossils called?",
+  "options": [
+   "Archaeology",
+   "Geology",
+   "Anthropology",
+   "Palaeontology"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the study of weather called?",
+  "options": [
+   "Astronomy",
+   "Geography",
+   "Astrology",
+   "Meteorology"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the study of earthquakes called?",
+  "options": [
+   "Seismology",
+   "Geology",
+   "Volcanology",
+   "Tectonics"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the study of caves called?",
+  "options": [
+   "Topography",
+   "Geology",
+   "Hydrology",
+   "Speleology"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the study and making of clocks called?",
+  "options": [
+   "Chronology",
+   "Horology",
+   "Mechanics",
+   "Timology"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the study of wine called?",
+  "options": [
+   "Vinology",
+   "Fermentology",
+   "Oenology",
+   "Sommelierism"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the hobby of bell ringing called?",
+  "options": [
+   "Belfry work",
+   "Carillonry",
+   "Tintinnology",
+   "Campanology"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is stamp collecting called?",
+  "options": [
+   "Philately",
+   "Deltiology",
+   "Cartophily",
+   "Numismatics"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is coin collecting called?",
+  "options": [
+   "Philately",
+   "Vexillology",
+   "Numismatics",
+   "Notaphily"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the study of flags called?",
+  "options": [
+   "Heraldry",
+   "Vexillology",
+   "Insignology",
+   "Bannerology"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the study of the origin and history of words called?",
+  "options": [
+   "Etymology",
+   "Ethnology",
+   "Entomology",
+   "Ecology"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the fear of the number thirteen called?",
+  "options": [
+   "Decaphobia",
+   "Tridecaphobia",
+   "Numerophobia",
+   "Triskaidekaphobia"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the fear of public speaking called?",
+  "options": [
+   "Sociophobia",
+   "Agoraphobia",
+   "Logophobia",
+   "Glossophobia"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the fear of clowns called?",
+  "options": [
+   "Mimophobia",
+   "Clownophobia",
+   "Coulrophobia",
+   "Circusphobia"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the fear of snakes called?",
+  "options": [
+   "Serpentophobia",
+   "Herpetophobia",
+   "Ophidiophobia",
+   "Viperphobia"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the fear of the dark called?",
+  "options": [
+   "Ombrophobia",
+   "Nyctophobia",
+   "Astraphobia",
+   "Photophobia"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "An 'Anglophile' is someone who loves what?",
+  "options": [
+   "Old books",
+   "England and English things",
+   "Angles and shapes",
+   "Fishing"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A 'Francophile' is someone who loves what?",
+  "options": [
+   "Frankness",
+   "Fine art",
+   "France and French things",
+   "Free speech"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "An 'audiophile' is someone with a passion for what?",
+  "options": [
+   "Public speaking",
+   "Old radios",
+   "High quality sound",
+   "Live theatre"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the word 'laconic' mean?",
+  "options": [
+   "Speaking quickly",
+   "Slow to act",
+   "Using very few words",
+   "Speaking loudly"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does 'taciturn' mean?",
+  "options": [
+   "Easily amused",
+   "Bad tempered",
+   "Very tidy",
+   "Saying very little"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does 'magnanimous' mean?",
+  "options": [
+   "Strict",
+   "Very wealthy",
+   "Generous and forgiving, especially to rivals",
+   "Physically large"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'frugal' mean?",
+  "options": [
+   "Fond of fruit",
+   "Very generous",
+   "Careful with money",
+   "Untidy"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'tenacious' mean?",
+  "options": [
+   "Determined and not giving up",
+   "Very thin",
+   "Nervous",
+   "Quick tempered"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ }
+]

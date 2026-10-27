@@ -1,0 +1,1346 @@
+[
+ {
+  "question": "Which brand's slogan is 'I'm lovin' it'?",
+  "options": [
+   "Hungry Jack's",
+   "KFC",
+   "McDonald's",
+   "Subway"
+  ],
+  "correctIndex": 2,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is Burger King called in Australia?",
+  "options": [
+   "Big Burger",
+   "Whopper King",
+   "Hungry Jack's",
+   "Burger Boss"
+  ],
+  "correctIndex": 2,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian chicken chain has a rooster logo?",
+  "options": [
+   "Oporto",
+   "Red Rooster",
+   "Chicken Treat",
+   "Nando's"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian burger chain is known for the Bondi Burger?",
+  "options": [
+   "Grill'd",
+   "Carl's Jr",
+   "Betty's Burgers",
+   "Oporto"
+  ],
+  "correctIndex": 3,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which sandwich chain's slogan was 'Eat fresh'?",
+  "options": [
+   "Sumo Salad",
+   "Subway",
+   "Zambrero",
+   "Boost"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which brand uses the slogan 'Because you're worth it'?",
+  "options": [
+   "Revlon",
+   "Maybelline",
+   "Olay",
+   "L'Oreal"
+  ],
+  "correctIndex": 3,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which credit card brand used 'Priceless' in its advertising?",
+  "options": [
+   "Mastercard",
+   "Diners Club",
+   "American Express",
+   "Visa"
+  ],
+  "correctIndex": 0,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which card brand's slogan was 'Everywhere you want to be'?",
+  "options": [
+   "Discover",
+   "Mastercard",
+   "American Express",
+   "Visa"
+  ],
+  "correctIndex": 3,
+  "category": "Brands & Advertising",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which brand's slogan is 'Think different'?",
+  "options": [
+   "Dell",
+   "Apple",
+   "Microsoft",
+   "IBM"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which brand's slogan is 'Connecting people'?",
+  "options": [
+   "Ericsson",
+   "Nokia",
+   "Motorola",
+   "Samsung"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which brand uses 'The best a man can get'?",
+  "options": [
+   "Nivea",
+   "Gillette",
+   "Schick",
+   "Old Spice"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which energy drink claims it 'gives you wings'?",
+  "options": [
+   "V",
+   "Rockstar",
+   "Monster",
+   "Red Bull"
+  ],
+  "correctIndex": 3,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which chocolate bar's slogan was 'Have a break'?",
+  "options": [
+   "Twix",
+   "Snickers",
+   "Mars",
+   "Kit Kat"
+  ],
+  "correctIndex": 3,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which chocolate bar's slogan told you not to be yourself when hungry?",
+  "options": [
+   "Bounty",
+   "Snickers",
+   "Mars",
+   "Picnic"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which brand of chocolate uses a purple wrapper in Australia?",
+  "options": [
+   "Nestle",
+   "Hershey",
+   "Cadbury",
+   "Lindt"
+  ],
+  "correctIndex": 2,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many glasses of milk are famously depicted on a block of Cadbury Dairy Milk?",
+  "options": [
+   "A glass and a half",
+   "Three glasses",
+   "Two glasses",
+   "Half a glass"
+  ],
+  "correctIndex": 0,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian biscuit brand makes Tim Tams?",
+  "options": [
+   "Paradise",
+   "Griffin's",
+   "Nabisco",
+   "Arnott's"
+  ],
+  "correctIndex": 3,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which bird appears on the Arnott's logo?",
+  "options": [
+   "A kookaburra",
+   "An emu",
+   "A parrot",
+   "A magpie"
+  ],
+  "correctIndex": 2,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian spread is owned by Bega after being sold by Kraft?",
+  "options": [
+   "Cheesybite only",
+   "Vegemite",
+   "Marmite",
+   "Promite"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Vegemite jingle character sang about being 'happy little' something?",
+  "options": [
+   "Aussies",
+   "Campers",
+   "Kids",
+   "Vegemites"
+  ],
+  "correctIndex": 3,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian brand's ads featured 'the fresh food people'?",
+  "options": [
+   "Coles",
+   "Franklins",
+   "Aldi",
+   "Woolworths"
+  ],
+  "correctIndex": 3,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which supermarket chain uses the slogan 'Down Down' with a red hand?",
+  "options": [
+   "Woolworths",
+   "IGA",
+   "Coles",
+   "Aldi"
+  ],
+  "correctIndex": 2,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which German supermarket chain entered Australia in 2001?",
+  "options": [
+   "Kaufland",
+   "Lidl",
+   "Rewe",
+   "Aldi"
+  ],
+  "correctIndex": 3,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian hardware chain is famous for sausage sizzles?",
+  "options": [
+   "Mitre 10",
+   "Masters",
+   "Bunnings",
+   "Home Timber"
+  ],
+  "correctIndex": 2,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian retailer's ads featured a very loud presenter shouting about deals?",
+  "options": [
+   "The Good Guys",
+   "JB Hi-Fi",
+   "Bing Lee",
+   "Harvey Norman"
+  ],
+  "correctIndex": 3,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian retailer uses the slogan 'Australia's cheapest'?",
+  "options": [
+   "Chemist Warehouse",
+   "Terry White",
+   "Priceline",
+   "Amcal"
+  ],
+  "correctIndex": 0,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian telco was formerly Telecom Australia?",
+  "options": [
+   "Optus",
+   "Vodafone",
+   "TPG",
+   "Telstra"
+  ],
+  "correctIndex": 3,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian bank's logo is a red and black star pattern?",
+  "options": [
+   "Westpac",
+   "ANZ",
+   "NAB",
+   "Commonwealth Bank"
+  ],
+  "correctIndex": 0,
+  "category": "Brands & Advertising",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian bank uses a yellow diamond logo?",
+  "options": [
+   "Commonwealth Bank",
+   "NAB",
+   "ANZ",
+   "Westpac"
+  ],
+  "correctIndex": 0,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian bank uses a red star as its logo?",
+  "options": [
+   "NAB",
+   "Bendigo",
+   "Westpac",
+   "ANZ"
+  ],
+  "correctIndex": 0,
+  "category": "Brands & Advertising",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which airline uses a kangaroo on its tail?",
+  "options": [
+   "Qantas",
+   "Jetstar",
+   "Virgin Australia",
+   "Rex"
+  ],
+  "correctIndex": 0,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does Qantas originally stand for?",
+  "options": [
+   "Quality Australian National Transport",
+   "Queensland and Northern Territory Aerial Services",
+   "Queensland National Air Transport Service",
+   "Queensland Air Northern Territory Service"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian airline uses a star and orange branding?",
+  "options": [
+   "Virgin Australia",
+   "Jetstar",
+   "Bonza",
+   "Rex"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which airline's slogan was 'The world's favourite airline'?",
+  "options": [
+   "Emirates",
+   "Qantas",
+   "British Airways",
+   "Singapore Airlines"
+  ],
+  "correctIndex": 2,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which sportswear brand uses three stripes?",
+  "options": [
+   "Adidas",
+   "Fila",
+   "Puma",
+   "Nike"
+  ],
+  "correctIndex": 0,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which sportswear brand uses a leaping big cat?",
+  "options": [
+   "Kappa",
+   "Reebok",
+   "Nike",
+   "Puma"
+  ],
+  "correctIndex": 3,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which two sportswear brands were founded by feuding German brothers?",
+  "options": [
+   "Fila and Kappa",
+   "Umbro and Lotto",
+   "Nike and Reebok",
+   "Adidas and Puma"
+  ],
+  "correctIndex": 3,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which brand's slogan is 'Impossible is nothing'?",
+  "options": [
+   "Under Armour",
+   "Asics",
+   "Adidas",
+   "Nike"
+  ],
+  "correctIndex": 2,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian surf brand was founded at Torquay in Victoria?",
+  "options": [
+   "Quiksilver",
+   "Mambo",
+   "Billabong",
+   "Rip Curl"
+  ],
+  "correctIndex": 3,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian boot brand is known for elastic-sided work boots?",
+  "options": [
+   "Blundstone",
+   "Rossi",
+   "Redback",
+   "RM Williams also makes them"
+  ],
+  "correctIndex": 0,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian brand is famous for oilskin jackets and rural clothing?",
+  "options": [
+   "Blundstone",
+   "Driza-Bone",
+   "Hard Yakka",
+   "Akubra"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian brand makes the classic wide-brimmed bush hat?",
+  "options": [
+   "Stetson",
+   "Driza-Bone",
+   "Akubra",
+   "Rossi"
+  ],
+  "correctIndex": 2,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian workwear brand's name means to work hard in slang?",
+  "options": [
+   "Bisley",
+   "Blundstone",
+   "King Gee",
+   "Hard Yakka"
+  ],
+  "correctIndex": 3,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which soft drink's logo uses a red and white ribbon script?",
+  "options": [
+   "Fanta",
+   "Coca-Cola",
+   "Pepsi",
+   "Dr Pepper"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which soft drink brand uses a red, white and blue circle?",
+  "options": [
+   "7 Up",
+   "Coca-Cola",
+   "Sprite",
+   "Pepsi"
+  ],
+  "correctIndex": 3,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian soft drink is famous for lemon and is owned by Schweppes?",
+  "options": [
+   "Fanta",
+   "Sunkist",
+   "Lift",
+   "Solo"
+  ],
+  "correctIndex": 3,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian cordial brand has been made since 1839?",
+  "options": [
+   "Berri",
+   "Bickford's",
+   "Golden Circle",
+   "Cottee's"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian juice brand's name comes from a South Australian river district?",
+  "options": [
+   "Golden Circle",
+   "Berri",
+   "Daily Juice",
+   "Just Juice"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which coffee chain uses a green circular logo with a siren?",
+  "options": [
+   "The Coffee Club",
+   "Gloria Jean's",
+   "Starbucks",
+   "Zarraffa's"
+  ],
+  "correctIndex": 2,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian coffee chain started on the Gold Coast?",
+  "options": [
+   "Zarraffa's",
+   "Muffin Break",
+   "Gloria Jean's",
+   "The Coffee Club"
+  ],
+  "correctIndex": 0,
+  "category": "Brands & Advertising",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which brand is known for the tagline 'Just do it'?",
+  "options": [
+   "Adidas",
+   "Nike",
+   "Reebok",
+   "Puma"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which car brand's slogan was 'The ultimate driving machine'?",
+  "options": [
+   "Mercedes-Benz",
+   "Lexus",
+   "Audi",
+   "BMW"
+  ],
+  "correctIndex": 3,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which car brand's slogan is 'Vorsprung durch Technik'?",
+  "options": [
+   "Audi",
+   "BMW",
+   "Porsche",
+   "Volkswagen"
+  ],
+  "correctIndex": 0,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which brand's slogan was 'Oh what a feeling' with a jump?",
+  "options": [
+   "Toyota",
+   "Mazda",
+   "Honda",
+   "Nissan"
+  ],
+  "correctIndex": 0,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which car brand's Australian ads used the line 'Zoom Zoom'?",
+  "options": [
+   "Mazda",
+   "Subaru",
+   "Toyota",
+   "Kia"
+  ],
+  "correctIndex": 0,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which insurance brand in Australia uses a meerkat in the UK but not here?",
+  "options": [
+   "Compare the Market",
+   "Budget Direct",
+   "Youi",
+   "AAMI"
+  ],
+  "correctIndex": 0,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian insurer's ads featured a character called Rhonda?",
+  "options": [
+   "Allianz",
+   "NRMA",
+   "Budget Direct",
+   "AAMI"
+  ],
+  "correctIndex": 3,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian brand's jingle promised 'happy little Vegemites' would grow?",
+  "options": [
+   "Milo",
+   "Uncle Tobys",
+   "Weet-Bix",
+   "Vegemite"
+  ],
+  "correctIndex": 3,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian cereal is associated with the slogan about being an 'Aussie kid'?",
+  "options": [
+   "Weet-Bix",
+   "Nutri-Grain",
+   "Corn Flakes",
+   "Just Right"
+  ],
+  "correctIndex": 0,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which chocolate malt drink is a Nestle staple in Australia?",
+  "options": [
+   "Aktavite",
+   "Milo",
+   "Horlicks",
+   "Ovaltine"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What sport imagery is Milo most associated with in Australia?",
+  "options": [
+   "Swimming",
+   "Junior cricket",
+   "Netball",
+   "Rugby"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which brand of Australian ice cream is famous for a chocolate-coated vanilla bar?",
+  "options": [
+   "Splice",
+   "Golden Gaytime",
+   "Bubble O'Bill",
+   "Paddle Pop"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian ice cream has a lion mascot?",
+  "options": [
+   "Golden Gaytime",
+   "Weis",
+   "Paddle Pop",
+   "Streets Blue Ribbon"
+  ],
+  "correctIndex": 2,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian ice cream features a cowboy face with a bubblegum nose?",
+  "options": [
+   "Bubble O'Bill",
+   "Zooper Dooper",
+   "Calippo",
+   "Paddle Pop"
+  ],
+  "correctIndex": 0,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which delivery brand's logo hides an arrow between two letters?",
+  "options": [
+   "FedEx",
+   "TNT",
+   "UPS",
+   "DHL"
+  ],
+  "correctIndex": 0,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which online retailer's logo has an arrow from A to Z?",
+  "options": [
+   "Etsy",
+   "eBay",
+   "Alibaba",
+   "Amazon"
+  ],
+  "correctIndex": 3,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which social media platform used a blue bird logo before rebranding?",
+  "options": [
+   "Facebook",
+   "LinkedIn",
+   "Twitter",
+   "Bluesky"
+  ],
+  "correctIndex": 2,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which company owns Instagram and WhatsApp?",
+  "options": [
+   "Meta",
+   "Snap",
+   "Alphabet",
+   "ByteDance"
+  ],
+  "correctIndex": 0,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What was Google's parent company renamed to in 2015?",
+  "options": [
+   "Verily",
+   "Nexus",
+   "Alphabet",
+   "Meta"
+  ],
+  "correctIndex": 2,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which streaming service's logo is a red N?",
+  "options": [
+   "Netflix",
+   "Nickelodeon",
+   "Nine Now",
+   "NBCUniversal"
+  ],
+  "correctIndex": 0,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian streaming service is owned by Nine and Foxtel jointly?",
+  "options": [
+   "Stan is Nine-owned; the joint one was Presto",
+   "Kayo",
+   "7plus",
+   "Binge"
+  ],
+  "correctIndex": 0,
+  "category": "Brands & Advertising",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which brand uses a green robot mascot?",
+  "options": [
+   "Java",
+   "Ubuntu",
+   "Firefox",
+   "Android"
+  ],
+  "correctIndex": 3,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which browser uses a fox wrapped around a globe?",
+  "options": [
+   "Edge",
+   "Firefox",
+   "Chrome",
+   "Safari"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which brand's four-colour circle logo belongs to a search company's browser?",
+  "options": [
+   "Chrome",
+   "Brave",
+   "Firefox",
+   "Opera"
+  ],
+  "correctIndex": 0,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which fast food brand's mascot is a clown?",
+  "options": [
+   "Jack in the Box",
+   "McDonald's",
+   "Burger King",
+   "KFC"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of McDonald's clown mascot?",
+  "options": [
+   "Chuckles",
+   "Ronald McDonald",
+   "Bobo",
+   "Krusty"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which cereal brand uses a tiger mascot?",
+  "options": [
+   "Frosties",
+   "Rice Bubbles",
+   "Nutri-Grain",
+   "Coco Pops"
+  ],
+  "correctIndex": 0,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are the three Rice Bubbles mascots called?",
+  "options": [
+   "Bing, Bang and Bong",
+   "Snap, Crackle and Pop",
+   "Zip, Zap and Zoom",
+   "Tick, Tock and Boom"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which brand's mascot is a monkey named Coco?",
+  "options": [
+   "Cocoa Puffs",
+   "Coco Pops",
+   "Nesquik",
+   "Milo"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which chocolate drink brand uses a rabbit mascot?",
+  "options": [
+   "Milo",
+   "Nesquik",
+   "Aktavite",
+   "Ovaltine"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which tyre brand's mascot is made of white tyres?",
+  "options": [
+   "Pirelli",
+   "Michelin",
+   "Bridgestone",
+   "Goodyear"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Michelin mascot's name?",
+  "options": [
+   "Monsieur Blanc",
+   "Rondo",
+   "Tyro",
+   "Bibendum"
+  ],
+  "correctIndex": 3,
+  "category": "Brands & Advertising",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which brand rates restaurants with stars and also sells tyres?",
+  "options": [
+   "Pirelli",
+   "Michelin",
+   "Goodyear",
+   "Continental"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which beer brand's advertising centred on a Mexican beach and a lime?",
+  "options": [
+   "Stella Artois",
+   "Heineken",
+   "Peroni",
+   "Corona"
+  ],
+  "correctIndex": 3,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Irish stout brand uses a harp logo?",
+  "options": [
+   "Kilkenny",
+   "Beamish",
+   "Guinness",
+   "Murphy's"
+  ],
+  "correctIndex": 2,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian beer brand's ads featured 'a hard earned thirst'?",
+  "options": [
+   "XXXX",
+   "Carlton Draught",
+   "Tooheys",
+   "Victoria Bitter"
+  ],
+  "correctIndex": 3,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian beer ad featured a giant chess-like 'Big Ad' with a choir?",
+  "options": [
+   "Hahn",
+   "VB",
+   "Carlton Draught",
+   "Tooheys Extra Dry"
+  ],
+  "correctIndex": 2,
+  "category": "Brands & Advertising",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian brand ran the 'Not happy Jan' advertising campaign?",
+  "options": [
+   "White Pages",
+   "Telstra",
+   "Yellow Pages",
+   "Australia Post"
+  ],
+  "correctIndex": 2,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian ad campaign told people to 'let your fingers do the walking'?",
+  "options": [
+   "Telstra",
+   "Australia Post",
+   "Yellow Pages",
+   "Sensis Online"
+  ],
+  "correctIndex": 2,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which brand famously advertised 'It's the real thing'?",
+  "options": [
+   "Coca-Cola",
+   "Pepsi",
+   "Solo",
+   "Schweppes"
+  ],
+  "correctIndex": 0,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which fried chicken brand's founder is depicted with a white suit and goatee?",
+  "options": [
+   "Chicken Treat",
+   "Red Rooster",
+   "KFC",
+   "Popeyes"
+  ],
+  "correctIndex": 2,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What was the real title of KFC's founder Harland Sanders?",
+  "options": [
+   "Colonel",
+   "Captain",
+   "Major",
+   "General"
+  ],
+  "correctIndex": 0,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many herbs and spices does KFC claim to use?",
+  "options": [
+   "Thirteen",
+   "Eleven",
+   "Seven",
+   "Nine"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which pizza chain's Australian ads promoted a 'Value Range'?",
+  "options": [
+   "Pizza Hut",
+   "Domino's",
+   "Crust",
+   "Eagle Boys"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian pizza chain used a blue eagle logo?",
+  "options": [
+   "La Porchetta",
+   "Pizza Haven",
+   "Eagle Boys",
+   "Crust"
+  ],
+  "correctIndex": 2,
+  "category": "Brands & Advertising",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which luxury brand's logo is two interlocking Cs?",
+  "options": [
+   "Coach",
+   "Chanel",
+   "Calvin Klein",
+   "Cartier"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which fashion brand uses interlocking Gs?",
+  "options": [
+   "Guess",
+   "Gap",
+   "Gucci",
+   "Givenchy"
+  ],
+  "correctIndex": 2,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which brand uses an LV monogram?",
+  "options": [
+   "Lacoste",
+   "Louis Vuitton",
+   "Levi's",
+   "Longchamp"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which clothing brand uses a crocodile logo?",
+  "options": [
+   "Ralph Lauren",
+   "Lacoste",
+   "Crocs",
+   "Fred Perry"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which brand uses a polo player on horseback?",
+  "options": [
+   "Ralph Lauren",
+   "Burberry",
+   "Tommy Hilfiger",
+   "Lacoste"
+  ],
+  "correctIndex": 0,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which watch brand uses a crown logo?",
+  "options": [
+   "Tag Heuer",
+   "Seiko",
+   "Omega",
+   "Rolex"
+  ],
+  "correctIndex": 3,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which watch brand's slogan involves never actually owning one?",
+  "options": [
+   "Patek Philippe",
+   "Cartier",
+   "Breitling",
+   "Rolex"
+  ],
+  "correctIndex": 0,
+  "category": "Brands & Advertising",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which brand uses a shell as its logo at petrol stations?",
+  "options": [
+   "Caltex",
+   "Mobil",
+   "BP",
+   "Shell"
+  ],
+  "correctIndex": 3,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which petrol brand uses a green and yellow sunburst logo?",
+  "options": [
+   "Ampol",
+   "BP",
+   "United",
+   "Shell"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian fuel brand returned after being Caltex?",
+  "options": [
+   "Ampol",
+   "Mobil",
+   "Puma",
+   "Total"
+  ],
+  "correctIndex": 0,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian department store is famous for its Christmas windows in Melbourne?",
+  "options": [
+   "Myer",
+   "Kmart",
+   "Target",
+   "David Jones"
+  ],
+  "correctIndex": 0,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian department store uses a black and white houndstooth pattern?",
+  "options": [
+   "Harris Scarfe",
+   "Myer",
+   "Big W",
+   "David Jones"
+  ],
+  "correctIndex": 3,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian retail chain uses a red bullseye logo?",
+  "options": [
+   "Target",
+   "Best & Less",
+   "Kmart",
+   "Big W"
+  ],
+  "correctIndex": 0,
+  "category": "Brands & Advertising",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which toy retailer's mascot is a giraffe?",
+  "options": [
+   "Toys R Us",
+   "Smiggle",
+   "Big W",
+   "Kmart"
+  ],
+  "correctIndex": 0,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian stationery brand is aimed at kids with bright colours?",
+  "options": [
+   "Kikki K",
+   "Smiggle",
+   "Typo",
+   "Officeworks"
+  ],
+  "correctIndex": 1,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian brand's slogan is 'lowest prices are just the beginning'?",
+  "options": [
+   "Harvey Norman",
+   "JB Hi-Fi",
+   "Officeworks",
+   "Bunnings"
+  ],
+  "correctIndex": 2,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Bunnings guarantee promises to beat a competitor's price?",
+  "options": [
+   "The double-back promise",
+   "The value pledge",
+   "The price match plus",
+   "The lowest prices guarantee"
+  ],
+  "correctIndex": 3,
+  "category": "Brands & Advertising",
+  "difficulty": "medium"
+ }
+]

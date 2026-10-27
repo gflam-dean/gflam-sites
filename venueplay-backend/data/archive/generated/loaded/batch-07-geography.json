@@ -1,0 +1,2402 @@
+[
+ {
+  "question": "What is the capital city of Australia?",
+  "options": [
+   "Sydney",
+   "Melbourne",
+   "Canberra",
+   "Brisbane"
+  ],
+  "correctIndex": 2,
+  "category": "Australian geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which is the largest planet in our solar system?",
+  "options": [
+   "Saturn",
+   "Jupiter",
+   "Neptune",
+   "Earth"
+  ],
+  "correctIndex": 1,
+  "category": "The solar system",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the capital of France?",
+  "options": [
+   "Lyon",
+   "Marseille",
+   "Paris",
+   "Nice"
+  ],
+  "correctIndex": 2,
+  "category": "World capitals",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which is the largest ocean on Earth?",
+  "options": [
+   "Atlantic Ocean",
+   "Indian Ocean",
+   "Arctic Ocean",
+   "Pacific Ocean"
+  ],
+  "correctIndex": 3,
+  "category": "Oceans and seas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On which continent is the Sahara Desert located?",
+  "options": [
+   "Asia",
+   "Africa",
+   "South America",
+   "Australia"
+  ],
+  "correctIndex": 1,
+  "category": "World geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which planet is known as the Red Planet?",
+  "options": [
+   "Venus",
+   "Mars",
+   "Mercury",
+   "Jupiter"
+  ],
+  "correctIndex": 1,
+  "category": "The solar system",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the tallest mountain on Earth above sea level?",
+  "options": [
+   "K2",
+   "Mount Kilimanjaro",
+   "Mount Everest",
+   "Denali"
+  ],
+  "correctIndex": 2,
+  "category": "Mountains",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian state is home to the city of Perth?",
+  "options": [
+   "South Australia",
+   "Western Australia",
+   "Victoria",
+   "Queensland"
+  ],
+  "correctIndex": 1,
+  "category": "Australian geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Eiffel Tower is located in which city?",
+  "options": [
+   "Rome",
+   "London",
+   "Paris",
+   "Berlin"
+  ],
+  "correctIndex": 2,
+  "category": "World landmarks",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which planet is closest to the Sun?",
+  "options": [
+   "Venus",
+   "Earth",
+   "Mercury",
+   "Mars"
+  ],
+  "correctIndex": 2,
+  "category": "The solar system",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the largest country in the world by land area?",
+  "options": [
+   "Canada",
+   "China",
+   "Russia",
+   "United States"
+  ],
+  "correctIndex": 2,
+  "category": "Countries",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Great Barrier Reef lies off the coast of which Australian state?",
+  "options": [
+   "New South Wales",
+   "Queensland",
+   "Northern Territory",
+   "Tasmania"
+  ],
+  "correctIndex": 1,
+  "category": "Australian geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the natural satellite of Earth called?",
+  "options": [
+   "Titan",
+   "The Moon",
+   "Europa",
+   "Phobos"
+  ],
+  "correctIndex": 1,
+  "category": "Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which country is shaped like a boot?",
+  "options": [
+   "Spain",
+   "Greece",
+   "Italy",
+   "Portugal"
+  ],
+  "correctIndex": 2,
+  "category": "Countries",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the capital of Japan?",
+  "options": [
+   "Osaka",
+   "Kyoto",
+   "Tokyo",
+   "Nagoya"
+  ],
+  "correctIndex": 2,
+  "category": "World capitals",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which is the longest river in the world?",
+  "options": [
+   "Amazon",
+   "Nile",
+   "Yangtze",
+   "Mississippi"
+  ],
+  "correctIndex": 1,
+  "category": "Rivers",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Statue of Liberty was a gift to the United States from which country?",
+  "options": [
+   "United Kingdom",
+   "Spain",
+   "France",
+   "Italy"
+  ],
+  "correctIndex": 2,
+  "category": "World landmarks",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which planet is famous for its prominent ring system?",
+  "options": [
+   "Jupiter",
+   "Saturn",
+   "Uranus",
+   "Neptune"
+  ],
+  "correctIndex": 1,
+  "category": "The solar system",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the capital of Italy?",
+  "options": [
+   "Milan",
+   "Rome",
+   "Venice",
+   "Turin"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which desert covers most of central Australia's interior?",
+  "options": [
+   "Gobi Desert",
+   "Outback deserts",
+   "Kalahari Desert",
+   "Atacama Desert"
+  ],
+  "correctIndex": 1,
+  "category": "Australian geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the capital of the United Kingdom?",
+  "options": [
+   "Manchester",
+   "Birmingham",
+   "London",
+   "Edinburgh"
+  ],
+  "correctIndex": 2,
+  "category": "World capitals",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which star is at the centre of our solar system?",
+  "options": [
+   "Sirius",
+   "The Sun",
+   "Polaris",
+   "Betelgeuse"
+  ],
+  "correctIndex": 1,
+  "category": "Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On which continent would you find the country of Brazil?",
+  "options": [
+   "Africa",
+   "South America",
+   "North America",
+   "Asia"
+  ],
+  "correctIndex": 1,
+  "category": "World geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the capital of Canada?",
+  "options": [
+   "Toronto",
+   "Vancouver",
+   "Ottawa",
+   "Montreal"
+  ],
+  "correctIndex": 2,
+  "category": "World capitals",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which famous rock formation sits in the Northern Territory near Alice Springs?",
+  "options": [
+   "Wave Rock",
+   "Uluru",
+   "The Twelve Apostles",
+   "Wilpena Pound"
+  ],
+  "correctIndex": 1,
+  "category": "Australian landmarks",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many planets are in our solar system?",
+  "options": [
+   "Seven",
+   "Eight",
+   "Nine",
+   "Ten"
+  ],
+  "correctIndex": 1,
+  "category": "The solar system",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which country has the Great Wall as a famous landmark?",
+  "options": [
+   "Japan",
+   "India",
+   "China",
+   "Mongolia"
+  ],
+  "correctIndex": 2,
+  "category": "World landmarks",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the smallest planet in our solar system?",
+  "options": [
+   "Mars",
+   "Mercury",
+   "Venus",
+   "Pluto"
+  ],
+  "correctIndex": 1,
+  "category": "The solar system",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Amazon Rainforest is located mainly in which country?",
+  "options": [
+   "Peru",
+   "Colombia",
+   "Brazil",
+   "Venezuela"
+  ],
+  "correctIndex": 2,
+  "category": "World geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian city is known as the Harbour City?",
+  "options": [
+   "Melbourne",
+   "Sydney",
+   "Adelaide",
+   "Darwin"
+  ],
+  "correctIndex": 1,
+  "category": "Australian geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the capital of Spain?",
+  "options": [
+   "Barcelona",
+   "Seville",
+   "Madrid",
+   "Valencia"
+  ],
+  "correctIndex": 2,
+  "category": "World capitals",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these is a US space agency?",
+  "options": [
+   "ESA",
+   "NASA",
+   "JAXA",
+   "ISRO"
+  ],
+  "correctIndex": 1,
+  "category": "Space exploration",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the largest continent by land area?",
+  "options": [
+   "Africa",
+   "Asia",
+   "North America",
+   "Antarctica"
+  ],
+  "correctIndex": 1,
+  "category": "World geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The pyramids of Giza are found in which country?",
+  "options": [
+   "Mexico",
+   "Egypt",
+   "Sudan",
+   "Iraq"
+  ],
+  "correctIndex": 1,
+  "category": "World landmarks",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which planet is known for having a giant storm called the Great Red Spot?",
+  "options": [
+   "Saturn",
+   "Mars",
+   "Jupiter",
+   "Neptune"
+  ],
+  "correctIndex": 2,
+  "category": "The solar system",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What colour are the two main colours of the Japanese national flag?",
+  "options": [
+   "Red and white",
+   "Blue and white",
+   "Red and yellow",
+   "Green and white"
+  ],
+  "correctIndex": 0,
+  "category": "Flags",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian state is an island?",
+  "options": [
+   "Victoria",
+   "Tasmania",
+   "South Australia",
+   "New South Wales"
+  ],
+  "correctIndex": 1,
+  "category": "Australian geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the capital of Germany?",
+  "options": [
+   "Munich",
+   "Hamburg",
+   "Berlin",
+   "Frankfurt"
+  ],
+  "correctIndex": 2,
+  "category": "World capitals",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which ocean lies between Africa and Australia?",
+  "options": [
+   "Atlantic Ocean",
+   "Pacific Ocean",
+   "Indian Ocean",
+   "Southern Ocean"
+  ],
+  "correctIndex": 2,
+  "category": "Oceans and seas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The first person to walk on the Moon was?",
+  "options": [
+   "Buzz Aldrin",
+   "Neil Armstrong",
+   "Yuri Gagarin",
+   "Michael Collins"
+  ],
+  "correctIndex": 1,
+  "category": "Space exploration",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the capital of New Zealand?",
+  "options": [
+   "Auckland",
+   "Christchurch",
+   "Wellington",
+   "Hamilton"
+  ],
+  "correctIndex": 2,
+  "category": "World capitals",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which river runs through London?",
+  "options": [
+   "Seine",
+   "Thames",
+   "Danube",
+   "Rhine"
+  ],
+  "correctIndex": 1,
+  "category": "Rivers",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Mount Kosciuszko is the highest mountain on the mainland of which country?",
+  "options": [
+   "New Zealand",
+   "Australia",
+   "Indonesia",
+   "Papua New Guinea"
+  ],
+  "correctIndex": 1,
+  "category": "Australian geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which planet is famous for being tilted on its side, rotating almost sideways?",
+  "options": [
+   "Neptune",
+   "Uranus",
+   "Saturn",
+   "Mars"
+  ],
+  "correctIndex": 1,
+  "category": "The solar system",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the capital of the United States?",
+  "options": [
+   "New York",
+   "Washington, D.C.",
+   "Los Angeles",
+   "Chicago"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Leaning Tower is located in which Italian city?",
+  "options": [
+   "Rome",
+   "Florence",
+   "Pisa",
+   "Naples"
+  ],
+  "correctIndex": 2,
+  "category": "World landmarks",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which is the smallest ocean?",
+  "options": [
+   "Indian Ocean",
+   "Southern Ocean",
+   "Arctic Ocean",
+   "Atlantic Ocean"
+  ],
+  "correctIndex": 2,
+  "category": "Oceans and seas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of Russia?",
+  "options": [
+   "Saint Petersburg",
+   "Moscow",
+   "Kiev",
+   "Novosibirsk"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which galaxy is Earth located in?",
+  "options": [
+   "Andromeda",
+   "The Milky Way",
+   "Triangulum",
+   "Whirlpool"
+  ],
+  "correctIndex": 1,
+  "category": "Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Nile River flows into which sea?",
+  "options": [
+   "Red Sea",
+   "Mediterranean Sea",
+   "Black Sea",
+   "Arabian Sea"
+  ],
+  "correctIndex": 1,
+  "category": "Rivers",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian city hosts a famous Opera House?",
+  "options": [
+   "Melbourne",
+   "Brisbane",
+   "Sydney",
+   "Perth"
+  ],
+  "correctIndex": 2,
+  "category": "Australian landmarks",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the capital of China?",
+  "options": [
+   "Shanghai",
+   "Beijing",
+   "Guangzhou",
+   "Shenzhen"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which planet has the most moons discovered as of the 2020s?",
+  "options": [
+   "Jupiter",
+   "Saturn",
+   "Neptune",
+   "Uranus"
+  ],
+  "correctIndex": 1,
+  "category": "The solar system",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The Sahara Desert is the largest hot desert on which continent?",
+  "options": [
+   "Asia",
+   "Africa",
+   "Australia",
+   "South America"
+  ],
+  "correctIndex": 1,
+  "category": "World geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the capital of Greece?",
+  "options": [
+   "Thessaloniki",
+   "Athens",
+   "Sparta",
+   "Patras"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which is the second-largest country in the world by land area?",
+  "options": [
+   "China",
+   "United States",
+   "Canada",
+   "Australia"
+  ],
+  "correctIndex": 2,
+  "category": "Countries",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Southern Cross constellation appears on the flag of which country?",
+  "options": [
+   "South Africa",
+   "Australia",
+   "Argentina",
+   "Chile"
+  ],
+  "correctIndex": 1,
+  "category": "Flags",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of Egypt?",
+  "options": [
+   "Alexandria",
+   "Cairo",
+   "Luxor",
+   "Giza"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which planet is often called Earth's twin due to its similar size?",
+  "options": [
+   "Mars",
+   "Venus",
+   "Mercury",
+   "Neptune"
+  ],
+  "correctIndex": 1,
+  "category": "The solar system",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Rocky Mountains run through which two main countries?",
+  "options": [
+   "USA and Mexico",
+   "Canada and USA",
+   "USA and Brazil",
+   "Canada and Mexico"
+  ],
+  "correctIndex": 1,
+  "category": "Mountains",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of India?",
+  "options": [
+   "Mumbai",
+   "Kolkata",
+   "New Delhi",
+   "Chennai"
+  ],
+  "correctIndex": 2,
+  "category": "World capitals",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian territory contains the nation's capital?",
+  "options": [
+   "Northern Territory",
+   "Australian Capital Territory",
+   "Jervis Bay Territory",
+   "Norfolk Island"
+  ],
+  "correctIndex": 1,
+  "category": "Australian geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a shooting star more accurately called?",
+  "options": [
+   "Comet",
+   "Meteor",
+   "Asteroid",
+   "Nebula"
+  ],
+  "correctIndex": 1,
+  "category": "Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which sea is the saltiest and lowest body of water often called a 'sea'?",
+  "options": [
+   "Caspian Sea",
+   "Dead Sea",
+   "Red Sea",
+   "Aral Sea"
+  ],
+  "correctIndex": 1,
+  "category": "Oceans and seas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of South Korea?",
+  "options": [
+   "Busan",
+   "Incheon",
+   "Seoul",
+   "Daegu"
+  ],
+  "correctIndex": 2,
+  "category": "World capitals",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which mountain range separates Europe from Asia?",
+  "options": [
+   "Alps",
+   "Andes",
+   "Ural Mountains",
+   "Himalayas"
+  ],
+  "correctIndex": 2,
+  "category": "Mountains",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Colosseum is a famous landmark in which city?",
+  "options": [
+   "Athens",
+   "Rome",
+   "Istanbul",
+   "Cairo"
+  ],
+  "correctIndex": 1,
+  "category": "World landmarks",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which planet takes the longest to orbit the Sun?",
+  "options": [
+   "Saturn",
+   "Uranus",
+   "Neptune",
+   "Jupiter"
+  ],
+  "correctIndex": 2,
+  "category": "The solar system",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of Brazil?",
+  "options": [
+   "Rio de Janeiro",
+   "Sao Paulo",
+   "Brasilia",
+   "Salvador"
+  ],
+  "correctIndex": 2,
+  "category": "World capitals",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Murray River forms much of the border between which two Australian states?",
+  "options": [
+   "Victoria and New South Wales",
+   "Queensland and NSW",
+   "South Australia and Victoria",
+   "WA and SA"
+  ],
+  "correctIndex": 0,
+  "category": "Australian geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which country is home to the ancient city of Machu Picchu?",
+  "options": [
+   "Bolivia",
+   "Peru",
+   "Chile",
+   "Ecuador"
+  ],
+  "correctIndex": 1,
+  "category": "World landmarks",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the closest star to Earth other than the Sun?",
+  "options": [
+   "Sirius",
+   "Proxima Centauri",
+   "Alpha Centauri A",
+   "Barnard's Star"
+  ],
+  "correctIndex": 1,
+  "category": "Astronomy",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which is the largest island in the world?",
+  "options": [
+   "Borneo",
+   "Greenland",
+   "Madagascar",
+   "New Guinea"
+  ],
+  "correctIndex": 1,
+  "category": "World geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of Argentina?",
+  "options": [
+   "Cordoba",
+   "Buenos Aires",
+   "Rosario",
+   "Mendoza"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which planet is the coldest in our solar system on average?",
+  "options": [
+   "Uranus",
+   "Neptune",
+   "Saturn",
+   "Pluto"
+  ],
+  "correctIndex": 1,
+  "category": "The solar system",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The Twelve Apostles rock stacks are found along which Australian coastline?",
+  "options": [
+   "Great Ocean Road",
+   "Gold Coast",
+   "Sunshine Coast",
+   "Ninety Mile Beach"
+  ],
+  "correctIndex": 0,
+  "category": "Australian landmarks",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of Portugal?",
+  "options": [
+   "Porto",
+   "Lisbon",
+   "Faro",
+   "Braga"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which layer of gases surrounds the Earth?",
+  "options": [
+   "Hydrosphere",
+   "Atmosphere",
+   "Lithosphere",
+   "Biosphere"
+  ],
+  "correctIndex": 1,
+  "category": "Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Danube River flows through more countries than any other in the world. On which continent is it?",
+  "options": [
+   "Asia",
+   "Europe",
+   "Africa",
+   "South America"
+  ],
+  "correctIndex": 1,
+  "category": "Rivers",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of Ireland?",
+  "options": [
+   "Cork",
+   "Belfast",
+   "Dublin",
+   "Galway"
+  ],
+  "correctIndex": 2,
+  "category": "World capitals",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which planet has a day longer than its year?",
+  "options": [
+   "Mercury",
+   "Venus",
+   "Mars",
+   "Jupiter"
+  ],
+  "correctIndex": 1,
+  "category": "The solar system",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The Andes mountain range runs along which continent?",
+  "options": [
+   "Africa",
+   "Asia",
+   "South America",
+   "Europe"
+  ],
+  "correctIndex": 2,
+  "category": "Mountains",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the capital of Thailand?",
+  "options": [
+   "Chiang Mai",
+   "Bangkok",
+   "Phuket",
+   "Pattaya"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which body orbits a planet rather than the Sun?",
+  "options": [
+   "A comet",
+   "A moon",
+   "An asteroid",
+   "A dwarf planet"
+  ],
+  "correctIndex": 1,
+  "category": "Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian city is the capital of Queensland?",
+  "options": [
+   "Gold Coast",
+   "Cairns",
+   "Brisbane",
+   "Townsville"
+  ],
+  "correctIndex": 2,
+  "category": "Australian geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the capital of Mexico?",
+  "options": [
+   "Guadalajara",
+   "Cancun",
+   "Mexico City",
+   "Monterrey"
+  ],
+  "correctIndex": 2,
+  "category": "World capitals",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Milky Way is what type of galaxy?",
+  "options": [
+   "Elliptical",
+   "Spiral",
+   "Irregular",
+   "Ring"
+  ],
+  "correctIndex": 1,
+  "category": "Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which strait separates Australia from Papua New Guinea?",
+  "options": [
+   "Bass Strait",
+   "Torres Strait",
+   "Cook Strait",
+   "Bering Strait"
+  ],
+  "correctIndex": 1,
+  "category": "Australian geography",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the capital of the Netherlands?",
+  "options": [
+   "Rotterdam",
+   "The Hague",
+   "Amsterdam",
+   "Utrecht"
+  ],
+  "correctIndex": 2,
+  "category": "World capitals",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which planet is named after the Roman god of the sea?",
+  "options": [
+   "Neptune",
+   "Mars",
+   "Saturn",
+   "Jupiter"
+  ],
+  "correctIndex": 0,
+  "category": "The solar system",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Sydney Harbour Bridge is nicknamed what by locals?",
+  "options": [
+   "The Rainbow",
+   "The Coathanger",
+   "The Iron Lady",
+   "The Big Arch"
+  ],
+  "correctIndex": 1,
+  "category": "Australian landmarks",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of Sweden?",
+  "options": [
+   "Gothenburg",
+   "Stockholm",
+   "Malmo",
+   "Uppsala"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which is the tallest mountain in Africa?",
+  "options": [
+   "Mount Kenya",
+   "Mount Kilimanjaro",
+   "Mount Stanley",
+   "Table Mountain"
+  ],
+  "correctIndex": 1,
+  "category": "Mountains",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of Norway?",
+  "options": [
+   "Bergen",
+   "Oslo",
+   "Trondheim",
+   "Stavanger"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which spacecraft carried the first humans to land on the Moon?",
+  "options": [
+   "Apollo 11",
+   "Apollo 13",
+   "Gemini 4",
+   "Vostok 1"
+  ],
+  "correctIndex": 0,
+  "category": "Space exploration",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Great Dividing Range runs down the eastern side of which country?",
+  "options": [
+   "New Zealand",
+   "Australia",
+   "South Africa",
+   "Chile"
+  ],
+  "correctIndex": 1,
+  "category": "Australian geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of Turkey?",
+  "options": [
+   "Istanbul",
+   "Ankara",
+   "Izmir",
+   "Bursa"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which planet spins in the opposite direction to most others, rotating east to west?",
+  "options": [
+   "Mars",
+   "Venus",
+   "Jupiter",
+   "Saturn"
+  ],
+  "correctIndex": 1,
+  "category": "The solar system",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The Victoria Falls lie on the border of Zambia and which other country?",
+  "options": [
+   "Botswana",
+   "Zimbabwe",
+   "Mozambique",
+   "Namibia"
+  ],
+  "correctIndex": 1,
+  "category": "World landmarks",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of Vietnam?",
+  "options": [
+   "Ho Chi Minh City",
+   "Hanoi",
+   "Da Nang",
+   "Hue"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which is the deepest ocean trench on Earth?",
+  "options": [
+   "Puerto Rico Trench",
+   "Java Trench",
+   "Mariana Trench",
+   "Tonga Trench"
+  ],
+  "correctIndex": 2,
+  "category": "Oceans and seas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the first Australian state you'd reach travelling north from Melbourne by land?",
+  "options": [
+   "Queensland",
+   "New South Wales",
+   "South Australia",
+   "Tasmania"
+  ],
+  "correctIndex": 1,
+  "category": "Australian geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the capital of Austria?",
+  "options": [
+   "Salzburg",
+   "Vienna",
+   "Graz",
+   "Innsbruck"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Sun is composed mostly of which two elements?",
+  "options": [
+   "Oxygen and nitrogen",
+   "Hydrogen and helium",
+   "Carbon and oxygen",
+   "Helium and iron"
+  ],
+  "correctIndex": 1,
+  "category": "Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which country has both the Alps and the city of Geneva?",
+  "options": [
+   "Austria",
+   "Switzerland",
+   "France",
+   "Germany"
+  ],
+  "correctIndex": 1,
+  "category": "Countries",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of Poland?",
+  "options": [
+   "Krakow",
+   "Warsaw",
+   "Gdansk",
+   "Wroclaw"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which planet appears blue-green due to methane in its atmosphere and lies eighth from the Sun?",
+  "options": [
+   "Uranus",
+   "Neptune",
+   "Saturn",
+   "Jupiter"
+  ],
+  "correctIndex": 1,
+  "category": "The solar system",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The Nullarbor Plain stretches across the southern edge of which country?",
+  "options": [
+   "South Africa",
+   "Australia",
+   "Argentina",
+   "USA"
+  ],
+  "correctIndex": 1,
+  "category": "Australian geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of Kenya?",
+  "options": [
+   "Mombasa",
+   "Nairobi",
+   "Kisumu",
+   "Nakuru"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which two colours make up the flag of Poland?",
+  "options": [
+   "Red and white",
+   "Blue and yellow",
+   "Green and white",
+   "Red and blue"
+  ],
+  "correctIndex": 0,
+  "category": "Flags",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the force that keeps planets in orbit around the Sun?",
+  "options": [
+   "Magnetism",
+   "Gravity",
+   "Friction",
+   "Momentum"
+  ],
+  "correctIndex": 1,
+  "category": "Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian state's capital is Adelaide?",
+  "options": [
+   "Western Australia",
+   "South Australia",
+   "Victoria",
+   "Tasmania"
+  ],
+  "correctIndex": 1,
+  "category": "Australian geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the capital of Switzerland?",
+  "options": [
+   "Zurich",
+   "Geneva",
+   "Bern",
+   "Basel"
+  ],
+  "correctIndex": 2,
+  "category": "World capitals",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which is the longest river in Australia?",
+  "options": [
+   "Darling River",
+   "Murray River",
+   "Murrumbidgee River",
+   "Cooper Creek"
+  ],
+  "correctIndex": 1,
+  "category": "Australian geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Taj Mahal is located in which country?",
+  "options": [
+   "Pakistan",
+   "India",
+   "Bangladesh",
+   "Nepal"
+  ],
+  "correctIndex": 1,
+  "category": "World landmarks",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the capital of the Czech Republic?",
+  "options": [
+   "Brno",
+   "Prague",
+   "Ostrava",
+   "Plzen"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which planet was reclassified as a dwarf planet in 2006?",
+  "options": [
+   "Ceres",
+   "Pluto",
+   "Eris",
+   "Makemake"
+  ],
+  "correctIndex": 1,
+  "category": "The solar system",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Bass Strait separates the Australian mainland from which state?",
+  "options": [
+   "Tasmania",
+   "Kangaroo Island",
+   "New Zealand",
+   "Norfolk Island"
+  ],
+  "correctIndex": 0,
+  "category": "Australian geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of Finland?",
+  "options": [
+   "Tampere",
+   "Helsinki",
+   "Turku",
+   "Espoo"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which is the world's largest hot desert by area?",
+  "options": [
+   "Arabian Desert",
+   "Sahara Desert",
+   "Gobi Desert",
+   "Kalahari Desert"
+  ],
+  "correctIndex": 1,
+  "category": "World geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The International Space Station orbits which body?",
+  "options": [
+   "The Moon",
+   "Earth",
+   "Mars",
+   "The Sun"
+  ],
+  "correctIndex": 1,
+  "category": "Space exploration",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the capital of Denmark?",
+  "options": [
+   "Aarhus",
+   "Copenhagen",
+   "Odense",
+   "Aalborg"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which mountain is the highest peak in the Himalayas and the world?",
+  "options": [
+   "K2",
+   "Kangchenjunga",
+   "Mount Everest",
+   "Lhotse"
+  ],
+  "correctIndex": 2,
+  "category": "Mountains",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The city of Darwin is the capital of which Australian territory?",
+  "options": [
+   "Australian Capital Territory",
+   "Northern Territory",
+   "Jervis Bay Territory",
+   "Cocos Islands"
+  ],
+  "correctIndex": 1,
+  "category": "Australian geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the capital of Hungary?",
+  "options": [
+   "Debrecen",
+   "Budapest",
+   "Szeged",
+   "Pecs"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which planet has the fastest winds in the solar system?",
+  "options": [
+   "Jupiter",
+   "Neptune",
+   "Saturn",
+   "Uranus"
+  ],
+  "correctIndex": 1,
+  "category": "The solar system",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The Mississippi River is the longest river in which country?",
+  "options": [
+   "Canada",
+   "United States",
+   "Mexico",
+   "Brazil"
+  ],
+  "correctIndex": 1,
+  "category": "Rivers",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of Belgium?",
+  "options": [
+   "Antwerp",
+   "Brussels",
+   "Ghent",
+   "Bruges"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which constellation is known as 'The Hunter' and features a famous belt of three stars?",
+  "options": [
+   "Orion",
+   "Scorpius",
+   "Leo",
+   "Taurus"
+  ],
+  "correctIndex": 0,
+  "category": "Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Fraser Island, the world's largest sand island, lies off the coast of which state?",
+  "options": [
+   "New South Wales",
+   "Queensland",
+   "Western Australia",
+   "Victoria"
+  ],
+  "correctIndex": 1,
+  "category": "Australian geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of Indonesia?",
+  "options": [
+   "Surabaya",
+   "Jakarta",
+   "Bandung",
+   "Bali"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which is the largest country entirely within Europe by area?",
+  "options": [
+   "France",
+   "Germany",
+   "Ukraine",
+   "Spain"
+  ],
+  "correctIndex": 2,
+  "category": "Countries",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Halley's Comet is famous for appearing roughly every how many years?",
+  "options": [
+   "Every 12 years",
+   "Every 50 years",
+   "Every 76 years",
+   "Every 100 years"
+  ],
+  "correctIndex": 2,
+  "category": "Astronomy",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the capital of Chile?",
+  "options": [
+   "Valparaiso",
+   "Santiago",
+   "Concepcion",
+   "Antofagasta"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Wave Rock granite formation is a natural landmark in which Australian state?",
+  "options": [
+   "South Australia",
+   "Western Australia",
+   "Victoria",
+   "Queensland"
+  ],
+  "correctIndex": 1,
+  "category": "Australian landmarks",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the capital of Peru?",
+  "options": [
+   "Cusco",
+   "Lima",
+   "Arequipa",
+   "Trujillo"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which planet is the hottest in the solar system due to its thick atmosphere?",
+  "options": [
+   "Mercury",
+   "Venus",
+   "Mars",
+   "Jupiter"
+  ],
+  "correctIndex": 1,
+  "category": "The solar system",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Rhine River flows through several countries and empties into which sea?",
+  "options": [
+   "Baltic Sea",
+   "North Sea",
+   "Mediterranean Sea",
+   "Black Sea"
+  ],
+  "correctIndex": 1,
+  "category": "Rivers",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the capital of Cuba?",
+  "options": [
+   "Santiago de Cuba",
+   "Havana",
+   "Camaguey",
+   "Holguin"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian city sits on the Swan River?",
+  "options": [
+   "Perth",
+   "Adelaide",
+   "Hobart",
+   "Darwin"
+  ],
+  "correctIndex": 0,
+  "category": "Australian geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The first artificial satellite launched into space was named what?",
+  "options": [
+   "Explorer 1",
+   "Sputnik 1",
+   "Vanguard 1",
+   "Telstar"
+  ],
+  "correctIndex": 1,
+  "category": "Space exploration",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of Morocco?",
+  "options": [
+   "Casablanca",
+   "Rabat",
+   "Marrakesh",
+   "Fez"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which sea separates Europe from Africa at its western end near Gibraltar?",
+  "options": [
+   "Black Sea",
+   "Mediterranean Sea",
+   "Adriatic Sea",
+   "Aegean Sea"
+  ],
+  "correctIndex": 1,
+  "category": "Oceans and seas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which is the smallest country in the world by area?",
+  "options": [
+   "Monaco",
+   "Vatican City",
+   "San Marino",
+   "Nauru"
+  ],
+  "correctIndex": 1,
+  "category": "Countries",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of Iceland?",
+  "options": [
+   "Akureyri",
+   "Reykjavik",
+   "Kopavogur",
+   "Hafnarfjordur"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Kakadu National Park is located in which Australian territory?",
+  "options": [
+   "Northern Territory",
+   "Western Australia",
+   "Queensland",
+   "New South Wales"
+  ],
+  "correctIndex": 0,
+  "category": "Australian geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which planet's largest moon is called Titan?",
+  "options": [
+   "Jupiter",
+   "Saturn",
+   "Neptune",
+   "Uranus"
+  ],
+  "correctIndex": 1,
+  "category": "The solar system",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of Croatia?",
+  "options": [
+   "Split",
+   "Zagreb",
+   "Dubrovnik",
+   "Rijeka"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The Yangtze River is the longest river on which continent?",
+  "options": [
+   "Africa",
+   "Asia",
+   "Europe",
+   "South America"
+  ],
+  "correctIndex": 1,
+  "category": "Rivers",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian island state's capital is Hobart?",
+  "options": [
+   "Kangaroo Island",
+   "Tasmania",
+   "King Island",
+   "Bruny Island"
+  ],
+  "correctIndex": 1,
+  "category": "Australian geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the capital of the Philippines?",
+  "options": [
+   "Cebu",
+   "Manila",
+   "Davao",
+   "Quezon City"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which telescope, launched in 1990, has taken famous deep-space images from orbit?",
+  "options": [
+   "James Webb",
+   "Hubble Space Telescope",
+   "Kepler",
+   "Spitzer"
+  ],
+  "correctIndex": 1,
+  "category": "Space exploration",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Blue Mountains are located just west of which Australian city?",
+  "options": [
+   "Melbourne",
+   "Sydney",
+   "Brisbane",
+   "Adelaide"
+  ],
+  "correctIndex": 1,
+  "category": "Australian geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of South Africa's legislative branch?",
+  "options": [
+   "Johannesburg",
+   "Cape Town",
+   "Durban",
+   "Pretoria"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which planet is known for the deepest and longest canyon in the solar system, Valles Marineris?",
+  "options": [
+   "Venus",
+   "Mars",
+   "Mercury",
+   "Jupiter"
+  ],
+  "correctIndex": 1,
+  "category": "The solar system",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The Congo River is found on which continent?",
+  "options": [
+   "South America",
+   "Africa",
+   "Asia",
+   "Australia"
+  ],
+  "correctIndex": 1,
+  "category": "Rivers",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of Nigeria?",
+  "options": [
+   "Lagos",
+   "Abuja",
+   "Kano",
+   "Ibadan"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian landmark is a large monolith also known by its English name Ayers Rock?",
+  "options": [
+   "Kata Tjuta",
+   "Uluru",
+   "Mount Augustus",
+   "The Olgas"
+  ],
+  "correctIndex": 1,
+  "category": "Australian landmarks",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the term for a group of stars forming a recognisable pattern in the sky?",
+  "options": [
+   "Galaxy",
+   "Constellation",
+   "Nebula",
+   "Cluster"
+  ],
+  "correctIndex": 1,
+  "category": "Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the capital of Colombia?",
+  "options": [
+   "Medellin",
+   "Bogota",
+   "Cali",
+   "Cartagena"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which mountain in Argentina is the highest peak in the Americas?",
+  "options": [
+   "Aconcagua",
+   "Chimborazo",
+   "Denali",
+   "Ojos del Salado"
+  ],
+  "correctIndex": 0,
+  "category": "Mountains",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The Great Australian Bight is a large open bay on which coast of Australia?",
+  "options": [
+   "Northern coast",
+   "Southern coast",
+   "Eastern coast",
+   "Western coast"
+  ],
+  "correctIndex": 1,
+  "category": "Australian geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of Saudi Arabia?",
+  "options": [
+   "Jeddah",
+   "Riyadh",
+   "Mecca",
+   "Medina"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which planet did the Curiosity and Perseverance rovers explore?",
+  "options": [
+   "Venus",
+   "Mars",
+   "The Moon",
+   "Mercury"
+  ],
+  "correctIndex": 1,
+  "category": "Space exploration",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Lake Eyre, Australia's largest lake when full, is located in which state?",
+  "options": [
+   "Western Australia",
+   "South Australia",
+   "Queensland",
+   "Victoria"
+  ],
+  "correctIndex": 1,
+  "category": "Australian geography",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the capital of Ukraine?",
+  "options": [
+   "Kharkiv",
+   "Kyiv",
+   "Odesa",
+   "Lviv"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which two colours appear on the flag of Canada?",
+  "options": [
+   "Red and white",
+   "Blue and white",
+   "Red and blue",
+   "Green and white"
+  ],
+  "correctIndex": 0,
+  "category": "Flags",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The asteroid belt lies between the orbits of Mars and which other planet?",
+  "options": [
+   "Earth",
+   "Jupiter",
+   "Saturn",
+   "Venus"
+  ],
+  "correctIndex": 1,
+  "category": "The solar system",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of Kazakhstan?",
+  "options": [
+   "Almaty",
+   "Astana",
+   "Shymkent",
+   "Karaganda"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian city is known for its casino and being the Gold Coast's entertainment hub?",
+  "options": [
+   "Surfers Paradise",
+   "Cairns",
+   "Newcastle",
+   "Geelong"
+  ],
+  "correctIndex": 0,
+  "category": "Australian geography",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the second planet from the Sun?",
+  "options": [
+   "Mercury",
+   "Venus",
+   "Earth",
+   "Mars"
+  ],
+  "correctIndex": 1,
+  "category": "The solar system",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Amazon River is the longest river on which continent?",
+  "options": [
+   "Africa",
+   "Asia",
+   "South America",
+   "North America"
+  ],
+  "correctIndex": 2,
+  "category": "Rivers",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the capital of Israel's largest metropolitan area, its economic centre on the coast?",
+  "options": [
+   "Jerusalem",
+   "Tel Aviv",
+   "Haifa",
+   "Eilat"
+  ],
+  "correctIndex": 1,
+  "category": "World geography",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which planet is the third from the Sun?",
+  "options": [
+   "Venus",
+   "Earth",
+   "Mars",
+   "Mercury"
+  ],
+  "correctIndex": 1,
+  "category": "The solar system",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Simpson Desert straddles the borders of three Australian states and territories, including which?",
+  "options": [
+   "Northern Territory",
+   "Tasmania",
+   "Victoria",
+   "New South Wales"
+  ],
+  "correctIndex": 0,
+  "category": "Australian geography",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the capital of Cambodia?",
+  "options": [
+   "Siem Reap",
+   "Phnom Penh",
+   "Battambang",
+   "Sihanoukville"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which is the largest moon in the solar system, orbiting Jupiter?",
+  "options": [
+   "Titan",
+   "Ganymede",
+   "Callisto",
+   "Europa"
+  ],
+  "correctIndex": 1,
+  "category": "The solar system",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the capital of Scotland?",
+  "options": [
+   "Glasgow",
+   "Edinburgh",
+   "Aberdeen",
+   "Dundee"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Coral Sea lies off the north-east coast of which country?",
+  "options": [
+   "New Zealand",
+   "Australia",
+   "Indonesia",
+   "Fiji"
+  ],
+  "correctIndex": 1,
+  "category": "Oceans and seas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the capital of Jamaica?",
+  "options": [
+   "Montego Bay",
+   "Kingston",
+   "Ocho Rios",
+   "Spanish Town"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which term describes the point in a planet's orbit when it is closest to the Sun?",
+  "options": [
+   "Aphelion",
+   "Perihelion",
+   "Equinox",
+   "Solstice"
+  ],
+  "correctIndex": 1,
+  "category": "Astronomy",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The Gulf of Carpentaria is a large sea inlet on the northern coast of which country?",
+  "options": [
+   "Indonesia",
+   "Australia",
+   "Papua New Guinea",
+   "Philippines"
+  ],
+  "correctIndex": 1,
+  "category": "Australian geography",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the capital of Greece's neighbour, Bulgaria?",
+  "options": [
+   "Plovdiv",
+   "Sofia",
+   "Varna",
+   "Burgas"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which planet has a moon called Europa thought to have an ocean beneath its icy surface?",
+  "options": [
+   "Saturn",
+   "Jupiter",
+   "Neptune",
+   "Mars"
+  ],
+  "correctIndex": 1,
+  "category": "The solar system",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the capital of Ethiopia?",
+  "options": [
+   "Dire Dawa",
+   "Addis Ababa",
+   "Mekelle",
+   "Gondar"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which is the largest of the Great Lakes of North America by surface area?",
+  "options": [
+   "Lake Michigan",
+   "Lake Superior",
+   "Lake Huron",
+   "Lake Erie"
+  ],
+  "correctIndex": 1,
+  "category": "World geography",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the study of celestial objects and the universe called?",
+  "options": [
+   "Geology",
+   "Astronomy",
+   "Meteorology",
+   "Astrology"
+  ],
+  "correctIndex": 1,
+  "category": "Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the capital of Fiji?",
+  "options": [
+   "Nadi",
+   "Suva",
+   "Lautoka",
+   "Labasa"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The Kimberley region, known for rugged gorges, is in which Australian state?",
+  "options": [
+   "Northern Territory",
+   "Western Australia",
+   "Queensland",
+   "South Australia"
+  ],
+  "correctIndex": 1,
+  "category": "Australian geography",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which planet is famous for its many rings made of ice and rock particles?",
+  "options": [
+   "Jupiter",
+   "Saturn",
+   "Uranus",
+   "Neptune"
+  ],
+  "correctIndex": 1,
+  "category": "The solar system",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The MacDonnell Ranges are located near which Australian outback town?",
+  "options": [
+   "Broken Hill",
+   "Alice Springs",
+   "Kalgoorlie",
+   "Mount Isa"
+  ],
+  "correctIndex": 1,
+  "category": "Australian geography",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the capital of Argentina's neighbour, Uruguay?",
+  "options": [
+   "Salto",
+   "Montevideo",
+   "Paysandu",
+   "Maldonado"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which is the brightest star in Earth's night sky?",
+  "options": [
+   "Polaris",
+   "Sirius",
+   "Betelgeuse",
+   "Vega"
+  ],
+  "correctIndex": 1,
+  "category": "Astronomy",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The city of Cairns is a gateway to which famous Australian natural wonder?",
+  "options": [
+   "Uluru",
+   "The Great Barrier Reef",
+   "The Twelve Apostles",
+   "Kakadu"
+  ],
+  "correctIndex": 1,
+  "category": "Australian geography",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which is the largest planet's moon that is bigger than the planet Mercury?",
+  "options": [
+   "Ganymede",
+   "Our Moon",
+   "Phobos",
+   "Deimos"
+  ],
+  "correctIndex": 0,
+  "category": "The solar system",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the capital of Portugal's neighbour, Spain?",
+  "options": [
+   "Barcelona",
+   "Madrid",
+   "Seville",
+   "Bilbao"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which ocean is the coldest and surrounds the North Pole?",
+  "options": [
+   "Southern Ocean",
+   "Arctic Ocean",
+   "Atlantic Ocean",
+   "Pacific Ocean"
+  ],
+  "correctIndex": 1,
+  "category": "Oceans and seas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the capital of Greece's island neighbour, Cyprus?",
+  "options": [
+   "Limassol",
+   "Nicosia",
+   "Larnaca",
+   "Paphos"
+  ],
+  "correctIndex": 1,
+  "category": "World capitals",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the capital of Singapore?",
+  "options": [
+   "Singapore",
+   "Kuala Lumpur",
+   "Jakarta",
+   "Bangkok"
+  ],
+  "correctIndex": 0,
+  "category": "World capitals",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which country is both a continent and a single nation?",
+  "options": [
+   "Greenland",
+   "Australia",
+   "India",
+   "Madagascar"
+  ],
+  "correctIndex": 1,
+  "category": "Countries",
+  "difficulty": "easy"
+ }
+]

@@ -1,0 +1,70 @@
+{
+  "_how_to_edit": "Change the words between the quote marks and save. Keep every quote mark and comma where it is. A new line inside an answer is written as \\n. House rules: no long dashes, never say roster (say your members list), bingo winners claim from the host, never the bar. A copy for reading is ~/venue-enrich/HELP-DESK-FAQ.md.",
+  "support_email": "support@venueplay.com.au",
+  "patron": {
+    "title": "Help",
+    "items": [
+      {
+        "q": "How do I join a game?",
+        "a": "Scan the QR code on the big screen with your phone camera, or go to venueplay.com.au/play and type the 6-character code shown on the screen. There is no app to download and no account to make."
+      },
+      {
+        "q": "What name should I use?",
+        "a": "Any name you like, up to 20 letters. The venue chooses how names show on the big screen, and some show only a first name and an initial. If your name is wrong or you would rather not show it, let the host know."
+      },
+      {
+        "q": "My tickets or my game are not showing",
+        "a": "Your game appears when the host starts it, so if you see \"You're in\", you are in and just waiting. If it has started and your phone is still waiting, check the code on your phone matches the big screen, then reload the page. Keep your screen on during the game: some phones pause a page when the screen locks.\nIn some states bingo is played on paper. If your phone says \"Tonight you play on paper\", grab a bingo book and mark it off as the numbers are called."
+      },
+      {
+        "q": "I have a BINGO. How do I claim it?",
+        "a": "Press the BINGO button on your phone as soon as your pattern is complete. The host checks it. If you win, show your phone to the host to claim. Prizes are always claimed from the host, never the bar."
+      },
+      {
+        "q": "Who gives out the prizes?",
+        "a": "The venue. Every prize is offered and given out by the venue running the game. VenuePlay supplies the game software only, so any question about a prize goes to the host or the venue."
+      },
+      {
+        "q": "What happens to my details?",
+        "a": "To play you only need a name. Some venues also ask for an email, a mobile or a postcode, and may ask whether you would like to hear from them; that is always your choice and is never needed to play. Those details belong to the venue. To be taken off a venue's list, ask the venue or contact us and we will remove you. The full privacy policy is at venueplay.com.au/privacy."
+      },
+      {
+        "q": "How do I contact you?",
+        "a": "Use the form below and we will reply by email, or email support@venueplay.com.au. For anything about tonight's game or a prize, the host in the room is the quickest help."
+      }
+    ]
+  },
+  "venue": {
+    "title": "Help for venues",
+    "items": [
+      {
+        "q": "Getting started",
+        "a": "Everyone at your venue signs in at venueplay.com.au/app with their mobile number and a code we text them. Pick the game, follow the steps on screen, and players join from their phones with the code on your TV. The guide at venueplay.com.au/training walks through a whole night."
+      },
+      {
+        "q": "Setting up the TV",
+        "a": "Open your venue's TV link in the TV's web browser (or a laptop or streaming stick plugged into the TV) and leave it running. Your TV link is on your Account page. It shows whatever game you start, and your ads between games. If the screen goes blank, reload the page on the TV."
+      },
+      {
+        "q": "Adding hosts and managers",
+        "a": "On your Account page, choose Add a host and put in their mobile number. They sign in with a text code, so there is no password to share. A host runs games on the night; a manager can also look after your members list, draws, raffles and advertising if you allow it."
+      },
+      {
+        "q": "Billing and players",
+        "a": "Your plan includes a number of players a night, and it never stops anyone joining. If a night runs bigger, the console shows the extra players when your host starts the game, and each extra player is $2 for that night once your host taps Start game to approve. Your Account page shows your plan, your next payment and your invoices. For anything about a bill, email accounts@venueplay.com.au."
+      },
+      {
+        "q": "Cancelling",
+        "a": "The account owner can cancel a venue from the Account page at any time. A monthly plan ends at the end of the current month, and an annual plan runs to the end of the period already paid for."
+      },
+      {
+        "q": "Your players' details",
+        "a": "Player details collected at your venue belong to your venue. You choose what is collected, and asking for an email or a marketing tick is off until you switch it on. The account owner can download players who opted in. When an account is closed, the details that identify players are deleted within 90 days."
+      },
+      {
+        "q": "Contacting us",
+        "a": "If a game is on right now and something is going wrong, call 07 5228 3667 and press 2. For anything else, use the form below and we will reply by email (sent from your console while a game is on, it comes to us marked urgent), or email support@venueplay.com.au. For billing, email accounts@venueplay.com.au, or call and press 4."
+      }
+    ]
+  }
+}

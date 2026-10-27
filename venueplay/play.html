@@ -1,0 +1,2260 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VenuePlay: Play</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="/favicon-48.png" type="image/png" sizes="48x48">
+<link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
+    --pink:#FF1F8E; --pink-deep:#C70F69;
+    --gold:#FFC24B; --win:#35D07F; --roll:#F5A524;
+    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#8A8A94;
+    --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow-x:clip}
+  body{background:radial-gradient(700px 420px at 80% -10%, rgba(255,31,142,.12), transparent 60%), var(--ink);
+    color:var(--text);font-family:'Manrope',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;
+    overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+  .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
+
+  .app{max-width:460px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+  /* ROOM EITHER SIDE FOR THE CORNERS (Dean, 21 Oct 2026: the VenuePlay logo "looks crammed into the
+     corner"). The menu button sits top-right and the called-ball chip top-left, both pinned over the
+     header, and the header used to be padded 16px all round, so at 320 wide "VenuePlay Musical Bingo"
+     ran under the menu button. 72px each side keeps the middle clear of both and the brand centred. */
+  .ptop{padding:16px 72px;text-align:center;border-bottom:1px solid var(--line-2);position:sticky;top:0;background:rgba(10,10,11,.82);backdrop-filter:blur(8px);z-index:10}
+  .brand{display:flex;align-items:center;justify-content:center;gap:8px}
+  .brand svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9))}
+  .brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;color:#fff;line-height:1.2;text-align:left}
+  .brand .nw{white-space:nowrap}   /* a long game name wraps after VenuePlay, never mid-name */
+  .brand .div{width:1px;height:16px;background:var(--line)}
+  .venue{font-size:11px;color:var(--muted);margin-top:5px;display:flex;align-items:center;justify-content:center;gap:6px}
+  .vlogo{display:block;margin:10px auto 2px;height:30px;max-width:150px;object-fit:contain}   /* sized by its shape once it loads: /app/vp-venuelogo.js */
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
+  .dot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
+
+  .view{flex:1;display:flex;flex-direction:column;padding:22px 18px}
+  .center{justify-content:center;text-align:center}
+  .paperview .pbig{font-size:40px;margin-bottom:16px}
+  .paperview .paperlead{font-size:19px;line-height:1.5;color:var(--text);margin:0 auto 14px;max-width:24em}
+  .paperview .paperwhy{font-size:16px;line-height:1.5;color:var(--muted);margin:0 auto;max-width:24em}
+  .hidden{display:none!important}
+
+  .pbig{font-family:'Anton',sans-serif;font-size:34px;color:#fff;text-transform:uppercase;line-height:1.02;margin-bottom:8px}
+  .psub{color:var(--muted);font-size:14px}
+  .pnote{font-size:12px;color:var(--faint);margin-top:16px}
+  .field{margin-top:14px}
+  input[type=text],input[type=email],input[type=tel]{width:100%;background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:12px;
+    padding:15px;font-family:'Manrope',sans-serif;font-size:16px;outline:none;transition:.15s;text-align:center}
+  .optin{display:flex;align-items:center;gap:9px;margin-top:14px;color:var(--muted);font-size:14px;text-align:left;cursor:pointer}
+  .optin input{width:18px;height:18px;flex:none;accent-color:var(--pink)}
+  input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.15)}
+  /* letter-spacing puts a gap AFTER the last character too, so centred text (and the placeholder)
+     sits half a gap to the left. text-indent of the same size puts it back in the middle. */
+  input.code{font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:.2em;text-indent:.2em;text-transform:uppercase;font-size:24px;text-align:center;width:100%;box-sizing:border-box}
+  /* The name sits on the next step of the same join, under a centred heading and
+     a centred code. Left-aligned it read as a different page. */
+  #nameIn{text-align:center}
+
+  .btn{border:none;border-radius:12px;padding:16px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:16px;cursor:pointer;transition:.15s;letter-spacing:.02em;width:100%}
+  .btn.pink{background:var(--pink);color:#0A0A0B;box-shadow:0 8px 20px rgba(255,31,142,.3)}
+  .btn.pink:active{background:var(--pink-deep)}
+  .btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+  .cerr{color:var(--roll);font-size:13px;min-height:18px;margin-top:10px}
+
+  /* card view */
+  .cardhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+  .cardhead .pn{font-weight:800;color:#fff;font-size:16px;font-family:'Hanken Grotesk',sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:55%}
+  .cardpat{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--pink);background:rgba(255,31,142,.12);padding:5px 12px;border-radius:20px;white-space:nowrap}
+  .card9{display:grid;grid-template-columns:repeat(9,1fr);gap:4px}
+  .card9 .cc{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(13px,3.8vw,20px);color:var(--text);background:var(--ink-3);border:1px solid var(--line);border-radius:8px;cursor:pointer;user-select:none;transition:.12s}
+  .card9 .cc.blank{background:transparent;border-color:transparent;cursor:default;box-shadow:none}
+  .card9 .cc.daub{background:var(--pink);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(255,31,142,.3)}
+  .card9 .cc.on{outline:2px solid var(--win);outline-offset:-2px}
+  /* Player zoom: --cz widens/narrows the card so numbers can be made big (scroll to pan) or small (see every ticket). */
+  #cardStack{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .card9{width:calc(100% * var(--cz,1));min-width:0}
+  .cardctl{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  .czbtn{background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 13px;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;line-height:1;cursor:pointer;min-width:46px;min-height:44px}
+  .czbtn:active{background:var(--pink);color:#fff;border-color:transparent}
+  .czbtn.fs{font-size:13px;min-width:0}
+  .czlbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--faint)}
+  .pmsg{font-size:14px;color:var(--muted);text-align:center;margin:16px 0;min-height:40px;line-height:1.45}
+  /* A stage win (a line, two lines) while the game plays on. Pinned above the tickets so the
+     next ball cannot wipe it: this is the player's proof for the host until the game ends. */
+  .stagewin{border-radius:14px;padding:14px 16px;margin-bottom:14px;text-align:center;line-height:1.4;
+    background:rgba(53,208,127,.12);border:1px solid rgba(53,208,127,.45)}
+  .stagewin b{display:block;font-family:'Anton',sans-serif;font-size:24px;letter-spacing:.02em;color:var(--win);text-transform:uppercase;margin-bottom:4px}
+  .stagewin span{display:block;font-size:14px;color:var(--text)}
+  .stagewin small{display:block;font-size:12.5px;color:var(--muted);margin-top:6px}
+  .stagewin em{font-style:normal;font-weight:800;color:var(--gold)}
+  body.light .stagewin em{color:var(--pink-deep)}
+  .stagewin.others{background:var(--ink-3);border-color:var(--line)}
+  .stagewin.others b{font-size:16px;color:var(--muted);font-family:'Hanken Grotesk',sans-serif;text-transform:none;letter-spacing:0}
+  body.light .stagewin{background:rgba(13,150,90,.10);border-color:rgba(13,150,90,.45)}
+  body.light .stagewin b{color:#0b7a4b}
+  .pmsg.no{color:var(--roll)}
+  .pmsg.wait{color:var(--gold)}
+  .bingoBtn{background:var(--pink);color:#fff;box-shadow:0 8px 24px rgba(255,31,142,.4);font-size:22px;text-transform:uppercase;letter-spacing:.06em;padding:20px}
+  .bingoBtn:active{background:var(--pink-deep)}
+
+  /* ticket count picker */
+  .cardpick{margin-top:16px}
+  .cplabel{font-size:13px;color:var(--muted);margin-bottom:9px}
+  .cprow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+  .cpbtn{width:50px;height:50px;border-radius:12px;border:1px solid var(--line);background:var(--ink-3);color:var(--text);
+    font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;cursor:pointer;transition:.12s}
+  .cpbtn.sel{background:var(--pink);color:#0A0A0B;border-color:transparent;box-shadow:0 6px 16px rgba(255,31,142,.3)}
+  /* stacked tickets (a book) */
+  .ticket{margin-bottom:16px}
+  /* Turning the page hides tickets; it does NOT rebuild them. See buildCards. */
+  .ticket.offpage{display:none}
+  /* A called number you have not marked yet. Deliberately quieter than .justcalled: the newest
+     number still has to be the loudest thing on the card. This does NOT mark for you, it only
+     says what is outstanding, which is what the board behind a caller does in a real hall. */
+  .cc.pending{box-shadow:inset 0 0 0 2px rgba(255,194,75,.75)}
+  body.light .cc.pending{box-shadow:inset 0 0 0 2px rgba(255,31,142,.55)}
+  .ticket .tklabel{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;text-align:left}
+
+  /* ---- LAYOUT: pages of three (menu option "Three at a time") ----
+     The first attempt put all six on one screen as thumbnails. At phone width that is a 9px cell
+     with two digits in it, too small to read and far too small to hit with a thumb, and the
+     ticket that popped forward covered its neighbours so marks landed on the wrong card.
+     What was actually wanted: three cards a screen at a readable size, and when a number is
+     called, the tab holding it comes to you. */
+  #cardStack.lay-pages{overflow-x:auto}
+  .pagetabs{display:flex;gap:7px;margin-bottom:10px}
+  .pagetab{flex:1;min-height:44px;padding:9px 6px;border-radius:10px;border:1px solid var(--line);background:var(--ink-3);
+    color:var(--muted);font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:12.5px;
+    letter-spacing:.04em;text-transform:uppercase;cursor:pointer;transition:.15s;position:relative}
+  .pagetab.on{background:var(--ink-2);color:var(--text);border-color:rgba(255,255,255,.22)}
+  .pagetab.has{border-color:var(--gold);color:var(--gold)}
+  /* Paid, more than one ticket: how many called numbers are still unmarked on that page. */
+  .pagetab .pcount{display:none;margin-left:6px;font-size:11px;font-weight:800;color:#12101a;
+    background:var(--gold);border-radius:9px;padding:1px 6px;vertical-align:middle}
+  .pagetab.owed .pcount{display:inline-block}
+  .pagetab.has:after{content:"";position:absolute;top:5px;right:6px;width:6px;height:6px;border-radius:50%;
+    background:var(--gold);box-shadow:0 0 7px var(--gold)}
+  .lay-pages .stackwrap{display:flex;flex-direction:column;gap:12px}
+  .lay-pages .ticket{margin-bottom:0}
+  .lay-pages .card9{width:calc(100% * var(--cz,1))}
+  .lay-pages .card9 .cc{font-size:clamp(15px,4vw,20px)}
+  /* ---- LAYOUT: all six, columns aligned (menu option "Columns lined up") ----
+     Tickets flush with no gutter, so the nine columns run as unbroken bands down all six the way
+     a paper strip reads. A number called lights its column top to bottom, so you scan one band. */
+  #cardStack.lay-align{overflow-x:auto}
+  .lay-align .stackwrap{display:flex;flex-direction:column;gap:0}
+  .lay-align .ticket{margin-bottom:0}
+  .lay-align .ticket + .ticket{border-top:1px solid var(--line-2);padding-top:3px;margin-top:3px}
+  .lay-align .ticket .tklabel{display:none}
+  .lay-align .card9{width:calc(100% * var(--cz,1));gap:2px}
+  /* The band is the whole point of this layout, and six tickets are taller than a phone, so it
+     sticks: it used to scroll away exactly when you reached the tickets you had not checked. */
+  .colband{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:repeat(9,1fr);gap:2px;width:calc(100% * var(--cz,1));
+    padding:5px 0 6px;margin-bottom:2px;background:var(--ink)}
+  .colband i{height:4px;border-radius:2px;background:var(--ink-3);transition:background .2s ease}
+  .colband i.lit{background:var(--gold);box-shadow:0 0 10px rgba(255,194,75,.55)}
+  /* NO VERTICAL HIGHLIGHT ON A TICKET. This used to tint the whole column holding the last
+     called number, all three rows of it, which draws a vertical stripe down a ticket in a game
+     where the only thing that ever wins is a row across. Players read it as the line they were
+     chasing. The thin colband above the tickets still points at the column, and .justcalled still
+     rings the actual number, which is the real navigation need. */
+  .card9 .cc.incol{border-color:rgba(255,194,75,.5)}
+  /* A called number this player has not marked, shown only when they are one or two away. */
+  .card9 .cc.missed{outline:2px dashed var(--gold);outline-offset:-2px;animation:missedPulse 1.1s ease-in-out infinite}
+  @keyframes missedPulse{0%,100%{opacity:1}50%{opacity:.55}}
+  @media (prefers-reduced-motion:reduce){ .card9 .cc.missed{animation:none} }
+  /* The hint under "2 numbers away" is a sentence, not a headline: in the headline's capitals and
+     condensed face it ran to three lines and the pulse pushed it into the win box below (audit,
+     14 Oct 2026). Plain type, one or two lines, and room underneath. */
+  .tmiss{display:block;font:600 12.5px/1.35 system-ui,-apple-system,sans-serif;text-transform:none;letter-spacing:0;text-shadow:none;opacity:.92;margin-top:5px}
+  .card9 .cc.incol.blank{border-color:transparent}
+  /* the number just called, ringed on the ticket that popped forward */
+  .card9 .cc.justcalled{box-shadow:inset 0 0 0 2px var(--gold);color:var(--gold)}
+  .card9 .cc.daub.justcalled{box-shadow:inset 0 0 0 2px rgba(255,194,75,.9);color:#fff}
+
+  .lastcalled{text-align:center;margin-bottom:14px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)}
+  .lastcalled b{color:#fff;font-size:18px}
+  .lcrow{display:flex;align-items:flex-end;justify-content:center;gap:14px}
+  .lcnum{font-family:'Anton',sans-serif;color:var(--gold);font-size:52px;line-height:1;letter-spacing:.01em}
+  /* The two numbers before it, small and grey, for whoever is back from the bar. */
+  .lcprev{font-family:'Anton',sans-serif;color:var(--faint);font-size:24px;line-height:1.1;padding-bottom:3px}
+  .lcprev + .lcprev{font-size:30px;color:var(--muted)}
+  body.light .lcnum{color:var(--pink-deep)}
+  .lcsub{display:block;font-size:12px;color:var(--faint);margin-top:4px;text-transform:uppercase;letter-spacing:.1em}
+  /* menu (top-right of the bar): Easy mode + Leave game */
+  /* The called number lives in the sticky header, hard left, so a player never has to scroll
+     back up to see what was just called. The big one in the card view scrolls away; this does not. */
+  .hdrball{position:absolute;left:12px;top:10px;display:flex;flex-direction:column;align-items:center;
+    gap:1px;min-width:46px;padding:4px 8px;border-radius:10px;background:rgba(255,194,75,.12);
+    border:1px solid rgba(255,194,75,.34)}
+  .hdrball b{font-family:'Anton',sans-serif;font-size:22px;line-height:1;color:var(--gold)}
+  .hdrball span{font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--faint);letter-spacing:.02em}
+  body.light .hdrball{ background:rgba(255,31,142,.10); border-color:rgba(255,31,142,.35) }
+  body.light .hdrball b{ color:var(--pink-deep) }
+  .menubtn{position:absolute;top:12px;right:14px;width:38px;height:38px;border:1px solid var(--line);background:var(--ink-3);color:var(--text);border-radius:10px;font-size:17px;line-height:1;cursor:pointer}
+  .menupanel{position:absolute;top:56px;right:12px;background:var(--ink-2);border:1px solid var(--line);border-radius:12px;padding:6px;min-width:216px;z-index:30;box-shadow:0 14px 34px -12px rgba(0,0,0,.75)}
+  .menuitem{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:12px 14px;background:none;border:none;color:var(--text);font-family:'Manrope',sans-serif;font-size:14.5px;text-align:left;cursor:pointer;border-radius:8px}
+  .menuitem:hover{background:var(--ink-3)}
+  .menuitem span{display:flex;flex-direction:column;gap:2px}
+  .menuitem small{color:var(--faint);font-size:11.5px}
+  .menuitem input{width:22px;height:22px;flex:none;accent-color:var(--pink)}
+  .menuitem select{flex:none;background:var(--ink-3);color:var(--text);border:1px solid var(--line);
+    border-radius:8px;padding:7px 9px;font-family:'Manrope',sans-serif;font-size:13px;max-width:47%}
+  .menuleave{color:var(--roll);font-weight:700;justify-content:flex-start}
+
+  /* light mode (menu toggle) */
+  /* Light mode is for older eyes in a bright room, and the first version was so pale the cards
+     and the page were nearly the same white. Dimmer ground, whiter cards, darker text. */
+  body.light{ --ink:#DFD9E4; --ink-2:#FFFFFF; --ink-3:#FFFFFF; --text:#141019; --muted:#4a4453; --faint:#6f6878; --line:rgba(0,0,0,.20); --line-2:rgba(0,0,0,.10);
+    background:radial-gradient(700px 420px at 80% -10%, rgba(255,31,142,.10), transparent 60%), #DFD9E4; }
+  body.light .ptop{ background:rgba(255,255,255,.9) }
+  body.light .brand .word, body.light .pbig, body.light .cardhead .pn, body.light .lastcalled b{ color:#191420 }
+  body.light .card9 .cc{ box-shadow:0 1px 2px rgba(0,0,0,.06) }
+  /* Light mode is chosen by the players who most need the cues (older eyes, a bright room), and
+     gold on white is invisible: the lit column read FAINTER than an unlit one. Use the pink for
+     every "this is the one" signal here, and repaint the panel colours the layouts sit on. */
+  body.light .colband{ background:var(--ink) }
+  body.light .colband i{ background:rgba(0,0,0,.10) }
+  body.light .colband i.lit{ background:var(--pink); box-shadow:0 0 10px rgba(255,31,142,.45) }
+  body.light .card9 .cc.incol{ border-color:rgba(255,31,142,.55) }
+  body.light .card9 .cc.incol.blank{ border-color:transparent }
+  body.light .card9 .cc.justcalled{ box-shadow:inset 0 0 0 2px var(--pink); color:var(--pink-deep) }
+  body.light .card9 .cc.daub.justcalled{ box-shadow:inset 0 0 0 2px #7a0940; color:#fff }
+  body.light .pagetab{ background:#fff; border-color:rgba(0,0,0,.12) }
+  body.light .pagetab.on{ background:#F3EFF5 }
+  body.light .pagetab.has{ border-color:var(--pink); color:var(--pink-deep) }
+  body.light .pagetab.has:after{ background:var(--pink); box-shadow:0 0 7px rgba(255,31,142,.6) }
+
+  .prizebox{margin-top:16px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:22px;color:var(--gold);background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);border-radius:12px;padding:16px}
+  .sharenote{margin-top:12px;font-size:13.5px;color:var(--muted);line-height:1.45}
+  .sharenote b{color:var(--text)}
+  .wonwrap{background:radial-gradient(600px 400px at 50% 20%, rgba(53,208,127,.18), transparent 65%)}
+  @keyframes winPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+  .wonwrap .pbig{font-size:56px;line-height:1.02;text-shadow:0 0 28px rgba(53,208,127,.6);animation:winPulse 1s ease-in-out infinite}
+  .wonwrap .wonemoji{font-size:78px;animation:winPulse 1.3s ease-in-out infinite}
+  @media (prefers-reduced-motion: reduce){ .wonwrap .pbig,.wonwrap .wonemoji{animation:none} }
+  .biglose .pbig{color:var(--gold)}
+  /* near-win tension */
+  .tension{margin:10px 0 10px;text-align:center;font-family:'Anton',sans-serif;text-transform:uppercase;letter-spacing:.04em;color:var(--gold);line-height:1}
+  .tension.two{font-size:16px;color:var(--muted);animation:none}
+  .tension.hot{font-size:30px;color:var(--pink);text-shadow:0 0 18px rgba(255,31,142,.5);animation:tensionPulse 1s ease-in-out infinite}
+  @keyframes tensionPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.09);opacity:.85}}
+  @media (prefers-reduced-motion: reduce){ .tension.hot{animation:none} }
+  /* win celebration */
+  .cfetti{position:fixed;top:-14px;width:9px;height:14px;z-index:9999;pointer-events:none;border-radius:2px;will-change:transform,opacity;animation:cfall linear forwards}
+  @keyframes cfall{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(106vh) rotate(560deg);opacity:.85}}
+  @media (prefers-reduced-motion: reduce){ .cfetti{display:none} }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="ptop">
+    <div class="brand">
+      <svg width="17" height="19" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
+      <span class="div"></span><span class="word">VenuePlay</span>
+    </div>
+    <img id="venueLogo" class="vlogo hidden" alt="">
+    <div class="hdrball hidden" id="hdrBall"><b id="hdrBallNum"></b><span id="hdrBallCount">0 of 90</span></div>
+    <div class="venue"><span class="dot" id="statusDot"></span> <span id="statusText">Connecting</span><span class="mono hidden" id="roomLabel">------</span></div>
+    <button class="menubtn" id="menuBtn" aria-label="Menu">&#9776;</button>
+    <div class="menupanel hidden" id="menuPanel">
+      <label class="menuitem"><span>Easy mode<small>Mark my numbers for me</small></span><input type="checkbox" id="assistChk"></label>
+      <label class="menuitem"><span>Light mode</span><input type="checkbox" id="lightChk"></label>
+      <label class="menuitem"><span>Ticket layout<small>How your tickets sit on screen</small></span>
+        <select id="laySel">
+          <option value="stack">Stacked</option>
+          <option value="pages">Three at a time</option>
+          <option value="align">Columns lined up</option>
+        </select></label>
+      <button class="menuitem menuleave" id="leaveBtn">Leave game</button>
+    </div>
+  </div>
+
+  <!-- NO ROOM -->
+  <div class="view center hidden" id="vNoRoom">
+    <div class="pbig">Enter the<br>game code</div>
+    <div class="psub">Scan the QR on the big screen, or type the 6-character code shown there.</div>
+    <div class="field"><input id="roomIn" class="code" maxlength="6" placeholder="ABC123" autocomplete="off" autocapitalize="characters" spellcheck="false"></div>
+    <div class="cerr" id="roomErr"></div>
+    <div class="field"><button class="btn pink" id="roomBtn">Continue</button></div>
+  </div>
+
+  <!-- JOIN -->
+  <div class="view center hidden" id="vJoin">
+    <div class="pbig">Join the<br>game</div>
+    <div class="psub hidden" id="joinVenue" style="color:var(--pink);font-weight:700"></div>
+    <div class="psub">You are joining room <b class="mono" id="joinCode" style="color:var(--gold)">------</b></div>
+    <div class="field"><input type="text" id="nameIn" placeholder="Your name" maxlength="20" autocomplete="given-name"></div>
+    <div id="joinExtra"></div>
+    <div class="cerr" id="joinErr"></div>
+    <!-- Loading... until the script below has wired Join (the last line of its setup turns it into "Join").
+         A tap on slow pub wifi before then is refused visibly, never silently lost (20 Oct 2026). -->
+    <div class="field"><button class="btn pink" id="joinBtn" disabled aria-busy="true">Loading...</button></div>
+    <div class="pnote">No app and no account. Your game appears here when the host starts.</div>
+  </div>
+
+  <!-- PAPER: a real-balls night, or a state whose rules ask for a printed ticket. Filled by showPaperBingo(). -->
+  <div class="view center hidden paperview" id="vPaper" role="status"></div>
+
+  <!-- WAIT -->
+  <div class="view center hidden" id="vWait">
+    <div style="font-size:44px">&#127921;</div>
+    <div class="pbig" style="color:var(--gold)">You&#39;re in</div>
+    <div class="psub">Good luck, <b id="waitName" style="color:var(--text)">Player</b></div>
+    <div class="pnote" id="waitNote">Waiting for the host to start. Your game will appear here.</div>
+  </div>
+
+  <!-- CARD -->
+  <div class="view hidden" id="vCard">
+    <div class="cardhead"><span class="pn" id="cardName">Player</span><span class="cardpat" id="cardPat">One line</span></div>
+    <div class="lastcalled" id="lastCalled">No numbers called yet</div>
+    <div class="tension hidden" id="tension"></div>
+    <div class="stagewin hidden" id="stageWin"></div>
+    <div class="cardctl">
+      <span class="czlbl">Size</span>
+      <button type="button" id="zoomOut" class="czbtn" aria-label="Smaller numbers">&#8722;</button>
+      <button type="button" id="zoomIn" class="czbtn" aria-label="Bigger numbers">&#43;</button>
+      <button type="button" id="fsBtn" class="czbtn fs">Full screen</button>
+    </div>
+    <div id="cardStack"></div>
+    <div class="pmsg" id="pMsg">Numbers light up as they are called.</div>
+    <button class="btn bingoBtn" id="bingoBtn">BINGO!</button>
+  </div>
+
+  <!-- WON -->
+  <div class="view center hidden wonwrap" id="vWon">
+    <div class="wonemoji" style="font-size:52px">&#127881;</div>
+    <div class="pbig" style="color:var(--win)">YOU WON!</div>
+    <div class="psub">Show this screen to the host to claim</div>
+    <div class="prizebox" id="wonPrize">the prize</div>
+    <div class="sharenote hidden" id="wonShare"></div>
+    <div class="sharenote hidden" id="wonAlso"></div>
+    <div class="pnote">Card <b id="wonCard" style="color:var(--muted)">#000</b></div>
+  </div>
+
+  <!-- LOST (someone else won) -->
+  <div class="view center hidden biglose" id="vLost">
+    <div style="font-size:44px">&#127882;</div>
+    <div class="pbig">Nice game!</div>
+    <div class="psub" id="lostSub">Good luck next round.</div>
+    <div class="pnote">Sit tight, the host may start another round.</div>
+  </div>
+</div>
+
+<!-- A DEMO DOES NOT WAIT FOR THE REALTIME LIBRARY. It is 219KB from a CDN and this page cannot
+     start until it has arrived, which on the sales page hero meant a black phone for seconds
+     (Dean, 22 Sep 2026: "The Mobile took ages to load"). ?demo=1 never connects to anything,
+     so it gets a stand-in with the one call the page makes at startup, and the real library is
+     not loaded at all. A real phone is untouched: the tag below still runs for it. -->
+<script>
+  if(/[?&]demo=1\b/.test(location.search)){
+    window.supabase={ createClient:function(){ return { channel:function(){ return { on:function(){ return this; }, subscribe:function(){ return this; }, send:function(){}, unsubscribe:function(){} }; }, removeChannel:function(){}, auth:{ getSession:function(){ return Promise.resolve({ data:{ session:null } }); } } }; } };
+  }
+</script>
+<script>if(!/[?&]demo=1\b/.test(location.search)){ document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>'); }</script>
+<script src="/app/vp-sign.js"></script>
+<script src="/app/vp-channel.js"></script>
+<script src="/app/vp-phonekey.js"></script>
+<script src="/app/vp-room.js"></script>
+<script src="/app/vp-feedback.js"></script>
+<script src="/app/vp-celebrate.js"></script>
+<script src="/app/vp-venuelogo.js"></script>
+<script src="/app/vp-venueurl.js"></script>
+<script>
+(function(){
+  "use strict";
+  function $(id){ return document.getElementById(id); }
+  function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
+  /* Shown instead of a ticket in the three states whose rules still require a printed card.
+     Written so a punter understands it is normal, not a fault. */
+  var _paper=false;   // set once this phone has been told it plays on paper: it then sends nothing
+  var _paperBox=null; // the notice itself, so a flag that clears later can take it down again
+  /* WHY tonight is paper, worded for the room (17 Oct 2026). The Worker sends paper_reason:
+     'caller' is a night called with real balls (caller mode: a ball machine, a barrel, the queens
+     at Drag Bingo), and the crowd plays printed books in any state; anything else is the state's
+     rules, worded as before. */
+  function paperWhy(reason){
+    return reason==="caller"
+      ? 'Tonight\u2019s numbers come out of a real ball draw, so everyone plays on a paper book. Phones sit this one out.'
+      : 'Your state\u2019s rules ask for a printed ticket for bingo, so phones sit this one out. Everything else runs exactly the same.';
+  }
+  var _paperWhyNow="";   // the reason the notice up now was written for
+  function paperNoticeHtml(reason){
+    return '<div style="font-size:44px">&#128214;</div>'+
+      '<div class="pbig" style="color:var(--gold)">Tonight you play on paper</div>'+
+      '<p class="paperlead">Grab your bingo book from the bar and mark it off as the numbers are called. '+
+      'The big screen shows every number, so you can always check back.</p>'+
+      '<p class="paperwhy" data-paper-why>'+paperWhy(reason)+'</p>';
+  }
+  function showPaperBingo(reason){
+    reason=(reason==="caller") ? "caller" : "state";
+    if(_paper){
+      // Already covered: the reason can still change (a caller night opening in a paper state), so the words follow it.
+      if(_paperBox && reason!==_paperWhyNow){ try{ _paperBox.innerHTML=paperNoticeHtml(reason); _paperWhyNow=reason; }catch(e){} }
+      return;
+    }
+    _paper=true;
+    _paperWhyNow=reason;
+    /* AND IT LEAVES THE ROOM. The page was blanked but the channel stayed open, so a phone that had
+       joined before kept announcing itself and the console dealt it tickets it could not see. */
+    try{ if(ch) ch.unsubscribe(); }catch(e){}
+    try{ if(_room && _room.close) _room.close(); }catch(e){}
+    ch=null; _room=null; subscribed=false; sendQueue=[];
+    /* AND IT IS NOT IN A GAME. Off the channel it will never hear the idle that ends one, so a phone
+       that had a ticket or a ball when the flag arrived stayed "active" for good, and the /play/live
+       poll never moved it on again (live play audit, 20 Oct 2026). When the paper comes down it
+       starts clean, on the waiting screen, and the console deals it whatever is on next. */
+    P.active=false; P.cards=[]; P.called=[]; P.claimPending=false;
+    try{ setHeaderBall(0); }catch(e){}
+    /* AN AGE TICK GOES BEHIND IT. There is no ticket to hold tonight; if the Worker still asks
+       once the paper comes down, the tick comes back (hidePaperBingo). */
+    if(_ageBox){ try{ _ageBox.remove(); }catch(e){} _ageBox=null; }
+    /* A VIEW IN THE PAGE, NOT A WIPE AND NOT A COVER (20 Oct 2026). It emptied document.body once,
+       which could never be undone; then it was a full-viewport cover over everything, which hid the
+       VenuePlay header, the venue's logo and the Help link, so a punter told to put the phone away
+       had nobody's name on the screen and no way to ask why. It is now one of the page's own views,
+       in the normal frame, and hidePaperBingo() puts the page back when the Worker stops saying paper. */
+    var d=$("vPaper");
+    try{ d.innerHTML=paperNoticeHtml(reason); _paperBox=d; show("vPaper"); }catch(e){ _paperBox=null; }
+    try{ setConn("paper"); }catch(e){}
+  }
+  /* The Worker has stopped saying paper (the bingo lobby closed, or another game is on): take the
+     notice down and rejoin the room, so the phone is back where it was before the flag arrived. */
+  function hidePaperBingo(){
+    if(!_paper) return;
+    _paper=false;
+    if(_paperBox){ try{ _paperBox.classList.add("hidden"); _paperBox.innerHTML=""; }catch(e){} _paperBox=null; }
+    try{ setConn("connecting"); route(); }catch(e){}
+    try{ if(_ageHold && !_ageBox) requireAge18(); }catch(e){}
+    try{ if(P.room) connect(P.room); }catch(e){}
+  }
+  function randId(){ var s=""; for(var i=0;i<12;i++) s+="abcdefghijklmnopqrstuvwxyz0123456789".charAt(cryptoInt(36)); return s; }
+
+  /* ---- "I AM 18 OR OVER" (15 Oct 2026) ----
+     The Worker says age_gate:true on /join/info where the state bars minors from this game
+     (Anisimoff Legal, 8 Oct 2026: Victoria for all bingo, ACT housie under a permit; the lawyer
+     calls the lock the venue's to enforce, and this is the platform's help with it). The tick is
+     asked ONCE before this phone announces itself for a ticket, and remembered for the night in
+     sessionStorage, so a reload does not ask again and a new day does.
+     The ticket is HELD, not just covered: every "join" announcement goes through sendJoin(), which
+     queues it while the tick is outstanding. The hold only ever starts on a KNOWN "ask" (the
+     Worker said so, or this session remembers it said so): a phone never waits on an answer that
+     may not come, because bingo is built to survive the Worker being down and three suites model
+     exactly that. So a first-time player is asked before they can join (the answer lands long
+     before they have typed a name), and a regular whose phone re-announces itself on its own sees
+     the tick over the top of their tickets until they tick it. Nothing here can stop a night. */
+  var _ageHold=false, _agePendingJoin=false, _ageBox=null;
+  function ageKey(){ return "vpAge18:"+(P.room||""); }
+  function sendJoin(){
+    if(_ageHold){ _agePendingJoin=true; return; }
+    send({ t:"join", pid:P.pid, name:P.name, cards:P.numCards, did:deviceId() });   // the one real join announcement
+  }
+  function ageAsk(){
+    var saved=""; try{ saved=sessionStorage.getItem(ageKey())||""; }catch(e){}
+    if(saved==="need"){ _ageHold=true; requireAge18(); }     // asked earlier this session, not yet ticked
+  }
+  function ageAnswer(r){
+    if(!(r && r.age_gate===true)) return;                   // this venue's state does not ask: nothing held
+    var saved=""; try{ saved=sessionStorage.getItem(ageKey())||""; }catch(e){}
+    if(saved==="ok") return;                                // ticked earlier tonight
+    try{ sessionStorage.setItem(ageKey(),"need"); }catch(e){}
+    _ageHold=true; requireAge18();
+  }
+  function ageConfirmed(){
+    _ageHold=false;
+    try{ sessionStorage.setItem(ageKey(),"ok"); }catch(e){}
+    if(_ageBox){ try{ _ageBox.remove(); }catch(e){} _ageBox=null; }
+    if(_agePendingJoin){ _agePendingJoin=false; sendJoin(); }
+  }
+  /* THE ASK WENT AWAY (16 Oct 2026). The Worker now answers age_gate:false once the bingo lobby
+     that asked has closed (or another game is on), so a tick still on screen comes down, the
+     held join is released as it would have been with no gate at all, and the "need" note is
+     forgotten. A tick already given tonight ("ok") is kept: the same room may ask again. */
+  function ageClear(){
+    if(!_ageHold && !_ageBox) return;
+    _ageHold=false;
+    try{ if(sessionStorage.getItem(ageKey())==="need") sessionStorage.removeItem(ageKey()); }catch(e){}
+    if(_ageBox){ try{ _ageBox.remove(); }catch(e){} _ageBox=null; }
+    if(_agePendingJoin){ _agePendingJoin=false; sendJoin(); }
+  }
+  function requireAge18(){
+    if(_ageBox || _paper) return;
+    try{
+      var d=document.createElement("div");
+      d.setAttribute("role","dialog"); d.setAttribute("aria-modal","true");
+      /* Full viewport at every width (top/left/right/bottom as well as inset, for older WebKit),
+         and .97 rather than .92: at desktop width the JOIN button read straight through the
+         backdrop (live audit, 16 Oct 2026). */
+      d.setAttribute("style","position:fixed;top:0;left:0;right:0;bottom:0;inset:0;width:100%;height:100%;z-index:99998;"+
+        "background:rgba(8,6,12,.97);display:flex;align-items:center;overflow-y:auto;"+
+        "justify-content:center;padding:22px;font:400 16px/1.5 system-ui,-apple-system,sans-serif;color:#E7E7EC");
+      d.innerHTML='<div style="max-width:24em;width:100%;text-align:center">'+
+        '<div style="font:800 24px/1.2 system-ui,sans-serif;color:#fff;margin-bottom:12px">Are you 18 or over?</div>'+
+        '<p style="color:#9A9AA4;margin:0 0 18px">This venue’s state does not allow anyone under 18 to play this game, so we ask before you get a ticket.</p>'+
+        '<label style="display:flex;align-items:center;justify-content:center;gap:10px;font-size:17px;color:#fff;margin:0 0 16px;cursor:pointer">'+
+        '<input type="checkbox" id="age18Chk" style="width:24px;height:24px"> I am 18 or over</label>'+
+        '<button type="button" id="age18Btn" disabled style="width:100%;min-height:48px;border:0;border-radius:12px;background:#FF1F8E;color:#fff;font:700 16px system-ui,sans-serif;opacity:.5">Continue</button>'+
+        '<p style="color:#8A8A94;font-size:13px;margin:14px 0 0">Under 18? You are welcome to watch the big screen. Ask the host about anything else on tonight.</p></div>';
+      var chk=d.querySelector("#age18Chk"), btn=d.querySelector("#age18Btn");
+      chk.addEventListener("change", function(){ btn.disabled=!chk.checked; btn.style.opacity=chk.checked?"1":".5"; });
+      btn.addEventListener("click", function(){ if(chk.checked) ageConfirmed(); });
+      document.body.appendChild(d);
+      _ageBox=d;
+    }catch(e){ ageConfirmed(); }                 // a page that cannot ask does not hold anyone up
+  }
+
+  var PATTERN_NAMES={one:"One line",two:"Two lines",full:"Full house",corners:"Four corners",top:"Top line",middle:"Middle line",bottom:"Bottom line"};
+  /* A venue's own pattern (24 Oct 2026) is the key "c:<id>"; the host's messages carry its name and rule in
+     pats. The rule here only lights BINGO and "one to go": the server judges every claim on the rule the
+     venue saved, whatever this phone holds. Names go on screen escaped or as text, never as markup. */
+  var PATS={};
+  function notePats(p){
+    if(!p || typeof p!=="object") return;
+    Object.keys(p).forEach(function(k){ var v=p[k]; if(/^c:[0-9a-fA-F-]{36}$/.test(k) && v && typeof v.name==="string" && v.name) PATS[k]={ name:v.name.slice(0,30), rule:v.rule||null }; });
+  }
+  function patName(k, dflt){ return PATTERN_NAMES[k] || (PATS[k] && PATS[k].name) || ((/^c:/.test(String(k||"")) && dflt===k) ? "Bingo" : (dflt || "")); }
+  // The cells of a custom rule this phone can use, or null. Same reading as VP-DRAW's ruleClean.
+  function customRule(k){
+    var r=PATS[k] && PATS[k].rule; if(!r) return null;
+    if(r.type==="any"){ var n=Number(r.n); return (n===Math.floor(n) && n>=1 && n<=15) ? { type:"any", n:n } : null; }
+    if(r.type==="shape" && Array.isArray(r.cells) && r.cells.length){ var c=r.cells.map(Number).filter(function(i){ return i===Math.floor(i) && i>=0 && i<=26; }); return c.length ? { type:"shape", cells:c } : null; }
+    return null;
+  }
+  // How many more numbers one ticket needs for a custom rule (0 = it is complete; 99 = it never can).
+  function customGap(cells,set,r){
+    var i,v,have=0,need=0;
+    if(r.type==="any"){ for(i=0;i<27;i++){ v=cells[Math.floor(i/9)][i%9]; if(v && set[v]) have++; } return Math.max(0, r.n-have); }
+    var miss=0;
+    for(i=0;i<r.cells.length;i++){ v=cells[Math.floor(r.cells[i]/9)][r.cells[i]%9]; if(!v) continue; need++; if(!set[v]) miss++; }
+    return need ? miss : 99;
+  }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+
+  var SUPA_URL='https://ijkzgmdtwtgfkedqspxm.supabase.co';
+  var SUPA_ANON='sb_publishable_9v83FWCSt7Di-jkgTvsMJQ_f6lJPovb';
+  var CODE_RE=/^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/;
+
+  // ---- the game Worker (server-authoritative) --------------------------
+  // The phone joins, fetches its ticket and claims BINGO through this Worker;
+  // the broadcasts below only give instant visual updates. Must match the
+  // deployed venueplay-game Worker URL (see its header for wrangler deploy).
+  var VP_GAME_API='https://venueplay-game.dean-tindale.workers.dev';
+  function readApi(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((d&&d.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }
+  function playerPost(path, body){ var h={ "Content-Type":"application/json" }; if(P.token) h["X-Player-Token"]=P.token; return fetch(VP_GAME_API+path,{ method:"POST", headers:h, body:JSON.stringify(body||{}) }).then(readApi); }
+  // A flat 27-value ticket from the Worker (blanks = 0) becomes a 3x9 grid.
+
+  /* On patchy pub wifi the Realtime library from the CDN is sometimes not there yet when this
+     runs. Everything below depends on it, so the script threw here and the punter was left with a
+     header and an empty screen forever: every view starts hidden, and there was no retry and no
+     message. Say something and try again rather than dying silently. */
+  if(typeof supabase==="undefined" || !supabase.createClient){
+    var _rc=document.createElement("div");
+    _rc.setAttribute("style","position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;"+
+      "align-items:center;justify-content:center;gap:14px;background:#0A0A0B;color:#E7E7EC;"+
+      "text-align:center;padding:28px;font:600 17px/1.5 system-ui,-apple-system,sans-serif");
+    _rc.innerHTML='<div>Connecting\u2026</div>'+
+      '<div style="font-size:14px;color:#9A9AA4;max-width:22em">The venue wifi is being slow. This will keep trying.</div>';
+    (document.body||document.documentElement).appendChild(_rc);
+    setTimeout(function(){ location.reload(); }, 4000);
+    throw new Error("VenuePlay: Realtime library not loaded yet");
+  }
+  var client=supabase.createClient(SUPA_URL, SUPA_ANON);
+  var ch=null, subscribed=false, sendQueue=[];
+  /* ?roomserver=1 puts THIS phone on the room server instead of Supabase Realtime.
+     NOT ?room=1: ?room= is this page's own game-code parameter, and ?room=1 made it show
+     "No room" and connect to nothing at all. Off by
+     default. See venueplay-backend/worker/ROOM-SERVER.md. */
+  /* THE SWITCH IS STICKY, ON PURPOSE.
+     ?roomserver=1 turns it on for this browser and it STAYS on until ?roomserver=0.
+     It cannot live in the address bar alone: opening the console as an HQ admin bounces
+     through hq.html, which drops the query string, so the page came back on the OLD
+     transport while looking exactly the same. Every fault in this feature so far has
+     been one half of a venue on one road and the other half on the other, which is why
+     the switch now survives a redirect and why the page says out loud which road it is
+     on (see the status line). */
+  /* ONE ANSWER, IN ONE PLACE. This decision used to be copied into all three pages, and a
+     road the console takes but the TV does not is a host talking into an empty room. It
+     lives in vp-room.js now, so all three pages cannot disagree and the whole product
+     changes road by one constant there. */
+  var _useRoom=false, _roomTried=false, _room=null;
+  try{ _useRoom = !!(window.VPRoom && window.VPRoom.wanted()); }catch(e){ _useRoom=false; }
+  function wireOut(obj){
+    if(_room){ try{ _room.send(obj); return true; }catch(e){ return false; } }
+    /* GUARDED, exactly like the room path one line up. This send was bare. `subscribed` is set
+       from the subscribe callback, which lags a socket that has actually died, so there is a
+       window where the flag says yes and the send throws. The throw escaped wireOut, escaped
+       send(), and the message was never pushed onto sendQueue: it was simply gone.
+       The message that matters most here is a BINGO claim. A punter taps it, the page shows the
+       claim as sent, the host never sees it, and somebody with a winning card stands in a pub
+       being ignored. Returning false instead queues it, and flushQueue delivers it the moment
+       the channel is back. */
+    if(subscribed && ch){
+      try{ ch.send({ type:"broadcast", event:"msg", payload:obj }); return true; }
+      catch(e){ return false; }
+    }
+    return false;
+  }
+  /* JOIN, CLAIM AND LEAVE ARE SIGNED BY THIS PHONE. The host used to believe anybody who said a
+     pid, and the host itself reads every pid out to the room when it deals. See vp-phonekey.js.
+     Signing is asynchronous, so these go through one chain: a join and the claim behind it must
+     reach the host in the order they were sent. The pid on the way out is ALWAYS the key's own,
+     whatever the caller put in, because a signature for any other pid is worthless.
+     If the script did not load, or this browser cannot sign, it sends exactly as it always did. */
+  var _keyReady=null, _signChain=Promise.resolve();
+  function send(obj){
+    if(_paper) return null;   // a paper-ticket phone has left the room
+    if(window.VPPhoneKey && VPPhoneKey.isPhoneMsg(obj) && _keyReady){
+      _signChain=_signChain.then(function(){ return _keyReady; })
+        .then(function(id){ return id ? id.sign(obj) : obj; })
+        .catch(function(){ return obj; })
+        .then(function(o){ if(!wireOut(o)) sendQueue.push(o); });
+      return _signChain;
+    }
+    if(!wireOut(obj)) sendQueue.push(obj);
+    return null;
+  }
+  /* EVERY JOIN THIS PHONE SAYS ON THE CHANNEL carries its SERVER device id too (did), the same
+     pid it sends /join. The console deals only to a phone the server knows in this session, and
+     this is how it asks (14 Oct 2026, see seatTick in app/index.html). Signed with the rest. */
+  function flushQueue(){ while(sendQueue.length && (ch || _room)){ if(!wireOut(sendQueue[0])) break; sendQueue.shift(); } }
+
+  /* WHAT THE PHONE DOES WHEN ITS CHANNEL CHANGES STATE.
+
+     TWO FAULTS LIVED HERE, and both meant a punter tapping an answer into nothing.
+
+     1. CLOSED WAS NOT HANDLED AT ALL. Supabase reports CHANNEL_ERROR, TIMED_OUT and
+        CLOSED, and this listed the first two. A closed channel left the phone showing
+        Connected, cheerfully, for ever.
+     2. subscribed WAS NEVER CLEARED. send() checks that flag: with it still true the
+        phone kept calling ch.send() into a dead channel and every answer, every join and
+        every ticket request went nowhere. Cleared, the same messages go to sendQueue
+        instead and flushQueue() posts the backlog the moment it reconnects.
+
+     The host console had exactly this bug and it was fixed there: "subscribed was never
+     reset here. It said Reconnecting on screen and then kept calling ch.send() into a
+     dead socket." The phone was never given the same line. Half a fix is the kind that
+     looks done. */
+  function onChannelStatus(status){
+    if(status==="SUBSCRIBED"){
+      subscribed=true; flushQueue();
+      // re-announce on every (re)connect so the host rebuilds our seat and re-deals our tickets
+      if(P.joined){ sendJoin(); setConn("waiting"); }
+      else { setConn("ready"); }
+      return;
+    }
+    if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){
+      subscribed=false;
+      setConn("reconnecting");
+    }
+  }
+
+  // Connection light: it goes green ONLY once a live host actually answers on this
+  // channel, so it can never say "Connected" while nobody is running the game.
+  function setConn(state){
+    var d=$("statusDot"), t=$("statusText");
+    if(_paper || state==="paper"){ d.classList.remove("on"); t.textContent="Paper tonight"; return; }   // off the channel on purpose: never "Reconnecting"
+    if(state==="live"){ d.classList.add("on"); t.textContent="Connected"; return; }
+    d.classList.remove("on");
+    t.textContent = state==="waiting" ? "Waiting for the host" : state==="reconnecting" ? "Reconnecting" : state==="ready" ? "Ready to join" : "Connecting";
+  }
+  function markHost(){ P.hostSeen=true; if(P.joined) setConn("live"); }
+
+  // ---- player state ----
+  // pid/name are only cosmetic (the host roster + count). token/sessionId/gameId
+  // are the real server identity/handles; the ticket + verdict come from the Worker.
+  var P={
+    room:"", pid:"", name:"", joined:false, hostSeen:false,
+    cards:[], numCards:1, defaultCards:1, pickedCount:false, wonCardNo:0,
+    pattern:"one", prize:"the prize", called:[], active:false, paidMode:"", assist:false, allowEarly:false,
+    claimPending:false, won:false, ended:false, capture:null,
+    shared:false, sharedWith:[], layout:"stack", page:0, turnedFor:0, dealSeq:0, builtKey:"", venueSlug:"",
+    stageWins:[],          // lines this phone has won while the game plays on: {pattern,prize,cardNo,shared,sharedWith}
+    stageNote:"",          // someone else won a stage: one line, kept until the next stage or game
+    lostBy:""              // who won the final pattern, for the "Nice game" screen
+  };
+
+  // ---- pid persistence (keep the cosmetic identity across reconnects) ----
+    /* localStorage, not sessionStorage. iOS discards a backgrounded tab routinely over a three
+     hour night, and sessionStorage dies with it, so the punter came back as a BRAND NEW
+     player: the host roster seated them twice and they were dealt fresh tickets mid-round.
+     Falls back to any sessionStorage value so a game already in progress is not disturbed. */
+  function loadPid(room){ try{ return localStorage.getItem("vp-pid-"+room) || sessionStorage.getItem("vp-pid-"+room) || ""; }catch(e){ return ""; } }
+  function savePid(room,pid){ try{ localStorage.setItem("vp-pid-"+room, pid); }catch(e){} }
+  // keep the name too, so a full page reload auto-rejoins instead of showing Join again
+  function loadName(room){ try{ return localStorage.getItem("vp-name-"+room) || sessionStorage.getItem("vp-name-"+room) || ""; }catch(e){ return ""; } }
+  function daubKey(){ return "vp-daubs-"+(P.room||""); }   // per room; a new deal clears it
+  function saveDaubs(){
+    try{
+      var out={}; for(var i=0;i<P.cards.length;i++) out[P.cards[i].cardNo]=P.cards[i].daubs||{};
+      localStorage.setItem(daubKey(), JSON.stringify(out));
+    }catch(e){}
+  }
+  function loadDaubs(){
+    try{ return JSON.parse(localStorage.getItem(daubKey())||"{}") || {}; }catch(e){ return {}; }
+  }
+  function clearDaubs(){ try{ localStorage.removeItem(daubKey()); }catch(e){} }
+  function saveName(room,name){ try{ localStorage.setItem("vp-name-"+room, name); }catch(e){} }
+  // A confirmed win survives a phone reload (#28): the "show this to the host to claim" screen was
+  // memory-only and set once by a live announcement that has already passed, so a locked/dropped tab
+  // came back with no proof. Save it, restore it on reconnect, and clear it the moment a new round
+  // starts. Two-hour expiry so last night's win never resurfaces.
+  function winKey(room){ return "vp-win-"+(room||P.room||""); }
+  function saveWin(){ try{ localStorage.setItem(winKey(), JSON.stringify({ cardNo:P.wonCardNo, prize:P.prize, shared:!!P.shared, sharedWith:P.sharedWith||[], ts:Date.now() })); }catch(e){} }
+  function loadWin(room){ try{ var raw=localStorage.getItem(winKey(room)); if(!raw) return null; var w=JSON.parse(raw); if(!w || (Date.now()-(w.ts||0))>2*60*60*1000){ clearWin(room); return null; } return w; }catch(e){ return null; } }
+  function clearWin(room){ try{ localStorage.removeItem(winKey(room)); }catch(e){} }
+  /* A stage win (a line while the game plays on to the house) is remembered the same way, so a
+     phone that reloads or sleeps mid-game still carries its proof. Cleared with the final win. */
+  function stageKey(room){ return "vp-stagewin-"+(room||P.room||""); }
+  function saveStage(){ try{ localStorage.setItem(stageKey(), JSON.stringify({ wins:P.stageWins||[], note:P.stageNote||"", ts:Date.now() })); }catch(e){} }
+  function loadStage(room){ try{ var raw=localStorage.getItem(stageKey(room)); if(!raw) return null; var w=JSON.parse(raw); if(!w || (Date.now()-(w.ts||0))>2*60*60*1000){ clearStage(room); return null; } return w; }catch(e){ return null; } }
+  function clearStage(room){ P.stageWins=[]; P.stageNote=""; try{ localStorage.removeItem(stageKey(room)); }catch(e){} }
+  // the player token IS the metered server identity: persist it so a reload reuses
+  // the same vp_players row (via localStorage) instead of minting a new metered one.
+
+  // ---- verification (from the called set only, ignore cosmetic daubs) ----
+  /* Ball numbers arrive over a PUBLIC broadcast channel that anyone who knows the venue exists
+     can compute and publish to. They are then written into innerHTML further down, so an array
+     of markup was a script injection onto every other player's phone. Bingo balls are 1 to 90:
+     anything else is not a ball and is dropped. */
+  function cleanCalled(a){
+    var out=[], i, n;
+    if(!a || !a.length) return out;
+    for(i=0;i<a.length && i<90;i++){ n=parseInt(a[i],10); if(n>=1 && n<=90 && out.indexOf(n)<0) out.push(n); }
+    return out;
+  }
+  function calledSet(){ var s={}; for(var i=0;i<P.called.length;i++) s[P.called[i]]=true; return s; }
+  function rowDone(set,cells,row){ for(var c=0;c<9;c++){ var v=cells[row][c]; if(v && !set[v]) return false; } return true; }
+  // must mirror the host's cornerNums() exactly: first + last actual number of the top and bottom rows
+  function cornerNums(cells){
+    var out=[]; [0,2].forEach(function(r){ var row=cells[r], first=0, last=0;
+      for(var c=0;c<9;c++){ if(row[c]){ if(!first) first=row[c]; last=row[c]; } }
+      if(first) out.push(first); if(last && last!==first) out.push(last); });
+    return out;
+  }
+  function cardMeetsPattern(cells,set){
+    if(/^c:/.test(String(P.pattern||""))){ var cr=customRule(P.pattern); return !!cr && customGap(cells,set,cr)===0; }
+    if(P.pattern==="top") return rowDone(set,cells,0);
+    if(P.pattern==="middle") return rowDone(set,cells,1);
+    if(P.pattern==="bottom") return rowDone(set,cells,2);
+    if(P.pattern==="corners"){ var cn=cornerNums(cells); if(!cn.length) return false; for(var i=0;i<cn.length;i++){ if(!set[cn[i]]) return false; } return true; }
+    var rows=0,r; for(r=0;r<3;r++){ if(rowDone(set,cells,r)) rows++; }
+    if(P.pattern==="one") return rows>=1;
+    if(P.pattern==="two") return rows>=2;
+    if(P.pattern==="full") return rows>=3;
+    return false;
+  }
+  // the cardNo of the first ticket that completes the pattern, or 0 if none do
+  function winningCardNo(){
+    var set=calledSet();
+    for(var i=0;i<P.cards.length;i++){ if(cardMeetsPattern(P.cards[i].cells,set)) return P.cards[i].cardNo; }
+    return 0;
+  }
+
+  // ---- near-win tension: how many more numbers until the pattern completes on the best ticket ----
+  function rowMissing(set,cells,row){ var m=0; for(var c=0;c<9;c++){ var v=cells[row][c]; if(v && !set[v]) m++; } return m; }
+  function cardShort(cells,set){
+    if(/^c:/.test(String(P.pattern||""))){ var cr=customRule(P.pattern); return cr ? customGap(cells,set,cr) : 99; }
+    if(P.pattern==="top") return rowMissing(set,cells,0);
+    if(P.pattern==="middle") return rowMissing(set,cells,1);
+    if(P.pattern==="bottom") return rowMissing(set,cells,2);
+    if(P.pattern==="corners"){ var cn=cornerNums(cells),m=0; for(var i=0;i<cn.length;i++){ if(!set[cn[i]]) m++; } return m; }
+    var miss=[rowMissing(set,cells,0),rowMissing(set,cells,1),rowMissing(set,cells,2)].sort(function(a,b){return a-b;});
+    if(P.pattern==="one") return miss[0];
+    if(P.pattern==="two") return miss[0]+miss[1];
+    if(P.pattern==="full") return miss[0]+miss[1]+miss[2];
+    return 99;
+  }
+  function marksShort(set){ var best=99; for(var i=0;i<P.cards.length;i++){ var s=cardShort(P.cards[i].cells,set); if(s<best) best=s; } return best; }
+  var _lastShort=99;
+  /* Numbers that have been CALLED and sit on this player's ticket unmarked.
+     "One to go" is worked out from the called numbers, because that is what a win is actually
+     made of, but the ticket in front of them shows their own marks. Miss one and the phone says
+     you are one away while the ticket plainly is not, which reads as the app being wrong. It is
+     not wrong, it is looking at something the player cannot see. So show them: name the numbers
+     they have missed, and glow those squares. */
+  function missedOnBestCard(set){
+    var out=[], best=99, bi=-1;
+    for(var i=0;i<P.cards.length;i++){ var s=cardShort(P.cards[i].cells,set); if(s<best){ best=s; bi=i; } }
+    if(bi<0) return out;
+    var cd=P.cards[bi];
+    for(var r=0;r<3;r++) for(var c=0;c<9;c++){
+      var v=cd.cells[r][c];
+      if(v && set[v] && !cd.daubs[v]) out.push(v);
+    }
+    return out;
+  }
+  function updateTension(set){
+    var el=$("tension"); if(!el) return;
+    if(P.claimPending||P.won||P.ended||!P.active||!P.cards.length){ el.classList.add("hidden"); _lastShort=99; _missed=[]; return; }
+    var n=marksShort(set);
+    // Only when it matters. A permanent hint would mark the card for them and there would be no
+    // game left in it; two away is the point where confusion starts costing someone a win.
+    _missed = (n<=2) ? missedOnBestCard(set) : [];
+    var miss = _missed.length
+      ? '<span class="tmiss">' +
+        (_missed.length>3 ? ('Missed ' + _missed.length + ' called numbers.') : ('Missed ' + _missed.join(", ") + '.')) +
+        ' Tap the glowing squares.</span>'
+      : '';
+    if(n===1){ el.classList.remove("hidden"); el.className="tension hot"; el.innerHTML="&#128293; One to go!" + miss;
+      if(_lastShort>1){ buzz([0,70,50,70]); } }   // buzz once, on the transition
+    else if(n===2){ el.classList.remove("hidden"); el.className="tension two"; el.innerHTML="2 numbers away" + miss; }
+    else { el.classList.add("hidden"); el.className="tension hidden"; }
+    _lastShort=n;
+    if(P.cards.length) paintMissed();
+  }
+  var _missed=[];
+  // Glow the called-but-unmarked squares, without a full re-render: this runs on every ball.
+  function paintMissed(){
+    var cells=document.querySelectorAll(".card9 .cc[data-n]");
+    for(var i=0;i<cells.length;i++){
+      var n=parseInt(cells[i].getAttribute("data-n"),10);
+      cells[i].classList.toggle("missed", _missed.indexOf(n)!==-1);
+    }
+  }
+
+  // ---- views ----
+  var VIEWS=["vNoRoom","vJoin","vWait","vCard","vWon","vLost","vPaper"];
+  function show(which){ if(_paper) which="vPaper";   /* nothing paints over the paper notice while it stands */
+    for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==which); } }
+  /* "How was that?", one tap, on the screen the punter is already looking at.
+
+     Broadcast bingo has no game id and no session id on the phone, so the widget
+     is given an explicit key: the room and the NIGHT. A night runs 2am to 2am on
+     a Brisbane clock, the same boundary the Worker's brisbaneNightKey uses to
+     count a venue's nights, so a game finishing at 12:30am is still the night it
+     started and nobody is asked twice for it. Without a key the widget would
+     fall back to the room code, which is printed on the table talker and never
+     changes: one rating, and that punter is never asked again at that venue. */
+  function bingoNightKey(){
+    try { return P.room + ":" + new Date(Date.now() + 8*60*60*1000).toISOString().slice(0,10); }
+    catch(e){ return P.room; }
+  }
+  function askHowItWent(where){
+    try{
+      if(!window.VPFeedback) return;
+      VPFeedback.ask({ api:VP_GAME_API, code:P.room, mount:where,
+                       key:bingoNightKey(), format:"bingo" });
+    }catch(e){}
+  }
+
+  function route(){
+    if(_paper) return;        // the page is the paper notice now; there is nothing else to show
+    if(P.won){
+      $("wonPrize").textContent=P.prize;
+      $("wonCard").textContent="#"+(P.wonCardNo||"");
+      // A tie splits the prize. Say so on the phone, so nobody walks to the bar expecting the lot.
+      var sw=$("wonShare");
+      if(sw){
+        if(P.shared && P.sharedWith.length){
+          sw.innerHTML="A tie on the same number, so you share this one with <b>"+
+            esc(P.sharedWith.length<2 ? P.sharedWith[0] : P.sharedWith.slice(0,-1).join(", ")+" and "+P.sharedWith[P.sharedWith.length-1])+"</b>.";
+          sw.classList.remove("hidden");
+        } else { sw.classList.add("hidden"); }
+      }
+      /* EVERY PRIZE THIS PHONE WON, not just the last. A line, then two lines, then the house on
+         one phone showed only the house on YOU WON, so the punter walked up to the host with a
+         screen that did not mention two of their three prizes (audit, 14 Oct 2026). */
+      var wa=$("wonAlso");
+      if(wa){
+        var sw2=(P.stageWins||[]).filter(function(w){ return w && w.pattern; });
+        if(sw2.length){
+          wa.innerHTML="You also won "+sw2.map(function(w){
+            return "<b>"+esc(patName(w.pattern, "a line"))+"</b>"+(w.prize?" ("+esc(w.prize)+")":"")+(w.cardNo?" on card #"+esc(String(w.cardNo)):"");
+          }).join(" and ")+" this game. Show the host all of them.";
+          wa.classList.remove("hidden");
+        } else { wa.classList.add("hidden"); wa.innerHTML=""; }
+      }
+      show("vWon"); askHowItWent("vWon"); return;
+    }
+    if(P.ended){
+      /* A LINE WON EARLIER IN THIS GAME IS STILL OWED (live play audit, 20 Oct 2026). Somebody else
+         taking two lines put "Nice game! Sam won Two lines" over the line this phone had won, and the
+         punter walked away from a prize. Say both, the prize owed first. */
+      var _owed=(P.stageWins||[]).filter(function(w){ return w && w.pattern; });
+      var _owedHtml=_owed.length ? '<span class="owed" style="display:block;color:var(--win);font-weight:700;font-size:17px;margin-bottom:10px">You won '+
+        _owed.map(function(w){ return esc(patName(w.pattern, "a line"))+(w.cardNo?" on card #"+esc(String(w.cardNo)):""); }).join(" and ")+
+        ', see the host.</span>' : "";
+      var ls=$("lostSub"); if(ls) ls.innerHTML = _owedHtml + (P.lostBy ? P.lostBy : "Good luck next round.");
+      show("vLost"); askHowItWent("vLost"); return;
+    }
+    if(!P.room){ show("vNoRoom"); return; }
+    if(!P.joined){ show("vJoin"); return; }
+    if(P.active && P.cards.length){ renderCards(); show("vCard"); return; }
+    $("waitName").textContent=P.name;
+    /* On a PAID night a player with no tickets is not waiting for the host, they have not bought
+       one yet, and "waiting for the host to start" would have them sitting there through the whole
+       game wondering. Tell them where the tickets come from. */
+    var wn=$("waitNote");
+    if(wn){
+      /* THEY SHOUTED BINGO AND THE GAME ENDED BEFORE ANYBODY LOOKED. This screen used to say
+         "waiting for the host to start the game", as if nothing had happened. Say what did, and
+         keep the card number on screen, because it is all they have to show the host. */
+      wn.innerHTML = P.droppedClaim
+        ? "The game ended before the host checked your BINGO"+(P.droppedClaim>0?" on card #"+esc(String(P.droppedClaim)):"")+". <b>See the host now</b> and show them this screen."
+        : (P.dealWait && P.active && !P.cards.length)
+        ? "Getting your ticket&hellip; It will appear here the moment it is ready. Hang tight."
+        : (P.paidMode && P.active && !P.cards.length)
+        ? "Tickets are on sale at the bar tonight. Grab one and the staff will put it straight on your phone."
+        : (P.active && !P.cards.length)
+        ? "The game is on. Your tickets are on the way, hang on a moment."
+        : (P.stageWins.length
+          ? "You won <b>"+esc(patName(P.stageWins[P.stageWins.length-1].pattern, "a line"))+"</b> last game (card #"+esc(String(P.stageWins[P.stageWins.length-1].cardNo||""))+"). See the host to collect. Your next ticket will appear here."
+          : "Waiting for the host to start the game. Your card will appear here.");
+    }
+    show("vWait");
+  }
+
+  // ---- card render ----
+  function autoDaub(){
+    if(P.paidMode) return;  // paid games are real bingo: the player dabs their own card. We highlight the
+                            // called numbers (see renderCards) but never mark them, even in Easy mode.
+    if(!P.assist) return;   // manual play by default: the player dabs their own numbers, we never mark for them
+    var set=calledSet();
+    for(var i=0;i<P.cards.length;i++){ var cd=P.cards[i];
+      for(var r=0;r<3;r++){ for(var c=0;c<9;c++){ var n=cd.cells[r][c]; if(n && set[n]) cd.daubs[n]=true; } } }
+  }
+  // Which column of the 3x9 ticket a number sits in. The bands are 1-9, 10-19, ... 70-79, 80-90,
+  // so it is floor(n/10), NOT floor((n-1)/10): the first column is nine numbers wide, not ten,
+  // and the last is eleven. Getting this wrong lights the column next door.
+  function colOfNum(n){ return n>=80 ? 8 : Math.floor(n/10); }
+  /* Rebuild ONLY when the tickets or the layout actually change.
+     Every called ball, and every join or leave by anyone in the room, used to run the whole
+     builder and wipe #cardStack with innerHTML="". Three things fell out of that, all reported
+     from the first live night: a tap was lost whenever a ball landed between the finger going
+     down and coming up, the screen visibly flickered, and any scroll position jumped back to the
+     top. Marks and highlights are just classes, so they get painted onto the cards already on
+     screen and the DOM is left alone. */
+  /* THE OUTSTANDING-NUMBER HELPER, and exactly who gets it.
+     Only on a PAID night, and only for somebody holding more than one ticket. That is the case
+     the phone genuinely cannot cope with: four sheets is 24 tickets across 8 pages, and the page
+     turns itself to whatever was called last, so a number on another page is behind a tab with
+     nothing to say it is there. On paper you sweep a whole book in a second; here you cannot.
+     It never marks anything. It shows what you have not marked yet and you still tap every one,
+     which is what the board behind the caller does in a real hall. A free night with one ticket
+     plays exactly as it always has. */
+  function showsOutstanding(){ return !!(P.paidMode && P.cards.length > 1); }
+
+  function structureKey(){
+    /* dealSeq is in here because cardNo is NOT a reliable identity: the host mints it as
+       100 + random(900), so re-dealing the same NUMBER of tickets has about a 1-in-900 chance per
+       ticket of drawing the same numbers again. When that happens the key matches, the rebuild is
+       skipped, and the phone keeps showing LAST round's grid while holding this round's tickets.
+       The punter then plays a card the host does not have, calls BINGO on it, and the host checks
+       a card that does not match: a disputed win at the bar, which is the worst way for this to
+       fail. Counting deals makes a re-deal always a new structure. */
+    var k=effectiveLayout()+"|"+P.dealSeq+"|"+P.cards.length;
+    for(var i=0;i<P.cards.length;i++) k+="|"+P.cards[i].cardNo;
+    return k;
+  }
+  // Once, the first time this phone holds a card: tell the server it is in the game. That
+  // stamp is what makes it a billable player (migration 87). Fire and forget; never blocks.
+  var _alive=false;
+  function sayAlive(){ if(_alive || !P.token || /[?&]demo=1/.test(location.search)) return; _alive=true; try{ playerPost("/player/alive",{}).catch(function(){}); }catch(e){} }
+  function renderCards(){
+    sayAlive();
+    autoLayoutForHand();   // six tickets stacked on a phone is a scroll, not a game
+    if(structureKey()===P.builtKey){ paintCards(); return; }
+    buildCards();
+  }
+  function buildCards(){
+    $("cardName").textContent=P.name;
+    $("cardPat").textContent=patName(P.pattern, P.pattern);
+    var last=P.called.length ? P.called[P.called.length-1] : 0;
+    $("lastCalled").innerHTML = lastCalledHtml();
+    var set=calledSet();
+    var stack=$("cardStack"); stack.innerHTML="";
+    P.builtKey=structureKey();
+    // One layout applies to the whole stack. With a single ticket they all look the same, so the
+    // setting only really bites once the host deals a book.
+    var lay=effectiveLayout();
+    stack.className = lay==="pages" ? "lay-pages" : lay==="align" ? "lay-align" : "";
+    syncCardCtl();
+    var curCol = (lay==="align" && last) ? colOfNum(last) : -1;
+    if(lay==="align"){
+      var band=document.createElement("div"); band.className="colband";
+      for(var b=0;b<9;b++){ var seg=document.createElement("i"); if(b===curCol) seg.className="lit"; band.appendChild(seg); }
+      stack.appendChild(band);
+    }
+    // Pages of three. Everything else shows every ticket.
+    /* EVERY ticket goes in, on every layout. "Three at a time" used to put only the current
+       page in the DOM, so turning the page meant a full rebuild: innerHTML="" and the whole
+       stack recreated. The page turns on its own whenever a called number is on
+       another ticket, which in this layout is most balls, so the screen was being torn down and
+       rebuilt several times a minute. That is the flicker. Now a page turn is a class. */
+    var PER=3, pages=1;
+    if(lay==="pages"){
+      pages=Math.ceil(P.cards.length/PER);
+      if(P.page>=pages) P.page=0;
+      var tabs=document.createElement("div"); tabs.className="pagetabs";
+      for(var pg=0;pg<pages;pg++){
+        var b=document.createElement("button"); b.type="button";
+        b.className="pagetab";                 // which tab is "on" is painted, not built
+        b.setAttribute("data-page",pg);
+        var a=pg*PER+1, z=Math.min(pg*PER+PER, P.cards.length);
+        b.innerHTML = ((a===z) ? ("Ticket "+a) : ("Tickets "+a+"-"+z)) + '<i class="pcount"></i>';
+        tabs.appendChild(b);
+      }
+      stack.appendChild(tabs);
+    }
+    var wrap=document.createElement("div"); wrap.className="stackwrap";
+    for(var i=0;i<P.cards.length;i++){
+      var cd=P.cards[i];
+      var tk=document.createElement("div"); tk.className="ticket";
+      tk.setAttribute("data-ti",i); tk.setAttribute("data-pg", Math.floor(i/PER));
+      if(P.cards.length>1){ var lab=document.createElement("div"); lab.className="tklabel";
+        // Always show the card number: it is how the host and the TV identify a winning ticket.
+        lab.textContent = "Ticket "+(i+1)+" of "+P.cards.length+" · #"+cd.cardNo;
+        tk.appendChild(lab); }
+      var grid=document.createElement("div"); grid.className="card9";
+      for(var r=0;r<3;r++){ for(var c=0;c<9;c++){
+        var n=cd.cells[r][c]; var cell=document.createElement("div");
+        if(!n){ cell.className="cc blank"; grid.appendChild(cell); continue; }
+        cell.className="cc"; cell.setAttribute("data-card",i); cell.setAttribute("data-n",n); cell.textContent=n;
+        if(cd.daubs[n]) cell.classList.add("daub");
+        // Highlight a called number in Easy mode, OR on a PAID game (where the player dabs their own
+        // card): on a paid night we never mark for them, we just glow the called-but-unmarked cells
+        // so they can find and tap them. The glow clears once they mark it.
+        if((P.assist && set[n]) || (P.paidMode && set[n] && !cd.daubs[n])) cell.classList.add("on");
+        if(c===curCol) cell.classList.add("incol");
+        // Three across shrinks a ticket to thumbnail size. Lifting the right TICKET is only half
+        // the job: without this the player still had to hunt 15 tiny numbers for the one that was
+        // called, with nothing marking it. Ring the number itself on the ticket that popped.
+        if(n===last) cell.classList.add("justcalled");
+        grid.appendChild(cell);
+      } }
+      tk.appendChild(grid); wrap.appendChild(tk);
+    }
+    stack.appendChild(wrap);
+    paintCards();
+  }
+
+  /* Repaint what CHANGES, on the cards already on screen: marks, called highlights, the lit
+     column, the header, and which ticket is lifted. Touches classes and text only, so a finger
+     mid-tap and a scrolled page both survive a called number. */
+  function paintCards(){
+    var last=P.called.length ? P.called[P.called.length-1] : 0;
+    var set=calledSet(), lay=effectiveLayout();
+    var curCol = (lay==="align" && last) ? colOfNum(last) : -1;
+    $("cardName").textContent=P.name;
+    $("cardPat").textContent=patName(P.pattern, P.pattern);
+    $("lastCalled").innerHTML = lastCalledHtml();
+    setHeaderBall(last);
+    var stack=$("cardStack");
+    pageForCalled(last);         // decide the page BEFORE painting, so it all lands in one pass
+    // Which page is showing is PAINTED, so turning it never touches the DOM structure.
+    if(lay==="pages"){
+      var PER=3, tks=stack.querySelectorAll(".ticket");
+      var np=Math.ceil(P.cards.length/PER); if(P.page>=np) P.page=0;
+      for(var t=0;t<tks.length;t++){
+        tks[t].classList.toggle("offpage", (+tks[t].getAttribute("data-pg"))!==P.page);
+      }
+      var tbs=stack.querySelectorAll(".pagetab");
+      for(var q=0;q<tbs.length;q++) tbs[q].classList.toggle("on", q===P.page);
+    }
+    var band=stack.querySelector(".colband");
+    if(band){ var segs=band.children; for(var b=0;b<segs.length;b++) segs[b].className = (b===curCol) ? "lit" : ""; }
+    var helps=showsOutstanding(), owed=[];
+    var cells=stack.querySelectorAll(".cc[data-n]");
+    for(var i=0;i<cells.length;i++){
+      var cell=cells[i], n=+cell.getAttribute("data-n"), ci=+cell.getAttribute("data-card");
+      var cd=P.cards[ci];
+      var marked=!!(cd && cd.daubs[n]);
+      cell.classList.toggle("daub", marked);
+      cell.classList.toggle("on", !!((P.assist && set[n]) || (P.paidMode && set[n] && !marked)));
+      cell.classList.toggle("incol", curCol>=0 && colOfNum(n)===curCol);
+      cell.classList.toggle("justcalled", n===last);
+      // Called, not marked, and not the newest ball (that one already has the loud ring).
+      var pend = helps && set[n] && !marked && n!==last;
+      cell.classList.toggle("pending", !!pend);
+      if(pend){ var pgi=Math.floor(ci/3); owed[pgi]=(owed[pgi]||0)+1; }
+    }
+    // Put the tally on each tab, so they know to turn the page without hunting for a reason to.
+    if(lay==="pages"){
+      var tb2=stack.querySelectorAll(".pagetab");
+      for(var t2=0;t2<tb2.length;t2++){
+        var cnt=owed[t2]||0;
+        tb2[t2].classList.toggle("owed", cnt>0);
+        var ce=tb2[t2].querySelector(".pcount"); if(ce) ce.textContent=cnt||"";
+      }
+    }
+    markCalledTab(last);
+    updateTension(set);
+    renderStageWin();
+    if(P.claimPending){ $("bingoBtn").disabled=true; setMsg("BINGO sent. The host is checking your ticket&hellip;","wait"); }
+    else { $("bingoBtn").disabled=false; setMsg(idleMsg(),""); }
+  }
+  /* The resting message under the tickets. It used to be one fixed sentence, and it was also
+     where a stage win was announced, so the very next ball wiped the win off the screen. The
+     win now has its own pinned banner (renderStageWin); this line only says what is being
+     played for. */
+  function idleMsg(){
+    var pn=patName(P.pattern, "the pattern");
+    if(P.stageWins.length) return "Keep marking your numbers. You are now playing for <b>"+esc(pn)+"</b>.";
+    return "Mark off your numbers as they are called. Hit BINGO when your ticket completes <b>"+esc(pn)+"</b>.";
+  }
+  function nameList(a){ return a.length<2 ? (a[0]||"A player") : a.slice(0,-1).join(", ")+" and "+a[a.length-1]; }
+  function renderStageWin(){
+    var box=$("stageWin"); if(!box) return;
+    if(P.stageWins.length){
+      var w=P.stageWins[P.stageWins.length-1], pn=patName(w.pattern, "a prize");
+      var h="<b>You won "+esc(pn)+"!</b>";
+      h+="<span>See the host to collect"+(w.prize && w.prize!=="the prize" ? " <em>"+esc(w.prize)+"</em>" : "")+". Card #"+esc(String(w.cardNo||""))+"."+(w.shared && w.sharedWith && w.sharedWith.length ? " A tie, so it is shared with "+esc(nameList(w.sharedWith))+"." : "")+"</span>";
+      if(P.stageWins.length>1){ var earlier=P.stageWins.slice(0,-1).map(function(x){ return patName(x.pattern, x.pattern); }); h+="<small>Also won tonight: "+esc(earlier.join(", "))+".</small>"; }
+      h+="<small>Keep playing for "+esc(patName(P.pattern, "the next prize"))+" on the same tickets.</small>";
+      box.innerHTML=h; box.className="stagewin";
+    } else if(P.stageNote){
+      box.innerHTML="<b>"+P.stageNote+"</b><span>Now playing for "+esc(patName(P.pattern, "the next prize"))+". Same tickets, keep marking.</span>";
+      box.className="stagewin others";
+    } else { box.className="stagewin hidden"; box.innerHTML=""; }
+  }
+  /* Last three numbers, newest biggest, so a player back from the bar can catch up without
+     looking for the TV. Older numbers sit to the left, small and grey. */
+  function lastCalledHtml(){
+    var n=P.called.length; if(!n) return "No numbers called yet";
+    var h='<span class="lcrow">';
+    for(var i=Math.max(0,n-3);i<n-1;i++) h+='<span class="lcprev">'+P.called[i]+'</span>';
+    h+='<span class="lcnum">'+P.called[n-1]+'</span></span><span class="lcsub">'+n+' of 90 called</span>';
+    return h;
+  }
+  function setHeaderBall(n){
+    var box=$("hdrBall"); if(!box) return;
+    if(!n || !P.active){ box.classList.add("hidden"); return; }
+    box.classList.remove("hidden");
+    $("hdrBallNum").textContent=n;
+    $("hdrBallCount").textContent=P.called.length+" of 90";
+  }
+  function setMsg(html,cls){ var m=$("pMsg"); m.innerHTML=html; m.className="pmsg"+(cls?" "+cls:""); }
+
+  // ---- pages: bring the ticket holding the called number to the player ----
+  // The point of paging is that you never hunt. When a number is called we work out which page
+  // it is on, mark that tab, and if the player is not already looking at it, turn to it. That is
+  // the "pull up the tab that has that number in it" behaviour, and it is why three readable
+  // cards a screen beats six unreadable ones.
+  function pageOf(n){
+    for(var i=0;i<P.cards.length;i++){
+      var cells=P.cards[i].cells;
+      for(var r=0;r<3;r++){ for(var c=0;c<9;c++){ if(cells[r][c]===n) return Math.floor(i/3); } }
+    }
+    return -1;
+  }
+  // Turn to the ticket the called number is on. Returns nothing and paints nothing: paintCards
+  // calls this BEFORE it paints, so the turn and the marks land in the same pass. Re-entering
+  // paintCards from here painted the whole stack twice on every page turn.
+  function pageForCalled(n){
+    if(effectiveLayout()!=="pages" || !n) return;
+    // Only turn for a number we have not already turned for. paintCards runs on plenty of things
+    // that are not a new ball (a player joining, the host resending state, the player tapping a
+    // tab), and turning on every one of them meant a player who flicked to another ticket was
+    // yanked straight back to whatever was last called, with no way to look at their own tickets.
+    if(n===P.turnedFor) return;
+    P.turnedFor=n;
+    var pg=pageOf(n);
+    if(pg>=0) P.page=pg;
+  }
+  // The gold dot on a tab: this page holds the number that was just called.
+  function markCalledTab(n){
+    if(effectiveLayout()!=="pages") return;
+    var pg=n?pageOf(n):-1;
+    var tabs=$("cardStack").querySelectorAll(".pagetab");
+    for(var i=0;i<tabs.length;i++) tabs[i].classList.toggle("has", i===pg);
+  }
+
+  // ---- layout choice (menu) ----
+  var LAYOUTS={ stack:"Stacked", pages:"Three at a time", align:"Columns lined up" };
+  // hasOwnProperty, not a truthy lookup: "constructor" and "toString" are truthy on any object,
+  // so a junk stored value used to sail through and leave the menu showing a blank selection.
+  function knownLayout(v){ return Object.prototype.hasOwnProperty.call(LAYOUTS, v); }
+  function loadLayout(){ try{ var v=localStorage.getItem("vp-layout"); return knownLayout(v)?v:"stack"; }catch(e){ return "stack"; } }
+  // Has this player ever CHOSEN a layout? Only then do we stop picking one for them.
+  function hasChosenLayout(){ try{ return knownLayout(localStorage.getItem("vp-layout")); }catch(e){ return false; } }
+  /* A stack of six tickets on a phone is a scroll, and a punter who is scrolling is not marking.
+     Past three, "three at a time" is the readable shape, so choose it for them the first time they
+     are dealt that many. Their own pick always wins, and once made it is never overridden. */
+  var _autoLaid=false;
+  function autoLayoutForHand(){
+    if(_autoLaid || hasChosenLayout()) return;
+    if(!P.cards || P.cards.length<=3) return;
+    _autoLaid=true;
+    var sel=$("laySel"); if(sel) sel.value="pages";
+    setLayout("pages", false);   // for this hand, not for ever
+  }
+  // With one ticket every layout looks the same, so we render stacked. The CONTROLS have to
+  // follow that, not the stored preference: hiding zoom because of a setting that is not in
+  // effect stranded a player at 220% zoom with no way to zoom back out.
+  function effectiveLayout(){ return (P.cards.length>1) ? P.layout : "stack"; }
+  /* Size and full screen used to be hidden in every layout but the stacked one, so a player
+     holding a strip in pages or columns had no way to make the numbers bigger, and in a dim
+     pub that is exactly who needs it. Every layout now widens with --cz and pans sideways,
+     so the control is always there. */
+  function syncCardCtl(){
+    var ctl=document.querySelector(".cardctl");
+    if(ctl) ctl.style.display = "";
+  }
+  /* remember=false is us choosing for them (a big hand), and it must NOT be written down as a
+     preference: do that and the player has "chosen" a layout they never picked, and every later
+     hand is locked to it. Their own pick is the only thing that gets stored. */
+  function setLayout(v, remember){
+    if(!knownLayout(v)) v="stack";
+    P.layout=v;
+    if(remember!==false){ try{ localStorage.setItem("vp-layout", v); }catch(e){} }
+    var sel=$("laySel"); if(sel && sel.value!==v) sel.value=v;
+    syncCardCtl();
+    if(P.cards.length) renderCards();
+  }
+
+  /* ONE PLACE THAT BUZZES A PHONE.
+
+     Dean said "get rid of the sound on the demo" and I silenced the fanfare, then swept again
+     properly and found this page buzzing on its own three separate times, none of them through
+     the celebrate library and so none of them covered. One of them is not even a win: line ~596
+     buzzes on an ordinary transition, so a visitor holding their phone on the sales page would
+     have felt it over and over.
+
+     A vibration is a noise as far as somebody reading a website is concerned, and it is worse
+     than a beep because it cannot be muted. Three call sites is three chances to miss one, so
+     they all come through here now and the question is asked once. Same flag the fanfare
+     reads: see isDemoPage() in /app/vp-celebrate.js. */
+  /* THE SHARED ONE. This was a local copy for about ten minutes, which is how this repo ends
+     up with eleven versions of esc(). Nothing here calls navigator.vibrate: VPCelebrate.buzz
+     does, once, and asks the demo flag first. If the shared file has not loaded we stay still
+     rather than throw, the same way playFanfare stays silent. */
+  function buzz(pattern){ try{ if(window.VPCelebrate) VPCelebrate.buzz(pattern); }catch(e){} }
+
+  // ---- win celebration (synthesised fanfare + buzz + confetti; no audio file to host) ----
+  // Phone speakers are often muted, so we lead with the confetti + vibrate and treat sound as a bonus.
+  var _ac=null;
+  function unlockAudio(){ try{ var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; if(!_ac) _ac=new AC(); if(_ac.state==="suspended") _ac.resume(); }catch(e){} }
+  document.addEventListener("pointerdown", unlockAudio, { once:true });   // browsers need a gesture before audio plays
+  function playFanfare(){
+    /* One copy, in /app/vp-celebrate.js. This was written out eight times
+       across the phones and the screens and had already drifted into three
+       versions. The page keeps its own name and its own audio context, so
+       every call site and the kiosk unlock are untouched. If the shared file
+       does not load we stay silent rather than throw: a missing celebration
+       is cosmetic, an exception during a win is not. */
+    try{ if(window.VPCelebrate) VPCelebrate.fanfare({ profile:"phone", ctx:_ac }); }catch(e){}
+  }
+  function confettiBurst(){
+    try{
+      var colors=["#FF1F8E","#FFC24B","#35D07F","#48C9FF","#C70F69","#FFFFFF"];
+      for(var i=0;i<44;i++){
+        var c=document.createElement("div"); c.className="cfetti";
+        c.style.left=Math.random()*100+"vw";
+        c.style.background=colors[i%colors.length];
+        c.style.animationDuration=(2+Math.random()*1.6)+"s";
+        c.style.animationDelay=(Math.random()*0.25)+"s";
+        c.style.transform="translateY(0) rotate("+(Math.random()*360)+"deg)";
+        document.body.appendChild(c);
+        (function(el){ setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 4200); })(c);
+      }
+    }catch(e){}
+  }
+  var _celebrated=false;
+  function celebrate(){ if(_celebrated) return; _celebrated=true; buzz([0,90,60,90,60,150]); playFanfare(); confettiBurst(); }
+  function celebrateStage(){ buzz([0,90,60,90,60,150]); playFanfare(); confettiBurst(); }
+
+  // ---- actions ----
+  // Ask the Worker which extra fields this venue collects, and render them on the join screen.
+  function loadJoinInfo(){
+    if(!P.room) return;
+    ageAsk();                      // hold any ticket request until the Worker says whether to ask
+    playerPost("/join/info",{ code:P.room }).then(function(r){
+      // Venue logo in the header (same one as the TV), so the phone shows whose game this is.
+      var lg=$("venueLogo"); if(lg){ if(r&&r.logo_url){ lg.src=r.logo_url; lg.classList.remove("hidden"); if(typeof VPVenueLogo==="object") VPVenueLogo.fit(lg,"phone"); } else { lg.classList.add("hidden"); } }
+      /* PAPER-TICKET STATES. South Australia, Victoria and Tasmania expect a printed ticket in
+         the player's hand for bingo (Anisimoff Legal, 8 Oct 2026, for VIC and TAS), so this
+         phone must not show one. The Worker decides it from the venue's state and sends
+         paper_bingo, rather than the console deciding, so a venue cannot route around it by
+         handing out the phone link directly. */
+      if(r && r.paper_bingo){ showPaperBingo(r.paper_reason); return; }
+      ageAnswer(r);                // "I am 18 or over" where the state asks for it; releases the join otherwise
+      if(r && r.exists===false){ unknownCode(); return; }
+      /* A phone that has joined before still asks (the paper check above is the point: a regular
+         back at an SA, ACT or Tasmanian venue was dealt phone tickets, 14 Oct 2026), but its name
+         box is not on screen, so there is nothing to add to it. */
+      if(P.joined) return;
+      var c=r&&r.collect; var box=$("joinExtra"); if(!c||!box) return;
+      P.venueName=(r&&r.venue_name)||"";   // named in the collection notice below
+      function f(id,type,ph,ac,ml){ return '<div class="field"><input type="'+type+'" id="'+id+'" placeholder="'+ph+'" autocomplete="'+ac+'" maxlength="'+ml+'"></div>'; }
+      var h="";
+      if(c.last_name) h+=f("xLast","text","Last name","family-name",40);
+      if(c.postcode)  h+=f("xPost","text","Postcode","postal-code",4);
+      if(c.email)     h+=f("xEmail","email","Email","email",120);
+      if(c.mobile)    h+=f("xMobile","tel","Mobile","tel",20);
+      box.innerHTML=h;
+      if(c.marketing_optin && (c.email || c.mobile)){   // no point asking to keep them posted with no email or phone
+        var l=document.createElement("label"); l.className="optin";
+        l.innerHTML='<input type="checkbox" id="xOptin"> <span>I am 18 or over. Keep me posted on what is on at the venue</span>';
+        box.appendChild(l);
+      }
+      /* Collection notice. Australian privacy law wants people told what is being collected and
+         who gets it AT THE POINT they are asked, not only in a policy page they never open. This
+         screen asked for last name, postcode, email and mobile with no notice and no link to the
+         policy at all, while the policy itself said capturing more than a name was a future
+         feature. Venue name is filled in where we know it, so the player can see who is asking. */
+      if(h){
+        var vn=(P.venueName||"").trim();
+        var n=document.createElement("p");
+        n.className="collectnote";
+        n.setAttribute("style","font-size:12px;line-height:1.5;color:#8A8A94;margin-top:10px");
+        n.textContent="These details are optional and go to "+(vn||"the venue you are playing at")+
+          ", not to anyone else. You can play with just your name. ";
+        var a=document.createElement("a");
+        a.href="/privacy"; a.target="_blank"; a.rel="noopener";
+        a.setAttribute("style","color:#FF1F8E;text-decoration:underline");
+        a.textContent="How your details are handled";
+        n.appendChild(a);
+        box.appendChild(n);
+      }
+    }).catch(function(){});
+  }
+  /* A CODE NOBODY HOLDS. A typo used to connect to an empty channel and say "YOU'RE IN, good luck,
+     waiting for the host" for ever (audit, 14 Oct 2026). The Worker now says exists:false, and the
+     phone goes back to the code box and says why. Only when the Worker actually answered that,
+     never on a blip, and never while a host is plainly talking on this channel. A table-talker
+     link is told by watchVenue in its own words. */
+  function unknownCode(){
+    if(!P.room || P.venueSlug || P.hostSeen || P.active) return;
+    var c=P.room;
+    try{ if(ch) ch.unsubscribe(); }catch(e){}
+    ch=null; subscribed=false; sendQueue=[];
+    P.room=""; P.joined=false;
+    try{ roomIn.value=c; }catch(e){}
+    $("roomErr").textContent="There is no game with the code "+c+" right now. Check the code on the TV and try again.";
+    $("statusText").textContent="No room";
+    show("vNoRoom");
+  }
+  function gatherCapture(nm){
+    var cap={ first_name:nm.slice(0,80) }, v;
+    if((v=$("xLast"))&&v.value.trim())  cap.last_name=v.value.trim();
+    if((v=$("xPost"))&&v.value.trim())  cap.postcode=v.value.trim();
+    if((v=$("xEmail"))&&v.value.trim()) cap.email=v.value.trim();
+    if((v=$("xMobile"))&&v.value.trim())cap.mobile=v.value.trim();
+    var o=$("xOptin"); if(o&&o.checked && (cap.email||cap.mobile)) cap.marketing_optin=true;   // opt-in only counts with a contact method
+    return cap;
+  }
+  // Fetch (or lazily be dealt) this player's ticket for the running game.
+  function join(){
+    var nm=($("nameIn").value||"").trim();
+    if(!nm){ $("joinErr").textContent="Pop your name in first."; return; }
+    P.name=nm.slice(0,20);
+    P.capture=gatherCapture(nm);
+    P.joined=true; saveName(P.room, P.name);
+    // Bingo runs on the live link: tell the host we're here and how many tickets we want.
+    // It adds us to the night and deals our tickets straight back (t:"cards").
+    sendJoin();
+    pushNameToServer();            // the TV reads the server row, not this broadcast
+    saveCapture();                 // best-effort: store opt-in details for the venue
+    setConn(P.hostSeen ? "live" : "waiting");
+    route();
+  }
+
+  /* WHY THE SCREEN SAID "PLAYER".
+     claimIdentity() runs the moment the page opens, before anyone has typed
+     anything, so the server row is created with no name. The name typed a moment
+     later goes out over BROADCAST, which reaches the host but never the database,
+     and /join only writes display_name when a name is actually present. So the
+     row stayed nameless for the whole night and every screen that reads it (the
+     trivia leaderboard, the winner card) fell back to "Player".
+     Re-posting /join with the name patches the same row: it is matched on the pid
+     this phone sends, so this neither mints a second player nor bills the venue
+     twice. It DID both, for as long as this call left the pid out, and the comment
+     here said otherwise the whole time. */
+  var _namePushed="";
+  function pushNameToServer(){
+    if(!P.name || _namePushed===P.name) return;
+    var code=P.room; if(!code) return;
+    _namePushed=P.name;
+    fetch(VP_GAME_API+"/play/live?code="+encodeURIComponent(code))
+      .then(function(r){ return r.ok?r.json():null; })
+      .then(function(d){
+        // Not live yet (a regular scanning the table talker before the lobby opens): forget that
+        // we tried, so the join code arriving on the first state message can carry the name in.
+        if(!d || !d.live || !d.join_code){ _namePushed=""; return; }
+        return playerPost("/join", { code:d.join_code, name:P.name, pid:deviceId() })
+          .then(function(j){
+            if(j && j.token){
+              noteJoined(j, d.join_code);                       // the patch mints a fresh token
+              shareToken(code, j.token);
+            }
+          });
+      })
+      .catch(function(){ _namePushed=""; });                    // let a later attempt retry
+  }
+  /* JOIN THE NIGHT THE HOST IS ACTUALLY RUNNING. The token this phone holds was minted against
+     one server session. When the host ends a game and opens a new lobby that is a NEW session
+     with a new join code, and nobody already in the room was ever joined to it, so game two
+     onward counted only newcomers. The join code rides on every state message, so whenever one
+     names a code this phone has not joined, join it. Same pid every time: the Worker matches on
+     it and patches one row, so this never seats a second player. Best effort, one call in
+     flight at a time, and a Worker that does not answer changes nothing on screen. */
+  /* THE SESSION, NOT THE CODE (14 Oct 2026). Since one code per venue, every session a venue
+     opens has the SAME join code, so a phone that compared codes saw nothing new when the host
+     ended game two and opened game three, and never joined it: six people played game three and
+     the meter counted one (audit, 14 Oct 2026). The console now sends the session id with every
+     state message, and that is what this remembers. A /join answers with the session it joined
+     (its snapshot), so the identity claimed at page load is remembered the same way. */
+  var _joinedFor="", _joinBusy=false;
+  function noteJoined(j, code){
+    P.token=j.token;
+    var sid=(j.snapshot && j.snapshot.session_id) || "";
+    var fresh=_joinedFor!==(sid||code);
+    _joinedFor=sid||code;
+    if(fresh){ _alive=false; if(P.joined && !_paper) sendJoin(); }   // tell the console now: it seats us
+  }
+  function joinServerSession(joinCode, sessionId, now){
+    if(!joinCode || _joinBusy || !P.room || _paper) return;
+    if(!now && _joinedFor===(sessionId||joinCode) && P.token) return;
+    _joinBusy=true;
+    /* Every phone in the room gets this same message on the same tick. Sixty of them calling
+       at once is sixty requests in one second, and the database sits behind a per-second
+       ceiling, so they are spread over a few seconds instead. Nobody is waiting on it: the
+       game itself runs over the broadcast link. A console asking this one phone to check in
+       (it is not seated yet) is answered straight away. */
+    setTimeout(function(){ joinServerSessionNow(joinCode); }, now ? 0 : Math.floor(Math.random()*4000));
+  }
+  function joinServerSessionNow(joinCode){
+    var room=P.room;
+    if(!room){ _joinBusy=false; return; }
+    playerPost("/join", { code:joinCode, name:(P.name||loadName(room)||""), pid:deviceId() })
+      .then(function(j){
+        if(j && j.token){
+          noteJoined(j, joinCode); _namePushed=P.name;
+          shareToken(room, j.token);
+          if(P.capture) saveCapture();   // details that went out unvouched can be vouched for now
+        }
+      })
+      .catch(function(){})
+      .then(function(){ _joinBusy=false; });
+  }
+  // Best-effort: store this player's details for the venue's opt-in list. This is
+  // separate from the game; if the endpoint isn't deployed yet it's simply ignored.
+  function saveCapture(){
+    try{
+      if(!P.capture || !P.room) return;
+      var body={ code:P.room }; for(var k in P.capture){ body[k]=P.capture[k]; }
+      /* The token is the whole point of this endpoint changing. It is minted by /join against a
+         SESSION code that exists only while this game runs, so presenting one is evidence of
+         having been in the room. Without it the Worker stores the capture but marks it unverified
+         and keeps it out of the list the venue mails. */
+      var _h={ "Content-Type":"application/json" };
+      if(P.token) _h["X-Player-Token"]=P.token;
+      fetch(VP_GAME_API+"/capture",{ method:"POST", headers:_h, body:JSON.stringify(body) }).catch(function(){});
+    }catch(e){}
+  }
+  function pressBingo(){
+    if(!P.active || !P.cards.length || P.claimPending || P.won) return;
+    // Local gate; the host holds the master copies of our tickets and makes the final call.
+    var win=winningCardNo();
+    if(!win && !P.allowEarly){ setMsg("Not yet, keep playing. That pattern is not complete on any of your tickets yet.","no"); return; }
+    var claimNo = win || (P.cards[0] && P.cards[0].cardNo) || 0;   // early-call venues: claim on their first ticket
+    P.claimPending=true; P.wonCardNo=claimNo; $("bingoBtn").disabled=true; setMsg("BINGO sent. The host is checking your ticket&hellip;","wait");
+    send({ t:"claim", pid:P.pid, name:P.name, cardNo:claimNo });
+  }
+  // ---- ticket count picker + host default ----
+  function renderPicker(){
+    // #cpRow is not in the markup, so this returns here every time and has done for a while.
+    // Left alone deliberately: the ticket count is the HOST's to set (free night) or the bar's
+    // (paid night), and a picker on the phone could only ever promise something we do not honour.
+    var row=$("cpRow"); if(!row) return; row.innerHTML="";
+    for(var k=1;k<=6;k++){ (function(kk){
+      var b=document.createElement("button"); b.type="button"; b.className="cpbtn"+(kk===P.numCards?" sel":""); b.textContent=kk;
+      b.addEventListener("click", function(){ P.numCards=kk; P.pickedCount=true; renderPicker(); });
+      row.appendChild(b);
+    })(k); }
+  }
+  function setHostDefault(n){
+    n=parseInt(n,10)||1; if(n<1)n=1; if(n>6)n=6;
+    P.defaultCards=n;
+    if(!P.pickedCount){ P.numCards=n; renderPicker(); }   // follow the host's default until the player picks
+  }
+  // ---- assist mode (older players): auto-mark called numbers. Off by default, so normally
+  // the player dabs their own numbers and we never flash them pink for them. ----
+  function loadAssist(){ try{ return localStorage.getItem("vp-assist")==="1"; }catch(e){ return false; } }
+  function setAssist(on){ P.assist=!!on; try{ localStorage.setItem("vp-assist", on?"1":"0"); }catch(e){} if(on) autoDaub(); if(P.cards.length) renderCards(); }
+
+  // ---- incoming ----
+
+  /* When did a game last actually HAPPEN on this channel? A bingo game the host
+     walked away from and one that is mid-round look identical from P.active
+     alone, and that difference decides whether it is safe to move the phone.
+
+     Only real play counts. Presence pings (host_here, tv_here), a phone waking up
+     (rollcall) and the pairing traffic all keep arriving on a channel where
+     nothing is happening, so counting those would mean the answer is always
+     "busy" and no phone would ever follow the host anywhere. idle is excluded on
+     purpose: it means the game just ended. */
+  var PLAY_TYPES = { ball:1, started:1, state:1, resume:1, winner:1, claim_pending:1, cards:1 };
+  var lastPlay = 0;
+  var VP_LOOK_NOW = null;   // set by watchVenue: the lookup that decides where a phone belongs
+  function playingHere(){ return P.active && lastPlay && (Date.now() - lastPlay < 60000); }
+  function onMsg(m){
+    /* A TRIVIA ROUND IS NOT BINGO. The session code is the venue code now, so the trivia console's
+       {t:"started", question_count} arrives on this channel too. This page took it for a bingo
+       round, called itself busy, and its lookup stopped for good: phones sent here sat on bingo
+       through every later round (break test, 14 Oct 2026). Ask where to go instead. */
+    if(m && m.fmt && m.fmt!=="bingo" && m.t!=="mode"){ if(m.t==="started" && typeof VP_LOOK_NOW==="function") VP_LOOK_NOW(); return; }   // mode still runs below, as it always has   // tagged by its console
+    if(m && m.t==="started" && m.question_count!=null){ if(typeof VP_LOOK_NOW==="function") VP_LOOK_NOW(); return; }   // a console from before the tag
+    if(m && m.t && PLAY_TYPES[m.t]) lastPlay = Date.now();
+    if(!m||!m.t) return;
+    if(m.pats) notePats(m.pats);   // the venue's own patterns this message names
+    /* A GAME HAS GONE ON AIR AND THIS PHONE IS ALREADY LISTENING.
+
+       A punter who scans the permanent QR on the table sits on the VENUE channel. Every
+       console announces {t:"mode"} there the moment it goes live, which is how the unified
+       /tv switches itself over. This phone was subscribed to that exact message and ignored
+       it, then found out by POLLING /play/live every eight seconds.
+
+       So the room watched the television change to trivia and their phones did nothing for
+       up to eight seconds. On a stage that is a long time: the host has said "right, phones
+       out" and twenty people are looking at a screen that has not moved.
+
+       Now it hops the moment it hears. The poll below is still there, because a phone that
+       joined during the announcement, or missed it on a flaky connection, still has to find
+       its way; but it is a fallback rather than the mechanism, so it runs far less often.
+
+       Nothing is trusted from the message itself: it only triggers the same lookup the poll
+       does, which is the thing that decides where to send them. A forged broadcast can
+       therefore make a phone ask a question early, and nothing more. Added 13 Sep 2026. */
+    /* A LOBBY FOR ANOTHER GAME ENDS LAST GAME'S WIN ON THIS PHONE. The win is saved against the
+       room so a reload on the way to the host still shows it, and the room code never changes, so a
+       bingo "YOU WON! Show this screen to the host" sat through the next musical lobby and into its
+       game: a real-looking claim for a game nobody had won (audit, 25 Sep 2026, found by playing).
+       Bingo re-announces mode:"bingo" on every reconnect, so only ANOTHER game's lobby clears it;
+       bingo's own next round clears it on cards/started as before. */
+    if(m.t==="mode" && m.mode && m.mode!=="bingo" && (P.won || P.ended)){
+      P.won=false; P.ended=false; P.claimPending=false; P.wonCardNo=0; P.shared=false; P.sharedWith=[];
+      clearWin(P.room); clearStage(P.room); P.lostBy=""; route();
+    }
+    if(m.t==="mode" && typeof VP_LOOK_NOW === "function"){ VP_LOOK_NOW(); }
+    if(m.t==="tv_here" || m.t==="tv_pair" || m.t==="session"){ return; }   // host<->TV only
+    if(typeof m.defaultCards==="number"){ setHostDefault(m.defaultCards); }
+    if(typeof m.allowEarly==="boolean"){ P.allowEarly=m.allowEarly; }
+    if(m.t==="rollcall"){
+      // host (re)connected and is rebuilding the night. re-announce so it re-adds us and
+      // re-deals our tickets. ONLY the roll call: host_here is also the 30s heartbeat (and the
+      // answer to every TV hello, which anyone can forge), and answering it made every phone
+      // re-join and the console re-deal to all of them twice a minute, about seven broadcasts
+      // per phone each time, growing with the square of the room (break test, 14 Oct 2026).
+      // Every console sends rollcall itself when it (re)connects, so nothing is lost.
+      if(P.joined){
+        sendJoin();
+        // Re-announce a still-pending BINGO claim, so a host that reloaded mid-claim gets it back in
+        // the queue instead of an empty one, and the player is not left on "checking your ticket"
+        // forever (audit #7).
+        if(P.claimPending && P.wonCardNo){ send({ t:"claim", pid:P.pid, name:P.name, cardNo:P.wonCardNo }); }
+      }
+      markHost(); return;
+    }
+    markHost();   // any message below proves a live host is on this channel
+    if(m.t==="cards"){
+      if(m.pid && m.pid!==P.pid) return;   // those tickets are for another player
+      /* THE SAME TICKETS AGAIN ARE NOT A NEW ROUND, and treating them as one wiped the
+         winner's screen. Found by audit, 20 Sep 2026, reproduced by running this page.
+
+         The host answers EVERY join with a cards message, and a phone re-joins on every
+         30 second host heartbeat and on every reconnect, which is what a screen locking
+         and unlocking is. The block below read any cards message as "fresh deal", so a
+         player on "You won! Show this to the host" was put back on her ordinary ticket
+         inside half a minute, with the BINGO button live again, on her way to the host.
+         A line win in a progressive game went the same way.
+
+         A new round ALWAYS deals new card numbers (nextCardNo only counts up), so an
+         identical set can only ever be a resend. Compare, and leave everything alone. */
+      var _inc = m.cards || [], _same = _inc.length > 0 && _inc.length === P.cards.length;
+      for(var _s=0; _same && _s<_inc.length; _s++){
+        if(_inc[_s].cardNo !== P.cards[_s].cardNo ||
+           JSON.stringify(_inc[_s].cells) !== JSON.stringify(P.cards[_s].cells)) _same = false;
+      }
+      if(_same) return;
+      // Being dealt tickets IS the start of a round for this phone, so it clears last round's
+      // result. Without this a phone that slept through t:"started" stayed on "Nice game!" or a
+      // stale "You won!" for the whole next game, ignoring its own new tickets, and the only way
+      // out was a reload that nothing on screen suggested.
+      P.won=false; P.ended=false; P.claimPending=false; P.wonCardNo=0;
+      P.shared=false; P.sharedWith=[]; _celebrated=false; clearWin(P.room);   // fresh deal = new round: drop last round's saved win
+      clearStage(P.room); P.lostBy="";
+      /* Carry marks across by card number. A paid player buying a second sheet mid-round gets a
+         fresh cards message, and rebuilding every ticket with an empty daub set wiped the marks
+         they had made on the tickets they were ALREADY holding. Only genuinely new tickets start
+         blank. */
+      /* Marks survive the phone dropping the tab. They were memory-only, so a punter whose screen
+         locked long enough for the browser to discard the page came back to a blank ticket after
+         twenty minutes of dabbing. The win itself was never at risk (a claim is checked against
+         the called numbers, not the marks) but losing them mid-house is a bar argument. */
+      var _prev={}; for(var _i=0;_i<P.cards.length;_i++){ _prev[P.cards[_i].cardNo]=P.cards[_i].daubs||{}; }
+      var _saved=loadDaubs();
+      for(var _k in _saved){ if(!_prev[_k] || !Object.keys(_prev[_k]).length) _prev[_k]=_saved[_k]; }
+      P.cards=(m.cards||[]).map(function(c){ return { cardNo:c.cardNo, cells:c.cells, daubs:_prev[c.cardNo]||{} }; });
+      if(P.cards.length) P.dealWait=false;   // the ticket we were waiting for is here
+      P.dealSeq++;   // a fresh deal is always a fresh structure, whatever the card numbers say
+      P.active=true; autoDaub(); route();
+    }
+    else if(m.t==="state"){
+      if(m.pattern) P.pattern=m.pattern;
+      if(typeof m.prize==="string") P.prize=m.prize;
+      if(typeof m.paidMode==="string") P.paidMode=m.paidMode;
+      P.called=cleanCalled(m.called); P.active=!!m.active;
+      if(m.join_code && P.joined) joinServerSession(m.join_code, m.session_id);   // a new game, or a phone that arrived before the lobby opened
+      /* A new lobby is a new game: last game's "that game is over" gives way to the waiting screen.
+         AND SO DOES LAST GAME'S "YOU WON" (live play audit, 20 Oct 2026). The winner's phone kept
+         "Show this screen to the host" through the whole next lobby, until Start, looking like a
+         claim on a game that had not begun. A new lobby is a new session, or a session with nothing
+         running and no ball called; the same game's routine refresh always has its balls. End game
+         sends no session, so the winner still has the screen to show at the bar until the next
+         lobby actually opens. */
+      var _newLobby=!!m.session_id && ((P.lastSid && m.session_id!==P.lastSid) || (!m.active && P.called.length===0));
+      if(_newLobby && (P.won || P.ended)){
+        P.won=false; P.ended=false; P.lostBy=""; P.wonCardNo=0; P.shared=false; P.sharedWith=[];
+        _celebrated=false; clearWin(P.room);
+      }
+      if(m.session_id) P.lastSid=m.session_id;
+      autoDaub(); if(!P.won && !P.ended) route();
+    }
+    else if(m.t==="started"){
+      if(m.pattern) P.pattern=m.pattern;
+      if(typeof m.prize==="string") P.prize=m.prize;
+      // fresh round: the host deals new tickets (t:"cards") just before this. Reset the
+      // round but keep whatever tickets we're holding.
+      P.called=[]; P.active=true; P.won=false; P.ended=false; P.claimPending=false; P.wonCardNo=0; P.droppedClaim=0; _celebrated=false; clearWin(P.room);   // new round starting
+      /* The SERVER deals this game's tickets now (19 Oct 2026), a moment after this message. Drop last
+         game's here so nobody marks or claims on a ticket that is no longer in play; the waiting screen
+         says they are on the way. An older console sends no dealing flag and deals first, as before. */
+      if(m.dealing){ P.cards=[]; P.dealSeq++; }
+      P.dealWait=false;   // a new game: any wait for last game's ticket is over
+      P.shared=false; P.sharedWith=[]; clearStage(P.room); P.lostBy="";
+      for(var i=0;i<P.cards.length;i++) P.cards[i].daubs={};
+      clearDaubs();   // a new game starts on a clean ticket
+      P.turnedFor=0;   // new round: the first ball must still turn the page
+      route();
+    }
+    else if(m.t==="ball"){
+      P.called=m.called?cleanCalled(m.called):P.called; P.active=true;
+      autoDaub();
+      if(P.joined && !P.won && !P.ended && P.cards.length){ renderCards(); show("vCard"); }
+    }
+    else if(m.t==="dealing"){
+      /* The host has asked the server for our ticket and it has not answered yet (a slow server). Say so,
+         rather than leave a waiting screen that reads as stuck. The ticket arrives as t:"cards". */
+      if(m.pid===P.pid && !P.cards.length){ P.dealWait=true; if(!P.won && !P.ended) route(); }
+    }
+    else if(m.t==="checkin"){
+      // The console has not seated this phone in its session (14 Oct 2026): join it now. Only the
+      // console says this, signed; at worst a forged one makes a phone ask once more.
+      if(m.pid===P.pid && P.joined && m.join_code) joinServerSession(m.join_code, m.session_id, true);
+    }
+    else if(m.t==="claim_pending"){
+      // another player (or me) claimed; nothing to change locally
+    }
+    else if(m.t==="claim_dropped"){
+      // The host ended the game with our claim still unchecked. Remember it, so the waiting
+      // screen can say so. Cleared when the next game starts.
+      if(m.pid && m.pid===P.pid){ P.droppedClaim = P.wonCardNo || -1; P.claimPending=false; }
+    }
+    else if(m.t==="resume"){
+      // No pid means the whole room plays on. A pid means only that player was waved off,
+      // which happens when they called at the same time as someone whose ticket stood up.
+      if(m.pid && m.pid!==P.pid) return;
+      // pids, when present, names who was actually rejected. Everyone else plays on
+      // without being told they lost - their claim may not have been looked at yet.
+      var waved = !m.pids || !m.pids.length || m.pids.indexOf(P.pid) >= 0;
+      if(P.claimPending){
+        P.claimPending=false; $("bingoBtn").disabled=false;
+        setMsg(waved ? "The host said not yet. Keep playing!" : "Play on!", "no");
+      }
+    }
+    else if(m.t==="winner"){
+      P.claimPending=false;
+      // winners[] is the whole tie. Older hosts send only pid/name/cardNo, so fall back to those.
+      var ws=(m.winners&&m.winners.length) ? m.winners : [{ pid:m.pid, name:m.name, cardNo:m.cardNo }];
+      var me=null, i;
+      for(i=0;i<ws.length;i++){ if(ws[i].pid===P.pid){ me=ws[i]; break; } }
+      var names=ws.map(function(w){ return w.name; }).filter(Boolean);
+      var others=ws.filter(function(w){ return w.pid!==P.pid; }).map(function(w){ return w.name; }).filter(Boolean);
+      function list(a){ return a.length<2 ? (a[0]||"A player") : a.slice(0,-1).join(", ")+" and "+a[a.length-1]; }
+      P.shared=ws.length>1; P.sharedWith=others;
+      // The prize for THIS stage rides on the message (a host built after 9 Sep 2026 sends it).
+      // An older host sends none, so the game prize stands in, exactly as before.
+      var stagePrize = (typeof m.prize==="string" && m.prize) ? m.prize : P.prize;
+      var pn=patName(m.pattern, "a prize");
+      if(m.cont){
+        // a stage was won; the game plays on for the next prize with the same tickets
+        if(m.next) P.pattern=m.next;
+        if(typeof m.nextPrize==="string" && m.nextPrize) P.prize=m.nextPrize;
+        P.wonCardNo=0;
+        if(me){
+          P.stageWins.push({ pattern:m.pattern, prize:stagePrize, cardNo:me.cardNo||0, shared:ws.length>1, sharedWith:others });
+          P.stageNote="";
+          celebrateStage();
+        } else {
+          P.stageNote=esc(list(names))+" won "+esc(pn)+".";
+        }
+        saveStage();
+        if(P.cards.length){ renderCards(); show("vCard"); } else { renderStageWin(); }
+      } else {
+        if(me){ P.prize=stagePrize; P.won=true; P.wonCardNo=me.cardNo||P.wonCardNo; saveWin(); route(); celebrate(); }
+        else {
+          var first=ws.filter(function(w){ return w.pid!==P.pid; })[0]||ws[0];
+          P.lostBy=esc(list(names))+" won "+esc(pn)+(first && first.cardNo ? " on card #"+esc(String(first.cardNo)) : "")+".";
+          P.ended=true; route();
+        }
+      }
+    }
+    else if(m.t==="idle"){
+      // host ended the round / went back to ads. Clear the game but keep the player "in"
+      // for the next round (this fixes the screen being stuck mid-game). A winner keeps
+      // their prize screen so they can still show it at the bar.
+      /* A GAME THAT ENDED WITH NO WINNER SAYS SO. This dropped the phone back on "YOU'RE IN, waiting
+         for the host" with the last game's "75 / 5 of 90" still in the header, which reads as the
+         game still being on (audit, 14 Oct 2026). A phone that was holding tickets goes to the
+         game-over screen instead and the header ball goes. Left as it was: a winner, a phone that
+         already knows who won, a dropped claim and a line won earlier, which each say their own
+         thing on the waiting screen, and a lobby closed before anyone was dealt. */
+      var hadGame=P.cards.length>0 || P.called.length>0;
+      P.active=false; P.cards=[]; P.called=[]; P.claimPending=false;
+      setHeaderBall(0);
+      if(!P.won){
+        if(P.ended && P.lostBy){ route(); }
+        else if(hadGame && !P.droppedClaim && !(P.stageWins && P.stageWins.length)){
+          /* A LINE WON BY SOMEONE ELSE IS STILL A WINNER. This read "Nobody called a winning ticket"
+             on every other phone after Phone Sam had just won One line (live play test, 24 Oct 2026).
+             stageNote holds that winner's line (already escaped), so the game-over screen says it. */
+          P.ended=true; P.lostBy = P.stageNote ? "That game is over. "+P.stageNote : "That game is over. Nobody called a winning ticket this time."; route();
+        }
+        else { P.ended=false; route(); }
+      }
+    }
+  }
+
+  // ---- connect ----
+  function connect(room){
+    /* ONE CHANNEL, AND IT COMES BACK. connect() can run again for this phone (a code hop, the
+       room server saying no), so hang up the last channel first. And a channel that ended in
+       CLOSED used to say Reconnecting and never rejoin: every answer after that sat in
+       sendQueue for the rest of the night (audit, 27 Sep 2026). The channel below comes from
+       /app/vp-channel.js, which rebuilds it with a backoff, and hanging it up (Leave, a code
+       hop) now really ends it: the old channel's CLOSED used to arrive afterwards and paint
+       Reconnecting on the screen the phone had moved to. Without the script it is the plain
+       channel, as before. */
+    if(ch){ try{ ch.unsubscribe(); }catch(e){} ch=null; subscribed=false; }
+    P.room=room;
+    $("roomLabel").textContent=room;
+    $("joinCode").textContent=room;
+    /* WHO THIS PHONE IS, IN THIS ROOM. Its pid is the fingerprint of a key only it holds, so
+       knowing the pid (the host broadcasts it) lets nobody speak for it. A phone that joined
+       before this existed has an old random pid saved: it is replaced, the host sees a new
+       player and deals fresh tickets, once. A browser that cannot make a key keeps the old
+       kind of pid and sends unsigned. */
+    P.pid=loadPid(room);
+    _keyReady=((window.VPPhoneKey && VPPhoneKey.ensure) ? VPPhoneKey.ensure(room) : Promise.reject(new Error("no phone key")))
+      .then(function(id){ if(P.pid!==id.pid){ P.pid=id.pid; savePid(room, P.pid); } return id; })
+      .catch(function(){ if(!P.pid || /^k1_/.test(P.pid)){   // a keyed pid this browser cannot sign for is no use to it
+        P.pid=randId(); savePid(room, P.pid); } return null; });
+    // a saved name means this player already joined this room: auto-rejoin on reload so
+    // they land back on their card. The host re-deals it when we re-announce below.
+    var savedName=loadName(room);
+    if(savedName){ P.name=savedName; P.joined=true; }
+    // Restore a confirmed win so a reloaded phone can still show it to the host. Any live new-round
+    // message (cards / started) clears it below, so it never lingers into the next game.
+    var _w=loadWin(room);
+    if(_w && P.joined){ P.won=true; P.wonCardNo=_w.cardNo||0; if(_w.prize) P.prize=_w.prize; P.shared=!!_w.shared; P.sharedWith=_w.sharedWith||[]; route(); }
+    var _sw=loadStage(room);
+    if(_sw && P.joined){ P.stageWins=Array.isArray(_sw.wins)?_sw.wins:[]; P.stageNote=_sw.note||""; }
+    // Verify host broadcasts (migrations 38/49): fetch the venue PUBLIC key by the room code and drop
+    // forged messages in enforce mode. No key / enforce off / script absent -> renders as before.
+    if(window.VPSign){ VPSign.initReceiver(VP_GAME_API, { code: room }); }
+    /* THE ROOM SERVER, opt in only (?roomserver=1). One WebSocket to the venue's room on
+       Cloudflare instead of a Supabase Realtime channel. Everything below stays as it
+       is: if the Worker says the room is not enabled, or the socket will not open, the
+       page connects to Supabase exactly as it always has. The messages are the same
+       objects and VPSign still checks every signature, so the game cannot tell which
+       road a ball arrived down.
+       A room only works if EVERYONE is in it: a phone in a room hears nothing from a
+       host that is not. That is why this is off unless the link says so. */
+    if(_useRoom && window.VPRoom && !_roomTried){
+      _roomTried=true;
+      try{
+        _room=VPRoom.connect(VP_GAME_API, "vp-"+room, "phone", function(payload){
+          if(window.VPSign){ VPSign.gate(payload, onMsg); } else { onMsg(payload); }
+        }, {
+          onUnavailable: function(){ _useRoom=false; _room=null; connect(room); },
+          onState: function(st){
+            if(st==="open"){
+              subscribed=true; flushQueue();
+              if(P.joined){ sendJoin(); setConn("waiting"); }
+              else { setConn("ready"); }
+              // say it out loud: a phone in a room and a host that is not is the one
+              // failure this feature keeps producing, and it looks identical to working.
+              try{document.documentElement.setAttribute("data-vp-transport","room");console.log("[VenuePlay] transport: "+"room");}catch(e){}
+            } else { subscribed=false; setConn("reconnecting"); }
+          }
+        });
+      }catch(err){ _useRoom=false; _room=null; }
+    }
+    if(!_room){
+    ch=window.VPChannel ? VPChannel.keep(client, "vp-"+room, { config:{ broadcast:{ self:false } } })
+                        : client.channel("vp-"+room, { config:{ broadcast:{ self:false } } });
+    ch.on("broadcast", { event:"msg" }, function(e){ if(window.VPSign){ VPSign.gate(e.payload, onMsg); } else { onMsg(e.payload); } });
+    /* NAMED, so it can be RUN by a test. It was an anonymous callback and the fault below
+       lived in it for weeks: no test in this repo could reach it. */
+    ch.subscribe(onChannelStatus);
+    }
+    loadJoinInfo();                 // extra fields this venue collects, its logo, and whether bingo is on paper here
+    renderPicker();                 // ticket-count buttons (default to the host's number)
+    route();
+  }
+
+  // ---- events ----
+  var roomIn=$("roomIn");
+  roomIn.addEventListener("input", function(){ roomIn.value=roomIn.value.toUpperCase().replace(/[^ACDEFGHJKMNPQRSTUVWXYZ2345679]/g,""); $("roomErr").textContent=""; });
+  roomIn.addEventListener("keydown", function(e){ if(e.key==="Enter") roomGo(); });
+  /* Every sign in the pub says venueplay.com.au/play, so /play has to cope with ANY code the
+     room is shown: a bingo venue code, or the random join code a trivia or musical night hands
+     out. It could not. Typing a trivia code here connected the phone to the BINGO channel and
+     sat on "waiting for the host" forever, because the only thing that ever hopped to another
+     game was the /play?venue= path off a table talker. A punter reading the printed sign and
+     typing the code on the screen in front of them hit a dead end.
+     Ask the Worker what the code is for, then go there. Bingo, an unknown code, or a Worker we
+     cannot reach all fall through to connecting here, which is the old behaviour. */
+  function playerAppFor(format){
+    var f=String(format||"");
+    if(f.indexOf("trivia")===0)  return "/app/trivia/play";
+    if(f.indexOf("musical")===0) return "/app/musical/play";
+    return "";   // bingo (and raffle/members, which have no player app) stay right here
+  }
+  /* Join the host's SERVER SESSION, when the code is one.
+     Broadcast bingo used to put the venue's permanent code on the TV, so a phone had no identity
+     and /capture could be forged by anyone who knew the venue existed. The console now opens a
+     session and the TV shows ITS code, which dies with the game. Joining it mints a player row,
+     which is both the identity a capture is bound to and the count the venue is metered on.
+     Falls through silently on anything else: an old table talker, a typed venue code, a Worker
+     blip. Bingo has never needed the server to run and still does not, so a failure here costs
+     the identity and nothing else. */
+  /* CLAIM A SERVER IDENTITY, without changing anything the room sees.
+     Broadcast bingo meets on a channel derived from the venue's PERMANENT code, and that code is
+     printed on the table talkers, so it cannot move. But a permanent public code is also why
+     /capture was forgeable: it proves nothing about who is sending.
+     The session is the missing piece. The host's console opens one, /play/live will name its join
+     code for this venue, and joining THAT mints a player row: an identity worth something,
+     because the code behind it exists only while the game runs. The punter sees none of this.
+     Entirely best-effort. No session, no Worker, no token: the night runs on the broadcast channel
+     exactly as it always has, and a capture without a token is stored but marked unverified. */
+  /* THE SAME PHONE MUST BE THE SAME PERSON, on every page of the night.
+
+     The Worker dedupes a re-join on the `pid` it is sent, and neither call in this
+     file sent one, so every reload minted ANOTHER metered player row. A phone that
+     scanned the table sign and was then hopped to the musical bingo room counted as
+     two people, and the room's rejoin after a wifi drop counted as a third. The
+     comment on pushNameToServer said this was matched on device_id and it was not:
+     it could not be, because nothing here had ever told the server which device it
+     was. The venue was billed for the difference.
+
+     One key, "vpDeviceId", the same one /app/musical/play and /app/trivia/play use,
+     so the identity survives the hop between them. */
+  function deviceId(){
+    var K="vpDeviceId", v="";
+    try{ v=localStorage.getItem(K)||""; }catch(e){}
+    if(!/^[A-Za-z0-9_-]{6,64}$/.test(v)){
+      v=randId()+randId();
+      try{ localStorage.setItem(K, v); }catch(e){}
+    }
+    return v;
+  }
+  var OWN_TOKEN_KEY="vp-token-";
+  /* ONE IDENTITY PER PHONE PER ROOM, WHICHEVER PAGE MINTED IT. A /join re-mints the token on the
+     same player row, so the bingo, trivia and musical pages each holding their own copy meant a
+     phone bounced through another page came back with a dead token: trivia answers were acked
+     by the room and thrown away at Reveal, "CORRECT! 0" all night while still billed (break test,
+     14 Oct 2026). Whoever mints writes every copy this phone already holds. Identical on all
+     three phone pages. */
+  function shareToken(room, tok){
+    if(!room || !tok) return;
+    try{ ["vp-token-","vp-ttoken-","vp-mtoken-"].forEach(function(k){ if(k===OWN_TOKEN_KEY || localStorage.getItem(k+room)!==null) localStorage.setItem(k+room, tok); }); }catch(e){}
+  }
+  function savedToken(code){ try{ return localStorage.getItem("vp-token-"+code)||""; }catch(e){ return ""; } }
+
+  function claimIdentity(code){
+    if(P.token) return;
+    // A token we already hold is this phone's identity for the night. Reusing it is
+    // what stops a refresh looking like a new arrival.
+    var had=savedToken(code);
+    if(had){ P.token=had; if(P.capture) saveCapture(); return; }
+    fetch(VP_GAME_API+"/play/live?code="+encodeURIComponent(code))
+      .then(function(r){ return r.ok?r.json():null; })
+      .then(function(d){
+        if(!d || !d.live || !d.join_code || P.token) return;
+        return playerPost("/join", { code: d.join_code, name: loadName(code) || P.name || "", pid: deviceId() })
+          .then(function(j){
+            if(j && j.token){
+              noteJoined(j, d.join_code);
+              shareToken(code, j.token);
+              // A capture may already have gone unverified while we were asking. Send it again now
+              // that it can be vouched for; the Worker keeps the newer row.
+              if(P.capture) saveCapture();
+            }
+          });
+      })
+      .catch(function(){});
+  }
+
+  /* THE NAME GOES WITH THE PLAYER. This page shows the bingo name box straight away and asks the
+     Worker in the background what the code is for, so a punter could type their name, and then be
+     moved to trivia or musical and asked for it all over again (the "double join" on the live-test
+     list; seen on Test Alpha 25 Sep 2026). The name rides in THIS TAB's sessionStorage, never the
+     address: analytics records addresses, and a player's name is not ours to send to Google. */
+  function hopToApp(url){
+    /* Or the name this phone already played under. A phone that joined bingo and was then moved to
+       musical had an empty name box (it rejoined from storage, nothing was typed), so the name was
+       asked for again on the next format (live audit, 19 Oct 2026). */
+    try{ var nm=(($("nameIn")||{}).value||"").trim() || String(P.name||"").trim() || String(loadName(P.room||"")||"").trim(); if(nm) sessionStorage.setItem("vpHopName", nm.slice(0,20)); }catch(e){}
+    window.location.replace(url);
+  }
+  function goToCode(code){
+    // Connect to the code we were given, exactly as this has always worked: for bingo that is the
+    // venue's permanent code and the channel is live right now. Identity is claimed alongside,
+    // never in front of, so a slow or missing Worker can no longer strand a phone.
+    goToCodeLegacy(code);
+    claimIdentity(code);
+  }
+
+  function goToCodeLegacy(code){
+    // Connect FIRST, ask second. Bingo is far and away the common case and its code needs no
+    // lookup at all, so making every player wait on a round trip to catch the rarer trivia and
+    // musical codes would be paying the cost in the wrong place. Same shape watchVenue already
+    // uses for a table-talker link.
+    connect(code);
+    /* KEEP ASKING. A single lookup answered "no game" for anyone who typed the code before the
+       host started round one, which is most of the room: the join code goes up on the TV during
+       the lobby and that is when people type it. They then sat on the bingo channel all night
+       with no way back. Poll until we learn what this is, the player joins something here, or we
+       give up. Cheap, and it stops the moment it has an answer. */
+    /* ONE LOOKUP AT A TIME, AND IT NEVER STOPS FOR GOOD (live play audit, 20 Oct 2026).
+       Two faults left a phone on "Tonight you play on paper" into the next game. Every mode message
+       started ANOTHER chain of this lookup (VP_LOOK_NOW was this function, and each call scheduled
+       its own next call), all counting down the same 225 tries; and 225 tries at eight seconds is
+       thirty minutes, far shorter than a night. A phone on the paper notice is off the channel, so
+       this poll is its ONLY way to learn the room has moved on, and on a Drag Bingo night it had run
+       out long before the musical lobby opened. Now there is exactly one timer (a push only brings
+       the next lookup forward), and after the first half hour it slows to every thirty seconds, the
+       same as the table-talker poll, instead of stopping. */
+    var tries=0, lookT=0, lastPush=0;
+    function lookLater(){ clearTimeout(lookT); tries++; lookT=setTimeout(look, tries<225 ? 8000 : 30000); }
+    /* A push (a console announcing its mode) asks now, at most once every two seconds, and never adds
+       a second chain: look() replaces the pending timer with its own single next one. */
+    function lookNow(){ if(Date.now()-lastPush<2000) return; lastPush=Date.now(); look(); }
+    function look(){
+      clearTimeout(lookT); lookT=0;
+      VP_LOOK_NOW = lookNow;   // a console announcing its mode moves this phone now, as on a ?venue link
+      /* "Already in a game here" must mean a game, not a remembered name. connect() sets
+         P.joined=true whenever localStorage has a name for this room, and the room key is now the
+         venue's PERMANENT code, so it matches for every regular who has ever played bingo here.
+         They typed the trivia code off the TV and were silently pinned to the bingo channel with
+         this lookup never running once. Only a live game here should stop the hop. */
+      // Busy with bingo: ask again later rather than stop asking. Returning here ended the lookup
+      // for the night, so a phone could never follow the room to trivia (14 Oct 2026).
+      if(playingHere()){ lookLater(); return; }   // see watchVenue
+      playerPost("/join/info",{ code:code })
+        .then(function(r){
+          /* The paper notice and the age tick follow the Worker's answer EACH time (16 Oct 2026):
+             a flag that arrives once a bingo lobby opens is acted on, and one that clears later
+             (the lobby closed, trivia opened) takes the notice down again. A phone shown the paper
+             notice keeps asking, so it can still follow the room to trivia or musical. */
+          if(r && r.paper_bingo){ showPaperBingo(r.paper_reason); lookLater(); return; }
+          hidePaperBingo();
+          if(r && r.age_gate===true) ageAnswer(r); else if(r && r.age_gate===false) ageClear();
+          if(r && r.exists===false){ unknownCode(); return; }   // no game behind it: stop asking
+          if(playingHere()){ lookLater(); return; }
+          var to=playerAppFor(r && r.format);
+          /* room_code is set when the code typed was the VENUE code (the permanent one on the
+             wall) and a trivia or musical session is live under it. Hop to THAT room, not the
+             code they typed, or the phone lands in the right app on the wrong channel. */
+          if(to){ hopToApp(to+"?room="+encodeURIComponent((r && r.room_code) || code)); return; }
+          /* THE CHANNEL IS NOT THE CODE. The TV, the console and every phone off a table talker
+             meet on a channel hashed from the venue's slug, which never changes. The code on the
+             wall is the one the owner was ISSUED, and since Change code shipped the owner can
+             replace it. The two were identical for every venue until then, so a phone that typed
+             the new code sat on a channel with nobody on it, "waiting for the host" all night, and
+             nothing on the console or the TV looked wrong. The Worker sends the venue's channel
+             back; if this phone is not on it, move over. Once: P.room matches from then on. */
+          if(r && r.channel && CODE_RE.test(r.channel) && r.channel!==P.room){ rehome(r.channel, code); }
+          lookLater();     // eight seconds for the first half hour (a lobby routinely outlasts 4), then thirty
+        })
+        .catch(function(){ lookLater(); });  // worker blip: bingo still works
+    }
+    look();
+  }
+  function rehome(channel, shown){
+    // Carry this phone's identity across, so a regular is the same player to the host either way.
+    var pid=loadPid(P.room); if(pid && !loadPid(channel)) savePid(channel, pid);
+    var nm=loadName(P.room); if(nm && !loadName(channel)) saveName(channel, nm);
+    try{ if(ch) ch.unsubscribe(); }catch(e){}
+    ch=null; subscribed=false;
+    connect(channel);
+    // Show the code that is on the wall, not the channel behind it: that is what they typed.
+    $("roomLabel").textContent=shown; $("joinCode").textContent=shown;
+  }
+  function roomGo(){
+    var v=roomIn.value.toUpperCase().trim();
+    if(!CODE_RE.test(v)){ $("roomErr").textContent="Enter all 6 characters from the TV."; return; }
+    $("roomErr").textContent="";
+    goToCode(v);
+  }
+  $("roomBtn").addEventListener("click", roomGo);
+  $("nameIn").addEventListener("keydown", function(e){ if(e.key==="Enter") join(); });
+  $("joinBtn").addEventListener("click", join);
+  /* JOIN IS READY NOW, AND SAYS SO (20 Oct 2026). The button is in the markup above the eight
+     scripts that make it do anything, so until this line it was a Join that did nothing when tapped.
+     It ships disabled, reading "Loading...", and becomes Join here, the moment it has a listener. */
+  (function(b){ b.disabled=false; b.setAttribute("aria-busy","false"); b.textContent="Join"; })($("joinBtn"));
+  $("bingoBtn").addEventListener("click", pressBingo);
+  // Card zoom + full screen: older players struggle to read a 9-wide card, or to see several
+  // tickets at once. Zoom bigger (scroll to pan) or smaller (fit every ticket); full screen
+  // hides the browser bars for maximum room. The size is remembered for next time.
+  var cz=1; try{ var sz=parseFloat(localStorage.getItem("vp-cardzoom")); if(sz) cz=sz; }catch(e){}
+  function applyZoom(){
+    cz=Math.max(0.6, Math.min(2.2, Math.round(cz*10)/10));
+    $("cardStack").style.setProperty("--cz", cz);
+    try{ localStorage.setItem("vp-cardzoom", String(cz)); }catch(e){}
+    var lbl=document.querySelector(".czlbl");
+    if(lbl) lbl.textContent = (cz===1) ? "Size" : (Math.round(cz*100)+"%");
+    var zi=$("zoomIn"), zo=$("zoomOut");
+    if(zi) zi.disabled = cz>=2.2;
+    if(zo) zo.disabled = cz<=0.6;
+  }
+  $("zoomIn").addEventListener("click", function(){ cz+=0.2; applyZoom(); });
+  $("zoomOut").addEventListener("click", function(){ cz-=0.2; applyZoom(); });
+  applyZoom();
+  (function(){
+    var b=$("fsBtn"); if(!b) return;
+    var el=document.documentElement;
+    if(!(el.requestFullscreen||el.webkitRequestFullscreen)) b.style.display="none";
+  })();
+  $("fsBtn").addEventListener("click", function(){
+    var d=document, el=d.documentElement;
+    var fsel=d.fullscreenElement||d.webkitFullscreenElement;
+    if(!fsel){ var rq=el.requestFullscreen||el.webkitRequestFullscreen; if(rq){ try{ rq.call(el); }catch(e){} } }
+    else { var ex=d.exitFullscreen||d.webkitExitFullscreen; if(ex){ try{ ex.call(d); }catch(e){} } }
+  });
+  $("cardStack").addEventListener("click", function(e){
+    var tab=e.target.closest(".pagetab");
+    if(tab){ P.page=parseInt(tab.getAttribute("data-page"),10)||0; paintCards(); return; }
+    var cell=e.target.closest(".cc"); if(!cell || cell.classList.contains("blank")) return;
+    var ci=parseInt(cell.getAttribute("data-card"),10), n=parseInt(cell.getAttribute("data-n"),10);
+    var cd=P.cards[ci]; if(!cd) return;
+    if(cd.daubs[n]){ delete cd.daubs[n]; cell.classList.remove("daub"); }
+    else { cd.daubs[n]=true; cell.classList.add("daub"); cell.classList.remove("on"); }   // clear the paid-mode "dab me" glow the instant it is marked
+    saveDaubs();
+  });
+  var assistChk=$("assistChk"); if(assistChk){ assistChk.addEventListener("change", function(){ setAssist(assistChk.checked); }); }
+  // ---- menu (Easy mode / Light mode / Leave game) ----
+  var menuBtn=$("menuBtn"), menuPanel=$("menuPanel");
+  if(menuBtn){ menuBtn.addEventListener("click", function(e){ e.stopPropagation(); menuPanel.classList.toggle("hidden"); }); }
+  document.addEventListener("click", function(e){ if(menuPanel && !menuPanel.classList.contains("hidden") && !menuPanel.contains(e.target) && e.target!==menuBtn){ menuPanel.classList.add("hidden"); } });
+  function loadLight(){ try{ return localStorage.getItem("vp-light")==="1"; }catch(e){ return false; } }
+  function setLight(on){ document.body.classList.toggle("light", !!on); try{ localStorage.setItem("vp-light", on?"1":"0"); }catch(e){} }
+  var lightChk=$("lightChk"); if(lightChk){ lightChk.addEventListener("change", function(){ setLight(lightChk.checked); }); }
+  var laySel=$("laySel"); if(laySel){ laySel.addEventListener("change", function(){ setLayout(laySel.value); }); }
+  var leaveBtn=$("leaveBtn"); if(leaveBtn){ leaveBtn.addEventListener("click", leaveGame); }
+  function leaveGame(){
+    if(menuPanel) menuPanel.classList.add("hidden");
+    /* Tell the host to drop us from the roster, and WAIT for that to be signed and sent before
+       hanging up. The signature takes a few milliseconds and everything below tears the
+       connection down and leaves the page, so without the wait the host never hears it and
+       the seat is billed for the rest of the night. Never more than a second, so a phone with
+       no signal can still leave. */
+    var _sent=null; try{ _sent=send({ t:"leave", pid:P.pid }); }catch(e){}
+    var _done=false;
+    function _finish(){ if(_done) return; _done=true; finishLeaving(); }
+    if(_sent && _sent.then){ _sent.then(_finish, _finish); setTimeout(_finish, 1000); } else { _finish(); }
+  }
+  function finishLeaving(){
+    try{ if(ch) ch.unsubscribe(); }catch(e){}
+    subscribed=false;
+    /* Both stores. saveName writes to localStorage and loadName reads either, so clearing only
+       sessionStorage meant Leave game redirected, loadName found the name again, and the player
+       was silently rejoined to the room they had just left. */
+    try{ sessionStorage.removeItem("vp-name-"+P.room); }catch(e){}
+    try{ localStorage.removeItem("vp-name-"+P.room); }catch(e){}
+    P.joined=false; P.cards=[]; P.active=false; P.won=false; P.ended=false; P.claimPending=false;
+    setConn("");
+    // A player who scanned the sign on the table has no code and never typed one, so dropping
+    // them on "enter the game code" is a dead end. Send them back to the venue's own join screen,
+    // ready for the next game. Only someone who actually typed a code gets asked for one.
+    if(P.venueSlug){ window.location.replace("/play?venue="+encodeURIComponent(P.venueSlug)); return; }
+    show("vNoRoom");
+  }
+
+  // ---- permanent venue link: /play?venue=<slug> (also /play?<slug>) ----
+  // A printed sign on a table cannot carry tonight's room code, so it carries the VENUE
+  // instead. The venue code is a pure hash of the slug - the same one VP.venueCode() and the
+  // Worker's fnvVenueCode() produce - so the code never changes and one sign works every week.
+  // Bingo needs nothing more: host, TV and phones all meet on that code. Trivia and musical
+  // open a session with a RANDOM join code, so we ask the Worker what is on tonight and hop
+  // the phone over to the right player screen.
+  // The venue in the address comes from ONE reader, /app/vp-venueurl.js, shared with every TV
+  // screen (venue=, slug=, any capitals, ?=slug, spaces as hyphens, a stray % no longer throws).
+  function venueSlugFromURL(){
+    return window.VPVenueURL ? VPVenueURL.slug(window.location.search||"") : "";
+  }
+  function venueCode(slug){
+    var s=String(slug||"").toLowerCase().replace(/[^a-z0-9]/g,""), h=2166136261>>>0;
+    for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619)>>>0; }
+    var A="ACDEFGHJKMNPQRSTUVWXYZ2345679", out="", x=h||1;
+    for(var j=0;j<6;j++){ x=(Math.imul(x,1103515245)+12345)>>>0; out+=A[x%A.length]; }
+    return out;
+  }
+  function watchVenue(slug){
+    P.venueSlug=slug;
+    var code=venueCode(slug);
+    connect(code);                              // broadcast bingo is live on this code right now
+    claimIdentity(code);                        // and quietly pick up a server identity if one is going
+    var hopped=false;
+    function look(){
+      /* P.active, NOT P.joined. connect() sets P.joined the moment loadName() finds a saved name,
+         and that name lives in localStorage keyed by the venue's PERMANENT code, so every regular
+         who has ever played bingo here has it forever. They scanned the trivia QR, this lookup
+         never ran once, and they sat on the bingo channel all night. goToCode was fixed for
+         exactly this today and this, its twin, was missed. The failure shape is the worst kind:
+         it works for first-timers and fails for regulars, so it looks intermittent. */
+      /* Do not yank someone out of a game that is actually being played. But a
+         host who started bingo by mistake and immediately started trivia leaves
+         P.active true forever with nothing happening, and the room used to sit
+         on that dead bingo screen all night. So: a live game holds the phone
+         only while it is still saying something. Numbers come far more often
+         than once a minute; an abandoned game says nothing at all. */
+      if(hopped || playingHere()) return;
+      try{
+        fetch(VP_GAME_API+"/play/live?code="+encodeURIComponent(code))
+          .then(function(r){ return r.ok?r.json():null; })
+          .then(function(d){
+            if(!d || hopped) return;
+            /* THE STATE'S PHONE RULES, ON EVERY POLL (16 Oct 2026). A phone off a table talker sat
+               here through the whole night, so a paper flag or an age tick that arrived once the
+               bingo lobby opened was never acted on, and one that cleared later never took the
+               notice down. The Worker decides; this only does what it says, each time it answers. */
+            if(d.paper_bingo===true) showPaperBingo(d.paper_reason); else hidePaperBingo();
+            if(d.age_gate===true) ageAnswer(d); else if(d.age_gate===false) ageClear();
+            if(P.active) return;
+            /* A mistyped or out-of-date slug (an old table talker, a typo on a printed sign)
+               connects to a channel nobody is on, and the punter sat on "waiting for the host"
+               all night with nothing to tell them why. The TV has warned about this since
+               validateVenue(); the phone never did. */
+            if(d.exists===false){
+              var je=$("joinErr");
+              if(je) je.textContent="That venue link does not look right. Check the code on your table or ask the bar staff.";
+              return;
+            }
+            if(d.name){ var jv=$("joinVenue"); if(jv){ jv.textContent=d.name; jv.classList.remove("hidden"); } }
+            /* THE FORMAT DECIDES, NOT THE CODE. This used to stop whenever the live room's code was
+               this venue's own code, on the idea that only bingo shares it. Trivia and musical
+               sessions are now opened on the venue's code too, so every phone off the TV's QR saw
+               "trivia is live" and stayed on the bingo screen all night. Found at The Mini Bar,
+               10 Oct 2026: two phones joined, zero answers. Bingo still stays put: no "to" below. */
+            if(!d.live || !d.join_code) return;
+            var f=String(d.format||"");
+            var to = f.indexOf("trivia")===0  ? "/app/trivia/play"
+                   : f.indexOf("musical")===0 ? "/app/musical/play" : "";
+            if(to){ hopped=true; hopToApp(to+"?room="+encodeURIComponent(d.join_code)); }
+          }).catch(function(){});               // worker unreachable/old: bingo still works
+      }catch(e){}
+    }
+    /* THE HOP IS PUSHED NOW, AND THIS IS THE BACKSTOP.
+
+       onMsg calls VP_LOOK_NOW the instant a console announces its mode on this channel, so a
+       phone normally moves in the time a broadcast takes rather than in the time a poll takes.
+
+       That lets this drop from eight seconds to thirty. It is four database reads every time
+       it runs, per waiting phone, and at eight seconds that was half a database call a second
+       per phone and the single biggest load VenuePlay generates: ninety phones standing in
+       lobbies was the whole project's budget. At thirty it is a quarter of that, and it is
+       only catching the phone that arrived mid-announcement.
+
+       This is why the edge cache is not the answer. Caching made the same volume of asking
+       cheaper; this asks far less and answers instantly. */
+    VP_LOOK_NOW = look;
+    look(); setInterval(look, 30000);
+  }
+
+  // ---- init: read ?room, or a permanent ?venue link off a printed sign ----
+  (function(){
+    P.assist=loadAssist(); var ac=$("assistChk"); if(ac) ac.checked=P.assist;
+    if(loadLight()) setLight(true); var lc=$("lightChk"); if(lc) lc.checked=loadLight();
+    setLayout(loadLayout());
+    /* ?demo=1 : THE REAL PHONE, PLAYING A SCRIPTED NIGHT, JOINED TO NOTHING.
+       The same idea as /tv?demo=1. Every pixel on this page is driven by onMsg(), so a
+       demo is a script of MESSAGES and not a second copy of the ticket rendering. The
+       sales page can then show a real phone beside a real screen, and neither can drift
+       from the product, because both ARE the product.
+
+       It joins nothing: no channel, no /join, no server session, no player row, so a
+       marketing page can never add a head to a venue's bill. The ticket below is fixed
+       rather than dealt, so a screenshot of it is the same every time.
+
+       The ticket is a legitimate 90 ball ticket: three rows of five, fifteen numbers,
+       each column holding its own decade in ascending order. The top row completes on
+       the scripted balls, so the demo shows a daub filling in and then a win, which is
+       the thing worth showing. */
+    if(/[?&]demo=1/.test(window.location.search||"")){
+      document.documentElement.setAttribute("data-vp-demo","1");
+      P.room="DEMO24"; P.name="Ann"; P.joined=true; P.numCards=1;
+      /* ASSIST ON, so the ticket marks itself. A demo with nobody tapping sat there
+         nagging "2 numbers away, you have not marked 6 called numbers, tap the glowing
+         squares", which on a sales page reads as a product that is not working rather
+         than one waiting for a finger. Assist is a real setting a real player can turn
+         on, so the demo is showing the product and not a special case of it. */
+      P.assist=true;
+      var CELLS=[[5,null,23,null,42,null,64,null,88],
+                 [null,13,null,31,null,53,null,71,90],
+                 [7,null,26,null,45,null,69,77,null]];
+      var BALLS=[7,42,13,88,31,64,5,77,26,90,19,53], called=[], timers=[];
+      function d(o){ try{ onMsg(o); }catch(e){ console.warn("[demo]", e && e.message); } }
+      function run(){
+        called=[]; timers.forEach(clearTimeout); timers=[];
+        P.won=false; P.ended=false; P.claimPending=false;
+        timers.push(setTimeout(function(){
+          d({ t:"cards", cards:[{ cardNo:1, cells:CELLS }], pattern:"one", prize:"$50 bar tab" });
+        }, 300));
+        BALLS.forEach(function(n,i){
+          timers.push(setTimeout(function(){
+            called.push(n);
+            d({ t:"ball", number:n, called:called.slice(), active:true });
+          }, 2600 + i*2100));
+        });
+        /* THE SAME LAP AS THE WALL. tv.html's demo runs 2600 + 12*2100 + 14000 ms a lap and
+           this ran 9000 at the end, so the two drifted five seconds further apart every lap
+           and the phone was daubing balls the wall had not called. Dean, 22 Sep 2026: "the tv
+           and phone seem to be unsynced". One number, copied from tv.html; change both. */
+        timers.push(setTimeout(run, 2600 + BALLS.length*2100 + 14000));
+      }
+      run();
+      return;                       // never reaches goToCode/watchVenue, so nothing connects
+    }
+    var m=/[?&]room=([^&]+)/.exec(window.location.search);
+    /* A STRAY "%" THREW HERE, and a throw here is the end of this phone's whole startup: no
+       code screen, no venue, nothing. /play?room=ABC234% did it (audit, 27 Sep 2026). A bad
+       escape is read as the raw text, which then simply fails the code check below. */
+    var room = "";
+    if(m){ try{ room=decodeURIComponent(m[1]); }catch(e){ room=m[1]; } room=room.toUpperCase().trim(); }
+    var slug = room ? "" : venueSlugFromURL();
+    if(room && CODE_RE.test(room)){ goToCode(room); }
+    else if(slug){ watchVenue(slug); }
+    else { $("statusText").textContent="No room"; show("vNoRoom"); }
+  })();
+})();
+</script>
+<!-- Help: a short FAQ and a contact form that makes a help desk ticket (vp-help.js, 19 Oct 2026). -->
+<script src="/app/vp-help.js" data-mode="patron" data-brand="venueplay"></script>
+</body>
+</html>

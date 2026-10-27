@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="VenuePlay">
+  <defs>
+    <filter id="vga" x="-70%" y="-70%" width="240%" height="240%">
+      <feGaussianBlur stdDeviation="14" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#12101A"/>
+  <g transform="translate(88,110) scale(2.4)">  <g filter="url(#vga)">
+    <path d="M30 20 L30 108 L104 64 Z" fill="none" stroke="#FF1F8E" stroke-width="10" stroke-linejoin="round" opacity=".5"/>
+    <path d="M30 20 L30 108 L104 64 Z" fill="none" stroke="#FF1F8E" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M30 20 L30 108 L104 64 Z" fill="none" stroke="#FFD9EC" stroke-width="1.7" stroke-linejoin="round"/>
+  </g>
+  </g>
+</svg>

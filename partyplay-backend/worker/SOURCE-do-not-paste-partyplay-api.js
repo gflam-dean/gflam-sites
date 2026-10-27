@@ -1,0 +1,3009 @@
+/* ============================================================================
+   PartyPlay Worker: checkout, licences, joining.
+
+   Deployed by paste, the same way the two VenuePlay Workers are.
+
+   SECRETS this needs set in the Cloudflare dashboard:
+     STRIPE_SECRET_KEY        sk_live_...
+     STRIPE_WEBHOOK_SECRET    whsec_...       (from the webhook endpoint, not the API keys page)
+     STRIPE_PRICE_1DAY        price_...       ($50)
+     STRIPE_PRICE_3DAY        price_...       ($120)
+     SUPABASE_URL             https://....supabase.co
+     SUPABASE_SERVICE_KEY     the service_role key. Never the anon key.
+     RESEND_API_KEY           re_...
+     SITE_ORIGIN              https://partyplay.com.au
+   ========================================================================== */
+const BUILD = '24 Oct 2026, 01:08 · 1af867f0';   // tools/stamp-workers.py, do not edit by hand
+// The licence window rules live in one place and are shared with the browser.
+// Paste lib/pp-licence.js above this line when deploying, or inline it. It is
+// referenced here as PPLicence.
+// -----------------------------------------------------------------------------
+
+/* ---------------------------------------------------------------- email ----
+ * One shell for every email, so they look like they came from the same company.
+ * Table layout and inline styles throughout: Outlook still does not do flexbox
+ * and half of these are read on a phone.
+ * ------------------------------------------------------------------------ */
+const PINK = '#FF1F8E', INK = '#12101A', PAPER = '#FFF1E6', MUTE = '#6A6076';
+
+// The one on terms.html and privacy.html, for both products. Keep the three in step.
+const PP_ABN = '35 679 383 049';
+
+function emailShell(opts) {
+  const site = (opts.site || '').replace(/\/$/, '');
+  return '<!doctype html><html><head><meta charset="utf-8">' +
+'<meta name="viewport" content="width=device-width,initial-scale=1"></head>' +
+'<body style="margin:0;padding:0;background:#F3F0EC;">' +
+'<div style="display:none;max-height:0;overflow:hidden;opacity:0">' + escapeHtml(opts.preview || '') + '</div>' +
+'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F3F0EC;padding:22px 12px">' +
+'<tr><td align="center">' +
+'<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden">' +
+'<tr><td style="background:' + INK + ';padding:22px 30px">' +
+'<img src="' + site + '/logos/partyplay-email-logo.png" width="176" alt="PartyPlay" style="display:block;border:0;height:auto;max-width:176px">' +
+'</td></tr>' +
+'<tr><td style="height:3px;background:' + PINK + ';font-size:0;line-height:0">&nbsp;</td></tr>' +
+'<tr><td style="padding:32px 30px 8px">' +
+'<h1 style="margin:0;font-family:Helvetica,Arial,sans-serif;font-size:26px;line-height:1.2;color:' + INK + ';font-weight:800">' + opts.heading + '</h1>' +
+'</td></tr>' +
+'<tr><td style="padding:0 30px 26px;font-family:Helvetica,Arial,sans-serif;font-size:16px;line-height:1.62;color:#3A3444">' + opts.body + '</td></tr>' +
+'<tr><td style="padding:20px 30px 30px;font-family:Helvetica,Arial,sans-serif;font-size:13px;line-height:1.6;color:#8A8296;border-top:1px solid #EDE9E4">' +
+(opts.foot || '') +
+/* THE ABN WAS MISSING FROM EVERY PARTYPLAY EMAIL. VenuePlay's carry it, these did
+   not, and these are commercial emails to consumers: a receipt, a licence, an album
+   link. Dean's own standard is that the ABN belongs in every email footer, and the
+   Spam Act agrees. Confirmed with him on 12 Sep 2026 that 35 679 383 049 is the right
+   number, the same one on terms.html and privacy.html for both products. One shell,
+   so this fixes every PartyPlay email at once. */
+'<p style="margin:10px 0 0">PartyPlay is made by Gflam Group Pty Ltd, ABN ' + PP_ABN + ', on the Gold Coast. <a href="' + site + '" style="color:#8A8296">partyplay.com.au</a></p>' +
+'</td></tr></table></td></tr></table></body></html>';
+}
+
+function emailButton(href, label) {
+  return '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:6px 0 4px"><tr>' +
+    '<td style="background:' + PINK + ';border-radius:10px">' +
+    '<a href="' + href + '" style="display:inline-block;padding:14px 26px;font-family:Helvetica,Arial,sans-serif;font-size:16px;font-weight:800;color:#ffffff;text-decoration:none">' + label + '</a>' +
+    '</td></tr></table>';
+}
+
+function emailCode(code) {
+  return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:' + PAPER + ';border-radius:12px;margin:4px 0 20px"><tr>' +
+    '<td align="center" style="padding:20px">' +
+    '<div style="font-family:Helvetica,Arial,sans-serif;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:' + MUTE + '">Your party code</div>' +
+    '<div style="font-family:Helvetica,Arial,sans-serif;font-size:42px;font-weight:800;letter-spacing:.12em;color:' + PINK + ';line-height:1.25">' + code + '</div>' +
+    '</td></tr></table>';
+}
+
+/* The three steps, and what each game needs BEFORE the night. This is the part
+   that stops the emails arriving: most of the nine need nothing at all, and
+   nobody knows that until somebody tells them. */
+function emailGuide(site) {
+  const step = (n, title, text) =>
+    '<tr><td width="32" valign="top" style="font-family:Helvetica,Arial,sans-serif;font-size:17px;font-weight:800;color:' + PINK + ';padding:0 0 14px">' + n + '</td>' +
+    '<td style="font-family:Helvetica,Arial,sans-serif;font-size:15.5px;line-height:1.6;color:#3A3444;padding:0 0 14px"><b>' + title + '</b><br>' + text + '</td></tr>';
+  const GAMES = [
+    ['Bingo','ready','90 ball with the calls. Everyone gets a real ticket on their phone.'],
+    ['Trivia','your questions','Write them in advance. Everyone taps an answer, scores keep themselves.'],
+    ['How well do you know...','your questions','About whoever the night is for. The youngest cousin usually wins.'],
+    ['Guess the photo','your photos','Upload baby photos beforehand and say who each one is.'],
+    ['Two truths and a lie','ready','Guests write their own on the night.'],
+    ['Heads or tails','ready','Ninety seconds, no skill, everyone in. The best opener.'],
+    ['Who here has ever','optional','Gets people who have never met talking.'],
+    ['Prize draw','ready','Draws from whoever is actually in the room.'],
+    // 'The playlist' removed 25 Sep 2026: it is retired in host.html, so a buyer could not build it.
+    ['Charades','your words','The word goes to one phone only, never the telly. Screens away from whoever is acting.'],
+    ['Who am I?','your list','On the screen and every phone but theirs. Sit them with their back to it.']
+  ];
+  return '<h2 style="margin:26px 0 12px;font-family:Helvetica,Arial,sans-serif;font-size:19px;color:' + INK + '">How a night runs</h2>' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" width="100%">' +
+    step(1,'Build your games, whenever suits','Nothing is ticking. Take a fortnight if you like, and your licence keeps for 12 months.') +
+    step(2,'Get a screen up before people arrive','A cable from a laptop is the easy one, and no TV at all is fine. <a href="' + site + '/setup" style="color:' + PINK + '">Five ways, here</a>.') +
+    step(3,'Press start on the night','That is when your time begins, not when you paid. Then read out the code and guests join in their phone browser.') +
+    '</table>' +
+    '<h2 style="margin:26px 0 10px;font-family:Helvetica,Arial,sans-serif;font-size:19px;color:' + INK + '">The ten games</h2>' +
+    '<p style="margin:0 0 12px;font-family:Helvetica,Arial,sans-serif;font-size:15px;color:' + MUTE + '">The ones marked <b>ready</b> need nothing from you at all.</p>' +
+    /* TWO ROWS A GAME, NOT THREE COLUMNS. Email audit, 23 Oct 2026: on a phone the two nowrap
+       columns took the width and the description was left one or two words to a line, ten
+       games long. The name and what it needs share a line; the description gets the full width. */
+    '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="font-family:Helvetica,Arial,sans-serif;font-size:15px;color:#3A3444">' +
+    GAMES.map(g => '<tr><td style="padding:10px 0 0;vertical-align:top"><b>' + g[0] + '</b>' +
+      '<span style="font-size:13px;color:' + (g[1] === 'ready' ? '#12786A' : MUTE) + ';padding-left:10px">' + g[1] + '</span></td></tr>' +
+      '<tr><td style="padding:2px 0 8px;vertical-align:top;color:' + MUTE + ';border-bottom:1px solid #EDE9E4">' + g[2] + '</td></tr>').join('') +
+    '</table>';
+}
+
+/* Codes get read off a television across a room, by people at a party, who have
+   had a drink. Every failed join is a support email, and support email is the one
+   thing this product cannot afford.
+   
+   So two separate alphabets, which is the bit worth understanding:
+   
+   GENERATED codes never contain a character that has a confusable twin. VenuePlay's
+   charset dropped O/0, I/1/L and B/8 but kept BOTH S and 5, and BOTH Z and 2. That
+   is fine on a tablet held at arm's length; it is not fine on a TV across a lounge
+   room. We drop 2 and 5 as well.
+   
+   ACCEPTED codes are normalised first, so somebody who types the twin still gets in:
+   a 5 becomes an S, a 2 becomes a Z. Shrinking the alphabet alone would still leave
+   that person locked out; normalising is what actually removes the support email.
+   
+   27^6 is 387 million, so nothing is lost by being fussy. */
+const CODE_ALPHABET = 'ACDEFGHJKMNPQRSTUVWXYZ34679';
+const CODE_RE = /^[ACDEFGHJKMNPQRSTUVWXYZ34679]{6}$/;
+
+function normaliseCode(input) {
+  return String(input || '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')   // spaces and dashes people add themselves
+    .replace(/5/g, 'S')
+    .replace(/2/g, 'Z');
+}
+
+function makeCode(len = 6) {
+  const a = new Uint32Array(len);
+  crypto.getRandomValues(a);
+  let out = '';
+  const n = CODE_ALPHABET.length;
+  const limit = Math.floor(4294967296 / n) * n;      // rejection sample, no modulo bias
+  for (let i = 0; i < len; i++) {
+    let x = a[i];
+    while (x >= limit) { const t = new Uint32Array(1); crypto.getRandomValues(t); x = t[0]; }
+    out += CODE_ALPHABET[x % n];
+  }
+  return out;
+}
+
+/* Long enough that guessing is pointless, and it only ever appears in the buyer's
+   own email. Not the same shape as the join code on purpose: nobody should ever
+   mistake one for the other. */
+function makeHostKey() {
+  const a = new Uint8Array(18);
+  crypto.getRandomValues(a);
+  return [...a].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function json(body, status = 200, extra = {}) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'content-type': 'application/json; charset=utf-8', ...extra }
+  });
+}
+
+/* A browser only accepts the answer if this header names the origin it actually
+   asked from. Returning the apex to everyone meant www.partyplay.com.au, every
+   Pages preview and localhost all got a reply the browser threw away, and the
+   guest saw nothing but "Load failed" the moment they pressed Join. So decide
+   per request, and echo back the origin we recognise. */
+function allowedOrigin(env, o) {
+  if (!o) return false;
+  const allow = (env.SITE_ORIGIN || '').replace(/\/$/, '');
+  if (o === allow) return true;
+  // Parsed by hand rather than with URL, because an Origin is always just
+  // scheme://host[:port] and this has to give the same answer in the test
+  // runner, which has no URL constructor and would fail every check closed.
+  const m = /^(https?):\/\/([a-z0-9.-]+)(?::\d+)?$/i.exec(o);
+  if (!m) return false;
+  const scheme = m[1].toLowerCase(), host = m[2].toLowerCase();
+  if (scheme === 'http') return host === 'localhost' || host === '127.0.0.1';
+  // the site itself, with or without the www
+  if (host === 'partyplay.com.au' || host === 'www.partyplay.com.au') return true;
+  /* NO pages.dev. This used to allow partyplay.pages.dev and anything under it,
+     on the assumption that it was our own Cloudflare Pages project. It is not:
+     that name belongs to somebody else's site entirely, so a stranger's page was
+     free to call this Worker from a visitor's browser. Checked on 27 Aug 2026 by
+     fetching it, and the title that came back was another product's.
+
+     Nothing is lost by dropping it. Preview builds are not turned on for this
+     project, and if they ever are, the hostname has to be READ OFF the Cloudflare
+     dashboard and added here, never guessed from the product name. That guess is
+     what opened this. */
+  return false;
+}
+
+function cors(env, request) {
+  const o = request.headers.get('Origin') || '';
+  const allow = (env.SITE_ORIGIN || '').replace(/\/$/, '');
+  const ok = allowedOrigin(env, o);
+  return {
+    'Access-Control-Allow-Origin': ok ? o : allow,
+    'Access-Control-Allow-Headers': 'content-type, x-player-token, x-admin-key, authorization',
+    'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+    'Vary': 'Origin'
+  };
+}
+
+/* ------------------------------------------------------------- Supabase ---- */
+async function sb(env, path, init = {}) {
+  const r = await fetch(env.SUPABASE_URL + '/rest/v1/' + path, {
+    ...init,
+    headers: {
+      apikey: env.SUPABASE_SERVICE_KEY,
+      authorization: 'Bearer ' + env.SUPABASE_SERVICE_KEY,
+      'content-type': 'application/json',
+      ...(init.headers || {})
+    }
+  });
+  const text = await r.text();
+  let body = null;
+  try { body = text ? JSON.parse(text) : null; } catch (e) { body = text; }
+  if (!r.ok) {
+    const err = new Error('supabase ' + r.status + ': ' + text.slice(0, 300));
+    err.status = r.status;
+    throw err;
+  }
+  return body;
+}
+
+/* ----------------------------------------------------------- one door ----
+ * EVERY EMAIL THIS WORKER SENDS GOES THROUGH HERE.
+ *
+ * All four senders used to be a bare `await fetch(...)` with nothing looking at
+ * the answer. Resend replies 200 with an id, or 4xx with a reason: an unverified
+ * sending domain, a rolled key, an address on its suppression list. Either way
+ * the await resolved, the caller carried on as though the email had gone, and
+ * the webhook then stamped welcome_sent_at. So a $50 purchase that delivered
+ * NOTHING read as delivered, and check-paid-not-delivered.py printed "Nothing
+ * paid is undelivered" while the buyer had no code and no host key.
+ *
+ * A missing key throws for the same reason: silently returning made "email is
+ * switched off" and "email was sent" the same event to every caller.
+ *
+ * Status 502/503 on purpose, both >= 500, so the router's catch turns them into
+ * a reference rather than echoing Resend's words at a customer.
+ * ------------------------------------------------------------------------ */
+async function sendEmail(env, payload) {
+  if (!env.RESEND_API_KEY) {
+    const e = new Error('no RESEND_API_KEY is set on this Worker, so nothing was sent');
+    e.status = 503;
+    throw e;
+  }
+  const r = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { authorization: 'Bearer ' + env.RESEND_API_KEY, 'content-type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  let text = '';
+  try { text = await r.text(); } catch (e) {}
+  if (!r.ok) {
+    const e = new Error('resend ' + r.status + ': ' + String(text).slice(0, 300));
+    e.status = 502;
+    throw e;
+  }
+  return text;
+}
+
+/* --------------------------------------------------- Stripe signature ------ */
+/* Verify a webhook the way Stripe documents it, because the alternative is an
+   endpoint that anybody on the internet can use to mark licences paid.
+     - recompute HMAC-SHA256 over `${timestamp}.${rawBody}`
+     - compare in constant time
+     - reject anything older than the tolerance, so a captured request cannot be
+       replayed back at us later */
+async function stripeVerify(env, rawBody, sigHeader, toleranceSec = 300) {
+  if (!sigHeader) return false;
+  const parts = {};
+  sigHeader.split(',').forEach(p => {
+    const i = p.indexOf('=');
+    if (i > 0) {
+      const k = p.slice(0, i).trim(), v = p.slice(i + 1).trim();
+      if (k === 'v1') (parts.v1 = parts.v1 || []).push(v); else parts[k] = v;
+    }
+  });
+  if (!parts.t || !parts.v1 || !parts.v1.length) return false;
+
+  const age = Math.abs(Math.floor(Date.now() / 1000) - parseInt(parts.t, 10));
+  if (!isFinite(age) || age > toleranceSec) return false;
+
+  const key = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(env.STRIPE_WEBHOOK_SECRET),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  );
+  const mac = await crypto.subtle.sign(
+    'HMAC', key, new TextEncoder().encode(parts.t + '.' + rawBody)
+  );
+  const expected = [...new Uint8Array(mac)].map(b => b.toString(16).padStart(2, '0')).join('');
+  return parts.v1.some(v => timingSafeEqual(v, expected));
+}
+
+function timingSafeEqual(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string' || a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+/* ------------------------------------------------------------- Stripe ------ */
+async function stripe(env, path, form, idem) {
+  const body = new URLSearchParams(form).toString();
+  const headers = {
+    authorization: 'Bearer ' + env.STRIPE_SECRET_KEY,
+    'content-type': 'application/x-www-form-urlencoded'
+  };
+  // Stripe's own duplicate guard: the same key within 24 hours returns the first result.
+  if (idem) headers['idempotency-key'] = String(idem).slice(0, 255);
+  const r = await fetch('https://api.stripe.com/v1/' + path, { method: 'POST', headers, body });
+  const j = await r.json();
+  if (!r.ok) {
+    const e = new Error((j && j.error && j.error.message) || 'stripe error');
+    e.status = 502;
+    throw e;
+  }
+  return j;
+}
+
+/* The admin key comes from a HEADER, not a query string. A key in a URL ends up
+   in browser history, in the Worker's own request logs, and in every screenshot
+   of that tab. The query string is still accepted so a quick check from the
+   address bar works, but the admin page always uses the header. */
+function isAdmin(request, env, bodyKey) {
+  if (!env.ADMIN_KEY) return false;
+  const given = request.headers.get('X-Admin-Key') ||
+                bodyKey ||
+                new URL(request.url).searchParams.get('key') || '';
+  return timingSafeEqual(String(given), String(env.ADMIN_KEY));
+}
+
+/* Australian mobiles get written a dozen ways and every one of them is the same
+   phone. Normalise to E.164 so the allow-list has one row per person rather than
+   one per way of typing it. */
+function e164(mobile) {
+  let d = String(mobile || '').replace(/[^\d+]/g, '');
+  if (d.startsWith('+61')) d = '0' + d.slice(3);
+  else if (d.startsWith('61') && d.length === 11) d = '0' + d.slice(2);
+  if (!/^04\d{8}$/.test(d)) return null;          // Australian mobiles only, on purpose
+  return '+61' + d.slice(1);
+}
+
+/* WHO IS ASKING.
+   A staff member signs in with Supabase phone OTP in the browser and sends the
+   access token they get back. We do not verify the signature ourselves: asking
+   Supabase who the token belongs to is one round trip and needs no extra secret
+   on this Worker, and a JWT secret sitting in a second place is a JWT secret
+   that can be leaked from a second place.
+
+   Returns the E.164 mobile of an ACTIVE admin, or null. */
+async function adminFromToken(request, env) {
+  const auth = request.headers.get('authorization') || '';
+  if (!auth.toLowerCase().startsWith('bearer ')) return null;
+  const token = auth.slice(7).trim();
+  if (!token || token.length > 4096) return null;
+  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) return null;
+
+  let phone = null;
+  try {
+    const r = await fetch(env.SUPABASE_URL + '/auth/v1/user', {
+      headers: { apikey: env.SUPABASE_SERVICE_KEY, authorization: 'Bearer ' + token }
+    });
+    if (!r.ok) return null;
+    const u = await r.json();
+    phone = u && u.phone ? String(u.phone) : null;
+  } catch (e) { return null; }
+  if (!phone) return null;
+  const mob = e164(phone.startsWith('+') ? phone : '+' + phone);
+  if (!mob) return null;
+
+  const rows = await sb(env, 'pp_admins?mobile=eq.' + encodeURIComponent(mob) +
+                             '&active=is.true&select=mobile&limit=1');
+  if (!rows.length) return null;
+  // Best effort, never blocks the request.
+  sb(env, 'pp_admins?mobile=eq.' + encodeURIComponent(mob), {
+    method: 'PATCH', body: JSON.stringify({ last_seen_at: new Date().toISOString() })
+  }).catch(() => {});
+  return mob;
+}
+
+/* Every admin route goes through this. It returns WHO, so the log can name them,
+   and the string 'key' when the shared key was used. Null means turn them away. */
+async function adminActor(request, env, bodyKey) {
+  if (isAdmin(request, env, bodyKey)) return 'key';
+  return await adminFromToken(request, env);
+}
+
+function licWindow(row) {
+  if (!row || !row.activated_at) return null;
+  return { startsAt: Date.parse(row.activated_at), endsAt: Date.parse(row.expires_at) };
+}
+
+/* Anything that CHANGES a party needs the host key, not the join code. The code is
+   on the television for every guest to read; if it were enough to move the date or
+   edit the questions, any guest could do both. */
+async function requireHost(env, code, hostKey) {
+  const c = normaliseCode(code);
+  const k = String(hostKey || '').trim();
+  if (!CODE_RE.test(c) || k.length < 20) { const e = new Error('Not your party to change.'); e.status = 403; throw e; }
+  const rows = await sb(env, 'pp_licences?code=eq.' + c + '&status=eq.paid&select=*');
+  if (!rows.length) { const e = new Error('No party with that code.'); e.status = 404; throw e; }
+  if (!timingSafeEqual(String(rows[0].host_key || ''), k)) {
+    const e = new Error('Not your party to change.'); e.status = 403; throw e;
+  }
+  return rows[0];
+}
+
+/* GET /party/gm/boards?code=&key=
+   GREAT MINDS' BOARDS, WITH THEIR ANSWERS, FOR THE HOST'S TABLET ONLY (15 Oct 2026).
+   They used to be a public script, /lib/pp-great-minds-boards.js, which run.html loaded and anybody
+   else could too: every answer, readable before the party. Most of these boards are also VenuePlay
+   boards, so it gave away Punters Reckon's answers as well. They live here now, behind the host key,
+   like the guest list. VenuePlay's game Worker holds its own boards the same way (PR_BOARDS).
+
+   A constant, not a table: we write them, they change rarely, and they are reviewed in the repo
+   beside the code that plays them. Changing a board is a Worker build and deploy.
+
+   PartyPlay plays at kids' birthdays, school fundraisers and community nights as well as adult
+   parties, so these are family boards: VenuePlay's boards without the pub, beer, wine and workplace
+   ones, plus party boards of our own. Written by us, 30 Sep 2026, and called "top answers", never a
+   survey, because nobody was surveyed. Points on a board add up to 100.
+   partyplay-backend/lib/pp-great-minds.test.js refuses any board that does not add up, any answer
+   form two answers share, and any word from its list of things that do not belong at a kids' party. */
+const PP_GM_BOARDS = [
+  { id: "bbq", q: "Name something you put on a barbie", answers: [
+    { a: "Sausages", pts: 36, also: ["sausage", "snags", "snag", "sausies"] },
+    { a: "Steak", pts: 24, also: ["steaks", "rump", "scotch fillet"] },
+    { a: "Onions", pts: 14, also: ["onion"] },
+    { a: "Prawns", pts: 10, also: ["prawn", "shrimp", "shrimps"] },
+    { a: "Burgers", pts: 8, also: ["burger", "rissoles", "patties"] },
+    { a: "Chicken", pts: 5, also: ["chicken wings", "wings", "drumsticks"] },
+    { a: "Corn", pts: 3, also: ["corn cob", "corn on the cob"] } ] },
+  { id: "beach", q: "Name something you take to the beach", answers: [
+    { a: "Towel", pts: 34, also: ["towels", "beach towel"] },
+    { a: "Sunscreen", pts: 24, also: ["sunblock", "suncream", "sun cream"] },
+    { a: "Umbrella", pts: 14, also: ["beach umbrella", "brolly", "tent"] },
+    { a: "Esky", pts: 12, also: ["cooler", "eski", "icebox"] },
+    { a: "Hat", pts: 8, also: ["cap", "bucket hat"] },
+    { a: "Sunglasses", pts: 5, also: ["sunnies", "shades"] },
+    { a: "Surfboard", pts: 3, also: ["board", "boogie board", "surf board"] } ] },
+  { id: "pizza", q: "Name a pizza topping", answers: [
+    { a: "Pepperoni", pts: 30, also: ["salami"] },
+    { a: "Cheese", pts: 20, also: ["mozzarella", "extra cheese"] },
+    { a: "Ham", pts: 16, also: [] },
+    { a: "Pineapple", pts: 14, also: ["pineapples"] },
+    { a: "Mushrooms", pts: 10, also: ["mushroom", "mushies"] },
+    { a: "Olives", pts: 6, also: ["olive"] },
+    { a: "Anchovies", pts: 4, also: ["anchovy"] } ] },
+  { id: "animal", q: "Name an Australian animal", answers: [
+    { a: "Kangaroo", pts: 40, also: ["roo", "kangaroos", "joey"] },
+    { a: "Koala", pts: 24, also: ["koala bear"] },
+    { a: "Wombat", pts: 12, also: [] },
+    { a: "Emu", pts: 10, also: [] },
+    { a: "Platypus", pts: 7, also: ["platypi"] },
+    { a: "Crocodile", pts: 4, also: ["croc", "saltie", "crocs"] },
+    { a: "Kookaburra", pts: 3, also: ["kooka"] } ] },
+  { id: "wedding", q: "Name something you see at a wedding", answers: [
+    { a: "Cake", pts: 32, also: ["wedding cake"] },
+    { a: "Bride", pts: 22, also: ["the bride", "wedding dress", "dress"] },
+    { a: "Rings", pts: 16, also: ["ring", "wedding ring"] },
+    { a: "Flowers", pts: 12, also: ["flower", "bouquet"] },
+    { a: "Groom", pts: 10, also: [] },
+    { a: "Dancing", pts: 8, also: ["dance floor", "first dance", "dj", "band"] } ] },
+  { id: "sport", q: "Name a sport Australians love to watch", answers: [
+    { a: "Rugby league", pts: 30, also: ["nrl", "league", "rugby", "state of origin", "origin"] },
+    { a: "AFL", pts: 26, also: ["aussie rules", "australian rules", "afl footy"] },
+    { a: "Cricket", pts: 22, also: ["test cricket", "the cricket"] },
+    { a: "Horse racing", pts: 10, also: ["the races", "races", "melbourne cup", "racing"] },
+    { a: "Tennis", pts: 7, also: ["australian open"] },
+    { a: "Soccer", pts: 5, also: ["football", "aleague", "matildas", "socceroos"] } ] },
+  { id: "morning", q: "Name something you do first thing in the morning", answers: [
+    { a: "Coffee", pts: 34, also: ["make coffee", "have a coffee", "cuppa"] },
+    { a: "Check phone", pts: 22, also: ["phone", "look at phone", "scroll"] },
+    { a: "Shower", pts: 16, also: ["have a shower", "take a shower"] },
+    { a: "Toilet", pts: 12, also: ["wee", "go to the toilet", "loo", "bathroom"] },
+    { a: "Brush teeth", pts: 10, also: ["teeth", "brush my teeth"] },
+    { a: "Hit snooze", pts: 6, also: ["snooze", "alarm", "turn off alarm"] } ] },
+  { id: "holiday", q: "Name a popular Aussie holiday spot", answers: [
+    { a: "Gold Coast", pts: 30, also: ["goldie", "surfers paradise", "surfers"] },
+    { a: "Bali", pts: 26, also: [] },
+    { a: "Byron Bay", pts: 14, also: ["byron"] },
+    { a: "Cairns", pts: 12, also: ["great barrier reef", "barrier reef", "port douglas"] },
+    { a: "Sunshine Coast", pts: 10, also: ["noosa", "sunny coast"] },
+    { a: "Uluru", pts: 8, also: ["ayers rock"] } ] },
+  { id: "handbag", q: "Name something you would find in a handbag", answers: [
+    { a: "Wallet", pts: 30, also: ["purse"] },
+    { a: "Phone", pts: 22, also: ["mobile", "mobile phone"] },
+    { a: "Keys", pts: 18, also: ["key", "car keys"] },
+    { a: "Lipstick", pts: 12, also: ["makeup", "make up", "lip balm", "lippy"] },
+    { a: "Tissues", pts: 10, also: ["tissue", "hanky"] },
+    { a: "Sunglasses", pts: 8, also: ["sunnies"] } ] },
+  { id: "christmas", q: "Name something you have at an Aussie Christmas", answers: [
+    { a: "Prawns", pts: 30, also: ["prawn", "seafood"] },
+    { a: "Ham", pts: 22, also: ["christmas ham"] },
+    { a: "Pavlova", pts: 16, also: ["pav"] },
+    { a: "Presents", pts: 14, also: ["present", "gifts", "gift"] },
+    { a: "Christmas tree", pts: 10, also: ["tree"] },
+    { a: "Pudding", pts: 8, also: ["christmas pudding", "plum pudding"] } ] },
+  { id: "kidsgame", q: "Name a game you played as a kid", answers: [
+    { a: "Hide and seek", pts: 32, also: ["hide and go seek", "hide n seek"] },
+    { a: "Tag", pts: 22, also: ["tiggy", "chasey", "tip"] },
+    { a: "Cricket", pts: 14, also: ["backyard cricket"] },
+    { a: "Hopscotch", pts: 12, also: [] },
+    { a: "Marbles", pts: 10, also: ["marble"] },
+    { a: "Handball", pts: 10, also: ["four square", "downball"] } ] },
+  { id: "car", q: "Name something you keep in your car", answers: [
+    { a: "Sunglasses", pts: 28, also: ["sunnies"] },
+    { a: "Phone charger", pts: 20, also: ["charger", "cable"] },
+    { a: "Water", pts: 16, also: ["water bottle", "bottle of water"] },
+    { a: "Spare tyre", pts: 14, also: ["spare", "spare tire", "jack"] },
+    { a: "Rubbish", pts: 12, also: ["trash", "garbage", "junk"] },
+    { a: "Umbrella", pts: 10, also: ["brolly"] } ] },
+  { id: "kitchen", q: "Name something you find in a kitchen", answers: [
+    { a: "Fridge", pts: 28, also: ["refrigerator"] },
+    { a: "Oven", pts: 22, also: ["stove", "cooktop"] },
+    { a: "Sink", pts: 16, also: [] },
+    { a: "Kettle", pts: 12, also: [] },
+    { a: "Microwave", pts: 12, also: [] },
+    { a: "Knives", pts: 10, also: ["knife", "cutlery"] } ] },
+  { id: "coffee", q: "Name a way to order your coffee", answers: [
+    { a: "Flat white", pts: 30, also: [] },
+    { a: "Cappuccino", pts: 22, also: ["cappa", "cap", "capp"] },
+    { a: "Latte", pts: 20, also: [] },
+    { a: "Long black", pts: 14, also: ["americano"] },
+    { a: "Espresso", pts: 8, also: ["short black", "expresso"] },
+    { a: "Iced coffee", pts: 6, also: ["iced latte", "cold brew"] } ] },
+  { id: "backyard", q: "Name something you find in an Aussie backyard", answers: [
+    { a: "Hills Hoist", pts: 30, also: ["clothesline", "clothes line", "washing line"] },
+    { a: "BBQ", pts: 24, also: ["barbie", "barbecue"] },
+    { a: "Pool", pts: 16, also: ["swimming pool"] },
+    { a: "Dog", pts: 12, also: ["dogs", "pet"] },
+    { a: "Shed", pts: 10, also: [] },
+    { a: "Trampoline", pts: 8, also: ["tramp"] } ] },
+  { id: "pack", q: "Name something people forget to pack for a holiday", answers: [
+    { a: "Phone charger", pts: 30, also: ["charger"] },
+    { a: "Toothbrush", pts: 24, also: ["tooth brush"] },
+    { a: "Underwear", pts: 14, also: ["undies", "jocks", "knickers"] },
+    { a: "Passport", pts: 12, also: [] },
+    { a: "Sunscreen", pts: 10, also: ["sunblock"] },
+    { a: "Swimmers", pts: 10, also: ["togs", "cozzie", "bathers", "swimsuit"] } ] },
+  { id: "wakeup", q: "Name something that wakes you up at night", answers: [
+    { a: "Kids", pts: 28, also: ["baby", "children", "kid"] },
+    { a: "Snoring", pts: 24, also: ["partner snoring", "snore"] },
+    { a: "Needing the toilet", pts: 16, also: ["toilet", "wee", "bathroom"] },
+    { a: "Dog", pts: 12, also: ["dog barking", "barking", "cat", "pets"] },
+    { a: "Noise", pts: 12, also: ["neighbours", "storm", "thunder"] },
+    { a: "Phone", pts: 8, also: ["phone ringing", "text"] } ] },
+  { id: "fastfood", q: "Name a fast food chain", answers: [
+    { a: "McDonald's", pts: 36, also: ["maccas", "mcdonalds", "macca", "mcdonald"] },
+    { a: "KFC", pts: 22, also: ["kentucky fried chicken"] },
+    { a: "Hungry Jack's", pts: 18, also: ["hungry jacks", "hjs", "burger king"] },
+    { a: "Subway", pts: 10, also: [] },
+    { a: "Domino's", pts: 8, also: ["dominos"] },
+    { a: "Red Rooster", pts: 6, also: ["rooster"] } ] },
+  { id: "schoolbag", q: "Name something in a kid's school bag", answers: [
+    { a: "Lunch box", pts: 30, also: ["lunchbox", "lunch"] },
+    { a: "Water bottle", pts: 20, also: ["drink bottle", "bottle"] },
+    { a: "Pencil case", pts: 18, also: ["pencils", "pens", "pencil"] },
+    { a: "Books", pts: 14, also: ["book", "exercise book", "homework"] },
+    { a: "Hat", pts: 10, also: ["school hat"] },
+    { a: "Jumper", pts: 8, also: ["jacket", "sweater", "hoodie"] } ] },
+  { id: "hardware", q: "Name something you buy at Bunnings", answers: [
+    { a: "Sausage sizzle", pts: 34, also: ["sausage", "snag", "sausage in bread", "snag in bread"] },
+    { a: "Paint", pts: 18, also: [] },
+    { a: "Plants", pts: 16, also: ["plant", "pot plant", "garden"] },
+    { a: "Tools", pts: 14, also: ["tool", "drill", "hammer"] },
+    { a: "Screws", pts: 10, also: ["screw", "nails", "nail"] },
+    { a: "Timber", pts: 8, also: ["wood"] } ] },
+  { id: "exercise", q: "Name a way people try to get fit", answers: [
+    { a: "Gym", pts: 30, also: ["going to the gym", "weights"] },
+    { a: "Running", pts: 24, also: ["run", "jogging", "jog"] },
+    { a: "Walking", pts: 16, also: ["walk", "walk the dog"] },
+    { a: "Swimming", pts: 10, also: ["swim", "laps"] },
+    { a: "Cycling", pts: 10, also: ["bike", "riding", "bike riding"] },
+    { a: "Diet", pts: 10, also: ["dieting", "eat healthy", "healthy eating"] } ] },
+  { id: "morningtea", q: "Name something you bring to a work morning tea", answers: [
+    { a: "Cake", pts: 30, also: [] },
+    { a: "Biscuits", pts: 22, also: ["biscuit", "bickies", "cookies", "tim tams"] },
+    { a: "Donuts", pts: 16, also: ["doughnuts", "donut"] },
+    { a: "Fruit", pts: 12, also: ["fruit platter"] },
+    { a: "Scones", pts: 10, also: ["scone"] },
+    { a: "Sausage rolls", pts: 10, also: ["sausage roll", "party pies", "pies"] } ] },
+  { id: "party", q: "Name something you see at a birthday party", answers: [
+    { a: "Cake", pts: 34, also: ["birthday cake", "cakes"] },
+    { a: "Balloons", pts: 22, also: ["balloon"] },
+    { a: "Presents", pts: 16, also: ["present", "gifts", "gift"] },
+    { a: "Candles", pts: 10, also: ["candle"] },
+    { a: "Party hats", pts: 8, also: ["party hat", "hats", "hat"] },
+    { a: "Lollies", pts: 6, also: ["lolly", "sweets", "candy", "lolly bags"] },
+    { a: "Games", pts: 4, also: ["party games", "pass the parcel"] } ] },
+  { id: "sleepover", q: "Name something you do at a sleepover", answers: [
+    { a: "Watch movies", pts: 30, also: ["movies", "movie", "watch a movie", "films"] },
+    { a: "Stay up late", pts: 22, also: ["stay up", "stay awake", "no sleep"] },
+    { a: "Pillow fight", pts: 16, also: ["pillow fights"] },
+    { a: "Eat snacks", pts: 12, also: ["snacks", "snack", "junk food", "popcorn"] },
+    { a: "Play games", pts: 10, also: ["games", "board games", "video games"] },
+    { a: "Tell stories", pts: 6, also: ["ghost stories", "scary stories", "stories"] },
+    { a: "Talk", pts: 4, also: ["chat", "chatting", "gossip", "talking"] } ] },
+  { id: "zoo", q: "Name an animal you see at the zoo", answers: [
+    { a: "Lion", pts: 28, also: ["lions"] },
+    { a: "Elephant", pts: 22, also: ["elephants"] },
+    { a: "Giraffe", pts: 18, also: ["giraffes"] },
+    { a: "Monkey", pts: 14, also: ["monkeys", "ape", "apes"] },
+    { a: "Tiger", pts: 8, also: ["tigers"] },
+    { a: "Penguin", pts: 6, also: ["penguins"] },
+    { a: "Zebra", pts: 4, also: ["zebras"] } ] },
+  { id: "camping", q: "Name something you take camping", answers: [
+    { a: "Tent", pts: 34, also: ["tents", "swag"] },
+    { a: "Sleeping bag", pts: 20, also: ["sleeping bags"] },
+    { a: "Torch", pts: 14, also: ["torches", "flashlight", "head torch"] },
+    { a: "Food", pts: 10, also: ["snacks", "marshmallows"] },
+    { a: "Chairs", pts: 8, also: ["camp chair", "camp chairs", "chair"] },
+    { a: "Esky", pts: 8, also: ["cooler", "ice box", "eskies"] },
+    { a: "Matches", pts: 6, also: ["lighter", "fire starters"] } ] },
+  { id: "hero", q: "Name a superhero", answers: [
+    { a: "Superman", pts: 28, also: ["super man"] },
+    { a: "Spider-Man", pts: 24, also: ["spiderman", "spider man"] },
+    { a: "Batman", pts: 20, also: ["bat man"] },
+    { a: "Wonder Woman", pts: 10, also: ["wonderwoman"] },
+    { a: "Iron Man", pts: 8, also: ["ironman"] },
+    { a: "Hulk", pts: 6, also: ["the incredible hulk", "incredible hulk"] },
+    { a: "Captain America", pts: 4, also: ["captain america"] } ] },
+  { id: "rainbow", q: "Name a colour of the rainbow", answers: [
+    { a: "Red", pts: 26, also: [] },
+    { a: "Blue", pts: 22, also: [] },
+    { a: "Yellow", pts: 16, also: [] },
+    { a: "Green", pts: 14, also: [] },
+    { a: "Orange", pts: 10, also: [] },
+    { a: "Purple", pts: 8, also: ["violet"] },
+    { a: "Indigo", pts: 4, also: [] } ] },
+  { id: "playground", q: "Name something you find at a playground", answers: [
+    { a: "Swings", pts: 32, also: ["swing"] },
+    { a: "Slide", pts: 28, also: ["slides", "slippery dip", "slippery slide"] },
+    { a: "Monkey bars", pts: 14, also: ["monkey bar"] },
+    { a: "Sandpit", pts: 12, also: ["sand pit", "sandbox", "sand"] },
+    { a: "Seesaw", pts: 8, also: ["see saw", "see-saw"] },
+    { a: "Roundabout", pts: 6, also: ["merry go round", "merry-go-round"] } ] },
+  { id: "lunchfruit", q: "Name a fruit you put in a lunchbox", answers: [
+    { a: "Apple", pts: 34, also: ["apples"] },
+    { a: "Banana", pts: 26, also: ["bananas"] },
+    { a: "Grapes", pts: 14, also: ["grape"] },
+    { a: "Orange", pts: 10, also: ["oranges"] },
+    { a: "Strawberries", pts: 8, also: ["strawberry"] },
+    { a: "Mandarin", pts: 5, also: ["mandarins", "mandarine"] },
+    { a: "Pear", pts: 3, also: ["pears"] } ] },
+  { id: "icecream", q: "Name an ice cream flavour", answers: [
+    { a: "Chocolate", pts: 32, also: ["choc", "choccy"] },
+    { a: "Vanilla", pts: 26, also: [] },
+    { a: "Strawberry", pts: 16, also: [] },
+    { a: "Cookies and cream", pts: 10, also: ["cookies n cream", "cookies & cream"] },
+    { a: "Mint choc chip", pts: 8, also: ["mint", "mint chocolate chip", "choc mint"] },
+    { a: "Rainbow", pts: 5, also: ["rainbow ice cream"] },
+    { a: "Caramel", pts: 3, also: ["salted caramel"] } ] }
+];
+async function handleGreatMindsBoards(request, env) {
+  const u = new URL(request.url);
+  await requireHost(env, u.searchParams.get('code'), u.searchParams.get('key'));
+  return json({ boards: PP_GM_BOARDS });
+}
+
+const FORMATS = ['bingo90','trivia','musical','draw','howwell','headstails','whohere','photos','truths','playlist',
+                 'charades','guesswho','topanswers'];
+
+/* GET /games?code=&key=   POST /games   POST /games/delete
+   Building games is NOT limited by the licence window: a host may write questions
+   for a fortnight before a party on one afternoon, and keep them afterwards. So
+   none of these check whether the party is live. */
+async function handleGamesList(request, env) {
+  const u = new URL(request.url);
+  const l = await requireHost(env, u.searchParams.get('code'), u.searchParams.get('key'));
+  /* created_at IS THE TIEBREAK, and it is needed because sort_order is not unique.
+
+     It is set to `existing.length` at the moment each game is added, so a host who clicks
+     three tiles faster than the round trips complete gives all three the same number: every
+     one of them counted the same "existing" list. Seen for real on 12 Sep, adding four games
+     in a row left three of them on sort_order 1.
+
+     Ordering by sort_order alone then returns those three in whatever order Postgres feels
+     like, which can differ between page loads, so the host's running order is not stable.
+     Ordering by when they were added is exactly the order the host clicked them in. */
+  const games = await sb(env, 'pp_games?licence_id=eq.' + l.id +
+    '&order=sort_order.asc,created_at.asc&select=id,format,title,config,sort_order');
+  const lic = licWindow(l);
+  return json({ games, party: {
+    code: l.code, party: l.party_name, days: l.days,
+    startsAt: l.activated_at, endsAt: l.expires_at,
+    live: PPLicence.isLive(lic),
+    status: !l.activated_at ? 'ready' : (PPLicence.isLive(lic) ? 'live' : 'finished'),
+    timeLeft: l.activated_at ? PPLicence.timeLeft(lic) : null,
+    startWarning: PPLicence.startWarning(l.days)
+  } });
+}
+
+async function handleGameSave(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const l = await requireHost(env, b.code, b.key);
+  const format = FORMATS.indexOf(String(b.format || '')) >= 0 ? String(b.format) : null;
+  if (!format) return json({ error: 'Unknown game type.' }, 400);
+
+  const title = b.title ? String(b.title).slice(0, 120) : null;
+  let config = (b.config && typeof b.config === 'object') ? b.config : {};
+  /* Belt to the braces above: never persist anything that looks like a key, even
+     if an old cached client sends one. A stored key is a key that gets broadcast
+     later by code nobody is looking at. */
+  {
+    const scrub = JSON.stringify(config).replace(/([?&])key=[0-9a-f]{20,}/gi, '$1key=REMOVED');
+    config = JSON.parse(scrub);
+  }
+  // A host uploading a hundred photographs would put the whole thing in one row.
+  if (JSON.stringify(config).length > 200000) {
+    return json({ error: 'That game is too big. Split it into two.' }, 413);
+  }
+
+  /* GUESS THE PHOTO MAY ONLY HOLD GAME PHOTOS.
+
+     The console fix is to promote a picked album photo first, and that is where
+     the capability is granted. This is the half that cannot be forgotten by a
+     browser that is cached, edited, or written later: a game that names a photo
+     /game/photo will not serve is a broken image on a television in front of a
+     room, and the host finds out at the worst possible moment. Refuse it here,
+     while somebody is sitting at a keyboard and can pick it again. */
+  if (format === 'photos') {
+    const items = Array.isArray(config.items) ? config.items : [];
+    const ids = [];
+    for (const it of items) {
+      const pid = String((it && it.id) || '');
+      if (!pid) continue;
+      if (!PHOTO_ID_RE.test(pid)) return json({ error: 'One of those photos is not one of yours. Pick it again.' }, 400);
+      if (ids.indexOf(pid) < 0) ids.push(pid);
+    }
+    if (ids.length) {
+      /* ASK FOR THE LICENCE'S GAME PHOTOS, not for these ids. A photo id list
+         would go into an in.() filter, and a comma inside a percent-encoded
+         PostgREST filter is a thing to be sure about rather than to assume on a
+         route a host presses to save their night's work. There are at most sixty
+         game photos on a licence, so the whole list is one cheap query and the
+         comparison happens here where it can be read. */
+      const found = await sb(env, 'pp_photos?licence_id=eq.' + l.id +
+        '&purpose=eq.game&select=id&limit=500');
+      const have = {};
+      (found || []).forEach(r => { have[r.id] = 1; });
+      if (ids.filter(x => !have[x]).length) {
+        return json({ error: 'One of those photos is not ready to show yet. Pick it again.' }, 400);
+      }
+    }
+  }
+
+  if (b.id) {
+    const rows = await sb(env, 'pp_games?id=eq.' + encodeURIComponent(String(b.id)) + '&licence_id=eq.' + l.id, {
+      method: 'PATCH', headers: { prefer: 'return=representation' },
+      body: JSON.stringify({ format, title, config, updated_at: new Date().toISOString() })
+    });
+    if (!rows.length) return json({ error: 'That game is not on this party.' }, 404);
+    return json({ ok: true, game: rows[0] });
+  }
+  const existing = await sb(env, 'pp_games?licence_id=eq.' + l.id + '&select=id');
+  if (existing.length >= 40) return json({ error: 'Forty games is plenty for one party.' }, 409);
+
+  const rows = await sb(env, 'pp_games', {
+    method: 'POST', headers: { prefer: 'return=representation' },
+    body: JSON.stringify([{ licence_id: l.id, format, title, config, sort_order: existing.length }])
+  });
+  return json({ ok: true, game: rows[0] });
+}
+
+async function handleGameDelete(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const l = await requireHost(env, b.code, b.key);
+  if (!b.id) return json({ error: 'Which game?' }, 400);
+  /* A DELETED GAME TAKES ITS PHOTOS WITH IT. The host's own photos for a game (baby photos for Guess
+     the photo) were kept for 400 days from purchase whether or not the game still existed, so a host
+     who deleted the game to get rid of them could not (privacy wording check, 28 Sep 2026). Only
+     purpose='game' photos on THIS licence, and only ones no other game of this party still uses. */
+  const gone = await sb(env, 'pp_games?id=eq.' + encodeURIComponent(String(b.id)) + '&licence_id=eq.' + l.id + '&select=config');
+  await sb(env, 'pp_games?id=eq.' + encodeURIComponent(String(b.id)) + '&licence_id=eq.' + l.id, { method: 'DELETE' });
+  const idsOf = (cfg) => (cfg && Array.isArray(cfg.items) ? cfg.items : []).map(it => String((it && it.id) || '')).filter(x => PHOTO_ID_RE.test(x));
+  const was = gone.length ? idsOf(gone[0].config) : [];
+  let removed = 0;
+  if (was.length && env.PHOTOS) {
+    const rest = await sb(env, 'pp_games?licence_id=eq.' + l.id + '&select=config');
+    const stillUsed = {};
+    (rest || []).forEach(g => idsOf(g.config).forEach(x => { stillUsed[x] = 1; }));
+    const mine = await sb(env, 'pp_photos?licence_id=eq.' + l.id + '&purpose=eq.game&select=id,object_key&limit=500');
+    for (const r of (mine || [])) {
+      if (was.indexOf(r.id) < 0 || stillUsed[r.id]) continue;
+      try { await env.PHOTOS.delete(r.object_key); } catch (e) { continue; }   // file not gone: keep the row that finds it
+      await sb(env, 'pp_photos?id=eq.' + encodeURIComponent(r.id) + '&licence_id=eq.' + l.id + '&purpose=eq.game', { method: 'DELETE' });
+      removed++;
+    }
+  }
+  return json({ ok: true, photos_removed: removed });
+}
+
+/* POST /admin/comp   { key, name, email, state, date, days, reason }
+   Issue a licence that was never paid for: a competition winner, a fix for
+   something that went wrong, a friend. It is a real licence in every respect. */
+async function handleComp(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const actor = await adminActor(request, env, b.key);
+  if (!actor) return json({ error: 'no' }, 403);
+  const name  = String(b.name  || '').trim().slice(0, 120);
+  const email = String(b.email || '').trim().toLowerCase().slice(0, 200);
+  if (!name || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return json({ error: 'Name and a real email, please.' }, 400);
+
+  // Default to the three day licence, since a comp is usually worth giving properly.
+  let plan;
+  try { plan = PPLicence.plan(b.days == null ? 3 : b.days); }
+  catch (e) { return json({ error: String(e.message || e) }, 400); }
+
+  let code = null;
+  for (let i = 0; i < 6 && !code; i++) {
+    const c = makeCode();
+    const clash = await sb(env, 'pp_licences?code=eq.' + c + '&select=id');
+    if (!clash.length) code = c;
+  }
+  if (!code) return json({ error: 'Could not allocate a code.' }, 503);
+
+  const rows = await sb(env, 'pp_licences', {
+    method: 'POST', headers: { prefer: 'return=representation' },
+    body: JSON.stringify([{
+      code, host_key: makeHostKey(), buyer_name: name, buyer_email: email,
+      party_name: b.party ? String(b.party).slice(0, 60) : null,
+      days: plan.days,
+      price_cents: 0, status: 'paid', paid_at: new Date().toISOString(),
+      is_comp: true, comp_reason: b.reason ? String(b.reason).slice(0, 200) : null
+    }])
+  });
+  /* Stamped like a paid one. A comp never set welcome_sent_at, so every comp read as
+     "paid, code never delivered" and a real delivery failure hid among them (audit,
+     27 Sep 2026). The admin is told if the email did not go. */
+  let emailed = false;
+  try {
+    await sendLicenceEmail(env, rows[0]);
+    await sb(env, 'pp_licences?id=eq.' + encodeURIComponent(rows[0].id), {
+      method: 'PATCH', body: JSON.stringify({ welcome_sent_at: new Date().toISOString() })
+    });
+    emailed = true;
+  } catch (e) { console.log('comp email failed: ' + e.message); }
+  return json({ ok: true, code, hostKey: rows[0].host_key, emailed });
+}
+
+/* POST /admin/followups  { key }
+   The "how was it" email, a week after a party. Run it from a cron.
+   Idempotent by the followup_sent_at stamp, so running it twice sends nothing twice. */
+async function handleFollowups(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const actor = await adminActor(request, env, b.key);
+  if (!actor) return json({ error: 'no' }, 403);
+  return json(await runFollowups(env));
+}
+
+/* The work, with no request and no admin in front of it, so scheduled() can do
+   it too. The button in admin.html and the cron now run the SAME code: a job
+   that only exists behind a button is a job that only happens when somebody
+   remembers. */
+async function runFollowups(env) {
+  const cutoff = new Date(Date.now() - 7 * 86400e3).toISOString();
+  /* Keyed off when the party actually finished, not a date somebody guessed at
+     purchase. A licence never started gets no follow-up, which is right: there is
+     nothing to ask them about. */
+  const due = await sb(env, 'pp_licences?status=eq.paid&followup_sent_at=is.null&expires_at=lt.' +
+    encodeURIComponent(cutoff) + '&select=id,code,buyer_name,buyer_email,party_name&limit=200');
+
+  let sent = 0, skipped = 0;
+  for (const l of due) {
+    /* Anyone who has unsubscribed gets nothing, even though an existing customer
+       relationship would probably allow it. Somebody who has actively said stop
+       is not a person to go back to on a technicality. */
+    const off = await sb(env, 'pp_subscribers?email=eq.' + encodeURIComponent(l.buyer_email) +
+      '&unsubscribed_at=not.is.null&select=id');
+    await sb(env, 'pp_licences?id=eq.' + l.id, {
+      method: 'PATCH', body: JSON.stringify({ followup_sent_at: new Date().toISOString() })
+    });
+    if (off.length) { skipped++; continue; }
+    try { await sendFollowupEmail(env, l); sent++; } catch (e) { console.log('followup failed ' + l.code + ': ' + e.message); }
+  }
+  return { ok: true, due: due.length, sent, skipped };
+}
+
+async function sendFollowupEmail(env, l) {
+  const site = (env.SITE_ORIGIN || '').replace(/\/$/, '');
+  const now = new Date();
+  const endOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0));
+  const expires = new Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 'long', timeZone: 'UTC' }).format(endOfMonth);
+  const what = l.party_name ? escapeHtml(l.party_name) : 'the party';
+  const promo = escapeHtml(env.FOLLOWUP_PROMO_CODE || 'AGAIN10');
+
+  await sendEmail(env, {
+    from: 'PartyPlay <hello@send.partyplay.com.au>',
+    /* REPLIES HAVE TO GO SOMEWHERE A PERSON LOOKS. Without this a reply goes back to
+       hello@send.partyplay.com.au, the Resend sending subdomain, which has no MX record
+       at all: the customer's reply is undeliverable and bounces to THEM. The licence
+       email tells every buyer "Just reply to this email, it comes straight to us", so
+       the one instruction we give a stuck customer was the one that could not work.
+       VenuePlay's sender has carried reply_to since it was written; this one never did.
+       Found 17 Sep 2026 by reading the DNS rather than the code. */
+    reply_to: 'hello@partyplay.com.au',
+    to: [l.buyer_email],
+    subject: 'How was ' + (l.party_name || 'the party') + '?',
+    html: emailShell({
+      site: site,
+      preview: '10% off the next one, if you are planning it.',
+      heading: 'How was ' + what + '?',
+      body: '<p>Hope it went well, ' + escapeHtml(l.buyer_name) + '.</p>' +
+            '<p>If you are planning the next one, here is <b>10% off</b> with the code ' +
+            '<b style="font-size:18px;color:' + PINK + '">' + promo + '</b> at checkout. ' +
+            'It runs out on ' + expires + '.</p>' +
+            emailButton(site + '/start', 'Book the next one'),
+      foot: '<p style="margin:0"><a href="' + site + '/unsubscribe?e=' + encodeURIComponent(l.buyer_email) +
+            '&t=' + (await unsubToken(env, l.buyer_email)) + '" style="color:#8A8296">Unsubscribe</a></p>'
+    })
+  });
+}
+
+/* ------------------------------------------------------------ the album ----
+ * Files go to R2, bound as PHOTOS. The bucket is private: nothing is ever served
+ * from a public URL, because a public URL to a photograph of somebody at a party
+ * is a link that outlives the party and cannot be taken back.
+ *
+ * Guests upload with their PLAYER TOKEN, which they only have because they were
+ * in the room. The host downloads with the HOST KEY.
+ * -------------------------------------------------------------------------- */
+
+/* A photo id is a v4 UUID and it is checked in three places now, so it is
+   written once. */
+const PHOTO_ID_RE = /^[0-9a-f-]{36}$/i;
+
+const PHOTO_MAX_BYTES = 5 * 1024 * 1024;    // generous: the browser resizes to ~300KB first
+/* Video is capped at 15 seconds and 720p in the browser, which lands around
+   4.6 MB. 25 MB is a backstop far enough above that it never fires by accident
+   but still stops a single upload becoming a problem. */
+const VIDEO_MAX_BYTES = 25 * 1024 * 1024;
+const ALBUM_KEEP_DAYS = 30;
+const OK_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const OK_VIDEO = ['video/webm', 'video/mp4'];
+
+function kindOf(contentType) {
+  const t = String(contentType || '').split(';')[0].trim().toLowerCase();
+  if (OK_TYPES.indexOf(t) >= 0) return { kind: 'photo', type: t, max: PHOTO_MAX_BYTES };
+  if (OK_VIDEO.indexOf(t) >= 0) return { kind: 'video', type: t, max: VIDEO_MAX_BYTES };
+  return null;
+}
+
+async function playerFor(env, token) {
+  const t = String(token || '').trim();
+  if (t.length < 20) { const e = new Error('Join the party first.'); e.status = 403; throw e; }
+  const rows = await sb(env, 'pp_players?token=eq.' + encodeURIComponent(t) +
+    '&select=id,nickname,licence_id&limit=1');
+  if (!rows.length) { const e = new Error('Join the party first.'); e.status = 403; throw e; }
+  return rows[0];
+}
+
+/* POST /photos  (raw image body)
+   Headers: X-Player-Token, Content-Type
+   The body is the image itself rather than a form, because a phone on party wifi
+   should send the bytes once and nothing else. */
+async function handlePhotoUpload(request, env) {
+  if (!env.PHOTOS) return json({ error: 'Photos are not switched on yet.' }, 503);
+  const player = await playerFor(env, request.headers.get('X-Player-Token'));
+
+  const k = kindOf(request.headers.get('content-type'));
+  if (!k) return json({ error: 'Photos and videos only, please.' }, 415);
+  const noun = k.kind === 'video' ? 'video' : 'photo';
+
+  const buf = await request.arrayBuffer();
+  if (!buf.byteLength) return json({ error: 'That ' + noun + ' did not arrive. Try again.' }, 400);
+  if (buf.byteLength > k.max) return json({ error: 'That ' + noun + ' is too big.' }, 413);
+
+  const lic = await sb(env, 'pp_licences?id=eq.' + player.licence_id + '&select=id,expires_at,activated_at');
+  if (!lic.length || !PPLicence.isLive(licWindow(lic[0]))) {
+    return json({ error: 'The party has finished, so the album is closed.' }, 403);
+  }
+
+  const ext = k.kind === 'video'
+    ? (k.type === 'video/mp4' ? 'mp4' : 'webm')
+    : (k.type === 'image/png' ? 'png' : (k.type === 'image/webp' ? 'webp' : 'jpg'));
+  const key = player.licence_id + '/' + makeHostKey() + '.' + ext;
+  await env.PHOTOS.put(key, buf, { httpMetadata: { contentType: k.type } });
+
+  /* Thirty days after the party ends, not after the upload: a photo taken at the
+     start and one taken at 2am should disappear together. */
+  const deleteAfter = new Date(Date.parse(lic[0].expires_at) + ALBUM_KEEP_DAYS * 86400e3).toISOString();
+  try {
+    await sb(env, 'pp_photos', {
+      method: 'POST',
+      body: JSON.stringify([{
+        licence_id: player.licence_id, object_key: key, taken_by: player.nickname,
+        bytes: buf.byteLength, content_type: k.type, delete_after: deleteAfter
+      }])
+    });
+  } catch (e) {
+    // The index write failed, so the file would be an orphan nobody can find or
+    // delete. Take it back out rather than leave it paid for and invisible.
+    try { await env.PHOTOS.delete(key); } catch (e2) {}
+    if (/album is full/i.test(e.message)) return json({ error: 'This album is full at 300 items.' }, 409);
+    throw e;
+  }
+  return json({ ok: true });
+}
+
+/* GET /photos/pick?code=&key=
+   The album, for building a Guess the Photo round out of it. Same host key as
+   everything else, and it deliberately returns only what a picker needs: an id,
+   who took it, and whether it moves. No object keys, no sizes. */
+async function handlePhotoPick(request, env) {
+  const u = new URL(request.url);
+  const l = await requireHost(env, u.searchParams.get('code'), u.searchParams.get('key'));
+  const rows = await sb(env, 'pp_photos?licence_id=eq.' + l.id +
+    '&order=created_at.asc&select=id,taken_by,purpose,content_type&limit=400');
+  const pics = rows.filter(r => !/^video\//.test(r.content_type || ''));
+  return json({
+    mine:  pics.filter(r => r.purpose === 'game').map(r => ({ id: r.id })),
+    party: pics.filter(r => r.purpose !== 'game').map(r => ({ id: r.id, by: r.taken_by }))
+  });
+}
+
+/* GET /game/photo?id=<uuid>
+   A Guess the Photo image, shown on a television to a whole room.
+
+   NO KEY. That is the fix, not an oversight. The host console used to build
+   thumbnail URLs containing the HOST KEY, store them in pp_games.config, and
+   then broadcast them on a public realtime channel when the game started, which
+   handed the host key to every guest in the room and to anyone on the internet
+   who knew the six character code. With it they could delete the host's games,
+   burn the licence, or read the whole album.
+
+   The photo id is a v4 UUID, so it is 122 bits of unguessable. It is the whole
+   capability, and it can only ever reach a photo the host uploaded FOR a game,
+   never a guest's album photo. Nothing else is exposed. */
+async function handleGamePhoto(request, env) {
+  if (!env.PHOTOS) return json({ error: 'Photos are not switched on yet.' }, 503);
+  const id = String(new URL(request.url).searchParams.get('id') || '');
+  if (!PHOTO_ID_RE.test(id)) return json({ error: 'Not found.' }, 404);
+
+  const rows = await sb(env, 'pp_photos?id=eq.' + encodeURIComponent(id) +
+    '&purpose=eq.game&select=object_key,content_type');
+  if (!rows.length) return json({ error: 'Not found.' }, 404);
+  const obj = await env.PHOTOS.get(rows[0].object_key);
+  if (!obj) return json({ error: 'Not found.' }, 404);
+  return new Response(obj.body, {
+    headers: { 'content-type': rows[0].content_type || 'image/jpeg',
+               'cache-control': 'public, max-age=3600' }
+  });
+}
+
+/* GET /album?share=...   the shared view.
+   Deliberately thin: the share key shows photos and nothing else. It cannot
+   start a party, edit a game, or tell you who bought it. */
+async function handleAlbumShare(request, env) {
+  const u = new URL(request.url);
+  const key = String(u.searchParams.get('share') || '').trim();
+  if (key.length < 16) return json({ error: 'That link does not look right.' }, 400);
+
+  const lic = await sb(env, 'pp_licences?share_key=eq.' + encodeURIComponent(key) +
+    '&status=eq.paid&select=id,party_name,expires_at,activated_at');
+  if (!lic.length) return json({ error: 'That album is not here any more.' }, 404);
+  const l = lic[0];
+
+  const rows = await sb(env, 'pp_photos?licence_id=eq.' + l.id + '&purpose=eq.album' +
+    '&order=created_at.asc&select=id,taken_by,content_type,created_at,delete_after');
+  return json({
+    party: l.party_name,
+    photos: rows.map(r => ({ id: r.id, by: r.taken_by,
+                             video: /^video\//.test(r.content_type || '') })),
+    count: rows.length,
+    deleteAfter: rows.length ? rows[0].delete_after : null,
+    /* Empty because the album was DELETED on schedule, not because nobody took any.
+       The page said "Nobody took any photos" to a guest whose photos we had removed. */
+    expired: !rows.length && !!l.expires_at &&
+             Date.now() > Date.parse(l.expires_at) + ALBUM_KEEP_DAYS * 86400e3
+  });
+}
+
+/* GET /album/photo?share=&id=   one file from a shared album */
+async function handleAlbumPhoto(request, env) {
+  if (!env.PHOTOS) return json({ error: 'Photos are not switched on yet.' }, 503);
+  const u = new URL(request.url);
+  const key = String(u.searchParams.get('share') || '').trim();
+  if (key.length < 16) return json({ error: 'That link does not look right.' }, 400);
+  const lic = await sb(env, 'pp_licences?share_key=eq.' + encodeURIComponent(key) + '&status=eq.paid&select=id');
+  if (!lic.length) return json({ error: 'Not found.' }, 404);
+
+  const rows = await sb(env, 'pp_photos?id=eq.' + encodeURIComponent(String(u.searchParams.get('id') || '')) +
+    '&licence_id=eq.' + lic[0].id + '&select=object_key,content_type');
+  if (!rows.length) return json({ error: 'Not found.' }, 404);
+  const obj = await env.PHOTOS.get(rows[0].object_key);
+  if (!obj) return json({ error: 'Not found.' }, 404);
+  return new Response(obj.body, {
+    headers: { 'content-type': rows[0].content_type || 'image/jpeg', 'cache-control': 'private, max-age=3600' }
+  });
+}
+
+/* POST /album/notify-me   { email, marketing }  + X-Player-Token
+   A guest asking to be sent the link tomorrow. An OFFER, never a gate: they can
+   see and add photos all night without ever touching this, and the photos are
+   not held back from anybody who says no. */
+async function handleNotifyMe(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const player = await playerFor(env, request.headers.get('X-Player-Token'));
+  const email = String(b.email || '').trim().toLowerCase().slice(0, 200);
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return json({ error: 'That email does not look right.' }, 400);
+
+  await sb(env, 'pp_album_requests?on_conflict=licence_id,email', {
+    method: 'POST',
+    headers: { prefer: 'resolution=merge-duplicates' },
+    body: JSON.stringify([{
+      licence_id: player.licence_id, email, nickname: player.nickname,
+      marketing_ok: b.marketing === true
+    }])
+  });
+
+  /* The marketing list is a SEPARATE consent and only happens if they ticked the
+     second box. Asking for the album is not permission to email them forever. */
+  if (b.marketing === true) {
+    try { await recordSubscriber(env, email, player.nickname, null); } catch (e) {}
+  }
+  return json({ ok: true });
+}
+
+/* POST /admin/send-albums  { key }
+   Sends every pending album link for parties that have finished. Cron it. */
+async function handleSendAlbums(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const actor = await adminActor(request, env, b.key);
+  if (!actor) return json({ error: 'no' }, 403);
+  return json(await runSendAlbums(env));
+}
+
+async function runSendAlbums(env) {
+  const now = new Date().toISOString();
+  const pending = await sb(env, 'pp_album_requests?sent_at=is.null&select=id,email,nickname,licence_id&limit=300');
+  let sent = 0;
+  for (const r of pending) {
+    const lic = await sb(env, 'pp_licences?id=eq.' + r.licence_id +
+      '&expires_at=lt.' + encodeURIComponent(now) + '&select=share_key,party_name,expires_at');
+    if (!lic.length) continue;                       // party still running, ask again later
+    /* STAMP AFTER THE SEND, not before it.
+
+       This marked the request sent and then tried to send, and a failure only
+       logged. The job selects sent_at=is.null, so that guest was never retried:
+       one Resend hiccup and somebody who asked for the photos at the party never
+       got them, with nothing anywhere showing it had gone wrong.
+
+       The other two jobs in this file stamp first on purpose, and that is right
+       for them: under-sending marketing beats sending it twice. This one is a
+       promise made to a guest at a party, so it fails the other way. The worst
+       case here is a duplicate album link, which nobody minds. */
+    try {
+      await sendAlbumEmail(env, r, lic[0]);
+      await sb(env, 'pp_album_requests?id=eq.' + r.id, {
+        method: 'PATCH', body: JSON.stringify({ sent_at: now })
+      });
+      sent++;
+    } catch (e) {
+      console.log('album email failed, will retry next run: ' + e.message);
+    }
+  }
+  return { ok: true, pending: pending.length, sent };
+}
+
+async function sendAlbumEmail(env, req, lic) {
+  const site = (env.SITE_ORIGIN || '').replace(/\/$/, '');
+  const gone = new Date(Date.parse(lic.expires_at) + ALBUM_KEEP_DAYS * 86400e3);
+  // In Australian time: a Worker runs in UTC, so a party ending late on the 3rd read as the 2nd.
+  const goneStr = new Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 'long', timeZone: 'Australia/Sydney' }).format(gone);
+  const what = lic.party_name ? escapeHtml(lic.party_name) : 'the party';
+
+  await sendEmail(env, {
+    from: 'PartyPlay <hello@send.partyplay.com.au>',
+    /* REPLIES HAVE TO GO SOMEWHERE A PERSON LOOKS. Without this a reply goes back to
+       hello@send.partyplay.com.au, the Resend sending subdomain, which has no MX record
+       at all: the customer's reply is undeliverable and bounces to THEM. The licence
+       email tells every buyer "Just reply to this email, it comes straight to us", so
+       the one instruction we give a stuck customer was the one that could not work.
+       VenuePlay's sender has carried reply_to since it was written; this one never did.
+       Found 17 Sep 2026 by reading the DNS rather than the code. */
+    reply_to: 'hello@partyplay.com.au',
+    to: [req.email],
+    subject: 'Photos from ' + (lic.party_name || 'the party'),
+    html: emailShell({
+      site: site,
+      preview: 'They are deleted on ' + goneStr + '. Save what you want before then.',
+      heading: 'Photos from ' + what,
+      body: '<p>Hi ' + escapeHtml(req.nickname || 'there') + ', here you go.</p>' +
+            emailButton(site + '/album?share=' + encodeURIComponent(lic.share_key), 'See the album') +
+            '<p style="margin-top:18px"><b>They are deleted on ' + goneStr + '.</b> ' +
+            'Save anything you want to keep before then.</p>',
+      foot: '<p style="margin:0">You asked for this at the party. It is a one off and you are not on any list.</p>'
+    })
+  });
+}
+
+/* POST /photos/host?code=&key=   (raw image body)
+   The host bringing their own photos for Guess the Photo: baby photos, the
+   bride at eighteen, whatever they have. Different from a guest upload in three
+   ways that matter: it is authorised by the host key rather than a player token,
+   it does NOT require the party to have started, and it is marked purpose=game
+   so it never lands in the album the guests share. */
+async function handleHostPhotoUpload(request, env) {
+  if (!env.PHOTOS) return json({ error: 'Photos are not switched on yet.' }, 503);
+  const u = new URL(request.url);
+  const l = await requireHost(env, u.searchParams.get('code'), u.searchParams.get('key'));
+
+  const k = kindOf(request.headers.get('content-type'));
+  if (!k || k.kind !== 'photo') return json({ error: 'Photos only for this one.' }, 415);
+
+  const buf = await request.arrayBuffer();
+  if (!buf.byteLength) return json({ error: 'That photo did not arrive. Try again.' }, 400);
+  if (buf.byteLength > k.max) return json({ error: 'That photo is too big.' }, 413);
+
+  const ext = k.type === 'image/png' ? 'png' : (k.type === 'image/webp' ? 'webp' : 'jpg');
+  const key = l.id + '/game/' + makeHostKey() + '.' + ext;
+  await env.PHOTOS.put(key, buf, { httpMetadata: { contentType: k.type } });
+
+  /* Game photos are uploaded days early and must still be there on the night, so
+     they are kept from purchase plus a year rather than on the album's clock. */
+  const deleteAfter = new Date(Date.parse(l.created_at) + 400 * 86400e3).toISOString();
+  let row;
+  try {
+    const rows = await sb(env, 'pp_photos', {
+      method: 'POST', headers: { prefer: 'return=representation' },
+      body: JSON.stringify([{
+        licence_id: l.id, object_key: key, taken_by: null, purpose: 'game',
+        bytes: buf.byteLength, content_type: k.type, delete_after: deleteAfter
+      }])
+    });
+    row = rows[0];
+  } catch (e) {
+    try { await env.PHOTOS.delete(key); } catch (e2) {}
+    if (/plenty for one game/i.test(e.message)) return json({ error: 'Sixty photos is plenty for one game.' }, 409);
+    throw e;
+  }
+  return json({ ok: true, id: row.id });
+}
+
+/* POST /photos/promote?code=&key=   { id }
+   THE HOST HAS PICKED A GUEST'S PHOTO FOR GUESS THE PHOTO.
+
+   The picker shows two sets side by side: the host's own game photos, and the
+   album the room has been filling tonight. Both were saved into the game as
+   /game/photo?id=..., and that route serves purpose='game' and nothing else, so
+   every album photo a host picked came out of the television as a broken image.
+
+   Widening /game/photo is the wrong fix. It carries NO KEY on purpose: the id
+   alone is the whole capability, and it is broadcast to every phone in the room
+   the second the game starts. Album photos are guests photographing each other
+   at a party and they must not become reachable that way.
+
+   So the capability is granted deliberately, here, at the moment the host picks
+   one. The file is COPIED to a second object marked purpose='game'. Copied and
+   not moved, because the album belongs to the guests: a photo must not vanish
+   out of it because the host built a game round. The copy's object key is
+   derived from the source id, so picking the same face twice returns the first
+   copy instead of putting another megabyte in the bucket. */
+async function handlePhotoPromote(request, env) {
+  if (!env.PHOTOS) return json({ error: 'Photos are not switched on yet.' }, 503);
+  const u = new URL(request.url);
+  const b = await request.json().catch(() => ({}));
+  const l = await requireHost(env, u.searchParams.get('code') || (b && b.code),
+                                   u.searchParams.get('key')  || (b && b.key));
+  const id = String((b && b.id) || u.searchParams.get('id') || '');
+  if (!PHOTO_ID_RE.test(id)) return json({ error: 'Which photo?' }, 400);
+
+  /* Scoped to this licence, so a host holding one party's key cannot reach into
+     another party's album and pull a face out of it. */
+  const rows = await sb(env, 'pp_photos?id=eq.' + encodeURIComponent(id) +
+    '&licence_id=eq.' + l.id + '&select=id,object_key,content_type,purpose,taken_by,delete_after');
+  if (!rows.length) return json({ error: 'That photo is not on this party.' }, 404);
+  const src = rows[0];
+  if (src.purpose === 'game') return json({ ok: true, id: src.id, already: true });
+  if (/^video\//.test(src.content_type || '')) return json({ error: 'Photos only for this one.' }, 415);
+
+  const type = src.content_type || 'image/jpeg';
+  const ext = type === 'image/png' ? 'png' : (type === 'image/webp' ? 'webp' : 'jpg');
+  const key = l.id + '/game/from-' + src.id + '.' + ext;
+
+  const had = await sb(env, 'pp_photos?licence_id=eq.' + l.id + '&purpose=eq.game' +
+    '&object_key=eq.' + encodeURIComponent(key) + '&select=id');
+  if (had.length) return json({ ok: true, id: had[0].id, already: true });
+
+  const obj = await env.PHOTOS.get(src.object_key);
+  if (!obj) return json({ error: 'That photo is not here any more.' }, 404);
+  const buf = await obj.arrayBuffer();
+  await env.PHOTOS.put(key, buf, { httpMetadata: { contentType: type } });
+
+  /* A GUEST'S PHOTO GOES WHEN THE ALBUM GOES, copy and all. This copy used to be
+     kept on the host's game clock (purchase plus 400 days) while the privacy page
+     promises every guest photo is deleted 30 days after the party, so a face the host
+     picked for Guess the photo outlived that promise by up to a year (audit, 25 Sep
+     2026). The copy takes the ORIGINAL'S date. The game is played during the party,
+     which is always before that date, so nothing a host needs is lost. */
+  const gameClock = Date.parse(l.created_at) + 400 * 86400e3;
+  const albumClock = Date.parse(src.delete_after || '');
+  const deleteAfter = new Date(Number.isFinite(albumClock) ? Math.min(albumClock, gameClock) : gameClock).toISOString();
+  let row;
+  try {
+    const made = await sb(env, 'pp_photos', {
+      method: 'POST', headers: { prefer: 'return=representation' },
+      body: JSON.stringify([{
+        licence_id: l.id, object_key: key, taken_by: src.taken_by, purpose: 'game',
+        bytes: buf.byteLength, content_type: type, delete_after: deleteAfter
+      }])
+    });
+    row = made[0];
+  } catch (e) {
+    try { await env.PHOTOS.delete(key); } catch (e2) {}
+    if (/plenty for one game/i.test(e.message)) return json({ error: 'Sixty photos is plenty for one game.' }, 409);
+    throw e;
+  }
+  return json({ ok: true, id: row.id });
+}
+
+/* GET /photos?code=&key=   the host's list */
+async function handlePhotoList(request, env) {
+  const u = new URL(request.url);
+  const l = await requireHost(env, u.searchParams.get('code'), u.searchParams.get('key'));
+  const rows = await sb(env, 'pp_photos?licence_id=eq.' + l.id + '&purpose=eq.album' +
+    '&order=created_at.asc&select=id,object_key,taken_by,bytes,content_type,created_at,delete_after');
+  const total = rows.reduce((n, r) => n + (r.bytes || 0), 0);
+  const waiting = await sb(env, 'pp_album_requests?licence_id=eq.' + l.id + '&sent_at=is.null&select=id');
+  return json({
+    photos: rows.map(r => ({ id: r.id, by: r.taken_by, at: r.created_at,
+                             video: /^video\//.test(r.content_type || '') })),
+    count: rows.length,
+    videos: rows.filter(r => /^video\//.test(r.content_type || '')).length,
+    megabytes: Math.round(total / 1048576 * 10) / 10,
+    deleteAfter: rows.length ? rows[0].delete_after : null,
+    shareKey: l.share_key,
+    guestsWaiting: waiting.length
+  });
+}
+
+/* GET /photo?code=&key=&id=   one file, streamed through us so the bucket stays private */
+async function handlePhotoGet(request, env) {
+  if (!env.PHOTOS) return json({ error: 'Photos are not switched on yet.' }, 503);
+  const u = new URL(request.url);
+  const l = await requireHost(env, u.searchParams.get('code'), u.searchParams.get('key'));
+  const id = String(u.searchParams.get('id') || '');
+  const rows = await sb(env, 'pp_photos?id=eq.' + encodeURIComponent(id) +
+    '&licence_id=eq.' + l.id + '&select=object_key,content_type');
+  if (!rows.length) return json({ error: 'Not found.' }, 404);
+  const obj = await env.PHOTOS.get(rows[0].object_key);
+  if (!obj) return json({ error: 'Not found.' }, 404);
+  return new Response(obj.body, {
+    headers: {
+      'content-type': rows[0].content_type || 'image/jpeg',
+      'cache-control': 'private, max-age=3600'
+    }
+  });
+}
+
+/* POST /admin/sweep-photos  { key }
+   The delete_after column is only a promise until something acts on it. Run from
+   a cron. */
+async function handlePhotoSweep(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const actor = await adminActor(request, env, b.key);
+  if (!actor) return json({ error: 'no' }, 403);
+  const out = await runPhotoSweep(env);
+  return json(out, out.ok ? 200 : 503);
+}
+
+async function runPhotoSweep(env) {
+  if (!env.PHOTOS) return { ok: false, error: 'Photos are not switched on yet.' };
+  const now = new Date().toISOString();
+  const due = await sb(env, 'pp_photos?delete_after=lt.' + encodeURIComponent(now) +
+    '&select=id,object_key&limit=500');
+  let gone = 0;
+  for (const r of due) {
+    try { await env.PHOTOS.delete(r.object_key); } catch (e) {}
+    await sb(env, 'pp_photos?id=eq.' + r.id, { method: 'DELETE' });
+    gone++;
+  }
+  /* AND THE ONES WITH NO ROW LEFT TO FIND THEM BY.
+
+     pp_photos.licence_id cascades on delete, so removing a licence takes its
+     photo rows with it and leaves the R2 objects behind. Nothing deletes a
+     licence in code today, but the day somebody clears out test parties in the
+     SQL editor, every photo those guests took stays in the bucket forever: the
+     sweep above works off ROWS, and there is no row any more.
+
+     That is not a storage bill, it is a broken promise. The album page tells
+     guests their photos go after thirty days.
+
+     Only objects older than a day are considered, so an upload whose row insert
+     is still in flight is never mistaken for an orphan. */
+  let orphans = 0;
+  try {
+    const DAY = 24 * 60 * 60 * 1000;
+    let cursor = undefined;
+    for (let page = 0; page < 10; page++) {
+      const listed = await env.PHOTOS.list({ limit: 200, cursor });
+      const old = (listed.objects || []).filter(function (o) {
+        return o.uploaded && (Date.now() - new Date(o.uploaded).getTime()) > DAY;
+      });
+      if (old.length) {
+        const keys = old.map(function (o) { return '"' + o.key + '"'; }).join(',');
+        const known = await sb(env, 'pp_photos?object_key=in.(' + encodeURIComponent(keys) +
+                                   ')&select=object_key');
+        const have = new Set((known || []).map(function (r) { return r.object_key; }));
+        for (const o of old) {
+          if (!have.has(o.key)) {
+            try { await env.PHOTOS.delete(o.key); orphans++; } catch (e) {}
+          }
+        }
+      }
+      if (!listed.truncated) break;
+      cursor = listed.cursor;
+    }
+  } catch (e) { /* listing is best effort; the row sweep above is the main job */ }
+
+  /* AND THE PEOPLE, NOT JUST THE PICTURES.
+
+     privacy.html makes three promises about a finished party, not one:
+       "The whole album is deleted 30 days after the party ends."   <- the rows above
+       "The nickname is deleted when the album is."                 <- pp_players
+       "Guest emails are deleted with everything else from that party, 30 days after it."
+                                                                    <- pp_album_requests
+
+     Only the first was kept. pp_players and pp_album_requests both hold guest EMAIL
+     ADDRESSES and nicknames, and nothing had ever deleted either: the only pp_players
+     delete in this Worker is the admin "clear players" button a host presses by hand.
+     So a party from a year ago still had its guests' addresses sitting in the database
+     while the page told them otherwise.
+
+     Same clock as the photos, deliberately: expires_at plus ALBUM_KEEP_DAYS, so the
+     album and the people who are in it go together, which is what the page says.
+
+     CONSENT IS NOT LOST. A guest who ticked the marketing box was copied into
+     pp_subscribers at the time, with opted_in_at, and that is a separate list they
+     agreed to and can leave from /unsubscribe. This only clears the party.
+
+     Found 12 Sep 2026 by reading the privacy page against the code. */
+  /* ONLY PARTIES THAT STILL HOLD SOMEBODY. This read every finished licence, limit 200
+     with no order, so from the 201st finished party on it could fetch the same 200
+     already-empty ones every night and never reach the rest (audit, 27 Sep 2026). Now it
+     asks the two tables for licences that still have rows, so every run makes progress,
+     and it says 'more' when it stopped with some left. */
+  let people = 0, asks = 0, peopleLeft = false;
+  try {
+    const cutoff = encodeURIComponent(new Date(Date.now() - ALBUM_KEEP_DAYS * 86400e3).toISOString());
+    const MAX_PARTIES = 150;
+    const ids = new Set();
+    for (const t of ['pp_players', 'pp_album_requests']) {
+      const rows = await sb(env, t + '?select=licence_id,pp_licences!inner(id)&pp_licences.expires_at=lt.' + cutoff +
+        '&order=licence_id.asc&limit=1000');
+      (rows || []).forEach(r => ids.add(r.licence_id));
+      if ((rows || []).length === 1000) peopleLeft = true;
+    }
+    const todo = Array.from(ids).sort();
+    if (todo.length > MAX_PARTIES) peopleLeft = true;
+    for (const id of todo.slice(0, MAX_PARTIES)) {
+      const p1 = await sb(env, 'pp_players?licence_id=eq.' + encodeURIComponent(id),
+        { method: 'DELETE', headers: { prefer: 'return=representation' } });
+      people += (p1 || []).length;
+      const p2 = await sb(env, 'pp_album_requests?licence_id=eq.' + encodeURIComponent(id),
+        { method: 'DELETE', headers: { prefer: 'return=representation' } });
+      asks += (p2 || []).length;
+    }
+  } catch (e) {
+    /* Loud, not silent. This one is a privacy promise: if it stops working we need to
+       know from the job's own output rather than from somebody asking what we hold. */
+    return { ok: false, deleted: gone, orphans: orphans,
+             error: 'personal data sweep failed: ' + e.message };
+  }
+
+  return { ok: true, deleted: gone, orphans: orphans, players: people, albumAsks: asks,
+           remaining: (due.length === 500 || peopleLeft) ? 'more' : 0 };
+}
+
+/* GET /unsubscribe?e=<email>   shows a button
+   POST /unsubscribe             actually does it
+
+   Every follow-up email links here and the route did not exist. It 404'd, so
+   pp_subscribers.unsubscribed_at could never be set by a recipient and the check
+   that reads it was dead code. Under the Spam Act a working unsubscribe is not
+   optional, so this is a compliance fix, not a feature.
+
+   IT USED TO UNSUBSCRIBE ON THE GET. Mail clients and corporate scanners follow
+   the links in a message before a human sees it -- Outlook SafeLinks and Gmail
+   both do -- so a recipient could be taken off the list without ever clicking.
+   Losing a subscriber that way would only cost us a subscriber. The problem is
+   the second thing this handler does: it also cancels any album email that has
+   not gone out yet, so a scanner following the footer link would silently kill
+   the album a guest at that party is still waiting for.
+
+   So the GET only asks. One button, still one click, and the POST does the work.
+   RFC 8058 one-click unsubscribe is a POST for exactly this reason. */
+/* THE LINK CARRIES PROOF IT CAME FROM US (14 Oct 2026 audit). /unsubscribe took any address with
+   no token, so anybody could take anybody off the list, and that also stops the follow-up and the
+   expiry reminder for a licence they paid for. Every unsubscribe link now carries t, an HMAC of the
+   address under a Worker secret, and a POST with a t that does not match is refused.
+
+   A LINK WITH NO t IS STILL HONOURED, after the person presses the button. Every email sent before
+   this has one, and the Spam Act needs the unsubscribe in a message to keep working for at least 30
+   days after it was sent. Turning tokenless links off later is Dean's call; until then the click
+   is the protection they get, as before. The key is UNSUB_SECRET if it is set, and otherwise the
+   service key, which is already a secret only this Worker holds. */
+async function unsubToken(env, email) {
+  const secret = env.UNSUB_SECRET || env.SUPABASE_SERVICE_KEY || '';
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode('pp-unsub:' + secret),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const mac = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(String(email || '').trim().toLowerCase()));
+  return [...new Uint8Array(mac)].map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
+}
+
+async function handleUnsubscribe(request, env) {
+  const u = new URL(request.url);
+  let email = String(u.searchParams.get('e') || '').trim().toLowerCase();
+  let tok = String(u.searchParams.get('t') || '').trim().toLowerCase();
+  if (request.method === 'POST' && !email) {
+    /* The form posts it, so a mail client that rewrites the query string cannot
+       lose it. Accepts either encoding; a party guest is not sending JSON. */
+    const ct = request.headers.get('content-type') || '';
+    try {
+      if (ct.indexOf('application/json') >= 0) {
+        const b = await request.json();
+        email = String((b && b.email) || '').trim().toLowerCase();
+        tok = String((b && b.t) || tok).trim().toLowerCase();
+      } else {
+        const f = await request.formData();
+        email = String(f.get('email') || '').trim().toLowerCase();
+        tok = String(f.get('t') || tok).trim().toLowerCase();
+      }
+    } catch (e) {}
+  }
+  const site = (env.SITE_ORIGIN || '').replace(/\/$/, '');
+  const page = (title, body, status) => new Response(
+    '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<title>' + title + ' | PartyPlay</title>' +
+    '<body style="margin:0;background:#12101A;color:#FFF1E6;font-family:system-ui,sans-serif;' +
+    'display:grid;place-items:center;min-height:100vh;padding:30px;text-align:center">' +
+    '<div style="max-width:34ch"><h1 style="font-size:28px;margin:0 0 12px">' + title + '</h1>' +
+    '<p style="color:#B6ADC2;line-height:1.6">' + body + '</p>' +
+    '<p style="margin-top:22px"><a style="color:#FF1F8E" href="' + site + '">partyplay.com.au</a></p></div>',
+    { status: status || 200, headers: { 'content-type': 'text/html; charset=utf-8' } });
+
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    return page('That link looks wrong', 'Email hello@partyplay.com.au and we will take you off by hand.');
+  }
+
+  if (request.method !== 'POST') {
+    /* Nothing has changed yet. This page is the only thing a link scanner gets. */
+    return new Response(
+      '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+      '<title>Unsubscribe | PartyPlay</title>' +
+      '<body style="margin:0;background:#12101A;color:#FFF1E6;font-family:system-ui,sans-serif;' +
+      'display:grid;place-items:center;min-height:100vh;padding:30px;text-align:center">' +
+      '<div style="max-width:34ch"><h1 style="font-size:28px;margin:0 0 12px">Come off the list?</h1>' +
+      '<p style="color:#B6ADC2;line-height:1.6">We will stop emailing ' + escapeHtml(email) + '. ' +
+      'Nothing you have paid for is affected and your party code still works.</p>' +
+      '<form method="POST" action="/unsubscribe" style="margin-top:22px">' +
+      '<input type="hidden" name="email" value="' + escapeHtml(email) + '">' +
+      (tok ? '<input type="hidden" name="t" value="' + escapeHtml(tok) + '">' : '') +
+      '<button type="submit" style="background:#FF1F8E;color:#fff;border:0;border-radius:12px;' +
+      'padding:14px 22px;font:600 16px system-ui,sans-serif;cursor:pointer">Yes, unsubscribe</button>' +
+      '</form></div>',
+      { headers: { 'content-type': 'text/html; charset=utf-8' } });
+  }
+
+  /* AN OPT-OUT HAS TO BE RECORDED FOR SOMEBODY WHO WAS NEVER ON THE LIST.
+
+     recordSubscriber only runs when a buyer ticks the marketing box, so most
+     buyers have NO pp_subscribers row at all. They still get the follow-up and
+     the expiry reminder, because both of those skip on unsubscribed_at rather
+     than on marketing consent. A PATCH matches no row for those people, writes
+     nothing, and this handler still answers "Done".
+
+     So the link was dead, then the link worked and the button was dead. A person
+     who pressed Unsubscribe was told they were off the list and kept receiving
+     email, which is worse than the broken link because they stop expecting it to
+     be wrong. Under the Spam Act the facility has to actually work.
+
+     PATCH first and ask for the row back. If nothing matched, insert the opt-out
+     on its own. source says where it came from so a row with no consent behind it
+     is never mistaken for one that opted in. Found 12 Sep 2026 by pressing the
+     button on the live site and then looking in the table, which is the only
+     reason it was found: the screen said Done both times. */
+  /* A token that is there and WRONG is somebody writing links by hand. No token at all is an old
+     email, honoured after the click (see unsubToken). */
+  if (tok && !timingSafeEqual(tok, await unsubToken(env, email))) {
+    return page('That link looks wrong', 'Use the Unsubscribe link in the email itself, or email hello@partyplay.com.au and we will take you off by hand.', 403);
+  }
+  const nowIso = new Date().toISOString();
+  const patched = await sb(env, 'pp_subscribers?email=eq.' + encodeURIComponent(email), {
+    method: 'PATCH',
+    headers: { prefer: 'return=representation' },
+    body: JSON.stringify({ opted_in: false, unsubscribed_at: nowIso })
+  });
+  if (!patched || !patched.length) {
+    await sb(env, 'pp_subscribers?on_conflict=email', {
+      method: 'POST',
+      headers: { prefer: 'resolution=merge-duplicates' },
+      body: JSON.stringify([{ email, opted_in: false, opted_in_at: null,
+                              source: 'unsubscribe', unsubscribed_at: nowIso }])
+    });
+  }
+  /* Also stop any album link that has not gone out yet. Somebody unsubscribing
+     the day after a party should not then get one more email from us. */
+  await sb(env, 'pp_album_requests?email=eq.' + encodeURIComponent(email) + '&sent_at=is.null', {
+    method: 'PATCH', body: JSON.stringify({ sent_at: new Date().toISOString() })
+  });
+  return page('Done', 'You are off the list. Nothing you have paid for is affected, and your party code still works.');
+}
+
+/* GET /parties
+   How many parties have actually run. Public, cached, and a count and nothing
+   else: no names, no dates, nothing that identifies a party or a buyer.
+   The landing page uses it to decide whether to show the figure at all. */
+async function handleParties(request, env) {
+  /* Counted by the database rather than by pulling every row across the wire on
+     an anonymous, cacheable, public endpoint. */
+  const r = await fetch(env.SUPABASE_URL + '/rest/v1/pp_licences?status=eq.paid&activated_at=not.is.null&select=id',
+    { headers: { apikey: env.SUPABASE_SERVICE_KEY, authorization: 'Bearer ' + env.SUPABASE_SERVICE_KEY,
+                 prefer: 'count=exact', range: '0-0' } });
+  const cr = r.headers.get('content-range') || '';
+  const n = parseInt(cr.split('/')[1], 10);
+  return json({ parties: isFinite(n) ? n : 0 }, 200, { 'cache-control': 'public, max-age=1800' });
+}
+
+/* ------------------------------------------------- the support console ----
+ * Everything below exists so that when somebody rings up mid party, whoever
+ * answers can SEE what is happening and FIX it, without talking a stranger
+ * through a menu on a phone in a loud room.
+ *
+ * Every action here is one somebody would otherwise have to be walked through,
+ * and every one of them is logged with who did it and why.
+ * ------------------------------------------------------------------------- */
+
+/* GET /admin/party?q=<code or email>
+   One party, everything about it, in one call. */
+async function handleAdminParty(request, env) {
+  const u = new URL(request.url);
+  const actor = await adminActor(request, env);
+  if (!actor) return json({ error: 'no' }, 403);
+  const q = String(u.searchParams.get('q') || '').trim();
+  if (!q) return json({ error: 'Give me a code or an email.' }, 400);
+
+  const byCode = /^[A-Za-z0-9]{6}$/.test(q);
+  const filter = byCode
+    ? 'code=eq.' + normaliseCode(q)
+    : 'buyer_email=ilike.' + encodeURIComponent('*' + q.toLowerCase() + '*');
+  const lics = await sb(env, 'pp_licences?' + filter + '&order=created_at.desc&limit=10&select=*');
+  if (!lics.length) return json({ error: 'Nothing found for that.' }, 404);
+
+  const out = [];
+  for (const l of lics) {
+    const [games, players, photos, requests] = await Promise.all([
+      sb(env, 'pp_games?licence_id=eq.' + l.id + '&select=id,format,title,config'),
+      sb(env, 'pp_players?licence_id=eq.' + l.id + '&order=joined_at.asc&select=id,nickname,joined_at'),
+      sb(env, 'pp_photos?licence_id=eq.' + l.id + '&select=id,purpose,bytes'),
+      sb(env, 'pp_album_requests?licence_id=eq.' + l.id + '&select=id,email,sent_at')
+    ]);
+    const lic = licWindow(l);
+    out.push({
+      code: l.code, id: l.id,
+      buyer: { name: l.buyer_name, email: l.buyer_email, mobile: l.buyer_mobile },
+      party: l.party_name,
+      plan: l.days === 3 ? '3 days' : '24 hours',
+      isComp: l.is_comp, compReason: l.comp_reason,
+      status: l.status,
+      clock: !l.activated_at ? 'not started'
+             : (PPLicence.isLive(lic) ? 'running, ' + PPLicence.timeLeft(lic) : 'finished'),
+      activatedAt: l.activated_at, expiresAt: l.expires_at,
+      boughtAt: l.paid_at || l.created_at,
+      games: games.map(g => ({ format: g.format, title: g.title,
+                               items: (g.config && g.config.items && g.config.items.length) || 0 })),
+      players: players.map(p => p.nickname),
+      playerCount: players.length,
+      albumPhotos: photos.filter(p => p.purpose !== 'game').length,
+      gamePhotos: photos.filter(p => p.purpose === 'game').length,
+      megabytes: Math.round(photos.reduce((n, p) => n + (p.bytes || 0), 0) / 1048576 * 10) / 10,
+      guestsWantingAlbum: requests.length,
+      followupSent: !!l.followup_sent_at,
+      /* The two links support will actually need. Handing these over IS the fix
+         for the commonest call: they lost the email. */
+      hostLink: (env.SITE_ORIGIN || '') + '/host?code=' + l.code + '&key=' + l.host_key,
+      runLink:  (env.SITE_ORIGIN || '') + '/run?code=' + l.code + '&key=' + l.host_key,
+      tvLink:   (env.SITE_ORIGIN || '') + '/tv?code=' + l.code,
+      albumLink:(env.SITE_ORIGIN || '') + '/album?share=' + l.share_key
+    });
+  }
+  return json({ parties: out });
+}
+
+/* POST /admin/party/do  { code, action, why, hours }
+   The fixes. Deliberately one route with an action, so every one of them goes
+   through the same authorisation and the same audit line. */
+async function handleAdminAction(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const actor = await adminActor(request, env, b.key);
+  if (!actor) return json({ error: 'no' }, 403);
+  const code = normaliseCode(b.code);
+  if (!CODE_RE.test(code)) return json({ error: 'That code does not look right.' }, 400);
+
+  const rows = await sb(env, 'pp_licences?code=eq.' + code + '&select=*');
+  if (!rows.length) return json({ error: 'No party with that code.' }, 404);
+  const l = rows[0];
+  const why = String(b.why || '').slice(0, 200);
+  const act = String(b.action || '');
+  let did = '';
+
+  if (act === 'resend') {
+    /* The single commonest call: they cannot find the email. */
+    try {
+      await sendLicenceEmail(env, l);
+    } catch (e) {
+      /* Whoever pressed this is repairing an undelivered party. Answering "done"
+         when Resend refused the message is the same lie the rest of this fix is
+         about, and here there is a person reading the reply who can act on the
+         reason. */
+      return json({ error: 'That email would not send. ' + e.message }, 502);
+    }
+    // It went, so the party now has its code: the same stamp the webhook and a comp write.
+    await sb(env, 'pp_licences?id=eq.' + encodeURIComponent(l.id), {
+      method: 'PATCH', body: JSON.stringify({ welcome_sent_at: new Date().toISOString() })
+    });
+    did = 'resent the licence email to ' + l.buyer_email;
+
+  } else if (act === 'unstart') {
+    /* Somebody pressed start days early, or by accident, and would otherwise
+       have burned the thing they paid for. Give it back. */
+    if (!l.activated_at) return json({ error: 'That party has not been started.' }, 409);
+    await sb(env, 'pp_licences?id=eq.' + l.id, {
+      method: 'PATCH', body: JSON.stringify({ activated_at: null, expires_at: null })
+    });
+    did = 'put the clock back to not started';
+
+  } else if (act === 'extend') {
+    const hours = Math.min(72, Math.max(1, Number(b.hours) || 24));
+    if (!l.expires_at) return json({ error: 'That party has not been started, so there is nothing to extend.' }, 409);
+    /* From NOW if it has already ended. Adding 24 hours to a party that finished two
+       days ago left it finished, and the admin was told it now ends at a time already
+       gone (audit, 27 Sep 2026). */
+    const to = new Date(Math.max(Date.parse(l.expires_at), Date.now()) + hours * 3600e3).toISOString();
+    await sb(env, 'pp_licences?id=eq.' + l.id, {
+      method: 'PATCH', body: JSON.stringify({ expires_at: to })
+    });
+    did = 'added ' + hours + ' hours, now ends ' + to;
+
+  } else if (act === 'clear-players') {
+    /* A room full of stale players: everyone reconnected under a new name, or a
+       test run left ghosts eating the 50 cap. */
+    await sb(env, 'pp_players?licence_id=eq.' + l.id, { method: 'DELETE' });
+    did = 'cleared everyone out of the room, they can rejoin';
+
+  } else if (act === 'kick') {
+    const who = String(b.nickname || '').trim();
+    if (!who) return json({ error: 'Which player?' }, 400);
+    await sb(env, 'pp_players?licence_id=eq.' + l.id + '&nickname=eq.' + encodeURIComponent(who),
+             { method: 'DELETE' });
+    did = 'removed ' + who + ' from the room';
+
+  } else if (act === 'refund-note') {
+    await sb(env, 'pp_licences?id=eq.' + l.id, {
+      method: 'PATCH', body: JSON.stringify({ status: 'refunded', refunded_at: new Date().toISOString() })
+    });
+    did = 'marked as refunded. NOTE: refund the money in Stripe separately, this only marks the record';
+
+  } else {
+    return json({ error: 'Unknown action.' }, 400);
+  }
+
+  /* Logged, always. A support tool that can hand out someone else's host link is
+     a support tool that needs a record of who did what and why. Now that more
+     than one person can be signed in, WHO matters as much as what. */
+  try {
+    await sb(env, 'pp_admin_log', {
+      method: 'POST',
+      body: JSON.stringify([{ licence_id: l.id, code: l.code, action: act, detail: did,
+                              why: why || null, actor: actor }])
+    });
+  } catch (e) { console.log('admin log failed: ' + e.message); }
+
+  return json({ ok: true, did });
+}
+
+/* GET /admin/stats?key=&months=6
+   The monthly numbers. Sold is when money changed hands; ran is when somebody
+   actually pressed start, and they are different months often enough to be worth
+   counting separately: a licence bought in March for a party in May is one sale
+   in March and one party in May. */
+/* CHOP CHOP.
+   Somebody paid, never used it, and their year is nearly up. One email, once,
+   and never again: nudged_at is written before the send so a double tap on a
+   flaky connection cannot post the same person twice. */
+async function handleNudgeExpiring(request, env) {
+  const actor = await adminActor(request, env);
+  if (!actor) return json({ error: 'no' }, 403);
+  const out = await runNudgeExpiring(env);
+  return json(out, out.ok ? 200 : 503);
+}
+
+async function runNudgeExpiring(env) {
+  if (!env.RESEND_API_KEY) return { ok: false, error: 'No email key set on this Worker' };
+
+  const now = Date.now();
+  /* HOW LONG AN UNSTARTED CODE KEEPS. lib/pp-licence.js owns this number and
+     expires codes by it; these two places used to write 365 again by hand. Change
+     the library to 180 and the code would have died at 180 while this still chased
+     at 365: the warning would fire six months after the thing it warns about, and
+     nobody would get the warning they were owed. One answer per question. */
+  const UNUSED_MS = PPLicence.UNUSED_EXPIRY_DAYS * 86400e3;
+  const rows = await sb(env, 'pp_licences?status=eq.paid&activated_at=is.null&nudged_at=is.null' +
+    '&select=id,code,buyer_name,buyer_email,party_name,paid_at,is_comp,host_key,days&limit=200');
+
+  const due = rows.filter(r => {
+    if (!r.paid_at) return false;
+    const gone = Date.parse(r.paid_at) + UNUSED_MS;
+    return gone > now && gone - now < 30 * 86400e3;
+  });
+
+  let sent = 0, skipped = 0;
+  const failed = [];
+  for (const r of due) {
+    const daysLeft = Math.max(1, Math.round((Date.parse(r.paid_at) + UNUSED_MS - now) / 86400e3));
+    try {
+      /* NOBODY WHO HAS ASKED US TO STOP. This went to every paid buyer, and it
+         carried no unsubscribe link at all, so there was no way to make it stop
+         and nothing checked whether somebody already had. Both halves are now
+         here: the footer links to /unsubscribe, and this reads what that writes.
+         marketing_optin is deliberately not the test: a code somebody paid for
+         and is about to lose is worth telling them about either way. Somebody
+         who pressed unsubscribe is not. */
+      const off = await sb(env, 'pp_subscribers?email=eq.' + encodeURIComponent(r.buyer_email) +
+        '&unsubscribed_at=not.is.null&select=id');
+      await sb(env, 'pp_licences?id=eq.' + encodeURIComponent(r.id), {
+        method: 'PATCH', body: JSON.stringify({ nudged_at: new Date().toISOString() })
+      });
+      if (off.length) { skipped++; continue; }
+      await sendNudgeEmail(env, r, daysLeft);
+      sent++;
+    } catch (e) {
+      failed.push(r.code);
+    }
+  }
+  return { ok: true, considered: rows.length, due: due.length, sent, skipped, failed };
+}
+
+async function sendNudgeEmail(env, l, daysLeft) {
+  const site = (env.SITE_ORIGIN || '').replace(/\/$/, '');
+  const host = site + '/host?code=' + l.code + '&key=' + (l.host_key || '');
+  const what = l.party_name ? escapeHtml(l.party_name) : 'your party';
+
+  await sendEmail(env, {
+    from: 'PartyPlay <hello@send.partyplay.com.au>',
+    /* REPLIES HAVE TO GO SOMEWHERE A PERSON LOOKS. Without this a reply goes back to
+       hello@send.partyplay.com.au, the Resend sending subdomain, which has no MX record
+       at all: the customer's reply is undeliverable and bounces to THEM. The licence
+       email tells every buyer "Just reply to this email, it comes straight to us", so
+       the one instruction we give a stuck customer was the one that could not work.
+       VenuePlay's sender has carried reply_to since it was written; this one never did.
+       Found 17 Sep 2026 by reading the DNS rather than the code. */
+    reply_to: 'hello@partyplay.com.au',
+    to: [l.buyer_email],
+    subject: 'Your party code runs out in ' + daysLeft + ' days',
+    html: emailShell({
+      site: site,
+      preview: 'Code ' + l.code + ' has not been used yet, and it expires soon.',
+      heading: 'Still got a party in you?',
+      body: '<p>Hi ' + escapeHtml(l.buyer_name) + '. You bought a PartyPlay code and never used it, ' +
+            'and it runs out in <b>' + daysLeft + ' days</b>.</p>' +
+            emailCode(l.code) +
+            '<p>Nothing has been ticking. Your ' + (l.days === 3 ? '3 days' : '24 hours') +
+            ' of play still starts the moment you press start, so all you need is a night.</p>' +
+            emailButton(host, 'Get ' + what + ' going') +
+            '<p style="margin-top:18px;font-size:14.5px;color:' + MUTE + '">' +
+            'If the party is off, no hard feelings and you can ignore this. ' +
+            'Reply and tell us what got in the way, we do read them.</p>',
+      foot: '<p style="margin:0">This is the only reminder we will send you about this code.</p>' +
+            '<p style="margin:10px 0 0"><a href="' + site + '/unsubscribe?e=' + encodeURIComponent(l.buyer_email) +
+            '&t=' + (await unsubToken(env, l.buyer_email)) + '" style="color:#8A8296">Unsubscribe</a></p>'
+    })
+  });
+}
+
+/* Who am I signed in as? The page asks this first, so it can say "signed in as
+   Dean" instead of leaving somebody wondering whether the key or the phone got
+   them in. */
+/* SEND IT AGAIN.
+   The welcome email is the only place the host key exists, so losing it means
+   losing a party that has been paid for. Anyone who knows the code may ask for
+   it, which is safe: the email only ever goes to the address already on the
+   licence, so the worst somebody can do with a code they found is post a
+   stranger their own party details. Spaced out all the same, because that is
+   still a nuisance and Resend costs money. */
+const RESEND_GAP_MS = 3 * 60 * 1000;
+
+async function handleResendWelcome(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const code = normaliseCode(b.code);
+  if (!/^[A-Z0-9]{4,10}$/.test(code)) return json({ error: 'Which party?' }, 400);
+  if (!env.RESEND_API_KEY) return json({ error: 'Email is not set up on this Worker.' }, 503);
+
+  const rows = await sb(env, 'pp_licences?code=eq.' + encodeURIComponent(code) +
+    '&status=eq.paid&select=id,code,host_key,buyer_name,buyer_email,party_name,days,is_comp,welcome_sent_at&limit=1');
+  /* ONE ANSWER, WHATEVER HAPPENED.
+     Saying "sent" for a real code and "not sent" for a made up one turns this into
+     a way of finding out which codes exist, which is the first half of taking
+     somebody's party off them. So the reply never varies: not for an unknown
+     code, not for one asked about twice in a minute. The page says "if that is a
+     real code, it is on its way", which is true in every case. */
+  const same = () => json({ ok: true });
+  if (!rows.length) return same();
+
+  const l = rows[0];
+  if (l.welcome_sent_at && Date.now() - Date.parse(l.welcome_sent_at) < RESEND_GAP_MS) return same();
+
+  /* SEND FIRST, STAMP AFTER.
+
+     This stamped welcome_sent_at and then tried to send. Nothing read the answer
+     from Resend either, so a send that was refused still left the stamp behind,
+     and welcome_sent_at is the one column that says a buyer has their code.
+     check-paid-not-delivered.py looks for status='paid' with no stamp, so the
+     repair tool itself was what marked the damage repaired: the buyer had
+     nothing and the tool printed "Nothing paid is undelivered".
+
+     The reply still must not vary. Saying "that failed" for a real code and "ok"
+     for a made up one is how somebody finds out which codes exist, so a failure
+     is logged and answered exactly like every other case. The difference is that
+     the stamp is not written, so the party shows up as undelivered where
+     somebody will see it. */
+  try {
+    await sendLicenceEmail(env, l);
+  } catch (e) {
+    console.log('resend welcome failed for ' + l.code + ': ' + e.message);
+    return same();
+  }
+  await sb(env, 'pp_licences?id=eq.' + encodeURIComponent(l.id), {
+    method: 'PATCH', body: JSON.stringify({ welcome_sent_at: new Date().toISOString() })
+  });
+  return same();
+}
+
+/* LOST THE EMAIL, AND THE CODE WITH IT (Dean, 23 Oct 2026).
+
+   /licence/resend above needs the party code, and the code is IN the lost email.
+   So the front door said "Lost the email? Send it again", and pressing it said
+   "Put your party code in first": a circle, on a product somebody has paid $50
+   for, and the only way out was to write to hello@. This route takes the one
+   thing a buyer still knows, the address they paid with, and sends the welcome
+   email (code and host key) to that address and nowhere else. Every party that
+   address has paid for and not yet run gets its own email, newest first, so a
+   buyer with two parties booked gets both back.
+
+   SAME SHAPE AS /licence/resend, for the same reasons: the reply never varies
+   (a known address and a stranger's guess both get {ok:true}, or an address list
+   could be checked against us one guess at a time), the email goes only to the
+   address on the licence, a send is stamped only after Resend accepted it, and
+   nobody is nagged: a party emailed in the last RESEND_GAP_MS is skipped. On top,
+   one place may ask RECOVER_PER_HOUR times an hour (the checkout's own IP tag, the
+   hashed address, never the address itself); past that the answer is the same and
+   nothing is sent. */
+const RECOVER_PER_HOUR = 5;
+const RECOVER_MAX_PARTIES = 3;
+const RECOVER_SEEN = new Map();
+
+async function handleRecoverByEmail(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const email = String(b.email || '').trim().toLowerCase().slice(0, 200);
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return json({ error: 'That email does not look right.' }, 400);
+  if (!env.RESEND_API_KEY) return json({ error: 'Email is not set up on this Worker.' }, 503);
+
+  const same = () => json({ ok: true });
+  const tag = await checkoutIpTag(env, request);
+  if (tag && recentInMemory(tag, RECOVER_SEEN).length >= RECOVER_PER_HOUR) return same();
+  noteCheckout(tag, RECOVER_SEEN);
+
+  /* Case does not matter (checkout and comp both store it lowercased, but a row typed
+     in by hand might not be), and the two characters that mean something to ILIKE are
+     escaped so the address is matched whole, never as a pattern. */
+  const pattern = email.replace(/[\\%_]/g, c => '\\' + c);
+  const rows = await sb(env, 'pp_licences?buyer_email=ilike.' + encodeURIComponent(pattern) +
+    '&status=eq.paid&order=created_at.desc&limit=' + RECOVER_MAX_PARTIES +
+    '&select=id,code,host_key,buyer_name,buyer_email,party_name,days,is_comp,welcome_sent_at,expires_at');
+
+  for (const l of rows || []) {
+    if (l.expires_at && Date.parse(l.expires_at) < Date.now()) continue;      // that party has run
+    if (l.welcome_sent_at && Date.now() - Date.parse(l.welcome_sent_at) < RESEND_GAP_MS) continue;
+    try {
+      await sendLicenceEmail(env, l);
+    } catch (e) {
+      console.log('recover by email failed for ' + l.code + ': ' + e.message);
+      continue;                                                              // no stamp: it shows as undelivered
+    }
+    await sb(env, 'pp_licences?id=eq.' + encodeURIComponent(l.id), {
+      method: 'PATCH', body: JSON.stringify({ welcome_sent_at: new Date().toISOString() })
+    });
+  }
+  return same();
+}
+
+async function handleWhoami(request, env) {
+  const actor = await adminActor(request, env);
+  if (!actor) return json({ error: 'no' }, 403);
+  if (actor === 'key') return json({ actor: 'key', name: 'Shared key', viaKey: true });
+  const rows = await sb(env, 'pp_admins?mobile=eq.' + encodeURIComponent(actor) + '&select=name,mobile&limit=1');
+  return json({ actor, name: (rows[0] && rows[0].name) || actor, viaKey: false });
+}
+
+async function handleStaffList(request, env) {
+  const actor = await adminActor(request, env);
+  if (!actor) return json({ error: 'no' }, 403);
+  const rows = await sb(env, 'pp_admins?select=mobile,name,active,added_at,added_by,last_seen_at&order=name.asc&limit=200');
+  return json({ staff: rows, you: actor });
+}
+
+async function handleStaffAdd(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const actor = await adminActor(request, env, b.key);
+  if (!actor) return json({ error: 'no' }, 403);
+
+  const mob = e164(b.mobile);
+  if (!mob) return json({ error: 'That does not look like an Australian mobile. Try 04xx xxx xxx.' }, 400);
+  const name = String(b.name || '').trim().slice(0, 60);
+  if (!name) return json({ error: 'Give them a name, so the log means something later.' }, 400);
+
+  /* Re-adding somebody who was switched off should turn them back on rather than
+     fail on the unique index, which is what anyone would expect it to do. */
+  const existing = await sb(env, 'pp_admins?mobile=eq.' + encodeURIComponent(mob) + '&select=mobile&limit=1');
+  if (existing.length) {
+    await sb(env, 'pp_admins?mobile=eq.' + encodeURIComponent(mob), {
+      method: 'PATCH', body: JSON.stringify({ active: true, name })
+    });
+    await logAdmin(env, actor, 'staff-on', mob);
+    return json({ ok: true, mobile: mob, name, reactivated: true });
+  }
+  await sb(env, 'pp_admins', {
+    method: 'POST',
+    body: JSON.stringify({ mobile: mob, name, added_by: actor })
+  });
+  await logAdmin(env, actor, 'staff-add', mob);
+  return json({ ok: true, mobile: mob, name });
+}
+
+async function handleStaffOff(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const actor = await adminActor(request, env, b.key);
+  if (!actor) return json({ error: 'no' }, 403);
+  const mob = e164(b.mobile);
+  if (!mob) return json({ error: 'Which number?' }, 400);
+  /* Switched off, never deleted, so the log still resolves who did what. And you
+     cannot switch yourself off: locking yourself out of the console you are
+     standing in is never what somebody meant to do. */
+  if (mob === actor) return json({ error: 'That is you. Get somebody else to do it.' }, 400);
+  await sb(env, 'pp_admins?mobile=eq.' + encodeURIComponent(mob), {
+    method: 'PATCH', body: JSON.stringify({ active: false })
+  });
+  await logAdmin(env, actor, 'staff-off', mob);
+  return json({ ok: true, mobile: mob });
+}
+
+/* Best effort. A log write that fails must never fail the thing it was logging. */
+async function logAdmin(env, actor, action, target) {
+  try {
+    await sb(env, 'pp_admin_log', {
+      method: 'POST',
+      body: JSON.stringify({ actor, action, detail: String(target || '').slice(0, 120) })
+    });
+  } catch (e) { /* nothing to do about it, and nothing worth breaking over */ }
+}
+
+async function handleStats(request, env) {
+  const u = new URL(request.url);
+  const actor = await adminActor(request, env);
+  if (!actor) return json({ error: 'no' }, 403);
+  const months = Math.min(24, Math.max(1, parseInt(u.searchParams.get('months') || '12', 10)));
+  const since = new Date(Date.now() - months * 31 * 86400e3).toISOString();
+  const now = Date.now();
+
+  /* Everything still alive, plus everything in the window, in one read. A licence
+     that was paid for eleven months ago and has still not been started is exactly
+     the one worth chasing, so the "expiring" side cannot be limited to the
+     reporting window. */
+  const rows = await sb(env, 'pp_licences?status=in.(paid,refunded)' +
+    '&select=id,code,days,price_cents,is_comp,paid_at,activated_at,expires_at,refunded_at,' +
+    'buyer_name,buyer_email,party_name,nudged_at,status&limit=5000');
+
+  const inWindow = (iso) => !!iso && iso >= since;
+  /* HOW LONG AN UNSTARTED CODE KEEPS. lib/pp-licence.js owns this number and
+     expires codes by it; these two places used to write 365 again by hand. Change
+     the library to 180 and the code would have died at 180 while this still chased
+     at 365: the warning would fire six months after the thing it warns about, and
+     nobody would get the warning they were owed. One answer per question. */
+  const UNUSED_MS = PPLicence.UNUSED_EXPIRY_DAYS * 86400e3;
+
+  /* Bought, never started. The licence keeps for a year from purchase, so this is
+     the clock that decides who gets chased. */
+  const shelfLife = (r) => (r.paid_at ? Date.parse(r.paid_at) + UNUSED_MS : null);
+
+  const live = [], upcoming = [], expiring = [];
+  let ranTotal = 0, compsTotal = 0, paidTotal = 0;
+
+  rows.forEach(r => {
+    if (r.status === 'refunded') return;                 // counted in the money, not the activity
+    if (r.is_comp) compsTotal++; else paidTotal++;
+    if (r.activated_at) {
+      ranTotal++;
+      if (r.expires_at && Date.parse(r.expires_at) > now) live.push(r);
+    } else if (r.paid_at) {
+      const gone = shelfLife(r);
+      upcoming.push(r);
+      if (gone && gone - now < 30 * 86400e3 && gone > now) expiring.push(r);
+    }
+  });
+  expiring.sort((a, b) => shelfLife(a) - shelfLife(b));
+
+  const slim = (r) => ({
+    code: r.code, name: r.buyer_name, email: r.buyer_email,
+    party: r.party_name || null, comp: !!r.is_comp,
+    expiresOn: shelfLife(r) ? new Date(shelfLife(r)).toISOString().slice(0, 10) : null,
+    daysLeft: shelfLife(r) ? Math.max(0, Math.round((shelfLife(r) - now) / 86400e3)) : null,
+    nudgedAt: r.nudged_at || null
+  });
+
+  /* ---- the money, by month and by quarter ---- */
+  const m = {};
+  const monthKey = (iso) => (iso || '').slice(0, 7);                       // YYYY-MM
+  const quarterKey = (iso) => {
+    if (!iso) return '';
+    const y = iso.slice(0, 4), mo = parseInt(iso.slice(5, 7), 10);
+    return y + '-Q' + Math.ceil(mo / 3);
+  };
+  const blank = (k) => ({ period: k, sold: 0, revenueCents: 0, refunds: 0, refundedCents: 0,
+                          netCents: 0, comps: 0, ran: 0, oneDay: 0, threeDay: 0 });
+  const row = (k) => (m[k] = m[k] || blank(k));
+
+  rows.forEach(r => {
+    if (inWindow(r.paid_at)) {
+      const b = row(monthKey(r.paid_at));
+      if (r.is_comp) b.comps++;
+      else { b.sold++; b.revenueCents += (r.price_cents || 0); }
+    }
+    /* A refund lands in the month the money went back, not the month it came in,
+       so a month already reported does not quietly change after the fact. */
+    if (inWindow(r.refunded_at)) {
+      const b = row(monthKey(r.refunded_at));
+      b.refunds++; b.refundedCents += (r.price_cents || 0);
+    }
+    if (inWindow(r.activated_at)) {
+      const b = row(monthKey(r.activated_at));
+      b.ran++;
+      if (r.days === 3) b.threeDay++; else b.oneDay++;
+    }
+  });
+
+  const money = (c) => '$' + (c / 100).toFixed(2);
+  const dress = (b) => {
+    b.netCents = b.revenueCents - b.refundedCents;
+    return { ...b, revenue: money(b.revenueCents), refunded: money(b.refundedCents), net: money(b.netCents) };
+  };
+
+  const monthList = Object.keys(m).sort().reverse().map(k => dress(m[k]));
+
+  const q = {};
+  Object.keys(m).forEach(k => {
+    const key = quarterKey(k + '-01');
+    const t = (q[key] = q[key] || blank(key));
+    ['sold','revenueCents','refunds','refundedCents','comps','ran','oneDay','threeDay']
+      .forEach(f => { t[f] += m[k][f]; });
+  });
+  const quarterList = Object.keys(q).sort().reverse().map(k => dress(q[k]));
+
+  return json({
+    now: {
+      runningNow: live.length,                  // a party is on right now
+      upcoming: upcoming.length,                // bought, not started yet
+      upcomingPaid: upcoming.filter(r => !r.is_comp).length,
+      upcomingComp: upcoming.filter(r => r.is_comp).length,
+      ranTotal, paidTotal, compsTotal,
+      expiring30: expiring.length,
+      neverNudged: expiring.filter(r => !r.nudged_at).length
+    },
+    expiring: expiring.slice(0, 100).map(slim),
+    months: monthList,
+    quarters: quarterList,
+    licencesConsidered: rows.length
+  });
+}
+
+/* ============================================================== routes ===== */
+
+/* POST /checkout
+   Creates the PENDING licence first, then the Stripe session pointing at it.
+   That order matters: a session with no licence row behind it is a customer who
+   paid for nothing, and we would have no record to fix it from. */
+/* Per address, not per person: the address is all an anonymous checkout has. Kept as a keyed hash
+   (never the address itself), so the licence table holds nothing that says where a buyer was.
+   Counted from the table when migration 16 has added the column, and from this Worker's memory
+   until then (weaker, since Cloudflare runs more than one copy, but not nothing). */
+const CHECKOUT_PER_HOUR = 6;
+const CHECKOUT_SEEN = new Map();
+async function checkoutIpTag(env, request) {
+  const ip = String((request.headers && request.headers.get && request.headers.get('CF-Connecting-IP')) || '').trim();
+  if (!ip) return null;
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode('pp-checkout:' + (env.SUPABASE_SERVICE_KEY || '')),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const mac = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(ip));
+  return [...new Uint8Array(mac)].map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 24);
+}
+/* `seen` is which memory to count in: checkouts by default, and /licence/recover keeps its
+   own (RECOVER_SEEN), so a buyer asking for their email again does not eat into the six
+   checkouts an hour their household is allowed. */
+function recentInMemory(tag, seen = CHECKOUT_SEEN) {
+  const cut = Date.now() - 3600e3;
+  const list = (seen.get(tag) || []).filter(t => t > cut);
+  seen.set(tag, list);
+  return list;
+}
+function noteCheckout(tag, seen = CHECKOUT_SEEN) {
+  if (!tag) return;
+  const list = recentInMemory(tag, seen); list.push(Date.now());
+  if (seen.size > 5000) seen.clear();     // a memory guard, never a reason to refuse
+}
+async function checkoutsFrom(env, tag) {
+  const mem = recentInMemory(tag).length;
+  try {
+    const since = new Date(Date.now() - 3600e3).toISOString();
+    const rows = await sb(env, 'pp_licences?checkout_ip=eq.' + encodeURIComponent(tag) +
+      '&created_at=gt.' + encodeURIComponent(since) + '&select=id&limit=' + (CHECKOUT_PER_HOUR + 1));
+    return Math.max(mem, (rows || []).length);
+  } catch (e) {
+    if (!missingColumn(e)) throw e;
+    return mem;
+  }
+}
+
+async function handleCheckout(request, env) {
+  const b = await request.json().catch(() => ({}));
+
+  const name  = String(b.name  || '').trim().slice(0, 120);
+  const email = String(b.email || '').trim().toLowerCase().slice(0, 200);
+  const mobile = b.mobile ? String(b.mobile).trim().slice(0, 40) : null;
+  const partyName = b.party ? String(b.party).trim().slice(0, 60) : null;
+  const days  = Number(b.days);
+
+  if (!name)  return json({ error: 'We need a name for the licence.' }, 400);
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return json({ error: 'That email does not look right.' }, 400);
+
+  let plan;
+  try { plan = PPLicence.plan(days); }
+  catch (e) { return json({ error: String(e.message || e) }, 400); }
+
+  const priceId = plan.days === 3 ? env.STRIPE_PRICE_3DAY : env.STRIPE_PRICE_1DAY;
+  const priceCents = plan.cents;
+
+  /* THE SAME BUYER PRESSING PAY AGAIN GETS THE SAME CHECKOUT. The Stripe idempotency key below is
+     built from the licence id, and every call used to insert a NEW pending licence first, so the key
+     was different every time and never matched a retry (review, 28 Sep 2026). A buyer who tapped
+     twice, or whose network retried, got two orders and two Stripe sessions. Now: the same email,
+     name and plan within 30 minutes, whose Stripe session is still open, is sent back to it. */
+  const since = new Date(Date.now() - 30 * 60e3).toISOString();
+  const recent = await sb(env, 'pp_licences?buyer_email=eq.' + encodeURIComponent(email) +
+    '&status=eq.pending&days=eq.' + plan.days + '&created_at=gt.' + encodeURIComponent(since) +
+    '&stripe_session_id=not.is.null&order=created_at.desc&limit=1&select=id,code,buyer_name,stripe_session_id');
+  if (recent.length && recent[0].buyer_name === name) {
+    try {
+      const r = await fetch('https://api.stripe.com/v1/checkout/sessions/' + encodeURIComponent(recent[0].stripe_session_id),
+        { headers: { authorization: 'Bearer ' + env.STRIPE_SECRET_KEY } });
+      const sess = r.ok ? await r.json() : null;
+      if (sess && sess.status === 'open' && sess.url) return json({ url: sess.url, code: recent[0].code, reused: true });
+    } catch (e) { /* could not ask Stripe: fall through and make a fresh checkout */ }
+  }
+
+  /* A LIMIT ON NEW CHECKOUTS FROM ONE PLACE (14 Oct 2026 audit). Every call with a new name or
+     email made a pending licence AND a live Stripe session, with nothing to stop a script making
+     thousands. A person retrying is sent back to their own session above and never reaches this;
+     CHECKOUT_PER_HOUR new ones from one address in an hour is more than any household books. */
+  const ipTag = await checkoutIpTag(env, request);
+  if (ipTag && (await checkoutsFrom(env, ipTag)) >= CHECKOUT_PER_HOUR) {
+    return json({ error: 'Too many bookings have been started from here in the last hour. ' +
+                         'Try again a bit later, or email hello@partyplay.com.au and we will sort it.' }, 429);
+  }
+
+  // A code nobody else holds. Six characters is 29^6, so a collision is rare, but
+  // rare is not never and a duplicate code would put two parties in one room.
+  let code = null;
+  for (let i = 0; i < 6 && !code; i++) {
+    const c = makeCode();
+    const clash = await sb(env, 'pp_licences?code=eq.' + c + '&select=id');
+    if (!clash.length) code = c;
+  }
+  if (!code) return json({ error: 'Could not allocate a code. Try again.' }, 503);
+
+  /* Recorded on the row now, acted on only AFTER they have paid. Signing somebody
+     up here used to happen on the anonymous checkout call, so anyone could POST a
+     victim's address with optin:true and quietly undo their unsubscribe. The flag
+     rides along on the pending row and the webhook is what acts on it.
+
+     It has to be declared HERE, above the insert that reads it. It was below, and
+     const in the temporal dead zone throws rather than reading as undefined, so
+     every single checkout answered 500 and nobody could buy anything. */
+  const wantsMarketing = b.optin === true;
+
+  const newRow = {
+    code, host_key: makeHostKey(), buyer_name: name, buyer_email: email, buyer_mobile: mobile,
+    party_name: partyName,
+    days: plan.days,
+    marketing_optin: wantsMarketing,
+    price_cents: priceCents, status: 'pending'
+  };
+  if (ipTag) newRow.checkout_ip = ipTag;
+  const insertLicence = () => sb(env, 'pp_licences', {
+    method: 'POST',
+    headers: { prefer: 'return=representation' },
+    body: JSON.stringify([newRow])
+  });
+  let rows;
+  try { rows = await insertLicence(); }
+  catch (e) {
+    // migration 16 not run yet: the limit falls back to this Worker's memory, the sale goes ahead
+    if (!newRow.checkout_ip || !missingColumn(e)) throw e;
+    delete newRow.checkout_ip;
+    rows = await insertLicence();
+  }
+  noteCheckout(ipTag);
+  const licence = rows[0];
+
+  const site = (env.SITE_ORIGIN || '').replace(/\/$/, '');
+  const session = await stripe(env, 'checkout/sessions', {
+    mode: 'payment',                                  // NOT subscription. One party, one charge.
+    /* CARD ONLY (Dean, 27 Sep 2026). Without this Stripe offers whatever the dashboard has
+       switched on, including bank payments that take days to clear, and the buyer landed on
+       a page saying their code had been emailed while nothing had been paid yet. Apple Pay
+       and Google Pay ride on card, so they still show. */
+    'payment_method_types[0]': 'card',
+    'line_items[0][price]': priceId,
+    'line_items[0][quantity]': '1',
+    customer_email: email,
+    client_reference_id: licence.id,
+    'metadata[licence_id]': licence.id,
+    'metadata[code]': code,
+    // So a discount code from a follow-up email, or a competition winner's code,
+    // works at checkout without needing another deploy every time.
+    allow_promotion_codes: 'true',
+    success_url: site + '/booked?code=' + code,
+    cancel_url: site + '/start',
+  }, 'pp-checkout-' + licence.id);   // one party, one Checkout: a retry or double tap gets the same session back
+  /* The comment here said Stripe deduped this and that "the header form is set below via a
+     second call parameter". There was no such parameter and no header (audit, 25 Sep 2026).
+     Now there is, keyed on the licence, which is what one purchase is. */
+
+  await sb(env, 'pp_licences?id=eq.' + licence.id, {
+    method: 'PATCH',
+    body: JSON.stringify({ stripe_session_id: session.id })
+  });
+
+  return json({ url: session.url, code });
+}
+
+async function recordSubscriber(env, email, name, mobile) {
+  /* Express consent, recorded with a timestamp, and never defaulted on. If they
+     are already on the list and previously unsubscribed, this re-subscribes them,
+     which is correct: they have just asked again. */
+  const now = new Date().toISOString();
+  await sb(env, 'pp_subscribers?on_conflict=email', {
+    method: 'POST',
+    headers: { prefer: 'resolution=merge-duplicates' },
+    body: JSON.stringify([{
+      email, name: name || null, mobile: mobile || null,
+      opted_in: true, opted_in_at: now, source: 'checkout', unsubscribed_at: null
+    }])
+  });
+}
+
+/* POST /stripe/webhook */
+async function handleWebhook(request, env) {
+  const raw = await request.text();
+  const ok = await stripeVerify(env, raw, request.headers.get('stripe-signature'));
+  if (!ok) return json({ error: 'bad signature' }, 400);
+
+  const evt = JSON.parse(raw);
+  /* THE OTHER HALF OF THE DELAYED-PAYMENT STORY.
+
+     The comment below is right that BECS and bank transfer complete the session
+     as 'unpaid' and must not be granted a licence. What was missing is the event
+     Stripe sends DAYS LATER to say the money arrived. Only
+     checkout.session.completed was acted on, so every other event - including
+     async_payment_succeeded - was answered with {ok:true, ignored} and dropped.
+
+     What that costs: an Australian buyer picks bank transfer at the Stripe page,
+     the money leaves their account, and the licence sits at 'pending' forever.
+     No code, no host key, no welcome email. The admin console labels the row
+     "somebody who started checkout and never finished", so whoever answers the
+     phone is misdirected too, and handleStats never counts the revenue, so the
+     loss is invisible from the inside.
+
+     async_payment_succeeded arrives with payment_status 'paid' and the same
+     metadata, so it can take the identical path: the PATCH below is filtered on
+     status=eq.pending, which makes it idempotent whichever event gets there
+     first.
+
+     And a payment that FAILS or a session that EXPIRES marks the row cancelled,
+     so pending rows stop accumulating forever and support can tell "never paid"
+     from "paid and waiting". */
+  const GRANTS = { 'checkout.session.completed': 1, 'checkout.session.async_payment_succeeded': 1 };
+  const KILLS  = { 'checkout.session.async_payment_failed': 1, 'checkout.session.expired': 1 };
+
+  if (KILLS[evt.type]) {
+    const dead = evt.data.object;
+    const deadId = (dead.metadata && dead.metadata.licence_id) || dead.client_reference_id;
+    if (deadId) {
+      await sb(env, 'pp_licences?id=eq.' + deadId + '&status=eq.pending', {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'cancelled' }),
+      });
+    }
+    return json({ ok: true, cancelled: evt.type });
+  }
+  if (!GRANTS[evt.type]) return json({ ok: true, ignored: evt.type });
+
+  const s = evt.data.object;
+  const licenceId = (s.metadata && s.metadata.licence_id) || s.client_reference_id;
+  if (!licenceId) return json({ ok: true, ignored: 'no licence id' });
+
+  /* Stripe fires checkout.session.completed for delayed methods too. BECS and
+     bank transfer are on by default for Australian dynamic payment methods, and
+     they complete the session with payment_status 'unpaid' while the money is
+     still in transit. Marking those paid hands out a free licence. */
+  if (s.payment_status && s.payment_status !== 'paid' && s.payment_status !== 'no_payment_required') {
+    return json({ ok: true, pending: s.payment_status });
+  }
+
+  /* IDEMPOTENT. Stripe retries, and a retry must not send a second licence email
+     or overwrite paid_at. The filter does the work: only a row still pending is
+     updated, so a second delivery patches nothing and returns quietly. */
+  const updated = await sb(env, 'pp_licences?id=eq.' + licenceId + '&status=eq.pending', {
+    method: 'PATCH',
+    headers: { prefer: 'return=representation' },
+    body: JSON.stringify({
+      status: 'paid',
+      paid_at: new Date().toISOString(),
+      stripe_payment_intent: s.payment_intent || null
+    })
+  });
+  if (!updated.length) return json({ ok: true, already: true });
+
+  /* The marketing consent was captured at checkout and only acted on now, once
+     money has actually changed hands. */
+  if (updated[0].marketing_optin) {
+    try { await recordSubscriber(env, updated[0].buyer_email, updated[0].buyer_name, updated[0].buyer_mobile); }
+    catch (e) { console.log('subscriber write failed: ' + e.message); }
+  }
+
+  try {
+    await sendLicenceEmail(env, updated[0]);
+    await sb(env, 'pp_licences?id=eq.' + encodeURIComponent(updated[0].id), {
+      method: 'PATCH', body: JSON.stringify({ welcome_sent_at: new Date().toISOString() })
+    });
+  }
+  catch (e) { console.log('licence email failed for ' + updated[0].code + ': ' + e.message); }
+
+  return json({ ok: true });
+}
+
+/* GET /licence?code=XXXXXX
+   What the host console and the player page both ask. Deliberately returns the
+   window and whether it is open, never the buyer's details: a guest holds this
+   code too, and it is not their business who paid. */
+async function handleLicence(request, env) {
+  const code = normaliseCode(new URL(request.url).searchParams.get('code'));
+  if (!CODE_RE.test(code)) return json({ error: 'That code does not look right.' }, 400);
+
+  const rows = await sb(env, 'pp_licences?code=eq.' + code +
+    '&status=eq.paid&select=code,party_name,days,activated_at,expires_at');
+  if (!rows.length) return json({ error: 'No party with that code.' }, 404);
+
+  const l = rows[0];
+  const lic = licWindow(l);
+  return json({
+    code: l.code, party: l.party_name, days: l.days,
+    startsAt: l.activated_at, endsAt: l.expires_at,
+    live: PPLicence.isLive(lic),
+    /* Three states now, and "ready" is the new one: bought, built, not started.
+       That is where a licence spends most of its life. */
+    status: !l.activated_at ? 'ready' : (PPLicence.isLive(lic) ? 'live' : 'finished'),
+    timeLeft: l.activated_at ? PPLicence.timeLeft(lic) : null
+  });
+}
+
+/* POST /licence/start   { code, key }
+   The moment the clock starts. Guarded by the host key, because a guest holding
+   the join code must not be able to burn somebody's night.
+
+   IDEMPOTENT: starting an already started licence returns the same window rather
+   than a second one. A host who taps twice, or whose tablet retries on bad wifi,
+   must not lose hours to it. */
+async function handleStart(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const l = await requireHost(env, b.code, b.key);
+
+  if (l.activated_at) {
+    const lic = licWindow(l);
+    return json({ ok: true, already: true, startsAt: l.activated_at, endsAt: l.expires_at,
+                  live: PPLicence.isLive(lic), timeLeft: PPLicence.timeLeft(lic) });
+  }
+  if (Date.now() > PPLicence.unusedExpiry(Date.parse(l.created_at))) {
+    return json({ error: 'This licence was bought over a year ago and has lapsed. Get in touch and we will sort it out.' }, 410);
+  }
+
+  const w = PPLicence.activate(l.days);
+  /* The filter is the record's own protection: only a row still unstarted is
+     written, so two taps arriving together cannot produce two different clocks. */
+  await sb(env, 'pp_licences?id=eq.' + l.id + '&activated_at=is.null', {
+    method: 'PATCH',
+    body: JSON.stringify({
+      activated_at: w.startsAtIso,
+      expires_at: w.endsAtIso,
+      activated_days: l.days,
+      activated_note: 'host pressed start and confirmed'
+    })
+  });
+  return json({ ok: true, startsAt: w.startsAtIso, endsAt: w.endsAtIso,
+                live: true, timeLeft: PPLicence.timeLeft(w) });
+}
+
+/* POST /join   { code, nickname } */
+async function handleJoin(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const code = normaliseCode(b.code);
+  const nickname = String(b.nickname || '').trim().slice(0, 24);
+  if (!CODE_RE.test(code)) return json({ error: 'That code does not look right.' }, 400);
+  if (!nickname) return json({ error: 'Put in a name so everyone knows who you are.' }, 400);
+
+  const rows = await sb(env, 'pp_licences?code=eq.' + code + '&status=eq.paid&select=id,activated_at,expires_at');
+  if (!rows.length) return json({ error: 'No party with that code.' }, 404);
+  const l = rows[0];
+
+  if (!l.activated_at) return json({ error: 'This party has not been started yet. Ask whoever is running it to press start.' }, 403);
+  if (!PPLicence.isLive(licWindow(l))) return json({ error: 'This party has finished.' }, 403);
+
+  /* TWO PEOPLE CALLED SAM.
+     At a party of twenty this is not unusual, and until now both joined as "Sam".
+     Two identical rows on the leaderboard and nobody knows which is theirs.
+
+     Worse, charades and Who am I decide whose phone shows the secret by matching
+     the name: the word goes out tagged "actor: Sam", and every phone belonging to
+     a Sam displayed it. The one game whose whole point is that exactly one person
+     sees something was broken by two guests sharing a name.
+
+     So the second Sam becomes "Sam 2". The reply carries the name we settled on
+     and the phone stores THAT, so it knows itself by a name nobody else has. */
+  /* THE SAME GUEST COMING BACK KEEPS THEIR PLACE. The fifty cap counts rows, and every
+     join made a new one: a guest who pressed "Not this party?" and typed the same code, or
+     whose phone had forgotten them, used up a second place, so a party of forty could be
+     turned away as full (audit, 27 Sep 2026). The phone now sends the token it last had;
+     if that token is a player at THIS party, they are the same person and get the same row. */
+  const prev = String(b.prev || '');
+  let me = null;
+  if (/^[A-Z0-9]{24}$/.test(prev)) {
+    const mine = await sb(env, 'pp_players?licence_id=eq.' + encodeURIComponent(l.id) +
+      '&token=eq.' + encodeURIComponent(prev) + '&select=id,nickname&limit=1');
+    me = (mine && mine[0]) || null;
+  }
+
+  /* THE PHONE'S KEY, so the console can tell this guest's messages from anybody else's (15 Oct
+     2026, lib/pp-phonekey.js). Only the fingerprint is kept; the console checks every message
+     against the public key the message itself carries. One pid, one guest: a pid already held by
+     somebody else at this party is not taken over, it is ignored. Read with the column if it is
+     there, and without it if migration 16 has not been run yet, because a join must never fail
+     for a column. */
+  /* rejoin is a phone that was already in, telling us its key: it must never become a second guest. */
+  if (b.rejoin === true && !me) return json({ error: 'That phone is not a guest at this party.' }, 404);
+  const pid = PID_RE.test(String(b.pid || '')) ? String(b.pid) : null;
+  const taken = await sb(env, 'pp_players?licence_id=eq.' + encodeURIComponent(l.id) + '&select=id,nickname,pid')
+    .catch(e => missingColumn(e) ? sb(env, 'pp_players?licence_id=eq.' + encodeURIComponent(l.id) + '&select=id,nickname') : Promise.reject(e));
+  const pidFree = pid && !(taken || []).some(r => r.pid === pid && (!me || r.id !== me.id));
+  const mePid = me ? ((taken || []).find(r => r.id === me.id) || {}).pid : null;
+  const used = new Set((taken || []).filter(r => !me || r.id !== me.id)
+                                    .map(r => String(r.nickname || '').toLowerCase()));
+  let name = nickname;
+  if (used.has(name.toLowerCase())) {
+    for (let n = 2; n <= 60; n++) {
+      const tryName = nickname.slice(0, 21) + ' ' + n;
+      if (!used.has(tryName.toLowerCase())) { name = tryName; break; }
+    }
+  }
+
+  if (me) {
+    if (name !== me.nickname) {
+      await sb(env, 'pp_players?id=eq.' + encodeURIComponent(me.id), {
+        method: 'PATCH', body: JSON.stringify({ nickname: name })
+      });
+    }
+    /* A phone that joined before keys existed, or lost its key, tells us its key now. */
+    if (pidFree && mePid !== pid) {
+      try {
+        await sb(env, 'pp_players?id=eq.' + encodeURIComponent(me.id), { method: 'PATCH', body: JSON.stringify({ pid }) });
+      } catch (e) { if (!missingColumn(e)) throw e; }
+    }
+    return json({ ok: true, token: prev, nickname: name, back: true });
+  }
+
+  const token = makeCode(24);
+  try {
+    const row = { licence_id: l.id, nickname: name, token };
+    if (pidFree) row.pid = pid;
+    try {
+      await sb(env, 'pp_players', { method: 'POST', body: JSON.stringify([row]) });
+    } catch (e) {
+      if (!row.pid || !missingColumn(e)) throw e;
+      delete row.pid;
+      await sb(env, 'pp_players', { method: 'POST', body: JSON.stringify([row]) });
+    }
+  } catch (e) {
+    /* The cap is a database trigger (partyplay-01-core.sql), so this is where it surfaces.
+       Say it in words a guest can act on rather than showing them a constraint error.
+
+       MATCH ON "capped at", NOT ON THE NUMBER. This read /50 players/i, which couples the
+       friendly message to the figure: raise the cap in the trigger and its message becomes
+       "capped at 60 players", this stops matching, the throw below fires, and a guest gets a
+       raw constraint error at the exact moment the party fills up. The number is then written
+       out of PPLicence.PLAYER_CAP so the wording cannot drift from the library either.
+       Found 12 Sep 2026; release-check now fails if the trigger, the library and terms.html
+       stop agreeing. */
+    if (/capped at/i.test(e.message)) {
+      return json({ error: 'This party is full, it is capped at ' +
+                           PPLicence.PLAYER_CAP + ' players.' }, 409);
+    }
+    throw e;
+  }
+  return json({ ok: true, token, nickname: name });
+}
+
+/* ------------------------------------------------- who is in the room ----
+ * The realtime channel is open to anybody holding the code on the telly, so what is SAID on it
+ * proves nothing (14 Oct 2026 audit). These routes are what the console checks it against.
+ * ------------------------------------------------------------------------ */
+const PID_RE = /^k1_[A-Za-z0-9_-]{32}$/;
+const KID_RE = /^p1_[A-Za-z0-9_-]{8,24}$/;
+
+/* PostgREST names the column when it refuses one it does not have (42703 on a read, PGRST204 on a
+   write). Migration 16 adds them; until it has been run, everything that uses them carries on
+   without them rather than failing a join or a checkout. */
+function missingColumn(e) {
+  return !!(e && /42703|PGRST204|column/i.test(String(e.message || '')));
+}
+
+/* lib/pp-ticket.js seedFrom, the same FNV-1a, held identical by pp-realtime-auth.test.js. The
+   console gets this for each guest and builds their ticket from it; the token itself never
+   leaves here, because it is what lets a phone upload to the album. */
+function ticketSeed(token) {
+  let h = 2166136261;
+  const s = String(token);
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+
+/* GET /party/players?code=&key=
+   The guests the SERVER let in, for the console to admit and nobody else. The console used to add
+   anyone who said hello on the channel, so the fifty cap on /join meant nothing to the room and a
+   made-up name went straight onto the telly. Host key only: it is the guest list. */
+async function handlePartyPlayers(request, env) {
+  const u = new URL(request.url);
+  const l = await requireHost(env, u.searchParams.get('code'), u.searchParams.get('key'));
+  let rows;
+  try {
+    rows = await sb(env, 'pp_players?licence_id=eq.' + encodeURIComponent(l.id) +
+      '&order=joined_at.asc,id.asc&limit=200&select=nickname,pid,token');
+  } catch (e) {
+    if (!missingColumn(e)) throw e;
+    rows = await sb(env, 'pp_players?licence_id=eq.' + encodeURIComponent(l.id) +
+      '&order=joined_at.asc,id.asc&limit=200&select=nickname,token');
+  }
+  return json({ players: (rows || []).map(r => ({ name: r.nickname, pid: r.pid || null, tseed: ticketSeed(r.token) })) });
+}
+
+/* GET /party/signing/public?code=
+   The party's public key, for the telly and the phones. Anybody may have it: it can only check a
+   signature, never make one. A party with no key yet (or a database without migration 16) says
+   so, and the screens then render everything, exactly as before signing existed. */
+async function handleSigningPublic(request, env) {
+  const code = normaliseCode(new URL(request.url).searchParams.get('code'));
+  if (!CODE_RE.test(code)) return json({ exists: false });
+  let rows = [];
+  try { rows = await sb(env, 'pp_licences?code=eq.' + code + '&status=eq.paid&select=sign_kid,sign_public_jwk&limit=1'); }
+  catch (e) { if (!missingColumn(e)) throw e; }
+  const r = rows[0];
+  if (!r || !r.sign_kid || !r.sign_public_jwk) return json({ exists: false });
+  return json({ exists: true, kid: r.sign_kid, public_jwk: r.sign_public_jwk });
+}
+
+function signingReply(row) {
+  if (!row || !row.sign_kid || !row.sign_private_jwk || !row.sign_public_jwk) return { exists: false };
+  return { exists: true, kid: row.sign_kid, public_jwk: row.sign_public_jwk, private_jwk: row.sign_private_jwk };
+}
+
+/* POST /party/signing/private  { code, key }
+   Both halves, for a console. Host key only, the same lock as editing the games. */
+async function handleSigningPrivate(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const l = await requireHost(env, b.code, b.key);
+  return json(signingReply(l));
+}
+
+/* POST /party/signing/mint  { code, key, kid, public_jwk, private_jwk }
+   The first console mints the pair in the browser (a Worker cannot generate an ECDSA key) and
+   leaves it here. Only a party with NO key takes one, so two consoles opening together cannot end
+   up with two keys: the second is handed the first's, and both sign the same way. */
+function okJwk(j, priv) {
+  return !!(j && typeof j === 'object' && j.kty === 'EC' && j.crv === 'P-256' &&
+            typeof j.x === 'string' && typeof j.y === 'string' && j.x.length < 100 && j.y.length < 100 &&
+            (priv ? (typeof j.d === 'string' && j.d.length < 100) : j.d === undefined));
+}
+async function handleSigningMint(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const l = await requireHost(env, b.code, b.key);
+  if (signingReply(l).exists) return json(signingReply(l));
+  if (!KID_RE.test(String(b.kid || '')) || !okJwk(b.public_jwk, false) || !okJwk(b.private_jwk, true) ||
+      b.public_jwk.x !== b.private_jwk.x || b.public_jwk.y !== b.private_jwk.y) {
+    return json({ error: 'That is not a key this party can use.' }, 400);
+  }
+  const keep = (j, priv) => {
+    const o = { kty: 'EC', crv: 'P-256', x: j.x, y: j.y };
+    if (priv) o.d = j.d;
+    return o;
+  };
+  try {
+    await sb(env, 'pp_licences?id=eq.' + encodeURIComponent(l.id) + '&sign_kid=is.null', {
+      method: 'PATCH',
+      body: JSON.stringify({ sign_kid: String(b.kid), sign_public_jwk: keep(b.public_jwk, false), sign_private_jwk: keep(b.private_jwk, true) })
+    });
+  } catch (e) {
+    if (missingColumn(e)) return json({ exists: false, why: 'not set up yet' });
+    throw e;
+  }
+  const rows = await sb(env, 'pp_licences?id=eq.' + encodeURIComponent(l.id) + '&select=sign_kid,sign_public_jwk,sign_private_jwk&limit=1');
+  return json(signingReply(rows[0]));
+}
+
+async function sendLicenceEmail(env, l) {
+  const site = (env.SITE_ORIGIN || '').replace(/\/$/, '');
+  const plan = PPLicence.plan(l.days).label;
+  const host = site + '/host?code=' + l.code + '&key=' + l.host_key;
+
+  const body =
+    '<p>Thanks ' + escapeHtml(l.buyer_name) + '. ' +
+    (l.is_comp ? 'This one is on us. ' : '') +
+    'Everything you need is below, and none of it has to happen today.</p>' +
+    emailCode(l.code) +
+    '<p>You have <b>' + plan + '</b> of play. <b>The clock does not start until you press start on the ' +
+    'night</b>, so there is no date to get wrong, and your licence keeps for 12 months.</p>' +
+    emailButton(host, 'Build your games') +
+    '<p style="margin-top:18px;font-size:14.5px;color:' + MUTE + '">That link is yours alone and it is the ' +
+    'only way back in, so keep this email. Anyone you forward it to can change your games.</p>' +
+    emailGuide(site) +
+    '<h2 style="margin:26px 0 10px;font-family:Helvetica,Arial,sans-serif;font-size:19px;color:' + INK +
+    '">Everyone&rsquo;s photos, in one place</h2>' +
+    '<p style="margin:0">There is a camera on every guest&rsquo;s phone from the moment they join, and a ' +
+    'video button under it for a 30 second message. It all lands in one album you can download or share, ' +
+    'and the whole lot is deleted 30 days after your party.</p>';
+
+  await sendEmail(env, {
+    from: 'PartyPlay <hello@send.partyplay.com.au>',
+    /* REPLIES HAVE TO GO SOMEWHERE A PERSON LOOKS. Without this a reply goes back to
+       hello@send.partyplay.com.au, the Resend sending subdomain, which has no MX record
+       at all: the customer's reply is undeliverable and bounces to THEM. The licence
+       email tells every buyer "Just reply to this email, it comes straight to us", so
+       the one instruction we give a stuck customer was the one that could not work.
+       VenuePlay's sender has carried reply_to since it was written; this one never did.
+       Found 17 Sep 2026 by reading the DNS rather than the code. */
+    reply_to: 'hello@partyplay.com.au',
+    to: [l.buyer_email],
+    subject: l.is_comp ? 'A party on us: your code is ' + l.code : 'Your party code is ' + l.code,
+    html: emailShell({
+      site: site,
+      preview: 'Your code is ' + l.code + '. Build your games whenever suits, nothing is ticking yet.',
+      heading: l.is_comp ? 'A party, on us' : 'You are all set',
+      body: body,
+      foot: '<p style="margin:0">Stuck on anything? Just reply to this email, it comes straight to us.</p>'
+    })
+  });
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+}
+
+/* Fail loudly on a missing secret, at the first request, naming the one that is
+   missing. Without this a half-configured Worker looks fine until somebody tries
+   to pay, and then throws something unreadable from inside Stripe. */
+const REQUIRED = ['STRIPE_SECRET_KEY','STRIPE_WEBHOOK_SECRET','STRIPE_PRICE_1DAY',
+                  'STRIPE_PRICE_3DAY','SUPABASE_URL','SUPABASE_SERVICE_KEY','SITE_ORIGIN'];
+
+function missingSecrets(env) {
+  return REQUIRED.filter(k => !env[k]);
+}
+
+export default {
+  // exposed so the test runner can check the allow-list directly
+  _allowedOrigin: allowedOrigin,
+
+  /* NOTHING RAN ON A SCHEDULE.
+
+     Four jobs in this file described themselves as crons. None of them was one:
+     this Worker exported fetch and nothing else, so all four were buttons in
+     admin.html that happened when somebody remembered to press them. The album
+     link a guest asked for at the party, the follow-up, the expiry reminder, and
+     the one that is not a nicety at all: privacy.html and terms.html both tell
+     every guest "the whole album is deleted 30 days after the party ends", and
+     the only thing that deletes anything is the sweep below.
+
+     A HANDLER IS NOT A SCHEDULE. This code does nothing until a Cron Trigger is
+     added in the Cloudflare dashboard: the Worker, Settings, Triggers, Cron
+     Triggers, Add Cron Trigger. One entry is enough and the value to type is
+
+         0,15,30,45 * * * *
+
+     which is every fifteen minutes, written the long way round because the
+     shorthand for it contains a star followed by a slash and would close this
+     comment. Every job here is idempotent and cheap, so one expression is
+     enough, and a single expression cannot be half set up.
+     Whatever expression is used, every tick does the same thing, so there is no
+     schedule to get wrong.
+
+     THE ONLY THING THAT WATCHES THE CLOCK is what time it is in Brisbane, and
+     only for the two jobs that email somebody who is not waiting for it.
+     Queensland has no daylight saving, so Brisbane is UTC+10 all year. An album
+     a guest asked for goes out the moment their party ends even if that is 2am,
+     because they asked for it; a "how was the party" does not. */
+  async scheduled(event, env, ctx) {
+    const missing = missingSecrets(env);
+    if (missing.length) {
+      console.log('scheduled: this Worker is not configured, missing ' + missing.join(', '));
+      return;
+    }
+    const brisbane = (new Date().getUTCHours() + 10) % 24;
+
+    /* albums: asked for at the party, and the album expires. Every tick.
+       photos: the 30 day promise on privacy.html and terms.html. Every tick.
+       The other two email somebody who is not waiting for it, so they keep
+       daytime hours. */
+    const jobs = [['albums', runSendAlbums], ['photos', runPhotoSweep]];
+    if (brisbane >= 9 && brisbane < 20) {
+      jobs.push(['followups', runFollowups], ['nudge', runNudgeExpiring]);
+    }
+
+    /* One job falling over must not take the rest of the night's work with it. */
+    const done = {};
+    for (const j of jobs) {
+      try { done[j[0]] = await j[1](env); }
+      catch (e) {
+        done[j[0]] = 'failed: ' + ((e && e.message) || e);
+        console.log('scheduled ' + j[0] + ' failed: ' + ((e && e.stack) || e));
+      }
+    }
+    console.log('scheduled ' + ((event && event.cron) || '?') + ' ' + JSON.stringify(done));
+  },
+
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    const path = url.pathname.replace(/\/+$/, '') || '/';
+    const method = request.method;
+    const ch = cors(env, request);
+
+    if (method === 'OPTIONS') return new Response(null, { status: 204, headers: ch });
+
+    // A quick way to check a deploy before pointing real money at it.
+    if (method === 'GET' && path === '/health') {
+      const missing = missingSecrets(env);
+      /* THE PHOTO STORE IS NOT A SECRET, IT IS A BINDING, and it was not checked
+         here at all. So health said "ok, nothing missing" while every single
+         photo upload answered "Photos are not switched on yet". A host could sell
+         a party, tell their guests about the album, watch every upload fail all
+         night, and then get an email offering them photos that do not exist.
+
+         Reported separately rather than folded into `missing`, because the site
+         genuinely does work without it: the games all run, only the album is
+         dead. But it must be VISIBLE. */
+      const photos = !!env.PHOTOS;
+
+      /* AND CAN IT SEND AN EMAIL? The entire product is delivered by one: the
+         party code and the host key exist nowhere else. RESEND_API_KEY is not in
+         REQUIRED on purpose, because a Worker that cannot email must still let a
+         party that is already running finish, and putting it there would answer
+         503 to every join mid-party. But it must be VISIBLE, so it is reported
+         here and it makes ok false, exactly like a locked-out admin. */
+      const email = !!env.RESEND_API_KEY;
+
+      /* CAN ANYBODY ACTUALLY GET IN?
+
+         Migration 11 moved admin sign-in to phone OTP and made pp_admins the
+         table that decides who gets past it. It seeded no rows. So the moment
+         the shared key came off the sign-in screen, that table was empty and
+         every admin action answered 403 'no', including comping a party.
+
+         Nothing noticed, because the release check tests that admin routes
+         REFUSE an unauthenticated caller, and refusing is exactly what they
+         did. It proved the lock worked. It could not tell that no key fitted.
+
+         So health now counts the admins. Zero is not a warning, it is a
+         locked-out product. */
+      let admins = null;
+      try {
+        const rows = await sb(env, 'pp_admins?active=is.true&select=mobile');
+        admins = Array.isArray(rows) ? rows.length : null;
+      } catch (e) { admins = null; }
+      const lockedOut = (admins === 0 && !env.ADMIN_KEY);
+
+      const warnings = [];
+      if (!photos) warnings.push('R2 is not bound as PHOTOS. Every photo and video upload will fail, and the album will be empty.');
+      if (!email) warnings.push('RESEND_API_KEY is not set, so NO email can be sent. Every purchase from now on takes $50 and delivers nothing: the party code and the host key only exist in that email.');
+      if (lockedOut) warnings.push('pp_admins has no active rows and no ADMIN_KEY is set, so NOBODY can sign in to the admin. Comping a party, refunds and resends will all answer "no". Seed your mobile: partyplay-12-seed-first-admin.sql.');
+
+      return json({
+        /* SAY WHICH WORKER THIS IS. On 31 Aug the VenuePlay game Worker was pasted
+           into the billing slot: checkout answered 404 and nobody could sign up
+           until somebody noticed by hand. What catches that now is each Worker
+           naming itself at /health, and the gate asking each URL who it is. Both
+           VenuePlay Workers do it. This one did not, so a file pasted into the
+           wrong slot here would still look healthy. */
+        worker: 'partyplay-api',
+        build: BUILD,
+        ok: !missing.length && photos && email && !lockedOut,
+        missing,
+        photos,
+        email,
+        /* YES OR NO, NOT HOW MANY (14 Oct 2026 audit). This printed the admin count to anybody,
+           which is a fact about the business nobody outside it needs. The question it exists to
+           answer is whether anybody can get in at all, and a yes/no answers it: false is the
+           locked-out product, and ok above is already false with it. null = could not be read. */
+        admins_ok: admins === null ? null : admins > 0,
+        warning: warnings.length ? warnings.join(' ') : undefined
+      }, missing.length ? 503 : 200, ch);
+    }
+    const missing = missingSecrets(env);
+    if (missing.length) {
+      console.log('Worker is not configured, missing: ' + missing.join(', '));
+      return json({ error: 'This Worker is not configured yet.', missing }, 503, ch);
+    }
+
+    try {
+      // The webhook is Stripe talking to us, not a browser. No CORS, and the
+      // raw body must not be parsed before the signature is checked.
+      if (method === 'POST' && path === '/stripe/webhook') return await handleWebhook(request, env);
+
+      let res;
+      if (method === 'POST' && path === '/checkout')      res = await handleCheckout(request, env);
+      else if (method === 'GET'  && path === '/licence')  res = await handleLicence(request, env);
+      else if (method === 'GET'  && path === '/parties')  res = await handleParties(request, env);
+      else if (path === '/unsubscribe')                   res = await handleUnsubscribe(request, env);
+      else if (method === 'POST' && path === '/licence/start') res = await handleStart(request, env);
+      else if (method === 'POST' && path === '/join')     res = await handleJoin(request, env);
+      else if (method === 'GET'  && path === '/party/players')        res = await handlePartyPlayers(request, env);
+      else if (method === 'GET'  && path === '/party/gm/boards')      res = await handleGreatMindsBoards(request, env);   // host key only
+      else if (method === 'GET'  && path === '/party/signing/public') res = await handleSigningPublic(request, env);
+      else if (method === 'POST' && path === '/party/signing/private') res = await handleSigningPrivate(request, env);
+      else if (method === 'POST' && path === '/party/signing/mint')   res = await handleSigningMint(request, env);
+      else if (method === 'GET'  && path === '/games')        res = await handleGamesList(request, env);
+      else if (method === 'POST' && path === '/games')        res = await handleGameSave(request, env);
+      else if (method === 'POST' && path === '/games/delete') res = await handleGameDelete(request, env);
+      else if (method === 'POST' && path === '/admin/comp')      res = await handleComp(request, env);
+      else if (method === 'POST' && path === '/licence/resend') res = await handleResendWelcome(request, env);
+      else if (method === 'POST' && path === '/licence/recover') res = await handleRecoverByEmail(request, env);
+      else if (method === 'GET'  && path === '/admin/stats')     res = await handleStats(request, env);
+      else if (method === 'GET'  && path === '/admin/whoami')    res = await handleWhoami(request, env);
+      else if (method === 'GET'  && path === '/admin/staff')     res = await handleStaffList(request, env);
+      else if (method === 'POST' && path === '/admin/staff/add') res = await handleStaffAdd(request, env);
+      else if (method === 'POST' && path === '/admin/staff/off') res = await handleStaffOff(request, env);
+      else if (method === 'GET'  && path === '/admin/party')     res = await handleAdminParty(request, env);
+      else if (method === 'POST' && path === '/admin/party/do')  res = await handleAdminAction(request, env);
+      else if (method === 'POST' && path === '/photos')          res = await handlePhotoUpload(request, env);
+      else if (method === 'GET'  && path === '/photos')          res = await handlePhotoList(request, env);
+      else if (method === 'GET'  && path === '/photo')           res = await handlePhotoGet(request, env);
+      else if (method === 'GET'  && path === '/photos/pick')     res = await handlePhotoPick(request, env);
+      else if (method === 'POST' && path === '/photos/host')     res = await handleHostPhotoUpload(request, env);
+      else if (method === 'POST' && path === '/photos/promote')  res = await handlePhotoPromote(request, env);
+      else if (method === 'POST' && path === '/admin/sweep-photos') res = await handlePhotoSweep(request, env);
+      else if (method === 'GET'  && path === '/album')           res = await handleAlbumShare(request, env);
+      else if (method === 'GET'  && path === '/album/photo')     res = await handleAlbumPhoto(request, env);
+      else if (method === 'GET'  && path === '/game/photo')      res = await handleGamePhoto(request, env);
+      else if (method === 'POST' && path === '/album/notify-me') res = await handleNotifyMe(request, env);
+      else if (method === 'POST' && path === '/admin/send-albums') res = await handleSendAlbums(request, env);
+      else if (method === 'POST' && path === '/admin/followups') res = await handleFollowups(request, env);
+      else if (method === 'POST' && path === '/admin/nudge-expiring') res = await handleNudgeExpiring(request, env);
+      else return new Response('not found', { status: 404, headers: ch });
+
+      Object.entries(ch).forEach(([k, v]) => res.headers.set(k, v));
+      return res;
+    } catch (e) {
+      // Only errors we raised on purpose are echoed. Anything else gets a
+      // reference and stays server-side, so no stack or SQL detail leaks.
+      /* Only errors WE raised are echoed. sb() throws with the raw PostgREST body,
+         which carries SQL state, column names and constraint names, and it also
+         carries a status under 500, so it used to sail straight out to the client. */
+      if (e && e.status && e.status < 500 && !/^supabase \d/.test(String(e.message))) {
+        return json({ error: String(e.message) }, e.status, ch);
+      }
+      const ref = makeCode(6);
+      console.log('[' + ref + '] ' + String((e && e.stack) || e));
+      return json({ error: 'Something went wrong', ref }, 500, ch);
+    }
+  }
+};

@@ -1,0 +1,24 @@
+# Auto-deploy config for the GAME worker.
+#
+# Cloudflare Workers Builds runs `wrangler deploy` from this folder on every push
+# to main, so the Worker updates the same way the website does.
+#
+# THE ONE THING THAT MATTERS HERE: a deploy replaces the Worker's bindings with
+# whatever this file declares. Anything NOT declared is removed. Secrets (the
+# encrypted ones) survive; a KV binding does not. If the RL binding below is
+# missing or wrong, every rate limit in the game Worker silently degrades to
+# allow-everything, with nothing to tell you.
+
+name = "venueplay-game"
+main = "../venueplay-game.js"
+compatibility_date = "2026-08-01"
+
+# Rate limiting store. Replace id with the real namespace id from
+# Cloudflare > Storage & Databases > KV (see DEPLOY-SETUP.md).
+[[kv_namespaces]]
+binding = "RL"
+id = "PASTE_THE_RL_KV_NAMESPACE_ID_HERE"
+
+# No [vars] block on purpose. Every setting this Worker reads should be an
+# ENCRYPTED variable in the dashboard, because encrypted values survive a deploy
+# and plain-text ones do not. See DEPLOY-SETUP.md.

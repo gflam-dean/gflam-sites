@@ -1,0 +1,1058 @@
+{
+ "partyplay-backend/lib/pp-admin-auth.test.js": {
+  "checks": 8,
+  "counted_by": "lines"
+ },
+ "partyplay-backend/lib/pp-album-page.test.js": {
+  "checks": 13,
+  "counted_by": "total"
+ },
+ "partyplay-backend/lib/pp-bingo-called.test.js": {
+  "checks": 16,
+  "counted_by": "lines"
+ },
+ "partyplay-backend/lib/pp-checkout.test.js": {
+  "checks": 17,
+  "counted_by": "total"
+ },
+ "partyplay-backend/lib/pp-code-and-channel.test.js": {
+  "checks": 32,
+  "counted_by": "lines"
+ },
+ "partyplay-backend/lib/pp-fixes-15-oct.test.js": {
+  "checks": 60,
+  "counted_by": "lines"
+ },
+ "partyplay-backend/lib/pp-gm-boards.test.js": {
+  "checks": 12,
+  "counted_by": "lines"
+ },
+ "partyplay-backend/lib/pp-great-minds.test.js": {
+  "checks": 36,
+  "counted_by": "lines"
+ },
+ "partyplay-backend/lib/pp-guest-connection.test.js": {
+  "checks": 68,
+  "counted_by": "lines"
+ },
+ "partyplay-backend/lib/pp-health-private.test.js": {
+  "checks": 5,
+  "counted_by": "lines"
+ },
+ "partyplay-backend/lib/pp-host-channel.test.js": {
+  "checks": 27,
+  "counted_by": "lines"
+ },
+ "partyplay-backend/lib/pp-host-reload.test.js": {
+  "checks": 166,
+  "counted_by": "lines"
+ },
+ "partyplay-backend/lib/pp-join-names.test.js": {
+  "checks": 9,
+  "counted_by": "total"
+ },
+ "partyplay-backend/lib/pp-licence.test.js": {
+  "checks": 39,
+  "counted_by": "total"
+ },
+ "partyplay-backend/lib/pp-photo-downloads.test.js": {
+  "checks": 7,
+  "counted_by": "lines"
+ },
+ "partyplay-backend/lib/pp-photo.test.js": {
+  "checks": 28,
+  "counted_by": "total"
+ },
+ "partyplay-backend/lib/pp-quiz.test.js": {
+  "checks": 38,
+  "counted_by": "total"
+ },
+ "partyplay-backend/lib/pp-realtime-auth.test.js": {
+  "checks": 49,
+  "counted_by": "lines"
+ },
+ "partyplay-backend/lib/pp-run-games.test.js": {
+  "checks": 71,
+  "counted_by": "total"
+ },
+ "partyplay-backend/lib/pp-start-back.test.js": {
+  "checks": 4,
+  "counted_by": "lines"
+ },
+ "partyplay-backend/lib/pp-suggested-night.test.js": {
+  "checks": 9,
+  "counted_by": "lines"
+ },
+ "partyplay-backend/lib/pp-ticket.test.js": {
+  "checks": 415,
+  "counted_by": "total"
+ },
+ "partyplay-backend/lib/pp-trivia-pack.test.js": {
+  "checks": 46,
+  "counted_by": "total"
+ },
+ "partyplay-backend/lib/pp-tv-code-check.test.js": {
+  "checks": 8,
+  "counted_by": "lines"
+ },
+ "partyplay-backend/lib/pp-tv-layout.test.js": {
+  "checks": 27,
+  "counted_by": "lines"
+ },
+ "partyplay-backend/lib/pp-tv-reconnect.test.js": {
+  "checks": 6,
+  "counted_by": "lines"
+ },
+ "partyplay-backend/lib/pp-video.test.js": {
+  "checks": 21,
+  "counted_by": "total"
+ },
+ "partyplay-backend/lib/pp-worker-15-oct.test.js": {
+  "checks": 35,
+  "counted_by": "lines"
+ },
+ "partyplay-backend/worker/partyplay-api.test.js": {
+  "checks": 178,
+  "counted_by": "total"
+ },
+ "tools/account-structure-in-chrome.test.py": {
+  "checks": 54,
+  "counted_by": "lines"
+ },
+ "tools/add-login-email.test.py": {
+  "checks": 19,
+  "counted_by": "lines"
+ },
+ "tools/caller-winner-in-chrome.test.py": {
+  "checks": 96,
+  "counted_by": "lines"
+ },
+ "tools/console-in-chrome.test.py": {
+  "checks": 63,
+  "counted_by": "lines"
+ },
+ "tools/dropdowns-in-chrome.test.py": {
+  "checks": 43,
+  "counted_by": "lines"
+ },
+ "tools/gate-record.test.py": {
+  "checks": 45,
+  "counted_by": "lines"
+ },
+ "tools/gate-reliability.test.py": {
+  "checks": 50,
+  "counted_by": "lines"
+ },
+ "tools/help-desk-pages.test.py": {
+  "checks": 216,
+  "counted_by": "lines"
+ },
+ "tools/help-seed-matches-faq.test.py": {
+  "checks": 14,
+  "counted_by": "lines"
+ },
+ "tools/hq-lists-in-chrome.test.py": {
+  "checks": 20,
+  "counted_by": "lines"
+ },
+ "tools/hq-tabs-in-chrome.test.py": {
+  "checks": 64,
+  "counted_by": "lines"
+ },
+ "tools/livenorm.test.py": {
+  "checks": 8,
+  "counted_by": "lines"
+ },
+ "tools/logo-tools-in-chrome.test.py": {
+  "checks": 28,
+  "counted_by": "lines"
+ },
+ "tools/migrations-parse.test.py": {
+  "checks": 15,
+  "counted_by": "lines"
+ },
+ "tools/move-show-images.test.py": {
+  "checks": 13,
+  "counted_by": "lines"
+ },
+ "tools/night-pass-hq-in-chrome.test.py": {
+  "checks": 13,
+  "counted_by": "lines"
+ },
+ "tools/partyplay-resend-in-chrome.test.py": {
+  "checks": 20,
+  "counted_by": "lines"
+ },
+ "tools/pickup-in-chrome.test.py": {
+  "checks": 38,
+  "counted_by": "lines"
+ },
+ "tools/purchase-raffle-in-chrome.test.py": {
+  "checks": 38,
+  "counted_by": "lines"
+ },
+ "tools/redirect-verdict.test.py": {
+  "checks": 12,
+  "counted_by": "lines"
+ },
+ "tools/regulated.test.py": {
+  "checks": 23,
+  "counted_by": "lines"
+ },
+ "tools/sant-bingo-in-chrome.test.py": {
+  "checks": 38,
+  "counted_by": "lines"
+ },
+ "tools/screen-history-sql.test.py": {
+  "checks": 37,
+  "counted_by": "lines"
+ },
+ "tools/screen-unsaved-in-chrome.test.py": {
+  "checks": 17,
+  "counted_by": "lines"
+ },
+ "tools/set-worker-secret.test.py": {
+  "checks": 32,
+  "counted_by": "lines"
+ },
+ "tools/support-phone.test.py": {
+  "checks": 29,
+  "counted_by": "lines"
+ },
+ "tools/test-a-player-bills-once-alive.js": {
+  "checks": 10,
+  "counted_by": "lines"
+ },
+ "tools/test-abandoned-lobby.js": {
+  "checks": 18,
+  "counted_by": "lines"
+ },
+ "tools/test-add-venue-free-month.js": {
+  "checks": 44,
+  "counted_by": "lines"
+ },
+ "tools/test-added-time-keeps-the-bonus-honest.js": {
+  "checks": 8,
+  "counted_by": "lines"
+ },
+ "tools/test-analytics-ignores-robots.js": {
+  "checks": 42,
+  "counted_by": "lines"
+ },
+ "tools/test-answers-room-relays-nothing.js": {
+  "checks": 5,
+  "counted_by": "lines"
+ },
+ "tools/test-archive-sweep-fails-closed.js": {
+  "checks": 7,
+  "counted_by": "lines"
+ },
+ "tools/test-archived-venue-restore.js": {
+  "checks": 14,
+  "counted_by": "lines"
+ },
+ "tools/test-audit-search.js": {
+  "checks": 52,
+  "counted_by": "lines"
+ },
+ "tools/test-billing-panels.js": {
+  "checks": 54,
+  "counted_by": "lines"
+ },
+ "tools/test-bingo-draw-record-18-oct.js": {
+  "checks": 27,
+  "counted_by": "lines"
+ },
+ "tools/test-bingo-end-report.js": {
+  "checks": 4,
+  "counted_by": "lines"
+ },
+ "tools/test-bingo-seat-15-oct.js": {
+  "checks": 41,
+  "counted_by": "lines"
+ },
+ "tools/test-bingo-server-tickets.js": {
+  "checks": 80,
+  "counted_by": "lines"
+ },
+ "tools/test-bingo-tab-15-oct.js": {
+  "checks": 71,
+  "counted_by": "lines"
+ },
+ "tools/test-bingo-worker-15-oct.js": {
+  "checks": 37,
+  "counted_by": "lines"
+ },
+ "tools/test-body-reader.js": {
+  "checks": 33,
+  "counted_by": "lines"
+ },
+ "tools/test-caller-mode.js": {
+  "checks": 117,
+  "counted_by": "lines"
+ },
+ "tools/test-cant-sign-warns.js": {
+  "checks": 3,
+  "counted_by": "lines"
+ },
+ "tools/test-channel-recovery-consoles.js": {
+  "checks": 21,
+  "counted_by": "lines"
+ },
+ "tools/test-channel-recovery-phones.js": {
+  "checks": 25,
+  "counted_by": "lines"
+ },
+ "tools/test-channel-recovery-screens.js": {
+  "checks": 57,
+  "counted_by": "lines"
+ },
+ "tools/test-channel-recovery-tv.js": {
+  "checks": 37,
+  "counted_by": "lines"
+ },
+ "tools/test-checkout-trial-and-duplicates.js": {
+  "checks": 46,
+  "counted_by": "lines"
+ },
+ "tools/test-collection-gate.js": {
+  "checks": 28,
+  "counted_by": "lines"
+ },
+ "tools/test-console-pickup.js": {
+  "checks": 53,
+  "counted_by": "lines"
+ },
+ "tools/test-console-venue-from-link.js": {
+  "checks": 12,
+  "counted_by": "lines"
+ },
+ "tools/test-demo-returns-to-offer.js": {
+  "checks": 23,
+  "counted_by": "lines"
+ },
+ "tools/test-double-points.js": {
+  "checks": 24,
+  "counted_by": "lines"
+ },
+ "tools/test-draws-keep-an-honest-record.js": {
+  "checks": 24,
+  "counted_by": "lines"
+ },
+ "tools/test-email-outcomes-recorded.js": {
+  "checks": 10,
+  "counted_by": "lines"
+ },
+ "tools/test-fail-closed-batch.js": {
+  "checks": 28,
+  "counted_by": "lines"
+ },
+ "tools/test-fallback-switch.js": {
+  "checks": 14,
+  "counted_by": "lines"
+ },
+ "tools/test-free-entry-rules-are-the-states-own.js": {
+  "checks": 36,
+  "counted_by": "lines"
+ },
+ "tools/test-gaming-rules-letters-15-oct.js": {
+  "checks": 72,
+  "counted_by": "lines"
+ },
+ "tools/test-help-desk.js": {
+  "checks": 267,
+  "counted_by": "lines"
+ },
+ "tools/test-help-triage-truth.js": {
+  "checks": 22,
+  "counted_by": "lines"
+ },
+ "tools/test-jackpot-cap-15-oct.js": {
+  "checks": 68,
+  "counted_by": "lines"
+ },
+ "tools/test-library-pull-reaches-the-whole-bank.js": {
+  "checks": 10,
+  "counted_by": "lines"
+ },
+ "tools/test-lobby-format.js": {
+  "checks": 9,
+  "counted_by": "lines"
+ },
+ "tools/test-manager-permissions.js": {
+  "checks": 14,
+  "counted_by": "lines"
+ },
+ "tools/test-manager-perms-scope.js": {
+  "checks": 12,
+  "counted_by": "lines"
+ },
+ "tools/test-marketing-cannot-run-games.js": {
+  "checks": 10,
+  "counted_by": "lines"
+ },
+ "tools/test-marketing-login.js": {
+  "checks": 38,
+  "counted_by": "lines"
+ },
+ "tools/test-members-console.js": {
+  "checks": 42,
+  "counted_by": "lines"
+ },
+ "tools/test-members-paged.js": {
+  "checks": 14,
+  "counted_by": "lines"
+ },
+ "tools/test-musical-15-oct.js": {
+  "checks": 70,
+  "counted_by": "lines"
+ },
+ "tools/test-musical-host.js": {
+  "checks": 65,
+  "counted_by": "lines"
+ },
+ "tools/test-musical-phone.js": {
+  "checks": 38,
+  "counted_by": "lines"
+ },
+ "tools/test-musical-print.js": {
+  "checks": 13,
+  "counted_by": "lines"
+ },
+ "tools/test-night-pass-hq.js": {
+  "checks": 23,
+  "counted_by": "lines"
+ },
+ "tools/test-night-pass.js": {
+  "checks": 39,
+  "counted_by": "lines"
+ },
+ "tools/test-olgr-audit-19-oct.js": {
+  "checks": 28,
+  "counted_by": "lines"
+ },
+ "tools/test-one-bingo-path.js": {
+  "checks": 18,
+  "counted_by": "lines"
+ },
+ "tools/test-one-room-one-identity.js": {
+  "checks": 39,
+  "counted_by": "lines"
+ },
+ "tools/test-optin-export-gate.js": {
+  "checks": 33,
+  "counted_by": "lines"
+ },
+ "tools/test-optin-fails-closed.js": {
+  "checks": 10,
+  "counted_by": "lines"
+ },
+ "tools/test-optin-held-back.js": {
+  "checks": 11,
+  "counted_by": "lines"
+ },
+ "tools/test-overage-ack-covers-room.js": {
+  "checks": 5,
+  "counted_by": "lines"
+ },
+ "tools/test-paper-is-for-bingo-only.js": {
+  "checks": 12,
+  "counted_by": "lines"
+ },
+ "tools/test-paper-night-event-private.js": {
+  "checks": 7,
+  "counted_by": "lines"
+ },
+ "tools/test-paper-players.js": {
+  "checks": 47,
+  "counted_by": "lines"
+ },
+ "tools/test-paper-score-held.js": {
+  "checks": 5,
+  "counted_by": "lines"
+ },
+ "tools/test-permits-and-compliance-tick.js": {
+  "checks": 84,
+  "counted_by": "lines"
+ },
+ "tools/test-phones-cannot-be-impersonated.js": {
+  "checks": 34,
+  "counted_by": "lines"
+ },
+ "tools/test-pickup-retry.js": {
+  "checks": 25,
+  "counted_by": "lines"
+ },
+ "tools/test-platform-15-oct.js": {
+  "checks": 63,
+  "counted_by": "lines"
+ },
+ "tools/test-platform-worker-15-oct.js": {
+  "checks": 15,
+  "counted_by": "lines"
+ },
+ "tools/test-play-live-age-gate-15-oct.js": {
+  "checks": 74,
+  "counted_by": "lines"
+ },
+ "tools/test-pr-boards-15-oct.js": {
+  "checks": 25,
+  "counted_by": "lines"
+ },
+ "tools/test-pr-game.js": {
+  "checks": 21,
+  "counted_by": "lines"
+ },
+ "tools/test-pr-guesses-15-oct.js": {
+  "checks": 20,
+  "counted_by": "lines"
+ },
+ "tools/test-pr-round.js": {
+  "checks": 20,
+  "counted_by": "lines"
+ },
+ "tools/test-print-problem.js": {
+  "checks": 8,
+  "counted_by": "lines"
+ },
+ "tools/test-purchase-raffle-hq.js": {
+  "checks": 24,
+  "counted_by": "lines"
+ },
+ "tools/test-purchase-raffle.js": {
+  "checks": 91,
+  "counted_by": "lines"
+ },
+ "tools/test-raffle-console.js": {
+  "checks": 53,
+  "counted_by": "lines"
+ },
+ "tools/test-raffle-unsold-server.js": {
+  "checks": 5,
+  "counted_by": "lines"
+ },
+ "tools/test-remove-a-player.js": {
+  "checks": 26,
+  "counted_by": "lines"
+ },
+ "tools/test-removed-host-loses-the-key.js": {
+  "checks": 9,
+  "counted_by": "lines"
+ },
+ "tools/test-retention-sweep.js": {
+  "checks": 40,
+  "counted_by": "lines"
+ },
+ "tools/test-room-chatter-14-oct.js": {
+  "checks": 17,
+  "counted_by": "lines"
+ },
+ "tools/test-router-heals-after-a-blip.js": {
+  "checks": 23,
+  "counted_by": "lines"
+ },
+ "tools/test-sant-bingo-game.js": {
+  "checks": 26,
+  "counted_by": "lines"
+ },
+ "tools/test-sant-bingo.js": {
+  "checks": 48,
+  "counted_by": "lines"
+ },
+ "tools/test-score-pull-is-shared.js": {
+  "checks": 13,
+  "counted_by": "lines"
+ },
+ "tools/test-screen-check-probe.js": {
+  "checks": 6,
+  "counted_by": "lines"
+ },
+ "tools/test-screen-check-wake.js": {
+  "checks": 19,
+  "counted_by": "lines"
+ },
+ "tools/test-screen-history.js": {
+  "checks": 60,
+  "counted_by": "lines"
+ },
+ "tools/test-screen-key-rotates.js": {
+  "checks": 14,
+  "counted_by": "lines"
+ },
+ "tools/test-screens-14-oct.js": {
+  "checks": 27,
+  "counted_by": "lines"
+ },
+ "tools/test-set-count.js": {
+  "checks": 9,
+  "counted_by": "lines"
+ },
+ "tools/test-shared-links-absolute.js": {
+  "checks": 6,
+  "counted_by": "lines"
+ },
+ "tools/test-sign-venue-switch.js": {
+  "checks": 2,
+  "counted_by": "lines"
+ },
+ "tools/test-signing-15-oct.js": {
+  "checks": 30,
+  "counted_by": "lines"
+ },
+ "tools/test-status-moves-the-clock.js": {
+  "checks": 6,
+  "counted_by": "lines"
+ },
+ "tools/test-stripe-signature-expires.js": {
+  "checks": 10,
+  "counted_by": "lines"
+ },
+ "tools/test-ta-match.js": {
+  "checks": 16,
+  "counted_by": "lines"
+ },
+ "tools/test-ta-screen.js": {
+  "checks": 9,
+  "counted_by": "lines"
+ },
+ "tools/test-terms-put-compliance-on-the-venue.js": {
+  "checks": 44,
+  "counted_by": "lines"
+ },
+ "tools/test-trivia-15-oct.js": {
+  "checks": 70,
+  "counted_by": "lines"
+ },
+ "tools/test-trivia-no-repeat-survives-a-removal.js": {
+  "checks": 10,
+  "counted_by": "lines"
+ },
+ "tools/test-trivia-nobody-answered.js": {
+  "checks": 8,
+  "counted_by": "lines"
+ },
+ "tools/test-trusted-logos.js": {
+  "checks": 43,
+  "counted_by": "lines"
+ },
+ "tools/test-tv-does-not-flap.js": {
+  "checks": 11,
+  "counted_by": "lines"
+ },
+ "tools/test-tv-logo-mark.js": {
+  "checks": 147,
+  "counted_by": "lines"
+ },
+ "tools/test-tv-reads-its-venue.js": {
+  "checks": 10,
+  "counted_by": "lines"
+ },
+ "tools/test-tv-slides-in-step.js": {
+  "checks": 10,
+  "counted_by": "lines"
+ },
+ "tools/test-tv-watchdog-runs.js": {
+  "checks": 12,
+  "counted_by": "lines"
+ },
+ "tools/test-two-accounts-one-login.js": {
+  "checks": 17,
+  "counted_by": "lines"
+ },
+ "tools/test-undo-cancel-rolls-back.js": {
+  "checks": 13,
+  "counted_by": "lines"
+ },
+ "tools/test-unlimited-nights-hq.js": {
+  "checks": 17,
+  "counted_by": "lines"
+ },
+ "tools/test-unlimited-nights.js": {
+  "checks": 19,
+  "counted_by": "lines"
+ },
+ "tools/test-unsubscribe-is-honoured.js": {
+  "checks": 16,
+  "counted_by": "lines"
+ },
+ "tools/test-venue-list-paged.js": {
+  "checks": 15,
+  "counted_by": "lines"
+ },
+ "tools/test-venue-logo-upload.js": {
+  "checks": 50,
+  "counted_by": "lines"
+ },
+ "tools/test-venue-picker-scopes.js": {
+  "checks": 9,
+  "counted_by": "lines"
+ },
+ "tools/test-venue-search-au-state.js": {
+  "checks": 5,
+  "counted_by": "lines"
+ },
+ "tools/test-venue-search-is-limited.js": {
+  "checks": 4,
+  "counted_by": "lines"
+ },
+ "tools/test-venue-url.js": {
+  "checks": 101,
+  "counted_by": "lines"
+ },
+ "tools/test-vp-draw-11.js": {
+  "checks": 44,
+  "counted_by": "lines"
+ },
+ "tools/test-webhook-retry-is-not-dropped.js": {
+  "checks": 11,
+  "counted_by": "lines"
+ },
+ "tools/test-welcome-email-renders.js": {
+  "checks": 22,
+  "counted_by": "lines"
+ },
+ "tools/test-welcome-is-sent-once.js": {
+  "checks": 8,
+  "counted_by": "lines"
+ },
+ "tools/test-winner-screen-survives.js": {
+  "checks": 10,
+  "counted_by": "lines"
+ },
+ "tools/touring-cards.test.py": {
+  "checks": 70,
+  "counted_by": "lines"
+ },
+ "tools/touring-lock.test.py": {
+  "checks": 24,
+  "counted_by": "lines"
+ },
+ "tools/touring-manage.test.py": {
+  "checks": 21,
+  "counted_by": "lines"
+ },
+ "tools/touring-signups.test.py": {
+  "checks": 29,
+  "counted_by": "lines"
+ },
+ "tools/tv-and-phone-in-chrome.test.py": {
+  "checks": 100,
+  "counted_by": "lines"
+ },
+ "tools/venue-logo-in-chrome.test.py": {
+  "checks": 348,
+  "counted_by": "lines"
+ },
+ "touring-backend/lib/touring-api.test.js": {
+  "checks": 56,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/billing-hosts.test.js": {
+  "checks": 19,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/billing-resecure-hq.test.js": {
+  "checks": 15,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/bingo-after-the-win.test.js": {
+  "checks": 149,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/bingo-console.test.js": {
+  "checks": 59,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/bingo-win.test.js": {
+  "checks": 39,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/demo-hermetic.test.js": {
+  "checks": 77,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/hop-name.test.js": {
+  "checks": 16,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/hq-contact-rule.test.js": {
+  "checks": 34,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/members/draw-again.test.js": {
+  "checks": 15,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/musical/live-fixes.test.js": {
+  "checks": 38,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/musical/musical-draw.test.js": {
+  "checks": 37,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/musical/musical-win.test.js": {
+  "checks": 15,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/one-answer.test.js": {
+  "checks": 8,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/phone-reconnect.test.js": {
+  "checks": 22,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/raffle/redraw-confirm.test.js": {
+  "checks": 10,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/raffle/unsold-and-hold.test.js": {
+  "checks": 16,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/room-fallback.test.js": {
+  "checks": 22,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/room-optin.test.js": {
+  "checks": 41,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/settings-owner-only.test.js": {
+  "checks": 10,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/sign-in.test.js": {
+  "checks": 4,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/sign-race.test.js": {
+  "checks": 6,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/signage-logo.test.js": {
+  "checks": 18,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/signin-blame.test.js": {
+  "checks": 18,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/signin-email-fallback.test.js": {
+  "checks": 42,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/song-excluded-acts.test.js": {
+  "checks": 6,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/trivia/trivia-night.test.js": {
+  "checks": 116,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/tv-ads-rebuild.test.js": {
+  "checks": 29,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/tv-logo.test.js": {
+  "checks": 17,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/tv-screen.test.js": {
+  "checks": 41,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/tv-stale-screen.test.js": {
+  "checks": 17,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/tv-states.test.js": {
+  "checks": 23,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/vp-ask-once.test.js": {
+  "checks": 77,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/vp-follow.test.js": {
+  "checks": 20,
+  "counted_by": "total"
+ },
+ "venueplay-backend/app/weekly-before-the-room.test.js": {
+  "checks": 56,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/billing-emails.test.js": {
+  "checks": 124,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/bingo-server-draw.test.js": {
+  "checks": 48,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/cancel-emails.test.js": {
+  "checks": 92,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/draw-fairness.test.js": {
+  "checks": 13,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/draw-hold.test.js": {
+  "checks": 41,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/founding-gate.test.js": {
+  "checks": 43,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/founding-month-expiry.test.js": {
+  "checks": 13,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/group-billing.test.js": {
+  "checks": 31,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/health.test.js": {
+  "checks": 12,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/manager-permissions.test.js": {
+  "checks": 12,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/metering.test.js": {
+  "checks": 22,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/money.test.js": {
+  "checks": 44,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/nights-dedup.test.js": {
+  "checks": 5,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/one-game.test.js": {
+  "checks": 32,
+  "counted_by": "total"
+ },
+ "venueplay-backend/worker/one-trip-draws.test.js": {
+  "checks": 81,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/overage-charge.test.js": {
+  "checks": 104,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/owner-only-routes.test.js": {
+  "checks": 42,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/plan-uplift.test.js": {
+  "checks": 21,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/rng-evidence.test.js": {
+  "checks": 12,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/screen-endpoint.test.js": {
+  "checks": 19,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/screen-health.test.js": {
+  "checks": 112,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/screen-probe.test.js": {
+  "checks": 12,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/screen-reload.test.js": {
+  "checks": 20,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/shift-timer.test.js": {
+  "checks": 34,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/slug-ladder.test.js": {
+  "checks": 10,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/sms-hook-failover.test.js": {
+  "checks": 33,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/sms-hook-secrets.test.js": {
+  "checks": 22,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/stripe-idempotency.test.js": {
+  "checks": 5,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/support-phone-emails.test.js": {
+  "checks": 18,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/suspend-not-before-auth.test.js": {
+  "checks": 18,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/sweep-sessions.test.js": {
+  "checks": 26,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/token-refusal.test.js": {
+  "checks": 8,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/trivia-catchup.test.js": {
+  "checks": 17,
+  "counted_by": "total"
+ },
+ "venueplay-backend/worker/trivia-reveal.test.js": {
+  "checks": 19,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/trivia-score.test.js": {
+  "checks": 16,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/trivia-set-delete.test.js": {
+  "checks": 24,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/venue-channel.test.js": {
+  "checks": 34,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/venue-code-scan.test.js": {
+  "checks": 4,
+  "counted_by": "total"
+ },
+ "venueplay-backend/worker/venue-code.test.js": {
+  "checks": 34,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/venue-scale.test.js": {
+  "checks": 11,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/venue-timezone.test.js": {
+  "checks": 21,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/venueplay-room.test.js": {
+  "checks": 66,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/webhook-ledger.test.js": {
+  "checks": 17,
+  "counted_by": "lines"
+ }
+}

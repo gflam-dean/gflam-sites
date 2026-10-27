@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Help | VenuePlay</title>
+<meta name="description" content="Help for VenuePlay venues and players. Pick who you are, work through the problem a step at a time, read the common questions, or send us a message.">
+<meta property="og:title" content="Help | VenuePlay">
+<meta property="og:description" content="Help for venues and players: guided fixes, common questions and a way to reach us.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://venueplay.com.au/help">
+<meta property="og:image" content="https://venueplay.com.au/logos/venueplay-share.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" href="/logos/venueplay_appicon_rebuilt.png">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="/favicon-48.png" type="image/png" sizes="48x48">
+<link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="canonical" href="https://venueplay.com.au/help">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@400;500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<!-- THE PUBLIC HELP PAGE (/help, and /support redirects here). 21 Oct 2026: Dean expected the help
+     desk at venueplay.com.au/help and it was a 404. The issues, the steps, the FAQ and the forms are
+     NOT written here: /app/vp-help.js draws them into each [data-vph-audience] below (data-mode
+     "page"), the same code as the Help panel on the phones and the console. This page is the
+     header, the footer and the three ways in. The look is index.html's: same tokens, same type.
+     THE SUPPORT PHONE (07 5228 3667): the widget draws "Call us on" into the VENUE part only, as it
+     does on the console; the sales part names it under its form; the player part and this page's
+     footer never do (players use Help, and the phone menu sends players to voicemail). -->
+<style>
+  :root{
+    --ink:#0A0A0B;--ink-2:#121214;--ink-3:#17171B;
+    --pink:#FF1F8E;--white:#FFFFFF;--muted:#9A9AA4;--muted-2:#8E8E98;
+    --line:rgba(255,255,255,0.08);--line-2:rgba(255,255,255,0.14);--glow:rgba(255,31,142,0.55);
+    --maxw:1120px;
+    --fs-xs:12px;--fs-sm:14px;--fs-base:16px;--fs-md:18px;--fs-lg:22px;
+    --fs-xl:clamp(30px,4.4vw,52px);--fs-hero:clamp(36px,4.6vw,64px);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;overflow-x:clip}
+  body{background:var(--ink);color:var(--white);font-family:'Manrope',system-ui,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  ::selection{background:var(--pink);color:#fff}
+  a{color:inherit;text-decoration:none}
+  [hidden]{display:none!important}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+
+  /* ---------- HEADER (index.html's) ---------- */
+  header{position:sticky;top:0;z-index:50;backdrop-filter:saturate(140%) blur(14px);background:rgba(10,10,11,0.72);border-bottom:1px solid var(--line)}
+  .nav{display:flex;align-items:center;justify-content:space-between;height:68px}
+  .logo{display:flex;align-items:center;gap:13px}
+  .logo svg{display:block;filter:drop-shadow(0 0 9px var(--glow))}
+  .logo .div{width:1px;height:24px;background:var(--line-2)}
+  .logo .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:var(--fs-lg);letter-spacing:-0.03em;color:#fff;line-height:1}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:'Manrope',sans-serif;font-weight:700;font-size:var(--fs-base);border:0;cursor:pointer;border-radius:999px;padding:13px 24px;transition:transform .15s ease,box-shadow .15s ease,background .15s ease}
+  .btn-ghost{background:transparent;color:#fff;border:1px solid var(--line-2)}
+  .btn-ghost:hover{border-color:var(--pink);color:var(--pink)}
+  .nav .btn{padding:10px 20px;font-size:var(--fs-sm)}
+  .nav-links{display:flex;align-items:center;gap:28px;margin-left:auto;margin-right:24px}
+  .nav-links a{font-size:var(--fs-sm);font-weight:600;color:var(--muted);transition:color .15s ease}
+  .nav-links a:hover,.nav-links a[aria-current]{color:#fff}
+
+  /* ---------- HERO ---------- */
+  .hero{padding:72px 0 28px}
+  .label{font-family:'JetBrains Mono',monospace;font-size:var(--fs-xs);letter-spacing:.18em;text-transform:uppercase;color:var(--pink);font-weight:500;display:flex;align-items:center;gap:12px;margin-bottom:18px}
+  .label::before{content:"";width:26px;height:1px;background:var(--pink)}
+  h1{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;font-size:var(--fs-hero);line-height:.92;letter-spacing:.005em}
+  h1 .accent{color:var(--pink)}
+  .lede{margin-top:20px;max-width:56ch;font-size:var(--fs-md);color:#D8D8DD;font-weight:500}
+
+  /* ---------- THE THREE WAYS IN ---------- */
+  .paths{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:40px}
+  .path{display:flex;flex-direction:column;align-items:flex-start;gap:10px;text-align:left;cursor:pointer;
+    background:var(--ink-2);border:1px solid var(--line-2);border-radius:20px;padding:26px 24px;color:#fff;
+    font-family:'Manrope',sans-serif;transition:border-color .15s ease,background .15s ease}
+  .path:hover{border-color:rgba(255,31,142,.55)}
+  .path[aria-selected="true"]{border-color:var(--pink);background:#16121A;box-shadow:0 0 0 1px var(--pink) inset}
+  .path .ico{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:rgba(255,31,142,.12);color:var(--pink)}
+  .path .t{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:var(--fs-lg);letter-spacing:-.02em;line-height:1.15}
+  .path .d{color:var(--muted);font-size:var(--fs-sm);line-height:1.5}
+  .sales-way{margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+    border:1px dashed var(--line-2);border-radius:16px;padding:16px 20px;cursor:pointer;background:transparent;color:#fff;width:100%;text-align:left;font-family:'Manrope',sans-serif}
+  .sales-way:hover{border-color:rgba(255,31,142,.55)}
+  .sales-way[aria-selected="true"]{border-style:solid;border-color:var(--pink)}
+  .sales-way b{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:var(--fs-base);color:#fff}
+  .sales-way span{color:var(--muted);font-size:var(--fs-sm)}
+  .sales-way .go{color:var(--pink);font-weight:700;font-size:var(--fs-sm);white-space:nowrap}
+  .pick-hint{margin-top:22px;color:var(--muted-2);font-size:var(--fs-sm)}
+
+  /* ---------- A PANEL ---------- */
+  .panels{padding:8px 0 40px}
+  .panel{max-width:760px;margin:0;scroll-margin-top:84px}
+  .panel[hidden]{display:none}
+  .panel-head{margin:28px 0 18px}
+  .panel-head h2{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;font-size:clamp(28px,3.4vw,40px);line-height:1;letter-spacing:.01em}
+  .panel-head p{margin-top:12px;color:var(--muted);font-size:var(--fs-base);max-width:60ch}
+  .card{background:var(--ink-2);border:1px solid var(--line);border-radius:20px;padding:24px 22px}
+  .card + .card{margin-top:14px}
+  .note{display:flex;gap:12px;align-items:flex-start;background:rgba(255,31,142,.07);border:1px solid rgba(255,31,142,.28);border-radius:14px;padding:14px 16px;font-size:var(--fs-sm);color:#E8E8EC;line-height:1.5;margin-bottom:14px}
+  .note a{color:#FF8AC4;font-weight:700;text-decoration:underline;text-underline-offset:3px}
+  .reach{margin-top:14px;font-size:var(--fs-sm);color:var(--muted);line-height:1.8}
+  .reach a{color:#FF8AC4}
+  .reach a.tel{white-space:nowrap}
+  /* The widget, drawn into the page: full width of the card, on the page's own type. */
+  .panel .vph-inline{max-width:none}
+  .panel .vph-pageflow{scroll-margin-top:84px}
+  .panel .vph h3{font-size:var(--fs-md)}
+  .panel .vph .vph-faqwrap{margin-top:18px;border-top:1px solid var(--line);padding-top:6px}
+  .panel .vph .vph-faqwrap>summary{font-family:'Hanken Grotesk',sans-serif;font-size:var(--fs-md);color:#fff;font-weight:800}
+  .panel .vph .vph-msg{font-size:var(--fs-sm);color:#FF8AC4}
+
+  /* ---------- FOOTER (index.html's) ---------- */
+  footer{border-top:1px solid var(--line);padding:54px 0 64px;margin-top:40px}
+  .foot{display:flex;justify-content:space-between;align-items:center;gap:28px;flex-wrap:wrap}
+  .foot-brand{display:flex;flex-direction:column;align-items:center;gap:9px;text-align:center}
+  .foot-meta{font-family:'JetBrains Mono',monospace;font-size:var(--fs-xs);color:var(--muted);line-height:1.9;text-align:right}
+  .foot-meta a:hover{color:var(--pink)}
+  .powered{font-family:'JetBrains Mono',monospace;font-size:var(--fs-xs);color:var(--muted-2);letter-spacing:.08em;text-transform:uppercase}
+  .powered b{color:var(--muted);font-weight:500}
+  .foot-social{display:flex;gap:16px;justify-content:center;margin-top:16px}
+  .foot-social a{display:inline-flex;color:var(--muted);transition:color .2s}
+  .foot-social a:hover{color:var(--pink)}
+  .foot-social svg{width:22px;height:22px}
+
+  @media(max-width:760px){ .nav-links{display:none} }
+  @media(max-width:620px){
+    .wrap{padding:0 16px}
+    .hero{padding:44px 0 18px}
+    .paths{grid-template-columns:1fr;gap:12px;margin-top:28px}
+    .path{padding:20px 18px;flex-direction:row;align-items:center;gap:14px}
+    .path .ico{flex:none}
+    .card{padding:20px 16px;border-radius:16px}
+    .foot{flex-direction:column;align-items:flex-start}
+    .foot-meta{text-align:left}
+  }
+  @media(prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important;scroll-behavior:auto!important} }
+</style>
+<script src="/app/vp-analytics.js"></script>
+<script src="/app/vp-pixel.js"></script>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="logo" href="/" aria-label="VenuePlay home">
+      <svg width="26" height="30" viewBox="0 0 26 30" fill="none" aria-hidden="true">
+        <path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/>
+      </svg>
+      <span class="div"></span>
+      <span class="word">VenuePlay</span>
+    </a>
+    <nav class="nav-links">
+      <a href="/play">Play</a>
+      <a href="/#modes">Game modes</a>
+      <a href="/#offer">Pricing</a>
+      <a href="/#faq">FAQs</a>
+      <a href="/help" aria-current="page">Help</a>
+      <a href="/#contact">Contact</a>
+    </nav>
+    <a class="btn btn-ghost" href="/app/index.html">Venue log in</a>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <div class="label">Help centre</div>
+      <h1>How can we <span class="accent">help?</span></h1>
+      <p class="lede">Tell us who you are. We'll walk you through the fix a step at a time, and if that doesn't sort it, you can send us a message from the same place.</p>
+
+      <div class="paths" role="tablist" aria-label="Who is asking">
+        <button class="path" type="button" role="tab" id="pathVenue" data-path="venue" aria-controls="venue" aria-selected="false">
+          <span class="ico" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg></span>
+          <span><span class="t">I'm a venue</span><br><span class="d">The TV, the console, signing in, your bill.</span></span>
+        </button>
+        <button class="path" type="button" role="tab" id="pathPlayer" data-path="player" aria-controls="player" aria-selected="false">
+          <span class="ico" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg></span>
+          <span><span class="t">I'm a player</span><br><span class="d">Joining a game, your tickets, a prize, your details.</span></span>
+        </button>
+      </div>
+      <button class="sales-way" type="button" role="tab" id="pathSales" data-path="sales" aria-controls="sales" aria-selected="false">
+        <span><b>Sales: bring VenuePlay to your venue</b><br><span>Pricing, a demo, or how it would work on your night.</span></span>
+        <span class="go" aria-hidden="true">Talk to us &rarr;</span>
+      </button>
+      <p class="pick-hint" id="pickHint">Choose one to see the help for it.</p>
+    </div>
+  </section>
+
+  <section class="panels">
+    <div class="wrap" id="helpDesk">
+
+      <div class="panel" id="venue" role="tabpanel" aria-labelledby="pathVenue" hidden>
+        <div class="panel-head">
+          <h2>Help for venues</h2>
+          <p>Pick what is going wrong and we'll go through it one step at a time.</p>
+        </div>
+        <div class="note">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF1F8E" stroke-width="2" aria-hidden="true" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+          <span>Signed in to your console? Use <b>Help</b> at the top of it instead: it already knows which venue you are. <a href="/app/index.html">Venue log in</a></span>
+        </div>
+        <div class="card" data-vph-audience="venue"></div>
+        <p class="reach">Or email <a href="mailto:support@venueplay.com.au">support@venueplay.com.au</a>, or <a href="mailto:accounts@venueplay.com.au">accounts@venueplay.com.au</a> about a bill.</p>
+      </div>
+
+      <div class="panel" id="player" role="tabpanel" aria-labelledby="pathPlayer" hidden>
+        <div class="panel-head">
+          <h2>Help for players</h2>
+          <p>Most things on the night are quickest with the host in the room. For anything else, start here.</p>
+        </div>
+        <div class="card" data-vph-audience="patron"></div>
+        <p class="reach">Or email <a href="mailto:support@venueplay.com.au">support@venueplay.com.au</a>.</p>
+      </div>
+
+      <div class="panel" id="sales" role="tabpanel" aria-labelledby="pathSales" hidden>
+        <div class="panel-head">
+          <h2>Bring VenuePlay to your venue</h2>
+          <p>Tell us about your venue and the nights you run, and we'll get back to you. Want to see it first? <a href="/see-a-night" style="color:#FF8AC4;text-decoration:underline;text-underline-offset:3px">See a night</a>.</p>
+        </div>
+        <div class="card" data-vph-audience="sales"></div>
+        <p class="reach">Or email <a href="mailto:sales@venueplay.com.au">sales@venueplay.com.au</a>, or call <a class="tel" href="tel:+61752283667">07 5228 3667</a>.</p>
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <div>
+      <div class="foot-brand">
+        <img src="/logos/venueplay-primary.svg" alt="VenuePlay" style="height:46px;width:auto;max-width:230px;display:block">
+      </div>
+      <p class="powered" style="margin-top:14px">Powered by <b>Gflam Touring</b></p>
+      <div class="foot-social"><a href="https://www.facebook.com/people/VenuePlay/61589892656207/" target="_blank" rel="noopener" aria-label="VenuePlay on Facebook" title="Facebook"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M13.5 22v-8h2.7l.4-3.2h-3.1V8.8c0-.9.3-1.5 1.6-1.5h1.7V4.4c-.3 0-1.3-.1-2.4-.1-2.4 0-4 1.5-4 4.1v2.4H7.6V14h2.8v8h3.1z"/></svg></a><a href="https://www.instagram.com/venueplay/" target="_blank" rel="noopener" aria-label="VenuePlay on Instagram" title="Instagram"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 7.4a4.6 4.6 0 1 0 0 9.2 4.6 4.6 0 0 0 0-9.2zm0 7.6a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm5.9-7.8a1.1 1.1 0 1 1-2.2 0 1.1 1.1 0 0 1 2.2 0zM12 3.8c2.7 0 3 0 4 .1 1 0 1.5.2 1.9.3.5.2.8.4 1.2.8.4.4.6.7.8 1.2.1.4.3.9.3 1.9.1 1 .1 1.4.1 4s0 3-.1 4c0 1-.2 1.5-.3 1.9-.2.5-.4.8-.8 1.2-.4.4-.7.6-1.2.8-.4.1-.9.3-1.9.3-1 .1-1.4.1-4 .1s-3 0-4-.1c-1 0-1.5-.2-1.9-.3a3.2 3.2 0 0 1-1.2-.8 3.2 3.2 0 0 1-.8-1.2c-.1-.4-.3-.9-.3-1.9-.1-1-.1-1.4-.1-4s0-3 .1-4c0-1 .2-1.5.3-1.9.2-.5.4-.8.8-1.2.4-.4.7-.6 1.2-.8.4-.1.9-.3 1.9-.3 1-.1 1.4-.1 4-.1zM12 2c-2.7 0-3.1 0-4.1.1-1.1 0-1.8.2-2.4.5-.7.2-1.2.6-1.8 1.1-.5.6-.9 1.1-1.1 1.8-.3.6-.5 1.3-.5 2.4C2 8.9 2 9.3 2 12s0 3.1.1 4.1c0 1.1.2 1.8.5 2.4.2.7.6 1.2 1.1 1.8.6.5 1.1.9 1.8 1.1.6.3 1.3.5 2.4.5 1 .1 1.4.1 4.1.1s3.1 0 4.1-.1c1.1 0 1.8-.2 2.4-.5.7-.2 1.2-.6 1.8-1.1.5-.6.9-1.1 1.1-1.8.3-.6.5-1.3.5-2.4.1-1 .1-1.4.1-4.1s0-3.1-.1-4.1c0-1.1-.2-1.8-.5-2.4a4.9 4.9 0 0 0-1.1-1.8 4.9 4.9 0 0 0-1.8-1.1c-.6-.3-1.3-.5-2.4-.5C15.1 2 14.7 2 12 2z"/></svg></a></div>
+    </div>
+    <div class="foot-meta">
+      <a href="/play">Play</a> · <a href="/#modes">Game modes</a> · <a href="/#faq">FAQs</a> · <a href="/help">Help</a> · <a href="/#contact">Contact</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a><br>
+      <a href="mailto:hello@venueplay.com.au">hello@venueplay.com.au</a><br>
+      &copy; <span id="vp-year"></span> Gflam Group Pty Ltd, trading as VenuePlay
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  document.getElementById('vp-year').textContent = new Date().getFullYear();
+  /* The three ways in. Which one is open lives in the address (#venue, #player, #sales), so a link
+     can send a venue straight to its help, and Back works. */
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('[data-path]'));
+  function show(name, scroll) {
+    var any = false;
+    tabs.forEach(function (t) {
+      var on = t.getAttribute('data-path') === name;
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      var p = document.getElementById(t.getAttribute('aria-controls'));
+      if (p) p.hidden = !on;
+      if (on) { any = true; if (scroll && p) p.scrollIntoView({ block: 'start' }); }
+    });
+    document.getElementById('pickHint').hidden = any;
+  }
+  tabs.forEach(function (t) {
+    t.addEventListener('click', function () {
+      var name = t.getAttribute('data-path');
+      try { history.replaceState(null, '', '#' + name); } catch (e) {}
+      show(name, true);
+    });
+  });
+  function fromHash() { var h = (location.hash || '').slice(1); if (h === 'venue' || h === 'player' || h === 'sales') show(h, false); }
+  window.addEventListener('hashchange', fromHash);
+  fromHash();
+})();
+</script>
+<script src="/app/vp-help.js" data-mode="page" data-brand="venueplay" data-mount="helpDesk"></script>
+</body>
+</html>

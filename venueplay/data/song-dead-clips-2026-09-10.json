@@ -1,0 +1,8 @@
+{
+ "generated": "2026-09-10",
+ "what_this_is": "Every song in a pack, checked that its audio clip and artwork still load.",
+ "why": "A dead preview is silence in a pub and nothing in the product would notice.",
+ "dead_clips": 0,
+ "dead_artwork": 0,
+ "list": []
+}

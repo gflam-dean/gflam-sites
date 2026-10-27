@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PartyPlay</title>
+<link rel="icon" href="/logos/partyplay-appicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@700;800&family=Manrope:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#12101A;--paper:#FFF1E6;--mute:#B6ADC2;--pink:#FF1F8E;--teal:#17C4B4;--line:rgba(255,241,230,.14)}
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--ink);color:var(--paper);font-family:Manrope,system-ui,sans-serif;
+    overflow:hidden;-webkit-font-smoothing:antialiased}
+  /* Everything scales off the viewport, because this is read from a couch and we
+     have no idea whether it is a 24 inch monitor or a 65 inch television. */
+  /* THE NAMES STRIP TAKES ITS OWN ROOM (17 Oct 2026). It used to be position:fixed OVER the
+     screen, while .screen was the full height and centred its picture in all of it. At 1280x720
+     with a room joined, the strip's two rows sat over the bottom 90px of the QR card and over
+     "Wrong party? Use a different code". Now the page is a column: the screen gets what the
+     strip leaves, so every picture centres in the space nobody is sitting on. fitScreen() below
+     shrinks a picture that still does not fit, the way /app/vp-fit.js does for VenuePlay's walls. */
+  body{display:flex;flex-direction:column}
+  .screen{flex:1 1 auto;min-height:0;display:grid;place-items:center;padding:4vh 4vw;text-align:center;overflow:hidden}
+  .screen > *{transform-origin:center center}
+  .screen > * > :last-child{margin-bottom:0}   /* a trailing margin is measured as content and wasted the gap above the strip */
+  h1,h2,.code,.big{font-family:'Hanken Grotesk',system-ui,sans-serif;font-weight:800;letter-spacing:-.02em;margin:0}
+  .join .mark{width:14vh;height:12vh;margin-bottom:2vh}
+  .join h1{font-size:clamp(30px,6.4vh,90px);line-height:1}
+  .join .sub{color:var(--mute);font-size:clamp(15px,2.4vh,30px);margin:1.4vh 0 3vh}
+  .joinrow{display:flex;align-items:center;gap:5vw;flex-wrap:wrap;justify-content:center}
+  .qr{background:#fff;padding:1.4vh;border-radius:2vh;line-height:0}
+  /* !important, because the QR library writes its own pixel size onto the canvas (width:420 below
+     comes back as style="width:420px"), and an inline style beats any rule here. So the code was
+     420px on every telly: half the height of a 720 screen, and a stamp on a 4K one. */
+  .qr canvas{display:block;width:34vh !important;height:34vh !important}
+  .codewrap{text-align:left}
+  .codewrap .lbl{color:var(--mute);font-size:clamp(13px,2vh,24px);display:block;margin-bottom:.4vh}
+  /* The address is the instruction, so it is set like one: big, in the party
+     colour, on its own line. It used to sit under the code in mute grey at half
+     the size, which read as a footnote rather than the thing to type. */
+  .codewrap .url{font-family:'Hanken Grotesk',system-ui,sans-serif;font-weight:800;
+    font-size:clamp(24px,5.4vh,68px);line-height:1;letter-spacing:-.01em;color:var(--teal);
+    margin-bottom:2.2vh;word-break:break-word}
+  .code{font-size:clamp(46px,14vh,180px);line-height:.95;letter-spacing:.06em;color:var(--pink)}
+
+  /* Typing a code with a TV remote is slow and unpleasant, so this screen gets
+     out of the way: one box, one button, nothing else to land focus on. */
+  .entry{width:min(90vw,760px);text-align:center}   /* 30ch of body text was narrower than "ABC123" at TV size, so it cut off */
+  .entry .mark{width:11vh;height:9.5vh;margin-bottom:1.6vh}
+  .entry h1{font-size:clamp(26px,5.2vh,66px);line-height:1.02}
+  .entry .sub{color:var(--mute);font-size:clamp(14px,2.2vh,26px);margin:1.2vh 0 3vh;line-height:1.5}
+  .entry input{width:100%;padding:2.2vh 1vh;border-radius:1.6vh;border:2px solid var(--line);
+    background:rgba(255,241,230,.05);color:var(--paper);font-family:'Hanken Grotesk',system-ui,sans-serif;
+    font-weight:800;font-size:clamp(28px,6.6vh,68px);text-align:center;letter-spacing:.12em;text-indent:.12em;
+    text-transform:uppercase;outline:none;transition:border-color .15s}
+  .entry input:focus{border-color:var(--pink)}
+  .entry input::placeholder{color:rgba(182,173,194,.4);letter-spacing:.12em}
+  .entry button{width:100%;margin-top:1.8vh;padding:2.1vh;border:0;border-radius:1.6vh;
+    background:var(--pink);color:#fff;font-family:'Hanken Grotesk',system-ui,sans-serif;font-weight:800;
+    font-size:clamp(17px,3vh,30px);cursor:pointer}
+  .entry button:disabled{background:rgba(255,241,230,.13);color:var(--mute);cursor:default}
+  .entry .foot{color:var(--mute);font-size:clamp(12px,1.8vh,20px);margin-top:2.6vh;line-height:1.6}
+  .entry .foot b{color:var(--paper)}
+  .who{flex:0 0 auto;padding:1.6vh 3vw;display:flex;gap:1vw;flex-wrap:wrap;
+    justify-content:center;border-top:1px solid var(--line);background:rgba(18,16,26,.9)}
+  /* display:flex above beats the browser's own [hidden] rule, so an empty strip was still a bar. */
+  .who[hidden]{display:none}
+  .who span{background:rgba(255,241,230,.08);border-radius:2vh;padding:.6vh 1.6vh;font-size:clamp(12px,1.8vh,22px)}
+  .who .count{background:var(--pink);color:#fff;font-weight:700}
+  /* margin-inline:auto, because max-width alone does not centre a block. The wrapper
+     is text-align:center, so the TEXT inside .msg was centred while the BOX it sat in
+     stayed hard against the 4vw left padding. On a 1920 screen that put "Question 3 of
+     10" at x=77 under a question spanning 77 to 1843, which reads as a mistake from
+     across a room. Reported by play-testers as "off-centre subtitles" and never traced.
+     Measured 15 Sep 2026: .msg box was 343px wide starting at the padding edge. */
+  .msg{color:var(--mute);font-size:clamp(15px,2.6vh,32px);max-width:24ch;margin-inline:auto}
+  /* THE TELLY HAS TO SHRINK FOR A LONG QUESTION.
+     14vh sizes off the screen's HEIGHT, which is the right unit, but it takes no
+     account of how many LINES the text wraps to. Measured 15 Sep 2026 on a 1920x902
+     screen: a 186 character question rendered at 126px and ran 92px off the bottom,
+     silently, because .screen is a grid that just overflows.
+     Real data from the packs: 312 questions are over 100 characters, 17 over 150,
+     the longest 171. So this is not a hypothetical, it is most of a long round.
+     Same shape as venueplay/app/trivia/screen.html, which has carried q-med/q-long/
+     q-epic for the same reason. */
+  .big{font-size:clamp(40px,14vh,180px);line-height:1}
+  .big.b-med {font-size:clamp(34px,10vh,120px);line-height:1.04}
+  .big.b-long{font-size:clamp(28px,7.4vh,86px);line-height:1.08}
+  .big.b-epic{font-size:clamp(24px,5.6vh,64px);line-height:1.12}
+</style>
+</head>
+<body>
+<div class="screen" id="screen">
+  <div class="msg">Starting up...</div>
+</div>
+<div class="who" id="who" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
+<script src="/lib/pp-config.js"></script>
+<script src="/lib/pr-board.js"></script>
+<script src="/lib/pp-sign.js"></script>
+<script>
+(function(){
+  "use strict";
+  var API = PPConfig.API;
+  var SITE = location.origin;
+  /* What guests are told to type is always the plain address, never whatever
+     this television happens to have loaded from. A www. or a preview host on
+     the screen is one more thing for someone to mistype from across the room. */
+  var JOIN_ADDRESS = "partyplay.com.au/play";
+  var SUPA_URL  = PPConfig.SUPA_URL;
+  var SUPA_ANON = PPConfig.SUPA_ANON;
+  var $ = function(id){ return document.getElementById(id); };
+  var CODE = PPConfig.code(new URLSearchParams(location.search).get("code"));
+  /* A television gets set up once and used all night, then again next year. If a
+     code was typed in before, the bare address works from then on.
+
+     BUT THE REMEMBERED CODE HAS TO FOLLOW THE LATEST PARTY. It used to be saved
+     only when somebody typed it into the telly, never when it arrived in the
+     address. So a host who opened /tv?code=NEW saw the new party, and the next
+     person who opened the bare /tv address got the OLD code back, still sitting
+     in storage from the first party this television ever showed. The TV showed
+     one code while the host console showed another, and there was nothing on
+     screen to change it. */
+  if(CODE){
+    try{ localStorage.setItem("ppTvCode", CODE); }catch(e){}
+  } else {
+    try{ CODE = PPConfig.code(localStorage.getItem("ppTvCode")); }catch(e){}
+  }
+  var players = [];
+
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  /* Anything else going up ends a Great Minds board: the board is only ever mounted by the branch
+     below, and show() is how every other screen is drawn. */
+  var gmBoard = null;
+  function show(html){ gmBoard = null; $("who").style.display = ""; $("screen").innerHTML = html; fitScreen(); }
+
+  /* WHATEVER IS UP MUST FIT IN WHAT THE STRIP LEAVES. The strip grows a row at a time as people
+     join (24 names and a count), so on a small telly the room left for the lobby shrinks under
+     it. The picture is measured unscaled and scaled down, never up, by the same rule vp-fit.js
+     uses on VenuePlay's walls: one transform about the centre keeps every proportion, where
+     smaller type would re-wrap and never settle. Pure, so a suite can run it. */
+  function fitScale(w, h, availW, availH){
+    if(!(w > 0) || !(h > 0) || !(availW > 0) || !(availH > 0)) return 1;
+    var s = Math.min(1, availW / w, availH / h);
+    s = Math.floor(s * 1000) / 1000;
+    if(s > 0.999) return 1;
+    return s < 0.4 ? 0.4 : s;            // something is wrong; do not vanish
+  }
+  function fitScreen(){ try{ fitNow(); }catch(e){} }   // a fit that cannot measure leaves the picture as drawn
+  function fitNow(){
+    var sc = $("screen"), el = sc && sc.firstElementChild;
+    if(!el || el.id === "gmwrap") return;       // the Great Minds board is the whole wall and sizes itself
+    el.style.transform = ""; el.style.transformOrigin = "";
+    var cs = getComputedStyle(sc);
+    var availW = sc.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    var availH = sc.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    var h = el.scrollHeight, s = fitScale(el.scrollWidth, h, availW, availH);
+    if(s >= 1) return;
+    /* A grid item taller than its area does not stay centred: it starts at the top padding and
+       runs out of the bottom. So scale from its top edge and move it down to the middle of the
+       room there is, or a scaled lobby still ends under the strip (measured, 1280x720). */
+    var off = el.getBoundingClientRect().top - (sc.getBoundingClientRect().top + parseFloat(cs.paddingTop));
+    var dy = Math.round((availH - h * s) / 2 - off);
+    el.style.transformOrigin = "center top";
+    el.style.transform = (dy ? "translateY(" + dy + "px) " : "") + "scale(" + s + ")";
+  }
+  if(window.addEventListener) window.addEventListener("resize", fitScreen, { passive:true });
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(fitScreen);   // web fonts change every measurement
+
+  /* The lobby. This is what is on the television for most of the night, so it is
+     the screen that matters most: a code big enough to read from the back of the
+     room, and a QR for anyone close enough to point a phone at it. */
+  /* A code box ON THE TELLY.
+     The setup guide tells people four times to go to partyplay.com.au/tv and
+     enter their code. There was nowhere to enter it: the page only read ?code=
+     and otherwise showed a dead end with nothing to tap, which on a TV remote is
+     the end of the road. This is what makes the smart-TV and TV-browser routes
+     work at all. Big boxes, because this gets typed with a remote. */
+  function askForCode(msg){
+    show('<div class="entry">' +
+      '<img class="mark" src="/logos/partyplay-mark.svg" alt="">' +
+      '<h1>Enter your party code</h1>' +
+      '<p class="sub">' + (msg ? esc(msg) : 'Six characters, in your welcome email and in the host console on your phone.') + '</p>' +
+      '<input id="cin" maxlength="9" placeholder="ABC123" autocomplete="off" ' +
+      'autocapitalize="characters" spellcheck="false" inputmode="text">' +
+      '<button id="cgo" disabled>Show the party</button>' +
+      '<p class="foot">This telly only needs this once. Next time <b>partyplay.com.au/tv</b> ' +
+      'comes straight back to your party.</p></div>');
+
+    var i = document.getElementById("cin"), b = document.getElementById("cgo");
+    function clean(){ return PPConfig.code(i.value); }
+    function go(){
+      var v = clean();
+      if(v.length < 6){ i.focus(); return; }
+      // Remembered, so a television only ever gets this typed into it once.
+      try{ localStorage.setItem("ppTvCode", v); }catch(e){}
+      location.search = "?code=" + encodeURIComponent(v);
+    }
+    // The button stays dead until the code is long enough, so a remote cannot
+    // land on it and submit nothing, which just blinks and looks broken.
+    i.addEventListener("input", function(){ b.disabled = clean().length < 6; });
+    b.addEventListener("click", go);
+    i.addEventListener("keydown", function(e){ if(e.key === "Enter") go(); });
+    i.focus();
+  }
+
+  function drawJoin(){
+    show('<div class="join">' +
+      '<img class="mark" src="/logos/partyplay-mark.svg" alt="">' +
+      '<h1>Join the party</h1>' +
+      '<p class="sub">No app. It works in your phone browser.</p>' +
+      '<div class="joinrow">' +
+        '<div class="qr"><canvas id="qr"></canvas></div>' +
+        '<div class="codewrap">' +
+          '<span class="lbl">Or on your phone, go to</span>' +
+          '<div class="url">' + esc(JOIN_ADDRESS) + '</div>' +
+          '<span class="lbl">and put in this code</span>' +
+          '<div class="code">' + esc(CODE) + '</div>' +
+        '</div>' +
+      '</div>' +
+      /* A WAY OUT. Without this a television that has ever shown one party is
+         stuck on it: the bare address always resolves to the stored code and
+         nothing on screen offers to change it. Deliberately quiet, because it
+         sits under the code all night and must not compete with it. */
+      '<p class="foot" style="margin-top:3vh">Wrong party? ' +
+        '<a href="#" id="changecode" style="color:var(--mute)">Use a different code</a></p>' +
+      '</div>');
+    var cc = document.getElementById("changecode");
+    if(cc) cc.addEventListener("click", function(e){
+      e.preventDefault();
+      try{ localStorage.removeItem("ppTvCode"); }catch(e2){}
+      CODE = "";
+      // Drop ?code= too, or the address puts the old one straight back.
+      if(location.search) { location.search = ""; return; }
+      askForCode();
+    });
+    var el = $("qr");
+    if(window.QRCode && el){
+      QRCode.toCanvas(el, SITE + "/play?code=" + encodeURIComponent(CODE),
+        { width: 420, margin: 1, color:{ dark:"#12101A", light:"#ffffff" } }, function(){ fitScreen(); });
+    }
+  }
+
+  function drawWho(){
+    var w = $("who");
+    if(!players.length){ w.hidden = true; return; }
+    w.hidden = false;
+    w.innerHTML = '<span class="count">' + players.length + ' playing</span>' +
+      players.slice(-24).map(function(p){ return '<span>' + esc(p) + '</span>'; }).join("");
+    fitScreen();    // a new row of names takes height off the screen above it
+  }
+
+  /* Whatever the host broadcasts, put it up. Each game sends its own shape and
+     the TV stays dumb on purpose: a screen that knows the rules is a screen that
+     has to be redeployed every time a game changes. */
+  /* THE TELLY KEEPS SAYING HELLO UNTIL THE HOST ANSWERS (18 Oct 2026). It used to say tv-here once,
+     on joining the channel. A broadcast nobody is listening for is gone, so a telly that reloaded
+     while the host's console was still reconnecting (the two reloaded one after the other) never
+     heard back, and sat on the join screen in the middle of Who here has ever. Now it asks again,
+     at 1, 2, 4 and 8 seconds and then every 15, until anything the host puts on the wall arrives;
+     the host answers every hello with the picture it already has, so asking twice costs nothing.
+     A rollcall means a console has just (re)joined, so it asks again then too: that is the other
+     order, the telly up first and the host reloading after, where what the console sends on
+     reconnecting can be lost the same way. */
+  var HELLO_FIRST_MS = 1000, HELLO_MAX_MS = 15000, PICTURE_T = { lobby:1, big:1, board:1, photoscreen:1, queue:1, ta_board:1 };
+  var helloCh = null, helloT = null, helloWait = HELLO_FIRST_MS;
+  function helloStop(){ if(helloT) clearTimeout(helloT); helloT = null; }
+  function helloSend(){
+    helloT = null;
+    if(!helloCh) return;
+    /* The next ask is armed BEFORE this one goes, so an answer that comes back at once stops it. */
+    helloT = setTimeout(helloSend, helloWait);
+    helloWait = Math.min(helloWait * 2, HELLO_MAX_MS);
+    try{ helloCh.send({ type:"broadcast", event:"msg", payload:{ t:"tv-here" } }); }catch(e){}
+  }
+  function helloStart(){ helloStop(); helloWait = HELLO_FIRST_MS; helloSend(); }
+
+  function onMsg(m){
+    if(!m || !m.t) return;
+    if(PICTURE_T[m.t]) helloStop();                   // the host has answered, or is already talking
+    else if(m.t === "rollcall"){ helloStart(); return; }
+    if(m.t === "players"){ players = m.names || []; drawWho(); return; }
+    /* GREAT MINDS: lib/pr-board.js, the same board VenuePlay's trivia TV mounts. It paints from
+       these three messages alone and never holds an answer before somebody finds it. Sized in cqw,
+       so it sits in its own size container, and the names strip steps aside while it is up. */
+    if(m.t === "ta_board" || m.t === "ta_reveal" || m.t === "ta_showall"){
+      if(!gmBoard){
+        if(m.t !== "ta_board") return;          // a reveal for a board this telly never saw
+        show('<div id="gmwrap" style="position:fixed;inset:0;container-type:inline-size;background:var(--ink)"></div>');
+        $("who").style.display = "none";
+        gmBoard = PRBoard.mount($("gmwrap"));
+      }
+      gmBoard.onMsg(m); return;
+    }
+    if(m.t === "lobby"){ drawJoin(); return; }
+    if(m.t === "big"){
+      /* A bingo ball is two characters and should be enormous; a trivia question can be
+         171. One clamp cannot serve both, so the size comes off the length. */
+      var _t = String(m.text == null ? "" : m.text);
+      var _cls = "big" + (_t.length > 150 ? " b-epic"
+                        : _t.length > 100 ? " b-long"
+                        : _t.length > 55  ? " b-med" : "");
+      show('<div><div class="' + _cls + '">' + esc(_t) + '</div>' +
+        (m.sub ? '<p class="msg" style="margin-top:2vh">' + esc(m.sub) + '</p>' : '') + '</div>'); return; }
+    /* There was a t:"html" branch here that put a broadcast payload straight
+       into innerHTML. Nothing in the product ever sent one, so it was a pure
+       injection point: anyone who knew the six character code could run script
+       on partyplay.com.au, where admin keys and player tokens live. Deleted. */
+    if(m.t === "photoscreen"){
+      /* Only a photo this party's Worker serves. Anything else, a stranger's picture from anywhere on
+         the internet, is not put on a wall in somebody's lounge room (14 Oct audit). Signing stops
+         a forged message once the party has a key; this holds even before it does. */
+      if(m.url && String(m.url).indexOf(PPConfig.API + "/game/photo?") !== 0) m.url = "";
+      show('<div style="height:100%;display:grid;grid-template-rows:auto 1fr;gap:2vh;width:100%">'+
+        '<div><div style="color:var(--mute);font-size:clamp(13px,2vh,24px)">Photo '+esc(m.n)+' of '+esc(m.of)+'</div>'+
+        '<h2 style="font-size:clamp(22px,4.4vh,54px)">'+esc(m.q||"Who is this?")+'</h2></div>'+
+        (m.url? '<img src="'+esc(m.url)+'" alt="" style="width:100%;height:100%;object-fit:contain;border-radius:2vh">'
+              : '<div class="msg">The photo could not be loaded.</div>')+
+        '</div>');
+      return;
+    }
+    /* THE LEADERBOARD. The host's "Put it up" and the end of two truths send this, and
+       the host is told "On the screen", but the TV had no branch for it, so nothing ever
+       changed on the wall (audit, 25 Sep 2026). Names are guests' own words: escaped.
+       Scores are numbers from the host's console; Number() keeps anything else out. */
+    if(m.t === "board"){
+      var rows = (m.rows || []).slice(0, 12);
+      show('<div style="width:100%;max-width:70vw"><h2 style="font-size:clamp(24px,4.6vh,58px);margin-bottom:2.4vh">' +
+        esc(m.title || "Scores") + '</h2>' +
+        (rows.length ? rows.map(function(r, i){
+          return '<div style="display:flex;justify-content:space-between;gap:3vw;padding:1vh 0;' +
+            'font-size:clamp(16px,3vh,38px);border-bottom:1px solid var(--line)' + (i === 0 ? ';font-weight:800' : '') + '">' +
+            '<span>' + (i + 1) + '. ' + esc(r.name) + '</span><span>' + (Number(r.score) || 0) + '</span></div>'; }).join("")
+          : '<div class="msg">No scores yet.</div>') +
+        '</div>');
+      return;
+    }
+    if(m.t === "queue"){
+      if(!m.songs || !m.songs.length){ show('<div class="msg">Nothing in the queue yet. Add one on your phone.</div>'); return; }
+      show('<div style="width:100%;max-width:78vw"><h2 style="font-size:clamp(24px,4.4vh,54px);margin-bottom:2vh">Coming up</h2>'+
+        m.songs.map(function(s,i){
+          return '<div style="display:flex;justify-content:space-between;gap:3vw;padding:.9vh 0;'+
+            'font-size:clamp(15px,2.7vh,34px);border-bottom:1px solid var(--line)">'+
+            '<span>'+esc(s.t)+'</span><span style="color:var(--mute)">'+esc(s.by)+'</span></div>'; }).join("")+
+        '</div>');
+      return;
+    }
+  }
+
+  /* IS THIS A PARTY? The telly used to trust any six characters: a typo, or a code from a party
+     that was never bought, put a QR code and "Join the party" on the wall for a room that could
+     never join (review, 28 Sep 2026). The lobby still goes up first, because the Worker being slow
+     must not delay the one screen everyone is looking at; a party that does not exist takes it down
+     again and asks for the code, and a finished one says so under the code. */
+  function checkCode(code){
+    return fetch(PPConfig.API + "/licence?code=" + encodeURIComponent(code))
+      .then(function(r){ return r.json().then(function(j){ return { status: r.status, body: j }; }); })
+      .then(function(x){
+        /* 400 is "that is not even a code": it used to leave the lobby up with it (14 Oct audit). */
+        if(x.status === 400){
+          try{ localStorage.removeItem("ppTvCode"); }catch(e){}
+          CODE = "";
+          askForCode("That code does not look right. It is six letters and numbers, in your welcome email.");
+          return false;
+        }
+        if(x.status === 404){
+          try{ localStorage.removeItem("ppTvCode"); }catch(e){}
+          CODE = "";
+          askForCode("There is no party with the code " + code + ". Check it against your welcome email and try again.");
+          return false;
+        }
+        if(x.status === 200 && x.body && x.body.status === "finished"){
+          var f = document.querySelector(".join .foot");
+          if(f) { f.insertAdjacentHTML("beforebegin", '<p class="foot">This party has finished.</p>'); fitScreen(); }
+        }
+        return true;
+      })
+      .catch(function(){ return true; });   // the Worker not answering is not a reason to take the lobby down
+  }
+  var LOST_MS = 20000, lostT = null;
+  function lostNote(on){
+    var n = $("lostNote");
+    if(!on){ if(n) n.remove(); return; }
+    if(n) return;
+    n = document.createElement("div"); n.id = "lostNote";
+    n.setAttribute("style", "position:fixed;top:2vh;right:2vw;z-index:50;background:rgba(18,16,26,.92);color:var(--mute);" +
+      "border:1px solid var(--line);border-radius:2vh;padding:.8vh 1.8vh;font-size:clamp(12px,1.8vh,22px)");
+    n.textContent = "Reconnecting to the party\u2026";
+    document.body.appendChild(n);
+  }
+  function connect(){
+    if(!CODE){ askForCode(); return; }
+    /* NOT A CODE AT ALL, SAID BEFORE ANYTHING GOES UP. /tv?code=%3Cb%3Ex put "BX" on the wall as
+       the join code (14 Oct audit). A party code is six from one alphabet (PPConfig.valid). */
+    if(PPConfig.valid && !PPConfig.valid(CODE)){
+      try{ localStorage.removeItem("ppTvCode"); }catch(e){}
+      CODE = "";
+      askForCode("That code does not look right. It is six letters and numbers, in your welcome email.");
+      return;
+    }
+    if(!SUPA_ANON){ show('<div class="msg">This screen is not configured yet.</div>'); return; }
+    drawJoin();
+    checkCode(CODE);
+    try{
+      var client = supabase.createClient(SUPA_URL, SUPA_ANON);
+      var ch = client.channel(PPConfig.channel(CODE), { config:{ broadcast:{ self:false } } });
+      /* ONLY THE HOST'S WORD GOES ON THE WALL (15 Oct 2026, lib/pp-sign.js). Anybody who could read
+         the code could put any caption, board or picture up here. Once the party has a key, a message
+         without the host's signature is dropped; with no key, or no pp-sign.js, it is as before, so a
+         missing key can never black the telly out. */
+      var PPS = window.PPSign || null;
+      if(PPS) PPS.initReceiver(API, CODE);
+      ch.on("broadcast", { event:"msg" }, function(e){ if(PPS) PPS.gate(e.payload, onMsg); else onMsg(e.payload); });
+      ch.subscribe(function(status){
+        /* Say nothing on a wobble. A television that flashes "reconnecting" every
+           time the house wifi hiccups is a television everyone is looking at.
+           BUT SAY SOMETHING WHEN IT IS REALLY GONE. A telly that lost the party showed
+           whatever it last drew, for ever, and looked exactly like one waiting for the
+           host (audit, 30 Sep 2026). Twenty seconds without the party earns a small
+           corner note; it goes the moment the party is back. */
+        if(status === "SUBSCRIBED"){
+          clearTimeout(lostT); lostT = null; lostNote(false);
+          helloCh = ch; helloStart();
+        } else if(status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED"){
+          if(!lostT) lostT = setTimeout(function(){ lostNote(true); }, LOST_MS);
+        }
+      });
+    }catch(e){ /* the lobby is already up, and it is the useful screen anyway */ }
+  }
+
+  // A TV that sleeps mid-game is the commonest complaint about anything like this.
+  if(navigator.wakeLock){ navigator.wakeLock.request("screen").catch(function(){}); }
+  document.addEventListener("visibilitychange", function(){
+    if(!document.hidden && navigator.wakeLock) navigator.wakeLock.request("screen").catch(function(){});
+  });
+
+  connect();
+})();
+</script>
+</body>
+</html>

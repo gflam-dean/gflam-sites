@@ -1,0 +1,3356 @@
+{
+ "generated": "2026-09-10",
+ "what_this_is": "The well known songs the 8 September curation dropped, put back into the same packs they were in that day, appended at the end so nothing already there moved.",
+ "how_to_read_it": "restored = songs put back, with the packs each went into. held_metal = songs that qualified on listeners but carry a metal tag, kept out of the general packs until there is a Metal pack. skipped = qualified but could not go into a pack, with the reason.",
+ "rule": "500,000 Last.fm listeners or more, in a pack on 8 September, no metal tag in the top 3 tags and no metal tag weighted 25 or more.",
+ "listener_source": "venueplay/data/song-listeners-cut-2026-09-10.json",
+ "pack_source": "venueplay/data/musical-library.backup-2026-09-08-pre-curate.json",
+ "tag_source": "Last.fm track.getTopTags, falling back to artist.getTopTags where Last.fm returns no track tags",
+ "restored": 228,
+ "held_metal_count": 24,
+ "restored_list": [
+  {
+   "id": "don-t-bring-me-down-electric-light-orchestra",
+   "title": "Don't Bring Me Down",
+   "artist": "Electric Light Orchestra",
+   "listeners": 936223,
+   "near_metal": null,
+   "packs": [
+    "rock"
+   ]
+  },
+  {
+   "id": "great-balls-of-fire-jerry-lee-lewis",
+   "title": "Great Balls Of Fire",
+   "artist": "Jerry Lee Lewis",
+   "listeners": 659621,
+   "near_metal": null,
+   "packs": [
+    "rock"
+   ]
+  },
+  {
+   "id": "johnny-b-goode-chuck-berry",
+   "title": "Johnny B. Goode",
+   "artist": "Chuck Berry",
+   "listeners": 1162609,
+   "near_metal": null,
+   "packs": [
+    "rock"
+   ]
+  },
+  {
+   "id": "could-you-be-loved-bob-marley-the-wailers",
+   "title": "Could You Be Loved",
+   "artist": "Bob Marley & The Wailers",
+   "listeners": 1538791,
+   "near_metal": null,
+   "packs": [
+    "80s-pop"
+   ]
+  },
+  {
+   "id": "red-red-wine-ub40",
+   "title": "Red Red Wine",
+   "artist": "UB40",
+   "listeners": 754175,
+   "near_metal": null,
+   "packs": [
+    "80s-pop"
+   ]
+  },
+  {
+   "id": "our-house-single-version-madness",
+   "title": "Our House",
+   "artist": "Madness",
+   "listeners": 757023,
+   "near_metal": null,
+   "packs": [
+    "80s-pop",
+    "pop"
+   ]
+  },
+  {
+   "id": "the-rock-show-blink-182",
+   "title": "The Rock Show",
+   "artist": "blink-182",
+   "listeners": 973344,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "pop"
+   ]
+  },
+  {
+   "id": "in-too-deep-sum-41",
+   "title": "In Too Deep",
+   "artist": "Sum 41",
+   "listeners": 1450422,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "ocean-avenue-yellowcard",
+   "title": "Ocean Avenue",
+   "artist": "Yellowcard",
+   "listeners": 1136157,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "face-down-the-red-jumpsuit-apparatus",
+   "title": "Face Down",
+   "artist": "The Red Jumpsuit Apparatus",
+   "listeners": 1140485,
+   "near_metal": [
+    [
+     "screamo",
+     18
+    ],
+    [
+     "post-hardcore",
+     2
+    ]
+   ],
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "tears-in-heaven-eric-clapton",
+   "title": "Tears in Heaven",
+   "artist": "Eric Clapton",
+   "listeners": 1104468,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "rock"
+   ]
+  },
+  {
+   "id": "new-slang-the-shins",
+   "title": "New Slang",
+   "artist": "The Shins",
+   "listeners": 1280789,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "young-folks-peter-bjorn-and-john",
+   "title": "Young Folks",
+   "artist": "Peter Bjorn and John",
+   "listeners": 1618880,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "pop"
+   ]
+  },
+  {
+   "id": "i-predict-a-riot-kaiser-chiefs",
+   "title": "I Predict A Riot",
+   "artist": "Kaiser Chiefs",
+   "listeners": 1027254,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "home-phillip-phillips",
+   "title": "Home",
+   "artist": "Phillip Phillips",
+   "listeners": 530949,
+   "near_metal": null,
+   "packs": [
+    "pop",
+    "2010s"
+   ]
+  },
+  {
+   "id": "gasolina-daddy-yankee",
+   "title": "Gasolina",
+   "artist": "Daddy Yankee",
+   "listeners": 1278014,
+   "near_metal": null,
+   "packs": [
+    "2000s"
+   ]
+  },
+  {
+   "id": "fireball-feat-john-ryan-pitbull",
+   "title": "Fireball (feat. John Ryan)",
+   "artist": "Pitbull",
+   "listeners": 735067,
+   "near_metal": null,
+   "packs": [
+    "pop",
+    "2010s"
+   ]
+  },
+  {
+   "id": "run-snow-patrol",
+   "title": "Run",
+   "artist": "Snow Patrol",
+   "listeners": 983795,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "pop"
+   ]
+  },
+  {
+   "id": "blurry-puddle-of-mudd",
+   "title": "Blurry",
+   "artist": "Puddle of Mudd",
+   "listeners": 947727,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "somewhere-only-we-know-keane",
+   "title": "Somewhere Only We Know",
+   "artist": "Keane",
+   "listeners": 2580325,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "pop"
+   ]
+  },
+  {
+   "id": "everybody-s-changing-keane",
+   "title": "Everybody's Changing",
+   "artist": "Keane",
+   "listeners": 1342588,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "pop"
+   ]
+  },
+  {
+   "id": "babylon-david-gray",
+   "title": "Babylon",
+   "artist": "David Gray",
+   "listeners": 529373,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "rock"
+   ]
+  },
+  {
+   "id": "sing-travis",
+   "title": "Sing",
+   "artist": "Travis",
+   "listeners": 791871,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "pop"
+   ]
+  },
+  {
+   "id": "i-m-with-you-avril-lavigne",
+   "title": "I'm with You",
+   "artist": "Avril Lavigne",
+   "listeners": 1227977,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "pop"
+   ]
+  },
+  {
+   "id": "behind-these-hazel-eyes-kelly-clarkson",
+   "title": "Behind These Hazel Eyes",
+   "artist": "Kelly Clarkson",
+   "listeners": 717965,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "pop"
+   ]
+  },
+  {
+   "id": "stronger-what-doesn-t-kill-you-kelly-clarkson",
+   "title": "Stronger (What Doesn't Kill You)",
+   "artist": "Kelly Clarkson",
+   "listeners": 884124,
+   "near_metal": null,
+   "packs": [
+    "pop",
+    "2010s"
+   ]
+  },
+  {
+   "id": "unwritten-natasha-bedingfield",
+   "title": "Unwritten",
+   "artist": "Natasha Bedingfield",
+   "listeners": 1895677,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "pop"
+   ]
+  },
+  {
+   "id": "pocketful-of-sunshine-natasha-bedingfield",
+   "title": "Pocketful of Sunshine",
+   "artist": "Natasha Bedingfield",
+   "listeners": 1359711,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "pop"
+   ]
+  },
+  {
+   "id": "banana-pancakes-jack-johnson",
+   "title": "Banana Pancakes",
+   "artist": "Jack Johnson",
+   "listeners": 1309249,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "better-together-jack-johnson",
+   "title": "Better Together",
+   "artist": "Jack Johnson",
+   "listeners": 1473940,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "sitting-waiting-wishing-jack-johnson",
+   "title": "Sitting, Waiting, Wishing",
+   "artist": "Jack Johnson",
+   "listeners": 1069126,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "empire-state-of-mind-part-ii-broken-down-alicia-keys",
+   "title": "Empire State of Mind (Part II) Broken Down",
+   "artist": "Alicia Keys",
+   "listeners": 502750,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "hip-hop-r-b"
+   ]
+  },
+  {
+   "id": "uptown-funk-feat-bruno-mars-mark-ronson",
+   "title": "Uptown Funk (feat. Bruno Mars)",
+   "artist": "Mark Ronson",
+   "listeners": 1289457,
+   "near_metal": null,
+   "packs": [
+    "modern-pop",
+    "pop",
+    "2010s"
+   ]
+  },
+  {
+   "id": "georgia-vance-joy",
+   "title": "Georgia",
+   "artist": "Vance Joy",
+   "listeners": 502678,
+   "near_metal": null,
+   "packs": [
+    "aussie",
+    "2010s"
+   ]
+  },
+  {
+   "id": "here-i-go-again-whitesnake",
+   "title": "Here I Go Again",
+   "artist": "Whitesnake",
+   "listeners": 595298,
+   "near_metal": [
+    [
+     "hair metal",
+     9
+    ],
+    [
+     "heavy metal",
+     5
+    ],
+    [
+     "Glam Metal",
+     1
+    ]
+   ],
+   "packs": [
+    "80s-rock",
+    "80s-pop",
+    "rock"
+   ]
+  },
+  {
+   "id": "another-day-in-paradise-phil-collins",
+   "title": "Another Day in Paradise",
+   "artist": "Phil Collins",
+   "listeners": 534965,
+   "near_metal": null,
+   "packs": [
+    "80s-pop",
+    "pop"
+   ]
+  },
+  {
+   "id": "cruel-summer-bananarama",
+   "title": "Cruel Summer",
+   "artist": "Bananarama",
+   "listeners": 510322,
+   "near_metal": null,
+   "packs": [
+    "80s-pop",
+    "pop"
+   ]
+  },
+  {
+   "id": "revelry-kings-of-leon",
+   "title": "Revelry",
+   "artist": "Kings of Leon",
+   "listeners": 968766,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "alternative"
+   ]
+  },
+  {
+   "id": "move-on-up-curtis-mayfield",
+   "title": "Move On Up",
+   "artist": "Curtis Mayfield",
+   "listeners": 599472,
+   "near_metal": null,
+   "packs": [
+    "soul-motown",
+    "70s"
+   ]
+  },
+  {
+   "id": "fell-on-black-days-soundgarden",
+   "title": "Fell On Black Days",
+   "artist": "Soundgarden",
+   "listeners": 1047095,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "rock"
+   ]
+  },
+  {
+   "id": "spoonman-soundgarden",
+   "title": "Spoonman",
+   "artist": "Soundgarden",
+   "listeners": 945017,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "rock"
+   ]
+  },
+  {
+   "id": "nutshell-alice-in-chains",
+   "title": "Nutshell",
+   "artist": "Alice In Chains",
+   "listeners": 1233601,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "rock"
+   ]
+  },
+  {
+   "id": "would-alice-in-chains",
+   "title": "Would?",
+   "artist": "Alice In Chains",
+   "listeners": 913986,
+   "near_metal": [
+    [
+     "heavy metal",
+     4
+    ],
+    [
+     "alternative metal",
+     3
+    ],
+    [
+     "metal",
+     1
+    ]
+   ],
+   "packs": [
+    "90s",
+    "alternative"
+   ]
+  },
+  {
+   "id": "rooster-alice-in-chains",
+   "title": "Rooster",
+   "artist": "Alice In Chains",
+   "listeners": 781983,
+   "near_metal": [
+    [
+     "heavy metal",
+     4
+    ],
+    [
+     "alternative metal",
+     3
+    ],
+    [
+     "metal",
+     1
+    ]
+   ],
+   "packs": [
+    "90s",
+    "alternative"
+   ]
+  },
+  {
+   "id": "creep-stone-temple-pilots",
+   "title": "Creep",
+   "artist": "Stone Temple Pilots",
+   "listeners": 594675,
+   "near_metal": [
+    [
+     "alternative metal",
+     1
+    ]
+   ],
+   "packs": [
+    "alternative"
+   ]
+  },
+  {
+   "id": "unwell-matchbox-twenty",
+   "title": "Unwell",
+   "artist": "Matchbox Twenty",
+   "listeners": 546408,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "if-it-makes-you-happy-sheryl-crow",
+   "title": "If It Makes You Happy",
+   "artist": "Sheryl Crow",
+   "listeners": 531774,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "pop"
+   ]
+  },
+  {
+   "id": "hand-in-my-pocket-alanis-morissette",
+   "title": "Hand in My Pocket",
+   "artist": "Alanis Morissette",
+   "listeners": 588183,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "pop"
+   ]
+  },
+  {
+   "id": "stupid-girl-garbage",
+   "title": "Stupid Girl",
+   "artist": "Garbage",
+   "listeners": 524179,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "rock"
+   ]
+  },
+  {
+   "id": "only-happy-when-it-rains-garbage",
+   "title": "Only Happy When It Rains",
+   "artist": "Garbage",
+   "listeners": 616034,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "rock"
+   ]
+  },
+  {
+   "id": "angel-sarah-mclachlan",
+   "title": "Angel",
+   "artist": "Sarah McLachlan",
+   "listeners": 511414,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "pop"
+   ]
+  },
+  {
+   "id": "lucky-man-the-verve",
+   "title": "Lucky Man",
+   "artist": "The Verve",
+   "listeners": 747259,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "alternative"
+   ]
+  },
+  {
+   "id": "sonnet-the-verve",
+   "title": "Sonnet",
+   "artist": "The Verve",
+   "listeners": 651058,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "rock"
+   ]
+  },
+  {
+   "id": "let-down-radiohead",
+   "title": "Let Down",
+   "artist": "Radiohead",
+   "listeners": 2633853,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "alternative"
+   ]
+  },
+  {
+   "id": "common-people-pulp",
+   "title": "Common People",
+   "artist": "Pulp",
+   "listeners": 616137,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "rock"
+   ]
+  },
+  {
+   "id": "disco-2000-pulp",
+   "title": "Disco 2000",
+   "artist": "Pulp",
+   "listeners": 683611,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "rock"
+   ]
+  },
+  {
+   "id": "butterfly-effect-travis-scott",
+   "title": "BUTTERFLY EFFECT",
+   "artist": "Travis Scott",
+   "listeners": 1355374,
+   "near_metal": null,
+   "packs": [
+    "2010s",
+    "hip-hop-r-b"
+   ]
+  },
+  {
+   "id": "yosemite-travis-scott",
+   "title": "YOSEMITE",
+   "artist": "Travis Scott",
+   "listeners": 844063,
+   "near_metal": null,
+   "packs": [
+    "2010s",
+    "hip-hop-r-b"
+   ]
+  },
+  {
+   "id": "dakota-stereophonics",
+   "title": "Dakota",
+   "artist": "Stereophonics",
+   "listeners": 852099,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "pop"
+   ]
+  },
+  {
+   "id": "maybe-tomorrow-stereophonics",
+   "title": "Maybe Tomorrow",
+   "artist": "Stereophonics",
+   "listeners": 747146,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "boom-boom-boom-boom-vengaboys",
+   "title": "Boom, Boom, Boom, Boom!!",
+   "artist": "Vengaboys",
+   "listeners": 639504,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "pop"
+   ]
+  },
+  {
+   "id": "there-she-goes-sixpence-none-the-richer",
+   "title": "There She Goes",
+   "artist": "Sixpence None the Richer",
+   "listeners": 512617,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "rock"
+   ]
+  },
+  {
+   "id": "my-friend-groove-armada",
+   "title": "My Friend",
+   "artist": "Groove Armada",
+   "listeners": 502799,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "pop"
+   ]
+  },
+  {
+   "id": "finesse-drake",
+   "title": "Finesse",
+   "artist": "Drake",
+   "listeners": 514329,
+   "near_metal": null,
+   "packs": [
+    "2010s",
+    "hip-hop-r-b"
+   ]
+  },
+  {
+   "id": "just-a-lil-bit-50-cent",
+   "title": "Just a Lil Bit",
+   "artist": "50 Cent",
+   "listeners": 978262,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "hip-hop-r-b"
+   ]
+  },
+  {
+   "id": "candy-shop-50-cent",
+   "title": "Candy Shop",
+   "artist": "50 Cent",
+   "listeners": 1535073,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "hip-hop-r-b"
+   ]
+  },
+  {
+   "id": "the-sound-of-silence-simon-and-garfunkel",
+   "title": "The Sound of Silence",
+   "artist": "Simon & Garfunkel",
+   "listeners": 1005609,
+   "near_metal": null,
+   "packs": [
+    "rock"
+   ]
+  },
+  {
+   "id": "heart-of-gold-neil-young",
+   "title": "Heart of Gold",
+   "artist": "Neil Young",
+   "listeners": 1106282,
+   "near_metal": null,
+   "packs": [
+    "rock",
+    "70s"
+   ]
+  },
+  {
+   "id": "harvest-moon-neil-young",
+   "title": "Harvest Moon",
+   "artist": "Neil Young",
+   "listeners": 990655,
+   "near_metal": null,
+   "packs": [
+    "70s",
+    "alternative"
+   ]
+  },
+  {
+   "id": "wild-world-cat-stevens",
+   "title": "Wild World",
+   "artist": "Cat Stevens",
+   "listeners": 625029,
+   "near_metal": null,
+   "packs": [
+    "pop",
+    "70s"
+   ]
+  },
+  {
+   "id": "ventura-highway-america",
+   "title": "Ventura Highway",
+   "artist": "America",
+   "listeners": 997300,
+   "near_metal": null,
+   "packs": [
+    "rock",
+    "70s"
+   ]
+  },
+  {
+   "id": "do-it-again-steely-dan",
+   "title": "Do It Again",
+   "artist": "Steely Dan",
+   "listeners": 792524,
+   "near_metal": null,
+   "packs": [
+    "rock",
+    "70s"
+   ]
+  },
+  {
+   "id": "reelin-in-the-years-steely-dan",
+   "title": "Reelin' In The Years",
+   "artist": "Steely Dan",
+   "listeners": 743340,
+   "near_metal": null,
+   "packs": [
+    "pop",
+    "70s"
+   ]
+  },
+  {
+   "id": "i-m-not-in-love-10cc",
+   "title": "I'm Not In Love",
+   "artist": "10cc",
+   "listeners": 1221918,
+   "near_metal": null,
+   "packs": [
+    "pop",
+    "70s"
+   ]
+  },
+  {
+   "id": "the-safety-dance-men-without-hats",
+   "title": "The Safety Dance",
+   "artist": "Men Without Hats",
+   "listeners": 503944,
+   "near_metal": null,
+   "packs": [
+    "80s-pop",
+    "pop"
+   ]
+  },
+  {
+   "id": "mad-world-tears-for-fears",
+   "title": "Mad World",
+   "artist": "Tears for Fears",
+   "listeners": 965042,
+   "near_metal": null,
+   "packs": [
+    "80s-pop",
+    "pop"
+   ]
+  },
+  {
+   "id": "life-is-a-highway-rascal-flatts",
+   "title": "Life Is a Highway",
+   "artist": "Rascal Flatts",
+   "listeners": 961961,
+   "near_metal": null,
+   "packs": [
+    "2000s"
+   ]
+  },
+  {
+   "id": "school-s-out-alice-cooper",
+   "title": "School's Out",
+   "artist": "Alice Cooper",
+   "listeners": 746325,
+   "near_metal": [
+    [
+     "heavy metal",
+     15
+    ]
+   ],
+   "packs": [
+    "rock",
+    "70s"
+   ]
+  },
+  {
+   "id": "shape-of-my-heart-sting",
+   "title": "Shape of My Heart",
+   "artist": "Sting",
+   "listeners": 848622,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "rock"
+   ]
+  },
+  {
+   "id": "true-remastered-spandau-ballet",
+   "title": "True",
+   "artist": "Spandau Ballet",
+   "listeners": 555050,
+   "near_metal": null,
+   "packs": [
+    "80s-pop",
+    "pop"
+   ]
+  },
+  {
+   "id": "self-control-laura-branigan",
+   "title": "Self Control",
+   "artist": "Laura Branigan",
+   "listeners": 783292,
+   "near_metal": null,
+   "packs": [
+    "80s-pop",
+    "pop"
+   ]
+  },
+  {
+   "id": "undone-the-sweater-song-weezer",
+   "title": "Undone - The Sweater Song",
+   "artist": "Weezer",
+   "listeners": 1106490,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "rock"
+   ]
+  },
+  {
+   "id": "santeria-sublime",
+   "title": "Santeria",
+   "artist": "Sublime",
+   "listeners": 1857388,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "alternative"
+   ]
+  },
+  {
+   "id": "doin-time-sublime",
+   "title": "Doin' Time",
+   "artist": "Sublime",
+   "listeners": 801727,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "alternative"
+   ]
+  },
+  {
+   "id": "smoke-two-joints-sublime",
+   "title": "Smoke Two Joints",
+   "artist": "Sublime",
+   "listeners": 643676,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "pop"
+   ]
+  },
+  {
+   "id": "renegades-of-funk-rage-against-the-machine",
+   "title": "Renegades of Funk",
+   "artist": "Rage Against the Machine",
+   "listeners": 732966,
+   "near_metal": [
+    [
+     "metal",
+     19
+    ],
+    [
+     "alternative metal",
+     9
+    ],
+    [
+     "rap metal",
+     2
+    ]
+   ],
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "testify-rage-against-the-machine",
+   "title": "Testify",
+   "artist": "Rage Against the Machine",
+   "listeners": 915920,
+   "near_metal": [
+    [
+     "metal",
+     19
+    ],
+    [
+     "alternative metal",
+     9
+    ],
+    [
+     "rap metal",
+     2
+    ]
+   ],
+   "packs": [
+    "90s",
+    "rock"
+   ]
+  },
+  {
+   "id": "the-hand-that-feeds-nine-inch-nails",
+   "title": "The Hand That Feeds",
+   "artist": "Nine Inch Nails",
+   "listeners": 1032853,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "alternative"
+   ]
+  },
+  {
+   "id": "hurt-nine-inch-nails",
+   "title": "Hurt",
+   "artist": "Nine Inch Nails",
+   "listeners": 963918,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "alternative"
+   ]
+  },
+  {
+   "id": "head-like-a-hole-nine-inch-nails",
+   "title": "Head Like a Hole",
+   "artist": "Nine Inch Nails",
+   "listeners": 773261,
+   "near_metal": null,
+   "packs": [
+    "80s-pop",
+    "alternative"
+   ]
+  },
+  {
+   "id": "the-kids-aren-t-alright-the-offspring",
+   "title": "The Kids Aren't Alright",
+   "artist": "The Offspring",
+   "listeners": 1926545,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "rock"
+   ]
+  },
+  {
+   "id": "inside-out-eve-6",
+   "title": "Inside Out",
+   "artist": "Eve 6",
+   "listeners": 520533,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "rock"
+   ]
+  },
+  {
+   "id": "every-morning-sugar-ray",
+   "title": "Every Morning",
+   "artist": "Sugar Ray",
+   "listeners": 522878,
+   "near_metal": [
+    [
+     "Nu Metal",
+     1
+    ],
+    [
+     "alternative metal",
+     1
+    ]
+   ],
+   "packs": [
+    "90s",
+    "rock"
+   ]
+  },
+  {
+   "id": "into-dust-mazzy-star",
+   "title": "Into Dust",
+   "artist": "Mazzy Star",
+   "listeners": 645708,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "rock"
+   ]
+  },
+  {
+   "id": "look-on-down-from-the-bridge-mazzy-star",
+   "title": "Look On Down from the Bridge",
+   "artist": "Mazzy Star",
+   "listeners": 639478,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "rock"
+   ]
+  },
+  {
+   "id": "my-favourite-game-the-cardigans",
+   "title": "My Favourite Game",
+   "artist": "The Cardigans",
+   "listeners": 1077213,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "pop"
+   ]
+  },
+  {
+   "id": "here-s-where-the-story-ends-the-sundays",
+   "title": "Here's Where the Story Ends",
+   "artist": "The Sundays",
+   "listeners": 866238,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "rock"
+   ]
+  },
+  {
+   "id": "alright-supergrass",
+   "title": "Alright",
+   "artist": "Supergrass",
+   "listeners": 995227,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "rock"
+   ]
+  },
+  {
+   "id": "there-she-goes-the-la-s",
+   "title": "There She Goes",
+   "artist": "The La's",
+   "listeners": 1329198,
+   "near_metal": null,
+   "packs": [
+    "80s-pop"
+   ]
+  },
+  {
+   "id": "insane-in-the-brain-cypress-hill",
+   "title": "Insane In the Brain",
+   "artist": "Cypress Hill",
+   "listeners": 1009198,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "hip-hop-r-b"
+   ]
+  },
+  {
+   "id": "hits-from-the-bong-cypress-hill",
+   "title": "Hits from the Bong",
+   "artist": "Cypress Hill",
+   "listeners": 655184,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "hip-hop-r-b"
+   ]
+  },
+  {
+   "id": "can-i-kick-it-a-tribe-called-quest",
+   "title": "Can I Kick It?",
+   "artist": "A Tribe Called Quest",
+   "listeners": 979393,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "hip-hop-r-b"
+   ]
+  },
+  {
+   "id": "panini-lil-nas-x",
+   "title": "Panini",
+   "artist": "Lil Nas X",
+   "listeners": 668403,
+   "near_metal": null,
+   "packs": [
+    "pop",
+    "2010s"
+   ]
+  },
+  {
+   "id": "little-black-submarines-the-black-keys",
+   "title": "Little Black Submarines",
+   "artist": "The Black Keys",
+   "listeners": 537476,
+   "near_metal": null,
+   "packs": [
+    "2010s",
+    "alternative"
+   ]
+  },
+  {
+   "id": "running-up-that-hill-placebo",
+   "title": "Running Up That Hill",
+   "artist": "Placebo",
+   "listeners": 738915,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "this-modern-love-bloc-party",
+   "title": "This Modern Love",
+   "artist": "Bloc Party",
+   "listeners": 984386,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "rock",
+    "alternative"
+   ]
+  },
+  {
+   "id": "shoot-the-runner-kasabian",
+   "title": "Shoot the Runner",
+   "artist": "Kasabian",
+   "listeners": 653782,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "alternative"
+   ]
+  },
+  {
+   "id": "club-foot-kasabian",
+   "title": "Club Foot",
+   "artist": "Kasabian",
+   "listeners": 1076819,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "pop"
+   ]
+  },
+  {
+   "id": "america-razorlight",
+   "title": "America",
+   "artist": "Razorlight",
+   "listeners": 716878,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "dreaming-of-you-the-coral",
+   "title": "Dreaming of You",
+   "artist": "The Coral",
+   "listeners": 629020,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "alternative"
+   ]
+  },
+  {
+   "id": "burn-it-to-the-ground-nickelback",
+   "title": "Burn It to the Ground",
+   "artist": "Nickelback",
+   "listeners": 773062,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "far-away-nickelback",
+   "title": "Far Away",
+   "artist": "Nickelback",
+   "listeners": 933946,
+   "near_metal": [
+    [
+     "alternative metal",
+     1
+    ]
+   ],
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "one-last-breath-creed",
+   "title": "One Last Breath",
+   "artist": "Creed",
+   "listeners": 1242480,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "higher-creed",
+   "title": "Higher",
+   "artist": "Creed",
+   "listeners": 943302,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "rock"
+   ]
+  },
+  {
+   "id": "my-sacrifice-creed",
+   "title": "My Sacrifice",
+   "artist": "Creed",
+   "listeners": 816135,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "remedy-seether",
+   "title": "Remedy",
+   "artist": "Seether",
+   "listeners": 727716,
+   "near_metal": [
+    [
+     "alternative metal",
+     1
+    ]
+   ],
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "second-chance-shinedown",
+   "title": "Second Chance",
+   "artist": "Shinedown",
+   "listeners": 558215,
+   "near_metal": null,
+   "packs": [
+    "2000s"
+   ]
+  },
+  {
+   "id": "headstrong-trapt",
+   "title": "Headstrong",
+   "artist": "Trapt",
+   "listeners": 863658,
+   "near_metal": [
+    [
+     "alternative metal",
+     12
+    ],
+    [
+     "Nu Metal",
+     9
+    ]
+   ],
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "the-diary-of-jane-breaking-benjamin",
+   "title": "The Diary of Jane",
+   "artist": "Breaking Benjamin",
+   "listeners": 929025,
+   "near_metal": [
+    [
+     "alternative metal",
+     8
+    ],
+    [
+     "metal",
+     1
+    ],
+    [
+     "Nu Metal",
+     1
+    ]
+   ],
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "i-hate-everything-about-you-three-days-grace",
+   "title": "I Hate Everything About You",
+   "artist": "Three Days Grace",
+   "listeners": 2234858,
+   "near_metal": [
+    [
+     "metal",
+     5
+    ],
+    [
+     "alternative metal",
+     1
+    ]
+   ],
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "animal-i-have-become-three-days-grace",
+   "title": "Animal I Have Become",
+   "artist": "Three Days Grace",
+   "listeners": 1839294,
+   "near_metal": [
+    [
+     "alternative metal",
+     5
+    ],
+    [
+     "metal",
+     1
+    ]
+   ],
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "never-too-late-three-days-grace",
+   "title": "Never Too Late",
+   "artist": "Three Days Grace",
+   "listeners": 1028641,
+   "near_metal": [
+    [
+     "alternative metal",
+     1
+    ]
+   ],
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "house-of-memories-panic-at-the-disco",
+   "title": "House of Memories",
+   "artist": "Panic! At the Disco",
+   "listeners": 919154,
+   "near_metal": null,
+   "packs": [
+    "2010s",
+    "alternative"
+   ]
+  },
+  {
+   "id": "the-ballad-of-mona-lisa-panic-at-the-disco",
+   "title": "The Ballad of Mona Lisa",
+   "artist": "Panic! At the Disco",
+   "listeners": 864757,
+   "near_metal": null,
+   "packs": [
+    "2010s",
+    "alternative"
+   ]
+  },
+  {
+   "id": "ride-twenty-one-pilots",
+   "title": "Ride",
+   "artist": "twenty one pilots",
+   "listeners": 1655153,
+   "near_metal": null,
+   "packs": [
+    "2010s",
+    "alternative"
+   ]
+  },
+  {
+   "id": "dear-maria-count-me-in-all-time-low",
+   "title": "Dear Maria, Count Me In",
+   "artist": "All Time Low",
+   "listeners": 1408815,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "alternative"
+   ]
+  },
+  {
+   "id": "i-m-just-a-kid-simple-plan",
+   "title": "I'm Just a Kid",
+   "artist": "Simple Plan",
+   "listeners": 886357,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "my-friends-over-you-new-found-glory",
+   "title": "My Friends Over You",
+   "artist": "New Found Glory",
+   "listeners": 530759,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "alternative"
+   ]
+  },
+  {
+   "id": "makedamnsure-taking-back-sunday",
+   "title": "MakeDamnSure",
+   "artist": "Taking Back Sunday",
+   "listeners": 746985,
+   "near_metal": [
+    [
+     "screamo",
+     3
+    ]
+   ],
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "the-man-who-can-t-be-moved-the-script",
+   "title": "The Man Who Can't Be Moved",
+   "artist": "The Script",
+   "listeners": 1303149,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "pop"
+   ]
+  },
+  {
+   "id": "all-i-want-kodaline",
+   "title": "All I Want",
+   "artist": "Kodaline",
+   "listeners": 1081653,
+   "near_metal": null,
+   "packs": [
+    "2010s"
+   ]
+  },
+  {
+   "id": "the-blower-s-daughter-damien-rice",
+   "title": "The Blower's Daughter",
+   "artist": "Damien Rice",
+   "listeners": 751068,
+   "near_metal": null,
+   "packs": [
+    "2000s"
+   ]
+  },
+  {
+   "id": "cannonball-damien-rice",
+   "title": "Cannonball",
+   "artist": "Damien Rice",
+   "listeners": 773508,
+   "near_metal": null,
+   "packs": [
+    "80s-pop"
+   ]
+  },
+  {
+   "id": "9-crimes-damien-rice",
+   "title": "9 Crimes",
+   "artist": "Damien Rice",
+   "listeners": 726483,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "alternative"
+   ]
+  },
+  {
+   "id": "your-body-is-a-wonderland-john-mayer",
+   "title": "Your Body Is a Wonderland",
+   "artist": "John Mayer",
+   "listeners": 902934,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "waiting-on-the-world-to-change-john-mayer",
+   "title": "Waiting On the World to Change",
+   "artist": "John Mayer",
+   "listeners": 1026039,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "pop"
+   ]
+  },
+  {
+   "id": "slow-dancing-in-a-burning-room-john-mayer",
+   "title": "Slow Dancing in a Burning Room",
+   "artist": "John Mayer",
+   "listeners": 966045,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "pop"
+   ]
+  },
+  {
+   "id": "new-shoes-paolo-nutini",
+   "title": "New Shoes",
+   "artist": "Paolo Nutini",
+   "listeners": 643151,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "pop"
+   ]
+  },
+  {
+   "id": "put-your-records-on-corinne-bailey-rae",
+   "title": "Put Your Records On",
+   "artist": "Corinne Bailey Rae",
+   "listeners": 1541652,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "pop"
+   ]
+  },
+  {
+   "id": "like-a-star-corinne-bailey-rae",
+   "title": "Like a Star",
+   "artist": "Corinne Bailey Rae",
+   "listeners": 581421,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "hip-hop-r-b"
+   ]
+  },
+  {
+   "id": "rehab-amy-winehouse",
+   "title": "Rehab",
+   "artist": "Amy Winehouse",
+   "listeners": 2132235,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "hip-hop-r-b"
+   ]
+  },
+  {
+   "id": "you-know-i-m-no-good-amy-winehouse",
+   "title": "You Know I'm No Good",
+   "artist": "Amy Winehouse",
+   "listeners": 1943994,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "pop"
+   ]
+  },
+  {
+   "id": "mercy-duffy",
+   "title": "Mercy",
+   "artist": "Duffy",
+   "listeners": 1153386,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "pop"
+   ]
+  },
+  {
+   "id": "warwick-avenue-duffy",
+   "title": "Warwick Avenue",
+   "artist": "Duffy",
+   "listeners": 720181,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "hip-hop-r-b"
+   ]
+  },
+  {
+   "id": "come-away-with-me-norah-jones",
+   "title": "Come Away with Me",
+   "artist": "Norah Jones",
+   "listeners": 1012791,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "pop"
+   ]
+  },
+  {
+   "id": "don-t-know-why-norah-jones",
+   "title": "Don't Know Why",
+   "artist": "Norah Jones",
+   "listeners": 1325553,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "pop"
+   ]
+  },
+  {
+   "id": "turn-me-on-norah-jones",
+   "title": "Turn Me On",
+   "artist": "Norah Jones",
+   "listeners": 750876,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "pop"
+   ]
+  },
+  {
+   "id": "1-thing-amerie",
+   "title": "1 Thing",
+   "artist": "Amerie",
+   "listeners": 787315,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "hip-hop-r-b"
+   ]
+  },
+  {
+   "id": "right-now-na-na-na-akon",
+   "title": "Right Now (Na Na Na)",
+   "artist": "Akon",
+   "listeners": 996341,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "hip-hop-r-b"
+   ]
+  },
+  {
+   "id": "because-of-you-ne-yo",
+   "title": "Because of You",
+   "artist": "Ne-Yo",
+   "listeners": 891161,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "hip-hop-r-b"
+   ]
+  },
+  {
+   "id": "mr-rager-kid-cudi",
+   "title": "Mr. Rager",
+   "artist": "Kid Cudi",
+   "listeners": 1166631,
+   "near_metal": null,
+   "packs": [
+    "2010s",
+    "hip-hop-r-b"
+   ]
+  },
+  {
+   "id": "someone-you-loved-lewis-capaldi",
+   "title": "Someone You Loved",
+   "artist": "Lewis Capaldi",
+   "listeners": 1095572,
+   "near_metal": null,
+   "packs": [
+    "modern-pop",
+    "2010s",
+    "alternative"
+   ]
+  },
+  {
+   "id": "before-you-go-lewis-capaldi",
+   "title": "Before You Go",
+   "artist": "Lewis Capaldi",
+   "listeners": 752589,
+   "near_metal": null,
+   "packs": [
+    "modern-pop",
+    "2010s",
+    "alternative"
+   ]
+  },
+  {
+   "id": "work-song-hozier",
+   "title": "Work Song",
+   "artist": "Hozier",
+   "listeners": 1042824,
+   "near_metal": null,
+   "packs": [
+    "modern-pop",
+    "2010s",
+    "alternative"
+   ]
+  },
+  {
+   "id": "maniac-conan-gray",
+   "title": "Maniac",
+   "artist": "Conan Gray",
+   "listeners": 1169900,
+   "near_metal": null,
+   "packs": [
+    "modern-pop",
+    "pop",
+    "2010s"
+   ]
+  },
+  {
+   "id": "location-khalid",
+   "title": "Location",
+   "artist": "Khalid",
+   "listeners": 928310,
+   "near_metal": null,
+   "packs": [
+    "modern-pop",
+    "2010s",
+    "hip-hop-r-b"
+   ]
+  },
+  {
+   "id": "mercy-shawn-mendes",
+   "title": "Mercy",
+   "artist": "Shawn Mendes",
+   "listeners": 793975,
+   "near_metal": null,
+   "packs": [
+    "modern-pop",
+    "2010s"
+   ]
+  },
+  {
+   "id": "my-my-my-troye-sivan",
+   "title": "My My My!",
+   "artist": "Troye Sivan",
+   "listeners": 524418,
+   "near_metal": null,
+   "packs": [
+    "modern-pop",
+    "pop",
+    "2010s"
+   ]
+  },
+  {
+   "id": "angel-baby-troye-sivan",
+   "title": "Angel Baby",
+   "artist": "Troye Sivan",
+   "listeners": 517468,
+   "near_metal": null,
+   "packs": [
+    "modern-pop",
+    "pop",
+    "2020s"
+   ]
+  },
+  {
+   "id": "driving-home-for-christmas-chris-rea",
+   "title": "Driving Home for Christmas",
+   "artist": "Chris Rea",
+   "listeners": 767478,
+   "near_metal": null,
+   "packs": [
+    "pub-classics"
+   ]
+  },
+  {
+   "id": "atmosphere-joy-division",
+   "title": "Atmosphere",
+   "artist": "Joy Division",
+   "listeners": 629624,
+   "near_metal": null,
+   "packs": [
+    "rock",
+    "70s"
+   ]
+  },
+  {
+   "id": "transmission-joy-division",
+   "title": "Transmission",
+   "artist": "Joy Division",
+   "listeners": 745225,
+   "near_metal": null,
+   "packs": [
+    "70s",
+    "alternative"
+   ]
+  },
+  {
+   "id": "cars-gary-numan",
+   "title": "Cars",
+   "artist": "Gary Numan",
+   "listeners": 651203,
+   "near_metal": null,
+   "packs": [
+    "70s"
+   ]
+  },
+  {
+   "id": "a-little-respect-erasure",
+   "title": "A Little Respect",
+   "artist": "Erasure",
+   "listeners": 559248,
+   "near_metal": null,
+   "packs": [
+    "80s-pop",
+    "pop"
+   ]
+  },
+  {
+   "id": "always-on-my-mind-pet-shop-boys",
+   "title": "Always On My Mind",
+   "artist": "Pet Shop Boys",
+   "listeners": 597512,
+   "near_metal": null,
+   "packs": [
+    "pop"
+   ]
+  },
+  {
+   "id": "smalltown-boy-bronski-beat",
+   "title": "Smalltown Boy",
+   "artist": "Bronski Beat",
+   "listeners": 1087834,
+   "near_metal": null,
+   "packs": [
+    "80s-pop",
+    "pop"
+   ]
+  },
+  {
+   "id": "girls-and-boys-blur",
+   "title": "Girls and Boys",
+   "artist": "Blur",
+   "listeners": 1065086,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "rock"
+   ]
+  },
+  {
+   "id": "6-underground-sneaker-pimps",
+   "title": "6 Underground",
+   "artist": "Sneaker Pimps",
+   "listeners": 695238,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "alternative"
+   ]
+  },
+  {
+   "id": "roads-portishead",
+   "title": "Roads",
+   "artist": "Portishead",
+   "listeners": 1297732,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "dance-club"
+   ]
+  },
+  {
+   "id": "sour-times-portishead",
+   "title": "Sour Times",
+   "artist": "Portishead",
+   "listeners": 1288605,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "dance-club"
+   ]
+  },
+  {
+   "id": "angel-massive-attack",
+   "title": "Angel",
+   "artist": "Massive Attack",
+   "listeners": 1760382,
+   "near_metal": null,
+   "packs": [
+    "dance-club"
+   ]
+  },
+  {
+   "id": "the-sea-morcheeba",
+   "title": "The Sea",
+   "artist": "Morcheeba",
+   "listeners": 641133,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "dance-club"
+   ]
+  },
+  {
+   "id": "open-your-eyes-snow-patrol",
+   "title": "Open Your Eyes",
+   "artist": "Snow Patrol",
+   "listeners": 949400,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "is-it-any-wonder-keane",
+   "title": "Is It Any Wonder?",
+   "artist": "Keane",
+   "listeners": 524257,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "whistle-for-the-choir-the-fratellis",
+   "title": "Whistle for the Choir",
+   "artist": "The Fratellis",
+   "listeners": 713023,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "alternative"
+   ]
+  },
+  {
+   "id": "tick-tick-boom-the-hives",
+   "title": "Tick Tick Boom",
+   "artist": "The Hives",
+   "listeners": 683154,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "alternative"
+   ]
+  },
+  {
+   "id": "walk-idiot-walk-the-hives",
+   "title": "Walk Idiot Walk",
+   "artist": "The Hives",
+   "listeners": 511839,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "maps-yeah-yeah-yeahs",
+   "title": "Maps",
+   "artist": "Yeah Yeah Yeahs",
+   "listeners": 1635161,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "obstacle-1-interpol",
+   "title": "Obstacle 1",
+   "artist": "Interpol",
+   "listeners": 1119980,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "alternative"
+   ]
+  },
+  {
+   "id": "evil-interpol",
+   "title": "Evil",
+   "artist": "Interpol",
+   "listeners": 1200219,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "alternative"
+   ]
+  },
+  {
+   "id": "all-my-friends-lcd-soundsystem",
+   "title": "All My Friends",
+   "artist": "LCD Soundsystem",
+   "listeners": 878811,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "dance-club"
+   ]
+  },
+  {
+   "id": "dance-yrself-clean-lcd-soundsystem",
+   "title": "Dance Yrself Clean",
+   "artist": "LCD Soundsystem",
+   "listeners": 861536,
+   "near_metal": null,
+   "packs": [
+    "2010s",
+    "dance-club"
+   ]
+  },
+  {
+   "id": "daft-punk-is-playing-at-my-house-lcd-soundsystem",
+   "title": "Daft Punk Is Playing at My House",
+   "artist": "LCD Soundsystem",
+   "listeners": 820064,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "pop"
+   ]
+  },
+  {
+   "id": "it-s-not-over-yet-klaxons",
+   "title": "It's Not Over Yet",
+   "artist": "Klaxons",
+   "listeners": 555312,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "dance-club"
+   ]
+  },
+  {
+   "id": "open-arms-feat-travis-scott-sza",
+   "title": "Open Arms (feat. Travis Scott)",
+   "artist": "SZA",
+   "listeners": 1120203,
+   "near_metal": null,
+   "packs": [
+    "modern-pop",
+    "hip-hop-r-b",
+    "2020s"
+   ]
+  },
+  {
+   "id": "party-4-u-charli-xcx",
+   "title": "party 4 u",
+   "artist": "Charli xcx",
+   "listeners": 1268511,
+   "near_metal": null,
+   "packs": [
+    "modern-pop",
+    "pop",
+    "2020s"
+   ]
+  },
+  {
+   "id": "xs-rina-sawayama",
+   "title": "XS",
+   "artist": "Rina Sawayama",
+   "listeners": 595020,
+   "near_metal": null,
+   "packs": [
+    "modern-pop",
+    "alternative",
+    "2020s"
+   ]
+  },
+  {
+   "id": "kings-queens-ava-max",
+   "title": "Kings & Queens",
+   "artist": "Ava Max",
+   "listeners": 654143,
+   "near_metal": null,
+   "packs": [
+    "modern-pop",
+    "pop",
+    "2020s"
+   ]
+  },
+  {
+   "id": "midnight-sun-zara-larsson",
+   "title": "Midnight Sun",
+   "artist": "Zara Larsson",
+   "listeners": 919220,
+   "near_metal": null,
+   "packs": [
+    "modern-pop",
+    "pop",
+    "2020s"
+   ]
+  },
+  {
+   "id": "ain-t-my-fault-zara-larsson",
+   "title": "Ain't My Fault",
+   "artist": "Zara Larsson",
+   "listeners": 568065,
+   "near_metal": null,
+   "packs": [
+    "modern-pop",
+    "pop",
+    "2010s"
+   ]
+  },
+  {
+   "id": "here-alessia-cara",
+   "title": "Here",
+   "artist": "Alessia Cara",
+   "listeners": 875216,
+   "near_metal": null,
+   "packs": [
+    "modern-pop",
+    "pop",
+    "2010s"
+   ]
+  },
+  {
+   "id": "wap-feat-megan-thee-stallion-cardi-b",
+   "title": "WAP (feat. Megan Thee Stallion)",
+   "artist": "Cardi B",
+   "listeners": 1268174,
+   "near_metal": null,
+   "packs": [
+    "modern-pop",
+    "hip-hop-r-b",
+    "2020s"
+   ]
+  },
+  {
+   "id": "thot-shit-megan-thee-stallion",
+   "title": "Thot Shit",
+   "artist": "Megan Thee Stallion",
+   "listeners": 731432,
+   "near_metal": null,
+   "packs": [
+    "modern-pop",
+    "hip-hop-r-b",
+    "2020s"
+   ]
+  },
+  {
+   "id": "sugar-feat-francesco-yates-robin-schulz",
+   "title": "Sugar (feat. Francesco Yates)",
+   "artist": "Robin Schulz",
+   "listeners": 822057,
+   "near_metal": null,
+   "packs": [
+    "modern-pop",
+    "2010s",
+    "dance-club"
+   ]
+  },
+  {
+   "id": "just-the-two-of-us-feat-bill-withers-grover-washington-jr",
+   "title": "Just the Two of Us (feat. Bill Withers)",
+   "artist": "Grover Washington, Jr.",
+   "listeners": 789274,
+   "near_metal": null,
+   "packs": [
+    "80s-pop",
+    "aussie"
+   ]
+  },
+  {
+   "id": "shooting-stars-bag-raiders",
+   "title": "Shooting Stars",
+   "artist": "Bag Raiders",
+   "listeners": 671954,
+   "near_metal": null,
+   "packs": [
+    "aussie",
+    "2000s",
+    "pop"
+   ]
+  },
+  {
+   "id": "hallelujah-rufus-wainwright",
+   "title": "Hallelujah",
+   "artist": "Rufus Wainwright",
+   "listeners": 538644,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "funk"
+   ]
+  },
+  {
+   "id": "rockin-around-the-christmas-tree-single-version-brenda-lee",
+   "title": "Rockin' Around the Christmas Tree",
+   "artist": "Brenda Lee",
+   "listeners": 1745970,
+   "near_metal": null,
+   "packs": [
+    "pub-classics"
+   ]
+  },
+  {
+   "id": "hunger-strike-temple-of-the-dog",
+   "title": "Hunger Strike",
+   "artist": "Temple of the Dog",
+   "listeners": 661853,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "alternative"
+   ]
+  },
+  {
+   "id": "superman-goldfinger",
+   "title": "Superman",
+   "artist": "Goldfinger",
+   "listeners": 512279,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "rock"
+   ]
+  },
+  {
+   "id": "amber-311",
+   "title": "Amber",
+   "artist": "311",
+   "listeners": 935259,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "rock"
+   ]
+  },
+  {
+   "id": "get-ur-freak-on-missy-elliott",
+   "title": "Get Ur Freak On",
+   "artist": "Missy Elliott",
+   "listeners": 727709,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "hip-hop-r-b"
+   ]
+  },
+  {
+   "id": "heartless-kanye-west",
+   "title": "Heartless",
+   "artist": "Kanye West",
+   "listeners": 2947558,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "hip-hop-r-b"
+   ]
+  },
+  {
+   "id": "virtual-insanity-jamiroquai",
+   "title": "Virtual Insanity",
+   "artist": "Jamiroquai",
+   "listeners": 810255,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "pop"
+   ]
+  },
+  {
+   "id": "cosmic-girl-jamiroquai",
+   "title": "Cosmic Girl",
+   "artist": "Jamiroquai",
+   "listeners": 500331,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "pop"
+   ]
+  },
+  {
+   "id": "true-colors-cyndi-lauper",
+   "title": "True Colors",
+   "artist": "Cyndi Lauper",
+   "listeners": 545009,
+   "near_metal": null,
+   "packs": [
+    "80s-pop",
+    "pop"
+   ]
+  },
+  {
+   "id": "i-have-nothing-whitney-houston",
+   "title": "I Have Nothing",
+   "artist": "Whitney Houston",
+   "listeners": 755489,
+   "near_metal": null,
+   "packs": [
+    "90s"
+   ]
+  },
+  {
+   "id": "it-s-gonna-be-me-nsync",
+   "title": "It's Gonna Be Me",
+   "artist": "*NSYNC",
+   "listeners": 580582,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "pop"
+   ]
+  },
+  {
+   "id": "how-s-it-going-to-be-third-eye-blind",
+   "title": "How's It Going to Be",
+   "artist": "Third Eye Blind",
+   "listeners": 534838,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "alternative"
+   ]
+  },
+  {
+   "id": "fighter-christina-aguilera",
+   "title": "Fighter",
+   "artist": "Christina Aguilera",
+   "listeners": 707923,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "pop"
+   ]
+  },
+  {
+   "id": "enjoy-the-silence-depeche-mode",
+   "title": "Enjoy the Silence",
+   "artist": "Depeche Mode",
+   "listeners": 2189505,
+   "near_metal": null,
+   "packs": [
+    "90s",
+    "pop"
+   ]
+  },
+  {
+   "id": "personal-jesus-depeche-mode",
+   "title": "Personal Jesus",
+   "artist": "Depeche Mode",
+   "listeners": 1180927,
+   "near_metal": null,
+   "packs": [
+    "80s-pop",
+    "pop"
+   ]
+  },
+  {
+   "id": "child-in-time-deep-purple",
+   "title": "Child In Time",
+   "artist": "Deep Purple",
+   "listeners": 572424,
+   "near_metal": [
+    [
+     "heavy metal",
+     13
+    ],
+    [
+     "metal",
+     1
+    ]
+   ],
+   "packs": [
+    "pub-classics",
+    "rock",
+    "60s"
+   ]
+  },
+  {
+   "id": "we-find-love-daniel-caesar",
+   "title": "We Find Love",
+   "artist": "Daniel Caesar",
+   "listeners": 505534,
+   "near_metal": null,
+   "packs": [
+    "2010s",
+    "hip-hop-r-b"
+   ]
+  },
+  {
+   "id": "around-me-feat-don-toliver-metro-boomin",
+   "title": "Around Me (feat. Don Toliver)",
+   "artist": "Metro Boomin",
+   "listeners": 748218,
+   "near_metal": null,
+   "packs": [
+    "hip-hop-r-b",
+    "2020s"
+   ]
+  },
+  {
+   "id": "welcome-to-jamrock-damian-jr-gong-marley",
+   "title": "Welcome to Jamrock",
+   "artist": "Damian \"Jr. Gong\" Marley",
+   "listeners": 634177,
+   "near_metal": null,
+   "packs": [
+    "2000s",
+    "dance-club"
+   ]
+  },
+  {
+   "id": "this-town-niall-horan",
+   "title": "This Town",
+   "artist": "Niall Horan",
+   "listeners": 664521,
+   "near_metal": null,
+   "packs": [
+    "modern-pop",
+    "pop",
+    "2010s"
+   ]
+  },
+  {
+   "id": "middle-of-the-night-elley-duhe",
+   "title": "MIDDLE OF THE NIGHT",
+   "artist": "Elley Duhé",
+   "listeners": 691448,
+   "near_metal": null,
+   "packs": [
+    "modern-pop",
+    "pop",
+    "2020s"
+   ]
+  },
+  {
+   "id": "lose-you-to-love-me-selena-gomez",
+   "title": "Lose You To Love Me",
+   "artist": "Selena Gomez",
+   "listeners": 790708,
+   "near_metal": null,
+   "packs": [
+    "modern-pop",
+    "pop",
+    "2010s"
+   ]
+  },
+  {
+   "id": "bad-liar-selena-gomez",
+   "title": "Bad Liar",
+   "artist": "Selena Gomez",
+   "listeners": 506365,
+   "near_metal": null,
+   "packs": [
+    "modern-pop",
+    "pop",
+    "2010s"
+   ]
+  },
+  {
+   "id": "just-wanna-rock-lil-uzi-vert",
+   "title": "Just Wanna Rock",
+   "artist": "Lil Uzi Vert",
+   "listeners": 1083877,
+   "near_metal": null,
+   "packs": [
+    "hip-hop-r-b",
+    "2020s"
+   ]
+  },
+  {
+   "id": "oui-jeremih",
+   "title": "Oui",
+   "artist": "Jeremih",
+   "listeners": 708479,
+   "near_metal": null,
+   "packs": [
+    "2010s",
+    "hip-hop-r-b"
+   ]
+  },
+  {
+   "id": "standing-next-to-you-jung-kook",
+   "title": "Standing Next to You",
+   "artist": "Jung Kook",
+   "listeners": 818074,
+   "near_metal": null,
+   "packs": [
+    "modern-pop",
+    "pop",
+    "2020s"
+   ]
+  },
+  {
+   "id": "illegal-pinkpantheress",
+   "title": "Illegal",
+   "artist": "PinkPantheress",
+   "listeners": 1244499,
+   "near_metal": null,
+   "packs": [
+    "modern-pop",
+    "pop",
+    "2020s"
+   ]
+  },
+  {
+   "id": "just-for-me-pinkpantheress",
+   "title": "Just for me",
+   "artist": "PinkPantheress",
+   "listeners": 932397,
+   "near_metal": null,
+   "packs": [
+    "modern-pop",
+    "pop",
+    "2020s"
+   ]
+  },
+  {
+   "id": "super-freaky-girl-nicki-minaj",
+   "title": "Super Freaky Girl",
+   "artist": "Nicki Minaj",
+   "listeners": 835711,
+   "near_metal": null,
+   "packs": [
+    "modern-pop",
+    "hip-hop-r-b",
+    "2020s"
+   ]
+  },
+  {
+   "id": "sober-childish-gambino",
+   "title": "Sober",
+   "artist": "Childish Gambino",
+   "listeners": 935901,
+   "near_metal": null,
+   "packs": [
+    "2010s",
+    "hip-hop-r-b"
+   ]
+  },
+  {
+   "id": "me-and-your-mama-childish-gambino",
+   "title": "Me and Your Mama",
+   "artist": "Childish Gambino",
+   "listeners": 1529717,
+   "near_metal": null,
+   "packs": [
+    "2010s",
+    "hip-hop-r-b"
+   ]
+  }
+ ],
+ "held_metal": [
+  {
+   "id": "fear-of-the-dark-iron-maiden",
+   "title": "Fear of the Dark",
+   "artist": "Iron Maiden",
+   "listeners": 541426,
+   "packs": [
+    "90s"
+   ],
+   "tag_source": "artist",
+   "metal_tags": [
+    [
+     "heavy metal",
+     100
+    ],
+    [
+     "metal",
+     42
+    ],
+    [
+     "New Wave of British Heavy Metal",
+     2
+    ],
+    [
+     "Power metal",
+     1
+    ]
+   ]
+  },
+  {
+   "id": "if-it-means-a-lot-to-you-a-day-to-remember",
+   "title": "If It Means A Lot To You",
+   "artist": "A Day to Remember",
+   "listeners": 630547,
+   "packs": [
+    "2000s",
+    "rock"
+   ],
+   "tag_source": "track",
+   "metal_tags": [
+    [
+     "post-hardcore",
+     86
+    ]
+   ]
+  },
+  {
+   "id": "no-more-tears-ozzy-osbourne",
+   "title": "No More Tears",
+   "artist": "Ozzy Osbourne",
+   "listeners": 846091,
+   "packs": [
+    "80s-rock",
+    "80s-pop",
+    "rock"
+   ],
+   "tag_source": "track",
+   "metal_tags": [
+    [
+     "heavy metal",
+     100
+    ],
+    [
+     "metal",
+     41
+    ],
+    [
+     "classic metal",
+     1
+    ]
+   ]
+  },
+  {
+   "id": "symphony-of-destruction-megadeth",
+   "title": "Symphony of Destruction",
+   "artist": "Megadeth",
+   "listeners": 858172,
+   "packs": [
+    "90s"
+   ],
+   "tag_source": "artist",
+   "metal_tags": [
+    [
+     "thrash metal",
+     100
+    ],
+    [
+     "heavy metal",
+     55
+    ],
+    [
+     "speed metal",
+     24
+    ],
+    [
+     "metal",
+     23
+    ]
+   ]
+  },
+  {
+   "id": "scars-papa-roach",
+   "title": "Scars",
+   "artist": "Papa Roach",
+   "listeners": 1082576,
+   "packs": [
+    "2000s",
+    "rock"
+   ],
+   "tag_source": "track",
+   "metal_tags": [
+    [
+     "Nu Metal",
+     36
+    ],
+    [
+     "metal",
+     1
+    ]
+   ]
+  },
+  {
+   "id": "getting-away-with-murder-papa-roach",
+   "title": "Getting Away with Murder",
+   "artist": "Papa Roach",
+   "listeners": 829113,
+   "packs": [
+    "2000s",
+    "rock"
+   ],
+   "tag_source": "track",
+   "metal_tags": [
+    [
+     "Nu Metal",
+     82
+    ],
+    [
+     "metal",
+     7
+    ],
+    [
+     "alternative metal",
+     2
+    ]
+   ]
+  },
+  {
+   "id": "i-stand-alone-godsmack",
+   "title": "I Stand Alone",
+   "artist": "Godsmack",
+   "listeners": 803217,
+   "packs": [
+    "2000s",
+    "rock"
+   ],
+   "tag_source": "track",
+   "metal_tags": [
+    [
+     "metal",
+     88
+    ],
+    [
+     "Nu Metal",
+     39
+    ],
+    [
+     "alternative metal",
+     7
+    ],
+    [
+     "heavy metal",
+     6
+    ]
+   ]
+  },
+  {
+   "id": "stricken-disturbed",
+   "title": "Stricken",
+   "artist": "Disturbed",
+   "listeners": 1077277,
+   "packs": [
+    "2000s",
+    "rock"
+   ],
+   "tag_source": "track",
+   "metal_tags": [
+    [
+     "metal",
+     100
+    ],
+    [
+     "Nu Metal",
+     81
+    ],
+    [
+     "heavy metal",
+     31
+    ],
+    [
+     "alternative metal",
+     9
+    ]
+   ]
+  },
+  {
+   "id": "indestructible-disturbed",
+   "title": "Indestructible",
+   "artist": "Disturbed",
+   "listeners": 520928,
+   "packs": [
+    "2000s",
+    "rock"
+   ],
+   "tag_source": "artist",
+   "metal_tags": [
+    [
+     "Nu Metal",
+     100
+    ],
+    [
+     "metal",
+     83
+    ],
+    [
+     "alternative metal",
+     7
+    ],
+    [
+     "heavy metal",
+     4
+    ]
+   ]
+  },
+  {
+   "id": "take-a-look-around-limp-bizkit",
+   "title": "Take A Look Around",
+   "artist": "Limp Bizkit",
+   "listeners": 1275041,
+   "packs": [
+    "2000s",
+    "rock"
+   ],
+   "tag_source": "track",
+   "metal_tags": [
+    [
+     "Nu Metal",
+     100
+    ],
+    [
+     "metal",
+     14
+    ],
+    [
+     "rap metal",
+     1
+    ]
+   ]
+  },
+  {
+   "id": "hot-dog-limp-bizkit",
+   "title": "Hot Dog",
+   "artist": "Limp Bizkit",
+   "listeners": 796568,
+   "packs": [
+    "2000s",
+    "rock"
+   ],
+   "tag_source": "track",
+   "metal_tags": [
+    [
+     "Nu Metal",
+     100
+    ],
+    [
+     "metal",
+     13
+    ],
+    [
+     "rap metal",
+     1
+    ]
+   ]
+  },
+  {
+   "id": "blind-korn",
+   "title": "Blind",
+   "artist": "Korn",
+   "listeners": 1047462,
+   "packs": [
+    "90s",
+    "rock"
+   ],
+   "tag_source": "track",
+   "metal_tags": [
+    [
+     "Nu Metal",
+     100
+    ],
+    [
+     "metal",
+     87
+    ],
+    [
+     "Nu-metal",
+     4
+    ],
+    [
+     "alternative metal",
+     4
+    ]
+   ]
+  },
+  {
+   "id": "coming-undone-korn",
+   "title": "Coming Undone",
+   "artist": "Korn",
+   "listeners": 1014963,
+   "packs": [
+    "2000s",
+    "rock"
+   ],
+   "tag_source": "track",
+   "metal_tags": [
+    [
+     "Nu Metal",
+     100
+    ],
+    [
+     "metal",
+     38
+    ],
+    [
+     "alternative metal",
+     11
+    ],
+    [
+     "Nu-metal",
+     2
+    ]
+   ]
+  },
+  {
+   "id": "word-up-korn",
+   "title": "Word Up!",
+   "artist": "Korn",
+   "listeners": 596971,
+   "packs": [
+    "2000s",
+    "rock"
+   ],
+   "tag_source": "artist",
+   "metal_tags": [
+    [
+     "Nu Metal",
+     100
+    ],
+    [
+     "metal",
+     47
+    ],
+    [
+     "Nu-metal",
+     8
+    ],
+    [
+     "alternative metal",
+     7
+    ]
+   ]
+  },
+  {
+   "id": "boom-p-o-d",
+   "title": "Boom",
+   "artist": "P.O.D.",
+   "listeners": 576944,
+   "packs": [
+    "2000s",
+    "rock"
+   ],
+   "tag_source": "artist",
+   "metal_tags": [
+    [
+     "Nu Metal",
+     100
+    ],
+    [
+     "metal",
+     11
+    ],
+    [
+     "alternative metal",
+     3
+    ],
+    [
+     "Nu-metal",
+     1
+    ]
+   ]
+  },
+  {
+   "id": "youth-of-the-nation-p-o-d",
+   "title": "Youth of the Nation",
+   "artist": "P.O.D.",
+   "listeners": 806199,
+   "packs": [
+    "2000s",
+    "rock"
+   ],
+   "tag_source": "artist",
+   "metal_tags": [
+    [
+     "Nu Metal",
+     100
+    ],
+    [
+     "metal",
+     11
+    ],
+    [
+     "alternative metal",
+     3
+    ],
+    [
+     "Nu-metal",
+     1
+    ]
+   ]
+  },
+  {
+   "id": "until-the-day-i-die-story-of-the-year",
+   "title": "Until the Day I Die",
+   "artist": "Story of the Year",
+   "listeners": 577404,
+   "packs": [
+    "2000s",
+    "pop"
+   ],
+   "tag_source": "artist",
+   "metal_tags": [
+    [
+     "post-hardcore",
+     100
+    ],
+    [
+     "screamo",
+     13
+    ],
+    [
+     "hardcore",
+     1
+    ]
+   ]
+  },
+  {
+   "id": "raining-blood-slayer",
+   "title": "Raining Blood",
+   "artist": "Slayer",
+   "listeners": 1093481,
+   "packs": [
+    "80s-rock",
+    "80s-pop",
+    "rock"
+   ],
+   "tag_source": "track",
+   "metal_tags": [
+    [
+     "thrash metal",
+     100
+    ],
+    [
+     "metal",
+     51
+    ],
+    [
+     "heavy metal",
+     26
+    ],
+    [
+     "thrash",
+     7
+    ]
+   ]
+  },
+  {
+   "id": "angel-of-death-slayer",
+   "title": "Angel Of Death",
+   "artist": "Slayer",
+   "listeners": 831786,
+   "packs": [
+    "80s-rock",
+    "80s-pop",
+    "pop"
+   ],
+   "tag_source": "track",
+   "metal_tags": [
+    [
+     "thrash metal",
+     100
+    ],
+    [
+     "metal",
+     43
+    ],
+    [
+     "heavy metal",
+     22
+    ],
+    [
+     "thrash",
+     7
+    ]
+   ]
+  },
+  {
+   "id": "walk-pantera",
+   "title": "Walk",
+   "artist": "Pantera",
+   "listeners": 1242538,
+   "packs": [
+    "90s"
+   ],
+   "tag_source": "track",
+   "metal_tags": [
+    [
+     "thrash metal",
+     100
+    ],
+    [
+     "metal",
+     93
+    ],
+    [
+     "groove metal",
+     53
+    ],
+    [
+     "heavy metal",
+     36
+    ]
+   ]
+  },
+  {
+   "id": "cemetary-gates-pantera",
+   "title": "Cemetary Gates",
+   "artist": "Pantera",
+   "listeners": 773633,
+   "packs": [
+    "90s"
+   ],
+   "tag_source": "track",
+   "metal_tags": [
+    [
+     "thrash metal",
+     100
+    ],
+    [
+     "metal",
+     79
+    ],
+    [
+     "groove metal",
+     47
+    ],
+    [
+     "heavy metal",
+     46
+    ]
+   ]
+  },
+  {
+   "id": "cowboys-from-hell-pantera",
+   "title": "Cowboys from Hell",
+   "artist": "Pantera",
+   "listeners": 1202795,
+   "packs": [
+    "90s"
+   ],
+   "tag_source": "track",
+   "metal_tags": [
+    [
+     "thrash metal",
+     100
+    ],
+    [
+     "groove metal",
+     71
+    ],
+    [
+     "metal",
+     45
+    ],
+    [
+     "heavy metal",
+     39
+    ]
+   ]
+  },
+  {
+   "id": "roots-bloody-roots-sepultura",
+   "title": "Roots Bloody Roots",
+   "artist": "Sepultura",
+   "listeners": 659322,
+   "packs": [
+    "90s"
+   ],
+   "tag_source": "track",
+   "metal_tags": [
+    [
+     "thrash metal",
+     100
+    ],
+    [
+     "metal",
+     69
+    ],
+    [
+     "death metal",
+     39
+    ],
+    [
+     "heavy metal",
+     26
+    ]
+   ]
+  },
+  {
+   "id": "throne-bring-me-the-horizon",
+   "title": "Throne",
+   "artist": "Bring Me The Horizon",
+   "listeners": 827387,
+   "packs": [
+    "modern-pop",
+    "rock",
+    "2010s"
+   ],
+   "tag_source": "track",
+   "metal_tags": [
+    [
+     "metalcore",
+     100
+    ],
+    [
+     "metal",
+     15
+    ],
+    [
+     "post-hardcore",
+     5
+    ],
+    [
+     "hardcore",
+     1
+    ]
+   ]
+  }
+ ],
+ "skipped": [
+  [
+   "don-t-bring-me-down-electric-light-orchestra",
+   "60s",
+   "year 1979 does not belong in 60s"
+  ]
+ ]
+}

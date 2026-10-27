@@ -1,0 +1,7886 @@
+[
+ {
+  "question": "In Pokemon, what is a person who catches and battles Pokemon called?",
+  "options": [
+   "A trainer",
+   "A ranger",
+   "A chef",
+   "A pilot"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Nintendo DS series stars a puzzle-solving gentleman in a top hat?",
+  "options": [
+   "Hotel Dusk",
+   "Ghost Trick",
+   "Professor Layton",
+   "Ace Attorney"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which company produces the Quest range of virtual reality headsets?",
+  "options": [
+   "Valve",
+   "HTC",
+   "Meta",
+   "Sony"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which game engine is made by Epic Games?",
+  "options": [
+   "Unreal Engine",
+   "CryEngine",
+   "Godot",
+   "Unity"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Grand Theft Auto's fictional Los Santos is based on which real city?",
+  "options": [
+   "San Francisco",
+   "Los Angeles",
+   "Miami",
+   "Las Vegas"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is Sudoku played with?",
+  "options": [
+   "Letters",
+   "Pictures",
+   "Colours",
+   "Numbers"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What was the last home console Sega released?",
+  "options": [
+   "Dreamcast",
+   "Master System",
+   "Saturn",
+   "Mega Drive"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which company published Where's My Water?",
+  "options": [
+   "Disney",
+   "Halfbrick",
+   "EA",
+   "Rovio"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Japanese designer created the Metal Gear series?",
+  "options": [
+   "Hideo Kojima",
+   "Keiji Inafune",
+   "Fumito Ueda",
+   "Yu Suzuki"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which studio created the original Crash Bandicoot games?",
+  "options": [
+   "Sucker Punch",
+   "Insomniac",
+   "Rare",
+   "Naughty Dog"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which game's soundtrack features the track 'Still Alive' sung by GLaDOS?",
+  "options": [
+   "Left 4 Dead",
+   "Half-Life",
+   "BioShock",
+   "Portal"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Super Mario Bros, what are the turtle enemies called?",
+  "options": [
+   "Goombas",
+   "Koopa Troopas",
+   "Lakitus",
+   "Piranha Plants"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the surname of the professor who gives you your first Pokemon in Red and Blue?",
+  "options": [
+   "Birch",
+   "Oak",
+   "Rowan",
+   "Elm"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Nintendo console was a purple cube that played small 8 centimetre discs?",
+  "options": [
+   "Nintendo 64",
+   "Virtual Boy",
+   "GameCube",
+   "Wii"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Minecraft, which ore is used to make the strongest common tools before netherite?",
+  "options": [
+   "Gold",
+   "Diamond",
+   "Redstone",
+   "Iron"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Super Monkey Ball, how does the player move the monkey?",
+  "options": [
+   "By tilting the whole stage",
+   "By pressing a jump button",
+   "By steering with a wheel",
+   "By tapping the screen"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which company created the run-and-gun game Contra?",
+  "options": [
+   "Taito",
+   "Capcom",
+   "Sega",
+   "Konami"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a 'quick time event'?",
+  "options": [
+   "A daily login bonus",
+   "A speedrun leaderboard",
+   "A timed sale",
+   "A prompt to press a button at the right moment during a scene"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'free-to-play' game?",
+  "options": [
+   "One with no online mode",
+   "One that never gets updates",
+   "One you can download and play without paying up front",
+   "One with no adverts"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Pokemon, what is the strongest standard type of Poke Ball, guaranteed to catch any wild Pokemon?",
+  "options": [
+   "Master Ball",
+   "Timer Ball",
+   "Ultra Ball",
+   "Great Ball"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Nintendo puzzle game has Mario dropping coloured pills onto viruses?",
+  "options": [
+   "Yoshi's Cookie",
+   "Mario Paint",
+   "Tetris Attack",
+   "Dr Mario"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Pokemon is known for evolving into many different forms depending on the stone or method used?",
+  "options": [
+   "Magikarp",
+   "Wobbuffet",
+   "Ditto",
+   "Eevee"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Ubisoft series features a wall-running hero and a dagger that rewinds time?",
+  "options": [
+   "Beyond Good and Evil",
+   "Assassin's Creed",
+   "Rayman",
+   "Prince of Persia"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 'Wii Sports' played with?",
+  "options": [
+   "A motion-sensing remote",
+   "A keyboard",
+   "A dance mat",
+   "A steering wheel only"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the finishing move in Mortal Kombat that ends a fight gruesomely?",
+  "options": [
+   "Finisher",
+   "Ender",
+   "Deathblow",
+   "Fatality"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which video game genre includes games such as Civilization and Age of Empires?",
+  "options": [
+   "Strategy",
+   "Rhythm",
+   "Fighting",
+   "Racing"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What was Microsoft's online service for the original Xbox and the Xbox 360 called?",
+  "options": [
+   "Xbox Live",
+   "Battle Net",
+   "PlayStation Plus",
+   "Nintendo Online"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Minecraft, what do you need to combine to make a torch?",
+  "options": [
+   "Stick and iron",
+   "Stick and coal",
+   "Coal and string",
+   "Wood and flint"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the name of the customisable cartoon avatars used across the Nintendo Wii?",
+  "options": [
+   "Simmies",
+   "Miis",
+   "Avvies",
+   "Wiibies"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which weapon is Lara Croft most associated with?",
+  "options": [
+   "A crossbow",
+   "A whip",
+   "A shotgun",
+   "Twin pistols"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Batman: Arkham video games are based on characters from which comics publisher?",
+  "options": [
+   "Image",
+   "Dark Horse",
+   "DC",
+   "Marvel"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is Pac-Man eating as he moves around the maze?",
+  "options": [
+   "Coins",
+   "Bricks",
+   "Cards",
+   "Dots"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which endless runner has players dodging trains while being chased by an inspector?",
+  "options": [
+   "Jetpack Joyride",
+   "Alto's Adventure",
+   "Subway Surfers",
+   "Temple Run"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Pokemon has a plant bulb on its back?",
+  "options": [
+   "Bulbasaur",
+   "Chikorita",
+   "Oddish",
+   "Turtwig"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Pokemon is a small blue turtle?",
+  "options": [
+   "Totodile",
+   "Squirtle",
+   "Mudkip",
+   "Piplup"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is an 'open world' game?",
+  "options": [
+   "One with no ending",
+   "One where you can roam freely rather than follow a set path",
+   "One with no enemies",
+   "One played outdoors"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour is Luigi's shirt in most Mario games?",
+  "options": [
+   "Blue",
+   "Red",
+   "Green",
+   "Yellow"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Zelda game was a launch title for the Nintendo Switch in 2017?",
+  "options": [
+   "Breath of the Wild",
+   "Tears of the Kingdom",
+   "Skyward Sword",
+   "Twilight Princess"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Sony handheld was the successor to the PlayStation Portable?",
+  "options": [
+   "PSP Go",
+   "PocketStation",
+   "PS Mini",
+   "PS Vita"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Minecraft, what tames a wolf?",
+  "options": [
+   "Fish",
+   "Wheat",
+   "Carrots",
+   "Bones"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the in-game currency of Roblox called?",
+  "options": [
+   "Credits",
+   "Tix",
+   "Bloxbucks",
+   "Robux"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Bioware series has players commanding the starship Normandy as Commander Shepard?",
+  "options": [
+   "Star Citizen",
+   "Halo",
+   "Dragon Age",
+   "Mass Effect"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the Nintendo game Pikmin, what are the Pikmin?",
+  "options": [
+   "Small plant-like creatures the player commands",
+   "Alien spaceships",
+   "Enemy robots",
+   "Coloured gems"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the name of the device that records data on every Pokemon you meet?",
+  "options": [
+   "Pokegear",
+   "Pokenav",
+   "Pokedex",
+   "Poketch"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Mario Kart, what are the characters driving?",
+  "options": [
+   "Go-karts",
+   "Aeroplanes",
+   "Boats",
+   "Motorbikes only"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In the game series Just Dance, what do players follow on screen?",
+  "options": [
+   "Coloured arrows on a mat",
+   "Musical notes",
+   "Dance moves performed by an on-screen avatar",
+   "Song lyrics only"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which educational game series asked players to track down a globe-trotting thief in a red coat?",
+  "options": [
+   "Mission Impossible",
+   "Where in the World is Carmen Sandiego?",
+   "Global Chase",
+   "Spy Fox"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Mario games, what is the name of the black bullet-shaped enemy fired out of a cannon?",
+  "options": [
+   "Bob-omb",
+   "Bullet Bill",
+   "Chain Chomp",
+   "Thwomp"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Mario Kart, which fruit item is dropped on the track to make rivals spin out?",
+  "options": [
+   "Melon",
+   "Apple",
+   "Banana",
+   "Pineapple"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which racing game series is best known for police chases and street racing?",
+  "options": [
+   "Gran Turismo",
+   "Trackmania",
+   "Need for Speed",
+   "F1"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Pokemon does Haunter evolve into?",
+  "options": [
+   "Gengar",
+   "Banette",
+   "Misdreavus",
+   "Gastly"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What do Pokemon trainers throw to catch a wild Pokemon?",
+  "options": [
+   "Poke Flute",
+   "Net",
+   "Poke Ball",
+   "Master Key"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are the plant enemies that pop out of pipes in Mario games called?",
+  "options": [
+   "Chomp Weeds",
+   "Snapjaws",
+   "Piranha Plants",
+   "Venus Traps"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Sonic character is a black hedgehog with red stripes?",
+  "options": [
+   "Metal Sonic",
+   "Espio",
+   "Shadow",
+   "Silver"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Five Nights at Freddy's, what is the player's job?",
+  "options": [
+   "Chef",
+   "Night security guard",
+   "Manager",
+   "Cleaner"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Zelda games, what does a full container of hearts represent?",
+  "options": [
+   "The player's money",
+   "The player's magic",
+   "The player's speed",
+   "The player's health"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which device are mobile games usually played on?",
+  "options": [
+   "A television only",
+   "A calculator",
+   "A phone",
+   "A radio"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which strategy series mixes a turn-based campaign map with huge real-time battles, in settings such as Rome and Medieval Europe?",
+  "options": [
+   "Crusader Kings",
+   "Total War",
+   "Europa Universalis",
+   "Civilization"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In most video games, what does a health bar show?",
+  "options": [
+   "How fast you are going",
+   "How long you have played",
+   "How much money you have",
+   "How much damage your character can still take"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which underwater city is the setting of the game BioShock?",
+  "options": [
+   "Rapture",
+   "Columbia",
+   "Neptune",
+   "Atlantis"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What sort of game is 'Gran Turismo'?",
+  "options": [
+   "A puzzle game",
+   "A cooking game",
+   "A car racing game",
+   "A boxing game"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which electronic memory game asks players to repeat a growing sequence of coloured lights and sounds?",
+  "options": [
+   "Bop It",
+   "Speak and Spell",
+   "Simon",
+   "Merlin"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which sport is simulated in the video game series 'Virtua Tennis'?",
+  "options": [
+   "Squash",
+   "Badminton",
+   "Table tennis",
+   "Tennis"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Minecraft, what is the dark alternate dimension full of lava called?",
+  "options": [
+   "The Nether",
+   "The End",
+   "The Void",
+   "The Deep"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In gaming, what does 'HP' usually stand for?",
+  "options": [
+   "High Power",
+   "Half Play",
+   "Hero Points",
+   "Hit Points"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which actor played Doctor Robotnik in the 2020 Sonic the Hedgehog film?",
+  "options": [
+   "Jim Carrey",
+   "Danny DeVito",
+   "Steve Carell",
+   "Will Ferrell"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In gaming, what is 'DLC' short for?",
+  "options": [
+   "Digital licence code",
+   "Dual layer console",
+   "Direct level change",
+   "Downloadable content"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Finnish company created Clash of Clans?",
+  "options": [
+   "Remedy",
+   "Frozenbyte",
+   "Rovio",
+   "Supercell"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What colour is Super Sonic?",
+  "options": [
+   "Gold",
+   "White",
+   "Green",
+   "Silver"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does Yoshi use to swallow enemies?",
+  "options": [
+   "His tail",
+   "His claws",
+   "His wings",
+   "His long tongue"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which studio develops the Grand Theft Auto series?",
+  "options": [
+   "Naughty Dog",
+   "Ubisoft",
+   "Rockstar Games",
+   "Bethesda"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour is the Xbox logo?",
+  "options": [
+   "Blue",
+   "Red",
+   "Green",
+   "Orange"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Mario power-up lets him throw fireballs?",
+  "options": [
+   "Super Leaf",
+   "Super Mushroom",
+   "Fire Flower",
+   "Super Star"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which actress starred as Alice in the Resident Evil films?",
+  "options": [
+   "Kate Beckinsale",
+   "Sigourney Weaver",
+   "Angelina Jolie",
+   "Milla Jovovich"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the final evolution of Squirtle?",
+  "options": [
+   "Poliwrath",
+   "Wartortle",
+   "Golduck",
+   "Blastoise"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which portable PC gaming device was released by Valve in 2022?",
+  "options": [
+   "Steam Machine",
+   "Steam Box",
+   "Steam Link",
+   "Steam Deck"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Pokemon is number 150 in the original Pokedex?",
+  "options": [
+   "Dragonite",
+   "Mew",
+   "Articuno",
+   "Mewtwo"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which video game character has no arms or legs connecting to his hands and feet?",
+  "options": [
+   "Rayman",
+   "Kirby",
+   "Mario",
+   "Sonic"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are 'achievements' or 'trophies' in gaming?",
+  "options": [
+   "In-game currency",
+   "Player rankings",
+   "Downloadable maps",
+   "Rewards for completing set challenges"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which country is the Street Fighter character Chun-Li from?",
+  "options": [
+   "China",
+   "Korea",
+   "Thailand",
+   "Japan"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which company released the Mega Drive console, known as the Genesis in North America?",
+  "options": [
+   "Atari",
+   "Nintendo",
+   "NEC",
+   "Sega"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which company bought Minecraft's developer Mojang in 2014?",
+  "options": [
+   "Microsoft",
+   "Sony",
+   "Nintendo",
+   "Google"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are you trying to catch in the game Pokemon?",
+  "options": [
+   "Creatures called Pokemon",
+   "Criminals",
+   "Fish",
+   "Stars"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Konami Code begins with which two directions?",
+  "options": [
+   "Up, up",
+   "Right, right",
+   "Left, left",
+   "Down, down"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which game series features the character Sackboy in a world made of craft materials?",
+  "options": [
+   "Tearaway",
+   "LittleBigPlanet",
+   "Yoshi's Woolly World",
+   "Kirby's Epic Yarn"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of Mario's dinosaur companion?",
+  "options": [
+   "Bowser",
+   "Yoshi",
+   "Birdo",
+   "Toad"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Super Smash Bros, what does the percentage next to a character show?",
+  "options": [
+   "How much health they have left",
+   "Their win rate",
+   "How much damage they have taken",
+   "Their speed"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which social deduction game asks a crew aboard a spaceship to find the impostors?",
+  "options": [
+   "Deceit",
+   "Among Us",
+   "Project Winter",
+   "Town of Salem"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which video game genre involves guiding a character to jump between platforms?",
+  "options": [
+   "Puzzle",
+   "Platformer",
+   "Simulation",
+   "Shooter"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the in-game currency of The Sims called?",
+  "options": [
+   "Coins",
+   "Simoleons",
+   "Credits",
+   "Simbucks"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which ancient board game did a computer program called AlphaGo master?",
+  "options": [
+   "Chess",
+   "Draughts",
+   "Backgammon",
+   "Go"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which arcade game has an orange creature hopping on a pyramid of cubes?",
+  "options": [
+   "Dig Dug",
+   "Bubble Bobble",
+   "Q*bert",
+   "Joust"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which criminal organisation are the villains of Pokemon Red and Blue?",
+  "options": [
+   "Team Galactic",
+   "Team Magma",
+   "Team Rocket",
+   "Team Plasma"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the point of a 'boss battle'?",
+  "options": [
+   "To save the game",
+   "To buy new items",
+   "To change the difficulty",
+   "To defeat a powerful enemy and progress"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'games arcade'?",
+  "options": [
+   "A console brand",
+   "A games magazine",
+   "A type of controller",
+   "A venue full of coin-operated game machines"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which company did Nolan Bushnell co-found in 1972?",
+  "options": [
+   "Namco",
+   "Atari",
+   "Activision",
+   "Midway"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which racing and stunt game series is best known for spectacular crash modes?",
+  "options": [
+   "Burnout",
+   "Motorstorm",
+   "Wipeout",
+   "Split Second"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What happens to the aliens in Space Invaders as you shoot more of them?",
+  "options": [
+   "They change colour",
+   "They speed up",
+   "They stop firing",
+   "They slow down"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which quiet Australian-made game has players taking belongings out of boxes and arranging a home?",
+  "options": [
+   "Nook",
+   "Unpacking",
+   "Tidy Up",
+   "Moving Day"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What do you build with in Minecraft?",
+  "options": [
+   "Rope",
+   "Cards",
+   "Blocks",
+   "Paper"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which fire-type starter Pokemon is offered in Pokemon Red and Blue?",
+  "options": [
+   "Bulbasaur",
+   "Squirtle",
+   "Charmander",
+   "Pidgey"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Crossy Road is a modern take on which arcade classic?",
+  "options": [
+   "Pac-Man",
+   "Donkey Kong",
+   "Frogger",
+   "Q*bert"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Sega advertising slogan of the early 1990s taunted its main rival?",
+  "options": [
+   "Play it loud",
+   "Now you're playing with power",
+   "Genesis does what Nintendon't",
+   "Get in the game"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In Pokemon, which type is strong against grass?",
+  "options": [
+   "Fire",
+   "Water",
+   "Electric",
+   "Ground"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many coins do you need to collect for an extra life in Super Mario Bros?",
+  "options": [
+   "50",
+   "200",
+   "100",
+   "75"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which game character is a spiky-haired blue hedgehog who cannot swim?",
+  "options": [
+   "Tails",
+   "Sonic",
+   "Knuckles",
+   "Shadow"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which silver-haired villain is the antagonist of Final Fantasy VII?",
+  "options": [
+   "Kuja",
+   "Ultimecia",
+   "Kefka",
+   "Sephiroth"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which arcade shooting game involves a light gun and a story about zombies, made by Sega?",
+  "options": [
+   "The House of the Dead",
+   "Point Blank",
+   "Time Crisis",
+   "Virtua Cop"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In The Oregon Trail, which disease is famously listed as a cause of death?",
+  "options": [
+   "Tetanus",
+   "Malaria",
+   "Scurvy",
+   "Dysentery"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Street Fighter character is a green-skinned electric fighter from Brazil?",
+  "options": [
+   "Dhalsim",
+   "Zangief",
+   "Balrog",
+   "Blanka"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'controller drift' fault?",
+  "options": [
+   "A stuck disc tray",
+   "A stick registering movement when untouched",
+   "A slow internet connection",
+   "A dead battery"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which party game has jellybean-shaped contestants racing through obstacle courses?",
+  "options": [
+   "Stumble Guys",
+   "Fall Guys",
+   "Human Fall Flat",
+   "Gang Beasts"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "When four friends play Mario Kart together on one television, what is that called?",
+  "options": [
+   "Split-screen multiplayer",
+   "A time trial",
+   "A co-op campaign",
+   "Online ranked play"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In gaming, what is a 'launch title'?",
+  "options": [
+   "A game trailer",
+   "The first game a studio makes",
+   "A game available on the day a console is released",
+   "A cancelled game"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who is the hero of The Legend of Zelda games?",
+  "options": [
+   "Zelda",
+   "Navi",
+   "Ganon",
+   "Link"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which arcade character is a yellow circle with a wedge cut out of it?",
+  "options": [
+   "Dig Dug",
+   "Q*bert",
+   "Pac-Man",
+   "Bomberman"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which company developed Skyrim?",
+  "options": [
+   "Bioware",
+   "Obsidian",
+   "CD Projekt Red",
+   "Bethesda Game Studios"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which musical instrument gives its name to a 1998 Zelda game on the Nintendo 64?",
+  "options": [
+   "Ocarina",
+   "Harp",
+   "Lute",
+   "Flute"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which fitness game came with a plastic balance board for the Nintendo Wii?",
+  "options": [
+   "Wii Fit",
+   "Ring Fit Adventure",
+   "Just Dance",
+   "Wii Sports"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the Metal Gear series, what does Solid Snake mostly try to avoid?",
+  "options": [
+   "Being seen by guards",
+   "Running out of fuel",
+   "Falling asleep",
+   "Losing money"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which classic pinball table came bundled with some versions of Windows?",
+  "options": [
+   "Pro Pinball",
+   "3D Pinball Space Cadet",
+   "Devil's Crush",
+   "Pinball Fantasies"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which large spiky-shelled villain kidnaps Princess Peach?",
+  "options": [
+   "Donkey Kong",
+   "Ganon",
+   "Bowser",
+   "Wario"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which pair of Pokemon games introduced the Johto region?",
+  "options": [
+   "Black and White",
+   "Diamond and Pearl",
+   "Ruby and Sapphire",
+   "Gold and Silver"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which monster hunter with white hair is the hero of The Witcher games?",
+  "options": [
+   "Geralt of Rivia",
+   "Ciri",
+   "Vesemir",
+   "Dandelion"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the very simple two-paddle tennis video game from 1972?",
+  "options": [
+   "Bounce",
+   "Rally",
+   "Net",
+   "Pong"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Nintendo golf series lets Mario characters play a round?",
+  "options": [
+   "Golf Story",
+   "Mario Sports Mix",
+   "Mario Power Tennis",
+   "Mario Golf"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which 1982 Disney film sent a programmer inside a computer world of light cycles?",
+  "options": [
+   "The Last Starfighter",
+   "Tron",
+   "WarGames",
+   "Electric Dreams"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What sort of game is 'Minecraft'?",
+  "options": [
+   "A racing game",
+   "A quiz game",
+   "A boxing game",
+   "A building and survival game"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does a game's 'tutorial' do?",
+  "options": [
+   "Teaches you how to play",
+   "Shows the credits",
+   "Ends the game",
+   "Sells extra items"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Nintendo series features a fox piloting a spacecraft called an Arwing?",
+  "options": [
+   "Pilotwings",
+   "Star Fox",
+   "F-Zero",
+   "Metroid"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Pokemon can transform to copy the appearance of another Pokemon?",
+  "options": [
+   "Smeargle",
+   "Mew",
+   "Ditto",
+   "Zorua"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which weapon is Link famous for carrying along with a shield?",
+  "options": [
+   "A spear",
+   "An axe",
+   "A sword",
+   "A rifle"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Rockstar game is a western set at the turn of the 20th century?",
+  "options": [
+   "Gun",
+   "Desperados",
+   "Call of Juarez",
+   "Red Dead Redemption"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many gym badges must you collect before the Pokemon League in Red and Blue?",
+  "options": [
+   "Eight",
+   "Six",
+   "Twelve",
+   "Ten"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which company created the WipEout futuristic racing series?",
+  "options": [
+   "Bizarre Creations",
+   "Criterion",
+   "Codemasters",
+   "Psygnosis"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Japanese composer is best known for the Final Fantasy music?",
+  "options": [
+   "Yoko Shimomura",
+   "Nobuo Uematsu",
+   "Koji Kondo",
+   "Hitoshi Sakimoto"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In Pokemon, what do you earn for defeating a Gym Leader?",
+  "options": [
+   "A badge",
+   "A medal",
+   "A ribbon",
+   "A stone"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which pixel-art game series has players building a base and fighting bosses in a 2D sandbox world, often compared with Minecraft?",
+  "options": [
+   "Core Keeper",
+   "Terraria",
+   "Starbound",
+   "Craft the World"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Sega puzzle game has players matching three coloured jewels in a column?",
+  "options": [
+   "Puyo Puyo",
+   "Columns",
+   "Zoop",
+   "Bejeweled"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In Grand Theft Auto V, how many playable main characters are there?",
+  "options": [
+   "One",
+   "Four",
+   "Two",
+   "Three"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What colour are the rings Sonic collects?",
+  "options": [
+   "Silver",
+   "Gold",
+   "Blue",
+   "Green"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Nintendo strategy series features permanent death of units and characters like Marth and Roy?",
+  "options": [
+   "Advance Wars",
+   "Xenoblade",
+   "Pikmin",
+   "Fire Emblem"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In Fallout, what is the wrist-mounted computer the player uses called?",
+  "options": [
+   "Data Pad",
+   "Wrist Deck",
+   "Vault-Tec",
+   "Pip-Boy"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In Counter-Strike, what do terrorists usually try to plant?",
+  "options": [
+   "A beacon",
+   "A camera",
+   "A flag",
+   "A bomb"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does Charmander evolve into?",
+  "options": [
+   "Flareon",
+   "Charizard",
+   "Magmar",
+   "Charmeleon"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which company created Sonic the Hedgehog?",
+  "options": [
+   "Nintendo",
+   "Konami",
+   "Capcom",
+   "Sega"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which arcade dance game has players stepping on arrows on a floor mat?",
+  "options": [
+   "Groove Coaster",
+   "Just Dance",
+   "Rhythm Heaven",
+   "Dance Dance Revolution"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'co-op' mean in gaming?",
+  "options": [
+   "A save format",
+   "Players competing",
+   "A cheat code",
+   "Players working together"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Plants vs Zombies, where do you plant your defences?",
+  "options": [
+   "In a spaceship",
+   "On a beach",
+   "In a garden and on the lawn of a house",
+   "On a rooftop farm only"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which building game lets players design and run their own theme park with roller coasters?",
+  "options": [
+   "RollerCoaster Tycoon",
+   "Zoo Tycoon",
+   "SimCity",
+   "Prison Architect"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'loot box' in a video game?",
+  "options": [
+   "A tutorial level",
+   "A randomised bundle of in-game items",
+   "A save slot",
+   "A difficulty option"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which word puzzle game did Zynga publish, based on a familiar tile-laying board game?",
+  "options": [
+   "Wordament",
+   "Letterpress",
+   "Scrabble Go",
+   "Words With Friends"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'twin stick shooter'?",
+  "options": [
+   "A game for exactly two players",
+   "A game played with two consoles",
+   "A game where one stick moves you and the other aims",
+   "A game with two weapons only"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the name of Link's legendary blade?",
+  "options": [
+   "Buster Sword",
+   "Soul Edge",
+   "Excalibur",
+   "Master Sword"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What happens in Snake if the snake hits its own tail?",
+  "options": [
+   "It splits in two",
+   "It speeds up",
+   "It shrinks",
+   "The game ends"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In many role playing games, what does 'NPC' stand for?",
+  "options": [
+   "Non-Player Character",
+   "Named Prize Card",
+   "Non-Playable Console",
+   "New Player Class"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In the game Duck Hunt, which character laughs at you when you miss?",
+  "options": [
+   "A duck",
+   "A hunter",
+   "A farmer",
+   "A dog"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Minecraft, what colour is a creeper?",
+  "options": [
+   "Green",
+   "Blue",
+   "Grey",
+   "Brown"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which online platform lets users build and play games made by other users, with blocky avatars?",
+  "options": [
+   "Garry's Mod",
+   "Minecraft",
+   "Roblox",
+   "Fortnite"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In the Pokemon games, what is the group of four elite trainers before the champion called?",
+  "options": [
+   "The Council",
+   "The Elite Four",
+   "The Masters",
+   "The Final Four"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the silent scientist hero of Half-Life?",
+  "options": [
+   "Adam Jensen",
+   "Gordon Freeman",
+   "Isaac Clarke",
+   "Alan Wake"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which letters do you collect in Donkey Kong Country levels?",
+  "options": [
+   "D, O, N and K",
+   "K, O, N and G",
+   "G, O, L and D",
+   "B, A, N and A"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What are the individual falling shapes in Tetris officially called?",
+  "options": [
+   "Quads",
+   "Tetriminos",
+   "Blocks",
+   "Bricks"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a 'glitch' in a video game?",
+  "options": [
+   "A type of enemy",
+   "A save file",
+   "An unintended fault in the game",
+   "A planned challenge"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which mask helps Crash Bandicoot survive one extra hit?",
+  "options": [
+   "Coco",
+   "Ripper Roo",
+   "Aku Aku",
+   "Uka Uka"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In Mario Kart, what does a lightning bolt item do to your opponents?",
+  "options": [
+   "Shrinks and slows them",
+   "Blinds them",
+   "Freezes them",
+   "Reverses their controls"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In gaming, what does 'GG' commonly mean at the end of a match?",
+  "options": [
+   "Good game",
+   "Game gone",
+   "Go go",
+   "Great gear"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Windows game asks you to move cards onto four piles of the same suit?",
+  "options": [
+   "FreeCell",
+   "Hearts",
+   "Solitaire",
+   "Minesweeper"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'tower defence' game?",
+  "options": [
+   "One with only one level",
+   "One about climbing towers",
+   "One where you place defences to stop waves of enemies",
+   "One about building skyscrapers"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which company made FarmVille?",
+  "options": [
+   "EA",
+   "Playfish",
+   "King",
+   "Zynga"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which video game character wears a red-and-blue cap and is often shown mid-jump with a fist raised?",
+  "options": [
+   "Mario",
+   "Sonic",
+   "Rayman",
+   "Crash"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Mortal Kombat character is a thunder god?",
+  "options": [
+   "Goro",
+   "Shao Kahn",
+   "Raiden",
+   "Shang Tsung"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the arcade game Donkey Kong, what does Mario use to smash barrels?",
+  "options": [
+   "A pipe",
+   "A bat",
+   "A hammer",
+   "A spanner"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the aim of a puzzle game?",
+  "options": [
+   "To finish a race",
+   "To score goals",
+   "To build an army",
+   "To solve problems using logic or matching"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Halo rings were built as weapons against which parasite?",
+  "options": [
+   "The Flood",
+   "The Locust",
+   "The Zerg",
+   "The Combine"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word Pokemon is a shortening of which phrase?",
+  "options": [
+   "Pocket Monsters",
+   "Portable Monsters",
+   "Power Monsters",
+   "Popular Monsters"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is an 'early access' game?",
+  "options": [
+   "A cancelled game",
+   "An unfinished game sold while still in development",
+   "A pre-order bonus",
+   "A demo version"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the cross-shaped directional controller on a gamepad called?",
+  "options": [
+   "Joy-pad",
+   "Nav-pad",
+   "X-pad",
+   "D-pad"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which virtual reality rhythm game has players slicing blocks with lightsabers?",
+  "options": [
+   "Superhot VR",
+   "Beat Saber",
+   "Pistol Whip",
+   "Audica"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Mario and Luigi are what to each other?",
+  "options": [
+   "Cousins",
+   "Best friends only",
+   "Father and son",
+   "Brothers"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'remaster' of a video game?",
+  "options": [
+   "A fan-made version",
+   "An older game rereleased with improved graphics",
+   "A brand new sequel",
+   "A cancelled project"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'games review'?",
+  "options": [
+   "A trade-in offer",
+   "A repair service",
+   "An opinion piece rating a game",
+   "A patch"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'level' in a video game?",
+  "options": [
+   "A menu font",
+   "A stage the player works through",
+   "A type of controller",
+   "A price tier"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour is Sonic the Hedgehog?",
+  "options": [
+   "Purple",
+   "Red",
+   "Green",
+   "Blue"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In gaming, what does 'respawn' mean?",
+  "options": [
+   "To upgrade a weapon",
+   "To reappear in the game after being defeated",
+   "To restart the console",
+   "To join a new team"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour is Mario's cap?",
+  "options": [
+   "Red",
+   "Green",
+   "Blue",
+   "Yellow"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Pokemon is a large orange dragon-like creature with a flame on its tail?",
+  "options": [
+   "Charizard",
+   "Typhlosion",
+   "Salamence",
+   "Dragonite"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which studio makes the Uncharted and The Last of Us games?",
+  "options": [
+   "Sucker Punch",
+   "Santa Monica",
+   "Naughty Dog",
+   "Guerrilla"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Pokemon is a flame-tailed lizard that is often the first choice of new players?",
+  "options": [
+   "Cyndaquil",
+   "Charmander",
+   "Torchic",
+   "Vulpix"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is Zelda in The Legend of Zelda?",
+  "options": [
+   "A princess",
+   "A sword",
+   "A horse",
+   "A castle"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Nintendo character is the star of the F-Zero series?",
+  "options": [
+   "Fox McCloud",
+   "Captain Falcon",
+   "Little Mac",
+   "Samus"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many controller ports did the Nintendo 64 have?",
+  "options": [
+   "One",
+   "Four",
+   "Two",
+   "Six"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which classic side-scrolling beat 'em up featured Axel, Blaze and Adam cleaning up a crime-ridden city?",
+  "options": [
+   "Final Fight",
+   "Streets of Rage",
+   "Golden Axe",
+   "Double Dragon"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does MOBA stand for in gaming?",
+  "options": [
+   "Multi Objective Battle Action",
+   "Mobile Online Battle Arena",
+   "Multiplayer Online Battle Arena",
+   "Massive Open Battle Area"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In Minecraft, what shape is almost everything in the world built from?",
+  "options": [
+   "Cubes",
+   "Spheres",
+   "Pyramids",
+   "Cylinders"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'crossplay'?",
+  "options": [
+   "Playing with a keyboard only",
+   "Swapping controllers mid-game",
+   "Players on different platforms playing together",
+   "Playing two games at once"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which PlayStation stealth series stars a thieving raccoon and his gang of Murray and Bentley?",
+  "options": [
+   "Sly Cooper",
+   "Jak and Daxter",
+   "Infamous",
+   "Ratchet and Clank"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which management series has players building animal enclosures and keeping visitors happy, sharing its publisher with RollerCoaster Tycoon?",
+  "options": [
+   "Planet Coaster",
+   "Zoo Tycoon",
+   "Jurassic World Evolution",
+   "Wildlife Park"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is on Luigi's cap?",
+  "options": [
+   "The letter L",
+   "A coin",
+   "A leaf",
+   "The letter G"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Animal Crossing, what is the name of the raccoon-like shopkeeper who lends you money for a house?",
+  "options": [
+   "Tom Nook",
+   "Blathers",
+   "Isabelle",
+   "K.K. Slider"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Space Invaders, what protects the player's cannon from enemy fire?",
+  "options": [
+   "Mirrors",
+   "Force fields",
+   "Bunkers",
+   "Nothing"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Sonic the Hedgehog, what happens when Sonic is hit while carrying rings?",
+  "options": [
+   "He drops his rings",
+   "He turns grey",
+   "He loses a life instantly",
+   "He shrinks"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a games 'cartridge'?",
+  "options": [
+   "A charging cable",
+   "A type of controller",
+   "A plastic case holding a game that slots into a console",
+   "A game manual"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In The Sims 4, which typed cheat gives your household extra money?",
+  "options": [
+   "cashnow",
+   "motherlode",
+   "richsim",
+   "moneybags"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In Skyrim, what is the player character known as?",
+  "options": [
+   "Champion",
+   "Chosen One",
+   "Dragonborn",
+   "Nerevarine"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which number puzzle involves filling a nine by nine grid so each row, column and box has one to nine?",
+  "options": [
+   "Sudoku",
+   "Nonogram",
+   "Kakuro",
+   "Futoshiki"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Nintendo 64 accessory added vibration feedback to the controller?",
+  "options": [
+   "Rumble Pak",
+   "Memory Pak",
+   "Transfer Pak",
+   "Expansion Pak"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a 'beta' version of a game?",
+  "options": [
+   "A test version played before full release",
+   "A cancelled version",
+   "A remastered version",
+   "The final version"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'cutscene' in a video game?",
+  "options": [
+   "A deleted level",
+   "A loading error",
+   "A non-playable story sequence",
+   "A multiplayer lobby"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What did the Nintendo 64 controller famously have that other controllers did not?",
+  "options": [
+   "A trackball",
+   "Three handles",
+   "Two screens",
+   "A keyboard"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Capcom series stars a blue robot boy who takes weapons from defeated bosses?",
+  "options": [
+   "Bomberman",
+   "Astro Boy",
+   "Mega Man",
+   "Rockman Jr"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The PlayStation 2 played games on which disc format?",
+  "options": [
+   "Mini disc",
+   "DVD",
+   "Cartridge",
+   "Blu-ray"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which video game genre asks the player to solve environmental problems rather than fight?",
+  "options": [
+   "Puzzle",
+   "Shooter",
+   "Racing",
+   "Sports"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which composer wrote the famous Super Mario Bros theme?",
+  "options": [
+   "Motoi Sakuraba",
+   "Nobuo Uematsu",
+   "Koji Kondo",
+   "Yuzo Koshiro"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Who is the main villain of The Legend of Zelda series?",
+  "options": [
+   "Zant",
+   "Agahnim",
+   "Vaati",
+   "Ganondorf"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does EA stand for in the games publisher's name?",
+  "options": [
+   "Entertainment Alliance",
+   "Elite Applications",
+   "Electronic Arts",
+   "Emerging Arts"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What colour are Sonic the Hedgehog's shoes?",
+  "options": [
+   "White",
+   "Blue",
+   "Black",
+   "Red"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which mobile game has players tapping a bird through gaps between green pipes?",
+  "options": [
+   "Doodle Jump",
+   "Jetpack Joyride",
+   "Flappy Bird",
+   "Tiny Wings"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which 1998 Rare platformer starred a bear who carries a bird in his backpack?",
+  "options": [
+   "Donkey Kong Country",
+   "Banjo-Kazooie",
+   "Yooka-Laylee",
+   "Conker"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which 1970s educational game had players leading a wagon party west, dying of dysentery along the way?",
+  "options": [
+   "Pioneer",
+   "Carmen Sandiego",
+   "The Oregon Trail",
+   "SimFrontier"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which karaoke game series on PlayStation used microphones and pop songs?",
+  "options": [
+   "SingStar",
+   "Karaoke Revolution",
+   "We Sing",
+   "Lips"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which toys-to-life series placed figures on a portal to bring them into the game?",
+  "options": [
+   "Pokemon",
+   "Beyblade",
+   "Skylanders",
+   "Amiibo"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Blizzard card game is set in the Warcraft world?",
+  "options": [
+   "Magic Arena",
+   "Hearthstone",
+   "Gwent",
+   "Legends of Runeterra"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian motorsport category has had its own officially licensed racing games?",
+  "options": [
+   "V8 Supercars",
+   "MotoGP",
+   "Formula One",
+   "NASCAR"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the Nintendo Switch able to do that a PlayStation 5 cannot?",
+  "options": [
+   "Connect to a television",
+   "Use a controller",
+   "Be taken out of the house and played as a handheld",
+   "Play discs"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the aim of a 'tower defence' game in simple terms?",
+  "options": [
+   "Build the tallest tower",
+   "Race up a tower",
+   "Rescue a hostage",
+   "Stop enemies getting past your defences"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which shooter series features super soldiers known as Spartans?",
+  "options": [
+   "Halo",
+   "Crysis",
+   "Killzone",
+   "Resistance"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the arcade game Centipede, what is the main enemy?",
+  "options": [
+   "A scorpion",
+   "A centipede",
+   "A worm",
+   "A spider"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In World of Warcraft, what are the two opposing factions called?",
+  "options": [
+   "Light and Shadow",
+   "Union and Legion",
+   "Alliance and Horde",
+   "Order and Chaos"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What kind of animal is Sonic?",
+  "options": [
+   "A hedgehog",
+   "A mouse",
+   "A porcupine",
+   "A squirrel"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Nintendo Switch controllers slide onto the sides of the console?",
+  "options": [
+   "Nunchuks",
+   "Wii Remotes",
+   "Joy-Cons",
+   "Pro Pads"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which red echidna is both a rival and an ally of Sonic?",
+  "options": [
+   "Shadow",
+   "Knuckles",
+   "Silver",
+   "Tails"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which 1985 Sega arcade game had players riding a full-size motorbike cabinet?",
+  "options": [
+   "Hang-On",
+   "OutRun",
+   "After Burner",
+   "Space Harrier"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Microsoft subscription gives access to a library of downloadable Xbox games?",
+  "options": [
+   "Game Pass",
+   "Xbox Store",
+   "Play Anywhere",
+   "Games With Gold only"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In The Legend of Zelda: Majora's Mask, how many days does Link have before the moon falls?",
+  "options": [
+   "Three",
+   "Ten",
+   "Five",
+   "Seven"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Pokemon is a round blue-and-white creature famous for being lazy and sleeping across roads?",
+  "options": [
+   "Jigglypuff",
+   "Snorlax",
+   "Munchlax",
+   "Wobbuffet"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian-made platform series stars a marsupial who fights with boomerangs?",
+  "options": [
+   "Bushwhacker",
+   "Bunyip",
+   "Roo Rampage",
+   "Ty the Tasmanian Tiger"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In pinball, what is it called when you nudge the machine too hard and lose the ball?",
+  "options": [
+   "A fault",
+   "A bounce",
+   "A tilt",
+   "A shove"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which video game genre uses the term 'metroidvania', named after two game series?",
+  "options": [
+   "Racing games",
+   "Exploration platformers with unlockable abilities",
+   "Music games",
+   "Card games"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which fruit appears as the first bonus item in Pac-Man?",
+  "options": [
+   "Apple",
+   "Strawberry",
+   "Orange",
+   "Cherry"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which actor's likeness appears as Johnny Silverhand in Cyberpunk 2077?",
+  "options": [
+   "Mads Mikkelsen",
+   "Norman Reedus",
+   "Willem Dafoe",
+   "Keanu Reeves"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Minecraft, what do you use a furnace for?",
+  "options": [
+   "Enchanting",
+   "Storing items",
+   "Smelting ores and cooking food",
+   "Crafting tools"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What sort of game is 'Tomb Raider'?",
+  "options": [
+   "A karaoke game",
+   "A quiz game",
+   "An action adventure game",
+   "A card game"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the arcade game where two players hit a puck on a low friction table?",
+  "options": [
+   "Foosball",
+   "Skee-ball",
+   "Pinball",
+   "Air hockey"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Valve game began as a mod for Warcraft III and became a huge competitive title?",
+  "options": [
+   "Counter-Strike",
+   "Dota 2",
+   "Left 4 Dead",
+   "Team Fortress"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which country is Lara Croft from?",
+  "options": [
+   "England",
+   "Ireland",
+   "United States",
+   "Canada"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which turn-based artillery series has squads of invertebrates firing bazookas and exploding sheep at each other?",
+  "options": [
+   "Worms",
+   "Cannon Fodder",
+   "Scorched Earth",
+   "Lemmings"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Riot Games tactical shooter features agents with special abilities?",
+  "options": [
+   "Overwatch",
+   "Valorant",
+   "Apex Legends",
+   "Splitgate"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which company makes the Xbox Series X console?",
+  "options": [
+   "Sony",
+   "Microsoft",
+   "Sega",
+   "Nintendo"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In a football video game, how do you score?",
+  "options": [
+   "Put the ball in the net",
+   "Knock over pins",
+   "Cross the finish line",
+   "Collect coins"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The FIFA games took their name from which organisation?",
+  "options": [
+   "A European broadcaster",
+   "The governing body of world football",
+   "A boot manufacturer",
+   "A players' union"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 'backwards compatibility'?",
+  "options": [
+   "Playing a game in reverse",
+   "A new console being able to play older games",
+   "A repeat mode",
+   "An undo button"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Melbourne studio created the mobile racing game Real Racing?",
+  "options": [
+   "Torus",
+   "Firemint",
+   "Halfbrick",
+   "Tantalus"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which studio made the Batman Arkham video games?",
+  "options": [
+   "Naughty Dog",
+   "Rockstar",
+   "Monolith",
+   "Rocksteady"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What colour is the top half of a standard Poke Ball?",
+  "options": [
+   "Black",
+   "Red",
+   "Green",
+   "Blue"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What can Kirby do after swallowing certain enemies?",
+  "options": [
+   "Summon allies",
+   "Change the level",
+   "Grow larger permanently",
+   "Copy their abilities"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 'Pong' generally considered to be a version of?",
+  "options": [
+   "Table tennis",
+   "Golf",
+   "Cricket",
+   "Football"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In gaming, what is a 'boss'?",
+  "options": [
+   "A powerful enemy at the end of a level",
+   "The player's employer",
+   "A save point",
+   "A difficulty setting"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Mario games, what do you collect that are gold and spin?",
+  "options": [
+   "Gems",
+   "Rings",
+   "Stars",
+   "Coins"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Mario princess wears yellow and orange and rules Sarasaland?",
+  "options": [
+   "Daisy",
+   "Peach",
+   "Rosalina",
+   "Pauline"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which console did Sony release first?",
+  "options": [
+   "PlayStation Portable",
+   "PlayStation 2",
+   "PlayStation",
+   "PlayStation 3"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Doom, on which planet's moons does the first game largely take place?",
+  "options": [
+   "Venus",
+   "Jupiter",
+   "Saturn",
+   "Mars"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which game series has players guiding a factory of conveyor belts and machines on an alien planet?",
+  "options": [
+   "Satisfactory",
+   "Rimworld",
+   "Dyson Sphere Program",
+   "Factorio"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What sort of creature is Donkey Kong?",
+  "options": [
+   "A gorilla",
+   "An elephant",
+   "A bear",
+   "A donkey"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which company created Age of Empires?",
+  "options": [
+   "Firaxis",
+   "Blizzard",
+   "Ensemble Studios",
+   "Westwood"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which designer's name appears in the title of the Civilization games?",
+  "options": [
+   "Sid Meier",
+   "Will Wright",
+   "Peter Molyneux",
+   "John Romero"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What device do you wear on your head to play a virtual reality game?",
+  "options": [
+   "Headphones only",
+   "A hat with lights",
+   "A helmet camera",
+   "A headset"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Rockstar game series lets players play as a schoolboy at a boarding school?",
+  "options": [
+   "Table Tennis",
+   "Bully",
+   "Max Payne",
+   "Manhunt"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a video game 'sequel'?",
+  "options": [
+   "A demo",
+   "A follow-up game to an earlier one",
+   "A cheat",
+   "A cancelled game"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Minecraft, which boss lives in The End?",
+  "options": [
+   "Ender Dragon",
+   "Warden",
+   "Wither",
+   "Ravager"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the Fallout series, what is the smiling cartoon mascot called?",
+  "options": [
+   "Nuka Lad",
+   "Pip Boy",
+   "Vault Boy",
+   "Atom Kid"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the pause button do in a video game?",
+  "options": [
+   "Ends the game",
+   "Stops the action temporarily",
+   "Skips a level",
+   "Deletes your save"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which treasure-hunting series stars Nathan Drake?",
+  "options": [
+   "Uncharted",
+   "Just Cause",
+   "Tomb Raider",
+   "Far Cry"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Age of Empires, what do villagers gather along with food, wood and stone?",
+  "options": [
+   "Coal",
+   "Oil",
+   "Iron",
+   "Gold"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What colour are the pipes Mario travels through?",
+  "options": [
+   "Green",
+   "Blue",
+   "Red",
+   "Yellow"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In a fighting game, what are two characters usually doing?",
+  "options": [
+   "Dancing",
+   "Fighting each other",
+   "Farming",
+   "Racing"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do you download a modern game from on a console?",
+  "options": [
+   "A cassette",
+   "A newspaper",
+   "An online store",
+   "A radio"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On Xbox, what is the score you build up from achievements called?",
+  "options": [
+   "Xbox Rank",
+   "Gamerscore",
+   "Trophy Level",
+   "Achievement Points"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Minecraft, which skeletal mob shoots arrows at the player?",
+  "options": [
+   "Slime",
+   "Enderman",
+   "Skeleton",
+   "Zombie"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which arcade classic do you guide a frog across a busy road and a river?",
+  "options": [
+   "Hopper",
+   "Leap",
+   "Toad Trek",
+   "Frogger"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Luigi's Mansion, what does Luigi use to capture ghosts?",
+  "options": [
+   "A lantern",
+   "A net",
+   "A mirror",
+   "A vacuum cleaner"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which type is Pikachu?",
+  "options": [
+   "Electric",
+   "Psychic",
+   "Water",
+   "Fire"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Wordle, what does a green tile mean?",
+  "options": [
+   "The letter is correct and in the right place",
+   "The letter is correct but in the wrong place",
+   "The letter is not in the word",
+   "The word is finished"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In the Doom games, what nickname is given to the silent marine protagonist?",
+  "options": [
+   "Doomguy",
+   "Slayer Sam",
+   "The Marine King",
+   "Hellwalker Joe"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In The Last of Us, what is the name of the teenage girl Joel escorts?",
+  "options": [
+   "Abby",
+   "Sarah",
+   "Tess",
+   "Ellie"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Microsoft accessory let Xbox players control games with body movement and no controller?",
+  "options": [
+   "Kinect",
+   "Wiimote",
+   "Move",
+   "Eye Toy"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Mario Kart, what does hitting a mushroom item give you?",
+  "options": [
+   "Invisibility",
+   "A speed boost",
+   "Extra coins",
+   "A shield"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which British studio made GoldenEye 007 and Banjo-Kazooie?",
+  "options": [
+   "Bullfrog",
+   "Team17",
+   "Codemasters",
+   "Rare"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the rainbow-coloured track that closes most Mario Kart games?",
+  "options": [
+   "Star Circuit",
+   "Neon Run",
+   "Rainbow Road",
+   "Sky Highway"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'couch co-op'?",
+  "options": [
+   "Watching others play",
+   "Playing on a phone",
+   "Playing online with strangers",
+   "Playing together in the same room on one console"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Cut the Rope, which creature are you feeding sweets to?",
+  "options": [
+   "A dragon",
+   "A small green monster",
+   "A frog",
+   "A monkey"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which company created Bejeweled and Plants vs Zombies?",
+  "options": [
+   "Zynga",
+   "Big Fish",
+   "PopCap Games",
+   "King"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is an 'extra life' in a game?",
+  "options": [
+   "A new game",
+   "A bigger screen",
+   "A faster console",
+   "Another chance after you are defeated"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On PlayStation, what is the highest tier of trophy called?",
+  "options": [
+   "Diamond",
+   "Gold",
+   "Platinum",
+   "Master"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the Zelda series, what is the three-triangle symbol called?",
+  "options": [
+   "Trident",
+   "Triforce",
+   "Tri-shield",
+   "Trinity"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In gaming, what is 'lag'?",
+  "options": [
+   "A type of weapon",
+   "A delay between an action and the game responding",
+   "A bonus round",
+   "A save file"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which shooter series is known for the mechanised suits called Titans?",
+  "options": [
+   "Titanfall",
+   "Destiny",
+   "Warframe",
+   "Halo"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the name of Ryu's signature fireball attack in Street Fighter?",
+  "options": [
+   "Hadouken",
+   "Shoryuken",
+   "Tatsumaki",
+   "Kikoken"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cooking game has players frantically preparing orders in chaotic kitchens?",
+  "options": [
+   "Cook Serve Delicious",
+   "Diner Dash",
+   "Kitchen Rush",
+   "Overcooked"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of Link's horse in the Zelda games?",
+  "options": [
+   "Roach",
+   "Shadowmere",
+   "Epona",
+   "Agro"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Brisbane studio created Ty the Tasmanian Tiger?",
+  "options": [
+   "Halfbrick",
+   "Beam Software",
+   "Krome Studios",
+   "Torus"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which bounty hunter in a power suit is the hero of the Metroid series?",
+  "options": [
+   "Jill Valentine",
+   "Bayonetta",
+   "Samus Aran",
+   "Nilin"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which PlayStation game is set in feudal Japan on an island invaded by the Mongols?",
+  "options": [
+   "Nioh",
+   "Onimusha",
+   "Ghost of Tsushima",
+   "Sekiro"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the name of the tall, thin arcade machine you stand up to play?",
+  "options": [
+   "A pod",
+   "A cabinet",
+   "A booth",
+   "A stand"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which egg-shaped digital pet toy from Japan became a 1990s craze?",
+  "options": [
+   "Digimon Pet",
+   "Tamagotchi",
+   "Giga Pet",
+   "Furby"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Among Us, what is the meeting called where players discuss who the impostor is?",
+  "options": [
+   "A round table",
+   "A trial",
+   "An emergency meeting",
+   "A crew call"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are 'headphones' used for while gaming?",
+  "options": [
+   "Improving graphics",
+   "Storing saves",
+   "Hearing the game's sound privately",
+   "Charging the console"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'LAN party'?",
+  "options": [
+   "An online tournament",
+   "A gathering where players connect computers on a local network",
+   "A streaming channel",
+   "A game launch event"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which video game series lets you build famous scenes out of plastic bricks?",
+  "options": [
+   "Meccano",
+   "Brick City",
+   "Blockland",
+   "Lego"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which sport features in the video game series Tony Hawk's Pro Skater?",
+  "options": [
+   "Surfing",
+   "Skateboarding",
+   "BMX",
+   "Snowboarding"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which fighting game series features the Mishima family and the King of Iron Fist tournament?",
+  "options": [
+   "Virtua Fighter",
+   "Dead or Alive",
+   "Killer Instinct",
+   "Tekken"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What kind of game is 'Football Manager'?",
+  "options": [
+   "A management simulation",
+   "A first person shooter",
+   "A puzzle game",
+   "A card game"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which company makes the Nintendo Switch?",
+  "options": [
+   "Sega",
+   "Nintendo",
+   "Sony",
+   "Atari"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which puzzle game asks players to fit shapes together to clear lines, and was created in the Soviet Union in 1984?",
+  "options": [
+   "Puyo Puyo",
+   "Dr Mario",
+   "Tetris",
+   "Columns"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which game combines rocket-powered cars with a giant football?",
+  "options": [
+   "Rocket League",
+   "Turbo Goal",
+   "Kickstart",
+   "Speedball"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Zelda games, what do you break to find hearts and rupees?",
+  "options": [
+   "Barrels only",
+   "Pots and grass",
+   "Trees only",
+   "Rocks only"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Nintendo game series is about training a pet dog on a handheld touchscreen?",
+  "options": [
+   "Petz",
+   "Pet Pals",
+   "Nintendogs",
+   "Dogz"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these is a Minecraft biome?",
+  "options": [
+   "Taiga",
+   "Barrow",
+   "Reach",
+   "Cascade"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian classification for video games was only introduced in 2013?",
+  "options": [
+   "MA15+",
+   "PG",
+   "R18+",
+   "M"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which long-running Microsoft simulation lets players pilot aircraft over a recreated real world?",
+  "options": [
+   "Microsoft Flight Simulator",
+   "Falcon",
+   "X-Plane",
+   "Ace Combat"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In StarCraft, which of these is one of the three playable races?",
+  "options": [
+   "Zerg",
+   "Necrons",
+   "Orcs",
+   "Covenant"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which company created Street Fighter?",
+  "options": [
+   "Capcom",
+   "Konami",
+   "SNK",
+   "Namco"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is Mario's catchphrase when he jumps?",
+  "options": [
+   "Wahoo",
+   "Yippee",
+   "Kaboom",
+   "Hooray"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which classic Nokia mobile phone game involved a growing line eating dots?",
+  "options": [
+   "Snake",
+   "Slither",
+   "Worms",
+   "Python"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'streaming' a video game?",
+  "options": [
+   "Printing a walkthrough",
+   "Recording it to tape",
+   "Downloading it to a disc",
+   "Broadcasting your play live over the internet"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In the Gears of War series, what is the chainsaw attached to?",
+  "options": [
+   "A rifle",
+   "A shield",
+   "A car",
+   "A helmet"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which publisher's PGA Tour golf series carried Tiger Woods' name from 1999 to 2013?",
+  "options": [
+   "Sony",
+   "EA Sports",
+   "Take-Two",
+   "Konami"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many squares are in a standard Sudoku grid across the top?",
+  "options": [
+   "Six",
+   "Ten",
+   "Twelve",
+   "Nine"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In the game Wii Sports Bowling, how many pins are there?",
+  "options": [
+   "Ten",
+   "Nine",
+   "Twelve",
+   "Six"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does FPS stand for when describing a genre of game?",
+  "options": [
+   "Fast Paced Shooter",
+   "First Person Shooter",
+   "Full Play Simulation",
+   "Free Play System"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many original Pokemon types were in Pokemon Red and Blue?",
+  "options": [
+   "Ten",
+   "Fifteen",
+   "Eighteen",
+   "Twelve"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In Wii Sports, which five sports were included?",
+  "options": [
+   "Soccer, tennis, golf, boxing and skiing",
+   "Tennis, baseball, bowling, golf and boxing",
+   "Bowling, snooker, golf, tennis and rugby",
+   "Tennis, cricket, bowling, golf and darts"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In gaming, what does 'AFK' stand for?",
+  "options": [
+   "Attack From Kneeling",
+   "All For Kills",
+   "Away From Keyboard",
+   "Automatic Fire Key"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Street Fighter character is a sumo wrestler?",
+  "options": [
+   "Zangief",
+   "E. Honda",
+   "Sagat",
+   "Blanka"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which studio, founded by former Call of Duty developers, made Titanfall and Apex Legends?",
+  "options": [
+   "Bungie",
+   "Bluepoint",
+   "Respawn Entertainment",
+   "Arkane"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In The Sims, what colour is the plumbob above a Sim in a very good mood?",
+  "options": [
+   "Yellow",
+   "Blue",
+   "Green",
+   "Red"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which clicker game has players baking an ever-growing pile of biscuits?",
+  "options": [
+   "Cookie Clicker",
+   "Clicker Heroes",
+   "Egg Inc",
+   "Adventure Capitalist"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which game console did Microsoft first release in 2001?",
+  "options": [
+   "Xbox 360",
+   "Zune",
+   "Xbox One",
+   "Xbox"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which handheld console famously came bundled with Tetris in the West?",
+  "options": [
+   "Game Boy",
+   "PSP",
+   "Game Gear",
+   "Atari Lynx"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which role playing series is set in the province of Skyrim in its fifth main entry?",
+  "options": [
+   "Dragon Age",
+   "The Witcher",
+   "Fable",
+   "The Elder Scrolls"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Nintendo handheld released in 2001 had a colour screen and played Game Boy games?",
+  "options": [
+   "Nintendo DS",
+   "Game Boy Colour",
+   "Game Boy Pocket",
+   "Game Boy Advance"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Finnish company created Angry Birds?",
+  "options": [
+   "Supercell",
+   "Housemarque",
+   "Remedy",
+   "Rovio"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are you flinging in Angry Birds?",
+  "options": [
+   "Rocks",
+   "Eggs",
+   "Birds",
+   "Balls"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Valve game is a free team-based shooter with cartoon classes such as the Heavy and the Spy?",
+  "options": [
+   "Team Fortress 2",
+   "Portal",
+   "Counter-Strike",
+   "Left 4 Dead"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which puzzle-platform game has you solving test chambers with a gun that fires two linked doorways?",
+  "options": [
+   "Portal",
+   "The Talos Principle",
+   "Quantum Conundrum",
+   "Antichamber"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Mario Kart, which cloud-riding character holds up the starting lights?",
+  "options": [
+   "Toad",
+   "Lakitu",
+   "Shy Guy",
+   "Koopa Troopa"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which game has a famous cheat code involving up, up, down, down, left, right, left, right, B, A?",
+  "options": [
+   "Doom",
+   "Mario",
+   "Sonic",
+   "Contra"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What appears in the corner of the screen in Grand Theft Auto when the police are after you?",
+  "options": [
+   "Stars showing your wanted level",
+   "A siren icon",
+   "A countdown clock",
+   "A red cross"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What was Mario originally called when he first appeared in Donkey Kong?",
+  "options": [
+   "Hopper",
+   "Plumber Joe",
+   "Jumpman",
+   "Mr Video"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many players could play the original Super Mario Bros at the same time?",
+  "options": [
+   "Three",
+   "Four",
+   "Two",
+   "One"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Disney and Square Enix crossover series stars a boy named Sora with a key-shaped sword?",
+  "options": [
+   "Disney Infinity",
+   "Kingdom Hearts",
+   "Epic Mickey",
+   "Castle of Illusion"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the flying turtle who throws spiny creatures from a cloud in Mario games?",
+  "options": [
+   "Bullet Bill",
+   "Lakitu",
+   "Boo",
+   "Koopa"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is Mega Man called in Japan?",
+  "options": [
+   "Blue Bomber",
+   "Rockman",
+   "Astro",
+   "Metalman"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What time of day do monsters appear in Minecraft survival mode?",
+  "options": [
+   "Night",
+   "Sunrise only",
+   "Midday",
+   "They never appear"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the final evolution of Bulbasaur?",
+  "options": [
+   "Tangela",
+   "Vileplume",
+   "Venusaur",
+   "Ivysaur"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which small pink legendary Pokemon is said to be the ancestor of all Pokemon?",
+  "options": [
+   "Mew",
+   "Mewtwo",
+   "Celebi",
+   "Jirachi"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Japanese company released Pac-Man in 1980?",
+  "options": [
+   "Taito",
+   "Namco",
+   "Konami",
+   "Sega"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do you place on a square in Minesweeper when you think a mine is hidden there?",
+  "options": [
+   "A star",
+   "A cone",
+   "A cross",
+   "A flag"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In gaming, what is 'loot'?",
+  "options": [
+   "The game engine",
+   "Items dropped by enemies or found in the world",
+   "A control layout",
+   "The end credits"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which classic Nintendo accessory was a plastic gun used to shoot ducks on screen?",
+  "options": [
+   "The Power Glove",
+   "The NES Zapper",
+   "The Wii Zapper",
+   "The Super Scope"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the game Solitaire played with?",
+  "options": [
+   "Marbles",
+   "Cards",
+   "Dice",
+   "Dominoes"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which pink hedgehog is a friend of Sonic?",
+  "options": [
+   "Rouge",
+   "Blaze",
+   "Amy Rose",
+   "Cream"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are you shooting at in the arcade game Space Invaders?",
+  "options": [
+   "Rows of aliens",
+   "Racing cars",
+   "Balloons",
+   "Ducks"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do you do with a 'save point' in a game?",
+  "options": [
+   "Buy weapons there",
+   "Change the difficulty there",
+   "Watch the credits there",
+   "Store your progress there"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do you put into an old-fashioned arcade machine to play?",
+  "options": [
+   "Cards",
+   "Nothing",
+   "Tokens made of wood",
+   "Coins"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which classic Atari game had you defending cities from incoming missiles?",
+  "options": [
+   "Defender",
+   "Missile Command",
+   "Tempest",
+   "Battlezone"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which early text adventure game begins with the player standing west of a white house?",
+  "options": [
+   "Zork",
+   "Hitchhiker's Guide",
+   "Adventure",
+   "Colossal Cave"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a 'console generation'?",
+  "options": [
+   "A game series",
+   "A firmware version",
+   "A controller model",
+   "A group of consoles released around the same period"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the female Pac-Man character with a bow on her head?",
+  "options": [
+   "Ms. Pac-Man",
+   "Baby Pac-Man",
+   "Pac-Girl",
+   "Lady Pac"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In The Legend of Zelda, what is the currency called?",
+  "options": [
+   "Rupees",
+   "Bells",
+   "Gems",
+   "Coins"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which mobile puzzle game has players firing coloured balls up a winding track before they reach the hole?",
+  "options": [
+   "Bejeweled",
+   "Zuma",
+   "Candy Crush",
+   "Peggle"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Super Mario Bros, which world is the last one in the original game?",
+  "options": [
+   "World 10",
+   "World 6",
+   "World 12",
+   "World 8"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which streaming service is most associated with watching people play games live?",
+  "options": [
+   "Twitch",
+   "Vimeo",
+   "Soundcloud",
+   "Spotify"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which arcade game is a follow-up to Galaxian where enemies dive at your ship in formation?",
+  "options": [
+   "Gradius",
+   "Xevious",
+   "R-Type",
+   "Galaga"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which action series stars Kratos, a warrior who battles Greek and later Norse gods?",
+  "options": [
+   "God of War",
+   "Devil May Cry",
+   "Bayonetta",
+   "Darksiders"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In gaming, what does 'HUD' stand for?",
+  "options": [
+   "Host Update Device",
+   "Heads-Up Display",
+   "Hidden User Data",
+   "High Usage Data"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Minecraft, what is the tall black mob that becomes hostile when you look at it?",
+  "options": [
+   "Zombie",
+   "Witch",
+   "Enderman",
+   "Creeper"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian studio is known for its cricket and rugby video games?",
+  "options": [
+   "Big Ant Studios",
+   "Krome",
+   "Firemint",
+   "Halfbrick"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which game features a shrinking storm, 100 players and building walls from gathered materials?",
+  "options": [
+   "Apex Legends",
+   "Fortnite",
+   "Warzone",
+   "PUBG"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the flagpole at the end of a Super Mario Bros level do?",
+  "options": [
+   "Gives an extra life always",
+   "Restarts the level",
+   "Ends the level and awards points",
+   "Opens a shop"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Minecraft, what happens in Hardcore mode when you die?",
+  "options": [
+   "You lose your items only",
+   "You go back a level",
+   "The world is over",
+   "Nothing"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the game Tetris, which piece is a straight line of four?",
+  "options": [
+   "T-piece",
+   "S-piece",
+   "I-piece",
+   "L-piece"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Pokemon, which type is strong against rock?",
+  "options": [
+   "Water",
+   "Normal",
+   "Fire",
+   "Flying"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the DS in Nintendo DS most commonly stand for?",
+  "options": [
+   "Direct Sync",
+   "Dual Screen",
+   "Digital System",
+   "Double Screen"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What shape was the inspiration for Pac-Man's design, according to his creator?",
+  "options": [
+   "A pizza with a slice removed",
+   "A smiley face",
+   "A moon",
+   "A tennis ball"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the Hitman games, what marking is on the back of Agent 47's head?",
+  "options": [
+   "A barcode",
+   "A number 47 in ink",
+   "A scar",
+   "A tattoo of a snake"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many squares make up each falling piece in Tetris?",
+  "options": [
+   "Six",
+   "Four",
+   "Five",
+   "Three"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Candy Crush Saga, how many matching candies in a row do you need to clear them?",
+  "options": [
+   "Three",
+   "Five",
+   "Two",
+   "Four"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which city-building series lets you zone residential, commercial and industrial areas?",
+  "options": [
+   "Anno",
+   "Civilization",
+   "Tropico",
+   "SimCity"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What colour is the standard Yoshi?",
+  "options": [
+   "Blue",
+   "Red",
+   "Green",
+   "Yellow"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In role playing games, what does 'XP' stand for?",
+  "options": [
+   "Experience Points",
+   "Extended Play",
+   "Extra Power",
+   "Exit Point"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Nintendo engineer designed the Game Boy?",
+  "options": [
+   "Gunpei Yokoi",
+   "Satoru Iwata",
+   "Shigeru Miyamoto",
+   "Hiroshi Yamauchi"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In Angry Birds, what device launches the birds?",
+  "options": [
+   "Cannon",
+   "Catapult",
+   "Spring",
+   "Slingshot"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which city is Nintendo's headquarters in?",
+  "options": [
+   "Nagoya",
+   "Osaka",
+   "Tokyo",
+   "Kyoto"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Nintendo DS series had players doing daily sums and puzzles to lower their 'brain age'?",
+  "options": [
+   "Brain Training",
+   "Professor Layton",
+   "Wii Fit",
+   "Nintendogs"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the pink ghost in Pac-Man?",
+  "options": [
+   "Clyde",
+   "Pinky",
+   "Inky",
+   "Blinky"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'esports' refer to?",
+  "options": [
+   "Online betting",
+   "Electric bicycle racing",
+   "Sports simulation only",
+   "Competitive video gaming played professionally"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'mod' in gaming?",
+  "options": [
+   "A difficulty level",
+   "A player-made modification to a game",
+   "A type of controller",
+   "A moderator badge"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In the arcade game Pac-Man, what are the four ghosts collectively hunting?",
+  "options": [
+   "The fruit",
+   "The pellets",
+   "Pac-Man",
+   "Each other"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'sandbox' game?",
+  "options": [
+   "One with only one level",
+   "One that lets players roam and create freely",
+   "One played offline",
+   "One set on a beach"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What was the first commercially successful arcade video game, released in 1972?",
+  "options": [
+   "Pong",
+   "Computer Space",
+   "Breakout",
+   "Space Race"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Minecraft, what do villagers do with emeralds?",
+  "options": [
+   "Light their homes",
+   "Craft armour",
+   "Use them as currency for trading",
+   "Build houses"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is Crash Bandicoot's main enemy?",
+  "options": [
+   "Ripto",
+   "Doctor Neo Cortex",
+   "Doctor Robotnik",
+   "Doctor Wily"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which stone evolves Pikachu into Raichu?",
+  "options": [
+   "Moon Stone",
+   "Thunder Stone",
+   "Fire Stone",
+   "Leaf Stone"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which pink balloon-like Pokemon sings people to sleep?",
+  "options": [
+   "Chansey",
+   "Jigglypuff",
+   "Clefairy",
+   "Wigglytuff"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which British studio is best known for the Lego video games?",
+  "options": [
+   "Rocksteady",
+   "Traveller's Tales",
+   "Rare",
+   "Codemasters"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "World of Warcraft is set in which fantasy world?",
+  "options": [
+   "Azeroth",
+   "Tyria",
+   "Middle-earth",
+   "Tamriel"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which endless runner has players fleeing from monkeys after stealing an idol?",
+  "options": [
+   "Subway Surfers",
+   "Crossy Road",
+   "Sonic Dash",
+   "Temple Run"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'battle pass'?",
+  "options": [
+   "A controller setting",
+   "A tournament entry ticket",
+   "A seasonal set of rewards unlocked by playing",
+   "An in-game map"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What chases Pac-Man around the maze?",
+  "options": [
+   "Dogs",
+   "Zombies",
+   "Robots",
+   "Ghosts"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which classic computer card game is played against three computer opponents to avoid taking points?",
+  "options": [
+   "FreeCell",
+   "Solitaire",
+   "Hearts",
+   "Spider"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Clearing four lines at once in Tetris is called what?",
+  "options": [
+   "A slam",
+   "A quad",
+   "A combo",
+   "A Tetris"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What do you use to control a game on a personal computer, as well as a keyboard?",
+  "options": [
+   "A remote",
+   "A mouse",
+   "A microphone",
+   "A stylus pen only"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What kind of creature is the Pokemon Onix?",
+  "options": [
+   "A fire lion",
+   "A water dragon",
+   "A steel bird",
+   "A giant rock snake"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which boxing video game series carried the name of Mike Tyson on the NES?",
+  "options": [
+   "Punch-Out!!",
+   "Ring King",
+   "Knockout",
+   "Fight Night"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which underwater survival game is set on an alien ocean planet after a crash landing?",
+  "options": [
+   "Stranded Deep",
+   "Abzu",
+   "Raft",
+   "Subnautica"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Minecraft, what block do you place items on to build tools and weapons?",
+  "options": [
+   "Furnace",
+   "Crafting table",
+   "Chest",
+   "Anvil"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many letters are in a Wordle answer?",
+  "options": [
+   "Four",
+   "Six",
+   "Seven",
+   "Five"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Mario Kart, which item is thrown forward and homes in on the racer ahead?",
+  "options": [
+   "Banana",
+   "Green shell",
+   "Red shell",
+   "Bob-omb"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In a bowling video game, what are you knocking down?",
+  "options": [
+   "Barrels",
+   "Pins",
+   "Targets",
+   "Hurdles"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which four-player Atari arcade game of 1985 had a warrior, a valkyrie, a wizard and an elf collecting food and treasure in dungeons?",
+  "options": [
+   "Golden Axe",
+   "Gauntlet",
+   "Dungeon Master",
+   "Wizard of Wor"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In the Atari game Breakout, what do you use to destroy the wall of bricks?",
+  "options": [
+   "A bomb",
+   "A laser",
+   "A ball and paddle",
+   "A drill"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which pink round Nintendo character can swallow enemies and copy their powers?",
+  "options": [
+   "Jigglypuff",
+   "Kirby",
+   "Yoshi",
+   "Ness"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do gamers call a joke or secret the developers hid inside a game?",
+  "options": [
+   "A patch note",
+   "A side quest",
+   "An easter egg",
+   "A loot drop"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In a racing video game, what are you usually trying to do?",
+  "options": [
+   "Collect coins only",
+   "Finish first",
+   "Score goals",
+   "Build a track"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does Mario do to defeat a Goomba?",
+  "options": [
+   "Freeze it",
+   "Jump on it",
+   "Shoot it",
+   "Kick it"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which PlayStation series features Aloy hunting robotic creatures in a post-apocalyptic world?",
+  "options": [
+   "Horizon",
+   "Days Gone",
+   "Death Stranding",
+   "Ghost of Tsushima"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Xbox console followed the original Xbox?",
+  "options": [
+   "Xbox Series S",
+   "Xbox 360",
+   "Xbox Live",
+   "Xbox One"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which newspaper bought Wordle in 2022?",
+  "options": [
+   "The Times",
+   "The Washington Post",
+   "The Guardian",
+   "The New York Times"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of Bowser's mischievous son in the Mario games?",
+  "options": [
+   "Bowser Jr",
+   "Baby Bowser",
+   "Ludwig",
+   "Iggy"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which arcade game involves shooting asteroids from a triangular ship?",
+  "options": [
+   "Asteroids",
+   "Centipede",
+   "Defender",
+   "Galaga"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Super Smash Bros, how do you defeat an opponent?",
+  "options": [
+   "Reduce their health to zero",
+   "Pin them for three seconds",
+   "Score three goals",
+   "Knock them off the stage"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'PvP' stand for?",
+  "options": [
+   "Point value Play",
+   "Player versus Player",
+   "Public versus Private",
+   "Play versus Practice"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which company makes the PlayStation 5?",
+  "options": [
+   "Nintendo",
+   "Sony",
+   "Samsung",
+   "Microsoft"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which racing series is Microsoft's flagship driving franchise?",
+  "options": [
+   "Ridge Racer",
+   "Project Cars",
+   "Forza",
+   "Gran Turismo"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is an 'inventory' in a video game?",
+  "options": [
+   "The credits",
+   "The player rankings",
+   "The options menu",
+   "The list of items your character is carrying"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is Mario's job in the games?",
+  "options": [
+   "Chef",
+   "Postman",
+   "Plumber",
+   "Electrician"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In gaming culture, what is a 'Nintendo hard' game?",
+  "options": [
+   "A launch title",
+   "A game that is punishingly difficult",
+   "A game with no save function",
+   "A game with a metal case"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which console war of the early 1990s was fought between Sega and which rival?",
+  "options": [
+   "Nintendo",
+   "Microsoft",
+   "Atari",
+   "Sony"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which puzzle game series has players matching coloured jewels in rows?",
+  "options": [
+   "Peggle",
+   "Zuma",
+   "Bejeweled",
+   "Bookworm"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Animal Crossing, what is the in-game currency called?",
+  "options": [
+   "Bells",
+   "Rupees",
+   "Simoleons",
+   "Coins"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is an 'idle' or 'clicker' game?",
+  "options": [
+   "One with no controls",
+   "One played offline only",
+   "One that progresses largely by tapping and waiting",
+   "One that never ends the tutorial"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the four symbols on a PlayStation controller's face buttons?",
+  "options": [
+   "Star, heart, moon and sun",
+   "A, B, X and Y",
+   "Diamond, club, heart and spade",
+   "Triangle, circle, cross and square"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What was the wood-panelled Atari console of 1977 called?",
+  "options": [
+   "Atari 2600",
+   "Atari 5200",
+   "Atari Lynx",
+   "Atari Jaguar"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which actor's likeness stars in the game Death Stranding as Sam Porter Bridges?",
+  "options": [
+   "Keanu Reeves",
+   "Idris Elba",
+   "Rami Malek",
+   "Norman Reedus"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What do you do in a game of Tetris?",
+  "options": [
+   "Fit falling shapes together",
+   "Race cars",
+   "Shoot aliens",
+   "Solve crosswords"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is Sonic the Hedgehog's arch-enemy?",
+  "options": [
+   "Bowser",
+   "Doctor Wily",
+   "Doctor Eggman",
+   "Ganondorf"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which 2014 puzzle game has players sliding numbered tiles that double when they meet?",
+  "options": [
+   "Sudoku",
+   "Numberle",
+   "2048",
+   "Threes"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which weapon in Doom is abbreviated to BFG?",
+  "options": [
+   "A huge plasma cannon",
+   "A shotgun",
+   "A basic pistol",
+   "A chainsaw"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which 2012 animated film features a video game villain who wants to be a hero?",
+  "options": [
+   "Free Guy",
+   "Pixels",
+   "The Emoji Movie",
+   "Wreck-It Ralph"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Mario games, what is the walking bomb with a wind-up key called?",
+  "options": [
+   "Bob-omb",
+   "Bullet Bill",
+   "Banzai Bill",
+   "Bomb Boo"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which company's consoles are the Wii and the Switch?",
+  "options": [
+   "Microsoft",
+   "Sony",
+   "Sega",
+   "Nintendo"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Grand Theft Auto's fictional Liberty City is based on which real city?",
+  "options": [
+   "New York",
+   "Los Angeles",
+   "Chicago",
+   "Miami"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the more common name for a video game's picture quality settings?",
+  "options": [
+   "Latency",
+   "Storage",
+   "Graphics",
+   "Volume"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which platform series stars a limbless hero with floating hands and feet, created by Ubisoft?",
+  "options": [
+   "Rayman",
+   "Croc",
+   "Jak and Daxter",
+   "Klonoa"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which card game inside The Witcher 3 became popular enough to get its own release?",
+  "options": [
+   "Pazaak",
+   "Caravan",
+   "Gwent",
+   "Triple Triad"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Brisbane studio created Fruit Ninja and Jetpack Joyride?",
+  "options": [
+   "Tantalus",
+   "Krome",
+   "Halfbrick Studios",
+   "Hipster Whale"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which long-running Sports Interactive series has players running a football club from the dugout, without controlling the players directly?",
+  "options": [
+   "Rocket League",
+   "Football Manager",
+   "FIFA",
+   "Pro Evolution Soccer"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which weak fish Pokemon evolves into the powerful Gyarados?",
+  "options": [
+   "Feebas",
+   "Remoraid",
+   "Goldeen",
+   "Magikarp"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many tails does Sonic's friend Tails have?",
+  "options": [
+   "Four",
+   "One",
+   "Two",
+   "Three"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In gaming, what is a 'nerf'?",
+  "options": [
+   "Making something stronger",
+   "Adding a new level",
+   "Removing a bug",
+   "Making something weaker in a game update"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which game has players riding a horse across an empty land to topple sixteen giant creatures?",
+  "options": [
+   "The Last Guardian",
+   "Shadow of the Colossus",
+   "Ico",
+   "Journey"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "On which media were Nintendo 64 games sold?",
+  "options": [
+   "CDs",
+   "Mini discs",
+   "DVDs",
+   "Cartridges"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who created Tetris?",
+  "options": [
+   "Shigeru Miyamoto",
+   "Gunpei Yokoi",
+   "Alexey Pajitnov",
+   "Nolan Bushnell"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'game over' screen?",
+  "options": [
+   "The message shown when you lose",
+   "A settings page",
+   "The opening menu",
+   "A bonus round"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'ray tracing' in video games?",
+  "options": [
+   "A control mapping",
+   "A save method",
+   "A lighting technique that simulates how light travels",
+   "A way to find other players"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is 'grinding' in a video game?",
+  "options": [
+   "Lowering the difficulty",
+   "Skipping cutscenes",
+   "Repeating tasks to gain experience or items",
+   "Trading with other players"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which video game rating board classifies games in Australia?",
+  "options": [
+   "BBFC",
+   "The Australian Classification Board",
+   "PEGI",
+   "ESRB"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In gaming, what is a 'raid'?",
+  "options": [
+   "A store sale",
+   "A large group challenge against a powerful enemy",
+   "A control setting",
+   "A save function"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which actor voiced Mario in the 2023 animated Super Mario Bros Movie?",
+  "options": [
+   "Chris Evans",
+   "Chris Hemsworth",
+   "Chris Pratt",
+   "Chris Pine"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which long-running Japanese farming series inspired Stardew Valley?",
+  "options": [
+   "Animal Crossing",
+   "Story of Seasons",
+   "Harvest Moon",
+   "Rune Factory"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In gaming, what is a 'checkpoint'?",
+  "options": [
+   "An enemy spawn",
+   "A locked door",
+   "A place the game saves your progress",
+   "A currency"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the handheld-only version of the Nintendo Switch called?",
+  "options": [
+   "Switch Lite",
+   "Switch Mini",
+   "Switch Go",
+   "Switch Micro"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which zombie shooter has four survivors fighting their way to rescue in co-operative play?",
+  "options": [
+   "World War Z",
+   "Dead Island",
+   "Killing Floor",
+   "Left 4 Dead"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Untitled Goose Game, what animal do you play as?",
+  "options": [
+   "A pelican",
+   "A swan",
+   "A duck",
+   "A goose"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Counter-Strike, what are the two teams?",
+  "options": [
+   "Red and blue",
+   "Terrorists and counter-terrorists",
+   "Attackers and builders",
+   "Alliance and horde"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What colour is Spyro the dragon?",
+  "options": [
+   "Red",
+   "Purple",
+   "Green",
+   "Blue"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In a golf video game, what are you trying to do?",
+  "options": [
+   "Get the ball in the hole",
+   "Score a goal",
+   "Cross a finish line",
+   "Knock down pins"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which arcade game asks players to grab a toy with a mechanical claw?",
+  "options": [
+   "A pinball table",
+   "An air hockey table",
+   "A racing cabinet",
+   "A claw machine"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In the game Theme Park, what do you build to attract visitors?",
+  "options": [
+   "Rides and stalls",
+   "Houses",
+   "Farms",
+   "Factories"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which arcade game asks you to bounce a ball with a paddle to break a wall of bricks?",
+  "options": [
+   "Missile Command",
+   "Breakout",
+   "Tempest",
+   "Pong"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What happens in Tetris when the blocks stack to the top of the screen?",
+  "options": [
+   "You get a bonus",
+   "Nothing",
+   "You win",
+   "The game is over"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which country is Nintendo's headquarters?",
+  "options": [
+   "South Korea",
+   "Japan",
+   "China",
+   "Taiwan"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'shooter' video game?",
+  "options": [
+   "One where you fire weapons at targets or enemies",
+   "One about photography",
+   "One about basketball",
+   "One about archery only"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which indie game has players climbing a mountain as a girl named Madeline?",
+  "options": [
+   "Hollow Knight",
+   "Fez",
+   "Celeste",
+   "Ori"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a console controller usually held in?",
+  "options": [
+   "A pocket",
+   "One foot",
+   "Both hands",
+   "The mouth"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Melbourne studio developed the Ashes Cricket and Cricket 22 games?",
+  "options": [
+   "Wicked Witch",
+   "Big Ant Studios",
+   "Krome",
+   "Halfbrick"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which company owns the Call of Duty publisher Activision Blizzard?",
+  "options": [
+   "Tencent",
+   "EA",
+   "Sony",
+   "Microsoft"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the mushroom-headed citizens of the Mushroom Kingdom called?",
+  "options": [
+   "Shy Guys",
+   "Goombas",
+   "Toads",
+   "Boos"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many ghosts chase Pac-Man in the original arcade game?",
+  "options": [
+   "Five",
+   "Four",
+   "Three",
+   "Six"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which sound is a warning that a creeper is about to explode?",
+  "options": [
+   "A bell",
+   "A growl",
+   "A hiss",
+   "A whistle"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the abbreviation PUBG stand for?",
+  "options": [
+   "Pure Battle Group",
+   "PlayerUnknown's Battlegrounds",
+   "Player Union Battle Game",
+   "Public Battle Grounds"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which company made the computer that beat Garry Kasparov at chess in 1997?",
+  "options": [
+   "Intel",
+   "Apple",
+   "Microsoft",
+   "IBM"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which region is the setting of Pokemon Red and Blue?",
+  "options": [
+   "Sinnoh",
+   "Kanto",
+   "Hoenn",
+   "Johto"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'patch' in gaming?",
+  "options": [
+   "A control scheme",
+   "A save file",
+   "A physical sticker",
+   "An update that fixes or changes a game"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'cheat code'?",
+  "options": [
+   "A serial number",
+   "A secret input that gives an advantage",
+   "A password to buy a game",
+   "A refund code"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which platform is Valve's digital game store for PCs?",
+  "options": [
+   "GOG",
+   "Origin",
+   "Steam",
+   "Epic"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Mario power-up makes him briefly invincible?",
+  "options": [
+   "Fire Flower",
+   "Super Mushroom",
+   "Super Star",
+   "Cape Feather"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Minecraft, which material is used to build circuits and mechanisms?",
+  "options": [
+   "Quartz",
+   "Obsidian",
+   "Lapis lazuli",
+   "Redstone"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does Donkey Kong roll down at Mario in the original arcade game?",
+  "options": [
+   "Boulders",
+   "Tyres",
+   "Barrels",
+   "Bombs"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Super Mario Bros, what are the brown mushroom-shaped enemies called?",
+  "options": [
+   "Koopas",
+   "Goombas",
+   "Bloopers",
+   "Boos"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Ocarina of Time, what is the name of the fairy who follows Link?",
+  "options": [
+   "Navi",
+   "Fi",
+   "Ciela",
+   "Tatl"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the Windows game Minesweeper, what are you trying to avoid?",
+  "options": [
+   "Traps",
+   "Ghosts",
+   "Mines",
+   "Guards"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'walkthrough'?",
+  "options": [
+   "A hidden level",
+   "A game trailer",
+   "A demo disc",
+   "A step by step guide to completing a game"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour is the Pac-Man ghost named Inky?",
+  "options": [
+   "Pink",
+   "Red",
+   "Orange",
+   "Cyan"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is 'single player'?",
+  "options": [
+   "A game with one level",
+   "A game played alone",
+   "A game with one button",
+   "A demo"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian football code features in the AFL video game series?",
+  "options": [
+   "Rugby league",
+   "Australian rules football",
+   "Soccer",
+   "Rugby union"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which shooter series is EA's long-running rival to Call of Duty?",
+  "options": [
+   "Killzone",
+   "Titanfall",
+   "Crysis",
+   "Battlefield"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which children's educational software series, launched in 1984, taught early reading skills?",
+  "options": [
+   "Zoombinis",
+   "Blue's Clues",
+   "Reader Rabbit",
+   "Jump Start"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the gibberish language spoken by characters in The Sims called?",
+  "options": [
+   "Simlish",
+   "Simbabble",
+   "Simtongue",
+   "Simspeak"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Nintendo console is played by waving a wireless remote?",
+  "options": [
+   "Switch",
+   "GameCube",
+   "Nintendo 64",
+   "Wii"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In the Pokemon games, what building do you visit to heal your Pokemon for free?",
+  "options": [
+   "Pokemon Centre",
+   "Gym",
+   "Poke Mart",
+   "Safari Zone"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Sony controller added two analogue sticks and vibration to the original PlayStation?",
+  "options": [
+   "Analog Pad",
+   "DualShock",
+   "Sixaxis",
+   "DualSense"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the Australian classification 'MA15+' mean for a video game?",
+  "options": [
+   "Restricted to over 18s",
+   "Suitable for all ages",
+   "Restricted to people aged 15 and over",
+   "Parental guidance only"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What sound effect is famously associated with Mario collecting a coin?",
+  "options": [
+   "A thud",
+   "A buzz",
+   "A splash",
+   "A bright ping"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which home computer of the 1980s had a rubber keyboard and was made by Sinclair?",
+  "options": [
+   "Amstrad CPC",
+   "ZX Spectrum",
+   "BBC Micro",
+   "Commodore 64"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In the Tomb Raider games, what is Lara Croft's profession?",
+  "options": [
+   "Archaeologist",
+   "Journalist",
+   "Doctor",
+   "Pilot"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Mario game was a launch title for the Nintendo 64 in 1996?",
+  "options": [
+   "Super Mario Galaxy",
+   "Super Mario World",
+   "Super Mario 64",
+   "Super Mario Sunshine"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which tactical shooter series takes its name from a Tom Clancy novel about a counter-terrorist team?",
+  "options": [
+   "Splinter Cell",
+   "Rainbow Six",
+   "The Division",
+   "Ghost Recon"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In which Pokemon game does Pikachu follow the player around instead of staying in its ball?",
+  "options": [
+   "Pokemon Green",
+   "Pokemon Yellow",
+   "Pokemon Crystal",
+   "Pokemon Emerald"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which simulation game series lets you drive freight lorries across Europe?",
+  "options": [
+   "Train Sim World",
+   "Euro Truck Simulator",
+   "Farming Simulator",
+   "Bus Simulator"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does a 'high score' table show?",
+  "options": [
+   "The best scores achieved",
+   "The controls",
+   "The game's price",
+   "The credits"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What sort of game is 'FIFA'?",
+  "options": [
+   "A wrestling game",
+   "A fishing game",
+   "A football game",
+   "A racing game"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which video game genre asks players to manage resources and build structures in real time against opponents?",
+  "options": [
+   "Rhythm",
+   "Fighting",
+   "Platforming",
+   "Real-time strategy"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'handheld' console?",
+  "options": [
+   "A console bolted to a wall",
+   "A console with no screen",
+   "A console you hold and play anywhere",
+   "A console for two players only"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which advice does Peppy famously give in Star Fox 64?",
+  "options": [
+   "Do a barrel roll",
+   "Stay in formation",
+   "Use the shield",
+   "Watch your fuel"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is an 'avatar' in a video game?",
+  "options": [
+   "The character representing the player",
+   "A cheat menu",
+   "The game's soundtrack",
+   "The end credits"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Space Invaders, which way do the aliens move down the screen?",
+  "options": [
+   "Side to side and steadily downwards",
+   "In circles",
+   "Only upwards",
+   "Diagonally only"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'map' used for in a video game?",
+  "options": [
+   "Showing where you are and where to go",
+   "Saving the game",
+   "Buying items",
+   "Changing the difficulty"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'port' of a video game?",
+  "options": [
+   "A downloadable map",
+   "A control setting",
+   "A version of a game converted to run on another system",
+   "A multiplayer lobby"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which company developed Pokemon Go?",
+  "options": [
+   "King",
+   "Supercell",
+   "Niantic",
+   "Rovio"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which studio is known for very difficult games including Dark Souls and Bloodborne?",
+  "options": [
+   "Team Ninja",
+   "Atlus",
+   "FromSoftware",
+   "Platinum Games"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Fortnite, how many players are usually in a match at the start?",
+  "options": [
+   "50",
+   "500",
+   "10",
+   "100"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In SimCity, what is a common way for a city to be destroyed by a disaster?",
+  "options": [
+   "A parking fine",
+   "A council election",
+   "A public holiday",
+   "A tornado or earthquake"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which racing sub-series of Forza is set in open worlds and named after a music event?",
+  "options": [
+   "Forza Circuit",
+   "Forza Rally",
+   "Forza Fest",
+   "Forza Horizon"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which letters label the four face buttons on a standard Xbox controller?",
+  "options": [
+   "L, R, X, Y",
+   "A, B, C, D",
+   "W, A, S, D",
+   "A, B, X, Y"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In video games, what is 'frame rate' measured in?",
+  "options": [
+   "Hertz per pixel",
+   "Pixels per inch",
+   "Frames per second",
+   "Bits per second"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In The Sims, what happens if a Sim's hunger need falls to zero?",
+  "options": [
+   "Nothing at all",
+   "The Sim can die",
+   "The Sim sleeps",
+   "The Sim gets a promotion"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What sort of creatures do you fight in most zombie video games?",
+  "options": [
+   "Dinosaurs",
+   "Aliens",
+   "The undead",
+   "Robots"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Mario character wears yellow and purple and has a W on his cap?",
+  "options": [
+   "Waluigi",
+   "Wario",
+   "Donkey Kong",
+   "Bowser Jr"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which 1993 Sega arcade racer was named after an American stock car speedway and linked up to eight cabinets together?",
+  "options": [
+   "Sega Rally",
+   "OutRun",
+   "Daytona USA",
+   "Virtua Racing"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does a game's soundtrack refer to?",
+  "options": [
+   "Its controls",
+   "Its price",
+   "Its graphics",
+   "Its music"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which company makes the Mario and Zelda games?",
+  "options": [
+   "Microsoft",
+   "Nintendo",
+   "Sony",
+   "Sega"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In a battle royale game, what is the aim?",
+  "options": [
+   "Build the biggest house",
+   "Be the last player standing",
+   "Finish the fastest lap",
+   "Collect the most coins"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which year was the original Super Mario Bros released in Japan?",
+  "options": [
+   "1988",
+   "1990",
+   "1983",
+   "1985"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Minecraft, which animal do you shear to get wool?",
+  "options": [
+   "Chicken",
+   "Sheep",
+   "Cow",
+   "Pig"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the aim in a 'hidden object' game?",
+  "options": [
+   "Score goals",
+   "Find items in a busy picture",
+   "Beat a boss",
+   "Race to the finish"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which stealth series stars Sam Fisher and his three-lens night vision goggles?",
+  "options": [
+   "Hitman",
+   "Metal Gear",
+   "Thief",
+   "Splinter Cell"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Nintendo character is a small blue-and-white robot introduced with the NES, later a Smash Bros fighter?",
+  "options": [
+   "Wii Fit Trainer",
+   "Duck Hunt Dog",
+   "R.O.B.",
+   "Mr Game and Watch"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In the puzzle game Lemmings, what must you do with the little creatures?",
+  "options": [
+   "Feed them",
+   "Guide them safely to an exit",
+   "Race them",
+   "Shoot them"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which company produced the arcade cabinet game Street Fighter II in 1991?",
+  "options": [
+   "Namco",
+   "Sega",
+   "Capcom",
+   "SNK"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Pokemon rides on Ash's shoulder in the games' advertising and the cartoon?",
+  "options": [
+   "Meowth",
+   "Pikachu",
+   "Eevee",
+   "Bulbasaur"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'roguelike' game known for?",
+  "options": [
+   "Only two players",
+   "No enemies",
+   "Fixed stories and set levels",
+   "Permanent death and randomly generated levels"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which company made the shooter Doom, released in 1993?",
+  "options": [
+   "3D Realms",
+   "id Software",
+   "Epic",
+   "Apogee"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which company publishes the Assassin's Creed series?",
+  "options": [
+   "Activision",
+   "Square Enix",
+   "EA",
+   "Ubisoft"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which character is Luigi's lanky rival, first seen in Mario Tennis?",
+  "options": [
+   "Toadette",
+   "Daisy",
+   "Waluigi",
+   "Wario"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Nintendo series has squid-like characters covering the ground in coloured ink?",
+  "options": [
+   "Kirby",
+   "Arms",
+   "Pikmin",
+   "Splatoon"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Super Mario Bros 3, which item turns Mario into Raccoon Mario?",
+  "options": [
+   "Tanooki Suit",
+   "Cape Feather",
+   "Frog Suit",
+   "Super Leaf"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What kind of game is 'Guitar Hero'?",
+  "options": [
+   "A music and rhythm game",
+   "A puzzle game",
+   "A racing game",
+   "A war game"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which company owns Twitch?",
+  "options": [
+   "Meta",
+   "Microsoft",
+   "Google",
+   "Amazon"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which company publishes the Sims games?",
+  "options": [
+   "Ubisoft",
+   "Activision",
+   "Take-Two",
+   "Electronic Arts"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Japanese designer created Mario, Donkey Kong and The Legend of Zelda?",
+  "options": [
+   "Satoshi Tajiri",
+   "Yuji Naka",
+   "Hideo Kojima",
+   "Shigeru Miyamoto"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'joystick'?",
+  "options": [
+   "A speaker",
+   "A type of screen",
+   "A stick used to control movement in a game",
+   "A memory card"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'emulation' in gaming?",
+  "options": [
+   "Playing without sound",
+   "Streaming a game live",
+   "Running old console games on other hardware",
+   "Copying another player's moves"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the Resident Evil series, what is the fictional American town overrun by zombies?",
+  "options": [
+   "Bright Falls",
+   "Raccoon City",
+   "Silent Hill",
+   "Rapture"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Portal, what is the name of the sarcastic computer that runs the test chambers?",
+  "options": [
+   "SHODAN",
+   "GLaDOS",
+   "HAL",
+   "Cortana"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which arcade game famously warns that 'Wizard needs food badly'?",
+  "options": [
+   "Golden Axe",
+   "Rampage",
+   "Joust",
+   "Gauntlet"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What did players famously do to dusty Nintendo cartridges to try to make them work?",
+  "options": [
+   "Shake them",
+   "Freeze them",
+   "Blow into them",
+   "Wash them"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which company makes the PlayStation consoles?",
+  "options": [
+   "Sony",
+   "Microsoft",
+   "Panasonic",
+   "Sega"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which company created the game Half-Life?",
+  "options": [
+   "id Software",
+   "Bungie",
+   "Epic Games",
+   "Valve"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which studio created the original Halo games?",
+  "options": [
+   "343 Industries",
+   "Bungie",
+   "Treyarch",
+   "Infinity Ward"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which 1983 laserdisc arcade game featured hand-drawn animation and a knight called Dirk?",
+  "options": [
+   "Dragon's Lair",
+   "Thayer's Quest",
+   "Cliff Hanger",
+   "Space Ace"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Grand Theft Auto game is set in a city inspired by 1980s Miami?",
+  "options": [
+   "GTA III",
+   "Liberty City Stories",
+   "Vice City",
+   "San Andreas"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 'split-screen' play?",
+  "options": [
+   "Streaming to a second device",
+   "Playing on two consoles",
+   "A graphics glitch",
+   "Two players sharing one screen divided in half"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which 2015 film had classic arcade characters such as Pac-Man attacking Earth?",
+  "options": [
+   "Free Guy",
+   "Ready Player One",
+   "Pixels",
+   "Gamer"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which studio created Guitar Hero and Rock Band?",
+  "options": [
+   "Neversoft",
+   "Bizarre",
+   "Activision",
+   "Harmonix"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In Minecraft, which tool do you need to mine stone?",
+  "options": [
+   "Hoe",
+   "Shovel",
+   "Axe",
+   "Pickaxe"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'RTS' stand for in gaming?",
+  "options": [
+   "Real-Time Strategy",
+   "Run Time Score",
+   "Rapid Turn System",
+   "Rated Ten Software"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 'multiplayer'?",
+  "options": [
+   "Playing several games at once",
+   "More than one person playing together",
+   "A type of screen",
+   "A price plan"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour is Luigi's cap?",
+  "options": [
+   "Red",
+   "Purple",
+   "Green",
+   "Blue"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which yellow electric Pokemon is the face of the series?",
+  "options": [
+   "Pikachu",
+   "Raichu",
+   "Pichu",
+   "Jolteon"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which space game lets players build rockets from parts and launch little green astronauts?",
+  "options": [
+   "Elite Dangerous",
+   "No Man's Sky",
+   "Space Engineers",
+   "Kerbal Space Program"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which designer created The Sims and SimCity?",
+  "options": [
+   "John Carmack",
+   "Peter Molyneux",
+   "Will Wright",
+   "Sid Meier"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What are the initials on Donkey Kong's tie?",
+  "options": [
+   "GK",
+   "DK",
+   "KD",
+   "DG"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Minecraft, what do you build to sleep and skip the night?",
+  "options": [
+   "A chair",
+   "A tent",
+   "A bed",
+   "A hammock"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which game series lets players fight as Jedi and Sith in a galaxy far, far away?",
+  "options": [
+   "Halo",
+   "Star Trek",
+   "Mass Effect",
+   "Star Wars"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In the arcade game Frogger, what is the frog trying to reach?",
+  "options": [
+   "A lily pad maze",
+   "A pond in the middle",
+   "A boat",
+   "Home bays at the top of the screen"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Nintendo game series lets players build and share their own Mario levels?",
+  "options": [
+   "Mario Paint",
+   "Mario Builder",
+   "Level Up",
+   "Super Mario Maker"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In video games, what is a 'lobby'?",
+  "options": [
+   "A cutscene",
+   "A shop",
+   "A waiting area where players gather before a match",
+   "A tutorial"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In pinball, what are the two paddles at the bottom of the table called?",
+  "options": [
+   "Bumpers",
+   "Plungers",
+   "Kickers",
+   "Flippers"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which crossover series pits Mario and Sonic against each other at the Olympic Games?",
+  "options": [
+   "Mario and Sonic at the Olympic Games",
+   "Olympic Heroes",
+   "Sonic and Mario Sports",
+   "Games of Champions"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Mortal Kombat character is known for the line 'Get over here!'?",
+  "options": [
+   "Sub-Zero",
+   "Scorpion",
+   "Raiden",
+   "Liu Kang"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What shape are the blocks in Minecraft?",
+  "options": [
+   "Cubes",
+   "Spheres",
+   "Pyramids",
+   "Cones"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In the Mario games, what are the shy white ghosts that cover their faces when looked at called?",
+  "options": [
+   "Boos",
+   "Whisps",
+   "Phantos",
+   "Spooks"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the game Frogger, what is the frog trying to cross?",
+  "options": [
+   "A desert",
+   "A mountain",
+   "A road and a river",
+   "A field"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Minecraft, what is a distinct region such as desert, jungle or tundra called?",
+  "options": [
+   "A district",
+   "A shard",
+   "A biome",
+   "A tile"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Angry Birds, which animals are the birds attacking?",
+  "options": [
+   "Foxes",
+   "Rats",
+   "Pigs",
+   "Cats"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these is a games console?",
+  "options": [
+   "Filofax",
+   "Walkman",
+   "Xbox",
+   "Betamax"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In video games, what is a 'walking simulator'?",
+  "options": [
+   "A pedometer app",
+   "A game about hiking races",
+   "A game focused on exploring and story rather than action",
+   "A fitness game"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which two-word message appears on screen when you die in the Dark Souls games?",
+  "options": [
+   "YOU FELL",
+   "GAME OVER",
+   "YOU DIED",
+   "TRY AGAIN"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which console did Sega release in Australia and Europe before the Mega Drive?",
+  "options": [
+   "Master System",
+   "Game Gear",
+   "Saturn",
+   "SG-1000"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which sports video game series is officially licensed by the National Basketball Association?",
+  "options": [
+   "NBA 2K",
+   "Slam City",
+   "Court Kings",
+   "Hoop Dreams"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which strategy series lets you lead a civilisation from the Stone Age to the space age?",
+  "options": [
+   "Age of Empires",
+   "Civilization",
+   "Anno",
+   "Total War"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Tetris, what happens when you completely fill a horizontal line?",
+  "options": [
+   "The game speeds up permanently",
+   "It flashes but stays",
+   "The line disappears",
+   "You lose a life"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does a games 'publisher' do?",
+  "options": [
+   "Writes the music only",
+   "Draws the artwork only",
+   "Funds and releases games to the public",
+   "Repairs consoles"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Rock Band, which instrument controller was added alongside guitar and drums?",
+  "options": [
+   "A microphone for vocals",
+   "A saxophone",
+   "A keytar only",
+   "A trumpet"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Nintendo game had players making music and animations with a mouse on the Super Nintendo?",
+  "options": [
+   "Mario Paint",
+   "Mario Artist",
+   "Sound Factory",
+   "Music Maker"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is on Mario's cap?",
+  "options": [
+   "The letter N",
+   "The letter M",
+   "A star",
+   "A mushroom"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which three legendary bird Pokemon appear in Pokemon Red and Blue?",
+  "options": [
+   "Regirock, Regice and Registeel",
+   "Articuno, Zapdos and Moltres",
+   "Entei, Raikou and Suicune",
+   "Uxie, Mesprit and Azelf"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What animal is Sonic's friend Tails?",
+  "options": [
+   "A fox",
+   "A squirrel",
+   "A raccoon",
+   "A cat"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a player attempting when they do a 'speedrun'?",
+  "options": [
+   "Reaching the top of a leaderboard",
+   "Playing at the hardest setting",
+   "Finishing a game as quickly as possible",
+   "Winning without taking damage"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which arcade light gun game by Namco used a foot pedal to duck behind cover?",
+  "options": [
+   "Lethal Enforcers",
+   "Time Crisis",
+   "Virtua Cop",
+   "House of the Dead"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Mario spin-off series is played as a virtual board game with minigames?",
+  "options": [
+   "Mario Party",
+   "Mario Golf",
+   "Mario Strikers",
+   "Mario Sports Mix"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Wordle, what does a yellow tile mean?",
+  "options": [
+   "The letter is in the right place",
+   "The letter is not in the word",
+   "You have one guess left",
+   "The letter is in the word but in the wrong place"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which chess-playing computer beat world champion Garry Kasparov in 1997?",
+  "options": [
+   "Deep Blue",
+   "Chess Master",
+   "Watson",
+   "Big Blue"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which 1989 film featuring Nintendo games starred Fred Savage and was effectively a long advert for Super Mario Bros 3?",
+  "options": [
+   "Brainscan",
+   "Cloak and Dagger",
+   "The Wizard",
+   "Nightmares"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Who created Pokemon and was inspired by his childhood insect collecting?",
+  "options": [
+   "Junichi Masuda",
+   "Shigeru Miyamoto",
+   "Ken Sugimori",
+   "Satoshi Tajiri"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Japanese company released Space Invaders in 1978?",
+  "options": [
+   "Namco",
+   "Capcom",
+   "Nintendo",
+   "Taito"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Pac-Man, what does eating a power pellet let you do?",
+  "options": [
+   "Eat the ghosts",
+   "Freeze the maze",
+   "Skip a level",
+   "Double your speed"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which platform series stars an orange marsupial who spins through crates on Australian-inspired islands?",
+  "options": [
+   "Ty the Tasmanian Tiger",
+   "Crash Bandicoot",
+   "Jak and Daxter",
+   "Spyro"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In video game terms, what is a 'demo'?",
+  "options": [
+   "A game engine",
+   "The end credits",
+   "A cheat code",
+   "A free sample of part of a game"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In The Sims, what is the green diamond floating above a Sim's head called?",
+  "options": [
+   "Moodstone",
+   "Simgem",
+   "Lifelight",
+   "Plumbob"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Halo, what is the enemy alliance of alien races called?",
+  "options": [
+   "The Covenant",
+   "The Horde",
+   "The Combine",
+   "The Locust"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which football game series was Konami's long-running rival to EA's FIFA?",
+  "options": [
+   "Football Manager",
+   "Sensible Soccer",
+   "Kick Off",
+   "Pro Evolution Soccer"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Konami series has players fighting Dracula with a whip?",
+  "options": [
+   "Devil May Cry",
+   "Ghosts n Goblins",
+   "Contra",
+   "Castlevania"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a video game 'save'?",
+  "options": [
+   "A cheat",
+   "A bonus life",
+   "An advert",
+   "A record of your progress"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which decade was the Nintendo Entertainment System released in Australia?",
+  "options": [
+   "1980s",
+   "1970s",
+   "2000s",
+   "1990s"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian-developed survival game strands you in the Pacific after a plane crash?",
+  "options": [
+   "Raft",
+   "Subnautica",
+   "Stranded Deep",
+   "The Forest"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which indie game about a bug exploring a fallen kingdom is called Hollow what?",
+  "options": [
+   "Hollow Kingdom",
+   "Hollow Knight",
+   "Hollow Path",
+   "Hollow Crown"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What sort of game is 'Call of Duty'?",
+  "options": [
+   "A word game",
+   "A farming game",
+   "A dance game",
+   "A military shooter"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'ping' measure in online gaming?",
+  "options": [
+   "Your accuracy",
+   "Your rank",
+   "The delay in your connection to the server",
+   "Your frame rate"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the game Wordle, how many guesses do you get?",
+  "options": [
+   "Five",
+   "Four",
+   "Six",
+   "Seven"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour are the overalls Mario wears?",
+  "options": [
+   "Brown",
+   "Green",
+   "Blue",
+   "Black"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In The Sims, what are you controlling?",
+  "options": [
+   "Racing cars",
+   "Everyday people living their lives",
+   "Spaceships",
+   "Soldiers"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'AR' stand for in gaming?",
+  "options": [
+   "Augmented Reality",
+   "Advanced Rendering",
+   "Active Roaming",
+   "Automatic Response"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Halo character is the armoured super soldier the player controls?",
+  "options": [
+   "The Arbiter",
+   "Noble Six",
+   "Sergeant Johnson",
+   "Master Chief"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Donkey Kong Country, what is the name of Donkey Kong's smaller sidekick with a cap?",
+  "options": [
+   "Cranky Kong",
+   "Dixie Kong",
+   "Diddy Kong",
+   "Funky Kong"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'skin' in a video game?",
+  "options": [
+   "A difficulty setting",
+   "A cosmetic look for a character or item",
+   "A save slot",
+   "An extra life"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Plants vs Zombies, what currency do sunflowers produce?",
+  "options": [
+   "Water",
+   "Coins",
+   "Seeds",
+   "Sun"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which actor played Lara Croft in the 2001 Tomb Raider film?",
+  "options": [
+   "Angelina Jolie",
+   "Charlize Theron",
+   "Kate Beckinsale",
+   "Milla Jovovich"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Grand Theft Auto, what do players spend a lot of time doing?",
+  "options": [
+   "Farming crops",
+   "Driving stolen cars around a city",
+   "Fishing",
+   "Building castles"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the aim of the game Wordle?",
+  "options": [
+   "Defeat a boss",
+   "Guess a hidden word",
+   "Race a clock around a track",
+   "Match three colours"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which management game has players building a city around a giant coal-powered generator in a frozen world?",
+  "options": [
+   "Banished",
+   "RimWorld",
+   "Frostpunk",
+   "Anno 1800"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which free and widely used game engine shares its name with a word meaning oneness?",
+  "options": [
+   "Frostbite",
+   "Unity",
+   "Unreal",
+   "Source"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which 2009 mobile game has players tilting a phone to bounce a four-legged creature up endless platforms?",
+  "options": [
+   "Bounce",
+   "Sky Hop",
+   "Jetpack Joyride",
+   "Doodle Jump"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What colour tunic does Link traditionally wear?",
+  "options": [
+   "Brown",
+   "Red",
+   "Green",
+   "Blue"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which company made the classic point-and-click adventures Monkey Island and Day of the Tentacle?",
+  "options": [
+   "Sierra",
+   "Revolution",
+   "LucasArts",
+   "Telltale"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the name of Ryu's rising uppercut in Street Fighter?",
+  "options": [
+   "Flash Kick",
+   "Shoryuken",
+   "Sonic Boom",
+   "Hadouken"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which mixed martial arts organisation has its own EA Sports video game series?",
+  "options": [
+   "ONE",
+   "Bellator",
+   "UFC",
+   "WWE"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'permadeath' game mode?",
+  "options": [
+   "One where a character who dies is gone for good",
+   "One with unlimited lives",
+   "One that saves automatically",
+   "One with no enemies"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does a 'games developer' do?",
+  "options": [
+   "Reviews games only",
+   "Makes video games",
+   "Sells consoles",
+   "Runs an arcade"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Minecraft, which mode lets you fly and use unlimited blocks?",
+  "options": [
+   "Survival",
+   "Adventure",
+   "Hardcore",
+   "Creative"
+  ],
+  "correctIndex": 3,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which fruit does Crash Bandicoot collect?",
+  "options": [
+   "Wumpa fruit",
+   "Bananas",
+   "Mangoes",
+   "Apples"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'gamer'?",
+  "options": [
+   "A referee",
+   "A shop assistant",
+   "Someone who plays video games",
+   "A game designer only"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which cube-shaped item in Portal does GLaDOS ask you to look after, then incinerate?",
+  "options": [
+   "The Radio",
+   "The Companion Cube",
+   "The Turret",
+   "The Cake"
+  ],
+  "correctIndex": 1,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In gaming, what does 'MMO' stand for?",
+  "options": [
+   "Massively Multiplayer Online",
+   "Maximum Modifier Output",
+   "Multi Mode Operation",
+   "Main Menu Option"
+  ],
+  "correctIndex": 0,
+  "category": "Video Games",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which company created StarCraft, Diablo and World of Warcraft?",
+  "options": [
+   "Valve",
+   "Bioware",
+   "Blizzard Entertainment",
+   "Bethesda"
+  ],
+  "correctIndex": 2,
+  "category": "Video Games",
+  "difficulty": "medium"
+ }
+]

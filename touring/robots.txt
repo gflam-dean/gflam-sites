@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /manage
+# Supabase proxy paths: data, not pages. Search Console had 15 of these crawled as duplicates.
+Disallow: /rest/
+Disallow: /storage/
+
+# A plain-language summary of this site for AI assistants:
+# https://www.gflamtouring.com.au/llms.txt
+Sitemap: https://www.gflamtouring.com.au/sitemap.xml

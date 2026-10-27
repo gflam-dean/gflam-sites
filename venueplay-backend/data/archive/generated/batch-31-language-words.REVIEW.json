@@ -1,0 +1,110 @@
+[
+  {
+    "index": 62,
+    "question": "On a station, what does a 'ringer' traditionally do?",
+    "problem": "ambiguous",
+    "detail": "The marked option conflates two different jobs: on a cattle station a ringer is a stockman, while in a shearing shed the ringer is the fastest shearer. Tagged hard, so the people most likely to know the term are the ones most likely to object to the wording.",
+    "fix": {
+      "question": "In an Australian shearing shed, who is 'the ringer'?",
+      "options": [
+        "The fastest shearer in the shed",
+        "The man who sweeps the board",
+        "The wool classer",
+        "The shed cook"
+      ],
+      "correctIndex": 0,
+      "category": "Language & Words",
+      "difficulty": "hard"
+    }
+  },
+  {
+    "index": 208,
+    "question": "The diesel engine is named after which engineer?",
+    "problem": "self-answering",
+    "detail": "The stem says 'the diesel engine' and the answer is Rudolf Diesel. Nothing is tested.",
+    "fix": {
+      "question": "Which German engineer patented the compression-ignition engine that now bears his name?",
+      "options": [
+        "Nikolaus Otto",
+        "Karl Benz",
+        "Gottlieb Daimler",
+        "Rudolf Diesel"
+      ],
+      "correctIndex": 3,
+      "category": "Language & Words",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 296,
+    "question": "Something described as 'spartan' takes its name from which ancient city?",
+    "problem": "self-answering",
+    "detail": "The answer, Sparta, is the visible root of the word 'spartan' given in the stem, so no knowledge is tested.",
+    "fix": {
+      "question": "Something described as 'laconic' takes its name from which region of ancient Greece?",
+      "options": [
+        "Attica",
+        "Boeotia",
+        "Laconia",
+        "Arcadia"
+      ],
+      "correctIndex": 2,
+      "category": "Language & Words",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 335,
+    "question": "What is a group of frogs traditionally called?",
+    "problem": "two-answers",
+    "detail": "'A chorus of frogs' appears in many published collective-noun lists alongside 'an army of frogs', and 'chorus' is offered as a distractor. At hard difficulty the players who know one term often know both.",
+    "fix": {
+      "question": "What is a group of frogs traditionally called?",
+      "options": [
+        "A knot",
+        "A parade",
+        "An army",
+        "A hop"
+      ],
+      "correctIndex": 2,
+      "category": "Language & Words",
+      "difficulty": "hard"
+    }
+  },
+  {
+    "index": 395,
+    "question": "On a ball-peen hammer, what is the rounded end opposite the flat face called?",
+    "problem": "self-answering",
+    "detail": "The stem says 'ball-peen hammer' and the answer is 'the peen'. Tagged hard, where it tests nothing.",
+    "fix": {
+      "question": "On a hammer, what is the name of the rounded end opposite the flat striking face?",
+      "options": [
+        "The claw",
+        "The peen",
+        "The cheek",
+        "The poll"
+      ],
+      "correctIndex": 1,
+      "category": "Language & Words",
+      "difficulty": "hard"
+    }
+  },
+  {
+    "index": 691,
+    "question": "What is the fear of the dark called?",
+    "problem": "unsure",
+    "detail": "Nyctophobia is the standard term for fear of the dark, but 'noctiphobia' / 'noctophobia' is listed in several phobia glossaries for fear of the night, so the distractor may be defensible to a well-read player. I could not confirm either way from a source I trust.",
+    "fix": {
+      "question": "What is the fear of the dark called?",
+      "options": [
+        "Ombrophobia",
+        "Nyctophobia",
+        "Astraphobia",
+        "Photophobia"
+      ],
+      "correctIndex": 1,
+      "category": "Language & Words",
+      "difficulty": "hard"
+    }
+  }
+]

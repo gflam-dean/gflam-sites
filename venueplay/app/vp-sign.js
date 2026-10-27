@@ -1,0 +1,506 @@
+/* VenuePlay broadcast-message signing (migrations 38 + 55).
+ *
+ * WHY. Broadcast games (bingo, members draw, and the instant-UX layer of trivia/musical/raffle) meet
+ * on a Supabase Realtime channel whose name is derived from the venue's PUBLIC slug. The channel is
+ * therefore guessable, and anyone with the anon key (it is printed in every page) can shout into it:
+ * a fake ball, a fake winner, the wrong trivia answer, the TV forced back to ads mid-round. There is
+ * no game server to appeal to for broadcast bingo.
+ *
+ * HOW. Each venue has an ECDSA P-256 keypair (see the game Worker /venue/signing/* routes). The HOST
+ * fetches the PRIVATE half (staff-gated) and signs every message it broadcasts. TVs and phones fetch
+ * the PUBLIC half (anyone may) and verify every message. In ENFORCE mode a message without a good,
+ * fresh signature is dropped instead of rendered.
+ *
+ * SAFE BY DEFAULT. Every failure path degrades to today's behaviour, never to a black screen:
+ *   - host can't get its key  -> sends UNSIGNED (exactly as before signing existed)
+ *   - screen can't get a key  -> renders everything (as before)
+ *   - enforce is off (phase 2) -> screen renders unsigned messages, just logs a warning
+ *   - this script fails to load -> callers fall back to calling onMsg directly (see the pages)
+ * Only when a venue is flipped to enforce=true (migration 55) does an unsigned message get dropped.
+ *
+ * Usage:
+ *   Receiver (TV / phone):  VPSign.initReceiver(apiBase, slug)
+ *                           ch.on("broadcast",{event:"msg"}, function(e){ VPSign.gate(e.payload, onMsg); });
+ *   Sender (host console):  VPSign.initHost(apiBase, slug, getAccessToken)   // returns a Promise
+ *                           function send(obj){ VPSign.signSend(obj, rawSend); }
+ */
+(function () {
+  "use strict";
+  var TE = new TextEncoder();
+  // A signed message older than this is treated as a stale replay. Deliberately LARGE (6h, i.e. a
+  // whole night) rather than tight: _ts is the HOST's clock and Date.now() is the RECEIVER's, and a
+  // cheap TV stick with a wrong clock must never mark every live message "stale" and black out under
+  // enforce. Replay within a session is already caught by the nonce set; this only bounds ancient
+  // cross-session replays loosely, which the screen reconciles against the server anyway.
+  var MAX_AGE_MS = 6 * 60 * 60 * 1000;
+  var NONCE_KEEP = 600;           // remember this many recent nonces to reject instant replays
+
+  /* A REPLAY THAT THE NONCE SET COULD NOT SEE (audit, 14 Oct 2026).
+     "Replay within a session is already caught by the nonce set" above was only true for a page that
+     never reloads. The game screen inside /tv is an iframe that is thrown away and loaded fresh on
+     every hop, every reload and every return from the ads, and its nonce set started empty each time.
+     So a signed message recorded off the channel earlier in the night was accepted again: last game's
+     "winner" put "BINGO! WWWW WINS" up mid-game, and a recorded to_ads/idle pulled a live game to the
+     ads, as often as it was played back. Three ideas were weighed:
+       1. A per-key "never older than the newest" watermark. REJECTED: the key is the VENUE's, shared
+          by every console there, and two consoles with skewed clocks (a common thing on cheap tablets)
+          would drop each other's messages. That is a black wall, which is worse than the replay.
+       2. Binding destructive messages to their game id. Sound, but it has to be built into six
+          consoles and seven screens one message at a time, and every one missed is a hole.
+       3. What is here, in this one file that every page already loads:
+          a. SENDER ORDER. Each console page signs a random sender id (_sid) and a counter (_seq) into
+             every message. A receiver remembers, per sender, the highest counter it has seen and that
+             message's _ts, and refuses a message that is BOTH behind on the counter AND more than
+             SENDER_LAG_MS older than the newest one by the SAME SENDER'S OWN CLOCK. Comparing a sender
+             with itself means no clock skew can enter, between consoles or between console and TV.
+             The counter means a console whose clock is corrected backwards mid-night is not refused
+             (its counter still goes up), and the lag means a message that took a slow path is not
+             refused either. A console page that is still running, which is the normal night, cannot
+             have its earlier messages played back at all.
+          b. MEMORY THAT OUTLIVES THE PAGE. The per-sender table is kept in sessionStorage, which
+             every same-origin frame in the tab shares and which survives the iframe being replaced,
+             so the fresh game screen knows what /tv and its predecessor knew before the first
+             message arrives. Seen nonces are kept there too, but PER PAGE PATH: /tv and the game
+             screen inside it legitimately receive the SAME message (the router listens on the game
+             channels), so a shared nonce list would have one of them drop real traffic. The path
+             list catches the last message of a console that has since been closed, which no later
+             counter can retire. Bounded (SENDERS_KEEP, PATH_NONCES_KEEP) and written at most once a
+             second, because a cheap TV stick verifies every card a console deals to every phone.
+     What this does NOT catch: a message from a console the tab never heard, after the TV's browser
+     was restarted (sessionStorage is gone). MAX_AGE_MS still bounds that. Every rule here can only
+     ever drop a SIGNED message that is behind its own sender, so the fail-open rules below for
+     missing keys, unsigned traffic and enforce-off are untouched. */
+  var SENDER_LAG_MS = 60 * 1000;
+  var SENDERS_KEEP = 24;
+  var PATH_NONCES_KEEP = 300;
+  var HOST_WAIT_MS = 6000;        // how long after load a send waits for initHost to be called (see signSend)
+  var LOADED_AT = Date.now();
+
+  var KEY_REFRESH_MS = 5 * 60 * 1000;   // how often each side asks for the venue key again; rotation converges within this
+  var S = {
+    apiBase: "", slug: "",
+    pubKey: null, privKey: null,  // imported CryptoKey objects (null until ready)
+    kid: null, enforce: false,
+    _refetch: null, _keyRefresh: null, _hostRefresh: null, _kidFetchAt: 0,
+    ready: false,
+    seenNonces: [], seenSet: {},
+    chain: Promise.resolve(),     // serialises host signing so message order is preserved
+    keyTried: null,               // the key fetch, so the first send does not race it
+    recvChain: Promise.resolve(), // serialises receiver verify+deliver so enforce can't reorder messages
+    _keyPoll: null,               // interval handle: retry the public-key fetch until it is minted
+    sid: null, seq: 0,            // this page as a SENDER: random id + counter, signed into every message
+    senders: {},                  // as a RECEIVER: sid -> { q: highest _seq, t: its _ts, at: when we saw it }
+    seenLoaded: false, saveT: null
+  };
+  var hostCalled = null;
+  var hostCalledP = new Promise(function (res) { hostCalled = res; });   // settles when initHost is first called
+
+  // Message types that are harmless page-lifecycle nudges, not game content. They are honoured even
+  // unsigned so admin tools (HQ "reload all TVs", the billing screen refresh) keep working: the worst
+  // an attacker does with one is make a TV reload, which comes straight back to its true state.
+  // idle / to_ads are on-EXIT page-lifecycle nudges: the host sends them synchronously (unsigned) as
+  // it signs out or the tab unloads, because an async signature never completes before the page dies.
+  // They only return the TV to the ad loop, which the next signed game message re-embeds anyway, so a
+  // forged one is self-correcting and honouring them unsigned is safe.
+  /* Messages that do not need a signature.
+     idle, to_ads and tv_reload came OFF this list. All three are destructive: a forged
+     {t:"idle"} drops a live game straight to the ad loop, and nothing re-embeds the game
+     without a fresh message from the host. The channel name is a public function of the
+     venue slug, so any patron who could read the screen could kill the night, repeatedly.
+     What is left is genuinely harmless: a screen saying hello, or asking who is there. */
+  /* A CHANGE TO THIS LIST CANNOT BE DELIVERED BY THE THING IT GATES.
+     Learned the hard way on 5 Sep. tv_reload was missing below, so HQ's reload
+     button did nothing at an enforcing venue. Adding it here fixed the code
+     instantly and fixed the screens not at all: a TV already on air is running the
+     copy of this file it loaded BEFORE the fix, and that copy still drops the very
+     message you would use to make it fetch the new one.
+     So after ANY change to EXEMPT or to vpGate, a screen at an enforcing venue has
+     to be reloaded by hand once, or left to the four-hourly reload in tv.html. It
+     self-heals within four hours; it does not self-heal in four seconds.
+
+     HOUSEKEEPING THAT ARRIVES UNSIGNED, AND MUST STILL BE HEARD.
+     HQ and billing.html broadcast these straight onto the channel: they hold no
+     venue private key, and cannot - the key is minted in the host console and
+     never leaves it. So the moment a venue was switched to enforce, every one of
+     these was dropped.
+
+     tv_reload was NOT on this list, which is why reloading a venue's screens from
+     HQ silently did nothing at The Mini Bar the day enforcement went on. It is the
+     same kind of message as screen_refresh, which was already exempt.
+
+     What an unsigned reload may NOT do is force. See vpGate: an exempt message is
+     delivered with _unverified on it, and tv.html refuses to interrupt a live game
+     on the word of a message it could not check. */
+  var EXEMPT = { screen_refresh: 1, tv_here: 1, hello: 1, rollcall: 1, tv_reload: 1 };
+
+  function b64uFromBytes(bytes) {
+    var s = "";
+    for (var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+    return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+  function bytesFromB64u(str) {
+    str = String(str || "").replace(/-/g, "+").replace(/_/g, "/");
+    while (str.length % 4) str += "=";
+    var bin = atob(str), out = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+  // Deterministic JSON: keys sorted at every level, and the signature envelope (_sig,_kid) removed,
+  // so the same logical message always hashes to the same bytes on the host and on the screen.
+  function canon(v) {
+    if (v === null || typeof v !== "object") return JSON.stringify(v === undefined ? null : v);
+    if (Array.isArray(v)) { return "[" + v.map(canon).join(",") + "]"; }
+    var keys = Object.keys(v).filter(function (k) { return k !== "_sig" && k !== "_kid"; }).sort();
+    var parts = [];
+    for (var i = 0; i < keys.length; i++) parts.push(JSON.stringify(keys[i]) + ":" + canon(v[keys[i]]));
+    return "{" + parts.join(",") + "}";
+  }
+  function nonce() {
+    var a = new Uint8Array(12);
+    (window.crypto || {}).getRandomValues ? window.crypto.getRandomValues(a) : (function () { for (var i = 0; i < a.length; i++) a[i] = (i * 53 + 7) & 255; })();
+    return b64uFromBytes(a);
+  }
+  function noteNonce(n) {
+    if (!n || S.seenSet[n]) return;
+    S.seenSet[n] = 1; S.seenNonces.push(n);
+    while (S.seenNonces.length > NONCE_KEEP) { delete S.seenSet[S.seenNonces.shift()]; }
+  }
+
+  // ---- replay memory that outlives the page (see SENDER_LAG_MS at the top) ----
+  // Every storage touch is in a try: a private window, blocked site data or a test rig has none, and
+  // then this degrades to the in-memory sets exactly as before.
+  var SENDERS_KEY = "vpSign.senders";
+  function store() { try { return (typeof window !== "undefined" && window.sessionStorage) || null; } catch (e) { return null; } }
+  function pathKey() {
+    var p = "";
+    try { p = String((window.location && window.location.pathname) || ""); } catch (e) { }
+    return "vpSign.n:" + (p.replace(/\.html$/, "").replace(/\/+$/, "") || "/");   // /tv, /tv.html and /tv/ are one page
+  }
+  function mergeSenders() {
+    var st = store(); if (!st) return;
+    try {
+      var o = JSON.parse(st.getItem(SENDERS_KEY) || "{}") || {};
+      for (var sid in o) {
+        if (!Object.prototype.hasOwnProperty.call(o, sid)) continue;
+        var r = o[sid], h = S.senders[sid];
+        if (r && typeof r.q === "number" && typeof r.t === "number" && (!h || r.q > h.q)) S.senders[sid] = { q: r.q, t: r.t, at: +r.at || 0 };
+      }
+    } catch (e) { }
+  }
+  function loadSeen() {
+    if (S.seenLoaded) return;
+    S.seenLoaded = true;
+    var st = store(); if (!st) return;
+    try {
+      var list = JSON.parse(st.getItem(pathKey()) || "[]");
+      if (Array.isArray(list)) for (var i = 0; i < list.length; i++) if (typeof list[i] === "string") noteNonce(list[i]);
+    } catch (e) { }
+    mergeSenders();
+  }
+  function saveNow() {
+    S.saveT = null;
+    var st = store(); if (!st) return;
+    try {
+      mergeSenders();                                   // keep what /tv or the frame next door learnt meanwhile
+      var ids = Object.keys(S.senders).sort(function (a, b) { return (S.senders[b].at || 0) - (S.senders[a].at || 0); });
+      var keep = {};
+      for (var i = 0; i < ids.length && i < SENDERS_KEEP; i++) keep[ids[i]] = S.senders[ids[i]];
+      S.senders = keep;
+      st.setItem(SENDERS_KEY, JSON.stringify(keep));
+      st.setItem(pathKey(), JSON.stringify(S.seenNonces.slice(-PATH_NONCES_KEEP)));
+    } catch (e) { }
+  }
+  function saveSoon() {
+    if (S.saveT) return;
+    if (typeof setTimeout !== "function") { saveNow(); return; }
+    S.saveT = setTimeout(saveNow, 1000);
+  }
+  // The game frame is thrown away on a hop: write what it knows before it goes, not a second later.
+  try { if (typeof window !== "undefined" && window.addEventListener) window.addEventListener("pagehide", function () { if (S.saveT) { try { clearTimeout(S.saveT); } catch (e) { } saveNow(); } }); } catch (e) { }
+
+  function hostWait() {
+    if (S.keyTried) return null;
+    var left = HOST_WAIT_MS - (Date.now() - LOADED_AT);
+    if (left <= 0 || typeof setTimeout !== "function") return null;
+    return Promise.race([hostCalledP, new Promise(function (r) { setTimeout(r, left); })]);
+  }
+  function senderId() {
+    // Only from a real random source. A fixed fallback would give two consoles the same id, and the
+    // sender rule would then compare one console's counter and clock with another's.
+    if (S.sid) return S.sid;
+    try {
+      if (!(window.crypto && window.crypto.getRandomValues)) return null;
+      var a = new Uint8Array(9); window.crypto.getRandomValues(a); S.sid = b64uFromBytes(a);
+    } catch (e) { return null; }
+    return S.sid;
+  }
+  function senderBehind(p) {
+    var sid = p._sid, q = p._seq, h;
+    if (typeof sid !== "string" || !sid || typeof q !== "number" || typeof p._ts !== "number") return false;   // an older console: no claim to judge
+    h = S.senders[sid];
+    return !!h && q < h.q && (h.t - p._ts) > SENDER_LAG_MS;
+  }
+  function noteSender(p) {
+    var sid = p._sid, q = p._seq, h;
+    if (typeof sid !== "string" || !sid || typeof q !== "number" || !isFinite(q) || typeof p._ts !== "number") return;
+    h = S.senders[sid];
+    if (!h || q > h.q) S.senders[sid] = { q: q, t: p._ts, at: Date.now() };
+    else h.at = Date.now();
+  }
+  function importKey(jwk, usage) {
+    return window.crypto.subtle.importKey("jwk", jwk, { name: "ECDSA", namedCurve: "P-256" }, false, [usage]);
+  }
+  function subtleOk() { return !!(window.crypto && window.crypto.subtle); }
+  // Adopt a key payload from the Worker: import the private (sign) + public (verify) halves, and take
+  // the venue's kid + enforce flag. Used by initHost both when a key already exists and after minting.
+  function useHostKey(d) {
+    S.kid = d.kid || null; S.enforce = !!d.enforce;
+    var jobs = [importKey(d.private_jwk, "sign").then(function (k) { S.privKey = k; })];
+    if (d.public_jwk) jobs.push(importKey(d.public_jwk, "verify").then(function (k) { S.pubKey = k; }));
+    return Promise.all(jobs).then(function () { S.ready = true; });
+  }
+
+  var VPSign = {
+    // Fetch and import the venue PUBLIC key + enforce flag. `ident` is the venue slug (a string), or
+    // an object identifying the venue by whatever the receiver holds: {venue:slug} | {code} | {session}.
+    // Never rejects; on any failure the screen keeps working in "can't verify -> render" mode.
+    initReceiver: function (apiBase, ident) {
+      S.apiBase = apiBase;
+      var qs = "";
+      if (typeof ident === "string") { S.slug = ident; qs = ident ? "venue=" + encodeURIComponent(ident) : ""; }
+      else if (ident && ident.venue) { S.slug = ident.venue; qs = "venue=" + encodeURIComponent(ident.venue); }
+      else if (ident && ident.code) { qs = "code=" + encodeURIComponent(ident.code); }
+      else if (ident && ident.session) { qs = "session=" + encodeURIComponent(ident.session); }
+      if (!subtleOk() || !qs) return Promise.resolve();
+      var url = apiBase + "/venue/signing/public?" + qs;
+      function attempt() {
+        return fetch(url)
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (d) {
+            if (d && typeof d.enforce === "boolean") S.enforce = !!d.enforce;   // keep the flag fresh even before a key
+            if (!d || !d.exists || !d.public_jwk) return false;                 // no key minted yet -> retry
+            S.kid = d.kid || null;
+            return importKey(d.public_jwk, "verify").then(function (k) { S.pubKey = k; S.ready = true; return true; });
+          })
+          .catch(function () { return false; });
+      }
+      // Fetch the key, and if it is not there yet (a screen that booted before the venue's first host
+      // login) or the fetch failed, KEEP RETRYING every 90s. Without this a long-lived Fire Stick that
+      // came up before the key existed would stay fail-open forever, so enforce would never protect it.
+      /* AND KEEP THE KEY FRESH ONCE WE HAVE ONE. A venue's key is rotated when a host is
+         removed (the row is deleted and the next console mints a new pair). A receiver that
+         fetched once and stopped would hold the old key until its next reload and drop every
+         signed message from the new console, so the wall goes deaf for the rest of the night.
+         Two ways back: a refetch every five minutes, and an immediate one when a message
+         arrives under a key id this screen does not know (see gate). Audit, 20 Sep 2026. */
+      S._refetch = attempt;
+      return attempt().then(function (got) {
+        if (!S._keyRefresh) S._keyRefresh = setInterval(function () { attempt(); }, KEY_REFRESH_MS);
+        if (got || S._keyPoll) return;
+        S._keyPoll = setInterval(function () {
+          attempt().then(function (ok) { if (ok && S._keyPoll) { clearInterval(S._keyPoll); S._keyPoll = null; } });
+        }, 90000);
+      });
+    },
+
+    // Fetch the venue PRIVATE key (staff-gated). getToken() must return the host's Supabase access
+    // token (or a Promise of it). If the venue has no key yet, mint an ECDSA P-256 pair in the browser
+    // (the Workers runtime cannot) and store it. Never rejects; on any failure the host sends UNSIGNED.
+    initHost: function (apiBase, slug, getToken) {
+      /* A NEW VENUE MEANS A NEW KEY, AND THE OLD ONE IS DROPPED NOW. A multi-venue host who switched
+         venue kept venue A's private key until the refresh, and the refresh below was bound to A's
+         slug for good, so every five minutes it fetched A's key again: venue B's messages carried A's
+         signature and B's enforcing TV dropped them (audit, 27 Sep 2026). */
+      if (S.slug && slug !== S.slug) { S.privKey = null; S.kid = null; }
+      S.apiBase = apiBase; S.slug = slug; S.hostGetToken = getToken;
+      if (!subtleOk() || !slug) { hostCalled(); return Promise.resolve(); }
+      /* Remember this attempt so signSend can WAIT for it. See the note on keyTried. */
+      var p = VPSign._initHost(apiBase, slug, getToken);
+      S.keyTried = p.catch(function () {});
+      hostCalled();
+      p.then(function () { VPSign._cantSignCheck(slug); }, function () { VPSign._cantSignCheck(slug); });
+      /* The console's half of rotation: ask again every five minutes. A rotated venue answers
+         "no key" and this console mints the new pair; a login that has been removed is refused
+         at the Worker and keeps signing with a key the screens are about to stop trusting. */
+      // Reads the CURRENT venue each time, not the one the timer started with.
+      if (!S._hostRefresh) S._hostRefresh = setInterval(function () { VPSign._initHost(S.apiBase, S.slug, S.hostGetToken).then(function () { VPSign._cantSignCheck(S.slug); }); }, KEY_REFRESH_MS);
+      return p;
+    },
+    _initHost: function (apiBase, slug, getToken) {
+      S.apiBase = apiBase; S.slug = slug;
+      if (!subtleOk() || !slug) return Promise.resolve();
+      var token = null;
+      return Promise.resolve(getToken ? getToken() : null).then(function (t) {
+        token = t;
+        if (!token) return null;
+        return fetch(apiBase + "/host/signing/private", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+          body: JSON.stringify({ slug: slug })
+        }).then(function (r) { return r.ok ? r.json() : null; });
+      }).then(function (d) {
+        /* AN ANSWER FOR A VENUE WE HAVE LEFT. A host who switches venue seconds after loading can get
+           venue A's key back after the switch to B, and would then sign B's broadcasts with A's key for
+           up to five minutes (review, 28 Sep 2026). S.slug is always the CURRENT venue. */
+        if (!d || S.slug !== slug) return;
+        if (d.has_key && d.private_jwk) {
+          if (d.kid && d.kid === S.kid && S.privKey) { S.enforce = !!d.enforce; return; }   // same key: nothing to re-import
+          return useHostKey(d);
+        }
+        // No key yet for this venue: mint one here, store it, then use whatever the Worker settles on
+        // (another host may have minted first; the Worker returns the effective key so we converge).
+        S.enforce = !!(d && d.enforce);
+        return window.crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"])
+          .then(function (kp) { return Promise.all([window.crypto.subtle.exportKey("jwk", kp.publicKey), window.crypto.subtle.exportKey("jwk", kp.privateKey)]); })
+          .then(function (jw) {
+            return fetch(apiBase + "/host/signing/mint", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+              body: JSON.stringify({ slug: slug, public_jwk: jw[0], private_jwk: jw[1] })
+            }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d2) { if (d2 && d2.private_jwk && S.slug === slug) return useHostKey(d2); });
+          });
+      }).catch(function () { /* leave privKey null -> send unsigned */ });
+    },
+
+    /* A CONSOLE THAT CANNOT SIGN MUST SAY SO. With no private key this console sends unsigned, which
+       is right at a venue that is not enforcing and useless at one that is: every TV and phone drops
+       it, and nothing on the console changes, so the host plays to a wall that is ignoring them. Seen
+       at Test Charlie, 30 Sep 2026 (an HQ View as login, which the Worker will not hand a venue key).
+       Only when the venue really enforces, asked of the public route, and only while there is still
+       no key: the bar goes as soon as the five-minute refresh gets one. */
+    _cantSignCheck: function (slug) {
+      if (S.privKey || !subtleOk() || typeof document === "undefined" || !slug || S.slug !== slug) { VPSign._cantSignBar(false); return; }
+      fetch(S.apiBase + "/venue/signing/public?venue=" + encodeURIComponent(slug))
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) { if (S.slug === slug && !S.privKey) VPSign._cantSignBar(!!(d && d.enforce)); })
+        .catch(function () {});
+    },
+    _cantSignBar: function (on) {
+      var bar = document.getElementById("vpCantSign");
+      if (!on) { if (bar && bar.parentNode) bar.parentNode.removeChild(bar); return; }
+      if (bar || !document.body) return;
+      bar = document.createElement("div");
+      bar.id = "vpCantSign";
+      bar.setAttribute("role", "alert");
+      bar.setAttribute("style", "position:sticky;top:0;z-index:9999;background:#5A1020;color:#FFE4E9;padding:12px 16px;" +
+        "font:600 14px/1.45 Manrope,system-ui,sans-serif;border-bottom:2px solid #FF1F8E");
+      bar.textContent = "The TV and phones will ignore this console: it could not get this venue's security key. " +
+        "Sign out and sign back in with a host login for this venue. (HQ View as cannot run a game at a venue that checks.)";
+      document.body.insertBefore(bar, document.body.firstChild);
+    },
+
+    enforcing: function () { return !!S.enforce; },
+    keyReady: function () { return !!(S.pubKey || S.privKey); },
+
+    // Sign one message (async). Returns the message with a _ts/_n/_sig/_kid envelope, or the message
+    // unchanged if we have no private key yet (so the game never stalls waiting on a key).
+    sign: function (payload) {
+      if (!S.privKey || !subtleOk()) return Promise.resolve(payload);
+      var msg = {}; for (var k in payload) if (Object.prototype.hasOwnProperty.call(payload, k)) msg[k] = payload[k];
+      msg._ts = Date.now(); msg._n = nonce();
+      var sid = senderId();
+      if (sid) { msg._sid = sid; msg._seq = ++S.seq; }   // see SENDER_LAG_MS: lets a screen refuse this sender's old messages
+      return window.crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, S.privKey, TE.encode(canon(msg)))
+        .then(function (sig) { msg._sig = b64uFromBytes(new Uint8Array(sig)); if (S.kid) msg._kid = S.kid; return msg; })
+        .catch(function () { return payload; });   // signing failed -> send unsigned rather than nothing
+    },
+
+    // Sign obj (order-preserving) then hand the result to rawSend(payload).
+    /* SIGN, BUT WAIT FOR THE KEY FIRST.
+       sign() falls back to sending UNSIGNED when the private key has not arrived yet, and
+       a console fetches that key asynchronously as it starts up. Over Supabase Realtime the
+       subscribe handshake was slow enough to hide the race. The room server connects in
+       about 20 milliseconds, so on 10 Sep 2026 the console's opening burst (host_here,
+       mode, state, cards, players) went out unsigned, and The Mini Bar is the one venue
+       with enforcement ON, so its TV dropped every one of them and the wall sat on the ads
+       with a game running. Reloading fixed it, which is the signature of a race.
+       So the first send waits for the key attempt to settle. If there is no key, or the
+       fetch fails, this resolves and everything behaves exactly as before. */
+    /* AND WAIT FOR initHost ITSELF, BRIEFLY (14 Oct 2026). keyTried only exists once initHost has been
+       called, and every console calls it after its sign-in check resolves. Anything sent before that
+       (the musical console states its saved room volume the moment the page loads) found no attempt to
+       wait on, went out unsigned, sat in the channel queue and was flushed at lobby-open, where an
+       enforcing TV binned it: "[VPSign] dropped unsigned message (volume)". So a send made in the first
+       HOST_WAIT_MS of the page's life also waits for initHost to be called. A page that never calls it
+       (signed out, a demo) waits at most that long once, and after it nothing waits at all. */
+    signSend: function (obj, rawSend) {
+      S.chain = S.chain
+        .then(function () { return hostWait(); })
+        .then(function () { return S.keyTried || null; })
+        .then(function () { return VPSign.sign(obj); })
+        .then(function (signed) {
+          try { rawSend(signed); } catch (e) { }
+        });
+      return S.chain;
+    },
+
+    // Verify one message. Resolves to 'ok' | 'unsigned' | 'bad' | 'stale' | 'replay'.
+    verify: function (payload) {
+      if (!payload || typeof payload !== "object" || !payload._sig) return Promise.resolve("unsigned");
+      if (!S.pubKey || !subtleOk()) return Promise.resolve("unsigned");   // can't verify -> treat as unsigned
+      if (payload._ts && (Date.now() - payload._ts > MAX_AGE_MS)) return Promise.resolve("stale");
+      loadSeen();                                                           // what this tab already heard, once per page
+      if (payload._n && S.seenSet[payload._n]) return Promise.resolve("replay");
+      if (senderBehind(payload)) return Promise.resolve("replay");         // behind its own sender: a recording
+      var sig;
+      try { sig = bytesFromB64u(payload._sig); } catch (e) { return Promise.resolve("bad"); }
+      return window.crypto.subtle.verify({ name: "ECDSA", hash: "SHA-256" }, S.pubKey, sig, TE.encode(canon(payload)))
+        .then(function (ok) {
+          if (!ok) return "bad";
+          // Remembered only once the signature is good, so a forger cannot poison the tables.
+          if (payload._n) noteNonce(payload._n);
+          noteSender(payload); saveSoon();
+          return "ok";
+        })
+        .catch(function () { return "bad"; });
+    },
+
+    // The gate a receiver puts in front of onMsg. Two hard safety rules keep it from ever blanking a
+    // real screen:
+    //   1. ENFORCE OFF (every venue by default): deliver SYNCHRONOUSLY, exactly as before signing
+    //      existed. No async verify sits in the render path, so message order can never change. A
+    //      signature is still checked in the background, only to log a suspicious one.
+    //   2. ENFORCE ON but we hold NO public key yet (fetch not finished, or it failed): deliver
+    //      anyway. We cannot judge a message with no key, and going dark on an infrastructure hiccup
+    //      is worse than the spoofing we are guarding against. Enforcement only bites once a key is
+    //      actually loaded, which for a paired screen is within a second of load.
+    // Only when enforce is ON and a key IS loaded do we drop anything that is not a good signature.
+    gate: function (payload, cb) {
+      if (!S.enforce) {
+        try { cb(payload); } catch (e) { }
+        if (S.pubKey && payload && payload._sig) {
+          VPSign.verify(payload).then(function (v) { if (v === "bad" || v === "replay") console.warn("[VPSign] " + v + " signature, rendered (enforce off)"); });
+        }
+        return;
+      }
+      if (!S.pubKey || !subtleOk()) { try { cb(payload); } catch (e) { } return; }   // no key to verify with -> fail open
+      // Serialize verify+deliver through a chain so back-to-back messages (e.g. trivia podium then
+      // leaderboard) cannot be reordered by crypto.subtle.verify's variable timing under enforce. The
+      // sender already preserves wire order; this preserves it on the receive side too.
+      S.recvChain = S.recvChain.then(function () {
+        // A key id this screen does not hold: fetch before judging, at most once every 15s, so
+        // the first message from a freshly minted console is not thrown away on the old key.
+        var pre = Promise.resolve();
+        var kid = payload && payload._kid;
+        if (kid && S.kid && kid !== S.kid && S._refetch && (Date.now() - (S._kidFetchAt || 0)) > 15000) {
+          S._kidFetchAt = Date.now();
+          pre = Promise.resolve(S._refetch()).catch(function () {});
+        }
+        return pre.then(function () { return VPSign.verify(payload); }).then(function (verdict) {
+          if (verdict === "ok") { try { cb(payload); } catch (e) { } return; }
+          var t = payload && payload.t;
+          if (t && EXEMPT[t]) {
+            // Delivered, but MARKED. A receiver that can do something disruptive on
+            // this message needs to know nobody vouched for it.
+            try { payload._unverified = true; } catch (e) { }
+            try { cb(payload); } catch (e) { }
+            return;
+          }
+          console.warn("[VPSign] dropped " + verdict + " message" + (t ? " (" + t + ")" : "") + " (enforce on)");
+        });
+      });
+    }
+  };
+
+  window.VPSign = VPSign;
+})();

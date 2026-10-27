@@ -1,0 +1,35 @@
+{
+ "note": "Written for a mixed-age Australian lounge room: a nine year old and a grandparent should both be able to answer honestly, in front of each other. Nothing about drinking, romance, money or anything a guest would rather not say out loud.",
+ "categories": [
+  {
+   "category": "Easy openers",
+   "slug": "easy-openers",
+   "count": 25,
+   "file": "data/words/whohere-easy-openers.json"
+  },
+  {
+   "category": "Very Australian",
+   "slug": "very-australian",
+   "count": 25,
+   "file": "data/words/whohere-very-australian.json"
+  },
+  {
+   "category": "Holidays and travel",
+   "slug": "holidays-and-travel",
+   "count": 25,
+   "file": "data/words/whohere-holidays-and-travel.json"
+  },
+  {
+   "category": "Around the house",
+   "slug": "at-home",
+   "count": 25,
+   "file": "data/words/whohere-at-home.json"
+  },
+  {
+   "category": "School and work",
+   "slug": "school-and-work",
+   "count": 25,
+   "file": "data/words/whohere-school-and-work.json"
+  }
+ ]
+}

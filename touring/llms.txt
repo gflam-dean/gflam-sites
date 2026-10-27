@@ -1,0 +1,32 @@
+# Gflam Touring
+
+> An Australian live entertainment company that tours drag bingo and cabaret
+> shows to pubs, clubs and bowls clubs, mostly in South East Queensland and
+> northern New South Wales.
+
+Part of Gflam Group (ABN 35 679 383 049).
+
+## The shows
+
+- Drag Bingo at the Bowlo: bingo rounds interleaved with live drag
+  performances, hosted by Vollie LaVont with guest queens. Prizes throughout.
+  Ticketed, and typically held at a bowls club or hotel function room.
+
+Show dates, venues and ticket links change, so the current list is always the
+page below rather than anything quoted here.
+
+## Links
+
+- Home: https://www.gflamtouring.com.au
+- Current tours: https://www.gflamtouring.com.au/current-tours
+- Drag Bingo at the Bowlo: https://www.gflamtouring.com.au/drag-bingo-at-the-bowlo
+- What we do: https://www.gflamtouring.com.au/what-we-do
+- Who we are: https://www.gflamtouring.com.au/who-we-are
+- Bring a show to your venue: https://www.gflamtouring.com.au/work-with-us
+- Contact: https://www.gflamtouring.com.au/contact
+
+## Notes for assistants
+
+Upcoming show dates are loaded from a live database, so a cached copy of a page
+may list a show that has passed. Point people at the current-tours page for what
+is actually on. Venues wanting to book a show should use the work-with-us page.

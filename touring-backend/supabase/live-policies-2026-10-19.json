@@ -1,0 +1,691 @@
+{
+ "captured": "2026-10-19, read-only, from the live Sydney database (ijkzgmdtwtgfkedqspxm) and the old Singapore one",
+ "projects": {
+  "singapore": {
+   "public.artists": {
+    "grants": {
+     "anon": [
+      "SELECT",
+      "INSERT",
+      "UPDATE",
+      "DELETE"
+     ],
+     "authenticated": [
+      "SELECT",
+      "INSERT",
+      "UPDATE",
+      "DELETE"
+     ]
+    },
+    "policies": [
+     {
+      "cmd": "SELECT",
+      "name": "Public can read artists",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     }
+    ],
+    "rls": true
+   },
+   "public.contacts": {
+    "grants": {
+     "anon": [
+      "SELECT"
+     ],
+     "authenticated": [
+      "SELECT"
+     ]
+    },
+    "policies": [
+     {
+      "cmd": "SELECT",
+      "name": "Auth read contacts",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     },
+     {
+      "cmd": "INSERT",
+      "name": "Public insert contacts",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     }
+    ],
+    "rls": true
+   },
+   "public.experience": {
+    "grants": {
+     "anon": [
+      "SELECT"
+     ],
+     "authenticated": [
+      "SELECT"
+     ]
+    },
+    "policies": [
+     {
+      "cmd": "DELETE",
+      "name": "Anon delete experience",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     },
+     {
+      "cmd": "INSERT",
+      "name": "Anon insert experience",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     },
+     {
+      "cmd": "SELECT",
+      "name": "Public read experience",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     }
+    ],
+    "rls": true
+   },
+   "public.reviews": {
+    "grants": {
+     "anon": [
+      "SELECT"
+     ],
+     "authenticated": [
+      "SELECT"
+     ]
+    },
+    "policies": [
+     {
+      "cmd": "SELECT",
+      "name": "Public read reviews",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     },
+     {
+      "cmd": "ALL",
+      "name": "Public write reviews",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     }
+    ],
+    "rls": true
+   },
+   "public.show_artists": {
+    "grants": {
+     "anon": [
+      "SELECT",
+      "INSERT",
+      "UPDATE",
+      "DELETE"
+     ],
+     "authenticated": [
+      "SELECT",
+      "INSERT",
+      "UPDATE",
+      "DELETE"
+     ]
+    },
+    "policies": [
+     {
+      "cmd": "SELECT",
+      "name": "Public can read show_artists",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     }
+    ],
+    "rls": true
+   },
+   "public.shows": {
+    "grants": {
+     "anon": [
+      "SELECT"
+     ],
+     "authenticated": [
+      "SELECT"
+     ]
+    },
+    "policies": [
+     {
+      "cmd": "SELECT",
+      "name": "Public read shows",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     },
+     {
+      "cmd": "ALL",
+      "name": "Public write shows",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     }
+    ],
+    "rls": true
+   },
+   "public.signups": {
+    "grants": {
+     "anon": [
+      "SELECT"
+     ],
+     "authenticated": [
+      "SELECT"
+     ]
+    },
+    "policies": [
+     {
+      "cmd": "SELECT",
+      "name": "Auth read signups",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     },
+     {
+      "cmd": "INSERT",
+      "name": "Public insert signups",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     }
+    ],
+    "rls": true
+   },
+   "public.ticket_milestones": {
+    "grants": {
+     "anon": [
+      "SELECT"
+     ],
+     "authenticated": [
+      "SELECT"
+     ]
+    },
+    "policies": [
+     {
+      "cmd": "DELETE",
+      "name": "Anon delete ticket_milestones",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     },
+     {
+      "cmd": "INSERT",
+      "name": "Anon insert ticket_milestones",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     },
+     {
+      "cmd": "SELECT",
+      "name": "Public read ticket_milestones",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     }
+    ],
+    "rls": true
+   },
+   "public.tour_categories": {
+    "grants": {
+     "anon": [
+      "SELECT"
+     ],
+     "authenticated": [
+      "SELECT"
+     ]
+    },
+    "policies": [
+     {
+      "cmd": "DELETE",
+      "name": "Anon delete tour_categories",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     },
+     {
+      "cmd": "INSERT",
+      "name": "Anon insert tour_categories",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     },
+     {
+      "cmd": "SELECT",
+      "name": "Public read tour_categories",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     }
+    ],
+    "rls": true
+   },
+   "public.venues": {
+    "grants": {
+     "anon": [
+      "SELECT"
+     ],
+     "authenticated": [
+      "SELECT"
+     ]
+    },
+    "policies": [
+     {
+      "cmd": "SELECT",
+      "name": "Public can read venues",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     }
+    ],
+    "rls": true
+   },
+   "storage.objects": {
+    "grants": {
+     "anon": [
+      "SELECT",
+      "INSERT",
+      "UPDATE",
+      "DELETE"
+     ],
+     "authenticated": [
+      "SELECT",
+      "INSERT",
+      "UPDATE",
+      "DELETE"
+     ]
+    },
+    "policies": [
+     {
+      "check": "(bucket_id = 'cvs'::text)",
+      "cmd": "INSERT",
+      "name": "Anon upload cvs",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "anon"
+      ],
+      "using": ""
+     },
+     {
+      "check": "(bucket_id = 'tour-images'::text)",
+      "cmd": "INSERT",
+      "name": "Anon upload tour-images",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "anon"
+      ],
+      "using": ""
+     }
+    ],
+    "rls": true
+   }
+  },
+  "sydney": {
+   "public.artists": {
+    "grants": {
+     "anon": [
+      "SELECT",
+      "INSERT",
+      "UPDATE",
+      "DELETE"
+     ],
+     "authenticated": [
+      "SELECT",
+      "INSERT",
+      "UPDATE",
+      "DELETE"
+     ]
+    },
+    "policies": [
+     {
+      "cmd": "SELECT",
+      "name": "Public can read artists",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     }
+    ],
+    "rls": true
+   },
+   "public.contacts": {
+    "grants": {
+     "anon": [
+      "SELECT"
+     ],
+     "authenticated": [
+      "SELECT"
+     ]
+    },
+    "policies": [
+     {
+      "cmd": "SELECT",
+      "name": "Auth read contacts",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "authenticated"
+      ]
+     },
+     {
+      "cmd": "INSERT",
+      "name": "Public insert contacts",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     }
+    ],
+    "rls": true
+   },
+   "public.experience": {
+    "grants": {
+     "anon": [
+      "SELECT"
+     ],
+     "authenticated": [
+      "SELECT"
+     ]
+    },
+    "policies": [
+     {
+      "cmd": "DELETE",
+      "name": "Anon delete experience",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     },
+     {
+      "cmd": "INSERT",
+      "name": "Anon insert experience",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     },
+     {
+      "cmd": "SELECT",
+      "name": "Public read experience",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     }
+    ],
+    "rls": true
+   },
+   "public.reviews": {
+    "grants": {
+     "anon": [
+      "SELECT"
+     ],
+     "authenticated": [
+      "SELECT"
+     ]
+    },
+    "policies": [
+     {
+      "cmd": "SELECT",
+      "name": "Public read reviews",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     },
+     {
+      "cmd": "ALL",
+      "name": "Public write reviews",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     }
+    ],
+    "rls": true
+   },
+   "public.show_artists": {
+    "grants": {
+     "anon": [
+      "SELECT",
+      "INSERT",
+      "UPDATE",
+      "DELETE"
+     ],
+     "authenticated": [
+      "SELECT",
+      "INSERT",
+      "UPDATE",
+      "DELETE"
+     ]
+    },
+    "policies": [
+     {
+      "cmd": "SELECT",
+      "name": "Public can read show_artists",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     }
+    ],
+    "rls": true
+   },
+   "public.shows": {
+    "grants": {
+     "anon": [
+      "SELECT"
+     ],
+     "authenticated": [
+      "SELECT"
+     ]
+    },
+    "policies": [
+     {
+      "cmd": "SELECT",
+      "name": "Public read shows",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     },
+     {
+      "cmd": "ALL",
+      "name": "Public write shows",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     }
+    ],
+    "rls": true
+   },
+   "public.signups": {
+    "grants": {
+     "anon": [
+      "SELECT"
+     ],
+     "authenticated": [
+      "SELECT"
+     ]
+    },
+    "policies": [
+     {
+      "cmd": "SELECT",
+      "name": "Auth read signups",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "authenticated"
+      ]
+     },
+     {
+      "cmd": "INSERT",
+      "name": "Public insert signups",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     }
+    ],
+    "rls": true
+   },
+   "public.ticket_milestones": {
+    "grants": {
+     "anon": [
+      "SELECT"
+     ],
+     "authenticated": [
+      "SELECT"
+     ]
+    },
+    "policies": [
+     {
+      "cmd": "DELETE",
+      "name": "Anon delete ticket_milestones",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     },
+     {
+      "cmd": "INSERT",
+      "name": "Anon insert ticket_milestones",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     },
+     {
+      "cmd": "SELECT",
+      "name": "Public read ticket_milestones",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     }
+    ],
+    "rls": true
+   },
+   "public.tour_categories": {
+    "grants": {
+     "anon": [
+      "SELECT"
+     ],
+     "authenticated": [
+      "SELECT"
+     ]
+    },
+    "policies": [
+     {
+      "cmd": "DELETE",
+      "name": "Anon delete tour_categories",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     },
+     {
+      "cmd": "INSERT",
+      "name": "Anon insert tour_categories",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     },
+     {
+      "cmd": "SELECT",
+      "name": "Public read tour_categories",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     }
+    ],
+    "rls": true
+   },
+   "public.venues": {
+    "grants": {
+     "anon": [
+      "SELECT"
+     ],
+     "authenticated": [
+      "SELECT"
+     ]
+    },
+    "policies": [
+     {
+      "cmd": "SELECT",
+      "name": "Public can read venues",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "public"
+      ]
+     }
+    ],
+    "rls": true
+   },
+   "storage.objects": {
+    "grants": {
+     "anon": [
+      "SELECT",
+      "INSERT",
+      "UPDATE",
+      "DELETE"
+     ],
+     "authenticated": [
+      "SELECT",
+      "INSERT",
+      "UPDATE",
+      "DELETE"
+     ]
+    },
+    "policies": [
+     {
+      "check": "(bucket_id = 'cvs'::text)",
+      "cmd": "INSERT",
+      "name": "Anon upload cvs",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "anon"
+      ],
+      "using": ""
+     },
+     {
+      "check": "(bucket_id = 'tour-images'::text)",
+      "cmd": "INSERT",
+      "name": "Anon upload tour-images",
+      "permissive": "PERMISSIVE",
+      "roles": [
+       "anon"
+      ],
+      "using": ""
+     }
+    ],
+    "rls": true
+   }
+  }
+ }
+}

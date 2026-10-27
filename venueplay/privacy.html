@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Privacy Policy: VenuePlay</title>
+<meta name="description" content="How VenuePlay collects, uses and protects your information.">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://venueplay.com.au/privacy">
+
+<!-- Favicon: neon play triangle on stage black -->
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="/favicon-48.png" type="image/png" sizes="48x48">
+<link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@400;500;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --ink:#0A0A0B; --ink-2:#121214; --pink:#FF1F8E; --pink-deep:#C70F69;
+    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --line:rgba(255,255,255,0.10);
+    --maxw:760px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;overflow-x:clip}
+  body{background:var(--ink);color:var(--text);font-family:'Manrope',system-ui,sans-serif;line-height:1.65;-webkit-font-smoothing:antialiased}
+  a{color:var(--pink);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px}
+
+  /* top bar */
+  header.bar{border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(10,10,11,0.86);backdrop-filter:blur(10px);z-index:5}
+  .bar .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:20px;letter-spacing:-0.01em;color:var(--white)}
+  .brand .div{width:1px;height:20px;background:var(--line)}
+  .back{font-size:14px;color:var(--muted)}
+
+  /* content */
+  main{padding:52px 0 40px}
+  .eyebrow{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:12px;color:var(--pink)}
+  h1{font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(34px,7vw,52px);line-height:1.02;letter-spacing:.01em;color:var(--white);text-transform:uppercase;margin:12px 0 10px}
+  .updated{color:var(--muted);font-size:14px;margin-bottom:8px}
+  .note{background:var(--ink-2);border:1px solid var(--line);border-left:3px solid var(--pink);border-radius:10px;padding:14px 16px;margin:22px 0;font-size:14.5px;color:var(--muted)}
+  h2{font-family:'Hanken Grotesk',sans-serif;font-weight:800;color:var(--white);font-size:21px;margin:34px 0 10px;letter-spacing:-0.01em}
+  h3{font-family:'Hanken Grotesk',sans-serif;font-weight:700;color:var(--white);font-size:16px;margin:20px 0 6px}
+  p{margin:0 0 14px}
+  ul{margin:0 0 14px;padding-left:20px}
+  li{margin:0 0 8px}
+  strong{color:var(--white)}
+  .fill{color:#FFC94D}
+
+  footer{border-top:1px solid var(--line);margin-top:48px;padding:30px 0}
+  .foot{display:flex;flex-wrap:wrap;gap:18px;justify-content:space-between;align-items:flex-end}
+  .foot-brand{display:flex;align-items:center;gap:10px}
+  .foot-brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;color:var(--white)}
+  .foot-brand .div{width:1px;height:18px;background:var(--line)}
+  .powered{color:var(--muted);font-size:13px;margin-top:12px}
+  .foot-social{display:flex;gap:16px;justify-content:center;margin-top:16px}
+  .foot-social a{display:inline-flex;color:var(--muted);transition:color .2s}
+  .foot-social a:hover{color:var(--pink)}
+  .foot-social svg{width:22px;height:22px}
+  .foot-meta{color:var(--muted);font-size:13px;text-align:right;line-height:1.9}
+  .foot-meta a{color:var(--muted)}
+  .foot-meta a:hover{color:var(--pink)}
+
+  /* VenuePlay neon hollow-triangle logo */
+  .brand svg,.foot-brand svg{overflow:visible;filter:drop-shadow(0 0 2px rgba(255,31,142,.9)) drop-shadow(0 0 6px rgba(255,31,142,.45))}
+</style>
+<!-- Google Analytics 4. The signup pages already call gtag() on a completed checkout,
+     guarded with a typeof check, so those conversions were being thrown away until this loaded.
+     Placed in the head so a bounce still registers. -->
+<script src="/app/vp-analytics.js"></script>
+<script src="/app/vp-pixel.js"></script>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap">
+    <a class="brand" href="/">
+      <svg width="20" height="23" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
+      <span class="div"></span>
+      <span class="word">VenuePlay</span>
+    </a>
+    <a class="back" href="/">&larr; Back to site</a>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div class="eyebrow">Privacy</div>
+    <h1>Privacy Policy</h1>
+    <p class="updated">Effective date: 21 September 2026</p>
+
+    <p>This Privacy Policy explains how <strong>VenuePlay</strong>, a product of <strong>Gflam Group Pty Ltd</strong> (ABN 35 679 383 049), trading as VenuePlay ("VenuePlay", "we", "us", "our"), collects, uses, discloses and protects your personal information. It applies to <a href="https://venueplay.com.au">venueplay.com.au</a> and the VenuePlay platform.</p>
+    <p>We handle personal information in line with the <strong>Australian Privacy Principles (APPs)</strong> under the <em>Privacy Act 1988</em> (Cth). By using our website or signing up, you agree to this policy.</p>
+
+    <h2>1. Who this policy is about</h2>
+    <p>VenuePlay is a platform sold to venues (pubs, clubs, bowls clubs and similar). Most of the personal information we handle relates to the venue operators and staff who sign up and use the platform. Players who join a game do so from their own phone with a name of their choosing, without creating an account. Anything more a venue asks a player for is optional and is set out in section 2. Clubs may also upload their own members list for a members draw, which is covered in section 2 as well.</p>
+
+    <h2>2. What we collect</h2>
+    <h3>When a venue signs up or enquires</h3>
+    <ul>
+      <li>Venue name and the number of venues you operate</li>
+      <li>Contact email address</li>
+      <li>Mobile number (optional)</li>
+      <li>Postcode</li>
+      <li>Your chosen plan (monthly or annual) and your maximum players per session</li>
+      <li>Anything you tell us in the contact form or by email</li>
+    </ul>
+    <h3>Payment information</h3>
+    <p>Card and payment details are collected and processed directly by <strong>Stripe</strong>, our payment provider. We do <strong>not</strong> see or store your full card number. We store the billing status and the Stripe customer and subscription identifiers Stripe returns to us, so we can manage your subscription.</p>
+    <h3>Players</h3>
+    <p>When someone joins a game on their phone, they enter a name to play. They do not create an account and they do not log in.</p>
+    <p>A venue can also choose to ask joining players for some or all of the following. Every one of these fields is optional for the player, and a game can always be played by giving a name alone:</p>
+    <ul>
+      <li>Last name</li>
+      <li>Postcode</li>
+      <li>Email address</li>
+      <li>Mobile number</li>
+      <li>Whether they want to hear from that venue about what is on (a tick box, off by default)</li>
+    </ul>
+    <p><strong>The venue is the owner of that information, not VenuePlay.</strong> Details a player gives are collected for the venue they are playing at, and are held for that venue alone. We hold them on that venue's behalf so the venue can see and export its own list. We do not sell player data, we do not use it to market VenuePlay, and we never pass one venue's players to another venue, to a visiting host, or to anyone else.</p>
+    <p>Marketing contact only happens where the player has ticked the box, and only from the venue they were playing at. A player who wants to be removed, or wants to know what a venue holds about them, can ask that venue, or contact us at the address in section 14. We will remove their details from that venue's list. Where the venue has already downloaded a copy of its list, we also tell the venue, so that they are removed from that copy too.</p>
+    <p>Players are told what is being collected and who gets it at the point they are asked, on the join screen itself.</p>
+    <p><strong>What a player's phone sends us without being asked.</strong> So that one phone is counted once, and so that a game cannot be flooded or a join forged, we keep a random identifier that the game stores in the player's own browser, and a scrambled (hashed) form of the phone's internet address rather than the address itself. Neither is used for advertising, neither is given to the venue, and both are removed with the rest of the player's details.</p>
+    <p><strong>Members lists.</strong> A club running a members draw can upload its own members list: a member number and a name for each member. Those people may never use VenuePlay themselves. The list belongs to the club, is held for that club alone, is used only to run and record that club's draw, and is never used for marketing by us or shared with anyone else. A member who wants to come off it should ask their club, which can remove them on the spot, or contact us at the address in section 14.</p>
+    <p>We keep player details for as long as the venue holds an active VenuePlay account. When a venue's account is closed, the details that identify its players and its members (names, email addresses, mobile numbers, postcodes and the identifiers described above) are deleted within 90 days. What remains is anonymous: how many people played on which night, which we keep as a billing record, and anything else we have to keep for tax or legal record-keeping.</p>
+    <h3>Technical information</h3>
+    <p>Like most websites, we automatically collect basic technical data such as your IP address, browser and device type, and pages visited. We use <strong>Google Analytics</strong> for this. We also run the <strong>Meta Pixel</strong> on our public pages, which tells Meta that a browser visited us so we can show VenuePlay ads to venues who have looked at the site. It is not on the host console, the venue screens or the player pages, and it is never sent a venue’s player list, anyone’s name or anyone’s email address.</p>
+
+    <p>Google Analytics also uses Google’s <strong>advertising features</strong>. These estimate an age range and a gender for visitors, and recognise the same person across their phone and computer, using the profile Google already holds for people signed in to a Google account. We only ever see this as totals for the whole site, never as an individual, and we never match it to a venue, a host or a player. You can turn it off for yourself at <a href="https://tools.google.com/dlpage/gaoptout" rel="noopener noreferrer">Google’s opt-out page</a> or in your <a href="https://myadcenter.google.com" rel="noopener noreferrer">Google ad settings</a>.</p>
+
+    <h2>3. How we use your information</h2>
+    <ul>
+      <li>To set up and provide the VenuePlay service to your venue</li>
+      <li>To process your subscription and payments through Stripe</li>
+      <li>To provide support and respond to your enquiries</li>
+      <li>To send you service messages about your account, billing and the platform</li>
+      <li>To send you marketing about VenuePlay <strong>where you have consented</strong>, which you can opt out of at any time</li>
+      <li>To improve and secure the platform</li>
+      <li>To meet our legal, tax and record-keeping obligations</li>
+    </ul>
+
+    <h2>4. Marketing and your consent</h2>
+    <p>We only send marketing communications where you have agreed to receive them, and every marketing message includes a way to unsubscribe. We handle electronic marketing in line with the <em>Spam Act 2003</em> (Cth). Opting out of marketing does not stop essential service messages about your account or billing.</p>
+
+    <h2>5. Who we share it with</h2>
+    <p>We do not sell your personal information. We share it only with the service providers we use to run VenuePlay, and only so they can perform their function for us:</p>
+    <ul>
+      <li><strong>Stripe</strong>: payment processing and subscription billing</li>
+      <li><strong>Supabase</strong>: secure database hosting for your account data</li>
+      <li><strong>Cloudflare</strong>: website hosting, delivery and security</li>
+      <li><strong>Resend</strong>: sending transactional and (where consented) email</li>
+      <li>Analytics providers such as <strong>Google</strong> and <strong>Meta</strong>, where enabled</li>
+    </ul>
+    <p>We may also disclose information where required by law, or to protect our rights, safety or property.</p>
+
+    <h2>6. Overseas disclosure</h2>
+    <p>Some of the providers above store or process data on servers outside Australia (for example in the United States or the European Union). Where this happens we take reasonable steps to ensure your information is handled consistently with the Australian Privacy Principles.</p>
+
+    <h2>7. How we protect your information</h2>
+    <p>We take reasonable steps to protect your information from misuse, loss and unauthorised access, including using reputable providers, encrypted connections and PCI-compliant payment handling through Stripe. No method of transmission or storage is completely secure, so we cannot guarantee absolute security.</p>
+
+    <h2>8. How long we keep it</h2>
+    <p>We keep your personal information while you are a customer and for as long afterwards as we need it for legitimate business and legal reasons, including tax and financial records, which Australian law generally requires us to keep for at least five years.</p>
+
+    <h2>9. Accessing and correcting your information</h2>
+    <p>You can ask us for a copy of the personal information we hold about you, and ask us to correct it if it is wrong or out of date. Contact us using the details below and we will respond within a reasonable time.</p>
+
+    <h2>10. Cookies</h2>
+    <p>Our website uses cookies to make the site work and, where enabled, to measure how it is used. You can control or delete cookies through your browser settings, though some parts of the site may not work as well without them.</p>
+
+    <h2>11. Children</h2>
+    <p>VenuePlay is a business tool intended for venue operators. It is not directed at children and we do not knowingly collect personal information from children.</p>
+
+    <h2>12. Complaints</h2>
+    <p>If you have a concern about how we have handled your personal information, please contact us first using the details below and we will work to resolve it. If you are not satisfied, you can contact the Office of the Australian Information Commissioner (OAIC) at <a href="https://www.oaic.gov.au">oaic.gov.au</a>.</p>
+
+    <h2>13. Changes to this policy</h2>
+    <p>We may update this policy from time to time. The current version will always be posted on this page, with the effective date shown at the top.</p>
+
+    <h2>14. Contact us</h2>
+    <p>
+      <strong>VenuePlay</strong><br>
+      Gflam Group Pty Ltd · ABN 35 679 383 049<br>
+      Gold Coast, Queensland, Australia<br>
+      Email: <a href="mailto:hello@venueplay.com.au">hello@venueplay.com.au</a>
+    </p>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <div>
+      <div class="foot-brand">
+        <svg width="22" height="25" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
+        <span class="div"></span>
+        <span class="word">VenuePlay</span>
+      </div>
+      <p class="powered">Powered by <b>Gflam Touring</b></p>
+      <div class="foot-social"><a href="https://www.facebook.com/people/VenuePlay/61589892656207/" target="_blank" rel="noopener" aria-label="VenuePlay on Facebook" title="Facebook"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M13.5 22v-8h2.7l.4-3.2h-3.1V8.8c0-.9.3-1.5 1.6-1.5h1.7V4.4c-.3 0-1.3-.1-2.4-.1-2.4 0-4 1.5-4 4.1v2.4H7.6V14h2.8v8h3.1z"/></svg></a><a href="https://www.instagram.com/venueplay/" target="_blank" rel="noopener" aria-label="VenuePlay on Instagram" title="Instagram"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 7.4a4.6 4.6 0 1 0 0 9.2 4.6 4.6 0 0 0 0-9.2zm0 7.6a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm5.9-7.8a1.1 1.1 0 1 1-2.2 0 1.1 1.1 0 0 1 2.2 0zM12 3.8c2.7 0 3 0 4 .1 1 0 1.5.2 1.9.3.5.2.8.4 1.2.8.4.4.6.7.8 1.2.1.4.3.9.3 1.9.1 1 .1 1.4.1 4s0 3-.1 4c0 1-.2 1.5-.3 1.9-.2.5-.4.8-.8 1.2-.4.4-.7.6-1.2.8-.4.1-.9.3-1.9.3-1 .1-1.4.1-4 .1s-3 0-4-.1c-1 0-1.5-.2-1.9-.3a3.2 3.2 0 0 1-1.2-.8 3.2 3.2 0 0 1-.8-1.2c-.1-.4-.3-.9-.3-1.9-.1-1-.1-1.4-.1-4s0-3 .1-4c0-1 .2-1.5.3-1.9.2-.5.4-.8.8-1.2.4-.4.7-.6 1.2-.8.4-.1.9-.3 1.9-.3 1-.1 1.4-.1 4-.1zM12 2c-2.7 0-3.1 0-4.1.1-1.1 0-1.8.2-2.4.5-.7.2-1.2.6-1.8 1.1-.5.6-.9 1.1-1.1 1.8-.3.6-.5 1.3-.5 2.4C2 8.9 2 9.3 2 12s0 3.1.1 4.1c0 1.1.2 1.8.5 2.4.2.7.6 1.2 1.1 1.8.6.5 1.1.9 1.8 1.1.6.3 1.3.5 2.4.5 1 .1 1.4.1 4.1.1s3.1 0 4.1-.1c1.1 0 1.8-.2 2.4-.5.7-.2 1.2-.6 1.8-1.1.5-.6.9-1.1 1.1-1.8.3-.6.5-1.3.5-2.4.1-1 .1-1.4.1-4.1s0-3.1-.1-4.1c0-1.1-.2-1.8-.5-2.4a4.9 4.9 0 0 0-1.1-1.8 4.9 4.9 0 0 0-1.8-1.1c-.6-.3-1.3-.5-2.4-.5C15.1 2 14.7 2 12 2z"/></svg></a></div>
+    </div>
+    <div class="foot-meta">
+      <a href="/">Home</a> · <a href="/help">Help</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a><br>
+      <a href="mailto:hello@venueplay.com.au">hello@venueplay.com.au</a><br>
+      &copy; <span id="vp-year"></span> Gflam Group Pty Ltd, trading as VenuePlay
+    </div>
+  </div>
+</footer>
+
+<script>document.getElementById('vp-year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

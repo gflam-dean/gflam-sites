@@ -1,0 +1,2402 @@
+[
+  {
+    "question": "Who wrote the novel 'Pride and Prejudice'?",
+    "options": [
+      "George Eliot",
+      "Emily Bronte",
+      "Jane Austen",
+      "Virginia Woolf"
+    ],
+    "correctIndex": 2,
+    "category": "Classic novels",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which playwright wrote 'Romeo and Juliet'?",
+    "options": [
+      "Christopher Marlowe",
+      "Oscar Wilde",
+      "Ben Jonson",
+      "William Shakespeare"
+    ],
+    "correctIndex": 3,
+    "category": "Theatre",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which author wrote 'Oliver Twist' and 'Great Expectations'?",
+    "options": [
+      "Charles Dickens",
+      "Thomas Hardy",
+      "H.G. Wells",
+      "Rudyard Kipling"
+    ],
+    "correctIndex": 0,
+    "category": "Classic novels",
+    "difficulty": "easy"
+  },
+  {
+    "question": "In Herman Melville's classic novel, what is the name of the great white whale?",
+    "options": [
+      "Leviathan",
+      "Moby Dick",
+      "Willy",
+      "Jonah"
+    ],
+    "correctIndex": 1,
+    "category": "Classic novels",
+    "difficulty": "easy"
+  },
+  {
+    "question": "'The Cat in the Hat' was written by which author?",
+    "options": [
+      "Beatrix Potter",
+      "A.A. Milne",
+      "Dr. Seuss",
+      "Eric Carle"
+    ],
+    "correctIndex": 2,
+    "category": "Children's books",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which Roald Dahl character owns a famous chocolate factory?",
+    "options": [
+      "Mr Fox",
+      "The BFG",
+      "Danny",
+      "Willy Wonka"
+    ],
+    "correctIndex": 3,
+    "category": "Children's books",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Who wrote the dystopian novel '1984'?",
+    "options": [
+      "George Orwell",
+      "Aldous Huxley",
+      "Ray Bradbury",
+      "H.G. Wells"
+    ],
+    "correctIndex": 0,
+    "category": "Classic novels",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which author wrote 'The Hobbit' and 'The Lord of the Rings'?",
+    "options": [
+      "C.S. Lewis",
+      "J.R.R. Tolkien",
+      "George R.R. Martin",
+      "Terry Pratchett"
+    ],
+    "correctIndex": 1,
+    "category": "Fantasy fiction",
+    "difficulty": "easy"
+  },
+  {
+    "question": "In Tolkien's books, what kind of creature is Bilbo Baggins?",
+    "options": [
+      "An elf",
+      "A dwarf",
+      "A hobbit",
+      "A wizard"
+    ],
+    "correctIndex": 2,
+    "category": "Fantasy fiction",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Who wrote 'The Hunger Games' trilogy?",
+    "options": [
+      "Stephenie Meyer",
+      "Veronica Roth",
+      "John Green",
+      "Suzanne Collins"
+    ],
+    "correctIndex": 3,
+    "category": "Popular fiction",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which moustachioed Belgian detective did Agatha Christie create?",
+    "options": [
+      "Hercule Poirot",
+      "Inspector Morse",
+      "Philip Marlowe",
+      "Sam Spade"
+    ],
+    "correctIndex": 0,
+    "category": "Classic characters",
+    "difficulty": "easy"
+  },
+  {
+    "question": "In E.B. White's book 'Charlotte's Web', what type of animal is Charlotte?",
+    "options": [
+      "A pig",
+      "A spider",
+      "A goose",
+      "A rat"
+    ],
+    "correctIndex": 1,
+    "category": "Children's books",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Who wrote the novella 'The Old Man and the Sea'?",
+    "options": [
+      "John Steinbeck",
+      "William Faulkner",
+      "Ernest Hemingway",
+      "F. Scott Fitzgerald"
+    ],
+    "correctIndex": 2,
+    "category": "Classic novels",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which Australian bush poet wrote 'The Man from Snowy River'?",
+    "options": [
+      "Henry Lawson",
+      "C.J. Dennis",
+      "Banjo Paterson",
+      "Adam Lindsay Gordon"
+    ],
+    "correctIndex": 2,
+    "category": "Australian literature",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Who wrote the words to the iconic Australian song 'Waltzing Matilda'?",
+    "options": [
+      "Henry Lawson",
+      "Dorothea Mackellar",
+      "A.B. 'Banjo' Paterson",
+      "Slim Dusty"
+    ],
+    "correctIndex": 2,
+    "category": "Australian literature",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which Australian became the first, and so far only, Australian to win the Nobel Prize in Literature?",
+    "options": [
+      "Patrick White",
+      "Peter Carey",
+      "Les Murray",
+      "Judith Wright"
+    ],
+    "correctIndex": 0,
+    "category": "Australian literature",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which Patrick White novel follows a German explorer crossing the Australian outback?",
+    "options": [
+      "The Tree of Man",
+      "Riders in the Chariot",
+      "Voss",
+      "The Vivisector"
+    ],
+    "correctIndex": 2,
+    "category": "Australian literature",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Who wrote 'Alice's Adventures in Wonderland'?",
+    "options": [
+      "Kenneth Grahame",
+      "Lewis Carroll",
+      "J.M. Barrie",
+      "Edward Lear"
+    ],
+    "correctIndex": 1,
+    "category": "Children's books",
+    "difficulty": "easy"
+  },
+  {
+    "question": "'The Lion, the Witch and the Wardrobe' was written by which author?",
+    "options": [
+      "J.R.R. Tolkien",
+      "Roald Dahl",
+      "C.S. Lewis",
+      "Philip Pullman"
+    ],
+    "correctIndex": 2,
+    "category": "Children's books",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the name of the magical land reached through the wardrobe in C.S. Lewis's books?",
+    "options": [
+      "Middle-earth",
+      "Neverland",
+      "Oz",
+      "Narnia"
+    ],
+    "correctIndex": 3,
+    "category": "Fantasy fiction",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which author wrote 'Matilda' and 'The BFG'?",
+    "options": [
+      "Roald Dahl",
+      "Michael Morpurgo",
+      "David Walliams",
+      "Jacqueline Wilson"
+    ],
+    "correctIndex": 0,
+    "category": "Children's books",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Who wrote the adventure novel 'Treasure Island'?",
+    "options": [
+      "Daniel Defoe",
+      "Robert Louis Stevenson",
+      "Jules Verne",
+      "Jack London"
+    ],
+    "correctIndex": 1,
+    "category": "Classic novels",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which author wrote the 'A Song of Ice and Fire' book series?",
+    "options": [
+      "George R.R. Martin",
+      "Robert Jordan",
+      "Terry Goodkind",
+      "Joe Abercrombie"
+    ],
+    "correctIndex": 0,
+    "category": "Fantasy fiction",
+    "difficulty": "easy"
+  },
+  {
+    "question": "The TV series 'Game of Thrones' is based on which book series?",
+    "options": [
+      "The Wheel of Time",
+      "A Song of Ice and Fire",
+      "The Kingkiller Chronicle",
+      "The Witcher"
+    ],
+    "correctIndex": 1,
+    "category": "Fantasy fiction",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which Irish author wrote the modernist novel 'Ulysses'?",
+    "options": [
+      "Samuel Beckett",
+      "James Joyce",
+      "Oscar Wilde",
+      "W.B. Yeats"
+    ],
+    "correctIndex": 1,
+    "category": "Classic novels",
+    "difficulty": "hard"
+  },
+  {
+    "question": "In children's stories, who is Peter Pan's fairy companion?",
+    "options": [
+      "Wendy",
+      "Nana",
+      "Tinker Bell",
+      "Tiger Lily"
+    ],
+    "correctIndex": 2,
+    "category": "Classic characters",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which gloomy donkey is a friend of Winnie the Pooh?",
+    "options": [
+      "Piglet",
+      "Tigger",
+      "Roo",
+      "Eeyore"
+    ],
+    "correctIndex": 3,
+    "category": "Classic characters",
+    "difficulty": "easy"
+  },
+  {
+    "question": "The word 'bibliophile' describes a person who loves what?",
+    "options": [
+      "Books",
+      "Wine",
+      "Music",
+      "Travel"
+    ],
+    "correctIndex": 0,
+    "category": "Language",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What do we call a word that means the same as another word?",
+    "options": [
+      "Antonym",
+      "Synonym",
+      "Homonym",
+      "Acronym"
+    ],
+    "correctIndex": 1,
+    "category": "Language",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the term for a word that means the opposite of another?",
+    "options": [
+      "Synonym",
+      "Homophone",
+      "Antonym",
+      "Palindrome"
+    ],
+    "correctIndex": 2,
+    "category": "Language",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What do we call words that sound the same but have different meanings, like 'their' and 'there'?",
+    "options": [
+      "Antonyms",
+      "Acronyms",
+      "Synonyms",
+      "Homophones"
+    ],
+    "correctIndex": 3,
+    "category": "Language",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the medical term for the fear of spiders?",
+    "options": [
+      "Arachnophobia",
+      "Claustrophobia",
+      "Acrophobia",
+      "Agoraphobia"
+    ],
+    "correctIndex": 0,
+    "category": "Language",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the study of the origin and history of words called?",
+    "options": [
+      "Phonetics",
+      "Syntax",
+      "Semantics",
+      "Etymology"
+    ],
+    "correctIndex": 3,
+    "category": "Language",
+    "difficulty": "medium"
+  },
+  {
+    "question": "English words like 'kangaroo' and 'boomerang' were borrowed from which source?",
+    "options": [
+      "Australian Aboriginal languages",
+      "Maori",
+      "Latin",
+      "Dutch"
+    ],
+    "correctIndex": 0,
+    "category": "Language",
+    "difficulty": "medium"
+  },
+  {
+    "question": "How many letters are there in the modern English alphabet?",
+    "options": [
+      "24",
+      "26",
+      "28",
+      "30"
+    ],
+    "correctIndex": 1,
+    "category": "Language",
+    "difficulty": "easy"
+  },
+  {
+    "question": "In Australian slang, what does the word 'arvo' mean?",
+    "options": [
+      "Morning",
+      "Evening",
+      "Afternoon",
+      "Weekend"
+    ],
+    "correctIndex": 2,
+    "category": "Australian slang",
+    "difficulty": "medium"
+  },
+  {
+    "question": "In Australian slang, what is a 'barbie'?",
+    "options": [
+      "A doll",
+      "A pub",
+      "A haircut",
+      "A barbecue"
+    ],
+    "correctIndex": 3,
+    "category": "Australian slang",
+    "difficulty": "easy"
+  },
+  {
+    "question": "'Onomatopoeia' refers to words that do what?",
+    "options": [
+      "Imitate sounds",
+      "Rhyme with each other",
+      "Have silent letters",
+      "Come from Greek"
+    ],
+    "correctIndex": 0,
+    "category": "Language",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which language has the most native speakers in the world?",
+    "options": [
+      "English",
+      "Mandarin Chinese",
+      "Spanish",
+      "Hindi"
+    ],
+    "correctIndex": 1,
+    "category": "Language",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What is the name for the small dot above a lowercase 'i' or 'j'?",
+    "options": [
+      "Serif",
+      "Umlaut",
+      "Tittle",
+      "Caret"
+    ],
+    "correctIndex": 2,
+    "category": "Language",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What do we call a sentence that contains every letter of the alphabet?",
+    "options": [
+      "An anagram",
+      "A palindrome",
+      "An acrostic",
+      "A pangram"
+    ],
+    "correctIndex": 3,
+    "category": "Language",
+    "difficulty": "hard"
+  },
+  {
+    "question": "In Australian slang, what is being shortened when someone says 'g'day'?",
+    "options": [
+      "Good day",
+      "Go away",
+      "Great day",
+      "Get a day"
+    ],
+    "correctIndex": 0,
+    "category": "Australian slang",
+    "difficulty": "easy"
+  },
+  {
+    "question": "The quokka, whose name comes from an Aboriginal word, is native to which country?",
+    "options": [
+      "New Zealand",
+      "Australia",
+      "Indonesia",
+      "South Africa"
+    ],
+    "correctIndex": 1,
+    "category": "Language",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Who painted the famous portrait known as the 'Mona Lisa'?",
+    "options": [
+      "Michelangelo",
+      "Raphael",
+      "Leonardo da Vinci",
+      "Titian"
+    ],
+    "correctIndex": 2,
+    "category": "Famous paintings",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which artist painted 'The Starry Night'?",
+    "options": [
+      "Claude Monet",
+      "Paul Cezanne",
+      "Edgar Degas",
+      "Vincent van Gogh"
+    ],
+    "correctIndex": 3,
+    "category": "Famous paintings",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Vincent van Gogh famously cut off part of his own what?",
+    "options": [
+      "Ear",
+      "Finger",
+      "Nose",
+      "Toe"
+    ],
+    "correctIndex": 0,
+    "category": "Artists",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which Spanish surrealist is famous for painting melting clocks?",
+    "options": [
+      "Joan Miro",
+      "Salvador Dali",
+      "Pablo Picasso",
+      "Francisco Goya"
+    ],
+    "correctIndex": 1,
+    "category": "Artists",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Salvador Dali's painting of melting clocks is called 'The Persistence of' what?",
+    "options": [
+      "Time",
+      "Dreams",
+      "Memory",
+      "Vision"
+    ],
+    "correctIndex": 2,
+    "category": "Famous paintings",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Who painted the ceiling of the Sistine Chapel?",
+    "options": [
+      "Leonardo da Vinci",
+      "Raphael",
+      "Donatello",
+      "Michelangelo"
+    ],
+    "correctIndex": 3,
+    "category": "Artists",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Michelangelo's famous marble statue of a young biblical hero is called what?",
+    "options": [
+      "David",
+      "Goliath",
+      "Apollo",
+      "Hercules"
+    ],
+    "correctIndex": 0,
+    "category": "Sculpture",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which artist co-founded the Cubism movement alongside Georges Braque?",
+    "options": [
+      "Henri Matisse",
+      "Pablo Picasso",
+      "Marc Chagall",
+      "Wassily Kandinsky"
+    ],
+    "correctIndex": 1,
+    "category": "Artists",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Picasso's huge anti-war painting depicting the bombing of a Spanish town is called what?",
+    "options": [
+      "Weeping Woman",
+      "The Old Guitarist",
+      "Guernica",
+      "Les Demoiselles"
+    ],
+    "correctIndex": 2,
+    "category": "Famous paintings",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which Dutch artist painted 'Girl with a Pearl Earring'?",
+    "options": [
+      "Rembrandt",
+      "Frans Hals",
+      "Pieter Bruegel",
+      "Johannes Vermeer"
+    ],
+    "correctIndex": 3,
+    "category": "Famous paintings",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which Norwegian artist painted 'The Scream'?",
+    "options": [
+      "Edvard Munch",
+      "Gustav Klimt",
+      "Egon Schiele",
+      "Wassily Kandinsky"
+    ],
+    "correctIndex": 0,
+    "category": "Famous paintings",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which pop artist is famous for his paintings of Campbell's soup cans?",
+    "options": [
+      "Roy Lichtenstein",
+      "Andy Warhol",
+      "Jasper Johns",
+      "Keith Haring"
+    ],
+    "correctIndex": 1,
+    "category": "Artists",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which Mexican artist is known for her striking self-portraits featuring a distinctive unibrow?",
+    "options": [
+      "Remedios Varo",
+      "Leonora Carrington",
+      "Frida Kahlo",
+      "Maria Izquierdo"
+    ],
+    "correctIndex": 2,
+    "category": "Artists",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which French artist, a founder of Impressionism, painted the 'Water Lilies' series?",
+    "options": [
+      "Auguste Renoir",
+      "Edgar Degas",
+      "Camille Pissarro",
+      "Claude Monet"
+    ],
+    "correctIndex": 3,
+    "category": "Artists",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which Dutch master painted the group portrait known as 'The Night Watch'?",
+    "options": [
+      "Rembrandt",
+      "Vermeer",
+      "Van Gogh",
+      "Frans Hals"
+    ],
+    "correctIndex": 0,
+    "category": "Famous paintings",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which Italian Renaissance artist painted 'The Birth of Venus'?",
+    "options": [
+      "Titian",
+      "Sandro Botticelli",
+      "Caravaggio",
+      "Giotto"
+    ],
+    "correctIndex": 1,
+    "category": "Famous paintings",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Who painted the famous American work 'American Gothic', showing a farmer with a pitchfork?",
+    "options": [
+      "Edward Hopper",
+      "Norman Rockwell",
+      "Grant Wood",
+      "Georgia O'Keeffe"
+    ],
+    "correctIndex": 2,
+    "category": "Famous paintings",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which American artist is famous for his 'drip' technique of abstract painting?",
+    "options": [
+      "Mark Rothko",
+      "Willem de Kooning",
+      "Barnett Newman",
+      "Jackson Pollock"
+    ],
+    "correctIndex": 3,
+    "category": "Artists",
+    "difficulty": "medium"
+  },
+  {
+    "question": "The melting clocks of Dali belong to which art movement?",
+    "options": [
+      "Surrealism",
+      "Cubism",
+      "Impressionism",
+      "Expressionism"
+    ],
+    "correctIndex": 0,
+    "category": "Art movements",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which French sculptor created the famous bronze statue 'The Thinker'?",
+    "options": [
+      "Auguste Rodin",
+      "Alberto Giacometti",
+      "Constantin Brancusi",
+      "Henry Moore"
+    ],
+    "correctIndex": 0,
+    "category": "Sculpture",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which Australian artist is famous for his series of paintings depicting Ned Kelly?",
+    "options": [
+      "Arthur Streeton",
+      "Sidney Nolan",
+      "Fred Williams",
+      "Russell Drysdale"
+    ],
+    "correctIndex": 1,
+    "category": "Australian art",
+    "difficulty": "medium"
+  },
+  {
+    "question": "The celebrated dot painting 'Warlugulong' was created by which Aboriginal artist?",
+    "options": [
+      "Albert Namatjira",
+      "Emily Kame Kngwarreye",
+      "Clifford Possum Tjapaltjarri",
+      "Rover Thomas"
+    ],
+    "correctIndex": 2,
+    "category": "Australian art",
+    "difficulty": "hard"
+  },
+  {
+    "question": "The iconic 1937 Australian photograph 'Sunbaker' was taken by which photographer?",
+    "options": [
+      "Frank Hurley",
+      "Olive Cotton",
+      "David Moore",
+      "Max Dupain"
+    ],
+    "correctIndex": 3,
+    "category": "Australian art",
+    "difficulty": "hard"
+  },
+  {
+    "question": "The group of Australian Impressionist painters is named after which Melbourne suburb?",
+    "options": [
+      "Heidelberg",
+      "Fitzroy",
+      "Carlton",
+      "Richmond"
+    ],
+    "correctIndex": 0,
+    "category": "Australian art",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which artist painted the famous Australian work 'Shearing the Rams'?",
+    "options": [
+      "Tom Roberts",
+      "Frederick McCubbin",
+      "Arthur Streeton",
+      "Charles Conder"
+    ],
+    "correctIndex": 0,
+    "category": "Australian art",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which Jackson Pollock painting was controversially bought by the National Gallery of Australia in 1973?",
+    "options": [
+      "No. 5",
+      "Blue Poles",
+      "Lavender Mist",
+      "Autumn Rhythm"
+    ],
+    "correctIndex": 1,
+    "category": "Australian art",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Who designed the Sydney Opera House?",
+    "options": [
+      "Harry Seidler",
+      "Jorn Utzon",
+      "Frank Lloyd Wright",
+      "Le Corbusier"
+    ],
+    "correctIndex": 1,
+    "category": "Architecture",
+    "difficulty": "easy"
+  },
+  {
+    "question": "The architect of the Sydney Opera House came from which country?",
+    "options": [
+      "Sweden",
+      "Germany",
+      "Denmark",
+      "Norway"
+    ],
+    "correctIndex": 2,
+    "category": "Architecture",
+    "difficulty": "easy"
+  },
+  {
+    "question": "The Eiffel Tower is located in which city?",
+    "options": [
+      "Rome",
+      "London",
+      "Berlin",
+      "Paris"
+    ],
+    "correctIndex": 3,
+    "category": "Architecture",
+    "difficulty": "easy"
+  },
+  {
+    "question": "The Eiffel Tower is named after which engineer?",
+    "options": [
+      "Gustave Eiffel",
+      "Alexandre Eiffel",
+      "Henri Eiffel",
+      "Louis Eiffel"
+    ],
+    "correctIndex": 0,
+    "category": "Architecture",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which American architect designed the famous house 'Fallingwater'?",
+    "options": [
+      "I.M. Pei",
+      "Frank Lloyd Wright",
+      "Louis Kahn",
+      "Philip Johnson"
+    ],
+    "correctIndex": 1,
+    "category": "Architecture",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which architectural style is known for pointed arches, ribbed vaults and flying buttresses?",
+    "options": [
+      "Baroque",
+      "Romanesque",
+      "Gothic",
+      "Art Deco"
+    ],
+    "correctIndex": 2,
+    "category": "Architecture",
+    "difficulty": "medium"
+  },
+  {
+    "question": "The Colosseum, an ancient amphitheatre, is located in which city?",
+    "options": [
+      "Athens",
+      "Naples",
+      "Florence",
+      "Rome"
+    ],
+    "correctIndex": 3,
+    "category": "Architecture",
+    "difficulty": "medium"
+  },
+  {
+    "question": "The Taj Mahal, a white marble mausoleum, is located in which country?",
+    "options": [
+      "India",
+      "Pakistan",
+      "Iran",
+      "Turkey"
+    ],
+    "correctIndex": 0,
+    "category": "Architecture",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which architect designed Barcelona's still-unfinished basilica, the Sagrada Familia?",
+    "options": [
+      "Santiago Calatrava",
+      "Antoni Gaudi",
+      "Oscar Niemeyer",
+      "Zaha Hadid"
+    ],
+    "correctIndex": 1,
+    "category": "Architecture",
+    "difficulty": "hard"
+  },
+  {
+    "question": "The famous Leaning Tower is found in which Italian city?",
+    "options": [
+      "Venice",
+      "Milan",
+      "Pisa",
+      "Bologna"
+    ],
+    "correctIndex": 2,
+    "category": "Architecture",
+    "difficulty": "medium"
+  },
+  {
+    "question": "The Parthenon, an ancient temple, sits on the Acropolis in which city?",
+    "options": [
+      "Rome",
+      "Cairo",
+      "Istanbul",
+      "Athens"
+    ],
+    "correctIndex": 3,
+    "category": "Architecture",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which architect designed the titanium-clad Guggenheim Museum in Bilbao?",
+    "options": [
+      "Frank Gehry",
+      "Renzo Piano",
+      "Norman Foster",
+      "Rem Koolhaas"
+    ],
+    "correctIndex": 0,
+    "category": "Architecture",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What is the common nickname for the Sydney Harbour Bridge?",
+    "options": [
+      "The Big Arch",
+      "The Coathanger",
+      "The Ironback",
+      "The Rainbow"
+    ],
+    "correctIndex": 1,
+    "category": "Australian landmarks",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Sir Christopher Wren designed which famous London cathedral?",
+    "options": [
+      "Westminster Abbey",
+      "Canterbury Cathedral",
+      "St Paul's Cathedral",
+      "York Minster"
+    ],
+    "correctIndex": 2,
+    "category": "Architecture",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Who is traditionally credited with inventing the telephone?",
+    "options": [
+      "Thomas Edison",
+      "Nikola Tesla",
+      "Guglielmo Marconi",
+      "Alexander Graham Bell"
+    ],
+    "correctIndex": 3,
+    "category": "Inventions",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which prolific inventor is most associated with the practical electric light bulb?",
+    "options": [
+      "Thomas Edison",
+      "Michael Faraday",
+      "James Watt",
+      "Benjamin Franklin"
+    ],
+    "correctIndex": 0,
+    "category": "Inventions",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Steve Jobs co-founded which technology company?",
+    "options": [
+      "Microsoft",
+      "Apple",
+      "IBM",
+      "Dell"
+    ],
+    "correctIndex": 1,
+    "category": "Technology",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Bill Gates co-founded which company with Paul Allen?",
+    "options": [
+      "Apple",
+      "Google",
+      "Microsoft",
+      "Oracle"
+    ],
+    "correctIndex": 2,
+    "category": "Technology",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Mark Zuckerberg is best known for founding which social network?",
+    "options": [
+      "Twitter",
+      "LinkedIn",
+      "Snapchat",
+      "Facebook"
+    ],
+    "correctIndex": 3,
+    "category": "Technology",
+    "difficulty": "easy"
+  },
+  {
+    "question": "In web addresses, what does 'www' stand for?",
+    "options": [
+      "World Wide Web",
+      "Wide World Web",
+      "Web World Wide",
+      "World Web Wide"
+    ],
+    "correctIndex": 0,
+    "category": "Technology",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Larry Page and Sergey Brin founded which search engine company?",
+    "options": [
+      "Yahoo",
+      "Google",
+      "Bing",
+      "Ask"
+    ],
+    "correctIndex": 1,
+    "category": "Technology",
+    "difficulty": "easy"
+  },
+  {
+    "question": "In computing, what does 'CPU' stand for?",
+    "options": [
+      "Computer Power Unit",
+      "Core Processing Utility",
+      "Central Processing Unit",
+      "Central Power Unit"
+    ],
+    "correctIndex": 2,
+    "category": "Computers",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which electric car company is led by Elon Musk?",
+    "options": [
+      "Rivian",
+      "Lucid",
+      "Polestar",
+      "Tesla"
+    ],
+    "correctIndex": 3,
+    "category": "Technology",
+    "difficulty": "easy"
+  },
+  {
+    "question": "The iPhone is a smartphone made by which company?",
+    "options": [
+      "Apple",
+      "Samsung",
+      "Nokia",
+      "Sony"
+    ],
+    "correctIndex": 0,
+    "category": "Technology",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which British computer scientist is credited with inventing the World Wide Web?",
+    "options": [
+      "Alan Turing",
+      "Tim Berners-Lee",
+      "Charles Babbage",
+      "Vint Cerf"
+    ],
+    "correctIndex": 1,
+    "category": "Computers",
+    "difficulty": "medium"
+  },
+  {
+    "question": "In web technology, what does 'HTTP' stand for?",
+    "options": [
+      "High Transfer Text Protocol",
+      "Hyperlink Text Transfer Process",
+      "HyperText Transfer Protocol",
+      "Home Text Transfer Protocol"
+    ],
+    "correctIndex": 2,
+    "category": "Computers",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which popular programming language shares its name with a type of snake?",
+    "options": [
+      "Cobra",
+      "Viper",
+      "Adder",
+      "Python"
+    ],
+    "correctIndex": 3,
+    "category": "Computers",
+    "difficulty": "medium"
+  },
+  {
+    "question": "The 'PDF' file format stands for what?",
+    "options": [
+      "Portable Document Format",
+      "Printed Document File",
+      "Personal Data File",
+      "Public Document Format"
+    ],
+    "correctIndex": 0,
+    "category": "Computers",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Who founded the online retail giant Amazon?",
+    "options": [
+      "Elon Musk",
+      "Jeff Bezos",
+      "Larry Ellison",
+      "Michael Dell"
+    ],
+    "correctIndex": 1,
+    "category": "Technology",
+    "difficulty": "medium"
+  },
+  {
+    "question": "In navigation technology, what does 'GPS' stand for?",
+    "options": [
+      "General Positioning Service",
+      "Global Position Sensor",
+      "Global Positioning System",
+      "Guided Positioning System"
+    ],
+    "correctIndex": 2,
+    "category": "Technology",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which 19th-century mathematician is often called the world's first computer programmer?",
+    "options": [
+      "Grace Hopper",
+      "Marie Curie",
+      "Emmy Noether",
+      "Ada Lovelace"
+    ],
+    "correctIndex": 3,
+    "category": "Computers",
+    "difficulty": "medium"
+  },
+  {
+    "question": "In computing, what does 'USB' stand for?",
+    "options": [
+      "Universal Serial Bus",
+      "United System Bus",
+      "Universal System Board",
+      "Unified Serial Bus"
+    ],
+    "correctIndex": 0,
+    "category": "Computers",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which British mathematician led the codebreaking effort against the German Enigma machine in WWII?",
+    "options": [
+      "Charles Babbage",
+      "Alan Turing",
+      "John von Neumann",
+      "Claude Shannon"
+    ],
+    "correctIndex": 1,
+    "category": "Computers",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which company develops the Windows operating system?",
+    "options": [
+      "Apple",
+      "Google",
+      "Microsoft",
+      "IBM"
+    ],
+    "correctIndex": 2,
+    "category": "Computers",
+    "difficulty": "medium"
+  },
+  {
+    "question": "In technology, what does 'AI' stand for?",
+    "options": [
+      "Automated Input",
+      "Advanced Interface",
+      "Applied Intelligence",
+      "Artificial Intelligence"
+    ],
+    "correctIndex": 3,
+    "category": "Technology",
+    "difficulty": "medium"
+  },
+  {
+    "question": "In computing, what does 'RAM' stand for?",
+    "options": [
+      "Random Access Memory",
+      "Rapid Access Module",
+      "Read Access Memory",
+      "Random Active Memory"
+    ],
+    "correctIndex": 0,
+    "category": "Computers",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which video-sharing website did Google buy in 2006?",
+    "options": [
+      "Vimeo",
+      "YouTube",
+      "Dailymotion",
+      "Twitch"
+    ],
+    "correctIndex": 1,
+    "category": "Technology",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which cryptocurrency was created in 2009 by the pseudonymous Satoshi Nakamoto?",
+    "options": [
+      "Ethereum",
+      "Litecoin",
+      "Bitcoin",
+      "Dogecoin"
+    ],
+    "correctIndex": 2,
+    "category": "Technology",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Colossus, used in Britain during WWII, was one of the world's first programmable electronic what?",
+    "options": [
+      "Radios",
+      "Radars",
+      "Telephones",
+      "Computers"
+    ],
+    "correctIndex": 3,
+    "category": "Computers",
+    "difficulty": "hard"
+  },
+  {
+    "question": "In which year was the first Apple iPhone released?",
+    "options": [
+      "2007",
+      "2005",
+      "2009",
+      "2010"
+    ],
+    "correctIndex": 0,
+    "category": "Technology",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which company develops the Android mobile operating system?",
+    "options": [
+      "Apple",
+      "Google",
+      "Samsung",
+      "Microsoft"
+    ],
+    "correctIndex": 1,
+    "category": "Technology",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which German goldsmith is credited with inventing the movable-type printing press in Europe?",
+    "options": [
+      "Martin Luther",
+      "Johannes Gutenberg",
+      "Johann Fust",
+      "Aldus Manutius"
+    ],
+    "correctIndex": 1,
+    "category": "Inventions",
+    "difficulty": "medium"
+  },
+  {
+    "question": "The Wright Brothers are credited with inventing and flying the first successful what?",
+    "options": [
+      "Motor car",
+      "Powered aeroplane",
+      "Steam engine",
+      "Helicopter"
+    ],
+    "correctIndex": 1,
+    "category": "Inventions",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which American developed the electric telegraph system and its famous code?",
+    "options": [
+      "Thomas Edison",
+      "Alexander Graham Bell",
+      "Samuel Morse",
+      "Nikola Tesla"
+    ],
+    "correctIndex": 2,
+    "category": "Inventions",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which Scottish inventor demonstrated an early working television system?",
+    "options": [
+      "James Watt",
+      "Alexander Fleming",
+      "John Napier",
+      "John Logie Baird"
+    ],
+    "correctIndex": 3,
+    "category": "Inventions",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which Scottish scientist discovered penicillin?",
+    "options": [
+      "Alexander Fleming",
+      "Joseph Lister",
+      "Edward Jenner",
+      "Louis Pasteur"
+    ],
+    "correctIndex": 0,
+    "category": "Inventions",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Inventor Nikola Tesla is closely associated with which type of electrical current?",
+    "options": [
+      "Direct current",
+      "Alternating current",
+      "Static charge",
+      "Pulsed current"
+    ],
+    "correctIndex": 1,
+    "category": "Inventions",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which Australian scientist is credited with inventing the 'black box' flight data recorder?",
+    "options": [
+      "Howard Florey",
+      "Fiona Wood",
+      "David Warren",
+      "Graeme Clark"
+    ],
+    "correctIndex": 2,
+    "category": "Australian inventions",
+    "difficulty": "hard"
+  },
+  {
+    "question": "The Australian company Cochlear is best known for pioneering which medical device?",
+    "options": [
+      "The pacemaker",
+      "The artificial heart",
+      "The insulin pump",
+      "The bionic ear (cochlear implant)"
+    ],
+    "correctIndex": 3,
+    "category": "Australian inventions",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Wi-Fi technology was significantly developed by scientists at which Australian research organisation?",
+    "options": [
+      "CSIRO",
+      "NASA",
+      "MIT",
+      "CERN"
+    ],
+    "correctIndex": 0,
+    "category": "Australian inventions",
+    "difficulty": "medium"
+  },
+  {
+    "question": "The Hills Hoist is a classic Australian invention used for what?",
+    "options": [
+      "Lifting cars",
+      "Drying clothes",
+      "Watering gardens",
+      "Storing tools"
+    ],
+    "correctIndex": 1,
+    "category": "Australian inventions",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which country was the first in the world to introduce polymer (plastic) banknotes?",
+    "options": [
+      "Canada",
+      "New Zealand",
+      "Australia",
+      "United Kingdom"
+    ],
+    "correctIndex": 2,
+    "category": "Australian inventions",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Vegemite is a famous Australian product of what kind?",
+    "options": [
+      "A soft drink",
+      "A biscuit",
+      "A cheese",
+      "A dark savoury spread"
+    ],
+    "correctIndex": 3,
+    "category": "Australian inventions",
+    "difficulty": "easy"
+  },
+  {
+    "question": "The water-saving dual-flush toilet was first developed in which country?",
+    "options": [
+      "Australia",
+      "Japan",
+      "Germany",
+      "United States"
+    ],
+    "correctIndex": 0,
+    "category": "Australian inventions",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which Swedish chemist invented dynamite and later founded the Nobel Prizes?",
+    "options": [
+      "Alfred Nobel",
+      "Svante Arrhenius",
+      "Carl Linnaeus",
+      "Anders Celsius"
+    ],
+    "correctIndex": 0,
+    "category": "Inventions",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which German engineer is credited with building the first practical petrol-powered automobile?",
+    "options": [
+      "Gottlieb Daimler",
+      "Karl Benz",
+      "Rudolf Diesel",
+      "Ferdinand Porsche"
+    ],
+    "correctIndex": 1,
+    "category": "Transport",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which company did the American industrialist Henry Ford found?",
+    "options": [
+      "General Motors",
+      "Chrysler",
+      "Ford",
+      "Chevrolet"
+    ],
+    "correctIndex": 2,
+    "category": "Transport",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Henry Ford's affordable, mass-produced early motor car was known as the Model what?",
+    "options": [
+      "Model A",
+      "Model S",
+      "Model X",
+      "Model T"
+    ],
+    "correctIndex": 3,
+    "category": "Transport",
+    "difficulty": "medium"
+  },
+  {
+    "question": "In which year did the RMS Titanic sink on its maiden voyage?",
+    "options": [
+      "1912",
+      "1905",
+      "1918",
+      "1923"
+    ],
+    "correctIndex": 0,
+    "category": "Transport",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Japan's famous high-speed train is popularly known in English by what nickname?",
+    "options": [
+      "The rocket train",
+      "The bullet train",
+      "The arrow train",
+      "The flash train"
+    ],
+    "correctIndex": 1,
+    "category": "Transport",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which supersonic passenger airliner was retired from service in 2003?",
+    "options": [
+      "Boeing 747",
+      "Airbus A380",
+      "Concorde",
+      "Tupolev Tu-144"
+    ],
+    "correctIndex": 2,
+    "category": "Transport",
+    "difficulty": "medium"
+  },
+  {
+    "question": "In the world of cars, what does 'SUV' stand for?",
+    "options": [
+      "Super Utility Van",
+      "Standard Utility Vehicle",
+      "Small Urban Vehicle",
+      "Sport Utility Vehicle"
+    ],
+    "correctIndex": 3,
+    "category": "Transport",
+    "difficulty": "medium"
+  },
+  {
+    "question": "How many wheels does a standard passenger car have?",
+    "options": [
+      "Four",
+      "Three",
+      "Six",
+      "Two"
+    ],
+    "correctIndex": 0,
+    "category": "Transport",
+    "difficulty": "easy"
+  },
+  {
+    "question": "The Wright Brothers made their first powered flight at Kitty Hawk in which US state?",
+    "options": [
+      "Ohio",
+      "North Carolina",
+      "Virginia",
+      "Kansas"
+    ],
+    "correctIndex": 1,
+    "category": "Transport",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Rudolf Diesel gave his name to which type of engine?",
+    "options": [
+      "The steam engine",
+      "The jet engine",
+      "The diesel engine",
+      "The rotary engine"
+    ],
+    "correctIndex": 2,
+    "category": "Transport",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which author wrote the seafaring poem and novels featuring the character Long John Silver?",
+    "options": [
+      "Herman Melville",
+      "Daniel Defoe",
+      "Jules Verne",
+      "Robert Louis Stevenson"
+    ],
+    "correctIndex": 3,
+    "category": "Classic characters",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which classic children's book features a family of rabbits and the character Peter Rabbit?",
+    "options": [
+      "The Tale of Peter Rabbit",
+      "The Wind in the Willows",
+      "Watership Down",
+      "The Velveteen Rabbit"
+    ],
+    "correctIndex": 0,
+    "category": "Children's books",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Beatrix Potter is famous for writing and illustrating stories about which kind of characters?",
+    "options": [
+      "Robots",
+      "Small animals",
+      "Pirates",
+      "Aliens"
+    ],
+    "correctIndex": 1,
+    "category": "Children's books",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which author wrote 'The Wind in the Willows', featuring Ratty, Mole and Mr Toad?",
+    "options": [
+      "A.A. Milne",
+      "Roald Dahl",
+      "Kenneth Grahame",
+      "Lewis Carroll"
+    ],
+    "correctIndex": 2,
+    "category": "Children's books",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which Australian author wrote the popular children's picture book 'Wombat Stew'?",
+    "options": [
+      "Mem Fox",
+      "Pamela Allen",
+      "Graeme Base",
+      "Marcia Vaughan"
+    ],
+    "correctIndex": 3,
+    "category": "Australian literature",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which poem beginning 'I love a sunburnt country' was written by Dorothea Mackellar?",
+    "options": [
+      "My Country",
+      "The Bush",
+      "Clancy of the Overflow",
+      "The Sundowner"
+    ],
+    "correctIndex": 0,
+    "category": "Australian literature",
+    "difficulty": "medium"
+  },
+  {
+    "question": "The character Peter Rabbit wears a distinctive blue what?",
+    "options": [
+      "Hat",
+      "Jacket",
+      "Scarf",
+      "Boot"
+    ],
+    "correctIndex": 1,
+    "category": "Children's books",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which novel opens with the line 'It was the best of times, it was the worst of times'?",
+    "options": [
+      "Great Expectations",
+      "Oliver Twist",
+      "A Tale of Two Cities",
+      "Bleak House"
+    ],
+    "correctIndex": 2,
+    "category": "Classic novels",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which novel by Charlotte Bronte features a governess who falls in love with Mr Rochester?",
+    "options": [
+      "Villette",
+      "Shirley",
+      "Agnes Grey",
+      "Jane Eyre"
+    ],
+    "correctIndex": 3,
+    "category": "Classic novels",
+    "difficulty": "medium"
+  },
+  {
+    "question": "In the 'Sherlock Holmes' stories, what is the name of Holmes's loyal companion and chronicler?",
+    "options": [
+      "Dr Watson",
+      "Inspector Lestrade",
+      "Mycroft",
+      "Moriarty"
+    ],
+    "correctIndex": 0,
+    "category": "Classic characters",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which villain is Sherlock Holmes's great criminal nemesis?",
+    "options": [
+      "Fu Manchu",
+      "Professor Moriarty",
+      "Count Dracula",
+      "Fagin"
+    ],
+    "correctIndex": 1,
+    "category": "Classic characters",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which author created the boy wizard's school called Hogwarts?",
+    "options": [
+      "Philip Pullman",
+      "Eoin Colfer",
+      "J.K. Rowling",
+      "Rick Riordan"
+    ],
+    "correctIndex": 2,
+    "category": "Popular fiction",
+    "difficulty": "easy"
+  },
+  {
+    "question": "In 'The Lord of the Rings', what is the name of the wizard played as a central character, clad in grey then white?",
+    "options": [
+      "Saruman",
+      "Radagast",
+      "Sauron",
+      "Gandalf"
+    ],
+    "correctIndex": 3,
+    "category": "Fantasy fiction",
+    "difficulty": "easy"
+  },
+  {
+    "question": "In Greek myth retold in many books, who flew too close to the sun on wax wings?",
+    "options": [
+      "Icarus",
+      "Perseus",
+      "Achilles",
+      "Theseus"
+    ],
+    "correctIndex": 0,
+    "category": "Classic literature",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which epic Greek poem, attributed to Homer, tells of Odysseus's long journey home?",
+    "options": [
+      "The Iliad",
+      "The Odyssey",
+      "The Aeneid",
+      "The Metamorphoses"
+    ],
+    "correctIndex": 1,
+    "category": "Classic literature",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which artist is famous for a series of paintings of sunflowers?",
+    "options": [
+      "Claude Monet",
+      "Paul Gauguin",
+      "Vincent van Gogh",
+      "Henri Matisse"
+    ],
+    "correctIndex": 2,
+    "category": "Famous paintings",
+    "difficulty": "easy"
+  },
+  {
+    "question": "'The Last Supper', a famous mural, was painted by which artist?",
+    "options": [
+      "Raphael",
+      "Michelangelo",
+      "Caravaggio",
+      "Leonardo da Vinci"
+    ],
+    "correctIndex": 3,
+    "category": "Famous paintings",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which colourful art movement, whose name means 'wild beasts' in French, was led by Henri Matisse?",
+    "options": [
+      "Fauvism",
+      "Dadaism",
+      "Futurism",
+      "Pointillism"
+    ],
+    "correctIndex": 0,
+    "category": "Art movements",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which Austrian artist painted the gold-leaf masterpiece 'The Kiss'?",
+    "options": [
+      "Egon Schiele",
+      "Gustav Klimt",
+      "Oskar Kokoschka",
+      "Ernst Kirchner"
+    ],
+    "correctIndex": 1,
+    "category": "Famous paintings",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which pop artist was famous for comic-strip style paintings using Ben-Day dots?",
+    "options": [
+      "Andy Warhol",
+      "Keith Haring",
+      "Roy Lichtenstein",
+      "Jean-Michel Basquiat"
+    ],
+    "correctIndex": 2,
+    "category": "Artists",
+    "difficulty": "hard"
+  },
+  {
+    "question": "The famous statue 'Venus de Milo' is missing which body parts?",
+    "options": [
+      "Its legs",
+      "Its head",
+      "Its feet",
+      "Its arms"
+    ],
+    "correctIndex": 3,
+    "category": "Sculpture",
+    "difficulty": "medium"
+  },
+  {
+    "question": "In which museum in Paris is the 'Mona Lisa' displayed?",
+    "options": [
+      "The Louvre",
+      "The Orsay",
+      "The Pompidou",
+      "The Rodin Museum"
+    ],
+    "correctIndex": 0,
+    "category": "Art",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which primary colours combine in painting to make green?",
+    "options": [
+      "Red and yellow",
+      "Blue and yellow",
+      "Red and blue",
+      "Blue and white"
+    ],
+    "correctIndex": 1,
+    "category": "Art basics",
+    "difficulty": "easy"
+  },
+  {
+    "question": "The Art Deco style was most fashionable during which decades?",
+    "options": [
+      "The 1860s and 1870s",
+      "The 1980s and 1990s",
+      "The 1920s and 1930s",
+      "The 1700s"
+    ],
+    "correctIndex": 2,
+    "category": "Art movements",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which famous ancient Egyptian structures on the Giza plateau are among the Seven Wonders?",
+    "options": [
+      "The Hanging Gardens",
+      "The Colossus",
+      "The Lighthouse",
+      "The Pyramids"
+    ],
+    "correctIndex": 3,
+    "category": "Architecture",
+    "difficulty": "easy"
+  },
+  {
+    "question": "The Guggenheim Museum's original spiral building in New York was designed by which architect?",
+    "options": [
+      "Frank Lloyd Wright",
+      "I.M. Pei",
+      "Frank Gehry",
+      "Philip Johnson"
+    ],
+    "correctIndex": 0,
+    "category": "Architecture",
+    "difficulty": "hard"
+  },
+  {
+    "question": "The glass pyramid entrance at the Louvre was designed by which architect?",
+    "options": [
+      "Le Corbusier",
+      "I.M. Pei",
+      "Norman Foster",
+      "Renzo Piano"
+    ],
+    "correctIndex": 1,
+    "category": "Architecture",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Australia's Parliament House in Canberra is famous for a large flagpole rising from what?",
+    "options": [
+      "A tower",
+      "A lake",
+      "A grass-covered roof",
+      "A dome"
+    ],
+    "correctIndex": 2,
+    "category": "Australian landmarks",
+    "difficulty": "medium"
+  },
+  {
+    "question": "The tall red sandstone monolith in central Australia is officially known by which name?",
+    "options": [
+      "Kata Tjuta",
+      "The Devils Marbles",
+      "Wave Rock",
+      "Uluru"
+    ],
+    "correctIndex": 3,
+    "category": "Australian landmarks",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What does the abbreviation 'e.g.' stand for in Latin?",
+    "options": [
+      "Exempli gratia (for example)",
+      "Et grata",
+      "Ergo generalis",
+      "Exit gratia"
+    ],
+    "correctIndex": 0,
+    "category": "Language",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What does the abbreviation 'i.e.' actually mean?",
+    "options": [
+      "For example",
+      "That is",
+      "In effect",
+      "And so on"
+    ],
+    "correctIndex": 1,
+    "category": "Language",
+    "difficulty": "medium"
+  },
+  {
+    "question": "A word or phrase made by rearranging the letters of another is called what?",
+    "options": [
+      "A palindrome",
+      "A homonym",
+      "An anagram",
+      "An acronym"
+    ],
+    "correctIndex": 2,
+    "category": "Language",
+    "difficulty": "medium"
+  },
+  {
+    "question": "The idiom 'once in a blue moon' means something happens how often?",
+    "options": [
+      "Constantly",
+      "Every night",
+      "Never at all",
+      "Very rarely"
+    ],
+    "correctIndex": 3,
+    "category": "Idioms",
+    "difficulty": "easy"
+  },
+  {
+    "question": "If something 'costs an arm and a leg', it is what?",
+    "options": [
+      "Very expensive",
+      "Completely free",
+      "Dangerous",
+      "Easy to get"
+    ],
+    "correctIndex": 0,
+    "category": "Idioms",
+    "difficulty": "easy"
+  },
+  {
+    "question": "To 'let the cat out of the bag' means to do what?",
+    "options": [
+      "Start a fight",
+      "Reveal a secret",
+      "Make a mistake",
+      "Leave quickly"
+    ],
+    "correctIndex": 1,
+    "category": "Idioms",
+    "difficulty": "easy"
+  },
+  {
+    "question": "In Australian slang, what does 'chuck a sickie' mean?",
+    "options": [
+      "Cook a barbecue",
+      "Go for a swim",
+      "Take a day off work pretending to be ill",
+      "Clean the house"
+    ],
+    "correctIndex": 2,
+    "category": "Australian slang",
+    "difficulty": "medium"
+  },
+  {
+    "question": "In Australian slang, a 'ute' is a type of what?",
+    "options": [
+      "Drink",
+      "Hat",
+      "Dance",
+      "Vehicle"
+    ],
+    "correctIndex": 3,
+    "category": "Australian slang",
+    "difficulty": "easy"
+  },
+  {
+    "question": "The English word 'robot' entered the language from a play written in which language?",
+    "options": [
+      "Czech",
+      "Russian",
+      "Polish",
+      "Hungarian"
+    ],
+    "correctIndex": 0,
+    "category": "Language",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which punctuation mark is used to show possession or to form contractions?",
+    "options": [
+      "Apostrophe",
+      "Comma",
+      "Colon",
+      "Hyphen"
+    ],
+    "correctIndex": 0,
+    "category": "Language",
+    "difficulty": "easy"
+  },
+  {
+    "question": "A short saying stating a general truth, such as 'actions speak louder than words', is called what?",
+    "options": [
+      "A metaphor",
+      "A proverb",
+      "A simile",
+      "A pun"
+    ],
+    "correctIndex": 1,
+    "category": "Language",
+    "difficulty": "medium"
+  },
+  {
+    "question": "A comparison using the words 'like' or 'as', such as 'as brave as a lion', is called what?",
+    "options": [
+      "A metaphor",
+      "An idiom",
+      "A simile",
+      "A hyperbole"
+    ],
+    "correctIndex": 2,
+    "category": "Language",
+    "difficulty": "medium"
+  },
+  {
+    "question": "In computing, what does 'URL' stand for?",
+    "options": [
+      "Universal Reading Link",
+      "Unique Reference Locator",
+      "United Resource Line",
+      "Uniform Resource Locator"
+    ],
+    "correctIndex": 3,
+    "category": "Computers",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which company created the popular video game console the PlayStation?",
+    "options": [
+      "Sony",
+      "Nintendo",
+      "Microsoft",
+      "Sega"
+    ],
+    "correctIndex": 0,
+    "category": "Technology",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which company makes the Xbox game console?",
+    "options": [
+      "Sony",
+      "Microsoft",
+      "Nintendo",
+      "Atari"
+    ],
+    "correctIndex": 1,
+    "category": "Technology",
+    "difficulty": "easy"
+  },
+  {
+    "question": "The tiny picture symbols used in text messages, like smiley faces, are known by which Japanese-derived word?",
+    "options": [
+      "Kanji",
+      "Manga",
+      "Emoji",
+      "Anime"
+    ],
+    "correctIndex": 2,
+    "category": "Technology",
+    "difficulty": "easy"
+  },
+  {
+    "question": "In email, what does the abbreviation 'cc' originally stand for?",
+    "options": [
+      "Contact copy",
+      "Common contact",
+      "Copy code",
+      "Carbon copy"
+    ],
+    "correctIndex": 3,
+    "category": "Technology",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which social media app is known for short videos and is owned by the Chinese company ByteDance?",
+    "options": [
+      "TikTok",
+      "Instagram",
+      "Snapchat",
+      "Pinterest"
+    ],
+    "correctIndex": 0,
+    "category": "Technology",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What was the name of the first artificial satellite, launched by the Soviet Union in 1957?",
+    "options": [
+      "Vostok",
+      "Sputnik",
+      "Explorer",
+      "Luna"
+    ],
+    "correctIndex": 1,
+    "category": "Technology",
+    "difficulty": "medium"
+  },
+  {
+    "question": "James Watt is famous for greatly improving which kind of engine?",
+    "options": [
+      "Petrol engine",
+      "Jet engine",
+      "Steam engine",
+      "Electric motor"
+    ],
+    "correctIndex": 2,
+    "category": "Inventions",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which brothers are credited with an early public demonstration of cinema projection in the 1890s?",
+    "options": [
+      "The Wright brothers",
+      "The Grimm brothers",
+      "The Warner brothers",
+      "The Lumiere brothers"
+    ],
+    "correctIndex": 3,
+    "category": "Inventions",
+    "difficulty": "hard"
+  },
+  {
+    "question": "The QWERTY layout refers to the arrangement of what?",
+    "options": [
+      "Keyboard keys",
+      "Car pedals",
+      "Piano keys",
+      "TV remote buttons"
+    ],
+    "correctIndex": 0,
+    "category": "Technology",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which Italian inventor is credited with pioneering long-distance radio transmission?",
+    "options": [
+      "Alessandro Volta",
+      "Guglielmo Marconi",
+      "Enrico Fermi",
+      "Antonio Meucci"
+    ],
+    "correctIndex": 1,
+    "category": "Inventions",
+    "difficulty": "medium"
+  },
+  {
+    "question": "The first successful powered, controlled aeroplane flight took place in which year?",
+    "options": [
+      "1885",
+      "1895",
+      "1903",
+      "1915"
+    ],
+    "correctIndex": 2,
+    "category": "Transport",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which Australian airline, the country's largest, is nicknamed 'The Flying Kangaroo'?",
+    "options": [
+      "Virgin Australia",
+      "Jetstar",
+      "Rex",
+      "Qantas"
+    ],
+    "correctIndex": 3,
+    "category": "Australian transport",
+    "difficulty": "easy"
+  },
+  {
+    "question": "A vehicle powered by both a petrol engine and an electric motor is commonly called what?",
+    "options": [
+      "A hybrid",
+      "A diesel",
+      "A coupe",
+      "A convertible"
+    ],
+    "correctIndex": 0,
+    "category": "Transport",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which company is famous for the luxury car brand featuring a 'Spirit of Ecstasy' bonnet ornament?",
+    "options": [
+      "Bentley",
+      "Rolls-Royce",
+      "Jaguar",
+      "Aston Martin"
+    ],
+    "correctIndex": 1,
+    "category": "Transport",
+    "difficulty": "medium"
+  },
+  {
+    "question": "The Trans-Siberian Railway crosses which country?",
+    "options": [
+      "China",
+      "Canada",
+      "Russia",
+      "India"
+    ],
+    "correctIndex": 2,
+    "category": "Transport",
+    "difficulty": "medium"
+  },
+  {
+    "question": "The famous Ghan and Indian Pacific are long-distance passenger trains in which country?",
+    "options": [
+      "South Africa",
+      "Canada",
+      "United States",
+      "Australia"
+    ],
+    "correctIndex": 3,
+    "category": "Australian transport",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which novel features the character Winston Smith living under the watch of 'Big Brother'?",
+    "options": [
+      "1984",
+      "Animal Farm",
+      "Fahrenheit 451",
+      "We"
+    ],
+    "correctIndex": 0,
+    "category": "Classic characters",
+    "difficulty": "medium"
+  },
+  {
+    "question": "In George Orwell's 'Animal Farm', which animals take control of the farm?",
+    "options": [
+      "Horses",
+      "Pigs",
+      "Dogs",
+      "Sheep"
+    ],
+    "correctIndex": 1,
+    "category": "Classic characters",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which author wrote the fantasy series 'His Dark Materials', beginning with 'Northern Lights'?",
+    "options": [
+      "C.S. Lewis",
+      "J.K. Rowling",
+      "Philip Pullman",
+      "Ursula K. Le Guin"
+    ],
+    "correctIndex": 2,
+    "category": "Fantasy fiction",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which Australian author wrote the young-adult series 'Tomorrow, When the War Began'?",
+    "options": [
+      "Markus Zusak",
+      "Melina Marchetta",
+      "Garth Nix",
+      "John Marsden"
+    ],
+    "correctIndex": 3,
+    "category": "Australian literature",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which prize is the most prestigious annual award for Australian literature, first awarded in 1957?",
+    "options": [
+      "The Miles Franklin Award",
+      "The Booker Prize",
+      "The Stella Prize",
+      "The Vogel Award"
+    ],
+    "correctIndex": 0,
+    "category": "Australian literature",
+    "difficulty": "hard"
+  },
+  {
+    "question": "The Archibald Prize, awarded annually in Australia, is a prize for which art form?",
+    "options": [
+      "Sculpture",
+      "Portrait painting",
+      "Photography",
+      "Landscape painting"
+    ],
+    "correctIndex": 1,
+    "category": "Australian art",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which colour is created by mixing blue and red paint together?",
+    "options": [
+      "Orange",
+      "Green",
+      "Purple",
+      "Brown"
+    ],
+    "correctIndex": 2,
+    "category": "Art basics",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which Renaissance genius kept notebooks written in mirror-image handwriting?",
+    "options": [
+      "Michelangelo",
+      "Raphael",
+      "Donatello",
+      "Leonardo da Vinci"
+    ],
+    "correctIndex": 3,
+    "category": "Artists",
+    "difficulty": "medium"
+  }
+]
