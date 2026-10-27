@@ -108,7 +108,7 @@
   "counted_by": "total"
  },
  "partyplay-backend/lib/pp-worker-15-oct.test.js": {
-  "checks": 35,
+  "checks": 39,
   "counted_by": "lines"
  },
  "partyplay-backend/worker/partyplay-api.test.js": {
@@ -1081,6 +1081,18 @@
  },
  "tools/signup-tick-in-chrome.test.py": {
   "checks": 20,
+  "counted_by": "lines"
+ },
+ "tools/gflam-unsub.test.py": {
+  "checks": 25,
+  "counted_by": "lines"
+ },
+ "touring-backend/lib/touring-unsubscribe.test.js": {
+  "checks": 28,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/winback-unsubscribe.test.js": {
+  "checks": 50,
   "counted_by": "lines"
  }
 }

@@ -125,7 +125,6 @@
   "gate-record.test.py",
   "gate-reliability.test.py",
   "git-shim.test.py",
-  "gflam-unsub.test.py",
   "release-push.test.py",
   "group-billing.test.js",
   "health.test.js",
@@ -321,7 +320,6 @@
   "touring-lock.test.py",
   "touring-manage.test.py",
   "touring-signups.test.py",
-  "touring-unsubscribe.test.js",
   "trivia-catchup.test.js",
   "trivia-night.test.js",
   "trivia-reveal.test.js",
@@ -360,6 +358,9 @@
   "owner/accounts admins set show_logo_on_site with an audit row; staff, venue logins and strangers refused; the venue route answers 410",
   "paged reads in venueplay-api-FULL.js are ordered (37)",
   "settings-and-logos-in-chrome.test.py",
-  "signup-tick-in-chrome.test.py"
+  "signup-tick-in-chrome.test.py",
+  "gflam-unsub.test.py",
+  "touring-unsubscribe.test.js",
+  "winback-unsubscribe.test.js"
  ]
 }

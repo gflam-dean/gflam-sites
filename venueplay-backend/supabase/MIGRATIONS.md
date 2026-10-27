@@ -370,4 +370,4 @@ was created by hand on 24 Oct 2026 from ~/venue-enrich/oztix/RUN-ME-gflam-custom
 policies, service role only, unchanged here). Run BEFORE the touring-api build carrying `/unsubscribe` (it writes the column).
 No grant or policy change, so RLS-BASELINE.json does not change. Branch `feature/gflam-one-click-unsub`. NOT RUN.
 Rollback: `alter table public.gflam_customers drop column unsubscribe_source; drop index gflam_customers_unsubscribed_idx;`
-(117 is feature/multi-raffle and 118 feature/custom-patterns, both unmerged.)
+(117 is fix/multi-raffle, unmerged; 118 is on main, above.)
