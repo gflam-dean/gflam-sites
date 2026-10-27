@@ -307,7 +307,6 @@
   "the screen badges are re-read every minute, and say so when they cannot be",
   "the staff check names its roles, in the Worker and in the database alike",
   "the sweep removes guest rows, not only picture rows",
-  "the tour cards say loading, retry once and tell the truth; Coming Soon only when nothing is on (80 checks)",
   "the unused-code expiry is declared in the licence library",
   "the venue key is deleted with the login, and only those with the hosts right can re-secure",
   "the venue list is complete and still one call for a host (15 checks)",
@@ -360,7 +359,6 @@
   "paged reads in venueplay-api-FULL.js are ordered (37)",
   "settings-and-logos-in-chrome.test.py",
   "signup-tick-in-chrome.test.py",
-  "paged reads in venueplay-api-FULL.js are ordered (38)",
-  "test venues, 1-player plans, comp, unpaid, HQ-hidden and unticked venues stay off; fewer than six paints nothing"
+  "the tour cards say loading, retry once and tell the truth; Coming Soon only when nothing is on (80 checks)"
  ]
 }
