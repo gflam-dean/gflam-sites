@@ -5,10 +5,10 @@
    b. "Reveal the song on the TV" sits on the same row as "Winning pattern", two columns at desktop,
       one at phone width.
    c. No "Players 0" box in setup: before the lobby opens it could only ever say 0.
-   d. The setup (theme, well-known songs only, pattern, prize, reveal) is saved for the VENUE: the
-      console sends it with the game start, the game Worker turns it into the vp_venue_settings row
-      through the game Worker's /host/game-prefs into vp_venue_settings.game_prefs (migration 121),
-      and a fresh console on another tablet opens on it.
+   d. The setup (theme, well-known songs only, pattern, prize, reveal) is saved for the VENUE through
+      the game Worker's /host/game-prefs into vp_venue_settings.game_prefs (migration 121). Since the
+      same day every game uses one shared mechanism (VP.gamePrefs), and the round trip for all five is
+      tools/test-game-setup-advanced.js; here, only that signing in starts it.
 
    The functions are lifted out of the page and the Worker that ship and RUN. (b) and (c) are the
    page's own markup and stylesheet, parsed into a tree, since the layout is the thing asked for.
@@ -107,141 +107,7 @@ var rj = runLifted(lift(HOST, 'renderJoinCounts'), { $: function (id) { return b
 rj();
 ok('a join updates the live counts and reaches for no setup box', counts.indexOf('livePlayers=7') >= 0 && !counts.some(function (c) { return /setupPlayers/.test(c); }), counts.join(','));
 
-section('d. The setup is saved for the venue and comes back on another tablet');
-/* The real Worker route, lifted, behind a fake database whose merge does what vp_set_game_prefs does
-   (migration 121): one game's keys merged into that game's object, the other games left alone. */
-var wStart = WORKER.indexOf('const GAME_PREFS_MAX_CHARS');
-var wEnd = WORKER.indexOf('async function handleGamePrefs(');
-if (wStart < 0 || wEnd < 0) throw new Error('cannot find the game-prefs route in the Worker');
-var routeSrc = WORKER.slice(wStart, wEnd) + 'async ' + lift(WORKER.slice(wEnd), 'handleGamePrefs');
-var DB, staffAsked, rpcCalls, routeUp;
-function resetServer(prefs) { DB = { 'venue-1': { game_prefs: prefs || {} } }; staffAsked = []; rpcCalls = []; routeUp = true; }
-// jsc has no URL; the Worker reads only .searchParams, as Object.fromEntries does in a Worker.
-function FakeURL(u) { var q = String(u).split('?')[1] || '', pairs = [];
-  q.split('&').forEach(function (kv) { if (!kv) return; var i = kv.indexOf('='); pairs.push([decodeURIComponent(kv.slice(0, i)), decodeURIComponent(kv.slice(i + 1))]); });
-  this.searchParams = pairs; }
-var handle = (new Function('verifyHostJwt', 'requireStaff', 'readJson', 'sbGet', 'sbRpc', 'enc', 'URL',
-  routeSrc + '\nreturn handleGamePrefs;'))(
-  function () { return Promise.resolve('user-1'); },
-  function (env, uid, venueId, aud) { staffAsked.push(venueId + ':' + aud); return Promise.resolve({ role: 'host' }); },
-  function (req) { return Promise.resolve(req._body); },
-  function (env, table, q) { var m = /venue_id=eq\.([^&]+)/.exec(q); var r = DB[decodeURIComponent(m[1])]; return Promise.resolve(r ? [r] : []); },
-  function (env, fn, a) {
-    rpcCalls.push(a);
-    var row = DB[a.p_venue_id] = DB[a.p_venue_id] || { game_prefs: {} };
-    var cur = row.game_prefs[a.p_game] || {}; for (var k in a.p_prefs) cur[k] = a.p_prefs[k];
-    row.game_prefs[a.p_game] = cur; return Promise.resolve(row.game_prefs);
-  },
-  encodeURIComponent, FakeURL);
-function jsonResp(body, status) { return { ok: (status || 200) < 300, status: status || 200, json: function () { return Promise.resolve(body); } }; }
-function callRoute(method, url, body) {
-  // A Worker without the route answers outside it, which a browser sees as a failed fetch.
-  if (!routeUp) return Promise.reject(new TypeError('Failed to fetch'));
-  var req = { method: method, url: url, _body: body };
-  return handle(req, {}, jsonResp).catch(function (e) { return jsonResp({ error: String(e && e.message) }, (e && e.status) || 500); });
-}
-function Sel(v, opts) { this.value = v; this.opts = opts || []; this.checked = false; this.style = {}; this.on = {}; }
-Sel.prototype.querySelector = function (q) { var m = /value="([^"]+)"/.exec(q); return m && this.opts.indexOf(m[1]) >= 0 ? {} : null; };
-Sel.prototype.addEventListener = function (ev, f) { this.on[ev] = f; };
-var posts;
-function tablet(state) {
-  var els = {
-    patternSel: new Sel(state.pattern || 'one', ['one', 'two', 'corners', 'full']),
-    prizeInput: new Sel(state.prize || ''), hitsChk: new Sel(''), playlistSel: new Sel('p1'),
-    revealSel: new Sel(state.reveal || 'end'), revealSelLive: new Sel(state.reveal || 'end'), revealBtn: null
-  };
-  els.hitsChk.checked = state.hitsOnly !== false;
-  var store = state.store || {}, timers = [];
-  var g = { status: 'setup', venueId: 'venue-1', playlistId: 'p1', hitsOnly: els.hitsChk.checked, revealMode: state.reveal || 'end' };
-  var over = {
-    G: g, $: function (id) { return els[id] || null; }, VP_GAME_API: 'https://w',
-    PREFS_GAME: 'musical', _prefsReady: false, _prefsApplying: false, _prefsTimer: null,
-    PL_OPTS: [{ id: 'p1', name: 'Pub Classics' }, { id: '80s', name: '80s Party' }, { id: 'all', name: 'All songs' }],
-    playlistNameOf: function (id) { var o = over.PL_OPTS.filter(function (x) { return x.id === id; })[0]; return o ? o.name : ''; },
-    document: { querySelectorAll: function () { return []; } },
-    localStorage: { getItem: function (k) { return k in store ? store[k] : null; }, setItem: function (k, v) { store[k] = String(v); } },
-    syncRevealBtn: function () {}, REVEAL_MODES: { instant: 1, '15': 1, end: 1, never: 1 },
-    getToken: function () { return Promise.resolve('tok'); },
-    setTimeout: function (f) { timers.push(f); return timers.length; }, clearTimeout: function (n) { timers[n - 1] = null; },
-    fetch: function (url, o) {
-      var m = (o && o.method) || 'GET', b = o && o.body ? JSON.parse(o.body) : undefined;
-      if (m === 'POST') posts.push(b);
-      return callRoute(m, url, b);
-    }
-  };
-  ['selectPlaylist', 'syncRevealUI', 'setRevealMode', 'musicalPrefs', 'applyMusicalPrefs', 'prefsUrl', 'loadVenuePrefs',
-   'saveVenuePrefsNow', 'queuePrefsSave', 'hadLocalPrefs', 'startVenuePrefs'].forEach(function (f) { over[f] = runLifted(lift(HOST, f), over, []); });
-  return { G: g, els: els, f: over, store: store, flush: function () { var t = timers.slice(); timers.length = 0; t.forEach(function (x) { if (x) x(); }); drainMicrotasks(); } };
-}
-// Tablet one, at a venue that has saved nothing and a browser that remembers nothing.
-resetServer({ bingo: { caller: true } }); posts = [];
-var A = tablet({});
-A.f.selectPlaylist('p1'); A.flush();
-ok('the page\'s own defaults are never saved before the venue\'s setup has been read', posts.length === 0);
-A.f.startVenuePrefs(); drainMicrotasks();
-ok('nothing saved and nothing remembered: nothing is sent', posts.length === 0 && A.f._prefsReady === true, JSON.stringify(posts));
-// The host sets up: 80s, every song, four corners, a $50 tab, reveal after 15 seconds.
-A.f.selectPlaylist('80s'); A.G.hitsOnly = false; A.els.hitsChk.checked = false; A.els.patternSel.value = 'corners';
-A.els.prizeInput.value = '$50 bar tab'; A.f.setRevealMode('15'); A.flush();
-var saved = DB['venue-1'].game_prefs.musical || {};
-ok('a change is saved for the venue a moment later, once, not once per tap', posts.length === 1, posts.length);
-var askedA = staffAsked.slice();
-var T = tablet({}); resetServer({}); posts = [];
-T.f.startVenuePrefs(); drainMicrotasks(); T.f.selectPlaylist('80s'); T.flush();
-ok('picking a theme on its own is saved for the venue', posts.length === 1 && DB['venue-1'].game_prefs.musical && DB['venue-1'].game_prefs.musical.playlist === '80s', JSON.stringify(posts));
-resetServer({ bingo: { caller: true }, musical: saved });
-ok('the venue now holds the whole setup', saved.playlist === '80s' && saved.playlist_name === '80s Party' && saved.hits_only === false &&
-   saved.pattern === 'corners' && saved.prize === '$50 bar tab' && saved.reveal === '15', JSON.stringify(saved));
-ok('any staff login can save: the route asks only that it is staff at this venue', askedA.length >= 1 && askedA.every(function (x) { return x === 'venue-1:host'; }), askedA.join(','));
-ok('saving musical leaves the venue\'s other games alone', DB['venue-1'].game_prefs.bingo && DB['venue-1'].game_prefs.bingo.caller === true);
-// Tablet two: this browser remembered hits-only and "when the clip ends"; the venue's choices win.
-posts = [];
-var B = tablet({ store: { vpMusicHitsOnly: '1', vpMusicReveal: 'end' } });
-B.f.startVenuePrefs(); drainMicrotasks(); B.flush();
-ok('a second tablet opens on the venue\'s theme, songs, pattern, prize and reveal',
-   B.G.playlistId === '80s' && B.els.hitsChk.checked === false && B.G.hitsOnly === false && B.els.patternSel.value === 'corners' &&
-   B.els.prizeInput.value === '$50 bar tab' && B.G.revealMode === '15' && B.els.revealSel.value === '15',
-   JSON.stringify({ pl: B.G.playlistId, hits: B.els.hitsChk.checked, pat: B.els.patternSel.value, prize: B.els.prizeInput.value, rev: B.G.revealMode }));
-ok('and opening it does not send it straight back', posts.length === 0, posts.length);
-// A venue with nothing saved yet, on a browser that remembers: sent up once, so nobody loses it.
-resetServer({}); posts = [];
-var C = tablet({ reveal: 'never', hitsOnly: false, store: { vpMusicHitsOnly: '0', vpMusicReveal: 'never' } });
-C.f.startVenuePrefs(); drainMicrotasks();
-ok('this browser\'s remembered choices go up to the venue once', posts.length === 1 && DB['venue-1'].game_prefs.musical.reveal === 'never' && DB['venue-1'].game_prefs.musical.hits_only === false,
-   JSON.stringify(DB['venue-1'].game_prefs));
-// The route is not there yet (the Worker or migration 121 not live): the page keeps working on this browser.
-resetServer({}); routeUp = false; posts = [];
-var D = tablet({ reveal: 'never', store: { vpMusicReveal: 'never' } });
-var threw = null; try { D.f.startVenuePrefs(); drainMicrotasks(); D.f.setRevealMode('instant'); D.flush(); } catch (e) { threw = e; }
-ok('no route yet: nothing breaks and this browser\'s choices stay', !threw && D.G.revealMode === 'instant' && D.store.vpMusicReveal === 'instant' && D.f._prefsReady === true, threw);
-var E = tablet({ prize: 'Meat tray' }); resetServer({ musical: { prize: '$50 bar tab' } });
-E.f.startVenuePrefs(); drainMicrotasks();
-ok('a prize the host has already typed is not overwritten', E.els.prizeInput.value === 'Meat tray');
-var F = tablet({}); F.G.status = 'running'; resetServer({ musical: { playlist: '80s' } });
-F.f.startVenuePrefs(); drainMicrotasks();
-ok('a game already running is never re-set from the saved setup', F.G.playlistId === 'p1');
-
-/* The route itself. */
-resetServer({});
-var got = [];
-function post(body) { var r = null; callRoute('POST', 'https://w/host/game-prefs', body).then(function (x) { return x.json().then(function (j) { r = { status: x.status, j: j }; }); }); drainMicrotasks(); return r; }
-var r1 = post({ venue_id: 'venue-1', game: 'musical', prefs: { pattern: 'corners', paid: true, tickets_unsold: 40, permits: { qld: 'X1' }, reveal: 'soon', playlist: 'a b<c>' } });
-var m1 = DB['venue-1'].game_prefs.musical || {};
-ok('the route keeps only the keys it allows, each one checked', r1 && r1.status === 200 && m1.pattern === 'corners' && !('reveal' in m1) && !('playlist' in m1), JSON.stringify(m1));
-ok('never paid-or-free, unsold tickets or permits', !('paid' in m1) && !('tickets_unsold' in m1) && !('permits' in m1));
-var rp = post({ venue_id: 'venue-1', game: 'musical', prefs: { pattern: 'diagonal', prize: 'Tab' } });
-ok('a pattern that does not exist is not stored', rp && rp.status === 200 && DB['venue-1'].game_prefs.musical.pattern === 'corners' && DB['venue-1'].game_prefs.musical.prize === 'Tab', JSON.stringify(DB['venue-1'].game_prefs.musical));
-var r2 = post({ venue_id: 'venue-1', game: 'musical', prefs: { prize: new Array(3000).join('x') } });
-ok('more than it should ever hold is refused', r2 && r2.status === 413, r2 && r2.status);
-var r3 = post({ venue_id: 'venue-1', game: 'payroll', prefs: { pattern: 'one' } });
-ok('a game it does not know is refused', r3 && r3.status === 400, r3 && r3.status);
-var r4 = post({ venue_id: 'venue-1', game: 'musical', prefs: { paid: true } });
-ok('nothing allowed in it: nothing written', r4 && r4.status === 400 && rpcCalls.length === 2, r4 && r4.status);
-var g1 = null; callRoute('GET', 'https://w/host/game-prefs?venue_id=venue-1&game=musical').then(function (x) { return x.json().then(function (j) { g1 = j; }); }); drainMicrotasks();
-var g2 = null; callRoute('GET', 'https://w/host/game-prefs?venue_id=venue-1&game=payroll').then(function (x) { g2 = x.status; }); drainMicrotasks();
-ok('GET for a game it does not know is refused', g2 === 400, g2);
-ok('GET answers this venue\'s musical setup', g1 && g1.prefs && g1.prefs.pattern === 'corners', JSON.stringify(g1));
-
+section('d. The setup is saved for the venue (the round trip itself: tools/test-game-setup-advanced.js, all five games)');
 // The console really starts this when it signs in.
 var bootLog = [], started = 0;
 var ready = runLifted(liftCallback(HOST, 'VP.ready().then('), {

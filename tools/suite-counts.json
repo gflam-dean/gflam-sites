@@ -379,6 +379,10 @@
   "checks": 36,
   "counted_by": "lines"
  },
+ "tools/test-game-setup-advanced.js": {
+  "checks": 156,
+  "counted_by": "lines"
+ },
  "tools/test-gaming-rules-letters-15-oct.js": {
   "checks": 72,
   "counted_by": "lines"
@@ -448,7 +452,7 @@
   "counted_by": "lines"
  },
  "tools/test-musical-setup-saved.js": {
-  "checks": 35,
+  "checks": 14,
   "counted_by": "lines"
  },
  "tools/test-night-pass-hq.js": {
@@ -556,7 +560,7 @@
   "counted_by": "lines"
  },
  "tools/test-raffle-console.js": {
-  "checks": 53,
+  "checks": 55,
   "counted_by": "lines"
  },
  "tools/test-raffle-unsold-server.js": {

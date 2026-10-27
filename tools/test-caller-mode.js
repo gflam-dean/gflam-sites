@@ -404,8 +404,8 @@ shuffle1to90 = function () { SHUFFLES++; return _shuffle(); };
   hw.$('prizeInput').value = '$50 bar tab'; hw.$('patternSel').value = 'one'; hw.$('cardsSel').value = '1'; hw.$('paidSel').value = '';
   hw.$('callerChk').checked = true; (hw.$('callerChk')._on.change || []).forEach(function (f) { f.call(hw.$('callerChk'), {}); });
   check('the setup button says what it does on a real-balls night', /Put bingo on the TV/.test(hw.$('startBtn').textContent) && !/scan/i.test(hw.$('startNote').textContent), [hw.$('startBtn').textContent, hw.$('startNote').textContent]);
-  check('and the console drops the player count and its "scan the QR" panel: nobody joins on a phone', hw.$('playersPanel').style.display === 'none' && hw.$('setupStats').style.display === 'none' && !/join code/.test(hw.$('coach').innerHTML.replace(/No join code/, '')),
-        [hw.$('playersPanel').style.display, hw.$('setupStats').style.display, hw.$('coach').innerHTML]);
+  check('and the console drops the player count and its "scan the QR" panel: nobody joins on a phone', hw.$('playersPanel').style.display === 'none' && !/id="setupStats"/.test(CONSOLE_SRC) && !/join code/.test(hw.$('coach').innerHTML.replace(/No join code/, '')),
+        [hw.$('playersPanel').style.display, /id="setupStats"/.test(CONSOLE_SRC), hw.$('coach').innerHTML]);
   hw.openLobby(); await advance(9000); hw.startGame(); await advance(3000);
   [5, 17, 42, 66, 89].forEach(function (n) { tap(hw, n); });
   await advance(3000); feedTV(tv);

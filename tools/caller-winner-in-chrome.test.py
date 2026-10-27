@@ -275,6 +275,7 @@ def custom_pattern_game():
            r.ask(host, '/^c:/.test(document.getElementById("patternSel").value)') is True, [o, r.ask(host, 'document.getElementById("patternSel").value')])
         saved = table(r, 'vp_bingo_patterns')
         ok('saved on the server for this venue: any 5', len(saved) == 1 and saved[0].get('name') == 'Any 5 numbers' and saved[0].get('rule') == {'type': 'any', 'n': 5}, saved)
+        r.ask(host, 'document.getElementById("bingoAdv").open=true; true')   # Edit lives in Advanced settings since 28 Oct 2026
         ok('Edit is offered beside a saved pattern', r.ask(host, vis('patEditRow')) is True)
 
         reload_console(r, host)

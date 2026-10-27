@@ -341,16 +341,18 @@ if (typeof endGameToAds === 'function') {
 /* ================= 8. Last week's unsold tickets are not carried over ================= */
 section('8. A new raffle starts with an EMPTY unsold box, whatever the last raffle saved (28 Oct 2026)');
 /* The saved raffle template carries last raffle's excluded_ranges. Pre-filled into this week's box, a
-   ticket sold this week inside last week's gap could never be drawn. The real prefillRaffleTemplate runs. */
-try { eval(lift('prefillRaffleTemplate')); } catch (e) { check('the pre-fill has a function this test can run', false, e.message); }
-if (typeof prefillRaffleTemplate === 'function') {
-  reset(); form(); $('rfSkip').value = '';
+   ticket sold this week inside last week's gap could never be drawn. Since 28 Oct 2026 the template is
+   read by raffleOldPrefs (the fallback while game_prefs is empty) and put on the page by applyRafflePrefs:
+   both real functions run here, as VP.gamePrefs runs them. */
+try { eval(lift('raffleOldPrefs')); eval(lift('applyRafflePrefs')); eval(lift('mergeSavedPrizes')); } catch (e) { check('the pre-fill has functions this test can run', false, e.message); }
+if (typeof raffleOldPrefs === 'function' && typeof applyRafflePrefs === 'function') {
+  reset(); form(); $('rfSkip').value = ''; G.recovered = false;
   var renderRange = function () {};
   VP = { loadSettings: function () { return Promise.resolve({ raffle_template: { range_min: 1, range_max: 400, time_to_present: 120,
          excluded_ranges: [[150, 200], [312, 312]] } }); } };
   window.VP = VP;
-  prefillRaffleTemplate(); drainMicrotasks();
-  check('last raffle\'s unsold tickets are NOT put into this raffle\'s box', $('rfSkip').value === '', $('rfSkip').value);
+  var _old = null; raffleOldPrefs().then(function (p) { _old = p; applyRafflePrefs(p); }); drainMicrotasks();
+  check('last raffle\'s unsold tickets are NOT put into this raffle\'s box', $('rfSkip').value === '' && _old && !('excluded_ranges' in _old), $('rfSkip').value + ' ' + JSON.stringify(_old));
   check('CONTROL: the rest of the template still fills in (range and time to claim)', String($('rfEnd').value) === '400' && String($('rfTime').value) === '120',
         { end: $('rfEnd').value, time: $('rfTime').value });
 }
