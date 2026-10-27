@@ -124,7 +124,10 @@ var PNG = (function () {   // a real 600 x 200 RGBA PNG header, enough for the W
   for (var i = 0; i < 40; i++) b.push(i); var s = ''; for (var j = 0; j < b.length; j++) s += String.fromCharCode(b[j]); return 'data:image/png;base64,' + btoa(s);
 })();
 if (typeof crypto === 'undefined') {
-  crypto = { subtle: { digest: function (alg, bytes) { var out = new Uint8Array(32); for (var i = 0; i < bytes.length; i++) out[i % 32] ^= (bytes[i] * 31 + i) & 255; return Promise.resolve(out.buffer); } } };
+  /* getRandomValues: a screen save names each raffle on the venue's list (vpbRaffleId, migration 117). */
+  var _rn = 0;
+  crypto = { getRandomValues: function (a) { for (var i = 0; i < a.length; i++) a[i] = (++_rn * 37 + i * 11) & 255; return a; },
+             subtle: { digest: function (alg, bytes) { var out = new Uint8Array(32); for (var i = 0; i < bytes.length; i++) out[i % 32] ^= (bytes[i] * 31 + i) & 255; return Promise.resolve(out.buffer); } } };
 }
 
 (async function () {
