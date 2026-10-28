@@ -659,10 +659,6 @@
   "checks": 44,
   "counted_by": "lines"
  },
- "tools/test-touring-cards-loader.js": {
-  "checks": 80,
-  "counted_by": "lines"
- },
  "tools/test-trivia-15-oct.js": {
   "checks": 70,
   "counted_by": "lines"
@@ -724,7 +720,7 @@
   "counted_by": "lines"
  },
  "tools/test-venue-logo-upload.js": {
-  "checks": 50,
+  "checks": 45,
   "counted_by": "lines"
  },
  "tools/test-venue-picker-scopes.js": {
@@ -1097,6 +1093,10 @@
  },
  "venueplay-backend/worker/webhook-ledger.test.js": {
   "checks": 17,
+  "counted_by": "lines"
+ },
+ "tools/test-touring-cards-loader.js": {
+  "checks": 80,
   "counted_by": "lines"
  }
 }
