@@ -1037,6 +1037,144 @@
     return true;
   }
 
+  /* SECTION 6 OF THE TERMS, ACCEPTED ONCE (legal compliance matrix gap 1, 28 Oct 2026).
+     Anisimoff Legal 9380, 1 Oct 2026, point 3: "prudent to ensure Customers actively tick a check
+     box". Onboarding records that tick (vp_venues.compliance_accepted_at and _by, migration 100),
+     but only since 15 Oct 2026: on 28 Oct 26 of 27 venues had no record, the live client among them,
+     and nothing ever asked them. This card asks, once, at sign-in.
+
+     WHAT IT GATES: the same as the tick has always gated, which is opening an account (/checkout and
+     /admin/venue refuse without it) and nothing a game does. No console, no game Worker route and no
+     draw reads compliance_accepted_at, so a venue without it keeps running every game, free or paid,
+     exactly as before. Changing that would be a new gate, and a game stopping in front of a room is
+     not the way to find out about a missing tick. So the card ASKS; it does not block.
+
+     WHO SEES WHAT. An owner or a manager gets the tick, their name and Accept, which writes the record
+     through the billing Worker (/account/compliance-accept) the way onboarding writes it: a typed name
+     and the time. A host is told the owner or a manager needs to accept it and their games run as
+     normal. HQ View as is told the venue has not accepted, and cannot accept on its behalf (the Worker
+     refuses that too). A venue whose row does not carry the column (a database the migration has not
+     reached) is never asked, and a switched-off venue shows its hold card instead.
+     TERMS_TICK is VPA_COMPLIANCE_TICK in the billing Worker word for word, and TERMS_EFFECTIVE the
+     date on terms.html: tools/test-terms-acceptance-card.js holds all three equal. */
+  var BILLING_API = "https://venueplay-api.dean-tindale.workers.dev";
+  var TERMS_TICK = "We are responsible for complying with the gaming laws that apply to our venue, including any permit, licence or authority, age limits and attendance rules. VenuePlay supplies the software only.";
+  var TERMS_EFFECTIVE = "28 October 2026";
+  function termsMode(ctx) {
+    var v = ctx && ctx.venue;
+    if (!v || typeof v !== "object" || !("compliance_accepted_at" in v)) return null;
+    if (v.compliance_accepted_at || v.status === "suspended") return null;
+    var r = ctx.role;
+    if (r === "owner" || r === "manager") return "accept";
+    if (r === "admin") return "hq";
+    return "host";
+  }
+  function termsEl(tag, css, text) {
+    var e = document.createElement(tag);
+    if (css) e.setAttribute("style", css);
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function termsCard(ctx) {
+    if (typeof document === "undefined" || !document.body) return false;
+    var card = document.getElementById("vpTermsCard");
+    var mode = termsMode(ctx);
+    if (!mode) { if (card && card.parentNode) card.parentNode.removeChild(card); return false; }
+    var v = ctx.venue, name = String(v.name || "your venue");
+    if (card && card.getAttribute("data-venue") === String(v.id) && card.getAttribute("data-mode") === mode) return true;
+    if (card && card.parentNode) card.parentNode.removeChild(card);
+    card = termsEl("div", "max-width:560px;margin:18px auto;padding:22px 22px 20px;background:rgba(255,31,142,.06);" +
+      "border:1px solid rgba(255,31,142,.40);border-radius:16px;font-family:Manrope,system-ui,sans-serif;color:#E7E7EC;" +
+      "box-sizing:border-box;width:calc(100% - 32px)");
+    card.id = "vpTermsCard";
+    card.setAttribute("role", "region");
+    card.setAttribute("aria-label", "Updated Terms");
+    card.setAttribute("data-venue", String(v.id));
+    card.setAttribute("data-mode", mode);
+    var EYEBROW = "margin:0 0 6px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#FF1F8E;font-weight:800";
+    var TITLE = "margin:0 0 10px;font-size:20px;font-weight:800;line-height:1.3;color:#FFFFFF;font-family:'Hanken Grotesk',Manrope,sans-serif";
+    var TEXT = "margin:0 0 14px;font-size:15px;line-height:1.55;color:#C9C9D1";
+    var LINK = "color:#FF8CC6;font-weight:700;text-decoration:underline";
+    card.appendChild(termsEl("p", EYEBROW, "Updated Terms"));
+    var read = termsEl("a", LINK, "Read section 6 of the Terms");
+    read.setAttribute("href", "/terms"); read.setAttribute("target", "_blank"); read.setAttribute("rel", "noopener");
+    if (mode === "host") {
+      card.appendChild(termsEl("h2", TITLE, "Your venue owner needs to accept the updated Terms"));
+      card.appendChild(termsEl("p", TEXT, "Section 6 of the Terms needs a tick from the owner or a manager of " + name +
+        ". They will be asked the next time they sign in. Your games run as normal in the meantime."));
+      card.appendChild(read);
+    } else if (mode === "hq") {
+      card.appendChild(termsEl("h2", TITLE, name + " has not accepted section 6 of the Terms"));
+      card.appendChild(termsEl("p", TEXT, "Only the venue's owner or a manager can accept it, at their own sign-in. HQ View as cannot accept it for them. Their games run as normal."));
+      card.appendChild(read);
+    } else {
+      card.appendChild(termsEl("h2", TITLE, "Please accept the updated Terms for " + name));
+      card.appendChild(termsEl("p", TEXT, "Section 6 of our Terms says who is responsible for the games you run: your venue conducts every game, and VenuePlay supplies the software. We have no record of " +
+        name + " accepting it, so we are asking once. Nothing else changes, and your games run as normal."));
+      var rp = termsEl("p", "margin:0 0 16px;font-size:14.5px"); rp.appendChild(read); card.appendChild(rp);
+      var tickRow = termsEl("label", "display:flex;gap:12px;align-items:flex-start;padding:14px 16px;background:rgba(255,255,255,.04);" +
+        "border:1px solid rgba(255,255,255,.12);border-radius:12px;cursor:pointer;margin:0 0 14px");
+      var tick = termsEl("input", "width:20px;height:20px;margin:2px 0 0;flex:0 0 auto;accent-color:#FF1F8E");
+      tick.setAttribute("type", "checkbox"); tick.id = "vpTermsTick";
+      tickRow.appendChild(tick);
+      tickRow.appendChild(termsEl("span", "font-size:14.5px;line-height:1.5;color:#E7E7EC",
+        "I accept section 6 of the Terms (effective " + TERMS_EFFECTIVE + ") for " + name + ". " + TERMS_TICK));
+      card.appendChild(tickRow);
+      var nameLbl = termsEl("label", "display:block;font-size:13px;font-weight:700;color:#C9C9D1;margin:0 0 6px", "Your name");
+      nameLbl.setAttribute("for", "vpTermsBy");
+      card.appendChild(nameLbl);
+      var by = termsEl("input", "display:block;width:100%;box-sizing:border-box;min-height:44px;padding:11px 14px;border-radius:10px;" +
+        "border:1px solid rgba(255,255,255,.16);background:#141418;color:#FFFFFF;font:inherit;font-size:16px;margin:0 0 14px");
+      by.setAttribute("type", "text"); by.setAttribute("autocomplete", "name"); by.setAttribute("maxlength", "120"); by.id = "vpTermsBy";
+      var mine = (ctx.staff || []).filter(function (x) { return x && x.venue_id === v.id; })[0];
+      by.value = (mine && mine.display_name) ? String(mine.display_name) : "";
+      card.appendChild(by);
+      var go = termsEl("button", "display:inline-block;min-height:44px;padding:11px 22px;border-radius:10px;border:none;background:#FF1F8E;" +
+        "color:#FFFFFF;font:700 15px/1.4 'Hanken Grotesk',Manrope,sans-serif;cursor:pointer", "Accept");
+      go.setAttribute("type", "button"); go.id = "vpTermsGo";
+      card.appendChild(go);
+      var msg = termsEl("p", "margin:10px 0 0;font-size:14px;line-height:1.5;color:#FF8CC6;min-height:1px", "");
+      msg.id = "vpTermsMsg"; msg.setAttribute("role", "status");
+      card.appendChild(msg);
+      go.addEventListener("click", function () { termsAccept(ctx, card, tick, by, go, msg); });
+    }
+    var wrap = document.querySelector ? document.querySelector(".wrap") : null;
+    if (wrap) { if (wrap.firstChild) wrap.insertBefore(card, wrap.firstChild); else wrap.appendChild(card); }
+    else document.body.appendChild(card);
+    return true;
+  }
+  function termsAccept(ctx, card, tick, by, go, msg) {
+    var v = ctx.venue, who = String(by.value || "").trim();
+    if (!tick.checked) { msg.textContent = "Tick the box to accept section 6 of the Terms."; return Promise.resolve(false); }
+    if (!who) { msg.textContent = "Enter your name, so the record says who accepted it."; return Promise.resolve(false); }
+    go.disabled = true; msg.textContent = "";
+    var c; try { c = getClient(); } catch (e) { go.disabled = false; msg.textContent = "Could not reach VenuePlay. Check your connection and try again."; return Promise.resolve(false); }
+    return c.auth.getSession().then(function (r) {
+      var tok = (r && r.data && r.data.session && r.data.session.access_token) || "";
+      return fetch(BILLING_API + "/account/compliance-accept", { method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + tok, "X-VP-Venue": String(v.id) },
+        body: JSON.stringify({ venue_id: v.id, accepted: true, by: who }) })
+        .then(function (res) { return res.json().catch(function () { return { error: "Something went wrong at our end. Try again in a minute." }; }); });
+    }).then(function (j) {
+      if (!j || j.error || !j.ok) { go.disabled = false; msg.textContent = (j && j.error) || "That did not save. Try again in a minute."; return false; }
+      v.compliance_accepted_at = j.compliance_accepted_at || new Date().toISOString();
+      v.compliance_accepted_by = j.compliance_accepted_by || who;
+      while (card.firstChild) card.removeChild(card.firstChild);
+      card.setAttribute("data-mode", "done");
+      card.appendChild(termsEl("p", "margin:0 0 6px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#2BD47D;font-weight:800", "Accepted"));
+      card.appendChild(termsEl("p", "margin:0 0 14px;font-size:15px;line-height:1.55;color:#E7E7EC",
+        "Thank you. Section 6 of the Terms is recorded as accepted for " + String(v.name || "your venue") + " by " + v.compliance_accepted_by + "."));
+      var done = termsEl("button", "display:inline-block;min-height:44px;padding:11px 22px;border-radius:10px;border:none;" +
+        "background:rgba(255,255,255,.08);color:#E7E7EC;font:700 15px/1.4 'Hanken Grotesk',Manrope,sans-serif;cursor:pointer", "Done");
+      done.setAttribute("type", "button"); done.id = "vpTermsDone";
+      done.addEventListener("click", function () { if (card.parentNode) card.parentNode.removeChild(card); });
+      card.appendChild(done);
+      return true;
+    }, function () {
+      go.disabled = false; msg.textContent = "Could not reach VenuePlay. Check your connection and try again."; return false;
+    });
+  }
+
   /* A HOST IS THE STAFF (Dean, 28 Oct 2026). The game Worker's kill-switch answers 403 in one of two
      sets of words: the host's ("Your tab has run a bit long...") or the room's ("Games are paused
      here tonight. Have a word with the staff."), and a few host routes (opening a session among
@@ -1286,6 +1424,7 @@
     statusBar: statusBar,
     holdGate: holdGate,
     holdWords: holdWords,
+    termsCard: termsCard,   // section 6 of the Terms, accepted once (28 Oct 2026)
     hostRefusal: hostRefusal,
     noteOpenSession: noteOpenSession,
     closeOpenSessions: closeOpenSessions,

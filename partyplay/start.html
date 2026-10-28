@@ -167,6 +167,18 @@
       <p class="keeps"><b>Your licence keeps for 12 months.</b> Buy it today and use it in March if you like. If the party moves, or gets cancelled, or never quite happens, you have lost nothing and there is nothing you need to do.</p>
     </div>
 
+    <!-- THE PRIVATE-USE DECLARATION (28 Oct 2026). Both lawyer's letters accepted PartyPlay on the
+         controls including "declaration for private party use only"; this is it. Required: the
+         Worker refuses a checkout without it and keeps the time with the order. -->
+    <fieldset>
+      <legend>Private party only</legend>
+      <div class="optin">
+        <input type="checkbox" id="privateUse" required>
+        <label for="privateUse">This is for a private party. It is not for a pub, club, business, fundraiser or promotion, and nobody pays to play.</label>
+      </div>
+      <p class="err" id="privErr"></p>
+    </fieldset>
+
     <fieldset>
       <legend>Keeping in touch</legend>
       <div class="optin">
@@ -224,8 +236,16 @@
       mobile: $("mobile").value.trim() || null,
       party:  $("party").value.trim() || null,
       days:   currentDays(),
-      optin:  $("optin").checked
+      optin:  $("optin").checked,
+      private_use: $("privateUse").checked === true
     };
+    var privErr = $("privErr"); privErr.textContent = ""; privErr.classList.remove("show");
+    if(!payload.private_use){
+      privErr.textContent = "PartyPlay is for private parties only. Tick the box to confirm this one is.";
+      privErr.classList.add("show");
+      try{ $("privateUse").focus(); }catch(e){}
+      return;
+    }
     if(!payload.name){ showErr("We need a name to put on the licence."); return; }
     if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(payload.email)){
       showErr("That email does not look right. Your party code gets sent there.");

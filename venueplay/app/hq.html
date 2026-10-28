@@ -329,6 +329,7 @@
           <option value="test">Test venues</option>
           <option value="suspended">Suspended</option>
           <option value="archived">Archived</option>
+          <option value="needsstate">Needs a state</option>
         </select>
         <!-- Venues that have LEFT (ended, cancelled, archived) are off the list unless this is ticked.
              The search box still finds them. Unpaid venues stay: they need chasing (Dean, 19 Oct 2026). -->
@@ -2083,6 +2084,17 @@
        scan slower. Billing still sees them for the month they left, because that month's invoice
        is real; that filtering lives in renderBilling, not here. */
     var searching = !ignoreSearch && !!S.vSearch;
+    /* NEEDS A STATE (legal compliance matrix G19, 28 Oct 2026). A venue with no state is shown no
+       state's rules and cannot charge for a game (vp-gaming.js assess), so it is a job to fix: every
+       one, test or not, left or not, so none can hide. The search still narrows it. */
+    if(S.vFilter==="needsstate"){
+      if(!needsState(v)) return false;
+      if(searching){
+        var qs=S.vSearch.toLowerCase();
+        return String(v.name||"").toLowerCase().indexOf(qs)>=0 || String(v.slug||"").toLowerCase().indexOf(qs)>=0;
+      }
+      return true;
+    }
     if(S.vFilter==="archived" && !isArchived(v)) return false;
     if(S.vFilter!=="archived" && S.vFilter!=="suspended" && S.vFilter!=="test" &&
        hasLeft(v) && !S.showLeft && !searching) return false;
@@ -2103,6 +2115,14 @@
     }
     return true;
   }
+  /* No state recorded: no postcode, or one that maps to none. The set-state fix is the postcode
+     field in Details (/admin/venue-gaming), which also switches paid entry off until it is set. */
+  function needsState(v){ return !!v && !String(v.au_state||"").trim(); }
+  function needsStateBadge(v){
+    if(!needsState(v)) return "";
+    return ' <span class="badge suspend" title="No state is recorded, so no state rules can be shown and paid games start as free entry. Set the postcode in Details.">Needs a state</span>'+
+      (v.paid_entry_enabled===true ? ' <span class="badge suspend" title="Paid entry is still switched on for a venue with no state. Setting or clearing the postcode in Details switches it off.">Paid entry ON</span>' : '');
+  }
   function renderVenues(){
     var b=$("venueRows"); b.innerHTML="";
     var list=S.venues.filter(function(v){ return venuePasses(v); });
@@ -2115,7 +2135,7 @@
        a filter doing its job. */
     var FLBL={ archived:"Archived venues", cancelling:"Cancelling", grouped:"Grouped venues",
                independent:"Independent venues", live:"Live now", suspended:"Suspended venues",
-               test:"Test venues" };
+               test:"Test venues", needsstate:"Venues that need a state" };
     var lbl=FLBL[S.vFilter] || "All venues";
     $("venuesLbl").textContent=lbl+" ("+list.length+(list.length===pool.length?"":" of "+pool.length)+")";
     if(!list.length){ b.innerHTML='<tr><td colspan="5"><div class="empty" style="border:none;background:none">'+(S.venues.length?"No venues match that filter.":"No venues yet. Use Add venue to onboard the first one.")+'</div></td></tr>'; return; }
@@ -2160,7 +2180,7 @@
         : (inAccount ? '<span class="badge grouped">Account &middot; '+acctCount[v.founding_id]+' venues</span>'
         : '<span class="badge indep">Independent</span>');
       var testBadge = isTest(v) ? ' <span class="badge gold">Test</span>' : '';
-      var statusCell = stateBadgeFor(v);
+      var statusCell = stateBadgeFor(v) + needsStateBadge(v);
       /* Its own span, so the minute-by-minute refresh below can repaint JUST this badge without
          re-rendering a table somebody may be half way through using. */
       statusCell += testBadge + ' <span data-screenbadge="'+esc(v.id)+'">' + screenBadge(v) + '</span>';
@@ -2430,6 +2450,8 @@
     if(pr) setPraffle(pr.getAttribute("data-vid"), pr.checked, pr);
     var nb=e.target.closest("input.numbingo");
     if(nb) setNumberBingo(nb.getAttribute("data-vid"), nb.checked, nb);
+    var rc=e.target.closest("input[data-regcheck]");
+    if(rc && rc.checked) markRegisterChecked(rc);
     var lo=e.target.closest("input.logosite");
     if(lo) setLogoSite(lo.getAttribute("data-vid"), lo.checked, lo);
   });
@@ -2668,7 +2690,7 @@
       : '<span style="color:var(--roll)">not asked</span>';
     var tick = v.compliance_accepted_at
       ? ('accepted '+esc(fmtWhen(v.compliance_accepted_at))+(v.compliance_accepted_by?' by '+esc(v.compliance_accepted_by):''))
-      : '<span style="color:var(--roll)">NOT accepted: no record of the tick (a signup before it was recorded, a venue added from Your account, or one onboarded by hand). Have them accept it.</span>';
+      : '<span style="color:var(--roll)">NOT accepted: no record of the tick (a signup before it was recorded, a venue added from Your account, or one onboarded by hand). The console asks their owner or a manager to accept section 6 of the Terms the next time either signs in.</span>';
     var permits=(v.permits&&typeof v.permits==="object")?v.permits:{};
     /* Only the kinds this venue's state needs a permit for (VPPermits.NEEDS, the one table the settings
        and Draws pages use), plus any kind they saved anyway, marked as not needed (Dean, 24 Oct 2026). */
@@ -2709,8 +2731,37 @@
               (d.category_claimed?' &middot; '+esc(d.category_claimed):'')+(money.length?' &middot; '+money.join(", "):'')+'</div>';
           }).join("")
         : '<div>No declarations yet: this venue has not started a paid game, raffle or members draw.</div>';
-      out.innerHTML='<b>Recorded</b> '+recTxt+'<div style="margin-top:4px"><b>Last declarations</b> (the venue saying it is the conductor, per game)</div>'+declTxt;
+      out.innerHTML='<b>Recorded</b> '+recTxt+registerChecksHtml(id, r)+'<div style="margin-top:4px"><b>Last declarations</b> (the venue saying it is the conductor, per game)</div>'+declTxt;
     }).catch(function(e){ btn.disabled=false; out.textContent="Could not read it: "+String((e&&e.message)||e); });
+  }
+  /* CHECKED AGAINST THE VGCCC REGISTER (legal compliance matrix gap 8, 28 Oct 2026). Anisimoff,
+     8 Oct 2026, point 1(a): "prudent to verify VIC permit numbers before providing the platform".
+     A person looks the number up on the VGCCC's register and ticks it here; nothing is automated.
+     Victoria only, one line per permit the venue has recorded. The record is an audit row naming
+     who and when (/admin/permit-register-check), and a permit changed since reads as not checked. */
+  function registerChecksHtml(id, r){
+    var v=(r&&r.venue)||{}; if(String(v.au_state||"").toUpperCase()!=="VIC") return "";
+    var rec=r.recorded||{}, chk=r.register_checks||{}, permits=r.permits||{};
+    var kinds=["bingo","raffle","members"].filter(function(k){ return rec[k]; });
+    if(!kinds.length) return '<div style="margin-top:4px"><b>VGCCC register</b> <span style="color:var(--faint)">no Victorian permit recorded, so nothing to check</span></div>';
+    return '<div style="margin-top:4px"><b>VGCCC register</b>'+kinds.map(function(k){
+      var c=chk[k], p=permits[k]||{}, name=esc(k==="members"?"members draw":k);
+      var what=p.number ? ' number '+esc(p.number) : (p.npo_name ? ' under '+esc(p.npo_name)+'\'s authority' : '');
+      var said = (c && c.current)
+        ? '<span style="color:var(--win)">checked '+esc(fmtWhen(c.at))+' by '+esc(c.by)+'</span>'
+        : (c ? '<span style="color:var(--roll)">not checked since the permit changed (last check '+esc(fmtWhen(c.at))+' by '+esc(c.by)+', number '+esc(c.number||"none")+')</span>'
+             : '<span style="color:var(--roll)">not checked</span>');
+      var box = (c && c.current) ? '' : ' <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" data-regcheck="'+esc(id)+'" data-regkind="'+esc(k)+'" style="accent-color:var(--pink);width:15px;height:15px;cursor:pointer"> I checked it against the VGCCC register</label>';
+      return '<div>'+name+what+' &middot; '+said+box+'</div>';
+    }).join("")+'</div>';
+  }
+  function markRegisterChecked(box){
+    var id=box.getAttribute("data-regcheck"), kind=box.getAttribute("data-regkind");
+    box.disabled=true;
+    workerPost("/admin/permit-register-check", { venue_id:id, kind:kind }).then(function(r){
+      if(!r || r.error){ box.disabled=false; box.checked=false; vpTell("That did not record: "+((r&&r.error)||"no answer")); return; }
+      var b=document.querySelector('button[data-compliance="'+id+'"]'); if(b) loadCompliance(id, b);
+    }).catch(function(){ box.disabled=false; box.checked=false; vpTell("Could not reach the billing service, so the check was not recorded."); });
   }
 
   /* SCREEN HISTORY (migration 114, 21 Oct 2026). Tugun Bowls Club's logo and slides went, and

@@ -55,7 +55,18 @@ check('Tasmania members draw: no minors, cash capped at $5,000, permit above $10
 var tasb = text(free('TAS', 'for_profit', 'bingo'));
 check('Tasmania free bingo: the exempt social game ($30 entry, $300 prize)', /\$30\b/.test(tasb) && /\$300/.test(tasb), tasb);
 var vicb = text(free('VIC', 'for_profit', 'bingo'));
-check('Victoria free bingo: s8.2.4A, not advertised or open to the public, no minors', /8\.2\.4A/.test(vicb) && /advertised/i.test(vicb) && /minors/i.test(vicb), vicb);
+/* Dean's ruling, 28 Oct 2026 (over the letter's table p.8): free number bingo may be run AND advertised;
+   only paid bingo is restricted. So a free Victorian night is told s8.2.4A, no permit, printed tickets,
+   no minors, and nothing about advertising or the general public. A pub and a club are told the same. */
+['for_profit', 'non_profit'].forEach(function (e) {
+  var t = text(free('VIC', e, 'bingo'));
+  check('Victoria free bingo (' + e + '): s8.2.4A, no permit, printed tickets, no minors', /8\.2\.4A/.test(t) && /no permit/i.test(t) && /printed ticket/i.test(t) && /minors/i.test(t), t);
+  check('Victoria free bingo (' + e + '): never told it cannot be advertised or opened to the public, or is entertainment only',
+    !/cannot be advertised|not advertised|general public|entertainment only/i.test(t), t);
+});
+var vicPaidPub = text(G.assess({ state: 'VIC', entityType: 'for_profit', format: 'bingo', paidEntry: true, paidEntryEnabled: true }));
+check('a Victorian pub asking to charge for bingo is offered free entry with the same true words, nothing about advertising',
+  /no permit, entry free, all on printed tickets/.test(vicPaidPub) && !/advertised|general public|entertainment only/i.test(vicPaidPub), vicPaidPub);
 check('a free game in Queensland is still not shown the paid-gaming block', !free('QLD', 'for_profit', 'bingo').blocked);
 var off = text(G.assess({ state: 'NSW', entityType: 'for_profit', format: 'raffle', paidEntry: true, paidEntryEnabled: false }));
 check('the paid-entry-is-off message makes no "anywhere" promise either', !/anywhere/i.test(off), off);

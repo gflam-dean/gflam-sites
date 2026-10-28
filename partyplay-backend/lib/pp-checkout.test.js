@@ -86,7 +86,7 @@ function buy(body, env) {
 }
 
 var chain = Promise.resolve()
-  .then(function () { return buy({ name:"Dean", email:"d@e.co", days:1, optin:false }); })
+  .then(function () { return buy({ name:"Dean", email:"d@e.co", days:1, optin:false, private_use:true }); })
   .then(function (r) {
     ok(!r.threw, "a 24 hour party must not throw: " + r.threw);
     ok(r.status === 200, "expected 200, got " + r.status);
@@ -97,8 +97,18 @@ var chain = Promise.resolve()
     ok(INSERTED && INSERTED.status === "pending", "the row starts pending, not paid");
     ok(INSERTED && !!INSERTED.host_key, "a host key is minted");
     ok(INSERTED && INSERTED.marketing_optin === false, "opt-in false is carried through");
+    /* The private-use declaration (legal compliance matrix gap 6, 28 Oct 2026): kept with the order. */
+    ok(INSERTED && /^\d{4}-\d{2}-\d{2}T/.test(String(INSERTED.private_use_ack_at || "")) &&
+       Math.abs(Date.parse(INSERTED.private_use_ack_at) - Date.now()) < 60000, "the private-use declaration time is on the licence row");
+    ok(/metadata%5Bprivate_use_ack_at%5D=\d{4}-|metadata\[private_use_ack_at\]=\d{4}-/.test(STRIPE_BODY || ""), "and on the Stripe session, so it survives a missing column");
   })
-  .then(function () { return buy({ name:"Dean", email:"d@e.co", days:3, optin:true }); })
+  // no declaration, no sale: nothing is written and no Stripe session is made
+  .then(function () { return buy({ name:"Dean", email:"d@e.co", days:1, optin:false }); })
+  .then(function (r) { ok(r.status === 400 && /private parties only/.test((r.body||{}).error || "") && INSERTED === null && STRIPE_BODY === null,
+                          "a checkout without the private-use tick is refused before any row or session, got " + r.status); })
+  .then(function () { return buy({ name:"Dean", email:"d@e.co", days:1, private_use:"yes" }); })
+  .then(function (r) { ok(r.status === 400 && INSERTED === null, "the tick must be exactly true, not a truthy string, got " + r.status); })
+  .then(function () { return buy({ name:"Dean", email:"d@e.co", days:3, optin:true, private_use:true }); })
   .then(function (r) {
     ok(r.status === 200, "a 3 day party works too, got " + r.status);
     ok(INSERTED && INSERTED.price_cents === 12000, "3 days costs $120, got " + (INSERTED||{}).price_cents);
@@ -106,18 +116,18 @@ var chain = Promise.resolve()
     ok(/allow_promotion_codes=true/.test(STRIPE_BODY || ""), "promo codes stay switched on");
   })
   // a code that is already taken must be retried, not handed out twice
-  .then(function () { CLASHES = 2; return buy({ name:"Dean", email:"d@e.co", days:1 }); })
+  .then(function () { CLASHES = 2; return buy({ name:"Dean", email:"d@e.co", days:1, private_use:true }); })
   .then(function (r) { ok(r.status === 200, "a clashing code is retried, got " + r.status); CLASHES = 0; })
   // and the refusals must still refuse
-  .then(function () { return buy({ email:"d@e.co", days:1 }); })
+  .then(function () { return buy({ email:"d@e.co", days:1, private_use:true }); })
   .then(function (r) { ok(r.status === 400, "no name is refused, got " + r.status); })
-  .then(function () { return buy({ name:"Dean", email:"nope", days:1 }); })
+  .then(function () { return buy({ name:"Dean", email:"nope", days:1, private_use:true }); })
   .then(function (r) { ok(r.status === 400, "a bad email is refused, got " + r.status); })
   .then(function () {
     /* A half configured Worker is turned away by the ROUTER, before it ever
        reaches this handler, so asserting it here would be testing the wrong
        layer. worker/partyplay-api.test.js covers that one through W.fetch. */
-    return buy({ name:"Dean", email:"d@e.co", days:1 });
+    return buy({ name:"Dean", email:"d@e.co", days:1, private_use:true });
   })
   .then(function (r) { ok(r.status === 200, "and a normal purchase still works at the end, got " + r.status); });
 

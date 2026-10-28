@@ -62,7 +62,7 @@ has('the tick is described, with when and who recorded', /ticking a box, and we 
 has('every permit, licence or authority is the venue\'s to obtain and hold (point 3)', /obtaining and holding every permit, licence, authority or approval/);
 has('recording a permit does not make a game lawful', /recording it does not make a game lawful/);
 has('the Victorian permit warranty (8 Oct, point 1(a), s8.4.4)', /If your venue is in Victoria, you warrant[\s\S]*minor gaming permit from the VGCCC/);
-has('Victoria: no bingo tickets on phones', /will not use VenuePlay to issue bingo tickets to players' phones/);
+has('Victoria: no number bingo tickets on phones', /will not use VenuePlay to issue number bingo tickets to players' phones/);
 has('Victoria: why we rely on the warranty (supplying without a permit is banned)', /bans supplying bingo tickets or a random number generator to anyone without a permit/);
 has('running a raffle for a charity needs its written authorisation (1 Oct, point 7)', /charity's written authorisation/);
 has('in NSW the charity holds the authority and the venue runs under it', /in New South Wales the charity holds the authority and you run the raffle under it/);
@@ -85,7 +85,28 @@ has('the music licence stays in section 7 (unchanged)', /responsible for holding
 print('house rules, on the whole document');
 check('no em dash anywhere in the Terms', terms.indexOf('—') === -1);
 check('never "the ACT"', !/\bthe ACT\b/.test(terms));
-check('the effective date moved with the change', /Effective date: 15 October 2026/.test(terms));
+check('the effective date moved with the change', /Effective date: 28 October 2026/.test(terms));
+check('section 13 says what changed on 28 October 2026', /<strong>Changes on 28 October 2026\.<\/strong>/.test(section(13)), section(13).slice(0, 200));
+
+/* 28 Oct 2026, Dean's standing rulings over any reading of the letters: musical bingo is NEVER bingo,
+   in any state; free number bingo may be run and advertised, only PAID bingo is restricted; number
+   bingo phone tickets stay off in Victoria. The legal compliance matrix of 28 Oct found section 6
+   saying the opposite in two places (C1, C2). Read from the clause itself, not the whole page. */
+print('section 6 against the standing rulings (28 Oct 2026)');
+var opening = (function () { var a = s6.indexOf('<p>'), b = s6.indexOf('</p>', a); return a >= 0 ? s6.slice(a, b) : ''; })();
+var c65 = (function () { var a = s6.indexOf('<strong>6.5 '), b = s6.indexOf('</li>', a); return a >= 0 ? s6.slice(a, b) : ''; })();
+var c614 = (function () { var a = s6.indexOf('<strong>6.14 '), b = s6.indexOf('</li>', a); return a >= 0 ? s6.slice(a, b) : ''; })();
+check('"gaming activity" is number bingo, raffles and members draws, and never names musical bingo inside it',
+  /"gaming activity" means number bingo, raffles, members draws and any other game of chance/.test(opening) && !/means[^.]*musical bingo/.test(opening), opening.slice(0, 220));
+check('musical bingo is never called regulated gaming or a gaming activity anywhere in section 6',
+  !/musical bingo[^.]*regulated/i.test(s6) && !/regulated[^.]*musical bingo/i.test(s6) && /Musical bingo is a music game[^.]*not bingo[^.]*neither is a gaming activity/.test(opening), opening);
+check('the venue still conducts every game, whatever its format, and VenuePlay is not involved in the conduct of ANY game (1 Oct, point 9)',
+  /you conduct every game at your venue, whatever its format/.test(opening) && /VenuePlay is not responsible for or in any way involved with the conduct or organisation of any game you run/.test(opening), opening);
+check('6.5 covers number bingo that charges for entry, and a raffle that charges for entry', /before you run number bingo that charges for entry, or a raffle that charges for entry/.test(c65), c65.slice(0, 200));
+check('6.5 never names musical bingo', !/musical/i.test(c65), c65);
+check('6.5 says free number bingo needs no permit (s8.2.4A) and is played on printed tickets in Victoria',
+  /Free number bingo[^.]*needs no permit \(section 8\.2\.4A/.test(c65) && /in Victoria it is played on printed tickets/.test(c65), c65);
+check('6.14 reaches any game run on VenuePlay, so musical bingo and trivia stay indemnified', /arising from any game you run on VenuePlay, including a gaming activity/.test(c614), c614.slice(0, 260));
 
 print('the tick is one sentence, in the Worker and on both onboarding pages (text: a label a human reads)');
 var api = readFile('venueplay-backend/worker/venueplay-api-FULL.js');

@@ -3127,6 +3127,7 @@
 
   VP.requireAuth({ roles:['owner','manager'] }).then(function(ctx){
     if (ctx) VP.suspensionBanner(ctx);
+    if (ctx && VP.termsCard) VP.termsCard(ctx);   // section 6 of the Terms, asked once (28 Oct 2026)
     if (!ctx){ return; } // requireAuth handles redirect when signed out
     impBillingBanner();   // say whose account this is BEFORE anything is drawn or pressed
     pageVenueId = ctx.currentVenueId || null;   // every venue picker below opens on this one

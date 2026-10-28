@@ -216,7 +216,7 @@ test("checkout offers card only, so nobody pays by a bank transfer that takes da
     return { status:201, body: JSON.stringify([{ id:"L9", code:"ACDEFG" }]) };
   };
   FETCH.plan = [answer, answer, answer, answer, answer, answer, answer, answer];
-  return W.fetch(req("POST","/checkout",{ name:"A", email:"a@b.co", days:1 }), ENV).then(function(r){
+  return W.fetch(req("POST","/checkout",{ name:"A", email:"a@b.co", days:1, private_use:true }), ENV).then(function(r){
     var st = FETCH.calls.filter(function(c){ return /checkout\/sessions/.test(c.url); })[0];
     var body = st ? decodeURIComponent(String(st.init.body)) : "";
     ok(!!st, "a Stripe session was asked for, status "+r.status);
@@ -247,7 +247,7 @@ test("the same buyer pressing pay again is sent back to the same open checkout",
     return { status:200, body:"[]" };
   };
   FETCH.plan = [answer, answer, answer, answer];
-  return W.fetch(req("POST","/checkout",{ name:"A", email:"a@b.co", days:1 }), ENV).then(function(r){ return r.json(); }).then(function(j){
+  return W.fetch(req("POST","/checkout",{ name:"A", email:"a@b.co", days:1, private_use:true }), ENV).then(function(r){ return r.json(); }).then(function(j){
     var inserts = FETCH.calls.filter(function(c){ return c.init && c.init.method === "POST" && /pp_licences/.test(c.url); });
     var fresh = FETCH.calls.filter(function(c){ return /checkout\/sessions$/.test(c.url) || (/checkout\/sessions/.test(c.url) && c.init && c.init.method === "POST"); });
     ok(j.url === "https://pay/old" && j.code === "ACDEFG" && j.reused === true, "same checkout back, got " + JSON.stringify(j));
@@ -264,7 +264,7 @@ test("a different plan, or an expired checkout, gets a fresh one", function(){
     return { status:201, body: JSON.stringify([{ id:"L9", code:"ZZZZZZ" }]) };
   };
   FETCH.plan = [answer, answer, answer, answer, answer, answer, answer, answer];
-  return W.fetch(req("POST","/checkout",{ name:"A", email:"a@b.co", days:1 }), ENV).then(function(r){ return r.json(); }).then(function(j){
+  return W.fetch(req("POST","/checkout",{ name:"A", email:"a@b.co", days:1, private_use:true }), ENV).then(function(r){ return r.json(); }).then(function(j){
     ok(j.url === "https://pay/new" && !j.reused, "an expired checkout is not reused, got " + JSON.stringify(j));
   });
 });
@@ -498,7 +498,7 @@ test("and stays quiet about it when it is bound", function(){
     ok(j.photos === true && !j.warning, "expected no warning, got "+JSON.stringify(j)); }); });
 });
 test("checkout refuses to run half configured", function(){
-  return W.fetch(req("POST","/checkout",{ name:"A", email:"a@b.co", days:1 }),
+  return W.fetch(req("POST","/checkout",{ name:"A", email:"a@b.co", days:1, private_use:true }),
                  { SITE_ORIGIN:"https://partyplay.com.au" })
     .then(function(r){ ok(r.status===503, "unconfigured checkout is 503, got "+r.status); });
 });
@@ -1090,7 +1090,7 @@ test("and asking for the email again does not use up the household's checkouts",
   }
   return chain.then(function(){
     FETCH.calls = []; FETCH.plan = [ { status:200, body:"[]" }, { status:200, body:"[]" }, { status:200, body:"[]" } ];
-    return W.fetch(req("POST","/checkout",{ name:"Dean", email:"dean@example.com", days:1 }, ip), ENV);
+    return W.fetch(req("POST","/checkout",{ name:"Dean", email:"dean@example.com", days:1, private_use:true }, ip), ENV);
   }).then(function(r){
     ok(r.status !== 429, "a checkout from the same place still goes ahead, got "+r.status);
   });

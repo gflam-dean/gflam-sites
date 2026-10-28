@@ -3560,6 +3560,18 @@ def local_checks(which):
              'join code or the question, or a broken box on the wall of a venue with no logo, reaches a room full of people otherwise'),
             # D47 and D46: the compliance build of 15 Oct 2026 (Anisimoff Legal 9380, letters of
             # 1 and 8 Oct 2026). Dean: build everything the lawyer called prudent.
+            # D82 and D83: the legal compliance matrix of 28 Oct 2026 (gaps 1, 6, 8 and 10), built on
+            # fix/legal-gaps-28-oct. Musical bingo is never bingo; free bingo may be advertised.
+            ('D82. A venue with no recorded acceptance of section 6 is asked once, and the record is the venue\'s own',
+             'test-terms-acceptance-card.js',
+             'owner or manager ticks section 6 once in the console and the billing Worker records who and when; a host is told, HQ View as cannot accept; nothing a game does is gated', 56,
+             'A live venue with no record it ever accepted that it, not VenuePlay, conducts its games, or an '
+             'acceptance written by somebody who is not the venue, is the exposure the 1 Oct letter (point 3) names'),
+            ('D83. No state means no paid game, HQ finds those venues, a VIC permit can be marked checked, PartyPlay asks private use',
+             'test-legal-gaps-28-oct.js',
+             'a paid game with no known state starts free; HQ filters and badges venues that need a state; the VGCCC register check is HQ-only, VIC-only and names who and when; /start sends the private-use tick', 46,
+             'A club charging for bingo with no state rules shown, a forged or stale "permit checked", or a '
+             'PartyPlay sale with no private-use declaration is what this stops reaching a venue or a buyer'),
             ('D47. The Terms put gaming compliance, permits, attendance, age, records and an indemnity on the venue',
              'test-terms-put-compliance-on-the-venue.js',
              'section 6 carries every clause the lawyer asked for, and the onboarding tick is one sentence everywhere', 40,

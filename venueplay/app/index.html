@@ -1380,6 +1380,7 @@
     /* SWITCHED OFF: one card in place of the game picker, and no TV pairing (28 Oct 2026). A host
        with more than one venue can still choose another one from the card. */
     if(window.VP && VP.holdGate && VP.holdGate(__ctx, staff.length>1 ? { other:{ label:"Choose another venue", onClick:showVenuePick } } : null)){ go("vBoot"); return; }
+    if(window.VP && VP.termsCard) VP.termsCard(__ctx);   // section 6 of the Terms, asked once; it blocks nothing (28 Oct 2026)
     if(venue && venue.slug && pairToVenue(venue.slug)){ return; }          // single venue: straight in
     // Fallback (no venue slug / helper missing): the old type-the-code screen.
     go("vPair"); $("pairIn").value=pairedCode(); $("pairErr").textContent=""; $("pairIn").focus();
@@ -4248,8 +4249,8 @@
   });
   var _startBusy = false;
   /* FREE BINGO SHOWS ITS STATE'S RULES ONCE A NIGHT where a letter attaches conditions to it (state
-     audit C9, 20 Oct 2026): VIC (s8.2.4A: not advertised, not open to the public, not for the
-     venue's commercial benefit), ACT (exempt to $1,000, record the winning ticket), TAS (social
+     audit C9, 20 Oct 2026): VIC (s8.2.4A: no permit, entry free, printed tickets; Dean, 28 Oct 2026:
+     free bingo may be advertised, only paid bingo is restricted), ACT (exempt to $1,000, record the winning ticket), TAS (social
      bingo: $30 entry, $300 prize) and NSW (a free lottery: no cash prizes, $30,000 cap). A free
      night there used to be recorded silently with nothing shown, which in Victoria let a pub start
      a "free" game that is not automatically lawful. freeEntry shows the free-entry rules once a

@@ -1,5 +1,5 @@
 /* PASTE THIS ONE.
-   Built 24 Oct 2026, 01:08:58   fingerprint 978124f6fe13
+   Built 28 Oct 2026, 12:52:56   fingerprint 8df71624dda7
    If that time is not within the last few minutes, close this window and reopen. */
 /* ============================================================================
    PartyPlay Worker: checkout, licences, joining.
@@ -16,7 +16,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '24 Oct 2026, 01:08 · eb5cbf97';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '28 Oct 2026, 12:52 · c2f913ec';   // tools/stamp-workers.py, do not edit by hand
 /* ---- lib/pp-licence.js, inlined at build time. Edit the file, not this. ---- */
 const PPLicence = (function () {
   const module = { exports: {} };
@@ -2355,6 +2355,14 @@ async function handleCheckout(request, env) {
 
   if (!name)  return json({ error: 'We need a name for the licence.' }, 400);
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return json({ error: 'That email does not look right.' }, 400);
+  /* THE PRIVATE-USE DECLARATION (legal compliance matrix gap 6, 28 Oct 2026). Both Anisimoff letters
+     accepted PartyPlay "based on the current controls including ... declaration for private party use
+     only" (1 Oct 2026, point 11; 8 Oct 2026, point 7). The terms said it; the buy page never asked. Now
+     the buyer ticks it on /start, and a checkout without it is refused here, before any row or session
+     exists. Exactly true, so a stray "yes" from a script is not a declaration. */
+  if (b.private_use !== true) {
+    return json({ error: 'PartyPlay is for private parties only. Tick the box to confirm this one is.' }, 400);
+  }
 
   let plan;
   try { plan = PPLicence.plan(days); }
@@ -2416,7 +2424,9 @@ async function handleCheckout(request, env) {
     party_name: partyName,
     days: plan.days,
     marketing_optin: wantsMarketing,
-    price_cents: priceCents, status: 'pending'
+    price_cents: priceCents, status: 'pending',
+    // When the buyer declared it a private party (migration 17). Also on the Stripe session below.
+    private_use_ack_at: new Date().toISOString()
   };
   if (ipTag) newRow.checkout_ip = ipTag;
   const insertLicence = () => sb(env, 'pp_licences', {
@@ -2427,10 +2437,19 @@ async function handleCheckout(request, env) {
   let rows;
   try { rows = await insertLicence(); }
   catch (e) {
-    // migration 16 not run yet: the limit falls back to this Worker's memory, the sale goes ahead
-    if (!newRow.checkout_ip || !missingColumn(e)) throw e;
-    delete newRow.checkout_ip;
-    rows = await insertLicence();
+    /* A migration not run yet: 16 (checkout_ip; the limit falls back to this Worker's memory) or 17
+       (private_use_ack_at; the declaration is still kept, on the Stripe session's metadata). The sale
+       goes ahead either way. */
+    let err = e;
+    for (let tries = 0; !rows && tries < 2; tries++) {
+      if (!missingColumn(err) || (!newRow.checkout_ip && !newRow.private_use_ack_at)) throw err;
+      const said = String(err.message || '');
+      if (/private_use_ack_at/.test(said)) delete newRow.private_use_ack_at;
+      else if (/checkout_ip/.test(said)) delete newRow.checkout_ip;
+      else { delete newRow.checkout_ip; delete newRow.private_use_ack_at; }
+      try { rows = await insertLicence(); } catch (e2) { err = e2; }
+    }
+    if (!rows) throw err;
   }
   noteCheckout(ipTag);
   const licence = rows[0];
@@ -2449,6 +2468,8 @@ async function handleCheckout(request, env) {
     client_reference_id: licence.id,
     'metadata[licence_id]': licence.id,
     'metadata[code]': code,
+    // The private-use declaration, kept with the order at Stripe too (gap 6, 28 Oct 2026).
+    'metadata[private_use_ack_at]': newRow.private_use_ack_at || new Date().toISOString(),
     // So a discount code from a follow-up email, or a competition winner's code,
     // works at checkout without needing another deploy every time.
     allow_promotion_codes: 'true',

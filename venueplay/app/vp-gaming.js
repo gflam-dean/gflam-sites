@@ -162,7 +162,9 @@
          bingo tickets or a number generator to anyone without a minor gaming permit, which is why
          paid bingo here is the one place the gate will not open without a permit on record. */
       free: { all: ['In Victoria a free-entry draw is a trade promotion: no permit.'],
-              bingo: ['Free-entry bingo may be run by anyone with no permit (s8.2.4A), but it cannot be advertised or opened to the general public, any entry fee goes back in full as prizes, and it is for entertainment only, not for the venue’s commercial benefit.',
+              /* Dean's ruling (28 Oct 2026, over the letter's table p.8): free number bingo may be run AND
+                 advertised. Only PAID bingo is restricted, and only a non-profit may charge for it here. */
+              bingo: ['Free-entry bingo needs no permit (s8.2.4A): entry is free, and in Victoria every ticket is a printed ticket. The calling and the big screen run on VenuePlay as normal.',
                       'No minors may take part in bingo in Victoria, free or paid, and players must be physically present.'],
               raffle: ['A free-entry raffle is a trade promotion: no permit, and entry is free apart from goods or services at their normal price.'],
               members: ['A members draw is a trade promotion: no permit, entry free.'] },
@@ -172,7 +174,7 @@
       for_profit: {
         bingo:  { paid: 'no', notes: [
           'Paid bingo in Victoria is for non-profits only, with VGCCC approval and a minor gaming permit. A venue cannot charge for it in its own right.',
-          'Free entry is open to you (s8.2.4A): no permit, any entry fee back in full as prizes, not advertised or open to the general public, entertainment only. No minors, and players must be present.'] },
+          'Free entry is open to you (s8.2.4A): no permit, entry free, all on printed tickets. No minors, and players must be present.'] },
         raffle: { paid: 'cause', permit: 'required', holder: 'npo', notes: [
           'A paid raffle is for non-profits only. The non-profit holds the VGCCC permit; a for-profit running it for them needs their written permission and a commercial organiser’s licence. Record their permission on the account page first.',
           'Ticket sales must be between two and six times the prize pool. No cash prizes (travel money up to 10% of the prize is the exception; store gift cards are fine, debit cards are not). No reverse draws.',
@@ -422,6 +424,15 @@
       out.points.push('Free entry is the safe option everywhere. If nobody pays to play, it is a promotional game.');
       out.points.push('Before selling any ticket, check with your state regulator. We will not guess the rules for you.');
       if (!opts.state) out.warnings.push('Add this venue’s postcode on the account page and we can show you your own state’s rules here.');
+      /* NO STATE, NO PAID GAME (legal compliance matrix G19, 28 Oct 2026). Rules "for that
+         jurisdiction and venue" (Anisimoff, 1 Oct 2026, point 5) cannot be shown for a venue whose
+         state we do not know, so a paid game there was let through with no rules and no block: two
+         venues sat with no state and paid entry ON. Now the same hard block as every other "may not
+         charge": the popup offers a free-entry game, which is lawful everywhere. */
+      if (opts.paidEntry) {
+        out.ok = false; out.hardBlock = true;
+        out.warnings.push('Until we know which state this venue is in, games here start as free entry only.');
+      }
       return out;
     }
     out.confirmed = true;
