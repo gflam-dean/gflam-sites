@@ -551,14 +551,6 @@
   "checks": 8,
   "counted_by": "lines"
  },
- "tools/test-prospect-setup.js": {
-  "checks": 113,
-  "counted_by": "lines"
- },
- "tools/test-prospect-terms-first-game.js": {
-  "checks": 17,
-  "counted_by": "lines"
- },
  "tools/test-purchase-raffle-hq.js": {
   "checks": 24,
   "counted_by": "lines"
@@ -1121,6 +1113,14 @@
  },
  "tools/test-terms-acceptance-card.js": {
   "checks": 56,
+  "counted_by": "lines"
+ },
+ "tools/test-prospect-setup.js": {
+  "checks": 113,
+  "counted_by": "lines"
+ },
+ "tools/test-prospect-terms-first-game.js": {
+  "checks": 17,
   "counted_by": "lines"
  }
 }
