@@ -48,10 +48,22 @@
     // Out of the address bar, the history and any screenshot before anything else happens.
     try { w.history.replaceState(null, "", "/app/go"); } catch (e) {}
 
+    /* A VENUE IS NEVER SENT TO HQ (Dean, 29 Oct 2026). This link is a venue's, but the browser that
+       opens it may already hold somebody else's session, and an HQ admin's sent /app/ straight on to
+       HQ. Whatever session this device had is dropped (this device only) before anything else, so
+       the only way on from here is the venue's own sign-in. */
+    var client = null;
+    function sb() { if (!client) client = w.supabase.createClient(SUPA_URL, SUPA_ANON); return client; }
+    function leaveOtherSession() {
+      try {
+        var p = sb().auth.signOut({ scope: "local" });
+        return (p && p.then) ? p.then(function () {}, function () {}) : Promise.resolve();
+      } catch (e) { return Promise.resolve(); }
+    }
     function toEmailSignIn() {
       try { ls.setItem(METHOD_KEY, "email"); } catch (e) {}
       try { if (got.e) ss.setItem(PREFILL_KEY, got.e); } catch (e) {}
-      w.location.replace("/app/?signin=email&gone=1");
+      return leaveOtherSession().then(function () { w.location.replace("/app/?signin=email&gone=1"); });
     }
     if (!got.t) { toEmailSignIn(); return "no-token"; }
 
@@ -73,8 +85,7 @@
             return null;
           }
           if (!d || d.ok !== true || !d.token_hash) { toEmailSignIn(); return null; }
-          var client = w.supabase.createClient(SUPA_URL, SUPA_ANON);
-          return client.auth.verifyOtp({ token_hash: d.token_hash, type: d.type === "email" ? "email" : "magiclink" })
+          return leaveOtherSession().then(function () { return sb().auth.verifyOtp({ token_hash: d.token_hash, type: d.type === "email" ? "email" : "magiclink" })
             .then(function (r) {
               if (!r || r.error || !r.data || !r.data.session) { toEmailSignIn(); return; }
               try { ls.setItem("vpShiftStart", String(Date.now())); } catch (e) {}   // a fresh 4h shift starts now
@@ -82,6 +93,7 @@
               try { if (d.venue_id) ls.setItem("vpCurrentVenue", String(d.venue_id)); ls.removeItem("vpVenuePick"); } catch (e) {}
               w.location.replace("/app/");
             });
+          });
         })
         .catch(function () { toEmailSignIn(); });
     });

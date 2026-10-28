@@ -365,16 +365,26 @@ function hrefs(html) { var out = [], re = /href="([^"]+)"/g, m; while ((m = re.e
     var msg = c[1], html = msg.html || '', txt = visible(html), L = hrefs(html);
     check(c[0] + ': the template\'s own notes (merge-field list) never reach the inbox', html.indexOf('Merge fields') === -1 && html.indexOf('vpaTplSections') === -1);
     check(c[0] + ': it is a whole document with nothing left unfilled', /^<!doctype html>/i.test(html) && html.indexOf('{{') === -1 && html.indexOf('<!--IF:') === -1 && html.indexOf('ENDIF') === -1, (html.match(/\{\{[a-z_]+\}\}/g) || []).join(' '));
-    check(c[0] + ': ONE button, "Open your VenuePlay", and it is the one-click link for their address', L.filter(function (h) { return /^https:\/\/www\.venueplay\.com\.au\/app\//.test(h); }).length === 1 &&
-      /<a href="https:\/\/www\.venueplay\.com\.au\/app\/go#t=[A-Za-z0-9_-]{43}&e=[^"]+"[^>]*>Open your VenuePlay<\/a>/.test(html) && html.indexOf('&e=' + encodeURIComponent(c[2])) !== -1, L);
+    if (c[0] === 'VIC') {
+      /* VERSION 3 (Dean, 29 Oct 2026): a prospect with a mobile on their login signs in by a texted code. */
+      check(c[0] + ': ONE button, "Open your VenuePlay", and with a mobile on the login it opens the TEXT-CODE sign-in with their number filled in (no one-click link)', L.filter(function (h) { return /^https:\/\/www\.venueplay\.com\.au\/app\//.test(h); }).length === 1 &&
+        /<a href="https:\/\/www\.venueplay\.com\.au\/app\/\?signin=sms#m=0452510904"[^>]*>Open your VenuePlay<\/a>/.test(html) && html.indexOf('/app/go') === -1, L);
+      check(c[0] + ': it says sign in with your mobile and we will text a code, and tells no "link works once, then your email" story', /It's your mobile, 0452 510 904\. Sign in with your mobile and we'll text you a code\./.test(txt) &&
+        !/works once|straight in, once|email you a code|Next time/i.test(txt), txt.slice(0, 700));
+    } else {
+      check(c[0] + ': ONE button, "Open your VenuePlay", and with no mobile it is the one-click link for their address', L.filter(function (h) { return /^https:\/\/www\.venueplay\.com\.au\/app\//.test(h); }).length === 1 &&
+        /<a href="https:\/\/www\.venueplay\.com\.au\/app\/go#t=[A-Za-z0-9_-]{43}&e=[^"]+"[^>]*>Open your VenuePlay<\/a>/.test(html) && html.indexOf('&e=' + encodeURIComponent(c[2])) !== -1, L);
+      check(c[0] + ': and no "this link works once, next time sign in with your email" story', !/works once|straight in, once|Next time|After that/i.test(txt), txt.slice(0, 700));
+    }
     check(c[0] + ': it says it takes about 5 minutes and walks them through everything', /It takes about 5 minutes and walks you through everything\./.test(txt), txt);
     check(c[0] + ': the price in one line: $2.50 a player a month on your usual crowd, first month free, no lock-in', /It's \$2\.50 a player a month on your usual crowd while the November offer runs, first month free, no lock-in\./.test(txt), txt);
     check(c[0] + ': signed by Dean, from VenuePlay', /Cheers, Dean VenuePlay/.test(txt), txt);
     check(c[0] + ': no long instructions any more: no TV address, no game steps, no card link, no tick (they live in the app)', !/\/tv\?|Open lobby|add-card|tick one box|Number bingo|Musical bingo/i.test(html), L);
-    check(c[0] + ': no logo, no banner image', !/<img/i.test(html));
+    check(c[0] + ': on brand (version 3): the VenuePlay logo in the dark header, as every VenuePlay email, and nothing else as an image', (html.match(/<img/gi) || []).length === 1 &&
+      /background:#12101a[^>]*>\s*<img src="https:\/\/venueplay\.com\.au\/logos\/venueplay_primary_rebuilt\.png"[^>]*alt="VenuePlay"/.test(html));
     check(c[0] + ': who we are, the call line and how to stop (Spam Act, as every venue email)', /You are getting this because you asked us to set up VenuePlay for/.test(txt) && /Gflam Group Pty Ltd, ABN 35 679 383 049/.test(txt) &&
       L.indexOf('https://www.venueplay.com.au/unsubscribe?e=' + encodeURIComponent(c[2])) !== -1 && L.indexOf('tel:+61752283667') !== -1 && L.indexOf('https://www.venueplay.com.au/terms') !== -1 && L.indexOf('https://www.venueplay.com.au/privacy') !== -1, L);
-    check(c[0] + ': a text part, made from the same HTML', typeof msg.text === 'string' && msg.text === helpPlainFromHtml(html) && msg.text.indexOf('Open your VenuePlay (https://www.venueplay.com.au/app/go#t=') !== -1, msg.text);
+    check(c[0] + ': a text part, made from the same HTML', typeof msg.text === 'string' && msg.text === helpPlainFromHtml(html) && msg.text.indexOf('Open your VenuePlay (https://www.venueplay.com.au/app/' + (c[0] === 'VIC' ? '?signin=sms#m=0452510904' : 'go#t=')) !== -1, msg.text);
     check(c[0] + ': no em dash or en dash anywhere in what they read', !/[—–]/.test(txt) && !/&mdash;|&ndash;/.test(html) && !/[—–]/.test(msg.text || ''));
     check(c[0] + ': no urgency or push (Dean, 28 Oct 2026)', !/don't miss|do not miss|hurry|limited time|act now|today only|last chance|before it's gone|spots? left|we have set you up/i.test(txt), txt.slice(0, 300));
   });

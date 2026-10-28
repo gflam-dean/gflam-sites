@@ -2421,12 +2421,14 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
        when the email goes, not when HQ pressed the button. No table yet, or no login: the button opens
        the email sign-in instead, and HQ is told. */
     let signinToken = null;
-    if (login) {
+    // A mobile login signs in by text code, so it needs no one-click link (and has none to leak).
+    if (login && !login.mobile) {
       try { signinToken = await vpaMintSigninLink(env, login.id, venue.id, sendAtMs); }
       catch (e) { warnings.push('The one-click sign-in button was not made (run migration 123), so their email button opens the email-code sign-in instead.'); }
     }
     const render = { foundingId: foundingId, email: email, firstName: firstName, venueName: name, slug: slug,
-      seats: players, state: state, entityType: entityType, slides: slideCount, authUserId: login ? login.id : null };
+      seats: players, state: state, entityType: entityType, slides: slideCount, authUserId: login ? login.id : null,
+      mobileLogin: !!(login && login.mobile), mobile: login && login.mobile ? vpaProspectPhone(mobileRaw) : null };
     const r = await vpaFireProspectWelcome(env, Object.assign({ signinToken: signinToken, sendAtMs: delayMin > 0 ? sendAtMs : null }, render));
     welcomeSent = !!r.ok;
     if (!welcomeSent) warnings.push('THE WELCOME EMAIL DID NOT SEND. Use Resend welcome on the venue, or send it by hand.');
@@ -2746,14 +2748,18 @@ async function vpaRenderProspectWelcome(env, o) {
   let html = String(await res.text()).replace(/^\s*<!--[\s\S]*?-->\s*/, '');   // the template's notes are for us, not the inbox
   const founding = vpaFoundingOpenNow(env);
   const rate = founding ? 2.50 : 3.00;
-  html = vpaTplSections(html, { slides: o.slides > 0, noslides: !(o.slides > 0), oneclick: !!o.signinToken, nooneclick: !o.signinToken,
-    founding: founding, standard: !founding });
+  /* HOW THEY SIGN IN (Dean, 29 Oct 2026: "everyone has their phone in their hand"). A login with their
+     mobile on it signs in by a texted code (the MobileMessage hook, as every venue login does), and the
+     button opens that sign-in with their number filled in. Otherwise the one-click link, else email. */
+  const mobile = vpaProspectPhone(o.mobile);
+  const sms = !!(o.mobileLogin && mobile && mobile.indexOf('04') === 0);
+  html = vpaTplSections(html, { slides: o.slides > 0, noslides: !(o.slides > 0), sms: sms, oneclick: !sms && !!o.signinToken,
+    nooneclick: !sms && !o.signinToken, founding: founding, standard: !founding });
   html = html
     .replace(/{{greeting}}/g, o.firstName ? 'Hi ' + vpaEsc(o.firstName) + ',' : 'Hi there,')
     .replace(/{{venue_name}}/g, vpaEsc(o.venueName || 'your venue'))
-    .replace(/{{signin_url}}/g, vpaOneClickUrl(site, o.signinToken, email))
-    .replace(/{{signin_days}}/g, String(VPA_SIGNIN_LINK_DAYS))
-    .replace(/{{app_address}}/g, (site + '/app').replace(/^https?:\/\//, ''))
+    .replace(/{{signin_url}}/g, sms ? site + '/app/?signin=sms#m=' + mobile.replace(/\D/g, '') : vpaOneClickUrl(site, o.signinToken, email))
+    .replace(/{{login_mobile}}/g, sms ? vpaEsc(mobile) : '')
     .replace(/{{login_email}}/g, vpaEsc(email))
     .replace(/{{player_rate}}/g, '$' + rate.toFixed(2))
     .replace(/{{offer_phrase}}/g, vpaOfferMonthPhrase(env))
@@ -2867,7 +2873,7 @@ async function vpaProspectWelcomeNow(request, env, json) {
   if (!(await vpaResendCancel(env, g.row.resend_id))) return json({ error: 'Resend would not take back the booked one, so nothing was sent twice. Try again in a minute.' }, 502);
   const render = Object.assign({}, g.row.detail || {});
   let token = null;
-  if (render.authUserId) { try { token = await vpaMintSigninLink(env, render.authUserId, g.row.venue_id, Date.now()); } catch (_) { token = null; } }
+  if (render.authUserId && !render.mobileLogin) { try { token = await vpaMintSigninLink(env, render.authUserId, g.row.venue_id, Date.now()); } catch (_) { token = null; } }
   await vpaProspectRetireLink(env, g.row.signin_token_hash);
   const r = await vpaFireProspectWelcome(env, Object.assign({}, render, { signinToken: token, sendAtMs: null }));
   const at = new Date().toISOString();

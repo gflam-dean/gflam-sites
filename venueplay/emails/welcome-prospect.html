@@ -1,56 +1,73 @@
 <!--
-  VenuePlay transactional email: YOUR VENUEPLAY ACCOUNT (a prospect HQ set up in one step)
+  VenuePlay transactional email: YOUR VENUEPLAY ACCOUNT (a prospect HQ or the autopilot set up in one step)
   Sent once by the billing Worker (vpaFireProspectWelcome) when HQ > Venues > Set up a prospect builds
   an account for a venue that replied "yes, tell me more" (Dean, 28 Oct 2026).
 
-  VERSION 2 (Dean, 28 Oct 2026): "an email that goes to the customer... on a delay, so they don't get it
-  straight away... just a link: hey, I've set you up an account. Click here to access it, and then it
-  actually asks them to add their mobile number and then to confirm the T&Cs and then it walks through
-  everything." So this is short and personal, in Dean's voice, framed as the favour he promised (see
-  memory dean-sales-reply-tone). ONE button. Every instruction that used to be in here (the TV address,
-  the tick, the first game, the card link) now lives in the app's first-run setup (app/vp-firstrun.js),
-  one step per screen. No logo, no banner: a person writing to a person.
-  It is transactional: they asked for it. Who we are and how to stop product emails are in the footer,
-  as on every other venue email.
-  Sections kept or stripped by vpaTplSections in the Worker: slides / noslides (did HQ load their
-  screen ads), oneclick / nooneclick (was a one-time sign-in link minted, migration 123), founding /
-  standard (is the offer running).
+  VERSION 3 (Dean, 29 Oct 2026): on brand, the same frame as every other VenuePlay email (the dark
+  header with the logo, the white card, the pink button), and it signs them in BY PHONE: "everyone has
+  their phone in their hand and they may not be at their email." A prospect with a real Australian
+  mobile has it on their login, so the button opens the sign-in on the mobile option with their number
+  filled in, and the email says we will text them a code. With no mobile, the button is the one-click
+  link (migration 123), or the email sign-in. It never tells a "this link works once, next time sign in
+  with your email" story. Still short and in Dean's voice, the favour he promised (dean-sales-reply-tone).
+  Everything else (the Terms tick, their TV, a first game, their card) lives in the app's first-run setup.
+  It is transactional: they asked for it. Who we are and how to stop product emails are in the footer.
+  Sections kept or stripped by vpaTplSections in the Worker: slides / noslides (did HQ load their screen
+  ads), sms / oneclick / nooneclick (how they sign in; exactly one is kept), founding / standard (offer).
   Merge fields:
-    {{greeting}} {{venue_name}} {{signin_url}} {{signin_days}} {{app_address}} {{login_email}}
+    {{greeting}} {{venue_name}} {{signin_url}} {{login_email}} {{login_mobile}}
     {{player_rate}} {{offer_phrase}} {{terms_url}} {{privacy_url}} {{support_email}} {{support_phone}}
     {{support_tel}} {{unsubscribe_url}}
   House rules: no em dashes, ACT not "the ACT", never "roster".
 -->
-<div style="display:none;max-height:0;overflow:hidden;opacity:0">As promised, your VenuePlay account for {{venue_name}} is ready to have a play with.</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;margin:0;padding:0">
-  <tr><td style="padding:24px 16px">
-    <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#1d1d24">
-      <tr><td>
-        <p style="margin:0 0 16px">{{greeting}}</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;margin:0;padding:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+  <tr><td align="center" style="padding:24px 12px">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0">As promised, your VenuePlay account for {{venue_name}} is ready to have a play with.</div>
+    <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden">
+      <tr><td style="background:#12101a;padding:20px 28px">
+        <img src="https://venueplay.com.au/logos/venueplay_primary_rebuilt.png" width="168" alt="VenuePlay" style="display:block;border:0;height:auto">
+      </td></tr>
+      <tr><td style="padding:32px 28px 4px">
+        <h1 style="margin:0;font-size:25px;line-height:1.25;color:#12101a;font-weight:800">Your VenuePlay is ready</h1>
+        <p style="margin:18px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">{{greeting}}</p>
 <!--IF:slides-->
-        <p style="margin:0 0 16px">As promised, I've set you up an account for {{venue_name}} with a few quick slides our marketing team made from your website, so you can see how your TV looks and have a play.</p>
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">As promised, I've set you up an account for {{venue_name}} with a few quick slides our marketing team made from your website, so you can see how your TV looks and have a play.</p>
 <!--ENDIF:slides-->
 <!--IF:noslides-->
-        <p style="margin:0 0 16px">As promised, I've set you up an account for {{venue_name}}, so you can see how your TV looks and have a play.</p>
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">As promised, I've set you up an account for {{venue_name}}, so you can see how your TV looks and have a play.</p>
 <!--ENDIF:noslides-->
-        <table role="presentation" cellpadding="0" cellspacing="0" style="margin:4px 0 8px"><tr>
-          <td><a href="{{signin_url}}" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:13px 28px;border-radius:8px">Open your VenuePlay</a></td>
-        </tr></table>
+      </td></tr>
+      <tr><td style="padding:22px 28px 0">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf7fb;border:1px solid #eee;border-radius:12px">
+          <tr><td style="padding:20px 22px">
+            <p style="margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#FF1F8E">Your login</p>
+<!--IF:sms-->
+            <p style="margin:8px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">It's your mobile, <strong>{{login_mobile}}</strong>. Sign in with your mobile and we'll text you a code. No password, and no app to download.</p>
+<!--ENDIF:sms-->
 <!--IF:oneclick-->
-        <p style="margin:0 0 16px;font-size:13px;color:#6a6a75">The button signs you straight in, once, within {{signin_days}} days. After that, sign in at {{app_address}} with {{login_email}}.</p>
+            <p style="margin:8px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">The button below opens your account for you. No password, and no app to download.</p>
 <!--ENDIF:oneclick-->
 <!--IF:nooneclick-->
-        <p style="margin:0 0 16px;font-size:13px;color:#6a6a75">Sign in with {{login_email}} and we'll email you a code. No password.</p>
+            <p style="margin:8px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Sign in with {{login_email}} and we'll email you a code. No password.</p>
 <!--ENDIF:nooneclick-->
-        <p style="margin:0 0 16px">It takes about 5 minutes and walks you through everything.</p>
+            <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:16px"><tr>
+              <td><a href="{{signin_url}}" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:14px 30px;border-radius:10px">Open your VenuePlay</a></td>
+            </tr></table>
+          </td></tr>
+        </table>
+      </td></tr>
+      <tr><td style="padding:22px 28px 0">
+        <p style="margin:0;font-size:16px;line-height:1.6;color:#3a3a44">It takes about 5 minutes and walks you through everything.</p>
 <!--IF:founding-->
-        <p style="margin:0 0 16px">It's {{player_rate}} a player a month on your usual crowd {{offer_phrase}}, first month free, no lock-in.</p>
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">It's {{player_rate}} a player a month on your usual crowd {{offer_phrase}}, first month free, no lock-in.</p>
 <!--ENDIF:founding-->
 <!--IF:standard-->
-        <p style="margin:0 0 16px">It's {{player_rate}} a player a month on your usual crowd, first month free, no lock-in.</p>
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">It's {{player_rate}} a player a month on your usual crowd, first month free, no lock-in.</p>
 <!--ENDIF:standard-->
-        <p style="margin:0 0 24px">Cheers,<br>Dean<br>VenuePlay</p>
-        <p style="margin:0 0 10px;font-size:12px;line-height:1.6;color:#8a8a95">Need a hand? Just reply to this email, or call <a href="tel:{{support_tel}}" style="color:#8a8a95;text-decoration:none">{{support_phone}}</a> and press 2.</p>
+        <p style="margin:18px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Cheers,<br>Dean<br>VenuePlay</p>
+      </td></tr>
+      <tr><td style="padding:26px 28px 26px">
+        <p style="margin:0 0 10px;font-size:12.5px;line-height:1.6;color:#8a8a95;border-top:1px solid #eee;padding-top:16px">Need a hand? Just reply to this email, or call <a href="tel:{{support_tel}}" style="color:#8a8a95;text-decoration:none">{{support_phone}}</a> and press 2.</p>
         <p style="margin:0;font-size:12px;line-height:1.6;color:#8a8a95">You are getting this because you asked us to set up VenuePlay for {{venue_name}}. VenuePlay is made by Gflam Group Pty Ltd, ABN 35 679 383 049. <a href="{{terms_url}}" style="color:#8a8a95">Terms</a> &middot; <a href="{{privacy_url}}" style="color:#8a8a95">Privacy</a> &middot; <a href="{{unsubscribe_url}}" style="color:#8a8a95">Unsubscribe from product emails</a></p>
       </td></tr>
     </table>

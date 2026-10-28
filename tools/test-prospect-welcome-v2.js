@@ -286,7 +286,9 @@ if (typeof Response === 'undefined') { Response = function (body, init) { this.b
     DB.vp_platform_admins = [{ auth_user_id: ADMIN, label: 'Dean', role: 'owner' }, { auth_user_id: STAFFADMIN, label: 'Staffer', role: 'staff' }];
     DB.vp_venues = []; DB.venueplay_founding = []; DB.vp_venue_staff = []; DB.vp_admin_audit = []; DB.vp_venue_settings = []; DB.vp_screens = []; DB.vp_venue_screen = []; DB.vp_signin_links = []; DB.vp_prospect_welcomes = [];
   }
-  var CAZ = { name: "Caz Reitop's Dirty Secrets", first_name: 'Amit', email: 'CazReitop@gmail.com', mobile: '0452 510 904', postcode: '3066', entity_type: 'for_profit', players: 60 };
+  /* No mobile: the delayed welcome's one-click link is what this section is about (a mobile login signs in by
+     text code and carries no link at all; tools/test-prospect-setup.js holds that). */
+  var CAZ = { name: "Caz Reitop's Dirty Secrets", first_name: 'Amit', email: 'CazReitop@gmail.com', postcode: '3066', entity_type: 'for_profit', players: 60 };
   function with_(o) { var b = {}; for (var k in CAZ) b[k] = CAZ[k]; for (var k2 in (o || {})) b[k2] = o[k2]; return b; }
   function tokenOf(m) { var x = /\/app\/go#t=([A-Za-z0-9_-]{43})/.exec((m && m.html) || ''); return x ? x[1] : ''; }
   function linkFor(tok) { return vpaSigninTokenHash(tok).then(function (h) { return DB.vp_signin_links.filter(function (l) { return l.token_hash === h; })[0] || null; }); }

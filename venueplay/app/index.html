@@ -894,6 +894,13 @@
         return;
       }
       clearImp();
+      /* A VENUE'S LINK NEVER LANDS IN HQ (Dean, 29 Oct 2026). ?signin= is only ever on a link we send a
+         venue (the prospect welcome, the go page). An HQ session already in this browser is not theirs:
+         drop it here, on this device only, and show the venue's sign-in. */
+      if(/[?&]signin=/.test(String(window.location.search||""))){
+        try{ client.auth.signOut({ scope:"local" }).then(function(){ go("vSignIn"); openSignInStep(); }, function(){ go("vSignIn"); }); }catch(e){ go("vSignIn"); }
+        return;
+      }
       window.location.href="hq.html"; return;
     }
     if(ctx.scope==="staff"){
@@ -1013,9 +1020,19 @@
   function openSignInStep(){
     var q=String((window.location && window.location.search) || ""), want="";
     if(/[?&]signin=email(&|$)/.test(q)) want="email";
+    /* THE PROSPECT WELCOME FOR A MOBILE LOGIN (Dean, 29 Oct 2026: "everyone has their phone in their hand")
+       opens ?signin=sms#m=04........: the text-code option, their number filled in, out of the address bar. */
+    if(/[?&]signin=sms(&|$)/.test(q)) want="sms";
     if(!want){ try{ want=localStorage.getItem(SIGNIN_KEY)||""; }catch(e){} }
     var prefill=""; try{ prefill=sessionStorage.getItem("vpSignInPrefill")||""; sessionStorage.removeItem("vpSignInPrefill"); }catch(e){}
-    if(want!=="email") return "sms";
+    if(want!=="email"){
+      var hm=/[#&]m=(04\d{8})(&|$)/.exec(String((window.location && window.location.hash) || ""));
+      if(hm){
+        var mi=$("mobileIn"); if(mi) mi.value=hm[1].slice(0,4)+" "+hm[1].slice(4,7)+" "+hm[1].slice(7);
+        try{ window.history.replaceState(null, "", window.location.pathname + q); }catch(e){}
+      }
+      return "sms";
+    }
     $("stepMobile").classList.add("hidden");
     $("stepCode").classList.add("hidden");
     $("emailAlt").classList.add("hidden");

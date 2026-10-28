@@ -47,17 +47,19 @@ El.prototype.addEventListener = function (ev, fn) { (this.handlers[ev] = this.ha
 El.prototype.click = function () { var me = this; (this.handlers.click || []).forEach(function (f) { f.call(me, { preventDefault: function () {} }); }); };
 var TOKEN_A = 'Ab_-0123456789abcdefghijklmnopqrstuvwxyzABC';   // 43 base64url characters
 function goPage(hash, answer, verify) {
-  var W = { calls: [], verifies: [], replaced: null, history: [] };
+  var W = { calls: [], verifies: [], replaced: null, history: [], order: [] };
   var els = { goBtn: new El('goBtn'), goMsg: new El('goMsg') };
   W.window = {
     document: { getElementById: function (id) { return els[id] || null; } },
     localStorage: store(), sessionStorage: store(),
-    location: { hash: hash, replace: function (u) { W.replaced = u; } },
+    location: { hash: hash, replace: function (u) { W.replaced = u; W.order.push('go ' + u); } },
     history: { replaceState: function (a, b, u) { W.history.push(u); W.window.location.hash = ''; } },
     fetch: function (url, opts) { W.calls.push({ url: url, body: JSON.parse(opts.body), method: opts.method });
       var a = answer || { status: 200, body: { ok: true, token_hash: 'pkce_HASH', type: 'magiclink', venue_id: 'V9' } };
       return Promise.resolve({ status: a.status, json: function () { return Promise.resolve(a.body); } }); },
-    supabase: { createClient: function () { return { auth: { verifyOtp: function (o) { W.verifies.push(o); return Promise.resolve(verify || { data: { session: { access_token: 'x' }, user: { id: 'u' } }, error: null }); } } }; } }
+    supabase: { createClient: function () { return { auth: {
+      signOut: function (o) { W.order.push('signout ' + (o && o.scope)); return Promise.resolve({ error: null }); },
+      verifyOtp: function (o) { W.verifies.push(o); W.order.push('verify'); return Promise.resolve(verify || { data: { session: { access_token: 'x' }, user: { id: 'u' } }, error: null }); } } }; } }
   };
   (new Function('window', ONECLICK))(W.window);
   W.els = els; W.ls = W.window.localStorage._s; W.ss = W.window.sessionStorage._s;
@@ -78,6 +80,10 @@ var shiftAt = parseInt(G1.ls.vpShiftStart, 10);
 check('a fresh 4 hour shift starts now (vpShiftStart), exactly as a typed code starts one', shiftAt > 0 && Math.abs(Date.now() - shiftAt) < 60000, G1.ls);
 check('this device now opens on the email option next time, on their venue', G1.ls.vpSignInWith === 'email' && G1.ls.vpCurrentVenue === 'V9', G1.ls);
 check('and the console opens, signed in', G1.replaced === '/app/', G1.replaced);
+/* A VENUE IS NEVER SENT TO HQ (Dean, 29 Oct 2026): the browser that opens a venue's link may hold an HQ
+   admin's session, and /app/ sends an admin straight on to HQ. It is dropped, on this device only, first. */
+check('whatever session this device already had (an HQ admin\'s) is signed out locally BEFORE the venue\'s sign-in is exchanged',
+  JSON.stringify(G1.order) === JSON.stringify(['signout local', 'verify', 'go /app/']), G1.order);
 
 var G2 = goPage('#t=' + TOKEN_A + '&e=Amit%40Caz.example', { status: 410, body: { ok: false } });
 G2.els.goBtn.click(); settle();
@@ -86,8 +92,11 @@ check('used or expired (410): to the email sign-in, saying so (gone=1), their ad
 var G3 = goPage('#t=' + TOKEN_A, undefined, { data: null, error: { message: 'Token has expired or is invalid' } });
 G3.els.goBtn.click(); settle();
 check('Auth refuses the exchange: the same friendly page, no shift started, no error code shown', G3.replaced === '/app/?signin=email&gone=1' && !G3.ls.vpShiftStart && G3.els.goMsg.textContent === '', G3.replaced);
-var G4 = goPage('');
+var G4 = goPage(''); settle();
 check('no token at all: straight to the email sign-in, nothing sent', G4.result === 'no-token' && G4.replaced === '/app/?signin=email&gone=1' && G4.calls.length === 0);
+check('and the session already on this device is dropped first, so an HQ login never carries a venue on to HQ',
+  JSON.stringify(G4.order) === JSON.stringify(['signout local', 'go /app/?signin=email&gone=1']), G4.order);
+check('a used link drops it too, before the sign-in page', G2.order[0] === 'signout local' && G2.order[G2.order.length - 1] === 'go /app/?signin=email&gone=1', G2.order);
 var G5 = goPage('#t=short&e=' + encodeURIComponent('x" onmouseover="y'));
 check('a malformed token or address is not used (no request, no prefill)', G5.result === 'no-token' && G5.calls.length === 0 && !G5.ss.vpSignInPrefill, G5.ss);
 var G6 = goPage('#t=' + TOKEN_A, { status: 429, body: {} });
@@ -100,14 +109,16 @@ var INDEX = readFile('venueplay/app/index.html');
 var keyM = /var SIGNIN_KEY="([^"]+)"/.exec(INDEX);
 check('index.html reads the same device key the go page writes', !!keyM && keyM[1] === 'vpSignInWith' && /METHOD_KEY = "vpSignInWith"/.test(ONECLICK), keyM && keyM[1]);
 function signInPage(search, ls, prefill) {
-  var ids = ['stepMobile', 'stepCode', 'emailAlt', 'stepEmail', 'authSub', 'emailIn'], els = {};
+  var ids = ['stepMobile', 'stepCode', 'emailAlt', 'stepEmail', 'authSub', 'emailIn', 'mobileIn'], els = {};
   ids.forEach(function (i) { els[i] = new El(i); });
   els.stepCode.classList.add('hidden'); els.emailAlt.classList.add('hidden'); els.stepEmail.classList.add('hidden');
   els.authSub.textContent = 'Sign in with a text code to your mobile.';
   var LS = ls || store(), SS = store(); if (prefill) SS.setItem('vpSignInPrefill', prefill);
   var fn = (new Function('$', 'localStorage', 'sessionStorage', 'window', 'var SIGNIN_KEY="' + keyM[1] + '";\n' + lift(INDEX, 'openSignInStep') + '\nreturn openSignInStep();'));
-  var out = fn(function (id) { return els[id]; }, LS, SS, { location: { search: search } });
-  return { out: out, els: els, SS: SS };
+  var hist = [], hash = arguments[3] || '';
+  var out = fn(function (id) { return els[id]; }, LS, SS, { location: { search: search, hash: hash, pathname: '/app/' },
+    history: { replaceState: function (a, b, u) { hist.push(u); } } });
+  return { out: out, els: els, SS: SS, hist: hist };
 }
 var S1 = signInPage('?signin=email&gone=1', null, 'amit@caz.example');
 check('?signin=email: the email step is open and the text step is not', S1.out === 'email' && !S1.els.stepEmail.classList.contains('hidden') && S1.els.stepMobile.classList.contains('hidden') && S1.els.emailAlt.classList.contains('hidden'));
@@ -118,6 +129,31 @@ var S2 = signInPage('', LSe);
 check('this device last signed in by email: the email option first, plainly worded', S2.out === 'email' && !S2.els.stepEmail.classList.contains('hidden') && S2.els.authSub.textContent === 'Sign in with a code sent to your email.', S2.els.authSub.textContent);
 var S3 = signInPage('');
 check('nothing known: the text step as before, untouched', S3.out === 'sms' && !S3.els.stepMobile.classList.contains('hidden') && S3.els.stepEmail.classList.contains('hidden') && S3.els.authSub.textContent === 'Sign in with a text code to your mobile.');
+/* THE PROSPECT WELCOME FOR A MOBILE LOGIN (Dean, 29 Oct 2026): ?signin=sms#m=04........ */
+var LSm = store(); LSm.setItem('vpSignInWith', 'email');
+var S5 = signInPage('?signin=sms', LSm, null, '#m=0452510904');
+check('?signin=sms from the welcome: the TEXT step, even on a device that last used email, their mobile filled in, the number out of the address bar',
+  S5.out === 'sms' && !S5.els.stepMobile.classList.contains('hidden') && S5.els.stepEmail.classList.contains('hidden') && S5.els.mobileIn.value === '0452 510 904' && S5.hist[0] === '/app/?signin=sms', [S5.out, S5.els.mobileIn.value, S5.hist]);
+var S6 = signInPage('?signin=sms', null, null, '#m=07522836' + '67');
+check('a number in the link that is not a mobile is never put in the box', S6.out === 'sms' && S6.els.mobileIn.value === '', S6.els.mobileIn.value);
+/* A VENUE'S LINK NEVER LANDS IN HQ (Dean, 29 Oct 2026: the go page "links back to HQ"). The console's own
+   router, run: an HQ session already in the browser, on a link that carries ?signin=, is dropped and the
+   venue's sign-in shown; without ?signin= an admin still goes to HQ as before. */
+function routeAdmin(search) {
+  var R = { href: null, views: [], signouts: [], opened: 0 };
+  var win = { location: { search: search, get href() { return R.href; }, set href(u) { R.href = u; } } };
+  var fn = new Function('window', 'client', 'go', 'openSignInStep', 'impFlag', 'clearImp', 'praffleTile', 'showImpBanner', '__ctx',
+    lift(INDEX, 'applyRoute') + '\nreturn applyRoute;');
+  var applyRoute = fn(win, { auth: { signOut: function (o) { R.signouts.push(o && o.scope); return Promise.resolve({}); } } },
+    function (v) { R.views.push(v); }, function () { R.opened++; }, function () { return null; }, function () {}, function () {}, function () {}, null);
+  applyRoute({ authed: true, isAdmin: true });
+  settle();
+  return R;
+}
+var RA = routeAdmin('?signin=sms'), RB = routeAdmin('?signin=email&gone=1'), RC = routeAdmin('');
+check('an HQ session opening a venue\'s link (?signin=): NOT sent to HQ; signed out on this device and shown the venue sign-in',
+  RA.href === null && RB.href === null && JSON.stringify(RA.signouts) === '["local"]' && RA.views.indexOf('vSignIn') !== -1 && RA.opened === 1, [RA, RB]);
+check('an HQ admin opening the console normally still goes to HQ', RC.href === 'hq.html' && RC.signouts.length === 0, RC);
 var S4 = signInPage('?signin=email', null, 'x" onmouseover="y');
 check('a prefill that is not an address is never put in the box', S4.out === 'email' && S4.els.emailIn.value === '', S4.els.emailIn.value);
 
@@ -253,7 +289,9 @@ function freshLink(ttlMs, venueId, userId) {   // a second link for the same log
   check('the email\'s main button "Open your VenuePlay" is the one-click link, with the token and their address in the fragment',
     main.length === 1 && main[0] === 'https://www.venueplay.com.au/app/go#t=' + token + '&e=cazreitop%40gmail.com' &&
     new RegExp('<a href="' + main[0].replace(/[.?*+^$()|[\]\\]/g, '\\$&') + '"[^>]*>Open your VenuePlay</a>').test(html), main);
-  check('it says plainly it signs them straight in, once, within 14 days, and how to sign in after that (their email)', /The button signs you straight in, once, within 14 days\. After that, sign in at www\.venueplay\.com\.au\/app with cazreitop@gmail\.com\./.test(txt), txt.slice(0, 900));
+  /* Version 3 (Dean, 29 Oct 2026): no "this link works once, next time sign in with your email" story. */
+  check('it says the button opens their account, with no "works once, next time your email" story', /The button below opens your account for you\. No password, and no app to download\./.test(txt) &&
+    !/works once|straight in, once|Next time|After that/i.test(txt), txt.slice(0, 900));
   check('it is the ONLY sign-in link in the email (version 2: one button)', L.filter(function (h) { return h.indexOf('/app') !== -1; }).length === 1, L);
   check('nothing left unfilled and no em dash', html.indexOf('{{') === -1 && html.indexOf('<!--IF:') === -1 && !/[—–]/.test(txt));
   var t2 = await freshLink(undefined, v.id, login.id);
