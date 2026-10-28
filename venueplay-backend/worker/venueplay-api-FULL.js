@@ -204,6 +204,9 @@ export default {
       // The same setup for the prospect autopilot Mac job, on Dean's yes; a secret header, this route only (29 Oct 2026).
       if (request.method === 'POST' && path === '/autopilot/prospect'    && typeof vpaAutopilotProspect === 'function')    return await vpaAutopilotProspect(request, env, json);
       // The welcome goes on a delay (Dean, 28 Oct 2026; migration 124): HQ sees when, and can cancel it or send it now.
+      // HQ > Prospects (Dean, 29 Oct 2026; migration 125): who has not signed up, who to ring, and the Called mark.
+      if (request.method === 'POST' && path === '/admin/prospects'              && typeof vpaProspectsList === 'function')      return await vpaProspectsList(request, env, json);
+      if (request.method === 'POST' && path === '/admin/prospect/called'        && typeof vpaProspectCalled === 'function')     return await vpaProspectCalled(request, env, json);
       if (request.method === 'POST' && path === '/admin/prospect/welcomes'      && typeof vpaProspectWelcomes === 'function')   return await vpaProspectWelcomes(request, env, json);
       if (request.method === 'POST' && path === '/admin/prospect/welcome-cancel' && typeof vpaProspectWelcomeCancel === 'function') return await vpaProspectWelcomeCancel(request, env, json);
       if (request.method === 'POST' && path === '/admin/prospect/welcome-now'   && typeof vpaProspectWelcomeNow === 'function') return await vpaProspectWelcomeNow(request, env, json);
@@ -2155,11 +2158,15 @@ async function vpaHandleVenue(request, env, json) {
  *     the owner or a manager ticks it. The TV keeps showing their ads.
  *   - one vp_admin_audit row saying who set it up and what was made.
  * Everything is checked BEFORE anything is written, so a refusal leaves nothing half-made.
- * Body: { name, first_name?, email, mobile?, postcode, entity_type: 'non_profit'|'for_profit',
- *         players? (default 60), website?, slides?: ['data:image/png;base64,...', ...], send_welcome? }
+ * Body: { name, first_name?, email, mobile?, phone?, postcode, entity_type: 'non_profit'|'for_profit',
+ *         players? (default 10), website?, call_requested?, slides?: ['data:image/png;base64,...', ...], send_welcome? }
+ *   phone (29 Oct 2026, migration 125): the number to RING them on, a mobile or a landline. Not a
+ *   login. Optional; empty falls back to the mobile. It goes on their vp_prospects row for HQ > Prospects.
  * -> { ok, venue:{id,name,slug}, founding_id, tv_url, login:{email, mobile?}, slides, welcome_sent, warnings? }
  * ======================================================================== */
-const VPA_PROSPECT_DEFAULT_PLAYERS = 60;
+/* TEN, NOT A GUESS (Dean, 29 Oct 2026): "Never guess a crowd size: a bigger number overcharges them."
+   The plan is priced on this number, so a prospect starts small and the venue raises it themselves. */
+const VPA_PROSPECT_DEFAULT_PLAYERS = 10;
 const VPA_PROSPECT_MAX_PLAYERS = 2000;
 const VPA_PROSPECT_SLIDE_SECONDS = 8;
 const VPA_PROSPECT_DEFAULT_DELAY_MIN = 90;
@@ -2259,6 +2266,13 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
   if (mobileRaw && !vpaIsAuMobileE164(phone)) {
     return json({ error: 'That mobile is not an Australian mobile (04...). Leave it empty, or fix it: a landline can never receive a sign-in code.' + NONE }, 400);
   }
+  /* THE NUMBER TO RING (Dean, 29 Oct 2026: "if it does have a phone number. We need to add that at the
+     point of setup also"). A mobile or a landline; empty falls back to their mobile; neither is fine. */
+  const phoneRaw = String(b.phone || '').trim();
+  const callPhone = vpaProspectPhone(phoneRaw || mobileRaw);
+  if (phoneRaw && !callPhone) {
+    return json({ error: 'That phone does not look like an Australian number (a mobile 04..., or a landline with its area code, 02 / 03 / 07 / 08). Leave it empty, or fix it.' + NONE }, 400);
+  }
   let players = VPA_PROSPECT_DEFAULT_PLAYERS;
   if (b.players != null && b.players !== '') {
     players = parseInt(b.players, 10);
@@ -2321,7 +2335,7 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
   // Every check has passed. A dry run stops here, having made nothing, and says what it would make.
   if (b.dry_run === true) {
     return json({ ok: true, dry_run: true, name: name, postcode: postcode, state: state, entity_type: entityType,
-      players: players, slides: slideFiles.length, mobile: phone ? (phoneTaken ? 'taken' : 'free') : 'none',
+      players: players, slides: slideFiles.length, mobile: phone ? (phoneTaken ? 'taken' : 'free') : 'none', phone: callPhone || null,
       welcome_in_minutes: b.send_welcome === false ? null : delayMin });
   }
 
@@ -2356,6 +2370,17 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
   } catch (e) {
     login = null;
     warnings.push('NOBODY CAN SIGN IN YET: the login was not made (' + String((e && e.message) || e).slice(0, 120) + '). Add them under the venue\'s Hosts, then Resend welcome.');
+  }
+
+  /* 3b. HQ > Prospects (migration 125): their row, so they are listed apart from the active venues and
+     flagged for a call if they never sign in. Best-effort: the account stands without it. */
+  try {
+    await vpaInsert(env, 'vp_prospects', { venue_id: venue.id, founding_id: foundingId || null,
+      source: opts.via === 'autopilot_prospect' ? 'autopilot' : 'hq', contact_name: firstName || null, email: email,
+      phone: callPhone || null, auth_user_id: login ? login.id : null, website: website || null,
+      call_requested: b.call_requested === true, created_label: actor.label || null }, false);
+  } catch (e) {
+    warnings.push('HQ > Prospects cannot list them until migration 125 is run' + (callPhone ? ' (their phone, ' + callPhone + ', is kept on the audit row).' : '.'));
   }
 
   // 4. Their screen ads, through the one recorded write (vpbWriteScreen, migration 114).
@@ -2417,7 +2442,7 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
   // 6. Who set it up, and what was made.
   await vpaAudit(env, actor, 'prospect_set_up', 'venue:' + venue.id, {
     via: opts.via || 'hq', name: name, slug: slug, founding_id: foundingId, email: email, first_name: firstName || undefined,
-    mobile_login: !!(login && login.mobile), login_made: !!login, players: players, state: state, entity_type: entityType,
+    mobile_login: !!(login && login.mobile), login_made: !!login, phone: callPhone || undefined, players: players, state: state, entity_type: entityType,
     website: website || undefined, slides: slideCount, compliance: 'pending', terms_required: true,
     welcome_sent: welcomeSent, welcome_send_at: welcome ? welcome.send_at : undefined, welcome_delay_min: welcome ? delayMin : undefined,
   });
@@ -2425,10 +2450,150 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
   const out = { ok: true, venue: { id: venue.id, name: name, slug: slug }, founding_id: foundingId,
     tv_url: site + '/tv?' + encodeURIComponent(slug),
     login: login ? (login.mobile ? { email: email, mobile: mobileRaw } : { email: email }) : null,
-    slides: slideCount, welcome_sent: welcomeSent };
+    slides: slideCount, welcome_sent: welcomeSent, phone: callPhone || null };
   if (welcome) out.welcome = welcome;
   if (warnings.length) out.warnings = warnings;
   return json(out);
+}
+
+/* ===========================================================================
+ * HQ > PROSPECTS (Dean, 29 Oct 2026; migration 125, vp_prospects; service role only)
+ *
+ * "Can we please put the prospects into HQ as a tab somewhere? ... if they haven't signed up they're
+ * not gonna sign up on the active list are they? And maybe we should have something that is like a
+ * follow-up ... if they haven't accessed it within ... three days it flags the venue ... so then we can
+ * actually give the person a call ... if it does have a phone number."
+ *
+ *   POST /admin/prospects         (owner | accounts) every prospect venue that has NOT signed up, with
+ *                                 its phone, welcome, last sign-in and whether to ring them
+ *   POST /admin/prospect/called   (owner | accounts) { venue_id, note?, undo? } the Called mark
+ *
+ * SIGNED UP is worked out on every read, never stored: a card on file (a subscription), comp, billed
+ * by invoice, or in an operator group. The moment one of those is true the venue drops off this list
+ * and HQ shows it with the active venues, without anything having to move it.
+ * THE FLAGS, until somebody marks it Called: "Call requested" (they asked for a call in their reply;
+ * sales rings them, shown first), then "Call them" (nobody at the venue has signed in
+ * VPA_PROSPECT_FOLLOWUP_DAYS after setup). A sign-in that could not be read is never "never".
+ * ======================================================================== */
+const VPA_PROSPECT_FOLLOWUP_DAYS = 3;
+const VPA_PROSPECT_NOTE_MAX = 500;
+/* An Australian number to ring: a mobile (04) or a landline with its area code (02, 03, 07, 08), in
+   any spacing, +61 or not. Returns it spaced the way it is said ('0432 071 622', '(02) 9876 5432'),
+   or null. A 13/1300/1800 line is a business switchboard, not a person, so it is not taken. */
+function vpaProspectPhone(raw) {
+  let d = String(raw || '').replace(/[^\d+]/g, '');
+  if (!d) return null;
+  if (d.indexOf('+61') === 0) d = '0' + d.slice(3);
+  else if (/^61\d{9}$/.test(d)) d = '0' + d.slice(2);
+  if (!/^0[23478]\d{8}$/.test(d)) return null;
+  if (d[1] === '4') return d.slice(0, 4) + ' ' + d.slice(4, 7) + ' ' + d.slice(7);
+  return '(' + d.slice(0, 2) + ') ' + d.slice(2, 6) + ' ' + d.slice(6);
+}
+/* Has this prospect become a customer? One answer, used by the list and by nothing else. */
+function vpaProspectSignedUp(venue, founding) {
+  if (venue && venue.group_id) return true;
+  if (!founding) return false;
+  if (founding.stripe_subscription_id) return true;
+  if (founding.bill_by_invoice === true) return true;
+  return ['card_on_file', 'comp'].indexOf(founding.status) !== -1;
+}
+/* A venue that has left (archived) is not somebody to ring: it is off this list and off the active one. */
+function vpaProspectGone(venue) {
+  return !venue || venue.suspended_reason === 'archived' || venue.suspended_reason === 'archived_cancelling';
+}
+/* The latest sign-in by ANY login on the venue, so a manager they added counts. known=false when Auth
+   would not answer for one of them: the list then says it could not check, never "never". */
+async function vpaProspectLastSignIn(env, userIds) {
+  let last = null, known = true;
+  for (let i = 0; i < userIds.length; i++) {
+    const u = await vpaAuthGetUser(env, userIds[i]);
+    if (!u) { known = false; continue; }
+    const t = Date.parse(u.last_sign_in_at || '');
+    if (isFinite(t) && (last == null || t > last)) last = t;
+  }
+  return { at: last, known: last != null ? true : known };
+}
+async function vpaProspectsList(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  let rows;
+  try { rows = await vpaSelectAll(env, 'vp_prospects', 'select=*&order=created_at.desc,venue_id.asc'); }
+  catch (e) { return json({ error: 'Run migration 125 first (vp_prospects): HQ cannot list prospects without it.', need_migration: 125 }, 503); }
+  const now = Date.now(), DAY = 86400000;
+  const ids = rows.map((r) => r.venue_id);
+  const venues = {}, accounts = {}, staff = {}, welcomes = {};
+  for (let i = 0; i < ids.length; i += 100) {
+    const chunk = ids.slice(i, i + 100).map(encodeURIComponent).join(',');
+    (await vpaSelectAll(env, 'vp_venues', 'id=in.(' + chunk + ')&select=id,name,slug,postcode,au_state,founding_id,group_id,status,suspended_reason&order=id.asc'))
+      .forEach((v) => { venues[v.id] = v; });
+    (await vpaSelectAll(env, 'vp_venue_staff', 'venue_id=in.(' + chunk + ')&select=venue_id,auth_user_id&order=venue_id.asc,auth_user_id.asc'))
+      .forEach((s) => { (staff[s.venue_id] = staff[s.venue_id] || []).push(s.auth_user_id); });
+    try {
+      (await vpaSelectAll(env, 'vp_prospect_welcomes', 'venue_id=in.(' + chunk + ')&select=venue_id,send_at,status&order=send_at.desc'))
+        .forEach((w) => { if (!welcomes[w.venue_id]) welcomes[w.venue_id] = w; });
+    } catch (_) { /* migration 124 not run: the column says "not recorded" */ }
+  }
+  const fids = Object.keys(venues).map((k) => venues[k].founding_id).filter(Boolean);
+  for (let i = 0; i < fids.length; i += 100) {
+    (await vpaSelectAll(env, 'venueplay_founding', 'id=in.(' + fids.slice(i, i + 100).map(encodeURIComponent).join(',') +
+      ')&select=id,status,stripe_subscription_id,bill_by_invoice&order=id.asc')).forEach((f) => { accounts[f.id] = f; });
+  }
+  const out = [];
+  let signedUp = 0;
+  for (const r of rows) {
+    const v = venues[r.venue_id];
+    if (vpaProspectGone(v)) continue;
+    if (vpaProspectSignedUp(v, accounts[v.founding_id || r.founding_id])) { signedUp++; continue; }
+    const users = (staff[r.venue_id] || []).slice();
+    if (r.auth_user_id && users.indexOf(r.auth_user_id) === -1) users.push(r.auth_user_id);
+    const seen = await vpaProspectLastSignIn(env, users);
+    const created = Date.parse(r.created_at);
+    const days = isFinite(created) ? Math.floor((now - created) / DAY) : 0;
+    const w = welcomes[r.venue_id];
+    const welcome = !w ? null : { status: w.status === 'scheduled' && Date.parse(w.send_at) <= now ? 'sent' : w.status,
+      send_at: w.send_at, when: vpaBrisbaneTime(Date.parse(w.send_at)) };
+    const due = isFinite(created) && (now - created) >= VPA_PROSPECT_FOLLOWUP_DAYS * DAY;
+    out.push({ venue_id: r.venue_id, name: v.name, slug: v.slug, postcode: v.postcode || '', state: v.au_state || '',
+      source: r.source === 'autopilot' ? 'autopilot' : 'hq', contact_name: r.contact_name || '', email: r.email || '',
+      phone: r.phone || null, tel: r.phone ? 'tel:' + String(r.phone).replace(/[^\d+]/g, '') : null,
+      website: /^https?:\/\//i.test(String(r.website || '')) ? r.website : null,
+      created_at: r.created_at, days_since_setup: days, welcome: welcome,
+      last_sign_in_at: seen.at != null ? new Date(seen.at).toISOString() : null, sign_in_known: seen.known,
+      called: r.called_at ? { at: r.called_at, by: r.called_label || '', note: r.call_note || '' } : null,
+      call_requested: r.call_requested === true,
+      follow_up: due && seen.known && seen.at == null && !r.called_at });
+    /* THE ONE FLAG A ROW SHOWS. They asked for a call: that comes first, whatever else is true, until
+       somebody marks it Called. Otherwise the 3-day no-sign-in flag. */
+    const last = out[out.length - 1];
+    last.flag = (last.call_requested && !r.called_at) ? 'call_requested' : (last.follow_up ? 'no_sign_in' : null);
+  }
+  const RANK = { call_requested: 0, no_sign_in: 1 };
+  out.sort((a, b) => ((a.flag ? RANK[a.flag] : 2) - (b.flag ? RANK[b.flag] : 2)) || (Date.parse(b.created_at) - Date.parse(a.created_at)));
+  return json({ ok: true, follow_up_days: VPA_PROSPECT_FOLLOWUP_DAYS, prospects: out,
+    follow_up_count: out.filter((p) => p.flag).length, signed_up: signedUp });
+}
+async function vpaProspectCalled(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body || {};
+  const id = String(b.venue_id || '');
+  if (!/^[0-9a-fA-F-]{36}$/.test(id)) return json({ error: 'Which prospect?' }, 400);
+  const note = String(b.note || '').replace(/[\x00-\x09\x0b-\x1f]+/g, ' ').trim();
+  if (note.length > VPA_PROSPECT_NOTE_MAX) return json({ error: 'Keep the note under ' + VPA_PROSPECT_NOTE_MAX + ' characters.' }, 400);
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_prospects?venue_id=eq.' + encodeURIComponent(id) + '&select=venue_id,called_at', { headers: vpaHeaders(env) });
+  if (!res.ok) return json({ error: 'Run migration 125 first (vp_prospects).', need_migration: 125 }, 503);
+  const have = await res.json();
+  if (!have || !have.length) return json({ error: 'That venue is not on the prospects list.' }, 404);
+  const undo = b.undo === true;
+  const patch = undo ? { called_at: null, called_by: null, called_label: null, call_note: null }
+    : { called_at: new Date().toISOString(), called_by: actor.actorId || null, called_label: actor.label || null, call_note: note || null };
+  const up = await fetch(env.SUPABASE_URL + '/rest/v1/vp_prospects?venue_id=eq.' + encodeURIComponent(id), {
+    method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify(patch) });
+  if (!up.ok) return json({ error: 'That did not save. Try again.' }, 502);
+  await vpaAudit(env, actor, undo ? 'prospect_call_undone' : 'prospect_called', 'venue:' + id, undo ? {} : { note: note || undefined });
+  return json({ ok: true, called: undo ? null : { at: patch.called_at, by: patch.called_label || '', note: note } });
 }
 
 /* ===========================================================================
