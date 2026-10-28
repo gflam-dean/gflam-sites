@@ -13,7 +13,8 @@
   Everything else (the Terms tick, their TV, a first game, their card) lives in the app's first-run setup.
   It is transactional: they asked for it. Who we are and how to stop product emails are in the footer.
   Sections kept or stripped by vpaTplSections in the Worker: slides / noslides (did HQ load their screen
-  ads), sms / oneclick / nooneclick (how they sign in; exactly one is kept), founding / standard (offer).
+  ads), sms / oneclick / nooneclick (how they sign in; exactly one is kept), samelogin (their mobile and email
+  are already one VenuePlay login at another venue), founding / standard (offer).
   Merge fields:
     {{greeting}} {{venue_name}} {{signin_url}} {{login_email}} {{login_mobile}}
     {{player_rate}} {{offer_phrase}} {{terms_url}} {{privacy_url}} {{support_email}} {{support_phone}}
@@ -44,6 +45,9 @@
 <!--IF:sms-->
             <p style="margin:8px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">It's your mobile, <strong>{{login_mobile}}</strong>. Sign in with your mobile and we'll text you a code. No password, and no app to download.</p>
 <!--ENDIF:sms-->
+<!--IF:samelogin-->
+            <p style="margin:10px 0 0;font-size:15px;line-height:1.6;color:#3a3a44">You already sign in to VenuePlay with this mobile, so {{venue_name}} is on the same login. Once you're in, tap <strong>Choose another venue</strong> to switch between your venues. Each venue keeps its own account and billing.</p>
+<!--ENDIF:samelogin-->
 <!--IF:oneclick-->
             <p style="margin:8px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">The button below opens your account for you. No password, and no app to download.</p>
 <!--ENDIF:oneclick-->

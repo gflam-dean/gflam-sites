@@ -298,7 +298,9 @@
 
   <div class="navpills" id="hqNav">
     <button data-pane="venues" class="on">Venues</button>
-    <!-- HQ > Prospects (Dean, 29 Oct 2026): its tab, pane and count are vp-prospects-hq.js's own. -->
+    <!-- HQ > Prospects (Dean, 29 Oct 2026): its tab, pane and count are vp-prospects-hq.js's own. It is one
+         button and one pane (#prTab, #paneProspects), so when HQ gets its sub menus it moves under Sales
+         (prospects / call requested / cancelled / flagged) by moving this line. -->
     <button data-pane="prospects" id="prTab" hidden>Prospects</button>
     <button data-pane="live">Live now</button>
     <button data-pane="quiet">Quiet</button>

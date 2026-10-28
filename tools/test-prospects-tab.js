@@ -144,6 +144,34 @@ async function setUp(o, viaAutopilot) { return viaAutopilot ? call('/autopilot/p
     r.status === 200 && r.body.login && r.body.login.mobile && DB.vp_signin_links.filter(function (x) { return x.venue_id === ml.id; }).length === 0 &&
     sent.some(function (m) { return /\/app\/\?signin=sms#m=0400222333/.test(m.html) && m.html.indexOf('/app/go#') === -1; }), [r.body.login, DB.vp_signin_links.length]);
 
+  section('1b. A prospect who already runs another VenuePlay venue on the same login');
+  var OLD = { id: U(700), email: 'owner@twovenues.example', phone: '61400999888' }; AUTH.push(OLD);
+  var OLDV = { id: U(701), name: 'Their First Venue', slug: 'their-first-venue', founding_id: U(702), postcode: '4000', au_state: 'QLD' };
+  DB.vp_venues.push(OLDV); DB.venueplay_founding.push({ id: U(702), status: 'card_on_file', stripe_subscription_id: 'sub_old' });
+  DB.vp_venue_staff.push({ venue_id: OLDV.id, auth_user_id: OLD.id, role: 'owner' });
+  var authBefore = AUTH.length, sentBefore = sent.length;
+  r = await setUp({ name: 'Their Second Venue', email: 'Owner@TwoVenues.example', mobile: '0400 999 888' });
+  var sv = DB.vp_venues.filter(function (x) { return x.name === 'Their Second Venue'; })[0] || {};
+  var svStaff = DB.vp_venue_staff.filter(function (x) { return x.venue_id === sv.id; });
+  check('the email AND the mobile are both on one existing login: that login is reused (no new login), as the new venue\'s manager',
+    r.status === 200 && AUTH.length === authBefore && svStaff.length === 1 && svStaff[0].auth_user_id === OLD.id && svStaff[0].role === 'manager' && r.body.login && r.body.login.existing === true, [r.body, svStaff]);
+  check('so "Choose another venue" lists both: the login has a staff row at each', DB.vp_venue_staff.filter(function (x) { return x.auth_user_id === OLD.id; }).map(function (x) { return x.venue_id; }).sort().join() === [OLDV.id, sv.id].sort().join());
+  check('the two venues stay separate accounts: a NEW account record for the new venue, the old one untouched', sv.founding_id && sv.founding_id !== OLDV.founding_id &&
+    DB.venueplay_founding.filter(function (f) { return f.id === U(702); })[0].stripe_subscription_id === 'sub_old' && !DB.venueplay_founding.filter(function (f) { return f.id === sv.founding_id; })[0].stripe_subscription_id, sv);
+  var svMail = sent.slice(sentBefore).filter(function (m) { return m.to && m.to[0] === 'owner@twovenues.example'; })[0] || {};
+  check('their welcome: sign in with the mobile they already use (text code), and Choose another venue switches between them; no one-click link',
+    /\/app\/\?signin=sms#m=0400999888/.test(svMail.html || '') && /You already sign in to VenuePlay with this mobile, so Their Second Venue is on the same login\. Once you're in, tap Choose another venue to switch between your venues\. Each venue keeps its own account and billing\./.test(svMail.text || '') &&
+    (svMail.html || '').indexOf('/app/go#') === -1, svMail.text);
+  check('audited as a reused login', DB.vp_admin_audit.some(function (a) { return a.action === 'prospect_set_up' && a.target === 'venue:' + sv.id && a.detail.login_reused === true; }));
+  r = await setUp({ name: 'Email Only Match', email: 'owner@twovenues.example', mobile: '0400 111 000', send_welcome: false });
+  check('the email matches but the mobile does not: refused as before, nothing made', r.status === 409 && /already has a VenuePlay login/.test(r.body.error) && !DB.vp_venues.some(function (x) { return x.name === 'Email Only Match'; }), r.body);
+  authBefore = AUTH.length;
+  r = await setUp({ name: 'Mobile Only Match', email: 'someone.new@else.example', mobile: '0400 999 888', send_welcome: false });
+  var mm = DB.vp_venues.filter(function (x) { return x.name === 'Mobile Only Match'; })[0] || {};
+  check('the mobile matches but the email does not: a NEW email-only login, the existing one never given this venue', r.status === 200 && AUTH.length === authBefore + 1 &&
+    !DB.vp_venue_staff.some(function (x) { return x.venue_id === mm.id && x.auth_user_id === OLD.id; }) && (r.body.warnings || []).some(function (w) { return /mobile already has a VenuePlay login/.test(w); }), r.body);
+  DB.vp_venues = DB.vp_venues.filter(function (x) { return x.id !== OLDV.id; });
+
   section('2. POST /admin/prospects is HQ\'s: owner and accounts only');
   var lr = await list(ADMIN), la = await list(ACCTS), ls = await list(STAFF), lv = await list(U(77)), ln = await call('/admin/prospects', {}, {});
   check('the owner and an accounts admin get the list', lr.status === 200 && lr.body.ok === true && la.status === 200 && (la.body.prospects || []).length === lr.body.prospects.length, [lr.status, la.status]);

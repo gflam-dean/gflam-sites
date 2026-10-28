@@ -411,3 +411,14 @@ prospect books the welcome with Resend (`scheduled_at`, default 90 minutes, 0 to
 revoked from public/anon/authenticated: service role only. Run BEFORE the billing Worker; without it the email is still booked
 for later and HQ is told it cannot cancel or send it early. After running, dump RLS-BASELINE.json (one new table). Branch
 `feature/prospect-v2-28-oct`. NOT RUN. Rollback: in the file.
+
+`venueplay-125-prospects-tab.sql` (Dean, 29 Oct 2026, "put the prospects into HQ as a tab ... if they haven't accessed it within
+... three days it flags the venue ... so then we can actually give the person a call"): table `vp_prospects` (venue_id primary
+key, founding_id, source hq|autopilot, contact_name, email, phone = the number to RING them on (a mobile or a landline; not a
+login), auth_user_id, website, call_requested, created_at, created_label, called_at/called_by/called_label/call_note = HQ's
+Called mark). Written by the billing Worker's one setup (`vpaProspectSetUp`, HQ's Set up a prospect and `/autopilot/prospect`);
+read by `/admin/prospects` and changed by `/admin/prospect/called` (owner or accounts). Signed up is never stored: worked out on
+each read from the account record. Backfills every earlier `prospect_set_up` audit row once. RLS on, no policies, revoked from
+public/anon/authenticated: service role only. Run BEFORE the billing Worker; without it Set up a prospect still works (HQ is told,
+the phone is on the audit row) and the Prospects tab says "Run migration 125". After running, dump RLS-BASELINE.json (one new
+table). Branch `feature/prospects-tab`. NOT RUN. Rollback: in the file.

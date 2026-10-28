@@ -3576,7 +3576,7 @@ def local_checks(which):
             # feature/prospect-setup-28-oct. One action builds the venue and sends ONE email.
             ('D84. Set up a prospect builds a working venue and sends one email, with compliance pending and no login touched',
              'test-prospect-setup.js',
-             'owner or accounts HQ only; refuses without email or postcode and creates nothing; account record at the founding price, email login, slides, terms_required, audit row; an existing login is never changed or linked; the email is short, from Dean, one button, the price line, no instructions, a text part; the card link comes from the app for that venue only; the console holds the venue until ticked', 110,
+             'owner or accounts HQ only; refuses without email or postcode and creates nothing; account record at the founding price, email login, slides, terms_required, audit row; an existing login is never changed or linked; the email is on brand, from Dean, one button (a text-code sign-in for a mobile login), the price line, no instructions, a text part; the card link comes from the app for that venue only; the console holds the venue until ticked', 112,
              'A prospect venue whose compliance line HQ ticked for them, an email login that cannot sign in, a '
              'welcome with a dead link or the wrong state\'s bingo rule, or one venue\'s manager handed another venue'),
             ('D85. The game Worker starts no game at a prospect venue until the owner or a manager has ticked section 6',
@@ -3588,7 +3588,7 @@ def local_checks(which):
             # 2026; migration 123), branch feature/one-click-signin-28-oct.
             ('D86. The prospect welcome signs them in with one tap, once, and the sign-in page opens on email for an email login',
              'test-one-click-signin.js',
-             'only the hash of a 32-byte random token is stored; one use, 14 days, one winner of two at once; unknown, used, expired and removed all get one identical answer; rate-limited, never logged; nothing sent before a tap; the 4 hour sign-out still applies; email first for an email-only login', 49,
+             'only the hash of a 32-byte random token is stored; one use, 14 days, one winner of two at once; unknown, used, expired and removed all get one identical answer; rate-limited, never logged; nothing sent before a tap; the 4 hour sign-out still applies; email first for an email-only login; a session already on the device (an HQ one) is dropped, so a venue link never lands in HQ', 56,
              'A sign-in link that works twice, for ever, for a stranger who guessed it, or for a mail scanner; a '
              'token readable from the database or a log; or an email-only prospect left waiting for a text'),
             # D87: the prospect flow, version 2 (Dean, 28 Oct 2026; migration 124), branch feature/prospect-v2-28-oct.
@@ -3600,9 +3600,15 @@ def local_checks(which):
             # D88: the prospect autopilot's one door (Dean, 29 Oct 2026), branch feature/prospect-autopilot.
             ('D88. The prospect autopilot sets up a prospect only with its key, on Dean\'s yes, and its welcome waits in HQ',
              'test-prospect-autopilot.js',
-             'off until PROSPECT_AUTOPILOT_KEY is set; a wrong or missing key makes nothing; a dry run makes nothing; the same setup as HQ, recorded as the autopilot; its welcome booked 90 minutes out or more and cancellable in HQ; an existing login refused, a used mobile left off', 38,
+             'off until PROSPECT_AUTOPILOT_KEY is set; a wrong or missing key makes nothing; a dry run makes nothing; the same setup as HQ, recorded as the autopilot; its welcome booked 30 minutes out or more and cancellable in HQ; an existing login refused, a used mobile left off', 38,
              'A guessed key setting up venues, a dry run that made a login, or a welcome that reached a venue '
              'before Dean could stop it'),
+            # D89: HQ > Prospects (Dean, 29 Oct 2026; migration 125), branch feature/prospects-tab.
+            ('D89. HQ lists prospects apart from active venues, flags who to call, and asks for a phone at setup',
+             'test-prospects-tab.js',
+             'a phone (mobile or landline) at setup from HQ and the autopilot, a bad one refused with nothing made, a crowd of 10; owner or accounts only; Call requested first, then no sign-in after 3 days; Called with a note and Undo; a card, comp, invoice or group takes them off the list; the HQ pane and the Venues filter; a login reused only when its email and mobile both match', 57,
+             'A prospect left on the active list, a venue that never signed in and nobody rang, a call request '
+             'nobody saw, their number lost, or another venue handed to a login on one typed fact'),
             ('D47. The Terms put gaming compliance, permits, attendance, age, records and an indemnity on the venue',
              'test-terms-put-compliance-on-the-venue.js',
              'section 6 carries every clause the lawyer asked for, and the onboarding tick is one sentence everywhere', 40,

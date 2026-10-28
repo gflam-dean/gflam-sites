@@ -2170,6 +2170,9 @@ const VPA_PROSPECT_DEFAULT_PLAYERS = 10;
 const VPA_PROSPECT_MAX_PLAYERS = 2000;
 const VPA_PROSPECT_SLIDE_SECONDS = 8;
 const VPA_PROSPECT_DEFAULT_DELAY_MIN = 90;
+/* THE AUTOPILOT'S FLOOR (Dean, 29 Oct 2026): its welcome goes 30 minutes after the reply it follows, so HQ
+   still has half an hour to cancel it; the Mac job's queue books the minute (send_in_minutes). */
+const VPA_PROSPECT_AUTOPILOT_DELAY_MIN = 30;
 const VPA_PROSPECT_MAX_DELAY_MIN = 1440;
 /* A slide's bytes, judged by the header and never by its label: PNG or JPEG only (Dean's spec for
    this form). Returns 'png' | 'jpg' | null. */
@@ -2220,7 +2223,7 @@ async function vpaHandleProspect(request, env, json) {
  *   - the caller is the Mac job, proved by a secret (PROSPECT_AUTOPILOT_KEY, set with
  *     tools/set-worker-secret.py), not an HQ login. Unset = the route is off (503). A wrong or missing
  *     key = 401 and nothing is read or made. The key can do THIS and nothing else.
- *   - their welcome always waits at least VPA_PROSPECT_DEFAULT_DELAY_MIN (90) minutes, so it sits in
+ *   - their welcome always waits at least VPA_PROSPECT_AUTOPILOT_DELAY_MIN (30) minutes, so it sits in
  *     HQ > Venues > prospect welcomes, where it can be cancelled or sent now, whatever the body says.
  * Every refusal stays: an email that already signs in is refused, a mobile already in use is left off,
  * the same venue twice is refused, and { dry_run: true } runs every one of those checks and makes nothing.
@@ -2238,7 +2241,7 @@ async function vpaAutopilotProspect(request, env, json) {
   if (!vpaSameSecret(request.headers.get('X-Autopilot-Key'), want)) return json({ error: 'Not allowed.' }, 401);
   const _b = await vpaBody(request, json);
   if (!_b.ok) return _b.res;
-  return await vpaProspectSetUp(env, VPA_AUTOPILOT_ACTOR, _b.body, json, { minDelayMin: VPA_PROSPECT_DEFAULT_DELAY_MIN, via: 'autopilot_prospect' });
+  return await vpaProspectSetUp(env, VPA_AUTOPILOT_ACTOR, _b.body, json, { minDelayMin: VPA_PROSPECT_AUTOPILOT_DELAY_MIN, via: 'autopilot_prospect' });
 }
 
 /* THE ONE SETUP, for HQ (vpaHandleProspect) and the autopilot (vpaAutopilotProspect). actor is who it
@@ -2327,15 +2330,22 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
   /* AN EMAIL THAT ALREADY SIGNS IN IS REFUSED, not linked (security review, 28 Oct 2026). Giving an
      existing login a new venue on the strength of an address typed in HQ is how a typo hands one
      venue's manager another venue. A mobile that already signs in is left off the new login. */
-  if (await vpaFindAuthUser(env, { email: email })) {
+  /* THE ONE EXCEPTION (29 Oct 2026, a prospect who already runs another VenuePlay venue): the email AND the
+     mobile typed are BOTH on the same existing login. Two facts that agree on one person are not a typo, so
+     that login is reused and given this venue too ("Choose another venue" then shows both). This venue still
+     gets its own account record, billing and everything else: nothing is shared but the sign-in. One fact
+     alone (the email, or the mobile) is still refused or left off, exactly as before. */
+  const byEmail = await vpaFindAuthUser(env, { email: email });
+  const sameLogin = !!(byEmail && phone && String(byEmail.phone || '').replace(/[^\d]/g, '') === String(phone).replace(/[^\d]/g, ''));
+  if (byEmail && !sameLogin) {
     return json({ error: 'That email already has a VenuePlay login, so it cannot be set up as a new prospect from here. Check it is theirs, then add this venue from their own account (or + Add venue).' + NONE }, 409);
   }
-  const phoneTaken = !!(phone && await vpaFindAuthUser(env, { phone: phone }));
+  const phoneTaken = !sameLogin && !!(phone && await vpaFindAuthUser(env, { phone: phone }));
 
   // Every check has passed. A dry run stops here, having made nothing, and says what it would make.
   if (b.dry_run === true) {
     return json({ ok: true, dry_run: true, name: name, postcode: postcode, state: state, entity_type: entityType,
-      players: players, slides: slideFiles.length, mobile: phone ? (phoneTaken ? 'taken' : 'free') : 'none', phone: callPhone || null,
+      players: players, slides: slideFiles.length, mobile: phone ? (sameLogin ? 'their existing login' : phoneTaken ? 'taken' : 'free') : 'none', phone: callPhone || null,
       welcome_in_minutes: b.send_welcome === false ? null : delayMin });
   }
 
@@ -2363,7 +2373,7 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
   // 3. The login, as the venue's manager (every self-serve and HQ venue's first login is one).
   let login = null;
   try {
-    login = await vpaProspectLogin(env, email, phoneTaken ? null : phone, name);
+    login = sameLogin ? { id: byEmail.id, mobile: true, existing: true } : await vpaProspectLogin(env, email, phoneTaken ? null : phone, name);
     if (phoneTaken) warnings.push('This mobile already has a VenuePlay login; the prospect was set up with an email login only. Add their mobile after they confirm it is theirs.');
     await vpaInsert(env, 'vp_venue_staff', { venue_id: venue.id, auth_user_id: login.id, role: 'manager',
       display_name: firstName || 'Manager' }, false);
@@ -2428,7 +2438,7 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
     }
     const render = { foundingId: foundingId, email: email, firstName: firstName, venueName: name, slug: slug,
       seats: players, state: state, entityType: entityType, slides: slideCount, authUserId: login ? login.id : null,
-      mobileLogin: !!(login && login.mobile), mobile: login && login.mobile ? vpaProspectPhone(mobileRaw) : null };
+      mobileLogin: !!(login && login.mobile), mobile: login && login.mobile ? vpaProspectPhone(mobileRaw) : null, sameLogin: !!(login && login.existing) };
     const r = await vpaFireProspectWelcome(env, Object.assign({ signinToken: signinToken, sendAtMs: delayMin > 0 ? sendAtMs : null }, render));
     welcomeSent = !!r.ok;
     if (!welcomeSent) warnings.push('THE WELCOME EMAIL DID NOT SEND. Use Resend welcome on the venue, or send it by hand.');
@@ -2444,14 +2454,14 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
   // 6. Who set it up, and what was made.
   await vpaAudit(env, actor, 'prospect_set_up', 'venue:' + venue.id, {
     via: opts.via || 'hq', name: name, slug: slug, founding_id: foundingId, email: email, first_name: firstName || undefined,
-    mobile_login: !!(login && login.mobile), login_made: !!login, phone: callPhone || undefined, players: players, state: state, entity_type: entityType,
+    mobile_login: !!(login && login.mobile), login_made: !!login, login_reused: !!(login && login.existing), phone: callPhone || undefined, players: players, state: state, entity_type: entityType,
     website: website || undefined, slides: slideCount, compliance: 'pending', terms_required: true,
     welcome_sent: welcomeSent, welcome_send_at: welcome ? welcome.send_at : undefined, welcome_delay_min: welcome ? delayMin : undefined,
   });
 
   const out = { ok: true, venue: { id: venue.id, name: name, slug: slug }, founding_id: foundingId,
     tv_url: site + '/tv?' + encodeURIComponent(slug),
-    login: login ? (login.mobile ? { email: email, mobile: mobileRaw } : { email: email }) : null,
+    login: login ? Object.assign(login.mobile ? { email: email, mobile: mobileRaw } : { email: email }, login.existing ? { existing: true } : {}) : null,
     slides: slideCount, welcome_sent: welcomeSent, phone: callPhone || null };
   if (welcome) out.welcome = welcome;
   if (warnings.length) out.warnings = warnings;
@@ -2753,7 +2763,7 @@ async function vpaRenderProspectWelcome(env, o) {
      button opens that sign-in with their number filled in. Otherwise the one-click link, else email. */
   const mobile = vpaProspectPhone(o.mobile);
   const sms = !!(o.mobileLogin && mobile && mobile.indexOf('04') === 0);
-  html = vpaTplSections(html, { slides: o.slides > 0, noslides: !(o.slides > 0), sms: sms, oneclick: !sms && !!o.signinToken,
+  html = vpaTplSections(html, { slides: o.slides > 0, noslides: !(o.slides > 0), sms: sms, samelogin: sms && !!o.sameLogin, oneclick: !sms && !!o.signinToken,
     nooneclick: !sms && !o.signinToken, founding: founding, standard: !founding });
   html = html
     .replace(/{{greeting}}/g, o.firstName ? 'Hi ' + vpaEsc(o.firstName) + ',' : 'Hi there,')

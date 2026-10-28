@@ -9,7 +9,7 @@
         near-miss key is 401 and makes nothing; a browser cannot send the key (CORS)
      2. a dry run runs every refusal and makes NOTHING: no venue, no login, no email, no record
      3. on Dean's yes: the SAME setup as HQ (venue, login, slides, terms pending), recorded as the
-        autopilot, and the welcome is BOOKED at least 90 minutes out whatever the body asks, so it
+        autopilot, and the welcome is BOOKED at least 30 minutes out whatever the body asks, so it
         sits in HQ where it can be cancelled or sent now (and HQ's cancel works on it)
      4. the security rules carry over: an email that already signs in is refused, a mobile already
         in use is left off, the same venue twice is refused
@@ -153,11 +153,12 @@ var AP = { 'X-Autopilot-Key': KEY };
 
   world(); t0 = Date.now();
   r = await call('/autopilot/prospect', with_({ send_in_minutes: 0 }), AP);
-  check('the body asking for 0 minutes (send now) is floored: still booked 90 minutes out', r.status === 200 && sent.length === 1 && typeof sent[0].scheduled_at === 'string' &&
-    Math.abs(Date.parse(sent[0].scheduled_at) - t0 - 90 * 60000) < 5000 && r.body.welcome.status === 'scheduled', sent[0] && sent[0].scheduled_at);
+  /* 29 Oct 2026: the floor is 30 minutes (the queue books the welcome 30 minutes after the reply). */
+  check('the body asking for 0 minutes (send now) is floored: still booked 30 minutes out', r.status === 200 && sent.length === 1 && typeof sent[0].scheduled_at === 'string' &&
+    Math.abs(Date.parse(sent[0].scheduled_at) - t0 - 30 * 60000) < 5000 && r.body.welcome.status === 'scheduled', sent[0] && sent[0].scheduled_at);
   world(); t0 = Date.now();
   r = await call('/autopilot/prospect', with_({ send_in_minutes: 15 }), AP);
-  check('15 minutes is floored to 90 too', r.status === 200 && Math.abs(Date.parse(sent[0].scheduled_at) - t0 - 90 * 60000) < 5000, sent[0] && sent[0].scheduled_at);
+  check('15 minutes is floored to 30 too', r.status === 200 && Math.abs(Date.parse(sent[0].scheduled_at) - t0 - 30 * 60000) < 5000, sent[0] && sent[0].scheduled_at);
   world(); t0 = Date.now();
   r = await call('/autopilot/prospect', with_({ send_in_minutes: 300 }), AP);
   check('a longer wait (300 minutes) is kept as asked', r.status === 200 && Math.abs(Date.parse(sent[0].scheduled_at) - t0 - 300 * 60000) < 5000, sent[0] && sent[0].scheduled_at);
