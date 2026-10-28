@@ -147,7 +147,7 @@ def main(argv=None):
     say(f'  before: {len(before)} binding(s); {name} is {"already there (will be replaced)" if had else "not there yet"}')
 
     st, d = put_secret(tok, acct, worker, name, value)
-    if st != 200 or not d.get('success', True):
+    if st not in (200, 201) or not d.get('success', True):   # 29 Oct 2026: Cloudflare answers 201 when a secret is created
         die(f'Cloudflare refused the secret ({st}): {dw.errors(d)}')
     say(f'  Cloudflare accepted {name} as secret_text')
 

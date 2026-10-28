@@ -44,6 +44,14 @@ if (typeof crypto === 'undefined') {
     return Promise.resolve(out.buffer);
   } }, getRandomValues: function (a) { for (var i = 0; i < a.length; i++) a[i] = (i * 2654435761) & 255; return a; } };
 }
+/* 29 Oct 2026: the invite-back email (HQ "Reactivate") is marketing and must carry a one-click
+   unsubscribe, so the Worker refuses to send it when VP_UNSUB_SECRET is unset. The live Worker has
+   the secret (set 29 Oct); this rig's Worker must too, the same way tools/test-audit-search.js does. */
+ENV.VP_UNSUB_SECRET = 'billing-rig-test-secret';
+load('partyplay-backend/worker/_test-sha256.js');   // a real HMAC for the unsubscribe token
+if (typeof TextEncoder === 'undefined') globalThis.TextEncoder = function () { this.encode = function (s) { return { _s: String(s) }; }; };
+if (!crypto.subtle.importKey) crypto.subtle.importKey = function (fmt, k) { return Promise.resolve({ _k: k._s }); };
+if (!crypto.subtle.sign) crypto.subtle.sign = function (alg, key, msg) { return Promise.resolve(new Uint8Array(SHA.hmac(key._k, msg._s)).buffer); };
 var STORED = [];
 var _rf = globalThis.fetch;
 globalThis.fetch = function (url, opts) {
