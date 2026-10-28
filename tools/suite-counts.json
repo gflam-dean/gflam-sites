@@ -1098,5 +1098,13 @@
  "tools/test-touring-cards-loader.js": {
   "checks": 80,
   "counted_by": "lines"
+ },
+ "tools/drag-bingo-clubs-page.test.py": {
+  "checks": 56,
+  "counted_by": "lines"
+ },
+ "tools/tv-window-uncovered.test.py": {
+  "checks": 17,
+  "counted_by": "lines"
  }
 }
