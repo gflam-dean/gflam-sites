@@ -2137,7 +2137,8 @@
     /* A PROSPECT IS NOT AN ACTIVE VENUE (Dean, 29 Oct 2026: "if they haven't signed up they're not gonna sign
        up on the active list are they?"). They are on the Prospects tab until they sign up, when the Worker
        stops listing them and they come back here by themselves. A search still finds one, badged. */
-    if(isProspect(v) && !searching && S.vFilter!=="test" && S.vFilter!=="needsstate") return false;
+    var prospect = !!(v && typeof window!=="undefined" && window.VPProspects && window.VPProspects.isProspect(v.id));   // isProspect(), inline: other suites lift this function alone
+    if(prospect && !searching && S.vFilter!=="test" && S.vFilter!=="needsstate") return false;
     /* NEEDS A STATE (legal compliance matrix G19, 28 Oct 2026). A venue with no state is shown no
        state's rules and cannot charge for a game (vp-gaming.js assess), so it is a job to fix: every
        one, test or not, left or not, so none can hide. The search still narrows it. */

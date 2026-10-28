@@ -7504,7 +7504,7 @@ MUTATIONS = [
      '    if (login) {\n      try { signinToken',
      'a mobile login is also sent a one-click sign-in link'),
     ('test-prospects-tab.js', 'venueplay/app/hq.html',
-     '    if(isProspect(v) && !searching && S.vFilter!=="test" && S.vFilter!=="needsstate") return false;\n',
+     '    if(prospect && !searching && S.vFilter!=="test" && S.vFilter!=="needsstate") return false;\n',
      '',
      'prospects stay on the active Venues list'),
     ('test-prospects-tab.js', 'venueplay/app/hq.html',

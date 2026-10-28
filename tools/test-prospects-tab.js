@@ -138,6 +138,13 @@ async function setUp(o, viaAutopilot) { return viaAutopilot ? call('/autopilot/p
   p = row('Autopilot Crows Nest') || {};
   check('the autopilot sets one up with their number and their call request: source autopilot, call_requested, website kept',
     r.status === 200 && p.source === 'autopilot' && p.phone === '0432 071 622' && p.call_requested === true && p.website === 'https://lmc.example/', p);
+  /* The Friday 4:10pm prospect (29 Oct 2026): the Mac makes the account at 8:50am Monday with send_in_minutes 30, so the
+     welcome row is booked 30 minutes ahead, inside migration 124's 2-day window and 125's 5-day one. */
+  r = await call('/autopilot/prospect', with_({ name: 'Friday Four Ten Pub', email: 'fri@pub.example', mobile: '0400 444 555', send_in_minutes: 30 }), AP);
+  var fw = DB.vp_prospect_welcomes.filter(function (w) { return w.email === 'fri@pub.example'; })[0] || {};
+  var ahead = Date.parse(fw.send_at) - Date.now();
+  check('the autopilot\'s Monday 8:50am setup inserts its welcome, booked 30 minutes on, inside the 2-day and 5-day caps',
+    r.status === 200 && fw.status === 'scheduled' && Math.abs(ahead - 30 * 60000) < 10000 && ahead <= 2 * DAY && ahead <= 5 * DAY, [r.status, fw.send_at]);
   r = await setUp({ name: 'Mobile Login Hotel', email: 'ml@ml.example', mobile: '0400 222 333' });
   var ml = DB.vp_venues.filter(function (x) { return x.name === 'Mobile Login Hotel'; })[0] || {};
   check('a prospect whose login has their mobile gets the text-code welcome and NO one-click sign-in link at all',
@@ -230,7 +237,7 @@ async function setUp(o, viaAutopilot) { return viaAutopilot ? call('/autopilot/p
   section('4. Signing up takes them off the list, by itself');
   var n0 = (await list()).body.prospects.length;
   var lf = DB.venueplay_founding.filter(function (x) { return x.id === lh.founding_id; })[0];
-  lf.stripe_subscription_id = 'sub_test_1'; lf.status = 'card_on_file';
+  lf.stripe_subscription_id = 'sub_test_1';   // the card alone (its status may still say active)
   var l4 = await list();
   check('they added their card: off the Prospects list, counted as signed up', !find(l4, 'Landline Hotel') && l4.body.prospects.length === n0 - 1 && l4.body.signed_up === 1, l4.body.signed_up);
   var pl = DB.vp_venues.filter(function (x) { return x.name === 'Plus61 Tavern'; })[0];
@@ -280,7 +287,7 @@ async function setUp(o, viaAutopilot) { return viaAutopilot ? call('/autopilot/p
   var lh1 = T.listHtml({ prospects: [row1, row2], follow_up_count: 2, follow_up_days: 3, signed_up: 1 });
   check('the pane head: the count, how many to call, and the 3 days from the Worker', /Prospects <span class="mono">2<\/span> <span class="prsum">2 to call<\/span>/.test(lh1) && /has not signed in 3 days after setup/.test(lh1) && /1 earlier prospect has signed up/.test(lh1), lh1.slice(0, 600));
   check('a list the Worker could not give says why', /Run migration 125/.test(T.listHtml({ error: 'Run migration 125 first (vp_prospects): HQ cannot list prospects without it.' })));
-  check('no em or en dash in anything the pane says', !/[—–]/.test(PANE));
+  check('no em or en dash in anything the pane says', !/[\u2014\u2013]/.test(PANE));
 
   var HQ = readFile('venueplay/app/hq.html');
   var S = { vSearch: '', vFilter: 'all', showLeft: false, live: {} };

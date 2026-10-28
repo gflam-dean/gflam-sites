@@ -3606,7 +3606,7 @@ def local_checks(which):
             # D89: HQ > Prospects (Dean, 29 Oct 2026; migration 125), branch feature/prospects-tab.
             ('D89. HQ lists prospects apart from active venues, flags who to call, and asks for a phone at setup',
              'test-prospects-tab.js',
-             'a phone (mobile or landline) at setup from HQ and the autopilot, a bad one refused with nothing made, a crowd of 10; owner or accounts only; Call requested first, then no sign-in after 3 days; Called with a note and Undo; a card, comp, invoice or group takes them off the list; the HQ pane and the Venues filter; a login reused only when its email and mobile both match', 57,
+             'a phone (mobile or landline) at setup from HQ and the autopilot, a bad one refused with nothing made, a crowd of 10; owner or accounts only; Call requested first, then no sign-in after 3 days; Called with a note and Undo; a card, comp, invoice or group takes them off the list; the HQ pane and the Venues filter; a login reused only when its email and mobile both match', 58,
              'A prospect left on the active list, a venue that never signed in and nobody rang, a call request '
              'nobody saw, their number lost, or another venue handed to a login on one typed fact'),
             ('D47. The Terms put gaming compliance, permits, attendance, age, records and an indemnity on the venue',
