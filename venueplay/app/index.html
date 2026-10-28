@@ -349,7 +349,7 @@
         <span class="word">VenuePlay</span>
       </div>
       <div class="authbig">Sign in</div>
-      <div class="authsub">Sign in with a text code to your mobile.</div>
+      <div class="authsub" id="authSub">Sign in with a text code to your mobile.</div>
 
       <div class="authcard">
         <div class="vp-c" id="stepMobile">
@@ -1000,6 +1000,33 @@
       $("otpIn").focus();
     }).catch(function(err){ btn.disabled=false; btn.textContent="Send code"; if(otpSendError(err)==="ours") showEmailAlt(); });
   });
+  /* WHICH WAY IN FIRST (Dean, 28 Oct 2026: "no signing in with an email to confuse them why they then
+     get a text"). The page cannot ask whether a login has a mobile before it is signed in without
+     telling a stranger whose logins exist, so it goes by what it CAN know: a link that asks for the
+     email option (?signin=email, every link in the prospect welcome), or this device's last way in.
+     After a sign-in, rememberSignIn() records "email" for a login with no mobile, so the next visit
+     and the 4 hour sign-out both come back to the email option. A used or expired one-click link
+     lands here with gone=1 and the address it was sent to. */
+  var SIGNIN_KEY="vpSignInWith", SUB_TEXT="Sign in with a text code to your mobile.";
+  function openSignInStep(){
+    var q=String((window.location && window.location.search) || ""), want="";
+    if(/[?&]signin=email(&|$)/.test(q)) want="email";
+    if(!want){ try{ want=localStorage.getItem(SIGNIN_KEY)||""; }catch(e){} }
+    var prefill=""; try{ prefill=sessionStorage.getItem("vpSignInPrefill")||""; sessionStorage.removeItem("vpSignInPrefill"); }catch(e){}
+    if(want!=="email") return "sms";
+    $("stepMobile").classList.add("hidden");
+    $("stepCode").classList.add("hidden");
+    $("emailAlt").classList.add("hidden");
+    $("stepEmail").classList.remove("hidden");
+    $("authSub").textContent = /[?&]gone=1(&|$)/.test(q)
+      ? "That link has been used or has expired. Sign in with your email and we will email you a code."
+      : "Sign in with a code sent to your email.";
+    if(prefill && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(prefill)) $("emailIn").value=prefill;
+    return "email";
+  }
+  function rememberSignIn(user, mode){
+    try{ localStorage.setItem(SIGNIN_KEY, (user && !user.phone) || mode==="email" ? "email" : "sms"); }catch(e){}
+  }
   $("emailAltBtn").addEventListener("click", function(){
     $("stepMobile").classList.add("hidden");
     $("stepCode").classList.add("hidden");
@@ -1009,7 +1036,7 @@
     $("emailIn").focus();
   });
   $("backToTextBtn").addEventListener("click", function(){
-    MODE="sms";
+    MODE="sms"; $("authSub").textContent=SUB_TEXT;
     $("stepEmail").classList.add("hidden");
     $("stepCode").classList.add("hidden");
     $("stepMobile").classList.remove("hidden");
@@ -1067,6 +1094,7 @@
       btn.disabled=false; btn.textContent="Verify";
       if(res && res.error){ $("otpErr").textContent="That code did not match"; return; }
       try{ localStorage.setItem("vpShiftStart", String(Date.now())); }catch(e){}   // fresh 4h shift starts now
+      rememberSignIn(res && res.data && res.data.user, MODE);
       routeAfterAuth();
     }).catch(function(){ btn.disabled=false; btn.textContent="Verify"; $("otpErr").textContent="That code did not match"; });
   });
@@ -4325,6 +4353,7 @@
   });
 
   // ================= INIT =================
+  openSignInStep();   // the email option first when the link asks for it or this device last used it
   // (removed "Paired, sign in to start" header chip: the status only shows once actually signed in)
   // Show a neutral splash until auth resolves, THEN route, so the sign-in screen never flashes for
   // someone who is actually signed in. Signed-out users fall through to vSignIn once ready resolves.

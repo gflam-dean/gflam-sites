@@ -7,10 +7,11 @@
   It is transactional: they asked for it. Who we are and how to stop product emails are in the footer,
   as on every other venue email.
   Sections kept or stripped by vpaTplSections in the Worker: slides / noslides (did HQ load their
-  screen ads), mobile (did their mobile go on the login), founding / standard (is the offer running).
+  screen ads), mobile (did their mobile go on the login), oneclick (was a one-time sign-in
+  link minted, migration 123: {{signin_url}} then signs them straight in; nooneclick: it opens the email-code sign-in), founding / standard (is the offer running).
   Merge fields:
     {{greeting}} {{venue_name}} {{tv_url}} {{tv_address}} {{app_url}} {{app_address}} {{login_email}}
-    {{login_mobile}} {{slide_count}} {{slide_word}} {{slide_verb}} {{bingo_line}} {{player_rate}} {{offer_phrase}}
+    {{login_mobile}} {{signin_url}} {{app_email_url}} {{signin_days}} {{slide_count}} {{slide_word}} {{slide_verb}} {{bingo_line}} {{player_rate}} {{offer_phrase}}
     {{player_count}} {{monthly_total}} {{card_url}} {{help_url}} {{see_night_url}} {{terms_url}}
     {{privacy_url}} {{support_email}} {{support_phone}} {{support_tel}} {{unsubscribe_url}}
   House rules: no em dashes, musical bingo is never called bingo on its own or gaming, ACT not "the ACT".
@@ -36,6 +37,12 @@
         <h1 style="margin:0;font-size:22px;line-height:1.35;color:#12101a;font-weight:800">As promised, here's your VenuePlay account for {{venue_name}}, so you can see what your TV looks like and have a play with a game or two.</h1>
 <!--ENDIF:noslides-->
         <p style="margin:14px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">There is nothing to sign up for. The steps below take about ten minutes, whenever suits you.</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:20px"><tr>
+          <td><a href="{{signin_url}}" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:17px;font-weight:800;padding:15px 32px;border-radius:10px">Open your VenuePlay</a></td>
+        </tr></table>
+<!--IF:oneclick-->
+        <p style="margin:12px 0 0;font-size:13.5px;line-height:1.6;color:#6a6a75">This button signs you straight in, with no code to type. It works once, within {{signin_days}} days, so keep it to yourself.</p>
+<!--ENDIF:oneclick-->
       </td></tr>
 
       <!-- 1. your TV -->
@@ -60,12 +67,12 @@
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf7fb;border:1px solid #eee;border-radius:12px">
           <tr><td style="padding:20px 22px">
             <p style="margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#FF1F8E">2. Sign in to run games</p>
-            <p style="margin:10px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44">On a phone, tablet or laptop, go to <a href="{{app_url}}" style="color:#12101a;font-weight:700;text-decoration:none">{{app_address}}</a> and type <strong>{{login_email}}</strong>. A code arrives by email. No password and no app to install.</p>
+            <p style="margin:10px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44"><!--IF:oneclick-->The button above signs you in the first time. After that, on<!--ENDIF:oneclick--><!--IF:nooneclick-->On<!--ENDIF:nooneclick--> a phone, tablet or laptop, go to <a href="{{app_email_url}}" style="color:#12101a;font-weight:700;text-decoration:none">{{app_address}}</a> and type <strong>{{login_email}}</strong>. A code arrives by email. No password and no app to install.</p>
 <!--IF:mobile-->
             <p style="margin:10px 0 0;font-size:15px;line-height:1.6;color:#3a3a44">Your mobile, {{login_mobile}}, works too: type it instead and the code comes by text.</p>
 <!--ENDIF:mobile-->
             <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:16px"><tr>
-              <td><a href="{{app_url}}" style="display:inline-block;background:#12101a;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:13px 26px;border-radius:10px">Sign in</a></td>
+              <td><a href="{{app_email_url}}" style="display:inline-block;background:#12101a;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:13px 26px;border-radius:10px">Sign in with my email</a></td>
             </tr></table>
           </td></tr>
         </table>

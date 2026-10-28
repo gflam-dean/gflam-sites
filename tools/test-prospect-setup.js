@@ -177,7 +177,8 @@ function fnv(bytes, seed) { var out = new Uint8Array(32), h = (2166136261 ^ seed
 crypto = { subtle: {
   digest: function (alg, b) { return Promise.resolve(fnv(new Uint8Array(b), 1).buffer); },
   importKey: function (fmt, raw) { return Promise.resolve({ k: fnv(new Uint8Array(raw), 2)[0] }); },
-  sign: function (alg, key, data) { return Promise.resolve(fnv(new Uint8Array(data), 3 + key.k).buffer); } } };
+  sign: function (alg, key, data) { return Promise.resolve(fnv(new Uint8Array(data), 3 + key.k).buffer); } },
+  getRandomValues: function (a) { for (var i = 0; i < a.length; i++) a[i] = (i * 37 + 11) & 255; return a; } };   // the one-click sign-in link (migration 123)
 var B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 if (typeof atob === 'undefined') { atob = function (s) { s = s.replace(/=+$/, ''); var o = '', bits = 0, acc = 0; for (var i = 0; i < s.length; i++) { var v = B64.indexOf(s[i]); if (v < 0) throw new Error('bad base64'); acc = ((acc << 6) | v) & 0xffffff; bits += 6; if (bits >= 8) { bits -= 8; o += String.fromCharCode((acc >> bits) & 255); } } return o; }; }
 function b64(bytes) { var s = ''; for (var i = 0; i < bytes.length; i += 3) { var a = bytes[i], b = i + 1 < bytes.length ? bytes[i + 1] : 0, c = i + 2 < bytes.length ? bytes[i + 2] : 0; var nn = (a << 16) | (b << 8) | c;
@@ -351,7 +352,7 @@ function hrefs(html) { var out = [], re = /href="([^"]+)"/g, m; while ((m = re.e
     check(c[0] + ': the template\'s own notes (merge-field list) never reach the inbox', html.indexOf('Merge fields') === -1 && html.indexOf('vpaTplSections') === -1);
     check(c[0] + ': it is a whole document with nothing left unfilled', /^<!doctype html>/i.test(html) && html.indexOf('{{') === -1 && html.indexOf('<!--IF:') === -1 && html.indexOf('ENDIF') === -1, (html.match(/\{\{[a-z_]+\}\}/g) || []).join(' '));
     check(c[0] + ': the TV address is exactly theirs, as a link and as words', L.indexOf('https://www.venueplay.com.au/tv?' + c[2]) !== -1 && txt.indexOf('www.venueplay.com.au/tv?' + c[2]) !== -1, L);
-    check(c[0] + ': sign in at the app address, with THEIR email, a code by email, no password', L.indexOf('https://www.venueplay.com.au/app') !== -1 && txt.indexOf('type ' + c[3] + '. A code arrives by email. No password') !== -1, txt.slice(0, 600));
+    check(c[0] + ': sign in at the app address (opening on the email option), with THEIR email, a code by email, no password', L.indexOf('https://www.venueplay.com.au/app/?signin=email') !== -1 && txt.indexOf('type ' + c[3] + '. A code arrives by email. No password') !== -1, txt.slice(0, 600));
     check(c[0] + ': the one tick, once, before the games', /tick one box confirming your venue runs its own games under the gaming laws that apply to you\. It is one tap, once/.test(txt));
     check(c[0] + ': trivia in four moves (set, Open lobby, the QR on the TV, Start)', /Trivia\. Pick a question set, tap Open lobby, players scan the QR code on the TV with their phones, then tap Start\./.test(txt));
     check(c[0] + ': musical bingo in four moves (playlist, Open lobby, Deal, Play)', /Musical bingo\. Pick a playlist, tap Open lobby, then Deal, then Play\./.test(txt));

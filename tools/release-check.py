@@ -3584,6 +3584,13 @@ def local_checks(which):
              '/session, /host/game, /host/bingo/draw and the members draw refuse terms_first at a held venue; an ordinary or ticked venue is not held; a stranger learns nothing; a missing column holds nobody, a database fault is not swallowed', 17,
              'A page that skips the console card starts a game at a venue that never accepted it runs its own '
              'games, or a database blip stops every game in the country'),
+            # D86: "Open your VenuePlay", the one-time sign-in link in the prospect welcome (Dean, 28 Oct
+            # 2026; migration 123), branch feature/one-click-signin-28-oct.
+            ('D86. The prospect welcome signs them in with one tap, once, and the sign-in page opens on email for an email login',
+             'test-one-click-signin.js',
+             'only the hash of a 32-byte random token is stored; one use, 14 days, one winner of two at once; unknown, used, expired and removed all get one identical answer; rate-limited, never logged; nothing sent before a tap; the 4 hour sign-out still applies; email first for an email-only login', 49,
+             'A sign-in link that works twice, for ever, for a stranger who guessed it, or for a mail scanner; a '
+             'token readable from the database or a log; or an email-only prospect left waiting for a text'),
             ('D47. The Terms put gaming compliance, permits, attendance, age, records and an indemnity on the venue',
              'test-terms-put-compliance-on-the-venue.js',
              'section 6 carries every clause the lawyer asked for, and the onboarding tick is one sentence everywhere', 40,

@@ -386,3 +386,12 @@ manager accepts (`/account/compliance-accept`). Not security definer, no new pol
 Run BEFORE the billing Worker that carries `/admin/prospect` (it answers "Run migration 122 first" without it); either order is
 safe for the game Worker and the console (both read it fail-safe). Branch `feature/prospect-setup-28-oct`. NOT RUN.
 Rollback: in the file.
+
+`venueplay-123-one-click-signin.sql` (Dean, 28 Oct 2026, "a link to click that automatically goes to that page"): table
+`vp_signin_links` (token_hash = SHA-256 of 32 random bytes, auth_user_id, venue_id, created_at, expires_at at most 15 days on,
+used_at). The prospect welcome's "Open your VenuePlay" button carries the raw token in the URL FRAGMENT (`/app/go#t=`), so it is
+never sent to Pages or the Worker in a request line; the billing Worker `POST /auth/one-click` marks the row used in ONE
+conditional update (`used_at is null and expires_at > now`) and only then mints a Supabase magic-link hash for that login.
+RLS on, no policies, revoked from public/anon/authenticated: service role only. Run BEFORE the billing Worker; without it
+/admin/prospect still works and the button opens the email sign-in (HQ is told). After running, dump RLS-BASELINE.json (one new
+table). Branch `feature/one-click-signin-28-oct`. NOT RUN. Rollback: in the file.

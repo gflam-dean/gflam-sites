@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '28 Oct 2026, 15:56 · 5a09b500';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '28 Oct 2026, 19:38 · c09ef1d1';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -124,6 +124,8 @@ export default {
       // redirect rather than JSON. Signed, and it mints a fresh Checkout each time it is clicked.
       if (request.method === 'GET'  && path === '/add-card' && typeof vpaAddCardRedirect === 'function') return await vpaAddCardRedirect(request, env);
       if (request.method === 'POST' && path === '/contact')  return await handleContact(request, env, json);
+      // "Open your VenuePlay" in the prospect welcome (Dean, 28 Oct 2026; migration 123). Public, rate-limited, one use.
+      if (request.method === 'POST' && path === '/auth/one-click' && typeof vpaHandleOneClick === 'function') return await vpaHandleOneClick(request, env, json);
       // The help desk (migration 106). Submit-only routes for the public and venue staff; every
       // route that READS a ticket is /admin/help/ and HQ only. See helpAdmin.
       if (request.method === 'POST' && path === '/help/ticket')            return await helpPublicTicket(request, env, json);
@@ -2311,7 +2313,16 @@ async function vpaHandleProspect(request, env, json) {
   // 5. The ONE email. Best-effort: the account stands whether or not Resend answers.
   let welcomeSent = false;
   if (b.send_welcome !== false) {
+    /* ITS MAIN BUTTON SIGNS THEM STRAIGHT IN, ONCE (Dean, 28 Oct 2026; migration 123). Only the hash
+       is kept; the token itself exists in this email and nowhere else. No table yet, or no login: the
+       button opens the email sign-in instead, and HQ is told. */
+    let signinToken = null;
+    if (login) {
+      try { signinToken = await vpaMintSigninLink(env, login.id, venue.id); }
+      catch (e) { warnings.push('The one-click sign-in button was not made (run migration 123), so their email button opens the email-code sign-in instead.'); }
+    }
     welcomeSent = await vpaFireProspectWelcome(env, {
+      signinToken: signinToken,
       foundingId: foundingId, email: email, firstName: firstName, venueName: name, slug: slug,
       seats: players, state: state, entityType: entityType, slides: slideCount,
       mobile: login && login.mobile ? mobileRaw : '',
@@ -2333,6 +2344,100 @@ async function vpaHandleProspect(request, env, json) {
     slides: slideCount, welcome_sent: welcomeSent };
   if (warnings.length) out.warnings = warnings;
   return json(out);
+}
+
+/* ===========================================================================
+ * ONE-CLICK SIGN-IN: "Open your VenuePlay" in the prospect welcome (migration 123)
+ *
+ * Dean, 28 Oct 2026: "Can we do a link to click that automatically goes to that page so there's no
+ * signing in with an email to confuse them why they then get a text?"
+ *
+ *   mint     vpaMintSigninLink: 32 bytes from crypto.getRandomValues, base64url. ONLY its SHA-256 is
+ *            stored (vp_signin_links, service role only), with the login, the venue and a 14 day life.
+ *   link     https://venueplay.com.au/app/go#t=<token>&e=<their email>. The token is in the FRAGMENT, which a browser
+ *            never sends to any server: not to Pages, not in a Referer, and not to this Worker in a
+ *            request line. The page posts it in a body, and nothing here logs a body.
+ *   use      POST /auth/one-click { t }. ONE conditional UPDATE marks the row used: token_hash matches,
+ *            used_at is null, expires_at is in the future. Postgres re-checks "used_at is null" under
+ *            the row lock, so two clicks at the same instant get exactly one row back between them.
+ *            Only the caller that got the row goes on: the login must still be staff at that venue
+ *            and still have its email, then Auth's admin generate_link (magiclink, sends nothing)
+ *            gives a hashed token that the page exchanges with verifyOtp, exactly as the email-code
+ *            sign-in does. The 4 hour sign-out applies: the page starts the shift clock like a code.
+ *   refuse   Unknown, used, expired, removed from the venue, malformed: ONE answer, 410 { ok:false },
+ *            identical in every case, so nothing says whether a token or an email exists. The page
+ *            shows "That link has been used or has expired" with the email sign-in opened.
+ *   limit    per network, like /contact and the help desk (helpIpLimit: durable, hashed address).
+ * ======================================================================== */
+const VPA_SIGNIN_LINK_DAYS = 14;
+const VPA_ONECLICK_PER_IP = 20;          // per 10 minutes: a person clicks once or twice; a guesser is stopped
+function vpaB64Url(bytes) {
+  const A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+  let out = '';
+  for (let i = 0; i < bytes.length; i += 3) {
+    const n = (bytes[i] << 16) | ((bytes[i + 1] || 0) << 8) | (bytes[i + 2] || 0);
+    out += A[(n >> 18) & 63] + A[(n >> 12) & 63];
+    if (i + 1 < bytes.length) out += A[(n >> 6) & 63];
+    if (i + 2 < bytes.length) out += A[n & 63];
+  }
+  return out;
+}
+async function vpaSigninTokenHash(token) { return vpbSha256Hex(new TextEncoder().encode(String(token))); }
+async function vpaMintSigninLink(env, authUserId, venueId) {
+  const raw = new Uint8Array(32);
+  crypto.getRandomValues(raw);
+  const token = vpaB64Url(raw);
+  const now = Date.now();
+  await vpaInsert(env, 'vp_signin_links', {
+    token_hash: await vpaSigninTokenHash(token), auth_user_id: authUserId, venue_id: venueId, purpose: 'prospect_welcome',
+    created_at: new Date(now).toISOString(), expires_at: new Date(now + VPA_SIGNIN_LINK_DAYS * 86400000).toISOString(), used_at: null,
+  }, false);
+  return token;
+}
+/* The email's main button. With a token it signs them in; without one it opens the email-code sign-in.
+   Their own address rides in the fragment too, so a used or expired link opens the email sign-in
+   already filled in. Fragment only: it is never sent to a server. */
+function vpaOneClickUrl(site, token, email) {
+  return token ? site + '/app/go#t=' + token + (email ? '&e=' + encodeURIComponent(email) : '') : site + '/app/?signin=email';
+}
+async function vpaHandleOneClick(request, env, json) {
+  const GONE = { ok: false };
+  const ip = request.headers.get('cf-connecting-ip') || '';
+  if (ip && !(await helpIpLimit(env, 'oneclick', ip, VPA_ONECLICK_PER_IP, 600))) return json({ ok: false, busy: true }, 429);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return json(GONE, 410);
+  const token = String((_b.body && _b.body.t) || '');
+  if (!/^[A-Za-z0-9_-]{43}$/.test(token)) return json(GONE, 410);
+  const hash = await vpaSigninTokenHash(token);
+  const nowIso = new Date().toISOString();
+  let rows = null;
+  try {
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_signin_links?token_hash=eq.' + hash + '&used_at=is.null&expires_at=gt.' + encodeURIComponent(nowIso) + '&select=auth_user_id,venue_id', {
+      method: 'PATCH',
+      headers: { ...vpaHeaders(env), 'Prefer': 'return=representation' },
+      body: JSON.stringify({ used_at: nowIso }),
+    });
+    if (res.ok) rows = await res.json().catch(() => null);
+  } catch (_) { rows = null; }
+  if (!Array.isArray(rows) || rows.length !== 1) return json(GONE, 410);
+  const link = rows[0];
+  // Still on that venue's staff: HQ removing them since the email went out ends the link too.
+  const staff = await vpaSelect(env, 'vp_venue_staff', 'auth_user_id=eq.' + encodeURIComponent(link.auth_user_id) +
+    '&venue_id=eq.' + encodeURIComponent(link.venue_id) + '&select=role&limit=1');
+  if (!staff || staff.length !== 1) return json(GONE, 410);
+  const user = await vpaAuthGetUser(env, link.auth_user_id);
+  const email = user && user.email ? String(user.email).trim().toLowerCase() : '';
+  if (!email || (user.banned_until && Date.parse(user.banned_until) > Date.now())) return json(GONE, 410);
+  let d = null;
+  try {
+    const gl = await fetch(env.SUPABASE_URL + '/auth/v1/admin/generate_link', {
+      method: 'POST', headers: vpaHeaders(env), body: JSON.stringify({ type: 'magiclink', email: email }),
+    });
+    if (gl.ok) d = await gl.json().catch(() => null);
+  } catch (_) { d = null; }
+  const p = (d && (d.properties || d)) || {};
+  if (!p.hashed_token || typeof p.hashed_token !== 'string') return json(GONE, 410);
+  return json({ ok: true, token_hash: p.hashed_token, type: p.verification_type === 'email' ? 'email' : 'magiclink', venue_id: link.venue_id });
 }
 
 /* NUMBER BINGO, ONE LINE FOR THE WELCOME, BY STATE AND BY CLUB OR PUB. The words are vp-gaming.js's
@@ -2393,7 +2498,7 @@ async function vpaFireProspectWelcome(env, o) {
     const money = (n) => '$' + Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     const bingo = vpaProspectBingo(o.state, o.entityType);
     const tvUrl = site + '/tv?' + encodeURIComponent(o.slug || '');
-    html = vpaTplSections(html, { slides: o.slides > 0, noslides: !(o.slides > 0), mobile: !!o.mobile,
+    html = vpaTplSections(html, { slides: o.slides > 0, noslides: !(o.slides > 0), mobile: !!o.mobile, oneclick: !!o.signinToken, nooneclick: !o.signinToken,
       founding: founding, standard: !founding });
     html = html
       .replace(/{{greeting}}/g, o.firstName ? 'Hi ' + vpaEsc(o.firstName) + ',' : 'Hi there,')
@@ -2402,8 +2507,11 @@ async function vpaFireProspectWelcome(env, o) {
       .replace(/{{tv_address}}/g, tvUrl.replace(/^https?:\/\//, ''))
       .replace(/{{app_url}}/g, site + '/app')
       .replace(/{{app_address}}/g, (site + '/app').replace(/^https?:\/\//, ''))
+      .replace(/{{signin_url}}/g, vpaOneClickUrl(site, o.signinToken, email))
+      .replace(/{{app_email_url}}/g, site + '/app/?signin=email')
       .replace(/{{login_email}}/g, vpaEsc(email))
       .replace(/{{login_mobile}}/g, vpaEsc(o.mobile || ''))
+      .replace(/{{signin_days}}/g, String(VPA_SIGNIN_LINK_DAYS))
       .replace(/{{slide_count}}/g, String(o.slides || 0))
       .replace(/{{slide_word}}/g, o.slides === 1 ? 'slide' : 'slides')
       .replace(/{{slide_verb}}/g, o.slides === 1 ? 'is' : 'are')

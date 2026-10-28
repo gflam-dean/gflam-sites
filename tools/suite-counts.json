@@ -1122,5 +1122,9 @@
  "tools/test-prospect-terms-first-game.js": {
   "checks": 17,
   "counted_by": "lines"
+ },
+ "tools/test-one-click-signin.js": {
+  "checks": 49,
+  "counted_by": "lines"
  }
 }
