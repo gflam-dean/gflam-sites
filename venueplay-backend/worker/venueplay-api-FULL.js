@@ -201,6 +201,8 @@ export default {
       if (request.method === 'POST' && path === '/admin/venue'           && typeof vpaHandleVenue === 'function')          return await vpaHandleVenue(request, env, json);
       // HQ > Venues > Set up a prospect (Dean, 28 Oct 2026): venue, login, slides and ONE welcome, in one go.
       if (request.method === 'POST' && path === '/admin/prospect'        && typeof vpaHandleProspect === 'function')       return await vpaHandleProspect(request, env, json);
+      // The same setup for the prospect autopilot Mac job, on Dean's yes; a secret header, this route only (29 Oct 2026).
+      if (request.method === 'POST' && path === '/autopilot/prospect'    && typeof vpaAutopilotProspect === 'function')    return await vpaAutopilotProspect(request, env, json);
       // The welcome goes on a delay (Dean, 28 Oct 2026; migration 124): HQ sees when, and can cancel it or send it now.
       if (request.method === 'POST' && path === '/admin/prospect/welcomes'      && typeof vpaProspectWelcomes === 'function')   return await vpaProspectWelcomes(request, env, json);
       if (request.method === 'POST' && path === '/admin/prospect/welcome-cancel' && typeof vpaProspectWelcomeCancel === 'function') return await vpaProspectWelcomeCancel(request, env, json);
@@ -2197,7 +2199,46 @@ async function vpaHandleProspect(request, env, json) {
   if (actor.error) return json({ error: actor.error }, actor.status);
   const _b = await vpaBody(request, json);
   if (!_b.ok) return _b.res;
-  const b = _b.body;
+  return await vpaProspectSetUp(env, actor, _b.body, json, null);
+}
+
+/* ===========================================================================
+ * POST /autopilot/prospect   header X-Autopilot-Key   (Dean, 29 Oct 2026)
+ *
+ * "something that auto does instantly and sets the customers up". The Mac job
+ * ~/venue-enrich/prospect-autopilot.py prepares each interested Instantly reply (slides from the
+ * venue's site, the reply, the setup) and sends NOTHING until Dean says yes; on his yes it calls this
+ * route. It is the SAME setup as HQ's Set up a prospect (vpaProspectSetUp, one copy), with two
+ * differences and no others:
+ *   - the caller is the Mac job, proved by a secret (PROSPECT_AUTOPILOT_KEY, set with
+ *     tools/set-worker-secret.py), not an HQ login. Unset = the route is off (503). A wrong or missing
+ *     key = 401 and nothing is read or made. The key can do THIS and nothing else.
+ *   - their welcome always waits at least VPA_PROSPECT_DEFAULT_DELAY_MIN (90) minutes, so it sits in
+ *     HQ > Venues > prospect welcomes, where it can be cancelled or sent now, whatever the body says.
+ * Every refusal stays: an email that already signs in is refused, a mobile already in use is left off,
+ * the same venue twice is refused, and { dry_run: true } runs every one of those checks and makes nothing.
+ * ======================================================================== */
+const VPA_AUTOPILOT_ACTOR = { actorId: null, role: 'autopilot', label: 'Prospect autopilot (on Dean\'s yes)' };
+function vpaSameSecret(a, b) {
+  a = String(a || ''); b = String(b || '');
+  let diff = a.length ^ b.length;
+  for (let i = 0; i < Math.max(a.length, b.length); i++) diff |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+  return diff === 0;
+}
+async function vpaAutopilotProspect(request, env, json) {
+  const want = String(env.PROSPECT_AUTOPILOT_KEY || '');
+  if (want.length < 32) return json({ error: 'The prospect autopilot is not switched on (PROSPECT_AUTOPILOT_KEY is not set).' }, 503);
+  if (!vpaSameSecret(request.headers.get('X-Autopilot-Key'), want)) return json({ error: 'Not allowed.' }, 401);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  return await vpaProspectSetUp(env, VPA_AUTOPILOT_ACTOR, _b.body, json, { minDelayMin: VPA_PROSPECT_DEFAULT_DELAY_MIN, via: 'autopilot_prospect' });
+}
+
+/* THE ONE SETUP, for HQ (vpaHandleProspect) and the autopilot (vpaAutopilotProspect). actor is who it
+   is recorded as; opts.minDelayMin floors the welcome's delay; opts.via names the caller on the
+   screen record. b.dry_run: every check below runs, nothing is created, and it says what it would do. */
+async function vpaProspectSetUp(env, actor, b, json, opts) {
+  opts = opts || {};
   const NONE = ' Nothing was created.';
 
   const name = String(b.name || '').replace(/[\x00-\x1f]+/g, ' ').trim().slice(0, 120);
@@ -2237,6 +2278,7 @@ async function vpaHandleProspect(request, env, json) {
       return json({ error: 'Send their email in 0 to ' + VPA_PROSPECT_MAX_DELAY_MIN + ' minutes (0 sends it now).' + NONE }, 400);
     }
   }
+  if (opts.minDelayMin && delayMin < opts.minDelayMin) delayMin = opts.minDelayMin;
 
   // The slides are read and checked in full before anything is created.
   const slidesIn = Array.isArray(b.slides) ? b.slides : [];
@@ -2275,6 +2317,13 @@ async function vpaHandleProspect(request, env, json) {
     return json({ error: 'That email already has a VenuePlay login, so it cannot be set up as a new prospect from here. Check it is theirs, then add this venue from their own account (or + Add venue).' + NONE }, 409);
   }
   const phoneTaken = !!(phone && await vpaFindAuthUser(env, { phone: phone }));
+
+  // Every check has passed. A dry run stops here, having made nothing, and says what it would make.
+  if (b.dry_run === true) {
+    return json({ ok: true, dry_run: true, name: name, postcode: postcode, state: state, entity_type: entityType,
+      players: players, slides: slideFiles.length, mobile: phone ? (phoneTaken ? 'taken' : 'free') : 'none',
+      welcome_in_minutes: b.send_welcome === false ? null : delayMin });
+  }
 
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
   const warnings = [];
@@ -2328,7 +2377,7 @@ async function vpaHandleProspect(request, env, json) {
         slides.push({ image_url: env.SUPABASE_URL + '/storage/v1/object/public/venue-ads/' + path, seconds: VPA_PROSPECT_SLIDE_SECONDS });
       }
       const row = { venue_id: venue.id, slug: slug, slides: vpbCleanSlides(slides), updated_at: new Date().toISOString() };
-      const w = await vpbWriteScreen(env, row, { via: 'hq_prospect', route: 'admin/prospect', user: actor.actorId || null,
+      const w = await vpbWriteScreen(env, row, { via: opts.via || 'hq_prospect', route: opts.via ? 'autopilot/prospect' : 'admin/prospect', user: actor.actorId || null,
         admin: actor.actorId || null, label: actor.label || 'admin', role: actor.role || null });
       if (!w.ok) throw new Error('the screen did not save');
       slideCount = row.slides.length;
@@ -2367,7 +2416,7 @@ async function vpaHandleProspect(request, env, json) {
 
   // 6. Who set it up, and what was made.
   await vpaAudit(env, actor, 'prospect_set_up', 'venue:' + venue.id, {
-    name: name, slug: slug, founding_id: foundingId, email: email, first_name: firstName || undefined,
+    via: opts.via || 'hq', name: name, slug: slug, founding_id: foundingId, email: email, first_name: firstName || undefined,
     mobile_login: !!(login && login.mobile), login_made: !!login, players: players, state: state, entity_type: entityType,
     website: website || undefined, slides: slideCount, compliance: 'pending', terms_required: true,
     welcome_sent: welcomeSent, welcome_send_at: welcome ? welcome.send_at : undefined, welcome_delay_min: welcome ? delayMin : undefined,

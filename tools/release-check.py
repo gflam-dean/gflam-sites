@@ -3597,6 +3597,12 @@ def local_checks(which):
              'a prospect\'s welcome is booked for HQ\'s delay and its link\'s 14 days start when it goes; cancel retires the link, send now sends a new one once; neither after its minute or by staff; the first run: mobile only after the texted code, the Terms tick, their TV and slides, a first game, their card, please call me; kept per venue', 98,
              'An email that lands the second a venue replied, a cancelled email whose button still signs in, a '
              'mobile put on a login nobody verified, or a guide that lets a venue past the Terms tick'),
+            # D88: the prospect autopilot's one door (Dean, 29 Oct 2026), branch feature/prospect-autopilot.
+            ('D88. The prospect autopilot sets up a prospect only with its key, on Dean\'s yes, and its welcome waits in HQ',
+             'test-prospect-autopilot.js',
+             'off until PROSPECT_AUTOPILOT_KEY is set; a wrong or missing key makes nothing; a dry run makes nothing; the same setup as HQ, recorded as the autopilot; its welcome booked 90 minutes out or more and cancellable in HQ; an existing login refused, a used mobile left off', 38,
+             'A guessed key setting up venues, a dry run that made a login, or a welcome that reached a venue '
+             'before Dean could stop it'),
             ('D47. The Terms put gaming compliance, permits, attendance, age, records and an indemnity on the venue',
              'test-terms-put-compliance-on-the-venue.js',
              'section 6 carries every clause the lawyer asked for, and the onboarding tick is one sentence everywhere', 40,
