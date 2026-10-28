@@ -150,6 +150,8 @@ async function setUp(o, viaAutopilot) { return viaAutopilot ? call('/autopilot/p
   var lastMail = sent[sent.length - 1] || {};
   check('the welcome says the account is set up for 10 players to start with, and that they can change it any time (Dean, 29 Oct 2026)',
     /Your account is set up for 10 players to start with, and you can change that any time\./.test(lastMail.text || ''), (lastMail.text || '').slice(0, 900));
+  check('the welcome says plainly it is not a sign-up that starts billing, in words that match the code: no card, nothing charged, the free month from the day they add one, nothing to do',
+    (lastMail.text || '').indexOf("There's no card on your account, so nothing can be charged. If you decide to keep going, you add a card in the app and your free month starts that day. If it's not for you, no problem at all, there's nothing you need to do.") !== -1, (lastMail.text || '').slice(0, 1200));
   check('a prospect whose login has their mobile gets the text-code welcome and NO one-click sign-in link at all',
     r.status === 200 && r.body.login && r.body.login.mobile && DB.vp_signin_links.filter(function (x) { return x.venue_id === ml.id; }).length === 0 &&
     sent.some(function (m) { return /\/app\/\?signin=sms#m=0400222333/.test(m.html) && m.html.indexOf('/app/go#') === -1; }), [r.body.login, DB.vp_signin_links.length]);
