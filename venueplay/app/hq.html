@@ -298,6 +298,8 @@
 
   <div class="navpills" id="hqNav">
     <button data-pane="venues" class="on">Venues</button>
+    <!-- HQ > Prospects (Dean, 29 Oct 2026): its tab, pane and count are vp-prospects-hq.js's own. -->
+    <button data-pane="prospects" id="prTab" hidden>Prospects</button>
     <button data-pane="live">Live now</button>
     <button data-pane="quiet">Quiet</button>
     <button data-pane="cancelled">Cancelled</button>
@@ -399,16 +401,20 @@
         <div class="field"><label for="ppName">Venue name</label><input type="text" id="ppName" placeholder="e.g. The Royal Hotel" maxlength="120"></div>
         <div class="field"><label for="ppFirst">Contact first name (optional)</label><input type="text" id="ppFirst" placeholder="e.g. Amit" maxlength="60" autocomplete="off"></div>
         <div class="field"><label for="ppEmail">Contact email</label><input type="email" id="ppEmail" placeholder="owner@venue.com.au"><div class="note" style="margin-top:4px">Their login (a code by email, no password) and where the welcome goes.</div></div>
-        <div class="field"><label for="ppMobile">Mobile (optional)</label><input type="text" id="ppMobile" placeholder="e.g. 0412 345 678" class="mono" inputmode="tel"><div class="note" style="margin-top:4px">Goes on the same login, so they can sign in by text code too.</div></div>
+        <div class="field"><label for="ppMobile">Mobile (optional)</label><input type="text" id="ppMobile" placeholder="e.g. 0412 345 678" class="mono" inputmode="tel"><div class="note" style="margin-top:4px">Their login: the welcome tells them to sign in with it, and we text them a code.</div></div>
+        <!-- THE NUMBER TO RING (Dean, 29 Oct 2026: "We need to add that at the point of setup also"). Not required,
+             but asked: HQ > Prospects flags a prospect who never signs in, and this is the number we call. -->
+        <div class="field"><label for="ppPhone">Phone to call them on</label><input type="text" id="ppPhone" placeholder="e.g. 0412 345 678 or 02 9876 5432" class="mono" inputmode="tel" autocomplete="off"><div class="note" style="margin-top:4px">A mobile or the venue's landline. Leave it empty and we use their mobile; with neither, Prospects says to email them.</div></div>
         <div class="field"><label for="ppPostcode">Venue postcode</label><input type="text" id="ppPostcode" placeholder="e.g. 3066" class="mono" maxlength="4" inputmode="numeric"><div class="note" style="margin-top:4px" id="ppState">Sets the state, so the email and the console show the right gaming rules.</div></div>
         <div class="field"><label for="ppKind">Club or pub?</label><select id="ppKind">
           <option value="">Choose...</option>
           <option value="non_profit">Club (RSL, bowls, leagues, non-profit)</option>
           <option value="for_profit">Pub (hotel or tavern)</option>
         </select></div>
-        <div class="field"><label for="ppPlayers">Usual crowd (players)</label><input type="number" id="ppPlayers" value="60" min="1" max="2000" class="mono"><div class="note" style="margin-top:4px" id="ppPrice">Sets their plan: the price is per player a month on this number.</div></div>
+        <div class="field"><label for="ppPlayers">Usual crowd (players)</label><input type="number" id="ppPlayers" value="10" min="1" max="2000" class="mono"><div class="note" style="margin-top:4px" id="ppPrice">Sets their plan: the price is per player a month on this number. Starts at 10: only change it if they told you their crowd.</div></div>
         <div class="field"><label for="ppDelay">Send their email in</label><div style="display:flex;align-items:center;gap:8px"><input type="number" id="ppDelay" value="90" min="0" max="1440" step="1" class="mono" style="max-width:110px" inputmode="numeric"><span>minutes</span></div><div class="note" style="margin-top:4px" id="ppDelayNote">So it does not land the moment they replied. 0 sends it now; up to 1440 (a day).</div></div>
-        <div class="field"><label for="ppWebsite">Website (optional)</label><input type="text" id="ppWebsite" placeholder="e.g. theroyalhotel.com.au" autocomplete="off"><div class="note" style="margin-top:4px">Kept on the record, for making their slides from.</div></div>
+        <div class="field"><label for="ppWebsite">Website (optional)</label><input type="text" id="ppWebsite" placeholder="e.g. theroyalhotel.com.au" autocomplete="off"><div class="note" style="margin-top:4px">Kept on the record, for making their slides from, and linked from Prospects.</div></div>
+        <div class="field"><label style="display:flex;align-items:center;gap:8px;font-weight:400;text-transform:none;letter-spacing:0"><input type="checkbox" id="ppCallReq" style="width:auto;margin:0"> They asked us to call them</label><div class="note" style="margin-top:4px">Puts "Call requested" on them in Prospects, at the top, for sales.</div></div>
         <div class="field" style="grid-column:1 / -1"><label for="ppSlides">Screen slides (optional, up to 20)</label>
           <input type="file" id="ppSlides" accept="image/png,image/jpeg" multiple>
           <div class="note" style="margin-top:4px">PNG or JPEG. Each is fitted to the TV (1920 by 1080) before it is sent, the same as Your account does, and they go straight onto the venue's screen.</div>
@@ -1109,7 +1115,7 @@
     // Archived venues are not customers, so they are not in any headline number.
     // A test venue is not a customer and was inflating every card at the top of this page.
     // Nor is a venue that has ended or cancelled (hasLeft), the same rule the Venues list uses.
-    var active=S.venues.filter(function(v){ return !hasLeft(v) && !hideAsTest(v); });
+    var active=S.venues.filter(function(v){ return !hasLeft(v) && !hideAsTest(v) && !isProspect(v); });   // a prospect is not a customer yet
     var grouped=active.filter(function(v){ return !!v.group_id; }).length;
     var indep=active.length-grouped;
     var susp=active.filter(function(v){ return v.status==="suspended"; }).length;
@@ -1237,7 +1243,10 @@
   }
 
   /* ================= NAV ================= */
-  var PANES=["venues","live","quiet","cancelled","billing","groups","usage","team","flagged","audit"];
+  var PANES=["venues","prospects","live","quiet","cancelled","billing","groups","usage","team","flagged","audit"];
+  /* HQ > Prospects (vp-prospects-hq.js) says when its list has arrived or changed: the Venues list and the
+     headline count leave its prospects out, so they are drawn again with it. */
+  document.addEventListener("vp-prospects", function(){ if(S.venues){ renderStats(); renderVenues(); } });
   /* Switching pane was only ever done inline by the nav's own click handler, so nothing else could
      send you to a pane. Now anything can, and the tab highlights correctly when it does. */
   function goPane(pane){
@@ -2114,6 +2123,7 @@
     for(var i=0;i<S.venues.length;i++){ if(S.venues[i].id===id) return S.venues[i]; }
     return null;
   }
+  function isProspect(v){ return !!(v && window.VPProspects && window.VPProspects.isProspect(v.id)); }
   function venuePasses(v, ignoreSearch){
     /* Venues that have LEFT (archived, ended, cancelled) are off the list unless you go looking:
        tick "Show cancelled", choose Archived or Suspended, or SEARCH. A search finds them whatever
@@ -2122,6 +2132,10 @@
        scan slower. Billing still sees them for the month they left, because that month's invoice
        is real; that filtering lives in renderBilling, not here. */
     var searching = !ignoreSearch && !!S.vSearch;
+    /* A PROSPECT IS NOT AN ACTIVE VENUE (Dean, 29 Oct 2026: "if they haven't signed up they're not gonna sign
+       up on the active list are they?"). They are on the Prospects tab until they sign up, when the Worker
+       stops listing them and they come back here by themselves. A search still finds one, badged. */
+    if(isProspect(v) && !searching && S.vFilter!=="test" && S.vFilter!=="needsstate") return false;
     /* NEEDS A STATE (legal compliance matrix G19, 28 Oct 2026). A venue with no state is shown no
        state's rules and cannot charge for a game (vp-gaming.js assess), so it is a job to fix: every
        one, test or not, left or not, so none can hide. The search still narrows it. */
@@ -2217,7 +2231,7 @@
       var billBadge=v.group_id ? '<span class="badge grouped">'+esc(groupName(v.group_id))+'</span>'
         : (inAccount ? '<span class="badge grouped">Account &middot; '+acctCount[v.founding_id]+' venues</span>'
         : '<span class="badge indep">Independent</span>');
-      var testBadge = isTest(v) ? ' <span class="badge gold">Test</span>' : '';
+      var testBadge = (isTest(v) ? ' <span class="badge gold">Test</span>' : '') + (isProspect(v) ? ' <span class="badge grouped">Prospect</span>' : '');
       var statusCell = stateBadgeFor(v) + needsStateBadge(v);
       /* Its own span, so the minute-by-minute refresh below can repaint JUST this badge without
          re-rendering a table somebody may be half way through using. */
@@ -4392,16 +4406,17 @@
   });
   $("ppGo").addEventListener("click", function(){
     var name=$("ppName").value.trim(), email=$("ppEmail").value.trim(), pc=($("ppPostcode").value||"").replace(/[^0-9]/g,"");
-    var kind=$("ppKind").value, mob=$("ppMobile").value.trim(), players=parseInt($("ppPlayers").value,10);
+    var kind=$("ppKind").value, mob=$("ppMobile").value.trim(), players=parseInt($("ppPlayers").value,10), tel=$("ppPhone").value.trim();
     if(!name){ errFlash("ppErr","Enter the venue name."); return; }
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ errFlash("ppErr","Enter the contact's email. It is their login and where the welcome goes."); return; }
     if(pc.length!==4){ errFlash("ppErr","Enter the venue's 4-digit postcode. It sets which state's gaming rules apply."); return; }
     if(kind!=="non_profit" && kind!=="for_profit"){ errFlash("ppErr","Choose club or pub."); return; }
     if(mob && !/^(04\d{8}|614\d{8}|4\d{8})$/.test(mob.replace(/[^0-9]/g,""))){ errFlash("ppErr","That mobile is not an Australian mobile (04...). Leave it empty or fix it."); return; }
+    if(tel && !/^0[23478]\d{8}$/.test(tel.replace(/^\+61/,"0").replace(/[^0-9]/g,"").replace(/^61(\d{9})$/,"0$1"))){ errFlash("ppErr","That phone does not look like an Australian number (a mobile 04..., or a landline with its area code). Leave it empty or fix it."); return; }
     if(!(players>=1 && players<=2000)){ errFlash("ppErr","Their usual crowd should be between 1 and 2000 players."); return; }
     var delay=Number($("ppDelay").value);
     if(!(Number.isInteger(delay) && delay>=0 && delay<=1440)){ errFlash("ppErr","Send their email in 0 to 1440 minutes (0 sends it now)."); return; }
-    var body={ name:name, first_name:$("ppFirst").value.trim(), email:email, mobile:mob, postcode:pc, entity_type:kind,
+    var body={ name:name, first_name:$("ppFirst").value.trim(), email:email, mobile:mob, phone:tel, call_requested:$("ppCallReq").checked, postcode:pc, entity_type:kind,
                players:players, website:$("ppWebsite").value.trim(), slides:PP.slides.slice(), send_in_minutes:delay };
     var btn=$("ppGo"); btn.disabled=true; btn.textContent="Setting up...";
     show("ppResult", false);
@@ -4413,17 +4428,22 @@
         (!res.welcome_sent ? '<b>The welcome email did not send.</b>' : (res.welcome && res.welcome.status==="scheduled") ? 'Email goes at <b>'+esc(ppWhen(res.welcome.send_at))+'</b>, to '+esc(email)+'. Cancel it or send it now below.' : 'Their welcome email went to '+esc(email)+'.')+'<br>'+
         'TV: <span class="mono">'+esc(res.tv_url)+'</span><br>'+
         'Login: '+esc(res.login ? (res.login.email+(res.login.mobile ? ' and '+res.login.mobile : '')) : 'none')+
+        ' &middot; Phone: '+esc(res.phone || 'none (Prospects will say to email them)')+
         ' &middot; Slides: '+esc(res.slides)+' &middot; Terms: waiting for their tick, no game starts until then.'+
         ((res.warnings||[]).length ? '<br><span style="color:var(--roll)">'+res.warnings.map(esc).join('<br>')+'</span>' : '');
       show("ppResult", true);
-      ["ppName","ppFirst","ppEmail","ppMobile","ppPostcode","ppWebsite"].forEach(function(id){ $(id).value=""; });
-      $("ppKind").value=""; $("ppPlayers").value="60"; $("ppDelay").value="90"; PP.slides=[]; ppThumbs(); ppStateNote(); ppPriceNote();
+      ["ppName","ppFirst","ppEmail","ppMobile","ppPhone","ppPostcode","ppWebsite"].forEach(function(id){ $(id).value=""; });
+      $("ppCallReq").checked=false;
+      $("ppKind").value=""; $("ppPlayers").value="10"; $("ppDelay").value="90"; PP.slides=[]; ppThumbs(); ppStateNote(); ppPriceNote();
       ppLoadWaiting();
       loadAll();
+      if(window.VPProspects) VPProspects.load();
     });
   });
 })();
 </script>
+<!-- HQ > Prospects (vp-prospects-hq.js, 29 Oct 2026): set up, not signed up yet, who to ring. HQ only. -->
+<script src="vp-prospects-hq.js"></script>
 <!-- The help desk tab (vp-helpdesk-hq.js, 19 Oct 2026): tickets for both brands, HQ only. -->
 <script src="vp-helpdesk-hq.js"></script>
 </body>
