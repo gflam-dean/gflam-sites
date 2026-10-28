@@ -318,6 +318,9 @@ eval('var hostDrawRpcMissing = false;');
 eval('var RULES_WINDOW_MS = 24 * 60 * 60 * 1000, RULES_NOT_SHOWN = "RECORDED AUTOMATICALLY";');
 eval(lift('rulesAccepted'));
 eval(lift('rulesRefusal'));
+eval('var TERMS_FIRST_MSG = ' + /const TERMS_FIRST_MSG = ('[^\n]*');/.exec(W)[1] + ';');
+eval(lift('venueTermsPending'));   // a prospect venue ticks section 6 first (migration 122, 28 Oct 2026)
+eval(lift('termsFirstReply'));
 eval(lift('membersRulesGate'));
 eval(lift('hostDrawRpc'));
 eval(lift('bingoRecordFailedAsk'));   // the failure record (VP-DRAW-1.1): written only when a draw throws
@@ -491,7 +494,9 @@ async function both(name, opts, body, note) {
      call against ten. */
   /* Plus TWO since 14 Oct 2026, on both paths: whose draw it is and whether tonight's rules were
      accepted (membersRulesGate). The draw itself is still one call against ten. */
-  ok('it costs ONE call now, and cost ten before', r.fastTrips.length === 3 && r.slowTrips.length === 12 &&
+  /* Plus ONE since 28 Oct 2026, on both paths: whether the venue is a prospect still to tick section 6
+     (venueTermsPending, migration 122), a single row by key. */
+  ok('it costs ONE call now, and cost ten before', r.fastTrips.length === 4 && r.slowTrips.length === 13 &&
      r.fastTrips.filter(function (t) { return t.indexOf('RPC ') === 0; }).length === 1,
      'one trip: ' + r.fastTrips.join(', ') + ' | many: ' + r.slowTrips.join(', '));
   ok('the unresolved record is written either way (migration 74)',

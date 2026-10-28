@@ -3572,6 +3572,18 @@ def local_checks(which):
              'a paid game with no known state starts free; HQ filters and badges venues that need a state; the VGCCC register check is HQ-only, VIC-only and names who and when; /start sends the private-use tick', 46,
              'A club charging for bingo with no state rules shown, a forged or stale "permit checked", or a '
              'PartyPlay sale with no private-use declaration is what this stops reaching a venue or a buyer'),
+            # D84 and D85: HQ > Set up a prospect (Dean, 28 Oct 2026; migration 122), branch
+            # feature/prospect-setup-28-oct. One action builds the venue and sends ONE email.
+            ('D84. Set up a prospect builds a working venue and sends one email, with compliance pending and no login touched',
+             'test-prospect-setup.js',
+             'owner or accounts HQ only; refuses without email or postcode and creates nothing; account record at the founding price, email login, slides, terms_required, audit row; an existing login is never changed or linked; the VIC and QLD emails carry every link, the right TV address and state, and never call musical bingo bingo; the console holds the venue until ticked', 113,
+             'A prospect venue whose compliance line HQ ticked for them, an email login that cannot sign in, a '
+             'welcome with a dead link or the wrong state\'s bingo rule, or one venue\'s manager handed another venue'),
+            ('D85. The game Worker starts no game at a prospect venue until the owner or a manager has ticked section 6',
+             'test-prospect-terms-first-game.js',
+             '/session, /host/game, /host/bingo/draw and the members draw refuse terms_first at a held venue; an ordinary or ticked venue is not held; a stranger learns nothing; a missing column holds nobody, a database fault is not swallowed', 17,
+             'A page that skips the console card starts a game at a venue that never accepted it runs its own '
+             'games, or a database blip stops every game in the country'),
             ('D47. The Terms put gaming compliance, permits, attendance, age, records and an indemnity on the venue',
              'test-terms-put-compliance-on-the-venue.js',
              'section 6 carries every clause the lawyer asked for, and the onboarding tick is one sentence everywhere', 40,

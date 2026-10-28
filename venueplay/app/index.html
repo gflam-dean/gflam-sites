@@ -1380,6 +1380,9 @@
     /* SWITCHED OFF: one card in place of the game picker, and no TV pairing (28 Oct 2026). A host
        with more than one venue can still choose another one from the card. */
     if(window.VP && VP.holdGate && VP.holdGate(__ctx, staff.length>1 ? { other:{ label:"Choose another venue", onClick:showVenuePick } } : null)){ go("vBoot"); return; }
+    /* A VENUE SET UP FOR A PROSPECT ticks section 6 before its first game: one card in place of the game
+       picker, no TV pairing (migration 122). Its TV keeps showing its ads. */
+    if(window.VP && VP.termsGate && VP.termsGate(__ctx)){ go("vBoot"); return; }
     if(window.VP && VP.termsCard) VP.termsCard(__ctx);   // section 6 of the Terms, asked once; it blocks nothing (28 Oct 2026)
     if(venue && venue.slug && pairToVenue(venue.slug)){ return; }          // single venue: straight in
     // Fallback (no venue slug / helper missing): the old type-the-code screen.

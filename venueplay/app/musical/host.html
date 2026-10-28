@@ -2332,6 +2332,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       /* SWITCHED OFF: one card in place of the setup, and nothing below it runs (no key, no TV, no
          restore). The Worker refuses a game here anyway; the page says so first (28 Oct 2026). */
       if(VP.holdGate && VP.holdGate(ctx)){ VP.enforceShift(); $("statusText").textContent="Switched off"; return; }
+      if(VP.termsGate && VP.termsGate(ctx)){ VP.enforceShift(); $("statusText").textContent="One tick first"; return; }   // a prospect venue ticks section 6 before its first game (migration 122)
       G.venueId=ctx.currentVenueId; G.venue=ctx.venue||null;
       G.slug=(ctx.venue && ctx.venue.slug) || "";   // so the console can show the code the ROOM is shown
       showPaidField(ctx.venue);                      // "Tonight: free entry / tickets sold", only where the venue may charge

@@ -339,6 +339,7 @@
         </label>
       </div>
       <button class="btn ghost sp" id="addVenueToggle">+ Add venue</button>
+      <button class="btn ghost sp" id="prospectToggle">Set up a prospect</button>
       <a class="btn pink" href="onboard.html">Full onboarding</a>
     </div>
 
@@ -384,6 +385,37 @@
       <div class="note">Onboarding sets up the venue, its first manager login and its billing record. Admin takes no card: the welcome email is what asks for it.</div>
       <div class="okflash" id="addVenueOk"><span>&#10003;</span> <span></span></div>
       <div class="errflash" id="addVenueErr"></div>
+    </div>
+
+    <!-- SET UP A PROSPECT (Dean, 28 Oct 2026): a venue replied "yes, tell me more" to a cold email.
+         One button builds their account (venue, account record at the founding price, an email login,
+         their slides) and sends ONE email that gets them running on their own. Nobody reads them the
+         compliance line, so it is NOT ticked here: their console asks the owner or a manager to tick it,
+         and no game starts until they do (migration 122). Billing Worker POST /admin/prospect. -->
+    <div id="prospectPanel" class="panel pad hidden" style="margin-bottom:16px">
+      <div class="lblk" style="margin-top:0">Set up a prospect</div>
+      <p class="note" style="margin:0 0 14px">For a venue that said yes to a cold email. This creates their account and emails them everything they need to run their first game: their TV address, how to sign in, their price and the card link. Nothing is charged until they add a card, and their free month starts then.</p>
+      <div class="formgrid">
+        <div class="field"><label for="ppName">Venue name</label><input type="text" id="ppName" placeholder="e.g. The Royal Hotel" maxlength="120"></div>
+        <div class="field"><label for="ppFirst">Contact first name (optional)</label><input type="text" id="ppFirst" placeholder="e.g. Amit" maxlength="60" autocomplete="off"></div>
+        <div class="field"><label for="ppEmail">Contact email</label><input type="email" id="ppEmail" placeholder="owner@venue.com.au"><div class="note" style="margin-top:4px">Their login (a code by email, no password) and where the welcome goes.</div></div>
+        <div class="field"><label for="ppMobile">Mobile (optional)</label><input type="text" id="ppMobile" placeholder="e.g. 0412 345 678" class="mono" inputmode="tel"><div class="note" style="margin-top:4px">Goes on the same login, so they can sign in by text code too.</div></div>
+        <div class="field"><label for="ppPostcode">Venue postcode</label><input type="text" id="ppPostcode" placeholder="e.g. 3066" class="mono" maxlength="4" inputmode="numeric"><div class="note" style="margin-top:4px" id="ppState">Sets the state, so the email and the console show the right gaming rules.</div></div>
+        <div class="field"><label for="ppKind">Club or pub?</label><select id="ppKind">
+          <option value="">Choose...</option>
+          <option value="non_profit">Club (RSL, bowls, leagues, non-profit)</option>
+          <option value="for_profit">Pub (hotel or tavern)</option>
+        </select></div>
+        <div class="field"><label for="ppPlayers">Usual crowd (players)</label><input type="number" id="ppPlayers" value="60" min="1" max="2000" class="mono"><div class="note" style="margin-top:4px" id="ppPrice">Sets their plan: the price is per player a month on this number.</div></div>
+        <div class="field"><label for="ppWebsite">Website (optional)</label><input type="text" id="ppWebsite" placeholder="e.g. theroyalhotel.com.au" autocomplete="off"><div class="note" style="margin-top:4px">Kept on the record, for making their slides from.</div></div>
+        <div class="field" style="grid-column:1 / -1"><label for="ppSlides">Screen slides (optional, up to 20)</label>
+          <input type="file" id="ppSlides" accept="image/png,image/jpeg" multiple>
+          <div class="note" style="margin-top:4px">PNG or JPEG. Each is fitted to the TV (1920 by 1080) before it is sent, the same as Your account does, and they go straight onto the venue's screen.</div>
+          <div id="ppThumbs" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"></div></div>
+      </div>
+      <button class="btn pink" id="ppGo" style="margin-top:6px">Set up and send</button>
+      <div class="errflash" id="ppErr"></div>
+      <div id="ppResult" class="note hidden" role="status" style="margin-top:12px;padding:12px 14px;border:1px solid rgba(43,212,125,.45);border-radius:10px;background:rgba(43,212,125,.07);color:var(--text, #E7E7EC);line-height:1.6"></div>
     </div>
 
     <div class="lblk" id="venuesLbl">All venues</div>
@@ -4256,6 +4288,95 @@
       flash("addVenueOk", msg);
       $("nvName").value=""; $("nvSlug").value=""; $("nvEmail").value=""; $("nvMobile").value=""; $("nvMax").value=""; $("nvCap").value=""; $("nvPostcode").value=""; $("nvComp").checked=false; $("nvWelcome").checked=true;
       $("nvKind").value=""; $("nvCompliance").checked=false; $("nvComplianceBy").value=""; nvBingoNote();
+      loadAll();
+    });
+  });
+
+  /* ================= SET UP A PROSPECT (Worker /admin/prospect, 28 Oct 2026) ================= */
+  var PP = { slides: [] };   // data URLs, already fitted to the TV
+  var PP_MAX_SLIDES = 20;    // the Worker's VPB_MAX_SLIDES
+  $("prospectToggle").addEventListener("click", function(){ show("prospectPanel", $("prospectPanel").classList.contains("hidden")); });
+  function ppStateNote(){
+    var pc=($("ppPostcode").value||"").replace(/[^0-9]/g,"");
+    var st=(pc.length===4 && window.VPGaming && VPGaming.stateFromPostcode) ? VPGaming.stateFromPostcode(pc) : null;
+    $("ppState").textContent = st ? ("State: "+st+". The email and the console show "+st+"'s rules.") : "Sets the state, so the email and the console show the right gaming rules.";
+  }
+  function ppPriceNote(){
+    var n=parseInt($("ppPlayers").value,10);
+    $("ppPrice").textContent = (n>0) ? ("At $2.50 a player a month while the offer runs: $"+(n*2.5).toFixed(2)+" a month, first month free once they add a card.") : "Sets their plan: the price is per player a month on this number.";
+  }
+  $("ppPostcode").addEventListener("input", ppStateNote);
+  $("ppPlayers").addEventListener("input", ppPriceNote);
+  /* Fit a slide to the TV, as billing.html's resizeAdImage does, but always PNG or JPEG out (this
+     route takes those two only): a black backing for any see-through part, never enlarged, and the
+     original kept when it is already smaller. */
+  function ppFit(dataUrl, cb){
+    var img=new Image();
+    img.onload=function(){
+      try{
+        var w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+        if(!w||!h){ cb(dataUrl); return; }
+        var scale=Math.min(1, 1920/w, 1080/h);
+        var cw=Math.max(1,Math.round(w*scale)), ch=Math.max(1,Math.round(h*scale));
+        var cv=document.createElement("canvas"); cv.width=cw; cv.height=ch;
+        var cx=cv.getContext("2d"); cx.fillStyle="#000"; cx.fillRect(0,0,cw,ch); cx.drawImage(img,0,0,cw,ch);
+        var out=cv.toDataURL("image/jpeg", 0.85);
+        cb(out && out.indexOf("data:image/jpeg")===0 && (scale<1 || out.length<dataUrl.length) ? out : dataUrl);
+      }catch(e){ cb(dataUrl); }
+    };
+    img.onerror=function(){ cb(null); };
+    img.src=dataUrl;
+  }
+  function ppThumbs(){
+    var box=$("ppThumbs");
+    box.innerHTML=PP.slides.map(function(d,i){
+      return '<div style="position:relative;width:96px;height:54px;border-radius:6px;overflow:hidden;background:#000;border:1px solid rgba(255,255,255,.15)">'+
+        '<img src="'+esc(d)+'" alt="Slide '+(i+1)+'" style="width:100%;height:100%;object-fit:contain">'+
+        '<button type="button" class="mini" data-pp-rm="'+i+'" aria-label="Remove slide '+(i+1)+'" style="position:absolute;top:2px;right:2px;min-height:0;padding:0 6px;line-height:18px">&times;</button></div>';
+    }).join("") + (PP.slides.length ? '<div class="note" style="align-self:center">'+PP.slides.length+' of '+PP_MAX_SLIDES+'</div>' : "");
+    box.querySelectorAll("[data-pp-rm]").forEach(function(b){ b.addEventListener("click", function(){ PP.slides.splice(parseInt(this.getAttribute("data-pp-rm"),10),1); ppThumbs(); }); });
+  }
+  $("ppSlides").addEventListener("change", function(){
+    var files=Array.prototype.slice.call(this.files||[]); this.value="";
+    var room=PP_MAX_SLIDES-PP.slides.length;
+    if(files.length>room){ errFlash("ppErr","A venue can have up to "+PP_MAX_SLIDES+" slides. The first "+Math.max(room,0)+" were added."); files=files.slice(0,Math.max(room,0)); }
+    files.forEach(function(f){
+      if(!/^image\/(png|jpeg)$/.test(f.type)){ errFlash("ppErr", f.name+" is not a PNG or JPEG."); return; }
+      var rd=new FileReader();
+      rd.onload=function(){ ppFit(String(rd.result), function(out){
+        if(!out){ errFlash("ppErr", f.name+" could not be read as an image."); return; }
+        if(out.length*0.75 > 5*1024*1024){ errFlash("ppErr", f.name+" is still over 5MB after fitting it to the TV."); return; }
+        if(PP.slides.length<PP_MAX_SLIDES){ PP.slides.push(out); ppThumbs(); }
+      }); };
+      rd.readAsDataURL(f);
+    });
+  });
+  $("ppGo").addEventListener("click", function(){
+    var name=$("ppName").value.trim(), email=$("ppEmail").value.trim(), pc=($("ppPostcode").value||"").replace(/[^0-9]/g,"");
+    var kind=$("ppKind").value, mob=$("ppMobile").value.trim(), players=parseInt($("ppPlayers").value,10);
+    if(!name){ errFlash("ppErr","Enter the venue name."); return; }
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ errFlash("ppErr","Enter the contact's email. It is their login and where the welcome goes."); return; }
+    if(pc.length!==4){ errFlash("ppErr","Enter the venue's 4-digit postcode. It sets which state's gaming rules apply."); return; }
+    if(kind!=="non_profit" && kind!=="for_profit"){ errFlash("ppErr","Choose club or pub."); return; }
+    if(mob && !/^(04\d{8}|614\d{8}|4\d{8})$/.test(mob.replace(/[^0-9]/g,""))){ errFlash("ppErr","That mobile is not an Australian mobile (04...). Leave it empty or fix it."); return; }
+    if(!(players>=1 && players<=2000)){ errFlash("ppErr","Their usual crowd should be between 1 and 2000 players."); return; }
+    var body={ name:name, first_name:$("ppFirst").value.trim(), email:email, mobile:mob, postcode:pc, entity_type:kind,
+               players:players, website:$("ppWebsite").value.trim(), slides:PP.slides.slice() };
+    var btn=$("ppGo"); btn.disabled=true; btn.textContent="Setting up...";
+    show("ppResult", false);
+    workerPost("/admin/prospect", body).then(function(res){
+      btn.disabled=false; btn.textContent="Set up and send";
+      if(!res || res.error){ errFlash("ppErr",(res && res.error) || "That did not work. Nothing was sent."); return; }
+      var r=$("ppResult");
+      r.innerHTML='<b>'+esc(res.venue.name)+' is set up.</b><br>'+
+        (res.welcome_sent ? 'Their welcome email went to '+esc(email)+'.' : '<b>The welcome email did not send.</b>')+'<br>'+
+        'TV: <span class="mono">'+esc(res.tv_url)+'</span><br>'+
+        'Login: '+esc(res.login ? (res.login.email+(res.login.mobile ? ' and '+res.login.mobile : '')) : 'none')+
+        ' &middot; Slides: '+esc(res.slides)+' &middot; Terms: waiting for their tick, no game starts until then.'+
+        ((res.warnings||[]).length ? '<br><span style="color:var(--roll)">'+res.warnings.map(esc).join('<br>')+'</span>' : '');
+      show("ppResult", true);
+      ["ppName","ppFirst","ppEmail","ppMobile","ppPostcode","ppWebsite"].forEach(function(id){ $(id).value=""; });
+      $("ppKind").value=""; $("ppPlayers").value="60"; PP.slides=[]; ppThumbs(); ppStateNote(); ppPriceNote();
       loadAll();
     });
   });

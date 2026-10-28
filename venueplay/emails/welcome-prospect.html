@@ -1,0 +1,139 @@
+<!--
+  VenuePlay transactional email: YOU'RE SET UP (a prospect HQ set up in one step)
+  Sent once by the billing Worker (vpaFireProspectWelcome) when HQ > Venues > Set up a prospect builds
+  an account for a venue that replied "yes, tell me more" (Dean, 28 Oct 2026). It is the only thing
+  they get, so it has to get them running on their own: their TV address, how they sign in, the one
+  tick, their first two games, their price and the card link, and where help is.
+  It is transactional: they asked for it. Who we are and how to stop product emails are in the footer,
+  as on every other venue email.
+  Sections kept or stripped by vpaTplSections in the Worker: slides / noslides (did HQ load their
+  screen ads), mobile (did their mobile go on the login), founding / standard (is the offer running).
+  Merge fields:
+    {{greeting}} {{venue_name}} {{tv_url}} {{tv_address}} {{app_url}} {{app_address}} {{login_email}}
+    {{login_mobile}} {{slide_count}} {{slide_word}} {{slide_verb}} {{bingo_line}} {{player_rate}} {{offer_phrase}}
+    {{player_count}} {{monthly_total}} {{card_url}} {{help_url}} {{see_night_url}} {{terms_url}}
+    {{privacy_url}} {{support_email}} {{support_phone}} {{support_tel}} {{unsubscribe_url}}
+  House rules: no em dashes, musical bingo is never called bingo on its own or gaming, ACT not "the ACT".
+-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;margin:0;padding:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+  <tr><td align="center" style="padding:24px 12px">
+    <!-- preheader (hidden) -->
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0">Your TV address, how to sign in, and a first game to try whenever suits you.</div>
+
+    <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden">
+      <!-- header -->
+      <tr><td style="background:#12101a;padding:20px 32px">
+        <img src="https://venueplay.com.au/logos/venueplay_primary_rebuilt.png" width="168" alt="VenuePlay" style="display:block;border:0;height:auto">
+      </td></tr>
+
+      <!-- hero -->
+      <tr><td style="padding:36px 32px 6px">
+        <p style="margin:0 0 10px;font-size:16px;line-height:1.6;color:#3a3a44">{{greeting}}</p>
+<!--IF:slides-->
+        <h1 style="margin:0;font-size:22px;line-height:1.35;color:#12101a;font-weight:800">As promised, here's your VenuePlay account for {{venue_name}}, with a few quick slides our marketing team made off your website, so you can see what your TV looks like and have a play with a game or two.</h1>
+<!--ENDIF:slides-->
+<!--IF:noslides-->
+        <h1 style="margin:0;font-size:22px;line-height:1.35;color:#12101a;font-weight:800">As promised, here's your VenuePlay account for {{venue_name}}, so you can see what your TV looks like and have a play with a game or two.</h1>
+<!--ENDIF:noslides-->
+        <p style="margin:14px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">There is nothing to sign up for. The steps below take about ten minutes, whenever suits you.</p>
+      </td></tr>
+
+      <!-- 1. your TV -->
+      <tr><td style="padding:24px 32px 0">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf7fb;border:1px solid #eee;border-radius:12px">
+          <tr><td style="padding:20px 22px">
+            <p style="margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#FF1F8E">1. Your TV</p>
+            <p style="margin:10px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44">Open this address in the TV's web browser, or on a laptop or streaming stick plugged into the TV, and leave it running:</p>
+            <p style="margin:12px 0 0;font-size:17px;line-height:1.5"><a href="{{tv_url}}" style="color:#12101a;font-weight:800;text-decoration:none;word-break:break-all">{{tv_address}}</a></p>
+<!--IF:slides-->
+            <p style="margin:12px 0 0;font-size:15px;line-height:1.6;color:#3a3a44">The {{slide_count}} {{slide_word}} we made for you {{slide_verb}} already on it, showing between games from the moment it is on.</p>
+<!--ENDIF:slides-->
+<!--IF:noslides-->
+            <p style="margin:12px 0 0;font-size:15px;line-height:1.6;color:#3a3a44">Between games it can show your own screen ads: add your pictures any time under Your account and they appear on the TV straight away.</p>
+<!--ENDIF:noslides-->
+          </td></tr>
+        </table>
+      </td></tr>
+
+      <!-- 2. sign in -->
+      <tr><td style="padding:16px 32px 0">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf7fb;border:1px solid #eee;border-radius:12px">
+          <tr><td style="padding:20px 22px">
+            <p style="margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#FF1F8E">2. Sign in to run games</p>
+            <p style="margin:10px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44">On a phone, tablet or laptop, go to <a href="{{app_url}}" style="color:#12101a;font-weight:700;text-decoration:none">{{app_address}}</a> and type <strong>{{login_email}}</strong>. A code arrives by email. No password and no app to install.</p>
+<!--IF:mobile-->
+            <p style="margin:10px 0 0;font-size:15px;line-height:1.6;color:#3a3a44">Your mobile, {{login_mobile}}, works too: type it instead and the code comes by text.</p>
+<!--ENDIF:mobile-->
+            <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:16px"><tr>
+              <td><a href="{{app_url}}" style="display:inline-block;background:#12101a;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:13px 26px;border-radius:10px">Sign in</a></td>
+            </tr></table>
+          </td></tr>
+        </table>
+      </td></tr>
+
+      <!-- 3. the one tick -->
+      <tr><td style="padding:16px 32px 0">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf7fb;border:1px solid #eee;border-radius:12px">
+          <tr><td style="padding:20px 22px">
+            <p style="margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#FF1F8E">3. The first time you sign in</p>
+            <p style="margin:10px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44">You will be asked to tick one box confirming your venue runs its own games under the gaming laws that apply to you. It is one tap, once. <a href="{{terms_url}}" style="color:#C70F69;font-weight:600;text-decoration:none">Read the Terms</a>.</p>
+          </td></tr>
+        </table>
+      </td></tr>
+
+      <!-- 4. first game -->
+      <tr><td style="padding:26px 32px 0">
+        <p style="margin:0 0 14px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#12101a">4. Try a game (about two minutes)</p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+          <tr><td style="padding:0 0 12px"><table role="presentation" cellpadding="0" cellspacing="0"><tr>
+            <td valign="top" style="width:30px;font-size:16px;font-weight:800;color:#FF1F8E">Q</td>
+            <td style="font-size:15px;line-height:1.55;color:#3a3a44"><strong>Trivia.</strong> Pick a question set, tap Open lobby, players scan the QR code on the TV with their phones, then tap Start.</td>
+          </tr></table></td></tr>
+          <tr><td style="padding:0 0 12px"><table role="presentation" cellpadding="0" cellspacing="0"><tr>
+            <td valign="top" style="width:30px;font-size:16px;font-weight:800;color:#FF1F8E">&#9835;</td>
+            <td style="font-size:15px;line-height:1.55;color:#3a3a44"><strong>Musical bingo.</strong> Pick a playlist, tap Open lobby, then Deal, then Play. The songs play, players mark them off on their phones, and it runs the same way in every state.</td>
+          </tr></table></td></tr>
+          <tr><td><table role="presentation" cellpadding="0" cellspacing="0"><tr>
+            <td valign="top" style="width:30px;font-size:16px;font-weight:800;color:#FF1F8E">#</td>
+            <td style="font-size:15px;line-height:1.55;color:#3a3a44"><strong>Number bingo.</strong> {{bingo_line}}</td>
+          </tr></table></td></tr>
+        </table>
+      </td></tr>
+
+      <!-- 5. your price -->
+      <tr><td style="padding:24px 32px 0">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #FF1F8E;border-radius:12px;background:#fff6fb">
+          <tr><td style="padding:22px 24px">
+            <p style="margin:0;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#C70F69">5. Your price</p>
+<!--IF:founding-->
+            <p style="margin:10px 0 0;font-size:19px;font-weight:800;color:#12101a">{{player_rate}} a player a month, {{offer_phrase}}</p>
+<!--ENDIF:founding-->
+<!--IF:standard-->
+            <p style="margin:10px 0 0;font-size:19px;font-weight:800;color:#12101a">{{player_rate}} a player a month</p>
+<!--ENDIF:standard-->
+            <p style="margin:10px 0 0;font-size:15.5px;line-height:1.65;color:#3a3a44">It is set on your usual crowd, not counted per person each time you play: <strong>{{player_count}} players is {{monthly_total}} a month</strong>, GST included. Your <strong>first month is free</strong>, and it starts the day you add your card. No lock-in.</p>
+            <p style="margin:14px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44">Add your card when you're ready:</p>
+            <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:12px"><tr>
+              <td><a href="{{card_url}}" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:14px 30px;border-radius:10px">Add my card</a></td>
+            </tr></table>
+            <p style="margin:14px 0 0;font-size:13px;line-height:1.6;color:#6a6a75">The link is secure and goes to our payment provider, Stripe. We never see or store your card, and nothing is charged when you add it.</p>
+          </td></tr>
+        </table>
+      </td></tr>
+
+      <!-- 6. help -->
+      <tr><td style="padding:24px 32px 0">
+        <p style="margin:0 0 10px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#12101a">6. Help</p>
+        <p style="margin:0;font-size:15px;line-height:1.6;color:#3a3a44"><a href="{{see_night_url}}" style="color:#C70F69;font-weight:700;text-decoration:none">See a night</a> walks you through the TV, the host and a player's phone. <a href="{{help_url}}" style="color:#C70F69;font-weight:700;text-decoration:none">The help page</a> answers the common questions.</p>
+        <p style="margin:12px 0 0;font-size:15px;line-height:1.6;color:#3a3a44">If you'd like a hand, reply to this email or tell us a good time and Dean will call you.</p>
+      </td></tr>
+
+      <!-- footer: the support line, who we are, how to stop -->
+      <tr><td style="padding:26px 32px 34px">
+        <p style="margin:0;font-size:13.5px;line-height:1.6;color:#6a6a75">Write to <a href="mailto:{{support_email}}" style="color:#C70F69;font-weight:600;text-decoration:none">{{support_email}}</a> and a person answers, usually the same day. If a game is on and you need us right now, call <a href="tel:{{support_tel}}" style="color:#FF1F8E;text-decoration:none;font-weight:700">{{support_phone}}</a> and press 2.</p>
+        <p style="margin:14px 0 0;font-size:12.5px;line-height:1.6;color:#b3b3bb">You are getting this because you asked us to set up VenuePlay for {{venue_name}}. Our <a href="{{terms_url}}" style="color:#b3b3bb">Terms of Service</a> and <a href="{{privacy_url}}" style="color:#b3b3bb">Privacy Policy</a> are the agreement.</p>
+        <p style="margin:14px 0 0;font-size:11px;line-height:1.7;color:#b3b3bb">VenuePlay, Gflam Group Pty Ltd, ABN 35 679 383 049. <a href="https://venueplay.com.au/privacy" style="color:#b3b3bb;text-decoration:underline">Privacy</a> &middot; <a href="https://venueplay.com.au/terms" style="color:#b3b3bb;text-decoration:underline">Terms</a> &middot; <a href="{{unsubscribe_url}}" style="color:#b3b3bb;text-decoration:underline">Unsubscribe from product emails</a></p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>

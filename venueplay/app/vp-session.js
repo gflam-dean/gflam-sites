@@ -1069,6 +1069,16 @@
     if (r === "admin") return "hq";
     return "host";
   }
+  /* A VENUE SET UP FOR A PROSPECT TICKS FIRST (Dean, 28 Oct 2026; migration 122). HQ > Set up a prospect
+     builds the venue with terms_required and no compliance record, because nobody read the line to them
+     on a call. For THAT venue the card is not a question that can wait: the game Worker refuses to start
+     any game there until the owner or a manager ticks it (code 'terms_first'), so the console says so up
+     front with termsGate below, the way holdGate does for a switched-off venue. Every other venue keeps
+     the card above, which asks and blocks nothing. The TV is never touched: its ads keep showing. */
+  function termsBlocking(ctx) {
+    var v = ctx && ctx.venue;
+    return !!(termsMode(ctx) && v.terms_required === true);
+  }
   function termsEl(tag, css, text) {
     var e = document.createElement(tag);
     if (css) e.setAttribute("style", css);
@@ -1080,7 +1090,8 @@
     var card = document.getElementById("vpTermsCard");
     var mode = termsMode(ctx);
     if (!mode) { if (card && card.parentNode) card.parentNode.removeChild(card); return false; }
-    var v = ctx.venue, name = String(v.name || "your venue");
+    var v = ctx.venue, name = String(v.name || "your venue"), block = termsBlocking(ctx);
+    if (block) mode = "block-" + mode;
     if (card && card.getAttribute("data-venue") === String(v.id) && card.getAttribute("data-mode") === mode) return true;
     if (card && card.parentNode) card.parentNode.removeChild(card);
     card = termsEl("div", "max-width:560px;margin:18px auto;padding:22px 22px 20px;background:rgba(255,31,142,.06);" +
@@ -1095,10 +1106,18 @@
     var TITLE = "margin:0 0 10px;font-size:20px;font-weight:800;line-height:1.3;color:#FFFFFF;font-family:'Hanken Grotesk',Manrope,sans-serif";
     var TEXT = "margin:0 0 14px;font-size:15px;line-height:1.55;color:#C9C9D1";
     var LINK = "color:#FF8CC6;font-weight:700;text-decoration:underline";
-    card.appendChild(termsEl("p", EYEBROW, "Updated Terms"));
+    card.appendChild(termsEl("p", EYEBROW, block ? "Before your first game" : "Updated Terms"));
     var read = termsEl("a", LINK, "Read section 6 of the Terms");
     read.setAttribute("href", "/terms"); read.setAttribute("target", "_blank"); read.setAttribute("rel", "noopener");
-    if (mode === "host") {
+    if (mode === "block-host") {
+      card.appendChild(termsEl("h2", TITLE, "Games start here once the owner or a manager ticks one box"));
+      card.appendChild(termsEl("p", TEXT, "Before the first game at " + name + ", the owner or a manager needs to confirm the venue runs its own games under the gaming laws that apply to it. They will see it the next time they sign in. The TV keeps showing your ads in the meantime."));
+      card.appendChild(read);
+    } else if (mode === "block-hq") {
+      card.appendChild(termsEl("h2", TITLE, name + " has not ticked section 6 yet, so its games cannot start"));
+      card.appendChild(termsEl("p", TEXT, "It was set up for a prospect. Only the venue's owner or a manager can tick it, at their own sign-in; HQ View as cannot do it for them. Their TV keeps showing their ads."));
+      card.appendChild(read);
+    } else if (mode === "host") {
       card.appendChild(termsEl("h2", TITLE, "Your venue owner needs to accept the updated Terms"));
       card.appendChild(termsEl("p", TEXT, "Section 6 of the Terms needs a tick from the owner or a manager of " + name +
         ". They will be asked the next time they sign in. Your games run as normal in the meantime."));
@@ -1108,9 +1127,14 @@
       card.appendChild(termsEl("p", TEXT, "Only the venue's owner or a manager can accept it, at their own sign-in. HQ View as cannot accept it for them. Their games run as normal."));
       card.appendChild(read);
     } else {
-      card.appendChild(termsEl("h2", TITLE, "Please accept the updated Terms for " + name));
-      card.appendChild(termsEl("p", TEXT, "Section 6 of our Terms says who is responsible for the games you run: your venue conducts every game, and VenuePlay supplies the software. We have no record of " +
-        name + " accepting it, so we are asking once. Nothing else changes, and your games run as normal."));
+      if (block) {
+        card.appendChild(termsEl("h2", TITLE, "One tick and your games are ready, " + name));
+        card.appendChild(termsEl("p", TEXT, "Section 6 of our Terms says who is responsible for the games you run: your venue conducts every game, and VenuePlay supplies the software. Tick it once and every game is ready to start. Your TV keeps showing your ads either way."));
+      } else {
+        card.appendChild(termsEl("h2", TITLE, "Please accept the updated Terms for " + name));
+        card.appendChild(termsEl("p", TEXT, "Section 6 of our Terms says who is responsible for the games you run: your venue conducts every game, and VenuePlay supplies the software. We have no record of " +
+          name + " accepting it, so we are asking once. Nothing else changes, and your games run as normal."));
+      }
       var rp = termsEl("p", "margin:0 0 16px;font-size:14.5px"); rp.appendChild(read); card.appendChild(rp);
       var tickRow = termsEl("label", "display:flex;gap:12px;align-items:flex-start;padding:14px 16px;background:rgba(255,255,255,.04);" +
         "border:1px solid rgba(255,255,255,.12);border-radius:12px;cursor:pointer;margin:0 0 14px");
@@ -1136,14 +1160,14 @@
       var msg = termsEl("p", "margin:10px 0 0;font-size:14px;line-height:1.5;color:#FF8CC6;min-height:1px", "");
       msg.id = "vpTermsMsg"; msg.setAttribute("role", "status");
       card.appendChild(msg);
-      go.addEventListener("click", function () { termsAccept(ctx, card, tick, by, go, msg); });
+      go.addEventListener("click", function () { termsAccept(ctx, card, tick, by, go, msg, block); });
     }
     var wrap = document.querySelector ? document.querySelector(".wrap") : null;
     if (wrap) { if (wrap.firstChild) wrap.insertBefore(card, wrap.firstChild); else wrap.appendChild(card); }
     else document.body.appendChild(card);
     return true;
   }
-  function termsAccept(ctx, card, tick, by, go, msg) {
+  function termsAccept(ctx, card, tick, by, go, msg, block) {
     var v = ctx.venue, who = String(by.value || "").trim();
     if (!tick.checked) { msg.textContent = "Tick the box to accept section 6 of the Terms."; return Promise.resolve(false); }
     if (!who) { msg.textContent = "Enter your name, so the record says who accepted it."; return Promise.resolve(false); }
@@ -1164,15 +1188,55 @@
       card.appendChild(termsEl("p", "margin:0 0 6px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#2BD47D;font-weight:800", "Accepted"));
       card.appendChild(termsEl("p", "margin:0 0 14px;font-size:15px;line-height:1.55;color:#E7E7EC",
         "Thank you. Section 6 of the Terms is recorded as accepted for " + String(v.name || "your venue") + " by " + v.compliance_accepted_by + "."));
+      /* A held console (termsGate) stopped its boot to show this card, so the way on is a fresh load,
+         which now finds the record and starts as normal. Anywhere else Done just takes the card away. */
       var done = termsEl("button", "display:inline-block;min-height:44px;padding:11px 22px;border-radius:10px;border:none;" +
-        "background:rgba(255,255,255,.08);color:#E7E7EC;font:700 15px/1.4 'Hanken Grotesk',Manrope,sans-serif;cursor:pointer", "Done");
+        (block ? "background:#FF1F8E;color:#FFFFFF;" : "background:rgba(255,255,255,.08);color:#E7E7EC;") +
+        "font:700 15px/1.4 'Hanken Grotesk',Manrope,sans-serif;cursor:pointer", block ? "Start a game" : "Done");
       done.setAttribute("type", "button"); done.id = "vpTermsDone";
-      done.addEventListener("click", function () { if (card.parentNode) card.parentNode.removeChild(card); });
+      done.addEventListener("click", function () {
+        if (block && termsHeld()) { try { window.location.reload(); } catch (e) {} return; }
+        if (card.parentNode) card.parentNode.removeChild(card);
+      });
       card.appendChild(done);
       return true;
     }, function () {
       go.disabled = false; msg.textContent = "Could not reach VenuePlay. Check your connection and try again."; return false;
     });
+  }
+
+  /* THE HELD CONSOLE (Dean, 28 Oct 2026; migration 122). For a prospect venue with no recorded tick,
+     the page's .wrap shows the Terms card and nothing else, and the caller stops its boot when this
+     answers true, exactly as it does for holdGate. Any other venue: whatever this hid comes back, and
+     it answers false. Its own attribute (data-vp-terms-held), so it never undoes what holdGate hid. */
+  function termsHeld() {
+    var wrap = (typeof document !== "undefined" && document.querySelector) ? document.querySelector(".wrap") : null;
+    return !!wrap && Array.prototype.some.call(wrap.children || [], function (k) { return k.getAttribute && k.getAttribute("data-vp-terms-held") === "1"; });
+  }
+  function termsGate(ctx) {
+    if (typeof document === "undefined" || !document.body) return false;
+    var wrap = document.querySelector ? document.querySelector(".wrap") : null;
+    var kids = wrap ? Array.prototype.slice.call(wrap.children || []) : [];
+    if (!termsBlocking(ctx)) {
+      kids.forEach(function (k) {
+        if (k.getAttribute && k.getAttribute("data-vp-terms-held") === "1") {
+          k.style.display = k.getAttribute("data-vp-terms-display") || "";
+          k.removeAttribute("data-vp-terms-held"); k.removeAttribute("data-vp-terms-display");
+        }
+      });
+      return false;
+    }
+    termsCard(ctx);
+    var card = document.getElementById("vpTermsCard");
+    kids.forEach(function (k) {
+      if (k === card || !k.style) return;
+      if (k.getAttribute && k.getAttribute("data-vp-terms-held") !== "1") {
+        k.setAttribute("data-vp-terms-held", "1");
+        k.setAttribute("data-vp-terms-display", k.style.display || "");
+      }
+      k.style.display = "none";
+    });
+    return true;
   }
 
   /* A HOST IS THE STAFF (Dean, 28 Oct 2026). The game Worker's kill-switch answers 403 in one of two
@@ -1425,6 +1489,7 @@
     holdGate: holdGate,
     holdWords: holdWords,
     termsCard: termsCard,   // section 6 of the Terms, accepted once (28 Oct 2026)
+    termsGate: termsGate,   // a prospect venue's console is held on that card until it is ticked (migration 122)
     hostRefusal: hostRefusal,
     noteOpenSession: noteOpenSession,
     closeOpenSessions: closeOpenSessions,

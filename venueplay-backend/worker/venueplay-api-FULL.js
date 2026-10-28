@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '28 Oct 2026, 12:52 · c035279b';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '28 Oct 2026, 15:56 · 5a09b500';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -186,6 +186,8 @@ export default {
       if (request.method === 'POST' && path === '/account/compliance-accept' && typeof vpbAcceptCompliance === 'function') return await vpbAcceptCompliance(request, env, json);
       // Gflam HQ admin (vpa* functions below). JWT-verified + role-gated inside each handler.
       if (request.method === 'POST' && path === '/admin/venue'           && typeof vpaHandleVenue === 'function')          return await vpaHandleVenue(request, env, json);
+      // HQ > Venues > Set up a prospect (Dean, 28 Oct 2026): venue, login, slides and ONE welcome, in one go.
+      if (request.method === 'POST' && path === '/admin/prospect'        && typeof vpaHandleProspect === 'function')       return await vpaHandleProspect(request, env, json);
       if (request.method === 'POST' && path === '/admin/resend-welcome'  && typeof vpaResendWelcome === 'function')        return await vpaResendWelcome(request, env, json);
       if (request.method === 'POST' && path === '/admin/discount'        && typeof vpaHandleDiscount === 'function')       return await vpaHandleDiscount(request, env, json);
       if (request.method === 'POST' && path === '/admin/discount-remove' && typeof vpaHandleDiscountRemove === 'function') return await vpaHandleDiscountRemove(request, env, json);
@@ -2111,6 +2113,316 @@ async function vpaHandleVenue(request, env, json) {
     out.warning = 'The venue is set up, but the database would not accept a comp status, so it is marked active and IS counted as a signed-up venue. Fix the status by hand.';
   }
   return json(out);
+}
+
+/* ===========================================================================
+ * POST /admin/prospect   (owner | accounts)        HQ > Venues > Set up a prospect
+ *
+ * Dean, 28 Oct 2026: "I want it so easy that they will never want to speak to me... when we set
+ * up the account that is all that we need to do." A venue replies "yes, tell me more" to a cold
+ * email; ONE action here builds everything a paying venue onboarded from HQ has, and sends ONE
+ * email that gets them running on their own:
+ *   - the account record (venueplay_founding, 'active', monthly, max_seats = their usual crowd,
+ *     no card: the welcome's secure card link starts the free month, exactly as /admin/venue does)
+ *   - the venue (state, timezone and paid-entry default from the postcode, club or pub, plan cap)
+ *   - an EMAIL login for the contact (and their mobile on the same login, if given), linked as the
+ *     venue's manager, so index.html's email code (shouldCreateUser:false) finds them
+ *   - their screen ads, if HQ attached any (PNG or JPEG, up to VPB_MAX_SLIDES, at the slide spec)
+ *   - compliance PENDING. Nobody read the compliance line to them on a call, so it is NOT ticked in
+ *     their name (Anisimoff Legal 9380, 1 Oct 2026, point 3: the venue actively ticks). The venue
+ *     gets terms_required = true (migration 122) and no compliance_accepted_at: the console shows
+ *     the Terms card in place of the game picker and the game Worker refuses to start a game until
+ *     the owner or a manager ticks it. The TV keeps showing their ads.
+ *   - one vp_admin_audit row saying who set it up and what was made.
+ * Everything is checked BEFORE anything is written, so a refusal leaves nothing half-made.
+ * Body: { name, first_name?, email, mobile?, postcode, entity_type: 'non_profit'|'for_profit',
+ *         players? (default 60), website?, slides?: ['data:image/png;base64,...', ...], send_welcome? }
+ * -> { ok, venue:{id,name,slug}, founding_id, tv_url, login:{email, mobile?}, slides, welcome_sent, warnings? }
+ * ======================================================================== */
+const VPA_PROSPECT_DEFAULT_PLAYERS = 60;
+const VPA_PROSPECT_MAX_PLAYERS = 2000;
+const VPA_PROSPECT_SLIDE_SECONDS = 8;
+/* A slide's bytes, judged by the header and never by its label: PNG or JPEG only (Dean's spec for
+   this form). Returns 'png' | 'jpg' | null. */
+function vpaProspectSlideKind(bytes) {
+  if (!bytes || bytes.length < 8) return null;
+  const PNG = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+  if (PNG.every(function (x, i) { return bytes[i] === x; })) return 'png';
+  if (bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF) return 'jpg';
+  return null;
+}
+function vpaProspectWebsite(raw) {
+  let w = String(raw || '').trim().replace(/[\x00-\x1f\s]+/g, '');
+  if (!w) return '';
+  if (!/^https?:\/\//i.test(w)) w = 'https://' + w;
+  if (!/^https?:\/\/[a-z0-9-]+(\.[a-z0-9-]+)+(:\d+)?(\/[^\s]*)?$/i.test(w) || w.length > 200) return null;
+  return w;
+}
+/* The login: ONE NEW auth user carrying the contact's email (and their mobile, if it is not already
+   somebody's login). An EXISTING login is never changed and never linked from here (security review,
+   28 Oct 2026): the email and mobile are typed by HQ and unverified, so attaching either to a login
+   that already exists, or giving that login this venue, would hand whoever owns the typed address
+   somebody else's account. vpaHandleProspect refuses an email that already signs in before anything
+   is created; a mobile that already signs in is simply left off. Returns { id, mobile }. */
+async function vpaProspectLogin(env, email, phone, venueName) {
+  const meta = { venue: venueName };
+  const u = await vpaAuthCreateUser(env, phone
+    ? { email: email, email_confirm: true, phone: phone, phone_confirm: true, user_metadata: meta }
+    : { email: email, email_confirm: true, user_metadata: meta });
+  return { id: u.id, mobile: !!phone };
+}
+
+async function vpaHandleProspect(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
+  const NONE = ' Nothing was created.';
+
+  const name = String(b.name || '').replace(/[\x00-\x1f]+/g, ' ').trim().slice(0, 120);
+  if (!name) return json({ error: 'Enter the venue name.' + NONE }, 400);
+  const email = String(b.email || '').trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 200) {
+    return json({ error: 'Enter the contact\'s email. It is their login and where the welcome goes.' + NONE }, 400);
+  }
+  const postcode = String(b.postcode || '').replace(/\D/g, '').slice(0, 4);
+  const state = postcode.length === 4 ? vpaStateFromPostcode(postcode) : null;
+  if (!state) return json({ error: 'Enter the venue\'s 4-digit postcode. It sets which state\'s gaming rules apply.' + NONE }, 400);
+  const entityType = b.entity_type;
+  if (['non_profit', 'for_profit'].indexOf(entityType) === -1) {
+    return json({ error: 'Choose club or pub.' + NONE }, 400);
+  }
+  const mobileRaw = String(b.mobile || '').trim();
+  const phone = mobileRaw ? vpaNormaliseMobileAU(mobileRaw) : null;
+  if (mobileRaw && !vpaIsAuMobileE164(phone)) {
+    return json({ error: 'That mobile is not an Australian mobile (04...). Leave it empty, or fix it: a landline can never receive a sign-in code.' + NONE }, 400);
+  }
+  let players = VPA_PROSPECT_DEFAULT_PLAYERS;
+  if (b.players != null && b.players !== '') {
+    players = parseInt(b.players, 10);
+    if (!(players >= 1 && players <= VPA_PROSPECT_MAX_PLAYERS)) {
+      return json({ error: 'Their usual crowd should be between 1 and ' + VPA_PROSPECT_MAX_PLAYERS + ' players.' + NONE }, 400);
+    }
+  }
+  const website = vpaProspectWebsite(b.website);
+  if (website === null) return json({ error: 'That website does not look like a web address. Leave it empty or fix it.' + NONE }, 400);
+  const firstName = String(b.first_name || '').replace(/[\x00-\x1f]+/g, ' ').trim().slice(0, 60);
+
+  // The slides are read and checked in full before anything is created.
+  const slidesIn = Array.isArray(b.slides) ? b.slides : [];
+  if (slidesIn.length > VPB_MAX_SLIDES) {
+    return json({ error: 'That is ' + slidesIn.length + ' slides. A venue can have up to ' + VPB_MAX_SLIDES + '.' + NONE }, 400);
+  }
+  const slideFiles = [];
+  for (let i = 0; i < slidesIn.length; i++) {
+    const m = /^data:image\/(png|jpe?g);base64,([A-Za-z0-9+/=\s]+)$/.exec(String(slidesIn[i] || ''));
+    if (!m) return json({ error: 'Slide ' + (i + 1) + ' is not a PNG or JPEG.' + NONE }, 400);
+    let bytes;
+    try { bytes = vpaB64ToBytes(m[2].replace(/\s+/g, '')); } catch (_) { bytes = null; }
+    const kind = vpaProspectSlideKind(bytes);
+    if (!kind) return json({ error: 'Slide ' + (i + 1) + ' is not a PNG or JPEG.' + NONE }, 400);
+    if (bytes.length > VPB_MAX_IMAGE_BYTES) {
+      return json({ error: 'Slide ' + (i + 1) + ' is over ' + Math.round(VPB_MAX_IMAGE_BYTES / (1024 * 1024)) + 'MB.' + NONE }, 400);
+    }
+    slideFiles.push({ bytes: bytes, kind: kind });
+  }
+
+  /* MIGRATION 122 FIRST. Without terms_required the venue would be created with no compliance
+     record AND nothing holding its games, which is the one combination this route exists to avoid. */
+  const probe = await fetch(env.SUPABASE_URL + '/rest/v1/vp_venues?select=terms_required&limit=1', { headers: vpaHeaders(env) });
+  if (!probe.ok) return json({ error: 'Run migration 122 first (vp_venues.terms_required).' + NONE }, 503);
+
+  // A double click, or the same reply handled twice, must not build the venue twice.
+  const twin = await vpaSelect(env, 'vp_venues', 'name=eq.' + encodeURIComponent(name) + '&postcode=eq.' + postcode + '&select=id,slug&limit=1');
+  if (twin && twin.length) {
+    return json({ error: name + ' (' + postcode + ') is already set up, at /tv?' + twin[0].slug + '. To send their email again, use Resend welcome on the venue.' + NONE }, 409);
+  }
+
+  /* AN EMAIL THAT ALREADY SIGNS IN IS REFUSED, not linked (security review, 28 Oct 2026). Giving an
+     existing login a new venue on the strength of an address typed in HQ is how a typo hands one
+     venue's manager another venue. A mobile that already signs in is left off the new login. */
+  if (await vpaFindAuthUser(env, { email: email })) {
+    return json({ error: 'That email already has a VenuePlay login, so it cannot be set up as a new prospect from here. Check it is theirs, then add this venue from their own account (or + Add venue).' + NONE }, 409);
+  }
+  const phoneTaken = !!(phone && await vpaFindAuthUser(env, { phone: phone }));
+
+  const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
+  const warnings = [];
+  // 1. The account record: a paying founding row with no card, as /admin/venue makes one.
+  const founding = await vpaInsert(env, 'venueplay_founding', {
+    venue_name: name, contact_email: email, mobile: mobileRaw || null, postcode: postcode,
+    max_seats: players, plan: 'monthly', marketing_opt_in: false, status: 'active',
+  });
+  const foundingId = founding && founding.id;
+  // 2. The venue. terms_required with NO compliance record: the console and the game Worker hold
+  //    every game until the owner or a manager ticks section 6 themselves.
+  const slug = await vpaUniqueSlug(env, vpaSlugify(name), name, postcode);
+  const venue = await vpaInsert(env, 'vp_venues', {
+    name: name, slug: slug, timezone: vpaTimezoneFromPostcode(postcode), postcode: postcode, au_state: state,
+    venue_kind: entityType === 'non_profit' ? 'club' : 'pub', entity_type: entityType,
+    paid_entry_enabled: vpaPaidEntryDefault(entityType, state),
+    founding_id: foundingId, max_players: players,
+    terms_required: true, compliance_accepted_at: null, compliance_accepted_by: null,
+  });
+  await vpaInsert(env, 'vp_venue_settings', { venue_id: venue.id }, false);
+  await vpaInsert(env, 'vp_screens', { venue_id: venue.id, name: 'Main screen' }, false);
+
+  // 3. The login, as the venue's manager (every self-serve and HQ venue's first login is one).
+  let login = null;
+  try {
+    login = await vpaProspectLogin(env, email, phoneTaken ? null : phone, name);
+    if (phoneTaken) warnings.push('This mobile already has a VenuePlay login; the prospect was set up with an email login only. Add their mobile after they confirm it is theirs.');
+    await vpaInsert(env, 'vp_venue_staff', { venue_id: venue.id, auth_user_id: login.id, role: 'manager',
+      display_name: firstName || 'Manager' }, false);
+  } catch (e) {
+    login = null;
+    warnings.push('NOBODY CAN SIGN IN YET: the login was not made (' + String((e && e.message) || e).slice(0, 120) + '). Add them under the venue\'s Hosts, then Resend welcome.');
+  }
+
+  // 4. Their screen ads, through the one recorded write (vpbWriteScreen, migration 114).
+  let slideCount = 0;
+  if (slideFiles.length) {
+    try {
+      await vpbEnsureBucket(env, 'venue-ads');
+      const slides = [];
+      for (let i = 0; i < slideFiles.length; i++) {
+        const f = slideFiles[i];
+        const path = venue.id + '/' + (await vpbSha256Hex(f.bytes)).slice(0, 40) + '.' + f.kind;
+        const up = await fetch(env.SUPABASE_URL + '/storage/v1/object/venue-ads/' + path, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + env.SUPABASE_SERVICE_KEY, 'apikey': env.SUPABASE_SERVICE_KEY,
+                     'Content-Type': f.kind === 'png' ? 'image/png' : 'image/jpeg', 'x-upsert': 'true' },
+          body: f.bytes,
+        });
+        if (!up.ok) throw new Error('slide ' + (i + 1) + ' did not upload');
+        slides.push({ image_url: env.SUPABASE_URL + '/storage/v1/object/public/venue-ads/' + path, seconds: VPA_PROSPECT_SLIDE_SECONDS });
+      }
+      const row = { venue_id: venue.id, slug: slug, slides: vpbCleanSlides(slides), updated_at: new Date().toISOString() };
+      const w = await vpbWriteScreen(env, row, { via: 'hq_prospect', route: 'admin/prospect', user: actor.actorId || null,
+        admin: actor.actorId || null, label: actor.label || 'admin', role: actor.role || null });
+      if (!w.ok) throw new Error('the screen did not save');
+      slideCount = row.slides.length;
+    } catch (e) {
+      warnings.push('Their slides did not go on: ' + String((e && e.message) || e).slice(0, 120) + '. Add them from View as > Your account.');
+    }
+  }
+
+  // 5. The ONE email. Best-effort: the account stands whether or not Resend answers.
+  let welcomeSent = false;
+  if (b.send_welcome !== false) {
+    welcomeSent = await vpaFireProspectWelcome(env, {
+      foundingId: foundingId, email: email, firstName: firstName, venueName: name, slug: slug,
+      seats: players, state: state, entityType: entityType, slides: slideCount,
+      mobile: login && login.mobile ? mobileRaw : '',
+    });
+    if (!welcomeSent) warnings.push('THE WELCOME EMAIL DID NOT SEND. Use Resend welcome on the venue, or send it by hand.');
+  }
+
+  // 6. Who set it up, and what was made.
+  await vpaAudit(env, actor, 'prospect_set_up', 'venue:' + venue.id, {
+    name: name, slug: slug, founding_id: foundingId, email: email, first_name: firstName || undefined,
+    mobile_login: !!(login && login.mobile), login_made: !!login, players: players, state: state, entity_type: entityType,
+    website: website || undefined, slides: slideCount, compliance: 'pending', terms_required: true,
+    welcome_sent: welcomeSent,
+  });
+
+  const out = { ok: true, venue: { id: venue.id, name: name, slug: slug }, founding_id: foundingId,
+    tv_url: site + '/tv?' + encodeURIComponent(slug),
+    login: login ? (login.mobile ? { email: email, mobile: mobileRaw } : { email: email }) : null,
+    slides: slideCount, welcome_sent: welcomeSent };
+  if (warnings.length) out.warnings = warnings;
+  return json(out);
+}
+
+/* NUMBER BINGO, ONE LINE FOR THE WELCOME, BY STATE AND BY CLUB OR PUB. The words are vp-gaming.js's
+   (VPGaming.states[st].phones.bingo, .paperBingo and numberBingoHidden), which a Worker cannot load,
+   so tools/test-prospect-setup.js runs both and holds every state's kind equal. Musical bingo is
+   NOT bingo and is never in here. kind: 'phones' | 'paper' | 'off'. */
+const VPA_PROSPECT_STATE_NAME = { NSW: 'New South Wales', QLD: 'Queensland', VIC: 'Victoria', WA: 'Western Australia',
+  SA: 'South Australia', ACT: 'ACT', TAS: 'Tasmania', NT: 'the Northern Territory' };
+const VPA_PROSPECT_PAPER_BINGO = { VIC: true, SA: true, TAS: true };
+function vpaProspectBingo(state, entityType) {
+  const st = String(state || '').toUpperCase();
+  const place = VPA_PROSPECT_STATE_NAME[st] || 'your state';
+  if (vpaNoNumberBingo(st, entityType, false)) {
+    return { kind: 'off', text: 'In ' + place + ', only a not-for-profit organisation may run number bingo, so it is switched off for pubs and you will not see it. If a club or charity runs number bingo at your venue, reply and tell us who, and we will switch it on once we have seen their approval.' };
+  }
+  if (st === 'VIC') {
+    return { kind: 'paper', text: 'In Victoria a phone cannot be used as a ticket, so number bingo is played on printed tickets: hand them out and run the calling and the big screen from VenuePlay. Free entry needs no permit; ' +
+      (entityType === 'non_profit' ? 'charging for entry needs a minor gaming permit, recorded on your account page first.' : 'charging for entry is for non-profits with a permit.') };
+  }
+  if (st === 'SA') {
+    return { kind: 'paper', text: 'In South Australia number bingo is played on paper sheets from a licensed supplier (phones cannot be tickets there): run the calling and the big screen from VenuePlay.' };
+  }
+  if (st === 'TAS') {
+    return { kind: 'paper', text: 'In Tasmania number bingo is played on printed tickets: hand them out and run the calling and the big screen from VenuePlay.' };
+  }
+  return { kind: 'phones', text: 'Open lobby, players join on their phones from the QR on the TV, and you call the numbers. Your console shows ' + place + '\'s rules before every game.' };
+}
+
+/* "while the November offer runs": the month of the latest live founding code, so the email never
+   names a month the card link will not honour. No code with a month: "while our offer runs". */
+const VPA_MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+function vpaOfferMonthPhrase(env, nowMs) {
+  let best = -1;
+  vpaLiveCodes(env, nowMs).forEach(function (c) {
+    const m = /-([A-Z]{3})-(20\d\d)$/.exec(c);
+    if (m && (m[1] in VPA_CODE_MONTHS)) best = Math.max(best, Number(m[2]) * 12 + VPA_CODE_MONTHS[m[1]]);
+  });
+  return best < 0 ? 'while our offer runs' : 'while the ' + VPA_MONTH_NAMES[best % 12] + ' offer runs';
+}
+
+/* THE PROSPECT'S ONE EMAIL, emails/welcome-prospect.html. Everything in it is THEIR venue's: the TV
+   address, the email they sign in with, the bingo rule for their state, their price on their crowd,
+   and the card link for their own account record. Returns true when Resend accepted it. */
+async function vpaFireProspectWelcome(env, o) {
+  try {
+    if (!env.RESEND_API_KEY) return false;
+    const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
+    const email = String(o.email || '').trim();
+    if (!email) return false;
+    const res = await fetch(site + '/emails/welcome-prospect.html');
+    if (!res.ok) return false;
+    let html = String(await res.text()).replace(/^\s*<!--[\s\S]*?-->\s*/, '');   // the template's notes are for us, not the inbox
+    const cardUrl = await vpaCardLink(env, o.foundingId);
+    if (!cardUrl) return false;   // the email's money section is that link; never send a dead end
+    const founding = vpaFoundingOpenNow(env);
+    const rate = founding ? 2.50 : 3.00;
+    const seats = parseInt(o.seats, 10) || VPA_PROSPECT_DEFAULT_PLAYERS;
+    const money = (n) => '$' + Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    const bingo = vpaProspectBingo(o.state, o.entityType);
+    const tvUrl = site + '/tv?' + encodeURIComponent(o.slug || '');
+    html = vpaTplSections(html, { slides: o.slides > 0, noslides: !(o.slides > 0), mobile: !!o.mobile,
+      founding: founding, standard: !founding });
+    html = html
+      .replace(/{{greeting}}/g, o.firstName ? 'Hi ' + vpaEsc(o.firstName) + ',' : 'Hi there,')
+      .replace(/{{venue_name}}/g, vpaEsc(o.venueName || 'Your venue'))
+      .replace(/{{tv_url}}/g, tvUrl)
+      .replace(/{{tv_address}}/g, tvUrl.replace(/^https?:\/\//, ''))
+      .replace(/{{app_url}}/g, site + '/app')
+      .replace(/{{app_address}}/g, (site + '/app').replace(/^https?:\/\//, ''))
+      .replace(/{{login_email}}/g, vpaEsc(email))
+      .replace(/{{login_mobile}}/g, vpaEsc(o.mobile || ''))
+      .replace(/{{slide_count}}/g, String(o.slides || 0))
+      .replace(/{{slide_word}}/g, o.slides === 1 ? 'slide' : 'slides')
+      .replace(/{{slide_verb}}/g, o.slides === 1 ? 'is' : 'are')
+      .replace(/{{bingo_line}}/g, vpaEsc(bingo.text))
+      .replace(/{{player_rate}}/g, money(rate))
+      .replace(/{{offer_phrase}}/g, vpaOfferMonthPhrase(env))
+      .replace(/{{player_count}}/g, String(seats))
+      .replace(/{{monthly_total}}/g, money(seats * rate))
+      .replace(/{{card_url}}/g, cardUrl)
+      .replace(/{{help_url}}/g, site + '/help')
+      .replace(/{{see_night_url}}/g, site + '/see-a-night')
+      .replace(/{{terms_url}}/g, site + '/terms')
+      .replace(/{{privacy_url}}/g, site + '/privacy')
+      .replace(/\{\{unsubscribe_url\}\}/g, site + '/unsubscribe?e=' + encodeURIComponent(email))
+      .replace(/{{support_email}}/g, 'support@venueplay.com.au');
+    html = vpaFillSupport(html);
+    return await vpaSendEmail(env, email, 'You\'re set up: your VenuePlay account for ' + (o.venueName || 'your venue'),
+      vpaEmailDocument(html, 'You\'re set up on VenuePlay'), 'support@venueplay.com.au');
+  } catch (_) { return false; }
 }
 
 /* ===========================================================================

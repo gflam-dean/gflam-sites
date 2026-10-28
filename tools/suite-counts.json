@@ -236,7 +236,7 @@
   "counted_by": "lines"
  },
  "tools/support-phone.test.py": {
-  "checks": 29,
+  "checks": 30,
   "counted_by": "lines"
  },
  "tools/test-a-player-bills-once-alive.js": {
@@ -549,6 +549,14 @@
  },
  "tools/test-print-problem.js": {
   "checks": 8,
+  "counted_by": "lines"
+ },
+ "tools/test-prospect-setup.js": {
+  "checks": 113,
+  "counted_by": "lines"
+ },
+ "tools/test-prospect-terms-first-game.js": {
+  "checks": 17,
   "counted_by": "lines"
  },
  "tools/test-purchase-raffle-hq.js": {

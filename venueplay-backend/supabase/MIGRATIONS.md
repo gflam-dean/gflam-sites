@@ -375,3 +375,14 @@ with the Worker is safe: without it the route answers an error and every console
 raffle still read their older trivia_* columns and raffle_template). After running, dump RLS-BASELINE.json (one new security
 definer function). Branches `fix/console-banners-28-oct`, `feature/advanced-settings-28-oct`. RUN on the live database by Dean, 28 Oct 2026 (vp_set_game_prefs present; RLS-BASELINE.json dumped).
 Rollback: in the file.
+
+`venueplay-122-prospect-terms-first.sql` (Dean, 28 Oct 2026, "Set up a prospect"): `vp_venues.terms_required` (boolean, not
+null, default false) and the `vp_venues_terms_required_guard` trigger (a venue's own login cannot change it; same shape as 116).
+True only for a venue made by HQ > Set up a prospect (billing Worker `POST /admin/prospect`), which creates the venue with NO
+compliance record because nobody read the line to them on a call. While `compliance_accepted_at` is null at such a venue the
+console shows the one-time Terms card in place of the game picker (`VP.termsGate`), and the game Worker refuses `/session`, `/host/game`,
+`/host/bingo/draw` and the members draw (`terms_first`); the TV keeps its ads. The block lifts by itself when the owner or a
+manager accepts (`/account/compliance-accept`). Not security definer, no new policy or grant: RLS-BASELINE.json does not change.
+Run BEFORE the billing Worker that carries `/admin/prospect` (it answers "Run migration 122 first" without it); either order is
+safe for the game Worker and the console (both read it fail-safe). Branch `feature/prospect-setup-28-oct`. NOT RUN.
+Rollback: in the file.

@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '28 Oct 2026, 09:09 · 10952448';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '28 Oct 2026, 15:54 · 945fa577';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '889556b56c9dc21830f3edb36aa90fd4ba12cfab7a7487187d05471dc0495d6d';
@@ -1078,13 +1078,20 @@ async function venueRulesRow(env, venueId) {
    change to how bingo is drawn. The host is verified first, the body is read once and handed on as
    it was, and the regulated handler then does everything it always did (staff check included). */
 async function handleBingoDrawStartForVenue(request, env, json) {
-  await verifyHostJwt(request, env);
+  const authUserId = await verifyHostJwt(request, env);
   const b = await readJson(request);
   const venueId = String(b.venue_id || '').trim();
   if (venueId) {
     assertUuid(venueId, 'venue_id');
     if (numberBingoHiddenFor(await venueRulesRow(env, venueId))) {
       return json({ error: NO_PUB_BINGO_MSG, code: 'number_bingo_off' }, 403);
+    }
+    /* A prospect venue ticks section 6 before its first game (migration 122). Also in front of the
+       regulated handler, for the same reason as the rule above. The staff check comes first, so a
+       stranger learns nothing about whether the venue has ticked. */
+    if (await venueTermsPending(env, venueId)) {
+      await requireStaff(env, authUserId, venueId, 'host');
+      return termsFirstReply(json);
     }
   }
   const again = { method: request.method, url: request.url, headers: request.headers, json: async function () { return b; } };
@@ -1101,6 +1108,7 @@ async function handleCreateSession(request, env, json) {
   /* 'host': the reader is the venue's own host, so a switched-off venue answers in the host's words, never the
      room's "have a word with the staff" (28 Oct 2026). requireStaff has already found the staff row by then. */
   const staff = await requireStaff(env, authUserId, venueId, 'host');   // ENFORCED: staff at THIS venue (also enforces the kill-switch)
+  if (await venueTermsPending(env, venueId)) return termsFirstReply(json);   // a prospect venue ticks section 6 first (migration 122)
 
   // No number bingo session for an SA or NT pub (migration 116). Musical bingo is never bingo90.
   if (lobbyFormat(b.format) === 'bingo90' && numberBingoHiddenFor(await venueRulesRow(env, venueId))) {
@@ -3059,6 +3067,7 @@ async function handleHostGame(request, env, json) {
   const session = sessions[0];
   if (session.status === 'finished' || session.status === 'cancelled') return json({ error: 'This session is closed' }, 409);
   const staff = await requireStaff(env, authUserId, session.venue_id, 'host');   // ENFORCED: staff at the session's venue (also kill-switch, in the host's words)
+  if (await venueTermsPending(env, session.venue_id)) return termsFirstReply(json);   // a prospect venue ticks section 6 first (migration 122)
 
   // Once-a-week limit for trivia + musical bingo, checked BEFORE the rollover below so a
   // blocked start can never finish the game already running. Extra rounds within THIS
@@ -4659,6 +4668,10 @@ function rulesRefusal(json, format) {
 async function membersRulesGate(env, json, authUserId, drawId) {
   const d = await sbGet(env, 'vp_member_draws', 'id=eq.' + enc(drawId) + '&select=venue_id&limit=1');
   if (!d.length) return null;                                      // the draw itself answers "not found"
+  if (await venueTermsPending(env, d[0].venue_id)) {               // a prospect venue ticks section 6 first (migration 122)
+    await requireStaff(env, authUserId, d[0].venue_id);            // throws for a stranger, so nothing leaks
+    return termsFirstReply(json);
+  }
   if (await rulesAccepted(env, d[0].venue_id, 'members')) return null;
   await requireStaff(env, authUserId, d[0].venue_id);              // throws for a stranger, so nothing leaks
   return rulesRefusal(json, 'members');
@@ -10181,6 +10194,28 @@ async function assertVenueActive(env, venueId, audience) {
     const groups = await sbGet(env, 'vp_venue_groups', 'id=eq.' + enc(venues[0].group_id) + '&select=status');
     if (groups.length && groups[0].status !== 'active') throw httpError(403, suspended);
   }
+}
+
+/* A VENUE SET UP FOR A PROSPECT ACCEPTS SECTION 6 OF THE TERMS BEFORE ITS FIRST GAME (Dean, 28 Oct
+   2026; migration 122). HQ > Set up a prospect builds the venue with terms_required = true and NO
+   compliance record, because nobody read the line to them on a call (Anisimoff Legal 9380, 1 Oct
+   2026, point 3: the venue actively ticks). Until the owner or a manager ticks it in the console
+   (/account/compliance-accept writes compliance_accepted_at), no game STARTS there: /session (Open
+   lobby), /host/game (trivia, musical bingo, raffle), /host/bingo/draw and the members draw call
+   this after the staff check. The TV and everything already running are untouched. Every other venue has the flag false
+   and is never held. The row is read with select=* ON PURPOSE: before migration 122 the column is
+   simply absent (nobody can hold the flag yet, so nobody is held), where naming it would make
+   PostgREST refuse the read and stop every game in the country. Any real database fault is thrown
+   by sbGet, never read as "not held". One row, by key. */
+const TERMS_FIRST_MSG = 'Before the first game here, the owner or a manager needs to tick one box: sign in at venueplay.com.au/app and it is at the top. It takes a second, and the TV keeps showing your ads.';
+async function venueTermsPending(env, venueId) {
+  assertUuid(venueId, 'venue_id');
+  const rows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=*&limit=1');
+  const v = Array.isArray(rows) ? rows[0] : null;
+  return !!(v && v.terms_required === true && !v.compliance_accepted_at);
+}
+function termsFirstReply(json) {
+  return json({ error: TERMS_FIRST_MSG, code: 'terms_first' }, 403);
 }
 
 // Verify the player: read X-Player-Token, sha256 it, match vp_players.token_hash.
