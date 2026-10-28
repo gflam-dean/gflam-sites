@@ -42,7 +42,7 @@
 
   /* ---- what one prospect row says, from what the Worker sent ---- */
   function flagHtml(p) {
-    if (p.flag === "call_requested") return '<span class="badge suspend prflag">Call requested</span>';
+    if (p.flag === "call_requested") return '<span class="badge prreq prflag">Call requested</span>';
     if (p.flag === "no_sign_in") return '<span class="badge roll prflag">Call them</span>';
     return "";
   }
@@ -77,7 +77,7 @@
         '<div class="practs"><button type="button" class="btn pink sp" data-pr-save="' + prEsc(p.venue_id) + '">Save as called</button>' +
         '<button type="button" class="mini" data-pr-close="1">Cancel</button></div></div>'
       : (!p.called ? '<div class="practs"><button type="button" class="mini' + (p.flag ? " win" : "") + '" data-pr-called="' + prEsc(p.venue_id) + '">Called</button></div>' : "");
-    return '<div class="panel pad prcard' + (p.flag ? " flagged" : "") + '" data-pr-id="' + prEsc(p.venue_id) + '">' +
+    return '<div class="panel pad prcard' + (p.flag ? " flagged" : "") + (p.flag === "call_requested" ? " req" : "") + '" data-pr-id="' + prEsc(p.venue_id) + '">' +
       '<div class="prtop"><div class="prname">' + prEsc(p.name || "A venue") + "</div>" + flagHtml(p) + "</div>" +
       (why ? '<div class="prwhy">' + prEsc(why) + "</div>" : "") +
       '<div class="prgrid">' +
@@ -152,6 +152,7 @@
       ".practs{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}.prform{margin-top:12px}.prform textarea{width:100%;margin-top:4px}" +
       ".prsum{color:var(--roll);letter-spacing:0;text-transform:none;font-weight:700;margin-left:6px}" +
       ".badge.roll{background:rgba(245,165,36,.14);color:var(--roll);border:1px solid rgba(245,165,36,.4)}" +
+      ".badge.prreq{background:rgba(229,72,77,.16);color:#FF8A8E;border:1px solid rgba(229,72,77,.55)}.prcard.req{border-left-color:#E5484D}" +
       "</style><div id=\"prBody\"><div class=\"note\">Loading prospects...</div></div>";
     host.insertBefore(p, $("paneLive") || null);
     p.addEventListener("click", onClick);
