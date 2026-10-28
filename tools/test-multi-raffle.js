@@ -144,6 +144,52 @@ function screen() { var o = {}; DB.vp_venue_screen.filter(function (r) { return 
   ADS.raffles = [{ id: 'a1b2c3', label: 'Lucky Envelope', day: '', time: '' }];
   c = raffleCards();
   check('ONE raffle on the list is the single routine as before: shown with no night set, as the routine always was', c.length === 1 && /Lucky Envelope/.test(c[0]), c);
+
+  /* THE RAFFLE CONSOLE'S PRIZE BUTTONS, after main's game-prefs (28 Oct 2026). The venue's prize table files a
+     prize under a raffle (raffle_id); game_prefs.raffle.prizes (any staff login) is the venue's list with no
+     raffle. The REAL functions from venueplay/app/raffle/host.html run here. */
+  var HH = readFile('venueplay/app/raffle/host.html');
+  function grabH(name) {
+    var i = HH.indexOf('function ' + name + '(');
+    if (i < 0) throw new Error('cannot find ' + name + ' in raffle/host.html');
+    var d = 0, k = HH.indexOf('{', i);
+    do { if (HH[k] === '{') d++; else if (HH[k] === '}') d--; k++; } while (d > 0 && k < HH.length);
+    return HH.slice(i, k) + '\n';
+  }
+  function consoleAt(raffles, raffleId) {
+    var src = 'var G={ raffles:RAFFLES, raffleId:RID, prizeRows:null, prefPrizes:[], savedPrizes:["Meat Tray"], venueId:"v1" };\n' +
+      'var DEFAULT_PRIZES=["Meat Tray"]; var POSTS=[], QUEUED=0;\n' +
+      'var EL={ rfJackOn:{checked:false}, rfAllowRedraw:{checked:true}, rfStart:{value:"1"}, rfEnd:{value:"200"}, rfTime:{value:"60"}, rfJackAmt:{value:""} };\n' +
+      'function $(id){ return EL[id]; } function renderPresets(){} function queueRafflePrefs(){ QUEUED++; }\n' +
+      'function apiPost(path, body){ POSTS.push(body); return Promise.resolve({}); }\n' +
+      grabH('filterSavedPrizes') + grabH('mergeSavedPrizes') + grabH('savePrize') + grabH('rafflePrefs') +
+      'return { G:G, POSTS:POSTS, filterSavedPrizes:filterSavedPrizes, mergeSavedPrizes:mergeSavedPrizes, savePrize:savePrize, rafflePrefs:rafflePrefs };';
+    return (new Function('RAFFLES', 'RID', src))(raffles, raffleId);
+  }
+  var TWO = [{ id: 'a1b2c3', label: 'Meat Raffle', day: 'Friday' }, { id: 'd4e5f6', label: 'Chook Raffle', day: 'Sunday' }];
+  var k2 = consoleAt(TWO, 'd4e5f6');
+  k2.G.prizeRows = [{ label: 'Chook', raffle_id: 'd4e5f6' }, { label: 'Meat Tray', raffle_id: 'a1b2c3' }, { label: 'Old Tab', raffle_id: null }];
+  k2.mergeSavedPrizes(['Meat Tray', 'Host Hamper']);
+  check('two raffles, game_prefs arriving: the Chook raffle shows its own prize and the no-raffle prefs prize, never the Meat raffle\'s',
+        k2.G.savedPrizes.join('|') === 'Chook|Host Hamper', k2.G.savedPrizes);
+  k2.G.raffleId = 'a1b2c3'; k2.filterSavedPrizes();
+  check('the venue\'s FIRST raffle also gets the prizes saved before raffles had their own list, and the prefs prize',
+        k2.G.savedPrizes.join('|') === 'Meat Tray|Old Tab|Host Hamper', k2.G.savedPrizes);
+  k2.G.raffleId = 'd4e5f6'; k2.filterSavedPrizes();
+  k2.savePrize('Wine');
+  check('a prize typed on the Chook raffle is filed under it in the prize table and kept in the venue-wide game_prefs list',
+        k2.POSTS.length === 1 && k2.POSTS[0].raffle_id === 'd4e5f6' && k2.G.prefPrizes.indexOf('Wine') === 0 && k2.G.savedPrizes[0] === 'Wine', [k2.POSTS, k2.G.prefPrizes]);
+  var saved = k2.rafflePrefs().prizes;
+  check('what is saved to game_prefs is the venue\'s whole list, not just the raffle on screen (the other raffle keeps its buttons)',
+        saved.indexOf('Host Hamper') >= 0 && saved.indexOf('Wine') >= 0 && saved.indexOf('Chook') < 0, saved);
+  var k1 = consoleAt([], '');
+  k1.G.prizeRows = [{ label: 'Seafood', raffle_id: null }];
+  k1.mergeSavedPrizes(['Bar Tab']);
+  k1.filterSavedPrizes();
+  check('one raffle or none: every saved prize and every prefs prize, exactly as main does', k1.G.savedPrizes.join('|') === 'Seafood|Bar Tab', k1.G.savedPrizes);
+  k1.savePrize('Cash');
+  check('one raffle: a new prize is not filed under any raffle and game_prefs saves the buttons as main does',
+        k1.POSTS.length === 1 && !('raffle_id' in k1.POSTS[0]) && k1.rafflePrefs().prizes[0] === 'Cash', [k1.POSTS, k1.rafflePrefs().prizes]);
   finished = true;
 })().catch(function (e) { print('  FAIL the test itself threw: ' + e + '\n' + (e && e.stack)); fails++; });
 drainMicrotasks();
