@@ -12,7 +12,7 @@
   "counted_by": "lines"
  },
  "partyplay-backend/lib/pp-checkout.test.js": {
-  "checks": 17,
+  "checks": 21,
   "counted_by": "total"
  },
  "partyplay-backend/lib/pp-code-and-channel.test.js": {
@@ -131,6 +131,10 @@
   "checks": 63,
   "counted_by": "lines"
  },
+ "tools/console-paid-and-draw-max-in-chrome.test.py": {
+  "checks": 13,
+  "counted_by": "lines"
+ },
  "tools/dropdowns-in-chrome.test.py": {
   "checks": 43,
   "counted_by": "lines"
@@ -140,7 +144,7 @@
   "counted_by": "lines"
  },
  "tools/gate-reliability.test.py": {
-  "checks": 50,
+  "checks": 53,
   "counted_by": "lines"
  },
  "tools/git-shim.test.py": {
@@ -223,8 +227,16 @@
   "checks": 32,
   "counted_by": "lines"
  },
+ "tools/settings-and-logos-in-chrome.test.py": {
+  "checks": 23,
+  "counted_by": "lines"
+ },
+ "tools/signup-tick-in-chrome.test.py": {
+  "checks": 20,
+  "counted_by": "lines"
+ },
  "tools/support-phone.test.py": {
-  "checks": 29,
+  "checks": 30,
   "counted_by": "lines"
  },
  "tools/test-a-player-bills-once-alive.js": {
@@ -331,6 +343,10 @@
   "checks": 53,
   "counted_by": "lines"
  },
+ "tools/test-console-status-area.js": {
+  "checks": 62,
+  "counted_by": "lines"
+ },
  "tools/test-console-venue-from-link.js": {
   "checks": 12,
   "counted_by": "lines"
@@ -360,7 +376,11 @@
   "counted_by": "lines"
  },
  "tools/test-free-entry-rules-are-the-states-own.js": {
-  "checks": 36,
+  "checks": 40,
+  "counted_by": "lines"
+ },
+ "tools/test-game-setup-advanced.js": {
+  "checks": 156,
   "counted_by": "lines"
  },
  "tools/test-gaming-rules-letters-15-oct.js": {
@@ -385,6 +405,10 @@
  },
  "tools/test-lobby-format.js": {
   "checks": 9,
+  "counted_by": "lines"
+ },
+ "tools/test-logo-on-site-hq.js": {
+  "checks": 18,
   "counted_by": "lines"
  },
  "tools/test-manager-permissions.js": {
@@ -425,6 +449,10 @@
  },
  "tools/test-musical-print.js": {
   "checks": 13,
+  "counted_by": "lines"
+ },
+ "tools/test-musical-setup-saved.js": {
+  "checks": 14,
   "counted_by": "lines"
  },
  "tools/test-night-pass-hq.js": {
@@ -532,7 +560,7 @@
   "counted_by": "lines"
  },
  "tools/test-raffle-console.js": {
-  "checks": 53,
+  "checks": 55,
   "counted_by": "lines"
  },
  "tools/test-raffle-unsold-server.js": {
@@ -595,6 +623,10 @@
   "checks": 9,
   "counted_by": "lines"
  },
+ "tools/test-settings-asks-only-what-applies.js": {
+  "checks": 19,
+  "counted_by": "lines"
+ },
  "tools/test-shared-links-absolute.js": {
   "checks": 6,
   "counted_by": "lines"
@@ -624,7 +656,7 @@
   "counted_by": "lines"
  },
  "tools/test-terms-put-compliance-on-the-venue.js": {
-  "checks": 44,
+  "checks": 52,
   "counted_by": "lines"
  },
  "tools/test-trivia-15-oct.js": {
@@ -1063,36 +1095,48 @@
   "checks": 17,
   "counted_by": "lines"
  },
- "tools/console-paid-and-draw-max-in-chrome.test.py": {
-  "checks": 13,
+ "tools/test-touring-cards-loader.js": {
+  "checks": 80,
   "counted_by": "lines"
  },
- "tools/test-logo-on-site-hq.js": {
-  "checks": 18,
+ "tools/drag-bingo-clubs-page.test.py": {
+  "checks": 56,
   "counted_by": "lines"
  },
- "tools/test-settings-asks-only-what-applies.js": {
-  "checks": 19,
+ "tools/tv-window-uncovered.test.py": {
+  "checks": 17,
   "counted_by": "lines"
  },
- "tools/settings-and-logos-in-chrome.test.py": {
-  "checks": 23,
+ "tools/test-legal-gaps-28-oct.js": {
+  "checks": 46,
   "counted_by": "lines"
  },
- "tools/signup-tick-in-chrome.test.py": {
-  "checks": 20,
+ "tools/test-terms-acceptance-card.js": {
+  "checks": 56,
+  "counted_by": "lines"
+ },
+ "tools/test-prospect-setup.js": {
+  "checks": 113,
+  "counted_by": "lines"
+ },
+ "tools/test-prospect-terms-first-game.js": {
+  "checks": 17,
+  "counted_by": "lines"
+ },
+ "tools/test-one-click-signin.js": {
+  "checks": 49,
   "counted_by": "lines"
  },
  "tools/gflam-unsub.test.py": {
   "checks": 25,
   "counted_by": "lines"
  },
- "touring-backend/lib/touring-unsubscribe.test.js": {
-  "checks": 28,
-  "counted_by": "lines"
- },
  "venueplay-backend/worker/winback-unsubscribe.test.js": {
   "checks": 50,
+  "counted_by": "lines"
+ },
+ "touring-backend/lib/touring-unsubscribe.test.js": {
+  "checks": 28,
   "counted_by": "lines"
  }
 }

@@ -65,7 +65,7 @@ ok('and remembered for next time, so it is a venue setting', /raffle_template: \
 ok('the trivia defaults the console reads are written too', /trivia_speed_bonus: speedBonus/.test(W),
    'migration 50 added columns the consoles read and nothing on main ever wrote');
 ok('the raffle console sends its spin when the game is made', /time_to_present:G\.time, spin_seconds:G\.drawLength/.test(RAFFLE));
-ok('the console pre-fills the spin from the template', /indexOf\(t\.spin_seconds\)>=0\)\{ G\.drawLength=t\.spin_seconds/.test(RAFFLE));
+ok('the console pre-fills the spin from the template', /spin_seconds:t\.spin_seconds/.test(RAFFLE) && /indexOf\(p\.spin_seconds\)>=0\)\{ G\.drawLength=p\.spin_seconds/.test(RAFFLE));   // raffleOldPrefs + applyRafflePrefs since 28 Oct 2026
 /* Found live on 8 Sep 2026: the template saved spin 8, the host reloaded mid-raffle, and the label
    said 4. Recovery restores the live game instead of reading the template, so the spin has to ride
    the snapshot like the range and the prize do. */

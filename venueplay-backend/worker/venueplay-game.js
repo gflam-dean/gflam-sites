@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '27 Oct 2026, 08:48 · a3955f04';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '28 Oct 2026, 15:54 · 945fa577';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '889556b56c9dc21830f3edb36aa90fd4ba12cfab7a7487187d05471dc0495d6d';
@@ -349,6 +349,8 @@ export default {
       if (method === 'GET'  && path === '/play/live')          return await handlePlayLive(request, env, json);
       if (method === 'GET'  && path === '/screen')             return await handleScreen(request, env, json);
       if (method === 'POST' && path === '/host/game')          return await handleHostGame(request, env, json);
+      /* Each game's setup saved for the VENUE (migration 121, Dean 28 Oct 2026). Any staff role. */
+      if ((method === 'GET' || method === 'POST') && path === '/host/game-prefs') return await handleGamePrefs(request, env, json);
       /* Pick up a running quiz or musical game from ANY device (Dean, 20 Oct 2026). Staff only. */
       if (method === 'POST' && path === '/host/running')       return await handleHostRunning(request, env, json);
       if (method === 'POST' && path === '/host/running/take')  return await handleHostRunningTake(request, env, json);
@@ -1076,13 +1078,20 @@ async function venueRulesRow(env, venueId) {
    change to how bingo is drawn. The host is verified first, the body is read once and handed on as
    it was, and the regulated handler then does everything it always did (staff check included). */
 async function handleBingoDrawStartForVenue(request, env, json) {
-  await verifyHostJwt(request, env);
+  const authUserId = await verifyHostJwt(request, env);
   const b = await readJson(request);
   const venueId = String(b.venue_id || '').trim();
   if (venueId) {
     assertUuid(venueId, 'venue_id');
     if (numberBingoHiddenFor(await venueRulesRow(env, venueId))) {
       return json({ error: NO_PUB_BINGO_MSG, code: 'number_bingo_off' }, 403);
+    }
+    /* A prospect venue ticks section 6 before its first game (migration 122). Also in front of the
+       regulated handler, for the same reason as the rule above. The staff check comes first, so a
+       stranger learns nothing about whether the venue has ticked. */
+    if (await venueTermsPending(env, venueId)) {
+      await requireStaff(env, authUserId, venueId, 'host');
+      return termsFirstReply(json);
     }
   }
   const again = { method: request.method, url: request.url, headers: request.headers, json: async function () { return b; } };
@@ -1096,7 +1105,10 @@ async function handleCreateSession(request, env, json) {
   if (!venueId) return json({ error: 'Missing venue_id' }, 400);
   assertUuid(venueId, 'venue_id');                                // reject anything that is not a UUID before it reaches PostgREST
 
-  const staff = await requireStaff(env, authUserId, venueId);     // ENFORCED: staff at THIS venue (also enforces the kill-switch)
+  /* 'host': the reader is the venue's own host, so a switched-off venue answers in the host's words, never the
+     room's "have a word with the staff" (28 Oct 2026). requireStaff has already found the staff row by then. */
+  const staff = await requireStaff(env, authUserId, venueId, 'host');   // ENFORCED: staff at THIS venue (also enforces the kill-switch)
+  if (await venueTermsPending(env, venueId)) return termsFirstReply(json);   // a prospect venue ticks section 6 first (migration 122)
 
   // No number bingo session for an SA or NT pub (migration 116). Musical bingo is never bingo90.
   if (lobbyFormat(b.format) === 'bingo90' && numberBingoHiddenFor(await venueRulesRow(env, venueId))) {
@@ -3055,6 +3067,7 @@ async function handleHostGame(request, env, json) {
   const session = sessions[0];
   if (session.status === 'finished' || session.status === 'cancelled') return json({ error: 'This session is closed' }, 409);
   const staff = await requireStaff(env, authUserId, session.venue_id, 'host');   // ENFORCED: staff at the session's venue (also kill-switch, in the host's words)
+  if (await venueTermsPending(env, session.venue_id)) return termsFirstReply(json);   // a prospect venue ticks section 6 first (migration 122)
 
   // Once-a-week limit for trivia + musical bingo, checked BEFORE the rollover below so a
   // blocked start can never finish the game already running. Extra rounds within THIS
@@ -3349,6 +3362,109 @@ async function hostStartTrivia(env, json, b, session, staff, seq) {
  * AUDIO IS A CLIENT CONCERN: the host device plays the ~30s previewUrl clip through the
  * PA. The Worker never stores or streams audio; it only tracks WHICH song was played.
  */
+/* GAME SETUP SAVED FOR THE VENUE (migration 121, Dean 28 Oct 2026).
+
+   A console's setup (musical bingo's theme, pattern, prize, reveal, well-known songs only) lived in
+   one browser, so a second tablet or next week started again from scratch. It now lives in
+   vp_venue_settings.game_prefs, one object per game, written through vp_set_game_prefs, which MERGES
+   that game's keys so two tablets saving two games never wipe each other.
+
+     GET  /host/game-prefs?venue_id=&game=musical        -> { game, prefs }
+     POST /host/game-prefs { venue_id, game, prefs }      -> { ok, game, prefs }   (merge)
+
+   Any staff role at that venue (requireStaff: owner, manager or host; HQ View as), so a Host login
+   saves its own setup. Only the keys listed below are kept, each one checked; anything else is
+   dropped. NEVER here: paid or free for the night (a compliance choice made each night), unsold
+   tickets, or permits (vp_venues.permits). Another game joins by adding its own row to the table. */
+const GAME_PREFS_MAX_CHARS = 2000;
+const GP_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const gpBool = (v) => (typeof v === 'boolean') ? v : undefined;
+const gpText = (n) => (v) => (typeof v === 'string' && v.trim()) ? v.trim().slice(0, n) : undefined;
+const gpInt = (lo, hi) => (v) => (typeof v === 'number' && Number.isInteger(v) && v >= lo && v <= hi) ? v : undefined;
+const gpUuid = (v) => (typeof v === 'string' && GP_UUID.test(v)) ? v.toLowerCase() : undefined;
+/* Every game's keys (28 Oct 2026). A key not listed here is dropped, whatever a console sends. */
+const GAME_PREFS_KEYS = {
+  bingo: {
+    caller:        gpBool,
+    // a built-in pattern, or the venue's own (c:<uuid>, migration 118); the console checks it still exists
+    pattern:       (v) => ({ one: 1, two: 1, full: 1, corners: 1, top: 1, middle: 1, bottom: 1 }[v] ||
+                           (typeof v === 'string' && /^c:/.test(v) && GP_UUID.test(v.slice(2)))) ? v : undefined,
+    prize:         gpText(120),
+    cards:         gpInt(1, 6),
+    allow_early:   gpBool,
+  },
+  trivia: {
+    set_id:        gpUuid,
+    count:         gpInt(1, 100),
+    time_s:        gpInt(5, 60),
+    base_points:   gpInt(0, 100000),
+    speed_bonus:   gpBool,
+    double_points: gpBool,
+    double_last:   gpInt(1, 100),
+  },
+  raffle: {
+    // the venue's saved prize buttons: any staff login adds to them (a Host's /host/raffle/prize-add is refused)
+    prizes:        (v) => {
+      if (!Array.isArray(v)) return undefined;
+      const out = [];
+      for (const x of v) { if (typeof x === 'string' && x.trim() && out.indexOf(x.trim().slice(0, 80)) < 0) out.push(x.trim().slice(0, 80)); if (out.length >= 12) break; }
+      return out;
+    },
+    range_min:     gpInt(0, 999999),
+    range_max:     gpInt(0, 999999),
+    time_to_present: gpInt(0, 3600),
+    jackpot_on:    gpBool,
+    jackpot_amount_cents: gpInt(0, 100000000),
+    allow_redraw:  gpBool,
+    spin_seconds:  (v) => ({ 3: 1, 4: 1, 5: 1, 6: 1, 8: 1 }[v] && typeof v === 'number') ? v : undefined,
+    // NEVER unsold tickets: one night's facts (28 Oct 2026 audit).
+  },
+  members: {
+    draw_id:       gpUuid,   // which draw the console opens on; the draw's own settings live in vp_member_draws
+  },
+  musical: {
+    playlist:      (v) => (typeof v === 'string' && /^[A-Za-z0-9_-]{1,80}$/.test(v)) ? v : undefined,
+    playlist_name: (v) => (typeof v === 'string' && v.trim()) ? v.trim().slice(0, 120) : undefined,
+    hits_only:     (v) => (typeof v === 'boolean') ? v : undefined,
+    pattern:       (v) => ({ one: 1, two: 1, corners: 1, full: 1 }[v] ? v : undefined),
+    prize:         (v) => (typeof v === 'string' && v.trim()) ? v.trim().slice(0, 120) : undefined,
+    reveal:        (v) => ({ instant: 1, '15': 1, end: 1, never: 1 }[v] ? v : undefined),
+  },
+};
+function cleanGamePrefs(game, raw) {
+  const rules = GAME_PREFS_KEYS[game];
+  const out = {};
+  if (!rules || !raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
+  for (const k of Object.keys(rules)) {
+    if (!Object.prototype.hasOwnProperty.call(raw, k)) continue;
+    const v = rules[k](raw[k]);
+    if (v !== undefined) out[k] = v;
+  }
+  return out;
+}
+async function handleGamePrefs(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const isGet = request.method === 'GET';
+  const b = isGet ? Object.fromEntries(new URL(request.url).searchParams) : await readJson(request);
+  const venueId = String((b && b.venue_id) || '').trim();
+  const game = String((b && b.game) || '');
+  if (!venueId) return json({ error: 'Missing venue_id' }, 400);
+  if (!Object.prototype.hasOwnProperty.call(GAME_PREFS_KEYS, game)) return json({ error: 'Unknown game' }, 400);
+  await requireStaff(env, authUserId, venueId, 'host');   // staff at THIS venue, and the kill-switch
+  if (isGet) {
+    const rows = await sbGet(env, 'vp_venue_settings', 'venue_id=eq.' + enc(venueId) + '&select=game_prefs&limit=1');
+    const all = (rows.length && rows[0].game_prefs && typeof rows[0].game_prefs === 'object') ? rows[0].game_prefs : {};
+    return json({ game, prefs: cleanGamePrefs(game, all[game]) });
+  }
+  const raw = b && b.prefs;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return json({ error: 'Missing prefs' }, 400);
+  if (JSON.stringify(raw).length > GAME_PREFS_MAX_CHARS) return json({ error: 'That is too much to save' }, 413);
+  const clean = cleanGamePrefs(game, raw);
+  if (!Object.keys(clean).length) return json({ error: 'Nothing to save' }, 400);
+  const all = await sbRpc(env, 'vp_set_game_prefs', { p_venue_id: venueId, p_game: game, p_prefs: clean });
+  return json({ ok: true, game, prefs: cleanGamePrefs(game, (all && all[game]) || clean) });
+}
+
 async function hostStartMusical(env, json, b, session, staff, seq) {
   // Pattern: accept the host UI values (one/two/corners/full) and the DB values, map to
   // the four vp_music_games patterns. Musical bingo DOES have four_corners (5x5 grid).
@@ -4552,6 +4668,10 @@ function rulesRefusal(json, format) {
 async function membersRulesGate(env, json, authUserId, drawId) {
   const d = await sbGet(env, 'vp_member_draws', 'id=eq.' + enc(drawId) + '&select=venue_id&limit=1');
   if (!d.length) return null;                                      // the draw itself answers "not found"
+  if (await venueTermsPending(env, d[0].venue_id)) {               // a prospect venue ticks section 6 first (migration 122)
+    await requireStaff(env, authUserId, d[0].venue_id);            // throws for a stranger, so nothing leaks
+    return termsFirstReply(json);
+  }
   if (await rulesAccepted(env, d[0].venue_id, 'members')) return null;
   await requireStaff(env, authUserId, d[0].venue_id);              // throws for a stranger, so nothing leaks
   return rulesRefusal(json, 'members');
@@ -10074,6 +10194,28 @@ async function assertVenueActive(env, venueId, audience) {
     const groups = await sbGet(env, 'vp_venue_groups', 'id=eq.' + enc(venues[0].group_id) + '&select=status');
     if (groups.length && groups[0].status !== 'active') throw httpError(403, suspended);
   }
+}
+
+/* A VENUE SET UP FOR A PROSPECT ACCEPTS SECTION 6 OF THE TERMS BEFORE ITS FIRST GAME (Dean, 28 Oct
+   2026; migration 122). HQ > Set up a prospect builds the venue with terms_required = true and NO
+   compliance record, because nobody read the line to them on a call (Anisimoff Legal 9380, 1 Oct
+   2026, point 3: the venue actively ticks). Until the owner or a manager ticks it in the console
+   (/account/compliance-accept writes compliance_accepted_at), no game STARTS there: /session (Open
+   lobby), /host/game (trivia, musical bingo, raffle), /host/bingo/draw and the members draw call
+   this after the staff check. The TV and everything already running are untouched. Every other venue has the flag false
+   and is never held. The row is read with select=* ON PURPOSE: before migration 122 the column is
+   simply absent (nobody can hold the flag yet, so nobody is held), where naming it would make
+   PostgREST refuse the read and stop every game in the country. Any real database fault is thrown
+   by sbGet, never read as "not held". One row, by key. */
+const TERMS_FIRST_MSG = 'Before the first game here, the owner or a manager needs to tick one box: sign in at venueplay.com.au/app and it is at the top. It takes a second, and the TV keeps showing your ads.';
+async function venueTermsPending(env, venueId) {
+  assertUuid(venueId, 'venue_id');
+  const rows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=*&limit=1');
+  const v = Array.isArray(rows) ? rows[0] : null;
+  return !!(v && v.terms_required === true && !v.compliance_accepted_at);
+}
+function termsFirstReply(json) {
+  return json({ error: TERMS_FIRST_MSG, code: 'terms_first' }, 403);
 }
 
 // Verify the player: read X-Player-Token, sha256 it, match vp_players.token_hash.

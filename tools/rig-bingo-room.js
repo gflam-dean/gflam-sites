@@ -72,6 +72,7 @@ function makeDom(search, store0){
       removeChild:function(n){ return n; },
       addEventListener:function(ev,fn){ (this._on[ev]=this._on[ev]||[]).push(fn); },
       setAttribute:function(k,v){ this._attr[k]=String(v); }, getAttribute:function(k){ return this._attr[k]==null?null:this._attr[k]; },
+      removeAttribute:function(k){ delete this._attr[k]; },   // the console's venue logo clears its src (27 Oct 2026); a stub without it threw inside pairToVenue
       querySelector:function(){ return null; }, querySelectorAll:function(){ return []; },
       closest:function(){ return null; }, focus:function(){}, select:function(){}, click:function(){ (this._on.click||[]).forEach(function(f){ f.call(node,{target:node,preventDefault:function(){},stopPropagation:function(){}}); }); },
       classList:{ _s:{}, add:function(c){this._s[c]=1;}, remove:function(c){delete this._s[c];}, toggle:function(c,on){ if(on===undefined) on=!this._s[c]; if(on) this._s[c]=1; else delete this._s[c]; }, contains:function(c){ return !!this._s[c]; } } };

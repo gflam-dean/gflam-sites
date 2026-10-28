@@ -1929,6 +1929,10 @@
    "enabled": true,
    "forced": false
   },
+  "vp_signin_links": {
+   "enabled": true,
+   "forced": false
+  },
   "vp_song_flags": {
    "enabled": true,
    "forced": false
@@ -2084,6 +2088,10 @@
    "authenticated": false
   },
   "vp_screen_poll(p_slug text, p_code text, p_version text)": {
+   "anon": false,
+   "authenticated": false
+  },
+  "vp_set_game_prefs(p_venue_id uuid, p_game text, p_prefs jsonb)": {
    "anon": false,
    "authenticated": false
   },

@@ -376,17 +376,33 @@
         .catch(function () {});
     },
     _cantSignBar: function (on) {
+      /* IN THE ONE STATUS AREA (VP.statusBar, vp-session.js), under the unpaid bar and over the
+         View-as bar, never painted over either (Dean, 28 Oct 2026). Every console loads vp-session;
+         a page without it still gets the bar at the top. */
+      var put = window.VP && typeof window.VP.statusBar === "function" ? window.VP.statusBar : null;
       var bar = document.getElementById("vpCantSign");
-      if (!on) { if (bar && bar.parentNode) bar.parentNode.removeChild(bar); return; }
+      if (!on) {
+        if (put) put("sign", null);
+        else if (bar && bar.parentNode) bar.parentNode.removeChild(bar);
+        return;
+      }
       if (bar || !document.body) return;
+      /* HQ View as has no host login for this venue and cannot get one, so telling it to sign in
+         with one sent Dean round in a circle at The Jolly Jess. Say what is true for HQ. */
+      var ctx = null;
+      try { ctx = window.VP && window.VP.getContext ? window.VP.getContext() : null; } catch (e) {}
+      var hq = !!(ctx && ctx.role === "admin");
       bar = document.createElement("div");
       bar.id = "vpCantSign";
       bar.setAttribute("role", "alert");
-      bar.setAttribute("style", "position:sticky;top:0;z-index:9999;background:#5A1020;color:#FFE4E9;padding:12px 16px;" +
-        "font:600 14px/1.45 Manrope,system-ui,sans-serif;border-bottom:2px solid #FF1F8E");
-      bar.textContent = "The TV and phones will ignore this console: it could not get this venue's security key. " +
-        "Sign out and sign back in with a host login for this venue. (HQ View as cannot run a game at a venue that checks.)";
-      document.body.insertBefore(bar, document.body.firstChild);
+      bar.setAttribute("style", "background:#5A1020;color:#FFE4E9;padding:12px 16px;" +
+        "font:600 14px/1.45 Manrope,system-ui,sans-serif;text-align:center;border-bottom:2px solid #FF1F8E");
+      bar.textContent = hq
+        ? "You are viewing as HQ. HQ can look around but cannot run a game here, because the TV and phones only accept this venue's own hosts."
+        : "The TV and phones will ignore this console: it could not get this venue's security key. " +
+          "Sign out and sign back in with a host login for this venue.";
+      if (put) put("sign", bar);
+      else document.body.insertBefore(bar, document.body.firstChild);
     },
 
     enforcing: function () { return !!S.enforce; },

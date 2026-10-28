@@ -1,3 +1,7 @@
+/* RUNS the product, it does not word-search it. The testing audit of 27 Oct 2026 filed this suite
+   as "reads-file" because its scanner looked for load() and this file executes the shipped code
+   through (0, eval)(src) instead. Its prove-checks rows break product logic, not strings, and go
+   red. Read and checked by hand, 27 Oct 2026 (fix/text-match-suites-27-oct). */
 /* An opt-in a venue cannot see must at least be an opt-in a venue is TOLD about.
 
    Broadcast bingo has no session, so a capture arriving without a player token cannot be

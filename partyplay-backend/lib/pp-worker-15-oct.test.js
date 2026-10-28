@@ -203,18 +203,18 @@ print("\n== a limit on checkouts from one address ==");
 fresh(true);
 var IPH = { "CF-Connecting-IP": "203.0.113.9" };
 var made = 0;
-for (var i = 0; i < 6; i++) { r = call("POST", "/checkout", { name: "Buyer " + i, email: "b" + i + "@example.com", days: 1 }, IPH); if (r.status === 200) made++; }
+for (var i = 0; i < 6; i++) { r = call("POST", "/checkout", { name: "Buyer " + i, email: "b" + i + "@example.com", days: 1, private_use: true }, IPH); if (r.status === 200) made++; }
 ok("CONTROL: six bookings from one address in an hour go through", made === 6, made);
 var stripeBefore = OUT.filter(function (o) { return /stripe/.test(o.url); }).length;
-r = call("POST", "/checkout", { name: "Buyer 7", email: "b7@example.com", days: 1 }, IPH);
+r = call("POST", "/checkout", { name: "Buyer 7", email: "b7@example.com", days: 1, private_use: true }, IPH);
 ok("the seventh is refused, politely", r.status === 429 && /Too many bookings/.test(r.json.error), r.text);
 ok("and makes no pending licence and no Stripe session", OUT.filter(function (o) { return /stripe/.test(o.url); }).length === stripeBefore &&
    DB.tables.pp_licences.length === 7, DB.tables.pp_licences.length);
 ok("the address is kept only as a keyed hash", DB.tables.pp_licences.slice(1).every(function (l) { return /^[0-9a-f]{24}$/.test(l.checkout_ip) && l.checkout_ip.indexOf("203") < 0; }));
-r = call("POST", "/checkout", { name: "Someone else", email: "s@example.com", days: 1 }, { "CF-Connecting-IP": "198.51.100.4" });
+r = call("POST", "/checkout", { name: "Someone else", email: "s@example.com", days: 1, private_use: true }, { "CF-Connecting-IP": "198.51.100.4" });
 ok("somebody at another address is not affected", r.status === 200, r.text);
 fresh(false);
-r = call("POST", "/checkout", { name: "Pre migration", email: "p@example.com", days: 1 }, { "CF-Connecting-IP": "192.0.2.1" });
+r = call("POST", "/checkout", { name: "Pre migration", email: "p@example.com", days: 1, private_use: true }, { "CF-Connecting-IP": "192.0.2.1" });
 ok("before migration 16 a checkout still goes through", r.status === 200 && DB.tables.pp_licences.length === 2, r.text);
 
 print("\n== unsubscribe links carry proof they came from us ==");

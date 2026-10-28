@@ -1,3 +1,7 @@
+/* RUNS the product, it does not word-search it. The testing audit of 27 Oct 2026 filed this suite
+   as "reads-file" because its scanner looked for load() and this file executes the shipped code
+   through (0, eval)(src) instead. Its prove-checks rows break product logic, not strings, and go
+   red. Read and checked by hand, 27 Oct 2026 (fix/text-match-suites-27-oct). */
 /* THE SUPPORT PHONE IN EVERY EMAIL A VENUE GETS, RUN (20 Oct 2026).
 
    Dean: VenuePlay has a support line, 07 5228 3667 (a Crazytel menu: 1 sales, 2 a venue running a

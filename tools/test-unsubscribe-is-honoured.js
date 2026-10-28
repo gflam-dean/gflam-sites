@@ -1,3 +1,7 @@
+/* RUNS the product, it does not word-search it. The testing audit of 27 Oct 2026 filed this suite
+   as "reads-file" because its scanner looked for load() and this file executes the shipped code
+   through (0, eval)(src) instead. Its prove-checks rows break product logic, not strings, and go
+   red. Read and checked by hand, 27 Oct 2026 (fix/text-match-suites-27-oct). */
 /* Does asking us to stop actually stop us?
 
    Found 17 Sep 2026: unsubscribing WORKED. The page wrote a row to vp_unsubscribes and a live

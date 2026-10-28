@@ -361,16 +361,16 @@
       if (document.getElementById("vpUrlVenue")) return;
       var d = document.createElement("div");
       d.id = "vpUrlVenue";
-      d.style.cssText = "position:fixed;left:0;right:0;top:0;z-index:99998;background:#2A0B14;color:#fff;" +
+      d.style.cssText = "background:#2A0B14;color:#fff;" +
         "border-bottom:2px solid #FF4D5E;padding:12px 16px;font:600 14px/1.4 -apple-system,Segoe UI,sans-serif;text-align:center";
       d.textContent = "This link is for " + asked + ", which this login cannot run. You are working at " +
         (workingName || "your own venue") + ". Anything you start here happens at " + (workingName || "your venue") + ".";
       var x = document.createElement("button");
       x.textContent = "OK";
       x.style.cssText = "margin-left:12px;font:inherit;background:#FF1F8E;color:#fff;border:0;border-radius:8px;padding:6px 14px;cursor:pointer";
-      x.addEventListener("click", function () { d.parentNode && d.parentNode.removeChild(d); });
+      x.addEventListener("click", function () { statusBar("link", null); });
       d.appendChild(x);
-      (document.body || document.documentElement).appendChild(d);
+      statusBar("link", d);   // in the one status area, under the others, never over the header (28 Oct 2026)
     } catch (e) {}
   }
 
@@ -911,32 +911,385 @@
   }
 
 
+  /* ONE STATUS AREA (Dean, 28 Oct 2026). Every bar a page can show about the venue or the login
+     (unpaid, the signing key, HQ View as, a link for another venue) used to be its own full-width
+     element, each inserted at the top of the page on its own, most of them position:sticky;top:0
+     with a huge z-index. Two or three at once were painted over each other and over the page
+     header: at The Jolly Jess (suspended, viewed from HQ) the red signing bar, the gold View-as bar
+     and the orange unpaid bar sat on top of each other and Dean could not read past them.
+     Now every bar goes through here: one column in normal flow at the top of the page, in this
+     fixed order, nothing sticky, so every bar is readable and none covers another or the header.
+     Pass null to take a slot's bar away. */
+  var STATUS_ORDER = ['hold', 'sign', 'viewas', 'link'];
+  var _statusBars = {};
+  function statusBar(slot, el) {
+    if (STATUS_ORDER.indexOf(slot) < 0) throw new Error('statusBar: unknown slot ' + slot);
+    if (typeof document === 'undefined' || !document.body) return null;
+    var old = _statusBars[slot];
+    if (old && old !== el && old.parentNode) old.parentNode.removeChild(old);
+    if (el) _statusBars[slot] = el; else delete _statusBars[slot];
+    var box = document.getElementById('vpStatus');
+    var any = false, k;
+    for (k in _statusBars) if (Object.prototype.hasOwnProperty.call(_statusBars, k)) any = true;
+    if (!any) { if (box && box.parentNode) box.parentNode.removeChild(box); return null; }
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'vpStatus';
+      box.style.cssText = 'position:relative;display:flex;flex-direction:column;width:100%';
+      if (document.body.firstChild) document.body.insertBefore(box, document.body.firstChild);
+      else document.body.appendChild(box);
+    }
+    for (var i = 0; i < STATUS_ORDER.length; i++) {
+      var b = _statusBars[STATUS_ORDER[i]];
+      if (!b) continue;
+      // A bar built elsewhere may still ask to be sticky or fixed. In here it is neither.
+      if (b.style) { b.style.position = 'static'; b.style.top = 'auto'; b.style.zIndex = 'auto'; }
+      if (b.setAttribute) b.setAttribute('data-vp-slot', STATUS_ORDER[i]);
+      box.appendChild(b);   // appendChild moves a node already in the box, so this re-sorts it
+    }
+    return el || null;
+  }
+
+  /* WHAT A SWITCHED-OFF VENUE IS TOLD, by reason, in one place (28 Oct 2026). The game Worker
+     refuses every host route at a venue whose status is not 'active' (assertVenueActive, called by
+     requireStaff on both its paths), so the page says the same thing up front. Never the word
+     "suspended": a venue reads that as an accusation, and most of these are an expired card. */
+  function holdWords(v, role) {
+    if (!v || v.status !== 'suspended') return null;
+    var r = typeof v.suspended_reason === 'string' ? v.suspended_reason : '';
+    var owner = role === 'owner' || role === 'admin';   // HQ View as reaches billing as the owner would
+    if (r === 'nonpayment') {
+      return { reason: 'nonpayment',
+        title: 'This venue is switched off until the card is updated',
+        text: owner
+          ? 'Nothing has been lost. Update your card and everything comes straight back on, exactly as you left it.'
+          : 'Nothing has been lost. Ask the venue owner to update the card on the account page, and everything comes straight back on, exactly as you left it.',
+        link: owner ? { href: '/app/billing.html#pastDue', label: 'Update your card' } : null };
+    }
+    if (r === 'ended' || r === 'cancelled' || isArchived(v)) {
+      return { reason: 'ended',
+        title: "This venue's subscription has ended",
+        text: 'Its games are switched off and nothing has been lost. Email support@venueplay.com.au to start it again.',
+        link: null };
+    }
+    return { reason: 'hold',
+      title: "This venue's games are on hold",
+      text: 'Nothing has been lost. Email support@venueplay.com.au and we will sort it out.',
+      link: null };
+  }
+
+  /* A SWITCHED-OFF VENUE CANNOT RUN A GAME, SO THE CONSOLE DOES NOT OFFER ONE (Dean, 28 Oct 2026).
+     The consoles used to paint a bar about it and then the whole setup underneath (question set,
+     timer, Start), so a host could set up a night the Worker was always going to refuse. Now the
+     page's .wrap shows ONE card in place of everything else, and the caller stops its boot when this
+     answers true. opts.other = { label, onClick } adds a second way out (pick another venue).
+     A venue that is not switched off clears any card left from an earlier venue and answers false. */
+  function holdGate(ctx, opts) {
+    if (typeof document === 'undefined' || !document.body) return false;
+    var w = holdWords(ctx && ctx.venue, ctx && ctx.role);
+    var wrap = document.querySelector ? document.querySelector('.wrap') : null;
+    var card = document.getElementById('vpHoldCard');
+    var kids = wrap ? Array.prototype.slice.call(wrap.children || []) : [];
+    if (!w) {
+      if (card && card.parentNode) card.parentNode.removeChild(card);
+      kids.forEach(function (k) {
+        if (k.getAttribute && k.getAttribute('data-vp-held') === '1') {
+          k.style.display = k.getAttribute('data-vp-held-display') || '';
+          k.removeAttribute('data-vp-held'); k.removeAttribute('data-vp-held-display');
+        }
+      });
+      return false;
+    }
+    statusBar('hold', null);   // the card says it; a bar above saying it again is the stacking Dean saw
+    if (!card) { card = document.createElement('div'); card.id = 'vpHoldCard'; }
+    card.setAttribute('role', 'status');
+    card.setAttribute('data-reason', w.reason);
+    card.setAttribute('style', 'max-width:480px;margin:6vh auto 0;padding:28px 24px;text-align:center;' +
+      'background:rgba(245,165,36,.08);border:1px solid rgba(245,165,36,.45);border-radius:16px;' +
+      "font-family:Manrope,system-ui,sans-serif;color:#E7E7EC");
+    var btn = 'display:inline-block;margin:6px;min-height:44px;padding:11px 18px;border-radius:10px;border:none;' +
+      "font:700 14px/1.4 'Hanken Grotesk',Manrope,sans-serif;cursor:pointer;text-decoration:none";
+    card.innerHTML =
+      '<div style="font-size:22px;font-weight:800;line-height:1.3;color:#FFFFFF;margin-bottom:10px">' + w.title + '</div>' +
+      '<p style="margin:0 0 16px;font-size:15px;line-height:1.55;color:#C9C9D1">' + w.text + '</p>' +
+      (w.link ? '<a id="vpHoldPay" href="' + w.link.href + '" style="' + btn + ';background:#FF1F8E;color:#FFFFFF">' + w.link.label + '</a>' : '') +
+      (opts && opts.other ? '<button type="button" id="vpHoldOther" style="' + btn + ';background:rgba(255,255,255,.08);color:#E7E7EC">' +
+        String(opts.other.label || 'Choose another venue') + '</button>' : '');
+    if (wrap) {
+      kids.forEach(function (k) {
+        if (k === card || !k.style) return;
+        if (k.getAttribute && k.getAttribute('data-vp-held') !== '1') {
+          k.setAttribute('data-vp-held', '1');
+          k.setAttribute('data-vp-held-display', k.style.display || '');
+        }
+        k.style.display = 'none';
+      });
+      if (card.parentNode !== wrap) {
+        if (wrap.firstChild) wrap.insertBefore(card, wrap.firstChild); else wrap.appendChild(card);
+      }
+    } else if (card.parentNode !== document.body) {
+      document.body.appendChild(card);
+    }
+    var other = document.getElementById('vpHoldOther');
+    if (other && opts && opts.other && typeof opts.other.onClick === 'function') {
+      other.addEventListener('click', function () { holdGate(null); opts.other.onClick(); });
+    }
+    return true;
+  }
+
+  /* SECTION 6 OF THE TERMS, ACCEPTED ONCE (legal compliance matrix gap 1, 28 Oct 2026).
+     Anisimoff Legal 9380, 1 Oct 2026, point 3: "prudent to ensure Customers actively tick a check
+     box". Onboarding records that tick (vp_venues.compliance_accepted_at and _by, migration 100),
+     but only since 15 Oct 2026: on 28 Oct 26 of 27 venues had no record, the live client among them,
+     and nothing ever asked them. This card asks, once, at sign-in.
+
+     WHAT IT GATES: the same as the tick has always gated, which is opening an account (/checkout and
+     /admin/venue refuse without it) and nothing a game does. No console, no game Worker route and no
+     draw reads compliance_accepted_at, so a venue without it keeps running every game, free or paid,
+     exactly as before. Changing that would be a new gate, and a game stopping in front of a room is
+     not the way to find out about a missing tick. So the card ASKS; it does not block.
+
+     WHO SEES WHAT. An owner or a manager gets the tick, their name and Accept, which writes the record
+     through the billing Worker (/account/compliance-accept) the way onboarding writes it: a typed name
+     and the time. A host is told the owner or a manager needs to accept it and their games run as
+     normal. HQ View as is told the venue has not accepted, and cannot accept on its behalf (the Worker
+     refuses that too). A venue whose row does not carry the column (a database the migration has not
+     reached) is never asked, and a switched-off venue shows its hold card instead.
+     TERMS_TICK is VPA_COMPLIANCE_TICK in the billing Worker word for word, and TERMS_EFFECTIVE the
+     date on terms.html: tools/test-terms-acceptance-card.js holds all three equal. */
+  var BILLING_API = "https://venueplay-api.dean-tindale.workers.dev";
+  var TERMS_TICK = "We are responsible for complying with the gaming laws that apply to our venue, including any permit, licence or authority, age limits and attendance rules. VenuePlay supplies the software only.";
+  var TERMS_EFFECTIVE = "28 October 2026";
+  function termsMode(ctx) {
+    var v = ctx && ctx.venue;
+    if (!v || typeof v !== "object" || !("compliance_accepted_at" in v)) return null;
+    if (v.compliance_accepted_at || v.status === "suspended") return null;
+    var r = ctx.role;
+    if (r === "owner" || r === "manager") return "accept";
+    if (r === "admin") return "hq";
+    return "host";
+  }
+  /* A VENUE SET UP FOR A PROSPECT TICKS FIRST (Dean, 28 Oct 2026; migration 122). HQ > Set up a prospect
+     builds the venue with terms_required and no compliance record, because nobody read the line to them
+     on a call. For THAT venue the card is not a question that can wait: the game Worker refuses to start
+     any game there until the owner or a manager ticks it (code 'terms_first'), so the console says so up
+     front with termsGate below, the way holdGate does for a switched-off venue. Every other venue keeps
+     the card above, which asks and blocks nothing. The TV is never touched: its ads keep showing. */
+  function termsBlocking(ctx) {
+    var v = ctx && ctx.venue;
+    return !!(termsMode(ctx) && v.terms_required === true);
+  }
+  function termsEl(tag, css, text) {
+    var e = document.createElement(tag);
+    if (css) e.setAttribute("style", css);
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function termsCard(ctx) {
+    if (typeof document === "undefined" || !document.body) return false;
+    var card = document.getElementById("vpTermsCard");
+    var mode = termsMode(ctx);
+    if (!mode) { if (card && card.parentNode) card.parentNode.removeChild(card); return false; }
+    var v = ctx.venue, name = String(v.name || "your venue"), block = termsBlocking(ctx);
+    if (block) mode = "block-" + mode;
+    if (card && card.getAttribute("data-venue") === String(v.id) && card.getAttribute("data-mode") === mode) return true;
+    if (card && card.parentNode) card.parentNode.removeChild(card);
+    card = termsEl("div", "max-width:560px;margin:18px auto;padding:22px 22px 20px;background:rgba(255,31,142,.06);" +
+      "border:1px solid rgba(255,31,142,.40);border-radius:16px;font-family:Manrope,system-ui,sans-serif;color:#E7E7EC;" +
+      "box-sizing:border-box;width:calc(100% - 32px)");
+    card.id = "vpTermsCard";
+    card.setAttribute("role", "region");
+    card.setAttribute("aria-label", "Updated Terms");
+    card.setAttribute("data-venue", String(v.id));
+    card.setAttribute("data-mode", mode);
+    var EYEBROW = "margin:0 0 6px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#FF1F8E;font-weight:800";
+    var TITLE = "margin:0 0 10px;font-size:20px;font-weight:800;line-height:1.3;color:#FFFFFF;font-family:'Hanken Grotesk',Manrope,sans-serif";
+    var TEXT = "margin:0 0 14px;font-size:15px;line-height:1.55;color:#C9C9D1";
+    var LINK = "color:#FF8CC6;font-weight:700;text-decoration:underline";
+    card.appendChild(termsEl("p", EYEBROW, block ? "Before your first game" : "Updated Terms"));
+    var read = termsEl("a", LINK, "Read section 6 of the Terms");
+    read.setAttribute("href", "/terms"); read.setAttribute("target", "_blank"); read.setAttribute("rel", "noopener");
+    if (mode === "block-host") {
+      card.appendChild(termsEl("h2", TITLE, "Games start here once the owner or a manager ticks one box"));
+      card.appendChild(termsEl("p", TEXT, "Before the first game at " + name + ", the owner or a manager needs to confirm the venue runs its own games under the gaming laws that apply to it. They will see it the next time they sign in. The TV keeps showing your ads in the meantime."));
+      card.appendChild(read);
+    } else if (mode === "block-hq") {
+      card.appendChild(termsEl("h2", TITLE, name + " has not ticked section 6 yet, so its games cannot start"));
+      card.appendChild(termsEl("p", TEXT, "It was set up for a prospect. Only the venue's owner or a manager can tick it, at their own sign-in; HQ View as cannot do it for them. Their TV keeps showing their ads."));
+      card.appendChild(read);
+    } else if (mode === "host") {
+      card.appendChild(termsEl("h2", TITLE, "Your venue owner needs to accept the updated Terms"));
+      card.appendChild(termsEl("p", TEXT, "Section 6 of the Terms needs a tick from the owner or a manager of " + name +
+        ". They will be asked the next time they sign in. Your games run as normal in the meantime."));
+      card.appendChild(read);
+    } else if (mode === "hq") {
+      card.appendChild(termsEl("h2", TITLE, name + " has not accepted section 6 of the Terms"));
+      card.appendChild(termsEl("p", TEXT, "Only the venue's owner or a manager can accept it, at their own sign-in. HQ View as cannot accept it for them. Their games run as normal."));
+      card.appendChild(read);
+    } else {
+      if (block) {
+        card.appendChild(termsEl("h2", TITLE, "One tick and your games are ready, " + name));
+        card.appendChild(termsEl("p", TEXT, "Section 6 of our Terms says who is responsible for the games you run: your venue conducts every game, and VenuePlay supplies the software. Tick it once and every game is ready to start. Your TV keeps showing your ads either way."));
+      } else {
+        card.appendChild(termsEl("h2", TITLE, "Please accept the updated Terms for " + name));
+        card.appendChild(termsEl("p", TEXT, "Section 6 of our Terms says who is responsible for the games you run: your venue conducts every game, and VenuePlay supplies the software. We have no record of " +
+          name + " accepting it, so we are asking once. Nothing else changes, and your games run as normal."));
+      }
+      var rp = termsEl("p", "margin:0 0 16px;font-size:14.5px"); rp.appendChild(read); card.appendChild(rp);
+      var tickRow = termsEl("label", "display:flex;gap:12px;align-items:flex-start;padding:14px 16px;background:rgba(255,255,255,.04);" +
+        "border:1px solid rgba(255,255,255,.12);border-radius:12px;cursor:pointer;margin:0 0 14px");
+      var tick = termsEl("input", "width:20px;height:20px;margin:2px 0 0;flex:0 0 auto;accent-color:#FF1F8E");
+      tick.setAttribute("type", "checkbox"); tick.id = "vpTermsTick";
+      tickRow.appendChild(tick);
+      tickRow.appendChild(termsEl("span", "font-size:14.5px;line-height:1.5;color:#E7E7EC",
+        "I accept section 6 of the Terms (effective " + TERMS_EFFECTIVE + ") for " + name + ". " + TERMS_TICK));
+      card.appendChild(tickRow);
+      var nameLbl = termsEl("label", "display:block;font-size:13px;font-weight:700;color:#C9C9D1;margin:0 0 6px", "Your name");
+      nameLbl.setAttribute("for", "vpTermsBy");
+      card.appendChild(nameLbl);
+      var by = termsEl("input", "display:block;width:100%;box-sizing:border-box;min-height:44px;padding:11px 14px;border-radius:10px;" +
+        "border:1px solid rgba(255,255,255,.16);background:#141418;color:#FFFFFF;font:inherit;font-size:16px;margin:0 0 14px");
+      by.setAttribute("type", "text"); by.setAttribute("autocomplete", "name"); by.setAttribute("maxlength", "120"); by.id = "vpTermsBy";
+      var mine = (ctx.staff || []).filter(function (x) { return x && x.venue_id === v.id; })[0];
+      by.value = (mine && mine.display_name) ? String(mine.display_name) : "";
+      card.appendChild(by);
+      var go = termsEl("button", "display:inline-block;min-height:44px;padding:11px 22px;border-radius:10px;border:none;background:#FF1F8E;" +
+        "color:#FFFFFF;font:700 15px/1.4 'Hanken Grotesk',Manrope,sans-serif;cursor:pointer", "Accept");
+      go.setAttribute("type", "button"); go.id = "vpTermsGo";
+      card.appendChild(go);
+      var msg = termsEl("p", "margin:10px 0 0;font-size:14px;line-height:1.5;color:#FF8CC6;min-height:1px", "");
+      msg.id = "vpTermsMsg"; msg.setAttribute("role", "status");
+      card.appendChild(msg);
+      go.addEventListener("click", function () { termsAccept(ctx, card, tick, by, go, msg, block); });
+    }
+    var wrap = document.querySelector ? document.querySelector(".wrap") : null;
+    if (wrap) { if (wrap.firstChild) wrap.insertBefore(card, wrap.firstChild); else wrap.appendChild(card); }
+    else document.body.appendChild(card);
+    return true;
+  }
+  function termsAccept(ctx, card, tick, by, go, msg, block) {
+    var v = ctx.venue, who = String(by.value || "").trim();
+    if (!tick.checked) { msg.textContent = "Tick the box to accept section 6 of the Terms."; return Promise.resolve(false); }
+    if (!who) { msg.textContent = "Enter your name, so the record says who accepted it."; return Promise.resolve(false); }
+    go.disabled = true; msg.textContent = "";
+    var c; try { c = getClient(); } catch (e) { go.disabled = false; msg.textContent = "Could not reach VenuePlay. Check your connection and try again."; return Promise.resolve(false); }
+    return c.auth.getSession().then(function (r) {
+      var tok = (r && r.data && r.data.session && r.data.session.access_token) || "";
+      return fetch(BILLING_API + "/account/compliance-accept", { method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + tok, "X-VP-Venue": String(v.id) },
+        body: JSON.stringify({ venue_id: v.id, accepted: true, by: who }) })
+        .then(function (res) { return res.json().catch(function () { return { error: "Something went wrong at our end. Try again in a minute." }; }); });
+    }).then(function (j) {
+      if (!j || j.error || !j.ok) { go.disabled = false; msg.textContent = (j && j.error) || "That did not save. Try again in a minute."; return false; }
+      v.compliance_accepted_at = j.compliance_accepted_at || new Date().toISOString();
+      v.compliance_accepted_by = j.compliance_accepted_by || who;
+      while (card.firstChild) card.removeChild(card.firstChild);
+      card.setAttribute("data-mode", "done");
+      card.appendChild(termsEl("p", "margin:0 0 6px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#2BD47D;font-weight:800", "Accepted"));
+      card.appendChild(termsEl("p", "margin:0 0 14px;font-size:15px;line-height:1.55;color:#E7E7EC",
+        "Thank you. Section 6 of the Terms is recorded as accepted for " + String(v.name || "your venue") + " by " + v.compliance_accepted_by + "."));
+      /* A held console (termsGate) stopped its boot to show this card, so the way on is a fresh load,
+         which now finds the record and starts as normal. Anywhere else Done just takes the card away. */
+      var done = termsEl("button", "display:inline-block;min-height:44px;padding:11px 22px;border-radius:10px;border:none;" +
+        (block ? "background:#FF1F8E;color:#FFFFFF;" : "background:rgba(255,255,255,.08);color:#E7E7EC;") +
+        "font:700 15px/1.4 'Hanken Grotesk',Manrope,sans-serif;cursor:pointer", block ? "Start a game" : "Done");
+      done.setAttribute("type", "button"); done.id = "vpTermsDone";
+      done.addEventListener("click", function () {
+        if (block && termsHeld()) { try { window.location.reload(); } catch (e) {} return; }
+        if (card.parentNode) card.parentNode.removeChild(card);
+      });
+      card.appendChild(done);
+      return true;
+    }, function () {
+      go.disabled = false; msg.textContent = "Could not reach VenuePlay. Check your connection and try again."; return false;
+    });
+  }
+
+  /* THE HELD CONSOLE (Dean, 28 Oct 2026; migration 122). For a prospect venue with no recorded tick,
+     the page's .wrap shows the Terms card and nothing else, and the caller stops its boot when this
+     answers true, exactly as it does for holdGate. Any other venue: whatever this hid comes back, and
+     it answers false. Its own attribute (data-vp-terms-held), so it never undoes what holdGate hid. */
+  function termsHeld() {
+    var wrap = (typeof document !== "undefined" && document.querySelector) ? document.querySelector(".wrap") : null;
+    return !!wrap && Array.prototype.some.call(wrap.children || [], function (k) { return k.getAttribute && k.getAttribute("data-vp-terms-held") === "1"; });
+  }
+  function termsGate(ctx) {
+    if (typeof document === "undefined" || !document.body) return false;
+    var wrap = document.querySelector ? document.querySelector(".wrap") : null;
+    var kids = wrap ? Array.prototype.slice.call(wrap.children || []) : [];
+    if (!termsBlocking(ctx)) {
+      kids.forEach(function (k) {
+        if (k.getAttribute && k.getAttribute("data-vp-terms-held") === "1") {
+          k.style.display = k.getAttribute("data-vp-terms-display") || "";
+          k.removeAttribute("data-vp-terms-held"); k.removeAttribute("data-vp-terms-display");
+        }
+      });
+      return false;
+    }
+    termsCard(ctx);
+    var card = document.getElementById("vpTermsCard");
+    kids.forEach(function (k) {
+      if (k === card || !k.style) return;
+      if (k.getAttribute && k.getAttribute("data-vp-terms-held") !== "1") {
+        k.setAttribute("data-vp-terms-held", "1");
+        k.setAttribute("data-vp-terms-display", k.style.display || "");
+      }
+      k.style.display = "none";
+    });
+    return true;
+  }
+
+  /* A HOST IS THE STAFF (Dean, 28 Oct 2026). The game Worker's kill-switch answers 403 in one of two
+     sets of words: the host's ("Your tab has run a bit long...") or the room's ("Games are paused
+     here tonight. Have a word with the staff."), and a few host routes (opening a session among
+     them) still answer in the room's. A host pressing Start at a switched-off venue was told to
+     have a word with the staff. Every console runs a Worker error through here: a switched-off
+     answer becomes the host's own words, and the page swaps to the switched-off card (holdGate),
+     re-reading the venue first so the card gives the real reason. Anything else passes through. */
+  var SWITCHED_OFF = /Have a word with the staff|Your tab has run a bit long\. Settle up on your account page/;
+  function hostRefusal(status, msg) {
+    if (status !== 403 || !SWITCHED_OFF.test(String(msg || ''))) return msg;
+    var ctx = _ctx;
+    function show(c) {
+      var v = c && c.venue;
+      if (v && v.status === 'suspended') return holdGate(c);
+      // The venue reads active but the Worker says no: its group is switched off. Same card, no reason.
+      return holdGate({ venue: { status: 'suspended', suspended_reason: '' }, role: c && c.role });
+    }
+    try { refresh().then(show, function () { show(ctx); }); } catch (e) { show(ctx); }
+    var w = holdWords(ctx && ctx.venue && ctx.venue.status === 'suspended' ? ctx.venue : { status: 'suspended' }, ctx && ctx.role);
+    return w.title + '.';
+  }
+
   /* A suspended venue used to look completely healthy until the host tapped Start in front of a
      room and got "This venue is suspended". Nothing in the venue-facing app checked the status at
-     all. Any page can call this after ready() to say so on sign-in instead. */
+     all. Any page can call this after ready() to say so on sign-in instead. A game console calls
+     holdGate() instead, which replaces the setup with one card. */
   function suspensionBanner(ctx) {
     var v = ctx && ctx.venue;
     if (!v || v.status !== 'suspended') return;
-    if (document.getElementById('vpSuspendBar')) return;
+    if (document.getElementById('vpSuspendBar') || document.getElementById('vpHoldCard')) return;
     var nonpay = v.suspended_reason === 'nonpayment';
     var bar = document.createElement('div');
     bar.id = 'vpSuspendBar';
-    bar.style.cssText = 'position:sticky;top:0;z-index:9999;padding:12px 18px;background:#F5A524;' +
+    if (bar.setAttribute) bar.setAttribute('role', 'status');
+    bar.style.cssText = 'padding:12px 18px;background:#F5A524;' +
       'color:#180d00;font-family:Manrope,system-ui,sans-serif;font-size:14px;font-weight:600;' +
       'line-height:1.45;text-align:center';
     // Never the word "suspended". A venue reads that as an accusation, and most of these are an
-    // expired card. Dean's line, in the voice the rest of the product uses.
+    // expired card. Dean's line, in the voice the rest of the product uses. It names no game: this
+    // bar shows on trivia, musical, raffle and members pages too (28 Oct 2026). The link is
+    // absolute because the consoles live one folder down.
     bar.innerHTML = nonpay
-      ? 'Your tab has run a bit long. Settle up and we will pour you another round of bingo. ' +
-        '<a href="billing.html#pastDue" style="color:#180d00;text-decoration:underline">Update your card</a> and everything comes straight back on, exactly as you left it.'
+      ? 'Your tab has run a bit long. Settle up and we will pour you another round. ' +
+        '<a href="/app/billing.html#pastDue" style="color:#180d00;text-decoration:underline">Update your card</a> and everything comes straight back on, exactly as you left it.'
       // An archived venue was switched off on purpose. Telling its owner to "give us a shout
       // and we will sort it out" reads as a fault and sends them chasing a problem that is not
       // one. Say what it is, and point at the way out.
       : isArchived(v)
       ? 'This venue is archived, so its games are switched off. Nothing has been lost. Choose another venue to keep playing, or email support@venueplay.com.au to bring this one back.'
       : 'Your games are on hold for the moment. Nothing has been lost. Email support@venueplay.com.au and we will sort it out.';
-    if (document.body.firstChild) document.body.insertBefore(bar, document.body.firstChild);
-    else document.body.appendChild(bar);
+    statusBar('hold', bar);
   }
   /* Fire-and-forget POST to the game Worker, signed with the caller's token.
      For side records that must never hold up or break the thing they describe:
@@ -983,6 +1336,136 @@
             function (err) { clearTimeout(timer); throw err; });
   }
 
+  /* ONE "ADVANCED SETTINGS" FOR EVERY GAME (Dean, 28 Oct 2026: "We need to make all the games easier.
+     Maybe we have an advanced settings tab for each game?"). The choices a host makes every night stay
+     on the setup; the ones a venue sets once go behind one disclosure, the same component in all five
+     consoles: a <details class="vp-adv"> in the page's own markup, closed until somebody opens it, and
+     this browser remembers whether it was left open (vpAdvOpen:<game>). Nothing the law needs before a
+     paid game ever goes in here: paid entry, the state rules screen and the free-entry note stay in
+     plain sight. The look lives here once, so the five consoles cannot drift apart. */
+  var ADV_CSS =
+    '.vp-adv{margin:14px 0;border:1px solid var(--line-2,rgba(255,255,255,.12));border-radius:12px;background:var(--ink-3,rgba(255,255,255,.03))}' +
+    '.vp-adv>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:10px 14px;border-radius:12px;' +
+      "font:700 14px/1.3 'Hanken Grotesk',Manrope,system-ui,sans-serif;color:var(--text,#E7E7EC)}" +
+    '.vp-adv>summary::-webkit-details-marker{display:none}' +
+    '.vp-adv>summary::after{content:"";flex:none;width:8px;height:8px;margin:-4px 4px 0 0;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);opacity:.7;transition:transform .15s}' +
+    '.vp-adv[open]>summary::after{transform:rotate(-135deg);margin-top:4px}' +
+    '.vp-adv>summary:focus-visible{outline:2px solid var(--pink,#FF1F8E);outline-offset:2px}' +
+    '.vp-adv-sub{display:block;margin-top:2px;font:500 12px/1.4 Manrope,system-ui,sans-serif;color:var(--faint,#8A8A94)}' +
+    '.vp-adv-body{padding:4px 14px 14px}' +
+    '.vp-adv-body>.field:last-child,.vp-adv-body>:last-child{margin-bottom:0}' +
+    '.vp-foot-link{display:block;width:100%;min-height:44px;margin:12px 0 0;padding:10px 0;background:none;border:none;cursor:pointer;text-align:center;' +
+      'font:600 13px/1.4 Manrope,system-ui,sans-serif;color:var(--muted,#B4B4BE);text-decoration:underline;text-underline-offset:3px}' +
+    '.vp-foot-link:hover{color:var(--text,#E7E7EC)}' +
+    '.vp-foot-link:focus-visible{outline:2px solid var(--pink,#FF1F8E);outline-offset:2px;border-radius:8px}';
+  function advancedCss() {
+    if (typeof document === 'undefined' || !document.createElement) return;
+    if (!document.head || (document.getElementById && document.getElementById('vpAdvCss'))) return;
+    var s = document.createElement('style');
+    s.id = 'vpAdvCss';
+    s.textContent = ADV_CSS;
+    if (document.head && document.head.appendChild) document.head.appendChild(s);   // never into the page body
+  }
+  advancedCss();   // at load, so the disclosure never paints as the browser's own triangle first
+  function advanced(el, game) {
+    if (!el) return null;
+    advancedCss();
+    var key = 'vpAdvOpen:' + String(game || 'game');
+    var open = false;
+    try { open = localStorage.getItem(key) === '1'; } catch (e) {}
+    el.open = open;   // closed unless this browser left it open
+    if (!el._vpAdv && el.addEventListener) {
+      el._vpAdv = true;
+      el.addEventListener('toggle', function () {
+        try { localStorage.setItem(key, el.open ? '1' : '0'); } catch (e) {}
+      });
+    }
+    return el;
+  }
+
+  /* EVERY GAME'S SETUP SAVED FOR THE VENUE (Dean, 28 Oct 2026: "all of those settings that they change
+     should be saved to the venue"). One mechanism for all five consoles, built on the musical console's
+     first version: vp_venue_settings.game_prefs (migration 121), one object per game, read and MERGED
+     through the game Worker's /host/game-prefs by ANY staff login (a Host included, which a direct
+     vp_venue_settings write never allowed).
+
+       var prefs = VP.gamePrefs('bingo', { venueId, collect, apply, local, fallback, token, api });
+       prefs.start()   once the page can show the choices: read, apply, and from then on save changes
+       prefs.queue()   a choice changed: saved a moment later, once, however many taps
+
+     Loading, in order: the venue's saved setup; else the venue's older saved columns (fallback:
+     trivia_* and raffle_template, so no venue loses what it had); else this browser's old values
+     (local), which are sent up ONCE so they become the venue's; else the page's own defaults. If the
+     route is not there (404, the column not added yet, offline) the page carries on with this
+     browser's values and says nothing. Nothing is saved before the venue's setup has been read, so
+     a fresh page's defaults never overwrite it. Never paid-or-free for the night, unsold tickets or
+     permits: the Worker drops them, and no console sends them. */
+  function gamePrefs(game, o) {
+    o = o || {};
+    var ready = false, applying = false, timer = null;
+    var delay = (o.delay == null) ? 800 : o.delay;
+    function api() { var a = (typeof o.api === 'function') ? o.api() : o.api; return String(a || GAME_API); }
+    function venue() { return String((typeof o.venueId === 'function' ? o.venueId() : o.venueId) || ''); }
+    function obj(p) { return (p && typeof p === 'object' && !Array.isArray(p)) ? p : null; }
+    function token() {
+      if (typeof o.token === 'function') return Promise.resolve(o.token());
+      var c; try { c = getClient(); } catch (e) { return Promise.reject(e); }
+      return c.auth.getSession().then(function (r) { return (r && r.data && r.data.session && r.data.session.access_token) || ''; });
+    }
+    function load() {
+      var v = venue();
+      if (!v) return Promise.resolve(null);
+      return token().then(function (t) {
+        return fetch(api() + '/host/game-prefs?venue_id=' + encodeURIComponent(v) + '&game=' + encodeURIComponent(game),
+          { headers: { 'Authorization': 'Bearer ' + t } });
+      }).then(function (r) { return (r && r.ok) ? r.json() : null; })
+        .then(function (d) { return d ? (obj(d.prefs) || {}) : null; })   // {} = the route answered, nothing saved yet
+        .catch(function () { return null; });                             // null = no route: this browser's values stay
+    }
+    function saveNow() {
+      var v = venue();
+      if (!v) return Promise.resolve(false);
+      var p = null; try { p = obj(o.collect && o.collect()); } catch (e) { p = null; }
+      if (!p || !Object.keys(p).length) return Promise.resolve(false);
+      return token().then(function (t) {
+        return fetch(api() + '/host/game-prefs', { method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t },
+          body: JSON.stringify({ venue_id: v, game: game, prefs: p }) });
+      }).then(function (r) { return !!(r && r.ok); }).catch(function () { return false; });   // the page keeps it either way
+    }
+    function queue() {
+      if (!ready || applying) return;   // never save the page's defaults over the venue's choices
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(function () { timer = null; saveNow(); }, delay);
+    }
+    function apply(p) {
+      if (typeof o.apply !== 'function') return;
+      applying = true;
+      try { o.apply(p); } catch (e) {} finally { applying = false; }
+    }
+    function start() {
+      return load().then(function (saved) {
+        if (saved && Object.keys(saved).length) { apply(saved); ready = true; return 'venue'; }
+        var fb = null;
+        try { fb = (typeof o.fallback === 'function') ? o.fallback() : null; } catch (e) { fb = null; }
+        return Promise.resolve(fb).catch(function () { return null; }).then(function (older) {
+          var loc = null; try { loc = (typeof o.local === 'function') ? o.local() : null; } catch (e) { loc = null; }
+          var merged = {}, any = false, k;
+          older = obj(older); loc = obj(loc);
+          if (older) for (k in older) if (Object.prototype.hasOwnProperty.call(older, k) && older[k] != null) { merged[k] = older[k]; any = true; }
+          if (loc) for (k in loc) if (Object.prototype.hasOwnProperty.call(loc, k) && loc[k] != null && !(k in merged)) { merged[k] = loc[k]; any = true; }
+          if (any) apply(merged);
+          ready = true;
+          // The route answered and the venue has nothing yet: what this page now shows becomes the venue's, once.
+          if (saved && any) return saveNow().then(function () { return 'sent'; });
+          return any ? 'local' : 'default';
+        });
+      });
+    }
+    return { start: start, queue: queue, saveNow: saveNow, load: load,
+             ready: function () { return ready; }, applying: function () { return applying; } };
+  }
+
   root.VP = {
     getClient: getClient,
     useClient: useClient,
@@ -1002,6 +1485,12 @@
     venueCode: venueCode,
     venueJoinCode: venueJoinCode,
     suspensionBanner: suspensionBanner,
+    statusBar: statusBar,
+    holdGate: holdGate,
+    holdWords: holdWords,
+    termsCard: termsCard,   // section 6 of the Terms, accepted once (28 Oct 2026)
+    termsGate: termsGate,   // a prospect venue's console is held on that card until it is ticked (migration 122)
+    hostRefusal: hostRefusal,
     noteOpenSession: noteOpenSession,
     closeOpenSessions: closeOpenSessions,
     closeSession: closeSession,
@@ -1011,6 +1500,8 @@
     confirmTakeover: confirmTakeover,
     askOnPage: askOnPage,   // the same on-page question, for the "pick it up?" prompt (vp-pickup.js)
     endShift: endShift,
-    setGameActive: setGameActive
+    setGameActive: setGameActive,
+    advanced: advanced,     // the one "Advanced settings" disclosure (28 Oct 2026)
+    gamePrefs: gamePrefs    // every game's setup saved for the venue (migration 121)
   };
 })(window);

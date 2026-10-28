@@ -329,6 +329,7 @@
           <option value="test">Test venues</option>
           <option value="suspended">Suspended</option>
           <option value="archived">Archived</option>
+          <option value="needsstate">Needs a state</option>
         </select>
         <!-- Venues that have LEFT (ended, cancelled, archived) are off the list unless this is ticked.
              The search box still finds them. Unpaid venues stay: they need chasing (Dean, 19 Oct 2026). -->
@@ -338,6 +339,7 @@
         </label>
       </div>
       <button class="btn ghost sp" id="addVenueToggle">+ Add venue</button>
+      <button class="btn ghost sp" id="prospectToggle">Set up a prospect</button>
       <a class="btn pink" href="onboard.html">Full onboarding</a>
     </div>
 
@@ -383,6 +385,37 @@
       <div class="note">Onboarding sets up the venue, its first manager login and its billing record. Admin takes no card: the welcome email is what asks for it.</div>
       <div class="okflash" id="addVenueOk"><span>&#10003;</span> <span></span></div>
       <div class="errflash" id="addVenueErr"></div>
+    </div>
+
+    <!-- SET UP A PROSPECT (Dean, 28 Oct 2026): a venue replied "yes, tell me more" to a cold email.
+         One button builds their account (venue, account record at the founding price, an email login,
+         their slides) and sends ONE email that gets them running on their own. Nobody reads them the
+         compliance line, so it is NOT ticked here: their console asks the owner or a manager to tick it,
+         and no game starts until they do (migration 122). Billing Worker POST /admin/prospect. -->
+    <div id="prospectPanel" class="panel pad hidden" style="margin-bottom:16px">
+      <div class="lblk" style="margin-top:0">Set up a prospect</div>
+      <p class="note" style="margin:0 0 14px">For a venue that said yes to a cold email. This creates their account and emails them everything they need to run their first game: their TV address, how to sign in, their price and the card link. Nothing is charged until they add a card, and their free month starts then.</p>
+      <div class="formgrid">
+        <div class="field"><label for="ppName">Venue name</label><input type="text" id="ppName" placeholder="e.g. The Royal Hotel" maxlength="120"></div>
+        <div class="field"><label for="ppFirst">Contact first name (optional)</label><input type="text" id="ppFirst" placeholder="e.g. Amit" maxlength="60" autocomplete="off"></div>
+        <div class="field"><label for="ppEmail">Contact email</label><input type="email" id="ppEmail" placeholder="owner@venue.com.au"><div class="note" style="margin-top:4px">Their login (a code by email, no password) and where the welcome goes.</div></div>
+        <div class="field"><label for="ppMobile">Mobile (optional)</label><input type="text" id="ppMobile" placeholder="e.g. 0412 345 678" class="mono" inputmode="tel"><div class="note" style="margin-top:4px">Goes on the same login, so they can sign in by text code too.</div></div>
+        <div class="field"><label for="ppPostcode">Venue postcode</label><input type="text" id="ppPostcode" placeholder="e.g. 3066" class="mono" maxlength="4" inputmode="numeric"><div class="note" style="margin-top:4px" id="ppState">Sets the state, so the email and the console show the right gaming rules.</div></div>
+        <div class="field"><label for="ppKind">Club or pub?</label><select id="ppKind">
+          <option value="">Choose...</option>
+          <option value="non_profit">Club (RSL, bowls, leagues, non-profit)</option>
+          <option value="for_profit">Pub (hotel or tavern)</option>
+        </select></div>
+        <div class="field"><label for="ppPlayers">Usual crowd (players)</label><input type="number" id="ppPlayers" value="60" min="1" max="2000" class="mono"><div class="note" style="margin-top:4px" id="ppPrice">Sets their plan: the price is per player a month on this number.</div></div>
+        <div class="field"><label for="ppWebsite">Website (optional)</label><input type="text" id="ppWebsite" placeholder="e.g. theroyalhotel.com.au" autocomplete="off"><div class="note" style="margin-top:4px">Kept on the record, for making their slides from.</div></div>
+        <div class="field" style="grid-column:1 / -1"><label for="ppSlides">Screen slides (optional, up to 20)</label>
+          <input type="file" id="ppSlides" accept="image/png,image/jpeg" multiple>
+          <div class="note" style="margin-top:4px">PNG or JPEG. Each is fitted to the TV (1920 by 1080) before it is sent, the same as Your account does, and they go straight onto the venue's screen.</div>
+          <div id="ppThumbs" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"></div></div>
+      </div>
+      <button class="btn pink" id="ppGo" style="margin-top:6px">Set up and send</button>
+      <div class="errflash" id="ppErr"></div>
+      <div id="ppResult" class="note hidden" role="status" style="margin-top:12px;padding:12px 14px;border:1px solid rgba(43,212,125,.45);border-radius:10px;background:rgba(43,212,125,.07);color:var(--text, #E7E7EC);line-height:1.6"></div>
     </div>
 
     <div class="lblk" id="venuesLbl">All venues</div>
@@ -2083,6 +2116,17 @@
        scan slower. Billing still sees them for the month they left, because that month's invoice
        is real; that filtering lives in renderBilling, not here. */
     var searching = !ignoreSearch && !!S.vSearch;
+    /* NEEDS A STATE (legal compliance matrix G19, 28 Oct 2026). A venue with no state is shown no
+       state's rules and cannot charge for a game (vp-gaming.js assess), so it is a job to fix: every
+       one, test or not, left or not, so none can hide. The search still narrows it. */
+    if(S.vFilter==="needsstate"){
+      if(!needsState(v)) return false;
+      if(searching){
+        var qs=S.vSearch.toLowerCase();
+        return String(v.name||"").toLowerCase().indexOf(qs)>=0 || String(v.slug||"").toLowerCase().indexOf(qs)>=0;
+      }
+      return true;
+    }
     if(S.vFilter==="archived" && !isArchived(v)) return false;
     if(S.vFilter!=="archived" && S.vFilter!=="suspended" && S.vFilter!=="test" &&
        hasLeft(v) && !S.showLeft && !searching) return false;
@@ -2103,6 +2147,14 @@
     }
     return true;
   }
+  /* No state recorded: no postcode, or one that maps to none. The set-state fix is the postcode
+     field in Details (/admin/venue-gaming), which also switches paid entry off until it is set. */
+  function needsState(v){ return !!v && !String(v.au_state||"").trim(); }
+  function needsStateBadge(v){
+    if(!needsState(v)) return "";
+    return ' <span class="badge suspend" title="No state is recorded, so no state rules can be shown and paid games start as free entry. Set the postcode in Details.">Needs a state</span>'+
+      (v.paid_entry_enabled===true ? ' <span class="badge suspend" title="Paid entry is still switched on for a venue with no state. Setting or clearing the postcode in Details switches it off.">Paid entry ON</span>' : '');
+  }
   function renderVenues(){
     var b=$("venueRows"); b.innerHTML="";
     var list=S.venues.filter(function(v){ return venuePasses(v); });
@@ -2115,7 +2167,7 @@
        a filter doing its job. */
     var FLBL={ archived:"Archived venues", cancelling:"Cancelling", grouped:"Grouped venues",
                independent:"Independent venues", live:"Live now", suspended:"Suspended venues",
-               test:"Test venues" };
+               test:"Test venues", needsstate:"Venues that need a state" };
     var lbl=FLBL[S.vFilter] || "All venues";
     $("venuesLbl").textContent=lbl+" ("+list.length+(list.length===pool.length?"":" of "+pool.length)+")";
     if(!list.length){ b.innerHTML='<tr><td colspan="5"><div class="empty" style="border:none;background:none">'+(S.venues.length?"No venues match that filter.":"No venues yet. Use Add venue to onboard the first one.")+'</div></td></tr>'; return; }
@@ -2160,7 +2212,7 @@
         : (inAccount ? '<span class="badge grouped">Account &middot; '+acctCount[v.founding_id]+' venues</span>'
         : '<span class="badge indep">Independent</span>');
       var testBadge = isTest(v) ? ' <span class="badge gold">Test</span>' : '';
-      var statusCell = stateBadgeFor(v);
+      var statusCell = stateBadgeFor(v) + needsStateBadge(v);
       /* Its own span, so the minute-by-minute refresh below can repaint JUST this badge without
          re-rendering a table somebody may be half way through using. */
       statusCell += testBadge + ' <span data-screenbadge="'+esc(v.id)+'">' + screenBadge(v) + '</span>';
@@ -2430,6 +2482,8 @@
     if(pr) setPraffle(pr.getAttribute("data-vid"), pr.checked, pr);
     var nb=e.target.closest("input.numbingo");
     if(nb) setNumberBingo(nb.getAttribute("data-vid"), nb.checked, nb);
+    var rc=e.target.closest("input[data-regcheck]");
+    if(rc && rc.checked) markRegisterChecked(rc);
     var lo=e.target.closest("input.logosite");
     if(lo) setLogoSite(lo.getAttribute("data-vid"), lo.checked, lo);
   });
@@ -2668,7 +2722,7 @@
       : '<span style="color:var(--roll)">not asked</span>';
     var tick = v.compliance_accepted_at
       ? ('accepted '+esc(fmtWhen(v.compliance_accepted_at))+(v.compliance_accepted_by?' by '+esc(v.compliance_accepted_by):''))
-      : '<span style="color:var(--roll)">NOT accepted: no record of the tick (a signup before it was recorded, a venue added from Your account, or one onboarded by hand). Have them accept it.</span>';
+      : '<span style="color:var(--roll)">NOT accepted: no record of the tick (a signup before it was recorded, a venue added from Your account, or one onboarded by hand). The console asks their owner or a manager to accept section 6 of the Terms the next time either signs in.</span>';
     var permits=(v.permits&&typeof v.permits==="object")?v.permits:{};
     /* Only the kinds this venue's state needs a permit for (VPPermits.NEEDS, the one table the settings
        and Draws pages use), plus any kind they saved anyway, marked as not needed (Dean, 24 Oct 2026). */
@@ -2709,8 +2763,37 @@
               (d.category_claimed?' &middot; '+esc(d.category_claimed):'')+(money.length?' &middot; '+money.join(", "):'')+'</div>';
           }).join("")
         : '<div>No declarations yet: this venue has not started a paid game, raffle or members draw.</div>';
-      out.innerHTML='<b>Recorded</b> '+recTxt+'<div style="margin-top:4px"><b>Last declarations</b> (the venue saying it is the conductor, per game)</div>'+declTxt;
+      out.innerHTML='<b>Recorded</b> '+recTxt+registerChecksHtml(id, r)+'<div style="margin-top:4px"><b>Last declarations</b> (the venue saying it is the conductor, per game)</div>'+declTxt;
     }).catch(function(e){ btn.disabled=false; out.textContent="Could not read it: "+String((e&&e.message)||e); });
+  }
+  /* CHECKED AGAINST THE VGCCC REGISTER (legal compliance matrix gap 8, 28 Oct 2026). Anisimoff,
+     8 Oct 2026, point 1(a): "prudent to verify VIC permit numbers before providing the platform".
+     A person looks the number up on the VGCCC's register and ticks it here; nothing is automated.
+     Victoria only, one line per permit the venue has recorded. The record is an audit row naming
+     who and when (/admin/permit-register-check), and a permit changed since reads as not checked. */
+  function registerChecksHtml(id, r){
+    var v=(r&&r.venue)||{}; if(String(v.au_state||"").toUpperCase()!=="VIC") return "";
+    var rec=r.recorded||{}, chk=r.register_checks||{}, permits=r.permits||{};
+    var kinds=["bingo","raffle","members"].filter(function(k){ return rec[k]; });
+    if(!kinds.length) return '<div style="margin-top:4px"><b>VGCCC register</b> <span style="color:var(--faint)">no Victorian permit recorded, so nothing to check</span></div>';
+    return '<div style="margin-top:4px"><b>VGCCC register</b>'+kinds.map(function(k){
+      var c=chk[k], p=permits[k]||{}, name=esc(k==="members"?"members draw":k);
+      var what=p.number ? ' number '+esc(p.number) : (p.npo_name ? ' under '+esc(p.npo_name)+'\'s authority' : '');
+      var said = (c && c.current)
+        ? '<span style="color:var(--win)">checked '+esc(fmtWhen(c.at))+' by '+esc(c.by)+'</span>'
+        : (c ? '<span style="color:var(--roll)">not checked since the permit changed (last check '+esc(fmtWhen(c.at))+' by '+esc(c.by)+', number '+esc(c.number||"none")+')</span>'
+             : '<span style="color:var(--roll)">not checked</span>');
+      var box = (c && c.current) ? '' : ' <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" data-regcheck="'+esc(id)+'" data-regkind="'+esc(k)+'" style="accent-color:var(--pink);width:15px;height:15px;cursor:pointer"> I checked it against the VGCCC register</label>';
+      return '<div>'+name+what+' &middot; '+said+box+'</div>';
+    }).join("")+'</div>';
+  }
+  function markRegisterChecked(box){
+    var id=box.getAttribute("data-regcheck"), kind=box.getAttribute("data-regkind");
+    box.disabled=true;
+    workerPost("/admin/permit-register-check", { venue_id:id, kind:kind }).then(function(r){
+      if(!r || r.error){ box.disabled=false; box.checked=false; vpTell("That did not record: "+((r&&r.error)||"no answer")); return; }
+      var b=document.querySelector('button[data-compliance="'+id+'"]'); if(b) loadCompliance(id, b);
+    }).catch(function(){ box.disabled=false; box.checked=false; vpTell("Could not reach the billing service, so the check was not recorded."); });
   }
 
   /* SCREEN HISTORY (migration 114, 21 Oct 2026). Tugun Bowls Club's logo and slides went, and
@@ -4205,6 +4288,95 @@
       flash("addVenueOk", msg);
       $("nvName").value=""; $("nvSlug").value=""; $("nvEmail").value=""; $("nvMobile").value=""; $("nvMax").value=""; $("nvCap").value=""; $("nvPostcode").value=""; $("nvComp").checked=false; $("nvWelcome").checked=true;
       $("nvKind").value=""; $("nvCompliance").checked=false; $("nvComplianceBy").value=""; nvBingoNote();
+      loadAll();
+    });
+  });
+
+  /* ================= SET UP A PROSPECT (Worker /admin/prospect, 28 Oct 2026) ================= */
+  var PP = { slides: [] };   // data URLs, already fitted to the TV
+  var PP_MAX_SLIDES = 20;    // the Worker's VPB_MAX_SLIDES
+  $("prospectToggle").addEventListener("click", function(){ show("prospectPanel", $("prospectPanel").classList.contains("hidden")); });
+  function ppStateNote(){
+    var pc=($("ppPostcode").value||"").replace(/[^0-9]/g,"");
+    var st=(pc.length===4 && window.VPGaming && VPGaming.stateFromPostcode) ? VPGaming.stateFromPostcode(pc) : null;
+    $("ppState").textContent = st ? ("State: "+st+". The email and the console show "+st+"'s rules.") : "Sets the state, so the email and the console show the right gaming rules.";
+  }
+  function ppPriceNote(){
+    var n=parseInt($("ppPlayers").value,10);
+    $("ppPrice").textContent = (n>0) ? ("At $2.50 a player a month while the offer runs: $"+(n*2.5).toFixed(2)+" a month, first month free once they add a card.") : "Sets their plan: the price is per player a month on this number.";
+  }
+  $("ppPostcode").addEventListener("input", ppStateNote);
+  $("ppPlayers").addEventListener("input", ppPriceNote);
+  /* Fit a slide to the TV, as billing.html's resizeAdImage does, but always PNG or JPEG out (this
+     route takes those two only): a black backing for any see-through part, never enlarged, and the
+     original kept when it is already smaller. */
+  function ppFit(dataUrl, cb){
+    var img=new Image();
+    img.onload=function(){
+      try{
+        var w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+        if(!w||!h){ cb(dataUrl); return; }
+        var scale=Math.min(1, 1920/w, 1080/h);
+        var cw=Math.max(1,Math.round(w*scale)), ch=Math.max(1,Math.round(h*scale));
+        var cv=document.createElement("canvas"); cv.width=cw; cv.height=ch;
+        var cx=cv.getContext("2d"); cx.fillStyle="#000"; cx.fillRect(0,0,cw,ch); cx.drawImage(img,0,0,cw,ch);
+        var out=cv.toDataURL("image/jpeg", 0.85);
+        cb(out && out.indexOf("data:image/jpeg")===0 && (scale<1 || out.length<dataUrl.length) ? out : dataUrl);
+      }catch(e){ cb(dataUrl); }
+    };
+    img.onerror=function(){ cb(null); };
+    img.src=dataUrl;
+  }
+  function ppThumbs(){
+    var box=$("ppThumbs");
+    box.innerHTML=PP.slides.map(function(d,i){
+      return '<div style="position:relative;width:96px;height:54px;border-radius:6px;overflow:hidden;background:#000;border:1px solid rgba(255,255,255,.15)">'+
+        '<img src="'+esc(d)+'" alt="Slide '+(i+1)+'" style="width:100%;height:100%;object-fit:contain">'+
+        '<button type="button" class="mini" data-pp-rm="'+i+'" aria-label="Remove slide '+(i+1)+'" style="position:absolute;top:2px;right:2px;min-height:0;padding:0 6px;line-height:18px">&times;</button></div>';
+    }).join("") + (PP.slides.length ? '<div class="note" style="align-self:center">'+PP.slides.length+' of '+PP_MAX_SLIDES+'</div>' : "");
+    box.querySelectorAll("[data-pp-rm]").forEach(function(b){ b.addEventListener("click", function(){ PP.slides.splice(parseInt(this.getAttribute("data-pp-rm"),10),1); ppThumbs(); }); });
+  }
+  $("ppSlides").addEventListener("change", function(){
+    var files=Array.prototype.slice.call(this.files||[]); this.value="";
+    var room=PP_MAX_SLIDES-PP.slides.length;
+    if(files.length>room){ errFlash("ppErr","A venue can have up to "+PP_MAX_SLIDES+" slides. The first "+Math.max(room,0)+" were added."); files=files.slice(0,Math.max(room,0)); }
+    files.forEach(function(f){
+      if(!/^image\/(png|jpeg)$/.test(f.type)){ errFlash("ppErr", f.name+" is not a PNG or JPEG."); return; }
+      var rd=new FileReader();
+      rd.onload=function(){ ppFit(String(rd.result), function(out){
+        if(!out){ errFlash("ppErr", f.name+" could not be read as an image."); return; }
+        if(out.length*0.75 > 5*1024*1024){ errFlash("ppErr", f.name+" is still over 5MB after fitting it to the TV."); return; }
+        if(PP.slides.length<PP_MAX_SLIDES){ PP.slides.push(out); ppThumbs(); }
+      }); };
+      rd.readAsDataURL(f);
+    });
+  });
+  $("ppGo").addEventListener("click", function(){
+    var name=$("ppName").value.trim(), email=$("ppEmail").value.trim(), pc=($("ppPostcode").value||"").replace(/[^0-9]/g,"");
+    var kind=$("ppKind").value, mob=$("ppMobile").value.trim(), players=parseInt($("ppPlayers").value,10);
+    if(!name){ errFlash("ppErr","Enter the venue name."); return; }
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ errFlash("ppErr","Enter the contact's email. It is their login and where the welcome goes."); return; }
+    if(pc.length!==4){ errFlash("ppErr","Enter the venue's 4-digit postcode. It sets which state's gaming rules apply."); return; }
+    if(kind!=="non_profit" && kind!=="for_profit"){ errFlash("ppErr","Choose club or pub."); return; }
+    if(mob && !/^(04\d{8}|614\d{8}|4\d{8})$/.test(mob.replace(/[^0-9]/g,""))){ errFlash("ppErr","That mobile is not an Australian mobile (04...). Leave it empty or fix it."); return; }
+    if(!(players>=1 && players<=2000)){ errFlash("ppErr","Their usual crowd should be between 1 and 2000 players."); return; }
+    var body={ name:name, first_name:$("ppFirst").value.trim(), email:email, mobile:mob, postcode:pc, entity_type:kind,
+               players:players, website:$("ppWebsite").value.trim(), slides:PP.slides.slice() };
+    var btn=$("ppGo"); btn.disabled=true; btn.textContent="Setting up...";
+    show("ppResult", false);
+    workerPost("/admin/prospect", body).then(function(res){
+      btn.disabled=false; btn.textContent="Set up and send";
+      if(!res || res.error){ errFlash("ppErr",(res && res.error) || "That did not work. Nothing was sent."); return; }
+      var r=$("ppResult");
+      r.innerHTML='<b>'+esc(res.venue.name)+' is set up.</b><br>'+
+        (res.welcome_sent ? 'Their welcome email went to '+esc(email)+'.' : '<b>The welcome email did not send.</b>')+'<br>'+
+        'TV: <span class="mono">'+esc(res.tv_url)+'</span><br>'+
+        'Login: '+esc(res.login ? (res.login.email+(res.login.mobile ? ' and '+res.login.mobile : '')) : 'none')+
+        ' &middot; Slides: '+esc(res.slides)+' &middot; Terms: waiting for their tick, no game starts until then.'+
+        ((res.warnings||[]).length ? '<br><span style="color:var(--roll)">'+res.warnings.map(esc).join('<br>')+'</span>' : '');
+      show("ppResult", true);
+      ["ppName","ppFirst","ppEmail","ppMobile","ppPostcode","ppWebsite"].forEach(function(id){ $(id).value=""; });
+      $("ppKind").value=""; $("ppPlayers").value="60"; PP.slides=[]; ppThumbs(); ppStateNote(); ppPriceNote();
       loadAll();
     });
   });

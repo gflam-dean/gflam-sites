@@ -398,6 +398,88 @@ show('e. "9 right" on a 3-question round is refused with the team named, and NO 
 r = await call(handlePaperScore, { game_id: GT, round: 1, teams: [{ no: 1, name: 'Oldies', correct: 2, double: 0 }] });
 show('   control: 2 right is scored', r.status === 200 && DB.vp_trivia_answers.length === 2, r.status + ' ' + DB.vp_trivia_answers.length);
 
+/* ---- A PHONE LEFT ON THE FINAL SCREEN ANSWERS THE NEXT NIGHT'S QUIZ (live play at Test Charlie, 27 Oct 2026) ----
+   The quiz ended, End game closed the session, Open lobby and Start round opened a NEW session on the same
+   code. The phone, still connected, heard "started" and the questions, kept the closed night's token,
+   answered, and the room acked it; at Reveal the Worker found a token of another session and dropped
+   it. Phone: "Correct!" with no points. Console: "Scores could not be loaded". Wall: "No scores yet".
+   RUN the real onMsg, nightChanged, dropStaleJoin, rejoinNow and answer out of play.html, and the real
+   startRound, nextQuestion and replayState out of host.html. */
+print('\nA NEW NIGHT ON THE SAME CODE: the phone drops the closed night\'s token and re-joins before it answers');
+await (async function () {
+  var store = { 'vp-ttoken-72USMR': 'old-token', 'vp-tsess-72USMR': 's-old' };
+  var ls = { getItem: function (k) { return store[k] == null ? null : store[k]; }, setItem: function (k, v) { store[k] = String(v); }, removeItem: function (k) { delete store[k]; } };
+  var P = { room: '72USMR', pid: 'p1', prPid: '', name: 'Test team', joined: true, token: 'old-token', sessionId: 's-old', gameId: 'g-old',
+            colour: true, total: 148, rank: 1, playersCount: 1, q: null, choice: null, locked: false, lastPts: 0, cdTimer: null, ended: true };
+  var AR = { room: null, hash: 'oldhash', gameId: '', waiting: {}, n: 0, off: true, asking: false };
+  var joins = 0, finishJoin = null, games = [], answers = [], waits = [], dom = makeDom();
+  function ensureJoined() {
+    joins++;
+    return new Promise(function (res) { finishJoin = function () { P.token = 'new-token'; P.sessionId = 's-new'; store['vp-ttoken-72USMR'] = 'new-token'; store['vp-tsess-72USMR'] = 's-new'; res(); }; });
+  }
+  var src = 'var _prPhone=null, _rejoinP=null;\n' + liftAll(PLAY, ['onMsg', 'nightChanged', 'dropStaleJoin', 'rejoinNow', 'answer'], 'trivia/play.html') +
+            '\n; return { onMsg: onMsg, answer: answer, changed: nightChanged };';
+  var env = { P: P, AR: AR, $: dom.$, window: {}, localStorage: ls, ensureJoined: ensureJoined,
+              prForMe: function () { return true; }, announce: function () {}, takeName: function () {}, useGame: function (id) { if (id) { P.gameId = id; games.push(id); } },
+              showWait: function (m) { waits.push(m); }, sayAlive: function () {}, stopCd: function () {}, lockOut: function () {}, unpick: function () {}, tickCd: function () {},
+              showResult: function () {}, pullScore: function () {}, showFinal: function () {}, paintPicked: function () {}, send: function () {},
+              renderQuestion: function (m) { P.q = { qseq: m.qseq, options: m.options || [], endsAt: m.endsAt, restored: false }; P.choice = null; P.locked = false; },
+              sendAnswer: function (gameId, i, qseq) { answers.push({ game: gameId, i: i, qseq: qseq, token: P.token }); return Promise.resolve({ ok: true, recorded: true }); },
+              loadAns: function () { return null; }, saveAns: function () {}, setTimeout: function (f) { f(); return 0; } };
+  var names = Object.keys(env);
+  var phone = new Function(names.join(','), src).apply(null, names.map(function (k) { return env[k]; }));
+
+  phone.onMsg({ t: 'started', fmt: 'trivia', game_id: 'g-new', session_id: 's-new', question_count: 3, colour: true });
+  show('a. "started" for a night this phone did not join: the closed night\'s token and session are dropped and a re-join is under way',
+       joins === 1 && P.token === '' && P.sessionId === '' && AR.hash === '' && store['vp-ttoken-72USMR'] == null && store['vp-tsess-72USMR'] == null && P.gameId === 'g-new',
+       JSON.stringify({ joins: joins, token: P.token, sess: P.sessionId, game: P.gameId }));
+  phone.onMsg({ t: 'question', fmt: 'trivia', game_id: 'g-new', session_id: 's-new', qseq: 1, qi: 1, qtotal: 3, text: 'Q1', options: ['A', 'B', 'C', 'D'], endsAt: Date.now() + 20000 });
+  show('b. the first question arrives while the re-join is still in flight: shown, and NOT a second join', joins === 1 && !!P.q && P.q.qseq === 1, JSON.stringify({ joins: joins, q: P.q }));
+  phone.answer(2);
+  await flush();
+  show('c. a tap before the re-join lands is held, not sent with no token', answers.length === 0 && P.locked === true, JSON.stringify(answers));
+  if (finishJoin) finishJoin();   // null when the phone never re-joined: c and d then fail on their own terms
+  await flush();
+  show('d. once the re-join lands the answer goes out with TONIGHT\'s token, to the new game', answers.length === 1 && answers[0].token === 'new-token' && answers[0].game === 'g-new' && answers[0].i === 2 && answers[0].qseq === 1, JSON.stringify(answers));
+  show('e. and the phone says "Answer in!"', dom.$('pStatus').textContent === 'Answer in! Good luck.', dom.$('pStatus').textContent);
+  phone.onMsg({ t: 'question', fmt: 'trivia', game_id: 'g-new', session_id: 's-new', qseq: 2, qi: 2, qtotal: 3, text: 'Q2', options: ['A', 'B', 'C', 'D'], endsAt: Date.now() + 20000 });
+  show('f. CONTROL: the next question of the SAME night does not re-join again', joins === 1 && P.token === 'new-token' && P.sessionId === 's-new', JSON.stringify({ joins: joins, token: P.token }));
+  phone.onMsg({ t: 'started', fmt: 'trivia', game_id: 'g-new2', session_id: 's-new', question_count: 3, colour: true });
+  show('g. CONTROL: another round of the same night ("started", same session) keeps the token', joins === 1 && P.token === 'new-token' && P.gameId === 'g-new2', JSON.stringify({ joins: joins, token: P.token }));
+  phone.onMsg({ t: 'started', fmt: 'trivia', game_id: 'g-new3', question_count: 3, colour: true });
+  show('h. CONTROL: an older console that does not say which night it is leaves the phone exactly as before', joins === 1 && P.token === 'new-token' && P.sessionId === 's-new', JSON.stringify({ joins: joins, token: P.token }));
+  P.joined = false; P.token = '';
+  show('i. CONTROL: a phone that has not joined is not joined by a "started" (it is on the name screen)', phone.changed({ t: 'started', session_id: 's-other' }) === false && joins === 1, joins);
+
+  /* THE CONSOLE'S SIDE: the night id rides on "started", on every question and on a replay to one phone. */
+  var G = { venueId: 'v1', sessionId: 's-new', joinCode: '72USMR', gameId: '', status: 'lobby', busy: false, roundType: 'trivia', setId: 'set1', setTitle: 'Anime', colour: true,
+            timePerQ: 20, base: 100, speedBonus: 50, count: 3, roundSize: 3, doublePoints: false, doubleLast: false, board: [], current: null, qtotal: 3, split: [], answeredPids: {}, pr: null };
+  var sent = [], ticks = [];
+  function apiPost(path) {
+    if (path === '/host/game') return Promise.resolve({ game_id: 'g-new', question_count: 3, double_seqs: [], paper: false, round_size: 3 });
+    if (path === '/host/question') return Promise.resolve({ qseq: 1, qi: 1, qtotal: 3, text: 'Q1', options: ['A', 'B', 'C', 'D'], ends_at: new Date(Date.now() + 20000).toISOString(), secs: 20 });
+    return Promise.reject(new Error('unexpected ' + path));
+  }
+  var hsrc = liftAll(HOSTP, ['startRound', 'nextQuestion', 'replayState'], 'trivia/host.html') + '\n; return { start: startRound, next: nextQuestion, replay: replayState };';
+  var henv = { G: G, apiPost: apiPost, bcast: function (m) { sent.push(m); }, gsend: function (m) { sent.push(m); }, send: function (m) { sent.push(m); },
+               clearErrForAction: function () {}, stopLobbyWatch: function () {}, startPR: function () {}, readSettings: function () {}, hostError: function (e) { throw new Error('hostError: ' + e); },
+               $: dom.$, openSession: function () { return Promise.resolve({ session_id: G.sessionId, join_code: G.joinCode }); }, paperThisRound: function () { return false; },
+               savePaperRound: function () {}, paperPrintedInfo: function () { return {}; }, localStorage: ls, playerCount: function () { return 1; }, renderConsole: function () {},
+               saveTrivia: function () {}, clearTick: function () {}, finish: function () {}, renderRun: function () {}, isDouble: function () { return false; }, remainingSecs: function () { return 20; },
+               setInterval: function (f) { ticks.push(f); return 1; }, updateLive: function () {}, LETTERS: ['A', 'B', 'C', 'D'] };
+  var hn = Object.keys(henv);
+  var console_ = new Function(hn.join(','), hsrc).apply(null, hn.map(function (k) { return henv[k]; }));
+  console_.start(); await flush();
+  var started = sent.filter(function (m) { return m.t === 'started'; });
+  show('j. the console\'s "started" says which night it is (session_id), to the phones', started.length === 1 && started[0].session_id === 's-new' && started[0].game_id === 'g-new', JSON.stringify(started));
+  console_.next(); await flush();
+  var qs = sent.filter(function (m) { return m.t === 'question'; });
+  show('k. and so does every question', qs.length === 1 && qs[0].session_id === 's-new' && qs[0].game_id === 'g-new', JSON.stringify(qs));
+  console_.replay('p9');
+  var rp = sent.filter(function (m) { return m.t === 'question' && m.to === 'p9'; });
+  show('l. and the question replayed to one phone that announced itself', rp.length === 1 && rp[0].session_id === 's-new', JSON.stringify(rp));
+})();
+
 // YOUR OWN: the set's questions say which came from the library
 reset();
 var MINE = '88888888-8888-4888-8888-888888888888';
@@ -408,6 +490,30 @@ DB.vp_questions.push({ id: 'm3', set_id: MINE, seq: 3, question: 'Who pours the 
 r = await callR(handleTriviaSetQuestions, req('', 'https://w/host/trivia/set/questions?set=' + MINE));
 var own = r.body.questions ? r.body.questions.map(function (q) { return q.own; }) : null;
 show('c. the set\'s questions say which the host wrote: library, library, own', JSON.stringify(own) === '[false,false,true]', JSON.stringify(own));
+
+/* ---- END GAME FROM THE PODIUM (live play at Test Charlie, 27 Oct 2026) ----
+   The quiz was over (status "ended", winners on the wall). End game sent idle and to_ads, the TV said
+   tv_here back, and reassertToTv() answered with the podium again: the wall stayed on WINNERS TONIGHT
+   for ever. RUN the real endGameToAds() and then the real reassertToTv() against it. */
+print('\nEND GAME FROM THE PODIUM resets the console, so the TV is not handed the podium straight back');
+(function () {
+  var sent = [], b = [], closed = [];
+  var G = { status: 'ended', board: [{ name: 'Test team', score: 148 }], current: null, gameId: 'g1', podiumHeld: true, podiumHoldT: 7, tick: null, setTitle: 'Anime' };
+  var src = lift(HOSTP, 'endGameToAds', 'trivia/host.html') + '\n' + lift(HOSTP, 'reassertToTv', 'trivia/host.html') + '\n; return { end: endGameToAds, reassert: reassertToTv };';
+  var fx = new Function('G', 'bcast', 'send', 'closeNight', 'endRound', 'clearTick', 'clearTimeout', 'clearTrivia', 'renderConsole', 'playerCount', 'remainingSecs', 'isDouble', src)(
+    G, function (m) { b.push(m.t); }, function (m) { sent.push(m.t); }, function (e) { closed.push(e); }, function () { throw new Error('endRound must not run: no round in progress'); },
+    function () {}, function () {}, function () { G.cleared = true; }, function () { G.rendered = true; }, function () { return 1; }, function () { return 0; }, function () { return false; });
+  var live = fx.end();
+  show('a. End game with the quiz over: no round to end, idle then to_ads to the room, the night closed', live === false && JSON.stringify(b) === '["idle","to_ads"]' && closed.length === 1, [live, b, closed.length]);
+  show('b. the console is back at setup, the podium hold dropped, the board and the saved quiz cleared', G.status === 'setup' && G.board.length === 0 && G.podiumHeld === false && G.gameId === '' && G.cleared === true && G.rendered === true, G);
+  fx.reassert();
+  show('c. so when the TV says tv_here a moment later, the console does NOT put the podium back on the wall', sent.length === 0, sent);
+  /* and the same call mid-question ends the round the old way */
+  var G2 = { status: 'question', board: [], current: {}, gameId: 'g2' }, ended = 0;
+  var fx2 = new Function('G', 'bcast', 'send', 'closeNight', 'endRound', 'clearTick', 'clearTimeout', 'clearTrivia', 'renderConsole', 'playerCount', 'remainingSecs', 'isDouble', src)(
+    G2, function () {}, function () {}, function () {}, function () { ended++; G2.status = 'setup'; return 'p'; }, function () {}, function () {}, function () {}, function () {}, function () { return 0; }, function () { return 0; }, function () { return false; });
+  show('d. CONTROL: End game mid-question still ends the round through endRound()', fx2.end() === true && ended === 1, [ended, G2.status]);
+})();
 
 print('\n' + (bad ? 'FAIL ' + bad + ' of ' + ran : 'ALL ' + ran + ' CHECKS PASSED'));
 if (bad) throw new Error(bad + ' failed');

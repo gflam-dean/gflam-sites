@@ -35,6 +35,8 @@
   .brand svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9)) drop-shadow(0 0 8px rgba(255,31,142,.4))}
   .brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;letter-spacing:-.01em}
   .brand .div{width:1px;height:20px;background:var(--line)}
+  .vlogo{display:block;height:30px;max-width:150px;object-fit:contain}   /* sized by its shape once it loads: /app/vp-venuelogo.js */
+  .vlogo.hidden{display:none}
   .tag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:11px;color:var(--pink)}
   .who{margin-left:auto;font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
   .dot{width:7px;height:7px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
@@ -320,6 +322,9 @@
       <svg width="20" height="23" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
       <span class="div"></span><span class="word">VenuePlay</span>
     </div>
+    <!-- The venue's own logo, the same as the player phones show (Dean, 24 Oct 2026: "Logo doesn't
+         appear on caller mode"). Filled by venueLogoFor() once the console is paired to a venue. -->
+    <img id="venueLogo" class="vlogo hidden" alt="">
     <span class="tag" id="headerTag"></span>
     <span class="who" id="who" style="display:none"><span class="dot" id="statusDot"></span> <span id="statusText">Sign in to start</span></span>
     <span class="hactions" id="hactions" style="display:none">
@@ -344,7 +349,7 @@
         <span class="word">VenuePlay</span>
       </div>
       <div class="authbig">Sign in</div>
-      <div class="authsub">Sign in with a text code to your mobile.</div>
+      <div class="authsub" id="authSub">Sign in with a text code to your mobile.</div>
 
       <div class="authcard">
         <div class="vp-c" id="stepMobile">
@@ -500,7 +505,6 @@
               <option value="middle">Middle line</option>
               <option value="bottom">Bottom line</option>
             </select>
-            <div class="patedit" id="patEditRow"><button type="button" class="btn ghost" id="patEditBtn">Edit this pattern</button></div>
           </div>
           <div class="field">
             <label>Prize</label>
@@ -515,32 +519,37 @@
             </select>
             <div class="note" id="paidNote" style="margin-top:6px;display:none">Players join and wait. Take the money at the bar as usual, then tap a name below to give them what they paid for. It lasts all night, so you only do it once.</div>
           </div>
-          <div class="field" id="cardsField">
-            <label>Tickets each player</label>
-            <select id="cardsSel">
-              <option value="1">1 ticket</option>
-              <option value="2">2 tickets</option>
-              <option value="3">3 tickets</option>
-              <option value="4">4 tickets</option>
-              <option value="5">5 tickets</option>
-              <option value="6">6 tickets (a full book)</option>
-            </select>
-            <div class="fieldnote vp-fine" style="margin-top:5px">Everyone gets this many tickets this game.</div>
-          </div>
-          <div class="field" id="allowEarlyField">
-            <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" id="allowEarlyChk" style="width:auto;margin:0"><span>Allow early BINGO calls</span></label>
-            <div class="fieldnote vp-fine" style="margin-top:5px">Lets players call BINGO even when it is not a win yet. A bit of fun for the room. A wrong call still lands with you, so you just tap Play on.</div>
-          </div>
-          <div class="stat" id="setupStats">
-            <div class="box"><div class="k">Players joined</div><div class="v" id="setupPlayers">0</div></div>
-            <div class="box" style="display:none"><div class="k">Join code</div><div class="v g" id="setupCode">------</div></div>
-          </div>
+          <!-- ADVANCED SETTINGS (Dean, 28 Oct 2026): set once by the venue, saved for the venue, closed until
+               opened. The shared disclosure, VP.advanced in /app/vp-session.js. Paid entry (Tickets above) and
+               the state rules screen on Open lobby NEVER go in here: a host sees them before every paid game. -->
+          <details class="vp-adv" id="bingoAdv">
+            <summary><span>Advanced settings<small class="vp-adv-sub">Saved for your venue. Set once, rarely changed.</small></span></summary>
+            <div class="vp-adv-body">
+              <div class="field" id="cardsField">
+                <label>Tickets each player</label>
+                <select id="cardsSel">
+                  <option value="1">1 ticket</option>
+                  <option value="2">2 tickets</option>
+                  <option value="3">3 tickets</option>
+                  <option value="4">4 tickets</option>
+                  <option value="5">5 tickets</option>
+                  <option value="6">6 tickets (a full book)</option>
+                </select>
+                <div class="fieldnote vp-fine" style="margin-top:5px">Everyone gets this many tickets this game.</div>
+              </div>
+              <div class="field" id="allowEarlyField">
+                <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" id="allowEarlyChk" style="width:auto;margin:0"><span>Allow early BINGO calls</span></label>
+                <div class="fieldnote vp-fine" style="margin-top:5px">Lets players call BINGO even when it is not a win yet. A bit of fun for the room. A wrong call still lands with you, so you just tap Play on.</div>
+              </div>
+              <div class="patedit" id="patEditRow"><button type="button" class="btn ghost" id="patEditBtn">Edit this pattern</button></div>
+            </div>
+          </details>
           <button class="btn pink big" id="startBtn">Open lobby</button>
           <button class="btn ghost big" id="cancelLobbyBtn" style="display:none;margin-top:8px">Close lobby</button>
           <p class="note vp-c" id="startNote" style="margin-top:10px">Puts the join screen on the TV so players can scan in. You start calling numbers when you are ready.</p>
           <!-- Every ball of every bingo game here, as a file the venue keeps (the same record the
                members and raffle consoles download). Between games, never in the middle of one. -->
-          <button type="button" class="btn ghost" id="downloadRecordBtn" style="margin-top:12px;width:100%">Download draw record</button>
+          <button type="button" class="vp-foot-link" id="downloadRecordBtn">Download draw record</button>
           <div class="note" id="downloadRecordMsg" style="margin-top:4px"></div>
         </div>
 
@@ -698,6 +707,8 @@
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-hold.js"></script>
 <script src="/app/vp-onetab.js"></script>
+<!-- The venue's logo in the console header, sized by its shape like the player phones (27 Oct 2026). -->
+<script src="/app/vp-venuelogo.js"></script>
 <!-- The shared celebration helpers. This console only needs buzz(), which is the one place in
      the product that vibrates a phone and the one place that asks whether the page is a demo
      first. It was calling navigator.vibrate itself, which is how a sales page ended up buzzing
@@ -807,13 +818,14 @@
     if(document.getElementById("vpImpBar")) return;
     var bar=document.createElement("div");
     bar.id="vpImpBar";
-    bar.style.cssText="position:sticky;top:0;z-index:60;background:rgba(255,194,75,.12);border-bottom:1px solid rgba(255,194,75,.35);color:#FFC24B;font-size:12.5px;font-weight:600;padding:9px 16px;display:flex;align-items:center;gap:10px;font-family:'Manrope',system-ui,sans-serif";
+    bar.style.cssText="background:rgba(255,194,75,.12);border-bottom:1px solid rgba(255,194,75,.35);color:#FFC24B;font-size:12.5px;font-weight:600;padding:9px 16px;display:flex;align-items:center;gap:10px;font-family:'Manrope',system-ui,sans-serif";
     // esc(), not a second sanitiser of its own. Stripping [<>&] is injection-safe but
     // it eats the ampersand, and pubs are full of them: "Bar & Grill" was displayed
     // as "Bar  Grill" in this banner. There is one esc() in this file for a reason.
     bar.innerHTML='<span>Viewing <b>'+esc(name||"this venue")+'</b> from VenuePlay Admin</span>'+
       '<a id="vpImpBack" style="margin-left:auto;color:#FFC24B;text-decoration:underline;cursor:pointer;font-weight:700">Back to VenuePlay Admin</a>';
-    document.body.insertBefore(bar, document.body.firstChild);
+    // In the one status area (VP.statusBar), under the unpaid and signing bars, never over them.
+    if(window.VP && VP.statusBar) VP.statusBar("viewas", bar); else document.body.insertBefore(bar, document.body.firstChild);
     document.getElementById("vpImpBack").addEventListener("click", function(){ clearImp(); window.location.href="hq.html"; });
   }
 
@@ -988,6 +1000,33 @@
       $("otpIn").focus();
     }).catch(function(err){ btn.disabled=false; btn.textContent="Send code"; if(otpSendError(err)==="ours") showEmailAlt(); });
   });
+  /* WHICH WAY IN FIRST (Dean, 28 Oct 2026: "no signing in with an email to confuse them why they then
+     get a text"). The page cannot ask whether a login has a mobile before it is signed in without
+     telling a stranger whose logins exist, so it goes by what it CAN know: a link that asks for the
+     email option (?signin=email, every link in the prospect welcome), or this device's last way in.
+     After a sign-in, rememberSignIn() records "email" for a login with no mobile, so the next visit
+     and the 4 hour sign-out both come back to the email option. A used or expired one-click link
+     lands here with gone=1 and the address it was sent to. */
+  var SIGNIN_KEY="vpSignInWith", SUB_TEXT="Sign in with a text code to your mobile.";
+  function openSignInStep(){
+    var q=String((window.location && window.location.search) || ""), want="";
+    if(/[?&]signin=email(&|$)/.test(q)) want="email";
+    if(!want){ try{ want=localStorage.getItem(SIGNIN_KEY)||""; }catch(e){} }
+    var prefill=""; try{ prefill=sessionStorage.getItem("vpSignInPrefill")||""; sessionStorage.removeItem("vpSignInPrefill"); }catch(e){}
+    if(want!=="email") return "sms";
+    $("stepMobile").classList.add("hidden");
+    $("stepCode").classList.add("hidden");
+    $("emailAlt").classList.add("hidden");
+    $("stepEmail").classList.remove("hidden");
+    $("authSub").textContent = /[?&]gone=1(&|$)/.test(q)
+      ? "That link has been used or has expired. Sign in with your email and we will email you a code."
+      : "Sign in with a code sent to your email.";
+    if(prefill && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(prefill)) $("emailIn").value=prefill;
+    return "email";
+  }
+  function rememberSignIn(user, mode){
+    try{ localStorage.setItem(SIGNIN_KEY, (user && !user.phone) || mode==="email" ? "email" : "sms"); }catch(e){}
+  }
   $("emailAltBtn").addEventListener("click", function(){
     $("stepMobile").classList.add("hidden");
     $("stepCode").classList.add("hidden");
@@ -997,7 +1036,7 @@
     $("emailIn").focus();
   });
   $("backToTextBtn").addEventListener("click", function(){
-    MODE="sms";
+    MODE="sms"; $("authSub").textContent=SUB_TEXT;
     $("stepEmail").classList.add("hidden");
     $("stepCode").classList.add("hidden");
     $("stepMobile").classList.remove("hidden");
@@ -1055,6 +1094,7 @@
       btn.disabled=false; btn.textContent="Verify";
       if(res && res.error){ $("otpErr").textContent="That code did not match"; return; }
       try{ localStorage.setItem("vpShiftStart", String(Date.now())); }catch(e){}   // fresh 4h shift starts now
+      rememberSignIn(res && res.data && res.data.user, MODE);
       routeAfterAuth();
     }).catch(function(){ btn.disabled=false; btn.textContent="Verify"; $("otpErr").textContent="That code did not match"; });
   });
@@ -1124,7 +1164,9 @@
   function pairToVenue(slug){
     if(VP && VP.venueCode && slug){
       if(window.VPSign){ VPSign.initHost(VP_GAME_API, slug, vpHostToken); }   // fetch this venue's signing key
-      connect(VP.venueCode(slug)); return true;
+      connect(VP.venueCode(slug));
+      try{ venueLogoFor(slug); }catch(e){}   // the venue's logo in the header, off the same feed the TV reads. AFTER connect, and never thrown: a logo can never stop the console pairing
+      return true;
     }
     return false;
   }
@@ -1372,6 +1414,13 @@
     updateAccountLink();
     var venue=__ctx&&__ctx.venue, staff=(__ctx&&__ctx.staff)||[];
     if(staff.length>1 && !venuePickFresh()){ showVenuePick(); return; }   // ask which venue this shift
+    /* SWITCHED OFF: one card in place of the game picker, and no TV pairing (28 Oct 2026). A host
+       with more than one venue can still choose another one from the card. */
+    if(window.VP && VP.holdGate && VP.holdGate(__ctx, staff.length>1 ? { other:{ label:"Choose another venue", onClick:showVenuePick } } : null)){ go("vBoot"); return; }
+    /* A VENUE SET UP FOR A PROSPECT ticks section 6 before its first game: one card in place of the game
+       picker, no TV pairing (migration 122). Its TV keeps showing its ads. */
+    if(window.VP && VP.termsGate && VP.termsGate(__ctx)){ go("vBoot"); return; }
+    if(window.VP && VP.termsCard) VP.termsCard(__ctx);   // section 6 of the Terms, asked once; it blocks nothing (28 Oct 2026)
     if(venue && venue.slug && pairToVenue(venue.slug)){ return; }          // single venue: straight in
     // Fallback (no venue slug / helper missing): the old type-the-code screen.
     go("vPair"); $("pairIn").value=pairedCode(); $("pairErr").textContent=""; $("pairIn").focus();
@@ -2620,7 +2669,6 @@
     el.style.display = over ? "" : "none";
   }
   function renderJoinCounts(){
-    var _sp=$("setupPlayers"); if(_sp) _sp.textContent=playerCount();
     var _pc=$("playerCount");  if(_pc) _pc.textContent=playerCount();
     var _lp=$("livePlayers");  if(_lp) _lp.textContent=playerCount();
     renderOverBanner();
@@ -2640,9 +2688,7 @@
       : lobby
       ? "Players are scanning in on their phones. Start calling numbers when you are ready."
       : "Puts the join screen on the TV so players can scan in. You start calling numbers when you are ready.";
-    $("setupPlayers").textContent=playerCount();
     renderOverBanner();
-    $("setupCode").textContent=G.code;
     $("playerCount").textContent=playerCount();
     renderPlayers();
     syncCallerUI();
@@ -2771,6 +2817,45 @@
   $("patternSel").addEventListener("change", function(){ patternPicked($("patternSel"), lobbyEdited); });
   $("cardsSel").addEventListener("change", lobbyEdited);
   $("prizeInput").addEventListener("input", lobbyEdited);
+
+  /* THE SETUP IS SAVED FOR THE VENUE (Dean, 28 Oct 2026). Real balls, the winning pattern and the prize
+     (Basic), tickets each player and early calls (Advanced) live in vp_venue_settings.game_prefs.bingo
+     (migration 121) through the game Worker's /host/game-prefs, so every tablet and next week start on
+     the venue's own choices. VP.gamePrefs in /app/vp-session.js is the one mechanism for all five games.
+     NEVER paid or free: Tickets is the night's compliance choice and starts on Free every night. */
+  function bingoPrefs(){
+    var p={}, cc=$("callerChk"), ps=$("patternSel"), pi=$("prizeInput"), cs=$("cardsSel");
+    if(cc) p.caller=!!cc.checked;
+    if(ps && ps.value && ps.value!==NEW_PAT) p.pattern=String(ps.value);
+    var pz=String((pi && pi.value)||"").trim(); if(pz) p.prize=pz.slice(0,120);
+    if(cs) p.cards=clampCards(cs.value);
+    p.allow_early=!!G.allowEarly;
+    return p;
+  }
+  function applyBingoPrefs(p){
+    if(!p || G.status!=="setup") return;   // a lobby or game brought back keeps its own choices
+    if(typeof p.caller==="boolean"){ var cc=$("callerChk"); if(cc && !cc.disabled) cc.checked=p.caller; }
+    if(p.pattern){ var ps=$("patternSel"), k=String(p.pattern).replace(/"/g,"");
+      if(ps && ps.querySelector('option[value="'+k+'"]')){ ps.value=k; ps._prev=k; rememberPat(k); } }   // a deleted pattern of their own: One line
+    if(p.prize){ var pi=$("prizeInput"); if(pi && !String(pi.value||"").trim()) pi.value=p.prize; }
+    if(p.cards!=null){ var cs=$("cardsSel"); if(cs) cs.value=String(clampCards(p.cards)); }
+    if(typeof p.allow_early==="boolean"){ G.allowEarly=p.allow_early; var a=$("allowEarlyChk"), b=$("allowEarlyLive"); if(a) a.checked=p.allow_early; if(b) b.checked=p.allow_early; }
+    syncPatEdit(); renderConsole();
+  }
+  var _bingoPrefs=(window.VP && VP.gamePrefs) ? VP.gamePrefs("bingo", { venueId:function(){ return (__ctx && __ctx.venue && __ctx.venue.id) || ""; },
+    api:function(){ return VP_GAME_API; }, token:vpHostToken, collect:bingoPrefs, apply:applyBingoPrefs }) : null;
+  var _bingoPrefsFor="";
+  function queueBingoPrefs(){ if(_bingoPrefs) _bingoPrefs.queue(); }
+  // Once the venue's own patterns are in the list, so a saved one of theirs can be chosen. Once per venue.
+  function startBingoPrefs(){
+    var v=__ctx && __ctx.venue;
+    if(!_bingoPrefs || !v || !v.id || _bingoPrefsFor===v.id) return Promise.resolve(null);
+    _bingoPrefsFor=v.id;
+    return _bingoPrefs.start();
+  }
+  ["callerChk","patternSel","cardsSel","allowEarlyChk","allowEarlyLive"].forEach(function(id){ var el=$(id); if(el) el.addEventListener("change", queueBingoPrefs); });
+  $("prizeInput").addEventListener("input", queueBingoPrefs);
+  if(window.VP && VP.advanced) VP.advanced($("bingoAdv"), "bingo");   // closed unless this browser left it open
 
   /* THE SERVER SESSION. Broadcast bingo ran without one for a long time and paid for it twice
      over: the room could never be counted by anything but this browser, and /capture had nothing
@@ -3516,7 +3601,6 @@
     var bv=$("bingoView"); if(bv) bv.classList.toggle("callermode", !!on);
     // Nobody joins on a phone tonight, so no player count and no "they join by scanning the QR".
     var pp=$("playersPanel"); if(pp) pp.style.display = on ? "none" : "";
-    var ss=$("setupStats"); if(ss) ss.style.display = on ? "none" : "";
     var cc=$("callerChk"); if(cc) cc.disabled = (G.status!=="setup");   // a night is real balls or not, from Open lobby to End game
   }
   /* Every record write in ORDER, after the draw has opened. A tap can land before the draw id
@@ -4099,7 +4183,6 @@
        is filled from the venue record instead and only falls back to the channel
        value while that is still loading. */
     $("roomCode").textContent = (window.__vpJoinCode || code);
-    $("setupCode").textContent=code;
     if(VP && VP.venueJoinCode){
       VP.venueJoinCode().then(function(jc){
         if(jc){ window.__vpJoinCode = jc; $("roomCode").textContent = jc; }
@@ -4142,7 +4225,8 @@
     var sv=$("soonView"); if(sv) sv.classList.add("hidden");
     $("gamesBack").style.display="";
     $("headerTag").textContent="Bingo";
-    loadCustomPatterns();   // the venue's own patterns into every pattern list (nothing shows until migration 118 is live)
+    // the venue's own patterns into every pattern list (nothing shows until migration 118 is live), then its saved setup
+    Promise.resolve(loadCustomPatterns()).then(startBingoPrefs, startBingoPrefs).catch(function(){});
     syncBingoPaidChoice();
   }
 
@@ -4205,8 +4289,8 @@
   });
   var _startBusy = false;
   /* FREE BINGO SHOWS ITS STATE'S RULES ONCE A NIGHT where a letter attaches conditions to it (state
-     audit C9, 20 Oct 2026): VIC (s8.2.4A: not advertised, not open to the public, not for the
-     venue's commercial benefit), ACT (exempt to $1,000, record the winning ticket), TAS (social
+     audit C9, 20 Oct 2026): VIC (s8.2.4A: no permit, entry free, printed tickets; Dean, 28 Oct 2026:
+     free bingo may be advertised, only paid bingo is restricted), ACT (exempt to $1,000, record the winning ticket), TAS (social
      bingo: $30 entry, $300 prize) and NSW (a free lottery: no cash prizes, $30,000 cap). A free
      night there used to be recorded silently with nothing shown, which in Victoria let a pub start
      a "free" game that is not automatically lawful. freeEntry shows the free-entry rules once a
@@ -4269,6 +4353,7 @@
   });
 
   // ================= INIT =================
+  openSignInStep();   // the email option first when the link asks for it or this device last used it
   // (removed "Paired, sign in to start" header chip: the status only shows once actually signed in)
   // Show a neutral splash until auth resolves, THEN route, so the sign-in screen never flashes for
   // someone who is actually signed in. Signed-out users fall through to vSignIn once ready resolves.
@@ -4325,6 +4410,30 @@
   }
   else if(window.VP){ VP.ready().then(function(ctx){ __ctx=ctx; VP.suspensionBanner(ctx); applyRoute(ctx); }).catch(function(){ go("vSignIn"); }); }
   else { go("vSignIn"); }
+
+  /* THE VENUE'S LOGO ON THE CONSOLE (Dean, 24 Oct 2026: "Logo doesn't appear on caller mode").
+     Every player phone shows the venue's logo in its header; the host's own console never did, so a
+     host running a real-balls night off their phone saw only the VenuePlay mark. The logo lives on
+     the venue's screen row, not on vp_venues (which is why ctx.venue.logo_url is empty for a venue
+     whose TV shows one), so it is read off the same public /screen feed the TV reads. Sized by its
+     shape with VPVenueLogo.fit(img,"phone"), as the player phones are. A venue with no logo, or a
+     feed that does not answer, leaves the header exactly as it was. A switch of venue swaps it. */
+  function venueLogoFor(slug){
+    var img=$("venueLogo"); if(!img) return;
+    /* Cosmetic, so it may fail but never throw: on the train of 27 Oct 2026 this ran BEFORE connect()
+       in pairToVenue and threw in the bingo rig (whose element had no removeAttribute), so the console
+       never joined its channel and test-caller-mode and test-bingo-server-tickets went red. */
+    try{ img.classList.add("hidden"); img.removeAttribute("src"); }catch(e){}
+    if(!slug) return;
+    var asked=slug; img.__vpLogoSlug=slug;
+    fetch(VP_GAME_API+"/screen?venue="+encodeURIComponent(slug)).then(function(r){ return r.ok ? r.json() : null; }).then(function(j){
+      if(img.__vpLogoSlug!==asked) return;   // the host switched venue while this was in flight
+      var url=(j && j.logo_url) ? String(j.logo_url).trim() : "";
+      if(!url) return;
+      img.src=url; img.classList.remove("hidden");
+      if(typeof VPVenueLogo==="object") VPVenueLogo.fit(img,"phone");
+    }).catch(function(){});
+  }
 })();
 </script>
 <!-- Help: a short FAQ and a contact form that makes a help desk ticket (vp-help.js, 19 Oct 2026). -->

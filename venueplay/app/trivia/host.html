@@ -226,6 +226,7 @@
               <a href="/app/trivia/builder.html" style="font-size:12px;font-weight:700;color:var(--pink);text-decoration:none">Build a night &rarr;</a>
             </label>
             <select id="setSel"><option value="">Loading your question sets&hellip;</option></select>
+            <div class="note" id="setLastNote" style="margin-top:4px;display:none">This is the set your venue played last time. Pick another for a fresh night.</div>
           </div>
           <div class="field">
             <label>Questions this round</label>
@@ -234,30 +235,12 @@
           </div>
           <div class="stat">
             <div class="box"><div class="k">Questions</div><div class="v" id="setupQs">0</div></div>
-            <div class="box"><div class="k">Players</div><div class="v" id="setupPlayers">0</div></div>
-            <div class="box" style="display:none"><div class="k">Join code</div><div class="v g" id="setupCode">------</div></div>
           </div>
           <div class="note" id="lobbyWait" style="display:none;margin:2px 0 12px"></div>
-          <div class="two">
-            <div class="field"><label>Time per question (seconds)</label><input type="number" id="cfgTime" class="mono" min="5" max="60" value="30"></div>
-            <div class="field"><label>Correct answer points</label><input type="number" id="cfgBase" class="mono" min="0" value="100"></div>
-          </div>
           <div class="field hidden" id="prField">
             <label>Round type</label>
             <div class="seg" id="cfgRoundType"><button data-v="trivia" class="on">Trivia</button><button data-v="pr">Punters Reckon</button></div>
             <div class="note" style="margin-top:4px">Punters Reckon: a question goes up, everyone types what they reckon the room would say, and the board flips as answers are found. It does not use the question set or the settings below.</div>
-          </div>
-          <div class="field">
-            <label>Speed bonus (faster answers score more, up to +50%)</label>
-            <div class="seg" id="cfgSpeed"><button data-v="on" class="on">On</button><button data-v="off">Off</button></div>
-          </div>
-          <div class="field">
-            <label>Double points final round <small style="color:var(--faint);font-weight:400">saved for your venue, so it is set for next week too</small></label>
-            <div class="two" style="align-items:center">
-              <div class="seg" id="cfgDouble"><button data-v="on">On</button><button data-v="off" class="on">Off</button></div>
-              <div class="field" style="margin:0"><input type="number" id="cfgDoubleLast" class="mono" min="1" max="100" value="10" aria-label="Questions in the double points round"></div>
-            </div>
-            <div class="note" id="doubleNote" style="margin-top:4px">The last 10 questions of the night score double, speed bonus included.</div>
           </div>
           <div class="field" id="paperField">
             <label>Paper teams <small style="color:var(--faint);font-weight:400">for regulars without a phone</small></label>
@@ -265,14 +248,37 @@
             <div class="note" id="paperNote" style="margin-top:4px">Up to 10 teams a night. With paper teams playing, the answers go up at the end of each round, after the host has their sheets. A paper team counts as a player once its score goes on the leaderboard.</div>
             <label id="paperRoundRow" style="display:none;margin-top:8px;color:var(--text);align-items:center;gap:8px;font-size:13.5px;font-weight:600;cursor:pointer"><input type="checkbox" id="paperRound" style="width:auto;margin:0"> Play this round on paper</label>
           </div>
+          <!-- ADVANCED SETTINGS (Dean, 28 Oct 2026): how the night scores, set once by the venue and saved for
+               the venue, closed until opened. The shared disclosure, VP.advanced in /app/vp-session.js. -->
+          <details class="vp-adv" id="triviaAdv">
+            <summary><span>Advanced settings<small class="vp-adv-sub">Saved for your venue. Set once, rarely changed.</small></span></summary>
+            <div class="vp-adv-body">
+              <div class="two">
+                <div class="field"><label>Time per question (seconds)</label><input type="number" id="cfgTime" class="mono" min="5" max="60" value="30"></div>
+                <div class="field"><label>Correct answer points</label><input type="number" id="cfgBase" class="mono" min="0" value="100"></div>
+              </div>
+              <div class="field">
+                <label>Speed bonus (faster answers score more, up to +50%)</label>
+                <div class="seg" id="cfgSpeed"><button data-v="on" class="on">On</button><button data-v="off">Off</button></div>
+              </div>
+              <div class="field">
+                <label>Double points final round</label>
+                <div class="two" style="align-items:center">
+                  <div class="seg" id="cfgDouble"><button data-v="on">On</button><button data-v="off" class="on">Off</button></div>
+                  <div class="field" style="margin:0"><input type="number" id="cfgDoubleLast" class="mono" min="1" max="100" value="10" aria-label="Questions in the double points round"></div>
+                </div>
+                <div class="note" id="doubleNote" style="margin-top:4px">The last 10 questions of the night score double, speed bonus included.</div>
+              </div>
+              <div style="margin-top:4px;padding:12px 14px;background:var(--ink-2);border:1px solid var(--line-2);border-radius:11px">
+                <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.1em;font-size:10px;color:var(--faint);margin-bottom:6px">How scoring works</div>
+                <div style="font-size:12.5px;color:var(--muted);line-height:1.5">A correct answer scores <b style="color:#fff" id="scBase">100</b> points. With the speed bonus on, answering fast adds up to <b class="vp-gold">+50%</b> (a lightning-fast correct answer = <b style="color:#fff" id="scMax">150</b>). A wrong answer scores 0.</div>
+              </div>
+            </div>
+          </details>
           <div class="vp-week" id="weekBanner" style="display:none"></div>
           <button class="btn pink big" id="startBtn">Open lobby</button>
           <button class="btn ghost big" id="cancelLobbyBtn" style="display:none;margin-top:8px">Close lobby</button>
           <p class="note vp-c" style="margin-top:10px">Shows the join screen on the TV and gets the room ready. Then call the first question.</p>
-          <div style="margin-top:14px;padding:12px 14px;background:var(--ink-3);border:1px solid var(--line-2);border-radius:11px">
-            <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.1em;font-size:10px;color:var(--faint);margin-bottom:6px">How scoring works</div>
-            <div style="font-size:12.5px;color:var(--muted);line-height:1.5">A correct answer scores <b style="color:#fff" id="scBase">100</b> points. With the speed bonus on, answering fast adds up to <b class="vp-gold">+50%</b> (a lightning-fast correct answer = <b style="color:#fff" id="scMax">150</b>). A wrong answer scores 0.</div>
-          </div>
         </div>
 
         <div id="liveBlock" class="hidden">
@@ -361,7 +367,7 @@
     var c=(window.VP&&VP.getClient)?VP.getClient():client;
     return c.auth.getSession().then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; });
   }
-  function readApi(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((d&&d.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }
+  function readApi(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((window.VP&&VP.hostRefusal?VP.hostRefusal(res.status,d&&d.error):(d&&d.error))||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }
   function apiPost(path, body){ if(window.VP_ONETAB && !VP_ONETAB.live()) return Promise.reject(new Error("This quiz is open in another tab on this device.")); return getToken().then(function(t){
       /* No timeout meant a request that never settled on pub wifi left G.busy true for good, and
          every later tap on Next, Reveal, Start and Open lobby returned silently at if(G.busy).
@@ -372,7 +378,7 @@
       if(_ac) _opts.signal=_ac.signal;
       return fetch(VP_GAME_API+path,_opts).then(function(r){ clearTimeout(_to); return r; },
         function(e){ clearTimeout(_to); var te=new Error("The game server did not answer. Check the venue wifi and try again."); te.status=0; throw te; });
-    }).then(function(res){ return res.json().catch(function(){ return {}; }).then(function(data){ if(res.status===402 && data && data.needs_overage_ack){ var extra=data.extra||0, cap=data.plan_cap||0; var ackAndGo=function(){ return apiPost("/host/overage/ack",{ session_id: body.session_id }).then(function(){ return apiPost(path, body); }); }; if(data.free_month) return ackAndGo();   /* the Worker decides the free month, not our own calendar maths */ return confirmOverage(cap, extra).then(function(ok){ if(!ok){ var ec=new Error("Over plan - game not started."); ec.status=402; throw ec; } return ackAndGo(); }); } if(!res.ok){ var e=new Error((data&&data.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return data; }); }); }
+    }).then(function(res){ return res.json().catch(function(){ return {}; }).then(function(data){ if(res.status===402 && data && data.needs_overage_ack){ var extra=data.extra||0, cap=data.plan_cap||0; var ackAndGo=function(){ return apiPost("/host/overage/ack",{ session_id: body.session_id }).then(function(){ return apiPost(path, body); }); }; if(data.free_month) return ackAndGo();   /* the Worker decides the free month, not our own calendar maths */ return confirmOverage(cap, extra).then(function(ok){ if(!ok){ var ec=new Error("Over plan - game not started."); ec.status=402; throw ec; } return ackAndGo(); }); } if(!res.ok){ var e=new Error((window.VP&&VP.hostRefusal?VP.hostRefusal(res.status,data&&data.error):(data&&data.error))||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return data; }); }); }
 
   // TWO broadcast channels for instant UX (the DB is the source of truth):
   //   ch  = PAIRING channel "vp-"+pairCode: host <-> venue screen (handoff + presence).
@@ -673,7 +679,6 @@
   // swapped out from under their finger and the round stalled. A join changes the
   // player count and the chip list and nothing else, so that is all it may touch.
   function renderJoinCounts(){
-    var _sp=$("setupPlayers"); if(_sp) _sp.textContent=playerCount();
     var _pc=$("playerCount");  if(_pc) _pc.textContent=playerCount();
     var _lp=$("livePlayers");  if(_lp) _lp.textContent=playerCount();
     var _ob=$("overBanner"), _oc=playerCap(), _op=playerCount();
@@ -689,13 +694,11 @@
     $("setupBlock").classList.toggle("hidden", live);
     $("liveBlock").classList.toggle("hidden", !live);
     paintRoundQs();
-    $("setupPlayers").textContent=playerCount();
     var _ob=$("overBanner"), _oc=playerCap(), _op=playerCount();
     if(_ob){
       if(_oc>0 && _op>_oc){ _ob.style.display=""; _ob.innerHTML="Heads up: <b>"+_op+"</b> players in, <b>"+(_op-_oc)+"</b> over the <b>"+_oc+"</b> your plan includes. "+(inFirstMonth()?"Your first month is free, so no charge this time.":"The extra will be charged to your card for this billing period."); }
       else _ob.style.display="none";
     }
-    $("setupCode").textContent=G.joinCode||"------";
     $("playerCount").textContent=playerCount();
     if(!live){
       var lobby=G.status==="lobby";
@@ -948,7 +951,6 @@
       renderConsole();
       openGameChannel(G.joinCode);                                        // players' channel
       send({ t:"session", session_id:G.sessionId, join_code:G.joinCode }); // hand the real code to the screen
-      $("setupCode").textContent=G.joinCode;
       return r;
     });
   }
@@ -1052,7 +1054,15 @@
       if(G.defer){ try{ var _pi=paperPrintedInfo(); _pi.usedBy=G.gameId; localStorage.setItem(paperKey(), JSON.stringify(_pi)); }catch(e){} }   // these sheets have now been played
       G.status="ready"; G.board=[]; G.current=null;
       saveTrivia();
-      bcast({ t:"started", game_id:G.gameId, question_count:r.question_count, colour:G.colour, title:G.setTitle });
+      /* session_id: WHICH NIGHT THIS IS. A phone left on the final screen of a closed quiz still
+         holds the token of that night, and the next quiz on the same code looked to it like a new
+         round of the same one: it answered with a token the new session does not know, the room
+         acked the answer and the Worker threw it away at Reveal, so the phone said "Correct!" with
+         no points, the console "Scores could not be loaded" and the wall "No scores yet" (live
+         play, Test Charlie, 27 Oct 2026). The phone compares this with the night it joined and
+         re-joins when it differs (trivia/play.html nightChanged). The question carries it too, for
+         a phone that missed this. */
+      bcast({ t:"started", game_id:G.gameId, session_id:G.sessionId, question_count:r.question_count, colour:G.colour, title:G.setTitle });
       bcast({ t:"players", count:playerCount() });
       renderConsole();
     }).catch(function(e){ hostError(e.message); }).then(function(){
@@ -1070,7 +1080,7 @@
       G.status="question"; G.answeredPids={}; G.answeredQseq=r.qseq; G.split=[];
       saveTrivia();
       // PUBLIC broadcast: text + options + optional picture, NEVER correct_index.
-      bcast({ t:"question", game_id:G.gameId, qseq:r.qseq, qi:r.qi, qtotal:r.qtotal,
+      bcast({ t:"question", game_id:G.gameId, session_id:G.sessionId, qseq:r.qseq, qi:r.qi, qtotal:r.qtotal,
         text:r.text, options:r.options||[], endsAt:G.current.endsAt, secs:r.secs, colour:G.colour, imageUrl:r.image_url||"", double:isDouble(r.qseq) });
       renderRun();
       G.tick=setInterval(function(){ updateLive(); if(remainingSecs()<=0){ clearTick(); bcast({ t:"lock" }); } }, 500);
@@ -1402,7 +1412,7 @@
       return;
     }
     if(G.status==="question" && G.current){
-      to({ t:"question", game_id:G.gameId, qseq:G.current.qseq, qi:G.current.qi, qtotal:G.qtotal,
+      to({ t:"question", game_id:G.gameId, session_id:G.sessionId, qseq:G.current.qseq, qi:G.current.qi, qtotal:G.qtotal,
            text:G.current.text, options:G.current.options, endsAt:G.current.endsAt,
            secs:remainingSecs(), colour:G.colour,
            imageUrl:(G.current.imageUrl||""), double:isDouble(G.current.qseq) });   // without this a replayed picture round loses its picture
@@ -1500,7 +1510,7 @@
   // ---- question sets (venue's own + the VenuePlay library, via RLS on the authed client) ----
   function loadQuestionSets(){
     var sel=$("setSel");
-    client.from("vp_question_sets")
+    return client.from("vp_question_sets")
       .select("id,title,question_count,visibility,owner_venue_id,status")
       .eq("status","active")
       .then(function(r){
@@ -1797,7 +1807,7 @@
     }
     return false;
   }
-  $("setSel").addEventListener("change", syncSetCount);
+  $("setSel").addEventListener("change", function(){ syncSetCount(); var n=$("setLastNote"); if(n) n.style.display="none"; queueTriviaPrefs(); });
   var cfgBaseEl=$("cfgBase"); if(cfgBaseEl){ cfgBaseEl.addEventListener("input", function(){ var b=Math.max(0,parseInt(cfgBaseEl.value,10)||0); if($("scBase")) $("scBase").textContent=b; if($("scMax")) $("scMax").textContent=Math.round(b*1.5); }); }
 
   /* DOUBLE POINTS FINAL ROUND. Which questions it covers is decided by the Worker when the night
@@ -1811,7 +1821,7 @@
       : "Off. Turn it on to make the last questions of the night count double.";
   }
   document.querySelectorAll("#cfgDouble button").forEach(function(b){ b.addEventListener("click", function(){
-    G.doublePoints=b.getAttribute("data-v")==="on"; paintDouble();
+    G.doublePoints=b.getAttribute("data-v")==="on"; paintDouble(); queueTriviaPrefs();
   }); });
   (function(){ var inp=$("cfgDoubleLast"); if(inp) inp.addEventListener("input", function(){
     G.doubleLast=Math.max(1, Math.min(100, parseInt(inp.value,10)||10)); var nt=$("doubleNote");
@@ -1826,7 +1836,66 @@
   document.querySelectorAll("#cfgSpeed button").forEach(function(b){ b.addEventListener("click", function(){
     G.speedBonus=b.getAttribute("data-v")==="on";
     document.querySelectorAll("#cfgSpeed button").forEach(function(x){x.classList.remove("on");}); b.classList.add("on");
+    queueTriviaPrefs();
   }); });
+
+  /* THE SETUP IS SAVED FOR THE VENUE, AS SOON AS IT CHANGES (Dean, 28 Oct 2026). The question set and how
+     many questions (Basic), time, points, speed bonus and double points (Advanced) live in
+     vp_venue_settings.game_prefs.trivia (migration 121) through the game Worker's /host/game-prefs, which
+     any staff login can write. They used to be saved only when a quiz STARTED (the trivia_* columns,
+     migrations 50 and 96), so a change with no quiz after it was lost. Those columns are still read
+     when the venue has nothing in game_prefs yet, so no venue loses what it had. VP.gamePrefs in
+     /app/vp-session.js is the one mechanism for all five games. Paper sheets are the night's own. */
+  function triviaPrefs(){
+    var p={}, sel=$("setSel");
+    if(sel && /^[0-9a-f-]{36}$/i.test(sel.value||"")) p.set_id=sel.value;
+    var n=parseInt(($("cfgCount")||{}).value,10); if(n>=1 && n<=100) p.count=n;
+    var t=parseInt(($("cfgTime")||{}).value,10); if(t>=5 && t<=60) p.time_s=t;
+    var b=parseInt(($("cfgBase")||{}).value,10); if(b>=0 && b<=100000) p.base_points=b;
+    p.speed_bonus=!!G.speedBonus;
+    p.double_points=!!G.doublePoints;
+    p.double_last=Math.max(1, Math.min(100, parseInt(G.doubleLast,10)||10));
+    return p;
+  }
+  function applyTriviaPrefs(p){
+    if(!p || G.status!=="setup") return;   // a quiz brought back keeps its own settings
+    var sel=$("setSel");
+    if(p.set_id && sel && !setFromUrl()){   // "Run it now" from the builder (?set=) always wins
+      for(var k=0;k<sel.options.length;k++){
+        if(sel.options[k].value===p.set_id){ sel.selectedIndex=k; syncSetCount(); var ln=$("setLastNote"); if(ln) ln.style.display=""; break; }
+      }
+    }
+    if(p.count>=1){ var c=$("cfgCount"); if(c){ c.value=Math.min(100, p.count); if(typeof renderPaperSetup==="function"){ try{ renderPaperSetup(); }catch(e){} } paintRoundQs(); } }
+    if(p.time_s!=null){ G.timePerQ=p.time_s; var ti=$("cfgTime"); if(ti) ti.value=p.time_s; }
+    if(p.base_points!=null){ G.base=p.base_points; var bp=$("cfgBase"); if(bp) bp.value=p.base_points;
+      if($("scBase")) $("scBase").textContent=p.base_points; if($("scMax")) $("scMax").textContent=Math.round(p.base_points*1.5); }
+    if(typeof p.speed_bonus==="boolean"){ G.speedBonus=p.speed_bonus;
+      var seg=$("cfgSpeed"); if(seg){ Array.prototype.forEach.call(seg.children, function(bt){ bt.classList.toggle("on", (bt.getAttribute("data-v")==="on")===G.speedBonus); }); } }
+    if(typeof p.double_points==="boolean") G.doublePoints=p.double_points;
+    if(p.double_last!=null) G.doubleLast=Math.max(1, Math.min(100, p.double_last));
+    paintDouble();
+  }
+  // What a quiz start saved before game_prefs (migrations 50 and 96): read only while game_prefs is empty.
+  function triviaOldPrefs(){
+    if(!(window.VP && VP.loadSettings)) return null;
+    return VP.loadSettings(G.venueId).then(function(s){
+      if(!s) return null;
+      var p={};
+      if(s.trivia_time_limit_s!=null) p.time_s=s.trivia_time_limit_s;
+      if(s.trivia_base_points!=null) p.base_points=s.trivia_base_points;
+      if(s.trivia_speed_bonus!=null) p.speed_bonus=!!s.trivia_speed_bonus;
+      if(s.trivia_double_points!=null) p.double_points=!!s.trivia_double_points;
+      if(s.trivia_double_last!=null) p.double_last=s.trivia_double_last;
+      return p;
+    }, function(){ return null; });
+  }
+  var _triviaPrefs=(window.VP && VP.gamePrefs) ? VP.gamePrefs("trivia", { venueId:function(){ return G.venueId; },
+    api:function(){ return VP_GAME_API; }, token:getToken, collect:triviaPrefs, apply:applyTriviaPrefs, fallback:triviaOldPrefs }) : null;
+  function queueTriviaPrefs(){ if(_triviaPrefs) _triviaPrefs.queue(); }
+  // Once the question sets are in the list, so the venue's last set can be chosen.
+  function startTriviaPrefs(){ return _triviaPrefs ? _triviaPrefs.start() : Promise.resolve(null); }
+  ["cfgCount","cfgTime","cfgBase","cfgDoubleLast"].forEach(function(id){ var el=$(id); if(el) el.addEventListener("input", queueTriviaPrefs); });
+  if(window.VP && VP.advanced) VP.advanced($("triviaAdv"), "trivia");   // closed unless this browser left it open
   /* No "Plain" answer buttons any more (Dean, 27 Sep 2026: "get rid of the setting to change the
      coloured buttons"). Phones always get the four colours, which match the TV. */
 
@@ -1889,29 +1958,21 @@
     VP.ready().then(function(ctx){
       if(!ctx.authed){ $("statusText").textContent="Not signed in"; showSignIn("You need your venue host login to start a live quiz."); return; }
       if(!ctx.currentVenueId){ $("statusText").textContent="No venue"; showSignIn("This login is not linked to a venue yet."); return; }
+      /* SWITCHED OFF: one card in place of the setup, and nothing below it runs (no key, no TV, no
+         restore). The Worker refuses a game here anyway; the page says so first (28 Oct 2026). */
+      if(VP.holdGate && VP.holdGate(ctx)){ VP.enforceShift(); $("statusText").textContent="Switched off"; return; }
+      if(VP.termsGate && VP.termsGate(ctx)){ VP.enforceShift(); $("statusText").textContent="One tick first"; return; }   // a prospect venue ticks section 6 before its first game (migration 122)
       G.venueId=ctx.currentVenueId; G.venue=ctx.venue||null;
-      // Pre-fill the round settings from what this venue last used (migration 50), so a host does not
-      // re-enter their preferred time/points/speed every night. A NULL column leaves the built-in default.
-      if(VP.loadSettings){ VP.loadSettings(G.venueId).then(function(s){
-        if(!s) return;
-        if(s.trivia_time_limit_s!=null){ G.timePerQ=s.trivia_time_limit_s; var t=$("cfgTime"); if(t) t.value=s.trivia_time_limit_s; }
-        if(s.trivia_base_points!=null){ G.base=s.trivia_base_points; var bp=$("cfgBase"); if(bp) bp.value=s.trivia_base_points; }
-        if(s.trivia_speed_bonus!=null){ G.speedBonus=!!s.trivia_speed_bonus;
-          var seg=$("cfgSpeed"); if(seg){ Array.prototype.forEach.call(seg.children, function(bt){ bt.classList.toggle("on", (bt.getAttribute("data-v")==="on")===G.speedBonus); }); } }
-        if(s.trivia_double_points!=null) G.doublePoints=!!s.trivia_double_points;
-        if(s.trivia_double_last!=null) G.doubleLast=Math.max(1, Math.min(100, s.trivia_double_last));
-        paintDouble();
-        G.colour=true;   // a venue that once saved "Plain" is not stuck with it: the setting is gone
-      }).catch(function(){}); }
+      G.colour=true;   // a venue that once saved "Plain" is not stuck with it: the setting is gone
       weeklyPreCheck(ctx.venue);
       // Tell vp-session when a quiz is actually on, so the forced sign-out stops closing the
       // session out from under it. It still signs the host out; it just leaves the night open
       // so signing back in restores it instead of burning the once-a-week trivia slot.
       if(VP.setGameActive) VP.setGameActive(function(){ return !!(G.sessionId && G.status!=="setup" && G.status!=="ended"); });
       VP.enforceShift();   // the 4h forced sign-out is a compliance control: it has to apply here too, not only on /app
-      if(VP.suspensionBanner) VP.suspensionBanner(ctx);
       $("statusText").textContent="Signed in";
-      loadQuestionSets();
+      // The question sets, then this venue's saved setup over them (VP.gamePrefs; the old trivia_* columns as a fallback).
+      Promise.resolve(loadQuestionSets()).then(startTriviaPrefs, startTriviaPrefs).catch(function(){});
       /* ONE CONSOLE PER TABLET: a second tab used to restore this same quiz as a second live
          console. Ask the other tabs first (/app/vp-onetab.js, 14 Oct 2026). */
       (window.VP_ONETAB ? VP_ONETAB.claim("trivia:"+G.venueId) : Promise.resolve(true)).then(function(){ return restoreTrivia().then(function(ok){ return ok || restorePR(); }); }).then(function(){   // recover a live quiz first (if this was an accidental reload), then pair the TV as normal
@@ -1996,16 +2057,33 @@
     try{ rawSend({ t:"to_ads" }); }catch(e){}   // sync on unload; an async signed send never lands before the page dies. NOT exempt: under enforce this is dropped, see vp-sign.js EXEMPT
   });
 
+  /* END GAME FROM THE PODIUM PUT THE WINNERS STRAIGHT BACK ON THE WALL (live play, Test Charlie,
+     27 Oct 2026). With the quiz over (status "ended") End game sent idle and to_ads but left the
+     console believing the podium was still on: the TV answers every host message with tv_here, and
+     reassertToTv() answered THAT by re-sending the podium 0.3 s after the idle, which the screen
+     took as a live game again (it cancels its return to the ads for any game message). The wall sat
+     on WINNERS TONIGHT for ever and the next Open lobby was the only way off it. So an End game with
+     no round in progress resets the console the way End round does, before it says idle. */
+  function endGameToAds(){
+    var live = G.status==="question" || G.status==="reveal" || G.status==="ready";
+    var _ended = live ? endRound() : null;   // actually end it, rather than only telling the room it ended
+    if(!live){
+      clearTick(); clearTimeout(G.podiumHoldT); G.podiumHeld=false;
+      G.status="setup"; G.board=[]; G.current=null; G.gameId=""; clearTrivia();
+      try{ bcast({ t:"idle" }); }catch(e){}
+      renderConsole();
+    }
+    closeNight(_ended);
+    try{ bcast({ t:"to_ads" }); }catch(e){}
+    return live;
+  }
   (function(){ var b=document.getElementById("toAdsBtn"); if(!b) return;
     b.addEventListener("click", function(){
       var live = G.status==="question" || G.status==="reveal" || G.status==="ready";
       function toAds(){
-      var _ended = live ? endRound() : null;   // actually end it, rather than only telling the room it ended
-      if(!live){ try{ bcast({ t:"idle" }); }catch(e){} }
-      closeNight(_ended);
-      try{ bcast({ t:"to_ads" }); }catch(e){}
-      b.textContent="Ads are back on";
-      setTimeout(function(){ b.textContent="End game"; }, 2500);
+        endGameToAds();
+        b.textContent="Ads are back on";
+        setTimeout(function(){ b.textContent="End game"; }, 2500);
       }
       if(!live){ toAds(); return; }
       vpAsk("End the quiz and put the venue ads back on the TV?\n\nThe round in progress will finish and every player will see \"thanks for playing\".").then(function(ok){ if(ok) toAds(); });

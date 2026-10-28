@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Open your VenuePlay</title>
+<link rel="icon" type="image/png" href="/logos/venueplay_appicon_rebuilt.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- The one-time sign-in link in the prospect welcome email (Dean, 28 Oct 2026). All of the logic,
+     and why it waits for a tap, is in /app/vp-oneclick.js. -->
+<style>
+  :root{ --ink:#0A0A0B; --ink-2:#121214; --pink:#FF1F8E; --pink-deep:#C70F69; --text:#E7E7EC; --muted:#A6A6B0; --faint:#8A8A94; --roll:#F5A524; --line-2:rgba(255,255,255,0.06); }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(1200px 600px at 80% -10%, rgba(255,31,142,.10), transparent 60%), var(--ink);
+    color:var(--text);font-family:'Manrope',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;padding:0 16px}
+  .authwrap{max-width:420px;margin:12vh auto 0;text-align:center}
+  .authlogo{display:flex;align-items:center;justify-content:center;gap:11px;margin-bottom:20px}
+  .authlogo svg{filter:drop-shadow(0 0 4px rgba(255,31,142,.9)) drop-shadow(0 0 12px rgba(255,31,142,.4))}
+  .authlogo .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:22px;color:#fff}
+  .authbig{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:32px;color:#fff;line-height:1.04;margin-bottom:8px}
+  .authsub{color:var(--muted);font-size:14px;margin-bottom:22px;line-height:1.5}
+  .authcard{background:var(--ink-2);border:1px solid var(--line-2);border-radius:16px;padding:22px 20px}
+  .btn{border:none;border-radius:12px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;cursor:pointer;transition:.15s}
+  .btn.pink{background:var(--pink);color:#0A0A0B;box-shadow:0 8px 20px rgba(255,31,142,.3)}
+  .btn.pink:hover{background:var(--pink-deep)}
+  .btn.big{width:100%;padding:16px;font-size:15px;text-transform:uppercase;letter-spacing:.04em}
+  .btn:disabled{opacity:.7;cursor:default}
+  .cerr{color:var(--roll);font-size:13px;min-height:18px;margin-top:10px}
+  .note{font-size:12.5px;color:var(--faint);line-height:1.5;margin-top:12px}
+</style>
+</head>
+<body>
+  <div class="authwrap">
+    <div class="authlogo">
+      <svg width="26" height="30" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
+      <span class="word">VenuePlay</span>
+    </div>
+    <div class="authbig">Welcome</div>
+    <div class="authsub">Your VenuePlay account is ready. Tap below and you are in, with no code to type.</div>
+    <div class="authcard">
+      <button class="btn pink big" id="goBtn" type="button">Open my VenuePlay</button>
+      <div class="cerr" id="goMsg" role="status"></div>
+      <p class="note">This link works once. Next time, sign in at venueplay.com.au/app with your email and we will email you a code.</p>
+    </div>
+  </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/app/vp-oneclick.js"></script>
+<script>
+  (function(){ try{ window.VPOneClick.start(window); }catch(e){ window.location.replace("/app/?signin=email&gone=1"); } })();
+</script>
+</body>
+</html>

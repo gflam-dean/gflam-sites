@@ -1,3 +1,7 @@
+/* RUNS the product, it does not word-search it. The testing audit of 27 Oct 2026 filed this suite
+   as "reads-file" because its scanner looked for load() and this file executes the shipped code
+   through (0, eval)(src) instead. Its prove-checks rows break product logic, not strings, and go
+   red. Read and checked by hand, 27 Oct 2026 (fix/text-match-suites-27-oct). */
 /* A captured Stripe event must stop working. This RUNS verifyStripeSig out of the shipped file.
 
    jsc has no crypto.subtle, so the HMAC is stood in for by a keyed digest that has the one

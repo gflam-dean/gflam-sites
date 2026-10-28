@@ -371,3 +371,34 @@ policies, service role only, unchanged here). Run BEFORE the touring-api build c
 No grant or policy change, so RLS-BASELINE.json does not change. Branch `feature/gflam-one-click-unsub`. NOT RUN.
 Rollback: `alter table public.gflam_customers drop column unsubscribe_source; drop index gflam_customers_unsubscribed_idx;`
 (117 is fix/multi-raffle, unmerged; 118 is on main, above.)
+
+`venueplay-121-game-prefs.sql` (Dean, 28 Oct 2026): every game's setup saved for the VENUE in one place.
+`vp_venue_settings.game_prefs` (jsonb, not null, default `{}`, an object of at most 20,000 characters) keyed by game
+(`bingo`, `trivia`, `musical`, `raffle`, `members`: every console's Basic and Advanced settings since 28 Oct 2026), and `vp_set_game_prefs(venue, game, prefs)`, security definer, which MERGES one
+game's keys and leaves the other games alone. Revoked from PUBLIC, anon and authenticated; service role only. Written and
+read by the game Worker's `GET` / `POST /host/game-prefs` (verifyHostJwt + requireStaff, any staff role at that venue, a
+short list of allowed keys per game, a size cap). Never paid-or-free for the night, unsold tickets or permits. Either order
+with the Worker is safe: without it the route answers an error and every console keeps this browser's own choices (trivia and
+raffle still read their older trivia_* columns and raffle_template). After running, dump RLS-BASELINE.json (one new security
+definer function). Branches `fix/console-banners-28-oct`, `feature/advanced-settings-28-oct`. RUN on the live database by Dean, 28 Oct 2026 (vp_set_game_prefs present; RLS-BASELINE.json dumped).
+Rollback: in the file.
+
+`venueplay-122-prospect-terms-first.sql` (Dean, 28 Oct 2026, "Set up a prospect"): `vp_venues.terms_required` (boolean, not
+null, default false) and the `vp_venues_terms_required_guard` trigger (a venue's own login cannot change it; same shape as 116).
+True only for a venue made by HQ > Set up a prospect (billing Worker `POST /admin/prospect`), which creates the venue with NO
+compliance record because nobody read the line to them on a call. While `compliance_accepted_at` is null at such a venue the
+console shows the one-time Terms card in place of the game picker (`VP.termsGate`), and the game Worker refuses `/session`, `/host/game`,
+`/host/bingo/draw` and the members draw (`terms_first`); the TV keeps its ads. The block lifts by itself when the owner or a
+manager accepts (`/account/compliance-accept`). Not security definer, no new policy or grant: RLS-BASELINE.json does not change.
+Run BEFORE the billing Worker that carries `/admin/prospect` (it answers "Run migration 122 first" without it); either order is
+safe for the game Worker and the console (both read it fail-safe). Branch `feature/prospect-setup-28-oct`. NOT RUN.
+Rollback: in the file.
+
+`venueplay-123-one-click-signin.sql` (Dean, 28 Oct 2026, "a link to click that automatically goes to that page"): table
+`vp_signin_links` (token_hash = SHA-256 of 32 random bytes, auth_user_id, venue_id, created_at, expires_at at most 15 days on,
+used_at). The prospect welcome's "Open your VenuePlay" button carries the raw token in the URL FRAGMENT (`/app/go#t=`), so it is
+never sent to Pages or the Worker in a request line; the billing Worker `POST /auth/one-click` marks the row used in ONE
+conditional update (`used_at is null and expires_at > now`) and only then mints a Supabase magic-link hash for that login.
+RLS on, no policies, revoked from public/anon/authenticated: service role only. Run BEFORE the billing Worker; without it
+/admin/prospect still works and the button opens the email sign-in (HQ is told). After running, dump RLS-BASELINE.json (one new
+table). Branch `feature/one-click-signin-28-oct`. NOT RUN. Rollback: in the file.

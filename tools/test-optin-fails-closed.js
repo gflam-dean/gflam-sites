@@ -1,3 +1,7 @@
+/* RUNS the product, it does not word-search it. The testing audit of 27 Oct 2026 filed this suite
+   as "reads-file" because its scanner looked for load() and this file executes the shipped code
+   through (0, eval)(src) instead. Its prove-checks rows break product logic, not strings, and go
+   red. Read and checked by hand, 27 Oct 2026 (fix/text-match-suites-27-oct). */
 /* A FAILED PAGE MUST NOT LOOK LIKE THE END OF THE LIST.
 
    vpaSelectAll used to be built on vpaSelect, which returns [] on any non-2xx. A paging loop

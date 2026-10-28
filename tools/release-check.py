@@ -3109,6 +3109,30 @@ def local_checks(which):
                why='run jsc tools/test-screen-check-wake.js. startAds must land on the clock\'s slot after a wake, and '
                    'screen-check.html\'s wakeVerdict must pass that slot or the one before it and fail slide one')
 
+    # THE TOUR CARDS NEVER SAY "COMING SOON" WHILE SHOWS ARE ON SALE (27 Oct 2026).
+    # The flake log caught touring-cards.test.py red once with "after 120 s the page showed: COMING
+    # SOON" at load 3.7, green on retry. That was the page, not the rig: gflamtouring.com.au's
+    # homepage and current-tours page started as the Coming Soon card and replaced it only when BOTH
+    # database reads came back, with no timeout, no retry, the error swallowed, and a failed shows
+    # read counted as "no shows" (which auto-hid the tour). A slow phone or a database blip read
+    # "new tours are being announced soon" to a real visitor while tickets were on sale. The suite
+    # RUNS the real loader out of both pages under jsc with stalled, failing and 500 reads.
+    head('D. The tour cards say loading, retry once, and tell the truth')
+    t = os.path.join(ROOT, 'tools', 'test-touring-cards-loader.js')
+    if not os.path.isfile(t):
+        ok('the tour cards loader test exists', False, why='tools/test-touring-cards-loader.js is missing')
+    else:
+        r = subprocess.run([JSC, t], capture_output=True, text=True, timeout=120, cwd=ROOT)
+        out = ((r.stdout or '') + (r.stderr or '')).strip()
+        bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
+        n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
+        ok('the tour cards say loading, retry once and tell the truth; Coming Soon only when nothing is on (%d checks)' % n,
+           r.returncode == 0 and 'PASSED' in out and not bad,
+           detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
+           why='run jsc tools/test-touring-cards-loader.js. touring/index.html and current-tours.html must say loading '
+               'until the database answers, give a read TC_FETCH_MS and try once more, write Coming Soon only when '
+               'the database answered with nothing on, and say "we couldn\'t load what\'s on" after two failures')
+
     # NEVER COLLECT WHAT YOU WILL NOT HAND BACK.
     #
     # Two gates asked the same question with two different word lists: collecting is gated on the
@@ -3536,6 +3560,37 @@ def local_checks(which):
              'join code or the question, or a broken box on the wall of a venue with no logo, reaches a room full of people otherwise'),
             # D47 and D46: the compliance build of 15 Oct 2026 (Anisimoff Legal 9380, letters of
             # 1 and 8 Oct 2026). Dean: build everything the lawyer called prudent.
+            # D82 and D83: the legal compliance matrix of 28 Oct 2026 (gaps 1, 6, 8 and 10), built on
+            # fix/legal-gaps-28-oct. Musical bingo is never bingo; free bingo may be advertised.
+            ('D82. A venue with no recorded acceptance of section 6 is asked once, and the record is the venue\'s own',
+             'test-terms-acceptance-card.js',
+             'owner or manager ticks section 6 once in the console and the billing Worker records who and when; a host is told, HQ View as cannot accept; nothing a game does is gated', 56,
+             'A live venue with no record it ever accepted that it, not VenuePlay, conducts its games, or an '
+             'acceptance written by somebody who is not the venue, is the exposure the 1 Oct letter (point 3) names'),
+            ('D83. No state means no paid game, HQ finds those venues, a VIC permit can be marked checked, PartyPlay asks private use',
+             'test-legal-gaps-28-oct.js',
+             'a paid game with no known state starts free; HQ filters and badges venues that need a state; the VGCCC register check is HQ-only, VIC-only and names who and when; /start sends the private-use tick', 46,
+             'A club charging for bingo with no state rules shown, a forged or stale "permit checked", or a '
+             'PartyPlay sale with no private-use declaration is what this stops reaching a venue or a buyer'),
+            # D84 and D85: HQ > Set up a prospect (Dean, 28 Oct 2026; migration 122), branch
+            # feature/prospect-setup-28-oct. One action builds the venue and sends ONE email.
+            ('D84. Set up a prospect builds a working venue and sends one email, with compliance pending and no login touched',
+             'test-prospect-setup.js',
+             'owner or accounts HQ only; refuses without email or postcode and creates nothing; account record at the founding price, email login, slides, terms_required, audit row; an existing login is never changed or linked; the VIC and QLD emails carry every link, the right TV address and state, and never call musical bingo bingo; the console holds the venue until ticked', 113,
+             'A prospect venue whose compliance line HQ ticked for them, an email login that cannot sign in, a '
+             'welcome with a dead link or the wrong state\'s bingo rule, or one venue\'s manager handed another venue'),
+            ('D85. The game Worker starts no game at a prospect venue until the owner or a manager has ticked section 6',
+             'test-prospect-terms-first-game.js',
+             '/session, /host/game, /host/bingo/draw and the members draw refuse terms_first at a held venue; an ordinary or ticked venue is not held; a stranger learns nothing; a missing column holds nobody, a database fault is not swallowed', 17,
+             'A page that skips the console card starts a game at a venue that never accepted it runs its own '
+             'games, or a database blip stops every game in the country'),
+            # D86: "Open your VenuePlay", the one-time sign-in link in the prospect welcome (Dean, 28 Oct
+            # 2026; migration 123), branch feature/one-click-signin-28-oct.
+            ('D86. The prospect welcome signs them in with one tap, once, and the sign-in page opens on email for an email login',
+             'test-one-click-signin.js',
+             'only the hash of a 32-byte random token is stored; one use, 14 days, one winner of two at once; unknown, used, expired and removed all get one identical answer; rate-limited, never logged; nothing sent before a tap; the 4 hour sign-out still applies; email first for an email-only login', 49,
+             'A sign-in link that works twice, for ever, for a stranger who guessed it, or for a mail scanner; a '
+             'token readable from the database or a log; or an email-only prospect left waiting for a text'),
             ('D47. The Terms put gaming compliance, permits, attendance, age, records and an indemnity on the venue',
              'test-terms-put-compliance-on-the-venue.js',
              'section 6 carries every clause the lawyer asked for, and the onboarding tick is one sentence everywhere', 40,

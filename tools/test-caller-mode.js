@@ -31,7 +31,7 @@
 var CONSOLE_SRC = readFile('venueplay/app/index.html');
 load('tools/rig-game-worker.js');
 load('tools/rig-bingo-room.js');
-var PASS = 0, FAILN = 0, EXPECT = 117;
+var PASS = 0, FAILN = 0, EXPECT = 119;
 function check(name, cond, saw) {
   if (cond) { PASS++; print('  ok   ' + name); }
   else { FAILN++; print('  FAIL ' + name + (saw !== undefined ? '   saw: ' + JSON.stringify(saw) : '')); }
@@ -404,8 +404,8 @@ shuffle1to90 = function () { SHUFFLES++; return _shuffle(); };
   hw.$('prizeInput').value = '$50 bar tab'; hw.$('patternSel').value = 'one'; hw.$('cardsSel').value = '1'; hw.$('paidSel').value = '';
   hw.$('callerChk').checked = true; (hw.$('callerChk')._on.change || []).forEach(function (f) { f.call(hw.$('callerChk'), {}); });
   check('the setup button says what it does on a real-balls night', /Put bingo on the TV/.test(hw.$('startBtn').textContent) && !/scan/i.test(hw.$('startNote').textContent), [hw.$('startBtn').textContent, hw.$('startNote').textContent]);
-  check('and the console drops the player count and its "scan the QR" panel: nobody joins on a phone', hw.$('playersPanel').style.display === 'none' && hw.$('setupStats').style.display === 'none' && !/join code/.test(hw.$('coach').innerHTML.replace(/No join code/, '')),
-        [hw.$('playersPanel').style.display, hw.$('setupStats').style.display, hw.$('coach').innerHTML]);
+  check('and the console drops the player count and its "scan the QR" panel: nobody joins on a phone', hw.$('playersPanel').style.display === 'none' && !/id="setupStats"/.test(CONSOLE_SRC) && !/join code/.test(hw.$('coach').innerHTML.replace(/No join code/, '')),
+        [hw.$('playersPanel').style.display, /id="setupStats"/.test(CONSOLE_SRC), hw.$('coach').innerHTML]);
   hw.openLobby(); await advance(9000); hw.startGame(); await advance(3000);
   [5, 17, 42, 66, 89].forEach(function (n) { tap(hw, n); });
   await advance(3000); feedTV(tv);
@@ -585,6 +585,21 @@ shuffle1to90 = function () { SHUFFLES++; return _shuffle(); };
   await worker('/session', { venue_id: VENUE, format: 'bingo', caller: true });
   var s4 = await worker('/session', { venue_id: VENUE, format: 'bingo' });
   check('an older console that sends no caller field changes nothing (the mark stays as it was)', s4.body.reused === true && callerBingoNight(row2), row2.paper);
+
+  /* THE VENUE LOGO CAN NEVER STOP THE CONSOLE PAIRING (train of 27 Oct 2026). venueLogoFor(slug) ran
+     BEFORE connect() in pairToVenue and threw in this rig, so the console never joined its channel and
+     ten taps put nothing on the wire. The real pairToVenue, with a venueLogoFor that throws. */
+  (function () {
+    var i = CONSOLE_SRC.indexOf('function pairToVenue('), d = 0, k = CONSOLE_SRC.indexOf('{', i);
+    do { if (CONSOLE_SRC[k] === '{') d++; else if (CONSOLE_SRC[k] === '}') d--; k++; } while (d > 0 && k < CONSOLE_SRC.length);
+    var connected = [], logoAskedWith = [];
+    var pair = new Function('VP', 'window', 'connect', 'venueLogoFor', 'VP_GAME_API', 'vpHostToken', CONSOLE_SRC.slice(i, k) + '\n return pairToVenue;')(
+      { venueCode: function (s) { return 'CODE-' + s; } }, {}, function (c) { connected.push(c); }, function () { logoAskedWith.push(connected.length); throw new Error('the logo broke'); }, 'https://w', function () {});
+    var r = false, threw = null;
+    try { r = pair('tugun-bowls'); } catch (e) { threw = e; }
+    check('pairToVenue connects the console to the venue even when the logo lookup throws', threw === null && r === true && connected.length === 1 && connected[0] === 'CODE-tugun-bowls', [threw && String(threw), connected]);
+    check('and the logo is asked for AFTER the channel is up, never before', logoAskedWith.length === 1 && logoAskedWith[0] === 1, logoAskedWith);
+  })();
 
   print('\n' + PASS + ' of ' + (PASS + FAILN) + ' checks passed');
   if (PASS + FAILN !== EXPECT) { print('FAIL ' + (PASS + FAILN) + ' checks ran, ' + EXPECT + ' expected'); throw new Error('a link in the chain was skipped'); }

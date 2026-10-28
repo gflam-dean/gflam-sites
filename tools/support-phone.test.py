@@ -178,7 +178,7 @@ contact = [it for it in faq['venue']['items'] if it['q'] == 'Contacting us']
 check('the venue FAQ "Contacting us" says: if a game is on right now, call %s and press 2' % SHOW,
       len(contact) == 1 and ('call %s and press 2' % SHOW) in contact[0]['a'], contact)
 
-for t in ('welcome', 'welcome-group', 'welcome-hq', 'venue-onboarding'):
+for t in ('welcome', 'welcome-group', 'welcome-hq', 'venue-onboarding', 'welcome-prospect'):
     s = no_comments(read('venueplay/emails/%s.html' % t), 'html')
     check('email template %s: its footer has the call line, as the tags the Worker fills (one place)' % t,
           re.search(r'<a href="tel:\{\{support_tel\}\}"[^>]*>\{\{support_phone\}\}</a> and press 2', s) is not None and SHOW not in s)

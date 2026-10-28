@@ -11,7 +11,7 @@ if (typeof AbortController === 'undefined') { AbortController = function () { th
 if (typeof setTimeout === 'undefined') { setTimeout = function () { return 0; }; }
 if (typeof clearTimeout === 'undefined') { clearTimeout = function () {}; }   // jsc has setTimeout and NOT clearTimeout
 var TPL = {};
-['welcome.html', 'welcome-group.html', 'welcome-hq.html', 'venue-onboarding.html'].forEach(function (n) {
+['welcome.html', 'welcome-group.html', 'welcome-hq.html', 'venue-onboarding.html', 'welcome-prospect.html'].forEach(function (n) {
   try { TPL[n] = readFile('venueplay/emails/' + n); } catch (e) {}
 });
 // Minimal PostgREST-like fake: eq/neq filters, or=(), order ignored, offset then limit, max-rows 1000.

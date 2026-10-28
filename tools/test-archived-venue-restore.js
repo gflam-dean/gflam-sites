@@ -149,8 +149,10 @@ function boot(world) {
     // the wording is to capture what it inserts.
     document: { addEventListener: function () {}, readyState: 'complete',
                 createElement: function () {
+                  // The bars now sit in one status box (VP.statusBar, 28 Oct 2026), so what
+                  // is appended to the box is painted too.
                   return { style: {}, innerHTML: '', id: '',
-                           appendChild: function () {} };
+                           appendChild: function (el) { painted.push(el); } };
                 },
                 body: { firstChild: null,
                         appendChild: function (el) { painted.push(el); },

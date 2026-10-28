@@ -69,7 +69,7 @@ def console_for(name):
     tid, sid = S.open('/app/?venue=' + IDS[name])
     S.until(sid, '!!document.querySelector(\'[data-game="bingo"]\') && document.querySelector(\'[data-game="bingo"]\').offsetParent!==null', 20)
     S.js(sid, 'document.querySelector(\'[data-game="bingo"]\').click(); true')
-    S.until(sid, '!!document.getElementById("cardsSel") && document.getElementById("cardsSel").offsetParent!==null', 10)
+    S.until(sid, '!!document.getElementById("patternSel") && document.getElementById("patternSel").offsetParent!==null', 10)
     time.sleep(0.5)
     venue = S.js(sid, '(VP.getContext()||{}).venue && VP.getContext().venue.name')
     if venue != name:

@@ -254,67 +254,59 @@
           </div>
         </div>
         <div class="drawnote" id="drawNote">The TV spins, reveals the winning member, then waits on your call.</div>
+        <!-- ADVANCED SETTINGS (Dean, 28 Oct 2026): the draw and jackpot settings, set once and saved for the venue
+             in vp_member_draws (MANAGER-ONLY write path, /host/members/settings), closed until opened. The shared
+             disclosure, VP.advanced in /app/vp-session.js. The maximum jackpot keeps its state hint and warning
+             beside it; the line above Draw shows the maximum whenever one is set. The state rules screen on Draw
+             never goes in here. -->
+        <details class="vp-adv" id="membersAdv">
+          <summary><span>Advanced settings<small class="vp-adv-sub">Draw and jackpot settings, saved for your venue.</small></span></summary>
+          <div class="vp-adv-body">
+            <div class="field"><label>Draw name</label><input type="text" id="setName" placeholder="e.g. Friday Members Draw"></div>
+            <!-- Running since: the code has always read and written #setSince, and the input was
+                 never here. $("setSince").value threw on EVERY load, which rejected loadAll(), which
+                 meant connect() never ran, which left the whole console blank for every venue. The
+                 field it wanted is a real one: date_started drives "running since" on the TV. -->
+            <div class="field"><label>Running since</label><input type="date" id="setSince"></div>
+            <div class="two">
+              <div class="field"><label>Starting jackpot ($)</label><input type="number" id="setStart" class="mono" min="0" step="1"></div>
+              <div class="field"><label>Weekly increment ($)</label><input type="number" id="setInc" class="mono" min="0" step="1"></div>
+            </div>
+            <div class="two">
+              <div class="field"><label>Current jackpot ($)</label><input type="number" id="setCur" class="mono" min="0" step="1"></div>
+              <div class="field"><label>Time to claim (seconds)</label><input type="number" id="setClaim" class="mono" min="30" step="1"><div class="note" id="setClaimHint" style="margin-top:4px">At least 30 seconds. A shorter window runs out before the member can reach the host.</div></div>
+            </div>
+            <div class="two">
+              <div class="field"><label>Draw day</label><input type="text" id="setDay" placeholder="Friday"></div>
+              <div class="field"><label>Draw time</label><input type="text" id="setTime" placeholder="7:30pm"></div>
+            </div>
+            <!-- Maximum jackpot (migration 101). Anisimoff Legal, 1 Oct 2026 point 10 and 8 Oct 2026
+                 point 6: a customer-set maximum, enforced before the draws, with the draw continuing
+                 until won. The hint beside it is the figure the letters' tables give for this state
+                 (VPGaming.jackpotLimit); the figure the venue types is the venue's own choice. -->
+            <div class="field"><label>Maximum jackpot ($)</label><input type="number" id="setMax" class="mono" min="0" step="1" placeholder="No maximum">
+              <div class="note" id="setMaxHint" style="margin-top:4px">Leave blank for no maximum. Once the jackpot reaches it, the draw keeps running at that figure until it is won, and each week's increase goes into a reserve.</div>
+              <div class="note hidden" id="capWarn" style="margin-top:4px;color:var(--roll)"></div>
+            </div>
+            <button class="btn pink big" id="saveSettingsBtn">Save settings</button>
+            <div class="lockline hidden" id="settingsLock">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="11" rx="2" stroke="#8A8A94" stroke-width="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#8A8A94" stroke-width="2"/></svg>
+              Only a manager or owner can change the jackpot and draw settings.
+            </div>
+            <div class="note" id="settingsMsg" style="margin-top:8px"></div>
+            <div class="note" style="margin-top:10px">Adding or removing members, and removing a draw altogether, is done on your Account page.</div>
+          </div>
+        </details>
+        <!-- The venue keeps its own winner and draw records (Anisimoff Legal, 1 Oct 2026, points 8 and 14).
+             This hands them the file: every members draw and raffle result at the venue, as CSV. -->
+        <button type="button" class="vp-foot-link" id="downloadRecordBtn">Download draw record</button>
+        <div class="note" id="downloadRecordMsg" style="margin-top:4px"></div>
       </div>
 
-      <!-- right: settings + members -->
+      <!-- right: the members list -->
       <div>
-        <div class="panel" style="margin-bottom:20px">
-          <div class="field" style="margin-bottom:0">
-            <label>How names show on the TV</label>
-            <div class="seg" id="nameSeg">
-              <button data-nd="abbrev_last" class="on">John S</button>
-              <button data-nd="abbrev_first">J Smith</button>
-              <button data-nd="full">John Smith</button>
-            </div>
-            <div class="lockline hidden" id="nameLock">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="11" rx="2" stroke="#8A8A94" stroke-width="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#8A8A94" stroke-width="2"/></svg>
-              Only a manager or owner can change how names show.
-            </div>
-          </div>
-        </div>
-
-        <!-- draw / jackpot settings (MANAGER-ONLY write path) -->
-        <div class="panel" style="margin-bottom:20px" id="settingsPanel">
-          <div class="lbl" style="margin-bottom:12px">Draw &amp; jackpot settings</div>
-          <div class="field"><label>Draw name</label><input type="text" id="setName" placeholder="e.g. Friday Members Draw"></div>
-          <!-- Running since: the code has always read and written #setSince, and the input was
-               never here. $("setSince").value threw on EVERY load, which rejected loadAll(), which
-               meant connect() never ran, which left the whole console blank for every venue. The
-               field it wanted is a real one: date_started drives "running since" on the TV. -->
-          <div class="field"><label>Running since</label><input type="date" id="setSince"></div>
-          <div class="two">
-            <div class="field"><label>Starting jackpot ($)</label><input type="number" id="setStart" class="mono" min="0" step="1"></div>
-            <div class="field"><label>Weekly increment ($)</label><input type="number" id="setInc" class="mono" min="0" step="1"></div>
-          </div>
-          <div class="two">
-            <div class="field"><label>Current jackpot ($)</label><input type="number" id="setCur" class="mono" min="0" step="1"></div>
-            <div class="field"><label>Time to claim (seconds)</label><input type="number" id="setClaim" class="mono" min="30" step="1"><div class="note" id="setClaimHint" style="margin-top:4px">At least 30 seconds. A shorter window runs out before the member can reach the host.</div></div>
-          </div>
-          <div class="two">
-            <div class="field"><label>Draw day</label><input type="text" id="setDay" placeholder="Friday"></div>
-            <div class="field"><label>Draw time</label><input type="text" id="setTime" placeholder="7:30pm"></div>
-          </div>
-          <!-- Maximum jackpot (migration 101). Anisimoff Legal, 1 Oct 2026 point 10 and 8 Oct 2026
-               point 6: a customer-set maximum, enforced before the draws, with the draw continuing
-               until won. The hint beside it is the figure the letters' tables give for this state
-               (VPGaming.jackpotLimit); the figure the venue types is the venue's own choice. -->
-          <div class="field"><label>Maximum jackpot ($)</label><input type="number" id="setMax" class="mono" min="0" step="1" placeholder="No maximum">
-            <div class="note" id="setMaxHint" style="margin-top:4px">Leave blank for no maximum. Once the jackpot reaches it, the draw keeps running at that figure until it is won, and each week's increase goes into a reserve.</div>
-            <div class="note hidden" id="capWarn" style="margin-top:4px;color:var(--roll)"></div>
-          </div>
-          <button class="btn pink big" id="saveSettingsBtn">Save settings</button>
-          <div class="lockline hidden" id="settingsLock">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="11" rx="2" stroke="#8A8A94" stroke-width="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#8A8A94" stroke-width="2"/></svg>
-            Only a manager or owner can change the jackpot and draw settings.
-          </div>
-          <div class="note" id="settingsMsg" style="margin-top:8px"></div>
-          <div class="note" style="margin-top:10px">Adding or removing members, and removing a draw altogether, is done on your Account page.</div>
-          <!-- The venue keeps its own winner and draw records (Anisimoff Legal, 1 Oct 2026, points 8 and 14).
-               This hands them the file: every members draw and raffle result at the venue, as CSV. -->
-          <button type="button" class="btn ghost" id="downloadRecordBtn" style="margin-top:12px;width:100%">Download draw record</button>
-          <div class="note" id="downloadRecordMsg" style="margin-top:4px"></div>
-        </div>
-
+        <!-- "How names show on the TV" lives on Your account > On the big screen only (28 Oct 2026 audit): it covers
+             the whole venue, and the console copy was a second place to change it. G.nameDisplay is still read. -->
         <div class="panel">
           <div class="lbl" style="margin-bottom:0">In the draw <span class="mono vp-gold">(<span id="memberCount">0</span> active)</span></div>
           <div class="members" id="memberList"></div>
@@ -385,7 +377,7 @@
     var c=(window.VP&&VP.getClient)?VP.getClient():client;
     return c.auth.getSession().then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; });
   }
-  function readApi(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((d&&d.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }
+  function readApi(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((window.VP&&VP.hostRefusal?VP.hostRefusal(res.status,d&&d.error):(d&&d.error))||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }
   function apiPost(path, body){ return getToken().then(function(t){
       /* No timeout meant a request that never settled on pub wifi left G.busy true for good, and
          every later tap on Next, Reveal, Start and Open lobby returned silently at if(G.busy).
@@ -556,7 +548,9 @@
     if(!G.round && !G.busy) drawBtnIdle();   // reflect "Drawn tonight" for the selected draw (not while a round is live)
     var d=curDraw();
     var sb=$("saveSettingsBtn"); if(sb) sb.textContent = d ? "Save settings" : (G.loadFailed ? "Could not load your draws" : "Create draw");
-    if(!d){ ["setName","setSince","setStart","setInc","setCur","setClaim","setDay","setTime","setMax"].forEach(function(id){ $(id).value=""; }); renderCapAdvice(); return; }   // creating a new draw: blank form
+    if(!d){ ["setName","setSince","setStart","setInc","setCur","setClaim","setDay","setTime","setMax"].forEach(function(id){ $(id).value=""; }); renderCapAdvice();
+      var adv=$("membersAdv"); if(adv && !G.loadFailed) adv.open=true;   // creating a draw: the form is the job, so it is never folded away
+      return; }   // creating a new draw: blank form
     $("setName").value  = d.name||"";
     $("setSince").value = d.date_started||"";
     $("setStart").value = d.starting_amount_cents!=null ? Math.round(d.starting_amount_cents/100) : "";
@@ -607,10 +601,6 @@
     var h=$("setMaxHint"), w=$("capWarn"); if(!h||!w) return;
     var a=capAdvice(stateLimit(), numOrNull("setMax"), numOrNull("setCur"), numOrNull("setStart"));
     h.textContent=a.hint; w.textContent=a.warn; w.classList.toggle("hidden", !a.warn);
-  }
-  function renderNameSeg(){
-    document.querySelectorAll("#nameSeg button").forEach(function(b){ b.classList.toggle("on", b.getAttribute("data-nd")===G.nameDisplay); b.disabled=!G.canManage; });
-    show("nameLock", !G.canManage);
   }
   function applyRoleGates(){
     // The members list moved to the Account page, so a host sees who is in it but cannot change
@@ -924,7 +914,7 @@
     var r=$("hostErrRetry"); if(r){ r.disabled=true; r.textContent="Loading\u2026"; }
     return loadAll().then(function(){
       clearHostErrorIf("load");
-      renderNameSeg(); applyRoleGates();
+      applyRoleGates();
       if(!G.round && ch) restoreRound();
       sendState();
     }, function(e){ try{ console.error("members: load failed", e); }catch(_){} loadFailed(); })
@@ -1033,7 +1023,7 @@
     $("consoleView").classList.remove("hidden");
     if($("runHelp")) $("runHelp").classList.remove("hidden");   // walkthrough shows only on the console, never sign-in
     $("roomCode").textContent=code;
-    renderDrawSelect(); renderStats(); renderMembers(); renderSettings(); renderNameSeg(); applyRoleGates();
+    renderDrawSelect(); renderStats(); renderMembers(); renderSettings(); applyRoleGates();
     // Pick a live round back up. Runs after the draws are rendered so curDraw() resolves, and
     // after the TV is paired so the winner can go back on the screen.
     if(!G.round) restoreRound();
@@ -1070,7 +1060,34 @@
     if(G.round){ this.value=G.currentDrawId; hostError("Finish this draw first: tap Claim, or Jackpot to next week."); return; }
     if(G.busy){ clearTimers(); G.round=null; G.busy=false; hideWinnerCard(); drawBtnIdle(); }
     G.currentDrawId=this.value; renderStats(); renderMembers(); renderSettings(); sendIdle();
+    queueMembersPrefs();
   });
+
+  /* WHICH DRAW IS SAVED FOR THE VENUE (Dean, 28 Oct 2026). The draw's own settings (name, jackpot, claim time,
+     day, maximum) were already the venue's, per draw, in vp_member_draws. The one choice the console made
+     on its own, which draw it opens on, now lives in vp_venue_settings.game_prefs.members (migration 121)
+     through /host/game-prefs, which any staff login can write. Tonight's draw (by its draw day) still
+     comes first; the venue's last draw is next; then the first one. VP.gamePrefs in /app/vp-session.js. */
+  function membersPrefs(){
+    var id=G.currentDrawId;
+    return (id && id!=="__new" && /^[0-9a-f-]{36}$/i.test(id)) ? { draw_id:id } : {};
+  }
+  function applyMembersPrefs(p){
+    if(!p || !p.draw_id || G.round || G.busy) return;
+    var wd=todayWeekday().toLowerCase(), tonight=false, found=false;
+    for(var i=0;i<G.draws.length;i++){
+      if((G.draws[i].draw_day||"").toLowerCase()===wd) tonight=true;
+      if(G.draws[i].id===p.draw_id) found=true;
+    }
+    if(!found || tonight) return;
+    G.currentDrawId=p.draw_id;
+    renderDrawSelect(); renderStats(); renderMembers(); renderSettings(); applyRoleGates();
+  }
+  var _membersPrefs=(window.VP && VP.gamePrefs) ? VP.gamePrefs("members", { venueId:function(){ return G.venueId; },
+    api:function(){ return VP_GAME_API; }, token:getToken, collect:membersPrefs, apply:applyMembersPrefs }) : null;
+  function queueMembersPrefs(){ if(_membersPrefs) _membersPrefs.queue(); }
+  function startMembersPrefs(){ return _membersPrefs ? _membersPrefs.start() : Promise.resolve(null); }
+  if(window.VP && VP.advanced) VP.advanced($("membersAdv"), "members");   // closed unless this browser left it open
   /* State gaming rules, once a night, before the first draw. */
   /* waitRecord: the draw is refused by the Worker until tonight's acceptance is on the record (14 Oct 2026). */
   $("drawBtn").addEventListener("click", function(){ if(window.VPGaming) VPGaming.gateFor("members", startDraw, { waitRecord:true, freeEntry:true }); else startDraw(); });
@@ -1093,16 +1110,6 @@
     VPDrawRecord.download({ api:VP_GAME_API, venueId:G.venueId, getToken:getToken, button:$("downloadRecordBtn"), message:$("downloadRecordMsg") });
   });
   $("memberList").addEventListener("click", function(e){ var chip=e.target.closest(".mchip"); if(!chip) return; toggleMember(chip.getAttribute("data-mid")); });
-  document.querySelectorAll("#nameSeg button").forEach(function(b){
-    b.addEventListener("click", function(){
-      if(!G.canManage) return;
-      var nd=b.getAttribute("data-nd"); var prev=G.nameDisplay; G.nameDisplay=nd; renderNameSeg();
-      if(window.VP&&VP.saveSettings){
-        VP.saveSettings(G.venueId, { name_display:nd }).then(function(){ sendState(); }, function(){ G.nameDisplay=prev; renderNameSeg(); hostError("Could not save that setting."); });
-      }
-    });
-  });
-
   // ---- boot: resolve the host login, load the venue's roster + draws, then pair ----
   function showSignIn(msg){ if(msg) $("signinSub").textContent=msg; $("signinView").classList.remove("hidden"); $("connectView").classList.add("hidden"); if($("runHelp")) $("runHelp").classList.add("hidden"); }
   function tvFromUrl(){ var m=/[?&](?:tv|room)=([^&]+)/.exec(window.location.search); if(!m) return ""; var c=decodeURIComponent(m[1]).toUpperCase().replace(/[^ACDEFGHJKMNPQRSTUVWXYZ2345679]/g,"").slice(0,6); return CODE_RE.test(c)?c:""; }
@@ -1112,6 +1119,10 @@
     VP.ready().then(function(ctx){
       if(!ctx.authed){ $("statusText").textContent="Not signed in"; showSignIn("You need your venue host login to run a members draw."); return; }
       if(!ctx.currentVenueId){ $("statusText").textContent="No venue"; showSignIn("This login is not linked to a venue yet."); return; }
+      /* SWITCHED OFF: one card in place of the setup, and nothing below it runs (no key, no TV, no
+         restore). The Worker refuses a game here anyway; the page says so first (28 Oct 2026). */
+      if(VP.holdGate && VP.holdGate(ctx)){ VP.enforceShift(); $("statusText").textContent="Switched off"; return; }
+      if(VP.termsGate && VP.termsGate(ctx)){ VP.enforceShift(); $("statusText").textContent="One tick first"; return; }   // a prospect venue ticks section 6 before its first game (migration 122)
       G.venueId=ctx.currentVenueId; G.role=ctx.role; G.venue=ctx.venue||null;
       applyPresentRule();
       G.canManage = ctx.isAdmin || ctx.role==="owner" || ctx.role==="manager";
@@ -1120,7 +1131,6 @@
       // instead of finishing it with a winner still unclaimed. The host is still signed out.
       if(VP.setGameActive) VP.setGameActive(function(){ return !!G.round; });
       VP.enforceShift();   // the 4h forced sign-out is a compliance control: it has to apply here too, not only on /app
-      if(VP.suspensionBanner) VP.suspensionBanner(ctx);
       $("statusText").textContent="Signed in";
       loadAll().catch(function(e){
         // Never let a render fault silently stop the console from connecting. Before this, one
@@ -1129,7 +1139,8 @@
         try{ console.error("members: load failed", e); }catch(_){}
         loadFailed();
       }).then(function(){
-        renderNameSeg(); applyRoleGates();
+        applyRoleGates();
+        if(!G.loadFailed) startMembersPrefs().catch(function(){});   // the venue's last draw, once the draws are in
         var tv=tvFromUrl();
         var _slug=(ctx.venue && ctx.venue.slug) || "";
         if(_slug && window.VPSign){ VPSign.initHost(VP_GAME_API, _slug, vpHostToken); }   // this venue's signing key

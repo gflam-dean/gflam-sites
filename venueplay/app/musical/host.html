@@ -78,6 +78,10 @@
   .panel{background:var(--ink-2);border:1px solid var(--line-2);border-radius:14px;padding:18px}
 
   .field{margin-bottom:14px}
+  /* Two fields on one row at desktop, stacked at phone width (pattern and reveal, 28 Oct 2026). */
+  .fieldrow{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;align-items:start}
+  .fieldrow .field{min-width:0}
+  @media (max-width:640px){ .fieldrow{grid-template-columns:1fr} }
   .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:600}
   .stat{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
   .stat .box{flex:1;background:var(--ink-3);border:1px solid var(--line-2);border-radius:11px;padding:11px 12px;min-width:90px}
@@ -297,13 +301,11 @@
             <input type="text" id="plSearch" placeholder="Search a theme&hellip; e.g. 80s, rock, aussie" autocomplete="off" style="margin-bottom:10px">
             <div id="plGrid" class="plgrid"><div class="plnone">Loading songs&hellip;</div></div>
             <select id="playlistSel" style="display:none"></select>
-            <label class="optin" for="hitsChk" style="display:flex;align-items:center;gap:9px;margin-top:10px;font-size:13px;cursor:pointer">
-              <input class="vp-check" type="checkbox" id="hitsChk" checked>
-              <span>Well-known songs only<small class="vp-fine" style="display:block">On, the night leans hard on the songs everyone knows. Off, every song in the playlist is equally likely, deep cuts and all.</small></span>
-            </label>
           </div>
-          <div class="field">
-            <label>Winning pattern</label>
+          <!-- Pattern and reveal side by side at desktop, stacked on a phone (Dean, 28 Oct 2026). -->
+          <div class="fieldrow" id="patternRevealRow">
+          <div class="field half">
+            <label for="patternSel">Winning pattern</label>
             <select id="patternSel">
               <option value="one">One line (any full row)</option>
               <option value="two">Two lines</option>
@@ -311,11 +313,7 @@
               <option value="full">Full house</option>
             </select>
           </div>
-          <div class="field">
-            <label>Prize</label>
-            <input type="text" id="prizeInput" placeholder="e.g. $50 bar tab">
-          </div>
-          <div class="field">
+          <div class="field half">
             <label for="revealSel">Reveal the song on the TV</label>
             <select id="revealSel">
               <option value="instant">Straight away</option>
@@ -325,11 +323,10 @@
             </select>
             <small class="fieldnote">Until then the TV shows a big question mark, so the room has to know the song rather than read it off the wall. You can always tap Reveal on TV now.</small>
           </div>
+          </div>
           <div class="field">
-            <label class="optin" for="autoChk" style="display:flex;align-items:center;gap:9px;font-size:13px;cursor:pointer;min-height:44px">
-              <input class="vp-check" type="checkbox" id="autoChk">
-              <span>Auto play<small class="vp-fine" style="display:block">The next song starts 8 seconds after the clip ends. It waits while a claim is on screen, and a song with no clip waits for you.</small></span>
-            </label>
+            <label>Prize</label>
+            <input type="text" id="prizeInput" placeholder="e.g. $50 bar tab">
           </div>
           <div class="field" id="paidField" style="display:none">
             <label>Tonight</label>
@@ -337,25 +334,34 @@
               <option value="">Free entry &middot; nobody pays to play</option>
               <option value="paid">Tickets sold &middot; players pay to play</option>
             </select>
-            <small class="fieldnote">Picked once for the night. Free entry is a promotional game and lawful everywhere; selling tickets brings up your state's bingo rules before you start.</small>
+            <small class="fieldnote">Picked once for the night. Free entry is a promotional game and lawful everywhere; selling tickets shows a short note that your venue runs the game.</small>
           </div>
           <div class="field" id="paperField">
             <label>Paper cards <small style="color:var(--faint);font-weight:400">for regulars without a phone</small></label>
             <button type="button" class="btn ghost" id="paperPrintBtn" style="width:100%">Print paper cards</button>
             <small class="fieldnote" id="paperNote">Up to 10 a night, printed from the playlist above. A paper card counts as a player once it is played or checked, the same as a phone.</small>
           </div>
-          <div class="stat">
-            <div class="box"><div class="k">Players</div><div class="v" id="setupPlayers">0</div></div>
-            <div class="box" style="display:none"><div class="k">Join code</div><div class="v g" id="setupCode">------</div></div>
-          </div>
+          <!-- ADVANCED SETTINGS (Dean, 28 Oct 2026): set once by the venue, saved for the venue, closed
+               until opened. The shared disclosure, VP.advanced in /app/vp-session.js. Never "Tonight". -->
+          <details class="vp-adv" id="musicalAdv">
+            <summary><span>Advanced settings<small class="vp-adv-sub">Saved for your venue. Set once, rarely changed.</small></span></summary>
+            <div class="vp-adv-body">
+              <div class="field">
+                <label class="optin" for="hitsChk" style="display:flex;align-items:center;gap:9px;font-size:13px;cursor:pointer">
+                  <input class="vp-check" type="checkbox" id="hitsChk" checked>
+                  <span>Well-known songs only<small class="vp-fine" style="display:block">On, the night leans hard on the songs everyone knows. Off, every song in the playlist is equally likely, deep cuts and all.</small></span>
+                </label>
+              </div>
+              <div class="compliance">
+                <div class="ct">How the music plays</div>
+                <p>The song clips play from the TV screen, so route that screen's sound into your venue's system (HDMI to your soundbar or amp, or through your AV rack) and it plays across the room. To hear it on this device too, tap the sound button once a game is running.</p>
+              </div>
+            </div>
+          </details>
           <div class="vp-week" id="weekBanner" style="display:none"></div>
           <button class="btn pink big" id="startBtn">Open lobby</button>
           <button class="btn ghost big" id="cancelLobbyBtn" style="display:none;margin-top:8px">Close lobby</button>
           <p class="note vp-c" style="margin-top:10px" id="startNote">Opens the join screen on the TV so players can scan in. Deal the cards and start when everyone is on.</p>
-          <div class="compliance">
-            <div class="ct">How the music plays</div>
-            <p>The song clips play from the TV screen, so route that screen's sound into your venue's system (HDMI to your soundbar or amp, or through your AV rack) and it plays across the room. To hear it on this device too, tap the sound button once a game is running.</p>
-          </div>
         </div>
 
         <div id="liveBlock" class="hidden">
@@ -376,7 +382,6 @@
               <button class="btn ghost wide" id="revealBtn" disabled>Reveal on TV now</button>
             </div>
             <div class="liveopts">
-              <label for="autoChkLive"><input type="checkbox" id="autoChkLive"> Auto play the next song</label>
               <label for="revealSelLive">TV reveals
                 <select id="revealSelLive">
                   <option value="instant">straight away</option>
@@ -681,7 +686,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     var c=(window.VP&&VP.getClient)?VP.getClient():client;
     return c.auth.getSession().then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; });
   }
-  function readApi(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((d&&d.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }
+  function readApi(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((window.VP&&VP.hostRefusal?VP.hostRefusal(res.status,d&&d.error):(d&&d.error))||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }
   function apiPost(path, body){ if(window.VP_ONETAB && !VP_ONETAB.live()) return Promise.reject(new Error("This game is open in another tab on this device.")); return getToken().then(function(t){
       /* No timeout meant a request that never settled on pub wifi left G.busy true for good, and
          every later tap on Next, Reveal, Start and Open lobby returned silently at if(G.busy).
@@ -692,7 +697,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       if(_ac) _opts.signal=_ac.signal;
       return fetch(VP_GAME_API+path,_opts).then(function(r){ clearTimeout(_to); return r; },
         function(e){ clearTimeout(_to); var te=new Error("The game server did not answer. Check the venue wifi and try again."); te.status=0; throw te; });
-    }).then(function(res){ return res.json().catch(function(){ return {}; }).then(function(data){ if(res.status===402 && data && data.needs_overage_ack){ var extra=data.extra||0, cap=data.plan_cap||0; var ackAndGo=function(){ return apiPost("/host/overage/ack",{ session_id: body.session_id }).then(function(){ return apiPost(path, body); }); }; if(data.free_month) return ackAndGo();   /* the Worker decides the free month, not our own calendar maths */ return confirmOverage(cap, extra).then(function(ok){ if(!ok){ var ec=new Error("Over plan - game not started."); ec.status=402; throw ec; } return ackAndGo(); }); } if(!res.ok){ var e=new Error((data&&data.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return data; }); }); }
+    }).then(function(res){ return res.json().catch(function(){ return {}; }).then(function(data){ if(res.status===402 && data && data.needs_overage_ack){ var extra=data.extra||0, cap=data.plan_cap||0; var ackAndGo=function(){ return apiPost("/host/overage/ack",{ session_id: body.session_id }).then(function(){ return apiPost(path, body); }); }; if(data.free_month) return ackAndGo();   /* the Worker decides the free month, not our own calendar maths */ return confirmOverage(cap, extra).then(function(ok){ if(!ok){ var ec=new Error("Over plan - game not started."); ec.status=402; throw ec; } return ackAndGo(); }); } if(!res.ok){ var e=new Error((window.VP&&VP.hostRefusal?VP.hostRefusal(res.status,data&&data.error):(data&&data.error))||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return data; }); }); }
 
   // TWO broadcast channels for instant UX (the DB is the source of truth), same as the
   // bingo/trivia host:
@@ -799,7 +804,6 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     claims:[], claim:null, won:false, busy:false,
     revealMode:"end",     // when the TV shows the title: instant | 15 | end | never
     revealed:false,       // has the current song been revealed on the TV (as far as this console knows)
-    autoPlay:false,       // next song 8 seconds after the clip ends
     startedAt:0, peak:0, prizesWon:[],   // the night's record, posted to /report at the end
     hostMonitor:false,    // false = the venue sound comes from the TV screen and THIS device stays quiet
     tvLastSeen:0          // when a screen last announced itself; 0 means never
@@ -1073,47 +1077,10 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   audio.addEventListener("ended", function(){
     setPlayPause(false); $("clipFill").style.width="100%";
     if(G.revealMode==="end"){ G.revealed=true; syncRevealBtn(); }   // the TV reveals itself on its own clip's end
-    maybeAutoNext();
   });
 
-  /* AUTO PLAY. Sixty taps a night is sixty chances to let the gap drift while the host is on
-     the mic or checking a card. Off by default, saved per device. The timer is cancelled by a
-     claim, a pause, End game, New game and any manual tap, and it never fires for a song with
-     no clip because nothing ended. */
-  var AUTO_GAP_SECONDS=8, _autoTimer=null;
-  function cancelAuto(){
-    if(_autoTimer){ clearInterval(_autoTimer); _autoTimer=null; var b=$("playNextBtn"); if(b && !VP_HOLD.busy(b)){ b.disabled=false; syncPlayBtn(); } }
-  }
-  function maybeAutoNext(){
-    cancelAuto();
-    if(!G.autoPlay || G.status!=="running" || G.claims.length || G.won) return;
-    if(!G.nowSong || !G.nowSong.previewUrl) return;
-    if(!$("carryModal").classList.contains("hidden")) return;
-    if(!peekNextInQueue()) return;
-    var left=AUTO_GAP_SECONDS, b=$("playNextBtn");
-    function tick(){
-      var bb=$("playNextBtn");
-      if(left<=0){
-        if(bb && VP_HOLD.busy(bb)) return;   // a short clip: the hold has not let go yet, so wait for it
-        cancelAuto(); if(G.autoPlay && G.status==="running" && !G.claims.length) playNext(); return;
-      }
-      if(bb){ bb.disabled=false; bb.textContent="Auto: next song in "+left+"s (tap to go now)"; }
-      left--;
-    }
-    tick();
-    _autoTimer=setInterval(tick, 1000);
-  }
-  function syncAutoUI(){
-    var a=$("autoChk"), b=$("autoChkLive");
-    if(a) a.checked=G.autoPlay; if(b) b.checked=G.autoPlay;
-    if(!G.autoPlay) cancelAuto();
-  }
-  function setAutoPlay(on){
-    G.autoPlay=!!on; try{ localStorage.setItem("vpMusicAuto", G.autoPlay?"1":"0"); }catch(e){}
-    syncAutoUI();
-    // Switched on after the clip already ended: start the countdown now rather than waiting a song.
-    if(G.autoPlay && audio.src && audio.ended) maybeAutoNext();
-  }
+  /* AUTO PLAY IS GONE (Dean, 28 Oct 2026): "the host isn't gonna be like oh I've only got eight
+     seconds to talk; get rid of it." The host plays every song with a tap. */
 
   /* REVEAL. The TV used to show the title 850ms after the song started, so the room read the
      answer off the wall instead of knowing it. The host picks when the TV reveals; the mode
@@ -1127,7 +1094,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   function setRevealMode(v){
     if(!REVEAL_MODES[v]) v="end";
     G.revealMode=v; try{ localStorage.setItem("vpMusicReveal", v); }catch(e){}
-    syncRevealUI();
+    syncRevealUI(); queuePrefsSave();
   }
   var _revealTimer=null;
   function syncRevealBtn(){
@@ -1182,7 +1149,6 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     if(G.gameId && song.song_id){
       apiPost("/host/play",{ game_id:G.gameId, song_id:song.song_id }).catch(function(e){ hostError(e.message); });
     }
-    cancelAuto();
     armRevealMirror(song);
     bcast(playedMsg(song, false));
     var warn=$("clipWarn");
@@ -1253,7 +1219,6 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       VP_HOLD.release(b);
     }
     clearErrForAction();
-    cancelAuto();
     for(var i=G.qIdx+1;i<G.queue.length;i++){
       var s=G.songs[G.queue[i]];
       if(s && !G.played[songKey(s)]){
@@ -1271,23 +1236,21 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     $("playNextBtn").disabled=true; $("playNextBtn").textContent="All songs played";
   }
   function togglePlayPause(){ if(!audio.src) return;
-    if(audio.paused){ cancelAuto(); if(audio.ended) return; var pr=audio.play(); if(pr&&pr.catch) pr.catch(function(){}); bcast({ t:"clipctl", action:"play" }); }
-    else { cancelAuto(); audio.pause(); bcast({ t:"clipctl", action:"pause" }); }
+    if(audio.paused){ if(audio.ended) return; var pr=audio.play(); if(pr&&pr.catch) pr.catch(function(){}); bcast({ t:"clipctl", action:"play" }); }
+    else { audio.pause(); bcast({ t:"clipctl", action:"pause" }); }
   }
   /* A claim pauses the room. The TV already stopped its clip on claim_pending; this device
      kept running, so the Pause button read "Pause" while the room heard nothing and the first
      tap on it did the opposite of what the host meant. Stop here too, and start both again. */
   function pauseForClaim(){
-    cancelAuto();
     if(audio.src && !audio.paused && !audio.ended){ try{ audio.pause(); }catch(e){} G._pausedForClaim=true; }
   }
   function resumeAfterClaim(){
     if(G.status!=="running" || G.claims.length) return;
     if(G._pausedForClaim && audio.src && audio.paused && !audio.ended){ var pr=audio.play(); if(pr&&pr.catch) pr.catch(function(){}); }
     G._pausedForClaim=false;
-    if(audio.src && audio.ended) maybeAutoNext();
   }
-  function stopAudio(){ cancelAuto(); try{ audio.pause(); }catch(e){} try{ audio.removeAttribute("src"); audio.load(); }catch(e){} resetClipUI(); $("playPauseBtn").disabled=true; $("playPauseBtn").textContent="Pause"; }
+  function stopAudio(){ try{ audio.pause(); }catch(e){} try{ audio.removeAttribute("src"); audio.load(); }catch(e){} resetClipUI(); $("playPauseBtn").disabled=true; $("playPauseBtn").textContent="Pause"; }
 
   // ---- Spotify affordance (for venues who prefer full tracks off their own subscription) ----
   function spotifyLinks(){
@@ -1312,7 +1275,6 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   // hosts have been reporting. A join only changes counts and the chip list, so
   // that is all it is allowed to touch.
   function renderJoinCounts(){
-    var _sp=$("setupPlayers"); if(_sp) _sp.textContent=playerCount();
     var _pc=$("playerCount");  if(_pc) _pc.textContent=playerCount();
     var _lp=$("livePlayers");  if(_lp) _lp.textContent=playerCount();
     var _ob=$("overBanner"), _oc=playerCap(), _op=playerCount();
@@ -1366,13 +1328,11 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     var live=G.status==="running", lobby=G.status==="lobby";
     $("setupBlock").classList.toggle("hidden", live);
     $("liveBlock").classList.toggle("hidden", !live);
-    $("setupPlayers").textContent=playerCount();
     var _ob=$("overBanner"), _oc=playerCap(), _op=playerCount();
     if(_ob){
       if(_oc>0 && _op>_oc){ _ob.style.display=""; _ob.innerHTML="Heads up: <b>"+_op+"</b> players in, <b>"+(_op-_oc)+"</b> over the <b>"+_oc+"</b> your plan includes. "+(inFirstMonth()?"Your first month is free, so no charge this time.":"The extra will be charged to your card for this billing period."); }
       else _ob.style.display="none";
     }
-    $("setupCode").textContent=roomCode();
     syncRoomCode();
     $("playerCount").textContent=playerCount();
     if(!live){
@@ -1527,7 +1487,6 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       G.joinCode=r.join_code;
       openGameChannel(G.joinCode);                                          // players' channel
       send({ t:"session", session_id:G.sessionId, join_code:G.joinCode });  // hand the real code to the screen
-      $("setupCode").textContent=roomCode();
       return r;
     });
   }
@@ -1646,10 +1605,18 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     });
   }
   function endGame(){
-    if(G.busy) return;
+    if(G.busy || G.endAsking || G.status!=="running") return;
     /* Same guard as New game. One stray tap here used to clear the songs, close every card and
-       send the TV back to the ads mid-round, in front of the room. */
-    vpAsk("End this game?\n\nThe TV goes back to your ads and everyone's card is closed.").then(function(ok){ if(ok && !G.busy) endGameAsked(); });
+       send the TV back to the ads mid-round, in front of the room.
+       ONE PROMPT, HOWEVER MANY TAPS. vpAsk queues a question asked while one is open, so a double
+       tap put a second "End this game?" up after the first OK had already ended the game (live
+       play, Test Charlie, 27 Oct 2026). endAsking holds the button while the question is open, and
+       a stale OK does nothing once the game is no longer running. */
+    G.endAsking=true;
+    vpAsk("End this game?\n\nThe TV goes back to your ads and everyone's card is closed.").then(function(ok){
+      G.endAsking=false;
+      if(ok && !G.busy && G.status==="running") endGameAsked();
+    }, function(){ G.endAsking=false; });
   }
   function endGameAsked(){
     clearErrForAction();
@@ -1975,7 +1942,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     renderPlCards($("plSearch") ? $("plSearch").value : "");
   }
   function selectPlaylist(id){
-    G.playlistId=id; $("playlistSel").value=id;
+    G.playlistId=id; $("playlistSel").value=id; queuePrefsSave();
     var cards=document.querySelectorAll("#plGrid .plcard");
     for(var i=0;i<cards.length;i++){ cards[i].classList.toggle("on", cards[i].getAttribute("data-id")===id); }
   }
@@ -1994,7 +1961,51 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     if(!shown){ var n=document.createElement("div"); n.className="plnone"; n.textContent='No theme matches "'+q+'".'; g.appendChild(n); }
   }
 
+  /* THE SETUP IS SAVED FOR THE VENUE, NOT THIS BROWSER (Dean, 28 Oct 2026). Theme, well-known
+     songs only, winning pattern, prize and reveal live in vp_venue_settings.game_prefs.musical
+     (migration 121), read and merged through the game Worker's /host/game-prefs by any staff login,
+     so a second tablet or next week opens on the same choices. Each change is saved a moment later.
+     Loading (VP.gamePrefs): the venue's saved values win. If the route is not there yet (404, or the
+     column has not been added) this browser's own choices stay, exactly as before. If the venue has
+     saved nothing yet, this browser's remembered choices (vpMusicHitsOnly, vpMusicReveal) are sent up
+     ONCE, so nobody loses what they had. Never paid-or-free for the night: that is decided each night. */
+  var PREFS_GAME="musical";
+  function musicalPrefs(){
+    var p={ hits_only:!!G.hitsOnly, reveal:String(G.revealMode||"") };
+    if(G.playlistId){ p.playlist=String(G.playlistId); p.playlist_name=String(playlistNameOf(G.playlistId)||""); }
+    var ps=$("patternSel"); if(ps && ps.value) p.pattern=String(ps.value);
+    var pz=$("prizeInput"); var prize=String((pz && pz.value)||"").trim(); if(prize) p.prize=prize;
+    return p;
+  }
+  function applyMusicalPrefs(p){
+    if(!p || G.status!=="setup") return false;
+    var used=false;   // VP.gamePrefs holds every save while this runs
+    if(p.playlist){
+      for(var i=0;i<PL_OPTS.length;i++){ if(PL_OPTS[i].id===p.playlist){ selectPlaylist(p.playlist); used=true; break; } }
+    }
+    if(typeof p.hits_only==="boolean"){ var hc=$("hitsChk"); G.hitsOnly=p.hits_only; if(hc) hc.checked=p.hits_only; used=true; }
+    if(p.pattern){ var ps=$("patternSel"); if(ps && ps.querySelector('option[value="'+p.pattern+'"]')){ ps.value=p.pattern; G.pattern=p.pattern; used=true; } }
+    if(p.prize){ var pi=$("prizeInput"); if(pi && !String(pi.value||"").trim()){ pi.value=p.prize; used=true; } }
+    if(p.reveal && REVEAL_MODES[p.reveal]){ setRevealMode(p.reveal); used=true; }
+    return used;
+  }
+  function musicalLocalPrefs(){   // this browser's old choices, sent up once to a venue that has none yet
+    var p={};
+    try{
+      var h=localStorage.getItem("vpMusicHitsOnly"); if(h!==null) p.hits_only=(h==="1");
+      var r=localStorage.getItem("vpMusicReveal"); if(r && REVEAL_MODES[r]) p.reveal=r;
+    }catch(e){}
+    return p;
+  }
+  // The one shared mechanism (VP.gamePrefs in /app/vp-session.js): read, apply, then save each change.
+  var _prefs=(window.VP && VP.gamePrefs) ? VP.gamePrefs(PREFS_GAME, { venueId:function(){ return G.venueId; },
+    api:function(){ return VP_GAME_API; }, token:getToken, collect:musicalPrefs, apply:applyMusicalPrefs, local:musicalLocalPrefs }) : null;
+  function queuePrefsSave(){ if(_prefs) _prefs.queue(); }
+  // Once the themes are on the page: the venue's choices, or this browser's sent up once.
+  function startVenuePrefs(){ return _prefs ? _prefs.start() : Promise.resolve(null); }
+
   // ---- events ----
+  if(window.VP && VP.advanced) VP.advanced($("musicalAdv"), "musical");   // closed unless this browser left it open
   var codeIn=$("codeIn");
   codeIn.addEventListener("input", function(){
     var v=codeIn.value.toUpperCase().replace(/[^ACDEFGHJKMNPQRSTUVWXYZ2345679]/g,"");
@@ -2015,19 +2026,16 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     c.addEventListener("change", function(){
       G.hitsOnly=c.checked;
       try{ localStorage.setItem("vpMusicHitsOnly", c.checked?"1":"0"); }catch(e){}
+      queuePrefsSave();
     });
   })();
   if($("plSearch")) $("plSearch").addEventListener("input", function(){ renderPlCards(this.value); });
+  ["patternSel","prizeInput"].forEach(function(id){ var el=$(id); if(el) el.addEventListener("change", queuePrefsSave); });
   (function bindReveal(){
     var v="end"; try{ v=localStorage.getItem("vpMusicReveal")||"end"; }catch(e){}
     G.revealMode=REVEAL_MODES[v]?v:"end"; syncRevealUI();
     ["revealSel","revealSelLive"].forEach(function(id){ var s=$(id); if(s) s.addEventListener("change", function(){ setRevealMode(s.value); }); });
     var rb=$("revealBtn"); if(rb) rb.addEventListener("click", revealNow);
-  })();
-  (function bindAuto(){
-    var v="0"; try{ v=localStorage.getItem("vpMusicAuto")||"0"; }catch(e){}
-    G.autoPlay=(v==="1"); syncAutoUI();
-    ["autoChk","autoChkLive"].forEach(function(id){ var c=$(id); if(c) c.addEventListener("change", function(){ setAutoPlay(c.checked); }); });
   })();
   // auto-daub is a per-player choice (Easy mode on the phone), not a host setting
   /* Musical bingo is bingo to every regulator, but the line they draw is paid entry, not prize
@@ -2283,7 +2291,6 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
        certified on a song nobody heard. Inside the hold the host is asked, not ignored. */
     var _hb=$("playNextBtn");
     function playPicked(){
-    cancelAuto();
     playSong(_ps);
     VP_HOLD.hold(_hb, _ps.previewUrl ? SONG_HOLD_SECONDS : NO_CLIP_HOLD_SECONDS, holdLabel,
       function(){ var bb=$("playNextBtn"); if(bb && bb.textContent!=="All songs played") syncPlayBtn(); },
@@ -2330,6 +2337,10 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     VP.ready().then(function(ctx){
       if(!ctx.authed){ $("statusText").textContent="Not signed in"; showSignIn("You need your venue host login to start a live game."); return; }
       if(!ctx.currentVenueId){ $("statusText").textContent="No venue"; showSignIn("This login is not linked to a venue yet."); return; }
+      /* SWITCHED OFF: one card in place of the setup, and nothing below it runs (no key, no TV, no
+         restore). The Worker refuses a game here anyway; the page says so first (28 Oct 2026). */
+      if(VP.holdGate && VP.holdGate(ctx)){ VP.enforceShift(); $("statusText").textContent="Switched off"; return; }
+      if(VP.termsGate && VP.termsGate(ctx)){ VP.enforceShift(); $("statusText").textContent="One tick first"; return; }   // a prospect venue ticks section 6 before its first game (migration 122)
       G.venueId=ctx.currentVenueId; G.venue=ctx.venue||null;
       G.slug=(ctx.venue && ctx.venue.slug) || "";   // so the console can show the code the ROOM is shown
       showPaidField(ctx.venue);                      // "Tonight: free entry / tickets sold", only where the venue may charge
@@ -2339,13 +2350,14 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       // so signing back in restores it instead of burning the once-a-week musical slot.
       if(VP.setGameActive) VP.setGameActive(function(){ return G.status==="running" || G.status==="lobby" || G.claims.length>0; });
       VP.enforceShift();   // the 4h forced sign-out is a compliance control: it has to apply here too, not only on /app
-      if(VP.suspensionBanner) VP.suspensionBanner(ctx);
       $("statusText").textContent="Signed in";
       var slug=(ctx.venue && ctx.venue.slug) || "";
       if(slug && window.VPSign){ VPSign.initHost(VP_GAME_API, slug, vpHostToken); }   // this venue's signing key
       /* ONE CONSOLE PER TABLET. Restoring is what made a second tab a second live console for
          the same game, so ask the other tabs first (/app/vp-onetab.js, 14 Oct 2026). */
       var _oneTab=(window.VP_ONETAB ? VP_ONETAB.claim("musical:"+G.venueId) : Promise.resolve(true));
+      // This venue's saved setup, once the themes exist to pick from (see applyMusicalPrefs).
+      libReady.then(startVenuePrefs).catch(function(){});
       Promise.all([libReady, _oneTab]).then(function(){   // library must be loaded before we rebuild a game's song list
         restoreMusic().then(function(){         // recover a live game first (accidental reload), then pair the TV as normal
           /* Picked up on another device: stand down and fall silent (/app/vp-pickup.js). */

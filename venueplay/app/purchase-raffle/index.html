@@ -382,7 +382,7 @@
         function(){ clearTimeout(to); var e=new Error("The VenuePlay server did not answer. Check the venue wifi and try again."); e.status=0; e.body={}; throw e; });
     }).then(function(r){
       return r.json().catch(function(){ return {}; }).then(function(d){
-        if(!r.ok){ var e=new Error((d&&d.error)||("Something went wrong ("+r.status+")")); e.status=r.status; e.body=d||{}; throw e; }
+        if(!r.ok){ var e=new Error((window.VP&&VP.hostRefusal?VP.hostRefusal(r.status,d&&d.error):(d&&d.error))||("Something went wrong ("+r.status+")")); e.status=r.status; e.body=d||{}; throw e; }
         return d;
       });
     });
@@ -761,7 +761,9 @@
     if(!ctx.authed){ show("loadingView",false); show("signinView",true); return; }
     if(!ctx.currentVenueId){ show("loadingView",false); $("signinSub").textContent="This login is not linked to a venue yet."; show("signinView",true); return; }
     if(VP.enforceShift) VP.enforceShift();   // the 4h forced sign-out is a compliance control: it applies here too
-    if(VP.suspensionBanner) VP.suspensionBanner(ctx);
+    /* SWITCHED OFF: one card in place of the draw, and nothing below it runs (28 Oct 2026). */
+    if(VP.holdGate && VP.holdGate(ctx)){ show("loadingView",false); return; }
+    if(VP.termsGate && VP.termsGate(ctx)){ show("loadingView",false); return; }   // a prospect venue ticks section 6 first (migration 122)
     G.venueId=ctx.currentVenueId; G.venue=ctx.venue||null; G.slug=(ctx.venue&&ctx.venue.slug)||"";
     $("venueName").textContent=(ctx.venue&&ctx.venue.name)||"";
     if(VP.listVenues) VP.listVenues().then(function(v){ G.multi=!!(v && v.length>1); if(G.raffle) render(); }).catch(function(){});

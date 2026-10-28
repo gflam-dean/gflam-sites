@@ -167,19 +167,21 @@ html,body{background:var(--dark);color:#fff;font-family:"DM Sans",sans-serif;fon
 </div>
 <hr class="divider">
 <div style="background:var(--dark)"><div class="section">
-  <div id="tourCards">
-    <!-- Fallback: coming-soon shown if Supabase unavailable or no cards; replaced by managed cards on load -->
+  <div id="tourCards" data-state="loading">
+    <!-- While the page reads what's on, it says so. "Coming Soon" is only ever written by the loader
+         below, once the database has answered and nothing is on (27 Oct 2026, same as the homepage). -->
     <div style="background:var(--dark2);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;margin-bottom:24px">
       <div style="padding:48px">
-        <div class="eyebrow" style="margin-bottom:16px">Coming Soon</div>
-        <div style="font-family:'DM Serif Display',serif;font-size:clamp(28px,4vw,42px);letter-spacing:-1px;color:#fff;margin-bottom:16px;line-height:1.1">Fabulous things in the works<span class="dot">.</span></div>
-        <p class="muted" style="font-size:15px;margin-bottom:24px">New tours are being announced soon. Join the mailing list to be the first to know - and to grab early-bird tickets.</p>
+        <div class="eyebrow" style="margin-bottom:16px">One Moment</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:clamp(28px,4vw,42px);letter-spacing:-1px;color:#fff;margin-bottom:16px;line-height:1.1">Loading what's on<span class="dot">.</span></div>
+        <p class="muted" style="font-size:15px;margin-bottom:24px">Fetching the latest tours and tickets. Join the mailing list and the next shows come straight to you.</p>
         <a href="/#signup" class="btn btn-pink">Join the Mailing List</a>
       </div>
       <div style="background:var(--dark3);display:flex;align-items:center;justify-content:center;border-left:1px solid var(--border);min-height:300px;text-align:center;padding:40px">
         <div><div style="font-size:60px;margin-bottom:16px">&#10024;</div><div style="font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase">Stay Tuned</div></div>
       </div>
     </div>
+    <noscript><p class="muted" style="font-size:15px;margin-bottom:24px">Turn on JavaScript to see what's on, or <a href="/#signup" style="color:var(--pink)">join the mailing list</a>.</p></noscript>
   </div>
   <div style="background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:40px;margin-bottom:24px">
     <div style="text-align:center;margin-bottom:32px">
@@ -249,20 +251,61 @@ html,body{background:var(--dark);color:#fff;font-family:"DM Sans",sans-serif;fon
       ${right}
     </div>`;
   }
-  try{
+  /* LOADING, ONE RETRY, THEN THE TRUTH (27 Oct 2026): the same loader as the homepage, see the
+     note there. Each read gets TC_FETCH_MS, the pair is tried twice, "Coming Soon" is only written
+     once the database has answered and nothing is on, and two failures say so and offer another
+     go. tools/test-touring-cards-loader.js runs this under jsc. data-state: loading, shows, none, failed. */
+  const TC_FETCH_MS = 8000;
+  const loadingHTML = wrap.innerHTML;
+  const failedHTML = `<div style="background:var(--dark2);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;margin-bottom:24px">
+      <div style="padding:48px">
+        <div class="eyebrow" style="margin-bottom:16px">What's On Now</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:clamp(28px,4vw,42px);letter-spacing:-1px;color:#fff;margin-bottom:16px;line-height:1.1">We couldn't load what's on<span class="dot">.</span></div>
+        <p class="muted" style="font-size:15px;margin-bottom:24px">Our show listing didn't answer just now. Try again in a moment, or join the mailing list and the next shows come straight to you.</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap"><a href="#tourCards" class="btn btn-pink" onclick="window.loadTourCards();return false;">Try Again</a><a href="/#signup" class="btn btn-pink">Join the Mailing List</a></div>
+      </div>
+      <div style="background:var(--dark3);display:flex;align-items:center;justify-content:center;border-left:1px solid var(--border);min-height:300px;text-align:center;padding:40px">
+        <div><div style="font-size:60px;margin-bottom:16px">&#10024;</div><div style="font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase">Try Again</div></div>
+      </div>
+    </div>`;
+  function tcFetch(url){
+    const ac=new AbortController();
+    const t=setTimeout(function(){ ac.abort(); }, TC_FETCH_MS);
+    return fetch(url,{headers:SBH,signal:ac.signal}).then(function(r){ clearTimeout(t); return r; }, function(e){ clearTimeout(t); throw e; });
+  }
+  async function tcRead(){
     const today=new Date().toISOString().slice(0,10);
     const [catsR,showsR]=await Promise.all([
-      fetch(SBU+"/rest/v1/tour_categories?order=priority.asc",{headers:SBH}),
-      fetch(SBU+"/rest/v1/shows?select=show_type,show_date&show_date=gte."+today,{headers:SBH})
+      tcFetch(SBU+"/rest/v1/tour_categories?order=priority.asc"),
+      tcFetch(SBU+"/rest/v1/shows?select=show_type,show_date&show_date=gte."+today)
     ]);
-    if(!catsR.ok)throw new Error("cats");
-    const cats=await catsR.json();
-    if(!Array.isArray(cats)||!cats.length){wrap.innerHTML=comingSoonHTML;return;}
+    if(!catsR.ok)throw new Error("tour_categories answered "+catsR.status);
+    if(!showsR.ok)throw new Error("shows answered "+showsR.status);
+    const cats=await catsR.json(), shows=await showsR.json();
+    return {cats:Array.isArray(cats)?cats:[], shows:Array.isArray(shows)?shows:[]};
+  }
+  function tcPaint(d){
+    if(!d.cats.length){wrap.innerHTML=comingSoonHTML;wrap.dataset.state="none";return;}
     let counts={};
-    if(showsR.ok){(await showsR.json()).forEach(function(x){counts[x.show_type]=(counts[x.show_type]||0)+1;});}
-    const visible=cats.filter(function(c){if(c.auto_hide&&c.tour_key){return (counts[c.tour_key]||0)>0;}return true;});
-    if(!visible.length){wrap.innerHTML=comingSoonHTML;return;}
+    d.shows.forEach(function(x){counts[x.show_type]=(counts[x.show_type]||0)+1;});
+    const visible=d.cats.filter(function(c){if(c.auto_hide&&c.tour_key){return (counts[c.tour_key]||0)>0;}return true;});
+    if(!visible.length){wrap.innerHTML=comingSoonHTML;wrap.dataset.state="none";return;}
     wrap.innerHTML=visible.map(cardHTML).join("");
-  }catch(e){}
+    wrap.dataset.state="shows";
+  }
+  window.loadTourCards=async function(){
+    wrap.innerHTML=loadingHTML; wrap.dataset.state="loading";
+    let data=null, err=null;
+    for(let go=0; go<2 && !data; go++){
+      try{ data=await tcRead(); }catch(e){ err=e; }
+    }
+    if(!data){
+      wrap.innerHTML=failedHTML; wrap.dataset.state="failed";
+      console.warn("tour cards: could not load what's on after two tries: "+(err&&err.message));
+      return;
+    }
+    tcPaint(data);
+  };
+  window.loadTourCards();
 })();
 </script></body></html>

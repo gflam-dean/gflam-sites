@@ -301,7 +301,18 @@ def fast_gate(name, path, skip_live=False):
         cmd = [sys.executable, str(REPO / s)] if s.endswith('.py') else [gatelib.JSC, str(REPO / s)]
 
         def _passed(rr):
-            return rr.rc == 0 and _suite_passed(rr.last)
+            # The gate's rule for the tools/test-*.js suites as well (release-check.py section D: exit 0,
+            # "PASS" printed, no FAIL line). They print "PASS 27 checks", which _suite_passed does not know,
+            # so on 28 Oct 2026 this fast gate called 13 green suites red and refused a deploy the full gate
+            # had passed. A FAIL line or a non-zero exit is still red either way.
+            if rr.rc != 0:
+                return False
+            if _suite_passed(rr.last):
+                return True
+            text = re.sub(r'\x1b\[[0-9;]*m', '', rr.out or '')
+            # Exactly release-check.py's section D rule: "PASS" anywhere in the output (some suites print it
+            # first and end on an "ok" line), and no line that starts with FAIL.
+            return 'PASS' in text and not any(l.strip().startswith('FAIL') for l in text.splitlines())
         rr, flake = gatelib.run_suite_with_retry(cmd, os.path.basename(s), _passed, cwd=str(REPO),
                                                  timeout=900 if is_chrome else 300, chrome=is_chrome,
                                                  say=lambda x: print('  ' + x))
