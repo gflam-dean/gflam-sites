@@ -1139,16 +1139,16 @@
   "checks": 28,
   "counted_by": "lines"
  },
- "tools/test-prospects-tab.js": {
-  "checks": 62,
-  "counted_by": "lines"
- },
  "tools/test-prospect-welcome-v2.js": {
   "checks": 98,
   "counted_by": "lines"
  },
  "tools/test-prospect-autopilot.js": {
   "checks": 38,
+  "counted_by": "lines"
+ },
+ "tools/test-prospects-tab.js": {
+  "checks": 62,
   "counted_by": "lines"
  }
 }
