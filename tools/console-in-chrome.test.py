@@ -281,23 +281,38 @@ def sign_out():
        ask(host, 'document.body.innerText.replace(/\\s+/g," ").slice(0,200)'))
     B.close_tab(ctid)
 
+RUNNING = '!document.getElementById("liveBlock").classList.contains("hidden")'
+def musical_running(host):
+    """Open lobby, then Start game, the way a host does. End game sits in the running console (liveBlock);
+    since 27 Oct 2026 (train/games-27-oct, b32521b1) it only acts on a RUNNING game, so tapping it on the
+    setup page or in a lobby, where it is not even on screen, rightly does nothing."""
+    ask(host, 'document.getElementById("prizeInput").value="Bar tab"; true')
+    tap(host, 'document.getElementById("startBtn").click();')
+    until(host, '(function(){var e=document.getElementById("cancelLobbyBtn"); return !!e && e.style.display!=="none";})()', 10)
+    tap(host, 'document.getElementById("startBtn").click();')
+    return until(host, RUNNING, 15) is True
+
 def musical_end():
     print('\nEnd game on the musical bingo console (was a native confirm())')
     ctid, host = B.open_tab(BASE + '/app/musical/host.html')
     B.call('Page.enable', {}, session=host)
     ok('the musical console loads', until(host, 'document.readyState==="complete" && !!document.getElementById("endGameBtn")', 20) is True)
     time.sleep(2)
+    ok('CONTROL: a musical game is running, with End game on screen', musical_running(host) and visible(host, 'endGameBtn'),
+       ask(host, 'document.body.innerText.replace(/\\s+/g," ").slice(0,200)'))
     tap(host, 'document.getElementById("endGameBtn").click();')
     time.sleep(1)
     ok('after End game the console still answers inside 6 seconds', alive(host), 'the page did not answer within 6 seconds')
     ok('no native browser dialog is holding it', no_native(host), 'a native dialog was open')
     ok('End this game? is asked on the page', asked(host, 'End this game') is True, ask(host, 'document.body.innerText.replace(/\\s+/g," ").slice(0,200)'))
     tap(host, 'document.getElementById("vpAskCancel").click();')
-    ok('Cancel leaves the game alone and the console answers', until(host, '!document.getElementById("vpAsk")', 4) is True and alive(host))
+    ok('Cancel leaves the game alone and the console answers', until(host, '!document.getElementById("vpAsk")', 4) is True and alive(host)
+       and ask(host, RUNNING) is True)
     tap(host, 'document.getElementById("endGameBtn").click();')
     asked(host, 'End this game')
     tap(host, 'document.getElementById("vpAskGo").click();')
     ok('End game, answered yes on the page, goes through and the console answers', until(host, '!document.getElementById("vpAsk")', 4) is True and alive(host)
+       and until(host, '!(' + RUNNING + ')', 6) is True
        and not ask(host, '(window.__errs||[]).join(" | ")'), ask(host, '(window.__errs||[]).join(" | ")'))
     B.close_tab(ctid)
 
@@ -380,6 +395,8 @@ def done_closes_the_night():
     tap(host, 'document.getElementById("startBtn").click();')
     until(host, '(function(){var e=document.getElementById("cancelLobbyBtn"); return !!e && e.style.display!=="none";})()', 10)
     ok('CONTROL: a second musical lobby is live again, still no takeover question', until_live(True) and not ask(host, '!!document.getElementById("vpTakeover")'))
+    tap(host, 'document.getElementById("startBtn").click();')   # Start game: End game is the running game's control
+    until(host, RUNNING, 15)
     tap(host, 'document.getElementById("endGameBtn").click();')
     asked(host, 'End this game')
     tap(host, 'document.getElementById("vpAskGo").click();')
