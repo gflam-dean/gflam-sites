@@ -410,7 +410,7 @@ prospect books the welcome with Resend (`scheduled_at`, default 90 minutes, 0 to
 `/welcome-cancel` and `/welcome-now` read and change it until its minute, retiring the old link each time. RLS on, no policies,
 revoked from public/anon/authenticated: service role only. Run BEFORE the billing Worker; without it the email is still booked
 for later and HQ is told it cannot cancel or send it early. After running, dump RLS-BASELINE.json (one new table). Branch
-`feature/prospect-v2-28-oct`. NOT RUN. Rollback: in the file.
+`feature/prospect-v2-28-oct`. RUN, live by 29 Oct 2026 (RLS-BASELINE.json shows the table). Rollback: in the file.
 
 `venueplay-125-prospects-tab.sql` (Dean, 29 Oct 2026, "put the prospects into HQ as a tab ... if they haven't accessed it within
 ... three days it flags the venue ... so then we can actually give the person a call"): table `vp_prospects` (venue_id primary
@@ -421,4 +421,4 @@ read by `/admin/prospects` and changed by `/admin/prospect/called` (owner or acc
 each read from the account record. Backfills every earlier `prospect_set_up` audit row once. RLS on, no policies, revoked from
 public/anon/authenticated: service role only. Run BEFORE the billing Worker; without it Set up a prospect still works (HQ is told,
 the phone is on the audit row) and the Prospects tab says "Run migration 125". After running, dump RLS-BASELINE.json (one new
-table). Branch `feature/prospects-tab`. NOT RUN. Rollback: in the file.
+table). Branch `feature/prospects-tab`. RUN 29 Oct 2026 (RLS-BASELINE.json dumped after). Rollback: in the file.
