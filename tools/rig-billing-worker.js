@@ -62,7 +62,11 @@ function match(row,q){
     if(k==='and'){ var conds=v.replace(/^\(|\)$/g,'').split(','); var all=true;   // and=(col.op.val,...), as PostgREST
       conds.forEach(function(c){ var mm=/^([a-z_]+)\.(eq|gte|lte|gt|lt)\.(.*)$/.exec(c); if(!mm) throw new Error('the fake database cannot answer and='+v);
         var one={}; one[mm[1]]=mm[2]+'.'+mm[3]; if(!match(row,one)) all=false; }); if(!all) return false; continue; }
-    var m=/^(eq|neq|is|in|gte|lte|gt|lt|ilike)\.(.*)$/.exec(v); if(!m) throw new Error('the fake database cannot answer '+k+'='+v);
+    var m=/^(eq|neq|is|in|gte|lte|gt|lt|ilike|like)\.(.*)$/.exec(v); if(!m) throw new Error('the fake database cannot answer '+k+'='+v);
+    /* A plain col=like.x* (28 Oct 2026). Until then it threw, and the help desk's once-only acknowledgement
+       guard "passed" only because the throw was caught and read as "do not send": prove-checks found the
+       guard could be deleted with every check still green. SQL LIKE, case-sensitive, through likeRx. */
+    if(m[1]==='like'){ if(!(row[k]!=null && likeRx(m[2],false).test(String(row[k])))) return false; continue; }
     var have=row[k];
     if(m[1]==='in'){ var list=m[2].replace(/^\(|\)$/g,'').split(',').map(function(x){return x.replace(/^"|"$/g,'');}); if(list.indexOf(String(have))===-1) return false; continue; }
     if(m[1]==='gt'){ if(!(have!=null && String(have)>m[2])) return false; continue; }
