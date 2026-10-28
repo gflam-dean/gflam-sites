@@ -16,7 +16,7 @@
   ads), sms / oneclick / nooneclick (how they sign in; exactly one is kept), samelogin (their mobile and email
   are already one VenuePlay login at another venue), founding / standard (offer).
   Merge fields:
-    {{greeting}} {{venue_name}} {{signin_url}} {{login_email}} {{login_mobile}}
+    {{greeting}} {{venue_name}} {{signin_url}} {{login_email}} {{login_mobile}} {{player_count}} (their plan's players, 10 unless told)
     {{player_rate}} {{offer_phrase}} {{terms_url}} {{privacy_url}} {{support_email}} {{support_phone}}
     {{support_tel}} {{unsubscribe_url}}
   House rules: no em dashes, ACT not "the ACT", never "roster".
@@ -68,6 +68,7 @@
 <!--IF:standard-->
         <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">It's {{player_rate}} a player a month on your usual crowd, first month free, no lock-in.</p>
 <!--ENDIF:standard-->
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your account is set up for {{player_count}} players to start with, and you can change that any time.</p>
         <p style="margin:18px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Cheers,<br>Dean<br>VenuePlay</p>
       </td></tr>
       <tr><td style="padding:26px 28px 26px">

@@ -7555,6 +7555,18 @@ MUTATIONS = [
      'const VPA_PROSPECT_FOLLOWUP_DAYS = 3;',
      'const VPA_PROSPECT_FOLLOWUP_DAYS = 4;',
      'the 3 days becomes 4 and the gate does not notice'),
+    ('test-prospects-tab.js', 'venueplay/nsw.html',
+     'Then a pub with 30 players pays $75 a month.',
+     'Then a pub with 60 players pays about $150 a month.',
+     'the offer pages go back to the 60-player "about" example'),
+    ('test-prospects-tab.js', 'venueplay/index.html',
+     'Then a pub with 30 players pays $90 a month.',
+     'Then a pub with 30 players pays $75 a month.',
+     'the homepage example stops matching its own $3 a player'),
+    ('test-prospects-tab.js', 'venueplay/emails/welcome-prospect.html',
+     'Your account is set up for {{player_count}} players to start with, and you can change that any time.',
+     'Your account is ready.',
+     'the welcome never says the account starts at 10 players and can be changed'),
 ]
 
 

@@ -191,7 +191,7 @@
     var note = undo ? "" : (($("prNote") || {}).value || "").trim();
     t.disabled = true; t.textContent = undo ? "Undoing..." : "Saving...";
     post("/admin/prospect/called", undo ? { venue_id: id, undo: true } : { venue_id: id, note: note }).then(function (j) {
-      if (j.error) { t.disabled = false; t.textContent = undo ? "Undo" : "Save as called"; root.alert(j.error); return; }
+      if (j.error) { t.disabled = false; t.textContent = undo ? "Undo" : "Save as called"; if (root.vpTell) root.vpTell(j.error); else t.title = j.error; return; }
       S.open = null; S.loading = false; load();
     });
   }

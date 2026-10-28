@@ -1781,6 +1781,10 @@
    "enabled": true,
    "forced": false
   },
+  "vp_help_saved_replies": {
+   "enabled": true,
+   "forced": false
+  },
   "vp_help_steps": {
    "enabled": true,
    "forced": false
@@ -1858,6 +1862,14 @@
    "forced": false
   },
   "vp_playlists": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_prospect_welcomes": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_prospects": {
    "enabled": true,
    "forced": false
   },

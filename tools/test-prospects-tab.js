@@ -147,6 +147,9 @@ async function setUp(o, viaAutopilot) { return viaAutopilot ? call('/autopilot/p
     r.status === 200 && fw.status === 'scheduled' && Math.abs(ahead - 30 * 60000) < 10000 && ahead <= 2 * DAY && ahead <= 5 * DAY, [r.status, fw.send_at]);
   r = await setUp({ name: 'Mobile Login Hotel', email: 'ml@ml.example', mobile: '0400 222 333' });
   var ml = DB.vp_venues.filter(function (x) { return x.name === 'Mobile Login Hotel'; })[0] || {};
+  var lastMail = sent[sent.length - 1] || {};
+  check('the welcome says the account is set up for 10 players to start with, and that they can change it any time (Dean, 29 Oct 2026)',
+    /Your account is set up for 10 players to start with, and you can change that any time\./.test(lastMail.text || ''), (lastMail.text || '').slice(0, 900));
   check('a prospect whose login has their mobile gets the text-code welcome and NO one-click sign-in link at all',
     r.status === 200 && r.body.login && r.body.login.mobile && DB.vp_signin_links.filter(function (x) { return x.venue_id === ml.id; }).length === 0 &&
     sent.some(function (m) { return /\/app\/\?signin=sms#m=0400222333/.test(m.html) && m.html.indexOf('/app/go#') === -1; }), [r.body.login, DB.vp_signin_links.length]);
@@ -305,6 +308,15 @@ async function setUp(o, viaAutopilot) { return viaAutopilot ? call('/autopilot/p
   check('the moment the Worker stops listing them (they signed up), they are back on the active list', passes(pv) === true);
   var stats = lift(HQ, 'renderStats');
   check('the headline Venues count leaves prospects out too', /!hasLeft\(v\) && !hideAsTest\(v\) && !isProspect\(v\)/.test(stats), stats.slice(0, 300));
+
+  /* THE WORKED EXAMPLE IS 30 PLAYERS, AT THE PAGE'S OWN PRICE (Dean, 29 Oct 2026: so the money looks right for a smaller venue). */
+  [['venueplay/nsw.html', /\$(\d+\.\d\d) a player, if you lock it in/], ['venueplay/index.html', /sec-title">\$(\d+(?:\.\d\d)?) per player/]].forEach(function (c) {
+    var page = readFile(c[0]), rate = parseFloat((c[1].exec(page) || [])[1]);
+    var ex = /Then a pub with (\d+) players pays \$(\d+) a month\./.exec(page) || [];
+    var want = { 'venueplay/nsw.html': 'Then a pub with 30 players pays $75 a month.', 'venueplay/index.html': 'Then a pub with 30 players pays $90 a month.' }[c[0]];
+    check(c[0] + ': "' + want + '" exactly, worked from the page\'s own $' + rate + ' a player, and never "about" on a price',
+      rate > 0 && ex[0] === want && parseInt(ex[2], 10) === rate * 30 && !/pays about \$/.test(page), [rate, ex[0]]);
+  });
 
   if (bad) throw new Error('prospects tab: ' + bad + ' of ' + ran + ' failed');
   print(''); print('PASS ' + ran + ' checks');

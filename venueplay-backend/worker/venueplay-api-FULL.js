@@ -2770,6 +2770,7 @@ async function vpaRenderProspectWelcome(env, o) {
     .replace(/{{venue_name}}/g, vpaEsc(o.venueName || 'your venue'))
     .replace(/{{signin_url}}/g, sms ? site + '/app/?signin=sms#m=' + mobile.replace(/\D/g, '') : vpaOneClickUrl(site, o.signinToken, email))
     .replace(/{{login_mobile}}/g, sms ? vpaEsc(mobile) : '')
+    .replace(/{{player_count}}/g, String(parseInt(o.seats, 10) > 0 ? parseInt(o.seats, 10) : VPA_PROSPECT_DEFAULT_PLAYERS))
     .replace(/{{login_email}}/g, vpaEsc(email))
     .replace(/{{player_rate}}/g, '$' + rate.toFixed(2))
     .replace(/{{offer_phrase}}/g, vpaOfferMonthPhrase(env))

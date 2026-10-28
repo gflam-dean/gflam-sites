@@ -406,7 +406,7 @@
         <div class="field"><label for="ppMobile">Mobile (optional)</label><input type="text" id="ppMobile" placeholder="e.g. 0412 345 678" class="mono" inputmode="tel"><div class="note" style="margin-top:4px">Their login: the welcome tells them to sign in with it, and we text them a code.</div></div>
         <!-- THE NUMBER TO RING (Dean, 29 Oct 2026: "We need to add that at the point of setup also"). Not required,
              but asked: HQ > Prospects flags a prospect who never signs in, and this is the number we call. -->
-        <div class="field"><label for="ppPhone">Phone to call them on</label><input type="text" id="ppPhone" placeholder="e.g. 0412 345 678 or 02 9876 5432" class="mono" inputmode="tel" autocomplete="off"><div class="note" style="margin-top:4px">A mobile or the venue's landline. Leave it empty and we use their mobile; with neither, Prospects says to email them.</div></div>
+        <div class="field"><label for="ppPhone">Phone to call them on</label><input type="text" id="ppPhone" placeholder="e.g. 0412 345 678, or their landline" class="mono" inputmode="tel" autocomplete="off"><div class="note" style="margin-top:4px">A mobile or the venue's landline. Leave it empty and we use their mobile; with neither, Prospects says to email them.</div></div>
         <div class="field"><label for="ppPostcode">Venue postcode</label><input type="text" id="ppPostcode" placeholder="e.g. 3066" class="mono" maxlength="4" inputmode="numeric"><div class="note" style="margin-top:4px" id="ppState">Sets the state, so the email and the console show the right gaming rules.</div></div>
         <div class="field"><label for="ppKind">Club or pub?</label><select id="ppKind">
           <option value="">Choose...</option>
@@ -753,6 +753,9 @@
 <!-- The state rules, for the SA and NT number bingo note (one rule, VPGaming.numberBingoHidden). -->
 <script src="vp-gaming.js"></script>
 <script src="vp-permits.js"></script>
+<!-- HQ > Prospects (vp-prospects-hq.js, 29 Oct 2026): set up, not signed up yet, who to ring. HQ only. Before the page's
+     own script, which asks it isProspect(); it waits for the page to finish loading before it draws anything. -->
+<script src="vp-prospects-hq.js"></script>
 <script>if(window.VP && VP.guardShift) VP.guardShift();   /* the 4h forced sign-out reaches every page with player data */</script>
 <script>
 (function(){
@@ -4445,8 +4448,6 @@
   });
 })();
 </script>
-<!-- HQ > Prospects (vp-prospects-hq.js, 29 Oct 2026): set up, not signed up yet, who to ring. HQ only. -->
-<script src="vp-prospects-hq.js"></script>
 <!-- The help desk tab (vp-helpdesk-hq.js, 19 Oct 2026): tickets for both brands, HQ only. -->
 <script src="vp-helpdesk-hq.js"></script>
 </body>
