@@ -245,15 +245,16 @@ function freshLink(ttlMs, venueId, userId) {   // a second link for the same log
   check('it keeps the SHA-256 of the token (64 hex), and that is the hash of exactly what the email carries', /^[0-9a-f]{64}$/.test(row.token_hash) && row.token_hash === await vpaSigninTokenHash(token), row.token_hash);
   check('the token itself is nowhere in the database (the link rows, the audit row, anything)', token.length === 43 && JSON.stringify(DB).indexOf(token) === -1);
   var life = Date.parse(row.expires_at) - Date.parse(row.created_at);
-  check('it lasts 14 days', life === 14 * 86400000, life);
+  var due = Date.parse(sent[0] && sent[0].scheduled_at);
+  check('it lasts 14 days FROM WHEN THE EMAIL GOES (90 minutes on, the default delay), not from when HQ pressed the button', Math.abs(life - (14 * 86400000 + 90 * 60000)) < 5000 &&
+    Date.parse(row.expires_at) === due + 14 * 86400000, [life, row.expires_at, sent[0] && sent[0].scheduled_at]);
   var L = hrefs(html), txt = visible(html);
   var main = L.filter(function (h) { return h.indexOf('/app/go#') !== -1; });
   check('the email\'s main button "Open your VenuePlay" is the one-click link, with the token and their address in the fragment',
     main.length === 1 && main[0] === 'https://www.venueplay.com.au/app/go#t=' + token + '&e=cazreitop%40gmail.com' &&
     new RegExp('<a href="' + main[0].replace(/[.?*+^$()|[\]\\]/g, '\\$&') + '"[^>]*>Open your VenuePlay</a>').test(html), main);
-  check('it says plainly it signs them straight in, once, within 14 days', /This button signs you straight in, with no code to type\. It works once, within 14 days/.test(txt) && /The button above signs you in the first time\. After that, on a phone/.test(txt), txt.slice(0, 900));
-  check('every other sign-in link in it opens the EMAIL option (no waiting for a text that never comes)', L.indexOf('https://www.venueplay.com.au/app/?signin=email') !== -1 &&
-    /<a href="https:\/\/www\.venueplay\.com\.au\/app\/\?signin=email"[^>]*>Sign in with my email<\/a>/.test(html) && L.indexOf('https://www.venueplay.com.au/app') === -1, L);
+  check('it says plainly it signs them straight in, once, within 14 days, and how to sign in after that (their email)', /The button signs you straight in, once, within 14 days\. After that, sign in at www\.venueplay\.com\.au\/app with cazreitop@gmail\.com\./.test(txt), txt.slice(0, 900));
+  check('it is the ONLY sign-in link in the email (version 2: one button)', L.filter(function (h) { return h.indexOf('/app') !== -1; }).length === 1, L);
   check('nothing left unfilled and no em dash', html.indexOf('{{') === -1 && html.indexOf('<!--IF:') === -1 && !/[—–]/.test(txt));
   var t2 = await freshLink(undefined, v.id, login.id);
   check('a second link for the same login is a different token', t2 !== token && /^[A-Za-z0-9_-]{43}$/.test(t2));
@@ -305,7 +306,7 @@ function freshLink(ttlMs, venueId, userId) {   // a second link for the same log
   var h2 = sent[0] ? sent[0].html : '', L2 = hrefs(h2), t3 = visible(h2);
   check('set up and sent, HQ told why there is no one-click button', r.status === 200 && r.body.welcome_sent === true && (r.body.warnings || []).some(function (w) { return /one-click sign-in button was not made \(run migration 123\)/.test(w); }), r.body);
   check('the main button opens the email sign-in, and the email says nothing about a one-time button',
-    /<a href="https:\/\/www\.venueplay\.com\.au\/app\/\?signin=email"[^>]*>Open your VenuePlay<\/a>/.test(h2) && L2.every(function (h) { return h.indexOf('/app/go') === -1; }) && !/signs you straight in/.test(t3) && /Sign in to run games On a phone, tablet or laptop/.test(t3), L2);
+    /<a href="https:\/\/www\.venueplay\.com\.au\/app\/\?signin=email"[^>]*>Open your VenuePlay<\/a>/.test(h2) && L2.every(function (h) { return h.indexOf('/app/go') === -1; }) && !/signs you straight in/.test(t3) && /Sign in with cazreitop@gmail\.com and we'll email you a code\. No password\./.test(t3), L2);
 
   if (bad) throw new Error('one-click sign-in: ' + bad + ' of ' + ran + ' failed');
   print(''); print('PASS ' + ran + ' checks');

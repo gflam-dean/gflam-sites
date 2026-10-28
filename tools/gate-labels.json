@@ -354,7 +354,6 @@
   "console-paid-and-draw-max-in-chrome.test.py",
   "only venues HQ switched on, active, with our stored logo; test venues never; fewer than six paints nothing",
   "owner/accounts admins set show_logo_on_site with an audit row; staff, venue logins and strangers refused; the venue route answers 410",
-  "paged reads in venueplay-api-FULL.js are ordered (37)",
   "settings-and-logos-in-chrome.test.py",
   "signup-tick-in-chrome.test.py",
   "the tour cards say loading, retry once and tell the truth; Coming Soon only when nothing is on (80 checks)",
@@ -362,13 +361,17 @@
   "tv-window-uncovered.test.py",
   "owner or manager ticks section 6 once in the console and the billing Worker records who and when; a host is told, HQ View as cannot accept; nothing a game does is gated",
   "a paid game with no known state starts free; HQ filters and badges venues that need a state; the VGCCC register check is HQ-only, VIC-only and names who and when; /start sends the private-use tick",
-  "owner or accounts HQ only; refuses without email or postcode and creates nothing; account record at the founding price, email login, slides, terms_required, audit row; an existing login is never changed or linked; the VIC and QLD emails carry every link, the right TV address and state, and never call musical bingo bingo; the console holds the venue until ticked",
   "/session, /host/game, /host/bingo/draw and the members draw refuse terms_first at a held venue; an ordinary or ticked venue is not held; a stranger learns nothing; a missing column holds nobody, a database fault is not swallowed",
-  "definition check across 119 file(s)",
-  "every script in 120 file(s) parses",
-  "only the hash of a 32-byte random token is stored; one use, 14 days, one winner of two at once; unknown, used, expired and removed all get one identical answer; rate-limited, never logged; nothing sent before a tap; the 4 hour sign-out still applies; email first for an email-only login",
   "gflam-unsub.test.py",
   "touring-unsubscribe.test.js",
-  "winback-unsubscribe.test.js"
+  "winback-unsubscribe.test.js",
+  "a phone (mobile or landline) at setup from HQ and the autopilot, a bad one refused with nothing made, a crowd of 10; owner or accounts only; Call requested first, then no sign-in after 3 days; Called with a note and Undo; a card, comp, invoice or group takes them off the list; the HQ pane and the Venues filter; a login reused only when its email and mobile both match",
+  "a prospect's welcome is booked for HQ's delay and its link's 14 days start when it goes; cancel retires the link, send now sends a new one once; neither after its minute or by staff; the first run: mobile only after the texted code, the Terms tick, their TV and slides, a first game, their card, please call me; kept per venue",
+  "definition check across 121 file(s)",
+  "every script in 122 file(s) parses",
+  "off until PROSPECT_AUTOPILOT_KEY is set; a wrong or missing key makes nothing; a dry run makes nothing; the same setup as HQ, recorded as the autopilot; its welcome booked 30 minutes out or more and cancellable in HQ; an existing login refused, a used mobile left off",
+  "only the hash of a 32-byte random token is stored; one use, 14 days, one winner of two at once; unknown, used, expired and removed all get one identical answer; rate-limited, never logged; nothing sent before a tap; the 4 hour sign-out still applies; email first for an email-only login; a session already on the device (an HQ one) is dropped, so a venue link never lands in HQ",
+  "owner or accounts HQ only; refuses without email or postcode and creates nothing; account record at the founding price, email login, slides, terms_required, audit row; an existing login is never changed or linked; the email is on brand, from Dean, one button (a text-code sign-in for a mobile login), the price line, no instructions, a text part; the card link comes from the app for that venue only; the console holds the venue until ticked",
+  "paged reads in venueplay-api-FULL.js are ordered (42)"
  ]
 }

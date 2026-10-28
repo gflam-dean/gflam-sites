@@ -394,7 +394,7 @@
          and no game starts until they do (migration 122). Billing Worker POST /admin/prospect. -->
     <div id="prospectPanel" class="panel pad hidden" style="margin-bottom:16px">
       <div class="lblk" style="margin-top:0">Set up a prospect</div>
-      <p class="note" style="margin:0 0 14px">For a venue that said yes to a cold email. This creates their account and emails them everything they need to run their first game: their TV address, how to sign in, their price and the card link. Nothing is charged until they add a card, and their free month starts then.</p>
+      <p class="note" style="margin:0 0 14px">For a venue that said yes to a cold email. This creates their account and books one short email from Dean with a single "Open your VenuePlay" button. When they open it, the app walks them through the rest one screen at a time: their mobile, the Terms tick, their TV, a first game and their card. Nothing is charged until they add a card, and their free month starts then.</p>
       <div class="formgrid">
         <div class="field"><label for="ppName">Venue name</label><input type="text" id="ppName" placeholder="e.g. The Royal Hotel" maxlength="120"></div>
         <div class="field"><label for="ppFirst">Contact first name (optional)</label><input type="text" id="ppFirst" placeholder="e.g. Amit" maxlength="60" autocomplete="off"></div>
@@ -407,6 +407,7 @@
           <option value="for_profit">Pub (hotel or tavern)</option>
         </select></div>
         <div class="field"><label for="ppPlayers">Usual crowd (players)</label><input type="number" id="ppPlayers" value="60" min="1" max="2000" class="mono"><div class="note" style="margin-top:4px" id="ppPrice">Sets their plan: the price is per player a month on this number.</div></div>
+        <div class="field"><label for="ppDelay">Send their email in</label><div style="display:flex;align-items:center;gap:8px"><input type="number" id="ppDelay" value="90" min="0" max="1440" step="1" class="mono" style="max-width:110px" inputmode="numeric"><span>minutes</span></div><div class="note" style="margin-top:4px" id="ppDelayNote">So it does not land the moment they replied. 0 sends it now; up to 1440 (a day).</div></div>
         <div class="field"><label for="ppWebsite">Website (optional)</label><input type="text" id="ppWebsite" placeholder="e.g. theroyalhotel.com.au" autocomplete="off"><div class="note" style="margin-top:4px">Kept on the record, for making their slides from.</div></div>
         <div class="field" style="grid-column:1 / -1"><label for="ppSlides">Screen slides (optional, up to 20)</label>
           <input type="file" id="ppSlides" accept="image/png,image/jpeg" multiple>
@@ -416,6 +417,11 @@
       <button class="btn pink" id="ppGo" style="margin-top:6px">Set up and send</button>
       <div class="errflash" id="ppErr"></div>
       <div id="ppResult" class="note hidden" role="status" style="margin-top:12px;padding:12px 14px;border:1px solid rgba(43,212,125,.45);border-radius:10px;background:rgba(43,212,125,.07);color:var(--text, #E7E7EC);line-height:1.6"></div>
+      <!-- Emails booked but not gone yet (migration 124): cancel one, or send it now. -->
+      <div id="ppWaitingWrap" class="hidden" style="margin-top:16px">
+        <div class="lblk" style="margin-top:0">Welcome emails</div>
+        <div id="ppWaiting"></div>
+      </div>
     </div>
 
     <div class="lblk" id="venuesLbl">All venues</div>
@@ -4295,7 +4301,40 @@
   /* ================= SET UP A PROSPECT (Worker /admin/prospect, 28 Oct 2026) ================= */
   var PP = { slides: [] };   // data URLs, already fitted to the TV
   var PP_MAX_SLIDES = 20;    // the Worker's VPB_MAX_SLIDES
-  $("prospectToggle").addEventListener("click", function(){ show("prospectPanel", $("prospectPanel").classList.contains("hidden")); });
+  $("prospectToggle").addEventListener("click", function(){ var open=$("prospectPanel").classList.contains("hidden"); show("prospectPanel", open); if(open) ppLoadWaiting(); });
+  /* THE DELAYED WELCOME (Dean, 28 Oct 2026; migration 124). The email is booked for later; until its
+     minute HQ can cancel it or send it now. One row per email from the last two days. */
+  function ppWhen(iso){
+    try{ return new Date(iso).toLocaleString("en-AU",{ timeZone:"Australia/Brisbane", hour:"numeric", minute:"2-digit", weekday:"short", day:"numeric", month:"short" }).replace(/\s?([ap])\.?m\.?/i,function(_,a){ return a.toLowerCase()+"m"; }); }catch(e){ return iso; }
+  }
+  function ppWaitingRow(w){
+    var st = w.status==="scheduled" ? "Email goes at "+esc(ppWhen(w.send_at))
+           : w.status==="cancelled" ? "Cancelled (was due "+esc(ppWhen(w.send_at))+")"
+           : w.status==="failed" ? "Did not send" : "Sent "+esc(ppWhen(w.send_at));
+    return '<div style="display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:10px 0;border-top:1px solid rgba(255,255,255,.08)">'+
+      '<div style="flex:1;min-width:200px"><b>'+esc(w.venue_name||"A venue")+'</b> &middot; '+esc(w.email)+'<br><span class="note">'+st+'</span></div>'+
+      (w.can_change ? '<button type="button" class="mini" data-pp-now="'+esc(w.id)+'">Send now</button><button type="button" class="mini" data-pp-cancel="'+esc(w.id)+'">Cancel email</button>' : '')+
+      '</div>';
+  }
+  function ppLoadWaiting(){
+    workerPost("/admin/prospect/welcomes", {}).then(function(res){
+      var list=(res && res.welcomes)||[];
+      show("ppWaitingWrap", list.length>0);
+      $("ppWaiting").innerHTML=list.map(ppWaitingRow).join("");
+      $("ppWaiting").querySelectorAll("[data-pp-now]").forEach(function(b){ b.addEventListener("click", function(){ ppChange("/admin/prospect/welcome-now", this.getAttribute("data-pp-now"), this, "Sending..."); }); });
+      $("ppWaiting").querySelectorAll("[data-pp-cancel]").forEach(function(b){ b.addEventListener("click", function(){
+        var id=this.getAttribute("data-pp-cancel"), btn=this;
+        vpAsk("Cancel this welcome email? It will not be sent, and its sign-in button stops working.").then(function(ok){ if(ok) ppChange("/admin/prospect/welcome-cancel", id, btn, "Cancelling..."); });
+      }); });
+    });
+  }
+  function ppChange(path, id, btn, busy){
+    btn.disabled=true; btn.textContent=busy;
+    workerPost(path, { id:id }).then(function(res){
+      if(!res || res.error) errFlash("ppErr", (res && res.error) || "That did not work. Try again in a minute.");
+      ppLoadWaiting();
+    });
+  }
   function ppStateNote(){
     var pc=($("ppPostcode").value||"").replace(/[^0-9]/g,"");
     var st=(pc.length===4 && window.VPGaming && VPGaming.stateFromPostcode) ? VPGaming.stateFromPostcode(pc) : null;
@@ -4360,8 +4399,10 @@
     if(kind!=="non_profit" && kind!=="for_profit"){ errFlash("ppErr","Choose club or pub."); return; }
     if(mob && !/^(04\d{8}|614\d{8}|4\d{8})$/.test(mob.replace(/[^0-9]/g,""))){ errFlash("ppErr","That mobile is not an Australian mobile (04...). Leave it empty or fix it."); return; }
     if(!(players>=1 && players<=2000)){ errFlash("ppErr","Their usual crowd should be between 1 and 2000 players."); return; }
+    var delay=Number($("ppDelay").value);
+    if(!(Number.isInteger(delay) && delay>=0 && delay<=1440)){ errFlash("ppErr","Send their email in 0 to 1440 minutes (0 sends it now)."); return; }
     var body={ name:name, first_name:$("ppFirst").value.trim(), email:email, mobile:mob, postcode:pc, entity_type:kind,
-               players:players, website:$("ppWebsite").value.trim(), slides:PP.slides.slice() };
+               players:players, website:$("ppWebsite").value.trim(), slides:PP.slides.slice(), send_in_minutes:delay };
     var btn=$("ppGo"); btn.disabled=true; btn.textContent="Setting up...";
     show("ppResult", false);
     workerPost("/admin/prospect", body).then(function(res){
@@ -4369,14 +4410,15 @@
       if(!res || res.error){ errFlash("ppErr",(res && res.error) || "That did not work. Nothing was sent."); return; }
       var r=$("ppResult");
       r.innerHTML='<b>'+esc(res.venue.name)+' is set up.</b><br>'+
-        (res.welcome_sent ? 'Their welcome email went to '+esc(email)+'.' : '<b>The welcome email did not send.</b>')+'<br>'+
+        (!res.welcome_sent ? '<b>The welcome email did not send.</b>' : (res.welcome && res.welcome.status==="scheduled") ? 'Email goes at <b>'+esc(ppWhen(res.welcome.send_at))+'</b>, to '+esc(email)+'. Cancel it or send it now below.' : 'Their welcome email went to '+esc(email)+'.')+'<br>'+
         'TV: <span class="mono">'+esc(res.tv_url)+'</span><br>'+
         'Login: '+esc(res.login ? (res.login.email+(res.login.mobile ? ' and '+res.login.mobile : '')) : 'none')+
         ' &middot; Slides: '+esc(res.slides)+' &middot; Terms: waiting for their tick, no game starts until then.'+
         ((res.warnings||[]).length ? '<br><span style="color:var(--roll)">'+res.warnings.map(esc).join('<br>')+'</span>' : '');
       show("ppResult", true);
       ["ppName","ppFirst","ppEmail","ppMobile","ppPostcode","ppWebsite"].forEach(function(id){ $(id).value=""; });
-      $("ppKind").value=""; $("ppPlayers").value="60"; PP.slides=[]; ppThumbs(); ppStateNote(); ppPriceNote();
+      $("ppKind").value=""; $("ppPlayers").value="60"; $("ppDelay").value="90"; PP.slides=[]; ppThumbs(); ppStateNote(); ppPriceNote();
+      ppLoadWaiting();
       loadAll();
     });
   });

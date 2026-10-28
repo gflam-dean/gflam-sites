@@ -402,3 +402,12 @@ conditional update (`used_at is null and expires_at > now`) and only then mints 
 RLS on, no policies, revoked from public/anon/authenticated: service role only. Run BEFORE the billing Worker; without it
 /admin/prospect still works and the button opens the email sign-in (HQ is told). After running, dump RLS-BASELINE.json (one new
 table). Branch `feature/one-click-signin-28-oct`. NOT RUN. Rollback: in the file.
+
+`venueplay-124-prospect-welcome-delay.sql` (Dean, 28 Oct 2026, "an email that goes to the customer... on a delay"): table
+`vp_prospect_welcomes` (venue_id, email, Resend's id, send_at, status scheduled|sent|sent_now|cancelled|failed, the SHA-256 of
+the sign-in link the email carries, detail = what the email was made from, who set it up and who changed it). HQ > Set up a
+prospect books the welcome with Resend (`scheduled_at`, default 90 minutes, 0 to 1440); `/admin/prospect/welcomes`,
+`/welcome-cancel` and `/welcome-now` read and change it until its minute, retiring the old link each time. RLS on, no policies,
+revoked from public/anon/authenticated: service role only. Run BEFORE the billing Worker; without it the email is still booked
+for later and HQ is told it cannot cancel or send it early. After running, dump RLS-BASELINE.json (one new table). Branch
+`feature/prospect-v2-28-oct`. NOT RUN. Rollback: in the file.

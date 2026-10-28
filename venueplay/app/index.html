@@ -328,6 +328,7 @@
     <span class="tag" id="headerTag"></span>
     <span class="who" id="who" style="display:none"><span class="dot" id="statusDot"></span> <span id="statusText">Sign in to start</span></span>
     <span class="hactions" id="hactions" style="display:none">
+      <button type="button" id="firstRunBtn" class="hact" style="display:none">Setup guide</button>
       <button type="button" id="switchVenue" class="hact" style="display:none">Switch venue</button>
       <a id="billingLink" class="hact" href="billing.html">Account</a>
       <button type="button" id="signoutBtn" class="hact">Sign out</button>
@@ -700,6 +701,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/app/vp-ask.js"></script>
 <script src="vp-session.js"></script>
+<script src="vp-firstrun.js"></script>
 <script src="vp-gaming.js"></script>
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-channel.js"></script>
@@ -1127,6 +1129,7 @@
     }
     return null;
   }
+  $("firstRunBtn").addEventListener("click", function(){ if(window.VPFirstRun && window.VP && VP.getClient) VPFirstRun.open(__ctx, { client:VP.getClient(), VP:VP, onClose:function(){} }); });
   $("signoutBtn").addEventListener("click", function(){
     var live=liveNightElsewhere();
     function signOutNow(){
@@ -1234,6 +1237,8 @@
   // shows for staff who cover more than one venue.
   function updateAccountLink(){
     var link=$("billingLink"); if(link) link.style.display = ((__ctx&&__ctx.role)==="host") ? "none" : "";
+    // A prospect's setup guide opens again from here (vp-firstrun.js, 28 Oct 2026).
+    var fr=$("firstRunBtn"); if(fr) fr.style.display = (window.VPFirstRun && VPFirstRun.isProspect(__ctx)) ? "" : "none";
     // An admin can reach every venue, so they always need the switcher, even with no staff rows.
     var multi = !!(__ctx && (__ctx.isAdmin || (__ctx.staff && __ctx.staff.length>1)));
     var sw=$("switchVenue"); if(sw) sw.style.display = multi ? "" : "none";
@@ -1417,6 +1422,9 @@
     /* SWITCHED OFF: one card in place of the game picker, and no TV pairing (28 Oct 2026). A host
        with more than one venue can still choose another one from the card. */
     if(window.VP && VP.holdGate && VP.holdGate(__ctx, staff.length>1 ? { other:{ label:"Choose another venue", onClick:showVenuePick } } : null)){ go("vBoot"); return; }
+    /* A PROSPECT'S FIRST RUN (Dean, 28 Oct 2026): their mobile, the Terms tick, their TV, a first game and
+       their card, one screen at a time, before anything else. Closing it carries on to the console below. */
+    if(window.VPFirstRun && VPFirstRun.wants(__ctx) && window.VP && VP.getClient){ VPFirstRun.open(__ctx, { client:VP.getClient(), VP:VP, onClose:proceedVenue }); go("vBoot"); return; }
     /* A VENUE SET UP FOR A PROSPECT ticks section 6 before its first game: one card in place of the game
        picker, no TV pairing (migration 122). Its TV keeps showing its ads. */
     if(window.VP && VP.termsGate && VP.termsGate(__ctx)){ go("vBoot"); return; }

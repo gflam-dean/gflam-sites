@@ -156,7 +156,7 @@
   "counted_by": "lines"
  },
  "tools/help-seed-matches-faq.test.py": {
-  "checks": 14,
+  "checks": 15,
   "counted_by": "lines"
  },
  "tools/hq-lists-in-chrome.test.py": {
@@ -308,7 +308,7 @@
   "counted_by": "lines"
  },
  "tools/test-caller-mode.js": {
-  "checks": 117,
+  "checks": 119,
   "counted_by": "lines"
  },
  "tools/test-cant-sign-warns.js": {
@@ -388,7 +388,7 @@
   "counted_by": "lines"
  },
  "tools/test-help-desk.js": {
-  "checks": 267,
+  "checks": 280,
   "counted_by": "lines"
  },
  "tools/test-help-triage-truth.js": {
@@ -440,7 +440,7 @@
   "counted_by": "lines"
  },
  "tools/test-musical-host.js": {
-  "checks": 65,
+  "checks": 74,
   "counted_by": "lines"
  },
  "tools/test-musical-phone.js": {
@@ -656,11 +656,11 @@
   "counted_by": "lines"
  },
  "tools/test-terms-put-compliance-on-the-venue.js": {
-  "checks": 52,
+  "checks": 89,
   "counted_by": "lines"
  },
  "tools/test-trivia-15-oct.js": {
-  "checks": 70,
+  "checks": 86,
   "counted_by": "lines"
  },
  "tools/test-trivia-no-repeat-survives-a-removal.js": {
@@ -680,7 +680,7 @@
   "counted_by": "lines"
  },
  "tools/test-tv-logo-mark.js": {
-  "checks": 147,
+  "checks": 160,
   "counted_by": "lines"
  },
  "tools/test-tv-reads-its-venue.js": {
@@ -1116,7 +1116,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospect-setup.js": {
-  "checks": 113,
+  "checks": 112,
   "counted_by": "lines"
  },
  "tools/test-prospect-terms-first-game.js": {
@@ -1124,7 +1124,7 @@
   "counted_by": "lines"
  },
  "tools/test-one-click-signin.js": {
-  "checks": 49,
+  "checks": 56,
   "counted_by": "lines"
  },
  "tools/gflam-unsub.test.py": {
@@ -1137,6 +1137,18 @@
  },
  "touring-backend/lib/touring-unsubscribe.test.js": {
   "checks": 28,
+  "counted_by": "lines"
+ },
+ "tools/test-prospects-tab.js": {
+  "checks": 62,
+  "counted_by": "lines"
+ },
+ "tools/test-prospect-autopilot.js": {
+  "checks": 38,
+  "counted_by": "lines"
+ },
+ "tools/test-prospect-welcome-v2.js": {
+  "checks": 98,
   "counted_by": "lines"
  }
 }

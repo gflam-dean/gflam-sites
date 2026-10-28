@@ -217,8 +217,8 @@ globalThis.fetch = function (url, opts) {
 };
 function U(nn) { return '52000000-0000-4000-8000-' + ('000000000000' + nn).slice(-12); }
 var ADMIN = U(9), ACCOUNTS = U(8), GFLAMSTAFF = U(7), VENUEOWNER = U(1);
-function as(user, body) {
-  var h = { Authorization: user ? 'Bearer ' + user : '' }; var txt = JSON.stringify(body || {});
+function as(user, body, extra) {
+  var h = { Authorization: user ? 'Bearer ' + user : '' }; for (var hk in (extra || {})) h[hk] = extra[hk]; var txt = JSON.stringify(body || {});
   return { url: 'https://api/x', headers: { get: function (k) { return h[k] || ''; } }, text: function () { return Promise.resolve(txt); }, json: function () { return Promise.resolve(JSON.parse(txt)); } };
 }
 var CODES_NOV = 'NSW-NOV-2099,QLD-OCT-2099';   // fixed far-future codes: never derived from today's clock
@@ -293,23 +293,37 @@ function hrefs(html) { var out = [], re = /href="([^"]+)"/g, m; while ((m = re.e
   check('ONE audit row: who set it up, the venue, compliance pending, the slides, the website and that the email went',
     au.length === 1 && au[0].actor_admin === ADMIN && au[0].actor_label === 'Dean' && au[0].target === 'venue:' + v.id && ad.compliance === 'pending' && ad.terms_required === true &&
     ad.slides === 2 && ad.website === 'https://cazreitop.com.au' && ad.welcome_sent === true && ad.email === 'cazreitop@gmail.com' && ad.players === 60, au);
-  check('ONE email, to the contact, from the transactional sender, replies to support', sent.length === 1 && sent[0].to[0] === 'cazreitop@gmail.com' &&
-    sent[0].from === 'VenuePlay <hello@send.venueplay.com.au>' && sent[0].reply_to === 'support@venueplay.com.au' && /^You're set up: your VenuePlay account for Caz Reitop's Dirty Secrets$/.test(sent[0].subject), sent[0] && sent[0].subject);
+  check('ONE email, to the contact, from Dean on the transactional sender, replies to support, subject "Your VenuePlay account for <venue>"', sent.length === 1 && sent[0].to[0] === 'cazreitop@gmail.com' &&
+    sent[0].from === 'Dean at VenuePlay <hello@send.venueplay.com.au>' && sent[0].reply_to === 'support@venueplay.com.au' && sent[0].subject === "Your VenuePlay account for Caz Reitop's Dirty Secrets", sent[0] && [sent[0].from, sent[0].subject]);
+  var due = sent[0] && Date.parse(sent[0].scheduled_at);
+  check('it is BOOKED for 90 minutes on (the default), not sent at once: Resend holds it (scheduled_at)', sent[0] && typeof sent[0].scheduled_at === 'string' && Math.abs(due - Date.now() - 90 * 60000) < 60000, sent[0] && sent[0].scheduled_at);
+  check('HQ is told when it goes', r.body.welcome && r.body.welcome.status === 'scheduled' && Date.parse(r.body.welcome.send_at) === due, r.body.welcome);
   check('nothing warned', r.body.welcome_sent === true && !r.body.warnings, r.body.warnings);
-  var VIC_HTML = sent[0] ? sent[0].html : '';
+  var VIC_MSG = sent[0] || {}, VIC_HTML = VIC_MSG.html || '';
 
   var again = await vpaHandleProspect(as(ADMIN, CAZ), ENV, J);
   check('a second click (same name, same postcode) is refused, pointing at Resend welcome, and makes nothing more',
     again.status === 409 && /already set up/.test(again.body.error) && DB.vp_venues.length === 1 && DB.venueplay_founding.length === 1 && sent.length === 1 && AUTH_POSTS.length === 1, again.body);
 
-  section('2. The price: the card link in the email opens Checkout on the founding monthly price, for their crowd');
-  var cardHref = hrefs(VIC_HTML).filter(function (h) { return h.indexOf('/add-card?') !== -1; })[0] || '';
-  check('the email carries the card link for THIS account record', cardHref.indexOf('https://www.venueplay.com.au/add-card?f=' + encodeURIComponent(f.id) + '&t=') === 0, cardHref);
+  section('2. The price: the card link (now in the app, POST /account/card-link) opens Checkout on the founding monthly price, for their crowd');
+  var mgr = (DB.vp_venue_staff.filter(function (x) { return x.venue_id === v.id && x.role === 'manager'; })[0] || {}).auth_user_id;
+  var cl = await vpbCardLink(as(mgr, { venue_id: v.id }), ENV, J);
+  var cardHref = (cl.body && cl.body.card_url) || '';
+  check('their manager asks for the card link: THIS account record, no card yet, the rate and the crowd', cl.status === 200 && cl.body.has_card === false && cardHref.indexOf('https://www.venueplay.com.au/add-card?f=' + encodeURIComponent(f.id) + '&t=') === 0 &&
+    cl.body.rate === 2.5 && cl.body.seats === 60 && cl.body.monthly === 150, cl.body);
   var redir = await vpaAddCardRedirect({ url: cardHref }, ENV);
   var sc = stripeCalls[0] ? stripeCalls[0].body : '';
   check('/add-card accepts that link and goes to Stripe', redir && redir.status === 302 && stripeCalls.length === 1, redir);
   check('on STRIPE_PRICE_MONTHLY (the founding $2.50 price), quantity 60, with a trial (the free month starts now)',
     /line_items%5B0%5D%5Bprice%5D=price_F_M/.test(sc) && /line_items%5B0%5D%5Bquantity%5D=60/.test(sc) && /subscription_data%5Btrial_end%5D=\d+/.test(sc) && /client_reference_id=/.test(sc), sc.slice(0, 300));
+  var clOther = await vpbCardLink(as(VENUEOWNER, { venue_id: v.id }), ENV, J);
+  check('another venue\'s owner gets no card link for this venue', clOther.status >= 400 && !(clOther.body && clOther.body.card_url), clOther);
+  var clHq = await vpbCardLink(as(ADMIN, { venue_id: v.id }, { 'X-VP-Venue': v.id }), ENV, J);
+  check('HQ View as gets no card link: a card is the venue\'s to add', clHq.status === 403 && !(clHq.body && clHq.body.card_url), clHq);
+  f.stripe_subscription_id = 'sub_x';
+  var clHas = await vpbCardLink(as(mgr, { venue_id: v.id }), ENV, J);
+  check('once a card is on, it says so and hands out no link', clHas.status === 200 && clHas.body.has_card === true && !clHas.body.card_url, clHas.body);
+  delete f.stripe_subscription_id;
 
   section('1c. An existing login is never changed and never linked from HQ (security review, 28 Oct 2026)');
   function snap() { return JSON.stringify(AUTH); }
@@ -341,50 +355,36 @@ function hrefs(html) { var out = [], re = /href="([^"]+)"/g, m; while ((m = re.e
   r = await vpaHandleProspect(as(ADMIN, with_({ send_welcome: false, slides: [] })), ENV, J);
   check('send_welcome:false builds everything and sends nothing', r.status === 200 && DB.vp_venues.length === 1 && sent.length === 0 && r.body.welcome_sent === false, r.body);
 
-  section('3. The email, filled for a VIC pub (Caz Reitop\'s, Collingwood) and a QLD club');
+  section('3. The email (version 2, Dean 28 Oct 2026): short, personal, one button; filled for a VIC pub with slides and a QLD club without');
   world();
   r = await vpaHandleProspect(as(ADMIN, { name: 'Tugun Test Bowls Club', email: 'sec@tuguntest.example', postcode: '4224', entity_type: 'non_profit', players: 120 }), ENV, J);
-  var QLD_HTML = sent[0] ? sent[0].html : '';
+  var QLD_MSG = sent[0] || {}, QLD_HTML = QLD_MSG.html || '';
   var qv = DB.vp_venues[0] || {};
   check('the QLD club: no mobile, no first name, a crowd of 120, no slides, paid entry off (QLD is blocked until OLGR approves the number generator)', r.status === 200 && qv.au_state === 'QLD' && qv.max_players === 120 && qv.paid_entry_enabled === false && r.body.slides === 0, qv);
-  [['VIC', VIC_HTML, 'caz-reitop-s-dirty-secrets', 'cazreitop@gmail.com'], ['QLD', QLD_HTML, 'tugun-test-bowls-club', 'sec@tuguntest.example']].forEach(function (c) {
-    var html = c[1], txt = visible(html), L = hrefs(html);
+  [['VIC', VIC_MSG, 'cazreitop@gmail.com'], ['QLD', QLD_MSG, 'sec@tuguntest.example']].forEach(function (c) {
+    var msg = c[1], html = msg.html || '', txt = visible(html), L = hrefs(html);
     check(c[0] + ': the template\'s own notes (merge-field list) never reach the inbox', html.indexOf('Merge fields') === -1 && html.indexOf('vpaTplSections') === -1);
     check(c[0] + ': it is a whole document with nothing left unfilled', /^<!doctype html>/i.test(html) && html.indexOf('{{') === -1 && html.indexOf('<!--IF:') === -1 && html.indexOf('ENDIF') === -1, (html.match(/\{\{[a-z_]+\}\}/g) || []).join(' '));
-    check(c[0] + ': the TV address is exactly theirs, as a link and as words', L.indexOf('https://www.venueplay.com.au/tv?' + c[2]) !== -1 && txt.indexOf('www.venueplay.com.au/tv?' + c[2]) !== -1, L);
-    check(c[0] + ': sign in at the app address (opening on the email option), with THEIR email, a code by email, no password', L.indexOf('https://www.venueplay.com.au/app/?signin=email') !== -1 && txt.indexOf('type ' + c[3] + '. A code arrives by email. No password') !== -1, txt.slice(0, 600));
-    check(c[0] + ': the one tick, once, before the games', /tick one box confirming your venue runs its own games under the gaming laws that apply to you\. It is one tap, once/.test(txt));
-    check(c[0] + ': trivia in four moves (set, Open lobby, the QR on the TV, Start)', /Trivia\. Pick a question set, tap Open lobby, players scan the QR code on the TV with their phones, then tap Start\./.test(txt));
-    check(c[0] + ': musical bingo in four moves (playlist, Open lobby, Deal, Play)', /Musical bingo\. Pick a playlist, tap Open lobby, then Deal, then Play\./.test(txt));
-    check(c[0] + ': every link is there (card, help, see a night, terms, privacy, unsubscribe, support email, call line)',
-      L.some(function (h) { return /\/add-card\?f=/.test(h); }) && L.indexOf('https://www.venueplay.com.au/help') !== -1 && L.indexOf('https://www.venueplay.com.au/see-a-night') !== -1 &&
-      L.indexOf('https://www.venueplay.com.au/terms') !== -1 && L.indexOf('https://www.venueplay.com.au/privacy') !== -1 &&
-      L.indexOf('https://www.venueplay.com.au/unsubscribe?e=' + encodeURIComponent(c[3])) !== -1 && L.indexOf('mailto:support@venueplay.com.au') !== -1 && L.indexOf('tel:+61752283667') !== -1, L);
-    check(c[0] + ': the price line as Dean set it: $2.50 a player a month while the November offer runs, on the usual crowd, free month from the card, no lock-in',
-      /\$2\.50 a player a month, while the November offer runs/.test(txt) && /set on your usual crowd, not counted per person each time you play/.test(txt) &&
-      /first month is free, and it starts the day you add your card\. No lock-in\./.test(txt) && /Add your card when you're ready/.test(txt), txt.slice(txt.indexOf('5. Your price'), txt.indexOf('5. Your price') + 400));
-    check(c[0] + ': it opens as an invitation to have a play, with no urgency or push (Dean, 28 Oct 2026)',
-      /As promised, here's your VenuePlay account for .+?, (with a few quick slides our marketing team made off your website, )?so you can see what your TV looks like and have a play with a game or two\./.test(txt) &&
-      !/don't miss|do not miss|hurry|limited time|act now|today only|last chance|before it's gone|spots? left|we have set you up/i.test(txt), txt.slice(0, 300));
-    check(c[0] + ': the help line, one line, not a pitch', /If you'd like a hand, reply to this email or tell us a good time and Dean will call you\./.test(txt));
-    check(c[0] + ': who we are and how to stop (Spam Act, as every venue email)', /You are getting this because you asked us to set up VenuePlay for/.test(txt) && /Gflam Group Pty Ltd, ABN 35 679 383 049/.test(txt) && /Unsubscribe from product emails/.test(txt));
-    check(c[0] + ': no em dash or en dash anywhere in what they read', !/[—–]/.test(txt) && !/&mdash;|&ndash;/.test(html));
-    var lone = []; var re = /(\S+)\s+bingo/gi, m; var t2 = txt.replace(/[.,:;()]/g, ' ');
-    while ((m = re.exec(t2))) if (!/^(musical|number)$/i.test(m[1])) lone.push(m[1] + ' bingo');
-    var bare = (t2.match(/(^|\s)bingo/gi) || []).length - (t2.match(/(musical|number)\s+bingo/gi) || []).length;
-    check(c[0] + ': "bingo" only ever as "musical bingo" or "number bingo", never on its own', !lone.length && bare === 0, lone);
-    var mus = txt.split(/(?<=[.!?])\s+/).filter(function (s) { return /musical bingo/i.test(s); });
-    check(c[0] + ': no sentence about musical bingo calls it gaming or asks for a permit', mus.length >= 1 && mus.every(function (s) { return !/gaming|gambl|permit|licen[cs]e/i.test(s); }), mus);
+    check(c[0] + ': ONE button, "Open your VenuePlay", and it is the one-click link for their address', L.filter(function (h) { return /^https:\/\/www\.venueplay\.com\.au\/app\//.test(h); }).length === 1 &&
+      /<a href="https:\/\/www\.venueplay\.com\.au\/app\/go#t=[A-Za-z0-9_-]{43}&e=[^"]+"[^>]*>Open your VenuePlay<\/a>/.test(html) && html.indexOf('&e=' + encodeURIComponent(c[2])) !== -1, L);
+    check(c[0] + ': it says it takes about 5 minutes and walks them through everything', /It takes about 5 minutes and walks you through everything\./.test(txt), txt);
+    check(c[0] + ': the price in one line: $2.50 a player a month on your usual crowd, first month free, no lock-in', /It's \$2\.50 a player a month on your usual crowd while the November offer runs, first month free, no lock-in\./.test(txt), txt);
+    check(c[0] + ': signed by Dean, from VenuePlay', /Cheers, Dean VenuePlay/.test(txt), txt);
+    check(c[0] + ': no long instructions any more: no TV address, no game steps, no card link, no tick (they live in the app)', !/\/tv\?|Open lobby|add-card|tick one box|Number bingo|Musical bingo/i.test(html), L);
+    check(c[0] + ': no logo, no banner image', !/<img/i.test(html));
+    check(c[0] + ': who we are, the call line and how to stop (Spam Act, as every venue email)', /You are getting this because you asked us to set up VenuePlay for/.test(txt) && /Gflam Group Pty Ltd, ABN 35 679 383 049/.test(txt) &&
+      L.indexOf('https://www.venueplay.com.au/unsubscribe?e=' + encodeURIComponent(c[2])) !== -1 && L.indexOf('tel:+61752283667') !== -1 && L.indexOf('https://www.venueplay.com.au/terms') !== -1 && L.indexOf('https://www.venueplay.com.au/privacy') !== -1, L);
+    check(c[0] + ': a text part, made from the same HTML', typeof msg.text === 'string' && msg.text === helpPlainFromHtml(html) && msg.text.indexOf('Open your VenuePlay (https://www.venueplay.com.au/app/go#t=') !== -1, msg.text);
+    check(c[0] + ': no em dash or en dash anywhere in what they read', !/[—–]/.test(txt) && !/&mdash;|&ndash;/.test(html) && !/[—–]/.test(msg.text || ''));
+    check(c[0] + ': no urgency or push (Dean, 28 Oct 2026)', !/don't miss|do not miss|hurry|limited time|act now|today only|last chance|before it's gone|spots? left|we have set you up/i.test(txt), txt.slice(0, 300));
   });
   var vt = visible(VIC_HTML), qt = visible(QLD_HTML);
-  check('VIC: Hi Amit, $150.00 a month for 60, the mobile line, the slides line', /Hi Amit,/.test(vt) && /60 players is \$150\.00 a month/.test(vt) && /Your mobile, 0452 510 904, works too/.test(vt) && /As promised, here's your VenuePlay account for Caz Reitop's Dirty Secrets, with a few quick slides our marketing team made off your website/.test(vt) && /The 2 slides we made for you are already on it/.test(vt), vt.slice(0, 300));
-  check('VIC: number bingo on printed tickets, free entry needs no permit, paid is for non-profits', /Number bingo\. In Victoria a phone cannot be used as a ticket, so number bingo is played on printed tickets/.test(vt) && /charging for entry is for non-profits with a permit/.test(vt), vt);
-  check('QLD: Hi there, $300.00 a month for 120, no mobile line, the add-your-own-ads line', /Hi there,/.test(qt) && /120 players is \$300\.00 a month/.test(qt) && !/Your mobile/.test(qt) && /add your pictures any time under Your account/.test(qt) && !/already on it/.test(qt) && !/marketing team/.test(qt), qt.slice(0, 300));
-  check('QLD: number bingo on phones, with Queensland\'s rules shown before every game, and no paper line', /players join on their phones from the QR on the TV/.test(qt) && /Queensland's rules before every game/.test(qt) && !/printed tickets/.test(qt));
+  check('VIC: Hi Amit, the favour as Dean says it, with the slides from their website', /Hi Amit,/.test(vt) && /As promised, I've set you up an account for Caz Reitop's Dirty Secrets with a few quick slides our marketing team made from your website, so you can see how your TV looks and have a play\./.test(vt), vt.slice(0, 400));
+  check('QLD: Hi there, the same favour without the slides line', /Hi there,/.test(qt) && /As promised, I've set you up an account for Tugun Test Bowls Club, so you can see how your TV looks and have a play\./.test(qt) && !/marketing team/.test(qt), qt.slice(0, 300));
   world(); ENV.FOUNDING_CODES = '';
   await vpaHandleProspect(as(ADMIN, with_({ slides: [] })), ENV, J);
   var std = sent[0] ? visible(sent[0].html) : '';
-  check('with no offer running, the email quotes the standard $3.00 and names no offer month', /\$3\.00 a player a month/.test(std) && !/offer runs/.test(std) && /60 players is \$180\.00 a month/.test(std), std.slice(std.indexOf('Your price'), std.indexOf('Your price') + 200));
+  check('with no offer running, the email quotes the standard $3.00 and names no offer month', /It's \$3\.00 a player a month on your usual crowd, first month free, no lock-in\./.test(std) && !/offer runs/.test(std), std);
 
   section('4. The number bingo line agrees with vp-gaming.js for every state, club and pub');
   var gw = {}; (new Function('window', readFile('venueplay/app/vp-gaming.js')))(gw);

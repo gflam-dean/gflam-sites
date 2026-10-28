@@ -3576,7 +3576,7 @@ def local_checks(which):
             # feature/prospect-setup-28-oct. One action builds the venue and sends ONE email.
             ('D84. Set up a prospect builds a working venue and sends one email, with compliance pending and no login touched',
              'test-prospect-setup.js',
-             'owner or accounts HQ only; refuses without email or postcode and creates nothing; account record at the founding price, email login, slides, terms_required, audit row; an existing login is never changed or linked; the VIC and QLD emails carry every link, the right TV address and state, and never call musical bingo bingo; the console holds the venue until ticked', 113,
+             'owner or accounts HQ only; refuses without email or postcode and creates nothing; account record at the founding price, email login, slides, terms_required, audit row; an existing login is never changed or linked; the email is short, from Dean, one button, the price line, no instructions, a text part; the card link comes from the app for that venue only; the console holds the venue until ticked', 110,
              'A prospect venue whose compliance line HQ ticked for them, an email login that cannot sign in, a '
              'welcome with a dead link or the wrong state\'s bingo rule, or one venue\'s manager handed another venue'),
             ('D85. The game Worker starts no game at a prospect venue until the owner or a manager has ticked section 6',
@@ -3591,6 +3591,12 @@ def local_checks(which):
              'only the hash of a 32-byte random token is stored; one use, 14 days, one winner of two at once; unknown, used, expired and removed all get one identical answer; rate-limited, never logged; nothing sent before a tap; the 4 hour sign-out still applies; email first for an email-only login', 49,
              'A sign-in link that works twice, for ever, for a stranger who guessed it, or for a mail scanner; a '
              'token readable from the database or a log; or an email-only prospect left waiting for a text'),
+            # D87: the prospect flow, version 2 (Dean, 28 Oct 2026; migration 124), branch feature/prospect-v2-28-oct.
+            ('D87. A prospect\'s welcome waits for HQ\'s delay and can be stopped, and the app walks them through setup one step at a time',
+             'test-prospect-welcome-v2.js',
+             'a prospect\'s welcome is booked for HQ\'s delay and its link\'s 14 days start when it goes; cancel retires the link, send now sends a new one once; neither after its minute or by staff; the first run: mobile only after the texted code, the Terms tick, their TV and slides, a first game, their card, please call me; kept per venue', 98,
+             'An email that lands the second a venue replied, a cancelled email whose button still signs in, a '
+             'mobile put on a login nobody verified, or a guide that lets a venue past the Terms tick'),
             ('D47. The Terms put gaming compliance, permits, attendance, age, records and an indemnity on the venue',
              'test-terms-put-compliance-on-the-venue.js',
              'section 6 carries every clause the lawyer asked for, and the onboarding tick is one sentence everywhere', 40,

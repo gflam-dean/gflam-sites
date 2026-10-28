@@ -43,6 +43,7 @@ var VPA_ALERT_KINDS = (function(){
 eval(lift(BILL,"vpaAlertSubject"));
 eval(lift(BILL,"vpaFireCancelAlert"));
 eval(lift(BILL,"vpaSendEmail"));
+eval(lift(BILL,"helpPlainFromHtml"));   // vpaSendEmail adds a text part made from the HTML (28 Oct 2026)
 
 // Jess's actual invoice, as Stripe returned it.
 var jess = { amount_paid: 1000, number: "9FGBRAJG-0008", lines: { data: [
@@ -444,6 +445,8 @@ function alertSubjectChecks() {
     "Your VenuePlay payment is coming up",
     "Your VenuePlay payment did not go through",
     "Your VenuePlay plan has moved up",
+    // The prospect's welcome, version 2 (28 Oct 2026): "Your VenuePlay account for <venue>", built in one place.
+    "vpaProspectSubject(o.venueName)",
   ];
   var helpSubjects = 0;
   var subjects = [], uncovered = [], sre = /^\s*subject:\s*(.+?),?\s*$/gm, sm;
