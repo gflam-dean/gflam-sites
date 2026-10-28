@@ -140,8 +140,8 @@
   "counted_by": "lines"
  },
  "tools/gate-record.test.py": {
-  "checks": 0,
-  "counted_by": "total"
+  "checks": 60,
+  "counted_by": "lines"
  },
  "tools/gate-reliability.test.py": {
   "checks": 53,
@@ -656,7 +656,7 @@
   "counted_by": "lines"
  },
  "tools/test-terms-put-compliance-on-the-venue.js": {
-  "checks": 70,
+  "checks": 81,
   "counted_by": "lines"
  },
  "tools/test-trivia-15-oct.js": {
