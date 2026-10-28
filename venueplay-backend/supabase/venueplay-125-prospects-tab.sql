@@ -84,5 +84,14 @@ select distinct on (v.id)
  order by v.id, a.created_at
 on conflict (venue_id) do nothing;
 
+-- THE WEEKEND. Migration 124 let a welcome be scheduled at most 2 days ahead. Dean's
+-- timing rule (29 Oct 2026) sends a Friday-afternoon or weekend prospect's account at
+-- 9:20am Monday: Friday 4pm to Monday 9:20 is 65 hours. 5 days covers that and a
+-- long weekend. Safe to run again.
+alter table public.vp_prospect_welcomes drop constraint if exists vp_prospect_welcomes_when;
+alter table public.vp_prospect_welcomes add constraint vp_prospect_welcomes_when
+  check (send_at <= created_at + interval '5 days');
+
 -- Rollback:
 --   drop table if exists public.vp_prospects;
+--   (the 5-day welcome window can stay; it only allows more)
