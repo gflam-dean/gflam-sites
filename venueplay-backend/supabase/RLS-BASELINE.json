@@ -1929,6 +1929,10 @@
    "enabled": true,
    "forced": false
   },
+  "vp_signin_links": {
+   "enabled": true,
+   "forced": false
+  },
   "vp_song_flags": {
    "enabled": true,
    "forced": false
