@@ -12,7 +12,7 @@
   "counted_by": "lines"
  },
  "partyplay-backend/lib/pp-checkout.test.js": {
-  "checks": 17,
+  "checks": 21,
   "counted_by": "total"
  },
  "partyplay-backend/lib/pp-code-and-channel.test.js": {
@@ -376,7 +376,7 @@
   "counted_by": "lines"
  },
  "tools/test-free-entry-rules-are-the-states-own.js": {
-  "checks": 36,
+  "checks": 40,
   "counted_by": "lines"
  },
  "tools/test-game-setup-advanced.js": {
@@ -656,7 +656,7 @@
   "counted_by": "lines"
  },
  "tools/test-terms-put-compliance-on-the-venue.js": {
-  "checks": 81,
+  "checks": 52,
   "counted_by": "lines"
  },
  "tools/test-trivia-15-oct.js": {
@@ -1105,6 +1105,14 @@
  },
  "tools/tv-window-uncovered.test.py": {
   "checks": 17,
+  "counted_by": "lines"
+ },
+ "tools/test-legal-gaps-28-oct.js": {
+  "checks": 46,
+  "counted_by": "lines"
+ },
+ "tools/test-terms-acceptance-card.js": {
+  "checks": 56,
   "counted_by": "lines"
  }
 }

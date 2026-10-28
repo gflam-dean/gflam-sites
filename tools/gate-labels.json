@@ -361,6 +361,8 @@
   "signup-tick-in-chrome.test.py",
   "the tour cards say loading, retry once and tell the truth; Coming Soon only when nothing is on (80 checks)",
   "drag-bingo-clubs-page.test.py",
-  "tv-window-uncovered.test.py"
+  "tv-window-uncovered.test.py",
+  "owner or manager ticks section 6 once in the console and the billing Worker records who and when; a host is told, HQ View as cannot accept; nothing a game does is gated",
+  "a paid game with no known state starts free; HQ filters and badges venues that need a state; the VGCCC register check is HQ-only, VIC-only and names who and when; /start sends the private-use tick"
  ]
 }
