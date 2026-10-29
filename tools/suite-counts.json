@@ -160,7 +160,7 @@
   "counted_by": "lines"
  },
  "tools/help-desk-pages.test.py": {
-  "checks": 218,
+  "checks": 228,
   "counted_by": "lines"
  },
  "tools/help-seed-matches-faq.test.py": {
@@ -249,6 +249,10 @@
  },
  "tools/signup-tick-in-chrome.test.py": {
   "checks": 20,
+  "counted_by": "lines"
+ },
+ "tools/site-offer-footer-in-chrome.test.py": {
+  "checks": 29,
   "counted_by": "lines"
  },
  "tools/support-phone.test.py": {
@@ -404,7 +408,7 @@
   "counted_by": "lines"
  },
  "tools/test-help-desk.js": {
-  "checks": 286,
+  "checks": 306,
   "counted_by": "lines"
  },
  "tools/test-help-triage-truth.js": {
