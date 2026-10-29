@@ -107,7 +107,8 @@ PROSPECTS = [
     prospect(CARD, ago(12), first_signin_at=ago(11), free_month_ends_at=bne_end(19), card_choice='now'),
     prospect(PAUSED, ago(40), first_signin_at=ago(38), free_month_ends_at=bne_end(-8), paused_at=ago(7),
              reminders_sent=[3, 10, 17, 24, 28, 29, 30]),
-    prospect(CANCEL, ago(15), first_signin_at=ago(14), free_month_ends_at=bne_end(16), cancelled_at=ago(2)),
+    # Paused first, then pressed Cancel: Cancelled wins (they said no; a pause alone might still come back).
+    prospect(CANCEL, ago(42), first_signin_at=ago(40), free_month_ends_at=bne_end(-10), paused_at=ago(9), cancelled_at=ago(2)),
 ]
 SIGNED_IN = {FRESH: ago(1), LAST3: ago(0, 5), FINAL: ago(3), CARD: ago(2), PAUSED: ago(9), CANCEL: ago(2)}
 AUTH = [{'id': uid(n), 'email': 'p%d@pub.test' % n, 'phone': '', 'last_sign_in_at': SIGNED_IN.get(n)} for n in NAMES]
@@ -213,7 +214,7 @@ try:
     ok('Paused Pub: Paused, the free month "Ended ..., paused ..."', c.get('st') == 'paused' and c.get('chip') == 'Paused'
        and c.get('ends', '').startswith('Ended ') and ', paused ' in c.get('ends', ''), c)
     c = card(sid, CANCEL)
-    ok('Cancelled Bowls Club: Cancelled, and no Called button (they said no)', c.get('st') == 'cancelled' and c.get('chip') == 'Cancelled' and not c.get('called'), c)
+    ok('Cancelled Bowls Club (paused, then cancelled): Cancelled, not Paused, and no Called button (they said no)', c.get('st') == 'cancelled' and c.get('chip') == 'Cancelled' and not c.get('called'), c)
     ok('...and no Resend sign-in link either: they asked us to stop', not c.get('resend'), c)
     ok('every prospect still in play (not signed in, free month, paused, card added) keeps Resend sign-in link (phone sign-in, 29 Oct)',
        all(card(sid, n).get('resend') for n in (NOSIGN, ASKED, FRESH, LAST3, FINAL, PAUSED, CARD)),
