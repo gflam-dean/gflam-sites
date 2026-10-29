@@ -404,7 +404,7 @@
   "counted_by": "lines"
  },
  "tools/test-help-desk.js": {
-  "checks": 280,
+  "checks": 286,
   "counted_by": "lines"
  },
  "tools/test-help-triage-truth.js": {

@@ -158,6 +158,7 @@
   "musical-draw.test.js",
   "musical-win.test.js",
   "naming a venue you hold picks its account; naming one you do not changes nothing",
+  "never \"Gflam\" in a VenuePlay or PartyPlay customer email: the templates and the help desk emails say the brand and its ABN",
   "never \"roster\" in copy",
   "never \"the ACT\"",
   "night-pass-hq-in-chrome.test.py",

@@ -15,6 +15,23 @@
 */
 load('tools/rig-billing-worker.js');
 var fails = 0, ran = 0;
+/* The help emails' images are the brand's own logo on its band (Dean, 29 Oct 2026: "a little prettier
+   and branded") and the square logo in the signature, which copies his Outlook one (VenuePlay's is the
+   glowing GIF). The footer is the brand and its ABN. Gflam appears once only: the Acknowledgement of
+   Country in the signature, worded as Dean's own. */
+var COUNTRY = ' and The Gflam Group of Companies acknowledge the Traditional Owners of the land on which we work and create. We pay our respects to Elders past and present.';
+function oneLogo(html, pp) {
+  var imgs = String(html || '').match(/<img\b[^>]*>/gi) || [];
+  return imgs.length === 2 && imgs[0].indexOf(pp ? 'https://partyplay.com.au/logos/partyplay-email-logo.png' : 'https://venueplay.com.au/logos/venueplay_primary_rebuilt.png') !== -1
+    && imgs[0].indexOf('alt="' + (pp ? 'PartyPlay' : 'VenuePlay') + '"') !== -1 && (pp ? /background:#ffffff;[^>]*><img/ : /background:#12101a;[^>]*><img/).test(html) && /background:#FF1F8E/.test(html)
+    && imgs[1].indexOf(pp ? 'https://partyplay.com.au/logos/email-signature-partyplay.png' : 'https://venueplay.com.au/logos/email-signature-venueplay.gif') !== -1
+    && imgs[1].indexOf('width="120"') !== -1 && imgs[1].indexOf('alt="' + (pp ? 'PartyPlay' : 'VenuePlay') + '"') !== -1;
+}
+function brandFoot(html, pp) {
+  var b = pp ? 'PartyPlay' : 'VenuePlay', h = String(html || '');
+  return h.indexOf(b + ' &middot; ABN 35 679 383 049.') !== -1 && h.indexOf(b + COUNTRY) !== -1
+    && !/gflam/i.test(h.split(b + COUNTRY).join('')) && !/Gold Coast/.test(h) && h.indexOf('<strong>CONFIDENTIAL EMAIL:</strong>') !== -1;
+}
 function check(name, ok, saw) { ran++; if (ok) print('  ok   ' + name); else { print('  FAIL ' + name + (saw === undefined ? '' : '   saw: ' + JSON.stringify(saw).slice(0, 400))); fails++; } }
 vpaVerifyJWT = async function (t) { return t ? { sub: t } : null; };
 
@@ -122,7 +139,8 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('the patron gets one acknowledgement and nothing else', acks.length === 1 && sent.length === 2, sent.map(function (m) { return [m.to, m.subject]; }));
   check('it comes from VenuePlay Support, replies go to support@, the subject carries the number and the reply secret', acks[0] && acks[0].from === 'VenuePlay Support <support@send.venueplay.com.au>' && acks[0].reply_to === 'support@venueplay.com.au' && acks[0].subject === 'Thanks, we\'ve got your message (ticket 1001, ref ' + helpRef(t.reply_token) + ')' && /^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/.test(helpRef(t.reply_token)), acks[0] && [acks[0].from, acks[0].reply_to, acks[0].subject]);
   check('it says, in plain words: thanks, the number, a person replies the same business day, reply to add anything', acks[0] && acks[0].text.indexOf('Hi Jo,') === 0 && acks[0].text.indexOf('Thanks, we\'ve got your message (ticket 1001). Someone from our team will read it and reply by email, usually the same business day.') !== -1 && acks[0].text.indexOf('To add anything, just reply to this email.') !== -1 && !/What happens next|we have got it/.test(acks[0].html), acks[0] && acks[0].text);
-  check('it is signed by a person over the brand\'s support, with the support address and no images', acks[0] && /\nDean\nVenuePlay support\nsupport@venueplay\.com\.au\nvenueplay\.com\.au\n/.test(acks[0].text) && !/<img/i.test(acks[0].html), acks[0] && acks[0].text);
+  check('it is signed by a person over the brand\'s support, with the support address, and the VenuePlay logo on the dark band over the pink rule and the square logo in Dean\'s Outlook signature (P, E, W)', acks[0] && /\nKind Regards\n\nDean\nVenuePlay\n\nE support@venueplay\.com\.au\nW venueplay\.com\.au\n/.test(acks[0].text) && oneLogo(acks[0].html, false), acks[0] && acks[0].text);
+  check('its footer is "VenuePlay \u00b7 ABN 35 679 383 049." and Gflam is nowhere in it but the Acknowledgement of Country (VenuePlay is its own business)', acks[0] && brandFoot(acks[0].html, false) && /\nVenuePlay - ABN 35 679 383 049\.\n$/.test(acks[0].text), acks[0] && acks[0].text);
   check('it has a text part made from the same words as the HTML, with no tags or entities left in it', acks[0] && typeof acks[0].text === 'string' && typeof acks[0].html === 'string' && !/[<>]|&[a-z#0-9]+;/i.test(acks[0].text) && acks[0].text === helpPlainFromHtml(acks[0].html), acks[0] && acks[0].text);
   check('it never quotes what they wrote (a public form can be pointed at any address)', acks[0] && acks[0].html.indexOf('My tickets are not showing') === -1);
   check('a player is not given the venue phone line', acks[0] && acks[0].html.indexOf('07 5228 3667') === -1 && acks[0].html.indexOf('tel:') === -1);
@@ -174,7 +192,8 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   t = T(r.body.ticket_no);
   check('the PartyPlay site form makes a PartyPlay sales ticket from the web form', t && t.brand === 'partyplay' && t.category === 'sales' && t.channel === 'web_form' && t.contact_phone === '0400 111 222', t);
   var ppAck = sent.filter(function (m) { return m.to.join() === 'pat@example.com'; });
-  check('a PartyPlay enquirer is acknowledged from PartyPlay Support, in PartyPlay branding, with no VenuePlay phone line', ppAck.length === 1 && ppAck[0].from === 'PartyPlay Support <support@send.partyplay.com.au>' && ppAck[0].reply_to === 'support@partyplay.com.au' && /PartyPlay support/.test(ppAck[0].text) && !/VenuePlay/.test(ppAck[0].html) && ppAck[0].html.indexOf('07 5228 3667') === -1 && !/<img/i.test(ppAck[0].html), ppAck[0] && [ppAck[0].from, ppAck[0].reply_to]);
+  check('a PartyPlay enquirer is acknowledged from PartyPlay Support, in PartyPlay branding, with no VenuePlay phone line', ppAck.length === 1 && ppAck[0].from === 'PartyPlay Support <support@send.partyplay.com.au>' && ppAck[0].reply_to === 'support@partyplay.com.au' && /\nKind Regards\n\nDean\nPartyPlay\n\nE support@partyplay\.com\.au\nW partyplay\.com\.au\n/.test(ppAck[0].text) && !/VenuePlay/.test(ppAck[0].html) && ppAck[0].html.indexOf('07 5228 3667') === -1 && oneLogo(ppAck[0].html, true), ppAck[0] && [ppAck[0].from, ppAck[0].reply_to]);
+  check('and its footer is "PartyPlay \u00b7 ABN 35 679 383 049." with no Gflam', ppAck[0] && brandFoot(ppAck[0].html, true) && ppAck[0].html.indexOf('#F3F0EC') !== -1, ppAck[0] && ppAck[0].text);
 
   print('THE PUBLIC HELP PAGE (/help): A VENUE THAT IS NOT SIGNED IN');
   world();
@@ -310,7 +329,16 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   var m = sent[0];
   check('an accounts reply goes from VenuePlay accounts, replies to accounts@', rp.status === 200 && m && m.from === 'VenuePlay Accounts <accounts@send.venueplay.com.au>' && m.reply_to === 'accounts@venueplay.com.au', m && [m.from, m.reply_to]);
   check('to the contact, the subject a person would write: "Re: <their subject> (ticket 1002, ref XXXX-XXXX)", the reference made from its secret', m && m.to.join() === 'owner@royalhotel.com.au' && m.subject === 'Re: ' + T(1002).subject + ' (ticket 1002, ref ' + helpRef(T(1002).reply_token) + ')' && m.subject.indexOf(T(1002).reply_token) === -1 && T(1002).reply_token.length === 12 && helpRef(T(1002).reply_token) !== helpRef(T(1001).reply_token), m && [m.subject, T(1002).reply_token]);
-  check('the reply has a text part beside the HTML, the same words, signed by the admin who sent it', m && m.text === helpPlainFromHtml(m.html) && m.text.indexOf('Refunded the second charge.') === 0 && /\nDean\nVenuePlay support\naccounts@venueplay\.com\.au\n07 5228 3667\nvenueplay\.com\.au\n/.test(m.text) && !/<img/i.test(m.html), m && m.text);
+  check('the reply has a text part beside the HTML, the same words, signed by the admin who sent it', m && m.text === helpPlainFromHtml(m.html) && m.text.indexOf('Refunded the second charge.') === 0 && /\nKind Regards\n\nDean\nVenuePlay\n\nP 07 5228 3667\nE accounts@venueplay\.com\.au\nW venueplay\.com\.au\n/.test(m.text) && oneLogo(m.html, false), m && m.text);
+  /* Links look like links, and a reply that signs off itself gets no second sign-off (Dean, 29 Oct 2026). */
+  var lk = helpReplyHtml(T(1002), 'On the TV, open venueplay.com.au/tv?royal-hotel. Or https://example.com/a?b=1&c=2, or email jo@example.com.\n<b>not markup</b> www.x.com.\n\nCheers,', 'support@venueplay.com.au', 'Dean');
+  check('a web address or email address in a reply is a pink underlined link; what was typed stays the words; nothing typed becomes markup', lk.indexOf('<a href="https://venueplay.com.au/tv?royal-hotel" class="hd-a" style="color:#C70F69;text-decoration:underline">venueplay.com.au/tv?royal-hotel</a>.') !== -1
+    && lk.indexOf('<a href="https://example.com/a?b=1&amp;c=2" class="hd-a"') !== -1 && lk.indexOf('>https://example.com/a?b=1&amp;c=2</a>,') !== -1
+    && lk.indexOf('<a href="mailto:jo@example.com" class="hd-a"') !== -1 && lk.indexOf('&lt;b&gt;not markup&lt;/b&gt;') !== -1 && lk.indexOf('<a href="https://www.x.com" class="hd-a"') !== -1
+    && helpPlainFromHtml(lk).indexOf('On the TV, open venueplay.com.au/tv?royal-hotel. Or https://example.com/a?b=1&c=2, or email jo@example.com.\n<b>not markup</b> www.x.com.') === 0, helpPlainFromHtml(lk).slice(0, 200));
+  check('a reply ending "Cheers," gets no "Kind Regards" under it; one that does not sign off gets it', lk.indexOf('Kind Regards') === -1 && /Cheers,\n\nDean\nVenuePlay\n/.test(helpPlainFromHtml(lk)) && m.text.indexOf('Kind Regards') !== -1);
+  check('every link in the signature and the acknowledgement is pink and underlined, none plain', (m.html.match(/<a\b[^>]*>/g) || []).every(function (a) { return a.indexOf('class="hd-a" style="color:#C70F69;text-decoration:underline"') !== -1; }) && (acks[0].html.match(/<a\b[^>]*>/g) || []).every(function (a) { return a.indexOf('text-decoration:underline') !== -1; }), m.html.match(/<a\b[^>]*>/g));
+  check('the reply is a whole document in the VenuePlay card, ending on the ticket line and "VenuePlay \u00b7 ABN", with no Gflam', m && /^<!doctype html>/i.test(m.html) && brandFoot(m.html, false) && /Ticket 1002 \(ref [A-Z0-9-]+\)\. To add anything, just reply to this email\.\nVenuePlay - ABN 35 679 383 049\.\n$/.test(m.text), m && m.text);
   check('it carries the ABN and a way to reach us', m && /ABN 35 679 383 049/.test(m.html) && /accounts@venueplay\.com\.au/.test(m.html));
   check('the reply is recorded on the ticket, which now waits on them', notesOf(T(1002)).some(function (n) { return n.kind === 'reply' && /Refunded/.test(n.body); }) && T(1002).status === 'waiting');
   sent.length = 0;

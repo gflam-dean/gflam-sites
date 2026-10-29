@@ -2604,6 +2604,38 @@ def local_checks(which):
             hits.append(short(f))
         ok(label, not hits, why=', '.join(hits[:4]))
 
+    # NEVER GFLAM IN A VENUEPLAY OR PARTYPLAY EMAIL (Dean, 29 Oct 2026: "Help emails still come out
+    # and say that it's provided by Gflam"). VenuePlay is its own business; its emails say
+    # "VenuePlay · ABN 35 679 383 049" and PartyPlay's "PartyPlay · ABN ...". Read: every template in
+    # venueplay/emails and partyplay/emails (comments removed, so a note about history is not copy),
+    # and the strings the help desk's email builders in the billing Worker write. The help desk's
+    # rendered emails are also run and read by tools/test-help-desk.js. One sentence is allowed (below). Not covered here, on purpose
+    # until Dean decides: the billing Worker's receipts and tax invoices, and the PartyPlay Worker's
+    # emailShell, which still name Gflam Group Pty Ltd as the supplier.
+    gflam_hits = []
+    for top in ('venueplay', 'partyplay'):
+        ed = os.path.join(ROOT, top, 'emails')
+        if os.path.isdir(ed):
+            for fn in sorted(os.listdir(ed)):
+                if fn.endswith('.html') and re.search(r'gflam', copy_text(os.path.join(ed, fn)), re.I):
+                    gflam_hits.append(top + '/emails/' + fn)
+    wsrc = io.open(os.path.join(ROOT, 'venueplay-backend', 'worker', 'venueplay-api-FULL.js'), encoding='utf-8').read()
+    # The ONE allowed mention: the Acknowledgement of Country in the signature, worded as Dean's own
+    # Outlook signature ("VenuePlay and The Gflam Group of Companies acknowledge the Traditional
+    # Owners ..."), his choice on 29 Oct 2026. Only that exact phrase is taken out before looking.
+    country = ' and The Gflam Group of Companies acknowledge the Traditional Owners of the land on which we work and create.'
+    help_fns = ('helpBrandFooter', 'helpEmailCard', 'helpReplyHtml', 'helpAckHtml', 'helpSignatureHtml', 'helpCountry', 'helpLinkify')
+    for name in help_fns:
+        m = re.search(r'^function ' + name + r'\(.*?^}', wsrc, re.S | re.M)
+        if not m:
+            gflam_hits.append('venueplay-api-FULL.js has no ' + name)
+            continue
+        body = re.sub(r'/\*.*?\*/', '', m.group(0), flags=re.S)
+        if any(re.search(r'gflam|gold coast', ''.join(lit).replace(country, ''), re.I) for lit in _JS_LIT.findall(body)):
+            gflam_hits.append('venueplay-api-FULL.js ' + name)
+    ok('never "Gflam" in a VenuePlay or PartyPlay customer email: the templates and the help desk emails say the brand and its ABN',
+       not gflam_hits, why=', '.join(gflam_hits[:5]))
+
     # THE TYPE SCALE. The design review of 1 Oct 2026 found 44 distinct font sizes on the
     # homepage, many of them half-pixel apart (11.5, 12.5, 14.5, 15.5), which is how a page
     # comes to look assembled rather than designed. On 16 Oct every size on the three sales

@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '30 Oct 2026, 01:05 · 762f81d7';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '30 Oct 2026, 07:49 · 51598304';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -12632,20 +12632,66 @@ function helpSigner(env, label) {
   if (/^[A-Za-z][A-Za-z' -]{1,39}$/.test(l)) return l;
   return helpLine((env && env.HELP_SIGNER) || 'Dean', 40) || 'Dean';
 }
-/* The signature on every email a customer gets from the desk: a name, the brand's support, how to reach
-   us, and the business line. Plain, no images. The phone line goes to a venue or a prospective venue
-   only: a VenuePlay ticket about a venue, a bill or a sale. Never a player's (the menu sends players to
-   voicemail) and never PartyPlay, which has no line. */
-function helpSignatureHtml(ticket, signer, replyTo) {
+/* THE SIGNATURE (Dean, 29 Oct 2026): a copy of his own Outlook signature, so a help desk email signs
+   off the way his support@ and hello@ mail does. ONE function, so it can be swapped whole. In order:
+     the sign-off "Kind Regards", unless the reply already ends on one of its own ("Cheers,");
+     the brand's square logo (VenuePlay's glows: a looping GIF whose FIRST frame is the whole logo,
+     because Outlook on a desktop shows only that frame), a pink rule, then the person's name, the
+     brand in pink, and P, E and W: the phone, the mailbox the email came from, the website;
+     the confidentiality note and the Acknowledgement of Country, small and grey. The Acknowledgement
+     names "The Gflam Group of Companies": Dean's choice, and the ONE place Gflam may appear in these
+     emails (release-check's "never Gflam" line allows exactly that sentence).
+   The phone line (P) goes to a venue or a prospective venue only: a VenuePlay ticket about a venue, a
+   bill or a sale. Never a player's (the menu sends players to voicemail) and never PartyPlay, which
+   has no line. Links are pink and underlined, so they look like links (Dean, 29 Oct 2026). */
+const HELP_LINK = 'class="hd-a" style="color:#C70F69;text-decoration:underline"';
+function helpCountry(pp) {
+  return (pp ? 'PartyPlay' : 'VenuePlay') + ' and The Gflam Group of Companies acknowledge the Traditional Owners of the land on which we work and create. We pay our respects to Elders past and present.';
+}
+function helpSignatureHtml(ticket, signer, replyTo, signedOff) {
   const pp = ticket.brand === 'partyplay';
   const brand = pp ? 'PartyPlay' : 'VenuePlay';
   const site = pp ? 'partyplay.com.au' : 'venueplay.com.au';
-  const A = 'color:#C70F69;text-decoration:none';
-  return '<p style="margin:22px 0 0">' + helpHtml(signer || 'Dean') + '<br>' + brand + ' support<br>' +
-    '<a href="mailto:' + replyTo + '" style="' + A + '">' + replyTo + '</a>' +
-    (!pp && ['venue_support', 'accounts', 'sales'].indexOf(ticket.category) !== -1
-      ? '<br><a href="tel:' + VP_SUPPORT_TEL + '" style="' + A + '">' + VP_SUPPORT_PHONE + '</a>' : '') +
-    '<br><a href="https://' + site + '" style="' + A + '">' + site + '</a></p>';
+  const icon = pp ? 'https://partyplay.com.au/logos/email-signature-partyplay.png' : 'https://venueplay.com.au/logos/email-signature-venueplay.gif';
+  const phone = !pp && ['venue_support', 'accounts', 'sales'].indexOf(ticket.category) !== -1;
+  const L = (k, v) => '<strong style="color:#FF1F8E">' + k + '</strong>&nbsp;&nbsp;' + v;
+  return (signedOff ? '' : '<p style="margin:22px 0 0">Kind Regards</p>')
+    + '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:20px 0 0;border-collapse:collapse"><tr>'
+    + '<td class="hd-sig-icon" valign="top" style="width:120px;padding:0 16px 0 0">'
+    + '<img class="hd-sig-img" src="' + icon + '" width="120" height="120" alt="' + brand + '" style="display:block;border:0;width:120px;height:120px;border-radius:12px"></td>'
+    + '<td style="width:3px;background:#FF1F8E;font-size:0;line-height:0">&nbsp;</td>'
+    + '<td class="hd-sig-text" valign="middle" style="padding:0 0 0 16px;font-size:14px;line-height:1.55">'
+    + '<p style="margin:0"><strong class="hd-ink" style="color:#12101a;font-size:18px;line-height:1.3">' + helpHtml(signer || ('The ' + brand + ' team')) + '</strong><br>'
+    + '<span style="color:#FF1F8E;font-weight:600">' + brand + '</span></p>'
+    + '<p style="margin:10px 0 0">'
+    + (phone ? L('P', '<a href="tel:' + VP_SUPPORT_TEL + '" ' + HELP_LINK + '>' + VP_SUPPORT_PHONE + '</a>') + '<br>' : '')
+    + L('E', '<a href="mailto:' + replyTo + '" ' + HELP_LINK + '>' + replyTo + '</a>') + '<br>'
+    + L('W', '<a href="https://' + site + '" ' + HELP_LINK + '>' + site + '</a>') + '</p>'
+    + '</td></tr></table>'
+    + '<p class="hd-mute" style="margin:22px 0 0;font-size:11px;line-height:1.55;color:#8a8a95"><strong>CONFIDENTIAL EMAIL:</strong> The contents of this email and any attachments are private and confidential. Any unauthorised use of all or any part of this email and any attachments is prohibited.</p>'
+    + '<p class="hd-mute" style="margin:8px 0 0;font-size:11px;line-height:1.55;color:#8a8a95">' + helpCountry(pp) + '</p>';
+}
+/* A reply that already signs off ("Cheers,", "Thanks,", "Kind regards,") gets no second sign-off. */
+function helpSignsOff(body) {
+  const lines = String(body || '').trim().split('\n');
+  const last = (lines[lines.length - 1] || '').trim();
+  return last.length <= 30 && /,$/.test(last) && /^(cheers|thanks|thank you|regards|kind regards|best regards|best|warm regards|many thanks|talk soon)\b/i.test(last);
+}
+/* LINKS IN WHAT STAFF TYPED (Dean, 29 Oct 2026: "the link doesn't actually look like it links"). A
+   web address or an email address in a reply (a saved reply's {tv_link} is "venueplay.com.au/tv?...")
+   becomes a pink underlined link. Runs on the ESCAPED text, so nothing typed can become markup; the
+   link's words are what was typed, so the text part reads the same. */
+function helpLinkify(escaped) {
+  return String(escaped).replace(/\b((?:https?:\/\/|www\.)[^\s<]+|(?:venueplay|partyplay)\.com\.au(?:\/[^\s<]*)?|[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+)/g, (m) => {
+    let tail = '';
+    while (/[.,;:!?)\]'"]$/.test(m) || /&#39;$|&quot;$/.test(m)) {
+      const t = /&#39;$|&quot;$/.exec(m); const n = t ? t[0].length : 1;
+      tail = m.slice(-n) + tail; m = m.slice(0, -n);
+    }
+    if (!m) return tail;
+    const href = /@/.test(m) && !/^(https?:|www\.)/i.test(m) ? 'mailto:' + m : (/^https?:/i.test(m) ? m : 'https://' + m);
+    return '<a href="' + href + '" ' + HELP_LINK + '>' + m + '</a>' + tail;
+  });
 }
 /* THE TEXT PART. Every help desk email carries text/plain beside the HTML, made from the same HTML
    so the two can never say different things. An HTML-only email is one of the things Outlook's
@@ -13143,27 +13189,66 @@ async function helpAdminNote(request, env, json) {
   return json({ ok: true });
 }
 
-/* The email the contact gets, in the ticket's own brand. Transactional, so it carries the ABN and
-   a way to reach us (as venueplay/emails/*.html do); the reference is in the subject so their reply
-   threads back. Both brands are Gflam Group's, ABN 35 679 383 049. Plain and personal (Dean, 28 Oct
-   2026): the words, a person's name over the brand's support, no logo and no banner. */
+/* THE HELP DESK'S EMAIL CARD (Dean, 29 Oct 2026: "Help emails still come out and say that it's
+   provided by Gflam. Can we make them a little prettier and branded?"). This replaces the 28 Oct
+   "plain, no logo" look; the words stay short, warm and signed by a person. Each brand is its own
+   business: VenuePlay mail says VenuePlay and PartyPlay mail says PartyPlay, never Gflam. The ABN in
+   the footer is the sender identification the Spam Act asks for, beside a way to reach us (the
+   signature) and, on a reply, the ticket line.
+   The same frame as venueplay/emails/welcome-prospect.html: the logo on the dark band, a pink rule
+   under it, the white card. PartyPlay in its own: the warm page and colours of the PartyPlay
+   Worker's emailShell, its logo on a white band over the same pink rule. Email-safe: tables and inline styles; the one <style> block only darkens the
+   card for a mail app that honours prefers-color-scheme, and each logo sits on the band it was drawn
+   for, so a forced dark mode cannot lose it. The text part is still made from this HTML (helpPlainFromHtml
+   drops the style and title), so it says the same words. */
+function helpBrandFooter(pp) {
+  return (pp ? 'PartyPlay' : 'VenuePlay') + ' &middot; ABN ' + VP_ABN;
+}
+function helpEmailCard(pp, inner, foot, title, preheader) {
+  const brand = pp ? 'PartyPlay' : 'VenuePlay';
+  const site = pp ? 'https://partyplay.com.au' : 'https://venueplay.com.au';
+  const logo = pp ? site + '/logos/partyplay-email-logo.png' : site + '/logos/venueplay_primary_rebuilt.png';
+  /* PartyPlay's email logo is drawn on white, so its band is white; on the dark band it would sit
+     in a white box. VenuePlay's logo is drawn for the dark band. */
+  const band = pp ? '#ffffff' : '#12101a';
+  const page = pp ? '#F3F0EC' : '#f4f4f7', text = pp ? '#3A3444' : '#3a3a44', mute = pp ? '#8A8296' : '#8a8a95', rule = pp ? '#EDE9E4' : '#eeeeee';
+  return '<!doctype html><html lang="en-AU"><head><meta charset="utf-8">'
+    + '<meta name="viewport" content="width=device-width,initial-scale=1">'
+    + '<meta name="x-apple-disable-message-reformatting">'
+    + '<meta name="color-scheme" content="light dark"><meta name="supported-color-schemes" content="light dark">'
+    + '<title>' + vpaEsc(title || brand) + '</title>'
+    + '<style>@media (prefers-color-scheme: dark){.hd-page{background:#0b0a10 !important}.hd-card{background:#1c1a24 !important}'
+    + '.hd-text{color:#e6e4ec !important}.hd-ink{color:#ffffff !important}.hd-mute{color:#a9a6b4 !important;border-color:#34313f !important}.hd-a{color:#ff6fb5 !important}}'
+    + '@media (max-width:480px){.hd-sig-icon{width:84px !important;padding-right:12px !important}.hd-sig-img{width:84px !important;height:84px !important;border-radius:10px !important}.hd-sig-text{padding-left:12px !important;font-size:13px !important}}</style>'
+    + '</head><body class="hd-page" style="margin:0;padding:0;background:' + page + ';-webkit-text-size-adjust:100%">'
+    + (preheader ? '<div style="display:none;max-height:0;overflow:hidden;opacity:0">' + vpaEsc(preheader) + '</div>' : '')
+    + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="hd-page" style="background:' + page + ';margin:0;padding:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">'
+    + '<tr><td align="center" style="padding:24px 12px">'
+    + '<table role="presentation" width="600" cellpadding="0" cellspacing="0" class="hd-card" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden">'
+    + '<tr><td style="background:' + band + ';padding:20px 28px"><img src="' + logo + '" width="168" alt="' + brand + '" style="display:block;border:0;height:auto;max-width:168px"></td></tr>'
+    + '<tr><td style="height:3px;background:#FF1F8E;font-size:0;line-height:0">&nbsp;</td></tr>'
+    + '<tr><td class="hd-text" style="padding:28px 28px 8px;font-size:16px;line-height:1.6;color:' + text + '">' + inner + '</td></tr>'
+    + '<tr><td style="padding:14px 28px 26px"><p class="hd-mute" style="margin:0;padding-top:16px;border-top:1px solid ' + rule + ';font-size:12px;line-height:1.6;color:' + mute + '">' + foot + '</p></td></tr>'
+    + '</table></td></tr></table></body></html>';
+}
+/* The email the contact gets, in the ticket's own brand and card (helpEmailCard). Transactional, so
+   it carries the ABN and a way to reach us (as venueplay/emails/*.html do); the reference is in the
+   subject so their reply threads back. */
 function helpReplyHtml(ticket, body, replyTo, signer) {
   const pp = ticket.brand === 'partyplay';
-  const brand = pp ? 'PartyPlay' : 'VenuePlay';
-  const site = pp ? 'partyplay.com.au' : 'venueplay.com.au';
   const ref = helpRef(ticket.reply_token);
-  return '<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.55;color:#111;max-width:560px">' +
-    '<div style="white-space:pre-wrap">' + helpHtml(body) + '</div>' +
-    helpSignatureHtml(ticket, signer || 'Dean', replyTo) +
-    '<p style="margin-top:22px;font-size:12px;color:#666">Ticket ' + ticket.ticket_no + (ref ? ' (ref ' + ref + ')' : '') +
-    '. To add anything, just reply to this email.<br>' + brand + ' (' + site + ') is made by Gflam Group Pty Ltd on the Gold Coast. ABN 35 679 383 049.</p></div>';
+  return helpEmailCard(pp,
+    '<div style="white-space:pre-wrap">' + helpLinkify(helpHtml(body)) + '</div>' + helpSignatureHtml(ticket, signer || 'Dean', replyTo, helpSignsOff(body)),
+    'Ticket ' + ticket.ticket_no + (ref ? ' (ref ' + ref + ')' : '') + '. To add anything, just reply to this email.<br>' + helpBrandFooter(pp) + '.',
+    'Ticket ' + ticket.ticket_no);
 }
 /* THE ACKNOWLEDGEMENT (Dean, 23 Oct 2026: "auto-acknowledgement for every enquiry and ticket from
    support@"). Until now nobody who wrote in heard anything until a person replied: the form said
    "sent" and the inbox stayed empty. One short note, once per ticket, the moment the ticket exists,
    from the brand's support address: thanks, we have it, here is the number, a person will reply,
    reply to this email to add anything. Rewritten 28 Oct 2026 (Dean: the old one read "clunky"): a
-   few warm, plain sentences signed by a person, no logo card and no "What happens next" list.
+   few warm, plain sentences signed by a person and no "What happens next" list. In the brand's own
+   card from 29 Oct 2026 (helpEmailCard): logo, pink rule, "VenuePlay · ABN" footer, never Gflam.
 
    What it never does:
      - send twice. A note on the ticket records it, and the note is checked before sending.
@@ -13181,7 +13266,6 @@ function helpReplyHtml(ticket, body, replyTo, signer) {
        as every invoice; past it the ticket still exists and HQ still sees it. */
 function helpAckHtml(t, signer) {
   const pp = t.brand === 'partyplay';
-  const brand = pp ? 'PartyPlay' : 'VenuePlay';
   const site = pp ? 'partyplay.com.au' : 'venueplay.com.au';
   const support = 'support@' + site;
   const first = helpLine(t.contact_name, 60).split(' ')[0];
@@ -13192,12 +13276,10 @@ function helpAckHtml(t, signer) {
     /* The phone line goes to a venue or a prospective venue only, never a player and never
        PartyPlay: the same rule as helpSignatureHtml. */
     + (!pp && ['venue_support', 'accounts', 'sales'].indexOf(t.category) !== -1
-        ? P + 'If a game is on right now and something has gone wrong, call <a href="tel:' + VP_SUPPORT_TEL + '" style="color:#C70F69;text-decoration:none">' + VP_SUPPORT_PHONE + '</a> and press 2.</p>' : '')
+        ? P + 'If a game is on right now and something has gone wrong, call <a href="tel:' + VP_SUPPORT_TEL + '" ' + HELP_LINK + '>' + VP_SUPPORT_PHONE + '</a> and press 2.</p>' : '')
     + P + 'To add anything, just reply to this email.</p>'
-    + helpSignatureHtml(t, signer || 'Dean', support)
-    + '<p style="margin:22px 0 0;font-size:12px;color:#666">' + brand + ' (' + site + ') is made by Gflam Group Pty Ltd on the Gold Coast. ABN ' + VP_ABN + '.</p>';
-  return vpaEmailDocument('<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.55;color:#111;max-width:560px;padding:20px 16px">' + inner + '</div>',
-    'Thanks, we\'ve got your message');
+    + helpSignatureHtml(t, signer || 'Dean', support, false);
+  return helpEmailCard(pp, inner, helpBrandFooter(pp) + '.', 'Thanks, we\'ve got your message');
 }
 /* The number, then the ticket's reference so a reply threads back onto it (helpTicketFromEmail). */
 function helpAckSubject(t) {
