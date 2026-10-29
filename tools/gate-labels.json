@@ -196,6 +196,7 @@
   "one-game.test.js",
   "one-trip-draws.test.js",
   "only a FINISHED Stripe event is answered 200; a failed one is retried",
+  "only the Mac's key registers, lists and marks; links signed over folder, action, expiry and round (Python vector), 7 days; a tampered, expired, old-round or unsigned link records nothing; a GET never writes and says what happens and when; one decision per round, a second tap changes nothing; an edit with a long dash or nothing in it is refused on the page; the Mac sees each decision until marked done, once; a held yes opens a new round",
   "only the hash of a 32-byte random token is stored; one use, 14 days, one winner of two at once; unknown, used, expired and removed all get one identical answer; rate-limited, never logged; nothing sent before a tap; the 4 hour sign-out still applies; a spent link offers a new one, never an email form; /app opens on the mobile whatever the link or device says; a session already on the device (an HQ one) is dropped, so a venue link never lands in HQ",
   "only venues HQ switched on, active, with our stored logo; test venues never; fewer than six paints nothing",
   "overage-charge.test.js",

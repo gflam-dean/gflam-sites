@@ -448,3 +448,14 @@ drops the offer price, and a card after it switches the venue back on (webhook a
 `/account/card-choice`, `/prospect/cancel`. No new table or grant: RLS-BASELINE.json does not change. Run BEFORE the billing
 Worker; without it the Worker behaves as before (no month starts, no reminders, no pause). Branch `feature/prospects-tab`.
 RUN 29 Oct 2026 by Dean, read back after. Rollback: in the file.
+
+`venueplay-128-autopilot-review-buttons.sql` (Dean, 29 Oct 2026, "can they just have a button to say yes no or edit maybe? I
+can't copy and paste a command every time"): table `vp_autopilot_reviews` (folder primary key = the prospect folder on Dean's
+Mac, round, company, class, their_words, reply, mailbox, reply_to, expires_at, decision yes|no|edit set once per round,
+decided_at, decided_agent, reason, edited_reply, applied_at / applied_result / applied_note set once). The Mac registers each
+review (`POST /autopilot/review/register`, X-Autopilot-Key) and emails Dean three signed links (HMAC with PROSPECT_AUTOPILOT_KEY
+over folder, action, expiry and round; 7 days). `GET /autopilot/review` shows the page and never writes; its POST records the
+choice. The Mac reads `GET /autopilot/decisions`, applies each with its own approve()/reject(), then `POST /autopilot/decisions/done`.
+RLS on, no policies, revoked from public/anon/authenticated: service role only. Run BEFORE the billing Worker; without it the
+Mac falls back to the plain review with the command line. After running, dump RLS-BASELINE.json (one new table). Branch
+`feature/review-buttons`. RUN 30 Oct 2026 by Dean (read back: service 200, anon refused). Rollback: in the file.

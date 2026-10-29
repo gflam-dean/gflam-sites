@@ -212,6 +212,11 @@ export default {
       if (request.method === 'POST' && path === '/admin/prospect'        && typeof vpaHandleProspect === 'function')       return await vpaHandleProspect(request, env, json);
       // The same setup for the prospect autopilot Mac job, on Dean's yes; a secret header, this route only (29 Oct 2026).
       if (request.method === 'POST' && path === '/autopilot/prospect'    && typeof vpaAutopilotProspect === 'function')    return await vpaAutopilotProspect(request, env, json);
+      // Dean's Yes / No / Edit buttons on the review email (Dean, 29 Oct 2026; migration 128). The page never writes on a GET.
+      if (request.method === 'POST' && path === '/autopilot/review/register' && typeof vpaAutopilotReviewRegister === 'function') return await vpaAutopilotReviewRegister(request, env, json);
+      if ((request.method === 'GET' || request.method === 'POST') && path === '/autopilot/review' && typeof vpaAutopilotReviewPage === 'function') return await vpaAutopilotReviewPage(request, env);
+      if (request.method === 'GET'  && path === '/autopilot/decisions'      && typeof vpaAutopilotDecisions === 'function')    return await vpaAutopilotDecisions(request, env, json);
+      if (request.method === 'POST' && path === '/autopilot/decisions/done' && typeof vpaAutopilotDecisionDone === 'function') return await vpaAutopilotDecisionDone(request, env, json);
       // The welcome goes on a delay (Dean, 28 Oct 2026; migration 124): HQ sees when, and can cancel it or send it now.
       // HQ > Prospects (Dean, 29 Oct 2026; migration 125): who has not signed up, who to ring, and the Called mark.
       if (request.method === 'POST' && path === '/admin/prospects'              && typeof vpaProspectsList === 'function')      return await vpaProspectsList(request, env, json);
@@ -2255,12 +2260,361 @@ function vpaSameSecret(a, b) {
   return diff === 0;
 }
 async function vpaAutopilotProspect(request, env, json) {
-  const want = String(env.PROSPECT_AUTOPILOT_KEY || '');
-  if (want.length < 32) return json({ error: 'The prospect autopilot is not switched on (PROSPECT_AUTOPILOT_KEY is not set).' }, 503);
-  if (!vpaSameSecret(request.headers.get('X-Autopilot-Key'), want)) return json({ error: 'Not allowed.' }, 401);
+  const no = vpaAutopilotKeyRefusal(request, env, json);   // one door check for every /autopilot/ route
+  if (no) return no;
   const _b = await vpaBody(request, json);
   if (!_b.ok) return _b.res;
   return await vpaProspectSetUp(env, VPA_AUTOPILOT_ACTOR, _b.body, json, { minDelayMin: VPA_PROSPECT_AUTOPILOT_DELAY_MIN, via: 'autopilot_prospect' });
+}
+
+/* ===========================================================================
+ * DEAN'S YES / NO / EDIT BUTTONS ON THE PROSPECT REVIEW EMAIL   (Dean, 29 Oct 2026; migration 128)
+ *
+ * "can they just have a button to say yes no or edit maybe? I can't copy and paste a command every
+ * time I get this. It's too much." Dean reads the review on his phone. Until now saying yes meant
+ * pasting `prospect-autopilot.py --approve <folder>` into a terminal.
+ *
+ * The Worker only RECORDS what Dean chose. It sends nothing to a venue and makes no account: the Mac
+ * job (~/venue-enrich/prospect-autopilot.py) fetches each decision on its 5-minute run and calls its
+ * own approve() or reject(), the same code as the command line, with every check that code makes
+ * (reply edited for a question, the thread re-read, the blocklist, the Worker dry run). One copy.
+ *
+ *   POST /autopilot/review/register   X-Autopilot-Key  the Mac registers a review (venue, their words,
+ *                                                      the reply) and gets back the three signed links
+ *   GET  /autopilot/review?f&a&r&x&t  the page behind a button. NEVER WRITES: Outlook SafeLinks, Gmail
+ *                                      and corporate scanners fetch every link before a human sees it
+ *   POST /autopilot/review?f&a&r&x&t  the button on that page: records the decision, once
+ *   GET  /autopilot/decisions         X-Autopilot-Key  decisions the Mac has not applied yet
+ *   POST /autopilot/decisions/done    X-Autopilot-Key  { folder, round, result, note }: applied, once
+ *
+ * THE LINK is signed: HMAC-SHA256 keyed 'vp-review:' + PROSPECT_AUTOPILOT_KEY over
+ * folder|action|expiry|round, hex, first 32. Seven days. A link for Yes cannot be edited into a link
+ * for anything else without the key. No key on the Worker = every link is refused (never "any token
+ * will do"). The key itself never leaves the Worker and the Mac.
+ *
+ * ONCE. The first decision for a round wins: a conditional update (decision is null) so two taps, or
+ * two phones, record one. The Mac marks a decision applied with a conditional update too, and keeps
+ * its own record, so a decision is applied once, ever. When the Mac HOLDS a yes (a check failed) it
+ * opens a new round and emails fresh buttons; links from the old round then say so and do nothing.
+ * ======================================================================== */
+const VPA_REVIEW_DAYS = 7;
+const VPA_REVIEW_ACTIONS = { yes: 'yes', no: 'no', edit: 'edit' };
+const VPA_REVIEW_FOLDER_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,119}$/;
+const VPA_REVIEW_MAX = 20000;
+
+async function vpaReviewToken(env, folder, action, exp, round) {
+  const key = await crypto.subtle.importKey('raw',
+    new TextEncoder().encode('vp-review:' + String(env.PROSPECT_AUTOPILOT_KEY || '')),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const mac = await crypto.subtle.sign('HMAC', key,
+    new TextEncoder().encode(String(folder) + '|' + String(action) + '|' + String(exp) + '|' + String(round)));
+  return [...new Uint8Array(mac)].map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
+}
+
+async function vpaReviewLinks(env, folder, exp, round) {
+  const base = vpUnsubApi(env) + '/autopilot/review?f=' + encodeURIComponent(folder);
+  const out = {};
+  for (const a of Object.keys(VPA_REVIEW_ACTIONS)) {
+    out[a] = base + '&a=' + a + '&r=' + round + '&x=' + exp + '&t=' + (await vpaReviewToken(env, folder, a, exp, round));
+  }
+  return out;
+}
+
+/* The Mac's door: the same key as /autopilot/prospect, checked the same way. */
+function vpaAutopilotKeyRefusal(request, env, json) {
+  const want = String(env.PROSPECT_AUTOPILOT_KEY || '');
+  if (want.length < 32) return json({ error: 'The prospect autopilot is not switched on (PROSPECT_AUTOPILOT_KEY is not set).' }, 503);
+  if (!vpaSameSecret(request.headers.get('X-Autopilot-Key'), want)) return json({ error: 'Not allowed.' }, 401);
+  return null;
+}
+
+async function vpaReviewRow(env, folder) {
+  const rows = await vpaReadPage(env, 'vp_autopilot_reviews', 'folder=eq.' + encodeURIComponent(folder) + '&limit=1');
+  return rows[0] || null;
+}
+
+/* PATCH with a filter, returning the rows it changed: [] means the filter matched nothing (someone
+   got there first). Throws on a database fault so a caller never reads a failure as "already done". */
+async function vpaReviewPatch(env, filter, patch) {
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_autopilot_reviews?' + filter, {
+    method: 'PATCH', headers: { ...vpaHeaders(env), 'Prefer': 'return=representation' }, body: JSON.stringify(patch) });
+  if (!res.ok) {
+    const t = (await res.text().catch(function () { return ''; })).slice(0, 200);
+    throw new Error('update vp_autopilot_reviews: ' + res.status + ' ' + t);
+  }
+  const rows = await res.json().catch(function () { return null; });
+  if (!Array.isArray(rows)) throw new Error('update vp_autopilot_reviews: no rows came back');
+  return rows;
+}
+
+function vpaReviewText(v, max) {
+  return String(v == null ? '' : v).replace(/\r\n?/g, '\n').slice(0, max || VPA_REVIEW_MAX);
+}
+
+/* POST /autopilot/review/register { folder, company, class, their_words, reply, mailbox, reply_to, reopen } */
+async function vpaAutopilotReviewRegister(request, env, json) {
+  const no = vpaAutopilotKeyRefusal(request, env, json);
+  if (no) return no;
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body || {};
+  const folder = String(b.folder || '').trim();
+  if (!VPA_REVIEW_FOLDER_RE.test(folder)) return json({ error: 'folder must be the prospect folder name (letters, numbers, dot, dash, underscore).' }, 400);
+  const reply = vpaReviewText(b.reply);
+  if (reply.trim().length < 20) return json({ error: 'reply is required.' }, 400);
+  const content = {
+    company: vpaReviewText(b.company, 200) || folder, class: vpaReviewText(b.class, 40),
+    their_words: vpaReviewText(b.their_words), reply: reply,
+    mailbox: vpaReviewText(b.mailbox, 200), reply_to: vpaReviewText(b.reply_to, 200),
+  };
+  const exp = Math.floor(Date.now() / 1000) + VPA_REVIEW_DAYS * 86400;
+  const expIso = new Date(exp * 1000).toISOString();
+  let row;
+  try { row = await vpaReviewRow(env, folder); }
+  catch (e) { return json({ error: 'Could not read the reviews table: ' + String(e.message || e) + '. Run migration 128 first.' }, 503); }
+  let round;
+  if (!row) {
+    round = 1;
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_autopilot_reviews', {
+      method: 'POST', headers: { ...vpaHeaders(env), 'Prefer': 'return=minimal' },
+      body: JSON.stringify(Object.assign({ folder: folder, round: round, expires_at: expIso }, content)) });
+    if (!res.ok) return json({ error: 'Could not save the review (' + res.status + '). Run migration 128 first.' }, 503);
+  } else if (!row.decision) {
+    // Not decided yet: the content and the links are refreshed, the round stays.
+    round = row.round;
+    const got = await vpaReviewPatch(env, 'folder=eq.' + encodeURIComponent(folder) + '&round=eq.' + round + '&decision=is.null',
+      Object.assign({ expires_at: expIso, updated_at: new Date().toISOString() }, content)).catch(function () { return null; });
+    if (!got) return json({ error: 'Could not save the review.' }, 503);
+    if (!got.length) return json({ error: 'Dean decided while this was being saved. Fetch the decisions first.', decided: true }, 409);
+  } else if (b.reopen === true && row.applied_at) {
+    // A held decision: a NEW round, so the old links stop working and fresh buttons go to Dean.
+    round = (parseInt(row.round, 10) || 1) + 1;
+    const got = await vpaReviewPatch(env, 'folder=eq.' + encodeURIComponent(folder) + '&round=eq.' + row.round,
+      Object.assign({ round: round, expires_at: expIso, updated_at: new Date().toISOString(), decision: null, decided_at: null,
+        reason: null, edited_reply: null, decided_agent: null, applied_at: null, applied_result: null, applied_note: null }, content)).catch(function () { return null; });
+    if (!got) return json({ error: 'Could not save the review.' }, 503);
+    if (!got.length) return json({ error: 'The review changed while this was being saved. Try again.' }, 409);
+  } else {
+    return json({ error: 'Dean has already decided this one (' + row.decision + ')' + (row.applied_at ? '' : ' and the Mac has not applied it yet') + '.',
+      decided: true, decision: row.decision }, 409);
+  }
+  return json({ ok: true, folder: folder, round: round, expires_at: expIso, links: await vpaReviewLinks(env, folder, exp, round) });
+}
+
+/* GET /autopilot/decisions: what Dean chose that the Mac has not applied. Oldest first. */
+async function vpaAutopilotDecisions(request, env, json) {
+  const no = vpaAutopilotKeyRefusal(request, env, json);
+  if (no) return no;
+  let rows;
+  try {
+    rows = await vpaReadPage(env, 'vp_autopilot_reviews', 'decision=in.(yes,no,edit)&applied_at=is.null'
+      + '&select=folder,round,company,decision,decided_at,reason,edited_reply&order=decided_at.asc&limit=50');
+  } catch (e) { return json({ error: 'Could not read the decisions: ' + String(e.message || e) }, 503); }
+  return json({ ok: true, decisions: rows });
+}
+
+/* POST /autopilot/decisions/done { folder, round, result, note } */
+async function vpaAutopilotDecisionDone(request, env, json) {
+  const no = vpaAutopilotKeyRefusal(request, env, json);
+  if (no) return no;
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body || {};
+  const folder = String(b.folder || '').trim(), round = parseInt(b.round, 10);
+  const result = String(b.result || '');
+  if (!VPA_REVIEW_FOLDER_RE.test(folder) || !(round >= 1)) return json({ error: 'folder and round are required.' }, 400);
+  if (['queued', 'held', 'rejected', 'already', 'failed'].indexOf(result) === -1) return json({ error: 'result must be queued, held, rejected, already or failed.' }, 400);
+  let got;
+  try {
+    got = await vpaReviewPatch(env, 'folder=eq.' + encodeURIComponent(folder) + '&round=eq.' + round + '&decision=in.(yes,no,edit)&applied_at=is.null',
+      { applied_at: new Date().toISOString(), applied_result: result, applied_note: vpaReviewText(b.note, 2000) });
+  } catch (e) { return json({ error: 'Could not mark it done: ' + String(e.message || e) }, 503); }
+  return json({ ok: true, marked: got.length === 1, already: got.length === 0 });
+}
+
+/* ---- the page ------------------------------------------------------------- */
+function vpaReviewPage(title, inner, status) {
+  const html = '<!doctype html><html lang="en-AU"><head><meta charset="utf-8">'
+    + '<meta name="viewport" content="width=device-width,initial-scale=1">'
+    + '<meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">'
+    + '<title>' + vpaEsc(title) + ' | VenuePlay</title>'
+    + '<style>'
+    + ':root{--bg:#0B0A0F;--card:#15131C;--card2:#1C1925;--line:rgba(255,255,255,.10);--text:#FFF1E6;--muted:#A79FB0;--pink:#FF1F8E;--green:#1DB97A;--warn:#FFCF8A;--warnbg:#3A2A12}'
+    + '*{box-sizing:border-box}html,body{margin:0}'
+    + 'body{background:var(--bg);color:var(--text);font:16px/1.55 Manrope,system-ui,-apple-system,"Segoe UI",sans-serif;padding:20px 16px 40px}'
+    + 'main{max-width:560px;margin:0 auto}'
+    + '.brand{display:flex;align-items:center;gap:9px;margin-bottom:18px;font-weight:700;font-size:15px}'
+    + 'h1{font-size:24px;line-height:1.25;margin:0 0 6px}h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:22px 0 8px}'
+    + 'p{margin:0 0 12px}.muted{color:var(--muted)}a{color:var(--pink)}'
+    + '.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}'
+    + '.words{white-space:pre-wrap;word-wrap:break-word;font-size:15px}'
+    + '.what{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-top:18px}'
+    + '.what ol{margin:6px 0 0;padding-left:20px}.what li{margin:4px 0}'
+    + '.warn{background:var(--warnbg);color:var(--warn);border-radius:12px;padding:12px 14px;margin:14px 0}'
+    + '.err{background:#3A1420;color:#FFB3C8;border-radius:12px;padding:12px 14px;margin:14px 0}'
+    + 'textarea{width:100%;min-height:340px;background:#0F0D14;color:var(--text);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:15px;line-height:1.5;font-family:inherit}'
+    + 'textarea.short{min-height:110px}'
+    + '.btn{display:block;width:100%;margin-top:12px;padding:16px;border:0;border-radius:12px;font:inherit;font-size:18px;font-weight:800;text-align:center;text-decoration:none;cursor:pointer}'
+    + '.yes{background:var(--green);color:#06140E}.edit{background:var(--pink);color:#fff}.no{background:transparent;color:var(--text);border:2px solid rgba(255,255,255,.35)}'
+    + '.others{display:flex;gap:10px;margin-top:6px}.others a{flex:1;font-size:15px;padding:12px}'
+    + '.done{font-size:46px;line-height:1;margin:6px 0 10px}'
+    + '.foot{margin-top:26px;padding-top:14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}'
+    + '</style></head><body><main>'
+    + '<div class="brand"><svg width="18" height="21" viewBox="0 0 26 30" fill="none" aria-hidden="true">'
+    + '<path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>VenuePlay prospect review</div>'
+    + inner
+    + '<p class="foot">Only you get these links. Nothing is sent to a venue from this page: your Mac does that, '
+    + 'after every check, and emails you what it did.</p>'
+    + '</main></body></html>';
+  return new Response(html, { status: status || 200,
+    headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store',
+               'x-robots-tag': 'noindex', 'referrer-policy': 'no-referrer' } });
+}
+
+/* Exactly what happens, and when (Dean: confirm pages say exactly what will happen and when). */
+function vpaReviewWhatHappens(row, edited) {
+  return '<div class="what"><b>What happens when you tap it</b><ol>'
+    + '<li>Within 5 minutes your Mac picks this up (if it is asleep, as soon as it wakes).</li>'
+    + '<li>It checks again that nobody has replied to them since, that they have not asked us to stop, and that their account can be made.</li>'
+    + '<li>If all is well, the reply' + (edited ? ', with your changes,' : '') + ' goes from ' + vpaEsc(row.mailbox || 'the mailbox that emailed them')
+    + ' in their own email thread, 30 minutes after their email arrived, between 8am and 5pm Monday to Friday. '
+    + 'Their account email follows 30 minutes after the reply, and you can still cancel it in HQ until it goes.</li>'
+    + '<li>You get an email straight away saying the time it will go, or, if something is not right, why it was held. Nothing goes to them if it is held.</li>'
+    + '</ol></div>';
+}
+
+function vpaReviewHead(row) {
+  return '<h1>' + vpaEsc(row.company || row.folder) + '</h1>'
+    + '<p class="muted">Replied to ' + vpaEsc(row.mailbox || 'us') + (row.reply_to ? ' from ' + vpaEsc(row.reply_to) : '') + '.</p>'
+    + '<h2>What they wrote</h2><div class="card words">' + vpaEsc(row.their_words || '(nothing above the quoted email)') + '</div>';
+}
+
+function vpaParseForm(text) {
+  const out = {};
+  String(text || '').split('&').forEach(function (p) {
+    if (!p) return;
+    const i = p.indexOf('=');
+    const k = i < 0 ? p : p.slice(0, i), v = i < 0 ? '' : p.slice(i + 1);
+    try { out[decodeURIComponent(k.replace(/\+/g, ' '))] = decodeURIComponent(v.replace(/\+/g, ' ')); } catch (e) { /* a broken escape is ignored */ }
+  });
+  return out;
+}
+
+const VPA_REVIEW_DECIDED_WORDS = { yes: 'Yes, send it', no: 'No, do not send', edit: 'Edited and send' };
+function vpaReviewDecidedPage(row, sameAsAsked) {
+  const when = row.decided_at ? new Date(Date.parse(row.decided_at) + 36000000).toISOString().slice(0, 16).replace('T', ' ') + ' Brisbane' : '';
+  const applied = row.applied_at
+    ? '<p>Your Mac has dealt with it: <b>' + vpaEsc(row.applied_result || 'done') + '</b>' + (row.applied_note ? '. ' + vpaEsc(row.applied_note) : '') + '</p>'
+    : '<p>Your Mac picks it up within 5 minutes and emails you what it did.</p>';
+  return vpaReviewPage(sameAsAsked ? 'Got it' : 'Already decided',
+    '<div class="done" aria-hidden="true">' + (row.decision === 'no' ? '&#10005;' : '&#10003;') + '</div>'
+    + '<h1>' + (sameAsAsked ? 'Got it: ' : 'You already chose: ') + vpaEsc(VPA_REVIEW_DECIDED_WORDS[row.decision] || row.decision) + '</h1>'
+    + '<p class="muted">' + vpaEsc(row.company || row.folder) + (when ? ', ' + vpaEsc(when) : '') + '.</p>'
+    + applied
+    + (sameAsAsked ? '' : '<p class="muted">Only the first choice counts, so nothing changed. To change your mind, tell Claude.</p>'), 200);
+}
+
+/* GET and POST /autopilot/review?f=&a=&r=&x=&t= */
+async function vpaAutopilotReviewPage(request, env) {
+  const isPost = request.method === 'POST';
+  const folder = vpaQueryParam(request, 'f'), action = vpaQueryParam(request, 'a');
+  const round = parseInt(vpaQueryParam(request, 'r'), 10), exp = parseInt(vpaQueryParam(request, 'x'), 10);
+  const tok = String(vpaQueryParam(request, 't') || '').toLowerCase();
+  const BAD = vpaReviewPage('That link does not work',
+    '<h1>That link does not work</h1><p>It may have been cut short. Use the buttons in the newest review email, '
+    + 'or tell Claude "send" or "reject" with the venue name.</p>', 403);
+  // An unset key must never mean "any token will do".
+  if (String(env.PROSPECT_AUTOPILOT_KEY || '').length < 32 || !env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) {
+    return vpaReviewPage('Not switched on', '<h1>The review buttons are not switched on</h1><p>Tell Claude "send" or "reject" with the venue name instead.</p>', 503);
+  }
+  if (!VPA_REVIEW_FOLDER_RE.test(folder) || !VPA_REVIEW_ACTIONS[action] || !(round >= 1) || !(exp > 0)
+      || !/^[0-9a-f]{32}$/.test(tok) || !vpaSameSecret(tok, await vpaReviewToken(env, folder, action, exp, round))) return BAD;
+  if (Math.floor(Date.now() / 1000) > exp) {
+    return vpaReviewPage('This link has run out', '<h1>This link has run out</h1><p>Review buttons last 7 days. '
+      + 'Tell Claude "send" or "reject" with the venue name, and it will run the same checks.</p>', 410);
+  }
+  let row;
+  try { row = await vpaReviewRow(env, folder); }
+  catch (e) { return vpaReviewPage('Try again', '<h1>That did not load</h1><p>Please try the button again in a minute.</p>', 503); }
+  if (!row) return BAD;
+  if (parseInt(row.round, 10) !== round) {
+    return vpaReviewPage('A newer email has the buttons', '<h1>This link is from an older email</h1><p>'
+      + vpaEsc(row.company || folder) + ' has a newer review email. Use the buttons in that one.</p>', 409);
+  }
+  if (row.decision) return vpaReviewDecidedPage(row, isPost && row.decision === action);
+
+  const self = '/autopilot/review?f=' + encodeURIComponent(folder) + '&a=' + action + '&r=' + round + '&x=' + exp + '&t=' + tok;
+  const links = await vpaReviewLinks(env, folder, exp, round);
+  const question = row.class === 'question';
+  const qWarn = question ? '<div class="warn">They asked something the standard reply does not answer. Tap <b>Edit</b> and answer it; '
+    + 'a Yes on the reply as drafted will be held and not sent.</div>' : '';
+  let form = null, err = '';
+
+  if (isPost) {
+    let body = '';
+    try { body = await request.text(); } catch (e) { /* read as empty */ }
+    const f = vpaParseForm(body);
+    const patch = { decision: action, decided_at: new Date().toISOString(),
+                    decided_agent: String(request.headers.get('User-Agent') || '').slice(0, 200) };
+    if (action === 'no') patch.reason = vpaReviewText(f.reason, 2000).trim() || null;
+    if (action === 'edit') {
+      const text = vpaReviewText(f.reply, VPA_REVIEW_MAX + 1);
+      /* Only what a phone keyboard does on its own is checked here, so Dean finds out now and not in five
+         minutes: iPhones turn "--" into a long dash. Every other rule is the Mac's lint_reply, one copy. */
+      if (text.length > VPA_REVIEW_MAX) err = 'That is too long to send (over 20,000 characters).';
+      else if (text.trim().length < 80) err = 'That is too short to be the reply. Nothing was saved.';
+      else if (/[\u2014\u2013]/.test(text)) err = 'Your reply has a long dash in it (your phone may have made one from two hyphens). Change it to a comma or a full stop, then tap Save and send again. Nothing was saved.';
+      if (err) form = text;
+      else patch.edited_reply = text.trim() + '\n';
+    }
+    if (!err) {
+      let got;
+      try {
+        got = await vpaReviewPatch(env, 'folder=eq.' + encodeURIComponent(folder) + '&round=eq.' + round + '&decision=is.null', patch);
+      } catch (e) {
+        return vpaReviewPage('Try again', '<h1>That did not save</h1><p>Nothing was recorded. Please tap the button again in a minute.</p>', 503);
+      }
+      if (!got.length) {
+        let now = null;
+        try { now = await vpaReviewRow(env, folder); } catch (e) { /* fall through */ }
+        return now && now.decision ? vpaReviewDecidedPage(now, now.decision === action) : BAD;
+      }
+      return vpaReviewDecidedPage(got[0], true);
+    }
+  }
+
+  // GET (or an edit sent back to fix): the page. NOTHING is written here.
+  let inner = vpaReviewHead(row);
+  if (action === 'yes') {
+    inner += qWarn + '<h2>The reply they will get</h2><div class="card words">' + vpaEsc(row.reply) + '</div>'
+      + '<p class="muted" style="margin-top:8px">The line saying when their account email comes is matched to when it really goes.</p>'
+      + vpaReviewWhatHappens(row, false)
+      + '<form method="POST" action="' + vpaEsc(self) + '" onsubmit="this.b.disabled=true;this.b.textContent=\'Saving...\'">'
+      + '<button class="btn yes" name="b" type="submit">Yes, send it</button></form>'
+      + '<div class="others"><a class="btn edit" href="' + vpaEsc(links.edit) + '">Edit first</a><a class="btn no" href="' + vpaEsc(links.no) + '">No</a></div>';
+  } else if (action === 'edit') {
+    inner += (err ? '<div class="err">' + vpaEsc(err) + '</div>' : '') + qWarn
+      + '<h2>The reply: change anything, then tap Save and send</h2>'
+      + '<form method="POST" action="' + vpaEsc(self) + '" onsubmit="this.b.disabled=true;this.b.textContent=\'Saving...\'">'
+      + '<textarea name="reply" aria-label="The reply" autocapitalize="sentences" spellcheck="true">' + vpaEsc(form != null ? form : row.reply) + '</textarea>'
+      + '<p class="muted" style="margin-top:8px">Your signature is at the bottom: leave it there. Plain text; a blank line starts a new paragraph.</p>'
+      + vpaReviewWhatHappens(row, true)
+      + '<button class="btn yes" name="b" type="submit">Save and send</button></form>'
+      + '<div class="others"><a class="btn no" href="' + vpaEsc(links.no) + '">No, do not send</a></div>';
+  } else {
+    inner += '<h2>The reply that will NOT go</h2><div class="card words">' + vpaEsc(row.reply) + '</div>'
+      + '<div class="what"><b>What happens when you tap it</b><ol>'
+      + '<li>Nothing is sent to them and no account is made, now or later.</li>'
+      + '<li>Within 5 minutes your Mac marks it rejected and emails you to say so.</li>'
+      + '<li>Their email stays in Instantly, so you can still answer it there by hand.</li></ol></div>'
+      + '<form method="POST" action="' + vpaEsc(self) + '" onsubmit="this.b.disabled=true;this.b.textContent=\'Saving...\'">'
+      + '<h2>Why not? (optional, just for the record)</h2>'
+      + '<textarea class="short" name="reason" aria-label="Why not"></textarea>'
+      + '<button class="btn no" name="b" type="submit">No, do not send</button></form>'
+      + '<div class="others"><a class="btn yes" href="' + vpaEsc(links.yes) + '">Yes after all</a><a class="btn edit" href="' + vpaEsc(links.edit) + '">Edit</a></div>';
+  }
+  const titles = { yes: 'Send this reply?', edit: 'Edit the reply', no: 'Do not send?' };
+  return vpaReviewPage(titles[action], inner, err ? 400 : 200);
 }
 
 /* THE ONE SETUP, for HQ (vpaHandleProspect) and the autopilot (vpaAutopilotProspect). actor is who it

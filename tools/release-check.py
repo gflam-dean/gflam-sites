@@ -3630,6 +3630,13 @@ def local_checks(which):
              'a login with no mobile is asked its name and mobile first, the mobile only through a verified phone change in the sign-in format; carry on for this sign-in only; a new link goes to the login\'s own email, retires older ones, one answer whatever happens, limited per network and per login; HQ resend is owner or accounts only; a login names only itself; the prospect welcome comes from and replies to hello@, signed by the sender_name the autopilot gives (checked: a plain name, one of our own mailboxes) or the team', 77,
              'A typo saved as the key to a venue\'s account, a host who can never sign in again after the 4 hour '
              'sign-out, a stranger told which addresses have a login, or one login renaming every member of staff'),
+            # D92: Dean's Yes / No / Edit buttons on the prospect review email (Dean, 29 Oct 2026; migration 128),
+            # branch feature/review-buttons. (D91 is claimed by feature/helpdesk-easier and feature/prospects-tab.)
+            ('D92. Dean\'s Yes, No and Edit buttons record his choice once, from a signed link, and a mail scanner\'s GET does nothing',
+             'test-review-buttons.js',
+             'only the Mac\'s key registers, lists and marks; links signed over folder, action, expiry and round (Python vector), 7 days; a tampered, expired, old-round or unsigned link records nothing; a GET never writes and says what happens and when; one decision per round, a second tap changes nothing; an edit with a long dash or nothing in it is refused on the page; the Mac sees each decision until marked done, once; a held yes opens a new round', 52,
+             'A forwarded or guessed link sending a reply Dean never approved, a mail scanner approving a prospect '
+             'by fetching the link, or one tap applied twice'),
             # D87: the prospect flow, version 2 (Dean, 28 Oct 2026; migration 124), branch feature/prospect-v2-28-oct.
             ('D87. A prospect\'s welcome waits for HQ\'s delay and can be stopped, and the app walks them through setup one step at a time',
              'test-prospect-welcome-v2.js',
